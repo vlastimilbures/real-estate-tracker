@@ -494,7 +494,19 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
                   help={spec.help}
                   value={draft[spec.name] ?? ""}
                   errors={errors}
-                  onChange={(v) => setDraft((d) => ({ ...d, [spec.name]: v }))}
+                  onChange={(v) => {
+                    setDraft((d) => ({ ...d, [spec.name]: v }));
+                    // Row errors are keyed by position: an edit can move rows, so the
+                    // list's errors go until the next save.
+                    setErrors((e) =>
+                      Object.fromEntries(
+                        Object.entries(e).filter(
+                          ([k]) =>
+                            k !== spec.name && !k.startsWith(`${spec.name}.`),
+                        ),
+                      ),
+                    );
+                  }}
                 />
               </div>
             );

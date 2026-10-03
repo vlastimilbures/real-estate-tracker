@@ -168,6 +168,9 @@ describe("prepayment and recast rows (ADR 0116)", () => {
         name: d.eventRemove(d.eventPrepaymentRow(1)),
       }),
     );
+    // The valid row moved up: the old row's error must not follow its position.
+    expect(row(1).textContent).not.toContain(en.inputRules.EVENT_BEFORE_START);
+    expect(row(1).getAttribute("aria-describedby")).toBeNull();
     await userEvent.click(saveButton());
     expect(save).toHaveBeenCalledTimes(2);
     expect(saved().prepayments).toHaveLength(1);
