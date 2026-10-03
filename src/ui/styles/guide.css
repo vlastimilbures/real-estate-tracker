@@ -157,6 +157,24 @@
   font-weight: 600;
 }
 
+/* ADR 0092: document addresses under "Limits and data safety", as plain text. */
+.guide-docs {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: var(--s5);
+  row-gap: var(--s2);
+  margin: 0;
+  font-size: 13.5px;
+}
+.guide-docs dt {
+  color: var(--ink-faint);
+}
+.guide-docs dd {
+  margin: 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
 /* UX-044: the entry a metric label opened is focused; mark it. */
 .guide-gloss:focus {
   outline: 2px solid var(--accent);

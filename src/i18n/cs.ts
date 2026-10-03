@@ -785,6 +785,12 @@ export const cs: Dictionary = {
     feedbackText: "github.com/vlastimilbures/real-estate-tracker/issues",
     sourceLabel: "Zdrojový kód",
     sourceText: "github.com/vlastimilbures/real-estate-tracker",
+    limitsLabel: "Omezení modelu",
+    limitsText:
+      "github.com/vlastimilbures/real-estate-tracker/blob/main/docs/model-limitations.md",
+    dataSafetyLabel: "Bezpečnost dat",
+    dataSafetyText:
+      "github.com/vlastimilbures/real-estate-tracker/blob/main/docs/data-safety.md",
 
     builtWithTitle: "Postaveno na",
     builtWithBody: "Tauri 2 · React · TypeScript · SQLite · decimal.js",
@@ -865,6 +871,9 @@ export const cs: Dictionary = {
     developmentInterestOnly: "pouze úrokový",
     developmentProsePost:
       " (bez jistiny) a hodnota roste s podílem dosud načerpaného úvěru. Když přijde tranše nebo se výstavba dokončí, úvěr se znovu umoří na běžný splátkový plán.",
+    limitsTitle: "Omezení a bezpečnost dat",
+    limitsProse:
+      "Tato čísla jsou plánovací odhady, ne nabídka banky ani zaručený výsledek. Dva dokumenty ve zdrojovém repozitáři vysvětlují, co model zjednodušuje nebo vynechává, a jak data zálohovat a obnovit po neúspěšné aktualizaci.",
     glossaryTitle: "Slovníček",
     snapshotDefs: {
       value: {

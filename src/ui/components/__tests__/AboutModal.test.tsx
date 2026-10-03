@@ -25,6 +25,20 @@ describe("About (UX-064)", () => {
     expect(text).toContain(en.about.sourceText);
   });
 
+  // ADR 0092: the limitations and data-safety documents, as plain text like Source.
+  it("shows the limitations and data-safety document addresses as text", () => {
+    const { container } = render(<AboutModal onClose={() => {}} />);
+    const text = container.textContent ?? "";
+    expect(text).toContain(en.about.limitsLabel);
+    expect(text).toContain(
+      "github.com/vlastimilbures/real-estate-tracker/blob/main/docs/model-limitations.md",
+    );
+    expect(text).toContain(en.about.dataSafetyLabel);
+    expect(text).toContain(
+      "github.com/vlastimilbures/real-estate-tracker/blob/main/docs/data-safety.md",
+    );
+  });
+
   // ADR 0082: feedback goes to GitHub issues; no personal e-mail address is shown.
   it("shows no e-mail address", () => {
     const { container } = render(<AboutModal onClose={() => {}} />);

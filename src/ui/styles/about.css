@@ -92,6 +92,8 @@
 }
 .about-meta dd {
   margin: 0;
+  /* Long document addresses wrap inside the dialog (ADR 0092). */
+  overflow-wrap: anywhere;
   font-size: 13.5px;
   color: var(--ink);
 }

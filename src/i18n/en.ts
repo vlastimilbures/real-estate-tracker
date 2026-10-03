@@ -820,6 +820,12 @@ export const en = {
     feedbackText: "github.com/vlastimilbures/real-estate-tracker/issues",
     sourceLabel: "Source",
     sourceText: "github.com/vlastimilbures/real-estate-tracker",
+    limitsLabel: "Model limits",
+    limitsText:
+      "github.com/vlastimilbures/real-estate-tracker/blob/main/docs/model-limitations.md",
+    dataSafetyLabel: "Data safety",
+    dataSafetyText:
+      "github.com/vlastimilbures/real-estate-tracker/blob/main/docs/data-safety.md",
 
     builtWithTitle: "Built with",
     builtWithBody: "Tauri 2 · React · TypeScript · SQLite · decimal.js",
@@ -900,6 +906,9 @@ export const en = {
     developmentInterestOnly: "interest-only",
     developmentProsePost:
       " (no principal) and the value ramps up with the fraction of the loan drawn so far. When a tranche lands or construction completes, the loan re-amortizes onto a normal repaying schedule.",
+    limitsTitle: "Limits and data safety",
+    limitsProse:
+      "These figures are planning estimates, not lender quotes or guaranteed outcomes. Two documents in the source repository explain what the model simplifies or leaves out, and how to back up your data and recover it after a failed upgrade.",
     glossaryTitle: "Glossary",
     // Definition tables
     snapshotDefs: {

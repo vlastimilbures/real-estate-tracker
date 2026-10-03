@@ -78,6 +78,10 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
                 <dd>{a.feedbackText}</dd>
                 <dt>{a.sourceLabel}</dt>
                 <dd>{a.sourceText}</dd>
+                <dt>{a.limitsLabel}</dt>
+                <dd>{a.limitsText}</dd>
+                <dt>{a.dataSafetyLabel}</dt>
+                <dd>{a.dataSafetyText}</dd>
               </dl>
             </div>
           </section>
