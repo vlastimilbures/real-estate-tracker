@@ -93,7 +93,8 @@ interest saved and the clamp warnings come in #32b, and both ship in the same re
    - a date on or before the loan start;
    - a date on or after the loan's last possible payment;
    - a recast with both or neither of maturity and instalment;
-   - a recast maturity before the next payment or beyond the cap.
+   - a recast maturity before the next payment, beyond the cap, or (development loan) on
+     or before the completion (ADR 0116).
 
 10. **Refinance handover.** A prepayment dated on or before the successor's start applies to
     the old loan. The successor pays off the balance **after** it, whether or not the old

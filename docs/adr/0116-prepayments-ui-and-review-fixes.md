@@ -33,8 +33,9 @@ This ADR covers both.
    `effect` and `fee`. A stored recast allows only `date`, `maturity` and `instalment`. Any
    other key makes the row invalid (`ROW_INVALID`), so a typo such as `fees` can't silently
    lose a fee. A hand-edited backup with extra keys no longer restores.
-5. **Recast maturity message.** The message states the real limit: at most 50 years after the
-   loan start, or the contract term when that is longer.
+5. **Recast maturity message.** The message states the real limits: at most 50 years after
+   the loan start, or the contract term when that is longer, and after a development loan's
+   completion (decision 15).
 6. **Snapshot instalment after a prepayment.** The as-of snapshot reports the instalment in
    force after a month's prepayment. When the snapshot month's row has a prepayment, the
    instalment and rate come from the next row. This matches the balance shown, which has
@@ -78,6 +79,17 @@ This ADR covers both.
 13. **Snapshot fallback without a schedule.** The app always passes schedules, so this path is
     dead code (DR-118, on the roadmap). It still ignores events. A test pins today's output,
     and nothing else changes.
+
+14. **Development loan completed just before baseDate.** The development grid opens with
+    the interest-only status of the last payment made, not of baseDate. Before, a
+    completion after the last payment due and on or before baseDate, with no tranche in
+    grid month 1, lost its re-amortization (D-24). The loan stayed interest-only to
+    maturity and repaid everything as a balloon. The extended property test found this,
+    and the reference model already amortized. No events are needed to trigger it.
+15. **A development loan's recast maturity falls after completion.** A maturity recast
+    whose last payment is on or before the completion date is rejected
+    (`INVALID_RECAST_MATURITY`), because the loan would end before it finishes drawing.
+    Before, the engine and the reference model disagreed on that input.
 
 ## Consequences
 

@@ -119,7 +119,7 @@ export const en = {
     INVALID_RECAST:
       "A maturity change needs either a new maturity date or a new instalment above zero, not both",
     INVALID_RECAST_MATURITY:
-      "The new maturity must be after the next payment and at most 50 years after the loan start",
+      "The new maturity must be after the next payment and after a development loan's completion, and at most 50 years after the loan start (or the contract term, if longer)",
     RECAST_INSTALMENT_BEFORE_COMPLETION:
       "A new instalment can only be set after the interest-only period ends; set a new maturity date instead",
   } satisfies Record<ValidationCode, string>,

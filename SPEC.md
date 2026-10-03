@@ -287,7 +287,8 @@ the next payment.
   and the maturity follows from `ceil(NPER)` at that payment's rate. The maturity is capped
   at the later of loan start + 50 years and the contract term; an instalment past the cap
   re-amortizes to the cap. An instalment that does not cover the next interest is ignored.
-  An instalment recast before a development loan's completion is rejected.
+  An instalment recast before a development loan's completion is rejected, and so is a
+  maturity on or before it.
 - A tranche landing on or after the maturity in force's payment restores the contract term.
 - Events dated on/before baseDate are **replayed** into the opening balance (the loan is
   simulated on its own due dates) and are not in the projection's cash flows.

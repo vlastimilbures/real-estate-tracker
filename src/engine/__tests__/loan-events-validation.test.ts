@@ -220,6 +220,12 @@ describe("ADR 0109: recast input checks", () => {
       loan({ recasts: [toInstalment("2071-01-17", 9000)] }),
     ],
     [
+      // ADR 0116: the loan would end before it finishes drawing.
+      "a dev loan maturity on or before its completion",
+      "INVALID_RECAST_MATURITY",
+      dev({ recasts: [toMaturity("2027-01-10", "2027-08-01")] }),
+    ],
+    [
       "an instalment recast before a dev loan's completion",
       "RECAST_INSTALMENT_BEFORE_COMPLETION",
       dev({ recasts: [toInstalment("2027-08-20", 15000)] }),
@@ -259,6 +265,13 @@ describe("ADR 0109: recast input checks", () => {
   it("allows a maturity recast before a dev loan's completion", () => {
     expect(
       codes(dev({ recasts: [toMaturity("2027-01-01", "2050-03-01")] })),
+    ).toEqual([]);
+  });
+
+  it("allows a dev loan maturity on the first payment after completion", () => {
+    // Completion 2027-08-20; the next payment is due 2027-09-01.
+    expect(
+      codes(dev({ recasts: [toMaturity("2027-01-10", "2027-09-01")] })),
     ).toEqual([]);
   });
 

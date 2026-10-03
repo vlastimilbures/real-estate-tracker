@@ -247,7 +247,8 @@ function checkPrepayments(
   }
 }
 
-/** A recast maturity must leave at least the next payment and stay within the cap. */
+/** A recast maturity must leave at least the next payment, stay within the cap and,
+ *  on a development loan, fall after the completion (ADR 0116). */
 function checkRecastMaturity(
   b: MortgageBlock,
   r: LoanRecast,
@@ -258,7 +259,10 @@ function checkRecastMaturity(
   if (badDate(r.maturity)) return report("INVALID_DATE", "recasts");
   const last = paymentsDueBy(b, r.maturity);
   const next = paymentOnOrAfter(b, r.date) + 1;
-  if (last < next || last > maxTermMonths(term))
+  const beforeCompletion =
+    b.completionDate != null &&
+    isOnOrBefore(edate(b.startDate, last), b.completionDate);
+  if (last < next || last > maxTermMonths(term) || beforeCompletion)
     report("INVALID_RECAST_MATURITY", "recasts");
 }
 
