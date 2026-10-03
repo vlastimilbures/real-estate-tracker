@@ -113,6 +113,7 @@ Other IDs seen in code comments:
 | [0086](0086-restore-int-bounds.md)                | Backup restore applies the whole-number bounds                                         |                                        |
 | [0087](0087-real-lens-multiple-cumulative-cf.md)  | Real lens: real net-worth multiple and cumulative cash flow                            |                                        |
 | [0088](0088-asof-basis-labels.md)                 | As-of labels name their basis                                                          |                                        |
+| [0089](0089-compare-owner-loss.md)                | Scenario compare shows the owner's loss                                                |                                        |
 
 ### Judgment calls and open questions
 
