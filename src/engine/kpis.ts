@@ -161,7 +161,9 @@ function scheduleOf(
   schedules: Map<string, PropertySchedule>,
   propertyId: string,
 ): PropertySchedule {
-  return schedules.get(propertyId) ?? { rows: [], refinances: [] };
+  return (
+    schedules.get(propertyId) ?? { rows: [], refinances: [], eventOutcomes: [] }
+  );
 }
 
 /**

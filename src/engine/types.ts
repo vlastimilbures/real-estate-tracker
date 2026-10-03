@@ -252,10 +252,41 @@ export interface AmortizationRow {
   principal: Decimal;
   /** New debt drawn in this grid month, dated after baseDate (DR-092): a loan's draw,
    *  a tranche, or a refinance's net new debt. Debt dated on/before baseDate is
-   *  opening debt. So endBalance = previous endBalance − principal + drawn, from the
-   *  baseDate debt (`openingDebt`). */
+   *  opening debt. So endBalance = previous endBalance − principal − prepaid +
+   *  drawn, from the baseDate debt (`openingDebt`). */
   drawn: Decimal;
+  /** Extra principal repaid after this month's payment (ADR 0109). */
+  prepaid: Decimal;
+  /** Fee paid with that prepayment (cash, not principal). */
+  prepaymentFee: Decimal;
   endBalance: Decimal;
+}
+
+/** Why a prepayment or recast did less than asked (ADR 0109). Reported, never
+ *  raised: the balance it meets depends on the assumptions and the scenario. */
+export type LoanEventIssue =
+  | "PREPAYMENT_EXCEEDS_BALANCE"
+  | "PREPAYMENT_AFTER_PAYOFF"
+  | "PREPAYMENT_REPLACED"
+  | "RECAST_AFTER_PAYOFF"
+  | "RECAST_REPLACED"
+  | "RECAST_INSTALMENT_BELOW_INTEREST"
+  | "RECAST_TERM_CAPPED";
+
+/** What one prepayment or recast did in the schedule (ADR 0109). */
+export interface LoanEventOutcome {
+  blockId: string;
+  kind: "prepayment" | "recast";
+  date: IsoDate;
+  /** Grid month it applied after (≤ 0: replayed before baseDate); null when a
+   *  successor block replaced the loan first. */
+  month: number | null;
+  /** A prepayment's amount asked for, the principal it repaid and the fee charged
+   *  (zero after payoff); zero for a recast. */
+  requested: Decimal;
+  applied: Decimal;
+  fee: Decimal;
+  issue: LoanEventIssue | null;
 }
 
 /** A successor block paying off its predecessor on the baseDate grid (D-27, D-47). */
