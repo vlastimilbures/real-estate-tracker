@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Scenarios: clicking a stress preset that is already saved no longer adds a second row with
+  the same name; it ticks the saved one and says "Already saved". A scenario added from a
+  preset, the "New scenario" form or Duplicate is ticked for compare straight away while fewer
+  than 3 are ticked; at the limit the selection stays and the message says why (ADR 0093,
+  #48, #49).
+
 - Scenario compare shows what a scenario does to your wealth, not only its returns. Two new
   rows lead the key figures: starting equity and Δ net worth vs Base (in the chosen lens). A
   price crash at Today lowers starting equity, so its multiple, CAGR and IRR can read higher

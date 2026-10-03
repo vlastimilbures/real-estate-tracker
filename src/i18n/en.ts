@@ -526,6 +526,11 @@ export const en = {
     crashAt: (label: string) => ` @ ${label}`,
     addedScenario: (name: string) => `Added “${name}”`,
     duplicatedScenario: (name: string) => `Duplicated “${name}”`,
+    alreadySaved: (name: string) => `Already saved: “${name}”`,
+    addedCompareFull: (name: string, max: number) =>
+      `Added “${name}”. Compare already shows ${max} scenarios, so untick one to add it.`,
+    duplicatedCompareFull: (name: string, max: number) =>
+      `Duplicated “${name}”. Compare already shows ${max} scenarios, so untick one to add the copy.`,
     confirmDelete: (name: string) =>
       `Delete scenario “${name}”? This cannot be undone.`,
     deletedScenario: (name: string) => `Deleted “${name}”`,

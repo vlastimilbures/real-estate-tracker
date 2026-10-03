@@ -168,7 +168,9 @@ interface PortfolioState {
   // scenarios (what-if overrides)
   addScenario: (s: Scenario) => Promise<MutationResult>;
   saveScenario: (s: Scenario) => Promise<MutationResult>;
-  duplicateScenario: (id: string) => Promise<MutationResult>;
+  /** Copies scenario `id` under `newId`; the caller picks the id so it can select the
+   *  copy (ADR 0093). */
+  duplicateScenario: (id: string, newId: string) => Promise<MutationResult>;
   removeScenario: (id: string) => Promise<MutationResult>;
   // whole-database operations. They throw their own typed errors (CsvImportError,
   // RestoreError, …) for the page to show, and leave the banner `error` alone.
@@ -442,13 +444,13 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
 
     addScenario: (s) => mutate((sql) => upsertScenario(sql, scenarioToRow(s))),
     saveScenario: (s) => mutate((sql) => upsertScenario(sql, scenarioToRow(s))),
-    duplicateScenario: (id) =>
+    duplicateScenario: (id, newId) =>
       mutate(async (sql) => {
         const src = get().scenarios.find((x) => x.id === id);
         if (!src) throw new Error("Scenario not found");
         const copy: Scenario = {
           ...src,
-          id: crypto.randomUUID(),
+          id: newId,
           name: `${src.name} (copy)`,
           createdAt: new Date(),
         };

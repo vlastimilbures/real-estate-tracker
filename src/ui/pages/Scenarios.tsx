@@ -9,7 +9,7 @@ import { Button, EmptyState, Toast } from "../components/primitives";
 import { FolderOpen } from "lucide-react";
 import type { Scenario, ScenarioOverrides } from "../../engine";
 import { useT } from "../hooks/useT";
-import { baseScenario } from "../model/scenarios";
+import { baseScenario, findByName, tickForCompare } from "../model/scenarios";
 import { CompareView } from "./ScenarioCompare";
 import { ScenarioForm } from "./ScenarioForm";
 import { StressPresetsPanel, ScenarioListPanel } from "./ScenariosPanels";
@@ -37,14 +37,15 @@ export function Scenarios() {
   const [busy, setBusy] = useState(false);
   const { toast, showToast } = useToast();
 
-  async function run(
-    action: () => Promise<{ ok: boolean }>,
-    successMsg: string,
-  ) {
+  async function run<R extends { ok: boolean }>(
+    action: () => Promise<R>,
+    successMsg?: string,
+  ): Promise<R> {
     setBusy(true);
     const res = await action();
     setBusy(false);
-    if (res.ok) showToast(successMsg);
+    if (res.ok && successMsg) showToast(successMsg);
+    return res;
   }
 
   if (!assumptions) {
@@ -73,16 +74,42 @@ export function Scenarios() {
     );
   }
 
-  function addPreset(name: string, overrides: ScenarioOverrides) {
-    return run(
-      () =>
-        addScenario({
-          id: crypto.randomUUID(),
-          name,
-          overrides,
-          createdAt: new Date(),
-        }),
-      t.scenarios.addedScenario(name),
+  /** Tick a new or re-found scenario for compare when there is room (ADR 0093);
+   *  false when compare is already full. */
+  function tick(id: string): boolean {
+    const next = tickForCompare(selectedIds, id, MAX_COMPARE);
+    setSelectedIds(next.ids);
+    return next.ticked;
+  }
+
+  async function addPreset(name: string, overrides: ScenarioOverrides) {
+    // A preset that is already saved creates no second row (ADR 0093).
+    const existing = findByName(scenarios, name);
+    if (existing) {
+      tick(existing.id);
+      showToast(t.scenarios.alreadySaved(name));
+      return;
+    }
+    const id = crypto.randomUUID();
+    const res = await run(() =>
+      addScenario({ id, name, overrides, createdAt: new Date() }),
+    );
+    if (!res.ok) return;
+    showToast(
+      tick(id)
+        ? t.scenarios.addedScenario(name)
+        : t.scenarios.addedCompareFull(name, MAX_COMPARE),
+    );
+  }
+
+  async function duplicate(s: Scenario) {
+    const id = crypto.randomUUID();
+    const res = await run(() => duplicateScenario(s.id, id));
+    if (!res.ok) return;
+    showToast(
+      tick(id)
+        ? t.scenarios.duplicatedScenario(s.name)
+        : t.scenarios.duplicatedCompareFull(s.name, MAX_COMPARE),
     );
   }
 
@@ -102,9 +129,12 @@ export function Scenarios() {
           scenario={editing === "new" ? null : editing}
           onCancel={() => setEditing(null)}
           onSubmit={async (s) => {
-            const res =
-              editing === "new" ? await addScenario(s) : await saveScenario(s);
-            if (res.ok) setEditing(null);
+            const isNew = editing === "new";
+            const res = isNew ? await addScenario(s) : await saveScenario(s);
+            if (!res.ok) return;
+            setEditing(null);
+            if (isNew && !tick(s.id))
+              showToast(t.scenarios.addedCompareFull(s.name, MAX_COMPARE));
           }}
         />
       )}
@@ -126,12 +156,7 @@ export function Scenarios() {
         onToggle={toggle}
         busy={busy}
         onEdit={setEditing}
-        onDuplicate={(s) =>
-          run(
-            () => duplicateScenario(s.id),
-            t.scenarios.duplicatedScenario(s.name),
-          )
-        }
+        onDuplicate={duplicate}
         onDelete={(s) =>
           run(() => removeScenario(s.id), t.scenarios.deletedScenario(s.name))
         }
