@@ -123,6 +123,14 @@ or import your own via CSV. Your data lives in
 `~/Library/Application Support/com.bures.realestate-tracker/` — see
 [Privacy & security](#privacy--security).
 
+## Current limits
+
+The app is a planning tool, and its figures are estimates. Returns are measured from the
+projection start, not from your purchase. It does not model income or capital-gains tax,
+selling costs, early repayments or a bank-account ledger. Amounts are in Kč only.
+[Model assumptions & limitations](docs/model-limitations.md) lists everything the model
+simplifies or leaves out.
+
 ## Build from source
 
 | Requirement              | Version                                                         |
@@ -232,15 +240,16 @@ Found a vulnerability? Please report it privately — see [SECURITY.md](SECURITY
 
 ## Documentation
 
-| Document                           | Contents                                                          |
-| ---------------------------------- | ----------------------------------------------------------------- |
-| [SPEC.md](SPEC.md)                 | Product and engine specification: domain model, formulas, screens |
-| [docs/adr/](docs/adr/README.md)    | Architecture decision records                                     |
-| [docs/roadmap.md](docs/roadmap.md) | Known limitations and planned work                                |
-| [docs/release.md](docs/release.md) | Building, signing, Gatekeeper, data locations                     |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, checks, commit style, decision process                     |
-| [CHANGELOG.md](CHANGELOG.md)       | User-visible changes per release                                  |
-| [CLAUDE.md](CLAUDE.md)             | Engineering rules, also used for AI-assisted work                 |
+| Document                                               | Contents                                                          |
+| ------------------------------------------------------ | ----------------------------------------------------------------- |
+| [SPEC.md](SPEC.md)                                     | Product and engine specification: domain model, formulas, screens |
+| [docs/adr/](docs/adr/README.md)                        | Architecture decision records                                     |
+| [docs/model-limitations.md](docs/model-limitations.md) | What the figures mean and what the model leaves out               |
+| [docs/roadmap.md](docs/roadmap.md)                     | Planned work and engineering backlog                              |
+| [docs/release.md](docs/release.md)                     | Building, signing, Gatekeeper, data locations                     |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                     | Setup, checks, commit style, decision process                     |
+| [CHANGELOG.md](CHANGELOG.md)                           | User-visible changes per release                                  |
+| [CLAUDE.md](CLAUDE.md)                                 | Engineering rules, also used for AI-assisted work                 |
 
 ## License
 
