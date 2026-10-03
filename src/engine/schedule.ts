@@ -349,15 +349,15 @@ function paymentTerms(
   };
 }
 
-/** A tranche landing after the maturity in force goes back to the contract term
- *  (ADR 0109), so it is not paid off in one shot. */
+/** A tranche landing on or after the maturity in force goes back to the contract term
+ *  (ADR 0109, ADR 0116), so it is not paid off in one shot. */
 function termsForTranche(
   terms: TermState,
   draw: Decimal,
   p: number,
   contractTerm: number,
 ): TermState {
-  return draw.greaterThan(ZERO) && p > terms.term
+  return draw.greaterThan(ZERO) && p >= terms.term
     ? { ...terms, term: Math.max(terms.term, contractTerm) }
     : terms;
 }
@@ -421,12 +421,16 @@ interface PaymentDone {
   terms: TermState;
 }
 
+/** An event outcome plus, for a prepayment, the fee entered with it: a handover that
+ *  pays the prepayment charges that fee (ADR 0116). Internal; stripped on output. */
+type Outcome = LoanEventOutcome & { enteredFee?: Decimal };
+
 interface Settled {
   balance: Decimal;
   prepaid: Decimal;
   fee: Decimal;
   terms: TermState;
-  outcomes: LoanEventOutcome[];
+  outcomes: Outcome[];
 }
 
 function prepaymentIssue(
@@ -446,7 +450,7 @@ function applyPrepayments(
   let { balance } = done;
   let [prepaid, fee] = [ZERO, ZERO];
   let effect: PrepaymentEffect | null = null;
-  const outcomes: LoanEventOutcome[] = [];
+  const outcomes: Outcome[] = [];
   for (const p of prepayments) {
     const applied = p.amount.lessThan(balance) ? p.amount : balance;
     const charged = applied.greaterThan(ZERO) ? (p.fee ?? ZERO) : ZERO;
@@ -467,6 +471,7 @@ function applyPrepayments(
       applied,
       fee: charged,
       issue: prepaymentIssue(p.amount, applied),
+      enteredFee: p.fee ?? ZERO,
     });
   }
   return { balance, prepaid, fee, effect, outcomes };
@@ -533,9 +538,9 @@ function applyRecasts(
   ev: LoanEvents,
   done: PaymentDone,
   recasts: LoanRecast[],
-): { terms: TermState; outcomes: LoanEventOutcome[] } {
+): { terms: TermState; outcomes: Outcome[] } {
   let { terms } = done;
-  const outcomes: LoanEventOutcome[] = [];
+  const outcomes: Outcome[] = [];
   for (const r of recasts) {
     const result = done.balance.greaterThan(ZERO)
       ? recastTerms(ev, { ...done, terms }, r)
@@ -609,7 +614,7 @@ interface Opening {
   balance: Decimal;
   currentInstalment: Decimal;
   terms: TermState;
-  outcomes: LoanEventOutcome[];
+  outcomes: Outcome[];
 }
 
 interface CatchUpState extends Opening {
@@ -742,7 +747,7 @@ interface DevScheduleState {
 function initDevScheduleState(
   block: DevelopmentLoan,
   assumptions: Assumptions,
-): { state: DevScheduleState; outcomes: LoanEventOutcome[] } {
+): { state: DevScheduleState; outcomes: Outcome[] } {
   const { baseDate } = assumptions;
   if (isAfter(block.startDate, baseDate)) {
     return {
@@ -768,7 +773,12 @@ function initDevScheduleState(
         block,
         assumptions,
       ),
-      prevInterestOnly: interestOnlyAt(block, baseDate),
+      // The last payment made, not baseDate: a completion between the two must still
+      // trigger the re-amortization at grid month 1 (D-24, ADR 0116).
+      prevInterestOnly: interestOnlyAt(
+        block,
+        edate(block.startDate, paymentOffset(block, baseDate)),
+      ),
       terms: sim.terms,
     },
     outcomes: sim.outcomes,
@@ -792,7 +802,7 @@ interface DevScheduleContext {
 type DevMonthStep = {
   row: AmortizationRow;
   state: DevScheduleState;
-  outcomes: LoanEventOutcome[];
+  outcomes: Outcome[];
 };
 
 /** A month before the first draw: nothing owed, or the first draw landing (it carries
@@ -921,7 +931,7 @@ function repaidOutcomes(
   p: number,
   m: number,
   state: { currentInstalment: Decimal; prevRate: Decimal; terms: TermState },
-): LoanEventOutcome[] {
+): Outcome[] {
   return settleEvents(
     ev,
     {
@@ -940,7 +950,7 @@ function repaidOutcomes(
 /** A block's rows and what its prepayments and recasts did (ADR 0109). */
 interface BlockSchedule {
   rows: AmortizationRow[];
-  outcomes: LoanEventOutcome[];
+  outcomes: Outcome[];
 }
 
 /**
@@ -958,6 +968,11 @@ function builtMonths(
   return Math.max(contract, reach);
 }
 
+/** A row that owes and pays nothing. */
+const idleRow = (r: AmortizationRow): boolean =>
+  !r.endBalance.greaterThan(ZERO) &&
+  r.interest.plus(r.principal).plus(r.prepaid).isZero();
+
 /** Drop the zero rows a longer build left past both the contract schedule and the
  *  loan's last payment (ADR 0109). */
 function trimRepaid(
@@ -965,30 +980,53 @@ function trimRepaid(
   contractMonths: number,
 ): AmortizationRow[] {
   let n = rows.length;
-  const idle = (r: AmortizationRow) =>
-    !r.endBalance.greaterThan(ZERO) &&
-    r.interest.plus(r.principal).plus(r.prepaid).isZero();
-  while (n > contractMonths && idle(at(rows, n - 1))) n--;
+  while (n > contractMonths && idleRow(at(rows, n - 1))) n--;
   return n === rows.length ? rows : rows.slice(0, n);
 }
 
-/** Run a month step over the built grid, collecting rows and event outcomes. */
+/**
+ * The grid month from which an idle row means the loan stays idle: past the contract
+ * schedule and every grid month a tranche (`drawMonths`) or an event (payment p
+ * settles in grid month p − offset) touches. The build stops there instead of running
+ * to a recast's 50-year reach; `trimRepaid` would drop the rest anyway.
+ */
+function quietFrom(
+  contractMonths: number,
+  events: LoanEvents,
+  offset: number,
+  drawMonths: Iterable<number>,
+): number {
+  const paymentsAt = [
+    ...events.prepaymentsAt.keys(),
+    ...events.recastsAt.keys(),
+  ];
+  return Math.max(
+    contractMonths,
+    ...paymentsAt.map((p) => p - offset),
+    ...drawMonths,
+  );
+}
+
+/** Run a month step over the built grid, collecting rows and event outcomes, until
+ *  `months` or the first idle row from month `quiet`. */
 function runGrid<S>(
   state: S,
   months: number,
+  quiet: number,
   step: (
     s: S,
     m: number,
-  ) => { row: AmortizationRow; state: S; outcomes: LoanEventOutcome[] },
+  ) => { row: AmortizationRow; state: S; outcomes: Outcome[] },
 ): BlockSchedule {
   const rows: AmortizationRow[] = [];
-  const outcomes: LoanEventOutcome[] = [];
+  const outcomes: Outcome[] = [];
   let s = state;
   for (let m = 1; m <= months; m++) {
     const next = step(s, m);
     rows.push(next.row);
     outcomes.push(...next.outcomes);
     s = next.state;
+    if (m >= quiet && idleRow(next.row)) break;
   }
   return { rows, outcomes };
 }
@@ -1023,11 +1061,18 @@ function buildDevSchedule(
     events: loanEvents(block, assumptions, (d) => isAfter(d, baseDate)),
   };
   const opening = initDevScheduleState(block, assumptions);
-  const grid = runGrid(opening.state, totalMonths, (s, m) =>
+  const contract = scheduleMonths(block, assumptions);
+  const quiet = quietFrom(
+    contract,
+    ctx.events,
+    startToBase,
+    ctx.drawsByMonth.keys(),
+  );
+  const grid = runGrid(opening.state, totalMonths, quiet, (s, m) =>
     devMonthStep(s, m, ctx),
   );
   return {
-    rows: trimRepaid(grid.rows, scheduleMonths(block, assumptions)),
+    rows: trimRepaid(grid.rows, contract),
     outcomes: [...opening.outcomes, ...grid.outcomes],
   };
 }
@@ -1084,7 +1129,7 @@ interface PlainScheduleContext {
 type PlainMonthStep = {
   row: AmortizationRow;
   state: PlainScheduleState;
-  outcomes: LoanEventOutcome[];
+  outcomes: Outcome[];
 };
 
 /** A future plain loan's month before it is drawn, or the month it draws in. */
@@ -1195,11 +1240,15 @@ function buildPlainSchedule(
     drawn: !isAfter(block.startDate, baseDate),
     terms: opening.terms,
   };
-  const grid = runGrid(state, builtMonths(block, assumptions, offset), (s, m) =>
-    plainMonthStep(s, m, ctx),
+  const contract = scheduleMonths(block, assumptions);
+  const grid = runGrid(
+    state,
+    builtMonths(block, assumptions, offset),
+    quietFrom(contract, ctx.events, offset, []),
+    (s, m) => plainMonthStep(s, m, ctx),
   );
   return {
-    rows: trimRepaid(grid.rows, scheduleMonths(block, assumptions)),
+    rows: trimRepaid(grid.rows, contract),
     outcomes: [...opening.outcomes, ...grid.outcomes],
   };
 }
@@ -1295,6 +1344,9 @@ export function openingDebt(
  * Instalment & rate in force at a baseDate-anchored schedule month — reads the
  * row at that month so a future as-of date past the fixation reset reflects the
  * re-amortized instalment and reset rate. Month ≤ 0 (baseDate) uses the first row.
+ * An amortizing month with a prepayment reports the next row's instalment when that
+ * row draws nothing at the same rate: the balance at that month has already had the
+ * prepayment taken off (ADR 0116).
  */
 export function instalmentAtMonth(
   schedule: AmortizationRow[],
@@ -1303,7 +1355,48 @@ export function instalmentAtMonth(
   if (schedule.length === 0) return { instalment: ZERO, ratePa: ZERO };
   const idx = Math.max(0, Math.min(month, schedule.length) - 1);
   const row = at(schedule, Math.max(0, idx));
-  return { instalment: row.instalment, ratePa: row.ratePa };
+  const next = schedule[idx + 1];
+  const after =
+    month >= 1 &&
+    row.prepaid.greaterThan(ZERO) &&
+    row.principal.greaterThan(ZERO) &&
+    next !== undefined &&
+    next.drawn.isZero() &&
+    next.ratePa.equals(row.ratePa);
+  return {
+    instalment: after ? next.instalment : row.instalment,
+    ratePa: row.ratePa,
+  };
+}
+
+/**
+ * Due date of a block's last payment in its own base schedule, after its prepayments
+ * and recasts: the maturity in force (ADR 0116). Events dated after `next`'s start are
+ * dropped, as in the chain. An instalment above the annuity can end it before the
+ * entered term.
+ */
+export function effectiveMaturity(
+  block: MortgageBlock,
+  assumptions: Assumptions,
+  next?: MortgageBlock,
+): IsoDate {
+  const b = next ? cutAt(block, next).block : block;
+  const { rows } = blockSchedule(b, assumptions);
+  return edate(
+    b.startDate,
+    paymentOffset(b, assumptions.baseDate) + lastPaymentMonth(rows),
+  );
+}
+
+/** Grid month of the schedule's last payment, 0 if it has none. A prepayment counts:
+ *  it can be the only cash of a month (ADR 0109). */
+export function lastPaymentMonth(rows: AmortizationRow[]): number {
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const r = rows[i];
+    if (r?.interest.plus(r.principal).plus(r.prepaid).greaterThan(ZERO))
+      return i + 1;
+  }
+  return 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -1380,38 +1473,29 @@ function spliceSuccessor(
   };
 }
 
-/** The fee entered with the prepayment an outcome reports. */
-function enteredFee(owner: MortgageBlock, o: LoanEventOutcome): Decimal {
-  const p = (owner.prepayments ?? []).find(
-    (x) =>
-      x.date.getTime() === o.date.getTime() && x.amount.equals(o.requested),
-  );
-  return p?.fee ?? ZERO;
-}
-
 /**
  * The owner's events in rows the handover drops (month d unless kept, and later):
  * each prepayment is paid at the handover, in order, out of the balance `owed`; a
  * recast no longer applies, as the successor replaces the loan (ADR 0109).
  */
 function handoverPrepayments(
-  outcomes: LoanEventOutcome[],
+  outcomes: Outcome[],
   owner: MortgageBlock,
   d: number,
   kept: boolean,
   owed: Decimal,
-): { applied: Decimal; fee: Decimal; outcomes: LoanEventOutcome[] } {
-  const dropped = (o: LoanEventOutcome) =>
+): { applied: Decimal; fee: Decimal; outcomes: Outcome[] } {
+  const dropped = (o: Outcome) =>
     o.blockId === owner.id &&
     o.month !== null &&
     (o.month > d || (o.month === d && !(kept && o.kind === "prepayment")));
   let [left, applied, fee] = [owed, ZERO, ZERO];
-  const out = outcomes.map((o): LoanEventOutcome => {
+  const out = outcomes.map((o): Outcome => {
     if (!dropped(o)) return o;
     if (o.kind === "recast")
       return { ...o, month: null, issue: "RECAST_REPLACED" };
     const paid = o.requested.lessThan(left) ? o.requested : left;
-    const charged = paid.greaterThan(ZERO) ? enteredFee(owner, o) : ZERO;
+    const charged = paid.greaterThan(ZERO) ? (o.enteredFee ?? ZERO) : ZERO;
     [left, applied, fee] = [
       left.minus(paid),
       applied.plus(paid),
@@ -1446,9 +1530,9 @@ function handoverBalances(
 /** An event a successor replaced before it applied (ADR 0109). */
 function replacedOutcome(
   block: MortgageBlock,
-  kind: LoanEventOutcome["kind"],
+  kind: Outcome["kind"],
   e: { date: IsoDate; amount?: Decimal },
-): LoanEventOutcome {
+): Outcome {
   return {
     blockId: block.id,
     kind,
@@ -1466,7 +1550,7 @@ function replacedOutcome(
 function cutAt(
   block: MortgageBlock,
   next: MortgageBlock,
-): { block: MortgageBlock; dropped: LoanEventOutcome[] } {
+): { block: MortgageBlock; dropped: Outcome[] } {
   const keep = (e: { date: Date }) => isOnOrBefore(e.date, next.startDate);
   const dropped = [
     ...(block.prepayments ?? [])
@@ -1499,7 +1583,7 @@ function cutAt(
  */
 function untilSuccessor(chain: MortgageBlock[]): {
   chain: MortgageBlock[];
-  dropped: LoanEventOutcome[];
+  dropped: Outcome[];
 } {
   const cut = chain.map((block, i) => {
     const next = chain[i + 1];
@@ -1548,8 +1632,15 @@ export function propertySchedule(
   return {
     rows: schedule.rows,
     refinances,
-    eventOutcomes: [...schedule.outcomes, ...dropped],
+    eventOutcomes: [...schedule.outcomes, ...dropped].map(publicOutcome),
   };
+}
+
+/** An outcome without the internal entered fee. */
+function publicOutcome(o: Outcome): LoanEventOutcome {
+  const { enteredFee, ...rest } = o;
+  void enteredFee;
+  return rest;
 }
 
 /**

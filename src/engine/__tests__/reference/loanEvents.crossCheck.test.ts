@@ -2,7 +2,8 @@
 // reference model, on the engine's calendar (J-03 a′, D-21). Every column, including
 // the prepaid principal, agrees to 1e-6 Kč, and principal is conserved.
 import { describe, it, expect } from "vitest";
-import { propertySchedule } from "../../schedule";
+import { openingBalance, propertySchedule } from "../../schedule";
+import { isoDate } from "../../dates";
 import { D } from "../../../lib/money";
 import { rate } from "../../brands";
 import type { Assumptions } from "../../types";
@@ -13,7 +14,15 @@ import {
   type RefOptions,
 } from "./mortgageReference";
 import { SEED_LOANS } from "./seedLoans";
-import { REF, TIGHT, both, maxDev, sum, toBlock } from "./eventHarness";
+import {
+  REF,
+  REF_MONTHS,
+  TIGHT,
+  both,
+  maxDev,
+  sum,
+  toBlock,
+} from "./eventHarness";
 
 const J = SEED_LOANS.javorova;
 const lower = (date: string, amount: number | string, fee?: number) => ({
@@ -214,6 +223,17 @@ const CASES: Case[] = [
     { ...devIo, recasts: [{ date: "2027-01-10", maturity: "2050-03-01" }] },
   ],
   [
+    "dev loan, tranche on the maturity payment (ADR 0116)",
+    {
+      ...devDrawsOnly,
+      draws: [
+        { date: "2026-11-15", amount: "1500000" },
+        { date: "2027-07-20", amount: "1000000" },
+      ],
+      recasts: [{ date: "2027-01-10", maturity: "2027-08-01" }],
+    },
+  ],
+  [
     "dev loan, instalment recast after completion",
     { ...devIo, recasts: [{ date: "2028-01-10", instalment: 25000 }] },
   ],
@@ -245,10 +265,12 @@ describe("ADR 0109: engine = reference with prepayments and recasts", () => {
     "%s: every row's balance identity holds",
     (_, loan, base, opts, extra) => {
       const { e } = both(loan, base, opts, extra);
-      let prev = e[0].endBalance
-        .plus(e[0].principal)
-        .plus(e[0].prepaid)
-        .minus(e[0].drawn);
+      // From the engine's own opening, not from row 1, so row 1 is checked too.
+      let prev = openingBalance(toBlock(loan), {
+        ...A0,
+        baseDate: isoDate(base ?? "2026-06-07"),
+        ...extra,
+      });
       for (const row of e) {
         const expected = prev
           .minus(row.principal)
@@ -280,7 +302,7 @@ describe("ADR 0109: refinance handovers with prepayments", () => {
     const r = referenceChain(loans, {
       ...REF,
       baseDate: "2026-06-07",
-      months: e.rows.length,
+      months: REF_MONTHS,
     });
     return { e, r };
   }
@@ -296,6 +318,19 @@ describe("ADR 0109: refinance handovers with prepayments", () => {
       "prepaid before a refinance that drops the payment",
       [
         { ...J, prepayments: [lower("2031-01-05", 500000, 3000)] },
+        refi("2031-01-10"),
+      ],
+    ],
+    [
+      "two same-day, same-amount prepayments with different fees (ADR 0116)",
+      [
+        {
+          ...J,
+          prepayments: [
+            lower("2031-01-05", 100000, 1000),
+            lower("2031-01-05", 100000, 3000),
+          ],
+        },
         refi("2031-01-10"),
       ],
     ],

@@ -220,6 +220,19 @@ describe("ADR 0109: recast input checks", () => {
       loan({ recasts: [toInstalment("2071-01-17", 9000)] }),
     ],
     [
+      // ADR 0116: the loan would end before it finishes drawing.
+      "a dev loan maturity on or before its completion",
+      "INVALID_RECAST_MATURITY",
+      dev({ recasts: [toMaturity("2027-01-10", "2027-08-01")] }),
+    ],
+    [
+      // The last tranche lands on the 2027-09-01 payment and would restore the
+      // contract term there, undoing the recast (ADR 0116 §2, §15).
+      "a dev loan maturity on the payment the last tranche lands on",
+      "INVALID_RECAST_MATURITY",
+      dev({ recasts: [toMaturity("2027-01-10", "2027-09-01")] }),
+    ],
+    [
       "an instalment recast before a dev loan's completion",
       "RECAST_INSTALMENT_BEFORE_COMPLETION",
       dev({ recasts: [toInstalment("2027-08-20", 15000)] }),
@@ -262,6 +275,13 @@ describe("ADR 0109: recast input checks", () => {
     ).toEqual([]);
   });
 
+  it("allows a dev loan maturity after the completion's payment", () => {
+    // Completion 2027-08-20 lands on the 2027-09-01 payment; the next is 2027-10-01.
+    expect(
+      codes(dev({ recasts: [toMaturity("2027-01-10", "2027-10-01")] })),
+    ).toEqual([]);
+  });
+
   it("allows an instalment recast after a dev loan's completion", () => {
     expect(
       codes(dev({ recasts: [toInstalment("2027-08-21", 15000)] })),
@@ -281,5 +301,49 @@ describe("ADR 0109: recast input checks", () => {
     expect(
       reported(loan({ recasts: [toInstalment("2031-01-17", "NaN")] })),
     ).toContainEqual({ code: "NON_FINITE_NUMBER", field: "recasts" });
+  });
+});
+
+describe("ADR 0116: event issues name the item", () => {
+  /** The javorova block's issues with their item index. */
+  const indexed = (block: MortgageBlock) =>
+    validateInputs(
+      {
+        ...portfolio,
+        mortgages: portfolio.mortgages.map((m) =>
+          m.propertyId === "javorova" ? block : m,
+        ),
+      },
+      assumptions,
+    )
+      .filter((e) => e.id === block.id)
+      .map(({ code, field, index }) => ({ code, field, index }));
+
+  it("indexes each prepayment as listed", () => {
+    const block = loan({
+      prepayments: [
+        prepay("2031-01-17", 1000),
+        prepay("2031-02-17", 0),
+        prepay("2020-01-01", 1000),
+      ],
+    });
+    expect(indexed(block)).toEqual([
+      { code: "NON_POSITIVE_PREPAYMENT", field: "prepayments", index: 1 },
+      { code: "EVENT_BEFORE_START", field: "prepayments", index: 2 },
+    ]);
+  });
+
+  it("indexes each recast as listed", () => {
+    const block = loan({
+      recasts: [
+        toMaturity("2031-01-17", "2045-01-17"),
+        toMaturity("2031-01-17", "2031-02-16"),
+        toInstalment("2032-01-17", 0),
+      ],
+    });
+    expect(indexed(block)).toEqual([
+      { code: "INVALID_RECAST_MATURITY", field: "recasts", index: 1 },
+      { code: "INVALID_RECAST", field: "recasts", index: 2 },
+    ]);
   });
 });

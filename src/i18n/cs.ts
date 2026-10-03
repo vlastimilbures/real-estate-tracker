@@ -108,7 +108,7 @@ export const cs: Dictionary = {
     INVALID_RECAST:
       "Změna splatnosti potřebuje buď nové datum splatnosti, nebo novou splátku vyšší než nula, ne obojí",
     INVALID_RECAST_MATURITY:
-      "Nová splatnost musí být po příští splátce a nejvýše 50 let od začátku úvěru",
+      "Nová splatnost musí být po příští splátce a u úvěru na výstavbu po dokončení, a nejvýše 50 let od začátku úvěru (nebo smluvní doba, je-li delší)",
     RECAST_INSTALMENT_BEFORE_COMPLETION:
       "Novou splátku lze nastavit až po skončení splácení jen úroků; zadejte místo toho nové datum splatnosti",
   },

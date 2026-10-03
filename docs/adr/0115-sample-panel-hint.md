@@ -1,4 +1,4 @@
-# 0116. Sample panel hint does not say how the sample arrived
+# 0115. Sample panel hint does not say how the sample arrived
 
 - Status: Accepted
 - Date: 2026-10-03

@@ -367,8 +367,8 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
         endBalance: balance,
       };
     }
-    // A tranche after the maturity in force goes back to the contract term.
-    if (draw.greaterThan(ZERO) && k > maturity)
+    // A tranche on or after the maturity in force goes back to the contract term (ADR 0116).
+    if (draw.greaterThan(ZERO) && k >= maturity)
       maturity = Math.max(maturity, term);
     let trigger = (prevIo && !io) || !ratePa.equals(prevRate) || reamortizeNext;
     if (draw.greaterThan(ZERO) && drawTiming === "landing") trigger = true;

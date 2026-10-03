@@ -176,7 +176,7 @@ describe("Settings → Backup sample panel (ADR 0094)", () => {
     ).toBeTruthy();
   });
 
-  it("hint does not claim the sample came on first launch (ADR 0116)", () => {
+  it("hint does not claim the sample came on first launch (ADR 0115)", () => {
     setSample(true, true);
     act(() => useUiStore.setState({ settingsTab: "backup" }));
     render(<Settings />);

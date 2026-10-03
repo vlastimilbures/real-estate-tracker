@@ -218,6 +218,18 @@ describe("mapper — prepayments and recasts", () => {
       { recasts: '[{"date":"2027-01-01","maturity":"soon"}]' },
       "recasts has an invalid maturity",
     ],
+    // ADR 0116: a misspelt key must not silently drop a value.
+    [
+      {
+        prepayments:
+          '[{"date":"2027-01-01","amount":"1","effect":"shortenTerm","fees":"500"}]',
+      },
+      "prepayments has an unknown field fees",
+    ],
+    [
+      { recasts: '[{"date":"2027-01-01","maturity":"2040-01-01","note":"x"}]' },
+      "recasts has an unknown field note",
+    ],
   ] as [Partial<MortgageBlockRow>, string][])(
     "rejects a corrupt row (%j)",
     (patch, message) => {
