@@ -267,3 +267,35 @@ describe("ADR 0116: the instalment after a month's prepayment", () => {
     );
   });
 });
+
+describe("DR-118: the snapshot fallback without a schedule ignores events", () => {
+  // Known debt (DR-118, ADR 0116): the app always passes schedules, so this path is
+  // dead; it reads the closed-form balance and skips prepayments and recasts. Pinned
+  // as today's output until the path is removed.
+  it("shows the closed-form debt despite a past prepayment", () => {
+    const javorova = portfolio.properties.find((p) => p.id === "javorova");
+    const block = portfolio.mortgages.find((m) => m.propertyId === "javorova");
+    if (!javorova || !block) throw new Error("seed missing");
+    const prepaid: Portfolio = {
+      ...portfolio,
+      mortgages: portfolio.mortgages.map((m) =>
+        m === block
+          ? {
+              ...m,
+              prepayments: [
+                {
+                  date: isoDate("2024-01-20"),
+                  amount: money(200000),
+                  effect: "lowerInstalment" as const,
+                },
+              ],
+            }
+          : m,
+      ),
+    };
+    const snap = propertySnapshot(javorova, prepaid, assumptions);
+    expect(snap.debt.toFixed(6)).toBe(
+      currentBalance(block, assumptions.baseDate).toFixed(6),
+    );
+  });
+});
