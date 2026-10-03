@@ -216,10 +216,13 @@ export const en = {
   // Chart cards: the toggle that shows a chart as a table (UX-075).
   charts: {
     table: "Table",
+    surfaceLabel: (title: string) =>
+      `${title} — chart. Use the Table button for the values.`,
   },
 
   shell: {
     offline: "Offline · local-first",
+    skipToContent: "Skip to content",
     backupHintNone: "No backup yet. Export now",
     backupHintOld: (days: number) =>
       `Last backup ${days} ${enPlural(days, ["day", "days"])} ago. Export now`,

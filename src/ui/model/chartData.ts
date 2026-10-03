@@ -1,7 +1,6 @@
 // Pure chart-data helpers (kept out of the component file so fast-refresh stays happy).
 // Engine Decimals → plain numbers happens HERE, the chart boundary.
 import { toNumber, type Decimal } from "../../lib/money";
-import { fmtCzkAxisTick, type CzkAxisUnit } from "../../lib/format";
 import { yearLabel, type SeriesRow } from "./projection";
 import type { Dictionary } from "../../i18n";
 import { at } from "../../lib/arrays";
@@ -111,6 +110,37 @@ export function tipValue(v: unknown): number | null {
   return v === null || v === undefined ? null : Number(v);
 }
 
+/** One tooltip row: a series' label, value, colour and dash (ADR 0114). */
+export interface TipItem {
+  label: string;
+  value: number | null; // null: not plotted (e.g. a year-0 flow) ⇒ "—"
+  color: string;
+  dash?: string | undefined;
+  kind: "czk" | "pct";
+}
+
+/** Tooltip rows for keyed series. Name and dash come from `series`: Recharts' payload
+ *  carries neither (ADR 0114). The colour comes from the payload. */
+export function seriesTipItems(
+  payload:
+    | readonly { dataKey?: unknown; value?: unknown; color?: unknown }[]
+    | undefined,
+  series: readonly { key: string; name: string; dash?: string | undefined }[],
+  kind: TipItem["kind"],
+  value: (v: unknown) => number | null = tipValue,
+): TipItem[] {
+  return (payload ?? []).map((p) => {
+    const s = series.find((x) => x.key === p.dataKey);
+    return {
+      label: s?.name ?? String(p.dataKey),
+      value: value(p.value),
+      color: String(p.color),
+      dash: s?.dash,
+      kind,
+    };
+  });
+}
+
 /** A chart-table cell's value (UX-075): a plotted number, or null for a gap. */
 export function tableValue(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
@@ -131,30 +161,4 @@ export function tableYear(
 /** Total line of a stacked-bar tooltip: the sum of the hovered bars' plotted values. */
 export function tooltipTotal(values: readonly number[]): number {
   return values.reduce((sum, v) => sum + v, 0);
-}
-
-/**
- * Y-axis pixel width so the longest tick never wraps: the longer of the largest positive
- * and the most negative tick (the minus sign counts). Recharts uses ~8 px per character
- * at the 12 px axis font; add 8 px padding.
- */
-export function czkAxisWidth(
-  unit: CzkAxisUnit,
-  rows: readonly Record<string, unknown>[],
-  keys: readonly string[],
-): number {
-  let max = 0;
-  let min = 0;
-  for (const row of rows)
-    for (const k of keys) {
-      const v = row[k];
-      if (typeof v !== "number" || !Number.isFinite(v)) continue;
-      if (v > max) max = v;
-      if (v < min) min = v;
-    }
-  const longest = Math.max(
-    fmtCzkAxisTick(max, unit).length,
-    fmtCzkAxisTick(min, unit).length,
-  );
-  return Math.max(44, longest * 8 + 8);
 }

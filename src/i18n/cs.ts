@@ -196,10 +196,13 @@ export const cs: Dictionary = {
 
   charts: {
     table: "Tabulka",
+    surfaceLabel: (title: string) =>
+      `${title} — graf. Hodnoty zobrazí tlačítko Tabulka.`,
   },
 
   shell: {
     offline: "Offline · lokální",
+    skipToContent: "Přeskočit na obsah",
     backupHintNone: "Zatím žádná záloha. Exportovat",
     backupHintOld: (days: number) =>
       `Poslední záloha před ${days} ${csPlural(days, ["dnem", "dny", "dny"])}. Exportovat`,

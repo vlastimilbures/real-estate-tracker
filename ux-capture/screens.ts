@@ -126,6 +126,41 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "08-dashboard-chart-tooltip",
+    desc: "Value chart focused from the keyboard: named surface, tooltip with series swatches, axe on the open tooltip (ADR 0114)",
+    route: "dashboard",
+    run: async (ux) => {
+      await boot(ux.page);
+      const surface = ux.page.getByRole("img", {
+        name: ux.t.charts.surfaceLabel(ux.t.dashboard.chartValueVsDebtVsEquity),
+      });
+      // Focus opens the tooltip at the first year; the arrow keys step through years.
+      await surface.focus();
+      for (let i = 0; i < 5; i++) await ux.page.keyboard.press("ArrowRight");
+      await expect(
+        ux.page.locator(".chart-tooltip .tt-label").first(),
+      ).toBeVisible();
+      // Tick labels are 11 px in --ink-soft. axe does not check SVG text, and a CSS rule
+      // that misses Recharts' markup fails silently (ADR 0114).
+      const ticks = await ux.page.evaluate(() => {
+        const probe = document.createElement("span");
+        probe.style.color = "var(--ink-soft)";
+        document.body.append(probe);
+        const inkSoft = getComputedStyle(probe).color;
+        probe.remove();
+        const styles = [
+          ...document.querySelectorAll(".recharts-cartesian-axis-tick-value"),
+        ].map((el) => {
+          const cs = getComputedStyle(el);
+          return `${cs.fontSize} ${cs.fill === inkSoft ? "ink-soft" : cs.fill}`;
+        });
+        return [...new Set(styles)];
+      });
+      expect(ticks).toEqual(["11px ink-soft"]);
+      await ux.capture("08-dashboard-chart-tooltip", { fullPage: false });
+    },
+  },
+  {
     id: "10-properties",
     desc: "Properties list",
     route: "properties",
@@ -700,25 +735,61 @@ export const SCREENS: Screen[] = [
     run: async (ux) => {
       await boot(ux.page);
       const order: string[] = [];
-      for (let i = 1; i <= 30; i++) {
+      for (let i = 1; i <= 40; i++) {
         await ux.page.keyboard.press("Tab");
         order.push(
           await ux.page.evaluate(() => {
             const el = document.activeElement as HTMLElement | null;
             if (!el || el === document.body) return "(body)";
-            const name =
+            // The accessible name, roughly: aria-label, then aria-labelledby, then the
+            // text. An SVG has no innerText, so an unnamed chart records "" (ADR 0114).
+            const labelledBy = el
+              .getAttribute("aria-labelledby")
+              ?.split(" ")
+              .map((id) => document.getElementById(id)?.textContent ?? "")
+              .join(" ");
+            const name = (
               el.getAttribute("aria-label") ??
-              el.innerText?.trim().slice(0, 40) ??
-              "";
+              labelledBy ??
+              el.innerText ??
+              ""
+            )
+              .trim()
+              .slice(0, 60);
+            const role = el.getAttribute("role");
             // getAttribute, not className: an SVG's className is an SVGAnimatedString.
             const cls = el.getAttribute("class")?.split(" ")[0];
-            return `${el.tagName.toLowerCase()}${cls ? "." + cls : ""} "${name}"`;
+            return `${el.tagName.toLowerCase()}${cls ? "." + cls : ""}${role ? `[role=${role}]` : ""} "${name}"`;
           }),
         );
         if ([1, 8, 12, 20].includes(i))
           await ux.shot(`90-keyboard-focus-tab${i}`, { fullPage: false });
       }
       ux.writeJson("90-keyboard-focus-order.json", order);
+      // ADR 0114: the first stop is the skip link, and every chart surface has a name.
+      expect(order[0]).toBe(`button.skip-link "${ux.t.shell.skipToContent}"`);
+      // Every chart surface on the page, not only those within the Tab walk.
+      const surfaces = await ux.page
+        .locator("svg.recharts-surface")
+        .evaluateAll((els) =>
+          els.map((el) => [
+            el.getAttribute("role"),
+            el.getAttribute("aria-label") ?? "",
+          ]),
+        );
+      expect(surfaces.length).toBeGreaterThan(0);
+      expect(
+        surfaces.filter(([role, name]) => role !== "img" || name === ""),
+      ).toEqual([]);
+      // Enter on the skip link moves focus into the page content.
+      await boot(ux.page);
+      await ux.page.keyboard.press("Tab");
+      await ux.page.keyboard.press("Enter");
+      const skipTarget = await ux.page.evaluate(
+        () => document.activeElement?.id,
+      );
+      expect(skipTarget).toBe("main");
+      ux.writeJson("90-keyboard-skip-link.json", { skipTarget });
       // Properties list: can a row (the drill-in target) be reached by keyboard? A
       // button outside the actions column counts (UX-022 makes the name a button).
       await nav(ux, "properties");

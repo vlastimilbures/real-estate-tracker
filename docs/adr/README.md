@@ -138,6 +138,7 @@ Other IDs seen in code comments:
 | [0111](0111-table-context-line.md)                | Table context line and visible export label                                            | #21                                    |
 | [0112](0112-load-sample-on-demand.md)             | Load the sample portfolio on demand                                                    | #74                                    |
 | [0113](0113-csv-boolean-message.md)               | CSV boolean error lists every accepted value                                           | #61                                    |
+| [0114](0114-a11y-skip-link-charts.md)             | Accessibility round: skip link, named charts, legible axes                             | #24, #25                               |
 | [0115](0115-sample-panel-hint.md)                 | Sample panel hint does not say how the sample arrived                                  | #97                                    |
 | [0116](0116-prepayments-ui-and-review-fixes.md)   | Prepayments: form, outputs and review fixes                                            | #32                                    |
 

@@ -19,6 +19,7 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { SegmentedToggle, ErrorBanner } from "./primitives";
 import { BrandMark } from "./BrandMark";
 import { BackupHint } from "./BackupHint";
+import { SkipLink } from "./SkipLink";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { fmtDate } from "../../lib/format";
 import { APP_NAME, LANGUAGES, type Dictionary } from "../../i18n";
@@ -205,6 +206,7 @@ export function AppShell({
 
   return (
     <div className={collapsed ? "shell collapsed" : "shell"}>
+      <SkipLink />
       <aside className="sidebar">
         <div className="sidebar-head">
           <div className="brand">
@@ -295,7 +297,7 @@ export function AppShell({
           </div>
           {subnav && <div className="topbar-subnav">{subnav}</div>}
         </header>
-        <main className="page">
+        <main className="page" id="main" tabIndex={-1}>
           {stale && (
             <ErrorBanner
               message={t.common.staleData}
