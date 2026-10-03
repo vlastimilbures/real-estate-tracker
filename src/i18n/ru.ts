@@ -791,6 +791,12 @@ export const ru: Dictionary = {
     feedbackText: "github.com/vlastimilbures/real-estate-tracker/issues",
     sourceLabel: "Исходный код",
     sourceText: "github.com/vlastimilbures/real-estate-tracker",
+    limitsLabel: "Ограничения модели",
+    limitsText:
+      "github.com/vlastimilbures/real-estate-tracker/blob/main/docs/model-limitations.md",
+    dataSafetyLabel: "Безопасность данных",
+    dataSafetyText:
+      "github.com/vlastimilbures/real-estate-tracker/blob/main/docs/data-safety.md",
 
     builtWithTitle: "Создано на",
     builtWithBody: "Tauri 2 · React · TypeScript · SQLite · decimal.js",
@@ -871,6 +877,9 @@ export const ru: Dictionary = {
     developmentInterestOnly: "только под проценты",
     developmentProsePost:
       " (без тела), и стоимость растёт с долей выбранного на данный момент кредита. Когда приходит транш или строительство завершается, кредит переамортизируется в обычный график погашения.",
+    limitsTitle: "Ограничения и безопасность данных",
+    limitsProse:
+      "Эти цифры — плановые оценки, а не предложение банка и не гарантированный результат. Два документа в репозитории исходного кода объясняют, что модель упрощает или не учитывает, и как сделать резервную копию данных и восстановить их после неудачного обновления.",
     glossaryTitle: "Глоссарий",
     snapshotDefs: {
       value: {

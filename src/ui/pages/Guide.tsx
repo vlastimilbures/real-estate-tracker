@@ -196,6 +196,16 @@ export function Guide() {
           ))}
         </div>
       </Panel>
+
+      <Panel title={g.limitsTitle}>
+        <p className="guide-prose">{g.limitsProse}</p>
+        <dl className="guide-docs">
+          <dt>{t.about.limitsLabel}</dt>
+          <dd>{t.about.limitsText}</dd>
+          <dt>{t.about.dataSafetyLabel}</dt>
+          <dd>{t.about.dataSafetyText}</dd>
+        </dl>
+      </Panel>
     </AppShell>
   );
 }

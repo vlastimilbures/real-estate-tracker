@@ -97,3 +97,31 @@ describe("About precision note (ADR 0091)", () => {
     expect(ru.about.precisionNote).not.toMatch(/до кроны/);
   });
 });
+
+// ADR 0092 (#28): the Guide ends by pointing to the limitations and data-safety documents,
+// with the same plain-text addresses as About, in every language.
+const LIMITS_DOC =
+  "github.com/vlastimilbures/real-estate-tracker/blob/main/docs/model-limitations.md";
+const DATA_SAFETY_DOC =
+  "github.com/vlastimilbures/real-estate-tracker/blob/main/docs/data-safety.md";
+
+describe("Guide limits and data-safety pointer (ADR 0092)", () => {
+  it("shows the planning-estimate note and both document addresses", () => {
+    const { container } = render(<Guide />);
+    const text = container.textContent ?? "";
+    expect(text).toContain("Limits and data safety");
+    expect(text).toContain("planning estimates, not lender quotes");
+    expect(text).toContain(LIMITS_DOC);
+    expect(text).toContain(DATA_SAFETY_DOC);
+    expect(container.querySelectorAll("a")).toHaveLength(0);
+  });
+
+  it("uses the same addresses in every language", () => {
+    for (const d of Object.values(DICTS)) {
+      expect(d.about.limitsText).toBe(LIMITS_DOC);
+      expect(d.about.dataSafetyText).toBe(DATA_SAFETY_DOC);
+      expect(d.guide.limitsTitle).toBeTruthy();
+      expect(d.guide.limitsProse).toBeTruthy();
+    }
+  });
+});
