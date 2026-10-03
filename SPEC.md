@@ -268,7 +268,10 @@ the next payment.
 **Prepayments and recasts** (ADR 0109), on plain and development loans:
 
 - Each event follows the **first payment due on or after its date**, counted on the loan's
-  own due dates, so moving baseDate never moves it. Within one payment period the order is:
+  own due dates, so moving baseDate does not move it. The one exception (ADR 0116) is an
+  event dated after the last payment due on or before baseDate and on or before baseDate
+  itself: it settles right after that payment, so its placement depends on baseDate by less
+  than one period. Within one payment period the order is:
   scheduled payment, then prepayments (date order), then recast. A prepayment dated
   between two due dates waits for the next one (interest is overstated by under a month).
 - The schedule carries the loan's **maturity in force**: the contract term until an event
@@ -285,7 +288,7 @@ the next payment.
   at the later of loan start + 50 years and the contract term; an instalment past the cap
   re-amortizes to the cap. An instalment that does not cover the next interest is ignored.
   An instalment recast before a development loan's completion is rejected.
-- A tranche landing after the maturity in force restores the contract term.
+- A tranche landing on or after the maturity in force's payment restores the contract term.
 - Events dated on/before baseDate are **replayed** into the opening balance (the loan is
   simulated on its own due dates) and are not in the projection's cash flows.
 - An event that meets a smaller balance (or a repaid loan) is clamped and **reported** as an

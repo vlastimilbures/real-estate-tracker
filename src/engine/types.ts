@@ -356,7 +356,8 @@ export interface PortfolioKPIs {
   leveredIrrNominalReason: IrrNoRateReason | null;
   /** Why `leveredIrrReal` is null; null when it has a value. */
   leveredIrrRealReason: IrrNoRateReason | null;
-  totalPrincipalRepaid: Decimal; // invariant: == initial total debt
+  /** Σ scheduled principal + Σ prepaid over the horizon; == initial debt + draws when loans retire (ADR 0109). */
+  totalPrincipalRepaid: Decimal;
   /** Σ projection interest, years 1..N (ADR 0103). */
   totalInterest: Decimal;
   /** Σ interest_t / CPI_t, years 1..N, like `cumulativeNetCashFlowReal` (ADR 0103). */

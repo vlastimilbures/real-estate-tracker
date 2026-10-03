@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #32 (pre-release review 2026-10, F3); design `docs/design/czech-mortgage-extensions.md` §1 (D-04)
+- Amended by: ADR 0116
 
 ## Context
 
@@ -34,7 +35,10 @@ interest saved and the clamp warnings come in #32b, and both ship in the same re
    - A full renegotiation (new rate, new lender, cash-out) stays a successor block.
 3. **Placement.** Every event maps to the loan's own payment number. That is the first payment
    due on or after the event date, and the event applies **after** that payment. The same
-   rule holds before and after baseDate, so moving baseDate never changes a result.
+   rule holds before and after baseDate, with one exception (ADR 0116):
+   - An event dated after the last payment due on or before baseDate, and on or before
+     baseDate itself, is history. It settles right after that last payment, so its
+     placement depends on baseDate by less than one payment period.
    - Within one payment period the order is: scheduled payment, then prepayments (in date
      order), then recast.
    - A re-amortization takes effect from the next payment.
@@ -72,8 +76,8 @@ interest saved and the clamp warnings come in #32b, and both ship in the same re
    - **Cap:** the effective maturity is at most the later of loan start + 50 years
      (`MAX_LOAN_TERM_YEARS`) and the contract term. An instalment that would go beyond the cap
      becomes a maturity-form recast at the cap and is reported.
-7. **Development tranches.** If a tranche lands after the effective maturity, the maturity
-   goes back to the contract term. A recast maturity otherwise persists.
+7. **Development tranches.** If a tranche lands on or after the effective maturity's payment,
+   the maturity goes back to the contract term (ADR 0116). A recast maturity otherwise persists.
 8. **Before the projection start.** Events dated on or before baseDate are history. They are
    replayed into the opening balance and are not in the projection cash flows. With no such
    event, the plain loan's closed-form opening is unchanged (parity).
@@ -82,12 +86,12 @@ interest saved and the clamp warnings come in #32b, and both ship in the same re
    - A prepayment equal to the balance pays off the loan; later rows are zero.
    - A prepayment after payoff applies nothing and charges no fee.
    - Events after a successor block's start are dropped and reported.
-   - The form in #32b rejects these against the base case.
+   - The form shows these as warnings and never rejects a save (ADR 0116).
 
    Static input errors raise, as for draws (D-17):
    - an amount of zero or less, a negative fee, or an invalid date;
    - a date on or before the loan start;
-   - a date after the loan's last possible payment;
+   - a date on or after the loan's last possible payment;
    - a recast with both or neither of maturity and instalment;
    - a recast maturity before the next payment or beyond the cap.
 
@@ -99,13 +103,15 @@ interest saved and the clamp warnings come in #32b, and both ship in the same re
     - Net cash flow, debt service and DSCR stay operating-only.
     - Cumulative cash flow and the IRR cash flows subtract prepaid + fee, as they do for
       acquisitions.
-    - Principal repaid includes prepaid, so the key invariant becomes
+    - The row and projection `principal` stay scheduled principal only. The KPI
+      `totalPrincipalRepaid` adds prepaid, so the key invariant becomes
       Σ principal + Σ prepaid = starting debt + draws, for loans that retire within the
       horizon.
 12. **Persistence.** Migration v9 adds the nullable JSON columns `mortgage_blocks.prepayments`
     and `mortgage_blocks.recasts`, each with a `json_valid` check.
     - Older backups restore with no events.
-    - A form edit keeps the stored events (DR-129).
+    - A form edit replaces the stored events with the form's rows (ADR 0116; before, it
+      kept them, DR-129).
     - A CSV re-import keeps them too.
 
 ## Consequences
@@ -114,8 +120,5 @@ New row fields (`prepaid`, `prepaymentFee`) and projection fields (`prepaid`,
 `prepaymentFees`). They join the golden master's `ADDED_FIELDS`. No parity target and no
 golden hash changes, because the seed has no events.
 
-Known gaps for #32b:
-
-- Rate-shock reach and the maturity-mismatch warning still read the contract maturity.
-- The snapshot fallback without a schedule ignores events.
-- Clamp outcomes are computed but not shown yet.
+ADR 0116 closes the gaps that #32b covered: rate-shock reach, the clamp warnings, and the
+snapshot fallback (pinned under DR-118).
