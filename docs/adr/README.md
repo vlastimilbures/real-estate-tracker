@@ -116,6 +116,7 @@ Other IDs seen in code comments:
 | [0089](0089-compare-owner-loss.md)                | Scenario compare shows the owner's loss                                                |                                        |
 | [0090](0090-scenario-wording.md)                  | Scenarios wording: shock units, projection start, lens                                 |                                        |
 | [0091](0091-guide-about-wording.md)               | Guide and About wording matches the model                                              |                                        |
+| [0092](0092-in-app-docs-pointer.md)               | Guide and About point to the limitations and data-safety docs                          |                                        |
 
 ### Judgment calls and open questions
 
