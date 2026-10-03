@@ -1502,6 +1502,25 @@ table.chart-table tbody th.sticky-col {
 }
 
 /* --- Scenarios -------------------------------------------------------------- */
+/* Scenario form groups: levels, shocks, crash (ADR 0102). */
+.form-group {
+  min-width: 0;
+  margin: 0;
+  padding: var(--s3) 0 0;
+  border: 0;
+  border-top: 1px solid var(--hairline);
+}
+.form-group > legend {
+  padding: 0 var(--s2) 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.form-group-help {
+  margin: 0 0 var(--s3);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
 .preset-bar {
   display: flex;
   flex-wrap: wrap;

@@ -450,14 +450,18 @@ data (properties/mortgages/etc.) is shared; only assumptions differ. The engine'
 
 **Override types supported:**
 
-- **Level overrides**: appreciation, rent indexation, inflation, vacancy, reset rate, and
-  optional per-property growth overrides.
+- **Level overrides**: appreciation, rent indexation, inflation, vacancy, reset rate. A
+  property's own appreciation / rent-indexation override (Properties form) takes precedence
+  over a scenario's level, so the scenario does not change that property's rate (ADR 0102).
 - **Temporary inflation shock** (`inflationShock`): raises inflation by `deltaPa` for
   `durationYears` years from baseDate, then reverts.
 - **Temporary rate shock** (`rateShock`): raises the reset rate by `deltaPa` for
   `durationYears` years starting at **each loan's own fixation end** (ADR 0028).
 - **Permanent value shock** (`valueShock`): haircut property values by `pct` starting from
   year `atYear`; appreciation resumes off the lower base thereafter.
+
+The scenario form groups these as **Permanent levels**, **Temporary shocks** and **One-off
+price crash**, each with a legend and one line of help (ADR 0102).
 
 **Workflow:**
 

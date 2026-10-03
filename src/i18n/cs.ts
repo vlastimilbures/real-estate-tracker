@@ -598,6 +598,16 @@ export const cs: Dictionary = {
     rateShockHelp:
       "Začíná koncem fixace každého úvěru, pak odezní. Přičítá procentní body: +2 p. b. změní 4,5 % na 6,5 %.",
     permanentCorrection: "trvalá korekce",
+    // Skupiny formuláře (ADR 0102)
+    groupLevels: "Trvalé úrovně",
+    groupLevelsHelp:
+      "Nahradí hodnotu Základu pro celou projekci. Nemovitost s vlastní mírou růstu si ji ponechá.",
+    groupShocks: "Dočasné šoky",
+    groupShocksHelp:
+      "Přičtou se k úrovni na zvolený počet let, pak se vrátí k trendu.",
+    groupCrash: "Jednorázový propad cen",
+    groupCrashHelp:
+      "Jednou sníží hodnotu všech nemovitostí ve zvoleném roce; růst pak pokračuje z nižší hodnoty.",
     defaultYears: (n) => `výchozí ${n}`,
     zeroIsStart: (date) => `0 = začátek projekce (${date})`,
     none: "žádný",

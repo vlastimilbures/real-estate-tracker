@@ -1,5 +1,6 @@
 // Field groups pulled out of ScenarioForm.tsx to shrink its render tree. Pure
 // presentation — no logic beyond what ScenarioForm.tsx already computed.
+import { useId, type ReactNode } from "react";
 import { Field, TextInput } from "../components/forms";
 import { fmtPct } from "../../lib/format";
 import {
@@ -9,6 +10,31 @@ import {
 } from "../model/scenarioForm";
 import type { Assumptions } from "../../engine";
 import { useT } from "../hooks/useT";
+
+/**
+ * One group of the scenario form (ADR 0102): a fieldset named by its legend and
+ * described by one line of help, with its fields in the usual two-column grid.
+ */
+export function FieldGroup({
+  legend,
+  help,
+  children,
+}: {
+  legend: string;
+  help: string;
+  children: ReactNode;
+}) {
+  const helpId = useId();
+  return (
+    <fieldset className="form-group" aria-describedby={helpId}>
+      <legend>{legend}</legend>
+      <p id={helpId} className="form-group-help">
+        {help}
+      </p>
+      <div className="form-grid">{children}</div>
+    </fieldset>
+  );
+}
 
 /** The five permanent level-override fields (appreciation, rent indexation, etc). */
 export function LevelOverrideFields({

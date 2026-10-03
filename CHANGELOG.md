@@ -51,6 +51,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The scenario form groups its fields under **Permanent levels**, **Temporary shocks** and
+  **One-off price crash**, each with one line of help, so an absolute level (reset rate 6 %)
+  no longer sits next to a temporary delta (+2 pp) without a visible difference. The levels
+  help says a property with its own growth rate keeps it; SPEC no longer claims scenarios
+  have per-property growth overrides. No computed figure changes (ADR 0102, #52).
+
 - Scenarios keep the compare selection, the Base toggle and the price-crash timing when you
   leave the page and come back, for as long as the app is open. Deleting a ticked scenario
   removes it from the compare (ADR 0101, #50).

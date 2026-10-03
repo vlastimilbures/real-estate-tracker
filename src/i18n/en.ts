@@ -632,6 +632,16 @@ export const en = {
     rateShockHelp:
       "Starts at each loan's fixation end, then reverts. Adds percentage points: +2 pp turns 4.5 % into 6.5 %.",
     permanentCorrection: "permanent correction",
+    // Form groups (ADR 0102)
+    groupLevels: "Permanent levels",
+    groupLevelsHelp:
+      "Replace the Base value for the whole projection. A property with its own growth rate keeps it.",
+    groupShocks: "Temporary shocks",
+    groupShocksHelp:
+      "Added on top of the level for a number of years, then back to trend.",
+    groupCrash: "One-off price crash",
+    groupCrashHelp:
+      "Cuts all property values once, at the chosen year; growth resumes from the lower value.",
     defaultYears: (n: number) => `default ${n}`,
     zeroIsStart: (date: string) => `0 = projection start (${date})`,
     none: "none",
