@@ -117,6 +117,7 @@ Other IDs seen in code comments:
 | [0090](0090-scenario-wording.md)                  | Scenarios wording: shock units, projection start, lens                                 |                                        |
 | [0091](0091-guide-about-wording.md)               | Guide and About wording matches the model                                              |                                        |
 | [0092](0092-in-app-docs-pointer.md)               | Guide and About point to the limitations and data-safety docs                          |                                        |
+| [0093](0093-scenario-add-flow.md)                 | Scenario add flow: no duplicate presets, new scenarios join the compare                |                                        |
 
 ### Judgment calls and open questions
 

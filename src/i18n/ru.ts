@@ -502,6 +502,11 @@ export const ru: Dictionary = {
     crashAt: (label) => ` @ ${label}`,
     addedScenario: (name) => `Добавлено «${name}»`,
     duplicatedScenario: (name) => `Дублировано «${name}»`,
+    alreadySaved: (name) => `Уже сохранено: «${name}»`,
+    addedCompareFull: (name, max) =>
+      `Добавлено «${name}». В сравнении уже ${max} сценария — снимите отметку с одного, чтобы показать его.`,
+    duplicatedCompareFull: (name, max) =>
+      `Дублировано «${name}». В сравнении уже ${max} сценария — снимите отметку с одного, чтобы показать копию.`,
     confirmDelete: (name: string) =>
       `Удалить сценарий «${name}»? Это действие нельзя отменить.`,
     deletedScenario: (name) => `Удалено «${name}»`,

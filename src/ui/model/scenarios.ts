@@ -46,3 +46,24 @@ export function summarize(s: Scenario, t: Dictionary): string {
     parts.push(sc.sumValueShock(fmtPct(o.valueShock.pct), o.valueShock.atYear));
   return parts.length ? parts.join(" · ") : sc.noOverrides;
 }
+
+/** The saved scenario with exactly this name, if any: a preset that is already saved
+ *  creates no second row (ADR 0093). */
+export function findByName(
+  scenarios: Scenario[],
+  name: string,
+): Scenario | undefined {
+  return scenarios.find((s) => s.name === name);
+}
+
+/** Tick `id` for compare while fewer than `max` are ticked; at the limit the selection
+ *  stays as it is and `ticked` is false (ADR 0093). */
+export function tickForCompare(
+  ids: string[],
+  id: string,
+  max: number,
+): { ids: string[]; ticked: boolean } {
+  if (ids.includes(id)) return { ids, ticked: true };
+  if (ids.length >= max) return { ids, ticked: false };
+  return { ids: [...ids, id], ticked: true };
+}

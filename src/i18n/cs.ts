@@ -498,6 +498,11 @@ export const cs: Dictionary = {
     crashAt: (label) => ` @ ${label}`,
     addedScenario: (name) => `Přidáno „${name}“`,
     duplicatedScenario: (name) => `Zduplikováno „${name}“`,
+    alreadySaved: (name) => `Už uloženo: „${name}“`,
+    addedCompareFull: (name, max) =>
+      `Přidáno „${name}“. Porovnání už ukazuje ${max} scénáře, odškrtněte jeden, aby se zobrazil.`,
+    duplicatedCompareFull: (name, max) =>
+      `Zduplikováno „${name}“. Porovnání už ukazuje ${max} scénáře, odškrtněte jeden, aby se zobrazila kopie.`,
     confirmDelete: (name: string) =>
       `Smazat scénář „${name}“? Tuto akci nelze vrátit.`,
     deletedScenario: (name) => `Smazáno „${name}“`,
