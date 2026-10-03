@@ -127,6 +127,28 @@ export const updateLease = (sql: Sql, l: Lease) =>
   updateRow(sql, "leases", leaseToRow(l));
 export const updateMortgageBlock = (sql: Sql, m: MortgageBlock) =>
   updateRow(sql, "mortgage_blocks", mortgageBlockToRow(m));
+
+/** A new valuation plus the end date of the open-ended one it succeeds, in one
+ *  transaction (ADR 0099). */
+export const insertValuationClosingPrevious = (
+  sql: Sql,
+  v: Valuation,
+  closedPrev: Valuation,
+) =>
+  sql.transaction([
+    insertStatement("valuations", valuationToRow(v)),
+    updateStatement("valuations", valuationToRow(closedPrev)),
+  ]);
+/** A new lease plus the end date of the open-ended one it succeeds (ADR 0099). */
+export const insertLeaseClosingPrevious = (
+  sql: Sql,
+  l: Lease,
+  closedPrev: Lease,
+) =>
+  sql.transaction([
+    insertStatement("leases", leaseToRow(l)),
+    updateStatement("leases", leaseToRow(closedPrev)),
+  ]);
 /** Save a property's holding costs: one row per property (UNIQUE property_id, v7).
  *  Inserts the row when the property has none, so an edit is never silently lost. */
 export async function updateHoldingCost(

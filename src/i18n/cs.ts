@@ -369,6 +369,14 @@ export const cs: Dictionary = {
     auto: "auto",
     draws: (n) => `${n} čerpání`,
     ioUntil: (d) => `IO→${d}`,
+    closePrevValuationTitle: "Ukončit předchozí ocenění?",
+    closePrevValuationBody: (from, end) =>
+      `Ocenění od ${from} nemá datum konce. Ukončit ho ${end}, den před začátkem nového?`,
+    closePrevLeaseTitle: "Ukončit předchozí nájem?",
+    closePrevLeaseBody: (from, end) =>
+      `Nájem od ${from} nemá datum konce. Ukončit ho ${end}, den před začátkem nového?`,
+    closePrevConfirm: "Ukončit předchozí",
+    closePrevKeep: "Ponechat",
     instalmentHint: (years, amount) =>
       `Anuitní splátka na ${years} ≈ ${amount}`,
     instalmentHintDev: (base) =>

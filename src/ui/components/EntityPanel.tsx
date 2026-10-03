@@ -7,8 +7,21 @@ import { EntityTable, DeleteConfirmRow } from "./EntityPanelParts";
 import type { FieldSpec, ParsedValues } from "../model/formParse";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
+import { Modal } from "./Modal";
 
 const newId = () => crypto.randomUUID();
+
+/** A question asked before a new row is added (ADR 0099). `onConfirm` writes the row
+ *  the confirmed way; "keep" writes it with the panel's plain `onAdd`. */
+export interface AddPrompt<T> {
+  title: string;
+  message: ReactNode;
+  confirmLabel: string;
+  keepLabel: string;
+  onConfirm: (r: T) => Promise<MutationResult>;
+}
+
+type AddChoice = "confirm" | "keep" | "cancel";
 
 /** Generic add/edit/delete panel for a property's child rows. `build` gets the form
  *  values typed by the inline `specs`. */
@@ -32,6 +45,7 @@ export function EntityPanel<
   validate,
   formHeader,
   hiddenFields,
+  confirmAdd,
 }: {
   title: string;
   hint?: string;
@@ -57,6 +71,9 @@ export function EntityPanel<
     values: ParsedValues<S>,
     draft: Record<string, string>,
   ) => Record<string, string>;
+  /** Asked before an add (not an edit) when it returns a prompt. Closing the dialog
+   *  adds nothing and keeps the form open. */
+  confirmAdd?: (r: T) => AddPrompt<T> | null;
 }) {
   const tr = useT();
   const [mode, setMode] = useState<
@@ -67,6 +84,11 @@ export function EntityPanel<
   >({
     t: "idle",
   });
+
+  const [asking, setAsking] = useState<{
+    prompt: AddPrompt<T>;
+    answer: (c: AddChoice) => void;
+  } | null>(null);
 
   const editingRow =
     mode.t === "edit" ? (rows.find((r) => r.id === mode.id) ?? null) : null;
@@ -148,8 +170,21 @@ export function EntityPanel<
             onSubmit={async (values) => {
               const id = mode.t === "edit" ? mode.id : newId();
               const entity = build(values, id);
+              const prompt = mode.t === "add" ? confirmAdd?.(entity) : null;
+              let choice: AddChoice = "keep";
+              if (prompt) {
+                choice = await new Promise<AddChoice>((answer) =>
+                  setAsking({ prompt, answer }),
+                );
+                setAsking(null);
+                if (choice === "cancel") return undefined;
+              }
               const result =
-                mode.t === "edit" ? await onSave(entity) : await onAdd(entity);
+                mode.t === "edit"
+                  ? await onSave(entity)
+                  : prompt && choice === "confirm"
+                    ? await prompt.onConfirm(entity)
+                    : await onAdd(entity);
               // Keep the form open (preserving input) on failure, with the failure
               // shown in the form. Close only when the write actually landed.
               if (!result.ok) return result.error;
@@ -158,6 +193,30 @@ export function EntityPanel<
             }}
           />
         </div>
+      )}
+
+      {asking && (
+        <Modal
+          titleId="add-prompt-title"
+          title={asking.prompt.title}
+          onClose={() => asking.answer("cancel")}
+          closeLabel={tr.common.close}
+          footer={
+            <>
+              <Button onClick={() => asking.answer("keep")}>
+                {asking.prompt.keepLabel}
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => asking.answer("confirm")}
+              >
+                {asking.prompt.confirmLabel}
+              </Button>
+            </>
+          }
+        >
+          <p>{asking.prompt.message}</p>
+        </Modal>
       )}
     </Panel>
   );

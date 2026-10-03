@@ -373,6 +373,14 @@ export const ru: Dictionary = {
     auto: "авто",
     draws: (n) => `${n} ${ruPlural(n, ["транш", "транша", "траншей"])}`,
     ioUntil: (d) => `% до ${d}`,
+    closePrevValuationTitle: "Завершить предыдущую оценку?",
+    closePrevValuationBody: (from, end) =>
+      `У оценки от ${from} нет даты окончания. Завершить её ${end}, за день до начала новой?`,
+    closePrevLeaseTitle: "Завершить предыдущую аренду?",
+    closePrevLeaseBody: (from, end) =>
+      `У аренды от ${from} нет даты окончания. Завершить её ${end}, за день до начала новой?`,
+    closePrevConfirm: "Завершить предыдущую",
+    closePrevKeep: "Оставить как есть",
     instalmentHint: (years, amount) =>
       `Аннуитетный платёж на ${years} ≈ ${amount}`,
     instalmentHintDev: (base) =>

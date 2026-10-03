@@ -34,6 +34,16 @@ export function edate(date: Date, months: number): IsoDate {
   return utc(targetYear, targetMonth + 1, Math.min(d, lastDay));
 }
 
+/** The calendar day before `date` (ADR 0099: a closed record ends the day before its
+ *  successor starts; end dates are inclusive). */
+export function dayBefore(date: Date): IsoDate {
+  return utc(
+    date.getUTCFullYear(),
+    date.getUTCMonth() + 1,
+    date.getUTCDate() - 1,
+  );
+}
+
 /** Add whole years as EDATE(date, 12·years), so Feb 29 clamps to Feb 28. */
 export function addYears(date: Date, years: number): IsoDate {
   return edate(date, years * 12);
