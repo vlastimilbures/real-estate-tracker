@@ -104,8 +104,10 @@ scripts/release-macos.sh     # build, ad-hoc sign and verify a release bundle
 On first launch the app fills in a **fictional sample portfolio** so every screen has data.
 To switch to your own:
 
-1. **Remove the sample.** In **Properties**, delete each sample property (**Delete property**).
-   A one-step "clear sample" action is planned ([#18](https://github.com/vlastimilbures/real-estate-tracker/issues/18)).
+1. **Remove the sample.** Click **Clear sample and start my own** in the banner on the
+   **Dashboard** or **Properties** page (or in **Settings → Backup & Restore**). The app saves a
+   safety copy first, then deletes the three sample apartments and everything under them.
+   Properties you added yourself, your assumptions and scenarios are kept.
 2. **Set your assumptions.** In **Settings → Assumptions**, set the base date, horizon,
    appreciation, rent indexation, inflation, vacancy, post-fixation reset rate and
    holding-cost defaults.
