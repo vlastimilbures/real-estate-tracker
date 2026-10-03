@@ -18,8 +18,9 @@ export function baseScenario(a: Assumptions, t: Dictionary): Scenario {
   };
 }
 
-/** One-line human summary of a scenario's deltas vs base (for the list). */
-export function summarize(s: Scenario, t: Dictionary): string {
+/** One-line human summary of a scenario's deltas vs base (for the list). `reach` is
+ *  the rate shock's reach note, shown after it (ADR 0100). */
+export function summarize(s: Scenario, t: Dictionary, reach?: string): string {
   const parts: string[] = [];
   const o = s.overrides;
   const sc = t.scenarios;
@@ -38,10 +39,13 @@ export function summarize(s: Scenario, t: Dictionary): string {
         o.inflationShock.durationYears,
       ),
     );
-  if (o.rateShock)
-    parts.push(
-      sc.sumRateShock(fmtPp(o.rateShock.deltaPa), o.rateShock.durationYears),
+  if (o.rateShock) {
+    const shock = sc.sumRateShock(
+      fmtPp(o.rateShock.deltaPa),
+      o.rateShock.durationYears,
     );
+    parts.push(reach ? `${shock}, ${reach}` : shock);
+  }
   if (o.valueShock)
     parts.push(sc.sumValueShock(fmtPct(o.valueShock.pct), o.valueShock.atYear));
   return parts.length ? parts.join(" · ") : sc.noOverrides;

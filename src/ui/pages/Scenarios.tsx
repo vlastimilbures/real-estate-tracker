@@ -9,6 +9,7 @@ import { Button, EmptyState, Toast } from "../components/primitives";
 import { FolderOpen } from "lucide-react";
 import type { Scenario, ScenarioOverrides } from "../../engine";
 import { useT } from "../hooks/useT";
+import { rateShockNote } from "../model/rateShockReach";
 import { baseScenario, findByName, tickForCompare } from "../model/scenarios";
 import { CompareView } from "./ScenarioCompare";
 import { ScenarioForm } from "./ScenarioForm";
@@ -20,6 +21,7 @@ const MAX_COMPARE = 3; // saved scenarios; Base is always available alongside
 export function Scenarios() {
   const t = useT();
   const assumptions = usePortfolioStore((s) => s.assumptions);
+  const portfolio = usePortfolioStore((s) => s.portfolio);
   const scenarios = usePortfolioStore((s) => s.scenarios);
   const addScenario = usePortfolioStore((s) => s.addScenario);
   const saveScenario = usePortfolioStore((s) => s.saveScenario);
@@ -63,6 +65,12 @@ export function Scenarios() {
     ...(baseOn ? [base] : []),
     ...scenarios.filter((s) => selectedIds.includes(s.id)),
   ];
+
+  /** Which loans a saved scenario's rate shock hits (ADR 0100). */
+  function reachText(id: string): string | undefined {
+    const s = scenarios.find((x) => x.id === id);
+    return s && rateShockNote(s, portfolio, assumptions, t);
+  }
 
   function toggle(id: string) {
     setSelectedIds((ids) =>
@@ -160,9 +168,10 @@ export function Scenarios() {
         onDelete={(s) =>
           run(() => removeScenario(s.id), t.scenarios.deletedScenario(s.name))
         }
+        reachText={reachText}
       />
 
-      <CompareView selected={selected} />
+      <CompareView selected={selected} reachText={reachText} />
       {toast && <Toast message={toast} />}
     </AppShell>
   );

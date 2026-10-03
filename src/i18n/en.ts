@@ -602,6 +602,10 @@ export const en = {
     sumInflationShock: (v: string, years: number) =>
       `inflation +${v} pp for ${years}y`,
     sumRateShock: (v: string, years: number) => `rates +${v} pp for ${years}y`,
+    // Which loans a rate shock reaches (ADR 0100)
+    reachHits: (n: number, m: number, years: string) =>
+      `hits ${n} of ${m} ${enPlural(m, ["loan", "loans"])} (refix ${years})`,
+    reachNone: "no loan refixes inside the shock window, so no effect",
     sumValueShock: (v: string, atYear: number) =>
       `value −${v}${atYear ? ` @ yr${atYear}` : ""}`,
     // Form
@@ -625,6 +629,8 @@ export const en = {
     ppSuffix: "pp",
     shockHelp:
       "Temporary, then reverts. Adds percentage points: +2 pp turns 4.5 % into 6.5 %.",
+    rateShockHelp:
+      "Starts at each loan's fixation end, then reverts. Adds percentage points: +2 pp turns 4.5 % into 6.5 %.",
     permanentCorrection: "permanent correction",
     defaultYears: (n: number) => `default ${n}`,
     zeroIsStart: (date: string) => `0 = projection start (${date})`,

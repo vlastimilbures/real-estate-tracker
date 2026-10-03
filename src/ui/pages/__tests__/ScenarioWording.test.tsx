@@ -89,7 +89,8 @@ describe("Scenarios wording (ADR 0090)", () => {
   it("shock deltas show a pp suffix and a worked example", () => {
     const { container } = render(
       <ShockPairFields
-        deltaLabel={en.scenarios.fieldRateShock}
+        deltaLabel={en.scenarios.fieldInflationShock}
+        deltaHelp={en.scenarios.shockHelp}
         deltaValue=""
         deltaError={undefined}
         onDeltaChange={() => undefined}

@@ -570,6 +570,9 @@ export const cs: Dictionary = {
     sumInflation: (v) => `inflace ${v}`,
     sumInflationShock: (v, years) => `inflace +${v} p. b. na ${years} l.`,
     sumRateShock: (v, years) => `sazby +${v} p. b. na ${years} l.`,
+    reachHits: (n, m, years) =>
+      `zasáhne ${n} z ${m} ${csPlural(m, ["úvěru", "úvěrů", "úvěrů"])} (refixace ${years})`,
+    reachNone: "v okně šoku se žádný úvěr nerefixuje, takže bez vlivu",
     sumValueShock: (v, atYear) =>
       `hodnota −${v}${atYear ? ` @ rok${atYear}` : ""}`,
     editTitle: (name) => `Upravit „${name}“`,
@@ -592,6 +595,8 @@ export const cs: Dictionary = {
     ppSuffix: "p. b.",
     shockHelp:
       "Dočasné, pak odezní. Přičítá procentní body: +2 p. b. změní 4,5 % na 6,5 %.",
+    rateShockHelp:
+      "Začíná koncem fixace každého úvěru, pak odezní. Přičítá procentní body: +2 p. b. změní 4,5 % na 6,5 %.",
     permanentCorrection: "trvalá korekce",
     defaultYears: (n) => `výchozí ${n}`,
     zeroIsStart: (date) => `0 = začátek projekce (${date})`,

@@ -66,6 +66,17 @@ describe("summarize", () => {
     );
   });
 
+  // ADR 0100: the rate shock's reach note follows the rate shock.
+  it("puts the reach note right after the rate shock", () => {
+    const s = withOverrides({
+      rateShock: { deltaPa: rate("0.02"), durationYears: 3 },
+      valueShock: { pct: rate("0.1"), atYear: 0 },
+    });
+    expect(summarize(s, en, "hits 3 of 3 loans (refix 2029, 2031)")).toBe(
+      "rates +2,0 pp for 3y, hits 3 of 3 loans (refix 2029, 2031) · value −10,0 %",
+    );
+  });
+
   it("includes the value shock's target year", () => {
     const s = withOverrides({ valueShock: { pct: rate("-0.1"), atYear: 4 } });
     expect(summarize(s, en)).toContain("4");

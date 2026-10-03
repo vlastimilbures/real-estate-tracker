@@ -574,6 +574,10 @@ export const ru: Dictionary = {
     sumInflation: (v) => `инфляция ${v}`,
     sumInflationShock: (v, years) => `инфляция +${v} п. п. на ${years} г.`,
     sumRateShock: (v, years) => `ставки +${v} п. п. на ${years} г.`,
+    reachHits: (n, m, years) =>
+      `затрагивает ${n} из ${m} ${ruPlural(m, ["кредита", "кредитов", "кредитов"])} (конец фиксации ${years})`,
+    reachNone:
+      "ни у одного кредита фиксация не заканчивается в окне шока, поэтому без эффекта",
     sumValueShock: (v, atYear) =>
       `стоимость −${v}${atYear ? ` @ год${atYear}` : ""}`,
     editTitle: (name) => `Изменить «${name}»`,
@@ -596,6 +600,8 @@ export const ru: Dictionary = {
     ppSuffix: "п. п.",
     shockHelp:
       "Временно, затем спадает. Добавляет процентные пункты: +2 п. п. превращают 4,5 % в 6,5 %.",
+    rateShockHelp:
+      "Начинается с конца фиксации каждого кредита, затем спадает. Добавляет процентные пункты: +2 п. п. превращают 4,5 % в 6,5 %.",
     permanentCorrection: "постоянная коррекция",
     defaultYears: (n) => `по умолчанию ${n}`,
     zeroIsStart: (date) => `0 = начало прогноза (${date})`,
