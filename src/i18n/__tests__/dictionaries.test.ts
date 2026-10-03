@@ -46,6 +46,8 @@ const RANGE_LABELS = new Set([
   // "Yrs 1–N" (ADR 0103).
   "dashboard.financingTotalInterest",
   "dashboard.financingTotalInterestReal",
+  // The accepted CSV spellings "1/0" (ADR 0113).
+  "importPage.errInvalidBoolean",
 ]);
 
 /** Keys whose output changes form (not just the digit) across counts 1 / 2 / 5. */

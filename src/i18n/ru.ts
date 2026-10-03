@@ -730,7 +730,7 @@ export const ru: Dictionary = {
     errInvalidNumber: (v) => `Неверное число «${v}»`,
     errInvalidInteger: (v) => `Неверное целое «${v}»`,
     errInvalidBoolean: (v) =>
-      `Неверное логическое «${v}» — используйте true или false`,
+      `Неверное логическое «${v}» — используйте true/false, yes/no или 1/0`,
     errUnknownProperty: (v) => `Неизвестный объект «${v}»`,
     errInstalmentRequired:
       "Обязательно (или укажите loan_term_years для авторасчёта)",

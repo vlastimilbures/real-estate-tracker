@@ -759,7 +759,7 @@ export const en = {
     errInvalidNumber: (v: string) => `Invalid number "${v}"`,
     errInvalidInteger: (v: string) => `Invalid integer "${v}"`,
     errInvalidBoolean: (v: string) =>
-      `Invalid boolean "${v}" — use true or false`,
+      `Invalid boolean "${v}" — use true/false, yes/no or 1/0`,
     errUnknownProperty: (v: string) => `Unknown property "${v}"`,
     errInstalmentRequired:
       "Required (or provide loan_term_years to auto-calculate)",

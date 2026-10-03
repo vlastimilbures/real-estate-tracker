@@ -107,6 +107,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The CSV import error for a yes/no column now lists every accepted value: `true`/`false`,
+  `yes`/`no` or `1`/`0`. SPEC §6 now matches the importer: header rules, all-or-nothing
+  import across the whole batch of files, and which empty cells keep or clear a stored
+  value on re-import (ADR 0113, #61).
+
 - The app uses one name, "Real Estate Tracker", everywhere. The sidebar brand, the logo
   title and the loading screen said "Real Estate Portfolio"; the name is not translated
   (ADR 0105, #22).
