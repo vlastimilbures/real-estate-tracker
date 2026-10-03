@@ -19,6 +19,7 @@ import { restoreIssueText } from "../model/restoreIssue";
 import { toWriteError } from "../../state/writeError";
 import { fmtDate } from "../../lib/format";
 import { useToast } from "../hooks/useToast";
+import { ClearSampleButton } from "../components/ClearSampleDialog";
 
 /** A refused backup as a translated message; `issues` are listed separately. */
 function restoreErrorText(t: Dictionary, e: RestoreError): string {
@@ -102,6 +103,7 @@ export function BackupRestorePanel() {
   const t = useT();
   const exportBackup = usePortfolioStore((s) => s.exportBackup);
   const restoreBackup = usePortfolioStore((s) => s.restoreBackup);
+  const sampleActive = usePortfolioStore((s) => s.sample.active);
 
   const [exporting, setExporting] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -236,6 +238,21 @@ export function BackupRestorePanel() {
           </div>
         )}
       </Panel>
+
+      {sampleActive && (
+        <Panel title={t.sample.panelTitle} hint={t.sample.panelHint}>
+          <p
+            style={{
+              color: "var(--ink-soft)",
+              fontSize: 13,
+              marginBottom: "var(--s4)",
+            }}
+          >
+            {t.sample.panelBody}
+          </p>
+          <ClearSampleButton />
+        </Panel>
+      )}
 
       {error && (
         <Panel title={t.backup.errorTitle}>

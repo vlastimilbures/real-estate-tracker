@@ -305,7 +305,7 @@ export const en = {
     subtitle: (n: number) => `${n} ${enPlural(n, ["apartment", "apartments"])}`,
     addProperty: "Add property",
     emptyTitle: "No properties",
-    emptyBody: "Add a property with the button above, or import data from CSV.",
+    emptyBody: "Add your first property, or import your data from CSV files.",
     colProperty: "Property",
     colValue: "Value",
     colDebt: "Debt",
@@ -733,6 +733,37 @@ export const en = {
       `Must be a whole number from ${min} to ${max}`,
   },
 
+  // First-run sample portfolio (ADR 0094).
+  sample: {
+    banner: "You're looking at a sample portfolio with fictional apartments.",
+    clearAction: "Clear sample and start my own",
+    keepExploring: "Keep exploring",
+    dialogTitle: "Clear the sample portfolio?",
+    dialogDeletes:
+      "This deletes the three sample apartments and every record under them — mortgages, valuations, leases and costs — including any you added to them.",
+    dialogKeeps:
+      "Properties you added yourself, your assumptions and your scenarios are kept.",
+    dialogBackup:
+      "A safety backup of all current data is saved first, in the backups folder next to the database.",
+    confirm: "Clear sample",
+    clearing: "Clearing…",
+    cleared: (file: string) =>
+      `Sample cleared. Your previous data was saved as ${file} in the backups folder next to the database.`,
+    safetyBackupFailed: (detail: string) =>
+      `Nothing was cleared: a safety backup of your current data could not be saved. (${detail})`,
+    clearFailed: (detail: string) =>
+      `Clearing the sample failed and was rolled back — your data is unchanged. (${detail})`,
+    panelTitle: "Sample portfolio",
+    panelHint: "Fictional apartments added on first launch",
+    panelBody:
+      "Delete the sample apartments to start your own portfolio. Properties you added yourself are kept.",
+    gettingStartedTitle: "Getting started",
+    stepAssumptions: "Set your assumptions",
+    stepAddProperty: "Add a property",
+    stepDetails: "Add its mortgage, lease and costs",
+    stepReview: "Review the projections",
+    stepBackup: "Export a backup",
+  },
   xlsx: {
     exportToExcel: "Export to Excel",
     exported: (name: string) => `Exported ${name}`,

@@ -285,7 +285,7 @@ export const cs: Dictionary = {
     addProperty: "Přidat nemovitost",
     emptyTitle: "Žádné nemovitosti",
     emptyBody:
-      "Přidejte nemovitost tlačítkem výše, nebo importujte data z CSV.",
+      "Přidejte první nemovitost, nebo importujte data ze souborů CSV.",
     colProperty: "Nemovitost",
     colValue: "Hodnota",
     colDebt: "Dluh",
@@ -700,6 +700,36 @@ export const cs: Dictionary = {
     issueOutOfRange: (min, max) => `Musí být celé číslo od ${min} do ${max}`,
   },
 
+  sample: {
+    banner: "Prohlížíte si ukázkové portfolio s fiktivními byty.",
+    clearAction: "Smazat ukázku a začít vlastní",
+    keepExploring: "Prohlížet dál",
+    dialogTitle: "Smazat ukázkové portfolio?",
+    dialogDeletes:
+      "Smažou se tři ukázkové byty a všechny záznamy pod nimi — hypotéky, ocenění, nájmy a náklady — včetně těch, které jste k nim přidali.",
+    dialogKeeps:
+      "Nemovitosti, které jste přidali sami, vaše předpoklady a scénáře zůstanou.",
+    dialogBackup:
+      "Nejprve se uloží bezpečnostní záloha všech současných dat do složky backups vedle databáze.",
+    confirm: "Smazat ukázku",
+    clearing: "Mazání…",
+    cleared: (file) =>
+      `Ukázka smazána. Předchozí data byla uložena jako ${file} do složky backups vedle databáze.`,
+    safetyBackupFailed: (detail) =>
+      `Nic nebylo smazáno: bezpečnostní zálohu současných dat se nepodařilo uložit. (${detail})`,
+    clearFailed: (detail) =>
+      `Smazání ukázky selhalo a bylo vráceno zpět — vaše data jsou beze změny. (${detail})`,
+    panelTitle: "Ukázkové portfolio",
+    panelHint: "Fiktivní byty přidané při prvním spuštění",
+    panelBody:
+      "Smažte ukázkové byty a začněte vlastní portfolio. Nemovitosti, které jste přidali sami, zůstanou.",
+    gettingStartedTitle: "Jak začít",
+    stepAssumptions: "Nastavte předpoklady",
+    stepAddProperty: "Přidejte nemovitost",
+    stepDetails: "Doplňte hypotéku, nájem a náklady",
+    stepReview: "Projděte projekce",
+    stepBackup: "Exportujte zálohu",
+  },
   xlsx: {
     exportToExcel: "Exportovat do Excelu",
     exported: (name) => `Exportováno ${name}`,

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { MetricLabel } from "../components/MetricLabel";
-import { Pencil, Trash2, Plus, Building2 } from "lucide-react";
+import { Pencil, Trash2, Plus, Building2, Upload } from "lucide-react";
 import { useEngine } from "../../state/useEngine";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
@@ -14,6 +14,7 @@ import {
   TableWrap,
 } from "../components/primitives";
 import { PropertyFormModal } from "../components/PropertyFormModal";
+import { SampleBanner } from "../components/SampleBanner";
 import { fmtPct, fmtDscr } from "../../lib/format";
 import {
   bandPill,
@@ -30,6 +31,7 @@ export function Properties() {
   const engine = useEngine();
   const removeProperty = usePortfolioStore((s) => s.removeProperty);
   const openProperty = useUiStore((s) => s.openProperty);
+  const navigate = useUiStore((s) => s.navigate);
 
   const [adding, setAdding] = useState(false);
   const newPropertyRequested = useUiStore((s) => s.newPropertyRequested);
@@ -74,8 +76,26 @@ export function Properties() {
         </Button>
       }
     >
+      <SampleBanner />
       {perProperty.length === 0 ? (
-        <EmptyState title={t.properties.emptyTitle} icon={Building2}>
+        <EmptyState
+          title={t.properties.emptyTitle}
+          icon={Building2}
+          action={
+            <div className="row">
+              <Button
+                variant="primary"
+                icon={Plus}
+                onClick={() => setAdding(true)}
+              >
+                {t.properties.addProperty}
+              </Button>
+              <Button icon={Upload} onClick={() => navigate("import")}>
+                {t.common.importCsv}
+              </Button>
+            </div>
+          }
+        >
           {t.properties.emptyBody}
         </EmptyState>
       ) : (

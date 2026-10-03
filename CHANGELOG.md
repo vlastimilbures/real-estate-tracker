@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The first-run sample portfolio is labelled as fictional. A banner on Dashboard and
+  Properties offers **Clear sample and start my own** and **Keep exploring** (which hides it
+  for good); while the sample is in place, Settings → Backup offers the same action. Clearing
+  saves a safety backup first, then deletes the three sample apartments and everything under
+  them in one step. Properties you added, assumptions and scenarios are kept, and the sample
+  is never reseeded. The empty Properties page now offers Add property and Import CSV, and the
+  empty Dashboard lists the first steps (ADR 0094, #18).
+
 ### Changed
 
 - Scenarios: clicking a stress preset that is already saved no longer adds a second row with

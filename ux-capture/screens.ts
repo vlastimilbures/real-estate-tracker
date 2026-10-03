@@ -521,6 +521,20 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "81-clear-sample-dialog",
+    desc: "Clear sample confirmation, opened from the sample banner (ADR 0094)",
+    route: "dashboard",
+    run: async (ux) => {
+      // Opened only: the browser build has no app backups folder for the safety backup.
+      await boot(ux.page);
+      await ux.page
+        .getByRole("button", { name: ux.t.sample.clearAction })
+        .click();
+      await expect(ux.page.getByRole("dialog")).toBeVisible();
+      await ux.capture("81-clear-sample-dialog");
+    },
+  },
+  {
     id: "90-keyboard-focus",
     desc: "Keyboard-only: Tab order from page load, with focus screenshots",
     route: "dashboard",
