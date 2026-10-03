@@ -1,6 +1,7 @@
 // Sub-components pulled out of Scenarios.tsx to shrink its render tree. Pure
 // presentation — no logic beyond what Scenarios.tsx already computed.
-import { useState } from "react";
+import { useId, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Panel, Button, SegmentedToggle } from "../components/primitives";
 import { DeleteConfirmRow } from "../components/EntityPanelParts";
 import { rate, type Scenario, type ScenarioOverrides } from "../../engine";
@@ -46,12 +47,17 @@ const COMBINED_LEVELS: CombinedRecipe[] = [
 ];
 
 export function StressPresetsPanel({
+  open,
+  onToggleOpen,
   busy,
   baseDate,
   crashAtYear,
   onCrashAtYearChange,
   onAddPreset,
 }: {
+  /** Collapsed, the panel shows a one-line summary and no buttons (ADR 0106). */
+  open: boolean;
+  onToggleOpen: () => void;
   busy: boolean;
   /** Projection start: crash timing 0 (ADR 0090). */
   baseDate: Date;
@@ -60,159 +66,205 @@ export function StressPresetsPanel({
   onAddPreset: (name: string, overrides: ScenarioOverrides) => void;
 }) {
   const t = useT();
+  const bodyId = useId();
   return (
     <Panel
       title={t.scenarios.presetsTitle}
       hint={t.scenarios.presetsHint(DEFAULT_SHOCK_YEARS)}
+      action={
+        <span className="preset-toggle">
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={open ? ChevronUp : ChevronDown}
+            aria-expanded={open}
+            aria-controls={bodyId}
+            onClick={onToggleOpen}
+          >
+            {open ? t.scenarios.hidePresets : t.scenarios.showPresets}
+          </Button>
+        </span>
+      }
     >
-      <div className="preset-bar">
-        <div className="preset-group">
-          <span className="preset-label">{t.scenarios.rateShockAtRefix}</span>
-          <div className="row" style={{ gap: "var(--s2)" }}>
-            {RATE_LEVELS.map((l) => (
-              <Button
-                key={l.pp}
-                size="sm"
-                disabled={busy}
-                title={t.scenarios.rateForYears(
-                  t.scenarios.plusPp(l.pp),
-                  DEFAULT_SHOCK_YEARS,
-                )}
-                onClick={() =>
-                  onAddPreset(
-                    t.scenarios.rateForYears(
-                      t.scenarios.plusPp(l.pp),
-                      DEFAULT_SHOCK_YEARS,
-                    ),
-                    {
-                      rateShock: {
-                        deltaPa: rate(l.delta),
-                        durationYears: DEFAULT_SHOCK_YEARS,
-                      },
-                    },
-                  )
-                }
-              >
-                {t.scenarios.plusPp(l.pp)}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="preset-group">
-          <span className="preset-label">{t.scenarios.inflationShock}</span>
-          <div className="row" style={{ gap: "var(--s2)" }}>
-            {INFLATION_LEVELS.map((l) => (
-              <Button
-                key={l.pp}
-                size="sm"
-                disabled={busy}
-                title={t.scenarios.inflForYears(
-                  t.scenarios.plusPp(l.pp),
-                  DEFAULT_SHOCK_YEARS,
-                )}
-                onClick={() =>
-                  onAddPreset(
-                    t.scenarios.inflForYears(
-                      t.scenarios.plusPp(l.pp),
-                      DEFAULT_SHOCK_YEARS,
-                    ),
-                    {
-                      inflationShock: {
-                        deltaPa: rate(l.delta),
-                        durationYears: DEFAULT_SHOCK_YEARS,
-                      },
-                    },
-                  )
-                }
-              >
-                {t.scenarios.plusPp(l.pp)}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="preset-group">
-          <span className="preset-label">{t.scenarios.priceCrash}</span>
-          {/* The timing is a setting the level buttons use (ADR 0101); it saves
-              nothing, so it stays usable while a save runs. */}
-          <div className="row" style={{ gap: "var(--s2)" }}>
-            <span className="preset-when">{t.scenarios.crashWhen}</span>
-            <SegmentedToggle
-              ariaLabel={t.scenarios.crashWhen}
-              options={CRASH_TIMINGS.map((atYear) => ({
-                value: String(atYear),
-                label:
-                  atYear === 0
-                    ? t.scenarios.atStart
-                    : t.common.plusYears(atYear),
-              }))}
-              value={String(crashAtYear)}
-              onChange={(v) => onCrashAtYearChange(Number(v))}
-            />
-          </div>
-          <div className="row" style={{ gap: "var(--s2)" }}>
-            {CRASH_LEVELS.map((l) => {
-              const suffix =
-                crashAtYear === 0
-                  ? ""
-                  : t.scenarios.crashAt(t.common.plusYears(crashAtYear));
-              const presetName = t.scenarios.crashTitle(l.label, suffix);
-              return (
-                <Button
-                  key={l.label}
-                  size="sm"
-                  disabled={busy}
-                  title={
-                    crashAtYear === 0
-                      ? `${presetName} · ${t.scenarios.atStartTitle(fmtDate(baseDate))}`
-                      : presetName
-                  }
-                  onClick={() =>
-                    onAddPreset(presetName, {
-                      valueShock: {
-                        pct: rate(l.pct),
-                        atYear: crashAtYear,
-                      },
-                    })
-                  }
-                >
-                  {`${l.label}${suffix}`}
-                </Button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="preset-group">
-          <span className="preset-label">{t.scenarios.combined}</span>
-          <div className="row" style={{ gap: "var(--s2)" }}>
-            {COMBINED_LEVELS.map((r) => {
-              const { name, overrides } = combinedPreset(r, crashAtYear, t);
-              const suffix =
-                crashAtYear === 0
-                  ? ""
-                  : t.scenarios.crashAt(t.common.plusYears(crashAtYear));
-              return (
-                <Button
-                  key={r.crash.label}
-                  size="sm"
-                  disabled={busy}
-                  title={
-                    crashAtYear === 0
-                      ? `${name} · ${t.scenarios.atStartTitle(fmtDate(baseDate))}`
-                      : name
-                  }
-                  onClick={() => onAddPreset(name, overrides)}
-                >
-                  {`${r.level(t)}${suffix}`}
-                </Button>
-              );
-            })}
-          </div>
-        </div>
+      <div id={bodyId}>
+        {open ? (
+          <PresetBar
+            busy={busy}
+            baseDate={baseDate}
+            crashAtYear={crashAtYear}
+            onCrashAtYearChange={onCrashAtYearChange}
+            onAddPreset={onAddPreset}
+          />
+        ) : (
+          <p className="preset-collapsed">
+            {t.scenarios.presetsCollapsedSummary}
+          </p>
+        )}
       </div>
     </Panel>
+  );
+}
+
+function PresetBar({
+  busy,
+  baseDate,
+  crashAtYear,
+  onCrashAtYearChange,
+  onAddPreset,
+}: {
+  busy: boolean;
+  baseDate: Date;
+  crashAtYear: number;
+  onCrashAtYearChange: (atYear: number) => void;
+  onAddPreset: (name: string, overrides: ScenarioOverrides) => void;
+}) {
+  const t = useT();
+  return (
+    <div className="preset-bar">
+      <div className="preset-group">
+        <span className="preset-label">{t.scenarios.rateShockAtRefix}</span>
+        <div className="row" style={{ gap: "var(--s2)" }}>
+          {RATE_LEVELS.map((l) => (
+            <Button
+              key={l.pp}
+              size="sm"
+              disabled={busy}
+              title={t.scenarios.rateForYears(
+                t.scenarios.plusPp(l.pp),
+                DEFAULT_SHOCK_YEARS,
+              )}
+              onClick={() =>
+                onAddPreset(
+                  t.scenarios.rateForYears(
+                    t.scenarios.plusPp(l.pp),
+                    DEFAULT_SHOCK_YEARS,
+                  ),
+                  {
+                    rateShock: {
+                      deltaPa: rate(l.delta),
+                      durationYears: DEFAULT_SHOCK_YEARS,
+                    },
+                  },
+                )
+              }
+            >
+              {t.scenarios.plusPp(l.pp)}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="preset-group">
+        <span className="preset-label">{t.scenarios.inflationShock}</span>
+        <div className="row" style={{ gap: "var(--s2)" }}>
+          {INFLATION_LEVELS.map((l) => (
+            <Button
+              key={l.pp}
+              size="sm"
+              disabled={busy}
+              title={t.scenarios.inflForYears(
+                t.scenarios.plusPp(l.pp),
+                DEFAULT_SHOCK_YEARS,
+              )}
+              onClick={() =>
+                onAddPreset(
+                  t.scenarios.inflForYears(
+                    t.scenarios.plusPp(l.pp),
+                    DEFAULT_SHOCK_YEARS,
+                  ),
+                  {
+                    inflationShock: {
+                      deltaPa: rate(l.delta),
+                      durationYears: DEFAULT_SHOCK_YEARS,
+                    },
+                  },
+                )
+              }
+            >
+              {t.scenarios.plusPp(l.pp)}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="preset-group">
+        <span className="preset-label">{t.scenarios.priceCrash}</span>
+        {/* The timing is a setting the level buttons use (ADR 0101); it saves
+              nothing, so it stays usable while a save runs. */}
+        <div className="row" style={{ gap: "var(--s2)" }}>
+          <span className="preset-when">{t.scenarios.crashWhen}</span>
+          <SegmentedToggle
+            ariaLabel={t.scenarios.crashWhen}
+            options={CRASH_TIMINGS.map((atYear) => ({
+              value: String(atYear),
+              label:
+                atYear === 0 ? t.scenarios.atStart : t.common.plusYears(atYear),
+            }))}
+            value={String(crashAtYear)}
+            onChange={(v) => onCrashAtYearChange(Number(v))}
+          />
+        </div>
+        <div className="row" style={{ gap: "var(--s2)" }}>
+          {CRASH_LEVELS.map((l) => {
+            const suffix =
+              crashAtYear === 0
+                ? ""
+                : t.scenarios.crashAt(t.common.plusYears(crashAtYear));
+            const presetName = t.scenarios.crashTitle(l.label, suffix);
+            return (
+              <Button
+                key={l.label}
+                size="sm"
+                disabled={busy}
+                title={
+                  crashAtYear === 0
+                    ? `${presetName} · ${t.scenarios.atStartTitle(fmtDate(baseDate))}`
+                    : presetName
+                }
+                onClick={() =>
+                  onAddPreset(presetName, {
+                    valueShock: {
+                      pct: rate(l.pct),
+                      atYear: crashAtYear,
+                    },
+                  })
+                }
+              >
+                {`${l.label}${suffix}`}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="preset-group">
+        <span className="preset-label">{t.scenarios.combined}</span>
+        <div className="row" style={{ gap: "var(--s2)" }}>
+          {COMBINED_LEVELS.map((r) => {
+            const { name, overrides } = combinedPreset(r, crashAtYear, t);
+            const suffix =
+              crashAtYear === 0
+                ? ""
+                : t.scenarios.crashAt(t.common.plusYears(crashAtYear));
+            return (
+              <Button
+                key={r.crash.label}
+                size="sm"
+                disabled={busy}
+                title={
+                  crashAtYear === 0
+                    ? `${name} · ${t.scenarios.atStartTitle(fmtDate(baseDate))}`
+                    : name
+                }
+                onClick={() => onAddPreset(name, overrides)}
+              >
+                {`${r.level(t)}${suffix}`}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 

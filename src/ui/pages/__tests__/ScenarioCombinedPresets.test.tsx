@@ -22,6 +22,8 @@ function Harness({
   const [atYear, setAtYear] = useState(0);
   return (
     <StressPresetsPanel
+      open
+      onToggleOpen={() => undefined}
       busy={false}
       baseDate={new Date(Date.UTC(2026, 0, 1))}
       crashAtYear={atYear}

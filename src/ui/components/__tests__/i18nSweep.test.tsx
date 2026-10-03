@@ -39,6 +39,8 @@ describe("UX-034 i18n sweep", () => {
     const onAddPreset = vi.fn();
     render(
       <StressPresetsPanel
+        open
+        onToggleOpen={() => undefined}
         busy={false}
         baseDate={new Date(Date.UTC(2026, 5, 7))}
         crashAtYear={5}

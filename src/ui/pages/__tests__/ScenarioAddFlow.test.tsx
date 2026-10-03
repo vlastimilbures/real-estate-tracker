@@ -91,6 +91,9 @@ beforeEach(() => {
       compareIds: [],
       compareBase: true,
       crashAtYear: 0,
+      // These tests click presets with scenarios saved; the collapse default is
+      // covered in ScenarioPresetsCollapse.test.tsx (ADR 0106).
+      presetsOpen: true,
     }),
   );
 });

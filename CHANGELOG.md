@@ -72,6 +72,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   title and the loading screen said "Real Estate Portfolio"; the name is not translated
   (ADR 0105, #22).
 
+- Scenarios: the **Stress presets** panel opens collapsed when at least one scenario is
+  saved, so the compare starts higher on the page. A **Show presets / Hide presets** button
+  opens and closes it; your choice lasts until the app closes. Saving your first preset
+  does not close the panel; it opens collapsed on your next visit (ADR 0106, #54).
+
 - The scenario form groups its fields under **Permanent levels**, **Temporary shocks** and
   **One-off price crash**, each with one line of help, so an absolute level (reset rate 6 %)
   no longer sits next to a temporary delta (+2 pp) without a visible difference. The levels

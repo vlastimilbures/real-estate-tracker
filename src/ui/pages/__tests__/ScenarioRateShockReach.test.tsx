@@ -65,6 +65,7 @@ beforeEach(() => {
       compareIds: [],
       compareBase: true,
       crashAtYear: 0,
+      presetsOpen: null,
     });
     usePortfolioStore.setState({ portfolio, assumptions, scenarios: [rates] });
   });

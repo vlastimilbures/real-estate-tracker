@@ -387,6 +387,9 @@ export const SCREENS: Screen[] = [
       await expect(picks).toHaveCount(3);
       await picks.nth(1).check();
       await picks.nth(2).check();
+      // Re-open the page: with saved scenarios the presets start collapsed (ADR 0106).
+      await nav(ux, "dashboard");
+      await nav(ux, "scenarios");
       await ux.capture("42-scenarios-compare");
     },
   },
@@ -405,6 +408,8 @@ export const SCREENS: Screen[] = [
       await expect(picks).toHaveCount(3);
       await picks.nth(1).check();
       await picks.nth(2).check();
+      await nav(ux, "dashboard");
+      await nav(ux, "scenarios");
       await ux.page
         .getByRole("button", { name: ux.t.scenarios.viewDeltaVsBase })
         .click();

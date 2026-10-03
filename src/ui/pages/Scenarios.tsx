@@ -38,6 +38,12 @@ export function Scenarios() {
   const pruneCompare = useUiStore((s) => s.pruneCompare);
   const toggleBase = useUiStore((s) => s.toggleCompareBase);
   const setCrashAtYear = useUiStore((s) => s.setCrashAtYear);
+  // The presets panel opens collapsed once a scenario is saved. The default is decided
+  // when the page opens, so saving the first preset does not close it under the
+  // pointer; a manual Show / Hide wins for the session (ADR 0106).
+  const [autoPresetsOpen] = useState(() => scenarios.length === 0);
+  const presetsOpen = useUiStore((s) => s.presetsOpen) ?? autoPresetsOpen;
+  const setPresetsOpen = useUiStore((s) => s.setPresetsOpen);
   const [editing, setEditing] = useState<Scenario | "new" | null>(null);
   // One in-flight mutation at a time: disables the action buttons and surfaces a
   // success toast (errors already surface via the global banner).
@@ -141,6 +147,8 @@ export function Scenarios() {
       )}
 
       <StressPresetsPanel
+        open={presetsOpen}
+        onToggleOpen={() => setPresetsOpen(!presetsOpen)}
         busy={busy}
         baseDate={assumptions.baseDate}
         crashAtYear={crashAtYear}

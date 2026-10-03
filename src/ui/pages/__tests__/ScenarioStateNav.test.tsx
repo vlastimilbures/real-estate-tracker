@@ -60,6 +60,9 @@ beforeEach(() =>
       compareIds: [],
       compareBase: true,
       crashAtYear: 0,
+      // The crash timing lives in the presets panel, collapsed by default once
+      // scenarios are saved (ADR 0106).
+      presetsOpen: true,
     }),
   ),
 );
