@@ -91,6 +91,8 @@ interface UiState {
   /** Safety backup written by the last "Clear sample", for the Dashboard's confirmation
    *  (ADR 0094). In-memory only. */
   sampleClearedBackup: string | null;
+  /** The sidebar backup reminder was hidden for this session (ADR 0110). In-memory. */
+  backupHintDismissed: boolean;
   /** The last CSV import's report, kept until the next import (ADR 0096). In-memory. */
   lastImport: CsvImportReport | null;
   setLastImport: (report: CsvImportReport | null) => void;
@@ -138,6 +140,7 @@ interface UiState {
   /** The sample was cleared: open the Dashboard and name the safety backup there. */
   showSampleCleared: (safetyBackup: string) => void;
   dismissSampleCleared: () => void;
+  dismissBackupHint: () => void;
   /** Some open form holds unsaved edits (UX-030): `unsavedSources` is not empty. */
   unsavedChanges: boolean;
   /** The open forms holding unsaved edits, one key per form, so a clean form never
@@ -182,6 +185,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   guideTerm: null,
   newPropertyRequested: false,
   sampleClearedBackup: null,
+  backupHintDismissed: false,
   lastImport: null,
   setLastImport: (lastImport) => set({ lastImport }),
   compareIds: [],
@@ -249,6 +253,7 @@ export const useUiStore = create<UiState>((set, get) => ({
     guarded(get, set, { route: "dashboard" });
   },
   dismissSampleCleared: () => set({ sampleClearedBackup: null }),
+  dismissBackupHint: () => set({ backupHintDismissed: true }),
   setUnsavedChanges: (source, unsaved) => {
     const others = get().unsavedSources.filter((k) => k !== source);
     const unsavedSources = unsaved ? [...others, source] : others;

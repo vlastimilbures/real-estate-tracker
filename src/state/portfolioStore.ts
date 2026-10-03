@@ -54,6 +54,9 @@ import {
   updateProperty,
   setPropertyActive,
   getPropertyExtras,
+  markDataChanged,
+  recordBackup,
+  type BackupState,
   type SampleState,
 } from "../data/repositories";
 import {
@@ -125,6 +128,8 @@ interface PortfolioState {
   scenarios: Scenario[];
   /** The first-run sample: still in place, and its banner dismissed (ADR 0094). */
   sample: SampleState;
+  /** The last recorded export and whether the data changed since (ADR 0110). */
+  backup: BackupState;
   status: Status;
   /** The last failed write (or the startup failure), translated by the UI. */
   error: WriteError | null;
@@ -211,7 +216,7 @@ interface PortfolioState {
   /** Delete the sample properties (after a safety backup), then reload. */
   clearSample: () => Promise<{ safetyBackup: string }>;
   /** Write a backup file through the save dialog. Read-only, so not queued: an open
-   *  dialog must not hold up edits. */
+   *  dialog must not hold up edits. A saved file is then recorded (ADR 0110). */
   exportBackup: () => Promise<ExportOutcome>;
 }
 
@@ -220,9 +225,15 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
    *  previous one settled, so writes reach the DB in call order and a refresh never
    *  interleaves with another write (DR-085). */
   let queue: Promise<unknown> = Promise.resolve();
+  /** Data writes so far: an export keeps the changed flag when one landed while its
+   *  save dialog was open, since the file does not hold it (ADR 0110). */
+  let writes = 0;
 
-  function mutate(op: (sql: Sql) => Promise<void>): Promise<MutationResult> {
-    const run = queue.then(() => mutateNow(op));
+  function mutate(
+    op: (sql: Sql) => Promise<void>,
+    changesData = true,
+  ): Promise<MutationResult> {
+    const run = queue.then(() => mutateNow(op, changesData));
     queue = run;
     return run;
   }
@@ -230,11 +241,15 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
   /** Run `op` in the mutation queue, then reload; rethrow its failure unchanged
    *  (after reconciling in-memory state with the DB). For operations whose callers
    *  show their own typed errors (DR-047: pages no longer touch the raw `sql`). */
-  function exclusive<T>(op: (sql: Sql) => Promise<T>): Promise<T> {
+  function exclusive<T>(
+    op: (sql: Sql) => Promise<T>,
+    changesData = true,
+  ): Promise<T> {
     const run = queue.then(async () => {
       const sql = requireSql();
       try {
         const result = await op(sql);
+        if (changesData) await markChanged(sql);
         await reconcile();
         return result;
       } catch (e) {
@@ -260,6 +275,17 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     }
   }
 
+  /** Data was written: the last backup no longer has it (ADR 0110). Best effort — a
+   *  failure is logged and never fails the write that already succeeded. */
+  async function markChanged(sql: Sql): Promise<void> {
+    writes += 1;
+    try {
+      await markDataChanged(sql);
+    } catch (e) {
+      logFailure("WRITE", e);
+    }
+  }
+
   function requireSql(): Sql {
     const sql = get().sql;
     if (!sql) throw new Error("Database not initialised");
@@ -273,6 +299,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
    *  atomic (`Sql.transaction`, D-14), so a failed op leaves the DB unchanged. */
   async function mutateNow(
     op: (sql: Sql) => Promise<void>,
+    changesData: boolean,
   ): Promise<MutationResult> {
     const sql = get().sql;
     if (!sql) {
@@ -283,6 +310,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     try {
       perfMark("edit:start");
       await op(sql);
+      if (changesData) await markChanged(sql);
       await reconcile();
       // Write + reload; the recompute and page render are measured where they run.
       perfMeasure("edit-saved", "edit:start");
@@ -331,6 +359,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     assumptions: null,
     scenarios: [],
     sample: { active: false, dismissed: false },
+    backup: { lastAt: null, lastFile: null, changedSince: false },
     status: "idle",
     error: null,
     startupError: null,
@@ -361,9 +390,9 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       const sql = get().sql;
       if (!sql) return;
       // One point-in-time snapshot of every table (DR-134).
-      const { portfolio, assumptions, scenarios, sample } =
+      const { portfolio, assumptions, scenarios, sample, backup } =
         await loadState(sql);
-      set({ portfolio, assumptions, scenarios, sample, stale: false });
+      set({ portfolio, assumptions, scenarios, sample, backup, stale: false });
     },
 
     clearError: () => set({ error: null }),
@@ -511,7 +540,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       }),
     removeScenario: (id) => mutate((sql) => deleteScenario(sql, id)),
 
-    dismissSampleBanner: () => mutate(dismissSampleBanner),
+    // Hides a banner: app state, not a data change (ADR 0110).
+    dismissSampleBanner: () => mutate(dismissSampleBanner, false),
 
     // Loaded on first use: keeps the CSV parser out of the startup bundle (P9).
     previewCsv: (batch) => {
@@ -530,7 +560,22 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     restoreBackup: (backup) =>
       exclusive((sql) => confirmRestore(sql, backup, checkInputRules)),
     clearSample: () => exclusive((sql) => clearSample(sql)),
-    exportBackup: async () =>
-      exportBackup(requireSql(), { today: localIsoDay(), save: saveFile }),
+    exportBackup: async () => {
+      const writesBefore = writes;
+      const outcome = await exportBackup(requireSql(), {
+        today: localIsoDay(),
+        save: saveFile,
+      });
+      if (outcome.kind !== "cancelled") {
+        // The file is saved; failing to record it must not turn that into an error.
+        const at = new Date().toISOString();
+        await exclusive(
+          (sql) =>
+            recordBackup(sql, at, outcome.filename, writes === writesBefore),
+          false,
+        ).catch((e: unknown) => logFailure("BACKUP", e));
+      }
+      return outcome;
+    },
   };
 });

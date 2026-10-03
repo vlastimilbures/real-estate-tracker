@@ -198,9 +198,12 @@ describe("i18n dictionaries — plural forms", () => {
       "importPage.importScope",
       "importPage.confirmOverwrite",
       "importPage.confirmOverwriteMsg",
+      // Backup recency (ADR 0110).
+      "backup.agoDays",
+      "backup.agoWeeks",
     ];
-    // Error summary count (ADR 0095).
-    const common = ["common.fieldsNeedAttention"];
+    // Error summary count (ADR 0095); the backup reminder's age (ADR 0110).
+    const common = ["common.fieldsNeedAttention", "shell.backupHintOld"];
     // Financing & upcoming panel (ADR 0103).
     const financing = [
       "dashboard.financingResettingWithin",

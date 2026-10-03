@@ -20,6 +20,7 @@ import { toWriteError } from "../../state/writeError";
 import { fmtDate } from "../../lib/format";
 import { useToast } from "../hooks/useToast";
 import { ClearSampleButton } from "../components/ClearSampleDialog";
+import { backupRecency, type BackupAgo } from "../model/backupRecency";
 
 /** A refused backup as a translated message; `issues` are listed separately. */
 function restoreErrorText(t: Dictionary, e: RestoreError): string {
@@ -94,6 +95,36 @@ function Summary({ summary }: { summary: BackupSummary }) {
           </Fragment>
         ))}
       </div>
+    </div>
+  );
+}
+
+function agoText(t: Dictionary, ago: BackupAgo): string {
+  switch (ago.unit) {
+    case "today":
+      return t.backup.agoToday;
+    case "days":
+      return t.backup.agoDays(ago.n);
+    case "weeks":
+      return t.backup.agoWeeks(ago.n);
+  }
+}
+
+/** When the last backup was exported, and where to keep it (ADR 0110). */
+function LastBackup() {
+  const t = useT();
+  const backup = usePortfolioStore((s) => s.backup);
+  const { day, ago } = backupRecency(backup, new Date());
+  return (
+    <div style={{ marginBottom: "var(--s4)" }}>
+      <p>
+        {day && ago
+          ? t.backup.lastBackup(fmtDate(day), agoText(t, ago))
+          : t.backup.noBackupYet}
+      </p>
+      <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>
+        {t.backup.offDevice}
+      </p>
     </div>
   );
 }
@@ -192,6 +223,7 @@ export function BackupRestorePanel() {
         >
           {t.backup.exportBody}
         </p>
+        <LastBackup />
         <Button variant="primary" onClick={handleExport} disabled={exporting}>
           {exporting ? t.backup.exporting : t.backup.exportButton}
         </Button>

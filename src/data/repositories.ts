@@ -335,15 +335,75 @@ function toSample(keys: unknown[], portfolio: Portfolio): SampleState {
   };
 }
 
+/** Backup recency (ADR 0110): the last recorded export and whether the data changed
+ *  since. App state in `app_meta`, so never part of a backup or a restore. */
+export const LAST_BACKUP_AT = "last_backup_at";
+export const LAST_BACKUP_FILE = "last_backup_file";
+export const CHANGED_SINCE_BACKUP = "changed_since_backup";
+const BACKUP_META_QUERY = `SELECT key, value FROM app_meta WHERE key IN ('${LAST_BACKUP_AT}', '${LAST_BACKUP_FILE}', '${CHANGED_SINCE_BACKUP}')`;
+
+export interface BackupState {
+  /** ISO UTC timestamp of the last successful export, or null. */
+  lastAt: string | null;
+  /** Its file name (no path), or null. */
+  lastFile: string | null;
+  changedSince: boolean;
+}
+
+function toBackupState(rows: unknown[]): BackupState {
+  const meta = new Map(
+    (rows as { key: string; value: string }[]).map((r) => [r.key, r.value]),
+  );
+  return {
+    lastAt: meta.get(LAST_BACKUP_AT) ?? null,
+    lastFile: meta.get(LAST_BACKUP_FILE) ?? null,
+    changedSince: meta.has(CHANGED_SINCE_BACKUP),
+  };
+}
+
+/** Record a successful export (ADR 0110): `at` comes from the caller, never the clock.
+ *  `clearChanged: false` keeps the changed flag, for a write that landed after the
+ *  exported snapshot was read. */
+export async function recordBackup(
+  sql: Sql,
+  at: string,
+  file: string,
+  clearChanged = true,
+): Promise<void> {
+  const upsert =
+    "INSERT INTO app_meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value";
+  await sql.transaction([
+    { query: upsert, params: [LAST_BACKUP_AT, at] },
+    { query: upsert, params: [LAST_BACKUP_FILE, file] },
+    ...(clearChanged
+      ? [
+          {
+            query: "DELETE FROM app_meta WHERE key = ?",
+            params: [CHANGED_SINCE_BACKUP],
+          },
+        ]
+      : []),
+  ]);
+}
+
+/** Mark the data as changed since the last backup (ADR 0110). */
+export async function markDataChanged(sql: Sql): Promise<void> {
+  await sql.execute(
+    "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
+    [CHANGED_SINCE_BACKUP],
+  );
+}
+
 /** Everything the app shows, as one point-in-time snapshot (DR-134). */
 export interface LoadedState {
   portfolio: Portfolio;
   assumptions: Assumptions;
   scenarios: Scenario[];
   sample: SampleState;
+  backup: BackupState;
 }
 
-/** `loadPortfolio` + `loadAssumptions` + `listScenarios` + the sample state, read in one snapshot so a
+/** `loadPortfolio` + `loadAssumptions` + `listScenarios` + the sample and backup state, read in one snapshot so a
  *  write landing mid-load cannot mix states (DR-134). */
 export async function loadState(sql: Sql): Promise<LoadedState> {
   const results = await sql.selectSnapshot(
@@ -352,6 +412,7 @@ export async function loadState(sql: Sql): Promise<LoadedState> {
       ASSUMPTIONS_QUERY,
       SCENARIOS_QUERY,
       SAMPLE_META_QUERY,
+      BACKUP_META_QUERY,
     ].map((query) => ({ query })),
   );
   const n = PORTFOLIO_QUERIES.length;
@@ -363,5 +424,6 @@ export async function loadState(sql: Sql): Promise<LoadedState> {
       rowToScenario,
     ),
     sample: toSample(results[n + 2] ?? [], portfolio),
+    backup: toBackupState(results[n + 3] ?? []),
   };
 }

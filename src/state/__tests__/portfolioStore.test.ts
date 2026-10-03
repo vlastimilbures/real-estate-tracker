@@ -11,6 +11,7 @@ import { isoDate, rate } from "../../engine";
 import type { IsoDate, MortgageBlock } from "../../engine";
 import type { Sql } from "../../data/sql";
 import { DataError } from "../../data/errors";
+import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
 import type { WriteError } from "../writeError";
 import { parseProperties, parseRents } from "../../import/csv";
 import { CsvImportError } from "../../import/csvImport";
@@ -197,11 +198,16 @@ describe("portfolioStore mutations", () => {
     release();
     expect((await a).ok).toBe(true);
     expect((await b).ok).toBe(true);
+    // Each write is followed by its "changed since backup" mark (ADR 0110).
     expect(log).toEqual([
       "start first",
       "end first",
+      `start ${CHANGED_SINCE_BACKUP}`,
+      `end ${CHANGED_SINCE_BACKUP}`,
       "start second",
       "end second",
+      `start ${CHANGED_SINCE_BACKUP}`,
+      `end ${CHANGED_SINCE_BACKUP}`,
     ]);
   });
 
@@ -598,7 +604,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
       select: real.select.bind(real),
       backup: real.backup.bind(real),
       execute: async (q, p) => {
-        log.push("valuation");
+        log.push(p?.[0] === CHANGED_SINCE_BACKUP ? "changed" : "valuation");
         await gate;
         return real.execute(q, p);
       },
@@ -625,7 +631,8 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
     release();
     await a;
     await b;
-    expect(log).toEqual(["valuation", "import"]);
+    // Each write is followed by its "changed since backup" mark (ADR 0110).
+    expect(log).toEqual(["valuation", "changed", "import", "changed"]);
   });
 
   it("a failed whole-database action does not block later mutations", async () => {
