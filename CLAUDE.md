@@ -61,8 +61,8 @@ mortgage reference model are the regression baseline (ADR 0081).
   Never assume one row per property.
 - **Dynamic 1..N properties:** the engine maps over a property array — no fixed slots, no code
   changes to add a property.
-- **Scenarios override only Assumptions** (+ optional per-property growth); they never mutate the
-  underlying portfolio data.
+- **Scenarios override only Assumptions**; a property's own growth override still wins over a
+  scenario level (ADR 0102). Scenarios never mutate the underlying portfolio data.
 - Enforced by tooling: `pnpm depcruise` (layer rules, no runtime cycles; the known-violations
   baseline is empty and `pnpm depcruise:baseline-check` fails a PR that grows it) and ESLint
   engine-purity rules. Never add to the baseline to get a change through.
