@@ -1,0 +1,262 @@
+import { Fragment, useState } from "react";
+import { usePortfolioStore } from "../../state/portfolioStore";
+import { Panel, Button, Toast, TableWrap } from "../components/primitives";
+import {
+  BackupExportError,
+  chooseRestoreFile,
+  RestoreError,
+  SafetyBackupError,
+  SCHEMA_HEAD,
+  type BackupFile,
+  type BackupSummary,
+  type RestoreIssue,
+} from "../../state/backup";
+import { logFailure } from "../../state/diagnostics";
+import { type Dictionary } from "../../i18n";
+import { useT } from "../hooks/useT";
+import { describeWriteError } from "../model/writeError";
+import { toWriteError } from "../../state/writeError";
+import { fmtDate } from "../../lib/format";
+import { useToast } from "../hooks/useToast";
+
+/** A refused backup as a translated message; `issues` are listed separately. */
+function restoreErrorText(t: Dictionary, e: RestoreError): string {
+  const b = t.backup;
+  switch (e.code) {
+    case "BACKUP_TOO_LARGE":
+      return b.errTooLarge(20);
+    case "BACKUP_NOT_JSON":
+      return b.errNotJson;
+    case "BACKUP_INVALID":
+      return b.errInvalid(e.detail);
+    case "BACKUP_NEWER":
+      return b.errNewer(e.detail);
+    case "BACKUP_ROWS_INVALID":
+      return b.errRowsInvalid;
+  }
+}
+
+function issueText(t: Dictionary, i: RestoreIssue): string {
+  switch (i.rule) {
+    case "UNREADABLE_VALUE":
+      return t.backup.issueUnreadable;
+    case "DUPLICATE_KEY":
+      return t.backup.issueDuplicate;
+    case "MISSING_ASSUMPTIONS":
+      return t.backup.issueMissingAssumptions;
+    default:
+      return t.inputRules[i.rule];
+  }
+}
+
+function IssueTable({ issues }: { issues: RestoreIssue[] }) {
+  const t = useT();
+  const b = t.backup;
+  return (
+    <TableWrap label={t.backup.errorTitle} style={{ marginTop: "var(--s3)" }}>
+      <table className="data">
+        <thead>
+          <tr>
+            <th className="left">{b.colTable}</th>
+            <th className="left">{b.colRecord}</th>
+            <th className="left">{b.colColumn}</th>
+            <th className="left">{b.colProblem}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {issues.map((i, n) => (
+            <tr key={n}>
+              <td className="left">
+                <code>{i.table}</code>
+              </td>
+              <td className="left">{i.id ? <code>{i.id}</code> : "—"}</td>
+              <td className="left">
+                {i.column ? <code>{i.column}</code> : "—"}
+              </td>
+              <td className="left" style={{ color: "var(--negative)" }}>
+                {issueText(t, i)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </TableWrap>
+  );
+}
+
+function Summary({ summary }: { summary: BackupSummary }) {
+  const t = useT();
+  const b = t.backup;
+  const exported = new Date(summary.exportedAt);
+  return (
+    <div style={{ marginBottom: "var(--s4)" }}>
+      {!Number.isNaN(exported.getTime()) && (
+        <p>{b.backupDate(fmtDate(exported))}</p>
+      )}
+      {summary.schemaVersion < SCHEMA_HEAD && (
+        <p style={{ color: "var(--ink-soft)" }}>{b.olderVersion}</p>
+      )}
+      <p style={{ marginTop: "var(--s2)" }}>{b.holds}</p>
+      <div className="statlist">
+        {Object.entries(summary.counts).map(([table, n]) => (
+          <Fragment key={table}>
+            <div className="k">{b.tables[table as keyof typeof b.tables]}</div>
+            <div className="v num">{n}</div>
+          </Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Backup/restore body without an AppShell — embedded in the Settings page sub-tabs. */
+export function BackupRestorePanel() {
+  const t = useT();
+  const exportBackup = usePortfolioStore((s) => s.exportBackup);
+  const restoreBackup = usePortfolioStore((s) => s.restoreBackup);
+
+  const [exporting, setExporting] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [pendingBackup, setPendingBackup] = useState<{
+    file: string;
+    backup: BackupFile;
+    summary: BackupSummary;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [issues, setIssues] = useState<RestoreIssue[]>([]);
+
+  /** Show a failure: a refused backup with its records, anything else translated. */
+  function fail(e: unknown, other: (detail: string) => string) {
+    if (e instanceof RestoreError) {
+      setError(restoreErrorText(t, e));
+      setIssues(e.issues);
+      return;
+    }
+    logFailure("BACKUP", e);
+    setError(
+      e instanceof SafetyBackupError
+        ? t.backup.safetyBackupFailed(e.detail)
+        : e instanceof BackupExportError
+          ? t.backup.exportFailed(e.detail)
+          : other(describeWriteError(t, toWriteError(e)).message),
+    );
+  }
+
+  function clearError() {
+    setError(null);
+    setIssues([]);
+  }
+  const { toast, showToast } = useToast(2400);
+
+  async function handleExport() {
+    setExporting(true);
+    clearError();
+    try {
+      const outcome = await exportBackup();
+      // A cancelled save dialog is the user's own choice: no toast (UX-001).
+      if (outcome.kind === "saved")
+        showToast(t.backup.savedTo(outcome.filename));
+      else if (outcome.kind === "downloaded") showToast(t.backup.downloaded);
+    } catch (e) {
+      fail(e, t.backup.exportFailed);
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleChooseRestore() {
+    clearError();
+    try {
+      const picked = await chooseRestoreFile();
+      if (picked) setPendingBackup(picked);
+    } catch (e) {
+      fail(e, t.backup.errInvalid);
+    }
+  }
+
+  async function handleConfirmRestore() {
+    if (!pendingBackup) return;
+    setRestoring(true);
+    clearError();
+    try {
+      const { safetyBackup } = await restoreBackup(pendingBackup.backup);
+      setPendingBackup(null);
+      showToast(t.backup.restored(safetyBackup));
+    } catch (e) {
+      // One transaction: on any failure the current data is unchanged (DR-019).
+      fail(e, t.backup.restoreFailed);
+    } finally {
+      setRestoring(false);
+    }
+  }
+
+  return (
+    <>
+      <Panel title={t.backup.exportTitle} hint={t.backup.exportHint}>
+        <p
+          style={{
+            color: "var(--ink-soft)",
+            fontSize: 13,
+            marginBottom: "var(--s4)",
+          }}
+        >
+          {t.backup.exportBody}
+        </p>
+        <Button variant="primary" onClick={handleExport} disabled={exporting}>
+          {exporting ? t.backup.exporting : t.backup.exportButton}
+        </Button>
+      </Panel>
+
+      <Panel title={t.backup.restoreTitle} hint={t.backup.restoreHint}>
+        <p
+          style={{
+            color: "var(--ink-soft)",
+            fontSize: 13,
+            marginBottom: "var(--s4)",
+          }}
+        >
+          {t.backup.restoreBody}
+        </p>
+        {!pendingBackup ? (
+          <Button onClick={handleChooseRestore} disabled={restoring}>
+            {t.backup.chooseFile}
+          </Button>
+        ) : (
+          <div>
+            <p style={{ marginBottom: "var(--s4)" }}>
+              {t.backup.restoreFrom(pendingBackup.file)}
+            </p>
+            <Summary summary={pendingBackup.summary} />
+            <p className="error-text" style={{ marginBottom: "var(--s4)" }}>
+              {t.backup.restoreWarning}
+            </p>
+            <div className="row" style={{ gap: "var(--s3)" }}>
+              <Button
+                onClick={() => setPendingBackup(null)}
+                disabled={restoring}
+              >
+                {t.common.cancel}
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleConfirmRestore}
+                disabled={restoring}
+              >
+                {restoring ? t.backup.restoring : t.backup.restoreNow}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Panel>
+
+      {error && (
+        <Panel title={t.backup.errorTitle}>
+          <p className="error-text">{error}</p>
+          {issues.length > 0 && <IssueTable issues={issues} />}
+        </Panel>
+      )}
+
+      {toast && <Toast message={toast} />}
+    </>
+  );
+}

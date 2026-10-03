@@ -1,0 +1,28 @@
+# Dependency updates (P10): weekly, grouped so minor/patch bumps arrive as one PR per
+# ecosystem. Major bumps stay separate PRs. A runtime dependency change still needs the
+# owner's approval (ADR 0002) — review, don't auto-merge.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: cargo
+    directory: /src-tauri
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      cargo-minor-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

@@ -1,0 +1,208 @@
+// Text date field (dd.mm.yyyy, app convention) with an added calendar popover.
+// Manual typing stays the source of truth; the calendar is an additive convenience.
+// String-level contract — the picker just writes a dd.mm.yyyy string — so every path
+// still round-trips through parseDate/dateDraft and the engine parity is untouched.
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
+import { DayPicker } from "react-day-picker";
+import { cs, enGB, ru } from "react-day-picker/locale";
+import "react-day-picker/style.css";
+import { Calendar } from "lucide-react";
+import { parseDate } from "../model/formParse";
+import { useT } from "../hooks/useT";
+import { useUiStore } from "../../state/uiStore";
+import type { Language } from "../../i18n/types";
+import { useFieldControlProps } from "./fieldContext";
+import { at } from "../../lib/arrays";
+
+// dd.mm.yyyy for a day picked in the calendar. The day comes from react-day-picker as a
+// LOCAL Date, so read local Y/M/D directly (no UTC math) to avoid an off-by-one near
+// midnight. Mirrors dateDraft's zero-padding.
+// The calendar's built-in screen-reader labels (month navigation, weekday and day names)
+// follow the UI language (UX-034); the visible caption/weekday text uses our dictionary.
+const DAY_PICKER_LOCALE: Record<Language, typeof enGB> = { en: enGB, cs, ru };
+
+function localDayToDraft(day: Date): string {
+  const dd = String(day.getDate()).padStart(2, "0");
+  const mm = String(day.getMonth() + 1).padStart(2, "0");
+  return `${dd}.${mm}.${day.getFullYear()}`;
+}
+
+export function DateInput({
+  value,
+  onChange,
+  onPick,
+  placeholder,
+  min,
+  max,
+  ...rest
+}: {
+  /** dd.mm.yyyy draft string ("" allowed). */
+  value: string;
+  /** Fired on every text edit. */
+  onChange: (v: string) => void;
+  /** Fired (instead of onChange) when a day is chosen in the calendar; lets callers
+   *  with commit semantics (e.g. AsOfPicker) apply the pick immediately. Defaults to
+   *  onChange. */
+  onPick?: ((v: string) => void) | undefined;
+  placeholder?: string | undefined;
+  /** First and last selectable calendar day (UTC midnight dates); typing is not
+   *  limited here, the caller checks a typed value. */
+  min?: Date | undefined;
+  max?: Date | undefined;
+} & Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "value" | "onChange" | "min" | "max"
+>) {
+  const t = useT();
+  const language = useUiStore((s) => s.language);
+  const fieldProps = useFieldControlProps();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
+  // Portaled to <body> with fixed coords so the calendar escapes the form's
+  // overflow:hidden/auto ancestors (modal card, panel) that were clipping it.
+  const [coords, setCoords] = useState<{ left: number; top: number } | null>(
+    null,
+  );
+
+  // The draft is a UTC date; re-express it as a local-midnight date with the same
+  // Y/M/D so the highlighted cell matches what the user typed regardless of timezone.
+  const utc = parseDate(value);
+  const local = (d: Date) =>
+    new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const selected = utc ? local(utc) : undefined;
+  const first = min ? local(min) : undefined;
+  const last = max ? local(max) : undefined;
+
+  // Lightweight popover dismissal: outside-click + Esc, returning focus to the trigger.
+  // Not a modal (no global focus trap) — it sits inline in a form. The popover is
+  // portaled, so the "inside" check must cover both the field and the popover node.
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      const target = e.target as Node;
+      if (rootRef.current?.contains(target) || popRef.current?.contains(target))
+        return;
+      setOpen(false);
+    }
+    // Capture phase + stopPropagation: Esc closes only the popover, never a modal
+    // listening on document behind it (DR-148).
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey, true);
+    };
+  }, [open]);
+
+  // Position the fixed popover from the field's rect: below it, or flipped above when
+  // there isn't room. Recomputed on scroll/resize so it tracks the field.
+  useLayoutEffect(() => {
+    if (!open) {
+      setCoords(null);
+      return;
+    }
+    function place() {
+      const anchor = rootRef.current;
+      const pop = popRef.current;
+      if (!anchor || !pop) return;
+      const r = anchor.getBoundingClientRect();
+      const gap = 4;
+      const margin = 8;
+      const pw = pop.offsetWidth;
+      const ph = pop.offsetHeight;
+      let left = Math.min(r.left, window.innerWidth - pw - margin);
+      left = Math.max(margin, left);
+      let top = r.bottom + gap;
+      // Flip above only if it doesn't fit below AND there's more room above.
+      if (top + ph > window.innerHeight - margin && r.top - gap - ph > margin) {
+        top = r.top - gap - ph;
+      }
+      setCoords({ left, top });
+    }
+    place();
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+    };
+  }, [open]);
+
+  function handleSelect(day: Date | undefined) {
+    if (day) (onPick ?? onChange)(localDayToDraft(day));
+    setOpen(false);
+    triggerRef.current?.focus();
+  }
+
+  return (
+    <div className="date-input" ref={rootRef}>
+      <div className="input-wrap">
+        <input
+          {...fieldProps}
+          className="has-trailing-btn"
+          value={value}
+          placeholder={placeholder ?? t.forms.datePlaceholder}
+          inputMode="text"
+          onChange={(e) => onChange(e.target.value)}
+          {...rest}
+        />
+        <button
+          type="button"
+          ref={triggerRef}
+          className="date-trigger"
+          aria-label={t.calendar.open}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+        >
+          <Calendar size={16} aria-hidden />
+        </button>
+      </div>
+      {open &&
+        createPortal(
+          <div
+            ref={popRef}
+            className="date-popover"
+            role="dialog"
+            aria-label={t.calendar.open}
+            style={{
+              left: coords?.left ?? -9999,
+              top: coords?.top ?? -9999,
+              visibility: coords ? "visible" : "hidden",
+            }}
+          >
+            <DayPicker
+              mode="single"
+              locale={DAY_PICKER_LOCALE[language]}
+              {...(selected && { selected, defaultMonth: selected })}
+              {...(first && { startMonth: first })}
+              {...(last && { endMonth: last })}
+              disabled={[
+                ...(first ? [{ before: first }] : []),
+                ...(last ? [{ after: last }] : []),
+              ]}
+              onSelect={handleSelect}
+              weekStartsOn={t.calendar.weekStartsOn as 0 | 1}
+              formatters={{
+                formatCaption: (month) =>
+                  `${t.monthsShort[month.getMonth()]} ${month.getFullYear()}`,
+                formatWeekdayName: (weekday) =>
+                  at(t.calendar.weekdaysShort, weekday.getDay()),
+              }}
+            />
+          </div>,
+          document.body,
+        )}
+    </div>
+  );
+}

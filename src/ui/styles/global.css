@@ -1,0 +1,112 @@
+/* Self-hosted variable fonts (bundled by Vite from node_modules → fully offline). */
+@import "@fontsource-variable/fraunces/index.css";
+@import "@fontsource-variable/public-sans/index.css";
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-text);
+  font-feature-settings: var(--num);
+  color: var(--ink);
+  background: var(--paper);
+  /* faint paper grain for depth */
+  background-image: radial-gradient(var(--grain) 0.5px, transparent 0.5px);
+  background-size: 3px 3px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 460;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--ink);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* tabular numbers everywhere money/ratios appear */
+.num {
+  font-feature-settings: var(--num);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* tones */
+.tone-positive {
+  color: var(--positive);
+}
+.tone-negative {
+  color: var(--negative);
+}
+.tone-neutral {
+  color: var(--ink);
+}
+
+/* focus ring — visible, accessible */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* utility */
+.eyebrow {
+  font-family: var(--font-text);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* staggered reveal for dashboard load */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.reveal {
+  animation: rise 0.18s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
+}

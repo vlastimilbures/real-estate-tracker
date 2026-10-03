@@ -1,0 +1,7 @@
+# Pinned Rust toolchain (P10): local builds and CI use the same compiler and clippy lint set.
+# Lives at the repo root because CI runs cargo from here (--manifest-path src-tauri/...).
+# Bump deliberately (Dependabot does not); run fmt + clippy -D warnings after a bump.
+[toolchain]
+channel = "1.96.0"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

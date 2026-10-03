@@ -1,0 +1,119 @@
+// Scenario draft parsing, extracted from ScenarioForm.tsx so it's unit-testable
+// without mounting the component (mirrors mortgageForm.test.ts).
+import { describe, it, expect } from "vitest";
+import {
+  parseScenarioDraft,
+  DEFAULT_SHOCK_YEARS,
+  type ScenarioDraftFields,
+} from "../scenarioForm";
+import { en } from "../../../i18n/en";
+
+const blank: ScenarioDraftFields = {
+  name: "",
+  appreciationPa: "",
+  rentIndexationPa: "",
+  vacancyAllowance: "",
+  postFixationResetRatePa: "",
+  inflationPa: "",
+  inflationShockDelta: "",
+  inflationShockYears: "",
+  rateShockDelta: "",
+  rateShockYears: "",
+  valueShockPct: "",
+  valueShockYear: "",
+};
+
+describe("parseScenarioDraft", () => {
+  it("requires a name", () => {
+    const { errors } = parseScenarioDraft(blank, en);
+    expect(errors.name).toBe(en.scenarios.required);
+  });
+
+  it("leaves overrides empty when every field is blank (inherits Base)", () => {
+    const { errors, overrides } = parseScenarioDraft(
+      { ...blank, name: "Stress test" },
+      en,
+    );
+    expect(errors).toEqual({});
+    expect(overrides).toEqual({});
+  });
+
+  it("parses level overrides as ratios", () => {
+    const { errors, overrides } = parseScenarioDraft(
+      { ...blank, name: "S", appreciationPa: "2.5", vacancyAllowance: "5" },
+      en,
+    );
+    expect(errors).toEqual({});
+    expect(overrides.appreciationPa?.toString()).toBe("0.025");
+    expect(overrides.vacancyAllowance?.toString()).toBe("0.05");
+  });
+
+  it("rejects an unparseable level override", () => {
+    const { errors } = parseScenarioDraft(
+      { ...blank, name: "S", appreciationPa: "abc" },
+      en,
+    );
+    expect(errors.appreciationPa).toBe(en.scenarios.invalidPct);
+  });
+
+  it("parses an inflation shock with default duration when years is blank", () => {
+    const { errors, overrides } = parseScenarioDraft(
+      { ...blank, name: "S", inflationShockDelta: "1.5" },
+      en,
+    );
+    expect(errors).toEqual({});
+    expect(overrides.inflationShock).toEqual({
+      deltaPa: overrides.inflationShock?.deltaPa,
+      durationYears: DEFAULT_SHOCK_YEARS,
+    });
+    expect(overrides.inflationShock?.deltaPa.toString()).toBe("0.015");
+  });
+
+  it("parses an explicit shock duration", () => {
+    const { overrides } = parseScenarioDraft(
+      {
+        ...blank,
+        name: "S",
+        rateShockDelta: "1",
+        rateShockYears: "5",
+      },
+      en,
+    );
+    expect(overrides.rateShock?.durationYears).toBe(5);
+  });
+
+  it("rejects a shock duration below 1", () => {
+    const { errors } = parseScenarioDraft(
+      { ...blank, name: "S", rateShockDelta: "1", rateShockYears: "0" },
+      en,
+    );
+    expect(errors.rateShockYears).toBe(en.scenarios.geOne);
+  });
+
+  it("ignores the years field when delta is blank (no shock)", () => {
+    const { errors, overrides } = parseScenarioDraft(
+      { ...blank, name: "S", inflationShockYears: "10" },
+      en,
+    );
+    expect(errors).toEqual({});
+    expect(overrides.inflationShock).toBeUndefined();
+  });
+
+  it("parses a value shock defaulting atYear to 0 (today)", () => {
+    const { errors, overrides } = parseScenarioDraft(
+      { ...blank, name: "S", valueShockPct: "-10" },
+      en,
+    );
+    expect(errors).toEqual({});
+    expect(overrides.valueShock?.atYear).toBe(0);
+    expect(overrides.valueShock?.pct.toString()).toBe("-0.1");
+  });
+
+  it("rejects a negative value-shock year", () => {
+    const { errors } = parseScenarioDraft(
+      { ...blank, name: "S", valueShockPct: "-10", valueShockYear: "-1" },
+      en,
+    );
+    expect(errors.valueShockYear).toBe(en.scenarios.geZero);
+  });
+});

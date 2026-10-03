@@ -1,0 +1,48 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "Mutation testing on the pure engine (D-26, D-68): nightly CI via `pnpm mutation`, incremental (D-72): only mutants in changed code or tests rerun; `pnpm mutation --force` reruns all. thresholds.break = P10 baseline 97.61 % floored; raise it, never lower it. Survivors: DR-168.",
+  "packageManager": "pnpm",
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "vite.config.ts",
+    "related": true
+  },
+  "mutate": ["src/engine/**/*.ts", "!src/engine/**/__tests__/**"],
+  "coverageAnalysis": "perTest",
+  "reporters": ["clear-text", "progress", "html", "json"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation.json"
+  },
+  "tempDirName": ".stryker-tmp",
+  "incremental": true,
+  "incrementalFile": "reports/mutation/stryker-incremental.json",
+  "concurrency": 8,
+  "timeoutMS": 10000,
+  "thresholds": {
+    "high": 90,
+    "low": 75,
+    "break": 97
+  },
+  "ignorePatterns": [
+    "/.claude",
+    "/.serena",
+    "/.tokensave",
+    "/.codegraph",
+    "/.impeccable",
+    "/docs",
+    "/e2e",
+    "/screenshots",
+    "/src-tauri",
+    "/test-results",
+    "/ux-capture",
+    "/ux-screens",
+    "/reports"
+  ],
+  "warnings": {
+    "unknownOptions": true
+  },
+  "plugins": ["@stryker-mutator/vitest-runner"]
+}

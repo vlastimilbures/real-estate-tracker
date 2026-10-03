@@ -1,0 +1,241 @@
+// The CSV write path (src/import/csvImport.ts, P5b): everything is resolved and checked
+// before anything is written, and the write is one transaction — a failure keeps
+// nothing (DR-023, DR-063). Synthetic fixtures only.
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
+import { migrate } from "../../data/migrations";
+import { upsertAssumptions } from "../../data/repositories";
+import { SEED_ASSUMPTIONS } from "../../data/seed";
+import type { Sql } from "../../data/sql";
+import {
+  parseMortgages,
+  parseProperties,
+  parseRents,
+  parseValuations,
+} from "../csv";
+import { CsvImportError, importCsv } from "../csvImport";
+
+const PROPS = `name,purchase_date,purchase_price
+Byt A,2020-01-01,5000000
+Byt B,2021-01-01,6000000`;
+const MH =
+  "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment,loan_term_years,contract_maturity_date";
+
+let sql: TestSql;
+
+/** Every portfolio table, for "nothing changed" comparisons. */
+function dump(s: TestSql) {
+  const out: Record<string, unknown[]> = {};
+  for (const t of [
+    "properties",
+    "mortgage_blocks",
+    "valuations",
+    "leases",
+    "holding_costs",
+  ])
+    out[t] = s.db.prepare(`SELECT * FROM ${t} ORDER BY id`).all();
+  return out;
+}
+
+async function refused(p: Promise<unknown>): Promise<CsvImportError> {
+  const e = await p.then(
+    () => null,
+    (err: unknown) => err,
+  );
+  expect(e).toBeInstanceOf(CsvImportError);
+  return e as CsvImportError;
+}
+
+beforeEach(async () => {
+  sql = openMemorySql();
+  await migrate(sql);
+  await upsertAssumptions(sql, SEED_ASSUMPTIONS);
+  await importCsv(sql, {
+    properties: parseProperties(PROPS).rows,
+    mortgages: parseMortgages(
+      `${MH}\nByt A,2021-01-17,2250000,10,0.0169,7908,,`,
+    ).rows,
+  });
+});
+
+afterEach(() => sql.db.close());
+
+describe("importCsv — all or nothing", () => {
+  it("an unknown property in a child file writes nothing (DR-023)", async () => {
+    const before = dump(sql);
+    const e = await refused(
+      importCsv(sql, {
+        properties: parseProperties(
+          "name,purchase_date,purchase_price\nNew,2020-01-01,1",
+        ).rows,
+        rents: parseRents(
+          "property_name,start_date,end_date,monthly_rent\nNope,2025-01-01,,1000",
+        ).rows,
+      }),
+    );
+    expect(e.problems).toEqual([
+      {
+        file: "rents",
+        row: 2,
+        field: "property_name",
+        problem: { code: "unknownProperty", value: "Nope" },
+      },
+    ]);
+    expect(dump(sql)).toEqual(before);
+  });
+
+  it("a failure inside the write rolls every statement back (DR-063)", async () => {
+    const before = dump(sql);
+    const failing: Sql = {
+      ...sql,
+      transaction: (statements, options) =>
+        sql.transaction(
+          [...statements, { query: "INSERT INTO no_such_table VALUES (1)" }],
+          options,
+        ),
+    };
+    await expect(
+      importCsv(failing, {
+        properties: parseProperties(
+          "name,purchase_date,purchase_price\nNew,2020-01-01,1\nByt B,2021-01-01,7000000",
+        ).rows,
+        valuations: parseValuations(
+          "property_name,valid_from,valid_to,market_value\nNew,2026-01-01,,2",
+        ).rows,
+      }),
+    ).rejects.toThrow(/no_such_table/);
+    expect(dump(sql)).toEqual(before);
+  });
+
+  it("an engine input rule rejects the file and names the line (D-17)", async () => {
+    const before = dump(sql);
+    const e = await refused(
+      importCsv(sql, {
+        mortgages: parseMortgages(
+          `${MH}\nByt B,2021-01-01,2000000,5,0.05,100,,`,
+        ).rows,
+      }),
+    );
+    expect(e.problems).toEqual([
+      {
+        file: "mortgages",
+        row: 2,
+        field: "monthly_instalment",
+        problem: { code: "inputRule", rule: "INSTALMENT_BELOW_INTEREST" },
+      },
+    ]);
+    expect(dump(sql)).toEqual(before);
+  });
+});
+
+describe("importCsv — matching and preserved fields", () => {
+  it("matches a property name case-insensitively and keeps its spelling (D-55)", async () => {
+    await importCsv(sql, {
+      properties: parseProperties(
+        "name,purchase_date,purchase_price\n byt a ,2020-01-01,5100000",
+      ).rows,
+      valuations: parseValuations(
+        "property_name,valid_from,valid_to,market_value\nBYT A,2026-01-01,,9000000",
+      ).rows,
+    });
+    const props = sql.db
+      .prepare("SELECT id, name, purchase_price FROM properties ORDER BY id")
+      .all();
+    expect(props).toEqual([
+      { id: "byt-a", name: "Byt A", purchase_price: "5100000" },
+      { id: "byt-b", name: "Byt B", purchase_price: "6000000" },
+    ]);
+    expect(sql.db.prepare("SELECT property_id FROM valuations").all()).toEqual([
+      { property_id: "byt-a" },
+    ]);
+  });
+
+  it("a re-import keeps the active flag, draws, interest-only date and a stored maturity (DR-129)", async () => {
+    sql.db.exec(`
+      UPDATE properties SET active = 0 WHERE id = 'byt-a';
+      UPDATE mortgage_blocks SET contract_maturity_date = '2046-01-17',
+        interest_only_until = '2021-06-30', loan_term_years = 25,
+        draws = '[{"date":"2021-03-01","amount":"100000"}]';
+    `);
+    await importCsv(sql, {
+      properties: parseProperties(PROPS).rows,
+      mortgages: parseMortgages(
+        `${MH}\nByt A,2021-01-17,2250000,10,0.0169,7908,25,`,
+      ).rows,
+    });
+    expect(
+      sql.db
+        .prepare(
+          "SELECT contract_maturity_date, interest_only_until, draws FROM mortgage_blocks",
+        )
+        .get(),
+    ).toEqual({
+      contract_maturity_date: "2046-01-17",
+      interest_only_until: "2021-06-30",
+      draws: '[{"date":"2021-03-01","amount":"100000"}]',
+    });
+    expect(
+      sql.db.prepare("SELECT active FROM properties WHERE id = 'byt-a'").get(),
+    ).toEqual({ active: 0 });
+
+    await importCsv(sql, {
+      mortgages: parseMortgages(
+        `${MH}\nByt A,2021-01-17,2250000,10,0.0169,7908,25,2046-02-17`,
+      ).rows,
+    });
+    expect(
+      sql.db
+        .prepare("SELECT contract_maturity_date FROM mortgage_blocks")
+        .get(),
+    ).toEqual({ contract_maturity_date: "2046-02-17" });
+  });
+
+  it("gives every new property a holding-costs row", async () => {
+    await importCsv(sql, {
+      properties: parseProperties(
+        "name,purchase_date,purchase_price\nByt C,2020-01-01,1",
+      ).rows,
+    });
+    expect(
+      sql.db
+        .prepare("SELECT property_id FROM holding_costs ORDER BY property_id")
+        .all(),
+    ).toEqual([
+      { property_id: "byt-a" },
+      { property_id: "byt-b" },
+      { property_id: "byt-c" },
+    ]);
+  });
+});
+
+// DR-137: a stored row whose date was edited after an earlier import still holds the id
+// generated from its old date. A new CSV row with that old date must get a fresh id
+// instead of failing the whole import on the PRIMARY KEY.
+describe("importCsv — generated ids never collide (DR-137)", () => {
+  it("re-importing a date whose generated id is taken gets a fresh id", async () => {
+    const VH = "property_name,valid_from,valid_to,market_value";
+    await importCsv(sql, {
+      valuations: parseValuations(
+        `${VH}\nByt A,2026-06-01,,12000000`,
+        new Set(["Byt A"]),
+      ).rows,
+    });
+    sql.db
+      .prepare(
+        "UPDATE valuations SET valid_from = '2026-07-01' WHERE valid_from = '2026-06-01'",
+      )
+      .run();
+    const report = await importCsv(sql, {
+      valuations: parseValuations(
+        `${VH}\nByt A,2026-06-01,,12500000`,
+        new Set(["Byt A"]),
+      ).rows,
+    });
+    expect(report.upserted.valuations).toBe(1);
+    const rows = sql.db
+      .prepare("SELECT id, valid_from FROM valuations ORDER BY valid_from")
+      .all() as { id: string; valid_from: string }[];
+    expect(rows.map((r) => r.valid_from)).toEqual(["2026-06-01", "2026-07-01"]);
+    expect(new Set(rows.map((r) => r.id)).size).toBe(2);
+  });
+});

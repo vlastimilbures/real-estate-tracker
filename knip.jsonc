@@ -1,0 +1,19 @@
+// Dead-code check (P10, `pnpm knip`): no unused files, exports, types or dependencies.
+// Entry points come from knip's Vite/Vitest/Playwright/ESLint plugins. Every allow-list
+// entry below says why it is a false positive; never add one to silence real dead code.
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  // Helpers exported for tests but also used inside their own module are not dead.
+  "ignoreExportsUsedInFile": true,
+  // Loaded by CSS @import in src/ui/styles/global.css:2-3, which knip does not parse.
+  "ignoreDependencies": [
+    "@fontsource-variable/fraunces",
+    "@fontsource-variable/public-sans",
+  ],
+  "ignoreIssues": {
+    // The independent reference model (P2) keeps its full API for cross-checks.
+    "src/engine/__tests__/reference/mortgageReference.ts": ["exports"],
+    // Shared tolerance helpers: the full set stays available to parity tests.
+    "src/engine/__tests__/support/tolerance.ts": ["exports"],
+  },
+}

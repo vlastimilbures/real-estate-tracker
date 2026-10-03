@@ -1,0 +1,126 @@
+name: Nightly (mutation testing, bench budgets)
+
+# Stryker on src/engine (J-09 → D-26, D-68). The run fails when the mutation score drops
+# below thresholds.break in stryker.config.json. The bench job fails when a budgeted
+# engine bench's p99 exceeds 2 × its budget (ADR 0066, ADR 0073). Scheduled runs skip
+# when main has no commit in the last 24 h; a manual run always runs both.
+#
+# Stryker runs incrementally (D-72): the previous run's result file is restored from the
+# Actions cache, so only mutants in changed engine code or tests rerun. The first run on a
+# branch has no cache and tests every mutant (~2.5 h on a 4-vCPU runner), hence the
+# timeout; later runs take minutes. Caches made on main are visible to every branch.
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  changed:
+    name: Main changed in 24 h?
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 50
+
+      - id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif [[ -n "$(git log --since='24 hours ago' --format=%H -1)" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No commit on main in 24 h: skipping."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  mutation:
+    name: Stryker (src/engine)
+    needs: changed
+    if: needs.changed.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore the incremental mutation result
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: reports/mutation/stryker-incremental.json
+          key: stryker-incremental-${{ github.run_id }}
+          restore-keys: stryker-incremental-
+
+      - name: Mutation testing
+        run: pnpm mutation --concurrency 4
+
+      # Saved even when the score breaks the threshold, so the next run does not redo
+      # the whole engine; skipped when there is no result file at all.
+      - name: Save the incremental mutation result
+        if: always() && hashFiles('reports/mutation/stryker-incremental.json') != ''
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: reports/mutation/stryker-incremental.json
+          key: stryker-incremental-${{ github.run_id }}
+
+      - name: Upload the mutation report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mutation-report
+          path: reports/mutation/
+          retention-days: 30
+
+  bench:
+    name: Engine bench budgets
+    needs: changed
+    if: needs.changed.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Bench
+        run: pnpm bench --outputJson bench.json
+
+      - name: Check p99 against 2 × budget
+        run: pnpm bench:check bench.json
+
+      - name: Upload the bench report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bench-report
+          path: bench.json
+          retention-days: 30

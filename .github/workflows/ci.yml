@@ -1,0 +1,182 @@
+name: CI
+
+# Scope push to main only — a PR branch push already triggers the pull_request event,
+# so without this filter every PR commit would run CI twice.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least-privilege: workflows only need to read the repo.
+permissions:
+  contents: read
+
+# Cancel any in-progress CI run for the same branch/PR when a newer commit arrives.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Frontend: TypeScript, lint, formatting, unit tests ────────────────────
+  frontend:
+    name: Frontend (typecheck · lint · format · test)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Version comes from package.json "packageManager".
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm exec prettier --check .
+
+      # Layer map (ADR 0072). The known-violations baseline is empty and may only shrink.
+      - name: Architecture rules
+        run: pnpm depcruise
+
+      - name: Baseline never grows
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --no-tags --depth=1 origin "$GITHUB_BASE_REF"
+          pnpm depcruise:baseline-check
+
+      - name: Dead code
+        run: pnpm knip
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level=high
+
+      # Separately named so a parity break (engine vs its parity targets) is visible at a glance.
+      - name: Parity tests
+        run: pnpm test:parity
+
+      # Full suite + per-folder coverage ratchet (thresholds in vite.config.ts).
+      - name: Test with coverage thresholds
+        run: pnpm test:coverage
+
+      # Dates are UTC by convention; a non-UTC zone (UTC−11) catches local-time leaks.
+      - name: Tests (non-UTC time zone)
+        run: pnpm test
+        env:
+          TZ: Pacific/Pago_Pago
+
+  # ── Accessibility: axe scan of every captured screen (F-08, ADR 0078) ────
+  # Runs the ux:capture harness on the in-memory sample portfolio (no real data) and fails
+  # on any axe WCAG 2.2 AA violation. Screenshots are a by-product; only axe is gated.
+  axe:
+    name: Accessibility (axe scan)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      # English, light + dark, default and minimum window (owner, ADR 0078).
+      - name: Capture screens with axe scans
+        run: pnpm ux:capture
+        env:
+          UX_RUN_ID: ci
+          UX_LANG: en
+          UX_THEME: both
+          UX_VIEWPORT: 1280x800,min
+
+      - name: Fail on any axe violation
+        run: pnpm ux:axe-check ci
+
+      - name: Upload axe results
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: axe-results
+          path: |
+            ux-screens/ci/summary.md
+            ux-screens/ci/*/axe/
+          retention-days: 14
+
+  # ── Rust / Tauri shell: formatting, clippy, tests, build ──────────────────
+  rust:
+    name: Rust (fmt · clippy · test · audit · build)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Tauri on Linux needs GTK / WebKit system libraries.
+      - name: Install Tauri Linux dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            libssl-dev \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libxdo-dev \
+            patchelf
+
+      # Installs the pinned toolchain and components from rust-toolchain.toml.
+      - name: Install Rust toolchain
+        run: rustup toolchain install && rustup show active-toolchain
+
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
+        with:
+          tool: cargo-audit
+
+      # Cache ~/.cargo/registry + the target dir keyed to Cargo.lock.
+      - name: Rust build cache
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: src-tauri
+
+      - name: Formatting check
+        run: cargo fmt --check --manifest-path src-tauri/Cargo.toml
+
+      - name: Clippy
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+
+      # Integration tests (DB transactions, migrations, H-14 probe). The timing-dependent
+      # H-14 probe is #[ignore]d (DR-169); run it locally with `cargo test -- --ignored`.
+      - name: Tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+      # Ignores (lock-only crates) are documented in src-tauri/.cargo/audit.toml.
+      - name: Audit Rust dependencies
+        working-directory: src-tauri
+        run: cargo audit
+
+      - name: Build
+        run: cargo build --manifest-path src-tauri/Cargo.toml

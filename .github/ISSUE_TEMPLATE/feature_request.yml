@@ -1,0 +1,20 @@
+name: Feature request
+description: Suggest an idea or a missing calculation
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation, e.g. a mortgage feature your bank uses.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How should it work? For calculations, include the formula or a worked example if you can.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

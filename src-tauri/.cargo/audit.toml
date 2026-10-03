@@ -1,0 +1,11 @@
+# cargo audit configuration (P8, DR-002). Each ignore names a crate that appears in
+# Cargo.lock but is not compiled into the app on any target: `cargo tree -i <crate>
+# --target all -e all` prints nothing. Re-check when Cargo.lock changes.
+[advisories]
+ignore = [
+  # rsa (Marvin timing side-channel; no fixed release). Lock-only: an optional sqlx
+  # backend (MySQL) that this app does not enable.
+  "RUSTSEC-2023-0071",
+  # rkyv (fix in >=0.8.17). Lock-only: an optional feature of a dependency, not enabled.
+  "RUSTSEC-2026-0235",
+]

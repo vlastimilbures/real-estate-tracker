@@ -1,0 +1,144 @@
+/* Design tokens — "private wealth report" palette (refined-minimalism).
+   Warm stone paper, ink text, one petrol accent + brass hairlines. */
+:root {
+  /* surfaces & ink */
+  --paper: #f5f3ee;
+  --paper-2: #efece4;
+  --surface: #fbfaf7;
+  --ink: #1c1b19;
+  --ink-soft: #6b6862;
+  --ink-faint: #726c62; /* WCAG-AA: 4.69:1 on paper, 4.98:1 on surface; 4.41:1 on paper-2 — use --ink-soft (4.7:1) there (UX-025) */
+  --hairline: #e2ddd3;
+  --hairline-strong: #d2ccbf;
+  --surface-raised: #efece4; /* inset/confirmation rows that sit above --surface */
+
+  /* accents */
+  --accent: #16484c; /* petrol */
+  --accent-soft: #2c6a6e;
+  --accent-wash: #e7eeed;
+  --brass: #9a7b3f;
+  --brass-soft: #c2a368;
+  --brass-text: #7a602c; /* brass for text: 5.03:1 on paper-2, 5.69:1 on surface (UX-025) */
+
+  /* semantic */
+  --positive: #2e6f4e;
+  --positive-wash: #e6efe8;
+  --negative: #a23a2c;
+  --negative-wash: #f3e6e2;
+  --warn: #7d6532; /* WCAG-AA: 4.63:1 on chip-bg (warn badge/banner), 5.01:1 on paper */
+
+  /* chart series (in order) */
+  --series-1: #16484c;
+  --series-2: #9a7b3f;
+  --series-2-text: #7a602c; /* series-2 as text: 5.69:1 on surface (UX-025) */
+  --series-3: #5a6b72;
+  --series-4: #9c5b47;
+  --series-5: #857b63; /* darkened sand: 3.78:1 on paper (clears 3:1 for chart lines) */
+
+  /* theme-aware surfaces (flip in dark) */
+  --grain: rgba(28, 27, 25, 0.018); /* paper-grain dot color */
+  --topbar-bg: rgba(245, 243, 238, 0.85); /* translucent sticky topbar */
+  --hover-wash: rgba(28, 27, 25, 0.04); /* nav/control hover */
+  --scrim: rgba(28, 27, 25, 0.45); /* modal backdrop */
+  --tile-grad: #f4f1ea; /* tile/legend gradient stop */
+  --chip-bg: #f1ead9; /* sand chip background */
+  --on-accent: #f4f1ea; /* ink on a filled accent surface */
+
+  /* typography */
+  --font-display: "Fraunces Variable", "Fraunces", Georgia, serif;
+  --font-text: "Public Sans Variable", "Public Sans", system-ui, sans-serif;
+  --num: "tnum" 1, "lnum" 1; /* tabular, lining figures */
+
+  /* spacing scale (4px base) */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 64px;
+
+  /* radii & shadow */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --shadow-tile:
+    0 1px 2px rgba(28, 27, 25, 0.04), 0 6px 20px rgba(28, 27, 25, 0.05);
+  --shadow-pop: 0 8px 30px rgba(28, 27, 25, 0.12);
+
+  /* layout */
+  --sidebar-w: 232px;
+  --sidebar-w-collapsed: 64px;
+  --content-max: 1200px;
+}
+
+/* ── Dark theme ──────────────────────────────────────────────────────────────
+   Applied via <html data-theme="dark"> (set in src/ui/theme.ts). Everything else
+   reads these variables, so only this block changes between modes. The petrol accent
+   is lightened so it stays legible on dark surfaces, and chart series are brightened. */
+[data-theme="dark"] {
+  /* surfaces & ink */
+  --paper: #16181a;
+  --paper-2: #1b1e20;
+  --surface: #202427;
+  --ink: #e9e6df;
+  --ink-soft: #a8a49b;
+  --ink-faint: #8f8a80; /* WCAG-AA: 5.18:1 on paper, 4.3:1 on surface */
+  --hairline: #2c3033;
+  --hairline-strong: #3a3f43;
+  --surface-raised: #262b2e; /* inset/confirmation rows that sit above --surface */
+
+  /* accents (lightened for dark) */
+  --accent: #5fb6ba;
+  --accent-soft: #7fc9cd;
+  --accent-wash: rgba(95, 182, 186, 0.16);
+  --brass: #c2a368;
+  --brass-soft: #d9c08a;
+  --brass-text: #c2a368;
+
+  /* semantic */
+  --positive: #66c08a;
+  --positive-wash: rgba(102, 192, 138, 0.14);
+  --negative: #e07a6b;
+  --negative-wash: rgba(
+    224,
+    122,
+    107,
+    0.1
+  ); /* .badge.bad text 4.61:1 on surface (UX-025) */
+  --warn: #d9b873;
+
+  /* chart series (brightened) */
+  --series-1: #5fb6ba;
+  --series-2: #d9b873;
+  --series-2-text: #d9b873;
+  --series-3: #8fa4ac;
+  --series-4: #d18a72;
+  --series-5: #c9c0ad; /* brightened sand: ~9.5:1 on --paper, ~7.9:1 on --surface (clears 3:1) */
+
+  /* theme-aware surfaces */
+  --grain: rgba(255, 255, 255, 0.015);
+  --topbar-bg: rgba(22, 24, 26, 0.85);
+  --hover-wash: rgba(255, 255, 255, 0.06);
+  --scrim: rgba(0, 0, 0, 0.6);
+  --tile-grad: #23272a;
+  --chip-bg: #2a2f33;
+  --on-accent: #16181a;
+
+  --shadow-tile: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+  --shadow-pop: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Screen-reader-only utility — visually hidden but accessible to AT */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

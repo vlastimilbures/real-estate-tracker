@@ -1,0 +1,376 @@
+// Portfolio KPIs incl. levered IRR (SPEC §4.6), computed from the portfolio
+// projection. Every value is a pure function of (portfolio, assumptions).
+import { ZERO, ONE, type Decimal } from "../lib/money";
+import {
+  DEBT_FREE_EPSILON,
+  IRR_BRACKET_EXTENSIONS,
+  IRR_BRACKET_HIGH,
+  IRR_BRACKET_LOW,
+  IRR_MAX_ITERATIONS,
+  IRR_NPV_TOLERANCE,
+  IRR_SCAN_GRID,
+} from "./constants";
+import { selectBlock } from "./amortization";
+import { at } from "./arrays";
+import {
+  propertySchedules,
+  scheduleRows,
+  type PropertySchedule,
+} from "./schedule";
+import { assertInputs } from "./validate";
+import { forProperty, openingValue } from "./metrics";
+import { buildCpiIndex, projectPortfolio, turnOnYear } from "./projections";
+import type {
+  Assumptions,
+  IrrNoRateReason,
+  Portfolio,
+  PortfolioKPIs,
+  Property,
+  ProjectionYear,
+} from "./types";
+
+/** An IRR, or why there is none (DR-158). */
+type IrrResult =
+  { rate: Decimal; reason: null } | { rate: null; reason: IrrNoRateReason };
+
+/** The IRR of `cashflows`, or null when there is none (see `irrResult`). */
+export function irr(cashflows: Decimal[]): Decimal | null {
+  return irrResult(cashflows).rate;
+}
+
+/**
+ * IRR via bisection on the decimal NPV (DR-158, ADR 0079). NOT_UNIQUE when an NPV sign
+ * scan over [−90 %, +1000 %] finds more than one root (counting cash-flow sign changes
+ * would wrongly flag a vector with a future purchase). Otherwise the root is bracketed
+ * in [−90 %, +100 %], then the upper bound widens in steps to +1000 %; NO_ROOT when no
+ * bracket holds one.
+ */
+export function irrResult(cashflows: Decimal[]): IrrResult {
+  // Horner's rule in the discount factor v = 1/(1+rate): one multiply-add per cash flow
+  // instead of a `pow` each (DR-041). Only the NPV's sign and the tolerance test are
+  // read, so the result is the same bisection midpoint (irr-equivalence.test.ts).
+  const npv = (rate: Decimal): Decimal => {
+    const v = ONE.div(ONE.plus(rate));
+    return cashflows.reduceRight((acc, cf) => acc.times(v).plus(cf), ZERO);
+  };
+  // Descartes' rule of signs: with at most one cash-flow sign change the NPV, a
+  // polynomial in v > 0, has at most one root, so only scan when there are more.
+  if (signChanges(cashflows) > 1 && npvSignChanges(npv) > 1) {
+    return { rate: null, reason: "NOT_UNIQUE" };
+  }
+  const nlo = npv(IRR_BRACKET_LOW);
+  for (const hi of [IRR_BRACKET_HIGH, ...IRR_BRACKET_EXTENSIONS]) {
+    if (!nlo.times(npv(hi)).isPositive()) {
+      return { rate: bisect(npv, IRR_BRACKET_LOW, nlo, hi), reason: null };
+    }
+  }
+  return { rate: null, reason: "NO_ROOT" };
+}
+
+/** Sign changes of the NPV across `IRR_SCAN_GRID`. */
+function npvSignChanges(npv: (rate: Decimal) => Decimal): number {
+  return signChanges(IRR_SCAN_GRID.map(npv));
+}
+
+/** Sign changes along `values`, skipping exact zeros. */
+function signChanges(values: Decimal[]): number {
+  let changes = 0;
+  let prev = 0;
+  for (const n of values) {
+    if (n.isZero()) continue;
+    const sign = n.isNegative() ? -1 : 1;
+    if (prev !== 0 && sign !== prev) changes++;
+    prev = sign;
+  }
+  return changes;
+}
+
+/** Bisect [lo, hi], whose NPVs differ in sign (or one is zero), to the root. */
+function bisect(
+  npv: (rate: Decimal) => Decimal,
+  lo: Decimal,
+  nlo: Decimal,
+  hi: Decimal,
+): Decimal {
+  for (let iter = 0; iter < IRR_MAX_ITERATIONS; iter++) {
+    const mid = lo.plus(hi).div(2);
+    const nmid = npv(mid);
+    if (nmid.abs().lessThan(IRR_NPV_TOLERANCE)) return mid;
+    if (nlo.times(nmid).isNegative()) {
+      hi = mid;
+    } else {
+      lo = mid;
+      nlo = nmid;
+    }
+  }
+  return lo.plus(hi).div(2);
+}
+
+/**
+ * Cash the investor must put in to acquire `property` at its (future) purchase date:
+ * `purchaseDateValue − initialLoanPrincipal + purchaseDateValue·acquisitionCostPct`.
+ * The valuation/principal selection mirrors the projection basis and
+ * `schedulesByProperty`, so the outflow lines up with the equity the projection turns
+ * on in the same year. Only meaningful for a future buy (tStart > 0).
+ */
+function acquisitionOutflow(
+  property: Property,
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+): Decimal {
+  const v0 = openingValue(
+    forProperty(portfolio.valuations, property.id),
+    property,
+    property.purchaseDate,
+  );
+  const block = selectBlock(
+    forProperty(portfolio.mortgages, property.id),
+    assumptions.baseDate,
+  );
+  const principal = block ? block.initialPrincipal : ZERO;
+  const acqPct = assumptions.acquisitionCostPct ?? ZERO;
+  return v0.minus(principal).plus(v0.times(acqPct));
+}
+
+/**
+ * Down-payment outflows by projection year: a property bought *after* baseDate turns
+ * its equity on at tStart > 0, so its purchase-date value − loan principal + costs is
+ * paid in year tStart; levered IRR / cumulative CF aren't flattered by free terminal
+ * equity. All zero for an all-owned portfolio (the seed ⇒ parity targets unchanged).
+ */
+function acquisitionOutflows(
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+): Decimal[] {
+  const N = assumptions.horizonYears;
+  const out: Decimal[] = Array.from({ length: N + 1 }, () => ZERO);
+  for (const p of portfolio.properties) {
+    if (p.active === false) continue;
+    const tStart = turnOnYear(p.purchaseDate, assumptions);
+    if (tStart > 0 && tStart <= N) {
+      out[tStart] = at(out, tStart).plus(
+        acquisitionOutflow(p, portfolio, assumptions),
+      );
+    }
+  }
+  return out;
+}
+
+/** A property's schedule from the shared map (every property id has an entry). */
+function scheduleOf(
+  schedules: Map<string, PropertySchedule>,
+  propertyId: string,
+): PropertySchedule {
+  return schedules.get(propertyId) ?? { rows: [], refinances: [] };
+}
+
+/**
+ * Net refinance cash by projection year (D-47): a successor's balance drawn − the
+ * predecessor balance it pays off, in the year of its handover month. Positive for a
+ * cash-out refinance, negative for a pay-down. All zero without successors (the seed
+ * ⇒ parity targets unchanged).
+ */
+function refinanceCash(
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+  schedules: Map<string, PropertySchedule>,
+): Decimal[] {
+  const N = assumptions.horizonYears;
+  const out: Decimal[] = Array.from({ length: N + 1 }, () => ZERO);
+  for (const p of portfolio.properties) {
+    if (p.active === false) continue;
+    for (const r of scheduleOf(schedules, p.id).refinances) {
+      const t = Math.ceil(r.month / 12);
+      if (t <= N) out[t] = at(out, t).plus(r.drawn).minus(r.paidOff);
+    }
+  }
+  return out;
+}
+
+/**
+ * Net-worth growth. A growth rate needs a *positive* opening equity base, so the CAGRs
+ * are null when equity0 ≤ 0 — no growth base, shown as "—" (D-34). `greaterThan`,
+ * because `isPositive()` is also true for ZERO (DR-107). Real CAGR
+ * is taken off the CPI-deflated net worth — identical to (1+cagr)/(1+infl)−1 under
+ * constant inflation, so parity holds.
+ */
+function equityGrowth(
+  equity0: Decimal,
+  equityN: Decimal,
+  cpiN: Decimal,
+  N: number,
+) {
+  const netWorthReal = equityN.div(cpiN);
+  const netWorthMultiple = equity0.isZero() ? ZERO : equityN.div(equity0);
+  const cagr = (end: Decimal) =>
+    equity0.greaterThan(ZERO)
+      ? end.div(equity0).pow(ONE.div(N)).minus(ONE)
+      : null;
+  return {
+    netWorthReal,
+    netWorthMultiple,
+    cagrNominal: cagr(equityN),
+    cagrReal: cagr(netWorthReal),
+  };
+}
+
+/**
+ * Cumulative net cash flow (net of acquisition outflows and refinance cash), the first calendar year with
+ * a positive net cash flow, and the first year the portfolio is debt-free. A debt-free
+ * year only counts once the portfolio has carried debt (a never-leveraged portfolio
+ * reports null). NB: greaterThan(ZERO), not isPositive() — ZERO.isPositive() is true.
+ */
+function cashFlowMilestones(proj: ProjectionYear[], acqOutflow: Decimal[]) {
+  const firstCashFlowPositive =
+    proj.slice(1).find((y) => y.netCashFlow.isPositive()) ?? null;
+  const debtFree = firstDebtFreeYear(proj);
+  return {
+    cumulativeNetCashFlow: cumulativeNetCashFlow(proj, acqOutflow),
+    firstCashFlowPositiveYear: firstCashFlowPositive?.calendarYear ?? null,
+    firstCashFlowPositiveProjectionYear: firstCashFlowPositive?.year ?? null,
+    debtFreeYear: debtFree?.calendarYear ?? null,
+    debtFreeProjectionYear: debtFree?.year ?? null,
+  };
+}
+
+/** Σ over years 1..N of net cash flow minus acquisition outflows. */
+function cumulativeNetCashFlow(
+  proj: ProjectionYear[],
+  acqOutflow: Decimal[],
+): Decimal {
+  let total = ZERO;
+  for (let t = 1; t < proj.length; t++) {
+    total = total.plus(at(proj, t).netCashFlow).minus(at(acqOutflow, t));
+  }
+  return total;
+}
+
+/** The first year (from year 1) at or below DEBT_FREE_EPSILON after the portfolio has
+ *  carried debt (in year 0 or any year up to and including that one); null if none. */
+function firstDebtFreeYear(proj: ProjectionYear[]): ProjectionYear | null {
+  let seenDebt = at(proj, 0).balance.greaterThan(ZERO);
+  for (let t = 1; t < proj.length; t++) {
+    const y = at(proj, t);
+    if (y.balance.greaterThan(ZERO)) seenDebt = true;
+    if (seenDebt && y.balance.lessThanOrEqualTo(DEBT_FREE_EPSILON)) return y;
+  }
+  return null;
+}
+
+/** The levered IRR KPIs, each with the reason it has no value (DR-158). */
+function leveredIrr(
+  nominalVector: Decimal[],
+  realVector: Decimal[],
+): Pick<
+  PortfolioKPIs,
+  | "leveredIrrNominal"
+  | "leveredIrrReal"
+  | "leveredIrrNominalReason"
+  | "leveredIrrRealReason"
+> {
+  const nominal = irrResult(nominalVector);
+  const real = irrResult(realVector);
+  return {
+    leveredIrrNominal: nominal.rate,
+    leveredIrrReal: real.rate,
+    leveredIrrNominalReason: nominal.reason,
+    leveredIrrRealReason: real.reason,
+  };
+}
+
+/** Levered cash-flow vector [-equity0, netCF1..netCF_{N-1}, netCF_N + equityN], net of
+ *  acquisition outflows and refinance cash (terminal sale at projected value). */
+function leveredCashFlows(
+  proj: ProjectionYear[],
+  acqOutflow: Decimal[],
+): Decimal[] {
+  const N = proj.length - 1;
+  const vector: Decimal[] = [at(proj, 0).equity.negated()];
+  for (let t = 1; t <= N; t++) {
+    let cf = at(proj, t).netCashFlow.minus(at(acqOutflow, t));
+    if (t === N) cf = cf.plus(at(proj, N).equity);
+    vector.push(cf);
+  }
+  return vector;
+}
+
+/**
+ * Σ principal repaid across active properties within the horizon window. Schedules may
+ * extend past it (a future loan amortizing over its own full term), but the parity
+ * invariant is "Σ principal Yrs 1–N = initial debt", matching the projection.
+ */
+function principalRepaidInHorizon(
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+  schedules: Map<string, PropertySchedule>,
+): Decimal {
+  const horizonMonths = assumptions.horizonYears * 12;
+  let total = ZERO;
+  // Once per property id, in first-seen order (as a Map keyed by id would).
+  const active = portfolio.properties.filter((p) => p.active !== false);
+  for (const id of new Set(active.map((p) => p.id))) {
+    for (const r of scheduleOf(schedules, id).rows) {
+      if (r.month > horizonMonths) break;
+      total = total.plus(r.principal);
+    }
+  }
+  return total;
+}
+
+/** Portfolio KPIs (SPEC §4.6) from the portfolio projection. */
+export function portfolioKpis(
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+): PortfolioKPIs {
+  assertInputs(portfolio, assumptions); // D-37
+  const schedules = propertySchedules(
+    portfolio.mortgages,
+    portfolio.properties.map((p) => p.id),
+    assumptions,
+  );
+  // Validated above (DR-128).
+  const proj = projectPortfolio(
+    portfolio,
+    assumptions,
+    scheduleRows(schedules),
+  );
+  return kpisFrom(portfolio, assumptions, proj, schedules);
+}
+
+/**
+ * `portfolioKpis` from a projection and the property schedules already built from the
+ * same (validated) inputs, so they are not built again (DR-042).
+ */
+export function kpisFrom(
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+  proj: ProjectionYear[],
+  schedules: Map<string, PropertySchedule>,
+): PortfolioKPIs {
+  const N = assumptions.horizonYears;
+  // Time-varying CPI (honours a temporary inflation shock); cpi[N] is the horizon
+  // deflator and cpi[t] deflates each cash flow. Collapses to (1+inflationPa)^t when
+  // no shock is set, so the real-terms parity targets are unchanged.
+  const cpi = buildCpiIndex(assumptions);
+  const equity0 = at(proj, 0).equity;
+  const equityN = at(proj, N).equity;
+  // Cash outside the projection rows: acquisitions out, net refinance cash in (D-47).
+  const refiCash = refinanceCash(portfolio, assumptions, schedules);
+  const acqOutflow = acquisitionOutflows(portfolio, assumptions).map((x, t) =>
+    x.minus(at(refiCash, t)),
+  );
+  const nominalVector = leveredCashFlows(proj, acqOutflow);
+  const realVector = nominalVector.map((cf, t) => cf.div(at(cpi, t)));
+
+  return {
+    netWorthNominal: equityN,
+    ...equityGrowth(equity0, equityN, at(cpi, N), N),
+    ...cashFlowMilestones(proj, acqOutflow),
+    ...leveredIrr(nominalVector, realVector),
+    totalPrincipalRepaid: principalRepaidInHorizon(
+      portfolio,
+      assumptions,
+      schedules,
+    ),
+  };
+}

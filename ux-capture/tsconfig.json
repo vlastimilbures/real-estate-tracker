@@ -1,0 +1,8 @@
+{
+  // Typecheck for the UX capture tool (Node + Playwright). Run by `pnpm typecheck`.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": [".", "../playwright.ux.config.ts", "../src/vite-env.d.ts"]
+}

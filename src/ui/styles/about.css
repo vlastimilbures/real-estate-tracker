@@ -1,0 +1,110 @@
+/* About page — page-scoped layout. Colours/spacing all via design tokens so light and
+   dark themes follow automatically. Mirrors guide.css conventions. */
+
+/* Hero — brand mark beside the app name, version chip and tagline */
+.about-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+}
+.about-logo {
+  flex: none;
+  border-radius: 13px;
+  box-shadow: var(--shadow-tile);
+}
+.about-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.about-name {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.about-version {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  font-feature-settings: var(--num);
+}
+.about-tagline {
+  margin: var(--s2) 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: 60ch;
+}
+
+/* Sections within the modal body — replace the removed Panel headers */
+.about-section {
+  margin-top: var(--s5);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--hairline);
+}
+.about-section h4 {
+  margin: 0 0 var(--s3);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+/* Prose blocks within sections */
+.about-prose {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.55;
+  max-width: 72ch;
+  margin: 0 0 var(--s3);
+}
+.about-prose:last-child {
+  margin-bottom: 0;
+}
+
+/* Built-with stack line */
+.about-stack {
+  margin: 0 0 var(--s3);
+  font-size: 14px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Developer block — name + label/value meta grid */
+.about-dev {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+.about-dev-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.about-meta {
+  display: grid;
+  grid-template-columns: minmax(80px, max-content) 1fr;
+  column-gap: var(--s5);
+  row-gap: var(--s2);
+  margin: 0;
+}
+.about-meta dt {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+.about-meta dd {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+
+/* Footer line — copyright + usage note */
+.about-foot {
+  display: flex;
+  gap: var(--s2);
+  justify-content: center;
+  padding: var(--s4) 0 var(--s2);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+.about-foot-sep {
+  opacity: 0.6;
+}

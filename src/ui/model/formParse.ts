@@ -1,0 +1,228 @@
+// Pure parse/format helpers for draft strings ⇄ engine types. Kept out of the form
+// component file so fast-refresh stays happy and the parsing is unit-testable.
+import { D, type Decimal } from "../../lib/money";
+import { fmtCzk } from "../../lib/format";
+import { inRange, type IntRange } from "../../lib/intRanges";
+import {
+  money,
+  rate,
+  utc,
+  type IsoDate,
+  type Money,
+  type MortgageDraw,
+  type Rate,
+} from "../../engine";
+import type { Dictionary } from "../../i18n";
+
+/** Accept "1 234 567,89" or "1234567.89" → Decimal. */
+export function parseDecimal(raw: string): Decimal | null {
+  const cleaned = raw.replace(/\s/g, "").replace(",", ".");
+  if (cleaned === "" || !/^-?\d*\.?\d+$/.test(cleaned)) return null;
+  try {
+    return D(cleaned);
+  } catch {
+    return null;
+  }
+}
+
+/** Money entry → Money (sign kept; callers decide whether negatives are allowed). */
+export function parseMoney(raw: string): Money | null {
+  const d = parseDecimal(raw);
+  return d === null ? null : money(d);
+}
+
+/** Percent entry: user types "4.5" (%) → ratio 0.045. */
+export function parsePercentToRatio(raw: string): Rate | null {
+  const d = parseDecimal(raw);
+  return d === null ? null : rate(d.div(100));
+}
+
+/** Whole, unsigned, at most 9 digits like CSV import (ADR 0075, DR-078): a longer entry
+ *  is rejected instead of becoming Infinity. */
+export function parseIntField(raw: string): number | null {
+  const cleaned = raw.replace(/\s/g, "");
+  if (!/^\d{1,9}$/.test(cleaned)) return null;
+  return Number(cleaned);
+}
+
+/** dd.mm.yyyy → UTC Date (or null). */
+export function parseDate(raw: string): IsoDate | null {
+  const m = raw.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (!m) return null;
+  const [, dd, mm, yyyy] = m;
+  const day = Number(dd);
+  const month = Number(mm);
+  const year = Number(yyyy);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  // Date.UTC maps years 0–99 to 1900–1999, so 0099 would save as 1999 (DR-035, UX-052).
+  if (year < 1900) return null;
+  const date = utc(year, month, day); // UTC midnight
+  if (date.getUTCMonth() !== month - 1) return null; // overflow guard
+  return date;
+}
+
+// draft formatters (Decimal/Date → editable string)
+export function moneyDraft(d: Decimal | undefined): string {
+  return d == null ? "" : d.toDecimalPlaces(2).toString();
+}
+export function percentDraft(d: Decimal | undefined): string {
+  return d == null ? "" : d.times(100).toDecimalPlaces(4).toString();
+}
+export function dateDraft(date: Date | undefined): string {
+  if (!date) return "";
+  const dd = String(date.getUTCDate()).padStart(2, "0");
+  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
+  return `${dd}.${mm}.${date.getUTCFullYear()}`;
+}
+
+/** Development draws, one per line as `dd.mm.yyyy = amount`. null ⇒ a line is
+ *  malformed; [] ⇒ no draws. Sorted by date. */
+export function parseDraws(raw: string): MortgageDraw[] | null {
+  const lines = raw
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l !== "");
+  const out: MortgageDraw[] = [];
+  for (const line of lines) {
+    const eq = line.indexOf("=");
+    if (eq < 0) return null;
+    const date = parseDate(line.slice(0, eq));
+    const amount = parseMoney(line.slice(eq + 1));
+    if (!date || !amount || amount.lessThanOrEqualTo(0)) return null;
+    out.push({ date, amount });
+  }
+  out.sort((a, b) => a.date.getTime() - b.date.getTime());
+  return out;
+}
+export function drawsDraft(draws: MortgageDraw[] | undefined): string {
+  if (!draws || draws.length === 0) return "";
+  return draws
+    .map((d) => `${dateDraft(d.date)} = ${moneyDraft(d.amount)}`)
+    .join("\n");
+}
+
+// ---- field specs + kind parsing -------------------------------------------
+
+export type FieldKind = "date" | "money" | "pct" | "int" | "draws";
+
+export interface FieldSpec {
+  name: string;
+  label: string;
+  kind: FieldKind;
+  optional?: boolean;
+  suffix?: string;
+  help?: string;
+  /** Bounds of an `int` field; a parsed value outside them is invalid. */
+  range?: IntRange;
+}
+
+/** The message for a value that does not parse: the expected format of its kind (UX-040). */
+export function invalidHint(
+  t: Pick<Dictionary, "forms">,
+  kind: FieldKind,
+): string {
+  return t.forms.invalidHint[kind];
+}
+
+/** "Enter a whole number from 1 to 10 000" (UX-068). */
+export function intRangeHint(
+  t: Pick<Dictionary, "forms">,
+  r: IntRange,
+): string {
+  const n = (v: number) => fmtCzk(v, { suffix: false });
+  return t.forms.intRange(n(r.min), n(r.max));
+}
+
+/** A field's invalid-value message: its range when bounded, else its kind's format. */
+export function fieldHint(
+  t: Pick<Dictionary, "forms">,
+  spec: Pick<FieldSpec, "kind" | "range">,
+): string {
+  return spec.range ? intRangeHint(t, spec.range) : invalidHint(t, spec.kind);
+}
+
+/** The value each field kind parses to. */
+export interface KindValue {
+  date: IsoDate;
+  money: Money;
+  pct: Rate;
+  int: number;
+  draws: MortgageDraw[];
+}
+
+/** Any one parsed field value; null = an optional field left blank. */
+export type ParsedValue = KindValue[FieldKind] | null;
+
+/** One spec's parsed value: its kind's type, plus null when the spec has an `optional`
+ *  flag that is not literally false (a plain FieldSpec may be optional, so it gets null). */
+type SpecValue<F extends FieldSpec> =
+  | KindValue[F["kind"]]
+  | ("optional" extends keyof F
+      ? F extends { optional: false }
+        ? never
+        : null
+      : never);
+
+/** A form's parsed values, keyed and typed by its field specs. Declare the specs inline
+ *  (or `as const`) so their names, kinds and `optional: true` stay literal. */
+export type ParsedValues<S extends readonly FieldSpec[]> = {
+  [F in S[number] as F["name"]]: SpecValue<F>;
+};
+
+/** A parser per field kind: the value, or null when the text does not parse. */
+export type KindParsers = {
+  [K in FieldKind]: (raw: string) => KindValue[K] | null;
+};
+
+/** RecordForm's parsers. Money is non-negative everywhere it's entered (price, rent,
+ *  principal, instalment, costs), so negatives are rejected here; pct stays signed (a
+ *  declining-market appreciation override is legitimately negative). */
+export const FORM_PARSERS: KindParsers = {
+  date: parseDate,
+  money: (raw) => {
+    const m = parseMoney(raw);
+    return m === null || m.isNegative() ? null : m;
+  },
+  pct: parsePercentToRatio,
+  int: parseIntField,
+  draws: parseDraws,
+};
+
+/** How a form parses: its kind parsers and the messages for blank and invalid fields. */
+export interface CollectRules {
+  parsers: KindParsers;
+  /** Message for a required field left blank (optional blanks parse to null). */
+  blank: (spec: FieldSpec) => string;
+  /** Message for text that does not parse as the field's kind. */
+  invalid: (spec: FieldSpec) => string;
+}
+
+/**
+ * Parse a draft (field name → text) into values typed by the specs. Text is trimmed; a
+ * blank optional field is null; any blank required or unparseable field gets an error
+ * instead of a value.
+ */
+export function collectValues<const S extends readonly FieldSpec[]>(
+  specs: S,
+  draft: Readonly<Record<string, string>>,
+  rules: CollectRules,
+): { values: ParsedValues<S>; errors: Record<string, string> } {
+  const values: Record<string, ParsedValue> = {};
+  const errors: Record<string, string> = {};
+  for (const spec of specs) {
+    const raw = (draft[spec.name] ?? "").trim();
+    if (raw === "") {
+      if (spec.optional) values[spec.name] = null;
+      else errors[spec.name] = rules.blank(spec);
+      continue;
+    }
+    const parsed = rules.parsers[spec.kind](raw);
+    const outside =
+      spec.range && typeof parsed === "number" && !inRange(parsed, spec.range);
+    if (parsed === null || outside) errors[spec.name] = rules.invalid(spec);
+    else values[spec.name] = parsed;
+  }
+  // Every value came from its own spec's kind parser, and null only from an optional
+  // blank, so the record has the ParsedValues<S> shape (read only when errors is empty).
+  return { values: values as ParsedValues<S>, errors };
+}
