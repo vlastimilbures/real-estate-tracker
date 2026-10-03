@@ -25,6 +25,21 @@ describe("ADR 0116: effective maturity", () => {
     expect(day(effectiveMaturity(dev, assumptions))).toBe("2056-03-01");
   });
 
+  it("is the schedule's payoff when the instalment beats the entered term", () => {
+    // 30-year term, but 12,000 Kč a month repays 1M at 3 % in 94 payments.
+    const fast = {
+      id: "fast",
+      propertyId: "p",
+      startDate: isoDate("2020-01-10"),
+      initialPrincipal: money(1000000),
+      fixationYears: 10,
+      interestRatePa: rate("0.03"),
+      monthlyInstalment: money(12000),
+      loanTermYears: 30,
+    } as MortgageBlock;
+    expect(day(effectiveMaturity(fast, assumptions))).toBe("2027-11-10");
+  });
+
   it("moves to the shortened term (ADR 0109 example: 2043-03-17)", () => {
     const b = {
       ...javorova,

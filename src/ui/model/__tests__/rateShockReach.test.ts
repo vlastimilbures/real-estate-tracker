@@ -141,7 +141,14 @@ describe("rateShockReach", () => {
   });
 
   it("misses a loan that refixes after the horizon", () => {
-    const [loan] = reachOf([block("a", "2026-01-01", 31, 40)]);
+    // 12,600 Kč runs the loan ~39.5 years, past the 31-year fixation (ADR 0116: the
+    // schedule's payoff, not the entered term, is the maturity).
+    const [loan] = reachOf([
+      {
+        ...block("a", "2026-01-01", 31, 40),
+        monthlyInstalment: money("12600"),
+      },
+    ]);
     expect(loan?.hit).toBe(false);
     expect(loan?.blocks[0]?.reason).toBe("refixAfterHorizon");
   });

@@ -1364,7 +1364,8 @@ export function instalmentAtMonth(
 /**
  * Due date of a block's last payment in its own base schedule, after its prepayments
  * and recasts: the maturity in force (ADR 0116). Events dated after `next`'s start are
- * dropped, as in the chain. Without events it is the contract maturity.
+ * dropped, as in the chain. An instalment above the annuity can end it before the
+ * entered term.
  */
 export function effectiveMaturity(
   block: MortgageBlock,
@@ -1372,8 +1373,6 @@ export function effectiveMaturity(
   next?: MortgageBlock,
 ): IsoDate {
   const b = next ? cutAt(block, next).block : block;
-  if (!b.prepayments?.length && !b.recasts?.length)
-    return edate(b.startDate, termMonths(b));
   const { rows } = blockSchedule(b, assumptions);
   return edate(
     b.startDate,
