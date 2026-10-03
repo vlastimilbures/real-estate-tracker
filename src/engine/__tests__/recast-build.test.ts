@@ -1,4 +1,4 @@
-// ADR 0116 §G: characterisation of schedules whose recasts let the build run past the
+// Characterisation of schedules whose recasts let the build run past the
 // contract term. The grid stops at the loan's last payment instead of building to the
 // 50-year cap and trimming; every row, its count and the outcomes must stay identical.
 import { createHash } from "node:crypto";

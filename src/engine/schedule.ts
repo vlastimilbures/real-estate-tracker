@@ -986,15 +986,15 @@ function trimRepaid(
 
 /**
  * The grid month from which an idle row means the loan stays idle: past the contract
- * schedule and every month a tranche or an event touches. The build stops there
- * instead of running to a recast's 50-year reach; `trimRepaid` would drop the rest
- * anyway (ADR 0116).
+ * schedule and every grid month a tranche (`drawMonths`) or an event (payment p
+ * settles in grid month p − offset) touches. The build stops there instead of running
+ * to a recast's 50-year reach; `trimRepaid` would drop the rest anyway.
  */
 function quietFrom(
   contractMonths: number,
   events: LoanEvents,
   offset: number,
-  draws: Map<number, Decimal> = new Map(),
+  drawMonths: Iterable<number>,
 ): number {
   const paymentsAt = [
     ...events.prepaymentsAt.keys(),
@@ -1002,8 +1002,8 @@ function quietFrom(
   ];
   return Math.max(
     contractMonths,
-    ...paymentsAt.map((p) => p - offset + 1),
-    ...draws.keys(),
+    ...paymentsAt.map((p) => p - offset),
+    ...drawMonths,
   );
 }
 
@@ -1062,7 +1062,12 @@ function buildDevSchedule(
   };
   const opening = initDevScheduleState(block, assumptions);
   const contract = scheduleMonths(block, assumptions);
-  const quiet = quietFrom(contract, ctx.events, startToBase, ctx.drawsByMonth);
+  const quiet = quietFrom(
+    contract,
+    ctx.events,
+    startToBase,
+    ctx.drawsByMonth.keys(),
+  );
   const grid = runGrid(opening.state, totalMonths, quiet, (s, m) =>
     devMonthStep(s, m, ctx),
   );
@@ -1239,7 +1244,7 @@ function buildPlainSchedule(
   const grid = runGrid(
     state,
     builtMonths(block, assumptions, offset),
-    quietFrom(contract, ctx.events, offset),
+    quietFrom(contract, ctx.events, offset, []),
     (s, m) => plainMonthStep(s, m, ctx),
   );
   return {
