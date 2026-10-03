@@ -478,6 +478,22 @@ export const ru: Dictionary = {
     holdingCostsSaved: "Расходы на содержание сохранены",
     projectionTitle: (n) => `${n}-летний прогноз`,
     amortizationWarn: "Месячный платёж не погасит этот кредит к концу срока.",
+    eventIssue: {
+      PREPAYMENT_EXCEEDS_BALANCE: (date, requested, applied) =>
+        `досрочный платёж ${requested} от ${date} больше остатка: он погашает ${applied} и закрывает кредит.`,
+      PREPAYMENT_AFTER_PAYOFF: (date) =>
+        `досрочный платёж от ${date} приходится на время после погашения кредита, поэтому не учитывается.`,
+      PREPAYMENT_REPLACED: (date) =>
+        `досрочный платёж от ${date} приходится на время после перехода к следующему блоку кредита, поэтому не учитывается.`,
+      RECAST_AFTER_PAYOFF: (date) =>
+        `изменение срока от ${date} приходится на время после погашения кредита, поэтому не учитывается.`,
+      RECAST_REPLACED: (date) =>
+        `изменение срока от ${date} приходится на время после перехода к следующему блоку кредита, поэтому не учитывается.`,
+      RECAST_INSTALMENT_BELOW_INTEREST: (date) =>
+        `новый платёж с ${date} не покрывает проценты, поэтому условия кредита не меняются.`,
+      RECAST_TERM_CAPPED: (date) =>
+        `новый платёж с ${date} вышел бы за наибольший допустимый срок, поэтому кредит пересчитывается на этот срок.`,
+    },
     loanFrom: (date) => `Кредит от ${date}:`,
     monthsCount: (n) => `${n} ${ruPlural(n, ["месяц", "месяца", "месяцев"])}`,
     maturityPaysOff: (instalment, implied) =>

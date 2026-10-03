@@ -473,6 +473,22 @@ export const cs: Dictionary = {
     projectionTitle: (n) => `${n}letá projekce`,
     amortizationWarn:
       "Měsíční splátka tento úvěr do konce doby splatnosti nesplatí.",
+    eventIssue: {
+      PREPAYMENT_EXCEEDS_BALANCE: (date, requested, applied) =>
+        `mimořádná splátka ${requested} k ${date} je vyšší než zůstatek: splatí ${applied} a úvěr doplatí.`,
+      PREPAYMENT_AFTER_PAYOFF: (date) =>
+        `mimořádná splátka k ${date} připadá po doplacení úvěru, proto se nepoužije.`,
+      PREPAYMENT_REPLACED: (date) =>
+        `mimořádná splátka k ${date} připadá po převzetí dalším úvěrovým blokem, proto se nepoužije.`,
+      RECAST_AFTER_PAYOFF: (date) =>
+        `změna splatnosti k ${date} připadá po doplacení úvěru, proto se nepoužije.`,
+      RECAST_REPLACED: (date) =>
+        `změna splatnosti k ${date} připadá po převzetí dalším úvěrovým blokem, proto se nepoužije.`,
+      RECAST_INSTALMENT_BELOW_INTEREST: (date) =>
+        `nová splátka od ${date} nepokryje úrok, proto úvěr zůstává na původních podmínkách.`,
+      RECAST_TERM_CAPPED: (date) =>
+        `nová splátka od ${date} by překročila nejdelší povolenou splatnost, proto se úvěr přepočítá na tuto splatnost.`,
+    },
     loanFrom: (date) => `Úvěr od ${date}:`,
     monthsCount: (n) => `${n} ${csPlural(n, ["měsíc", "měsíce", "měsíců"])}`,
     maturityPaysOff: (instalment, implied) =>

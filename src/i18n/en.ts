@@ -5,7 +5,7 @@
 // Number/date/currency formatting is NOT localized (see src/lib/format.ts): the app is a
 // single-currency Czech tracker, so amounts stay "28 730 000 Kč" and dates dd.mm.yyyy in
 // every language. Only UI chrome is translated; `about.formatsNote` tells the user (ADR 0105).
-import type { ValidationCode } from "../engine";
+import type { LoanEventIssue, ValidationCode } from "../engine";
 import { enPlural } from "./plural";
 import { APP_NAME } from "./appName";
 
@@ -502,6 +502,29 @@ export const en = {
     projectionTitle: (n: number) => `${n}-year projection`,
     amortizationWarn:
       "The monthly instalment will not repay this loan by the end of its term.",
+    eventIssue: {
+      PREPAYMENT_EXCEEDS_BALANCE: (
+        date: string,
+        requested: string,
+        applied: string,
+      ) =>
+        `the prepayment of ${requested} on ${date} is more than the balance: it repays ${applied} and pays the loan off.`,
+      PREPAYMENT_AFTER_PAYOFF: (date: string) =>
+        `the prepayment on ${date} falls after the loan is paid off, so it is ignored.`,
+      PREPAYMENT_REPLACED: (date: string) =>
+        `the prepayment on ${date} falls after the next loan block takes over, so it is ignored.`,
+      RECAST_AFTER_PAYOFF: (date: string) =>
+        `the maturity change on ${date} falls after the loan is paid off, so it is ignored.`,
+      RECAST_REPLACED: (date: string) =>
+        `the maturity change on ${date} falls after the next loan block takes over, so it is ignored.`,
+      RECAST_INSTALMENT_BELOW_INTEREST: (date: string) =>
+        `the new instalment from ${date} does not cover the interest, so the loan keeps its terms.`,
+      RECAST_TERM_CAPPED: (date: string) =>
+        `the new instalment from ${date} would run past the longest allowed term, so the loan is re-amortized to that term instead.`,
+    } satisfies Record<
+      LoanEventIssue,
+      (date: string, requested: string, applied: string) => string
+    >,
     loanFrom: (date: string) => `Loan from ${date}:`,
     monthsCount: (n: number) => `${n} ${enPlural(n, ["month", "months"])}`,
     maturityPaysOff: (instalment: string, implied: string) =>

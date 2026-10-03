@@ -174,7 +174,9 @@ export function PropertyDetail() {
   const baseDate = assumptions.baseDate;
   // Loan checks for every block from the one in force onward (UX-054).
   // Skipped while the stored data breaks an engine rule (the checks would throw too).
-  const warnings = out ? loanWarnings(mortgages, baseDate) : [];
+  const warnings = out
+    ? loanWarnings(mortgages, baseDate, out.eventOutcomes)
+    : [];
 
   const lens =
     mode === "real"
