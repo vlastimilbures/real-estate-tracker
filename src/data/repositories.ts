@@ -100,21 +100,22 @@ async function byId(
 }
 
 /** Generic UPDATE … SET col=? … WHERE id=? from a row object's own keys (id excluded). */
+function updateStatement(table: string, row: { id: string }): SqlStatement {
+  const entries = Object.entries(row).filter(([k]) => k !== "id");
+  const assignments = entries.map(([k]) => `${k} = ?`).join(", ");
+  return {
+    query: `UPDATE ${table} SET ${assignments} WHERE id = ?`,
+    params: [...entries.map(([, v]) => v), row.id],
+  };
+}
+
 async function updateRow(
   sql: Sql,
   table: string,
   row: { id: string },
 ): Promise<void> {
-  const entries = Object.entries(row).filter(([k]) => k !== "id");
-  const assignments = entries.map(([k]) => `${k} = ?`).join(", ");
-  await byId(
-    table,
-    row.id,
-    sql.execute(`UPDATE ${table} SET ${assignments} WHERE id = ?`, [
-      ...entries.map(([, v]) => v),
-      row.id,
-    ]),
-  );
+  const { query, params } = updateStatement(table, row);
+  await byId(table, row.id, sql.execute(query, params));
 }
 
 const deleteById = (sql: Sql, table: string, id: string) =>
