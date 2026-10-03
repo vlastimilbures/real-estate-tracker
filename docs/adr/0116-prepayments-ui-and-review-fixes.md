@@ -38,9 +38,10 @@ This ADR covers both.
    completion (decision 15).
 6. **Snapshot instalment after a prepayment.** The as-of snapshot reports the instalment in
    force after a month's prepayment. When the snapshot month's row has a prepayment, the
-   instalment comes from the next row, if that row is at the same rate; the rate stays the
-   month's own. This matches the balance shown, which has already had the prepayment taken
-   off. A reset in the next row, or a recast alone, keeps today's behaviour.
+   instalment comes from the next row, if that row is at the same rate and draws nothing;
+   the rate stays the month's own. This matches the balance shown, which has already had
+   the prepayment taken off. An interest-only month, a reset or a tranche in the next
+   row, or a recast alone keeps today's behaviour.
 7. **Rate-shock reach uses the modelled maturity.** The Scenarios note ("hits N of M loans")
    reads each block's last payment from the base schedule, after its prepayments and
    recasts. Before the fixation end the rates, and so the events, are the same with and

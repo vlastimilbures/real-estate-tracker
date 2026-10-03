@@ -1339,8 +1339,9 @@ export function openingDebt(
  * Instalment & rate in force at a baseDate-anchored schedule month — reads the
  * row at that month so a future as-of date past the fixation reset reflects the
  * re-amortized instalment and reset rate. Month ≤ 0 (baseDate) uses the first row.
- * A month with a prepayment reports the next row's instalment at the same rate: the
- * balance at that month has already had the prepayment taken off (ADR 0116).
+ * An amortizing month with a prepayment reports the next row's instalment when that
+ * row draws nothing at the same rate: the balance at that month has already had the
+ * prepayment taken off (ADR 0116).
  */
 export function instalmentAtMonth(
   schedule: AmortizationRow[],
@@ -1353,7 +1354,9 @@ export function instalmentAtMonth(
   const after =
     month >= 1 &&
     row.prepaid.greaterThan(ZERO) &&
+    row.principal.greaterThan(ZERO) &&
     next !== undefined &&
+    next.drawn.isZero() &&
     next.ratePa.equals(row.ratePa);
   return {
     instalment: after ? next.instalment : row.instalment,

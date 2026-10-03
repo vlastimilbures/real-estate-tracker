@@ -10,7 +10,8 @@ import { portfolioProjection, propertyProjection } from "../projections";
 import { currentBalance, activeBlock } from "../amortization";
 import { schedulesByProperty } from "../schedule";
 import { assumptions, portfolio } from "./support/seed";
-import type { Portfolio } from "../types";
+import type { MortgageBlock, Portfolio } from "../types";
+import { devBlock } from "./support/mixed";
 import { KC, RATIO, near } from "./support/tolerance";
 import { money } from "../brands";
 
@@ -258,6 +259,46 @@ describe("ADR 0116: the instalment after a month's prepayment", () => {
     expect(snap.debt.toFixed(6)).toBe(rows[i].endBalance.toFixed(6));
     expect(snap.annualDebtService.toFixed(6)).toBe(
       rows[i + 1].instalment.times(12).toFixed(6),
+    );
+  });
+
+  it("keeps the month's own instalment when the next row draws a tranche", () => {
+    // Dev loan: a prepayment in the interest-only month before the 2027-08-20
+    // tranche; the next row's instalment is sized on the drawn balance.
+    const dev = {
+      ...devBlock,
+      id: "m-dev",
+      propertyId: "javorova",
+      prepayments: [
+        {
+          date: isoDate("2027-07-15"),
+          amount: money(200000),
+          effect: "lowerInstalment" as const,
+        },
+      ],
+    } as MortgageBlock;
+    const p: Portfolio = {
+      ...portfolio,
+      mortgages: [
+        ...portfolio.mortgages.filter((m) => m.propertyId !== "javorova"),
+        dev,
+      ],
+    };
+    const devRows =
+      schedulesByProperty(p.mortgages, ["javorova"], assumptions).get(
+        "javorova",
+      ) ?? [];
+    const k = devRows.findIndex((r) => r.prepaid.greaterThan(0));
+    expect(devRows[k + 1].drawn.greaterThan(0)).toBe(true);
+    const snap = propertySnapshot(
+      javorova,
+      p,
+      assumptions,
+      isoDate(devRows[k].date.toISOString().slice(0, 10)),
+      devRows,
+    );
+    expect(snap.annualDebtService.toFixed(6)).toBe(
+      devRows[k].instalment.times(12).toFixed(6),
     );
   });
 
