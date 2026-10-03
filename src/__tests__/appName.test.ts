@@ -74,10 +74,11 @@ describe("brand surfaces (ADR 0105)", () => {
     );
     const mark = container.querySelector(".brand .mark");
     expect(mark?.querySelector("br")).toBeTruthy();
-    const text = (mark?.innerHTML ?? "")
-      .replace(/<br>/g, " ")
-      .replace(/<[^>]+>/g, "")
-      .replace(/&nbsp;|\u00a0/g, " ");
+    // The line break reads as a space; the head's no-break spaces as plain spaces.
+    const text = [...(mark?.childNodes ?? [])]
+      .map((n) => (n.nodeName === "BR" ? " " : (n.textContent ?? "")))
+      .join("")
+      .replace(/\u00a0/g, " ");
     expect(text).toBe(name);
   });
 
