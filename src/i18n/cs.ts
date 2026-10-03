@@ -489,6 +489,14 @@ export const cs: Dictionary = {
       RECAST_TERM_CAPPED: (date) =>
         `nová splátka od ${date} by překročila nejdelší povolenou splatnost, proto se úvěr přepočítá na tuto splatnost.`,
     },
+    loanSummaryTitle: "Výhled úvěru",
+    loanSummaryHint:
+      "modelováno z úvěrů, mimořádných splátek a změn splatnosti",
+    loanPayoff: "Modelované doplacení",
+    loanPayoffNone: "Splaceno",
+    interestSaved: "Úrok ušetřený mimořádnými splátkami (nominálně)",
+    loanSummaryNote:
+      "Datum doplacení je modelované, není to termín od banky. Ušetřený úrok porovnává úvěr s mimořádnými splátkami a bez nich, za celou zbývající dobu.",
     loanFrom: (date) => `Úvěr od ${date}:`,
     monthsCount: (n) => `${n} ${csPlural(n, ["měsíc", "měsíce", "měsíců"])}`,
     maturityPaysOff: (instalment, implied) =>

@@ -1,6 +1,7 @@
 // Presentational panels extracted from PropertyDetail.tsx: the snapshot KPI tiles +
 // mini charts, and the always-editable holding-costs form. Pure rendering — the finance
 // lives in the engine; these take already-computed props / store actions.
+import type { ReactNode } from "react";
 import { MetricLabel } from "../components/MetricLabel";
 import {
   KpiTile,
@@ -11,6 +12,7 @@ import {
   Pct,
   Dscr,
   TableWrap,
+  StatList,
 } from "../components/primitives";
 import { ChartCard, CzkLines, SignedBars } from "../components/charts";
 import { SERIES, type ChartRow } from "../model/chartData";
@@ -24,6 +26,7 @@ import type {
   PropertySnapshot,
   HoldingCost,
   AmortizationRow,
+  LoanExposure,
 } from "../../engine";
 import type { MutationResult } from "../../state/portfolioStore";
 import { useT } from "../hooks/useT";
@@ -292,6 +295,29 @@ export function ActivationBanner({
   }
 
   return null;
+}
+
+/** The loan's modelled payoff and the interest its prepayments save (ADR 0116 §9). */
+export function LoanSummary({ loan }: { loan: LoanExposure }) {
+  const t = useT();
+  const d = t.propertyDetail;
+  const rows: { k: string; v: ReactNode }[] = [
+    {
+      k: d.loanPayoff,
+      v: loan.payoffDate ? fmtDate(loan.payoffDate) : d.loanPayoffNone,
+    },
+  ];
+  if (loan.interestSaved)
+    rows.push({
+      k: d.interestSaved,
+      v: <Money value={loan.interestSaved} parens={false} />,
+    });
+  return (
+    <Panel title={d.loanSummaryTitle} hint={d.loanSummaryHint}>
+      <StatList rows={rows} />
+      <p className="panel-note">{d.loanSummaryNote}</p>
+    </Panel>
+  );
 }
 
 /** Monthly amortization table for the block driving the schedule. */

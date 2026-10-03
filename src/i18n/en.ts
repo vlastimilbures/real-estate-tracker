@@ -525,6 +525,13 @@ export const en = {
       LoanEventIssue,
       (date: string, requested: string, applied: string) => string
     >,
+    loanSummaryTitle: "Loan outlook",
+    loanSummaryHint: "modelled from your loans, prepayments and recasts",
+    loanPayoff: "Modelled payoff",
+    loanPayoffNone: "Repaid",
+    interestSaved: "Interest saved by prepayments (nominal)",
+    loanSummaryNote:
+      "The payoff date is modelled, not a deadline from your lender. Interest saved compares the loan with and without every prepayment, over its whole remaining life.",
     loanFrom: (date: string) => `Loan from ${date}:`,
     monthsCount: (n: number) => `${n} ${enPlural(n, ["month", "months"])}`,
     maturityPaysOff: (instalment: string, implied: string) =>

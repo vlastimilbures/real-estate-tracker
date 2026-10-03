@@ -31,6 +31,7 @@ import {
   HoldingCostsPanel,
   ActivationBanner,
   AmortizationTable,
+  LoanSummary,
 } from "./PropertyDetailPanels";
 import {
   ValuationsPanel,
@@ -332,6 +333,7 @@ export function PropertyDetail() {
             {loanWarningText(t, w, assumptions.postFixationResetRatePa)}
           </div>
         ))}
+        {out?.loan && <LoanSummary loan={out.loan} />}
       </div>
 
       <div className="pd-section" id={sectionId("holding")}>
