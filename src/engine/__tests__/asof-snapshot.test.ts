@@ -338,5 +338,19 @@ describe("DR-118: the snapshot fallback without a schedule ignores events", () =
     expect(snap.debt.toFixed(6)).toBe(
       currentBalance(block, assumptions.baseDate).toFixed(6),
     );
+    // The schedule path, which the app uses, does see the prepayment.
+    const rows = schedulesByProperty(
+      prepaid.mortgages,
+      ["javorova"],
+      assumptions,
+    ).get("javorova");
+    const viaSchedule = propertySnapshot(
+      javorova,
+      prepaid,
+      assumptions,
+      assumptions.baseDate,
+      rows,
+    );
+    expect(viaSchedule.debt.lessThan(snap.debt)).toBe(true);
   });
 });

@@ -30,6 +30,7 @@ import {
   type RefRow,
 } from "./mortgageReference";
 import { RESET, SEED_LOANS } from "./seedLoans";
+import { both as eventBoth, maxDev as eventMaxDev } from "./eventHarness";
 import { rate } from "../../brands";
 import { money } from "../../brands";
 
@@ -510,9 +511,10 @@ describe("ADR 0116: completion after the last payment due and by baseDate", () =
       "2025-07-06",
     ],
   ];
+  // The shared event harness: a fixed reference horizon and every column.
   it.each(cases)("%s: engine = reference", (_, l, base) => {
-    const { e, r } = both(l, base);
-    expect(maxDev(e, r)).toBeLessThanOrEqual(TIGHT);
+    const { e, r } = eventBoth(l, base);
+    expect(eventMaxDev(e, r)).toBeLessThanOrEqual(TIGHT);
   });
 
   it("amortizes from grid month 1", () => {
