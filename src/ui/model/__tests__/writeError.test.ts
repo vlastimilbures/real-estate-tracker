@@ -1,7 +1,7 @@
 // UX-046 (DR-133): a failed write reads as a translated sentence, tied to the form field
 // when one field is at fault — never SQLite's raw text.
 import { describe, it, expect } from "vitest";
-import { describeWriteError } from "../writeError";
+import { describeWriteError, formWriteErrors } from "../writeError";
 import { getDict } from "../../../i18n";
 import { V7_TABLES } from "../../../data/migrations";
 import type { WriteError } from "../../../state/writeError";
@@ -136,5 +136,52 @@ describe("describeWriteError", () => {
     expect(
       describeWriteError(en, { kind: "other", message: "disk is full" }),
     ).toEqual({ message: "disk is full" });
+  });
+});
+
+// ADR 0116 §11: an error on one prepayment or recast shows on its row.
+describe("formWriteErrors with list rows", () => {
+  const event = (index?: number) => ({
+    code: "EVENT_BEFORE_START" as const,
+    entity: "mortgage" as const,
+    id: "m1",
+    field: "prepayments",
+    ...(index === undefined ? {} : { index }),
+  });
+  const input: WriteError = {
+    kind: "input",
+    errors: [
+      event(1),
+      event(0),
+      {
+        code: "INVALID_RECAST",
+        entity: "mortgage",
+        id: "m1",
+        field: "recasts",
+      },
+    ],
+  };
+  const fields = ["startDate", "prepayments", "recasts"];
+
+  it("keys an indexed error by its draft row", () => {
+    const rowOf = (field: string, i: number) =>
+      field === "prepayments" ? ([2, 5][i] ?? null) : null;
+    expect(formWriteErrors(en, input, fields, rowOf)).toEqual({
+      fieldErrors: {
+        "prepayments.5": en.inputRules.EVENT_BEFORE_START,
+        "prepayments.2": en.inputRules.EVENT_BEFORE_START,
+        recasts: en.inputRules.INVALID_RECAST,
+      },
+      formError: null,
+    });
+  });
+
+  it("falls back to the field when the row is unknown", () => {
+    expect(
+      formWriteErrors(en, input, fields, () => null).fieldErrors.prepayments,
+    ).toBe(en.inputRules.EVENT_BEFORE_START);
+    expect(formWriteErrors(en, input, fields).fieldErrors.prepayments).toBe(
+      en.inputRules.EVENT_BEFORE_START,
+    );
   });
 });

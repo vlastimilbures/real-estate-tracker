@@ -9,6 +9,8 @@ export interface WriteErrorText {
   message: string;
   /** Form field (spec name) the message belongs to, when it is one field. */
   field?: string | undefined;
+  /** The item of a list field (prepayments, recasts) it belongs to (ADR 0116). */
+  index?: number | undefined;
 }
 
 /** CHECK constraint (migrations v7) → engine rule wording + the field it guards, named
@@ -137,29 +139,40 @@ export function writeErrorTexts(
     const text = {
       message: t.inputRules[err.code],
       field: formField(err.field),
+      index: err.index,
     };
-    const key = `${text.field ?? ""}|${text.message}`;
+    const key = `${text.field ?? ""}|${text.index ?? ""}|${text.message}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push(text.field ? text : { message: text.message });
+    if (!text.field) out.push({ message: text.message });
+    else if (text.index === undefined)
+      out.push({ message: text.message, field: text.field });
+    else out.push(text);
   }
   return out;
 }
 
 /**
  * Split a failure for a form: messages for the fields the form shows (first message
- * per field), and one line for the rest, shown above the buttons.
+ * per field), and one line for the rest, shown above the buttons. An error on a list
+ * item is keyed `field.row` when `rowOf` finds the form row it came from (ADR 0116).
  */
 export function formWriteErrors(
   t: Dictionary,
   e: WriteError,
   fields: readonly string[],
+  rowOf?: (field: string, index: number) => number | null,
 ): { fieldErrors: Record<string, string>; formError: string | null } {
   const fieldErrors: Record<string, string> = {};
   const rest: string[] = [];
   for (const text of writeErrorTexts(t, e)) {
     if (text.field && fields.includes(text.field)) {
-      fieldErrors[text.field] ??= text.message;
+      const row =
+        text.index === undefined
+          ? null
+          : (rowOf?.(text.field, text.index) ?? null);
+      fieldErrors[row === null ? text.field : `${text.field}.${row}`] ??=
+        text.message;
     } else rest.push(text.message);
   }
   return { fieldErrors, formError: rest.length ? rest.join(" · ") : null };
