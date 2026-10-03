@@ -968,6 +968,11 @@ function builtMonths(
   return Math.max(contract, reach);
 }
 
+/** A row that owes and pays nothing. */
+const idleRow = (r: AmortizationRow): boolean =>
+  !r.endBalance.greaterThan(ZERO) &&
+  r.interest.plus(r.principal).plus(r.prepaid).isZero();
+
 /** Drop the zero rows a longer build left past both the contract schedule and the
  *  loan's last payment (ADR 0109). */
 function trimRepaid(
@@ -975,17 +980,39 @@ function trimRepaid(
   contractMonths: number,
 ): AmortizationRow[] {
   let n = rows.length;
-  const idle = (r: AmortizationRow) =>
-    !r.endBalance.greaterThan(ZERO) &&
-    r.interest.plus(r.principal).plus(r.prepaid).isZero();
-  while (n > contractMonths && idle(at(rows, n - 1))) n--;
+  while (n > contractMonths && idleRow(at(rows, n - 1))) n--;
   return n === rows.length ? rows : rows.slice(0, n);
 }
 
-/** Run a month step over the built grid, collecting rows and event outcomes. */
+/**
+ * The grid month from which an idle row means the loan stays idle: past the contract
+ * schedule and every month a tranche or an event touches. The build stops there
+ * instead of running to a recast's 50-year reach; `trimRepaid` would drop the rest
+ * anyway (ADR 0116).
+ */
+function quietFrom(
+  contractMonths: number,
+  events: LoanEvents,
+  offset: number,
+  draws: Map<number, Decimal> = new Map(),
+): number {
+  const paymentsAt = [
+    ...events.prepaymentsAt.keys(),
+    ...events.recastsAt.keys(),
+  ];
+  return Math.max(
+    contractMonths,
+    ...paymentsAt.map((p) => p - offset + 1),
+    ...draws.keys(),
+  );
+}
+
+/** Run a month step over the built grid, collecting rows and event outcomes, until
+ *  `months` or the first idle row from month `quiet`. */
 function runGrid<S>(
   state: S,
   months: number,
+  quiet: number,
   step: (
     s: S,
     m: number,
@@ -999,6 +1026,7 @@ function runGrid<S>(
     rows.push(next.row);
     outcomes.push(...next.outcomes);
     s = next.state;
+    if (m >= quiet && idleRow(next.row)) break;
   }
   return { rows, outcomes };
 }
@@ -1033,11 +1061,13 @@ function buildDevSchedule(
     events: loanEvents(block, assumptions, (d) => isAfter(d, baseDate)),
   };
   const opening = initDevScheduleState(block, assumptions);
-  const grid = runGrid(opening.state, totalMonths, (s, m) =>
+  const contract = scheduleMonths(block, assumptions);
+  const quiet = quietFrom(contract, ctx.events, startToBase, ctx.drawsByMonth);
+  const grid = runGrid(opening.state, totalMonths, quiet, (s, m) =>
     devMonthStep(s, m, ctx),
   );
   return {
-    rows: trimRepaid(grid.rows, scheduleMonths(block, assumptions)),
+    rows: trimRepaid(grid.rows, contract),
     outcomes: [...opening.outcomes, ...grid.outcomes],
   };
 }
@@ -1205,11 +1235,15 @@ function buildPlainSchedule(
     drawn: !isAfter(block.startDate, baseDate),
     terms: opening.terms,
   };
-  const grid = runGrid(state, builtMonths(block, assumptions, offset), (s, m) =>
-    plainMonthStep(s, m, ctx),
+  const contract = scheduleMonths(block, assumptions);
+  const grid = runGrid(
+    state,
+    builtMonths(block, assumptions, offset),
+    quietFrom(contract, ctx.events, offset),
+    (s, m) => plainMonthStep(s, m, ctx),
   );
   return {
-    rows: trimRepaid(grid.rows, scheduleMonths(block, assumptions)),
+    rows: trimRepaid(grid.rows, contract),
     outcomes: [...opening.outcomes, ...grid.outcomes],
   };
 }

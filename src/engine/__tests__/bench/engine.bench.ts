@@ -3,8 +3,10 @@
 // `useScenarioComparison` for a 3-scenario compare. Report mean and p99.
 import { bench, describe } from "vitest";
 import { D } from "../../../lib/money";
-import { rate } from "../../brands";
+import { money, rate } from "../../brands";
 import { irr } from "../../kpis";
+import { mortgageBlock } from "../../amortization";
+import { edate } from "../../dates";
 import { schedulesByProperty } from "../../schedule";
 import {
   applyScenario,
@@ -84,4 +86,36 @@ describe("pieces, synthetic 20 properties", () => {
   );
   bench("portfolioKpis", () => void portfolioKpis(p20, assumptions), opts);
   bench("irr (31 cash flows)", () => void irr(vector), opts);
+});
+
+// ADR 0116: an instalment recast lets a loan run to the 50-year cap, so the build
+// stops at the last payment instead of building every one of the 600 months.
+describe("recasts, synthetic 20 properties", () => {
+  const ids = p20.properties.map((x) => x.id);
+  const recast = p20.mortgages.map((m) =>
+    mortgageBlock({
+      ...m,
+      recasts: [
+        {
+          // A year after the latest of baseDate, the start and any completion.
+          date: edate(
+            new Date(
+              Math.max(
+                assumptions.baseDate.getTime(),
+                m.startDate.getTime(),
+                m.completionDate?.getTime() ?? 0,
+              ),
+            ),
+            13,
+          ),
+          instalment: money(m.monthlyInstalment.times(1.2)),
+        },
+      ],
+    }),
+  );
+  bench(
+    "schedulesByProperty, an instalment recast on every loan",
+    () => void schedulesByProperty(recast, ids, assumptions),
+    opts,
+  );
 });
