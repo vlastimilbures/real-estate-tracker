@@ -87,7 +87,16 @@ export function Guide() {
     sd.netYield,
     sd.weightedAvgRate,
   ];
-  const PROJECTION: Def[] = [pd.value, pd.rent, pd.vacancy, pd.costs, pd.debt];
+  const PROJECTION: Def[] = [
+    pd.value,
+    pd.rent,
+    pd.vacancy,
+    pd.costs,
+    pd.debt,
+    pd.nextReset,
+    pd.debtResetting,
+    pd.totalInterest,
+  ];
   const RETURNS: Def[] = [rd.multiple, rd.cagr, rd.irr];
   const GLOSSARY = Object.entries(g.glossary).map(([key, v]) => ({
     key,

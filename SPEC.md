@@ -554,7 +554,9 @@ offline badge, and controls for language and theme.
 1. **Dashboard** — hero KPI tiles (net worth today / at horizon, LTV, DSCR), nominal/real
    toggle, charts (value vs debt vs equity, equity change, net cash flow, LTV, etc.), KPI
    list, and a property filter. An **AsOfPicker** (Today / +1y / +5y presets, or any typed
-   date within the projection window) sets the snapshot date (§4.3).
+   date within the projection window) sets the snapshot date (§4.3). A compact **Financing &
+   upcoming** panel (§4.7, ADR 0103) shows the next rate reset, the debt resetting within
+   1/3/5 years, total interest and the next 12 months' events, each linking to its property.
 
 2. **Properties** — list with per-property summary and LTV/DSCR health bands; "+ Add property"
    button opens a form modal (name, address, type, size_m2, garage, purchase_date,

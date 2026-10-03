@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The Dashboard has a **Financing & upcoming** panel. It shows the next modelled rate reset
+  (date, property and the debt that moves to the reset rate), the debt resetting within 1,
+  3 or 5 years, the total interest over the horizon (real or nominal, by lens) and the
+  next 12 months' fixation ends, modelled loan payoffs, development completions and lease
+  ends with no next lease entered, each linking to its property. The dates are modelled
+  from your data, not lender deadlines. No existing figure changes (ADR 0103, #31).
+
 - Scenarios say which loans a rate shock hits. The list summary and the compare column
   header (as a tooltip) add "hits N of M loans (refix 2029, 2031)", or say that no loan
   refixes inside the shock window, so the shock has no effect. Each property's mortgage

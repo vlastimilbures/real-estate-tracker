@@ -282,6 +282,32 @@ export const cs: Dictionary = {
     kpiSumPrincipalRepaidNominal: (n) =>
       `Σ splacené jistiny (roky 1–${n}, nominálně)`,
     kpiWeightedAvgRate: "Vážená průměrná úroková sazba",
+    // Panel Financování a termíny (ADR 0103).
+    financingTitle: "Financování a termíny",
+    financingHint: (d) => `modelová data k ${d}`,
+    financingNextReset: "Příští změna sazby",
+    financingNextResetNone: "Žádná v dohledu",
+    financingBalanceAtReset: "Dluh při této změně",
+    financingBalanceAtResetNominal: "Dluh při této změně (nominálně)",
+    financingResettingWithin: (n) =>
+      `Dluh se změnou sazby do ${n} ${csPlural(n, ["roku", "let", "let"])}`,
+    financingResettingWithinNominal: (n) =>
+      `Dluh se změnou sazby do ${n} ${csPlural(n, ["roku", "let", "let"])} (nominálně)`,
+    financingLoans: (n) => `${n} ${csPlural(n, ["úvěr", "úvěry", "úvěrů"])}`,
+    financingWindow: "Období změny sazby",
+    financingWindowOption: (n) => `${n} r.`,
+    financingTotalInterest: (n) => `Úroky celkem (roky 1–${n})`,
+    financingTotalInterestReal: (n) => `Úroky celkem (roky 1–${n}, reálně)`,
+    financingUpcoming: "Příštích 12 měsíců",
+    financingNoEvents: "Model v příštích 12 měsících nic neočekává.",
+    financingMoreEvents: (n) => `+ dalších ${n}`,
+    financingNoLoans: "V tomto výběru není žádná hypotéka.",
+    financingEventFixationEnd: "Konec fixace",
+    financingEventLoanPayoff: "Úvěr splacen",
+    financingEventDevCompletion: "Konec splácení jen úroků (dokončení)",
+    financingEventLeaseEnd: "Konec nájmu, další nájem nezadán",
+    financingDisclaimer:
+      "Data vycházejí z modelu podle zadaných úvěrů a nájmů. Nejsou to termíny banky; přesná data si ověřte u banky.",
   },
 
   properties: {
@@ -1091,6 +1117,25 @@ export const cs: Dictionary = {
         name: "Dluh",
         formula: "umořovací plán",
         meaning: "Sleduje plán včetně resetů po fixaci.",
+      },
+      nextReset: {
+        name: "Příští změna sazby",
+        formula: "začátek + roky fixace",
+        meaning:
+          "Nejbližší modelový konec fixace a zůstatek podle plánu po splátce splatné v ten den. Tento zůstatek přechází na sazbu po fixaci.",
+        caveat: "Vychází ze zadaných úvěrů, nejde o termín od banky.",
+      },
+      debtResetting: {
+        name: "Dluh se změnou sazby do N let",
+        formula: "Σ zůstatků při koncích fixace v období",
+        meaning:
+          "Kolik dluhu dosáhne konce fixace během příštího 1, 3 nebo 5 let; každý konec fixace se počítá jednou.",
+      },
+      totalInterest: {
+        name: "Úroky celkem",
+        formula: "Σ úroků, roky 1…N",
+        meaning:
+          "Všechny úroky zaplacené v projekci do horizontu. Reálný pohled každý rok deflatuje indexem inflace daného roku.",
       },
     },
     returnsDefs: {
