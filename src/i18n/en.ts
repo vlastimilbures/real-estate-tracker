@@ -541,6 +541,10 @@ export const en = {
     chartNetCashFlow: "Net cash flow by year",
     chartLtv: "Loan-to-value",
     subPct: "%",
+    kpiStartingEquity: "Starting equity",
+    kpiNetWorthDeltaVsBase: "Δ net worth vs Base",
+    rebasedReturnsFootnote: (names: string) =>
+      `Returns for ${names} are measured from a lower starting equity after the price crash; compare Δ net worth vs Base for the loss to you.`,
     kpiNetWorthNominal: "Net worth (nominal)",
     kpiNetWorthReal: "Net worth (real)",
     kpiNetWorthMultiple: "Net-worth multiple",
@@ -1057,7 +1061,8 @@ export const en = {
       valueCrash: {
         name: "Value crash",
         formula: "one-off drop in year Y",
-        meaning: "A one-off fall in value; growth resumes from the lower base.",
+        meaning:
+          "A one-off fall in value; growth resumes from the lower base. A crash at Today lowers starting equity, so percentage returns can rise while your wealth falls.",
       },
     },
     glossary: {

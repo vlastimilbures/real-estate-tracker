@@ -467,6 +467,11 @@ data (properties/mortgages/etc.) is shared; only assumptions differ. The engine'
   Scenarios page currently hides the lens toggle (`showLens={false}` in
   `src/ui/pages/Scenarios.tsx`), so the comparison follows the lens last chosen on another
   page; showing the toggle there is tracked in #15.
+  The key figures start with **starting equity** (projection year 0) and **Δ net worth vs
+  Base** (horizon net worth minus Base's, in the lens; only when Base is compared). A
+  scenario whose starting equity differs from Base's (a price crash at Today) has its
+  multiple, CAGR and IRR marked with a footnote: those returns are measured from its lower
+  starting equity, and Δ net worth shows the loss (ADR 0089).
 - **Stress presets** (one-click; each creates a named scenario,
   `src/ui/pages/ScenariosPanels.tsx`). Temporary shocks last `DEFAULT_SHOCK_YEARS` = 3
   years (`src/ui/model/scenarioForm.ts`), then revert to trend:

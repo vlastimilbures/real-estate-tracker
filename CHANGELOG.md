@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Scenario compare shows what a scenario does to your wealth, not only its returns. Two new
+  rows lead the key figures: starting equity and Δ net worth vs Base (in the chosen lens). A
+  price crash at Today lowers starting equity, so its multiple, CAGR and IRR can read higher
+  than Base's while net worth ends lower; those cells are marked and a footnote explains it.
+  The Guide's value-crash entry says the same (ADR 0089, #14).
+
 ### Fixed
 
 - Dashboard and Property detail labels say what the tiles show. With a future As-of date

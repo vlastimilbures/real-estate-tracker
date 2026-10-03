@@ -514,6 +514,10 @@ export const cs: Dictionary = {
     chartNetCashFlow: "Čistý cash flow podle roku",
     chartLtv: "Poměr dluhu k hodnotě (LTV)",
     subPct: "%",
+    kpiStartingEquity: "Počáteční kapitál",
+    kpiNetWorthDeltaVsBase: "Δ čistého jmění vůči Základu",
+    rebasedReturnsFootnote: (names: string) =>
+      `Výnosy pro ${names} se měří od nižšího počátečního kapitálu po propadu cen; ztrátu pro vás ukazuje Δ čistého jmění vůči Základu.`,
     kpiNetWorthNominal: "Čisté jmění (nominální)",
     kpiNetWorthReal: "Čisté jmění (reálné)",
     kpiNetWorthMultiple: "Násobek čistého jmění",
@@ -1020,7 +1024,8 @@ export const cs: Dictionary = {
       valueCrash: {
         name: "Propad hodnoty",
         formula: "jednorázový pokles v roce Y",
-        meaning: "Jednorázový pokles hodnoty; růst pokračuje z nižší základny.",
+        meaning:
+          "Jednorázový pokles hodnoty; růst pokračuje z nižší základny. Propad s načasováním Dnes sníží počáteční kapitál, takže procentní výnosy mohou růst, i když vaše jmění klesá.",
       },
     },
     glossary: {
