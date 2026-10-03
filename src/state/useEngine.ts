@@ -26,6 +26,7 @@ import type {
   PortfolioKPIs,
   ProjectionYear,
   AmortizationRow,
+  FinancingExposure,
   IsoDate,
   PropertySnapshot,
 } from "../engine";
@@ -64,6 +65,8 @@ export interface EngineOutput {
   projection: ProjectionYear[];
   kpis: PortfolioKPIs;
   schedules: Map<string, AmortizationRow[]>;
+  /** Next fixations, payoffs and fixation ends at the as-of date (ADR 0103). */
+  financing: FinancingExposure;
 }
 
 /**
@@ -111,6 +114,7 @@ export function useEngine(
       projection: out.projection,
       kpis: out.kpis,
       schedules: out.schedules,
+      financing: out.financing,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [portfolio, assumptions, key, asOfKey]);

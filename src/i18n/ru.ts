@@ -287,6 +287,33 @@ export const ru: Dictionary = {
     kpiSumPrincipalRepaidNominal: (n) =>
       `Σ погашенного тела (годы 1–${n}, номинально)`,
     kpiWeightedAvgRate: "Средневзвешенная ставка",
+    // Панель «Финансирование и ближайшие события» (ADR 0103).
+    financingTitle: "Финансирование и ближайшие события",
+    financingHint: (d) => `расчётные даты на ${d}`,
+    financingNextReset: "Следующая смена ставки",
+    financingNextResetNone: "Не предвидится",
+    financingBalanceAtReset: "Долг на момент смены",
+    financingBalanceAtResetNominal: "Долг на момент смены (номинально)",
+    financingResettingWithin: (n) =>
+      `Долг со сменой ставки в течение ${n} ${ruPlural(n, ["года", "лет", "лет"])}`,
+    financingResettingWithinNominal: (n) =>
+      `Долг со сменой ставки в течение ${n} ${ruPlural(n, ["года", "лет", "лет"])} (номинально)`,
+    financingLoans: (n) =>
+      `${n} ${ruPlural(n, ["кредит", "кредита", "кредитов"])}`,
+    financingWindow: "Период смены ставки",
+    financingWindowOption: (n) => `${n} г.`,
+    financingTotalInterest: (n) => `Проценты всего (годы 1–${n})`,
+    financingTotalInterestReal: (n) => `Проценты всего (годы 1–${n}, реально)`,
+    financingUpcoming: "Ближайшие 12 месяцев",
+    financingNoEvents: "По модели в ближайшие 12 месяцев ничего не ожидается.",
+    financingMoreEvents: (n) => `+ ещё ${n}`,
+    financingNoLoans: "В этой выборке нет ипотеки.",
+    financingEventFixationEnd: "Конец фиксации",
+    financingEventLoanPayoff: "Кредит погашен",
+    financingEventDevCompletion: "Конец периода только процентов (сдача)",
+    financingEventLeaseEnd: "Аренда заканчивается, новая не внесена",
+    financingDisclaimer:
+      "Даты рассчитаны по внесённым кредитам и договорам аренды. Это не сроки банка; точные даты уточните в банке.",
   },
 
   properties: {
@@ -1097,6 +1124,25 @@ export const ru: Dictionary = {
         name: "Долг",
         formula: "график амортизации",
         meaning: "Следует графику, включая сбросы после фиксации.",
+      },
+      nextReset: {
+        name: "Следующая смена ставки",
+        formula: "начало + годы фиксации",
+        meaning:
+          "Ближайший расчётный конец фиксации и остаток по графику после платежа в этот день. Этот остаток переходит на ставку после фиксации.",
+        caveat: "Рассчитано по внесённым кредитам, это не дата от банка.",
+      },
+      debtResetting: {
+        name: "Долг со сменой ставки за N лет",
+        formula: "Σ остатков на концах фиксации в периоде",
+        meaning:
+          "Сколько долга дойдёт до конца фиксации в ближайшие 1, 3 или 5 лет; каждый конец фиксации считается один раз.",
+      },
+      totalInterest: {
+        name: "Проценты всего",
+        formula: "Σ процентов, годы 1…N",
+        meaning:
+          "Все проценты, уплаченные в прогнозе до горизонта. Реальный режим дефлирует проценты каждого года индексом инфляции этого года.",
       },
     },
     returnsDefs: {

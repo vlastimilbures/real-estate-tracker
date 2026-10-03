@@ -43,6 +43,9 @@ const RANGE_LABELS = new Set([
   "dashboard.kpiSumPrincipalRepaid",
   "dashboard.kpiSumPrincipalRepaidNominal",
   "dashboard.monthlyHint",
+  // "Yrs 1–N" (ADR 0103).
+  "dashboard.financingTotalInterest",
+  "dashboard.financingTotalInterestReal",
 ]);
 
 /** Keys whose output changes form (not just the digit) across counts 1 / 2 / 5. */
@@ -196,13 +199,20 @@ describe("i18n dictionaries — plural forms", () => {
     ];
     // Error summary count (ADR 0095).
     const common = ["common.fieldsNeedAttention"];
-    const counted = [...common, ...rest];
+    // Financing & upcoming panel (ADR 0103).
+    const financing = [
+      "dashboard.financingResettingWithin",
+      "dashboard.financingResettingWithinNominal",
+      "dashboard.financingLoans",
+    ];
+    const counted = [...common, ...financing, ...rest];
     // English writes the horizon and the IRR foot as compounds ("25-yr"); Czech and
     // Russian count years.
     const withIrrFoot = [
       ...common,
       "dashboard.netWorthInYear",
       "dashboard.irrFoot",
+      ...financing,
       ...rest,
     ];
     expect(countInflected("en")).toEqual(counted);

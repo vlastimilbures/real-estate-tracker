@@ -30,6 +30,7 @@ import {
   TrajectoryCharts,
   KpiListPanel,
 } from "./DashboardPanels";
+import { FinancingPanel } from "./DashboardFinancing";
 import { useT } from "../hooks/useT";
 import { useRenderTiming } from "../hooks/useRenderTiming";
 import { SampleBanner, SampleClearedNotice } from "../components/SampleBanner";
@@ -83,6 +84,7 @@ export function Dashboard() {
   const engine = useEngine(effectiveIds, asOf);
   useRenderTiming("dashboard", engine);
   const navigate = useUiStore((s) => s.navigate);
+  const openProperty = useUiStore((s) => s.openProperty);
 
   if (!engine || allProperties.length === 0) {
     return (
@@ -182,6 +184,15 @@ export function Dashboard() {
         flow={flow}
         title={flowLabels.title}
         hint={flowLabels.hint}
+      />
+
+      <FinancingPanel
+        fx={engine.financing}
+        portfolio={engine.portfolio}
+        kpis={kpis}
+        mode={mode}
+        horizonYears={assumptions.horizonYears}
+        onOpenProperty={openProperty}
       />
 
       <TrajectoryCharts

@@ -10,6 +10,7 @@ import { portfolioSnapshot } from "../metrics";
 import { portfolioProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
 import { portfolioOutputs, projectionAndKpis } from "../outputs";
+import { financingExposure } from "../financing";
 import { applyScenario } from "../scenarios";
 import { EngineInputError } from "../errors";
 import type { Assumptions, IsoDate, Portfolio } from "../types";
@@ -18,7 +19,7 @@ import { mixed } from "./support/mixed";
 import { mixedWithRefi, synthetic } from "./support/synthetic";
 import { money } from "../brands";
 
-/** The `useEngine` memo body before P9. */
+/** The `useEngine` memo body before P9, plus ADR 0103's financing exposure. */
 function separate(p: Portfolio, a: Assumptions, asOf: IsoDate) {
   const schedules = schedulesByProperty(
     p.mortgages,
@@ -30,6 +31,7 @@ function separate(p: Portfolio, a: Assumptions, asOf: IsoDate) {
     snapshot: portfolioSnapshot(p, a, asOf, schedules),
     projection: portfolioProjection(p, a),
     kpis: portfolioKpis(p, a),
+    financing: financingExposure(p, a, schedules, asOf),
   };
 }
 

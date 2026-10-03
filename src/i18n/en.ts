@@ -304,6 +304,33 @@ export const en = {
     kpiSumPrincipalRepaidNominal: (n: number) =>
       `Σ principal repaid (Yrs 1–${n}, nominal)`,
     kpiWeightedAvgRate: "Weighted-avg interest rate",
+    // Financing & upcoming panel (ADR 0103).
+    financingTitle: "Financing & upcoming",
+    financingHint: (d: string) => `modelled dates, as of ${d}`,
+    financingNextReset: "Next rate reset",
+    financingNextResetNone: "None ahead",
+    financingBalanceAtReset: "Debt at that reset",
+    financingBalanceAtResetNominal: "Debt at that reset (nominal)",
+    financingResettingWithin: (n: number) =>
+      `Debt resetting within ${n} ${enPlural(n, ["year", "years"])}`,
+    financingResettingWithinNominal: (n: number) =>
+      `Debt resetting within ${n} ${enPlural(n, ["year", "years"])} (nominal)`,
+    financingLoans: (n: number) => `${n} ${enPlural(n, ["loan", "loans"])}`,
+    financingWindow: "Reset window",
+    financingWindowOption: (n: number) => `${n} y`,
+    financingTotalInterest: (n: number) => `Total interest (Yrs 1–${n})`,
+    financingTotalInterestReal: (n: number) =>
+      `Total interest (Yrs 1–${n}, real)`,
+    financingUpcoming: "Next 12 months",
+    financingNoEvents: "Nothing modelled in the next 12 months.",
+    financingMoreEvents: (n: number) => `+ ${n} more`,
+    financingNoLoans: "No mortgage in this selection.",
+    financingEventFixationEnd: "Fixation ends",
+    financingEventLoanPayoff: "Loan repaid",
+    financingEventDevCompletion: "Interest-only ends (completion)",
+    financingEventLeaseEnd: "Lease ends, no next lease entered",
+    financingDisclaimer:
+      "Dates are modelled from the loans and leases you entered. They are not deadlines from your lender; check exact dates with your bank.",
   },
 
   properties: {
@@ -1133,6 +1160,26 @@ export const en = {
         name: "Debt",
         formula: "amortization schedule",
         meaning: "Follows the schedule, including fixation resets.",
+      },
+      nextReset: {
+        name: "Next rate reset",
+        formula: "start + fixation years",
+        meaning:
+          "The earliest modelled fixation end ahead, with the schedule balance after the payment due that day. That balance moves to the reset rate.",
+        caveat:
+          "Modelled from the loans you entered, not a date from your lender.",
+      },
+      debtResetting: {
+        name: "Debt resetting within N years",
+        formula: "Σ balances at fixation ends in the window",
+        meaning:
+          "How much debt reaches a fixation end within the next 1, 3 or 5 years, counted once per fixation end.",
+      },
+      totalInterest: {
+        name: "Total interest",
+        formula: "Σ interest, years 1…N",
+        meaning:
+          "All interest the projection pays over the horizon. The real lens deflates each year's interest by that year's inflation index.",
       },
     },
     returnsDefs: {

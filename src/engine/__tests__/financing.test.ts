@@ -1,0 +1,403 @@
+// ADR 0103 (#31): financing exposure (next fixation, balance at reset, debt resetting in N
+// years, modelled payoff and remaining term) and upcoming events, all read off the same
+// schedules the projection uses.
+import { describe, it, expect } from "vitest";
+import fc from "fast-check";
+import {
+  debtResettingWithin,
+  financingExposure,
+  upcomingEvents,
+  type FinancingExposure,
+  type FixationReset,
+} from "../financing";
+import { schedulesByProperty } from "../schedule";
+import { portfolioOutputs } from "../outputs";
+import { impliedMaturity, mortgageBlock } from "../amortization";
+import { edate, isoDate, lastGridMonthOnOrBefore } from "../dates";
+import { money, rate } from "../brands";
+import { ZERO } from "../../lib/money";
+import type {
+  AmortizationRow,
+  IsoDate,
+  MortgageBlock,
+  MortgageBlockFields,
+  Portfolio,
+} from "../types";
+import { BASE_DATE, assumptions, portfolio } from "./support/seed";
+import { devBlock, mixed } from "./support/mixed";
+import { mixedWithRefi } from "./support/synthetic";
+import { expectKc } from "./support/tolerance";
+
+function exposure(p: Portfolio, asOf: IsoDate = BASE_DATE) {
+  const ids = p.properties.map((x) => x.id);
+  const schedules = schedulesByProperty(p.mortgages, ids, assumptions);
+  return { fx: financingExposure(p, assumptions, schedules, asOf), schedules };
+}
+
+function rowsOf(s: Map<string, AmortizationRow[]>, id: string) {
+  const rows = s.get(id);
+  if (!rows) throw new Error(`no schedule for ${id}`);
+  return rows;
+}
+
+/** 1-based month of the last row before the first rate change (the reset row is +1). */
+function lastFixedMonth(rows: AmortizationRow[]): number {
+  const i = rows.findIndex(
+    (r, k) => k > 0 && !r.ratePa.equals(rows[k - 1].ratePa),
+  );
+  return i;
+}
+
+function reset(fx: FinancingExposure, blockId: string): FixationReset {
+  const r = fx.resets.find((x) => x.blockId === blockId);
+  if (!r) throw new Error(`no reset for ${blockId}`);
+  return r;
+}
+
+function loan(fx: FinancingExposure, propertyId: string) {
+  const l = fx.loans.find((x) => x.propertyId === propertyId);
+  if (!l) throw new Error(`no loan for ${propertyId}`);
+  return l;
+}
+
+/** A one-property portfolio with the given blocks. */
+function single(...blocks: MortgageBlock[]): Portfolio {
+  return {
+    properties: [
+      {
+        id: "p",
+        name: "P",
+        purchaseDate: isoDate("2015-01-01"),
+        purchasePrice: money("5000000"),
+      },
+    ],
+    mortgages: blocks,
+    valuations: [],
+    leases: [],
+    holdingCosts: [],
+  };
+}
+
+function block(
+  over: Partial<MortgageBlockFields> & { id: string },
+): MortgageBlock {
+  return mortgageBlock({
+    propertyId: "p",
+    startDate: isoDate("2024-01-10"),
+    initialPrincipal: money("3000000"),
+    fixationYears: 5,
+    interestRatePa: rate("0.04"),
+    monthlyInstalment: money("14322.46"),
+    ...over,
+  });
+}
+
+describe("ADR 0103: next fixation on the sample portfolio", () => {
+  const { fx, schedules } = exposure(portfolio);
+
+  it.each([
+    ["javorova", "m-javorova", "2031-01-17"],
+    ["lipova", "m-lipova", "2029-01-15"],
+    ["dubova", "m-dubova", "2031-03-12"],
+  ])("%s: next fixation %s is the schedule's reset row", (pid, bid, end) => {
+    const rows = rowsOf(schedules, pid);
+    const m = lastFixedMonth(rows);
+    const next = loan(fx, pid).nextFixation;
+    expect(next?.blockId).toBe(bid);
+    expect(next?.status).toBe("upcoming");
+    expect(next?.fixationEnd.toISOString().slice(0, 10)).toBe(end);
+    expect(next?.gridMonth).toBe(m);
+    expect(next?.balance.toString()).toBe(rows[m - 1].endBalance.toString());
+  });
+
+  it("Javorova's fixation-end payment is grid month 56 (still fixed, D-21)", () => {
+    expect(reset(fx, "m-javorova").gridMonth).toBe(56);
+  });
+
+  it("debt resetting in 1/3/5 years is Σ schedule balances at the resets in the window", () => {
+    const bal = (pid: string) => {
+      const rows = rowsOf(schedules, pid);
+      return rows[lastFixedMonth(rows) - 1].endBalance;
+    };
+    expect(debtResettingWithin(fx, 1).amount.isZero()).toBe(true);
+    expect(debtResettingWithin(fx, 1).loans).toBe(0);
+    const three = debtResettingWithin(fx, 3);
+    expect(three.loans).toBe(1);
+    expectKc(three.amount, bal("lipova").toNumber(), "3y");
+    const five = debtResettingWithin(fx, 5);
+    expect(five.loans).toBe(3);
+    expectKc(
+      five.amount,
+      bal("lipova").plus(bal("javorova")).plus(bal("dubova")).toNumber(),
+      "5y",
+    );
+  });
+
+  it("payoff is the schedule's last payment, at the loan's implied maturity", () => {
+    for (const b of portfolio.mortgages) {
+      const rows = rowsOf(schedules, b.propertyId);
+      const paid = rows.map((r) =>
+        r.interest.plus(r.principal).greaterThan(ZERO),
+      );
+      const last = paid.lastIndexOf(true);
+      const l = loan(fx, b.propertyId);
+      expect(l.blockId).toBe(b.id);
+      expect(l.remainingMonths).toBe(last + 1);
+      expect(l.payoffDate?.getTime()).toBe(impliedMaturity(b)?.getTime());
+    }
+  });
+
+  it("is what portfolioOutputs returns", () => {
+    const out = portfolioOutputs(portfolio, assumptions);
+    expect(out.financing).toEqual(fx);
+  });
+});
+
+describe("ADR 0103: as-of after baseDate", () => {
+  const asOf = isoDate("2029-02-01");
+  const { fx, schedules } = exposure(portfolio, asOf);
+
+  it("a fixation end on or before as-of has passed", () => {
+    expect(reset(fx, "m-lipova").status).toBe("passed");
+    expect(loan(fx, "lipova").nextFixation).toBeNull();
+    expect(loan(fx, "javorova").nextFixation?.blockId).toBe("m-javorova");
+  });
+
+  it("remaining months count from the as-of grid month", () => {
+    const base = exposure(portfolio).fx;
+    const elapsed = lastGridMonthOnOrBefore(BASE_DATE, asOf);
+    expect(loan(fx, "dubova").remainingMonths).toBe(
+      (loan(base, "dubova").remainingMonths ?? 0) - elapsed,
+    );
+    expect(rowsOf(schedules, "dubova").length).toBeGreaterThan(elapsed);
+  });
+
+  it("the window starts at as-of", () => {
+    // 2029-02-01 + 3 y = 2032-02-01: Javorova (2031-01-17) and Dubova (2031-03-12).
+    expect(debtResettingWithin(fx, 3).loans).toBe(2);
+  });
+});
+
+describe("ADR 0103: edge cases", () => {
+  it("expired fixation: passed, no next fixation (ADR 0030)", () => {
+    const old = block({
+      id: "old",
+      startDate: isoDate("2016-01-10"),
+      fixationYears: 5,
+      monthlyInstalment: money("14322.46"),
+    });
+    const { fx } = exposure(single(old));
+    expect(reset(fx, "old").status).toBe("passed");
+    expect(loan(fx, "p").nextFixation).toBeNull();
+    expect(loan(fx, "p").remainingMonths).toBeGreaterThan(0);
+  });
+
+  it("paid off before the reset: repaid, balance 0", () => {
+    const short = block({
+      id: "short",
+      fixationYears: 10,
+      loanTermYears: 5,
+      monthlyInstalment: money("55249.79"),
+    });
+    const { fx } = exposure(single(short));
+    const r = reset(fx, "short");
+    expect(r.status).toBe("repaid");
+    expect(r.balance.isZero()).toBe(true);
+    expect(loan(fx, "p").nextFixation).toBeNull();
+    expect(debtResettingWithin(fx, 30).loans).toBe(0);
+  });
+
+  it("fixed to maturity: the fixation-end payment repays it, so no reset", () => {
+    const toEnd = block({
+      id: "to-end",
+      fixationYears: 5,
+      loanTermYears: 5,
+      monthlyInstalment: money("55249.79"),
+    });
+    expect(reset(exposure(single(toEnd)).fx, "to-end").status).toBe("repaid");
+  });
+
+  it("0 fixation years: a floating loan has no fixation end", () => {
+    const floating = block({ id: "float", fixationYears: 0 });
+    const { fx } = exposure(single(floating));
+    expect(fx.resets).toHaveLength(0);
+    expect(loan(fx, "p").nextFixation).toBeNull();
+  });
+
+  it("development loan before completion: balance from the dev schedule", () => {
+    const { fx, schedules } = exposure(mixed);
+    const rows = rowsOf(schedules, "dev");
+    const r = reset(fx, devBlock.id);
+    expect(r.status).toBe("upcoming");
+    expect(r.fixationEnd.toISOString().slice(0, 10)).toBe("2031-03-01");
+    expect(r.balance.toString()).toBe(
+      rows[r.gridMonth - 1].endBalance.toString(),
+    );
+    expect(r.gridMonth).toBe(lastFixedMonth(rows));
+  });
+
+  it("future loan: grid month counts from its draw month", () => {
+    const { fx, schedules } = exposure(mixed);
+    const rows = rowsOf(schedules, "future");
+    const r = reset(fx, "m-future");
+    expect(r.status).toBe("upcoming");
+    expect(r.gridMonth).toBe(lastFixedMonth(rows));
+    expect(loan(fx, "future").blockId).toBe("m-future");
+  });
+
+  it("refinance successor: the predecessor is replaced, the successor resets", () => {
+    const { fx, schedules } = exposure(mixedWithRefi);
+    expect(reset(fx, "m-javorova").status).toBe("replaced");
+    expect(reset(fx, "m-javorova").balance.isZero()).toBe(true);
+    const next = loan(fx, "javorova").nextFixation;
+    expect(next?.blockId).toBe("m-refi");
+    expect(next?.fixationEnd.toISOString().slice(0, 10)).toBe("2036-01-17");
+    const rows = rowsOf(schedules, "javorova");
+    expect(next?.balance.toString()).toBe(
+      rows[(next?.gridMonth ?? 0) - 1].endBalance.toString(),
+    );
+    // In force at as-of is still the predecessor; after the handover the successor.
+    expect(loan(fx, "javorova").blockId).toBe("m-javorova");
+    const later = exposure(mixedWithRefi, isoDate("2032-01-01")).fx;
+    expect(loan(later, "javorova").blockId).toBe("m-refi");
+  });
+
+  it("a successor starting in the fixation-end schedule month replaces it", () => {
+    // Fixation-end payment due 2029-01-10 sits on grid month 2029-02-07; a successor
+    // starting 2029-01-20 draws in that same month.
+    const first = block({ id: "first" });
+    const next = block({
+      id: "next",
+      startDate: isoDate("2029-01-20"),
+      initialPrincipal: money("2500000"),
+    });
+    const { fx } = exposure(single(first, next));
+    expect(reset(fx, "first").status).toBe("replaced");
+  });
+
+  it("inactive properties and properties without a loan are left out", () => {
+    const { fx } = exposure(mixed);
+    expect(fx.loans.map((l) => l.propertyId)).not.toContain("inactive");
+    expect(fx.resets.map((r) => r.propertyId)).not.toContain("inactive");
+    const noLoan = { ...single(), mortgages: [] };
+    expect(exposure(noLoan).fx).toEqual({
+      asOf: BASE_DATE,
+      loans: [],
+      resets: [],
+    });
+  });
+});
+
+describe("ADR 0103: upcoming events", () => {
+  const withoutFollowOn: Portfolio = {
+    ...portfolio,
+    leases: portfolio.leases.filter((l) => l.id !== "l-lipova-2"),
+  };
+
+  it("a lease end followed by a later lease is not an event", () => {
+    const { fx } = exposure(portfolio);
+    const events = upcomingEvents(portfolio, fx, 12);
+    expect(events.filter((e) => e.kind === "leaseEnd")).toHaveLength(0);
+  });
+
+  it("the in-force lease end with no follow-on is an event; open-ended leases are not", () => {
+    const { fx } = exposure(withoutFollowOn);
+    const events = upcomingEvents(withoutFollowOn, fx, 12);
+    expect(events).toEqual([
+      { date: isoDate("2026-08-30"), kind: "leaseEnd", propertyId: "lipova" },
+    ]);
+  });
+
+  it("past events are excluded and the window is (as-of, as-of + months]", () => {
+    const { fx } = exposure(withoutFollowOn, isoDate("2026-09-01"));
+    expect(upcomingEvents(withoutFollowOn, fx, 12)).toEqual([]);
+    const edge = exposure(portfolio, isoDate("2028-01-15")).fx;
+    const ev = upcomingEvents(portfolio, edge, 12);
+    expect(ev.map((e) => e.kind)).toEqual(["fixationEnd"]);
+    expect(ev[0].propertyId).toBe("lipova");
+    expectKc(
+      ev[0].amount ?? ZERO,
+      reset(edge, "m-lipova").balance.toNumber(),
+      "amt",
+    );
+  });
+
+  it("modelled payoff and development completion are events", () => {
+    const javorova = portfolio.mortgages[0];
+    const payoff = impliedMaturity(javorova);
+    if (!payoff) throw new Error("plain loan has a maturity");
+    const { fx } = exposure(portfolio, edate(payoff, -6));
+    const kinds = upcomingEvents(portfolio, fx, 12).map(
+      (e) => `${e.kind}:${e.propertyId}`,
+    );
+    expect(kinds).toContain("loanPayoff:javorova");
+
+    const dev = exposure(mixed, isoDate("2026-12-01")).fx;
+    const devEvents = upcomingEvents(mixed, dev, 12);
+    expect(devEvents).toContainEqual({
+      date: isoDate("2027-08-20"),
+      kind: "devCompletion",
+      propertyId: "dev",
+    });
+  });
+
+  it("is sorted by date, and every event is inside the window", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 0, max: 300 }),
+        fc.integer({ min: 1, max: 60 }),
+        (k, months) => {
+          const asOf = edate(BASE_DATE, k);
+          const { fx } = exposure(mixedWithRefi, asOf);
+          const events = upcomingEvents(mixedWithRefi, fx, months);
+          const end = edate(asOf, months).getTime();
+          for (const [i, e] of events.entries()) {
+            expect(e.date.getTime()).toBeGreaterThan(asOf.getTime());
+            expect(e.date.getTime()).toBeLessThanOrEqual(end);
+            if (i > 0) {
+              expect(e.date.getTime()).toBeGreaterThanOrEqual(
+                events[i - 1].date.getTime(),
+              );
+            }
+          }
+        },
+      ),
+      { numRuns: 40 },
+    );
+  });
+});
+
+describe("ADR 0103: properties", () => {
+  it("debt resetting is Σ upcoming balances in the window, monotone in N, within the schedule", () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 0, max: 300 }), (k) => {
+        const asOf = edate(BASE_DATE, k);
+        const { fx, schedules } = exposure(mixedWithRefi, asOf);
+        let prev = ZERO;
+        for (const years of [1, 3, 5, 30]) {
+          const end = edate(asOf, years * 12).getTime();
+          const inWindow = fx.resets.filter(
+            (r) => r.status === "upcoming" && r.fixationEnd.getTime() <= end,
+          );
+          const sum = inWindow.reduce((s, r) => s.plus(r.balance), ZERO);
+          const got = debtResettingWithin(fx, years);
+          expect(got.amount.toString()).toBe(sum.toString());
+          expect(got.loans).toBe(inWindow.length);
+          expect(got.amount.greaterThanOrEqualTo(prev)).toBe(true);
+          prev = got.amount;
+        }
+        for (const r of fx.resets) {
+          expect(r.balance.isNegative()).toBe(false);
+          if (r.status !== "upcoming") continue;
+          expect(r.fixationEnd.getTime()).toBeGreaterThan(asOf.getTime());
+          const peak = rowsOf(schedules, r.propertyId).reduce(
+            (m, row) => (row.endBalance.greaterThan(m) ? row.endBalance : m),
+            ZERO,
+          );
+          expect(r.balance.lessThanOrEqualTo(peak)).toBe(true);
+        }
+      }),
+      { numRuns: 40 },
+    );
+  });
+});

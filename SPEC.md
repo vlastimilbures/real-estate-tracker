@@ -382,6 +382,27 @@ netCF_N + equity_N]` — acquisition outflows and refinance cash adjust the rele
   between −90 % and +1000 %" (`src/ui/model/irr.ts`).
 - `totalPrincipalRepaid` (sanity invariant): Σ principal repaid over the horizon; for the
   seed it equals the starting debt (tripwire for the classic zero-principal spreadsheet bug).
+- **Total interest** (ADR 0103): Σ projection interest of Years 1…N; the **real** figure is
+  Σ interest_t / CPI_t, deflated like the real cumulative cash flow.
+
+### 4.7 Financing exposure and upcoming events (ADR 0103)
+
+`financingExposure(portfolio, assumptions, schedules, asOf)` reads the same schedules as the
+projection (`src/engine/financing.ts`). A loan is one active property's block chain.
+
+- **Fixation end** = `blockEndDate`. Its payment is still fixed (D-21), so the **balance at
+  fixation end** is the end balance of grid month `fixationYears·12 − paymentOffset`, and the
+  reset row is the next one. A 0-year (floating) block has no fixation end.
+- Status at as-of: **passed** (on or before as-of, incl. ADR 0030), **replaced** (a successor
+  starts on or before it, or in the same schedule month), **repaid** (no balance left by
+  then), else **upcoming**. A loan's **next fixation** is its earliest upcoming one.
+- **Debt resetting within N years** (`debtResettingWithin`) = Σ upcoming balances with the
+  fixation end in (as-of, as-of + N years].
+- **Payoff** = due date of the schedule's last payment (modelled, not the contract maturity);
+  **remaining term** = schedule months from as-of to it.
+- **Upcoming events** (`upcomingEvents`) in (as-of, as-of + M months], sorted by date: fixation
+  ends (with the balance), modelled payoffs, development completions, and the in-force
+  lease's end when no later lease is entered.
 
 ## 5. Data layer
 
@@ -533,7 +554,9 @@ offline badge, and controls for language and theme.
 1. **Dashboard** — hero KPI tiles (net worth today / at horizon, LTV, DSCR), nominal/real
    toggle, charts (value vs debt vs equity, equity change, net cash flow, LTV, etc.), KPI
    list, and a property filter. An **AsOfPicker** (Today / +1y / +5y presets, or any typed
-   date within the projection window) sets the snapshot date (§4.3).
+   date within the projection window) sets the snapshot date (§4.3). A compact **Financing &
+   upcoming** panel (§4.7, ADR 0103) shows the next rate reset, the debt resetting within
+   1/3/5 years, total interest and the next 12 months' events, each linking to its property.
 
 2. **Properties** — list with per-property summary and LTV/DSCR health bands; "+ Add property"
    button opens a form modal (name, address, type, size_m2, garage, purchase_date,

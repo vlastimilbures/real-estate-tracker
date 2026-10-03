@@ -59,6 +59,18 @@ export {
 } from "./real";
 export { portfolioKpis } from "./kpis";
 export { portfolioOutputs, projectionAndKpis } from "./outputs";
+export {
+  debtResettingWithin,
+  financingExposure,
+  upcomingEvents,
+} from "./financing";
+export type {
+  FinancingEvent,
+  FinancingEventKind,
+  FinancingExposure,
+  FixationReset,
+  LoanExposure,
+} from "./financing";
 export type { PortfolioOutputs } from "./outputs";
 export { applyScenario } from "./scenarios";
 export { validateInputs, validatePortfolio } from "./validate";

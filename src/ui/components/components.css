@@ -344,6 +344,19 @@
   border-bottom: none;
 }
 
+/* A small heading and a quiet note inside a panel (Financing & upcoming, ADR 0103). */
+.panel-subhead {
+  margin: var(--s4) 0 var(--s2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.panel-note {
+  margin: var(--s2) 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
 /* ============ Import drag-and-drop ============ */
 .dropzone {
   border: 1px dashed var(--hairline-strong);
