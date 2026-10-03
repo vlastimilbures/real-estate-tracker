@@ -15,6 +15,12 @@ export default defineConfig(async () => ({
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
 
+  // Vite 5's default target, kept explicit: Vite 7 defaults to Safari 16.4, but the app
+  // supports macOS 13.0 (Safari 16.0, src-tauri/tauri.conf.json minimumSystemVersion).
+  build: {
+    target: ["es2020", "edge88", "firefox78", "chrome87", "safari14"],
+  },
+
   // Tauri expects a fixed port; fail if it's not available.
   clearScreen: false,
   server: {
