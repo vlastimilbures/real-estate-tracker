@@ -38,7 +38,7 @@ test-results
 *.sw?
 
 # Phase-3 UI-review screenshots (throwaway)
-screenshots/
+/screenshots/
 
 # UX capture output (`pnpm ux:capture`, ux-capture/README.md)
 ux-screens/
