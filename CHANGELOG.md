@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Adding a valuation or a lease after one that has no end date asks whether to end that
+  record on the day before the new one starts. **End previous** saves both in one write;
+  **Keep as is** adds only the new record; closing the dialog adds nothing and keeps your
+  input. Editing a record never asks. No computed figure changes (ADR 0099).
+
 - The mortgage form starts with a **Loan type** switch: **Standard** or **Development
   (construction)**. Standard hides the development draws and the interest-only completion
   date; an existing block opens in the type its data shows, and switching a development
