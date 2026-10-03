@@ -923,6 +923,10 @@ export const cs: Dictionary = {
       money: "Zadejte částku 0 nebo vyšší, např. 1 250 000",
       pct: "Zadejte procenta, např. 4,5",
       int: "Zadejte celé číslo, např. 25",
+      prepayments:
+        "Zkontrolujte označené řádky: datum jako dd.mm.yyyy, částka nad 0 a poplatek 0 nebo více",
+      recasts:
+        "Zkontrolujte označené řádky: datum jako dd.mm.yyyy a nové datum splatnosti nebo splátka nad 0",
       draws: "Jedna tranše na řádek: dd.mm.yyyy = částka",
     },
     /** A bounded whole-number field (UX-068, ADR 0075). */

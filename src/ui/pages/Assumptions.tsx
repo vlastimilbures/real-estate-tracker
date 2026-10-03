@@ -8,7 +8,6 @@ import { Field, TextInput } from "../components/forms";
 import { DateInput } from "../components/DateInput";
 import {
   collectValues,
-  FORM_PARSERS,
   fieldHint,
   percentDraft,
   moneyDraft,
@@ -16,6 +15,7 @@ import {
   type CollectRules,
   type FieldSpec,
 } from "../model/formParse";
+import { FORM_PARSERS } from "../model/formParsers";
 import { INT_RANGES } from "../../lib/intRanges";
 import type { Assumptions } from "../../engine";
 import { currencySymbol } from "../../lib/currency";

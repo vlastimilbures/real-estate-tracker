@@ -967,6 +967,10 @@ export const en = {
       money: "Enter an amount of 0 or more, e.g. 1 250 000",
       pct: "Enter a percentage, e.g. 4,5",
       int: "Enter a whole number, e.g. 25",
+      prepayments:
+        "Check the marked rows: a date as dd.mm.yyyy, an amount above 0 and a fee of 0 or more",
+      recasts:
+        "Check the marked rows: a date as dd.mm.yyyy, and a new maturity date or an instalment above 0",
       draws: "One tranche per line: dd.mm.yyyy = amount",
     },
     /** A bounded whole-number field (UX-068, ADR 0075). */

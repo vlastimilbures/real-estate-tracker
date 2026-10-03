@@ -8,8 +8,10 @@ import {
   rate,
   utc,
   type IsoDate,
+  type LoanRecast,
   type Money,
   type MortgageDraw,
+  type MortgagePrepayment,
   type Rate,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
@@ -103,7 +105,8 @@ export function drawsDraft(draws: MortgageDraw[] | undefined): string {
 
 // ---- field specs + kind parsing -------------------------------------------
 
-export type FieldKind = "date" | "money" | "pct" | "int" | "draws";
+export type FieldKind =
+  "date" | "money" | "pct" | "int" | "draws" | "prepayments" | "recasts";
 
 export interface FieldSpec {
   name: string;
@@ -148,6 +151,9 @@ export interface KindValue {
   pct: Rate;
   int: number;
   draws: MortgageDraw[];
+  /** Row-editor lists (ADR 0116): a JSON draft, see loanEventRows.ts. */
+  prepayments: MortgagePrepayment[];
+  recasts: LoanRecast[];
 }
 
 /** Any one parsed field value; null = an optional field left blank. */
@@ -172,20 +178,6 @@ export type ParsedValues<S extends readonly FieldSpec[]> = {
 /** A parser per field kind: the value, or null when the text does not parse. */
 export type KindParsers = {
   [K in FieldKind]: (raw: string) => KindValue[K] | null;
-};
-
-/** RecordForm's parsers. Money is non-negative everywhere it's entered (price, rent,
- *  principal, instalment, costs), so negatives are rejected here; pct stays signed (a
- *  declining-market appreciation override is legitimately negative). */
-export const FORM_PARSERS: KindParsers = {
-  date: parseDate,
-  money: (raw) => {
-    const m = parseMoney(raw);
-    return m === null || m.isNegative() ? null : m;
-  },
-  pct: parsePercentToRatio,
-  int: parseIntField,
-  draws: parseDraws,
 };
 
 /** How a form parses: its kind parsers and the messages for blank and invalid fields. */

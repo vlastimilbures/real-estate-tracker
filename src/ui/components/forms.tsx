@@ -3,11 +3,11 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
 import {
   collectValues,
-  FORM_PARSERS,
   fieldHint,
   type FieldSpec,
   type ParsedValues,
 } from "../model/formParse";
+import { FORM_PARSERS } from "../model/formParsers";
 import { Button } from "./primitives";
 import { DateInput } from "./DateInput";
 import { FieldContext, useFieldControlProps } from "./fieldContext";
