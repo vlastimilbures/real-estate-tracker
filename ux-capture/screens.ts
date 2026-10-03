@@ -208,6 +208,18 @@ export const SCREENS: Screen[] = [
         .getByRole("button", { name: ux.t.common.saveChanges })
         .click();
       await expect(dialog).toBeHidden();
+      // LTV and Net cash flow stay in view without scrolling sideways, clear of the
+      // pinned actions column (ADR 0085).
+      const actions = await ux.page.locator("th.actions-col").boundingBox();
+      for (const col of [
+        ux.t.properties.colLtv,
+        ux.t.properties.colNetCashFlow,
+      ]) {
+        const box = await ux.page
+          .getByRole("columnheader", { name: col, exact: true })
+          .boundingBox();
+        expect(box!.x + box!.width).toBeLessThanOrEqual(actions!.x);
+      }
       await ux.capture("14-properties-long-name");
     },
   },
