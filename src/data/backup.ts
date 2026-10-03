@@ -606,15 +606,16 @@ export class SafetyBackupError extends Error {
  * database and its pre-migration backups (DR-136). Written to a temp file and renamed
  * into place, then read back: its row counts must equal the live data. Any failure
  * throws `SafetyBackupError` — without a verified file a restore must not start.
- * Returns the file name.
+ * `prefix` names the file for other destructive actions. Returns the file name.
  */
 export async function writeSafetyBackup(
   sql: Sql,
   now: Date = new Date(),
+  prefix = "portfolio-before-restore",
 ): Promise<string> {
   const safetyBackup = await exportToJson(sql);
   const json = JSON.stringify(safetyBackup, null, 2);
-  const filename = `portfolio-before-restore-${stamp(now)}.json`;
+  const filename = `${prefix}-${stamp(now)}.json`;
   try {
     // Temp file + rename in `<app config>/backups`, read back (src-tauri/src/files.rs).
     const readBack = await invoke<string>("write_app_backup", {
