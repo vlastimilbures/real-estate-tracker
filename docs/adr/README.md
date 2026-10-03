@@ -119,6 +119,7 @@ Other IDs seen in code comments:
 | [0092](0092-in-app-docs-pointer.md)               | Guide and About point to the limitations and data-safety docs                          |                                        |
 | [0093](0093-scenario-add-flow.md)                 | Scenario add flow: no duplicate presets, new scenarios join the compare                |                                        |
 | [0094](0094-sample-portfolio-clear.md)            | Label the sample portfolio and clear it in one step                                    |                                        |
+| [0096](0096-csv-import-preview.md)                | CSV import preview: adds and updates before importing                                  |                                        |
 
 ### Judgment calls and open questions
 

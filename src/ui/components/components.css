@@ -1662,3 +1662,35 @@ a:focus-visible,
   text-decoration: underline dotted;
   text-underline-offset: 3px;
 }
+
+/* CSV import preview and report (ADR 0096): one block per file, records in a
+   disclosure list, an update's changed columns under its name. */
+.import-summary {
+  display: grid;
+  gap: var(--s3);
+}
+.import-summary-file {
+  padding-bottom: var(--s3);
+  border-bottom: 1px solid var(--hairline);
+  font-size: 13.5px;
+}
+.import-summary-file .counts {
+  color: var(--ink-soft);
+  margin-left: var(--s2);
+}
+.import-summary details {
+  margin-top: var(--s2);
+}
+.import-summary summary {
+  cursor: pointer;
+}
+.import-summary ul {
+  margin: var(--s2) 0 0;
+  padding-left: var(--s4);
+}
+.import-summary .changes {
+  color: var(--ink-soft);
+}
+.import-summary .link-button {
+  text-decoration: underline;
+}

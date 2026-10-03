@@ -188,6 +188,9 @@ describe("i18n dictionaries — plural forms", () => {
       "propertyDetail.amortizationMonths",
       "importPage.rowsReady",
       "importPage.errorsBadge",
+      "importPage.importScope",
+      "importPage.confirmOverwrite",
+      "importPage.confirmOverwriteMsg",
     ];
     // English writes the horizon and the IRR foot as compounds ("25-yr"); Czech and
     // Russian count years.

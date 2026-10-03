@@ -627,7 +627,20 @@ export const en = {
     importing: "Importing…",
     importComplete: "Import complete",
     reportTitle: "Import report",
-    upserted: (v: number) => `${v} added or updated`,
+    willAdd: (n: number) => `Will add ${n}`,
+    willUpdate: (n: number) => `Will update ${n}`,
+    added: (n: number) => `Added ${n}`,
+    updated: (n: number) => `Updated ${n}`,
+    unchangedCount: (n: number) => `${n} unchanged`,
+    importScope: (total: number, added: number, updated: number) =>
+      `Import ${total} ${enPlural(total, ["record", "records"])} (${added} new, ${updated} ${enPlural(updated, ["update", "updates"])})`,
+    nothingToImport: "Every record in these files is already up to date.",
+    confirmOverwrite: (n: number) =>
+      `Overwrite ${n} existing ${enPlural(n, ["record", "records"])}`,
+    confirmOverwriteMsg: (n: number) =>
+      `This import changes ${n} existing ${enPlural(n, ["record", "records"])}. Review the changes above.`,
+    planChanged:
+      "Your data changed since this preview, so nothing was imported. Review the updated preview and import again.",
     // Error-code → message map (csv.ts emits codes; UI renders these)
     errRequired: "Required",
     errInvalidDate: (v: string) => `Invalid date "${v}" — use YYYY-MM-DD`,

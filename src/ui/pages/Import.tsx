@@ -1,4 +1,4 @@
-import { useState, Fragment } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useEngine } from "../../state/useEngine";
 import { AppShell } from "../components/AppShell";
@@ -17,18 +17,21 @@ import {
   type ParsedRentRow,
   type ParsedMortgageRow,
   CsvImportError,
+  CsvPlanChangedError,
+  type CsvImportPreview,
   type CsvImportProblem,
-  type CsvImportReport,
 } from "../../state/csv";
+import { useUiStore } from "../../state/uiStore";
 import { logFailure } from "../../state/diagnostics";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
-import { importReportRows } from "../model/importReport";
+import { importCounts } from "../model/importPreview";
 import { toWriteError } from "../../state/writeError";
 import { useToast } from "../hooks/useToast";
 
 import {
   EntityImportPanel,
+  ImportSummary,
   RefusedTable,
   type FileState,
 } from "./ImportPanels";
@@ -36,6 +39,11 @@ import {
 export function Import() {
   const t = useT();
   const importCsv = usePortfolioStore((s) => s.importCsv);
+  const previewCsv = usePortfolioStore((s) => s.previewCsv);
+  const portfolio = usePortfolioStore((s) => s.portfolio);
+  const lastImport = useUiStore((s) => s.lastImport);
+  const setLastImport = useUiStore((s) => s.setLastImport);
+  const openProperty = useUiStore((s) => s.openProperty);
   const engine = useEngine();
 
   const [properties, setProperties] =
@@ -48,9 +56,9 @@ export function Import() {
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [refused, setRefused] = useState<CsvImportProblem[] | null>(null);
-  const [importReport, setImportReport] = useState<CsvImportReport | null>(
-    null,
-  );
+  const [preview, setPreview] = useState<CsvImportPreview | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [planChanged, setPlanChanged] = useState(false);
   const { toast, showToast } = useToast(2400);
 
   // FK-aware parsers: check child rows against known property names
@@ -104,25 +112,64 @@ export function Import() {
     });
   }
 
-  const hasAnyFile = properties || valuations || rents || mortgages;
+  const hasAnyFile = !!(properties || valuations || rents || mortgages);
   const allValid = [properties, valuations, rents, mortgages].every(
     (f) => !f || f.result.errors.length === 0,
   );
-  const canImport = hasAnyFile && allValid && !importing;
+  const batch = useMemo(
+    () => ({
+      properties: properties?.result.rows,
+      valuations: valuations?.result.rows,
+      rents: rents?.result.rows,
+      mortgages: mortgages?.result.rows,
+    }),
+    [properties, valuations, rents, mortgages],
+  );
 
-  async function runImport() {
-    if (!canImport) return;
+  // ADR 0096: once every chosen file is valid, preview what the import would do; again
+  // whenever the files or the stored data change.
+  useEffect(() => {
+    setConfirming(false);
+    if (!hasAnyFile || !allValid) {
+      setPreview(null);
+      return;
+    }
+    let current = true;
+    previewCsv(batch).then(
+      (p) => {
+        if (current) setPreview(p);
+      },
+      (e: unknown) => {
+        logFailure("IMPORT", e);
+        if (current) setPreview(null);
+      },
+    );
+    return () => {
+      current = false;
+    };
+  }, [batch, hasAnyFile, allValid, portfolio, previewCsv]);
+
+  const counts = importCounts(preview?.items ?? []);
+  const toWrite = counts.added + counts.updated;
+  const planOk = preview !== null && preview.problems.length === 0;
+  const canImport =
+    hasAnyFile && allValid && planOk && toWrite > 0 && !importing;
+
+  async function runImport(confirmed: boolean) {
+    if (!canImport || !preview) return;
+    // Updates overwrite stored records: ask first (ADR 0096).
+    if (counts.updated > 0 && !confirmed) {
+      setConfirming(true);
+      return;
+    }
+    setConfirming(false);
     setImporting(true);
     setImportError(null);
     setRefused(null);
+    setPlanChanged(false);
     try {
-      const report = await importCsv({
-        properties: properties?.result.rows,
-        valuations: valuations?.result.rows,
-        rents: rents?.result.rows,
-        mortgages: mortgages?.result.rows,
-      });
-      setImportReport(report);
+      const report = await importCsv(batch, preview.fingerprint);
+      setLastImport(report);
       // Imported: clear the files so a second click cannot import them again (UX-038).
       setProperties(null);
       setValuations(null);
@@ -132,7 +179,10 @@ export function Import() {
     } catch (e) {
       // Import is one transaction: on any failure nothing was written (DR-023).
       if (e instanceof CsvImportError) setRefused(e.problems);
-      else {
+      else if (e instanceof CsvPlanChangedError) {
+        setPlanChanged(true);
+        setPreview(e.preview);
+      } else {
         logFailure("IMPORT", e);
         // A constraint the CSV checks missed (a generated-id clash was one, now fixed: DR-137)
         // gets the translated wording, not SQLite's text.
@@ -193,11 +243,68 @@ export function Import() {
               {t.importPage.fixErrors}
             </p>
           )}
+          {preview && preview.problems.length > 0 && (
+            <RefusedTable problems={preview.problems} />
+          )}
+          {planOk && (
+            <div style={{ marginBottom: "var(--s3)" }}>
+              <ImportSummary items={preview.items} mode="preview" />
+              {toWrite === 0 && (
+                <p style={{ marginTop: "var(--s3)" }}>
+                  {t.importPage.nothingToImport}
+                </p>
+              )}
+            </div>
+          )}
+          {planChanged && (
+            <div style={{ marginBottom: "var(--s3)" }}>
+              <ErrorBanner
+                message={t.importPage.planChanged}
+                onDismiss={() => setPlanChanged(false)}
+              />
+            </div>
+          )}
           <div className="row" style={{ gap: "var(--s3)" }}>
-            <Button variant="primary" disabled={!canImport} onClick={runImport}>
-              {importing ? t.importPage.importing : t.importPage.importSelected}
+            <Button
+              variant="primary"
+              disabled={!canImport || confirming}
+              onClick={() => void runImport(false)}
+            >
+              {importing
+                ? t.importPage.importing
+                : planOk && toWrite > 0
+                  ? t.importPage.importScope(
+                      toWrite,
+                      counts.added,
+                      counts.updated,
+                    )
+                  : t.importPage.importSelected}
             </Button>
           </div>
+          {confirming && (
+            <div className="confirm-row">
+              <div className="confirm-row-content">
+                <span className="confirm-msg">
+                  {t.importPage.confirmOverwriteMsg(counts.updated)}
+                </span>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  disabled={importing}
+                  onClick={() => void runImport(true)}
+                >
+                  {t.importPage.confirmOverwrite(counts.updated)}
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={importing}
+                  onClick={() => setConfirming(false)}
+                >
+                  {t.common.cancel}
+                </Button>
+              </div>
+            </div>
+          )}
           {refused && <RefusedTable problems={refused} />}
           {importError && (
             <div style={{ marginTop: "var(--s3)" }}>
@@ -210,16 +317,13 @@ export function Import() {
         </Panel>
       )}
 
-      {importReport && (
+      {lastImport && (
         <Panel title={t.importPage.reportTitle}>
-          <div className="statlist">
-            {importReportRows(t, importReport.upserted).map((r) => (
-              <Fragment key={r.label}>
-                <div className="k">{r.label}</div>
-                <div className="v">{r.value}</div>
-              </Fragment>
-            ))}
-          </div>
+          <ImportSummary
+            items={lastImport.items}
+            mode="report"
+            onOpenProperty={openProperty}
+          />
         </Panel>
       )}
 

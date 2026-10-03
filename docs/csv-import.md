@@ -17,7 +17,7 @@ each picker has a **Download template** button that saves the header and one exa
 | `mortgages.csv`  | Mortgage blocks (one per fixation period) | one mortgage block   |
 
 You can choose any subset of the four files. Everything you choose is imported together, as
-one batch, when you press **Import selected files**.
+one batch, when you press the **Import** button.
 
 - **Order does not matter.** You can choose the files in any order; properties in the batch
   are written before the rows that refer to them.
@@ -149,19 +149,42 @@ matched to an existing record by its natural key:
 - A new property gets an empty holding-costs record, so its costs follow the Assumptions
   defaults until you set them.
 
+## Preview and confirmation
+
+Once every chosen file is valid, the Import panel shows a **preview** before anything is
+written. For each file it lists how many records it will add, update and leave unchanged:
+
+- **Will add** — rows with no matching record (including a renamed property).
+- **Will update** — rows that match a record and change at least one column. Each one lists
+  its changed columns as `before → after`.
+- **Unchanged** — rows that match a record and change nothing. They are counted, not listed.
+
+Expand a list to see each record by name (`Byt Javorova`, or `Byt Javorova · 01.06.2026` for
+a dated record). The button states the scope, for example **Import 4 records (3 new, 1
+update)**. If the import updates existing records, pressing it asks you to confirm with
+**Overwrite 1 existing record**; an import that only adds records starts at once. When every
+row is unchanged there is nothing to import, and the button stays disabled.
+
+If your data changes between the preview and the import (for example you edited a property
+in the meantime), nothing is written: the page says so and shows the new preview to review.
+
+After the import, the **Import report** lists the records added and updated, each linking to
+its property. It stays on the Import page until your next import or until you quit the app.
+
 ## All or nothing
 
 The whole batch — every file you chose — is imported in one step:
 
 1. Each file is checked as you choose it. Errors are listed with the file line and column,
-   and **Import selected files** stays disabled until every file is clean.
-2. When you press it, the app merges the rows with your current data and checks the result
-   against the same rules as the forms (for example an instalment that does not cover the
-   interest, or a lease that ends before it starts).
-3. If any row breaks a rule, nothing is written. The app shows _"Nothing was imported.
+   and the Import button stays disabled until every file is clean.
+2. The preview merges the rows with your current data and checks the result against the
+   same rules as the forms (for example an instalment that does not cover the interest, or a
+   lease that ends before it starts).
+3. If any row breaks a rule, nothing can be imported. The app shows _"Nothing was imported.
    Correct these rows and import again"_ with each file, line and column.
-4. Otherwise every row is written in one database transaction. If the write itself fails, it
-   is rolled back and nothing is imported.
+4. Otherwise, when you press Import, the plan is checked once more and every row is written
+   in one database transaction. If the write itself fails, it is rolled back and nothing is
+   imported.
 
 There is no partial import: one bad row in one file stops the whole batch.
 

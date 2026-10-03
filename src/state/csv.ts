@@ -19,6 +19,9 @@ export {
 } from "../import/csv";
 export {
   CsvImportError,
+  CsvPlanChangedError,
+  type CsvImportPreview,
   type CsvImportProblem,
   type CsvImportReport,
+  type ImportItem,
 } from "../import/csvImport";

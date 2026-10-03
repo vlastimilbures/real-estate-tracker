@@ -402,13 +402,36 @@ export const SCREENS: Screen[] = [
         .locator("input[type=file]")
         .first()
         .setInputFiles(fixture("properties-ok.csv"));
+      // ADR 0096: one new property, so the button states the scope.
       await ux.page
-        .getByRole("button", { name: ux.t.importPage.importSelected })
+        .getByRole("button", { name: ux.t.importPage.importScope(1, 1, 0) })
         .click();
       await expect(
         ux.page.getByRole("heading", { name: ux.t.importPage.reportTitle }),
       ).toBeVisible();
       await ux.capture("52-import-done");
+    },
+  },
+  {
+    id: "53-import-preview",
+    desc: "Import preview: one add, one update, overwrite confirmation open",
+    route: "import",
+    run: async (ux) => {
+      await boot(ux.page);
+      await nav(ux, "import");
+      await ux.page
+        .locator("input[type=file]")
+        .first()
+        .setInputFiles(fixture("properties-update.csv"));
+      await ux.page
+        .getByRole("button", { name: ux.t.importPage.importScope(2, 1, 1) })
+        .click();
+      await expect(
+        ux.page.getByRole("button", {
+          name: ux.t.importPage.confirmOverwrite(1),
+        }),
+      ).toBeVisible();
+      await ux.capture("53-import-preview");
     },
   },
   {
