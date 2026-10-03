@@ -131,6 +131,7 @@ Other IDs seen in code comments:
 | [0104](0104-combined-stress-presets.md)           | Scenarios: combined stress presets                                                     |                                        |
 | [0105](0105-one-product-name-and-format-note.md)  | One product name on every surface; language does not change formats                    | #22                                    |
 | [0106](0106-collapsible-stress-presets.md)        | Scenarios: collapsible stress presets                                                  |                                        |
+| [0108](0108-scenario-compare-xlsx-export.md)      | Scenario compare: export to Excel                                                      | #56                                    |
 
 ### Judgment calls and open questions
 
