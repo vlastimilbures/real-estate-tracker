@@ -1107,6 +1107,49 @@ table.data tbody tr:hover td.sticky-col {
   font-size: 11.5px;
   color: var(--ink-faint);
 }
+/* Prepayment and recast rows (ADR 0116): full width, one wrapped row per event. */
+.form-wide {
+  grid-column: 1 / -1;
+}
+.event-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: 0;
+  padding: var(--s3);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+}
+.event-rows > legend {
+  padding: 0 var(--s1);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.event-rows > .help,
+.event-rows .err {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+.event-rows .err {
+  color: var(--negative);
+}
+.event-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s3);
+  align-items: flex-end;
+}
+.event-row > .field {
+  flex: 1 1 140px;
+}
+.event-row > .err {
+  flex-basis: 100%;
+}
+.event-rows > button {
+  align-self: flex-start;
+}
 .form-actions {
   display: flex;
   gap: var(--s2);

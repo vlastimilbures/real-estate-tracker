@@ -101,7 +101,7 @@ describe("mortgageFromForm (DR-129)", () => {
     expect(m.draws).toBeUndefined();
   });
 
-  it("keeps the stored prepayments and recasts the form does not show (ADR 0109)", () => {
+  it("keeps the stored prepayments and recasts a caller without them does not show (ADR 0109)", () => {
     const prepayments = [
       {
         date: isoDate("2031-01-01"),
@@ -118,6 +118,42 @@ describe("mortgageFromForm (DR-129)", () => {
     const fresh = mortgageFromForm(values, "m2", "p1", undefined);
     expect(fresh.prepayments).toBeUndefined();
     expect(fresh.recasts).toBeUndefined();
+  });
+
+  it("takes the form's prepayments and recasts, and clears them when empty (ADR 0116)", () => {
+    const stored = {
+      prepayments: [
+        {
+          date: isoDate("2031-01-01"),
+          amount: money("100000"),
+          effect: "shortenTerm" as const,
+        },
+      ],
+      recasts: [{ date: isoDate("2033-01-01"), instalment: money("9000") }],
+    };
+    const entered = [
+      {
+        date: isoDate("2032-01-01"),
+        amount: money("50000"),
+        effect: "lowerInstalment" as const,
+      },
+    ];
+    const m = mortgageFromForm(
+      { ...values, prepayments: entered, recasts: [] },
+      "m1",
+      "p1",
+      stored,
+    );
+    expect(m.prepayments).toEqual(entered);
+    expect(m.recasts).toBeUndefined();
+    expect(
+      mortgageFromForm(
+        { ...values, prepayments: null, recasts: null },
+        "m1",
+        "p1",
+        stored,
+      ).prepayments,
+    ).toBeUndefined();
   });
 
   it("a new loan has no contract maturity", () => {

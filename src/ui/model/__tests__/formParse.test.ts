@@ -15,11 +15,11 @@ import {
   parseMoney,
   collectValues,
   fieldHint,
-  FORM_PARSERS,
   type FieldSpec,
   type ParsedValues,
   type CollectRules,
 } from "../formParse";
+import { FORM_PARSERS } from "../formParsers";
 import { INT_RANGES } from "../../../lib/intRanges";
 import { D } from "../../../lib/money";
 import { getDict } from "../../../i18n";
@@ -27,7 +27,9 @@ import {
   isoDate,
   type IsoDate,
   type Money,
+  type LoanRecast,
   type MortgageDraw,
+  type MortgagePrepayment,
   type Rate,
 } from "../../../engine";
 
@@ -187,7 +189,15 @@ describe("collectValues", () => {
     }>();
     // A spec typed as plain FieldSpec may be optional, so its values include null.
     expectTypeOf<ParsedValues<FieldSpec[]>>().toEqualTypeOf<{
-      [name: string]: Money | IsoDate | Rate | number | MortgageDraw[] | null;
+      [name: string]:
+        | Money
+        | IsoDate
+        | Rate
+        | number
+        | MortgageDraw[]
+        | MortgagePrepayment[]
+        | LoanRecast[]
+        | null;
     }>();
   });
 

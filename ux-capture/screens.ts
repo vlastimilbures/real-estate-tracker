@@ -25,6 +25,38 @@ export interface Screen {
 // Resolved from the repo root (the cwd of `pnpm ux:capture`).
 const fixture = (name: string) => path.resolve("ux-capture", "fixtures", name);
 
+/**
+ * Opens the first property's first mortgage block for editing and enters two
+ * prepayments (the second larger than the balance) and a maturity change (ADR 0116).
+ */
+async function enterLoanEvents(ux: Ux) {
+  await boot(ux.page);
+  await openFirstProperty(ux);
+  const d = ux.t.propertyDetail;
+  const p = panel(ux, d.mortgagesTitle);
+  await p.getByRole("button", { name: ux.t.common.edit }).first().click();
+  const add = p.getByRole("button", { name: d.eventAddPrepayment });
+  const rows: [string, string][] = [
+    ["17.01.2031", "500000"],
+    ["17.01.2040", "5000000"],
+  ];
+  for (const [i, [date, amount]] of rows.entries()) {
+    await add.click();
+    const row = p.getByRole("group", { name: d.eventPrepaymentRow(i + 1) });
+    await row.getByLabel(d.eventDate, { exact: true }).fill(date);
+    await row.getByLabel(d.eventAmount).fill(amount);
+  }
+  await p
+    .getByRole("group", { name: d.eventPrepaymentRow(1) })
+    .getByLabel(d.eventFee)
+    .fill("2000");
+  await p.getByRole("button", { name: d.eventAddRecast }).click();
+  const recast = p.getByRole("group", { name: d.eventRecastRow(1) });
+  await recast.getByLabel(d.eventDate, { exact: true }).fill("17.01.2033");
+  await recast.getByLabel(d.eventMaturity).fill("17.01.2045");
+  return p;
+}
+
 export const SCREENS: Screen[] = [
   {
     id: "00-loading",
@@ -306,6 +338,43 @@ export const SCREENS: Screen[] = [
       const head = await heading.boundingBox();
       expect(head!.y).toBeGreaterThanOrEqual(bar!.y + bar!.height);
       await ux.capture("27-property-section-nav-focus", { fullPage: false });
+    },
+  },
+  {
+    id: "28-property-mortgage-events",
+    desc: "Mortgage form with prepayment and maturity-change rows (ADR 0116)",
+    route: "property",
+    run: async (ux) => {
+      const p = await enterLoanEvents(ux);
+      await p
+        .getByRole("group", { name: ux.t.propertyDetail.fieldPrepayments })
+        .scrollIntoViewIfNeeded();
+      await ux.capture("28-property-mortgage-events");
+    },
+  },
+  {
+    id: "29-property-prepayment-outputs",
+    desc: "After saving events: loan outlook, event warning, Prepaid and fee columns (ADR 0116)",
+    route: "property",
+    run: async (ux) => {
+      const d = ux.t.propertyDetail;
+      const p = await enterLoanEvents(ux);
+      await p
+        .locator(".form-actions")
+        .getByRole("button", { name: ux.t.common.saveChanges })
+        .click();
+      await expect(
+        panel(ux, d.loanSummaryTitle).getByText(d.interestSaved),
+      ).toBeVisible();
+      await expect(
+        ux.page.getByRole("alert").filter({ hasText: "17.01.2040" }),
+      ).toBeVisible();
+      const am = panel(ux, d.amortizationTitle);
+      await am.getByRole("button", { expanded: false }).click();
+      await expect(
+        am.getByRole("columnheader", { name: d.amColPrepaid }),
+      ).toBeVisible();
+      await ux.capture("29-property-prepayment-outputs");
     },
   },
   {

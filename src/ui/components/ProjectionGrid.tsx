@@ -6,6 +6,7 @@ import { fmtDscr } from "../../lib/format";
 import type { Decimal } from "../../lib/money";
 import {
   periodLabelLocalized,
+  projectionExtras,
   yearLabel,
   showPeriodColumn,
   type SeriesRow,
@@ -24,6 +25,7 @@ export function ProjectionGrid({
   // Year 1's fiscal span starts at edate(baseDate, 1); if that month is January
   // the spans equal calendar years and the Period column just restates "Year".
   const showPeriod = showPeriodColumn(baseDate);
+  const extras = projectionExtras(rows, t.projGrid);
   return (
     <TableWrap label={t.projGrid.caption}>
       <table className="data">
@@ -59,6 +61,11 @@ export function ProjectionGrid({
             <th scope="col">
               <MetricLabel term="dscr">{t.projGrid.dscr}</MetricLabel>
             </th>
+            {extras.map(({ key, header }) => (
+              <th key={key} scope="col">
+                {header}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -116,6 +123,9 @@ export function ProjectionGrid({
                 <td>{flow(r.debtService)}</td>
                 <td>{flow(r.netCashFlow, true)}</td>
                 <td>{r.dscr ? fmtDscr(r.dscr) : "—"}</td>
+                {extras.map(({ key }) => (
+                  <td key={key}>{flow(r[key])}</td>
+                ))}
               </tr>
             );
           })}

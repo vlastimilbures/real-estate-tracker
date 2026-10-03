@@ -42,6 +42,7 @@ function seriesRow(year: number, netCashFlow: string): SeriesRow {
     dscr: D("0.9"),
     draws: ZERO,
     prepaid: ZERO,
+    prepaymentFees: ZERO,
   };
 }
 

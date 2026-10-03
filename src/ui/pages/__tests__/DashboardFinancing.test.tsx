@@ -7,6 +7,7 @@ import userEvent from "@testing-library/user-event";
 import {
   debtResettingWithin,
   isoDate,
+  money as moneyOf,
   portfolioOutputs,
   type Portfolio,
 } from "../../../engine";
@@ -122,5 +123,48 @@ describe("Financing & upcoming panel (ADR 0103)", () => {
   it("at a later as-of it does not say today or current", () => {
     const { view } = renderPanel(portfolio, "nominal", isoDate("2031-06-07"));
     expect(view.container.textContent).not.toMatch(/today|current/i);
+  });
+});
+
+describe("interest saved (ADR 0116)", () => {
+  const prepaid: Portfolio = {
+    ...portfolio,
+    mortgages: portfolio.mortgages.map((m) =>
+      m.propertyId === "lipova"
+        ? {
+            ...m,
+            prepayments: [
+              {
+                date: isoDate("2029-01-15"),
+                amount: moneyOf(300000),
+                effect: "lowerInstalment" as const,
+              },
+            ],
+          }
+        : m,
+    ),
+  };
+
+  it("is hidden without a prepayment", () => {
+    renderPanel(portfolio);
+    expect(screen.queryByText(en.dashboard.financingInterestSaved)).toBeNull();
+  });
+
+  it("shows the total, and each property in a disclosure that opens the property", async () => {
+    const { out, onOpen, view } = renderPanel(prepaid, "real");
+    const saved = out.financing.loans.find(
+      (l) => l.propertyId === "lipova",
+    )!.interestSaved!;
+    expect(screen.getByText(en.dashboard.financingInterestSaved)).toBeTruthy();
+    expect(screen.getAllByText(money(saved)).length).toBe(2);
+    const details = view.container.querySelector("details")!;
+    const summary = within(details).getByText(
+      en.dashboard.financingInterestSavedByProperty,
+    );
+    await userEvent.click(summary);
+    await userEvent.click(
+      within(details).getByRole("button", { name: "Byt Lipova" }),
+    );
+    expect(onOpen).toHaveBeenCalledWith("lipova");
   });
 });

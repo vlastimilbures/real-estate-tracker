@@ -12,10 +12,13 @@ import {
 import type {
   AmortizationRow,
   IsoDate,
+  LoanEventIssue,
+  LoanEventOutcome,
   MortgageBlock,
   Rate,
 } from "../../engine";
 import type { XlsxColumn } from "./xlsxExport";
+import { nonZeroColumns } from "./columns";
 import type { Decimal } from "../../lib/money";
 import { fmtCzk, fmtDate, fmtPct } from "../../lib/format";
 import type { Dictionary } from "../../i18n";
@@ -34,18 +37,25 @@ export type LoanWarning =
       months: number;
     }
   /** The fixation ended on/before baseDate and no follow-on block is entered (D-30). */
-  | { kind: "fixationEnded"; block: MortgageBlock; fixationEnd: Date };
+  | { kind: "fixationEnded"; block: MortgageBlock; fixationEnd: Date }
+  /** A prepayment or recast the engine clamped, ignored or dropped (ADR 0116 §10). */
+  | {
+      kind: "event";
+      block: MortgageBlock;
+      outcome: LoanEventOutcome & { issue: LoanEventIssue };
+    };
 
 /**
  * Warnings for a property's loan: every block from the one in force at baseDate (or the
  * earliest upcoming) onward, so a follow-on block is checked too (DR-125). A block a
  * later one replaced before baseDate is history and is skipped. Development loans have
  * an engine-derived instalment and an explicit term, so they get neither the instalment
- * nor the maturity check.
+ * nor the maturity check. Event outcomes with an issue follow, on their block (ADR 0116).
  */
 export function loanWarnings(
   mortgages: MortgageBlock[],
   baseDate: Date,
+  outcomes: LoanEventOutcome[] = [],
 ): LoanWarning[] {
   const current = selectBlock(mortgages, baseDate);
   if (!current) return [];
@@ -77,6 +87,15 @@ export function loanWarnings(
       block: current,
       fixationEnd: blockEndDate(current),
     });
+  for (const outcome of outcomes) {
+    const block = mortgages.find((b) => b.id === outcome.blockId);
+    if (block && outcome.issue !== null)
+      out.push({
+        kind: "event",
+        block,
+        outcome: { ...outcome, issue: outcome.issue },
+      });
+  }
   return out;
 }
 
@@ -108,12 +127,37 @@ export function loanWarningText(
     }
     case "fixationEnded":
       return `${head} ${d.fixationEnded(fmtDate(w.fixationEnd), fmtPct(resetRate))}`;
+    case "event": {
+      const o = w.outcome;
+      const text = d.eventIssue[o.issue](
+        fmtDate(o.date),
+        fmtCzk(o.requested),
+        fmtCzk(o.applied),
+      );
+      return `${head} ${text}`;
+    }
   }
+}
+
+/**
+ * The optional columns with their headers, each shown only when some row is non-zero
+ * (ADR 0116 §12): the balance then reconciles on screen and in the export.
+ */
+export function amortizationExtras(
+  rows: AmortizationRow[],
+  d: Dictionary["propertyDetail"],
+) {
+  return nonZeroColumns(rows, [
+    { key: "drawn", header: d.amColDrawn },
+    { key: "prepaid", header: d.amColPrepaid },
+    { key: "prepaymentFee", header: d.amColPrepaymentFee },
+  ]);
 }
 
 /** Excel column map for the amortization schedule, headers as on screen (UX-062). */
 export function amortizationColumns(
   t: Pick<Dictionary, "propertyDetail">,
+  rows: AmortizationRow[],
 ): XlsxColumn<AmortizationRow>[] {
   const d = t.propertyDetail;
   return [
@@ -123,6 +167,13 @@ export function amortizationColumns(
     { header: d.amColInstalment, kind: "money", value: (r) => r.instalment },
     { header: d.amColInterest, kind: "money", value: (r) => r.interest },
     { header: d.amColPrincipal, kind: "money", value: (r) => r.principal },
+    ...amortizationExtras(rows, d).map(
+      ({ key, header }): XlsxColumn<AmortizationRow> => ({
+        header,
+        kind: "money",
+        value: (r) => r[key],
+      }),
+    ),
     { header: d.amColEndBalance, kind: "money", value: (r) => r.endBalance },
   ];
 }

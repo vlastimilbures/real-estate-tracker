@@ -5,10 +5,15 @@
 import { describe, it, expect } from "vitest";
 import { loanWarnings, loanWarningText } from "../propertyDetail";
 import { impliedMaturity, isoDate, rate } from "../../../engine";
-import type { MortgageBlock } from "../../../engine";
+import type {
+  LoanEventIssue,
+  LoanEventOutcome,
+  MortgageBlock,
+} from "../../../engine";
 import { D } from "../../../lib/money";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
+import { ru } from "../../../i18n/ru";
 import { fmtCzk } from "../../../lib/format";
 import { money } from "../../../engine";
 
@@ -129,5 +134,73 @@ describe("loanWarningText", () => {
     const text = loanWarningText(en, w, reset);
     expect(text).toContain("01.03.2023");
     expect(text).toContain("4,5 %");
+  });
+});
+
+// ADR 0116 §10: an event the engine clamped, ignored or dropped is a warning, never a
+// rejected save.
+describe("event warnings", () => {
+  const outcome = (
+    issue: LoanEventOutcome["issue"],
+    o: Partial<LoanEventOutcome> = {},
+  ): LoanEventOutcome => ({
+    blockId: "m1",
+    kind: "prepayment",
+    date: isoDate("2031-01-17"),
+    month: 56,
+    requested: D(500000),
+    applied: D(400000),
+    fee: D(0),
+    issue,
+    ...o,
+  });
+
+  it("an outcome with no issue is no warning", () => {
+    expect(loanWarnings([block()], baseDate, [outcome(null)])).toEqual([]);
+  });
+
+  it("an outcome with an issue is a warning on its block, after the block checks", () => {
+    const b = block({ startDate: isoDate("2018-03-01"), fixationYears: 5 });
+    const ws = loanWarnings([b], baseDate, [
+      outcome("PREPAYMENT_EXCEEDS_BALANCE"),
+    ]);
+    expect(ws.map((w) => w.kind)).toEqual(["fixationEnded", "event"]);
+    expect(ws[1]!.block).toBe(b);
+  });
+
+  it("names the date, the amount asked for and the amount repaid", () => {
+    const [w] = loanWarnings([block()], baseDate, [
+      outcome("PREPAYMENT_EXCEEDS_BALANCE"),
+    ]);
+    const text = loanWarningText(en, w!, reset);
+    expect(text).toContain("Loan from 17.01.2021:");
+    expect(text).toContain("17.01.2031");
+    expect(text).not.toMatch(/undefined/);
+    expect(text).toContain(fmtCzk(D(500000)));
+    expect(text).toContain(fmtCzk(D(400000)));
+  });
+
+  it("has a sentence for every issue, in every language", () => {
+    const issues = Object.keys(
+      en.propertyDetail.eventIssue,
+    ) as LoanEventIssue[];
+    expect(issues).toHaveLength(7);
+    for (const dict of [en, cs, ru]) {
+      for (const issue of issues) {
+        const kind = issue.startsWith("RECAST") ? "recast" : "prepayment";
+        const [w] = loanWarnings([block()], baseDate, [
+          outcome(issue, { kind }),
+        ]);
+        expect(loanWarningText(dict, w!, reset)).toContain("17.01.2031");
+      }
+    }
+  });
+
+  it("skips an outcome of a block the page does not list", () => {
+    expect(
+      loanWarnings([block()], baseDate, [
+        outcome("PREPAYMENT_AFTER_PAYOFF", { blockId: "gone" }),
+      ]),
+    ).toEqual([]);
   });
 });

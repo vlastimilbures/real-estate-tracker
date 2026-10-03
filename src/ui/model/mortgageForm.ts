@@ -11,9 +11,11 @@ import {
 import { mortgageBlock, suggestedInstalment } from "../../engine";
 import type {
   IsoDate,
+  LoanRecast,
   Money,
   MortgageBlock,
   MortgageDraw,
+  MortgagePrepayment,
   Rate,
 } from "../../engine";
 import type { Decimal } from "../../lib/money";
@@ -106,13 +108,19 @@ export interface MortgageFormValues {
   completionDate: IsoDate | null;
   /** Absent when the form has no maturity field (the stored value carries over). */
   contractMaturityDate?: IsoDate | null | undefined;
+  /** Absent when the form has no event rows (the stored events carry over). */
+  prepayments?: MortgagePrepayment[] | null | undefined;
+  recasts?: LoanRecast[] | null | undefined;
 }
+
+const nonEmpty = <T>(list: T[] | null | undefined): T[] | undefined =>
+  list && list.length > 0 ? list : undefined;
 
 /**
  * The mortgage block a submitted form describes. The contract maturity (D-29) comes from
  * its field (UX-054, blank clears it); a caller without that field carries the stored
- * value over (DR-129). The form has no prepayment or recast fields yet, so the stored
- * ones always carry over (ADR 0109).
+ * value over (DR-129). Prepayments and recasts likewise: the form's rows replace the
+ * stored events (no row clears them), a caller without them carries them over (ADR 0116).
  */
 export function mortgageFromForm(
   v: MortgageFormValues,
@@ -131,13 +139,14 @@ export function mortgageFromForm(
     loanTermYears: v.loanTermYears ?? undefined,
     interestRatePa: v.interestRatePa,
     monthlyInstalment: v.monthlyInstalment,
-    draws: v.draws && v.draws.length ? v.draws : undefined,
+    draws: nonEmpty(v.draws),
     completionDate: v.completionDate ?? undefined,
     contractMaturityDate:
       "contractMaturityDate" in v
         ? (v.contractMaturityDate ?? undefined)
         : existing?.contractMaturityDate,
-    prepayments: existing?.prepayments,
-    recasts: existing?.recasts,
+    prepayments:
+      "prepayments" in v ? nonEmpty(v.prepayments) : existing?.prepayments,
+    recasts: "recasts" in v ? nonEmpty(v.recasts) : existing?.recasts,
   });
 }

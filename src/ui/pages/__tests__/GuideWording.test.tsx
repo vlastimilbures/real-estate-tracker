@@ -133,3 +133,16 @@ describe("Guide language note (ADR 0105)", () => {
     expect(guideText()).toContain(d.about.formatsNote);
   });
 });
+
+// ADR 0116: the mortgages section explains prepayments and maturity changes.
+describe("Guide prepayments (ADR 0116)", () => {
+  it.each(Object.entries(DICTS))("%s shows the paragraph", (lang, d) => {
+    act(() => useUiStore.setState({ language: lang as keyof typeof DICTS }));
+    expect(guideText()).toContain(d.guide.mortgagesProse3);
+  });
+
+  it("says prepayments stay outside net cash flow and fees do not reduce the debt", () => {
+    expect(en.guide.mortgagesProse3).toMatch(/outside net cash flow and DSCR/);
+    expect(en.guide.mortgagesProse3).toMatch(/does not reduce the debt/);
+  });
+});

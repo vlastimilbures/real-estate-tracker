@@ -151,6 +151,7 @@ export function Guide() {
           <strong>{g.mortgagesProse2Reamortizes}</strong>
           {g.mortgagesProse2Post}
         </p>
+        <p className="guide-prose">{g.mortgagesProse3}</p>
       </Panel>
 
       <Panel title={g.projectionTitle} hint={g.projectionHint}>

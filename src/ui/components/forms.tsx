@@ -3,11 +3,20 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
 import {
   collectValues,
-  FORM_PARSERS,
   fieldHint,
   type FieldSpec,
   type ParsedValues,
 } from "../model/formParse";
+import { FORM_PARSERS } from "../model/formParsers";
+import {
+  BLANK_ROW,
+  draftRowOf,
+  readRows,
+  rowProblems,
+  writeRows,
+  type EventListKind,
+} from "../model/loanEventRows";
+import { currencySymbol } from "../../lib/currency";
 import { Button } from "./primitives";
 import { DateInput } from "./DateInput";
 import { FieldContext, useFieldControlProps } from "./fieldContext";
@@ -141,6 +150,180 @@ export function Checkbox(
   return <input type="checkbox" {...fieldProps} {...props} />;
 }
 
+/**
+ * A loan's prepayment or recast rows (ADR 0116 §11): a fieldset with a group per row,
+ * a labelled control per cell, and add/remove buttons. The rows live in `value` as one
+ * JSON draft (loanEventRows.ts). After a failed save, `errors` holds the list's parse
+ * message under `name` (its bad cells are then marked) and an engine message per row
+ * under `name.row`.
+ */
+function LoanEventRows({
+  kind,
+  name,
+  label,
+  help,
+  value,
+  errors,
+  onChange,
+}: {
+  kind: EventListKind;
+  name: string;
+  label: string;
+  help?: string | undefined;
+  value: string;
+  errors: Record<string, string>;
+  onChange: (v: string) => void;
+}) {
+  const t = useT();
+  const d = t.propertyDetail;
+  const hint = t.forms.invalidHint;
+  const helpId = useId();
+  const rows = readRows(value);
+  const listError = errors[name];
+  const set = (i: number, patch: Record<string, string>) =>
+    onChange(writeRows(rows.map((r, j) => (j === i ? { ...r, ...patch } : r))));
+  const money = (v: string, onCell: (v: string) => void) => (
+    <TextInput
+      value={v}
+      onChange={onCell}
+      suffix={currencySymbol()}
+      inputMode="decimal"
+    />
+  );
+  return (
+    <fieldset
+      className="event-rows"
+      aria-describedby={
+        [listError && `${helpId}-err`, help && helpId]
+          .filter(Boolean)
+          .join(" ") || undefined
+      }
+    >
+      <legend>{label}</legend>
+      {help && (
+        <p className="help" id={helpId}>
+          {help}
+        </p>
+      )}
+      {listError && (
+        <p className="err" id={`${helpId}-err`}>
+          {listError}
+        </p>
+      )}
+      {rows.map((row, i) => {
+        const rowName =
+          kind === "prepayments"
+            ? d.eventPrepaymentRow(i + 1)
+            : d.eventRecastRow(i + 1);
+        const rowError = errors[`${name}.${i}`];
+        const rowErrorId = `${helpId}-row${i}`;
+        // Unparseable cells are marked only once a save has failed on the list.
+        const bad = listError ? rowProblems(row) : [];
+        const err = (cell: string, message: string) =>
+          bad.includes(cell) ? message : undefined;
+        return (
+          <div
+            key={i}
+            role="group"
+            aria-label={rowName}
+            aria-describedby={rowError ? rowErrorId : undefined}
+            className={`event-row${rowError ? " invalid" : ""}`}
+          >
+            <Field label={d.eventDate} error={err("date", hint.date)}>
+              <DateInput
+                value={row.date}
+                onChange={(v) => set(i, { date: v })}
+              />
+            </Field>
+            {"amount" in row ? (
+              <>
+                <Field
+                  label={d.eventAmount}
+                  error={err("amount", t.forms.positiveAmount)}
+                >
+                  {money(row.amount, (v) => set(i, { amount: v }))}
+                </Field>
+                <Field label={d.eventEffect}>
+                  <SelectInput
+                    value={row.effect}
+                    onChange={(v) => set(i, { effect: v })}
+                    options={[
+                      {
+                        value: "lowerInstalment",
+                        label: d.eventEffectLowerInstalment,
+                      },
+                      { value: "shortenTerm", label: d.eventEffectShortenTerm },
+                    ]}
+                  />
+                </Field>
+                <Field label={d.eventFee} error={err("fee", hint.money)}>
+                  {money(row.fee, (v) => set(i, { fee: v }))}
+                </Field>
+              </>
+            ) : (
+              <>
+                <Field label={d.eventMode}>
+                  <SelectInput
+                    value={row.mode}
+                    onChange={(v) => set(i, { mode: v, value: "" })}
+                    options={[
+                      { value: "maturity", label: d.eventModeMaturity },
+                      { value: "instalment", label: d.eventModeInstalment },
+                    ]}
+                  />
+                </Field>
+                {row.mode === "maturity" ? (
+                  <Field
+                    label={d.eventMaturity}
+                    error={err("value", hint.date)}
+                  >
+                    <DateInput
+                      value={row.value}
+                      onChange={(v) => set(i, { value: v })}
+                    />
+                  </Field>
+                ) : (
+                  <Field
+                    label={d.eventInstalment}
+                    error={err("value", t.forms.positiveAmount)}
+                  >
+                    {money(row.value, (v) => set(i, { value: v }))}
+                  </Field>
+                )}
+              </>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() =>
+                onChange(writeRows(rows.filter((_, j) => j !== i)))
+              }
+            >
+              {d.eventRemove(rowName)}
+            </Button>
+            {rowError && (
+              <p className="err" id={rowErrorId}>
+                {rowError}
+              </p>
+            )}
+          </div>
+        );
+      })}
+      <Button
+        type="button"
+        size="sm"
+        onClick={() => onChange(writeRows([...rows, BLANK_ROW[kind]]))}
+      >
+        {kind === "prepayments" ? d.eventAddPrepayment : d.eventAddRecast}
+      </Button>
+    </fieldset>
+  );
+}
+
+const listKind = (kind: string | undefined): kind is EventListKind =>
+  kind === "prepayments" || kind === "recasts";
+
 /** Field-row buttons keyed by field name (see RecordForm's `fieldActions`). */
 export type FieldActions<S extends readonly FieldSpec[]> = Partial<
   Record<
@@ -256,6 +439,10 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
           t,
           failure,
           specs.map((s) => s.name),
+          (field, index) =>
+            listKind(specs.find((s) => s.name === field)?.kind)
+              ? draftRowOf(draft[field] ?? "", index)
+              : null,
         );
         setErrors(split.fieldErrors);
         setFormError(split.formError);
@@ -278,6 +465,32 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
       <div className="form-grid">
         {specs.map((spec) => {
           if (hiddenFields?.(draft).includes(spec.name)) return null;
+          if (listKind(spec.kind))
+            return (
+              <div key={spec.name} className="form-wide">
+                <LoanEventRows
+                  kind={spec.kind}
+                  name={spec.name}
+                  label={spec.label}
+                  help={spec.help}
+                  value={draft[spec.name] ?? ""}
+                  errors={errors}
+                  onChange={(v) => {
+                    setDraft((d) => ({ ...d, [spec.name]: v }));
+                    // Row errors are keyed by position: an edit can move rows, so the
+                    // list's errors go until the next save.
+                    setErrors((e) =>
+                      Object.fromEntries(
+                        Object.entries(e).filter(
+                          ([k]) =>
+                            k !== spec.name && !k.startsWith(`${spec.name}.`),
+                        ),
+                      ),
+                    );
+                  }}
+                />
+              </div>
+            );
           const action =
             fieldActions?.[spec.name as S[number]["name"]]?.(draft) ?? null;
           const input =

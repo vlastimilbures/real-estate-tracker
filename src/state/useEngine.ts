@@ -12,6 +12,8 @@ import {
   portfolioProjection,
   propertyProjection,
   schedulesByProperty,
+  propertySchedules,
+  propertyLoanExposure,
   applyScenario,
   cpiIndex,
   EngineInputError,
@@ -28,6 +30,8 @@ import type {
   AmortizationRow,
   FinancingExposure,
   IsoDate,
+  LoanEventOutcome,
+  LoanExposure,
   PropertySnapshot,
 } from "../engine";
 
@@ -238,6 +242,10 @@ export interface PropertyEngineOutput {
   snapshot: PropertySnapshot;
   projection: ProjectionYear[];
   schedule: AmortizationRow[];
+  /** What the loan's prepayments and recasts did (ADR 0109, shown as warnings: ADR 0116). */
+  eventOutcomes: LoanEventOutcome[];
+  /** Modelled payoff and interest saved (ADR 0116); null without a loan. */
+  loan: LoanExposure | null;
 }
 
 /** Stored data that breaks an engine rule, reported instead of thrown (DR-146). */
@@ -262,10 +270,12 @@ export function usePropertyEngineResult(
     const property = portfolio.properties.find((p) => p.id === propertyId);
     if (!property) return null;
     try {
-      const schedule =
-        schedulesByProperty(portfolio.mortgages, [propertyId], assumptions).get(
-          propertyId,
-        ) ?? [];
+      const built = propertySchedules(
+        portfolio.mortgages,
+        [propertyId],
+        assumptions,
+      ).get(propertyId);
+      const schedule = built?.rows ?? [];
       return {
         asOf: asOfDate,
         snapshot: propertySnapshot(
@@ -282,6 +292,13 @@ export function usePropertyEngineResult(
           schedule,
         ),
         schedule,
+        eventOutcomes: built?.eventOutcomes ?? [],
+        loan: propertyLoanExposure(
+          portfolio.mortgages.filter((b) => b.propertyId === propertyId),
+          assumptions,
+          schedule,
+          asOfDate,
+        ),
       };
     } catch (e) {
       if (e instanceof EngineInputError) return { invalid: e };

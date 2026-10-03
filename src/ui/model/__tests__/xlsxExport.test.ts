@@ -3,7 +3,14 @@
 // cells are blanked like the on-screen "—", and a null DSCR is left empty.
 import { describe, it, expect } from "vitest";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
-import { isoDate, portfolioProjection } from "../../../engine";
+import {
+  isoDate,
+  money,
+  portfolioProjection,
+  propertySchedules,
+} from "../../../engine";
+import type { MortgageBlock } from "../../../engine";
+import { devBlock } from "../../../engine/__tests__/support/mixed";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
@@ -13,7 +20,7 @@ import { cellValue, numFmt, safeText } from "../xlsxExport";
 
 const proj = portfolioProjection(portfolio, assumptions);
 const rows = projectionSeries(proj, "nominal", assumptions);
-const cols = projectionColumns(en, assumptions.baseDate);
+const cols = projectionColumns(en, assumptions.baseDate, rows);
 const col = (h: string) => cols.find((c) => c.header === h)!;
 const cell = (h: string, row = rows[0]) =>
   cellValue(col(h).kind, col(h).value(row));
@@ -73,10 +80,56 @@ describe("cell kinds", () => {
   });
 });
 
+// ADR 0116 §12: owner-cash columns after DSCR, only when some year is non-zero.
+describe("projection event columns", () => {
+  const withEvents = {
+    ...portfolio,
+    mortgages: portfolio.mortgages.map((m) =>
+      m.propertyId === "javorova"
+        ? {
+            ...m,
+            prepayments: [
+              {
+                date: isoDate("2031-01-17"),
+                amount: money(500000),
+                effect: "shortenTerm" as const,
+                fee: money(2000),
+              },
+            ],
+          }
+        : m,
+    ),
+  };
+  const series = projectionSeries(
+    portfolioProjection(withEvents, assumptions),
+    "nominal",
+    assumptions,
+  );
+  const g = en.projGrid;
+
+  it("are absent without events", () => {
+    expect(cols.map((c) => c.header)).not.toContain(g.prepaid);
+    expect(cols.map((c) => c.header).at(-1)).toBe(g.dscr);
+  });
+
+  it("show Prepaid and Prepayment fees with the year's totals, blank in the opening row", () => {
+    const c = projectionColumns(en, assumptions.baseDate, series);
+    expect(c.map((x) => x.header).slice(-3)).toEqual([
+      g.dscr,
+      g.prepaid,
+      g.prepaymentFees,
+    ]);
+    const year = series.find((r) => !r.prepaid.isZero())!;
+    expect(c.at(-2)!.value(year)).toEqual(money(500000));
+    expect(c.at(-1)!.value(year)).toEqual(money(2000));
+    expect(c.at(-1)!.value(series[0]!)).toBeNull();
+  });
+});
+
 // UX-062 (DR-091): export headers follow the UI language, like the on-screen tables.
 describe("translated export headers", () => {
   it("projection headers are the grid's labels in the user's language", () => {
-    const headers = projectionColumns(cs, isoDate("2026-06-07")).map(
+    const headers = projectionColumns(cs, isoDate("2026-06-07"), rows).map(
       (c) => c.header,
     );
     expect(headers).toEqual([
@@ -99,7 +152,7 @@ describe("translated export headers", () => {
   });
 
   it("the Period cell uses the language's month names", () => {
-    const period = projectionColumns(cs, isoDate("2026-06-07"))[1]!;
+    const period = projectionColumns(cs, isoDate("2026-06-07"), rows)[1]!;
     expect(period.value(rows[1]!)).toBe(
       `${cs.monthsShort[6]} 2026 – ${cs.monthsShort[5]} 2027`,
     );
@@ -108,7 +161,7 @@ describe("translated export headers", () => {
 
   it("amortization headers are the table's labels", () => {
     const d = ru.propertyDetail;
-    expect(amortizationColumns(ru).map((c) => c.header)).toEqual([
+    expect(amortizationColumns(ru, []).map((c) => c.header)).toEqual([
       d.amColMonth,
       d.amColDate,
       d.amColRate,
@@ -117,5 +170,43 @@ describe("translated export headers", () => {
       d.amColPrincipal,
       d.amColEndBalance,
     ]);
+  });
+
+  const rowsOf = (b: MortgageBlock) =>
+    propertySchedules([b], [b.propertyId], assumptions).get(b.propertyId)!.rows;
+
+  it("adds Prepaid and Prepayment fee only when a row has them (ADR 0116 §12)", () => {
+    const d = en.propertyDetail;
+    const seed = portfolio.mortgages.find((m) => m.propertyId === "javorova")!;
+    const prepaid = rowsOf({
+      ...seed,
+      prepayments: [
+        {
+          date: isoDate("2031-01-17"),
+          amount: money(500000),
+          effect: "lowerInstalment",
+          fee: money(1000),
+        },
+      ],
+    });
+    const cols = amortizationColumns(en, prepaid);
+    expect(cols.map((c) => c.header).slice(-3)).toEqual([
+      d.amColPrepaid,
+      d.amColPrepaymentFee,
+      d.amColEndBalance,
+    ]);
+    const row = prepaid.find((r) => !r.prepaid.isZero())!;
+    const value = (h: string) => cols.find((c) => c.header === h)!.value(row);
+    expect(value(d.amColPrepaid)).toEqual(money(500000));
+    expect(value(d.amColPrepaymentFee)).toEqual(money(1000));
+    expect(amortizationColumns(en, rowsOf(seed))).toHaveLength(7);
+  });
+
+  it("adds Drawn for a development loan's tranches", () => {
+    const headers = amortizationColumns(en, rowsOf(devBlock)).map(
+      (c) => c.header,
+    );
+    expect(headers).toContain(en.propertyDetail.amColDrawn);
+    expect(headers).not.toContain(en.propertyDetail.amColPrepaid);
   });
 });

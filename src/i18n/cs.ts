@@ -317,6 +317,8 @@ export const cs: Dictionary = {
     financingWindowOption: (n) => `${n} r.`,
     financingTotalInterest: (n) => `Úroky celkem (roky 1–${n})`,
     financingTotalInterestReal: (n) => `Úroky celkem (roky 1–${n}, reálně)`,
+    financingInterestSaved: "Úrok ušetřený mimořádnými splátkami (nominálně)",
+    financingInterestSavedByProperty: "Podle nemovitosti",
     financingUpcoming: "Příštích 12 měsíců",
     financingNoEvents: "Model v příštích 12 měsících nic neočekává.",
     financingMoreEvents: (n) => `+ dalších ${n}`,
@@ -473,6 +475,30 @@ export const cs: Dictionary = {
     projectionTitle: (n) => `${n}letá projekce`,
     amortizationWarn:
       "Měsíční splátka tento úvěr do konce doby splatnosti nesplatí.",
+    eventIssue: {
+      PREPAYMENT_EXCEEDS_BALANCE: (date, requested, applied) =>
+        `mimořádná splátka ${requested} k ${date} je vyšší než zůstatek: splatí ${applied} a úvěr doplatí.`,
+      PREPAYMENT_AFTER_PAYOFF: (date) =>
+        `mimořádná splátka k ${date} připadá po doplacení úvěru, proto se nepoužije.`,
+      PREPAYMENT_REPLACED: (date) =>
+        `mimořádná splátka k ${date} připadá po převzetí dalším úvěrovým blokem, proto se nepoužije.`,
+      RECAST_AFTER_PAYOFF: (date) =>
+        `změna splatnosti k ${date} připadá po doplacení úvěru, proto se nepoužije.`,
+      RECAST_REPLACED: (date) =>
+        `změna splatnosti k ${date} připadá po převzetí dalším úvěrovým blokem, proto se nepoužije.`,
+      RECAST_INSTALMENT_BELOW_INTEREST: (date) =>
+        `nová splátka od ${date} nepokryje úrok, proto úvěr zůstává na původních podmínkách.`,
+      RECAST_TERM_CAPPED: (date) =>
+        `nová splátka od ${date} by překročila nejdelší povolenou splatnost, proto se úvěr přepočítá na tuto splatnost.`,
+    },
+    loanSummaryTitle: "Výhled úvěru",
+    loanSummaryHint:
+      "modelováno z úvěrů, mimořádných splátek a změn splatnosti",
+    loanPayoff: "Modelované doplacení",
+    loanPayoffNone: "Splaceno",
+    interestSaved: "Úrok ušetřený mimořádnými splátkami (nominálně)",
+    loanSummaryNote:
+      "Datum doplacení je modelované, není to termín od banky. Ušetřený úrok porovnává úvěr s mimořádnými splátkami a bez nich, za celou zbývající dobu.",
     loanFrom: (date) => `Úvěr od ${date}:`,
     monthsCount: (n) => `${n} ${csPlural(n, ["měsíc", "měsíce", "měsíců"])}`,
     maturityPaysOff: (instalment, implied) =>
@@ -484,6 +510,28 @@ export const cs: Dictionary = {
     maturityCheck: "Zkontrolujte splátku nebo datum splatnosti.",
     fixationEnded: (end, rate) =>
       `Fixace skončila ${end} a není zadán navazující blok, proto aplikace od té doby počítá s resetovací sazbou ${rate}. Zadejte podmínky refixace jako nový blok hypotéky.`,
+    fieldPrepayments: "Mimořádné splátky",
+    helpPrepayments:
+      "Mimořádné splacení jistiny k datu. Snížení splátky zachová splatnost; zkrácení splatnosti zachová splátku. Poplatek se platí z vlastních prostředků a dluh nesnižuje.",
+    fieldRecasts: "Změny splatnosti",
+    helpRecasts:
+      "Od data úvěr běží do nového data splatnosti nebo s novou splátkou.",
+    eventDate: "Datum",
+    eventAmount: "Částka",
+    eventEffect: "Dopad",
+    eventEffectLowerInstalment: "Snížit splátku",
+    eventEffectShortenTerm: "Zkrátit splatnost",
+    eventFee: "Poplatek (nepovinný)",
+    eventMode: "Změna",
+    eventModeMaturity: "Nové datum splatnosti",
+    eventModeInstalment: "Nová splátka",
+    eventMaturity: "Datum splatnosti",
+    eventInstalment: "Splátka",
+    eventAddPrepayment: "Přidat mimořádnou splátku",
+    eventAddRecast: "Přidat změnu splatnosti",
+    eventPrepaymentRow: (n) => `Mimořádná splátka ${n}`,
+    eventRecastRow: (n) => `Změna splatnosti ${n}`,
+    eventRemove: (row) => `Odebrat: ${row}`,
     fieldContractMaturity: "Splatnost podle smlouvy",
     helpContractMaturity:
       "ze smlouvy; prázdné = nekontroluje se; u developerského úvěru se nepoužívá",
@@ -508,6 +556,9 @@ export const cs: Dictionary = {
     amColInstalment: "Splátka",
     amColInterest: "Úrok",
     amColPrincipal: "Jistina",
+    amColDrawn: "Čerpáno",
+    amColPrepaid: "Mimořádně splaceno",
+    amColPrepaymentFee: "Poplatek za mimořádnou splátku",
     amColEndBalance: "Konečný zůstatek",
     realTermsLens: "reálné hodnoty",
     nominalKcLens: "nominální Kč",
@@ -894,9 +945,14 @@ export const cs: Dictionary = {
       money: "Zadejte částku 0 nebo vyšší, např. 1 250 000",
       pct: "Zadejte procenta, např. 4,5",
       int: "Zadejte celé číslo, např. 25",
+      prepayments:
+        "Zkontrolujte označené řádky: datum jako dd.mm.yyyy, částka nad 0 a poplatek 0 nebo více",
+      recasts:
+        "Zkontrolujte označené řádky: datum jako dd.mm.yyyy a nové datum splatnosti nebo splátka nad 0",
       draws: "Jedna tranše na řádek: dd.mm.yyyy = částka",
     },
     /** A bounded whole-number field (UX-068, ADR 0075). */
+    positiveAmount: "Zadejte částku vyšší než 0, např. 500 000",
     intRange: (min: string, max: string) =>
       `Zadejte celé číslo od ${min} do ${max}`,
     drawsPlaceholder: "dd.mm.yyyy = částka  (jedna tranše na řádek)",
@@ -944,6 +1000,9 @@ export const cs: Dictionary = {
     interest: "Úrok",
     principal: "Jistina",
     debtSvc: "Dluh. služba",
+    draws: "Čerpání",
+    prepaid: "Mimořádně splaceno",
+    prepaymentFees: "Poplatky za mimořádné splátky",
     netCf: "Čistý CF",
     dscr: "DSCR",
     caption: "Projekce rok po roku",
@@ -1026,6 +1085,8 @@ export const cs: Dictionary = {
     mortgagesProse2Reamortizes: "znovu umoří",
     mortgagesProse2Post:
       ", aby splatila zbývající zůstatek za zbývající dobu, takže se platba k tomu datu může zvýšit nebo snížit.",
+    mortgagesProse3:
+      "Mimořádné splátky a změny splatnosti zadáte u každého úvěrového bloku v jeho formuláři. Mimořádná splátka k datu splatí jistinu navíc a buď sníží splátku, nebo zkrátí splatnost; poplatek se platí z vlastních prostředků a dluh nesnižuje. Změna splatnosti převede úvěr na nové datum splatnosti nebo novou splátku. Mimořádné splátky jsou vaše vlastní prostředky, mimo čistý cash flow a DSCR. Stránka nemovitosti ukazuje modelované doplacení a úrok, který mimořádné splátky ušetří za zbývající dobu úvěru, a upozorní, když je splátka vyšší než zůstatek nebo připadá po doplacení.",
     projectionTitle: "Projekce do horizontu",
     projectionHint: "Posunutí snímku do budoucna",
     projectionProse1:

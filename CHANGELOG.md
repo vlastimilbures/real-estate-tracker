@@ -15,11 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   again. It never adds to existing properties, and your assumptions and scenarios stay as
   they are (ADR 0112, #74).
 
-- Loans can carry **one-off prepayments** and **maturity changes** (engine and saved data;
-  the form comes next, #32b). A prepayment either lowers the instalment or shortens the
+- Loans can carry **one-off prepayments** and **maturity changes**, entered in a row
+  editor in each mortgage block's form (#32b). A prepayment either lowers the instalment or shortens the
   term; a maturity change sets a new last-payment date or a new instalment, up to 50 years
   from the loan start. Prepayments and their fees count in cumulative cash flow and the IRR,
   not in net cash flow or DSCR. Existing figures do not change (ADR 0109, #32).
+  - The property page shows the loan's modelled payoff date and the interest its
+    prepayments save over the loan's remaining life; the Dashboard financing panel shows
+    the total and each property's figure.
+  - A prepayment larger than the balance, or one that falls after payoff, shows as a loan
+    warning. Saving is never refused for it.
+  - The amortization table, the projection grid and their Excel exports add Prepaid,
+    Prepayment fee and Drawn columns when a row has a value.
+  - The Guide explains prepayments and maturity changes (ADR 0116).
 
 - Settings → Backup says when the last backup was exported ("Last backup: 12.09.2026
   (3 weeks ago)" or "No backup exported yet") and to keep a copy somewhere other than this

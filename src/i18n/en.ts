@@ -5,7 +5,7 @@
 // Number/date/currency formatting is NOT localized (see src/lib/format.ts): the app is a
 // single-currency Czech tracker, so amounts stay "28 730 000 Kč" and dates dd.mm.yyyy in
 // every language. Only UI chrome is translated; `about.formatsNote` tells the user (ADR 0105).
-import type { ValidationCode } from "../engine";
+import type { LoanEventIssue, ValidationCode } from "../engine";
 import { enPlural } from "./plural";
 import { APP_NAME } from "./appName";
 
@@ -340,6 +340,8 @@ export const en = {
     financingTotalInterest: (n: number) => `Total interest (Yrs 1–${n})`,
     financingTotalInterestReal: (n: number) =>
       `Total interest (Yrs 1–${n}, real)`,
+    financingInterestSaved: "Interest saved by prepayments (nominal)",
+    financingInterestSavedByProperty: "By property",
     financingUpcoming: "Next 12 months",
     financingNoEvents: "Nothing modelled in the next 12 months.",
     financingMoreEvents: (n: number) => `+ ${n} more`,
@@ -502,6 +504,36 @@ export const en = {
     projectionTitle: (n: number) => `${n}-year projection`,
     amortizationWarn:
       "The monthly instalment will not repay this loan by the end of its term.",
+    eventIssue: {
+      PREPAYMENT_EXCEEDS_BALANCE: (
+        date: string,
+        requested: string,
+        applied: string,
+      ) =>
+        `the prepayment of ${requested} on ${date} is more than the balance: it repays ${applied} and pays the loan off.`,
+      PREPAYMENT_AFTER_PAYOFF: (date: string) =>
+        `the prepayment on ${date} falls after the loan is paid off, so it is ignored.`,
+      PREPAYMENT_REPLACED: (date: string) =>
+        `the prepayment on ${date} falls after the next loan block takes over, so it is ignored.`,
+      RECAST_AFTER_PAYOFF: (date: string) =>
+        `the maturity change on ${date} falls after the loan is paid off, so it is ignored.`,
+      RECAST_REPLACED: (date: string) =>
+        `the maturity change on ${date} falls after the next loan block takes over, so it is ignored.`,
+      RECAST_INSTALMENT_BELOW_INTEREST: (date: string) =>
+        `the new instalment from ${date} does not cover the interest, so the loan keeps its terms.`,
+      RECAST_TERM_CAPPED: (date: string) =>
+        `the new instalment from ${date} would run past the longest allowed term, so the loan is re-amortized to that term instead.`,
+    } satisfies Record<
+      LoanEventIssue,
+      (date: string, requested: string, applied: string) => string
+    >,
+    loanSummaryTitle: "Loan outlook",
+    loanSummaryHint: "modelled from your loans, prepayments and recasts",
+    loanPayoff: "Modelled payoff",
+    loanPayoffNone: "Repaid",
+    interestSaved: "Interest saved by prepayments (nominal)",
+    loanSummaryNote:
+      "The payoff date is modelled, not a deadline from your lender. Interest saved compares the loan with and without every prepayment, over its whole remaining life.",
     loanFrom: (date: string) => `Loan from ${date}:`,
     monthsCount: (n: number) => `${n} ${enPlural(n, ["month", "months"])}`,
     maturityPaysOff: (instalment: string, implied: string) =>
@@ -513,6 +545,28 @@ export const en = {
     maturityCheck: "Check the instalment or the maturity date.",
     fixationEnded: (end: string, rate: string) =>
       `Its fixation ended on ${end} and no follow-on block is entered, so the app assumes the reset rate of ${rate} from then on. Add the refix terms as a new mortgage block.`,
+    fieldPrepayments: "Prepayments",
+    helpPrepayments:
+      "Extra repayments of principal on a date. Lowering the instalment keeps the term; shortening the term keeps the instalment. The fee is paid in cash and does not reduce the debt.",
+    fieldRecasts: "Maturity changes",
+    helpRecasts:
+      "From a date, the loan runs to a new maturity date or at a new instalment.",
+    eventDate: "Date",
+    eventAmount: "Amount",
+    eventEffect: "Effect",
+    eventEffectLowerInstalment: "Lower the instalment",
+    eventEffectShortenTerm: "Shorten the term",
+    eventFee: "Fee (optional)",
+    eventMode: "Change",
+    eventModeMaturity: "New maturity date",
+    eventModeInstalment: "New instalment",
+    eventMaturity: "Maturity date",
+    eventInstalment: "Instalment",
+    eventAddPrepayment: "Add prepayment",
+    eventAddRecast: "Add maturity change",
+    eventPrepaymentRow: (n: number) => `Prepayment ${n}`,
+    eventRecastRow: (n: number) => `Maturity change ${n}`,
+    eventRemove: (row: string) => `Remove ${row}`,
     fieldContractMaturity: "Contract maturity date",
     helpContractMaturity:
       "from the loan contract; blank = not checked; not used for development loans",
@@ -537,6 +591,9 @@ export const en = {
     amColInstalment: "Instalment",
     amColInterest: "Interest",
     amColPrincipal: "Principal",
+    amColDrawn: "Drawn",
+    amColPrepaid: "Prepaid",
+    amColPrepaymentFee: "Prepayment fee",
     amColEndBalance: "End balance",
     realTermsLens: "real terms",
     nominalKcLens: "nominal Kč",
@@ -932,9 +989,14 @@ export const en = {
       money: "Enter an amount of 0 or more, e.g. 1 250 000",
       pct: "Enter a percentage, e.g. 4,5",
       int: "Enter a whole number, e.g. 25",
+      prepayments:
+        "Check the marked rows: a date as dd.mm.yyyy, an amount above 0 and a fee of 0 or more",
+      recasts:
+        "Check the marked rows: a date as dd.mm.yyyy, and a new maturity date or an instalment above 0",
       draws: "One tranche per line: dd.mm.yyyy = amount",
     },
     /** A bounded whole-number field (UX-068, ADR 0075). */
+    positiveAmount: "Enter an amount above 0, e.g. 500 000",
     intRange: (min: string, max: string) =>
       `Enter a whole number from ${min} to ${max}`,
     drawsPlaceholder: "dd.mm.yyyy = amount  (one tranche per line)",
@@ -984,6 +1046,9 @@ export const en = {
     interest: "Interest",
     principal: "Principal",
     debtSvc: "Debt svc",
+    draws: "Draws",
+    prepaid: "Prepaid",
+    prepaymentFees: "Prepayment fees",
     netCf: "Net CF",
     dscr: "DSCR",
     caption: "Year-by-year projection",
@@ -1067,6 +1132,8 @@ export const en = {
     mortgagesProse2Reamortizes: "re-amortizes",
     mortgagesProse2Post:
       " to clear the remaining balance over the remaining term, so the payment can step up or down at that date.",
+    mortgagesProse3:
+      "Prepayments and maturity changes are entered on each loan block, in its form. A prepayment repays extra principal on its date and either lowers the instalment or shortens the term; its fee is paid in cash and does not reduce the debt. A maturity change moves the loan to a new maturity date or a new instalment. Prepayments are your own cash, kept outside net cash flow and DSCR. The property page shows the modelled payoff and the interest the prepayments save over the loan's remaining life, and warns when one is larger than the balance or falls after payoff.",
     projectionTitle: "Projection to the horizon",
     projectionHint: "Rolling the snapshot forward",
     projectionProse1:

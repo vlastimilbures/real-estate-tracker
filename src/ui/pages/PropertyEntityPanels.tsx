@@ -10,6 +10,7 @@ import {
   dateDraft,
   drawsDraft,
 } from "../model/formParse";
+import { prepaymentsDraft, recastsDraft } from "../model/loanEventRows";
 import { INT_RANGES } from "../../lib/intRanges";
 import { fmtDate, fmtCzk } from "../../lib/format";
 import { currencySymbol } from "../../lib/currency";
@@ -349,6 +350,20 @@ export function MortgagesPanel({
           optional: true,
           help: t.propertyDetail.helpContractMaturity,
         },
+        {
+          name: "prepayments",
+          label: t.propertyDetail.fieldPrepayments,
+          kind: "prepayments",
+          optional: true,
+          help: t.propertyDetail.helpPrepayments,
+        },
+        {
+          name: "recasts",
+          label: t.propertyDetail.fieldRecasts,
+          kind: "recasts",
+          optional: true,
+          help: t.propertyDetail.helpRecasts,
+        },
       ]}
       draftOf={(r) => {
         const base = {
@@ -362,6 +377,9 @@ export function MortgagesPanel({
           draws: drawsDraft(r?.draws),
           completionDate: dateDraft(r?.completionDate),
           contractMaturityDate: dateDraft(r?.contractMaturityDate),
+          // Stored events come date-sorted from the mapper (ADR 0116 §11).
+          prepayments: prepaymentsDraft(r?.prepayments),
+          recasts: recastsDraft(r?.recasts),
         };
         // The Standard | Development switch starts from the block's data (ADR 0098).
         return { ...base, loanType: loanTypeOf(base) };

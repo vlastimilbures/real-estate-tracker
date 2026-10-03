@@ -31,6 +31,7 @@ import {
   HoldingCostsPanel,
   ActivationBanner,
   AmortizationTable,
+  LoanSummary,
 } from "./PropertyDetailPanels";
 import {
   ValuationsPanel,
@@ -174,7 +175,9 @@ export function PropertyDetail() {
   const baseDate = assumptions.baseDate;
   // Loan checks for every block from the one in force onward (UX-054).
   // Skipped while the stored data breaks an engine rule (the checks would throw too).
-  const warnings = out ? loanWarnings(mortgages, baseDate) : [];
+  const warnings = out
+    ? loanWarnings(mortgages, baseDate, out.eventOutcomes)
+    : [];
 
   const lens =
     mode === "real"
@@ -193,14 +196,14 @@ export function PropertyDetail() {
     exportTableXlsx({
       filename: `${slug(property.name)}-projection-${mode}.xlsx`,
       sheetName: t.xlsx.sheetNames.projection,
-      columns: projectionColumns(t, baseDate),
+      columns: projectionColumns(t, baseDate, series),
       rows: series,
     });
   const exportAmortization = () =>
     exportTableXlsx({
       filename: `${slug(property.name)}-amortization.xlsx`,
       sheetName: t.xlsx.sheetNames.amortization,
-      columns: amortizationColumns(t),
+      columns: amortizationColumns(t, out?.schedule ?? []),
       rows: out?.schedule ?? [],
     });
 
@@ -330,6 +333,7 @@ export function PropertyDetail() {
             {loanWarningText(t, w, assumptions.postFixationResetRatePa)}
           </div>
         ))}
+        {out?.loan && <LoanSummary loan={out.loan} />}
       </div>
 
       <div className="pd-section" id={sectionId("holding")}>
