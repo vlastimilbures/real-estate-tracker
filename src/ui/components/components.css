@@ -1466,6 +1466,15 @@ table.chart-table tbody th.sticky-col {
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
+.compare-table .ct-mark {
+  margin-left: 2px;
+  color: var(--ink-soft);
+}
+.ct-footnote {
+  margin: var(--s3) 0 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
 
 /* ============ Visible keyboard focus (a11y) ============ */
 /* Buttons/links/nav/chips render a clear ring only for keyboard focus (not mouse

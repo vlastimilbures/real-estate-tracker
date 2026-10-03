@@ -11,8 +11,10 @@ import {
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { toNumber } from "../../../lib/money";
+import { fmtCzkM } from "../../../lib/format";
 import { en } from "../../../i18n/en";
 import {
+  compareFootnote,
   compareHint,
   compareKpiRows,
   mergeCompareMetric,
@@ -34,6 +36,13 @@ function result(id: string, overrides = {}): CompareResult {
 const base = result("base");
 const shocked = result("shock", {
   inflationShock: { deltaPa: rate("0.06"), durationYears: 3 },
+});
+
+const crash = result("crash", {
+  valueShock: { pct: rate("0.2"), atYear: 0 },
+});
+const rateShock = result("rate", {
+  rateShock: { deltaPa: rate("0.02"), durationYears: 3 },
 });
 
 describe("mergeCompareMetric", () => {
@@ -111,5 +120,79 @@ describe("compareKpiRows", () => {
   it("the hint follows the lens", () => {
     expect(compareHint(en, "nominal")).toBe(en.scenarios.keyFiguresHint);
     expect(compareHint(en, "real")).toBe(en.scenarios.keyFiguresHintReal);
+  });
+});
+
+// ADR 0089 (#14): a crash at Today lowers starting equity, so the table shows the owner's
+// loss next to the rebased returns.
+describe("compare owner loss (ADR 0089)", () => {
+  const row = (mode: "nominal" | "real", label: string, b = base) =>
+    compareKpiRows(en, mode, b).find((r) => r.label === label);
+  const start = en.scenarios.kpiStartingEquity;
+  const delta = en.scenarios.kpiNetWorthDeltaVsBase;
+
+  it("starting equity and Δ net worth vs Base lead the table", () => {
+    const labels = compareKpiRows(en, "nominal", base).map((r) => r.label);
+    expect(labels.slice(0, 2)).toEqual([start, delta]);
+  });
+
+  it("starting equity is projection year 0 equity under the lens", () => {
+    expect(row("nominal", start)?.fmt(base)).toBe("19,2 M Kč");
+    expect(row("nominal", start)?.fmt(crash)).toBe("13,5 M Kč");
+    expect(row("real", start)?.fmt(crash)).toBe(
+      fmtCzkM(crash.realProjection[0].equity),
+    );
+  });
+
+  it("Δ net worth is the scenario's lens net worth minus Base's", () => {
+    expect(row("nominal", delta)?.fmt(base)).toBe("—");
+    expect(row("nominal", delta)?.fmt(crash)).toBe("−18,6 M Kč");
+    expect(row("real", delta)?.fmt(crash)).toBe(
+      fmtCzkM(crash.kpis.netWorthReal.minus(base.kpis.netWorthReal)),
+    );
+    expect(row("real", delta)?.fmt(crash)).not.toBe(
+      row("nominal", delta)?.fmt(crash),
+    );
+  });
+
+  it("a gain shows a plus sign", () => {
+    const gain: CompareResult = {
+      ...base,
+      id: "gain",
+      kpis: {
+        ...base.kpis,
+        netWorthNominal: base.kpis.netWorthNominal.plus(1_000_000),
+      },
+    };
+    expect(row("nominal", delta)?.fmt(gain)).toBe("+1,0 M Kč");
+  });
+
+  it("without Base in the comparison there is no Δ row", () => {
+    const labels = compareKpiRows(en, "nominal").map((r) => r.label);
+    expect(labels).toContain(start);
+    expect(labels).not.toContain(delta);
+  });
+
+  it("marks the rebased returns only for a scenario whose starting equity differs", () => {
+    const marked = (r: CompareResult) =>
+      compareKpiRows(en, "real", base)
+        .filter((k) => k.mark?.(r))
+        .map((k) => k.label);
+    expect(marked(crash)).toEqual([
+      en.scenarios.kpiNetWorthMultiple,
+      en.scenarios.kpiCagrReal,
+      en.scenarios.kpiLeveredIrrReal,
+    ]);
+    expect(marked(base)).toEqual([]);
+    expect(marked(rateShock)).toEqual([]);
+    expect(marked(shocked)).toEqual([]);
+  });
+
+  it("the footnote appears only when a starting equity differs from Base's", () => {
+    expect(compareFootnote(en, [base, crash, rateShock])).toBe(
+      en.scenarios.rebasedReturnsFootnote("crash"),
+    );
+    expect(compareFootnote(en, [base, rateShock, shocked])).toBeNull();
+    expect(compareFootnote(en, [crash, rateShock])).toBeNull();
   });
 });

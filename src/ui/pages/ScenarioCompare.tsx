@@ -1,6 +1,7 @@
 // Read-only side-by-side compare for 2–3 scenarios (Base + picks): a key-figures
 // table plus net-worth / net-cash-flow / LTV charts. Extracted from Scenarios.tsx;
 // holds no finance logic — the engine re-runs via useScenarioComparison.
+import { useId } from "react";
 import { useScenarioComparison } from "../../state/useEngine";
 import { useUiStore } from "../../state/uiStore";
 import { Panel, EmptyState } from "../components/primitives";
@@ -10,6 +11,8 @@ import { SERIES } from "../model/chartData";
 import type { Scenario } from "../../engine";
 import { useT } from "../hooks/useT";
 import {
+  compareBase,
+  compareFootnote,
   compareHint,
   compareKpiRows,
   mergeCompareMetric,
@@ -23,6 +26,7 @@ export function CompareView({ selected }: { selected: Scenario[] }) {
   const t = useT();
   const mode = useUiStore((s) => s.mode);
   const results = useScenarioComparison(selected);
+  const footnoteId = useId();
   if (!results || results.length === 0) {
     return (
       <Panel title={t.scenarios.compareTitle}>
@@ -44,6 +48,8 @@ export function CompareView({ selected }: { selected: Scenario[] }) {
   const netWorthRows = mergeCompareMetric(results, mode, (y) => y.equity);
   const cashFlowRows = mergeCompareMetric(results, mode, (y) => y.netCashFlow);
   const ltvRows = mergeCompareMetric(results, mode, (y) => y.ltv);
+  // Owner's loss next to the rebased returns of a crash at Today (ADR 0089).
+  const footnote = compareFootnote(t, results);
   const lensSub =
     mode === "real" ? t.projections.realTerms : t.projections.nominalKc;
 
@@ -77,18 +83,25 @@ export function CompareView({ selected }: { selected: Scenario[] }) {
             </tr>
           </thead>
           <tbody>
-            {compareKpiRows(t, mode).map((row) => (
+            {compareKpiRows(t, mode, compareBase(results)).map((row) => (
               <ComparisonRow
                 key={row.label}
                 label={row.label}
                 cells={results.map((r) => ({
                   text: row.fmt(r),
                   note: row.note?.(r),
+                  describedBy: row.mark?.(r) ? footnoteId : undefined,
                 }))}
               />
             ))}
           </tbody>
         </table>
+        {footnote && (
+          <p className="ct-footnote" id={footnoteId}>
+            <span aria-hidden="true">* </span>
+            {footnote}
+          </p>
+        )}
       </Panel>
 
       <div className="chart-grid">
@@ -132,7 +145,12 @@ function ComparisonRow({
   cells,
 }: {
   label: string;
-  cells: { text: string; note: string | undefined }[];
+  cells: {
+    text: string;
+    note: string | undefined;
+    /** The footnote id when the cell is marked (ADR 0089). */
+    describedBy: string | undefined;
+  }[];
 }) {
   return (
     <tr>
@@ -140,8 +158,18 @@ function ComparisonRow({
         {label}
       </th>
       {cells.map((c, i) => (
-        <td className="ct-cell" key={i} title={c.note}>
+        <td
+          className="ct-cell"
+          key={i}
+          title={c.note}
+          aria-describedby={c.describedBy}
+        >
           {c.text}
+          {c.describedBy && (
+            <sup className="ct-mark" aria-hidden="true">
+              *
+            </sup>
+          )}
           {c.note && <span className="sr-only"> ({c.note})</span>}
         </td>
       ))}

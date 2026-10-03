@@ -6,9 +6,12 @@ import type { Assumptions, Scenario } from "../../engine";
 import type { Dictionary } from "../../i18n";
 
 /** The implicit Base = the saved assumptions (no overrides, no shock). */
+/** The id of the synthetic Base scenario (the saved assumptions). */
+export const BASE_SCENARIO_ID = "base";
+
 export function baseScenario(a: Assumptions, t: Dictionary): Scenario {
   return {
-    id: "base",
+    id: BASE_SCENARIO_ID,
     name: t.scenarios.base,
     overrides: {},
     createdAt: a.baseDate,
