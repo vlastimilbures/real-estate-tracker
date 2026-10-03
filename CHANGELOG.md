@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- About and the Guide say what the language setting changes: the interface text only.
+  Amounts are always in Czech crowns (Kč) with Czech number and date formats (ADR 0105,
+  #22).
+
 - Stress presets have a **Combined** group. **Mild** saves rates +2 pp for 3 years and a
   −10 % price crash in one scenario; **Severe** saves rates +4 pp and inflation +3 pp for
   3 years and a −20 % price crash. The crash uses the "When" timing, the scenario name
@@ -63,6 +67,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (ADR 0096, #34).
 
 ### Changed
+
+- The app uses one name, "Real Estate Tracker", everywhere. The sidebar brand, the logo
+  title and the loading screen said "Real Estate Portfolio"; the name is not translated
+  (ADR 0105, #22).
 
 - The scenario form groups its fields under **Permanent levels**, **Temporary shocks** and
   **One-off price crash**, each with one line of help, so an absolute level (reset rate 6 %)

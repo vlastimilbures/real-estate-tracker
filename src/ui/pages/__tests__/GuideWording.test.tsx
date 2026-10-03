@@ -125,3 +125,11 @@ describe("Guide limits and data-safety pointer (ADR 0092)", () => {
     }
   });
 });
+
+// ADR 0105 (#22): the Guide repeats About's language/formats line in every language.
+describe("Guide language note (ADR 0105)", () => {
+  it.each(Object.entries(DICTS))("%s shows the formats note", (lang, d) => {
+    act(() => useUiStore.setState({ language: lang as keyof typeof DICTS }));
+    expect(guideText()).toContain(d.about.formatsNote);
+  });
+});

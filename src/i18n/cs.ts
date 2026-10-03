@@ -895,6 +895,8 @@ export const cs: Dictionary = {
     appTitle: "Co aplikace umí",
     appBody:
       "Sledujte své nájemní byty na jednom místě: aktuální hodnotu, dluh a vlastní kapitál, nájem, provozní náklady a cash flow. Aplikace promítá nominální i reálné výsledky do zvoleného horizontu (výchozí je 30 let), ukazuje ukazatele jako LTV, DSCR, výnosy a IRR a umožňuje zátěžové testy portfolia pomocí scénářů co-kdyby.",
+    formatsNote:
+      "Jazyk mění jen texty rozhraní. Částky jsou vždy v českých korunách (Kč) s českým formátem čísel a dat.",
 
     privacyTitle: "Soukromí na prvním místě",
     privacyBody:

@@ -4,7 +4,7 @@
 //
 // Number/date/currency formatting is NOT localized (see src/lib/format.ts): the app is a
 // single-currency Czech tracker, so amounts stay "28 730 000 Kč" and dates dd.mm.yyyy in
-// every language. Only UI chrome is translated.
+// every language. Only UI chrome is translated; `about.formatsNote` tells the user (ADR 0105).
 import type { ValidationCode } from "../engine";
 import { enPlural } from "./plural";
 import { APP_NAME } from "./appName";
@@ -936,6 +936,9 @@ export const en = {
     appTitle: "What this app does",
     appBody:
       "Track your rental apartments in one place: current value, debt and equity, rent, holding costs and cash flow. It projects nominal and real outcomes over your chosen horizon (30 years by default), surfaces KPIs like LTV, DSCR, yields and IRR, and lets you stress-test the portfolio with what-if scenarios.",
+    // ADR 0105: the language setting changes UI text only (also shown in the Guide).
+    formatsNote:
+      "Language changes the interface text only. Amounts are always in Czech crowns (Kč) with Czech number and date formats.",
 
     privacyTitle: "Private by design",
     privacyBody:
