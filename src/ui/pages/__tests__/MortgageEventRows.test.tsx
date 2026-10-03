@@ -84,7 +84,7 @@ describe("prepayment and recast rows (ADR 0116)", () => {
     expect(saved().recasts).toBeUndefined();
   });
 
-  it("shows stored events in date order; removing every row clears them", async () => {
+  it("shows the stored events; removing every row clears them", async () => {
     await openEdit({
       ...seed,
       prepayments: [

@@ -9,7 +9,8 @@ import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
-import { isoDate, money } from "../../../engine";
+import { isoDate, money, portfolioOutputs } from "../../../engine";
+import { fmtCzk, fmtDate } from "../../../lib/format";
 import type { MortgagePrepayment } from "../../../engine";
 
 vi.mock("../../../data/errorLog", () => ({ logFailure: vi.fn() }));
@@ -80,8 +81,19 @@ describe("ADR 0116: loan outlook on Property detail", () => {
       },
     ]);
     render(<PropertyDetail />);
-    expect(outlook().textContent).toContain(pd.interestSaved);
-    expect(outlook().textContent).not.toContain("17.05.2051");
+    const { portfolio: p } = usePortfolioStore.getState();
+    const loan = portfolioOutputs(
+      p!,
+      assumptions,
+      assumptions.baseDate,
+    ).financing.loans.find((l) => l.propertyId === "javorova")!;
+    const text = outlook().textContent;
+    expect(text).toContain(pd.interestSaved);
+    expect(text).toContain(fmtCzk(loan.interestSaved!));
+    expect(text).toContain(fmtDate(loan.payoffDate!));
+    expect(loan.payoffDate!.getTime()).toBeLessThan(
+      isoDate("2051-05-17").getTime(),
+    );
     expect(screen.queryAllByRole("alert")).toHaveLength(0);
   });
 
