@@ -75,7 +75,8 @@ export class CsvImportError extends Error {
   }
 }
 
-interface Tables {
+/** The stored rows an import plan is computed against. */
+interface ImportTables {
   properties: PropertyRow[];
   mortgage_blocks: MortgageBlockRow[];
   valuations: ValuationRow[];
@@ -83,7 +84,7 @@ interface Tables {
   holding_costs: HoldingCostRow[];
 }
 
-async function readTables(sql: Sql): Promise<Tables> {
+async function readTables(sql: Sql): Promise<ImportTables> {
   const [properties, mortgage_blocks, valuations, leases, holding_costs] =
     await Promise.all([
       sql.select<PropertyRow>("SELECT * FROM properties ORDER BY id"),
@@ -119,11 +120,24 @@ function put<R extends { id: string }>(rows: R[], row: R): void {
   else rows.push(row);
 }
 
-export async function importCsv(
-  sql: Sql,
-  batch: CsvImportBatch,
-): Promise<CsvImportReport> {
-  const db = await readTables(sql);
+/** What an import would write, computed without touching the DB. */
+interface ImportPlan {
+  statements: SqlStatement[];
+  /** Non-empty ⇒ the import must be refused; nothing may be written. */
+  problems: CsvImportProblem[];
+  report: CsvImportReport;
+}
+
+/** Match every row against `tables` (D-55), build the write statements and check the
+ *  merged result against the engine's input rules. Pure: `tables` is not modified. */
+function planImport(batch: CsvImportBatch, tables: ImportTables): ImportPlan {
+  const db: ImportTables = {
+    properties: [...tables.properties],
+    mortgage_blocks: [...tables.mortgage_blocks],
+    valuations: [...tables.valuations],
+    leases: [...tables.leases],
+    holding_costs: [...tables.holding_costs],
+  };
   const statements: SqlStatement[] = [];
   const problems: CsvImportProblem[] = [];
   /** Which file line produced each written row, as `${entity}:${id}`. */
@@ -326,8 +340,16 @@ export async function importCsv(
         });
     }
   }
-  if (problems.length > 0) throw new CsvImportError(problems);
+  return { statements, problems, report };
+}
 
-  await sql.transaction(statements);
-  return report;
+export async function importCsv(
+  sql: Sql,
+  batch: CsvImportBatch,
+): Promise<CsvImportReport> {
+  const plan = planImport(batch, await readTables(sql));
+  if (plan.problems.length > 0) throw new CsvImportError(plan.problems);
+
+  await sql.transaction(plan.statements);
+  return plan.report;
 }
