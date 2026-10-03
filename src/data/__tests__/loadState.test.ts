@@ -33,13 +33,14 @@ async function seeded() {
 }
 
 describe("loadState", () => {
-  it("equals loadPortfolio + loadAssumptions + listScenarios + the sample state", async () => {
+  it("equals loadPortfolio + loadAssumptions + listScenarios + the sample and backup state", async () => {
     const db = await seeded();
     expect(await loadState(db)).toEqual({
       portfolio: await loadPortfolio(db),
       assumptions: await loadAssumptions(db),
       scenarios: await listScenarios(db),
       sample: { active: true, dismissed: false },
+      backup: { lastAt: null, lastFile: null, changedSince: false },
     });
   });
 

@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Settings → Backup says when the last backup was exported ("Last backup: 12.09.2026
+  (3 weeks ago)" or "No backup exported yet") and to keep a copy somewhere other than this
+  Mac. When the data changed and there is no backup or the last one is over 30 days old,
+  a quiet reminder in the sidebar footer opens Settings → Backup; it can be hidden for the
+  session. Only exports count, not the automatic safety backups, and a restore never
+  brings back the restored file's backup date (ADR 0110, #36).
+
 - Scenario compare exports to Excel. The button in the Key figures header saves one
   workbook in the current lens: the key figures (one column per scenario, always the
   values, money in whole Kč) and one sheet each for net worth, net cash flow and LTV by

@@ -616,6 +616,26 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "66-sidebar-backup-hint",
+    desc: "Sidebar backup reminder after an edit with no backup yet (ADR 0110)",
+    route: "settings",
+    run: async (ux) => {
+      await boot(ux.page);
+      await settingsTab(ux, "assumptions");
+      await ux.page
+        .locator(".field", { hasText: ux.t.assumptions.inflation })
+        .locator("input")
+        .fill("3");
+      await ux.page
+        .getByRole("button", { name: ux.t.common.saveChanges })
+        .click();
+      await expect(
+        ux.page.getByRole("button", { name: ux.t.shell.backupHintNone }),
+      ).toBeVisible();
+      await ux.capture("66-sidebar-backup-hint", { fullPage: false });
+    },
+  },
+  {
     id: "70-guide",
     desc: "Guide (full page)",
     route: "guide",

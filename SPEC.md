@@ -606,6 +606,9 @@ offline badge, and controls for language and theme.
      values and whole-number values outside the form bounds are refused before anything
      changes), writes and verifies a safety backup first
      (ADR 0052), then replaces all tables in one transaction and reloads app state.
+     The tab shows the date of the last successful export (or "No backup exported yet")
+     and says to keep a copy off this Mac. A sidebar reminder appears when the data
+     changed since then and there is no backup or it is over 30 days old (ADR 0110).
 
 8. **Guide** — a static glossary / help screen (NOI, DSCR, LTV, fixation, annuity, etc.);
    no data entry.

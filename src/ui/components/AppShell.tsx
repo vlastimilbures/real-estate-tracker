@@ -18,6 +18,7 @@ import { useUiStore, type Route, type Theme } from "../../state/uiStore";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { SegmentedToggle, ErrorBanner } from "./primitives";
 import { BrandMark } from "./BrandMark";
+import { BackupHint } from "./BackupHint";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { fmtDate } from "../../lib/format";
 import { APP_NAME, LANGUAGES, type Dictionary } from "../../i18n";
@@ -259,6 +260,7 @@ export function AppShell({
         </nav>
 
         <div className="sidebar-foot">
+          <BackupHint collapsed={collapsed} />
           <LanguageControl collapsed={collapsed} />
           <ThemeControl collapsed={collapsed} />
           <div className="foot-meta">

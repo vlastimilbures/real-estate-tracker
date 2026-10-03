@@ -209,6 +209,10 @@ export const en = {
 
   shell: {
     offline: "Offline · local-first",
+    backupHintNone: "No backup yet. Export now",
+    backupHintOld: (days: number) =>
+      `Last backup ${days} ${enPlural(days, ["day", "days"])} ago. Export now`,
+    dismissBackupHint: "Hide the backup reminder",
     baseDate: (d: string) => `Projection start ${d}`,
     expandSidebar: "Expand sidebar",
     collapseSidebar: "Collapse sidebar",
@@ -783,6 +787,12 @@ export const en = {
     exportBody:
       "Exports the entire portfolio to a versioned JSON file. Use this to create a snapshot before making large changes.",
     exportButton: "Export backup…",
+    lastBackup: (date: string, ago: string) => `Last backup: ${date} (${ago})`,
+    noBackupYet: "No backup exported yet",
+    agoToday: "today",
+    agoDays: (n: number) => `${n} ${enPlural(n, ["day", "days"])} ago`,
+    agoWeeks: (n: number) => `${n} ${enPlural(n, ["week", "weeks"])} ago`,
+    offDevice: "Keep a copy somewhere other than this Mac.",
     exporting: "Exporting…",
     restoreTitle: "Restore from backup",
     restoreHint: "Overwrites all current data",

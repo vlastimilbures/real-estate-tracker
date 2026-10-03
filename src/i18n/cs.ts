@@ -189,6 +189,10 @@ export const cs: Dictionary = {
 
   shell: {
     offline: "Offline · lokální",
+    backupHintNone: "Zatím žádná záloha. Exportovat",
+    backupHintOld: (days: number) =>
+      `Poslední záloha před ${days} ${csPlural(days, ["dnem", "dny", "dny"])}. Exportovat`,
+    dismissBackupHint: "Skrýt připomínku zálohy",
     baseDate: (d) => `Začátek projekce ${d}`,
     expandSidebar: "Rozbalit panel",
     collapseSidebar: "Sbalit panel",
@@ -747,6 +751,14 @@ export const cs: Dictionary = {
     exportBody:
       "Exportuje celé portfolio do verzovaného JSON souboru. Použijte pro vytvoření snímku před velkými změnami.",
     exportButton: "Exportovat zálohu…",
+    lastBackup: (date: string, ago: string) =>
+      `Poslední záloha: ${date} (${ago})`,
+    noBackupYet: "Zatím nebyla exportována žádná záloha",
+    agoToday: "dnes",
+    agoDays: (n: number) => `před ${n} ${csPlural(n, ["dnem", "dny", "dny"])}`,
+    agoWeeks: (n: number) =>
+      `před ${n} ${csPlural(n, ["týdnem", "týdny", "týdny"])}`,
+    offDevice: "Uchovávejte kopii i jinde než na tomto Macu.",
     exporting: "Exportování…",
     restoreTitle: "Obnovit ze zálohy",
     restoreHint: "Přepíše všechna aktuální data",

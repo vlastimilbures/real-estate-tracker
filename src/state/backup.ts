@@ -14,6 +14,7 @@ export {
   type BackupSummary,
   type RestoreIssue,
 } from "../data/backup";
+export { type BackupState } from "../data/repositories";
 
 /** Pick a backup file and check it completely; `null` when the user cancels. */
 export const chooseRestoreFile = () => chooseWithRules(checkInputRules);

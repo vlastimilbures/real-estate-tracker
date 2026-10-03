@@ -193,6 +193,10 @@ export const ru: Dictionary = {
 
   shell: {
     offline: "Офлайн · локально",
+    backupHintNone: "Резервной копии пока нет. Экспортировать",
+    backupHintOld: (days: number) =>
+      `Последняя копия ${days} ${ruPlural(days, ["день", "дня", "дней"])} назад. Экспортировать`,
+    dismissBackupHint: "Скрыть напоминание о копии",
     baseDate: (d) => `Начало прогноза ${d}`,
     expandSidebar: "Развернуть панель",
     collapseSidebar: "Свернуть панель",
@@ -753,6 +757,15 @@ export const ru: Dictionary = {
     exportBody:
       "Экспортирует весь портфель в версионированный JSON файл. Используйте для снимка перед крупными изменениями.",
     exportButton: "Экспортировать копию…",
+    lastBackup: (date: string, ago: string) =>
+      `Последняя копия: ${date} (${ago})`,
+    noBackupYet: "Резервная копия ещё не экспортировалась",
+    agoToday: "сегодня",
+    agoDays: (n: number) =>
+      `${n} ${ruPlural(n, ["день", "дня", "дней"])} назад`,
+    agoWeeks: (n: number) =>
+      `${n} ${ruPlural(n, ["неделю", "недели", "недель"])} назад`,
+    offDevice: "Храните копию не только на этом Mac.",
     exporting: "Экспорт…",
     restoreTitle: "Восстановить из копии",
     restoreHint: "Перезаписывает все текущие данные",
