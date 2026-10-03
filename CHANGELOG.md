@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Scenario compare can show every key figure as the difference to Base. A "Values | Δ vs
+  Base" switch in the Key figures header (shown when Base is ticked) turns each scenario cell
+  into its value minus Base's: M Kč for money, percentage points for CAGR and IRR, the
+  multiple, and years for the first cash-flow-positive and debt-free years (ADR 0097, #53).
 - Scenarios: clicking a stress preset that is already saved no longer adds a second row with
   the same name; it ticks the saved one and says "Already saved". A scenario added from a
   preset, the "New scenario" form or Duplicate is ticked for compare straight away while fewer

@@ -567,6 +567,11 @@ export const en = {
     subPct: "%",
     kpiStartingEquity: "Starting equity",
     kpiNetWorthDeltaVsBase: "Δ net worth vs Base",
+    viewValues: "Values",
+    viewDeltaVsBase: "Δ vs Base",
+    viewToggleLabel: "Show values or the difference to Base",
+    deltaYears: (n: number) => (n > 0 ? `+${n}y` : n < 0 ? `−${-n}y` : "0y"),
+    deltaNoBaseValue: "Base has no value",
     rebasedReturnsFootnote: (names: string) =>
       `Returns for ${names} are measured from a lower starting equity after the price crash; compare Δ net worth vs Base for the loss to you.`,
     kpiNetWorthNominal: "Net worth (nominal)",
