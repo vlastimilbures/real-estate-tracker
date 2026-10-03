@@ -864,7 +864,16 @@ export const en = {
     exported: (name: string) => `Exported ${name}`,
     exportFailed: (detail: string) => `Export failed (${detail})`,
     // Excel sheet names (DR-152, UX-080): ≤ 31 characters, none of []:*?/\.
-    sheetNames: { projection: "Projection", amortization: "Amortization" },
+    sheetNames: {
+      projection: "Projection",
+      amortization: "Amortization",
+      compareKeyFigures: "Key figures",
+      compareNetWorth: "Net worth",
+      compareNetCashFlow: "Net cash flow",
+      compareLtv: "LTV",
+    },
+    // First column header of the Scenario compare key-figures sheet (ADR 0108).
+    metric: "Metric",
   },
 
   forms: {

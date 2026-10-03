@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Scenario compare exports to Excel. The button in the Key figures header saves one
+  workbook in the current lens: the key figures (one column per scenario, always the
+  values, money in whole Kč) and one sheet each for net worth, net cash flow and LTV by
+  year. The lens, the rebased-returns footnote and the reason for an n/a IRR are notes
+  under the key figures. No computed figure changes (ADR 0108, #56).
+
 - About and the Guide say what the language setting changes: the interface text only.
   Amounts are always in Czech crowns (Kč) with Czech number and date formats (ADR 0105,
   #22).

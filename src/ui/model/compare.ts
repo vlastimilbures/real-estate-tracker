@@ -10,6 +10,7 @@ import { irrReasonText, leveredIrr } from "./irr";
 import { lensKpis } from "./lensKpis";
 import { at } from "../../lib/arrays";
 import { BASE_SCENARIO_ID } from "./scenarios";
+import type { Cell, CellKind } from "./xlsxExport";
 
 /** One compared scenario: its projection in both lenses and its KPIs. */
 export interface CompareResult {
@@ -27,6 +28,13 @@ export interface CompareKpiRow {
   note?: (r: CompareResult) => string | undefined;
   /** The cell points to the rebased-returns footnote (ADR 0089). */
   mark?: (r: CompareResult) => boolean;
+}
+
+/** A Values-view row with its typed cell for the Excel export (ADR 0108): `fmt` of the
+ *  cell's value, rounded by `kind`, is the table's text. */
+export interface CompareValueRow extends CompareKpiRow {
+  kind: CellKind;
+  value: (r: CompareResult) => Cell;
 }
 
 const pct = (d: Decimal | null) => (d ? fmtPct(d) : "—");
@@ -57,7 +65,7 @@ interface DeltaCell {
   note?: string | undefined;
 }
 
-interface KpiRowSpec extends CompareKpiRow {
+interface KpiRowSpec extends CompareValueRow {
   /** The scenario's value minus Base's, in the row's unit (ADR 0097). Rows without
    *  one are hidden in the Δ view. */
   delta?: (r: CompareResult, base: CompareResult) => DeltaCell;
@@ -77,6 +85,37 @@ export function compareKpiRows(
   base?: CompareResult,
   view: CompareView = "values",
 ): CompareKpiRow[] {
+  const rows = kpiRowSpecs(t, mode, base);
+  if (view === "values" || !base) return rows;
+  return rows.flatMap(({ delta, ...row }) =>
+    delta
+      ? [
+          {
+            ...row,
+            fmt: (r: CompareResult) =>
+              r.id === base.id ? "—" : delta(r, base).text,
+            note: (r: CompareResult) =>
+              r.id === base.id ? undefined : delta(r, base).note,
+          },
+        ]
+      : [],
+  );
+}
+
+/** The Values-view key figures with their typed cells, for the Excel export (ADR 0108). */
+export function compareValueRows(
+  t: Dictionary,
+  mode: Mode,
+  base?: CompareResult,
+): CompareValueRow[] {
+  return kpiRowSpecs(t, mode, base);
+}
+
+function kpiRowSpecs(
+  t: Dictionary,
+  mode: Mode,
+  base: CompareResult | undefined,
+): KpiRowSpec[] {
   const s = t.scenarios;
   const real = mode === "real";
   const netWorth = (r: CompareResult) =>
@@ -108,11 +147,24 @@ export function compareKpiRows(
   const irrRate = (r: CompareResult) => leveredIrr(r.kpis, mode).rate;
   const irrDelta = decimalDelta(irrRate, pp);
 
-  const rows: KpiRowSpec[] = [
+  // Each row's value, shared by its text, its Δ and its export cell.
+  const startEquity = (r: CompareResult) => at(rowsOf(r, mode), 0).equity;
+  const multiple = (r: CompareResult) =>
+    lensKpis(r.kpis, mode).netWorthMultiple;
+  const cagr = (r: CompareResult) =>
+    real ? r.kpis.cagrReal : r.kpis.cagrNominal;
+  const cumCf = (r: CompareResult) =>
+    lensKpis(r.kpis, mode).cumulativeNetCashFlow;
+  const firstCfYear = (r: CompareResult) => r.kpis.firstCashFlowPositiveYear;
+  const debtFreeYear = (r: CompareResult) => r.kpis.debtFreeYear;
+
+  return [
     {
       label: s.kpiStartingEquity,
-      fmt: (r) => fmtCzkM(at(rowsOf(r, mode), 0).equity),
-      delta: decimalDelta((r) => at(rowsOf(r, mode), 0).equity, fmtCzkM),
+      fmt: (r) => fmtCzkM(startEquity(r)),
+      kind: "money",
+      value: startEquity,
+      delta: decimalDelta(startEquity, fmtCzkM),
     },
     ...(base
       ? [
@@ -122,55 +174,57 @@ export function compareKpiRows(
               if (r.id === base.id) return "—";
               return signed(netWorth(r).minus(netWorth(base)), fmtCzkM);
             },
+            kind: "money" as const,
+            value: (r: CompareResult) =>
+              r.id === base.id ? null : netWorth(r).minus(netWorth(base)),
           },
         ]
       : []),
     {
       label: s.kpiNetWorthNominal,
       fmt: (r) => fmtCzkM(r.kpis.netWorthNominal),
+      kind: "money",
+      value: (r) => r.kpis.netWorthNominal,
       delta: decimalDelta((r) => r.kpis.netWorthNominal, fmtCzkM),
     },
     {
       label: s.kpiNetWorthReal,
       fmt: (r) => fmtCzkM(r.kpis.netWorthReal),
+      kind: "money",
+      value: (r) => r.kpis.netWorthReal,
       delta: decimalDelta((r) => r.kpis.netWorthReal, fmtCzkM),
     },
     {
       label: s.kpiNetWorthMultiple,
-      fmt: (r) => fmtMultiple(lensKpis(r.kpis, mode).netWorthMultiple),
+      fmt: (r) => fmtMultiple(multiple(r)),
+      kind: "multiple",
+      value: multiple,
       mark: rebased,
-      delta: decimalDelta(
-        (r) => lensKpis(r.kpis, mode).netWorthMultiple,
-        fmtMultiple,
-      ),
+      delta: decimalDelta(multiple, fmtMultiple),
     },
-    real
-      ? {
-          label: s.kpiCagrReal,
-          fmt: (r) => pct(r.kpis.cagrReal),
-          mark: rebased,
-          delta: decimalDelta((r) => r.kpis.cagrReal, pp),
-        }
-      : {
-          label: s.kpiCagrNominal,
-          fmt: (r) => pct(r.kpis.cagrNominal),
-          mark: rebased,
-          delta: decimalDelta((r) => r.kpis.cagrNominal, pp),
-        },
+    {
+      label: real ? s.kpiCagrReal : s.kpiCagrNominal,
+      fmt: (r) => pct(cagr(r)),
+      kind: "percent",
+      value: cagr,
+      mark: rebased,
+      delta: decimalDelta(cagr, pp),
+    },
     {
       label: s.kpiCumulativeNetCf,
-      fmt: (r) => fmtCzkM(lensKpis(r.kpis, mode).cumulativeNetCashFlow),
-      delta: decimalDelta(
-        (r) => lensKpis(r.kpis, mode).cumulativeNetCashFlow,
-        fmtCzkM,
-      ),
+      fmt: (r) => fmtCzkM(cumCf(r)),
+      kind: "money",
+      value: cumCf,
+      delta: decimalDelta(cumCf, fmtCzkM),
     },
     {
       label: real ? s.kpiLeveredIrrReal : s.kpiLeveredIrrNominal,
       fmt: (r) => {
-        const irr = leveredIrr(r.kpis, mode);
-        return irr.rate ? fmtPct(irr.rate) : t.common.notApplicable;
+        const rate = irrRate(r);
+        return rate ? fmtPct(rate) : t.common.notApplicable;
       },
+      kind: "percent",
+      value: (r) => irrRate(r) ?? t.common.notApplicable,
       note: (r) => irrReasonText(t, leveredIrr(r.kpis, mode).reason),
       mark: rebased,
       // A scenario IRR without a value keeps its reason (UX-079).
@@ -184,29 +238,19 @@ export function compareKpiRows(
     },
     {
       label: s.kpiFirstCfPositiveYear,
-      fmt: (r) => r.kpis.firstCashFlowPositiveYear?.toString() ?? "—",
-      delta: yearDelta((r) => r.kpis.firstCashFlowPositiveYear),
+      fmt: (r) => firstCfYear(r)?.toString() ?? "—",
+      kind: "int",
+      value: firstCfYear,
+      delta: yearDelta(firstCfYear),
     },
     {
       label: s.kpiDebtFreeYear,
-      fmt: (r) => r.kpis.debtFreeYear?.toString() ?? "—",
-      delta: yearDelta((r) => r.kpis.debtFreeYear),
+      fmt: (r) => debtFreeYear(r)?.toString() ?? "—",
+      kind: "int",
+      value: debtFreeYear,
+      delta: yearDelta(debtFreeYear),
     },
   ];
-  if (view === "values" || !base) return rows;
-  return rows.flatMap(({ delta, ...row }) =>
-    delta
-      ? [
-          {
-            ...row,
-            fmt: (r: CompareResult) =>
-              r.id === base.id ? "—" : delta(r, base).text,
-            note: (r: CompareResult) =>
-              r.id === base.id ? undefined : delta(r, base).note,
-          },
-        ]
-      : [],
-  );
 }
 
 /** Footnote for the marked returns: names each scenario whose starting equity differs

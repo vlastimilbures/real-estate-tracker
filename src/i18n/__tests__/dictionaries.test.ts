@@ -276,7 +276,8 @@ describe("i18n dictionaries — CSV messages", () => {
 describe("Excel sheet names", () => {
   it.each(LANGS)("%s names are valid Excel sheet names", (lang) => {
     const names = Object.values(DICTS[lang].xlsx.sheetNames);
-    expect(names).toHaveLength(2);
+    // Projection, Amortization and the four Scenario compare sheets (ADR 0108).
+    expect(names).toHaveLength(6);
     for (const name of names) {
       expect(name.trim().length).toBeGreaterThan(0);
       expect(name.length).toBeLessThanOrEqual(31);

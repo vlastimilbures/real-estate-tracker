@@ -501,6 +501,12 @@ price crash**, each with a legend and one line of help (ADR 0102).
   The ticked scenarios, the Base toggle and the price-crash timing last for the app session
   (in memory, like the lens): leaving the page and coming back keeps them. A deleted
   scenario leaves the selection (ADR 0101).
+  An **Excel export** in the Key figures header saves the compare as
+  `scenario-compare-<lens>.xlsx`: a Key figures sheet (one column per scenario, always the
+  values, whatever the Values / Δ toggle shows) and one sheet each for net worth, net cash
+  flow and LTV (year rows, one column per scenario), all in the lens. Money is whole Kč;
+  the lens, the rebased-returns footnote and each n/a IRR's reason are note lines under the
+  key figures (ADR 0108).
 - **Stress presets** (one-click; each creates a named scenario,
   `src/ui/pages/ScenariosPanels.tsx`). Temporary shocks last `DEFAULT_SHOCK_YEARS` = 3
   years (`src/ui/model/scenarioForm.ts`), then revert to trend:
