@@ -31,6 +31,11 @@ const RUNS = {
   numRuns: Number(process.env.FC_RUNS ?? 120),
 };
 
+// Time budget for the heavy random-loan properties: each run builds a schedule of up to 480 rows and
+// projects it, ~1 s per test locally but past the 5 s default on CI runners under v8 coverage.
+// A time budget only — the checks and run count are unchanged.
+const HEAVY_TIMEOUT_MS = 30_000;
+
 // ---------------------------------------------------------------------------
 // Arbitraries
 // ---------------------------------------------------------------------------
@@ -147,7 +152,7 @@ describe("PMT / FV / NPER round-trip", () => {
 // Random valid loans
 // ---------------------------------------------------------------------------
 
-describe("random valid plain loans", () => {
+describe("random valid plain loans", { timeout: HEAVY_TIMEOUT_MS }, () => {
   it("term is finite and within the 12–480-month design range", () => {
     fc.assert(
       fc.property(plainLoan, ({ block, months }) => {
