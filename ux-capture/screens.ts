@@ -225,12 +225,51 @@ export const SCREENS: Screen[] = [
   },
   {
     id: "20-property-detail",
-    desc: "Property detail (first property)",
+    desc: "Property detail (first property): section nav, amortization collapsed (ADR 0107)",
     route: "property",
     run: async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
       await ux.capture("20-property-detail");
+    },
+  },
+  {
+    id: "26-property-amortization-open",
+    desc: "Property detail with the amortization schedule expanded: every section (ADR 0107)",
+    route: "property",
+    run: async (ux) => {
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      const p = panel(ux, ux.t.propertyDetail.amortizationTitle);
+      const toggle = p.getByRole("button", { expanded: false });
+      await toggle.click();
+      await expect(p.getByRole("table")).toBeVisible();
+      await ux.capture("26-property-amortization-open");
+    },
+  },
+  {
+    id: "27-property-section-nav-focus",
+    desc: "Section nav from the keyboard: Financing's heading focused below the topbar (ADR 0107)",
+    route: "property",
+    run: async (ux) => {
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      const link = ux.page
+        .getByRole("navigation", { name: ux.t.propertyDetail.sectionNavLabel })
+        .getByRole("link", { name: ux.t.propertyDetail.sectionFinancing });
+      await link.focus();
+      await ux.page.keyboard.press("Enter");
+      const heading = ux.page.getByRole("heading", {
+        name: ux.t.propertyDetail.mortgagesTitle,
+        exact: true,
+      });
+      await expect(heading).toBeFocused();
+      await expect(link).toHaveAttribute("aria-current", "location");
+      // The jump lands the heading below the sticky topbar, not under it.
+      const bar = await ux.page.locator(".topbar").boundingBox();
+      const head = await heading.boundingBox();
+      expect(head!.y).toBeGreaterThanOrEqual(bar!.y + bar!.height);
+      await ux.capture("27-property-section-nav-focus", { fullPage: false });
     },
   },
   {
