@@ -76,6 +76,12 @@ export function DateInput({
   const first = min ? local(min) : undefined;
   const last = max ? local(max) : undefined;
 
+  // Closing also forgets the coords, so the next open stays hidden until measured.
+  function close() {
+    setOpen(false);
+    setCoords(null);
+  }
+
   // Lightweight popover dismissal: outside-click + Esc, returning focus to the trigger.
   // Not a modal (no global focus trap) — it sits inline in a form. The popover is
   // portaled, so the "inside" check must cover both the field and the popover node.
@@ -85,14 +91,14 @@ export function DateInput({
       const target = e.target as Node;
       if (rootRef.current?.contains(target) || popRef.current?.contains(target))
         return;
-      setOpen(false);
+      close();
     }
     // Capture phase + stopPropagation: Esc closes only the popover, never a modal
     // listening on document behind it (DR-148).
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.stopPropagation();
-        setOpen(false);
+        close();
         triggerRef.current?.focus();
       }
     }
@@ -107,10 +113,7 @@ export function DateInput({
   // Position the fixed popover from the field's rect: below it, or flipped above when
   // there isn't room. Recomputed on scroll/resize so it tracks the field.
   useLayoutEffect(() => {
-    if (!open) {
-      setCoords(null);
-      return;
-    }
+    if (!open) return;
     function place() {
       const anchor = rootRef.current;
       const pop = popRef.current;
@@ -140,7 +143,7 @@ export function DateInput({
 
   function handleSelect(day: Date | undefined) {
     if (day) (onPick ?? onChange)(localDayToDraft(day));
-    setOpen(false);
+    close();
     triggerRef.current?.focus();
   }
 
@@ -163,7 +166,7 @@ export function DateInput({
           aria-label={t.calendar.open}
           aria-haspopup="dialog"
           aria-expanded={open}
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => (open ? close() : setOpen(true))}
         >
           <Calendar size={16} aria-hidden />
         </button>
