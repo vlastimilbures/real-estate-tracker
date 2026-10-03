@@ -1,0 +1,17 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ADR 0116: schedules a recast extends > below the interest 1`] = `"360:5c5bf72318884f0b"`;
+
+exports[`ADR 0116: schedules a recast extends > capped at 50 years 1`] = `"536:59abb4be74bbdd27"`;
+
+exports[`ADR 0116: schedules a recast extends > dev loan after completion 1`] = `"360:f3e129080ae6d87d"`;
+
+exports[`ADR 0116: schedules a recast extends > higher instalment 1`] = `"360:7cb5301cc45f6eb7"`;
+
+exports[`ADR 0116: schedules a recast extends > later maturity 1`] = `"464:e62891bd9c06e90c"`;
+
+exports[`ADR 0116: schedules a recast extends > lower instalment 1`] = `"419:b28f4f5da6b29069"`;
+
+exports[`ADR 0116: schedules a recast extends > recast, then paid off 1`] = `"360:6256dc0a6be8bae4"`;
+
+exports[`ADR 0116: schedules a recast extends > refinanced 1`] = `"360:be8c7df70f8ae03f"`;
