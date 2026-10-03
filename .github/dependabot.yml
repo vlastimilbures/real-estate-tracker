@@ -8,6 +8,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # v7 adds React Compiler rules that fail lint on existing code; remove when #77 lands.
+      - dependency-name: eslint-plugin-react-hooks
+        update-types: ["version-update:semver-major"]
     groups:
       npm-minor-patch:
         update-types: [minor, patch]
