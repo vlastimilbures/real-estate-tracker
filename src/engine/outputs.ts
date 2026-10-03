@@ -7,6 +7,7 @@ import { propertySchedules, scheduleRows } from "./schedule";
 import { portfolioSnapshot } from "./metrics";
 import { projectPortfolio } from "./projections";
 import { kpisFrom } from "./kpis";
+import { financingExposure, type FinancingExposure } from "./financing";
 import type {
   AmortizationRow,
   Assumptions,
@@ -23,11 +24,14 @@ export interface PortfolioOutputs {
   snapshot: PortfolioSnapshot;
   projection: ProjectionYear[];
   kpis: PortfolioKPIs;
+  /** Next fixations, modelled payoffs and fixation ends at `asOf` (ADR 0103). */
+  financing: FinancingExposure;
 }
 
 /**
  * Schedules, snapshot at `asOf`, projection and KPIs in one pass: equal to
- * `schedulesByProperty` → `portfolioSnapshot` → `portfolioProjection` → `portfolioKpis`.
+ * `schedulesByProperty` → `portfolioSnapshot` → `portfolioProjection` → `portfolioKpis`,
+ * plus the financing exposure at `asOf` from the same schedules (ADR 0103).
  */
 export function portfolioOutputs(
   portfolio: Portfolio,
@@ -47,6 +51,7 @@ export function portfolioOutputs(
     snapshot,
     projection,
     kpis: kpisFrom(portfolio, assumptions, projection, built),
+    financing: financingExposure(portfolio, assumptions, schedules, asOf),
   };
 }
 

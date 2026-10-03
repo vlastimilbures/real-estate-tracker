@@ -36,8 +36,9 @@ import { money } from "../brands";
 // Fields added after the golden master was recorded: D-22's (pinned in
 // year-periods.test.ts), DR-092's `drawn` / `draws` (pinned in draws.test.ts against
 // the balances hashed here), DR-158's IRR reasons (pinned in irr-edge.test.ts) and
-// ADR 0087's real-lens KPIs (pinned in real-kpis.test.ts). Leaving them out keeps every
-// hash comparable (no number moved).
+// ADR 0087's real-lens KPIs (pinned in real-kpis.test.ts) and ADR 0103's total interest
+// (pinned in total-interest.test.ts). Leaving them out keeps every hash comparable (no
+// number moved).
 const ADDED_FIELDS = new Set([
   "periodStart",
   "periodEnd",
@@ -49,6 +50,8 @@ const ADDED_FIELDS = new Set([
   "leveredIrrRealReason",
   "netWorthMultipleReal",
   "cumulativeNetCashFlowReal",
+  "totalInterest",
+  "totalInterestReal",
 ]);
 
 function canon(v: unknown): unknown {

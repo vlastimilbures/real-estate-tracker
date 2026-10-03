@@ -329,6 +329,22 @@ function principalRepaidInHorizon(
   return total;
 }
 
+/** Σ projection interest of years 1..N, nominal and deflated by CPI_t (ADR 0103). */
+function interestInHorizon(
+  proj: ProjectionYear[],
+  cpi: Decimal[],
+  N: number,
+): { totalInterest: Decimal; totalInterestReal: Decimal } {
+  let nominal = ZERO;
+  let real = ZERO;
+  for (let t = 1; t <= N; t++) {
+    const interest = at(proj, t).interest;
+    nominal = nominal.plus(interest);
+    real = real.plus(interest.div(at(cpi, t)));
+  }
+  return { totalInterest: nominal, totalInterestReal: real };
+}
+
 /** Portfolio KPIs (SPEC §4.6) from the portfolio projection. */
 export function portfolioKpis(
   portfolio: Portfolio,
@@ -384,5 +400,6 @@ export function kpisFrom(
       assumptions,
       schedules,
     ),
+    ...interestInHorizon(proj, cpi, N),
   };
 }

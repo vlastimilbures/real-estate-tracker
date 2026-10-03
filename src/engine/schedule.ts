@@ -152,7 +152,7 @@ function remainingTerm(term: number, elapsedAtAnchor: number, m: number) {
  * running loan, or −drawMonth for a future loan (drawn in grid month drawMonth, first
  * payment the month after). Grid month m then carries payment `offset + m`.
  */
-function paymentOffset(block: MortgageBlock, baseDate: Date): number {
+export function paymentOffset(block: MortgageBlock, baseDate: Date): number {
   return isAfter(block.startDate, baseDate)
     ? -drawMonth(block, baseDate)
     : lastGridMonthOnOrBefore(block.startDate, baseDate);
@@ -678,7 +678,10 @@ export function instalmentAtMonth(
  * the earliest upcoming one), then each later start in order — a successor replaces
  * its predecessor from its start (D-27, D-43). Earlier blocks are already replaced.
  */
-function blockChain(blocks: MortgageBlock[], baseDate: Date): MortgageBlock[] {
+export function blockChain(
+  blocks: MortgageBlock[],
+  baseDate: Date,
+): MortgageBlock[] {
   const chain: MortgageBlock[] = [];
   let block = selectBlock(blocks, baseDate);
   while (block) {
