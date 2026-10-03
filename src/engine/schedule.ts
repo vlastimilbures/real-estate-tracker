@@ -421,12 +421,16 @@ interface PaymentDone {
   terms: TermState;
 }
 
+/** An event outcome plus, for a prepayment, the fee entered with it: a handover that
+ *  pays the prepayment charges that fee (ADR 0116). Internal; stripped on output. */
+type Outcome = LoanEventOutcome & { enteredFee?: Decimal };
+
 interface Settled {
   balance: Decimal;
   prepaid: Decimal;
   fee: Decimal;
   terms: TermState;
-  outcomes: LoanEventOutcome[];
+  outcomes: Outcome[];
 }
 
 function prepaymentIssue(
@@ -446,7 +450,7 @@ function applyPrepayments(
   let { balance } = done;
   let [prepaid, fee] = [ZERO, ZERO];
   let effect: PrepaymentEffect | null = null;
-  const outcomes: LoanEventOutcome[] = [];
+  const outcomes: Outcome[] = [];
   for (const p of prepayments) {
     const applied = p.amount.lessThan(balance) ? p.amount : balance;
     const charged = applied.greaterThan(ZERO) ? (p.fee ?? ZERO) : ZERO;
@@ -467,6 +471,7 @@ function applyPrepayments(
       applied,
       fee: charged,
       issue: prepaymentIssue(p.amount, applied),
+      enteredFee: p.fee ?? ZERO,
     });
   }
   return { balance, prepaid, fee, effect, outcomes };
@@ -533,9 +538,9 @@ function applyRecasts(
   ev: LoanEvents,
   done: PaymentDone,
   recasts: LoanRecast[],
-): { terms: TermState; outcomes: LoanEventOutcome[] } {
+): { terms: TermState; outcomes: Outcome[] } {
   let { terms } = done;
-  const outcomes: LoanEventOutcome[] = [];
+  const outcomes: Outcome[] = [];
   for (const r of recasts) {
     const result = done.balance.greaterThan(ZERO)
       ? recastTerms(ev, { ...done, terms }, r)
@@ -609,7 +614,7 @@ interface Opening {
   balance: Decimal;
   currentInstalment: Decimal;
   terms: TermState;
-  outcomes: LoanEventOutcome[];
+  outcomes: Outcome[];
 }
 
 interface CatchUpState extends Opening {
@@ -742,7 +747,7 @@ interface DevScheduleState {
 function initDevScheduleState(
   block: DevelopmentLoan,
   assumptions: Assumptions,
-): { state: DevScheduleState; outcomes: LoanEventOutcome[] } {
+): { state: DevScheduleState; outcomes: Outcome[] } {
   const { baseDate } = assumptions;
   if (isAfter(block.startDate, baseDate)) {
     return {
@@ -792,7 +797,7 @@ interface DevScheduleContext {
 type DevMonthStep = {
   row: AmortizationRow;
   state: DevScheduleState;
-  outcomes: LoanEventOutcome[];
+  outcomes: Outcome[];
 };
 
 /** A month before the first draw: nothing owed, or the first draw landing (it carries
@@ -921,7 +926,7 @@ function repaidOutcomes(
   p: number,
   m: number,
   state: { currentInstalment: Decimal; prevRate: Decimal; terms: TermState },
-): LoanEventOutcome[] {
+): Outcome[] {
   return settleEvents(
     ev,
     {
@@ -940,7 +945,7 @@ function repaidOutcomes(
 /** A block's rows and what its prepayments and recasts did (ADR 0109). */
 interface BlockSchedule {
   rows: AmortizationRow[];
-  outcomes: LoanEventOutcome[];
+  outcomes: Outcome[];
 }
 
 /**
@@ -979,10 +984,10 @@ function runGrid<S>(
   step: (
     s: S,
     m: number,
-  ) => { row: AmortizationRow; state: S; outcomes: LoanEventOutcome[] },
+  ) => { row: AmortizationRow; state: S; outcomes: Outcome[] },
 ): BlockSchedule {
   const rows: AmortizationRow[] = [];
-  const outcomes: LoanEventOutcome[] = [];
+  const outcomes: Outcome[] = [];
   let s = state;
   for (let m = 1; m <= months; m++) {
     const next = step(s, m);
@@ -1084,7 +1089,7 @@ interface PlainScheduleContext {
 type PlainMonthStep = {
   row: AmortizationRow;
   state: PlainScheduleState;
-  outcomes: LoanEventOutcome[];
+  outcomes: Outcome[];
 };
 
 /** A future plain loan's month before it is drawn, or the month it draws in. */
@@ -1380,38 +1385,29 @@ function spliceSuccessor(
   };
 }
 
-/** The fee entered with the prepayment an outcome reports. */
-function enteredFee(owner: MortgageBlock, o: LoanEventOutcome): Decimal {
-  const p = (owner.prepayments ?? []).find(
-    (x) =>
-      x.date.getTime() === o.date.getTime() && x.amount.equals(o.requested),
-  );
-  return p?.fee ?? ZERO;
-}
-
 /**
  * The owner's events in rows the handover drops (month d unless kept, and later):
  * each prepayment is paid at the handover, in order, out of the balance `owed`; a
  * recast no longer applies, as the successor replaces the loan (ADR 0109).
  */
 function handoverPrepayments(
-  outcomes: LoanEventOutcome[],
+  outcomes: Outcome[],
   owner: MortgageBlock,
   d: number,
   kept: boolean,
   owed: Decimal,
-): { applied: Decimal; fee: Decimal; outcomes: LoanEventOutcome[] } {
-  const dropped = (o: LoanEventOutcome) =>
+): { applied: Decimal; fee: Decimal; outcomes: Outcome[] } {
+  const dropped = (o: Outcome) =>
     o.blockId === owner.id &&
     o.month !== null &&
     (o.month > d || (o.month === d && !(kept && o.kind === "prepayment")));
   let [left, applied, fee] = [owed, ZERO, ZERO];
-  const out = outcomes.map((o): LoanEventOutcome => {
+  const out = outcomes.map((o): Outcome => {
     if (!dropped(o)) return o;
     if (o.kind === "recast")
       return { ...o, month: null, issue: "RECAST_REPLACED" };
     const paid = o.requested.lessThan(left) ? o.requested : left;
-    const charged = paid.greaterThan(ZERO) ? enteredFee(owner, o) : ZERO;
+    const charged = paid.greaterThan(ZERO) ? (o.enteredFee ?? ZERO) : ZERO;
     [left, applied, fee] = [
       left.minus(paid),
       applied.plus(paid),
@@ -1446,9 +1442,9 @@ function handoverBalances(
 /** An event a successor replaced before it applied (ADR 0109). */
 function replacedOutcome(
   block: MortgageBlock,
-  kind: LoanEventOutcome["kind"],
+  kind: Outcome["kind"],
   e: { date: IsoDate; amount?: Decimal },
-): LoanEventOutcome {
+): Outcome {
   return {
     blockId: block.id,
     kind,
@@ -1466,7 +1462,7 @@ function replacedOutcome(
 function cutAt(
   block: MortgageBlock,
   next: MortgageBlock,
-): { block: MortgageBlock; dropped: LoanEventOutcome[] } {
+): { block: MortgageBlock; dropped: Outcome[] } {
   const keep = (e: { date: Date }) => isOnOrBefore(e.date, next.startDate);
   const dropped = [
     ...(block.prepayments ?? [])
@@ -1499,7 +1495,7 @@ function cutAt(
  */
 function untilSuccessor(chain: MortgageBlock[]): {
   chain: MortgageBlock[];
-  dropped: LoanEventOutcome[];
+  dropped: Outcome[];
 } {
   const cut = chain.map((block, i) => {
     const next = chain[i + 1];
@@ -1548,8 +1544,15 @@ export function propertySchedule(
   return {
     rows: schedule.rows,
     refinances,
-    eventOutcomes: [...schedule.outcomes, ...dropped],
+    eventOutcomes: [...schedule.outcomes, ...dropped].map(publicOutcome),
   };
+}
+
+/** An outcome without the internal entered fee. */
+function publicOutcome(o: Outcome): LoanEventOutcome {
+  const { enteredFee, ...rest } = o;
+  void enteredFee;
+  return rest;
 }
 
 /**

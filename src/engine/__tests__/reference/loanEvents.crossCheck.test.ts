@@ -312,6 +312,19 @@ describe("ADR 0109: refinance handovers with prepayments", () => {
       ],
     ],
     [
+      "two same-day, same-amount prepayments with different fees (ADR 0116)",
+      [
+        {
+          ...J,
+          prepayments: [
+            lower("2031-01-05", 100000, 1000),
+            lower("2031-01-05", 100000, 3000),
+          ],
+        },
+        refi("2031-01-10"),
+      ],
+    ],
+    [
       "prepayment due after the successor's start but dated before it",
       [
         { ...J, prepayments: [shorten("2031-01-09", 200000)] },

@@ -503,6 +503,27 @@ describe("ADR 0109: refinance handovers", () => {
     expect(s.eventOutcomes[0]).toMatchObject({ month: 56, issue: null });
   });
 
+  // ADR 0116 §3: each dropped prepayment keeps its own entered fee, even when another
+  // one has the same date and amount.
+  it("charges each prepayment paid at the handover its own fee", () => {
+    const s = propertySchedule(
+      [
+        withEvents(javorova, [
+          prepay("2031-01-05", 100000, "lowerInstalment", 1000),
+          prepay("2031-01-05", 100000, "lowerInstalment", 3000),
+        ]),
+        refi("2031-01-10"),
+      ],
+      assumptions,
+    );
+    expect(s.rows[55].prepaid.toFixed(0)).toBe("200000");
+    expect(s.rows[55].prepaymentFee.toFixed(0)).toBe("4000");
+    expect(s.eventOutcomes.map((o) => o.fee.toFixed(0))).toEqual([
+      "1000",
+      "3000",
+    ]);
+  });
+
   it("events after the successor's start are dropped and reported", () => {
     const s = propertySchedule(
       [
