@@ -339,7 +339,7 @@ export const en = {
     deactivateTitle: "Exclude this property from dashboards and projections",
     activateTitle: "Include this property in dashboards and projections again",
     confirmDeactivate: (name: string) =>
-      `Deactivate ${name}? It will be excluded from dashboards and projections until reactivated. No data is deleted.`,
+      `Deactivate ${name}? It will be excluded from dashboards and projections until reactivated. No data is deleted. Deactivating does not record a sale, sale proceeds or a loan payoff.`,
     inactiveBadge: "Inactive",
     inactiveNote:
       "This property is excluded from portfolio dashboards and projections.",
@@ -824,7 +824,7 @@ export const en = {
     builtWithTitle: "Built with",
     builtWithBody: "Tauri 2 · React · TypeScript · SQLite · decimal.js",
     precisionNote:
-      "Money is computed with exact decimal arithmetic — never floating point — so figures reconcile to the cent.",
+      "Money is computed with exact decimal arithmetic (never floating point). Results are tested against reference figures within ±1 Kč.",
 
     copyright: "© 2026 Vlastimil Bureš",
     usageNote: "Made for personal use.",
@@ -848,7 +848,7 @@ export const en = {
     snapshotTitle: "Snapshot metrics",
     snapshotHint: "The current picture of a property or the portfolio",
     snapshotProse:
-      "Portfolio totals add up only the properties you currently own and that are active; ratios like portfolio LTV and DSCR come from those totals.",
+      "Portfolio totals add up only the properties you currently own and that are active; ratios like portfolio LTV and DSCR come from those totals. Deactivating a property only leaves it out: it does not record a sale, sale proceeds or a loan payoff.",
     mortgagesTitle: "Mortgages & fixation",
     mortgagesHint: "How the loan balance moves over time",
     mortgagesProse1Pre: "Loans are ",
@@ -874,7 +874,7 @@ export const en = {
     projectionProse1:
       "Every input is grown forward, year by year, to the horizon (30 years by default, set in Settings → Assumptions):",
     projectionProse2:
-      "A property or lease starting mid-year is pro-rated for that first year. Built-in check: total principal repaid over the horizon must exactly equal the starting debt — the loan is fully paid off, never more, never less. Outputs include the first cash-flow-positive year and the debt-free year.",
+      "A property or lease starting mid-year is pro-rated for that first year. Built-in check: when every loan is repaid within the horizon, total principal repaid equals the starting debt plus any later draws — never more, never less. Outputs include the first cash-flow-positive year and the debt-free year.",
     nominalRealTitle: "Nominal vs Real",
     nominalRealHint: "The toggle on the Dashboard & Projections",
     nominalRealProsePre:
@@ -968,7 +968,8 @@ export const en = {
         name: "Net cash flow",
         formula: "NOI − debt service",
         meaning:
-          "What actually lands in your pocket each year after costs and mortgage. Can be negative.",
+          "Modelled yearly cash flow after costs and mortgage — an estimate, not a bank-account record. Can be negative.",
+        caveat: "Not actual receipts.",
         eg: "144k − 120k = +24k.",
       },
       dscr: {
@@ -1008,8 +1009,9 @@ export const en = {
       },
       rent: {
         name: "Rent",
-        formula: "× (1 + indexation) / yr",
-        meaning: "Rises each year by the rent indexation rate.",
+        formula: "lease by lease, indexed",
+        meaning:
+          "Follows your leases month by month. A gap between leases earns nothing, the last lease is treated as renewed, and each lease is indexed from its start.",
       },
       vacancy: {
         name: "Vacancy",
@@ -1032,9 +1034,9 @@ export const en = {
     returnsDefs: {
       multiple: {
         name: "Net-worth multiple",
-        formula: "equity at horizon ÷ equity today",
+        formula: "equity at horizon ÷ equity at projection start",
         meaning:
-          "How many times your current equity is expected to grow over the projection.",
+          "How many times your equity at the projection start is expected to grow by the horizon.",
         eg: "22M → 110M = 5.0×.",
       },
       cagr: {
@@ -1048,8 +1050,9 @@ export const en = {
         name: "Levered IRR",
         formula: "rate where NPV = 0",
         meaning:
-          "The single annual return on the money you put in — accounting for initial equity, yearly cash flow, and the sale at the end, with the mortgage in the mix.",
-        eg: "negative early, big sale at end → ≈ 6%/yr.",
+          "The annual return from the projection start, treating that day's equity as the amount invested, plus yearly cash flows and the projected equity at the horizon (no selling costs or tax), with the mortgage in the mix.",
+        caveat: "Not the return on your original purchase cash.",
+        eg: "negative early, large equity at horizon → ≈ 6%/yr.",
       },
     },
     scenarioDefs: {
