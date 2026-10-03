@@ -294,7 +294,7 @@ export function BackupRestorePanel() {
       </Panel>
 
       {sampleActive && (
-        <Panel title={t.sample.panelTitle} hint={t.sample.panelHint}>
+        <Panel title={t.sample.panelTitle} hint={t.sample.loadHint}>
           <p
             style={{
               color: "var(--ink-soft)",

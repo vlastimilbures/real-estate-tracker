@@ -176,6 +176,14 @@ describe("Settings → Backup sample panel (ADR 0094)", () => {
     ).toBeTruthy();
   });
 
+  it("hint does not claim the sample came on first launch (ADR 0115)", () => {
+    setSample(true, true);
+    act(() => useUiStore.setState({ settingsTab: "backup" }));
+    render(<Settings />);
+    expect(screen.getByText(en.sample.loadHint)).toBeTruthy();
+    expect(screen.queryByText(/first launch/i)).toBeNull();
+  });
+
   it("is hidden when there is no sample", () => {
     setSample(false);
     act(() => useUiStore.setState({ settingsTab: "backup" }));

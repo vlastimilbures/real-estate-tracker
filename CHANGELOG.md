@@ -178,6 +178,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The as-of snapshot shows the lowered instalment in the month of a prepayment.
   - The Scenarios rate-shock note reads the maturity in force, so a loan repaid by a
     prepayment before its refix no longer counts as hit (ADR 0116, #32).
+- Settings → Backup: the **Sample portfolio** panel no longer says the apartments were
+  added on first launch. Its hint now reads "Fictional apartments to explore the app",
+  also when the sample was loaded later (ADR 0115, #97).
 
 - Guide and About explain the figures the way the model computes them. The net-worth
   multiple and IRR start from equity at the projection start, and the IRR ends with projected
