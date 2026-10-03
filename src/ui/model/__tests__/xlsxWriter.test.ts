@@ -6,7 +6,14 @@ import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { portfolioProjection } from "../../../engine";
 import { projectionSeries, projectionColumns } from "../projection";
 import { en } from "../../../i18n/en";
-import { buildXlsx, numFmt, type XlsxColumn } from "../xlsxExport";
+import { D, type Decimal } from "../../../lib/money";
+import {
+  buildWorkbook,
+  buildXlsx,
+  numFmt,
+  xlsxSheet,
+  type XlsxColumn,
+} from "../xlsxExport";
 
 const rows = projectionSeries(
   portfolioProjection(portfolio, assumptions),
@@ -72,5 +79,65 @@ describe("buildXlsx — projection sheet", () => {
     const c = s.getRow(2).getCell(1);
     expect(c.type).toBe(ExcelJS.ValueType.String);
     expect(c.value).toBe("'=1+1");
+  });
+});
+
+describe("buildWorkbook — several sheets", () => {
+  interface Metric {
+    label: string;
+    kind: "money" | "percent";
+    v: Decimal;
+  }
+  const metrics: Metric[] = [
+    { label: "Equity", kind: "money", v: D("1234567.6") },
+    { label: "LTV", kind: "percent", v: D("0.61234") },
+  ];
+  let wb: ExcelJS.Workbook;
+
+  beforeAll(async () => {
+    wb = new ExcelJS.Workbook();
+    const bytes = await buildWorkbook([
+      xlsxSheet<Metric>({
+        name: "Metrics",
+        columns: [
+          { header: "Metric", kind: "text", value: (r) => r.label },
+          {
+            header: "A",
+            kind: "money",
+            kindOf: (r) => r.kind,
+            value: (r) => r.v,
+          },
+        ],
+        rows: metrics,
+        notes: ["* a note", "=not a formula"],
+      }),
+      xlsxSheet<number>({
+        name: "Years",
+        columns: [{ header: "Year", kind: "int", value: (r) => r }],
+        rows: [2026, 2027],
+      }),
+    ]);
+    await wb.xlsx.load(bytes.buffer as ArrayBuffer);
+  });
+
+  it("writes one worksheet per sheet, in order", () => {
+    expect(wb.worksheets.map((w) => w.name)).toEqual(["Metrics", "Years"]);
+    expect(wb.getWorksheet("Years")!.getRow(3).getCell(1).value).toBe(2027);
+  });
+
+  it("a per-row kind sets each row's rounding and number format", () => {
+    const ws = wb.getWorksheet("Metrics")!;
+    expect(ws.getRow(2).getCell(2).value).toBe(1_234_568);
+    expect(ws.getRow(2).getCell(2).numFmt).toBe(numFmt("money"));
+    expect(ws.getRow(3).getCell(2).value).toBe(0.612);
+    expect(ws.getRow(3).getCell(2).numFmt).toBe(numFmt("percent"));
+  });
+
+  it("notes follow the table after one blank row, as literal text", () => {
+    const ws = wb.getWorksheet("Metrics")!;
+    expect(ws.getRow(4).getCell(1).value).toBeNull();
+    expect(ws.getRow(5).getCell(1).value).toBe("* a note");
+    expect(ws.getRow(6).getCell(1).value).toBe("'=not a formula");
+    expect(ws.rowCount).toBe(6);
   });
 });

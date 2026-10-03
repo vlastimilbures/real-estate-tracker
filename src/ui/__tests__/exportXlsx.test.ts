@@ -1,6 +1,7 @@
 // exportTableXlsx hands the built workbook to saveFile (moved out of ui/model, DR-066).
 import { describe, it, expect, vi } from "vitest";
-import { exportTableXlsx } from "../exportXlsx";
+import { exportTableXlsx, exportWorkbookXlsx } from "../exportXlsx";
+import { xlsxSheet } from "../model/xlsxExport";
 
 const save = vi.hoisted(() => vi.fn());
 vi.mock("../../platform/saveFile", () => ({ saveFile: save }));
@@ -28,5 +29,24 @@ describe("exportTableXlsx", () => {
       name: "Excel workbook",
       extensions: ["xlsx"],
     });
+  });
+});
+
+describe("exportWorkbookXlsx", () => {
+  it("saves a workbook of several sheets under the given name", async () => {
+    save.mockReset();
+    save.mockResolvedValue({ kind: "saved", filename: "w.xlsx" });
+    const sheets = ["A", "B"].map((name) =>
+      xlsxSheet({
+        name,
+        columns: [{ header: "N", kind: "int", value: (r: number) => r }],
+        rows: [1],
+      }),
+    );
+    const outcome = await exportWorkbookXlsx({ filename: "w.xlsx", sheets });
+    expect(outcome).toEqual({ kind: "saved", filename: "w.xlsx" });
+    const [opts] = save.mock.calls[0] as [{ filename: string; data: unknown }];
+    expect(opts.filename).toBe("w.xlsx");
+    expect(opts.data).toBeInstanceOf(Uint8Array);
   });
 });

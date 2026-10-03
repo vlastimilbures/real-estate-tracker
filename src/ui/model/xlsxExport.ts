@@ -26,7 +26,43 @@ export type Cell = Decimal | number | string | Date | null;
 export interface XlsxColumn<R> {
   header: string;
   kind: CellKind;
+  /** A per-row kind instead of `kind`, for a table whose rows are metrics. */
+  kindOf?: (row: R) => CellKind;
   value: (row: R) => Cell;
+}
+
+/** One worksheet: a bold header row, one row per item, then optional note lines. */
+export interface XlsxSheet<R> {
+  name: string;
+  columns: XlsxColumn<R>[];
+  rows: R[];
+  /** Text lines under the table (after one blank row), in the first column. */
+  notes?: string[];
+}
+
+/** A sheet with its cells already extracted, so sheets of different row types fit one
+ *  workbook. Built by `xlsxSheet`. */
+export interface XlsxSheetCells {
+  name: string;
+  headers: string[];
+  rows: { kind: CellKind; value: Cell }[][];
+  notes: string[];
+}
+
+/** Extract a sheet's cells: each column's kind (per row with `kindOf`) and value. */
+export function xlsxSheet<R>(sheet: XlsxSheet<R>): XlsxSheetCells {
+  const { name, columns, rows, notes = [] } = sheet;
+  return {
+    name,
+    headers: columns.map((c) => c.header),
+    rows: rows.map((row) =>
+      columns.map((c) => ({
+        kind: c.kindOf ? c.kindOf(row) : c.kind,
+        value: c.value(row),
+      })),
+    ),
+    notes,
+  };
 }
 
 /** Excel number format per kind (CLAUDE.md §5 display conventions). */
@@ -79,36 +115,51 @@ export function cellValue(
 export const XLSX_MIME =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-/** Build the workbook bytes (pure: no download, no dialog). */
+/** Build the workbook bytes for one sheet (pure: no download, no dialog). */
 export async function buildXlsx<R>(opts: {
   sheetName: string;
   columns: XlsxColumn<R>[];
   rows: R[];
 }): Promise<Uint8Array> {
   const { sheetName, columns, rows } = opts;
+  return buildWorkbook([xlsxSheet({ name: sheetName, columns, rows })]);
+}
+
+/** Build the workbook bytes, one worksheet per sheet in order (pure). */
+export async function buildWorkbook(
+  sheets: XlsxSheetCells[],
+): Promise<Uint8Array> {
   // Lazy-load exceljs (~1 MB) only when the user actually exports, keeping it out of the
   // initial bundle. The browser UMD build's ESM-interop shape varies (namespace vs
   // `.default`), so tolerate both rather than relying on one.
   const mod = await import("exceljs");
   const ExcelJS = (mod as unknown as { default?: typeof mod }).default ?? mod;
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet(sheetName);
 
-  const headerRow = ws.addRow(columns.map((c) => safeText(c.header)));
-  headerRow.font = { bold: true };
+  for (const { name, headers, rows, notes } of sheets) {
+    const ws = wb.addWorksheet(name);
 
-  for (const row of rows) {
-    const r = ws.addRow(columns.map((c) => cellValue(c.kind, c.value(row))));
-    columns.forEach((c, i) => {
-      const fmt = numFmt(c.kind);
-      if (fmt) r.getCell(i + 1).numFmt = fmt;
+    const headerRow = ws.addRow(headers.map(safeText));
+    headerRow.font = { bold: true };
+
+    for (const cells of rows) {
+      const r = ws.addRow(cells.map((c) => cellValue(c.kind, c.value)));
+      cells.forEach((c, i) => {
+        const fmt = numFmt(c.kind);
+        if (fmt) r.getCell(i + 1).numFmt = fmt;
+      });
+    }
+
+    if (notes.length > 0) {
+      ws.addRow([]);
+      for (const note of notes) ws.addRow([safeText(note)]);
+    }
+
+    // Reasonable column widths from header length.
+    headers.forEach((h, i) => {
+      ws.getColumn(i + 1).width = Math.max(10, h.length + 2);
     });
   }
-
-  // Reasonable column widths from header length.
-  columns.forEach((c, i) => {
-    ws.getColumn(i + 1).width = Math.max(10, c.header.length + 2);
-  });
 
   return new Uint8Array(await wb.xlsx.writeBuffer());
 }
