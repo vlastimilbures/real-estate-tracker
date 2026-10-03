@@ -18,12 +18,15 @@ import { useUiStore } from "../../state/uiStore";
 import { isDirty } from "../model/dirty";
 
 export function Field({
+  id: idProp,
   label,
   error,
   help,
   required = false,
   children,
 }: {
+  /** The control's id, when something else must focus it (an error summary link). */
+  id?: string | undefined;
   label: string;
   error?: string | undefined;
   help?: string | undefined;
@@ -31,7 +34,8 @@ export function Field({
   required?: boolean | undefined;
   children: ReactNode;
 }) {
-  const id = useId();
+  const autoId = useId();
+  const id = idProp ?? autoId;
   const noteId = `${id}-note`;
   const note = error ?? help;
   return (
@@ -329,6 +333,9 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
         </p>
       )}
       <div className="form-actions">
+        {unsaved && (
+          <span className="form-state">{t.common.unsavedChanges}</span>
+        )}
         {onCancel && (
           <Button
             type="button"

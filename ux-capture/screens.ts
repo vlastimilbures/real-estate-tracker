@@ -481,6 +481,21 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "63-settings-assumptions-unsaved",
+    desc: "Assumptions with an unsaved edit: the sticky Save row in the window (ADR 0095)",
+    route: "settings",
+    run: async (ux) => {
+      await boot(ux.page);
+      await settingsTab(ux, "assumptions");
+      await ux.page
+        .locator(".field", { hasText: ux.t.assumptions.inflation })
+        .locator("input")
+        .fill("3");
+      await expect(ux.page.getByText(ux.t.common.unsavedChanges)).toBeVisible();
+      await ux.capture("63-settings-assumptions-unsaved", { fullPage: false });
+    },
+  },
+  {
     id: "64-settings-backup",
     desc: "Settings → Backup / Restore",
     route: "settings",

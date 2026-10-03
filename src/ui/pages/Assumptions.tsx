@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { isDirty } from "../model/dirty";
@@ -134,6 +134,17 @@ export function AssumptionsPanel() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast, showToast } = useToast();
   const setUnsavedChanges = useUiStore((s) => s.setUnsavedChanges);
+  const [saving, setSaving] = useState(false);
+  // A failed save keeps the input and says so until the next edit (ADR 0095).
+  const [failed, setFailed] = useState(false);
+  // Bumped on a failed save so the error summary takes focus once it renders.
+  const [summaryFocus, setSummaryFocus] = useState(0);
+  const summaryRef = useRef<HTMLDivElement>(null);
+  const formId = useId();
+  const fieldId = (name: string) => `${formId}-${name}`;
+  useEffect(() => {
+    if (summaryFocus > 0) summaryRef.current?.focus();
+  }, [summaryFocus]);
 
   // re-sync when store loads / changes underneath
   const current = draft ?? initial;
@@ -154,16 +165,36 @@ export function AssumptionsPanel() {
     );
   }
 
-  const set = (name: string, v: string) => setDraft({ ...current, [name]: v });
+  const set = (name: string, v: string) => {
+    setDraft({ ...current, [name]: v });
+    setFailed(false);
+  };
+
+  /** Show a failed save: keep the input, and focus the summary when fields are named. */
+  const fail = (fieldErrors: Record<string, string>) => {
+    setErrors(fieldErrors);
+    setFailed(true);
+    if (Object.keys(fieldErrors).length > 0) setSummaryFocus((n) => n + 1);
+  };
+
+  const onDiscard = () => {
+    setDraft(null);
+    setErrors({});
+    setFailed(false);
+  };
 
   const onSave = () => {
+    if (saving) return;
     const { values: v, errors: errs } = collectValues(
       [...DRIVERS, ...DEFAULTS],
       current,
       assumptionRules(t),
     );
-    setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    if (Object.keys(errs).length > 0) {
+      fail(errs);
+      return;
+    }
+    setErrors({});
 
     const next: Assumptions = {
       baseDate: v.baseDate,
@@ -184,21 +215,32 @@ export function AssumptionsPanel() {
     };
     // On failure the AppShell banner shows the message and a broken rule also marks
     // its field (UX-047); the success toast shows only when the write landed.
+    setSaving(true);
     void saveAssumptions(next).then((result) => {
+      setSaving(false);
       if (!result.ok) {
         const names = [...DRIVERS, ...DEFAULTS].map((s) => s.name);
-        setErrors(formWriteErrors(t, result.error, names).fieldErrors);
+        fail(formWriteErrors(t, result.error, names).fieldErrors);
         return;
       }
       // Saved: show the stored values again, so the form is no longer "unsaved".
       setDraft(null);
+      setFailed(false);
       showToast(t.assumptions.saved);
     });
   };
 
+  const invalid = [...DRIVERS, ...DEFAULTS].filter((s) => errors[s.name]);
+  const stateText = failed
+    ? t.common.saveFailedKept
+    : unsaved
+      ? t.common.unsavedChanges
+      : t.common.allChangesSaved;
+
   const renderField = (spec: FieldSpec) => (
     <Field
       key={spec.name}
+      id={fieldId(spec.name)}
       label={spec.label}
       required
       error={errors[spec.name]}
@@ -222,19 +264,14 @@ export function AssumptionsPanel() {
 
   return (
     <form
-      className="form-contents"
+      className="form-contents assumptions-form"
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
         onSave();
       }}
     >
-      <div className="settings-actions">
-        <p className="hint">{t.assumptions.scenariosHint}</p>
-        <Button type="submit" variant="primary">
-          {t.common.saveChanges}
-        </Button>
-      </div>
+      <p className="hint">{t.assumptions.scenariosHint}</p>
       <Panel title={t.assumptions.driversTitle}>
         <div className="form-grid">{DRIVERS.map(renderField)}</div>
       </Panel>
@@ -244,6 +281,51 @@ export function AssumptionsPanel() {
       >
         <div className="form-grid">{DEFAULTS.map(renderField)}</div>
       </Panel>
+      {invalid.length > 0 && (
+        <div
+          className="error-summary"
+          role="group"
+          aria-labelledby={`${formId}-summary`}
+          tabIndex={-1}
+          ref={summaryRef}
+        >
+          <p id={`${formId}-summary`} className="error-text">
+            {t.common.fieldsNeedAttention(invalid.length)}
+          </p>
+          <ul>
+            {invalid.map((spec) => (
+              <li key={spec.name}>
+                <button
+                  type="button"
+                  className="link-btn"
+                  onClick={() =>
+                    document.getElementById(fieldId(spec.name))?.focus()
+                  }
+                >
+                  {spec.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {/* One Save/Discard row for the whole form, kept in view (ADR 0095). */}
+      <div className="form-actions sticky-actions">
+        <span className={`form-state${failed ? " failed" : ""}`} role="status">
+          {stateText}
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onDiscard}
+          disabled={!unsaved || saving}
+        >
+          {t.common.discardChanges}
+        </Button>
+        <Button type="submit" variant="primary" disabled={!unsaved || saving}>
+          {saving ? t.common.saving : t.common.saveChanges}
+        </Button>
+      </div>
       {toast && <Toast message={toast} />}
     </form>
   );

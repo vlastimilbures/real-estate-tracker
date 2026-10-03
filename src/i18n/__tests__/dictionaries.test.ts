@@ -180,7 +180,7 @@ describe("i18n dictionaries — plural forms", () => {
   });
 
   it("every language inflects the same count strings (DR-111, UX-034)", () => {
-    const counted = [
+    const rest = [
       "properties.subtitle",
       "propertyDetail.yrs",
       "propertyDetail.draws",
@@ -192,12 +192,16 @@ describe("i18n dictionaries — plural forms", () => {
       "importPage.confirmOverwrite",
       "importPage.confirmOverwriteMsg",
     ];
+    // Error summary count (ADR 0095).
+    const common = ["common.fieldsNeedAttention"];
+    const counted = [...common, ...rest];
     // English writes the horizon and the IRR foot as compounds ("25-yr"); Czech and
     // Russian count years.
     const withIrrFoot = [
+      ...common,
       "dashboard.netWorthInYear",
       "dashboard.irrFoot",
-      ...counted,
+      ...rest,
     ];
     expect(countInflected("en")).toEqual(counted);
     expect(countInflected("ru")).toEqual(withIrrFoot);

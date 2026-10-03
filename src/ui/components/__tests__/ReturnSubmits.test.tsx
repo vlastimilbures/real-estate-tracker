@@ -104,8 +104,10 @@ describe("Return submits forms (UX-028)", () => {
     const saveAssumptions = vi.fn(async () => ({ ok: true as const }));
     act(() => usePortfolioStore.setState({ saveAssumptions }));
     render(<AssumptionsPanel />);
+    // An edit first: Save is disabled while nothing changed (ADR 0095).
     const horizon = screen.getByLabelText(en.assumptions.horizon);
-    await userEvent.type(horizon, "{Enter}");
+    await userEvent.clear(horizon);
+    await userEvent.type(horizon, "25{Enter}");
     expect(saveAssumptions).toHaveBeenCalledTimes(1);
   });
 });

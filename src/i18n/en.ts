@@ -30,6 +30,12 @@ export const en = {
     unsavedTitle: "Discard unsaved changes?",
     unsavedBody: "Your changes on this page have not been saved.",
     discardChanges: "Discard changes",
+    // Save-row state and error summary (ADR 0095).
+    unsavedChanges: "Unsaved changes",
+    allChangesSaved: "All changes saved",
+    saveFailedKept: "Save failed — your input is kept",
+    fieldsNeedAttention: (n: number) =>
+      `${n} ${enPlural(n, ["field needs", "fields need"])} attention:`,
     keepEditing: "Keep editing",
     edit: "Edit",
     delete: "Delete",

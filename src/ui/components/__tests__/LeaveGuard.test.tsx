@@ -3,7 +3,7 @@
 // UX-030: leaving Settings → Assumptions with unsaved edits asks first instead of
 // silently dropping them.
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AssumptionsPanel } from "../../pages/Assumptions";
 import { LeaveGuard } from "../LeaveGuard";
@@ -69,7 +69,12 @@ describe("unsaved Assumptions guard (UX-030)", () => {
     renderPanel();
     await editInflation();
     act(() => useUiStore.getState().setSettingsTab("backup"));
-    await userEvent.click(screen.getByRole("button", { name: /discard/i }));
+    // The guard's own Discard, not the form's "Discard changes" (ADR 0095).
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /discard/i,
+      }),
+    );
     expect(useUiStore.getState().settingsTab).toBe("backup");
     expect(useUiStore.getState().unsavedChanges).toBe(false);
   });
