@@ -724,7 +724,7 @@ export const cs: Dictionary = {
     errInvalidNumber: (v) => `Neplatné číslo „${v}“`,
     errInvalidInteger: (v) => `Neplatné celé číslo „${v}“`,
     errInvalidBoolean: (v) =>
-      `Neplatná logická hodnota „${v}“ — použijte true nebo false`,
+      `Neplatná logická hodnota „${v}“ — použijte true/false, yes/no nebo 1/0`,
     errUnknownProperty: (v) => `Neznámá nemovitost „${v}“`,
     errInstalmentRequired:
       "Povinné (nebo zadejte loan_term_years pro automatický výpočet)",
