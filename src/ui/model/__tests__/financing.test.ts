@@ -15,6 +15,7 @@ import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
 import { fmtDate } from "../../../lib/format";
+import { D } from "../../../lib/money";
 import { financingLabels, financingPanel } from "../financing";
 
 function impliedMaturityOf(id: string) {
@@ -252,6 +253,22 @@ describe("financingPanel interest saved (ADR 0116)", () => {
 
   it("is null when no property has a prepayment", () => {
     expect(panel(portfolio).m.interestSaved).toBeNull();
+  });
+
+  it("leaves out a property whose prepayments saved nothing", () => {
+    const p = prepaid(["lipova"]);
+    const o = run(p);
+    // E.g. every prepayment fell after payoff: interest saved is zero, not null.
+    const fx = {
+      ...o.financing,
+      loans: o.financing.loans.map((l) =>
+        l.propertyId === "javorova" ? { ...l, interestSaved: D(0) } : l,
+      ),
+    };
+    const m = financingPanel(fx, p, o.kpis, "nominal", "3", en);
+    expect(m.interestSaved!.properties.map((r) => r.propertyId)).toEqual([
+      "lipova",
+    ]);
   });
 
   it("is the sum of the properties' figures, largest first, the same in both lenses", () => {

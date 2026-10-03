@@ -82,7 +82,7 @@ export function financingPanel(
   const events = upcomingEvents(portfolio, fx, EVENT_MONTHS);
   const saved = fx.loans
     .flatMap((l) =>
-      l.interestSaved
+      l.interestSaved && !l.interestSaved.isZero()
         ? [
             {
               propertyId: l.propertyId,
