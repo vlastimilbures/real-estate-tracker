@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is never reseeded. The empty Properties page now offers Add property and Import CSV, and the
   empty Dashboard lists the first steps (ADR 0094, #18).
 
+- CSV import previews what it will do before writing anything: per file, the records it will
+  add, update (with each changed column as before → after) and leave unchanged. Overwriting
+  existing records needs a confirmation, an import whose data changed since the preview
+  writes nothing, and the import report stays on the page with links to each property
+  (ADR 0096, #34).
+
 ### Changed
 
 - Scenarios: clicking a stress preset that is already saved no longer adds a second row with
