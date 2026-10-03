@@ -326,6 +326,9 @@ export const SCREENS: Screen[] = [
       await expect(
         p.getByLabel(ux.t.propertyDetail.fieldDraws, { exact: false }),
       ).toBeVisible();
+      // The pointer stays where the toggle was; once the form grows it can rest on a
+      // chart and open its tooltip. Park it so the scan covers the form, not a hover.
+      await ux.page.mouse.move(0, 0);
       await ux.capture("25-property-mortgage-development");
     },
   },
