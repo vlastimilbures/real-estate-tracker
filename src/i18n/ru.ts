@@ -26,6 +26,11 @@ export const ru: Dictionary = {
     unsavedTitle: "Отменить несохранённые изменения?",
     unsavedBody: "Изменения на этой странице не сохранены.",
     discardChanges: "Отменить изменения",
+    unsavedChanges: "Есть несохранённые изменения",
+    allChangesSaved: "Все изменения сохранены",
+    saveFailedKept: "Сохранить не удалось — введённые данные сохранены в форме",
+    fieldsNeedAttention: (n) =>
+      `${n} ${ruPlural(n, ["поле требует", "поля требуют", "полей требуют"])} внимания:`,
     keepEditing: "Продолжить редактирование",
     edit: "Изменить",
     delete: "Удалить",

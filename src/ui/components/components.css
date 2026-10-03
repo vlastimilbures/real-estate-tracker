@@ -1007,6 +1007,66 @@ table.data tbody tr:hover td.sticky-col {
   margin-top: var(--s4);
 }
 
+/* Save-row state text, e.g. "Unsaved changes" (ADR 0095): left of the buttons. */
+.form-actions .form-state {
+  margin-right: auto;
+  align-self: center;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.form-actions .form-state.failed {
+  color: var(--negative);
+}
+
+/* ADR 0095: the Assumptions buttons stay in view at the bottom of the scrolling page. */
+.form-actions.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  align-items: center;
+  margin: var(--s4) 0 0;
+  padding: var(--s3) 0;
+  background: var(--paper);
+  border-top: 1px solid var(--hairline);
+}
+
+/* A focused field scrolls into view above the sticky row. */
+.assumptions-form :is(input, select, textarea) {
+  scroll-margin-bottom: 96px;
+}
+
+.error-summary {
+  margin-top: var(--s4);
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--negative);
+  border-radius: var(--r-sm);
+  background: var(--negative-wash);
+  font-size: 13px;
+}
+
+.error-summary:focus-visible {
+  outline: 2px solid var(--negative);
+  outline-offset: 2px;
+}
+
+.error-summary ul {
+  margin: var(--s2) 0 0;
+  padding-left: var(--s5);
+}
+
+.error-summary .link-btn {
+  /* WCAG 2.5.8: at least 24px tall. */
+  min-height: 24px;
+  font: inherit;
+  color: var(--negative);
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
 /* ============ Empty state ============ */
 .empty {
   text-align: center;
@@ -1635,18 +1695,6 @@ a:focus-visible,
   display: flex;
   flex-direction: column;
   gap: var(--s6);
-}
-.settings-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s4);
-}
-.settings-actions .hint {
-  margin: 0;
-}
-.settings-actions .btn {
-  flex-shrink: 0;
 }
 
 /* UX-044: a metric abbreviation that explains itself and links to the Guide. */

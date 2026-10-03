@@ -26,6 +26,11 @@ export const cs: Dictionary = {
     unsavedTitle: "Zahodit neuložené změny?",
     unsavedBody: "Změny na této stránce nejsou uložené.",
     discardChanges: "Zahodit změny",
+    unsavedChanges: "Neuložené změny",
+    allChangesSaved: "Všechny změny uloženy",
+    saveFailedKept: "Uložení selhalo — zadané hodnoty zůstaly",
+    fieldsNeedAttention: (n) =>
+      `${n} ${csPlural(n, ["pole vyžaduje", "pole vyžadují", "polí vyžaduje"])} pozornost:`,
     keepEditing: "Pokračovat v úpravách",
     edit: "Upravit",
     delete: "Smazat",

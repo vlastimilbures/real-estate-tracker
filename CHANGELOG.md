@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Settings → Assumptions keeps **Discard changes** and **Save changes** in a row that stays in
+  view at the bottom of the window. The row says whether there are unsaved changes, all
+  changes are saved, or a save failed (your input is kept); both buttons are disabled while
+  nothing changed. A save with invalid fields lists them above the row as links that jump to
+  each field. Property record forms say "Unsaved changes" next to their buttons. Saving stays
+  explicit — there is no autosave (ADR 0095, #19).
+
 - The first-run sample portfolio is labelled as fictional. A banner on Dashboard and
   Properties offers **Clear sample and start my own** and **Keep exploring** (which hides it
   for good); while the sample is in place, Settings → Backup offers the same action. Clearing
