@@ -485,15 +485,28 @@ are set via the UI, not CSV; a re-import keeps them.
 - Dates `YYYY-MM-DD` and real calendar dates; money plain decimal (no thousands separator,
   no exponent, not negative); rates as decimals in 0–1 (0.0169 = 1.69 %); integers whole and
   unsigned, within the form bounds — `fixation_years` 0–50, `loan_term_years` 1–50,
-  `size_m2` 1–10 000 (ADR 0076); garage `true`/`false`.
+  `size_m2` 1–10 000 (ADR 0076); garage `true`/`false`, `yes`/`no` or `1`/`0`, in any
+  case (an empty cell means not set).
+- **Header row** ([guide](docs/csv-import.md#file-format)): header names are trimmed, then
+  matched exactly and case-sensitively (lower case, as in the table above). Columns may come
+  in any order and extra columns are ignored. A missing required column makes that cell
+  _Required_ on every row. Every row must have as many cells as the header; empty lines are
+  skipped and a leading byte-order mark is dropped.
 - `property_name` matches a property after trimming, case-insensitively; the stored
   spelling is kept. Two names in one file differing only by case or spaces are a duplicate
   (fatal). An unknown name is fatal (D-55).
 - Each row also passes the engine's `validateInputs` rules (§4.1).
-- **Block-on-fatal-error**: if any row has an error, the whole file is rejected; errors name
-  row and column. Fix and re-upload.
-- **Upsert by natural key**: re-importing updates rather than duplicating. Properties by
-  name; children by `(property_name, start_date/valid_from)`. The write is one transaction.
+- **All or nothing across the batch** ([guide](docs/csv-import.md#all-or-nothing)): every
+  file chosen for one import is parsed, its property names resolved and the merged portfolio
+  validated before anything is written. If any row in any file has an error, nothing is
+  imported; errors name file, row and column. Fix and re-upload. The write is one
+  transaction (ADR 0014), and a commit whose plan differs from the previewed one writes
+  nothing (ADR 0096).
+- **Upsert by natural key** ([guide](docs/csv-import.md#matching-and-updates)):
+  re-importing updates rather than duplicating. Properties by name; children by
+  `(property_name, start_date/valid_from)`. On an update, an empty
+  `contract_maturity_date` keeps the stored date; any other empty optional cell clears the
+  stored value.
 - Each file picker has a "Download template" button producing the header + one example row.
 - Importing a new property automatically creates a default holding-costs row for it.
 - Holding costs are **not** imported via CSV — set them via the UI on the property detail
