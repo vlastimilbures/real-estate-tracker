@@ -90,7 +90,6 @@ export function Scenarios() {
     <AppShell
       title={t.scenarios.title}
       subtitle={t.scenarios.subtitle}
-      showLens={false}
       actions={
         <Button variant="primary" onClick={() => setEditing("new")}>
           {t.scenarios.newScenario}
@@ -112,6 +111,7 @@ export function Scenarios() {
 
       <StressPresetsPanel
         busy={busy}
+        baseDate={assumptions.baseDate}
         crashAtYear={crashAtYear}
         onCrashAtYearChange={setCrashAtYear}
         onAddPreset={addPreset}

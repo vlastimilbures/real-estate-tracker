@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Scenarios wording matches the model. The stress-preset hint says rate and inflation shocks
+  revert after 3 years while a price crash is permanent. Shock inputs and the scenario list
+  use percentage points ("pp", "p. b.", "п. п.") with a worked example (+2 pp turns 4.5 % into
+  6.5 %). Crash timing 0 reads "Start" with the projection start date, and the form says
+  "0 = projection start (date)". The compare hint says Base does not count toward the 3
+  scenarios. The Nominal/Real lens toggle is now on the Scenarios page (ADR 0090, #15).
 - Dashboard and Property detail labels say what the tiles show. With a future As-of date
   they name the projection year and its period ("Monthly equivalent — projection year
   Y5 · 2031 (Jul 2030 – Jun 2031)") instead of "current" or "today's lease". The As-of picker

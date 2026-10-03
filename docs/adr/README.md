@@ -114,6 +114,7 @@ Other IDs seen in code comments:
 | [0087](0087-real-lens-multiple-cumulative-cf.md)  | Real lens: real net-worth multiple and cumulative cash flow                            |                                        |
 | [0088](0088-asof-basis-labels.md)                 | As-of labels name their basis                                                          |                                        |
 | [0089](0089-compare-owner-loss.md)                | Scenario compare shows the owner's loss                                                |                                        |
+| [0090](0090-scenario-wording.md)                  | Scenarios wording: shock units, projection start, lens                                 |                                        |
 
 ### Judgment calls and open questions
 

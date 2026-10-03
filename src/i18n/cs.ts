@@ -485,7 +485,9 @@ export const cs: Dictionary = {
     noOverrides: "žádné úpravy",
     presetsTitle: "Stresové předvolby",
     presetsHint: (years) =>
-      `jedním klikem vznikne uložený scénář · šoky odezní po ${years} l.`,
+      `Jedním klikem se uloží scénář. Šoky sazeb a inflace trvají ${years} l., pak odezní; propad cen je trvalý.`,
+    atStart: "Start",
+    atStartTitle: (date) => `Na začátku projekce (${date})`,
     rateShockAtRefix: "Šok sazby @ refix",
     inflationShock: "Inflační šok",
     priceCrash: "Propad cen",
@@ -500,7 +502,8 @@ export const cs: Dictionary = {
       `Smazat scénář „${name}“? Tuto akci nelze vrátit.`,
     deletedScenario: (name) => `Smazáno „${name}“`,
     listTitle: "Scénáře",
-    listHint: (max) => `vyberte až ${max} pro porovnání se Základem`,
+    listHint: (max) =>
+      `Zaškrtněte až ${max} scénáře k porovnání. Základ je navíc a nepočítá se.`,
     duplicate: "Duplikovat",
     emptyList:
       "Zatím žádné uložené scénáře — použijte předvolbu nebo „Nový scénář“.",
@@ -533,8 +536,8 @@ export const cs: Dictionary = {
     sumVacancy: (v) => `neobsazenost ${v}`,
     sumResetRate: (v) => `sazba po fixaci ${v}`,
     sumInflation: (v) => `inflace ${v}`,
-    sumInflationShock: (v, years) => `inflace +${v} na ${years} l.`,
-    sumRateShock: (v, years) => `sazby +${v} na ${years} l.`,
+    sumInflationShock: (v, years) => `inflace +${v} p. b. na ${years} l.`,
+    sumRateShock: (v, years) => `sazby +${v} p. b. na ${years} l.`,
     sumValueShock: (v, atYear) =>
       `hodnota −${v}${atYear ? ` @ rok${atYear}` : ""}`,
     editTitle: (name) => `Upravit „${name}“`,
@@ -549,15 +552,17 @@ export const cs: Dictionary = {
     fieldVacancy: "Rezerva na neobsazenost",
     fieldPostFixationReset: "Sazba po skončení fixace",
     fieldInflation: "Inflace p.a.",
-    fieldInflationShock: "Inflační šok (+pp)",
-    fieldRateShock: "Šok sazby @ refix (+pp)",
+    fieldInflationShock: "Inflační šok",
+    fieldRateShock: "Šok sazby při refixaci",
     fieldValueCrash: "Propad hodnoty",
     forYears: "…na roky",
     atYear: "…v roce",
-    temporaryReverts: "dočasné, vrací se k trendu",
+    ppSuffix: "p. b.",
+    shockHelp:
+      "Dočasné, pak odezní. Přičítá procentní body: +2 p. b. změní 4,5 % na 6,5 %.",
     permanentCorrection: "trvalá korekce",
     defaultYears: (n) => `výchozí ${n}`,
-    zeroIsToday: "0 = základní datum",
+    zeroIsStart: (date) => `0 = začátek projekce (${date})`,
     none: "žádný",
     invalidPct: "Neplatné %",
     geOne: "≥ 1",
@@ -1025,7 +1030,7 @@ export const cs: Dictionary = {
         name: "Propad hodnoty",
         formula: "jednorázový pokles v roce Y",
         meaning:
-          "Jednorázový pokles hodnoty; růst pokračuje z nižší základny. Propad s načasováním Dnes sníží počáteční kapitál, takže procentní výnosy mohou růst, i když vaše jmění klesá.",
+          "Jednorázový pokles hodnoty; růst pokračuje z nižší základny. Propad na začátku projekce sníží počáteční kapitál, takže procentní výnosy mohou růst, i když vaše jmění klesá.",
       },
     },
     glossary: {

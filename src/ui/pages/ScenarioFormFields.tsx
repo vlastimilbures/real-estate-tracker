@@ -71,15 +71,11 @@ export function ShockPairFields({
   const t = useT();
   return (
     <>
-      <Field
-        label={deltaLabel}
-        error={deltaError}
-        help={t.scenarios.temporaryReverts}
-      >
+      <Field label={deltaLabel} error={deltaError} help={t.scenarios.shockHelp}>
         <TextInput
           value={deltaValue}
           onChange={onDeltaChange}
-          suffix="%"
+          suffix={t.scenarios.ppSuffix}
           inputMode="decimal"
           placeholder={t.scenarios.none}
         />

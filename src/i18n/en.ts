@@ -510,7 +510,9 @@ export const en = {
     noOverrides: "no overrides",
     presetsTitle: "Stress presets",
     presetsHint: (years: number) =>
-      `one click creates a saved scenario · shocks revert after ${years}y`,
+      `One click saves a scenario. Rate and inflation shocks last ${years} years, then revert; a price crash is permanent.`,
+    atStart: "Start",
+    atStartTitle: (date: string) => `At projection start (${date})`,
     rateShockAtRefix: "Rate shock @ refix",
     inflationShock: "Inflation shock",
     priceCrash: "Price crash",
@@ -528,7 +530,8 @@ export const en = {
       `Delete scenario “${name}”? This cannot be undone.`,
     deletedScenario: (name: string) => `Deleted “${name}”`,
     listTitle: "Scenarios",
-    listHint: (max: number) => `pick up to ${max} to compare against Base`,
+    listHint: (max: number) =>
+      `Tick up to ${max} scenarios to compare. Base is extra and does not count.`,
     duplicate: "Duplicate",
     emptyList: "No saved scenarios yet — use a preset or “New scenario”.",
     compareTitle: "Compare",
@@ -562,8 +565,8 @@ export const en = {
     sumResetRate: (v: string) => `reset rate ${v}`,
     sumInflation: (v: string) => `inflation ${v}`,
     sumInflationShock: (v: string, years: number) =>
-      `inflation +${v} for ${years}y`,
-    sumRateShock: (v: string, years: number) => `rates +${v} for ${years}y`,
+      `inflation +${v} pp for ${years}y`,
+    sumRateShock: (v: string, years: number) => `rates +${v} pp for ${years}y`,
     sumValueShock: (v: string, atYear: number) =>
       `value −${v}${atYear ? ` @ yr${atYear}` : ""}`,
     // Form
@@ -579,15 +582,17 @@ export const en = {
     fieldVacancy: "Vacancy allowance",
     fieldPostFixationReset: "Post-fixation reset rate",
     fieldInflation: "Inflation p.a.",
-    fieldInflationShock: "Inflation shock (+pp)",
-    fieldRateShock: "Rate shock @ refix (+pp)",
+    fieldInflationShock: "Inflation shock",
+    fieldRateShock: "Rate shock at refix",
     fieldValueCrash: "Value crash",
     forYears: "…for years",
     atYear: "…at year",
-    temporaryReverts: "temporary, reverts to trend",
+    ppSuffix: "pp",
+    shockHelp:
+      "Temporary, then reverts. Adds percentage points: +2 pp turns 4.5 % into 6.5 %.",
     permanentCorrection: "permanent correction",
     defaultYears: (n: number) => `default ${n}`,
-    zeroIsToday: "0 = base date",
+    zeroIsStart: (date: string) => `0 = projection start (${date})`,
     none: "none",
     invalidPct: "Invalid %",
     geOne: "≥ 1",
@@ -1062,7 +1067,7 @@ export const en = {
         name: "Value crash",
         formula: "one-off drop in year Y",
         meaning:
-          "A one-off fall in value; growth resumes from the lower base. A crash at Today lowers starting equity, so percentage returns can rise while your wealth falls.",
+          "A one-off fall in value; growth resumes from the lower base. A crash at projection start lowers starting equity, so percentage returns can rise while your wealth falls.",
       },
     },
     glossary: {
