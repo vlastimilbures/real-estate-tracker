@@ -79,6 +79,17 @@ describe("describeWriteError", () => {
     }
   });
 
+  it("translates the v9 JSON checks added outside V7_TABLES (ADR 0109)", () => {
+    for (const name of ["mortgage_prepayments_json", "mortgage_recasts_json"]) {
+      expect(describeWriteError(en, check(name)).message, name).not.toBe(
+        en.writeErrors.otherConstraint,
+      );
+    }
+    expect(describeWriteError(en, check("mortgage_recasts_json")).field).toBe(
+      "recasts",
+    );
+  });
+
   it("falls back to a generic sentence for an unknown constraint", () => {
     expect(describeWriteError(en, check("future_rule")).message).toBe(
       en.writeErrors.otherConstraint,

@@ -45,6 +45,9 @@ const CHECKS: Record<
   },
   mortgage_contract_maturity_iso: { rule: "INVALID_DATE" },
   mortgage_draws_json: { rule: "json", field: "draws" },
+  // v9 (ADR 0109): added with their columns, outside the frozen V7_TABLES.
+  mortgage_prepayments_json: { rule: "json", field: "prepayments" },
+  mortgage_recasts_json: { rule: "json", field: "recasts" },
   valuation_valid_from_iso: { rule: "INVALID_DATE", field: "validFrom" },
   valuation_valid_to_iso: { rule: "INVALID_DATE", field: "validTo" },
   valuation_end_not_before_start: {

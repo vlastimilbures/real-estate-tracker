@@ -374,6 +374,8 @@ export function planImport(
         draws: null,
         interest_only_until: null,
         contract_maturity_date: m.contract_maturity_date,
+        prepayments: null,
+        recasts: null,
       },
       fields,
       { file: "mortgages", row: m.line },

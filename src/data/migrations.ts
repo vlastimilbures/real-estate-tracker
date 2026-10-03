@@ -498,6 +498,20 @@ export const MIGRATIONS: Migration[] = [
           params: [r.after, r.id],
         })),
   },
+  {
+    version: 9,
+    name: "mortgage prepayments and recasts",
+    // ADR 0109: nullable JSON lists, like `draws` (v3). `prepayments` holds
+    // [{date, amount, effect, fee?}], `recasts` holds [{date, maturity} | {date,
+    // instalment}]. NULL = none, so every stored loan keeps its numbers. Each column
+    // carries its JSON check here: V7_TABLES is the frozen v7 rebuild spec.
+    sql: `
+      ALTER TABLE mortgage_blocks ADD COLUMN prepayments TEXT
+        CONSTRAINT mortgage_prepayments_json CHECK (json_valid(prepayments));
+      ALTER TABLE mortgage_blocks ADD COLUMN recasts TEXT
+        CONSTRAINT mortgage_recasts_json CHECK (json_valid(recasts));
+    `,
+  },
 ];
 
 function scenarioRows(

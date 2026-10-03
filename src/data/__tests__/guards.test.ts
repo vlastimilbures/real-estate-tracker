@@ -65,6 +65,8 @@ const mortgage: MortgageBlockRow = {
   draws: null,
   interest_only_until: null,
   contract_maturity_date: null,
+  prepayments: null,
+  recasts: null,
 };
 
 const scenario = (overrides: string): ScenarioRow => ({
