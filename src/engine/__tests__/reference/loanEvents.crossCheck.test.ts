@@ -214,6 +214,18 @@ const CASES: Case[] = [
     { ...devIo, recasts: [{ date: "2027-01-10", maturity: "2050-03-01" }] },
   ],
   [
+    "dev loan, tranche on the maturity payment (ADR 0116)",
+    {
+      ...devIo,
+      draws: [
+        { date: "2026-11-15", amount: "1500000" },
+        { date: "2027-07-20", amount: "1000000" },
+      ],
+      completion: "2027-07-20",
+      recasts: [{ date: "2027-01-10", maturity: "2027-08-01" }],
+    },
+  ],
+  [
     "dev loan, instalment recast after completion",
     { ...devIo, recasts: [{ date: "2028-01-10", instalment: 25000 }] },
   ],

@@ -433,6 +433,33 @@ describe("ADR 0109: development loans", () => {
   });
 });
 
+describe("ADR 0116 §2: a tranche on the maturity payment", () => {
+  // The maturity recast makes payment 17 (2027-08-01) the last one; the second tranche,
+  // dated 2027-07-20, follows that same payment. It restores the contract term instead
+  // of being repaid in one shot.
+  const b = withEvents(
+    {
+      ...devBlock,
+      id: "m-dev",
+      draws: [
+        { date: isoDate("2026-11-15"), amount: money("1500000") },
+        { date: isoDate("2027-07-20"), amount: money("1000000") },
+      ],
+      completionDate: isoDate("2027-07-20"),
+    } as MortgageBlock,
+    undefined,
+    [toMaturity("2027-01-10", "2027-08-01")],
+  );
+
+  it("keeps amortizing after the tranche's payment", () => {
+    const rows = buildSchedule(b, assumptions);
+    const t = rows.map((r) => r.drawn.greaterThan(0)).lastIndexOf(true);
+    expect(rows[t].endBalance.greaterThan(0)).toBe(true);
+    expect(rows[t + 1].principal.greaterThan(0)).toBe(true);
+    expect(lastPayment(rows)).toBeGreaterThan(t + 300);
+  });
+});
+
 describe("ADR 0109: refinance handovers", () => {
   const refi = (start: string): MortgageBlock =>
     ({

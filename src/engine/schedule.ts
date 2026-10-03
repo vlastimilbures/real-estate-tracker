@@ -349,15 +349,15 @@ function paymentTerms(
   };
 }
 
-/** A tranche landing after the maturity in force goes back to the contract term
- *  (ADR 0109), so it is not paid off in one shot. */
+/** A tranche landing on or after the maturity in force goes back to the contract term
+ *  (ADR 0109, ADR 0116), so it is not paid off in one shot. */
 function termsForTranche(
   terms: TermState,
   draw: Decimal,
   p: number,
   contractTerm: number,
 ): TermState {
-  return draw.greaterThan(ZERO) && p > terms.term
+  return draw.greaterThan(ZERO) && p >= terms.term
     ? { ...terms, term: Math.max(terms.term, contractTerm) }
     : terms;
 }
