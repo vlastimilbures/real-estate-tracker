@@ -118,6 +118,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   import across the whole batch of files, and which empty cells keep or clear a stored
   value on re-import (ADR 0113, #61).
 
+- Accessibility: the first Tab on any page shows **Skip to content**, which moves focus
+  past the sidebar and topbar to the page. Each chart is announced by its title, with a
+  pointer to its Table button. Chart axis labels take the intended 11 px size and a
+  colour with at least 4.5:1 contrast, and the value axis fits its labels, so "−300 k"
+  no longer breaks onto two lines. Tooltip labels are text-coloured with a line swatch,
+  as in the legend. On the scenario compare charts each line also has its own dash
+  pattern (ADR 0114, #24, #25).
+
 - The app uses one name, "Real Estate Tracker", everywhere. The sidebar brand, the logo
   title and the loading screen said "Real Estate Portfolio"; the name is not translated
   (ADR 0105, #22).

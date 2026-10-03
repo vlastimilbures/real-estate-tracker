@@ -7,6 +7,7 @@ import { D, roundCzk, type Numeric } from "./money";
 import { getActiveCurrency } from "./currency";
 
 const MINUS = "−"; // real minus sign, not a hyphen
+const NBSP = "\u00A0";
 
 /** Group a non-negative integer string into space-separated thousands: 28730000 → "28 730 000". */
 function groupThousands(intDigits: string): string {
@@ -120,10 +121,12 @@ export function fmtCzkAxisValue(value: Numeric, unit: CzkAxisUnit): string {
   return neg ? `${MINUS}${body}` : body;
 }
 
-/** Format a value for a chart Y-axis tick, appending a compact unit suffix (e.g. "120 M"). */
+/** Format a value for a chart Y-axis tick, appending a compact unit suffix (e.g. "120 M").
+ *  Non-breaking spaces throughout, so a tick never wraps (ADR 0114). */
 export function fmtCzkAxisTick(value: Numeric, unit: CzkAxisUnit): string {
   const num = fmtCzkAxisValue(value, unit);
-  return unit.shortLabel ? `${num} ${unit.shortLabel}` : num;
+  const tick = unit.shortLabel ? `${num} ${unit.shortLabel}` : num;
+  return tick.replace(/ /g, NBSP);
 }
 
 /** `0.0%` — ratio (0.331) → "33,1 %". */

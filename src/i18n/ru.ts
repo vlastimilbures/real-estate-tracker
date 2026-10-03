@@ -200,10 +200,13 @@ export const ru: Dictionary = {
 
   charts: {
     table: "Таблица",
+    surfaceLabel: (title: string) =>
+      `${title} — график. Значения — по кнопке «Таблица».`,
   },
 
   shell: {
     offline: "Офлайн · локально",
+    skipToContent: "Перейти к содержимому",
     backupHintNone: "Резервной копии пока нет. Экспортировать",
     backupHintOld: (days: number) =>
       `Последняя копия ${days} ${ruPlural(days, ["день", "дня", "дней"])} назад. Экспортировать`,

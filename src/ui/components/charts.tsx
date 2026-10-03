@@ -13,7 +13,7 @@ import {
   Tooltip,
   ReferenceLine,
 } from "recharts";
-import { useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { Table2 } from "lucide-react";
 import {
   fmtCzk,
@@ -24,12 +24,13 @@ import {
 } from "../../lib/format";
 import {
   SERIES,
-  czkAxisWidth,
   tipValue,
   tableValue,
   tableYear,
   tooltipTotal,
+  seriesTipItems,
   type ChartRow,
+  type TipItem,
 } from "../model/chartData";
 import { yearLabel } from "../model/projection";
 import { currencySymbol } from "../../lib/currency";
@@ -53,9 +54,48 @@ function czkUnitFromRows(
   return pickCzkAxisUnit(values, thousands);
 }
 
-// CSS-var strings resolve inside SVG, so grid/axis colors track the active theme.
+// CSS-var strings resolve inside SVG, so the grid colour tracks the active theme. Tick
+// colour and size live in components.css.
 const GRID = "var(--hairline)";
-const AXIS_TICK = { fill: "var(--ink-soft)" } as const;
+
+/** The chart surface's accessible name, set by the enclosing ChartCard (ADR 0114). */
+const SurfaceLabel = createContext<string | undefined>(undefined);
+
+/** `role="img"` + the card's name for a chart's <svg>. Recharts keeps it a tab stop, so
+ *  the arrow keys still step the tooltip (ADR 0114). */
+function useSurfaceProps() {
+  const label = useContext(SurfaceLabel);
+  return label === undefined ? {} : { role: "img", "aria-label": label };
+}
+
+/** A short line in a series' colour and dash: the legend and tooltip key (ADR 0114). */
+function SeriesSwatch({
+  color,
+  dash,
+}: {
+  color: string;
+  dash?: string | undefined;
+}) {
+  return (
+    <svg
+      className="series-swatch"
+      width={16}
+      height={4}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <line
+        x1={0}
+        y1={2}
+        x2={16}
+        y2={2}
+        stroke={color}
+        strokeWidth={3}
+        strokeDasharray={dash}
+      />
+    </svg>
+  );
+}
 
 /** A chart card: title, subtitle and a legend built from `series` (by default only for
  *  two or more series). The Table toggle swaps the chart for a table of the same rows,
@@ -116,15 +156,17 @@ export function ChartCard({
       {asTable ? (
         <ChartTable title={title} kind={kind} rows={rows} series={series} />
       ) : (
-        <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-          {children}
-        </ResponsiveContainer>
+        <SurfaceLabel.Provider value={t.charts.surfaceLabel(title)}>
+          <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+            {children}
+          </ResponsiveContainer>
+        </SurfaceLabel.Provider>
       )}
       {legend && !asTable && (
         <div className="legend">
           {series.map((s) => (
             <span key={s.key}>
-              <i style={{ background: s.color }} /> {s.name}
+              <SeriesSwatch color={s.color} dash={s.dash} /> {s.name}
             </span>
           ))}
         </div>
@@ -196,13 +238,7 @@ function ChartTable({
   );
 }
 
-interface TipItem {
-  label: string;
-  value: number | null; // null: not plotted (e.g. a year-0 flow) ⇒ "—"
-  color: string;
-  kind: "czk" | "pct";
-}
-function Tip({
+export function Tip({
   active,
   year,
   point,
@@ -229,7 +265,10 @@ function Tip({
       <div className="tt-year">{heading}</div>
       {items.map((it) => (
         <div className="tt-row" key={it.label}>
-          <span style={{ color: it.color }}>{it.label}</span>
+          <span className="tt-label">
+            <SeriesSwatch color={it.color} dash={it.dash} />
+            {it.label}
+          </span>
           <span>
             {it.value === null
               ? "—"
@@ -257,6 +296,8 @@ interface SeriesDef {
   key: string;
   name: string;
   color: string;
+  /** SVG strokeDasharray, e.g. "6 3"; solid when absent (ADR 0114). */
+  dash?: string | undefined;
 }
 
 /** A row whose numeric series are addressed by string key (superset of ChartRow). */
@@ -272,26 +313,28 @@ export function CzkLines({
 }) {
   // Reduce motion: no entry animation (UX-058).
   const animate = !usePrefersReducedMotion();
+  const surface = useSurfaceProps();
   const t = useT();
   const keys = series.map((s) => s.key);
   const unit = czkUnitFromRows(data, keys, t.common.thousandsShort);
-  const axisW = czkAxisWidth(unit, data, keys);
   return (
-    <LineChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: 4 }}>
+    <LineChart
+      data={data}
+      margin={{ top: 6, right: 8, bottom: 0, left: 4 }}
+      {...surface}
+    >
       <CartesianGrid stroke={GRID} vertical={false} />
       <XAxis
         dataKey="calendarYear"
-        tick={AXIS_TICK}
         tickLine={false}
         axisLine={false}
         minTickGap={28}
       />
       <YAxis
         tickFormatter={(v: number) => fmtCzkAxisTick(v, unit)}
-        tick={AXIS_TICK}
         tickLine={false}
         axisLine={false}
-        width={axisW}
+        width="auto"
       />
       <Tooltip
         content={({ active, label, payload }) => (
@@ -299,14 +342,7 @@ export function CzkLines({
             active={active}
             year={label}
             point={payload?.[0]?.payload}
-            items={(payload ?? []).map((p) => ({
-              label:
-                series.find((s) => s.key === p.dataKey)?.name ??
-                String(p.dataKey),
-              value: tipValue(p.value),
-              color: p.color as string,
-              kind: "czk",
-            }))}
+            items={seriesTipItems(payload, series, "czk")}
           />
         )}
       />
@@ -318,6 +354,8 @@ export function CzkLines({
           dataKey={s.key}
           name={s.name}
           stroke={s.color}
+          // Spread, not strokeDasharray={undefined}: exactOptionalPropertyTypes.
+          {...(s.dash && { strokeDasharray: s.dash })}
           strokeWidth={2}
           dot={false}
           activeDot={{ r: 3 }}
@@ -339,6 +377,7 @@ export function SignedBars({
 }) {
   // Reduce motion: no entry animation (UX-058).
   const animate = !usePrefersReducedMotion();
+  const surface = useSurfaceProps();
   const t = useT();
   const key = String(dataKey);
   const unit = czkUnitFromRows(
@@ -346,27 +385,24 @@ export function SignedBars({
     [key],
     t.common.thousandsShort,
   );
-  const axisW = czkAxisWidth(
-    unit,
-    data as unknown as Record<string, unknown>[],
-    [key],
-  );
   return (
-    <BarChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: 4 }}>
+    <BarChart
+      data={data}
+      margin={{ top: 6, right: 8, bottom: 0, left: 4 }}
+      {...surface}
+    >
       <CartesianGrid stroke={GRID} vertical={false} />
       <XAxis
         dataKey="calendarYear"
-        tick={AXIS_TICK}
         tickLine={false}
         axisLine={false}
         minTickGap={28}
       />
       <YAxis
         tickFormatter={(v: number) => fmtCzkAxisTick(v, unit)}
-        tick={AXIS_TICK}
         tickLine={false}
         axisLine={false}
-        width={axisW}
+        width="auto"
       />
       <ReferenceLine y={0} stroke="var(--hairline-strong)" />
       <Tooltip
@@ -410,47 +446,39 @@ export function StackedCzkBars({
 }) {
   // Reduce motion: no entry animation (UX-058).
   const animate = !usePrefersReducedMotion();
+  const surface = useSurfaceProps();
   const t = useT();
   const sKeys = series.map((s) => s.key);
   const unit = czkUnitFromRows(data, sKeys, t.common.thousandsShort);
-  const axisW = czkAxisWidth(unit, data, sKeys);
   return (
     <BarChart
       data={data}
       stackOffset="sign"
       margin={{ top: 6, right: 8, bottom: 0, left: 4 }}
+      {...surface}
     >
       <CartesianGrid stroke={GRID} vertical={false} />
       <XAxis
         dataKey="calendarYear"
-        tick={AXIS_TICK}
         tickLine={false}
         axisLine={false}
         minTickGap={28}
       />
       <YAxis
         tickFormatter={(v: number) => fmtCzkAxisTick(v, unit)}
-        tick={AXIS_TICK}
         tickLine={false}
         axisLine={false}
-        width={axisW}
+        width="auto"
       />
       <ReferenceLine y={0} stroke="var(--hairline-strong)" />
       <Tooltip
         content={({ active, label, payload }) => {
-          const items = (payload ?? []).map((p) => ({
-            label:
-              series.find((s) => s.key === p.dataKey)?.name ??
-              String(p.dataKey),
-            value: Number(p.value),
-            color: p.color as string,
-            kind: "czk" as const,
-          }));
+          const items = seriesTipItems(payload, series, "czk", Number);
           const total =
             totalLabel !== undefined
               ? {
                   label: totalLabel,
-                  value: tooltipTotal(items.map((it) => it.value)),
+                  value: tooltipTotal(items.map((it) => it.value ?? 0)),
                 }
               : undefined;
           return (
@@ -488,22 +516,25 @@ export function PctLines({
 }) {
   // Reduce motion: no entry animation (UX-058).
   const animate = !usePrefersReducedMotion();
+  const surface = useSurfaceProps();
   return (
-    <LineChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: 4 }}>
+    <LineChart
+      data={data}
+      margin={{ top: 6, right: 8, bottom: 0, left: 4 }}
+      {...surface}
+    >
       <CartesianGrid stroke={GRID} vertical={false} />
       <XAxis
         dataKey="calendarYear"
-        tick={AXIS_TICK}
         tickLine={false}
         axisLine={false}
         minTickGap={28}
       />
       <YAxis
         tickFormatter={pctAxis}
-        tick={AXIS_TICK}
         tickLine={false}
         axisLine={false}
-        width={40}
+        width="auto"
         domain={[0, "auto"]}
       />
       <Tooltip
@@ -512,14 +543,7 @@ export function PctLines({
             active={active}
             year={label}
             point={payload?.[0]?.payload}
-            items={(payload ?? []).map((p) => ({
-              label:
-                series.find((s) => s.key === p.dataKey)?.name ??
-                String(p.dataKey),
-              value: tipValue(p.value),
-              color: p.color as string,
-              kind: "pct",
-            }))}
+            items={seriesTipItems(payload, series, "pct")}
           />
         )}
       />
@@ -531,6 +555,8 @@ export function PctLines({
           dataKey={s.key}
           name={s.name}
           stroke={s.color}
+          // Spread, not strokeDasharray={undefined}: exactOptionalPropertyTypes.
+          {...(s.dash && { strokeDasharray: s.dash })}
           strokeWidth={2}
           dot={false}
           activeDot={{ r: 3 }}
@@ -554,22 +580,25 @@ export function PctLine({
 }) {
   // Reduce motion: no entry animation (UX-058).
   const animate = !usePrefersReducedMotion();
+  const surface = useSurfaceProps();
   return (
-    <LineChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: 4 }}>
+    <LineChart
+      data={data}
+      margin={{ top: 6, right: 8, bottom: 0, left: 4 }}
+      {...surface}
+    >
       <CartesianGrid stroke={GRID} vertical={false} />
       <XAxis
         dataKey="calendarYear"
-        tick={AXIS_TICK}
         tickLine={false}
         axisLine={false}
         minTickGap={28}
       />
       <YAxis
         tickFormatter={pctAxis}
-        tick={AXIS_TICK}
         tickLine={false}
         axisLine={false}
-        width={40}
+        width="auto"
         domain={[0, "auto"]}
       />
       <Tooltip
