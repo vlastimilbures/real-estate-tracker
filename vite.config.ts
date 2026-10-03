@@ -47,6 +47,7 @@ export default defineConfig(async () => ({
     benchmark: { include: ["src/**/*.bench.ts"] },
     // Coverage ratchet. Thresholds are per folder and only ever go up: the target where
     // met, else the measured value floored. Enforced by `pnpm test:coverage` in CI.
+    // Re-baselined once for Vitest 4's AST-based v8 counting (ADR 0083).
     coverage: {
       provider: "v8",
       include: ["src/**"],
@@ -58,13 +59,13 @@ export default defineConfig(async () => ({
         "src/import/**": { lines: 85, branches: 80 },
         "src/lib/**": { lines: 95, branches: 90 },
         "src/ui/model/**": { lines: 94, branches: 92 },
-        "src/state/**": { lines: 84, branches: 82 },
-        "src/platform/**": { lines: 79, branches: 81 },
+        "src/state/**": { lines: 84, branches: 78 },
+        "src/platform/**": { lines: 65, branches: 50 },
         // UI floors (P12, DR-171): measured values floored; raise over time.
-        "src/ui/pages/**": { lines: 66, branches: 66 },
-        "src/ui/components/**": { lines: 73, branches: 85 },
-        "src/ui/hooks/**": { lines: 97, branches: 86 },
-        "src/ui/*.{ts,tsx}": { lines: 60, branches: 79 },
+        "src/ui/pages/**": { lines: 57, branches: 43 },
+        "src/ui/components/**": { lines: 72, branches: 67 },
+        "src/ui/hooks/**": { lines: 96, branches: 84 },
+        "src/ui/*.{ts,tsx}": { lines: 60, branches: 64 },
       },
     },
   },
