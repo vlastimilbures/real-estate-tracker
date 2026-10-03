@@ -156,12 +156,14 @@ function parseDraws(
 }
 /**
  * A JSON array column → items sorted by date, NULL/empty → undefined (ADR 0109). Any
- * malformed item rejects the whole row (ROW_INVALID), like the draws column.
+ * malformed item, or one with a key outside `keys` (a misspelt `fees` would drop the
+ * fee, ADR 0116), rejects the whole row (ROW_INVALID), like the draws column.
  */
 function parseEventList<T extends { date: Date }>(
   ref: g.RowRef,
   column: string,
   v: string | null,
+  keys: readonly string[],
   item: (o: Record<string, unknown>, bad: (problem: string) => never) => T,
 ): T[] | undefined {
   if (v == null) return undefined;
@@ -180,8 +182,13 @@ function parseEventList<T extends { date: Date }>(
     return bad("is not valid JSON");
   }
   if (!Array.isArray(arr)) return bad("is not an array");
+  const known = (x: unknown) => {
+    const o = (x ?? {}) as Record<string, unknown>;
+    const extra = Object.keys(o).find((k) => !keys.includes(k));
+    return extra === undefined ? o : bad(`has an unknown field ${extra}`);
+  };
   const items = arr
-    .map((x: unknown) => item((x ?? {}) as Record<string, unknown>, bad))
+    .map((x: unknown) => item(known(x), bad))
     .sort((a, b) => a.date.getTime() - b.date.getTime());
   return items.length ? items : undefined;
 }
@@ -199,7 +206,8 @@ function parsePrepayments(
   ref: g.RowRef,
   v: string | null,
 ): MortgagePrepayment[] | undefined {
-  return parseEventList(ref, "prepayments", v, (o, bad) => {
+  const keys = ["date", "amount", "effect", "fee"] as const;
+  return parseEventList(ref, "prepayments", v, keys, (o, bad) => {
     if (typeof o.date !== "string" || !g.isIsoDate(o.date))
       return bad("has an invalid date");
     if (o.effect !== "lowerInstalment" && o.effect !== "shortenTerm")
@@ -217,7 +225,8 @@ function parseRecasts(
   ref: g.RowRef,
   v: string | null,
 ): LoanRecast[] | undefined {
-  return parseEventList(ref, "recasts", v, (o, bad): LoanRecast => {
+  const keys = ["date", "maturity", "instalment"] as const;
+  return parseEventList(ref, "recasts", v, keys, (o, bad): LoanRecast => {
     if (typeof o.date !== "string" || !g.isIsoDate(o.date))
       return bad("has an invalid date");
     const date = g.date(ref, "recasts", o.date);

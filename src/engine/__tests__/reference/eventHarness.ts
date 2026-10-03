@@ -20,6 +20,8 @@ import {
 import { RESET } from "./seedLoans";
 
 export const TIGHT = 1e-6; // Kč
+/** The reference always runs this long, so a row the engine trims or misses shows. */
+export const REF_MONTHS = 720;
 
 export function toBlock(l: RefLoan, id = "x", propertyId = "p"): MortgageBlock {
   return {
@@ -71,15 +73,24 @@ export function both(
   const r = referenceSchedule(l, {
     ...REF,
     baseDate: base,
-    months: e.length,
+    months: REF_MONTHS,
     ...opts,
   });
   return { e, r };
 }
 
-/** Max |Δ| over every column; the instalment only where the reference pays. */
+/**
+ * Max |Δ| over every column; the instalment only where the reference pays. The
+ * reference runs longer than the engine (`REF_MONTHS`): every reference row past the
+ * engine's last one must be idle, else the engine dropped a row that still pays.
+ */
 export function maxDev(e: AmortizationRow[], r: RefRow[]): number {
+  if (r.length < e.length) return Infinity;
   let m = 0;
+  for (const row of r.slice(e.length)) {
+    for (const v of [row.payment, row.prepaid, row.draw, row.endBalance])
+      m = Math.max(m, Math.abs(v.toNumber()));
+  }
   const cols = [
     "ratePa",
     "interest",
@@ -87,7 +98,7 @@ export function maxDev(e: AmortizationRow[], r: RefRow[]): number {
     "prepaid",
     "endBalance",
   ] as const;
-  for (let i = 0; i < Math.min(e.length, r.length); i++) {
+  for (let i = 0; i < e.length; i++) {
     for (const c of cols) {
       m = Math.max(m, Math.abs(e[i][c].minus(r[i][c].toString()).toNumber()));
     }

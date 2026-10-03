@@ -30,6 +30,7 @@ import {
   type RefRow,
 } from "./mortgageReference";
 import { RESET, SEED_LOANS } from "./seedLoans";
+import { both as eventBoth, maxDev as eventMaxDev } from "./eventHarness";
 import { rate } from "../../brands";
 import { money } from "../../brands";
 
@@ -481,6 +482,44 @@ describe("fixed by D-41: a tranche between the last payment and baseDate (DR-016
     ).toBeLessThanOrEqual(CENT);
     const repaid = e.reduce((s, x) => s.plus(x.principal), D(0));
     expect(Math.abs(repaid.toNumber() - 1500000)).toBeLessThanOrEqual(TIGHT);
+  });
+});
+
+describe("ADR 0116: completion after the last payment due and by baseDate", () => {
+  // The last tranche follows payment 21 (due 2025-06-07) and completion is after it, so
+  // payment 21 is interest-only. With baseDate before payment 22, the loan must still
+  // start amortizing at payment 22 (D-24), not stay interest-only to maturity.
+  const dev: RefLoan = {
+    start: "2023-09-07",
+    principal: "300000",
+    ratePa: "0.005",
+    instalment: "5064",
+    fixationMonths: 12,
+    termMonths: 120,
+    draws: [
+      { date: "2023-10-01", amount: "15000" },
+      { date: "2025-06-07", amount: "15000" },
+    ],
+    completion: "2025-06-07",
+  };
+  const cases: [string, RefLoan, string][] = [
+    ["completion on the last due date", dev, "2025-07-06"],
+    ["completion on the last due date, base just after", dev, "2025-06-20"],
+    [
+      "completion after the last due date",
+      { ...dev, completion: "2025-06-10" },
+      "2025-07-06",
+    ],
+  ];
+  // The shared event harness: a fixed reference horizon and every column.
+  it.each(cases)("%s: engine = reference", (_, l, base) => {
+    const { e, r } = eventBoth(l, base);
+    expect(eventMaxDev(e, r)).toBeLessThanOrEqual(TIGHT);
+  });
+
+  it("amortizes from grid month 1", () => {
+    const e = buildSchedule(toBlock(dev), at("2025-07-06"));
+    expect(e[0].principal.greaterThan(0)).toBe(true);
   });
 });
 

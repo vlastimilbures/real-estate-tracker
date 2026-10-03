@@ -257,6 +257,46 @@ describe("ADR 0109: placement on the loan's own payments", () => {
     ).toBeLessThanOrEqual(0);
   });
 
+  // ADR 0116 §1: an event dated after the last payment due on or before baseDate, and on
+  // or before baseDate itself, settles right after that payment. Its placement therefore
+  // depends on baseDate by less than one period. Javorova pays on the 17th.
+  it("a late-window event settles after the last payment due by baseDate", () => {
+    const b = withEvents(javorova, [
+      prepay("2031-05-20", 500000, "shortenTerm"),
+    ]);
+    const at = (base: string) => ({ ...assumptions, baseDate: isoDate(base) });
+    const plain = buildSchedule(javorova, at("2031-05-25"));
+
+    // Base 05-25: history, taken off right after the 05-17 payment.
+    const late = buildSchedule(b, at("2031-05-25"));
+    expect(late.every((r) => r.prepaid.isZero())).toBe(true);
+    expect(balanceAtMonth(late, 0).toFixed(4)).toBe(
+      balanceAtMonth(plain, 0).minus(500000).toFixed(4),
+    );
+
+    // Base 05-19: forward, applied after the 06-17 payment in grid row 1.
+    const early = buildSchedule(b, at("2031-05-19"));
+    expect(early[0].prepaid.toFixed(4)).toBe("500000.0000");
+
+    // Row 1 is the 06-17 payment in both grids: its interest differs by one month on
+    // 500,000.
+    expect(
+      early[0].interest
+        .minus(late[0].interest)
+        .minus(D(500000).times(early[0].ratePa).div(12))
+        .abs()
+        .toNumber(),
+    ).toBeLessThan(1e-9);
+    // Same instalment (shortenTerm), so the late grid repays exactly that much more.
+    expect(
+      balanceAtMonth(early, 1)
+        .minus(balanceAtMonth(late, 1))
+        .minus(early[0].interest.minus(late[0].interest))
+        .abs()
+        .toNumber(),
+    ).toBeLessThan(1e-9);
+  });
+
   it("a future loan's prepayment follows its first payment, never the draw row", () => {
     const fut = {
       id: "f",
@@ -393,6 +433,34 @@ describe("ADR 0109: development loans", () => {
   });
 });
 
+describe("ADR 0116 §2: a tranche on the maturity payment", () => {
+  // A tranches-only development loan (no completion date, so no completion rule): the
+  // maturity recast makes payment 17 (2027-08-01) the last one, and the second tranche,
+  // dated 2027-07-20, follows that same payment. It restores the contract term instead
+  // of being repaid in one shot.
+  const b = withEvents(
+    {
+      ...devBlock,
+      id: "m-dev",
+      draws: [
+        { date: isoDate("2026-11-15"), amount: money("1500000") },
+        { date: isoDate("2027-07-20"), amount: money("1000000") },
+      ],
+      completionDate: undefined,
+    } as MortgageBlock,
+    undefined,
+    [toMaturity("2027-01-10", "2027-08-01")],
+  );
+
+  it("keeps amortizing after the tranche's payment", () => {
+    const rows = buildSchedule(b, assumptions);
+    const t = rows.map((r) => r.drawn.greaterThan(0)).lastIndexOf(true);
+    expect(rows[t].endBalance.greaterThan(0)).toBe(true);
+    expect(rows[t + 1].principal.greaterThan(0)).toBe(true);
+    expect(lastPayment(rows)).toBeGreaterThan(t + 300);
+  });
+});
+
 describe("ADR 0109: refinance handovers", () => {
   const refi = (start: string): MortgageBlock =>
     ({
@@ -434,6 +502,27 @@ describe("ADR 0109: refinance handovers", () => {
     expect(s.rows[55].prepaid.toFixed(0)).toBe("500000");
     expect(s.rows[55].prepaymentFee.toFixed(0)).toBe("3000");
     expect(s.eventOutcomes[0]).toMatchObject({ month: 56, issue: null });
+  });
+
+  // ADR 0116 §3: each dropped prepayment keeps its own entered fee, even when another
+  // one has the same date and amount.
+  it("charges each prepayment paid at the handover its own fee", () => {
+    const s = propertySchedule(
+      [
+        withEvents(javorova, [
+          prepay("2031-01-05", 100000, "lowerInstalment", 1000),
+          prepay("2031-01-05", 100000, "lowerInstalment", 3000),
+        ]),
+        refi("2031-01-10"),
+      ],
+      assumptions,
+    );
+    expect(s.rows[55].prepaid.toFixed(0)).toBe("200000");
+    expect(s.rows[55].prepaymentFee.toFixed(0)).toBe("4000");
+    expect(s.eventOutcomes.map((o) => o.fee.toFixed(0))).toEqual([
+      "1000",
+      "3000",
+    ]);
   });
 
   it("events after the successor's start are dropped and reported", () => {
