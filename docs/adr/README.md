@@ -129,6 +129,7 @@ Other IDs seen in code comments:
 | [0102](0102-scenario-form-groups.md)              | Scenario form: group levels, shocks and crash; no per-property override                |                                        |
 | [0103](0103-financing-exposure.md)                | Financing exposure and upcoming events                                                 |                                        |
 | [0104](0104-combined-stress-presets.md)           | Scenarios: combined stress presets                                                     |                                        |
+| [0105](0105-one-product-name-and-format-note.md)  | One product name on every surface; language does not change formats                    | #22                                    |
 
 ### Judgment calls and open questions
 
