@@ -253,6 +253,23 @@ function firstStepOnOrAfter(anchor: Date, date: Date, maxStep: number): number {
   return Math.min(firstGridMonthOnOrAfter(anchor, date, cap - 1), cap);
 }
 
+/** Group dated items by the cadence step (anchor + k months) they land in, in input
+ *  order, over the items the `include` predicate accepts. */
+function bucketByStep<T extends { date: IsoDate }>(
+  items: readonly T[],
+  anchor: Date,
+  maxStep: number,
+  include: (d: Date) => boolean,
+): Map<number, T[]> {
+  const buckets = new Map<number, T[]>();
+  for (const item of items) {
+    if (!include(item.date)) continue;
+    const k = firstStepOnOrAfter(anchor, item.date, maxStep);
+    buckets.set(k, [...(buckets.get(k) ?? []), item]);
+  }
+  return buckets;
+}
+
 /** Bucket draw amounts by the cadence step (anchor + k months) they land in,
  *  summing collisions, over the draws the `include` predicate accepts. */
 function bucketDraws(
@@ -261,13 +278,14 @@ function bucketDraws(
   maxStep: number,
   include: (d: Date) => boolean,
 ): Map<number, Decimal> {
-  const buckets = new Map<number, Decimal>();
-  for (const d of draws) {
-    if (!include(d.date)) continue;
-    const k = firstStepOnOrAfter(anchor, d.date, maxStep);
-    buckets.set(k, (buckets.get(k) ?? ZERO).plus(d.amount));
+  const sums = new Map<number, Decimal>();
+  for (const [k, items] of bucketByStep(draws, anchor, maxStep, include)) {
+    sums.set(
+      k,
+      items.reduce((sum, d) => sum.plus(d.amount), ZERO),
+    );
   }
-  return buckets;
+  return sums;
 }
 
 // ---------------------------------------------------------------------------
@@ -524,54 +542,92 @@ function plainOpening(
  * constant-maturity remaining term whenever the rate changes — at fixation end and
  * when a scenario rate shock reverts. Once repaid it emits zero rows (payoff guard).
  */
+/** Running per-month state of the plain-loan grid. */
+interface PlainScheduleState {
+  balance: Decimal;
+  currentInstalment: Decimal;
+  prevRate: Decimal;
+  drawn: boolean;
+}
+
+/** Everything the plain-loan grid needs besides the running state. */
+interface PlainScheduleContext {
+  block: PlainLoan;
+  assumptions: Assumptions;
+  term: number;
+  offset: number;
+}
+
+type PlainMonthStep = { row: AmortizationRow; state: PlainScheduleState };
+
+/** One month of the plain-loan grid: undrawn → draw → amortizing → repaid. */
+function plainMonthStep(
+  state: PlainScheduleState,
+  m: number,
+  ctx: PlainScheduleContext,
+): PlainMonthStep {
+  const { block, assumptions, term, offset } = ctx;
+  const date = edate(assumptions.baseDate, m);
+  if (!state.drawn) {
+    const { row, drawsNow } = undrawnRow(block, m, date);
+    return drawsNow
+      ? { row, state: { ...state, balance: row.endBalance, drawn: true } }
+      : { row, state };
+  }
+  const ratePa = rateOfPayment(offset + m, block, assumptions);
+  // Payoff guard (Decimal(0).isPositive() is true, so test with greaterThan).
+  if (!state.balance.greaterThan(ZERO)) {
+    return {
+      row: zeroRow(m, date, ratePa),
+      state: { ...state, prevRate: ratePa },
+    };
+  }
+  const step = amortizeMonth(
+    state.balance,
+    ratePa,
+    false,
+    state.currentInstalment,
+    ratePa.equals(state.prevRate) ? null : remainingTerm(term, offset, m),
+    offset + m >= term,
+  );
+  return {
+    row: { month: m, date, ratePa, drawn: ZERO, ...step },
+    state: {
+      balance: step.endBalance,
+      currentInstalment: step.instalment,
+      prevRate: ratePa,
+      drawn: true,
+    },
+  };
+}
+
 function buildPlainSchedule(
   block: PlainLoan,
   assumptions: Assumptions,
 ): AmortizationRow[] {
   const { baseDate } = assumptions;
-  const term = termMonths(block);
-  const totalMonths = scheduleMonths(block, assumptions);
   const offset = paymentOffset(block, baseDate);
   const futureStart = isAfter(block.startDate, baseDate);
-
-  const rows: AmortizationRow[] = [];
-  const opening = futureStart
+  const ctx: PlainScheduleContext = {
+    block,
+    assumptions,
+    term: termMonths(block),
+    offset,
+  };
+  let state: PlainScheduleState = futureStart
     ? {
         balance: ZERO,
         currentInstalment: block.monthlyInstalment,
         prevRate: block.interestRatePa,
+        drawn: false,
       }
-    : plainOpening(block, assumptions, offset);
-  let { balance, currentInstalment, prevRate } = opening;
-  let drawn = !futureStart;
-
+    : { ...plainOpening(block, assumptions, offset), drawn: true };
+  const rows: AmortizationRow[] = [];
+  const totalMonths = scheduleMonths(block, assumptions);
   for (let m = 1; m <= totalMonths; m++) {
-    const date = edate(baseDate, m);
-    if (!drawn) {
-      const { row, drawsNow } = undrawnRow(block, m, date);
-      rows.push(row);
-      if (drawsNow) [balance, drawn] = [row.endBalance, true];
-      continue;
-    }
-    const ratePa = rateOfPayment(offset + m, block, assumptions);
-    // Payoff guard (Decimal(0).isPositive() is true, so test with greaterThan).
-    if (!balance.greaterThan(ZERO)) {
-      rows.push(zeroRow(m, date, ratePa));
-      prevRate = ratePa;
-      continue;
-    }
-    const step = amortizeMonth(
-      balance,
-      ratePa,
-      false,
-      currentInstalment,
-      ratePa.equals(prevRate) ? null : remainingTerm(term, offset, m),
-      offset + m >= term,
-    );
-    rows.push({ month: m, date, ratePa, drawn: ZERO, ...step });
-    balance = step.endBalance;
-    currentInstalment = step.instalment;
-    prevRate = ratePa;
+    const next = plainMonthStep(state, m, ctx);
+    rows.push(next.row);
+    state = next.state;
   }
   return rows;
 }

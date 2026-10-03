@@ -111,11 +111,22 @@ export function termMonths(block: MortgageBlock): number {
       { ...problem, entity: "mortgage", id: block.id },
     ]);
   }
-  const n = NPER(
+  return nperMonths(
     block.interestRatePa.div(12),
-    block.monthlyInstalment.negated(),
+    block.monthlyInstalment,
     block.initialPrincipal,
   );
+}
+
+/** Whole monthly payments of `instalment` that repay `balance` at `rateMonthly`
+ *  (NPER rounded up; the last payment may be smaller). NaN or Infinity when the
+ *  instalment never repays the balance. */
+export function nperMonths(
+  rateMonthly: Decimal,
+  instalment: Decimal,
+  balance: Decimal,
+): number {
+  const n = NPER(rateMonthly, instalment.negated(), balance);
   // eslint-disable-next-line no-restricted-syntax -- an NPER month count, not money
   return Math.ceil(n.toNumber());
 }
