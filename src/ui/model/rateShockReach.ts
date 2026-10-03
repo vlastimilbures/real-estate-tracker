@@ -1,12 +1,13 @@
 // Which loans a scenario rate shock reaches, for the Scenarios page (ADR 0100, #47).
-// Pure: it mirrors the engine's block chain and `rateAt` on block dates only and does
-// no rate maths. A tripwire test runs the engine with and without the shock so this
-// cannot drift from `rateAt`.
+// Pure: it mirrors the engine's block chain and `rateAt` on block dates and does no
+// rate maths; each block's maturity in force comes from the engine (ADR 0116). A
+// tripwire test runs the engine with and without the shock so this cannot drift from
+// `rateAt`.
 import {
   blockEndDate,
   edate,
+  effectiveMaturity,
   EngineInputError,
-  impliedMaturity,
   monthsBetween,
   selectBlock,
 } from "../../engine";
@@ -138,8 +139,9 @@ function blockReach(
 ): BlockReach {
   const miss = (reason: MissReason) => ({ blockId: b.id, hit: false, reason });
   const fixEnd = blockEndDate(b);
-  const maturity =
-    impliedMaturity(b) ?? edate(b.startDate, (b.loanTermYears ?? 0) * 12);
+  // The maturity in force after prepayments and recasts (ADR 0116). The base
+  // schedule decides: before the fixation end the shock changes no rate, so no event.
+  const maturity = effectiveMaturity(b, a, next);
   if (ms(fixEnd) >= ms(maturity)) return miss("fixedToMaturity");
   const offset = paymentOffset(b, a.baseDate);
   const k = Math.max(1, offset + 1, b.fixationYears * 12 + 1);

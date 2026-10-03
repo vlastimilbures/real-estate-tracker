@@ -41,7 +41,7 @@ export {
 } from "./amortization";
 export { MAX_LOAN_TERM_MONTHS } from "./constants";
 export { scheduledPrincipal } from "./growth";
-export { schedulesByProperty } from "./schedule";
+export { effectiveMaturity, schedulesByProperty } from "./schedule";
 
 // Snapshot, projection, KPIs, scenarios, validation
 export { portfolioSnapshot, propertySnapshot } from "./metrics";

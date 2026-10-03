@@ -79,6 +79,38 @@ describe("rateShockReach", () => {
     expect(loan?.refixYears).toEqual([2031]);
   });
 
+  // ADR 0116: the maturity in force after prepayments and recasts, not the contract's.
+  it("misses a loan a prepayment repays before its refix", () => {
+    const [loan] = reachOf([
+      {
+        ...block("a", "2021-01-17", 10),
+        prepayments: [
+          {
+            date: isoDate("2028-02-01"),
+            amount: money("5000000"),
+            effect: "lowerInstalment",
+          },
+        ],
+      },
+    ]);
+    expect(loan?.hit).toBe(false);
+    // Repaid within its fixation: the fixation now runs to the maturity in force.
+    expect(loan?.blocks[0]?.reason).toBe("fixedToMaturity");
+  });
+
+  it("hits a loan a recast keeps running past its contract maturity", () => {
+    // Contract: 2021 + 10 years, fixed for 10: fixed to maturity without the recast.
+    const [loan] = reachOf([
+      {
+        ...block("a", "2021-01-17", 10, 10),
+        recasts: [
+          { date: isoDate("2028-01-17"), maturity: isoDate("2041-01-17") },
+        ],
+      },
+    ]);
+    expect(loan?.hit).toBe(true);
+  });
+
   it("misses a loan fixed to maturity", () => {
     const [loan] = reachOf([block("a", "2020-01-01", 20, 20)]);
     expect(loan?.hit).toBe(false);
@@ -307,6 +339,21 @@ describe("tripwire: the helper agrees with the engine", () => {
     variant("successor refixes in the window", true, onlyLipova, [
       lipovaSuccessor(5),
     ]),
+    // ADR 0116: a prepayment repays lipova before its 2029 refix.
+    variant("lipova repaid before its refix", false, (m) =>
+      m.propertyId === "lipova"
+        ? {
+            ...m,
+            prepayments: [
+              {
+                date: isoDate("2028-03-01"),
+                amount: money("10000000"),
+                effect: "lowerInstalment" as const,
+              },
+            ],
+          }
+        : pastHorizon(m),
+    ),
   ];
 
   it.each(variants)("$name", ({ p, hit, durationYears }) => {
