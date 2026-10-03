@@ -110,7 +110,8 @@ To switch to your own:
    appreciation, rent indexation, inflation, vacancy, post-fixation reset rate and
    holding-cost defaults.
 3. **Add your properties.** Use **Properties → Add property**, or load several at once from CSV
-   files on the **Import** page.
+   files on the **Import** page — see the [CSV import guide](docs/csv-import.md) for the
+   columns, examples and matching rules.
 4. **Add the details.** On each property, enter the mortgage, leases, valuations and holding
    costs.
 5. **Review.** Check the **Dashboard**, **Projections** and **Scenarios** pages; the figures
@@ -151,7 +152,7 @@ Everything runs and stays on your Mac.
 **Data**
 
 - **CSV import** for properties, valuations, leases and mortgages — all-or-nothing, with
-  per-row, per-column messages
+  per-row, per-column messages ([guide](docs/csv-import.md))
 - **JSON backup & restore** with validation and an automatic safety backup
 - **Excel export** of projection and amortization tables
 
@@ -286,6 +287,7 @@ flowchart LR
 | [docs/adr/](docs/adr/README.md)                        | Architecture decision records                                     |
 | [docs/model-limitations.md](docs/model-limitations.md) | What the figures mean and what the model leaves out               |
 | [docs/data-safety.md](docs/data-safety.md)             | Backup, restore and recovery after a failed upgrade               |
+| [docs/csv-import.md](docs/csv-import.md)               | CSV import: columns, examples, matching and all-or-nothing rules  |
 | [docs/roadmap.md](docs/roadmap.md)                     | Planned work and engineering backlog                              |
 | [docs/release.md](docs/release.md)                     | Building, signing, Gatekeeper, data locations                     |
 | [CONTRIBUTING.md](CONTRIBUTING.md)                     | Setup, checks, commit style, decision process                     |
