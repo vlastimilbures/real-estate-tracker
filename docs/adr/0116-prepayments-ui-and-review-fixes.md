@@ -4,6 +4,7 @@
 - Date: 2026-10-03
 - Source: issue #32 (#32b); independent review of PR #91 (2026-10-03)
 - Amends: [0109](0109-loan-prepayments-and-recasts.md)
+- Amended: 2026-10-03 (#32b-2: how the form and the outputs show events, decisions 9 and 11)
 
 ## Context
 
@@ -62,6 +63,12 @@ This ADR covers both.
    - It is shown on the property page and in the Dashboard financing panel, and it is never
      a KPI.
    - A successor's own interest does not change, because its principal is an input.
+   - The property page shows the property's figure. The Dashboard financing panel shows
+     the portfolio total and, in a disclosure, each property with a prepayment and its
+     figure. It stays nominal in the real lens too, and it is labelled so.
+   - The outcome keeps the entered fee internal. A warning shows the requested and the
+     applied amounts; the Fee column shows the fee charged. The entered fee is in the form
+     row (owner decision, 2026-10-03).
 10. **Clamps are warnings, not rejections.** A clamped, ignored or dropped event (an event
     outcome with an issue) is shown as a loan warning on the property page. Saving is never
     rejected for it. This replaces "the form in #32b rejects these" in ADR 0109 §9: the
@@ -73,6 +80,12 @@ This ADR covers both.
     - Validation issues on events carry the item's index, so an error shows on its row.
     - A stored event that an edit made invalid shows on its row and can be fixed or removed
       there.
+    - The form submits its non-blank rows in the order shown; the engine sorts events by
+      date itself. A validation `index` is the position in that submitted list, which the
+      form maps back to its row. A blank row is ignored. A row that does not parse (a bad
+      date or amount) blocks the save and shows its message on the row.
+    - A form opens with the stored events in date order (the order the database returns),
+      so after a save the rows can come back re-sorted.
 12. **New columns.** These columns are shown only when some row has a non-zero value, the
     same on screen and in the Excel export. The balance then reconciles in both views.
     - Amortization table: Prepaid, Prepayment fee, Drawn.
