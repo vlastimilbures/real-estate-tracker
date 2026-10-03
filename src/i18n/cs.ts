@@ -538,6 +538,11 @@ export const cs: Dictionary = {
     subPct: "%",
     kpiStartingEquity: "Počáteční kapitál",
     kpiNetWorthDeltaVsBase: "Δ čistého jmění vůči Základu",
+    viewValues: "Hodnoty",
+    viewDeltaVsBase: "Δ vůči Základu",
+    viewToggleLabel: "Zobrazit hodnoty, nebo rozdíl vůči Základu",
+    deltaYears: (n) => (n > 0 ? `+${n} r.` : n < 0 ? `−${-n} r.` : "0 r."),
+    deltaNoBaseValue: "Základ nemá hodnotu",
     rebasedReturnsFootnote: (names: string) =>
       `Výnosy pro ${names} se měří od nižšího počátečního kapitálu po propadu cen; ztrátu pro vás ukazuje Δ čistého jmění vůči Základu.`,
     kpiNetWorthNominal: "Čisté jmění (nominální)",

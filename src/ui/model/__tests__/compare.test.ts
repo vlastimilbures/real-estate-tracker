@@ -10,8 +10,8 @@ import {
   realProjection,
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { toNumber } from "../../../lib/money";
-import { fmtCzkM } from "../../../lib/format";
+import { toNumber, type Decimal } from "../../../lib/money";
+import { fmtCzkM, fmtMultiple, fmtPp } from "../../../lib/format";
 import { en } from "../../../i18n/en";
 import {
   compareFootnote,
@@ -194,5 +194,156 @@ describe("compare owner loss (ADR 0089)", () => {
     );
     expect(compareFootnote(en, [base, rateShock, shocked])).toBeNull();
     expect(compareFootnote(en, [crash, rateShock])).toBeNull();
+  });
+});
+
+// ADR 0097 (#53): with Base in the comparison every key figure can show the scenario's
+// value minus Base's, in the row's own unit.
+describe("Δ vs Base view (ADR 0097)", () => {
+  const sc = en.scenarios;
+  const rowsOf = (mode: "nominal" | "real" = "nominal", b = base) =>
+    compareKpiRows(en, mode, b, "delta");
+  const row = (label: string, mode: "nominal" | "real" = "nominal", b = base) =>
+    rowsOf(mode, b).find((r) => r.label === label)!;
+  const plus = (d: Decimal, s: string) => (d.gt(0) ? `+${s}` : s);
+
+  it("the Base column reads — in every row", () => {
+    for (const r of rowsOf()) expect(r.fmt(base)).toBe("—");
+  });
+
+  it("hides the separate Δ net worth row; values mode keeps it", () => {
+    const labels = rowsOf().map((r) => r.label);
+    expect(labels).not.toContain(sc.kpiNetWorthDeltaVsBase);
+    expect(labels[0]).toBe(sc.kpiStartingEquity);
+    expect(
+      compareKpiRows(en, "nominal", base, "values").map((r) => r.label),
+    ).toContain(sc.kpiNetWorthDeltaVsBase);
+  });
+
+  it("without Base the delta view returns the values rows", () => {
+    const delta = compareKpiRows(en, "nominal", undefined, "delta");
+    const values = compareKpiRows(en, "nominal");
+    expect(delta.map((r) => r.label)).toEqual(values.map((r) => r.label));
+    expect(delta.map((r) => r.fmt(crash))).toEqual(
+      values.map((r) => r.fmt(crash)),
+    );
+  });
+
+  it("money rows show signed M Kč", () => {
+    expect(row(sc.kpiNetWorthNominal).fmt(crash)).toBe("−18,6 M Kč");
+    expect(row(sc.kpiStartingEquity).fmt(crash)).toBe(
+      fmtCzkM(crash.projection[0].equity.minus(base.projection[0].equity)),
+    );
+    expect(row(sc.kpiStartingEquity).fmt(shocked)).toBe("0,0 M Kč");
+    const cf = rateShock.kpis.cumulativeNetCashFlow.minus(
+      base.kpis.cumulativeNetCashFlow,
+    );
+    expect(row(sc.kpiCumulativeNetCf).fmt(rateShock)).toBe(
+      plus(cf, fmtCzkM(cf)),
+    );
+  });
+
+  it("a gain carries a plus sign", () => {
+    const gain: CompareResult = {
+      ...base,
+      id: "gain",
+      kpis: {
+        ...base.kpis,
+        netWorthNominal: base.kpis.netWorthNominal.plus(1_000_000),
+      },
+    };
+    expect(row(sc.kpiNetWorthNominal).fmt(gain)).toBe("+1,0 M Kč");
+  });
+
+  it("rate rows show signed percentage points", () => {
+    const cagr = crash.kpis.cagrNominal!.minus(base.kpis.cagrNominal!);
+    expect(cagr.gt(0)).toBe(true);
+    expect(row(sc.kpiCagrNominal).fmt(crash)).toBe(
+      `+${fmtPp(cagr)} ${sc.ppSuffix}`,
+    );
+    const irr = rateShock.kpis.leveredIrrNominal!.minus(
+      base.kpis.leveredIrrNominal!,
+    );
+    expect(row(sc.kpiLeveredIrrNominal).fmt(rateShock)).toBe(
+      `${plus(irr, fmtPp(irr))} ${sc.ppSuffix}`,
+    );
+  });
+
+  it("the multiple shows a signed multiple", () => {
+    const m = crash.kpis.netWorthMultiple.minus(base.kpis.netWorthMultiple);
+    expect(row(sc.kpiNetWorthMultiple).fmt(crash)).toBe(
+      plus(m, fmtMultiple(m)),
+    );
+  });
+
+  it("year rows show signed whole years", () => {
+    const d =
+      rateShock.kpis.firstCashFlowPositiveYear! -
+      base.kpis.firstCashFlowPositiveYear!;
+    expect(d).not.toBe(0);
+    expect(row(sc.kpiFirstCfPositiveYear).fmt(rateShock)).toBe(
+      sc.deltaYears(d),
+    );
+    expect(row(sc.kpiDebtFreeYear).fmt(shocked)).toBe(
+      sc.deltaYears(shocked.kpis.debtFreeYear! - base.kpis.debtFreeYear!),
+    );
+  });
+
+  it("deltaYears signs the number", () => {
+    expect(sc.deltaYears(3)).toBe("+3y");
+    expect(sc.deltaYears(-2)).toBe("−2y");
+    expect(sc.deltaYears(0)).toBe("0y");
+  });
+
+  it("a missing value on either side reads — with a note", () => {
+    const noIrr: CompareResult = {
+      ...base,
+      id: "noirr",
+      kpis: {
+        ...base.kpis,
+        leveredIrrNominal: null,
+        leveredIrrNominalReason: "NO_ROOT",
+        debtFreeYear: null,
+      },
+    };
+    const irr = row(sc.kpiLeveredIrrNominal);
+    expect(irr.fmt(noIrr)).toBe("—");
+    expect(irr.note?.(noIrr)).toBe(en.common.irrNoRoot);
+    expect(irr.note?.(crash)).toBeUndefined();
+    expect(row(sc.kpiDebtFreeYear).fmt(noIrr)).toBe("—");
+
+    const vsNullBase = row(sc.kpiLeveredIrrNominal, "nominal", noIrr);
+    expect(vsNullBase.fmt(crash)).toBe("—");
+    expect(vsNullBase.note?.(crash)).toBe(sc.deltaNoBaseValue);
+  });
+
+  it("the real lens uses the real figures", () => {
+    const nw = crash.kpis.netWorthReal.minus(base.kpis.netWorthReal);
+    expect(row(sc.kpiNetWorthReal, "real").fmt(crash)).toBe(fmtCzkM(nw));
+    const m = crash.kpis.netWorthMultipleReal.minus(
+      base.kpis.netWorthMultipleReal,
+    );
+    expect(row(sc.kpiNetWorthMultiple, "real").fmt(crash)).toBe(
+      plus(m, fmtMultiple(m)),
+    );
+    const cagr = crash.kpis.cagrReal!.minus(base.kpis.cagrReal!);
+    expect(row(sc.kpiCagrReal, "real").fmt(crash)).toBe(
+      `${plus(cagr, fmtPp(cagr))} ${sc.ppSuffix}`,
+    );
+    const irr = crash.kpis.leveredIrrReal!.minus(base.kpis.leveredIrrReal!);
+    expect(row(sc.kpiLeveredIrrReal, "real").fmt(crash)).toBe(
+      `${plus(irr, fmtPp(irr))} ${sc.ppSuffix}`,
+    );
+  });
+
+  it("keeps the rebased-returns marks", () => {
+    const marked = rowsOf()
+      .filter((k) => k.mark?.(crash))
+      .map((k) => k.label);
+    expect(marked).toEqual([
+      sc.kpiNetWorthMultiple,
+      sc.kpiCagrNominal,
+      sc.kpiLeveredIrrNominal,
+    ]);
   });
 });

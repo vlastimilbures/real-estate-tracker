@@ -542,6 +542,11 @@ export const ru: Dictionary = {
     subPct: "%",
     kpiStartingEquity: "Начальный капитал",
     kpiNetWorthDeltaVsBase: "Δ чистых активов к Базе",
+    viewValues: "Значения",
+    viewDeltaVsBase: "Δ к Базе",
+    viewToggleLabel: "Показать значения или разницу с Базой",
+    deltaYears: (n) => (n > 0 ? `+${n} г.` : n < 0 ? `−${-n} г.` : "0 г."),
+    deltaNoBaseValue: "У Базы нет значения",
     rebasedReturnsFootnote: (names: string) =>
       `Доходность для ${names} считается от более низкого начального капитала после обвала цен; ваш убыток показывает Δ чистых активов к Базе.`,
     kpiNetWorthNominal: "Чистые активы (номинал)",

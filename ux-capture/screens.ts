@@ -391,6 +391,27 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "43-scenarios-compare-delta",
+    desc: "Compare key figures as Δ vs Base (ADR 0097)",
+    route: "scenarios",
+    run: async (ux) => {
+      await boot(ux.page);
+      await nav(ux, "scenarios");
+      await ux.page
+        .getByRole("button", { name: ux.t.scenarios.plusPp(2), exact: true })
+        .click();
+      await ux.page.getByRole("button", { name: "−20%", exact: true }).click();
+      const picks = ux.page.locator(".scenario-row input[type=checkbox]");
+      await expect(picks).toHaveCount(3);
+      await picks.nth(1).check();
+      await picks.nth(2).check();
+      await ux.page
+        .getByRole("button", { name: ux.t.scenarios.viewDeltaVsBase })
+        .click();
+      await ux.capture("43-scenarios-compare-delta");
+    },
+  },
+  {
     id: "50-import",
     desc: "Import page, nothing chosen",
     route: "import",

@@ -1,10 +1,10 @@
 // Read-only side-by-side compare for 2–3 scenarios (Base + picks): a key-figures
 // table plus net-worth / net-cash-flow / LTV charts. Extracted from Scenarios.tsx;
 // holds no finance logic — the engine re-runs via useScenarioComparison.
-import { useId } from "react";
+import { useId, useState } from "react";
 import { useScenarioComparison } from "../../state/useEngine";
 import { useUiStore } from "../../state/uiStore";
-import { Panel, EmptyState } from "../components/primitives";
+import { Panel, EmptyState, SegmentedToggle } from "../components/primitives";
 import { GitCompare } from "lucide-react";
 import { ChartCard, CzkLines, PctLines } from "../components/charts";
 import { SERIES } from "../model/chartData";
@@ -16,6 +16,7 @@ import {
   compareHint,
   compareKpiRows,
   mergeCompareMetric,
+  type CompareView,
 } from "../model/compare";
 import { at } from "../../lib/arrays";
 
@@ -27,6 +28,7 @@ export function CompareView({ selected }: { selected: Scenario[] }) {
   const mode = useUiStore((s) => s.mode);
   const results = useScenarioComparison(selected);
   const footnoteId = useId();
+  const [view, setView] = useState<CompareView>("values");
   if (!results || results.length === 0) {
     return (
       <Panel title={t.scenarios.compareTitle}>
@@ -50,12 +52,31 @@ export function CompareView({ selected }: { selected: Scenario[] }) {
   const ltvRows = mergeCompareMetric(results, mode, (y) => y.ltv);
   // Owner's loss next to the rebased returns of a crash at Today (ADR 0089).
   const footnote = compareFootnote(t, results);
+  // Δ vs Base needs Base; without it the table shows values (ADR 0097).
+  const base = compareBase(results);
+  const shownView: CompareView = base ? view : "values";
   const lensSub =
     mode === "real" ? t.projections.realTerms : t.projections.nominalKc;
 
   return (
     <>
-      <Panel title={t.scenarios.keyFiguresTitle} hint={compareHint(t, mode)}>
+      <Panel
+        title={t.scenarios.keyFiguresTitle}
+        hint={compareHint(t, mode)}
+        action={
+          base && (
+            <SegmentedToggle
+              ariaLabel={t.scenarios.viewToggleLabel}
+              options={[
+                { value: "values", label: t.scenarios.viewValues },
+                { value: "delta", label: t.scenarios.viewDeltaVsBase },
+              ]}
+              value={shownView}
+              onChange={setView}
+            />
+          )
+        }
+      >
         {/* A real table for assistive technology: caption, scenario column headers,
             metric row headers (UX-081, DR-145). */}
         <table className="compare-table">
@@ -83,7 +104,7 @@ export function CompareView({ selected }: { selected: Scenario[] }) {
             </tr>
           </thead>
           <tbody>
-            {compareKpiRows(t, mode, compareBase(results)).map((row) => (
+            {compareKpiRows(t, mode, base, shownView).map((row) => (
               <ComparisonRow
                 key={row.label}
                 label={row.label}
