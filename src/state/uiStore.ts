@@ -106,6 +106,10 @@ interface UiState {
   pruneCompare: (existingIds: readonly string[]) => void;
   toggleCompareBase: () => void;
   setCrashAtYear: (atYear: number) => void;
+  /** Stress presets panel: a manual Show / Hide for the session, or null when the user
+   *  has not chosen and the page decides on open (ADR 0106). */
+  presetsOpen: boolean | null;
+  setPresetsOpen: (open: boolean) => void;
   navigate: (route: Route) => void;
   openProperty: (id: string) => void;
   setMode: (mode: Mode) => void;
@@ -196,6 +200,8 @@ export const useUiStore = create<UiState>((set, get) => ({
   },
   toggleCompareBase: () => set({ compareBase: !get().compareBase }),
   setCrashAtYear: (crashAtYear) => set({ crashAtYear }),
+  presetsOpen: null,
+  setPresetsOpen: (presetsOpen) => set({ presetsOpen }),
   unsavedChanges: false,
   unsavedSources: [],
   pendingLeave: null,

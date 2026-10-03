@@ -535,6 +535,10 @@ export const cs: Dictionary = {
     presetsTitle: "Stresové předvolby",
     presetsHint: (years) =>
       `Jedním klikem se uloží scénář. Šoky sazeb a inflace trvají ${years} l., pak odezní; propad cen je trvalý.`,
+    showPresets: "Zobrazit předvolby",
+    hidePresets: "Skrýt předvolby",
+    presetsCollapsedSummary:
+      "Šoky sazeb, inflace, propad cen a kombinované šoky jsou skryté.",
     atStart: "Start",
     atStartTitle: (date) => `Na začátku projekce (${date})`,
     rateShockAtRefix: "Šok sazby @ refix",

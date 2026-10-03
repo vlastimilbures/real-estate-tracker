@@ -169,4 +169,11 @@ describe("scenario compare state", () => {
     s.setCrashAtYear(5);
     expect(useUiStore.getState().crashAtYear).toBe(5);
   });
+
+  it("presets panel: no manual choice at first, then the one set (ADR 0106)", () => {
+    expect(useUiStore.getInitialState().presetsOpen).toBeNull();
+    useUiStore.getState().setPresetsOpen(false);
+    expect(useUiStore.getState().presetsOpen).toBe(false);
+    useUiStore.setState({ presetsOpen: null });
+  });
 });

@@ -564,6 +564,10 @@ export const en = {
     presetsTitle: "Stress presets",
     presetsHint: (years: number) =>
       `One click saves a scenario. Rate and inflation shocks last ${years} years, then revert; a price crash is permanent.`,
+    showPresets: "Show presets",
+    hidePresets: "Hide presets",
+    presetsCollapsedSummary:
+      "Rate, inflation, price-crash and combined shocks are hidden.",
     atStart: "Start",
     atStartTitle: (date: string) => `At projection start (${date})`,
     rateShockAtRefix: "Rate shock @ refix",

@@ -1551,6 +1551,19 @@ table.chart-table tbody th.sticky-col {
   text-transform: uppercase;
   color: var(--ink-faint);
 }
+/* One-line summary of the collapsed presets panel (ADR 0106). */
+.preset-collapsed {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+/* Show / Hide presets stays on one line at the minimum window. */
+.preset-toggle {
+  flex-shrink: 0;
+}
+.preset-toggle .btn {
+  white-space: nowrap;
+}
 /* "When" label of the price-crash timing toggle (ADR 0101). */
 .preset-when {
   font-size: 12px;

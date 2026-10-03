@@ -514,6 +514,9 @@ price crash**, each with a legend and one line of help (ADR 0102).
     rates +4 pp + inflation +3 pp, both for 3 years, + price crash −20 %. One click saves
     all parts in one scenario; the crash uses the "When" timing ("Mild @ +5y"), and the
     name lists the parts ("Mild: Rates +2pp for 3y · Price crash −10%") (ADR 0104).
+  - The panel has a **Show / Hide presets** button. When the page opens it is collapsed if
+    at least one scenario is saved, open otherwise; a manual Show or Hide wins for the app
+    session (in memory). Collapsed, it shows a one-line summary (ADR 0106).
 
 ## 8. Non-functional requirements
 

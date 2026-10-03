@@ -130,6 +130,7 @@ Other IDs seen in code comments:
 | [0103](0103-financing-exposure.md)                | Financing exposure and upcoming events                                                 |                                        |
 | [0104](0104-combined-stress-presets.md)           | Scenarios: combined stress presets                                                     |                                        |
 | [0105](0105-one-product-name-and-format-note.md)  | One product name on every surface; language does not change formats                    | #22                                    |
+| [0106](0106-collapsible-stress-presets.md)        | Scenarios: collapsible stress presets                                                  |                                        |
 
 ### Judgment calls and open questions
 

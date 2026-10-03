@@ -51,6 +51,7 @@ beforeEach(() =>
       compareIds: [],
       compareBase: true,
       crashAtYear: 0,
+      presetsOpen: null,
     }),
   ),
 );
@@ -59,6 +60,8 @@ describe("Scenarios wording (ADR 0090)", () => {
   it("preset hint says the price crash is permanent", () => {
     render(
       <StressPresetsPanel
+        open
+        onToggleOpen={() => undefined}
         busy={false}
         baseDate={assumptions.baseDate}
         crashAtYear={0}
@@ -74,6 +77,8 @@ describe("Scenarios wording (ADR 0090)", () => {
   it("crash timing 0 is the projection start, with its date", () => {
     render(
       <StressPresetsPanel
+        open
+        onToggleOpen={() => undefined}
         busy={false}
         baseDate={assumptions.baseDate}
         crashAtYear={0}
