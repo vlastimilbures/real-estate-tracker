@@ -5,7 +5,11 @@ import { Panel, Button, SegmentedToggle } from "../components/primitives";
 import { DeleteConfirmRow } from "../components/EntityPanelParts";
 import { rate, type Scenario, type ScenarioOverrides } from "../../engine";
 import { useT } from "../hooks/useT";
-import { summarize } from "../model/scenarios";
+import {
+  combinedPreset,
+  summarize,
+  type CombinedRecipe,
+} from "../model/scenarios";
 import { fmtDate } from "../../lib/format";
 import { DEFAULT_SHOCK_YEARS } from "./ScenarioForm";
 
@@ -26,6 +30,20 @@ const CRASH_LEVELS = [
   { label: "−35%", pct: "0.35" },
 ];
 const CRASH_TIMINGS = [0, 5, 10];
+// The fixed combined recipes (ADR 0104).
+const COMBINED_LEVELS: CombinedRecipe[] = [
+  {
+    level: (t) => t.scenarios.mild,
+    rate: { pp: 2, delta: "0.02" },
+    crash: { label: "−10%", pct: "0.1" },
+  },
+  {
+    level: (t) => t.scenarios.severe,
+    rate: { pp: 4, delta: "0.04" },
+    inflation: { pp: 3, delta: "0.03" },
+    crash: { label: "−20%", pct: "0.2" },
+  },
+];
 
 export function StressPresetsPanel({
   busy,
@@ -160,6 +178,34 @@ export function StressPresetsPanel({
                   }
                 >
                   {`${l.label}${suffix}`}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="preset-group">
+          <span className="preset-label">{t.scenarios.combined}</span>
+          <div className="row" style={{ gap: "var(--s2)" }}>
+            {COMBINED_LEVELS.map((r) => {
+              const { name, overrides } = combinedPreset(r, crashAtYear, t);
+              const suffix =
+                crashAtYear === 0
+                  ? ""
+                  : t.scenarios.crashAt(t.common.plusYears(crashAtYear));
+              return (
+                <Button
+                  key={r.crash.label}
+                  size="sm"
+                  disabled={busy}
+                  title={
+                    crashAtYear === 0
+                      ? `${name} · ${t.scenarios.atStartTitle(fmtDate(baseDate))}`
+                      : name
+                  }
+                  onClick={() => onAddPreset(name, overrides)}
+                >
+                  {`${r.level(t)}${suffix}`}
                 </Button>
               );
             })}

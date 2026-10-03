@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Stress presets have a **Combined** group. **Mild** saves rates +2 pp for 3 years and a
+  −10 % price crash in one scenario; **Severe** saves rates +4 pp and inflation +3 pp for
+  3 years and a −20 % price crash. The crash uses the "When" timing, the scenario name
+  lists the parts, and a preset that is already saved is not added twice. No computed
+  figure changes (ADR 0104, #55).
+
 - The Dashboard has a **Financing & upcoming** panel. It shows the next modelled rate reset
   (date, property and the debt that moves to the reset rate), the debt resetting within 1,
   3 or 5 years, the total interest over the horizon (real or nominal, by lens) and the

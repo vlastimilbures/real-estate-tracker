@@ -576,6 +576,10 @@ export const en = {
     crashTitle: (label: string, suffix: string) =>
       `Price crash ${label}${suffix}`,
     crashAt: (label: string) => ` @ ${label}`,
+    combined: "Combined",
+    mild: "Mild",
+    severe: "Severe",
+    combinedTitle: (level: string, parts: string) => `${level}: ${parts}`,
     addedScenario: (name: string) => `Added “${name}”`,
     duplicatedScenario: (name: string) => `Duplicated “${name}”`,
     alreadySaved: (name: string) => `Already saved: “${name}”`,
