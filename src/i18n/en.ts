@@ -545,6 +545,28 @@ export const en = {
     maturityCheck: "Check the instalment or the maturity date.",
     fixationEnded: (end: string, rate: string) =>
       `Its fixation ended on ${end} and no follow-on block is entered, so the app assumes the reset rate of ${rate} from then on. Add the refix terms as a new mortgage block.`,
+    fieldPrepayments: "Prepayments",
+    helpPrepayments:
+      "Extra repayments of principal on a date. Lowering the instalment keeps the term; shortening the term keeps the instalment. The fee is paid in cash and does not reduce the debt.",
+    fieldRecasts: "Maturity changes",
+    helpRecasts:
+      "From a date, the loan runs to a new maturity date or at a new instalment.",
+    eventDate: "Date",
+    eventAmount: "Amount",
+    eventEffect: "Effect",
+    eventEffectLowerInstalment: "Lower the instalment",
+    eventEffectShortenTerm: "Shorten the term",
+    eventFee: "Fee (optional)",
+    eventMode: "Change",
+    eventModeMaturity: "New maturity date",
+    eventModeInstalment: "New instalment",
+    eventMaturity: "Maturity date",
+    eventInstalment: "Instalment",
+    eventAddPrepayment: "Add prepayment",
+    eventAddRecast: "Add maturity change",
+    eventPrepaymentRow: (n: number) => `Prepayment ${n}`,
+    eventRecastRow: (n: number) => `Maturity change ${n}`,
+    eventRemove: (row: string) => `Remove ${row}`,
     fieldContractMaturity: "Contract maturity date",
     helpContractMaturity:
       "from the loan contract; blank = not checked; not used for development loans",

@@ -515,6 +515,28 @@ export const ru: Dictionary = {
     maturityCheck: "Проверьте платёж или дату погашения.",
     fixationEnded: (end, rate) =>
       `Фиксация закончилась ${end}, а следующий блок не введён, поэтому приложение с этого момента использует ставку после сброса ${rate}. Добавьте условия рефиксации как новый блок ипотеки.`,
+    fieldPrepayments: "Досрочные платежи",
+    helpPrepayments:
+      "Досрочное погашение основного долга на дату. Снижение платежа сохраняет срок; сокращение срока сохраняет платёж. Комиссия оплачивается наличными и долг не уменьшает.",
+    fieldRecasts: "Изменения срока",
+    helpRecasts:
+      "С указанной даты кредит идёт до новой даты погашения или с новым платежом.",
+    eventDate: "Дата",
+    eventAmount: "Сумма",
+    eventEffect: "Результат",
+    eventEffectLowerInstalment: "Снизить платёж",
+    eventEffectShortenTerm: "Сократить срок",
+    eventFee: "Комиссия (необязательно)",
+    eventMode: "Изменение",
+    eventModeMaturity: "Новая дата погашения",
+    eventModeInstalment: "Новый платёж",
+    eventMaturity: "Дата погашения",
+    eventInstalment: "Платёж",
+    eventAddPrepayment: "Добавить досрочный платёж",
+    eventAddRecast: "Добавить изменение срока",
+    eventPrepaymentRow: (n) => `Досрочный платёж ${n}`,
+    eventRecastRow: (n) => `Изменение срока ${n}`,
+    eventRemove: (row) => `Удалить: ${row}`,
     fieldContractMaturity: "Дата погашения по договору",
     helpContractMaturity:
       "из договора; пусто — не проверяется; не используется для строительного кредита",

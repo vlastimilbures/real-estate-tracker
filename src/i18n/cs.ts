@@ -510,6 +510,28 @@ export const cs: Dictionary = {
     maturityCheck: "Zkontrolujte splátku nebo datum splatnosti.",
     fixationEnded: (end, rate) =>
       `Fixace skončila ${end} a není zadán navazující blok, proto aplikace od té doby počítá s resetovací sazbou ${rate}. Zadejte podmínky refixace jako nový blok hypotéky.`,
+    fieldPrepayments: "Mimořádné splátky",
+    helpPrepayments:
+      "Mimořádné splacení jistiny k datu. Snížení splátky zachová splatnost; zkrácení splatnosti zachová splátku. Poplatek se platí hotově a dluh nesnižuje.",
+    fieldRecasts: "Změny splatnosti",
+    helpRecasts:
+      "Od data úvěr běží do nového data splatnosti nebo s novou splátkou.",
+    eventDate: "Datum",
+    eventAmount: "Částka",
+    eventEffect: "Dopad",
+    eventEffectLowerInstalment: "Snížit splátku",
+    eventEffectShortenTerm: "Zkrátit splatnost",
+    eventFee: "Poplatek (nepovinný)",
+    eventMode: "Změna",
+    eventModeMaturity: "Nové datum splatnosti",
+    eventModeInstalment: "Nová splátka",
+    eventMaturity: "Datum splatnosti",
+    eventInstalment: "Splátka",
+    eventAddPrepayment: "Přidat mimořádnou splátku",
+    eventAddRecast: "Přidat změnu splatnosti",
+    eventPrepaymentRow: (n) => `Mimořádná splátka ${n}`,
+    eventRecastRow: (n) => `Změna splatnosti ${n}`,
+    eventRemove: (row) => `Odebrat: ${row}`,
     fieldContractMaturity: "Splatnost podle smlouvy",
     helpContractMaturity:
       "ze smlouvy; prázdné = nekontroluje se; u developerského úvěru se nepoužívá",
