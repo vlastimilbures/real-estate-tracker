@@ -278,9 +278,11 @@ export interface PortfolioKPIs {
   netWorthNominal: Decimal;
   netWorthReal: Decimal;
   netWorthMultiple: Decimal;
+  netWorthMultipleReal: Decimal; // real net worth / equity₀ (ADR 0087)
   cagrNominal: Decimal | null; // null when equity₀ ≤ 0 (D-34)
   cagrReal: Decimal | null;
   cumulativeNetCashFlow: Decimal;
+  cumulativeNetCashFlowReal: Decimal; // Σ flow_t / CPI_t (ADR 0087)
   firstCashFlowPositiveYear: number | null; // calendar year
   firstCashFlowPositiveProjectionYear: number | null; // D-22: its projection year
   debtFreeYear: number | null; // calendar year

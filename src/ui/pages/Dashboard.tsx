@@ -11,6 +11,7 @@ import { FolderOpen, Plus, Upload } from "lucide-react";
 import { toChartRows, toEquityChangeRows } from "../model/chartData";
 import { projectionSeries } from "../model/projection";
 import { leveredIrr } from "../model/irr";
+import { lensKpis } from "../model/lensKpis";
 import {
   monthlyFlow,
   netWorthHorizon,
@@ -127,7 +128,7 @@ export function Dashboard() {
         isToday={isToday}
         horizon={horizon}
         horizonYears={assumptions.horizonYears}
-        netWorthMultiple={kpis.netWorthMultiple}
+        netWorthMultiple={lensKpis(kpis, mode).netWorthMultiple}
         modeWord={modeWord}
         irr={irr}
       />

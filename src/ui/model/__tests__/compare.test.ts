@@ -77,10 +77,18 @@ describe("compareKpiRows", () => {
     const irr = rows.find((r) => r.label === en.scenarios.kpiLeveredIrrReal);
     expect(cagr?.fmt(base)).toBe("2,8 %");
     expect(irr?.fmt(base)).toBe("3,6 %");
-    // Cumulative cash flow has no real counterpart: labelled nominal in the real lens.
-    expect(rows.map((r) => r.label)).toContain(
-      en.scenarios.kpiCumulativeNetCfNominal,
-    );
+  });
+
+  it("real: the multiple and cumulative CF switch to their real values (ADR 0087)", () => {
+    const value = (mode: "nominal" | "real", label: string) =>
+      compareKpiRows(en, mode)
+        .find((r) => r.label === label)
+        ?.fmt(base);
+    const multiple = en.scenarios.kpiNetWorthMultiple;
+    const cumCf = en.scenarios.kpiCumulativeNetCf;
+    expect(value("real", multiple)).toBe("2,31x");
+    expect(value("nominal", multiple)).toBe("4,85x");
+    expect(value("real", cumCf)).not.toBe(value("nominal", cumCf));
   });
 
   it("an IRR with no value reads n/a with its reason (UX-079, DR-158)", () => {

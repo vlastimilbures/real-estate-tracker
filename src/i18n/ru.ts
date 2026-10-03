@@ -206,7 +206,8 @@ export const ru: Dictionary = {
     assetsDebtEquity: (assets, debt) =>
       `Активы ${assets} · Долг ${debt} · Капитал в Kč`,
     realTodayKc: " · реально (Kč на базовую дату)",
-    multipleTodayMode: (mult, mode) => `${mult} сегодня · ${mode}`,
+    multipleFromStartMode: (mult, mode) =>
+      `${mult} от начала прогноза · ${mode}`,
     leveredIrr: "IRR с плечом",
     irrFoot: (n, mode) =>
       `${n} ${ruPlural(n, ["год", "года", "лет"])} · после долга · ${mode}`,
@@ -254,7 +255,8 @@ export const ru: Dictionary = {
     seriesNetCashFlow: "Чистый денежный поток",
     seriesLtv: "LTV",
     kpiTitle: "Ключевые показатели",
-    kpiHint: (mode) => `${mode} значения, где применимо`,
+    kpiHintNominal: "номинальные значения",
+    kpiHintReal: "реальные значения (Kč на базовую дату)",
     kpiNetWorthAtHorizon: "Чистые активы на горизонте",
     kpiNetWorthMultiple: "Множитель чистых активов",
     kpiNetWorthCagr: "CAGR чистых активов",
@@ -264,6 +266,8 @@ export const ru: Dictionary = {
     kpiFirstCfPositiveYear: "Первый год с положительным потоком",
     kpiDebtFullyRepaid: "Долг полностью погашен",
     kpiSumPrincipalRepaid: (n) => `Σ погашенного тела (годы 1–${n})`,
+    kpiSumPrincipalRepaidNominal: (n) =>
+      `Σ погашенного тела (годы 1–${n}, номинально)`,
     kpiWeightedAvgRate: "Средневзвешенная ставка",
   },
 
@@ -507,7 +511,6 @@ export const ru: Dictionary = {
     kpiCagrNominal: "CAGR (номинал)",
     kpiCagrReal: "CAGR (реальный)",
     kpiCumulativeNetCf: "Накопленный чистый ДП",
-    kpiCumulativeNetCfNominal: "Накопленный чистый ДП (номинал)",
     kpiLeveredIrrNominal: "IRR с плечом (номинал)",
     kpiLeveredIrrReal: "IRR с плечом (реальный)",
     kpiFirstCfPositiveYear: "Первый год положительного ДП",
@@ -829,6 +832,8 @@ export const ru: Dictionary = {
     fReal: "реальное = номинальное ÷ CPI",
     nominalRealProsePost:
       ". При инфляции 2,5% 1,0 M через 30 лет стоит ≈ 477 k в деньгах на базовую дату.",
+    nominalRealTodayNote:
+      "Реальные значения приводятся к началу прогноза, поэтому снимок «Сегодня» с более поздней датой немного ниже номинального значения. Так и задумано.",
     returnsTitle: "Доходность за горизонт",
     returnsHint: "Рост и денежный поток одним числом",
     scenariosTitle: "Сценарии",

@@ -26,6 +26,7 @@ import { fmtCzkM, fmtMultiple, fmtPct } from "../../lib/format";
 import { dscrBand, dscrBandWord, ltvBand, ltvBandWord } from "../model/health";
 import type { MonthlyFlow } from "../model/dashboard";
 import type { LeveredIrr } from "../model/irr";
+import { lensKpis } from "../model/lensKpis";
 import type { PortfolioKPIs, PortfolioSnapshot } from "../../engine";
 import type { Decimal } from "../../lib/money";
 import type { Mode } from "../../state/uiStore";
@@ -74,7 +75,7 @@ export function HeroTiles({
         delay={24}
         label={t.dashboard.netWorthInYears(horizonYears)}
         value={fmtCzkM(horizon)}
-        foot={t.dashboard.multipleTodayMode(
+        foot={t.dashboard.multipleFromStartMode(
           fmtMultiple(netWorthMultiple),
           modeWord,
         )}
@@ -292,10 +293,14 @@ export function KpiListPanel({
   irr: LeveredIrr;
 }) {
   const t = useT();
-  const modeWord = mode === "real" ? t.common.realLower : t.common.nominalLower;
-  const cagr = mode === "real" ? kpis.cagrReal : kpis.cagrNominal;
+  const real = mode === "real";
+  const cagr = real ? kpis.cagrReal : kpis.cagrNominal;
+  const lens = lensKpis(kpis, mode);
   return (
-    <Panel title={t.dashboard.kpiTitle} hint={t.dashboard.kpiHint(modeWord)}>
+    <Panel
+      title={t.dashboard.kpiTitle}
+      hint={real ? t.dashboard.kpiHintReal : t.dashboard.kpiHintNominal}
+    >
       <StatList
         rows={[
           {
@@ -304,7 +309,7 @@ export function KpiListPanel({
           },
           {
             k: t.dashboard.kpiNetWorthMultiple,
-            v: <Mult value={kpis.netWorthMultiple} />,
+            v: <Mult value={lens.netWorthMultiple} />,
           },
           {
             k: t.dashboard.kpiNetWorthCagr,
@@ -316,7 +321,7 @@ export function KpiListPanel({
           },
           {
             k: t.dashboard.kpiCumulativeNetCashFlow(horizonYears),
-            v: <Money value={kpis.cumulativeNetCashFlow} signed />,
+            v: <Money value={lens.cumulativeNetCashFlow} signed />,
           },
           {
             k: t.dashboard.kpiFirstCfPositiveYear,
@@ -324,7 +329,10 @@ export function KpiListPanel({
           },
           { k: t.dashboard.kpiDebtFullyRepaid, v: kpis.debtFreeYear ?? "—" },
           {
-            k: t.dashboard.kpiSumPrincipalRepaid(horizonYears),
+            // Σ principal repaid stays nominal; labelled so in the real lens (ADR 0087).
+            k: real
+              ? t.dashboard.kpiSumPrincipalRepaidNominal(horizonYears)
+              : t.dashboard.kpiSumPrincipalRepaid(horizonYears),
             v: <Money value={kpis.totalPrincipalRepaid} parens={false} />,
           },
           {
