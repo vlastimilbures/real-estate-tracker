@@ -225,12 +225,11 @@ const CASES: Case[] = [
   [
     "dev loan, tranche on the maturity payment (ADR 0116)",
     {
-      ...devIo,
+      ...devDrawsOnly,
       draws: [
         { date: "2026-11-15", amount: "1500000" },
         { date: "2027-07-20", amount: "1000000" },
       ],
-      completion: "2027-07-20",
       recasts: [{ date: "2027-01-10", maturity: "2027-08-01" }],
     },
   ],

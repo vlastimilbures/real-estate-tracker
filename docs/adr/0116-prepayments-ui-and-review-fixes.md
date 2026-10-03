@@ -87,9 +87,12 @@ This ADR covers both.
     maturity and repaid everything as a balloon. The extended property test found this,
     and the reference model already amortized. No events are needed to trigger it.
 15. **A development loan's recast maturity falls after completion.** A maturity recast
-    whose last payment is on or before the completion date is rejected
-    (`INVALID_RECAST_MATURITY`), because the loan would end before it finishes drawing.
-    Before, the engine and the reference model disagreed on that input.
+    whose last payment is on or before the payment the completion lands on (the first due
+    on or after the completion date) is rejected (`INVALID_RECAST_MATURITY`). The loan
+    would end before it finishes drawing, or its last tranche would land on the maturity
+    and restore the contract term (decision 2), silently undoing the recast. Before, the
+    engine and the reference model disagreed on that input. Decision 2 still applies to a
+    development loan with tranches but no completion date.
 
 ## Consequences
 

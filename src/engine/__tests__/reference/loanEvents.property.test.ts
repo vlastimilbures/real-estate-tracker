@@ -124,30 +124,25 @@ const loanWithEvents = fc
       });
     prepayments.sort((a, b) => a.date.localeCompare(b.date));
     if (!g.recast) return { loan: { ...loan, prepayments }, base };
-    const k = payment(g.recast.at);
-    const date = addMonths(start, k);
-    // A development loan's maturity falls after its completion (ADR 0116): the
-    // payment after the last tranche's month is the first one that can be.
-    const completed = g.dev
+    // A development loan's last tranche lands on payment `landed` at the latest: an
+    // instalment recast must be dated after it, a maturity must follow it (ADR 0116).
+    const landed = g.dev
       ? Math.max(...g.dev.tranches.map((t) => t.month)) + 1
       : 0;
-    const lo = Math.max(k + 1, completed);
-    // An instalment recast before a development loan's completion is rejected.
-    const recast =
-      g.recast.toMaturity || loan.completion
-        ? {
-            date,
-            maturity: addMonths(
-              start,
-              lo + Math.floor(g.recast.x * (599 - lo)),
-            ),
-          }
-        : {
-            date,
-            instalment: String(
-              Math.round((0.4 + g.recast.x) * Number(instalment)),
-            ),
-          };
+    const k = Math.max(payment(g.recast.at), landed);
+    const date = addMonths(start, k);
+    const lo = Math.max(k, landed) + 1;
+    const recast = g.recast.toMaturity
+      ? {
+          date,
+          maturity: addMonths(start, lo + Math.floor(g.recast.x * (599 - lo))),
+        }
+      : {
+          date,
+          instalment: String(
+            Math.round((0.4 + g.recast.x) * Number(instalment)),
+          ),
+        };
     return { loan: { ...loan, prepayments, recasts: [recast] }, base };
   });
 

@@ -226,6 +226,13 @@ describe("ADR 0109: recast input checks", () => {
       dev({ recasts: [toMaturity("2027-01-10", "2027-08-01")] }),
     ],
     [
+      // The last tranche lands on the 2027-09-01 payment and would restore the
+      // contract term there, undoing the recast (ADR 0116 §2, §15).
+      "a dev loan maturity on the payment the last tranche lands on",
+      "INVALID_RECAST_MATURITY",
+      dev({ recasts: [toMaturity("2027-01-10", "2027-09-01")] }),
+    ],
+    [
       "an instalment recast before a dev loan's completion",
       "RECAST_INSTALMENT_BEFORE_COMPLETION",
       dev({ recasts: [toInstalment("2027-08-20", 15000)] }),
@@ -268,10 +275,10 @@ describe("ADR 0109: recast input checks", () => {
     ).toEqual([]);
   });
 
-  it("allows a dev loan maturity on the first payment after completion", () => {
-    // Completion 2027-08-20; the next payment is due 2027-09-01.
+  it("allows a dev loan maturity after the completion's payment", () => {
+    // Completion 2027-08-20 lands on the 2027-09-01 payment; the next is 2027-10-01.
     expect(
-      codes(dev({ recasts: [toMaturity("2027-01-10", "2027-09-01")] })),
+      codes(dev({ recasts: [toMaturity("2027-01-10", "2027-10-01")] })),
     ).toEqual([]);
   });
 

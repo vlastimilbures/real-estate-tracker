@@ -110,7 +110,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stored loan prepayments and maturity changes are checked more strictly. An entry with an
   unknown field (for example a misspelt `fees`) makes the loan invalid instead of losing
   the value silently, so a hand-edited backup with extra fields no longer restores. A
-  maturity change on a development loan must fall after its completion (ADR 0116, #32).
+  maturity change on a development loan must fall after the payment its completion lands
+  on (ADR 0116, #32).
 
 - The CSV import error for a yes/no column now lists every accepted value: `true`/`false`,
   `yes`/`no` or `1`/`0`. SPEC §6 now matches the importer: header rules, all-or-nothing

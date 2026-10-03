@@ -434,7 +434,8 @@ describe("ADR 0109: development loans", () => {
 });
 
 describe("ADR 0116 §2: a tranche on the maturity payment", () => {
-  // The maturity recast makes payment 17 (2027-08-01) the last one; the second tranche,
+  // A tranches-only development loan (no completion date, so no completion rule): the
+  // maturity recast makes payment 17 (2027-08-01) the last one, and the second tranche,
   // dated 2027-07-20, follows that same payment. It restores the contract term instead
   // of being repaid in one shot.
   const b = withEvents(
@@ -445,7 +446,7 @@ describe("ADR 0116 §2: a tranche on the maturity payment", () => {
         { date: isoDate("2026-11-15"), amount: money("1500000") },
         { date: isoDate("2027-07-20"), amount: money("1000000") },
       ],
-      completionDate: isoDate("2027-07-20"),
+      completionDate: undefined,
     } as MortgageBlock,
     undefined,
     [toMaturity("2027-01-10", "2027-08-01")],
