@@ -3,6 +3,7 @@
 // so any key missing relative to en.ts is a tsc error.
 import type { Dictionary } from "./en";
 import { csPlural } from "./plural";
+import { APP_NAME } from "./appName";
 
 export const cs: Dictionary = {
   common: {
@@ -63,7 +64,7 @@ export const cs: Dictionary = {
   },
 
   app: {
-    loadingEyebrow: "Realitní portfolio",
+    loadingEyebrow: APP_NAME,
     loading: "Načítání portfolia…",
     dbErrorEyebrow: "Nepodařilo se otevřít databázi",
     bootRetryHint:
@@ -177,7 +178,7 @@ export const cs: Dictionary = {
   },
 
   menu: {
-    about: "O aplikaci Real Estate Tracker",
+    about: `O aplikaci ${APP_NAME}`,
     settings: "Nastavení…",
     newProperty: "Nová nemovitost…",
   },
@@ -887,7 +888,7 @@ export const cs: Dictionary = {
 
   about: {
     title: "O aplikaci",
-    subtitle: "Real Estate Tracker",
+    subtitle: APP_NAME,
     version: (v: string) => `Verze ${v}`,
     tagline: "Lokální nástroj pro sledování vašeho portfolia nájemních bytů.",
 

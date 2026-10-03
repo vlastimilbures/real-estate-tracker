@@ -7,6 +7,7 @@
 // every language. Only UI chrome is translated.
 import type { ValidationCode } from "../engine";
 import { enPlural } from "./plural";
+import { APP_NAME } from "./appName";
 
 export const en = {
   common: {
@@ -70,7 +71,7 @@ export const en = {
   },
 
   app: {
-    loadingEyebrow: "Real Estate Portfolio",
+    loadingEyebrow: APP_NAME,
     loading: "Loading your portfolio…",
     dbErrorEyebrow: "Could not open the database",
     bootRetryHint:
@@ -196,7 +197,7 @@ export const en = {
 
   // Native macOS menu items the app adds (UX-076); View ▸ pages reuse `nav`.
   menu: {
-    about: "About Real Estate Tracker",
+    about: `About ${APP_NAME}`,
     settings: "Settings…",
     newProperty: "New Property…",
   },
@@ -928,7 +929,7 @@ export const en = {
 
   about: {
     title: "About",
-    subtitle: "Real Estate Tracker",
+    subtitle: APP_NAME,
     version: (v: string) => `Version ${v}`,
     tagline: "A local-first tracker for your rental-apartment portfolio.",
 

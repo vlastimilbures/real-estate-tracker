@@ -9,6 +9,7 @@ import type { Language } from "./types";
 export type { Dictionary } from "./en";
 export type { Language } from "./types";
 export { LANGUAGES } from "./types";
+export { APP_NAME } from "./appName";
 
 const DICTIONARIES: Record<Language, Dictionary> = { en, cs, ru };
 

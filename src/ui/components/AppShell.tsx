@@ -20,7 +20,7 @@ import { SegmentedToggle, ErrorBanner } from "./primitives";
 import { BrandMark } from "./BrandMark";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { fmtDate } from "../../lib/format";
-import { LANGUAGES, type Dictionary } from "../../i18n";
+import { APP_NAME, LANGUAGES, type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import { at } from "../../lib/arrays";
@@ -142,6 +142,11 @@ function ThemeControl({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+// Sidebar brand (ADR 0105): the product name on two lines, "Real Estate" / "Tracker".
+const BRAND_SPLIT = APP_NAME.lastIndexOf(" ");
+const BRAND_HEAD = APP_NAME.slice(0, BRAND_SPLIT).replace(/ /g, "\u00a0");
+const BRAND_TAIL = APP_NAME.slice(BRAND_SPLIT + 1);
+
 export function AppShell({
   title,
   subtitle,
@@ -185,9 +190,9 @@ export function AppShell({
             <BrandMark size={30} className="brand-logo" />
             <div className="brand-text">
               <span className="mark">
-                Real&nbsp;Estate
+                {BRAND_HEAD}
                 <br />
-                <em>Portfolio</em>
+                <em>{BRAND_TAIL}</em>
               </span>
             </div>
           </div>

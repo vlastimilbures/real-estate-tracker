@@ -3,6 +3,7 @@
 // the user. Annotated `: Dictionary` so missing keys relative to en.ts are tsc errors.
 import type { Dictionary } from "./en";
 import { ruPlural } from "./plural";
+import { APP_NAME } from "./appName";
 
 export const ru: Dictionary = {
   common: {
@@ -64,7 +65,7 @@ export const ru: Dictionary = {
   },
 
   app: {
-    loadingEyebrow: "Портфель недвижимости",
+    loadingEyebrow: APP_NAME,
     loading: "Загрузка портфеля…",
     dbErrorEyebrow: "Не удалось открыть базу данных",
     bootRetryHint:
@@ -181,7 +182,7 @@ export const ru: Dictionary = {
   },
 
   menu: {
-    about: "О программе Real Estate Tracker",
+    about: `О программе ${APP_NAME}`,
     settings: "Настройки…",
     newProperty: "Новый объект…",
   },
@@ -895,7 +896,7 @@ export const ru: Dictionary = {
 
   about: {
     title: "О приложении",
-    subtitle: "Real Estate Tracker",
+    subtitle: APP_NAME,
     version: (v: string) => `Версия ${v}`,
     tagline: "Локальный трекер вашего портфеля арендных квартир.",
 
