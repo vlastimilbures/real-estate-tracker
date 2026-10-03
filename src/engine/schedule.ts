@@ -773,7 +773,12 @@ function initDevScheduleState(
         block,
         assumptions,
       ),
-      prevInterestOnly: interestOnlyAt(block, baseDate),
+      // The last payment made, not baseDate: a completion between the two must still
+      // trigger the re-amortization at grid month 1 (D-24, ADR 0116).
+      prevInterestOnly: interestOnlyAt(
+        block,
+        edate(block.startDate, paymentOffset(block, baseDate)),
+      ),
       terms: sim.terms,
     },
     outcomes: sim.outcomes,
