@@ -541,7 +541,7 @@ export const en = {
     rateShockAtRefix: "Rate shock @ refix",
     inflationShock: "Inflation shock",
     priceCrash: "Price crash",
-    applyCrashAt: (label: string) => `Apply the crash at ${label}`,
+    crashWhen: "When",
     rateForYears: (label: string, years: number) =>
       `Rates ${label} for ${years}y`,
     inflForYears: (label: string, years: number) =>

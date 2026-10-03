@@ -1519,11 +1519,10 @@ table.chart-table tbody th.sticky-col {
   text-transform: uppercase;
   color: var(--ink-faint);
 }
-.preset-sep {
-  align-self: stretch;
-  width: 1px;
-  margin: 0 4px;
-  background: var(--hairline);
+/* "When" label of the price-crash timing toggle (ADR 0101). */
+.preset-when {
+  font-size: 12px;
+  color: var(--ink-soft);
 }
 .scenario-list {
   list-style: none;
