@@ -31,7 +31,7 @@ reached only through the `VITE_E2E` gate).
 ## Checks
 
 A change is done when all of these pass (CI runs the same commands on Linux; see the table in
-the [README](README.md#-checks)):
+the [README](README.md#quality)):
 
 ```bash
 pnpm typecheck
