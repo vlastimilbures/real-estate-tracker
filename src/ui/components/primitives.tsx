@@ -222,17 +222,16 @@ export function ExportXlsxButton({
 
   return (
     <>
-      <button
-        type="button"
-        className="icon-btn"
+      {/* Visible text, which is also the accessible name (ADR 0111). */}
+      <Button
+        size="sm"
+        icon={FileSpreadsheet}
         onClick={() => void run()}
         disabled={busy}
         aria-busy={busy}
-        aria-label={btnLabel}
-        title={btnLabel}
       >
-        <FileSpreadsheet size={16} strokeWidth={1.75} />
-      </button>
+        {btnLabel}
+      </Button>
       {toast && <Toast message={toast} />}
     </>
   );

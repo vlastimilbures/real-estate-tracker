@@ -318,6 +318,8 @@ export const cs: Dictionary = {
   properties: {
     title: "Nemovitosti",
     subtitle: (n) => `${n} ${csPlural(n, ["byt", "byty", "bytů"])}`,
+    asOf: (d) => `k ${d}`,
+    unitsNote: "částky v Kč, toky za rok",
     addProperty: "Přidat nemovitost",
     emptyTitle: "Žádné nemovitosti",
     emptyBody:
@@ -534,7 +536,9 @@ export const cs: Dictionary = {
     title: "Projekce",
     subtitle: (lens) => `Rok po roce · ${lens}`,
     realTerms: "reálné hodnoty",
+    realTermsDated: (d) => `reálné hodnoty (Kč k začátku projekce ${d})`,
     nominalKc: "nominální Kč",
+    periodNote: "toky za rok, zůstatky ke konci roku",
     portfolio: "Portfolio",
     entity: "Subjekt",
   },

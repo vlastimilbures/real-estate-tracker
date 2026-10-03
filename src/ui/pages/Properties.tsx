@@ -25,6 +25,7 @@ import {
 } from "../model/health";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
+import { propertiesSubtitle } from "../model/tableContext";
 
 export function Properties() {
   const t = useT();
@@ -65,8 +66,8 @@ export function Properties() {
     <AppShell
       title={t.properties.title}
       subtitle={
-        perProperty.length > 0
-          ? t.properties.subtitle(perProperty.length)
+        engine && perProperty.length > 0
+          ? propertiesSubtitle(t, perProperty.length, engine.snapshot.asOf)
           : undefined
       }
       showLens={false}

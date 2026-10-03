@@ -12,6 +12,7 @@ import {
   projectionColumns,
   shortPropertyName,
 } from "../model/projection";
+import { projectionsSubtitle } from "../model/tableContext";
 import { exportTableXlsx } from "../exportXlsx";
 import { slug } from "../../lib/slug";
 import { useT } from "../hooks/useT";
@@ -61,7 +62,7 @@ export function Projections() {
   return (
     <AppShell
       title={t.projections.title}
-      subtitle={t.projections.subtitle(lens)}
+      subtitle={projectionsSubtitle(t, mode, assumptions.baseDate)}
       actions={
         <PropertySelect
           mode="single"

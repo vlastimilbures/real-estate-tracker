@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   session. Only exports count, not the automatic safety backups, and a restore never
   brings back the restored file's backup date (ADR 0110, #36).
 
+- Properties and Projections say what their amounts are. The Properties subtitle reads
+  "3 apartments · as of 03.10.2026 · amounts in Kč, flows per year"; the Projections
+  subtitle adds "flows per year, balances at year end", and in Real mode names the base
+  date ("real terms (Kč at projection start 07.06.2026)"). Column headers are unchanged.
+  The Excel export button now shows "Export to Excel" next to its icon, everywhere it
+  appears. No figure changes (ADR 0111, #21).
+
 - Scenario compare exports to Excel. The button in the Key figures header saves one
   workbook in the current lens: the key figures (one column per scenario, always the
   values, money in whole Kč) and one sheet each for net worth, net cash flow and LTV by
