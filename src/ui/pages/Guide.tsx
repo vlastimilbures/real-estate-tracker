@@ -19,9 +19,16 @@ function F({ children, wrap }: { children: ReactNode; wrap?: boolean }) {
   );
 }
 
-type Def = { name: string; formula: string; meaning: string; eg?: string };
+type Def = {
+  name: string;
+  formula: string;
+  meaning: string;
+  /** What the figure does not mean (ADR 0091). */
+  caveat?: string;
+  eg?: string;
+};
 
-/** Two-column definition grid: name + formula chip | meaning + example. */
+/** Two-column definition grid: name + formula chip | meaning + caveat + example. */
 function Defs({ rows, egLabel }: { rows: Def[]; egLabel: string }) {
   return (
     <div className="guide-defs">
@@ -29,10 +36,11 @@ function Defs({ rows, egLabel }: { rows: Def[]; egLabel: string }) {
         <div className="guide-def" key={r.name}>
           <div className="guide-def-term">
             <span className="guide-def-name">{r.name}</span>
-            <F>{r.formula}</F>
+            <F wrap>{r.formula}</F>
           </div>
           <div className="guide-def-desc">
             {r.meaning}
+            {r.caveat && <span className="guide-caveat">{r.caveat}</span>}
             {r.eg && (
               <span className="guide-eg">
                 {egLabel} {r.eg}

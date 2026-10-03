@@ -87,6 +87,13 @@
   line-height: 1.5;
   color: var(--ink);
 }
+.guide-caveat {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--ink-soft);
+}
 .guide-eg {
   display: block;
   margin-top: 2px;

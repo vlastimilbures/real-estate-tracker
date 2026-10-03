@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Guide and About explain the figures the way the model computes them. The net-worth
+  multiple and IRR start from equity at the projection start, and the IRR ends with projected
+  equity at the horizon (no selling costs or tax), not "the money you put in" and "the sale
+  at the end". The principal check holds when every loan is repaid within the horizon and
+  includes later draws. Net cash flow is a modelled estimate, not a bank-account record.
+  Projected rent follows leases: gaps earn nothing and the last lease is treated as renewed.
+  IRR and net cash flow say what they do not mean, and the Guide and the deactivate dialog
+  say deactivating does not record a sale. About states the ±1 Kč test tolerance in every
+  language instead of "to the cent" (ADR 0091, #16).
 - Scenarios wording matches the model. The stress-preset hint says rate and inflation shocks
   revert after 3 years while a price crash is permanent. Shock inputs and the scenario list
   use percentage points ("pp", "p. b.", "п. п.") with a worked example (+2 pp turns 4.5 % into

@@ -319,7 +319,7 @@ export const cs: Dictionary = {
     deactivateTitle: "Vyřadit tuto nemovitost z přehledů a projekcí",
     activateTitle: "Znovu zahrnout tuto nemovitost do přehledů a projekcí",
     confirmDeactivate: (name) =>
-      `Deaktivovat ${name}? Bude vyřazena z přehledů a projekcí, dokud ji znovu neaktivujete. Žádná data se nesmažou.`,
+      `Deaktivovat ${name}? Bude vyřazena z přehledů a projekcí, dokud ji znovu neaktivujete. Žádná data se nesmažou. Deaktivace nezaznamená prodej, výnos z prodeje ani splacení úvěru.`,
     inactiveBadge: "Neaktivní",
     inactiveNote:
       "Tato nemovitost je vyřazena z přehledů a projekcí portfolia.",
@@ -789,7 +789,7 @@ export const cs: Dictionary = {
     builtWithTitle: "Postaveno na",
     builtWithBody: "Tauri 2 · React · TypeScript · SQLite · decimal.js",
     precisionNote:
-      "Peníze se počítají přesnou desetinnou aritmetikou — nikdy ne v plovoucí řádové čárce — takže částky sedí na korunu.",
+      "Peníze se počítají přesnou desetinnou aritmetikou (nikdy ne v plovoucí řádové čárce). Výsledky jsou testovány proti referenčním hodnotám s tolerancí ±1 Kč.",
 
     copyright: "© 2026 Vlastimil Bureš",
     usageNote: "Vytvořeno pro osobní použití.",
@@ -813,7 +813,7 @@ export const cs: Dictionary = {
     snapshotTitle: "Ukazatele snímku",
     snapshotHint: "Aktuální obrázek nemovitosti nebo portfolia",
     snapshotProse:
-      "Součty portfolia sčítají jen nemovitosti, které aktuálně vlastníte a jsou aktivní; poměry jako LTV a DSCR portfolia vycházejí z těchto součtů.",
+      "Součty portfolia sčítají jen nemovitosti, které aktuálně vlastníte a jsou aktivní; poměry jako LTV a DSCR portfolia vycházejí z těchto součtů. Deaktivace nemovitost jen vynechá: nezaznamená prodej, výnos z prodeje ani splacení úvěru.",
     mortgagesTitle: "Hypotéky a fixace",
     mortgagesHint: "Jak se zůstatek úvěru mění v čase",
     mortgagesProse1Pre: "Úvěry jsou ",
@@ -839,7 +839,7 @@ export const cs: Dictionary = {
     projectionProse1:
       "Každý vstup roste vpřed, rok po roce, až k horizontu (výchozí je 30 let, nastavíte v Nastavení → Předpoklady):",
     projectionProse2:
-      "Nemovitost nebo nájem začínající uprostřed roku se za první rok poměrně rozpočítá. Zabudovaná kontrola: součet splacené jistiny za celý horizont se musí přesně rovnat počátečnímu dluhu — úvěr je plně splacen, nikdy víc, nikdy míň. Výstupy zahrnují první rok s kladným cash flow a rok bez dluhu.",
+      "Nemovitost nebo nájem začínající uprostřed roku se za první rok poměrně rozpočítá. Zabudovaná kontrola: když jsou všechny úvěry splaceny v rámci horizontu, součet splacené jistiny se rovná počátečnímu dluhu plus pozdějším čerpáním — nikdy víc, nikdy míň. Výstupy zahrnují první rok s kladným cash flow a rok bez dluhu.",
     nominalRealTitle: "Nominální vs reálné",
     nominalRealHint: "Přepínač na Přehledu a Projekcích",
     nominalRealProsePre:
@@ -931,7 +931,8 @@ export const cs: Dictionary = {
         name: "Čistý cash flow",
         formula: "NOI − dluhová služba",
         meaning:
-          "Co vám reálně zůstane každý rok po nákladech a hypotéce. Může být záporné.",
+          "Modelovaný roční cash flow po nákladech a hypotéce — odhad, ne záznam z bankovního účtu. Může být záporný.",
+        caveat: "Nejde o skutečné příjmy.",
         eg: "144 k − 120 k = +24 k.",
       },
       dscr: {
@@ -971,8 +972,9 @@ export const cs: Dictionary = {
       },
       rent: {
         name: "Nájem",
-        formula: "× (1 + indexace) / rok",
-        meaning: "Roste každý rok o míru indexace nájmu.",
+        formula: "podle nájemních smluv, indexovaný",
+        meaning:
+          "Řídí se vašimi nájmy měsíc po měsíci. Mezera mezi nájmy nevynáší nic, poslední nájem se považuje za prodloužený a každý nájem se indexuje od svého začátku.",
       },
       vacancy: {
         name: "Neobsazenost",
@@ -995,9 +997,9 @@ export const cs: Dictionary = {
     returnsDefs: {
       multiple: {
         name: "Násobek čistého jmění",
-        formula: "kapitál na horizontu ÷ kapitál dnes",
+        formula: "kapitál na horizontu ÷ kapitál na začátku projekce",
         meaning:
-          "Kolikrát se očekává, že váš současný kapitál za projekci vzroste.",
+          "Kolikrát se očekává, že váš kapitál na začátku projekce do horizontu vzroste.",
         eg: "22 M → 110 M = 5,0×.",
       },
       cagr: {
@@ -1011,8 +1013,9 @@ export const cs: Dictionary = {
         name: "Pákové IRR",
         formula: "sazba, kde NPV = 0",
         meaning:
-          "Jediná roční návratnost vložených peněz — zohledňuje počáteční kapitál, roční cash flow a prodej na konci, s hypotékou v rovnici.",
-        eg: "zpočátku záporné, velký prodej na konci → ≈ 6 %/rok.",
+          "Roční návratnost od začátku projekce: kapitál k tomuto dni se bere jako vložená částka, k tomu roční cash flow a projektovaný kapitál na horizontu (bez nákladů na prodej a daní), s hypotékou v rovnici.",
+        caveat: "Nejde o návratnost vašich původních peněz vložených do koupě.",
+        eg: "zpočátku záporné, velký kapitál na horizontu → ≈ 6 %/rok.",
       },
     },
     scenarioDefs: {
