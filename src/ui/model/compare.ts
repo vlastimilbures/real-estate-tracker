@@ -10,6 +10,7 @@ import { irrReasonText, leveredIrr } from "./irr";
 import { lensKpis } from "./lensKpis";
 import { at } from "../../lib/arrays";
 import { BASE_SCENARIO_ID } from "./scenarios";
+import { SERIES } from "./chartData";
 import type { Cell, CellKind } from "./xlsxExport";
 
 /** One compared scenario: its projection in both lenses and its KPIs. */
@@ -48,6 +49,25 @@ const startingEquity = (r: CompareResult) => at(r.projection, 0).equity;
 /** A crash at Today lowers starting equity, so the returns are rebased (ADR 0089). */
 const startsDifferently = (r: CompareResult, base: CompareResult) =>
   !startingEquity(r).eq(startingEquity(base));
+
+interface LineStyle {
+  color: string;
+  dash?: string;
+}
+
+/** Up to four lines per chart (Base + 3 picks), each with its own colour and dash so
+ *  they read in greyscale too; cycles if more are somehow selected (ADR 0114). */
+const COMPARE_STYLES: readonly LineStyle[] = [
+  { color: SERIES.petrol },
+  { color: SERIES.clay, dash: "6 3" },
+  { color: SERIES.brass, dash: "2 3" },
+  { color: SERIES.slate, dash: "8 3 2 3" },
+];
+
+/** The line style of the i-th compared scenario; the first (Base, when shown) is solid. */
+export function compareSeriesStyle(i: number): LineStyle {
+  return at(COMPARE_STYLES, i % COMPARE_STYLES.length);
+}
 
 /** The Base scenario among the compared results, if it is selected. */
 export function compareBase(

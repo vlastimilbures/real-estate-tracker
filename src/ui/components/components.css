@@ -1319,15 +1319,16 @@ table.chart-table tbody th.sticky-col {
   align-items: center;
   gap: 6px;
 }
-.legend i {
-  width: 10px;
-  height: 3px;
-  border-radius: 2px;
-  display: inline-block;
+/* A series' colour and dash, in the legend and the tooltip (ADR 0114). */
+.series-swatch {
+  flex: none;
 }
-.recharts-cartesian-axis-tick text {
-  fill: var(--ink-faint);
-  font-size: 10.5px;
+/* 11 px --ink-soft: 5.32:1 light, 6.29:1 dark on --surface (ADR 0114). Recharts 3 draws
+   the tick labels in their own layer, outside .recharts-cartesian-axis-tick, so the rule
+   targets the label's own class (the old descendant rule matched nothing). */
+.recharts-cartesian-axis-tick-value {
+  fill: var(--ink-soft);
+  font-size: 11px;
 }
 .chart-tooltip {
   background: var(--surface);
@@ -1346,6 +1347,11 @@ table.chart-table tbody th.sticky-col {
   justify-content: space-between;
   gap: var(--s4);
   font-feature-settings: var(--num);
+}
+.chart-tooltip .tt-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .chart-tooltip .tt-total {
   margin-top: 4px;
@@ -1775,6 +1781,32 @@ a:focus-visible,
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--r-sm);
+}
+
+/* "Skip to content" (ADR 0114): off-screen until focused, then above the topbar. Fixed,
+   so it never takes a cell of the .shell grid. */
+.skip-link {
+  position: fixed;
+  top: var(--s2);
+  left: var(--s2);
+  z-index: 100;
+  padding: var(--s2) var(--s3);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transform: translateY(calc(-100% - var(--s4)));
+}
+.skip-link:focus {
+  transform: none;
+}
+/* Main takes focus only from the skip link; the page itself needs no ring. */
+main.page:focus {
+  outline: none;
 }
 
 /* ============ Phase-3 utility classes (extracted from inline styles) ============ */

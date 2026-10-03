@@ -163,12 +163,12 @@ describe("fmtCzkAxisValue", () => {
 describe("fmtCzkAxisTick", () => {
   it("appends compact unit suffix for millions", () => {
     const unit = pickCzkAxisUnit([28_730_000]);
-    expect(fmtCzkAxisTick(120_000_000, unit)).toBe("120 M");
+    expect(fmtCzkAxisTick(120_000_000, unit)).toBe("120\u00A0M");
   });
 
   it("appends compact unit suffix for thousands", () => {
     const unit = pickCzkAxisUnit([850_000]);
-    expect(fmtCzkAxisTick(800_000, unit)).toBe("800 tis.");
+    expect(fmtCzkAxisTick(800_000, unit)).toBe("800\u00A0tis.");
   });
 
   it("no suffix for plain Kč", () => {
@@ -178,7 +178,16 @@ describe("fmtCzkAxisTick", () => {
 
   it("handles negative values", () => {
     const unit = pickCzkAxisUnit([28_730_000]);
-    expect(fmtCzkAxisTick(-50_000_000, unit)).toBe("−50 M");
+    expect(fmtCzkAxisTick(-50_000_000, unit)).toBe("−50\u00A0M");
+  });
+
+  // A tick never wraps: the axis text breaks only at ASCII spaces (ADR 0114).
+  it("joins groups and the unit with non-breaking spaces", () => {
+    const thousands = pickCzkAxisUnit([999_999], "k");
+    expect(fmtCzkAxisTick(-300_000, thousands)).toBe("−300\u00A0k");
+    expect(fmtCzkAxisTick(1_000_000, thousands)).toBe("1\u00A0000\u00A0k");
+    const millions = pickCzkAxisUnit([1_200_000_000]);
+    expect(fmtCzkAxisTick(1_200_000_000, millions)).toBe("1\u00A0200\u00A0M");
   });
 });
 
@@ -187,7 +196,7 @@ describe("thousands axis unit per language (UX-034)", () => {
     const unit = pickCzkAxisUnit([850_000], "тыс.");
     expect(unit.shortLabel).toBe("тыс.");
     expect(unit.label).toBe("тыс. Kč");
-    expect(fmtCzkAxisTick(800_000, unit)).toBe("800 тыс.");
+    expect(fmtCzkAxisTick(800_000, unit)).toBe("800\u00A0тыс.");
   });
 
   it("leaves millions alone", () => {

@@ -14,7 +14,6 @@ import { exportWorkbookXlsx } from "../exportXlsx";
 import { compareWorkbook } from "../model/compareXlsx";
 import { GitCompare } from "lucide-react";
 import { ChartCard, CzkLines, PctLines } from "../components/charts";
-import { SERIES } from "../model/chartData";
 import type { Scenario } from "../../engine";
 import { useT } from "../hooks/useT";
 import {
@@ -22,13 +21,10 @@ import {
   compareFootnote,
   compareHint,
   compareKpiRows,
+  compareSeriesStyle,
   mergeCompareMetric,
   type CompareView,
 } from "../model/compare";
-import { at } from "../../lib/arrays";
-
-// Up to four lines per chart (Base + 3 picks); cycles if more are somehow selected.
-const PALETTE = [SERIES.petrol, SERIES.clay, SERIES.brass, SERIES.slate];
 
 export function CompareView({
   selected,
@@ -53,11 +49,11 @@ export function CompareView({
     );
   }
 
-  const colorOf = (i: number) => at(PALETTE, i % PALETTE.length);
+  // Colour and dash by position, so the lines read in greyscale too (ADR 0114).
   const series = results.map((r, i) => ({
     key: `s${i}`,
     name: r.name,
-    color: colorOf(i),
+    ...compareSeriesStyle(i),
   }));
 
   // Each scenario under the Nominal/Real lens, real by its own CPI (UX-055).
@@ -120,7 +116,7 @@ export function CompareView({
                     scope="col"
                     className="ct-head"
                     key={r.id}
-                    style={{ color: colorOf(i) }}
+                    style={{ color: compareSeriesStyle(i).color }}
                     title={reach}
                   >
                     {r.name}

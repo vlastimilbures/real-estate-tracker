@@ -17,9 +17,11 @@ import {
   compareFootnote,
   compareHint,
   compareKpiRows,
+  compareSeriesStyle,
   mergeCompareMetric,
   type CompareResult,
 } from "../compare";
+import { SERIES } from "../chartData";
 
 function result(id: string, overrides = {}): CompareResult {
   const assn = applyScenario(assumptions, overrides);
@@ -345,5 +347,22 @@ describe("Δ vs Base view (ADR 0097)", () => {
       sc.kpiCagrNominal,
       sc.kpiLeveredIrrNominal,
     ]);
+  });
+});
+
+// ADR 0114: compare lines differ by dash as well as colour, so they read in greyscale.
+describe("compareSeriesStyle", () => {
+  it("pairs each position with a colour and a dash, the first line solid", () => {
+    expect([0, 1, 2, 3].map((i) => compareSeriesStyle(i))).toEqual([
+      { color: SERIES.petrol, dash: undefined },
+      { color: SERIES.clay, dash: "6 3" },
+      { color: SERIES.brass, dash: "2 3" },
+      { color: SERIES.slate, dash: "8 3 2 3" },
+    ]);
+  });
+
+  it("cycles after four lines", () => {
+    expect(compareSeriesStyle(4)).toEqual(compareSeriesStyle(0));
+    expect(compareSeriesStyle(5)).toEqual(compareSeriesStyle(1));
   });
 });
