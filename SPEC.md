@@ -403,7 +403,8 @@ netCF_N + equity_N]` — acquisition outflows and refinance cash adjust the rele
 ## 6. CSV importer
 
 Per-entity CSV import (`src/import/csv.ts` + `src/import/csvImport.ts`). CSV is the only
-importer; the app has no dependency on any specific spreadsheet file.
+importer; the app has no dependency on any specific spreadsheet file. The user-facing guide,
+with examples, is [docs/csv-import.md](docs/csv-import.md).
 
 **Four importable entity types** (Assumptions are never imported — edited in the UI):
 
