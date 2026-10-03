@@ -34,7 +34,7 @@ import { fmtDate } from "../../lib/format";
 import { projectionSeries, projectionColumns } from "../model/projection";
 import { exportTableXlsx } from "../exportXlsx";
 import { slug } from "../../lib/slug";
-import { propertyTilesForAsOf } from "../model/dashboard";
+import { asOfBasis, asOfHint, propertyTilesForAsOf } from "../model/dashboard";
 import {
   amortizationColumns,
   loanWarningText,
@@ -129,6 +129,19 @@ export function PropertyDetail() {
     ? propertyTilesForAsOf(out.snapshot, series, out.asOf, mode, assumptions)
     : null;
   const chartRows = toChartRows(series);
+  // Picker hint by the same as-of rule as the tiles (ADR 0088).
+  const pickerHint = out
+    ? asOfHint(
+        t,
+        asOfBasis(
+          assumptions.baseDate,
+          out.asOf,
+          series,
+          asOf === null || asOf.getTime() === todayUtc().getTime(),
+        ),
+        assumptions.baseDate,
+      )
+    : null;
 
   const baseDate = assumptions.baseDate;
   // Loan checks for every block from the one in force onward (UX-054).
@@ -237,6 +250,7 @@ export function PropertyDetail() {
                 assumptions.baseDate,
                 assumptions.horizonYears,
               )}
+              hint={pickerHint}
             />
           </div>
 

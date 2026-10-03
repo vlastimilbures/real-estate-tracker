@@ -14,6 +14,7 @@ export function AsOfPicker({
   onChange,
   anchor,
   bounds,
+  hint,
 }: {
   value: Date | null;
   onChange: (date: Date | null) => void;
@@ -22,9 +23,12 @@ export function AsOfPicker({
   // Date the "+Ny" presets step from. Defaults to today; every caller uses the
   // default so presets always mean "N years from now", not from a stored date.
   anchor?: Date;
+  /** How the date maps to what the page shows (ADR 0088); none at Today. */
+  hint?: string | null;
 }) {
   const t = useT();
   const labelId = useId();
+  const hintId = useId();
   const today = todayUtc();
   const presetAnchor = anchor ?? today;
   const effective = value ?? today;
@@ -67,6 +71,7 @@ export function AsOfPicker({
         onChange={setDraft}
         onPick={commit}
         aria-labelledby={labelId}
+        aria-describedby={hint ? hintId : undefined}
         onBlur={(e) => commit(e.target.value)}
         onKeyDown={(e) =>
           e.key === "Enter" && commit((e.target as HTMLInputElement).value)
@@ -104,6 +109,11 @@ export function AsOfPicker({
           {t.common.plusYears(5)}
         </button>
       </div>
+      {hint && (
+        <span className="asof-hint" id={hintId} data-testid="asof-hint">
+          {hint}
+        </span>
+      )}
     </div>
   );
 }

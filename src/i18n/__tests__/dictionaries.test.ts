@@ -36,11 +36,13 @@ const render = (f: unknown, n: number) => String((f as Fn)(n, n, n));
 const kind = (v: unknown) =>
   typeof v === "function" ? `function/${(v as Fn).length}` : typeof v;
 
-/** Year ranges ("Yrs 1–n") hold a literal 1 that collides with the count 1 (ADR 0084). */
+/** Year ranges ("Yrs 1–n") hold a literal 1 that collides with the count 1 (ADR 0084);
+ *  so does the monthly hint's "÷ 12" (ADR 0088). */
 const RANGE_LABELS = new Set([
   "dashboard.kpiCumulativeNetCashFlow",
   "dashboard.kpiSumPrincipalRepaid",
   "dashboard.kpiSumPrincipalRepaidNominal",
+  "dashboard.monthlyHint",
 ]);
 
 /** Keys whose output changes form (not just the digit) across counts 1 / 2 / 5. */
@@ -179,7 +181,6 @@ describe("i18n dictionaries — plural forms", () => {
 
   it("every language inflects the same count strings (DR-111, UX-034)", () => {
     const counted = [
-      "dashboard.netWorthInYears",
       "properties.subtitle",
       "propertyDetail.yrs",
       "propertyDetail.draws",
@@ -188,11 +189,12 @@ describe("i18n dictionaries — plural forms", () => {
       "importPage.rowsReady",
       "importPage.errorsBadge",
     ];
-    // English writes the IRR foot as a compound ("25-yr"); Czech and Russian count years.
+    // English writes the horizon and the IRR foot as compounds ("25-yr"); Czech and
+    // Russian count years.
     const withIrrFoot = [
-      "dashboard.netWorthInYears",
+      "dashboard.netWorthInYear",
       "dashboard.irrFoot",
-      ...counted.slice(1),
+      ...counted,
     ];
     expect(countInflected("en")).toEqual(counted);
     expect(countInflected("ru")).toEqual(withIrrFoot);
@@ -202,19 +204,20 @@ describe("i18n dictionaries — plural forms", () => {
     );
   });
 
-  it("horizon years inflect in every language (ADR 0084)", () => {
-    const f = (l: Lang) => L[l].get("dashboard.netWorthInYears");
-    expect(render(f("en"), 1)).toBe("Net worth in 1 year");
-    expect([1, 2, 5].map((n) => render(f("cs"), n))).toEqual([
-      "Čisté jmění za 1 rok",
-      "Čisté jmění za 2 roky",
-      "Čisté jmění za 5 let",
+  it("horizon years inflect in every language (ADR 0084, ADR 0088)", () => {
+    const f = (l: Lang) => (n: number) =>
+      String((L[l].get("dashboard.netWorthInYear") as Fn)(2056, n));
+    expect(f("en")(1)).toBe("Net worth in 2056 (1-yr horizon)");
+    expect([1, 2, 5].map(f("cs"))).toEqual([
+      "Čisté jmění v roce 2056 (horizont 1 rok)",
+      "Čisté jmění v roce 2056 (horizont 2 roky)",
+      "Čisté jmění v roce 2056 (horizont 5 let)",
     ]);
-    expect([1, 2, 5, 21].map((n) => render(f("ru"), n))).toEqual([
-      "Чистые активы через 1 год",
-      "Чистые активы через 2 года",
-      "Чистые активы через 5 лет",
-      "Чистые активы через 21 год",
+    expect([1, 2, 5, 21].map(f("ru"))).toEqual([
+      "Чистые активы в 2056 г. (горизонт 1 год)",
+      "Чистые активы в 2056 г. (горизонт 2 года)",
+      "Чистые активы в 2056 г. (горизонт 5 лет)",
+      "Чистые активы в 2056 г. (горизонт 21 год)",
     ]);
     for (const l of LANGS) {
       for (const k of [

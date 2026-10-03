@@ -1,5 +1,5 @@
-// Pure presentation model for the Dashboard's "current monthly inflow / outflow" band.
-// Monthly = current-snapshot annual ÷ 12. Net is the baseline (== netCashFlow ÷ 12).
+// Pure presentation model for the Dashboard's as-of tiles and monthly inflow / outflow
+// band. Monthly = the tiles' annual ÷ 12. Net is the baseline (== netCashFlow ÷ 12).
 import type { Decimal } from "../../lib/money";
 import {
   cpiAt,
@@ -18,7 +18,7 @@ import type {
 import { fmtDate } from "../../lib/format";
 import type { Mode } from "./lens";
 import type { Dictionary } from "../../i18n";
-import type { SeriesRow } from "./projection";
+import { periodLabelLocalized, yearLabel, type SeriesRow } from "./projection";
 import { at } from "../../lib/arrays";
 
 export interface MonthlyFlow {
@@ -93,6 +93,101 @@ export function propertyTilesForAsOf(
       : snapshot;
   }
   return propertySnapshotAtYear(snapshot, at(series, n));
+}
+
+/**
+ * What the as-of tiles show (ADR 0088), by the same rule as `tilesForAsOf`: the projection
+ * year the date rounds to; else today's effective-dated snapshot; else the records in force
+ * on the date (under six months after the base date, or past the horizon).
+ */
+export type AsOfBasis =
+  | { kind: "today" }
+  | { kind: "projection"; year: number; calendarYear: number }
+  | { kind: "snapshot"; date: Date; beyondHorizon: boolean };
+
+export function asOfBasis(
+  baseDate: Date,
+  asOf: Date,
+  series: SeriesRow[],
+  isToday: boolean,
+): AsOfBasis {
+  const n = projectionYearForAsOf(baseDate, asOf);
+  if (n > 0 && n < series.length)
+    return {
+      kind: "projection",
+      year: n,
+      calendarYear: at(series, n).calendarYear,
+    };
+  if (isToday) return { kind: "today" };
+  return { kind: "snapshot", date: asOf, beyondHorizon: n >= series.length };
+}
+
+/** Calendar year of the last projection row ("Net worth in 2056"); as-of independent. */
+export function horizonEndYear(series: SeriesRow[]): number {
+  return at(series, series.length - 1).calendarYear;
+}
+
+/** "Y5 · 2031" and "Jul 2030 – Jun 2031", as the Projections table labels that row. */
+function yearAndPeriod(
+  t: Dictionary,
+  b: { year: number; calendarYear: number },
+  baseDate: Date,
+): [string, string] {
+  return [
+    yearLabel(t, b.year, b.calendarYear),
+    periodLabelLocalized(baseDate, b.year, t.monthsShort, t.projGrid.opening),
+  ];
+}
+
+/** Title + hint of the monthly cash-flow panel. */
+export function monthlyFlowLabels(
+  t: Dictionary,
+  basis: AsOfBasis,
+  baseDate: Date,
+  asOf: Date,
+): { title: string; hint: string } {
+  const d = t.dashboard;
+  if (basis.kind === "projection") {
+    const [year, period] = yearAndPeriod(t, basis, baseDate);
+    return {
+      title: d.monthlyEquivalentYear(year, period),
+      hint: d.monthlyHintProjection,
+    };
+  }
+  return {
+    title:
+      basis.kind === "today"
+        ? d.currentMonthlyCashFlow
+        : d.monthlyCashFlowOn(fmtDate(basis.date)),
+    hint: d.monthlyHint(fmtDate(asOf)),
+  };
+}
+
+/** Foot of the annual net cash flow tile. */
+export function netCashFlowFoot(t: Dictionary, basis: AsOfBasis): string {
+  const d = t.dashboard;
+  if (basis.kind === "today") return d.noiMinusDebtService;
+  if (basis.kind === "snapshot")
+    return d.noiMinusDebtServiceOn(fmtDate(basis.date));
+  return d.noiMinusDebtServiceYear(
+    yearLabel(t, basis.year, basis.calendarYear),
+  );
+}
+
+/** As-of picker hint: how the date maps to what is shown; none at today. */
+export function asOfHint(
+  t: Dictionary,
+  basis: AsOfBasis,
+  baseDate: Date,
+): string | null {
+  const c = t.common;
+  if (basis.kind === "today") return null;
+  if (basis.kind === "projection")
+    return c.asOfHintProjection(...yearAndPeriod(t, basis, baseDate));
+  const date = fmtDate(basis.date);
+  return basis.beyondHorizon
+    ? c.asOfHintBeyond(date)
+    : c.asOfHintSnapshot(date);
 }
 
 /**

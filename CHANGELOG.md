@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Dashboard and Property detail labels say what the tiles show. With a future As-of date
+  they name the projection year and its period ("Monthly equivalent — projection year
+  Y5 · 2031 (Jul 2030 – Jun 2031)") instead of "current" or "today's lease". The As-of picker
+  explains how the date maps to a projection year, or that past the horizon it shows the
+  records in force on that date. The horizon tile names its end year ("Net worth in 2056
+  (30-yr horizon)") (ADR 0088, #13).
 - Real lens: the net-worth multiple and the cumulative net cash flow are now computed in real
   terms (base-date Kč) on the Dashboard and in Scenario compare, instead of staying nominal.
   The cumulative cash flow deflates each year by its own CPI. The hero tile reads "×N from

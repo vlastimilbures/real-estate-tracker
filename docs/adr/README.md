@@ -112,6 +112,7 @@ Other IDs seen in code comments:
 | [0085](0085-properties-long-names.md)             | Properties list keeps its risk columns in view                                         |                                        |
 | [0086](0086-restore-int-bounds.md)                | Backup restore applies the whole-number bounds                                         |                                        |
 | [0087](0087-real-lens-multiple-cumulative-cf.md)  | Real lens: real net-worth multiple and cumulative cash flow                            |                                        |
+| [0088](0088-asof-basis-labels.md)                 | As-of labels name their basis                                                          |                                        |
 
 ### Judgment calls and open questions
 

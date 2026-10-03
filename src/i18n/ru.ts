@@ -43,6 +43,11 @@ export const ru: Dictionary = {
     all: "Все",
     addVerb: "Добавить",
     asOfLabel: "На дату",
+    asOfHintProjection: (year, period) =>
+      `Для будущих дат показан ближайший год прогноза (${year}, ${period})`,
+    asOfHintBeyond: (d) =>
+      `За горизонтом — показаны записи, действующие на ${d}, а не прогноз`,
+    asOfHintSnapshot: (d) => `Показаны записи, действующие на ${d}`,
     noPortfolioTitle: "Портфеля пока нет",
     noPortfolioBody:
       "Добавьте объект или импортируйте файлы CSV, чтобы начать.",
@@ -201,8 +206,8 @@ export const ru: Dictionary = {
     subFilter: (n, total) => `${n} из ${total} объектов`,
     asOf: (d) => `на ${d}`,
     netWorth: "Чистые активы",
-    netWorthInYears: (n) =>
-      `Чистые активы через ${n} ${ruPlural(n, ["год", "года", "лет"])}`,
+    netWorthInYear: (endYear, n) =>
+      `Чистые активы в ${endYear} г. (горизонт ${n} ${ruPlural(n, ["год", "года", "лет"])})`,
     assetsDebtEquity: (assets, debt) =>
       `Активы ${assets} · Долг ${debt} · Капитал в Kč`,
     realTodayKc: " · реально (Kč на базовую дату)",
@@ -224,8 +229,16 @@ export const ru: Dictionary = {
     grossYieldFoot: (v) => `Валовая доходность ${v}`,
     annualNetCashFlow: "Годовой чистый денежный поток",
     noiMinusDebtService: "NOI − обслуживание долга, сейчас",
+    noiMinusDebtServiceYear: (year) =>
+      `NOI − обслуживание долга, год прогноза ${year}`,
+    noiMinusDebtServiceOn: (d) => `NOI − обслуживание долга, на ${d}`,
     currentMonthlyCashFlow: "Текущий месячный денежный поток",
-    monthlyHint: "год ÷ 12, действующий сегодня договор аренды",
+    monthlyCashFlowOn: (d) => `Месячный денежный поток на ${d}`,
+    monthlyEquivalentYear: (year, period) =>
+      `Месячный эквивалент — год прогноза ${year} (${period})`,
+    monthlyHint: (d) =>
+      `годовой темп ÷ 12, договоры аренды, действующие на ${d}`,
+    monthlyHintProjection: "годовой прогноз ÷ 12",
     inflowLabel: "Приток · эффективная аренда",
     outflowLabel: "Отток · расходы + обслуживание долга",
     netCashFlowBaseline: "Чистый денежный поток · базовый",
@@ -337,7 +350,7 @@ export const ru: Dictionary = {
     colMarketValue: "Рыночная стоимость",
     leasesTitle: "Аренды",
     leasesHint:
-      "текущую аренду определяет договор, действующий на дату «На дату» (по умолчанию сегодня)",
+      "показанную аренду определяет договор, действующий на дату «На дату»",
     addLease: "аренду",
     colStart: "Начало",
     colEnd: "Конец",
