@@ -123,6 +123,10 @@ or import your own via CSV. Your data lives in
 `~/Library/Application Support/com.bures.realestate-tracker/` — see
 [Privacy & security](#privacy--security).
 
+**Before installing a new version,** export a backup (**Settings → Backup & Restore → Export
+backup…**). [Data safety & recovery](docs/data-safety.md) covers backups, restore and what to do
+if an upgrade fails.
+
 ## Current limits
 
 The app is a planning tool, and its figures are estimates. Returns are measured from the
@@ -235,6 +239,7 @@ Every check CI runs has a local command; the full list is in [CONTRIBUTING.md](C
   | Error log (rotating, 5 × 1 MB) | `~/Library/Logs/com.bures.realestate-tracker/app.log`                 |
 
   Files are readable only by your user (`0600`); they are not encrypted beyond FileVault.
+  How to back up and recover: [Data safety & recovery](docs/data-safety.md).
 
 Found a vulnerability? Please report it privately — see [SECURITY.md](SECURITY.md).
 
@@ -245,6 +250,7 @@ Found a vulnerability? Please report it privately — see [SECURITY.md](SECURITY
 | [SPEC.md](SPEC.md)                                     | Product and engine specification: domain model, formulas, screens |
 | [docs/adr/](docs/adr/README.md)                        | Architecture decision records                                     |
 | [docs/model-limitations.md](docs/model-limitations.md) | What the figures mean and what the model leaves out               |
+| [docs/data-safety.md](docs/data-safety.md)             | Backup, restore and recovery after a failed upgrade               |
 | [docs/roadmap.md](docs/roadmap.md)                     | Planned work and engineering backlog                              |
 | [docs/release.md](docs/release.md)                     | Building, signing, Gatekeeper, data locations                     |
 | [CONTRIBUTING.md](CONTRIBUTING.md)                     | Setup, checks, commit style, decision process                     |
