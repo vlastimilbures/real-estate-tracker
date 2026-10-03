@@ -67,9 +67,11 @@ export interface EngineValidationError {
   id?: string | undefined;
   /** Offending field, when the problem is in one field. */
   field?: string | undefined;
+  /** The item's position in a list field (prepayments, recasts) as given (ADR 0116). */
+  index?: number | undefined;
 }
 
-type Report = (code: ValidationCode, field?: string) => void;
+type Report = (code: ValidationCode, field?: string, index?: number) => void;
 
 const badDate = (d: Date | undefined) =>
   d !== undefined && Number.isNaN(d.getTime());
@@ -220,13 +222,11 @@ function checkEventDate(
   date: Date,
   b: MortgageBlock,
   end: Date | undefined,
-  field: string,
-  report: Report,
+  report: (code: ValidationCode) => void,
 ): boolean {
-  if (badDate(date)) report("INVALID_DATE", field);
-  else if (isOnOrBefore(date, b.startDate)) report("EVENT_BEFORE_START", field);
-  else if (end && isOnOrBefore(end, date))
-    report("EVENT_AFTER_SCHEDULE_END", field);
+  if (badDate(date)) report("INVALID_DATE");
+  else if (isOnOrBefore(date, b.startDate)) report("EVENT_BEFORE_START");
+  else if (end && isOnOrBefore(end, date)) report("EVENT_AFTER_SCHEDULE_END");
   else return true;
   return false;
 }
@@ -236,15 +236,14 @@ function checkPrepayments(
   end: Date | undefined,
   report: Report,
 ): void {
-  const field = "prepayments";
-  for (const p of b.prepayments ?? []) {
-    checkEventDate(p.date, b, end, field, report);
-    if (badNumber(p.amount)) report("NON_FINITE_NUMBER", field);
-    else if (!p.amount.greaterThan(ZERO))
-      report("NON_POSITIVE_PREPAYMENT", field);
-    if (badNumber(p.fee)) report("NON_FINITE_NUMBER", field);
-    else if (p.fee?.isNegative()) report("NEGATIVE_AMOUNT", field);
-  }
+  (b.prepayments ?? []).forEach((p, i) => {
+    const issue = (code: ValidationCode) => report(code, "prepayments", i);
+    checkEventDate(p.date, b, end, issue);
+    if (badNumber(p.amount)) issue("NON_FINITE_NUMBER");
+    else if (!p.amount.greaterThan(ZERO)) issue("NON_POSITIVE_PREPAYMENT");
+    if (badNumber(p.fee)) issue("NON_FINITE_NUMBER");
+    else if (p.fee?.isNegative()) issue("NEGATIVE_AMOUNT");
+  });
 }
 
 /** A recast maturity must leave at least the next payment, stay within the cap and,
@@ -253,30 +252,30 @@ function checkRecastMaturity(
   b: MortgageBlock,
   r: LoanRecast,
   term: number | undefined,
-  report: Report,
+  issue: (code: ValidationCode) => void,
 ): void {
   if (r.maturity === undefined || term === undefined) return;
-  if (badDate(r.maturity)) return report("INVALID_DATE", "recasts");
+  if (badDate(r.maturity)) return issue("INVALID_DATE");
   const last = paymentsDueBy(b, r.maturity);
   const next = paymentOnOrAfter(b, r.date) + 1;
   const beforeCompletion =
     b.completionDate != null &&
     isOnOrBefore(edate(b.startDate, last), b.completionDate);
   if (last < next || last > maxTermMonths(term) || beforeCompletion)
-    report("INVALID_RECAST_MATURITY", "recasts");
+    issue("INVALID_RECAST_MATURITY");
 }
 
 function checkRecastInstalment(
   b: MortgageBlock,
   r: LoanRecast,
-  report: Report,
+  issue: (code: ValidationCode) => void,
 ): void {
   if (r.instalment === undefined) return;
-  if (badNumber(r.instalment)) report("NON_FINITE_NUMBER", "recasts");
-  else if (!r.instalment.greaterThan(ZERO)) report("INVALID_RECAST", "recasts");
+  if (badNumber(r.instalment)) issue("NON_FINITE_NUMBER");
+  else if (!r.instalment.greaterThan(ZERO)) issue("INVALID_RECAST");
   // Before completion the payment is interest only: no instalment to set.
   if (b.completionDate && isOnOrBefore(r.date, b.completionDate))
-    report("RECAST_INSTALMENT_BEFORE_COMPLETION", "recasts");
+    issue("RECAST_INSTALMENT_BEFORE_COMPLETION");
 }
 
 function checkRecasts(
@@ -285,15 +284,14 @@ function checkRecasts(
   end: Date | undefined,
   report: Report,
 ): void {
-  for (const r of b.recasts ?? []) {
-    const dated = checkEventDate(r.date, b, end, "recasts", report);
-    if ((r.maturity === undefined) === (r.instalment === undefined)) {
-      report("INVALID_RECAST", "recasts");
-      continue;
-    }
-    checkRecastInstalment(b, r, report);
-    if (dated) checkRecastMaturity(b, r, term, report);
-  }
+  (b.recasts ?? []).forEach((r, i) => {
+    const issue = (code: ValidationCode) => report(code, "recasts", i);
+    const dated = checkEventDate(r.date, b, end, issue);
+    if ((r.maturity === undefined) === (r.instalment === undefined))
+      return issue("INVALID_RECAST");
+    checkRecastInstalment(b, r, issue);
+    if (dated) checkRecastMaturity(b, r, term, issue);
+  });
 }
 
 /** Prepayments and recasts (ADR 0109). */
@@ -555,7 +553,14 @@ function checkPortfolio(
 ): void {
   const ids = new Set(p.properties.map((x) => x.id));
   const on: ReporterFor = (entity, id, propertyId) => {
-    const report: Report = (code, field) => add({ code, entity, id, field });
+    const report: Report = (code, field, index) =>
+      add({
+        code,
+        entity,
+        id,
+        field,
+        ...(index === undefined ? {} : { index }),
+      });
     if (propertyId !== undefined && !ids.has(propertyId))
       report("ORPHAN_ROW", "propertyId");
     return report;
