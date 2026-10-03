@@ -136,18 +136,17 @@ export function writeErrorTexts(
   const seen = new Set<string>();
   const out: WriteErrorText[] = [];
   for (const err of e.errors) {
-    const text = {
-      message: t.inputRules[err.code],
-      field: formField(err.field),
-      index: err.index,
-    };
-    const key = `${text.field ?? ""}|${text.index ?? ""}|${text.message}`;
+    const message = t.inputRules[err.code];
+    const field = formField(err.field);
+    const key = `${field ?? ""}|${err.index ?? ""}|${message}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    if (!text.field) out.push({ message: text.message });
-    else if (text.index === undefined)
-      out.push({ message: text.message, field: text.field });
-    else out.push(text);
+    // Field and index only when present (tests compare whole objects).
+    out.push({
+      message,
+      ...(field && { field }),
+      ...(field && err.index !== undefined && { index: err.index }),
+    });
   }
   return out;
 }

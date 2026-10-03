@@ -5,6 +5,7 @@
 // is a position among the non-blank rows (`draftRowOf` maps it back).
 import { dateDraft, moneyDraft, parseDate, parseMoney } from "./formParse";
 import type {
+  Money,
   LoanRecast,
   MortgagePrepayment,
   PrepaymentEffect,
@@ -37,12 +38,11 @@ export const BLANK_ROW: Rows = {
   recasts: { date: "", mode: "maturity", value: "" },
 };
 
+type Row = PrepaymentRow | RecastRow;
+
 /** The rows of a list draft ("" ⇒ none). */
-export function readRows<K extends EventListKind>(
-  _kind: K,
-  draft: string,
-): Rows[K][] {
-  return draft === "" ? [] : (JSON.parse(draft) as Rows[K][]);
+export function readRows<R extends Row = Row>(draft: string): R[] {
+  return draft === "" ? [] : (JSON.parse(draft) as R[]);
 }
 
 /** A list draft: "" when there is no row, so an untouched empty list stays clean. */
@@ -84,21 +84,26 @@ const positive = (raw: string) => {
   return m !== null && m.greaterThan(0) ? m : null;
 };
 
-const isBlank = (row: PrepaymentRow | RecastRow) =>
+const isBlank = (row: Row) =>
   "amount" in row
     ? [row.date, row.amount, row.fee].every((v) => v.trim() === "")
     : [row.date, row.value].every((v) => v.trim() === "");
 
-function parsePrepayment(row: PrepaymentRow) {
-  const fee = row.fee.trim() === "" ? undefined : parseMoney(row.fee);
-  return {
-    date: parseDate(row.date),
-    amount: positive(row.amount),
-    fee: fee === undefined || (fee !== null && !fee.isNegative()) ? fee : null,
-  };
+/** An optional fee: undefined when blank, null when not an amount of 0 or more. */
+function parseFee(raw: string): Money | null | undefined {
+  if (raw.trim() === "") return undefined;
+  const fee = parseMoney(raw);
+  return fee?.isNegative() ? null : fee;
 }
 
-function parseRecast(row: RecastRow) {
+/** Each cell parsed; null where it does not parse. */
+function cells(row: Row): Record<string, unknown> {
+  if ("amount" in row)
+    return {
+      date: parseDate(row.date),
+      amount: positive(row.amount),
+      fee: parseFee(row.fee),
+    };
   return {
     date: parseDate(row.date),
     value: row.mode === "maturity" ? parseDate(row.value) : positive(row.value),
@@ -106,60 +111,55 @@ function parseRecast(row: RecastRow) {
 }
 
 /** The cells of a row that do not parse, in column order ([] for a blank row). */
-export function rowProblems<K extends EventListKind>(
-  kind: K,
-  row: Rows[K],
-): string[] {
+export function rowProblems(row: Row): string[] {
   if (isBlank(row)) return [];
-  const cells: Record<string, unknown> =
-    kind === "prepayments"
-      ? parsePrepayment(row as PrepaymentRow)
-      : parseRecast(row as RecastRow);
-  return Object.entries(cells)
+  return Object.entries(cells(row))
     .filter(([, v]) => v === null)
     .map(([k]) => k);
 }
 
-/** The prepayments of a draft in row order, or null when a non-blank row does not parse. */
-export function parsePrepaymentRows(
+function toPrepayment(row: PrepaymentRow): MortgagePrepayment | null {
+  const date = parseDate(row.date);
+  const amount = positive(row.amount);
+  const fee = parseFee(row.fee);
+  if (!date || !amount || fee === null) return null;
+  return { date, amount, effect: row.effect, ...(fee ? { fee } : {}) };
+}
+
+function toRecast(row: RecastRow): LoanRecast | null {
+  const date = parseDate(row.date);
+  if (!date) return null;
+  if (row.mode === "maturity") {
+    const maturity = parseDate(row.value);
+    return maturity ? { date, maturity } : null;
+  }
+  const instalment = positive(row.value);
+  return instalment ? { date, instalment } : null;
+}
+
+/** A list's events in row order, or null when a non-blank row does not parse. */
+function parseRows<R extends Row, E>(
   draft: string,
-): MortgagePrepayment[] | null {
-  const out: MortgagePrepayment[] = [];
-  for (const row of readRows("prepayments", draft)) {
+  toEvent: (row: R) => E | null,
+): E[] | null {
+  const out: E[] = [];
+  for (const row of readRows<R>(draft)) {
     if (isBlank(row)) continue;
-    const { date, amount, fee } = parsePrepayment(row);
-    if (!date || !amount || fee === null) return null;
-    out.push({ date, amount, effect: row.effect, ...(fee ? { fee } : {}) });
+    const e = toEvent(row);
+    if (!e) return null;
+    out.push(e);
   }
   return out;
 }
 
-/** The recasts of a draft in row order, or null when a non-blank row does not parse. */
-export function parseRecastRows(draft: string): LoanRecast[] | null {
-  const out: LoanRecast[] = [];
-  for (const row of readRows("recasts", draft)) {
-    if (isBlank(row)) continue;
-    const date = parseDate(row.date);
-    if (!date) return null;
-    if (row.mode === "maturity") {
-      const maturity = parseDate(row.value);
-      if (!maturity) return null;
-      out.push({ date, maturity });
-    } else {
-      const instalment = positive(row.value);
-      if (!instalment) return null;
-      out.push({ date, instalment });
-    }
-  }
-  return out;
-}
+export const parsePrepaymentRows = (draft: string) =>
+  parseRows(draft, toPrepayment);
+export const parseRecastRows = (draft: string) => parseRows(draft, toRecast);
 
 /** The draft row of the `index`-th non-blank row (an engine error's index), or null. */
 export function draftRowOf(draft: string, index: number): number | null {
-  const rows =
-    draft === "" ? [] : (JSON.parse(draft) as (PrepaymentRow | RecastRow)[]);
   let seen = -1;
-  for (const [i, row] of rows.entries()) {
+  for (const [i, row] of readRows(draft).entries()) {
     if (!isBlank(row) && ++seen === index) return i;
   }
   return null;

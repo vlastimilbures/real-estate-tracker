@@ -139,7 +139,7 @@ export function mortgageFromForm(
     loanTermYears: v.loanTermYears ?? undefined,
     interestRatePa: v.interestRatePa,
     monthlyInstalment: v.monthlyInstalment,
-    draws: v.draws && v.draws.length ? v.draws : undefined,
+    draws: nonEmpty(v.draws),
     completionDate: v.completionDate ?? undefined,
     contractMaturityDate:
       "contractMaturityDate" in v

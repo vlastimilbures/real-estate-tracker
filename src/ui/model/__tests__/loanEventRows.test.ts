@@ -58,7 +58,7 @@ describe("loan event rows", () => {
     expect(prepaymentsDraft(undefined)).toBe("");
     expect(recastsDraft([])).toBe("");
     expect(writeRows([])).toBe("");
-    expect(readRows("prepayments", "")).toEqual([]);
+    expect(readRows("")).toEqual([]);
     expect(parsePrepaymentRows("")).toEqual([]);
   });
 
@@ -75,16 +75,17 @@ describe("loan event rows", () => {
   });
 
   it("names the cells of a row that does not parse, and fails the list", () => {
-    expect(rowProblems("prepayments", pre())).toEqual([]);
-    expect(rowProblems("prepayments", blankPre)).toEqual([]);
-    expect(
-      rowProblems("prepayments", pre({ date: "31.02.2031", amount: "0" })),
-    ).toEqual(["date", "amount"]);
-    expect(rowProblems("prepayments", pre({ fee: "-1" }))).toEqual(["fee"]);
-    expect(rowProblems("recasts", rec({ value: "2045" }))).toEqual(["value"]);
-    expect(
-      rowProblems("recasts", rec({ mode: "instalment", value: "9 000" })),
-    ).toEqual([]);
+    expect(rowProblems(pre())).toEqual([]);
+    expect(rowProblems(blankPre)).toEqual([]);
+    expect(rowProblems(pre({ date: "31.02.2031", amount: "0" }))).toEqual([
+      "date",
+      "amount",
+    ]);
+    expect(rowProblems(pre({ fee: "-1" }))).toEqual(["fee"]);
+    expect(rowProblems(rec({ value: "2045" }))).toEqual(["value"]);
+    expect(rowProblems(rec({ mode: "instalment", value: "9 000" }))).toEqual(
+      [],
+    );
     expect(
       parsePrepaymentRows(writeRows([pre(), pre({ amount: "x" })])),
     ).toBeNull();

@@ -178,25 +178,17 @@ function LoanEventRows({
   const d = t.propertyDetail;
   const hint = t.forms.invalidHint;
   const helpId = useId();
-  const rows = readRows(kind, value);
+  const rows = readRows(value);
   const listError = errors[name];
   const set = (i: number, patch: Record<string, string>) =>
     onChange(writeRows(rows.map((r, j) => (j === i ? { ...r, ...patch } : r))));
-  // A row's unparseable cells, marked only once a save has failed on them.
-  const bad = rows.map((r) => (listError ? rowProblems(kind, r) : []));
-  const cell = (
-    i: number,
-    key: string,
-    cellLabel: string,
-    message: string,
-    control: ReactNode,
-  ) => (
-    <Field
-      label={cellLabel}
-      error={bad[i]?.includes(key) ? message : undefined}
-    >
-      {control}
-    </Field>
+  const money = (v: string, onCell: (v: string) => void) => (
+    <TextInput
+      value={v}
+      onChange={onCell}
+      suffix={currencySymbol()}
+      inputMode="decimal"
+    />
   );
   return (
     <fieldset
@@ -225,13 +217,10 @@ function LoanEventRows({
             : d.eventRecastRow(i + 1);
         const rowError = errors[`${name}.${i}`];
         const rowErrorId = `${helpId}-row${i}`;
-        const date = cell(
-          i,
-          "date",
-          d.eventDate,
-          hint.date,
-          <DateInput value={row.date} onChange={(v) => set(i, { date: v })} />,
-        );
+        // Unparseable cells are marked only once a save has failed on the list.
+        const bad = listError ? rowProblems(row) : [];
+        const err = (cell: string, message: string) =>
+          bad.includes(cell) ? message : undefined;
         return (
           <div
             key={i}
@@ -240,21 +229,20 @@ function LoanEventRows({
             aria-describedby={rowError ? rowErrorId : undefined}
             className={`event-row${rowError ? " invalid" : ""}`}
           >
+            <Field label={d.eventDate} error={err("date", hint.date)}>
+              <DateInput
+                value={row.date}
+                onChange={(v) => set(i, { date: v })}
+              />
+            </Field>
             {"amount" in row ? (
               <>
-                {date}
-                {cell(
-                  i,
-                  "amount",
-                  d.eventAmount,
-                  t.forms.positiveAmount,
-                  <TextInput
-                    value={row.amount}
-                    onChange={(v) => set(i, { amount: v })}
-                    suffix={currencySymbol()}
-                    inputMode="decimal"
-                  />,
-                )}
+                <Field
+                  label={d.eventAmount}
+                  error={err("amount", t.forms.positiveAmount)}
+                >
+                  {money(row.amount, (v) => set(i, { amount: v }))}
+                </Field>
                 <Field label={d.eventEffect}>
                   <SelectInput
                     value={row.effect}
@@ -268,22 +256,12 @@ function LoanEventRows({
                     ]}
                   />
                 </Field>
-                {cell(
-                  i,
-                  "fee",
-                  d.eventFee,
-                  hint.money,
-                  <TextInput
-                    value={row.fee}
-                    onChange={(v) => set(i, { fee: v })}
-                    suffix={currencySymbol()}
-                    inputMode="decimal"
-                  />,
-                )}
+                <Field label={d.eventFee} error={err("fee", hint.money)}>
+                  {money(row.fee, (v) => set(i, { fee: v }))}
+                </Field>
               </>
             ) : (
               <>
-                {date}
                 <Field label={d.eventMode}>
                   <SelectInput
                     value={row.mode}
@@ -294,29 +272,24 @@ function LoanEventRows({
                     ]}
                   />
                 </Field>
-                {row.mode === "maturity"
-                  ? cell(
-                      i,
-                      "value",
-                      d.eventMaturity,
-                      hint.date,
-                      <DateInput
-                        value={row.value}
-                        onChange={(v) => set(i, { value: v })}
-                      />,
-                    )
-                  : cell(
-                      i,
-                      "value",
-                      d.eventInstalment,
-                      t.forms.positiveAmount,
-                      <TextInput
-                        value={row.value}
-                        onChange={(v) => set(i, { value: v })}
-                        suffix={currencySymbol()}
-                        inputMode="decimal"
-                      />,
-                    )}
+                {row.mode === "maturity" ? (
+                  <Field
+                    label={d.eventMaturity}
+                    error={err("value", hint.date)}
+                  >
+                    <DateInput
+                      value={row.value}
+                      onChange={(v) => set(i, { value: v })}
+                    />
+                  </Field>
+                ) : (
+                  <Field
+                    label={d.eventInstalment}
+                    error={err("value", t.forms.positiveAmount)}
+                  >
+                    {money(row.value, (v) => set(i, { value: v }))}
+                  </Field>
+                )}
               </>
             )}
             <Button

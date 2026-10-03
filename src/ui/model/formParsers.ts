@@ -1,5 +1,5 @@
-// The parser of each form field kind. Apart from formParse.ts because the loan event
-// lists (loanEventRows.ts) build on formParse's own parsers.
+// The parser of each form field kind. A separate file to avoid a formParse ↔
+// loanEventRows import cycle (depcruise): the loan event lists build on formParse.
 import {
   parseDate,
   parseDraws,
