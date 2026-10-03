@@ -5,6 +5,7 @@ import {
   edate,
   impliedMaturity,
   isoDate,
+  money,
   portfolioOutputs,
   type Portfolio,
 } from "../../../engine";
@@ -222,5 +223,55 @@ describe("financingLabels (ADR 0103)", () => {
     expect(financingLabels(ru, "nominal", "3", 30).resettingWithin).toBe(
       "Долг со сменой ставки в течение 3 лет",
     );
+  });
+});
+
+// ADR 0116 §9: interest saved by prepayments, total plus each property, nominal.
+describe("financingPanel interest saved (ADR 0116)", () => {
+  const prepaid = (ids: string[]): Portfolio => ({
+    ...portfolio,
+    mortgages: portfolio.mortgages.map((m) =>
+      ids.includes(m.propertyId)
+        ? {
+            ...m,
+            prepayments: [
+              {
+                date: isoDate("2029-01-15"),
+                amount: money(300000),
+                effect: "lowerInstalment" as const,
+              },
+            ],
+          }
+        : m,
+    ),
+  });
+  const panel = (p: Portfolio, mode: "nominal" | "real" = "nominal") => {
+    const o = run(p);
+    return { m: financingPanel(o.financing, p, o.kpis, mode, "3", en), o };
+  };
+
+  it("is null when no property has a prepayment", () => {
+    expect(panel(portfolio).m.interestSaved).toBeNull();
+  });
+
+  it("is the sum of the properties' figures, largest first, the same in both lenses", () => {
+    const p = prepaid(["javorova", "lipova"]);
+    const { m, o } = panel(p);
+    const of = (id: string) =>
+      o.financing.loans.find((l) => l.propertyId === id)!.interestSaved!;
+    const rows = m.interestSaved!.properties;
+    expect(rows.map((r) => r.propertyId).sort()).toEqual([
+      "javorova",
+      "lipova",
+    ]);
+    expect(rows[0]!.amount.greaterThanOrEqualTo(rows[1]!.amount)).toBe(true);
+    expect(rows.find((r) => r.propertyId === "lipova")).toMatchObject({
+      propertyName: "Byt Lipova",
+      amount: of("lipova"),
+    });
+    expect(m.interestSaved!.total.toFixed(6)).toBe(
+      of("javorova").plus(of("lipova")).toFixed(6),
+    );
+    expect(panel(p, "real").m.interestSaved).toEqual(m.interestSaved);
   });
 });

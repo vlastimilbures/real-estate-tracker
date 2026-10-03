@@ -114,10 +114,35 @@ export function FinancingPanel({
               k: labels.totalInterest,
               v: <Money value={m.totalInterest} parens={false} />,
             },
+            ...(m.interestSaved
+              ? [
+                  {
+                    k: d.financingInterestSaved,
+                    v: <Money value={m.interestSaved.total} parens={false} />,
+                  },
+                ]
+              : []),
           ]}
         />
       ) : (
         <p className="panel-note">{d.financingNoLoans}</p>
+      )}
+      {m.interestSaved && (
+        <details>
+          <summary>{d.financingInterestSavedByProperty}</summary>
+          <StatList
+            rows={m.interestSaved.properties.map((r) => ({
+              k: (
+                <PropertyLink
+                  id={r.propertyId}
+                  name={r.propertyName}
+                  onOpen={onOpenProperty}
+                />
+              ),
+              v: <Money value={r.amount} parens={false} />,
+            }))}
+          />
+        </details>
       )}
       <h4 className="panel-subhead">{d.financingUpcoming}</h4>
       {m.events.length > 0 ? (

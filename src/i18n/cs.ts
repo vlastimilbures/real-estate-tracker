@@ -317,6 +317,8 @@ export const cs: Dictionary = {
     financingWindowOption: (n) => `${n} r.`,
     financingTotalInterest: (n) => `Úroky celkem (roky 1–${n})`,
     financingTotalInterestReal: (n) => `Úroky celkem (roky 1–${n}, reálně)`,
+    financingInterestSaved: "Úrok ušetřený mimořádnými splátkami (nominálně)",
+    financingInterestSavedByProperty: "Podle nemovitosti",
     financingUpcoming: "Příštích 12 měsíců",
     financingNoEvents: "Model v příštích 12 měsících nic neočekává.",
     financingMoreEvents: (n) => `+ dalších ${n}`,

@@ -323,6 +323,9 @@ export const ru: Dictionary = {
     financingWindowOption: (n) => `${n} г.`,
     financingTotalInterest: (n) => `Проценты всего (годы 1–${n})`,
     financingTotalInterestReal: (n) => `Проценты всего (годы 1–${n}, реально)`,
+    financingInterestSaved:
+      "Сэкономлено процентов досрочными платежами (номинально)",
+    financingInterestSavedByProperty: "По объектам",
     financingUpcoming: "Ближайшие 12 месяцев",
     financingNoEvents: "По модели в ближайшие 12 месяцев ничего не ожидается.",
     financingMoreEvents: (n) => `+ ещё ${n}`,

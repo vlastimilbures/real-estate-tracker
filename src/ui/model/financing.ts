@@ -1,7 +1,8 @@
 // The Dashboard "Financing & upcoming" panel (ADR 0103, #31). Pure shaping of the engine's
 // financing exposure: the next reset across the portfolio, debt resetting in the chosen
-// window, total interest of the lens and the next 12 months' events. Balances stay
-// nominal in the real lens (labelled so); total interest follows the lens.
+// window, total interest of the lens, interest saved by prepayments (ADR 0116) and the
+// next 12 months' events. Balances and interest saved stay nominal in the real lens
+// (labelled so); total interest follows the lens.
 import { debtResettingWithin, upcomingEvents } from "../../engine";
 import type {
   FinancingEventKind,
@@ -10,7 +11,7 @@ import type {
   PortfolioKPIs,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
-import type { Decimal } from "../../lib/money";
+import { ZERO, type Decimal } from "../../lib/money";
 import { fmtDate } from "../../lib/format";
 import type { Mode } from "./lens";
 
@@ -41,6 +42,11 @@ export interface FinancingPanelModel {
   } | null;
   resetting: { amount: Decimal; loans: number };
   totalInterest: Decimal;
+  /** Null when no property has a prepayment; properties largest first. */
+  interestSaved: {
+    total: Decimal;
+    properties: { propertyId: string; propertyName: string; amount: Decimal }[];
+  } | null;
   events: FinancingEventRow[];
   moreEvents: number;
 }
@@ -74,6 +80,19 @@ export function financingPanel(
     .filter((r) => r.status === "upcoming")
     .sort((a, b) => a.fixationEnd.getTime() - b.fixationEnd.getTime())[0];
   const events = upcomingEvents(portfolio, fx, EVENT_MONTHS);
+  const saved = fx.loans
+    .flatMap((l) =>
+      l.interestSaved
+        ? [
+            {
+              propertyId: l.propertyId,
+              propertyName: name(l.propertyId),
+              amount: l.interestSaved,
+            },
+          ]
+        : [],
+    )
+    .sort((a, b) => b.amount.comparedTo(a.amount));
   return {
     hasLoans: fx.loans.length > 0,
     nextReset: next
@@ -87,6 +106,13 @@ export function financingPanel(
     resetting: debtResettingWithin(fx, Number(span)),
     totalInterest:
       mode === "real" ? kpis.totalInterestReal : kpis.totalInterest,
+    interestSaved:
+      saved.length > 0
+        ? {
+            total: saved.reduce((sum, r) => sum.plus(r.amount), ZERO),
+            properties: saved,
+          }
+        : null,
     events: events.slice(0, MAX_EVENTS).map((e) => ({
       date: fmtDate(e.date),
       propertyId: e.propertyId,
