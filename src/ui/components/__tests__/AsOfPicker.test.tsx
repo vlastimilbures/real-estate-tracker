@@ -61,6 +61,24 @@ describe("AsOfPicker (UX-059)", () => {
     ).toBe(el.id);
   });
 
+  it("the text follows a value set from outside", () => {
+    const { rerender } = render(
+      <AsOfPicker value={null} onChange={vi.fn()} bounds={bounds} />,
+    );
+    const input = screen.getByTestId<HTMLInputElement>("asof-input");
+    expect(input.value).toBe("29.02.2028");
+    rerender(
+      <AsOfPicker
+        value={new Date(Date.UTC(2030, 5, 15))}
+        onChange={vi.fn()}
+        bounds={bounds}
+      />,
+    );
+    expect(input.value).toBe("15.06.2030");
+    rerender(<AsOfPicker value={null} onChange={vi.fn()} bounds={bounds} />);
+    expect(input.value).toBe("29.02.2028");
+  });
+
   it("renders no hint when none is given", () => {
     render(<AsOfPicker value={null} onChange={vi.fn()} bounds={bounds} />);
     expect(screen.queryByTestId("asof-hint")).toBeNull();
