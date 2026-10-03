@@ -136,9 +136,21 @@ export function Dashboard() {
 
       <MonthlyFlowPanel flow={flow} />
 
-      <TrajectoryCharts mode={mode} rows={rows} eqChange={eqChange} />
+      <TrajectoryCharts
+        mode={mode}
+        rows={rows}
+        eqChange={eqChange}
+        horizonYears={assumptions.horizonYears}
+      />
 
-      <KpiListPanel s={s} kpis={kpis} mode={mode} horizon={horizon} irr={irr} />
+      <KpiListPanel
+        s={s}
+        kpis={kpis}
+        mode={mode}
+        horizon={horizon}
+        horizonYears={assumptions.horizonYears}
+        irr={irr}
+      />
     </AppShell>
   );
 }

@@ -51,6 +51,8 @@ describe("Property detail with invalid stored data (UX-056)", () => {
     expect(screen.getByText(en.propertyDetail.mortgagesTitle)).toBeTruthy();
     expect(screen.getByText(en.propertyDetail.valuationsTitle)).toBeTruthy();
     // No figures from the engine.
-    expect(screen.queryByText(en.propertyDetail.projectionTitle)).toBeNull();
+    expect(
+      screen.queryByText(en.propertyDetail.projectionTitle(30)),
+    ).toBeNull();
   });
 });

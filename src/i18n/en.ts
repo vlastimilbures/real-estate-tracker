@@ -218,7 +218,8 @@ export const en = {
     subFilter: (n: number, total: number) => `${n} of ${total} properties`,
     asOf: (d: string) => `as of ${d}`,
     netWorth: "Net worth",
-    netWorthInYears: (n: number) => `Net worth in ${n} years`,
+    netWorthInYears: (n: number) =>
+      `Net worth in ${n} ${enPlural(n, ["year", "years"])}`,
     assetsDebtEquity: (assets: string, debt: string) =>
       `Assets ${assets} · Debt ${debt} · Equity in Kč`,
     realTodayKc: " · real (base-date Kč)",
@@ -244,7 +245,7 @@ export const en = {
     inflowLabel: "Inflow · effective rent",
     outflowLabel: "Outflow · costs + debt service",
     netCashFlowBaseline: "Net cash flow · baseline",
-    trajectory: "30-year trajectory",
+    trajectory: (n: number) => `${n}-year trajectory`,
     realTerms: "Real terms (base-date Kč)",
     nominalKc: "Nominal Kč",
     chartValueVsDebtVsEquity: "Value vs debt vs equity",
@@ -275,10 +276,11 @@ export const en = {
     kpiNetWorthMultiple: "Net-worth multiple",
     kpiNetWorthCagr: "Net-worth CAGR",
     kpiLeveredIrr: "Levered IRR",
-    kpiCumulativeNetCashFlow: "Cumulative net cash flow (Yrs 1–30)",
+    kpiCumulativeNetCashFlow: (n: number) =>
+      `Cumulative net cash flow (Yrs 1–${n})`,
     kpiFirstCfPositiveYear: "First cash-flow-positive year",
     kpiDebtFullyRepaid: "Debt fully repaid",
-    kpiSumPrincipalRepaid: "Σ principal repaid (Yrs 1–30)",
+    kpiSumPrincipalRepaid: (n: number) => `Σ principal repaid (Yrs 1–${n})`,
     kpiWeightedAvgRate: "Weighted-avg interest rate",
   },
 
@@ -409,7 +411,7 @@ export const en = {
     saveHoldingCosts: "Save holding costs",
     holdingCostsSaved: "Holding costs saved",
     // Projection + amortization
-    projectionTitle: "30-year projection",
+    projectionTitle: (n: number) => `${n}-year projection`,
     amortizationWarn:
       "The monthly instalment will not repay this loan by the end of its term.",
     loanFrom: (date: string) => `Loan from ${date}:`,
@@ -781,7 +783,7 @@ export const en = {
 
     appTitle: "What this app does",
     appBody:
-      "Track your rental apartments in one place: current value, debt and equity, rent, holding costs and cash flow. It projects 30 years of nominal and real outcomes, surfaces KPIs like LTV, DSCR, yields and IRR, and lets you stress-test the portfolio with what-if scenarios.",
+      "Track your rental apartments in one place: current value, debt and equity, rent, holding costs and cash flow. It projects nominal and real outcomes over your chosen horizon (30 years by default), surfaces KPIs like LTV, DSCR, yields and IRR, and lets you stress-test the portfolio with what-if scenarios.",
 
     privacyTitle: "Private by design",
     privacyBody:
@@ -842,10 +844,10 @@ export const en = {
     mortgagesProse2Reamortizes: "re-amortizes",
     mortgagesProse2Post:
       " to clear the remaining balance over the remaining term, so the payment can step up or down at that date.",
-    projectionTitle: "30-year projection",
+    projectionTitle: "Projection to the horizon",
     projectionHint: "Rolling the snapshot forward",
     projectionProse1:
-      "Every input is grown forward, year by year, to the horizon:",
+      "Every input is grown forward, year by year, to the horizon (30 years by default, set in Settings → Assumptions):",
     projectionProse2:
       "A property or lease starting mid-year is pro-rated for that first year. Built-in check: total principal repaid over the horizon must exactly equal the starting debt — the loan is fully paid off, never more, never less. Outputs include the first cash-flow-positive year and the debt-free year.",
     nominalRealTitle: "Nominal vs Real",

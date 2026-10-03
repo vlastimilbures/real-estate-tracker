@@ -197,13 +197,15 @@ export const cs: Dictionary = {
     subFilter: (n, total) => `${n} z ${total} nemovitostí`,
     asOf: (d) => `k ${d}`,
     netWorth: "Čisté jmění",
-    netWorthInYears: (n) => `Čisté jmění za ${n} let`,
+    netWorthInYears: (n) =>
+      `Čisté jmění za ${n} ${csPlural(n, ["rok", "roky", "let"])}`,
     assetsDebtEquity: (assets, debt) =>
       `Aktiva ${assets} · Dluh ${debt} · Kapitál v Kč`,
     realTodayKc: " · reálně (Kč k základnímu datu)",
     multipleTodayMode: (mult, mode) => `${mult} dneška · ${mode}`,
     leveredIrr: "Pákové IRR",
-    irrFoot: (n, mode) => `${n} let · po dluhu · ${mode}`,
+    irrFoot: (n, mode) =>
+      `${n} ${csPlural(n, ["rok", "roky", "let"])} · po dluhu · ${mode}`,
     portfolioLtv: "LTV portfolia",
     badgeConservative: "Konzervativní",
     badgeModerate: "Střední",
@@ -222,7 +224,7 @@ export const cs: Dictionary = {
     inflowLabel: "Příjem · efektivní nájem",
     outflowLabel: "Výdaj · náklady + dluhová služba",
     netCashFlowBaseline: "Čistý cash flow · základ",
-    trajectory: "30letá trajektorie",
+    trajectory: (n) => `${n}letá trajektorie`,
     realTerms: "Reálné hodnoty (Kč k základnímu datu)",
     nominalKc: "Nominální Kč",
     chartValueVsDebtVsEquity: "Hodnota vs dluh vs kapitál",
@@ -253,10 +255,11 @@ export const cs: Dictionary = {
     kpiNetWorthMultiple: "Násobek čistého jmění",
     kpiNetWorthCagr: "CAGR čistého jmění",
     kpiLeveredIrr: "Pákové IRR",
-    kpiCumulativeNetCashFlow: "Kumulativní čistý cash flow (roky 1–30)",
+    kpiCumulativeNetCashFlow: (n) =>
+      `Kumulativní čistý cash flow (roky 1–${n})`,
     kpiFirstCfPositiveYear: "První rok s kladným cash flow",
     kpiDebtFullyRepaid: "Dluh plně splacen",
-    kpiSumPrincipalRepaid: "Σ splacené jistiny (roky 1–30)",
+    kpiSumPrincipalRepaid: (n) => `Σ splacené jistiny (roky 1–${n})`,
     kpiWeightedAvgRate: "Vážená průměrná úroková sazba",
   },
 
@@ -383,7 +386,7 @@ export const cs: Dictionary = {
     fieldMaintPct: "Údržba (% nájmu)",
     saveHoldingCosts: "Uložit náklady na držbu",
     holdingCostsSaved: "Náklady na držbu uloženy",
-    projectionTitle: "30letá projekce",
+    projectionTitle: (n) => `${n}letá projekce`,
     amortizationWarn:
       "Měsíční splátka tento úvěr do konce doby splatnosti nesplatí.",
     loanFrom: (date) => `Úvěr od ${date}:`,
@@ -746,7 +749,7 @@ export const cs: Dictionary = {
 
     appTitle: "Co aplikace umí",
     appBody:
-      "Sledujte své nájemní byty na jednom místě: aktuální hodnotu, dluh a vlastní kapitál, nájem, provozní náklady a cash flow. Aplikace promítá 30 let nominálních i reálných výsledků, ukazuje ukazatele jako LTV, DSCR, výnosy a IRR a umožňuje zátěžové testy portfolia pomocí scénářů co-kdyby.",
+      "Sledujte své nájemní byty na jednom místě: aktuální hodnotu, dluh a vlastní kapitál, nájem, provozní náklady a cash flow. Aplikace promítá nominální i reálné výsledky do zvoleného horizontu (výchozí je 30 let), ukazuje ukazatele jako LTV, DSCR, výnosy a IRR a umožňuje zátěžové testy portfolia pomocí scénářů co-kdyby.",
 
     privacyTitle: "Soukromí na prvním místě",
     privacyBody:
@@ -807,9 +810,10 @@ export const cs: Dictionary = {
     mortgagesProse2Reamortizes: "znovu umoří",
     mortgagesProse2Post:
       ", aby splatila zbývající zůstatek za zbývající dobu, takže se platba k tomu datu může zvýšit nebo snížit.",
-    projectionTitle: "30letá projekce",
+    projectionTitle: "Projekce do horizontu",
     projectionHint: "Posunutí snímku do budoucna",
-    projectionProse1: "Každý vstup roste vpřed, rok po roce, až k horizontu:",
+    projectionProse1:
+      "Každý vstup roste vpřed, rok po roce, až k horizontu (výchozí je 30 let, nastavíte v Nastavení → Předpoklady):",
     projectionProse2:
       "Nemovitost nebo nájem začínající uprostřed roku se za první rok poměrně rozpočítá. Zabudovaná kontrola: součet splacené jistiny za celý horizont se musí přesně rovnat počátečnímu dluhu — úvěr je plně splacen, nikdy víc, nikdy míň. Výstupy zahrnují první rok s kladným cash flow a rok bez dluhu.",
     nominalRealTitle: "Nominální vs reálné",
