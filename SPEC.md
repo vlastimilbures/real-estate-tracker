@@ -1,5 +1,8 @@
 # Real Estate Portfolio App — Specification
 
+Describes the behaviour of the current release; planned work lives in
+[`docs/roadmap.md`](docs/roadmap.md).
+
 Decisions that shaped a rule are cited as `ADR nnnn` (see `docs/adr/`). Parity targets and the
 sample portfolio live in `.claude/rules/engine-parity.md`.
 
@@ -124,6 +127,14 @@ cost shares and value haircut 0–1; shock durations whole years ≥ 0; horizon 
 ≥ 1; growth, indexation and inflation may be negative (finite only). The form, the CSV
 importer and backup restore reject the same rows with a translated message (ADR 0037).
 
+**Whole-number bounds.** On top of the engine rules, the forms and the CSV importer bound
+the whole-number fields they take (ADR 0075, ADR 0076; `src/lib/intRanges.ts`): projection
+horizon 1–100, fixation 0–50 years, loan term 1–50 years, property size 1–10 000 m². The
+engine (`HORIZON_NOT_POSITIVE`, `INVALID_TERM`) and the database CHECK constraints have no
+upper bound, and backup restore does not yet apply these ranges, so a restored backup can
+still bring in, for example, a horizon above 100. Restore will reject out-of-range values
+like the form and CSV do (#38).
+
 ### 4.2 Derived per-mortgage-block values
 
 - `fixationEnd = startDate + fixationYears*12 months` (EDATE).
@@ -153,13 +164,23 @@ raises `ASOF_BEFORE_BASEDATE` (ADR 0019): earlier dates are reached by moving th
 start in Settings → Assumptions. The UI's **As-of** picker is bounded to
 `[baseDate, baseDate + horizonYears]`, defaults to `max(today, baseDate)` and clamps a stale
 value after a baseDate change. Today's view is the effective-dated snapshot; a future as-of
-date shows the matching projection-year row on both Dashboard and Property detail (D-62).
+date shows a projection-year row on both Dashboard and Property detail (D-62), so the tiles
+agree with the charts. The row is the **nearest whole year** on the baseDate grid:
+`n = round(months(baseDate, asOf) / 12)` in whole months. With baseDate 1 Jan 2026, an
+as-of of 1 Aug 2026 (7 months) shows year 1 and 1 Jul 2028 (30 months) shows year 3. When
+`n` is 0 (as-of less than six months after baseDate), or the date rounds past the last
+projected year, the tiles fall back to the effective-dated snapshot at `asOf` (deflated by
+the CPI index under the Real lens) (`src/ui/model/dashboard.ts` `projectionYearForAsOf`,
+`tilesForAsOf`).
 
 Selectors follow a consistent rule: "record in force at `asOf`" = latest `startDate/validFrom
-≤ asOf` whose optional `endDate/validTo` is blank or `≥ asOf`. If nothing is in force yet,
-the nearest upcoming record is used as a fallback (so year-0 lines up correctly with the
-projection even before the first lease or valuation date). A one-day gap between leases is
-rent-free.
+≤ asOf` whose optional `endDate/validTo` is blank or `≥ asOf`. For **valuations**, if
+nothing is in force yet, the nearest upcoming record is used as a fallback (so year 0 lines
+up with the projection even before the first valuation date). **Leases** have no such
+fallback (DR-045): snapshot rent is the contractual monthly rent of the lease in force at
+`asOf` × 12, unindexed, and 0 when no lease is in force — before the first lease, in a gap
+between leases (a one-day gap is rent-free) and after the last lease's end date. The
+projection treats rent differently (§4.5).
 
 Derived per-property values:
 
@@ -270,7 +291,8 @@ appreciation; rent index `idx` likewise):
   snapshot, ADR 0032); for a baseDate anchor this is `V0 * (1+g)^t`. A
   `valueShock { pct, atYear }` permanently reduces the value from year `atYear` onward
   (growth resumes off the lower base).
-- `rentMonthly_t = rent0 * (1+idx)^t`; `gross_t = ×12`; `effective_t = ×(1−vacancy)`
+- `gross_t` = Σ of the year's monthly rents, lease by lease (see **Projected rent** below);
+  `effective_t = gross_t × (1−vacancy)`
 - `holding_t = fixed0 * CPI_t + (mgmtPct+maintPct) * gross_t`, where `CPI_t` is the
   cumulative per-year index (honours any `inflationShock`: spike, then revert).
 - `NOI_t = effective_t − holding_t`
@@ -283,6 +305,40 @@ appreciation; rent index `idx` likewise):
 - Portfolio = Σ across active properties; ratios from totals.
 - **Real terms**: `real_t = nominal_t / CPI_t` (deflate to base-date money with the same
   cumulative index, ADR 0023). LTV and DSCR are ratios — identical nominal and real.
+
+**Projected rent** follows the leases month by month (ADR 0080; `src/engine/projections.ts`
+`buildRentPlan`, `computeRentAndCosts`). Projection year _t_ covers grid months
+`12(t−1)+1 … 12t`; grid month _m_ is dated `EDATE(baseDate, m)`.
+
+- Each grid month from the basis date on (baseDate, or the purchase date of a property bought
+  later) takes the rent of the lease in force on its grid date (§4.3 rule). No lease in force
+  ⇒ no rent that month: months before the first lease and gaps between leases earn nothing.
+- The **last lease** (latest start date) keeps renting past its end date — it is treated as
+  renewed — unless it ended before the basis date. Only a gap between two leases is empty.
+- Each lease is indexed from its own turn-on year:
+  `monthly_t = monthlyRent × (1+idx)^(t − t₀)`, where `t₀` = 0 for a lease in force at the
+  basis date, else the projection year whose slice contains the lease's start (its first
+  grid month on/after the start date).
+- `gross_t` = Σ over the year's 12 grid months of that month's `monthly_t`.
+
+_Example_ (baseDate 1 Jan 2026, `idx` = 3 %, vacancy ignored): lease A 20 000 Kč/month,
+started 2025, ends 30 Jun 2026; lease B 22 000 Kč/month runs 1 Aug 2026 – 31 Jul 2027 and
+is the last lease. Year 1's grid dates are 1 Feb 2026 … 1 Jan 2027.
+
+| Grid dates (year 1)     | Lease in force | Months | `t₀` | Rent                            |
+| ----------------------- | -------------- | -----: | ---: | ------------------------------- |
+| 1 Feb – 1 Jun 2026      | A              |      5 |    0 | 5 × 20 000 × 1.03¹ = 103 000 Kč |
+| 1 Jul 2026              | — (gap)        |      1 |    — | 0 Kč                            |
+| 1 Aug 2026 – 1 Jan 2027 | B              |      6 |    1 | 6 × 22 000 × 1.03⁰ = 132 000 Kč |
+| **Year 1 gross**        |                |     12 |      | **235 000 Kč**                  |
+
+In year 2 (1 Feb 2027 … 1 Jan 2028) lease B is renewed past 31 Jul 2027 for all 12 months:
+12 × 22 000 × 1.03¹ = 271 920 Kč.
+
+The snapshot (§4.3) and the projection differ: the snapshot reads the lease in force on the
+exact `asOf` date, unindexed, and gives 0 after the last lease's end; the projection reads
+the lease on each grid date, indexes it, and renews the last lease. Both give no rent in a
+gap between leases and neither falls back to an upcoming lease.
 
 **Invariants:** `propertySnapshot(asOf = baseDate + N years)` == projection year N (value,
 debt) for every property; when every loan retires within the horizon (as in the seed),
@@ -300,8 +356,17 @@ debt) for every property; when every loan retires within the horizon (as in the 
 - **Levered IRR** (nominal & real): IRR of the vector `[−equity₀, netCF₁, …, netCF_{N−1},
 netCF_N + equity_N]` — acquisition outflows and refinance cash adjust the relevant year's
   entry; terminal = projected equity at horizon. Real IRR deflates each entry by `CPI_t`.
-  Computed by bisection on the decimal NPV over the bracket [−0.9, 1] (tolerance 1e-9, at
-  most 200 iterations); null if no sign change is bracketed.
+  Computed by bisection on the decimal NPV (tolerance |NPV| < 1e-9 Kč, at most 200
+  iterations) over the domain **−90 % … +1000 %** a year (ADR 0079; `src/engine/kpis.ts`
+  `irrResult`, `src/engine/constants.ts`). The search starts with −90 % … +100 % and, when
+  that brackets no sign change, widens the upper bound to +200 %, +400 %, +800 % and
+  +1000 %. Uniqueness: with at most one sign change in the cash flows the NPV has at most
+  one root (Descartes' rule of signs), so no check is needed; with more than one, the NPV's
+  sign is scanned over a rate grid across the domain (`IRR_SCAN_GRID`) and more than one
+  NPV sign change gives no IRR with reason **`NOT_UNIQUE`**. When no bracket holds a root
+  the reason is **`NO_ROOT`**. In either case the IRR is null and the UI shows "n/a" with
+  the reason: "No unique IRR: the cash flows break even at more than one rate" or "No IRR
+  between −90 % and +1000 %" (`src/ui/model/irr.ts`).
 - `totalPrincipalRepaid` (sanity invariant): Σ principal repaid over the horizon; for the
   seed it equals the starting debt (tripwire for the classic zero-principal spreadsheet bug).
 
@@ -385,10 +450,17 @@ data (properties/mortgages/etc.) is shared; only assumptions differ. The engine'
 - The "Base" scenario = the saved assumptions. Users create, edit, duplicate, and delete
   named scenarios (persisted in the `scenarios` table).
 - **Compare view**: pick 2–3 scenarios; show their KPIs and key charts side by side
-  (net worth, net cash flow, LTV) on one screen, honouring the Nominal/Real lens.
-- **Stress presets** (one-click): "Rates +2pp" (`resetRate +0.02`), "Low growth"
-  (`appreciation 1%, rentIndex 1%`), "High inflation" (`inflation 5%`),
-  "Recession" (`valueShock -10%` at year 0).
+  (net worth, net cash flow, LTV) on one screen, honouring the Nominal/Real lens. The
+  Scenarios page currently hides the lens toggle (`showLens={false}` in
+  `src/ui/pages/Scenarios.tsx`), so the comparison follows the lens last chosen on another
+  page; showing the toggle there is tracked in #15.
+- **Stress presets** (one-click; each creates a named scenario,
+  `src/ui/pages/ScenariosPanels.tsx`). Temporary shocks last `DEFAULT_SHOCK_YEARS` = 3
+  years (`src/ui/model/scenarioForm.ts`), then revert to trend:
+  - **Rate shock @ refix**: +2 / +4 / +6 pp for 3 years (`rateShock`).
+  - **Inflation shock**: +3 / +6 / +9 pp for 3 years (`inflationShock`).
+  - **Price crash**: −10 % / −20 % / −35 % of property value at Today / +5 years / +10 years
+    (projection year 0, 5 or 10; `valueShock`, permanent).
 
 ## 8. Non-functional requirements
 
@@ -437,16 +509,18 @@ offline badge, and controls for language and theme.
 
 2. **Properties** — list with per-property summary and LTV/DSCR health bands; "+ Add property"
    button opens a form modal (name, address, type, size_m2, garage, purchase_date,
-   purchase_price, optional per-property growth overrides). Each row has Edit, Delete, and
-   activate/deactivate actions. Delete cascades to all linked mortgages, valuations, leases,
-   and holding costs (after confirmation).
+   purchase_price, optional per-property growth overrides). Each row has Edit and Delete
+   actions; a deactivated property shows an "Inactive" badge and one not yet purchased a
+   "Pending" badge (activate/deactivate is on Property detail). Delete cascades to all
+   linked mortgages, valuations, leases, and holding costs (after confirmation).
 
 3. **Property detail** — valuations, leases, mortgage blocks (including dev-loan tranche draws,
    completion date and the optional contract maturity date), holding costs (edit forms),
    30-year projection table + mini charts, amortization schedule, and a health check
    (`amortizationHealth`, including the maturity and refix warnings). The **AsOfPicker** is
    available here too. Two **Excel export** buttons save the projection and amortization
-   schedule as `.xlsx` files.
+   schedule as `.xlsx` files. A **Deactivate / Activate** action takes the property out of
+   (or back into) all projections and KPIs (§4.5), after confirmation when deactivating.
 
 4. **Projections** — full year-by-year grid (per property + portfolio), nominal/real toggle,
    and an **Excel export** of the projection table.
