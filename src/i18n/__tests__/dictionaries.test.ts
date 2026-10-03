@@ -107,14 +107,25 @@ function sources(dir: string): string[] {
 describe("i18n dictionaries — usage", () => {
   it("every key is read by the app (DR-149)", () => {
     const files = sources(join(__dirname, "..", ".."));
-    const used = (f: string, ns: string, rest: string): boolean => {
+    // Aliases of a namespace per file, scanned once per namespace (not once per key).
+    const aliasCache = new Map<string, string[][]>();
+    const aliasesOf = (ns: string): string[][] => {
+      let hit = aliasCache.get(ns);
+      if (!hit) {
+        const alias = new RegExp(
+          `(\\w+)\\s*(?:=\\s*[\\w.()]*\\.${ns};|:\\s*Dictionary\\["${ns}"\\])`,
+          "g",
+        );
+        hit = files.map((f) => [...f.matchAll(alias)].map(([, a = ""]) => a));
+        aliasCache.set(ns, hit);
+      }
+      return hit;
+    };
+    const used = (i: number, ns: string, rest: string): boolean => {
+      const f = files[i] ?? "";
       // `t.ns.rest`, or an alias: `const x = t.ns;` / `x: Dictionary["ns"]`, then `x.rest`.
       if (new RegExp(`\\.${ns}\\.${rest}\\b`).test(f)) return true;
-      const alias = new RegExp(
-        `(\\w+)\\s*(?:=\\s*[\\w.()]*\\.${ns};|:\\s*Dictionary\\["${ns}"\\])`,
-        "g",
-      );
-      return [...f.matchAll(alias)].some(([, a]) =>
+      return (aliasesOf(ns)[i] ?? []).some((a) =>
         new RegExp(`\\b${a}\\.${rest}\\b`).test(f),
       );
     };
@@ -128,7 +139,7 @@ describe("i18n dictionaries — usage", () => {
         return false;
       // A nested object read whole (`b.tables[table]`, `[sd.value, sd.debt]`) uses its leaves.
       return !rest.some((_, i) =>
-        files.some((f) => used(f, ns, rest.slice(0, i + 1).join("\\."))),
+        files.some((_f, fi) => used(fi, ns, rest.slice(0, i + 1).join("\\."))),
       );
     });
     expect(unused).toEqual([]);
