@@ -19,7 +19,12 @@ import { migrate } from "../data/migrations";
 import { DataError, type DataErrorCode } from "../data/errors";
 import { toWriteError, type WriteError } from "./writeError";
 import { logFailure } from "../data/errorLog";
-import { clearSample, dismissSampleBanner, seedIfEmpty } from "../data/seed";
+import {
+  clearSample,
+  dismissSampleBanner,
+  loadSample,
+  seedIfEmpty,
+} from "../data/seed";
 import {
   confirmRestore,
   exportBackup,
@@ -215,6 +220,9 @@ interface PortfolioState {
   restoreBackup: (backup: BackupFile) => Promise<{ safetyBackup: string }>;
   /** Delete the sample properties (after a safety backup), then reload. */
   clearSample: () => Promise<{ safetyBackup: string }>;
+  /** Load the sample into an empty portfolio, then reload (ADR 0112). Throws
+   *  SampleNotEmptyError when any property exists. */
+  loadSample: () => Promise<void>;
   /** Write a backup file through the save dialog. Read-only, so not queued: an open
    *  dialog must not hold up edits. A saved file is then recorded (ADR 0110). */
   exportBackup: () => Promise<ExportOutcome>;
@@ -560,6 +568,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     restoreBackup: (backup) =>
       exclusive((sql) => confirmRestore(sql, backup, checkInputRules)),
     clearSample: () => exclusive((sql) => clearSample(sql)),
+    loadSample: () => exclusive(loadSample),
     exportBackup: async () => {
       const writesBefore = writes;
       const outcome = await exportBackup(requireSql(), {

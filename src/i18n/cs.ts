@@ -851,6 +851,17 @@ export const cs: Dictionary = {
     panelHint: "Fiktivní byty přidané při prvním spuštění",
     panelBody:
       "Smažte ukázkové byty a začněte vlastní portfolio. Nemovitosti, které jste přidali sami, zůstanou.",
+    loadHint: "Fiktivní byty pro vyzkoušení aplikace",
+    loadBody:
+      "Nahrajte tři fiktivní byty s hypotékami, nájmy a náklady. Vaše předpoklady zůstanou beze změny.",
+    loadAction: "Nahrát ukázkové portfolio",
+    loading: "Nahrávám…",
+    loaded:
+      "Ukázkové portfolio je nahrané. Kdykoli ho smažete zde nebo z banneru.",
+    errNotEmpty:
+      "Ukázku lze nahrát jen do prázdného portfolia. Nic nebylo přidáno.",
+    loadFailed: (detail) =>
+      `Nahrání ukázky selhalo a bylo vráceno zpět — nic nebylo přidáno. (${detail})`,
     gettingStartedTitle: "Jak začít",
     stepAssumptions: "Nastavte předpoklady",
     stepAddProperty: "Přidejte nemovitost",

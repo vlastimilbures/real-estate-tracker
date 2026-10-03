@@ -1,10 +1,17 @@
 // ADR 0094: the first-run sample is marked as such, and "Clear sample" removes only the
 // sample properties (with every record under them) after a verified safety backup, in
-// one transaction. The sample is never reseeded afterwards.
+// one transaction. The sample is never reseeded afterwards. ADR 0112: the user can load it
+// again on demand, only into an empty portfolio.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
 import { migrate } from "../migrations";
-import { clearSample, dismissSampleBanner, seedIfEmpty } from "../seed";
+import {
+  clearSample,
+  dismissSampleBanner,
+  loadSample,
+  SampleNotEmptyError,
+  seedIfEmpty,
+} from "../seed";
 import { SafetyBackupError } from "../backup";
 import {
   insertLease,
@@ -12,10 +19,11 @@ import {
   loadAssumptions,
   loadPortfolio,
   loadState,
+  upsertAssumptions,
 } from "../repositories";
 import { holdingCostToRow, leaseToRow, propertyToRow } from "../mappers";
 import type { Sql } from "../sql";
-import { isoDate } from "../../engine";
+import { isoDate, rate } from "../../engine";
 
 /** Safety backups the fake `write_app_backup` command wrote, by file name. */
 const written = vi.hoisted(() => new Map<string, string>());
@@ -214,5 +222,82 @@ describe("clearSample (ADR 0094)", () => {
     expect(await ids(sql, "properties")).toEqual([...SAMPLE, "mine"].sort());
     expect(await ids(sql, "leases")).toContain("l-javorova-user");
     expect(await meta(sql)).toEqual(["sample_active", "sample_seeded"]);
+  });
+});
+
+describe("loadSample (ADR 0112)", () => {
+  /** A first-run database whose sample was cleared, with the banner dismissed before. */
+  async function cleared(): Promise<TestSql> {
+    const sql = openMemorySql();
+    await migrate(sql);
+    await seedIfEmpty(sql);
+    await dismissSampleBanner(sql);
+    await clearSample(sql, NOW);
+    return sql;
+  }
+
+  it("loads the same records as the first-run seed and marks the sample active", async () => {
+    const fresh = openMemorySql();
+    await migrate(fresh);
+    await seedIfEmpty(fresh);
+    const sql = await cleared();
+
+    await loadSample(sql);
+
+    expect(await loadPortfolio(sql)).toEqual(await loadPortfolio(fresh));
+    expect(await meta(sql)).toEqual(["sample_active", "sample_seeded"]);
+    expect((await loadState(sql)).sample).toEqual({
+      active: true,
+      dismissed: false,
+    });
+  });
+
+  it("shows the banner again after the sample was deleted by hand", async () => {
+    const sql = openMemorySql();
+    await migrate(sql);
+    await seedIfEmpty(sql);
+    await dismissSampleBanner(sql);
+    // Deleted by hand: both markers stay behind.
+    await sql.execute("DELETE FROM properties");
+
+    await loadSample(sql);
+
+    expect((await loadState(sql)).sample).toEqual({
+      active: true,
+      dismissed: false,
+    });
+  });
+
+  it("keeps the user's assumptions", async () => {
+    const sql = await cleared();
+    const own = {
+      ...(await loadAssumptions(sql)),
+      appreciationPa: rate("0.02"),
+      horizonYears: 20,
+    };
+    await upsertAssumptions(sql, own);
+
+    await loadSample(sql);
+
+    expect(await loadAssumptions(sql)).toEqual(own);
+  });
+
+  it("refuses when the portfolio has any property and writes nothing", async () => {
+    const sql = await withOwnData();
+    await clearSample(sql, NOW);
+
+    await expect(loadSample(sql)).rejects.toBeInstanceOf(SampleNotEmptyError);
+
+    expect(await ids(sql, "properties")).toEqual(["mine"]);
+    expect(await meta(sql)).toEqual(["sample_seeded"]);
+  });
+
+  it("a failure in the load transaction leaves nothing behind", async () => {
+    const sql = await cleared();
+    await expect(
+      loadSample(failOn(sql, /INSERT INTO leases/)),
+    ).rejects.toThrow();
+    expect(await ids(sql, "properties")).toEqual([]);
+    expect(await meta(sql)).toEqual(["sample_seeded"]);
   });
 });

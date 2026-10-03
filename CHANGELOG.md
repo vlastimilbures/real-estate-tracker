@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Settings → Backup can load the sample portfolio again. While the portfolio has no
+  properties, a **Load sample portfolio** button adds the three fictional apartments with
+  their mortgages, valuations, leases and costs in one step, and the sample banner shows
+  again. It never adds to existing properties, and your assumptions and scenarios stay as
+  they are (ADR 0112, #74).
+
 - Loans can carry **one-off prepayments** and **maturity changes** (engine and saved data;
   the form comes next, #32b). A prepayment either lowers the instalment or shortens the
   term; a maturity change sets a new last-payment date or a new instalment, up to 50 years

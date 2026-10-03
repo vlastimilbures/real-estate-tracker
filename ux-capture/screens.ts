@@ -10,6 +10,7 @@ import {
   panel,
   settingsTab,
   boot,
+  deleteAllProperties,
   type Ux,
 } from "./helpers";
 
@@ -651,19 +652,7 @@ export const SCREENS: Screen[] = [
     route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
-      await nav(ux, "properties");
-      const rows = ux.page.locator("table.data tbody tr");
-      while ((await rows.count()) > 0) {
-        await rows
-          .first()
-          .getByRole("button", { name: ux.t.common.delete })
-          .click();
-        await ux.page
-          .locator(".confirm-row")
-          .getByRole("button", { name: ux.t.common.yesDelete })
-          .click();
-        await expect(ux.page.locator(".confirm-row")).toHaveCount(0);
-      }
+      await deleteAllProperties(ux);
       await ux.capture("80-empty-properties");
       await nav(ux, "dashboard");
       await ux.capture("80-empty-portfolio");
@@ -681,6 +670,27 @@ export const SCREENS: Screen[] = [
         .click();
       await expect(ux.page.getByRole("dialog")).toBeVisible();
       await ux.capture("81-clear-sample-dialog");
+    },
+  },
+  {
+    id: "82-load-sample",
+    desc: "Load sample portfolio on an empty portfolio, then its banner (ADR 0112)",
+    route: "settings",
+    run: async (ux) => {
+      await boot(ux.page);
+      await deleteAllProperties(ux);
+      await settingsTab(ux, "backup");
+      const load = ux.page.getByRole("button", {
+        name: ux.t.sample.loadAction,
+      });
+      await expect(load).toBeVisible();
+      await ux.capture("82-load-sample");
+      await load.click();
+      await expect(ux.page.getByText(ux.t.sample.loaded)).toBeVisible();
+      await ux.capture("82-load-sample-loaded");
+      await nav(ux, "dashboard");
+      await expect(ux.page.getByText(ux.t.sample.banner)).toBeVisible();
+      await ux.capture("82-load-sample-banner");
     },
   },
   {

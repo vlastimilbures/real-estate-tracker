@@ -6,6 +6,7 @@ import {
   chooseRestoreFile,
   RestoreError,
   SafetyBackupError,
+  SampleNotEmptyError,
   SCHEMA_HEAD,
   type BackupFile,
   type BackupSummary,
@@ -135,8 +136,11 @@ export function BackupRestorePanel() {
   const exportBackup = usePortfolioStore((s) => s.exportBackup);
   const restoreBackup = usePortfolioStore((s) => s.restoreBackup);
   const sampleActive = usePortfolioStore((s) => s.sample.active);
+  const loadSample = usePortfolioStore((s) => s.loadSample);
+  const empty = usePortfolioStore((s) => s.portfolio?.properties.length === 0);
 
   const [exporting, setExporting] = useState(false);
+  const [loadingSample, setLoadingSample] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [pendingBackup, setPendingBackup] = useState<{
     file: string;
@@ -151,6 +155,10 @@ export function BackupRestorePanel() {
     if (e instanceof RestoreError) {
       setError(restoreErrorText(t, e));
       setIssues(e.issues);
+      return;
+    }
+    if (e instanceof SampleNotEmptyError) {
+      setError(t.sample.errNotEmpty);
       return;
     }
     logFailure("BACKUP", e);
@@ -182,6 +190,20 @@ export function BackupRestorePanel() {
       fail(e, t.backup.exportFailed);
     } finally {
       setExporting(false);
+    }
+  }
+
+  /** Load the sample into the empty portfolio (ADR 0112). */
+  async function handleLoadSample() {
+    setLoadingSample(true);
+    clearError();
+    try {
+      await loadSample();
+      showToast(t.sample.loaded);
+    } catch (e) {
+      fail(e, t.sample.loadFailed);
+    } finally {
+      setLoadingSample(false);
     }
   }
 
@@ -283,6 +305,23 @@ export function BackupRestorePanel() {
             {t.sample.panelBody}
           </p>
           <ClearSampleButton />
+        </Panel>
+      )}
+
+      {empty && !sampleActive && (
+        <Panel title={t.sample.panelTitle} hint={t.sample.loadHint}>
+          <p
+            style={{
+              color: "var(--ink-soft)",
+              fontSize: 13,
+              marginBottom: "var(--s4)",
+            }}
+          >
+            {t.sample.loadBody}
+          </p>
+          <Button onClick={handleLoadSample} disabled={loadingSample}>
+            {loadingSample ? t.sample.loading : t.sample.loadAction}
+          </Button>
         </Panel>
       )}
 

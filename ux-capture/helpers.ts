@@ -197,3 +197,20 @@ export async function settingsTab(
   await nav(ux, "settings");
   await ux.page.getByRole("tab", { name: ux.t.settings.tabs[tab] }).click();
 }
+
+/** Delete every property through the Properties page, leaving an empty portfolio. */
+export async function deleteAllProperties(ux: Ux) {
+  await nav(ux, "properties");
+  const rows = ux.page.locator("table.data tbody tr");
+  while ((await rows.count()) > 0) {
+    await rows
+      .first()
+      .getByRole("button", { name: ux.t.common.delete })
+      .click();
+    await ux.page
+      .locator(".confirm-row")
+      .getByRole("button", { name: ux.t.common.yesDelete })
+      .click();
+    await expect(ux.page.locator(".confirm-row")).toHaveCount(0);
+  }
+}
