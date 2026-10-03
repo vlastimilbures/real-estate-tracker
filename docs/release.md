@@ -13,7 +13,12 @@ runtime only, ADR 0063).
    script refuses to build if they differ.
 3. **Changelog** — move the `Unreleased` notes in `CHANGELOG.md` under the new version and
    date.
-4. **Build, sign, verify** — `scripts/release-macos.sh`. It runs typecheck, lint, the JS and
+4. **Docs impact** — if formulas, presets, limits, data formats or UI text changed since the
+   last release, check that the documents below still describe the app: SPEC, the Guide
+   strings (`src/i18n`), README, [`docs/model-limitations.md`](model-limitations.md),
+   [`docs/csv-import.md`](csv-import.md) and the [roadmap](roadmap.md). Update them in this
+   release, not later.
+5. **Build, sign, verify** — `scripts/release-macos.sh`. It runs typecheck, lint, the JS and
    Rust tests, `cargo fmt --check`, `cargo clippy -D warnings` and `cargo audit`, then
    `pnpm tauri build --target aarch64-apple-darwin`, and verifies the result:
    - `codesign --verify --deep --strict --verbose=2` passes;
@@ -23,14 +28,28 @@ runtime only, ADR 0063).
    Artefacts: `src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Real Estate Tracker.app`
    and `…/bundle/dmg/Real Estate Tracker_<version>_aarch64.dmg` (the script prints its SHA-256).
 
-5. **Install and smoke-test** — open the dmg, drag the app to Applications, open it. Check:
+6. **Install and smoke-test** — open the dmg, drag the app to Applications, open it. Check:
    the data is there; it works with Wi-Fi off; no light flash on start in dark mode; an export
    saves; the window reopens where you left it.
-6. **Commit and tag** — `git tag v<version>` on the release commit, push the tag.
+7. **Commit and tag** — `git tag v<version>` on the release commit, push the tag.
    The `Release (macOS)` workflow then builds and verifies the bundle on a macOS runner and
    attaches the dmg to the tag's GitHub release (creating the release if needed).
 
 The script never launches the app and never touches the database.
+
+### Who owns what
+
+Each document has one job, so a change has one obvious place to be described:
+
+| Document                                                                                              | Owns                                                       |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| [README](../README.md)                                                                                | Discovery and onboarding: what it is, install, first steps |
+| [SPEC](../SPEC.md)                                                                                    | Current behaviour: domain model, formulas, screens         |
+| Guide (`src/i18n`, in the app)                                                                        | In-app explanations of terms and figures                   |
+| [CHANGELOG](../CHANGELOG.md)                                                                          | What changed in each release                               |
+| [Model limitations](model-limitations.md), [data safety](data-safety.md), [CSV import](csv-import.md) | User docs: limits, data safety, CSV format                 |
+| [Roadmap](roadmap.md)                                                                                 | Planned work                                               |
+| [ADRs](adr/README.md)                                                                                 | Why a decision was made                                    |
 
 ## Gatekeeper on another Mac
 
