@@ -121,8 +121,15 @@ export { expect };
 export async function settle(page: Page) {
   await page.evaluate(() => document.fonts.ready);
   // No CSS animation or transition still running (e.g. the sidebar collapsing).
+  // Scroll-driven animations (pinned-column shadows) run for as long as the page
+  // lives, so only time-based ones count. `animations: "disabled"` resets them, so
+  // shots show no pinned-column shadow (ADR 0085).
   await page.waitForFunction(() =>
-    document.getAnimations().every((a) => a.playState !== "running"),
+    document
+      .getAnimations()
+      .every(
+        (a) => a.timeline !== document.timeline || a.playState !== "running",
+      ),
   );
   if (await page.locator(".recharts-wrapper").count()) {
     // Charts resize after layout changes (ResizeObserver): wait until every chart's

@@ -90,3 +90,39 @@ describe("Properties keyboard drill-in (UX-022)", () => {
     expect(useUiStore.getState().selectedPropertyId).toBe(first.id);
   });
 });
+
+describe("Properties long names and narrow windows (ADR 0085)", () => {
+  it("truncates the name but keeps the full name on hover and for screen readers", () => {
+    render(<Properties />);
+    const name = screen.getByRole("button", { name: first.name });
+    expect(name.className).toContain("cell-name");
+    expect(name.getAttribute("title")).toBe(first.name);
+  });
+
+  it("puts the risk and cash-flow columns right after the name", () => {
+    render(<Properties />);
+    const headers = screen
+      .getAllByRole("columnheader")
+      .map((th) => th.textContent);
+    const p = en.properties;
+    expect(headers).toEqual([
+      p.colProperty,
+      p.colLtv,
+      p.colNetCashFlow,
+      p.colDscr,
+      p.colValue,
+      p.colDebt,
+      p.colEquity,
+      p.colNoi,
+      "",
+    ]);
+  });
+
+  it("row actions keep their labels for screen readers when shown as icons", () => {
+    render(<Properties />);
+    for (const label of [en.common.edit, en.common.delete]) {
+      const button = screen.getAllByRole("button", { name: label })[0]!;
+      expect(button.querySelector(".btn-label")?.textContent).toBe(label);
+    }
+  });
+});

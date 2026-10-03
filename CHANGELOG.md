@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cash flow and principal-repaid KPI rows, Property detail projection title) show the
   configured horizon instead of a fixed 30 years; Czech and Russian year counts use the right
   plural form (ADR 0084, #12).
+- Properties list: long property names are cut with an ellipsis (full name on hover and for
+  screen readers). LTV, Net cash flow and DSCR now come right after the name. In narrow windows,
+  Edit and Delete show as icons. Pinned columns show an edge shadow when the table scrolls
+  sideways (ADR 0085, #17).
 
 ## [1.4.0] - 2026-10-03
 

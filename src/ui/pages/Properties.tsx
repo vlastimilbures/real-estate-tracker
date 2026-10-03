@@ -87,20 +87,22 @@ export function Properties() {
                   <th scope="col" className="left sticky-col">
                     {t.properties.colProperty}
                   </th>
-                  <th scope="col">{t.properties.colValue}</th>
-                  <th scope="col">{t.properties.colDebt}</th>
-                  <th scope="col">{t.properties.colEquity}</th>
+                  {/* Risk and cash flow first, so they stay in view in narrow
+                      windows (ADR 0085). */}
                   <th scope="col">
                     <MetricLabel term="ltv">{t.properties.colLtv}</MetricLabel>
-                  </th>
-                  <th scope="col">
-                    <MetricLabel term="noi">{t.properties.colNoi}</MetricLabel>
                   </th>
                   <th scope="col">{t.properties.colNetCashFlow}</th>
                   <th scope="col">
                     <MetricLabel term="dscr">
                       {t.properties.colDscr}
                     </MetricLabel>
+                  </th>
+                  <th scope="col">{t.properties.colValue}</th>
+                  <th scope="col">{t.properties.colDebt}</th>
+                  <th scope="col">{t.properties.colEquity}</th>
+                  <th scope="col">
+                    <MetricLabel term="noi">{t.properties.colNoi}</MetricLabel>
                   </th>
                   <th scope="col" className="actions-col"></th>
                 </tr>
@@ -120,7 +122,10 @@ export function Properties() {
                           click stays as the mouse shortcut (UX-022). */}
                       <button
                         type="button"
-                        className="link-button"
+                        className="link-button cell-name"
+                        // Long names are cut with an ellipsis; the full name shows
+                        // on hover and stays the accessible name (ADR 0085).
+                        title={p.name}
                         onClick={(e) => {
                           e.stopPropagation();
                           openProperty(p.propertyId);
@@ -144,21 +149,9 @@ export function Properties() {
                       )}
                     </td>
                     <td>
-                      <Money value={p.value} parens={false} suffix={false} />
-                    </td>
-                    <td>
-                      <Money value={p.debt} parens={false} suffix={false} />
-                    </td>
-                    <td>
-                      <Money value={p.equity} suffix={false} />
-                    </td>
-                    <td>
                       <Badge band={ltvBand(p.ltv)}>
                         {bandPill(fmtPct(p.ltv), ltvBandWord(t, p.ltv))}
                       </Badge>
-                    </td>
-                    <td>
-                      <Money value={p.noi} parens={false} suffix={false} />
                     </td>
                     <td>
                       <Money value={p.netCashFlow} suffix={false} signed />
@@ -172,6 +165,18 @@ export function Properties() {
                         "—"
                       )}
                     </td>
+                    <td>
+                      <Money value={p.value} parens={false} suffix={false} />
+                    </td>
+                    <td>
+                      <Money value={p.debt} parens={false} suffix={false} />
+                    </td>
+                    <td>
+                      <Money value={p.equity} suffix={false} />
+                    </td>
+                    <td>
+                      <Money value={p.noi} parens={false} suffix={false} />
+                    </td>
                     <td
                       className="actions-col"
                       onClick={(e) => e.stopPropagation()}
@@ -184,7 +189,7 @@ export function Properties() {
                           onClick={() => setEditingId(p.propertyId)}
                           title={t.properties.editProperty}
                         >
-                          {t.common.edit}
+                          <span className="btn-label">{t.common.edit}</span>
                         </Button>
                         <Button
                           size="sm"
@@ -196,7 +201,7 @@ export function Properties() {
                           }}
                           title={t.properties.deleteProperty}
                         >
-                          {t.common.delete}
+                          <span className="btn-label">{t.common.delete}</span>
                         </Button>
                       </span>
                     </td>
