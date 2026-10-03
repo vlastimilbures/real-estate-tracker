@@ -4,25 +4,18 @@
 
 # Real Estate Tracker
 
-**A local-first macOS app for tracking a rental-apartment portfolio —<br>
-mortgages, leases, valuations and costs — with 30-year projections, KPIs and what-if scenarios.**
+**A private Mac app for owners of Czech rental apartments: track mortgages, leases, valuations
+and costs, and see where the portfolio is heading over the next 30 years.**
+
+[Who it's for](#who-its-for) · [Current limits](#current-limits) · [Install](#install) ·
+[Start your own portfolio](#start-your-own-portfolio) · [Features](#features) ·
+[Documentation](#documentation)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/vlastimilbures/real-estate-tracker/ci.yml?branch=main&style=flat-square&label=CI&logo=githubactions&logoColor=white)](https://github.com/vlastimilbures/real-estate-tracker/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/vlastimilbures/real-estate-tracker?style=flat-square&label=release&color=1f5f5b)](https://github.com/vlastimilbures/real-estate-tracker/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-1f5f5b?style=flat-square)](LICENSE)
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B%20·%20Apple%20Silicon-000000?style=flat-square&logo=apple&logoColor=white)
 ![Offline](https://img.shields.io/badge/offline-local--first-2e7d4f?style=flat-square)
-
-![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&logo=tauri&logoColor=white)
-![React 18](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Rust](https://img.shields.io/badge/Rust-1.96-B7410E?style=flat-square&logo=rust&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-local-003B57?style=flat-square&logo=sqlite&logoColor=white)
-![i18n](https://img.shields.io/badge/i18n-EN%20·%20CS%20·%20RU-8a6d3b?style=flat-square)
-
-[Features](#features) · [Screenshots](#screenshots) · [Install](#install) ·
-[Build from source](#build-from-source) · [Architecture](#architecture) ·
-[Documentation](#documentation)
 
 </div>
 
@@ -34,6 +27,96 @@ mortgages, leases, valuations and costs — with 30-year projections, KPIs and w
 </picture>
 
 <sub>All figures in the screenshots come from the built-in fictional sample portfolio.</sub>
+
+## Who it's for
+
+- **One owner of a few rental flats in Czechia**, financed with Czech annuity mortgages, who
+  keeps the records on one Mac.
+- **Comfortable with the numbers** — LTV, DSCR, yields, fixation and rate resets — and wants
+  them computed correctly rather than in a fragile spreadsheet.
+- **Planning, not bookkeeping** — projections and what-if scenarios, not a bank
+  ledger, accounting or tax return.
+
+## Current limits
+
+- **Platform:** macOS 13 or later on Apple Silicon. Offline and single-user; no sync or sharing.
+- **Currency:** Czech koruna (Kč) only, with Czech number, date and currency formatting. The
+  interface is in English, Czech or Russian.
+- **Mortgages:** Czech annuity practice — fixation periods and a rate reset at each refix. One
+  active loan block per property at a time (refinancing is a successor block).
+- **Estimates, not quotes:** figures are planning projections, not lender quotes or valuations.
+  Returns are measured from the projection start, not from your purchase.
+- **Not modelled:** income or capital-gains tax, selling costs, early repayments and a
+  bank-account ledger.
+
+[Model assumptions & limitations](docs/model-limitations.md) lists everything the model
+simplifies or leaves out.
+
+## Install
+
+Download the latest `.dmg` from [Releases](https://github.com/vlastimilbures/real-estate-tracker/releases)
+(Apple Silicon, macOS 13 or later) and drag the app to Applications.
+
+The app is ad-hoc signed, not notarized, so macOS blocks the first launch. Allow this one app:
+
+- **macOS 15+:** open the app once, then **System Settings → Privacy & Security → Open Anyway**.
+- **macOS 13–14:** Control-click the app in Finder → **Open** → **Open**.
+
+Do not turn Gatekeeper off globally; the steps above allow only this app. Details are in
+[Gatekeeper on another Mac](docs/release.md#gatekeeper-on-another-mac).
+
+Your data lives in `~/Library/Application Support/com.bures.realestate-tracker/` — see
+[Privacy & security](#privacy--security).
+
+**Before installing a new version,** export a backup (**Settings → Backup & Restore → Export
+backup…**). [Data safety & recovery](docs/data-safety.md) covers backups, restore and what to do
+if an upgrade fails.
+
+### Build from source
+
+The second way in, for developers. You need:
+
+| Requirement              | Version                                                        |
+| ------------------------ | -------------------------------------------------------------- |
+| macOS                    | 13 or later, Apple Silicon                                     |
+| Xcode Command Line Tools | `xcode-select --install`                                       |
+| Rust                     | 1.96.0 via [rustup](https://rustup.rs) (`rust-toolchain.toml`) |
+| Node.js                  | 24 or later (`package.json` `engines`)                         |
+| pnpm                     | 11.5.0 (`packageManager`; `corepack enable` installs it)       |
+
+```bash
+git clone https://github.com/vlastimilbures/real-estate-tracker.git
+cd real-estate-tracker
+corepack enable              # pnpm at the pinned version
+pnpm install                 # dependencies + git hooks
+pnpm typecheck && pnpm test  # clean-run check: both must pass
+pnpm tauri dev               # run the app with hot reload
+scripts/release-macos.sh     # build, ad-hoc sign and verify a release bundle
+```
+
+> [!TIP]
+> `pnpm tauri dev` opens your real database. To work on the UI without touching it, run
+> `pnpm ux:capture` — it renders every screen in a browser on an in-memory copy of the sample
+> portfolio.
+
+## Start your own portfolio
+
+On first launch the app fills in a **fictional sample portfolio** so every screen has data.
+To switch to your own:
+
+1. **Remove the sample.** In **Properties**, delete each sample property (**Delete property**).
+   A one-step "clear sample" action is planned ([#18](https://github.com/vlastimilbures/real-estate-tracker/issues/18)).
+2. **Set your assumptions.** In **Settings → Assumptions**, set the base date, horizon,
+   appreciation, rent indexation, inflation, vacancy, post-fixation reset rate and
+   holding-cost defaults.
+3. **Add your properties.** Use **Properties → Add property**, or load several at once from CSV
+   files on the **Import** page.
+4. **Add the details.** On each property, enter the mortgage, leases, valuations and holding
+   costs.
+5. **Review.** Check the **Dashboard**, **Projections** and **Scenarios** pages; the figures
+   update as you edit.
+6. **Export a backup.** **Settings → Backup & Restore → Export backup…** saves everything to
+   one file. Keep it somewhere safe — see [Data safety & recovery](docs/data-safety.md).
 
 ## Why
 
@@ -108,53 +191,38 @@ Everything runs and stays on your Mac.
   </tr>
 </table>
 
-## Install
+## Privacy & security
 
-Download the latest `.dmg` from [Releases](https://github.com/vlastimilbures/real-estate-tracker/releases)
-(Apple Silicon, macOS 13 or later) and drag the app to Applications.
+- **Offline by design** — no network calls, analytics or updater. A strict Content Security
+  Policy and a navigation guard keep the webview on the app.
+- **Least privilege** — the webview can use the SQL plugin, menu events and the app's own
+  commands, nothing else. File dialogs and writes run in Rust; the webview never sees a path.
+- **Your data stays on your Mac:**
 
-The app is ad-hoc signed, not notarized, so macOS blocks the first launch:
+  | What                           | Location                                                              |
+  | ------------------------------ | --------------------------------------------------------------------- |
+  | Database                       | `~/Library/Application Support/com.bures.realestate-tracker/`         |
+  | Automatic backups              | `~/Library/Application Support/com.bures.realestate-tracker/backups/` |
+  | Error log (rotating, 5 × 1 MB) | `~/Library/Logs/com.bures.realestate-tracker/app.log`                 |
 
-- **macOS 15+:** open the app once, then **System Settings → Privacy & Security → Open Anyway**.
-- **macOS 13–14:** Control-click the app in Finder → **Open** → **Open**.
+  Files are readable only by your user (`0600`); they are not encrypted beyond FileVault.
+  How to back up and recover: [Data safety & recovery](docs/data-safety.md).
 
-On first launch the app seeds a fictional sample portfolio so every screen has data; delete it
-or import your own via CSV. Your data lives in
-`~/Library/Application Support/com.bures.realestate-tracker/` — see
-[Privacy & security](#privacy--security).
+Found a vulnerability? Please report it privately — see [SECURITY.md](SECURITY.md).
 
-**Before installing a new version,** export a backup (**Settings → Backup & Restore → Export
-backup…**). [Data safety & recovery](docs/data-safety.md) covers backups, restore and what to do
-if an upgrade fails.
+## Quality
 
-## Current limits
+Every check CI runs has a local command; the full list is in [CONTRIBUTING.md](CONTRIBUTING.md#checks).
 
-The app is a planning tool, and its figures are estimates. Returns are measured from the
-projection start, not from your purchase. It does not model income or capital-gains tax,
-selling costs, early repayments or a bank-account ledger. Amounts are in Kč only.
-[Model assumptions & limitations](docs/model-limitations.md) lists everything the model
-simplifies or leaves out.
-
-## Build from source
-
-| Requirement              | Version                                                         |
-| ------------------------ | --------------------------------------------------------------- |
-| macOS                    | 13 or later, Apple Silicon                                      |
-| Xcode Command Line Tools | `xcode-select --install`                                        |
-| Rust                     | via [rustup](https://rustup.rs) — `rust-toolchain.toml` pins it |
-| Node.js                  | ≥ 24                                                            |
-| pnpm                     | ≥ 11.5 (`corepack enable` picks up the pinned version)          |
-
-```bash
-pnpm install                 # dependencies + git hooks
-pnpm tauri dev               # run the app with hot reload
-scripts/release-macos.sh     # build, ad-hoc sign and verify a release bundle
-```
-
-> [!TIP]
-> `pnpm tauri dev` opens your real database. To work on the UI without touching it, run
-> `pnpm ux:capture` — it renders every screen in a browser on an in-memory copy of the sample
-> portfolio.
+| Command                        | Checks                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------ |
+| `pnpm typecheck` · `pnpm lint` | TypeScript strict; ESLint with zero warnings, incl. engine-purity rules  |
+| `pnpm test:coverage`           | ~1,500 Vitest tests with per-folder coverage floors                      |
+| `pnpm test:parity`             | Engine and SQLite round trip against the parity targets (±1 Kč, ±0.0001) |
+| `pnpm depcruise` · `pnpm knip` | Layer map and cycles; unused files, exports and dependencies             |
+| `cargo clippy` · `cargo test`  | Rust lints and integration tests                                         |
+| `pnpm ux:axe-check ci`         | axe scan of every screen, light and dark                                 |
+| `pnpm mutation` · `pnpm bench` | Nightly: Stryker mutation score on the engine; performance budgets       |
 
 ## Architecture
 
@@ -209,39 +277,6 @@ flowchart LR
 | [`src-tauri/`](src-tauri)                       | Rust shell: DB transactions, file dialogs, atomic writes, menu, navigation guard                |
 | [`ux-capture/`](ux-capture)                     | Screenshot + axe harness for every screen                                                       |
 | [`docs/`](docs)                                 | Architecture decision records, release guide, design notes, roadmap                             |
-
-## Quality
-
-Every check CI runs has a local command; the full list is in [CONTRIBUTING.md](CONTRIBUTING.md#checks).
-
-| Command                        | Checks                                                                   |
-| ------------------------------ | ------------------------------------------------------------------------ |
-| `pnpm typecheck` · `pnpm lint` | TypeScript strict; ESLint with zero warnings, incl. engine-purity rules  |
-| `pnpm test:coverage`           | ~1,500 Vitest tests with per-folder coverage floors                      |
-| `pnpm test:parity`             | Engine and SQLite round trip against the parity targets (±1 Kč, ±0.0001) |
-| `pnpm depcruise` · `pnpm knip` | Layer map and cycles; unused files, exports and dependencies             |
-| `cargo clippy` · `cargo test`  | Rust lints and integration tests                                         |
-| `pnpm ux:axe-check ci`         | axe scan of every screen, light and dark                                 |
-| `pnpm mutation` · `pnpm bench` | Nightly: Stryker mutation score on the engine; performance budgets       |
-
-## Privacy & security
-
-- **Offline by design** — no network calls, analytics or updater. A strict Content Security
-  Policy and a navigation guard keep the webview on the app.
-- **Least privilege** — the webview can use the SQL plugin, menu events and the app's own
-  commands, nothing else. File dialogs and writes run in Rust; the webview never sees a path.
-- **Your data stays on your Mac:**
-
-  | What                           | Location                                                              |
-  | ------------------------------ | --------------------------------------------------------------------- |
-  | Database                       | `~/Library/Application Support/com.bures.realestate-tracker/`         |
-  | Automatic backups              | `~/Library/Application Support/com.bures.realestate-tracker/backups/` |
-  | Error log (rotating, 5 × 1 MB) | `~/Library/Logs/com.bures.realestate-tracker/app.log`                 |
-
-  Files are readable only by your user (`0600`); they are not encrypted beyond FileVault.
-  How to back up and recover: [Data safety & recovery](docs/data-safety.md).
-
-Found a vulnerability? Please report it privately — see [SECURITY.md](SECURITY.md).
 
 ## Documentation
 
