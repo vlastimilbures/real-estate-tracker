@@ -17,7 +17,10 @@ import {
   suggestedInstalmentHint,
   instalmentFill,
   mortgageFromForm,
+  DEV_FIELDS,
+  loanTypeOf,
 } from "../model/mortgageForm";
+import { LoanTypeSwitch } from "../components/LoanTypeSwitch";
 import { scheduledPrincipal } from "../../engine";
 import type { Valuation, Lease, MortgageBlock } from "../../engine";
 import { type Dictionary } from "../../i18n";
@@ -295,17 +298,34 @@ export function MortgagesPanel({
           help: t.propertyDetail.helpContractMaturity,
         },
       ]}
-      draftOf={(r) => ({
-        startDate: dateDraft(r?.startDate),
-        initialPrincipal: moneyDraft(r?.initialPrincipal),
-        fixationYears: r ? String(r.fixationYears) : "",
-        loanTermYears: r?.loanTermYears != null ? String(r.loanTermYears) : "",
-        interestRatePa: percentDraft(r?.interestRatePa),
-        monthlyInstalment: moneyDraft(r?.monthlyInstalment),
-        draws: drawsDraft(r?.draws),
-        completionDate: dateDraft(r?.completionDate),
-        contractMaturityDate: dateDraft(r?.contractMaturityDate),
-      })}
+      draftOf={(r) => {
+        const base = {
+          startDate: dateDraft(r?.startDate),
+          initialPrincipal: moneyDraft(r?.initialPrincipal),
+          fixationYears: r ? String(r.fixationYears) : "",
+          loanTermYears:
+            r?.loanTermYears != null ? String(r.loanTermYears) : "",
+          interestRatePa: percentDraft(r?.interestRatePa),
+          monthlyInstalment: moneyDraft(r?.monthlyInstalment),
+          draws: drawsDraft(r?.draws),
+          completionDate: dateDraft(r?.completionDate),
+          contractMaturityDate: dateDraft(r?.contractMaturityDate),
+        };
+        // The Standard | Development switch starts from the block's data (ADR 0098).
+        return { ...base, loanType: loanTypeOf(base) };
+      }}
+      formHeader={(draft, patch, adding) => (
+        <LoanTypeSwitch
+          draft={draft}
+          patch={patch}
+          successorNote={adding && rows.length > 0}
+        />
+      )}
+      hiddenFields={(draft) =>
+        (draft.loanType ?? loanTypeOf(draft)) === "development"
+          ? []
+          : DEV_FIELDS
+      }
       build={(v, id) =>
         mortgageFromForm(
           v,

@@ -401,6 +401,15 @@ export const ru: Dictionary = {
     fieldCompletionDate: "Только проценты до (завершение)",
     helpCompletionDate:
       "до этой даты платить только проценты, затем переамортизировать",
+    loanType: "Тип кредита",
+    loanTypeStandard: "Стандартный",
+    loanTypeDevelopment: "На строительство",
+    loanTypeClearWarning: "Стандартный тип удалит транши и дату завершения.",
+    loanTypeClearAndSwitch: "Удалить и переключить",
+    loanTypeKeepDevelopment: "Оставить строительный",
+    successorNote:
+      "Новый блок заменяет текущий с даты своего начала (перефиксация или рефинансирование). Приложение моделирует один активный кредит на объект.",
+    successorLearnMore: "Подробнее",
     holdingCostsTitle: "Расходы на содержание",
     holdingCostsHint: "оставьте пустым для глобального значения по умолчанию",
     fieldPropertyTax: "Налог на недвижимость /год",

@@ -121,6 +121,7 @@ Other IDs seen in code comments:
 | [0094](0094-sample-portfolio-clear.md)            | Label the sample portfolio and clear it in one step                                    |                                        |
 | [0095](0095-assumptions-save-row.md)              | Assumptions: sticky Save row, unsaved state and error summary                          |                                        |
 | [0096](0096-csv-import-preview.md)                | CSV import preview: adds and updates before importing                                  |                                        |
+| [0098](0098-mortgage-loan-type.md)                | Mortgage form: Standard vs Development switch and successor note                       |                                        |
 
 ### Judgment calls and open questions
 
