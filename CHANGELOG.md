@@ -107,6 +107,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Stored loan prepayments and maturity changes are checked more strictly. An entry with an
+  unknown field (for example a misspelt `fees`) makes the loan invalid instead of losing
+  the value silently, so a hand-edited backup with extra fields no longer restores. A
+  maturity change on a development loan must fall after its completion (ADR 0116, #32).
+
 - The CSV import error for a yes/no column now lists every accepted value: `true`/`false`,
   `yes`/`no` or `1`/`0`. SPEC §6 now matches the importer: header rules, all-or-nothing
   import across the whole batch of files, and which empty cells keep or clear a stored
@@ -152,6 +157,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The Guide's value-crash entry says the same (ADR 0089, #14).
 
 ### Fixed
+
+- A development loan completed after its last payment before the projection start, with no
+  tranche in the first projection month, stayed interest-only to maturity and repaid
+  everything at the end. It now starts amortizing from the first projection month (ADR
+  0116).
+- Loan prepayments and maturity changes (engine, ahead of the form):
+  - A development tranche that lands on the last payment of a shortened term restores the
+    contract term instead of being repaid at once.
+  - A refinance that pays two identical prepayments charges each its own fee.
+  - The as-of snapshot shows the lowered instalment in the month of a prepayment.
+  - The Scenarios rate-shock note reads the maturity in force, so a loan repaid by a
+    prepayment before its refix no longer counts as hit (ADR 0116, #32).
 
 - Guide and About explain the figures the way the model computes them. The net-worth
   multiple and IRR start from equity at the projection start, and the IRR ends with projected
