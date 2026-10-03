@@ -60,6 +60,8 @@ export function realProjection(
       debtService: d(y.debtService),
       netCashFlow: d(y.netCashFlow),
       draws: d(y.draws),
+      prepaid: d(y.prepaid),
+      prepaymentFees: d(y.prepaymentFees),
     };
   });
 }

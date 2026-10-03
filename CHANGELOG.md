@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Loans can carry **one-off prepayments** and **maturity changes** (engine and saved data;
+  the form comes next, #32b). A prepayment either lowers the instalment or shortens the
+  term; a maturity change sets a new last-payment date or a new instalment, up to 50 years
+  from the loan start. Prepayments and their fees count in cumulative cash flow and the IRR,
+  not in net cash flow or DSCR. Existing figures do not change (ADR 0109, #32).
+
 - Settings → Backup says when the last backup was exported ("Last backup: 12.09.2026
   (3 weeks ago)" or "No backup exported yet") and to keep a copy somewhere other than this
   Mac. When the data changed and there is no backup or the last one is over 30 days old,

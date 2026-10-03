@@ -42,7 +42,7 @@ improvement, **P3** later.
 - **More Czech mortgage features.** The annual partial-prepayment allowance, a per-loan payment
   day and first partial-month interest. Designed but not built:
   [`docs/design/czech-mortgage-extensions.md`](design/czech-mortgage-extensions.md) §§2–4.
-  Prepayment at fixation end is #32.
+  One-off prepayments and maturity changes are #32 (ADR 0109).
 - **Multi-currency.** Each record keeps its own currency, a reporting currency is set in
   Settings, and FX rates are entered or imported by hand to stay offline. This needs a scope ADR
   first, covering four decisions: single currency vs display conversion vs true multi-currency;

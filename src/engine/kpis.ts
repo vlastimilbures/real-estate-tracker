@@ -309,7 +309,8 @@ function leveredCashFlows(
 }
 
 /**
- * Σ principal repaid across active properties within the horizon window. Schedules may
+ * Σ principal repaid (scheduled and prepaid, ADR 0109) across active properties within
+ * the horizon window. Schedules may
  * extend past it (a future loan amortizing over its own full term), but the parity
  * invariant is "Σ principal Yrs 1–N = initial debt", matching the projection.
  */
@@ -325,7 +326,7 @@ function principalRepaidInHorizon(
   for (const id of new Set(active.map((p) => p.id))) {
     for (const r of scheduleOf(schedules, id).rows) {
       if (r.month > horizonMonths) break;
-      total = total.plus(r.principal);
+      total = total.plus(r.principal).plus(r.prepaid);
     }
   }
   return total;
@@ -384,10 +385,14 @@ export function kpisFrom(
   const cpi = buildCpiIndex(assumptions);
   const equity0 = at(proj, 0).equity;
   const equityN = at(proj, N).equity;
-  // Cash outside the projection rows: acquisitions out, net refinance cash in (D-47).
+  // Cash outside net cash flow: acquisitions out, net refinance cash in (D-47),
+  // prepayments and their fees out (ADR 0109).
   const refiCash = refinanceCash(portfolio, assumptions, schedules);
   const acqOutflow = acquisitionOutflows(portfolio, assumptions).map((x, t) =>
-    x.minus(at(refiCash, t)),
+    x
+      .minus(at(refiCash, t))
+      .plus(at(proj, t).prepaid)
+      .plus(at(proj, t).prepaymentFees),
   );
   const nominalVector = leveredCashFlows(proj, acqOutflow);
   const realVector = nominalVector.map((cf, t) => cf.div(at(cpi, t)));

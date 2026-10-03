@@ -124,11 +124,13 @@ function chainResets(
   return resets;
 }
 
-/** Grid month of the schedule's last payment, 0 if it has none. */
+/** Grid month of the schedule's last payment, 0 if it has none. A prepayment counts:
+ *  it can be the only cash of a month (ADR 0109). */
 function lastPaymentMonth(rows: AmortizationRow[]): number {
   for (let i = rows.length - 1; i >= 0; i--) {
     const r = rows[i];
-    if (r && r.interest.plus(r.principal).greaterThan(ZERO)) return i + 1;
+    if (r?.interest.plus(r.principal).plus(r.prepaid).greaterThan(ZERO))
+      return i + 1;
   }
   return 0;
 }

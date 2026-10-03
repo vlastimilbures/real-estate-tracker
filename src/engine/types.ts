@@ -320,9 +320,15 @@ export interface ProjectionYear {
   principal: Decimal;
   debtService: Decimal;
   netCashFlow: Decimal;
-  // DR-092: new debt drawn in the year (0 in year 0); with principal it explains the
-  // balance move: balance[t] = balance[t−1] − principal[t] + draws[t].
+  // DR-092: new debt drawn in the year (0 in year 0); with principal and prepaid it
+  // explains the balance move: balance[t] = balance[t−1] − principal[t] − prepaid[t]
+  // + draws[t].
   draws: Decimal;
+  // ADR 0109: extra principal prepaid in the year and the fees paid with it. Owner
+  // cash outside debt service and net cash flow, like an acquisition; cumulative cash
+  // flow and the IRR subtract both.
+  prepaid: Decimal;
+  prepaymentFees: Decimal;
   dscr: Decimal | null;
   ratePa: Decimal | null; // dominant mortgage rate in effect; null if no debt
 }

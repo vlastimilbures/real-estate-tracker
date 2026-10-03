@@ -57,7 +57,7 @@ export type EquityChangeRow = {
   year: number;
   calendarYear: number;
   appreciation: number; // value[t] − value[t−1]              (negative in a crash year)
-  paydown: number; // principal repaid in year t (≥ 0)         (equity gained by amortizing)
+  paydown: number; // principal repaid in year t, prepaid included (≥ 0) (equity gained by repaying)
   drawdown: number; // −(new debt drawn in year t) (≤ 0)       (equity lost to fresh borrowing)
 };
 
@@ -73,9 +73,13 @@ export function toEquityChangeRows(series: SeriesRow[]): EquityChangeRow[] {
       calendarYear: r.calendarYear,
       // residual: keeps appreciation + paydown + drawdown === equity[t] − equity[t−1].
       appreciation: n(
-        r.equity.minus(prev.equity).minus(r.principal).plus(r.draws),
+        r.equity
+          .minus(prev.equity)
+          .minus(r.principal)
+          .minus(r.prepaid)
+          .plus(r.draws),
       ),
-      paydown: n(r.principal),
+      paydown: n(r.principal.plus(r.prepaid)),
       drawdown: n(r.draws.negated()),
     };
   });
