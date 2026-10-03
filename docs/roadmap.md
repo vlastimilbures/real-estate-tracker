@@ -103,6 +103,9 @@ product's positioning changes.
   prints a `localStorage` warning during the test run. (DR-094)
 - **Dead fallback.** A no-schedule snapshot fallback for development loans is unreachable from
   the app and could be removed. (DR-118)
+- **Row editor focus.** Adding a prepayment or maturity-change row does not move focus to
+  its date, and removing one leaves focus on the next row's button or the page (PR #100
+  review).
 - **Prepayment tests (from the PR #99 review).** The interest-saved "whole-life difference"
   test restates the formula; pin a reference figure. The event cross-check harness does not
   compare `drawn` per row, and `edgeCases.test.ts` still has its own copy of the harness.

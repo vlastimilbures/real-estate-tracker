@@ -62,6 +62,8 @@ work still to do is in the [roadmap](roadmap.md).
   prepayment larger than the balance, or after the loan is repaid, is cut to what is owed,
   and the property page warns about it. Interest saved is nominal, uses the base-case
   assumptions, covers the loan's whole remaining life and is not net of fees (ADR 0116).
+  Prepayments and maturity changes entered on a loan block that a later block had already
+  replaced before the projection start have no effect, and no warning says so.
   See [SPEC §4.4](../SPEC.md#44-monthly-amortization-the-engine-within-the-engine) and
   ADR 0109.
 - **The maturity check uses the contract term.** The implied-maturity warning compares the

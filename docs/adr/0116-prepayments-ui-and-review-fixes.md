@@ -83,7 +83,9 @@ This ADR covers both.
     - The form submits its non-blank rows in the order shown; the engine sorts events by
       date itself. A validation `index` is the position in that submitted list, which the
       form maps back to its row. A blank row is ignored. A row that does not parse (a bad
-      date or amount) blocks the save and shows its message on the row.
+      date or amount) blocks the save: the list shows the message and marks the bad cells.
+      Editing a list clears its row errors until the next save, because rows can move.
+    - An added row, even a blank one, marks the form as having unsaved changes.
     - A form opens with the stored events in date order (the order the database returns),
       so after a save the rows can come back re-sorted.
 12. **New columns.** These columns are shown only when some row has a non-zero value, the
