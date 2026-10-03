@@ -40,6 +40,16 @@ function draftInstalment(
   };
 }
 
+export type LoanType = "standard" | "development";
+
+/** The development-only fields, hidden for a Standard loan (ADR 0098). */
+export const DEV_FIELDS = ["draws", "completionDate"] as const;
+
+/** The form's loan type from the block's data; the type is not stored (ADR 0098). */
+export function loanTypeOf(draft: Record<string, string>): LoanType {
+  return draftIsDev(draft) ? "development" : "standard";
+}
+
 /** A draft is a development loan when it carries tranche draws or a completion date. */
 function draftIsDev(draft: Record<string, string>): boolean {
   return (

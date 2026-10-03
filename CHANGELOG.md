@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The mortgage form starts with a **Loan type** switch: **Standard** or **Development
+  (construction)**. Standard hides the development draws and the interest-only completion
+  date; an existing block opens in the type its data shows, and switching a development
+  block back to Standard asks before clearing those fields. When the property already has a
+  block, the Add form says a new block replaces the current one from its start date (refix or
+  refinance) and links to the Guide. No stored data or computed figure changes (ADR 0098,
+  #20).
+
 - Settings → Assumptions keeps **Discard changes** and **Save changes** in a row that stays in
   view at the bottom of the window. The row says whether there are unsaved changes, all
   changes are saved, or a save failed (your input is kept); both buttons are disabled while

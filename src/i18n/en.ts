@@ -420,6 +420,16 @@ export const en = {
       "ADDITIONAL tranches drawn AFTER the start date — one per line: dd.mm.yyyy = amount. The first drawdown is the Initial principal field (do not repeat it here). Total loan = initial principal + these draws; property value ramps with cumulative drawn ÷ total.",
     fieldCompletionDate: "Interest-only until (completion)",
     helpCompletionDate: "pay interest only until this date, then re-amortize",
+    // Loan type switch and successor note (ADR 0098)
+    loanType: "Loan type",
+    loanTypeStandard: "Standard",
+    loanTypeDevelopment: "Development (construction)",
+    loanTypeClearWarning: "Standard clears the draws and the completion date.",
+    loanTypeClearAndSwitch: "Clear and switch",
+    loanTypeKeepDevelopment: "Keep development",
+    successorNote:
+      "A new block replaces the current one from its start date (refix or refinance). The app models one active loan per property.",
+    successorLearnMore: "Learn more",
     // Holding costs
     holdingCostsTitle: "Holding costs",
     holdingCostsHint: "leave blank to use the global default",

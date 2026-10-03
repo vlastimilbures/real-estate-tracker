@@ -30,6 +30,8 @@ export function EntityPanel<
   computeHint,
   fieldActions,
   validate,
+  formHeader,
+  hiddenFields,
 }: {
   title: string;
   hint?: string;
@@ -44,6 +46,13 @@ export function EntityPanel<
   addLabel: string;
   computeHint?: (draft: Record<string, string>) => string | null;
   fieldActions?: FieldActions<S>;
+  /** Above the form's fields; `adding` is true for a new row (ADR 0098). */
+  formHeader?: (
+    draft: Record<string, string>,
+    patch: (p: Record<string, string>) => void,
+    adding: boolean,
+  ) => ReactNode;
+  hiddenFields?: (draft: Record<string, string>) => readonly string[];
   validate?: (
     values: ParsedValues<S>,
     draft: Record<string, string>,
@@ -131,6 +140,11 @@ export function EntityPanel<
             computeHint={computeHint}
             fieldActions={fieldActions}
             validate={validate}
+            header={
+              formHeader &&
+              ((draft, patch) => formHeader(draft, patch, mode.t === "add"))
+            }
+            hiddenFields={hiddenFields}
             onSubmit={async (values) => {
               const id = mode.t === "edit" ? mode.id : newId();
               const entity = build(values, id);

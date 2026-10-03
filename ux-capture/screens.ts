@@ -268,6 +268,29 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "25-property-mortgage-development",
+    desc: "Add mortgage block as Development, with the successor note (ADR 0098)",
+    route: "property",
+    run: async (ux) => {
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      const p = panel(ux, ux.t.propertyDetail.mortgagesTitle);
+      await p
+        .getByRole("button", { name: ux.t.propertyDetail.addMortgage })
+        .click();
+      await expect(
+        p.getByText(ux.t.propertyDetail.successorNote),
+      ).toBeVisible();
+      await p
+        .getByRole("button", { name: ux.t.propertyDetail.loanTypeDevelopment })
+        .click();
+      await expect(
+        p.getByLabel(ux.t.propertyDetail.fieldDraws, { exact: false }),
+      ).toBeVisible();
+      await ux.capture("25-property-mortgage-development");
+    },
+  },
+  {
     id: "24-property-record-leave-guard",
     desc: "Edited valuation form, then a sidebar click: the leave guard asks (UX-073)",
     route: "property",

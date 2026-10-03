@@ -164,6 +164,8 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
   computeHint,
   fieldActions,
   validate,
+  header,
+  hiddenFields,
 }: {
   specs: S;
   initial: Record<string, string>;
@@ -191,6 +193,18 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
    *  to the right of that field and patches the draft on click. A null return hides
    *  the button entirely; an omitted `patch` renders it disabled (not yet computable). */
   fieldActions?: FieldActions<S> | undefined;
+  /** Rendered above the fields with the draft and a way to patch it, e.g. a mode
+   *  switch kept in the draft under a key that is not a spec (ADR 0098). */
+  header?:
+    | ((
+        draft: Record<string, string>,
+        patch: (p: Record<string, string>) => void,
+      ) => ReactNode)
+    | undefined;
+  /** Names of the specs not shown for this draft. They still parse on submit, so a
+   *  hidden field should be blank. */
+  hiddenFields?:
+    ((draft: Record<string, string>) => readonly string[]) | undefined;
 }) {
   const t = useT();
   const [draft, setDraft] = useState<Record<string, string>>(initial);
@@ -260,8 +274,10 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
         if (!busy) void submit();
       }}
     >
+      {header?.(draft, (p) => setDraft((d) => ({ ...d, ...p })))}
       <div className="form-grid">
         {specs.map((spec) => {
+          if (hiddenFields?.(draft).includes(spec.name)) return null;
           const action =
             fieldActions?.[spec.name as S[number]["name"]]?.(draft) ?? null;
           const input =
