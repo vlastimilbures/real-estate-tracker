@@ -14,7 +14,11 @@ import {
   type ScenarioDraftFields,
   type LevelKey,
 } from "../model/scenarioForm";
-import { LevelOverrideFields, ShockPairFields } from "./ScenarioFormFields";
+import {
+  FieldGroup,
+  LevelOverrideFields,
+  ShockPairFields,
+} from "./ScenarioFormFields";
 import type { Assumptions, Scenario } from "../../engine";
 import { useT } from "../hooks/useT";
 
@@ -99,13 +103,22 @@ export function ScenarioForm({
               placeholder={t.scenarios.namePlaceholder}
             />
           </Field>
+        </div>
+        <FieldGroup
+          legend={t.scenarios.groupLevels}
+          help={t.scenarios.groupLevelsHelp}
+        >
           <LevelOverrideFields
             assumptions={assumptions}
             values={draft}
             errors={errors}
             onChange={(key: LevelKey, v) => set(key, v)}
           />
-
+        </FieldGroup>
+        <FieldGroup
+          legend={t.scenarios.groupShocks}
+          help={t.scenarios.groupShocksHelp}
+        >
           <ShockPairFields
             deltaLabel={t.scenarios.fieldInflationShock}
             deltaHelp={t.scenarios.shockHelp}
@@ -129,7 +142,11 @@ export function ScenarioForm({
             onYearsChange={(v) => set("rateShockYears", v)}
             defaultShockYears={DEFAULT_SHOCK_YEARS}
           />
-
+        </FieldGroup>
+        <FieldGroup
+          legend={t.scenarios.groupCrash}
+          help={t.scenarios.groupCrashHelp}
+        >
           <Field
             label={t.scenarios.fieldValueCrash}
             error={errors.valueShockPct}
@@ -155,7 +172,7 @@ export function ScenarioForm({
               placeholder="0"
             />
           </Field>
-        </div>
+        </FieldGroup>
       </div>
     </Modal>
   );
