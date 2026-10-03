@@ -41,11 +41,11 @@ export function Properties() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // File ▸ New Property… (⌘N, UX-066) lands here with a one-shot request.
+  // File ▸ New Property… (⌘N, UX-066) lands here with a one-shot request: open the form
+  // during render, then clear the request in the store.
+  if (newPropertyRequested && !adding) setAdding(true);
   useEffect(() => {
-    if (!newPropertyRequested) return;
-    setAdding(true);
-    clearNewPropertyRequest();
+    if (newPropertyRequested) clearNewPropertyRequest();
   }, [newPropertyRequested, clearNewPropertyRequest]);
 
   const perProperty = engine?.snapshot.perProperty ?? [];

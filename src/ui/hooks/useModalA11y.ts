@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 const FOCUSABLE =
   "input, select, textarea, button, [href], [tabindex]:not([tabindex='-1'])";
@@ -27,7 +27,11 @@ export function useModalA11y(
 ) {
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
-  closeRef.current = onClose;
+  // Refresh the ref after each render (not during it); layout effects run before any
+  // keydown can reach the handler.
+  useLayoutEffect(() => {
+    closeRef.current = onClose;
+  });
 
   useEffect(() => {
     const opener =

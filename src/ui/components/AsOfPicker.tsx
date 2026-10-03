@@ -2,7 +2,7 @@
 // text input (app convention) plus quick presets. `value === null` means "today".
 // Presentational: it resolves today and emits Date | null (null = Today). With `bounds`
 // it keeps the date inside the projection window (UX-059, D-19).
-import { useState, useEffect, useId } from "react";
+import { useState, useId } from "react";
 import { parseDate, dateDraft } from "../model/formParse";
 import { todayUtc } from "../../lib/today";
 import { useT } from "../hooks/useT";
@@ -34,8 +34,13 @@ export function AsOfPicker({
   const effective = value ?? today;
   const [draft, setDraft] = useState(dateDraft(effective));
 
-  // Keep the text in sync when presets change the value externally.
-  useEffect(() => setDraft(dateDraft(value ?? todayUtc())), [value]);
+  // Keep the text in sync when presets change the value externally: adjust the draft
+  // during render when the value changes, rather than in an effect.
+  const [syncedValue, setSyncedValue] = useState(value);
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    setDraft(dateDraft(effective));
+  }
 
   const pick = (d: Date) => {
     const inside = bounds ? clampAsOf(d, bounds) : d;

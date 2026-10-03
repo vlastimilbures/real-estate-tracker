@@ -138,6 +138,22 @@ describe("Import preview (ADR 0096)", () => {
     expect(importCsv).not.toHaveBeenCalled();
   });
 
+  it("a change to the stored data closes the confirm row and previews again", async () => {
+    previewCsv.mockResolvedValue(plan([update]));
+    const { container } = render(<Import />);
+    await choosePropertiesFile(container);
+    await userEvent.click(
+      await screen.findByRole("button", { name: p.importScope(1, 0, 1) }),
+    );
+    expect(screen.getByText(p.confirmOverwriteMsg(1))).toBeTruthy();
+    const calls = previewCsv.mock.calls.length;
+
+    act(() => usePortfolioStore.setState({ portfolio: { ...portfolio } }));
+    expect(screen.queryByText(p.confirmOverwriteMsg(1))).toBeNull();
+    await waitFor(() => expect(previewCsv).toHaveBeenCalledTimes(calls + 1));
+    expect(importCsv).not.toHaveBeenCalled();
+  });
+
   it("a plan with problems shows them and offers no import", async () => {
     previewCsv.mockResolvedValue({
       items: [],

@@ -47,4 +47,20 @@ describe("DateInput", () => {
     expect(onPick).toHaveBeenCalledWith("15.06.2026");
     expect(onChange).not.toHaveBeenCalled();
   });
+
+  it("reopens after Escape and a pick still works", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateInput value="07.06.2026" onChange={onChange} />);
+    const trigger = screen.getByRole("button");
+    await user.click(trigger);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+    await user.click(trigger);
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.style.visibility).toBe("visible");
+    await user.click(within(dialog).getByText("15"));
+    expect(onChange).toHaveBeenCalledWith("15.06.2026");
+  });
 });
