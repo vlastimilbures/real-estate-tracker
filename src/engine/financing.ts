@@ -15,7 +15,12 @@ import {
   lastGridMonthOnOrBefore,
 } from "./dates";
 import { leaseInForce } from "./metrics";
-import { blockChain, paymentOffset, propertySchedule } from "./schedule";
+import {
+  blockChain,
+  lastPaymentMonth,
+  paymentOffset,
+  propertySchedule,
+} from "./schedule";
 import type {
   AmortizationRow,
   Assumptions,
@@ -124,17 +129,6 @@ function chainResets(
     });
   }
   return resets;
-}
-
-/** Grid month of the schedule's last payment, 0 if it has none. A prepayment counts:
- *  it can be the only cash of a month (ADR 0109). */
-function lastPaymentMonth(rows: AmortizationRow[]): number {
-  for (let i = rows.length - 1; i >= 0; i--) {
-    const r = rows[i];
-    if (r?.interest.plus(r.principal).plus(r.prepaid).greaterThan(ZERO))
-      return i + 1;
-  }
-  return 0;
 }
 
 /** Due date of grid month `m`'s payment on the block paying it (drawn before `m`). */

@@ -1375,9 +1375,21 @@ export function effectiveMaturity(
   if (!b.prepayments?.length && !b.recasts?.length)
     return edate(b.startDate, termMonths(b));
   const { rows } = blockSchedule(b, assumptions);
-  let m = rows.length;
-  while (m > 0 && idleRow(at(rows, m - 1))) m--;
-  return edate(b.startDate, paymentOffset(b, assumptions.baseDate) + m);
+  return edate(
+    b.startDate,
+    paymentOffset(b, assumptions.baseDate) + lastPaymentMonth(rows),
+  );
+}
+
+/** Grid month of the schedule's last payment, 0 if it has none. A prepayment counts:
+ *  it can be the only cash of a month (ADR 0109). */
+export function lastPaymentMonth(rows: AmortizationRow[]): number {
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const r = rows[i];
+    if (r?.interest.plus(r.principal).plus(r.prepaid).greaterThan(ZERO))
+      return i + 1;
+  }
+  return 0;
 }
 
 // ---------------------------------------------------------------------------
