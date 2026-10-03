@@ -1564,6 +1564,13 @@ table.chart-table tbody th.sticky-col {
 .preset-toggle .btn {
   white-space: nowrap;
 }
+/* Key figures header: the Values / Δ toggle and the Excel export (ADR 0108). */
+.compare-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-shrink: 0;
+}
 /* "When" label of the price-crash timing toggle (ADR 0101). */
 .preset-when {
   font-size: 12px;

@@ -825,7 +825,15 @@ export const cs: Dictionary = {
     exported: (name) => `Exportováno ${name}`,
     exportFailed: (detail) => `Export selhal (${detail})`,
     // Excel sheet names (DR-152, UX-080): ≤ 31 characters, none of []:*?/\.
-    sheetNames: { projection: "Projekce", amortization: "Splátkový kalendář" },
+    sheetNames: {
+      projection: "Projekce",
+      amortization: "Splátkový kalendář",
+      compareKeyFigures: "Klíčové údaje",
+      compareNetWorth: "Čisté jmění",
+      compareNetCashFlow: "Čistý cash flow",
+      compareLtv: "LTV",
+    },
+    metric: "Ukazatel",
   },
 
   forms: {

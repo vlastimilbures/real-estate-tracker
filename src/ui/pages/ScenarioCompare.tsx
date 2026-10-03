@@ -4,7 +4,14 @@
 import { useId, useState } from "react";
 import { useScenarioComparison } from "../../state/useEngine";
 import { useUiStore } from "../../state/uiStore";
-import { Panel, EmptyState, SegmentedToggle } from "../components/primitives";
+import {
+  Panel,
+  EmptyState,
+  ExportXlsxButton,
+  SegmentedToggle,
+} from "../components/primitives";
+import { exportWorkbookXlsx } from "../exportXlsx";
+import { compareWorkbook } from "../model/compareXlsx";
 import { GitCompare } from "lucide-react";
 import { ChartCard, CzkLines, PctLines } from "../components/charts";
 import { SERIES } from "../model/chartData";
@@ -71,17 +78,25 @@ export function CompareView({
         title={t.scenarios.keyFiguresTitle}
         hint={compareHint(t, mode)}
         action={
-          base && (
-            <SegmentedToggle
-              ariaLabel={t.scenarios.viewToggleLabel}
-              options={[
-                { value: "values", label: t.scenarios.viewValues },
-                { value: "delta", label: t.scenarios.viewDeltaVsBase },
-              ]}
-              value={shownView}
-              onChange={setView}
+          <span className="compare-actions">
+            {base && (
+              <SegmentedToggle
+                ariaLabel={t.scenarios.viewToggleLabel}
+                options={[
+                  { value: "values", label: t.scenarios.viewValues },
+                  { value: "delta", label: t.scenarios.viewDeltaVsBase },
+                ]}
+                value={shownView}
+                onChange={setView}
+              />
+            )}
+            {/* The whole compare, always as values (ADR 0108). */}
+            <ExportXlsxButton
+              onExport={() =>
+                exportWorkbookXlsx(compareWorkbook(t, results, mode))
+              }
             />
-          )
+          </span>
         }
       >
         {/* A real table for assistive technology: caption, scenario column headers,

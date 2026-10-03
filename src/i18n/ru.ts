@@ -833,7 +833,15 @@ export const ru: Dictionary = {
     exported: (name) => `Экспортировано ${name}`,
     exportFailed: (detail) => `Ошибка экспорта (${detail})`,
     // Excel sheet names (DR-152, UX-080): ≤ 31 characters, none of []:*?/\.
-    sheetNames: { projection: "Прогноз", amortization: "График платежей" },
+    sheetNames: {
+      projection: "Прогноз",
+      amortization: "График платежей",
+      compareKeyFigures: "Ключевые цифры",
+      compareNetWorth: "Чистые активы",
+      compareNetCashFlow: "Чистый денежный поток",
+      compareLtv: "LTV",
+    },
+    metric: "Показатель",
   },
 
   forms: {
