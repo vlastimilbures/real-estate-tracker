@@ -39,6 +39,7 @@ export {
   mortgageBlock,
   selectBlock,
 } from "./amortization";
+export { MAX_LOAN_TERM_MONTHS } from "./constants";
 export { scheduledPrincipal } from "./growth";
 export { schedulesByProperty } from "./schedule";
 

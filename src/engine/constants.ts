@@ -24,6 +24,11 @@ export const IRR_MAX_ITERATIONS = 200;
 /** A portfolio balance at or below this (Kč) counts as debt-free. */
 export const DEBT_FREE_EPSILON = D("0.005");
 
+/** Longest loan, in payments from its start, a recast may run to (ADR 0109): the
+ *  50-year loan term a form or CSV accepts at most (`INT_RANGES.loanTermYears`),
+ *  unless the contract term is longer. */
+export const MAX_LOAN_TERM_MONTHS = 600;
+
 /** Residual balance at term end (Kč) up to which an instalment "fully amortizes". */
 export const FULLY_AMORTIZES_TOLERANCE = D("1");
 

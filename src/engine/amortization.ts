@@ -19,7 +19,7 @@ import type {
 } from "./types";
 import type { ValidationCode } from "./validate";
 import { EngineInputError } from "./errors";
-import { FULLY_AMORTIZES_TOLERANCE } from "./constants";
+import { FULLY_AMORTIZES_TOLERANCE, MAX_LOAN_TERM_MONTHS } from "./constants";
 
 /** End of the fixation period: startDate + fixationYears*12 months (EDATE). */
 export function blockEndDate(block: MortgageBlock): Date {
@@ -116,6 +116,41 @@ export function termMonths(block: MortgageBlock): number {
     block.monthlyInstalment,
     block.initialPrincipal,
   );
+}
+
+/** Payment number of the first payment due on or after `date`: the payment a
+ *  prepayment or recast dated `date` follows (ADR 0109). */
+export function paymentOnOrAfter(block: MortgageBlock, date: Date): number {
+  return firstGridMonthOnOrAfter(block.startDate, date);
+}
+
+/** Payment number of the last payment due on or before `date` (DR-070): a recast
+ *  maturity as the loan's last payment (ADR 0109). */
+export function paymentsDueBy(block: MortgageBlock, date: Date): number {
+  return lastGridMonthOnOrBefore(block.startDate, date);
+}
+
+/** The latest last payment a recast may set: loan start + 50 years, or the contract
+ *  term when that is longer (ADR 0109). */
+export function maxTermMonths(contractTerm: number): number {
+  return Math.max(MAX_LOAN_TERM_MONTHS, contractTerm);
+}
+
+/** The latest payment the loan can reach with its recasts (ADR 0109): the contract
+ *  term, a later recast maturity, or the cap when a recast sets an instalment. */
+export function eventTermMonths(
+  block: MortgageBlock,
+  contractTerm: number,
+): number {
+  let term = contractTerm;
+  for (const r of block.recasts ?? []) {
+    const reach =
+      r.maturity === undefined
+        ? maxTermMonths(contractTerm)
+        : paymentsDueBy(block, r.maturity);
+    term = Math.max(term, reach);
+  }
+  return term;
 }
 
 /** Whole monthly payments of `instalment` that repay `balance` at `rateMonthly`

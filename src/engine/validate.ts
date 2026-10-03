@@ -7,9 +7,22 @@
 // Entry-point rejection is P5b/P7; messages belong to P7.
 import { ONE, ZERO, type Decimal } from "../lib/money";
 import { edate, isAfter, isOnOrBefore } from "./dates";
-import { derivedTermProblem } from "./amortization";
+import {
+  derivedTermProblem,
+  eventTermMonths,
+  maxTermMonths,
+  paymentOnOrAfter,
+  paymentsDueBy,
+  termMonths,
+} from "./amortization";
 import { EngineInputError } from "./errors";
-import type { Assumptions, MortgageBlock, Portfolio, ShockBand } from "./types";
+import type {
+  Assumptions,
+  LoanRecast,
+  MortgageBlock,
+  Portfolio,
+  ShockBand,
+} from "./types";
 
 export type ValidationCode =
   | "INVALID_DATE"
@@ -31,7 +44,13 @@ export type ValidationCode =
   | "HORIZON_NOT_POSITIVE"
   | "INVALID_TERM"
   | "SHOCK_OUT_OF_RANGE"
-  | "ASOF_BEFORE_BASEDATE";
+  | "ASOF_BEFORE_BASEDATE"
+  | "NON_POSITIVE_PREPAYMENT"
+  | "EVENT_BEFORE_START"
+  | "EVENT_AFTER_SCHEDULE_END"
+  | "INVALID_RECAST"
+  | "INVALID_RECAST_MATURITY"
+  | "RECAST_INSTALMENT_BEFORE_COMPLETION";
 
 export type ValidationEntity =
   | "assumptions"
@@ -180,6 +199,119 @@ function checkDevFeatures(b: MortgageBlock, report: Report): void {
   }
 }
 
+/** The contract term in payments, or undefined when it is invalid (another code
+ *  reports that) or cannot be derived from non-finite inputs. */
+function contractTerm(b: MortgageBlock): number | undefined {
+  if (b.loanTermYears != null) {
+    return Number.isInteger(b.loanTermYears) && b.loanTermYears > 0
+      ? b.loanTermYears * 12
+      : undefined;
+  }
+  const finite =
+    b.initialPrincipal.isFinite() &&
+    b.interestRatePa.isFinite() &&
+    b.monthlyInstalment.isFinite();
+  return finite && !derivedTermProblem(b) ? termMonths(b) : undefined;
+}
+
+/** A prepayment or recast date: after the start, before the last payment the loan
+ *  can reach (ADR 0109). */
+function checkEventDate(
+  date: Date,
+  b: MortgageBlock,
+  end: Date | undefined,
+  field: string,
+  report: Report,
+): boolean {
+  if (badDate(date)) report("INVALID_DATE", field);
+  else if (isOnOrBefore(date, b.startDate)) report("EVENT_BEFORE_START", field);
+  else if (end && isOnOrBefore(end, date))
+    report("EVENT_AFTER_SCHEDULE_END", field);
+  else return true;
+  return false;
+}
+
+function checkPrepayments(
+  b: MortgageBlock,
+  end: Date | undefined,
+  report: Report,
+): void {
+  const field = "prepayments";
+  for (const p of b.prepayments ?? []) {
+    checkEventDate(p.date, b, end, field, report);
+    if (badNumber(p.amount)) report("NON_FINITE_NUMBER", field);
+    else if (!p.amount.greaterThan(ZERO))
+      report("NON_POSITIVE_PREPAYMENT", field);
+    if (badNumber(p.fee)) report("NON_FINITE_NUMBER", field);
+    else if (p.fee?.isNegative()) report("NEGATIVE_AMOUNT", field);
+  }
+}
+
+/** A recast maturity must leave at least the next payment and stay within the cap. */
+function checkRecastMaturity(
+  b: MortgageBlock,
+  r: LoanRecast,
+  term: number | undefined,
+  report: Report,
+): void {
+  if (r.maturity === undefined || term === undefined) return;
+  if (badDate(r.maturity)) return report("INVALID_DATE", "recasts");
+  const last = paymentsDueBy(b, r.maturity);
+  const next = paymentOnOrAfter(b, r.date) + 1;
+  if (last < next || last > maxTermMonths(term))
+    report("INVALID_RECAST_MATURITY", "recasts");
+}
+
+function checkRecastInstalment(
+  b: MortgageBlock,
+  r: LoanRecast,
+  report: Report,
+): void {
+  if (r.instalment === undefined) return;
+  if (badNumber(r.instalment)) report("NON_FINITE_NUMBER", "recasts");
+  else if (!r.instalment.greaterThan(ZERO)) report("INVALID_RECAST", "recasts");
+  // Before completion the payment is interest only: no instalment to set.
+  if (b.completionDate && isOnOrBefore(r.date, b.completionDate))
+    report("RECAST_INSTALMENT_BEFORE_COMPLETION", "recasts");
+}
+
+function checkRecasts(
+  b: MortgageBlock,
+  term: number | undefined,
+  end: Date | undefined,
+  report: Report,
+): void {
+  for (const r of b.recasts ?? []) {
+    const dated = checkEventDate(r.date, b, end, "recasts", report);
+    if ((r.maturity === undefined) === (r.instalment === undefined)) {
+      report("INVALID_RECAST", "recasts");
+      continue;
+    }
+    checkRecastInstalment(b, r, report);
+    if (dated) checkRecastMaturity(b, r, term, report);
+  }
+}
+
+/** Prepayments and recasts (ADR 0109). */
+function checkLoanEvents(b: MortgageBlock, report: Report): void {
+  if (!b.prepayments?.length && !b.recasts?.length) return;
+  const term = contractTerm(b);
+  const end =
+    term === undefined || badDate(b.startDate)
+      ? undefined
+      : edate(b.startDate, eventTermMonths(withValidRecasts(b), term));
+  checkPrepayments(b, end, report);
+  checkRecasts(b, term, end, report);
+}
+
+/** The block without recasts whose dates could not place a maturity. */
+function withValidRecasts(b: MortgageBlock): MortgageBlock {
+  const recasts = (b.recasts ?? []).filter(
+    (r) => r.maturity === undefined || !badDate(r.maturity),
+  );
+  return { ...b, recasts };
+}
+
 function checkMortgage(b: MortgageBlock, report: Report): void {
   checkFields(
     b,
@@ -200,6 +332,7 @@ function checkMortgage(b: MortgageBlock, report: Report): void {
   checkDevFeatures(b, report);
   if (b.initialPrincipal.isFinite() && b.interestRatePa.isFinite())
     checkDerivedTerm(b, report);
+  checkLoanEvents(b, report);
 }
 
 /** Corrupt-data codes the engine raises on at every entry point (D-37). */
@@ -237,6 +370,12 @@ const LOAN_ERROR_CODES: ReadonlySet<ValidationCode> = new Set([
   "COMPLETION_BEFORE_START",
   "INVALID_TERM",
   "RATE_OUT_OF_RANGE",
+  "NON_POSITIVE_PREPAYMENT",
+  "EVENT_BEFORE_START",
+  "EVENT_AFTER_SCHEDULE_END",
+  "INVALID_RECAST",
+  "INVALID_RECAST_MATURITY",
+  "RECAST_INSTALMENT_BEFORE_COMPLETION",
 ]);
 
 /**

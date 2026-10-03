@@ -111,6 +111,17 @@ export const en = {
     INVALID_TERM: "The term in years is not valid",
     SHOCK_OUT_OF_RANGE: "A scenario shock is outside its allowed range",
     ASOF_BEFORE_BASEDATE: "The date is before the base date",
+    NON_POSITIVE_PREPAYMENT: "Each prepayment must be above zero",
+    EVENT_BEFORE_START:
+      "A prepayment or maturity change must be dated after the loan start",
+    EVENT_AFTER_SCHEDULE_END:
+      "A prepayment or maturity change must be dated before the loan's last payment",
+    INVALID_RECAST:
+      "A maturity change needs either a new maturity date or a new instalment above zero, not both",
+    INVALID_RECAST_MATURITY:
+      "The new maturity must be after the next payment and at most 50 years after the loan start",
+    RECAST_INSTALMENT_BEFORE_COMPLETION:
+      "A new instalment can only be set after the interest-only period ends; set a new maturity date instead",
   } satisfies Record<ValidationCode, string>,
 
   // A write the database refused (P7a, DR-133). Shown in place of SQLite's raw text.

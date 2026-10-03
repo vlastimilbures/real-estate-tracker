@@ -80,6 +80,27 @@ export interface MortgageDraw {
   amount: Money; // additional principal drawn this month (> 0)
 }
 
+/** What the bank does after a prepayment (ADR 0109): keep the maturity and lower the
+ *  instalment, or keep the instalment and shorten the term. */
+export type PrepaymentEffect = "lowerInstalment" | "shortenTerm";
+
+/** A one-off extra principal payment (ADR 0109), applied after the first payment due
+ *  on or after `date`. */
+export interface MortgagePrepayment {
+  date: IsoDate;
+  amount: Money; // principal repaid (> 0)
+  effect: PrepaymentEffect;
+  /** Fee paid with it, as entered (no automatic legal fee). */
+  fee?: Money | undefined;
+}
+
+/** A change of the loan's maturity (ADR 0109) from the first payment after the first
+ *  payment due on or after `date`: to a new maturity date, or to a new instalment
+ *  (the maturity then follows from NPER). Exactly one of the two. */
+export type LoanRecast =
+  | { date: IsoDate; maturity: IsoDate; instalment?: undefined }
+  | { date: IsoDate; instalment: Money; maturity?: undefined };
+
 /** Fields every mortgage block has. */
 interface LoanBase {
   id: string;
@@ -92,6 +113,11 @@ interface LoanBase {
   /** Contract maturity date, when entered (D-29). Informational: the term stays
    *  derived from the instalment (D-08); see `maturityMismatch`. */
   contractMaturityDate?: IsoDate | undefined;
+  /** One-off prepayments, sorted by date (ADR 0109). They never make a plain loan a
+   *  development loan. */
+  prepayments?: MortgagePrepayment[] | undefined;
+  /** Maturity changes, sorted by date (ADR 0109). */
+  recasts?: LoanRecast[] | undefined;
 }
 
 /**
