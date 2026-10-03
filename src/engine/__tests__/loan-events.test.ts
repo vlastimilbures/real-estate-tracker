@@ -257,6 +257,46 @@ describe("ADR 0109: placement on the loan's own payments", () => {
     ).toBeLessThanOrEqual(0);
   });
 
+  // ADR 0116 §1: an event dated after the last payment due on or before baseDate, and on
+  // or before baseDate itself, settles right after that payment. Its placement therefore
+  // depends on baseDate by less than one period. Javorova pays on the 17th.
+  it("a late-window event settles after the last payment due by baseDate", () => {
+    const b = withEvents(javorova, [
+      prepay("2031-05-20", 500000, "shortenTerm"),
+    ]);
+    const at = (base: string) => ({ ...assumptions, baseDate: isoDate(base) });
+    const plain = buildSchedule(javorova, at("2031-05-25"));
+
+    // Base 05-25: history, taken off right after the 05-17 payment.
+    const late = buildSchedule(b, at("2031-05-25"));
+    expect(late.every((r) => r.prepaid.isZero())).toBe(true);
+    expect(balanceAtMonth(late, 0).toFixed(4)).toBe(
+      balanceAtMonth(plain, 0).minus(500000).toFixed(4),
+    );
+
+    // Base 05-19: forward, applied after the 06-17 payment in grid row 1.
+    const early = buildSchedule(b, at("2031-05-19"));
+    expect(early[0].prepaid.toFixed(4)).toBe("500000.0000");
+
+    // Row 1 is the 06-17 payment in both grids: its interest differs by one month on
+    // 500,000.
+    expect(
+      early[0].interest
+        .minus(late[0].interest)
+        .minus(D(500000).times(early[0].ratePa).div(12))
+        .abs()
+        .toNumber(),
+    ).toBeLessThan(1e-9);
+    // Same instalment (shortenTerm), so the late grid repays exactly that much more.
+    expect(
+      balanceAtMonth(early, 1)
+        .minus(balanceAtMonth(late, 1))
+        .minus(early[0].interest.minus(late[0].interest))
+        .abs()
+        .toNumber(),
+    ).toBeLessThan(1e-9);
+  });
+
   it("a future loan's prepayment follows its first payment, never the draw row", () => {
     const fut = {
       id: "f",
