@@ -468,6 +468,17 @@ export const cs: Dictionary = {
     helpContractMaturity:
       "ze smlouvy; prázdné = nekontroluje se; u developerského úvěru se nepoužívá",
     amortizationWarnExpected: "Očekávaná splátka ≈",
+    // Section nav (ADR 0107)
+    sectionNavLabel: "Části nemovitosti",
+    sectionOverview: "Přehled",
+    sectionRecords: "Záznamy",
+    sectionFinancing: "Financování",
+    sectionHolding: "Náklady na držbu",
+    sectionProjection: "Projekce",
+    sectionAmortization: "Umořovací plán",
+    showAmortization: (n) =>
+      `Zobrazit umořovací plán (${n} ${csPlural(n, ["splátka", "splátky", "splátek"])})`,
+    hideAmortization: "Skrýt umořovací plán",
     amortizationTitle: "Umořovací plán",
     amortizationMonths: (n) =>
       `${n} ${csPlural(n, ["měsíc", "měsíce", "měsíců"])}`,

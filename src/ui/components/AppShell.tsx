@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
@@ -152,12 +152,15 @@ export function AppShell({
   subtitle,
   actions,
   showLens = true,
+  subnav,
   children,
 }: {
   title: string;
   subtitle?: string | undefined;
   actions?: ReactNode | undefined;
   showLens?: boolean | undefined;
+  /** A full-width last row in the sticky topbar, e.g. a section nav (ADR 0107). */
+  subnav?: ReactNode | undefined;
   children: ReactNode;
 }) {
   const t = useT();
@@ -181,6 +184,23 @@ export function AppShell({
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [route, selectedPropertyId]);
+
+  // The topbar's height as --topbar-h on the page, so an in-page jump lands a section
+  // below the sticky topbar (scroll-margin-top), whatever rows the topbar wraps to.
+  const topbarRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const bar = topbarRef.current;
+    if (!bar || typeof ResizeObserver === "undefined") return;
+    const root = document.documentElement;
+    const observer = new ResizeObserver(() =>
+      root.style.setProperty("--topbar-h", `${bar.offsetHeight}px`),
+    );
+    observer.observe(bar);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--topbar-h");
+    };
+  }, []);
 
   return (
     <div className={collapsed ? "shell collapsed" : "shell"}>
@@ -252,7 +272,7 @@ export function AppShell({
       </aside>
 
       <div className="content">
-        <header className="topbar">
+        <header className="topbar" ref={topbarRef}>
           <div>
             <div className="page-title">{title}</div>
             {subtitle && <div className="page-sub">{subtitle}</div>}
@@ -271,6 +291,7 @@ export function AppShell({
               />
             )}
           </div>
+          {subnav && <div className="topbar-subnav">{subnav}</div>}
         </header>
         <main className="page">
           {stale && (

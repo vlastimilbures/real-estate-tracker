@@ -110,6 +110,10 @@ interface UiState {
    *  has not chosen and the page decides on open (ADR 0106). */
   presetsOpen: boolean | null;
   setPresetsOpen: (open: boolean) => void;
+  /** Property detail's amortization schedule is expanded. In-memory for the session,
+   *  across properties (ADR 0107). */
+  amortizationOpen: boolean;
+  setAmortizationOpen: (open: boolean) => void;
   navigate: (route: Route) => void;
   openProperty: (id: string) => void;
   setMode: (mode: Mode) => void;
@@ -202,6 +206,8 @@ export const useUiStore = create<UiState>((set, get) => ({
   setCrashAtYear: (crashAtYear) => set({ crashAtYear }),
   presetsOpen: null,
   setPresetsOpen: (presetsOpen) => set({ presetsOpen }),
+  amortizationOpen: false,
+  setAmortizationOpen: (amortizationOpen) => set({ amortizationOpen }),
   unsavedChanges: false,
   unsavedSources: [],
   pendingLeave: null,
