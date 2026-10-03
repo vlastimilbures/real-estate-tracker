@@ -318,11 +318,20 @@ describe("restoreFromJson — column whitelist (DR-017)", () => {
           "loan_term_years",
           "draws",
           "interest_only_until",
+          "prepayments",
+          "recasts",
         ]),
       },
     };
     await restoreFromJson(db, old, checkInputRules);
     expect(await rowCounts(db)).toEqual(before);
+    // A backup from before v9 restores with no prepayments or recasts (ADR 0109).
+    const events = await db.select<{ prepayments: null; recasts: null }>(
+      "SELECT prepayments, recasts FROM mortgage_blocks",
+    );
+    expect(
+      events.every((e) => e.prepayments === null && e.recasts === null),
+    ).toBe(true);
     const props = await db.select<{ active: number }>(
       "SELECT active FROM properties",
     );
@@ -369,6 +378,8 @@ describe("mappers — guard corrupt JSON", () => {
       draws: "[{bad",
       interest_only_until: null,
       contract_maturity_date: null,
+      prepayments: null,
+      recasts: null,
     };
     expect(() => rowToMortgageBlock(row)).toThrow(
       /Corrupt mortgage draws JSON/,

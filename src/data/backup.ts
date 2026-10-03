@@ -113,6 +113,8 @@ export const BACKUP_COLUMNS: Record<BackupTable, readonly string[]> = {
     "draws",
     "interest_only_until",
     "contract_maturity_date",
+    "prepayments",
+    "recasts",
   ],
   valuations: ["id", "property_id", "valid_from", "valid_to", "market_value"],
   leases: ["id", "property_id", "start_date", "end_date", "monthly_rent"],

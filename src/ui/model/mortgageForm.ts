@@ -111,13 +111,16 @@ export interface MortgageFormValues {
 /**
  * The mortgage block a submitted form describes. The contract maturity (D-29) comes from
  * its field (UX-054, blank clears it); a caller without that field carries the stored
- * value over (DR-129).
+ * value over (DR-129). The form has no prepayment or recast fields yet, so the stored
+ * ones always carry over (ADR 0109).
  */
 export function mortgageFromForm(
   v: MortgageFormValues,
   id: string,
   propertyId: string,
-  existing: Pick<MortgageBlock, "contractMaturityDate"> | undefined,
+  existing:
+    | Pick<MortgageBlock, "contractMaturityDate" | "prepayments" | "recasts">
+    | undefined,
 ): MortgageBlock {
   return mortgageBlock({
     id,
@@ -134,5 +137,7 @@ export function mortgageFromForm(
       "contractMaturityDate" in v
         ? (v.contractMaturityDate ?? undefined)
         : existing?.contractMaturityDate,
+    prepayments: existing?.prepayments,
+    recasts: existing?.recasts,
   });
 }

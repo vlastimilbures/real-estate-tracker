@@ -100,6 +100,17 @@ export const cs: Dictionary = {
     INVALID_TERM: "Doba v letech není platná",
     SHOCK_OUT_OF_RANGE: "Šok scénáře je mimo povolený rozsah",
     ASOF_BEFORE_BASEDATE: "Datum je před výchozím datem",
+    NON_POSITIVE_PREPAYMENT: "Každá mimořádná splátka musí být vyšší než nula",
+    EVENT_BEFORE_START:
+      "Mimořádná splátka nebo změna splatnosti musí mít datum po začátku úvěru",
+    EVENT_AFTER_SCHEDULE_END:
+      "Mimořádná splátka nebo změna splatnosti musí mít datum před poslední splátkou úvěru",
+    INVALID_RECAST:
+      "Změna splatnosti potřebuje buď nové datum splatnosti, nebo novou splátku vyšší než nula, ne obojí",
+    INVALID_RECAST_MATURITY:
+      "Nová splatnost musí být po příští splátce a nejvýše 50 let od začátku úvěru",
+    RECAST_INSTALMENT_BEFORE_COMPLETION:
+      "Novou splátku lze nastavit až po skončení splácení jen úroků; zadejte místo toho nové datum splatnosti",
   },
 
   writeErrors: {

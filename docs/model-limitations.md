@@ -55,7 +55,16 @@ work still to do is in the [roadmap](roadmap.md).
   30/360-style simplification). The loan's payment day and interest for a first partial month
   are not modelled, so totals can differ slightly from a bank statement. See
   [SPEC §4.4](../SPEC.md#44-monthly-amortization-the-engine-within-the-engine).
-- **No early repayments.** Extra principal payments are not modelled yet.
+- **Prepayments and maturity changes are simplified.** A one-off prepayment is applied right
+  after the next payment due on or after its date, so a prepayment between two due dates is
+  charged up to a month of interest it would save at the bank. The fee is what you enter:
+  the app does not work out the legal fee or the annual penalty-free allowance. A
+  prepayment larger than the balance, or after the loan is repaid, is cut to what is owed.
+  See [SPEC §4.4](../SPEC.md#44-monthly-amortization-the-engine-within-the-engine) and
+  ADR 0109.
+- **Rate-shock reach and the maturity check use the contract term.** After a prepayment
+  shortens the term or a maturity change moves it, the Scenarios "hits N of M loans"
+  summary and the implied-maturity warning still read the loan's original terms.
 - **Balloon at maturity.** If the instalment cannot clear the loan by the end of its term, the
   last payment pays the rest.
 

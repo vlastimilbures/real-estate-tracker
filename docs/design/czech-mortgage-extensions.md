@@ -1,6 +1,8 @@
 # Czech mortgage extensions — design notes (D-04)
 
-Status: design only, nothing is built (D-04). Written in P4c (2026-10-01) against the engine
+Status: design only, nothing is built (D-04), except §1: one-off prepayments are built,
+with recasts added, as decided in ADR 0109 (which supersedes the §1 details where they
+differ, e.g. the shorten-term example (b)). Written in P4c (2026-10-01) against the engine
 after P4a/P4b and the P4c refactors (DR-092, DR-128). Source outline: P02 report §10; the Czech
 practice checklist is P02 §3.3 (C-03, C-14, C-15).
 

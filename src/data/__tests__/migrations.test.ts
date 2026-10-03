@@ -54,6 +54,10 @@ async function fill(sql: Sql, version: number): Promise<void> {
     await sql.execute(
       "UPDATE mortgage_blocks SET contract_maturity_date = '2053-02-01'",
     );
+  if (version >= 9)
+    await sql.execute(
+      `UPDATE mortgage_blocks SET prepayments = '[{"date":"2027-02-01","amount":"100000","effect":"shortenTerm"}]', recasts = '[{"date":"2030-02-01","maturity":"2050-02-01"}]'`,
+    );
   await sql.execute(
     "INSERT INTO valuations (id, property_id, valid_from, valid_to, market_value) VALUES ('v1', 'p1', '2023-02-01', '2025-12-31', '7600000'), ('v2', 'p1', '2026-01-01', NULL, '8100000')",
   );
@@ -66,8 +70,14 @@ async function fill(sql: Sql, version: number): Promise<void> {
   await sql.execute(
     `INSERT INTO assumptions VALUES (1, '2026-06-07', '0.03', '0.025', '0.04', '0.055', 30, '0.025', '2000', '3000', '0.0', '0.05', '1500', '0')`,
   );
+  // From v8 the overrides are stored in the versioned spelling.
+  const overrides =
+    version >= 8
+      ? '{"version":1,"appreciationPa":"0.01"}'
+      : '{"appreciationPa":"0.01"}';
   await sql.execute(
-    `INSERT INTO scenarios (id, name, overrides, created_at) VALUES ('s1', 'Stress', '{"appreciationPa":"0.01"}', '2026-01-05')`,
+    "INSERT INTO scenarios (id, name, overrides, created_at) VALUES ('s1', 'Stress', ?, '2026-01-05')",
+    [overrides],
   );
 }
 

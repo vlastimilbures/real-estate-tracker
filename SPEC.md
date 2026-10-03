@@ -91,16 +91,22 @@ Property { id, name, type?, sizeM2?, purchaseDate, purchasePrice,
            // address and garage are stored in the DB / CSV but not used by the engine
 
 MortgageDraw { date: IsoDate, amount: Money }     // additional principal tranche (> 0)
+MortgagePrepayment { date, amount: Money, effect: "lowerInstalment" | "shortenTerm",
+                     fee?: Money }               // extra principal repaid (> 0), ADR 0109
+LoanRecast { date, maturity } | { date, instalment: Money }  // new maturity, ADR 0109
 
 MortgageBlock = PlainLoan | DevelopmentLoan
   common: { id, propertyId, startDate, initialPrincipal, fixationYears,
             interestRatePa, monthlyInstalment,
-            contractMaturityDate? }   // consistency check only (ADR 0029)
+            contractMaturityDate?,    // consistency check only (ADR 0029)
+            prepayments?: MortgagePrepayment[],  // plain and development loans
+            recasts?: LoanRecast[] }
   PlainLoan:       loanTermYears?      // optional; blank ⇒ term derived from the instalment
   DevelopmentLoan: loanTermYears       // required
                    draws?: MortgageDraw[]
                    completionDate?     // interest-only until this date
-  // A block is a development loan when it has draws or a completionDate.
+  // A block is a development loan when it has draws or a completionDate
+  // (prepayments and recasts never make it one).
 
 Valuation { id, propertyId, validFrom, validTo?, marketValue }   // effective-dated
 Lease     { id, propertyId, startDate, endDate?,  monthlyRent }  // effective-dated
@@ -259,6 +265,35 @@ the next payment.
   dropped. Net refinance cash (successor principal − predecessor balance paid off) counts in
   the handover year's cumulative net cash flow and levered IRR, like an acquisition outflow.
 
+**Prepayments and recasts** (ADR 0109), on plain and development loans:
+
+- Each event follows the **first payment due on or after its date**, counted on the loan's
+  own due dates, so moving baseDate never moves it. Within one payment period the order is:
+  scheduled payment, then prepayments (date order), then recast. A prepayment dated
+  between two due dates waits for the next one (interest is overstated by under a month).
+- The schedule carries the loan's **maturity in force**: the contract term until an event
+  moves it. Every re-amortization (a reset, a shock revert, a tranche, completion) runs
+  over the payments left to it.
+- **Prepayment**: `applied = min(amount, B)` is subtracted after the payment (row column
+  `prepaid`; the fee is in `prepaymentFee`). Effect of the period's last prepayment, once:
+  `lowerInstalment` re-amortizes from the next payment to the same maturity;
+  `shortenTerm` keeps the instalment and sets the maturity to the payment plus
+  `ceil(NPER)` at its rate. During interest-only both effects are the same.
+- **Recast**: to a `maturity`, the last payment becomes the last one due on or before it
+  and the next payment re-amortizes; to an `instalment`, the next payment pays exactly that
+  and the maturity follows from `ceil(NPER)` at that payment's rate. The maturity is capped
+  at the later of loan start + 50 years and the contract term; an instalment past the cap
+  re-amortizes to the cap. An instalment that does not cover the next interest is ignored.
+  An instalment recast before a development loan's completion is rejected.
+- A tranche landing after the maturity in force restores the contract term.
+- Events dated on/before baseDate are **replayed** into the opening balance (the loan is
+  simulated on its own due dates) and are not in the projection's cash flows.
+- An event that meets a smaller balance (or a repaid loan) is clamped and **reported** as an
+  event outcome, never raised. Events dated after a successor block's start are dropped and
+  reported; a prepayment the handover drops is paid at the handover, before the successor
+  pays off the rest.
+- Row identity: `endBalance = previous − principal − prepaid + drawn`.
+
 **Dev/phased loans** — additional rules applied before the plain path:
 
 - While `date ≤ completionDate`: **interest-only** — no principal, instalment = interest.
@@ -273,8 +308,9 @@ the next payment.
   landing in a future loan's first draw month joins that draw (D-46).
 - During construction the property's market value is scaled by `drawnFraction` (see §4.3).
 
-Aggregate monthly interest / principal / debt-service / draws / year-end balance for the
-annual projection.
+Aggregate monthly interest / principal / debt-service / draws / prepaid / prepayment fees /
+year-end balance for the annual projection. Prepaid principal and its fees are owner cash
+outside debt service, net cash flow and DSCR (ADR 0109).
 
 ### 4.5 Annual projection (Year 0 … horizon)
 
@@ -359,7 +395,8 @@ debt) for every property; when every loan retires within the horizon (as in the 
   when equity₀ ≤ 0 and the tile shows "—" (ADR 0034). **Real multiple** = net worth realₙ /
   equity₀ (CPI₀ = 1, so equity₀ is already in base-date Kč); 0 when equity₀ = 0, like the
   nominal multiple (ADR 0087).
-- Cumulative net cash flow (Years 1…N), net of acquisition outflows and refinance cash.
+- Cumulative net cash flow (Years 1…N), net of acquisition outflows, refinance cash and
+  prepayments with their fees (ADR 0109).
   **Real** cumulative net cash flow = Σ_{t=1..N} (netCF_t − acquisition outflow_t) / CPI_t:
   each year is deflated by its own index, as in the real IRR (ADR 0087). The Dashboard and
   Scenario compare show the multiple and the cumulative cash flow of the lens; Σ principal
@@ -367,8 +404,8 @@ debt) for every property; when every loan retires within the horizon (as in the 
 - First calendar year net cash flow turns positive; first year portfolio debt = 0 — each
   reported with its projection year (ADR 0022).
 - **Levered IRR** (nominal & real): IRR of the vector `[−equity₀, netCF₁, …, netCF_{N−1},
-netCF_N + equity_N]` — acquisition outflows and refinance cash adjust the relevant year's
-  entry; terminal = projected equity at horizon. Real IRR deflates each entry by `CPI_t`.
+netCF_N + equity_N]` — acquisition outflows, refinance cash and prepayments with their
+  fees adjust the relevant year's entry; terminal = projected equity at horizon. Real IRR deflates each entry by `CPI_t`.
   Computed by bisection on the decimal NPV (tolerance |NPV| < 1e-9 Kč, at most 200
   iterations) over the domain **−90 % … +1000 %** a year (ADR 0079; `src/engine/kpis.ts`
   `irrResult`, `src/engine/constants.ts`). The search starts with −90 % … +100 % and, when
@@ -380,8 +417,9 @@ netCF_N + equity_N]` — acquisition outflows and refinance cash adjust the rele
   the reason is **`NO_ROOT`**. In either case the IRR is null and the UI shows "n/a" with
   the reason: "No unique IRR: the cash flows break even at more than one rate" or "No IRR
   between −90 % and +1000 %" (`src/ui/model/irr.ts`).
-- `totalPrincipalRepaid` (sanity invariant): Σ principal repaid over the horizon; for the
-  seed it equals the starting debt (tripwire for the classic zero-principal spreadsheet bug).
+- `totalPrincipalRepaid` (sanity invariant): Σ principal repaid over the horizon, prepaid
+  principal included; for the seed it equals the starting debt (tripwire for the classic
+  zero-principal spreadsheet bug).
 - **Total interest** (ADR 0103): Σ projection interest of Years 1…N; the **real** figure is
   Σ interest_t / CPI_t, deflated like the real cumulative cash flow.
 
@@ -436,7 +474,8 @@ with examples, is [docs/csv-import.md](docs/csv-import.md).
 | `rents.csv`      | property_name (FK), start_date, end_date, monthly_rent                                                                                           |
 | `mortgages.csv`  | property_name (FK), start_date, initial_principal, fixation_years, interest_rate_pa, monthly_instalment, loan_term_years, contract_maturity_date |
 
-Note: `draws` and `completionDate` (dev/phased mortgage fields) are set via the UI, not CSV.
+Note: `draws` and `completionDate` (dev/phased mortgage fields), prepayments and recasts
+are set via the UI, not CSV; a re-import keeps them.
 
 **Rules:**
 
@@ -620,7 +659,7 @@ tax modelling, mobile. Keep the engine and data model clean enough to add these 
 rewrites.
 
 Czech mortgage features flagged but **not modelled** (ADR 0004), with design notes and a
-build order in `docs/design/czech-mortgage-extensions.md`: prepayment at fixation end, the
-annual penalty-free prepayment allowance, the loan's payment day, and first partial-month
-interest. Also backlog: auto-converting Czech-Excel CSV files (ADR 0049), a read-only history
+build order in `docs/design/czech-mortgage-extensions.md`: the annual penalty-free
+prepayment allowance, the loan's payment day, and first partial-month interest. One-off
+prepayments and recasts are modelled (ADR 0109). Also backlog: auto-converting Czech-Excel CSV files (ADR 0049), a read-only history
 view before the Projection start (ADR 0019), App Sandbox (ADR 0063).

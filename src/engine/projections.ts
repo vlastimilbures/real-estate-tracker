@@ -174,12 +174,16 @@ function yearSlice(schedule: AmortizationRow[], t: number) {
   let interest = ZERO;
   let principal = ZERO;
   let drawn = ZERO;
+  let prepaid = ZERO;
+  let prepaymentFees = ZERO;
   let balance = ZERO;
   let lastRate: Decimal | null = null;
   for (const row of schedule.slice(start, end)) {
     interest = interest.plus(row.interest);
     principal = principal.plus(row.principal);
     drawn = drawn.plus(row.drawn);
+    prepaid = prepaid.plus(row.prepaid);
+    prepaymentFees = prepaymentFees.plus(row.prepaymentFee);
     balance = row.endBalance;
     if (row.principal.plus(row.interest).isPositive()) {
       lastRate = row.ratePa;
@@ -190,6 +194,8 @@ function yearSlice(schedule: AmortizationRow[], t: number) {
     principal,
     debtService: interest.plus(principal),
     drawn,
+    prepaid,
+    prepaymentFees,
     balance,
     rate: lastRate,
   };
@@ -269,6 +275,8 @@ function buildYear0(
     debtService: ZERO,
     netCashFlow: ZERO,
     draws: ZERO,
+    prepaid: ZERO,
+    prepaymentFees: ZERO,
     dscr: null,
     ratePa: null,
   };
@@ -370,6 +378,8 @@ function buildYearRow(
     debtService: slice.debtService,
     netCashFlow,
     draws,
+    prepaid: slice.prepaid,
+    prepaymentFees: slice.prepaymentFees,
     dscr: slice.debtService.isZero() ? null : rc.noi.div(slice.debtService),
     ratePa: slice.rate,
   };
@@ -527,6 +537,8 @@ function zeroYear(
     debtService: ZERO,
     netCashFlow: ZERO,
     draws: ZERO,
+    prepaid: ZERO,
+    prepaymentFees: ZERO,
     dscr: null,
     ratePa: null,
   };
@@ -589,6 +601,8 @@ export function projectPortfolio(
       debtService,
       netCashFlow: acc((y) => y.netCashFlow),
       draws: acc((y) => y.draws),
+      prepaid: acc((y) => y.prepaid),
+      prepaymentFees: acc((y) => y.prepaymentFees),
       dscr: debtService.isZero() ? null : noi.div(debtService),
       ratePa: null,
     });

@@ -83,6 +83,7 @@ describe("toEquityChangeRows", () => {
       balance: string,
       principal: string,
       draws: string,
+      prepaid = "0",
     ): SeriesRow => ({
       year,
       calendarYear: 2026 + year,
@@ -100,6 +101,7 @@ describe("toEquityChangeRows", () => {
       netCashFlow: ZERO,
       dscr: null,
       draws: D(draws),
+      prepaid: D(prepaid),
     });
     const series = [
       row(0, "2000000", "1000000", "0", "0"),
@@ -112,5 +114,18 @@ describe("toEquityChangeRows", () => {
     // Still reconciles to the equity delta.
     const equityDelta = toNumber(series[1].equity.minus(series[0].equity));
     expect(r.appreciation + r.paydown + r.drawdown).toBeCloseTo(equityDelta, 6);
+
+    // ADR 0109: a 300,000 prepayment is paydown too; appreciation stays the value ramp.
+    const prepaid = [
+      row(0, "2000000", "1000000", "0", "0"),
+      row(1, "3200000", "650000", "50000", "0", "300000"),
+    ];
+    const [p] = toEquityChangeRows(prepaid);
+    expect(p.appreciation).toBeCloseTo(1200000, 6);
+    expect(p.paydown).toBeCloseTo(350000, 6);
+    expect(p.appreciation + p.paydown + p.drawdown).toBeCloseTo(
+      toNumber(prepaid[1].equity.minus(prepaid[0].equity)),
+      6,
+    );
   });
 });

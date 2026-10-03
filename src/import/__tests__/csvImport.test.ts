@@ -190,6 +190,30 @@ describe("importCsv — matching and preserved fields", () => {
     ).toEqual({ contract_maturity_date: "2046-02-17" });
   });
 
+  it("a re-import keeps stored prepayments and recasts; a new loan has none (ADR 0109)", async () => {
+    const prepayments =
+      '[{"date":"2026-01-17","amount":"100000","effect":"shortenTerm"}]';
+    const recasts = '[{"date":"2031-01-17","maturity":"2045-01-17"}]';
+    sql.db
+      .prepare("UPDATE mortgage_blocks SET prepayments = ?, recasts = ?")
+      .run(prepayments, recasts);
+    await importCsv(sql, {
+      mortgages: parseMortgages(
+        `${MH}\nByt A,2021-01-17,2250000,10,0.0169,7908,25,\nByt A,2031-01-17,1500000,5,0.045,9000,15,`,
+      ).rows,
+    });
+    expect(
+      sql.db
+        .prepare(
+          "SELECT start_date, prepayments, recasts FROM mortgage_blocks ORDER BY start_date",
+        )
+        .all(),
+    ).toEqual([
+      { start_date: "2021-01-17", prepayments, recasts },
+      { start_date: "2031-01-17", prepayments: null, recasts: null },
+    ]);
+  });
+
   it("gives every new property a holding-costs row", async () => {
     await importCsv(sql, {
       properties: parseProperties(

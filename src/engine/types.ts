@@ -80,6 +80,27 @@ export interface MortgageDraw {
   amount: Money; // additional principal drawn this month (> 0)
 }
 
+/** What the bank does after a prepayment (ADR 0109): keep the maturity and lower the
+ *  instalment, or keep the instalment and shorten the term. */
+export type PrepaymentEffect = "lowerInstalment" | "shortenTerm";
+
+/** A one-off extra principal payment (ADR 0109), applied after the first payment due
+ *  on or after `date`. */
+export interface MortgagePrepayment {
+  date: IsoDate;
+  amount: Money; // principal repaid (> 0)
+  effect: PrepaymentEffect;
+  /** Fee paid with it, as entered (no automatic legal fee). */
+  fee?: Money | undefined;
+}
+
+/** A change of the loan's maturity (ADR 0109) from the first payment after the first
+ *  payment due on or after `date`: to a new maturity date, or to a new instalment
+ *  (the maturity then follows from NPER). Exactly one of the two. */
+export type LoanRecast =
+  | { date: IsoDate; maturity: IsoDate; instalment?: undefined }
+  | { date: IsoDate; instalment: Money; maturity?: undefined };
+
 /** Fields every mortgage block has. */
 interface LoanBase {
   id: string;
@@ -92,6 +113,11 @@ interface LoanBase {
   /** Contract maturity date, when entered (D-29). Informational: the term stays
    *  derived from the instalment (D-08); see `maturityMismatch`. */
   contractMaturityDate?: IsoDate | undefined;
+  /** One-off prepayments, sorted by date (ADR 0109). They never make a plain loan a
+   *  development loan. */
+  prepayments?: MortgagePrepayment[] | undefined;
+  /** Maturity changes, sorted by date (ADR 0109). */
+  recasts?: LoanRecast[] | undefined;
 }
 
 /**
@@ -226,10 +252,41 @@ export interface AmortizationRow {
   principal: Decimal;
   /** New debt drawn in this grid month, dated after baseDate (DR-092): a loan's draw,
    *  a tranche, or a refinance's net new debt. Debt dated on/before baseDate is
-   *  opening debt. So endBalance = previous endBalance − principal + drawn, from the
-   *  baseDate debt (`openingDebt`). */
+   *  opening debt. So endBalance = previous endBalance − principal − prepaid +
+   *  drawn, from the baseDate debt (`openingDebt`). */
   drawn: Decimal;
+  /** Extra principal repaid after this month's payment (ADR 0109). */
+  prepaid: Decimal;
+  /** Fee paid with that prepayment (cash, not principal). */
+  prepaymentFee: Decimal;
   endBalance: Decimal;
+}
+
+/** Why a prepayment or recast did less than asked (ADR 0109). Reported, never
+ *  raised: the balance it meets depends on the assumptions and the scenario. */
+export type LoanEventIssue =
+  | "PREPAYMENT_EXCEEDS_BALANCE"
+  | "PREPAYMENT_AFTER_PAYOFF"
+  | "PREPAYMENT_REPLACED"
+  | "RECAST_AFTER_PAYOFF"
+  | "RECAST_REPLACED"
+  | "RECAST_INSTALMENT_BELOW_INTEREST"
+  | "RECAST_TERM_CAPPED";
+
+/** What one prepayment or recast did in the schedule (ADR 0109). */
+export interface LoanEventOutcome {
+  blockId: string;
+  kind: "prepayment" | "recast";
+  date: IsoDate;
+  /** Grid month it applied after (≤ 0: replayed before baseDate); null when a
+   *  successor block replaced the loan first. */
+  month: number | null;
+  /** A prepayment's amount asked for, the principal it repaid and the fee charged
+   *  (zero after payoff); zero for a recast. */
+  requested: Decimal;
+  applied: Decimal;
+  fee: Decimal;
+  issue: LoanEventIssue | null;
 }
 
 /** A successor block paying off its predecessor on the baseDate grid (D-27, D-47). */
@@ -263,9 +320,15 @@ export interface ProjectionYear {
   principal: Decimal;
   debtService: Decimal;
   netCashFlow: Decimal;
-  // DR-092: new debt drawn in the year (0 in year 0); with principal it explains the
-  // balance move: balance[t] = balance[t−1] − principal[t] + draws[t].
+  // DR-092: new debt drawn in the year (0 in year 0); with principal and prepaid it
+  // explains the balance move: balance[t] = balance[t−1] − principal[t] − prepaid[t]
+  // + draws[t].
   draws: Decimal;
+  // ADR 0109: extra principal prepaid in the year and the fees paid with it. Owner
+  // cash outside debt service and net cash flow, like an acquisition; cumulative cash
+  // flow and the IRR subtract both.
+  prepaid: Decimal;
+  prepaymentFees: Decimal;
   dscr: Decimal | null;
   ratePa: Decimal | null; // dominant mortgage rate in effect; null if no debt
 }

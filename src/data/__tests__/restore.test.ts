@@ -258,6 +258,8 @@ describe("older backups are upgraded in memory", () => {
           "draws",
           "interest_only_until",
           "contract_maturity_date",
+          "prepayments",
+          "recasts",
         ]),
         scenarios: [
           {

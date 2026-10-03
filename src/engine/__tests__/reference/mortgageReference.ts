@@ -111,6 +111,21 @@ export interface RefDraw {
   amount: Value;
 }
 
+/** An extra principal payment (mimořádná splátka, ADR 0109): paid right after the
+ *  first payment due on/after its date. The bank then either lowers the instalment
+ *  (same maturity) or keeps it (earlier maturity). */
+export interface RefPrepayment {
+  date: Iso;
+  amount: Value;
+  effect: "lowerInstalment" | "shortenTerm";
+  fee?: Value;
+}
+
+/** A change of maturity agreed with the bank (ADR 0109), from the payment after the
+ *  first payment due on/after its date: a new last-payment date, or a new instalment. */
+export type RefRecast =
+  { date: Iso; maturity: Iso } | { date: Iso; instalment: Value };
+
 export interface RefLoan {
   start: Iso;
   principal: Value;
@@ -122,6 +137,18 @@ export interface RefLoan {
   draws?: RefDraw[];
   /** Interest-only on every payment due on/before this date. */
   completion?: Iso;
+  prepayments?: RefPrepayment[];
+  recasts?: RefRecast[];
+}
+
+/** A recast may not run past 50 years from the start, unless the contract is longer. */
+const REF_MAX_TERM = 600;
+
+/** Payment number k of the first payment due on/after `date` (ADR 0109). */
+export function firstPaymentOnOrAfter(start: Iso, date: Iso): number {
+  let k = 1;
+  while (addMonths(start, k) < date) k++;
+  return k;
 }
 
 export interface RefRateShock {
@@ -174,6 +201,9 @@ export interface RefRow {
   /** Cash actually paid: interest + principal (differs from instalment at payoff). */
   payment: Dec;
   draw: Dec;
+  /** Extra principal paid after this period's payment, and its fee (ADR 0109). */
+  prepaid: Dec;
+  fee: Dec;
   endBalance: Dec;
 }
 
@@ -281,6 +311,11 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
   let prevRate = d(loan.ratePa);
   let prevIo = ioAt(loan.start);
   let pending = false;
+  // ADR 0109: the last payment number in force (prepayments and recasts move it), a
+  // re-amortization owed at the next payment, and an agreed instalment for it.
+  let maturity = term;
+  let reamortizeNext = false;
+  let agreedInstalment: Dec | null = null;
 
   /** One payment period ending on `date`; `k` = payment number since loan start.
    *  The rate is read on `rateDate` (the grid date, unless J-03 a′ keys it on the due
@@ -305,6 +340,8 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
       principal: ZERO,
       payment: ZERO,
       draw,
+      prepaid: ZERO,
+      fee: ZERO,
       endBalance: balance,
     });
     if (!balance.greaterThan(ZERO)) {
@@ -325,28 +362,37 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
         principal: ZERO,
         payment: interest,
         draw,
+        prepaid: ZERO,
+        fee: ZERO,
         endBalance: balance,
       };
     }
-    let trigger = (prevIo && !io) || !ratePa.equals(prevRate);
+    // A tranche after the maturity in force goes back to the contract term.
+    if (draw.greaterThan(ZERO) && k > maturity)
+      maturity = Math.max(maturity, term);
+    let trigger = (prevIo && !io) || !ratePa.equals(prevRate) || reamortizeNext;
     if (draw.greaterThan(ZERO) && drawTiming === "landing") trigger = true;
     if (drawTiming === "nextMonth") {
       if (pending) trigger = true;
       pending = draw.greaterThan(ZERO) && !trigger;
     }
-    if (trigger) {
-      const remaining = term - (k - 1);
+    if (agreedInstalment) {
+      instalment = agreedInstalment;
+    } else if (trigger) {
+      const remaining = maturity - (k - 1);
       instalment =
         remaining > 0
           ? roundInstalment(annuityPayment(r, remaining, balance))
           : balance.plus(balance.times(r));
     }
+    reamortizeNext = false;
+    agreedInstalment = null;
     const interest = roundInterest(balance.times(r));
     let principal = instalment.minus(interest);
     if (principal.isNegative()) principal = ZERO;
     // The payment at (or after) maturity clears the balance, whatever residual
     // rounding or arithmetic left behind.
-    if (principal.greaterThan(balance) || k >= term) principal = balance;
+    if (principal.greaterThan(balance) || k >= maturity) principal = balance;
     balance = balance.minus(principal);
     prevRate = ratePa;
     prevIo = io;
@@ -359,9 +405,81 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
       principal,
       payment: interest.plus(principal),
       draw,
+      prepaid: ZERO,
+      fee: ZERO,
       endBalance: balance,
     };
   };
+
+  // ADR 0109: prepayments and recasts, each tied to the payment it follows.
+  type Pending = { k: number; date: Iso; done: boolean };
+  const prepays = (loan.prepayments ?? [])
+    .map((p) => ({ ...p, k: firstPaymentOnOrAfter(loan.start, p.date) }))
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+    .map((p): RefPrepayment & Pending => ({ ...p, done: false }));
+  const recasts = (loan.recasts ?? [])
+    .map((r) => ({ ...r, k: firstPaymentOnOrAfter(loan.start, r.date) }))
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+    .map((r): RefRecast & Pending => ({ ...r, done: false }));
+
+  /** Apply one recast after payment k. */
+  const recast = (r: RefRecast, k: number) => {
+    if ("maturity" in r) {
+      maturity = paymentsMadeBy(loan.start, r.maturity);
+      reamortizeNext = true;
+      agreedInstalment = null;
+      return;
+    }
+    const a = d(r.instalment);
+    const rNext = rateAt(addMonths(loan.start, k + 1)).div(12);
+    if (a.lessThanOrEqualTo(balance.times(rNext))) return; // never repays: ignored
+    const last = k + annuityPeriods(rNext, a, balance).ceil().toNumber();
+    const cap = Math.max(REF_MAX_TERM, term);
+    if (last > cap) {
+      maturity = cap;
+      reamortizeNext = true;
+      agreedInstalment = null;
+    } else {
+      maturity = last;
+      reamortizeNext = false;
+      agreedInstalment = a;
+    }
+  };
+
+  /** After payment k (row `row`): the prepayments, then the recasts, that `due` picks. */
+  const settle = (
+    row: RefRow,
+    k: number,
+    due: (e: Pending) => boolean,
+  ): RefRow => {
+    let prepaid = ZERO;
+    let fee = ZERO;
+    let effect: RefPrepayment["effect"] | null = null;
+    for (const p of prepays.filter((e) => !e.done && due(e))) {
+      p.done = true;
+      const applied = Dec.min(d(p.amount), balance);
+      if (!applied.greaterThan(ZERO)) continue;
+      balance = balance.minus(applied);
+      prepaid = prepaid.plus(applied);
+      fee = fee.plus(p.fee ?? 0);
+      effect = p.effect;
+    }
+    if (effect && balance.greaterThan(ZERO) && !ioAt(row.date)) {
+      if (effect === "lowerInstalment") reamortizeNext = true;
+      else {
+        const n = annuityPeriods(row.ratePa.div(12), row.instalment, balance);
+        maturity = Math.min(maturity, k + n.ceil().toNumber());
+      }
+    }
+    for (const r of recasts.filter((e) => !e.done && due(e))) {
+      r.done = true;
+      if (balance.greaterThan(ZERO)) recast(r, k);
+    }
+    return prepaid.isZero() && fee.isZero()
+      ? { ...row, endBalance: balance }
+      : { ...row, prepaid, fee, endBalance: balance };
+  };
+  const at = (k: number) => (e: Pending) => e.k === k;
 
   const rows: RefRow[] = [];
 
@@ -370,11 +488,31 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
     balance = d(loan.principal).plus(drawsUpTo(loan.start));
     const n = paymentsMadeBy(loan.start, base);
     let prev = loan.start;
+    let last: RefRow | undefined;
     for (let k = 1; k <= n; k++) {
       const date = addMonths(loan.start, k);
-      step(date, k, drawsIn(prev, date), 0);
+      last = settle(step(date, k, drawsIn(prev, date), 0), k, at(k));
       prev = date;
     }
+    // Events dated after the last payment due and on/before baseDate are history too:
+    // they follow that payment (or the start, when none is due yet).
+    settle(
+      last ?? {
+        month: 0,
+        date: loan.start,
+        ratePa: d(loan.ratePa),
+        instalment,
+        interest: ZERO,
+        principal: ZERO,
+        payment: ZERO,
+        draw: ZERO,
+        prepaid: ZERO,
+        fee: ZERO,
+        endBalance: balance,
+      },
+      n,
+      (e) => e.date <= base,
+    );
     // Tranches between the last payment and baseDate: folded into the opening
     // balance, or (D-41) carried into the next payment period.
     const late = drawsIn(prev, base);
@@ -385,13 +523,17 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
         const date = addMonths(base, m);
         const draw = drawsIn(addMonths(base, m - 1), date);
         const withLate = m === 1 && carry ? draw.plus(late) : draw;
-        rows.push(step(date, n + m, withLate, m, gridRateDate(date, n + m)));
+        const k = n + m;
+        rows.push(
+          settle(step(date, k, withLate, m, gridRateDate(date, k)), k, at(k)),
+        );
       }
     } else {
       let prevDate = carry ? prev : base;
       for (let m = 1; m <= opts.months; m++) {
         const date = addMonths(loan.start, n + m);
-        rows.push(step(date, n + m, drawsIn(prevDate, date), m));
+        const k = n + m;
+        rows.push(settle(step(date, k, drawsIn(prevDate, date), m), k, at(k)));
         prevDate = date;
       }
     }
@@ -416,6 +558,8 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
             principal: ZERO,
             payment: ZERO,
             draw: ZERO,
+            prepaid: ZERO,
+            fee: ZERO,
             endBalance: ZERO,
           });
           continue;
@@ -440,13 +584,16 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
           principal: ZERO,
           payment: ZERO,
           draw: balance,
+          prepaid: ZERO,
+          fee: ZERO,
           endBalance: balance,
         });
         continue;
       }
       const draw = drawsIn(addMonths(base, m - 1), date);
+      const k = m - drawnAt;
       rows.push(
-        step(date, m - drawnAt, draw, m, gridRateDate(date, m - drawnAt)),
+        settle(step(date, k, draw, m, gridRateDate(date, k)), k, at(k)),
       );
     }
     return rows;
@@ -455,7 +602,7 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
   let prevDate = loan.start;
   for (let m = 1; m <= opts.months; m++) {
     const date = addMonths(loan.start, m);
-    rows.push(step(date, m, drawsIn(prevDate, date), m));
+    rows.push(settle(step(date, m, drawsIn(prevDate, date), m), m, at(m)));
     prevDate = date;
   }
   return rows;
@@ -518,14 +665,21 @@ export function referenceChain(
   const base = opts.baseDate;
   const sorted = [...loans].sort((a, b) => (a.start < b.start ? -1 : 1));
   const inForce = sorted.filter((l) => l.start <= base).at(-1);
-  // A loan's tranches dated after its successor's start are never drawn (DR-126).
+  // A loan's tranches dated after its successor's start are never drawn (DR-126);
+  // nor are its prepayments or recasts (ADR 0109).
   const chain = (
     inForce ? sorted.filter((l) => l.start >= inForce.start) : sorted
   ).map((l, i, all) => {
     const next = all[i + 1];
-    return next && l.draws
-      ? { ...l, draws: l.draws.filter((d) => d.date <= next.start) }
-      : l;
+    if (!next) return l;
+    const upTo = <T extends { date: Iso }>(xs: T[]) =>
+      xs.filter((x) => x.date <= next.start);
+    return {
+      ...l,
+      ...(l.draws ? { draws: upTo(l.draws) } : {}),
+      ...(l.prepayments ? { prepayments: upTo(l.prepayments) } : {}),
+      ...(l.recasts ? { recasts: upTo(l.recasts) } : {}),
+    };
   });
   const gridOpts = { ...opts, calendar: "gridDueDate" as const };
   const firstGridOnOrAfter = (date: Iso) => {
@@ -556,15 +710,35 @@ export function referenceChain(
     const before =
       D > 1
         ? rows[D - 2].endBalance
-        : own.endBalance.plus(own.principal).minus(own.draw);
-    handovers.push({
-      month: D,
-      paidOff: kept ? own.endBalance : before,
-      drawn: drawRow.endBalance,
-    });
-    const merged: RefRow = kept
+        : own.endBalance.plus(own.principal).plus(own.prepaid).minus(own.draw);
+    // ADR 0109: the owner's prepayments (dated by the successor's start) in rows the
+    // handover drops are paid then, in date order, before the successor pays off the
+    // rest.
+    const gridMonth = (loan: RefLoan, k: number) =>
+      loan.start <= base
+        ? k - paymentsMadeBy(loan.start, base)
+        : k + firstGridOnOrAfter(loan.start);
+    let owed = kept ? own.endBalance : before;
+    let [late, lateFee] = [ZERO, ZERO];
+    for (const p of [...(owner.prepayments ?? [])].sort((a, b) =>
+      a.date < b.date ? -1 : 1,
+    )) {
+      const m = gridMonth(owner, firstPaymentOnOrAfter(owner.start, p.date));
+      if (p.date <= base || m < D || (m === D && kept)) continue;
+      const paid = Dec.min(d(p.amount), owed);
+      owed = owed.minus(paid);
+      late = late.plus(paid);
+      if (paid.greaterThan(ZERO)) lateFee = lateFee.plus(p.fee ?? 0);
+    }
+    handovers.push({ month: D, paidOff: owed, drawn: drawRow.endBalance });
+    const head: RefRow = kept
       ? { ...own, draw: drawRow.draw, endBalance: drawRow.endBalance }
       : drawRow;
+    const merged: RefRow = {
+      ...head,
+      prepaid: head.prepaid.plus(late),
+      fee: head.fee.plus(lateFee),
+    };
     rows = [...rows.slice(0, D - 1), merged, ...next.slice(D)];
     owner = succ;
     ownerDraw = D;

@@ -28,6 +28,8 @@ export interface SeriesRow {
   // New debt drawn this year (lensed), from the engine (DR-092): zero unless a loan,
   // tranche or refinance draws in the year; zero in year 0.
   draws: Decimal;
+  // Extra principal prepaid this year (lensed, ADR 0109); zero in year 0.
+  prepaid: Decimal;
 }
 
 /** "Y5 · 2031": projection year t with its calendar year (D-22, UX-032). The prefix is
@@ -87,6 +89,7 @@ export function projectionSeries(
     netCashFlow: y.netCashFlow,
     dscr: y.dscr,
     draws: y.draws,
+    prepaid: y.prepaid,
   }));
 }
 
