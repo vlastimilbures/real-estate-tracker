@@ -2,21 +2,20 @@
 // one-click stress presets, and a 2–3-way side-by-side compare (net worth, net cash flow,
 // LTV). Scenarios never mutate portfolio data — the engine re-runs over overridden
 // assumptions (+ a transient value-crash portfolio) via useScenarioComparison.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
+import { MAX_COMPARE, useUiStore } from "../../state/uiStore";
 import { AppShell } from "../components/AppShell";
 import { Button, EmptyState, Toast } from "../components/primitives";
 import { FolderOpen } from "lucide-react";
 import type { Scenario, ScenarioOverrides } from "../../engine";
 import { useT } from "../hooks/useT";
 import { rateShockNote } from "../model/rateShockReach";
-import { baseScenario, findByName, tickForCompare } from "../model/scenarios";
+import { baseScenario, findByName } from "../model/scenarios";
 import { CompareView } from "./ScenarioCompare";
 import { ScenarioForm } from "./ScenarioForm";
 import { StressPresetsPanel, ScenarioListPanel } from "./ScenariosPanels";
 import { useToast } from "../hooks/useToast";
-
-const MAX_COMPARE = 3; // saved scenarios; Base is always available alongside
 
 export function Scenarios() {
   const t = useT();
@@ -28,16 +27,28 @@ export function Scenarios() {
   const duplicateScenario = usePortfolioStore((s) => s.duplicateScenario);
   const removeScenario = usePortfolioStore((s) => s.removeScenario);
 
-  // Compare selection (saved-scenario ids, capped at MAX_COMPARE). Base is toggled
-  // separately and shown first when on.
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [baseOn, setBaseOn] = useState(true);
+  // Compare selection (saved-scenario ids, capped at MAX_COMPARE), the Base toggle and
+  // the crash-preset timing live in uiStore for the session (ADR 0101). Base is shown
+  // first when on.
+  const selectedIds = useUiStore((s) => s.compareIds);
+  const baseOn = useUiStore((s) => s.compareBase);
+  const crashAtYear = useUiStore((s) => s.crashAtYear);
+  const toggle = useUiStore((s) => s.toggleCompare);
+  const tick = useUiStore((s) => s.tickCompare);
+  const pruneCompare = useUiStore((s) => s.pruneCompare);
+  const toggleBase = useUiStore((s) => s.toggleCompareBase);
+  const setCrashAtYear = useUiStore((s) => s.setCrashAtYear);
   const [editing, setEditing] = useState<Scenario | "new" | null>(null);
-  const [crashAtYear, setCrashAtYear] = useState(0); // timing for the price-crash presets
   // One in-flight mutation at a time: disables the action buttons and surfaces a
   // success toast (errors already surface via the global banner).
   const [busy, setBusy] = useState(false);
   const { toast, showToast } = useToast();
+
+  // A deleted (or restored-away) scenario leaves the compare selection.
+  useEffect(
+    () => pruneCompare(scenarios.map((s) => s.id)),
+    [scenarios, pruneCompare],
+  );
 
   async function run<R extends { ok: boolean }>(
     action: () => Promise<R>,
@@ -70,24 +81,6 @@ export function Scenarios() {
   function reachText(id: string): string | undefined {
     const s = scenarios.find((x) => x.id === id);
     return s && rateShockNote(s, portfolio, assumptions, t);
-  }
-
-  function toggle(id: string) {
-    setSelectedIds((ids) =>
-      ids.includes(id)
-        ? ids.filter((x) => x !== id)
-        : ids.length >= MAX_COMPARE
-          ? ids
-          : [...ids, id],
-    );
-  }
-
-  /** Tick a new or re-found scenario for compare when there is room (ADR 0093);
-   *  false when compare is already full. */
-  function tick(id: string): boolean {
-    const next = tickForCompare(selectedIds, id, MAX_COMPARE);
-    setSelectedIds(next.ids);
-    return next.ticked;
   }
 
   async function addPreset(name: string, overrides: ScenarioOverrides) {
@@ -158,7 +151,7 @@ export function Scenarios() {
       <ScenarioListPanel
         scenarios={scenarios}
         baseOn={baseOn}
-        onToggleBase={() => setBaseOn((v) => !v)}
+        onToggleBase={toggleBase}
         selectedIds={selectedIds}
         maxCompare={MAX_COMPARE}
         onToggle={toggle}

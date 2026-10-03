@@ -517,7 +517,7 @@ export const ru: Dictionary = {
     rateShockAtRefix: "Шок ставки @ рефикс",
     inflationShock: "Шок инфляции",
     priceCrash: "Обвал цен",
-    applyCrashAt: (label) => `Применить обвал в ${label}`,
+    crashWhen: "Когда",
     rateForYears: (label, years) => `Ставки ${label} на ${years} г.`,
     inflForYears: (label, years) => `Инфляция ${label} на ${years} г.`,
     crashTitle: (label, suffix) => `Обвал цен ${label}${suffix}`,

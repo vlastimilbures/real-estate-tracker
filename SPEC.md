@@ -473,13 +473,18 @@ data (properties/mortgages/etc.) is shared; only assumptions differ. The engine'
   scenario whose starting equity differs from Base's (a price crash at Today) has its
   multiple, CAGR and IRR marked with a footnote: those returns are measured from its lower
   starting equity, and Δ net worth shows the loss (ADR 0089).
+  The ticked scenarios, the Base toggle and the price-crash timing last for the app session
+  (in memory, like the lens): leaving the page and coming back keeps them. A deleted
+  scenario leaves the selection (ADR 0101).
 - **Stress presets** (one-click; each creates a named scenario,
   `src/ui/pages/ScenariosPanels.tsx`). Temporary shocks last `DEFAULT_SHOCK_YEARS` = 3
   years (`src/ui/model/scenarioForm.ts`), then revert to trend:
   - **Rate shock @ refix**: +2 / +4 / +6 pp for 3 years (`rateShock`).
   - **Inflation shock**: +3 / +6 / +9 pp for 3 years (`inflationShock`).
   - **Price crash**: −10 % / −20 % / −35 % of property value at Today / +5 years / +10 years
-    (projection year 0, 5 or 10; `valueShock`, permanent).
+    (projection year 0, 5 or 10; `valueShock`, permanent). The timing is a "When" toggle
+    (Start · +5y · +10y); each level button shows the timing it uses ("−20% @ +5y") and
+    the preset name keeps that form (ADR 0101).
 
 ## 8. Non-functional requirements
 

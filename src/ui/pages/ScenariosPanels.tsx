@@ -1,7 +1,7 @@
 // Sub-components pulled out of Scenarios.tsx to shrink its render tree. Pure
 // presentation — no logic beyond what Scenarios.tsx already computed.
 import { useState } from "react";
-import { Panel, Button } from "../components/primitives";
+import { Panel, Button, SegmentedToggle } from "../components/primitives";
 import { DeleteConfirmRow } from "../components/EntityPanelParts";
 import { rate, type Scenario, type ScenarioOverrides } from "../../engine";
 import { useT } from "../hooks/useT";
@@ -116,28 +116,24 @@ export function StressPresetsPanel({
 
         <div className="preset-group">
           <span className="preset-label">{t.scenarios.priceCrash}</span>
+          {/* The timing is a setting the level buttons use (ADR 0101); it saves
+              nothing, so it stays usable while a save runs. */}
           <div className="row" style={{ gap: "var(--s2)" }}>
-            {CRASH_TIMINGS.map((atYear) => {
-              const tmLabel =
-                atYear === 0 ? t.scenarios.atStart : t.common.plusYears(atYear);
-              return (
-                <Button
-                  key={atYear}
-                  size="sm"
-                  variant={crashAtYear === atYear ? "primary" : "ghost"}
-                  aria-pressed={crashAtYear === atYear}
-                  onClick={() => onCrashAtYearChange(atYear)}
-                  title={
-                    atYear === 0
-                      ? t.scenarios.atStartTitle(fmtDate(baseDate))
-                      : t.scenarios.applyCrashAt(tmLabel)
-                  }
-                >
-                  {tmLabel}
-                </Button>
-              );
-            })}
-            <span className="preset-sep" />
+            <span className="preset-when">{t.scenarios.crashWhen}</span>
+            <SegmentedToggle
+              ariaLabel={t.scenarios.crashWhen}
+              options={CRASH_TIMINGS.map((atYear) => ({
+                value: String(atYear),
+                label:
+                  atYear === 0
+                    ? t.scenarios.atStart
+                    : t.common.plusYears(atYear),
+              }))}
+              value={String(crashAtYear)}
+              onChange={(v) => onCrashAtYearChange(Number(v))}
+            />
+          </div>
+          <div className="row" style={{ gap: "var(--s2)" }}>
             {CRASH_LEVELS.map((l) => {
               const suffix =
                 crashAtYear === 0
@@ -149,7 +145,11 @@ export function StressPresetsPanel({
                   key={l.label}
                   size="sm"
                   disabled={busy}
-                  title={presetName}
+                  title={
+                    crashAtYear === 0
+                      ? `${presetName} · ${t.scenarios.atStartTitle(fmtDate(baseDate))}`
+                      : presetName
+                  }
                   onClick={() =>
                     onAddPreset(presetName, {
                       valueShock: {
@@ -159,7 +159,7 @@ export function StressPresetsPanel({
                     })
                   }
                 >
-                  {l.label}
+                  {`${l.label}${suffix}`}
                 </Button>
               );
             })}

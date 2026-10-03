@@ -513,7 +513,7 @@ export const cs: Dictionary = {
     rateShockAtRefix: "Šok sazby @ refix",
     inflationShock: "Inflační šok",
     priceCrash: "Propad cen",
-    applyCrashAt: (label) => `Aplikovat propad v ${label}`,
+    crashWhen: "Kdy",
     rateForYears: (label, years) => `Sazby ${label} na ${years} l.`,
     inflForYears: (label, years) => `Inflace ${label} na ${years} l.`,
     crashTitle: (label, suffix) => `Propad cen ${label}${suffix}`,

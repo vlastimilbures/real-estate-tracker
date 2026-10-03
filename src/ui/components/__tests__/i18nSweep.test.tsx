@@ -52,12 +52,11 @@ describe("UX-034 i18n sweep", () => {
     expect(onAddPreset.mock.calls[0]![0]).toBe(
       ru.scenarios.rateForYears(pp, 3),
     );
-    await userEvent.click(screen.getByRole("button", { name: "−20%" }));
+    // The level button names its timing (ADR 0101).
+    const at5 = ru.scenarios.crashAt(ru.common.plusYears(5));
+    await userEvent.click(screen.getByRole("button", { name: `−20%${at5}` }));
     expect(onAddPreset.mock.calls[1]![0]).toBe(
-      ru.scenarios.crashTitle(
-        "−20%",
-        ru.scenarios.crashAt(ru.common.plusYears(5)),
-      ),
+      ru.scenarios.crashTitle("−20%", at5),
     );
     expect(
       screen.getByRole("button", { name: ru.common.plusYears(10) }),

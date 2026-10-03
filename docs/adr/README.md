@@ -125,6 +125,7 @@ Other IDs seen in code comments:
 | [0098](0098-mortgage-loan-type.md)                | Mortgage form: Standard vs Development switch and successor note                       |                                        |
 | [0099](0099-close-previous-open-record.md)        | Offer to close the previous open-ended valuation or lease                              |                                        |
 | [0100](0100-rate-shock-reach.md)                  | Scenarios: show which loans a rate shock hits                                          |                                        |
+| [0101](0101-scenario-session-state.md)            | Scenarios: keep the compare state for the session; crash timing is a setting           |                                        |
 
 ### Judgment calls and open questions
 

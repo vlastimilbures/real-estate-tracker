@@ -1,12 +1,7 @@
 // Base-scenario construction + one-line summary, extracted from Scenarios.tsx so
 // they're unit-testable without mounting the component.
 import { describe, it, expect } from "vitest";
-import {
-  baseScenario,
-  findByName,
-  summarize,
-  tickForCompare,
-} from "../scenarios";
+import { baseScenario, findByName, summarize } from "../scenarios";
 import { en } from "../../../i18n/en";
 import { assumptions } from "../../../engine/__tests__/support/seed";
 import { rate } from "../../../engine";
@@ -103,28 +98,5 @@ describe("findByName", () => {
   it("returns undefined when no name matches exactly", () => {
     expect(findByName(saved, "stress")).toBeUndefined();
     expect(findByName([], "Stress")).toBeUndefined();
-  });
-});
-
-describe("tickForCompare", () => {
-  it("adds the id while fewer than max are ticked", () => {
-    expect(tickForCompare(["a"], "b", 3)).toEqual({
-      ids: ["a", "b"],
-      ticked: true,
-    });
-  });
-
-  it("keeps the selection unchanged at the limit", () => {
-    const ids = ["a", "b", "c"];
-    const out = tickForCompare(ids, "d", 3);
-    expect(out).toEqual({ ids: ["a", "b", "c"], ticked: false });
-    expect(out.ids).toBe(ids);
-  });
-
-  it("treats an already ticked id as ticked, also at the limit", () => {
-    const ids = ["a", "b", "c"];
-    const out = tickForCompare(ids, "b", 3);
-    expect(out).toEqual({ ids: ["a", "b", "c"], ticked: true });
-    expect(out.ids).toBe(ids);
   });
 });

@@ -44,7 +44,15 @@ const { Scenarios } = await import("../Scenarios");
 const startDate = fmtDate(assumptions.baseDate);
 
 beforeEach(() =>
-  act(() => useUiStore.setState({ language: "en", mode: "nominal" })),
+  act(() =>
+    useUiStore.setState({
+      language: "en",
+      mode: "nominal",
+      compareIds: [],
+      compareBase: true,
+      crashAtYear: 0,
+    }),
+  ),
 );
 
 describe("Scenarios wording (ADR 0090)", () => {
@@ -74,11 +82,13 @@ describe("Scenarios wording (ADR 0090)", () => {
       />,
     );
     const start = screen.getByRole("button", { name: en.scenarios.atStart });
-    expect(start.getAttribute("title")).toBe(
+    expect(start.getAttribute("aria-pressed")).toBe("true");
+    // The start date moved from the timing button to the level tooltip (ADR 0101).
+    const level = screen.getByRole("button", { name: "−20%" });
+    expect(level.getAttribute("title")).toContain(
       en.scenarios.atStartTitle(startDate),
     );
-    expect(start.getAttribute("title")).toContain("projection start");
-    expect(start.getAttribute("aria-pressed")).toBe("true");
+    expect(level.getAttribute("title")).toContain("projection start");
     const later = screen.getByRole("button", {
       name: en.common.plusYears(5),
     });
