@@ -5,7 +5,7 @@
 //   • a loan is a property's block chain (D-27), its payoff the schedule's last payment.
 // Dates are modelled from the entered data, not lender deadlines (the wording is UI).
 import { ZERO, type Decimal } from "../lib/money";
-import { drawMonth, isDevLoan } from "./amortization";
+import { drawMonth, isDevLoan, mortgageBlock } from "./amortization";
 import { DEBT_FREE_EPSILON } from "./constants";
 import {
   edate,
@@ -15,7 +15,7 @@ import {
   lastGridMonthOnOrBefore,
 } from "./dates";
 import { leaseInForce } from "./metrics";
-import { blockChain, paymentOffset } from "./schedule";
+import { blockChain, paymentOffset, propertySchedule } from "./schedule";
 import type {
   AmortizationRow,
   Assumptions,
@@ -48,6 +48,8 @@ export interface LoanExposure {
   payoffDate: IsoDate | null;
   /** Schedule months from as-of to the last payment (0 once repaid). */
   remainingMonths: number | null;
+  /** Interest the loan's prepayments save to payoff; null without one (ADR 0116). */
+  interestSaved: Decimal | null;
 }
 
 export interface FinancingExposure {
@@ -143,11 +145,35 @@ function dueDate(chain: MortgageBlock[], m: number, baseDate: Date): IsoDate {
   return edate(owner.startDate, paymentOffset(owner, baseDate) + m);
 }
 
+const interestOf = (rows: AmortizationRow[]): Decimal =>
+  rows.reduce((s, r) => s.plus(r.interest), ZERO);
+
+/**
+ * Interest a property's prepayments save over the rest of its loans' life: the chain's
+ * interest from grid month 1 to payoff with every prepayment removed (those before
+ * baseDate too), minus the same in `rows`, the schedule built with them. Recasts stay.
+ * Null when no block of the chain has a prepayment (ADR 0116).
+ */
+export function prepaymentInterestSaved(
+  blocks: MortgageBlock[],
+  assumptions: Assumptions,
+  rows: AmortizationRow[],
+): Decimal | null {
+  const chain = blockChain(blocks, assumptions.baseDate);
+  if (!chain.some((b) => b.prepayments?.length)) return null;
+  const without = blocks.map((b) =>
+    b.prepayments?.length ? mortgageBlock({ ...b, prepayments: undefined }) : b,
+  );
+  return interestOf(propertySchedule(without, assumptions).rows).minus(
+    interestOf(rows),
+  );
+}
+
 /** One property's loan exposure and resets (none without a loan). */
 function propertyExposure(
   blocks: MortgageBlock[],
   rows: AmortizationRow[],
-  ctx: { asOf: IsoDate; baseDate: Date },
+  ctx: { asOf: IsoDate; assumptions: Assumptions; baseDate: Date },
 ): { loan: LoanExposure; resets: FixationReset[] } | null {
   const chain = blockChain(blocks, ctx.baseDate);
   const first = chain[0];
@@ -163,6 +189,7 @@ function propertyExposure(
       nextFixation: resets.find((r) => r.status === "upcoming") ?? null,
       payoffDate: last > 0 ? dueDate(chain, last, ctx.baseDate) : null,
       remainingMonths: last > 0 ? Math.max(0, last - elapsed) : null,
+      interestSaved: prepaymentInterestSaved(blocks, ctx.assumptions, rows),
     },
     resets,
   };
@@ -179,7 +206,7 @@ export function financingExposure(
   schedules: Map<string, AmortizationRow[]>,
   asOf: IsoDate,
 ): FinancingExposure {
-  const ctx = { asOf, baseDate: assumptions.baseDate };
+  const ctx = { asOf, assumptions, baseDate: assumptions.baseDate };
   const loans: LoanExposure[] = [];
   const resets: FixationReset[] = [];
   const active = portfolio.properties.filter((p) => p.active !== false);
