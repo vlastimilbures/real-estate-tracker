@@ -190,6 +190,20 @@ function propertyExposure(
 }
 
 /**
+ * One property's loan as of `asOf` from its blocks and schedule `rows`, active or not:
+ * the property page's view of its `financingExposure` entry (ADR 0116). Null without a loan.
+ */
+export function propertyLoanExposure(
+  blocks: MortgageBlock[],
+  assumptions: Assumptions,
+  rows: AmortizationRow[],
+  asOf: IsoDate,
+): LoanExposure | null {
+  const ctx = { asOf, assumptions, baseDate: assumptions.baseDate };
+  return propertyExposure(blocks, rows, ctx)?.loan ?? null;
+}
+
+/**
  * Each active property's loan as of `asOf` (next fixation, modelled payoff, remaining
  * term) and every chain block's fixation end, from `schedules` (the rows built from the
  * same portfolio and assumptions). Pure; `asOf` is explicit (ADR 0103).

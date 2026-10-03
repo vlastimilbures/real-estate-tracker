@@ -6,6 +6,7 @@ import fc from "fast-check";
 import {
   debtResettingWithin,
   financingExposure,
+  propertyLoanExposure,
   upcomingEvents,
   type FinancingExposure,
   type FixationReset,
@@ -285,6 +286,36 @@ describe("ADR 0103: edge cases", () => {
       loans: [],
       resets: [],
     });
+  });
+
+  it("one property's loan is its portfolio entry, inactive or not (ADR 0116)", () => {
+    const { fx, schedules } = exposure(portfolio);
+    for (const loan of fx.loans) {
+      const blocks = portfolio.mortgages.filter(
+        (b) => b.propertyId === loan.propertyId,
+      );
+      expect(
+        propertyLoanExposure(
+          blocks,
+          assumptions,
+          rowsOf(schedules, loan.propertyId),
+          BASE_DATE,
+        ),
+      ).toEqual(loan);
+    }
+    const ids = mixed.properties.map((x) => x.id);
+    const s = schedulesByProperty(mixed.mortgages, ids, assumptions);
+    const inactive = mixed.mortgages.filter((b) => b.propertyId === "inactive");
+    expect(inactive.length).toBeGreaterThan(0);
+    expect(
+      propertyLoanExposure(
+        inactive,
+        assumptions,
+        rowsOf(s, "inactive"),
+        BASE_DATE,
+      )?.propertyId,
+    ).toBe("inactive");
+    expect(propertyLoanExposure([], assumptions, [], BASE_DATE)).toBeNull();
   });
 });
 

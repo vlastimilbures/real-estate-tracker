@@ -18,7 +18,7 @@ import {
   PARITY,
 } from "../../engine/__tests__/support/seed";
 import { near, KC } from "../../engine/__tests__/support/tolerance";
-import { isoDate, rate } from "../../engine";
+import { isoDate, money, rate } from "../../engine";
 import type { Scenario } from "../../engine";
 
 vi.mock("../../lib/today", () => ({
@@ -196,6 +196,42 @@ describe("useAllProjections / usePropertyEngine", () => {
       "debt",
     );
     expect(result.current!.schedule.length).toBeGreaterThan(0);
+  });
+
+  it("carries the loan's event outcomes, modelled payoff and interest saved (ADR 0116)", () => {
+    const plain = renderHook(() => usePropertyEngine("javorova", BASE)).result
+      .current!;
+    expect(plain.eventOutcomes).toEqual([]);
+    expect(plain.loan?.interestSaved).toBeNull();
+    const payoff = plain.loan?.payoffDate;
+    expect(payoff).toBeTruthy();
+    const withEvent = {
+      ...portfolio,
+      mortgages: portfolio.mortgages.map((m) =>
+        m.propertyId === "javorova"
+          ? {
+              ...m,
+              prepayments: [
+                {
+                  date: isoDate("2031-01-17"),
+                  amount: money(500000),
+                  effect: "shortenTerm" as const,
+                },
+              ],
+            }
+          : m,
+      ),
+    };
+    act(() => usePortfolioStore.setState({ portfolio: withEvent }));
+    const out = renderHook(() => usePropertyEngine("javorova", BASE)).result
+      .current!;
+    expect(out.eventOutcomes).toHaveLength(1);
+    expect(out.eventOutcomes[0]).toMatchObject({
+      kind: "prepayment",
+      issue: null,
+    });
+    expect(out.loan?.interestSaved?.greaterThan(0)).toBe(true);
+    expect(out.loan!.payoffDate!.getTime()).toBeLessThan(payoff!.getTime());
   });
 
   it("clamps an as-of date before baseDate to baseDate (D-19)", () => {
