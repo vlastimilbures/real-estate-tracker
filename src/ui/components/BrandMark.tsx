@@ -1,3 +1,5 @@
+import { APP_NAME } from "../../i18n";
+
 /**
  * BrandMark — the app's logo: a petrol tile with a cream roofline and three
  * ascending brass bars (property + portfolio growth). Rendered as a self-contained
@@ -8,7 +10,7 @@
 export function BrandMark({
   size = 28,
   className,
-  title = "Real Estate Portfolio",
+  title = APP_NAME,
 }: {
   size?: number;
   className?: string;

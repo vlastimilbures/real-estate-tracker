@@ -62,6 +62,7 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
           <section className="about-section">
             <h4>{a.appTitle}</h4>
             <p className="about-prose">{a.appBody}</p>
+            <p className="about-prose">{a.formatsNote}</p>
           </section>
 
           <section className="about-section">

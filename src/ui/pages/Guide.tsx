@@ -120,6 +120,10 @@ export function Guide() {
             <p>{g.cardEffectiveBody}</p>
           </div>
         </div>
+        {/* ADR 0105: the same line as About — language never changes Kč or the formats. */}
+        <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
+          {t.about.formatsNote}
+        </p>
       </Panel>
 
       <Panel title={g.snapshotTitle} hint={g.snapshotHint}>

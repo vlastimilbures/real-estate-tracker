@@ -39,6 +39,12 @@ describe("About (UX-064)", () => {
     );
   });
 
+  // ADR 0105 (#22): the language changes interface text only, never currency or formats.
+  it("says the language does not change amounts or formats", () => {
+    const { container } = render(<AboutModal onClose={() => {}} />);
+    expect(container.textContent ?? "").toContain(en.about.formatsNote);
+  });
+
   // ADR 0082: feedback goes to GitHub issues; no personal e-mail address is shown.
   it("shows no e-mail address", () => {
     const { container } = render(<AboutModal onClose={() => {}} />);

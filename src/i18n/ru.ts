@@ -3,6 +3,7 @@
 // the user. Annotated `: Dictionary` so missing keys relative to en.ts are tsc errors.
 import type { Dictionary } from "./en";
 import { ruPlural } from "./plural";
+import { APP_NAME } from "./appName";
 
 export const ru: Dictionary = {
   common: {
@@ -64,7 +65,7 @@ export const ru: Dictionary = {
   },
 
   app: {
-    loadingEyebrow: "Портфель недвижимости",
+    loadingEyebrow: APP_NAME,
     loading: "Загрузка портфеля…",
     dbErrorEyebrow: "Не удалось открыть базу данных",
     bootRetryHint:
@@ -181,7 +182,7 @@ export const ru: Dictionary = {
   },
 
   menu: {
-    about: "О программе Real Estate Tracker",
+    about: `О программе ${APP_NAME}`,
     settings: "Настройки…",
     newProperty: "Новый объект…",
   },
@@ -895,13 +896,15 @@ export const ru: Dictionary = {
 
   about: {
     title: "О приложении",
-    subtitle: "Real Estate Tracker",
+    subtitle: APP_NAME,
     version: (v: string) => `Версия ${v}`,
     tagline: "Локальный трекер вашего портфеля арендных квартир.",
 
     appTitle: "Что умеет приложение",
     appBody:
       "Отслеживайте свои арендные квартиры в одном месте: текущую стоимость, долг и капитал, аренду, расходы на содержание и денежный поток. Приложение строит прогноз в номинальном и реальном выражении на выбранный горизонт (по умолчанию 30 лет), показывает показатели LTV, DSCR, доходности и IRR и позволяет проверять портфель сценариями «что если».",
+    formatsNote:
+      "Язык меняет только текст интерфейса. Суммы всегда указаны в чешских кронах (Kč) в чешском формате чисел и дат.",
 
     privacyTitle: "Приватность по умолчанию",
     privacyBody:
