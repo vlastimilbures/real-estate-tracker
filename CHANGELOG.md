@@ -282,7 +282,7 @@ tracker with 30-year nominal/real projections, charts, KPIs, and what-if scenari
 ### Added
 
 - **Financial engine** — pure, deterministic amortization, projections, metrics, growth, and
-  scenario logic, with parity tests to the cent (±1 Kč / ±0.0001).
+  scenario logic, with parity tests to the cent (±1 Kč / ±0.0001).\*
 - **Data layer** — SQLite persistence with migrations, mappers, seed data, effective-dated
   valuations and leases, and dynamic 1..N properties.
 - **CSV importer** for four entity types (canonical import path).
@@ -302,6 +302,9 @@ tracker with 30-year nominal/real projections, charts, KPIs, and what-if scenari
 - The macOS `.dmg` is **unsigned / not notarized**. On first launch, right-click the app and
   choose **Open** to bypass Gatekeeper.
 - Offline only — no network calls, analytics, or cloud services.
+
+\* _"To the cent" meant within the ±1 Kč parity tolerance (±0.0001 for ratios), not to the
+haléř. Note added 2026-10 (#30)._
 
 [Unreleased]: https://github.com/vlastimilbures/real-estate-tracker/compare/v1.4.0...HEAD
 [1.4.0]: https://github.com/vlastimilbures/real-estate-tracker/releases/tag/v1.4.0
