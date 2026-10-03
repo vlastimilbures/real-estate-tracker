@@ -473,6 +473,17 @@ export const ru: Dictionary = {
     helpContractMaturity:
       "из договора; пусто — не проверяется; не используется для строительного кредита",
     amortizationWarnExpected: "Ожидаемый платёж ≈",
+    // Section nav (ADR 0107)
+    sectionNavLabel: "Разделы объекта",
+    sectionOverview: "Обзор",
+    sectionRecords: "Записи",
+    sectionFinancing: "Финансирование",
+    sectionHolding: "Расходы на содержание",
+    sectionProjection: "Прогноз",
+    sectionAmortization: "Амортизация",
+    showAmortization: (n) =>
+      `Показать график амортизации (${n} ${ruPlural(n, ["платёж", "платежа", "платежей"])})`,
+    hideAmortization: "Скрыть график амортизации",
     amortizationTitle: "График амортизации",
     amortizationMonths: (n) =>
       `${n} ${ruPlural(n, ["месяц", "месяца", "месяцев"])}`,

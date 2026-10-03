@@ -188,6 +188,8 @@ describe("i18n dictionaries — plural forms", () => {
       "propertyDetail.yrs",
       "propertyDetail.draws",
       "propertyDetail.monthsCount",
+      // Amortization disclosure (ADR 0107).
+      "propertyDetail.showAmortization",
       "propertyDetail.amortizationMonths",
       // Rate shock reach (ADR 0100).
       "scenarios.reachHits",

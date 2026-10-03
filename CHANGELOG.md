@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   year. The lens, the rebased-returns footnote and the reason for an n/a IRR are notes
   under the key figures. No computed figure changes (ADR 0108, #56).
 
+- Property detail has a section nav in its header: Overview · Records · Financing ·
+  Holding costs · Projection · Amortization. A link jumps to the section and moves focus
+  to its heading; the section in view is marked. The amortization schedule is collapsed
+  by default behind "Show amortization schedule (N payments)" and stays open for the app
+  session once opened; its Excel export works while collapsed. The loan warnings now sit
+  under the mortgage blocks. No figure changes (ADR 0107, #23).
+
 - About and the Guide say what the language setting changes: the interface text only.
   Amounts are always in Czech crowns (Kč) with Czech number and date formats (ADR 0105,
   #22).

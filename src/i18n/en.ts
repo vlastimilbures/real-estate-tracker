@@ -497,6 +497,17 @@ export const en = {
     helpContractMaturity:
       "from the loan contract; blank = not checked; not used for development loans",
     amortizationWarnExpected: "Expected instalment ≈",
+    // Section nav (ADR 0107)
+    sectionNavLabel: "Property sections",
+    sectionOverview: "Overview",
+    sectionRecords: "Records",
+    sectionFinancing: "Financing",
+    sectionHolding: "Holding costs",
+    sectionProjection: "Projection",
+    sectionAmortization: "Amortization",
+    showAmortization: (n: number) =>
+      `Show amortization schedule (${n} ${enPlural(n, ["payment", "payments"])})`,
+    hideAmortization: "Hide amortization schedule",
     amortizationTitle: "Amortization schedule",
     amortizationMonths: (n: number) =>
       `${n} ${enPlural(n, ["month", "months"])}`,

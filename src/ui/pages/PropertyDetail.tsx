@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { asOfBounds } from "../model/asOf";
-import { Pencil, Power, PowerOff, Building2 } from "lucide-react";
+import {
+  Pencil,
+  Power,
+  PowerOff,
+  Building2,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { usePropertyEngineResult } from "../../state/useEngine";
@@ -18,6 +25,7 @@ import { PropertyFormModal } from "../components/PropertyFormModal";
 import { toChartRows } from "../model/chartData";
 import { ProjectionGrid } from "../components/ProjectionGrid";
 import { AsOfPicker } from "../components/AsOfPicker";
+import { SectionNav } from "../components/SectionNav";
 import {
   PropertySnapshotTiles,
   HoldingCostsPanel,
@@ -43,6 +51,14 @@ import {
 import { useToast } from "../hooks/useToast";
 import { describeWriteError } from "../model/writeError";
 import { useT } from "../hooks/useT";
+import { useSectionSpy } from "../hooks/useSectionSpy";
+import {
+  propertySections,
+  sectionId,
+  type PropertySection,
+} from "../model/sectionNav";
+
+const AMORTIZATION_BODY = "pd-amortization-table";
 
 export function PropertyDetail() {
   const t = useT();
@@ -51,6 +67,8 @@ export function PropertyDetail() {
   const mode = useUiStore((s) => s.mode);
   const asOf = useUiStore((s) => s.asOf);
   const setAsOf = useUiStore((s) => s.setAsOf);
+  const amortizationOpen = useUiStore((s) => s.amortizationOpen);
+  const setAmortizationOpen = useUiStore((s) => s.setAmortizationOpen);
   // Only the fields this page reads, so an unrelated store change (error banner,
   // scenarios, status) does not re-render it (DR-056).
   const store = usePortfolioStore(
@@ -70,6 +88,16 @@ export function PropertyDetail() {
   const [toggling, setToggling] = useState(false);
   const [activeError, setActiveError] = useState<string | null>(null);
   const { toast, showToast } = useToast();
+  // The page's sections in order (ADR 0107); computed before the early return so the
+  // spy hook runs on every render.
+  const sections = propertySections({
+    overview: out !== null,
+    projection: out !== null,
+    amortization: out !== null && out.schedule.length > 0,
+  });
+  const [currentSection, setCurrentSection] = useSectionSpy(
+    sections.map(sectionId),
+  );
 
   // The engine result is null for an unknown id, so a stale or deleted selection lands
   // here too; the guard also narrows every field the page reads (DR-065).
@@ -153,6 +181,14 @@ export function PropertyDetail() {
       ? t.propertyDetail.realTermsLens
       : t.propertyDetail.nominalKcLens;
   const modeWord = mode === "real" ? t.common.realLower : t.common.nominalLower;
+  const sectionLabel: Record<PropertySection, string> = {
+    overview: t.propertyDetail.sectionOverview,
+    records: t.propertyDetail.sectionRecords,
+    financing: t.propertyDetail.sectionFinancing,
+    holding: t.propertyDetail.sectionHolding,
+    projection: t.propertyDetail.sectionProjection,
+    amortization: t.propertyDetail.sectionAmortization,
+  };
   const exportProjection = () =>
     exportTableXlsx({
       filename: `${slug(property.name)}-projection-${mode}.xlsx`,
@@ -186,6 +222,17 @@ export function PropertyDetail() {
       ]
         .filter(Boolean)
         .join(" · ")}
+      subnav={
+        <SectionNav
+          label={t.propertyDetail.sectionNavLabel}
+          sections={sections.map((sec) => ({
+            id: sectionId(sec),
+            label: sectionLabel[sec],
+          }))}
+          current={currentSection}
+          onSelect={setCurrentSection}
+        />
+      }
       actions={
         <>
           <Button onClick={() => navigate("properties")}>
@@ -240,7 +287,10 @@ export function PropertyDetail() {
       )}
 
       {s && (
-        <>
+        <div className="pd-section" id={sectionId("overview")}>
+          <h2 className="sr-only" tabIndex={-1}>
+            {t.propertyDetail.sectionOverview}
+          </h2>
           <div className="filter-bar">
             <span />
             <AsOfPicker
@@ -259,54 +309,81 @@ export function PropertyDetail() {
             chartRows={chartRows}
             modeWord={modeWord}
           />
-        </>
+        </div>
       )}
 
       {/* Editable child entities */}
-      <ValuationsPanel propertyId={propertyId} rows={valuations} />
+      <div className="pd-section" id={sectionId("records")}>
+        <ValuationsPanel propertyId={propertyId} rows={valuations} />
+        <LeasesPanel propertyId={propertyId} rows={leases} />
+      </div>
 
-      <LeasesPanel propertyId={propertyId} rows={leases} />
+      {/* The loan warnings sit with the blocks they describe (ADR 0107). */}
+      <div className="pd-section" id={sectionId("financing")}>
+        <MortgagesPanel propertyId={propertyId} rows={mortgages} />
+        {warnings.map((w, i) => (
+          <div
+            className="banner warn"
+            role="alert"
+            key={`${w.kind}-${w.block.id}-${i}`}
+          >
+            {loanWarningText(t, w, assumptions.postFixationResetRatePa)}
+          </div>
+        ))}
+      </div>
 
-      <MortgagesPanel propertyId={propertyId} rows={mortgages} />
-
-      <HoldingCostsPanel
-        holding={holding}
-        propertyId={propertyId}
-        onSave={store.saveHoldingCost}
-        onSaved={() => showToast(t.propertyDetail.holdingCostsSaved)}
-      />
+      <div className="pd-section" id={sectionId("holding")}>
+        <HoldingCostsPanel
+          holding={holding}
+          propertyId={propertyId}
+          onSave={store.saveHoldingCost}
+          onSaved={() => showToast(t.propertyDetail.holdingCostsSaved)}
+        />
+      </div>
 
       {/* Projection + amortization */}
       {out && (
-        <Panel
-          title={t.propertyDetail.projectionTitle(assumptions.horizonYears)}
-          hint={lens}
-          action={<ExportXlsxButton onExport={exportProjection} />}
-          flush
-        >
-          <ProjectionGrid rows={series} baseDate={assumptions.baseDate} />
-        </Panel>
+        <div className="pd-section" id={sectionId("projection")}>
+          <Panel
+            title={t.propertyDetail.projectionTitle(assumptions.horizonYears)}
+            hint={lens}
+            action={<ExportXlsxButton onExport={exportProjection} />}
+            flush
+          >
+            <ProjectionGrid rows={series} baseDate={assumptions.baseDate} />
+          </Panel>
+        </div>
       )}
 
-      {warnings.map((w, i) => (
-        <div
-          className="banner warn"
-          role="alert"
-          key={`${w.kind}-${w.block.id}-${i}`}
-        >
-          {loanWarningText(t, w, assumptions.postFixationResetRatePa)}
-        </div>
-      ))}
-
+      {/* Collapsed by default; the header and its export stay (ADR 0107). */}
       {out && out.schedule.length > 0 && (
-        <Panel
-          title={t.propertyDetail.amortizationTitle}
-          hint={t.propertyDetail.amortizationMonths(out.schedule.length)}
-          action={<ExportXlsxButton onExport={exportAmortization} />}
-          flush
-        >
-          <AmortizationTable schedule={out.schedule} />
-        </Panel>
+        <div className="pd-section" id={sectionId("amortization")}>
+          <Panel
+            title={t.propertyDetail.amortizationTitle}
+            hint={t.propertyDetail.amortizationMonths(out.schedule.length)}
+            action={<ExportXlsxButton onExport={exportAmortization} />}
+            flush
+          >
+            <div className="disclosure-row">
+              <Button
+                size="sm"
+                icon={amortizationOpen ? ChevronUp : ChevronDown}
+                aria-expanded={amortizationOpen}
+                aria-controls={AMORTIZATION_BODY}
+                onClick={() => setAmortizationOpen(!amortizationOpen)}
+              >
+                {amortizationOpen
+                  ? t.propertyDetail.hideAmortization
+                  : t.propertyDetail.showAmortization(out.schedule.length)}
+              </Button>
+            </div>
+            <div id={AMORTIZATION_BODY}>
+              {amortizationOpen && (
+                <AmortizationTable schedule={out.schedule} />
+              )}
+            </div>
+          </Panel>
+        </div>
       )}
 
       {editing && (

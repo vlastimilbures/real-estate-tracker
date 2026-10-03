@@ -165,7 +165,8 @@ export function Panel({
       {(title || action) && (
         <div className="panel-head">
           <div className="panel-head-titles">
-            {title && <h3>{title}</h3>}
+            {/* Focusable from script only: an in-page link lands here (ADR 0107). */}
+            {title && <h3 tabIndex={-1}>{title}</h3>}
             {hint && <span className="hint">{hint}</span>}
           </div>
           {action}
