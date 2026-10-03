@@ -391,6 +391,15 @@ export const en = {
     auto: "auto",
     draws: (n: number) => `${n} ${enPlural(n, ["draw", "draws"])}`,
     ioUntil: (d: string) => `IO→${d}`,
+    // ADR 0099: adding a valuation/lease offers to end the open-ended previous one.
+    closePrevValuationTitle: "End the previous valuation?",
+    closePrevValuationBody: (from: string, end: string) =>
+      `The valuation from ${from} has no end date. End it on ${end}, the day before the new one starts?`,
+    closePrevLeaseTitle: "End the previous lease?",
+    closePrevLeaseBody: (from: string, end: string) =>
+      `The lease from ${from} has no end date. End it on ${end}, the day before the new one starts?`,
+    closePrevConfirm: "End previous",
+    closePrevKeep: "Keep as is",
     // Mortgage form hints and the instalment "Calc" button (DR-059)
     instalmentHint: (years: string, amount: string) =>
       `Amortizing instalment over ${years} ≈ ${amount}`,

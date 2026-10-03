@@ -16,7 +16,15 @@ export type {
 
 // Brand constructors and calendar-date helpers
 export { money, rate } from "./brands";
-export { addYears, edate, isoDate, monthsBetween, utc } from "./dates";
+export {
+  addYears,
+  dayBefore,
+  edate,
+  isoDate,
+  monthsBetween,
+  utc,
+} from "./dates";
+export { openPredecessor } from "./succession";
 
 // Loans
 export {

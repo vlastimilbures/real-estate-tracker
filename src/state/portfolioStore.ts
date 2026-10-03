@@ -37,9 +37,11 @@ import {
   upsertScenario,
   deleteScenario,
   insertValuation,
+  insertValuationClosingPrevious,
   updateValuation,
   deleteValuation,
   insertLease,
+  insertLeaseClosingPrevious,
   updateLease,
   deleteLease,
   insertMortgageBlock,
@@ -140,10 +142,21 @@ interface PortfolioState {
 
   // valuations
   addValuation: (v: Valuation) => Promise<MutationResult>;
+  /** Add `v` and save `closedPrev` (the open-ended valuation it succeeds, now with an
+   *  end date) in one write (ADR 0099). */
+  addValuationClosingPrevious: (
+    v: Valuation,
+    closedPrev: Valuation,
+  ) => Promise<MutationResult>;
   saveValuation: (v: Valuation) => Promise<MutationResult>;
   removeValuation: (id: string) => Promise<MutationResult>;
   // leases
   addLease: (l: Lease) => Promise<MutationResult>;
+  /** Add `l` and save `closedPrev` with its new end date in one write (ADR 0099). */
+  addLeaseClosingPrevious: (
+    l: Lease,
+    closedPrev: Lease,
+  ) => Promise<MutationResult>;
   saveLease: (l: Lease) => Promise<MutationResult>;
   removeLease: (id: string) => Promise<MutationResult>;
   // mortgage blocks
@@ -372,6 +385,17 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         );
         await insertValuation(sql, valuationToRow(v));
       }),
+    addValuationClosingPrevious: (v, closedPrev) =>
+      mutate(async (sql) => {
+        checkEdit(
+          (p) => ({
+            ...p,
+            valuations: withRow(withRow(p.valuations, closedPrev), v),
+          }),
+          [v.id, closedPrev.id],
+        );
+        await insertValuationClosingPrevious(sql, v, closedPrev);
+      }),
     saveValuation: (v) =>
       mutate(async (sql) => {
         checkEdit(
@@ -386,6 +410,14 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       mutate(async (sql) => {
         checkEdit((p) => ({ ...p, leases: withRow(p.leases, l) }), [l.id]);
         await insertLease(sql, leaseToRow(l));
+      }),
+    addLeaseClosingPrevious: (l, closedPrev) =>
+      mutate(async (sql) => {
+        checkEdit(
+          (p) => ({ ...p, leases: withRow(withRow(p.leases, closedPrev), l) }),
+          [l.id, closedPrev.id],
+        );
+        await insertLeaseClosingPrevious(sql, l, closedPrev);
       }),
     saveLease: (l) =>
       mutate(async (sql) => {

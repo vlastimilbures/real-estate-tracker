@@ -21,7 +21,7 @@ import {
   loanTypeOf,
 } from "../model/mortgageForm";
 import { LoanTypeSwitch } from "../components/LoanTypeSwitch";
-import { scheduledPrincipal } from "../../engine";
+import { dayBefore, openPredecessor, scheduledPrincipal } from "../../engine";
 import type { Valuation, Lease, MortgageBlock } from "../../engine";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
@@ -53,6 +53,7 @@ export function ValuationsPanel({
   const add = usePortfolioStore((s) => s.addValuation);
   const save = usePortfolioStore((s) => s.saveValuation);
   const remove = usePortfolioStore((s) => s.removeValuation);
+  const addClosing = usePortfolioStore((s) => s.addValuationClosingPrevious);
   return (
     <EntityPanel
       title={t.propertyDetail.valuationsTitle}
@@ -109,6 +110,31 @@ export function ValuationsPanel({
       onAdd={add}
       onSave={save}
       onDelete={remove}
+      confirmAdd={(v) => {
+        const prev = openPredecessor(
+          rows,
+          v.propertyId,
+          v.validFrom,
+          (r) => r.validFrom,
+          (r) => r.validTo,
+        );
+        if (
+          !prev ||
+          (v.validTo && v.validTo.getTime() < prev.validFrom.getTime())
+        )
+          return null;
+        const end = dayBefore(v.validFrom);
+        return {
+          title: t.propertyDetail.closePrevValuationTitle,
+          message: t.propertyDetail.closePrevValuationBody(
+            fmtDate(prev.validFrom),
+            fmtDate(end),
+          ),
+          confirmLabel: t.propertyDetail.closePrevConfirm,
+          keepLabel: t.propertyDetail.closePrevKeep,
+          onConfirm: (n) => addClosing(n, { ...prev, validTo: end }),
+        };
+      }}
     />
   );
 }
@@ -124,6 +150,7 @@ export function LeasesPanel({
   const add = usePortfolioStore((s) => s.addLease);
   const save = usePortfolioStore((s) => s.saveLease);
   const remove = usePortfolioStore((s) => s.removeLease);
+  const addClosing = usePortfolioStore((s) => s.addLeaseClosingPrevious);
   return (
     <EntityPanel
       title={t.propertyDetail.leasesTitle}
@@ -180,6 +207,31 @@ export function LeasesPanel({
       onAdd={add}
       onSave={save}
       onDelete={remove}
+      confirmAdd={(l) => {
+        const prev = openPredecessor(
+          rows,
+          l.propertyId,
+          l.startDate,
+          (r) => r.startDate,
+          (r) => r.endDate,
+        );
+        if (
+          !prev ||
+          (l.endDate && l.endDate.getTime() < prev.startDate.getTime())
+        )
+          return null;
+        const end = dayBefore(l.startDate);
+        return {
+          title: t.propertyDetail.closePrevLeaseTitle,
+          message: t.propertyDetail.closePrevLeaseBody(
+            fmtDate(prev.startDate),
+            fmtDate(end),
+          ),
+          confirmLabel: t.propertyDetail.closePrevConfirm,
+          keepLabel: t.propertyDetail.closePrevKeep,
+          onConfirm: (n) => addClosing(n, { ...prev, endDate: end }),
+        };
+      }}
     />
   );
 }
