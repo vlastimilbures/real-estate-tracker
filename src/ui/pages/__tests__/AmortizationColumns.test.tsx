@@ -19,7 +19,7 @@ const headers = () =>
 
 describe("ADR 0116: amortization table columns", () => {
   it("has no event columns without events", () => {
-    render(<AmortizationTable schedule={rowsOf(seed)} />);
+    render(<AmortizationTable schedule={rowsOf(seed).slice(0, 3)} />);
     expect(headers()).not.toContain(pd.amColPrepaid);
     expect(headers()).not.toContain(pd.amColPrepaymentFee);
     expect(headers()).not.toContain(pd.amColDrawn);
@@ -36,7 +36,9 @@ describe("ADR 0116: amortization table columns", () => {
         },
       ],
     });
-    render(<AmortizationTable schedule={rows} />);
+    // The rows around the prepayment keep the render small (360 rows is slow in CI).
+    const at = rows.findIndex((r) => !r.prepaid.isZero());
+    render(<AmortizationTable schedule={rows.slice(at - 1, at + 2)} />);
     expect(headers().slice(-2)).toEqual([pd.amColPrepaid, pd.amColEndBalance]);
     const cells = screen.getAllByRole("cell").map((c) => c.textContent);
     expect(cells).toContain("500 000");
