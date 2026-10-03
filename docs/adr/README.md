@@ -133,6 +133,7 @@ Other IDs seen in code comments:
 | [0106](0106-collapsible-stress-presets.md)        | Scenarios: collapsible stress presets                                                  |                                        |
 | [0107](0107-property-section-nav.md)              | Property detail: section nav and collapsed amortization                                | #23                                    |
 | [0108](0108-scenario-compare-xlsx-export.md)      | Scenario compare: export to Excel                                                      | #56                                    |
+| [0110](0110-backup-recency-indicator.md)          | Backup recency indicator                                                               | #36                                    |
 
 ### Judgment calls and open questions
 
