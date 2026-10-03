@@ -473,6 +473,9 @@ data (properties/mortgages/etc.) is shared; only assumptions differ. The engine'
   scenario whose starting equity differs from Base's (a price crash at Today) has its
   multiple, CAGR and IRR marked with a footnote: those returns are measured from its lower
   starting equity, and Δ net worth shows the loss (ADR 0089).
+  The ticked scenarios, the Base toggle and the price-crash timing last for the app session
+  (in memory, like the lens): leaving the page and coming back keeps them. A deleted
+  scenario leaves the selection (ADR 0101).
 - **Stress presets** (one-click; each creates a named scenario,
   `src/ui/pages/ScenariosPanels.tsx`). Temporary shocks last `DEFAULT_SHOCK_YEARS` = 3
   years (`src/ui/model/scenarioForm.ts`), then revert to trend:

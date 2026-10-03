@@ -51,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Scenarios keep the compare selection, the Base toggle and the price-crash timing when you
+  leave the page and come back, for as long as the app is open. Deleting a ticked scenario
+  removes it from the compare (ADR 0101, #50).
+
 - Scenario compare can show every key figure as the difference to Base. A "Values | Δ vs
   Base" switch in the Key figures header (shown when Base is ticked) turns each scenario cell
   into its value minus Base's: M Kč for money, percentage points for CAGR and IRR, the

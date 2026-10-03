@@ -44,7 +44,15 @@ const { Scenarios } = await import("../Scenarios");
 const startDate = fmtDate(assumptions.baseDate);
 
 beforeEach(() =>
-  act(() => useUiStore.setState({ language: "en", mode: "nominal" })),
+  act(() =>
+    useUiStore.setState({
+      language: "en",
+      mode: "nominal",
+      compareIds: [],
+      compareBase: true,
+      crashAtYear: 0,
+    }),
+  ),
 );
 
 describe("Scenarios wording (ADR 0090)", () => {

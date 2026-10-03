@@ -59,7 +59,13 @@ const reach = "hits 3 of 3 loans (refix 2029, 2031)";
 beforeEach(() => {
   window.scrollTo = vi.fn();
   act(() => {
-    useUiStore.setState({ language: "en", mode: "nominal" });
+    useUiStore.setState({
+      language: "en",
+      mode: "nominal",
+      compareIds: [],
+      compareBase: true,
+      crashAtYear: 0,
+    });
     usePortfolioStore.setState({ portfolio, assumptions, scenarios: [rates] });
   });
 });

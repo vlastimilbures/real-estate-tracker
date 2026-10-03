@@ -84,7 +84,15 @@ beforeEach(() => {
   addScenario.mockClear();
   saveScenario.mockClear();
   duplicateScenario.mockClear();
-  act(() => useUiStore.setState({ language: "en", route: "scenarios" }));
+  act(() =>
+    useUiStore.setState({
+      language: "en",
+      route: "scenarios",
+      compareIds: [],
+      compareBase: true,
+      crashAtYear: 0,
+    }),
+  );
 });
 
 describe("stress presets do not save duplicates (#48)", () => {
