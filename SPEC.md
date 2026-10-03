@@ -510,6 +510,10 @@ price crash**, each with a legend and one line of help (ADR 0102).
     (projection year 0, 5 or 10; `valueShock`, permanent). The timing is a "When" toggle
     (Start · +5y · +10y); each level button shows the timing it uses ("−20% @ +5y") and
     the preset name keeps that form (ADR 0101).
+  - **Combined**: **Mild** = rates +2 pp for 3 years + price crash −10 %; **Severe** =
+    rates +4 pp + inflation +3 pp, both for 3 years, + price crash −20 %. One click saves
+    all parts in one scenario; the crash uses the "When" timing ("Mild @ +5y"), and the
+    name lists the parts ("Mild: Rates +2pp for 3y · Price crash −10%") (ADR 0104).
 
 ## 8. Non-functional requirements
 

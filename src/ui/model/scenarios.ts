@@ -2,8 +2,14 @@
 // the one-line human summary of a scenario's deltas vs base. Extracted from
 // Scenarios.tsx so they're unit-testable without mounting the component.
 import { fmtPct, fmtPp } from "../../lib/format";
-import type { Assumptions, Scenario } from "../../engine";
+import {
+  rate,
+  type Assumptions,
+  type Scenario,
+  type ScenarioOverrides,
+} from "../../engine";
 import type { Dictionary } from "../../i18n";
+import { DEFAULT_SHOCK_YEARS } from "./scenarioForm";
 
 /** The implicit Base = the saved assumptions (no overrides, no shock). */
 /** The id of the synthetic Base scenario (the saved assumptions). */
@@ -58,4 +64,51 @@ export function findByName(
   name: string,
 ): Scenario | undefined {
   return scenarios.find((s) => s.name === name);
+}
+
+/** A fixed combined stress recipe (ADR 0104): shock levels in pp with their decimal
+ *  deltas, and the crash as its label and fraction. */
+export interface CombinedRecipe {
+  /** The recipe's own name ("Mild"), in the UI language. */
+  level: (t: Dictionary) => string;
+  rate: { pp: number; delta: string };
+  inflation?: { pp: number; delta: string };
+  crash: { label: string; pct: string };
+}
+
+/** The saved name and overrides of a combined preset (ADR 0104). The name lists the parts
+ *  in the single presets' wording, so a saved one is found by name (ADR 0093); the crash
+ *  takes the "When" timing (ADR 0101). */
+export function combinedPreset(
+  recipe: CombinedRecipe,
+  crashAtYear: number,
+  t: Dictionary,
+): { name: string; overrides: ScenarioOverrides } {
+  const sc = t.scenarios;
+  const suffix =
+    crashAtYear === 0 ? "" : sc.crashAt(t.common.plusYears(crashAtYear));
+  const parts = [
+    sc.rateForYears(sc.plusPp(recipe.rate.pp), DEFAULT_SHOCK_YEARS),
+  ];
+  if (recipe.inflation)
+    parts.push(
+      sc.inflForYears(sc.plusPp(recipe.inflation.pp), DEFAULT_SHOCK_YEARS),
+    );
+  parts.push(sc.crashTitle(recipe.crash.label, suffix));
+  return {
+    name: sc.combinedTitle(recipe.level(t), parts.join(" · ")),
+    overrides: {
+      rateShock: {
+        deltaPa: rate(recipe.rate.delta),
+        durationYears: DEFAULT_SHOCK_YEARS,
+      },
+      ...(recipe.inflation && {
+        inflationShock: {
+          deltaPa: rate(recipe.inflation.delta),
+          durationYears: DEFAULT_SHOCK_YEARS,
+        },
+      }),
+      valueShock: { pct: rate(recipe.crash.pct), atYear: crashAtYear },
+    },
+  };
 }
