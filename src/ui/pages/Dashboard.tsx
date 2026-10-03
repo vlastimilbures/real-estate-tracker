@@ -32,6 +32,36 @@ import {
 } from "./DashboardPanels";
 import { useT } from "../hooks/useT";
 import { useRenderTiming } from "../hooks/useRenderTiming";
+import { SampleBanner, SampleClearedNotice } from "../components/SampleBanner";
+
+/** First steps for an empty portfolio, each linking to its page; no wizard (ADR 0094). */
+function GettingStarted() {
+  const t = useT();
+  const openSettings = useUiStore((s) => s.openSettings);
+  const requestNewProperty = useUiStore((s) => s.requestNewProperty);
+  const navigate = useUiStore((s) => s.navigate);
+  const steps = [
+    { label: t.sample.stepAssumptions, go: () => openSettings("assumptions") },
+    { label: t.sample.stepAddProperty, go: requestNewProperty },
+    { label: t.sample.stepDetails, go: () => navigate("properties") },
+    { label: t.sample.stepReview, go: () => navigate("projections") },
+    { label: t.sample.stepBackup, go: () => openSettings("backup") },
+  ];
+  return (
+    <section className="getting-started" aria-labelledby="getting-started">
+      <h3 id="getting-started">{t.sample.gettingStartedTitle}</h3>
+      <ol>
+        {steps.map((s) => (
+          <li key={s.label}>
+            <Button size="sm" variant="ghost" onClick={s.go}>
+              {s.label}
+            </Button>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
 
 export function Dashboard() {
   const t = useT();
@@ -57,6 +87,7 @@ export function Dashboard() {
   if (!engine || allProperties.length === 0) {
     return (
       <AppShell title={t.dashboard.title} showLens={false}>
+        <SampleClearedNotice />
         <EmptyState
           title={t.common.noPortfolioTitle}
           icon={FolderOpen}
@@ -77,6 +108,7 @@ export function Dashboard() {
         >
           {t.common.noPortfolioBody}
         </EmptyState>
+        <GettingStarted />
       </AppShell>
     );
   }
@@ -110,6 +142,8 @@ export function Dashboard() {
 
   return (
     <AppShell title={t.dashboard.title} subtitle={subtitle}>
+      <SampleClearedNotice />
+      <SampleBanner />
       <div className="filter-bar">
         {allProperties.length > 1 ? (
           <PropertySelect

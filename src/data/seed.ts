@@ -15,7 +15,11 @@ import {
   insertStatement,
   upsertAssumptions,
   countProperties,
+  SAMPLE_ACTIVE,
+  SAMPLE_DISMISSED,
+  SAMPLE_PROPERTY_IDS,
 } from "./repositories";
+import { writeSafetyBackup } from "./backup";
 import { money } from "../engine";
 
 const BASE_DATE = isoDate("2026-06-07");
@@ -225,6 +229,46 @@ export async function seedIfEmpty(sql: Sql): Promise<boolean> {
       query: "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
       params: [SEEDED_FLAG],
     },
+    // Marks the sample for the banner and "Clear sample" (ADR 0094).
+    {
+      query: "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
+      params: [SAMPLE_ACTIVE],
+    },
   ]);
   return true;
+}
+
+/** "Keep exploring": hide the sample banner for good (ADR 0094). */
+export async function dismissSampleBanner(sql: Sql): Promise<void> {
+  await sql.execute(
+    "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
+    [SAMPLE_DISMISSED],
+  );
+}
+
+/** "Clear sample and start my own" (ADR 0094): write and verify a safety backup (D-52),
+ *  then in one transaction (D-14) delete the sample properties — their records go with
+ *  them through ON DELETE CASCADE — and the sample markers. `sample_seeded` stays, so
+ *  the sample is never reseeded. The user's own properties and the assumptions are
+ *  untouched. Returns the safety backup's name. */
+export async function clearSample(
+  sql: Sql,
+  now: Date = new Date(),
+): Promise<{ safetyBackup: string }> {
+  const safetyBackup = await writeSafetyBackup(
+    sql,
+    now,
+    "portfolio-before-clear-sample",
+  );
+  await sql.transaction([
+    {
+      query: `DELETE FROM properties WHERE id IN (${SAMPLE_PROPERTY_IDS.map(() => "?").join(", ")})`,
+      params: [...SAMPLE_PROPERTY_IDS],
+    },
+    {
+      query: "DELETE FROM app_meta WHERE key IN (?, ?)",
+      params: [SAMPLE_ACTIVE, SAMPLE_DISMISSED],
+    },
+  ]);
+  return { safetyBackup };
 }

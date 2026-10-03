@@ -19,7 +19,7 @@ import { migrate } from "../data/migrations";
 import { DataError, type DataErrorCode } from "../data/errors";
 import { toWriteError, type WriteError } from "./writeError";
 import { logFailure } from "../data/errorLog";
-import { seedIfEmpty } from "../data/seed";
+import { clearSample, dismissSampleBanner, seedIfEmpty } from "../data/seed";
 import {
   confirmRestore,
   exportBackup,
@@ -48,6 +48,7 @@ import {
   updateProperty,
   setPropertyActive,
   getPropertyExtras,
+  type SampleState,
 } from "../data/repositories";
 import {
   valuationToRow,
@@ -116,6 +117,8 @@ interface PortfolioState {
   portfolio: Portfolio | null;
   assumptions: Assumptions | null;
   scenarios: Scenario[];
+  /** The first-run sample: still in place, and its banner dismissed (ADR 0094). */
+  sample: SampleState;
   status: Status;
   /** The last failed write (or the startup failure), translated by the UI. */
   error: WriteError | null;
@@ -172,12 +175,17 @@ interface PortfolioState {
    *  copy (ADR 0093). */
   duplicateScenario: (id: string, newId: string) => Promise<MutationResult>;
   removeScenario: (id: string) => Promise<MutationResult>;
+  // sample portfolio (ADR 0094)
+  /** "Keep exploring": hide the sample banner for good. */
+  dismissSampleBanner: () => Promise<MutationResult>;
   // whole-database operations. They throw their own typed errors (CsvImportError,
   // RestoreError, …) for the page to show, and leave the banner `error` alone.
   /** CSV import in one transaction, then reload. */
   importCsv: (batch: CsvImportBatch) => Promise<CsvImportReport>;
   /** Replace the data with a checked backup (after a safety backup), then reload. */
   restoreBackup: (backup: BackupFile) => Promise<{ safetyBackup: string }>;
+  /** Delete the sample properties (after a safety backup), then reload. */
+  clearSample: () => Promise<{ safetyBackup: string }>;
   /** Write a backup file through the save dialog. Read-only, so not queued: an open
    *  dialog must not hold up edits. */
   exportBackup: () => Promise<ExportOutcome>;
@@ -298,6 +306,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     portfolio: null,
     assumptions: null,
     scenarios: [],
+    sample: { active: false, dismissed: false },
     status: "idle",
     error: null,
     startupError: null,
@@ -328,8 +337,9 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       const sql = get().sql;
       if (!sql) return;
       // One point-in-time snapshot of every table (DR-134).
-      const { portfolio, assumptions, scenarios } = await loadState(sql);
-      set({ portfolio, assumptions, scenarios, stale: false });
+      const { portfolio, assumptions, scenarios, sample } =
+        await loadState(sql);
+      set({ portfolio, assumptions, scenarios, sample, stale: false });
     },
 
     clearError: () => set({ error: null }),
@@ -458,6 +468,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       }),
     removeScenario: (id) => mutate((sql) => deleteScenario(sql, id)),
 
+    dismissSampleBanner: () => mutate(dismissSampleBanner),
+
     // Loaded on first use: keeps the CSV parser out of the startup bundle (P9).
     importCsv: (batch) =>
       exclusive(async (sql) => {
@@ -466,6 +478,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       }),
     restoreBackup: (backup) =>
       exclusive((sql) => confirmRestore(sql, backup, checkInputRules)),
+    clearSample: () => exclusive((sql) => clearSample(sql)),
     exportBackup: async () =>
       exportBackup(requireSql(), { today: localIsoDay(), save: saveFile }),
   };

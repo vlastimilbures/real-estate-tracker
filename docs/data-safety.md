@@ -51,6 +51,10 @@ To open the folder, in Finder choose **Go → Go to Folder…** (⇧⌘G) and pa
   file picker, paste
   `~/Library/Application Support/com.bures.realestate-tracker/backups/`, and pick the
   `portfolio-before-restore-…` file with the right date. The time in its name is UTC.
+- **Clear sample works the same way.** **Clear sample and start my own** first saves
+  `backups/portfolio-before-clear-sample-<date>.json`; if that copy cannot be saved, nothing is
+  deleted. To undo it, restore that file as above. The restored sample shows as ordinary data,
+  without the sample banner.
 
 ## If an upgrade fails
 

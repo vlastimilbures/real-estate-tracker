@@ -1204,6 +1204,37 @@ table.chart-table tbody th.sticky-col {
   font-size: 13px;
 }
 
+/* ============ Information banner (sample portfolio, ADR 0094) ============ */
+.banner.info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3) var(--s4);
+  padding: var(--s3) var(--s4);
+  margin-bottom: var(--s4);
+  border-radius: var(--r-sm);
+  background: var(--accent-wash);
+  color: var(--ink);
+  border: 1px solid var(--hairline-strong);
+  font-size: 13px;
+}
+
+.getting-started {
+  max-width: 420px;
+  margin: var(--s5) auto 0;
+  text-align: left;
+}
+
+.getting-started ol {
+  margin: var(--s2) 0 0;
+  padding-left: var(--s5);
+}
+
+.getting-started li + li {
+  margin-top: var(--s1);
+}
+
 /* ============ Error banner / boundary ============ */
 .error-banner {
   display: flex;

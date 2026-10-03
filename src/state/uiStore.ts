@@ -83,6 +83,9 @@ interface UiState {
   guideTerm: string | null;
   /** Properties should open its Add form once (menu ⌘N, UX-066). In-memory only. */
   newPropertyRequested: boolean;
+  /** Safety backup written by the last "Clear sample", for the Dashboard's confirmation
+   *  (ADR 0094). In-memory only. */
+  sampleClearedBackup: string | null;
   navigate: (route: Route) => void;
   openProperty: (id: string) => void;
   setMode: (mode: Mode) => void;
@@ -104,6 +107,9 @@ interface UiState {
   requestNewProperty: () => void;
   /** Properties has opened the Add form for `newPropertyRequested`. */
   clearNewPropertyRequest: () => void;
+  /** The sample was cleared: open the Dashboard and name the safety backup there. */
+  showSampleCleared: (safetyBackup: string) => void;
+  dismissSampleCleared: () => void;
   /** Some open form holds unsaved edits (UX-030): `unsavedSources` is not empty. */
   unsavedChanges: boolean;
   /** The open forms holding unsaved edits, one key per form, so a clean form never
@@ -147,6 +153,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   aboutOpen: false,
   guideTerm: null,
   newPropertyRequested: false,
+  sampleClearedBackup: null,
   unsavedChanges: false,
   unsavedSources: [],
   pendingLeave: null,
@@ -183,6 +190,11 @@ export const useUiStore = create<UiState>((set, get) => ({
   requestNewProperty: () =>
     guarded(get, set, { route: "properties", newPropertyRequested: true }),
   clearNewPropertyRequest: () => set({ newPropertyRequested: false }),
+  showSampleCleared: (safetyBackup) => {
+    set({ sampleClearedBackup: safetyBackup });
+    guarded(get, set, { route: "dashboard" });
+  },
+  dismissSampleCleared: () => set({ sampleClearedBackup: null }),
   setUnsavedChanges: (source, unsaved) => {
     const others = get().unsavedSources.filter((k) => k !== source);
     const unsavedSources = unsaved ? [...others, source] : others;
