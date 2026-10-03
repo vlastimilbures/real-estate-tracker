@@ -201,7 +201,11 @@ function LoanEventRows({
   return (
     <fieldset
       className="event-rows"
-      aria-describedby={help ? helpId : undefined}
+      aria-describedby={
+        [listError && `${helpId}-err`, help && helpId]
+          .filter(Boolean)
+          .join(" ") || undefined
+      }
     >
       <legend>{label}</legend>
       {help && (
@@ -209,7 +213,11 @@ function LoanEventRows({
           {help}
         </p>
       )}
-      {listError && <p className="err">{listError}</p>}
+      {listError && (
+        <p className="err" id={`${helpId}-err`}>
+          {listError}
+        </p>
+      )}
       {rows.map((row, i) => {
         const rowName =
           kind === "prepayments"

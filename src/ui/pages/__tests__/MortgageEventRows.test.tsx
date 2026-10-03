@@ -128,9 +128,13 @@ describe("prepayment and recast rows (ADR 0116)", () => {
     await userEvent.type(within(row(1)).getByLabelText(d.eventAmount), "0");
     await userEvent.click(saveButton());
     expect(save).not.toHaveBeenCalled();
-    expect(
-      within(prepayments()).getByText(en.forms.invalidHint.prepayments),
-    ).toBeTruthy();
+    const listError = within(prepayments()).getByText(
+      en.forms.invalidHint.prepayments,
+    );
+    expect(listError.id).not.toBe("");
+    expect(prepayments().getAttribute("aria-describedby")).toContain(
+      listError.id,
+    );
     expect(
       within(row(1)).getByLabelText(d.eventAmount).getAttribute("aria-invalid"),
     ).toBe("true");
