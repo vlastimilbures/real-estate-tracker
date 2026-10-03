@@ -107,6 +107,7 @@ Other IDs seen in code comments:
 | [0080](0080-close-out.md)                         | Close-out: lease steps and gaps, real-terms months, review leftovers                   | DR-045, DR-182, DR-145, DR-152/157/181 |
 | [0081](0081-public-release.md)                    | Public release: fictional sample portfolio, own regression baseline, archive retired   |                                        |
 | [0082](0082-about-feedback-via-issues.md)         | About dialog points to GitHub issues instead of an e-mail address                      |                                        |
+| [0083](0083-coverage-rebaseline-vitest-4.md)      | Coverage floors re-baselined for Vitest 4                                              |                                        |
 
 ### Judgment calls and open questions
 
