@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { powYears } from "../../lib/money";
 import { edate, isoDate } from "../dates";
-import { portfolioSnapshot } from "../metrics";
+import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { currentBalance, activeBlock } from "../amortization";
 import { schedulesByProperty } from "../schedule";
@@ -211,5 +211,59 @@ describe("Fixation-aware debt at a future as-of date (Javorova resets 2031)", ()
     expect(
       Math.abs(withSchedule.toNumber() - naive.toNumber()),
     ).toBeGreaterThan(1);
+  });
+});
+
+describe("ADR 0116: the instalment after a month's prepayment", () => {
+  // A lowerInstalment prepayment settles after that month's payment, so the balance at
+  // an as-of date in that month is already lower; the instalment must match it.
+  const javorova = portfolio.properties.find((p) => p.id === "javorova");
+  if (!javorova) throw new Error("seed property missing");
+  const withPrepayment: Portfolio = {
+    ...portfolio,
+    mortgages: portfolio.mortgages.map((m) =>
+      m.propertyId === "javorova"
+        ? {
+            ...m,
+            prepayments: [
+              {
+                date: isoDate("2029-03-20"),
+                amount: money(300000),
+                effect: "lowerInstalment" as const,
+              },
+            ],
+          }
+        : m,
+    ),
+  };
+  const rows =
+    schedulesByProperty(
+      withPrepayment.mortgages,
+      ["javorova"],
+      assumptions,
+    ).get("javorova") ?? [];
+  const i = rows.findIndex((r) => r.prepaid.greaterThan(0));
+  const on = (k: number) =>
+    propertySnapshot(
+      javorova,
+      withPrepayment,
+      assumptions,
+      isoDate(rows[k].date.toISOString().slice(0, 10)),
+      rows,
+    );
+
+  it("reports the lowered instalment in the prepayment month", () => {
+    const snap = on(i);
+    expect(rows[i + 1].instalment.lessThan(rows[i].instalment)).toBe(true);
+    expect(snap.debt.toFixed(6)).toBe(rows[i].endBalance.toFixed(6));
+    expect(snap.annualDebtService.toFixed(6)).toBe(
+      rows[i + 1].instalment.times(12).toFixed(6),
+    );
+  });
+
+  it("keeps the month's own instalment the month before", () => {
+    expect(on(i - 1).annualDebtService.toFixed(6)).toBe(
+      rows[i - 1].instalment.times(12).toFixed(6),
+    );
   });
 });
