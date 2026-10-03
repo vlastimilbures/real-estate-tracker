@@ -7,6 +7,7 @@ import { cpiIndex, edate, realProjection } from "../../engine";
 import type { Assumptions, ProjectionYear } from "../../engine";
 import type { Mode } from "./lens";
 import type { XlsxColumn } from "./xlsxExport";
+import { nonZeroColumns } from "./columns";
 import type { Dictionary } from "../../i18n";
 
 export interface SeriesRow {
@@ -96,22 +97,16 @@ export function projectionSeries(
   }));
 }
 
-type ProjectionExtra = "draws" | "prepaid" | "prepaymentFees";
-
 /**
  * The owner-cash columns outside net cash flow, with their headers, each shown only when
  * some year is non-zero (ADR 0116 §12). They follow DSCR, apart from the operating columns.
  */
-export function projectionExtras(
-  rows: SeriesRow[],
-  g: Dictionary["projGrid"],
-): { key: ProjectionExtra; header: string }[] {
-  const all: { key: ProjectionExtra; header: string }[] = [
+export function projectionExtras(rows: SeriesRow[], g: Dictionary["projGrid"]) {
+  return nonZeroColumns(rows, [
     { key: "draws", header: g.draws },
     { key: "prepaid", header: g.prepaid },
     { key: "prepaymentFees", header: g.prepaymentFees },
-  ];
-  return all.filter(({ key }) => rows.some((r) => !r[key].isZero()));
+  ]);
 }
 
 /**

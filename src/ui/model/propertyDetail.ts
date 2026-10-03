@@ -18,6 +18,7 @@ import type {
   Rate,
 } from "../../engine";
 import type { XlsxColumn } from "./xlsxExport";
+import { nonZeroColumns } from "./columns";
 import type { Decimal } from "../../lib/money";
 import { fmtCzk, fmtDate, fmtPct } from "../../lib/format";
 import type { Dictionary } from "../../i18n";
@@ -138,8 +139,6 @@ export function loanWarningText(
   }
 }
 
-type AmortizationExtra = "drawn" | "prepaid" | "prepaymentFee";
-
 /**
  * The optional columns with their headers, each shown only when some row is non-zero
  * (ADR 0116 §12): the balance then reconciles on screen and in the export.
@@ -147,13 +146,12 @@ type AmortizationExtra = "drawn" | "prepaid" | "prepaymentFee";
 export function amortizationExtras(
   rows: AmortizationRow[],
   d: Dictionary["propertyDetail"],
-): { key: AmortizationExtra; header: string }[] {
-  const all: { key: AmortizationExtra; header: string }[] = [
+) {
+  return nonZeroColumns(rows, [
     { key: "drawn", header: d.amColDrawn },
     { key: "prepaid", header: d.amColPrepaid },
     { key: "prepaymentFee", header: d.amColPrepaymentFee },
-  ];
-  return all.filter(({ key }) => rows.some((r) => !r[key].isZero()));
+  ]);
 }
 
 /** Excel column map for the amortization schedule, headers as on screen (UX-062). */
