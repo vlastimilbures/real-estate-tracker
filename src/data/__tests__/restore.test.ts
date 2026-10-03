@@ -163,6 +163,42 @@ describe("restore checks every row before touching the DB (DR-019)", () => {
     expect(dump(sql)).toEqual(before);
   });
 
+  // ADR 0086 (#38): the form and CSV whole-number bounds apply to restore too.
+  it.each([
+    ["assumptions", "horizon_years", 101, 100, { min: 1, max: 100 }],
+    ["mortgage_blocks", "fixation_years", 51, 50, { min: 0, max: 50 }],
+    ["mortgage_blocks", "loan_term_years", 51, 50, { min: 1, max: 50 }],
+    ["properties", "size_m2", 10_001, 10_000, { min: 1, max: 10_000 }],
+  ])("%s.%s outside its range", async (table, column, out, edge, range) => {
+    const before = dump(sql);
+    const set = (n: number) =>
+      edited(table, (rows) => {
+        rows[0][column] = n;
+        return rows;
+      });
+    const bad = await set(out);
+    const e = await rejection(restoreFromJson(sql, bad, checkInputRules));
+    expect(e.code).toBe("BACKUP_ROWS_INVALID");
+    expect(e.issues).toEqual([
+      {
+        table,
+        ...(table !== "assumptions" && { id: bad.tables[table][0].id }),
+        column,
+        rule: "OUT_OF_RANGE",
+        range,
+      },
+    ]);
+    expect(dump(sql)).toEqual(before);
+
+    await restoreFromJson(sql, await set(edge), checkInputRules);
+    const id = bad.tables[table][0].id;
+    expect(
+      sql.db
+        .prepare(`SELECT ${column} AS v FROM ${table} WHERE id = ?`)
+        .get(id),
+    ).toEqual({ v: edge });
+  });
+
   it("a missing assumptions row", async () => {
     const e = await rejection(
       restoreFromJson(

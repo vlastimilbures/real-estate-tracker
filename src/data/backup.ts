@@ -41,14 +41,26 @@ import type {
   ValidationCode,
   ValidationEntity,
 } from "../engine";
+import type { IntRange } from "../lib/intRanges";
 
-/** The engine's input rules over the restored rows (assumptions absent ⇒ portfolio
- *  rules only). Injected by the caller: the data layer never calls engine functions;
- *  `checkInputRules` in src/import/inputRules.ts is the one the app uses. */
+/** A whole-number field outside the bounds the forms and CSV import apply (ADR 0086).
+ *  Restore-only: the engine itself is open-ended. */
+export interface RangeProblem {
+  code: "OUT_OF_RANGE";
+  entity: ValidationEntity;
+  id?: string | undefined;
+  field: string;
+  range: IntRange;
+}
+
+/** The engine's input rules plus the whole-number bounds over the restored rows
+ *  (assumptions absent ⇒ portfolio rules only). Injected by the caller: the data layer
+ *  never calls engine functions; `checkInputRules` in src/import/inputRules.ts is the one
+ *  the app uses. */
 export type InputRules = (
   portfolio: Portfolio,
   assumptions?: Assumptions,
-) => EngineValidationError[];
+) => (EngineValidationError | RangeProblem)[];
 
 /** The newest schema this app writes and reads (the last migration). */
 export const SCHEMA_HEAD = Math.max(...MIGRATIONS.map((m) => m.version));
@@ -162,7 +174,10 @@ export interface RestoreIssue {
     | ValidationCode
     | "UNREADABLE_VALUE"
     | "DUPLICATE_KEY"
-    | "MISSING_ASSUMPTIONS";
+    | "MISSING_ASSUMPTIONS"
+    | "OUT_OF_RANGE";
+  /** The allowed range of an OUT_OF_RANGE field. */
+  range?: IntRange;
 }
 
 /** The backup was refused before anything was changed. */
@@ -461,14 +476,15 @@ export function prepareRestore(
 
   if (issues.length === 0) {
     issues.push(...duplicateKeys(tables));
-    // The engine's input rules, as at every other entry point (D-17, D-27, D-37,
-    // D-38, D-42, D-54).
+    // The engine's input rules and the whole-number bounds, as at every other entry
+    // point (D-17, D-27, D-37, D-38, D-42, D-54, ADR 0086).
     for (const e of rules(portfolio, assumptions))
       issues.push({
         table: ENTITY_TABLE[e.entity],
         ...(e.id !== undefined && { id: e.id }),
         ...(e.field && { column: snake(e.field) }),
         rule: e.code,
+        ...("range" in e && { range: e.range }),
       });
   }
   if (issues.length > 0)

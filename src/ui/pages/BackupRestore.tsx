@@ -15,6 +15,7 @@ import { logFailure } from "../../state/diagnostics";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
+import { restoreIssueText } from "../model/restoreIssue";
 import { toWriteError } from "../../state/writeError";
 import { fmtDate } from "../../lib/format";
 import { useToast } from "../hooks/useToast";
@@ -33,19 +34,6 @@ function restoreErrorText(t: Dictionary, e: RestoreError): string {
       return b.errNewer(e.detail);
     case "BACKUP_ROWS_INVALID":
       return b.errRowsInvalid;
-  }
-}
-
-function issueText(t: Dictionary, i: RestoreIssue): string {
-  switch (i.rule) {
-    case "UNREADABLE_VALUE":
-      return t.backup.issueUnreadable;
-    case "DUPLICATE_KEY":
-      return t.backup.issueDuplicate;
-    case "MISSING_ASSUMPTIONS":
-      return t.backup.issueMissingAssumptions;
-    default:
-      return t.inputRules[i.rule];
   }
 }
 
@@ -74,7 +62,7 @@ function IssueTable({ issues }: { issues: RestoreIssue[] }) {
                 {i.column ? <code>{i.column}</code> : "—"}
               </td>
               <td className="left" style={{ color: "var(--negative)" }}>
-                {issueText(t, i)}
+                {restoreIssueText(t, i)}
               </td>
             </tr>
           ))}

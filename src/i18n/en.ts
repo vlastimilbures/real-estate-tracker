@@ -701,6 +701,8 @@ export const en = {
     issueDuplicate: "Repeats an earlier record",
     issueMissingAssumptions:
       "The file must hold exactly one assumptions record",
+    issueOutOfRange: (min: string, max: string) =>
+      `Must be a whole number from ${min} to ${max}`,
   },
 
   xlsx: {

@@ -127,13 +127,13 @@ cost shares and value haircut 0–1; shock durations whole years ≥ 0; horizon 
 ≥ 1; growth, indexation and inflation may be negative (finite only). The form, the CSV
 importer and backup restore reject the same rows with a translated message (ADR 0037).
 
-**Whole-number bounds.** On top of the engine rules, the forms and the CSV importer bound
-the whole-number fields they take (ADR 0075, ADR 0076; `src/lib/intRanges.ts`): projection
-horizon 1–100, fixation 0–50 years, loan term 1–50 years, property size 1–10 000 m². The
-engine (`HORIZON_NOT_POSITIVE`, `INVALID_TERM`) and the database CHECK constraints have no
-upper bound, and backup restore does not yet apply these ranges, so a restored backup can
-still bring in, for example, a horizon above 100. Restore will reject out-of-range values
-like the form and CSV do (#38).
+**Whole-number bounds.** On top of the engine rules, every user-data entry point — the
+forms, the CSV importer and backup restore — bounds the whole-number fields it takes
+(ADR 0075, ADR 0076, ADR 0086; `src/lib/intRanges.ts`): projection horizon 1–100, fixation
+0–50 years, loan term 1–50 years, property size 1–10 000 m². Restore reports a value outside
+its range as `OUT_OF_RANGE` with the allowed range (a restore-only rule). The engine
+(`HORIZON_NOT_POSITIVE`, `INVALID_TERM`) and the database CHECK constraints have no upper
+bound, so a database that already holds an out-of-range value still loads.
 
 ### 4.2 Derived per-mortgage-block values
 
@@ -538,8 +538,9 @@ offline badge, and controls for language and theme.
    - **Backup / Restore** tab — Export writes the whole database to a versioned JSON file
      (`{ schemaVersion, exportedAt, tables: {...} }`) through a native save dialog; the file
      is written to a temporary name and moved into place. Restore opens a JSON backup (at
-     most 20 MB), validates the schema version and every row (unknown columns and invalid
-     values are refused before anything changes), writes and verifies a safety backup first
+     most 20 MB), validates the schema version and every row (unknown columns, invalid
+     values and whole-number values outside the form bounds are refused before anything
+     changes), writes and verifies a safety backup first
      (ADR 0052), then replaces all tables in one transaction and reloads app state.
 
 8. **Guide** — a static glossary / help screen (NOI, DSCR, LTV, fixation, annuity, etc.);
