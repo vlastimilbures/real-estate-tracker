@@ -3,7 +3,14 @@
 // cells are blanked like the on-screen "—", and a null DSCR is left empty.
 import { describe, it, expect } from "vitest";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
-import { isoDate, portfolioProjection } from "../../../engine";
+import {
+  isoDate,
+  money,
+  portfolioProjection,
+  propertySchedules,
+} from "../../../engine";
+import type { MortgageBlock } from "../../../engine";
+import { devBlock } from "../../../engine/__tests__/support/mixed";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
@@ -108,7 +115,7 @@ describe("translated export headers", () => {
 
   it("amortization headers are the table's labels", () => {
     const d = ru.propertyDetail;
-    expect(amortizationColumns(ru).map((c) => c.header)).toEqual([
+    expect(amortizationColumns(ru, []).map((c) => c.header)).toEqual([
       d.amColMonth,
       d.amColDate,
       d.amColRate,
@@ -117,5 +124,43 @@ describe("translated export headers", () => {
       d.amColPrincipal,
       d.amColEndBalance,
     ]);
+  });
+
+  const rowsOf = (b: MortgageBlock) =>
+    propertySchedules([b], [b.propertyId], assumptions).get(b.propertyId)!.rows;
+
+  it("adds Prepaid and Prepayment fee only when a row has them (ADR 0116 §12)", () => {
+    const d = en.propertyDetail;
+    const seed = portfolio.mortgages.find((m) => m.propertyId === "javorova")!;
+    const prepaid = rowsOf({
+      ...seed,
+      prepayments: [
+        {
+          date: isoDate("2031-01-17"),
+          amount: money(500000),
+          effect: "lowerInstalment",
+          fee: money(1000),
+        },
+      ],
+    });
+    const cols = amortizationColumns(en, prepaid);
+    expect(cols.map((c) => c.header).slice(-3)).toEqual([
+      d.amColPrepaid,
+      d.amColPrepaymentFee,
+      d.amColEndBalance,
+    ]);
+    const row = prepaid.find((r) => !r.prepaid.isZero())!;
+    const value = (h: string) => cols.find((c) => c.header === h)!.value(row);
+    expect(value(d.amColPrepaid)).toEqual(money(500000));
+    expect(value(d.amColPrepaymentFee)).toEqual(money(1000));
+    expect(amortizationColumns(en, rowsOf(seed))).toHaveLength(7);
+  });
+
+  it("adds Drawn for a development loan's tranches", () => {
+    const headers = amortizationColumns(en, rowsOf(devBlock)).map(
+      (c) => c.header,
+    );
+    expect(headers).toContain(en.propertyDetail.amColDrawn);
+    expect(headers).not.toContain(en.propertyDetail.amColPrepaid);
   });
 });

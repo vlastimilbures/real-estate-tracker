@@ -200,7 +200,7 @@ export function PropertyDetail() {
     exportTableXlsx({
       filename: `${slug(property.name)}-amortization.xlsx`,
       sheetName: t.xlsx.sheetNames.amortization,
-      columns: amortizationColumns(t),
+      columns: amortizationColumns(t, out?.schedule ?? []),
       rows: out?.schedule ?? [],
     });
 

@@ -17,6 +17,7 @@ import { SERIES, type ChartRow } from "../model/chartData";
 import { RecordForm } from "../components/forms";
 import { moneyDraft, percentDraft } from "../model/formParse";
 import { fmtDate } from "../../lib/format";
+import { amortizationExtras } from "../model/propertyDetail";
 import { dscrBand, dscrBandWord, ltvBand, ltvBandWord } from "../model/health";
 import { currencySymbol } from "../../lib/currency";
 import type {
@@ -300,6 +301,7 @@ export function AmortizationTable({
   schedule: AmortizationRow[];
 }) {
   const t = useT();
+  const extras = amortizationExtras(schedule, t.propertyDetail);
   return (
     <TableWrap
       label={t.propertyDetail.amortizationTitle}
@@ -321,6 +323,11 @@ export function AmortizationTable({
             <th scope="col">{t.propertyDetail.amColInstalment}</th>
             <th scope="col">{t.propertyDetail.amColInterest}</th>
             <th scope="col">{t.propertyDetail.amColPrincipal}</th>
+            {extras.map(({ key, header }) => (
+              <th key={key} scope="col">
+                {header}
+              </th>
+            ))}
             <th scope="col">{t.propertyDetail.amColEndBalance}</th>
           </tr>
         </thead>
@@ -344,6 +351,11 @@ export function AmortizationTable({
                 <td>
                   <Money value={row.principal} parens={false} suffix={false} />
                 </td>
+                {extras.map(({ key }) => (
+                  <td key={key}>
+                    <Money value={row[key]} parens={false} suffix={false} />
+                  </td>
+                ))}
                 <td>
                   <Money value={row.endBalance} parens={false} suffix={false} />
                 </td>

@@ -111,9 +111,28 @@ export function loanWarningText(
   }
 }
 
+type AmortizationExtra = "drawn" | "prepaid" | "prepaymentFee";
+
+/**
+ * The optional columns with their headers, each shown only when some row is non-zero
+ * (ADR 0116 §12): the balance then reconciles on screen and in the export.
+ */
+export function amortizationExtras(
+  rows: AmortizationRow[],
+  d: Dictionary["propertyDetail"],
+): { key: AmortizationExtra; header: string }[] {
+  const all: { key: AmortizationExtra; header: string }[] = [
+    { key: "drawn", header: d.amColDrawn },
+    { key: "prepaid", header: d.amColPrepaid },
+    { key: "prepaymentFee", header: d.amColPrepaymentFee },
+  ];
+  return all.filter(({ key }) => rows.some((r) => !r[key].isZero()));
+}
+
 /** Excel column map for the amortization schedule, headers as on screen (UX-062). */
 export function amortizationColumns(
   t: Pick<Dictionary, "propertyDetail">,
+  rows: AmortizationRow[],
 ): XlsxColumn<AmortizationRow>[] {
   const d = t.propertyDetail;
   return [
@@ -123,6 +142,13 @@ export function amortizationColumns(
     { header: d.amColInstalment, kind: "money", value: (r) => r.instalment },
     { header: d.amColInterest, kind: "money", value: (r) => r.interest },
     { header: d.amColPrincipal, kind: "money", value: (r) => r.principal },
+    ...amortizationExtras(rows, d).map(
+      ({ key, header }): XlsxColumn<AmortizationRow> => ({
+        header,
+        kind: "money",
+        value: (r) => r[key],
+      }),
+    ),
     { header: d.amColEndBalance, kind: "money", value: (r) => r.endBalance },
   ];
 }
