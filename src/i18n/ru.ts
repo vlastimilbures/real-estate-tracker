@@ -489,7 +489,9 @@ export const ru: Dictionary = {
     noOverrides: "без изменений",
     presetsTitle: "Стресс-пресеты",
     presetsHint: (years) =>
-      `один клик создаёт сохранённый сценарий · шоки спадают через ${years} г.`,
+      `Один клик сохраняет сценарий. Шоки ставок и инфляции длятся ${years} г., затем спадают; обвал цен постоянный.`,
+    atStart: "Начало",
+    atStartTitle: (date) => `В начале прогноза (${date})`,
     rateShockAtRefix: "Шок ставки @ рефикс",
     inflationShock: "Шок инфляции",
     priceCrash: "Обвал цен",
@@ -504,7 +506,8 @@ export const ru: Dictionary = {
       `Удалить сценарий «${name}»? Это действие нельзя отменить.`,
     deletedScenario: (name) => `Удалено «${name}»`,
     listTitle: "Сценарии",
-    listHint: (max) => `выберите до ${max} для сравнения с Базой`,
+    listHint: (max) =>
+      `Отметьте до ${max} сценариев для сравнения. База идёт дополнительно и не считается.`,
     duplicate: "Дублировать",
     emptyList:
       "Пока нет сохранённых сценариев — используйте пресет или «Новый сценарий».",
@@ -537,8 +540,8 @@ export const ru: Dictionary = {
     sumVacancy: (v) => `простой ${v}`,
     sumResetRate: (v) => `ставка после фиксации ${v}`,
     sumInflation: (v) => `инфляция ${v}`,
-    sumInflationShock: (v, years) => `инфляция +${v} на ${years} г.`,
-    sumRateShock: (v, years) => `ставки +${v} на ${years} г.`,
+    sumInflationShock: (v, years) => `инфляция +${v} п. п. на ${years} г.`,
+    sumRateShock: (v, years) => `ставки +${v} п. п. на ${years} г.`,
     sumValueShock: (v, atYear) =>
       `стоимость −${v}${atYear ? ` @ год${atYear}` : ""}`,
     editTitle: (name) => `Изменить «${name}»`,
@@ -553,15 +556,17 @@ export const ru: Dictionary = {
     fieldVacancy: "Резерв на простой",
     fieldPostFixationReset: "Ставка после фиксации",
     fieldInflation: "Инфляция годовых",
-    fieldInflationShock: "Шок инфляции (+пп)",
-    fieldRateShock: "Шок ставки @ рефикс (+пп)",
+    fieldInflationShock: "Шок инфляции",
+    fieldRateShock: "Шок ставки при рефиксации",
     fieldValueCrash: "Обвал стоимости",
     forYears: "…на годы",
     atYear: "…в году",
-    temporaryReverts: "временно, возвращается к тренду",
+    ppSuffix: "п. п.",
+    shockHelp:
+      "Временно, затем спадает. Добавляет процентные пункты: +2 п. п. превращают 4,5 % в 6,5 %.",
     permanentCorrection: "постоянная коррекция",
     defaultYears: (n) => `по умолчанию ${n}`,
-    zeroIsToday: "0 = базовая дата",
+    zeroIsStart: (date) => `0 = начало прогноза (${date})`,
     none: "нет",
     invalidPct: "Неверный %",
     geOne: "≥ 1",
@@ -1030,7 +1035,7 @@ export const ru: Dictionary = {
         name: "Обвал стоимости",
         formula: "разовое падение в году Y",
         meaning:
-          "Разовое падение стоимости; рост возобновляется с более низкой базы. Обвал в момент «Сегодня» снижает начальный капитал, поэтому процентная доходность может расти, пока ваше состояние падает.",
+          "Разовое падение стоимости; рост возобновляется с более низкой базы. Обвал в начале прогноза снижает начальный капитал, поэтому процентная доходность может расти, пока ваше состояние падает.",
       },
     },
     glossary: {

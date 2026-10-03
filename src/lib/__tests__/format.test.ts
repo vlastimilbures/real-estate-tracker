@@ -4,6 +4,7 @@ import {
   fmtCzk,
   fmtCzkM,
   fmtPct,
+  fmtPp,
   fmtMultiple,
   fmtDscr,
   fmtDate,
@@ -39,6 +40,14 @@ describe("fmtCzkM", () => {
   });
   it("negative millions use a minus", () => {
     expect(fmtCzkM(-127_030.8)).toBe("−0,1 M Kč");
+  });
+});
+
+describe("fmtPp", () => {
+  it("formats a ratio as bare percentage points (unit added by the caller)", () => {
+    expect(fmtPp(0.02)).toBe("2,0");
+    expect(fmtPp(0.0125, 2)).toBe("1,25");
+    expect(fmtPp(-0.03)).toBe("−3,0");
   });
 });
 

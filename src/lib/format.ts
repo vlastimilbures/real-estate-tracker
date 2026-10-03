@@ -133,6 +133,12 @@ export function fmtPct(value: Numeric, dp = 1): string {
   return neg ? `${MINUS}${withUnit}` : withUnit;
 }
 
+/** Percentage points, bare — ratio (0.02) → "2,0"; the caller adds the localised unit. */
+export function fmtPp(value: Numeric, dp = 1): string {
+  const { neg, body } = fmtFixed(D(value).times(100), dp);
+  return neg ? `${MINUS}${body}` : body;
+}
+
 /** `0.00x` — multiple → "4,85x". */
 export function fmtMultiple(value: Numeric, dp = 2): string {
   const { neg, body } = fmtFixed(value, dp);

@@ -6,6 +6,7 @@ import { Button } from "../components/primitives";
 import { Modal } from "../components/Modal";
 import { Field, TextInput } from "../components/forms";
 import { percentDraft } from "../model/formParse";
+import { fmtDate } from "../../lib/format";
 import { isDirty } from "../model/dirty";
 import {
   parseScenarioDraft,
@@ -143,7 +144,7 @@ export function ScenarioForm({
           <Field
             label={t.scenarios.atYear}
             error={errors.valueShockYear}
-            help={t.scenarios.zeroIsToday}
+            help={t.scenarios.zeroIsStart(fmtDate(assumptions.baseDate))}
           >
             <TextInput
               value={draft.valueShockYear}

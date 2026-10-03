@@ -1,7 +1,7 @@
 // Pure presentation helpers for the Scenarios page: the implicit Base scenario and
 // the one-line human summary of a scenario's deltas vs base. Extracted from
 // Scenarios.tsx so they're unit-testable without mounting the component.
-import { fmtPct } from "../../lib/format";
+import { fmtPct, fmtPp } from "../../lib/format";
 import type { Assumptions, Scenario } from "../../engine";
 import type { Dictionary } from "../../i18n";
 
@@ -34,13 +34,13 @@ export function summarize(s: Scenario, t: Dictionary): string {
   if (o.inflationShock)
     parts.push(
       sc.sumInflationShock(
-        fmtPct(o.inflationShock.deltaPa),
+        fmtPp(o.inflationShock.deltaPa),
         o.inflationShock.durationYears,
       ),
     );
   if (o.rateShock)
     parts.push(
-      sc.sumRateShock(fmtPct(o.rateShock.deltaPa), o.rateShock.durationYears),
+      sc.sumRateShock(fmtPp(o.rateShock.deltaPa), o.rateShock.durationYears),
     );
   if (o.valueShock)
     parts.push(sc.sumValueShock(fmtPct(o.valueShock.pct), o.valueShock.atYear));

@@ -6,6 +6,7 @@ import { DeleteConfirmRow } from "../components/EntityPanelParts";
 import { rate, type Scenario, type ScenarioOverrides } from "../../engine";
 import { useT } from "../hooks/useT";
 import { summarize } from "../model/scenarios";
+import { fmtDate } from "../../lib/format";
 import { DEFAULT_SHOCK_YEARS } from "./ScenarioForm";
 
 // Labels are built from these numbers in the UI language at render (UX-034).
@@ -28,11 +29,14 @@ const CRASH_TIMINGS = [0, 5, 10];
 
 export function StressPresetsPanel({
   busy,
+  baseDate,
   crashAtYear,
   onCrashAtYearChange,
   onAddPreset,
 }: {
   busy: boolean;
+  /** Projection start: crash timing 0 (ADR 0090). */
+  baseDate: Date;
   crashAtYear: number;
   onCrashAtYearChange: (atYear: number) => void;
   onAddPreset: (name: string, overrides: ScenarioOverrides) => void;
@@ -115,14 +119,19 @@ export function StressPresetsPanel({
           <div className="row" style={{ gap: "var(--s2)" }}>
             {CRASH_TIMINGS.map((atYear) => {
               const tmLabel =
-                atYear === 0 ? t.common.today : t.common.plusYears(atYear);
+                atYear === 0 ? t.scenarios.atStart : t.common.plusYears(atYear);
               return (
                 <Button
                   key={atYear}
                   size="sm"
                   variant={crashAtYear === atYear ? "primary" : "ghost"}
+                  aria-pressed={crashAtYear === atYear}
                   onClick={() => onCrashAtYearChange(atYear)}
-                  title={t.scenarios.applyCrashAt(tmLabel)}
+                  title={
+                    atYear === 0
+                      ? t.scenarios.atStartTitle(fmtDate(baseDate))
+                      : t.scenarios.applyCrashAt(tmLabel)
+                  }
                 >
                   {tmLabel}
                 </Button>

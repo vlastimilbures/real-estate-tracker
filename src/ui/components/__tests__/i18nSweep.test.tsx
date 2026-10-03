@@ -40,6 +40,7 @@ describe("UX-034 i18n sweep", () => {
     render(
       <StressPresetsPanel
         busy={false}
+        baseDate={new Date(Date.UTC(2026, 5, 7))}
         crashAtYear={5}
         onCrashAtYearChange={() => undefined}
         onAddPreset={onAddPreset}
