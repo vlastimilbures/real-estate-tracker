@@ -27,6 +27,7 @@ function renderPanels(mode: Mode) {
         isToday
         horizon={real ? kpis.netWorthReal : kpis.netWorthNominal}
         horizonYears={N}
+        horizonEndYear={2056}
         netWorthMultiple={lensKpis(kpis, mode).netWorthMultiple}
         modeWord={real ? en.common.realLower : en.common.nominalLower}
         irr={{ rate: null, reason: "NO_ROOT" }}

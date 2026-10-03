@@ -38,6 +38,7 @@ export function HeroTiles({
   isToday,
   horizon,
   horizonYears,
+  horizonEndYear,
   netWorthMultiple,
   modeWord,
   irr,
@@ -47,6 +48,8 @@ export function HeroTiles({
   isToday: boolean;
   horizon: Decimal;
   horizonYears: number;
+  /** Calendar year of the last projection row (ADR 0088). */
+  horizonEndYear: number;
   netWorthMultiple: Decimal;
   modeWord: string;
   irr: LeveredIrr;
@@ -73,7 +76,7 @@ export function HeroTiles({
       />
       <KpiTile
         delay={24}
-        label={t.dashboard.netWorthInYears(horizonYears)}
+        label={t.dashboard.netWorthInYear(horizonEndYear, horizonYears)}
         value={fmtCzkM(horizon)}
         foot={t.dashboard.multipleFromStartMode(
           fmtMultiple(netWorthMultiple),
@@ -90,7 +93,14 @@ export function HeroTiles({
   );
 }
 
-export function RiskTiles({ s }: { s: PortfolioSnapshot }) {
+export function RiskTiles({
+  s,
+  cashFlowFoot,
+}: {
+  s: PortfolioSnapshot;
+  /** Names the tiles' basis: current, a date, or a projection year (ADR 0088). */
+  cashFlowFoot: string;
+}) {
   const t = useT();
   return (
     <div className="tiles">
@@ -124,19 +134,24 @@ export function RiskTiles({ s }: { s: PortfolioSnapshot }) {
         delay={72}
         label={t.dashboard.annualNetCashFlow}
         value={<Money value={s.netCashFlow} signed />}
-        foot={t.dashboard.noiMinusDebtService}
+        foot={cashFlowFoot}
       />
     </div>
   );
 }
 
-export function MonthlyFlowPanel({ flow }: { flow: MonthlyFlow }) {
+export function MonthlyFlowPanel({
+  flow,
+  title,
+  hint,
+}: {
+  flow: MonthlyFlow;
+  title: string;
+  hint: string;
+}) {
   const t = useT();
   return (
-    <Panel
-      title={t.dashboard.currentMonthlyCashFlow}
-      hint={t.dashboard.monthlyHint}
-    >
+    <Panel title={title} hint={hint}>
       <div className="flow-bars">
         <div className="flow in">
           <div className="flabel">{t.dashboard.inflowLabel}</div>

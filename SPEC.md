@@ -173,6 +173,13 @@ projected year, the tiles fall back to the effective-dated snapshot at `asOf` (d
 the CPI index under the Real lens) (`src/ui/model/dashboard.ts` `projectionYearForAsOf`,
 `tilesForAsOf`).
 
+Labels name that basis (ADR 0088, `asOfBasis`): a projection year reads "projection year
+Y5 · 2031" with the Projections table's period, and the monthly block becomes "Monthly
+equivalent … (annual projection ÷ 12)"; Today keeps "current" with the hint "annualised run
+rate ÷ 12, leases in force on {date}"; any other date says "records in force on {date}". The
+As-of picker shows the mapping under the date (none at Today). The horizon tile names the
+last projection year ("Net worth in 2056 (30-yr horizon)") and does not follow the as-of date.
+
 Selectors follow a consistent rule: "record in force at `asOf`" = latest `startDate/validFrom
 ≤ asOf` whose optional `endDate/validTo` is blank or `≥ asOf`. For **valuations**, if
 nothing is in force yet, the nearest upcoming record is used as a fallback (so year 0 lines

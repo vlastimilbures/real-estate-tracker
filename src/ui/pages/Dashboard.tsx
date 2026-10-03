@@ -16,6 +16,11 @@ import {
   monthlyFlow,
   netWorthHorizon,
   tilesForAsOf,
+  asOfBasis,
+  asOfHint,
+  horizonEndYear,
+  monthlyFlowLabels,
+  netCashFlowFoot,
   dashboardSubtitle,
 } from "../model/dashboard";
 import {
@@ -92,6 +97,8 @@ export function Dashboard() {
   const modeWord = mode === "real" ? t.common.realLower : t.common.nominalLower;
   const filterActive = effectiveIds.length > 0;
   const isToday = asOf === null || asOf.getTime() === todayUtc().getTime();
+  const basis = asOfBasis(assumptions.baseDate, s.asOf, series, isToday);
+  const flowLabels = monthlyFlowLabels(t, basis, assumptions.baseDate, s.asOf);
   const subtitle = dashboardSubtitle(
     t,
     filterActive,
@@ -119,6 +126,7 @@ export function Dashboard() {
           value={asOf}
           onChange={setAsOf}
           bounds={asOfBounds(assumptions.baseDate, assumptions.horizonYears)}
+          hint={asOfHint(t, basis, assumptions.baseDate)}
         />
       </div>
 
@@ -128,14 +136,19 @@ export function Dashboard() {
         isToday={isToday}
         horizon={horizon}
         horizonYears={assumptions.horizonYears}
+        horizonEndYear={horizonEndYear(series)}
         netWorthMultiple={lensKpis(kpis, mode).netWorthMultiple}
         modeWord={modeWord}
         irr={irr}
       />
 
-      <RiskTiles s={s} />
+      <RiskTiles s={s} cashFlowFoot={netCashFlowFoot(t, basis)} />
 
-      <MonthlyFlowPanel flow={flow} />
+      <MonthlyFlowPanel
+        flow={flow}
+        title={flowLabels.title}
+        hint={flowLabels.hint}
+      />
 
       <TrajectoryCharts
         mode={mode}

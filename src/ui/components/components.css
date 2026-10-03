@@ -786,6 +786,8 @@ table.data tbody tr:hover td.sticky-col {
 /* ============ As-of date picker ============ */
 .asof {
   display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: var(--s2);
 }
@@ -816,6 +818,15 @@ table.data tbody tr:hover td.sticky-col {
 }
 .asof .pill-group {
   margin-bottom: 0;
+}
+/* How the as-of date maps to what the page shows (ADR 0088): its own line under the picker. */
+.asof-hint {
+  flex-basis: 100%;
+  /* Wraps to the picker's width instead of widening it (keeps it beside the filter). */
+  contain: inline-size;
+  text-align: right;
+  font-size: 11px;
+  color: var(--ink-soft);
 }
 
 /* ============ Forms ============ */

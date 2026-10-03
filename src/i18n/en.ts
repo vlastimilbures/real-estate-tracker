@@ -48,6 +48,11 @@ export const en = {
     all: "All",
     addVerb: "Add",
     asOfLabel: "As of",
+    asOfHintProjection: (year: string, period: string) =>
+      `Future dates show the nearest projection year (${year}, ${period})`,
+    asOfHintBeyond: (d: string) =>
+      `Beyond the horizon — showing records in force on ${d}, not a projection`,
+    asOfHintSnapshot: (d: string) => `Showing records in force on ${d}`,
     noPortfolioTitle: "No portfolio yet",
     noPortfolioBody: "Add a property or import CSV files to begin.",
     importCsv: "Import CSV",
@@ -218,8 +223,8 @@ export const en = {
     subFilter: (n: number, total: number) => `${n} of ${total} properties`,
     asOf: (d: string) => `as of ${d}`,
     netWorth: "Net worth",
-    netWorthInYears: (n: number) =>
-      `Net worth in ${n} ${enPlural(n, ["year", "years"])}`,
+    netWorthInYear: (endYear: number, n: number) =>
+      `Net worth in ${endYear} (${n}-yr horizon)`,
     assetsDebtEquity: (assets: string, debt: string) =>
       `Assets ${assets} · Debt ${debt} · Equity in Kč`,
     realTodayKc: " · real (base-date Kč)",
@@ -240,8 +245,16 @@ export const en = {
     grossYieldFoot: (v: string) => `Gross yield ${v}`,
     annualNetCashFlow: "Annual net cash flow",
     noiMinusDebtService: "NOI − debt service, current",
+    noiMinusDebtServiceYear: (year: string) =>
+      `NOI − debt service, projection year ${year}`,
+    noiMinusDebtServiceOn: (d: string) => `NOI − debt service, on ${d}`,
     currentMonthlyCashFlow: "Current monthly cash flow",
-    monthlyHint: "annual ÷ 12, today's lease in force",
+    monthlyCashFlowOn: (d: string) => `Monthly cash flow on ${d}`,
+    monthlyEquivalentYear: (year: string, period: string) =>
+      `Monthly equivalent — projection year ${year} (${period})`,
+    monthlyHint: (d: string) =>
+      `annualised run rate ÷ 12, leases in force on ${d}`,
+    monthlyHintProjection: "annual projection ÷ 12",
     inflowLabel: "Inflow · effective rent",
     outflowLabel: "Outflow · costs + debt service",
     netCashFlowBaseline: "Net cash flow · baseline",
@@ -354,8 +367,7 @@ export const en = {
     colValidTo: "Valid to",
     colMarketValue: "Market value",
     leasesTitle: "Leases",
-    leasesHint:
-      "the lease in force on the As-of date (default today) drives current rent",
+    leasesHint: "the lease in force on the As-of date sets the rent shown",
     addLease: "lease",
     colStart: "Start",
     colEnd: "End",

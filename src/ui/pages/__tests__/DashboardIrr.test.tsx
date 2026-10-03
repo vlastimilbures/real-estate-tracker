@@ -25,6 +25,7 @@ function renderPanels(irr: LeveredIrr) {
         isToday
         horizon={kpis.netWorthNominal}
         horizonYears={assumptions.horizonYears}
+        horizonEndYear={2056}
         netWorthMultiple={kpis.netWorthMultiple}
         modeWord={en.common.nominalLower}
         irr={irr}

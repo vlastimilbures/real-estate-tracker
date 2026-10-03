@@ -44,4 +44,28 @@ describe("AsOfPicker (UX-059)", () => {
     const d = onChange.mock.calls[0]![0] as Date;
     expect(d.toISOString().slice(0, 10)).toBe("2029-02-28");
   });
+
+  it("shows the as-of hint and links it to the date input (ADR 0088)", () => {
+    const hint = "Future dates show the nearest projection year (Y5 · 2031)";
+    render(
+      <AsOfPicker
+        value={null}
+        onChange={vi.fn()}
+        bounds={bounds}
+        hint={hint}
+      />,
+    );
+    const el = screen.getByText(hint);
+    expect(
+      screen.getByTestId("asof-input").getAttribute("aria-describedby"),
+    ).toBe(el.id);
+  });
+
+  it("renders no hint when none is given", () => {
+    render(<AsOfPicker value={null} onChange={vi.fn()} bounds={bounds} />);
+    expect(screen.queryByTestId("asof-hint")).toBeNull();
+    expect(
+      screen.getByTestId("asof-input").hasAttribute("aria-describedby"),
+    ).toBe(false);
+  });
 });

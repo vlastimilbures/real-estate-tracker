@@ -43,6 +43,11 @@ export const cs: Dictionary = {
     all: "Vše",
     addVerb: "Přidat",
     asOfLabel: "K datu",
+    asOfHintProjection: (year, period) =>
+      `Budoucí datum ukazuje nejbližší rok projekce (${year}, ${period})`,
+    asOfHintBeyond: (d) =>
+      `Za horizontem — zobrazeny záznamy platné k ${d}, nejde o projekci`,
+    asOfHintSnapshot: (d) => `Zobrazeny záznamy platné k ${d}`,
     noPortfolioTitle: "Zatím žádné portfolio",
     noPortfolioBody: "Začněte přidáním nemovitosti nebo importem souborů CSV.",
     importCsv: "Importovat CSV",
@@ -197,8 +202,8 @@ export const cs: Dictionary = {
     subFilter: (n, total) => `${n} z ${total} nemovitostí`,
     asOf: (d) => `k ${d}`,
     netWorth: "Čisté jmění",
-    netWorthInYears: (n) =>
-      `Čisté jmění za ${n} ${csPlural(n, ["rok", "roky", "let"])}`,
+    netWorthInYear: (endYear, n) =>
+      `Čisté jmění v roce ${endYear} (horizont ${n} ${csPlural(n, ["rok", "roky", "let"])})`,
     assetsDebtEquity: (assets, debt) =>
       `Aktiva ${assets} · Dluh ${debt} · Kapitál v Kč`,
     realTodayKc: " · reálně (Kč k základnímu datu)",
@@ -220,8 +225,15 @@ export const cs: Dictionary = {
     grossYieldFoot: (v) => `Hrubý výnos ${v}`,
     annualNetCashFlow: "Roční čistý cash flow",
     noiMinusDebtService: "NOI − dluhová služba, aktuálně",
+    noiMinusDebtServiceYear: (year) =>
+      `NOI − dluhová služba, rok projekce ${year}`,
+    noiMinusDebtServiceOn: (d) => `NOI − dluhová služba, k ${d}`,
     currentMonthlyCashFlow: "Aktuální měsíční cash flow",
-    monthlyHint: "ročně ÷ 12, dnešní platná nájemní smlouva",
+    monthlyCashFlowOn: (d) => `Měsíční cash flow k ${d}`,
+    monthlyEquivalentYear: (year, period) =>
+      `Měsíční ekvivalent — rok projekce ${year} (${period})`,
+    monthlyHint: (d) => `roční běžný stav ÷ 12, nájemní smlouvy platné k ${d}`,
+    monthlyHintProjection: "roční projekce ÷ 12",
     inflowLabel: "Příjem · efektivní nájem",
     outflowLabel: "Výdaj · náklady + dluhová služba",
     netCashFlowBaseline: "Čistý cash flow · základ",
@@ -334,8 +346,7 @@ export const cs: Dictionary = {
     colValidTo: "Platné do",
     colMarketValue: "Tržní hodnota",
     leasesTitle: "Nájmy",
-    leasesHint:
-      "aktuální nájem určuje smlouva platná k datu „K datu“ (výchozí je dnešek)",
+    leasesHint: "zobrazený nájem určuje smlouva platná k datu „K datu“",
     addLease: "nájem",
     colStart: "Začátek",
     colEnd: "Konec",
