@@ -146,6 +146,9 @@ export function Guide() {
           <F wrap>{g.fCpi}</F> <F wrap>{g.fReal}</F>
           {g.nominalRealProsePost}
         </p>
+        <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
+          {g.nominalRealTodayNote}
+        </p>
       </Panel>
 
       <Panel title={g.returnsTitle} hint={g.returnsHint}>

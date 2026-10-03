@@ -40,6 +40,7 @@ const kind = (v: unknown) =>
 const RANGE_LABELS = new Set([
   "dashboard.kpiCumulativeNetCashFlow",
   "dashboard.kpiSumPrincipalRepaid",
+  "dashboard.kpiSumPrincipalRepaidNominal",
 ]);
 
 /** Keys whose output changes form (not just the digit) across counts 1 / 2 / 5. */

@@ -202,7 +202,8 @@ export const cs: Dictionary = {
     assetsDebtEquity: (assets, debt) =>
       `Aktiva ${assets} · Dluh ${debt} · Kapitál v Kč`,
     realTodayKc: " · reálně (Kč k základnímu datu)",
-    multipleTodayMode: (mult, mode) => `${mult} dneška · ${mode}`,
+    multipleFromStartMode: (mult, mode) =>
+      `${mult} od začátku projekce · ${mode}`,
     leveredIrr: "Pákové IRR",
     irrFoot: (n, mode) =>
       `${n} ${csPlural(n, ["rok", "roky", "let"])} · po dluhu · ${mode}`,
@@ -250,7 +251,8 @@ export const cs: Dictionary = {
     seriesNetCashFlow: "Čistý cash flow",
     seriesLtv: "LTV",
     kpiTitle: "Klíčové ukazatele",
-    kpiHint: (mode) => `${mode} hodnoty tam, kde to dává smysl`,
+    kpiHintNominal: "nominální hodnoty",
+    kpiHintReal: "reálné hodnoty (Kč k základnímu datu)",
     kpiNetWorthAtHorizon: "Čisté jmění na horizontu",
     kpiNetWorthMultiple: "Násobek čistého jmění",
     kpiNetWorthCagr: "CAGR čistého jmění",
@@ -260,6 +262,8 @@ export const cs: Dictionary = {
     kpiFirstCfPositiveYear: "První rok s kladným cash flow",
     kpiDebtFullyRepaid: "Dluh plně splacen",
     kpiSumPrincipalRepaid: (n) => `Σ splacené jistiny (roky 1–${n})`,
+    kpiSumPrincipalRepaidNominal: (n) =>
+      `Σ splacené jistiny (roky 1–${n}, nominálně)`,
     kpiWeightedAvgRate: "Vážená průměrná úroková sazba",
   },
 
@@ -505,7 +509,6 @@ export const cs: Dictionary = {
     kpiCagrNominal: "CAGR (nominální)",
     kpiCagrReal: "CAGR (reálné)",
     kpiCumulativeNetCf: "Kumulativní čistý CF",
-    kpiCumulativeNetCfNominal: "Kumulativní čistý CF (nominální)",
     kpiLeveredIrrNominal: "Pákové IRR (nominální)",
     kpiLeveredIrrReal: "Pákové IRR (reálné)",
     kpiFirstCfPositiveYear: "První rok kladného CF",
@@ -825,6 +828,8 @@ export const cs: Dictionary = {
     fReal: "reálné = nominální ÷ CPI",
     nominalRealProsePost:
       ". Při 2,5% inflaci má 1,0 M za 30 let hodnotu ≈ 477 k v penězích k základnímu datu.",
+    nominalRealTodayNote:
+      "Reálné hodnoty se přepočítávají k začátku projekce, proto je snímek Dnes s pozdějším datem o něco nižší než nominální hodnota. Je to záměr.",
     returnsTitle: "Výnosy za celý horizont",
     returnsHint: "Růst a cash flow jako jediné číslo",
     scenariosTitle: "Scénáře",

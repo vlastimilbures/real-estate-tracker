@@ -7,6 +7,7 @@ import type { PortfolioKPIs, ProjectionYear } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import type { Mode } from "./lens";
 import { irrReasonText, leveredIrr } from "./irr";
+import { lensKpis } from "./lensKpis";
 import { at } from "../../lib/arrays";
 
 /** One compared scenario: its projection in both lenses and its KPIs. */
@@ -27,8 +28,8 @@ export interface CompareKpiRow {
 
 const pct = (d: Decimal | null) => (d ? fmtPct(d) : "—");
 
-/** Key-figure rows. Net worth shows both lenses; CAGR and IRR follow the lens; the
- *  cumulative cash flow and the multiple have no real counterpart. */
+/** Key-figure rows. Net worth shows both lenses; the multiple, CAGR, cumulative cash
+ *  flow and IRR follow the lens (ADR 0087). */
 export function compareKpiRows(t: Dictionary, mode: Mode): CompareKpiRow[] {
   const s = t.scenarios;
   const real = mode === "real";
@@ -40,14 +41,14 @@ export function compareKpiRows(t: Dictionary, mode: Mode): CompareKpiRow[] {
     { label: s.kpiNetWorthReal, fmt: (r) => fmtCzkM(r.kpis.netWorthReal) },
     {
       label: s.kpiNetWorthMultiple,
-      fmt: (r) => fmtMultiple(r.kpis.netWorthMultiple),
+      fmt: (r) => fmtMultiple(lensKpis(r.kpis, mode).netWorthMultiple),
     },
     real
       ? { label: s.kpiCagrReal, fmt: (r) => pct(r.kpis.cagrReal) }
       : { label: s.kpiCagrNominal, fmt: (r) => pct(r.kpis.cagrNominal) },
     {
-      label: real ? s.kpiCumulativeNetCfNominal : s.kpiCumulativeNetCf,
-      fmt: (r) => fmtCzkM(r.kpis.cumulativeNetCashFlow),
+      label: s.kpiCumulativeNetCf,
+      fmt: (r) => fmtCzkM(lensKpis(r.kpis, mode).cumulativeNetCashFlow),
     },
     {
       label: real ? s.kpiLeveredIrrReal : s.kpiLeveredIrrNominal,

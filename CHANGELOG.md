@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Real lens: the net-worth multiple and the cumulative net cash flow are now computed in real
+  terms (base-date Kč) on the Dashboard and in Scenario compare, instead of staying nominal.
+  The cumulative cash flow deflates each year by its own CPI. The hero tile reads "×N from
+  projection start", Σ principal repaid is labelled "(nominal)" in the Real lens, and the
+  Guide explains why a later Today snapshot reads slightly below nominal (ADR 0087, #11).
 - Labels that depend on the projection horizon (Dashboard trajectory heading, cumulative net
   cash flow and principal-repaid KPI rows, Property detail projection title) show the
   configured horizon instead of a fixed 30 years; Czech and Russian year counts use the right

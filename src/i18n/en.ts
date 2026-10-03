@@ -223,8 +223,8 @@ export const en = {
     assetsDebtEquity: (assets: string, debt: string) =>
       `Assets ${assets} · Debt ${debt} · Equity in Kč`,
     realTodayKc: " · real (base-date Kč)",
-    multipleTodayMode: (mult: string, mode: string) =>
-      `${mult} today · ${mode}`,
+    multipleFromStartMode: (mult: string, mode: string) =>
+      `${mult} from projection start · ${mode}`,
     leveredIrr: "Levered IRR",
     irrFoot: (n: number, mode: string) => `${n}-yr · after debt · ${mode}`,
     portfolioLtv: "Portfolio LTV",
@@ -271,7 +271,8 @@ export const en = {
     seriesNetCashFlow: "Net cash flow",
     seriesLtv: "LTV",
     kpiTitle: "Key performance indicators",
-    kpiHint: (mode: string) => `${mode} terms where applicable`,
+    kpiHintNominal: "nominal terms",
+    kpiHintReal: "real terms (base-date Kč)",
     kpiNetWorthAtHorizon: "Net worth at horizon",
     kpiNetWorthMultiple: "Net-worth multiple",
     kpiNetWorthCagr: "Net-worth CAGR",
@@ -281,6 +282,8 @@ export const en = {
     kpiFirstCfPositiveYear: "First cash-flow-positive year",
     kpiDebtFullyRepaid: "Debt fully repaid",
     kpiSumPrincipalRepaid: (n: number) => `Σ principal repaid (Yrs 1–${n})`,
+    kpiSumPrincipalRepaidNominal: (n: number) =>
+      `Σ principal repaid (Yrs 1–${n}, nominal)`,
     kpiWeightedAvgRate: "Weighted-avg interest rate",
   },
 
@@ -532,7 +535,6 @@ export const en = {
     kpiCagrNominal: "CAGR (nominal)",
     kpiCagrReal: "CAGR (real)",
     kpiCumulativeNetCf: "Cumulative net CF",
-    kpiCumulativeNetCfNominal: "Cumulative net CF (nominal)",
     kpiLeveredIrrNominal: "Levered IRR (nominal)",
     kpiLeveredIrrReal: "Levered IRR (real)",
     kpiFirstCfPositiveYear: "First CF-positive year",
@@ -860,6 +862,8 @@ export const en = {
     fReal: "real = nominal ÷ CPI",
     nominalRealProsePost:
       ". At 2.5% inflation, 1.0M in 30 years is worth ≈ 477k in base-date money.",
+    nominalRealTodayNote:
+      "Because real values are deflated to the projection start, a Today snapshot dated after it reads slightly below its nominal value. This is intended.",
     returnsTitle: "Returns over the horizon",
     returnsHint: "Growth and cash flow as one number",
     scenariosTitle: "Scenarios",

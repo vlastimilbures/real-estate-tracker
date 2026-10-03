@@ -111,6 +111,7 @@ Other IDs seen in code comments:
 | [0084](0084-horizon-dependent-labels.md)          | Horizon-dependent labels name the configured horizon                                   |                                        |
 | [0085](0085-properties-long-names.md)             | Properties list keeps its risk columns in view                                         |                                        |
 | [0086](0086-restore-int-bounds.md)                | Backup restore applies the whole-number bounds                                         |                                        |
+| [0087](0087-real-lens-multiple-cumulative-cf.md)  | Real lens: real net-worth multiple and cumulative cash flow                            |                                        |
 
 ### Judgment calls and open questions
 

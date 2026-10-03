@@ -349,8 +349,14 @@ debt) for every property; when every loan retires within the horizon (as in the 
 - Net worth at horizon (nominal & real); net-worth **multiple** = equityₙ/equity₀;
   **CAGR** nominal = (equityₙ/equity₀)^(1/horizon) − 1; **CAGR real** from the CPI-deflated
   net worth (equal to (1+CAGRₙ)/(1+infl) − 1 under constant inflation). CAGR is **null**
-  when equity₀ ≤ 0 and the tile shows "—" (ADR 0034).
+  when equity₀ ≤ 0 and the tile shows "—" (ADR 0034). **Real multiple** = net worth realₙ /
+  equity₀ (CPI₀ = 1, so equity₀ is already in base-date Kč); 0 when equity₀ = 0, like the
+  nominal multiple (ADR 0087).
 - Cumulative net cash flow (Years 1…N), net of acquisition outflows and refinance cash.
+  **Real** cumulative net cash flow = Σ_{t=1..N} (netCF_t − acquisition outflow_t) / CPI_t:
+  each year is deflated by its own index, as in the real IRR (ADR 0087). The Dashboard and
+  Scenario compare show the multiple and the cumulative cash flow of the lens; Σ principal
+  repaid stays nominal and is labelled "(nominal)" in the Real lens.
 - First calendar year net cash flow turns positive; first year portfolio debt = 0 — each
   reported with its projection year (ADR 0022).
 - **Levered IRR** (nominal & real): IRR of the vector `[−equity₀, netCF₁, …, netCF_{N−1},

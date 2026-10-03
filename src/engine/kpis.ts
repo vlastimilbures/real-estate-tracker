@@ -192,7 +192,8 @@ function refinanceCash(
  * are null when equity0 ≤ 0 — no growth base, shown as "—" (D-34). `greaterThan`,
  * because `isPositive()` is also true for ZERO (DR-107). Real CAGR
  * is taken off the CPI-deflated net worth — identical to (1+cagr)/(1+infl)−1 under
- * constant inflation, so parity holds.
+ * constant inflation, so parity holds. The real multiple divides that same deflated net
+ * worth by equity0 (CPI₀ = 1, so equity0 is already in base-date Kč; ADR 0087).
  */
 function equityGrowth(
   equity0: Decimal,
@@ -201,14 +202,16 @@ function equityGrowth(
   N: number,
 ) {
   const netWorthReal = equityN.div(cpiN);
-  const netWorthMultiple = equity0.isZero() ? ZERO : equityN.div(equity0);
+  const multiple = (end: Decimal) =>
+    equity0.isZero() ? ZERO : end.div(equity0);
   const cagr = (end: Decimal) =>
     equity0.greaterThan(ZERO)
       ? end.div(equity0).pow(ONE.div(N)).minus(ONE)
       : null;
   return {
     netWorthReal,
-    netWorthMultiple,
+    netWorthMultiple: multiple(equityN),
+    netWorthMultipleReal: multiple(netWorthReal),
     cagrNominal: cagr(equityN),
     cagrReal: cagr(netWorthReal),
   };
@@ -219,13 +222,19 @@ function equityGrowth(
  * a positive net cash flow, and the first year the portfolio is debt-free. A debt-free
  * year only counts once the portfolio has carried debt (a never-leveraged portfolio
  * reports null). NB: greaterThan(ZERO), not isPositive() — ZERO.isPositive() is true.
+ * The real cumulative cash flow deflates each year by its own CPI_t (ADR 0087).
  */
-function cashFlowMilestones(proj: ProjectionYear[], acqOutflow: Decimal[]) {
+function cashFlowMilestones(
+  proj: ProjectionYear[],
+  acqOutflow: Decimal[],
+  cpi: Decimal[],
+) {
   const firstCashFlowPositive =
     proj.slice(1).find((y) => y.netCashFlow.isPositive()) ?? null;
   const debtFree = firstDebtFreeYear(proj);
   return {
     cumulativeNetCashFlow: cumulativeNetCashFlow(proj, acqOutflow),
+    cumulativeNetCashFlowReal: cumulativeNetCashFlow(proj, acqOutflow, cpi),
     firstCashFlowPositiveYear: firstCashFlowPositive?.calendarYear ?? null,
     firstCashFlowPositiveProjectionYear: firstCashFlowPositive?.year ?? null,
     debtFreeYear: debtFree?.calendarYear ?? null,
@@ -233,14 +242,17 @@ function cashFlowMilestones(proj: ProjectionYear[], acqOutflow: Decimal[]) {
   };
 }
 
-/** Σ over years 1..N of net cash flow minus acquisition outflows. */
+/** Σ over years 1..N of net cash flow minus acquisition outflows; with `cpi`, each
+ *  year's flow is divided by CPI_t first (real terms). */
 function cumulativeNetCashFlow(
   proj: ProjectionYear[],
   acqOutflow: Decimal[],
+  cpi?: Decimal[],
 ): Decimal {
   let total = ZERO;
   for (let t = 1; t < proj.length; t++) {
-    total = total.plus(at(proj, t).netCashFlow).minus(at(acqOutflow, t));
+    const flow = at(proj, t).netCashFlow.minus(at(acqOutflow, t));
+    total = total.plus(cpi ? flow.div(at(cpi, t)) : flow);
   }
   return total;
 }
@@ -365,7 +377,7 @@ export function kpisFrom(
   return {
     netWorthNominal: equityN,
     ...equityGrowth(equity0, equityN, at(cpi, N), N),
-    ...cashFlowMilestones(proj, acqOutflow),
+    ...cashFlowMilestones(proj, acqOutflow, cpi),
     ...leveredIrr(nominalVector, realVector),
     totalPrincipalRepaid: principalRepaidInHorizon(
       portfolio,
