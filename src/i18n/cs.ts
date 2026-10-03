@@ -848,7 +848,6 @@ export const cs: Dictionary = {
     clearFailed: (detail) =>
       `Smazání ukázky selhalo a bylo vráceno zpět — vaše data jsou beze změny. (${detail})`,
     panelTitle: "Ukázkové portfolio",
-    panelHint: "Fiktivní byty přidané při prvním spuštění",
     panelBody:
       "Smažte ukázkové byty a začněte vlastní portfolio. Nemovitosti, které jste přidali sami, zůstanou.",
     loadHint: "Fiktivní byty pro vyzkoušení aplikace",

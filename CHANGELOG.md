@@ -153,6 +153,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Settings → Backup: the **Sample portfolio** panel no longer says the apartments were
+  added on first launch. Its hint now reads "Fictional apartments to explore the app",
+  also when the sample was loaded later (ADR 0116, #97).
+
 - Guide and About explain the figures the way the model computes them. The net-worth
   multiple and IRR start from equity at the projection start, and the IRR ends with projected
   equity at the horizon (no selling costs or tax), not "the money you put in" and "the sale

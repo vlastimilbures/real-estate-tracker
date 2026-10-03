@@ -885,7 +885,6 @@ export const en = {
     clearFailed: (detail: string) =>
       `Clearing the sample failed and was rolled back — your data is unchanged. (${detail})`,
     panelTitle: "Sample portfolio",
-    panelHint: "Fictional apartments added on first launch",
     panelBody:
       "Delete the sample apartments to start your own portfolio. Properties you added yourself are kept.",
     loadHint: "Fictional apartments to explore the app",
