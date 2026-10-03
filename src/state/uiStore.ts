@@ -5,6 +5,7 @@ import { create } from "zustand";
 import type { Language } from "../i18n/types";
 import type { Mode } from "../ui/model/lens";
 import { THEME_KEY, readPersistedTheme, type Theme } from "./themePreference";
+import type { CsvImportReport } from "./csv";
 
 export type Route =
   | "dashboard"
@@ -86,6 +87,9 @@ interface UiState {
   /** Safety backup written by the last "Clear sample", for the Dashboard's confirmation
    *  (ADR 0094). In-memory only. */
   sampleClearedBackup: string | null;
+  /** The last CSV import's report, kept until the next import (ADR 0096). In-memory. */
+  lastImport: CsvImportReport | null;
+  setLastImport: (report: CsvImportReport | null) => void;
   navigate: (route: Route) => void;
   openProperty: (id: string) => void;
   setMode: (mode: Mode) => void;
@@ -154,6 +158,8 @@ export const useUiStore = create<UiState>((set, get) => ({
   guideTerm: null,
   newPropertyRequested: false,
   sampleClearedBackup: null,
+  lastImport: null,
+  setLastImport: (lastImport) => set({ lastImport }),
   unsavedChanges: false,
   unsavedSources: [],
   pendingLeave: null,

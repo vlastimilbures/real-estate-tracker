@@ -4,6 +4,10 @@
 // resolved (D-55) and the merged result is checked against the engine's input rules
 // BEFORE anything is written. The write is then a single `Sql.transaction` (D-14): every
 // statement commits, or none does.
+//
+// ADR 0096: `planImport` classifies each row as add / update / unchanged. The preview
+// and the commit share it, and a commit whose plan differs from the previewed one
+// writes nothing.
 import type { Sql, SqlStatement } from "../data/sql";
 import { insertStatement } from "../data/repositories";
 import {
@@ -31,12 +35,40 @@ import {
   type ParsedValuationRow,
 } from "./csv";
 import { slug } from "../lib/slug";
+import { D } from "../lib/money";
 
 export interface CsvImportBatch {
   properties?: ParsedPropertyRow[] | undefined;
   valuations?: ParsedValuationRow[] | undefined;
   rents?: ParsedRentRow[] | undefined;
   mortgages?: ParsedMortgageRow[] | undefined;
+}
+
+export type CsvFile = keyof CsvImportBatch;
+
+/** ADR 0096: no stored match · a match with ≥1 changed CSV column · a match without. */
+export type ImportKind = "add" | "update" | "unchanged";
+
+/** One CSV column an update changes, as stored text (`null` = empty). */
+export interface FieldChange {
+  field: string;
+  before: string | null;
+  after: string | null;
+}
+
+/** What the import does with one CSV row. */
+export interface ImportItem {
+  file: CsvFile;
+  /** Physical file line. */
+  row: number;
+  kind: ImportKind;
+  propertyId: string;
+  /** The stored spelling for a match (D-55), else the CSV's. */
+  propertyName: string;
+  /** A child row's key date (`valid_from` / `start_date`); `null` for a property. */
+  date: string | null;
+  /** Empty unless `kind` is `"update"`. */
+  changes: FieldChange[];
 }
 
 export interface CsvImportReport {
@@ -46,9 +78,16 @@ export interface CsvImportReport {
     leases: number;
     mortgage_blocks: number;
   };
+  items: ImportItem[];
 }
 
-export type CsvFile = keyof CsvImportBatch;
+/** A plan shown before importing: what would happen, and what would refuse it. */
+export interface CsvImportPreview {
+  items: ImportItem[];
+  problems: CsvImportProblem[];
+  /** Identifies the plan; the commit refuses when its own plan differs (ADR 0096). */
+  fingerprint: string;
+}
 
 export type CsvImportProblemCode =
   | { code: "unknownProperty"; value: string }
@@ -75,8 +114,18 @@ export class CsvImportError extends Error {
   }
 }
 
+/** The plan changed between preview and commit; nothing was written (ADR 0096). */
+export class CsvPlanChangedError extends Error {
+  readonly preview: CsvImportPreview;
+  constructor(preview: CsvImportPreview) {
+    super("CSV import refused: the data changed since the preview.");
+    this.name = "CsvPlanChangedError";
+    this.preview = preview;
+  }
+}
+
 /** The stored rows an import plan is computed against. */
-interface ImportTables {
+export interface ImportTables {
   properties: PropertyRow[];
   mortgage_blocks: MortgageBlockRow[];
   valuations: ValuationRow[];
@@ -120,17 +169,48 @@ function put<R extends { id: string }>(rows: R[], row: R): void {
   else rows.push(row);
 }
 
+const DECIMAL_TEXT = /^-?\d+(\.\d+)?$/;
+
+/** Stored text of a cell value; empty ⇒ `null`. */
+function cellText(v: unknown): string | null {
+  if (v === null || v === undefined || v === "") return null;
+  return String(v);
+}
+
+/** Equal for the user: both empty, the same decimal value, or the same text. */
+function sameValue(a: string | null, b: string | null): boolean {
+  if (a === null || b === null) return a === b;
+  if (DECIMAL_TEXT.test(a) && DECIMAL_TEXT.test(b)) return D(a).eq(D(b));
+  return a === b;
+}
+
+/** The CSV columns whose value would change on `stored`. */
+function changesOf(stored: object, fields: object): FieldChange[] {
+  const row = stored as Record<string, unknown>;
+  const out: FieldChange[] = [];
+  for (const [field, value] of Object.entries(fields)) {
+    const before = cellText(row[field]);
+    const after = cellText(value);
+    if (!sameValue(before, after)) out.push({ field, before, after });
+  }
+  return out;
+}
+
+const kindOf = (existing: unknown, changes: FieldChange[]): ImportKind =>
+  !existing ? "add" : changes.length > 0 ? "update" : "unchanged";
+
 /** What an import would write, computed without touching the DB. */
-interface ImportPlan {
+export interface ImportPlan extends CsvImportPreview {
   statements: SqlStatement[];
-  /** Non-empty ⇒ the import must be refused; nothing may be written. */
-  problems: CsvImportProblem[];
   report: CsvImportReport;
 }
 
 /** Match every row against `tables` (D-55), build the write statements and check the
  *  merged result against the engine's input rules. Pure: `tables` is not modified. */
-function planImport(batch: CsvImportBatch, tables: ImportTables): ImportPlan {
+export function planImport(
+  batch: CsvImportBatch,
+  tables: ImportTables,
+): ImportPlan {
   const db: ImportTables = {
     properties: [...tables.properties],
     mortgage_blocks: [...tables.mortgage_blocks],
@@ -140,10 +220,12 @@ function planImport(batch: CsvImportBatch, tables: ImportTables): ImportPlan {
   };
   const statements: SqlStatement[] = [];
   const problems: CsvImportProblem[] = [];
+  const items: ImportItem[] = [];
   /** Which file line produced each written row, as `${entity}:${id}`. */
   const origin = new Map<string, { file: CsvFile; row: number }>();
   const report: CsvImportReport = {
     upserted: { properties: 0, valuations: 0, leases: 0, mortgage_blocks: 0 },
+    items,
   };
 
   const byKey = new Map(db.properties.map((p) => [propertyKey(p.name), p]));
@@ -183,6 +265,16 @@ function planImport(batch: CsvImportBatch, tables: ImportTables): ImportPlan {
     byKey.set(propertyKey(p.name), row);
     usedIds.add(row.id);
     origin.set(`property:${row.id}`, { file: "properties", row: p.line });
+    const changes = existing ? changesOf(existing, fields) : [];
+    items.push({
+      file: "properties",
+      row: p.line,
+      kind: kindOf(existing, changes),
+      propertyId: row.id,
+      propertyName: row.name,
+      date: null,
+      changes,
+    });
     // Every property gets a holding-costs row so the edit form works.
     if (!withCosts.has(row.id)) {
       const costs: HoldingCostRow = {
@@ -223,8 +315,19 @@ function planImport(batch: CsvImportBatch, tables: ImportTables): ImportPlan {
     fresh: R,
     fields: Partial<R>,
     at: { file: CsvFile; row: number },
+    date: string,
   ): void {
     const existing = rows.find(match);
+    const changes = existing ? changesOf(existing, fields) : [];
+    items.push({
+      ...at,
+      kind: kindOf(existing, changes),
+      propertyId: fresh.property_id,
+      propertyName:
+        db.properties.find((p) => p.id === fresh.property_id)?.name ?? "",
+      date,
+      changes,
+    });
     // A stored row whose date was edited after an earlier import keeps the id generated
     // from its old date; suffix a fresh id instead of clashing on the key (DR-137).
     let id = fresh.id;
@@ -274,6 +377,7 @@ function planImport(batch: CsvImportBatch, tables: ImportTables): ImportPlan {
       },
       fields,
       { file: "mortgages", row: m.line },
+      m.start_date,
     );
     report.upserted.mortgage_blocks++;
   }
@@ -295,6 +399,7 @@ function planImport(batch: CsvImportBatch, tables: ImportTables): ImportPlan {
       },
       fields,
       { file: "valuations", row: v.line },
+      v.valid_from,
     );
     report.upserted.valuations++;
   }
@@ -316,6 +421,7 @@ function planImport(batch: CsvImportBatch, tables: ImportTables): ImportPlan {
       },
       fields,
       { file: "rents", row: r.line },
+      r.start_date,
     );
     report.upserted.leases++;
   }
@@ -340,15 +446,35 @@ function planImport(batch: CsvImportBatch, tables: ImportTables): ImportPlan {
         });
     }
   }
-  return { statements, problems, report };
+  const fingerprint = JSON.stringify({ items, statements });
+  return { statements, problems, items, fingerprint, report };
 }
 
+const previewOf = (plan: ImportPlan): CsvImportPreview => ({
+  items: plan.items,
+  problems: plan.problems,
+  fingerprint: plan.fingerprint,
+});
+
+/** The plan for `batch` against the stored data. Reads only; never writes. */
+export async function previewImport(
+  sql: Sql,
+  batch: CsvImportBatch,
+): Promise<CsvImportPreview> {
+  return previewOf(planImport(batch, await readTables(sql)));
+}
+
+/** Write `batch` in one transaction. With `expected` (a previewed plan's fingerprint),
+ *  refuse with `CsvPlanChangedError` when the plan is no longer the same (ADR 0096). */
 export async function importCsv(
   sql: Sql,
   batch: CsvImportBatch,
+  expected?: string,
 ): Promise<CsvImportReport> {
   const plan = planImport(batch, await readTables(sql));
   if (plan.problems.length > 0) throw new CsvImportError(plan.problems);
+  if (expected !== undefined && expected !== plan.fingerprint)
+    throw new CsvPlanChangedError(previewOf(plan));
 
   await sql.transaction(plan.statements);
   return plan.report;

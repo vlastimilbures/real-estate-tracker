@@ -9,7 +9,8 @@ import { saveFile } from "../../state/platform";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { fmtCzk } from "../../lib/format";
-import type { CsvErrorCode, CsvRowError } from "../../state/csv";
+import type { CsvErrorCode, CsvRowError, ImportItem } from "../../state/csv";
+import { changeText, groupByFile, itemLabel } from "../model/importPreview";
 
 export interface FileState<T> {
   name: string;
@@ -254,5 +255,81 @@ export function EntityImportPanel<T>({
         <ErrorTable errors={fileState.result.errors} />
       )}
     </Panel>
+  );
+}
+
+/** What an import will do (preview) or did (report), per file (ADR 0096). In the report
+ *  each record's name opens its property. */
+export function ImportSummary({
+  items,
+  mode,
+  onOpenProperty,
+}: {
+  items: ImportItem[];
+  mode: "preview" | "report";
+  onOpenProperty?: ((id: string) => void) | undefined;
+}) {
+  const t = useT();
+  const p = t.importPage;
+  const addLabel = mode === "preview" ? p.willAdd : p.added;
+  const updateLabel = mode === "preview" ? p.willUpdate : p.updated;
+
+  const name = (i: ImportItem) =>
+    onOpenProperty ? (
+      <button
+        type="button"
+        className="link-button"
+        onClick={() => onOpenProperty(i.propertyId)}
+      >
+        {itemLabel(i)}
+      </button>
+    ) : (
+      itemLabel(i)
+    );
+
+  return (
+    <div className="import-summary">
+      {groupByFile(t, items).map((g) => (
+        <div key={g.file} className="import-summary-file">
+          <strong>{g.title}</strong>
+          <span className="counts">
+            {[
+              addLabel(g.added.length),
+              updateLabel(g.updated.length),
+              p.unchangedCount(g.unchanged),
+            ].join(" · ")}
+          </span>
+          {g.added.length > 0 && (
+            <details>
+              <summary>{addLabel(g.added.length)}</summary>
+              <ul>
+                {g.added.map((i) => (
+                  <li key={i.row}>{name(i)}</li>
+                ))}
+              </ul>
+            </details>
+          )}
+          {g.updated.length > 0 && (
+            <details open={mode === "preview"}>
+              <summary>{updateLabel(g.updated.length)}</summary>
+              <ul>
+                {g.updated.map((i) => (
+                  <li key={i.row}>
+                    {name(i)}
+                    <ul className="changes">
+                      {i.changes.map((c) => (
+                        <li key={c.field}>
+                          <code>{c.field}</code> {changeText(c)}
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

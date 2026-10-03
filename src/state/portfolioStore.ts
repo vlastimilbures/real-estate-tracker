@@ -26,7 +26,11 @@ import {
   type BackupFile,
   type ExportOutcome,
 } from "../data/backup";
-import type { CsvImportBatch, CsvImportReport } from "../import/csvImport";
+import type {
+  CsvImportBatch,
+  CsvImportPreview,
+  CsvImportReport,
+} from "../import/csvImport";
 import { checkInputRules } from "../import/inputRules";
 import {
   loadState,
@@ -180,8 +184,15 @@ interface PortfolioState {
   dismissSampleBanner: () => Promise<MutationResult>;
   // whole-database operations. They throw their own typed errors (CsvImportError,
   // RestoreError, …) for the page to show, and leave the banner `error` alone.
-  /** CSV import in one transaction, then reload. */
-  importCsv: (batch: CsvImportBatch) => Promise<CsvImportReport>;
+  /** What a CSV import would add and update (ADR 0096). Reads only; queued behind
+   *  pending writes so it sees their result. */
+  previewCsv: (batch: CsvImportBatch) => Promise<CsvImportPreview>;
+  /** CSV import in one transaction, then reload. With `expected` (the previewed
+   *  plan's fingerprint) it refuses with CsvPlanChangedError if the plan changed. */
+  importCsv: (
+    batch: CsvImportBatch,
+    expected?: string,
+  ) => Promise<CsvImportReport>;
   /** Replace the data with a checked backup (after a safety backup), then reload. */
   restoreBackup: (backup: BackupFile) => Promise<{ safetyBackup: string }>;
   /** Delete the sample properties (after a safety backup), then reload. */
@@ -471,10 +482,18 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     dismissSampleBanner: () => mutate(dismissSampleBanner),
 
     // Loaded on first use: keeps the CSV parser out of the startup bundle (P9).
-    importCsv: (batch) =>
+    previewCsv: (batch) => {
+      const run = queue.then(async () => {
+        const { previewImport } = await import("../import/csvImport");
+        return previewImport(requireSql(), batch);
+      });
+      queue = run.catch(() => undefined);
+      return run;
+    },
+    importCsv: (batch, expected) =>
       exclusive(async (sql) => {
         const { importCsv } = await import("../import/csvImport");
-        return importCsv(sql, batch);
+        return importCsv(sql, batch, expected);
       }),
     restoreBackup: (backup) =>
       exclusive((sql) => confirmRestore(sql, backup, checkInputRules)),

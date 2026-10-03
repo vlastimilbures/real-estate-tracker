@@ -598,7 +598,20 @@ export const cs: Dictionary = {
     importing: "Importování…",
     importComplete: "Import dokončen",
     reportTitle: "Zpráva o importu",
-    upserted: (v) => `${v} vloženo/aktualizováno`,
+    willAdd: (n) => `Přidá se ${n}`,
+    willUpdate: (n) => `Aktualizuje se ${n}`,
+    added: (n) => `Přidáno ${n}`,
+    updated: (n) => `Aktualizováno ${n}`,
+    unchangedCount: (n) => `${n} beze změny`,
+    importScope: (total, added, updated) =>
+      `Importovat ${total} ${csPlural(total, ["záznam", "záznamy", "záznamů"])} (${added} ${csPlural(added, ["nový", "nové", "nových"])}, ${updated} ${csPlural(updated, ["aktualizace", "aktualizace", "aktualizací"])})`,
+    nothingToImport: "Všechny záznamy v těchto souborech jsou už aktuální.",
+    confirmOverwrite: (n) =>
+      `Přepsat ${n} ${csPlural(n, ["existující záznam", "existující záznamy", "existujících záznamů"])}`,
+    confirmOverwriteMsg: (n) =>
+      `Import změní ${n} ${csPlural(n, ["existující záznam", "existující záznamy", "existujících záznamů"])}. Zkontrolujte změny výše.`,
+    planChanged:
+      "Data se od zobrazení náhledu změnila, proto se nic neimportovalo. Zkontrolujte aktualizovaný náhled a importujte znovu.",
     errRequired: "Povinné",
     errInvalidDate: (v) => `Neplatné datum „${v}“ — použijte YYYY-MM-DD`,
     errInvalidNumber: (v) => `Neplatné číslo „${v}“`,
