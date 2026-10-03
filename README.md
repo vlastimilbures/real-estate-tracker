@@ -162,7 +162,8 @@ Everything runs and stays on your Mac.
 
 - English, Czech and Russian UI; Czech number, date and currency formatting
 - Light, dark and system themes; keyboard navigation and macOS menu shortcuts
-- Accessibility checked with axe (WCAG 2.2 AA) on every screen in CI
+- Automated accessibility checks: axe (WCAG 2.2 AA rules) on every screen in CI, in English,
+  light and dark — see [Quality](#quality)
 
 ## Screenshots
 
@@ -215,6 +216,19 @@ Found a vulnerability? Please report it privately — see [SECURITY.md](SECURITY
 
 ## Quality
 
+What the checks do and do not prove:
+
+- **Arithmetic.** Money uses exact decimal arithmetic; results are rounded only for display.
+- **Engine figures.** Engine output is regression-tested against reference figures within
+  ±1 Kč (money) and ±0.0001 (ratios), plus a golden master and an independent mortgage
+  model. A reference figure changes only through an ADR, recorded in the
+  [target change log](.claude/rules/engine-parity.md#target-change-log). These tests show the
+  formulas run as specified; they do not show that the economic assumptions are right — see
+  [Model assumptions & limitations](docs/model-limitations.md).
+- **Accessibility.** axe (WCAG 2.2 AA rules) runs in CI on every screen in English, light and
+  dark, at two window sizes ([workflow](.github/workflows/ci.yml)). Automated checks
+  complement but do not replace manual keyboard and screen-reader testing.
+
 Every check CI runs has a local command; the full list is in [CONTRIBUTING.md](CONTRIBUTING.md#checks).
 
 | Command                        | Checks                                                                   |
@@ -224,7 +238,7 @@ Every check CI runs has a local command; the full list is in [CONTRIBUTING.md](C
 | `pnpm test:parity`             | Engine and SQLite round trip against the parity targets (±1 Kč, ±0.0001) |
 | `pnpm depcruise` · `pnpm knip` | Layer map and cycles; unused files, exports and dependencies             |
 | `cargo clippy` · `cargo test`  | Rust lints and integration tests                                         |
-| `pnpm ux:axe-check ci`         | axe scan of every screen, light and dark                                 |
+| `pnpm ux:axe-check ci`         | axe scan of every screen: English, light and dark, two window sizes      |
 | `pnpm mutation` · `pnpm bench` | Nightly: Stryker mutation score on the engine; performance budgets       |
 
 ## Architecture

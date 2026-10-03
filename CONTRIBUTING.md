@@ -44,6 +44,12 @@ cargo fmt --check --manifest-path src-tauri/Cargo.toml
 cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 ```
 
+It is also done only when the **docs impact** is checked: if the change touches formulas,
+presets, limits, data formats or UI text, SPEC, the Guide strings, README, the user docs
+(`docs/model-limitations.md`, `docs/data-safety.md`, `docs/csv-import.md`) and the roadmap
+still describe it. Which document owns what is listed in
+[docs/release.md](docs/release.md#who-owns-what).
+
 - **Git hooks** (husky + lint-staged): on commit, staged files are formatted, linted and their
   related Vitest tests run; on push, the full typecheck runs. A green CI run is required to
   merge — do not bypass the hooks.
