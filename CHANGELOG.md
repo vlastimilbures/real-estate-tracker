@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Labels that depend on the projection horizon (Dashboard trajectory heading, cumulative net
+  cash flow and principal-repaid KPI rows, Property detail projection title) show the
+  configured horizon instead of a fixed 30 years; Czech and Russian year counts use the right
+  plural form (ADR 0084, #12).
+
 ## [1.4.0] - 2026-10-03
 
 First public release. Versions before 1.4.0 were developed in a private repository, so their

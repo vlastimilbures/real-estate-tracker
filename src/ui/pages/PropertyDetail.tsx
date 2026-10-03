@@ -265,7 +265,7 @@ export function PropertyDetail() {
       {/* Projection + amortization */}
       {out && (
         <Panel
-          title={t.propertyDetail.projectionTitle}
+          title={t.propertyDetail.projectionTitle(assumptions.horizonYears)}
           hint={lens}
           action={<ExportXlsxButton onExport={exportProjection} />}
           flush

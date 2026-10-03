@@ -167,10 +167,12 @@ export function TrajectoryCharts({
   mode,
   rows,
   eqChange,
+  horizonYears,
 }: {
   mode: Mode;
   rows: ChartRow[];
   eqChange: EquityChangeRow[];
+  horizonYears: number;
 }) {
   const t = useT();
   const d = t.dashboard;
@@ -199,7 +201,7 @@ export function TrajectoryCharts({
   return (
     <>
       <div className="section-head">
-        <h2>{d.trajectory}</h2>
+        <h2>{d.trajectory(horizonYears)}</h2>
         <span className="page-sub">
           {mode === "real" ? d.realTerms : d.nominalKc}
         </span>
@@ -279,12 +281,14 @@ export function KpiListPanel({
   kpis,
   mode,
   horizon,
+  horizonYears,
   irr,
 }: {
   s: PortfolioSnapshot;
   kpis: PortfolioKPIs;
   mode: Mode;
   horizon: Decimal;
+  horizonYears: number;
   irr: LeveredIrr;
 }) {
   const t = useT();
@@ -311,7 +315,7 @@ export function KpiListPanel({
             v: <IrrValue irr={irr} dp={2} />,
           },
           {
-            k: t.dashboard.kpiCumulativeNetCashFlow,
+            k: t.dashboard.kpiCumulativeNetCashFlow(horizonYears),
             v: <Money value={kpis.cumulativeNetCashFlow} signed />,
           },
           {
@@ -320,7 +324,7 @@ export function KpiListPanel({
           },
           { k: t.dashboard.kpiDebtFullyRepaid, v: kpis.debtFreeYear ?? "—" },
           {
-            k: t.dashboard.kpiSumPrincipalRepaid,
+            k: t.dashboard.kpiSumPrincipalRepaid(horizonYears),
             v: <Money value={kpis.totalPrincipalRepaid} parens={false} />,
           },
           {

@@ -36,10 +36,16 @@ const render = (f: unknown, n: number) => String((f as Fn)(n, n, n));
 const kind = (v: unknown) =>
   typeof v === "function" ? `function/${(v as Fn).length}` : typeof v;
 
+/** Year ranges ("Yrs 1–n") hold a literal 1 that collides with the count 1 (ADR 0084). */
+const RANGE_LABELS = new Set([
+  "dashboard.kpiCumulativeNetCashFlow",
+  "dashboard.kpiSumPrincipalRepaid",
+]);
+
 /** Keys whose output changes form (not just the digit) across counts 1 / 2 / 5. */
 function countInflected(lang: Lang): string[] {
   return [...L[lang]]
-    .filter(([, v]) => typeof v === "function")
+    .filter(([k, v]) => typeof v === "function" && !RANGE_LABELS.has(k))
     .filter(
       ([, v]) =>
         new Set([1, 2, 5].map((n) => render(v, n).split(String(n)).join("#")))
@@ -172,6 +178,7 @@ describe("i18n dictionaries — plural forms", () => {
 
   it("every language inflects the same count strings (DR-111, UX-034)", () => {
     const counted = [
+      "dashboard.netWorthInYears",
       "properties.subtitle",
       "propertyDetail.yrs",
       "propertyDetail.draws",
@@ -180,12 +187,46 @@ describe("i18n dictionaries — plural forms", () => {
       "importPage.rowsReady",
       "importPage.errorsBadge",
     ];
+    // English writes the IRR foot as a compound ("25-yr"); Czech and Russian count years.
+    const withIrrFoot = [
+      "dashboard.netWorthInYears",
+      "dashboard.irrFoot",
+      ...counted.slice(1),
+    ];
     expect(countInflected("en")).toEqual(counted);
-    expect(countInflected("ru")).toEqual(counted);
+    expect(countInflected("ru")).toEqual(withIrrFoot);
     // Czech "čerpání" is the same for every count (1 · 2 · 5 čerpání).
     expect(countInflected("cs")).toEqual(
-      counted.filter((k) => k !== "propertyDetail.draws"),
+      withIrrFoot.filter((k) => k !== "propertyDetail.draws"),
     );
+  });
+
+  it("horizon years inflect in every language (ADR 0084)", () => {
+    const f = (l: Lang) => L[l].get("dashboard.netWorthInYears");
+    expect(render(f("en"), 1)).toBe("Net worth in 1 year");
+    expect([1, 2, 5].map((n) => render(f("cs"), n))).toEqual([
+      "Čisté jmění za 1 rok",
+      "Čisté jmění za 2 roky",
+      "Čisté jmění za 5 let",
+    ]);
+    expect([1, 2, 5, 21].map((n) => render(f("ru"), n))).toEqual([
+      "Чистые активы через 1 год",
+      "Чистые активы через 2 года",
+      "Чистые активы через 5 лет",
+      "Чистые активы через 21 год",
+    ]);
+    for (const l of LANGS) {
+      for (const k of [
+        "dashboard.trajectory",
+        "dashboard.kpiCumulativeNetCashFlow",
+        "dashboard.kpiSumPrincipalRepaid",
+        "propertyDetail.projectionTitle",
+      ]) {
+        const out = render(L[l].get(k), 25);
+        expect(out, `${l} ${k}`).toContain("25");
+        expect(out, `${l} ${k}`).not.toContain("30");
+      }
+    }
   });
 
   it("English and Czech singulars read naturally (DR-111)", () => {
