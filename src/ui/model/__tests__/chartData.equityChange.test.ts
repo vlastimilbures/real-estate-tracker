@@ -102,6 +102,7 @@ describe("toEquityChangeRows", () => {
       dscr: null,
       draws: D(draws),
       prepaid: D(prepaid),
+      prepaymentFees: D(0),
     });
     const series = [
       row(0, "2000000", "1000000", "0", "0"),

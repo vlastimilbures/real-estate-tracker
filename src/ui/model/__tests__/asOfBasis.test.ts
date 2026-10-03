@@ -35,6 +35,7 @@ function row(year: number): SeriesRow {
     dscr: null,
     draws: ZERO,
     prepaid: ZERO,
+    prepaymentFees: ZERO,
   };
 }
 

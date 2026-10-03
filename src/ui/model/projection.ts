@@ -30,6 +30,8 @@ export interface SeriesRow {
   draws: Decimal;
   // Extra principal prepaid this year (lensed, ADR 0109); zero in year 0.
   prepaid: Decimal;
+  // Fees charged on this year's prepayments (lensed, ADR 0109); zero in year 0.
+  prepaymentFees: Decimal;
 }
 
 /** "Y5 · 2031": projection year t with its calendar year (D-22, UX-032). The prefix is
@@ -90,7 +92,26 @@ export function projectionSeries(
     dscr: y.dscr,
     draws: y.draws,
     prepaid: y.prepaid,
+    prepaymentFees: y.prepaymentFees,
   }));
+}
+
+type ProjectionExtra = "draws" | "prepaid" | "prepaymentFees";
+
+/**
+ * The owner-cash columns outside net cash flow, with their headers, each shown only when
+ * some year is non-zero (ADR 0116 §12). They follow DSCR, apart from the operating columns.
+ */
+export function projectionExtras(
+  rows: SeriesRow[],
+  g: Dictionary["projGrid"],
+): { key: ProjectionExtra; header: string }[] {
+  const all: { key: ProjectionExtra; header: string }[] = [
+    { key: "draws", header: g.draws },
+    { key: "prepaid", header: g.prepaid },
+    { key: "prepaymentFees", header: g.prepaymentFees },
+  ];
+  return all.filter(({ key }) => rows.some((r) => !r[key].isZero()));
 }
 
 /**
@@ -101,6 +122,7 @@ export function projectionSeries(
 export function projectionColumns(
   t: Pick<Dictionary, "projGrid" | "monthsShort">,
   baseDate: Date,
+  rows: SeriesRow[],
 ): XlsxColumn<SeriesRow>[] {
   const g = t.projGrid;
   // Flow fields are structurally N/A in the opening snapshot row.
@@ -131,6 +153,13 @@ export function projectionColumns(
     { header: g.debtSvc, kind: "money", value: flow((r) => r.debtService) },
     { header: g.netCf, kind: "money", value: flow((r) => r.netCashFlow) },
     { header: g.dscr, kind: "multiple", value: (r) => r.dscr },
+    ...projectionExtras(rows, g).map(
+      ({ key, header }): XlsxColumn<SeriesRow> => ({
+        header,
+        kind: "money",
+        value: flow((r) => r[key]),
+      }),
+    ),
   );
   return cols;
 }

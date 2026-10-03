@@ -55,7 +55,7 @@ export function Projections() {
     exportTableXlsx({
       filename: `${slug(entityLabel)}-projection-${mode}.xlsx`,
       sheetName: t.xlsx.sheetNames.projection,
-      columns: projectionColumns(t, assumptions.baseDate),
+      columns: projectionColumns(t, assumptions.baseDate, rows),
       rows,
     });
 

@@ -20,7 +20,7 @@ const rows = projectionSeries(
   "nominal",
   assumptions,
 );
-const columns = projectionColumns(en, assumptions.baseDate);
+const columns = projectionColumns(en, assumptions.baseDate, rows);
 let ws: ExcelJS.Worksheet;
 
 async function sheet<R>(cols: XlsxColumn<R>[], data: R[]) {

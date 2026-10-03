@@ -193,7 +193,7 @@ export function PropertyDetail() {
     exportTableXlsx({
       filename: `${slug(property.name)}-projection-${mode}.xlsx`,
       sheetName: t.xlsx.sheetNames.projection,
-      columns: projectionColumns(t, baseDate),
+      columns: projectionColumns(t, baseDate, series),
       rows: series,
     });
   const exportAmortization = () =>
