@@ -108,6 +108,7 @@ export function ScenarioForm({
 
           <ShockPairFields
             deltaLabel={t.scenarios.fieldInflationShock}
+            deltaHelp={t.scenarios.shockHelp}
             deltaValue={draft.inflationShockDelta}
             deltaError={errors.inflationShockDelta}
             onDeltaChange={(v) => set("inflationShockDelta", v)}
@@ -119,6 +120,7 @@ export function ScenarioForm({
 
           <ShockPairFields
             deltaLabel={t.scenarios.fieldRateShock}
+            deltaHelp={t.scenarios.rateShockHelp}
             deltaValue={draft.rateShockDelta}
             deltaError={errors.rateShockDelta}
             onDeltaChange={(v) => set("rateShockDelta", v)}

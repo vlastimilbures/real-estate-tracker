@@ -51,6 +51,7 @@ export function LevelOverrideFields({
  */
 export function ShockPairFields({
   deltaLabel,
+  deltaHelp,
   deltaValue,
   deltaError,
   onDeltaChange,
@@ -60,6 +61,8 @@ export function ShockPairFields({
   defaultShockYears,
 }: {
   deltaLabel: string;
+  /** Each shock says where it starts: the rate shock at each loan's refix (ADR 0100). */
+  deltaHelp: string;
   deltaValue: string;
   deltaError: string | undefined;
   onDeltaChange: (v: string) => void;
@@ -71,7 +74,7 @@ export function ShockPairFields({
   const t = useT();
   return (
     <>
-      <Field label={deltaLabel} error={deltaError} help={t.scenarios.shockHelp}>
+      <Field label={deltaLabel} error={deltaError} help={deltaHelp}>
         <TextInput
           value={deltaValue}
           onChange={onDeltaChange}

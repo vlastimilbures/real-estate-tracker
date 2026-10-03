@@ -181,6 +181,7 @@ export function ScenarioListPanel({
   onEdit,
   onDuplicate,
   onDelete,
+  reachText,
 }: {
   scenarios: Scenario[];
   baseOn: boolean;
@@ -192,6 +193,8 @@ export function ScenarioListPanel({
   onEdit: (s: Scenario) => void;
   onDuplicate: (s: Scenario) => void;
   onDelete: (s: Scenario) => void;
+  /** Which loans the scenario's rate shock hits (ADR 0100). */
+  reachText?: (id: string) => string | undefined;
 }) {
   const t = useT();
   // UX-020: Delete asks inline first, like every other delete in the app.
@@ -226,7 +229,9 @@ export function ScenarioListPanel({
               />
               <span className="scenario-name">{s.name}</span>
             </label>
-            <span className="scenario-summary">{summarize(s, t)}</span>
+            <span className="scenario-summary">
+              {summarize(s, t, reachText?.(s.id))}
+            </span>
             <span className="scenario-actions">
               <Button size="sm" variant="ghost" onClick={() => onEdit(s)}>
                 {t.common.edit}

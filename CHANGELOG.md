@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Scenarios say which loans a rate shock hits. The list summary and the compare column
+  header (as a tooltip) add "hits N of M loans (refix 2029, 2031)", or say that no loan
+  refixes inside the shock window, so the shock has no effect. Each property's mortgage
+  chain counts as one loan. The rate-shock help says the shock starts at each loan's
+  fixation end. No computed figure changes (ADR 0100, #47).
+
 - Adding a valuation or a lease after one that has no end date asks whether to end that
   record on the day before the new one starts. **End previous** saves both in one write;
   **Keep as is** adds only the new record; closing the dialog adds nothing and keeps your

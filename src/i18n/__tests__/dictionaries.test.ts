@@ -186,6 +186,8 @@ describe("i18n dictionaries — plural forms", () => {
       "propertyDetail.draws",
       "propertyDetail.monthsCount",
       "propertyDetail.amortizationMonths",
+      // Rate shock reach (ADR 0100).
+      "scenarios.reachHits",
       "importPage.rowsReady",
       "importPage.errorsBadge",
       "importPage.importScope",

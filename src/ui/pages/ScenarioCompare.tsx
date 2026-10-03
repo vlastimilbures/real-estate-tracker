@@ -23,7 +23,14 @@ import { at } from "../../lib/arrays";
 // Up to four lines per chart (Base + 3 picks); cycles if more are somehow selected.
 const PALETTE = [SERIES.petrol, SERIES.clay, SERIES.brass, SERIES.slate];
 
-export function CompareView({ selected }: { selected: Scenario[] }) {
+export function CompareView({
+  selected,
+  reachText,
+}: {
+  selected: Scenario[];
+  /** Which loans a scenario's rate shock hits, by scenario id (ADR 0100). */
+  reachText?: (id: string) => string | undefined;
+}) {
   const t = useT();
   const mode = useUiStore((s) => s.mode);
   const results = useScenarioComparison(selected);
@@ -91,16 +98,21 @@ export function CompareView({ selected }: { selected: Scenario[] }) {
                   width: `${(140 / (1.4 + results.length)).toFixed(2)}%`,
                 }}
               />
-              {results.map((r, i) => (
-                <th
-                  scope="col"
-                  className="ct-head"
-                  key={r.id}
-                  style={{ color: colorOf(i) }}
-                >
-                  {r.name}
-                </th>
-              ))}
+              {results.map((r, i) => {
+                const reach = reachText?.(r.id);
+                return (
+                  <th
+                    scope="col"
+                    className="ct-head"
+                    key={r.id}
+                    style={{ color: colorOf(i) }}
+                    title={reach}
+                  >
+                    {r.name}
+                    {reach && <span className="sr-only"> ({reach})</span>}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
