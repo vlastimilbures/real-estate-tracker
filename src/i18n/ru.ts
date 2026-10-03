@@ -672,6 +672,8 @@ export const ru: Dictionary = {
     issueDuplicate: "Повторяет более раннюю запись",
     issueMissingAssumptions:
       "Файл должен содержать ровно одну запись допущений",
+    issueOutOfRange: (min, max) =>
+      `Должно быть целым числом от ${min} до ${max}`,
   },
 
   xlsx: {

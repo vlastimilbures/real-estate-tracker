@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   screen readers). LTV, Net cash flow and DSCR now come right after the name. In narrow windows,
   Edit and Delete show as icons. Pinned columns show an edge shadow when the table scrolls
   sideways (ADR 0085, #17).
+- Backup restore refuses a projection horizon, fixation, loan term or property size outside
+  the range the forms and CSV import allow (1–100, 0–50, 1–50 years, 1–10 000 m²). Nothing is
+  changed, and the issue table names the record, column and allowed range (ADR 0086, #38).
 
 ## [1.4.0] - 2026-10-03
 

@@ -110,6 +110,7 @@ Other IDs seen in code comments:
 | [0083](0083-coverage-rebaseline-vitest-4.md)      | Coverage floors re-baselined for Vitest 4                                              |                                        |
 | [0084](0084-horizon-dependent-labels.md)          | Horizon-dependent labels name the configured horizon                                   |                                        |
 | [0085](0085-properties-long-names.md)             | Properties list keeps its risk columns in view                                         |                                        |
+| [0086](0086-restore-int-bounds.md)                | Backup restore applies the whole-number bounds                                         |                                        |
 
 ### Judgment calls and open questions
 

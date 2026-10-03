@@ -669,6 +669,7 @@ export const cs: Dictionary = {
     issueDuplicate: "Opakuje dřívější záznam",
     issueMissingAssumptions:
       "Soubor musí obsahovat právě jeden záznam předpokladů",
+    issueOutOfRange: (min, max) => `Musí být celé číslo od ${min} do ${max}`,
   },
 
   xlsx: {
