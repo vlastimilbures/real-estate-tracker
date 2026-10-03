@@ -126,3 +126,14 @@ describe("Properties long names and narrow windows (ADR 0085)", () => {
     }
   });
 });
+
+describe("Properties context line (ADR 0111, #21)", () => {
+  it("names the as-of date, the currency and the flow period", () => {
+    render(<Properties />);
+    expect(
+      screen.getByText(
+        `${en.properties.subtitle(portfolio.properties.length)} · as of 01.10.2026 · amounts in Kč, flows per year`,
+      ),
+    ).toBeTruthy();
+  });
+});

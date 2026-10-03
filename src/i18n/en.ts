@@ -341,6 +341,8 @@ export const en = {
   properties: {
     title: "Properties",
     subtitle: (n: number) => `${n} ${enPlural(n, ["apartment", "apartments"])}`,
+    asOf: (d: string) => `as of ${d}`,
+    unitsNote: "amounts in Kč, flows per year",
     addProperty: "Add property",
     emptyTitle: "No properties",
     emptyBody: "Add your first property, or import your data from CSV files.",
@@ -563,7 +565,9 @@ export const en = {
     title: "Projections",
     subtitle: (lens: string) => `Year-by-year · ${lens}`,
     realTerms: "real terms",
+    realTermsDated: (d: string) => `real terms (Kč at projection start ${d})`,
     nominalKc: "nominal Kč",
+    periodNote: "flows per year, balances at year end",
     portfolio: "Portfolio",
     entity: "Entity",
   },

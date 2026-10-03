@@ -324,6 +324,8 @@ export const ru: Dictionary = {
   properties: {
     title: "Объекты",
     subtitle: (n) => `${n} ${ruPlural(n, ["квартира", "квартиры", "квартир"])}`,
+    asOf: (d) => `на ${d}`,
+    unitsNote: "суммы в Kč, потоки за год",
     addProperty: "Добавить объект",
     emptyTitle: "Нет объектов",
     emptyBody: "Добавьте первый объект или импортируйте данные из файлов CSV.",
@@ -539,7 +541,9 @@ export const ru: Dictionary = {
     title: "Прогнозы",
     subtitle: (lens) => `Год за годом · ${lens}`,
     realTerms: "реальные значения",
+    realTermsDated: (d) => `реальные значения (Kč на начало прогноза ${d})`,
     nominalKc: "номинальные Kč",
+    periodNote: "потоки за год, остатки на конец года",
     portfolio: "Портфель",
     entity: "Объект",
   },
