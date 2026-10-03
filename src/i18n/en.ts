@@ -996,6 +996,7 @@ export const en = {
       draws: "One tranche per line: dd.mm.yyyy = amount",
     },
     /** A bounded whole-number field (UX-068, ADR 0075). */
+    positiveAmount: "Enter an amount above 0, e.g. 500 000",
     intRange: (min: string, max: string) =>
       `Enter a whole number from ${min} to ${max}`,
     drawsPlaceholder: "dd.mm.yyyy = amount  (one tranche per line)",

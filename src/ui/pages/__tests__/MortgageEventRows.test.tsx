@@ -125,7 +125,7 @@ describe("prepayment and recast rows (ADR 0116)", () => {
       within(row(1)).getByLabelText(d.eventDate),
       "17.01.2031",
     );
-    await userEvent.type(within(row(1)).getByLabelText(d.eventAmount), "x");
+    await userEvent.type(within(row(1)).getByLabelText(d.eventAmount), "0");
     await userEvent.click(saveButton());
     expect(save).not.toHaveBeenCalled();
     expect(
@@ -134,6 +134,8 @@ describe("prepayment and recast rows (ADR 0116)", () => {
     expect(
       within(row(1)).getByLabelText(d.eventAmount).getAttribute("aria-invalid"),
     ).toBe("true");
+    // A zero amount is refused, so its hint asks for an amount above 0.
+    expect(within(row(1)).getByText(en.forms.positiveAmount)).toBeTruthy();
     expect(
       within(row(1)).getByLabelText(d.eventDate).getAttribute("aria-invalid"),
     ).not.toBe("true");

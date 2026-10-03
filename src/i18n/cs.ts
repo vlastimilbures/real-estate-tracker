@@ -952,6 +952,7 @@ export const cs: Dictionary = {
       draws: "Jedna tranše na řádek: dd.mm.yyyy = částka",
     },
     /** A bounded whole-number field (UX-068, ADR 0075). */
+    positiveAmount: "Zadejte částku vyšší než 0, např. 500 000",
     intRange: (min: string, max: string) =>
       `Zadejte celé číslo od ${min} do ${max}`,
     drawsPlaceholder: "dd.mm.yyyy = částka  (jedna tranše na řádek)",

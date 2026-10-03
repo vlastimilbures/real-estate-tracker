@@ -961,6 +961,7 @@ export const ru: Dictionary = {
       draws: "Один транш в строке: dd.mm.yyyy = сумма",
     },
     /** A bounded whole-number field (UX-068, ADR 0075). */
+    positiveAmount: "Введите сумму больше 0, например 500 000",
     intRange: (min: string, max: string) =>
       `Введите целое число от ${min} до ${max}`,
     drawsPlaceholder: "dd.mm.yyyy = сумма  (один транш в строке)",

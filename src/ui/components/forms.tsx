@@ -239,7 +239,7 @@ function LoanEventRows({
                   i,
                   "amount",
                   d.eventAmount,
-                  hint.money,
+                  t.forms.positiveAmount,
                   <TextInput
                     value={row.amount}
                     onChange={(v) => set(i, { amount: v })}
@@ -301,7 +301,7 @@ function LoanEventRows({
                       i,
                       "value",
                       d.eventInstalment,
-                      hint.money,
+                      t.forms.positiveAmount,
                       <TextInput
                         value={row.value}
                         onChange={(v) => set(i, { value: v })}
