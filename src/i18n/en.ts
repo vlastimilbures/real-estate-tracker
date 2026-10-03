@@ -888,6 +888,17 @@ export const en = {
     panelHint: "Fictional apartments added on first launch",
     panelBody:
       "Delete the sample apartments to start your own portfolio. Properties you added yourself are kept.",
+    loadHint: "Fictional apartments to explore the app",
+    loadBody:
+      "Load three fictional apartments with their mortgages, leases and costs. Your assumptions stay as they are.",
+    loadAction: "Load sample portfolio",
+    loading: "Loading…",
+    loaded:
+      "Sample portfolio loaded. Clear it any time here or from the banner.",
+    errNotEmpty:
+      "The sample loads only into an empty portfolio. Nothing was added.",
+    loadFailed: (detail: string) =>
+      `Loading the sample failed and was rolled back — nothing was added. (${detail})`,
     gettingStartedTitle: "Getting started",
     stepAssumptions: "Set your assumptions",
     stepAddProperty: "Add a property",

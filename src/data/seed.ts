@@ -3,7 +3,7 @@
 // `seedIfEmpty` inserts only when the DB has no properties yet.
 import { isoDate, rate } from "../engine";
 import type { Assumptions } from "../engine";
-import type { Sql } from "./sql";
+import type { Sql, SqlStatement } from "./sql";
 import {
   propertyToRow,
   mortgageBlockToRow,
@@ -180,6 +180,23 @@ const HOLDING_COSTS = [
   holdingFor("dubova"),
 ];
 
+/** The inserts for the three sample properties and every record under them. */
+function sampleStatements(): SqlStatement[] {
+  return [
+    ...PROPERTIES.map(({ p, address, garage }) =>
+      insertStatement("properties", propertyToRow(p, { address, garage })),
+    ),
+    ...MORTGAGES.map((m) =>
+      insertStatement("mortgage_blocks", mortgageBlockToRow(m)),
+    ),
+    ...VALUATIONS.map((v) => insertStatement("valuations", valuationToRow(v))),
+    ...LEASES.map((l) => insertStatement("leases", leaseToRow(l))),
+    ...HOLDING_COSTS.map((h) =>
+      insertStatement("holding_costs", holdingCostToRow(h)),
+    ),
+  ];
+}
+
 const SEEDED_FLAG = "sample_seeded";
 
 async function markSeeded(sql: Sql): Promise<void> {
@@ -214,17 +231,7 @@ export async function seedIfEmpty(sql: Sql): Promise<boolean> {
   // First-run seed: insert the sample portfolio seed (.claude/rules/engine-parity.md), in one transaction so a
   // failure leaves nothing behind and the next launch simply seeds again.
   await sql.transaction([
-    ...PROPERTIES.map(({ p, address, garage }) =>
-      insertStatement("properties", propertyToRow(p, { address, garage })),
-    ),
-    ...MORTGAGES.map((m) =>
-      insertStatement("mortgage_blocks", mortgageBlockToRow(m)),
-    ),
-    ...VALUATIONS.map((v) => insertStatement("valuations", valuationToRow(v))),
-    ...LEASES.map((l) => insertStatement("leases", leaseToRow(l))),
-    ...HOLDING_COSTS.map((h) =>
-      insertStatement("holding_costs", holdingCostToRow(h)),
-    ),
+    ...sampleStatements(),
     {
       query: "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
       params: [SEEDED_FLAG],
@@ -236,6 +243,34 @@ export async function seedIfEmpty(sql: Sql): Promise<boolean> {
     },
   ]);
   return true;
+}
+
+/** `loadSample` refused: the portfolio has properties, and the sample never merges with
+ *  them (ADR 0112). */
+export class SampleNotEmptyError extends Error {
+  constructor() {
+    super("The sample loads only into an empty portfolio");
+    this.name = "SampleNotEmptyError";
+  }
+}
+
+/** "Load sample portfolio" (ADR 0112): only into an empty portfolio, in one transaction
+ *  (D-14) — the first-run sample records, the `sample_active` marker, and the banner shown
+ *  again. Assumptions and `sample_seeded` are untouched. Nothing is replaced, so no safety
+ *  backup. */
+export async function loadSample(sql: Sql): Promise<void> {
+  if ((await countProperties(sql)) > 0) throw new SampleNotEmptyError();
+  await sql.transaction([
+    ...sampleStatements(),
+    {
+      query: "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
+      params: [SAMPLE_ACTIVE],
+    },
+    {
+      query: "DELETE FROM app_meta WHERE key = ?",
+      params: [SAMPLE_DISMISSED],
+    },
+  ]);
 }
 
 /** "Keep exploring": hide the sample banner for good (ADR 0094). */

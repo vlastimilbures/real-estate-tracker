@@ -136,6 +136,7 @@ Other IDs seen in code comments:
 | [0109](0109-loan-prepayments-and-recasts.md)      | Loan prepayments and recasts                                                           | #32                                    |
 | [0110](0110-backup-recency-indicator.md)          | Backup recency indicator                                                               | #36                                    |
 | [0111](0111-table-context-line.md)                | Table context line and visible export label                                            | #21                                    |
+| [0112](0112-load-sample-on-demand.md)             | Load the sample portfolio on demand                                                    | #74                                    |
 
 ### Judgment calls and open questions
 

@@ -1,11 +1,12 @@
 // ADR 0094: the store exposes the sample state, remembers "Keep exploring" across a
 // relaunch, and clears the sample as a whole-database action that reloads afterwards.
+// ADR 0112: loading it again on demand is a data write that reloads too.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { usePortfolioStore } from "../portfolioStore";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
-import { SafetyBackupError } from "../backup";
+import { SafetyBackupError, SampleNotEmptyError } from "../backup";
 import type { Sql } from "../../data/sql";
 
 const disk = vi.hoisted(() => ({ fail: false }));
@@ -98,5 +99,37 @@ describe("portfolioStore sample (ADR 0094)", () => {
     ).rejects.toBeInstanceOf(SafetyBackupError);
     expect(usePortfolioStore.getState().portfolio!.properties).toHaveLength(3);
     expect(usePortfolioStore.getState().sample.active).toBe(true);
+  });
+
+  it("loadSample loads the sample into an empty portfolio, reloads and marks a change (ADR 0112)", async () => {
+    const db = openMemorySql();
+    await usePortfolioStore.getState().init(async () => {
+      await migrate(db);
+      await seedIfEmpty(db);
+      return db;
+    });
+    await usePortfolioStore.getState().clearSample();
+    // Pretend a backup was exported after the clear.
+    await db.execute("DELETE FROM app_meta WHERE key = 'changed_since_backup'");
+
+    await usePortfolioStore.getState().loadSample();
+
+    const s = usePortfolioStore.getState();
+    expect(s.portfolio!.properties).toHaveLength(3);
+    expect(s.sample).toEqual({ active: true, dismissed: false });
+    expect(s.backup.changedSince).toBe(true);
+  });
+
+  it("loadSample throws the refusal when the portfolio is not empty", async () => {
+    const db = openMemorySql();
+    await usePortfolioStore.getState().init(async () => {
+      await migrate(db);
+      await seedIfEmpty(db);
+      return db;
+    });
+    await expect(
+      usePortfolioStore.getState().loadSample(),
+    ).rejects.toBeInstanceOf(SampleNotEmptyError);
+    expect(usePortfolioStore.getState().portfolio!.properties).toHaveLength(3);
   });
 });
