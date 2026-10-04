@@ -375,7 +375,8 @@ export interface PortfolioKPIs {
   leveredIrrRealReason: IrrNoRateReason | null;
   /** Σ scheduled principal + Σ prepaid over the horizon; == initial debt + draws when loans retire (ADR 0109). */
   totalPrincipalRepaid: Decimal;
-  /** Σ projection interest, years 1..N (ADR 0103). */
+  /** Σ interest, years 1..N (ADR 0103): the projection's plus what a future buy's loan
+   *  charges before the property turns on (ADR 0124). */
   totalInterest: Decimal;
   /** Σ interest_t / CPI_t, years 1..N, like `cumulativeNetCashFlowReal` (ADR 0103). */
   totalInterestReal: Decimal;

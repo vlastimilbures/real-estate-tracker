@@ -225,6 +225,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   backup the app writes can be restored (ADR 0123, #107).
 - One scenario the app cannot read no longer stops startup: it is listed on the Scenarios
   page with a Delete button (ADR 0123, #107).
+- A property bought in the future whose mortgage started earlier (an off-plan flat, the loan
+  drawn at contract and the purchase date set to the handover) now pays the loan's
+  instalments before the handover. Their interest and principal, and any prepayment and fee,
+  lower the cumulative net cash flow and the levered IRR in the years they are paid, and the
+  interest counts in total interest. Before, those years were left out. The projection rows
+  before the purchase stay empty (ADR 0124, #104).
 - A valuation's "Valid to" date no longer changes the property's value. Before, once it
   passed, the value fell back to the purchase price or to an older valuation. The latest
   valuation now keeps governing, grown by appreciation, until a newer one replaces it; in a
