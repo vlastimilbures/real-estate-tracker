@@ -246,13 +246,19 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
    *  save dialog was open, since the file does not hold it (ADR 0110). */
   let writes = 0;
 
+  /** Run `job` after everything queued before it has settled. A failed job never blocks
+   *  the ones after it. */
+  function enqueue<T>(job: () => Promise<T>): Promise<T> {
+    const run = queue.then(job);
+    queue = run.catch(() => undefined);
+    return run;
+  }
+
   function mutate(
     op: (sql: Sql) => Promise<void>,
     changesData = true,
   ): Promise<MutationResult> {
-    const run = queue.then(() => mutateNow(op, changesData));
-    queue = run;
-    return run;
+    return enqueue(() => mutateNow(op, changesData));
   }
 
   /** Run `op` in the mutation queue, then reload; rethrow its failure unchanged
@@ -264,7 +270,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     op: (sql: Sql) => Promise<T>,
     changesData = true,
   ): Promise<T> {
-    const run = queue.then(async () => {
+    return enqueue(async () => {
       const sql = requireSql();
       try {
         const result = await op(sql);
@@ -276,8 +282,6 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         throw e;
       }
     });
-    queue = run.catch(() => undefined);
-    return run;
   }
 
   /** Data was written: the last backup no longer has it (ADR 0110). Best effort — a
@@ -577,14 +581,11 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     dismissSampleBanner: () => mutate(dismissSampleBanner, false),
 
     // Loaded on first use: keeps the CSV parser out of the startup bundle (P9).
-    previewCsv: (batch) => {
-      const run = queue.then(async () => {
+    previewCsv: (batch) =>
+      enqueue(async () => {
         const { previewImport } = await import("../import/csvImport");
         return previewImport(requireSql(), batch);
-      });
-      queue = run.catch(() => undefined);
-      return run;
-    },
+      }),
     importCsv: (batch, expected) =>
       exclusive(async (sql) => {
         const { importCsv } = await import("../import/csvImport");
