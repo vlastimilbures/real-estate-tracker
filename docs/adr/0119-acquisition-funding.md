@@ -6,7 +6,8 @@
   #140 and #118 (items 1–2)
 - Amended: 2026-10-04 (independent review of PR #180: decision 3's tranche cut and decision
   5's late first loan, both decided by the owner); 2026-10-04 (#33 PR2: the CSV columns of
-  decision 8, decided by the owner)
+  decision 8, decided by the owner); 2026-10-04 (#33 PR3: the form section and the display of
+  decision 9, decided by the owner)
 
 ## Context
 
@@ -104,10 +105,27 @@ detail section (PR3) follow.
      missing column means unknown: a new property gets no amount, and a re-import keeps
      the stored amount. A CSV sets or changes an amount but never erases one. The note
      has no CSV column.
-   - Saving the property form keeps the stored record until PR3 adds the form section.
-9. **Display (PR3).** "Cash invested" is the own cash. The portfolio total is shown only when
-   every active property has a known own cash. Cash-on-cash return, a since-purchase IRR and
-   a sale or disposal event stay out of scope (roadmap).
+   - The property form sets, changes and clears each part: a blank amount is unknown, and
+     a blank note (after trimming) is no note. Clearing every field clears the record. The
+     form always saves the record it shows; a store edit that carries no record keeps the
+     stored one.
+9. **Display (PR3).** "Cash invested" is the own cash. Cash-on-cash return, a since-purchase
+   IRR and a sale or disposal event stay out of scope (roadmap).
+   - **Property form:** an optional Acquisition section with own cash, transaction costs,
+     initial works and the note; nothing in it is required. It starts collapsed when adding
+     a property, and when editing one with no record; it starts open when editing one with
+     a record, and opens itself when one of its fields has an error. Its amount fields read
+     "unknown" while blank.
+   - **Property detail:** an Acquisition section after Financing lists the purchase price,
+     transaction costs, initial works, uses, cash invested, acquisition loan and sources,
+     then the recorded note. An unknown part reads "—"; no acquisition loan reads "None";
+     sources read "—" while own cash is unknown. A gap of 1 Kč or more either way shows as
+     a warning note (short or over), never a blocker; a smaller gap is rounding. Own cash 0
+     gets no extra hint.
+   - **Portfolio total:** the Dashboard's KPI list shows "Cash invested", the sum of own
+     cash over the active properties in the Dashboard filter, future buys included. It is
+     shown only when every one of them has a known own cash. It is a recorded nominal
+     amount, so the real lens labels it nominal (as Σ principal, ADR 0087).
 
 ## Consequences
 
@@ -123,8 +141,8 @@ detail section (PR3) follow.
   both fall in the same projection year, no figure changes.
 - A development loan refinanced before its last tranche counts only the tranches drawn
   before the refinance.
-- A recorded amount cannot be cleared by a CSV re-import; clearing it is a form edit
-  (#33 PR3).
+- A recorded amount cannot be cleared by a CSV re-import; clearing it is a property form
+  edit.
 - Still open: a first loan drawn after baseDate on a property already owned at baseDate
   raises the debt with no cash in (#181).
 - Migration v10 is covered by a restore tripwire for added columns and by a Rust test that
