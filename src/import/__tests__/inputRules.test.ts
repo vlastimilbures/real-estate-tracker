@@ -173,35 +173,4 @@ describe("scenarioRuleErrors (ADR 0123)", () => {
       scenarioRuleErrors(badBase, { vacancyAllowance: rate("0.1") }),
     ).toEqual([]);
   });
-
-  it("checkInputRules lists each rule a scenario breaks once, on its overrides", () => {
-    const scenarios = [
-      { id: "ok", name: "Fine", overrides: { appreciationPa: rate("0.01") } },
-      {
-        id: "bad",
-        name: "Bad",
-        overrides: {
-          vacancyAllowance: BAD.vacancyAllowance,
-          inflationShock: BAD.inflationShock,
-          rateShock: BAD.rateShock,
-        },
-      },
-    ];
-    expect(checkInputRules(portfolio, assumptions, scenarios)).toEqual([
-      {
-        code: "RATE_OUT_OF_RANGE",
-        entity: "scenario",
-        id: "bad",
-        field: "overrides",
-      },
-      {
-        code: "SHOCK_OUT_OF_RANGE",
-        entity: "scenario",
-        id: "bad",
-        field: "overrides",
-      },
-    ]);
-    // Without assumptions (a restore already missing them) scenarios are not checked.
-    expect(checkInputRules(portfolio, undefined, scenarios)).toEqual([]);
-  });
 });

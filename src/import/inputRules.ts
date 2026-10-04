@@ -1,6 +1,6 @@
 // The engine's input rules as the restore check (P5b), plus the whole-number bounds the
-// forms and CSV import apply (ADR 0086) and the scenario check every scenario write uses
-// (ADR 0123). Lives outside src/data because the data layer never calls engine functions
+// forms and CSV import apply (ADR 0086), and the scenario check the store and the compare
+// use (ADR 0123). Lives outside src/data because the data layer never calls engine functions
 // (DB → mappers → engine).
 import { applyScenario, validateInputs, validatePortfolio } from "../engine";
 import type {
@@ -10,11 +10,7 @@ import type {
   ScenarioOverrides,
   ValidationEntity,
 } from "../engine";
-import type {
-  InputRules,
-  RangeProblem,
-  ScenarioRuleProblem,
-} from "../data/backup";
+import type { InputRules, RangeProblem } from "../data/backup";
 import { inRange, INT_RANGES } from "../lib/intRanges";
 
 type BoundedField = keyof typeof INT_RANGES;
@@ -72,37 +68,18 @@ export function scenarioRuleErrors(
 
 /** Every engine input rule over a restored portfolio (without assumptions, the
  *  portfolio rules only), then the whole-number bounds on fields no engine rule
- *  already reported, then each rule a scenario's overrides break (once per rule). */
-export const checkInputRules: InputRules = (
-  portfolio,
-  assumptions,
-  scenarios = [],
-) => {
+ *  already reported. */
+export const checkInputRules: InputRules = (portfolio, assumptions) => {
   const engine = assumptions
     ? validateInputs(portfolio, assumptions)
     : validatePortfolio(portfolio);
   const key = (e: EngineValidationError | RangeProblem) =>
     `${e.entity}\u0000${e.id ?? ""}\u0000${e.field ?? ""}`;
   const reported = new Set(engine.map(key));
-  const scenarioProblems = assumptions
-    ? scenarios.flatMap((s) =>
-        [
-          ...new Set(
-            scenarioRuleErrors(assumptions, s.overrides).map((e) => e.code),
-          ),
-        ].map((code): ScenarioRuleProblem => ({
-          code,
-          entity: "scenario",
-          id: s.id,
-          field: "overrides",
-        })),
-      )
-    : [];
   return [
     ...engine,
     ...rangeProblems(portfolio, assumptions).filter(
       (p) => !reported.has(key(p)),
     ),
-    ...scenarioProblems,
   ];
 };

@@ -561,7 +561,7 @@ export function rowToScenario(r: ScenarioRow): Scenario {
   // created_at only orders the list in SQL (DR-181); the app never reads it (ADR 0123).
   return {
     id: r.id,
-    name: r.name,
+    name: g.text({ table: "scenarios", id: r.id }, "name", r.name),
     overrides: parseOverrides(r.name, r.overrides),
   };
 }

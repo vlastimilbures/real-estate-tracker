@@ -307,9 +307,11 @@ describe("older backups are upgraded in memory", () => {
   });
 });
 
-// ADR 0123 (#107, #108): restore reads every scenario row and applies the engine rules
-// to its overrides, before anything is written.
-describe("restore checks every scenario row (ADR 0123)", () => {
+// ADR 0123 (#107): restore reads every scenario row before anything is written. A
+// scenario only has to be readable: one that breaks an engine rule restores like a saved
+// one (the compare leaves it out, its next save is refused), so every backup the app
+// writes stays restorable.
+describe("restore reads every scenario row (ADR 0123)", () => {
   const good = {
     id: "s1",
     name: "S",
@@ -319,7 +321,7 @@ describe("restore checks every scenario row (ADR 0123)", () => {
   const withScenario = (row: Record<string, unknown>) =>
     edited("scenarios", () => [{ ...good, ...row }]);
 
-  it.each([["2026-13-45"], [null], ["garbage"], [5]])(
+  it.each([[null], [""], [5]])(
     "refuses created_at %j, nothing written",
     async (createdAt) => {
       const before = dump(sql);
@@ -338,6 +340,16 @@ describe("restore checks every scenario row (ADR 0123)", () => {
     },
   );
 
+  it("refuses a scenario without a name, nothing written", async () => {
+    const before = dump(sql);
+    const bad = await withScenario({ name: null });
+    const e = await rejection(restoreFromJson(sql, bad, checkInputRules));
+    expect(e.issues).toEqual([
+      { table: "scenarios", id: "s1", rule: "UNREADABLE_VALUE" },
+    ]);
+    expect(dump(sql)).toEqual(before);
+  });
+
   it("reports unreadable overrides once", async () => {
     const bad = await withScenario({ overrides: '{"typoKey":"1"}' });
     const e = await rejection(restoreFromJson(sql, bad, checkInputRules));
@@ -352,23 +364,28 @@ describe("restore checks every scenario row (ADR 0123)", () => {
   });
 
   it.each([
-    ['{"version":1,"vacancyAllowance":"1.5"}', "RATE_OUT_OF_RANGE"],
-    [
-      '{"version":1,"valueShock":{"pct":"-3","atYear":2}}',
-      "SHOCK_OUT_OF_RANGE",
-    ],
-    [
-      '{"version":1,"rateShock":{"deltaPa":"0.02","durationYears":-1}}',
-      "SHOCK_OUT_OF_RANGE",
-    ],
-  ])("refuses overrides %s that break %s", async (overrides, rule) => {
-    const before = dump(sql);
-    const bad = await withScenario({ overrides });
-    const e = await rejection(restoreFromJson(sql, bad, checkInputRules));
-    expect(e.issues).toEqual([
-      { table: "scenarios", id: "s1", column: "overrides", rule },
-    ]);
-    expect(dump(sql)).toEqual(before);
+    ['{"version":1,"vacancyAllowance":"1.5"}'],
+    ['{"version":1,"valueShock":{"pct":"-0.2","atYear":0}}'],
+  ])(
+    "restores a scenario whose overrides %s break a rule, and its export restores",
+    async (overrides) => {
+      await restoreFromJson(
+        sql,
+        await withScenario({ overrides }),
+        checkInputRules,
+      );
+      expect((await loadState(sql)).scenarios.map((s) => s.id)).toEqual(["s1"]);
+      await restoreFromJson(sql, await exportToJson(sql), checkInputRules);
+    },
+  );
+
+  it("restores a created_at that is not a date: the app never reads it", async () => {
+    await restoreFromJson(
+      sql,
+      await withScenario({ created_at: "2026-13-45" }),
+      checkInputRules,
+    );
+    expect((await loadState(sql)).scenarios.map((s) => s.id)).toEqual(["s1"]);
   });
 
   it("restores a valid scenario and the app reads it", async () => {
