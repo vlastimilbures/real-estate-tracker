@@ -497,8 +497,21 @@ export const cs: Dictionary = {
     loanPayoff: "Modelované doplacení",
     loanPayoffNone: "Splaceno",
     interestSaved: "Úrok ušetřený mimořádnými splátkami (nominálně)",
+    remainingTerm: "Zbývající doba splácení",
+    outlookResetsTitle: "Konce fixace podle bloků úvěru",
+    colFixationEnd: "Konec fixace",
+    colBalanceAtReset: "Dluh na konci fixace (nominálně)",
+    colStatus: "Stav",
+    outlookStatus: {
+      nextReset: "Příští konec fixace",
+      upcoming: "Nadcházející",
+      passed: "Proběhlo",
+      replaced: "Nahrazen pozdějším úvěrem",
+      repaid: "Splacen před koncem fixace",
+      floating: "Plovoucí sazba",
+    },
     loanSummaryNote:
-      "Datum doplacení je modelované, není to termín od banky. Ušetřený úrok porovnává úvěr s mimořádnými splátkami a bez nich, za celou zbývající dobu.",
+      "Data doplacení a konců fixace jsou modelovaná, nejsou to termíny od banky, a dluh na konci fixace je nominální. Ušetřený úrok porovnává úvěr s mimořádnými splátkami a bez nich, za celou zbývající dobu.",
     loanFrom: (date) => `Úvěr od ${date}:`,
     monthsCount: (n) => `${n} ${csPlural(n, ["měsíc", "měsíce", "měsíců"])}`,
     maturityPaysOff: (instalment, implied) =>

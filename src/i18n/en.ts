@@ -532,8 +532,22 @@ export const en = {
     loanPayoff: "Modelled payoff",
     loanPayoffNone: "Repaid",
     interestSaved: "Interest saved by prepayments (nominal)",
+    // ADR 0117: the remaining term and each block's reset.
+    remainingTerm: "Remaining term",
+    outlookResetsTitle: "Fixation resets by loan block",
+    colFixationEnd: "Fixation end",
+    colBalanceAtReset: "Balance at reset (nominal)",
+    colStatus: "Status",
+    outlookStatus: {
+      nextReset: "Next reset",
+      upcoming: "Upcoming",
+      passed: "Passed",
+      replaced: "Replaced by a later loan",
+      repaid: "Repaid before the reset",
+      floating: "Floating rate",
+    },
     loanSummaryNote:
-      "The payoff date is modelled, not a deadline from your lender. Interest saved compares the loan with and without every prepayment, over its whole remaining life.",
+      "The payoff and fixation dates are modelled, not deadlines from your lender, and balances at reset are nominal. Interest saved compares the loan with and without every prepayment, over its whole remaining life.",
     loanFrom: (date: string) => `Loan from ${date}:`,
     monthsCount: (n: number) => `${n} ${enPlural(n, ["month", "months"])}`,
     maturityPaysOff: (instalment: string, implied: string) =>
