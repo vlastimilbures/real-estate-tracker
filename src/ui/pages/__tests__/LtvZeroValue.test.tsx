@@ -53,6 +53,15 @@ const crashedRows = portfolioProjection(portfolio, crashed);
 
 beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
+/** The index of the table's LTV column, from its header. */
+function ltvColumn(): number {
+  const i = screen
+    .getAllByRole("columnheader")
+    .findIndex((h) => h.textContent === "LTV");
+  if (i < 0) throw new Error("no LTV column");
+  return i;
+}
+
 /** The tile whose label is `label`. */
 function tile(label: string): HTMLElement {
   return screen.getByText(label).closest(".tile") as HTMLElement;
@@ -107,8 +116,9 @@ describe("Properties table", () => {
     const row = screen
       .getByRole("button", { name: javorova.name })
       .closest("tr") as HTMLElement;
-    const cells = within(row).getAllByRole("cell");
-    expect(cells.some((c) => c.textContent === NA)).toBe(true);
+    const ltvCell = row.children[ltvColumn()];
+    expect(ltvCell?.textContent).toBe(NA);
+    expect(ltvCell?.querySelector(".badge")).toBeNull();
     expect(row.textContent).not.toContain(en.dashboard.badgeConservative);
   });
 });
@@ -117,6 +127,8 @@ describe("Projection grid", () => {
   it("a year with debt and no value shows n/a in the LTV column", () => {
     const rows = projectionSeries(crashedRows, "nominal", crashed);
     render(<ProjectionGrid rows={rows} baseDate={crashed.baseDate} />);
-    expect(screen.getAllByText(NA).length).toBeGreaterThan(0);
+    // Year 0 owes 9.5 M Kč on a value of 0.
+    const y0 = screen.getAllByRole("row")[1]!;
+    expect(y0.children[ltvColumn()]?.textContent).toBe(NA);
   });
 });
