@@ -134,6 +134,17 @@ module.exports = {
       to: { path: "^src/(data|state|ui|import|lib)/" },
     },
     {
+      name: "i18n-dictionaries-lazy",
+      severity: "error",
+      comment:
+        "Dictionaries load on demand through src/i18n/index.ts (DR-009): a value import elsewhere would put one back in the startup bundle.",
+      from: { path: "^src/", pathNot: [TESTS, "^src/i18n/"] },
+      to: {
+        path: "^src/i18n/(en|cs|ru)\\.ts$",
+        dependencyTypesNot: ["type-only"],
+      },
+    },
+    {
       name: "no-prod-to-tests",
       severity: "error",
       comment: "Production code never imports test code.",
