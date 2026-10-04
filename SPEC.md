@@ -646,7 +646,7 @@ offline badge, and controls for language and theme.
    (or back into) all projections and KPIs (§4.5), after confirmation when deactivating.
    The Financing section's **Loan outlook** (ADR 0116, ADR 0117) shows the modelled payoff,
    the remaining term and the interest prepayments save, then every loan block, oldest
-   first, with its fixation end, the nominal balance at reset and a status: next reset,
+   first, with its fixation end, the nominal balance at reset and a status: next rate reset,
    upcoming, passed, replaced by a later loan, repaid before the reset, or floating rate.
 
 4. **Projections** — full year-by-year grid (per property + portfolio), nominal/real toggle,

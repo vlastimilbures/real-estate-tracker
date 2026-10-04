@@ -536,10 +536,10 @@ export const en = {
     remainingTerm: "Remaining term",
     outlookResetsTitle: "Fixation resets by loan block",
     colFixationEnd: "Fixation end",
-    colBalanceAtReset: "Balance at reset (nominal)",
+    colBalanceAtReset: "Debt at reset (nominal)",
     colStatus: "Status",
     outlookStatus: {
-      nextReset: "Next reset",
+      nextReset: "Next rate reset",
       upcoming: "Upcoming",
       passed: "Passed",
       replaced: "Replaced by a later loan",

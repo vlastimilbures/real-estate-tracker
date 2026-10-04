@@ -378,7 +378,7 @@ export const SCREENS: Screen[] = [
     },
   },
   {
-    id: "30-property-loan-outlook",
+    id: "29b-property-loan-outlook",
     desc: "Loan outlook: remaining term and each block's reset (ADR 0117)",
     route: "property",
     run: async (ux) => {
@@ -391,7 +391,7 @@ export const SCREENS: Screen[] = [
       ).toBeVisible();
       await expect(p.getByText(d.remainingTerm)).toBeVisible();
       await p.scrollIntoViewIfNeeded();
-      await ux.capture("30-property-loan-outlook", { fullPage: false });
+      await ux.capture("29b-property-loan-outlook", { fullPage: false });
     },
   },
   {

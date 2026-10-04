@@ -27,7 +27,7 @@ block's fixation ends, what balance moves to the new rate, or how long the loan 
    - **Upcoming**: the fixation end is after the as-of date and the block still has a
      balance then. The balance cell shows the schedule balance after the fixation-end
      payment, nominal (as on the Dashboard, ADR 0103).
-   - **Next reset**: the upcoming row that is the loan's next fixation. It is highlighted.
+   - **Next rate reset**: the upcoming row that is the loan's next fixation. It is highlighted.
    - **Replaced by a later loan**: a later block starts on or before the fixation end, or
      in the schedule month of its fixation-end payment (ADR 0103 §3). A block that a later
      block replaced before baseDate (outside the chain, D-27) gets this status too.

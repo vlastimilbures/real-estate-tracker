@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The property page's **Loan outlook** shows the loan's remaining term ("24 yrs 8 months")
   and lists every loan block, oldest first, with its fixation end, the balance that moves
-  to the new rate (nominal) and a status: next reset, upcoming, passed, replaced by a later
+  to the new rate (nominal) and a status: next rate reset, upcoming, passed, replaced by a later
   loan, repaid before the reset, or floating rate. The dates are modelled, not deadlines
   from your lender (ADR 0117, #31).
 
