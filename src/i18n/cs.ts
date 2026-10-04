@@ -735,9 +735,9 @@ export const cs: Dictionary = {
       `zasáhne ${n} z ${m} ${csPlural(m, ["úvěru", "úvěrů", "úvěrů"])} (refixace ${years})`,
     reachNone: "v okně šoku se žádný úvěr nerefixuje, takže bez vlivu",
     unreadableRow:
-      "Nelze přečíst, proto je vynechán. Smažte ho: do té doby nepůjde exportovanou zálohu obnovit.",
-    notCompared: (names) =>
-      `Vynecháno z porovnání, protože hodnota je mimo povolený rozsah: ${names}. Scénář upravte nebo smažte v seznamu.`,
+      "Nelze přečíst, proto je vynechán. Smažte ho před exportem: zálohu, která ho obsahuje, nepůjde obnovit.",
+    notCompared: (name) =>
+      `Vynecháno z porovnání: „${name}“ má hodnotu mimo povolený rozsah. Upravte ho nebo smažte v seznamu.`,
     sumValueShock: (v, atYear) =>
       `hodnota −${v}${atYear ? ` @ rok${atYear}` : ""}`,
     editTitle: (name) => `Upravit „${name}“`,

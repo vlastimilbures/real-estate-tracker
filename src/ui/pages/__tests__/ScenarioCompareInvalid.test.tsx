@@ -55,7 +55,8 @@ describe("Compare with a scenario that breaks a rule (ADR 0123)", () => {
   it("shows the notice instead of the empty state when every pick is left out", () => {
     renderCompare([crash, vacancy]);
     expect(screen.getByRole("status").textContent).toBe(
-      en.scenarios.notCompared("Crash −20 %, Empty"),
+      en.scenarios.notCompared("Crash −20 %") +
+        en.scenarios.notCompared("Empty"),
     );
     expect(screen.queryByRole("table")).toBeNull();
   });

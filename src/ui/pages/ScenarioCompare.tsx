@@ -45,9 +45,11 @@ export function CompareView({
     ? selected.filter((s) => !results.some((r) => r.id === s.id))
     : [];
   const notice = leftOut.length > 0 && (
-    <p className="form-note" role="status">
-      {t.scenarios.notCompared(leftOut.map((s) => s.name).join(", "))}
-    </p>
+    <div className="form-note" role="status">
+      {leftOut.map((s) => (
+        <p key={s.id}>{t.scenarios.notCompared(s.name)}</p>
+      ))}
+    </div>
   );
   if (!results || results.length === 0) {
     return (

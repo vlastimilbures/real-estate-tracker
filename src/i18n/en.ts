@@ -777,9 +777,9 @@ export const en = {
     reachNone: "no loan refixes inside the shock window, so no effect",
     // A saved scenario that breaks an engine rule, or cannot be read (ADR 0123)
     unreadableRow:
-      "Cannot be read, so it is left out. Delete it: until then, a backup you export cannot be restored.",
-    notCompared: (names: string) =>
-      `Left out of the comparison because a value is outside its allowed range: ${names}. Edit or delete the scenario in the list.`,
+      "Cannot be read, so it is left out. Delete it before you export: a backup that contains it cannot be restored.",
+    notCompared: (name: string) =>
+      `Left out of the comparison: “${name}” has a value outside its allowed range. Edit or delete it in the list.`,
     sumValueShock: (v: string, atYear: number) =>
       `value −${v}${atYear ? ` @ yr${atYear}` : ""}`,
     // Form
