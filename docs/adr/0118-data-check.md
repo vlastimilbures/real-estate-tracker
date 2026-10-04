@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-04
-- Source: issue #35 (pre-release review 2026-10, §6 and F5)
+- Source: issue #35 (pre-release review 2026-10, §6 and F5); independent review of PR #179
 
 ## Context
 
@@ -23,9 +23,11 @@ Owner, 2026-10-04 (#35 plan):
 
 1. **A pure presentation model, `src/ui/model/dataCheck.ts`.** It lists findings for a
    property at an explicit as-of date and never reads the clock. It calls the engine's own
-   selectors (`selectValuation`, `leaseInForce`, `leaseEndWithoutFollowOn`, `loanWarnings`),
-   so a finding appears exactly when the engine falls back. There is no completeness score
-   or grade: each finding states its effect and where to fix it.
+   selectors (`selectValuation`, `leaseInForce`, `leaseEndWithoutFollowOn`, `renewedLease`,
+   `loanWarnings`), so a finding appears exactly when the engine falls back. There is no
+   completeness score or grade: each finding states its effect and where to fix it. An
+   effect is stated only where it is true for both the snapshot and the projection, or says
+   how they differ.
 2. **The as-of date is the page's snapshot date** (the picked date, else today, never before
    the base date), the same date as the numbers on screen.
 3. **"Needs attention" findings** (counted in the panel header):
@@ -33,13 +35,21 @@ Owner, 2026-10-04 (#35 plan):
      more than 12 months old (as-of after validFrom + 12 months). Exactly 12 months is not
      stale. The age is shown in whole months. A valuation that only starts later is used by
      the engine and is not flagged.
-   - **No valuation:** the purchase price stands in as the value.
-   - **No lease in force** at the as-of date: rent counts as 0.
+   - **No valuation** in force (or upcoming) at the as-of date: the purchase price stands
+     in as the value.
+   - **Lease ended:** no lease is in force and the last lease ended before the as-of date,
+     on or after the projection's basis date. The snapshot has no rent after its end; the
+     projection treats it as renewed (`renewedLease`, ADR 0080), so a Dashboard read from a
+     projection year still shows its rent. The finding says both.
+   - **No lease in force** otherwise (no lease, a gap before a later lease, or a last lease
+     that ended before the basis date): rent counts as 0.
    - **Lease ending:** the lease in force ends within 3 months, the as-of date included,
      and no later lease is entered. This is the rule of the Dashboard's upcoming lease ends
      (ADR 0103), now one shared engine helper.
    - **Fixation ended with no follow-on block** at the as-of date: the existing Property
-     detail loan warning (D-30), with the same text. That warning stays where it is.
+     detail loan warning (D-30), with the same text. That warning stays where it is and is
+     still evaluated at the base date, so for a fixation ending between the base date and
+     the as-of date only the Data check shows it.
 4. **"Using portfolio defaults" findings** (listed below, not counted): the property has no
    own appreciation and/or rent indexation; the property's holding costs are missing or have
    blank fields (the fields are named). These are often deliberate, so they are shown
@@ -63,7 +73,7 @@ Owner, 2026-10-04 (#35 plan):
 ## Consequences
 
 Presentation only: no computed number, parity target, golden master, export or stored data
-changes. Two engine selectors are exported and the lease-end rule moves into one helper,
-both behaviour-neutral. New strings in en, cs and ru; the section nav gains one link. The
-sample portfolio shows no attention findings at its base date, and the growth defaults for
-all three properties.
+changes. Two engine selectors are exported, and the lease-end and renewed-lease rules move
+into shared helpers, all behaviour-neutral. New strings in en, cs and ru; the section nav
+gains one link. The sample portfolio shows no attention findings at its base date, and the
+growth defaults for all three properties.

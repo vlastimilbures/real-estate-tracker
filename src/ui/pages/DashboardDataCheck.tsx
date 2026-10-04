@@ -14,6 +14,7 @@ import { dataCheckItems, type DataCheckFix } from "../model/dataCheck";
 export function DataCheckPanel({
   portfolio,
   asOf,
+  baseDate,
   resetRate,
   onFix,
 }: {
@@ -21,6 +22,8 @@ export function DataCheckPanel({
   portfolio: Portfolio;
   /** The snapshot's as-of date. */
   asOf: Date;
+  /** The projection start. */
+  baseDate: Date;
   resetRate: Rate;
   onFix: (propertyId: string, fix: DataCheckFix) => void;
 }) {
@@ -34,6 +37,7 @@ export function DataCheckPanel({
     portfolio.properties.filter((p) => p.active !== false),
     portfolio,
     asOf,
+    baseDate,
   );
   const empty = attention.length + defaults.length === 0;
   const open = !empty && (choice ?? attention.length > 0);

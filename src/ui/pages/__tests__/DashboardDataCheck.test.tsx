@@ -22,6 +22,7 @@ function renderPanel(p: Portfolio, asOf: Date = BASE_DATE) {
     <DataCheckPanel
       portfolio={p}
       asOf={asOf}
+      baseDate={BASE_DATE}
       resetRate={assumptions.postFixationResetRatePa}
       onFix={onFix}
     />,

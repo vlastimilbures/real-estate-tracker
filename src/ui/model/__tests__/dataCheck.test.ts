@@ -30,7 +30,7 @@ import { loanWarningText } from "../propertyDetail";
 function check(id: string, asOf: Date = BASE_DATE, p: Portfolio = portfolio) {
   const property = p.properties.find((x) => x.id === id);
   if (!property) throw new Error(`no property ${id}`);
-  return propertyDataCheck(property, p, asOf);
+  return propertyDataCheck(property, p, asOf, BASE_DATE);
 }
 
 function block(id: string): MortgageBlock {
@@ -73,7 +73,7 @@ describe("data check: valuation (ADR 0118)", () => {
   it("no valuation: the purchase price stands in", () => {
     const p = without(portfolio, ["v-javorova"]);
     expect(check("javorova", BASE_DATE, p).attention).toEqual([
-      { kind: "noValuation", purchasePrice: javorovaPrice },
+      { kind: "noValuation", purchasePrice: javorovaPrice, asOf: BASE_DATE },
     ]);
   });
 
@@ -155,14 +155,58 @@ describe("data check: lease (ADR 0118)", () => {
     expect(check("javorova", BASE_DATE, leased).attention).toEqual([]);
   });
 
-  it("a lease ending on the as-of date is flagged; the day after it is no lease", () => {
+  it("a lease ending on the as-of date is flagged; after it, that it ended", () => {
     const end = isoDate("2026-08-30");
     expect(check("lipova", end, noFollowOn).attention).toEqual([
       { kind: "leaseEnding", endDate: end },
     ]);
+    // The projection keeps renting the last lease, so this is not "rent counts as 0".
     expect(
       check("lipova", isoDate("2026-08-31"), noFollowOn).attention,
-    ).toEqual([{ kind: "noLease", asOf: isoDate("2026-08-31") }]);
+    ).toEqual([{ kind: "leaseEnded", endDate: end }]);
+    expect(
+      check("lipova", isoDate("2026-12-07"), noFollowOn).attention,
+    ).toEqual([{ kind: "leaseEnded", endDate: end }]);
+  });
+
+  it("no lease in force and none the projection renews: rent counts as 0", () => {
+    const only = (endDate?: IsoDate): Portfolio => ({
+      ...portfolio,
+      leases: [
+        ...portfolio.leases.filter((l) => l.propertyId !== "javorova"),
+        {
+          id: "l-only",
+          propertyId: "javorova",
+          startDate: isoDate("2025-01-01"),
+          endDate,
+          monthlyRent: money("27000"),
+        },
+      ],
+    });
+    // Ended before the base date: the projection does not renew it either.
+    expect(
+      check("javorova", BASE_DATE, only(isoDate("2026-06-06"))).attention,
+    ).toEqual([{ kind: "noLease", asOf: BASE_DATE }]);
+    // Ended on the base date: renewed by the projection.
+    expect(
+      check("javorova", isoDate("2026-06-08"), only(BASE_DATE)).attention,
+    ).toEqual([{ kind: "leaseEnded", endDate: BASE_DATE }]);
+    // A lease that starts later leaves a gap now: no lease, rent 0 until it starts.
+    const later: Portfolio = {
+      ...without(portfolio, ["l-javorova"]),
+      leases: [
+        ...without(portfolio, ["l-javorova"]).leases,
+        {
+          id: "l-later",
+          propertyId: "javorova",
+          startDate: isoDate("2026-09-01"),
+          monthlyRent: money("27000"),
+        },
+      ],
+    };
+    expect(check("javorova", BASE_DATE, later).attention).toEqual([
+      { kind: "noLease", asOf: BASE_DATE },
+    ]);
   });
 
   it("a lease ending exactly 3 months after the as-of date is flagged; one day later is not", () => {
@@ -335,9 +379,12 @@ describe("data check: scope (ADR 0118)", () => {
       "costDefaults",
     ]);
     expect(
-      dataCheckItems(future.properties, future, BASE_DATE).defaults.map(
-        (r) => r.propertyId,
-      ),
+      dataCheckItems(
+        future.properties,
+        future,
+        BASE_DATE,
+        BASE_DATE,
+      ).defaults.map((r) => r.propertyId),
     ).toEqual(["javorova", "lipova", "dubova"]);
   });
 });
@@ -350,7 +397,7 @@ describe("data check: the sample portfolio (ADR 0118)", () => {
   };
 
   const items = (asOf: Date) =>
-    dataCheckItems(portfolio.properties, portfolio, asOf);
+    dataCheckItems(portfolio.properties, portfolio, asOf, BASE_DATE);
 
   it("at the base date nothing needs attention; all three use the portfolio growth", () => {
     expect(items(BASE_DATE)).toEqual({
@@ -398,16 +445,25 @@ describe("data check: text and fix (ADR 0118)", () => {
         months: 26,
       }),
     ).toBe(
-      "The latest valuation is 26 months old (01.08.2024). Value, equity and LTV rest on it and the appreciation assumption.",
+      "The valuation in use is 26 months old (01.08.2024). Value, equity and LTV rest on it.",
     );
-    expect(text({ kind: "noValuation", purchasePrice: javorovaPrice })).toBe(
-      `No valuation is entered, so the purchase price of ${fmtCzk(javorovaPrice)} stands in as the market value.`,
+    expect(
+      text({
+        kind: "noValuation",
+        purchasePrice: javorovaPrice,
+        asOf: BASE_DATE,
+      }),
+    ).toBe(
+      `No valuation is in force on 07.06.2026, so the purchase price of ${fmtCzk(javorovaPrice)} stands in as the market value.`,
     );
     expect(text({ kind: "noLease", asOf: BASE_DATE })).toBe(
       "No lease is in force on 07.06.2026, so rent counts as 0.",
     );
     expect(text({ kind: "leaseEnding", endDate: isoDate("2026-08-30") })).toBe(
       "The lease ends on 30.08.2026 and no next lease is entered. The projection assumes it is renewed.",
+    );
+    expect(text({ kind: "leaseEnded", endDate: isoDate("2026-08-30") })).toBe(
+      "The lease ended on 30.08.2026 and no next lease is entered. The snapshot counts no rent after that date; the projection assumes the lease is renewed.",
     );
     expect(text(fixation)).toBe(loanWarningText(en, fixation, resetRate));
     expect(
@@ -435,7 +491,11 @@ describe("data check: text and fix (ADR 0118)", () => {
   it("links each finding to the place that fixes it", () => {
     expect(findingFix({ kind: "noLease", asOf: BASE_DATE })).toBe("records");
     expect(
-      findingFix({ kind: "noValuation", purchasePrice: javorovaPrice }),
+      findingFix({
+        kind: "noValuation",
+        purchasePrice: javorovaPrice,
+        asOf: BASE_DATE,
+      }),
     ).toBe("records");
     expect(
       findingFix({
@@ -445,6 +505,9 @@ describe("data check: text and fix (ADR 0118)", () => {
       }),
     ).toBe("records");
     expect(findingFix({ kind: "leaseEnding", endDate: BASE_DATE })).toBe(
+      "records",
+    );
+    expect(findingFix({ kind: "leaseEnded", endDate: BASE_DATE })).toBe(
       "records",
     );
     expect(findingFix(fixation)).toBe("financing");
@@ -472,7 +535,7 @@ describe("data check lists (ADR 0118)", () => {
   it("lists every property's findings by group, each row with its property", () => {
     const asOf = isoDate("2029-01-15");
     const p = without(portfolio, ["v-dubova"]);
-    const lists = dataCheckItems(p.properties, p, asOf);
+    const lists = dataCheckItems(p.properties, p, asOf, BASE_DATE);
     expect(
       lists.attention.map((r) => `${r.propertyId}:${r.finding.kind}`),
     ).toEqual([
@@ -486,7 +549,7 @@ describe("data check lists (ADR 0118)", () => {
       "Byt Lipova",
       "Byt Dubova",
     ]);
-    expect(dataCheckItems([], p, asOf)).toEqual({
+    expect(dataCheckItems([], p, asOf, BASE_DATE)).toEqual({
       attention: [],
       defaults: [],
     });

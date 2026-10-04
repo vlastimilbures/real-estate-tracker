@@ -199,6 +199,7 @@ export function Dashboard() {
       <DataCheckPanel
         portfolio={engine.portfolio}
         asOf={snapshot.asOf}
+        baseDate={assumptions.baseDate}
         resetRate={assumptions.postFixationResetRatePa}
         onFix={openProperty}
       />

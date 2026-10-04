@@ -628,8 +628,9 @@ offline badge, and controls for language and theme.
    1/3/5 years, total interest and the next 12 months' events, each linking to its property.
    A **Data check** panel (ADR 0118) lists, at the snapshot date, the inputs the engine
    falls back on: under "Needs attention" a valuation more than 12 months old, no valuation
-   (purchase price used), no lease in force (rent 0), a lease ending within 3 months with no
-   next lease, and a fixation that ended with no follow-on block; under "Using portfolio
+   (purchase price used), a last lease that ended (no rent in the snapshot, renewed in the
+   projection), no lease in force (rent 0), a lease ending within 3 months with no next
+   lease, and a fixation that ended with no follow-on block; under "Using portfolio
    defaults" the portfolio growth and blank holding-cost fields. Each row links to the
    property section (or form) that fixes it. The panel opens when something needs
    attention; a property not yet purchased has no findings.

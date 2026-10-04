@@ -248,7 +248,9 @@ describe("Property detail data check (ADR 0118)", () => {
     render(<PropertyDetail />);
     const section = within(dataCheck());
     expect(
-      section.getByText(en.dataCheck.noValuation(fmtCzk(owner.purchasePrice))),
+      section.getByText(
+        en.dataCheck.noValuation("07.06.2026", fmtCzk(owner.purchasePrice)),
+      ),
     ).toBeTruthy();
     expect(section.getByText(en.dataCheck.growthBoth)).toBeTruthy();
     await userEvent.click(

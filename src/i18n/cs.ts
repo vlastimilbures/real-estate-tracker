@@ -344,11 +344,13 @@ export const cs: Dictionary = {
     hide: "Skrýt kontrolu dat",
     goTo: (section) => `Přejít do sekce ${section}`,
     valuationStale: (age, date) =>
-      `Poslední ocenění je staré ${age} (${date}). Hodnota, vlastní kapitál a LTV vycházejí z něj a z předpokladu zhodnocení.`,
-    noValuation: (price) =>
-      `Není zadáno žádné ocenění, proto se jako tržní hodnota použije kupní cena ${price}.`,
+      `Použité ocenění je staré ${age} (${date}). Hodnota, vlastní kapitál a LTV vycházejí z něj.`,
+    noValuation: (date, price) =>
+      `K ${date} neplatí žádné ocenění, proto se jako tržní hodnota použije kupní cena ${price}.`,
     noLease: (date) =>
       `K ${date} neplatí žádný nájem, proto se nájemné počítá jako 0.`,
+    leaseEnded: (date) =>
+      `Nájem skončil ${date} a další nájem není zadán. Snímek po tomto datu nepočítá žádné nájemné; projekce počítá s prodloužením tohoto nájmu.`,
     leaseEnding: (date) =>
       `Nájem končí ${date} a další nájem není zadán. Projekce předpokládá jeho prodloužení.`,
     growthBoth: "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",

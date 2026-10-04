@@ -2,10 +2,12 @@
 // that are stale, missing or left at a portfolio default, at an explicit as-of date. It
 // calls the engine's own selectors, so a finding appears exactly when the engine falls back.
 import {
+  basisDate,
   edate,
   leaseEndWithoutFollowOn,
   leaseInForce,
   monthsBetween,
+  renewedLease,
   selectValuation,
 } from "../../engine";
 import type {
@@ -45,10 +47,13 @@ type CostField = (typeof COST_FIELDS)[number];
 export type DataFinding =
   /** The valuation in use is more than 12 months old; `months` = whole months of age. */
   | { kind: "valuationStale"; validFrom: IsoDate; months: number }
-  /** No valuation: the purchase price stands in as the market value. */
-  | { kind: "noValuation"; purchasePrice: Money }
-  /** No lease in force at the as-of date: rent counts as 0. */
+  /** No valuation in force or upcoming: the purchase price stands in as the market value. */
+  | { kind: "noValuation"; purchasePrice: Money; asOf: Date }
+  /** No lease in force at the as-of date and none the projection renews: rent is 0. */
   | { kind: "noLease"; asOf: Date }
+  /** The last lease ended before the as-of date: the snapshot has no rent after it, the
+   *  projection treats it as renewed (`renewedLease`). */
+  | { kind: "leaseEnded"; endDate: IsoDate }
   /** The lease in force ends within 3 months and no later lease is entered. */
   | { kind: "leaseEnding"; endDate: IsoDate }
   /** The fixation ended with no follow-on block (the Property detail loan warning). */
@@ -75,11 +80,13 @@ export interface DataCheckItem {
 export type DataCheckFix =
   Extract<PropertySection, "records" | "financing" | "holding"> | "edit";
 
-/** The property's findings at `asOf`; none before its purchase date. */
+/** The property's findings at `asOf`; none before its purchase date. `baseDate` = the
+ *  projection start, for what the projection assumes about an ended lease. */
 export function propertyDataCheck(
   property: Property,
   portfolio: Portfolio,
   asOf: Date,
+  baseDate: Date,
 ): DataCheck {
   if (property.purchaseDate.getTime() > asOf.getTime())
     return { attention: [], defaults: [] };
@@ -92,6 +99,7 @@ export function propertyDataCheck(
     attention.push({
       kind: "noValuation",
       purchasePrice: property.purchasePrice,
+      asOf,
     });
   else if (
     edate(valuation.validFrom, VALUATION_STALE_MONTHS).getTime() <
@@ -104,7 +112,14 @@ export function propertyDataCheck(
     });
 
   const leases = own(portfolio.leases);
-  if (!leaseInForce(leases, asOf)) attention.push({ kind: "noLease", asOf });
+  if (!leaseInForce(leases, asOf)) {
+    const ended = renewedLease(leases, basisDate(property, baseDate))?.endDate;
+    attention.push(
+      ended && ended.getTime() < asOf.getTime()
+        ? { kind: "leaseEnded", endDate: ended }
+        : { kind: "noLease", asOf },
+    );
+  }
   const leaseEnd = leaseEndWithoutFollowOn(leases, asOf);
   if (
     leaseEnd &&
@@ -142,10 +157,11 @@ export function dataCheckItems(
   properties: Property[],
   portfolio: Portfolio,
   asOf: Date,
+  baseDate: Date,
 ): { attention: DataCheckItem[]; defaults: DataCheckItem[] } {
   const checks = properties.map((p) => ({
     p,
-    check: propertyDataCheck(p, portfolio, asOf),
+    check: propertyDataCheck(p, portfolio, asOf, baseDate),
   }));
   const rows = (group: keyof DataCheck) =>
     checks.flatMap(({ p, check }) =>
@@ -164,6 +180,7 @@ export function findingFix(f: DataFinding): DataCheckFix {
     case "valuationStale":
     case "noValuation":
     case "noLease":
+    case "leaseEnded":
     case "leaseEnding":
       return "records";
     case "fixationEnded":
@@ -189,9 +206,11 @@ export function findingText(
         fmtDate(f.validFrom),
       );
     case "noValuation":
-      return d.noValuation(fmtCzk(f.purchasePrice));
+      return d.noValuation(fmtDate(f.asOf), fmtCzk(f.purchasePrice));
     case "noLease":
       return d.noLease(fmtDate(f.asOf));
+    case "leaseEnded":
+      return d.leaseEnded(fmtDate(f.endDate));
     case "leaseEnding":
       return d.leaseEnding(fmtDate(f.endDate));
     case "fixationEnded":

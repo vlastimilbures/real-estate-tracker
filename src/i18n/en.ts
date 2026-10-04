@@ -367,11 +367,13 @@ export const en = {
     hide: "Hide data check",
     goTo: (section: string) => `Go to ${section}`,
     valuationStale: (age: string, date: string) =>
-      `The latest valuation is ${age} old (${date}). Value, equity and LTV rest on it and the appreciation assumption.`,
-    noValuation: (price: string) =>
-      `No valuation is entered, so the purchase price of ${price} stands in as the market value.`,
+      `The valuation in use is ${age} old (${date}). Value, equity and LTV rest on it.`,
+    noValuation: (date: string, price: string) =>
+      `No valuation is in force on ${date}, so the purchase price of ${price} stands in as the market value.`,
     noLease: (date: string) =>
       `No lease is in force on ${date}, so rent counts as 0.`,
+    leaseEnded: (date: string) =>
+      `The lease ended on ${date} and no next lease is entered. The snapshot counts no rent after that date; the projection assumes the lease is renewed.`,
     leaseEnding: (date: string) =>
       `The lease ends on ${date} and no next lease is entered. The projection assumes it is renewed.`,
     growthBoth: "Uses the portfolio appreciation and rent indexation.",

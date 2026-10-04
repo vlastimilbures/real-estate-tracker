@@ -336,6 +336,7 @@ export function PropertyDetail() {
             property={property}
             portfolio={store.portfolio}
             asOf={out.asOf}
+            baseDate={baseDate}
             resetRate={assumptions.postFixationResetRatePa}
             onFix={(fix) =>
               fix === "edit" ? setEditing(true) : focusSection(sectionId(fix))

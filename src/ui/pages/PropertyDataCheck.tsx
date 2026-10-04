@@ -11,18 +11,26 @@ export function PropertyDataCheckPanel({
   property,
   portfolio,
   asOf,
+  baseDate,
   resetRate,
   onFix,
 }: {
   property: Property;
   portfolio: Portfolio;
   asOf: Date;
+  /** The projection start. */
+  baseDate: Date;
   resetRate: Rate;
   onFix: (fix: DataCheckFix) => void;
 }) {
   const t = useT();
   const d = t.dataCheck;
-  const { attention, defaults } = dataCheckItems([property], portfolio, asOf);
+  const { attention, defaults } = dataCheckItems(
+    [property],
+    portfolio,
+    asOf,
+    baseDate,
+  );
   return (
     <Panel title={d.title} hint={d.summary(attention.length, defaults.length)}>
       <DataCheckList
