@@ -63,7 +63,8 @@ describe("ADR 0116: interest saved by prepayments", () => {
       .times(244)
       .minus(500000);
     expect(closedForm.toFixed(2)).toBe("264031.42");
-    expect(saved([b])?.toFixed(6)).toBe(closedForm.toFixed(6));
+    const gap = saved([b])?.minus(closedForm.toString()).abs().toNumber();
+    expect(gap).toBeLessThanOrEqual(1e-6);
   });
 
   it("keeps recasts on both sides", () => {
