@@ -18,7 +18,12 @@ import {
   type PropertySchedule,
 } from "./schedule";
 import { assertInputs } from "./validate";
-import { buildCpiIndex, projectPortfolio, turnOnYear } from "./projections";
+import {
+  buildCpiIndex,
+  prePurchaseDebtService,
+  projectPortfolio,
+  turnOnYear,
+} from "./projections";
 import type {
   Assumptions,
   IrrNoRateReason,
@@ -37,11 +42,11 @@ export function irr(cashflows: Decimal[]): Decimal | null {
 }
 
 /**
- * IRR via bisection on the decimal NPV (DR-158, ADR 0079). NOT_UNIQUE when an NPV sign
- * scan over [−90 %, +1000 %] finds more than one root (counting cash-flow sign changes
- * would wrongly flag a vector with a future purchase). Otherwise the root is bracketed
- * in [−90 %, +100 %], then the upper bound widens in steps to +1000 %; NO_ROOT when no
- * bracket holds one.
+ * IRR via bisection on the decimal NPV (DR-158, ADR 0079). NOT_UNIQUE when an NPV scan
+ * over [−90 %, +1000 %] finds more than one root (counting cash-flow sign changes would
+ * wrongly flag a vector with a future purchase). Otherwise the root is bracketed in
+ * [−90 %, +100 %], then the upper bound widens in steps to +1000 %; a bracket end at the
+ * root is the IRR (ADR 0121); NO_ROOT when no bracket holds one.
  */
 export function irrResult(cashflows: Decimal[]): IrrResult {
   // Horner's rule in the discount factor v = 1/(1+rate): one multiply-add per cash flow
@@ -53,21 +58,54 @@ export function irrResult(cashflows: Decimal[]): IrrResult {
   };
   // Descartes' rule of signs: with at most one cash-flow sign change the NPV, a
   // polynomial in v > 0, has at most one root, so only scan when there are more.
-  if (signChanges(cashflows) > 1 && npvSignChanges(npv) > 1) {
+  if (signChanges(cashflows) > 1 && npvRootsOnGrid(npv) > 1) {
     return { rate: null, reason: "NOT_UNIQUE" };
   }
+  // All-zero flows: every rate is a root, so there is no IRR (DR-061).
+  if (cashflows.every((cf) => cf.isZero())) {
+    return { rate: null, reason: "NO_ROOT" };
+  }
+  // A bracket end whose NPV passes the tolerance test `bisect` applies is the root. The
+  // sign of a product cannot tell: 0 × x is ±0 and Decimal(+0).isPositive() is true
+  // (ADR 0121, #185).
   const nlo = npv(IRR_BRACKET_LOW);
+  if (atRoot(nlo)) return { rate: IRR_BRACKET_LOW, reason: null };
   for (const hi of [IRR_BRACKET_HIGH, ...IRR_BRACKET_EXTENSIONS]) {
-    if (!nlo.times(npv(hi)).isPositive()) {
+    const nhi = npv(hi);
+    if (atRoot(nhi)) return { rate: hi, reason: null };
+    if (nlo.times(nhi).isNegative()) {
       return { rate: bisect(npv, IRR_BRACKET_LOW, nlo, hi), reason: null };
     }
   }
   return { rate: null, reason: "NO_ROOT" };
 }
 
-/** Sign changes of the NPV across `IRR_SCAN_GRID`. */
-function npvSignChanges(npv: (rate: Decimal) => Decimal): number {
-  return signChanges(IRR_SCAN_GRID.map(npv));
+/** An NPV close enough to 0 to be the root (the tolerance test of `bisect`). */
+function atRoot(n: Decimal): boolean {
+  return n.abs().lessThan(IRR_NPV_TOLERANCE);
+}
+
+/**
+ * Roots of the NPV seen across `IRR_SCAN_GRID`: each sign change between neighbouring
+ * points, and each run of points at a root (crossing or touching 0), counted once. A
+ * root on a grid point is a root: with another one the IRR is not unique (#185).
+ */
+function npvRootsOnGrid(npv: (rate: Decimal) => Decimal): number {
+  let roots = 0;
+  let prev = 0;
+  let inRoot = false;
+  for (const n of IRR_SCAN_GRID.map(npv)) {
+    if (atRoot(n)) {
+      if (!inRoot) roots++;
+      inRoot = true;
+      continue;
+    }
+    const sign = n.isNegative() ? -1 : 1;
+    if (!inRoot && prev !== 0 && sign !== prev) roots++;
+    prev = sign;
+    inRoot = false;
+  }
+  return roots;
 }
 
 /** Sign changes along `values`, skipping exact zeros. */
@@ -83,7 +121,7 @@ function signChanges(values: Decimal[]): number {
   return changes;
 }
 
-/** Bisect [lo, hi], whose NPVs differ in sign (or one is zero), to the root. */
+/** Bisect [lo, hi], whose NPVs are off the root and differ in sign, to the root. */
 function bisect(
   npv: (rate: Decimal) => Decimal,
   lo: Decimal,
@@ -93,7 +131,7 @@ function bisect(
   for (let iter = 0; iter < IRR_MAX_ITERATIONS; iter++) {
     const mid = lo.plus(hi).div(2);
     const nmid = npv(mid);
-    if (nmid.abs().lessThan(IRR_NPV_TOLERANCE)) return mid;
+    if (atRoot(nmid)) return mid;
     if (nlo.times(nmid).isNegative()) {
       hi = mid;
     } else {
@@ -200,11 +238,11 @@ function equityGrowth(
 }
 
 /**
- * Cumulative net cash flow (net of acquisition outflows and refinance cash), the first calendar year with
- * a positive net cash flow, and the first year the portfolio is debt-free. A debt-free
- * year only counts once the portfolio has carried debt (a never-leveraged portfolio
- * reports null). NB: greaterThan(ZERO), not isPositive() — ZERO.isPositive() is true, and
- * a year with no active property nets exactly 0 (ADR 0121).
+ * Cumulative net cash flow (net of the cash outside it, `acqOutflow` in `kpisFrom`), the
+ * first calendar year with a positive net cash flow, and the first year the portfolio is
+ * debt-free. A debt-free year only counts once the portfolio has carried debt (a
+ * never-leveraged portfolio reports null). NB: greaterThan(ZERO), not isPositive() —
+ * ZERO.isPositive() is true, and a year with no active property nets exactly 0 (ADR 0121).
  * The real cumulative cash flow deflates each year by its own CPI_t (ADR 0087).
  */
 function cashFlowMilestones(
@@ -225,8 +263,8 @@ function cashFlowMilestones(
   };
 }
 
-/** Σ over years 1..N of net cash flow minus acquisition outflows; with `cpi`, each
- *  year's flow is divided by CPI_t first (real terms). */
+/** Σ over years 1..N of net cash flow minus the cash outside it (`acqOutflow`); with
+ *  `cpi`, each year's flow is divided by CPI_t first (real terms). */
 function cumulativeNetCashFlow(
   proj: ProjectionYear[],
   acqOutflow: Decimal[],
@@ -274,7 +312,8 @@ function leveredIrr(
 }
 
 /** Levered cash-flow vector [-equity0, netCF1..netCF_{N-1}, netCF_N + equityN], net of
- *  acquisition outflows and refinance cash (terminal sale at projected value). */
+ *  the cash outside net cash flow (`acqOutflow` in `kpisFrom`; terminal sale at projected
+ *  value). */
 function leveredCashFlows(
   proj: ProjectionYear[],
   acqOutflow: Decimal[],
@@ -293,7 +332,9 @@ function leveredCashFlows(
  * Σ principal repaid (scheduled and prepaid, ADR 0109) across active properties within
  * the horizon window. Schedules may
  * extend past it (a future loan amortizing over its own full term), but the parity
- * invariant is "Σ principal Yrs 1–N = initial debt", matching the projection.
+ * invariant is "Σ principal Yrs 1–N = initial debt", matching the projection. The raw
+ * rows include the years before a future buy turns on, so this equals the projection's
+ * principal + prepaid plus `prePurchaseDebtService`'s (ADR 0124).
  */
 function principalRepaidInHorizon(
   portfolio: Portfolio,
@@ -313,16 +354,18 @@ function principalRepaidInHorizon(
   return total;
 }
 
-/** Σ projection interest of years 1..N, nominal and deflated by CPI_t (ADR 0103). */
+/** Σ interest of years 1..N, nominal and deflated by CPI_t (ADR 0103): the projection's
+ *  plus the interest paid before a future buy turns on (ADR 0124). */
 function interestInHorizon(
   proj: ProjectionYear[],
+  prePurchase: { interest: Decimal }[],
   cpi: Decimal[],
   N: number,
 ): { totalInterest: Decimal; totalInterestReal: Decimal } {
   let nominal = ZERO;
   let real = ZERO;
   for (let t = 1; t <= N; t++) {
-    const interest = at(proj, t).interest;
+    const interest = at(proj, t).interest.plus(at(prePurchase, t).interest);
     nominal = nominal.plus(interest);
     real = real.plus(interest.div(at(cpi, t)));
   }
@@ -367,14 +410,25 @@ export function kpisFrom(
   const equity0 = at(proj, 0).equity;
   const equityN = at(proj, N).equity;
   // Cash outside net cash flow: acquisitions out, net refinance cash in (D-47),
-  // prepayments and their fees out (ADR 0109).
+  // prepayments and their fees out (ADR 0109), and the debt service paid before a
+  // future buy turns on (ADR 0124).
   const refiCash = refinanceCash(portfolio, assumptions, schedules);
-  const acqOutflow = acquisitionOutflows(portfolio, assumptions).map((x, t) =>
-    x
+  const prePurchase = prePurchaseDebtService(
+    portfolio,
+    assumptions,
+    scheduleRows(schedules),
+  );
+  const acqOutflow = acquisitionOutflows(portfolio, assumptions).map((x, t) => {
+    const pre = at(prePurchase, t);
+    return x
       .minus(at(refiCash, t))
       .plus(at(proj, t).prepaid)
-      .plus(at(proj, t).prepaymentFees),
-  );
+      .plus(at(proj, t).prepaymentFees)
+      .plus(pre.interest)
+      .plus(pre.principal)
+      .plus(pre.prepaid)
+      .plus(pre.prepaymentFees);
+  });
   const nominalVector = leveredCashFlows(proj, acqOutflow);
   const realVector = nominalVector.map((cf, t) => cf.div(at(cpi, t)));
 
@@ -388,6 +442,6 @@ export function kpisFrom(
       assumptions,
       schedules,
     ),
-    ...interestInHorizon(proj, cpi, N),
+    ...interestInHorizon(proj, prePurchase, cpi, N),
   };
 }

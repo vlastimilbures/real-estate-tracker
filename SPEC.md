@@ -358,6 +358,16 @@ detail page, #33 PR3; never a blocker): uses = price + recorded costs + recorded
 sources = own cash + acquisition loan; gap = uses − sources, only while own cash is known.
 A funding record on a property bought on or before baseDate changes no figure.
 
+**Debt service before the purchase** (ADR 0124): a future buy's loan can start before its
+purchase date (an off-plan loan drawn at contract). Its schedule runs from its own start, while
+the property's rows before the turn-on year stay empty. In years 1 … min(tStart − 1, N) the
+schedule's interest, principal, prepaid and prepayment fees are **owner cash out**, booked in
+the year paid, beside the down payment (for cumulative cash flow and levered IRR). Tranches
+drawn in those years are the bank's money, not cash; the balance arrives as the turn-on year's
+draw (DR-092). The turn-on year's row already holds all twelve schedule months. A property
+bought after the horizon pays every in-window instalment but never enters equity. Principal
+repaid before baseDate is not counted (#193).
+
 **Deactivated properties** (`active = false`) are excluded from all projection rows and KPIs.
 
 For each year _t ≥ 1_ and active property (growth rate `g` = override or default
@@ -428,8 +438,9 @@ debt) for every property; when every loan retires within the horizon (as in the 
   when equity₀ ≤ 0 and the tile shows "—" (ADR 0034). **Real multiple** = net worth realₙ /
   equity₀ (CPI₀ = 1, so equity₀ is already in base-date Kč); 0 when equity₀ = 0, like the
   nominal multiple (ADR 0087).
-- Cumulative net cash flow (Years 1…N), net of acquisition outflows, refinance cash and
-  prepayments with their fees (ADR 0109).
+- Cumulative net cash flow (Years 1…N), net of acquisition outflows, refinance cash,
+  prepayments with their fees (ADR 0109) and debt service paid before a future purchase
+  (ADR 0124).
   **Real** cumulative net cash flow = Σ_{t=1..N} (netCF_t − acquisition outflow_t) / CPI_t:
   each year is deflated by its own index, as in the real IRR (ADR 0087). The Dashboard and
   Scenario compare show the multiple and the cumulative cash flow of the lens; Σ principal
@@ -437,24 +448,28 @@ debt) for every property; when every loan retires within the horizon (as in the 
 - First calendar year net cash flow turns positive; first year portfolio debt = 0 — each
   reported with its projection year (ADR 0022).
 - **Levered IRR** (nominal & real): IRR of the vector `[−equity₀, netCF₁, …, netCF_{N−1},
-netCF_N + equity_N]` — acquisition outflows, refinance cash and prepayments with their
-  fees adjust the relevant year's entry; terminal = projected equity at horizon. Real IRR deflates each entry by `CPI_t`.
+netCF_N + equity_N]` — acquisition outflows, refinance cash, prepayments with their
+  fees and debt service paid before a future purchase (ADR 0124) adjust the relevant year's entry; terminal = projected equity at horizon. Real IRR deflates each entry by `CPI_t`.
   Computed by bisection on the decimal NPV (tolerance |NPV| < 1e-9 Kč, at most 200
   iterations) over the domain **−90 % … +1000 %** a year (ADR 0079; `src/engine/kpis.ts`
   `irrResult`, `src/engine/constants.ts`). The search starts with −90 % … +100 % and, when
   that brackets no sign change, widens the upper bound to +200 %, +400 %, +800 % and
-  +1000 %. Uniqueness: with at most one sign change in the cash flows the NPV has at most
+  +1000 %. A bracket end with |NPV| < 1e-9 Kč is the IRR (ADR 0121, #185).
+  Uniqueness: with at most one sign change in the cash flows the NPV has at most
   one root (Descartes' rule of signs), so no check is needed; with more than one, the NPV's
   sign is scanned over a rate grid across the domain (`IRR_SCAN_GRID`) and more than one
-  NPV sign change gives no IRR with reason **`NOT_UNIQUE`**. When no bracket holds a root
-  the reason is **`NO_ROOT`**. In either case the IRR is null and the UI shows "n/a" with
+  root on the grid (a sign change between points, or a run of points with |NPV| < 1e-9 Kč)
+  gives no IRR with reason **`NOT_UNIQUE`**. When no bracket holds a root the reason is
+  **`NO_ROOT`**. In either case the IRR is null and the UI shows "n/a" with
   the reason: "No unique IRR: the cash flows break even at more than one rate" or "No IRR
   between −90 % and +1000 %" (`src/ui/model/irr.ts`).
 - `totalPrincipalRepaid` (sanity invariant): Σ principal repaid over the horizon, prepaid
-  principal included; for the seed it equals the starting debt (tripwire for the classic
-  zero-principal spreadsheet bug).
-- **Total interest** (ADR 0103): Σ projection interest of Years 1…N; the **real** figure is
-  Σ interest_t / CPI_t, deflated like the real cumulative cash flow.
+  principal included, read from the schedules of the active properties (so it includes the
+  years before a future purchase, ADR 0124); for the seed it equals the starting debt
+  (tripwire for the classic zero-principal spreadsheet bug).
+- **Total interest** (ADR 0103): Σ projection interest of Years 1…N plus the interest paid
+  before a future purchase (ADR 0124); the **real** figure is Σ interest_t / CPI_t, deflated
+  like the real cumulative cash flow.
 
 ### 4.7 Financing exposure and upcoming events (ADR 0103)
 

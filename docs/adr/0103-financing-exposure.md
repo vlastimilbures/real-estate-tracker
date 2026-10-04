@@ -3,6 +3,8 @@
 - Status: Accepted
 - Amended by: [0117](0117-property-loan-outlook.md) (status precedence; remaining term counts
   payments due)
+- Amended by: [0124](0124-pre-purchase-debt-service.md) (total interest adds the interest paid
+  before a future purchase)
 - Date: 2026-10-03
 - Source: issue #31 (pre-release review 2026-10, F5 and §6)
 
