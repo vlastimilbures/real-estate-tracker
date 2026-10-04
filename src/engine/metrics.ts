@@ -12,6 +12,7 @@ import {
   balanceAtMonth,
   instalmentAtMonth,
   openingDebt,
+  propertySchedule,
   schedulesByProperty,
 } from "./schedule";
 import { assertAsOf, assertInputs } from "./validate";
@@ -194,8 +195,9 @@ function snapshotValue(
 
 /**
  * Debt, instalment and rate at `asOf`, read from the fixation-aware schedule (so a
- * future asOf past a reset reflects the re-amortized instalment). No rows (no loan)
- * gives zeros.
+ * future asOf past a reset reflects the re-amortized instalment). `schedule` must be
+ * the property's rows built from the same inputs: it has no rows only when the
+ * property has no loan, which gives zeros.
  */
 function snapshotDebt(
   blocks: MortgageBlock[],
@@ -255,10 +257,8 @@ export function propertySnapshot(
   assertAsOf(asOf, assumptions.baseDate); // D-19: no snapshot before the projection start
   const rows =
     schedule ??
-    schedulesByProperty(portfolio.mortgages, [property.id], assumptions).get(
-      property.id,
-    ) ??
-    [];
+    propertySchedule(forProperty(portfolio.mortgages, property.id), assumptions)
+      .rows;
   return snapshotProperty(property, portfolio, assumptions, asOf, rows);
 }
 
