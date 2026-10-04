@@ -496,7 +496,6 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
           const input =
             spec.kind === "draws" ? (
               <TextArea
-                className="draws-input"
                 rows={3}
                 value={draft[spec.name] ?? ""}
                 placeholder={t.forms.drawsPlaceholder}

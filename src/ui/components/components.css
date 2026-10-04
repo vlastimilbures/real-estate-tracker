@@ -996,8 +996,7 @@ table.data tbody tr:hover td.sticky-col {
 }
 .field input:not([type="checkbox"]),
 .field select,
-.field textarea.draws-input,
-.field textarea.note-input {
+.field textarea {
   width: 100%;
   font-family: inherit;
   font-size: 13.5px;
@@ -1008,19 +1007,16 @@ table.data tbody tr:hover td.sticky-col {
   background: var(--surface);
   color: var(--ink);
 }
-.field textarea.draws-input,
-.field textarea.note-input {
+.field textarea {
   resize: vertical;
   line-height: 1.5;
 }
-.field textarea.draws-input:focus,
-.field textarea.note-input:focus {
+.field textarea:focus {
   outline: 2px solid var(--accent);
   outline-offset: 0;
   border-color: var(--accent);
 }
-.field.invalid textarea.draws-input,
-.field.invalid textarea.note-input {
+.field.invalid textarea {
   border-color: var(--negative);
 }
 .field input.has-suffix {

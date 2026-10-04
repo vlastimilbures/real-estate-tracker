@@ -211,7 +211,6 @@ function AcquisitionFields({
             <div className="form-wide">
               <Field label={t.propertyForm.fundingNote}>
                 <TextArea
-                  className="note-input"
                   rows={2}
                   value={form.funding_note}
                   onChange={(e) => set("funding_note", e.target.value)}
