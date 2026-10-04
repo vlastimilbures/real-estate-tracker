@@ -56,7 +56,8 @@ export interface LoanExposure {
   payoffDate: IsoDate | null;
   /** Schedule payments due after as-of (0 once repaid, ADR 0117). */
   remainingMonths: number | null;
-  /** Interest the loan's prepayments save to payoff; null without one (ADR 0116). */
+  /** Interest the loan's prepayments save to payoff; null unless one repaid some
+   *  principal (ADR 0116, ADR 0130). */
   interestSaved: Decimal | null;
 }
 
@@ -204,16 +205,19 @@ type LoanSchedule = Pick<PropertySchedule, "rows" | "eventOutcomes">;
 /**
  * Interest a property's prepayments save over the rest of its loans' life: the chain's
  * interest from grid month 1 to payoff with every prepayment removed (those before
- * baseDate too), minus the same in `schedule`, built with them. Recasts stay.
- * Null when no block of the chain has a prepayment (ADR 0116).
+ * baseDate too), minus the same in `schedule`, built with them. Recasts stay (ADR 0116).
+ * Null unless a prepayment of the chain repaid some principal (ADR 0130). Negative when
+ * a recast applies only with the prepayment; the UI shows a note instead.
  */
 export function prepaymentInterestSaved(
   blocks: MortgageBlock[],
   assumptions: Assumptions,
   schedule: LoanSchedule,
 ): Decimal | null {
-  const chain = blockChain(blocks, assumptions.baseDate);
-  if (!chain.some((b) => b.prepayments?.length)) return null;
+  const applied = schedule.eventOutcomes.some(
+    (o) => o.kind === "prepayment" && o.applied.greaterThan(ZERO),
+  );
+  if (!applied) return null;
   const without = blocks.map((b) =>
     b.prepayments?.length ? mortgageBlock({ ...b, prepayments: undefined }) : b,
   );

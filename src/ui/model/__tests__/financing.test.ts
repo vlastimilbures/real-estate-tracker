@@ -16,7 +16,12 @@ import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
 import { fmtDate } from "../../../lib/format";
 import { D } from "../../../lib/money";
-import { financingLabels, financingPanel } from "../financing";
+import {
+  financingLabels,
+  financingPanel,
+  interestSavedShown,
+  type InterestSavedShown,
+} from "../financing";
 
 function impliedMaturityOf(id: string) {
   const b = portfolio.mortgages.find((x) => x.id === id);
@@ -227,6 +232,23 @@ describe("financingLabels (ADR 0103)", () => {
   });
 });
 
+/** A shown figure that must be an amount. */
+function amount(x: InterestSavedShown) {
+  if (x === "n/a") throw new Error("expected an amount");
+  return x;
+}
+
+// ADR 0130: one display rule for the property page and the Dashboard.
+describe("interestSavedShown (ADR 0130)", () => {
+  it("hides null, shows zero or more, and n/a in place of a negative figure", () => {
+    expect(interestSavedShown(null)).toBeNull();
+    expect(interestSavedShown(D(0))).toEqual(D(0));
+    expect(interestSavedShown(D("264031.42"))).toEqual(D("264031.42"));
+    expect(interestSavedShown(D("-0.01"))).toBe("n/a");
+    expect(interestSavedShown(D("-433551.87"))).toBe("n/a");
+  });
+});
+
 // ADR 0116 §9: interest saved by prepayments, total plus each property, nominal.
 describe("financingPanel interest saved (ADR 0116)", () => {
   const prepaid = (ids: string[]): Portfolio => ({
@@ -255,19 +277,45 @@ describe("financingPanel interest saved (ADR 0116)", () => {
     expect(panel(portfolio).m.interestSaved).toBeNull();
   });
 
-  it("leaves out a property whose prepayments saved nothing", () => {
-    const p = prepaid(["lipova"]);
+  /** The panel with Javorova's figure replaced by `javorova`. */
+  const withJavorova = (javorova: string, ids = ["lipova"]) => {
+    const p = prepaid(ids);
     const o = run(p);
-    // E.g. every prepayment fell after payoff: interest saved is zero, not null.
     const fx = {
       ...o.financing,
       loans: o.financing.loans.map((l) =>
-        l.propertyId === "javorova" ? { ...l, interestSaved: D(0) } : l,
+        l.propertyId === "javorova" ? { ...l, interestSaved: D(javorova) } : l,
       ),
     };
-    const m = financingPanel(fx, p, o.kpis, "nominal", "3", en);
-    expect(m.interestSaved!.properties.map((r) => r.propertyId)).toEqual([
-      "lipova",
+    return { m: financingPanel(fx, p, o.kpis, "nominal", "3", en), o };
+  };
+  const lipovaSaved = (o: ReturnType<typeof run>) =>
+    o.financing.loans.find((l) => l.propertyId === "lipova")!.interestSaved!;
+
+  it("lists a negative figure last as n/a, outside the total (ADR 0130)", () => {
+    const { m, o } = withJavorova("-433551.87");
+    expect(m.interestSaved!.properties).toEqual([
+      expect.objectContaining({ propertyId: "lipova", amount: lipovaSaved(o) }),
+      expect.objectContaining({ propertyId: "javorova", amount: "n/a" }),
+    ]);
+    expect(m.interestSaved!.total).toEqual(lipovaSaved(o));
+  });
+
+  it("is n/a in total when every figure is negative (ADR 0130)", () => {
+    const { m } = withJavorova("-1", []);
+    expect(m.interestSaved).toEqual({
+      total: "n/a",
+      properties: [expect.objectContaining({ propertyId: "javorova" })],
+    });
+  });
+
+  it("shows a zero figure, as the property page does (ADR 0130)", () => {
+    const { m } = withJavorova("0");
+    expect(
+      m.interestSaved!.properties.map((r) => [r.propertyId, String(r.amount)]),
+    ).toEqual([
+      ["lipova", expect.any(String)],
+      ["javorova", "0"],
     ]);
   });
 
@@ -281,12 +329,14 @@ describe("financingPanel interest saved (ADR 0116)", () => {
       "javorova",
       "lipova",
     ]);
-    expect(rows[0]!.amount.greaterThanOrEqualTo(rows[1]!.amount)).toBe(true);
+    expect(
+      amount(rows[0]!.amount).greaterThanOrEqualTo(amount(rows[1]!.amount)),
+    ).toBe(true);
     expect(rows.find((r) => r.propertyId === "lipova")).toMatchObject({
       propertyName: "Byt Lipova",
       amount: of("lipova"),
     });
-    expect(m.interestSaved!.total.toFixed(6)).toBe(
+    expect(amount(m.interestSaved!.total).toFixed(6)).toBe(
       of("javorova").plus(of("lipova")).toFixed(6),
     );
     expect(panel(p, "real").m.interestSaved).toEqual(m.interestSaved);

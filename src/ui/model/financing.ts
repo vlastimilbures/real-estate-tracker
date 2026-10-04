@@ -15,6 +15,19 @@ import { ZERO, type Decimal } from "../../lib/money";
 import { fmtDate } from "../../lib/format";
 import type { Mode } from "./lens";
 
+/** An interest-saved figure as shown (ADR 0130): an amount of 0 or more, or "n/a" in
+ *  place of a negative one (a recast that applies only with the prepayment). */
+export type InterestSavedShown = Decimal | "n/a";
+
+/** The one display rule for interest saved, on the property page and the Dashboard:
+ *  null stays hidden, a negative figure becomes "n/a" (ADR 0130). */
+export function interestSavedShown(
+  saved: Decimal | null,
+): InterestSavedShown | null {
+  if (saved === null) return null;
+  return saved.lessThan(ZERO) ? "n/a" : saved;
+}
+
 /** The reset windows the panel offers, in years (ADR 0103). */
 export const RESET_WINDOWS = ["1", "3", "5"] as const;
 export type ResetWindow = (typeof RESET_WINDOWS)[number];
@@ -42,10 +55,15 @@ export interface FinancingPanelModel {
   } | null;
   resetting: { amount: Decimal; loans: number };
   totalInterest: Decimal;
-  /** Null when no property has a prepayment; properties largest first. */
+  /** Null when no property has a figure; properties largest first, "n/a" last. The
+   *  total sums the amounts shown; "n/a" when there is none (ADR 0130). */
   interestSaved: {
-    total: Decimal;
-    properties: { propertyId: string; propertyName: string; amount: Decimal }[];
+    total: InterestSavedShown;
+    properties: {
+      propertyId: string;
+      propertyName: string;
+      amount: InterestSavedShown;
+    }[];
   } | null;
   events: FinancingEventRow[];
   moreEvents: number;
@@ -65,6 +83,13 @@ function eventLabel(t: Dictionary, kind: FinancingEventKind): string {
   }
 }
 
+/** Largest amount first, "n/a" last. */
+function byAmount(a: InterestSavedShown, b: InterestSavedShown): number {
+  if (a === "n/a" || b === "n/a")
+    return Number(a === "n/a") - Number(b === "n/a");
+  return b.comparedTo(a);
+}
+
 /** The panel's figures and rows for the exposure at its as-of date. */
 export function financingPanel(
   fx: FinancingExposure,
@@ -81,18 +106,20 @@ export function financingPanel(
     .sort((a, b) => a.fixationEnd.getTime() - b.fixationEnd.getTime())[0];
   const events = upcomingEvents(portfolio, fx, EVENT_MONTHS);
   const saved = fx.loans
-    .flatMap((l) =>
-      l.interestSaved && !l.interestSaved.isZero()
-        ? [
+    .flatMap((l) => {
+      const amount = interestSavedShown(l.interestSaved);
+      return amount === null
+        ? []
+        : [
             {
               propertyId: l.propertyId,
               propertyName: name(l.propertyId),
-              amount: l.interestSaved,
+              amount,
             },
-          ]
-        : [],
-    )
-    .sort((a, b) => b.amount.comparedTo(a.amount));
+          ];
+    })
+    .sort((a, b) => byAmount(a.amount, b.amount));
+  const amounts = saved.flatMap((r) => (r.amount === "n/a" ? [] : [r.amount]));
   return {
     hasLoans: fx.loans.length > 0,
     nextReset: next
@@ -109,7 +136,10 @@ export function financingPanel(
     interestSaved:
       saved.length > 0
         ? {
-            total: saved.reduce((sum, r) => sum.plus(r.amount), ZERO),
+            total:
+              amounts.length > 0
+                ? amounts.reduce((sum, a) => sum.plus(a), ZERO)
+                : "n/a",
             properties: saved,
           }
         : null,

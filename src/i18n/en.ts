@@ -352,6 +352,7 @@ export const en = {
       `Total interest (Yrs 1–${n}, real)`,
     financingInterestSaved: "Interest saved by prepayments (nominal)",
     financingInterestSavedByProperty: "By property",
+    financingInterestSavedNa: "n/a: a recast depends on the prepayment",
     financingUpcoming: "Next 12 months",
     financingNoEvents: "Nothing modelled in the next 12 months.",
     financingMoreEvents: (n: number) => `+ ${n} more`,
@@ -575,6 +576,7 @@ export const en = {
     loanPayoff: "Modelled payoff",
     loanPayoffNone: "Repaid",
     interestSaved: "Interest saved by prepayments (nominal)",
+    interestSavedNa: "n/a: a recast depends on the prepayment",
     // ADR 0117: the remaining term and each block's reset.
     remainingTerm: "Remaining term",
     outlookResetsTitle: "Fixation resets by loan block",

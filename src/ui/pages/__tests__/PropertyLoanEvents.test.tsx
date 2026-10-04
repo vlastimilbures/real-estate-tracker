@@ -10,7 +10,7 @@ import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
-import { isoDate, money, portfolioOutputs } from "../../../engine";
+import { isoDate, money, portfolioOutputs, rate } from "../../../engine";
 import { fmtCzk, fmtDate } from "../../../lib/format";
 import type { MortgagePrepayment } from "../../../engine";
 
@@ -133,5 +133,80 @@ describe("ADR 0117: block resets in the loan outlook", () => {
     expect(row.textContent).toContain(fmtCzk(reset.balance));
     expect(row.textContent).toContain(pd.outlookStatus.nextReset);
     expect(row.className).toContain("is-milestone");
+  });
+});
+
+describe("ADR 0130: interest saved on Property detail", () => {
+  it("shows n/a when a recast applies only with the prepayment", () => {
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: {
+          ...portfolio,
+          mortgages: portfolio.mortgages.map((m) =>
+            m.propertyId === "javorova"
+              ? {
+                  ...m,
+                  prepayments: [
+                    {
+                      date: isoDate("2031-01-17"),
+                      amount: money(300000),
+                      effect: "lowerInstalment" as const,
+                    },
+                  ],
+                  recasts: [
+                    { date: isoDate("2031-01-17"), instalment: money(5000) },
+                  ],
+                }
+              : m,
+          ),
+        },
+        assumptions,
+        status: "ready",
+      }),
+    );
+    render(<PropertyDetail />);
+    const text = outlook().textContent;
+    expect(text).toContain(pd.interestSaved);
+    expect(text).toContain(pd.interestSavedNa);
+    expect(text).not.toContain("433");
+  });
+
+  it("hides interest saved when a successor replaced the prepayment", () => {
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: {
+          ...portfolio,
+          mortgages: [
+            ...portfolio.mortgages.map((m) =>
+              m.propertyId === "javorova"
+                ? {
+                    ...m,
+                    prepayments: [
+                      {
+                        date: isoDate("2037-01-17"),
+                        amount: money(100000),
+                        effect: "lowerInstalment" as const,
+                      },
+                    ],
+                  }
+                : m,
+            ),
+            {
+              id: "m-refi",
+              propertyId: "javorova",
+              startDate: isoDate("2036-01-17"),
+              initialPrincipal: money(900000),
+              fixationYears: 5,
+              interestRatePa: rate("0.039"),
+              monthlyInstalment: money(9800),
+            },
+          ],
+        },
+        assumptions,
+        status: "ready",
+      }),
+    );
+    render(<PropertyDetail />);
+    expect(outlook().textContent).not.toContain(pd.interestSaved);
   });
 });

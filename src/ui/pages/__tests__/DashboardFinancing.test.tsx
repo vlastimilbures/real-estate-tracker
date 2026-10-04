@@ -168,3 +168,42 @@ describe("interest saved (ADR 0116)", () => {
     expect(onOpen).toHaveBeenCalledWith("lipova");
   });
 });
+
+describe("interest saved with a recast that needs the prepayment (ADR 0130)", () => {
+  // A 300,000 Kč prepayment and a recast to a 5,000 Kč instalment on one date: the
+  // engine's figure is negative, so the panel shows the note instead of an amount.
+  const recast: Portfolio = {
+    ...portfolio,
+    mortgages: portfolio.mortgages.map((m) =>
+      m.propertyId === "javorova"
+        ? {
+            ...m,
+            prepayments: [
+              {
+                date: isoDate("2031-01-17"),
+                amount: moneyOf(300000),
+                effect: "lowerInstalment" as const,
+              },
+            ],
+            recasts: [
+              { date: isoDate("2031-01-17"), instalment: moneyOf(5000) },
+            ],
+          }
+        : m,
+    ),
+  };
+
+  it("shows n/a for the total and the property, never the negative amount", () => {
+    const { out, view } = renderPanel(recast);
+    const saved = out.financing.loans.find(
+      (l) => l.propertyId === "javorova",
+    )!.interestSaved!;
+    expect(saved.isNegative()).toBe(true);
+    expect(screen.getByText(en.dashboard.financingInterestSaved)).toBeTruthy();
+    expect(
+      screen.getAllByText(en.dashboard.financingInterestSavedNa).length,
+    ).toBe(2);
+    expect(view.container.textContent).not.toContain(money(saved));
+    expect(view.container.textContent).not.toContain(money(saved.negated()));
+  });
+});

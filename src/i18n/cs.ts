@@ -328,6 +328,8 @@ export const cs: Dictionary = {
     financingTotalInterestReal: (n) => `Úroky celkem (roky 1–${n}, reálně)`,
     financingInterestSaved: "Úrok ušetřený mimořádnými splátkami (nominálně)",
     financingInterestSavedByProperty: "Podle nemovitosti",
+    financingInterestSavedNa:
+      "n/a: změna splatnosti závisí na mimořádné splátce",
     financingUpcoming: "Příštích 12 měsíců",
     financingNoEvents: "Model v příštích 12 měsících nic neočekává.",
     financingMoreEvents: (n) => `+ dalších ${n}`,
@@ -539,6 +541,7 @@ export const cs: Dictionary = {
     loanPayoff: "Modelované doplacení",
     loanPayoffNone: "Splaceno",
     interestSaved: "Úrok ušetřený mimořádnými splátkami (nominálně)",
+    interestSavedNa: "n/a: změna splatnosti závisí na mimořádné splátce",
     remainingTerm: "Zbývající doba splácení",
     outlookResetsTitle: "Konce fixace podle úvěrových bloků",
     colFixationEnd: "Konec fixace",

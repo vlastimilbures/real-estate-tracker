@@ -23,6 +23,7 @@ import type {
 } from "../../engine";
 import type { XlsxColumn } from "./xlsxExport";
 import { nonZeroColumns } from "./columns";
+import { interestSavedShown, type InterestSavedShown } from "./financing";
 import type { Decimal } from "../../lib/money";
 import { fmtCzk, fmtDate, fmtPct } from "../../lib/format";
 import type { Dictionary } from "../../i18n";
@@ -198,7 +199,8 @@ export interface LoanOutlook {
   payoff: string;
   /** Null once repaid or with no payment left to count. */
   remainingTerm: string | null;
-  interestSaved: Decimal | null;
+  /** Null hides the line; "n/a" shows the note (ADR 0130). */
+  interestSaved: InterestSavedShown | null;
   resets: LoanOutlookRow[];
 }
 
@@ -254,7 +256,7 @@ export function loanOutlook(
     remainingTerm: loan.remainingMonths
       ? remainingTermText(loan.remainingMonths, d)
       : null,
-    interestSaved: loan.interestSaved,
+    interestSaved: interestSavedShown(loan.interestSaved),
     resets: rows,
   };
 }

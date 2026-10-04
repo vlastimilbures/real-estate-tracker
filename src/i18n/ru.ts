@@ -335,6 +335,8 @@ export const ru: Dictionary = {
     financingInterestSaved:
       "Сэкономлено процентов досрочными платежами (номинально)",
     financingInterestSavedByProperty: "По объектам",
+    financingInterestSavedNa:
+      "н/д: изменение срока зависит от досрочного платежа",
     financingUpcoming: "Ближайшие 12 месяцев",
     financingNoEvents: "По модели в ближайшие 12 месяцев ничего не ожидается.",
     financingMoreEvents: (n) => `+ ещё ${n}`,
@@ -545,6 +547,7 @@ export const ru: Dictionary = {
     loanPayoff: "Расчётное погашение",
     loanPayoffNone: "Погашен",
     interestSaved: "Сэкономлено процентов досрочными платежами (номинально)",
+    interestSavedNa: "н/д: изменение срока зависит от досрочного платежа",
     remainingTerm: "Оставшийся срок",
     outlookResetsTitle: "Окончания фиксации по блокам кредита",
     colFixationEnd: "Конец фиксации",
