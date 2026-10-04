@@ -270,7 +270,7 @@ export function Properties() {
       {adding && (
         <PropertyFormModal mode="add" onClose={() => setAdding(false)} />
       )}
-      {editingId && (
+      {editingId !== null && (
         <PropertyFormModal
           mode="edit"
           propertyId={editingId}

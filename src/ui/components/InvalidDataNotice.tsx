@@ -20,7 +20,7 @@ export function InvalidDataNotice({
   onOpenProperty?: (propertyId: string) => void;
 }) {
   const lines = invalidDataLines(t, error.errors, portfolio);
-  const target = lines.find((l) => l.propertyId)?.propertyId;
+  const target = lines.find((l) => l.propertyId !== undefined)?.propertyId;
   return (
     <div className="error-boundary" role="alert">
       <h3>{t.errorBoundary.invalidDataTitle}</h3>
@@ -30,7 +30,7 @@ export function InvalidDataNotice({
           <li key={l.text}>{l.text}</li>
         ))}
       </ul>
-      {target && onOpenProperty && (
+      {target !== undefined && onOpenProperty && (
         <Button type="button" onClick={() => onOpenProperty(target)}>
           {t.errorBoundary.openProperty}
         </Button>

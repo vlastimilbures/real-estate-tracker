@@ -12,7 +12,13 @@ import {
   SampleNotEmptyError,
   seedIfEmpty,
 } from "../seed";
-import { SafetyBackupError } from "../backup";
+import {
+  confirmRestore,
+  exportToJson,
+  restoreFromJson,
+  SafetyBackupError,
+} from "../backup";
+import { checkInputRules } from "../../import/inputRules";
 import {
   insertLease,
   insertPropertyWithCosts,
@@ -222,6 +228,91 @@ describe("clearSample (ADR 0094)", () => {
     expect(await ids(sql, "properties")).toEqual([...SAMPLE, "mine"].sort());
     expect(await ids(sql, "leases")).toContain("l-javorova-user");
     expect(await meta(sql)).toEqual(["sample_active", "sample_seeded"]);
+  });
+});
+
+describe("the sample is matched by id and name (ADR 0127)", () => {
+  /** A first-run database where the user deleted the sample flat `id` and added their own
+   *  flat `name`, which got the same id from its name before ADR 0127, with a lease. */
+  async function ownFlatWithSampleId(id: string, name: string) {
+    const sql = openMemorySql();
+    await migrate(sql);
+    await seedIfEmpty(sql);
+    const p = await loadPortfolio(sql);
+    const flat = p.properties.find((x) => x.id === id)!;
+    const cost = p.holdingCosts.find((x) => x.propertyId === id)!;
+    const lease = p.leases.find((x) => x.propertyId === id)!;
+    await sql.execute(`DELETE FROM properties WHERE id = '${id}'`);
+    await insertPropertyWithCosts(
+      sql,
+      propertyToRow({ ...flat, name }),
+      holdingCostToRow(cost),
+    );
+    await insertLease(sql, leaseToRow({ ...lease, id: `l-own-${id}` }));
+    return sql;
+  }
+
+  it("Clear sample keeps an own flat that holds a sample id", async () => {
+    const sql = await ownFlatWithSampleId("dubova", "Dubová");
+    await clearSample(sql, NOW);
+    expect(await ids(sql, "properties")).toEqual(["dubova"]);
+    expect(await ids(sql, "leases")).toEqual(["l-own-dubova"]);
+  });
+
+  it("an own flat with a sample id does not count as the sample", async () => {
+    const sql = await ownFlatWithSampleId("lipova", "Lipová");
+    await sql.execute("DELETE FROM properties WHERE id <> 'lipova'");
+    expect((await loadState(sql)).sample.active).toBe(false);
+  });
+
+  it("Clear sample keeps a sample flat the user renamed", async () => {
+    const sql = openMemorySql();
+    await migrate(sql);
+    await seedIfEmpty(sql);
+    await sql.execute(
+      "UPDATE properties SET name = 'Můj byt' WHERE id = 'javorova'",
+    );
+    await clearSample(sql, NOW);
+    expect(await ids(sql, "properties")).toEqual(["javorova"]);
+  });
+});
+
+describe("restore and the sample (ADR 0127)", () => {
+  /** A backup of the owner's own data: their flat "Lipová", whose id came from its name. */
+  async function ownBackup() {
+    const own = openMemorySql();
+    await migrate(own);
+    await seedIfEmpty(own);
+    await own.execute("DELETE FROM properties WHERE id <> 'lipova'");
+    await own.execute(
+      "UPDATE properties SET name = 'Lipová' WHERE id = 'lipova'",
+    );
+    return exportToJson(own);
+  }
+
+  /** A new Mac: the first launch seeded the sample, and its banner was dismissed. */
+  async function freshInstall(): Promise<TestSql> {
+    const sql = openMemorySql();
+    await migrate(sql);
+    await seedIfEmpty(sql);
+    await dismissSampleBanner(sql);
+    return sql;
+  }
+
+  it("a restore clears the sample markers, so the owner's data is not a sample", async () => {
+    const sql = await freshInstall();
+    await confirmRestore(sql, await ownBackup(), checkInputRules);
+    expect(await meta(sql)).toEqual(["sample_seeded"]);
+    expect((await loadState(sql)).sample).toEqual({
+      active: false,
+      dismissed: false,
+    });
+  });
+
+  it("so does a restore without a safety backup", async () => {
+    const sql = await freshInstall();
+    await restoreFromJson(sql, await ownBackup(), checkInputRules);
+    expect(await meta(sql)).toEqual(["sample_seeded"]);
   });
 });
 

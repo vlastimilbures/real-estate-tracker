@@ -116,3 +116,33 @@ describe("selectSnapshot (test adapter)", () => {
     ).rejects.toThrow(/no such table/);
   });
 });
+
+describe("property order (ADR 0127)", () => {
+  it("lists properties by name in Czech order, numbers by value, not by id", async () => {
+    const db = openMemorySql();
+    await migrate(db);
+    const insert = db.db.prepare(
+      "INSERT INTO properties (id, name, purchase_date, purchase_price) VALUES (?, ?, '2020-01-01', '1000000')",
+    );
+    for (const [id, name] of [
+      ["a", "Byt Chalupa"],
+      ["b", "Byt Čapkova"],
+      ["c", "Byt 10"],
+      ["d", "Byt Hradní"],
+      ["e", "Byt Cibulka"],
+      ["f", "Byt 2"],
+      ["g", "Byt Dubova"],
+    ])
+      insert.run(id, name);
+    const names = (await loadPortfolio(db)).properties.map((p) => p.name);
+    expect(names).toEqual([
+      "Byt 2",
+      "Byt 10",
+      "Byt Cibulka",
+      "Byt Čapkova",
+      "Byt Dubova",
+      "Byt Hradní",
+      "Byt Chalupa",
+    ]);
+  });
+});

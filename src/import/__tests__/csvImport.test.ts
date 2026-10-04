@@ -30,13 +30,24 @@ const FH =
 
 let sql: TestSql;
 
+const UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+/** A property's id, found by its name: new ids are random (ADR 0127). */
+const idOf = (name: string) =>
+  (
+    sql.db.prepare("SELECT id FROM properties WHERE name = ?").get(name) as {
+      id: string;
+    }
+  ).id;
+
 /** The stored funding record of one property. */
-const funding = (id: string) =>
+const funding = (name: string) =>
   sql.db
     .prepare(
-      "SELECT own_cash, transaction_costs, initial_works, funding_note FROM properties WHERE id = ?",
+      "SELECT own_cash, transaction_costs, initial_works, funding_note FROM properties WHERE name = ?",
     )
-    .get(id);
+    .get(name);
 
 /** Every portfolio table, for "nothing changed" comparisons. */
 function dump(s: TestSql) {
@@ -154,20 +165,20 @@ describe("importCsv — matching and preserved fields", () => {
       ).rows,
     });
     const props = sql.db
-      .prepare("SELECT id, name, purchase_price FROM properties ORDER BY id")
+      .prepare("SELECT name, purchase_price FROM properties ORDER BY name")
       .all();
     expect(props).toEqual([
-      { id: "byt-a", name: "Byt A", purchase_price: "5100000" },
-      { id: "byt-b", name: "Byt B", purchase_price: "6000000" },
+      { name: "Byt A", purchase_price: "5100000" },
+      { name: "Byt B", purchase_price: "6000000" },
     ]);
     expect(sql.db.prepare("SELECT property_id FROM valuations").all()).toEqual([
-      { property_id: "byt-a" },
+      { property_id: idOf("Byt A") },
     ]);
   });
 
   it("a re-import keeps the active flag, draws, interest-only date and a stored maturity (DR-129)", async () => {
     sql.db.exec(`
-      UPDATE properties SET active = 0 WHERE id = 'byt-a';
+      UPDATE properties SET active = 0 WHERE name = 'Byt A';
       UPDATE mortgage_blocks SET contract_maturity_date = '2046-01-17',
         interest_only_until = '2021-06-30', loan_term_years = 25,
         draws = '[{"date":"2021-03-01","amount":"100000"}]';
@@ -190,7 +201,9 @@ describe("importCsv — matching and preserved fields", () => {
       draws: '[{"date":"2021-03-01","amount":"100000"}]',
     });
     expect(
-      sql.db.prepare("SELECT active FROM properties WHERE id = 'byt-a'").get(),
+      sql.db
+        .prepare("SELECT active FROM properties WHERE name = 'Byt A'")
+        .get(),
     ).toEqual({ active: 0 });
 
     await importCsv(sql, {
@@ -232,7 +245,7 @@ describe("importCsv — matching and preserved fields", () => {
   it("a re-import keeps a stored funding record; a new property has none (ADR 0119)", async () => {
     sql.db.exec(`
       UPDATE properties SET own_cash = '1500000', transaction_costs = '95000',
-        initial_works = '0', funding_note = 'Deposit' WHERE id = 'byt-a';
+        initial_works = '0', funding_note = 'Deposit' WHERE name = 'Byt A';
     `);
     await importCsv(sql, {
       properties: parseProperties(
@@ -242,12 +255,12 @@ describe("importCsv — matching and preserved fields", () => {
     expect(
       sql.db
         .prepare(
-          "SELECT id, purchase_price, own_cash, transaction_costs, initial_works, funding_note FROM properties WHERE id IN ('byt-a', 'byt-c') ORDER BY id",
+          "SELECT name, purchase_price, own_cash, transaction_costs, initial_works, funding_note FROM properties WHERE name IN ('Byt A', 'Byt C') ORDER BY name",
         )
         .all(),
     ).toEqual([
       {
-        id: "byt-a",
+        name: "Byt A",
         purchase_price: "5100000",
         own_cash: "1500000",
         transaction_costs: "95000",
@@ -255,7 +268,7 @@ describe("importCsv — matching and preserved fields", () => {
         funding_note: "Deposit",
       },
       {
-        id: "byt-c",
+        name: "Byt C",
         purchase_price: "3000000",
         own_cash: null,
         transaction_costs: null,
@@ -270,7 +283,7 @@ describe("importCsv — matching and preserved fields", () => {
       properties: parseProperties(`${FH}\nByt C,2024-01-01,3000000,900000,,0`)
         .rows,
     });
-    expect(funding("byt-c")).toEqual({
+    expect(funding("Byt C")).toEqual({
       own_cash: "900000",
       transaction_costs: null,
       initial_works: "0",
@@ -281,7 +294,7 @@ describe("importCsv — matching and preserved fields", () => {
   it("a re-import sets a filled funding amount and keeps a blank one (ADR 0119 §8)", async () => {
     sql.db.exec(`
       UPDATE properties SET own_cash = '1500000', transaction_costs = '95000',
-        funding_note = 'Deposit' WHERE id = 'byt-a';
+        funding_note = 'Deposit' WHERE name = 'Byt A';
     `);
     await importCsv(sql, {
       properties: parseProperties(
@@ -289,7 +302,7 @@ describe("importCsv — matching and preserved fields", () => {
       ).rows,
     });
     // own cash changed, costs kept, works filled in from unknown, note kept
-    expect(funding("byt-a")).toEqual({
+    expect(funding("Byt A")).toEqual({
       own_cash: "1600000",
       transaction_costs: "95000",
       initial_works: "25000",
@@ -314,7 +327,7 @@ describe("importCsv — matching and preserved fields", () => {
     const recorded = await cumulative();
 
     const f = (await loadPortfolio(sql)).properties.find(
-      (p) => p.id === "byt-f",
+      (p) => p.name === "Byt F",
     )?.funding;
     expect(f?.ownCash?.toString()).toBe("1500000");
     expect(f?.transactionCosts?.toString()).toBe("0");
@@ -332,13 +345,11 @@ describe("importCsv — matching and preserved fields", () => {
     });
     expect(
       sql.db
-        .prepare("SELECT property_id FROM holding_costs ORDER BY property_id")
+        .prepare(
+          "SELECT p.name FROM holding_costs h JOIN properties p ON p.id = h.property_id ORDER BY p.name",
+        )
         .all(),
-    ).toEqual([
-      { property_id: "byt-a" },
-      { property_id: "byt-b" },
-      { property_id: "byt-c" },
-    ]);
+    ).toEqual([{ name: "Byt A" }, { name: "Byt B" }, { name: "Byt C" }]);
   });
 });
 
@@ -371,5 +382,73 @@ describe("importCsv — generated ids never collide (DR-137)", () => {
       .all() as { id: string; valid_from: string }[];
     expect(rows.map((r) => r.valid_from)).toEqual(["2026-06-01", "2026-07-01"]);
     expect(new Set(rows.map((r) => r.id)).size).toBe(2);
+  });
+});
+
+describe('a property stored with the id "" (ADR 0127)', () => {
+  it("takes its loan, valuation and rent rows", async () => {
+    sql.db
+      .prepare(
+        "INSERT INTO properties (id, name, purchase_date, purchase_price) VALUES ('', 'Квартира', '2020-01-01', '3000000')",
+      )
+      .run();
+    await importCsv(sql, {
+      mortgages: parseMortgages(
+        `${MH}\nКвартира,2021-01-17,1000000,10,0.0169,3515,,`,
+      ).rows,
+      valuations: parseValuations(
+        "property_name,valid_from,valid_to,market_value\nКвартира,2026-06-01,,3500000",
+      ).rows,
+      rents: parseRents(
+        "property_name,start_date,end_date,monthly_rent\nКвартира,2025-01-01,,15000",
+      ).rows,
+    });
+    for (const t of ["mortgage_blocks", "valuations", "leases"])
+      expect(
+        sql.db.prepare(`SELECT id FROM ${t} WHERE property_id = ''`).all(),
+      ).toHaveLength(1);
+  });
+});
+
+describe("new property ids (ADR 0127)", () => {
+  it("a Cyrillic name imports together with its rents", async () => {
+    await importCsv(sql, {
+      properties: parseProperties(
+        "name,purchase_date,purchase_price\nКвартира,2020-01-01,3000000",
+      ).rows,
+      rents: parseRents(
+        "property_name,start_date,end_date,monthly_rent\nКвартира,2025-01-01,,15000",
+      ).rows,
+    });
+    const id = idOf("Квартира");
+    expect(id).toMatch(UUID);
+    expect(sql.db.prepare("SELECT property_id FROM leases").all()).toEqual([
+      { property_id: id },
+    ]);
+  });
+
+  it("a name like a sample flat's does not get the sample's id", async () => {
+    await importCsv(sql, {
+      properties: parseProperties(
+        "name,purchase_date,purchase_price\nJavorová,2020-01-01,3000000",
+      ).rows,
+    });
+    expect(idOf("Javorová")).toMatch(UUID);
+  });
+
+  it("importing the same batch again after a rename adds a property with a new id", async () => {
+    const batch = {
+      properties: parseProperties(
+        "name,purchase_date,purchase_price\nByt N,2020-01-01,3000000",
+      ).rows,
+    };
+    await importCsv(sql, batch);
+    const first = idOf("Byt N");
+    sql.db.exec(
+      "UPDATE properties SET name = 'Byt N renamed' WHERE name = 'Byt N'",
+    );
+    await importCsv(sql, batch);
+    expect(idOf("Byt N")).toMatch(UUID);
+    expect(idOf("Byt N")).not.toBe(first);
   });
 });

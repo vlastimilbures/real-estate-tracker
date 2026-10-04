@@ -12,7 +12,8 @@ export class EngineInputError extends Error {
 
   constructor(errors: readonly EngineValidationError[]) {
     const first = errors[0];
-    const where = first?.id ? `${first.entity} ${first.id}` : first?.entity;
+    const where =
+      first?.id !== undefined ? `${first.entity} ${first.id}` : first?.entity;
     super(`Invalid ${where ?? "input"}: ${errors.map(describe).join(", ")}`);
     this.name = "EngineInputError";
     this.errors = errors;

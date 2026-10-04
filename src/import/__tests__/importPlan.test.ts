@@ -46,6 +46,14 @@ function dump(s: TestSql) {
 
 const props = (body: string) => parseProperties(`${PH}\n${body}`).rows;
 
+/** A property's id, found by its name: new ids are random (ADR 0127). */
+const idOf = (name: string) =>
+  (
+    sql.db.prepare("SELECT id FROM properties WHERE name = ?").get(name) as {
+      id: string;
+    }
+  ).id;
+
 beforeEach(async () => {
   sql = openMemorySql();
   await migrate(sql);
@@ -83,7 +91,7 @@ describe("previewImport — add, update, unchanged (ADR 0096)", () => {
     expect(p.items).toEqual([
       expect.objectContaining({
         kind: "update",
-        propertyId: "byt-a",
+        propertyId: idOf("Byt A"),
         // the stored spelling, not the CSV's
         propertyName: "Byt A",
         changes: [
@@ -138,7 +146,7 @@ describe("previewImport — add, update, unchanged (ADR 0096)", () => {
 
   it("a blank funding cell or a missing column keeps the stored amount and is no change (ADR 0119 §8)", async () => {
     sql.db.exec(
-      "UPDATE properties SET own_cash = '1500000.00' WHERE id = 'byt-a'",
+      "UPDATE properties SET own_cash = '1500000.00' WHERE name = 'Byt A'",
     );
     const preview = (ownCash: string) =>
       previewImport(sql, {
@@ -223,8 +231,11 @@ describe("planImport is pure", () => {
     const plan = planImport(
       { properties: props("Byt C,,2022-01-01,7000000") },
       tables,
+      (key) => `new:${key}`,
     );
-    expect(plan.items.map((i) => i.kind)).toEqual(["add"]);
+    expect(plan.items.map((i) => [i.kind, i.propertyId])).toEqual([
+      ["add", "new:byt c"],
+    ]);
     expect(tables.properties).toEqual([]);
     expect(tables.holding_costs).toEqual([]);
   });
@@ -240,6 +251,10 @@ describe("importCsv — commit matches the preview (ADR 0096)", () => {
     const report = await importCsv(sql, batch, preview.fingerprint);
     expect(report.items).toEqual(preview.items);
     expect(report.upserted.properties).toBe(2);
+    // The new property's id is random, and the import used the one the preview showed.
+    expect(idOf("Byt C")).toBe(
+      preview.items.find((i) => i.propertyName === "Byt C")?.propertyId,
+    );
   });
 
   it("a plan that changed since the preview writes nothing", async () => {
@@ -249,7 +264,7 @@ describe("importCsv — commit matches the preview (ADR 0096)", () => {
     // Another edit lands between preview and commit.
     sql.db
       .prepare("UPDATE properties SET purchase_price = ? WHERE id = ?")
-      .run("4900000", "byt-a");
+      .run("4900000", idOf("Byt A"));
     const before = dump(sql);
 
     const e = await importCsv(sql, batch, preview.fingerprint).then(
