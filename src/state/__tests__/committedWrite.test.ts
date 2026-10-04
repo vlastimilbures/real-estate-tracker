@@ -1,14 +1,17 @@
 // ADR 0125 (#106): once a whole-database action has committed, a failed reload never turns
 // it into a failure. It resolves as usual (naming the safety backup) and leaves the screen
 // marked stale, so the page never says "rolled back — unchanged" about replaced data.
+// ADR 0132 (#138, #199): whole-database reads and the banner Reload follow the write queue.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { usePortfolioStore } from "../portfolioStore";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
-import { exportToJson } from "../../data/backup";
+import { invoke } from "@tauri-apps/api/core";
+import { exportToJson, type BackupFile } from "../../data/backup";
 import { parseProperties } from "../../import/csv";
 import type { Sql } from "../../data/sql";
+import { money, type IsoDate } from "../../engine";
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn((_command: string, args: { json: string }) =>
@@ -150,5 +153,58 @@ describe("a failed write whose reload also fails (ADR 0125)", () => {
     expect(store().error).toEqual(error);
     expect(store().stale).toBe(true);
     expect(store().assumptions).toBe(before);
+  });
+});
+
+describe("a safety backup waits for a write queued before it (ADR 0132)", () => {
+  /** `real`, but the first `execute` (the queued valuation) waits for `release`. */
+  function heldFirstWrite(real: Sql) {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    let held = false;
+    const sql: Sql = {
+      ...real,
+      execute: async (q, p) => {
+        if (!held) {
+          held = true;
+          await gate;
+        }
+        return real.execute(q, p);
+      },
+    };
+    return { sql, release };
+  }
+  const backupsWritten = () =>
+    vi.mocked(invoke).mock.calls.filter(([c]) => c === "write_app_backup");
+
+  it.each([
+    { action: "clearing the sample", run: () => store().clearSample() },
+    {
+      action: "a restore",
+      run: (file: BackupFile) => store().restoreBackup(file),
+    },
+  ])("$action backs up the queued write", async ({ run }) => {
+    const file = await exportToJson(db);
+    const { sql, release } = heldFirstWrite(db);
+    usePortfolioStore.setState({ sql });
+    vi.mocked(invoke).mockClear();
+
+    const write = store().addValuation({
+      id: "queued",
+      propertyId: store().portfolio!.properties[0]!.id,
+      validFrom: new Date(Date.UTC(2033, 0, 1)) as IsoDate,
+      marketValue: money("1"),
+    });
+    const action = run(file);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(backupsWritten()).toHaveLength(0);
+
+    release();
+    expect(await write).toEqual({ ok: true });
+    await action;
+
+    const [, args] = backupsWritten().at(-1)!;
+    const saved = JSON.parse((args as { json: string }).json) as BackupFile;
+    expect(saved.tables.valuations!.map((v) => v.id)).toContain("queued");
   });
 });
