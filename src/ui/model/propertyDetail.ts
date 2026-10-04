@@ -4,6 +4,7 @@
 import {
   amortizationHealth,
   blockEndDate,
+  edate,
   fixationExpired,
   isDevLoan,
   maturityMismatch,
@@ -39,14 +40,45 @@ export type LoanWarning =
       contract: IsoDate;
       months: number;
     }
-  /** The fixation ended on/before baseDate and no follow-on block is entered (D-30). */
-  | { kind: "fixationEnded"; block: MortgageBlock; fixationEnd: Date }
+  /** The fixation ended on/before baseDate and no follow-on block is entered (D-30),
+   *  or the next one starts only on `until`, after the first floating payment
+   *  (ADR 0129 §4). */
+  | {
+      kind: "fixationEnded";
+      block: MortgageBlock;
+      fixationEnd: Date;
+      until?: Date;
+    }
   /** A prepayment or recast the engine clamped, ignored or dropped (ADR 0116 §10). */
   | {
       kind: "event";
       block: MortgageBlock;
       outcome: LoanEventOutcome & { issue: LoanEventIssue };
     };
+
+/**
+ * The months an ended fixation runs at the assumed reset rate: from its end, unless the
+ * next block starts before the first payment after it falls due — until that block, if
+ * there is one (D-30, ADR 0129 §4). Undefined while the fixation runs or the next block
+ * covers it.
+ */
+function refixGap(
+  current: MortgageBlock,
+  next: MortgageBlock | undefined,
+  baseDate: Date,
+): { fixationEnd: Date; until?: Date } | undefined {
+  if (!fixationExpired(current, baseDate)) return undefined;
+  const fixationEnd = blockEndDate(current);
+  if (!next) return { fixationEnd };
+  const firstFloating = edate(
+    current.startDate,
+    current.fixationYears * 12 + 1,
+  );
+  // A payment due on the next block's start stays with this one (D-47).
+  return next.startDate.getTime() >= firstFloating.getTime()
+    ? { fixationEnd, until: next.startDate }
+    : undefined;
+}
 
 /**
  * Warnings for a property's loan: every block from the one in force at baseDate (or the
@@ -84,12 +116,8 @@ export function loanWarnings(
         months: monthsBetween(m.contract, m.implied),
       });
   }
-  if (chain.length === 1 && fixationExpired(current, baseDate))
-    out.push({
-      kind: "fixationEnded",
-      block: current,
-      fixationEnd: blockEndDate(current),
-    });
+  const gap = refixGap(current, chain[1], baseDate);
+  if (gap) out.push({ kind: "fixationEnded", block: current, ...gap });
   for (const outcome of outcomes) {
     const block = mortgages.find((b) => b.id === outcome.blockId);
     if (block && outcome.issue !== null)
@@ -129,7 +157,15 @@ export function loanWarningText(
       ].join(" ");
     }
     case "fixationEnded":
-      return `${head} ${d.fixationEnded(fmtDate(w.fixationEnd), fmtPct(resetRate))}`;
+      return `${head} ${
+        w.until
+          ? d.fixationEndedUntil(
+              fmtDate(w.fixationEnd),
+              fmtDate(w.until),
+              fmtPct(resetRate),
+            )
+          : d.fixationEnded(fmtDate(w.fixationEnd), fmtPct(resetRate))
+      }`;
     case "event": {
       const o = w.outcome;
       const text = d.eventIssue[o.issue](

@@ -88,7 +88,7 @@ export const cs: Dictionary = {
     DRAW_BEFORE_START:
       "Čerpání musí mít datum po začátku úvěru; částka čerpaná v den začátku patří do počáteční jistiny",
     DRAW_AFTER_SCHEDULE_END:
-      "Čerpání musí mít datum před poslední splátkou úvěru (začátek plus doba splatnosti)",
+      "Čerpání musí mít datum nejpozději v den předposlední splátky úvěru (začátek plus doba splatnosti bez jednoho měsíce)",
     COMPLETION_BEFORE_START: "Konec splácení jen úroků je před začátkem úvěru",
     DUPLICATE_BLOCK_START:
       "Tato nemovitost už má hypotéku začínající ve stejný den",
@@ -565,6 +565,8 @@ export const cs: Dictionary = {
     maturityCheck: "Zkontrolujte splátku nebo datum splatnosti.",
     fixationEnded: (end, rate) =>
       `Fixace skončila ${end} a není zadán navazující blok, proto aplikace od té doby počítá s resetovací sazbou ${rate}. Zadejte podmínky refixace jako nový blok hypotéky.`,
+    fixationEndedUntil: (end, until, rate) =>
+      `Fixace skončila ${end} a další blok začíná až ${until}, proto aplikace počítá s resetovací sazbou ${rate} od ${end} do ${until}. Zadejte podmínky pro toto období jako blok hypotéky.`,
     fieldPrepayments: "Mimořádné splátky",
     helpPrepayments:
       "Mimořádné splacení jistiny k datu. Snížení splátky zachová splatnost; zkrácení splatnosti zachová splátku. Poplatek se platí z vlastních prostředků a dluh nesnižuje.",

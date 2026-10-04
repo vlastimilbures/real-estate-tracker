@@ -947,7 +947,7 @@ describe("development-loan rules at save time (UX-047, was mortgageFieldErrors)"
     });
   });
 
-  it("a draw on or after the loan's final payment date is refused (DR-074)", async () => {
+  it("a draw after the loan's last-but-one payment date is refused (DR-074, ADR 0129)", async () => {
     const start = isoDate("2030-01-01");
     const r = await usePortfolioStore.getState().addMortgageBlock({
       id: "m-draw-late",

@@ -276,7 +276,9 @@ the next payment.
 - **Expired fixation without a successor** (fixation ended before baseDate and no later
   block): the opening balance is replayed on the loan's own due dates with the reset applied
   from the true fixation end, and the UI warns the owner to enter the refix terms as a new
-  block (ADR 0030).
+  block (ADR 0030). The warning also shows, "from … until …", when the next block starts
+  on or after the due date of the first payment following the fixation end, so at least
+  one payment runs at the reset rate (ADR 0129).
 - **Loan starting after baseDate**: opening balance 0; the loan appears as new debt in the
   grid month it is drawn (ADR 0033).
 - **Refinance handover** (successor block, D-47 in ADR 0027): the successor draws in the
@@ -291,7 +293,9 @@ the next payment.
   own due dates, so moving baseDate does not move it. The one exception (ADR 0116) is an
   event dated after the last payment due on or before baseDate and on or before baseDate
   itself: it settles right after that payment, so its placement depends on baseDate by less
-  than one period. Within one payment period the order is:
+  than one period. Its balance checks (prepayment clamp, the bank's `NPER`, recast checks)
+  count the development-loan tranches of that window dated on or before it; the tranche
+  itself still joins grid month 1 (ADR 0129). Within one payment period the order is:
   scheduled payment, then prepayments (date order), then recast. A prepayment dated
   between two due dates waits for the next one (interest is overstated by under a month).
 - The schedule carries the loan's **maturity in force**: the contract term until an event
@@ -320,16 +324,20 @@ the next payment.
 
 **Dev/phased loans** — additional rules applied before the plain path:
 
-- While `date ≤ completionDate`: **interest-only** — no principal, instalment = interest.
+- While the payment's due date `EDATE(start, p)` ≤ `completionDate`: **interest-only** —
+  no principal, instalment = interest. Like the rate, it is read on the due date, not the
+  grid date (ADR 0129).
 - Each `MortgageDraw` tranche adds its `amount` to the balance **in the grid month it
   lands**, and the instalment re-amortizes in that month over the term remaining to
   `startDate + loanTermYears` (ADR 0024). After `completionDate` the fully drawn balance
   re-amortizes the same way. The trigger fires only on a real draw or completion.
 - A tranche must be dated strictly after the loan start (`DRAW_BEFORE_START`; money drawn on
-  the start date belongs in the initial principal, D-42). A tranche between the last payment
-  due by baseDate and baseDate joins grid month 1 and is part of the baseDate debt (D-41);
-  one dated after baseDate within grid month 1 is new debt in that month (D-44). A tranche
-  landing in a future loan's first draw month joins that draw (D-46).
+  the start date belongs in the initial principal, D-42), and on or before the last-but-one
+  payment `EDATE(start, term·12 − 1)` (`DRAW_AFTER_SCHEDULE_END`, ADR 0129). A tranche
+  between the last payment due by baseDate and baseDate joins grid month 1 and is part of
+  the baseDate debt (D-41); one dated after baseDate within grid month 1 is new debt in that
+  month (D-44). A tranche landing in a future loan's first draw month joins that draw
+  (D-46).
 - During construction the property's market value is scaled by `drawnFraction` (see §4.3).
 
 Aggregate monthly interest / principal / debt-service / draws / prepaid / prepayment fees /

@@ -98,7 +98,7 @@ export const en = {
     DRAW_BEFORE_START:
       "A draw must be dated after the loan start; money drawn on the start date belongs in the initial principal",
     DRAW_AFTER_SCHEDULE_END:
-      "A draw must be dated before the loan's final payment date (start date plus loan term)",
+      "A draw must be dated on or before the loan's last-but-one payment date (start date plus loan term, less one month)",
     COMPLETION_BEFORE_START:
       "The interest-only end date is before the loan start",
     DUPLICATE_BLOCK_START:
@@ -602,6 +602,8 @@ export const en = {
     maturityCheck: "Check the instalment or the maturity date.",
     fixationEnded: (end: string, rate: string) =>
       `Its fixation ended on ${end} and no follow-on block is entered, so the app assumes the reset rate of ${rate} from then on. Add the refix terms as a new mortgage block.`,
+    fixationEndedUntil: (end: string, until: string, rate: string) =>
+      `Its fixation ended on ${end} and the next block starts only on ${until}, so the app assumes the reset rate of ${rate} from ${end} until ${until}. Add the terms for those months as a mortgage block.`,
     fieldPrepayments: "Prepayments",
     helpPrepayments:
       "Extra repayments of principal on a date. Lowering the instalment keeps the term; shortening the term keeps the instalment. The fee is paid in cash and does not reduce the debt.",

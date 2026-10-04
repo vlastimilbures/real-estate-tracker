@@ -222,33 +222,34 @@ function checkDerivedTerm(b: MortgageBlock, report: Report): void {
   if (problem) report(problem.code, problem.field);
 }
 
-/** The final payment date (start + term), or undefined without a valid term (then
- *  MISSING_TERM_FOR_DEV_LOAN or INVALID_TERM reports instead). */
-function finalPaymentDate(b: MortgageBlock): Date | undefined {
+/** The last-but-one payment date (start + term − 1 month), or undefined without a
+ *  valid term (then MISSING_TERM_FOR_DEV_LOAN or INVALID_TERM reports instead). */
+function lastDrawDate(b: MortgageBlock): Date | undefined {
   return b.loanTermYears != null && Number.isInteger(b.loanTermYears)
-    ? edate(b.startDate, b.loanTermYears * 12)
+    ? edate(b.startDate, b.loanTermYears * 12 - 1)
     : undefined;
 }
 
 function checkDrawDate(
   date: Date,
   b: MortgageBlock,
-  end: Date | undefined,
+  lastDraw: Date | undefined,
   report: Report,
 ): void {
   if (badDate(date)) report("INVALID_DATE", "draws");
   // A draw on the start date itself belongs in the initial principal (D-42).
   else if (isOnOrBefore(date, b.startDate))
     report("DRAW_BEFORE_START", "draws");
-  // A draw on or after the final payment has no payment left to repay it (DR-074).
-  else if (end && isOnOrBefore(end, date))
+  // A later draw lands on the final payment, which would repay it in one shot
+  // (DR-074, ADR 0129 §3).
+  else if (lastDraw && isAfter(date, lastDraw))
     report("DRAW_AFTER_SCHEDULE_END", "draws");
 }
 
 function checkDevFeatures(b: MortgageBlock, report: Report): void {
-  const end = finalPaymentDate(b);
+  const lastDraw = lastDrawDate(b);
   for (const d of b.draws ?? []) {
-    checkDrawDate(d.date, b, end, report);
+    checkDrawDate(d.date, b, lastDraw, report);
     if (badNumber(d.amount)) report("NON_FINITE_NUMBER", "draws");
     else if (!d.amount.greaterThan(ZERO)) report("NON_POSITIVE_DRAW", "draws");
   }
@@ -440,6 +441,22 @@ const LOAN_ERROR_CODES: ReadonlySet<ValidationCode> = new Set([
   "RECAST_INSTALMENT_BEFORE_COMPLETION",
 ]);
 
+/** A block's error, naming the event item when there is one (ADR 0116). */
+function loanError(
+  block: MortgageBlock,
+  code: ValidationCode,
+  field: string | undefined,
+  index: number | undefined,
+): EngineValidationError {
+  return {
+    code,
+    entity: "mortgage",
+    id: block.id,
+    field,
+    ...(index === undefined ? {} : { index }),
+  };
+}
+
 /**
  * Raise an EngineInputError when a loan the engine is about to compute has a D-17
  * problem, instead of letting it become a NaN term, an endless schedule or vanished
@@ -447,9 +464,9 @@ const LOAN_ERROR_CODES: ReadonlySet<ValidationCode> = new Set([
  */
 export function assertLoanInputs(block: MortgageBlock): void {
   const errors: EngineValidationError[] = [];
-  checkMortgage(block, (code, field) => {
+  checkMortgage(block, (code, field, index) => {
     if (LOAN_ERROR_CODES.has(code)) {
-      errors.push({ code, entity: "mortgage", id: block.id, field });
+      errors.push(loanError(block, code, field, index));
     }
   });
   if (errors.length > 0) throw new EngineInputError(errors);
@@ -462,9 +479,9 @@ export function assertLoanInputs(block: MortgageBlock): void {
 export function assertLoanRows(blocks: MortgageBlock[]): void {
   const errors: EngineValidationError[] = [];
   for (const b of blocks) {
-    checkMortgage(b, (code, field) => {
+    checkMortgage(b, (code, field, index) => {
       if (DATA_ERROR_CODES.has(code)) {
-        errors.push({ code, entity: "mortgage", id: b.id, field });
+        errors.push(loanError(b, code, field, index));
       }
     });
   }

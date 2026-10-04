@@ -114,9 +114,18 @@ describe("validateInputs", () => {
       d({ draws: [{ date: isoDate("2027-01-01"), amount: money(0) }] }),
       "NON_POSITIVE_DRAW",
     );
-    // DR-074 (ADR 0079): a draw on or after the final payment date (start + term).
+    // DR-074, ADR 0129 §3: a draw after the last-but-one payment date (start + term
+    // − 1 month) would be repaid in one shot by the final payment.
     expectCode(
       d({ draws: [{ date: isoDate("2056-03-01"), amount: money(1) }] }),
+      "DRAW_AFTER_SCHEDULE_END",
+    );
+    expectCode(
+      d({ draws: [{ date: isoDate("2056-02-29"), amount: money(1) }] }),
+      "DRAW_AFTER_SCHEDULE_END",
+    );
+    expectCode(
+      d({ draws: [{ date: isoDate("2056-02-02"), amount: money(1) }] }),
       "DRAW_AFTER_SCHEDULE_END",
     );
     expectCode(
@@ -124,7 +133,7 @@ describe("validateInputs", () => {
       "DRAW_AFTER_SCHEDULE_END",
     );
     expect(
-      codes(d({ draws: [{ date: isoDate("2056-02-29"), amount: money(1) }] })),
+      codes(d({ draws: [{ date: isoDate("2056-02-01"), amount: money(1) }] })),
     ).toEqual([]);
     expectCode(
       d({ completionDate: isoDate("2020-01-01") }),
