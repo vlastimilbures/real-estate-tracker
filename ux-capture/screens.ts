@@ -193,6 +193,26 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "09-dashboard-data-check",
+    desc: "Data check five years on: open with stale valuations and ended fixations, then the defaults (ADR 0118)",
+    route: "dashboard",
+    run: async (ux) => {
+      const d = ux.t.dataCheck;
+      await boot(ux.page);
+      await ux.page.getByTestId("asof-5y").click();
+      const p = panel(ux, d.title);
+      await expect(p.getByRole("button", { name: d.hide })).toHaveAttribute(
+        "aria-expanded",
+        "true",
+      );
+      await expect(
+        p.getByRole("heading", { name: d.defaultsTitle }),
+      ).toBeVisible();
+      await p.scrollIntoViewIfNeeded();
+      await ux.capture("09-dashboard-data-check", { fullPage: false });
+    },
+  },
+  {
     id: "10-properties",
     desc: "Properties list",
     route: "properties",
@@ -375,6 +395,39 @@ export const SCREENS: Screen[] = [
         am.getByRole("columnheader", { name: d.amColPrepaid }),
       ).toBeVisible();
       await ux.capture("29-property-prepayment-outputs");
+    },
+  },
+  {
+    id: "31-property-data-check",
+    desc: "Property detail's Data check five years on, after the Overview; its link moves to Records (ADR 0118)",
+    route: "property",
+    run: async (ux) => {
+      const d = ux.t.dataCheck;
+      await boot(ux.page);
+      await ux.page.getByTestId("asof-5y").click();
+      await openFirstProperty(ux);
+      const p = panel(ux, d.title);
+      await expect(
+        p.getByRole("heading", { name: d.attentionTitle }),
+      ).toBeVisible();
+      // Land on it through the section nav, so the panel sits under the topbar.
+      await ux.page
+        .getByRole("navigation", { name: ux.t.propertyDetail.sectionNavLabel })
+        .getByRole("link", { name: d.title })
+        .click();
+      await expect(p.getByRole("heading", { name: d.title })).toBeFocused();
+      await ux.capture("31-property-data-check", { fullPage: false });
+      await p
+        .getByRole("button", {
+          name: d.goTo(ux.t.propertyDetail.sectionRecords),
+        })
+        .click();
+      await expect(
+        ux.page.getByRole("heading", {
+          name: ux.t.propertyDetail.valuationsTitle,
+          exact: true,
+        }),
+      ).toBeFocused();
     },
   },
   {
