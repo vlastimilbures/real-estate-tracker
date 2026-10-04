@@ -3,7 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #32 (pre-release review 2026-10, F3); design `docs/design/czech-mortgage-extensions.md` §1 (D-04)
-- Amended by: ADR 0116
+- Amended by: ADR 0116, ADR 0120 (§6: a tranche on payment `q`)
 
 ## Context
 
@@ -69,6 +69,7 @@ interest saved and the clamp warnings come in #32b, and both ship in the same re
      - The rate is that of the next payment `q`.
      - The effective last payment is `p + ceil(NPER)`.
      - Payment `q` pays exactly the requested instalment, even when `q` is a rate reset.
+     - A tranche landing on `q` re-amortizes from `q+1` over that maturity (ADR 0120).
      - Later resets re-amortize over that maturity.
      - An instalment that does not cover the interest of payment `q` is ignored and reported.
      - An instalment-form recast before a development loan's completion is rejected. A
