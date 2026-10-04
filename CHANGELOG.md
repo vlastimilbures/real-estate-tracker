@@ -234,6 +234,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   empty id, and a CSV file can add such a property together with its loans, valuations and
   rents. Names that differ only in punctuation or accents ("Byt 1" and "Byt-1", "Lipová 2"
   and "Lipova 2") no longer fail with "a record with the same internal id already exists".
+- **Clear sample** deleted any property whose internal id was a sample one, so it could
+  delete your own flat named after a sample street (for example "Dubová") with all its
+  loans, leases and valuations. It now deletes a property only while it still has both the
+  sample's id and its name ("Byt Javorova", "Byt Lipova", "Byt Dubova"). A sample flat you
+  renamed counts as yours and is kept. The sample banner follows the same rule (ADR 0127,
+  #101).
 - After a restore, the sample banner no longer comes back over your own data. On a new Mac,
   the first launch fills in the sample; restoring your backup then kept the sample label,
   and **Clear sample** could delete your own flat if its internal id matched a sample one

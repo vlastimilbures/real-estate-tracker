@@ -18,7 +18,7 @@ import {
   DELETE_SAMPLE_MARKERS,
   SAMPLE_ACTIVE,
   SAMPLE_DISMISSED,
-  SAMPLE_PROPERTY_IDS,
+  SAMPLE_PROPERTIES,
 } from "./repositories";
 import { writeSafetyBackup } from "./backup";
 import { money } from "../engine";
@@ -57,11 +57,13 @@ function holdingFor(propertyId: string) {
   };
 }
 
+// Their ids and names are what Clear sample matches (ADR 0127).
+const [JAVOROVA, LIPOVA, DUBOVA] = SAMPLE_PROPERTIES;
+
 const PROPERTIES = [
   {
     p: {
-      id: "javorova",
-      name: "Byt Javorova",
+      ...JAVOROVA,
       type: "3 bedroom",
       sizeM2: 71,
       purchaseDate: isoDate("2015-06-01"),
@@ -72,8 +74,7 @@ const PROPERTIES = [
   },
   {
     p: {
-      id: "lipova",
-      name: "Byt Lipova",
+      ...LIPOVA,
       type: "1 bedroom",
       sizeM2: 55,
       purchaseDate: isoDate("2022-01-15"),
@@ -84,8 +85,7 @@ const PROPERTIES = [
   },
   {
     p: {
-      id: "dubova",
-      name: "Byt Dubova",
+      ...DUBOVA,
       type: "1 bedroom",
       sizeM2: 47,
       purchaseDate: isoDate("2023-02-01"),
@@ -284,9 +284,10 @@ export async function dismissSampleBanner(sql: Sql): Promise<void> {
 
 /** "Clear sample and start my own" (ADR 0094): write and verify a safety backup (D-52),
  *  then in one transaction (D-14) delete the sample properties — their records go with
- *  them through ON DELETE CASCADE — and the sample markers. `sample_seeded` stays, so
- *  the sample is never reseeded. The user's own properties and the assumptions are
- *  untouched. Returns the safety backup's name. */
+ *  them through ON DELETE CASCADE — and the sample markers. Only a property that still
+ *  has a sample id and its seeded name is deleted, so an own or renamed flat stays
+ *  (ADR 0127). `sample_seeded` stays, so the sample is never reseeded. The assumptions
+ *  are untouched. Returns the safety backup's name. */
 export async function clearSample(
   sql: Sql,
   now: Date = new Date(),
@@ -298,8 +299,8 @@ export async function clearSample(
   );
   await sql.transaction([
     {
-      query: `DELETE FROM properties WHERE id IN (${SAMPLE_PROPERTY_IDS.map(() => "?").join(", ")})`,
-      params: [...SAMPLE_PROPERTY_IDS],
+      query: `DELETE FROM properties WHERE ${SAMPLE_PROPERTIES.map(() => "(id = ? AND name = ?)").join(" OR ")}`,
+      params: SAMPLE_PROPERTIES.flatMap((p) => [p.id, p.name]),
     },
     DELETE_SAMPLE_MARKERS,
   ]);

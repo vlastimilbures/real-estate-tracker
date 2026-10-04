@@ -231,6 +231,52 @@ describe("clearSample (ADR 0094)", () => {
   });
 });
 
+describe("the sample is matched by id and name (ADR 0127)", () => {
+  /** A first-run database where the user deleted the sample flat `id` and added their own
+   *  flat `name`, which got the same id from its name before ADR 0127, with a lease. */
+  async function ownFlatWithSampleId(id: string, name: string) {
+    const sql = openMemorySql();
+    await migrate(sql);
+    await seedIfEmpty(sql);
+    const p = await loadPortfolio(sql);
+    const flat = p.properties.find((x) => x.id === id)!;
+    const cost = p.holdingCosts.find((x) => x.propertyId === id)!;
+    const lease = p.leases.find((x) => x.propertyId === id)!;
+    await sql.execute(`DELETE FROM properties WHERE id = '${id}'`);
+    await insertPropertyWithCosts(
+      sql,
+      propertyToRow({ ...flat, name }),
+      holdingCostToRow(cost),
+    );
+    await insertLease(sql, leaseToRow({ ...lease, id: `l-own-${id}` }));
+    return sql;
+  }
+
+  it("Clear sample keeps an own flat that holds a sample id", async () => {
+    const sql = await ownFlatWithSampleId("dubova", "Dubová");
+    await clearSample(sql, NOW);
+    expect(await ids(sql, "properties")).toEqual(["dubova"]);
+    expect(await ids(sql, "leases")).toEqual(["l-own-dubova"]);
+  });
+
+  it("an own flat with a sample id does not count as the sample", async () => {
+    const sql = await ownFlatWithSampleId("lipova", "Lipová");
+    await sql.execute("DELETE FROM properties WHERE id <> 'lipova'");
+    expect((await loadState(sql)).sample.active).toBe(false);
+  });
+
+  it("Clear sample keeps a sample flat the user renamed", async () => {
+    const sql = openMemorySql();
+    await migrate(sql);
+    await seedIfEmpty(sql);
+    await sql.execute(
+      "UPDATE properties SET name = 'Můj byt' WHERE id = 'javorova'",
+    );
+    await clearSample(sql, NOW);
+    expect(await ids(sql, "properties")).toEqual(["javorova"]);
+  });
+});
+
 describe("restore and the sample (ADR 0127)", () => {
   /** A backup of the owner's own data: their flat "Lipová", whose id came from its name. */
   async function ownBackup() {
