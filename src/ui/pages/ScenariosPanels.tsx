@@ -268,8 +268,12 @@ function PresetBar({
   );
 }
 
+/** A scenario as the list deletes it: a readable one, or a row the app cannot read. */
+type Deletable = { id: string; name: string };
+
 export function ScenarioListPanel({
   scenarios,
+  unreadable = [],
   baseOn,
   onToggleBase,
   selectedIds,
@@ -282,6 +286,8 @@ export function ScenarioListPanel({
   reachText,
 }: {
   scenarios: Scenario[];
+  /** Stored rows the app cannot read (ADR 0123): listed with only Delete. */
+  unreadable?: readonly Deletable[];
   baseOn: boolean;
   onToggleBase: () => void;
   selectedIds: string[];
@@ -290,7 +296,7 @@ export function ScenarioListPanel({
   busy: boolean;
   onEdit: (s: Scenario) => void;
   onDuplicate: (s: Scenario) => void;
-  onDelete: (s: Scenario) => void;
+  onDelete: (s: Deletable) => void;
   /** Which loans the scenario's rate shock hits (ADR 0100). */
   reachText?: (id: string) => string | undefined;
 }) {
@@ -366,7 +372,40 @@ export function ScenarioListPanel({
             )}
           </li>
         ))}
-        {scenarios.length === 0 && (
+        {unreadable.map((u) => (
+          <li className="scenario-row" key={u.id}>
+            <span className="scenario-pick">
+              <span className="scenario-name">{u.name}</span>
+            </span>
+            <span className="scenario-summary">
+              {t.scenarios.unreadableRow}
+            </span>
+            <span className="scenario-actions">
+              <Button
+                size="sm"
+                variant="danger"
+                disabled={busy}
+                onClick={() => setConfirmingId(u.id)}
+              >
+                {t.common.delete}
+              </Button>
+            </span>
+            {confirmingId === u.id && (
+              <div className="scenario-confirm">
+                <DeleteConfirmRow
+                  busy={busy}
+                  message={t.scenarios.confirmDelete(u.name)}
+                  onConfirm={() => {
+                    setConfirmingId(null);
+                    onDelete(u);
+                  }}
+                  onCancel={() => setConfirmingId(null)}
+                />
+              </div>
+            )}
+          </li>
+        ))}
+        {scenarios.length === 0 && unreadable.length === 0 && (
           <li className="scenario-empty">{t.scenarios.emptyList}</li>
         )}
       </ul>

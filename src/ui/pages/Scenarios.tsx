@@ -22,6 +22,7 @@ export function Scenarios() {
   const assumptions = usePortfolioStore((s) => s.assumptions);
   const portfolio = usePortfolioStore((s) => s.portfolio);
   const scenarios = usePortfolioStore((s) => s.scenarios);
+  const unreadable = usePortfolioStore((s) => s.unreadableScenarios);
   const addScenario = usePortfolioStore((s) => s.addScenario);
   const saveScenario = usePortfolioStore((s) => s.saveScenario);
   const duplicateScenario = usePortfolioStore((s) => s.duplicateScenario);
@@ -158,6 +159,7 @@ export function Scenarios() {
 
       <ScenarioListPanel
         scenarios={scenarios}
+        unreadable={unreadable}
         baseOn={baseOn}
         onToggleBase={toggleBase}
         selectedIds={selectedIds}

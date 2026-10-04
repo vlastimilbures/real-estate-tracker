@@ -64,6 +64,7 @@ import {
   recordBackup,
   type BackupState,
   type SampleState,
+  type UnreadableScenario,
 } from "../data/repositories";
 import {
   valuationToRow,
@@ -132,6 +133,8 @@ interface PortfolioState {
   portfolio: Portfolio | null;
   assumptions: Assumptions | null;
   scenarios: Scenario[];
+  /** Stored scenario rows the app cannot read, listed for deletion (ADR 0123). */
+  unreadableScenarios: UnreadableScenario[];
   /** The first-run sample: still in place, and its banner dismissed (ADR 0094). */
   sample: SampleState;
   /** The last recorded export and whether the data changed since (ADR 0110). */
@@ -376,6 +379,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     portfolio: null,
     assumptions: null,
     scenarios: [],
+    unreadableScenarios: [],
     sample: { active: false, dismissed: false },
     backup: { lastAt: null, lastFile: null, changedSince: false },
     status: "idle",
@@ -408,9 +412,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       const sql = get().sql;
       if (!sql) return;
       // One point-in-time snapshot of every table (DR-134).
-      const { portfolio, assumptions, scenarios, sample, backup } =
-        await loadState(sql);
-      set({ portfolio, assumptions, scenarios, sample, backup, stale: false });
+      const state = await loadState(sql);
+      set({ ...state, stale: false });
     },
 
     clearError: () => set({ error: null }),

@@ -1030,3 +1030,32 @@ describe("portfolioStore refuses a scenario that breaks an engine rule (ADR 0123
     expect(await storedIds()).toEqual(["old"]);
   });
 });
+
+// ADR 0123 (#107): one scenario row the app cannot read no longer blocks startup.
+describe("portfolioStore loads around an unreadable scenario (ADR 0123)", () => {
+  it("starts, lists the row as unreadable, and Delete removes it", async () => {
+    await usePortfolioStore.getState().init(async () => {
+      const sql = await openSeeded();
+      // Valid JSON (passes the CHECK) that the overrides reader refuses.
+      await sql.execute(
+        "INSERT INTO scenarios (id, name, overrides, created_at) VALUES (?, ?, ?, ?)",
+        [
+          "bad",
+          "Broken",
+          '{"version":1,"valueShock":{"pct":"x"}}',
+          "2026-01-01T00:00:00.000Z",
+        ],
+      );
+      return sql;
+    });
+    const store = () => usePortfolioStore.getState();
+    expect(store().status).toBe("ready");
+    expect(store().scenarios).toEqual([]);
+    expect(store().unreadableScenarios).toEqual([
+      { id: "bad", name: "Broken" },
+    ]);
+
+    expect(await store().removeScenario("bad")).toEqual({ ok: true });
+    expect(store().unreadableScenarios).toEqual([]);
+  });
+});
