@@ -318,12 +318,21 @@ function initialTerms(block: MortgageBlock): TermState {
   };
 }
 
-/** After an amortizing payment nothing is owed to the next one any more. Through
- *  interest-only months it stays owed (completion re-amortizes anyway). */
-function paidTerms(terms: TermState, interestOnly: boolean): TermState {
-  return interestOnly
-    ? terms
-    : { ...terms, reamortizeNext: false, agreedInstalment: null };
+/** After an amortizing payment nothing is owed to the next one any more, except when
+ *  it paid an agreed instalment on a tranche (`draw`): the tranche then re-amortizes
+ *  the next payment (ADR 0120). Through interest-only months it stays owed (completion
+ *  re-amortizes anyway). */
+function paidTerms(
+  terms: TermState,
+  interestOnly: boolean,
+  draw: Decimal,
+): TermState {
+  if (interestOnly) return terms;
+  return {
+    ...terms,
+    reamortizeNext: terms.agreedInstalment !== null && draw.greaterThan(ZERO),
+    agreedInstalment: null,
+  };
 }
 
 /**
@@ -659,7 +668,7 @@ function catchUpStep(
       ratePa,
       instalment: step.instalment,
       interestOnly: io,
-      terms: paidTerms(terms, io),
+      terms: paidTerms(terms, io, draw),
     },
     eventsAt(ctx.events, k),
   );
@@ -877,7 +886,7 @@ function devPaymentStep(
       ratePa,
       instalment: step.instalment,
       interestOnly: io,
-      terms: paidTerms(terms, io),
+      terms: paidTerms(terms, io, draw),
     },
     eventsAt(ctx.events, p),
   );
@@ -1186,7 +1195,7 @@ function plainMonthStep(
       ratePa,
       instalment: step.instalment,
       interestOnly: false,
-      terms: paidTerms(state.terms, false),
+      terms: paidTerms(state.terms, false, ZERO),
     },
     eventsAt(ctx.events, p),
   );
