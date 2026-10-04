@@ -3,8 +3,8 @@
 // every column, and conserve principal from the engine's opening balance:
 // Σ principal + Σ prepaid + final balance = opening debt + new debt. Some prepayments
 // fall just before baseDate, so the late window (ADR 0116 §1) is covered. Loans start on
-// the 7th or on the 28th–31st, clamped to the month, so month-end and leap-day due dates
-// (DR-070) meet events too (#130 G2-6-11).
+// the 7th or on the 28th–31st, so their due dates clamp to short months and to February,
+// leap years included, and those clamped dates meet events too (DR-070, #130 G2-6-11).
 import { describe, it, expect } from "vitest";
 import fc from "fast-check";
 import { D, PMT } from "../../../lib/money";
@@ -75,8 +75,13 @@ const loanWithEvents = fc
   })
   .map((g): { loan: RefLoan; base: string } => {
     const base = daysBefore(BASE, -g.baseShift);
-    // January has 31 days; addMonths clamps the day to the target month (BASE is June).
-    const start = addMonths(`2026-01-${g.startDay}`, g.startOffset + 5);
+    // Day `startDay` of month BASE + startOffset. addMonths clamps a missing day (31 April)
+    // to the month end; step back to the month before, which always has 31 days, so the
+    // start keeps its day and only the later due dates clamp.
+    const month = g.startOffset + Number(BASE.slice(5, 7)) - 1;
+    const at = (k: number) =>
+      addMonths(`${BASE.slice(0, 4)}-01-${g.startDay}`, k);
+    const start = at(month).endsWith(g.startDay) ? at(month) : at(month - 1);
     const r = D(g.bp).div(10_000);
     const instalment = PMT(r.div(12), g.months, D(-g.principal))
       .ceil()
