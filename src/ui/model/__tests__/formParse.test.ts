@@ -141,6 +141,24 @@ describe("draft formatters round-trip", () => {
     expect(percentDraft(undefined)).toBe("");
   });
 
+  // ADR 0131 (#208): the rate twin of moneyDraft — a stored ratio of any precision drafts
+  // as its exact percentage, so a save writes back the rate it read.
+  it("percentDraft keeps a stored rate's full precision in plain notation", () => {
+    for (const [stored, draft] of [
+      ["0.03591234", "3.591234"],
+      ["0.0359", "3.59"],
+      ["1e-12", "0.0000000001"],
+      ["-0.1", "-10"],
+      ["-0", "0"],
+      ["1e+5", "10000000"],
+    ] as const) {
+      const v = D(stored);
+      expect(percentDraft(v)).toBe(draft);
+      expect(parsePercentToRatio(percentDraft(v))!.equals(v)).toBe(true);
+      expect(FORM_PARSERS.pct(percentDraft(v))!.equals(v)).toBe(true);
+    }
+  });
+
   it("dateDraft → parseDate preserves the date", () => {
     const d = new Date(Date.UTC(2031, 0, 17));
     expect(dateDraft(d)).toBe("17.01.2031");

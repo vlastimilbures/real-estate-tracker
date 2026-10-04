@@ -226,6 +226,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Saving a form no longer rounds a stored rate it did not change (ADR 0131, #208). A rate
+  imported or restored with more than six decimals (e.g. interest rate `0.03591234`) was
+  rewritten to six (`0.035912`) by any edit of the same record. Forms now show and save the
+  stored rate in full, as a percentage (`3.591234`).
 - Saving a form no longer rounds a stored amount it did not change (ADR 0131, #201). An
   amount imported, restored or typed with more than two decimals (e.g. own cash `1000.005`) was
   rewritten to two (`1000.01`) by any edit of the same record, such as a rename. Forms now
