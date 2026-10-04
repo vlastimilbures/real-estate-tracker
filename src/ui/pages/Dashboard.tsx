@@ -31,6 +31,7 @@ import {
   KpiListPanel,
 } from "./DashboardPanels";
 import { FinancingPanel } from "./DashboardFinancing";
+import { DataCheckPanel } from "./DashboardDataCheck";
 import { useT } from "../hooks/useT";
 import { useRenderTiming } from "../hooks/useRenderTiming";
 import { SampleBanner, SampleClearedNotice } from "../components/SampleBanner";
@@ -193,6 +194,13 @@ export function Dashboard() {
         mode={mode}
         horizonYears={assumptions.horizonYears}
         onOpenProperty={openProperty}
+      />
+
+      <DataCheckPanel
+        portfolio={engine.portfolio}
+        asOf={snapshot.asOf}
+        resetRate={assumptions.postFixationResetRatePa}
+        onFix={openProperty}
       />
 
       <TrajectoryCharts

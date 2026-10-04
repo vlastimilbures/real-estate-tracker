@@ -450,6 +450,29 @@
   font-size: 12.5px;
   color: var(--ink-soft);
 }
+/* Data check rows: the finding and its effect, then the link to its fix (ADR 0118). */
+.data-check-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s2);
+}
+.data-check-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s1) var(--s3);
+  font-size: 13px;
+}
+.data-check-list .btn {
+  flex-shrink: 0;
+}
+.data-check-list.quiet li {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
 
 /* ============ Import drag-and-drop ============ */
 .dropzone {

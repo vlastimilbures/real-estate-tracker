@@ -340,6 +340,16 @@ export const ru: Dictionary = {
 
   // Проверка данных (ADR 0118).
   dataCheck: {
+    title: "Проверка данных",
+    summary: (attention, defaults) =>
+      `требует внимания: ${attention} · значения портфеля по умолчанию: ${defaults}`,
+    attentionTitle: "Требует внимания",
+    attentionNone: "Ничего не требует внимания.",
+    defaultsTitle: "Используются значения портфеля по умолчанию",
+    asOfNote: (date) => `Проверено на ${date}.`,
+    show: "Показать проверку данных",
+    hide: "Скрыть проверку данных",
+    goTo: (section) => `Перейти к разделу «${section}»`,
     valuationStale: (age, date) =>
       `Последней оценке ${age} (${date}). Стоимость, собственный капитал и LTV опираются на неё и на допущение о росте стоимости.`,
     noValuation: (price) =>

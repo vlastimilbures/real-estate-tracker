@@ -333,6 +333,16 @@ export const cs: Dictionary = {
 
   // Kontrola dat (ADR 0118).
   dataCheck: {
+    title: "Kontrola dat",
+    summary: (attention, defaults) =>
+      `k řešení: ${attention} · výchozí hodnoty portfolia: ${defaults}`,
+    attentionTitle: "Vyžaduje pozornost",
+    attentionNone: "Nic nevyžaduje pozornost.",
+    defaultsTitle: "Používá výchozí hodnoty portfolia",
+    asOfNote: (date) => `Zkontrolováno k ${date}.`,
+    show: "Zobrazit kontrolu dat",
+    hide: "Skrýt kontrolu dat",
+    goTo: (section) => `Přejít do sekce ${section}`,
     valuationStale: (age, date) =>
       `Poslední ocenění je staré ${age} (${date}). Hodnota, vlastní kapitál a LTV vycházejí z něj a z předpokladu zhodnocení.`,
     noValuation: (price) =>

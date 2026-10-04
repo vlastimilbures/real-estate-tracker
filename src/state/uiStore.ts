@@ -4,6 +4,7 @@
 import { create } from "zustand";
 import type { Language } from "../i18n/types";
 import type { Mode } from "../ui/model/lens";
+import type { PropertySection } from "../ui/model/sectionNav";
 import { THEME_KEY, readPersistedTheme, type Theme } from "./themePreference";
 import type { CsvImportReport } from "./csv";
 import { tickForCompare } from "./compareSelection";
@@ -22,6 +23,9 @@ export type Route =
 export type SettingsTab = "assumptions" | "backup";
 
 export type { Mode } from "../ui/model/lens";
+
+/** Where Property detail lands once: a section, or the open property form (ADR 0118). */
+export type PropertyTarget = PropertySection | "edit";
 export type { Theme } from "./themePreference";
 
 /** Saved scenarios the compare shows at most; Base is always available alongside. */
@@ -88,6 +92,10 @@ interface UiState {
   guideTerm: string | null;
   /** Properties should open its Add form once (menu ⌘N, UX-066). In-memory only. */
   newPropertyRequested: boolean;
+  /** Property detail should move to this section, or open the property form, once (a
+   *  data check fix link, ADR 0118). In-memory only. */
+  propertyTarget: PropertyTarget | null;
+  clearPropertyTarget: () => void;
   /** Safety backup written by the last "Clear sample", for the Dashboard's confirmation
    *  (ADR 0094). In-memory only. */
   sampleClearedBackup: string | null;
@@ -116,8 +124,13 @@ interface UiState {
    *  across properties (ADR 0107). */
   amortizationOpen: boolean;
   setAmortizationOpen: (open: boolean) => void;
+  /** Dashboard data check: a manual Show / Hide for the session, or null when the page
+   *  decides (open when something needs attention, ADR 0118). */
+  dataCheckOpen: boolean | null;
+  setDataCheckOpen: (open: boolean) => void;
   navigate: (route: Route) => void;
-  openProperty: (id: string) => void;
+  /** Open a property; `target` = where its page lands (ADR 0118). */
+  openProperty: (id: string, target?: PropertyTarget) => void;
   setMode: (mode: Mode) => void;
   setTheme: (theme: Theme) => void;
   setLanguage: (language: Language) => void;
@@ -184,6 +197,8 @@ export const useUiStore = create<UiState>((set, get) => ({
   aboutOpen: false,
   guideTerm: null,
   newPropertyRequested: false,
+  propertyTarget: null,
+  clearPropertyTarget: () => set({ propertyTarget: null }),
   sampleClearedBackup: null,
   backupHintDismissed: false,
   lastImport: null,
@@ -212,12 +227,18 @@ export const useUiStore = create<UiState>((set, get) => ({
   setPresetsOpen: (presetsOpen) => set({ presetsOpen }),
   amortizationOpen: false,
   setAmortizationOpen: (amortizationOpen) => set({ amortizationOpen }),
+  dataCheckOpen: null,
+  setDataCheckOpen: (dataCheckOpen) => set({ dataCheckOpen }),
   unsavedChanges: false,
   unsavedSources: [],
   pendingLeave: null,
   navigate: (route) => guarded(get, set, { route }),
-  openProperty: (id) =>
-    guarded(get, set, { route: "property", selectedPropertyId: id }),
+  openProperty: (id, target) =>
+    guarded(get, set, {
+      route: "property",
+      selectedPropertyId: id,
+      propertyTarget: target ?? null,
+    }),
   setMode: (mode) => set({ mode }),
   setTheme: (theme) => {
     persist(THEME_KEY, theme);

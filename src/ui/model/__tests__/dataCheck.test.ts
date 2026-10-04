@@ -20,8 +20,10 @@ import { fmtCzk } from "../../../lib/format";
 import {
   LEASE_ENDING_MONTHS,
   VALUATION_STALE_MONTHS,
+  dataCheckLists,
   findingFix,
   findingText,
+  fixLabel,
   portfolioDataCheck,
   propertyDataCheck,
   type DataFinding,
@@ -491,5 +493,35 @@ describe("data check: text and fix (ADR 0118)", () => {
         rentIndexation: true,
       }),
     ).toBe("edit");
+  });
+
+  it("labels the fix link with its section, or the property form", () => {
+    expect(fixLabel(en, "records")).toBe("Go to Records");
+    expect(fixLabel(en, "financing")).toBe("Go to Financing");
+    expect(fixLabel(en, "holding")).toBe("Go to Holding costs");
+    expect(fixLabel(en, "edit")).toBe("Edit property");
+  });
+});
+
+describe("data check lists (ADR 0118)", () => {
+  it("lists every property's findings by group, each row with its property", () => {
+    const asOf = isoDate("2029-01-15");
+    const lists = dataCheckLists(
+      portfolioDataCheck(without(portfolio, ["v-dubova"]), asOf),
+    );
+    expect(
+      lists.attention.map((r) => `${r.propertyId}:${r.finding.kind}`),
+    ).toEqual([
+      "javorova:valuationStale",
+      "lipova:valuationStale",
+      "lipova:fixationEnded",
+      "dubova:noValuation",
+    ]);
+    expect(lists.defaults.map((r) => r.name)).toEqual([
+      "Byt Javorova",
+      "Byt Lipova",
+      "Byt Dubova",
+    ]);
+    expect(dataCheckLists([])).toEqual({ attention: [], defaults: [] });
   });
 });

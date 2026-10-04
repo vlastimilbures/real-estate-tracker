@@ -64,8 +64,21 @@ export interface DataCheck {
   defaults: DataFinding[];
 }
 
+/** A property's findings with the property's id and name. */
+export interface PropertyDataCheck extends DataCheck {
+  propertyId: string;
+  name: string;
+}
+
+/** One row of a Data check list: the finding and its property. */
+export interface DataCheckItem {
+  propertyId: string;
+  name: string;
+  finding: DataFinding;
+}
+
 /** Where a finding is fixed: a Property detail section, or the property form. */
-type DataCheckFix =
+export type DataCheckFix =
   Extract<PropertySection, "records" | "financing" | "holding"> | "edit";
 
 /** The property's findings at `asOf`; none before its purchase date. */
@@ -133,7 +146,7 @@ function defaultsOf(
 export function portfolioDataCheck(
   portfolio: Portfolio,
   asOf: Date,
-): (DataCheck & { propertyId: string; name: string })[] {
+): PropertyDataCheck[] {
   return portfolio.properties
     .filter((p) => p.active !== false)
     .map((p) => ({
@@ -142,6 +155,22 @@ export function portfolioDataCheck(
       ...propertyDataCheck(p, portfolio, asOf),
     }))
     .filter((c) => c.attention.length + c.defaults.length > 0);
+}
+
+/** The checks as the two lists, each row with its property, in the given order. */
+export function dataCheckLists(checks: PropertyDataCheck[]): {
+  attention: DataCheckItem[];
+  defaults: DataCheckItem[];
+} {
+  const rows = (group: "attention" | "defaults") =>
+    checks.flatMap((c) =>
+      c[group].map((finding) => ({
+        propertyId: c.propertyId,
+        name: c.name,
+        finding,
+      })),
+    );
+  return { attention: rows("attention"), defaults: rows("defaults") };
 }
 
 /** Where the finding is fixed. */
@@ -192,6 +221,24 @@ export function findingText(
       return d.costDefaults(
         f.fields.map((field) => costLabel(t, field)).join(", "),
       );
+  }
+}
+
+/** The fix link's label: the section it moves to, or the property form. */
+export function fixLabel(
+  t: Pick<Dictionary, "dataCheck" | "propertyDetail" | "properties">,
+  fix: DataCheckFix,
+): string {
+  const d = t.propertyDetail;
+  switch (fix) {
+    case "records":
+      return t.dataCheck.goTo(d.sectionRecords);
+    case "financing":
+      return t.dataCheck.goTo(d.sectionFinancing);
+    case "holding":
+      return t.dataCheck.goTo(d.sectionHolding);
+    case "edit":
+      return t.properties.editProperty;
   }
 }
 
