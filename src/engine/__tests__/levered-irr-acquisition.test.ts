@@ -6,11 +6,14 @@
 // projection.test.ts and re-asserted here.
 import { describe, it, expect } from "vitest";
 import { portfolioKpis } from "../kpis";
+import { portfolioProjection } from "../projections";
 import { isoDate } from "../dates";
 import { assumptions, portfolio, PARITY } from "./support/seed";
 import type { Assumptions, Portfolio, Property } from "../types";
 import { rate } from "../brands";
 import { money } from "../brands";
+import { ZERO } from "../../lib/money";
+import { expectKc } from "./support/tolerance";
 
 const PURCHASE = isoDate("2029-01-01"); // baseDate 2026-06-07 → tStart = 3
 const FUTURE_VALUE = 6_200_000;
@@ -84,13 +87,25 @@ describe("levered IRR — future-acquisition outflow", () => {
     ).toBe(true);
   });
 
-  it("the down-payment (value − principal) is itself charged: a future buy lowers cumulative CF vs no buy", () => {
-    // Even at acquisitionCostPct 0, the future buy injects (value − principal) at tStart.
-    // Its own rent/amortization partly offsets it, but the headline check is the outflow
-    // exists and the IRR vector still brackets a single sign change (non-null IRR).
-    const k = portfolioKpis(withFuture, withCost("0"));
-    expect(k.leveredIrrNominal).not.toBeNull();
-    expect(k.leveredIrrReal).not.toBeNull();
+  it("charges the down payment once: cumulative CF = Σ net CF − outflow", () => {
+    // The seed has no refinance and no prepayment, so the only cash outside net cash
+    // flow is the future buy's outflow (#103, R2-10): price − principal, plus
+    // acquisitionCostPct × price (ADR 0119 §5; the 6.2 M valuation does not count).
+    const sumNetCf = (a: Assumptions) =>
+      portfolioProjection(withFuture, a)
+        .slice(1)
+        .reduce((s, y) => s.plus(y.netCashFlow), ZERO);
+    for (const [pct, outflow] of [
+      ["0", 3_800_000],
+      ["0.06", 4_148_000],
+    ] as const) {
+      const a = withCost(pct);
+      expectKc(
+        sumNetCf(a).minus(portfolioKpis(withFuture, a).cumulativeNetCashFlow),
+        outflow,
+        `outflow at cost ${pct}`,
+      );
+    }
   });
 
   it("is a strict no-op on the all-owned seed (parity levered IRR & cumulative CF unchanged)", () => {

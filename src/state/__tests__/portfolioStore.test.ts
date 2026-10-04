@@ -522,6 +522,36 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
     expect(saved.active).toBe(false);
   });
 
+  it("editProperty keeps a stored funding record the edit does not carry (ADR 0119)", async () => {
+    const id = pid();
+    const stored = pf().properties.find((p) => p.id === id)!;
+    const funding = {
+      ownCash: money("1500000"),
+      transactionCosts: money("95000"),
+      note: "Deposit",
+    };
+    expect(
+      (
+        await usePortfolioStore
+          .getState()
+          .editProperty({ ...stored, funding }, {})
+      ).ok,
+    ).toBe(true);
+    // The edit form's Property carries no funding record yet (#33 PR3 adds it).
+    const edited = { ...pf().properties.find((p) => p.id === id)! };
+    delete edited.funding;
+    const edit = await usePortfolioStore
+      .getState()
+      .editProperty({ ...edited, name: "Byt Renamed" }, {});
+    expect(edit.ok).toBe(true);
+    const saved = pf().properties.find((p) => p.id === id)!;
+    expect(saved.name).toBe("Byt Renamed");
+    expect(saved.funding?.ownCash?.toString()).toBe("1500000");
+    expect(saved.funding?.transactionCosts?.toString()).toBe("95000");
+    expect(saved.funding?.initialWorks).toBeUndefined();
+    expect(saved.funding?.note).toBe("Deposit");
+  });
+
   it("saveAssumptions persists changed assumptions", async () => {
     const a = usePortfolioStore.getState().assumptions!;
     const result = await usePortfolioStore

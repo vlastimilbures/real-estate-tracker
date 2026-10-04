@@ -44,10 +44,6 @@ describe("ADR 0087: real net-worth multiple", () => {
         ...p,
         purchaseDate: isoDate("2028-01-15"),
       })),
-      valuations: portfolio.valuations.map((v) => ({
-        ...v,
-        date: isoDate("2028-01-15"),
-      })),
       mortgages: [],
     };
     const k = portfolioKpis(later, assumptions);

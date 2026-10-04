@@ -51,6 +51,10 @@ const property: PropertyRow = {
   appreciation_override_pa: null,
   rent_index_override_pa: null,
   active: 1,
+  own_cash: null,
+  transaction_costs: null,
+  initial_works: null,
+  funding_note: null,
 };
 
 const mortgage: MortgageBlockRow = {

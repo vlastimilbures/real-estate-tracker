@@ -103,8 +103,8 @@ export function forProperty<T extends { propertyId: string }>(
 
 /**
  * Opening value at `asOf`: the governing valuation's market value (`selectValuation`),
- * else the purchase price. Shared by the projection basis and the acquisition outflow
- * of a future buy.
+ * else the purchase price. The projection basis (a future buy's down payment starts
+ * from its price instead, ADR 0119).
  */
 export function openingValue(
   valuations: Valuation[],

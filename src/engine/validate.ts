@@ -148,6 +148,9 @@ function checkAssumptions(a: Assumptions, report: Report): void {
   }
   if (outsideUnit(a.vacancyAllowance))
     report("RATE_OUT_OF_RANGE", "vacancyAllowance");
+  // ADR 0119 §6: a fraction of the purchase price.
+  if (outsideUnit(a.acquisitionCostPct))
+    report("RATE_OUT_OF_RANGE", "acquisitionCostPct");
   checkDefaultRanges(a.defaults, report);
   checkShock(a.inflationShock, "inflationShock", report);
   checkShock(a.rateShock, "rateShock", report);
@@ -442,6 +445,9 @@ const HOLDING_COST_FIELDS = [
   "otherYr",
 ];
 
+/** The Kč parts of a property's funding record (ADR 0119). */
+const FUNDING_MONEY = ["ownCash", "transactionCosts", "initialWorks"] as const;
+
 function checkProperties(p: Portfolio, on: ReporterFor): void {
   for (const x of p.properties) {
     const report = on("property", x.id);
@@ -453,6 +459,12 @@ function checkProperties(p: Portfolio, on: ReporterFor): void {
     );
     if (x.purchasePrice.isNegative())
       report("NEGATIVE_AMOUNT", "purchasePrice");
+    // ADR 0119 §7: flat field names, so a restore maps them to their columns.
+    const funding = x.funding ?? {};
+    checkFields(funding, [], [...FUNDING_MONEY], report);
+    for (const f of FUNDING_MONEY) {
+      if (isNegativeAmount(funding[f])) report("NEGATIVE_AMOUNT", f);
+    }
   }
 }
 

@@ -255,7 +255,17 @@ export function planImport(
     };
     const row: PropertyRow = existing
       ? { ...existing, ...fields }
-      : { id: uniqueId(p.name), name: p.name, ...fields, active: 1 };
+      : {
+          id: uniqueId(p.name),
+          name: p.name,
+          ...fields,
+          active: 1,
+          // ADR 0119: CSV does not carry a funding record yet (#33 PR2).
+          own_cash: null,
+          transaction_costs: null,
+          initial_works: null,
+          funding_note: null,
+        };
     statements.push(
       existing
         ? updateStatement("properties", row.id, fields)

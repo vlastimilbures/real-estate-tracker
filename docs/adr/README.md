@@ -143,6 +143,7 @@ Other IDs seen in code comments:
 | [0116](0116-prepayments-ui-and-review-fixes.md)   | Prepayments: form, outputs and review fixes                                            | #32                                    |
 | [0117](0117-property-loan-outlook.md)             | Property loan outlook: each block's reset and the remaining term                       | #31                                    |
 | [0118](0118-data-check.md)                        | Data check: stale, defaulted and missing inputs                                        | #35                                    |
+| [0119](0119-acquisition-funding.md)               | Acquisition funding record and the down payment of a future buy                        | #33, #103, #140, #118                  |
 | [0122](0122-valuation-persists-past-valid-to.md)  | A valuation keeps governing after its "Valid to" date                                  | #110                                   |
 
 ### Judgment calls and open questions
