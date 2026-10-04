@@ -9,7 +9,7 @@ import { portfolioProjection, buildCpiIndex } from "../projections";
 import { realProjection } from "../real";
 import { portfolioKpis } from "../kpis";
 import { financingExposure } from "../financing";
-import { schedulesByProperty } from "../schedule";
+import { propertySchedules } from "../schedule";
 import type {
   MortgageBlock,
   Portfolio,
@@ -152,7 +152,7 @@ describe("ADR 0109: the modelled payoff moves with a shorter term", () => {
   it("payoff date 2043-03-17 after the shortenTerm prepayment", () => {
     const p = prepaid("shortenTerm");
     const ids = p.properties.map((x) => x.id);
-    const schedules = schedulesByProperty(p.mortgages, ids, assumptions);
+    const schedules = propertySchedules(p.mortgages, ids, assumptions);
     const fx = financingExposure(p, assumptions, schedules, BASE_DATE);
     const loan = fx.loans.find((l) => l.propertyId === "javorova");
     expect(loan?.payoffDate?.toISOString().slice(0, 10)).toBe("2043-03-17");

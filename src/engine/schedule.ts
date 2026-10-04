@@ -220,6 +220,7 @@ function zeroRow(
     interest: ZERO,
     principal: ZERO,
     drawn: ZERO,
+    refinanced: ZERO,
     prepaid: ZERO,
     prepaymentFee: ZERO,
     endBalance,
@@ -638,6 +639,7 @@ function paymentRow(
   return {
     ...head,
     ...step,
+    refinanced: ZERO,
     prepaid: settled.prepaid,
     prepaymentFee: settled.fee,
     endBalance: settled.balance,
@@ -1433,6 +1435,7 @@ export function instalmentAtMonth(
     row.principal.greaterThan(ZERO) &&
     next !== undefined &&
     next.drawn.isZero() &&
+    next.refinanced.isZero() &&
     next.ratePa.equals(row.ratePa);
   return {
     instalment: after ? next.instalment : row.instalment,
@@ -1502,6 +1505,8 @@ export function blockChain(
  * owner drawn in month d itself (two successors in one grid month) pays off its draw.
  * A prepayment dated on/before the successor's start that the owner's dropped rows
  * carried is paid at the handover, before the successor pays off the rest (ADR 0109).
+ * The merged row's `drawn` is real new debt only; `refinanced` is the successor's
+ * principal less the balance it pays off (ADR 0130).
  */
 function spliceSuccessor(
   current: BlockSchedule,
@@ -1530,11 +1535,20 @@ function spliceSuccessor(
   const row =
     own && kept ? { ...own, endBalance: drawRow.endBalance } : drawRow;
   const prepaid = row.prepaid.plus(late.applied);
+  // The rest of the handover's net new debt (D-47, DR-092) is the refinance difference.
+  const drawn = handoverDrawn(drawRow, next, own, {
+    counted: kept || d === 1 || drawMonth(owner, baseDate) === d,
+  });
+  const netNew = row.endBalance
+    .minus(carriedIn)
+    .plus(row.principal)
+    .plus(prepaid);
   const merged = {
     ...row,
     prepaid,
     prepaymentFee: row.prepaymentFee.plus(late.fee),
-    drawn: row.endBalance.minus(carriedIn).plus(row.principal).plus(prepaid),
+    drawn,
+    refinanced: netNew.minus(drawn),
   };
   return {
     rows: [...head, merged, ...nextRows.slice(d)],
@@ -1579,6 +1593,21 @@ function handoverPrepayments(
     return { ...o, month: d, applied: paid, fee: charged, issue };
   });
   return { applied, fee, outcomes: out };
+}
+
+/**
+ * A handover row's real new debt (ADR 0130): a tranche the successor draws with its
+ * principal, plus what the owner's month-d row drew when the balance the successor pays
+ * off `counted` it (a kept row, grid month 1, or an owner drawn in month d).
+ */
+function handoverDrawn(
+  drawRow: AmortizationRow,
+  next: MortgageBlock,
+  own: AmortizationRow | undefined,
+  { counted }: { counted: boolean },
+): Decimal {
+  const ownDrew = own && counted ? own.drawn : ZERO;
+  return drawRow.drawn.minus(next.initialPrincipal).plus(ownDrew);
 }
 
 /**

@@ -114,9 +114,9 @@ function openingDraws(l: RefLoan, base: string): Decimal {
  * Max |Δ| over every column; the instalment only where the reference pays. The
  * reference runs longer than the engine (`REF_MONTHS`): every reference row past the
  * engine's last one must be idle, else the engine dropped a row that still pays.
- * On a refinance handover row the engine's `drawn` is the net new debt (D-47), the
- * reference's `draw` the successor's gross draw: pass the reference `handovers` so
- * the row is compared as gross − paid off.
+ * On a refinance handover row the engine's `drawn` + `refinanced` is the net new debt
+ * (D-47, ADR 0130), the reference's `draw` the successor's gross draw: pass the
+ * reference `handovers` so the row is compared as gross − paid off.
  */
 export function maxDev(
   e: AmortizationRow[],
@@ -146,7 +146,8 @@ export function maxDev(
     );
     const h = handovers.find((x) => x.month === e[i].month);
     const draw = h ? r[i].draw.minus(h.paidOff.toString()) : r[i].draw;
-    m = Math.max(m, Math.abs(e[i].drawn.minus(draw.toString()).toNumber()));
+    const netNew = e[i].drawn.plus(e[i].refinanced);
+    m = Math.max(m, Math.abs(netNew.minus(draw.toString()).toNumber()));
     if (r[i].payment.greaterThan(0)) {
       m = Math.max(
         m,

@@ -67,7 +67,9 @@ work still to do is in the [roadmap](roadmap.md).
   and recalculates the instalment over the remaining term. Once you know the real new terms,
   enter them as a new block. If a fixation has already ended and there is no new block, or
   the next block leaves at least one payment at the reset rate, the app warns you
-  (ADR 0129).
+  (ADR 0129). A new block's principal less the balance it pays off shows as the
+  "Refinance difference", not as a draw, even when the previous loan was already repaid
+  and the new block pays off nothing (ADR 0130).
 - **One development loan per property.** You can enter more than one, but the property's value
   during construction follows only the first. One development loan per property, optionally
   refinanced into a plain loan, is the supported case.
@@ -82,6 +84,12 @@ work still to do is in the [roadmap](roadmap.md).
   prepayment larger than the balance, or after the loan is repaid, is cut to what is owed,
   and the property page warns about it. Interest saved is nominal, uses the base-case
   assumptions, covers the loan's whole remaining life and is not net of fees (ADR 0116).
+  It is shown only when a prepayment repaid some principal. When a maturity change takes
+  effect only because of the prepayment (a lower instalment that the higher balance without
+  it could not carry), the comparison measures that change too and can come out negative:
+  the app then shows "n/a" instead of a figure (ADR 0130). A prepayment on the day a new
+  block starts saves nothing in the model, because the new block's principal is what you
+  enter, so no figure is shown for it.
   Prepayments and maturity changes entered on a loan block that a later block had already
   replaced before the projection start have no effect, and no warning says so.
   A development-loan tranche counts in full for every prepayment and maturity change

@@ -5,7 +5,7 @@ import { D } from "../../lib/money";
 import { money, rate } from "../brands";
 import { isoDate } from "../dates";
 import { financingExposure, prepaymentInterestSaved } from "../financing";
-import { propertySchedule, schedulesByProperty } from "../schedule";
+import { propertySchedule, propertySchedules } from "../schedule";
 import type {
   AmortizationRow,
   MortgageBlock,
@@ -36,7 +36,7 @@ const saved = (blocks: MortgageBlock[]) =>
   prepaymentInterestSaved(
     blocks,
     assumptions,
-    propertySchedule(blocks, assumptions).rows,
+    propertySchedule(blocks, assumptions),
   );
 
 describe("ADR 0116: interest saved by prepayments", () => {
@@ -136,11 +136,96 @@ describe("ADR 0116: interest saved by prepayments", () => {
     const fx = financingExposure(
       p,
       assumptions,
-      schedulesByProperty(p.mortgages, ids, assumptions),
+      propertySchedules(p.mortgages, ids, assumptions),
       assumptions.baseDate,
     );
     const byId = new Map(fx.loans.map((l) => [l.propertyId, l]));
     expect(byId.get("javorova")?.interestSaved?.greaterThan(0)).toBe(true);
     expect(byId.get("lipova")?.interestSaved).toBeNull();
+  });
+});
+
+describe("ADR 0130: interest saved needs an applied prepayment", () => {
+  const refi = (start: string): MortgageBlock =>
+    ({
+      id: "refi",
+      propertyId: javorova.propertyId,
+      startDate: isoDate(start),
+      initialPrincipal: money(900000),
+      fixationYears: 5,
+      interestRatePa: rate("0.039"),
+      monthlyInstalment: money(9800),
+    }) as MortgageBlock;
+
+  it("is null when a successor replaced every prepayment", () => {
+    const blocks = [
+      { ...javorova, prepayments: [prepay("2037-01-17", 100000)] },
+      refi("2036-01-17"),
+    ];
+    const s = propertySchedule(blocks, assumptions);
+    expect(s.eventOutcomes.map((o) => o.issue)).toEqual([
+      "PREPAYMENT_REPLACED",
+    ]);
+    expect(saved(blocks)).toBeNull();
+  });
+
+  it("is null when every prepayment comes after payoff", () => {
+    const b = {
+      ...javorova,
+      recasts: [
+        { date: isoDate("2031-01-17"), maturity: isoDate("2035-01-17") },
+      ],
+      prepayments: [prepay("2040-01-17", 100000)],
+    };
+    const s = propertySchedule([b], assumptions);
+    expect(
+      s.eventOutcomes
+        .filter((o) => o.kind === "prepayment")
+        .map((o) => o.issue),
+    ).toEqual(["PREPAYMENT_AFTER_PAYOFF"]);
+    expect(saved([b])).toBeNull();
+  });
+
+  it("counts a prepayment that applied when another was replaced", () => {
+    const b = {
+      ...javorova,
+      prepayments: [prepay("2031-01-17", 500000), prepay("2037-01-17", 100000)],
+    };
+    expect(saved([b, refi("2036-01-17")])?.greaterThan(0)).toBe(true);
+  });
+
+  it("keeps the sign when a recast applies only with the prepayment (R1-05)", () => {
+    // A 300,000 Kč prepayment and a recast to a 5,000 Kč instalment on one date: without
+    // the prepayment the instalment is below the next interest and the recast is
+    // ignored; with it the recast applies and stretches the loan. The UI shows a note.
+    const b = {
+      ...javorova,
+      prepayments: [prepay("2031-01-17", 300000)],
+      recasts: [{ date: isoDate("2031-01-17"), instalment: money(5000) }],
+    };
+    expect(saved([b])?.toFixed(2)).toBe("-433551.87");
+  });
+
+  it("is null on the property's loan exposure when nothing applied", () => {
+    const p = {
+      ...portfolio,
+      mortgages: [
+        ...portfolio.mortgages.map((m) =>
+          m === javorova
+            ? { ...m, prepayments: [prepay("2037-01-17", 100000)] }
+            : m,
+        ),
+        refi("2036-01-17"),
+      ],
+    };
+    const ids = p.properties.map((x) => x.id);
+    const fx = financingExposure(
+      p,
+      assumptions,
+      propertySchedules(p.mortgages, ids, assumptions),
+      assumptions.baseDate,
+    );
+    const loan = fx.loans.find((l) => l.propertyId === "javorova");
+    expect(loan?.interestSaved).toBeNull();
   });
 });

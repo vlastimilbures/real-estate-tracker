@@ -101,6 +101,7 @@ describe("toEquityChangeRows", () => {
       netCashFlow: ZERO,
       dscr: null,
       draws: D(draws),
+      refinanced: D(0),
       prepaid: D(prepaid),
       prepaymentFees: D(0),
     });

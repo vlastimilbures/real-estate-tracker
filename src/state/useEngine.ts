@@ -310,7 +310,7 @@ export function usePropertyEngineResult(
         financing: propertyLoanExposure(
           portfolio.mortgages.filter((b) => b.propertyId === propertyId),
           assumptions,
-          schedule,
+          { rows: schedule, eventOutcomes: built?.eventOutcomes ?? [] },
           asOfDate,
         ),
         acquisition: acquisitionSummary(property, portfolio, assumptions),
