@@ -12,6 +12,8 @@ import type {
 } from "../../types";
 import { assumptions as A0 } from "../support/seed";
 import {
+  addMonths,
+  paymentsMadeBy,
   referenceSchedule,
   type RefLoan,
   type RefOptions,
@@ -59,6 +61,12 @@ export const REF: Omit<RefOptions, "baseDate" | "months"> = {
   openingDraws: "nextPeriod", // D-41
 };
 
+/**
+ * Engine schedule and reference rows for one loan. Under D-41 (`openingDraws:
+ * "nextPeriod"`), reference row 1's `draw` is rebased to the engine's meaning (DR-092):
+ * the tranches after the last payment due and on/before baseDate leave it, because the
+ * engine counts them as opening debt. Balances and every other column are untouched.
+ */
 export function both(
   l: RefLoan,
   base = "2026-06-07",
@@ -70,21 +78,35 @@ export function both(
     baseDate: isoDate(base),
     ...extra,
   });
-  const r = referenceSchedule(l, {
-    ...REF,
-    baseDate: base,
-    months: REF_MONTHS,
-    ...opts,
-  });
+  const options = { ...REF, baseDate: base, months: REF_MONTHS, ...opts };
+  const r = referenceSchedule(l, options);
+  if (options.openingDraws === "nextPeriod" && r.length > 0)
+    r[0] = { ...r[0], draw: r[0].draw.minus(openingDraws(l, base).toString()) };
   return { e, r };
+}
+
+/** A running loan's tranches after its last payment due and on/before baseDate. */
+function openingDraws(l: RefLoan, base: string): Decimal {
+  if (l.start > base) return D(0);
+  const last = addMonths(l.start, paymentsMadeBy(l.start, base));
+  return (l.draws ?? [])
+    .filter((x) => x.date > last && x.date <= base)
+    .reduce((s, x) => s.plus(String(x.amount)), D(0));
 }
 
 /**
  * Max |Δ| over every column; the instalment only where the reference pays. The
  * reference runs longer than the engine (`REF_MONTHS`): every reference row past the
  * engine's last one must be idle, else the engine dropped a row that still pays.
+ * On a refinance handover row the engine's `drawn` is the net new debt (D-47), the
+ * reference's `draw` the successor's gross draw: pass the reference `handovers` so
+ * the row is compared as gross − paid off.
  */
-export function maxDev(e: AmortizationRow[], r: RefRow[]): number {
+export function maxDev(
+  e: AmortizationRow[],
+  r: RefRow[],
+  handovers: readonly { month: number; paidOff: { toString(): string } }[] = [],
+): number {
   if (r.length < e.length) return Infinity;
   let m = 0;
   for (const row of r.slice(e.length)) {
@@ -106,6 +128,9 @@ export function maxDev(e: AmortizationRow[], r: RefRow[]): number {
       m,
       Math.abs(e[i].prepaymentFee.minus(r[i].fee.toString()).toNumber()),
     );
+    const h = handovers.find((x) => x.month === e[i].month);
+    const draw = h ? r[i].draw.minus(h.paidOff.toString()) : r[i].draw;
+    m = Math.max(m, Math.abs(e[i].drawn.minus(draw.toString()).toNumber()));
     if (r[i].payment.greaterThan(0)) {
       m = Math.max(
         m,

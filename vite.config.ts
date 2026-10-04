@@ -42,6 +42,9 @@ export default defineConfig(async () => ({
   test: {
     globals: true,
     environment: "node",
+    // Node 25+ turns Web Storage on: its `localStorage` warns in every worker without
+    // --localstorage-file and hides jsdom's own storage. Off in test workers (DR-094).
+    execArgv: ["--no-experimental-webstorage"],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     // Engine benchmarks (P9, `pnpm bench`); git-ignored evidence benches stay out.
     benchmark: { include: ["src/**/*.bench.ts"] },

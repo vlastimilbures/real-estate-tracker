@@ -5,7 +5,7 @@
 // in ui/pages/__tests__/SettingsTabs.test.tsx (DR-170).
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
-// jsdom here has no Storage without a URL; a Map-backed stand-in is enough.
+// A fresh Map-backed storage per test, so a stored value never reaches the next one.
 function memoryStorage(): Storage {
   const m = new Map<string, string>();
   return {
