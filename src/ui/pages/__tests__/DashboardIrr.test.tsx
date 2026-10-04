@@ -37,6 +37,7 @@ function renderPanels(irr: LeveredIrr) {
         horizon={kpis.netWorthNominal}
         horizonYears={assumptions.horizonYears}
         irr={irr}
+        cashInvested={null}
       />
     </>,
   );

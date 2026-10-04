@@ -301,6 +301,8 @@ export const cs: Dictionary = {
     kpiSumPrincipalRepaidNominal: (n) =>
       `Σ splacené jistiny (roky 1–${n}, nominálně)`,
     kpiWeightedAvgRate: "Vážená průměrná úroková sazba",
+    kpiCashInvested: "Vložené vlastní zdroje",
+    kpiCashInvestedNominal: "Vložené vlastní zdroje (nominálně)",
     // Panel Financování a termíny (ADR 0103).
     financingTitle: "Financování a termíny",
     financingHint: (d) => `modelová data k ${d}`,

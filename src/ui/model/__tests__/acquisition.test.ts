@@ -1,11 +1,13 @@
 // ADR 0119 §4, §9 (#33 PR3): the Property detail Acquisition section. Unknown parts read
 // "—", no acquisition loan reads "None", and a gap of 1 Kč or more either way warns.
 import { describe, it, expect } from "vitest";
-import { acquisitionView } from "../acquisition";
+import { acquisitionView, cashInvestedTotal } from "../acquisition";
 import {
   acquisitionSummary,
+  isoDate,
   money,
   type AcquisitionSummary,
+  type Property,
 } from "../../../engine";
 import { D } from "../../../lib/money";
 import { fmtCzk } from "../../../lib/format";
@@ -164,5 +166,69 @@ describe("acquisitionView", () => {
     expect(acquisitionView(s, undefined, d).warning).toBe(
       d.acqGapShort(fmtCzk(25_000)),
     );
+  });
+});
+
+describe("cashInvestedTotal", () => {
+  const flat = (id: string, over: Partial<Property> = {}): Property => ({
+    id,
+    name: id,
+    purchaseDate: isoDate("2020-01-01"),
+    purchasePrice: money("5000000"),
+    ...over,
+  });
+  const cash = (amount: string) => ({ funding: { ownCash: money(amount) } });
+
+  it("sums the own cash of the active properties", () => {
+    expect(
+      cashInvestedTotal([
+        flat("a", cash("1500000")),
+        flat("b", cash("900000.5")),
+      ])?.toString(),
+    ).toBe("2400000.5");
+  });
+
+  it("is not shown while an active property has no own cash", () => {
+    expect(
+      cashInvestedTotal([
+        flat("a", cash("1500000")),
+        flat("b", { funding: { transactionCosts: money("95000") } }),
+      ]),
+    ).toBeNull();
+    expect(cashInvestedTotal([flat("a", cash("1")), flat("b")])).toBeNull();
+  });
+
+  it("leaves out a deactivated property, known or not", () => {
+    expect(
+      cashInvestedTotal([
+        flat("a", cash("1500000")),
+        flat("b", { active: false }),
+        flat("c", { active: false, ...cash("700000") }),
+      ])?.toString(),
+    ).toBe("1500000");
+  });
+
+  it("counts a future buy, so one with no own cash hides the total", () => {
+    const future = { purchaseDate: isoDate("2030-01-01") };
+    expect(
+      cashInvestedTotal([
+        flat("a", cash("1")),
+        flat("b", { ...future, ...cash("2") }),
+      ])?.toString(),
+    ).toBe("3");
+    expect(
+      cashInvestedTotal([flat("a", cash("1")), flat("b", future)]),
+    ).toBeNull();
+  });
+
+  it("counts own cash 0 as known", () => {
+    expect(cashInvestedTotal([flat("a", cash("0"))])?.toString()).toBe("0");
+  });
+
+  it("is not shown with no active property", () => {
+    expect(cashInvestedTotal([])).toBeNull();
+    expect(
+      cashInvestedTotal([flat("a", { active: false, ...cash("1") })]),
+    ).toBeNull();
   });
 });

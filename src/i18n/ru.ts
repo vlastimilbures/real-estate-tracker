@@ -306,6 +306,8 @@ export const ru: Dictionary = {
     kpiSumPrincipalRepaidNominal: (n) =>
       `Σ погашенного тела (годы 1–${n}, номинально)`,
     kpiWeightedAvgRate: "Средневзвешенная ставка",
+    kpiCashInvested: "Вложенные собственные средства",
+    kpiCashInvestedNominal: "Вложенные собственные средства (номинально)",
     // Панель «Финансирование и ближайшие события» (ADR 0103).
     financingTitle: "Финансирование и ближайшие события",
     financingHint: (d) => `расчётные даты на ${d}`,

@@ -32,6 +32,7 @@ describe("Dashboard horizon labels (ADR 0084)", () => {
           horizon={kpis.netWorthNominal}
           horizonYears={a25.horizonYears}
           irr={{ rate: null, reason: "NOT_UNIQUE" }}
+          cashInvested={null}
         />
       </>,
     );

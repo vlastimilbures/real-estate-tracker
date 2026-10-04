@@ -323,6 +323,8 @@ export const en = {
     kpiSumPrincipalRepaidNominal: (n: number) =>
       `Σ principal repaid (Yrs 1–${n}, nominal)`,
     kpiWeightedAvgRate: "Weighted-avg interest rate",
+    kpiCashInvested: "Cash invested",
+    kpiCashInvestedNominal: "Cash invested (nominal)",
     // Financing & upcoming panel (ADR 0103).
     financingTitle: "Financing & upcoming",
     financingHint: (d: string) => `modelled dates, as of ${d}`,

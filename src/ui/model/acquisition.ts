@@ -1,7 +1,7 @@
 // Pure presentation model for the purchase's funding (ADR 0119 §4, §9): the Property
-// detail Acquisition section.
-import type { AcquisitionSummary } from "../../engine";
-import type { Decimal } from "../../lib/money";
+// detail Acquisition section and the Dashboard's Cash invested total.
+import type { AcquisitionSummary, Property } from "../../engine";
+import { ZERO, type Decimal } from "../../lib/money";
 import { fmtCzk } from "../../lib/format";
 import type { Dictionary } from "../../i18n";
 
@@ -51,4 +51,20 @@ export function acquisitionView(
           : d.acqGapOver(fmtCzk(gap.abs())),
     note: note?.trim() ? d.acqRecordedNote(note.trim()) : null,
   };
+}
+
+/** Σ own cash over the active properties (future buys included); null unless every one
+ *  of them has it, and with none (ADR 0119 §9). */
+export function cashInvestedTotal(
+  properties: readonly Property[],
+): Decimal | null {
+  const active = properties.filter((p) => p.active !== false);
+  if (active.length === 0) return null;
+  let total = ZERO;
+  for (const p of active) {
+    const ownCash = p.funding?.ownCash;
+    if (!ownCash) return null;
+    total = total.plus(ownCash);
+  }
+  return total;
 }

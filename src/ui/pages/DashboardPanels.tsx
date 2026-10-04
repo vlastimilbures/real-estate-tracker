@@ -299,6 +299,7 @@ export function KpiListPanel({
   horizon,
   horizonYears,
   irr,
+  cashInvested,
 }: {
   s: PortfolioSnapshot;
   kpis: PortfolioKPIs;
@@ -306,6 +307,8 @@ export function KpiListPanel({
   horizon: Decimal;
   horizonYears: number;
   irr: LeveredIrr;
+  /** Σ own cash, null unless every property has it (ADR 0119 §9). */
+  cashInvested: Decimal | null;
 }) {
   const t = useT();
   const real = mode === "real";
@@ -354,6 +357,17 @@ export function KpiListPanel({
             k: t.dashboard.kpiWeightedAvgRate,
             v: <Pct value={s.weightedAvgRate} dp={2} />,
           },
+          // A recorded nominal amount, labelled so in the real lens (ADR 0087, 0119 §9).
+          ...(cashInvested
+            ? [
+                {
+                  k: real
+                    ? t.dashboard.kpiCashInvestedNominal
+                    : t.dashboard.kpiCashInvested,
+                  v: <Money value={cashInvested} parens={false} />,
+                },
+              ]
+            : []),
         ]}
       />
     </Panel>

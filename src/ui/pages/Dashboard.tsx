@@ -32,6 +32,7 @@ import {
 } from "./DashboardPanels";
 import { FinancingPanel } from "./DashboardFinancing";
 import { DataCheckPanel } from "./DashboardDataCheck";
+import { cashInvestedTotal } from "../model/acquisition";
 import { useT } from "../hooks/useT";
 import { useRenderTiming } from "../hooks/useRenderTiming";
 import { SampleBanner, SampleClearedNotice } from "../components/SampleBanner";
@@ -218,6 +219,7 @@ export function Dashboard() {
         horizon={horizon}
         horizonYears={assumptions.horizonYears}
         irr={irr}
+        cashInvested={cashInvestedTotal(engine.portfolio.properties)}
       />
     </AppShell>
   );
