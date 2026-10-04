@@ -25,6 +25,7 @@ import type {
   AmortizationRow,
   Assumptions,
   IsoDate,
+  Lease,
   MortgageBlock,
   Portfolio,
 } from "./types";
@@ -268,16 +269,29 @@ function completions(
   return events;
 }
 
+/**
+ * The end of the lease in force at `asOf`, or null when that lease is open-ended, a later
+ * lease is entered, or none is in force. `leases` = one property's leases. Shared by the
+ * upcoming lease ends and the data check (ADR 0118).
+ */
+export function leaseEndWithoutFollowOn(
+  leases: Lease[],
+  asOf: Date,
+): IsoDate | null {
+  const lease = leaseInForce(leases, asOf);
+  if (!lease?.endDate) return null;
+  if (firstAfter(leases, lease.startDate, (l) => l.startDate)) return null;
+  return lease.endDate;
+}
+
 /** The in-force lease's end for each active property, when no later lease is entered. */
 function leaseEnds(portfolio: Portfolio, asOf: Date): FinancingEvent[] {
   const events: FinancingEvent[] = [];
   const active = portfolio.properties.filter((p) => p.active !== false);
   for (const id of new Set(active.map((p) => p.id))) {
     const leases = portfolio.leases.filter((l) => l.propertyId === id);
-    const lease = leaseInForce(leases, asOf);
-    if (!lease?.endDate) continue;
-    if (firstAfter(leases, lease.startDate, (l) => l.startDate)) continue;
-    events.push({ date: lease.endDate, kind: "leaseEnd", propertyId: id });
+    const date = leaseEndWithoutFollowOn(leases, asOf);
+    if (date) events.push({ date, kind: "leaseEnd", propertyId: id });
   }
   return events;
 }

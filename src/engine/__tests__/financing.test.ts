@@ -6,6 +6,7 @@ import fc from "fast-check";
 import {
   debtResettingWithin,
   financingExposure,
+  leaseEndWithoutFollowOn,
   propertyLoanExposure,
   upcomingEvents,
   type FinancingExposure,
@@ -351,6 +352,27 @@ describe("ADR 0103: upcoming events", () => {
       reset(edge, "m-lipova").balance.toNumber(),
       "amt",
     );
+  });
+
+  it("the lease-end helper: the in-force lease's end, unless open-ended or followed", () => {
+    const lipova = (p: Portfolio) =>
+      p.leases.filter((l) => l.propertyId === "lipova");
+    // l-lipova-1 ends 2026-08-30; l-lipova-2 follows it.
+    expect(leaseEndWithoutFollowOn(lipova(portfolio), BASE_DATE)).toBeNull();
+    expect(leaseEndWithoutFollowOn(lipova(withoutFollowOn), BASE_DATE)).toEqual(
+      isoDate("2026-08-30"),
+    );
+    // In force on its last day; nothing in force the day after.
+    expect(
+      leaseEndWithoutFollowOn(lipova(withoutFollowOn), isoDate("2026-08-30")),
+    ).toEqual(isoDate("2026-08-30"));
+    expect(
+      leaseEndWithoutFollowOn(lipova(withoutFollowOn), isoDate("2026-08-31")),
+    ).toBeNull();
+    const javorova = portfolio.leases.filter(
+      (l) => l.propertyId === "javorova",
+    );
+    expect(leaseEndWithoutFollowOn(javorova, BASE_DATE)).toBeNull();
   });
 
   it("modelled payoff and development completion are events", () => {

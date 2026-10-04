@@ -48,7 +48,12 @@ export {
 } from "./schedule";
 
 // Snapshot, projection, KPIs, scenarios, validation
-export { portfolioSnapshot, propertySnapshot } from "./metrics";
+export {
+  leaseInForce,
+  portfolioSnapshot,
+  propertySnapshot,
+  selectValuation,
+} from "./metrics";
 export {
   cpiIndex,
   portfolioProjection,
@@ -67,6 +72,7 @@ export { portfolioOutputs, projectionAndKpis } from "./outputs";
 export {
   debtResettingWithin,
   financingExposure,
+  leaseEndWithoutFollowOn,
   propertyLoanExposure,
   upcomingEvents,
 } from "./financing";
