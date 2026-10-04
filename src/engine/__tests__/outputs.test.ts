@@ -42,9 +42,9 @@ const shocked = applyScenario(assumptions, {
   valueShock: { pct: rate("0.2"), atYear: 2 },
 });
 
-/** Every loan with two prepayments and a recast (ADR 0109; #130 G1-6-04): the seed
- *  loans replay the first prepayment as history, the dev loan meets them after its
- *  completion, the future loan after its draw. */
+/** Every loan with two prepayments and a recast (ADR 0109; #130 G1-6-04). Javorová's
+ *  and the inactive loan's first prepayments replay as history, the dev loan meets its
+ *  events after completion, the future loan after its draw. */
 const withEvents = (p: Portfolio): Portfolio => ({
   ...p,
   mortgages: p.mortgages.map((m) => ({
@@ -113,6 +113,11 @@ describe("portfolioOutputs = the separate public calls", () => {
         ]),
       );
     }
+    expect(
+      propertySchedules(seedEvents.mortgages, ["javorova"], assumptions).get(
+        "javorova",
+      )?.eventOutcomes[0].month,
+    ).toBeLessThanOrEqual(0);
   });
 
   for (const [pName, p] of PORTFOLIOS) {
