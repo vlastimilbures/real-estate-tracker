@@ -155,7 +155,9 @@ describe("ADR 0120: a tranche whose interest exceeds the agreed instalment", () 
       draws: [{ date: isoDate("2027-01-15"), amount: money(2000000) }],
     }) as MortgageBlock;
 
-  it("q repays no principal: a short payment never goes negative", () => {
+  // Today's behaviour (#225): the 1,231.52 Kč shortfall is neither paid nor added to
+  // the balance. Pinned so principal never goes negative; the decision is open.
+  it("today: q pays the agreed 15,000 Kč while more interest accrues (#225)", () => {
     const rows = buildSchedule(big(), assumptions);
     const q = at(rows, Q);
     expect(q.instalment.toNumber()).toBe(AGREED);

@@ -80,8 +80,8 @@ describe("validation problem fields", () => {
     expect(dev({ amount: money(NaN) })).toStrictEqual([
       onLoan("NON_FINITE_NUMBER", "draws"),
     ]);
-    // A fractional term gives no last draw date (start + 17 months would be
-    // 2027-08-01), so no draw is past it.
+    // Today (#226): a fractional term gives no last draw date (start + 17 months
+    // would be 2027-08-01), so no draw is past it.
     expect(
       loanErrors({
         ...devBlock,

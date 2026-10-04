@@ -457,7 +457,8 @@ describe("the loan event window (ADR 0109, DR-168)", () => {
     expect(loanErrors({ loanTermYears: 0, recasts })).toStrictEqual([
       onLoan("INVALID_TERM", "loanTermYears"),
     ]);
-    // A fractional term is not rejected, but gives no whole-payment term either.
+    // Today (#226): a fractional term is not rejected, but gives no whole-payment
+    // term either, so the maturity goes unchecked.
     expect(loanErrors({ loanTermYears: 1.5, recasts })).toStrictEqual([]);
   });
 
