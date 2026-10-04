@@ -1,14 +1,20 @@
 // The engine's input rules as the restore check (P5b), plus the whole-number bounds the
-// forms and CSV import apply (ADR 0086). Lives outside src/data because the data layer
-// never calls engine functions (DB → mappers → engine).
-import { validateInputs, validatePortfolio } from "../engine";
+// forms and CSV import apply (ADR 0086) and the scenario check every scenario write uses
+// (ADR 0123). Lives outside src/data because the data layer never calls engine functions
+// (DB → mappers → engine).
+import { applyScenario, validateInputs, validatePortfolio } from "../engine";
 import type {
   Assumptions,
   EngineValidationError,
   Portfolio,
+  ScenarioOverrides,
   ValidationEntity,
 } from "../engine";
-import type { InputRules, RangeProblem } from "../data/backup";
+import type {
+  InputRules,
+  RangeProblem,
+  ScenarioRuleProblem,
+} from "../data/backup";
 import { inRange, INT_RANGES } from "../lib/intRanges";
 
 type BoundedField = keyof typeof INT_RANGES;
@@ -40,20 +46,63 @@ function rangeProblems(
   return problems;
 }
 
+const NO_ROWS: Portfolio = {
+  properties: [],
+  mortgages: [],
+  valuations: [],
+  leases: [],
+  holdingCosts: [],
+};
+
+/** The engine rules a scenario's own overrides break, applied on top of the saved
+ *  assumptions (ADR 0123). Every rule on a scenario field is independent of the base
+ *  values, so a problem in the base assumptions is never blamed on the scenario. */
+export function scenarioRuleErrors(
+  base: Assumptions,
+  overrides: ScenarioOverrides,
+): EngineValidationError[] {
+  const set = overrides as Record<string, unknown>;
+  return validateInputs(NO_ROWS, applyScenario(base, overrides)).filter(
+    (e) =>
+      e.entity === "assumptions" &&
+      e.field !== undefined &&
+      set[e.field] !== undefined,
+  );
+}
+
 /** Every engine input rule over a restored portfolio (without assumptions, the
  *  portfolio rules only), then the whole-number bounds on fields no engine rule
- *  already reported. */
-export const checkInputRules: InputRules = (portfolio, assumptions) => {
+ *  already reported, then each rule a scenario's overrides break (once per rule). */
+export const checkInputRules: InputRules = (
+  portfolio,
+  assumptions,
+  scenarios = [],
+) => {
   const engine = assumptions
     ? validateInputs(portfolio, assumptions)
     : validatePortfolio(portfolio);
   const key = (e: EngineValidationError | RangeProblem) =>
     `${e.entity}\u0000${e.id ?? ""}\u0000${e.field ?? ""}`;
   const reported = new Set(engine.map(key));
+  const scenarioProblems = assumptions
+    ? scenarios.flatMap((s) =>
+        [
+          ...new Set(
+            scenarioRuleErrors(assumptions, s.overrides).map((e) => e.code),
+          ),
+        ].map((code): ScenarioRuleProblem => ({
+          code,
+          entity: "scenario",
+          id: s.id,
+          field: "overrides",
+        })),
+      )
+    : [];
   return [
     ...engine,
     ...rangeProblems(portfolio, assumptions).filter(
       (p) => !reported.has(key(p)),
     ),
+    ...scenarioProblems,
   ];
 };

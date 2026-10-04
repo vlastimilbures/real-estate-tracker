@@ -11,6 +11,7 @@ import type { Sql, SqlStatement } from "./sql";
 import { PORTFOLIO_TABLES, insertStatement } from "./repositories";
 import { MIGRATIONS, V7_TABLES, stamp } from "./migrations";
 import { DataError, messageOf } from "./errors";
+import { isIsoDate } from "./guards";
 import {
   SaveFileError,
   type SaveFileOptions,
@@ -38,6 +39,7 @@ import type {
   Assumptions,
   EngineValidationError,
   Portfolio,
+  Scenario,
   ValidationCode,
   ValidationEntity,
 } from "../engine";
@@ -53,14 +55,24 @@ export interface RangeProblem {
   range: IntRange;
 }
 
+/** A scenario whose overrides break an engine rule (ADR 0123), reported on the scenario's
+ *  row and its `overrides` column. */
+export interface ScenarioRuleProblem {
+  code: ValidationCode;
+  entity: "scenario";
+  id: string;
+  field: "overrides";
+}
+
 /** The engine's input rules plus the whole-number bounds over the restored rows
- *  (assumptions absent ⇒ portfolio rules only). Injected by the caller: the data layer
- *  never calls engine functions; `checkInputRules` in src/import/inputRules.ts is the one
- *  the app uses. */
+ *  (assumptions absent ⇒ portfolio rules only), and the engine rules over each scenario's
+ *  overrides (ADR 0123). Injected by the caller: the data layer never calls engine
+ *  functions; `checkInputRules` in src/import/inputRules.ts is the one the app uses. */
 export type InputRules = (
   portfolio: Portfolio,
   assumptions?: Assumptions,
-) => (EngineValidationError | RangeProblem)[];
+  scenarios?: readonly Scenario[],
+) => (EngineValidationError | RangeProblem | ScenarioRuleProblem)[];
 
 /** The newest schema this app writes and reads (the last migration). */
 export const SCHEMA_HEAD = Math.max(...MIGRATIONS.map((m) => m.version));
@@ -305,7 +317,9 @@ type Tables = Record<BackupTable, Row[]>;
 
 /** Every table present, only known columns, scalar cells (DR-017); then each row
  *  brought to the current schema: missing added columns get their default and
- *  scenario overrides are rewritten to the versioned shape (what migration v8 does). */
+ *  scenario overrides are rewritten to the versioned shape (what migration v8 does).
+ *  A scenario's created_at must start with a real date: the app never reads it, but it
+ *  orders the list and the column is NOT NULL (ADR 0123). */
 function upgradeRows(backup: BackupFile): {
   tables: Tables;
   issues: RestoreIssue[];
@@ -340,18 +354,23 @@ function upgradeRows(backup: BackupFile): {
     });
   }
   for (const s of tables.scenarios) {
+    const unreadable = (column: string) =>
+      issues.push({
+        table: "scenarios",
+        id: String(s.id),
+        column,
+        rule: "UNREADABLE_VALUE",
+      });
     try {
       s.overrides = serializeOverrides(
         parseOverrides(String(s.name), String(s.overrides)),
       );
     } catch {
-      issues.push({
-        table: "scenarios",
-        id: String(s.id),
-        column: "overrides",
-        rule: "UNREADABLE_VALUE",
-      });
+      unreadable("overrides");
     }
+    const created = s.created_at;
+    if (typeof created !== "string" || !isIsoDate(created.slice(0, 10)))
+      unreadable("created_at");
   }
   return { tables, issues };
 }
@@ -375,7 +394,8 @@ function readRows<R, T>(
   return out;
 }
 
-const ENTITY_TABLE: Record<ValidationEntity, BackupTable> = {
+const ENTITY_TABLE: Record<ValidationEntity | "scenario", BackupTable> = {
+  scenario: "scenarios",
   assumptions: "assumptions",
   property: "properties",
   mortgage: "mortgage_blocks",
@@ -459,11 +479,15 @@ export function prepareRestore(
       issues,
     ),
   };
-  readRows<ScenarioRow, unknown>(
+  // A scenario already refused by upgradeRows is not read again (one issue per row).
+  const flagged = new Set(
+    issues.filter((i) => i.table === "scenarios").map((i) => i.id),
+  );
+  const scenarios = readRows<ScenarioRow, Scenario>(
     "scenarios",
-    tables.scenarios,
+    tables.scenarios.filter((r) => !flagged.has(String(r.id))),
     rowToScenario,
-    [],
+    issues,
   );
   const assumptionRows = tables.assumptions;
   const [onlyAssumptions] = assumptionRows;
@@ -483,8 +507,8 @@ export function prepareRestore(
   if (issues.length === 0) {
     issues.push(...duplicateKeys(tables));
     // The engine's input rules and the whole-number bounds, as at every other entry
-    // point (D-17, D-27, D-37, D-38, D-42, D-54, ADR 0086).
-    for (const e of rules(portfolio, assumptions))
+    // point (D-17, D-27, D-37, D-38, D-42, D-54, ADR 0086, ADR 0123).
+    for (const e of rules(portfolio, assumptions, scenarios))
       issues.push({
         table: ENTITY_TABLE[e.entity],
         ...(e.id !== undefined && { id: e.id }),

@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
 import { MIGRATIONS, migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
+import { loadState } from "../repositories";
 import {
   BACKUP_MAX_BYTES,
   exportToJson,
@@ -303,5 +304,85 @@ describe("older backups are upgraded in memory", () => {
     expect(sql.db.prepare("SELECT overrides FROM scenarios").get()).toEqual({
       overrides: '{"version":1,"valueShock":{"pct":"0.2","atYear":0}}',
     });
+  });
+});
+
+// ADR 0123 (#107, #108): restore reads every scenario row and applies the engine rules
+// to its overrides, before anything is written.
+describe("restore checks every scenario row (ADR 0123)", () => {
+  const good = {
+    id: "s1",
+    name: "S",
+    overrides: '{"version":1}',
+    created_at: "2026-01-05T10:00:00.000Z",
+  };
+  const withScenario = (row: Record<string, unknown>) =>
+    edited("scenarios", () => [{ ...good, ...row }]);
+
+  it.each([["2026-13-45"], [null], ["garbage"], [5]])(
+    "refuses created_at %j, nothing written",
+    async (createdAt) => {
+      const before = dump(sql);
+      const bad = await withScenario({ created_at: createdAt });
+      const e = await rejection(restoreFromJson(sql, bad, checkInputRules));
+      expect(e.code).toBe("BACKUP_ROWS_INVALID");
+      expect(e.issues).toEqual([
+        {
+          table: "scenarios",
+          id: "s1",
+          column: "created_at",
+          rule: "UNREADABLE_VALUE",
+        },
+      ]);
+      expect(dump(sql)).toEqual(before);
+    },
+  );
+
+  it("reports unreadable overrides once", async () => {
+    const bad = await withScenario({ overrides: '{"typoKey":"1"}' });
+    const e = await rejection(restoreFromJson(sql, bad, checkInputRules));
+    expect(e.issues).toEqual([
+      {
+        table: "scenarios",
+        id: "s1",
+        column: "overrides",
+        rule: "UNREADABLE_VALUE",
+      },
+    ]);
+  });
+
+  it.each([
+    ['{"version":1,"vacancyAllowance":"1.5"}', "RATE_OUT_OF_RANGE"],
+    [
+      '{"version":1,"valueShock":{"pct":"-3","atYear":2}}',
+      "SHOCK_OUT_OF_RANGE",
+    ],
+    [
+      '{"version":1,"rateShock":{"deltaPa":"0.02","durationYears":-1}}',
+      "SHOCK_OUT_OF_RANGE",
+    ],
+  ])("refuses overrides %s that break %s", async (overrides, rule) => {
+    const before = dump(sql);
+    const bad = await withScenario({ overrides });
+    const e = await rejection(restoreFromJson(sql, bad, checkInputRules));
+    expect(e.issues).toEqual([
+      { table: "scenarios", id: "s1", column: "overrides", rule },
+    ]);
+    expect(dump(sql)).toEqual(before);
+  });
+
+  it("restores a valid scenario and the app reads it", async () => {
+    await restoreFromJson(
+      sql,
+      await withScenario({
+        overrides: '{"version":1,"valueShock":{"pct":"0.2","atYear":2}}',
+      }),
+      checkInputRules,
+    );
+    const state = await loadState(sql);
+    expect(state.scenarios.map((s) => s.id)).toEqual(["s1"]);
+    expect(state.scenarios[0]!.overrides.valueShock?.pct.toString()).toBe(
+      "0.2",
+    );
   });
 });
