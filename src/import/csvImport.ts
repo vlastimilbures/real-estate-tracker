@@ -313,7 +313,7 @@ export function planImport(
 
   const resolve = (file: CsvFile, row: number, name: string) => {
     const id = byKey.get(propertyKey(name))?.id;
-    if (!id)
+    if (id === undefined)
       problems.push({
         file,
         row,
@@ -361,7 +361,7 @@ export function planImport(
 
   for (const m of batch.mortgages ?? []) {
     const propId = resolve("mortgages", m.line, m.property_name);
-    if (!propId) continue;
+    if (propId === undefined) continue;
     const fields: Partial<MortgageBlockRow> = {
       initial_principal: m.initial_principal,
       fixation_years: m.fixation_years,
@@ -403,7 +403,7 @@ export function planImport(
 
   for (const v of batch.valuations ?? []) {
     const propId = resolve("valuations", v.line, v.property_name);
-    if (!propId) continue;
+    if (propId === undefined) continue;
     const fields = { valid_to: v.valid_to, market_value: v.market_value };
     upsertChild(
       "valuations",
@@ -425,7 +425,7 @@ export function planImport(
 
   for (const r of batch.rents ?? []) {
     const propId = resolve("rents", r.line, r.property_name);
-    if (!propId) continue;
+    if (propId === undefined) continue;
     const fields = { end_date: r.end_date, monthly_rent: r.monthly_rent };
     upsertChild(
       "leases",

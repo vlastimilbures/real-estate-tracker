@@ -3,13 +3,17 @@
 // Properties table: the delete confirmation sits outside the scrolling table so it is
 // never clipped, and the actions column stays pinned (UX-019).
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Properties } from "../Properties";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
-import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import {
+  portfolio,
+  assumptions,
+  withPropertyId,
+} from "../../../engine/__tests__/support/seed";
 
 vi.mock("../../../lib/today", () => ({
   todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
@@ -135,5 +139,24 @@ describe("Properties context line (ADR 0111, #21)", () => {
         `${en.properties.subtitle(portfolio.properties.length)} · as of 01.10.2026 · amounts in Kč, flows per year`,
       ),
     ).toBeTruthy();
+  });
+});
+
+describe('A property stored with the id "" (ADR 0127)', () => {
+  it("opens the edit form filled in", async () => {
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: withPropertyId(first.id, ""),
+        getPropertyExtras: () =>
+          Promise.resolve({ address: null, garage: null }),
+      }),
+    );
+    render(<Properties />);
+    const row = screen.getByRole("button", { name: first.name }).closest("tr")!;
+    await userEvent.click(
+      within(row).getByRole("button", { name: en.common.edit }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByDisplayValue(first.name)).toBeTruthy();
   });
 });

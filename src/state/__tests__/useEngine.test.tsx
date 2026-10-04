@@ -16,6 +16,7 @@ import {
   portfolio,
   assumptions,
   PARITY,
+  withPropertyId,
 } from "../../engine/__tests__/support/seed";
 import { near, KC } from "../../engine/__tests__/support/tolerance";
 import { EngineInputError, isoDate, money, rate } from "../../engine";
@@ -92,6 +93,23 @@ describe("useEngine", () => {
       const first = result.current;
       rerender({ ids: [] });
       expect(result.current).toBe(first);
+    });
+
+    it('filters to a property stored with the id "" (ADR 0127)', () => {
+      act(() =>
+        usePortfolioStore.setState({
+          portfolio: withPropertyId("lipova", ""),
+        }),
+      );
+      const { result, rerender } = renderHook(
+        ({ ids }) => useEngine(ids, BASE),
+        { initialProps: { ids: [] as string[] } },
+      );
+      expect(result.current!.portfolio.properties).toHaveLength(3);
+      rerender({ ids: [""] });
+      expect(result.current!.portfolio.properties.map((p) => p.id)).toEqual([
+        "",
+      ]);
     });
 
     it("keys asOf by time value: an equal new Date reuses, a new day recomputes", () => {
@@ -287,6 +305,19 @@ describe("useAllProjections / usePropertyEngine", () => {
     const { result } = renderHook(() =>
       usePropertyEngine("javorova", isoDate("2024-06-07")),
     );
+    near(
+      result.current!.snapshot.debt,
+      PARITY.perProperty.javorova.debt,
+      KC,
+      "debt",
+    );
+  });
+
+  it('computes a property stored with the id "" (ADR 0127)', () => {
+    act(() =>
+      usePortfolioStore.setState({ portfolio: withPropertyId("javorova", "") }),
+    );
+    const { result } = renderHook(() => usePropertyEngine("", BASE));
     near(
       result.current!.snapshot.debt,
       PARITY.perProperty.javorova.debt,

@@ -251,7 +251,7 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
 
   // For edit mode: load engine fields from portfolio + address/garage from DB
   useEffect(() => {
-    if (mode !== "edit" || !propertyId) return;
+    if (mode !== "edit" || propertyId === undefined) return;
     const p = portfolio?.properties.find((x) => x.id === propertyId);
     const load = (patch: Partial<PropertyFormState>) => {
       setForm((f) => ({ ...f, ...patch }));

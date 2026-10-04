@@ -220,6 +220,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A property whose name has no Latin letters or digits (for example a Cyrillic name) was
+  saved with an empty internal id. It showed in the list, but its page, its edit form, its
+  "Open property" link and the Dashboard filter treated it as "no property", and a CSV file
+  could not add its loans, valuations or rents. Such a property now works like any other
+  (ADR 0127, #105).
 - A restore, Clear sample, Load sample or CSV import that went through but whose screen
   could not reload said it had failed and been rolled back, with the data unchanged. It now
   reports success, naming the safety backup, and the banner asks you to reload. A form save

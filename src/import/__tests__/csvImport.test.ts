@@ -373,3 +373,28 @@ describe("importCsv — generated ids never collide (DR-137)", () => {
     expect(new Set(rows.map((r) => r.id)).size).toBe(2);
   });
 });
+
+describe('a property stored with the id "" (ADR 0127)', () => {
+  it("takes its loan, valuation and rent rows", async () => {
+    sql.db
+      .prepare(
+        "INSERT INTO properties (id, name, purchase_date, purchase_price) VALUES ('', 'Квартира', '2020-01-01', '3000000')",
+      )
+      .run();
+    await importCsv(sql, {
+      mortgages: parseMortgages(
+        `${MH}\nКвартира,2021-01-17,1000000,10,0.0169,3515,,`,
+      ).rows,
+      valuations: parseValuations(
+        "property_name,valid_from,valid_to,market_value\nКвартира,2026-06-01,,3500000",
+      ).rows,
+      rents: parseRents(
+        "property_name,start_date,end_date,monthly_rent\nКвартира,2025-01-01,,15000",
+      ).rows,
+    });
+    for (const t of ["mortgage_blocks", "valuations", "leases"])
+      expect(
+        sql.db.prepare(`SELECT id FROM ${t} WHERE property_id = ''`).all(),
+      ).toHaveLength(1);
+  });
+});

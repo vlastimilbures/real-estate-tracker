@@ -11,7 +11,11 @@ import { useUiStore } from "../../../state/uiStore";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { EngineInputError } from "../../../engine";
 import { getDict } from "../../../i18n";
-import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import {
+  portfolio,
+  assumptions,
+  withPropertyId,
+} from "../../../engine/__tests__/support/seed";
 
 vi.mock("../../../data/errorLog", () => ({ logFailure: vi.fn() }));
 
@@ -67,6 +71,26 @@ describe("ErrorBoundary with invalid stored data", () => {
     );
     expect(useUiStore.getState().route).toBe("property");
     expect(useUiStore.getState().selectedPropertyId).toBe(owner.id);
+  });
+
+  it('opens a property stored with the id "" (ADR 0127)', async () => {
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: withPropertyId(loan.propertyId, ""),
+      }),
+    );
+    render(
+      <ErrorBoundary>
+        <Boom />
+      </ErrorBoundary>,
+    );
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: getDict("cs").errorBoundary.openProperty,
+      }),
+    );
+    expect(useUiStore.getState().route).toBe("property");
+    expect(useUiStore.getState().selectedPropertyId).toBe("");
   });
 
   it("keeps the generic fallback for other crashes", () => {

@@ -122,7 +122,7 @@ export function PropertyDetail() {
   // here too; the guard also narrows every field the page reads (DR-065).
   const assumptions = store.assumptions;
   if (
-    !propertyId ||
+    propertyId === null ||
     !store.portfolio ||
     (!out && !invalid) ||
     !property ||

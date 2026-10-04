@@ -152,6 +152,22 @@ export const portfolio: Portfolio = {
   ],
 };
 
+/** The seed with one property's id changed everywhere it is referenced: for example to `""`,
+ *  the id a name without Latin letters got before ADR 0127. */
+export function withPropertyId(from: string, to: string): Portfolio {
+  const moved = <T extends { propertyId: string }>(rows: T[]): T[] =>
+    rows.map((r) => (r.propertyId === from ? { ...r, propertyId: to } : r));
+  return {
+    properties: portfolio.properties.map((p) =>
+      p.id === from ? { ...p, id: to } : p,
+    ),
+    mortgages: moved(portfolio.mortgages),
+    valuations: moved(portfolio.valuations),
+    leases: moved(portfolio.leases),
+    holdingCosts: moved(portfolio.holdingCosts),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Parity targets (.claude/rules/engine-parity.md). Money ±1 Kč, ratios ±0.0001.
 // ---------------------------------------------------------------------------

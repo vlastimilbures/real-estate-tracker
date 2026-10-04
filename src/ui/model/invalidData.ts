@@ -14,7 +14,7 @@ function propertyOf(
   e: EngineValidationError,
   p: Portfolio | null,
 ): string | undefined {
-  if (!e.id || !p) return undefined;
+  if (e.id === undefined || !p) return undefined;
   if (e.entity === "property") return e.id;
   const rows =
     e.entity === "mortgage"
@@ -46,7 +46,7 @@ export function invalidDataLines(
     const text = `${name}: ${t.inputRules[e.code]}`;
     if (seen.has(text)) continue;
     seen.add(text);
-    lines.push(propertyId ? { text, propertyId } : { text });
+    lines.push(propertyId !== undefined ? { text, propertyId } : { text });
   }
   return lines;
 }

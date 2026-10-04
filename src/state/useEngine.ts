@@ -93,7 +93,9 @@ export function useEngine(
   // Stable string dep: a new array ref with the same ids won't recompute, a
   // content change will. Sorted so order doesn't matter.
   const key =
-    propertyIds && propertyIds.length ? [...propertyIds].sort().join(",") : "";
+    propertyIds && propertyIds.length
+      ? JSON.stringify([...propertyIds].sort())
+      : "";
   // Resolve "today" at the UI boundary (engine stays pure). Day-bucket the value
   // so the memo doesn't recompute on every render from a fresh Date.
   const asOfDate = engineAsOf(asOf, assumptions?.baseDate);
@@ -278,7 +280,7 @@ export function usePropertyEngineResult(
   const asOfDate = engineAsOf(asOf, assumptions?.baseDate);
   const asOfKey = asOfDate.getTime();
   return useMemo(() => {
-    if (!portfolio || !assumptions || !propertyId) return null;
+    if (!portfolio || !assumptions || propertyId === null) return null;
     const property = portfolio.properties.find((p) => p.id === propertyId);
     if (!property) return null;
     try {
