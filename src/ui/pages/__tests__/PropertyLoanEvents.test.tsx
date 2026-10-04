@@ -210,3 +210,50 @@ describe("ADR 0130: interest saved on Property detail", () => {
     expect(outlook().textContent).not.toContain(pd.interestSaved);
   });
 });
+
+describe("ADR 0130: a prepayment at the refix saves nothing in the model", () => {
+  it("hides interest saved: the successor's typed principal already holds it", () => {
+    const refix = isoDate("2031-01-17");
+    const mortgages = [
+      ...portfolio.mortgages.map((m) =>
+        m.propertyId === "javorova"
+          ? {
+              ...m,
+              prepayments: [
+                {
+                  date: refix,
+                  amount: money(200000),
+                  effect: "lowerInstalment" as const,
+                },
+              ],
+            }
+          : m,
+      ),
+      {
+        id: "m-refi",
+        propertyId: "javorova",
+        startDate: refix,
+        initialPrincipal: money(1186000),
+        fixationYears: 5,
+        interestRatePa: rate("0.039"),
+        monthlyInstalment: money(9800),
+      },
+    ];
+    const p = { ...portfolio, mortgages };
+    const loan = portfolioOutputs(
+      p,
+      assumptions,
+      assumptions.baseDate,
+    ).financing.loans.find((l) => l.propertyId === "javorova")!;
+    expect(loan.interestSaved?.isZero()).toBe(true);
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: p,
+        assumptions,
+        status: "ready",
+      }),
+    );
+    render(<PropertyDetail />);
+    expect(outlook().textContent).not.toContain(pd.interestSaved);
+  });
+});

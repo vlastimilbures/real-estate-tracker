@@ -232,8 +232,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Interest saved and the refinance difference (ADR 0130, #172):
   - **Interest saved by prepayments** is shown only when a prepayment repaid some
-    principal; a prepayment that a later block replaced, or one after payoff, no longer
-    shows 0 Kč. When a maturity change takes effect only because of the prepayment, the
+    principal and saved something; a prepayment that a later block replaced, one after
+    payoff, or one on the day a new block starts no longer shows 0 Kč. When a maturity change takes effect only because of the prepayment, the
     figure would be negative: the property page and the Dashboard show "n/a: a recast
     depends on the prepayment" instead, and the Dashboard total leaves it out.
   - A planned refix (a later loan block) no longer makes the **Drawn** and **Draws**

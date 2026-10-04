@@ -240,9 +240,11 @@ function amount(x: InterestSavedShown) {
 
 // ADR 0130: one display rule for the property page and the Dashboard.
 describe("interestSavedShown (ADR 0130)", () => {
-  it("hides null, shows zero or more, and n/a in place of a negative figure", () => {
+  it("hides null and zero, shows more, and n/a in place of a negative figure", () => {
     expect(interestSavedShown(null)).toBeNull();
-    expect(interestSavedShown(D(0))).toEqual(D(0));
+    expect(interestSavedShown(D(0))).toBeNull();
+    expect(interestSavedShown(D("-0"))).toBeNull();
+    expect(interestSavedShown(D("0.000001"))).toEqual(D("0.000001"));
     expect(interestSavedShown(D("264031.42"))).toEqual(D("264031.42"));
     expect(interestSavedShown(D("-0.01"))).toBe("n/a");
     expect(interestSavedShown(D("-433551.87"))).toBe("n/a");
@@ -309,13 +311,11 @@ describe("financingPanel interest saved (ADR 0116)", () => {
     });
   });
 
-  it("shows a zero figure, as the property page does (ADR 0130)", () => {
+  it("leaves out a zero figure, as the property page does (ADR 0130)", () => {
+    // E.g. a prepayment at a refix: the successor's typed principal already holds it.
     const { m } = withJavorova("0");
-    expect(
-      m.interestSaved!.properties.map((r) => [r.propertyId, String(r.amount)]),
-    ).toEqual([
-      ["lipova", expect.any(String)],
-      ["javorova", "0"],
+    expect(m.interestSaved!.properties.map((r) => r.propertyId)).toEqual([
+      "lipova",
     ]);
   });
 

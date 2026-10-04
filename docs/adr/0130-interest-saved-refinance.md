@@ -45,8 +45,9 @@ The owner chose option A for both items on 2026-10-04.
 2. **A negative figure is not shown as saved.** The engine keeps the sign. One display
    rule in `ui/model/financing.ts` (`interestSavedShown`) serves the property page and the
    Dashboard financing panel:
-   - null stays hidden;
-   - a figure of 0 or more is shown;
+   - null stays hidden, and so does 0: a prepayment at a refix saves nothing in the
+     model, because the successor's principal is typed in and already holds it;
+   - a positive figure is shown;
    - a negative figure shows the note "n/a: a recast depends on the prepayment" instead
      of an amount.
 

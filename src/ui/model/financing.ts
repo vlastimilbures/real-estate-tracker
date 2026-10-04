@@ -15,16 +15,17 @@ import { ZERO, type Decimal } from "../../lib/money";
 import { fmtDate } from "../../lib/format";
 import type { Mode } from "./lens";
 
-/** An interest-saved figure as shown (ADR 0130): an amount of 0 or more, or "n/a" in
- *  place of a negative one (a recast that applies only with the prepayment). */
+/** An interest-saved figure as shown (ADR 0130): a positive amount, or "n/a" in place
+ *  of a negative one (a recast that applies only with the prepayment). */
 export type InterestSavedShown = Decimal | "n/a";
 
 /** The one display rule for interest saved, on the property page and the Dashboard:
- *  null stays hidden, a negative figure becomes "n/a" (ADR 0130). */
+ *  null and zero stay hidden, a negative figure becomes "n/a" (ADR 0130). Zero is a
+ *  prepayment at a refix: the successor's typed principal already holds it. */
 export function interestSavedShown(
   saved: Decimal | null,
 ): InterestSavedShown | null {
-  if (saved === null) return null;
+  if (saved === null || saved.isZero()) return null;
   return saved.lessThan(ZERO) ? "n/a" : saved;
 }
 

@@ -286,7 +286,9 @@ the next payment.
   still paid (one falling in the draw month is carried by the draw row); later ones are
   dropped. Net refinance cash (successor principal − predecessor balance paid off) counts in
   the handover year's cumulative net cash flow and levered IRR, like an acquisition outflow.
-  The handover row holds it as `refinanced`, apart from `drawn` (ADR 0130).
+  The handover row holds the successor's principal less the balance it pays off as
+  `refinanced`, apart from `drawn` (ADR 0130); a tranche the successor draws in that month
+  stays in `drawn`.
 
 **Prepayments and recasts** (ADR 0109), on plain and development loans:
 
