@@ -151,7 +151,9 @@ Other IDs seen in code comments:
 | [0124](0124-pre-purchase-debt-service.md)         | Debt service before a future purchase is owner cash                                    | #104                                   |
 | [0125](0125-committed-write-reload-failure.md)    | A committed write whose reload fails is not a failure                                  | #106                                   |
 | [0126](0126-degenerate-kpis.md)                   | Degenerate KPIs: no growth base, debt-free from, no-debt badge                         | #129                                   |
+| [0127](0127-opaque-property-ids-sample-match.md)  | Random property ids; the sample is matched by id and name                              | #101, #105                             |
 | [0128](0128-assumption-bounds.md)                 | Assumption bounds: reset rate, growth floor, shocked levels                            | #114                                   |
+| [0131](0131-lossless-money-draft.md)              | A form drafts a stored money amount at full precision                                  | #201                                   |
 
 ### Judgment calls and open questions
 

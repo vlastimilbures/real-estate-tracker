@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { invalidDataLines } from "../invalidData";
 import { getDict } from "../../../i18n";
-import { portfolio } from "../../../engine/__tests__/support/seed";
+import {
+  portfolio,
+  withPropertyId,
+} from "../../../engine/__tests__/support/seed";
 
 const en = getDict("en");
 const nameOf = (id: string) =>
@@ -40,6 +43,24 @@ describe("invalidDataLines", () => {
         text: `${nameOf(v.propertyId)}: ${en.inputRules.INVALID_DATE}`,
         propertyId: v.propertyId,
       },
+    ]);
+  });
+
+  it('keeps the link for a property stored with the id "" (ADR 0127)', () => {
+    const pf = withPropertyId("lipova", "");
+    const v = pf.valuations.find((x) => x.propertyId === "")!;
+    expect(
+      invalidDataLines(
+        en,
+        [
+          { code: "INVALID_DATE", entity: "property", id: "" },
+          { code: "NEGATIVE_AMOUNT", entity: "valuation", id: v.id },
+        ],
+        pf,
+      ),
+    ).toEqual([
+      { text: `Byt Lipova: ${en.inputRules.INVALID_DATE}`, propertyId: "" },
+      { text: `Byt Lipova: ${en.inputRules.NEGATIVE_AMOUNT}`, propertyId: "" },
     ]);
   });
 

@@ -107,7 +107,8 @@ To switch to your own:
 1. **Remove the sample.** Click **Clear sample and start my own** in the banner on the
    **Dashboard** or **Properties** page (or in **Settings → Backup & Restore**). The app saves a
    safety copy first, then deletes the three sample apartments and everything under them.
-   Properties you added yourself, your assumptions and scenarios are kept.
+   Properties you added yourself, a sample apartment you renamed, your assumptions and
+   scenarios are kept.
 2. **Set your assumptions.** In **Settings → Assumptions**, set the base date, horizon,
    appreciation, rent indexation, inflation, vacancy, post-fixation reset rate and
    holding-cost defaults.

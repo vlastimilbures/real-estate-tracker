@@ -10,7 +10,11 @@ import userEvent from "@testing-library/user-event";
 import { PropertyDetail } from "../PropertyDetail";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
-import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import {
+  portfolio,
+  assumptions,
+  withPropertyId,
+} from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { isoDate, money } from "../../../engine";
 import { fmtCzk } from "../../../lib/format";
@@ -324,5 +328,16 @@ describe("Property detail data check (ADR 0118)", () => {
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(acquisitionToggle().getAttribute("aria-expanded")).toBe("true");
     expect(useUiStore.getState().propertyTarget).toBeNull();
+  });
+});
+
+describe('A property stored with the id "" (ADR 0127)', () => {
+  it("opens like any other property", () => {
+    setPortfolio(withPropertyId(owner.id, ""));
+    act(() => useUiStore.setState({ selectedPropertyId: "" }));
+    render(<PropertyDetail />);
+    expect(screen.queryByText(pd.noneSelectedTitle)).toBeNull();
+    expect(nav()).toBeTruthy();
+    expect(screen.getAllByText(owner.name).length).toBeGreaterThan(0);
   });
 });

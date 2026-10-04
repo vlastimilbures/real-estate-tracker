@@ -8,7 +8,11 @@
 // data in one transaction (D-14): on any failure the current data stays (DR-019).
 import { invoke } from "@tauri-apps/api/core";
 import type { Sql, SqlStatement } from "./sql";
-import { PORTFOLIO_TABLES, insertStatement } from "./repositories";
+import {
+  DELETE_SAMPLE_MARKERS,
+  PORTFOLIO_TABLES,
+  insertStatement,
+} from "./repositories";
 import { MIGRATIONS, V7_TABLES, stamp } from "./migrations";
 import { DataError, messageOf } from "./errors";
 import {
@@ -518,6 +522,8 @@ export function prepareRestore(
     ...BACKUP_TABLES.flatMap((t) =>
       tables[t].map((row) => insertStatement(t, row)),
     ),
+    // The restored data is the owner's, never the sample (ADR 0127).
+    DELETE_SAMPLE_MARKERS,
   ];
   return { summary: summarise(backup), statements };
 }

@@ -54,6 +54,22 @@ describe("loan event rows", () => {
     expect(parseRecastRows(recastsDraft(recasts))).toEqual(recasts);
   });
 
+  it("keeps a stored amount's precision through the draft (ADR 0131)", () => {
+    const stored = [
+      {
+        date: isoDate("2031-01-17"),
+        amount: money("500000.005"),
+        effect: "lowerInstalment" as const,
+        fee: money("1500.125"),
+      },
+    ];
+    expect(parsePrepaymentRows(prepaymentsDraft(stored))).toEqual(stored);
+    const recasts = [
+      { date: isoDate("2033-01-17"), instalment: money("9000.005") },
+    ];
+    expect(parseRecastRows(recastsDraft(recasts))).toEqual(recasts);
+  });
+
   it("an empty list is an empty draft, and back", () => {
     expect(prepaymentsDraft(undefined)).toBe("");
     expect(recastsDraft([])).toBe("");

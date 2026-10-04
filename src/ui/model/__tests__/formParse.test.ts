@@ -119,6 +119,22 @@ describe("draft formatters round-trip", () => {
     expect(moneyDraft(undefined)).toBe("");
   });
 
+  // ADR 0131 (#201): a form saves the record it shows, so the draft keeps the stored
+  // precision (CSV import and restore accept any) — never rounded, never exponent form.
+  it("moneyDraft keeps a stored amount's full precision in plain notation", () => {
+    for (const [stored, draft] of [
+      ["1000.005", "1000.005"],
+      ["0.00000001", "0.00000001"],
+      ["1e21", "1000000000000000000000"],
+      ["12000000.50", "12000000.5"],
+      ["-0", "0"],
+    ] as const) {
+      const v = D(stored);
+      expect(moneyDraft(v)).toBe(draft);
+      expect(parseDecimal(moneyDraft(v))!.equals(v)).toBe(true);
+    }
+  });
+
   it("percentDraft → parsePercentToRatio preserves the ratio", () => {
     const v = D("0.0359");
     expect(parsePercentToRatio(percentDraft(v))!.equals(v)).toBe(true);

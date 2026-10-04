@@ -42,16 +42,17 @@ From the 2026-10 code review
 [`review-2026-10-code`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=label%3Areview-2026-10-code),
 #101–#174). Each issue has evidence, decision options and a recommendation.
 
-- **Bugs to fix first (P1).** Property ids derived from the name, and Clear sample vs the
-  owner's own property (#101, #105). Fixed: a development purchase's later tranches in the
+- **Bugs to fix first (P1).** All fixed: a development purchase's later tranches in the
   returns (#103, ADR 0119), a tranche after an instalment recast (#109, ADR 0120), the
   first cash-flow-positive year (#102, ADR 0121), the value after a valuation's "Valid to"
   date (#110, ADR 0122), unchecked scenario rows in a restore and out-of-range scenario
   inputs (#107, #108, ADR 0123), debt service before a future purchase (#104, ADR 0124),
-  and a restore misreported as rolled back (#106, ADR 0125). P2 fixed: degenerate KPIs
-  (negative multiple, NaN CAGR, stale debt-free year, "Shortfall" with no debt; #129,
-  ADR 0126) and assumptions that produced NaN, Infinity or negative interest (reset rate
-  0–100 %, growth and inflation above −100 %, shocked levels; #114, ADR 0128).
+  a restore misreported as rolled back (#106, ADR 0125), and property ids made from the
+  name with Clear sample deleting the owner's own property (#101, #105, ADR 0127).
+  P2 fixed: degenerate KPIs (negative multiple, NaN CAGR, stale debt-free year,
+  "Shortfall" with no debt; #129, ADR 0126) and assumptions that produced NaN, Infinity or
+  negative interest (reset rate 0–100 %, growth and inflation above −100 %, shocked levels;
+  #114, ADR 0128).
 - **Decisions (label `decision`).** Modelling and process choices challenged with options and
   the case for keeping them; weak challenges stay in the record only.
 - **Clean-up (label `tech-debt`), docs, accessibility and smaller fixes (P2, P3).**
@@ -116,10 +117,11 @@ product's positioning changes.
 
 - **Mutation score.** The engine scores ~97.6 % under Stryker; the surviving mutants are
   mostly error-message text and boundary comparisons that no test pins. (DR-168)
-- **Bundle size.** Startup JavaScript is ~295 kB gzip (down from ~329 kB); every page but
-  the Dashboard and Properties, and the date picker calendar, load on first use. Most of the
-  rest is Recharts (~108 kB, which the Dashboard needs at start) and all three UI
-  dictionaries (~57 kB); loading only the active language would cut it further. (DR-009)
+- **Bundle size.** Startup JavaScript is ~234 kB gzip plus the active UI dictionary
+  (~19–24 kB), down from ~329 kB; every page but the Dashboard and Properties, and the date
+  picker calendar, load on first use, and the other dictionaries load only on a language
+  switch. Most of the rest is Recharts (~108 kB, which the Dashboard needs at start).
+  (DR-009)
 - **Type tightening.** Plain and development loans share one type with optional fields
   (DR-051); a few helpers still take loose `Record<string, string>` drafts (DR-081); stored
   boolean flags are typed as numbers at the database boundary (DR-080); `D()` still accepts a

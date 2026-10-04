@@ -11,7 +11,6 @@ import {
 } from "./formParse";
 import { inRange, INT_RANGES } from "../../lib/intRanges";
 import type { AcquisitionFunding, Property } from "../../engine";
-import { slug } from "../../lib/slug";
 import type { Dictionary } from "../../i18n";
 
 export interface PropertyFormState {
@@ -119,14 +118,14 @@ export type PropertyFormResult =
 /**
  * Validate an in-progress property form and, when valid, assemble the engine
  * `Property` plus the address/garage extras (persisted for fidelity but not engine
- * inputs). `existingNames` is every other property's name (lowercased) — used for
- * the uniqueness check; the form's own current name (in edit mode) must already be
+ * inputs). `id` is the property's id: the edited one's, or a new random one the caller
+ * made (ADR 0127). `existingNames` is every other property's name (lowercased) — used
+ * for the uniqueness check; the form's own current name (in edit mode) must already be
  * excluded by the caller.
  */
 export function parsePropertyForm(
   form: PropertyFormState,
-  mode: "add" | "edit",
-  propertyId: string | undefined,
+  id: string,
   existingNames: string[],
   t: Dictionary,
 ): PropertyFormResult {
@@ -188,7 +187,6 @@ export function parsePropertyForm(
     };
   }
 
-  const id = mode === "edit" && propertyId ? propertyId : slug(name);
   const property: Property = {
     id,
     name,
