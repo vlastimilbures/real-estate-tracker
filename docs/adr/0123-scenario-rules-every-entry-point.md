@@ -1,10 +1,12 @@
-# 0123. Scenario overrides meet the engine rules at every entry point
+# 0123. Scenario overrides meet the engine rules; restore needs them readable
 
 - Status: Accepted
 - Date: 2026-10-04
 - Source: issues #107 and #108 (2026-10 code review: R3-01, R7-02, G1-3-09, R4-02, R6-04)
 - Completes: [0037](0037-data-integrity-codes.md), [0038](0038-range-codes.md) for scenarios
 - Amends: [0052](0052-restore-safety-backup.md) (DR-019: restore checks every row)
+- Amended: 2026-10-04 after the independent review of PR #190 (§4: restore checks
+  that scenario rows are readable, not their rules)
 
 ## Context
 
@@ -45,14 +47,19 @@ Owner, 2026-10-04 (Track 8 PR1 plan):
    group's help, which stays visible next to the field's error, says to enter the drop as a
    positive number (20 = values fall by 20 %). The form creates a new scenario's id once and
    ignores a second submit while saving, so a double Enter no longer saves two scenarios.
-4. **Restore reads every scenario row before anything is written.** A missing or invalid
-   `created_at` (its first ten characters must be a real date) is refused on column
-   `created_at`. Unreadable overrides are refused once, on column `overrides`. An override
-   that breaks an engine rule is refused on the scenario's row, column `overrides`, with the
-   rule's text. As for every restore issue, no value is shown. Nothing is written and no
-   safety backup is made when a file is refused.
+4. **Restore reads every scenario row before anything is written; it does not apply the
+   scenario rules.** A row without a name, with a missing or empty `created_at`, or with
+   unreadable overrides is refused (overrides reported once, on column `overrides`). As for
+   every restore issue, no value is shown, and nothing is written and no safety backup is
+   made when a file is refused. A scenario that breaks an engine rule restores like one
+   already saved: the compare leaves it out and its next save is refused (§5, §8). Unlike
+   the whole-number bounds of ADR 0086, the rules are not applied here, because a database
+   can already hold such a scenario (saved before this decision): refusing it would make
+   every backup the app writes from that database, the safety copy before a restore
+   included, impossible to restore.
 5. **The compare never fails on a scenario's own overrides.** It leaves such a scenario out
-   and names it above the key figures ("Not compared: … Edit or delete it in the list.").
+   and names it above the key figures, one line per scenario ("Left out of the comparison:
+   “X” has a value outside its allowed range. Edit or delete it in the list.").
    Problems in the portfolio data still show the invalid-data notice, as before (DR-146).
 6. **The app no longer reads `created_at`.** `Scenario.createdAt` is removed. The store stamps
    `created_at` when it inserts a scenario; an update keeps the stored value. Scenarios are
@@ -70,8 +77,10 @@ Owner, 2026-10-04 (Track 8 PR1 plan):
 
 - Parity, the golden master and the bench budgets are unchanged: valid inputs compute the
   same numbers and no engine logic changes (`Scenario` loses one field).
-- User-visible: the scenario form and restore refuse values they accepted before; the
-  compare can show a "Not compared" notice; the Scenarios page can list unreadable rows; the
-  price-crash help text changes.
+- User-visible: the scenario form refuses values it accepted before; restore refuses a
+  scenario row it cannot read; the compare can name a scenario it left out; the Scenarios
+  page can list unreadable rows; the price-crash help text changes.
+- Every backup the app exports restores, except one that holds a scenario row the app
+  cannot read; the Scenarios page lists such a row and says to delete it before exporting.
 - A non-finite value-crash percentage is still not covered by any engine rule. The parser
   cannot produce one today; it is left to the engine track.
