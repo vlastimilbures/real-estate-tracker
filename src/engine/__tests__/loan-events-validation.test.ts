@@ -6,7 +6,7 @@ import { describe, it, expect } from "vitest";
 import { money, rate } from "../brands";
 import { isoDate } from "../dates";
 import { isDevLoan } from "../amortization";
-import { buildSchedule } from "../schedule";
+import { buildSchedule, propertySchedule } from "../schedule";
 import { EngineInputError } from "../errors";
 import { validateInputs, type ValidationCode } from "../validate";
 import type {
@@ -344,6 +344,43 @@ describe("ADR 0116: event issues name the item", () => {
     expect(indexed(block)).toEqual([
       { code: "INVALID_RECAST_MATURITY", field: "recasts", index: 1 },
       { code: "INVALID_RECAST", field: "recasts", index: 2 },
+    ]);
+  });
+});
+
+describe("#135 R1-13: raised loan errors name the item", () => {
+  /** The errors `run` raises, with their item index. */
+  function raised(run: () => unknown) {
+    try {
+      run();
+    } catch (e) {
+      expect(e).toBeInstanceOf(EngineInputError);
+      return (e as EngineInputError).errors.map(({ code, field, index }) => ({
+        code,
+        field,
+        index,
+      }));
+    }
+    return [];
+  }
+
+  it("keeps a loan code's index (assertLoanInputs)", () => {
+    const block = loan({
+      prepayments: [prepay("2031-01-17", 1000), prepay("2031-02-17", 0)],
+      recasts: [toInstalment("2032-01-17", 0)],
+    });
+    expect(raised(() => buildSchedule(block, assumptions))).toEqual([
+      { code: "NON_POSITIVE_PREPAYMENT", field: "prepayments", index: 1 },
+      { code: "INVALID_RECAST", field: "recasts", index: 0 },
+    ]);
+  });
+
+  it("keeps a data code's index (assertLoanRows)", () => {
+    const block = loan({
+      prepayments: [prepay("2031-01-17", 1000), prepay("2031-02-17", "NaN")],
+    });
+    expect(raised(() => propertySchedule([block], assumptions))).toEqual([
+      { code: "NON_FINITE_NUMBER", field: "prepayments", index: 1 },
     ]);
   });
 });

@@ -440,6 +440,22 @@ const LOAN_ERROR_CODES: ReadonlySet<ValidationCode> = new Set([
   "RECAST_INSTALMENT_BEFORE_COMPLETION",
 ]);
 
+/** A block's error, naming the event item when there is one (ADR 0116). */
+function loanError(
+  block: MortgageBlock,
+  code: ValidationCode,
+  field: string | undefined,
+  index: number | undefined,
+): EngineValidationError {
+  return {
+    code,
+    entity: "mortgage",
+    id: block.id,
+    field,
+    ...(index === undefined ? {} : { index }),
+  };
+}
+
 /**
  * Raise an EngineInputError when a loan the engine is about to compute has a D-17
  * problem, instead of letting it become a NaN term, an endless schedule or vanished
@@ -447,9 +463,9 @@ const LOAN_ERROR_CODES: ReadonlySet<ValidationCode> = new Set([
  */
 export function assertLoanInputs(block: MortgageBlock): void {
   const errors: EngineValidationError[] = [];
-  checkMortgage(block, (code, field) => {
+  checkMortgage(block, (code, field, index) => {
     if (LOAN_ERROR_CODES.has(code)) {
-      errors.push({ code, entity: "mortgage", id: block.id, field });
+      errors.push(loanError(block, code, field, index));
     }
   });
   if (errors.length > 0) throw new EngineInputError(errors);
@@ -462,9 +478,9 @@ export function assertLoanInputs(block: MortgageBlock): void {
 export function assertLoanRows(blocks: MortgageBlock[]): void {
   const errors: EngineValidationError[] = [];
   for (const b of blocks) {
-    checkMortgage(b, (code, field) => {
+    checkMortgage(b, (code, field, index) => {
       if (DATA_ERROR_CODES.has(code)) {
-        errors.push({ code, entity: "mortgage", id: b.id, field });
+        errors.push(loanError(b, code, field, index));
       }
     });
   }
