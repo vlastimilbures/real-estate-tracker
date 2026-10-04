@@ -452,7 +452,7 @@ describe("ADR 0109: refinance handovers with prepayments", () => {
 
   it.each(cases)("%s: engine = reference", (_, loans) => {
     const { e, r } = chainBoth(loans);
-    expect(maxDev(e.rows, r.rows, e.refinances)).toBeLessThanOrEqual(TIGHT);
+    expect(maxDev(e.rows, r.rows, r.handovers)).toBeLessThanOrEqual(TIGHT);
     expect(e.refinances).toHaveLength(r.handovers.length);
     e.refinances.forEach((x, i) => {
       const h = r.handovers[i];
