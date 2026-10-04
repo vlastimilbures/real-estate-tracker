@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A **Data check** shows which inputs behind the numbers are stale, missing or left at a
+  default, at the snapshot date (ADR 0118, #35). A panel on the Dashboard and a section on
+  each property list, with their effect:
+  - under **Needs attention**: a valuation more than 12 months old, no valuation (the
+    purchase price stands in), no lease in force (rent counts as 0), a lease ending within
+    3 months with no next lease, and a fixation that ended with no follow-on block;
+  - under **Using portfolio defaults**: the portfolio appreciation and rent indexation, and
+    blank holding-cost fields.
+  - Each row links to the section that fixes it, or to the property form. The Dashboard
+    panel opens when something needs attention. No figure changes.
+
 - Settings → Backup can load the sample portfolio again. While the portfolio has no
   properties, a **Load sample portfolio** button adds the three fictional apartments with
   their mortgages, valuations, leases and costs in one step, and the sample banner shows

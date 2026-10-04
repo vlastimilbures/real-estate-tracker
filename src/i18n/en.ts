@@ -1135,6 +1135,9 @@ export const en = {
     cardEffectiveTitle: "Records are effective-dated",
     cardEffectiveBody:
       "Valuations, leases and mortgages each have a date range. For any day the engine picks the one in force — so an expiring lease hands over to the next.",
+    cardDataCheckTitle: "The data check shows the fallbacks",
+    cardDataCheckBody:
+      "When a valuation is old or missing, no lease is in force, a fixation ended without new terms, or a property uses the portfolio defaults, the Data check on the Dashboard and on each property says so, what it changes and where to fix it.",
     snapshotTitle: "Snapshot metrics",
     snapshotHint: "The current picture of a property or the portfolio",
     snapshotProse:

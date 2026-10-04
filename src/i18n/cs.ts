@@ -1088,6 +1088,9 @@ export const cs: Dictionary = {
     cardEffectiveTitle: "Záznamy mají platnost k datu",
     cardEffectiveBody:
       "Ocenění, nájmy a hypotéky mají vždy časové rozmezí. Pro kterýkoli den engine vybere ten platný — takže končící nájem předá štafetu dalšímu.",
+    cardDataCheckTitle: "Kontrola dat ukáže náhradní hodnoty",
+    cardDataCheckBody:
+      "Když je ocenění staré nebo chybí, neplatí žádný nájem, fixace skončila bez nových podmínek nebo nemovitost používá výchozí hodnoty portfolia, Kontrola dat na Přehledu a u každé nemovitosti to uvede, včetně toho, co to mění a kde to opravit.",
     snapshotTitle: "Ukazatele snímku",
     snapshotHint: "Aktuální obrázek nemovitosti nebo portfolia",
     snapshotProse:
