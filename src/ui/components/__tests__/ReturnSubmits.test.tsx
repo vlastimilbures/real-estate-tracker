@@ -2,7 +2,7 @@
 //
 // UX-028: pressing Return in a form field saves the form; Return in the draws text box
 // still adds a new line, and picking a day in the calendar popover does not submit.
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RecordForm } from "../forms";
@@ -16,6 +16,12 @@ import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import type { FieldSpec } from "../../model/formParse";
 
 const en = getDict("en");
+
+// DateInput loads the calendar on the first open (DR-009). Load its module up front:
+// under coverage the first transform can outlast findBy's 1 s wait.
+beforeAll(async () => {
+  await import("../DateCalendar");
+});
 
 beforeEach(() =>
   act(() => {
@@ -64,6 +70,7 @@ describe("Return submits forms (UX-028)", () => {
     await userEvent.click(
       screen.getByRole("button", { name: en.calendar.open }),
     );
+    await screen.findByRole("dialog", { name: en.calendar.open });
     const day = document.querySelector<HTMLButtonElement>(
       ".date-popover .rdp-day button, .date-popover button.rdp-day_button",
     )!;

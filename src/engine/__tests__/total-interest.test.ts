@@ -1,6 +1,8 @@
 // ADR 0103 (#31): total interest over the horizon, nominal and real. Nominal is Σ projection
 // interest of years 1..N; real deflates each year by its own CPI_t, as the real cumulative
-// cash flow does (ADR 0087). Both are left out of the golden hashes (ADDED_FIELDS).
+// cash flow does (ADR 0087). Both are left out of the golden hashes (ADDED_FIELDS). A loan
+// running before a future purchase adds its interest of those years (ADR 0124,
+// pre-purchase-debt-service.test.ts); none of these fixtures has one.
 import { describe, it, expect } from "vitest";
 import { portfolioKpis } from "../kpis";
 import { cpiIndex, portfolioProjection } from "../projections";
