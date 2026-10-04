@@ -223,6 +223,25 @@ const DATA_CASES: [string, Portfolio, EngineValidationError][] = [
       field: undefined,
     },
   ],
+  ...(
+    [
+      ["ownCash", money("-1"), "NEGATIVE_AMOUNT"],
+      ["transactionCosts", money("-0.01"), "NEGATIVE_AMOUNT"],
+      ["initialWorks", money("-250000"), "NEGATIVE_AMOUNT"],
+      ["ownCash", money(NaN), "NON_FINITE_NUMBER"],
+      ["initialWorks", money(Infinity), "NON_FINITE_NUMBER"],
+    ] as const
+  ).map(([field, amount, code]): [string, Portfolio, EngineValidationError] => [
+    `funding ${field} ${amount.toString()} (ADR 0119)`,
+    {
+      ...portfolio,
+      properties: [
+        { ...petr, funding: { [field]: amount } },
+        ...portfolio.properties.slice(1),
+      ],
+    },
+    { code, entity: "property", id: petr.id, field },
+  ]),
 ];
 
 describe("D-37 data-integrity codes raise at every entry point", () => {
@@ -266,6 +285,27 @@ describe("D-37 data-integrity codes raise at every entry point", () => {
     });
   });
 
+  it("control: a funding record of zeros and a note raises nowhere (ADR 0119)", () => {
+    const p: Portfolio = {
+      ...portfolio,
+      properties: [
+        {
+          ...petr,
+          funding: {
+            ownCash: money(0),
+            transactionCosts: money(0),
+            initialWorks: money(0),
+            note: "paid in full",
+          },
+        },
+        ...portfolio.properties.slice(1),
+      ],
+    };
+    for (const run of Object.values(entryPoints(p, assumptions))) {
+      expect(run).not.toThrow();
+    }
+  });
+
   it("control: the seed and the mixed fixture raise nowhere", () => {
     for (const p of [portfolio, mixed]) {
       for (const run of Object.values(entryPoints(p, assumptions))) {
@@ -303,6 +343,24 @@ const RANGE_CASES: [string, Partial<Assumptions>, EngineValidationError][] = [
       code: "RATE_OUT_OF_RANGE",
       entity: "assumptions",
       field: "vacancyAllowance",
+    },
+  ],
+  [
+    "acquisition cost rate above 1 (ADR 0119)",
+    { acquisitionCostPct: rate("1.5") },
+    {
+      code: "RATE_OUT_OF_RANGE",
+      entity: "assumptions",
+      field: "acquisitionCostPct",
+    },
+  ],
+  [
+    "negative acquisition cost rate (ADR 0119)",
+    { acquisitionCostPct: rate("-0.5") },
+    {
+      code: "RATE_OUT_OF_RANGE",
+      entity: "assumptions",
+      field: "acquisitionCostPct",
     },
   ],
   [
@@ -363,6 +421,7 @@ describe("D-38 range codes raise at every entry point", () => {
       inflationShock: { deltaPa: rate("-0.02"), durationYears: 5 },
       rateShock: { deltaPa: rate("-0.01"), durationYears: 0 },
       valueShock: { pct: rate("1"), atYear: 0 },
+      acquisitionCostPct: rate("1"),
     };
     for (const run of Object.values(entryPoints(portfolio, a))) {
       expect(run).not.toThrow();

@@ -100,6 +100,10 @@ export const BACKUP_COLUMNS: Record<BackupTable, readonly string[]> = {
     "appreciation_override_pa",
     "rent_index_override_pa",
     "active",
+    "own_cash",
+    "transaction_costs",
+    "initial_works",
+    "funding_note",
   ],
   mortgage_blocks: [
     "id",
