@@ -69,7 +69,7 @@ The owner chose option C of #104 (2026-10-04): model the payments, do not reject
    baseDate, the principal it repaid before baseDate (33,542 Kč in the probe) still shows as
    equity at turn-on with no cash against it. Its place would be the year-0 investment,
    beside −equity0, which is how a not-yet-owned property is costed at the start (#126),
-   and a refinance chain before baseDate cannot be traced. A follow-up issue holds it.
+   and a refinance chain before baseDate cannot be traced. Issue #193 holds it.
 
 ## Consequences
 
