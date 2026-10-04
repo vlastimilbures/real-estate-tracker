@@ -84,4 +84,9 @@ The owner chose option C of #104 (2026-10-04): model the payments, do not reject
 - The test of ADR 0119 §3 with an off-plan loan drawn a year before the purchase now also
   counts the five instalments paid in the year before the turn-on year.
 - The Property detail projection still shows empty years before the purchase; the payments
-  appear in the portfolio KPIs only. How a not-yet-owned property is shown stays with #126.
+  appear in the portfolio KPIs only. How a not-yet-owned property is shown stays with #126,
+  including the baseDate snapshot, which leaves out the debt such a loan already carries
+  (the portfolio totals list only owned properties).
+- The input is not flagged: with the payments counted, the figures no longer depend on it.
+- The total interest help text (three languages) now says it covers all loan interest in
+  the horizon, including a loan that runs before a purchase date.

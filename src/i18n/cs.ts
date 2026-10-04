@@ -1315,7 +1315,7 @@ export const cs: Dictionary = {
         name: "Úroky celkem",
         formula: "Σ úroků, roky 1…N",
         meaning:
-          "Všechny úroky zaplacené v projekci do horizontu. Reálný pohled každý rok deflatuje indexem inflace daného roku.",
+          "Všechny úroky zaplacené z úvěrů do horizontu, včetně úroků z úvěru, který běží před datem koupě nemovitosti. Reálný pohled každý rok deflatuje indexem inflace daného roku.",
       },
     },
     returnsDefs: {
