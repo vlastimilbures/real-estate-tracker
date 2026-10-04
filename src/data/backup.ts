@@ -225,20 +225,18 @@ const invalid = (detail: string) =>
 
 // --- export ---------------------------------------------------------------------
 
-async function schemaVersionOf(sql: Sql): Promise<number> {
-  const rows = await sql.select<{ v: number | null }>(
-    "SELECT MAX(version) AS v FROM schema_migrations",
-  );
-  return Number(rows[0]?.v ?? SCHEMA_HEAD);
-}
-
+/** Every backup table and the schema version, read in one snapshot (DR-134), so a write
+ *  that commits during the export is wholly in or wholly out of the file (ADR 0132). */
 export async function exportToJson(sql: Sql): Promise<BackupFile> {
+  const results = await sql.selectSnapshot([
+    ...BACKUP_TABLES.map((table) => ({ query: `SELECT * FROM ${table}` })),
+    { query: "SELECT MAX(version) AS v FROM schema_migrations" },
+  ]);
   const tables: Record<string, Record<string, unknown>[]> = {};
-  for (const table of BACKUP_TABLES) {
-    tables[table] = await sql.select(`SELECT * FROM ${table}`);
-  }
+  BACKUP_TABLES.forEach((table, i) => (tables[table] = results[i] ?? []));
+  const version = results[BACKUP_TABLES.length]?.[0]?.v as number | null;
   return {
-    schemaVersion: await schemaVersionOf(sql),
+    schemaVersion: Number(version ?? SCHEMA_HEAD),
     exportedAt: new Date().toISOString(),
     tables,
   };

@@ -230,6 +230,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A backup exported while a change was being saved could mix the data from before and
+  after it: for example a new flat's valuation without the flat. Such a file could fail its
+  own restore check, or restore with records missing, and the export still reported
+  success. The export, and the safety backup before a restore or Clear sample, now read the
+  whole database at one moment (ADR 0132, #138).
 - A property whose name has no Latin letters or digits (for example a Cyrillic name) was
   saved with an empty internal id. It showed in the list, but its page, its edit form, its
   "Open property" link and the Dashboard filter treated it as "no property", and a CSV file

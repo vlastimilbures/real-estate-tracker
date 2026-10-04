@@ -233,7 +233,8 @@ interface PortfolioState {
    *  SampleNotEmptyError when any property exists. */
   loadSample: () => Promise<void>;
   /** Write a backup file through the save dialog. Read-only, so not queued: an open
-   *  dialog must not hold up edits. A saved file is then recorded (ADR 0110). */
+   *  dialog must not hold up edits. It reads one snapshot, so the file holds one database
+   *  state (ADR 0132). A saved file is then recorded (ADR 0110). */
   exportBackup: () => Promise<ExportOutcome>;
 }
 

@@ -20,10 +20,14 @@ vi.mock("@tauri-apps/api/core", () => ({
 }));
 
 /** `real`, but the reload's snapshot read fails: the write commits, the reload after it
- *  fails. Every action's own reads use `select`, so only the reload is hit. */
+ *  fails. The safety backup's snapshot (the only other one, it reads `schema_migrations`)
+ *  passes, and every action's other reads use `select`, so only the reload is hit. */
 const reloadFails = (real: Sql): Sql => ({
   ...real,
-  selectSnapshot: () => Promise.reject(new Error("database is locked")),
+  selectSnapshot: (statements) =>
+    statements.some((s) => s.query.includes("schema_migrations"))
+      ? real.selectSnapshot(statements)
+      : Promise.reject(new Error("database is locked")),
 });
 
 let db: TestSql;
