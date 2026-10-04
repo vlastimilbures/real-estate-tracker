@@ -50,8 +50,8 @@ beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 describe("Dashboard KPIs by lens (ADR 0087)", () => {
   it("real: multiple and cumulative CF are real, principal repaid says nominal", () => {
     const { container } = renderPanels("real");
-    const real = fmtMultiple(kpis.netWorthMultipleReal);
-    const nominal = fmtMultiple(kpis.netWorthMultiple);
+    const real = fmtMultiple(kpis.netWorthMultipleReal!);
+    const nominal = fmtMultiple(kpis.netWorthMultiple!);
     expect(
       screen.getByText(en.dashboard.multipleFromStartMode(real, "real")),
     ).toBeTruthy();
@@ -67,7 +67,7 @@ describe("Dashboard KPIs by lens (ADR 0087)", () => {
 
   it("nominal: nominal multiple, plain principal label", () => {
     renderPanels("nominal");
-    const nominal = fmtMultiple(kpis.netWorthMultiple);
+    const nominal = fmtMultiple(kpis.netWorthMultiple!);
     expect(
       screen.getByText(en.dashboard.multipleFromStartMode(nominal, "nominal")),
     ).toBeTruthy();

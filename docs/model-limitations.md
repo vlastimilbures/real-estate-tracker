@@ -37,7 +37,8 @@ work still to do is in the [roadmap](roadmap.md).
   (ADR 0124). The principal it repaid before the projection start is not counted, so it
   shows as equity you did not pay for (#193). A property bought after the horizon pays its
   instalments inside the horizon but never adds its value. With equity of zero or less
-  at the start, CAGR shows "—"; when the cash flows give no single answer, IRR shows "n/a"
+  at the start, the multiple and CAGR show "—", and so does CAGR when net worth at the
+  horizon is zero or less; when the cash flows give no single answer, IRR shows "n/a"
   with the reason.
 - **The end value is projected equity.** At the horizon the model counts each property's
   projected value minus its remaining debt. It does not sell anything: there are no selling

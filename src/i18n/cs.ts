@@ -414,7 +414,6 @@ export const cs: Dictionary = {
     equity: "Kapitál",
     dscr: "DSCR",
     ltv: "LTV",
-    badgeShort: "Schodek",
     netCf: "Čistý CF",
     chartValueVsDebtVsEquity: "Hodnota vs dluh vs kapitál",
     chartNetCashFlowByYear: "Čistý cash flow podle roku",

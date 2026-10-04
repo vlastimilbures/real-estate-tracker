@@ -420,7 +420,6 @@ export const ru: Dictionary = {
     equity: "Капитал",
     dscr: "DSCR",
     ltv: "LTV",
-    badgeShort: "Дефицит",
     netCf: "Чистый ДП",
     chartValueVsDebtVsEquity: "Стоимость vs долг vs капитал",
     chartNetCashFlowByYear: "Чистый денежный поток по годам",

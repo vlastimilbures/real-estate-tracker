@@ -436,7 +436,6 @@ export const en = {
     equity: "Equity",
     dscr: "DSCR",
     ltv: "LTV",
-    badgeShort: "Short",
     netCf: "Net CF",
     chartValueVsDebtVsEquity: "Value vs debt vs equity",
     chartNetCashFlowByYear: "Net cash flow by year",
