@@ -217,6 +217,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an invalid date or a value outside its range used to be restored and then stopped the app
   from starting. One scenario the app cannot read no longer stops startup either: it is
   listed on the Scenarios page with a Delete button (ADR 0123, #107).
+- The "first cash-flow-positive year" no longer names a year that earned nothing. With only
+  properties bought in the future (or a Dashboard filter on them), it showed the first
+  projection year; it now shows the first year whose net cash flow is above zero, or "—"
+  (ADR 0121, #102).
 - A development tranche paid out in the month of an agreed new instalment no longer leaves
   the loan with too low an instalment and a large final payment. That month still pays the
   agreed instalment, and the next payment is recalculated for the higher balance (ADR 0120,
