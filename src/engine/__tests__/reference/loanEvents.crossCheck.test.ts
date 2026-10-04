@@ -59,6 +59,21 @@ const devDrawsOnly: RefLoan = {
   termMonths: 360,
   draws: [{ date: "2028-03-10", amount: "500000" }],
 };
+/** #109: the recast's payment q (2027-02-01) takes the tranche dated 2027-01-15. */
+const onRecastPayment: RefLoan = {
+  ...devDrawsOnly,
+  draws: [{ date: "2027-01-15", amount: "1000000" }],
+  recasts: [{ date: "2027-01-01", instalment: 15000 }],
+};
+/** A plain loan on the same dates, 30-year fixation: events without any tranche. */
+const plainForRecast: RefLoan = {
+  start: "2026-03-01",
+  principal: "2000000",
+  ratePa: "0.049",
+  instalment: "10614.53",
+  fixationMonths: 360,
+  termMonths: 360,
+};
 const future: RefLoan = {
   start: "2027-01-15",
   principal: "1500000",
@@ -236,6 +251,91 @@ const CASES: Case[] = [
   [
     "dev loan, instalment recast after completion",
     { ...devIo, recasts: [{ date: "2028-01-10", instalment: 25000 }] },
+  ],
+  [
+    "dev loan, tranche on an instalment recast's payment (ADR 0120)",
+    { ...onRecastPayment, fixationMonths: 360 },
+  ],
+  [
+    "dev loan, tranche on an instalment recast's payment, then a reset (ADR 0120)",
+    onRecastPayment,
+  ],
+  [
+    "dev loan, tranche on an instalment recast's payment, replayed (ADR 0120)",
+    onRecastPayment,
+    "2027-02-07",
+  ],
+  [
+    "dev loan, tranche the payment after an instalment recast's (ADR 0120)",
+    {
+      ...onRecastPayment,
+      draws: [{ date: "2027-02-15", amount: "1000000" }],
+    },
+  ],
+  [
+    "dev loan, a rate reset and a tranche both on the recast's payment (ADR 0120)",
+    {
+      ...onRecastPayment,
+      draws: [{ date: "2031-03-15", amount: "1000000" }],
+      recasts: [{ date: "2031-03-01", instalment: 25000 }],
+    },
+  ],
+  [
+    "dev loan, tranche on the recast's payment, then an instalment recast (ADR 0120)",
+    {
+      ...onRecastPayment,
+      recasts: [
+        { date: "2027-01-01", instalment: 15000 },
+        { date: "2027-02-01", instalment: 20000 },
+      ],
+    },
+  ],
+  [
+    "dev loan, tranche on the recast's payment, then a maturity recast (ADR 0120)",
+    {
+      ...onRecastPayment,
+      recasts: [
+        { date: "2027-01-01", instalment: 15000 },
+        { date: "2027-02-01", maturity: "2050-03-01" },
+      ],
+    },
+  ],
+  [
+    "dev loan, tranche on the recast's payment, then shorten (ADR 0120)",
+    { ...onRecastPayment, prepayments: [shorten("2027-02-01", 300000)] },
+  ],
+  [
+    "dev loan, recast and tranche between the last payment and baseDate (ADR 0120, D-41)",
+    {
+      ...onRecastPayment,
+      recasts: [{ date: "2027-01-10", instalment: 15000 }],
+    },
+    "2027-01-20",
+  ],
+  [
+    "dev loan, tranche on a recast's payment that is its maturity (ADR 0116, 0120)",
+    {
+      ...onRecastPayment,
+      recasts: [{ date: "2027-01-01", instalment: 2100000 }],
+    },
+  ],
+  [
+    "plain loan, lower between an instalment recast and baseDate: no tranche, no re-amortization",
+    {
+      ...plainForRecast,
+      recasts: [{ date: "2027-01-01", instalment: 15000 }],
+      prepayments: [lower("2027-01-10", 200000)],
+    },
+    "2027-01-20",
+  ],
+  [
+    "dev loan, lower between an instalment recast and baseDate: no tranche, no re-amortization",
+    {
+      ...devDrawsOnly,
+      recasts: [{ date: "2027-01-01", instalment: 15000 }],
+      prepayments: [lower("2027-01-10", 200000)],
+    },
+    "2027-01-20",
   ],
   [
     "dev loan replayed before baseDate",

@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-09-30
 - Source IDs: D-24, J-06
+- Amended by: ADR 0120 (a tranche on an agreed instalment's payment re-amortizes the next payment)
 
 ## Context
 

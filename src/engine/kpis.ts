@@ -203,7 +203,8 @@ function equityGrowth(
  * Cumulative net cash flow (net of acquisition outflows and refinance cash), the first calendar year with
  * a positive net cash flow, and the first year the portfolio is debt-free. A debt-free
  * year only counts once the portfolio has carried debt (a never-leveraged portfolio
- * reports null). NB: greaterThan(ZERO), not isPositive() — ZERO.isPositive() is true.
+ * reports null). NB: greaterThan(ZERO), not isPositive() — ZERO.isPositive() is true, and
+ * a year with no active property nets exactly 0 (ADR 0121).
  * The real cumulative cash flow deflates each year by its own CPI_t (ADR 0087).
  */
 function cashFlowMilestones(
@@ -212,7 +213,7 @@ function cashFlowMilestones(
   cpi: Decimal[],
 ) {
   const firstCashFlowPositive =
-    proj.slice(1).find((y) => y.netCashFlow.isPositive()) ?? null;
+    proj.slice(1).find((y) => y.netCashFlow.greaterThan(ZERO)) ?? null;
   const debtFree = firstDebtFreeYear(proj);
   return {
     cumulativeNetCashFlow: cumulativeNetCashFlow(proj, acqOutflow),
