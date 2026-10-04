@@ -91,6 +91,21 @@ describe("modal forms have no unnamed control (UX-018)", () => {
     expect(unlabelled(document.body)).toEqual([]);
   });
 
+  it("Add property with the Acquisition section open (ADR 0119 §9)", async () => {
+    render(<PropertyFormModal mode="add" onClose={() => undefined} />);
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: getDict("en").propertyForm.acquisitionSection,
+      }),
+    );
+    expect(
+      screen.getByRole("textbox", {
+        name: getDict("en").propertyForm.fundingNote,
+      }),
+    ).toBeTruthy();
+    expect(unlabelled(document.body)).toEqual([]);
+  });
+
   it("New scenario", () => {
     render(
       <ScenarioForm

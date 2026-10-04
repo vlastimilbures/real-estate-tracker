@@ -21,11 +21,12 @@ work still to do is in the [roadmap](roadmap.md).
 - **The investment is your equity at the projection start.** The net-worth multiple, CAGR and
   levered IRR treat the equity on the projection start date (value − debt) as the amount
   invested. They are not returns on the cash you paid at purchase, and the app has no
-  since-purchase performance. See [SPEC §4.6](../SPEC.md#46-portfolio-kpis).
+  since-purchase performance. The recorded own cash is shown as "Cash invested", but no
+  return is measured from it. See [SPEC §4.6](../SPEC.md#46-portfolio-kpis).
 - **What enters the IRR.** The yearly net cash flows, the down payment for a property bought
   after the projection start, and the net cash from a refinance. The down payment is the own
-  cash recorded for the purchase (the form to record it comes in a later release); without
-  it, the purchase price minus the loan that funded it, plus any recorded costs and works
+  cash recorded for the purchase (the property form's Acquisition section); without it, the
+  purchase price minus the loan that funded it, plus any recorded costs and works
   (ADR 0119). The loan that funded the purchase is the property's first loan, if it starts
   no later than 90 days after the purchase. A later first loan counts as cash paid to you in
   the year it is drawn. A first loan taken out on a property you already own at the

@@ -1,13 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { dateDraft, moneyDraft, percentDraft } from "../model/formParse";
 import {
   parsePropertyForm,
+  fundingDraft,
+  hasFundingError,
   BLANK_PROPERTY_FORM,
   type PropertyFormState,
   type PropertyFormErrors,
 } from "../model/propertyForm";
-import { Checkbox, Field, TextInput } from "./forms";
+import { Checkbox, Field, TextArea, TextInput } from "./forms";
 import { DateInput } from "./DateInput";
 import { Button, ErrorBanner } from "./primitives";
 import { Modal } from "./Modal";
@@ -35,6 +38,9 @@ type TextFieldKey = Extract<
   | "purchase_price"
   | "appreciation_override_pa"
   | "rent_index_override_pa"
+  | "own_cash"
+  | "transaction_costs"
+  | "initial_works"
 >;
 
 interface TextFieldSpec {
@@ -91,6 +97,38 @@ const FINANCIAL_FIELD_SPECS: TextFieldSpec[] = [
   },
 ];
 
+/** The funding record's amounts (ADR 0119 §9): blank is unknown, not 0. */
+const fundingSpec = (
+  key: TextFieldKey,
+  label: (t: Dictionary) => string,
+  help: (t: Dictionary) => string,
+): TextFieldSpec => ({
+  key,
+  label,
+  help,
+  suffix: currencySymbol(),
+  inputMode: "decimal",
+  placeholder: (t) => t.propertyForm.unknownPlaceholder,
+});
+
+const FUNDING_FIELD_SPECS: TextFieldSpec[] = [
+  fundingSpec(
+    "own_cash",
+    (t) => t.propertyForm.ownCash,
+    (t) => t.propertyForm.ownCashHelp,
+  ),
+  fundingSpec(
+    "transaction_costs",
+    (t) => t.propertyForm.transactionCosts,
+    (t) => t.propertyForm.transactionCostsHelp,
+  ),
+  fundingSpec(
+    "initial_works",
+    (t) => t.propertyForm.initialWorks,
+    (t) => t.propertyForm.initialWorksHelp,
+  ),
+];
+
 function PropertyTextField({
   spec,
   t,
@@ -122,6 +160,70 @@ function PropertyTextField({
   );
 }
 
+/** The optional funding record, behind a toggle; values entered stay while it is shut. */
+function AcquisitionFields({
+  t,
+  open,
+  onToggle,
+  form,
+  errors,
+  set,
+}: {
+  t: Dictionary;
+  open: boolean;
+  onToggle: () => void;
+  form: PropertyFormState;
+  errors: PropertyFormErrors;
+  set: (field: keyof PropertyFormState, value: string) => void;
+}) {
+  const bodyId = useId();
+  return (
+    <>
+      <div className="form-wide form-disclosure">
+        <Button
+          size="sm"
+          variant="ghost"
+          icon={open ? ChevronUp : ChevronDown}
+          aria-expanded={open}
+          aria-controls={bodyId}
+          onClick={onToggle}
+        >
+          {t.propertyForm.acquisitionSection}
+        </Button>
+      </div>
+      {/* Hidden, not removed, while shut: the toggle controls it, and it adds no grid row. */}
+      <div id={bodyId} className="form-wide" hidden={!open}>
+        {open && (
+          <div className="form-grid">
+            <p className="form-wide panel-note">
+              {t.propertyForm.acquisitionHelp}
+            </p>
+            {FUNDING_FIELD_SPECS.map((spec) => (
+              <PropertyTextField
+                key={spec.key}
+                spec={spec}
+                t={t}
+                value={form[spec.key]}
+                error={errors[spec.key]}
+                onChange={(v) => set(spec.key, v)}
+              />
+            ))}
+            <div className="form-wide">
+              <Field label={t.propertyForm.fundingNote}>
+                <TextArea
+                  rows={2}
+                  value={form.funding_note}
+                  onChange={(e) => set("funding_note", e.target.value)}
+                />
+              </Field>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
 export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
   const t = useT();
   const portfolio = usePortfolioStore((s) => s.portfolio);
@@ -139,6 +241,13 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
   >({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Shut on add; open on edit when a record exists, so what is stored is seen (ADR 0119 §9).
+  const [fundingOpen, setFundingOpen] = useState(
+    () =>
+      mode === "edit" &&
+      portfolio?.properties.find((x) => x.id === propertyId)?.funding !==
+        undefined,
+  );
 
   // For edit mode: load engine fields from portfolio + address/garage from DB
   useEffect(() => {
@@ -157,6 +266,7 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
         purchase_price: moneyDraft(p.purchasePrice),
         appreciation_override_pa: percentDraft(p.appreciationOverridePa),
         rent_index_override_pa: percentDraft(p.rentIndexOverridePa),
+        ...fundingDraft(p.funding),
       });
     }
     void getPropertyExtras(propertyId).then(({ address, garage }) => {
@@ -173,12 +283,18 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
     });
   }
 
+  // A funding field in error opens the Acquisition section, so the error is seen.
+  function showErrors(next: PropertyFormErrors) {
+    setErrors(next);
+    if (hasFundingError(next)) setFundingOpen(true);
+  }
+
   async function handleSave() {
     const existingNames = (portfolio?.properties ?? [])
       .filter((p) => mode === "add" || p.id !== propertyId)
       .map((p) => p.name.toLowerCase());
     const result = parsePropertyForm(form, mode, propertyId, existingNames, t);
-    setErrors(result.errors);
+    showErrors(result.errors);
     if (!result.valid) return;
     const { property, address, garage } = result;
     setSaving(true);
@@ -204,7 +320,7 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
       const key = byField.get(field); // split only names the fields passed in
       if (key) fieldErrors[key] = message;
     }
-    setErrors(fieldErrors);
+    showErrors(fieldErrors);
     setSaveError(split.formError);
   }
 
@@ -280,6 +396,14 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
             onChange={(v) => set(spec.key, v)}
           />
         ))}
+        <AcquisitionFields
+          t={t}
+          open={fundingOpen}
+          onToggle={() => setFundingOpen((o) => !o)}
+          form={form}
+          errors={errors}
+          set={set}
+        />
       </div>
       {saveError && (
         <ErrorBanner message={saveError} onDismiss={() => setSaveError(null)} />

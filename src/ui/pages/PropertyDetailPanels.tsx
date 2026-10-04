@@ -20,6 +20,7 @@ import { RecordForm } from "../components/forms";
 import { moneyDraft, percentDraft } from "../model/formParse";
 import { fmtDate } from "../../lib/format";
 import { amortizationExtras, type LoanOutlook } from "../model/propertyDetail";
+import type { AcquisitionView } from "../model/acquisition";
 import { dscrBand, dscrBandWord, ltvBand, ltvBandWord } from "../model/health";
 import { currencySymbol } from "../../lib/currency";
 import type {
@@ -351,6 +352,29 @@ export function LoanSummary({ outlook }: { outlook: LoanOutlook }) {
         </table>
       </TableWrap>
       <p className="panel-note">{d.loanSummaryNote}</p>
+    </Panel>
+  );
+}
+
+/** The purchase's funding: sources and uses and the gap between them (ADR 0119 §9). */
+export function AcquisitionPanel({ view }: { view: AcquisitionView }) {
+  const d = useT().propertyDetail;
+  return (
+    <Panel title={d.acqTitle} hint={d.acqHint}>
+      <StatList
+        rows={view.rows.map((r) => ({
+          k: r.label,
+          v: r.value ? <Money value={r.value} parens={false} /> : r.missing,
+        }))}
+      />
+      {/* A standing note, not an alert: a gap never blocks (ADR 0119 §4). */}
+      {view.warning && (
+        <div className="banner warn" role="note">
+          {view.warning}
+        </div>
+      )}
+      {view.note && <p className="panel-note funding-note">{view.note}</p>}
+      <p className="panel-note">{d.acqNote}</p>
     </Panel>
   );
 }

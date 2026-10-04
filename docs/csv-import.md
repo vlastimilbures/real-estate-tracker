@@ -152,7 +152,8 @@ matched to an existing record by its natural key:
   property's active/inactive state and holding costs, and a mortgage block's draws and
   interest-only date. An empty `contract_maturity_date` keeps the stored date, and an empty
   or missing `own_cash`, `transaction_costs` or `initial_works` column keeps the stored
-  amount. A CSV can set or change an amount, never erase it.
+  amount. A CSV can set or change an amount, never erase it: clear an amount in the
+  property form.
 - **Any other empty cell clears.** An empty optional cell clears the stored value (for
   example an empty `address`), except `contract_maturity_date` and the three funding columns
   as above.
@@ -237,7 +238,7 @@ and check the file in a text editor. The app does not convert these files itself
 - **Mortgage draws, completion date and interest-only period** of a development loan — set
   them in the mortgage form.
 - **Active/inactive state** of a property.
-- The **funding note** of a property.
+- The **funding note** of a property — set it in the property form.
 
 ## Export is not import
 

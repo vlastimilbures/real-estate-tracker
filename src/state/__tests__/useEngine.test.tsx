@@ -271,6 +271,18 @@ describe("useAllProjections / usePropertyEngine", () => {
     );
   });
 
+  it("carries the purchase's sources and uses (ADR 0119 §9)", () => {
+    // Lipova's loan starts on its purchase day; Javorova's first block starts years later.
+    const lipova = renderHook(() => usePropertyEngine("lipova", BASE)).result
+      .current!;
+    expect(lipova.acquisition.price.toString()).toBe("7225000");
+    expect(lipova.acquisition.loan?.toString()).toBe("5610000");
+    expect(lipova.acquisition.ownCash).toBeNull();
+    const javorova = renderHook(() => usePropertyEngine("javorova", BASE))
+      .result.current!;
+    expect(javorova.acquisition.loan).toBeNull();
+  });
+
   it("clamps an as-of date before baseDate to baseDate (D-19)", () => {
     const { result } = renderHook(() =>
       usePropertyEngine("javorova", isoDate("2024-06-07")),

@@ -94,7 +94,8 @@ Property { id, name, type?, sizeM2?, purchaseDate, purchasePrice,
 
 AcquisitionFunding { ownCash?, transactionCosts?, initialWorks?: Money, note? }
            // ADR 0119: each part unknown when blank (never 0); own cash = all own money
-           // paid in at acquisition, costs and works included
+           // paid in at acquisition, costs and works included. Set, changed and cleared
+           // in the property form; a CSV sets amounts but never clears one
 
 MortgageDraw { date: IsoDate, amount: Money }     // additional principal tranche (> 0)
 MortgagePrepayment { date, amount: Money, effect: "lowerInstalment" | "shortenTerm",
@@ -353,10 +354,11 @@ handover). It counts its initial principal and every tranche dated on or before 
 of the block that replaces it (the schedule's cut, D-47). A later block is a successor,
 never the acquisition loan. A future buy's first loan that starts after the window is not
 the acquisition loan: its initial principal is **cash in** in the projection year it is
-drawn, like refinance cash; its tranches are not. **Sources and uses** (for the Property
-detail page, #33 PR3; never a blocker): uses = price + recorded costs + recorded works;
+drawn, like refinance cash; its tranches are not. **Sources and uses** (the Property detail
+Acquisition section, §9; never a blocker): uses = price + recorded costs + recorded works;
 sources = own cash + acquisition loan; gap = uses − sources, only while own cash is known.
-A funding record on a property bought on or before baseDate changes no figure.
+A gap of 1 Kč or more either way is shown as a warning; a smaller one is rounding. A
+funding record on a property bought on or before baseDate changes no figure.
 
 **Debt service before the purchase** (ADR 0124): a future buy's loan can start before its
 purchase date (an off-plan loan drawn at contract). Its schedule runs from its own start, while
@@ -526,7 +528,8 @@ with examples, is [docs/csv-import.md](docs/csv-import.md).
 | `mortgages.csv`  | property_name (FK), start_date, initial_principal, fixation_years, interest_rate_pa, monthly_instalment, loan_term_years, contract_maturity_date                  |
 
 Note: `draws` and `completionDate` (dev/phased mortgage fields), prepayments, recasts and
-the funding note (form: #33 PR3) are set via the UI, not CSV; a re-import keeps them.
+the funding note (property form) are set via the UI, not CSV; a re-import keeps them.
+Clearing a funding amount is a property form edit too: a blank CSV cell keeps it.
 
 **Rules:**
 
@@ -684,6 +687,9 @@ offline badge, and controls for language and theme.
    date within the projection window) sets the snapshot date (§4.3). A compact **Financing &
    upcoming** panel (§4.7, ADR 0103) shows the next rate reset, the debt resetting within
    1/3/5 years, total interest and the next 12 months' events, each linking to its property.
+   The KPI list ends with **Cash invested** (ADR 0119 §9): the recorded own cash of the
+   active properties in the filter, future buys included, shown only when every one of them
+   has it; the real lens labels it nominal.
    A **Data check** panel (ADR 0118) lists, at the snapshot date, the inputs the engine
    falls back on: under "Needs attention" a valuation more than 12 months old, no valuation
    (purchase price used), a last lease that ended (no rent in the snapshot, renewed in the
@@ -695,7 +701,10 @@ offline badge, and controls for language and theme.
 
 2. **Properties** — list with per-property summary and LTV/DSCR health bands; "+ Add property"
    button opens a form modal (name, address, type, size_m2, garage, purchase_date,
-   purchase_price, optional per-property growth overrides). Each row has Edit and Delete
+   purchase_price, optional per-property growth overrides, and an optional collapsed
+   **Acquisition** section: own cash, transaction costs, initial works and a funding note,
+   where a blank amount is unknown and clearing every field clears the record, ADR 0119
+   §9). Each row has Edit and Delete
    actions; a deactivated property shows an "Inactive" badge and one not yet purchased a
    "Pending" badge (activate/deactivate is on Property detail). Delete cascades to all
    linked mortgages, valuations, leases, and holding costs (after confirmation).
@@ -711,8 +720,12 @@ offline badge, and controls for language and theme.
    the remaining term and the interest prepayments save, then every loan block, oldest
    first, with its fixation end, the nominal balance at reset and a status: next rate reset,
    upcoming, passed, replaced by a later loan, repaid before the reset, or floating rate.
+   The **Acquisition** section (ADR 0119 §9) lists the purchase price, transaction costs,
+   initial works, uses, cash invested (own cash), the acquisition loan and sources, then the
+   funding note; an unknown part reads "—" and no acquisition loan reads "None". A sources
+   & uses gap of 1 Kč or more shows as a warning (short or over), never a blocker.
    A section nav lists Overview, Data check (the property's own findings, ADR 0118),
-   Records, Financing, Holding costs, Projection and Amortization (ADR 0107).
+   Records, Financing, Acquisition, Holding costs, Projection and Amortization (ADR 0107).
 
 4. **Projections** — full year-by-year grid (per property + portfolio), nominal/real toggle,
    and an **Excel export** of the projection table.

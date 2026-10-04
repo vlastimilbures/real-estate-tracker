@@ -57,6 +57,42 @@ async function enterLoanEvents(ux: Ux) {
   return p;
 }
 
+/**
+ * In the open property dialog, opens the Acquisition section and fills the given
+ * funding fields (ADR 0119 §9).
+ */
+async function fillFunding(
+  ux: Ux,
+  values: Partial<
+    Record<
+      "ownCash" | "transactionCosts" | "initialWorks" | "fundingNote",
+      string
+    >
+  >,
+) {
+  const dialog = ux.page.getByRole("dialog");
+  const f = ux.t.propertyForm;
+  const toggle = dialog.getByRole("button", { name: f.acquisitionSection });
+  if ((await toggle.getAttribute("aria-expanded")) !== "true")
+    await toggle.click();
+  for (const [key, value] of Object.entries(values)) {
+    await dialog
+      .getByLabel(f[key as keyof typeof values], { exact: true })
+      .fill(value);
+  }
+  return dialog;
+}
+
+/** Saves the open property dialog and waits for it to close. */
+async function saveProperty(ux: Ux) {
+  const dialog = ux.page.getByRole("dialog");
+  await dialog
+    .locator(".modal-foot")
+    .getByRole("button", { name: ux.t.common.saveChanges })
+    .click();
+  await expect(dialog).toBeHidden();
+}
+
 export const SCREENS: Screen[] = [
   {
     id: "00-loading",
@@ -228,6 +264,31 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "09b-dashboard-cash-invested",
+    desc: "Dashboard KPI list with Cash invested once every property has own cash (ADR 0119 §9)",
+    route: "dashboard",
+    run: async (ux) => {
+      await boot(ux.page);
+      await nav(ux, "properties");
+      const rows = ux.page.locator("table.data tbody tr");
+      for (const [i, ownCash] of ["1500000", "1700000", "2000000"].entries()) {
+        await rows
+          .nth(i)
+          .getByRole("button", { name: ux.t.common.edit })
+          .click();
+        await fillFunding(ux, { ownCash });
+        await saveProperty(ux);
+      }
+      await nav(ux, "dashboard");
+      const p = panel(ux, ux.t.dashboard.kpiTitle);
+      await expect(
+        p.getByText(ux.t.dashboard.kpiCashInvested, { exact: true }),
+      ).toBeVisible();
+      await p.scrollIntoViewIfNeeded();
+      await ux.capture("09b-dashboard-cash-invested", { fullPage: false });
+    },
+  },
+  {
     id: "10-properties",
     desc: "Properties list",
     route: "properties",
@@ -324,6 +385,30 @@ export const SCREENS: Screen[] = [
         expect(box!.x + box!.width).toBeLessThanOrEqual(actions!.x);
       }
       await ux.capture("14-properties-long-name");
+    },
+  },
+  {
+    id: "15-property-edit-acquisition",
+    desc: "Edit-property dialog with the Acquisition section open and filled (ADR 0119 §9)",
+    route: "properties",
+    run: async (ux) => {
+      await boot(ux.page);
+      await nav(ux, "properties");
+      await ux.page
+        .locator("table.data tbody tr")
+        .first()
+        .getByRole("button", { name: ux.t.common.edit })
+        .click();
+      const dialog = await fillFunding(ux, {
+        ownCash: "1500000",
+        transactionCosts: "95000",
+        initialWorks: "150000",
+        fundingNote: "Deposit from savings; the rest from the bank",
+      });
+      await dialog
+        .getByLabel(ux.t.propertyForm.fundingNote, { exact: true })
+        .scrollIntoViewIfNeeded();
+      await ux.capture("15-property-edit-acquisition", { fullPage: false });
     },
   },
   {
@@ -427,6 +512,30 @@ export const SCREENS: Screen[] = [
       await expect(p.getByText(d.remainingTerm, { exact: true })).toBeVisible();
       await p.scrollIntoViewIfNeeded();
       await ux.capture("29b-property-loan-outlook", { fullPage: false });
+    },
+  },
+  {
+    id: "29c-property-acquisition",
+    desc: "Property detail Acquisition section: sources and uses with the gap warning (ADR 0119 §9)",
+    route: "property",
+    run: async (ux) => {
+      const d = ux.t.propertyDetail;
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      await ux.page
+        .getByRole("banner")
+        .getByRole("button", { name: ux.t.properties.editProperty })
+        .click();
+      await fillFunding(ux, { ownCash: "1000000", transactionCosts: "95000" });
+      await saveProperty(ux);
+      await ux.page
+        .getByRole("navigation", { name: d.sectionNavLabel })
+        .getByRole("link", { name: d.sectionAcquisition })
+        .click();
+      const p = panel(ux, d.acqTitle);
+      await expect(p.getByRole("heading", { name: d.acqTitle })).toBeFocused();
+      await expect(p.getByRole("note")).toBeVisible();
+      await ux.capture("29c-property-acquisition", { fullPage: false });
     },
   },
   {

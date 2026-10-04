@@ -30,7 +30,9 @@ improvement, **P3** later.
     Loan outlook (ADR 0117).
   - Early repayment: one-off extra principal, as in
     [`czech-mortgage-extensions.md`](design/czech-mortgage-extensions.md) §1 (#32).
-  - Acquisition funding: own cash, costs, initial works (#33).
+  - Acquisition funding: own cash, costs, initial works (#33). Done: the record and the
+    down payment (ADR 0119), the CSV columns, the property form section, the Property
+    detail sources & uses check and the Dashboard Cash invested total.
   - CSV import preview showing adds vs updates (#34).
   - Data-check panel (#35).
   - Backup recency indicator (#36).

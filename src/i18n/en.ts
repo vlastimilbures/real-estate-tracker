@@ -323,6 +323,8 @@ export const en = {
     kpiSumPrincipalRepaidNominal: (n: number) =>
       `Σ principal repaid (Yrs 1–${n}, nominal)`,
     kpiWeightedAvgRate: "Weighted-avg interest rate",
+    kpiCashInvested: "Cash invested",
+    kpiCashInvestedNominal: "Cash invested (nominal)",
     // Financing & upcoming panel (ADR 0103).
     financingTitle: "Financing & upcoming",
     financingHint: (d: string) => `modelled dates, as of ${d}`,
@@ -622,6 +624,25 @@ export const en = {
     sectionHolding: "Holding costs",
     sectionProjection: "Projection",
     sectionAmortization: "Amortization",
+    // Acquisition section (ADR 0119 §9)
+    sectionAcquisition: "Acquisition",
+    acqTitle: "Acquisition funding",
+    acqHint: "as recorded, nominal",
+    acqPrice: "Purchase price",
+    acqTransactionCosts: "Transaction costs",
+    acqInitialWorks: "Initial works",
+    acqUses: "Uses (price + costs + works)",
+    acqCashInvested: "Cash invested (own cash)",
+    acqLoan: "Acquisition loan",
+    acqLoanNone: "None",
+    acqSources: "Sources (own cash + loan)",
+    acqGapShort: (amount: string) =>
+      `The recorded sources fall ${amount} short of the uses. Check the own cash, the costs and works, or the loan.`,
+    acqGapOver: (amount: string) =>
+      `The recorded sources exceed the uses by ${amount}. Check the own cash, the costs and works, or the loan.`,
+    acqNote:
+      "— means not recorded; the uses count only the recorded costs and works. The acquisition loan is the first loan block when it starts no later than 90 days after the purchase. Set the amounts in Edit property.",
+    acqRecordedNote: (note: string) => `Note: ${note}`,
     showAmortization: (n: number) =>
       `Show amortization schedule (${n} ${enPlural(n, ["payment", "payments"])})`,
     hideAmortization: "Hide amortization schedule",
@@ -1073,6 +1094,19 @@ export const en = {
     errInvalidNumber: "Invalid number",
     errWholeNumber: "Must be a whole number",
     errInvalidPercentage: "Invalid percentage",
+    acquisitionSection: "Acquisition (optional)",
+    acquisitionHelp:
+      "How the purchase was funded. A blank amount is unknown; 0 is an amount. For a property bought after the projection start, own cash is its down payment.",
+    ownCash: "Own cash",
+    ownCashHelp:
+      "All your own money paid in at the purchase, costs and works included",
+    transactionCosts: "Transaction costs",
+    transactionCostsHelp: "Broker, legal, cadastre, valuation and similar fees",
+    initialWorks: "Initial works",
+    initialWorksHelp:
+      "Renovation or furnishing paid at or right after the purchase",
+    fundingNote: "Funding note",
+    unknownPlaceholder: "unknown",
   },
 
   // Projection grid headers, on screen and in the Excel export (UX-062,
@@ -1392,6 +1426,23 @@ export const en = {
           "The annual return from the projection start, treating that day's equity as the amount invested, plus yearly cash flows and the projected equity at the horizon (no selling costs or tax), with the mortgage in the mix.",
         caveat: "Not the return on your original purchase cash.",
         eg: "negative early, large equity at horizon → ≈ 6%/yr.",
+      },
+      cashInvested: {
+        name: "Cash invested",
+        formula: "Σ recorded own cash",
+        meaning:
+          "The own money recorded as paid in at each purchase, costs and works included, set in the property form's Acquisition section. The Dashboard shows the total only when every active property has it.",
+        caveat:
+          "The multiple, CAGR and IRR do not start from it; for a property bought after the projection start it is the down payment.",
+        eg: "1.5M + 1.7M + 2.0M = 5.2M.",
+      },
+      sourcesUses: {
+        name: "Sources and uses",
+        formula:
+          "uses = price + costs + works; sources = own cash + acquisition loan",
+        meaning:
+          "A check of the recorded funding on each property page. A gap of 1 Kč or more either way shows as a warning, never a blocker. The acquisition loan is the first loan block when it starts no later than 90 days after the purchase.",
+        eg: "uses 7.30M, sources 7.25M → 50k short.",
       },
     },
     scenarioDefs: {

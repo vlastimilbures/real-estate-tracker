@@ -301,6 +301,8 @@ export const cs: Dictionary = {
     kpiSumPrincipalRepaidNominal: (n) =>
       `Σ splacené jistiny (roky 1–${n}, nominálně)`,
     kpiWeightedAvgRate: "Vážená průměrná úroková sazba",
+    kpiCashInvested: "Vložené vlastní zdroje",
+    kpiCashInvestedNominal: "Vložené vlastní zdroje (nominálně)",
     // Panel Financování a termíny (ADR 0103).
     financingTitle: "Financování a termíny",
     financingHint: (d) => `modelová data k ${d}`,
@@ -586,6 +588,25 @@ export const cs: Dictionary = {
     sectionHolding: "Náklady na držbu",
     sectionProjection: "Projekce",
     sectionAmortization: "Umořovací plán",
+    // Acquisition section (ADR 0119 §9)
+    sectionAcquisition: "Pořízení",
+    acqTitle: "Financování koupě",
+    acqHint: "jak bylo zadáno, nominálně",
+    acqPrice: "Kupní cena",
+    acqTransactionCosts: "Transakční náklady",
+    acqInitialWorks: "Počáteční úpravy",
+    acqUses: "Užití (cena + náklady + úpravy)",
+    acqCashInvested: "Vložené vlastní zdroje",
+    acqLoan: "Úvěr na koupi",
+    acqLoanNone: "Žádný",
+    acqSources: "Zdroje (vlastní zdroje + úvěr)",
+    acqGapShort: (amount) =>
+      `Zadané zdroje nepokrývají užití o ${amount}. Zkontrolujte vlastní zdroje, náklady a úpravy nebo úvěr.`,
+    acqGapOver: (amount) =>
+      `Zadané zdroje převyšují užití o ${amount}. Zkontrolujte vlastní zdroje, náklady a úpravy nebo úvěr.`,
+    acqNote:
+      "— znamená nezadáno; užití počítá jen zadané náklady a úpravy. Úvěr na koupi je první úvěrový blok, pokud začíná nejpozději 90 dní po koupi. Částky zadáte v dialogu „Upravit nemovitost“.",
+    acqRecordedNote: (note) => `Poznámka: ${note}`,
     showAmortization: (n) =>
       `Zobrazit umořovací plán (${n} ${csPlural(n, ["splátka", "splátky", "splátek"])})`,
     hideAmortization: "Skrýt umořovací plán",
@@ -1027,6 +1048,20 @@ export const cs: Dictionary = {
     errInvalidNumber: "Neplatné číslo",
     errWholeNumber: "Musí být celé číslo",
     errInvalidPercentage: "Neplatné procento",
+    acquisitionSection: "Pořízení (nepovinné)",
+    acquisitionHelp:
+      "Jak byl nákup financován. Prázdná částka je neznámá; 0 je částka. U nemovitosti koupené po začátku projekce jsou vlastní zdroje platbou při koupi.",
+    ownCash: "Vlastní zdroje",
+    ownCashHelp:
+      "Všechny vlastní peníze vložené při koupi, včetně nákladů a úprav",
+    transactionCosts: "Transakční náklady",
+    transactionCostsHelp:
+      "Makléř, právní služby, katastr, odhad a podobné poplatky",
+    initialWorks: "Počáteční úpravy",
+    initialWorksHelp:
+      "Rekonstrukce nebo vybavení placené při koupi či hned po ní",
+    fundingNote: "Poznámka k financování",
+    unknownPlaceholder: "neznámé",
   },
 
   projGrid: {
@@ -1340,6 +1375,23 @@ export const cs: Dictionary = {
           "Roční návratnost od začátku projekce: kapitál k tomuto dni se bere jako vložená částka, k tomu roční cash flow a projektovaný kapitál na horizontu (bez nákladů na prodej a daní), s hypotékou v rovnici.",
         caveat: "Nejde o návratnost vašich původních peněz vložených do koupě.",
         eg: "zpočátku záporné, velký kapitál na horizontu → ≈ 6 %/rok.",
+      },
+      cashInvested: {
+        name: "Vložené vlastní zdroje",
+        formula: "Σ zadaných vlastních zdrojů",
+        meaning:
+          "Vlastní peníze zadané jako vložené při každé koupi, včetně nákladů a úprav, v sekci Pořízení ve formuláři nemovitosti. Přehled ukáže součet, jen když je mají všechny aktivní nemovitosti.",
+        caveat:
+          "Násobek, CAGR ani IRR z nich nevycházejí; u nemovitosti koupené po začátku projekce jsou platbou při koupi.",
+        eg: "1,5 M + 1,7 M + 2,0 M = 5,2 M.",
+      },
+      sourcesUses: {
+        name: "Zdroje a užití",
+        formula:
+          "užití = cena + náklady + úpravy; zdroje = vlastní zdroje + úvěr na koupi",
+        meaning:
+          "Kontrola zadaného financování na stránce každé nemovitosti. Rozdíl 1 Kč a víc oběma směry se ukáže jako upozornění, nikdy neblokuje. Úvěr na koupi je první úvěrový blok, pokud začíná nejpozději 90 dní po koupi.",
+        eg: "užití 7,30 M, zdroje 7,25 M → chybí 50 tis.",
       },
     },
     scenarioDefs: {

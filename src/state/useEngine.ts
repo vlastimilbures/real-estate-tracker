@@ -7,6 +7,7 @@ import { scenarioRuleErrors } from "../import/inputRules";
 import { todayUtc } from "../lib/today";
 import { timed } from "../lib/perf";
 import {
+  acquisitionSummary,
   portfolioOutputs,
   projectionAndKpis,
   propertySnapshot,
@@ -22,6 +23,7 @@ import {
   utc,
 } from "../engine";
 import type {
+  AcquisitionSummary,
   Scenario,
   Portfolio,
   Assumptions,
@@ -254,6 +256,8 @@ export interface PropertyEngineOutput {
   /** Modelled payoff, interest saved (ADR 0116) and each block's reset (ADR 0117); null
    *  without a loan. */
   financing: PropertyLoan | null;
+  /** The purchase's sources and uses (ADR 0119 §4, §9). */
+  acquisition: AcquisitionSummary;
 }
 
 /** Stored data that breaks an engine rule, reported instead of thrown (DR-146). */
@@ -307,6 +311,7 @@ export function usePropertyEngineResult(
           schedule,
           asOfDate,
         ),
+        acquisition: acquisitionSummary(property, portfolio, assumptions),
       };
     } catch (e) {
       if (e instanceof EngineInputError) return { invalid: e };

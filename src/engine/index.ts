@@ -68,6 +68,8 @@ export {
   realProjection,
   realPropertySnapshot,
 } from "./real";
+export { acquisitionSummary } from "./acquisition";
+export type { AcquisitionSummary } from "./acquisition";
 export { portfolioKpis } from "./kpis";
 export { portfolioOutputs, projectionAndKpis } from "./outputs";
 export {

@@ -39,6 +39,7 @@ function renderPanels(mode: Mode) {
         horizon={real ? kpis.netWorthReal : kpis.netWorthNominal}
         horizonYears={N}
         irr={{ rate: null, reason: "NO_ROOT" }}
+        cashInvested={null}
       />
     </>,
   );
