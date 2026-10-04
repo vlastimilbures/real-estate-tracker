@@ -545,6 +545,8 @@ export function PctLines({
         domain={[0, "auto"]}
       />
       <Tooltip
+        // Keep a null LTV (no value) in the hover so it reads n/a (ADR 0133).
+        filterNull={false}
         content={({ active, label, payload }) => (
           <Tip
             active={active}
@@ -609,6 +611,8 @@ export function PctLine({
         domain={[0, "auto"]}
       />
       <Tooltip
+        // Keep a null LTV (no value) in the hover so it reads n/a (ADR 0133).
+        filterNull={false}
         content={({ active, label, payload }) => (
           <Tip
             active={active}
