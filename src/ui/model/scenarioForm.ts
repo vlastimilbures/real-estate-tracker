@@ -2,7 +2,11 @@
 // so it's unit-testable without mounting the component (mirrors ./mortgageForm.ts).
 import { parsePercentToRatio, parseIntField } from "./formParse";
 import { formWriteErrors } from "./writeError";
-import type { ScenarioOverrides, ShockBand } from "../../engine";
+import type {
+  EngineValidationError,
+  ScenarioOverrides,
+  ShockBand,
+} from "../../engine";
 import type { Dictionary } from "../../i18n";
 import type { WriteError } from "../../state/writeError";
 
@@ -148,22 +152,32 @@ export function parseScenarioDraft(
   return { errors: errs, name: draft.name.trim(), overrides };
 }
 
-/** A refused save, split for the form (ADR 0123): the store checks a scenario with the
- *  engine's assumption rules, which name the override. A rule on Vacancy or Value crash
- *  (`valueShock`) shows on that field in the engine's words; anything else shows above
- *  the buttons (the parser already bounds the shock and crash years). */
+/** The form field of a rule on a shock: the crash's percentage, or the delta of a shock
+ *  that takes its level out of range (ADR 0128 §3). Other shock rules (the years) stay on
+ *  the shock, shown above the buttons: the parser already bounds them. */
+function shockField(x: EngineValidationError): string | undefined {
+  if (x.field === "valueShock") return "valueShockPct";
+  if (x.code === "SHOCKED_RATE_OUT_OF_RANGE") return "rateShockDelta";
+  if (x.code === "SHOCKED_INFLATION_OUT_OF_RANGE") return "inflationShockDelta";
+  return x.field;
+}
+
+/** A refused save, split for the form (ADR 0123, ADR 0128): the store checks a scenario
+ *  with the engine's assumption rules, which name the override. A rule on a level, the
+ *  value crash or a shocked level shows on that field in the engine's words; anything
+ *  else shows above the buttons. */
 export function scenarioWriteErrors(
   t: Dictionary,
   e: WriteError,
 ): { fieldErrors: Record<string, string>; formError: string | null } {
   const onForm: WriteError =
     e.kind === "input"
-      ? {
-          ...e,
-          errors: e.errors.map((x) =>
-            x.field === "valueShock" ? { ...x, field: "valueShockPct" } : x,
-          ),
-        }
+      ? { ...e, errors: e.errors.map((x) => ({ ...x, field: shockField(x) })) }
       : e;
-  return formWriteErrors(t, onForm, ["vacancyAllowance", "valueShockPct"]);
+  return formWriteErrors(t, onForm, [
+    ...OVERRIDE_KEYS,
+    "valueShockPct",
+    "rateShockDelta",
+    "inflationShockDelta",
+  ]);
 }

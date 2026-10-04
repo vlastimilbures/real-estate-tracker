@@ -214,3 +214,57 @@ describe("formWriteErrors with list rows", () => {
     );
   });
 });
+
+// ADR 0128 §6: an assumptions edit that newly breaks a saved scenario names the scenario,
+// on the base field the scenario's shock shifts.
+describe("a scenario the assumptions edit would break (ADR 0128)", () => {
+  const breaks = (field: string, code: string): WriteError =>
+    ({
+      kind: "input",
+      scenario: "Rate cut",
+      errors: [{ code, entity: "assumptions", field }],
+    }) as WriteError;
+  const fields = ["postFixationResetRatePa", "inflationPa"];
+
+  it("shows the rule with the scenario's name on the base field", () => {
+    expect(
+      formWriteErrors(
+        en,
+        breaks("rateShock", "SHOCKED_RATE_OUT_OF_RANGE"),
+        fields,
+      ),
+    ).toEqual({
+      fieldErrors: {
+        postFixationResetRatePa: en.writeErrors.scenarioBreaks(
+          "Rate cut",
+          en.inputRules.SHOCKED_RATE_OUT_OF_RANGE,
+        ),
+      },
+      formError: null,
+    });
+    expect(
+      formWriteErrors(
+        en,
+        breaks("inflationShock", "SHOCKED_INFLATION_OUT_OF_RANGE"),
+        fields,
+      ).fieldErrors,
+    ).toEqual({
+      inflationPa: en.writeErrors.scenarioBreaks(
+        "Rate cut",
+        en.inputRules.SHOCKED_INFLATION_OUT_OF_RANGE,
+      ),
+    });
+  });
+
+  it("the banner names the scenario too", () => {
+    expect(
+      describeWriteError(en, breaks("rateShock", "SHOCKED_RATE_OUT_OF_RANGE"))
+        .message,
+    ).toBe(
+      en.writeErrors.scenarioBreaks(
+        "Rate cut",
+        en.inputRules.SHOCKED_RATE_OUT_OF_RANGE,
+      ),
+    );
+  });
+});

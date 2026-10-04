@@ -7,6 +7,8 @@
 - Amends: [0052](0052-restore-safety-backup.md) (DR-019: restore checks every row)
 - Amended: 2026-10-04 after the independent review of PR #190 (§4: restore checks
   that scenario rows are readable, not their rules)
+- Amended by: [0128](0128-assumption-bounds.md) §6 (§1: the cross-field shock rules depend
+  on the base; §3: levels and shock deltas show on their fields)
 
 ## Context
 

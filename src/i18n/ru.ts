@@ -101,6 +101,11 @@ export const ru: Dictionary = {
     HORIZON_NOT_POSITIVE: "Горизонт прогноза должен быть не меньше одного года",
     INVALID_TERM: "Срок в годах неверен",
     SHOCK_OUT_OF_RANGE: "Шок сценария вне допустимого диапазона",
+    GROWTH_OUT_OF_RANGE: "Должно быть больше −100 %",
+    SHOCKED_RATE_OUT_OF_RANGE:
+      "Ставка после фиксации плюс шок ставки должна оставаться от 0 % до 100 %",
+    SHOCKED_INFLATION_OUT_OF_RANGE:
+      "Инфляция плюс шок инфляции должна оставаться выше −100 %",
     ASOF_BEFORE_BASEDATE: "Дата раньше базовой даты",
     NON_POSITIVE_PREPAYMENT: "Каждый досрочный платёж должен быть больше нуля",
     EVENT_BEFORE_START:
@@ -126,6 +131,8 @@ export const ru: Dictionary = {
     invalidJson: "Сохранённое значение не удаётся прочитать",
     missingValue: "Не указано обязательное значение",
     otherConstraint: "База данных отклонила изменение, ничего не изменено",
+    scenarioBreaks: (name, rule) =>
+      `Это значение нарушит сценарий «${name}». ${rule}. Измените значение или сначала отредактируйте сценарий`,
   },
 
   dataErrors: {

@@ -191,6 +191,31 @@ describe("confirmRestore — safety backup (DR-019, D-52)", () => {
     expect(await propertyCount()).toBe(3);
   });
 
+  // ADR 0128 §7: the cross-field rules are not checked on restore. A scenario whose rate
+  // shock takes the reset rate below 0 restores like one already saved (ADR 0123 §4).
+  it("restores a scenario that breaks a cross-field rule", async () => {
+    const backup = await emptyBackup();
+    const withScenario = {
+      ...backup,
+      tables: {
+        ...backup.tables,
+        scenarios: [
+          {
+            id: "s1",
+            name: "Negative rate",
+            overrides:
+              '{"version":1,"rateShock":{"deltaPa":"-0.5","durationYears":3}}',
+            created_at: "2026-01-05T10:00:00.000Z",
+          },
+        ],
+      },
+    };
+    await confirmRestore(sql, withScenario, checkInputRules);
+    expect(await sql.select("SELECT id FROM scenarios")).toEqual([
+      { id: "s1" },
+    ]);
+  });
+
   it("writes the safety backup to the app's backups folder, then restores", async () => {
     const backup = await emptyBackup();
 
