@@ -377,11 +377,9 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
       pending = draw.greaterThan(ZERO) && !trigger;
     }
     // ADR 0120: a tranche landing on the agreed instalment's payment does not change
-    // that payment; the next payment re-amortizes over the maturity in force.
-    const owedNext =
-      agreedInstalment !== null &&
-      draw.greaterThan(ZERO) &&
-      drawTiming === "landing";
+    // that payment; the next payment re-amortizes over the maturity in force (in either
+    // draw timing; with "nextMonth" a pending tranche would re-amortize there anyway).
+    const owedNext = agreedInstalment !== null && draw.greaterThan(ZERO);
     if (agreedInstalment) {
       instalment = agreedInstalment;
     } else if (trigger) {

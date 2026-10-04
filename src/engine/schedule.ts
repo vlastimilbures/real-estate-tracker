@@ -302,9 +302,7 @@ function bucketDraws(
 /**
  * The loan's last payment number in force — the contract term until a prepayment
  * shortens it or a recast moves it — and what the next payment owes: a
- * re-amortization over the payments left, or an agreed instalment (ADR 0109). Both are
- * owed when a tranche lands on the agreed instalment's payment: that payment pays the
- * agreed instalment and the next one re-amortizes (ADR 0120).
+ * re-amortization over the payments left, or an agreed instalment (ADR 0109).
  */
 interface TermState {
   term: number;
@@ -320,14 +318,19 @@ function initialTerms(block: MortgageBlock): TermState {
   };
 }
 
-/** After an amortizing payment nothing is owed to the next one any more, except a
- *  re-amortization owed beside the agreed instalment it paid (ADR 0120). Through
- *  interest-only months it stays owed (completion re-amortizes anyway). */
-function paidTerms(terms: TermState, interestOnly: boolean): TermState {
+/** After an amortizing payment nothing is owed to the next one any more, except when
+ *  it paid an agreed instalment on a tranche (`draw`): the tranche then re-amortizes
+ *  the next payment (ADR 0120). Through interest-only months it stays owed (completion
+ *  re-amortizes anyway). */
+function paidTerms(
+  terms: TermState,
+  interestOnly: boolean,
+  draw: Decimal,
+): TermState {
   if (interestOnly) return terms;
   return {
     ...terms,
-    reamortizeNext: terms.agreedInstalment !== null && terms.reamortizeNext,
+    reamortizeNext: terms.agreedInstalment !== null && draw.greaterThan(ZERO),
     agreedInstalment: null,
   };
 }
@@ -356,21 +359,16 @@ function paymentTerms(
 }
 
 /** A tranche landing on or after the maturity in force goes back to the contract term
- *  (ADR 0109, ADR 0116), so it is not paid off in one shot. A tranche landing on an
- *  agreed instalment's payment leaves that instalment paid and re-amortizes the next
- *  payment (ADR 0120). */
+ *  (ADR 0109, ADR 0116), so it is not paid off in one shot. */
 function termsForTranche(
   terms: TermState,
   draw: Decimal,
   p: number,
   contractTerm: number,
 ): TermState {
-  if (!draw.greaterThan(ZERO)) return terms;
-  return {
-    ...terms,
-    term: p >= terms.term ? Math.max(terms.term, contractTerm) : terms.term,
-    reamortizeNext: terms.reamortizeNext || terms.agreedInstalment !== null,
-  };
+  return draw.greaterThan(ZERO) && p >= terms.term
+    ? { ...terms, term: Math.max(terms.term, contractTerm) }
+    : terms;
 }
 
 /** A block's prepayments and recasts, keyed by the payment number they follow. */
@@ -670,7 +668,7 @@ function catchUpStep(
       ratePa,
       instalment: step.instalment,
       interestOnly: io,
-      terms: paidTerms(terms, io),
+      terms: paidTerms(terms, io, draw),
     },
     eventsAt(ctx.events, k),
   );
@@ -888,7 +886,7 @@ function devPaymentStep(
       ratePa,
       instalment: step.instalment,
       interestOnly: io,
-      terms: paidTerms(terms, io),
+      terms: paidTerms(terms, io, draw),
     },
     eventsAt(ctx.events, p),
   );
@@ -1197,7 +1195,7 @@ function plainMonthStep(
       ratePa,
       instalment: step.instalment,
       interestOnly: false,
-      terms: paidTerms(state.terms, false),
+      terms: paidTerms(state.terms, false, ZERO),
     },
     eventsAt(ctx.events, p),
   );

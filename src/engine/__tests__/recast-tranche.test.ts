@@ -73,7 +73,7 @@ describe("ADR 0120: a tranche on an instalment recast's payment q", () => {
           .instalment.minus(expected)
           .abs()
           .toNumber(),
-      ).toBeLessThanOrEqual(0.01);
+      ).toBeLessThanOrEqual(1e-6);
     },
   );
 
@@ -89,7 +89,8 @@ describe("ADR 0120: a tranche on an instalment recast's payment q", () => {
     const rows = buildSchedule(loan("2027-01-15", 5), assumptions);
     const next = at(rows, Q + 1).instalment;
     expect(next.greaterThan(20000)).toBe(true);
-    // Grid month 57 is the last payment before the 2031 reset (payment 60).
+    // Grid month 57 is payment 60, the last at the fixed rate; the reset re-amortizes
+    // payment 61 (grid month 58).
     expect(at(rows, 57).instalment.equals(next)).toBe(true);
   });
 
@@ -131,16 +132,16 @@ describe("ADR 0120: a tranche on an instalment recast's payment q", () => {
     const fromStart = buildSchedule(block, assumptions);
     // baseDate 2027-02-07: payment q (2027-02-01) is history, q+1 is grid month 1.
     const later = { ...assumptions, baseDate: isoDate("2027-02-07") };
-    expect(
-      openingBalance(block, later)
-        .minus(at(fromStart, Q).endBalance)
-        .toNumber(),
-    ).toBe(0);
+    const opening = openingBalance(block, later);
+    expect(opening.minus(at(fromStart, Q).endBalance).toNumber()).toBe(0);
+    // Grid month 1 re-amortizes the opening over the payments left to the recast
+    // maturity (from the balance the recast was agreed on).
+    const before = at(fromStart, Q - 1).endBalance;
+    const left = Math.ceil(annuityPeriods(r, AGREED, before).toNumber());
+    const expected = annuityPayment(r, left - 1, opening);
     const rows = buildSchedule(block, later);
     expect(
-      at(rows, 1)
-        .instalment.minus(at(fromStart, Q + 1).instalment)
-        .toNumber(),
-    ).toBe(0);
+      at(rows, 1).instalment.minus(expected).abs().toNumber(),
+    ).toBeLessThanOrEqual(1e-6);
   });
 });
