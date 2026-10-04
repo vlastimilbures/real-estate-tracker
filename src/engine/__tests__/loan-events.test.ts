@@ -8,6 +8,7 @@ import { D } from "../../lib/money";
 import {
   balanceAtMonth,
   buildSchedule,
+  instalmentAtMonth,
   openingBalance,
   propertySchedule,
 } from "../schedule";
@@ -196,6 +197,20 @@ describe("ADR 0109: clamps are reported, not raised", () => {
     expect(second.fee.isZero()).toBe(true);
   });
 
+  it("prepayments in one period apply in date order, not entry order", () => {
+    // Both settle after the 2031-01-17 payment; the earlier-dated one goes first.
+    const b = withEvents(javorova, [
+      prepay("2031-01-15", 5000000),
+      prepay("2031-01-05", 1000),
+    ]);
+    expect(
+      outcomesOf(b).map((o) => [o.date.toISOString().slice(0, 10), o.issue]),
+    ).toEqual([
+      ["2031-01-05", null],
+      ["2031-01-15", "PREPAYMENT_EXCEEDS_BALANCE"],
+    ]);
+  });
+
   it("a recast after payoff is reported", () => {
     const b = withEvents(
       javorova,
@@ -217,6 +232,25 @@ describe("ADR 0109: clamps are reported, not raised", () => {
     expect(
       outcomesOf(
         withEvents(javorova, [], [toInstalment("2031-01-17", 6000)]),
+      )[0].issue,
+    ).toBe("RECAST_TERM_CAPPED");
+  });
+
+  // The 480 payments left to the cap (payment 600) at 4.5 % need 6,232.0643 Kč on
+  // 1,386,249.89: a haléř above runs out exactly at the cap, a haléř below one past it.
+  it("an instalment that ends exactly on the cap is agreed, not capped", () => {
+    const exact = withEvents(
+      javorova,
+      [],
+      [toInstalment("2031-01-17", 6232.07)],
+    );
+    expect(outcomesOf(exact)[0].issue).toBeNull();
+    const rows = buildSchedule(exact, assumptions);
+    expect(rows[56].instalment.toFixed(2)).toBe("6232.07");
+    expect(lastPayment(rows)).toBe(600 - 64);
+    expect(
+      outcomesOf(
+        withEvents(javorova, [], [toInstalment("2031-01-17", 6232.06)]),
       )[0].issue,
     ).toBe("RECAST_TERM_CAPPED");
   });
@@ -375,6 +409,45 @@ describe("ADR 0109: recasts", () => {
     );
     expect(lastPayment(rows)).toBe(300);
     expect(rows[80].instalment.lessThan(rows[79].instalment)).toBe(true);
+  });
+
+  it("a future loan's later maturity is built out to its last payment", () => {
+    // Drawn in grid month 13 (2027-07-07); payment p falls in grid month 13 + p.
+    const fut = {
+      id: "f",
+      propertyId: "f",
+      startDate: isoDate("2027-06-17"),
+      initialPrincipal: money(3000000),
+      fixationYears: 5,
+      interestRatePa: rate("0.05"),
+      monthlyInstalment: money(16105),
+      recasts: [toMaturity("2030-06-17", "2072-06-17")], // payment 540
+    } as MortgageBlock;
+    const rows = buildSchedule(fut, assumptions);
+    expect(lastPayment(rows)).toBe(13 + 540);
+    expect(rows).toHaveLength(13 + 540);
+    expect(rows[13 + 540 - 1].endBalance.isZero()).toBe(true);
+  });
+
+  // A payoff past the contract schedule leaves the prepayment row last: there is no
+  // next row to take the instalment from.
+  it("reports the last row's instalment when that row prepays the loan off", () => {
+    const rows = buildSchedule(
+      withEvents(
+        javorova,
+        [prepay("2060-01-17", 5000000)], // payment 468, grid month 404
+        [toMaturity("2031-01-17", "2066-01-17")],
+      ),
+      assumptions,
+    );
+    expect(rows).toHaveLength(404);
+    const last = rows[403];
+    expect(last.prepaid.greaterThan(0)).toBe(true);
+    expect(last.principal.greaterThan(0)).toBe(true);
+    expect(instalmentAtMonth(rows, 404)).toEqual({
+      instalment: last.instalment,
+      ratePa: last.ratePa,
+    });
   });
 });
 
@@ -538,10 +611,73 @@ describe("ADR 0109: refinance handovers", () => {
       assumptions,
     );
     expect(s.rows.every((r) => r.prepaid.isZero())).toBe(true);
-    expect(s.eventOutcomes.map((o) => [o.issue, o.month])).toEqual([
-      ["PREPAYMENT_REPLACED", null],
-      ["RECAST_REPLACED", null],
+    expect(
+      s.eventOutcomes.map((o) => [
+        o.kind,
+        o.issue,
+        o.month,
+        o.requested.toFixed(0),
+      ]),
+    ).toEqual([
+      ["prepayment", "PREPAYMENT_REPLACED", null, "500000"],
+      ["recast", "RECAST_REPLACED", null, "0"],
     ]);
+  });
+
+  // Javorova pays on the 17th, the grid runs on the 7th: a refinance on 2031-01-05
+  // draws in grid month 55 (2031-01-07), while a prepayment dated 2031-01-03 follows the
+  // 2031-01-17 payment in grid month 56, a row the successor replaces.
+  it("a prepayment settling after the successor's draw month is paid at the handover", () => {
+    const plain = propertySchedule([javorova, refi("2031-01-05")], assumptions);
+    const s = propertySchedule(
+      [
+        withEvents(javorova, [prepay("2031-01-03", 100000)]),
+        refi("2031-01-05"),
+      ],
+      assumptions,
+    );
+    expect(s.refinances[0].month).toBe(55);
+    expect(s.refinances[0].paidOff.toFixed(6)).toBe(
+      plain.refinances[0].paidOff.minus(100000).toFixed(6),
+    );
+    expect(s.eventOutcomes).toHaveLength(1);
+    expect(s.eventOutcomes[0]).toMatchObject({ month: 55, issue: null });
+    expect(s.eventOutcomes[0].applied.toFixed(0)).toBe("100000");
+  });
+
+  // D-47: a second successor drawn in the same grid month pays off what the first one
+  // drew; the first handover's prepayment belongs to Javorova and is not paid twice.
+  it("two successors in one grid month: the second pays off the first one's draw", () => {
+    const second = {
+      ...refi("2031-01-20"),
+      id: "refi-2",
+      initialPrincipal: money(1200000),
+    } as MortgageBlock;
+    const s = propertySchedule(
+      [
+        withEvents(javorova, [prepay("2031-01-05", 100000)]),
+        { ...refi("2031-01-10"), initialPrincipal: money(1000000) },
+        second,
+      ],
+      assumptions,
+    );
+    expect(
+      s.refinances.map((r) => [
+        r.month,
+        r.paidOff.toFixed(2),
+        r.drawn.toFixed(2),
+      ]),
+    ).toEqual([
+      // Javorova's month-55 balance (1,391,012.68) less the prepayment.
+      [56, "1291012.68", "1000000.00"],
+      [56, "1000000.00", "1200000.00"],
+    ]);
+    expect(s.eventOutcomes).toHaveLength(1);
+    expect(s.eventOutcomes[0]).toMatchObject({
+      blockId: javorova.id,
+      month: 56,
+      issue: null,
+    });
   });
 
   it("a recast in the handover period no longer applies", () => {
