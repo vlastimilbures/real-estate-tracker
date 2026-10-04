@@ -7,7 +7,13 @@
 import { ZERO, type Decimal } from "../lib/money";
 import { drawMonth, isDevLoan, mortgageBlock } from "./amortization";
 import { DEBT_FREE_EPSILON } from "./constants";
-import { edate, firstAfter, isAfter, isOnOrBefore } from "./dates";
+import {
+  edate,
+  firstAfter,
+  isAfter,
+  isOnOrBefore,
+  lastGridMonthOnOrBefore,
+} from "./dates";
 import { leaseInForce } from "./metrics";
 import {
   blockChain,
@@ -139,23 +145,50 @@ function chainResets(
   return resets;
 }
 
-/** Due date of grid month `m`'s payment on the block paying it (drawn before `m`). */
-function dueDate(chain: MortgageBlock[], m: number, baseDate: Date): IsoDate {
-  const payers = chain.filter((b) => drawMonth(b, baseDate) < m);
-  const owner = payers.at(-1) ?? chain[0];
-  if (!owner) throw new RangeError("dueDate: empty chain");
-  return edate(owner.startDate, paymentOffset(owner, baseDate) + m);
+/** A chain block as a payer: its first schedule month and payment offset, read once. */
+interface Payer {
+  start: Date;
+  draw: number;
+  offset: number;
 }
 
-/** Schedule payments due after `asOf`, each on its paying block's own day (ADR 0117). */
+const payersOf = (chain: MortgageBlock[], baseDate: Date): Payer[] =>
+  chain.map((b) => ({
+    start: b.startDate,
+    draw: drawMonth(b, baseDate),
+    offset: paymentOffset(b, baseDate),
+  }));
+
+/** Index of the block paying grid month `m`: the last one drawn before `m`, else the first. */
+function payerAt(payers: Payer[], m: number): number {
+  let k = 0;
+  for (const [j, p] of payers.entries()) if (p.draw < m) k = j;
+  return k;
+}
+
+/** Due date of grid month `m`'s payment on the block paying it. */
+function dueDate(payers: Payer[], m: number): IsoDate {
+  const p = payers[payerAt(payers, m)];
+  if (!p) throw new RangeError("dueDate: empty chain");
+  return edate(p.start, p.offset + m);
+}
+
+/**
+ * Schedule payments due after `asOf`, each on its paying block's own day (ADR 0117).
+ * A block's payment of grid month m is due on or before as-of when offset + m is at most
+ * the block's last month anniversary on or before as-of, so no row needs its own date.
+ */
 function paymentsDueAfter(
-  chain: MortgageBlock[],
   rows: AmortizationRow[],
+  payers: Payer[],
   asOf: Date,
-  baseDate: Date,
 ): number {
+  const paidThrough = payers.map(
+    (p) => lastGridMonthOnOrBefore(p.start, asOf) - p.offset,
+  );
   return rows.filter(
-    (r, i) => hasPayment(r) && isAfter(dueDate(chain, i + 1, baseDate), asOf),
+    (r, i) =>
+      i + 1 > (paidThrough[payerAt(payers, i + 1)] ?? 0) && hasPayment(r),
   ).length;
 }
 
@@ -195,14 +228,15 @@ function propertyExposure(
   const resets = chainResets(chain, rows, ctx);
   const inForce = chain.filter((b) => isOnOrBefore(b.startDate, ctx.asOf));
   const last = lastPaymentMonth(rows);
+  const payers = payersOf(chain, ctx.baseDate);
   return {
     loan: {
       propertyId: first.propertyId,
       blockId: (inForce.at(-1) ?? first).id,
       nextFixation: resets.find((r) => r.status === "upcoming") ?? null,
-      payoffDate: last > 0 ? dueDate(chain, last, ctx.baseDate) : null,
+      payoffDate: last > 0 ? dueDate(payers, last) : null,
       remainingMonths:
-        last > 0 ? paymentsDueAfter(chain, rows, ctx.asOf, ctx.baseDate) : null,
+        last > 0 ? paymentsDueAfter(rows, payers, ctx.asOf) : null,
       interestSaved: prepaymentInterestSaved(blocks, ctx.assumptions, rows),
     },
     resets,
