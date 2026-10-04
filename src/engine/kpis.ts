@@ -10,7 +10,7 @@ import {
   IRR_NPV_TOLERANCE,
   IRR_SCAN_GRID,
 } from "./constants";
-import { selectBlock } from "./amortization";
+import { acquisitionSummary } from "./acquisition";
 import { at } from "./arrays";
 import {
   propertySchedules,
@@ -18,14 +18,12 @@ import {
   type PropertySchedule,
 } from "./schedule";
 import { assertInputs } from "./validate";
-import { forProperty, openingValue } from "./metrics";
 import { buildCpiIndex, projectPortfolio, turnOnYear } from "./projections";
 import type {
   Assumptions,
   IrrNoRateReason,
   Portfolio,
   PortfolioKPIs,
-  Property,
   ProjectionYear,
 } from "./types";
 
@@ -107,36 +105,11 @@ function bisect(
 }
 
 /**
- * Cash the investor must put in to acquire `property` at its (future) purchase date:
- * `purchaseDateValue − initialLoanPrincipal + purchaseDateValue·acquisitionCostPct`.
- * The valuation/principal selection mirrors the projection basis and
- * `schedulesByProperty`, so the outflow lines up with the equity the projection turns
- * on in the same year. Only meaningful for a future buy (tStart > 0).
- */
-function acquisitionOutflow(
-  property: Property,
-  portfolio: Portfolio,
-  assumptions: Assumptions,
-): Decimal {
-  const v0 = openingValue(
-    forProperty(portfolio.valuations, property.id),
-    property,
-    property.purchaseDate,
-  );
-  const block = selectBlock(
-    forProperty(portfolio.mortgages, property.id),
-    assumptions.baseDate,
-  );
-  const principal = block ? block.initialPrincipal : ZERO;
-  const acqPct = assumptions.acquisitionCostPct ?? ZERO;
-  return v0.minus(principal).plus(v0.times(acqPct));
-}
-
-/**
  * Down-payment outflows by projection year: a property bought *after* baseDate turns
- * its equity on at tStart > 0, so its purchase-date value − loan principal + costs is
- * paid in year tStart; levered IRR / cumulative CF aren't flattered by free terminal
- * equity. All zero for an all-owned portfolio (the seed ⇒ parity targets unchanged).
+ * its equity on at tStart > 0, so its down payment (the recorded own cash, else price −
+ * acquisition loan + costs + works, ADR 0119) is paid in year tStart; levered IRR /
+ * cumulative CF aren't flattered by free terminal equity. All zero for an all-owned
+ * portfolio (the seed ⇒ parity targets unchanged).
  */
 function acquisitionOutflows(
   portfolio: Portfolio,
@@ -149,7 +122,7 @@ function acquisitionOutflows(
     const tStart = turnOnYear(p.purchaseDate, assumptions);
     if (tStart > 0 && tStart <= N) {
       out[tStart] = at(out, tStart).plus(
-        acquisitionOutflow(p, portfolio, assumptions),
+        acquisitionSummary(p, portfolio, assumptions).outflow,
       );
     }
   }

@@ -217,6 +217,26 @@ describe("P4a golden master (full precision)", () => {
     expect(fullRun(mixed, a)).toMatchSnapshot();
   });
 
+  it("mixed fixture with a funding record (ADR 0119)", () => {
+    // The future buy's recorded own cash replaces its derived down payment.
+    const funded = {
+      ...mixed,
+      properties: mixed.properties.map((p) =>
+        p.id === "future"
+          ? {
+              ...p,
+              funding: {
+                ownCash: money("2125000.5"),
+                transactionCosts: money("95000"),
+                initialWorks: money("230000"),
+              },
+            }
+          : p,
+      ),
+    };
+    expect(fullRun(funded, seedAssumptions)).toMatchSnapshot();
+  });
+
   it.each(Object.keys(shocks))("scenario %s on seed and mixed", (name) => {
     const a = applyScenario(seedAssumptions, shocks[name]);
     expect({

@@ -89,15 +89,15 @@ describe("levered IRR — future-acquisition outflow", () => {
 
   it("charges the down payment once: cumulative CF = Σ net CF − outflow", () => {
     // The seed has no refinance and no prepayment, so the only cash outside net cash
-    // flow is the future buy's outflow (#103, R2-10): value − principal, plus
-    // acquisitionCostPct × value.
+    // flow is the future buy's outflow (#103, R2-10): price − principal, plus
+    // acquisitionCostPct × price (ADR 0119 §5; the 6.2 M valuation does not count).
     const sumNetCf = (a: Assumptions) =>
       portfolioProjection(withFuture, a)
         .slice(1)
         .reduce((s, y) => s.plus(y.netCashFlow), ZERO);
     for (const [pct, outflow] of [
-      ["0", 4_200_000],
-      ["0.06", 4_572_000],
+      ["0", 3_800_000],
+      ["0.06", 4_148_000],
     ] as const) {
       const a = withCost(pct);
       expectKc(
