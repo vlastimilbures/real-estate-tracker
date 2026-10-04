@@ -59,8 +59,10 @@ import { describeWriteError } from "../model/writeError";
 import { useT } from "../hooks/useT";
 import { useSectionSpy } from "../hooks/useSectionSpy";
 import {
+  isFormTarget,
   propertySections,
   sectionId,
+  type PropertyFormTarget,
   type PropertySection,
 } from "../model/sectionNav";
 
@@ -92,7 +94,7 @@ export function PropertyDetail() {
   const invalid = result && "invalid" in result ? result.invalid : null;
   const out = result && !("invalid" in result) ? result : null;
   // The open property form: plain, or at its Acquisition section (a Data check link).
-  const [editing, setEditing] = useState<false | "edit" | "editFunding">(false);
+  const [editing, setEditing] = useState<false | PropertyFormTarget>(false);
   const [confirmingDeactivate, setConfirmingDeactivate] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [activeError, setActiveError] = useState<string | null>(null);
@@ -112,15 +114,11 @@ export function PropertyDetail() {
   // ⌘N request does; the effect moves focus and clears the request.
   const property = store.portfolio?.properties.find((p) => p.id === propertyId);
   const shown = property !== undefined;
-  const formTarget =
-    propertyTarget === "edit" || propertyTarget === "editFunding"
-      ? propertyTarget
-      : null;
-  if (formTarget && shown && !editing) setEditing(formTarget);
+  if (isFormTarget(propertyTarget) && shown && !editing)
+    setEditing(propertyTarget);
   useEffect(() => {
     if (!propertyTarget || !shown) return;
-    if (propertyTarget !== "edit" && propertyTarget !== "editFunding")
-      focusSection(sectionId(propertyTarget));
+    if (!isFormTarget(propertyTarget)) focusSection(sectionId(propertyTarget));
     clearPropertyTarget();
   }, [propertyTarget, shown, clearPropertyTarget]);
 
@@ -352,9 +350,7 @@ export function PropertyDetail() {
             baseDate={baseDate}
             resetRate={assumptions.postFixationResetRatePa}
             onFix={(fix) =>
-              fix === "edit" || fix === "editFunding"
-                ? setEditing(fix)
-                : focusSection(sectionId(fix))
+              isFormTarget(fix) ? setEditing(fix) : focusSection(sectionId(fix))
             }
           />
         </div>

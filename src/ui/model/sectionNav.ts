@@ -31,6 +31,13 @@ export function propertySections(has: {
   ];
 }
 
+/** The property form as a landing target: plain, or opened at its Acquisition section
+ *  (a Data check link, ADR 0118, #178). */
+export type PropertyFormTarget = "edit" | "editFunding";
+export const isFormTarget = (
+  x: PropertySection | PropertyFormTarget | null,
+): x is PropertyFormTarget => x === "edit" || x === "editFunding";
+
 /** The element id a section's link points at. */
 export const sectionId = (s: PropertySection) => `pd-${s}`;
 

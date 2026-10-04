@@ -25,7 +25,7 @@ import {
   loanWarningText,
   type LoanWarning,
 } from "./propertyDetail";
-import type { PropertySection } from "./sectionNav";
+import type { PropertyFormTarget, PropertySection } from "./sectionNav";
 
 /** A valuation more than this many months old at the as-of date is stale. */
 const VALUATION_STALE_MONTHS = 12;
@@ -83,8 +83,7 @@ export interface DataCheckItem {
  *  Acquisition section open for `editFunding`). */
 export type DataCheckFix =
   | Extract<PropertySection, "records" | "financing" | "holding">
-  | "edit"
-  | "editFunding";
+  | PropertyFormTarget;
 
 /** The property's findings at `asOf`; before its purchase date only the own-cash one.
  *  `baseDate` = the projection start, for what the projection assumes about an ended
