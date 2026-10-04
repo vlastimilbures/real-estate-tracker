@@ -115,8 +115,9 @@ product's positioning changes.
 
 ## Code health
 
-- **Mutation score.** The engine scores ~97.6 % under Stryker; the surviving mutants are
-  mostly error-message text and boundary comparisons that no test pins. (DR-168)
+- **Mutation score.** The engine scores ~98.7 % under Stryker (nightly breaks below 98 %).
+  The surviving mutants are equivalent (no observable difference), defaults no caller can
+  reach, or the text of engine error messages, which the UI never shows. (DR-168)
 - **Bundle size.** Startup JavaScript is ~234 kB gzip plus the active UI dictionary
   (~19–24 kB), down from ~329 kB; every page but the Dashboard and Properties, and the date
   picker calendar, load on first use, and the other dictionaries load only on a language
