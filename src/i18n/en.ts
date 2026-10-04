@@ -1401,7 +1401,7 @@ export const en = {
         name: "Total interest",
         formula: "Σ interest, years 1…N",
         meaning:
-          "All interest the projection pays over the horizon. The real lens deflates each year's interest by that year's inflation index.",
+          "All interest the loans pay over the horizon, including interest on a loan that runs before a property's purchase date. The real lens deflates each year's interest by that year's inflation index.",
       },
     },
     returnsDefs: {

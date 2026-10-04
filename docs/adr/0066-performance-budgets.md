@@ -17,6 +17,7 @@ Options considered for J-11 (Engine off the UI thread (Web Worker)): (a) only if
 Related follow-up decisions:
 
 - **D-67**: **P9 gate (2026-10-01):** (1) Budgets confirmed as proposed (D-66 item 4). Release-build results: cold start → `dashboard-rendered` 719 ms (first, cold) / 363–368 ms (4 warm launches); assumption edit → dashboard 55 / 57 ms; Node bench 20 properties p99 66.3 ms. (2) DR-159: option (a) — accept the 288.5 kB gzip startup bundle; revisit only if cold start misses 2 s. (3) J-11 closed: (a) not needed (engine within budget).
+- **DR-009 (owner, 2026-10-04):** Item 3 also covers the date picker calendar: `DateInput` loads it on the first open and shows the popover once it has loaded, with no placeholder. Projections and Property detail became lazy pages under item 3 (PR #192).
 
 ## Consequences
 

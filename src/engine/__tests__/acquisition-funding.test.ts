@@ -173,7 +173,10 @@ describe("ADR 0119 §3: the acquisition loan", () => {
   it("counts a loan drawn before the purchase (off-plan, before handover)", () => {
     const early = withBuy([loan({ startDate: isoDate("2028-01-01") })]);
     expect(summary(early).loan?.toString()).toBe("2000000");
-    expectKc(outflow(early), 3_800_000, "early loan");
+    expect(summary(early).outflow.toString()).toBe("3800000");
+    // ADR 0124: drawn in grid month 19 (year 2), the instalments of months 20–24 are
+    // paid before the turn-on year (3), so they are owner cash beside the down payment.
+    expectKc(outflow(early), 3_800_000 + 5 * 30_000, "early loan");
   });
 
   it("never counts a later (refinance) block", () => {

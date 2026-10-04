@@ -5,8 +5,6 @@ import { usePortfolioStore } from "../state/portfolioStore";
 import { useUiStore } from "../state/uiStore";
 import { Dashboard } from "./pages/Dashboard";
 import { Properties } from "./pages/Properties";
-import { PropertyDetail } from "./pages/PropertyDetail";
-import { Projections } from "./pages/Projections";
 import { AboutModal } from "./components/AboutModal";
 import { LeaveGuard } from "./components/LeaveGuard";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -20,7 +18,13 @@ import { onMenuEvent, setMenuLabels } from "../state/platform";
 
 // Pages away from the start screen load on first visit (P9): their code, and the
 // libraries only they use, stay out of the startup bundle. The fallback is empty; the
-// chunk is a local file, so the gap is a few milliseconds (D-66).
+// chunk is a local file, so the gap is a few milliseconds (D-66, DR-009).
+const PropertyDetail = lazy(() =>
+  import("./pages/PropertyDetail").then((m) => ({ default: m.PropertyDetail })),
+);
+const Projections = lazy(() =>
+  import("./pages/Projections").then((m) => ({ default: m.Projections })),
+);
 const Scenarios = lazy(() =>
   import("./pages/Scenarios").then((m) => ({ default: m.Scenarios })),
 );
