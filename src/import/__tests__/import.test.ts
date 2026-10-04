@@ -209,6 +209,10 @@ describe("template generators", () => {
     expect(propertiesTemplate()).toContain(
       "name,address,type,size_m2,garage,purchase_date,purchase_price",
     ));
+  it("properties template ends with the funding columns (ADR 0119 §8)", () =>
+    expect(propertiesTemplate().split("\n")[0]).toMatch(
+      /,own_cash,transaction_costs,initial_works$/,
+    ));
   it("valuations template has correct header", () =>
     expect(valuationsTemplate()).toContain(
       "property_name,valid_from,valid_to,market_value",

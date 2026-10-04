@@ -74,6 +74,9 @@ const MONEY = new Set([
   "monthly_rent",
   "initial_principal",
   "monthly_instalment",
+  "own_cash",
+  "transaction_costs",
+  "initial_works",
 ]);
 const RATES = new Set([
   "interest_rate_pa",

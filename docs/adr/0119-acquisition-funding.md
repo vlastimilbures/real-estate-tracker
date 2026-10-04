@@ -5,7 +5,8 @@
 - Source: issue #33 (pre-release review 2026-10, F1 + F2); code review 2026-10 issues #103,
   #140 and #118 (items 1–2)
 - Amended: 2026-10-04 (independent review of PR #180: decision 3's tranche cut and decision
-  5's late first loan, both decided by the owner)
+  5's late first loan, both decided by the owner); 2026-10-04 (#33 PR2: the CSV columns of
+  decision 8, decided by the owner)
 
 ## Context
 
@@ -97,8 +98,12 @@ detail section (PR3) follow.
    `transaction_costs` and `initial_works` (money as text, each with a not-negative check)
    and `funding_note`.
    - Backups include them. A backup written before v10 restores with the record unknown.
-   - A CSV re-import keeps the stored record. PR2 adds the optional CSV columns `own_cash`,
-     `transaction_costs` and `initial_works`, where a blank cell means unknown.
+   - CSV: `properties.csv` takes the optional columns `own_cash`, `transaction_costs` and
+     `initial_works`, in the same money format as `purchase_price` (a decimal point, a
+     decimal comma is refused, ADR 0049; never negative; 0 is a fact). A blank cell or a
+     missing column means unknown: a new property gets no amount, and a re-import keeps
+     the stored amount. A CSV sets or changes an amount but never erases one. The note
+     has no CSV column.
    - Saving the property form keeps the stored record until PR3 adds the form section.
 9. **Display (PR3).** "Cash invested" is the own cash. The portfolio total is shown only when
    every active property has a known own cash. Cash-on-cash return, a since-purchase IRR and
@@ -118,6 +123,8 @@ detail section (PR3) follow.
   both fall in the same projection year, no figure changes.
 - A development loan refinanced before its last tranche counts only the tranches drawn
   before the refinance.
+- A recorded amount cannot be cleared by a CSV re-import; clearing it is a form edit
+  (#33 PR3).
 - Still open: a first loan drawn after baseDate on a property already owned at baseDate
   raises the debt with no cash in (#181).
 - Migration v10 is covered by a restore tripwire for added columns and by a Rust test that

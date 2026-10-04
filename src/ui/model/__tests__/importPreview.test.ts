@@ -89,4 +89,11 @@ describe("changeText", () => {
       "A → —",
     );
   });
+
+  it("formats the funding amounts as money (ADR 0119 §8)", () => {
+    for (const field of ["own_cash", "transaction_costs", "initial_works"])
+      expect(changeText({ field, before: null, after: "850000" })).toBe(
+        `— → ${fmtCzk("850000")}`,
+      );
+  });
 });
