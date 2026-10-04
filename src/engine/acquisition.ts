@@ -2,8 +2,7 @@
 // loan derived from the mortgage blocks, the sources-and-uses check, and the down
 // payment a property bought after baseDate is charged in its turn-on year.
 import { ZERO, type Decimal } from "../lib/money";
-import { addDays, isAfter, isOnOrBefore } from "./dates";
-import { scheduledPrincipal } from "./growth";
+import { addDays, firstAfter, isAfter, isOnOrBefore } from "./dates";
 import { forProperty } from "./metrics";
 import type { Assumptions, MortgageBlock, Portfolio, Property } from "./types";
 
@@ -46,6 +45,19 @@ function acquisitionLoanBlock(
   return earliest && isOnOrBefore(earliest.startDate, latest)
     ? earliest
     : undefined;
+}
+
+/** A loan's initial principal plus its tranches dated on or before the start of the
+ *  block that replaces it: the schedule's cut (D-47), so a tranche it never draws does
+ *  not count (ADR 0119 §3). */
+function principalUntilReplaced(
+  block: MortgageBlock,
+  blocks: MortgageBlock[],
+): Decimal {
+  const next = firstAfter(blocks, block.startDate, (b) => b.startDate);
+  return (block.draws ?? [])
+    .filter((d) => !next || isOnOrBefore(d.date, next.startDate))
+    .reduce<Decimal>((s, d) => s.plus(d.amount), block.initialPrincipal);
 }
 
 /** The recorded parts of a funding record, null where unknown. */
@@ -97,11 +109,9 @@ export function acquisitionSummary(
   assumptions: Assumptions,
 ): AcquisitionSummary {
   const price = property.purchasePrice;
-  const block = acquisitionLoanBlock(
-    property,
-    forProperty(portfolio.mortgages, property.id),
-  );
-  const loan = block ? scheduledPrincipal(block) : null;
+  const blocks = forProperty(portfolio.mortgages, property.id);
+  const block = acquisitionLoanBlock(property, blocks);
+  const loan = block ? principalUntilReplaced(block, blocks) : null;
   const loanOrZero = loan ?? ZERO;
   const parts = recorded(property);
   return {

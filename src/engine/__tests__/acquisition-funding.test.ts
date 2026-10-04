@@ -39,6 +39,19 @@ const loan = (
   ...patch,
 });
 
+/** 2 M at purchase, then 3 M + 3 M tranches (#103 probe shape). */
+const devLoan: MortgageBlock = {
+  ...loan(),
+  interestRatePa: rate("0.05"),
+  monthlyInstalment: money("10000"),
+  loanTermYears: 30,
+  draws: [
+    { date: isoDate("2029-09-01"), amount: money(3_000_000) },
+    { date: isoDate("2030-06-01"), amount: money(3_000_000) },
+  ],
+  completionDate: isoDate("2030-06-01"),
+};
+
 /** The seed plus one future buy with its own blocks and funding record. */
 function withBuy(
   blocks: MortgageBlock[] = [loan()],
@@ -139,18 +152,7 @@ describe("ADR 0119 §5: the down payment of a future buy", () => {
   });
 
   it("#103: a development loan's tranches are the bank's money, not the owner's", () => {
-    const dev: MortgageBlock = {
-      ...loan(),
-      interestRatePa: rate("0.05"),
-      monthlyInstalment: money("10000"),
-      loanTermYears: 30,
-      draws: [
-        { date: isoDate("2029-09-01"), amount: money(3_000_000) },
-        { date: isoDate("2030-06-01"), amount: money(3_000_000) },
-      ],
-      completionDate: isoDate("2030-06-01"),
-    };
-    const p = withBuy([dev], undefined, 10_000_000, 10_000_000);
+    const p = withBuy([devLoan], undefined, 10_000_000, 10_000_000);
     expectKc(outflow(p), 2_000_000, "10 M − 8 M");
   });
 });
@@ -181,6 +183,25 @@ describe("ADR 0119 §3: the acquisition loan", () => {
       initialPrincipal: money(3_000_000),
     });
     expect(summary(withBuy([refi, loan()])).loan?.toString()).toBe("2000000");
+  });
+
+  it("counts only the tranches dated on or before the block that replaces it (D-47)", () => {
+    // Refinanced before the last tranche: the schedule never draws it.
+    const refi = (start: string) =>
+      loan({
+        id: "m-refi",
+        startDate: isoDate(start),
+        initialPrincipal: money(5_000_000),
+      });
+    const before = summary(
+      withBuy([devLoan, refi("2030-01-01")], undefined, 10_000_000, 10_000_000),
+    );
+    expect(before.loan?.toString()).toBe("5000000"); // 2 M + the 2029-09 tranche
+    expect(before.outflow.toString()).toBe("5000000");
+    const onTheDay = summary(
+      withBuy([devLoan, refi("2030-06-01")], undefined, 10_000_000, 10_000_000),
+    );
+    expect(onTheDay.loan?.toString()).toBe("8000000"); // on the day: still drawn
   });
 
   it("takes the earliest block, not the latest one inside the window", () => {
