@@ -51,7 +51,7 @@ export function DataCheckList({
     </ul>
   );
   return (
-    <>
+    <div className="data-check">
       <h4 className="panel-subhead">{d.attentionTitle}</h4>
       {attention.length > 0 ? (
         rows(attention, "data-check-list")
@@ -64,6 +64,6 @@ export function DataCheckList({
           {rows(defaults, "data-check-list quiet")}
         </>
       )}
-    </>
+    </div>
   );
 }
