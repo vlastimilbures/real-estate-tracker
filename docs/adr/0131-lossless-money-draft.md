@@ -9,13 +9,16 @@
 ## Context
 
 `moneyDraft` turned a stored amount into a form's editable text with
-`toDecimalPlaces(2)`. CSV import and backup restore accept a plain decimal of any precision,
-and every form saves the record it shows. So an unrelated edit, such as renaming a property,
-rewrote an amount imported with more than two decimals: `own_cash` `1000.005` was saved as
+`toDecimalPlaces(2)`. CSV import, backup restore and form entry itself accept a plain decimal
+of any precision, and every form saves the record it shows. So an unrelated edit, such as
+renaming a property, rewrote an amount imported, restored or typed with more than two
+decimals: `own_cash` `1000.005` was saved as
 `1000.01`. The same held for every money field a form drafts: purchase price and funding,
 valuations, leases, mortgages and their draws, prepayments and recasts, holding costs and
 the Assumptions defaults. The change was below one crown and never shown, but it was a silent
-write of a figure the owner did not touch.
+write of a figure the owner did not touch. Two edge cases failed outright: a positive amount
+below 0.005 drafted as `0`, which a positive-only field then refused, and a restored amount
+in exponent form (`1e+21`) drafted as text the form could not parse.
 
 Options (issue #201):
 
@@ -40,7 +43,7 @@ already rounds that suggestion up to whole crowns, so its text is unchanged.
 
 - An amount imported with more than two decimals shows them in its form field, e.g.
   `1000.005`. Display elsewhere still rounds to whole Kč (CLAUDE.md §5).
-- No engine, parity or golden change; amounts entered in a form (≤ 2 decimals in practice)
-  draft as before, minus trailing zeros (`12000000.50` → `12000000.5`, as `toString` did).
+- No engine, parity or golden change. An amount with at most two decimals drafts exactly as
+  before (trailing zeros were already dropped: `12000000.50` → `12000000.5`).
 - Rates are out of scope: `percentDraft` still drafts a ratio to 6 decimals, the same class
   of silent rewrite; tracked as issue #208.
