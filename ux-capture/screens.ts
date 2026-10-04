@@ -210,6 +210,21 @@ export const SCREENS: Screen[] = [
       ).toBeVisible();
       await p.scrollIntoViewIfNeeded();
       await ux.capture("09-dashboard-data-check", { fullPage: false });
+      // A fix link opens the property and lands its section below the sticky topbar.
+      await p
+        .getByRole("button", {
+          name: d.goTo(ux.t.propertyDetail.sectionFinancing),
+        })
+        .first()
+        .click();
+      const heading = ux.page.getByRole("heading", {
+        name: ux.t.propertyDetail.mortgagesTitle,
+        exact: true,
+      });
+      await expect(heading).toBeFocused();
+      const bar = await ux.page.locator(".topbar").boundingBox();
+      const head = await heading.boundingBox();
+      expect(head!.y).toBeGreaterThanOrEqual(bar!.y + bar!.height);
     },
   },
   {
