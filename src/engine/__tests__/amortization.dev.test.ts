@@ -112,12 +112,12 @@ describe("Development loan — gradual utilization + interest-only", () => {
     expect(at("2027-09-07").principal.toNumber()).toBe(0);
   });
 
-  it("re-amortizes the first month after completion (principal turns positive)", () => {
-    const lastIo = at("2027-12-07"); // <= completion 2027-12-01? no — see note below
-    // Completion is 2027-12-01; the grid month dated 2027-12-07 is AFTER it, so it is
-    // the first amortizing month. The prior month (2027-11-07) is the last IO month.
-    expect(at("2027-11-07").principal.toNumber()).toBe(0);
-    expect(lastIo.principal.toNumber()).toBeGreaterThan(0);
+  it("re-amortizes the first payment due after completion (principal turns positive)", () => {
+    // Completion is 2027-12-01. The grid month dated 2027-12-07 carries the payment due
+    // 2027-12-01, on completion, so it is the last interest-only one; the payment due
+    // 2028-01-01 (grid 2028-01-07) is the first amortizing one (ADR 0129 §2).
+    expect(at("2027-12-07").principal.toNumber()).toBe(0);
+    expect(at("2028-01-07").principal.toNumber()).toBeGreaterThan(0);
   });
 });
 

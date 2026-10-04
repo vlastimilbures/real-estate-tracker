@@ -13,6 +13,8 @@
 //     clamped); a payment is "made by" a date when its due date is on/before it;
 //   • the fixed rate applies to every payment due on/before the fixation end
 //     (start + fixationMonths); later payments use the reset rate (± rate shock);
+//   • a development loan pays interest only on every payment due on/before its
+//     completion date (ADR 0129 §2);
 //   • on any rate change, the end of interest-only, or a tranche draw, the instalment
 //     re-amortizes the balance over the payments left to the (implied) maturity
 //     start + term (constant maturity); between those events the instalment holds;
@@ -318,8 +320,8 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
   let agreedInstalment: Dec | null = null;
 
   /** One payment period ending on `date`; `k` = payment number since loan start.
-   *  The rate is read on `rateDate` (the grid date, unless J-03 a′ keys it on the due
-   *  date). Interest-only and draws stay on `date`. */
+   *  The rate and interest-only are read on `rateDate` (the grid date, unless J-03 a′
+   *  keys them on the due date; ADR 0129 §2). Draws stay on `date`. */
   const step = (
     date: Iso,
     k: number,
@@ -330,7 +332,7 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
     balance = balance.plus(draw);
     const ratePa = rateAt(rateDate);
     const r = ratePa.div(12);
-    const io = ioAt(date);
+    const io = ioAt(rateDate);
     const zero = (): RefRow => ({
       month,
       date,
@@ -474,7 +476,8 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
       effectSeen = seen(p.date);
     }
     const owedAfter = balance.plus(effectSeen);
-    if (effect && owedAfter.greaterThan(ZERO) && !ioAt(row.date)) {
+    // `prevIo`: whether payment k (just made) was interest-only (ADR 0129 §2).
+    if (effect && owedAfter.greaterThan(ZERO) && !prevIo) {
       if (effect === "lowerInstalment") reamortizeNext = true;
       else {
         const n = annuityPeriods(row.ratePa.div(12), row.instalment, owedAfter);
@@ -588,7 +591,7 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
         ) {
           instalment = annuityPayment(d(loan.ratePa).div(12), term, balance);
         }
-        prevIo = ioAt(date);
+        prevIo = ioAt(gridRateDate(date, 0));
         rows.push({
           month: m,
           date,

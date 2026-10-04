@@ -14,10 +14,10 @@
 //
 // Calendar (D-21, J-03 a′): rows sit on the baseDate grid EDATE(baseDate, m), but each
 // row carries payment number p = paymentsDueAtBase + m (running loan) or m − drawMonth
-// (future loan), and its rate is read on that payment's due date EDATE(start, p). So
-// the payment due on the fixation end is still at the fixed rate (DR-101), and a
-// clamped month-end due date counts as paid (DR-070). Interest-only and tranche
-// landing stay on the grid.
+// (future loan), and its rate and interest-only are read on that payment's due date
+// EDATE(start, p) (ADR 0129 §2). So the payment due on the fixation end is still at
+// the fixed rate (DR-101), and a clamped month-end due date counts as paid (DR-070).
+// Tranche landing stays on the grid.
 import { PMT, ZERO, type Decimal } from "../lib/money";
 import {
   edate,
@@ -877,7 +877,11 @@ function undrawnMonthStep(
         : state.currentInstalment,
       drawn: true,
       prevRate: rateOfPayment(ctx.startToBase + m, block, assumptions),
-      prevInterestOnly: interestOnlyAt(block, date),
+      // Payment 0, on the loan start (ADR 0129 §2).
+      prevInterestOnly: interestOnlyAt(
+        block,
+        edate(block.startDate, ctx.startToBase + m),
+      ),
     },
     outcomes: [],
   };
@@ -961,7 +965,7 @@ function devMonthStep(
   const p = ctx.startToBase + m;
   const draw = ctx.drawsByMonth.get(m) ?? ZERO;
   const ratePa = rateOfPayment(p, block, assumptions);
-  const io = interestOnlyAt(block, date);
+  const io = interestOnlyAt(block, edate(block.startDate, p)); // ADR 0129 §2
   // Payoff guard, as in the plain grid: once repaid (and no tranche lands) nothing
   // is due, rather than the held instalment on a zero balance (DR-044).
   if (!state.balance.plus(draw).greaterThan(ZERO)) {
