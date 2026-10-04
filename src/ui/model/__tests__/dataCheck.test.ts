@@ -77,7 +77,7 @@ describe("data check: valuation (ADR 0118)", () => {
     ]);
   });
 
-  it("an expired valuation counts as none, as in the engine", () => {
+  it("an expired valuation stays in use, as in the engine: stale, not none (ADR 0122)", () => {
     const p: Portfolio = {
       ...without(portfolio, ["v-javorova"]),
       valuations: [
@@ -90,8 +90,12 @@ describe("data check: valuation (ADR 0118)", () => {
         },
       ],
     };
-    expect(kinds(check("javorova", BASE_DATE, p).attention)).toEqual([
-      "noValuation",
+    expect(check("javorova", BASE_DATE, p).attention).toEqual([
+      {
+        kind: "valuationStale",
+        validFrom: isoDate("2025-01-01"),
+        months: 17,
+      },
     ]);
   });
 
@@ -454,7 +458,7 @@ describe("data check: text and fix (ADR 0118)", () => {
         asOf: BASE_DATE,
       }),
     ).toBe(
-      `No valuation is in force on 07.06.2026, so the purchase price of ${fmtCzk(javorovaPrice)} stands in as the market value.`,
+      `No valuation is recorded, so the purchase price of ${fmtCzk(javorovaPrice)} stands in as the market value.`,
     );
     expect(text({ kind: "noLease", asOf: BASE_DATE })).toBe(
       "No lease is in force on 07.06.2026, so rent counts as 0.",

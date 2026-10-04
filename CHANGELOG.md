@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `properties.csv` takes three optional columns for how a purchase was funded: `own_cash`,
+  `transaction_costs` and `initial_works`, in the same money format as `purchase_price`
+  (ADR 0119, #33). An empty cell means unknown. A re-import keeps an amount already stored,
+  so a CSV never erases a recorded figure. The template and the CSV guide show them.
+
 - A **Data check** shows which inputs behind the numbers are stale, missing or left at a
   default, at the snapshot date (ADR 0118, #35). A panel on the Dashboard and a section on
   each property list, with their effect:
@@ -220,6 +225,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   backup the app writes can be restored (ADR 0123, #107).
 - One scenario the app cannot read no longer stops startup: it is listed on the Scenarios
   page with a Delete button (ADR 0123, #107).
+- A valuation's "Valid to" date no longer changes the property's value. Before, once it
+  passed, the value fell back to the purchase price or to an older valuation. The latest
+  valuation now keeps governing, grown by appreciation, until a newer one replaces it; in a
+  gap between two valuations the earlier one governs. The purchase price stands in only when
+  a property has no valuation, and the Data check then says "No valuation is recorded"
+  (ADR 0122, #110).
 - The "first cash-flow-positive year" no longer names a year that earned nothing. With only
   properties bought in the future (or a Dashboard filter on them), it showed the first
   projection year; it now shows the first year whose net cash flow is above zero, or "—"

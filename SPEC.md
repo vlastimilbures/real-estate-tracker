@@ -197,10 +197,11 @@ As-of picker shows the mapping under the date (none at Today). The horizon tile 
 last projection year ("Net worth in 2056 (30-yr horizon)") and does not follow the as-of date.
 
 Selectors follow a consistent rule: "record in force at `asOf`" = latest `startDate/validFrom
-≤ asOf` whose optional `endDate/validTo` is blank or `≥ asOf`. For **valuations**, if
-nothing is in force yet, the nearest upcoming record is used as a fallback (so year 0 lines
-up with the projection even before the first valuation date). **Leases** have no such
-fallback (DR-045): snapshot rent is the contractual monthly rent of the lease in force at
+≤ asOf` whose optional `endDate/validTo` is blank or `≥ asOf`. **Valuations** differ: the
+governing valuation is the latest one with `validFrom ≤ asOf`, and its `validTo` is not read
+(a value does not expire; the next valuation replaces it, ADR 0122). Before the first
+valuation date, the nearest upcoming record is used (so year 0 lines up with the projection).
+**Leases** have no such fallback (DR-045): snapshot rent is the contractual monthly rent of the lease in force at
 `asOf` × 12, unindexed, and 0 when no lease is in force — before the first lease, in a gap
 between leases (a one-day gap is rent-free) and after the last lease's end date. The
 projection treats rent differently (§4.5).
@@ -211,11 +212,11 @@ Derived per-property values:
   completed months ÷ 12** at the appreciation rate (ADR 0032). The anchor is the baseDate,
   a later valuation's `validFrom`, or the purchase date of a property bought after baseDate.
   Months are counted with the month-end rule, so a 29 Feb baseDate still counts a full year
-  (D-45). A valuation already in force at baseDate is anchored at baseDate, not at its
+  (D-45). A valuation that started on or before baseDate is anchored at baseDate, not at its
   `validFrom`, so its value is not grown for the months before baseDate.
-  Falls back to `purchasePrice` when no valuation exists. For dev loans the completed value
-  is scaled by `drawnFraction` (cumulative principal drawn ÷ total scheduled principal), so
-  value ramps with construction progress.
+  Falls back to `purchasePrice` only when the property has no valuation (ADR 0122). For dev
+  loans the completed value is scaled by `drawnFraction` (cumulative principal drawn ÷ total
+  scheduled principal), so value ramps with construction progress.
 - **Outstanding debt** — the active block's balance at `asOf`; the re-amortized instalment
   and reset rate are read from the schedule when `asOf` is past a fixation reset.
 - **Monthly rent** — lease in force at `asOf`; **gross annual** = ×12.
@@ -501,15 +502,15 @@ with examples, is [docs/csv-import.md](docs/csv-import.md).
 
 **Four importable entity types** (Assumptions are never imported — edited in the UI):
 
-| File             | Key fields                                                                                                                                       |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `properties.csv` | name, address, type, size_m2, garage, purchase_date, purchase_price, appreciation_override_pa, rent_index_override_pa                            |
-| `valuations.csv` | property_name (FK), valid_from, valid_to, market_value                                                                                           |
-| `rents.csv`      | property_name (FK), start_date, end_date, monthly_rent                                                                                           |
-| `mortgages.csv`  | property_name (FK), start_date, initial_principal, fixation_years, interest_rate_pa, monthly_instalment, loan_term_years, contract_maturity_date |
+| File             | Key fields                                                                                                                                                        |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `properties.csv` | name, address, type, size_m2, garage, purchase_date, purchase_price, appreciation_override_pa, rent_index_override_pa, own_cash, transaction_costs, initial_works |
+| `valuations.csv` | property_name (FK), valid_from, valid_to, market_value                                                                                                            |
+| `rents.csv`      | property_name (FK), start_date, end_date, monthly_rent                                                                                                            |
+| `mortgages.csv`  | property_name (FK), start_date, initial_principal, fixation_years, interest_rate_pa, monthly_instalment, loan_term_years, contract_maturity_date                  |
 
-Note: `draws` and `completionDate` (dev/phased mortgage fields), prepayments and recasts
-are set via the UI, not CSV; a re-import keeps them.
+Note: `draws` and `completionDate` (dev/phased mortgage fields), prepayments, recasts and
+the funding note (form: #33 PR3) are set via the UI, not CSV; a re-import keeps them.
 
 **Rules:**
 
@@ -539,8 +540,9 @@ are set via the UI, not CSV; a re-import keeps them.
 - **Upsert by natural key** ([guide](docs/csv-import.md#matching-and-updates)):
   re-importing updates rather than duplicating. Properties by name; children by
   `(property_name, start_date/valid_from)`. On an update, an empty
-  `contract_maturity_date` keeps the stored date; any other empty optional cell clears the
-  stored value.
+  `contract_maturity_date` keeps the stored date and an empty or missing `own_cash`,
+  `transaction_costs` or `initial_works` column keeps the stored amount (ADR 0119; a new property
+  gets them unknown); any other empty optional cell clears the stored value.
 - Each file picker has a "Download template" button producing the header + one example row.
 - Importing a new property automatically creates a default holding-costs row for it.
 - Holding costs are **not** imported via CSV — set them via the UI on the property detail

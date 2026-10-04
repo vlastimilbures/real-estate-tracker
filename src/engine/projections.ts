@@ -93,9 +93,9 @@ function propertyBasis(
   // project zero rent forever. Past purchases collapse to baseDate (unchanged).
   const asOf = basisDate(property, assumptions.baseDate);
   const valuations = forProperty(portfolio.valuations, property.id);
-  // Prefer the valuation in force at the basis date; if none yet (baseDate predates
-  // the first recorded valuation), use the nearest upcoming one rather than the
-  // stale purchase price — so year 0 lines up with the snapshot tile (no jump).
+  // The valuation governing the basis date (`selectValuation`): before the first
+  // recorded valuation, the nearest upcoming one rather than the stale purchase
+  // price — so year 0 lines up with the snapshot tile (no jump).
   const v0 = openingValue(valuations, property, asOf);
   const rentPlan = buildRentPlan(
     forProperty(portfolio.leases, property.id),

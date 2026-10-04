@@ -252,6 +252,13 @@ export function planImport(
       purchase_price: p.purchase_price,
       appreciation_override_pa: p.appreciation_override_pa,
       rent_index_override_pa: p.rent_index_override_pa,
+      // ADR 0119 §8: a blank funding cell keeps the stored amount; a CSV sets or
+      // changes a recorded figure, never erases it.
+      ...(p.own_cash !== null && { own_cash: p.own_cash }),
+      ...(p.transaction_costs !== null && {
+        transaction_costs: p.transaction_costs,
+      }),
+      ...(p.initial_works !== null && { initial_works: p.initial_works }),
     };
     const row: PropertyRow = existing
       ? { ...existing, ...fields }
@@ -260,10 +267,10 @@ export function planImport(
           name: p.name,
           ...fields,
           active: 1,
-          // ADR 0119: CSV does not carry a funding record yet (#33 PR2).
-          own_cash: null,
-          transaction_costs: null,
-          initial_works: null,
+          own_cash: p.own_cash,
+          transaction_costs: p.transaction_costs,
+          initial_works: p.initial_works,
+          // ADR 0119 §8: the note is not a CSV column.
           funding_note: null,
         };
     statements.push(

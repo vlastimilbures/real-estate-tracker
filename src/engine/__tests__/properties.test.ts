@@ -7,7 +7,12 @@ import fc from "fast-check";
 import { termMonths } from "../amortization";
 import { EngineInputError } from "../errors";
 import { buildSchedule, schedulesByProperty } from "../schedule";
-import { propertySnapshot, leaseInForce, valuationInForce } from "../metrics";
+import {
+  propertySnapshot,
+  leaseInForce,
+  selectValuation,
+  valuationInForce,
+} from "../metrics";
 import { propertyProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
 import { edate, isAfter, isOnOrBefore, utc } from "../dates";
@@ -339,6 +344,48 @@ describe("random effective-dated leases and valuations", () => {
           );
         },
       ),
+      RUNS,
+    );
+  });
+
+  it("selectValuation: latest started (validTo not read), else nearest upcoming (ADR 0122)", () => {
+    fc.assert(
+      fc.property(records, fc.integer({ min: 0, max: 2500 }), (rs, asOfDay) => {
+        const asOf = dayToDate(asOfDay);
+        const vals: Valuation[] = rs.map((r, i) => ({
+          id: `v${i}`,
+          propertyId: "p",
+          validFrom: dayToDate(r.startDay),
+          validTo:
+            r.lengthDays === undefined
+              ? undefined
+              : dayToDate(r.startDay + r.lengthDays),
+          marketValue: money(r.amount * 100),
+        }));
+        const from = (v: Valuation) => v.validFrom;
+        const upcoming = vals
+          .filter((v) => v.validFrom > asOf)
+          .sort((a, b) => a.validFrom.getTime() - b.validFrom.getTime())[0];
+        expect(selectValuation(vals, asOf)?.id).toBe(
+          oracle(vals, asOf, from, () => undefined) ?? upcoming?.id,
+        );
+        // The purchase price (1 Kč here) stands in only when there is no valuation.
+        const property: Property = {
+          id: "p",
+          name: "P",
+          purchaseDate: utc(2020, 1, 1),
+          purchasePrice: money(1),
+        };
+        const p: Portfolio = {
+          properties: [property],
+          mortgages: [],
+          valuations: vals,
+          leases: [],
+          holdingCosts: [],
+        };
+        const value = propertySnapshot(property, p, assumptions, asOf).value;
+        expect(value.greaterThanOrEqualTo(100_000)).toBe(vals.length > 0);
+      }),
       RUNS,
     );
   });

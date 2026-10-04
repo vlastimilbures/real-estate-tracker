@@ -345,8 +345,8 @@ export const cs: Dictionary = {
     goTo: (section) => `Přejít do sekce ${section}`,
     valuationStale: (age, date) =>
       `Použité ocenění je staré ${age} (${date}). Hodnota, vlastní kapitál a LTV vycházejí z něj.`,
-    noValuation: (date, price) =>
-      `K ${date} neplatí žádné ocenění, proto se jako tržní hodnota použije kupní cena ${price}.`,
+    noValuation: (price) =>
+      `Není zadané žádné ocenění, proto se jako tržní hodnota použije kupní cena ${price}.`,
     noLease: (date) =>
       `K ${date} neplatí žádný nájem, proto se nájemné počítá jako 0.`,
     leaseEnded: (date) =>

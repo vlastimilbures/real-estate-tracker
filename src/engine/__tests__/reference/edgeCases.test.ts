@@ -30,30 +30,10 @@ import {
   type RefRow,
 } from "./mortgageReference";
 import { RESET, SEED_LOANS } from "./seedLoans";
-import { both as eventBoth, maxDev as eventMaxDev } from "./eventHarness";
-import { rate } from "../../brands";
-import { money } from "../../brands";
+import { REF, REF_MONTHS, TIGHT, both, maxDev, toBlock } from "./eventHarness";
+import { money, rate } from "../../brands";
 
-const TIGHT = 1e-6; // Kč
 const CENT = 0.01; // Kč, for quoted engine/reference figures
-
-function toBlock(l: RefLoan, id = "x", propertyId = "p"): MortgageBlock {
-  return {
-    id,
-    propertyId,
-    startDate: isoDate(l.start),
-    initialPrincipal: money(String(l.principal)),
-    fixationYears: l.fixationMonths / 12,
-    interestRatePa: rate(String(l.ratePa)),
-    monthlyInstalment: money(String(l.instalment)),
-    loanTermYears: l.termMonths != null ? l.termMonths / 12 : undefined,
-    draws: l.draws?.map((x) => ({
-      date: isoDate(x.date),
-      amount: money(String(x.amount)),
-    })),
-    completionDate: l.completion ? isoDate(l.completion) : undefined,
-  } as MortgageBlock;
-}
 
 const at = (base: string, extra: Partial<Assumptions> = {}): Assumptions => ({
   ...A0,
@@ -61,48 +41,10 @@ const at = (base: string, extra: Partial<Assumptions> = {}): Assumptions => ({
   ...extra,
 });
 
-function both(
-  l: RefLoan,
-  base = "2026-06-07",
-  opts: Partial<RefOptions> = {},
-  extra: Partial<Assumptions> = {},
-): { e: AmortizationRow[]; r: RefRow[] } {
-  const e = buildSchedule(toBlock(l), at(base, extra));
-  const r = referenceSchedule(l, {
-    baseDate: base,
-    months: e.length,
-    resetRatePa: RESET,
-    calendar: "gridDueDate",
-    devInstalment: "fromTerm", // D-31
-    openingDraws: "nextPeriod", // D-41
-    ...opts,
-  });
-  return { e, r };
-}
-
 const opening = (e: AmortizationRow[]) =>
   e[0].endBalance.plus(e[0].principal).toNumber();
 const refOpening = (r: RefRow[]) =>
   r[0].endBalance.plus(r[0].principal).minus(r[0].draw).toNumber();
-
-/** Max |Δ| over all columns. The instalment column is compared only on months the
- *  reference collects a payment (a scheduled-but-unpaid instalment is not cash). */
-function maxDev(e: AmortizationRow[], r: RefRow[]): number {
-  let m = 0;
-  for (let i = 0; i < Math.min(e.length, r.length); i++) {
-    const cols = ["ratePa", "interest", "principal", "endBalance"] as const;
-    for (const c of cols) {
-      m = Math.max(m, Math.abs(e[i][c].minus(r[i][c].toString()).toNumber()));
-    }
-    if (r[i].payment.greaterThan(0)) {
-      m = Math.max(
-        m,
-        Math.abs(e[i].instalment.minus(r[i].instalment.toString()).toNumber()),
-      );
-    }
-  }
-  return m;
-}
 
 describe("edge cases where engine and reference agree", () => {
   const cases: [
@@ -469,6 +411,14 @@ describe("fixed by D-41: a tranche between the last payment and baseDate (DR-016
         draws: [{ date: "2026-05-20", amount: "500000" }],
       },
     ],
+    [
+      "tranche on baseDate",
+      {
+        ...dev,
+        start: "2026-01-20",
+        draws: [{ date: "2026-06-07", amount: "500000" }],
+      },
+    ],
   ];
   it.each(cases)("%s: engine = reference", (_, l) => {
     const { e, r } = both(l);
@@ -511,10 +461,9 @@ describe("ADR 0116: completion after the last payment due and by baseDate", () =
       "2025-07-06",
     ],
   ];
-  // The shared event harness: a fixed reference horizon and every column.
   it.each(cases)("%s: engine = reference", (_, l, base) => {
-    const { e, r } = eventBoth(l, base);
-    expect(eventMaxDev(e, r)).toBeLessThanOrEqual(TIGHT);
+    const { e, r } = both(l, base);
+    expect(maxDev(e, r)).toBeLessThanOrEqual(TIGHT);
   });
 
   it("amortizes from grid month 1", () => {
@@ -581,11 +530,9 @@ describe("fixed by D-27/D-47: a successor after baseDate replaces its predecesso
     const blocks = loans.map((l, i) => toBlock(l, `b${i}`));
     const e = propertySchedule(blocks, A0);
     const r = referenceChain(loans, {
+      ...REF,
       baseDate: "2026-06-07",
-      months: e.rows.length,
-      resetRatePa: RESET,
-      devInstalment: "fromTerm",
-      openingDraws: "nextPeriod",
+      months: REF_MONTHS,
     });
     return { e, r };
   }
@@ -659,7 +606,7 @@ describe("fixed by D-27/D-47: a successor after baseDate replaces its predecesso
 
   it.each(cases)("%s: engine = reference", (_, loans) => {
     const { e, r } = chainBoth(loans);
-    expect(maxDev(e.rows, r.rows)).toBeLessThanOrEqual(TIGHT);
+    expect(maxDev(e.rows, r.rows, r.handovers)).toBeLessThanOrEqual(TIGHT);
     expect(e.refinances).toHaveLength(r.handovers.length);
     e.refinances.forEach((x, i) => {
       const h = r.handovers[i];
