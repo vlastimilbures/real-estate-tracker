@@ -54,7 +54,7 @@ already rounds that suggestion up to whole crowns, so its text is unchanged.
 - An amount imported with more than two decimals shows them in its form field, e.g.
   `1000.005`. Display elsewhere still rounds to whole Kč (CLAUDE.md §5).
 - A rate imported with more than six decimals shows them as a percentage, e.g. `3.591234`.
-  Display elsewhere still rounds to `0.0%`.
+  Display elsewhere still rounds (CLAUDE.md §5).
 - No engine, parity or golden change. An amount with at most two decimals, and a rate with at
   most six, drafts exactly as before (trailing zeros were already dropped: `12000000.50` →
   `12000000.5`, `0.0359` → `3.59`).
