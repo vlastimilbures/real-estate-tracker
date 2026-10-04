@@ -800,7 +800,7 @@ export const en = {
       "Temporary, then reverts. Adds percentage points: +2 pp turns 4.5 % into 6.5 %.",
     rateShockHelp:
       "Starts at each loan's fixation end, then reverts. Adds percentage points: +2 pp turns 4.5 % into 6.5 %.",
-    permanentCorrection: "permanent correction",
+    permanentCorrection: "permanent drop: 20 = values fall by 20 %",
     // Form groups (ADR 0102)
     groupLevels: "Permanent levels",
     groupLevelsHelp:

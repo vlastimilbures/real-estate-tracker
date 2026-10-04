@@ -1,6 +1,7 @@
 // Create/edit modal for a named scenario: five permanent level overrides plus
 // temporary rate/inflation shocks and a permanent value crash. Extracted from
 // Scenarios.tsx; produces a Scenario via onSubmit and never touches portfolio data.
+// A refused save stays open with the broken rule on its field (ADR 0123).
 import { useState } from "react";
 import { Button } from "../components/primitives";
 import { Modal } from "../components/Modal";
@@ -10,6 +11,7 @@ import { fmtDate } from "../../lib/format";
 import { isDirty } from "../model/dirty";
 import {
   parseScenarioDraft,
+  scenarioWriteErrors,
   DEFAULT_SHOCK_YEARS,
   type ScenarioDraftFields,
   type LevelKey,
@@ -20,6 +22,7 @@ import {
   ShockPairFields,
 } from "./ScenarioFormFields";
 import type { Assumptions, Scenario } from "../../engine";
+import { toWriteError, type WriteError } from "../../state/writeError";
 import { useT } from "../hooks/useT";
 
 export { DEFAULT_SHOCK_YEARS };
@@ -32,7 +35,10 @@ export function ScenarioForm({
 }: {
   assumptions: Assumptions;
   scenario: Scenario | null;
-  onSubmit: (s: Scenario) => void;
+  /** May be async; while it runs the buttons disable, so a second Return cannot save a
+   *  second scenario. Resolve to a WriteError to keep the form open with the failure
+   *  shown (as RecordForm does). */
+  onSubmit: (s: Scenario) => void | WriteError | Promise<void | WriteError>;
   onCancel: () => void;
 }) {
   const t = useT();
@@ -55,20 +61,37 @@ export function ScenarioForm({
   }));
   const [draft, setDraft] = useState(initialDraft);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  // One id per form, so a retry after a failed save cannot add a second scenario.
+  const [id] = useState(() => scenario?.id ?? crypto.randomUUID());
 
   function set<K extends keyof ScenarioDraftFields>(k: K, v: string) {
     setDraft((d) => ({ ...d, [k]: v }));
   }
 
-  function submit() {
+  async function submit() {
+    if (busy) return;
     const { errors: errs, name, overrides } = parseScenarioDraft(draft, t);
     setErrors(errs);
+    setFormError(null);
     if (Object.keys(errs).length > 0) return;
-    onSubmit({
-      id: scenario?.id ?? crypto.randomUUID(),
-      name,
-      overrides,
-    });
+    setBusy(true);
+    try {
+      let failure: void | WriteError;
+      try {
+        failure = await onSubmit({ id, name, overrides });
+      } catch (e) {
+        failure = toWriteError(e);
+      }
+      if (failure) {
+        const split = scenarioWriteErrors(t, failure);
+        setErrors(split.fieldErrors);
+        setFormError(split.formError);
+      }
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -79,15 +102,24 @@ export function ScenarioForm({
       }
       onClose={onCancel}
       closeLabel={t.common.close}
-      onSubmit={submit}
+      onSubmit={() => void submit()}
       dirty={isDirty(initialDraft, draft)}
       footer={
         <>
-          <Button type="button" variant="ghost" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onCancel}
+            disabled={busy}
+          >
             {t.common.cancel}
           </Button>
-          <Button type="submit" variant="primary">
-            {scenario ? t.common.save : t.common.create}
+          <Button type="submit" variant="primary" disabled={busy}>
+            {busy
+              ? t.common.saving
+              : scenario
+                ? t.common.save
+                : t.common.create}
           </Button>
         </>
       }
@@ -172,6 +204,11 @@ export function ScenarioForm({
             />
           </Field>
         </FieldGroup>
+        {formError && (
+          <p className="error-text" role="alert">
+            {formError}
+          </p>
+        )}
       </div>
     </Modal>
   );

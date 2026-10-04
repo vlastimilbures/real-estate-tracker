@@ -3,10 +3,13 @@
 import { describe, it, expect } from "vitest";
 import {
   parseScenarioDraft,
+  scenarioWriteErrors,
   DEFAULT_SHOCK_YEARS,
   type ScenarioDraftFields,
 } from "../scenarioForm";
 import { en } from "../../../i18n/en";
+import type { EngineValidationError } from "../../../engine";
+import type { WriteError } from "../../../state/writeError";
 
 const blank: ScenarioDraftFields = {
   name: "",
@@ -99,6 +102,8 @@ describe("parseScenarioDraft", () => {
     expect(overrides.inflationShock).toBeUndefined();
   });
 
+  // Parsing is shape-only: the store refuses a negative crash with the engine rule
+  // (ADR 0123), see scenarioWriteErrors below.
   it("parses a value shock defaulting atYear to 0 (today)", () => {
     const { errors, overrides } = parseScenarioDraft(
       { ...blank, name: "S", valueShockPct: "-10" },
@@ -115,5 +120,57 @@ describe("parseScenarioDraft", () => {
       en,
     );
     expect(errors.valueShockYear).toBe(en.scenarios.geZero);
+  });
+});
+
+describe("scenarioWriteErrors (ADR 0123)", () => {
+  const input = (...errors: EngineValidationError[]): WriteError => ({
+    kind: "input",
+    errors,
+  });
+
+  it("shows a vacancy or value-crash rule on its field, in the engine's words", () => {
+    expect(
+      scenarioWriteErrors(
+        en,
+        input(
+          {
+            code: "RATE_OUT_OF_RANGE",
+            entity: "assumptions",
+            field: "vacancyAllowance",
+          },
+          {
+            code: "SHOCK_OUT_OF_RANGE",
+            entity: "assumptions",
+            field: "valueShock",
+          },
+        ),
+      ),
+    ).toEqual({
+      fieldErrors: {
+        vacancyAllowance: en.inputRules.RATE_OUT_OF_RANGE,
+        valueShockPct: en.inputRules.SHOCK_OUT_OF_RANGE,
+      },
+      formError: null,
+    });
+  });
+
+  it("puts any other failure above the buttons", () => {
+    expect(
+      scenarioWriteErrors(
+        en,
+        input({
+          code: "SHOCK_OUT_OF_RANGE",
+          entity: "assumptions",
+          field: "rateShock",
+        }),
+      ),
+    ).toEqual({ fieldErrors: {}, formError: en.inputRules.SHOCK_OUT_OF_RANGE });
+    const other = scenarioWriteErrors(en, {
+      kind: "other",
+      message: "disk full",
+    });
+    expect(other.fieldErrors).toEqual({});
+    expect(other.formError).toBeTruthy();
   });
 });

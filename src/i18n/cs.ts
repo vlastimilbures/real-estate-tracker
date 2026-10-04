@@ -758,7 +758,7 @@ export const cs: Dictionary = {
       "Dočasné, pak odezní. Přičítá procentní body: +2 p. b. změní 4,5 % na 6,5 %.",
     rateShockHelp:
       "Začíná koncem fixace každého úvěru, pak odezní. Přičítá procentní body: +2 p. b. změní 4,5 % na 6,5 %.",
-    permanentCorrection: "trvalá korekce",
+    permanentCorrection: "trvalý pokles: 20 = hodnoty klesnou o 20 %",
     // Skupiny formuláře (ADR 0102)
     groupLevels: "Trvalé úrovně",
     groupLevelsHelp:

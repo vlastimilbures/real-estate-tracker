@@ -14,6 +14,7 @@ import type {
   MortgageBlock,
   HoldingCost,
   Scenario,
+  ScenarioOverrides,
 } from "../engine";
 import { migrate } from "../data/migrations";
 import { DataError, type DataErrorCode } from "../data/errors";
@@ -36,7 +37,7 @@ import type {
   CsvImportPreview,
   CsvImportReport,
 } from "../import/csvImport";
-import { checkInputRules } from "../import/inputRules";
+import { checkInputRules, scenarioRuleErrors } from "../import/inputRules";
 import {
   loadState,
   upsertScenario,
@@ -361,6 +362,15 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     if (errors.length > 0) throw new EngineInputError(errors);
   }
 
+  /** Engine rules a scenario's own overrides break on top of the saved assumptions
+   *  (ADR 0123): refused before writing, like the assumptions themselves. */
+  function checkScenario(overrides: ScenarioOverrides): void {
+    const a = get().assumptions;
+    if (!a) return;
+    const errors = scenarioRuleErrors(a, overrides);
+    if (errors.length > 0) throw new EngineInputError(errors);
+  }
+
   return {
     sql: null,
     portfolio: null,
@@ -539,13 +549,20 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
 
     // An insert stamps created_at; an update keeps the stored one (ADR 0123).
     addScenario: (s) =>
-      mutate((sql) => upsertScenario(sql, scenarioToRow(s, new Date()))),
+      mutate(async (sql) => {
+        checkScenario(s.overrides);
+        await upsertScenario(sql, scenarioToRow(s, new Date()));
+      }),
     saveScenario: (s) =>
-      mutate((sql) => upsertScenario(sql, scenarioToRow(s, new Date()))),
+      mutate(async (sql) => {
+        checkScenario(s.overrides);
+        await upsertScenario(sql, scenarioToRow(s, new Date()));
+      }),
     duplicateScenario: (id, newId) =>
       mutate(async (sql) => {
         const src = get().scenarios.find((x) => x.id === id);
         if (!src) throw new Error("Scenario not found");
+        checkScenario(src.overrides);
         const copy: Scenario = {
           ...src,
           id: newId,

@@ -136,10 +136,12 @@ export function Scenarios() {
           onSubmit={async (s) => {
             const isNew = editing === "new";
             const res = isNew ? await addScenario(s) : await saveScenario(s);
-            if (!res.ok) return;
+            // A refusal stays in the form, on the field it names (ADR 0123).
+            if (!res.ok) return res.error;
             setEditing(null);
             if (isNew && !tick(s.id))
               showToast(t.scenarios.addedCompareFull(s.name, MAX_COMPARE));
+            return undefined;
           }}
         />
       )}

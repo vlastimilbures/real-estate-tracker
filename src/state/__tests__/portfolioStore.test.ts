@@ -960,3 +960,73 @@ describe("portfolioStore scenario writes (ADR 0123)", () => {
     ]);
   });
 });
+
+// ADR 0123 (#108): a scenario write runs the engine's assumption rules on the scenario's
+// own overrides before anything is written, like saveAssumptions (UX-047).
+describe("portfolioStore refuses a scenario that breaks an engine rule (ADR 0123)", () => {
+  const storedIds = async () =>
+    (
+      await usePortfolioStore
+        .getState()
+        .sql!.select<{ id: string }>("SELECT id FROM scenarios ORDER BY id")
+    ).map((r) => r.id);
+
+  it.each([
+    [
+      "a vacancy of 150 %",
+      { vacancyAllowance: rate("1.5") },
+      "RATE_OUT_OF_RANGE",
+      "vacancyAllowance",
+    ],
+    [
+      "a crash typed as −20 %",
+      { valueShock: { pct: rate("-0.2"), atYear: 0 } },
+      "SHOCK_OUT_OF_RANGE",
+      "valueShock",
+    ],
+  ] as const)(
+    "add and save refuse %s, nothing written",
+    async (_, overrides, code, field) => {
+      await usePortfolioStore.getState().init(openSeeded);
+      const refused = {
+        ok: false,
+        error: { kind: "input", errors: [{ code, field }] },
+      };
+      const store = () => usePortfolioStore.getState();
+      expect(
+        await store().addScenario({ id: "bad", name: "Bad", overrides }),
+      ).toMatchObject(refused);
+      expect(await storedIds()).toEqual([]);
+
+      await store().addScenario({ id: "s1", name: "Fine", overrides: {} });
+      expect(
+        await store().saveScenario({ id: "s1", name: "Fine", overrides }),
+      ).toMatchObject(refused);
+      expect(store().scenarios.map((s) => s.overrides)).toEqual([{}]);
+    },
+  );
+
+  it("refuses to duplicate a stored scenario that breaks a rule", async () => {
+    await usePortfolioStore.getState().init(openSeeded);
+    await usePortfolioStore
+      .getState()
+      .sql!.execute(
+        "INSERT INTO scenarios (id, name, overrides, created_at) VALUES (?, ?, ?, ?)",
+        [
+          "old",
+          "Old",
+          '{"version":1,"vacancyAllowance":"1.5"}',
+          "2026-01-01T00:00:00.000Z",
+        ],
+      );
+    await usePortfolioStore.getState().reload();
+    const r = await usePortfolioStore
+      .getState()
+      .duplicateScenario("old", "copy");
+    expect(r).toMatchObject({
+      ok: false,
+      error: { kind: "input", errors: [{ code: "RATE_OUT_OF_RANGE" }] },
+    });
+    expect(await storedIds()).toEqual(["old"]);
+  });
+});
