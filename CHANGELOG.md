@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `properties.csv` takes three optional columns for how a purchase was funded: `own_cash`,
+  `transaction_costs` and `initial_works`, in the same money format as `purchase_price`
+  (ADR 0119, #33). An empty cell means unknown. A re-import keeps an amount already stored,
+  so a CSV never erases a recorded figure. The template and the CSV guide show them.
+
 - A **Data check** shows which inputs behind the numbers are stale, missing or left at a
   default, at the snapshot date (ADR 0118, #35). A panel on the Dashboard and a section on
   each property list, with their effect:

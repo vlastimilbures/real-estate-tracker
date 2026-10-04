@@ -53,11 +53,20 @@ An optional column may be left empty.
 | `purchase_price`           | yes      | Money        |                                                                                          |
 | `appreciation_override_pa` | no       | Fraction     | Yearly value growth for this property; may be negative. Empty ⇒ the Assumptions value    |
 | `rent_index_override_pa`   | no       | Fraction     | Yearly rent indexation for this property; may be negative. Empty ⇒ the Assumptions value |
+| `own_cash`                 | no       | Money        | All your own money paid in at the purchase. `0` = fully financed. Empty ⇒ unknown        |
+| `transaction_costs`        | no       | Money        | Broker, legal, cadastre, valuation and similar fees. Empty ⇒ unknown                     |
+| `initial_works`            | no       | Money        | Renovation or furnishing paid at or right after the purchase. Empty ⇒ unknown            |
+
+The last three columns record how the purchase was funded. Own cash covers your share of the
+price, the costs and the works together; the costs and works only break down what it paid
+for. For a property bought after the base date, a known own cash is the down payment in its
+purchase year. An empty cell never clears a stored amount (see
+[Matching](#matching-and-updates)).
 
 ```csv
-name,address,type,size_m2,garage,purchase_date,purchase_price,appreciation_override_pa,rent_index_override_pa
-Byt Javorova,Javorova 12 Praha,3 bedroom,71,true,2015-06-01,4080000,,
-Byt Lipova,Lipova 5 Brno,2 bedroom,54,false,2019-03-15,3150000,0.03,
+name,address,type,size_m2,garage,purchase_date,purchase_price,appreciation_override_pa,rent_index_override_pa,own_cash,transaction_costs,initial_works
+Byt Javorova,Javorova 12 Praha,3 bedroom,71,true,2015-06-01,4080000,,,,,
+Byt Lipova,Lipova 5 Brno,2 bedroom,54,false,2019-03-15,3150000,0.03,,850000,60000,40000
 ```
 
 ### valuations.csv
@@ -140,9 +149,12 @@ matched to an existing record by its natural key:
   as another lease; the old one stays. Edit or delete the old record in the app.
 - **A match updates only the CSV columns.** What the CSV does not hold is left as stored: a
   property's active/inactive state and holding costs, and a mortgage block's draws and
-  interest-only date. An empty `contract_maturity_date` keeps the stored date.
+  interest-only date. An empty `contract_maturity_date` keeps the stored date, and an empty
+  `own_cash`, `transaction_costs` or `initial_works` keeps the stored amount. A CSV can set
+  or change an amount, never erase it.
 - **An update writes every CSV column.** An empty optional cell clears the stored value (for
-  example an empty `address`), except `contract_maturity_date` as above.
+  example an empty `address`), except `contract_maturity_date` and the three funding columns
+  as above.
 - **Each key may appear once per file.** A second row with the same key — including names
   that differ only by case or spaces — is an error that points at the first row.
 - **Nothing is deleted.** A record missing from the CSV stays in the app.
@@ -223,6 +235,7 @@ and check the file in a text editor. The app does not convert these files itself
 - **Mortgage draws, completion date and interest-only period** of a development loan — set
   them in the mortgage form.
 - **Active/inactive state** of a property.
+- The **funding note** of a property.
 
 ## Export is not import
 

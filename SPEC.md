@@ -498,15 +498,15 @@ with examples, is [docs/csv-import.md](docs/csv-import.md).
 
 **Four importable entity types** (Assumptions are never imported — edited in the UI):
 
-| File             | Key fields                                                                                                                                       |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `properties.csv` | name, address, type, size_m2, garage, purchase_date, purchase_price, appreciation_override_pa, rent_index_override_pa                            |
-| `valuations.csv` | property_name (FK), valid_from, valid_to, market_value                                                                                           |
-| `rents.csv`      | property_name (FK), start_date, end_date, monthly_rent                                                                                           |
-| `mortgages.csv`  | property_name (FK), start_date, initial_principal, fixation_years, interest_rate_pa, monthly_instalment, loan_term_years, contract_maturity_date |
+| File             | Key fields                                                                                                                                                        |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `properties.csv` | name, address, type, size_m2, garage, purchase_date, purchase_price, appreciation_override_pa, rent_index_override_pa, own_cash, transaction_costs, initial_works |
+| `valuations.csv` | property_name (FK), valid_from, valid_to, market_value                                                                                                            |
+| `rents.csv`      | property_name (FK), start_date, end_date, monthly_rent                                                                                                            |
+| `mortgages.csv`  | property_name (FK), start_date, initial_principal, fixation_years, interest_rate_pa, monthly_instalment, loan_term_years, contract_maturity_date                  |
 
-Note: `draws` and `completionDate` (dev/phased mortgage fields), prepayments and recasts
-are set via the UI, not CSV; a re-import keeps them.
+Note: `draws` and `completionDate` (dev/phased mortgage fields), prepayments, recasts and
+the funding note are set via the UI, not CSV; a re-import keeps them.
 
 **Rules:**
 
@@ -536,8 +536,9 @@ are set via the UI, not CSV; a re-import keeps them.
 - **Upsert by natural key** ([guide](docs/csv-import.md#matching-and-updates)):
   re-importing updates rather than duplicating. Properties by name; children by
   `(property_name, start_date/valid_from)`. On an update, an empty
-  `contract_maturity_date` keeps the stored date; any other empty optional cell clears the
-  stored value.
+  `contract_maturity_date` keeps the stored date and an empty `own_cash`,
+  `transaction_costs` or `initial_works` keeps the stored amount (ADR 0119; a new property
+  gets them unknown); any other empty optional cell clears the stored value.
 - Each file picker has a "Download template" button producing the header + one example row.
 - Importing a new property automatically creates a default holding-costs row for it.
 - Holding costs are **not** imported via CSV — set them via the UI on the property detail
