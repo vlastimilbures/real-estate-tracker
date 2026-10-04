@@ -129,8 +129,9 @@ export function lastOnOrBefore<T>(
 
 /**
  * "The record governing a date": the one in force at `asOf` (see `lastOnOrBefore`),
- * else the nearest upcoming one. The one selector behind valuation, lease and
- * mortgage-block fallbacks (a recorded future value beats a stale default).
+ * else the nearest upcoming one. The mortgage-block fallback (a recorded future record
+ * beats a stale default). Valuations add a tier between the two (`selectValuation`,
+ * ADR 0122).
  */
 export function inForceOrUpcoming<T>(
   items: T[],

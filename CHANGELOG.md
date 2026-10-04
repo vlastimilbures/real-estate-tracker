@@ -194,6 +194,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A valuation with a "Valid to" date no longer drops the property's value to its purchase
+  price once that date passes. The latest valuation keeps governing, grown by appreciation,
+  until a newer one replaces it; in a gap between two valuations the earlier one governs. The
+  purchase price stands in only when a property has no valuation (ADR 0122, #110).
 - Stat lists (the property page's Loan outlook, the Dashboard financing panel, Backup) no
   longer draw a short line under their last label (ADR 0117).
 - A development loan completed after its last payment before the projection start, with no

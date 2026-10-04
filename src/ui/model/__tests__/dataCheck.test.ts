@@ -77,7 +77,7 @@ describe("data check: valuation (ADR 0118)", () => {
     ]);
   });
 
-  it("an expired valuation counts as none, as in the engine", () => {
+  it("an expired valuation stays in use, as in the engine: stale, not none (ADR 0122)", () => {
     const p: Portfolio = {
       ...without(portfolio, ["v-javorova"]),
       valuations: [
@@ -90,8 +90,12 @@ describe("data check: valuation (ADR 0118)", () => {
         },
       ],
     };
-    expect(kinds(check("javorova", BASE_DATE, p).attention)).toEqual([
-      "noValuation",
+    expect(check("javorova", BASE_DATE, p).attention).toEqual([
+      {
+        kind: "valuationStale",
+        validFrom: isoDate("2025-01-01"),
+        months: 17,
+      },
     ]);
   });
 

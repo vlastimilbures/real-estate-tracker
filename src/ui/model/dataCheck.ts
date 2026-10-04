@@ -47,7 +47,7 @@ type CostField = (typeof COST_FIELDS)[number];
 export type DataFinding =
   /** The valuation in use is more than 12 months old; `months` = whole months of age. */
   | { kind: "valuationStale"; validFrom: IsoDate; months: number }
-  /** No valuation in force or upcoming: the purchase price stands in as the market value. */
+  /** No valuation recorded: the purchase price stands in as the market value (ADR 0122). */
   | { kind: "noValuation"; purchasePrice: Money; asOf: Date }
   /** No lease in force at the as-of date and none the projection renews: rent is 0. */
   | { kind: "noLease"; asOf: Date }
