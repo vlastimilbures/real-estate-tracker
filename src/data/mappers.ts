@@ -558,16 +558,11 @@ export function rowToAssumptions(r: AssumptionsRow): Assumptions {
 }
 
 export function rowToScenario(r: ScenarioRow): Scenario {
-  const ref = { table: "scenarios", id: r.id };
-  // created_at is a full ISO timestamp (yyyy-mm-dd in rows written before DR-181);
-  // only its date part is read.
-  const createdAt =
-    typeof r.created_at === "string" ? r.created_at.slice(0, 10) : r.created_at;
+  // created_at only orders the list in SQL (DR-181); the app never reads it (ADR 0123).
   return {
     id: r.id,
     name: r.name,
     overrides: parseOverrides(r.name, r.overrides),
-    createdAt: g.date(ref, "created_at", createdAt),
   };
 }
 
@@ -647,13 +642,15 @@ export function holdingCostToRow(h: HoldingCost): HoldingCostRow {
   };
 }
 
-export function scenarioToRow(s: Scenario): ScenarioRow {
+/** `createdAt` is the time of the write: an insert stores it, an update keeps the stored
+ *  value (`upsertScenario`, ADR 0123). */
+export function scenarioToRow(s: Scenario, createdAt: Date): ScenarioRow {
   return {
     id: s.id,
     name: s.name,
     overrides: serializeOverrides(s.overrides),
     // A full ISO timestamp, so same-day scenarios keep their creation order (DR-181).
-    created_at: s.createdAt.toISOString(),
+    created_at: createdAt.toISOString(),
   };
 }
 

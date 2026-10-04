@@ -20,15 +20,14 @@ const sample: Scenario = {
     rateShock: { deltaPa: rate("0.04"), durationYears: 2 },
     valueShock: { pct: rate("0.2"), atYear: 5 },
   },
-  createdAt: isoDate("2026-06-08"),
 };
+const created = isoDate("2026-06-08");
 
 describe("scenario mapper round-trip", () => {
   it("scenarioToRow → rowToScenario is identity", () => {
-    const back = rowToScenario(scenarioToRow(sample));
+    const back = rowToScenario(scenarioToRow(sample, created));
     expect(back.id).toBe(sample.id);
     expect(back.name).toBe(sample.name);
-    expect(back.createdAt.getTime()).toBe(sample.createdAt.getTime());
     expect(back.overrides.appreciationPa?.toString()).toBe("0.01");
     expect(back.overrides.inflationPa?.toString()).toBe("0.05");
     expect(back.overrides.inflationShock?.deltaPa.toString()).toBe("0.06");
@@ -65,30 +64,34 @@ describe("scenarios repository", () => {
   afterAll(() => sql.db.close());
 
   it("inserts, lists, updates (preserving created_at), and deletes by id", async () => {
-    await upsertScenario(sql, scenarioToRow(sample));
+    await upsertScenario(sql, scenarioToRow(sample, created));
     let all = await listScenarios(sql);
     expect(all.map((s) => s.id)).toEqual(["s-1"]);
 
-    // Rename + change overrides with a different createdAt in the row → name/overrides
+    // Rename + change overrides with a different created_at in the row → name/overrides
     // change but the stored created_at is preserved.
     await upsertScenario(
       sql,
-      scenarioToRow({
-        ...sample,
-        name: "Severe recession",
-        overrides: {
-          ...sample.overrides,
-          valueShock: { pct: rate("0.35"), atYear: 10 },
+      scenarioToRow(
+        {
+          ...sample,
+          name: "Severe recession",
+          overrides: {
+            ...sample.overrides,
+            valueShock: { pct: rate("0.35"), atYear: 10 },
+          },
         },
-        createdAt: isoDate("2030-01-01"),
-      }),
+        isoDate("2030-01-01"),
+      ),
     );
     all = await listScenarios(sql);
     expect(all).toHaveLength(1);
     expect(all[0].name).toBe("Severe recession");
     expect(all[0].overrides.valueShock?.pct.toString()).toBe("0.35");
     expect(all[0].overrides.valueShock?.atYear).toBe(10);
-    expect(all[0].createdAt.getTime()).toBe(isoDate("2026-06-08").getTime());
+    expect(
+      sql.db.prepare("SELECT created_at FROM scenarios WHERE id = 's-1'").get(),
+    ).toEqual({ created_at: "2026-06-08T00:00:00.000Z" });
 
     await deleteScenario(sql, "s-1");
     expect(await listScenarios(sql)).toHaveLength(0);
@@ -107,7 +110,7 @@ describe("scenario creation order", () => {
 
   it("stores created_at as a full timestamp", () => {
     const at = new Date("2026-10-02T09:15:30.123Z");
-    expect(scenarioToRow({ ...sample, createdAt: at }).created_at).toBe(
+    expect(scenarioToRow(sample, at).created_at).toBe(
       "2026-10-02T09:15:30.123Z",
     );
   });
@@ -129,13 +132,11 @@ describe("scenario creation order", () => {
     ] as const) {
       await upsertScenario(
         sql,
-        scenarioToRow({ ...sample, id, name: id, createdAt: new Date(at) }),
+        scenarioToRow({ ...sample, id, name: id }, new Date(at)),
       );
     }
     const all = await listScenarios(sql);
     expect(all.map((x) => x.id)).toEqual(["legacy-a", "legacy-b", "zz", "aa"]);
-    // Read back as the creation day, like the date-only rows.
-    expect(all[2]!.createdAt.getTime()).toBe(isoDate("2026-10-02").getTime());
   });
 });
 
@@ -148,7 +149,7 @@ describe("scenarios persist across a restart (gate)", () => {
     try {
       const first = openMemorySql(file);
       await migrate(first);
-      await upsertScenario(first, scenarioToRow(sample));
+      await upsertScenario(first, scenarioToRow(sample, created));
       first.db.close();
 
       const second = openMemorySql(file);

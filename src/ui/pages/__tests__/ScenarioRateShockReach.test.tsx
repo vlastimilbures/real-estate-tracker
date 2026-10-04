@@ -43,7 +43,6 @@ const rates: Scenario = {
   id: "rates",
   name: "Rates +2pp",
   overrides: shock,
-  createdAt: assumptions.baseDate,
 };
 const results = [result("base", "Base"), result("rates", "Rates +2pp", shock)];
 

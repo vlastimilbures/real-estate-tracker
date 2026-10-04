@@ -935,3 +935,28 @@ describe("portfolioStore stale flag (UX-050, DR-086)", () => {
     ).toBe(true);
   });
 });
+
+// ADR 0123 (#107, #108): scenario writes.
+describe("portfolioStore scenario writes (ADR 0123)", () => {
+  const createdAt = async (id: string) =>
+    (
+      await usePortfolioStore.getState().sql!.select<{
+        created_at: string;
+      }>("SELECT created_at FROM scenarios WHERE id = ?", [id])
+    )[0]?.created_at;
+
+  it("an add stamps created_at; a save keeps it", async () => {
+    await usePortfolioStore.getState().init(openSeeded);
+    const s = { id: "s1", name: "Stress", overrides: {} };
+    expect(await usePortfolioStore.getState().addScenario(s)).toEqual({
+      ok: true,
+    });
+    const stamped = await createdAt("s1");
+    expect(stamped).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    await usePortfolioStore.getState().saveScenario({ ...s, name: "Renamed" });
+    expect(await createdAt("s1")).toBe(stamped);
+    expect(usePortfolioStore.getState().scenarios.map((x) => x.name)).toEqual([
+      "Renamed",
+    ]);
+  });
+});

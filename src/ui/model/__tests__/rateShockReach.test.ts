@@ -251,7 +251,6 @@ describe("rateShockNote", () => {
     id: "s",
     name: "s",
     overrides,
-    createdAt: assumptions.baseDate,
   });
 
   it("is the reach summary of a rate-shock scenario", () => {

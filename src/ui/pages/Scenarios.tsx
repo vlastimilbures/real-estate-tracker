@@ -77,7 +77,7 @@ export function Scenarios() {
     );
   }
 
-  const base = baseScenario(assumptions, t);
+  const base = baseScenario(t);
   const selected: Scenario[] = [
     ...(baseOn ? [base] : []),
     ...scenarios.filter((s) => selectedIds.includes(s.id)),
@@ -98,9 +98,7 @@ export function Scenarios() {
       return;
     }
     const id = crypto.randomUUID();
-    const res = await run(() =>
-      addScenario({ id, name, overrides, createdAt: new Date() }),
-    );
+    const res = await run(() => addScenario({ id, name, overrides }));
     if (!res.ok) return;
     showToast(
       tick(id)

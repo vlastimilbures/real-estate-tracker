@@ -14,7 +14,6 @@ const scenario: Scenario = {
   id: "s1",
   name: "Rates up",
   overrides: {},
-  createdAt: new Date(Date.UTC(2026, 0, 1)),
 };
 
 function renderList(onDelete: (s: Scenario) => void) {

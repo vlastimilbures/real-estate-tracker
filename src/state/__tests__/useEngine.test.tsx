@@ -125,7 +125,6 @@ describe("useScenarioComparison", () => {
     id: "s1",
     name,
     overrides: { appreciationPa: rate(appreciation) },
-    createdAt: isoDate("2026-06-07"),
   });
 
   it("runs one engine pass per scenario, in order", () => {

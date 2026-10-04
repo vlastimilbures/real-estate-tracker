@@ -537,8 +537,11 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         await upsertAssumptions(sql, a);
       }),
 
-    addScenario: (s) => mutate((sql) => upsertScenario(sql, scenarioToRow(s))),
-    saveScenario: (s) => mutate((sql) => upsertScenario(sql, scenarioToRow(s))),
+    // An insert stamps created_at; an update keeps the stored one (ADR 0123).
+    addScenario: (s) =>
+      mutate((sql) => upsertScenario(sql, scenarioToRow(s, new Date()))),
+    saveScenario: (s) =>
+      mutate((sql) => upsertScenario(sql, scenarioToRow(s, new Date()))),
     duplicateScenario: (id, newId) =>
       mutate(async (sql) => {
         const src = get().scenarios.find((x) => x.id === id);
@@ -547,9 +550,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
           ...src,
           id: newId,
           name: `${src.name} (copy)`,
-          createdAt: new Date(),
         };
-        await upsertScenario(sql, scenarioToRow(copy));
+        await upsertScenario(sql, scenarioToRow(copy, new Date()));
       }),
     removeScenario: (id) => mutate((sql) => deleteScenario(sql, id)),
 

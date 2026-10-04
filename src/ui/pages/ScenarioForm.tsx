@@ -68,7 +68,6 @@ export function ScenarioForm({
       id: scenario?.id ?? crypto.randomUUID(),
       name,
       overrides,
-      createdAt: scenario?.createdAt ?? new Date(),
     });
   }
 
