@@ -154,6 +154,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Properties are listed by name in Czech alphabetical order, with numbers by value ("Byt 2"
+  before "Byt 10"), wherever the app lists them (ADR 0127). Before, the order followed an
+  internal id, which only roughly matched the names.
+
 - The down payment of a property bought after the projection start now starts from its
   **purchase price**, not its valuation, and subtracts the whole loan that funded the
   purchase, every development tranche included. Before, a development loan's later
@@ -230,6 +234,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   imported or restored with more than six decimals (e.g. interest rate `0.03591234`) was
   rewritten to six (`0.035912`) by any edit of the same record. Forms now show and save the
   stored rate in full, as a percentage (`3.591234`).
+- A property whose name has no Latin letters or digits (for example a Cyrillic name) was
+  saved with an empty internal id. It showed in the list, but its page, its edit form, its
+  "Open property" link and the Dashboard filter treated it as "no property", and a CSV file
+  could not add its loans, valuations or rents. Such a property now works like any other
+  (ADR 0127, #105).
+- A new property gets a random internal id, from the property form and from a CSV import,
+  instead of one made from its name (ADR 0127, #105). A Cyrillic name no longer gets an
+  empty id. Names that differ only in punctuation or accents ("Byt 1" and "Byt-1",
+  "Lipová 2" and "Lipova 2") no longer fail with "a record with the same internal id
+  already exists".
+- **Clear sample** deleted any property whose internal id was a sample one, so it could
+  delete your own flat named after a sample street (for example "Dubová") with all its
+  loans, leases and valuations. It now deletes a property only while it still has both the
+  sample's id and its name ("Byt Javorova", "Byt Lipova", "Byt Dubova"). A sample flat you
+  renamed counts as yours and is kept. The sample banner follows the same rule (ADR 0127,
+  #101).
+- After a restore, the sample banner no longer comes back over your own data. On a new Mac,
+  the first launch fills in the sample; restoring your backup then kept the sample label,
+  and **Clear sample** could delete your own flat if its internal id matched a sample one
+  (for example a flat named "Lipová"). A restore now clears the sample label (ADR 0127,
+  #101).
 - Saving a form no longer rounds a stored amount it did not change (ADR 0131, #201). An
   amount imported, restored or typed with more than two decimals (e.g. own cash `1000.005`) was
   rewritten to two (`1000.01`) by any edit of the same record, such as a rename. Forms now

@@ -704,7 +704,8 @@ offline badge, and controls for language and theme.
    opens when something needs attention; a property not yet purchased has no findings
    except the own-cash one.
 
-2. **Properties** — list with per-property summary and LTV/DSCR health bands; "+ Add property"
+2. **Properties** — list with per-property summary and LTV/DSCR health bands, sorted by name in
+   Czech order with numbers by value (every property list follows it, ADR 0127); "+ Add property"
    button opens a form modal (name, address, type, size_m2, garage, purchase_date,
    purchase_price, optional per-property growth overrides, and an optional collapsed
    **Acquisition** section: own cash, transaction costs, initial works and a funding note,
@@ -752,7 +753,9 @@ offline badge, and controls for language and theme.
      values, whole-number values outside the form bounds, and scenario rows the app
      cannot read are refused before anything changes, ADR 0123), writes and verifies a
      safety backup first
-     (ADR 0052), then replaces all tables in one transaction and reloads app state.
+     (ADR 0052), then replaces all tables in one transaction and reloads app state. The
+     same transaction removes the sample markers, so restored data never shows as the
+     sample (ADR 0127).
      The tab shows the date of the last successful export (or "No backup exported yet")
      and says to keep a copy off this Mac. A sidebar reminder appears when the data
      changed since then and there is no backup or it is over 30 days old (ADR 0110).

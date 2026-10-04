@@ -34,7 +34,6 @@ import {
   type ParsedRentRow,
   type ParsedValuationRow,
 } from "./csv";
-import { slug } from "../lib/slug";
 import { D } from "../lib/money";
 
 export interface CsvImportBatch {
@@ -206,10 +205,13 @@ export interface ImportPlan extends CsvImportPreview {
 }
 
 /** Match every row against `tables` (D-55), build the write statements and check the
- *  merged result against the engine's input rules. Pure: `tables` is not modified. */
+ *  merged result against the engine's input rules. A new property's id comes from
+ *  `newPropertyId(key)`, keyed by its matching name (ADR 0127). Pure: `tables` is not
+ *  modified. */
 export function planImport(
   batch: CsvImportBatch,
   tables: ImportTables,
+  newPropertyId: (key: string) => string,
 ): ImportPlan {
   const db: ImportTables = {
     properties: [...tables.properties],
@@ -229,14 +231,6 @@ export function planImport(
   };
 
   const byKey = new Map(db.properties.map((p) => [propertyKey(p.name), p]));
-  // Two distinct new names can slugify to the same base: keep primary keys unique.
-  const usedIds = new Set(db.properties.map((p) => p.id));
-  const uniqueId = (name: string): string => {
-    const base = slug(name);
-    let id = base;
-    for (let n = 2; usedIds.has(id); n++) id = `${base}-${n}`;
-    return id;
-  };
   const withCosts = new Set(db.holding_costs.map((h) => h.property_id));
 
   // Properties first (FK parent). An existing property keeps its id, stored spelling
@@ -263,7 +257,7 @@ export function planImport(
     const row: PropertyRow = existing
       ? { ...existing, ...fields }
       : {
-          id: uniqueId(p.name),
+          id: newPropertyId(propertyKey(p.name)),
           name: p.name,
           ...fields,
           active: 1,
@@ -280,7 +274,6 @@ export function planImport(
     );
     put(db.properties, row);
     byKey.set(propertyKey(p.name), row);
-    usedIds.add(row.id);
     origin.set(`property:${row.id}`, { file: "properties", row: p.line });
     const changes = existing ? changesOf(existing, fields) : [];
     items.push({
@@ -313,7 +306,7 @@ export function planImport(
 
   const resolve = (file: CsvFile, row: number, name: string) => {
     const id = byKey.get(propertyKey(name))?.id;
-    if (!id)
+    if (id === undefined)
       problems.push({
         file,
         row,
@@ -361,7 +354,7 @@ export function planImport(
 
   for (const m of batch.mortgages ?? []) {
     const propId = resolve("mortgages", m.line, m.property_name);
-    if (!propId) continue;
+    if (propId === undefined) continue;
     const fields: Partial<MortgageBlockRow> = {
       initial_principal: m.initial_principal,
       fixation_years: m.fixation_years,
@@ -403,7 +396,7 @@ export function planImport(
 
   for (const v of batch.valuations ?? []) {
     const propId = resolve("valuations", v.line, v.property_name);
-    if (!propId) continue;
+    if (propId === undefined) continue;
     const fields = { valid_to: v.valid_to, market_value: v.market_value };
     upsertChild(
       "valuations",
@@ -425,7 +418,7 @@ export function planImport(
 
   for (const r of batch.rents ?? []) {
     const propId = resolve("rents", r.line, r.property_name);
-    if (!propId) continue;
+    if (propId === undefined) continue;
     const fields = { end_date: r.end_date, monthly_rent: r.monthly_rent };
     upsertChild(
       "leases",
@@ -469,6 +462,22 @@ export function planImport(
   return { statements, problems, items, fingerprint, report };
 }
 
+/** The new property ids of each batch (ADR 0127): a batch's preview and its import must
+ *  plan the same ids, or their fingerprints differ (ADR 0096). The Import page keeps one
+ *  batch object for both. */
+const batchIds = new WeakMap<CsvImportBatch, Map<string, string>>();
+
+function idsFor(batch: CsvImportBatch): (key: string) => string {
+  let ids = batchIds.get(batch);
+  if (!ids) batchIds.set(batch, (ids = new Map()));
+  const known = ids;
+  return (key) => {
+    let id = known.get(key);
+    if (id === undefined) known.set(key, (id = crypto.randomUUID()));
+    return id;
+  };
+}
+
 const previewOf = (plan: ImportPlan): CsvImportPreview => ({
   items: plan.items,
   problems: plan.problems,
@@ -480,7 +489,7 @@ export async function previewImport(
   sql: Sql,
   batch: CsvImportBatch,
 ): Promise<CsvImportPreview> {
-  return previewOf(planImport(batch, await readTables(sql)));
+  return previewOf(planImport(batch, await readTables(sql), idsFor(batch)));
 }
 
 /** Write `batch` in one transaction. With `expected` (a previewed plan's fingerprint),
@@ -490,11 +499,13 @@ export async function importCsv(
   batch: CsvImportBatch,
   expected?: string,
 ): Promise<CsvImportReport> {
-  const plan = planImport(batch, await readTables(sql));
+  const plan = planImport(batch, await readTables(sql), idsFor(batch));
   if (plan.problems.length > 0) throw new CsvImportError(plan.problems);
   if (expected !== undefined && expected !== plan.fingerprint)
     throw new CsvPlanChangedError(previewOf(plan));
 
   await sql.transaction(plan.statements);
+  // Written: importing the same batch again makes new ids for any property it adds.
+  batchIds.delete(batch);
   return plan.report;
 }

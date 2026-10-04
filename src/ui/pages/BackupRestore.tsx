@@ -60,7 +60,9 @@ function IssueTable({ issues }: { issues: RestoreIssue[] }) {
               <td className="left">
                 <code>{i.table}</code>
               </td>
-              <td className="left">{i.id ? <code>{i.id}</code> : "—"}</td>
+              <td className="left">
+                {i.id !== undefined ? <code>{i.id}</code> : "—"}
+              </td>
               <td className="left">
                 {i.column ? <code>{i.column}</code> : "—"}
               </td>

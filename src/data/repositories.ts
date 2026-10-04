@@ -278,6 +278,10 @@ const ASSUMPTIONS_QUERY = "SELECT * FROM assumptions WHERE id = 1";
 // Creation order (DR-181): older yyyy-mm-dd rows sort before same-day timestamps, by id.
 const SCENARIOS_QUERY = "SELECT * FROM scenarios ORDER BY created_at, id";
 
+// Properties are listed by name in Czech order, numbers by value (ADR 0127: ids are random).
+// The sort is stable, so the query's id order breaks ties.
+const byName = new Intl.Collator("cs", { numeric: true }).compare;
+
 function toPortfolio([
   properties,
   mortgages,
@@ -286,7 +290,9 @@ function toPortfolio([
   holdingCosts,
 ]: unknown[][]): Portfolio {
   return {
-    properties: (properties as PropertyRow[]).map(rowToProperty),
+    properties: (properties as PropertyRow[])
+      .map(rowToProperty)
+      .sort((a, b) => byName(a.name, b.name)),
     mortgages: (mortgages as MortgageBlockRow[]).map(rowToMortgageBlock),
     valuations: (valuations as ValuationRow[]).map(rowToValuation),
     leases: (leases as LeaseRow[]).map(rowToLease),
@@ -310,12 +316,25 @@ export async function loadAssumptions(sql: Sql): Promise<Assumptions> {
   return toAssumptions(await sql.select(ASSUMPTIONS_QUERY));
 }
 
-/** The first-run sample portfolio (ADR 0094): its fixed property IDs and the `app_meta`
- *  keys that mark it as active and its banner as dismissed. */
-export const SAMPLE_PROPERTY_IDS = ["javorova", "lipova", "dubova"] as const;
+/** The first-run sample portfolio (ADR 0094): its properties as seeded and the `app_meta`
+ *  keys that mark it as active and its banner as dismissed. A property is part of the
+ *  sample only while both its id and its name are the seeded ones (ADR 0127). */
+export const SAMPLE_PROPERTIES = [
+  { id: "javorova", name: "Byt Javorova" },
+  { id: "lipova", name: "Byt Lipova" },
+  { id: "dubova", name: "Byt Dubova" },
+] as const;
 export const SAMPLE_ACTIVE = "sample_active";
 export const SAMPLE_DISMISSED = "sample_banner_dismissed";
 const SAMPLE_META_QUERY = `SELECT key FROM app_meta WHERE key IN ('${SAMPLE_ACTIVE}', '${SAMPLE_DISMISSED}')`;
+/** Removes both sample markers: Clear sample (ADR 0094) and every restore (ADR 0127). */
+export const DELETE_SAMPLE_MARKERS: SqlStatement = {
+  query: "DELETE FROM app_meta WHERE key IN (?, ?)",
+  params: [SAMPLE_ACTIVE, SAMPLE_DISMISSED],
+};
+
+const isSampleProperty = (p: { id: string; name: string }) =>
+  SAMPLE_PROPERTIES.some((s) => s.id === p.id && s.name === p.name);
 
 /** Whether the sample is still in place (marker set and at least one sample property
  *  left) and whether its banner was dismissed (ADR 0094). */
@@ -326,11 +345,9 @@ export interface SampleState {
 
 function toSample(keys: unknown[], portfolio: Portfolio): SampleState {
   const set = new Set((keys as { key: string }[]).map((r) => r.key));
-  const ids: readonly string[] = SAMPLE_PROPERTY_IDS;
   return {
     active:
-      set.has(SAMPLE_ACTIVE) &&
-      portfolio.properties.some((p) => ids.includes(p.id)),
+      set.has(SAMPLE_ACTIVE) && portfolio.properties.some(isSampleProperty),
     dismissed: set.has(SAMPLE_DISMISSED),
   };
 }
