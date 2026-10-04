@@ -36,8 +36,8 @@ const withRefi = (block: MortgageBlock): Portfolio => ({
 });
 
 /** Javorova's chain with a successor; the handover row and the balance paid off. */
-function handover(block: MortgageBlock) {
-  const s = propertySchedule([...javorova, block], assumptions);
+function handover(block: MortgageBlock, owner: MortgageBlock[] = javorova) {
+  const s = propertySchedule([...owner, block], assumptions);
   const [r] = s.refinances;
   if (!r) throw new Error("expected a handover");
   return { s, r, row: s.rows[r.month - 1]! };
@@ -149,6 +149,39 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
       years.filter((y) => y.year !== 5).every((y) => y.refinanced.isZero()),
     ).toBe(true);
   });
+
+  // Grid month 1 is 07.07.2026; Javorova's payment #1 of it is due 17.06.2026, so a
+  // successor starting 20.06 keeps that payment and one starting 10.06 does not. A start
+  // of 10.01.2031 drops payment #56 (due 17.01.2031); a prepayment dated 12.01.2031 is
+  // then paid at the handover, before the successor pays off the rest (ADR 0109).
+  it.each([
+    ["grid month 1, payment kept", "2026-06-20", []],
+    ["grid month 1, payment dropped", "2026-06-10", []],
+    ["later month, payment dropped", "2031-01-10", []],
+    ["prepayment paid at the handover", "2031-01-15", ["2031-01-12"]],
+  ])(
+    "%s: nothing drawn, refinanced = drawn − paid off",
+    (_, start, prepayments) => {
+      const owner = javorova.map((b) => ({
+        ...b,
+        prepayments: prepayments.map((date) => ({
+          date: isoDate(date),
+          amount: money("100000"),
+          effect: "lowerInstalment" as const,
+        })),
+      }));
+      const { s, r, row } = handover(refi(start, "1300000"), owner);
+      expect(row.drawn.toString()).toBe("0");
+      expect(row.refinanced.toFixed(6)).toBe(
+        r.drawn.minus(r.paidOff).toFixed(6),
+      );
+      if (prepayments.length > 0)
+        expect(row.prepaid.toFixed(2)).toBe("100000.00");
+      expect(
+        identityGap(s.rows, openingDebt(javorova, assumptions)),
+      ).toBeLessThanOrEqual(1e-9);
+    },
+  );
 
   it("drawn + refinanced is the handover's net new debt (D-47, DR-092)", () => {
     const { r, row } = handover(refi("2031-01-17", "1633000"));
