@@ -16,10 +16,12 @@ applyTheme(readPersistedTheme());
 
 // Render once the active language's dictionary has loaded (DR-009), so the first frame
 // is already translated. It is a local chunk: this adds a few milliseconds.
-void loadStartupDictionary().finally(() => {
-  ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>,
-  );
-});
+void loadStartupDictionary()
+  .catch((error: unknown) => console.error(error))
+  .finally(() => {
+    ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>,
+    );
+  });

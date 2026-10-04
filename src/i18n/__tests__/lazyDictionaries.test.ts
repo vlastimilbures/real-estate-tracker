@@ -44,10 +44,12 @@ describe("lazy dictionaries (DR-009)", () => {
       throw new Error("chunk missing");
     });
     const i18n = await freshI18n();
-    await expect(i18n.loadDictionary("cs")).rejects.toThrow();
-    expect(i18n.isDictionaryLoaded("cs")).toBe(false);
-
-    vi.doUnmock("../cs");
+    try {
+      await expect(i18n.loadDictionary("cs")).rejects.toThrow();
+      expect(i18n.isDictionaryLoaded("cs")).toBe(false);
+    } finally {
+      vi.doUnmock("../cs");
+    }
     const dict = await i18n.loadDictionary("cs");
     expect(dict.nav.dashboard).toBe(cs.nav.dashboard);
   });

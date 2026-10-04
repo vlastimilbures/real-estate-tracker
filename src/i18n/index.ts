@@ -42,7 +42,9 @@ export function isDictionaryLoaded(lang: Language): boolean {
   return loaded[lang] !== undefined;
 }
 
-/** The dictionary for a loaded language (for non-hook contexts). */
+/** The dictionary for a loaded language (for non-hook contexts). App code asks only for
+ *  the active language; tests preload all three (__tests__/preload.ts), so they would not
+ *  catch a call for another one. */
 export function getDict(lang: Language): Dictionary {
   const dict = loaded[lang];
   if (!dict)
