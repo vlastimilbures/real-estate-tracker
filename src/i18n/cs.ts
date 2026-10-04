@@ -586,6 +586,25 @@ export const cs: Dictionary = {
     sectionHolding: "Náklady na držbu",
     sectionProjection: "Projekce",
     sectionAmortization: "Umořovací plán",
+    // Acquisition section (ADR 0119 §9)
+    sectionAcquisition: "Pořízení",
+    acqTitle: "Financování koupě",
+    acqHint: "jak bylo zadáno, nominálně",
+    acqPrice: "Kupní cena",
+    acqTransactionCosts: "Transakční náklady",
+    acqInitialWorks: "Počáteční úpravy",
+    acqUses: "Užití (cena + náklady + úpravy)",
+    acqCashInvested: "Vložené vlastní zdroje",
+    acqLoan: "Úvěr na koupi",
+    acqLoanNone: "Žádný",
+    acqSources: "Zdroje (vlastní zdroje + úvěr)",
+    acqGapShort: (amount) =>
+      `Zadané zdroje nepokrývají užití o ${amount}. Zkontrolujte vlastní zdroje, náklady a úpravy nebo úvěr.`,
+    acqGapOver: (amount) =>
+      `Zadané zdroje převyšují užití o ${amount}. Zkontrolujte vlastní zdroje, náklady a úpravy nebo úvěr.`,
+    acqNote:
+      "— znamená nezadáno; užití počítá jen zadané náklady a úpravy. Úvěr na koupi je první úvěrový blok, pokud začíná nejpozději 90 dní po koupi. Částky zadáte v Upravit nemovitost.",
+    acqRecordedNote: (note) => `Poznámka: ${note}`,
     showAmortization: (n) =>
       `Zobrazit umořovací plán (${n} ${csPlural(n, ["splátka", "splátky", "splátek"])})`,
     hideAmortization: "Skrýt umořovací plán",

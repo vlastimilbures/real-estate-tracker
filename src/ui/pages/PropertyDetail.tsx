@@ -34,6 +34,7 @@ import {
   ActivationBanner,
   AmortizationTable,
   LoanSummary,
+  AcquisitionPanel,
 } from "./PropertyDetailPanels";
 import {
   ValuationsPanel,
@@ -52,6 +53,7 @@ import {
   loanWarningText,
   loanWarnings,
 } from "../model/propertyDetail";
+import { acquisitionView } from "../model/acquisition";
 import { useToast } from "../hooks/useToast";
 import { describeWriteError } from "../model/writeError";
 import { useT } from "../hooks/useT";
@@ -207,6 +209,7 @@ export function PropertyDetail() {
     dataCheck: t.dataCheck.title,
     records: t.propertyDetail.sectionRecords,
     financing: t.propertyDetail.sectionFinancing,
+    acquisition: t.propertyDetail.sectionAcquisition,
     holding: t.propertyDetail.sectionHolding,
     projection: t.propertyDetail.sectionProjection,
     amortization: t.propertyDetail.sectionAmortization,
@@ -369,6 +372,18 @@ export function PropertyDetail() {
         ))}
         {outlook && <LoanSummary outlook={outlook} />}
       </div>
+
+      {out && (
+        <div className="pd-section" id={sectionId("acquisition")}>
+          <AcquisitionPanel
+            view={acquisitionView(
+              out.acquisition,
+              property.funding?.note,
+              t.propertyDetail,
+            )}
+          />
+        </div>
+      )}
 
       <div className="pd-section" id={sectionId("holding")}>
         <HoldingCostsPanel

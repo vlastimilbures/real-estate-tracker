@@ -622,6 +622,25 @@ export const en = {
     sectionHolding: "Holding costs",
     sectionProjection: "Projection",
     sectionAmortization: "Amortization",
+    // Acquisition section (ADR 0119 §9)
+    sectionAcquisition: "Acquisition",
+    acqTitle: "Acquisition funding",
+    acqHint: "as recorded, nominal",
+    acqPrice: "Purchase price",
+    acqTransactionCosts: "Transaction costs",
+    acqInitialWorks: "Initial works",
+    acqUses: "Uses (price + costs + works)",
+    acqCashInvested: "Cash invested (own cash)",
+    acqLoan: "Acquisition loan",
+    acqLoanNone: "None",
+    acqSources: "Sources (own cash + loan)",
+    acqGapShort: (amount: string) =>
+      `The recorded sources fall ${amount} short of the uses. Check the own cash, the costs and works, or the loan.`,
+    acqGapOver: (amount: string) =>
+      `The recorded sources exceed the uses by ${amount}. Check the own cash, the costs and works, or the loan.`,
+    acqNote:
+      "— means not recorded; the uses count only the recorded costs and works. The acquisition loan is the first loan block when it starts no later than 90 days after the purchase. Set the amounts in Edit property.",
+    acqRecordedNote: (note: string) => `Note: ${note}`,
     showAmortization: (n: number) =>
       `Show amortization schedule (${n} ${enPlural(n, ["payment", "payments"])})`,
     hideAmortization: "Hide amortization schedule",

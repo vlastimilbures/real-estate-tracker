@@ -99,6 +99,7 @@ describe("Property detail section nav (ADR 0107)", () => {
       en.dataCheck.title,
       pd.sectionRecords,
       pd.sectionFinancing,
+      pd.sectionAcquisition,
       pd.sectionHolding,
       pd.sectionProjection,
       pd.sectionAmortization,
