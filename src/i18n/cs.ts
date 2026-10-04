@@ -605,7 +605,7 @@ export const cs: Dictionary = {
     acqGapOver: (amount) =>
       `Zadané zdroje převyšují užití o ${amount}. Zkontrolujte vlastní zdroje, náklady a úpravy nebo úvěr.`,
     acqNote:
-      "— znamená nezadáno; užití počítá jen zadané náklady a úpravy. Úvěr na koupi je první úvěrový blok, pokud začíná nejpozději 90 dní po koupi. Částky zadáte v Upravit nemovitost.",
+      "— znamená nezadáno; užití počítá jen zadané náklady a úpravy. Úvěr na koupi je první úvěrový blok, pokud začíná nejpozději 90 dní po koupi. Částky zadáte v dialogu „Upravit nemovitost“.",
     acqRecordedNote: (note) => `Poznámka: ${note}`,
     showAmortization: (n) =>
       `Zobrazit umořovací plán (${n} ${csPlural(n, ["splátka", "splátky", "splátek"])})`,
@@ -1391,7 +1391,7 @@ export const cs: Dictionary = {
           "užití = cena + náklady + úpravy; zdroje = vlastní zdroje + úvěr na koupi",
         meaning:
           "Kontrola zadaného financování na stránce každé nemovitosti. Rozdíl 1 Kč a víc oběma směry se ukáže jako upozornění, nikdy neblokuje. Úvěr na koupi je první úvěrový blok, pokud začíná nejpozději 90 dní po koupi.",
-        eg: "užití 7,24 M, zdroje 7,21 M → chybí 25 tis.",
+        eg: "užití 7,30 M, zdroje 7,25 M → chybí 50 tis.",
       },
     },
     scenarioDefs: {

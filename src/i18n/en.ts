@@ -1442,7 +1442,7 @@ export const en = {
           "uses = price + costs + works; sources = own cash + acquisition loan",
         meaning:
           "A check of the recorded funding on each property page. A gap of 1 Kč or more either way shows as a warning, never a blocker. The acquisition loan is the first loan block when it starts no later than 90 days after the purchase.",
-        eg: "uses 7.24M, sources 7.21M → 25k short.",
+        eg: "uses 7.30M, sources 7.25M → 50k short.",
       },
     },
     scenarioDefs: {
