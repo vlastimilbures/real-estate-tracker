@@ -144,6 +144,7 @@ Other IDs seen in code comments:
 | [0117](0117-property-loan-outlook.md)             | Property loan outlook: each block's reset and the remaining term                       | #31                                    |
 | [0118](0118-data-check.md)                        | Data check: stale, defaulted and missing inputs                                        | #35                                    |
 | [0119](0119-acquisition-funding.md)               | Acquisition funding record and the down payment of a future buy                        | #33, #103, #140, #118                  |
+| [0120](0120-tranche-on-recast-payment.md)         | A tranche on an instalment recast's payment                                            | #109                                   |
 | [0123](0123-scenario-rules-every-entry-point.md)  | Scenario overrides meet the engine rules at every entry point                          | #107, #108                             |
 
 ### Judgment calls and open questions
