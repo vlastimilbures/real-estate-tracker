@@ -3,9 +3,10 @@
 // inflation shock reaches every real figure. With no shock the index is (1+inflation)^t.
 // Also: the snapshot read off a projection year (DR-054, D-62), so an as-of date inside the
 // horizon shows the projected year the charts plot.
-import { ONE, ZERO, powYears, type Decimal } from "../lib/money";
+import { ONE, powYears, type Decimal } from "../lib/money";
 import { at } from "./arrays";
 import { lastGridMonthOnOrBefore } from "./dates";
+import { yieldOf } from "./metrics";
 import { buildCpiIndex, inflationInYear } from "./projections";
 import { assertAssumptions } from "./validate";
 import type {
@@ -110,8 +111,6 @@ export function realPropertySnapshot(
   };
 }
 
-const ratio = (n: Decimal, d: Decimal) => (d.isZero() ? ZERO : n.div(d));
-
 /** The projection-year figures a snapshot reads (a `ProjectionYear` or a lensed copy). */
 export type YearFigures = Pick<
   ProjectionYear,
@@ -149,8 +148,8 @@ export function portfolioSnapshotAtYear(
     noi: r.noi,
     annualDebtService: r.debtService,
     netCashFlow: r.netCashFlow,
-    grossYield: ratio(r.grossRent, r.value),
-    netYield: ratio(r.noi, r.value),
+    grossYield: yieldOf(r.grossRent, r.value),
+    netYield: yieldOf(r.noi, r.value),
     dscr: r.dscr,
   };
 }
@@ -172,8 +171,8 @@ export function propertySnapshotAtYear(
     noi: r.noi,
     annualDebtService: r.debtService,
     netCashFlow: r.netCashFlow,
-    grossYield: ratio(r.grossRent, r.value),
-    netYield: ratio(r.noi, r.value),
+    grossYield: yieldOf(r.grossRent, r.value),
+    netYield: yieldOf(r.noi, r.value),
     dscr: r.dscr,
   };
 }

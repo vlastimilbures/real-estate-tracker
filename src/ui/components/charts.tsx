@@ -220,7 +220,12 @@ function ChartTable({
                   return (
                     <td key={s.key}>
                       {v === null ? (
-                        "—"
+                        // A percent with no base (LTV on no value, ADR 0133).
+                        kind === "pct" ? (
+                          t.common.notApplicable
+                        ) : (
+                          "—"
+                        )
                       ) : kind === "pct" ? (
                         <Pct value={v} />
                       ) : (
@@ -271,7 +276,9 @@ export function Tip({
           </span>
           <span>
             {it.value === null
-              ? "—"
+              ? it.kind === "pct"
+                ? t.common.notApplicable // no base (ADR 0133)
+                : "—"
               : it.kind === "pct"
                 ? fmtPct(it.value)
                 : fmtCzk(it.value, { parens: true })}

@@ -22,7 +22,7 @@ import {
   type XlsxSheetCells,
 } from "./xlsxExport";
 
-type ChartRow = Record<string, number>;
+type ChartRow = Record<string, number | null>;
 
 /** The compare workbook: its file name and its four sheets. */
 export function compareWorkbook(
@@ -36,7 +36,7 @@ export function compareWorkbook(
   const chart = (
     name: string,
     kind: CellKind,
-    pick: (y: ProjectionYear) => Decimal,
+    pick: (y: ProjectionYear) => Decimal | null,
   ) =>
     xlsxSheet<ChartRow>({
       name,

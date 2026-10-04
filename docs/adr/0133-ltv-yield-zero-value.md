@@ -39,15 +39,17 @@ The owner chose option A of #129 on 2026-10-04 (item 5).
    `PortfolioSnapshot`, and `ProjectionYear.ltv`, become `Decimal | null`. The real lens
    keeps them unchanged (ratios are lens-invariant).
 4. **Display.** A null LTV or yield shows "n/a" (`common.notApplicable`): the Dashboard and
-   Property detail tiles (no LTV badge), the Properties table, the projection grid and the
-   projection table. Charts leave a gap. The Excel exports write a blank cell. No code path
-   turns a null back into 0.
+   Property detail tiles (no LTV badge), the Properties table and the projection grid.
+   The LTV charts leave a gap; their tooltip and table view read "n/a".
+   The Excel exports write a blank cell. No code path turns a null back into 0.
 
 ## Consequences
 
 - Parity targets do not change: every sample property has a positive value.
-- The golden master changes once: the edge-loan `devFuture` case has a property whose
-  value is 0 at Today, so its yields become null (snapshot updated in the same commit,
-  ADR 0039).
+- The golden master changes once: in the edge-loan `devFuture` case, Javorova has a value
+  of 0 and no debt until its development loan starts on 2026-09-01, with rent of
+  326,400 Kč a year. Its snapshot yields at Today, a month later and on 2026-08-31 become
+  null (they were 0); its LTV stays 0. The snapshot is updated in the same commit
+  (ADR 0039).
 - A value above 0 with no debt still reads LTV 0 %.
 - A 0 Kč valuation stays valid input; only the ratios it feeds become "n/a".

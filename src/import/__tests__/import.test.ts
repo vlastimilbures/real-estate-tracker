@@ -285,7 +285,7 @@ describe("importCsv — parity (parity targets via CSV)", () => {
     near(snap.totalDebt.toNumber(), 9_515_405.13, KC, "debt"));
   it("total equity", () =>
     near(snap.totalEquity.toNumber(), 19_214_594.87, KC, "equity"));
-  it("portfolio LTV", () => near(snap.ltv.toNumber(), 0.3312, RATIO, "ltv"));
+  it("portfolio LTV", () => near(snap.ltv!.toNumber(), 0.3312, RATIO, "ltv"));
   it("gross rent", () =>
     near(snap.grossAnnualRent.toNumber(), 846_600, KC, "gross"));
   it("NOI", () => near(snap.noi.toNumber(), 589_050, KC, "noi"));

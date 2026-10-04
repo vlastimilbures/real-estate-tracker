@@ -170,9 +170,13 @@ export function Properties() {
                       )}
                     </td>
                     <td>
-                      <Badge band={ltvBand(p.ltv)}>
-                        {bandPill(fmtPct(p.ltv), ltvBandWord(t, p.ltv))}
-                      </Badge>
+                      {p.ltv === null ? (
+                        t.common.notApplicable
+                      ) : (
+                        <Badge band={ltvBand(p.ltv)}>
+                          {bandPill(fmtPct(p.ltv), ltvBandWord(t, p.ltv))}
+                        </Badge>
+                      )}
                     </td>
                     <td>
                       <Money value={p.netCashFlow} suffix={false} signed />

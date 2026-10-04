@@ -119,4 +119,20 @@ describe("ChartCard table toggle (UX-075)", () => {
     expect(cells(first!)).toEqual(["60,0 %"]);
     expect(cells(second!)).toEqual(["55,0 %"]);
   });
+
+  it("a percent with no base (LTV on no value) reads n/a (ADR 0133)", () => {
+    render(
+      <ChartCard
+        title="LTV"
+        kind="pct"
+        rows={[{ year: 0, calendarYear: 2026, ltv: null }]}
+        series={[{ key: "ltv", name: "LTV", color: "red" }]}
+      >
+        <Plot />
+      </ChartCard>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Table" }));
+    const [, first] = screen.getAllByRole("row");
+    expect(cells(first!)).toEqual(["n/a"]);
+  });
 });

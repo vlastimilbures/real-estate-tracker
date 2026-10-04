@@ -228,15 +228,15 @@ export interface PropertySnapshot {
   value: Decimal;
   debt: Decimal;
   equity: Decimal;
-  ltv: Decimal;
+  ltv: Decimal | null; // null when debt is owed on no value (ADR 0133)
   grossAnnualRent: Decimal;
   effectiveGrossIncome: Decimal;
   holdingCosts: Decimal;
   noi: Decimal;
   annualDebtService: Decimal;
   netCashFlow: Decimal;
-  grossYield: Decimal;
-  netYield: Decimal;
+  grossYield: Decimal | null; // null when there is no value (ADR 0133)
+  netYield: Decimal | null;
   dscr: Decimal | null; // null when debt service is 0
   weightedRateNumerator: Decimal; // balance*rate, for portfolio weighting
 }
@@ -247,15 +247,15 @@ export interface PortfolioSnapshot {
   totalValue: Decimal;
   totalDebt: Decimal;
   totalEquity: Decimal;
-  ltv: Decimal;
+  ltv: Decimal | null; // null when debt is owed on no value (ADR 0133)
   grossAnnualRent: Decimal;
   effectiveGrossIncome: Decimal;
   holdingCosts: Decimal;
   noi: Decimal;
   annualDebtService: Decimal;
   netCashFlow: Decimal;
-  grossYield: Decimal;
-  netYield: Decimal;
+  grossYield: Decimal | null; // null when there is no value (ADR 0133)
+  netYield: Decimal | null;
   dscr: Decimal | null;
   weightedAvgRate: Decimal;
 }
@@ -330,7 +330,7 @@ export interface ProjectionYear {
   value: Decimal;
   balance: Decimal;
   equity: Decimal;
-  ltv: Decimal;
+  ltv: Decimal | null; // null when debt is owed on no value (ADR 0133)
   // flows (blank/zero in year 0)
   grossRent: Decimal;
   effectiveRent: Decimal;

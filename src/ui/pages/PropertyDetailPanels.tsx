@@ -21,7 +21,7 @@ import { moneyDraft, percentDraft } from "../model/formParse";
 import { fmtDate } from "../../lib/format";
 import { amortizationExtras, type LoanOutlook } from "../model/propertyDetail";
 import type { AcquisitionView } from "../model/acquisition";
-import { dscrBadge, ltvBand, ltvBandWord } from "../model/health";
+import { dscrBadge, ltvBadge } from "../model/health";
 import { currencySymbol } from "../../lib/currency";
 import type {
   PropertySnapshot,
@@ -69,7 +69,7 @@ export function PropertySnapshotTiles({
               <Pct value={s.ltv} />
             </>
           }
-          badge={{ band: ltvBand(s.ltv), text: ltvBandWord(t, s.ltv) }}
+          badge={ltvBadge(t, s.ltv)}
         />
         <KpiTile
           label={t.propertyDetail.equity}

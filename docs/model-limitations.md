@@ -142,6 +142,9 @@ work still to do is in the [roadmap](roadmap.md).
 - **Deactivating is not selling.** A deactivated property is left out of the Dashboard,
   projections and KPIs. The app does not record a sale, sale proceeds or a loan payoff, and
   the property's equity simply disappears from the totals.
+- **No value, no ratio.** When a value is 0 (a 100 % crash in a scenario, or a 0 Kč
+  valuation), LTV and the yields show "n/a": there is nothing to divide by. With no debt
+  either, LTV shows 0 %.
 
 ## Currency and local practice
 

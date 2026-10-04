@@ -129,7 +129,7 @@ describe("snapshot value ramps with construction progress", () => {
     expect(s.value.lessThan(D("3500000"))).toBe(true);
     // equity & LTV follow from the ramped value.
     near(s.equity.toNumber(), s.value.minus(s.debt).toNumber(), 1, "equity");
-    near(s.ltv.toNumber(), s.debt.div(s.value).toNumber(), 1e-9, "ltv");
+    near(s.ltv!.toNumber(), s.debt.div(s.value).toNumber(), 1e-9, "ltv");
   });
 
   it("after the last draw the value is the full appreciated completed value", () => {

@@ -95,7 +95,7 @@ describe("one as-of rule on both screens (UX-053)", () => {
     expect(real.value.toString()).toBe(
       snap.value.div(cpiAt(assumptions, asOf)).toString(),
     );
-    expect(real.ltv.toString()).toBe(snap.ltv.toString());
+    expect(real.ltv?.toString()).toBe(snap.ltv?.toString());
   });
 
   it("at baseDate real equals nominal (price base = projection start)", () => {
