@@ -118,6 +118,33 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
     expect(identityGap(s.rows, ZERO)).toBeLessThanOrEqual(1e-9);
   });
 
+  it("a predecessor's tranche in a grid-month-1 handover is drawn", () => {
+    // The owner pays on the 15th; its 500,000 Kč tranche (10.06) lands in grid month 1,
+    // and so does a successor starting 12.06, before that payment is due: the balance
+    // it pays off includes the tranche.
+    const owner = refi("2025-01-15", "1000000", {
+      id: "m-dev",
+      interestRatePa: rate("0.05"),
+      monthlyInstalment: money("5400"),
+      loanTermYears: 30,
+      draws: [{ date: isoDate("2026-06-10"), amount: money("500000") }],
+    });
+    const blocks = [owner, refi("2026-06-12", "1600000")];
+    const s = propertySchedule(blocks, assumptions);
+    const [r] = s.refinances;
+    const row = s.rows[0]!;
+    expect(r!.month).toBe(1);
+    expect(row.drawn.toFixed(2)).toBe("500000.00");
+    expect(row.refinanced.toFixed(2)).toBe("119837.41");
+    // The balance paid off (1,480,162.59 Kč) already holds the tranche.
+    expect(row.refinanced.toFixed(6)).toBe(
+      r!.drawn.minus(r!.paidOff).toFixed(6),
+    );
+    expect(
+      identityGap(s.rows, openingDebt(blocks, assumptions)),
+    ).toBeLessThanOrEqual(1e-9);
+  });
+
   it("every row reconciles with drawn + refinanced", () => {
     for (const principal of ["1386000", "1186249.89", "1633000"]) {
       const { s } = handover(refi("2031-01-17", principal));

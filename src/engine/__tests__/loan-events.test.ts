@@ -9,6 +9,7 @@ import {
   balanceAtMonth,
   buildSchedule,
   instalmentAtMonth,
+  lastPaymentMonth,
   openingBalance,
   propertySchedule,
 } from "../schedule";
@@ -78,6 +79,25 @@ describe("ADR 0109: inert without events", () => {
     expect(plain.every((r) => r.prepaid.isZero())).toBe(true);
     expect(plain.every((r) => r.prepaymentFee.isZero())).toBe(true);
     expect(outcomesOf(javorova)).toEqual([]);
+  });
+
+  it("a future development loan reports nothing, before or after its draw", () => {
+    // Starts in grid month 4 (after three undrawn months), draws a tranche later.
+    const future = {
+      ...devBlock,
+      id: "m-future-dev",
+      startDate: isoDate("2026-09-15"),
+      draws: [{ date: isoDate("2027-01-20"), amount: money(1000000) }],
+    } as MortgageBlock;
+    expect(outcomesOf(future)).toEqual([]);
+  });
+
+  it("no block: no rows, handovers or outcomes", () => {
+    expect(propertySchedule([], assumptions)).toEqual({
+      rows: [],
+      refinances: [],
+      eventOutcomes: [],
+    });
   });
 });
 
@@ -448,6 +468,29 @@ describe("ADR 0109: recasts", () => {
       instalment: last.instalment,
       ratePa: last.ratePa,
     });
+  });
+});
+
+describe("ADR 0116: reading a schedule with a prepayment in grid month 1", () => {
+  // Payment 65 (17.06.2026) is grid month 1; a prepayment dated 10.06 follows it.
+  it("month 1 reports the lowered instalment; baseDate (month 0) the one paid", () => {
+    const rows = buildSchedule(
+      withEvents(javorova, [prepay("2026-06-10", 100000)]),
+      assumptions,
+    );
+    expect(rows[0]?.prepaid.toFixed(2)).toBe("100000.00");
+    expect(rows[0]?.instalment.toFixed(2)).toBe("6721.80");
+    expect(rows[1]?.instalment.toFixed(2)).toBe("6308.22");
+    expect(instalmentAtMonth(rows, 1).instalment.toFixed(2)).toBe("6308.22");
+    expect(instalmentAtMonth(rows, 0).instalment.toFixed(2)).toBe("6721.80");
+  });
+
+  it("a loan prepaid off in grid month 1 last pays in month 1", () => {
+    const rows = buildSchedule(
+      withEvents(javorova, [prepay("2026-06-10", 5000000)]),
+      assumptions,
+    );
+    expect(lastPaymentMonth(rows)).toBe(1);
   });
 });
 

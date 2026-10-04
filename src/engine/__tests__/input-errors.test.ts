@@ -5,7 +5,12 @@ import { describe, it, expect } from "vitest";
 import { rate } from "../brands";
 import { isoDate } from "../dates";
 import { amortizationHealth, termMonths } from "../amortization";
-import { buildSchedule, openingDebt, schedulesByProperty } from "../schedule";
+import {
+  buildSchedule,
+  openingBalance,
+  openingDebt,
+  schedulesByProperty,
+} from "../schedule";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
@@ -158,6 +163,19 @@ describe("D-17: every loan path raises the typed error", () => {
     caught(() => schedulesByProperty(p.mortgages, ids, assumptions));
     caught(() => portfolioProjection(p, assumptions));
     caught(() => portfolioKpis(p, assumptions));
+  });
+
+  it("the opening balance and debt", () => {
+    // The parity path is a closed-form FV: without the check it returns a number.
+    expect(caught(() => openingBalance(bad, assumptions)).errors).toEqual([
+      {
+        code: "INSTALMENT_BELOW_INTEREST",
+        entity: "mortgage",
+        id: "m-x",
+        field: "monthlyInstalment",
+      },
+    ]);
+    caught(() => openingDebt([bad], assumptions));
   });
 
   it("snapshot without schedules agrees", () => {
