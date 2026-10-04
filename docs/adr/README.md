@@ -154,6 +154,7 @@ Other IDs seen in code comments:
 | [0127](0127-opaque-property-ids-sample-match.md)  | Random property ids; the sample is matched by id and name                              | #101, #105                             |
 | [0128](0128-assumption-bounds.md)                 | Assumption bounds: reset rate, growth floor, shocked levels                            | #114                                   |
 | [0131](0131-lossless-money-draft.md)              | A form drafts a stored amount or rate at full precision                                | #201, #208                             |
+| [0132](0132-reload-export-write-order.md)         | The banner Reload and the backup export follow the write order                         | #138, #199                             |
 
 ### Judgment calls and open questions
 
