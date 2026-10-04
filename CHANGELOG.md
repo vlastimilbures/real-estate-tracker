@@ -230,6 +230,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Saving a form no longer rounds a stored rate it did not change (ADR 0131, #208). A rate
+  imported or restored with more than six decimals (e.g. interest rate `0.03591234`) was
+  rewritten to six (`0.035912`) by any edit of the same record. Forms now show and save the
+  stored rate in full, as a percentage (`3.591234`).
 - Assumptions that broke the maths are refused instead of showing `Infinity`, `NaN` or
   negative interest (ADR 0128, #114). The Assumptions page, the scenario form, the property
   form, CSV import and restore now check that:
