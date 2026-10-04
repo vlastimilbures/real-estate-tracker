@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { rate } from "../brands";
 import { edate, isoDate } from "../dates";
-import { schedulesByProperty } from "../schedule";
+import { propertySchedules, schedulesByProperty } from "../schedule";
 import { portfolioSnapshot } from "../metrics";
 import { portfolioProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
@@ -42,9 +42,39 @@ const shocked = applyScenario(assumptions, {
   valueShock: { pct: rate("0.2"), atYear: 2 },
 });
 
+/** Every loan with two prepayments and a recast (ADR 0109; #130 G1-6-04): the seed
+ *  loans replay the first prepayment as history, the dev loan meets them after its
+ *  completion, the future loan after its draw. */
+const withEvents = (p: Portfolio): Portfolio => ({
+  ...p,
+  mortgages: p.mortgages.map((m) => ({
+    ...m,
+    prepayments: [
+      {
+        date: edate(m.startDate, 61),
+        amount: money("150000"),
+        effect: "shortenTerm",
+      },
+      {
+        date: edate(m.startDate, 97),
+        amount: money("100000"),
+        effect: "lowerInstalment",
+        fee: money("2000"),
+      },
+    ],
+    recasts: [
+      { date: edate(m.startDate, 121), maturity: edate(m.startDate, 300) },
+    ],
+  })),
+});
+const seedEvents = withEvents(seed);
+const mixedEvents = withEvents(mixed);
+
 const PORTFOLIOS: [string, Portfolio][] = [
   ["seed", seed],
   ["mixed", mixed],
+  ["seed + events", seedEvents],
+  ["mixed + events", mixedEvents],
   ["mixed + refinance", mixedWithRefi],
   ["synthetic 20", synthetic(20)],
   [
@@ -66,6 +96,25 @@ const ASSUMPTIONS: [string, Assumptions][] = [
 ];
 
 describe("portfolioOutputs = the separate public calls", () => {
+  it("the event portfolios apply every event", () => {
+    for (const p of [seedEvents, mixedEvents]) {
+      const outcomes = [
+        ...propertySchedules(
+          p.mortgages,
+          p.properties.map((x) => x.id),
+          assumptions,
+        ).values(),
+      ].flatMap((s) => s.eventOutcomes);
+      expect(outcomes.map((o) => [o.blockId, o.kind, o.issue])).toEqual(
+        p.mortgages.flatMap((m) => [
+          [m.id, "prepayment", null],
+          [m.id, "prepayment", null],
+          [m.id, "recast", null],
+        ]),
+      );
+    }
+  });
+
   for (const [pName, p] of PORTFOLIOS) {
     for (const [aName, a] of ASSUMPTIONS) {
       it(`${pName}, ${aName}`, () => {
