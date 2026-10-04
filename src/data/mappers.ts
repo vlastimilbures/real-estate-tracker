@@ -7,6 +7,7 @@ import { money, mortgageBlock, rate } from "../engine";
 import { DataError } from "./errors";
 import * as g from "./guards";
 import type {
+  AcquisitionFunding,
   Assumptions,
   Property,
   LoanRecast,
@@ -36,6 +37,10 @@ export interface PropertyRow {
   appreciation_override_pa: string | null;
   rent_index_override_pa: string | null;
   active: number | null;
+  own_cash: string | null;
+  transaction_costs: string | null;
+  initial_works: string | null;
+  funding_note: string | null;
 }
 
 export interface MortgageBlockRow {
@@ -432,7 +437,32 @@ export function rowToProperty(r: PropertyRow): Property {
       r.rent_index_override_pa,
     ),
     active: r.active === 0 ? false : true, // NULL (legacy row) / 1 ⇒ active
+    funding: rowToFunding(ref, r),
   };
+}
+
+/** The funding record (ADR 0119): undefined when every part is NULL (unknown). */
+function rowToFunding(
+  ref: g.RowRef,
+  r: PropertyRow,
+): AcquisitionFunding | undefined {
+  if (
+    r.own_cash == null &&
+    r.transaction_costs == null &&
+    r.initial_works == null &&
+    r.funding_note == null
+  )
+    return undefined;
+  const f: AcquisitionFunding = {};
+  const ownCash = g.moneyOpt(ref, "own_cash", r.own_cash);
+  const costs = g.moneyOpt(ref, "transaction_costs", r.transaction_costs);
+  const works = g.moneyOpt(ref, "initial_works", r.initial_works);
+  if (ownCash) f.ownCash = ownCash;
+  if (costs) f.transactionCosts = costs;
+  if (works) f.initialWorks = works;
+  if (r.funding_note != null)
+    f.note = g.text(ref, "funding_note", r.funding_note);
+  return f;
 }
 
 export function rowToMortgageBlock(r: MortgageBlockRow): MortgageBlock {
@@ -564,6 +594,10 @@ export function propertyToRow(
     appreciation_override_pa: dtext(p.appreciationOverridePa),
     rent_index_override_pa: dtext(p.rentIndexOverridePa),
     active: p.active === false ? 0 : 1,
+    own_cash: dtext(p.funding?.ownCash),
+    transaction_costs: dtext(p.funding?.transactionCosts),
+    initial_works: dtext(p.funding?.initialWorks),
+    funding_note: p.funding?.note ?? null,
   };
 }
 

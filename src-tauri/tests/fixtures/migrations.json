@@ -53,6 +53,12 @@
       "name": "mortgage prepayments and recasts",
       "sql": "\n      ALTER TABLE mortgage_blocks ADD COLUMN prepayments TEXT\n        CONSTRAINT mortgage_prepayments_json CHECK (json_valid(prepayments));\n      ALTER TABLE mortgage_blocks ADD COLUMN recasts TEXT\n        CONSTRAINT mortgage_recasts_json CHECK (json_valid(recasts));\n    ",
       "foreignKeysOff": false
+    },
+    {
+      "version": 10,
+      "name": "property acquisition funding",
+      "sql": "\n      ALTER TABLE properties ADD COLUMN own_cash TEXT\n        CONSTRAINT property_own_cash_not_negative CHECK (own_cash NOT GLOB '-*');\n      ALTER TABLE properties ADD COLUMN transaction_costs TEXT\n        CONSTRAINT property_transaction_costs_not_negative CHECK (transaction_costs NOT GLOB '-*');\n      ALTER TABLE properties ADD COLUMN initial_works TEXT\n        CONSTRAINT property_initial_works_not_negative CHECK (initial_works NOT GLOB '-*');\n      ALTER TABLE properties ADD COLUMN funding_note TEXT;\n    ",
+      "foreignKeysOff": false
     }
   ],
   "headColumns": {
@@ -67,7 +73,11 @@
       "purchase_price",
       "appreciation_override_pa",
       "rent_index_override_pa",
-      "active"
+      "active",
+      "own_cash",
+      "transaction_costs",
+      "initial_works",
+      "funding_note"
     ],
     "mortgage_blocks": [
       "id",

@@ -58,6 +58,10 @@ async function fill(sql: Sql, version: number): Promise<void> {
     await sql.execute(
       `UPDATE mortgage_blocks SET prepayments = '[{"date":"2027-02-01","amount":"100000","effect":"shortenTerm"}]', recasts = '[{"date":"2030-02-01","maturity":"2050-02-01"}]'`,
     );
+  if (version >= 10)
+    await sql.execute(
+      "UPDATE properties SET own_cash = '2500000', transaction_costs = '95000', funding_note = 'Deposit' WHERE id = 'p1'",
+    );
   await sql.execute(
     "INSERT INTO valuations (id, property_id, valid_from, valid_to, market_value) VALUES ('v1', 'p1', '2023-02-01', '2025-12-31', '7600000'), ('v2', 'p1', '2026-01-01', NULL, '8100000')",
   );

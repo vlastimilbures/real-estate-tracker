@@ -369,6 +369,20 @@ describe("restoreFromJson — column whitelist (DR-017)", () => {
     db.db.close();
   });
 
+  it("a backup round-trips a funding record (ADR 0119)", async () => {
+    const db = await freshSeeded();
+    await db.execute(
+      "UPDATE properties SET own_cash = '1500000.5', transaction_costs = '95000', initial_works = '0', funding_note = 'Deposit' WHERE rowid = 1",
+    );
+    const cols =
+      "SELECT id, own_cash, transaction_costs, initial_works, funding_note FROM properties ORDER BY id";
+    const before = await db.select<Record<string, unknown>>(cols);
+    expect(before.filter((r) => r.own_cash !== null)).toHaveLength(1);
+    await restoreFromJson(db, await exportToJson(db), checkInputRules);
+    expect(await db.select<Record<string, unknown>>(cols)).toEqual(before);
+    db.db.close();
+  });
+
   it("drift tripwire: BACKUP_COLUMNS matches the migrated schema", async () => {
     const db = openMemorySql();
     await migrate(db);

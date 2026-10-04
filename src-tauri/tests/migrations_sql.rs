@@ -154,3 +154,31 @@ async fn a_fresh_database_reaches_the_head_schema() {
     }
     cleanup(path, pool).await;
 }
+
+/// ADR 0119 (v10): the funding columns' textual sign checks hold on the bundled SQLite.
+#[tokio::test]
+async fn the_funding_sign_checks_hold_on_the_bundled_sqlite() {
+    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let (path, pool) = open("funding").await;
+    for migration in fixture["migrations"].as_array().unwrap() {
+        apply(&pool, migration).await;
+    }
+    pool.execute(
+        "INSERT INTO properties (id, name, purchase_date, purchase_price, own_cash, transaction_costs, initial_works, funding_note) \
+         VALUES ('p1', 'Flat One', '2023-02-01', '6375000', '1500000', '0', NULL, 'Deposit')",
+    )
+    .await
+    .unwrap();
+    for column in ["own_cash", "transaction_costs", "initial_works"] {
+        let err = pool
+            .execute(format!("UPDATE properties SET {column} = '-1'").as_str())
+            .await
+            .unwrap_err()
+            .to_string();
+        assert!(
+            err.contains(&format!("property_{column}_not_negative")),
+            "{column}: {err}"
+        );
+    }
+    cleanup(path, pool).await;
+}
