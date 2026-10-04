@@ -12,6 +12,7 @@ import type {
   MortgagePrepayment,
   PrepaymentEffect,
 } from "../types";
+import { annuityPayment } from "./reference/mortgageReference";
 import { assumptions, portfolio } from "./support/seed";
 
 const seedJavorova = portfolio.mortgages.find(
@@ -54,11 +55,15 @@ describe("ADR 0116: interest saved by prepayments", () => {
   });
 
   it("is the whole-life interest difference", () => {
+    // Both schedules match through payment #120 (the fixation end, 2031-01-17). From
+    // #121 both are 244-payment annuities at 4.5 %/12 to the same maturity (#364), on
+    // balances B and B − 500,000. So the saving is 244 · PMT(500,000) − 500,000, for any B.
     const b = { ...javorova, prepayments: [prepay("2031-01-17", 500000)] };
-    const plain = interest(propertySchedule([javorova], assumptions).rows);
-    const withIt = interest(propertySchedule([b], assumptions).rows);
-    expect(saved([b])?.toFixed(6)).toBe(plain.minus(withIt).toFixed(6));
-    expect(saved([b])?.greaterThan(0)).toBe(true);
+    const closedForm = annuityPayment("0.00375", 244, 500000)
+      .times(244)
+      .minus(500000);
+    expect(closedForm.toFixed(2)).toBe("264031.42");
+    expect(saved([b])?.toFixed(6)).toBe(closedForm.toFixed(6));
   });
 
   it("keeps recasts on both sides", () => {
