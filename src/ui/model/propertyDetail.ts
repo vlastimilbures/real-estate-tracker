@@ -271,6 +271,7 @@ export function amortizationExtras(
 ) {
   return nonZeroColumns(rows, [
     { key: "drawn", header: d.amColDrawn },
+    { key: "refinanced", header: d.amColRefinanced },
     { key: "prepaid", header: d.amColPrepaid },
     { key: "prepaymentFee", header: d.amColPrepaymentFee },
   ]);

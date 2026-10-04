@@ -79,12 +79,13 @@ function expectMatchesReference(loans: RefLoan[], outcomes: Outcome[]) {
   expect(e.rows).toHaveLength(
     Math.max(lastPaid, assumptions.horizonYears * 12),
   );
-  // Σ principal + Σ prepaid = opening debt + new debt, and the loan ends repaid.
+  // Σ principal + Σ prepaid = opening debt + new debt (drawn and the refinance
+  // differences, ADR 0130), and the loan ends repaid.
   const last = e.rows.at(-1)?.endBalance ?? D(0);
   expect(last.toNumber()).toBe(0);
   const opening = openingBalance(toBlock(loans[0]), assumptions);
   const repaid = sum(e.rows, (x) => x.principal.plus(x.prepaid));
-  const drawn = sum(e.rows, (x) => x.drawn);
+  const drawn = sum(e.rows, (x) => x.drawn.plus(x.refinanced));
   expect(
     repaid.minus(opening).minus(drawn).abs().toNumber(),
   ).toBeLessThanOrEqual(TIGHT);

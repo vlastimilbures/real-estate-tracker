@@ -2,9 +2,10 @@
 // carries it per year as `draws`. Until now ui/model backed draws out of the balances
 // (balance[t] − balance[t−1] + principal[t]); the engine value must reproduce that
 // back-out exactly (a refactor: no number moves), and every schedule row must satisfy
-//   endBalance[m] = endBalance[m−1] − principal[m] + drawn[m],
+//   endBalance[m] = endBalance[m−1] − principal[m] + drawn[m] + refinanced[m],
 // anchored at the baseDate debt (openingDebt), over plain, development, future, refinance
-// and turn-on cases.
+// and turn-on cases. Since ADR 0130 a refinance handover's difference is `refinanced`,
+// apart from `drawn` / `draws`, so the back-out is draws + refinanced.
 import { describe, it, expect } from "vitest";
 import { D, ZERO, type Decimal } from "../../lib/money";
 import { rate } from "../brands";
@@ -191,7 +192,7 @@ const CASES: [string, Portfolio, Assumptions][] = [
   ],
 ];
 
-/** Today's ui/model back-out, which the engine `draws` must reproduce. */
+/** The old ui/model back-out, which the engine `draws` + `refinanced` must reproduce. */
 const backOut = (proj: ProjectionYear[], t: number): Decimal =>
   proj[t].balance
     .minus(t > 0 ? proj[t - 1].balance : ZERO)
@@ -199,15 +200,19 @@ const backOut = (proj: ProjectionYear[], t: number): Decimal =>
 
 function expectDrawsMatchBackOut(proj: ProjectionYear[], label: string) {
   expect(proj[0].draws.isZero(), `${label} year 0`).toBe(true);
+  expect(proj[0].refinanced.isZero(), `${label} year 0`).toBe(true);
   for (let t = 1; t < proj.length; t++) {
-    const diff = proj[t].draws.minus(backOut(proj, t)).abs();
+    const diff = proj[t].draws
+      .plus(proj[t].refinanced)
+      .minus(backOut(proj, t))
+      .abs();
     expect(diff.lt(EPS), `${label} t=${t}: ${diff.toString()}`).toBe(true);
   }
 }
 
 describe("DR-092 — schedule rows record the debt they draw", () => {
   for (const [name, p, a] of CASES) {
-    it(`${name}: endBalance[m] = endBalance[m−1] − principal[m] + drawn[m]`, () => {
+    it(`${name}: endBalance[m] = endBalance[m−1] − principal[m] + drawn[m] + refinanced[m]`, () => {
       for (const prop of p.properties) {
         const blocks = p.mortgages.filter((m) => m.propertyId === prop.id);
         const { rows } = propertySchedule(blocks, a);
@@ -216,6 +221,7 @@ describe("DR-092 — schedule rows record the debt they draw", () => {
           const diff = prev
             .minus(row.principal)
             .plus(row.drawn)
+            .plus(row.refinanced)
             .minus(row.endBalance)
             .abs();
           expect(
@@ -240,7 +246,7 @@ describe("DR-092 — schedule rows record the debt they draw", () => {
   });
 });
 
-describe("DR-092 — ProjectionYear.draws equals the balance back-out", () => {
+describe("DR-092 — ProjectionYear.draws + refinanced equals the balance back-out", () => {
   for (const [name, p, a] of CASES) {
     it(`${name}: per property and portfolio`, () => {
       const blocksOf = (id: string) =>
