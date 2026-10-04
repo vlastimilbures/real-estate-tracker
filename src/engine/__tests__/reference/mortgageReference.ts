@@ -376,6 +376,12 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
       if (pending) trigger = true;
       pending = draw.greaterThan(ZERO) && !trigger;
     }
+    // ADR 0120: a tranche landing on the agreed instalment's payment does not change
+    // that payment; the next payment re-amortizes over the maturity in force.
+    const owedNext =
+      agreedInstalment !== null &&
+      draw.greaterThan(ZERO) &&
+      drawTiming === "landing";
     if (agreedInstalment) {
       instalment = agreedInstalment;
     } else if (trigger) {
@@ -385,7 +391,7 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
           ? roundInstalment(annuityPayment(r, remaining, balance))
           : balance.plus(balance.times(r));
     }
-    reamortizeNext = false;
+    reamortizeNext = owedNext;
     agreedInstalment = null;
     const interest = roundInterest(balance.times(r));
     let principal = instalment.minus(interest);

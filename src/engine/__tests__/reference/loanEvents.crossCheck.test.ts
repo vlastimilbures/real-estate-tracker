@@ -59,6 +59,12 @@ const devDrawsOnly: RefLoan = {
   termMonths: 360,
   draws: [{ date: "2028-03-10", amount: "500000" }],
 };
+/** #109: the recast's payment q (2027-02-01) takes the tranche dated 2027-01-15. */
+const onRecastPayment: RefLoan = {
+  ...devDrawsOnly,
+  draws: [{ date: "2027-01-15", amount: "1000000" }],
+  recasts: [{ date: "2027-01-01", instalment: 15000 }],
+};
 const future: RefLoan = {
   start: "2027-01-15",
   principal: "1500000",
@@ -236,6 +242,26 @@ const CASES: Case[] = [
   [
     "dev loan, instalment recast after completion",
     { ...devIo, recasts: [{ date: "2028-01-10", instalment: 25000 }] },
+  ],
+  [
+    "dev loan, tranche on an instalment recast's payment (ADR 0120)",
+    { ...onRecastPayment, fixationMonths: 360 },
+  ],
+  [
+    "dev loan, tranche on an instalment recast's payment, then a reset (ADR 0120)",
+    onRecastPayment,
+  ],
+  [
+    "dev loan, tranche on an instalment recast's payment, replayed (ADR 0120)",
+    onRecastPayment,
+    "2027-02-07",
+  ],
+  [
+    "dev loan, tranche the payment after an instalment recast's (ADR 0120)",
+    {
+      ...onRecastPayment,
+      draws: [{ date: "2027-02-15", amount: "1000000" }],
+    },
   ],
   [
     "dev loan replayed before baseDate",

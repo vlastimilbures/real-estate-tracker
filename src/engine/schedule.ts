@@ -302,7 +302,9 @@ function bucketDraws(
 /**
  * The loan's last payment number in force — the contract term until a prepayment
  * shortens it or a recast moves it — and what the next payment owes: a
- * re-amortization over the payments left, or an agreed instalment (ADR 0109).
+ * re-amortization over the payments left, or an agreed instalment (ADR 0109). Both are
+ * owed when a tranche lands on the agreed instalment's payment: that payment pays the
+ * agreed instalment and the next one re-amortizes (ADR 0120).
  */
 interface TermState {
   term: number;
@@ -318,12 +320,16 @@ function initialTerms(block: MortgageBlock): TermState {
   };
 }
 
-/** After an amortizing payment nothing is owed to the next one any more. Through
+/** After an amortizing payment nothing is owed to the next one any more, except a
+ *  re-amortization owed beside the agreed instalment it paid (ADR 0120). Through
  *  interest-only months it stays owed (completion re-amortizes anyway). */
 function paidTerms(terms: TermState, interestOnly: boolean): TermState {
-  return interestOnly
-    ? terms
-    : { ...terms, reamortizeNext: false, agreedInstalment: null };
+  if (interestOnly) return terms;
+  return {
+    ...terms,
+    reamortizeNext: terms.agreedInstalment !== null && terms.reamortizeNext,
+    agreedInstalment: null,
+  };
 }
 
 /**
@@ -350,16 +356,21 @@ function paymentTerms(
 }
 
 /** A tranche landing on or after the maturity in force goes back to the contract term
- *  (ADR 0109, ADR 0116), so it is not paid off in one shot. */
+ *  (ADR 0109, ADR 0116), so it is not paid off in one shot. A tranche landing on an
+ *  agreed instalment's payment leaves that instalment paid and re-amortizes the next
+ *  payment (ADR 0120). */
 function termsForTranche(
   terms: TermState,
   draw: Decimal,
   p: number,
   contractTerm: number,
 ): TermState {
-  return draw.greaterThan(ZERO) && p >= terms.term
-    ? { ...terms, term: Math.max(terms.term, contractTerm) }
-    : terms;
+  if (!draw.greaterThan(ZERO)) return terms;
+  return {
+    ...terms,
+    term: p >= terms.term ? Math.max(terms.term, contractTerm) : terms.term,
+    reamortizeNext: terms.reamortizeNext || terms.agreedInstalment !== null,
+  };
 }
 
 /** A block's prepayments and recasts, keyed by the payment number they follow. */
