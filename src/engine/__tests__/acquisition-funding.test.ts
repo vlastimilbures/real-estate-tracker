@@ -167,7 +167,7 @@ describe("ADR 0119 §3: the acquisition loan", () => {
   it("does not count a first loan starting 91 days after the purchase", () => {
     const at91 = withBuy([loan({ startDate: addDays(PURCHASE, 91) })]);
     expect(summary(at91).loan).toBeNull();
-    expectKc(outflow(at91), PRICE, "cash purchase");
+    expect(summary(at91).outflow.toString()).toBe(String(PRICE)); // its cash in: §5 below
   });
 
   it("counts a loan drawn before the purchase (off-plan, before handover)", () => {
@@ -215,6 +215,49 @@ describe("ADR 0119 §3: the acquisition loan", () => {
     expect(summary(withBuy([handover, offPlan])).loan?.toString()).toBe(
       "2000000",
     );
+  });
+});
+
+describe("ADR 0119 §5: a first loan after the window", () => {
+  const kpiText = (p: Portfolio, a: Assumptions = assumptions) => {
+    const k = portfolioKpis(p, a);
+    return [k.cumulativeNetCashFlow, k.leveredIrrNominal, k.leveredIrrReal].map(
+      (x) => x?.toString(),
+    );
+  };
+
+  it("drawn in the purchase's projection year: the same figures as inside the window", () => {
+    // +90 d nets the loan off the down payment; +91 d charges the price and books the
+    // loan as cash in, both in year 3, so one day moves nothing.
+    expect(
+      kpiText(withBuy([loan({ startDate: addDays(PURCHASE, 91) })])),
+    ).toEqual(kpiText(withBuy([loan({ startDate: addDays(PURCHASE, 90) })])));
+  });
+
+  it("drawn a year later: the price goes out, the principal comes back", () => {
+    const later = loan({ startDate: isoDate("2030-03-01") }); // projection year 4
+    expectKc(outflow(withBuy([later])), 3_800_000, "5.8 M out, 2 M in");
+    // A cash purchase recorded as such: same cash, the loan still comes back.
+    expectKc(
+      outflow(withBuy([later], { ownCash: money(PRICE) })),
+      3_800_000,
+      "recorded cash buy",
+    );
+  });
+
+  it("drawn after the horizon: no cash in", () => {
+    const a = { ...assumptions, horizonYears: 5 };
+    const beyond = loan({ startDate: isoDate("2032-01-01") }); // projection year 6
+    expectKc(outflow(withBuy([beyond]), a), PRICE, "price only");
+  });
+
+  it("only its initial principal comes back, not its tranches", () => {
+    const lateDev: MortgageBlock = {
+      ...devLoan,
+      startDate: isoDate("2029-06-01"),
+    };
+    const p = withBuy([lateDev], undefined, 10_000_000, 10_000_000);
+    expectKc(outflow(p), 8_000_000, "10 M out, 2 M in");
   });
 });
 

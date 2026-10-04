@@ -27,24 +27,33 @@ export interface AcquisitionSummary {
   outflow: Decimal;
 }
 
-/**
- * The block that funded the purchase (ADR 0119 §3): the property's earliest block, when
- * it starts no later than 90 days after the purchase date. Any earlier start counts (an
- * off-plan loan drawn before handover). A later block is a successor, never this one.
- * `blocks` must be the property's own.
- */
-function acquisitionLoanBlock(
-  property: Property,
-  blocks: MortgageBlock[],
-): MortgageBlock | undefined {
+/** The property's earliest block (`blocks` must be the property's own). */
+function earliestBlock(blocks: MortgageBlock[]): MortgageBlock | undefined {
   let earliest: MortgageBlock | undefined;
   for (const b of blocks) {
     if (!earliest || isAfter(earliest.startDate, b.startDate)) earliest = b;
   }
+  return earliest;
+}
+
+/** ADR 0119 §3: a block starting no later than 90 days after the purchase funded it;
+ *  any earlier start counts too (an off-plan loan drawn before handover). */
+function fundedThePurchase(property: Property, block: MortgageBlock): boolean {
   const latest = addDays(property.purchaseDate, ACQUISITION_LOAN_WINDOW_DAYS);
-  return earliest && isOnOrBefore(earliest.startDate, latest)
-    ? earliest
-    : undefined;
+  return isOnOrBefore(block.startDate, latest);
+}
+
+/**
+ * ADR 0119 §5: a property's first loan that is not its acquisition loan (it starts after
+ * the 90-day window). For a future buy its initial principal reaches the owner as cash in
+ * the year it is drawn; its later tranches do not.
+ */
+export function laterFirstLoan(
+  property: Property,
+  portfolio: Portfolio,
+): MortgageBlock | undefined {
+  const first = earliestBlock(forProperty(portfolio.mortgages, property.id));
+  return first && !fundedThePurchase(property, first) ? first : undefined;
 }
 
 /** A loan's initial principal plus its tranches dated on or before the start of the
@@ -109,9 +118,14 @@ export function acquisitionSummary(
   assumptions: Assumptions,
 ): AcquisitionSummary {
   const price = property.purchasePrice;
+  // ADR 0119 §3: the earliest block, when it funded the purchase. A later block is a
+  // successor, never the acquisition loan.
   const blocks = forProperty(portfolio.mortgages, property.id);
-  const block = acquisitionLoanBlock(property, blocks);
-  const loan = block ? principalUntilReplaced(block, blocks) : null;
+  const first = earliestBlock(blocks);
+  const loan =
+    first && fundedThePurchase(property, first)
+      ? principalUntilReplaced(first, blocks)
+      : null;
   const loanOrZero = loan ?? ZERO;
   const parts = recorded(property);
   return {
