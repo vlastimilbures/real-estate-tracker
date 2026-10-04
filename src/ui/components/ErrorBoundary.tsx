@@ -44,7 +44,8 @@ export class ErrorBoundary extends Component<Props, State> {
     if (error) {
       if (this.props.fallback) return this.props.fallback(error, this.reset);
       // Non-reactive read: a class fallback can't use the useT hook, and the language
-      // won't change while a crash is on screen. Default to "en" before the store inits.
+      // won't change while a crash is on screen. The active language's dictionary is
+      // loaded before the first render (DR-009).
       const t = getDict(useUiStore.getState().language);
       if (error instanceof EngineInputError) {
         // Stored data breaks an engine rule (UX-049): say which record and which

@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { App } from "./ui/App";
 import { applyTheme } from "./ui/theme";
 import { readPersistedTheme } from "./state/themePreference";
+import { loadStartupDictionary } from "./state/uiStore";
 import { setPerfSink } from "./lib/perf";
 import { tauriPerfSink } from "./platform/perfReport";
 import { isTauri } from "./lib/tauri";
@@ -13,8 +14,14 @@ if (isTauri()) setPerfSink(tauriPerfSink);
 // Apply the saved appearance before first paint to avoid a light-flash on launch.
 applyTheme(readPersistedTheme());
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-);
+// Render once the active language's dictionary has loaded (DR-009), so the first frame
+// is already translated. It is a local chunk: this adds a few milliseconds.
+void loadStartupDictionary()
+  .catch((error: unknown) => console.error(error))
+  .finally(() => {
+    ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>,
+    );
+  });
