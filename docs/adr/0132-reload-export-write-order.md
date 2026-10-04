@@ -9,6 +9,8 @@
   [0052](0052-restore-safety-backup.md) (restore safety backup),
   [0066](0066-performance-budgets.md) (DR-134: one snapshot for the load),
   [0014](0014-rust-transaction-command.md) (one transaction per write)
+- Amended: 2026-10-04 after the independent review of PR #216 (incomplete snapshot, field
+  order, R6-03)
 
 ## Context
 
@@ -42,7 +44,9 @@ Owner, 2026-10-04 (Track 8 PR4 plan; option A of #138 and #199, option C of #138
 2. **The export and the safety backups read one snapshot.** All seven tables and the
    schema version are read in one read transaction (the DR-134 mechanism the load already
    uses). A write that lands during an export is either wholly in the file or wholly out of
-   it.
+   it. An incomplete snapshot fails the export rather than writing a table empty. The CSV
+   import's own reads (R6-03) need no snapshot: the preview and the import run inside the
+   queue, so no write lands between them.
 3. **The export itself is not queued.** It never waits for edits, and its save dialog never
    holds them up. A write that commits while an export runs keeps the "changed since last
    backup" flag on, as ADR 0110 already says; the count of writes is taken before the
@@ -63,5 +67,10 @@ Owner, 2026-10-04 (Track 8 PR4 plan; option A of #138 and #199, option C of #138
   reads the saved row.
 - An exported file holds one moment of the database. It still does not hold a write queued
   before the click but not yet committed; such a write keeps the changed flag on.
+- In the app, a backup file now lists each record's fields in alphabetical order, not in
+  table column order: the snapshot read returns them that way (found by the independent
+  review of PR #216). Restore reads fields by name, so every backup restores as before,
+  older files included. Keeping column order would need a runtime dependency feature
+  (`serde_json` `preserve_order`, ADR 0002); not done.
 - When the reload keeps failing, the banner still does not name the cause (#200: owner chose
   to leave it, as ADR 0125 Consequences say).

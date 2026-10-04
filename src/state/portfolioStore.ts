@@ -151,7 +151,8 @@ interface PortfolioState {
   stale: boolean;
 
   init: (open?: () => Promise<Sql>) => Promise<void>;
-  /** Load every table into the store. Not queued: for startup (and tests) only. */
+  /** Load every table into the store. Does not queue itself: outside a queued job, only
+   *  `init` calls it; everything else uses `reload`. */
   refresh: () => Promise<void>;
   /** The banner's Reload: refresh after every pending write, so it never shows data older
    *  than theirs (ADR 0132). On failure log it and set `stale`; never throws. */

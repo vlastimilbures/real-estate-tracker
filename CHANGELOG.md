@@ -234,7 +234,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   after it: for example a new flat's valuation without the flat. Such a file could fail its
   own restore check, or restore with records missing, and the export still reported
   success. The export, and the safety backup before a restore or Clear sample, now read the
-  whole database at one moment (ADR 0132, #138).
+  whole database at one moment (ADR 0132, #138). A backup file now lists each record's
+  fields in alphabetical order; every backup, old or new, restores as before.
 - The **Reload** button on the "change may not be shown yet" banner could finish after a
   save made while it ran and put the older data back on screen, with the banner gone: the
   saved record seemed to vanish until the next change. Reload now waits for pending saves
