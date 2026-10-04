@@ -187,12 +187,11 @@ As-of picker shows the mapping under the date (none at Today). The horizon tile 
 last projection year ("Net worth in 2056 (30-yr horizon)") and does not follow the as-of date.
 
 Selectors follow a consistent rule: "record in force at `asOf`" = latest `startDate/validFrom
-≤ asOf` whose optional `endDate/validTo` is blank or `≥ asOf`. For **valuations**, if
-nothing is in force, the latest valuation that started on or before `asOf` governs: a value
-does not expire at its `validTo`, the next valuation replaces it (ADR 0122). Before the first
+≤ asOf` whose optional `endDate/validTo` is blank or `≥ asOf`. **Valuations** differ: the
+governing valuation is the latest one with `validFrom ≤ asOf`, and its `validTo` is not read
+(a value does not expire; the next valuation replaces it, ADR 0122). Before the first
 valuation date, the nearest upcoming record is used (so year 0 lines up with the projection).
-**Leases** have no such
-fallback (DR-045): snapshot rent is the contractual monthly rent of the lease in force at
+**Leases** have no such fallback (DR-045): snapshot rent is the contractual monthly rent of the lease in force at
 `asOf` × 12, unindexed, and 0 when no lease is in force — before the first lease, in a gap
 between leases (a one-day gap is rent-free) and after the last lease's end date. The
 projection treats rent differently (§4.5).
@@ -203,7 +202,7 @@ Derived per-property values:
   completed months ÷ 12** at the appreciation rate (ADR 0032). The anchor is the baseDate,
   a later valuation's `validFrom`, or the purchase date of a property bought after baseDate.
   Months are counted with the month-end rule, so a 29 Feb baseDate still counts a full year
-  (D-45). A valuation already in force at baseDate is anchored at baseDate, not at its
+  (D-45). A valuation that started on or before baseDate is anchored at baseDate, not at its
   `validFrom`, so its value is not grown for the months before baseDate.
   Falls back to `purchasePrice` only when the property has no valuation (ADR 0122). For dev
   loans the completed value is scaled by `drawnFraction` (cumulative principal drawn ÷ total
