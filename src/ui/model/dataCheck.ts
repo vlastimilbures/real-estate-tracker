@@ -206,7 +206,7 @@ export function findingText(
         fmtDate(f.validFrom),
       );
     case "noValuation":
-      return d.noValuation(fmtDate(f.asOf), fmtCzk(f.purchasePrice));
+      return d.noValuation(fmtCzk(f.purchasePrice));
     case "noLease":
       return d.noLease(fmtDate(f.asOf));
     case "leaseEnded":

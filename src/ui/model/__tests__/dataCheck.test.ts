@@ -458,7 +458,7 @@ describe("data check: text and fix (ADR 0118)", () => {
         asOf: BASE_DATE,
       }),
     ).toBe(
-      `No valuation is in force on 07.06.2026, so the purchase price of ${fmtCzk(javorovaPrice)} stands in as the market value.`,
+      `No valuation is recorded, so the purchase price of ${fmtCzk(javorovaPrice)} stands in as the market value.`,
     );
     expect(text({ kind: "noLease", asOf: BASE_DATE })).toBe(
       "No lease is in force on 07.06.2026, so rent counts as 0.",

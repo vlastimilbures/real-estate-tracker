@@ -368,8 +368,8 @@ export const en = {
     goTo: (section: string) => `Go to ${section}`,
     valuationStale: (age: string, date: string) =>
       `The valuation in use is ${age} old (${date}). Value, equity and LTV rest on it.`,
-    noValuation: (date: string, price: string) =>
-      `No valuation is in force on ${date}, so the purchase price of ${price} stands in as the market value.`,
+    noValuation: (price: string) =>
+      `No valuation is recorded, so the purchase price of ${price} stands in as the market value.`,
     noLease: (date: string) =>
       `No lease is in force on ${date}, so rent counts as 0.`,
     leaseEnded: (date: string) =>
