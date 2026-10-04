@@ -241,8 +241,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - A tranche dated after the loan's last-but-one payment is refused: the final payment
     would have repaid it in one shot.
   - The "Fixation ended" warning (property page and Data check) also shows when the next
-    loan block starts after the first payment at the assumed reset rate, with "from …
-    until …".
+    loan block leaves at least one payment at the assumed reset rate, with "from … until
+    …".
   - An error raised for an invalid stored prepayment or maturity change names its row.
 
 - Saving a form no longer rounds a stored rate it did not change (ADR 0131, #208). A rate

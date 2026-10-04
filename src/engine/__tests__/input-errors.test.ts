@@ -89,8 +89,8 @@ const CASES: [ValidationCode, string, MortgageBlock][] = [
       draws: [{ date: isoDate("2026-03-01"), amount: money(1) }],
     }),
   ],
-  // DR-074 (ADR 0079): a draw on/after the final payment date (start + term) is
-  // rejected, not clamped into the last month as a one-shot payoff.
+  // DR-074 (ADR 0079, ADR 0129 §3): a draw after the last-but-one payment date
+  // (start + term − 1 month) is rejected, not repaid by the final payment in one shot.
   [
     "DRAW_AFTER_SCHEDULE_END",
     "draws",

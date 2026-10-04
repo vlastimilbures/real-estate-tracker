@@ -56,10 +56,19 @@ The owner chose option A of #135 on 2026-10-04: all five in one change.
    - a recast checks "after payoff", the instalment against the next interest, and its
      `NPER` on the balance plus the tranches dated on or before the recast.
 
-   Nothing else moves. The tranche still joins grid month 1 and re-amortizes there (D-41),
-   the baseDate debt still counts it once (D-44), and the opening balance is still the
-   balance after the last payment due, less what the late events took off. Money is not
-   counted twice: the tranche is added once, in grid month 1.
+   The tranche still joins grid month 1 and re-amortizes there (D-41), the baseDate debt
+   still counts it once (D-44), and the opening balance is still the balance after the last
+   payment due, less what the late events took off. Money is not counted twice: the
+   tranche is added once, in grid month 1.
+
+   Terms are not answered twice either. When a late event set new terms (a prepayment's
+   effect, a recast) on a balance that already counted a late tranche, grid month 1 does
+   not treat that tranche as a new one again: it does not restore the contract term
+   (ADR 0116 §2) and does not defer an agreed instalment to the next payment (ADR 0120).
+   Otherwise a one-payment `shortenTerm` answer was stretched back to the contract term,
+   and an instalment recast's 7,000 Kč became 6,993.31 Kč from month 2, both depending
+   on baseDate. A tranche in grid month 1 that no late event counted (a later late
+   tranche, or one dated after baseDate, D-44) keeps both rules.
 
 2. **Interest-only is read on the payment's due date (R1-04).** A development loan's
    payment is interest-only when its due date `EDATE(start, p)` is on or before the
@@ -71,13 +80,18 @@ The owner chose option A of #135 on 2026-10-04: all five in one change.
 3. **The last draw date is the last-but-one payment (R1-11).** A draw dated after
    `EDATE(start, term · 12 − 1)` raises `DRAW_AFTER_SCHEDULE_END`. A draw on that date is
    still accepted: it lands on the last-but-one payment and is repaid over the last two.
-   The message says so in en, cs and ru.
+   The message says so in en, cs and ru. One corner stays open (#218): the projection
+   buckets tranches on the baseDate grid, so with month-end clamping (start day 29–31,
+   DR-070) a draw on the last-but-one due date can still land on the final payment.
 4. **The "Fixation ended" warning sees a refix gap (G2-1-08).** When the block in force at
    baseDate has a fixation that ended on or before baseDate, the warning shows unless the
-   next block starts on or before the first payment after the fixation end
-   (`EDATE(start, fixationYears · 12 + 1)`). When a later block exists, the warning carries
-   its start as `until` and reads "from … until …": the months in between run at the
-   assumed reset rate. The Data check inherits the warning and its text.
+   next block starts before the first payment after the fixation end
+   (`EDATE(start, fixationYears · 12 + 1)`). A block starting on that payment's due date
+   still leaves that payment, at the reset rate, with the old block (the refinance
+   handover keeps a payment due on or before the successor's start, D-47), so it warns.
+   When a later block exists, the warning carries its start as `until` and reads "from …
+   until …": the payments in between run at the assumed reset rate. The Data check
+   inherits the warning and its text.
 5. **Event index in raised errors (R1-13).** `assertLoanInputs` and `assertLoanRows` keep
    the index of the prepayment or recast at fault, as `validateInputs` does (ADR 0116).
 
@@ -103,4 +117,4 @@ The owner chose option A of #135 on 2026-10-04: all five in one change.
   restore; a stored one makes the engine raise the code until the owner corrects it (no
   migration, as ADR 0128 §8). The property page and the Data check warn about a refix gap.
 - `model-limitations.md` records the two cases that stay (ordinary periods, tranches after
-  baseDate).
+  baseDate). The month-end corner of §3 is #218.

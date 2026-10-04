@@ -66,7 +66,7 @@ work still to do is in the [roadmap](roadmap.md).
 - **Refix at fixation end.** When a fixation ends, the model switches to the block's reset rate
   and recalculates the instalment over the remaining term. Once you know the real new terms,
   enter them as a new block. If a fixation has already ended and there is no new block, or
-  the next block starts after the first payment at the reset rate, the app warns you
+  the next block leaves at least one payment at the reset rate, the app warns you
   (ADR 0129).
 - **One development loan per property.** You can enter more than one, but the property's value
   during construction follows only the first. One development loan per property, optionally

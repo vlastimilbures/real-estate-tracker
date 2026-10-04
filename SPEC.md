@@ -277,7 +277,8 @@ the next payment.
   block): the opening balance is replayed on the loan's own due dates with the reset applied
   from the true fixation end, and the UI warns the owner to enter the refix terms as a new
   block (ADR 0030). The warning also shows, "from … until …", when the next block starts
-  after the first payment following the fixation end (ADR 0129).
+  on or after the due date of the first payment following the fixation end, so at least
+  one payment runs at the reset rate (ADR 0129).
 - **Loan starting after baseDate**: opening balance 0; the loan appears as new debt in the
   grid month it is drawn (ADR 0033).
 - **Refinance handover** (successor block, D-47 in ADR 0027): the successor draws in the
