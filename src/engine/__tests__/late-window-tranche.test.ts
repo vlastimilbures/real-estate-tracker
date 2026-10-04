@@ -84,10 +84,36 @@ describe("ADR 0129 §1: the bank's answer and a recast see it too", () => {
     expect(o?.issue).toBeNull();
     const { e, r } = both(l, "2026-04-28");
     expect(maxDev(e, r)).toBeLessThan(TIGHT);
-    // Month 1 pays the agreed 7,000; the tranche re-amortizes the next payment to the
-    // maturity the recast set on the whole balance, so it stays near 7,000.
-    expect(e[0]?.instalment.toFixed(2)).toBe("7000.00");
-    expect(e[1]?.instalment.minus(7000).abs().lessThan(100)).toBe(true);
+    // The recast already counted the tranche, so grid month 1's tranche does not defer
+    // the agreed instalment (ADR 0120): 7,000 holds, as with baseDate 05-20.
+    for (const base of ["2026-04-28", "2026-05-20"]) {
+      const rows = both(l, base).e;
+      expect(rows.slice(0, 3).map((x) => x.instalment.toFixed(2))).toEqual([
+        "7000.00",
+        "7000.00",
+        "7000.00",
+      ]);
+    }
+  });
+
+  it("a one-payment shortenTerm answer is not undone by the tranche", () => {
+    // 149,000 off ≈ 149,494 (balance + tranche) leaves ≈ 494: the bank ends the loan at
+    // the next payment. Grid month 1's tranche must not restore the contract term
+    // (ADR 0116 §2): the loan is repaid in month 1, as with baseDate 05-20.
+    const l: RefLoan = {
+      ...loan,
+      draws: [{ date: "2026-04-20", amount: 50000 }],
+      prepayments: [
+        { date: "2026-04-25", amount: 149000, effect: "shortenTerm" },
+      ],
+    };
+    for (const base of ["2026-04-28", "2026-05-20"]) {
+      const { e, r } = both(l, base);
+      expect(maxDev(e, r)).toBeLessThan(TIGHT);
+      const paying = e.filter((row) => row.principal.greaterThan(0));
+      expect(paying).toHaveLength(1);
+      expect(paying[0]?.endBalance.toFixed(2)).toBe("0.00");
+    }
   });
 
   it("a recast to an instalment below the interest with the tranche is ignored", () => {

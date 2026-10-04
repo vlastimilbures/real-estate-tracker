@@ -254,7 +254,8 @@ function undrawnRow(
 
 /** First step k in [1,maxStep] whose cadence date (anchor + k months) is on/after
  *  `date`, capped at maxStep. Validation rejects a draw after the loan's last-but-one
- *  payment date (DR-074, ADR 0129 §3), so a valid draw never reaches the cap. */
+ *  payment date (DR-074, ADR 0129 §3), so a valid draw never reaches the cap. On the
+ *  baseDate grid a month-end clamp can still land it on the final payment (#218). */
 function firstStepOnOrAfter(anchor: Date, date: Date, maxStep: number): number {
   const cap = Math.max(1, maxStep);
   return Math.min(firstGridMonthOnOrAfter(anchor, date, cap - 1), cap);
@@ -440,7 +441,12 @@ interface Settled {
   fee: Decimal;
   terms: TermState;
   outcomes: Outcome[];
+  /** The seen tranches behind the terms the events set: grid month 1 does not treat
+   *  them as a new tranche again (ADR 0129 §1). Zero outside the late settle. */
+  counted: Decimal;
 }
+
+const larger = (a: Decimal, b: Decimal): Decimal => (a.greaterThan(b) ? a : b);
 
 function prepaymentIssue(
   requested: Decimal,
@@ -466,7 +472,7 @@ function applyPrepayments(
   done: PaymentDone,
   prepayments: MortgagePrepayment[],
   seen: SeenTranches,
-): Omit<Settled, "terms"> & {
+): Omit<Settled, "terms" | "counted"> & {
   effect: PrepaymentEffect | null;
   seenAfter: Decimal;
 } {
@@ -559,20 +565,23 @@ function recastTerms(
       };
 }
 
-/** The period's recasts in date order, each on the balance plus the tranches it sees. */
+/** The period's recasts in date order, each on the balance plus the tranches it sees;
+ *  `counted` is what the last one that set new terms saw. */
 function applyRecasts(
   ev: LoanEvents,
   done: PaymentDone,
   recasts: LoanRecast[],
   seen: SeenTranches,
-): { terms: TermState; outcomes: Outcome[] } {
+): { terms: TermState; outcomes: Outcome[]; counted: Decimal } {
   let { terms } = done;
+  let counted = ZERO;
   const outcomes: Outcome[] = [];
   for (const r of recasts) {
     const balance = done.balance.plus(seen(r.date));
     const result = balance.greaterThan(ZERO)
       ? recastTerms(ev, { ...done, balance, terms }, r)
       : { terms, issue: "RECAST_AFTER_PAYOFF" as const };
+    if (result.terms !== terms) counted = seen(r.date);
     terms = result.terms;
     outcomes.push({
       blockId: ev.block.id,
@@ -585,7 +594,7 @@ function applyRecasts(
       issue: result.issue,
     });
   }
-  return { terms, outcomes };
+  return { terms, outcomes, counted };
 }
 
 /** After payment `p`: its prepayments, the bank's answer to them, then its recasts
@@ -598,7 +607,7 @@ function settleEvents(
   seen: SeenTranches = NO_TRANCHES,
 ): Settled {
   if (period.prepayments.length === 0 && period.recasts.length === 0) {
-    return { ...done, prepaid: ZERO, fee: ZERO, outcomes: [] };
+    return { ...done, prepaid: ZERO, fee: ZERO, outcomes: [], counted: ZERO };
   }
   const paid = applyPrepayments(ev, done, period.prepayments, seen);
   const after = { ...done, balance: paid.balance };
@@ -613,6 +622,10 @@ function settleEvents(
     fee: paid.fee,
     terms: recast.terms,
     outcomes: [...paid.outcomes, ...recast.outcomes],
+    counted: larger(
+      terms === done.terms ? ZERO : paid.seenAfter,
+      recast.counted,
+    ),
   };
 }
 
@@ -733,7 +746,7 @@ function catchUpStep(
 function simulateToBaseDate(
   block: MortgageBlock,
   assumptions: Assumptions,
-): Opening {
+): Opening & { counted: Decimal } {
   const { baseDate } = assumptions;
   const steps = lastGridMonthOnOrBefore(block.startDate, baseDate);
   const ctx: CatchUpContext = {
@@ -780,6 +793,7 @@ function simulateToBaseDate(
     currentInstalment: s.currentInstalment,
     terms: late.terms,
     outcomes: [...s.outcomes, ...late.outcomes],
+    counted: late.counted,
   };
 }
 
@@ -796,7 +810,7 @@ interface DevScheduleState {
 function initDevScheduleState(
   block: DevelopmentLoan,
   assumptions: Assumptions,
-): { state: DevScheduleState; outcomes: Outcome[] } {
+): { state: DevScheduleState; outcomes: Outcome[]; counted: Decimal } {
   const { baseDate } = assumptions;
   if (isAfter(block.startDate, baseDate)) {
     return {
@@ -809,6 +823,7 @@ function initDevScheduleState(
         terms: initialTerms(block),
       },
       outcomes: [],
+      counted: ZERO,
     };
   }
   const sim = simulateToBaseDate(block, assumptions);
@@ -831,6 +846,7 @@ function initDevScheduleState(
       terms: sim.terms,
     },
     outcomes: sim.outcomes,
+    counted: sim.counted,
   };
 }
 
@@ -846,6 +862,10 @@ interface DevScheduleContext {
   newDebtByMonth: Map<number, Decimal>;
   /** Prepayments and recasts dated after baseDate (ADR 0109). */
   events: LoanEvents;
+  /** The part of grid month 1's tranches a late-window event already counted in the
+   *  terms it set: no second contract-term restore or agreed-instalment deferral for
+   *  it (ADR 0129 §1). */
+  openingCounted: Decimal;
 }
 
 type DevMonthStep = {
@@ -904,7 +924,8 @@ function devPaymentStep(
   ctx: DevScheduleContext,
 ): DevMonthStep {
   const { m, p, date, draw, ratePa, io } = mo;
-  const terms = termsForTranche(state.terms, draw, p, ctx.events.contractTerm);
+  const fresh = m === 1 ? draw.minus(ctx.openingCounted) : draw;
+  const terms = termsForTranche(state.terms, fresh, p, ctx.events.contractTerm);
   const trigger = reamortizes(
     draw,
     state.prevInterestOnly,
@@ -930,7 +951,7 @@ function devPaymentStep(
       ratePa,
       instalment: step.instalment,
       interestOnly: io,
-      terms: paidTerms(terms, io, draw),
+      terms: paidTerms(terms, io, fresh),
     },
     eventsAt(ctx.events, p),
   );
@@ -1101,6 +1122,7 @@ function buildDevSchedule(
   const drawnAfter = isAfter(block.startDate, baseDate)
     ? baseDate
     : lastPaymentDue(block, baseDate);
+  const opening = initDevScheduleState(block, assumptions);
   const ctx: DevScheduleContext = {
     block,
     assumptions,
@@ -1112,8 +1134,8 @@ function buildDevSchedule(
       isAfter(d, baseDate),
     ),
     events: loanEvents(block, assumptions, (d) => isAfter(d, baseDate)),
+    openingCounted: opening.counted,
   };
-  const opening = initDevScheduleState(block, assumptions);
   const contract = scheduleMonths(block, assumptions);
   const quiet = quietFrom(
     contract,
