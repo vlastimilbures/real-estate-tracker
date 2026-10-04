@@ -23,7 +23,9 @@ work still to do is in the [roadmap](roadmap.md).
   invested. They are not returns on the cash you paid at purchase, and the app has no
   since-purchase performance. See [SPEC §4.6](../SPEC.md#46-portfolio-kpis).
 - **What enters the IRR.** The yearly net cash flows, the down payment for a property bought
-  after the projection start, and the net cash from a refinance. With equity of zero or less
+  after the projection start, and the net cash from a refinance. The down payment is the own
+  cash you recorded for the purchase; without it, the purchase price minus the loan that
+  funded it, plus any recorded costs and works (ADR 0119). With equity of zero or less
   at the start, CAGR shows "—"; when the cash flows give no single answer, IRR shows "n/a"
   with the reason.
 - **The end value is projected equity.** At the horizon the model counts each property's
@@ -35,8 +37,9 @@ work still to do is in the [roadmap](roadmap.md).
 - **No cash ledger.** Net cash flow is a modelled yearly figure (rent after vacancy, minus
   costs and mortgage payments). It is not a record of your bank account and is not
   reconciled with one. See [SPEC §10](../SPEC.md#10-out-of-scope--future).
-- **Property tax only.** The property tax (daň z nemovitých věcí) is a holding cost. Income tax,
-  capital-gains tax and transfer tax are not modelled, so all figures are before those taxes.
+- **Property tax only.** The property tax (daň z nemovitých věcí) is a holding cost. Income tax
+  and capital-gains tax are not modelled, so all figures are before those taxes. (The Czech
+  property acquisition tax was abolished in 2020.)
 
 ## Mortgages
 
