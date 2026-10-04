@@ -105,6 +105,25 @@ describe("D-47: net refinance cash in the KPIs", () => {
     );
   });
 
+  it("a refinance in the horizon's last year adds its cash", () => {
+    // A 5-year horizon ends in the handover year: year N itself still counts.
+    const a5 = { ...assumptions, horizonYears: 5 };
+    const p = withRefi(refi("2031-01-17", D("2500000")));
+    const blocks = p.mortgages.filter((m) => m.propertyId === "javorova");
+    const [r] = propertySchedule(blocks, a5).refinances;
+    if (!r) throw new Error("expected a handover");
+    expect(Math.ceil(r.month / 12)).toBe(5);
+    const flows = portfolioProjection(p, a5)
+      .slice(1)
+      .reduce((s, y) => s.plus(y.netCashFlow), ZERO);
+    near(
+      portfolioKpis(p, a5).cumulativeNetCashFlow.minus(flows),
+      r.drawn.minus(r.paidOff).toNumber(),
+      KC,
+      "year-N refi cash",
+    );
+  });
+
   it("a refinance after the horizon adds no cash", () => {
     const late = withRefi(refi("2057-01-17", D("100000")));
     near(
