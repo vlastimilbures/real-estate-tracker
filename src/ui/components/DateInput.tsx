@@ -4,24 +4,25 @@
 // still round-trips through parseDate/dateDraft and the engine parity is untouched.
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
-import { DayPicker } from "react-day-picker";
-import { cs, enGB, ru } from "react-day-picker/locale";
-import "react-day-picker/style.css";
 import { Calendar } from "lucide-react";
 import { parseDate } from "../model/formParse";
 import { useT } from "../hooks/useT";
-import { useUiStore } from "../../state/uiStore";
-import type { Language } from "../../i18n/types";
 import { useFieldControlProps } from "./fieldContext";
-import { at } from "../../lib/arrays";
+import type { DateCalendar } from "./DateCalendar";
+
+// The calendar loads on the first open (DR-009): react-day-picker stays out of the startup
+// bundle. The popover opens once the chunk is in, so it never shows a placeholder; the
+// chunk is a local file, so the wait is a few milliseconds (D-66).
+let LoadedCalendar: typeof DateCalendar | undefined;
+function loadCalendar(): Promise<unknown> {
+  return import("./DateCalendar").then(
+    (m) => (LoadedCalendar = m.DateCalendar),
+  );
+}
 
 // dd.mm.yyyy for a day picked in the calendar. The day comes from react-day-picker as a
 // LOCAL Date, so read local Y/M/D directly (no UTC math) to avoid an off-by-one near
 // midnight. Mirrors dateDraft's zero-padding.
-// The calendar's built-in screen-reader labels (month navigation, weekday and day names)
-// follow the UI language (UX-034); the visible caption/weekday text uses our dictionary.
-const DAY_PICKER_LOCALE: Record<Language, typeof enGB> = { en: enGB, cs, ru };
-
 function localDayToDraft(day: Date): string {
   const dd = String(day.getDate()).padStart(2, "0");
   const mm = String(day.getMonth() + 1).padStart(2, "0");
@@ -55,7 +56,6 @@ export function DateInput({
   "value" | "onChange" | "min" | "max"
 >) {
   const t = useT();
-  const language = useUiStore((s) => s.language);
   const fieldProps = useFieldControlProps();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -166,12 +166,17 @@ export function DateInput({
           aria-label={t.calendar.open}
           aria-haspopup="dialog"
           aria-expanded={open}
-          onClick={() => (open ? close() : setOpen(true))}
+          onClick={() => {
+            if (open) close();
+            else if (LoadedCalendar) setOpen(true);
+            else void loadCalendar().then(() => setOpen(true));
+          }}
         >
           <Calendar size={16} aria-hidden />
         </button>
       </div>
       {open &&
+        LoadedCalendar &&
         createPortal(
           <div
             ref={popRef}
@@ -184,24 +189,11 @@ export function DateInput({
               visibility: coords ? "visible" : "hidden",
             }}
           >
-            <DayPicker
-              mode="single"
-              locale={DAY_PICKER_LOCALE[language]}
-              {...(selected && { selected, defaultMonth: selected })}
-              {...(first && { startMonth: first })}
-              {...(last && { endMonth: last })}
-              disabled={[
-                ...(first ? [{ before: first }] : []),
-                ...(last ? [{ after: last }] : []),
-              ]}
+            <LoadedCalendar
+              selected={selected}
+              first={first}
+              last={last}
               onSelect={handleSelect}
-              weekStartsOn={t.calendar.weekStartsOn as 0 | 1}
-              formatters={{
-                formatCaption: (month) =>
-                  `${t.monthsShort[month.getMonth()]} ${month.getFullYear()}`,
-                formatWeekdayName: (weekday) =>
-                  at(t.calendar.weekdaysShort, weekday.getDay()),
-              }}
             />
           </div>,
           document.body,

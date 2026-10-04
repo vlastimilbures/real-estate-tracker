@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 //
 // UX-034: strings that used to be hard-coded English show in the UI language.
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AsOfPicker } from "../AsOfPicker";
@@ -19,6 +19,12 @@ const ru = getDict("ru");
 const cs = getDict("cs");
 
 beforeEach(() => act(() => useUiStore.setState({ language: "ru" })));
+
+// DateInput loads the calendar on the first open (DR-009). Load its module up front:
+// under coverage the first transform can outlast findBy's 1 s wait.
+beforeAll(async () => {
+  await import("../DateCalendar");
+});
 
 describe("UX-034 i18n sweep", () => {
   it("As-of picker: group name and year chips", () => {
@@ -94,7 +100,7 @@ describe("UX-034 i18n sweep", () => {
       screen.getByRole("button", { name: cs.calendar.open }),
     );
     expect(
-      screen.getByRole("button", { name: /předchozí měsíc/i }),
+      await screen.findByRole("button", { name: /předchozí měsíc/i }),
     ).toBeTruthy();
     const weekday = document.querySelector(".rdp-weekday")!;
     expect(weekday.getAttribute("aria-label")).not.toMatch(/day$/);
