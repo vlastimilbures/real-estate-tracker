@@ -45,12 +45,23 @@ above 0 and that no earlier year does.
 **The same trap in the IRR bracket (#185).** `irrResult` looked for a bracket whose end NPVs
 differ in sign by testing `!nlo.times(npv(hi)).isPositive()`. When an end's NPV is exactly 0,
 the product is ±0: +0 counted as "same sign", so the bracket was skipped, and −0 reached
-`bisect` only by accident. A root that sits exactly on a bracket end (−90 %, or +100 %, +200 %,
-+400 %, +800 %, +1000 %) is now returned as that rate. A bracket is bisected only when both end
-NPVs are non-zero and their product is negative. Testing the product with
-`lessThanOrEqualTo(ZERO)` alone would not do: with a zero NPV at −90 % and a positive NPV above
-it, `bisect` would move away from the root and return a wrong rate. Cash flows that are all zero
-have a zero NPV at every rate, so they keep having no IRR (`NO_ROOT`, DR-061).
+`bisect` only by accident. Now:
+
+- A bracket end (−90 %, or +100 %, +200 %, +400 %, +800 %, +1000 %) whose NPV passes the
+  tolerance test `bisect` uses to accept a midpoint (|NPV| < 1e-9 Kč) is the IRR. Exact 0 is
+  not required: 1/3 or 1/9 does not round back exactly in 40-digit decimals, so an NPV that
+  is 0 in exact arithmetic can come out as −1e-40.
+- A bracket is bisected only when both end NPVs are off the root and their product is
+  negative. Testing the product with `lessThanOrEqualTo(ZERO)` alone would not do: with a
+  zero NPV at −90 % and a positive NPV above it, `bisect` would move away from the root and
+  return a wrong rate.
+- The uniqueness scan counts a grid point at the root (by the same test) as a root, once per
+  run of such points, beside the sign changes between points. Before, it skipped exact zeros,
+  so a root on a bracket end plus a second root passed as unique, and the end root would have
+  won. Such cash flows now give `NOT_UNIQUE`.
+- Cash flows that are all zero have a zero NPV at every rate, so they keep having no IRR
+  (`NO_ROOT`, DR-061). Two roots between the same two grid points stay a grid-resolution
+  limit, as before.
 
 ## Consequences
 
@@ -60,6 +71,9 @@ have a zero NPV at every rate, so they keep having no IRR (`NO_ROOT`, DR-061).
   returned year 1. The UI shows the empty state for these, so nothing visible changes there.
 - No parity target changes: the seed stays 2031 (Y5). The golden master does not change.
 - IRR (#185): `[−1, 11]` now gives +1000 % and `[10, −1]` gives −90 %; both gave no IRR
-  ("No IRR between −90 % and +1000 %"). `[−1, 5]` and `[−10, 1]` now give exactly +400 % and
-  −90 % instead of a bisection value next to them. Real portfolio cash flows almost never hit
-  an exact zero on a bracket end, so no parity target, golden figure or visible KPI changes.
+  ("No IRR between −90 % and +1000 %"). `[−1, 5]`, `[−1, 3]` and `[−10, 1]` now give +400 %,
+  +200 % and −90 % instead of a bisection value next to them. `[−10, 11, −1]` (roots −90 % and
+  0 %) and `[−4, 21, −36, 20]` (a crossing at 25 %, a touch at +100 %) now give "No unique
+  IRR"; before, they showed one of their roots. Real portfolio cash flows (millions of Kč)
+  do not land within 1e-9 Kč of 0 on a grid point, so no parity target, golden figure or
+  visible KPI changes.

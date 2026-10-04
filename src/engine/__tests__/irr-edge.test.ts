@@ -103,6 +103,27 @@ describe("irr — an exact root on a bracket end (#185, ADR 0121)", () => {
     expect(rateOf([-10, 1])).toBe("-0.9");
   });
 
+  it("a bound whose NPV is within the bisection tolerance of 0, not exactly 0", () => {
+    // 1 / 3 and 1 / 9 do not round back exactly: the NPV is about −1e-40 there.
+    expect(rateOf([-1, 3])).toBe("2");
+    expect(rateOf([-1, 9])).toBe("8");
+  });
+
+  it("a root on a bound plus a second root is not unique", () => {
+    // −90 % and 0 %; −90 % and 13 %; a crossing at 25 % and a touch at +100 %.
+    for (const flows of [
+      [-10, 11, -1],
+      [10, -11, 1],
+      [-10, 12.3, -1.13],
+      [-4, 21, -36, 20],
+    ]) {
+      expect(irrResult(flows.map((x) => D(x))), String(flows)).toEqual({
+        rate: null,
+        reason: "NOT_UNIQUE",
+      });
+    }
+  });
+
   it("all-zero flows (NPV 0 at every rate) still have no IRR", () => {
     expect(irrResult([D(0), D(0), D(0)])).toEqual({
       rate: null,

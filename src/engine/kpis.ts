@@ -37,11 +37,11 @@ export function irr(cashflows: Decimal[]): Decimal | null {
 }
 
 /**
- * IRR via bisection on the decimal NPV (DR-158, ADR 0079). NOT_UNIQUE when an NPV sign
- * scan over [−90 %, +1000 %] finds more than one root (counting cash-flow sign changes
- * would wrongly flag a vector with a future purchase). Otherwise the root is bracketed
- * in [−90 %, +100 %], then the upper bound widens in steps to +1000 %; NO_ROOT when no
- * bracket holds one.
+ * IRR via bisection on the decimal NPV (DR-158, ADR 0079). NOT_UNIQUE when an NPV scan
+ * over [−90 %, +1000 %] finds more than one root (counting cash-flow sign changes would
+ * wrongly flag a vector with a future purchase). Otherwise the root is bracketed in
+ * [−90 %, +100 %], then the upper bound widens in steps to +1000 %; a bracket end at the
+ * root is the IRR (ADR 0121); NO_ROOT when no bracket holds one.
  */
 export function irrResult(cashflows: Decimal[]): IrrResult {
   // Horner's rule in the discount factor v = 1/(1+rate): one multiply-add per cash flow
@@ -53,20 +53,21 @@ export function irrResult(cashflows: Decimal[]): IrrResult {
   };
   // Descartes' rule of signs: with at most one cash-flow sign change the NPV, a
   // polynomial in v > 0, has at most one root, so only scan when there are more.
-  if (signChanges(cashflows) > 1 && npvSignChanges(npv) > 1) {
+  if (signChanges(cashflows) > 1 && npvRootsOnGrid(npv) > 1) {
     return { rate: null, reason: "NOT_UNIQUE" };
   }
   // All-zero flows: every rate is a root, so there is no IRR (DR-061).
   if (cashflows.every((cf) => cf.isZero())) {
     return { rate: null, reason: "NO_ROOT" };
   }
-  // A bracket end whose NPV is exactly 0 is the root. The sign of a product cannot tell:
-  // 0 × x is ±0 and Decimal(+0).isPositive() is true (ADR 0121, #185).
+  // A bracket end whose NPV passes the tolerance test `bisect` applies is the root. The
+  // sign of a product cannot tell: 0 × x is ±0 and Decimal(+0).isPositive() is true
+  // (ADR 0121, #185).
   const nlo = npv(IRR_BRACKET_LOW);
-  if (nlo.isZero()) return { rate: IRR_BRACKET_LOW, reason: null };
+  if (atRoot(nlo)) return { rate: IRR_BRACKET_LOW, reason: null };
   for (const hi of [IRR_BRACKET_HIGH, ...IRR_BRACKET_EXTENSIONS]) {
     const nhi = npv(hi);
-    if (nhi.isZero()) return { rate: hi, reason: null };
+    if (atRoot(nhi)) return { rate: hi, reason: null };
     if (nlo.times(nhi).isNegative()) {
       return { rate: bisect(npv, IRR_BRACKET_LOW, nlo, hi), reason: null };
     }
@@ -74,9 +75,32 @@ export function irrResult(cashflows: Decimal[]): IrrResult {
   return { rate: null, reason: "NO_ROOT" };
 }
 
-/** Sign changes of the NPV across `IRR_SCAN_GRID`. */
-function npvSignChanges(npv: (rate: Decimal) => Decimal): number {
-  return signChanges(IRR_SCAN_GRID.map(npv));
+/** An NPV close enough to 0 to be the root (the tolerance test of `bisect`). */
+function atRoot(n: Decimal): boolean {
+  return n.abs().lessThan(IRR_NPV_TOLERANCE);
+}
+
+/**
+ * Roots of the NPV seen across `IRR_SCAN_GRID`: each sign change between neighbouring
+ * points, and each run of points at a root (crossing or touching 0), counted once. A
+ * root on a grid point is a root: with another one the IRR is not unique (#185).
+ */
+function npvRootsOnGrid(npv: (rate: Decimal) => Decimal): number {
+  let roots = 0;
+  let prev = 0;
+  let inRoot = false;
+  for (const n of IRR_SCAN_GRID.map(npv)) {
+    if (atRoot(n)) {
+      if (!inRoot) roots++;
+      inRoot = true;
+      continue;
+    }
+    const sign = n.isNegative() ? -1 : 1;
+    if (!inRoot && prev !== 0 && sign !== prev) roots++;
+    prev = sign;
+    inRoot = false;
+  }
+  return roots;
 }
 
 /** Sign changes along `values`, skipping exact zeros. */
@@ -92,7 +116,7 @@ function signChanges(values: Decimal[]): number {
   return changes;
 }
 
-/** Bisect [lo, hi], whose NPVs are non-zero and differ in sign, to the root. */
+/** Bisect [lo, hi], whose NPVs are off the root and differ in sign, to the root. */
 function bisect(
   npv: (rate: Decimal) => Decimal,
   lo: Decimal,
@@ -102,7 +126,7 @@ function bisect(
   for (let iter = 0; iter < IRR_MAX_ITERATIONS; iter++) {
     const mid = lo.plus(hi).div(2);
     const nmid = npv(mid);
-    if (nmid.abs().lessThan(IRR_NPV_TOLERANCE)) return mid;
+    if (atRoot(nmid)) return mid;
     if (nlo.times(nmid).isNegative()) {
       hi = mid;
     } else {

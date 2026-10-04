@@ -442,11 +442,12 @@ netCF_N + equity_N]` — acquisition outflows, refinance cash and prepayments wi
   iterations) over the domain **−90 % … +1000 %** a year (ADR 0079; `src/engine/kpis.ts`
   `irrResult`, `src/engine/constants.ts`). The search starts with −90 % … +100 % and, when
   that brackets no sign change, widens the upper bound to +200 %, +400 %, +800 % and
-  +1000 %. Uniqueness: with at most one sign change in the cash flows the NPV has at most
+  +1000 %. A bracket end with |NPV| < 1e-9 Kč is the IRR (ADR 0121, #185).
+  Uniqueness: with at most one sign change in the cash flows the NPV has at most
   one root (Descartes' rule of signs), so no check is needed; with more than one, the NPV's
   sign is scanned over a rate grid across the domain (`IRR_SCAN_GRID`) and more than one
-  NPV sign change gives no IRR with reason **`NOT_UNIQUE`**. A bracket end whose NPV is
-  exactly 0 is the IRR (ADR 0121, #185). When no bracket holds a root the reason is
+  root on the grid (a sign change between points, or a run of points with |NPV| < 1e-9 Kč)
+  gives no IRR with reason **`NOT_UNIQUE`**. When no bracket holds a root the reason is
   **`NO_ROOT`**. In either case the IRR is null and the UI shows "n/a" with
   the reason: "No unique IRR: the cash flows break even at more than one rate" or "No IRR
   between −90 % and +1000 %" (`src/ui/model/irr.ts`).
