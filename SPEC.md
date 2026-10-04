@@ -217,8 +217,9 @@ Derived per-property values:
   Falls back to `purchasePrice` only when the property has no valuation (ADR 0122). For dev
   loans the completed value is scaled by `drawnFraction` (cumulative principal drawn ÷ total
   scheduled principal), so value ramps with construction progress.
-- **Outstanding debt** — the active block's balance at `asOf`; the re-amortized instalment
-  and reset rate are read from the schedule when `asOf` is past a fixation reset.
+- **Outstanding debt** — the property's schedule balance at `asOf` (refinance chain,
+  fixation resets, prepayments and recasts included); the instalment and rate are the
+  schedule's at that month.
 - **Monthly rent** — lease in force at `asOf`; **gross annual** = ×12.
 - **Effective gross** = gross × (1 − vacancy).
 - **Holding costs** = `fixed + variable`, where

@@ -95,6 +95,11 @@ This ADR covers both.
 13. **Snapshot fallback without a schedule.** The app always passes schedules, so this path is
     dead code (DR-118, on the roadmap). It still ignores events. A test pins today's output,
     and nothing else changes.
+    - **Follow-up (DR-118, 2026-10-04):** the fallback is removed. A snapshot called
+      without a schedule builds one from the same inputs, so every snapshot reads the
+      schedule; no app number changed. Engine callers that omit schedules (tests only)
+      now get the schedule figures, and the owner approved dropping the golden master's
+      `snapshotsClosedForm` arrays (PR #197).
 
 14. **Development loan completed just before baseDate.** The development grid opens with
     the interest-only status of the last payment made, not of baseDate. Before, a

@@ -7,14 +7,15 @@ import {
   lastOnOrBefore,
   inForceOrUpcoming,
 } from "./dates";
-import { currentBalance, activeBlock, isDevLoan } from "./amortization";
-import { balanceAtMonth, instalmentAtMonth, openingDebt } from "./schedule";
+import { isDevLoan } from "./amortization";
 import {
-  assertAsOf,
-  assertBlockStarts,
-  assertInputs,
-  assertLoanInputs,
-} from "./validate";
+  balanceAtMonth,
+  instalmentAtMonth,
+  openingDebt,
+  propertySchedule,
+  schedulesByProperty,
+} from "./schedule";
+import { assertAsOf, assertInputs } from "./validate";
 import { basisDate, valueAt, drawnFraction } from "./growth";
 import type {
   Assumptions,
@@ -193,41 +194,30 @@ function snapshotValue(
 }
 
 /**
- * Debt, instalment and rate at `asOf`. Prefers the fixation-aware schedule (so a
- * future asOf past a reset reflects the re-amortized instalment); falls back to the
- * closed-form balance of the active block when no schedule is supplied (legacy
- * callers — P02 C-20).
+ * Debt, instalment and rate at `asOf`, read from the fixation-aware schedule (so a
+ * future asOf past a reset reflects the re-amortized instalment). `schedule` must be
+ * the property's rows built from the same inputs: it has no rows only when the
+ * property has no loan, which gives zeros.
  */
 function snapshotDebt(
   blocks: MortgageBlock[],
   assumptions: Assumptions,
   asOf: Date,
-  schedule?: AmortizationRow[],
+  schedule: AmortizationRow[],
 ): { debt: Decimal; monthlyInstalment: Decimal; rate: Decimal } {
-  if (schedule && schedule.length > 0) {
-    // The last grid row dated on/before asOf (D-21: a clamped month-end grid date
-    // counts, DR-070).
-    const month = lastGridMonthOnOrBefore(assumptions.baseDate, asOf);
-    // Grid month 0 is baseDate itself: a loan drawn after it is not debt yet (D-33).
-    const debt =
-      month === 0
-        ? openingDebt(blocks, assumptions)
-        : balanceAtMonth(schedule, month);
-    const st = instalmentAtMonth(schedule, month);
-    // Instalment/rate apply only while there is debt outstanding at asOf.
-    return debt.isZero()
-      ? { debt, monthlyInstalment: ZERO, rate: ZERO }
-      : { debt, monthlyInstalment: st.instalment, rate: st.ratePa };
-  }
-  assertBlockStarts(blocks); // D-27 / D-43: as the schedule path does
-  const block = activeBlock(blocks, asOf);
-  if (!block) return { debt: ZERO, monthlyInstalment: ZERO, rate: ZERO };
-  assertLoanInputs(block); // D-17: raise as the schedule path does
-  return {
-    debt: currentBalance(block, asOf),
-    monthlyInstalment: block.monthlyInstalment,
-    rate: block.interestRatePa,
-  };
+  // The last grid row dated on/before asOf (D-21: a clamped month-end grid date
+  // counts, DR-070).
+  const month = lastGridMonthOnOrBefore(assumptions.baseDate, asOf);
+  // Grid month 0 is baseDate itself: a loan drawn after it is not debt yet (D-33).
+  const debt =
+    month === 0
+      ? openingDebt(blocks, assumptions)
+      : balanceAtMonth(schedule, month);
+  const st = instalmentAtMonth(schedule, month);
+  // Instalment/rate apply only while there is debt outstanding at asOf.
+  return debt.isZero()
+    ? { debt, monthlyInstalment: ZERO, rate: ZERO }
+    : { debt, monthlyInstalment: st.instalment, rate: st.ratePa };
 }
 
 /** Rent in force at `asOf` (no upcoming fallback — DR-045) and holding costs. */
@@ -252,6 +242,10 @@ function snapshotIncome(
   return { grossAnnualRent, effectiveGrossIncome, holdingCosts, noi };
 }
 
+/**
+ * One property's snapshot at `asOf`. Pass its `schedule` (from `schedulesByProperty` on
+ * the same inputs) to reuse it; an omitted one is built here (DR-042, DR-118).
+ */
 export function propertySnapshot(
   property: Property,
   portfolio: Portfolio,
@@ -261,7 +255,11 @@ export function propertySnapshot(
 ): PropertySnapshot {
   assertInputs(portfolio, assumptions); // D-37
   assertAsOf(asOf, assumptions.baseDate); // D-19: no snapshot before the projection start
-  return snapshotProperty(property, portfolio, assumptions, asOf, schedule);
+  const rows =
+    schedule ??
+    propertySchedule(forProperty(portfolio.mortgages, property.id), assumptions)
+      .rows;
+  return snapshotProperty(property, portfolio, assumptions, asOf, rows);
 }
 
 /**
@@ -273,7 +271,7 @@ function snapshotProperty(
   portfolio: Portfolio,
   assumptions: Assumptions,
   asOf: IsoDate,
-  schedule?: AmortizationRow[],
+  schedule: AmortizationRow[],
 ): PropertySnapshot {
   const blocks = forProperty(portfolio.mortgages, property.id);
   const value = snapshotValue(property, portfolio, assumptions, asOf, blocks);
@@ -305,6 +303,10 @@ function snapshotProperty(
   };
 }
 
+/**
+ * Portfolio snapshot at `asOf`. Pass `schedules` (from `schedulesByProperty` on the same
+ * inputs) to reuse them; omitted ones are built here (DR-042, DR-118).
+ */
 export function portfolioSnapshot(
   portfolio: Portfolio,
   assumptions: Assumptions,
@@ -314,8 +316,15 @@ export function portfolioSnapshot(
   assertInputs(portfolio, assumptions); // D-37
   // D-19, checked once so an empty portfolio raises too (ADR 0075, DR-131).
   assertAsOf(asOf, assumptions.baseDate);
+  const built =
+    schedules ??
+    schedulesByProperty(
+      portfolio.mortgages,
+      portfolio.properties.map((p) => p.id),
+      assumptions,
+    );
   const perProperty = portfolio.properties.map((p) =>
-    snapshotProperty(p, portfolio, assumptions, asOf, schedules?.get(p.id)),
+    snapshotProperty(p, portfolio, assumptions, asOf, built.get(p.id) ?? []),
   );
   // Not-yet-owned and deactivated properties are listed but excluded from current totals.
   const owned = perProperty.filter((s) => s.owned && s.active);
