@@ -26,7 +26,8 @@ improvement, **P3** later.
   docs-impact check (#30).
 - **Features.**
   - Financing exposure and upcoming events: next fixation, debt resetting, remaining term,
-    total interest (#31).
+    total interest (#31). Done: the Dashboard panel (ADR 0103) and the property page's
+    Loan outlook (ADR 0117).
   - Early repayment: one-off extra principal, as in
     [`czech-mortgage-extensions.md`](design/czech-mortgage-extensions.md) §1 (#32).
   - Acquisition funding: own cash, costs, initial works (#33).
