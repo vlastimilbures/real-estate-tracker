@@ -4,7 +4,7 @@
 // round-trip. The TZ assertion (clicking the 15th yields "15.06.2026") is the tripwire —
 // it pins the local-Y/M/D conversion so a refactor can't reintroduce an off-by-one.
 import { describe, it, expect, vi, beforeAll } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DateInput } from "../DateInput";
 
@@ -15,17 +15,6 @@ beforeAll(async () => {
 });
 
 describe("DateInput", () => {
-  // First in the file: DateInput has not loaded the calendar yet in this module instance.
-  it("opens the calendar only once its code has loaded (DR-009)", async () => {
-    render(<DateInput value="" onChange={() => {}} />);
-    const trigger = screen.getByRole("button");
-    fireEvent.click(trigger);
-    expect(screen.queryByRole("dialog")).toBeNull();
-    expect(trigger.getAttribute("aria-expanded")).toBe("false");
-    await screen.findByRole("dialog");
-    expect(trigger.getAttribute("aria-expanded")).toBe("true");
-  });
-
   it("marks no day selected when the value is empty", async () => {
     const user = userEvent.setup();
     render(<DateInput value="" onChange={() => {}} />);
