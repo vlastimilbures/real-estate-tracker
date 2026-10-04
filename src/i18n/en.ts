@@ -1427,6 +1427,23 @@ export const en = {
         caveat: "Not the return on your original purchase cash.",
         eg: "negative early, large equity at horizon → ≈ 6%/yr.",
       },
+      cashInvested: {
+        name: "Cash invested",
+        formula: "Σ recorded own cash",
+        meaning:
+          "The own money recorded as paid in at each purchase, costs and works included, set in the property form's Acquisition section. The Dashboard shows the total only when every active property has it.",
+        caveat:
+          "The multiple, CAGR and IRR do not start from it; for a property bought after the projection start it is the down payment.",
+        eg: "1.5M + 1.7M + 2.0M = 5.2M.",
+      },
+      sourcesUses: {
+        name: "Sources and uses",
+        formula:
+          "uses = price + costs + works; sources = own cash + acquisition loan",
+        meaning:
+          "A check of the recorded funding on each property page. A gap of 1 Kč or more either way shows as a warning, never a blocker. The acquisition loan is the first loan block when it starts no later than 90 days after the purchase.",
+        eg: "uses 7.24M, sources 7.21M → 25k short.",
+      },
     },
     scenarioDefs: {
       inflationShock: {

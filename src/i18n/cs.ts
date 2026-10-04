@@ -1376,6 +1376,23 @@ export const cs: Dictionary = {
         caveat: "Nejde o návratnost vašich původních peněz vložených do koupě.",
         eg: "zpočátku záporné, velký kapitál na horizontu → ≈ 6 %/rok.",
       },
+      cashInvested: {
+        name: "Vložené vlastní zdroje",
+        formula: "Σ zadaných vlastních zdrojů",
+        meaning:
+          "Vlastní peníze zadané jako vložené při každé koupi, včetně nákladů a úprav, v sekci Pořízení ve formuláři nemovitosti. Přehled ukáže součet, jen když je mají všechny aktivní nemovitosti.",
+        caveat:
+          "Násobek, CAGR ani IRR z nich nevycházejí; u nemovitosti koupené po začátku projekce jsou platbou při koupi.",
+        eg: "1,5 M + 1,7 M + 2,0 M = 5,2 M.",
+      },
+      sourcesUses: {
+        name: "Zdroje a užití",
+        formula:
+          "užití = cena + náklady + úpravy; zdroje = vlastní zdroje + úvěr na koupi",
+        meaning:
+          "Kontrola zadaného financování na stránce každé nemovitosti. Rozdíl 1 Kč a víc oběma směry se ukáže jako upozornění, nikdy neblokuje. Úvěr na koupi je první úvěrový blok, pokud začíná nejpozději 90 dní po koupi.",
+        eg: "užití 7,24 M, zdroje 7,21 M → chybí 25 tis.",
+      },
     },
     scenarioDefs: {
       inflationShock: {

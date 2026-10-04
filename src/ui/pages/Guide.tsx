@@ -97,7 +97,13 @@ export function Guide() {
     pd.debtResetting,
     pd.totalInterest,
   ];
-  const RETURNS: Def[] = [rd.multiple, rd.cagr, rd.irr];
+  const RETURNS: Def[] = [
+    rd.multiple,
+    rd.cagr,
+    rd.irr,
+    rd.cashInvested,
+    rd.sourcesUses,
+  ];
   const GLOSSARY = Object.entries(g.glossary).map(([key, v]) => ({
     key,
     ...v,

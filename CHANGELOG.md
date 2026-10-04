@@ -9,10 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The property form has an optional **Acquisition** section to record how a purchase was
+  funded: own cash, transaction costs, initial works and a note (ADR 0119, #33). A blank
+  amount is unknown; clearing every field clears the record. Each property page gets an
+  **Acquisition** section with the purchase's sources and uses (price, costs and works
+  against own cash and the loan that funded it) and a warning when they differ by 1 Kč or
+  more, never a blocker. The Dashboard KPI list shows **Cash invested**, the total own
+  cash, once every active property has it.
+
 - `properties.csv` takes three optional columns for how a purchase was funded: `own_cash`,
   `transaction_costs` and `initial_works`, in the same money format as `purchase_price`
   (ADR 0119, #33). An empty cell means unknown. A re-import keeps an amount already stored,
-  so a CSV never erases a recorded figure. The template and the CSV guide show them.
+  so a CSV never erases a recorded figure; clear one in the property form. The template
+  and the CSV guide show them.
 
 - A **Data check** shows which inputs behind the numbers are stale, missing or left at a
   default, at the snapshot date (ADR 0118, #35). A panel on the Dashboard and a section on

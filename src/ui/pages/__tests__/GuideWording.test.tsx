@@ -39,6 +39,16 @@ describe("Guide wording (ADR 0091)", () => {
     }
   });
 
+  it("explains cash invested and sources and uses in every language (ADR 0119 §9)", () => {
+    const text = guideText();
+    expect(text).toContain(en.guide.returnsDefs.cashInvested.name);
+    expect(text).toContain(en.guide.returnsDefs.sourcesUses.formula);
+    for (const d of Object.values(DICTS)) {
+      expect(d.guide.returnsDefs.cashInvested.caveat).toBeTruthy();
+      expect(d.guide.returnsDefs.sourcesUses.meaning).toMatch(/1 Kč/);
+    }
+  });
+
   it("measures the multiple and IRR from projection-start equity", () => {
     const rd = en.guide.returnsDefs;
     expect(rd.multiple.formula).toBe(
