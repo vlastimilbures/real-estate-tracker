@@ -31,8 +31,7 @@ import {
 } from "./mortgageReference";
 import { RESET, SEED_LOANS } from "./seedLoans";
 import { REF, REF_MONTHS, TIGHT, both, maxDev, toBlock } from "./eventHarness";
-import { rate } from "../../brands";
-import { money } from "../../brands";
+import { money, rate } from "../../brands";
 
 const CENT = 0.01; // Kč, for quoted engine/reference figures
 
@@ -410,6 +409,14 @@ describe("fixed by D-41: a tranche between the last payment and baseDate (DR-016
         ...dev,
         start: "2026-01-20",
         draws: [{ date: "2026-05-20", amount: "500000" }],
+      },
+    ],
+    [
+      "tranche on baseDate",
+      {
+        ...dev,
+        start: "2026-01-20",
+        draws: [{ date: "2026-06-07", amount: "500000" }],
       },
     ],
   ];
