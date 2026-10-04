@@ -1,6 +1,6 @@
-// Vacancy boundary cases. The seed only ever runs at 5% (fixtures.ts:13), so the
+// Vacancy boundary cases. The seed only ever runs at 5% (support/seed.ts), so the
 // 0% and 100% branches of `effectiveGrossIncome = grossRent·(1−vacancy)`
-// (metrics.ts:192) are otherwise unexercised. The 100% case also folds in the parity
+// (metrics.ts `snapshotIncome`) are otherwise unexercised. The 100% case also folds in the parity
 // "Σ principal = initial debt" invariant: debt must retire regardless of cash flow.
 import { describe, it, expect } from "vitest";
 import { portfolioSnapshot } from "../metrics";
