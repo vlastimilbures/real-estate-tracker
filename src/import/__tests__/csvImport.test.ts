@@ -281,16 +281,18 @@ describe("importCsv — matching and preserved fields", () => {
   it("a re-import sets a filled funding amount and keeps a blank one (ADR 0119 §8)", async () => {
     sql.db.exec(`
       UPDATE properties SET own_cash = '1500000', transaction_costs = '95000',
-        initial_works = '0', funding_note = 'Deposit' WHERE id = 'byt-a';
+        funding_note = 'Deposit' WHERE id = 'byt-a';
     `);
     await importCsv(sql, {
-      properties: parseProperties(`${FH}\nByt A,2020-01-01,5000000,1600000,,`)
-        .rows,
+      properties: parseProperties(
+        `${FH}\nByt A,2020-01-01,5000000,1600000,,25000`,
+      ).rows,
     });
+    // own cash changed, costs kept, works filled in from unknown, note kept
     expect(funding("byt-a")).toEqual({
       own_cash: "1600000",
       transaction_costs: "95000",
-      initial_works: "0",
+      initial_works: "25000",
       funding_note: "Deposit",
     });
   });
