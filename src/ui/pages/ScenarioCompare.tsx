@@ -39,12 +39,27 @@ export function CompareView({
   const results = useScenarioComparison(selected);
   const footnoteId = useId();
   const [view, setView] = useState<CompareView>("values");
+  // A pick the engine run left out breaks an engine rule (ADR 0123): name it, compare
+  // the rest.
+  const leftOut = results
+    ? selected.filter((s) => !results.some((r) => r.id === s.id))
+    : [];
+  const notice = leftOut.length > 0 && (
+    <p className="form-note" role="status">
+      {t.scenarios.notCompared(leftOut.map((s) => s.name).join(", "))}
+    </p>
+  );
   if (!results || results.length === 0) {
     return (
       <Panel title={t.scenarios.compareTitle}>
-        <EmptyState title={t.scenarios.nothingSelectedTitle} icon={GitCompare}>
-          {t.scenarios.nothingSelectedBody}
-        </EmptyState>
+        {notice || (
+          <EmptyState
+            title={t.scenarios.nothingSelectedTitle}
+            icon={GitCompare}
+          >
+            {t.scenarios.nothingSelectedBody}
+          </EmptyState>
+        )}
       </Panel>
     );
   }
@@ -95,6 +110,7 @@ export function CompareView({
           </span>
         }
       >
+        {notice}
         {/* A real table for assistive technology: caption, scenario column headers,
             metric row headers (UX-081, DR-145). */}
         <table className="compare-table">

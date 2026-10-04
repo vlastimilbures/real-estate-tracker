@@ -165,6 +165,39 @@ describe("useScenarioComparison", () => {
     // The engine did not re-run for a rename: same projection object.
     expect(result.current![0].projection).toBe(before);
   });
+
+  // ADR 0123 (#108): a scenario whose own overrides break an engine rule is left out
+  // (the page names it) instead of throwing during render.
+  it("leaves out a scenario that breaks a rule and keeps every name on its own row", () => {
+    const base: Scenario = { id: "b", name: "Base", overrides: {} };
+    const bad: Scenario = {
+      id: "bad",
+      name: "Crash typed as −20 %",
+      overrides: { valueShock: { pct: rate("-0.2"), atYear: 0 } },
+    };
+    const { result } = renderHook(() =>
+      useScenarioComparison([base, bad, scenario("Low", "0.01")]),
+    );
+    expect(result.current!.map((r) => [r.id, r.name])).toEqual([
+      ["b", "Base"],
+      ["s1", "Low"],
+    ]);
+  });
+
+  it("still throws on invalid portfolio data (DR-146 notice)", () => {
+    const [v0, ...vs] = portfolio.valuations;
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: {
+          ...portfolio,
+          valuations: [{ ...v0!, marketValue: money("-1") }, ...vs],
+        },
+      }),
+    );
+    expect(() =>
+      renderHook(() => useScenarioComparison([scenario("Low", "0.01")])),
+    ).toThrow();
+  });
 });
 
 describe("useAllProjections / usePropertyEngine", () => {

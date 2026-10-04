@@ -775,6 +775,9 @@ export const en = {
     reachHits: (n: number, m: number, years: string) =>
       `hits ${n} of ${m} ${enPlural(m, ["loan", "loans"])} (refix ${years})`,
     reachNone: "no loan refixes inside the shock window, so no effect",
+    // A saved scenario that breaks an engine rule (ADR 0123)
+    notCompared: (names: string) =>
+      `Left out of the comparison because a value is outside its allowed range: ${names}. Edit or delete the scenario in the list.`,
     sumValueShock: (v: string, atYear: number) =>
       `value −${v}${atYear ? ` @ yr${atYear}` : ""}`,
     // Form
