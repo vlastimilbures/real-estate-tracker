@@ -112,7 +112,7 @@ export const en = {
     SHOCK_OUT_OF_RANGE: "A scenario shock is outside its allowed range",
     GROWTH_OUT_OF_RANGE: "Must be above −100 %",
     SHOCKED_RATE_OUT_OF_RANGE:
-      "The post-fixation reset rate plus the rate shock must stay from 0 % to 100 %",
+      "The post-fixation reset rate plus the rate shock must stay between 0 % and 100 %",
     SHOCKED_INFLATION_OUT_OF_RANGE:
       "Inflation plus the inflation shock must stay above −100 %",
     ASOF_BEFORE_BASEDATE: "The date is before the base date",
@@ -144,7 +144,7 @@ export const en = {
     otherConstraint: "The database refused the change, so nothing was changed",
     // ADR 0128 §6: an assumptions edit that would break a saved scenario.
     scenarioBreaks: (name: string, rule: string) =>
-      `This value would break the scenario “${name}”: ${rule}. Change the value or edit the scenario first`,
+      `This value would break the scenario “${name}”. ${rule}. Change the value or edit the scenario first`,
   },
 
   dataErrors: {

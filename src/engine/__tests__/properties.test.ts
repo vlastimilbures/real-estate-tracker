@@ -561,14 +561,12 @@ const bp = (n: number) => brandRate(D(n).div(10_000));
 /** Growth, indexation and inflation: above −100 % (ADR 0128), up to +50 %. */
 const growthBp = fc.integer({ min: -9_999, max: 5_000 });
 
-/** A shock band as a share of the room its level allows, held for 0–10 years. */
-const band = fc.option(
-  fc.record({
-    share: fc.double({ min: 0, max: 1, noNaN: true }),
-    years: fc.integer({ min: 0, max: 10 }),
-  }),
-  { nil: undefined },
-);
+/** A shock band drawn as the shocked level (bp) it gives, held for 0–10 years. */
+const band = (shockedBp: fc.Arbitrary<number>) =>
+  fc.option(
+    fc.record({ shocked: shockedBp, years: fc.integer({ min: 0, max: 10 }) }),
+    { nil: undefined },
+  );
 
 /** Valid assumptions on the seed portfolio: every level, shock, crash and property
  *  override drawn from the ranges ADR 0038 / ADR 0128 allow, horizon 1–50 years. */
@@ -580,12 +578,13 @@ const validInputs = fc
     vacancy: fc.integer({ min: 0, max: 10_000 }),
     reset: fc.integer({ min: 0, max: 10_000 }),
     horizon: fc.integer({ min: 1, max: 50 }),
-    rateShock: band,
-    inflationShock: band,
+    // Shocked reset rate within [0, 1]; shocked inflation above −1 (ADR 0128 §3).
+    rateShock: band(fc.integer({ min: 0, max: 10_000 })),
+    inflationShock: band(growthBp),
     crash: fc.option(
       fc.record({
         pct: fc.integer({ min: 0, max: 10_000 }),
-        share: fc.double({ min: 0, max: 1, noNaN: true }),
+        year: fc.integer({ min: 0, max: 50 }),
       }),
       { nil: undefined },
     ),
@@ -593,11 +592,9 @@ const validInputs = fc
     rentIndexOverride: fc.option(growthBp, { nil: undefined }),
   })
   .map((r) => {
-    // A shock's delta keeps the shocked level in range: reset + Δ within [0, 1];
-    // inflation + Δ within (−1, +0.5].
-    const rateDelta = (s: number) => Math.round(s * 10_000) - r.reset;
-    const inflationDelta = (s: number) =>
-      Math.round(s * 14_999) - 9_999 - r.inflation;
+    // The delta is the shocked level minus the level, so the shocked level is in range.
+    const rateDelta = (shocked: number) => shocked - r.reset;
+    const inflationDelta = (shocked: number) => shocked - r.inflation;
     const a: Assumptions = {
       ...assumptions,
       appreciationPa: bp(r.appreciation),
@@ -608,20 +605,21 @@ const validInputs = fc
       horizonYears: r.horizon,
       ...(r.rateShock && {
         rateShock: {
-          deltaPa: bp(rateDelta(r.rateShock.share)),
+          deltaPa: bp(rateDelta(r.rateShock.shocked)),
           durationYears: r.rateShock.years,
         },
       }),
       ...(r.inflationShock && {
         inflationShock: {
-          deltaPa: bp(inflationDelta(r.inflationShock.share)),
+          deltaPa: bp(inflationDelta(r.inflationShock.shocked)),
           durationYears: r.inflationShock.years,
         },
       }),
       ...(r.crash && {
+        // Any year from today to the horizon.
         valueShock: {
           pct: bp(r.crash.pct),
-          atYear: Math.round(r.crash.share * r.horizon),
+          atYear: r.crash.year % (r.horizon + 1),
         },
       }),
     };

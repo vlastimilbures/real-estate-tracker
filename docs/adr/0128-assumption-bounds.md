@@ -67,9 +67,12 @@ The owner chose option A of #114 in full on 2026-10-04.
      Value crash).
    - Saving the assumptions refuses an edit that **newly** breaks a saved scenario, and names
      the scenario on the base field that caused it ("This value would break the scenario
-     “Rate cut”: …"). A scenario that already broke a rule before the edit does not block
+     “Rate cut”. …"). A scenario that already broke a rule before the edit does not block
      it; the compare keeps leaving that scenario out (ADR 0123 §5). When several scenarios
-     break, the first in the list is named.
+     break, the first in the list is named. Correcting a stored level that is itself out of
+     range counts as a new break when the corrected level plus a saved shock is out of
+     range (the cross-field rule was skipped while the level was invalid); the message says
+     to edit the scenario first.
    - This replaces ADR 0123 §1's "every rule on a scenario field is independent of the base
      assumptions": the cross-field rules are the exception, and the check above covers it.
 7. **Restore.** The new assumption and property rules apply to a restored file, as every

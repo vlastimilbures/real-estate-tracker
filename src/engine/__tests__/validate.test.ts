@@ -337,9 +337,15 @@ describe("assumption bounds (ADR 0128)", () => {
     expect(
       errors({ inflationPa: rate(NaN), inflationShock: band("-2") }),
     ).toEqual(one("NON_FINITE_NUMBER", "inflationPa"));
-    // A non-finite delta is its own rule, not a shocked level.
+    // A non-finite delta or a bad duration is the shock's own rule, not a shocked level.
     expect(errors({ rateShock: band("NaN") })).toEqual(
       one("NON_FINITE_NUMBER", "rateShock"),
+    );
+    expect(errors({ rateShock: band("-1", -1) })).toEqual(
+      one("SHOCK_OUT_OF_RANGE", "rateShock"),
+    );
+    expect(errors({ inflationShock: band("-2", 1.5) })).toEqual(
+      one("SHOCK_OUT_OF_RANGE", "inflationShock"),
     );
   });
 

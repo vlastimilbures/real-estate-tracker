@@ -107,6 +107,10 @@ function checkFields(
   }
 }
 
+/** A shock band's duration: whole years ≥ 0 (D-38). */
+const badDuration = (band: ShockBand) =>
+  !Number.isInteger(band.durationYears) || band.durationYears < 0;
+
 function checkShock(
   band: ShockBand | undefined,
   field: string,
@@ -114,9 +118,7 @@ function checkShock(
 ): void {
   if (!band) return;
   if (badNumber(band.deltaPa)) report("NON_FINITE_NUMBER", field);
-  if (!Number.isInteger(band.durationYears) || band.durationYears < 0) {
-    report("SHOCK_OUT_OF_RANGE", field);
-  }
+  if (badDuration(band)) report("SHOCK_OUT_OF_RANGE", field);
 }
 
 /** The Kč fields of a holding-cost row and of the assumption cost defaults. */
@@ -191,7 +193,7 @@ function checkLevelRanges(a: Assumptions, report: Report): void {
 
 /**
  * ADR 0128 §3: `level` + the shock's delta must stay in the level's own range. Checked
- * only when the level and the delta pass their own rules, so one typo gives one message.
+ * only when the level and the shock pass their own rules, so one typo gives one message.
  */
 function checkShiftedLevel(
   level: Decimal,
@@ -199,7 +201,8 @@ function checkShiftedLevel(
   outOfRange: (d: Decimal) => boolean,
   report: () => void,
 ): void {
-  if (!band || badNumber(band.deltaPa) || badNumber(level)) return;
+  if (!band || badNumber(band.deltaPa) || badDuration(band)) return;
+  if (badNumber(level)) return;
   if (outOfRange(level)) return;
   if (outOfRange(level.plus(band.deltaPa))) report();
 }

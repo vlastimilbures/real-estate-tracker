@@ -129,7 +129,7 @@ export const cs: Dictionary = {
     missingValue: "Chybí povinná hodnota",
     otherConstraint: "Databáze změnu odmítla, nic se nezměnilo",
     scenarioBreaks: (name, rule) =>
-      `Tato hodnota by porušila scénář „${name}“: ${rule}. Změňte hodnotu, nebo nejdřív upravte scénář`,
+      `Tato hodnota by porušila scénář „${name}“. ${rule}. Změňte hodnotu, nebo nejdřív upravte scénář`,
   },
 
   dataErrors: {
