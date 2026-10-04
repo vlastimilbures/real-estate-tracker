@@ -1,6 +1,6 @@
 // ADR 0109: shared harness for running prepayments and recasts through BOTH the engine
 // and the independent reference model (TEST-ONLY).
-import { buildSchedule } from "../../schedule";
+import { buildSchedule, propertySchedule } from "../../schedule";
 import { isoDate } from "../../dates";
 import { D, type Decimal } from "../../../lib/money";
 import { money, rate } from "../../brands";
@@ -14,6 +14,7 @@ import { assumptions as A0 } from "../support/seed";
 import {
   addMonths,
   paymentsMadeBy,
+  referenceChain,
   referenceSchedule,
   type RefLoan,
   type RefOptions,
@@ -82,6 +83,21 @@ export function both(
   const r = referenceSchedule(l, options);
   if (options.openingDraws === "nextPeriod" && r.length > 0)
     r[0] = { ...r[0], draw: r[0].draw.minus(openingDraws(l, base).toString()) };
+  return { e, r };
+}
+
+/** Engine chain (`propertySchedule`) and the reference chain for one property's
+ *  loans; a single loan is a chain of one. */
+export function chainBoth(loans: RefLoan[]) {
+  const e = propertySchedule(
+    loans.map((l, i) => toBlock(l, `b${i}`)),
+    A0,
+  );
+  const r = referenceChain(loans, {
+    ...REF,
+    baseDate: "2026-06-07",
+    months: REF_MONTHS,
+  });
   return { e, r };
 }
 
