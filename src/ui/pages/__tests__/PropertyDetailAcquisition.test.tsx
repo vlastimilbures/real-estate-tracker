@@ -116,11 +116,13 @@ describe("Property detail Acquisition section (ADR 0119 §9)", () => {
     expect(within(section()!).queryByRole("note")).toBeNull();
   });
 
-  it("shows the recorded funding note", () => {
-    show("dubova", { note: "Bought with savings" });
-    expect(
-      within(section()!).getByText(pd.acqRecordedNote("Bought with savings")),
-    ).toBeTruthy();
+  it("shows the recorded funding note with its line breaks", () => {
+    show("dubova", { note: "Bought with savings\nand a family loan" });
+    const note = within(section()!).getByText(
+      pd.acqRecordedNote("Bought with savings\nand a family loan"),
+      { normalizer: (s) => s },
+    );
+    expect(note.className).toContain("funding-note");
   });
 
   it("is not shown while the stored data breaks an engine rule", () => {

@@ -58,7 +58,7 @@ async function fillRequired() {
   await userEvent.type(screen.getByLabelText(f.purchasePrice), "5200000");
 }
 
-/** The funding record of the n-th call's Property, amounts as strings. */
+/** The funding record of the first call's Property, amounts as strings. */
 function savedFunding(fn: typeof addProperty) {
   const funding = fn.mock.calls[0]![0].funding;
   return (
@@ -144,6 +144,28 @@ describe("property form Acquisition section (ADR 0119 §9)", () => {
     expect(
       screen.getByLabelText<HTMLTextAreaElement>(f.fundingNote).value,
     ).toBe("Deposit");
+  });
+
+  it("edit: a stored record drafted on open is not an unsaved change: Esc still closes", async () => {
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: withFunding("lipova", {
+          ownCash: money("1500000"),
+          note: "Deposit",
+        }),
+      }),
+    );
+    const onClose = vi.fn();
+    render(
+      <PropertyFormModal mode="edit" propertyId="lipova" onClose={onClose} />,
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText<HTMLInputElement>(f.ownCash).value).toBe(
+        "1500000",
+      ),
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it("edit: stays shut when nothing is recorded", () => {

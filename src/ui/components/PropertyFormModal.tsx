@@ -191,7 +191,8 @@ function AcquisitionFields({
           {t.propertyForm.acquisitionSection}
         </Button>
       </div>
-      <div id={bodyId} className="form-wide">
+      {/* Hidden, not removed, while shut: the toggle controls it, and it adds no grid row. */}
+      <div id={bodyId} className="form-wide" hidden={!open}>
         {open && (
           <div className="form-grid">
             <p className="form-wide panel-note">
@@ -283,13 +284,18 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
     });
   }
 
+  // A funding field in error opens the Acquisition section, so the error is seen.
+  function showErrors(next: PropertyFormErrors) {
+    setErrors(next);
+    if (hasFundingError(next)) setFundingOpen(true);
+  }
+
   async function handleSave() {
     const existingNames = (portfolio?.properties ?? [])
       .filter((p) => mode === "add" || p.id !== propertyId)
       .map((p) => p.name.toLowerCase());
     const result = parsePropertyForm(form, mode, propertyId, existingNames, t);
-    setErrors(result.errors);
-    if (hasFundingError(result.errors)) setFundingOpen(true);
+    showErrors(result.errors);
     if (!result.valid) return;
     const { property, address, garage } = result;
     setSaving(true);
@@ -315,8 +321,7 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
       const key = byField.get(field); // split only names the fields passed in
       if (key) fieldErrors[key] = message;
     }
-    setErrors(fieldErrors);
-    if (hasFundingError(fieldErrors)) setFundingOpen(true);
+    showErrors(fieldErrors);
     setSaveError(split.formError);
   }
 

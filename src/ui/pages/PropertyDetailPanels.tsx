@@ -373,7 +373,7 @@ export function AcquisitionPanel({ view }: { view: AcquisitionView }) {
           {view.warning}
         </div>
       )}
-      {view.note && <p className="panel-note">{view.note}</p>}
+      {view.note && <p className="panel-note funding-note">{view.note}</p>}
       <p className="panel-note">{d.acqNote}</p>
     </Panel>
   );

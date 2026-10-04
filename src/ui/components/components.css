@@ -1139,6 +1139,10 @@ table.data tbody tr:hover td.sticky-col {
 .form-wide {
   grid-column: 1 / -1;
 }
+/* The funding note keeps the line breaks typed in the form (ADR 0119 §9). */
+.funding-note {
+  white-space: pre-line;
+}
 /* The property form's optional Acquisition toggle (ADR 0119 §9). */
 .form-disclosure {
   border-top: 1px solid var(--hairline);
