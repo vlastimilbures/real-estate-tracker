@@ -26,6 +26,8 @@ const snakeToCamel = (k: string) =>
 interface Props {
   mode: "add" | "edit";
   propertyId?: string;
+  /** Open the Acquisition section from the start (a Data check link, ADR 0118). */
+  openFunding?: boolean;
   onClose: () => void;
 }
 
@@ -224,7 +226,12 @@ function AcquisitionFields({
   );
 }
 
-export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
+export function PropertyFormModal({
+  mode,
+  propertyId,
+  openFunding = false,
+  onClose,
+}: Props) {
   const t = useT();
   const portfolio = usePortfolioStore((s) => s.portfolio);
   const getPropertyExtras = usePortfolioStore((s) => s.getPropertyExtras);
@@ -241,12 +248,14 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
   >({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  // Shut on add; open on edit when a record exists, so what is stored is seen (ADR 0119 §9).
+  // Shut on add; open on edit when a record exists, so what is stored is seen (ADR 0119 §9),
+  // or when a Data check link asked for it.
   const [fundingOpen, setFundingOpen] = useState(
     () =>
-      mode === "edit" &&
-      portfolio?.properties.find((x) => x.id === propertyId)?.funding !==
-        undefined,
+      openFunding ||
+      (mode === "edit" &&
+        portfolio?.properties.find((x) => x.id === propertyId)?.funding !==
+          undefined),
   );
 
   // For edit mode: load engine fields from portfolio + address/garage from DB

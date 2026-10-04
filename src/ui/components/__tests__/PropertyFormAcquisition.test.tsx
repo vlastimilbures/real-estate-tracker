@@ -179,6 +179,22 @@ describe("property form Acquisition section (ADR 0119 §9)", () => {
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
   });
 
+  it("edit: opens with nothing recorded when asked (a Data check link, ADR 0118); Esc still closes", async () => {
+    const onClose = vi.fn();
+    render(
+      <PropertyFormModal
+        mode="edit"
+        propertyId="dubova"
+        openFunding
+        onClose={onClose}
+      />,
+    );
+    expect(toggle().getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByLabelText<HTMLInputElement>(f.ownCash).value).toBe("");
+    await userEvent.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
   it("edit: clearing every field saves an empty record, which clears the stored one", async () => {
     act(() =>
       usePortfolioStore.setState({

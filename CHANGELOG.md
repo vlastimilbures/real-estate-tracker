@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Each row links to the section that fixes it, or to the property form. The Dashboard
     panel opens when something needs attention. No figure changes.
 
+- The Data check lists a property whose **own cash at purchase is not recorded** under
+  "Using portfolio defaults" (ADR 0118, #178): Cash invested is then unknown, and for a
+  property bought after the projection start the down payment is derived. A future purchase
+  shows it before its purchase date too. Its link, **Record funding**, opens the property
+  form with the Acquisition section open.
+
 - The property page's **Loan outlook** shows the loan's remaining term ("24 yrs 8 months")
   and lists every loan block, oldest first, with its fixation end, the balance that moves
   to the new rate (nominal) and a status: next rate reset, upcoming, passed, replaced by a later

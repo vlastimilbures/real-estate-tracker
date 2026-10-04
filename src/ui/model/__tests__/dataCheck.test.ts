@@ -275,19 +275,23 @@ describe("data check: fixation (ADR 0118)", () => {
 });
 
 describe("data check: portfolio defaults (ADR 0118)", () => {
+  // Javorova with own cash recorded, so only the growth findings are left.
+  const own = (overrides: object): Portfolio => ({
+    ...portfolio,
+    properties: portfolio.properties.map((x) =>
+      x.id === "javorova"
+        ? { ...x, funding: { ownCash: money("2000000") }, ...overrides }
+        : x,
+    ),
+  });
+
   it("no own growth: the portfolio appreciation and rent indexation apply", () => {
-    expect(check("javorova").defaults).toEqual([
+    expect(check("javorova", BASE_DATE, own({})).defaults).toEqual([
       { kind: "growthDefault", appreciation: true, rentIndexation: true },
     ]);
   });
 
   it("an own appreciation leaves only rent indexation; both own leave none", () => {
-    const own = (overrides: object): Portfolio => ({
-      ...portfolio,
-      properties: portfolio.properties.map((x) =>
-        x.id === "javorova" ? { ...x, ...overrides } : x,
-      ),
-    });
     expect(
       check(
         "javorova",
@@ -357,6 +361,44 @@ describe("data check: portfolio defaults (ADR 0118)", () => {
   });
 });
 
+describe("data check: own cash unknown (ADR 0118, #178)", () => {
+  const funded = (funding: object | undefined): Portfolio => ({
+    ...portfolio,
+    properties: portfolio.properties.map((x) =>
+      x.id === "javorova" ? { ...x, funding } : x,
+    ),
+  });
+  const funding = (p: Portfolio) =>
+    check("javorova", BASE_DATE, p).defaults.filter(
+      (f) => f.kind === "fundingUnknown",
+    );
+
+  it("no funding record: listed under the portfolio defaults, not counted", () => {
+    const { attention, defaults } = check("javorova");
+    expect(defaults).toContainEqual({ kind: "fundingUnknown", future: false });
+    expect(kinds(attention)).not.toContain("fundingUnknown");
+  });
+
+  it("a record without own cash still lists it: own cash drives Cash invested", () => {
+    expect(funding(funded({ note: "from savings" }))).toEqual([
+      { kind: "fundingUnknown", future: false },
+    ]);
+    expect(
+      funding(
+        funded({
+          transactionCosts: money("150000"),
+          initialWorks: money("300000"),
+        }),
+      ),
+    ).toEqual([{ kind: "fundingUnknown", future: false }]);
+  });
+
+  it("recording own cash resolves it, 0 included", () => {
+    expect(funding(funded({ ownCash: money("2500000") }))).toEqual([]);
+    expect(funding(funded({ ownCash: money("0") }))).toEqual([]);
+  });
+});
+
 describe("data check: scope (ADR 0118)", () => {
   const future: Portfolio = {
     ...portfolio,
@@ -371,25 +413,31 @@ describe("data check: scope (ADR 0118)", () => {
     ],
   };
 
-  it("a property bought after the as-of date has no findings until its purchase date", () => {
+  it("a property bought after the as-of date has only the own-cash finding until its purchase date", () => {
+    // Its own cash is the projection's down payment (ADR 0119), so it is listed early.
     expect(check("future", BASE_DATE, future)).toEqual({
       attention: [],
-      defaults: [],
+      defaults: [{ kind: "fundingUnknown", future: true }],
     });
     const onPurchase = check("future", isoDate("2027-01-01"), future);
     expect(kinds(onPurchase.attention)).toEqual(["noValuation", "noLease"]);
     expect(kinds(onPurchase.defaults)).toEqual([
       "growthDefault",
       "costDefaults",
+      "fundingUnknown",
     ]);
-    expect(
-      dataCheckItems(
-        future.properties,
-        future,
-        BASE_DATE,
-        BASE_DATE,
-      ).defaults.map((r) => r.propertyId),
-    ).toEqual(["javorova", "lipova", "dubova"]);
+    const recorded: Portfolio = {
+      ...future,
+      properties: future.properties.map((x) =>
+        x.id === "future"
+          ? { ...x, funding: { ownCash: money("1500000") } }
+          : x,
+      ),
+    };
+    expect(check("future", BASE_DATE, recorded)).toEqual({
+      attention: [],
+      defaults: [],
+    });
   });
 });
 
@@ -403,19 +451,25 @@ describe("data check: the sample portfolio (ADR 0118)", () => {
   const items = (asOf: Date) =>
     dataCheckItems(portfolio.properties, portfolio, asOf, BASE_DATE);
 
-  it("at the base date nothing needs attention; all three use the portfolio growth", () => {
+  const funding: DataFinding = { kind: "fundingUnknown", future: false };
+
+  it("at the base date nothing needs attention; all three use the portfolio growth and have no own cash recorded", () => {
     expect(items(BASE_DATE)).toEqual({
       attention: [],
       defaults: [
         { propertyId: "javorova", name: "Byt Javorova", finding: growth },
+        { propertyId: "javorova", name: "Byt Javorova", finding: funding },
         { propertyId: "lipova", name: "Byt Lipova", finding: growth },
+        { propertyId: "lipova", name: "Byt Lipova", finding: funding },
         { propertyId: "dubova", name: "Byt Dubova", finding: growth },
+        { propertyId: "dubova", name: "Byt Dubova", finding: funding },
       ],
     });
   });
 
   it("five years on, every valuation is stale and every fixation has ended", () => {
-    const { attention } = items(edate(BASE_DATE, 60)); // 2031-06-07
+    const { attention, defaults } = items(edate(BASE_DATE, 60)); // 2031-06-07
+    expect(defaults).toEqual(items(BASE_DATE).defaults);
     expect(attention.map((r) => `${r.propertyId}:${r.finding.kind}`)).toEqual([
       "javorova:valuationStale",
       "javorova:fixationEnded",
@@ -490,6 +544,12 @@ describe("data check: text and fix (ADR 0118)", () => {
     expect(
       text({ kind: "costDefaults", fields: ["svjMonthly", "otherYr"] }),
     ).toBe("Holding costs use the portfolio defaults for: SVJ /mo, Other /yr.");
+    expect(text({ kind: "fundingUnknown", future: false })).toBe(
+      "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    );
+    expect(text({ kind: "fundingUnknown", future: true })).toBe(
+      "Own cash for this purchase is not recorded, so the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
+    );
   });
 
   it("links each finding to the place that fixes it", () => {
@@ -525,6 +585,9 @@ describe("data check: text and fix (ADR 0118)", () => {
         rentIndexation: true,
       }),
     ).toBe("edit");
+    expect(findingFix({ kind: "fundingUnknown", future: false })).toBe(
+      "editFunding",
+    );
   });
 
   it("labels the fix link with its section, or the property form", () => {
@@ -532,6 +595,7 @@ describe("data check: text and fix (ADR 0118)", () => {
     expect(fixLabel(en, "financing")).toBe("Go to Financing");
     expect(fixLabel(en, "holding")).toBe("Go to Holding costs");
     expect(fixLabel(en, "edit")).toBe("Edit property");
+    expect(fixLabel(en, "editFunding")).toBe("Record funding");
   });
 });
 
@@ -548,10 +612,15 @@ describe("data check lists (ADR 0118)", () => {
       "lipova:fixationEnded",
       "dubova:noValuation",
     ]);
-    expect(lists.defaults.map((r) => r.name)).toEqual([
-      "Byt Javorova",
-      "Byt Lipova",
-      "Byt Dubova",
+    expect(
+      lists.defaults.map((r) => `${r.propertyId}:${r.finding.kind}`),
+    ).toEqual([
+      "javorova:growthDefault",
+      "javorova:fundingUnknown",
+      "lipova:growthDefault",
+      "lipova:fundingUnknown",
+      "dubova:growthDefault",
+      "dubova:fundingUnknown",
     ]);
     expect(dataCheckItems([], p, asOf, BASE_DATE)).toEqual({
       attention: [],

@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-04
 - Source: issue #35 (pre-release review 2026-10, §6 and F5); independent review of PR #179
+- Amended: 2026-10-04 (#178: the own-cash finding in decisions 4, 5, 7 and 8, decided by
+  the owner)
 - Amended by: ADR 0122 (a closed last valuation stays in use)
 
 ## Context
@@ -53,9 +55,18 @@ Owner, 2026-10-04 (#35 plan):
      the as-of date only the Data check shows it.
 4. **"Using portfolio defaults" findings** (listed below, not counted): the property has no
    own appreciation and/or rent indexation; the property's holding costs are missing or have
-   blank fields (the fields are named). These are often deliberate, so they are shown
-   quietly.
-5. **Scope:** a property not yet purchased at the as-of date has no findings. The Dashboard
+   blank fields (the fields are named); **own cash at purchase is not recorded** (#178,
+   ADR 0119). These are often deliberate, so they are shown quietly.
+   - The own-cash finding fires when the funding record has no own cash, even when it
+     holds transaction costs, initial works or a note: own cash alone drives Cash invested
+     (Property detail and the Dashboard total) and a future purchase's outflow. Own cash
+     of 0 is recorded and resolves it.
+   - Its text states the effect that is true for the property: Cash invested is unknown;
+     for a property bought after the base date, the projection derives the down payment
+     (price − acquisition loan + recorded costs and works, ADR 0119 §5).
+5. **Scope:** a property not yet purchased at the as-of date has no findings, except the
+   own-cash finding: a future purchase's own cash is its down payment in the projection,
+   so it is worth recording before the purchase date. The Dashboard
    covers the active properties in its filter; Property detail covers its own property.
 6. **Where it shows:**
    - A **Data check** panel on the Dashboard, after "Financing & upcoming". It opens when
@@ -64,12 +75,14 @@ Owner, 2026-10-04 (#35 plan):
    - A **Data check** section on Property detail, right after Overview, listed in the
      section nav (ADR 0107).
 7. **Each finding links straight to its fix:** valuation and lease findings to Records, the
-   fixation to Financing, holding costs to Holding costs, growth to the property form. From
+   fixation to Financing, holding costs to Holding costs, growth to the property form,
+   and own cash to the property form with its Acquisition section already open ("Record
+   funding"; the one-shot target `editFunding`). From
    the Dashboard the link opens the property and then moves to that section; the
    unsaved-changes guard applies as for any navigation.
-8. **Not in this decision:** "funding history unknown" waits for the acquisition funding
-   record (#33); a valuation source field (roadmap); gaps between consecutive leases (model
-   limitations).
+8. **Not in this decision:** a valuation source field (roadmap); gaps between consecutive
+   leases (model limitations). (The funding finding, first deferred to #33, is decision 4's
+   own-cash finding.)
 
 ## Consequences
 
@@ -77,4 +90,5 @@ Presentation only: no computed number, parity target, golden master, export or s
 changes. Two engine selectors are exported, and the lease-end and renewed-lease rules move
 into shared helpers, all behaviour-neutral. New strings in en, cs and ru; the section nav
 gains one link. The sample portfolio shows no attention findings at its base date, and the
-growth defaults for all three properties.
+growth defaults and the own-cash finding for all three properties (the seed records no
+funding).

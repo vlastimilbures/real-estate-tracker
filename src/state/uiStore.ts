@@ -24,8 +24,9 @@ export type SettingsTab = "assumptions" | "backup";
 
 export type { Mode } from "../ui/model/lens";
 
-/** Where Property detail lands once: a section, or the open property form (ADR 0118). */
-export type PropertyTarget = PropertySection | "edit";
+/** Where Property detail lands once: a section, or the open property form (ADR 0118);
+ *  `editFunding` opens it at its Acquisition section (#178). */
+export type PropertyTarget = PropertySection | "edit" | "editFunding";
 export type { Theme } from "./themePreference";
 
 /** Saved scenarios the compare shows at most; Base is always available alongside. */
