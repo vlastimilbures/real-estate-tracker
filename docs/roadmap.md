@@ -115,13 +115,9 @@ product's positioning changes.
   (DR-051); a few helpers still take loose `Record<string, string>` drafts (DR-081); stored
   boolean flags are typed as numbers at the database boundary (DR-080); `D()` still accepts a
   JS `number` (DR-078).
-- **Tests.** The two optional Playwright smoke tests do not run in CI (ADR 0006), and Node 26
-  prints a `localStorage` warning during the test run. (DR-094)
+- **Tests.** The two optional Playwright smoke tests do not run in CI (ADR 0006). (DR-094)
 - **Dead fallback.** A no-schedule snapshot fallback for development loans is unreachable from
   the app and could be removed. (DR-118)
 - **Row editor focus.** Adding a prepayment or maturity-change row does not move focus to
   its date, and removing one leaves focus on the next row's button or the page (PR #100
   review).
-- **Prepayment tests (from the PR #99 review).** The interest-saved "whole-life difference"
-  test restates the formula; pin a reference figure. The event cross-check harness does not
-  compare `drawn` per row, and `edgeCases.test.ts` still has its own copy of the harness.
