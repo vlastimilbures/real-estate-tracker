@@ -422,13 +422,10 @@ describe("ADR 0117: remaining term = payments due after as-of", () => {
   });
 
   it("a loan not yet drawn counts its own payments only", () => {
+    // 3,000,000 at 4 % for 14,322.46 is a 30-year annuity: 360 payments from 10.02.2028,
+    // none in the 19 schedule months before the draw.
     const later = block({ id: "later", startDate: isoDate("2028-01-10") });
-    const { fx, schedules } = exposure(single(later));
-    const paid = rowsOf(schedules, "p").filter((r) =>
-      r.interest.plus(r.principal).greaterThan(ZERO),
-    ).length;
-    expect(paid).toBeGreaterThan(0);
-    expect(loan(fx, "p").remainingMonths).toBe(paid);
+    expect(loan(exposure(single(later)).fx, "p").remainingMonths).toBe(360);
   });
 });
 
