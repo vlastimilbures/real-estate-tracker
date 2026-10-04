@@ -72,6 +72,23 @@ export interface Property {
   appreciationOverridePa?: Rate | undefined;
   rentIndexOverridePa?: Rate | undefined;
   active?: boolean | undefined; // false ⇒ excluded from portfolio aggregates & projections; default active
+  /** How the purchase was funded, as the owner recorded it (ADR 0119). Undefined ⇒
+   *  nothing recorded. */
+  funding?: AcquisitionFunding | undefined;
+}
+
+/** The owner's record of a purchase's funding (ADR 0119). Each part is optional on its
+ *  own: undefined is unknown, never 0. The acquisition loan is derived from the mortgage
+ *  blocks, not recorded here. */
+export interface AcquisitionFunding {
+  /** All own money paid in at acquisition: the owner's share of the price, the
+   *  transaction costs and the initial works together. */
+  ownCash?: Money | undefined;
+  /** Broker, legal, cadastre, valuation and similar fees. */
+  transactionCosts?: Money | undefined;
+  /** Renovation or furnishing paid at or right after the purchase. */
+  initialWorks?: Money | undefined;
+  note?: string | undefined;
 }
 
 /** A construction tranche: additional principal drawn down at a future milestone. */
