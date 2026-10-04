@@ -757,7 +757,7 @@ describe("deviations (engine asserted as today; reference = Czech-practice truth
     // 2036-06-07 = grid month 120.
     expect(currentBalance(b, isoDate("2036-06-07")).toFixed(2)).toBe(
       "1067057.71",
-    ); // legacy path only
+    ); // closed form only: no app path reads it past a reset
     // useEngine path: equals the reference (payment-day reset) since D-21.
     expect(balanceAtMonth(sch, 120).toFixed(2)).toBe("1134841.71");
     expect(

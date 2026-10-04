@@ -115,11 +115,16 @@ function fullRun(portfolio: Portfolio, a: Assumptions) {
     edate(a.baseDate, 12 * a.horizonYears),
     isoDate("2024-01-01"),
   ];
+  const snapshotsWithSchedules = asOfs.map((d) =>
+    hashOrCodes(() => portfolioSnapshot(portfolio, a, d, schedules)),
+  );
+  // DR-118: an omitted schedule is built from the same inputs (not hashed again).
+  expect(
+    asOfs.map((d) => hashOrCodes(() => portfolioSnapshot(portfolio, a, d))),
+  ).toEqual(snapshotsWithSchedules);
   return {
     schedules: hash(schedules),
-    snapshotsWithSchedules: asOfs.map((d) =>
-      hashOrCodes(() => portfolioSnapshot(portfolio, a, d, schedules)),
-    ),
+    snapshotsWithSchedules,
     propertyProjections: portfolio.properties.map((p) =>
       hash(propertyProjection(p, portfolio, a, schedules.get(p.id) ?? [])),
     ),

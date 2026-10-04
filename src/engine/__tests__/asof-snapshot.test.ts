@@ -107,7 +107,8 @@ describe("DR-118: an omitted schedule is built from the same inputs", () => {
       ["javorova"],
       assumptions,
     ).get("javorova");
-    expect(propertySnapshot(javorova, prepaid, assumptions)).toEqual(
+    const snap = propertySnapshot(javorova, prepaid, assumptions);
+    expect(snap).toEqual(
       propertySnapshot(
         javorova,
         prepaid,
@@ -116,6 +117,11 @@ describe("DR-118: an omitted schedule is built from the same inputs", () => {
         rows,
       ),
     );
+    // The built schedule sees the prepayment: the debt is below the no-event balance.
+    const block = portfolio.mortgages.find((m) => m.propertyId === "javorova")!;
+    expect(
+      snap.debt.lessThan(currentBalance(block, assumptions.baseDate)),
+    ).toBe(true);
   });
 });
 
