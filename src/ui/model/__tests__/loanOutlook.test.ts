@@ -17,8 +17,10 @@ import {
   portfolio,
 } from "../../../engine/__tests__/support/seed";
 import { mixedWithRefi } from "../../../engine/__tests__/support/synthetic";
+import { devBlock } from "../../../engine/__tests__/support/mixed";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
+import { ru } from "../../../i18n/ru";
 
 const d = en.propertyDetail;
 
@@ -146,6 +148,64 @@ describe("ADR 0117: loan outlook rows", () => {
   });
 });
 
+describe("ADR 0117: loan outlook edge cases", () => {
+  it("a 0-year block replaced before baseDate is replaced, with no fixation end", () => {
+    const o = outlook([
+      block("float", "2018-03-10", 0),
+      block("now", "2024-01-10"),
+    ]);
+    expect(o.resets.map((r) => [r.blockId, r.status, r.fixationEnd])).toEqual([
+      ["float", "replaced", "—"],
+      ["now", "nextReset", "10.01.2029"],
+    ]);
+  });
+
+  it("a floating block followed by a fixed one: floating, then the next rate reset", () => {
+    const o = outlook([
+      block("float", "2024-01-10", 0),
+      block("next", "2027-01-10"),
+    ]);
+    expect(o.resets.map((r) => [r.blockId, r.status, r.fixationEnd])).toEqual([
+      ["float", "floating", "—"],
+      ["next", "nextReset", "10.01.2032"],
+    ]);
+  });
+
+  it("a development loan's fixation end is its next rate reset", () => {
+    const o = outlook([devBlock]);
+    expect(o.resets).toEqual([
+      expect.objectContaining({
+        blockId: "m-dev",
+        fixationEnd: "01.03.2031",
+        status: "nextReset",
+      }),
+    ]);
+    expect(o.resets[0].balance?.greaterThan(0)).toBe(true);
+  });
+
+  it("a loan repaid before baseDate: payoff Repaid, no term; its old fixation end passed", () => {
+    const old = mortgageBlock({
+      id: "old",
+      propertyId: "p",
+      startDate: isoDate("2010-01-10"),
+      initialPrincipal: money("300000"),
+      fixationYears: 5,
+      interestRatePa: rate("0.04"),
+      monthlyInstalment: money("14322.46"),
+    });
+    const o = outlook([old]);
+    expect(o.payoff).toBe(d.loanPayoffNone);
+    expect(o.remainingTerm).toBeNull();
+    expect(o.resets[0]).toMatchObject({ status: "passed", balance: null });
+  });
+
+  it("just after payoff: the payoff date shows and the term is hidden", () => {
+    const o = outlook(javorova(), isoDate("2051-05-20"));
+    expect(o.payoff).toBe("17.05.2051");
+    expect(o.remainingTerm).toBeNull();
+  });
+});
+
 describe("ADR 0117: remaining term", () => {
   it.each([
     [300, "25 yrs"],
@@ -158,6 +218,8 @@ describe("ADR 0117: remaining term", () => {
 
   it("uses the language's plurals", () => {
     expect(remainingTermText(296, cs.propertyDetail)).toBe("24 let 8 měsíců");
+    expect(remainingTermText(296, ru.propertyDetail)).toBe("24 года 8 месяцев");
+    expect(remainingTermText(13, ru.propertyDetail)).toBe("1 год 1 месяц");
   });
 
   it("is hidden once the loan is repaid", () => {
