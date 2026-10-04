@@ -1,6 +1,7 @@
 // The Data check's two lists (ADR 0118): "Needs attention" first, then the quieter
 // "Using portfolio defaults". Each row states the finding and its effect, then links to the
 // place that fixes it. Text and targets come from src/ui/model/dataCheck.ts.
+import { useId } from "react";
 import type { Rate } from "../../engine";
 import {
   findingFix,
@@ -28,19 +29,24 @@ export function DataCheckList({
 }) {
   const t = useT();
   const d = t.dataCheck;
+  // The row's text describes its fix button: on the Dashboard several buttons share a
+  // name ("Go to Records"), and the description tells them apart.
+  const baseId = useId();
   const rows = (items: DataCheckItem[], className: string) => (
     <ul className={className}>
       {items.map(({ propertyId, name, finding }) => {
         const fix = findingFix(finding);
+        const textId = `${baseId}-${propertyId}-${finding.kind}`;
         return (
           <li key={`${propertyId}-${finding.kind}`}>
-            <span>
+            <span id={textId}>
               {showNames && <strong>{name}: </strong>}
               {findingText(t, finding, resetRate)}
             </span>
             <Button
               size="sm"
               variant="ghost"
+              aria-describedby={textId}
               onClick={() => onFix(propertyId, fix)}
             >
               {fixLabel(t, fix)}

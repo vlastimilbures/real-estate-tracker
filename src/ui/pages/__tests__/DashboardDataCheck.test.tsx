@@ -13,6 +13,8 @@ import {
 import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { DataCheckPanel } from "../DashboardDataCheck";
+import { Dashboard } from "../Dashboard";
+import { usePortfolioStore } from "../../../state/portfolioStore";
 
 const d = en.dataCheck;
 
@@ -68,6 +70,18 @@ describe("Data check panel (ADR 0118)", () => {
     expect(onFix).toHaveBeenLastCalledWith("javorova", "edit");
   });
 
+  it("each fix button is described by its row, so equal names stay apart", () => {
+    renderPanel(portfolio, edate(BASE_DATE, 60));
+    const [first, second] = screen.getAllByRole("button", {
+      name: "Go to Records",
+    });
+    const describe = (b: HTMLElement) =>
+      document.getElementById(b.getAttribute("aria-describedby") ?? "")
+        ?.textContent;
+    expect(describe(first)).toMatch(/^Byt Javorova: The valuation in use/);
+    expect(describe(second)).toMatch(/^Byt Lipova: The valuation in use/);
+  });
+
   it("a manual Show / Hide wins for the session", async () => {
     renderPanel(portfolio);
     await userEvent.click(toggle());
@@ -106,5 +120,41 @@ describe("Data check panel (ADR 0118)", () => {
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.getByText(d.attentionNone)).toBeTruthy();
     expect(screen.getByText(d.summary(0, 0))).toBeTruthy();
+  });
+});
+
+describe("Data check on the Dashboard page (ADR 0118)", () => {
+  it("checks the filtered properties at the snapshot date; a fix opens the property there", async () => {
+    act(() => {
+      usePortfolioStore.setState({
+        status: "ready",
+        portfolio,
+        assumptions,
+        scenarios: [],
+        sample: { active: false, dismissed: true },
+      });
+      useUiStore.setState({
+        route: "dashboard",
+        dashboardPropertyIds: ["lipova"],
+        asOf: edate(BASE_DATE, 60),
+        propertyTarget: null,
+        unsavedChanges: false,
+        unsavedSources: [],
+        pendingLeave: null,
+      });
+    });
+    render(<Dashboard />);
+    expect(screen.getByText(d.summary(2, 1))).toBeTruthy();
+    expect(screen.getByText("Checked as of 07.06.2031.")).toBeTruthy();
+    expect(screen.queryByText("Byt Javorova:")).toBeNull();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Go to Financing" }),
+    );
+    const ui = useUiStore.getState();
+    expect([ui.route, ui.selectedPropertyId, ui.propertyTarget]).toEqual([
+      "property",
+      "lipova",
+      "financing",
+    ]);
   });
 });

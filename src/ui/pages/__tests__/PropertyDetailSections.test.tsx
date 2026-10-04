@@ -281,6 +281,20 @@ describe("Property detail data check (ADR 0118)", () => {
     expect(useUiStore.getState().propertyTarget).toBeNull();
   });
 
+  it("waits for the portfolio before landing", () => {
+    act(() => {
+      usePortfolioStore.setState({ portfolio: null, status: "loading" });
+      useUiStore.setState({ propertyTarget: "holding" });
+    });
+    render(<PropertyDetail />);
+    expect(useUiStore.getState().propertyTarget).toBe("holding");
+    setPortfolio(portfolio);
+    expect(document.activeElement).toBe(
+      screen.getByRole("heading", { name: pd.holdingCostsTitle }),
+    );
+    expect(useUiStore.getState().propertyTarget).toBeNull();
+  });
+
   it("opens the property form when the Dashboard link asked for it", () => {
     act(() => useUiStore.setState({ propertyTarget: "edit" }));
     render(<PropertyDetail />);
