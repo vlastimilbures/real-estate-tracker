@@ -135,6 +135,64 @@ describe("loanWarningText", () => {
     expect(text).toContain("01.03.2023");
     expect(text).toContain("4,5 %");
   });
+
+  it("fixation ended with a later block: from … until … (ADR 0129 §4)", () => {
+    const a = block({ startDate: isoDate("2019-05-01"), fixationYears: 5 });
+    const b = block({ id: "m2", startDate: isoDate("2027-03-01") });
+    const w = loanWarnings([a, b], baseDate).find(
+      (x) => x.kind === "fixationEnded",
+    );
+    for (const dict of [en, cs, ru]) {
+      const text = loanWarningText(dict, w!, reset);
+      expect(text).toContain("01.05.2024");
+      expect(text).toContain("01.03.2027");
+      expect(text).toContain("4,5 %");
+    }
+    expect(loanWarningText(en, w!, reset)).toContain(
+      "from 01.05.2024 until 01.03.2027",
+    );
+  });
+});
+
+// ADR 0129 §4 (#135 G2-1-08): a later block silences the warning only when it starts
+// on or before the first payment after the fixation end.
+describe("fixation ended before a later block", () => {
+  const fixationEnded = (blocks: MortgageBlock[]) =>
+    loanWarnings(blocks, baseDate).filter((w) => w.kind === "fixationEnded");
+
+  it("warns until the later block's start", () => {
+    const a = block({ startDate: isoDate("2019-05-01"), fixationYears: 5 });
+    const b = block({ id: "m2", startDate: isoDate("2027-03-01") });
+    expect(fixationEnded([a, b])).toEqual([
+      {
+        kind: "fixationEnded",
+        block: a,
+        fixationEnd: isoDate("2024-05-01"),
+        until: isoDate("2027-03-01"),
+      },
+    ]);
+  });
+
+  it("is silent when the next block starts by the first floating payment", () => {
+    // Fixation ends 2026-06-01 (on/before baseDate); first floating payment 2026-07-01.
+    const a = block({ startDate: isoDate("2021-06-01"), fixationYears: 5 });
+    const on = block({ id: "m2", startDate: isoDate("2026-07-01") });
+    const after = block({ id: "m2", startDate: isoDate("2026-07-02") });
+    expect(fixationEnded([a, on])).toEqual([]);
+    expect(fixationEnded([a, after])).toEqual([
+      {
+        kind: "fixationEnded",
+        block: a,
+        fixationEnd: isoDate("2026-06-01"),
+        until: isoDate("2026-07-02"),
+      },
+    ]);
+  });
+
+  it("with no later block there is no `until`", () => {
+    const a = block({ startDate: isoDate("2019-05-01"), fixationYears: 5 });
+    expect(fixationEnded([a])[0]).not.toHaveProperty("until");
+  });
 });
 
 // ADR 0116 §10: an event the engine clamped, ignored or dropped is a warning, never a
