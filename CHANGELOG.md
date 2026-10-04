@@ -213,10 +213,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - A saved scenario that breaks a rule is left out of the compare and named above it,
     instead of breaking the page.
   - A fast double Return in the scenario form no longer saves the scenario twice.
-- Restore checks every scenario in the backup before it changes anything. A scenario with
-  an invalid date or a value outside its range used to be restored and then stopped the app
-  from starting. One scenario the app cannot read no longer stops startup either: it is
-  listed on the Scenarios page with a Delete button (ADR 0123, #107).
+- A scenario with an invalid creation date, restored from a hand-edited backup, stopped
+  the app from starting. The app no longer reads that date, and restore now checks that
+  every scenario in the backup can be read before it changes anything. A scenario that
+  breaks a rule still restores and is left out of the compare until it is fixed, so every
+  backup the app writes can be restored (ADR 0123, #107).
+- One scenario the app cannot read no longer stops startup: it is listed on the Scenarios
+  page with a Delete button (ADR 0123, #107).
 - The "first cash-flow-positive year" no longer names a year that earned nothing. With only
   properties bought in the future (or a Dashboard filter on them), it showed the first
   projection year; it now shows the first year whose net cash flow is above zero, or "—"
