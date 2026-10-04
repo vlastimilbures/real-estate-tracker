@@ -4,7 +4,10 @@
 import { create } from "zustand";
 import type { Language } from "../i18n/types";
 import type { Mode } from "../ui/model/lens";
-import type { PropertySection } from "../ui/model/sectionNav";
+import type {
+  PropertyFormTarget,
+  PropertySection,
+} from "../ui/model/sectionNav";
 import { THEME_KEY, readPersistedTheme, type Theme } from "./themePreference";
 import type { CsvImportReport } from "./csv";
 import { tickForCompare } from "./compareSelection";
@@ -25,7 +28,7 @@ export type SettingsTab = "assumptions" | "backup";
 export type { Mode } from "../ui/model/lens";
 
 /** Where Property detail lands once: a section, or the open property form (ADR 0118). */
-export type PropertyTarget = PropertySection | "edit";
+export type PropertyTarget = PropertySection | PropertyFormTarget;
 export type { Theme } from "./themePreference";
 
 /** Saved scenarios the compare shows at most; Base is always available alongside. */

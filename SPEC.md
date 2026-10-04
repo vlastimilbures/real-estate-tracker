@@ -695,9 +695,12 @@ offline badge, and controls for language and theme.
    (purchase price used), a last lease that ended (no rent in the snapshot, renewed in the
    projection), no lease in force (rent 0), a lease ending within 3 months with no next
    lease, and a fixation that ended with no follow-on block; under "Using portfolio
-   defaults" the portfolio growth and blank holding-cost fields. Each row links to the
-   property section (or form) that fixes it. The panel opens when something needs
-   attention; a property not yet purchased has no findings.
+   defaults" the portfolio growth, blank holding-cost fields and own cash at purchase not
+   recorded (Cash invested unknown; for a property bought after the base date the down
+   payment is derived, ADR 0119). Each row links to the property section (or form) that
+   fixes it; the own-cash row opens the form with its Acquisition section open. The panel
+   opens when something needs attention; a property not yet purchased has no findings
+   except the own-cash one.
 
 2. **Properties** — list with per-property summary and LTV/DSCR health bands; "+ Add property"
    button opens a form modal (name, address, type, size_m2, garage, purchase_date,

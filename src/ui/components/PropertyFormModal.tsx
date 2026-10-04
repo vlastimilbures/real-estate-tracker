@@ -1,4 +1,4 @@
-import { useState, useEffect, useId } from "react";
+import { useState, useEffect, useId, useRef, type RefObject } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { dateDraft, moneyDraft, percentDraft } from "../model/formParse";
@@ -26,6 +26,8 @@ const snakeToCamel = (k: string) =>
 interface Props {
   mode: "add" | "edit";
   propertyId?: string;
+  /** Open the Acquisition section from the start (a Data check link, ADR 0118). */
+  openFunding?: boolean;
   onClose: () => void;
 }
 
@@ -168,10 +170,12 @@ function AcquisitionFields({
   form,
   errors,
   set,
+  bodyRef,
 }: {
   t: Dictionary;
   open: boolean;
   onToggle: () => void;
+  bodyRef: RefObject<HTMLDivElement>;
   form: PropertyFormState;
   errors: PropertyFormErrors;
   set: (field: keyof PropertyFormState, value: string) => void;
@@ -192,7 +196,7 @@ function AcquisitionFields({
         </Button>
       </div>
       {/* Hidden, not removed, while shut: the toggle controls it, and it adds no grid row. */}
-      <div id={bodyId} className="form-wide" hidden={!open}>
+      <div id={bodyId} ref={bodyRef} className="form-wide" hidden={!open}>
         {open && (
           <div className="form-grid">
             <p className="form-wide panel-note">
@@ -224,7 +228,12 @@ function AcquisitionFields({
   );
 }
 
-export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
+export function PropertyFormModal({
+  mode,
+  propertyId,
+  openFunding = false,
+  onClose,
+}: Props) {
   const t = useT();
   const portfolio = usePortfolioStore((s) => s.portfolio);
   const getPropertyExtras = usePortfolioStore((s) => s.getPropertyExtras);
@@ -241,13 +250,21 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
   >({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  // Shut on add; open on edit when a record exists, so what is stored is seen (ADR 0119 §9).
+  // Shut on add; open on edit when a record exists, so what is stored is seen (ADR 0119 §9),
+  // or when a Data check link asked for it.
   const [fundingOpen, setFundingOpen] = useState(
     () =>
-      mode === "edit" &&
-      portfolio?.properties.find((x) => x.id === propertyId)?.funding !==
-        undefined,
+      openFunding ||
+      (mode === "edit" &&
+        portfolio?.properties.find((x) => x.id === propertyId)?.funding !==
+          undefined),
   );
+  // A Data check link lands on own cash. This parent effect runs after the Modal's,
+  // which focuses the first field.
+  const fundingRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (openFunding) fundingRef.current?.querySelector("input")?.focus();
+  }, [openFunding]);
 
   // For edit mode: load engine fields from portfolio + address/garage from DB
   useEffect(() => {
@@ -400,6 +417,7 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
           t={t}
           open={fundingOpen}
           onToggle={() => setFundingOpen((o) => !o)}
+          bodyRef={fundingRef}
           form={form}
           errors={errors}
           set={set}

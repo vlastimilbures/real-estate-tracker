@@ -360,6 +360,11 @@ export const cs: Dictionary = {
     growthRentIndexation: "Používá indexaci nájmu z předpokladů portfolia.",
     costDefaults: (fields) =>
       `Náklady na držbu používají výchozí hodnoty portfolia pro: ${fields}.`,
+    fundingUnknown:
+      "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    fundingUnknownFuture:
+      "Vlastní zdroje na tento nákup nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám a projekce platbu při koupi odvodí: cena minus úvěr plus zadané transakční náklady a úpravy.",
+    recordFunding: "Zadat financování",
   },
 
   properties: {
@@ -1144,7 +1149,7 @@ export const cs: Dictionary = {
       "Ocenění, nájmy a hypotéky mají vždy časové rozmezí. Pro kterýkoli den engine vybere ten platný — takže končící nájem předá štafetu dalšímu.",
     cardDataCheckTitle: "Kontrola dat ukáže náhradní hodnoty",
     cardDataCheckBody:
-      "Když je ocenění staré nebo chybí, neplatí žádný nájem, fixace skončila bez nových podmínek nebo nemovitost používá výchozí hodnoty portfolia, Kontrola dat na Přehledu a u každé nemovitosti to uvede, včetně toho, co to mění a kde to opravit.",
+      "Když je ocenění staré nebo chybí, neplatí žádný nájem, fixace skončila bez nových podmínek, nemovitost používá výchozí hodnoty portfolia nebo nemá zadané vlastní zdroje vložené při koupi, Kontrola dat na Přehledu a u každé nemovitosti to uvede, včetně toho, co to mění a kde to opravit.",
     snapshotTitle: "Ukazatele snímku",
     snapshotHint: "Aktuální obrázek nemovitosti nebo portfolia",
     snapshotProse:

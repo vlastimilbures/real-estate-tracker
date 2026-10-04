@@ -34,7 +34,7 @@ improvement, **P3** later.
     down payment (ADR 0119), the CSV columns, the property form section, the Property
     detail sources & uses check and the Dashboard Cash invested total.
   - CSV import preview showing adds vs updates (#34).
-  - Data-check panel (#35).
+  - Data-check panel (#35); the own-cash finding (#178).
   - Backup recency indicator (#36).
 
 From the 2026-10 code review

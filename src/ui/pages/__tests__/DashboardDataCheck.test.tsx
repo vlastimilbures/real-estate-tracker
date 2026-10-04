@@ -4,7 +4,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { edate, type Portfolio } from "../../../engine";
+import { edate, money, type Portfolio } from "../../../engine";
 import {
   BASE_DATE,
   assumptions,
@@ -42,7 +42,7 @@ describe("Data check panel (ADR 0118)", () => {
   it("only defaults: collapsed, with the counts and the as-of date", () => {
     renderPanel(portfolio);
     expect(screen.getByText(d.title)).toBeTruthy();
-    expect(screen.getByText(d.summary(0, 3))).toBeTruthy();
+    expect(screen.getByText(d.summary(0, 6))).toBeTruthy();
     expect(screen.getByText("Checked as of 07.06.2026.")).toBeTruthy();
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByText(d.attentionTitle)).toBeNull();
@@ -51,10 +51,10 @@ describe("Data check panel (ADR 0118)", () => {
   it("something needs attention: open, each row named and linked to its fix", async () => {
     const { onFix } = renderPanel(portfolio, edate(BASE_DATE, 60));
     expect(toggle().getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByText(d.summary(6, 3))).toBeTruthy();
+    expect(screen.getByText(d.summary(6, 6))).toBeTruthy();
     expect(screen.getByText(d.attentionTitle)).toBeTruthy();
     expect(screen.getByText(d.defaultsTitle)).toBeTruthy();
-    expect(screen.getAllByText("Byt Lipova:")).toHaveLength(3);
+    expect(screen.getAllByText("Byt Lipova:")).toHaveLength(4);
     const records = screen.getAllByRole("button", { name: "Go to Records" });
     expect(records).toHaveLength(3);
     await userEvent.click(records[1]);
@@ -68,6 +68,10 @@ describe("Data check panel (ADR 0118)", () => {
       screen.getAllByRole("button", { name: "Edit property" })[0],
     );
     expect(onFix).toHaveBeenLastCalledWith("javorova", "edit");
+    const funding = screen.getAllByRole("button", { name: d.recordFunding });
+    expect(funding).toHaveLength(3);
+    await userEvent.click(funding[1]);
+    expect(onFix).toHaveBeenLastCalledWith("lipova", "editFunding");
   });
 
   it("each fix button is described by its row, so equal names stay apart", () => {
@@ -89,6 +93,7 @@ describe("Data check panel (ADR 0118)", () => {
     expect(toggle().getAttribute("aria-expanded")).toBe("true");
     expect(screen.getByText(d.attentionNone)).toBeTruthy();
     expect(screen.getAllByText(d.growthBoth)).toHaveLength(3);
+    expect(screen.getAllByText(d.fundingUnknown)).toHaveLength(3);
     await userEvent.click(toggle());
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
   });
@@ -103,7 +108,7 @@ describe("Data check panel (ADR 0118)", () => {
       },
       edate(BASE_DATE, 60),
     );
-    expect(screen.getByText(d.summary(4, 2))).toBeTruthy();
+    expect(screen.getByText(d.summary(4, 4))).toBeTruthy();
     expect(screen.queryByText("Byt Dubova:")).toBeNull();
   });
 
@@ -114,6 +119,7 @@ describe("Data check panel (ADR 0118)", () => {
         ...p,
         appreciationOverridePa: assumptions.appreciationPa,
         rentIndexOverridePa: assumptions.rentIndexationPa,
+        funding: { ownCash: money("2000000") },
       })),
     };
     renderPanel(own);
@@ -144,7 +150,7 @@ describe("Data check on the Dashboard page (ADR 0118)", () => {
       });
     });
     render(<Dashboard />);
-    expect(screen.getByText(d.summary(2, 1))).toBeTruthy();
+    expect(screen.getByText(d.summary(2, 2))).toBeTruthy();
     expect(screen.getByText("Checked as of 07.06.2031.")).toBeTruthy();
     expect(screen.queryByText("Byt Javorova:")).toBeNull();
     await userEvent.click(

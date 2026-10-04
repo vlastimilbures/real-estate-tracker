@@ -59,8 +59,10 @@ import { describeWriteError } from "../model/writeError";
 import { useT } from "../hooks/useT";
 import { useSectionSpy } from "../hooks/useSectionSpy";
 import {
+  isFormTarget,
   propertySections,
   sectionId,
+  type PropertyFormTarget,
   type PropertySection,
 } from "../model/sectionNav";
 
@@ -91,7 +93,8 @@ export function PropertyDetail() {
   // Stored data that breaks an engine rule: show the records to fix, no figures (DR-146).
   const invalid = result && "invalid" in result ? result.invalid : null;
   const out = result && !("invalid" in result) ? result : null;
-  const [editing, setEditing] = useState(false);
+  // The open property form: plain, or at its Acquisition section (a Data check link).
+  const [editing, setEditing] = useState<false | PropertyFormTarget>(false);
   const [confirmingDeactivate, setConfirmingDeactivate] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [activeError, setActiveError] = useState<string | null>(null);
@@ -111,10 +114,11 @@ export function PropertyDetail() {
   // ⌘N request does; the effect moves focus and clears the request.
   const property = store.portfolio?.properties.find((p) => p.id === propertyId);
   const shown = property !== undefined;
-  if (propertyTarget === "edit" && shown && !editing) setEditing(true);
+  if (isFormTarget(propertyTarget) && shown && !editing)
+    setEditing(propertyTarget);
   useEffect(() => {
     if (!propertyTarget || !shown) return;
-    if (propertyTarget !== "edit") focusSection(sectionId(propertyTarget));
+    if (!isFormTarget(propertyTarget)) focusSection(sectionId(propertyTarget));
     clearPropertyTarget();
   }, [propertyTarget, shown, clearPropertyTarget]);
 
@@ -287,7 +291,7 @@ export function PropertyDetail() {
           <Button
             variant="primary"
             icon={Pencil}
-            onClick={() => setEditing(true)}
+            onClick={() => setEditing("edit")}
           >
             {t.properties.editProperty}
           </Button>
@@ -346,7 +350,7 @@ export function PropertyDetail() {
             baseDate={baseDate}
             resetRate={assumptions.postFixationResetRatePa}
             onFix={(fix) =>
-              fix === "edit" ? setEditing(true) : focusSection(sectionId(fix))
+              isFormTarget(fix) ? setEditing(fix) : focusSection(sectionId(fix))
             }
           />
         </div>
@@ -443,6 +447,7 @@ export function PropertyDetail() {
         <PropertyFormModal
           mode="edit"
           propertyId={propertyId}
+          openFunding={editing === "editFunding"}
           onClose={() => setEditing(false)}
         />
       )}
