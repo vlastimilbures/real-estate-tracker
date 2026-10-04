@@ -50,7 +50,9 @@ From the 2026-10 code review
   a restore misreported as rolled back (#106, ADR 0125), and property ids made from the
   name with Clear sample deleting the owner's own property (#101, #105, ADR 0127).
   P2 fixed: degenerate KPIs (negative multiple, NaN CAGR, stale debt-free year,
-  "Shortfall" with no debt; #129, ADR 0126).
+  "Shortfall" with no debt; #129, ADR 0126) and assumptions that produced NaN, Infinity or
+  negative interest (reset rate 0–100 %, growth and inflation above −100 %, shocked levels;
+  #114, ADR 0128).
 - **Decisions (label `decision`).** Modelling and process choices challenged with options and
   the case for keeping them; weak challenges stay in the record only.
 - **Clean-up (label `tech-debt`), docs, accessibility and smaller fixes (P2, P3).**

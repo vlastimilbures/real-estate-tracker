@@ -1,7 +1,11 @@
 // The restore rule set (P5b) applies the whole-number bounds of the forms and CSV import
 // on top of the engine rules (ADR 0086, #38). The engine itself stays open-ended.
 import { describe, it, expect } from "vitest";
-import { checkInputRules, scenarioRuleErrors } from "../inputRules";
+import {
+  checkInputRules,
+  scenarioErrorsAddedBy,
+  scenarioRuleErrors,
+} from "../inputRules";
 import { parseMortgages, parseProperties } from "../csv";
 import { INT_RANGES, type IntRange } from "../../lib/intRanges";
 import { collectValues } from "../../ui/model/formParse";
@@ -156,7 +160,7 @@ describe("scenarioRuleErrors (ADR 0123)", () => {
     expect(scenarioRuleErrors(assumptions, {})).toEqual([]);
     expect(
       scenarioRuleErrors(assumptions, {
-        appreciationPa: rate("-0.05"), // growth may be negative (ADR 0038)
+        appreciationPa: rate("-0.05"), // growth may be negative (ADR 0038, 0128)
         vacancyAllowance: rate("1"),
         valueShock: { pct: rate("0"), atYear: 0 },
       }),
@@ -172,5 +176,122 @@ describe("scenarioRuleErrors (ADR 0123)", () => {
     expect(
       scenarioRuleErrors(badBase, { vacancyAllowance: rate("0.1") }),
     ).toEqual([]);
+  });
+});
+
+// ADR 0128 (#114): a shock meets the base level it shifts. The cross-field rules are the
+// one place where a scenario's verdict depends on the base assumptions.
+describe("cross-field scenario rules (ADR 0128)", () => {
+  const shock = (deltaPa: string) => ({
+    deltaPa: rate(deltaPa),
+    durationYears: 3,
+  });
+  const shocked = (field: "rateShock" | "inflationShock") => [
+    {
+      code:
+        field === "rateShock"
+          ? "SHOCKED_RATE_OUT_OF_RANGE"
+          : "SHOCKED_INFLATION_OUT_OF_RANGE",
+      entity: "assumptions",
+      field,
+    },
+  ];
+
+  it("a scenario's shock on the saved level names the shock", () => {
+    // Seed reset rate 4.5 %, inflation 2.5 %.
+    expect(
+      scenarioRuleErrors(assumptions, { rateShock: shock("-0.10") }),
+    ).toEqual(shocked("rateShock"));
+    expect(
+      scenarioRuleErrors(assumptions, { inflationShock: shock("-1.2") }),
+    ).toEqual(shocked("inflationShock"));
+    // The scenario's own level counts, not the saved one.
+    expect(
+      scenarioRuleErrors(assumptions, {
+        postFixationResetRatePa: rate("0.01"),
+        rateShock: shock("-0.02"),
+      }),
+    ).toEqual(shocked("rateShock"));
+    expect(
+      scenarioRuleErrors(assumptions, {
+        postFixationResetRatePa: rate("0.10"),
+        rateShock: shock("-0.08"),
+      }),
+    ).toEqual([]);
+  });
+
+  it("an invalid saved level is not blamed on the scenario's shock", () => {
+    const badBase = { ...assumptions, postFixationResetRatePa: rate("1.5") };
+    expect(scenarioRuleErrors(badBase, { rateShock: shock("-0.2") })).toEqual(
+      [],
+    );
+  });
+
+  describe("scenarioErrorsAddedBy", () => {
+    const lowered = { ...assumptions, postFixationResetRatePa: rate("0.03") };
+
+    it("lists a rule the new assumptions break and the old did not", () => {
+      const overrides = { rateShock: shock("-0.04") };
+      expect(scenarioRuleErrors(assumptions, overrides)).toEqual([]);
+      expect(scenarioErrorsAddedBy(assumptions, lowered, overrides)).toEqual(
+        shocked("rateShock"),
+      );
+      expect(
+        scenarioErrorsAddedBy(
+          assumptions,
+          { ...assumptions, inflationPa: rate("-0.5") },
+          { inflationShock: shock("-0.6") },
+        ),
+      ).toEqual(shocked("inflationShock"));
+    });
+
+    it("ignores a scenario that already broke the rule", () => {
+      const overrides = { rateShock: shock("-0.05") };
+      expect(scenarioRuleErrors(assumptions, overrides)).toEqual(
+        shocked("rateShock"),
+      );
+      expect(scenarioErrorsAddedBy(assumptions, lowered, overrides)).toEqual(
+        [],
+      );
+    });
+
+    it("ignores a scenario that sets the level itself", () => {
+      expect(
+        scenarioErrorsAddedBy(assumptions, lowered, {
+          postFixationResetRatePa: rate("0.05"),
+          rateShock: shock("-0.04"),
+        }),
+      ).toEqual([]);
+    });
+  });
+});
+
+// ADR 0128 §7: restore applies the new assumption and property rules (scenario rows only
+// need to be readable, ADR 0123 §4).
+describe("restore applies the ADR 0128 bounds", () => {
+  it("reports a reset rate outside 0–1 and a growth override at −100 %", () => {
+    const [p0, ...ps] = portfolio.properties;
+    const p: Portfolio = {
+      ...portfolio,
+      properties: [{ ...p0!, appreciationOverridePa: rate("-1") }, ...ps],
+    };
+    expect(
+      checkInputRules(p, {
+        ...assumptions,
+        postFixationResetRatePa: rate("-0.05"),
+      }),
+    ).toEqual([
+      {
+        code: "RATE_OUT_OF_RANGE",
+        entity: "assumptions",
+        field: "postFixationResetRatePa",
+      },
+      {
+        code: "GROWTH_OUT_OF_RANGE",
+        entity: "property",
+        id: p0!.id,
+        field: "appreciationOverridePa",
+      },
+    ]);
   });
 });

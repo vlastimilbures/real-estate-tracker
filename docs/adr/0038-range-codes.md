@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-09-30
 - Source IDs: D-38, J-28
+- Amended by: [0128](0128-assumption-bounds.md) (reset rate 0–100 %, growth above −100 %,
+  shocked levels)
 
 ## Context
 

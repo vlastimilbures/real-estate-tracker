@@ -15,6 +15,10 @@ work still to do is in the [roadmap](roadmap.md).
 - **Tested arithmetic, not tested assumptions.** Money is computed in exact decimals and checked
   against reference figures within ±1 Kč. That proves the formulas run as specified; it does
   not make the assumptions right.
+- **Assumption bounds catch typos, not implausible values.** Interest rates, the reset rate
+  included, must lie within 0–100 %, and growth, rent indexation and inflation above −100 %,
+  also with a scenario's shock added (ADR 0128). Anything inside those bounds is computed as
+  entered: a 40 % growth rate for 50 years gives large but valid numbers.
 
 ## Returns start at the projection start
 

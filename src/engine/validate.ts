@@ -44,6 +44,9 @@ export type ValidationCode =
   | "HORIZON_NOT_POSITIVE"
   | "INVALID_TERM"
   | "SHOCK_OUT_OF_RANGE"
+  | "GROWTH_OUT_OF_RANGE"
+  | "SHOCKED_RATE_OUT_OF_RANGE"
+  | "SHOCKED_INFLATION_OUT_OF_RANGE"
   | "ASOF_BEFORE_BASEDATE"
   | "NON_POSITIVE_PREPAYMENT"
   | "EVENT_BEFORE_START"
@@ -80,6 +83,10 @@ const badNumber = (d: Decimal | undefined) => d !== undefined && !d.isFinite();
 const outsideUnit = (d: Decimal | undefined) =>
   d !== undefined && d.isFinite() && (d.isNegative() || d.greaterThan(ONE));
 
+/** A growth rate at or below −100 % (ADR 0128): a yearly factor of zero or less. */
+const belowGrowthFloor = (d: Decimal | undefined) =>
+  d !== undefined && d.isFinite() && d.lessThanOrEqualTo(ONE.negated());
+
 /** A finite amount below zero (a non-finite one is NON_FINITE_NUMBER instead). */
 const isNegativeAmount = (d: Decimal | undefined) =>
   d !== undefined && d.isFinite() && d.isNegative();
@@ -100,6 +107,10 @@ function checkFields(
   }
 }
 
+/** A shock band's duration: whole years ≥ 0 (D-38). */
+const badDuration = (band: ShockBand) =>
+  !Number.isInteger(band.durationYears) || band.durationYears < 0;
+
 function checkShock(
   band: ShockBand | undefined,
   field: string,
@@ -107,9 +118,7 @@ function checkShock(
 ): void {
   if (!band) return;
   if (badNumber(band.deltaPa)) report("NON_FINITE_NUMBER", field);
-  if (!Number.isInteger(band.durationYears) || band.durationYears < 0) {
-    report("SHOCK_OUT_OF_RANGE", field);
-  }
+  if (badDuration(band)) report("SHOCK_OUT_OF_RANGE", field);
 }
 
 /** The Kč fields of a holding-cost row and of the assumption cost defaults. */
@@ -146,19 +155,63 @@ function checkAssumptions(a: Assumptions, report: Report): void {
   if (!Number.isInteger(a.horizonYears) || a.horizonYears <= 0) {
     report("HORIZON_NOT_POSITIVE", "horizonYears");
   }
+  checkLevelRanges(a, report);
+  checkDefaultRanges(a.defaults, report);
+  checkShock(a.inflationShock, "inflationShock", report);
+  checkShock(a.rateShock, "rateShock", report);
+  // ADR 0128 §3: a shock shifts a level, so the shifted level keeps the level's bound.
+  checkShiftedLevel(a.postFixationResetRatePa, a.rateShock, outsideUnit, () =>
+    report("SHOCKED_RATE_OUT_OF_RANGE", "rateShock"),
+  );
+  checkShiftedLevel(a.inflationPa, a.inflationShock, belowGrowthFloor, () =>
+    report("SHOCKED_INFLATION_OUT_OF_RANGE", "inflationShock"),
+  );
+  checkValueShock(a.valueShock, report);
+}
+
+/** The assumption levels bounded below by −100 % (ADR 0128 §2). */
+const GROWTH_FIELDS = [
+  "appreciationPa",
+  "rentIndexationPa",
+  "inflationPa",
+] as const;
+
+/** D-38 and ADR 0128 §1–2 ranges of the assumption levels. */
+function checkLevelRanges(a: Assumptions, report: Report): void {
   if (outsideUnit(a.vacancyAllowance))
     report("RATE_OUT_OF_RANGE", "vacancyAllowance");
   // ADR 0119 §6: a fraction of the purchase price.
   if (outsideUnit(a.acquisitionCostPct))
     report("RATE_OUT_OF_RANGE", "acquisitionCostPct");
-  checkDefaultRanges(a.defaults, report);
-  checkShock(a.inflationShock, "inflationShock", report);
-  checkShock(a.rateShock, "rateShock", report);
-  const vs = a.valueShock;
-  if (
-    vs &&
-    (outsideUnit(vs.pct) || !Number.isInteger(vs.atYear) || vs.atYear < 0)
-  ) {
+  // ADR 0128 §1: the reset rate is an interest rate (ADR 0038).
+  if (outsideUnit(a.postFixationResetRatePa))
+    report("RATE_OUT_OF_RANGE", "postFixationResetRatePa");
+  for (const f of GROWTH_FIELDS) {
+    if (belowGrowthFloor(a[f])) report("GROWTH_OUT_OF_RANGE", f);
+  }
+}
+
+/**
+ * ADR 0128 §3: `level` + the shock's delta must stay in the level's own range. Checked
+ * only when the level and the shock pass their own rules, so one typo gives one message.
+ */
+function checkShiftedLevel(
+  level: Decimal,
+  band: ShockBand | undefined,
+  outOfRange: (d: Decimal) => boolean,
+  report: () => void,
+): void {
+  if (!band || badNumber(band.deltaPa) || badDuration(band)) return;
+  if (badNumber(level)) return;
+  if (outOfRange(level)) return;
+  if (outOfRange(level.plus(band.deltaPa))) report();
+}
+
+/** A value crash: a finite haircut within 0–1 at a whole year ≥ 0 (D-38, ADR 0128 §4). */
+function checkValueShock(vs: Assumptions["valueShock"], report: Report): void {
+  if (!vs) return;
+  if (badNumber(vs.pct)) report("NON_FINITE_NUMBER", "valueShock");
+  if (outsideUnit(vs.pct) || !Number.isInteger(vs.atYear) || vs.atYear < 0) {
     report("SHOCK_OUT_OF_RANGE", "valueShock");
   }
 }
@@ -351,11 +404,14 @@ const DATA_ERROR_CODES: ReadonlySet<ValidationCode> = new Set([
   "DUPLICATE_HOLDING_COST",
 ]);
 
-/** Range codes the engine raises on at every entry point (D-38). */
+/** Range codes the engine raises on at every entry point (D-38, ADR 0128). */
 const RANGE_ERROR_CODES: ReadonlySet<ValidationCode> = new Set([
   "HORIZON_NOT_POSITIVE",
   "RATE_OUT_OF_RANGE",
   "SHOCK_OUT_OF_RANGE",
+  "GROWTH_OUT_OF_RANGE",
+  "SHOCKED_RATE_OUT_OF_RANGE",
+  "SHOCKED_INFLATION_OUT_OF_RANGE",
 ]);
 
 /** The codes `assertInputs` and `assertAssumptions` raise on. */
@@ -459,6 +515,13 @@ function checkProperties(p: Portfolio, on: ReporterFor): void {
     );
     if (x.purchasePrice.isNegative())
       report("NEGATIVE_AMOUNT", "purchasePrice");
+    // ADR 0128 §2: a property's own growth keeps the assumption floor.
+    for (const f of [
+      "appreciationOverridePa",
+      "rentIndexOverridePa",
+    ] as const) {
+      if (belowGrowthFloor(x[f])) report("GROWTH_OUT_OF_RANGE", f);
+    }
     // ADR 0119 §7: flat field names, so a restore maps them to their columns.
     const funding = x.funding ?? {};
     checkFields(funding, [], [...FUNDING_MONEY], report);

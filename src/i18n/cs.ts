@@ -99,6 +99,11 @@ export const cs: Dictionary = {
     HORIZON_NOT_POSITIVE: "Horizont projekce musí být alespoň jeden rok",
     INVALID_TERM: "Doba v letech není platná",
     SHOCK_OUT_OF_RANGE: "Šok scénáře je mimo povolený rozsah",
+    GROWTH_OUT_OF_RANGE: "Musí být vyšší než −100 %",
+    SHOCKED_RATE_OUT_OF_RANGE:
+      "Sazba po skončení fixace plus šok sazby musí zůstat od 0 % do 100 %",
+    SHOCKED_INFLATION_OUT_OF_RANGE:
+      "Inflace plus inflační šok musí zůstat vyšší než −100 %",
     ASOF_BEFORE_BASEDATE: "Datum je před výchozím datem",
     NON_POSITIVE_PREPAYMENT: "Každá mimořádná splátka musí být vyšší než nula",
     EVENT_BEFORE_START:
@@ -123,6 +128,8 @@ export const cs: Dictionary = {
     invalidJson: "Uloženou hodnotu nelze přečíst",
     missingValue: "Chybí povinná hodnota",
     otherConstraint: "Databáze změnu odmítla, nic se nezměnilo",
+    scenarioBreaks: (name, rule) =>
+      `Tato hodnota by porušila scénář „${name}“. ${rule}. Změňte hodnotu, nebo nejdřív upravte scénář`,
   },
 
   dataErrors: {

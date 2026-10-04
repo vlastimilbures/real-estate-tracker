@@ -234,6 +234,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   imported or restored with more than six decimals (e.g. interest rate `0.03591234`) was
   rewritten to six (`0.035912`) by any edit of the same record. Forms now show and save the
   stored rate in full, as a percentage (`3.591234`).
+- Assumptions that broke the maths are refused instead of showing `Infinity`, `NaN` or
+  negative interest (ADR 0128, #114). The Assumptions page, the scenario form, the property
+  form, CSV import and restore now check that:
+  - the post-fixation reset rate lies within 0–100 %, like a loan's own rate;
+  - growth, rent indexation, inflation and a property's growth overrides are above −100 %
+    (an inflation of −100 % gave an infinite real net worth);
+  - a scenario's rate shock keeps the reset rate within 0–100 %, and its inflation shock
+    keeps inflation above −100 %; the scenario form shows this on the shock's field;
+  - a value crash percentage is a finite number.
+
+  Saving the assumptions is refused when the new value would break a saved scenario's
+  shock; the message names the scenario. A scenario that broke the rule before the edit
+  does not block it. Stored values are not changed: a value already outside these bounds
+  shows the invalid-input message until it is corrected.
+
 - A property whose name has no Latin letters or digits (for example a Cyrillic name) was
   saved with an empty internal id. It showed in the list, but its page, its edit form, its
   "Open property" link and the Dashboard filter treated it as "no property", and a CSV file
