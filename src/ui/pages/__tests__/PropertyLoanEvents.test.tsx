@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 //
 // ADR 0116 §9–§10: Property detail shows the loan's modelled payoff, the interest its
-// prepayments save, and a warning for an event the engine clamped.
+// prepayments save, and a warning for an event the engine clamped. ADR 0117: the outlook
+// also lists each block's reset and the loan's remaining term.
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import { PropertyDetail } from "../PropertyDetail";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
@@ -110,5 +111,27 @@ describe("ADR 0116: loan outlook on Property detail", () => {
       .getAllByRole("alert")
       .find((a) => a.textContent?.includes("17.01.2031"));
     expect(alert?.textContent).toContain("is more than the balance");
+  });
+});
+
+describe("ADR 0117: block resets in the loan outlook", () => {
+  it("lists the block's reset and the remaining term at the as-of date", () => {
+    act(() => useUiStore.setState({ asOf: assumptions.baseDate }));
+    render(<PropertyDetail />);
+    const reset = portfolioOutputs(
+      portfolio,
+      assumptions,
+      assumptions.baseDate,
+    ).financing.resets.find((r) => r.blockId === "m-javorova")!;
+    const section = outlook();
+    expect(section.textContent).toContain(pd.remainingTerm);
+    expect(section.textContent).toContain("25 yrs");
+    const table = within(section).getByRole("table", {
+      name: pd.outlookResetsTitle,
+    });
+    const row = within(table).getByRole("row", { name: /17\.01\.2031/ });
+    expect(row.textContent).toContain(fmtCzk(reset.balance));
+    expect(row.textContent).toContain(pd.outlookStatus.nextReset);
+    expect(row.className).toContain("is-milestone");
   });
 });

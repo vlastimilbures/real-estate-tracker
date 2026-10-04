@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The property page's **Loan outlook** shows the loan's remaining term ("24 yrs 8 months")
+  and lists every loan block, oldest first, with its fixation end, the balance that moves
+  to the new rate (nominal) and a status: next rate reset, upcoming, passed, replaced by a later
+  loan, repaid before the reset, or floating rate. The dates are modelled, not deadlines
+  from your lender (ADR 0117, #31).
+
 - Settings → Backup can load the sample portfolio again. While the portfolio has no
   properties, a **Load sample portfolio** button adds the three fictional apartments with
   their mortgages, valuations, leases and costs in one step, and the sample banner shows
@@ -175,6 +181,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Stat lists (the property page's Loan outlook, the Dashboard financing panel, Backup) no
+  longer draw a short line under their last label (ADR 0117).
 - A development loan completed after its last payment before the projection start, with no
   tranche in the first projection month, stayed interest-only to maturity and repaid
   everything at the end. It now starts amortizing from the first projection month (ADR

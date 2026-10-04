@@ -497,8 +497,21 @@ export const cs: Dictionary = {
     loanPayoff: "Modelované doplacení",
     loanPayoffNone: "Splaceno",
     interestSaved: "Úrok ušetřený mimořádnými splátkami (nominálně)",
+    remainingTerm: "Zbývající doba splácení",
+    outlookResetsTitle: "Konce fixace podle úvěrových bloků",
+    colFixationEnd: "Konec fixace",
+    colBalanceAtReset: "Dluh při změně sazby (nominálně)",
+    colStatus: "Stav",
+    outlookStatus: {
+      nextReset: "Příští změna sazby",
+      upcoming: "Nadcházející",
+      passed: "Fixace skončila",
+      replaced: "Nahrazen pozdějším úvěrem",
+      repaid: "Splacen před koncem fixace",
+      floating: "Plovoucí sazba",
+    },
     loanSummaryNote:
-      "Datum doplacení je modelované, není to termín od banky. Ušetřený úrok porovnává úvěr s mimořádnými splátkami a bez nich, za celou zbývající dobu.",
+      "Data doplacení a konců fixace jsou modelovaná, nejsou to termíny od banky, a dluh při změně sazby je nominální. Ušetřený úrok porovnává úvěr s mimořádnými splátkami a bez nich, za celou zbývající dobu.",
     loanFrom: (date) => `Úvěr od ${date}:`,
     monthsCount: (n) => `${n} ${csPlural(n, ["měsíc", "měsíce", "měsíců"])}`,
     maturityPaysOff: (instalment, implied) =>
@@ -1084,7 +1097,7 @@ export const cs: Dictionary = {
     mortgagesProse2Mid2: " na vaši sazbu po fixaci a splátka se ",
     mortgagesProse2Reamortizes: "znovu umoří",
     mortgagesProse2Post:
-      ", aby splatila zbývající zůstatek za zbývající dobu, takže se platba k tomu datu může zvýšit nebo snížit.",
+      ", aby splatila zbývající zůstatek za zbývající dobu, takže se platba k tomu datu může zvýšit nebo snížit. Výhled úvěru na stránce nemovitosti ukazuje u každého úvěrového bloku modelovaný konec fixace a dluh, který přejde na novou sazbu, a také zbývající dobu splácení.",
     mortgagesProse3:
       "Mimořádné splátky a změny splatnosti zadáte u každého úvěrového bloku v jeho formuláři. Mimořádná splátka k datu splatí jistinu navíc a buď sníží splátku, nebo zkrátí splatnost; poplatek se platí z vlastních prostředků a dluh nesnižuje. Změna splatnosti převede úvěr na nové datum splatnosti nebo novou splátku. Mimořádné splátky jsou vaše vlastní prostředky, mimo čistý cash flow a DSCR. Stránka nemovitosti ukazuje modelované doplacení a úrok, který mimořádné splátky ušetří za zbývající dobu úvěru, a upozorní, když je splátka vyšší než zůstatek nebo připadá po doplacení.",
     projectionTitle: "Projekce do horizontu",

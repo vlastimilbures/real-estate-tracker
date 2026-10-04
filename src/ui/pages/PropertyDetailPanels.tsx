@@ -19,14 +19,13 @@ import { SERIES, type ChartRow } from "../model/chartData";
 import { RecordForm } from "../components/forms";
 import { moneyDraft, percentDraft } from "../model/formParse";
 import { fmtDate } from "../../lib/format";
-import { amortizationExtras } from "../model/propertyDetail";
+import { amortizationExtras, type LoanOutlook } from "../model/propertyDetail";
 import { dscrBand, dscrBandWord, ltvBand, ltvBandWord } from "../model/health";
 import { currencySymbol } from "../../lib/currency";
 import type {
   PropertySnapshot,
   HoldingCost,
   AmortizationRow,
-  LoanExposure,
 } from "../../engine";
 import type { MutationResult } from "../../state/portfolioStore";
 import { useT } from "../hooks/useT";
@@ -297,24 +296,60 @@ export function ActivationBanner({
   return null;
 }
 
-/** The loan's modelled payoff and the interest its prepayments save (ADR 0116 §9). */
-export function LoanSummary({ loan }: { loan: LoanExposure }) {
+/**
+ * The loan's modelled payoff, remaining term and the interest its prepayments save
+ * (ADR 0116 §9), then each block's fixation end and balance at reset (ADR 0117).
+ */
+export function LoanSummary({ outlook }: { outlook: LoanOutlook }) {
   const t = useT();
   const d = t.propertyDetail;
   const rows: { k: string; v: ReactNode }[] = [
-    {
-      k: d.loanPayoff,
-      v: loan.payoffDate ? fmtDate(loan.payoffDate) : d.loanPayoffNone,
-    },
+    { k: d.loanPayoff, v: outlook.payoff },
   ];
-  if (loan.interestSaved)
+  if (outlook.remainingTerm)
+    rows.push({ k: d.remainingTerm, v: outlook.remainingTerm });
+  if (outlook.interestSaved)
     rows.push({
       k: d.interestSaved,
-      v: <Money value={loan.interestSaved} parens={false} />,
+      v: <Money value={outlook.interestSaved} parens={false} />,
     });
   return (
     <Panel title={d.loanSummaryTitle} hint={d.loanSummaryHint}>
       <StatList rows={rows} />
+      <TableWrap label={d.outlookResetsTitle}>
+        <table className="data">
+          <caption className="sr-only">{d.outlookResetsTitle}</caption>
+          <thead>
+            <tr>
+              <th scope="col" className="left">
+                {d.colStart}
+              </th>
+              <th scope="col" className="left">
+                {d.colFixationEnd}
+              </th>
+              <th scope="col">{d.colBalanceAtReset}</th>
+              <th scope="col" className="left">
+                {d.colStatus}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {outlook.resets.map((r) => (
+              <tr
+                key={r.blockId}
+                className={r.status === "nextReset" ? "is-milestone" : ""}
+              >
+                <td className="left">{r.start}</td>
+                <td className="left">{r.fixationEnd}</td>
+                <td>
+                  {r.balance ? <Money value={r.balance} parens={false} /> : "—"}
+                </td>
+                <td className="left">{r.label}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableWrap>
       <p className="panel-note">{d.loanSummaryNote}</p>
     </Panel>
   );

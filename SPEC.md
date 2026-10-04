@@ -435,13 +435,16 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
 - **Fixation end** = `blockEndDate`. Its payment is still fixed (D-21), so the **balance at
   fixation end** is the end balance of grid month `fixationYears·12 − paymentOffset`, and the
   reset row is the next one. A 0-year (floating) block has no fixation end.
-- Status at as-of: **passed** (on or before as-of, incl. ADR 0030), **replaced** (a successor
-  starts on or before it, or in the same schedule month), **repaid** (no balance left by
-  then), else **upcoming**. A loan's **next fixation** is its earliest upcoming one.
+- Status at as-of, first match wins (ADR 0117): **replaced** (a successor starts on or before
+  it, or in the same schedule month), **repaid** (no balance left by then), **passed** (on or
+  before as-of, incl. ADR 0030), else **upcoming**. A loan's **next fixation** is its earliest
+  upcoming one.
 - **Debt resetting within N years** (`debtResettingWithin`) = Σ upcoming balances with the
   fixation end in (as-of, as-of + N years].
 - **Payoff** = due date of the schedule's last payment (modelled, not the contract maturity);
-  **remaining term** = schedule months from as-of to it.
+  **remaining term** = the schedule's payments due after as-of (ADR 0117).
+- **One property's loan** (`propertyLoanExposure`, ADR 0117) is the same view for the property
+  page, active or not: its exposure, its chain blocks' resets and the ids of the chain blocks.
 - **Upcoming events** (`upcomingEvents`) in (as-of, as-of + M months], sorted by date: fixation
   ends (with the balance), modelled payoffs, development completions, and the in-force
   lease's end when no later lease is entered.
@@ -641,6 +644,10 @@ offline badge, and controls for language and theme.
    available here too. Two **Excel export** buttons save the projection and amortization
    schedule as `.xlsx` files. A **Deactivate / Activate** action takes the property out of
    (or back into) all projections and KPIs (§4.5), after confirmation when deactivating.
+   The Financing section's **Loan outlook** (ADR 0116, ADR 0117) shows the modelled payoff,
+   the remaining term and the interest prepayments save, then every loan block, oldest
+   first, with its fixation end, the nominal balance at reset and a status: next rate reset,
+   upcoming, passed, replaced by a later loan, repaid before the reset, or floating rate.
 
 4. **Projections** — full year-by-year grid (per property + portfolio), nominal/real toggle,
    and an **Excel export** of the projection table.
