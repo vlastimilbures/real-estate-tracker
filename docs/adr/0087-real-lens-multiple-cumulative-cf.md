@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #11 (pre-release review 2026-10, finding A01)
+- Amended by: ADR 0126 (§1: both multiples are null, not 0, when equity₀ ≤ 0)
 
 ## Context
 

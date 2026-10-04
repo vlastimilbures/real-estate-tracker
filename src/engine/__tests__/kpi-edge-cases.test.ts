@@ -75,6 +75,7 @@ describe("ADR 0126: no growth base", () => {
     expect(k.netWorthMultiple).toBeNull();
     expect(k.netWorthMultipleReal).toBeNull();
     expect(k.cagrNominal).toBeNull();
+    expect(k.cagrReal).toBeNull();
   });
 });
 
@@ -111,18 +112,13 @@ describe("ADR 0126: debt-free year", () => {
     const p = withLaterLoan("1000000", "100000");
     expect(validateInputs(p, assumptions)).toEqual([]);
     const proj = portfolioProjection(p, assumptions);
-    const N = assumptions.horizonYears;
-    let from = N + 1;
-    while (
-      from > 1 &&
-      proj[from - 1].balance.lessThanOrEqualTo(DEBT_FREE_EPSILON)
-    )
-      from--;
-    expect(from).toBeGreaterThan(27);
-    expect(from).toBeLessThanOrEqual(N);
+    // Repaid 2052 (year 26), borrowed again 2053-09, owed at the end of 2054 (year 28),
+    // repaid again in 2055 (year 29) and through N.
+    expect(proj[26].balance.lessThanOrEqualTo(DEBT_FREE_EPSILON)).toBe(true);
+    expect(proj[28].balance.greaterThan(ZERO)).toBe(true);
     const k = portfolioKpis(p, assumptions);
-    expect(k.debtFreeProjectionYear).toBe(from);
-    expect(k.debtFreeYear).toBe(proj[from].calendarYear);
+    expect(k.debtFreeYear).toBe(2055);
+    expect(k.debtFreeProjectionYear).toBe(29);
   });
 
   it("the seed (repaid once, never again) keeps 2052", () => {

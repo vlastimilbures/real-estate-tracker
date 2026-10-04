@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-09-30
 - Source IDs: D-34, J-25
+- Amended by: ADR 0126 (CAGR is also null when its end net worth ≤ 0)
 
 ## Context
 

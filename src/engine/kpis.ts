@@ -241,8 +241,8 @@ function equityGrowth(
 
 /**
  * Cumulative net cash flow (net of the cash outside it, `acqOutflow` in `kpisFrom`), the
- * first calendar year with a positive net cash flow, and the first year the portfolio is
- * debt-free. A debt-free year only counts once the portfolio has carried debt (a
+ * first calendar year with a positive net cash flow, and the year from which the portfolio
+ * stays debt-free (ADR 0126). A debt-free year only counts once the portfolio has carried debt (a
  * never-leveraged portfolio reports null). NB: greaterThan(ZERO), not isPositive() —
  * ZERO.isPositive() is true, and a year with no active property nets exactly 0 (ADR 0121).
  * The real cumulative cash flow deflates each year by its own CPI_t (ADR 0087).

@@ -31,27 +31,27 @@ degenerate. Probes on the sample portfolio:
   warning. The Properties table showed a plain "—" for the same state.
 
 The sixth finding of #129 (LTV and yields read 0 % when the value is 0) needs a wider type
-change and has its own ADR (0130).
+change and gets its own ADR in a later PR.
 
 ## Decision
 
 The owner chose option A of #129 on 2026-10-04, split in two PRs. This ADR covers items 1–4
 and 6.
 
-1. **Multiple.** `netWorthMultiple` and `netWorthMultipleReal` are `null` when equity₀ ≤ 0:
+1. **Multiple** (#129 items 1 and 3). `netWorthMultiple` and `netWorthMultipleReal` are `null` when equity₀ ≤ 0:
    there is no growth base, as for the CAGR (ADR 0034). With equity₀ > 0 the multiple keeps
    any sign: a negative multiple then means the owner lost more than the starting equity.
    This replaces "0 when equity₀ = 0" (ADR 0087 §1). The tile, the KPI list and the compare
    show "—".
-2. **CAGR.** `cagrNominal` and `cagrReal` are `null` when equity₀ ≤ 0 **or** the end value
+2. **CAGR** (#129 item 2). `cagrNominal` and `cagrReal` are `null` when equity₀ ≤ 0 **or** the end value
    (net worth at N, nominal or real) ≤ 0. A growth rate to or below nothing is undefined.
    This extends ADR 0034.
-3. **Debt-free year.** `debtFreeYear` is the first year t ≥ 1 from which the portfolio
+3. **Debt-free year** (#129 item 4). `debtFreeYear` is the first year t ≥ 1 from which the portfolio
    balance stays at or below half a haléř through year N, provided the portfolio carried
    debt in some year up to t. It is `null` when debt is still owed at N, or when the
    portfolio never carried debt. For a portfolio that repays once and never borrows again
    (the sample) the year does not change.
-4. **No debt, no badge.** A null DSCR shows "—" with no badge on the Dashboard and Property
+4. **No debt, no badge** (#129 item 6). A null DSCR shows "—" with no badge on the Dashboard and Property
    detail tiles, as the Properties table does. One helper (`dscrBadge` in
    `src/ui/model/health.ts`) builds the badge for all tiles; the unused "Short" text is
    removed.
@@ -64,4 +64,6 @@ and 6.
   borrows once (debt-free 2052). The golden master does not change: no fixture has a
   multiple of 0 or below, a CAGR with a non-positive end, or debt drawn after a repaid year.
 - Scenario compare: a "—" multiple or CAGR on Base gives the Δ note "Base has no value".
-- LTV and yields at a value of 0 stay as they are until ADR 0130.
+- LTV and yields at a value of 0 stay as they are until that later ADR (#129 item 5).
+- In the compare's Δ view a scenario whose own multiple or CAGR is null shows a bare "—",
+  as a null CAGR did before; only a null on Base carries a note.
