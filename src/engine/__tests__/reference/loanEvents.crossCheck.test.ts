@@ -2,27 +2,15 @@
 // reference model, on the engine's calendar (J-03 a′, D-21). Every column, including
 // the prepaid principal, agrees to 1e-6 Kč, and principal is conserved.
 import { describe, it, expect } from "vitest";
-import { openingBalance, propertySchedule } from "../../schedule";
+import { openingBalance } from "../../schedule";
 import { isoDate } from "../../dates";
 import { D } from "../../../lib/money";
 import { rate } from "../../brands";
 import type { Assumptions } from "../../types";
 import { assumptions as A0 } from "../support/seed";
-import {
-  referenceChain,
-  type RefLoan,
-  type RefOptions,
-} from "./mortgageReference";
+import { type RefLoan, type RefOptions } from "./mortgageReference";
 import { SEED_LOANS } from "./seedLoans";
-import {
-  REF,
-  REF_MONTHS,
-  TIGHT,
-  both,
-  maxDev,
-  sum,
-  toBlock,
-} from "./eventHarness";
+import { TIGHT, both, chainBoth, maxDev, sum, toBlock } from "./eventHarness";
 
 const J = SEED_LOANS.javorova;
 const lower = (date: string, amount: number | string, fee?: number) => ({
@@ -394,18 +382,6 @@ describe("ADR 0109: refinance handovers with prepayments", () => {
     instalment: "9800",
     fixationMonths: 60,
   });
-  function chainBoth(loans: RefLoan[]) {
-    const e = propertySchedule(
-      loans.map((l, i) => toBlock(l, `b${i}`)),
-      A0,
-    );
-    const r = referenceChain(loans, {
-      ...REF,
-      baseDate: "2026-06-07",
-      months: REF_MONTHS,
-    });
-    return { e, r };
-  }
   const cases: [string, RefLoan[]][] = [
     [
       "prepaid on the refix date (payment kept)",

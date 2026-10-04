@@ -1,129 +1,165 @@
-// Characterisation of schedules whose recasts let the build run past the
-// contract term. The grid stops at the loan's last payment instead of building to the
-// 50-year cap and trimming; every row, its count and the outcomes must stay identical.
-import { createHash } from "node:crypto";
+// Schedules whose recasts let the build run past the contract term (ADR 0116). The grid
+// stops at the loan's last payment (or the horizon) instead of building to the 50-year
+// cap and trimming. Each case runs through the engine and the independent reference
+// model (#130 R1-15): every row agrees, the last row is the last payment, principal is
+// conserved, and the event outcomes are spelled out, so a fix shows which number moved.
 import { describe, it, expect } from "vitest";
-import { money, rate } from "../brands";
-import { isoDate } from "../dates";
-import { propertySchedule } from "../schedule";
-import type { MortgageBlock, MortgagePrepayment, LoanRecast } from "../types";
-import { assumptions, portfolio } from "./support/seed";
-import { devBlock } from "./support/mixed";
+import { D } from "../../lib/money";
+import { openingBalance } from "../schedule";
+import type { RefLoan, RefRecast } from "./reference/mortgageReference";
+import { SEED_LOANS } from "./reference/seedLoans";
+import {
+  TIGHT,
+  chainBoth,
+  maxDev,
+  sum,
+  toBlock,
+} from "./reference/eventHarness";
+import { assumptions } from "./support/seed";
 
-const seedJavorova = portfolio.mortgages.find(
-  (m) => m.propertyId === "javorova",
-);
-if (!seedJavorova) throw new Error("seed block missing");
-const javorova: MortgageBlock = seedJavorova;
+const J = SEED_LOANS.javorova;
+/** `devBlock` (support/mixed.ts) as a reference loan. */
+const dev: RefLoan = {
+  start: "2026-03-01",
+  principal: "2000000",
+  ratePa: "0.049",
+  instalment: "11000",
+  fixationMonths: 60,
+  termMonths: 360,
+  draws: [
+    { date: "2026-11-15", amount: "1500000" },
+    { date: "2027-08-20", amount: "1000000" },
+  ],
+  completion: "2027-08-20",
+};
+const refi: RefLoan = {
+  start: "2036-01-17",
+  principal: "900000",
+  ratePa: "0.039",
+  instalment: "9800",
+  fixationMonths: 60,
+};
+const toInstalment = (date: string, instalment: number): RefRecast => ({
+  date,
+  instalment,
+});
+const toMaturity = (date: string, maturity: string): RefRecast => ({
+  date,
+  maturity,
+});
 
-const prepay = (date: string, amount: number): MortgagePrepayment => ({
-  date: isoDate(date),
-  amount: money(amount),
-  effect: "lowerInstalment",
-});
-const toInstalment = (date: string, instalment: number): LoanRecast => ({
-  date: isoDate(date),
-  instalment: money(instalment),
-});
-const toMaturity = (date: string, maturity: string): LoanRecast => ({
-  date: isoDate(date),
-  maturity: isoDate(maturity),
-});
-const withEvents = (
-  b: MortgageBlock,
-  recasts: LoanRecast[],
-  prepayments?: MortgagePrepayment[],
-): MortgageBlock => ({ ...b, recasts, prepayments }) as MortgageBlock;
+/** An event outcome: kind, date, grid month, issue. */
+type Outcome = [string, string, number | null, string | null];
+const recastAt56 = (issue: string | null): Outcome => [
+  "recast",
+  "2031-01-17",
+  56,
+  issue,
+];
 
-/** Rows, outcomes and refinances as one string: any change shows as a new hash. */
-function fingerprint(blocks: MortgageBlock[]): string {
-  const s = propertySchedule(blocks, assumptions);
-  const text = JSON.stringify({
-    rows: s.rows.map((r) =>
-      [
-        r.month,
-        r.date.toISOString(),
-        r.ratePa,
-        r.instalment,
-        r.interest,
-        r.principal,
-        r.prepaid,
-        r.prepaymentFee,
-        r.drawn,
-        r.endBalance,
-      ].map(String),
-    ),
-    outcomes: s.eventOutcomes.map((o) => [
-      o.blockId,
-      o.kind,
-      o.date.toISOString(),
-      o.month,
-      String(o.applied),
-      String(o.fee),
-      o.issue,
-    ]),
-    refinances: s.refinances.map((x) => [
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+function expectMatchesReference(loans: RefLoan[], outcomes: Outcome[]) {
+  const { e, r } = chainBoth(loans);
+  // Every column agrees, and every reference row past the engine's last is idle.
+  expect(maxDev(e.rows, r.rows, r.handovers)).toBeLessThanOrEqual(TIGHT);
+  expect(e.rows.map((x) => [x.month, iso(x.date)])).toEqual(
+    r.rows.slice(0, e.rows.length).map((x) => [x.month, x.date]),
+  );
+  // The grid ends at the last payment, or at the horizon when that comes later.
+  const lastPaid = r.rows.reduce(
+    (m, x) => (x.payment.plus(x.prepaid).greaterThan(0) ? x.month : m),
+    0,
+  );
+  expect(e.rows).toHaveLength(
+    Math.max(lastPaid, assumptions.horizonYears * 12),
+  );
+  // Σ principal + Σ prepaid = opening debt + new debt, and the loan ends repaid.
+  const last = e.rows.at(-1)?.endBalance ?? D(0);
+  expect(last.toNumber()).toBe(0);
+  const opening = openingBalance(toBlock(loans[0]), assumptions);
+  const repaid = sum(e.rows, (x) => x.principal.plus(x.prepaid));
+  const drawn = sum(e.rows, (x) => x.drawn);
+  expect(
+    repaid.minus(opening).minus(drawn).abs().toNumber(),
+  ).toBeLessThanOrEqual(TIGHT);
+  expect(
+    e.refinances.map((x) => [
       x.month,
-      String(x.paidOff),
-      String(x.drawn),
+      x.paidOff.toNumber(),
+      x.drawn.toNumber(),
     ]),
-  });
-  return `${s.rows.length}:${createHash("sha256").update(text).digest("hex").slice(0, 16)}`;
+  ).toEqual(
+    r.handovers.map((h) => [h.month, h.paidOff.toNumber(), h.drawn.toNumber()]),
+  );
+  expect(
+    e.eventOutcomes.map((o) => [o.kind, iso(o.date), o.month, o.issue]),
+  ).toEqual(outcomes);
+  // A prepayment repays what the reference prepays in its row, at its fee.
+  for (const o of e.eventOutcomes) {
+    if (o.kind !== "prepayment" || o.month == null || o.month < 1) continue;
+    const row = r.rows[o.month - 1];
+    expect(
+      o.applied.minus(row.prepaid.toString()).abs().toNumber(),
+    ).toBeLessThanOrEqual(TIGHT);
+    expect(o.fee.minus(row.fee.toString()).abs().toNumber()).toBe(0);
+  }
 }
 
-const refi: MortgageBlock = {
-  id: "refi",
-  propertyId: javorova.propertyId,
-  startDate: isoDate("2036-01-17"),
-  initialPrincipal: money(900000),
-  fixationYears: 5,
-  interestRatePa: rate("0.039"),
-  monthlyInstalment: money(9800),
-} as MortgageBlock;
-
-const dev = { ...devBlock, id: "m-dev" } as MortgageBlock;
-
-describe("ADR 0116: schedules a recast extends", () => {
-  it.each<[string, MortgageBlock[]]>([
+describe("ADR 0116: schedules a recast extends (#130 R1-15)", () => {
+  it.each<[string, RefLoan[], Outcome[]]>([
     [
       "lower instalment",
-      [withEvents(javorova, [toInstalment("2031-01-17", 7000)])],
+      [{ ...J, recasts: [toInstalment("2031-01-17", 7000)] }],
+      [recastAt56(null)],
     ],
     [
       "higher instalment",
-      [withEvents(javorova, [toInstalment("2031-01-17", 15000)])],
+      [{ ...J, recasts: [toInstalment("2031-01-17", 15000)] }],
+      [recastAt56(null)],
     ],
     [
       "capped at 50 years",
-      [withEvents(javorova, [toInstalment("2031-01-17", 5300)])],
+      [{ ...J, recasts: [toInstalment("2031-01-17", 5300)] }],
+      [recastAt56("RECAST_TERM_CAPPED")],
     ],
     [
       "below the interest",
-      [withEvents(javorova, [toInstalment("2031-01-17", 100)])],
+      [{ ...J, recasts: [toInstalment("2031-01-17", 100)] }],
+      [recastAt56("RECAST_INSTALMENT_BELOW_INTEREST")],
     ],
     [
       "later maturity",
-      [withEvents(javorova, [toMaturity("2031-01-17", "2065-01-17")])],
+      [{ ...J, recasts: [toMaturity("2031-01-17", "2065-01-17")] }],
+      [recastAt56(null)],
     ],
     [
       "recast, then paid off",
       [
-        withEvents(
-          javorova,
-          [toInstalment("2031-01-17", 6000)],
-          [prepay("2040-02-01", 5000000)],
-        ),
+        {
+          ...J,
+          recasts: [toInstalment("2031-01-17", 6000)],
+          prepayments: [
+            { date: "2040-02-01", amount: 5000000, effect: "lowerInstalment" },
+          ],
+        },
+      ],
+      [
+        recastAt56("RECAST_TERM_CAPPED"),
+        ["prepayment", "2040-02-01", 165, "PREPAYMENT_EXCEEDS_BALANCE"],
       ],
     ],
     [
       "dev loan after completion",
-      [withEvents(dev, [toInstalment("2028-01-10", 9000)])],
+      [{ ...dev, recasts: [toInstalment("2028-01-10", 9000)] }],
+      [["recast", "2028-01-10", 20, "RECAST_INSTALMENT_BELOW_INTEREST"]],
     ],
     [
       "refinanced",
-      [withEvents(javorova, [toInstalment("2031-01-17", 6000)]), refi],
+      [{ ...J, recasts: [toInstalment("2031-01-17", 6000)] }, refi],
+      [recastAt56("RECAST_TERM_CAPPED")],
     ],
-  ])("%s", (_, blocks) => {
-    expect(fingerprint(blocks)).toMatchSnapshot();
+  ])("%s: engine = reference", (_, loans, outcomes) => {
+    expectMatchesReference(loans, outcomes);
   });
 });

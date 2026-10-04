@@ -10,7 +10,6 @@ import { EngineInputError } from "../../errors";
 import {
   buildSchedule,
   balanceAtMonth,
-  propertySchedule,
   schedulesByProperty,
 } from "../../schedule";
 import { portfolioSnapshot } from "../../metrics";
@@ -22,7 +21,6 @@ import { assumptions as A0, portfolio as P0 } from "../support/seed";
 import {
   annuityPayment,
   referenceBalanceAt,
-  referenceChain,
   referenceSchedule,
   termOf,
   type RefLoan,
@@ -30,7 +28,7 @@ import {
   type RefRow,
 } from "./mortgageReference";
 import { RESET, SEED_LOANS } from "./seedLoans";
-import { REF, REF_MONTHS, TIGHT, both, maxDev, toBlock } from "./eventHarness";
+import { TIGHT, both, chainBoth, maxDev, toBlock } from "./eventHarness";
 import { money, rate } from "../../brands";
 
 const CENT = 0.01; // Kč, for quoted engine/reference figures
@@ -525,17 +523,6 @@ describe("fixed by D-27/D-47: a successor after baseDate replaces its predecesso
     fixationMonths: 60,
     ...extra,
   });
-  /** Engine chain (`propertySchedule`) and the reference chain for one property. */
-  function chainBoth(loans: RefLoan[]) {
-    const blocks = loans.map((l, i) => toBlock(l, `b${i}`));
-    const e = propertySchedule(blocks, A0);
-    const r = referenceChain(loans, {
-      ...REF,
-      baseDate: "2026-06-07",
-      months: REF_MONTHS,
-    });
-    return { e, r };
-  }
   const P = SEED_LOANS.javorova;
   const dev: RefLoan = {
     start: "2026-03-01",
