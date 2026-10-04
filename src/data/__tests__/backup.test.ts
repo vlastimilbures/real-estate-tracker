@@ -148,6 +148,16 @@ describe("exportToJson reads one database state", () => {
     expect(file.tables).toEqual(before.tables);
   });
 
+  it("refuses a snapshot short of a table instead of writing it empty", async () => {
+    const short: Sql = {
+      ...sql,
+      selectSnapshot: async (st) => (await sql.selectSnapshot(st)).slice(0, -2),
+    };
+    await expect(exportToJson(short)).rejects.toThrow(
+      "the snapshot returned 6 of 8 result sets",
+    );
+  });
+
   it("reads through one snapshot call and no separate selects", async () => {
     let snapshots = 0;
     let selects = 0;

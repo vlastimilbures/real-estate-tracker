@@ -228,10 +228,16 @@ const invalid = (detail: string) =>
 /** Every backup table and the schema version, read in one snapshot (DR-134), so a write
  *  that commits during the export is wholly in or wholly out of the file (ADR 0132). */
 export async function exportToJson(sql: Sql): Promise<BackupFile> {
-  const results = await sql.selectSnapshot([
+  const statements = [
     ...BACKUP_TABLES.map((table) => ({ query: `SELECT * FROM ${table}` })),
     { query: "SELECT MAX(version) AS v FROM schema_migrations" },
-  ]);
+  ];
+  const results = await sql.selectSnapshot(statements);
+  // A missing row list would become an empty table: a file that restores with data lost.
+  if (results.length !== statements.length)
+    throw new Error(
+      `the snapshot returned ${results.length} of ${statements.length} result sets`,
+    );
   const tables: Record<string, Record<string, unknown>[]> = {};
   BACKUP_TABLES.forEach((table, i) => (tables[table] = results[i] ?? []));
   const version = results[BACKUP_TABLES.length]?.[0]?.v as number | null;
