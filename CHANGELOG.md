@@ -235,6 +235,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   own restore check, or restore with records missing, and the export still reported
   success. The export, and the safety backup before a restore or Clear sample, now read the
   whole database at one moment (ADR 0132, #138).
+- The **Reload** button on the "change may not be shown yet" banner could finish after a
+  save made while it ran and put the older data back on screen, with the banner gone: the
+  saved record seemed to vanish until the next change. Reload now waits for pending saves
+  and shows what they wrote (ADR 0132, #138, #199).
 - A property whose name has no Latin letters or digits (for example a Cyrillic name) was
   saved with an empty internal id. It showed in the list, but its page, its edit form, its
   "Open property" link and the Dashboard filter treated it as "no property", and a CSV file

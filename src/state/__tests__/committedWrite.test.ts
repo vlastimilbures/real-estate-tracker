@@ -11,6 +11,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { exportToJson, type BackupFile } from "../../data/backup";
 import { parseProperties } from "../../import/csv";
 import type { Sql } from "../../data/sql";
+import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
 import { money, type IsoDate } from "../../engine";
 
 vi.mock("@tauri-apps/api/core", () => ({
@@ -52,6 +53,15 @@ beforeEach(async () => {
 });
 
 const store = () => usePortfolioStore.getState();
+/** A valuation `id` on the first property. */
+const valuation = (id: string) => ({
+  id,
+  propertyId: store().portfolio!.properties[0]!.id,
+  validFrom: new Date(Date.UTC(2033, 0, 1)) as IsoDate,
+  marketValue: money("1"),
+});
+const onScreen = (id: string) =>
+  store().portfolio!.valuations.some((v) => v.id === id);
 const propertiesOnDisk = async () =>
   (await db.select<{ n: number }>("SELECT COUNT(*) AS n FROM properties"))[0]!
     .n;
@@ -193,12 +203,7 @@ describe("a safety backup waits for a write queued before it (ADR 0132)", () => 
     usePortfolioStore.setState({ sql });
     vi.mocked(invoke).mockClear();
 
-    const write = store().addValuation({
-      id: "queued",
-      propertyId: store().portfolio!.properties[0]!.id,
-      validFrom: new Date(Date.UTC(2033, 0, 1)) as IsoDate,
-      marketValue: money("1"),
-    });
+    const write = store().addValuation(valuation("queued"));
     const action = run(file);
     await new Promise((r) => setTimeout(r, 0));
     expect(backupsWritten()).toHaveLength(0);
@@ -210,5 +215,67 @@ describe("a safety backup waits for a write queued before it (ADR 0132)", () => 
     const [, args] = backupsWritten().at(-1)!;
     const saved = JSON.parse((args as { json: string }).json) as BackupFile;
     expect(saved.tables.valuations!.map((v) => v.id)).toContain("queued");
+  });
+});
+
+describe("the banner Reload waits for pending writes (ADR 0132)", () => {
+  it("a Reload read before a write cannot put the old data back after it", async () => {
+    // The Reload's snapshot is read at once (old data) but answers only on `release`.
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    let held = false;
+    const sql: Sql = {
+      ...db,
+      selectSnapshot: async (statements) => {
+        const rows = await db.selectSnapshot(statements);
+        if (!held) {
+          held = true;
+          await gate;
+        }
+        return rows;
+      },
+    };
+    usePortfolioStore.setState({ sql, stale: true });
+
+    const reload = store().reload();
+    const write = store().addValuation(valuation("saved"));
+    await new Promise((r) => setTimeout(r, 0));
+    release();
+    // Never await the write before `release`: it is queued behind the Reload.
+    const [, result] = await Promise.all([reload, write]);
+
+    expect(result).toEqual({ ok: true });
+    expect(onScreen("saved")).toBe(true);
+    expect(store().stale).toBe(false);
+  });
+
+  it("a Reload clicked during a write reads only after it", async () => {
+    const log: string[] = [];
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const sql: Sql = {
+      ...db,
+      execute: async (q, p) => {
+        log.push(p?.[0] === CHANGED_SINCE_BACKUP ? "changed" : "valuation");
+        await gate;
+        return db.execute(q, p);
+      },
+      selectSnapshot: (statements) => {
+        log.push("snapshot");
+        return db.selectSnapshot(statements);
+      },
+    };
+    usePortfolioStore.setState({ sql, stale: true });
+
+    const write = store().addValuation(valuation("saved"));
+    const reload = store().reload();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(log).toEqual(["valuation"]);
+
+    release();
+    await Promise.all([write, reload]);
+    // The write's own reload, then the banner's.
+    expect(log).toEqual(["valuation", "changed", "snapshot", "snapshot"]);
+    expect(onScreen("saved")).toBe(true);
   });
 });

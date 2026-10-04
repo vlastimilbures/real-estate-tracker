@@ -151,9 +151,10 @@ interface PortfolioState {
   stale: boolean;
 
   init: (open?: () => Promise<Sql>) => Promise<void>;
+  /** Load every table into the store. Not queued: for startup (and tests) only. */
   refresh: () => Promise<void>;
-  /** Refresh; on failure log it and set `stale`. Never throws: the banner's Reload,
-   *  and the reload after every write (ADR 0125). */
+  /** The banner's Reload: refresh after every pending write, so it never shows data older
+   *  than theirs (ADR 0132). On failure log it and set `stale`; never throws. */
   reload: () => Promise<void>;
   clearError: () => void;
 
@@ -241,7 +242,8 @@ interface PortfolioState {
 export const usePortfolioStore = create<PortfolioState>((set, get) => {
   /** Tail of the mutation queue: each mutation (write + refresh) starts only after the
    *  previous one settled, so writes reach the DB in call order and a refresh never
-   *  interleaves with another write (DR-085). */
+   *  interleaves with another write (DR-085). The CSV preview and the banner's Reload
+   *  wait in it too (ADR 0132). */
   let queue: Promise<unknown> = Promise.resolve();
   /** Data writes so far: an export keeps the changed flag when one landed while its
    *  save dialog was open, since the file does not hold it (ADR 0110). */
@@ -276,10 +278,10 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       try {
         const result = await op(sql);
         if (changesData) await markChanged(sql);
-        await get().reload();
+        await refreshOrMarkStale();
         return result;
       } catch (e) {
-        await get().reload();
+        await refreshOrMarkStale();
         throw e;
       }
     });
@@ -293,6 +295,17 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       await markDataChanged(sql);
     } catch (e) {
       logFailure("WRITE", e);
+    }
+  }
+
+  /** Refresh; on failure log it and set `stale` (ADR 0125). Never throws. Not queued: the
+   *  reload inside a queued write, where queueing it would wait for itself. */
+  async function refreshOrMarkStale(): Promise<void> {
+    try {
+      await get().refresh();
+    } catch (e) {
+      logFailure("WRITE", e);
+      set({ stale: true });
     }
   }
 
@@ -323,7 +336,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       perfMark("edit:start");
       await op(sql);
       if (changesData) await markChanged(sql);
-      await get().reload();
+      await refreshOrMarkStale();
       // Write + reload; the recompute and page render are measured where they run.
       perfMeasure("edit-saved", "edit:start");
       set({ error: null });
@@ -338,7 +351,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       }
       logFailure("WRITE", e);
       const error = toWriteError(e);
-      await get().reload();
+      await refreshOrMarkStale();
       set({ error });
       return { ok: false, error };
     }
@@ -414,14 +427,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
 
     clearError: () => set({ error: null }),
 
-    async reload() {
-      try {
-        await get().refresh();
-      } catch (e) {
-        logFailure("WRITE", e);
-        set({ stale: true });
-      }
-    },
+    reload: () => enqueue(refreshOrMarkStale),
 
     addValuation: (v) =>
       mutate(async (sql) => {
