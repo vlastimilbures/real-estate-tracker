@@ -251,6 +251,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and **Clear sample** could delete your own flat if its internal id matched a sample one
   (for example a flat named "Lipová"). A restore now clears the sample label (ADR 0127,
   #101).
+- Saving a form no longer rounds a stored amount it did not change (ADR 0131, #201). An
+  amount imported, restored or typed with more than two decimals (e.g. own cash `1000.005`) was
+  rewritten to two (`1000.01`) by any edit of the same record, such as a rename. Forms now
+  show and save the stored amount in full.
 - Headline KPIs no longer contradict their inputs in edge cases (ADR 0126, #129):
   - The net-worth multiple shows "—" when equity at the projection start is zero or less,
     instead of "0,00x" or a negative multiple (−31,19x after a deep crash at Today).

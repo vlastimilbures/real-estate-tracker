@@ -152,6 +152,7 @@ Other IDs seen in code comments:
 | [0125](0125-committed-write-reload-failure.md)    | A committed write whose reload fails is not a failure                                  | #106                                   |
 | [0126](0126-degenerate-kpis.md)                   | Degenerate KPIs: no growth base, debt-free from, no-debt badge                         | #129                                   |
 | [0127](0127-opaque-property-ids-sample-match.md)  | Random property ids; the sample is matched by id and name                              | #101, #105                             |
+| [0131](0131-lossless-money-draft.md)              | A form drafts a stored money amount at full precision                                  | #201                                   |
 
 ### Judgment calls and open questions
 
