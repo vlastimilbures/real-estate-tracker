@@ -143,6 +143,7 @@ Other IDs seen in code comments:
 | [0116](0116-prepayments-ui-and-review-fixes.md)   | Prepayments: form, outputs and review fixes                                            | #32                                    |
 | [0117](0117-property-loan-outlook.md)             | Property loan outlook: each block's reset and the remaining term                       | #31                                    |
 | [0118](0118-data-check.md)                        | Data check: stale, defaulted and missing inputs                                        | #35                                    |
+| [0121](0121-first-positive-cash-flow-strict.md)   | The first cash-flow-positive year is strictly positive                                 | #102                                   |
 
 ### Judgment calls and open questions
 
