@@ -136,6 +136,28 @@ describe("previewImport — add, update, unchanged (ADR 0096)", () => {
     ]);
   });
 
+  it("a blank funding cell keeps the stored amount and is no change (ADR 0119 §8)", async () => {
+    sql.db.exec(
+      "UPDATE properties SET own_cash = '1500000' WHERE id = 'byt-a'",
+    );
+    const preview = (ownCash: string) =>
+      previewImport(sql, {
+        properties: parseProperties(
+          `${PH},own_cash\nByt A,Javorova 12,2020-01-01,5000000,${ownCash}`,
+        ).rows,
+      });
+    for (const same of ["", "1500000.00"])
+      expect((await preview(same)).items, same).toEqual([
+        expect.objectContaining({ kind: "unchanged", changes: [] }),
+      ]);
+    expect((await preview("1600000")).items).toEqual([
+      expect.objectContaining({
+        kind: "update",
+        changes: [{ field: "own_cash", before: "1500000", after: "1600000" }],
+      }),
+    ]);
+  });
+
   it("classifies mixed files, children by property + date", async () => {
     const p = await previewImport(sql, {
       properties: props("Byt C,,2022-01-01,7000000"),

@@ -71,6 +71,11 @@ export interface ParsedPropertyRow extends Located {
   purchase_price: string; // decimal text
   appreciation_override_pa: string | null;
   rent_index_override_pa: string | null;
+  /** ADR 0119 §8: optional amounts; blank ⇒ unknown on a new property, kept on a
+   *  re-import. */
+  own_cash: string | null;
+  transaction_costs: string | null;
+  initial_works: string | null;
 }
 
 export interface ParsedValuationRow extends Located {
@@ -424,6 +429,9 @@ export function parseProperties(
         "rent_index_override_pa",
         "any",
       );
+      const own_cash = c.optDecimal("own_cash", "amount");
+      const transaction_costs = c.optDecimal("transaction_costs", "amount");
+      const initial_works = c.optDecimal("initial_works", "amount");
       if (!name || !purchase_date || !purchase_price) return null;
       return {
         name,
@@ -435,6 +443,9 @@ export function parseProperties(
         purchase_price,
         appreciation_override_pa,
         rent_index_override_pa,
+        own_cash,
+        transaction_costs,
+        initial_works,
       };
     },
     (r) => propertyKey(r.name),
@@ -557,8 +568,8 @@ export function parseMortgages(
 
 export function propertiesTemplate(): string {
   return [
-    "name,address,type,size_m2,garage,purchase_date,purchase_price,appreciation_override_pa,rent_index_override_pa",
-    "Byt Javorova,Javorova 12 Praha,3 bedroom,71,true,2015-06-01,4080000,,",
+    "name,address,type,size_m2,garage,purchase_date,purchase_price,appreciation_override_pa,rent_index_override_pa,own_cash,transaction_costs,initial_works",
+    "Byt Javorova,Javorova 12 Praha,3 bedroom,71,true,2015-06-01,4080000,,,,,",
   ].join("\n");
 }
 

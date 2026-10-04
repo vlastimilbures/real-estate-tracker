@@ -293,6 +293,60 @@ describe("number formats", () => {
   });
 });
 
+describe("funding amounts (ADR 0119 §8)", () => {
+  const FH = `${H},own_cash,transaction_costs,initial_works`;
+
+  it("reads own cash, transaction costs and initial works; 0 is a value", () => {
+    const r = parseProperties(`${FH}\nA,,,,,2020-01-01,100,,,850000,60000.5,0`);
+    expect(r.errors).toEqual([]);
+    expect(r.rows[0]).toMatchObject({
+      own_cash: "850000",
+      transaction_costs: "60000.5",
+      initial_works: "0",
+    });
+  });
+
+  it("a blank cell or a missing column is unknown (null)", () => {
+    const blank = parseProperties(`${FH}\nA,,,,,2020-01-01,100,,,,,`);
+    const missing = parseProperties(`${H}\nA,,,,,2020-01-01,100,,`);
+    for (const r of [blank, missing]) {
+      expect(r.errors).toEqual([]);
+      expect(r.rows[0]).toMatchObject({
+        own_cash: null,
+        transaction_costs: null,
+        initial_works: null,
+      });
+    }
+  });
+
+  it("refuses a negative amount on its own column and line", () => {
+    const cells = ["-1,,", ",-1,", ",,-1"];
+    const fields = ["own_cash", "transaction_costs", "initial_works"];
+    cells.forEach((c, i) => {
+      const r = parseProperties(`${FH}\nA,,,,,2020-01-01,100,,,${c}`);
+      expect(r.rows).toEqual([]);
+      expect(r.errors).toEqual([
+        {
+          row: 2,
+          field: fields[i],
+          error: { code: "negativeAmount", value: "-1" },
+        },
+      ]);
+    });
+  });
+
+  it("names the fix for a decimal comma, like purchase_price (D-49)", () => {
+    const r = parseProperties(`${FH}\nA,,,,,2020-01-01,100,,,"850 000,5",,`);
+    expect(r.errors).toEqual([
+      {
+        row: 2,
+        field: "own_cash",
+        error: { code: "decimalComma", value: "850 000,5" },
+      },
+    ]);
+  });
+});
+
 describe("dates", () => {
   it("rejects a non-ISO date format", () => {
     const r = parseProperties(`${H}\nA,,,,,01.02.2020,100,,`);

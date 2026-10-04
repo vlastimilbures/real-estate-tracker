@@ -4,9 +4,14 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
-import { upsertAssumptions } from "../../data/repositories";
+import {
+  loadAssumptions,
+  loadPortfolio,
+  upsertAssumptions,
+} from "../../data/repositories";
 import { SEED_ASSUMPTIONS } from "../../data/seed";
 import type { Sql } from "../../data/sql";
+import { portfolioKpis } from "../../engine";
 import {
   parseMortgages,
   parseProperties,
@@ -20,8 +25,18 @@ Byt A,2020-01-01,5000000
 Byt B,2021-01-01,6000000`;
 const MH =
   "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment,loan_term_years,contract_maturity_date";
+const FH =
+  "name,purchase_date,purchase_price,own_cash,transaction_costs,initial_works";
 
 let sql: TestSql;
+
+/** The stored funding record of one property. */
+const funding = (id: string) =>
+  sql.db
+    .prepare(
+      "SELECT own_cash, transaction_costs, initial_works, funding_note FROM properties WHERE id = ?",
+    )
+    .get(id);
 
 /** Every portfolio table, for "nothing changed" comparisons. */
 function dump(s: TestSql) {
@@ -248,6 +263,63 @@ describe("importCsv — matching and preserved fields", () => {
         funding_note: null,
       },
     ]);
+  });
+
+  it("a new property takes its funding amounts from the CSV; a blank cell is unknown (ADR 0119 §8)", async () => {
+    await importCsv(sql, {
+      properties: parseProperties(`${FH}\nByt C,2024-01-01,3000000,900000,,0`)
+        .rows,
+    });
+    expect(funding("byt-c")).toEqual({
+      own_cash: "900000",
+      transaction_costs: null,
+      initial_works: "0",
+      funding_note: null,
+    });
+  });
+
+  it("a re-import sets a filled funding amount and keeps a blank one (ADR 0119 §8)", async () => {
+    sql.db.exec(`
+      UPDATE properties SET own_cash = '1500000', transaction_costs = '95000',
+        initial_works = '0', funding_note = 'Deposit' WHERE id = 'byt-a';
+    `);
+    await importCsv(sql, {
+      properties: parseProperties(`${FH}\nByt A,2020-01-01,5000000,1600000,,`)
+        .rows,
+    });
+    expect(funding("byt-a")).toEqual({
+      own_cash: "1600000",
+      transaction_costs: "95000",
+      initial_works: "0",
+      funding_note: "Deposit",
+    });
+  });
+
+  it("imported own cash reaches the engine as a future buy's down payment (ADR 0119 §5)", async () => {
+    const cumulative = async () =>
+      portfolioKpis(await loadPortfolio(sql), await loadAssumptions(sql))
+        .cumulativeNetCashFlow;
+    // Bought after the seed baseDate (2026-06-07), no loan: the derived down payment is
+    // the price, 5,000,000, as the entered costs and works are 0.
+    await importCsv(sql, {
+      properties: parseProperties(`${FH}\nByt F,2027-03-01,5000000,,0,0`).rows,
+    });
+    const derived = await cumulative();
+    await importCsv(sql, {
+      properties: parseProperties(`${FH}\nByt F,2027-03-01,5000000,1500000,,`)
+        .rows,
+    });
+    const recorded = await cumulative();
+
+    const f = (await loadPortfolio(sql)).properties.find(
+      (p) => p.id === "byt-f",
+    )?.funding;
+    expect(f?.ownCash?.toString()).toBe("1500000");
+    expect(f?.transactionCosts?.toString()).toBe("0");
+    expect(f?.initialWorks?.toString()).toBe("0");
+    // 5,000,000 derived − 1,500,000 own cash = 3,500,000 less paid out. The engine sums
+    // at full precision, so compare to the haléř.
+    expect(recorded.minus(derived).toFixed(2)).toBe("3500000.00");
   });
 
   it("gives every new property a holding-costs row", async () => {
