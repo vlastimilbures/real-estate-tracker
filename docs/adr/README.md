@@ -141,6 +141,7 @@ Other IDs seen in code comments:
 | [0114](0114-a11y-skip-link-charts.md)             | Accessibility round: skip link, named charts, legible axes                             | #24, #25                               |
 | [0115](0115-sample-panel-hint.md)                 | Sample panel hint does not say how the sample arrived                                  | #97                                    |
 | [0116](0116-prepayments-ui-and-review-fixes.md)   | Prepayments: form, outputs and review fixes                                            | #32                                    |
+| [0119](0119-acquisition-funding.md)               | Acquisition funding record and the down payment of a future buy                        | #33, #103, #140                        |
 
 ### Judgment calls and open questions
 
