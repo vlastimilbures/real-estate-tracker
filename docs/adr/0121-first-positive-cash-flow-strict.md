@@ -20,10 +20,14 @@ year 1 although nothing was earned in it:
 
 - A cash purchase on 2030-06-01 with rent of 25,000 Kč showed **2027**. The first year with
   income is 2030.
-- A purchase on 2029-01-01 with a 2.0 M Kč loan and rent of 20,000 Kč showed **2027**. The first
-  positive year is 2029.
+- A purchase on 2029-01-01 with a 2.0 M Kč loan (10,614.53 Kč a month) and rent of
+  20,000 Kč showed **2027**. The first positive year is 2029. With rent of 8,000 Kč no year
+  is ever positive: it showed 2027 instead of "—".
+- A test fixture's planned purchase alone (`mixed` filtered to it, as a Dashboard chip
+  filter does) nets 0, then losses until 2048. It showed **2027** instead of 2048.
 
-The Dashboard KPI row and the Scenario compare delta show this year.
+The Dashboard KPI row, the Scenario compare delta and Values view, and the compare Excel
+export show this year.
 
 ## Decision
 
@@ -32,13 +36,14 @@ The first cash-flow-positive year is the first projection year (1..N) whose net 
 nets exactly 0 never counts. Only the implementation changes; the rule does not.
 
 The test oracle in `loan-events-kpis.test.ts` repeated the same `isPositive()` call, so it
-would have confirmed the bug. It now uses `greaterThan(ZERO)` as well. The new tests pin the two
-examples above and check that every year before the KPI year nets 0 or less.
+would have confirmed the bug. It now pins the seed's 2031 and checks that the prepayment lands
+in that year. The new tests pin the examples above. They also check that the KPI year nets
+above 0 and that no earlier year does.
 
 ## Consequences
 
-- A future-only portfolio or filter now shows the first year with real income, or "—" when
-  no year is positive.
+- A future-only portfolio or filter now shows the first year whose net cash flow (after debt
+  service) is above zero, or "—" when no year is.
 - An empty or fully deactivated portfolio now returns `null` inside the engine. Before, it
   returned year 1. The UI shows the empty state for these, so nothing visible changes there.
 - No parity target changes: the seed stays 2031 (Y5). The golden master does not change.
