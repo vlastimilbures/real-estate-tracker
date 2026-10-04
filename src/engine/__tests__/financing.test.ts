@@ -14,7 +14,7 @@ import {
 import { schedulesByProperty } from "../schedule";
 import { portfolioOutputs } from "../outputs";
 import { impliedMaturity, mortgageBlock } from "../amortization";
-import { edate, isoDate, lastGridMonthOnOrBefore } from "../dates";
+import { edate, isoDate } from "../dates";
 import { money, rate } from "../brands";
 import { ZERO } from "../../lib/money";
 import type {
@@ -164,13 +164,10 @@ describe("ADR 0103: as-of after baseDate", () => {
     expect(loan(fx, "javorova").nextFixation?.blockId).toBe("m-javorova");
   });
 
-  it("remaining months count from the as-of grid month", () => {
-    const base = exposure(portfolio).fx;
-    const elapsed = lastGridMonthOnOrBefore(BASE_DATE, asOf);
-    expect(loan(fx, "dubova").remainingMonths).toBe(
-      (loan(base, "dubova").remainingMonths ?? 0) - elapsed,
-    );
-    expect(rowsOf(schedules, "dubova").length).toBeGreaterThan(elapsed);
+  it("remaining months count the payments due after as-of (ADR 0117)", () => {
+    // Dubova pays on the 12th until 12.12.2040: Feb 2029 to Dec 2040.
+    expect(loan(fx, "dubova").remainingMonths).toBe(143);
+    expect(rowsOf(schedules, "dubova").length).toBeGreaterThan(143);
   });
 
   it("the window starts at as-of", () => {
@@ -396,6 +393,35 @@ describe("ADR 0117: replaced and repaid outrank passed", () => {
     ).toBe("passed");
     const old = block({ id: "old", startDate: isoDate("2016-01-10") });
     expect(reset(at("2026-06-07", old), "old").status).toBe("passed");
+  });
+});
+
+describe("ADR 0117: remaining term = payments due after as-of", () => {
+  const months = (asOf: string, pid: string, p: Portfolio = portfolio) =>
+    loan(exposure(p, isoDate(asOf)).fx, pid).remainingMonths;
+
+  it("a payment made this grid month no longer counts", () => {
+    // Javorova pays on the 17th until 17.05.2051; 17.06.2026 is paid by 06.07.2026.
+    expect(months("2026-06-07", "javorova")).toBe(300);
+    expect(months("2026-07-06", "javorova")).toBe(299);
+    // Dubova pays on the 12th until 12.12.2040: Oct 2026 to Dec 2040.
+    expect(months("2026-10-01", "dubova")).toBe(171);
+  });
+
+  it("is 0 from the payoff date on", () => {
+    expect(months("2051-05-16", "javorova")).toBe(1);
+    expect(months("2051-05-17", "javorova")).toBe(0);
+    expect(months("2051-05-20", "javorova")).toBe(0);
+  });
+
+  it("a loan not yet drawn counts its own payments only", () => {
+    const later = block({ id: "later", startDate: isoDate("2028-01-10") });
+    const { fx, schedules } = exposure(single(later));
+    const paid = rowsOf(schedules, "p").filter((r) =>
+      r.interest.plus(r.principal).greaterThan(ZERO),
+    ).length;
+    expect(paid).toBeGreaterThan(0);
+    expect(loan(fx, "p").remainingMonths).toBe(paid);
   });
 });
 

@@ -7,16 +7,11 @@
 import { ZERO, type Decimal } from "../lib/money";
 import { drawMonth, isDevLoan, mortgageBlock } from "./amortization";
 import { DEBT_FREE_EPSILON } from "./constants";
-import {
-  edate,
-  firstAfter,
-  isAfter,
-  isOnOrBefore,
-  lastGridMonthOnOrBefore,
-} from "./dates";
+import { edate, firstAfter, isAfter, isOnOrBefore } from "./dates";
 import { leaseInForce } from "./metrics";
 import {
   blockChain,
+  hasPayment,
   lastPaymentMonth,
   paymentOffset,
   propertySchedule,
@@ -51,7 +46,7 @@ export interface LoanExposure {
   nextFixation: FixationReset | null;
   /** Due date of the schedule's last payment (the modelled payoff). */
   payoffDate: IsoDate | null;
-  /** Schedule months from as-of to the last payment (0 once repaid). */
+  /** Schedule payments due after as-of (0 once repaid, ADR 0117). */
   remainingMonths: number | null;
   /** Interest the loan's prepayments save to payoff; null without one (ADR 0116). */
   interestSaved: Decimal | null;
@@ -152,6 +147,18 @@ function dueDate(chain: MortgageBlock[], m: number, baseDate: Date): IsoDate {
   return edate(owner.startDate, paymentOffset(owner, baseDate) + m);
 }
 
+/** Schedule payments due after `asOf`, each on its paying block's own day (ADR 0117). */
+function paymentsDueAfter(
+  chain: MortgageBlock[],
+  rows: AmortizationRow[],
+  asOf: Date,
+  baseDate: Date,
+): number {
+  return rows.filter(
+    (r, i) => hasPayment(r) && isAfter(dueDate(chain, i + 1, baseDate), asOf),
+  ).length;
+}
+
 const interestOf = (rows: AmortizationRow[]): Decimal =>
   rows.reduce((s, r) => s.plus(r.interest), ZERO);
 
@@ -188,14 +195,14 @@ function propertyExposure(
   const resets = chainResets(chain, rows, ctx);
   const inForce = chain.filter((b) => isOnOrBefore(b.startDate, ctx.asOf));
   const last = lastPaymentMonth(rows);
-  const elapsed = lastGridMonthOnOrBefore(ctx.baseDate, ctx.asOf);
   return {
     loan: {
       propertyId: first.propertyId,
       blockId: (inForce.at(-1) ?? first).id,
       nextFixation: resets.find((r) => r.status === "upcoming") ?? null,
       payoffDate: last > 0 ? dueDate(chain, last, ctx.baseDate) : null,
-      remainingMonths: last > 0 ? Math.max(0, last - elapsed) : null,
+      remainingMonths:
+        last > 0 ? paymentsDueAfter(chain, rows, ctx.asOf, ctx.baseDate) : null,
       interestSaved: prepaymentInterestSaved(blocks, ctx.assumptions, rows),
     },
     resets,
