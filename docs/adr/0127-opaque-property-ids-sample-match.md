@@ -10,6 +10,8 @@
   [0049](0049-czech-excel-csv.md) (D-55: CSV name matching), [0096](0096-csv-import-preview.md)
   (preview fingerprint), [0110](0110-backup-recency-indicator.md) (`app_meta`),
   [0112](0112-load-sample-on-demand.md) (load sample on demand)
+- Amended: 2026-10-04 after the independent review of PR #204 (§5: ADR 0094 §2 still
+  holds; Consequences: only the `"portfolio"` value can clash)
 
 ## Context
 
@@ -61,7 +63,8 @@ Owner, 2026-10-04 (Track 8 PR3 plan; option A of #101 and #105):
    `javorova` "Byt Javorova", `lipova` "Byt Lipova", `dubova` "Byt Dubova". The same rule decides
    whether the banner shows and what Clear sample deletes, so the two never disagree. A sample
    flat the user renamed counts as their own and is kept. This also protects databases that
-   already hold an own property with a sample id.
+   already hold an own property with a sample id. ADR 0094 §2 still holds: the name only
+   narrows the match on the marker and the sample ids, and never marks data as the sample.
 6. **Undoing Clear sample stays as it is** (G2-4-03). Restoring the pre-clear safety backup
    brings the sample flats back as ordinary data, without the banner, as ADR 0094 and ADR 0112
    already state. The app does not guess from names that restored rows are the sample.
@@ -81,6 +84,6 @@ Owner, 2026-10-04 (Track 8 PR3 plan; option A of #101 and #105):
 - The Clear sample dialog still says "the three sample apartments". The text was already
   inexact after the user deleted one by hand. It is now inexact after a rename too. The text
   is kept.
-- Not changed: the `"portfolio"` and `"all"` filter values can still clash with an old id
-  made from a name, and export file names are still made from the property name with
-  `slug()`.
+- Not changed: the Projections page's `"portfolio"` value can still clash with an old id
+  made from a name ("Portfolio"), and export file names are still made from the property
+  name with `slug()` (#205).

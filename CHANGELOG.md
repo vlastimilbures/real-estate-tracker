@@ -231,9 +231,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (ADR 0127, #105).
 - A new property gets a random internal id, from the property form and from a CSV import,
   instead of one made from its name (ADR 0127, #105). A Cyrillic name no longer gets an
-  empty id, and a CSV file can add such a property together with its loans, valuations and
-  rents. Names that differ only in punctuation or accents ("Byt 1" and "Byt-1", "Lipová 2"
-  and "Lipova 2") no longer fail with "a record with the same internal id already exists".
+  empty id. Names that differ only in punctuation or accents ("Byt 1" and "Byt-1",
+  "Lipová 2" and "Lipova 2") no longer fail with "a record with the same internal id
+  already exists".
 - **Clear sample** deleted any property whose internal id was a sample one, so it could
   delete your own flat named after a sample street (for example "Dubová") with all its
   loans, leases and valuations. It now deletes a property only while it still has both the
