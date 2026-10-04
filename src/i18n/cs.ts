@@ -361,9 +361,9 @@ export const cs: Dictionary = {
     costDefaults: (fields) =>
       `Náklady na držbu používají výchozí hodnoty portfolia pro: ${fields}.`,
     fundingUnknown:
-      "Vlastní zdroje vložené při koupi nejsou zadané, takže vložené vlastní zdroje nejsou známé.",
+      "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
     fundingUnknownFuture:
-      "Vlastní zdroje na tento nákup nejsou zadané, takže projekce platbu při koupi odvodí: cena minus úvěr plus zadané transakční náklady a úpravy.",
+      "Vlastní zdroje na tento nákup nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám a projekce platbu při koupi odvodí: cena minus úvěr plus zadané transakční náklady a úpravy.",
     recordFunding: "Zadat financování",
   },
 

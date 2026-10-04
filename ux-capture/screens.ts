@@ -576,6 +576,9 @@ export const SCREENS: Screen[] = [
           .getByRole("dialog")
           .getByRole("button", { name: ux.t.propertyForm.acquisitionSection }),
       ).toHaveAttribute("aria-expanded", "true");
+      await expect(
+        ux.page.getByRole("dialog").getByLabel(ux.t.propertyForm.ownCash),
+      ).toBeFocused();
     },
   },
   {

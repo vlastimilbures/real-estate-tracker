@@ -426,6 +426,15 @@ describe("data check: scope (ADR 0118)", () => {
       "costDefaults",
       "fundingUnknown",
     ]);
+    expect(onPurchase.defaults).toContainEqual({
+      kind: "fundingUnknown",
+      future: true,
+    });
+    expect(
+      dataCheckItems(future.properties, future, BASE_DATE, BASE_DATE)
+        .defaults.filter((r) => r.propertyId === "future")
+        .map((r) => r.finding),
+    ).toEqual([{ kind: "fundingUnknown", future: true }]);
     const recorded: Portfolio = {
       ...future,
       properties: future.properties.map((x) =>
@@ -548,7 +557,7 @@ describe("data check: text and fix (ADR 0118)", () => {
       "Own cash paid at purchase is not recorded, so Cash invested is not known.",
     );
     expect(text({ kind: "fundingUnknown", future: true })).toBe(
-      "Own cash for this purchase is not recorded, so the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
+      "Own cash for this purchase is not recorded, so Cash invested is not known and the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
     );
   });
 

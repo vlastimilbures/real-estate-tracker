@@ -699,8 +699,8 @@ offline badge, and controls for language and theme.
    recorded (Cash invested unknown; for a property bought after the base date the down
    payment is derived, ADR 0119). Each row links to the property section (or form) that
    fixes it; the own-cash row opens the form with its Acquisition section open. The panel
-   opens when something needs attention; a property not yet purchased has only the
-   own-cash finding.
+   opens when something needs attention; a property not yet purchased has no findings
+   except the own-cash one.
 
 2. **Properties** — list with per-property summary and LTV/DSCR health bands; "+ Add property"
    button opens a form modal (name, address, type, size_m2, garage, purchase_date,

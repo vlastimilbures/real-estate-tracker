@@ -386,7 +386,7 @@ export const en = {
     fundingUnknown:
       "Own cash paid at purchase is not recorded, so Cash invested is not known.",
     fundingUnknownFuture:
-      "Own cash for this purchase is not recorded, so the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
+      "Own cash for this purchase is not recorded, so Cash invested is not known and the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
     recordFunding: "Record funding",
   },
 

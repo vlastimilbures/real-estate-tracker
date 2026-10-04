@@ -61,9 +61,13 @@ Owner, 2026-10-04 (#35 plan):
      holds transaction costs, initial works or a note: own cash alone drives Cash invested
      (Property detail and the Dashboard total) and a future purchase's outflow. Own cash
      of 0 is recorded and resolves it.
-   - Its text states the effect that is true for the property: Cash invested is unknown;
-     for a property bought after the base date, the projection derives the down payment
-     (price − acquisition loan + recorded costs and works, ADR 0119 §5).
+   - Its text states the effect: Cash invested is unknown; for a property bought after the
+     base date, the projection also derives the down payment (price − acquisition loan +
+     recorded costs and works, ADR 0119 §5). That second part follows the purchase date
+     only: it does not check whether the property is inactive or bought after the horizon,
+     where the projection leaves it out altogether.
+   - "Record funding" opens the property form with its Acquisition section open and focus
+     on own cash.
 5. **Scope:** a property not yet purchased at the as-of date has no findings, except the
    own-cash finding: a future purchase's own cash is its down payment in the projection,
    so it is worth recording before the purchase date. The Dashboard
