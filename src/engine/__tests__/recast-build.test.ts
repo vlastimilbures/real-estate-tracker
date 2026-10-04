@@ -15,6 +15,7 @@ import {
   sum,
   toBlock,
 } from "./reference/eventHarness";
+import { devBlock } from "./support/mixed";
 import { assumptions } from "./support/seed";
 
 const J = SEED_LOANS.javorova;
@@ -48,9 +49,10 @@ const toMaturity = (date: string, maturity: string): RefRecast => ({
   maturity,
 });
 
-/** An event outcome: kind, date, grid month, issue. */
-type Outcome = [string, string, number | null, string | null];
+/** An event outcome: block, kind, date, grid month, issue. */
+type Outcome = [string, string, string, number | null, string | null];
 const recastAt56 = (issue: string | null): Outcome => [
+  "b0",
   "recast",
   "2031-01-17",
   56,
@@ -63,6 +65,9 @@ function expectMatchesReference(loans: RefLoan[], outcomes: Outcome[]) {
   const { e, r } = chainBoth(loans);
   // Every column agrees, and every reference row past the engine's last is idle.
   expect(maxDev(e.rows, r.rows, r.handovers)).toBeLessThanOrEqual(TIGHT);
+  // maxDev reads the instalment only where the reference pays; elsewhere it is 0.
+  const idle = e.rows.filter((_, i) => !r.rows[i].payment.greaterThan(0));
+  expect(idle.every((x) => x.instalment.isZero())).toBe(true);
   expect(e.rows.map((x) => [x.month, iso(x.date)])).toEqual(
     r.rows.slice(0, e.rows.length).map((x) => [x.month, x.date]),
   );
@@ -93,18 +98,30 @@ function expectMatchesReference(loans: RefLoan[], outcomes: Outcome[]) {
     r.handovers.map((h) => [h.month, h.paidOff.toNumber(), h.drawn.toNumber()]),
   );
   expect(
-    e.eventOutcomes.map((o) => [o.kind, iso(o.date), o.month, o.issue]),
+    e.eventOutcomes.map((o) => [
+      o.blockId,
+      o.kind,
+      iso(o.date),
+      o.month,
+      o.issue,
+    ]),
   ).toEqual(outcomes);
-  // A prepayment repays what the reference prepays in its row, at its fee.
+  // A prepayment repays what the reference prepays in its row, at its fee; a recast
+  // repays nothing and costs nothing.
   for (const o of e.eventOutcomes) {
-    if (o.kind !== "prepayment" || o.month == null || o.month < 1) continue;
-    const row = r.rows[o.month - 1];
+    const row =
+      o.kind === "prepayment" ? r.rows[(o.month ?? 0) - 1] : undefined;
+    const [applied, fee] = row ? [row.prepaid, row.fee] : [0, 0];
     expect(
-      o.applied.minus(row.prepaid.toString()).abs().toNumber(),
+      o.applied.minus(applied.toString()).abs().toNumber(),
     ).toBeLessThanOrEqual(TIGHT);
-    expect(o.fee.minus(row.fee.toString()).abs().toNumber()).toBe(0);
+    expect(o.fee.minus(fee.toString()).abs().toNumber()).toBe(0);
   }
 }
+
+it("the dev loan is devBlock", () => {
+  expect(toBlock(dev, "m-dev", "dev")).toEqual(devBlock);
+});
 
 describe("ADR 0116: schedules a recast extends (#130 R1-15)", () => {
   it.each<[string, RefLoan[], Outcome[]]>([
@@ -146,13 +163,13 @@ describe("ADR 0116: schedules a recast extends (#130 R1-15)", () => {
       ],
       [
         recastAt56("RECAST_TERM_CAPPED"),
-        ["prepayment", "2040-02-01", 165, "PREPAYMENT_EXCEEDS_BALANCE"],
+        ["b0", "prepayment", "2040-02-01", 165, "PREPAYMENT_EXCEEDS_BALANCE"],
       ],
     ],
     [
       "dev loan after completion",
-      [{ ...dev, recasts: [toInstalment("2028-01-10", 9000)] }],
-      [["recast", "2028-01-10", 20, "RECAST_INSTALMENT_BELOW_INTEREST"]],
+      [{ ...dev, recasts: [toInstalment("2028-01-10", 22000)] }],
+      [["b0", "recast", "2028-01-10", 20, null]],
     ],
     [
       "refinanced",
