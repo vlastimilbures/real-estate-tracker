@@ -9,6 +9,8 @@
   [0096](0096-csv-import-preview.md), [0112](0112-load-sample-on-demand.md)
 - Replaces: the "acknowledged, no-code-change behaviour" note on the store test (legacy
   DR-086 / UX-050)
+- Amended: 2026-10-04 after the independent review of PR #196 (item 5: the store, not the
+  Assumptions page, keeps the saved assumptions)
 
 ## Context
 
@@ -21,8 +23,9 @@ failed after the operation had committed was reported as a failed write:
   That was false: the data had been replaced. After a restore or a clear, the name of the
   safety backup that undoes it was never shown.
 - Forms got `{ ok: false }` with the raw read error and stayed open. A retry made a new id
-  and was refused as a duplicate, while the stale table did not show the row. Form errors
-  for a broken record (`ROW_INVALID`, `SCENARIO_INVALID`) also said "Nothing was changed".
+  and was refused as a duplicate, while the stale table did not show the row. When the
+  reload found a record it could not read (`ROW_INVALID`), the form also said "Nothing was
+  changed".
 
 The stale banner ("The change may not be shown yet: reloading the data failed. Reload to see
 what is saved.") already appeared at the same time. PR #190 (ADR 0123) removed the likeliest
@@ -35,7 +38,7 @@ unchanged (a restore or clear may already have written its safety-backup file).
 
 ## Decision
 
-Owner, 2026-10-04 (Track 8 PR2 plan; option A of #106, plus §5):
+Owner, 2026-10-04 (Track 8 PR2 plan; option A of #106, plus item 5):
 
 1. **Once the operation has resolved, a failed reload never fails the write.** The store
    sets `stale` (the banner with Reload) and logs the reload error. The rule is the same for
@@ -48,9 +51,11 @@ Owner, 2026-10-04 (Track 8 PR2 plan; option A of #106, plus §5):
    failure. The error banner is cleared on success as before; the stale banner explains.
 4. The "rolled back" and "unchanged" messages now appear only for failures before the
    commit, where they are true. No message text changes.
-5. **The Assumptions page keeps its values after a save while the screen is stale.** It
-   shows the saved values (so a later edit cannot write the old ones back) and "Unsaved
-   changes" until a Reload confirms them. Saving again is a harmless upsert.
+5. **Saved assumptions are what the store shows, even while the screen is stale.** When the
+   reload after saving the assumptions fails, the store sets its in-memory assumptions to
+   the row it has just written. The Assumptions page shows them as saved, so neither
+   Discard, nor leaving and reopening the page, nor the next save can bring back the old
+   values. The rest of the screen stays stale until Reload.
 6. Failures before the commit behave as before: the store reloads and reports the failure.
 
 ## Consequences
@@ -62,7 +67,7 @@ Owner, 2026-10-04 (Track 8 PR2 plan; option A of #106, plus §5):
   property's link landing on the empty property page. Nothing crashes, and the banner asks
   for a Reload.
 - Other forms save what they show. Editing a record again before Reload can write the old
-  values it shows; the banner says to reload first.
+  values it shows; the banner asks for a Reload.
 - When the reload keeps failing, its cause is only in `app.log`, as it already was for the
   banner's Reload.
 - Logs: a reload failure after the export record is logged as `WRITE`, not `BACKUP`; a second
