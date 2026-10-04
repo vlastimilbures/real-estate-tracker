@@ -25,7 +25,7 @@ import {
   loanWarningText,
   type LoanWarning,
 } from "./propertyDetail";
-import type { PropertySection } from "./sectionNav";
+import type { PropertyFormTarget, PropertySection } from "./sectionNav";
 
 /** A valuation more than this many months old at the as-of date is stale. */
 const VALUATION_STALE_MONTHS = 12;
@@ -61,7 +61,10 @@ export type DataFinding =
   /** The portfolio appreciation and/or rent indexation apply. */
   | { kind: "growthDefault"; appreciation: boolean; rentIndexation: boolean }
   /** These holding-cost fields fall back to the portfolio defaults. */
-  | { kind: "costDefaults"; fields: CostField[] };
+  | { kind: "costDefaults"; fields: CostField[] }
+  /** No own cash recorded (ADR 0119): Cash invested is unknown; for a property bought
+   *  after the base date (`future`) the projection derives its down payment. */
+  | { kind: "fundingUnknown"; future: boolean };
 
 /** A property's findings: "needs attention" (counted) and "using portfolio defaults". */
 export interface DataCheck {
@@ -76,12 +79,15 @@ export interface DataCheckItem {
   finding: DataFinding;
 }
 
-/** Where a finding is fixed: a Property detail section, or the property form. */
+/** Where a finding is fixed: a Property detail section, or the property form (with its
+ *  Acquisition section open for `editFunding`). */
 export type DataCheckFix =
-  Extract<PropertySection, "records" | "financing" | "holding"> | "edit";
+  | Extract<PropertySection, "records" | "financing" | "holding">
+  | PropertyFormTarget;
 
-/** The property's findings at `asOf`; none before its purchase date. `baseDate` = the
- *  projection start, for what the projection assumes about an ended lease. */
+/** The property's findings at `asOf`; before its purchase date only the own-cash one.
+ *  `baseDate` = the projection start, for what the projection assumes about an ended
+ *  lease and whether it derives the down payment. */
 export function propertyDataCheck(
   property: Property,
   portfolio: Portfolio,
@@ -89,7 +95,7 @@ export function propertyDataCheck(
   baseDate: Date,
 ): DataCheck {
   if (property.purchaseDate.getTime() > asOf.getTime())
-    return { attention: [], defaults: [] };
+    return { attention: [], defaults: fundingOf(property, baseDate) };
   const own = <T extends { propertyId: string }>(rows: T[]) =>
     rows.filter((r) => r.propertyId === property.id);
   const attention: DataFinding[] = [];
@@ -132,8 +138,18 @@ export function propertyDataCheck(
 
   return {
     attention,
-    defaults: defaultsOf(property, own(portfolio.holdingCosts)[0]),
+    defaults: [
+      ...defaultsOf(property, own(portfolio.holdingCosts)[0]),
+      ...fundingOf(property, baseDate),
+    ],
   };
+}
+
+/** No own cash recorded (#178): a record with only costs, works or a note counts too. */
+function fundingOf(property: Property, baseDate: Date): DataFinding[] {
+  if (property.funding?.ownCash !== undefined) return [];
+  const future = property.purchaseDate.getTime() > baseDate.getTime();
+  return [{ kind: "fundingUnknown", future }];
 }
 
 /** Growth and holding-cost fields left to the portfolio defaults (first cost row wins). */
@@ -189,6 +205,8 @@ export function findingFix(f: DataFinding): DataCheckFix {
       return "holding";
     case "growthDefault":
       return "edit";
+    case "fundingUnknown":
+      return "editFunding";
   }
 }
 
@@ -225,6 +243,8 @@ export function findingText(
       return d.costDefaults(
         f.fields.map((field) => costLabel(t, field)).join(", "),
       );
+    case "fundingUnknown":
+      return f.future ? d.fundingUnknownFuture : d.fundingUnknown;
   }
 }
 
@@ -243,6 +263,8 @@ export function fixLabel(
       return t.dataCheck.goTo(d.sectionHolding);
     case "edit":
       return t.properties.editProperty;
+    case "editFunding":
+      return t.dataCheck.recordFunding;
   }
 }
 

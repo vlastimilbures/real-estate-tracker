@@ -540,7 +540,7 @@ export const SCREENS: Screen[] = [
   },
   {
     id: "31-property-data-check",
-    desc: "Property detail's Data check five years on, after the Overview; its link moves to Records (ADR 0118)",
+    desc: "Property detail's Data check five years on, after the Overview; its link moves to Records, Record funding opens the form's Acquisition section (ADR 0118)",
     route: "property",
     run: async (ux) => {
       const d = ux.t.dataCheck;
@@ -568,6 +568,16 @@ export const SCREENS: Screen[] = [
           name: ux.t.propertyDetail.valuationsTitle,
           exact: true,
         }),
+      ).toBeFocused();
+      // The own-cash link opens the property form at its Acquisition section (#178).
+      await p.getByRole("button", { name: d.recordFunding }).click();
+      await expect(
+        ux.page
+          .getByRole("dialog")
+          .getByRole("button", { name: ux.t.propertyForm.acquisitionSection }),
+      ).toHaveAttribute("aria-expanded", "true");
+      await expect(
+        ux.page.getByRole("dialog").getByLabel(ux.t.propertyForm.ownCash),
       ).toBeFocused();
     },
   },

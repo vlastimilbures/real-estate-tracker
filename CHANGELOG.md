@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Each row links to the section that fixes it, or to the property form. The Dashboard
     panel opens when something needs attention. No figure changes.
 
+- The Data check lists a property whose **own cash at purchase is not recorded** under
+  "Using portfolio defaults" (ADR 0118, #178): Cash invested is then unknown, and for a
+  property bought after the projection start the down payment is derived. A future purchase
+  shows it before its purchase date too. Its link, **Record funding**, opens the property
+  form with the Acquisition section open.
+
 - The property page's **Loan outlook** shows the loan's remaining term ("24 yrs 8 months")
   and lists every loan block, oldest first, with its fixation end, the balance that moves
   to the new rate (nominal) and a status: next rate reset, upcoming, passed, replaced by a later
@@ -245,6 +251,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and **Clear sample** could delete your own flat if its internal id matched a sample one
   (for example a flat named "Lipová"). A restore now clears the sample label (ADR 0127,
   #101).
+- Headline KPIs no longer contradict their inputs in edge cases (ADR 0126, #129):
+  - The net-worth multiple shows "—" when equity at the projection start is zero or less,
+    instead of "0,00x" or a negative multiple (−31,19x after a deep crash at Today).
+  - CAGR shows "—" when net worth at the horizon is zero or less, instead of "NaN %".
+  - "Debt fully repaid" is the year from which debt stays repaid; debt drawn later moves it
+    on, and it shows "—" while debt is still owed at the horizon.
+  - A property or portfolio with no debt shows DSCR "—" with no "Shortfall" badge.
 - A restore, Clear sample, Load sample or CSV import that went through but whose screen
   could not reload said it had failed and been rolled back, with the data unchanged. It now
   reports success, naming the safety backup, and the banner asks you to reload. A form save

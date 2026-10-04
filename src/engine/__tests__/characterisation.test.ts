@@ -447,7 +447,7 @@ describe("CAGR and DSCR edge cases", () => {
     );
     expect(k.cagrNominal).toBeNull(); // D-34 (was Infinity: ZERO.isPositive())
     expect(k.cagrReal).toBeNull(); // D-34
-    expect(k.netWorthMultiple.isZero()).toBe(true);
+    expect(k.netWorthMultiple).toBeNull(); // ADR 0126 (was 0)
   });
 
   it("DSCR is null in a projection year with no debt service", () => {

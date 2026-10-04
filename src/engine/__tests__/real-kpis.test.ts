@@ -30,14 +30,14 @@ describe("ADR 0087: real net-worth multiple", () => {
   it("is the real net worth over equity₀ (sample ≈ 2.3120x)", () => {
     const k = portfolioKpis(portfolio, assumptions);
     const equity0 = portfolioProjection(portfolio, assumptions)[0].equity;
-    expect(k.netWorthMultipleReal.toString()).toBe(
+    expect(k.netWorthMultipleReal!.toString()).toBe(
       k.netWorthReal.div(equity0).toString(),
     );
-    near(k.netWorthMultipleReal, 2.312, RATIO, "real multiple");
-    expect(k.netWorthMultipleReal.lessThan(k.netWorthMultiple)).toBe(true);
+    near(k.netWorthMultipleReal!, 2.312, RATIO, "real multiple");
+    expect(k.netWorthMultipleReal!.lessThan(k.netWorthMultiple!)).toBe(true);
   });
 
-  it("is 0 when equity₀ is 0, like the nominal multiple", () => {
+  it("is null when equity₀ is 0, like the nominal multiple (ADR 0126)", () => {
     const later = {
       ...portfolio,
       properties: portfolio.properties.map((p) => ({
@@ -47,8 +47,8 @@ describe("ADR 0087: real net-worth multiple", () => {
       mortgages: [],
     };
     const k = portfolioKpis(later, assumptions);
-    expect(k.netWorthMultiple.isZero()).toBe(true);
-    expect(k.netWorthMultipleReal.isZero()).toBe(true);
+    expect(k.netWorthMultiple).toBeNull();
+    expect(k.netWorthMultipleReal).toBeNull();
   });
 });
 
@@ -113,8 +113,8 @@ describe("ADR 0087: with zero inflation real equals nominal", () => {
             rentIndexationPa: rate(String(rentBp / 10_000)),
           };
           const k = portfolioKpis(portfolio, a);
-          expect(k.netWorthMultipleReal.toString()).toBe(
-            k.netWorthMultiple.toString(),
+          expect(k.netWorthMultipleReal!.toString()).toBe(
+            k.netWorthMultiple!.toString(),
           );
           expect(k.cumulativeNetCashFlowReal.toString()).toBe(
             k.cumulativeNetCashFlow.toString(),

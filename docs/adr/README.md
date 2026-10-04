@@ -142,7 +142,7 @@ Other IDs seen in code comments:
 | [0115](0115-sample-panel-hint.md)                 | Sample panel hint does not say how the sample arrived                                  | #97                                    |
 | [0116](0116-prepayments-ui-and-review-fixes.md)   | Prepayments: form, outputs and review fixes                                            | #32                                    |
 | [0117](0117-property-loan-outlook.md)             | Property loan outlook: each block's reset and the remaining term                       | #31                                    |
-| [0118](0118-data-check.md)                        | Data check: stale, defaulted and missing inputs                                        | #35                                    |
+| [0118](0118-data-check.md)                        | Data check: stale, defaulted and missing inputs                                        | #35, #178                              |
 | [0119](0119-acquisition-funding.md)               | Acquisition funding record and the down payment of a future buy                        | #33, #103, #140, #118                  |
 | [0120](0120-tranche-on-recast-payment.md)         | A tranche on an instalment recast's payment                                            | #109                                   |
 | [0121](0121-first-positive-cash-flow-strict.md)   | The first cash-flow-positive year is strictly positive                                 | #102, #185                             |
@@ -150,6 +150,7 @@ Other IDs seen in code comments:
 | [0123](0123-scenario-rules-every-entry-point.md)  | Scenario overrides meet the engine rules; restore needs them readable                  | #107, #108                             |
 | [0124](0124-pre-purchase-debt-service.md)         | Debt service before a future purchase is owner cash                                    | #104                                   |
 | [0125](0125-committed-write-reload-failure.md)    | A committed write whose reload fails is not a failure                                  | #106                                   |
+| [0126](0126-degenerate-kpis.md)                   | Degenerate KPIs: no growth base, debt-free from, no-debt badge                         | #129                                   |
 | [0127](0127-opaque-property-ids-sample-match.md)  | Random property ids; the sample is matched by id and name                              | #101, #105                             |
 
 ### Judgment calls and open questions

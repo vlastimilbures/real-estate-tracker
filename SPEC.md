@@ -437,9 +437,10 @@ debt) for every property; when every loan retires within the horizon (as in the 
 - Net worth at horizon (nominal & real); net-worth **multiple** = equityₙ/equity₀;
   **CAGR** nominal = (equityₙ/equity₀)^(1/horizon) − 1; **CAGR real** from the CPI-deflated
   net worth (equal to (1+CAGRₙ)/(1+infl) − 1 under constant inflation). CAGR is **null**
-  when equity₀ ≤ 0 and the tile shows "—" (ADR 0034). **Real multiple** = net worth realₙ /
-  equity₀ (CPI₀ = 1, so equity₀ is already in base-date Kč); 0 when equity₀ = 0, like the
-  nominal multiple (ADR 0087).
+  when equity₀ ≤ 0 or its end net worth ≤ 0, and the tile shows "—" (ADR 0034, 0126).
+  **Real multiple** = net worth realₙ / equity₀ (CPI₀ = 1, so equity₀ is already in
+  base-date Kč; ADR 0087). Both multiples are **null** when equity₀ ≤ 0 (no growth base,
+  shown "—"); with equity₀ > 0 a multiple keeps its sign (ADR 0126).
 - Cumulative net cash flow (Years 1…N), net of acquisition outflows, refinance cash,
   prepayments with their fees (ADR 0109) and debt service paid before a future purchase
   (ADR 0124).
@@ -447,8 +448,9 @@ debt) for every property; when every loan retires within the horizon (as in the 
   each year is deflated by its own index, as in the real IRR (ADR 0087). The Dashboard and
   Scenario compare show the multiple and the cumulative cash flow of the lens; Σ principal
   repaid stays nominal and is labelled "(nominal)" in the Real lens.
-- First calendar year net cash flow turns positive; first year portfolio debt = 0 — each
-  reported with its projection year (ADR 0022).
+- First calendar year net cash flow turns positive; first year from which portfolio debt
+  stays 0 through year N (null while debt is owed at N; ADR 0126) — each reported with its
+  projection year (ADR 0022).
 - **Levered IRR** (nominal & real): IRR of the vector `[−equity₀, netCF₁, …, netCF_{N−1},
 netCF_N + equity_N]` — acquisition outflows, refinance cash, prepayments with their
   fees and debt service paid before a future purchase (ADR 0124) adjust the relevant year's entry; terminal = projected equity at horizon. Real IRR deflates each entry by `CPI_t`.
@@ -695,9 +697,12 @@ offline badge, and controls for language and theme.
    (purchase price used), a last lease that ended (no rent in the snapshot, renewed in the
    projection), no lease in force (rent 0), a lease ending within 3 months with no next
    lease, and a fixation that ended with no follow-on block; under "Using portfolio
-   defaults" the portfolio growth and blank holding-cost fields. Each row links to the
-   property section (or form) that fixes it. The panel opens when something needs
-   attention; a property not yet purchased has no findings.
+   defaults" the portfolio growth, blank holding-cost fields and own cash at purchase not
+   recorded (Cash invested unknown; for a property bought after the base date the down
+   payment is derived, ADR 0119). Each row links to the property section (or form) that
+   fixes it; the own-cash row opens the form with its Acquisition section open. The panel
+   opens when something needs attention; a property not yet purchased has no findings
+   except the own-cash one.
 
 2. **Properties** — list with per-property summary and LTV/DSCR health bands, sorted by name in
    Czech order with numbers by value (every property list follows it, ADR 0127); "+ Add property"

@@ -383,6 +383,11 @@ export const en = {
     growthRentIndexation: "Uses the portfolio rent indexation.",
     costDefaults: (fields: string) =>
       `Holding costs use the portfolio defaults for: ${fields}.`,
+    fundingUnknown:
+      "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    fundingUnknownFuture:
+      "Own cash for this purchase is not recorded, so Cash invested is not known and the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
+    recordFunding: "Record funding",
   },
 
   properties: {
@@ -436,7 +441,6 @@ export const en = {
     equity: "Equity",
     dscr: "DSCR",
     ltv: "LTV",
-    badgeShort: "Short",
     netCf: "Net CF",
     chartValueVsDebtVsEquity: "Value vs debt vs equity",
     chartNetCashFlowByYear: "Net cash flow by year",
@@ -1192,7 +1196,7 @@ export const en = {
       "Valuations, leases and mortgages each have a date range. For any day the engine picks the one in force — so an expiring lease hands over to the next.",
     cardDataCheckTitle: "The data check shows the fallbacks",
     cardDataCheckBody:
-      "When a valuation is old or missing, no lease is in force, a fixation ended without new terms, or a property uses the portfolio defaults, the Data check on the Dashboard and on each property says so, what it changes and where to fix it.",
+      "When a valuation is old or missing, no lease is in force, a fixation ended without new terms, a property uses the portfolio defaults, or its own cash at purchase is not recorded, the Data check on the Dashboard and on each property says so, what it changes and where to fix it.",
     snapshotTitle: "Snapshot metrics",
     snapshotHint: "The current picture of a property or the portfolio",
     snapshotProse:

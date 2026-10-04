@@ -195,7 +195,7 @@ describe("portfolio KPIs on a ramped dev property", () => {
     // The ramp shrinks year-0 equity (≈ fraction × (completed − total)), so for a
     // standalone dev property the net-worth multiple and CAGR look alarmingly large.
     // This is faithful to the approved model; pin it so it reads as intended, not a bug.
-    expect(kpis.netWorthMultiple.greaterThan(5)).toBe(true);
+    expect(kpis.netWorthMultiple!.greaterThan(5)).toBe(true);
     expect(kpis.cagrNominal?.isFinite()).toBe(true);
   });
 

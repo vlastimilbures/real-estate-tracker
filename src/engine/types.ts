@@ -357,9 +357,9 @@ export type IrrNoRateReason = "NO_ROOT" | "NOT_UNIQUE";
 export interface PortfolioKPIs {
   netWorthNominal: Decimal;
   netWorthReal: Decimal;
-  netWorthMultiple: Decimal;
-  netWorthMultipleReal: Decimal; // real net worth / equity₀ (ADR 0087)
-  cagrNominal: Decimal | null; // null when equity₀ ≤ 0 (D-34)
+  netWorthMultiple: Decimal | null; // null when equity₀ ≤ 0 (ADR 0126)
+  netWorthMultipleReal: Decimal | null; // real net worth / equity₀ (ADR 0087, 0126)
+  cagrNominal: Decimal | null; // null when equity₀ ≤ 0 or the end ≤ 0 (D-34, ADR 0126)
   cagrReal: Decimal | null;
   cumulativeNetCashFlow: Decimal;
   cumulativeNetCashFlowReal: Decimal; // Σ flow_t / CPI_t (ADR 0087)

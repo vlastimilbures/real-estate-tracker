@@ -62,7 +62,7 @@ describe("Filtered projection — amortization runs correctly (parity invariant)
       assumptions,
     );
     near(k.totalPrincipalRepaid.toNumber(), 9_515_405, KC, "Σ principal all");
-    near(k.netWorthMultiple.toNumber(), 4.8496, RATIO, "multiple all");
+    near(k.netWorthMultiple!.toNumber(), 4.8496, RATIO, "multiple all");
   });
 });
 

@@ -237,6 +237,10 @@ describe("Property detail amortization disclosure (ADR 0107)", () => {
 
 describe("Property detail data check (ADR 0118)", () => {
   const dataCheck = () => document.getElementById("pd-dataCheck")!;
+  const acquisitionToggle = () =>
+    within(screen.getByRole("dialog")).getByRole("button", {
+      name: en.propertyForm.acquisitionSection,
+    });
   const withoutValuation = {
     ...portfolio,
     valuations: portfolio.valuations.filter((v) => v.propertyId !== owner.id),
@@ -273,6 +277,18 @@ describe("Property detail data check (ADR 0118)", () => {
       }),
     );
     expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(acquisitionToggle().getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("the own-cash finding opens the property form at its Acquisition section (#178)", async () => {
+    render(<PropertyDetail />);
+    const section = within(dataCheck());
+    expect(section.getByText(en.dataCheck.fundingUnknown)).toBeTruthy();
+    await userEvent.click(
+      section.getByRole("button", { name: en.dataCheck.recordFunding }),
+    );
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(acquisitionToggle().getAttribute("aria-expanded")).toBe("true");
   });
 
   it("lands once on the section a Dashboard fix link asked for", () => {
@@ -302,6 +318,15 @@ describe("Property detail data check (ADR 0118)", () => {
     act(() => useUiStore.setState({ propertyTarget: "edit" }));
     render(<PropertyDetail />);
     expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(acquisitionToggle().getAttribute("aria-expanded")).toBe("false");
+    expect(useUiStore.getState().propertyTarget).toBeNull();
+  });
+
+  it("opens the form at its Acquisition section when the Dashboard link asked for it (#178)", () => {
+    act(() => useUiStore.setState({ propertyTarget: "editFunding" }));
+    render(<PropertyDetail />);
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(acquisitionToggle().getAttribute("aria-expanded")).toBe("true");
     expect(useUiStore.getState().propertyTarget).toBeNull();
   });
 });

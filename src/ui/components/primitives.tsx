@@ -250,7 +250,7 @@ export function KpiTile({
   value: ReactNode;
   foot?: ReactNode | undefined;
   hero?: boolean | undefined;
-  badge?: { band: Band; text: string };
+  badge?: { band: Band; text: string } | undefined;
   delay?: number | undefined;
   testId?: string | undefined;
 }) {

@@ -21,7 +21,7 @@ import { moneyDraft, percentDraft } from "../model/formParse";
 import { fmtDate } from "../../lib/format";
 import { amortizationExtras, type LoanOutlook } from "../model/propertyDetail";
 import type { AcquisitionView } from "../model/acquisition";
-import { dscrBand, dscrBandWord, ltvBand, ltvBandWord } from "../model/health";
+import { dscrBadge, ltvBand, ltvBandWord } from "../model/health";
 import { currencySymbol } from "../../lib/currency";
 import type {
   PropertySnapshot,
@@ -78,10 +78,7 @@ export function PropertySnapshotTiles({
         <KpiTile
           label={<MetricLabel term="dscr">{t.propertyDetail.dscr}</MetricLabel>}
           value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
-          badge={{
-            band: dscrBand(s.dscr),
-            text: dscrBandWord(t, s.dscr) ?? t.propertyDetail.badgeShort,
-          }}
+          badge={dscrBadge(t, s.dscr)}
           foot={
             <>
               {t.propertyDetail.netCf} <Money value={s.netCashFlow} signed />

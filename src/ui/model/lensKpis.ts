@@ -5,7 +5,7 @@ import type { PortfolioKPIs } from "../../engine";
 import type { Mode } from "./lens";
 
 export interface LensKpis {
-  netWorthMultiple: Decimal;
+  netWorthMultiple: Decimal | null; // null with no growth base (ADR 0126)
   cumulativeNetCashFlow: Decimal;
 }
 
