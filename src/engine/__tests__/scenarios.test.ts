@@ -140,7 +140,7 @@ describe("value crash at a chosen year", () => {
       KC,
       "value yr5",
     );
-    expect(proj[5].ltv.greaterThan(base[5].ltv)).toBe(true);
+    expect(proj[5].ltv!.greaterThan(base[5].ltv!)).toBe(true);
     expect(proj[5].balance.toString()).toBe(base[5].balance.toString());
   });
 

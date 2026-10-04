@@ -12,6 +12,7 @@ import {
   Badge,
   EmptyState,
   TableWrap,
+  Pct,
 } from "../components/primitives";
 import { PropertyFormModal } from "../components/PropertyFormModal";
 import { SampleBanner } from "../components/SampleBanner";
@@ -170,9 +171,13 @@ export function Properties() {
                       )}
                     </td>
                     <td>
-                      <Badge band={ltvBand(p.ltv)}>
-                        {bandPill(fmtPct(p.ltv), ltvBandWord(t, p.ltv))}
-                      </Badge>
+                      {p.ltv === null ? (
+                        <Pct value={null} />
+                      ) : (
+                        <Badge band={ltvBand(p.ltv)}>
+                          {bandPill(fmtPct(p.ltv), ltvBandWord(t, p.ltv))}
+                        </Badge>
+                      )}
                     </td>
                     <td>
                       <Money value={p.netCashFlow} suffix={false} signed />

@@ -230,6 +230,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- LTV and the yields read **n/a** when the value is 0, instead of 0 % (ADR 0133, #129). A
+  100 % value crash in a scenario, or a 0 Kč valuation, showed LTV 0,0 % in the
+  "Conservative" band with the debt still owed, and yields of 0 %. The Dashboard and
+  property tiles, the Properties table, the projection grid and the LTV charts' tooltip and
+  table now show "n/a" with no band badge; the LTV line leaves a gap and the Excel exports
+  leave the cell blank. With no value and no debt, LTV stays 0 %.
 - Interest saved and the refinance difference (ADR 0130, #172):
   - **Interest saved by prepayments** is shown only when a prepayment repaid some
     principal and saved something; a prepayment that a later block replaced, one after

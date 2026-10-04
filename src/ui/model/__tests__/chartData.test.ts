@@ -36,7 +36,7 @@ describe("toChartRows", () => {
     expect(rows[i].value).toBe(toNumber(series[i].value));
     expect(rows[i].balance).toBe(toNumber(series[i].balance));
     expect(rows[i].equity).toBe(toNumber(series[i].equity));
-    expect(rows[i].ltv).toBe(toNumber(series[i].ltv));
+    expect(rows[i].ltv).toBe(toNumber(series[i].ltv!));
     expect(rows[i].grossRent).toBe(toNumber(series[i].grossRent));
     expect(rows[i].effectiveRent).toBe(toNumber(series[i].effectiveRent));
     expect(rows[i].noi).toBe(toNumber(series[i].noi));
@@ -62,7 +62,7 @@ describe("toChartRows", () => {
     expect(r0.value).toBe(toNumber(series[0].value));
     expect(r0.balance).toBe(toNumber(series[0].balance));
     expect(r0.equity).toBe(toNumber(series[0].equity));
-    expect(r0.ltv).toBe(toNumber(series[0].ltv));
+    expect(r0.ltv).toBe(toNumber(series[0].ltv!));
   });
 
   it("returns an empty array for empty input", () => {

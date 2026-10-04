@@ -43,8 +43,9 @@ describe("Nominal/Real lens invariants", () => {
 
   it("LTV and DSCR are identical in nominal and real, every year", () => {
     for (let t = 0; t < nominal.length; t++) {
-      expect(real[t].ltv.toString(), `ltv t=${t}`).toBe(
-        nominal[t].ltv.toString(),
+      expect(nominal[t].ltv, `ltv t=${t}`).not.toBeNull();
+      expect(real[t].ltv?.toString(), `ltv t=${t}`).toBe(
+        nominal[t].ltv?.toString(),
       );
       expect(String(real[t].dscr), `dscr t=${t}`).toBe(String(nominal[t].dscr));
     }

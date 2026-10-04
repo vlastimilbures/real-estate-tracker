@@ -236,8 +236,10 @@ Derived per-property values:
 - **NOI** = effective gross − holding.
 - **Debt service (annual)** = 12 × active monthly instalment.
 - **Net cash flow** = NOI − debt service.
-- **Equity** = value − debt. **LTV** = debt ÷ value.
-- **Gross yield** = grossAnnual ÷ value. **Net yield (cap rate)** = NOI ÷ value.
+- **Equity** = value − debt. **LTV** = debt ÷ value (null, shown "n/a", when the value is 0
+  and debt is owed; 0 when both are 0; ADR 0133).
+- **Gross yield** = grossAnnual ÷ value. **Net yield (cap rate)** = NOI ÷ value. Both are
+  null ("n/a") when the value is 0 (ADR 0133).
 - **DSCR** = NOI ÷ debt service (null when debt service = 0; displayed as ">99×" above 99,
   ADR 0035).
 - Portfolio = sums across **active** properties; portfolio **LTV** = Σdebt ÷ Σvalue;
@@ -406,7 +408,8 @@ appreciation; rent index `idx` likewise):
 - `interest_t / principal_t / debtService_t / draws_t / balance_t` from the monthly schedule;
   `balance_t = balance_{t−1} − principal_t + draws_t`.
 - `netCashFlow_t = NOI_t − debtService_t`
-- `equity_t = value_t − balance_t`; `LTV_t = balance_t / value_t`;
+- `equity_t = value_t − balance_t`; `LTV_t = balance_t / value_t` (null when
+  `value_t = 0 < balance_t`, 0 when both are 0; ADR 0133);
   `DSCR_t = NOI_t / debtService_t` (null when debtService_t = 0; display cap ">99×")
 - **Mortgage rate in effect** for the year (steps to reset after fixation end)
 - Portfolio = Σ across active properties; ratios from totals.

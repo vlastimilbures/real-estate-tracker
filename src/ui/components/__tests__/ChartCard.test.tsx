@@ -114,6 +114,23 @@ describe("series dashes (#25)", () => {
   });
 });
 
+describe("tooltip with no value", () => {
+  it("a percent with no base reads n/a, a money gap — (ADR 0133)", () => {
+    render(
+      <Tip
+        active
+        year={2027}
+        items={[
+          { label: "LTV", value: null, color: "red", kind: "pct" },
+          { label: "Net cash flow", value: null, color: "blue", kind: "czk" },
+        ]}
+      />,
+    );
+    const values = [...document.querySelectorAll(".tt-row > span:last-child")];
+    expect(values.map((v) => v.textContent)).toEqual(["n/a", "—"]);
+  });
+});
+
 describe("series swatches (#25)", () => {
   it("draws the legend swatch with the series dash", () => {
     card();

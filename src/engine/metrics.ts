@@ -116,9 +116,15 @@ export function openingValue(
   return val ? val.marketValue : property.purchasePrice;
 }
 
-/** `n / d`, or ZERO when `d` is zero (LTV, yields). */
-function ratioOrZero(n: Decimal, d: Decimal): Decimal {
-  return d.isZero() ? ZERO : n.div(d);
+/** LTV = debt ÷ value; null when debt is owed on no value, 0 when neither (ADR 0133). */
+export function ltvOf(debt: Decimal, value: Decimal): Decimal | null {
+  if (!value.isZero()) return debt.div(value);
+  return debt.isZero() ? ZERO : null;
+}
+
+/** A yield = income ÷ value; null when there is no value (ADR 0133). */
+export function yieldOf(income: Decimal, value: Decimal): Decimal | null {
+  return value.isZero() ? null : income.div(value);
 }
 
 /**
@@ -292,12 +298,12 @@ function snapshotProperty(
     value,
     debt,
     equity: value.minus(debt),
-    ltv: ratioOrZero(debt, value),
+    ltv: ltvOf(debt, value),
     ...income,
     annualDebtService,
     netCashFlow: income.noi.minus(annualDebtService),
-    grossYield: ratioOrZero(income.grossAnnualRent, value),
-    netYield: ratioOrZero(income.noi, value),
+    grossYield: yieldOf(income.grossAnnualRent, value),
+    netYield: yieldOf(income.noi, value),
     dscr: annualDebtService.isZero() ? null : income.noi.div(annualDebtService),
     weightedRateNumerator: debt.times(rate),
   };
@@ -346,15 +352,15 @@ export function portfolioSnapshot(
     totalValue,
     totalDebt,
     totalEquity: totalValue.minus(totalDebt),
-    ltv: totalValue.isZero() ? ZERO : totalDebt.div(totalValue),
+    ltv: ltvOf(totalDebt, totalValue),
     grossAnnualRent,
     effectiveGrossIncome,
     holdingCosts,
     noi,
     annualDebtService,
     netCashFlow: noi.minus(annualDebtService),
-    grossYield: totalValue.isZero() ? ZERO : grossAnnualRent.div(totalValue),
-    netYield: totalValue.isZero() ? ZERO : noi.div(totalValue),
+    grossYield: yieldOf(grossAnnualRent, totalValue),
+    netYield: yieldOf(noi, totalValue),
     dscr: annualDebtService.isZero() ? null : noi.div(annualDebtService),
     weightedAvgRate: totalDebt.isZero()
       ? ZERO

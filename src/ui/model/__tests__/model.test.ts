@@ -31,7 +31,8 @@ describe("projectionSeries — Nominal/Real lens", () => {
   it("LTV is lens-invariant", () => {
     const nom = projectionSeries(proj, "nominal", assumptions);
     const real = projectionSeries(proj, "real", assumptions);
-    expect(nom[10].ltv.toString()).toBe(real[10].ltv.toString());
+    expect(nom[10].ltv).not.toBeNull();
+    expect(nom[10].ltv?.toString()).toBe(real[10].ltv?.toString());
   });
 });
 
@@ -70,8 +71,10 @@ describe("realPortfolioSnapshot", () => {
       1,
       "ncf",
     );
-    expect(sv.ltv.toString()).toBe(snap.ltv.toString());
-    expect(sv.netYield.toString()).toBe(snap.netYield.toString());
+    expect(snap.ltv).not.toBeNull();
+    expect(snap.netYield).not.toBeNull();
+    expect(sv.ltv?.toString()).toBe(snap.ltv?.toString());
+    expect(sv.netYield?.toString()).toBe(snap.netYield?.toString());
     expect(sv.asOf).toBe(snap.asOf);
   });
 });

@@ -54,7 +54,8 @@ From the 2026-10 code review
   negative interest (reset rate 0–100 %, growth and inflation above −100 %, shocked levels;
   #114, ADR 0128), and loan schedule edge cases (a late prepayment clamped before an earlier
   tranche, interest-only read on two dates, a draw in the final payment period, a refix gap
-  with no warning; #135, ADR 0129).
+  with no warning; #135, ADR 0129), and LTV and yields of 0 % with no value (#129,
+  ADR 0133).
 - **Decisions (label `decision`).** Modelling and process choices challenged with options and
   the case for keeping them; weak challenges stay in the record only.
 - **Clean-up (label `tech-debt`), docs, accessibility and smaller fixes (P2, P3).**

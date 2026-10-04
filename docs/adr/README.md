@@ -157,6 +157,7 @@ Other IDs seen in code comments:
 | [0130](0130-interest-saved-refinance.md)          | Interest saved only when a prepayment applied; refinance difference apart from draws   | #172                                   |
 | [0131](0131-lossless-money-draft.md)              | A form drafts a stored amount or rate at full precision                                | #201, #208                             |
 | [0132](0132-reload-export-write-order.md)         | The banner Reload and the backup export follow the write order                         | #138, #199                             |
+| [0133](0133-ltv-yield-zero-value.md)              | LTV and yields with no value read n/a, not 0 %                                         | #129                                   |
 
 ### Judgment calls and open questions
 

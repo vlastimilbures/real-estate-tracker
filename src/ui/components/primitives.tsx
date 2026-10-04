@@ -39,8 +39,15 @@ export function Money({
   );
 }
 
-export function Pct({ value, dp = 1 }: { value: Num; dp?: number }) {
-  return <span className="num">{fmtPct(value, dp)}</span>;
+/** A percentage; null (a ratio with no base, e.g. LTV on no value) reads "n/a"
+ *  (ADR 0133). */
+export function Pct({ value, dp = 1 }: { value: Num | null; dp?: number }) {
+  const t = useT();
+  return (
+    <span className="num">
+      {value === null ? t.common.notApplicable : fmtPct(value, dp)}
+    </span>
+  );
 }
 
 /** A levered IRR, or "n/a" with the reason it has none as a tooltip and for screen
