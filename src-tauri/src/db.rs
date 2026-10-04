@@ -115,7 +115,8 @@ pub async fn run_atomic(
     outcome
 }
 
-/// One result row as tauri-plugin-sql's `select` returns it: column name → JSON value.
+/// One result row: column name → JSON value, decoded as tauri-plugin-sql's `select` does.
+/// Unlike the plugin's (column order), the keys come out in name order (serde_json `Map`).
 pub type JsonRow = Map<String, JsonValue>;
 
 /// A column value as JSON, exactly as tauri-plugin-sql 2.4.0 decodes it
