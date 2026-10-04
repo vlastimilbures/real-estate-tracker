@@ -51,7 +51,7 @@ export function portfolioOutputs(
     snapshot,
     projection,
     kpis: kpisFrom(portfolio, assumptions, projection, built),
-    financing: financingExposure(portfolio, assumptions, schedules, asOf),
+    financing: financingExposure(portfolio, assumptions, built, asOf),
   };
 }
 

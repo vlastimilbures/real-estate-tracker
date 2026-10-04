@@ -34,6 +34,7 @@ function row(year: number): SeriesRow {
     netCashFlow: D("1"),
     dscr: null,
     draws: ZERO,
+    refinanced: ZERO,
     prepaid: ZERO,
     prepaymentFees: ZERO,
   };

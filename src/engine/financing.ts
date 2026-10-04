@@ -21,6 +21,7 @@ import {
   lastPaymentMonth,
   paymentOffset,
   propertySchedule,
+  type PropertySchedule,
 } from "./schedule";
 import type {
   AmortizationRow,
@@ -197,16 +198,19 @@ function paymentsDueAfter(
 const interestOf = (rows: AmortizationRow[]): Decimal =>
   rows.reduce((s, r) => s.plus(r.interest), ZERO);
 
+/** A property's schedule rows and what its prepayments and recasts did (ADR 0109). */
+type LoanSchedule = Pick<PropertySchedule, "rows" | "eventOutcomes">;
+
 /**
  * Interest a property's prepayments save over the rest of its loans' life: the chain's
  * interest from grid month 1 to payoff with every prepayment removed (those before
- * baseDate too), minus the same in `rows`, the schedule built with them. Recasts stay.
+ * baseDate too), minus the same in `schedule`, built with them. Recasts stay.
  * Null when no block of the chain has a prepayment (ADR 0116).
  */
 export function prepaymentInterestSaved(
   blocks: MortgageBlock[],
   assumptions: Assumptions,
-  rows: AmortizationRow[],
+  schedule: LoanSchedule,
 ): Decimal | null {
   const chain = blockChain(blocks, assumptions.baseDate);
   if (!chain.some((b) => b.prepayments?.length)) return null;
@@ -214,16 +218,17 @@ export function prepaymentInterestSaved(
     b.prepayments?.length ? mortgageBlock({ ...b, prepayments: undefined }) : b,
   );
   return interestOf(propertySchedule(without, assumptions).rows).minus(
-    interestOf(rows),
+    interestOf(schedule.rows),
   );
 }
 
 /** One property's loan exposure, resets and chain (none without a loan). */
 function propertyExposure(
   blocks: MortgageBlock[],
-  rows: AmortizationRow[],
+  schedule: LoanSchedule,
   ctx: { asOf: IsoDate; assumptions: Assumptions; baseDate: Date },
 ): PropertyLoan | null {
+  const { rows } = schedule;
   const chain = blockChain(blocks, ctx.baseDate);
   const first = chain[0];
   if (!first) return null;
@@ -239,7 +244,7 @@ function propertyExposure(
       payoffDate: last > 0 ? dueDate(payers, last) : null,
       remainingMonths:
         last > 0 ? paymentsDueAfter(rows, payers, ctx.asOf) : null,
-      interestSaved: prepaymentInterestSaved(blocks, ctx.assumptions, rows),
+      interestSaved: prepaymentInterestSaved(blocks, ctx.assumptions, schedule),
     },
     resets,
     chain: chain.map((b) => b.id),
@@ -247,29 +252,29 @@ function propertyExposure(
 }
 
 /**
- * One property's loan as of `asOf` from its blocks and schedule `rows`, active or not:
+ * One property's loan as of `asOf` from its blocks and schedule, active or not:
  * the property page's view of its `financingExposure` entry with its resets and chain
  * (ADR 0116, ADR 0117). Null without a loan.
  */
 export function propertyLoanExposure(
   blocks: MortgageBlock[],
   assumptions: Assumptions,
-  rows: AmortizationRow[],
+  schedule: LoanSchedule,
   asOf: IsoDate,
 ): PropertyLoan | null {
   const ctx = { asOf, assumptions, baseDate: assumptions.baseDate };
-  return propertyExposure(blocks, rows, ctx);
+  return propertyExposure(blocks, schedule, ctx);
 }
 
 /**
  * Each active property's loan as of `asOf` (next fixation, modelled payoff, remaining
- * term) and every chain block's fixation end, from `schedules` (the rows built from the
- * same portfolio and assumptions). Pure; `asOf` is explicit (ADR 0103).
+ * term) and every chain block's fixation end, from `schedules` (built from the same
+ * portfolio and assumptions). Pure; `asOf` is explicit (ADR 0103).
  */
 export function financingExposure(
   portfolio: Portfolio,
   assumptions: Assumptions,
-  schedules: Map<string, AmortizationRow[]>,
+  schedules: Map<string, LoanSchedule>,
   asOf: IsoDate,
 ): FinancingExposure {
   const ctx = { asOf, assumptions, baseDate: assumptions.baseDate };
@@ -278,7 +283,11 @@ export function financingExposure(
   const active = portfolio.properties.filter((p) => p.active !== false);
   for (const id of new Set(active.map((p) => p.id))) {
     const blocks = portfolio.mortgages.filter((b) => b.propertyId === id);
-    const one = propertyExposure(blocks, schedules.get(id) ?? [], ctx);
+    const one = propertyExposure(
+      blocks,
+      schedules.get(id) ?? { rows: [], eventOutcomes: [] },
+      ctx,
+    );
     if (!one) continue;
     loans.push(one.loan);
     resets.push(...one.resets);

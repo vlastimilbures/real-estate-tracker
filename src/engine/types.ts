@@ -272,6 +272,9 @@ export interface AmortizationRow {
    *  opening debt. So endBalance = previous endBalance − principal − prepaid +
    *  drawn, from the baseDate debt (`openingDebt`). */
   drawn: Decimal;
+  /** A refinance handover's difference: the successor's draw less the predecessor
+   *  balance it pays off (ADR 0130). Zero in every other month. */
+  refinanced: Decimal;
   /** Extra principal repaid after this month's payment (ADR 0109). */
   prepaid: Decimal;
   /** Fee paid with that prepayment (cash, not principal). */
@@ -341,6 +344,8 @@ export interface ProjectionYear {
   // explains the balance move: balance[t] = balance[t−1] − principal[t] − prepaid[t]
   // + draws[t].
   draws: Decimal;
+  // ADR 0130: the year's refinance handover differences (Σ row `refinanced`).
+  refinanced: Decimal;
   // ADR 0109: extra principal prepaid in the year and the fees paid with it. Owner
   // cash outside debt service and net cash flow, like an acquisition; cumulative cash
   // flow and the IRR subtract both.

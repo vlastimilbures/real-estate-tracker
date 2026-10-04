@@ -220,6 +220,7 @@ function zeroRow(
     interest: ZERO,
     principal: ZERO,
     drawn: ZERO,
+    refinanced: ZERO,
     prepaid: ZERO,
     prepaymentFee: ZERO,
     endBalance,
@@ -638,6 +639,7 @@ function paymentRow(
   return {
     ...head,
     ...step,
+    refinanced: ZERO,
     prepaid: settled.prepaid,
     prepaymentFee: settled.fee,
     endBalance: settled.balance,
@@ -1433,6 +1435,7 @@ export function instalmentAtMonth(
     row.principal.greaterThan(ZERO) &&
     next !== undefined &&
     next.drawn.isZero() &&
+    next.refinanced.isZero() &&
     next.ratePa.equals(row.ratePa);
   return {
     instalment: after ? next.instalment : row.instalment,

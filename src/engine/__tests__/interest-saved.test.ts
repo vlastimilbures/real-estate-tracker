@@ -5,7 +5,7 @@ import { D } from "../../lib/money";
 import { money, rate } from "../brands";
 import { isoDate } from "../dates";
 import { financingExposure, prepaymentInterestSaved } from "../financing";
-import { propertySchedule, schedulesByProperty } from "../schedule";
+import { propertySchedule, propertySchedules } from "../schedule";
 import type {
   AmortizationRow,
   MortgageBlock,
@@ -36,7 +36,7 @@ const saved = (blocks: MortgageBlock[]) =>
   prepaymentInterestSaved(
     blocks,
     assumptions,
-    propertySchedule(blocks, assumptions).rows,
+    propertySchedule(blocks, assumptions),
   );
 
 describe("ADR 0116: interest saved by prepayments", () => {
@@ -136,7 +136,7 @@ describe("ADR 0116: interest saved by prepayments", () => {
     const fx = financingExposure(
       p,
       assumptions,
-      schedulesByProperty(p.mortgages, ids, assumptions),
+      propertySchedules(p.mortgages, ids, assumptions),
       assumptions.baseDate,
     );
     const byId = new Map(fx.loans.map((l) => [l.propertyId, l]));
