@@ -129,13 +129,10 @@ describe("ADR 0109: prepayments in the KPIs", () => {
     expect(
       kpis.leveredIrrNominal?.equals(baseKpis.leveredIrrNominal ?? ZERO),
     ).toBe(false);
-    // The prepayment year's own net cash flow is not reduced by the outflow.
-    const firstPositive = proj
-      .slice(1)
-      .find((y) => y.netCashFlow.greaterThan(ZERO));
-    expect(kpis.firstCashFlowPositiveYear).toBe(
-      firstPositive?.calendarYear ?? null,
-    );
+    // The prepayment lands in Y5 (2031), the seed's first positive year; its outflow
+    // does not reduce that year's own net cash flow, so the KPI stays 2031.
+    expect(proj[5]?.prepaid.greaterThan(ZERO)).toBe(true);
+    expect(kpis.firstCashFlowPositiveYear).toBe(2031);
   });
 
   it("a shorter term makes the loan debt-free earlier", () => {

@@ -91,8 +91,6 @@ describe("ADR 0121: the first cash-flow-positive year is strictly positive", () 
       {
         id: "f",
         name: "Future flat",
-        type: "1 bedroom",
-        sizeM2: 50,
         purchaseDate: isoDate(purchaseDate),
         purchasePrice: money("5000000"),
       },
@@ -109,6 +107,17 @@ describe("ADR 0121: the first cash-flow-positive year is strictly positive", () 
     ],
     holdingCosts: [],
   });
+
+  /** 2.0 M Kč at 4.9 % from the 2029-01-01 purchase, 10,614.53 Kč a month. */
+  const loan2029: MortgageBlock = {
+    id: "m-f",
+    propertyId: "f",
+    startDate: isoDate("2029-01-01"),
+    initialPrincipal: money("2000000"),
+    fixationYears: 5,
+    interestRatePa: rate("0.049"),
+    monthlyInstalment: money("10614.53"),
+  };
 
   /** The KPI year nets > 0 and no earlier year does (none at all when null). */
   function expectFirstStrictlyPositive(k: PortfolioKPIs, p: ProjectionYear[]) {
@@ -139,15 +148,7 @@ describe("ADR 0121: the first cash-flow-positive year is strictly positive", () 
   });
 
   it("a planned purchase on a loan: the zero years before it do not count", () => {
-    const pf = futureBuy("2029-01-01", "20000", {
-      id: "m-f",
-      propertyId: "f",
-      startDate: isoDate("2029-01-01"),
-      initialPrincipal: money("2000000"),
-      fixationYears: 5,
-      interestRatePa: rate("0.049"),
-      monthlyInstalment: money("10614.53"),
-    });
+    const pf = futureBuy("2029-01-01", "20000", loan2029);
     const proj = portfolioProjection(pf, assumptions);
     expect(proj.slice(1, 3).map((y) => y.netCashFlow.isZero())).toEqual([
       true,
@@ -157,6 +158,35 @@ describe("ADR 0121: the first cash-flow-positive year is strictly positive", () 
     // The purchase year (Y3, 2029) nets > 0; before the fix the KPI said Y1 (2027).
     expect(k.firstCashFlowPositiveYear).toBe(2029);
     expect(k.firstCashFlowPositiveProjectionYear).toBe(3);
+    expectFirstStrictlyPositive(k, proj);
+  });
+
+  it("a planned purchase that never nets > 0: none, not the first zero year", () => {
+    const pf = futureBuy("2029-01-01", "8000", loan2029);
+    const proj = portfolioProjection(pf, assumptions);
+    expect(proj[1]?.netCashFlow.isZero()).toBe(true);
+    expect(proj[3]?.netCashFlow.isNegative()).toBe(true);
+    const k = portfolioKpis(pf, assumptions);
+    expect(k.firstCashFlowPositiveYear).toBeNull();
+    expect(k.firstCashFlowPositiveProjectionYear).toBeNull();
+    expectFirstStrictlyPositive(k, proj);
+  });
+
+  it("the mixed fixture's future purchase alone (a Dashboard filter): zero, then losses", () => {
+    const only = <T extends { propertyId: string }>(rows: T[]) =>
+      rows.filter((r) => r.propertyId === "future");
+    const pf: Portfolio = {
+      properties: mixed.properties.filter((p) => p.id === "future"),
+      mortgages: only(mixed.mortgages),
+      valuations: only(mixed.valuations),
+      leases: only(mixed.leases),
+      holdingCosts: only(mixed.holdingCosts),
+    };
+    const proj = portfolioProjection(pf, assumptions);
+    expect(proj[1]?.netCashFlow.isZero()).toBe(true);
+    const k = portfolioKpis(pf, assumptions);
+    expect(k.firstCashFlowPositiveYear).toBe(2048);
+    expect(k.firstCashFlowPositiveProjectionYear).toBe(22);
     expectFirstStrictlyPositive(k, proj);
   });
 
