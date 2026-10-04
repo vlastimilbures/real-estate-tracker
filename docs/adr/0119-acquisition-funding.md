@@ -119,7 +119,7 @@ detail section (PR3) follow.
 - A development loan refinanced before its last tranche counts only the tranches drawn
   before the refinance.
 - Still open: a first loan drawn after baseDate on a property already owned at baseDate
-  raises the debt with no cash in (follow-up issue).
+  raises the debt with no cash in (#181).
 - Migration v10 is covered by a restore tripwire for added columns and by a Rust test that
   applies every migration's SQL on the bundled SQLite (#118 items 1–2).
 - Not decided here: debt service of a loan that runs before a future purchase date (#104), how

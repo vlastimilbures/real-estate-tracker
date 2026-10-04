@@ -344,11 +344,14 @@ cash-flow purposes (ADR 0119):
 
 The **acquisition loan** is the property's earliest block when it starts no later than 90
 days after the purchase date (an earlier start counts: an off-plan loan drawn before
-handover), with its whole scheduled principal (initial + every tranche). A later block is
-a successor, never the acquisition loan. **Sources and uses** (shown in the UI, never a
-blocker): uses = price + recorded costs + recorded works; sources = own cash + acquisition
-loan; gap = uses − sources, only while own cash is known. A funding record on a property
-bought on or before baseDate changes no figure.
+handover). It counts its initial principal and every tranche dated on or before the start
+of the block that replaces it (the schedule's cut, D-47). A later block is a successor,
+never the acquisition loan. A future buy's first loan that starts after the window is not
+the acquisition loan: its initial principal is **cash in** in the projection year it is
+drawn, like refinance cash; its tranches are not. **Sources and uses** (for the Property
+detail page, #33 PR3; never a blocker): uses = price + recorded costs + recorded works;
+sources = own cash + acquisition loan; gap = uses − sources, only while own cash is known.
+A funding record on a property bought on or before baseDate changes no figure.
 
 **Deactivated properties** (`active = false`) are excluded from all projection rows and KPIs.
 
