@@ -64,8 +64,10 @@ export function parseDate(raw: string): IsoDate | null {
 }
 
 // draft formatters (Decimal/Date → editable string)
+/** The stored precision, never rounded or in exponent form: a form saves the record it
+ *  shows, so a rounded draft would rewrite an amount nobody touched (ADR 0131, #201). */
 export function moneyDraft(d: Decimal | undefined): string {
-  return d == null ? "" : d.toDecimalPlaces(2).toString();
+  return d == null ? "" : d.toFixed();
 }
 export function percentDraft(d: Decimal | undefined): string {
   return d == null ? "" : d.times(100).toDecimalPlaces(4).toString();
