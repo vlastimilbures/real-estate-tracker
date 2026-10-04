@@ -537,7 +537,7 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
           .editProperty({ ...stored, funding }, {})
       ).ok,
     ).toBe(true);
-    // The edit form's Property carries no funding record yet (#33 PR3 adds it).
+    // An edit with no record keeps the stored one; the form always sends one (ADR 0119 §8).
     const edited = { ...pf().properties.find((p) => p.id === id)! };
     delete edited.funding;
     const edit = await usePortfolioStore
@@ -550,6 +550,61 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
     expect(saved.funding?.transactionCosts?.toString()).toBe("95000");
     expect(saved.funding?.initialWorks).toBeUndefined();
     expect(saved.funding?.note).toBe("Deposit");
+  });
+
+  it("editProperty clears a stored funding record with an empty one (ADR 0119 §8)", async () => {
+    const id = pid();
+    const stored = pf().properties.find((p) => p.id === id)!;
+    const store = usePortfolioStore.getState();
+    const funding = { ownCash: money("1500000"), note: "Deposit" };
+    expect((await store.editProperty({ ...stored, funding }, {})).ok).toBe(
+      true,
+    );
+    expect((await store.editProperty({ ...stored, funding: {} }, {})).ok).toBe(
+      true,
+    );
+    expect(pf().properties.find((p) => p.id === id)!.funding).toBeUndefined();
+  });
+
+  it("editProperty saves the edit's record whole: a part it drops is cleared", async () => {
+    const id = pid();
+    const stored = pf().properties.find((p) => p.id === id)!;
+    const store = usePortfolioStore.getState();
+    const full = {
+      ownCash: money("1500000"),
+      transactionCosts: money("95000"),
+      note: "Deposit",
+    };
+    expect(
+      (await store.editProperty({ ...stored, funding: full }, {})).ok,
+    ).toBe(true);
+    const edit = await store.editProperty(
+      { ...stored, funding: { ownCash: money("1400000") } },
+      {},
+    );
+    expect(edit.ok).toBe(true);
+    const saved = pf().properties.find((p) => p.id === id)!.funding;
+    expect(saved?.ownCash?.toString()).toBe("1400000");
+    expect(saved?.transactionCosts).toBeUndefined();
+    expect(saved?.note).toBeUndefined();
+  });
+
+  it("addProperty persists a funding record", async () => {
+    const add = await usePortfolioStore.getState().addProperty(
+      {
+        id: "p-new",
+        name: "Byt Test",
+        purchaseDate: new Date(Date.UTC(2030, 0, 1)) as IsoDate,
+        purchasePrice: money("5000000"),
+        funding: { ownCash: money("0"), initialWorks: money("150000") },
+      },
+      { id: "hc-new", propertyId: "p-new" },
+    );
+    expect(add.ok).toBe(true);
+    const saved = pf().properties.find((p) => p.id === "p-new")!.funding;
+    expect(saved?.ownCash?.toString()).toBe("0");
+    expect(saved?.initialWorks?.toString()).toBe("150000");
+    expect(saved?.transactionCosts).toBeUndefined();
   });
 
   it("saveAssumptions persists changed assumptions", async () => {

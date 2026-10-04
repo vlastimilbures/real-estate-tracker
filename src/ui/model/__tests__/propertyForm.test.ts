@@ -3,9 +3,12 @@
 import { describe, it, expect } from "vitest";
 import {
   parsePropertyForm,
+  fundingDraft,
+  hasFundingError,
   BLANK_PROPERTY_FORM,
   type PropertyFormState,
 } from "../propertyForm";
+import { money, type AcquisitionFunding } from "../../../engine";
 import { en } from "../../../i18n/en";
 
 const valid: PropertyFormState = {
@@ -146,5 +149,113 @@ describe("parsePropertyForm", () => {
       en,
     );
     expect(max.valid && max.property.sizeM2).toBe(10_000);
+  });
+});
+
+// ADR 0119 §8–§9: the form is the only place that clears an amount or sets the note, so it
+// always sends the record it shows; an empty one clears the stored record.
+describe("parsePropertyForm — acquisition funding", () => {
+  const funding = (form: Partial<PropertyFormState>): AcquisitionFunding => {
+    const result = parsePropertyForm(
+      { ...valid, ...form },
+      "edit",
+      "vinohrady",
+      [],
+      en,
+    );
+    if (!result.valid) throw new Error("expected valid");
+    return result.property.funding!;
+  };
+  const text = (f: AcquisitionFunding) =>
+    Object.fromEntries(Object.entries(f).map(([k, v]) => [k, String(v)]));
+
+  it("records every part and trims the note", () => {
+    expect(
+      text(
+        funding({
+          own_cash: "1 500 000",
+          transaction_costs: "95000,50",
+          initial_works: "0",
+          funding_note: "  Deposit from savings  ",
+        }),
+      ),
+    ).toEqual({
+      ownCash: "1500000",
+      transactionCosts: "95000.5",
+      initialWorks: "0",
+      note: "Deposit from savings",
+    });
+  });
+
+  it("sends an empty record when every field is blank, which clears the stored one", () => {
+    expect(funding({})).toStrictEqual({});
+    expect(
+      funding({ own_cash: "  ", transaction_costs: "", funding_note: " " }),
+    ).toStrictEqual({});
+  });
+
+  it("leaves a blank amount unknown, never 0, and a blank note out", () => {
+    const f = funding({ own_cash: "800000", funding_note: "   " });
+    expect(Object.keys(f)).toEqual(["ownCash"]);
+    expect(f.ownCash?.toString()).toBe("800000");
+  });
+
+  it("puts an unparseable amount on its own field", () => {
+    const result = parsePropertyForm(
+      {
+        ...valid,
+        own_cash: "abc",
+        transaction_costs: "1.2.3",
+        initial_works: "x",
+      },
+      "add",
+      undefined,
+      [],
+      en,
+    );
+    expect(result.valid).toBe(false);
+    expect(result.errors).toEqual({
+      own_cash: en.propertyForm.errInvalidNumber,
+      transaction_costs: en.propertyForm.errInvalidNumber,
+      initial_works: en.propertyForm.errInvalidNumber,
+    });
+  });
+
+  it("passes a negative amount on for the engine to refuse, as the purchase price", () => {
+    expect(funding({ own_cash: "-5" }).ownCash?.toString()).toBe("-5");
+  });
+});
+
+describe("fundingDraft", () => {
+  it("drafts a stored record into the form's fields", () => {
+    expect(
+      fundingDraft({
+        ownCash: money("1500000"),
+        initialWorks: money("0"),
+        note: "Deposit",
+      }),
+    ).toEqual({
+      own_cash: "1500000",
+      transaction_costs: "",
+      initial_works: "0",
+      funding_note: "Deposit",
+    });
+  });
+
+  it("drafts no record as blank fields", () => {
+    expect(fundingDraft(undefined)).toEqual({
+      own_cash: "",
+      transaction_costs: "",
+      initial_works: "",
+      funding_note: "",
+    });
+  });
+});
+
+describe("hasFundingError", () => {
+  it("is true only for an error on a funding field", () => {
+    expect(hasFundingError({ initial_works: "x" })).toBe(true);
+    expect(hasFundingError({ name: "x", purchase_price: "y" })).toBe(false);
+    expect(hasFundingError({})).toBe(false);
   });
 });

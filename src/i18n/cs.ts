@@ -1027,6 +1027,20 @@ export const cs: Dictionary = {
     errInvalidNumber: "Neplatné číslo",
     errWholeNumber: "Musí být celé číslo",
     errInvalidPercentage: "Neplatné procento",
+    acquisitionSection: "Pořízení (nepovinné)",
+    acquisitionHelp:
+      "Jak byl nákup financován. Prázdná částka je neznámá; 0 je částka. U nemovitosti koupené po začátku projekce jsou vlastní zdroje platbou při koupi.",
+    ownCash: "Vlastní zdroje",
+    ownCashHelp:
+      "Všechny vlastní peníze vložené při koupi, včetně nákladů a úprav",
+    transactionCosts: "Transakční náklady",
+    transactionCostsHelp:
+      "Makléř, právní služby, katastr, odhad a podobné poplatky",
+    initialWorks: "Počáteční úpravy",
+    initialWorksHelp:
+      "Rekonstrukce nebo vybavení placené při koupi či hned po ní",
+    fundingNote: "Poznámka k financování",
+    unknownPlaceholder: "neznámé",
   },
 
   projGrid: {

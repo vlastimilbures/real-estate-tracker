@@ -1073,6 +1073,19 @@ export const en = {
     errInvalidNumber: "Invalid number",
     errWholeNumber: "Must be a whole number",
     errInvalidPercentage: "Invalid percentage",
+    acquisitionSection: "Acquisition (optional)",
+    acquisitionHelp:
+      "How the purchase was funded. A blank amount is unknown; 0 is an amount. For a property bought after the projection start, own cash is its down payment.",
+    ownCash: "Own cash",
+    ownCashHelp:
+      "All your own money paid in at the purchase, costs and works included",
+    transactionCosts: "Transaction costs",
+    transactionCostsHelp: "Broker, legal, cadastre, valuation and similar fees",
+    initialWorks: "Initial works",
+    initialWorksHelp:
+      "Renovation or furnishing paid at or right after the purchase",
+    fundingNote: "Funding note",
+    unknownPlaceholder: "unknown",
   },
 
   // Projection grid headers, on screen and in the Excel export (UX-062,

@@ -185,7 +185,8 @@ interface PortfolioState {
     cost: HoldingCost,
     extra?: { address?: string | null; garage?: boolean | null },
   ) => Promise<MutationResult>;
-  /** An omitted `p.active` keeps the stored flag, so an edit never re-activates. */
+  /** An omitted `p.active` keeps the stored flag, so an edit never re-activates. An
+   *  omitted `p.funding` keeps the stored record; `{}` clears it (ADR 0119 §8). */
   editProperty: (
     p: Property,
     extra: { address?: string | null; garage?: boolean | null },
@@ -524,7 +525,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         const stored = get().portfolio?.properties.find(
           (x) => x.id === edited.id,
         );
-        // The form carries neither flag nor funding record (ADR 0119): keep the stored.
+        // The form carries no flag: keep the stored. It always sends a funding record
+        // (`{}` clears); one an edit leaves out is kept (ADR 0119 §8).
         const p = {
           ...edited,
           active: edited.active ?? stored?.active,

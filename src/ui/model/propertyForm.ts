@@ -3,13 +3,14 @@
 // ./mortgageForm.ts.
 import {
   intRangeHint,
+  moneyDraft,
   parseDate,
   parseIntField,
   parseMoney,
   parsePercentToRatio,
 } from "./formParse";
 import { inRange, INT_RANGES } from "../../lib/intRanges";
-import type { Property } from "../../engine";
+import type { AcquisitionFunding, Property } from "../../engine";
 import { slug } from "../../lib/slug";
 import type { Dictionary } from "../../i18n";
 
@@ -23,6 +24,11 @@ export interface PropertyFormState {
   purchase_price: string;
   appreciation_override_pa: string;
   rent_index_override_pa: string;
+  /** The acquisition funding record (ADR 0119): blank = unknown. */
+  own_cash: string;
+  transaction_costs: string;
+  initial_works: string;
+  funding_note: string;
 }
 
 export const BLANK_PROPERTY_FORM: PropertyFormState = {
@@ -35,11 +41,64 @@ export const BLANK_PROPERTY_FORM: PropertyFormState = {
   purchase_price: "",
   appreciation_override_pa: "",
   rent_index_override_pa: "",
+  own_cash: "",
+  transaction_costs: "",
+  initial_works: "",
+  funding_note: "",
 };
+
+type FundingKey =
+  "own_cash" | "transaction_costs" | "initial_works" | "funding_note";
+
+/** The form's money fields for each part of the funding record. */
+const FUNDING_MONEY = [
+  ["own_cash", "ownCash"],
+  ["transaction_costs", "transactionCosts"],
+  ["initial_works", "initialWorks"],
+] as const;
+
+/** A stored funding record as the form's drafts (blank where unknown). */
+export function fundingDraft(
+  f: AcquisitionFunding | undefined,
+): Pick<PropertyFormState, FundingKey> {
+  return {
+    own_cash: moneyDraft(f?.ownCash),
+    transaction_costs: moneyDraft(f?.transactionCosts),
+    initial_works: moneyDraft(f?.initialWorks),
+    funding_note: f?.note ?? "",
+  };
+}
 
 export type PropertyFormErrors = Partial<
   Record<keyof PropertyFormState, string>
 >;
+
+/** Whether any funding field has an error (the form opens its Acquisition section). */
+export function hasFundingError(errors: PropertyFormErrors): boolean {
+  return FUNDING_MONEY.some(([key]) => errors[key] !== undefined);
+}
+
+/**
+ * The record the form shows (ADR 0119 §8–§9): a blank amount is unknown and a blank note is
+ * no note, so all-blank is `{}`, which clears the stored record. A negative amount is left
+ * for the engine to refuse, as the purchase price is.
+ */
+function parseFunding(
+  form: PropertyFormState,
+  errs: PropertyFormErrors,
+  t: Dictionary,
+): AcquisitionFunding {
+  const funding: AcquisitionFunding = {};
+  for (const [key, field] of FUNDING_MONEY) {
+    if (!form[key].trim()) continue;
+    const parsed = parseMoney(form[key]);
+    if (parsed) funding[field] = parsed;
+    else errs[key] = t.propertyForm.errInvalidNumber;
+  }
+  const note = form.funding_note.trim();
+  if (note) funding.note = note;
+  return funding;
+}
 
 export type PropertyFormResult =
   | {
@@ -113,6 +172,8 @@ export function parsePropertyForm(
   if (form.rent_index_override_pa.trim() && rentOvr === null)
     errs.rent_index_override_pa = t.propertyForm.errInvalidPercentage;
 
+  const funding = parseFunding(form, errs, t);
+
   if (
     Object.keys(errs).length > 0 ||
     !purchaseDateParsed ||
@@ -137,6 +198,7 @@ export function parsePropertyForm(
     purchasePrice: purchasePriceParsed,
     appreciationOverridePa: apprOvr ?? undefined,
     rentIndexOverridePa: rentOvr ?? undefined,
+    funding,
   };
   return {
     valid: true,

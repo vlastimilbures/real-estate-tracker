@@ -996,7 +996,8 @@ table.data tbody tr:hover td.sticky-col {
 }
 .field input:not([type="checkbox"]),
 .field select,
-.field textarea.draws-input {
+.field textarea.draws-input,
+.field textarea.note-input {
   width: 100%;
   font-family: inherit;
   font-size: 13.5px;
@@ -1007,16 +1008,19 @@ table.data tbody tr:hover td.sticky-col {
   background: var(--surface);
   color: var(--ink);
 }
-.field textarea.draws-input {
+.field textarea.draws-input,
+.field textarea.note-input {
   resize: vertical;
   line-height: 1.5;
 }
-.field textarea.draws-input:focus {
+.field textarea.draws-input:focus,
+.field textarea.note-input:focus {
   outline: 2px solid var(--accent);
   outline-offset: 0;
   border-color: var(--accent);
 }
-.field.invalid textarea.draws-input {
+.field.invalid textarea.draws-input,
+.field.invalid textarea.note-input {
   border-color: var(--negative);
 }
 .field input.has-suffix {
@@ -1134,6 +1138,11 @@ table.data tbody tr:hover td.sticky-col {
 /* Prepayment and recast rows (ADR 0116): full width, one wrapped row per event. */
 .form-wide {
   grid-column: 1 / -1;
+}
+/* The property form's optional Acquisition toggle (ADR 0119 §9). */
+.form-disclosure {
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--s3);
 }
 .event-rows {
   display: flex;
