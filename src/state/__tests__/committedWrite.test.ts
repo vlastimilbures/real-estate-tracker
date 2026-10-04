@@ -21,8 +21,9 @@ vi.mock("@tauri-apps/api/core", () => ({
 }));
 
 /** `real`, but the reload's snapshot read fails: the write commits, the reload after it
- *  fails. The safety backup's snapshot (the only other one, it reads `schema_migrations`)
- *  passes, and every action's other reads use `select`, so only the reload is hit. */
+ *  fails. A snapshot that reads `schema_migrations` stands for `exportToJson` (the safety
+ *  backup) and passes; every action's other reads use `select`, so only the reload is
+ *  hit. */
 const reloadFails = (real: Sql): Sql => ({
   ...real,
   selectSnapshot: (statements) =>
@@ -30,6 +31,13 @@ const reloadFails = (real: Sql): Sql => ({
       ? real.selectSnapshot(statements)
       : Promise.reject(new Error("database is locked")),
 });
+
+/** A promise that settles once `release()` is called. */
+function gate() {
+  let release!: () => void;
+  const opened = new Promise<void>((r) => (release = r));
+  return { opened, release };
+}
 
 let db: TestSql;
 
@@ -173,15 +181,14 @@ describe("a failed write whose reload also fails (ADR 0125)", () => {
 describe("a safety backup waits for a write queued before it (ADR 0132)", () => {
   /** `real`, but the first `execute` (the queued valuation) waits for `release`. */
   function heldFirstWrite(real: Sql) {
-    let release!: () => void;
-    const gate = new Promise<void>((r) => (release = r));
+    const { opened, release } = gate();
     let held = false;
     const sql: Sql = {
       ...real,
       execute: async (q, p) => {
         if (!held) {
           held = true;
-          await gate;
+          await opened;
         }
         return real.execute(q, p);
       },
@@ -221,8 +228,7 @@ describe("a safety backup waits for a write queued before it (ADR 0132)", () => 
 describe("the banner Reload waits for pending writes (ADR 0132)", () => {
   it("a Reload read before a write cannot put the old data back after it", async () => {
     // The Reload's snapshot is read at once (old data) but answers only on `release`.
-    let release!: () => void;
-    const gate = new Promise<void>((r) => (release = r));
+    const { opened, release } = gate();
     let held = false;
     const sql: Sql = {
       ...db,
@@ -230,7 +236,7 @@ describe("the banner Reload waits for pending writes (ADR 0132)", () => {
         const rows = await db.selectSnapshot(statements);
         if (!held) {
           held = true;
-          await gate;
+          await opened;
         }
         return rows;
       },
@@ -251,13 +257,12 @@ describe("the banner Reload waits for pending writes (ADR 0132)", () => {
 
   it("a Reload clicked during a write reads only after it", async () => {
     const log: string[] = [];
-    let release!: () => void;
-    const gate = new Promise<void>((r) => (release = r));
+    const { opened, release } = gate();
     const sql: Sql = {
       ...db,
       execute: async (q, p) => {
         log.push(p?.[0] === CHANGED_SINCE_BACKUP ? "changed" : "valuation");
-        await gate;
+        await opened;
         return db.execute(q, p);
       },
       selectSnapshot: (statements) => {

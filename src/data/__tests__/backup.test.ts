@@ -158,7 +158,8 @@ describe("exportToJson reads one database state", () => {
     );
   });
 
-  it("reads through one snapshot call and no separate selects", async () => {
+  // Pins what the race test above cannot see: the schema version is in the same snapshot.
+  it("reads the tables and the schema version in one snapshot call", async () => {
     let snapshots = 0;
     let selects = 0;
     const counting: Sql = {
