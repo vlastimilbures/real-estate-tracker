@@ -2,7 +2,9 @@
 // random recast, at a random baseDate, agree with the independent reference model in
 // every column, and conserve principal from the engine's opening balance:
 // Σ principal + Σ prepaid + final balance = opening debt + new debt. Some prepayments
-// fall just before baseDate, so the late window (ADR 0116 §1) is covered.
+// fall just before baseDate, so the late window (ADR 0116 §1) is covered. Loans start on
+// the 7th or on the 28th–31st, clamped to the month, so month-end and leap-day due dates
+// (DR-070) meet events too (#130 G2-6-11).
 import { describe, it, expect } from "vitest";
 import fc from "fast-check";
 import { D, PMT } from "../../../lib/money";
@@ -46,6 +48,7 @@ const loanWithEvents = fc
     months: fc.integer({ min: 60, max: 360 }),
     fixationYears: fc.integer({ min: 1, max: 10 }),
     startOffset: fc.integer({ min: -180, max: 24 }),
+    startDay: fc.constantFrom("07", "28", "29", "30", "31"),
     prepays: fc.array(
       fc.record({
         at: share,
@@ -72,7 +75,8 @@ const loanWithEvents = fc
   })
   .map((g): { loan: RefLoan; base: string } => {
     const base = daysBefore(BASE, -g.baseShift);
-    const start = addMonths(BASE, g.startOffset);
+    // January has 31 days; addMonths clamps the day to the target month (BASE is June).
+    const start = addMonths(`2026-01-${g.startDay}`, g.startOffset + 5);
     const r = D(g.bp).div(10_000);
     const instalment = PMT(r.div(12), g.months, D(-g.principal))
       .ceil()
