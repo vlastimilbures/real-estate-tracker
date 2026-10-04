@@ -12,12 +12,10 @@ import type { DateCalendar } from "./DateCalendar";
 
 // The calendar loads on the first open (DR-009): react-day-picker stays out of the startup
 // bundle. The popover opens once the chunk is in, so it never shows a placeholder; the
-// chunk is a local file, so the wait is a few milliseconds (D-66).
+// chunk is a local file, so the wait is a few milliseconds (ADR 0066).
 let LoadedCalendar: typeof DateCalendar | undefined;
-function loadCalendar(): Promise<unknown> {
-  return import("./DateCalendar").then(
-    (m) => (LoadedCalendar = m.DateCalendar),
-  );
+async function loadCalendar(): Promise<void> {
+  LoadedCalendar = (await import("./DateCalendar")).DateCalendar;
 }
 
 // dd.mm.yyyy for a day picked in the calendar. The day comes from react-day-picker as a
