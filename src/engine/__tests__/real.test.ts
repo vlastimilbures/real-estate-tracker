@@ -173,8 +173,8 @@ describe("snapshot at a projection year and real snapshots", () => {
     expect(s.annualDebtService).toBe(r.debtService);
     expect(s.netCashFlow).toBe(r.netCashFlow);
     expect(s.dscr).toBe(r.dscr);
-    expect(s.grossYield.toString()).toBe(r.grossRent.div(r.value).toString());
-    expect(s.netYield.toString()).toBe(r.noi.div(r.value).toString());
+    expect(s.grossYield?.toString()).toBe(r.grossRent.div(r.value).toString());
+    expect(s.netYield?.toString()).toBe(r.noi.div(r.value).toString());
     // Kept from the snapshot: the projection has no per-property / rate breakdown.
     expect(s.asOf).toBe(snap.asOf);
     expect(s.perProperty).toBe(snap.perProperty);
@@ -192,16 +192,16 @@ describe("snapshot at a projection year and real snapshots", () => {
     expect(s.noi).toBe(r.noi);
     expect(s.annualDebtService).toBe(r.debtService);
     expect(s.dscr).toBe(r.dscr);
-    expect(s.netYield.toString()).toBe(r.noi.div(r.value).toString());
+    expect(s.netYield?.toString()).toBe(r.noi.div(r.value).toString());
     expect(s.propertyId).toBe(p.id);
     expect(s.weightedRateNumerator).toBe(ps.weightedRateNumerator);
   });
 
-  it("zero value gives zero yields (no division by zero)", () => {
+  it("zero value gives no yields (ADR 0133), not a division by zero", () => {
     const zero = { ...rows[5], value: D(0) };
     const s = portfolioSnapshotAtYear(snap, zero);
-    expect(s.grossYield.isZero()).toBe(true);
-    expect(s.netYield.isZero()).toBe(true);
+    expect(s.grossYield).toBeNull();
+    expect(s.netYield).toBeNull();
   });
 
   it("real snapshots divide money and keep ratios; k = 1 is the identity", () => {

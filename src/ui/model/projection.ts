@@ -16,7 +16,7 @@ export interface SeriesRow {
   value: Decimal;
   balance: Decimal;
   equity: Decimal;
-  ltv: Decimal;
+  ltv: Decimal | null; // null when debt is owed on no value (ADR 0133)
   grossRent: Decimal;
   effectiveRent: Decimal;
   holdingCosts: Decimal;

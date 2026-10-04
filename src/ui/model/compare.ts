@@ -297,19 +297,21 @@ export function compareHint(t: Dictionary, mode: Mode): string {
     : t.scenarios.keyFiguresHint;
 }
 
-/** One chart row per year with each scenario's metric under the lens, keyed s0, s1, … */
+/** One chart row per year with each scenario's metric under the lens, keyed s0, s1, …
+ *  A null metric (LTV on no value, ADR 0133) stays null: a gap, not 0. */
 export function mergeCompareMetric(
   results: CompareResult[],
   mode: Mode,
-  pick: (y: ProjectionYear) => Decimal,
-): Record<string, number>[] {
+  pick: (y: ProjectionYear) => Decimal | null,
+): Record<string, number | null>[] {
   return rowsOf(at(results, 0), mode).map((y, t) => {
-    const row: Record<string, number> = {
+    const row: Record<string, number | null> = {
       year: y.year,
       calendarYear: y.calendarYear,
     };
     results.forEach((r, i) => {
-      row[`s${i}`] = toNumber(pick(at(rowsOf(r, mode), t)));
+      const v = pick(at(rowsOf(r, mode), t));
+      row[`s${i}`] = v === null ? null : toNumber(v);
     });
     return row;
   });

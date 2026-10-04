@@ -23,7 +23,7 @@ import {
   type EquityChangeRow,
 } from "../model/chartData";
 import { fmtCzkM, fmtMultiple, fmtPct } from "../../lib/format";
-import { dscrBadge, ltvBand, ltvBandWord } from "../model/health";
+import { dscrBadge, ltvBadge } from "../model/health";
 import type { MonthlyFlow } from "../model/dashboard";
 import type { LeveredIrr } from "../model/irr";
 import { lensKpis } from "../model/lensKpis";
@@ -108,10 +108,7 @@ export function RiskTiles({
         delay={0}
         label={t.dashboard.portfolioLtv}
         value={<Pct value={s.ltv} dp={1} />}
-        badge={{
-          band: ltvBand(s.ltv),
-          text: ltvBandWord(t, s.ltv),
-        }}
+        badge={ltvBadge(t, s.ltv)}
         foot={t.dashboard.debtOverValue}
       />
       <KpiTile
@@ -125,7 +122,11 @@ export function RiskTiles({
         delay={48}
         label={t.dashboard.netYieldCap}
         value={<Pct value={s.netYield} dp={2} />}
-        foot={t.dashboard.grossYieldFoot(fmtPct(s.grossYield, 2))}
+        foot={t.dashboard.grossYieldFoot(
+          s.grossYield === null
+            ? t.common.notApplicable
+            : fmtPct(s.grossYield, 2),
+        )}
       />
       <KpiTile
         delay={72}

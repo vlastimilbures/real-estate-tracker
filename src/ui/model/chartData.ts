@@ -27,7 +27,7 @@ export type ChartRow = {
   value: number;
   balance: number;
   equity: number;
-  ltv: number;
+  ltv: number | null; // null: debt on no value, a gap in the line (ADR 0133)
   // Flows are null in year 0 (the opening point has none), so the lines start at year 1
   // instead of rising from a plotted 0 (UX-033).
   grossRent: number | null;
@@ -98,7 +98,7 @@ export function toChartRows(series: SeriesRow[]): ChartRow[] {
       value: n(r.value),
       balance: n(r.balance),
       equity: n(r.equity),
-      ltv: n(r.ltv),
+      ltv: r.ltv === null ? null : n(r.ltv),
       grossRent: flow(r.grossRent),
       effectiveRent: flow(r.effectiveRent),
       noi: flow(r.noi),

@@ -10,8 +10,9 @@ const LTV_GOOD = D("0.5");
 const LTV_WARN = D("0.75");
 const DSCR_GOOD = D("1.2");
 
-/** LTV colour band: lower is safer. */
-export function ltvBand(value: Decimal): Band {
+/** LTV colour band: lower is safer. null = debt on no value → neutral (ADR 0133). */
+export function ltvBand(value: Decimal | null): Band {
+  if (value === null) return "neutral";
   // Decimal comparisons, no float conversion at the thresholds (DR-079).
   if (value.lessThanOrEqualTo(LTV_GOOD)) return "good";
   if (value.lessThanOrEqualTo(LTV_WARN)) return "warn";
@@ -26,11 +27,13 @@ export function dscrBand(value: Decimal | null): Band {
   return "bad";
 }
 
-/** The LTV band in words (UX-027): the same words as the Dashboard tile. */
+/** The LTV band in words (UX-027): the same words as the Dashboard tile. No value
+ *  (null) has no word (ADR 0133). */
 export function ltvBandWord(
   t: Pick<Dictionary, "dashboard">,
-  value: Decimal,
-): string {
+  value: Decimal | null,
+): string | null {
+  if (value === null) return null;
   const band = ltvBand(value);
   if (band === "good") return t.dashboard.badgeConservative;
   return band === "warn" ? t.dashboard.badgeModerate : t.dashboard.badgeHigh;
@@ -46,6 +49,15 @@ export function dscrBandWord(
   return value.greaterThanOrEqualTo(1)
     ? t.dashboard.badgeCoversDebt
     : t.dashboard.badgeShortfall;
+}
+
+/** The LTV tile badge: its band and word; no value (null) has no badge (ADR 0133). */
+export function ltvBadge(
+  t: Pick<Dictionary, "dashboard">,
+  value: Decimal | null,
+): { band: Band; text: string } | undefined {
+  const text = ltvBandWord(t, value);
+  return text === null ? undefined : { band: ltvBand(value), text };
 }
 
 /** The DSCR tile badge: its band and word; no debt (null) has no badge (ADR 0126). */

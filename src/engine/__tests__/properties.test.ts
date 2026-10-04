@@ -439,10 +439,12 @@ describe("random effective-dated leases and valuations", () => {
           0,
           "rent",
         );
+        expect([s.value, s.noi, s.netCashFlow].every((d) => d.isFinite())).toBe(
+          true,
+        );
+        // No value, no yield (ADR 0133); otherwise a finite one.
         expect(
-          [s.value, s.noi, s.netCashFlow, s.grossYield].every((d) =>
-            d.isFinite(),
-          ),
+          s.grossYield === null ? s.value.isZero() : s.grossYield.isFinite(),
         ).toBe(true);
       }),
       RUNS,

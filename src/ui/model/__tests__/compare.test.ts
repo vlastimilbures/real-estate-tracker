@@ -69,7 +69,7 @@ describe("mergeCompareMetric", () => {
     expect(rows[10].s1).toBe(
       toNumber(shocked.projection[10].equity.div(cpiShock[10])),
     );
-    expect(rows[10].s1).toBeLessThan(rows[10].s0);
+    expect(rows[10].s1).toBeLessThan(rows[10].s0!);
   });
 });
 
