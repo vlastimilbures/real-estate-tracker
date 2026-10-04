@@ -181,6 +181,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Stat lists (the property page's Loan outlook, the Dashboard financing panel, Backup) no
+  longer draw a short line under their last label (ADR 0117).
 - A development loan completed after its last payment before the projection start, with no
   tranche in the first projection month, stayed interest-only to maturity and repaid
   everything at the end. It now starts amortizing from the first projection month (ADR
