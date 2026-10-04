@@ -102,7 +102,6 @@ const CASES: [string, Portfolio][] = [
   ["seed", portfolio],
   ["mixed", mixed],
   ["refinanced", refinanced],
-  ["closed valuations", closedValuations],
 ];
 
 const sum = (xs: Decimal[]) => xs.reduce((s, x) => s.plus(x), ZERO);
@@ -236,6 +235,14 @@ describe("Invariant — snapshot(baseDate + N y) == projection year N", () => {
         "debt",
       ));
   }
+
+  // ADR 0122: valuations closed by validTo, with a gap and over an older open one.
+  it("closed valuations: VALUE matches for every property, N = 0…horizon // ADR 0122", () =>
+    assertSnapshotMatchesProjection(
+      closedValuations,
+      ownedAtBase(closedValuations),
+      "value",
+    ));
 
   // D-32 (DR-105): the projection grows a future purchase from its purchase date by whole
   // completed months / 12, as the snapshot does (was: from its turn-on projection year).
