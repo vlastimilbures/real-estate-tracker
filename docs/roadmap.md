@@ -40,11 +40,12 @@ From the 2026-10 code review
 [`review-2026-10-code`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=label%3Areview-2026-10-code),
 #101–#174). Each issue has evidence, decision options and a recommendation.
 
-- **Bugs to fix first (P1).** Value falls back to the purchase price after a valuation's
-  "Valid to" date, property ids derived from the name, Clear sample vs the owner's own
-  property, unchecked scenario rows in a restore, a restore misreported as rolled back,
-  out-of-range scenario inputs, future and development purchases in the returns, a tranche
-  after an instalment recast, and the first cash-flow-positive year (#101–#110).
+- **Bugs to fix first (P1).** Property ids derived from the name, Clear sample vs the owner's
+  own property, unchecked scenario rows in a restore, a restore misreported as rolled back,
+  out-of-range scenario inputs, and future and development purchases in the returns (#101,
+  #103–#108). Fixed: a tranche after an instalment recast (#109, ADR 0120), the first
+  cash-flow-positive year (#102, ADR 0121), and the value after a valuation's "Valid to" date
+  (#110, ADR 0122).
 - **Decisions (label `decision`).** Modelling and process choices challenged with options and
   the case for keeping them; weak challenges stay in the record only.
 - **Clean-up (label `tech-debt`), docs, accessibility and smaller fixes (P2, P3).**

@@ -211,6 +211,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A valuation's "Valid to" date no longer changes the property's value. Before, once it
+  passed, the value fell back to the purchase price or to an older valuation. The latest
+  valuation now keeps governing, grown by appreciation, until a newer one replaces it; in a
+  gap between two valuations the earlier one governs. The purchase price stands in only when
+  a property has no valuation, and the Data check then says "No valuation is recorded"
+  (ADR 0122, #110).
 - The "first cash-flow-positive year" no longer names a year that earned nothing. With only
   properties bought in the future (or a Dashboard filter on them), it showed the first
   projection year; it now shows the first year whose net cash flow is above zero, or "—"

@@ -53,18 +53,15 @@ export function leaseInForce(leases: Lease[], asOf: Date): Lease | undefined {
   );
 }
 
-/** Valuation governing `asOf`: the one in force, else the nearest upcoming (a recorded
- *  value beats the stale purchase price). Single source for this fallback. */
+/** Valuation governing `asOf`: the latest one started on or before it, else the
+ *  nearest upcoming (a recorded value beats the stale purchase price). Its validTo is
+ *  not read: a value does not expire, the next valuation replaces it (ADR 0122).
+ *  Undefined only when there is no valuation. Single source for this fallback. */
 export function selectValuation(
   valuations: Valuation[],
   asOf: Date,
 ): Valuation | undefined {
-  return inForceOrUpcoming(
-    valuations,
-    asOf,
-    (v) => v.validFrom,
-    (v) => v.validTo,
-  );
+  return inForceOrUpcoming(valuations, asOf, (v) => v.validFrom);
 }
 
 /** Resolve effective holding-cost fields, falling back to assumption defaults. */
@@ -105,9 +102,9 @@ export function forProperty<T extends { propertyId: string }>(
 }
 
 /**
- * Opening value at `asOf`: the governing valuation's market value (in force, else the
- * nearest upcoming), else the purchase price. The projection basis (a future buy's
- * down payment starts from its price instead, ADR 0119).
+ * Opening value at `asOf`: the governing valuation's market value (`selectValuation`),
+ * else the purchase price. The projection basis (a future buy's down payment starts
+ * from its price instead, ADR 0119).
  */
 export function openingValue(
   valuations: Valuation[],
@@ -125,8 +122,8 @@ function ratioOrZero(n: Decimal, d: Decimal): Decimal {
 
 /**
  * The value that growth starts from at `asOf`, and the date it starts. The valuation
- * governing `asOf` (in force, else the nearest upcoming — better than the stale
- * purchase price), else the purchase price. Growth starts at the later of its validFrom
+ * governing `asOf` (`selectValuation`: the latest started, else the nearest
+ * upcoming), else the purchase price. Growth starts at the later of its validFrom
  * and the basis (baseDate, or purchaseDate for a future buy), so a valuation dated
  * after the basis re-anchors growth from its own validFrom. Shared by the snapshot and
  * the projection, so snapshot(baseDate + N y) == projection year N (D-32).

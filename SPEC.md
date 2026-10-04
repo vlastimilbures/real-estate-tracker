@@ -194,10 +194,11 @@ As-of picker shows the mapping under the date (none at Today). The horizon tile 
 last projection year ("Net worth in 2056 (30-yr horizon)") and does not follow the as-of date.
 
 Selectors follow a consistent rule: "record in force at `asOf`" = latest `startDate/validFrom
-≤ asOf` whose optional `endDate/validTo` is blank or `≥ asOf`. For **valuations**, if
-nothing is in force yet, the nearest upcoming record is used as a fallback (so year 0 lines
-up with the projection even before the first valuation date). **Leases** have no such
-fallback (DR-045): snapshot rent is the contractual monthly rent of the lease in force at
+≤ asOf` whose optional `endDate/validTo` is blank or `≥ asOf`. **Valuations** differ: the
+governing valuation is the latest one with `validFrom ≤ asOf`, and its `validTo` is not read
+(a value does not expire; the next valuation replaces it, ADR 0122). Before the first
+valuation date, the nearest upcoming record is used (so year 0 lines up with the projection).
+**Leases** have no such fallback (DR-045): snapshot rent is the contractual monthly rent of the lease in force at
 `asOf` × 12, unindexed, and 0 when no lease is in force — before the first lease, in a gap
 between leases (a one-day gap is rent-free) and after the last lease's end date. The
 projection treats rent differently (§4.5).
@@ -208,11 +209,11 @@ Derived per-property values:
   completed months ÷ 12** at the appreciation rate (ADR 0032). The anchor is the baseDate,
   a later valuation's `validFrom`, or the purchase date of a property bought after baseDate.
   Months are counted with the month-end rule, so a 29 Feb baseDate still counts a full year
-  (D-45). A valuation already in force at baseDate is anchored at baseDate, not at its
+  (D-45). A valuation that started on or before baseDate is anchored at baseDate, not at its
   `validFrom`, so its value is not grown for the months before baseDate.
-  Falls back to `purchasePrice` when no valuation exists. For dev loans the completed value
-  is scaled by `drawnFraction` (cumulative principal drawn ÷ total scheduled principal), so
-  value ramps with construction progress.
+  Falls back to `purchasePrice` only when the property has no valuation (ADR 0122). For dev
+  loans the completed value is scaled by `drawnFraction` (cumulative principal drawn ÷ total
+  scheduled principal), so value ramps with construction progress.
 - **Outstanding debt** — the active block's balance at `asOf`; the re-amortized instalment
   and reset rate are read from the schedule when `asOf` is past a fixation reset.
 - **Monthly rent** — lease in force at `asOf`; **gross annual** = ×12.

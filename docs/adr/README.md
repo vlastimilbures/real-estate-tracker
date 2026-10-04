@@ -146,6 +146,7 @@ Other IDs seen in code comments:
 | [0119](0119-acquisition-funding.md)               | Acquisition funding record and the down payment of a future buy                        | #33, #103, #140, #118                  |
 | [0120](0120-tranche-on-recast-payment.md)         | A tranche on an instalment recast's payment                                            | #109                                   |
 | [0121](0121-first-positive-cash-flow-strict.md)   | The first cash-flow-positive year is strictly positive                                 | #102                                   |
+| [0122](0122-valuation-persists-past-valid-to.md)  | A valuation keeps governing after its "Valid to" date                                  | #110                                   |
 
 ### Judgment calls and open questions
 

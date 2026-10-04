@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-04
 - Source: issue #35 (pre-release review 2026-10, §6 and F5); independent review of PR #179
+- Amended by: ADR 0122 (a closed last valuation stays in use)
 
 ## Context
 
@@ -36,7 +37,7 @@ Owner, 2026-10-04 (#35 plan):
      stale. The age is shown in whole months. A valuation that only starts later is used by
      the engine and is not flagged.
    - **No valuation** in force (or upcoming) at the as-of date: the purchase price stands
-     in as the value.
+     in as the value. Since ADR 0122 this means the property has no valuation at all.
    - **Lease ended:** no lease is in force and the last lease ended before the as-of date,
      on or after the projection's basis date. The snapshot has no rent after its end; the
      projection treats it as renewed (`renewedLease`, ADR 0080), so a Dashboard read from a
