@@ -40,7 +40,7 @@ export {
   selectBlock,
 } from "./amortization";
 export { MAX_LOAN_TERM_MONTHS } from "./constants";
-export { scheduledPrincipal } from "./growth";
+export { basisDate, scheduledPrincipal } from "./growth";
 export {
   effectiveMaturity,
   propertySchedules,
@@ -58,6 +58,7 @@ export {
   cpiIndex,
   portfolioProjection,
   propertyProjection,
+  renewedLease,
 } from "./projections";
 export {
   cpiAt,
