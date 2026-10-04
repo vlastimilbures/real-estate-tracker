@@ -441,28 +441,23 @@ export function rowToProperty(r: PropertyRow): Property {
   };
 }
 
-/** The funding record (ADR 0119): undefined when every part is NULL (unknown). */
+/** The funding record (ADR 0119): undefined when every part is NULL (unknown). A
+ *  blank note is no note. */
 function rowToFunding(
   ref: g.RowRef,
   r: PropertyRow,
 ): AcquisitionFunding | undefined {
-  if (
-    r.own_cash == null &&
-    r.transaction_costs == null &&
-    r.initial_works == null &&
-    r.funding_note == null
-  )
-    return undefined;
   const f: AcquisitionFunding = {};
   const ownCash = g.moneyOpt(ref, "own_cash", r.own_cash);
   const costs = g.moneyOpt(ref, "transaction_costs", r.transaction_costs);
   const works = g.moneyOpt(ref, "initial_works", r.initial_works);
+  const note =
+    r.funding_note == null ? "" : g.text(ref, "funding_note", r.funding_note);
   if (ownCash) f.ownCash = ownCash;
   if (costs) f.transactionCosts = costs;
   if (works) f.initialWorks = works;
-  if (r.funding_note != null)
-    f.note = g.text(ref, "funding_note", r.funding_note);
-  return f;
+  if (note.trim()) f.note = note;
+  return Object.keys(f).length > 0 ? f : undefined;
 }
 
 export function rowToMortgageBlock(r: MortgageBlockRow): MortgageBlock {
@@ -597,7 +592,7 @@ export function propertyToRow(
     own_cash: dtext(p.funding?.ownCash),
     transaction_costs: dtext(p.funding?.transactionCosts),
     initial_works: dtext(p.funding?.initialWorks),
-    funding_note: p.funding?.note ?? null,
+    funding_note: p.funding?.note?.trim() ? p.funding.note : null,
   };
 }
 

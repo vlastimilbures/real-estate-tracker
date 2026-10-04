@@ -117,6 +117,13 @@ describe("mapper — acquisition funding", () => {
     expect(propertyToRow(back)).toEqual(propertyToRow(funded));
   });
 
+  it("treats a blank note as no note", () => {
+    expect(
+      propertyToRow({ ...property, funding: { note: "  " } }).funding_note,
+    ).toBeNull();
+    expect(rowToProperty({ ...row, funding_note: "" }).funding).toBeUndefined();
+  });
+
   it("keeps a partial record partial (unknown is not 0)", () => {
     const partial = rowToProperty({ ...row, transaction_costs: "120000" });
     expect(text(partial.funding)).toEqual({
