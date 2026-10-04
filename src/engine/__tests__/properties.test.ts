@@ -25,7 +25,12 @@ import type {
   Property,
   Valuation,
 } from "../types";
-import { assumptions, BASE_DATE } from "./support/seed";
+import { validateInputs } from "../validate";
+import {
+  assumptions,
+  BASE_DATE,
+  portfolio as seedPortfolio,
+} from "./support/seed";
 import { KC, near } from "./support/tolerance";
 import { rate as brandRate, type IsoDate, type Rate } from "../brands";
 import { money } from "../brands";
@@ -545,3 +550,116 @@ describe("invalid loans — typed errors (D-17)", () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// R2-12 (ADR 0128): random valid assumptions, shocks and horizon
+// ---------------------------------------------------------------------------
+
+/** A ratio from whole basis points (exact in decimal). */
+const bp = (n: number) => brandRate(D(n).div(10_000));
+
+/** Growth, indexation and inflation: above −100 % (ADR 0128), up to +50 %. */
+const growthBp = fc.integer({ min: -9_999, max: 5_000 });
+
+/** A shock band as a share of the room its level allows, held for 0–10 years. */
+const band = fc.option(
+  fc.record({
+    share: fc.double({ min: 0, max: 1, noNaN: true }),
+    years: fc.integer({ min: 0, max: 10 }),
+  }),
+  { nil: undefined },
+);
+
+/** Valid assumptions on the seed portfolio: every level, shock, crash and property
+ *  override drawn from the ranges ADR 0038 / ADR 0128 allow, horizon 1–50 years. */
+const validInputs = fc
+  .record({
+    appreciation: growthBp,
+    indexation: growthBp,
+    inflation: growthBp,
+    vacancy: fc.integer({ min: 0, max: 10_000 }),
+    reset: fc.integer({ min: 0, max: 10_000 }),
+    horizon: fc.integer({ min: 1, max: 50 }),
+    rateShock: band,
+    inflationShock: band,
+    crash: fc.option(
+      fc.record({
+        pct: fc.integer({ min: 0, max: 10_000 }),
+        share: fc.double({ min: 0, max: 1, noNaN: true }),
+      }),
+      { nil: undefined },
+    ),
+    appreciationOverride: fc.option(growthBp, { nil: undefined }),
+    rentIndexOverride: fc.option(growthBp, { nil: undefined }),
+  })
+  .map((r) => {
+    // A shock's delta keeps the shocked level in range: reset + Δ within [0, 1];
+    // inflation + Δ within (−1, +0.5].
+    const rateDelta = (s: number) => Math.round(s * 10_000) - r.reset;
+    const inflationDelta = (s: number) =>
+      Math.round(s * 14_999) - 9_999 - r.inflation;
+    const a: Assumptions = {
+      ...assumptions,
+      appreciationPa: bp(r.appreciation),
+      rentIndexationPa: bp(r.indexation),
+      inflationPa: bp(r.inflation),
+      vacancyAllowance: bp(r.vacancy),
+      postFixationResetRatePa: bp(r.reset),
+      horizonYears: r.horizon,
+      ...(r.rateShock && {
+        rateShock: {
+          deltaPa: bp(rateDelta(r.rateShock.share)),
+          durationYears: r.rateShock.years,
+        },
+      }),
+      ...(r.inflationShock && {
+        inflationShock: {
+          deltaPa: bp(inflationDelta(r.inflationShock.share)),
+          durationYears: r.inflationShock.years,
+        },
+      }),
+      ...(r.crash && {
+        valueShock: {
+          pct: bp(r.crash.pct),
+          atYear: Math.round(r.crash.share * r.horizon),
+        },
+      }),
+    };
+    const [p0, ...ps] = seedPortfolio.properties;
+    const portfolio: Portfolio = {
+      ...seedPortfolio,
+      properties: [
+        {
+          ...p0!,
+          ...(r.appreciationOverride !== undefined && {
+            appreciationOverridePa: bp(r.appreciationOverride),
+          }),
+          ...(r.rentIndexOverride !== undefined && {
+            rentIndexOverridePa: bp(r.rentIndexOverride),
+          }),
+        },
+        ...ps,
+      ],
+    };
+    return { a, portfolio };
+  });
+
+describe(
+  "random valid assumptions, shocks and horizon (R2-12, ADR 0128)",
+  { timeout: HEAVY_TIMEOUT_MS },
+  () => {
+    it("every input passes validation and every KPI present is finite", () => {
+      fc.assert(
+        fc.property(validInputs, ({ a, portfolio }) => {
+          expect(validateInputs(portfolio, a)).toEqual([]);
+          const k = portfolioKpis(portfolio, a);
+          for (const [key, v] of Object.entries(k)) {
+            if (v !== null && typeof v === "object")
+              expect((v as Decimal).isFinite(), key).toBe(true);
+          }
+        }),
+        { ...RUNS, numRuns: Math.ceil(RUNS.numRuns / 4) },
+      );
+    });
+  },
+);

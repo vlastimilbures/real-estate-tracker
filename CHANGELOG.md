@@ -226,6 +226,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Assumptions that broke the maths are refused instead of showing `Infinity`, `NaN` or
+  negative interest (ADR 0128, #114). The Assumptions page, the scenario form, the property
+  form, CSV import and restore now check that:
+  - the post-fixation reset rate lies within 0–100 %, like a loan's own rate;
+  - growth, rent indexation, inflation and a property's growth overrides are above −100 %
+    (an inflation of −100 % gave an infinite real net worth);
+  - a scenario's rate shock keeps the reset rate within 0–100 %, and its inflation shock
+    keeps inflation above −100 %; the scenario form shows this on the shock's field;
+  - a value crash percentage is a finite number.
+
+  Saving the assumptions is refused when the new value would break a saved scenario's
+  shock; the message names the scenario. A scenario that broke the rule before the edit
+  does not block it. Stored values are not changed: a value already outside these bounds
+  shows the invalid-input message until it is corrected.
+
 - Headline KPIs no longer contradict their inputs in edge cases (ADR 0126, #129):
   - The net-worth multiple shows "—" when equity at the projection start is zero or less,
     instead of "0,00x" or a negative multiple (−31,19x after a deep crash at Today).

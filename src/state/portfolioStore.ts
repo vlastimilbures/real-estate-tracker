@@ -18,7 +18,7 @@ import type {
 } from "../engine";
 import { migrate } from "../data/migrations";
 import { DataError, type DataErrorCode } from "../data/errors";
-import { toWriteError, type WriteError } from "./writeError";
+import { ScenarioRuleError, toWriteError, type WriteError } from "./writeError";
 import { logFailure } from "../data/errorLog";
 import {
   clearSample,
@@ -37,7 +37,11 @@ import type {
   CsvImportPreview,
   CsvImportReport,
 } from "../import/csvImport";
-import { checkInputRules, scenarioRuleErrors } from "../import/inputRules";
+import {
+  checkInputRules,
+  scenarioErrorsAddedBy,
+  scenarioRuleErrors,
+} from "../import/inputRules";
 import {
   loadState,
   upsertScenario,
@@ -346,7 +350,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     if (p) assertRows(edit(p), ids);
   }
 
-  /** Engine rules of the assumptions themselves (horizon, rates, shocks, D-38). */
+  /** Engine rules of the assumptions themselves (horizon, rates, shocks, D-38), then
+   *  the saved scenarios the edit would newly break (ADR 0128 §6). */
   function checkAssumptions(a: Assumptions): void {
     const p = get().portfolio;
     if (!p) return;
@@ -354,6 +359,14 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       (e) => e.entity === "assumptions",
     );
     if (errors.length > 0) throw new EngineInputError(errors);
+    // ADR 0128 §6: a shock meets the level it shifts, so an edit can break a saved
+    // scenario. Refuse only one the edit newly breaks, and name the first.
+    const old = get().assumptions;
+    if (!old) return;
+    for (const s of get().scenarios) {
+      const added = scenarioErrorsAddedBy(old, a, s.overrides);
+      if (added.length > 0) throw new ScenarioRuleError(s.name, added);
+    }
   }
 
   /** Engine rules a scenario's own overrides break on top of the saved assumptions

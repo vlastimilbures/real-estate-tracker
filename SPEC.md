@@ -135,13 +135,20 @@ ADR 0036). The codes: `INVALID_DATE`, `NON_FINITE_NUMBER`, `NEGATIVE_AMOUNT`,
 `ZERO_RATE_ZERO_INSTALMENT`, `MISSING_TERM_FOR_DEV_LOAN`, `NON_POSITIVE_DRAW`,
 `DRAW_BEFORE_START`, `COMPLETION_BEFORE_START`, `DUPLICATE_BLOCK_START`, `END_BEFORE_START`,
 `DUPLICATE_HOLDING_COST`, `ORPHAN_ROW`, `HORIZON_NOT_POSITIVE`, `INVALID_TERM`,
-`SHOCK_OUT_OF_RANGE`, `ASOF_BEFORE_BASEDATE`. Ranges (ADR 0038): interest 0–100 %; vacancy,
-cost shares, value haircut and the acquisition cost rate 0–1 (ADR 0119); shock durations
-whole years ≥ 0; horizon a whole number ≥ 1; growth, indexation and inflation may be
-negative (finite only). The funding record's amounts must not be negative. The form, the CSV
-importer and backup restore reject the same rows with a translated message (ADR 0037). A
-scenario is checked the same way when it is saved: its overrides applied to the saved
-assumptions, counting only the fields it sets. Restore only needs a scenario to be readable
+`SHOCK_OUT_OF_RANGE`, `GROWTH_OUT_OF_RANGE`, `SHOCKED_RATE_OUT_OF_RANGE`,
+`SHOCKED_INFLATION_OUT_OF_RANGE`, `ASOF_BEFORE_BASEDATE`. Ranges (ADR 0038, ADR 0128):
+interest 0–100 %, the post-fixation reset rate included; vacancy, cost shares, value haircut
+and the acquisition cost rate 0–1 (ADR 0119); shock durations whole years ≥ 0; horizon a
+whole number ≥ 1; growth, indexation, inflation and a property's growth overrides may be
+negative but must be above −100 % (`GROWTH_OUT_OF_RANGE`); the reset rate plus a rate shock
+stays within 0–100 % (`SHOCKED_RATE_OUT_OF_RANGE` on `rateShock`) and inflation plus an
+inflation shock above −100 % (`SHOCKED_INFLATION_OUT_OF_RANGE` on `inflationShock`), checked
+only when the level itself is valid; a value crash percentage must be finite. The funding
+record's amounts must not be negative. The form, the CSV importer and backup restore reject
+the same rows with a translated message (ADR 0037). A scenario is checked the same way when
+it is saved: its overrides applied to the saved assumptions, counting only the fields it
+sets. Saving the assumptions refuses an edit that newly breaks a saved scenario's shocked
+level and names the scenario (ADR 0128). Restore only needs a scenario to be readable
 (ADR 0123, §7).
 
 **Whole-number bounds.** On top of the engine rules, every user-data entry point — the
@@ -600,8 +607,12 @@ price crash**, each with a legend and one line of help (ADR 0102).
 - **Rules (ADR 0123):** adding, saving and duplicating a scenario run the engine's
   assumption rules on its overrides applied to the saved assumptions, counting only the
   fields the scenario sets (vacancy and the value crash 0–100 %, shock years whole and
-  ≥ 0, levels finite). A refused save writes nothing and shows the rule on its field
-  (Vacancy, Value crash) or above the buttons. A scenario that still breaks a rule (saved
+  ≥ 0, levels finite, growth levels above −100 %, the reset rate 0–100 %, and with a shock
+  the shocked reset rate 0–100 % and shocked inflation above −100 %, ADR 0128). A refused
+  save writes nothing and shows the rule on its field (a level, the value crash, a shock's
+  delta) or above the buttons. Saving the assumptions refuses an edit that newly breaks a
+  saved scenario's shocked level, naming the scenario on the level field; a scenario that
+  broke the rule before the edit does not block it. A scenario that still breaks a rule (saved
   before this check, or restored) is left out of the compare and named in a notice above
   it. Restore only needs a scenario row to be readable, so every backup the app writes
   restores. A stored scenario row the app cannot read is left out at startup and listed
