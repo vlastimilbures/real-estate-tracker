@@ -734,6 +734,10 @@ export const cs: Dictionary = {
     reachHits: (n, m, years) =>
       `zasáhne ${n} z ${m} ${csPlural(m, ["úvěru", "úvěrů", "úvěrů"])} (refixace ${years})`,
     reachNone: "v okně šoku se žádný úvěr nerefixuje, takže bez vlivu",
+    unreadableRow:
+      "Nelze přečíst, proto je vynechán. Smažte ho před exportem: zálohu, která ho obsahuje, nepůjde obnovit.",
+    notCompared: (name) =>
+      `Vynecháno z porovnání: „${name}“ má hodnotu mimo povolený rozsah. Upravte ho nebo smažte v seznamu.`,
     sumValueShock: (v, atYear) =>
       `hodnota −${v}${atYear ? ` @ rok${atYear}` : ""}`,
     editTitle: (name) => `Upravit „${name}“`,
@@ -768,7 +772,7 @@ export const cs: Dictionary = {
       "Přičtou se k úrovni na zvolený počet let, pak se vrátí k trendu.",
     groupCrash: "Jednorázový propad cen",
     groupCrashHelp:
-      "Jednou sníží hodnotu všech nemovitostí ve zvoleném roce; růst pak pokračuje z nižší hodnoty.",
+      "Jednou sníží hodnotu všech nemovitostí ve zvoleném roce; růst pak pokračuje z nižší hodnoty. Pokles zadejte jako kladné číslo: 20 = hodnoty klesnou o 20 %.",
     defaultYears: (n) => `výchozí ${n}`,
     zeroIsStart: (date) => `0 = začátek projekce (${date})`,
     none: "žádný",

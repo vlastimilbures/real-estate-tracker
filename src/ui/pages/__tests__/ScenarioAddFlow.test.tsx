@@ -31,7 +31,6 @@ const saved = (id: string, name: string): Scenario => ({
   id,
   name,
   overrides: {},
-  createdAt: new Date(Date.UTC(2026, 0, 1)),
 });
 
 const addScenario = vi.fn(async (s: Scenario) => {

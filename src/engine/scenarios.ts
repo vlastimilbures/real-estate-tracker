@@ -25,7 +25,6 @@ export interface Scenario {
   id: string;
   name: string;
   overrides: ScenarioOverrides;
-  createdAt: Date;
 }
 
 /** Return a new Assumptions with the scenario's overrides applied. Pure. */

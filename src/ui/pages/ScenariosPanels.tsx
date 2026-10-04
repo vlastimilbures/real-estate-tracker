@@ -268,8 +268,12 @@ function PresetBar({
   );
 }
 
+/** A scenario as the list deletes it: a readable one, or a row the app cannot read. */
+type Deletable = { id: string; name: string };
+
 export function ScenarioListPanel({
   scenarios,
+  unreadable = [],
   baseOn,
   onToggleBase,
   selectedIds,
@@ -282,6 +286,8 @@ export function ScenarioListPanel({
   reachText,
 }: {
   scenarios: Scenario[];
+  /** Stored rows the app cannot read (ADR 0123): listed with only Delete. */
+  unreadable?: readonly Deletable[];
   baseOn: boolean;
   onToggleBase: () => void;
   selectedIds: string[];
@@ -290,13 +296,38 @@ export function ScenarioListPanel({
   busy: boolean;
   onEdit: (s: Scenario) => void;
   onDuplicate: (s: Scenario) => void;
-  onDelete: (s: Scenario) => void;
+  onDelete: (s: Deletable) => void;
   /** Which loans the scenario's rate shock hits (ADR 0100). */
   reachText?: (id: string) => string | undefined;
 }) {
   const t = useT();
-  // UX-020: Delete asks inline first, like every other delete in the app.
+  // UX-020: Delete asks inline first, like every other delete in the app. The same
+  // button and confirmation serve readable and unreadable rows (ADR 0123).
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const deleteButton = (item: Deletable) => (
+    <Button
+      size="sm"
+      variant="danger"
+      disabled={busy}
+      onClick={() => setConfirmingId(item.id)}
+    >
+      {t.common.delete}
+    </Button>
+  );
+  const confirmDelete = (item: Deletable) =>
+    confirmingId === item.id && (
+      <div className="scenario-confirm">
+        <DeleteConfirmRow
+          busy={busy}
+          message={t.scenarios.confirmDelete(item.name)}
+          onConfirm={() => {
+            setConfirmingId(null);
+            onDelete(item);
+          }}
+          onCancel={() => setConfirmingId(null)}
+        />
+      </div>
+    );
   return (
     <Panel
       title={t.scenarios.listTitle}
@@ -342,31 +373,24 @@ export function ScenarioListPanel({
               >
                 {t.scenarios.duplicate}
               </Button>
-              <Button
-                size="sm"
-                variant="danger"
-                disabled={busy}
-                onClick={() => setConfirmingId(s.id)}
-              >
-                {t.common.delete}
-              </Button>
+              {deleteButton(s)}
             </span>
-            {confirmingId === s.id && (
-              <div className="scenario-confirm">
-                <DeleteConfirmRow
-                  busy={busy}
-                  message={t.scenarios.confirmDelete(s.name)}
-                  onConfirm={() => {
-                    setConfirmingId(null);
-                    onDelete(s);
-                  }}
-                  onCancel={() => setConfirmingId(null)}
-                />
-              </div>
-            )}
+            {confirmDelete(s)}
           </li>
         ))}
-        {scenarios.length === 0 && (
+        {unreadable.map((u) => (
+          <li className="scenario-row" key={u.id}>
+            <span className="scenario-pick">
+              <span className="scenario-name">{u.name}</span>
+            </span>
+            <span className="scenario-summary">
+              {t.scenarios.unreadableRow}
+            </span>
+            <span className="scenario-actions">{deleteButton(u)}</span>
+            {confirmDelete(u)}
+          </li>
+        ))}
+        {scenarios.length === 0 && unreadable.length === 0 && (
           <li className="scenario-empty">{t.scenarios.emptyList}</li>
         )}
       </ul>

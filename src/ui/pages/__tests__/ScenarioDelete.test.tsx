@@ -14,10 +14,9 @@ const scenario: Scenario = {
   id: "s1",
   name: "Rates up",
   overrides: {},
-  createdAt: new Date(Date.UTC(2026, 0, 1)),
 };
 
-function renderList(onDelete: (s: Scenario) => void) {
+function renderList(onDelete: (s: { id: string; name: string }) => void) {
   render(
     <ScenarioListPanel
       scenarios={[scenario]}
@@ -67,5 +66,50 @@ describe("scenario delete confirmation (UX-020)", () => {
     expect(
       screen.queryByText(en.scenarios.confirmDelete("Rates up")),
     ).toBeNull();
+  });
+});
+
+// ADR 0123 (#107): a scenario row the app cannot read is listed with only a Delete,
+// behind the same confirmation, instead of blocking startup.
+describe("an unreadable scenario (ADR 0123)", () => {
+  function renderUnreadable(
+    onDelete: (s: { id: string; name: string }) => void,
+  ) {
+    render(
+      <ScenarioListPanel
+        scenarios={[]}
+        unreadable={[{ id: "bad", name: "Broken" }]}
+        baseOn
+        onToggleBase={() => undefined}
+        selectedIds={[]}
+        maxCompare={4}
+        onToggle={() => undefined}
+        busy={false}
+        onEdit={() => undefined}
+        onDuplicate={() => undefined}
+        onDelete={onDelete}
+      />,
+    );
+  }
+
+  it("is listed with why it is left out, and no compare tick", () => {
+    renderUnreadable(() => undefined);
+    const row = screen.getByText("Broken").closest("li")!;
+    expect(row.textContent).toContain(en.scenarios.unreadableRow);
+    expect(row.querySelector("input[type=checkbox]")).toBeNull();
+    expect(screen.queryByText(en.scenarios.emptyList)).toBeNull();
+  });
+
+  it("is deleted after the usual confirmation", async () => {
+    const onDelete = vi.fn();
+    renderUnreadable(onDelete);
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.delete }),
+    );
+    expect(onDelete).not.toHaveBeenCalled();
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.yesDelete }),
+    );
+    expect(onDelete).toHaveBeenCalledWith({ id: "bad", name: "Broken" });
   });
 });

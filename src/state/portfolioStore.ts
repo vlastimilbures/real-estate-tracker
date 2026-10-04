@@ -14,6 +14,7 @@ import type {
   MortgageBlock,
   HoldingCost,
   Scenario,
+  ScenarioOverrides,
 } from "../engine";
 import { migrate } from "../data/migrations";
 import { DataError, type DataErrorCode } from "../data/errors";
@@ -36,7 +37,7 @@ import type {
   CsvImportPreview,
   CsvImportReport,
 } from "../import/csvImport";
-import { checkInputRules } from "../import/inputRules";
+import { checkInputRules, scenarioRuleErrors } from "../import/inputRules";
 import {
   loadState,
   upsertScenario,
@@ -63,6 +64,7 @@ import {
   recordBackup,
   type BackupState,
   type SampleState,
+  type UnreadableScenario,
 } from "../data/repositories";
 import {
   valuationToRow,
@@ -131,6 +133,8 @@ interface PortfolioState {
   portfolio: Portfolio | null;
   assumptions: Assumptions | null;
   scenarios: Scenario[];
+  /** Stored scenario rows the app cannot read, listed for deletion (ADR 0123). */
+  unreadableScenarios: UnreadableScenario[];
   /** The first-run sample: still in place, and its banner dismissed (ADR 0094). */
   sample: SampleState;
   /** The last recorded export and whether the data changed since (ADR 0110). */
@@ -361,11 +365,21 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     if (errors.length > 0) throw new EngineInputError(errors);
   }
 
+  /** Engine rules a scenario's own overrides break on top of the saved assumptions
+   *  (ADR 0123): refused before writing, like the assumptions themselves. */
+  function checkScenario(overrides: ScenarioOverrides): void {
+    const a = get().assumptions;
+    if (!a) return;
+    const errors = scenarioRuleErrors(a, overrides);
+    if (errors.length > 0) throw new EngineInputError(errors);
+  }
+
   return {
     sql: null,
     portfolio: null,
     assumptions: null,
     scenarios: [],
+    unreadableScenarios: [],
     sample: { active: false, dismissed: false },
     backup: { lastAt: null, lastFile: null, changedSince: false },
     status: "idle",
@@ -398,9 +412,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       const sql = get().sql;
       if (!sql) return;
       // One point-in-time snapshot of every table (DR-134).
-      const { portfolio, assumptions, scenarios, sample, backup } =
-        await loadState(sql);
-      set({ portfolio, assumptions, scenarios, sample, backup, stale: false });
+      const state = await loadState(sql);
+      set({ ...state, stale: false });
     },
 
     clearError: () => set({ error: null }),
@@ -537,19 +550,28 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         await upsertAssumptions(sql, a);
       }),
 
-    addScenario: (s) => mutate((sql) => upsertScenario(sql, scenarioToRow(s))),
-    saveScenario: (s) => mutate((sql) => upsertScenario(sql, scenarioToRow(s))),
+    // An insert stamps created_at; an update keeps the stored one (ADR 0123).
+    addScenario: (s) =>
+      mutate(async (sql) => {
+        checkScenario(s.overrides);
+        await upsertScenario(sql, scenarioToRow(s, new Date()));
+      }),
+    saveScenario: (s) =>
+      mutate(async (sql) => {
+        checkScenario(s.overrides);
+        await upsertScenario(sql, scenarioToRow(s, new Date()));
+      }),
     duplicateScenario: (id, newId) =>
       mutate(async (sql) => {
         const src = get().scenarios.find((x) => x.id === id);
         if (!src) throw new Error("Scenario not found");
+        checkScenario(src.overrides);
         const copy: Scenario = {
           ...src,
           id: newId,
           name: `${src.name} (copy)`,
-          createdAt: new Date(),
         };
-        await upsertScenario(sql, scenarioToRow(copy));
+        await upsertScenario(sql, scenarioToRow(copy, new Date()));
       }),
     removeScenario: (id) => mutate((sql) => deleteScenario(sql, id)),
 

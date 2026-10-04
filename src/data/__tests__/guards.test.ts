@@ -164,12 +164,14 @@ describe("row guards", () => {
 
 describe("scenario overrides JSON (versioned)", () => {
   it("writes version 1", () => {
-    const row = scenarioToRow({
-      id: "s1",
-      name: "S",
-      overrides: { appreciationPa: rate("0.01") },
-      createdAt: isoDate("2026-01-05"),
-    });
+    const row = scenarioToRow(
+      {
+        id: "s1",
+        name: "S",
+        overrides: { appreciationPa: rate("0.01") },
+      },
+      isoDate("2026-01-05"),
+    );
     expect(JSON.parse(row.overrides)).toEqual({
       version: 1,
       appreciationPa: "0.01",

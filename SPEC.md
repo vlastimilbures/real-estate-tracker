@@ -138,7 +138,10 @@ ADR 0036). The codes: `INVALID_DATE`, `NON_FINITE_NUMBER`, `NEGATIVE_AMOUNT`,
 cost shares, value haircut and the acquisition cost rate 0–1 (ADR 0119); shock durations
 whole years ≥ 0; horizon a whole number ≥ 1; growth, indexation and inflation may be
 negative (finite only). The funding record's amounts must not be negative. The form, the CSV
-importer and backup restore reject the same rows with a translated message (ADR 0037).
+importer and backup restore reject the same rows with a translated message (ADR 0037). A
+scenario is checked the same way when it is saved: its overrides applied to the saved
+assumptions, counting only the fields it sets. Restore only needs a scenario to be readable
+(ADR 0123, §7).
 
 **Whole-number bounds.** On top of the engine rules, every user-data entry point — the
 forms, the CSV importer and backup restore — bounds the whole-number fields it takes
@@ -573,6 +576,16 @@ price crash**, each with a legend and one line of help (ADR 0102).
 
 - The "Base" scenario = the saved assumptions. Users create, edit, duplicate, and delete
   named scenarios (persisted in the `scenarios` table).
+- **Rules (ADR 0123):** adding, saving and duplicating a scenario run the engine's
+  assumption rules on its overrides applied to the saved assumptions, counting only the
+  fields the scenario sets (vacancy and the value crash 0–100 %, shock years whole and
+  ≥ 0, levels finite). A refused save writes nothing and shows the rule on its field
+  (Vacancy, Value crash) or above the buttons. A scenario that still breaks a rule (saved
+  before this check, or restored) is left out of the compare and named in a notice above
+  it. Restore only needs a scenario row to be readable, so every backup the app writes
+  restores. A stored scenario row the app cannot read is left out at startup and listed
+  with only a Delete; the rest of the app loads. The app never reads `created_at`; it only
+  orders the list (DR-181).
 - **Compare view**: pick 2–3 scenarios; show their KPIs and key charts side by side
   (net worth, net cash flow, LTV) on one screen, honouring the Nominal/Real lens. The
   Scenarios page currently hides the lens toggle (`showLens={false}` in
@@ -702,8 +715,9 @@ offline badge, and controls for language and theme.
      (`{ schemaVersion, exportedAt, tables: {...} }`) through a native save dialog; the file
      is written to a temporary name and moved into place. Restore opens a JSON backup (at
      most 20 MB), validates the schema version and every row (unknown columns, invalid
-     values and whole-number values outside the form bounds are refused before anything
-     changes), writes and verifies a safety backup first
+     values, whole-number values outside the form bounds, and scenario rows the app
+     cannot read are refused before anything changes, ADR 0123), writes and verifies a
+     safety backup first
      (ADR 0052), then replaces all tables in one transaction and reloads app state.
      The tab shows the date of the last successful export (or "No backup exported yet")
      and says to keep a copy off this Mac. A sidebar reminder appears when the data

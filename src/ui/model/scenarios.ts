@@ -2,12 +2,7 @@
 // the one-line human summary of a scenario's deltas vs base. Extracted from
 // Scenarios.tsx so they're unit-testable without mounting the component.
 import { fmtPct, fmtPp } from "../../lib/format";
-import {
-  rate,
-  type Assumptions,
-  type Scenario,
-  type ScenarioOverrides,
-} from "../../engine";
+import { rate, type Scenario, type ScenarioOverrides } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import { DEFAULT_SHOCK_YEARS } from "./scenarioForm";
 
@@ -15,13 +10,8 @@ import { DEFAULT_SHOCK_YEARS } from "./scenarioForm";
 /** The id of the synthetic Base scenario (the saved assumptions). */
 export const BASE_SCENARIO_ID = "base";
 
-export function baseScenario(a: Assumptions, t: Dictionary): Scenario {
-  return {
-    id: BASE_SCENARIO_ID,
-    name: t.scenarios.base,
-    overrides: {},
-    createdAt: a.baseDate,
-  };
+export function baseScenario(t: Dictionary): Scenario {
+  return { id: BASE_SCENARIO_ID, name: t.scenarios.base, overrides: {} };
 }
 
 /** One-line human summary of a scenario's deltas vs base (for the list). `reach` is

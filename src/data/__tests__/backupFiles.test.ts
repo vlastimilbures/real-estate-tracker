@@ -167,6 +167,30 @@ describe("confirmRestore — safety backup (DR-019, D-52)", () => {
     expect(await propertyCount()).toBe(3);
   });
 
+  // ADR 0123: a scenario row is read before the safety file, like every other row.
+  it("refuses a scenario it cannot read before writing any safety file", async () => {
+    const backup = await emptyBackup();
+    const bad = {
+      ...backup,
+      tables: {
+        ...backup.tables,
+        scenarios: [
+          {
+            id: "s1",
+            name: null,
+            overrides: '{"version":1}',
+            created_at: "2026-01-05T10:00:00.000Z",
+          },
+        ],
+      },
+    };
+    await expect(
+      confirmRestore(sql, bad, checkInputRules),
+    ).rejects.toBeInstanceOf(RestoreError);
+    expect(core.invoke).not.toHaveBeenCalled();
+    expect(await propertyCount()).toBe(3);
+  });
+
   it("writes the safety backup to the app's backups folder, then restores", async () => {
     const backup = await emptyBackup();
 

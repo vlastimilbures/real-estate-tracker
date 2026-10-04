@@ -935,3 +935,129 @@ describe("portfolioStore stale flag (UX-050, DR-086)", () => {
     ).toBe(true);
   });
 });
+
+// ADR 0123 (#107, #108): scenario writes.
+describe("portfolioStore scenario writes (ADR 0123)", () => {
+  const createdAt = async (id: string) =>
+    (
+      await usePortfolioStore.getState().sql!.select<{
+        created_at: string;
+      }>("SELECT created_at FROM scenarios WHERE id = ?", [id])
+    )[0]?.created_at;
+
+  it("an add stamps created_at; a save keeps it", async () => {
+    await usePortfolioStore.getState().init(openSeeded);
+    const s = { id: "s1", name: "Stress", overrides: {} };
+    expect(await usePortfolioStore.getState().addScenario(s)).toEqual({
+      ok: true,
+    });
+    const stamped = await createdAt("s1");
+    expect(stamped).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    await usePortfolioStore.getState().saveScenario({ ...s, name: "Renamed" });
+    expect(await createdAt("s1")).toBe(stamped);
+    expect(usePortfolioStore.getState().scenarios.map((x) => x.name)).toEqual([
+      "Renamed",
+    ]);
+  });
+});
+
+// ADR 0123 (#108): a scenario write runs the engine's assumption rules on the scenario's
+// own overrides before anything is written, like saveAssumptions (UX-047).
+describe("portfolioStore refuses a scenario that breaks an engine rule (ADR 0123)", () => {
+  const storedIds = async () =>
+    (
+      await usePortfolioStore
+        .getState()
+        .sql!.select<{ id: string }>("SELECT id FROM scenarios ORDER BY id")
+    ).map((r) => r.id);
+
+  it.each([
+    [
+      "a vacancy of 150 %",
+      { vacancyAllowance: rate("1.5") },
+      "RATE_OUT_OF_RANGE",
+      "vacancyAllowance",
+    ],
+    [
+      "a crash typed as −20 %",
+      { valueShock: { pct: rate("-0.2"), atYear: 0 } },
+      "SHOCK_OUT_OF_RANGE",
+      "valueShock",
+    ],
+  ] as const)(
+    "add and save refuse %s, nothing written",
+    async (_, overrides, code, field) => {
+      await usePortfolioStore.getState().init(openSeeded);
+      const refused = {
+        ok: false,
+        error: { kind: "input", errors: [{ code, field }] },
+      };
+      const store = () => usePortfolioStore.getState();
+      expect(
+        await store().addScenario({ id: "bad", name: "Bad", overrides }),
+      ).toMatchObject(refused);
+      expect(await storedIds()).toEqual([]);
+
+      await store().addScenario({ id: "s1", name: "Fine", overrides: {} });
+      expect(
+        await store().saveScenario({ id: "s1", name: "Fine", overrides }),
+      ).toMatchObject(refused);
+      expect(
+        await store().sql!.select("SELECT overrides FROM scenarios"),
+      ).toEqual([{ overrides: '{"version":1}' }]);
+    },
+  );
+
+  it("refuses to duplicate a stored scenario that breaks a rule", async () => {
+    await usePortfolioStore.getState().init(openSeeded);
+    await usePortfolioStore
+      .getState()
+      .sql!.execute(
+        "INSERT INTO scenarios (id, name, overrides, created_at) VALUES (?, ?, ?, ?)",
+        [
+          "old",
+          "Old",
+          '{"version":1,"vacancyAllowance":"1.5"}',
+          "2026-01-01T00:00:00.000Z",
+        ],
+      );
+    await usePortfolioStore.getState().reload();
+    const r = await usePortfolioStore
+      .getState()
+      .duplicateScenario("old", "copy");
+    expect(r).toMatchObject({
+      ok: false,
+      error: { kind: "input", errors: [{ code: "RATE_OUT_OF_RANGE" }] },
+    });
+    expect(await storedIds()).toEqual(["old"]);
+  });
+});
+
+// ADR 0123 (#107): one scenario row the app cannot read no longer blocks startup.
+describe("portfolioStore loads around an unreadable scenario (ADR 0123)", () => {
+  it("starts, lists the row as unreadable, and Delete removes it", async () => {
+    await usePortfolioStore.getState().init(async () => {
+      const sql = await openSeeded();
+      // Valid JSON (passes the CHECK) that the overrides reader refuses.
+      await sql.execute(
+        "INSERT INTO scenarios (id, name, overrides, created_at) VALUES (?, ?, ?, ?)",
+        [
+          "bad",
+          "Broken",
+          '{"version":1,"valueShock":{"pct":"x"}}',
+          "2026-01-01T00:00:00.000Z",
+        ],
+      );
+      return sql;
+    });
+    const store = () => usePortfolioStore.getState();
+    expect(store().status).toBe("ready");
+    expect(store().scenarios).toEqual([]);
+    expect(store().unreadableScenarios).toEqual([
+      { id: "bad", name: "Broken" },
+    ]);
+
+    expect(await store().removeScenario("bad")).toEqual({ ok: true });
+    expect(store().unreadableScenarios).toEqual([]);
+  });
+});

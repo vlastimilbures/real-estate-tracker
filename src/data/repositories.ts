@@ -394,11 +394,19 @@ export async function markDataChanged(sql: Sql): Promise<void> {
   );
 }
 
+/** A stored scenario row the app cannot read: left out and listed for deletion. */
+export interface UnreadableScenario {
+  id: string;
+  name: string;
+}
+
 /** Everything the app shows, as one point-in-time snapshot (DR-134). */
 export interface LoadedState {
   portfolio: Portfolio;
   assumptions: Assumptions;
   scenarios: Scenario[];
+  /** Scenario rows the app cannot read (ADR 0123): the rest of the app still loads. */
+  unreadableScenarios: UnreadableScenario[];
   sample: SampleState;
   backup: BackupState;
 }
@@ -417,12 +425,23 @@ export async function loadState(sql: Sql): Promise<LoadedState> {
   );
   const n = PORTFOLIO_QUERIES.length;
   const portfolio = toPortfolio(results.slice(0, n));
+  // A scenario is a what-if on top of the portfolio: one the app cannot read is left out
+  // and listed, not a reason to refuse the whole load (ADR 0123). Other tables stay strict.
+  const scenarios: Scenario[] = [];
+  const unreadableScenarios: UnreadableScenario[] = [];
+  for (const r of (results[n + 1] ?? []) as unknown as ScenarioRow[]) {
+    try {
+      scenarios.push(rowToScenario(r));
+    } catch (e) {
+      if (!(e instanceof DataError)) throw e;
+      unreadableScenarios.push({ id: r.id, name: String(r.name) });
+    }
+  }
   return {
     portfolio,
     assumptions: toAssumptions(results[n] ?? []),
-    scenarios: ((results[n + 1] ?? []) as unknown as ScenarioRow[]).map(
-      rowToScenario,
-    ),
+    scenarios,
+    unreadableScenarios,
     sample: toSample(results[n + 2] ?? [], portfolio),
     backup: toBackupState(results[n + 3] ?? []),
   };

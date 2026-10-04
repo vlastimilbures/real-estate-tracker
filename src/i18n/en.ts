@@ -775,6 +775,11 @@ export const en = {
     reachHits: (n: number, m: number, years: string) =>
       `hits ${n} of ${m} ${enPlural(m, ["loan", "loans"])} (refix ${years})`,
     reachNone: "no loan refixes inside the shock window, so no effect",
+    // A saved scenario that breaks an engine rule, or cannot be read (ADR 0123)
+    unreadableRow:
+      "Cannot be read, so it is left out. Delete it before you export: a backup that contains it cannot be restored.",
+    notCompared: (name: string) =>
+      `Left out of the comparison: “${name}” has a value outside its allowed range. Edit or delete it in the list.`,
     sumValueShock: (v: string, atYear: number) =>
       `value −${v}${atYear ? ` @ yr${atYear}` : ""}`,
     // Form
@@ -810,7 +815,7 @@ export const en = {
       "Added on top of the level for a number of years, then back to trend.",
     groupCrash: "One-off price crash",
     groupCrashHelp:
-      "Cuts all property values once, at the chosen year; growth resumes from the lower value.",
+      "Cuts all property values once, at the chosen year; growth resumes from the lower value. Enter the drop as a positive number: 20 = values fall by 20 %.",
     defaultYears: (n: number) => `default ${n}`,
     zeroIsStart: (date: string) => `0 = projection start (${date})`,
     none: "none",

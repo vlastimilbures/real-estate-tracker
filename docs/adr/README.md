@@ -147,6 +147,7 @@ Other IDs seen in code comments:
 | [0120](0120-tranche-on-recast-payment.md)         | A tranche on an instalment recast's payment                                            | #109                                   |
 | [0121](0121-first-positive-cash-flow-strict.md)   | The first cash-flow-positive year is strictly positive                                 | #102                                   |
 | [0122](0122-valuation-persists-past-valid-to.md)  | A valuation keeps governing after its "Valid to" date                                  | #110                                   |
+| [0123](0123-scenario-rules-every-entry-point.md)  | Scenario overrides meet the engine rules; restore needs them readable                  | #107, #108                             |
 
 ### Judgment calls and open questions
 

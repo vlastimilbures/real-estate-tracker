@@ -3,17 +3,15 @@
 import { describe, it, expect } from "vitest";
 import { baseScenario, findByName, summarize } from "../scenarios";
 import { en } from "../../../i18n/en";
-import { assumptions } from "../../../engine/__tests__/support/seed";
 import { rate } from "../../../engine";
 import type { Scenario } from "../../../engine";
 
 describe("baseScenario", () => {
-  it("has no overrides and is named/dated from the saved assumptions", () => {
-    const b = baseScenario(assumptions, en);
+  it("has no overrides and is named Base", () => {
+    const b = baseScenario(en);
     expect(b.id).toBe("base");
     expect(b.name).toBe(en.scenarios.base);
     expect(b.overrides).toEqual({});
-    expect(b.createdAt).toBe(assumptions.baseDate);
   });
 });
 
@@ -22,7 +20,6 @@ describe("summarize", () => {
     id: "s1",
     name: "Stress",
     overrides,
-    createdAt: assumptions.baseDate,
   });
 
   it("reports no overrides when the scenario has none", () => {
@@ -86,9 +83,8 @@ describe("findByName", () => {
       id: "a",
       name: "Rates +2 pp for 3y",
       overrides: {},
-      createdAt: assumptions.baseDate,
     },
-    { id: "b", name: "Stress", overrides: {}, createdAt: assumptions.baseDate },
+    { id: "b", name: "Stress", overrides: {} },
   ];
 
   it("finds a saved scenario with exactly that name", () => {

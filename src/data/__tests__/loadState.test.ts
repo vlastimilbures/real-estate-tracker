@@ -22,12 +22,14 @@ async function seeded() {
   await seedIfEmpty(db);
   await upsertScenario(
     db,
-    scenarioToRow({
-      id: "s-1",
-      name: "Shock",
-      overrides: { appreciationPa: rate("0.01") },
-      createdAt: isoDate("2026-06-08"),
-    }),
+    scenarioToRow(
+      {
+        id: "s-1",
+        name: "Shock",
+        overrides: { appreciationPa: rate("0.01") },
+      },
+      isoDate("2026-06-08"),
+    ),
   );
   return db;
 }
@@ -39,6 +41,7 @@ describe("loadState", () => {
       portfolio: await loadPortfolio(db),
       assumptions: await loadAssumptions(db),
       scenarios: await listScenarios(db),
+      unreadableScenarios: [],
       sample: { active: true, dismissed: false },
       backup: { lastAt: null, lastFile: null, changedSince: false },
     });
@@ -61,6 +64,33 @@ describe("loadState", () => {
     };
     await loadState(counting);
     expect({ snapshots, selects }).toEqual({ snapshots: 1, selects: 0 });
+  });
+
+  // ADR 0123 §6 (#107, G1-3-09): created_at only orders the list in SQL; the app does
+  // not read it, so a bad stored value can no longer stop the app from loading.
+  it("loads a scenario whose stored created_at is not a date", async () => {
+    const db = await seeded();
+    await db.execute("UPDATE scenarios SET created_at = '2026-13-45'");
+    const state = await loadState(db);
+    expect(state.scenarios.map((s) => s.id)).toEqual(["s-1"]);
+  });
+
+  // ADR 0123 §7 (#107): a scenario is a what-if, so one the app cannot read is left out
+  // and listed instead of failing the whole load.
+  it("leaves out a scenario row it cannot read and lists it", async () => {
+    const db = await seeded();
+    await db.execute(
+      "INSERT INTO scenarios (id, name, overrides, created_at) VALUES (?, ?, ?, ?)",
+      [
+        "bad",
+        "Broken",
+        '{"version":1,"valueShock":{"pct":"x"}}',
+        "2026-01-01T00:00:00.000Z",
+      ],
+    );
+    const state = await loadState(db);
+    expect(state.scenarios.map((s) => s.id)).toEqual(["s-1"]);
+    expect(state.unreadableScenarios).toEqual([{ id: "bad", name: "Broken" }]);
   });
 
   it("still fails without the assumptions row", async () => {

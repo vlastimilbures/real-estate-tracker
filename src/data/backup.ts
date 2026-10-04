@@ -38,6 +38,7 @@ import type {
   Assumptions,
   EngineValidationError,
   Portfolio,
+  Scenario,
   ValidationCode,
   ValidationEntity,
 } from "../engine";
@@ -56,7 +57,8 @@ export interface RangeProblem {
 /** The engine's input rules plus the whole-number bounds over the restored rows
  *  (assumptions absent ⇒ portfolio rules only). Injected by the caller: the data layer
  *  never calls engine functions; `checkInputRules` in src/import/inputRules.ts is the one
- *  the app uses. */
+ *  the app uses. Scenarios only need to be readable (ADR 0123): one that breaks a rule
+ *  restores and is handled like a saved one, so every backup the app writes restores. */
 export type InputRules = (
   portfolio: Portfolio,
   assumptions?: Assumptions,
@@ -305,7 +307,9 @@ type Tables = Record<BackupTable, Row[]>;
 
 /** Every table present, only known columns, scalar cells (DR-017); then each row
  *  brought to the current schema: missing added columns get their default and
- *  scenario overrides are rewritten to the versioned shape (what migration v8 does). */
+ *  scenario overrides are rewritten to the versioned shape (what migration v8 does).
+ *  A scenario's created_at must be non-empty text: the app never reads it, but it orders
+ *  the list and the column is NOT NULL (ADR 0123). */
 function upgradeRows(backup: BackupFile): {
   tables: Tables;
   issues: RestoreIssue[];
@@ -340,18 +344,22 @@ function upgradeRows(backup: BackupFile): {
     });
   }
   for (const s of tables.scenarios) {
+    const unreadable = (column: string) =>
+      issues.push({
+        table: "scenarios",
+        id: String(s.id),
+        column,
+        rule: "UNREADABLE_VALUE",
+      });
     try {
       s.overrides = serializeOverrides(
         parseOverrides(String(s.name), String(s.overrides)),
       );
     } catch {
-      issues.push({
-        table: "scenarios",
-        id: String(s.id),
-        column: "overrides",
-        rule: "UNREADABLE_VALUE",
-      });
+      unreadable("overrides");
     }
+    if (typeof s.created_at !== "string" || s.created_at.trim() === "")
+      unreadable("created_at");
   }
   return { tables, issues };
 }
@@ -459,11 +467,16 @@ export function prepareRestore(
       issues,
     ),
   };
-  readRows<ScenarioRow, unknown>(
+  // Scenarios only need to be readable (ADR 0123). A row upgradeRows already refused is
+  // not read again, so its overrides are not reported twice.
+  const flagged = new Set(
+    issues.filter((i) => i.table === "scenarios").map((i) => i.id),
+  );
+  readRows<ScenarioRow, Scenario>(
     "scenarios",
-    tables.scenarios,
+    tables.scenarios.filter((r) => !flagged.has(String(r.id))),
     rowToScenario,
-    [],
+    issues,
   );
   const assumptionRows = tables.assumptions;
   const [onlyAssumptions] = assumptionRows;

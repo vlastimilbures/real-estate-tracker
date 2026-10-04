@@ -211,6 +211,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Scenarios now follow the same rules as the assumptions (ADR 0123, #107, #108):
+  - The scenario form refuses a vacancy or a value crash outside 0–100 % and shows why on
+    the field. A crash is entered as a positive number (20 = values fall by 20 %); "-20"
+    used to be saved and then broke the whole Scenarios page until a restart.
+  - A saved scenario that breaks a rule is left out of the compare and named above it,
+    instead of breaking the page.
+  - A fast double Return in the scenario form no longer saves the scenario twice.
+- A scenario with an invalid creation date, restored from a hand-edited backup, stopped
+  the app from starting. The app no longer reads that date, and restore now checks that
+  every scenario in the backup can be read before it changes anything. A scenario that
+  breaks a rule still restores and is left out of the compare until it is fixed, so every
+  backup the app writes can be restored (ADR 0123, #107).
+- One scenario the app cannot read no longer stops startup: it is listed on the Scenarios
+  page with a Delete button (ADR 0123, #107).
 - A valuation's "Valid to" date no longer changes the property's value. Before, once it
   passed, the value fell back to the purchase price or to an older valuation. The latest
   valuation now keeps governing, grown by appreciation, until a newer one replaces it; in a

@@ -649,6 +649,29 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "44-scenario-form-errors",
+    desc: "New-scenario modal refusing a crash typed as −20 % (ADR 0123)",
+    route: "scenarios",
+    run: async (ux) => {
+      await boot(ux.page);
+      await nav(ux, "scenarios");
+      await ux.page
+        .getByRole("button", { name: ux.t.scenarios.newScenario })
+        .click();
+      const dialog = ux.page.getByRole("dialog");
+      await dialog.getByLabel(ux.t.scenarios.name).fill("Crash");
+      await dialog.getByLabel(ux.t.scenarios.fieldValueCrash).fill("-20");
+      await dialog
+        .locator(".modal-foot")
+        .getByRole("button", { name: ux.t.common.create })
+        .click();
+      const err = dialog.locator(".err").first();
+      await expect(err).toBeVisible();
+      await err.scrollIntoViewIfNeeded();
+      await ux.capture("44-scenario-form-errors", { fullPage: false });
+    },
+  },
+  {
     id: "50-import",
     desc: "Import page, nothing chosen",
     route: "import",

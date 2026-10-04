@@ -3,6 +3,7 @@
 // to every screen. Components consume this — they never call the engine inline.
 import { useMemo } from "react";
 import { usePortfolioStore } from "./portfolioStore";
+import { scenarioRuleErrors } from "../import/inputRules";
 import { todayUtc } from "../lib/today";
 import { timed } from "../lib/perf";
 import {
@@ -138,7 +139,10 @@ export interface ScenarioResult {
  * `applyScenario` folds the overrides (including the time-aware shock descriptors) onto
  * the assumptions; the engine reads them where relevant (CPI, the value-crash, the
  * amortization rate). Base = a scenario with empty overrides ⇒ identical to `useEngine`.
- * Returns one result per input scenario, in order, or null until the store has loaded.
+ * A scenario whose own overrides break an engine rule is left out instead of throwing
+ * during render (ADR 0123); the caller names it from the ids missing in the result.
+ * Returns one result per remaining scenario, in order, or null until the store has
+ * loaded.
  */
 export function useScenarioComparison(
   scenarios: Scenario[],
@@ -152,29 +156,32 @@ export function useScenarioComparison(
   const computed = useMemo(() => {
     if (!portfolio || !assumptions) return null;
     return timed("scenario-compare", () =>
-      scenarios.map((s) => {
-        const assn = applyScenario(assumptions, s.overrides);
-        const { projection, kpis } = projectionAndKpis(portfolio, assn);
-        return {
-          id: s.id,
-          projection,
-          realProjection: realProjection(projection, cpiIndex(assn)),
-          kpis,
-        };
-      }),
+      scenarios
+        .filter(
+          (s) => scenarioRuleErrors(assumptions, s.overrides).length === 0,
+        )
+        .map((s) => {
+          const assn = applyScenario(assumptions, s.overrides);
+          const { projection, kpis } = projectionAndKpis(portfolio, assn);
+          return {
+            id: s.id,
+            projection,
+            realProjection: realProjection(projection, cpiIndex(assn)),
+            kpis,
+          };
+        }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [portfolio, assumptions, key]);
   // Names are attached outside the engine memo: a rename shows at once without
-  // re-running the engine (DR-055).
+  // re-running the engine (DR-055). By id, since a left-out scenario shifts positions.
   const names = scenarios.map((s) => s.name).join("\u0000");
-  return useMemo(
-    () =>
-      computed &&
-      computed.map((r, i) => ({ ...r, name: scenarios[i]?.name ?? "" })),
+  return useMemo(() => {
+    if (!computed) return null;
+    const nameOf = new Map(scenarios.map((s) => [s.id, s.name]));
+    return computed.map((r) => ({ ...r, name: nameOf.get(r.id) ?? "" }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [computed, names],
-  );
+  }, [computed, names]);
 }
 
 /** Decimals → strings so a scenario's content can key the comparison memo. */

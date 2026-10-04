@@ -43,7 +43,12 @@ To open the folder, in Finder choose **Go → Go to Folder…** (⇧⌘G) and pa
 
 - **What it does.** **Settings → Backup & Restore → Choose backup file…** reads a JSON backup
   and **replaces all current data** with it. Backups from older versions are upgraded as they
-  are restored. Restore accepts only the app's JSON backups.
+  are restored. Restore accepts only the app's JSON backups. Every record is checked first,
+  scenarios included; a file with a record the app cannot use is refused and lists it, and
+  nothing changes.
+- **A scenario the app cannot read.** It is left out and listed on the Scenarios page with
+  a Delete button. Delete it before you export: a backup that contains it cannot be
+  restored.
 - **Safety copy first.** Before it changes anything, the app saves your current data as
   `backups/portfolio-before-restore-<date>.json`. If that copy cannot be saved, the restore
   does not start. If the restore itself fails, it is rolled back and your data is unchanged.

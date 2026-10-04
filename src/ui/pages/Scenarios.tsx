@@ -22,6 +22,7 @@ export function Scenarios() {
   const assumptions = usePortfolioStore((s) => s.assumptions);
   const portfolio = usePortfolioStore((s) => s.portfolio);
   const scenarios = usePortfolioStore((s) => s.scenarios);
+  const unreadable = usePortfolioStore((s) => s.unreadableScenarios);
   const addScenario = usePortfolioStore((s) => s.addScenario);
   const saveScenario = usePortfolioStore((s) => s.saveScenario);
   const duplicateScenario = usePortfolioStore((s) => s.duplicateScenario);
@@ -77,7 +78,7 @@ export function Scenarios() {
     );
   }
 
-  const base = baseScenario(assumptions, t);
+  const base = baseScenario(t);
   const selected: Scenario[] = [
     ...(baseOn ? [base] : []),
     ...scenarios.filter((s) => selectedIds.includes(s.id)),
@@ -98,9 +99,7 @@ export function Scenarios() {
       return;
     }
     const id = crypto.randomUUID();
-    const res = await run(() =>
-      addScenario({ id, name, overrides, createdAt: new Date() }),
-    );
+    const res = await run(() => addScenario({ id, name, overrides }));
     if (!res.ok) return;
     showToast(
       tick(id)
@@ -138,10 +137,12 @@ export function Scenarios() {
           onSubmit={async (s) => {
             const isNew = editing === "new";
             const res = isNew ? await addScenario(s) : await saveScenario(s);
-            if (!res.ok) return;
+            // A refusal stays in the form, on the field it names (ADR 0123).
+            if (!res.ok) return res.error;
             setEditing(null);
             if (isNew && !tick(s.id))
               showToast(t.scenarios.addedCompareFull(s.name, MAX_COMPARE));
+            return undefined;
           }}
         />
       )}
@@ -158,6 +159,7 @@ export function Scenarios() {
 
       <ScenarioListPanel
         scenarios={scenarios}
+        unreadable={unreadable}
         baseOn={baseOn}
         onToggleBase={toggleBase}
         selectedIds={selectedIds}
