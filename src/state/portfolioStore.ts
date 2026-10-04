@@ -324,7 +324,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       return { ok: true };
     } catch (e) {
       // A broken input rule is the user's to fix in the form, not a failure to log;
-      // it is thrown before anything is written, so there is nothing to reconcile.
+      // it is thrown before anything is written, so there is nothing to reload.
       if (e instanceof EngineInputError) {
         const error = toWriteError(e);
         set({ error });
@@ -534,11 +534,17 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       mutate((sql) => setPropertyActive(sql, id, active)),
     removeProperty: (id) => mutate((sql) => deleteProperty(sql, id)),
 
-    saveAssumptions: (a) =>
-      mutate(async (sql) => {
+    saveAssumptions: async (a) => {
+      const result = await mutate(async (sql) => {
         checkAssumptions(a);
         await upsertAssumptions(sql, a);
-      }),
+      });
+      // The row is `a`: show it even when the reload failed, so the Assumptions form,
+      // which rebuilds every field from the store, cannot save the old values back
+      // (ADR 0125).
+      if (result.ok && get().stale) set({ assumptions: a });
+      return result;
+    },
 
     // An insert stamps created_at; an update keeps the stored one (ADR 0123).
     addScenario: (s) =>

@@ -33,7 +33,6 @@ beforeEach(() => {
       portfolio,
       assumptions,
       status: "ready",
-      stale: false,
       saveAssumptions: save,
     });
   });
@@ -120,21 +119,6 @@ describe("Assumptions save row (ADR 0095)", () => {
     expect(input(en.assumptions.inflation).value).toBe("3");
     // The next edit is simply unsaved again.
     await userEvent.type(input(en.assumptions.inflation), "5");
-    expect(screen.getByText(en.common.unsavedChanges)).toBeTruthy();
-  });
-
-  it("a save whose reload failed keeps the saved values until Reload (ADR 0125)", async () => {
-    save.mockImplementation(() => {
-      usePortfolioStore.setState({ stale: true });
-      return Promise.resolve({ ok: true });
-    });
-    render(<AssumptionsPanel />);
-    await setField(en.assumptions.inflation, "3");
-    await userEvent.click(saveButton());
-    expect(screen.getByText(en.assumptions.saved)).toBeTruthy();
-    // The store still holds the old assumptions: the form must not fall back to them,
-    // or the next save would write them over the one that just landed.
-    expect(input(en.assumptions.inflation).value).toBe("3");
     expect(screen.getByText(en.common.unsavedChanges)).toBeTruthy();
   });
 });

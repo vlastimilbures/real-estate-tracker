@@ -214,8 +214,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A restore, Clear sample, Load sample or CSV import that went through but whose screen
   could not reload said it had failed and been rolled back, with the data unchanged. It now
   reports success, naming the safety backup, and the banner asks you to reload. A form save
-  in the same case closes instead of refusing a retry as a duplicate; the Assumptions page
-  keeps the saved values until the reload (ADR 0125, #106).
+  in the same case closes instead of refusing a retry as a duplicate, and the Assumptions
+  page shows the values just saved (ADR 0125, #106).
 - Scenarios now follow the same rules as the assumptions (ADR 0123, #107, #108):
   - The scenario form refuses a vacancy or a value crash outside 0–100 % and shows why on
     the field. A crash is entered as a positive number (20 = values fall by 20 %); "-20"

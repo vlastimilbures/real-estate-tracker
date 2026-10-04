@@ -61,8 +61,8 @@ To open the folder, in Finder choose **Go → Go to Folder…** (⇧⌘G) and pa
 - **Clear sample works the same way.** **Clear sample and start my own** first saves
   `backups/portfolio-before-clear-sample-<date>.json`; if that copy cannot be saved, nothing is
   deleted. If the screen cannot reload afterwards, the app still names that copy and a banner
-  asks you to reload. To undo it, restore that file as above. The restored sample shows as ordinary data,
-  without the sample banner.
+  asks you to reload. To undo it, restore that file as above. The restored sample shows as
+  ordinary data, without the sample banner.
 
 ## If an upgrade fails
 

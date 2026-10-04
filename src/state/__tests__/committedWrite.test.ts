@@ -106,5 +106,18 @@ describe("a committed whole-database action whose reload fails (ADR 0125)", () =
   ])("$action resolves and marks the screen stale", async ({ run }) => {
     await run();
     expect(store().stale).toBe(true);
+    expect(store().error).toBeNull();
+  });
+});
+
+describe("saved assumptions whose reload fails (ADR 0125)", () => {
+  it("are what the store shows, so the form cannot write the old ones back", async () => {
+    const next = { ...store().assumptions!, horizonYears: 25 };
+    usePortfolioStore.setState({ sql: reloadFails(db) });
+
+    expect(await store().saveAssumptions(next)).toEqual({ ok: true });
+
+    expect(store().stale).toBe(true);
+    expect(store().assumptions).toEqual(next);
   });
 });
