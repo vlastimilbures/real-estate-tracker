@@ -115,10 +115,10 @@ product's positioning changes.
 
 - **Mutation score.** The engine scores ~97.6 % under Stryker; the surviving mutants are
   mostly error-message text and boundary comparisons that no test pins. (DR-168)
-- **Bundle size.** Startup JavaScript is ~295 kB gzip (down from ~329 kB); every page but
-  the Dashboard and Properties, and the date picker calendar, load on first use. Most of the
-  rest is Recharts (~108 kB, which the Dashboard needs at start) and all three UI
-  dictionaries (~57 kB); loading only the active language would cut it further. (DR-009)
+- **Bundle size.** Startup JavaScript is ~234 kB gzip (down from ~329 kB); every page but
+  the Dashboard and Properties, and the date picker calendar, load on first use, and only
+  the active UI dictionary (~19–24 kB) loads before the first render. Most of the rest is
+  Recharts (~108 kB, which the Dashboard needs at start). (DR-009)
 - **Type tightening.** Plain and development loans share one type with optional fields
   (DR-051); a few helpers still take loose `Record<string, string>` drafts (DR-081); stored
   boolean flags are typed as numbers at the database boundary (DR-080); `D()` still accepts a
