@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { asOfBounds } from "../model/asOf";
 import {
   Pencil,
@@ -26,6 +26,8 @@ import { toChartRows } from "../model/chartData";
 import { ProjectionGrid } from "../components/ProjectionGrid";
 import { AsOfPicker } from "../components/AsOfPicker";
 import { SectionNav } from "../components/SectionNav";
+import { focusSection } from "../components/focusSection";
+import { PropertyDataCheckPanel } from "./PropertyDataCheck";
 import {
   PropertySnapshotTiles,
   HoldingCostsPanel,
@@ -46,6 +48,7 @@ import { slug } from "../../lib/slug";
 import { asOfBasis, asOfHint, propertyTilesForAsOf } from "../model/dashboard";
 import {
   amortizationColumns,
+  loanOutlook,
   loanWarningText,
   loanWarnings,
 } from "../model/propertyDetail";
@@ -68,6 +71,8 @@ export function PropertyDetail() {
   const mode = useUiStore((s) => s.mode);
   const asOf = useUiStore((s) => s.asOf);
   const setAsOf = useUiStore((s) => s.setAsOf);
+  const propertyTarget = useUiStore((s) => s.propertyTarget);
+  const clearPropertyTarget = useUiStore((s) => s.clearPropertyTarget);
   const amortizationOpen = useUiStore((s) => s.amortizationOpen);
   const setAmortizationOpen = useUiStore((s) => s.setAmortizationOpen);
   // Only the fields this page reads, so an unrelated store change (error banner,
@@ -99,10 +104,20 @@ export function PropertyDetail() {
   const [currentSection, setCurrentSection] = useSectionSpy(
     sections.map(sectionId),
   );
+  // A Dashboard data check link lands on its section, or opens the property form, once
+  // the page shows the property (ADR 0118). The form opens during render, as Properties'
+  // ⌘N request does; the effect moves focus and clears the request.
+  const property = store.portfolio?.properties.find((p) => p.id === propertyId);
+  const shown = property !== undefined;
+  if (propertyTarget === "edit" && shown && !editing) setEditing(true);
+  useEffect(() => {
+    if (!propertyTarget || !shown) return;
+    if (propertyTarget !== "edit") focusSection(sectionId(propertyTarget));
+    clearPropertyTarget();
+  }, [propertyTarget, shown, clearPropertyTarget]);
 
   // The engine result is null for an unknown id, so a stale or deleted selection lands
   // here too; the guard also narrows every field the page reads (DR-065).
-  const property = store.portfolio?.properties.find((p) => p.id === propertyId);
   const assumptions = store.assumptions;
   if (
     !propertyId ||
@@ -178,6 +193,9 @@ export function PropertyDetail() {
   const warnings = out
     ? loanWarnings(mortgages, baseDate, out.eventOutcomes)
     : [];
+  const outlook = out?.financing
+    ? loanOutlook(out.financing, mortgages, t.propertyDetail)
+    : null;
 
   const lens =
     mode === "real"
@@ -186,6 +204,7 @@ export function PropertyDetail() {
   const modeWord = mode === "real" ? t.common.realLower : t.common.nominalLower;
   const sectionLabel: Record<PropertySection, string> = {
     overview: t.propertyDetail.sectionOverview,
+    dataCheck: t.dataCheck.title,
     records: t.propertyDetail.sectionRecords,
     financing: t.propertyDetail.sectionFinancing,
     holding: t.propertyDetail.sectionHolding,
@@ -315,6 +334,21 @@ export function PropertyDetail() {
         </div>
       )}
 
+      {out && (
+        <div className="pd-section" id={sectionId("dataCheck")}>
+          <PropertyDataCheckPanel
+            property={property}
+            portfolio={store.portfolio}
+            asOf={out.asOf}
+            baseDate={baseDate}
+            resetRate={assumptions.postFixationResetRatePa}
+            onFix={(fix) =>
+              fix === "edit" ? setEditing(true) : focusSection(sectionId(fix))
+            }
+          />
+        </div>
+      )}
+
       {/* Editable child entities */}
       <div className="pd-section" id={sectionId("records")}>
         <ValuationsPanel propertyId={propertyId} rows={valuations} />
@@ -333,7 +367,7 @@ export function PropertyDetail() {
             {loanWarningText(t, w, assumptions.postFixationResetRatePa)}
           </div>
         ))}
-        {out?.loan && <LoanSummary loan={out.loan} />}
+        {outlook && <LoanSummary outlook={outlook} />}
       </div>
 
       <div className="pd-section" id={sectionId("holding")}>

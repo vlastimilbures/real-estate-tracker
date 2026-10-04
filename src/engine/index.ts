@@ -40,7 +40,7 @@ export {
   selectBlock,
 } from "./amortization";
 export { MAX_LOAN_TERM_MONTHS } from "./constants";
-export { scheduledPrincipal } from "./growth";
+export { basisDate, scheduledPrincipal } from "./growth";
 export {
   effectiveMaturity,
   propertySchedules,
@@ -48,11 +48,17 @@ export {
 } from "./schedule";
 
 // Snapshot, projection, KPIs, scenarios, validation
-export { portfolioSnapshot, propertySnapshot } from "./metrics";
+export {
+  leaseInForce,
+  portfolioSnapshot,
+  propertySnapshot,
+  selectValuation,
+} from "./metrics";
 export {
   cpiIndex,
   portfolioProjection,
   propertyProjection,
+  renewedLease,
 } from "./projections";
 export {
   cpiAt,
@@ -67,6 +73,7 @@ export { portfolioOutputs, projectionAndKpis } from "./outputs";
 export {
   debtResettingWithin,
   financingExposure,
+  leaseEndWithoutFollowOn,
   propertyLoanExposure,
   upcomingEvents,
 } from "./financing";
@@ -76,6 +83,7 @@ export type {
   FinancingExposure,
   FixationReset,
   LoanExposure,
+  PropertyLoan,
 } from "./financing";
 export type { PortfolioOutputs } from "./outputs";
 export { applyScenario } from "./scenarios";

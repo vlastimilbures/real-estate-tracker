@@ -331,6 +331,35 @@ export const cs: Dictionary = {
       "Data vycházejí z modelu podle zadaných úvěrů a nájmů. Nejsou to termíny banky; přesná data si ověřte u banky.",
   },
 
+  // Kontrola dat (ADR 0118).
+  dataCheck: {
+    title: "Kontrola dat",
+    summary: (attention, defaults) =>
+      `k řešení: ${attention} · výchozí hodnoty portfolia: ${defaults}`,
+    attentionTitle: "Vyžaduje pozornost",
+    attentionNone: "Nic nevyžaduje pozornost.",
+    defaultsTitle: "Výchozí hodnoty portfolia",
+    asOfNote: (date) => `Zkontrolováno k ${date}.`,
+    show: "Zobrazit kontrolu dat",
+    hide: "Skrýt kontrolu dat",
+    goTo: (section) => `Přejít do sekce ${section}`,
+    valuationStale: (age, date) =>
+      `Použité ocenění je staré ${age} (${date}). Hodnota, vlastní kapitál a LTV vycházejí z něj.`,
+    noValuation: (date, price) =>
+      `K ${date} neplatí žádné ocenění, proto se jako tržní hodnota použije kupní cena ${price}.`,
+    noLease: (date) =>
+      `K ${date} neplatí žádný nájem, proto se nájemné počítá jako 0.`,
+    leaseEnded: (date) =>
+      `Nájem skončil ${date} a další nájem není zadán. Snímek po tomto datu nepočítá žádné nájemné; projekce počítá s prodloužením tohoto nájmu.`,
+    leaseEnding: (date) =>
+      `Nájem končí ${date} a další nájem není zadán. Projekce počítá s prodloužením stávajícího nájmu.`,
+    growthBoth: "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    growthAppreciation: "Používá zhodnocení z předpokladů portfolia.",
+    growthRentIndexation: "Používá indexaci nájmu z předpokladů portfolia.",
+    costDefaults: (fields) =>
+      `Náklady na držbu používají výchozí hodnoty portfolia pro: ${fields}.`,
+  },
+
   properties: {
     title: "Nemovitosti",
     subtitle: (n) => `${n} ${csPlural(n, ["byt", "byty", "bytů"])}`,
@@ -497,8 +526,21 @@ export const cs: Dictionary = {
     loanPayoff: "Modelované doplacení",
     loanPayoffNone: "Splaceno",
     interestSaved: "Úrok ušetřený mimořádnými splátkami (nominálně)",
+    remainingTerm: "Zbývající doba splácení",
+    outlookResetsTitle: "Konce fixace podle úvěrových bloků",
+    colFixationEnd: "Konec fixace",
+    colBalanceAtReset: "Dluh při změně sazby (nominálně)",
+    colStatus: "Stav",
+    outlookStatus: {
+      nextReset: "Příští změna sazby",
+      upcoming: "Nadcházející",
+      passed: "Fixace skončila",
+      replaced: "Nahrazen pozdějším úvěrem",
+      repaid: "Splacen před koncem fixace",
+      floating: "Plovoucí sazba",
+    },
     loanSummaryNote:
-      "Datum doplacení je modelované, není to termín od banky. Ušetřený úrok porovnává úvěr s mimořádnými splátkami a bez nich, za celou zbývající dobu.",
+      "Data doplacení a konců fixace jsou modelovaná, nejsou to termíny od banky, a dluh při změně sazby je nominální. Ušetřený úrok porovnává úvěr s mimořádnými splátkami a bez nich, za celou zbývající dobu.",
     loanFrom: (date) => `Úvěr od ${date}:`,
     monthsCount: (n) => `${n} ${csPlural(n, ["měsíc", "měsíce", "měsíců"])}`,
     maturityPaysOff: (instalment, implied) =>
@@ -1061,6 +1103,9 @@ export const cs: Dictionary = {
     cardEffectiveTitle: "Záznamy mají platnost k datu",
     cardEffectiveBody:
       "Ocenění, nájmy a hypotéky mají vždy časové rozmezí. Pro kterýkoli den engine vybere ten platný — takže končící nájem předá štafetu dalšímu.",
+    cardDataCheckTitle: "Kontrola dat ukáže náhradní hodnoty",
+    cardDataCheckBody:
+      "Když je ocenění staré nebo chybí, neplatí žádný nájem, fixace skončila bez nových podmínek nebo nemovitost používá výchozí hodnoty portfolia, Kontrola dat na Přehledu a u každé nemovitosti to uvede, včetně toho, co to mění a kde to opravit.",
     snapshotTitle: "Ukazatele snímku",
     snapshotHint: "Aktuální obrázek nemovitosti nebo portfolia",
     snapshotProse:
@@ -1084,7 +1129,7 @@ export const cs: Dictionary = {
     mortgagesProse2Mid2: " na vaši sazbu po fixaci a splátka se ",
     mortgagesProse2Reamortizes: "znovu umoří",
     mortgagesProse2Post:
-      ", aby splatila zbývající zůstatek za zbývající dobu, takže se platba k tomu datu může zvýšit nebo snížit.",
+      ", aby splatila zbývající zůstatek za zbývající dobu, takže se platba k tomu datu může zvýšit nebo snížit. Výhled úvěru na stránce nemovitosti ukazuje u každého úvěrového bloku modelovaný konec fixace a dluh, který přejde na novou sazbu, a také zbývající dobu splácení.",
     mortgagesProse3:
       "Mimořádné splátky a změny splatnosti zadáte u každého úvěrového bloku v jeho formuláři. Mimořádná splátka k datu splatí jistinu navíc a buď sníží splátku, nebo zkrátí splatnost; poplatek se platí z vlastních prostředků a dluh nesnižuje. Změna splatnosti převede úvěr na nové datum splatnosti nebo novou splátku. Mimořádné splátky jsou vaše vlastní prostředky, mimo čistý cash flow a DSCR. Stránka nemovitosti ukazuje modelované doplacení a úrok, který mimořádné splátky ušetří za zbývající dobu úvěru, a upozorní, když je splátka vyšší než zůstatek nebo připadá po doplacení.",
     projectionTitle: "Projekce do horizontu",

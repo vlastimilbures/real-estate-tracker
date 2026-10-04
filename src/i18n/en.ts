@@ -354,6 +354,35 @@ export const en = {
       "Dates are modelled from the loans and leases you entered. They are not deadlines from your lender; check exact dates with your bank.",
   },
 
+  // Data check (ADR 0118).
+  dataCheck: {
+    title: "Data check",
+    summary: (attention: number, defaults: number) =>
+      `${attention} to review · ${defaults} on portfolio defaults`,
+    attentionTitle: "Needs attention",
+    attentionNone: "Nothing needs attention.",
+    defaultsTitle: "Using portfolio defaults",
+    asOfNote: (date: string) => `Checked as of ${date}.`,
+    show: "Show data check",
+    hide: "Hide data check",
+    goTo: (section: string) => `Go to ${section}`,
+    valuationStale: (age: string, date: string) =>
+      `The valuation in use is ${age} old (${date}). Value, equity and LTV rest on it.`,
+    noValuation: (date: string, price: string) =>
+      `No valuation is in force on ${date}, so the purchase price of ${price} stands in as the market value.`,
+    noLease: (date: string) =>
+      `No lease is in force on ${date}, so rent counts as 0.`,
+    leaseEnded: (date: string) =>
+      `The lease ended on ${date} and no next lease is entered. The snapshot counts no rent after that date; the projection assumes the lease is renewed.`,
+    leaseEnding: (date: string) =>
+      `The lease ends on ${date} and no next lease is entered. The projection assumes it is renewed.`,
+    growthBoth: "Uses the portfolio appreciation and rent indexation.",
+    growthAppreciation: "Uses the portfolio appreciation.",
+    growthRentIndexation: "Uses the portfolio rent indexation.",
+    costDefaults: (fields: string) =>
+      `Holding costs use the portfolio defaults for: ${fields}.`,
+  },
+
   properties: {
     title: "Properties",
     subtitle: (n: number) => `${n} ${enPlural(n, ["apartment", "apartments"])}`,
@@ -532,8 +561,22 @@ export const en = {
     loanPayoff: "Modelled payoff",
     loanPayoffNone: "Repaid",
     interestSaved: "Interest saved by prepayments (nominal)",
+    // ADR 0117: the remaining term and each block's reset.
+    remainingTerm: "Remaining term",
+    outlookResetsTitle: "Fixation resets by loan block",
+    colFixationEnd: "Fixation end",
+    colBalanceAtReset: "Debt at reset (nominal)",
+    colStatus: "Status",
+    outlookStatus: {
+      nextReset: "Next rate reset",
+      upcoming: "Upcoming",
+      passed: "Passed",
+      replaced: "Replaced by a later loan",
+      repaid: "Repaid before the reset",
+      floating: "Floating rate",
+    },
     loanSummaryNote:
-      "The payoff date is modelled, not a deadline from your lender. Interest saved compares the loan with and without every prepayment, over its whole remaining life.",
+      "The payoff and fixation dates are modelled, not deadlines from your lender, and balances at reset are nominal. Interest saved compares the loan with and without every prepayment, over its whole remaining life.",
     loanFrom: (date: string) => `Loan from ${date}:`,
     monthsCount: (n: number) => `${n} ${enPlural(n, ["month", "months"])}`,
     maturityPaysOff: (instalment: string, implied: string) =>
@@ -1108,6 +1151,9 @@ export const en = {
     cardEffectiveTitle: "Records are effective-dated",
     cardEffectiveBody:
       "Valuations, leases and mortgages each have a date range. For any day the engine picks the one in force — so an expiring lease hands over to the next.",
+    cardDataCheckTitle: "The data check shows the fallbacks",
+    cardDataCheckBody:
+      "When a valuation is old or missing, no lease is in force, a fixation ended without new terms, or a property uses the portfolio defaults, the Data check on the Dashboard and on each property says so, what it changes and where to fix it.",
     snapshotTitle: "Snapshot metrics",
     snapshotHint: "The current picture of a property or the portfolio",
     snapshotProse:
@@ -1131,7 +1177,7 @@ export const en = {
     mortgagesProse2Mid2: " to your post-fixation rate and the instalment ",
     mortgagesProse2Reamortizes: "re-amortizes",
     mortgagesProse2Post:
-      " to clear the remaining balance over the remaining term, so the payment can step up or down at that date.",
+      " to clear the remaining balance over the remaining term, so the payment can step up or down at that date. The property page's Loan outlook lists each loan block's modelled fixation end, the balance that moves to the new rate, and the loan's remaining term.",
     mortgagesProse3:
       "Prepayments and maturity changes are entered on each loan block, in its form. A prepayment repays extra principal on its date and either lowers the instalment or shortens the term; its fee is paid in cash and does not reduce the debt. A maturity change moves the loan to a new maturity date or a new instalment. Prepayments are your own cash, kept outside net cash flow and DSCR. The property page shows the modelled payoff and the interest the prepayments save over the loan's remaining life, and warns when one is larger than the balance or falls after payoff.",
     projectionTitle: "Projection to the horizon",

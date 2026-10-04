@@ -459,13 +459,16 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
 - **Fixation end** = `blockEndDate`. Its payment is still fixed (D-21), so the **balance at
   fixation end** is the end balance of grid month `fixationYears·12 − paymentOffset`, and the
   reset row is the next one. A 0-year (floating) block has no fixation end.
-- Status at as-of: **passed** (on or before as-of, incl. ADR 0030), **replaced** (a successor
-  starts on or before it, or in the same schedule month), **repaid** (no balance left by
-  then), else **upcoming**. A loan's **next fixation** is its earliest upcoming one.
+- Status at as-of, first match wins (ADR 0117): **replaced** (a successor starts on or before
+  it, or in the same schedule month), **repaid** (no balance left by then), **passed** (on or
+  before as-of, incl. ADR 0030), else **upcoming**. A loan's **next fixation** is its earliest
+  upcoming one.
 - **Debt resetting within N years** (`debtResettingWithin`) = Σ upcoming balances with the
   fixation end in (as-of, as-of + N years].
 - **Payoff** = due date of the schedule's last payment (modelled, not the contract maturity);
-  **remaining term** = schedule months from as-of to it.
+  **remaining term** = the schedule's payments due after as-of (ADR 0117).
+- **One property's loan** (`propertyLoanExposure`, ADR 0117) is the same view for the property
+  page, active or not: its exposure, its chain blocks' resets and the ids of the chain blocks.
 - **Upcoming events** (`upcomingEvents`) in (as-of, as-of + M months], sorted by date: fixation
   ends (with the balance), modelled payoffs, development completions, and the in-force
   lease's end when no later lease is entered.
@@ -650,6 +653,14 @@ offline badge, and controls for language and theme.
    date within the projection window) sets the snapshot date (§4.3). A compact **Financing &
    upcoming** panel (§4.7, ADR 0103) shows the next rate reset, the debt resetting within
    1/3/5 years, total interest and the next 12 months' events, each linking to its property.
+   A **Data check** panel (ADR 0118) lists, at the snapshot date, the inputs the engine
+   falls back on: under "Needs attention" a valuation more than 12 months old, no valuation
+   (purchase price used), a last lease that ended (no rent in the snapshot, renewed in the
+   projection), no lease in force (rent 0), a lease ending within 3 months with no next
+   lease, and a fixation that ended with no follow-on block; under "Using portfolio
+   defaults" the portfolio growth and blank holding-cost fields. Each row links to the
+   property section (or form) that fixes it. The panel opens when something needs
+   attention; a property not yet purchased has no findings.
 
 2. **Properties** — list with per-property summary and LTV/DSCR health bands; "+ Add property"
    button opens a form modal (name, address, type, size_m2, garage, purchase_date,
@@ -665,6 +676,12 @@ offline badge, and controls for language and theme.
    available here too. Two **Excel export** buttons save the projection and amortization
    schedule as `.xlsx` files. A **Deactivate / Activate** action takes the property out of
    (or back into) all projections and KPIs (§4.5), after confirmation when deactivating.
+   The Financing section's **Loan outlook** (ADR 0116, ADR 0117) shows the modelled payoff,
+   the remaining term and the interest prepayments save, then every loan block, oldest
+   first, with its fixation end, the nominal balance at reset and a status: next rate reset,
+   upcoming, passed, replaced by a later loan, repaid before the reset, or floating rate.
+   A section nav lists Overview, Data check (the property's own findings, ADR 0118),
+   Records, Financing, Holding costs, Projection and Amortization (ADR 0107).
 
 4. **Projections** — full year-by-year grid (per property + portfolio), nominal/real toggle,
    and an **Excel export** of the projection table.

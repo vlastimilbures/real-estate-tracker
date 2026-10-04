@@ -89,6 +89,9 @@ work still to do is in the [roadmap](roadmap.md).
 - **The snapshot does not renew it.** The Dashboard for today, or for a date close to the
   projection start, shows the rent of the lease in force on that date, without indexation,
   and no rent after the last lease ends.
+- **The Data check flags a lease end only when no later lease is entered** (ADR 0118). A gap
+  between two entered leases is not flagged until a date inside the gap, when the check shows
+  no lease in force.
 
 ## Dates: snapshot vs projection
 

@@ -3,6 +3,7 @@
 
 export type PropertySection =
   | "overview"
+  | "dataCheck"
   | "records"
   | "financing"
   | "holding"
@@ -10,14 +11,15 @@ export type PropertySection =
   | "amortization";
 
 /** The sections Property detail renders, in page order. Records, Financing and Holding
- *  costs are always there (they stay editable with invalid data); the rest need output. */
+ *  costs are always there (they stay editable with invalid data); the rest need output.
+ *  The Data check follows the Overview (ADR 0118). */
 export function propertySections(has: {
   overview: boolean;
   projection: boolean;
   amortization: boolean;
 }): PropertySection[] {
   return [
-    ...(has.overview ? (["overview"] as const) : []),
+    ...(has.overview ? (["overview", "dataCheck"] as const) : []),
     "records",
     "financing",
     "holding",

@@ -31,7 +31,7 @@ import type {
   FinancingExposure,
   IsoDate,
   LoanEventOutcome,
-  LoanExposure,
+  PropertyLoan,
   PropertySnapshot,
 } from "../engine";
 
@@ -244,8 +244,9 @@ export interface PropertyEngineOutput {
   schedule: AmortizationRow[];
   /** What the loan's prepayments and recasts did (ADR 0109, shown as warnings: ADR 0116). */
   eventOutcomes: LoanEventOutcome[];
-  /** Modelled payoff and interest saved (ADR 0116); null without a loan. */
-  loan: LoanExposure | null;
+  /** Modelled payoff, interest saved (ADR 0116) and each block's reset (ADR 0117); null
+   *  without a loan. */
+  financing: PropertyLoan | null;
 }
 
 /** Stored data that breaks an engine rule, reported instead of thrown (DR-146). */
@@ -293,7 +294,7 @@ export function usePropertyEngineResult(
         ),
         schedule,
         eventOutcomes: built?.eventOutcomes ?? [],
-        loan: propertyLoanExposure(
+        financing: propertyLoanExposure(
           portfolio.mortgages.filter((b) => b.propertyId === propertyId),
           assumptions,
           schedule,

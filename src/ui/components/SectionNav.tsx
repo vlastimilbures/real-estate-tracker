@@ -1,4 +1,5 @@
 import type { MouseEvent } from "react";
+import { focusSection } from "./focusSection";
 
 /**
  * In-page section links for a page's topbar (ADR 0107). A link scrolls its section under
@@ -19,13 +20,7 @@ export function SectionNav({
   function jump(e: MouseEvent<HTMLAnchorElement>, id: string) {
     // No hash change: the app's routes live in the store, not the URL.
     e.preventDefault();
-    const section = document.getElementById(id);
-    if (!section) return;
-    section
-      .querySelector<HTMLElement>("h2, h3")
-      ?.focus({ preventScroll: true });
-    section.scrollIntoView?.({ block: "start" });
-    onSelect(id);
+    if (focusSection(id)) onSelect(id);
   }
   return (
     <nav className="section-nav" aria-label={label}>

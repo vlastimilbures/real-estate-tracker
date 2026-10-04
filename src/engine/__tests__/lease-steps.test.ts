@@ -4,9 +4,9 @@
 // from its own turn-on year; the last lease keeps renting after its end date.
 // Seed baseDate 2026-06-07 ⇒ grid month m falls on the 7th: m = 1 → 2026-07-07,
 // m = 6 → 2026-12-07, m = 7 → 2027-01-07. Rent indexation 3 %.
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { isoDate } from "../dates";
-import { propertyProjection } from "../projections";
+import { propertyProjection, renewedLease } from "../projections";
 import { schedulesByProperty } from "../schedule";
 import type { Lease, Portfolio, Property } from "../types";
 import { money } from "../brands";
@@ -114,6 +114,26 @@ describe("lease steps and gaps on the month grid (DR-045)", () => {
     near(r[1]!, 3 * A, KC, "year 1");
     near(r[2]!, 6 * A * 1.03 + 6 * B, KC, "year 2");
     near(r[3]!, 12 * B * 1.03, KC, "year 3");
+  });
+});
+
+describe("renewedLease: the lease the projection keeps renting (ADR 0118)", () => {
+  const basis = assumptions.baseDate; // 2026-06-07
+
+  it("is the last lease when it ends on or after the basis date", () => {
+    const a = lease("a", "2025-01-01", A, "2026-06-30");
+    const b = lease("b", "2026-07-01", B, "2027-06-30");
+    expect(renewedLease([b, a], basis)).toBe(b);
+    const onBasis = lease("c", "2025-01-01", A, "2026-06-07");
+    expect(renewedLease([onBasis], basis)).toBe(onBasis);
+  });
+
+  it("is none for an open-ended last lease, one that ended before the basis, or no lease", () => {
+    expect(renewedLease([lease("a", "2025-01-01", A)], basis)).toBeUndefined();
+    expect(
+      renewedLease([lease("a", "2025-01-01", A, "2026-06-06")], basis),
+    ).toBeUndefined();
+    expect(renewedLease([], basis)).toBeUndefined();
   });
 });
 

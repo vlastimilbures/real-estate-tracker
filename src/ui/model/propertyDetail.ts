@@ -1,5 +1,6 @@
 // Pure presentation model for PropertyDetail's loan warnings (UX-054): instalment health,
 // contract maturity and an expired fixation, for every block from the one in force onward.
+// Also the Loan outlook: payoff, remaining term and each block's reset (ADR 0116, 0117).
 import {
   amortizationHealth,
   blockEndDate,
@@ -11,10 +12,12 @@ import {
 } from "../../engine";
 import type {
   AmortizationRow,
+  FixationReset,
   IsoDate,
   LoanEventIssue,
   LoanEventOutcome,
   MortgageBlock,
+  PropertyLoan,
   Rate,
 } from "../../engine";
 import type { XlsxColumn } from "./xlsxExport";
@@ -137,6 +140,87 @@ export function loanWarningText(
       return `${head} ${text}`;
     }
   }
+}
+
+/** A block's row status in the Loan outlook (ADR 0117). */
+export type LoanOutlookStatus =
+  FixationReset["status"] | "nextReset" | "floating";
+
+/** One loan block in the Loan outlook's reset table (ADR 0117). */
+export interface LoanOutlookRow {
+  blockId: string;
+  start: string;
+  /** "—" for a floating (0-year) block. */
+  fixationEnd: string;
+  /** The nominal balance after the fixation-end payment; upcoming resets only. */
+  balance: Decimal | null;
+  status: LoanOutlookStatus;
+  label: string;
+}
+
+export interface LoanOutlook {
+  payoff: string;
+  /** Null once repaid or with no payment left to count. */
+  remainingTerm: string | null;
+  interestSaved: Decimal | null;
+  resets: LoanOutlookRow[];
+}
+
+/** Months as "24 yrs 8 months", "25 yrs" or "7 months" (ADR 0117). */
+export function remainingTermText(
+  months: number,
+  d: Dictionary["propertyDetail"],
+): string {
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  if (years === 0) return d.monthsCount(rest);
+  return rest === 0 ? d.yrs(years) : `${d.yrs(years)} ${d.monthsCount(rest)}`;
+}
+
+/**
+ * The Loan outlook of a property's loan: payoff, remaining term, interest saved and every
+ * block oldest first with its fixation end, balance at reset and status (ADR 0117). A
+ * block outside the chain was replaced before baseDate; a chain block without a reset is
+ * floating.
+ */
+export function loanOutlook(
+  financing: PropertyLoan,
+  blocks: MortgageBlock[],
+  d: Dictionary["propertyDetail"],
+): LoanOutlook {
+  const { loan } = financing;
+  const resets = new Map(financing.resets.map((r) => [r.blockId, r]));
+  const chain = new Set(financing.chain);
+  const statusOf = (
+    b: MortgageBlock,
+    reset: FixationReset | undefined,
+  ): LoanOutlookStatus => {
+    if (!chain.has(b.id)) return "replaced";
+    if (!reset) return "floating";
+    return b.id === loan.nextFixation?.blockId ? "nextReset" : reset.status;
+  };
+  const rows = [...blocks]
+    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
+    .map((b): LoanOutlookRow => {
+      const reset = resets.get(b.id);
+      const status = statusOf(b, reset);
+      return {
+        blockId: b.id,
+        start: fmtDate(b.startDate),
+        fixationEnd: b.fixationYears === 0 ? "—" : fmtDate(blockEndDate(b)),
+        balance: reset?.status === "upcoming" ? reset.balance : null,
+        status,
+        label: d.outlookStatus[status],
+      };
+    });
+  return {
+    payoff: loan.payoffDate ? fmtDate(loan.payoffDate) : d.loanPayoffNone,
+    remainingTerm: loan.remainingMonths
+      ? remainingTermText(loan.remainingMonths, d)
+      : null,
+    interestSaved: loan.interestSaved,
+    resets: rows,
+  };
 }
 
 /**

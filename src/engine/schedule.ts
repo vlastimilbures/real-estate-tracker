@@ -1388,13 +1388,16 @@ export function effectiveMaturity(
   );
 }
 
-/** Grid month of the schedule's last payment, 0 if it has none. A prepayment counts:
- *  it can be the only cash of a month (ADR 0109). */
+/** True when the row pays something. A prepayment counts: it can be the only cash of a
+ *  month (ADR 0109). */
+export const hasPayment = (r: AmortizationRow): boolean =>
+  r.interest.plus(r.principal).plus(r.prepaid).greaterThan(ZERO);
+
+/** Grid month of the schedule's last payment, 0 if it has none. */
 export function lastPaymentMonth(rows: AmortizationRow[]): number {
   for (let i = rows.length - 1; i >= 0; i--) {
     const r = rows[i];
-    if (r?.interest.plus(r.principal).plus(r.prepaid).greaterThan(ZERO))
-      return i + 1;
+    if (r && hasPayment(r)) return i + 1;
   }
   return 0;
 }
