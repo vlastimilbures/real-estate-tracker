@@ -148,16 +148,10 @@ export function parseScenarioDraft(
   return { errors: errs, name: draft.name.trim(), overrides };
 }
 
-/** The form field of each engine field a scenario save can break from this form (ADR
- *  0123): the store checks a scenario with the engine's assumption rules, which name the
- *  override. The parser already bounds the shock and crash years. */
-const FORM_FIELD: Partial<Record<string, keyof ScenarioDraftFields>> = {
-  vacancyAllowance: "vacancyAllowance",
-  valueShock: "valueShockPct",
-};
-
-/** A refused save, split for the form: a rule on Vacancy or Value crash shows on that
- *  field in the engine's words; anything else shows above the buttons. */
+/** A refused save, split for the form (ADR 0123): the store checks a scenario with the
+ *  engine's assumption rules, which name the override. A rule on Vacancy or Value crash
+ *  (`valueShock`) shows on that field in the engine's words; anything else shows above
+ *  the buttons (the parser already bounds the shock and crash years). */
 export function scenarioWriteErrors(
   t: Dictionary,
   e: WriteError,
@@ -166,10 +160,9 @@ export function scenarioWriteErrors(
     e.kind === "input"
       ? {
           ...e,
-          errors: e.errors.map((x) => ({
-            ...x,
-            field: x.field === undefined ? undefined : FORM_FIELD[x.field],
-          })),
+          errors: e.errors.map((x) =>
+            x.field === "valueShock" ? { ...x, field: "valueShockPct" } : x,
+          ),
         }
       : e;
   return formWriteErrors(t, onForm, ["vacancyAllowance", "valueShockPct"]);
