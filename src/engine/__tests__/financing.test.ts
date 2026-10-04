@@ -394,6 +394,13 @@ describe("ADR 0117: replaced and repaid outrank passed", () => {
     const old = block({ id: "old", startDate: isoDate("2016-01-10") });
     expect(reset(at("2026-06-07", old), "old").status).toBe("passed");
   });
+
+  it("a fixation end before baseDate has passed, whatever the as-of", () => {
+    const old = block({ id: "old", startDate: isoDate("2016-01-10") });
+    const fx = at("2020-06-01", old);
+    expect(reset(fx, "old").status).toBe("passed");
+    expect(loan(fx, "p").nextFixation).toBeNull();
+  });
 });
 
 describe("ADR 0117: remaining term = payments due after as-of", () => {

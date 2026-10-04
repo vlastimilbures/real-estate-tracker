@@ -114,8 +114,9 @@ function resetStatus(
       drawMonth(next, ctx.baseDate) <= m)
   )
     return "replaced";
+  if (m <= 0) return "passed";
   const row = rows[m - 1];
-  if (m > 0 && (!row || row.endBalance.lessThanOrEqualTo(DEBT_FREE_EPSILON)))
+  if (!row || row.endBalance.lessThanOrEqualTo(DEBT_FREE_EPSILON))
     return "repaid";
   if (isOnOrBefore(fixationEnd, ctx.asOf)) return "passed";
   return "upcoming";
