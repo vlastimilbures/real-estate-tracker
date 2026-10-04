@@ -316,8 +316,44 @@ describe("D-37 data-integrity codes raise at every entry point", () => {
 });
 
 // D-38: the range codes raise too. Growth, indexation, inflation and shock deltas may be
-// negative (finiteness only).
+// negative, above −100 % (ADR 0128).
 const RANGE_CASES: [string, Partial<Assumptions>, EngineValidationError][] = [
+  [
+    "negative reset rate (ADR 0128)",
+    { postFixationResetRatePa: rate("-0.05") },
+    {
+      code: "RATE_OUT_OF_RANGE",
+      entity: "assumptions",
+      field: "postFixationResetRatePa",
+    },
+  ],
+  [
+    "inflation of −100 % (ADR 0128)",
+    { inflationPa: rate("-1") },
+    {
+      code: "GROWTH_OUT_OF_RANGE",
+      entity: "assumptions",
+      field: "inflationPa",
+    },
+  ],
+  [
+    "a rate shock below a zero rate (ADR 0128)",
+    { rateShock: { deltaPa: rate("-0.10"), durationYears: 5 } },
+    {
+      code: "SHOCKED_RATE_OUT_OF_RANGE",
+      entity: "assumptions",
+      field: "rateShock",
+    },
+  ],
+  [
+    "an inflation shock to −100 % or less (ADR 0128)",
+    { inflationShock: { deltaPa: rate("-1.2"), durationYears: 2 } },
+    {
+      code: "SHOCKED_INFLATION_OUT_OF_RANGE",
+      entity: "assumptions",
+      field: "inflationShock",
+    },
+  ],
   [
     "zero horizon",
     { horizonYears: 0 },

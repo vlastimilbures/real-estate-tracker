@@ -251,3 +251,109 @@ describe("validateInputs", () => {
     expect(codes(portfolio, assumptions, assumptions.baseDate)).toEqual([]);
   });
 });
+
+// ADR 0128 (#114): the reset rate within 0–1, growth above −1, the shocked reset rate and
+// inflation within the same bounds, a finite value crash.
+describe("assumption bounds (ADR 0128)", () => {
+  const errors = (x: Partial<Assumptions>, p: Portfolio = portfolio) =>
+    validateInputs(p, { ...assumptions, ...x });
+  const one = (code: ValidationCode, field: string) => [
+    { code, entity: "assumptions", field },
+  ];
+  const band = (deltaPa: string, durationYears = 3) => ({
+    deltaPa: rate(deltaPa),
+    durationYears,
+  });
+
+  it("reset rate: 0 and 1 pass, outside raises RATE_OUT_OF_RANGE", () => {
+    for (const v of ["0", "1"])
+      expect(errors({ postFixationResetRatePa: rate(v) }), v).toEqual([]);
+    for (const v of ["-0.0001", "1.0001"])
+      expect(errors({ postFixationResetRatePa: rate(v) }), v).toEqual(
+        one("RATE_OUT_OF_RANGE", "postFixationResetRatePa"),
+      );
+  });
+
+  it.each(["appreciationPa", "rentIndexationPa", "inflationPa"] as const)(
+    "%s: −0.9999 and large values pass, −1 or less raises GROWTH_OUT_OF_RANGE",
+    (field) => {
+      for (const v of ["-0.9999", "5"])
+        expect(errors({ [field]: rate(v) }), v).toEqual([]);
+      for (const v of ["-1", "-1.5"])
+        expect(errors({ [field]: rate(v) }), v).toEqual(
+          one("GROWTH_OUT_OF_RANGE", field),
+        );
+    },
+  );
+
+  it.each(["appreciationOverridePa", "rentIndexOverridePa"] as const)(
+    "property %s: −0.9999 passes, −1 raises GROWTH_OUT_OF_RANGE",
+    (field) => {
+      const [p0, ...ps] = portfolio.properties;
+      const withOverride = (v: string): Portfolio => ({
+        ...portfolio,
+        properties: [{ ...p0!, [field]: rate(v) }, ...ps],
+      });
+      expect(errors({}, withOverride("-0.9999"))).toEqual([]);
+      expect(errors({}, withOverride("-1"))).toEqual([
+        { code: "GROWTH_OUT_OF_RANGE", entity: "property", id: p0!.id, field },
+      ]);
+    },
+  );
+
+  it("reset rate plus rate shock: 0–1 passes, outside raises on rateShock", () => {
+    // Seed reset rate 4.5 %.
+    for (const d of ["-0.045", "0.955"])
+      expect(errors({ rateShock: band(d) }), d).toEqual([]);
+    for (const d of ["-0.0451", "0.9551"])
+      expect(errors({ rateShock: band(d) }), d).toEqual(
+        one("SHOCKED_RATE_OUT_OF_RANGE", "rateShock"),
+      );
+    // Whatever the duration (ADR 0128 §3).
+    expect(errors({ rateShock: band("-0.05", 0) })).toEqual(
+      one("SHOCKED_RATE_OUT_OF_RANGE", "rateShock"),
+    );
+  });
+
+  it("inflation plus inflation shock: above −1 passes, −1 or less raises on inflationShock", () => {
+    // Seed inflation 2.5 %.
+    expect(errors({ inflationShock: band("-1.0249") })).toEqual([]);
+    for (const d of ["-1.025", "-1.2"])
+      expect(errors({ inflationShock: band(d) }), d).toEqual(
+        one("SHOCKED_INFLATION_OUT_OF_RANGE", "inflationShock"),
+      );
+  });
+
+  it("an invalid base level reports only its own rule", () => {
+    expect(
+      errors({
+        postFixationResetRatePa: rate("1.5"),
+        rateShock: band("-0.2"),
+      }),
+    ).toEqual(one("RATE_OUT_OF_RANGE", "postFixationResetRatePa"));
+    expect(
+      errors({ inflationPa: rate("-1"), inflationShock: band("-0.5") }),
+    ).toEqual(one("GROWTH_OUT_OF_RANGE", "inflationPa"));
+    expect(
+      errors({ inflationPa: rate(NaN), inflationShock: band("-2") }),
+    ).toEqual(one("NON_FINITE_NUMBER", "inflationPa"));
+    // A non-finite delta or a bad duration is the shock's own rule, not a shocked level.
+    expect(errors({ rateShock: band("NaN") })).toEqual(
+      one("NON_FINITE_NUMBER", "rateShock"),
+    );
+    expect(errors({ rateShock: band("-1", -1) })).toEqual(
+      one("SHOCK_OUT_OF_RANGE", "rateShock"),
+    );
+    expect(errors({ inflationShock: band("-2", 1.5) })).toEqual(
+      one("SHOCK_OUT_OF_RANGE", "inflationShock"),
+    );
+  });
+
+  it("a non-finite value crash raises NON_FINITE_NUMBER", () => {
+    for (const v of [NaN, Infinity])
+      expect(
+        errors({ valueShock: { pct: rate(v), atYear: 0 } }),
+        String(v),
+      ).toEqual(one("NON_FINITE_NUMBER", "valueShock"));
+  });
+});

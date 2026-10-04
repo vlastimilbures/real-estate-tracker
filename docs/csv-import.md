@@ -42,20 +42,20 @@ An optional column may be left empty.
 
 ### properties.csv
 
-| Column                     | Required | Type         | Notes                                                                                    |
-| -------------------------- | -------- | ------------ | ---------------------------------------------------------------------------------------- |
-| `name`                     | yes      | Text         | Identifies the property (see [Matching](#matching-and-updates))                          |
-| `address`                  | no       | Text         |                                                                                          |
-| `type`                     | no       | Text         | Free text, e.g. `3 bedroom`                                                              |
-| `size_m2`                  | no       | Whole number | 1–10 000 m²                                                                              |
-| `garage`                   | no       | Yes/no       |                                                                                          |
-| `purchase_date`            | yes      | Date         |                                                                                          |
-| `purchase_price`           | yes      | Money        |                                                                                          |
-| `appreciation_override_pa` | no       | Fraction     | Yearly value growth for this property; may be negative. Empty ⇒ the Assumptions value    |
-| `rent_index_override_pa`   | no       | Fraction     | Yearly rent indexation for this property; may be negative. Empty ⇒ the Assumptions value |
-| `own_cash`                 | no       | Money        | All your own money paid in at the purchase. `0` = fully financed. Empty ⇒ unknown        |
-| `transaction_costs`        | no       | Money        | Broker, legal, cadastre, valuation and similar fees. Empty ⇒ unknown                     |
-| `initial_works`            | no       | Money        | Renovation or furnishing paid at or right after the purchase. Empty ⇒ unknown            |
+| Column                     | Required | Type         | Notes                                                                                                       |
+| -------------------------- | -------- | ------------ | ----------------------------------------------------------------------------------------------------------- |
+| `name`                     | yes      | Text         | Identifies the property (see [Matching](#matching-and-updates))                                             |
+| `address`                  | no       | Text         |                                                                                                             |
+| `type`                     | no       | Text         | Free text, e.g. `3 bedroom`                                                                                 |
+| `size_m2`                  | no       | Whole number | 1–10 000 m²                                                                                                 |
+| `garage`                   | no       | Yes/no       |                                                                                                             |
+| `purchase_date`            | yes      | Date         |                                                                                                             |
+| `purchase_price`           | yes      | Money        |                                                                                                             |
+| `appreciation_override_pa` | no       | Fraction     | Yearly value growth for this property; may be negative, above −1 (−100 %). Empty ⇒ the Assumptions value    |
+| `rent_index_override_pa`   | no       | Fraction     | Yearly rent indexation for this property; may be negative, above −1 (−100 %). Empty ⇒ the Assumptions value |
+| `own_cash`                 | no       | Money        | All your own money paid in at the purchase. `0` = fully financed. Empty ⇒ unknown                           |
+| `transaction_costs`        | no       | Money        | Broker, legal, cadastre, valuation and similar fees. Empty ⇒ unknown                                        |
+| `initial_works`            | no       | Money        | Renovation or furnishing paid at or right after the purchase. Empty ⇒ unknown                               |
 
 The last three columns record how the purchase was funded. Own cash covers your share of the
 price, the costs and the works together; the costs and works only break down what it paid
