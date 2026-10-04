@@ -4,29 +4,12 @@
 // round-trips the record; a negative amount is refused.
 import { describe, it, expect } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
-import { migrate, MIGRATIONS } from "../migrations";
-import { loadPortfolio } from "../repositories";
+import { schemaAt } from "./schemaAt";
+import { migrate } from "../migrations";
+import { insertProperty, loadPortfolio } from "../repositories";
 import { propertyToRow, rowToProperty, type PropertyRow } from "../mappers";
 import { DataError } from "../errors";
 import { isoDate, money, type Property } from "../../engine";
-
-/** A database at schema `version`, built from the historical migrations. */
-async function schemaAt(version: number): Promise<TestSql> {
-  const sql = openMemorySql();
-  await sql.execute(
-    "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL)",
-  );
-  for (const m of MIGRATIONS.filter((m) => m.version <= version)) {
-    for (const stmt of m.sql.split(";")) {
-      if (stmt.trim()) await sql.execute(stmt.trim());
-    }
-    await sql.execute(
-      "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
-      [m.version, m.name, "1970-01-01T00:00:00.000Z"],
-    );
-  }
-  return sql;
-}
 
 const property: Property = {
   id: "p1",
@@ -44,14 +27,6 @@ const funded: Property = {
     note: "Deposit from the sale of the old flat",
   },
 };
-
-async function insertRow(sql: TestSql, row: Record<string, unknown>) {
-  const cols = Object.keys(row);
-  await sql.execute(
-    `INSERT INTO properties (${cols.join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`,
-    Object.values(row),
-  );
-}
 
 async function migrated(): Promise<TestSql> {
   const sql = openMemorySql();
@@ -90,7 +65,7 @@ describe("migration v10 — acquisition funding (ADR 0119)", () => {
 
   it("stores and loads a full record, exactly", async () => {
     const sql = await migrated();
-    await insertRow(sql, { ...propertyToRow(funded) });
+    await insertProperty(sql, propertyToRow(funded));
     const [p] = (await loadPortfolio(sql)).properties;
     expect(text(p.funding)).toEqual({
       ownCash: "1500000.5",
@@ -106,7 +81,7 @@ describe("migration v10 — acquisition funding (ADR 0119)", () => {
     async (column) => {
       const sql = await migrated();
       await expect(
-        insertRow(sql, { ...propertyToRow(property), [column]: "-1" }),
+        insertProperty(sql, { ...propertyToRow(property), [column]: "-1" }),
       ).rejects.toThrow(`property_${column}_not_negative`);
       sql.db.close();
     },

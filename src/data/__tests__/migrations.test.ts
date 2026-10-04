@@ -4,6 +4,7 @@
 import { describe, it, expect } from "vitest";
 import DatabaseConstructor from "better-sqlite3";
 import { openMemorySql, type TestSql } from "./betterSqlite";
+import { schemaAt } from "./schemaAt";
 import { checkIntegrity, migrate, MIGRATIONS } from "../migrations";
 import { DataError } from "../errors";
 import { loadAssumptions, loadPortfolio, listScenarios } from "../repositories";
@@ -11,25 +12,6 @@ import type { Sql } from "../sql";
 
 const HEAD = Math.max(...MIGRATIONS.map((m) => m.version));
 const NOW = () => new Date(Date.UTC(2026, 9, 1, 7, 35, 12));
-
-/** A database at schema `version`, built from the historical migrations exactly as the
- *  pre-P5a runner applied them (statement by statement, no transaction). */
-async function schemaAt(version: number): Promise<TestSql> {
-  const sql = openMemorySql();
-  await sql.execute(
-    "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL)",
-  );
-  for (const m of MIGRATIONS.filter((m) => m.version <= version)) {
-    for (const stmt of m.sql.split(";")) {
-      if (stmt.trim()) await sql.execute(stmt.trim());
-    }
-    await sql.execute(
-      "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
-      [m.version, m.name, "1970-01-01T00:00:00.000Z"],
-    );
-  }
-  return sql;
-}
 
 /** Representative synthetic rows, using only the columns that exist at `version`. */
 async function fill(sql: Sql, version: number): Promise<void> {
