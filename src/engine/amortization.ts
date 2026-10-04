@@ -7,7 +7,6 @@ import {
   lastGridMonthOnOrBefore,
   isAfter,
   isOnOrBefore,
-  lastOnOrBefore,
   inForceOrUpcoming,
 } from "./dates";
 import type {
@@ -284,14 +283,6 @@ export function currentBalance(block: MortgageBlock, asOf: Date): Decimal {
     block.initialPrincipal,
   ).negated();
   return bal.isNegative() ? ZERO : bal;
-}
-
-/** Pick the active block for a property as of `asOf` (latest startDate ≤ asOf). */
-export function activeBlock(
-  blocks: MortgageBlock[],
-  asOf: Date,
-): MortgageBlock | undefined {
-  return lastOnOrBefore(blocks, asOf, (b) => b.startDate);
 }
 
 /**

@@ -120,9 +120,6 @@ function fullRun(portfolio: Portfolio, a: Assumptions) {
     snapshotsWithSchedules: asOfs.map((d) =>
       hashOrCodes(() => portfolioSnapshot(portfolio, a, d, schedules)),
     ),
-    snapshotsClosedForm: asOfs.map((d) =>
-      hashOrCodes(() => portfolioSnapshot(portfolio, a, d)),
-    ),
     propertyProjections: portfolio.properties.map((p) =>
       hash(propertyProjection(p, portfolio, a, schedules.get(p.id) ?? [])),
     ),
@@ -282,6 +279,8 @@ describe("P4a golden master (full precision)", () => {
     expect(out).toMatchSnapshot();
   });
 
+  // Name kept so the golden key stays stable: since DR-118 there is no closed form and
+  // the omitted schedule is built inside.
   it("snapshot per property at baseDate (closed form)", () => {
     expect(
       seed.properties.map((p) =>

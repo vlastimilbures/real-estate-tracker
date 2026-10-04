@@ -118,7 +118,7 @@ describe("As-of before baseDate // DR-015 (D-19)", () => {
       ),
     ).toEqual([ASOF_ERROR]);
   });
-  it("rejects it on the closed-form path (no schedule)", () => {
+  it("rejects it when the schedules are omitted", () => {
     expect(
       errorsOf(() => portfolioSnapshot(portfolio, assumptions, asOf)),
     ).toEqual([ASOF_ERROR]);

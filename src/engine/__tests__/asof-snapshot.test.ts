@@ -7,7 +7,7 @@ import { powYears } from "../../lib/money";
 import { edate, isoDate } from "../dates";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
-import { currentBalance, activeBlock } from "../amortization";
+import { currentBalance } from "../amortization";
 import { schedulesByProperty } from "../schedule";
 import { assumptions, portfolio } from "./support/seed";
 import type { MortgageBlock, Portfolio } from "../types";
@@ -72,16 +72,51 @@ describe("Regression: snapshot at baseDate == the parity targets", () => {
   it("DSCR 0.9113", () => near(snap.dscr!.toNumber(), 0.9113, RATIO, "dscr"));
 });
 
-describe("Today (no schedule arg) still amortizes via currentBalance fallback", () => {
-  // A date 1 year past baseDate: debt should be below the baseDate balance either way.
-  const base = portfolioSnapshot(portfolio, assumptions).totalDebt.toNumber();
-  const later = portfolioSnapshot(
-    portfolio,
-    assumptions,
-    atYears(1),
-  ).totalDebt.toNumber();
-  it("debt falls without a schedule (legacy path)", () =>
-    expect(later).toBeLessThan(base));
+describe("DR-118: an omitted schedule is built from the same inputs", () => {
+  // The snapshot always reads the schedule: a caller that passes none gets the rows the
+  // app passes. Year 5 is past Lipova's 2029 fixation reset.
+  for (const n of [0, 1, 5, 10]) {
+    it(`portfolio snapshot at year ${n}`, () =>
+      expect(portfolioSnapshot(portfolio, assumptions, atYears(n))).toEqual(
+        portfolioSnapshot(portfolio, assumptions, atYears(n), schedules),
+      ));
+  }
+
+  it("property snapshot after a past prepayment", () => {
+    const javorova = portfolio.properties.find((p) => p.id === "javorova");
+    if (!javorova) throw new Error("seed property missing");
+    const prepaid: Portfolio = {
+      ...portfolio,
+      mortgages: portfolio.mortgages.map((m) =>
+        m.propertyId === "javorova"
+          ? {
+              ...m,
+              prepayments: [
+                {
+                  date: isoDate("2024-01-20"),
+                  amount: money(200000),
+                  effect: "lowerInstalment" as const,
+                },
+              ],
+            }
+          : m,
+      ),
+    };
+    const rows = schedulesByProperty(
+      prepaid.mortgages,
+      ["javorova"],
+      assumptions,
+    ).get("javorova");
+    expect(propertySnapshot(javorova, prepaid, assumptions)).toEqual(
+      propertySnapshot(
+        javorova,
+        prepaid,
+        assumptions,
+        assumptions.baseDate,
+        rows,
+      ),
+    );
+  });
 });
 
 describe("Valuation re-anchor: a newer valuation overrides the modeled curve", () => {
@@ -203,10 +238,8 @@ describe("Fixation-aware debt at a future as-of date (Javorova resets 2031)", ()
     asOf,
     schedules,
   ).perProperty.find((p) => p.propertyId === "javorova")!.debt;
-  const block = activeBlock(
-    portfolio.mortgages.filter((b) => b.propertyId === "javorova"),
-    asOf,
-  )!;
+  // The seed's only Javorova block.
+  const block = portfolio.mortgages.find((b) => b.propertyId === "javorova")!;
   const naive = currentBalance(block, asOf);
   it("schedule-based debt differs from naive currentBalance", () => {
     expect(
@@ -306,51 +339,5 @@ describe("ADR 0116: the instalment after a month's prepayment", () => {
     expect(on(i - 1).annualDebtService.toFixed(6)).toBe(
       rows[i - 1].instalment.times(12).toFixed(6),
     );
-  });
-});
-
-describe("DR-118: the snapshot fallback without a schedule ignores events", () => {
-  // Known debt (DR-118, ADR 0116): the app always passes schedules, so this path is
-  // dead; it reads the closed-form balance and skips prepayments and recasts. Pinned
-  // as today's output until the path is removed.
-  it("shows the closed-form debt despite a past prepayment", () => {
-    const javorova = portfolio.properties.find((p) => p.id === "javorova");
-    const block = portfolio.mortgages.find((m) => m.propertyId === "javorova");
-    if (!javorova || !block) throw new Error("seed missing");
-    const prepaid: Portfolio = {
-      ...portfolio,
-      mortgages: portfolio.mortgages.map((m) =>
-        m === block
-          ? {
-              ...m,
-              prepayments: [
-                {
-                  date: isoDate("2024-01-20"),
-                  amount: money(200000),
-                  effect: "lowerInstalment" as const,
-                },
-              ],
-            }
-          : m,
-      ),
-    };
-    const snap = propertySnapshot(javorova, prepaid, assumptions);
-    expect(snap.debt.toFixed(6)).toBe(
-      currentBalance(block, assumptions.baseDate).toFixed(6),
-    );
-    // The schedule path, which the app uses, does see the prepayment.
-    const rows = schedulesByProperty(
-      prepaid.mortgages,
-      ["javorova"],
-      assumptions,
-    ).get("javorova");
-    const viaSchedule = propertySnapshot(
-      javorova,
-      prepaid,
-      assumptions,
-      assumptions.baseDate,
-      rows,
-    );
-    expect(viaSchedule.debt.lessThan(snap.debt)).toBe(true);
   });
 });
