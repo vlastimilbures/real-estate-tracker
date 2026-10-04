@@ -202,8 +202,8 @@ describe("useAllProjections / usePropertyEngine", () => {
     const plain = renderHook(() => usePropertyEngine("javorova", BASE)).result
       .current!;
     expect(plain.eventOutcomes).toEqual([]);
-    expect(plain.loan?.interestSaved).toBeNull();
-    const payoff = plain.loan?.payoffDate;
+    expect(plain.financing?.loan.interestSaved).toBeNull();
+    const payoff = plain.financing?.loan.payoffDate;
     expect(payoff).toBeTruthy();
     const withEvent = {
       ...portfolio,
@@ -230,8 +230,10 @@ describe("useAllProjections / usePropertyEngine", () => {
       kind: "prepayment",
       issue: null,
     });
-    expect(out.loan?.interestSaved?.greaterThan(0)).toBe(true);
-    expect(out.loan!.payoffDate!.getTime()).toBeLessThan(payoff!.getTime());
+    expect(out.financing?.loan.interestSaved?.greaterThan(0)).toBe(true);
+    expect(out.financing!.loan.payoffDate!.getTime()).toBeLessThan(
+      payoff!.getTime(),
+    );
   });
 
   it("clamps an as-of date before baseDate to baseDate (D-19)", () => {

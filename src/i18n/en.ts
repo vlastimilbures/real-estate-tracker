@@ -561,8 +561,22 @@ export const en = {
     loanPayoff: "Modelled payoff",
     loanPayoffNone: "Repaid",
     interestSaved: "Interest saved by prepayments (nominal)",
+    // ADR 0117: the remaining term and each block's reset.
+    remainingTerm: "Remaining term",
+    outlookResetsTitle: "Fixation resets by loan block",
+    colFixationEnd: "Fixation end",
+    colBalanceAtReset: "Debt at reset (nominal)",
+    colStatus: "Status",
+    outlookStatus: {
+      nextReset: "Next rate reset",
+      upcoming: "Upcoming",
+      passed: "Passed",
+      replaced: "Replaced by a later loan",
+      repaid: "Repaid before the reset",
+      floating: "Floating rate",
+    },
     loanSummaryNote:
-      "The payoff date is modelled, not a deadline from your lender. Interest saved compares the loan with and without every prepayment, over its whole remaining life.",
+      "The payoff and fixation dates are modelled, not deadlines from your lender, and balances at reset are nominal. Interest saved compares the loan with and without every prepayment, over its whole remaining life.",
     loanFrom: (date: string) => `Loan from ${date}:`,
     monthsCount: (n: number) => `${n} ${enPlural(n, ["month", "months"])}`,
     maturityPaysOff: (instalment: string, implied: string) =>
@@ -1163,7 +1177,7 @@ export const en = {
     mortgagesProse2Mid2: " to your post-fixation rate and the instalment ",
     mortgagesProse2Reamortizes: "re-amortizes",
     mortgagesProse2Post:
-      " to clear the remaining balance over the remaining term, so the payment can step up or down at that date.",
+      " to clear the remaining balance over the remaining term, so the payment can step up or down at that date. The property page's Loan outlook lists each loan block's modelled fixation end, the balance that moves to the new rate, and the loan's remaining term.",
     mortgagesProse3:
       "Prepayments and maturity changes are entered on each loan block, in its form. A prepayment repays extra principal on its date and either lowers the instalment or shortens the term; its fee is paid in cash and does not reduce the debt. A maturity change moves the loan to a new maturity date or a new instalment. Prepayments are your own cash, kept outside net cash flow and DSCR. The property page shows the modelled payoff and the interest the prepayments save over the loan's remaining life, and warns when one is larger than the balance or falls after payoff.",
     projectionTitle: "Projection to the horizon",

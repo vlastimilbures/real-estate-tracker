@@ -433,8 +433,9 @@
   font-feature-settings: var(--num);
   font-variant-numeric: tabular-nums;
 }
-.statlist .k:last-of-type,
-.statlist .v:last-of-type {
+/* The last row: every cell is a div, so :last-of-type matched only the value. */
+.statlist .k:nth-last-child(2),
+.statlist .v:last-child {
   border-bottom: none;
 }
 

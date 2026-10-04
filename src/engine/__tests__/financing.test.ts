@@ -15,7 +15,7 @@ import {
 import { schedulesByProperty } from "../schedule";
 import { portfolioOutputs } from "../outputs";
 import { impliedMaturity, mortgageBlock } from "../amortization";
-import { edate, isoDate, lastGridMonthOnOrBefore } from "../dates";
+import { edate, isoDate } from "../dates";
 import { money, rate } from "../brands";
 import { ZERO } from "../../lib/money";
 import type {
@@ -165,13 +165,10 @@ describe("ADR 0103: as-of after baseDate", () => {
     expect(loan(fx, "javorova").nextFixation?.blockId).toBe("m-javorova");
   });
 
-  it("remaining months count from the as-of grid month", () => {
-    const base = exposure(portfolio).fx;
-    const elapsed = lastGridMonthOnOrBefore(BASE_DATE, asOf);
-    expect(loan(fx, "dubova").remainingMonths).toBe(
-      (loan(base, "dubova").remainingMonths ?? 0) - elapsed,
-    );
-    expect(rowsOf(schedules, "dubova").length).toBeGreaterThan(elapsed);
+  it("remaining months count the payments due after as-of (ADR 0117)", () => {
+    // Dubova pays on the 12th until 12.12.2040: Feb 2029 to Dec 2040.
+    expect(loan(fx, "dubova").remainingMonths).toBe(143);
+    expect(rowsOf(schedules, "dubova").length).toBeGreaterThan(143);
   });
 
   it("the window starts at as-of", () => {
@@ -301,7 +298,7 @@ describe("ADR 0103: edge cases", () => {
           assumptions,
           rowsOf(schedules, loan.propertyId),
           BASE_DATE,
-        ),
+        )?.loan,
       ).toEqual(loan);
     }
     const ids = mixed.properties.map((x) => x.id);
@@ -314,9 +311,122 @@ describe("ADR 0103: edge cases", () => {
         assumptions,
         rowsOf(s, "inactive"),
         BASE_DATE,
-      )?.propertyId,
+      )?.loan.propertyId,
     ).toBe("inactive");
     expect(propertyLoanExposure([], assumptions, [], BASE_DATE)).toBeNull();
+  });
+
+  it("one property's resets are its Dashboard resets, its chain the blocks in order (ADR 0117)", () => {
+    const asOf = isoDate("2030-06-01");
+    const { fx, schedules } = exposure(mixedWithRefi, asOf);
+    for (const loan of fx.loans) {
+      const one = propertyLoanExposure(
+        mixedWithRefi.mortgages.filter((b) => b.propertyId === loan.propertyId),
+        assumptions,
+        rowsOf(schedules, loan.propertyId),
+        asOf,
+      );
+      expect(one?.resets).toEqual(
+        fx.resets.filter((r) => r.propertyId === loan.propertyId),
+      );
+    }
+    const javorova = mixedWithRefi.mortgages.filter(
+      (b) => b.propertyId === "javorova",
+    );
+    expect(
+      propertyLoanExposure(
+        javorova,
+        assumptions,
+        rowsOf(schedules, "javorova"),
+        asOf,
+      )?.chain,
+    ).toEqual(["m-javorova", "m-refi"]);
+    const old = block({ id: "old", startDate: isoDate("2018-03-10") });
+    const now = block({ id: "now", startDate: isoDate("2024-01-10") });
+    const later = block({ id: "later", startDate: isoDate("2029-01-10") });
+    const blocks = [later, old, now];
+    const rows = rowsOf(schedulesByProperty(blocks, ["p"], assumptions), "p");
+    expect(
+      propertyLoanExposure(blocks, assumptions, rows, BASE_DATE)?.chain,
+    ).toEqual(["now", "later"]);
+  });
+});
+
+describe("ADR 0117: replaced and repaid outrank passed", () => {
+  const at = (asOf: string, ...blocks: MortgageBlock[]) =>
+    exposure(single(...blocks), isoDate(asOf)).fx;
+
+  it("a block refinanced mid-fixation stays replaced after its fixation end", () => {
+    const a = block({ id: "a", startDate: isoDate("2024-01-10") });
+    const b = block({ id: "b", startDate: isoDate("2027-01-10") });
+    expect(reset(at("2026-06-07", a, b), "a").status).toBe("replaced");
+    expect(reset(at("2029-06-01", a, b), "a").status).toBe("replaced");
+  });
+
+  it("a refix on the fixation end stays replaced after it", () => {
+    const a = block({
+      id: "a",
+      startDate: isoDate("2024-01-10"),
+      fixationYears: 3,
+    });
+    const b = block({
+      id: "b",
+      startDate: isoDate("2027-01-10"),
+      fixationYears: 2,
+    });
+    expect(reset(at("2026-12-01", a, b), "a").status).toBe("replaced");
+    expect(reset(at("2027-06-01", a, b), "a").status).toBe("replaced");
+  });
+
+  it("a loan repaid before its fixation end stays repaid after it", () => {
+    const short = block({
+      id: "short",
+      startDate: isoDate("2025-06-10"),
+      initialPrincipal: money("300000"),
+    });
+    expect(reset(at("2026-06-07", short), "short").status).toBe("repaid");
+    expect(reset(at("2030-07-01", short), "short").status).toBe("repaid");
+  });
+
+  it("a reset that happened in the model has passed; one before baseDate too (ADR 0030)", () => {
+    expect(
+      reset(exposure(portfolio, isoDate("2031-06-01")).fx, "m-javorova").status,
+    ).toBe("passed");
+    const old = block({ id: "old", startDate: isoDate("2016-01-10") });
+    expect(reset(at("2026-06-07", old), "old").status).toBe("passed");
+  });
+
+  it("a fixation end before baseDate has passed, whatever the as-of", () => {
+    const old = block({ id: "old", startDate: isoDate("2016-01-10") });
+    const fx = at("2020-06-01", old);
+    expect(reset(fx, "old").status).toBe("passed");
+    expect(loan(fx, "p").nextFixation).toBeNull();
+  });
+});
+
+describe("ADR 0117: remaining term = payments due after as-of", () => {
+  const months = (asOf: string, pid: string, p: Portfolio = portfolio) =>
+    loan(exposure(p, isoDate(asOf)).fx, pid).remainingMonths;
+
+  it("a payment made this grid month no longer counts", () => {
+    // Javorova pays on the 17th until 17.05.2051; 17.06.2026 is paid by 06.07.2026.
+    expect(months("2026-06-07", "javorova")).toBe(300);
+    expect(months("2026-07-06", "javorova")).toBe(299);
+    // Dubova pays on the 12th until 12.12.2040: Oct 2026 to Dec 2040.
+    expect(months("2026-10-01", "dubova")).toBe(171);
+  });
+
+  it("is 0 from the payoff date on", () => {
+    expect(months("2051-05-16", "javorova")).toBe(1);
+    expect(months("2051-05-17", "javorova")).toBe(0);
+    expect(months("2051-05-20", "javorova")).toBe(0);
+  });
+
+  it("a loan not yet drawn counts its own payments only", () => {
+    // 3,000,000 at 4 % for 14,322.46 is a 30-year annuity: 360 payments from 10.02.2028,
+    // none in the 19 schedule months before the draw.
+    const later = block({ id: "later", startDate: isoDate("2028-01-10") });
+    expect(loan(exposure(single(later)).fx, "p").remainingMonths).toBe(360);
   });
 });
 

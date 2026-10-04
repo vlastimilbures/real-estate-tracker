@@ -413,6 +413,23 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "29b-property-loan-outlook",
+    desc: "Loan outlook: remaining term and each block's reset (ADR 0117)",
+    route: "property",
+    run: async (ux) => {
+      const d = ux.t.propertyDetail;
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      const p = panel(ux, d.loanSummaryTitle);
+      await expect(
+        p.getByRole("table", { name: d.outlookResetsTitle }),
+      ).toBeVisible();
+      await expect(p.getByText(d.remainingTerm, { exact: true })).toBeVisible();
+      await p.scrollIntoViewIfNeeded();
+      await ux.capture("29b-property-loan-outlook", { fullPage: false });
+    },
+  },
+  {
     id: "31-property-data-check",
     desc: "Property detail's Data check five years on, after the Overview; its link moves to Records (ADR 0118)",
     route: "property",

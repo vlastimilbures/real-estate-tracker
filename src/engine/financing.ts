@@ -17,6 +17,7 @@ import {
 import { leaseInForce } from "./metrics";
 import {
   blockChain,
+  hasPayment,
   lastPaymentMonth,
   paymentOffset,
   propertySchedule,
@@ -37,8 +38,8 @@ export interface FixationReset {
   fixationEnd: IsoDate;
   /** Grid month of the fixation-end payment (the reset row is the next one). */
   gridMonth: number;
-  /** passed: on/before as-of · replaced: a successor takes over first · repaid: no
-   *  balance left by then · upcoming: otherwise. */
+  /** First match wins (ADR 0117): replaced: a successor takes over first · repaid: no
+   *  balance left by then · passed: on/before as-of · upcoming: otherwise. */
   status: "upcoming" | "passed" | "replaced" | "repaid";
   /** Balance after the fixation-end payment; 0 unless upcoming. */
   balance: Decimal;
@@ -52,10 +53,19 @@ export interface LoanExposure {
   nextFixation: FixationReset | null;
   /** Due date of the schedule's last payment (the modelled payoff). */
   payoffDate: IsoDate | null;
-  /** Schedule months from as-of to the last payment (0 once repaid). */
+  /** Schedule payments due after as-of (0 once repaid, ADR 0117). */
   remainingMonths: number | null;
   /** Interest the loan's prepayments save to payoff; null without one (ADR 0116). */
   interestSaved: Decimal | null;
+}
+
+/** One property's loan view: its exposure, every chain block's reset, the chain (ADR 0117). */
+export interface PropertyLoan {
+  loan: LoanExposure;
+  /** The chain blocks' fixation ends, as on the Dashboard (none for a floating block). */
+  resets: FixationReset[];
+  /** Ids of the blocks driving the schedule, in order (D-27). */
+  chain: string[];
 }
 
 export interface FinancingExposure {
@@ -87,7 +97,11 @@ function inWindow(date: Date, asOf: Date, months: number): boolean {
   return isAfter(date, asOf) && isOnOrBefore(date, edate(asOf, months));
 }
 
-/** The status of a fixation end at grid month `m`, before the balance is read. */
+/**
+ * The status of a fixation end at grid month `m`, before the balance is read. Replaced
+ * and repaid outrank passed, so a past fixation end keeps its outcome (ADR 0117). One on
+ * or before baseDate (m ≤ 0) has no schedule row: passed unless replaced (ADR 0030).
+ */
 function resetStatus(
   fixationEnd: Date,
   m: number,
@@ -95,16 +109,17 @@ function resetStatus(
   rows: AmortizationRow[],
   ctx: { asOf: Date; baseDate: Date },
 ): FixationReset["status"] {
-  if (isOnOrBefore(fixationEnd, ctx.asOf)) return "passed";
   if (
     next &&
     (isOnOrBefore(next.startDate, fixationEnd) ||
       drawMonth(next, ctx.baseDate) <= m)
   )
     return "replaced";
+  if (m <= 0) return "passed";
   const row = rows[m - 1];
   if (!row || row.endBalance.lessThanOrEqualTo(DEBT_FREE_EPSILON))
     return "repaid";
+  if (isOnOrBefore(fixationEnd, ctx.asOf)) return "passed";
   return "upcoming";
 }
 
@@ -132,12 +147,51 @@ function chainResets(
   return resets;
 }
 
-/** Due date of grid month `m`'s payment on the block paying it (drawn before `m`). */
-function dueDate(chain: MortgageBlock[], m: number, baseDate: Date): IsoDate {
-  const payers = chain.filter((b) => drawMonth(b, baseDate) < m);
-  const owner = payers.at(-1) ?? chain[0];
-  if (!owner) throw new RangeError("dueDate: empty chain");
-  return edate(owner.startDate, paymentOffset(owner, baseDate) + m);
+/** A chain block as a payer: its first schedule month and payment offset, read once. */
+interface Payer {
+  start: Date;
+  draw: number;
+  offset: number;
+}
+
+const payersOf = (chain: MortgageBlock[], baseDate: Date): Payer[] =>
+  chain.map((b) => ({
+    start: b.startDate,
+    draw: drawMonth(b, baseDate),
+    offset: paymentOffset(b, baseDate),
+  }));
+
+/** Index of the block paying grid month `m`: the last one drawn before `m`, else the first. */
+function payerAt(payers: Payer[], m: number): number {
+  let k = 0;
+  for (const [j, p] of payers.entries()) if (p.draw < m) k = j;
+  return k;
+}
+
+/** Due date of grid month `m`'s payment on the block paying it. */
+function dueDate(payers: Payer[], m: number): IsoDate {
+  const p = payers[payerAt(payers, m)];
+  if (!p) throw new RangeError("dueDate: empty chain");
+  return edate(p.start, p.offset + m);
+}
+
+/**
+ * Schedule payments due after `asOf`, each on its paying block's own day (ADR 0117).
+ * A block's payment of grid month m is due on or before as-of when offset + m is at most
+ * the block's last month anniversary on or before as-of, so no row needs its own date.
+ */
+function paymentsDueAfter(
+  rows: AmortizationRow[],
+  payers: Payer[],
+  asOf: Date,
+): number {
+  const paidThrough = payers.map(
+    (p) => lastGridMonthOnOrBefore(p.start, asOf) - p.offset,
+  );
+  return rows.filter(
+    (r, i) =>
+      i + 1 > (paidThrough[payerAt(payers, i + 1)] ?? 0) && hasPayment(r),
+  ).length;
 }
 
 const interestOf = (rows: AmortizationRow[]): Decimal =>
@@ -164,44 +218,47 @@ export function prepaymentInterestSaved(
   );
 }
 
-/** One property's loan exposure and resets (none without a loan). */
+/** One property's loan exposure, resets and chain (none without a loan). */
 function propertyExposure(
   blocks: MortgageBlock[],
   rows: AmortizationRow[],
   ctx: { asOf: IsoDate; assumptions: Assumptions; baseDate: Date },
-): { loan: LoanExposure; resets: FixationReset[] } | null {
+): PropertyLoan | null {
   const chain = blockChain(blocks, ctx.baseDate);
   const first = chain[0];
   if (!first) return null;
   const resets = chainResets(chain, rows, ctx);
   const inForce = chain.filter((b) => isOnOrBefore(b.startDate, ctx.asOf));
   const last = lastPaymentMonth(rows);
-  const elapsed = lastGridMonthOnOrBefore(ctx.baseDate, ctx.asOf);
+  const payers = payersOf(chain, ctx.baseDate);
   return {
     loan: {
       propertyId: first.propertyId,
       blockId: (inForce.at(-1) ?? first).id,
       nextFixation: resets.find((r) => r.status === "upcoming") ?? null,
-      payoffDate: last > 0 ? dueDate(chain, last, ctx.baseDate) : null,
-      remainingMonths: last > 0 ? Math.max(0, last - elapsed) : null,
+      payoffDate: last > 0 ? dueDate(payers, last) : null,
+      remainingMonths:
+        last > 0 ? paymentsDueAfter(rows, payers, ctx.asOf) : null,
       interestSaved: prepaymentInterestSaved(blocks, ctx.assumptions, rows),
     },
     resets,
+    chain: chain.map((b) => b.id),
   };
 }
 
 /**
  * One property's loan as of `asOf` from its blocks and schedule `rows`, active or not:
- * the property page's view of its `financingExposure` entry (ADR 0116). Null without a loan.
+ * the property page's view of its `financingExposure` entry with its resets and chain
+ * (ADR 0116, ADR 0117). Null without a loan.
  */
 export function propertyLoanExposure(
   blocks: MortgageBlock[],
   assumptions: Assumptions,
   rows: AmortizationRow[],
   asOf: IsoDate,
-): LoanExposure | null {
+): PropertyLoan | null {
   const ctx = { asOf, assumptions, baseDate: assumptions.baseDate };
-  return propertyExposure(blocks, rows, ctx)?.loan ?? null;
+  return propertyExposure(blocks, rows, ctx);
 }
 
 /**

@@ -48,6 +48,7 @@ import { slug } from "../../lib/slug";
 import { asOfBasis, asOfHint, propertyTilesForAsOf } from "../model/dashboard";
 import {
   amortizationColumns,
+  loanOutlook,
   loanWarningText,
   loanWarnings,
 } from "../model/propertyDetail";
@@ -192,6 +193,9 @@ export function PropertyDetail() {
   const warnings = out
     ? loanWarnings(mortgages, baseDate, out.eventOutcomes)
     : [];
+  const outlook = out?.financing
+    ? loanOutlook(out.financing, mortgages, t.propertyDetail)
+    : null;
 
   const lens =
     mode === "real"
@@ -363,7 +367,7 @@ export function PropertyDetail() {
             {loanWarningText(t, w, assumptions.postFixationResetRatePa)}
           </div>
         ))}
-        {out?.loan && <LoanSummary loan={out.loan} />}
+        {outlook && <LoanSummary outlook={outlook} />}
       </div>
 
       <div className="pd-section" id={sectionId("holding")}>
