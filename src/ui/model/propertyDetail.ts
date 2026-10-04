@@ -12,6 +12,7 @@ import {
 } from "../../engine";
 import type {
   AmortizationRow,
+  FixationReset,
   IsoDate,
   LoanEventIssue,
   LoanEventOutcome,
@@ -143,7 +144,7 @@ export function loanWarningText(
 
 /** A block's row status in the Loan outlook (ADR 0117). */
 export type LoanOutlookStatus =
-  keyof Dictionary["propertyDetail"]["outlookStatus"];
+  FixationReset["status"] | "nextReset" | "floating";
 
 /** One loan block in the Loan outlook's reset table (ADR 0117). */
 export interface LoanOutlookRow {
@@ -190,8 +191,10 @@ export function loanOutlook(
   const { loan } = financing;
   const resets = new Map(financing.resets.map((r) => [r.blockId, r]));
   const chain = new Set(financing.chain);
-  const statusOf = (b: MortgageBlock): LoanOutlookStatus => {
-    const reset = resets.get(b.id);
+  const statusOf = (
+    b: MortgageBlock,
+    reset: FixationReset | undefined,
+  ): LoanOutlookStatus => {
     if (!chain.has(b.id)) return "replaced";
     if (!reset) return "floating";
     return b.id === loan.nextFixation?.blockId ? "nextReset" : reset.status;
@@ -200,12 +203,11 @@ export function loanOutlook(
     .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
     .map((b): LoanOutlookRow => {
       const reset = resets.get(b.id);
-      const status = statusOf(b);
-      const end = reset?.fixationEnd ?? blockEndDate(b);
+      const status = statusOf(b, reset);
       return {
         blockId: b.id,
         start: fmtDate(b.startDate),
-        fixationEnd: b.fixationYears === 0 ? "—" : fmtDate(end),
+        fixationEnd: b.fixationYears === 0 ? "—" : fmtDate(blockEndDate(b)),
         balance: reset?.status === "upcoming" ? reset.balance : null,
         status,
         label: d.outlookStatus[status],
