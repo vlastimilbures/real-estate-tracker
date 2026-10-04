@@ -18,13 +18,10 @@ import {
 import { en } from "../../../i18n/en";
 import { fmtCzk } from "../../../lib/format";
 import {
-  LEASE_ENDING_MONTHS,
-  VALUATION_STALE_MONTHS,
-  dataCheckLists,
+  dataCheckItems,
   findingFix,
   findingText,
   fixLabel,
-  portfolioDataCheck,
   propertyDataCheck,
   type DataFinding,
 } from "../dataCheck";
@@ -52,13 +49,6 @@ const without = (p: Portfolio, ids: string[]): Portfolio => ({
 });
 
 const javorovaPrice = portfolio.properties[0].purchasePrice;
-
-describe("data check thresholds (ADR 0118)", () => {
-  it("are 12 months for a valuation and 3 months for a lease end", () => {
-    expect(VALUATION_STALE_MONTHS).toBe(12);
-    expect(LEASE_ENDING_MONTHS).toBe(3);
-  });
-});
 
 describe("data check: valuation (ADR 0118)", () => {
   // Javorova's valuation is dated 2026-06-01.
@@ -345,28 +335,10 @@ describe("data check: scope (ADR 0118)", () => {
       "costDefaults",
     ]);
     expect(
-      portfolioDataCheck(future, BASE_DATE).map((c) => c.propertyId),
-    ).toEqual(["javorova", "lipova", "dubova"]);
-  });
-
-  it("the portfolio check leaves out inactive properties and those with no finding", () => {
-    const p: Portfolio = {
-      ...portfolio,
-      properties: portfolio.properties.map((x) =>
-        x.id === "dubova"
-          ? { ...x, active: false }
-          : x.id === "lipova"
-            ? {
-                ...x,
-                appreciationOverridePa: rate("0.05"),
-                rentIndexOverridePa: rate("0.02"),
-              }
-            : x,
+      dataCheckItems(future.properties, future, BASE_DATE).defaults.map(
+        (r) => r.propertyId,
       ),
-    };
-    expect(portfolioDataCheck(p, BASE_DATE).map((c) => c.propertyId)).toEqual([
-      "javorova",
-    ]);
+    ).toEqual(["javorova", "lipova", "dubova"]);
   });
 });
 
@@ -377,38 +349,31 @@ describe("data check: the sample portfolio (ADR 0118)", () => {
     rentIndexation: true,
   };
 
+  const items = (asOf: Date) =>
+    dataCheckItems(portfolio.properties, portfolio, asOf);
+
   it("at the base date nothing needs attention; all three use the portfolio growth", () => {
-    expect(portfolioDataCheck(portfolio, BASE_DATE)).toEqual([
-      {
-        propertyId: "javorova",
-        name: "Byt Javorova",
-        attention: [],
-        defaults: [growth],
-      },
-      {
-        propertyId: "lipova",
-        name: "Byt Lipova",
-        attention: [],
-        defaults: [growth],
-      },
-      {
-        propertyId: "dubova",
-        name: "Byt Dubova",
-        attention: [],
-        defaults: [growth],
-      },
-    ]);
+    expect(items(BASE_DATE)).toEqual({
+      attention: [],
+      defaults: [
+        { propertyId: "javorova", name: "Byt Javorova", finding: growth },
+        { propertyId: "lipova", name: "Byt Lipova", finding: growth },
+        { propertyId: "dubova", name: "Byt Dubova", finding: growth },
+      ],
+    });
   });
 
   it("five years on, every valuation is stale and every fixation has ended", () => {
-    const asOf = edate(BASE_DATE, 60); // 2031-06-07
-    const checks = portfolioDataCheck(portfolio, asOf);
-    expect(checks.map((c) => [c.propertyId, kinds(c.attention)])).toEqual([
-      ["javorova", ["valuationStale", "fixationEnded"]],
-      ["lipova", ["valuationStale", "fixationEnded"]],
-      ["dubova", ["valuationStale", "fixationEnded"]],
+    const { attention } = items(edate(BASE_DATE, 60)); // 2031-06-07
+    expect(attention.map((r) => `${r.propertyId}:${r.finding.kind}`)).toEqual([
+      "javorova:valuationStale",
+      "javorova:fixationEnded",
+      "lipova:valuationStale",
+      "lipova:fixationEnded",
+      "dubova:valuationStale",
+      "dubova:fixationEnded",
     ]);
-    expect(checks[0].attention[0]).toEqual({
+    expect(attention[0].finding).toEqual({
       kind: "valuationStale",
       validFrom: isoDate("2026-06-01"),
       months: 60,
@@ -506,9 +471,8 @@ describe("data check: text and fix (ADR 0118)", () => {
 describe("data check lists (ADR 0118)", () => {
   it("lists every property's findings by group, each row with its property", () => {
     const asOf = isoDate("2029-01-15");
-    const lists = dataCheckLists(
-      portfolioDataCheck(without(portfolio, ["v-dubova"]), asOf),
-    );
+    const p = without(portfolio, ["v-dubova"]);
+    const lists = dataCheckItems(p.properties, p, asOf);
     expect(
       lists.attention.map((r) => `${r.propertyId}:${r.finding.kind}`),
     ).toEqual([
@@ -522,6 +486,9 @@ describe("data check lists (ADR 0118)", () => {
       "Byt Lipova",
       "Byt Dubova",
     ]);
-    expect(dataCheckLists([])).toEqual({ attention: [], defaults: [] });
+    expect(dataCheckItems([], p, asOf)).toEqual({
+      attention: [],
+      defaults: [],
+    });
   });
 });

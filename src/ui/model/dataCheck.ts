@@ -26,9 +26,9 @@ import {
 import type { PropertySection } from "./sectionNav";
 
 /** A valuation more than this many months old at the as-of date is stale. */
-export const VALUATION_STALE_MONTHS = 12;
+const VALUATION_STALE_MONTHS = 12;
 /** A lease ending within this many months of the as-of date (that day included). */
-export const LEASE_ENDING_MONTHS = 3;
+const LEASE_ENDING_MONTHS = 3;
 
 /** The holding-cost fields, in the Holding costs form's order. */
 const COST_FIELDS = [
@@ -62,12 +62,6 @@ export type DataFinding =
 export interface DataCheck {
   attention: DataFinding[];
   defaults: DataFinding[];
-}
-
-/** A property's findings with the property's id and name. */
-export interface PropertyDataCheck extends DataCheck {
-  propertyId: string;
-  name: string;
 }
 
 /** One row of a Data check list: the finding and its property. */
@@ -142,31 +136,22 @@ function defaultsOf(
   return out;
 }
 
-/** The Dashboard's check: active properties with a finding, in portfolio order. */
-export function portfolioDataCheck(
+/** These properties' findings as the two lists, each row with its property, in the
+ *  given order (the Dashboard passes its active properties, Property detail its own). */
+export function dataCheckItems(
+  properties: Property[],
   portfolio: Portfolio,
   asOf: Date,
-): PropertyDataCheck[] {
-  return portfolio.properties
-    .filter((p) => p.active !== false)
-    .map((p) => ({
-      propertyId: p.id,
-      name: p.name,
-      ...propertyDataCheck(p, portfolio, asOf),
-    }))
-    .filter((c) => c.attention.length + c.defaults.length > 0);
-}
-
-/** The checks as the two lists, each row with its property, in the given order. */
-export function dataCheckLists(checks: PropertyDataCheck[]): {
-  attention: DataCheckItem[];
-  defaults: DataCheckItem[];
-} {
-  const rows = (group: "attention" | "defaults") =>
-    checks.flatMap((c) =>
-      c[group].map((finding) => ({
-        propertyId: c.propertyId,
-        name: c.name,
+): { attention: DataCheckItem[]; defaults: DataCheckItem[] } {
+  const checks = properties.map((p) => ({
+    p,
+    check: propertyDataCheck(p, portfolio, asOf),
+  }));
+  const rows = (group: keyof DataCheck) =>
+    checks.flatMap(({ p, check }) =>
+      check[group].map((finding) => ({
+        propertyId: p.id,
+        name: p.name,
         finding,
       })),
     );

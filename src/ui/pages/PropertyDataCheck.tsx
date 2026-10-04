@@ -5,11 +5,7 @@ import { fmtDate } from "../../lib/format";
 import { DataCheckList } from "../components/DataCheckList";
 import { Panel } from "../components/primitives";
 import { useT } from "../hooks/useT";
-import {
-  dataCheckLists,
-  propertyDataCheck,
-  type DataCheckFix,
-} from "../model/dataCheck";
+import { dataCheckItems, type DataCheckFix } from "../model/dataCheck";
 
 export function PropertyDataCheckPanel({
   property,
@@ -26,13 +22,7 @@ export function PropertyDataCheckPanel({
 }) {
   const t = useT();
   const d = t.dataCheck;
-  const { attention, defaults } = dataCheckLists([
-    {
-      propertyId: property.id,
-      name: property.name,
-      ...propertyDataCheck(property, portfolio, asOf),
-    },
-  ]);
+  const { attention, defaults } = dataCheckItems([property], portfolio, asOf);
   return (
     <Panel title={d.title} hint={d.summary(attention.length, defaults.length)}>
       <DataCheckList

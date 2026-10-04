@@ -78,6 +78,20 @@ describe("Data check panel (ADR 0118)", () => {
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
   });
 
+  it("leaves out inactive properties, as the Dashboard's totals do", () => {
+    renderPanel(
+      {
+        ...portfolio,
+        properties: portfolio.properties.map((p) =>
+          p.id === "dubova" ? { ...p, active: false } : p,
+        ),
+      },
+      edate(BASE_DATE, 60),
+    );
+    expect(screen.getByText(d.summary(4, 2))).toBeTruthy();
+    expect(screen.queryByText("Byt Dubova:")).toBeNull();
+  });
+
   it("no finding: no toggle, nothing needs attention", () => {
     const own: Portfolio = {
       ...portfolio,

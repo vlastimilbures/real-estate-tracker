@@ -106,9 +106,8 @@ export function PropertyDetail() {
   // A Dashboard data check link lands on its section, or opens the property form, once
   // the page shows the property (ADR 0118). The form opens during render, as Properties'
   // ⌘N request does; the effect moves focus and clears the request.
-  const shown = Boolean(
-    store.portfolio?.properties.some((p) => p.id === propertyId),
-  );
+  const property = store.portfolio?.properties.find((p) => p.id === propertyId);
+  const shown = property !== undefined;
   if (propertyTarget === "edit" && shown && !editing) setEditing(true);
   useEffect(() => {
     if (!propertyTarget || !shown) return;
@@ -118,7 +117,6 @@ export function PropertyDetail() {
 
   // The engine result is null for an unknown id, so a stale or deleted selection lands
   // here too; the guard also narrows every field the page reads (DR-065).
-  const property = store.portfolio?.properties.find((p) => p.id === propertyId);
   const assumptions = store.assumptions;
   if (
     !propertyId ||

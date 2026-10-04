@@ -9,11 +9,7 @@ import { useUiStore } from "../../state/uiStore";
 import { DataCheckList } from "../components/DataCheckList";
 import { Button, Panel } from "../components/primitives";
 import { useT } from "../hooks/useT";
-import {
-  dataCheckLists,
-  portfolioDataCheck,
-  type DataCheckFix,
-} from "../model/dataCheck";
+import { dataCheckItems, type DataCheckFix } from "../model/dataCheck";
 
 export function DataCheckPanel({
   portfolio,
@@ -33,8 +29,11 @@ export function DataCheckPanel({
   const bodyId = useId();
   const choice = useUiStore((s) => s.dataCheckOpen);
   const setOpen = useUiStore((s) => s.setDataCheckOpen);
-  const { attention, defaults } = dataCheckLists(
-    portfolioDataCheck(portfolio, asOf),
+  // Inactive properties are left out, as from the Dashboard's totals.
+  const { attention, defaults } = dataCheckItems(
+    portfolio.properties.filter((p) => p.active !== false),
+    portfolio,
+    asOf,
   );
   const empty = attention.length + defaults.length === 0;
   const open = !empty && (choice ?? attention.length > 0);
