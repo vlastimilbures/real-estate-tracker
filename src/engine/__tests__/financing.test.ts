@@ -300,7 +300,7 @@ describe("ADR 0103: edge cases", () => {
           assumptions,
           rowsOf(schedules, loan.propertyId),
           BASE_DATE,
-        ),
+        )?.loan,
       ).toEqual(loan);
     }
     const ids = mixed.properties.map((x) => x.id);
@@ -313,9 +313,44 @@ describe("ADR 0103: edge cases", () => {
         assumptions,
         rowsOf(s, "inactive"),
         BASE_DATE,
-      )?.propertyId,
+      )?.loan.propertyId,
     ).toBe("inactive");
     expect(propertyLoanExposure([], assumptions, [], BASE_DATE)).toBeNull();
+  });
+
+  it("one property's resets are its Dashboard resets, its chain the blocks in order (ADR 0117)", () => {
+    const asOf = isoDate("2030-06-01");
+    const { fx, schedules } = exposure(mixedWithRefi, asOf);
+    for (const loan of fx.loans) {
+      const one = propertyLoanExposure(
+        mixedWithRefi.mortgages.filter((b) => b.propertyId === loan.propertyId),
+        assumptions,
+        rowsOf(schedules, loan.propertyId),
+        asOf,
+      );
+      expect(one?.resets).toEqual(
+        fx.resets.filter((r) => r.propertyId === loan.propertyId),
+      );
+    }
+    const javorova = mixedWithRefi.mortgages.filter(
+      (b) => b.propertyId === "javorova",
+    );
+    expect(
+      propertyLoanExposure(
+        javorova,
+        assumptions,
+        rowsOf(schedules, "javorova"),
+        asOf,
+      )?.chain,
+    ).toEqual(["m-javorova", "m-refi"]);
+    const old = block({ id: "old", startDate: isoDate("2018-03-10") });
+    const now = block({ id: "now", startDate: isoDate("2024-01-10") });
+    const later = block({ id: "later", startDate: isoDate("2029-01-10") });
+    const blocks = [later, old, now];
+    const rows = rowsOf(schedulesByProperty(blocks, ["p"], assumptions), "p");
+    expect(
+      propertyLoanExposure(blocks, assumptions, rows, BASE_DATE)?.chain,
+    ).toEqual(["now", "later"]);
   });
 });
 

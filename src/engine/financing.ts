@@ -57,6 +57,15 @@ export interface LoanExposure {
   interestSaved: Decimal | null;
 }
 
+/** One property's loan view: its exposure, every chain block's reset, the chain (ADR 0117). */
+export interface PropertyLoan {
+  loan: LoanExposure;
+  /** The chain blocks' fixation ends, as on the Dashboard (none for a floating block). */
+  resets: FixationReset[];
+  /** Ids of the blocks driving the schedule, in order (D-27). */
+  chain: string[];
+}
+
 export interface FinancingExposure {
   asOf: IsoDate;
   loans: LoanExposure[];
@@ -163,12 +172,12 @@ export function prepaymentInterestSaved(
   );
 }
 
-/** One property's loan exposure and resets (none without a loan). */
+/** One property's loan exposure, resets and chain (none without a loan). */
 function propertyExposure(
   blocks: MortgageBlock[],
   rows: AmortizationRow[],
   ctx: { asOf: IsoDate; assumptions: Assumptions; baseDate: Date },
-): { loan: LoanExposure; resets: FixationReset[] } | null {
+): PropertyLoan | null {
   const chain = blockChain(blocks, ctx.baseDate);
   const first = chain[0];
   if (!first) return null;
@@ -186,21 +195,23 @@ function propertyExposure(
       interestSaved: prepaymentInterestSaved(blocks, ctx.assumptions, rows),
     },
     resets,
+    chain: chain.map((b) => b.id),
   };
 }
 
 /**
  * One property's loan as of `asOf` from its blocks and schedule `rows`, active or not:
- * the property page's view of its `financingExposure` entry (ADR 0116). Null without a loan.
+ * the property page's view of its `financingExposure` entry with its resets and chain
+ * (ADR 0116, ADR 0117). Null without a loan.
  */
 export function propertyLoanExposure(
   blocks: MortgageBlock[],
   assumptions: Assumptions,
   rows: AmortizationRow[],
   asOf: IsoDate,
-): LoanExposure | null {
+): PropertyLoan | null {
   const ctx = { asOf, assumptions, baseDate: assumptions.baseDate };
-  return propertyExposure(blocks, rows, ctx)?.loan ?? null;
+  return propertyExposure(blocks, rows, ctx);
 }
 
 /**

@@ -76,6 +76,7 @@ export type {
   FinancingExposure,
   FixationReset,
   LoanExposure,
+  PropertyLoan,
 } from "./financing";
 export type { PortfolioOutputs } from "./outputs";
 export { applyScenario } from "./scenarios";

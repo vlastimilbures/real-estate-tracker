@@ -333,7 +333,7 @@ export function PropertyDetail() {
             {loanWarningText(t, w, assumptions.postFixationResetRatePa)}
           </div>
         ))}
-        {out?.loan && <LoanSummary loan={out.loan} />}
+        {out?.financing && <LoanSummary loan={out.financing.loan} />}
       </div>
 
       <div className="pd-section" id={sectionId("holding")}>
