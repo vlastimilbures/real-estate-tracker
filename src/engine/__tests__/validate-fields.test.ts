@@ -8,6 +8,7 @@ import { isoDate } from "../dates";
 import { eventTermMonths, termMonths } from "../amortization";
 import { EngineInputError } from "../errors";
 import {
+  assertInputs,
   assertLoanInputs,
   assertLoanRows,
   validateInputs,
@@ -143,6 +144,83 @@ describe("validation problem fields", () => {
     expect(dev({ amount: money(NaN) })).toStrictEqual([
       onLoan("NON_FINITE_NUMBER", "draws"),
     ]);
+    // A fractional term gives no last draw date (start + 17 months would be
+    // 2027-08-01), so no draw is past it.
+    expect(
+      loanErrors({
+        ...devBlock,
+        id: "m-x",
+        propertyId: "javorova",
+        loanTermYears: 1.5,
+        draws: [{ ...draw, date: isoDate("2027-11-15") }],
+      }),
+    ).toStrictEqual([]);
+  });
+
+  it("non-finite loan amounts name their field", () => {
+    expect(loanErrors({ initialPrincipal: money(NaN) })).toStrictEqual([
+      onLoan("NON_FINITE_NUMBER", "initialPrincipal"),
+    ]);
+    expect(loanErrors({ interestRatePa: rate(NaN) })).toStrictEqual([
+      onLoan("NON_FINITE_NUMBER", "interestRatePa"),
+    ]);
+    // An infinite principal derives no term, so no instalment check runs on it.
+    expect(loanErrors({ initialPrincipal: money(Infinity) })).toStrictEqual([
+      onLoan("NON_FINITE_NUMBER", "initialPrincipal"),
+    ]);
+  });
+
+  it("property numbers and a valuation start name their field", () => {
+    const [p, ...rest] = portfolio.properties;
+    expect(
+      validatePortfolio({
+        ...portfolio,
+        properties: [
+          {
+            ...p!,
+            purchasePrice: money(NaN),
+            appreciationOverridePa: rate(NaN),
+            rentIndexOverridePa: rate(NaN),
+          },
+          ...rest,
+        ],
+      }),
+    ).toStrictEqual(
+      ["purchasePrice", "appreciationOverridePa", "rentIndexOverridePa"].map(
+        (field) => ({
+          code: "NON_FINITE_NUMBER",
+          entity: "property",
+          id: p!.id,
+          field,
+        }),
+      ),
+    );
+    const [v, ...others] = portfolio.valuations;
+    expect(
+      validatePortfolio({
+        ...portfolio,
+        valuations: [{ ...v!, validFrom: bad }, ...others],
+      }),
+    ).toStrictEqual([
+      {
+        code: "INVALID_DATE",
+        entity: "valuation",
+        id: v!.id,
+        field: "validFrom",
+      },
+    ]);
+  });
+
+  it("a value crash before year 0 is out of range", () => {
+    expect(
+      onAssumptions({ valueShock: { pct: rate("0.1"), atYear: -1 } }),
+    ).toStrictEqual([
+      {
+        code: "SHOCK_OUT_OF_RANGE",
+        entity: "assumptions",
+        field: "valueShock",
+      },
+    ]);
   });
 });
 
@@ -160,6 +238,14 @@ describe("loan asserts raise only their own codes", () => {
     expect(raised(() => assertLoanRows([block]))).toStrictEqual([
       onLoan("INVALID_DATE", "contractMaturityDate"),
     ]);
+  });
+
+  it("assertInputs raises the data and range codes only", () => {
+    expect(
+      raised(() =>
+        assertInputs({ ...portfolio, mortgages: [block] }, assumptions),
+      ),
+    ).toStrictEqual([onLoan("INVALID_DATE", "contractMaturityDate")]);
   });
 
   it("termMonths names the mortgage it cannot derive a term for", () => {
@@ -212,6 +298,34 @@ describe("loan event window (ADR 0109)", () => {
     ]);
     // A fractional term is not rejected, but gives no whole-payment term either.
     expect(loanErrors({ loanTermYears: 1.5, recasts })).toStrictEqual([]);
+  });
+
+  it("a loan without a derivable term leaves the maturity unchecked", () => {
+    const recasts = [toMaturity("2022-03-01", isoDate("2022-03-01"))];
+    expect(loanErrors({ initialPrincipal: money(NaN), recasts })).toStrictEqual(
+      [onLoan("NON_FINITE_NUMBER", "initialPrincipal")],
+    );
+    // NPER has no term to give here: it is not asked for one.
+    expect(
+      loanErrors({
+        interestRatePa: rate(0),
+        monthlyInstalment: money(0),
+        recasts,
+      }),
+    ).toStrictEqual([onLoan("ZERO_RATE_ZERO_INSTALMENT", "monthlyInstalment")]);
+  });
+
+  it("an invalid start date sets no window (no payment grid from it)", () => {
+    expect(
+      loanErrors({
+        ...tenYears,
+        startDate: bad,
+        recasts: [{ date: bad, maturity: isoDate("2030-01-17") }],
+      }),
+    ).toStrictEqual([
+      onLoan("INVALID_DATE", "startDate"),
+      onLoan("INVALID_DATE", "recasts", 0),
+    ]);
   });
 
   it("a recast dated before the start is not checked further", () => {
