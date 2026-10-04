@@ -205,11 +205,11 @@ function equityGrowth(
 }
 
 /**
- * Cumulative net cash flow (net of acquisition outflows and refinance cash), the first calendar year with
- * a positive net cash flow, and the first year the portfolio is debt-free. A debt-free
- * year only counts once the portfolio has carried debt (a never-leveraged portfolio
- * reports null). NB: greaterThan(ZERO), not isPositive() — ZERO.isPositive() is true, and
- * a year with no active property nets exactly 0 (ADR 0121).
+ * Cumulative net cash flow (net of the cash outside it, `acqOutflow` in `kpisFrom`), the
+ * first calendar year with a positive net cash flow, and the first year the portfolio is
+ * debt-free. A debt-free year only counts once the portfolio has carried debt (a
+ * never-leveraged portfolio reports null). NB: greaterThan(ZERO), not isPositive() —
+ * ZERO.isPositive() is true, and a year with no active property nets exactly 0 (ADR 0121).
  * The real cumulative cash flow deflates each year by its own CPI_t (ADR 0087).
  */
 function cashFlowMilestones(
@@ -230,8 +230,8 @@ function cashFlowMilestones(
   };
 }
 
-/** Σ over years 1..N of net cash flow minus acquisition outflows; with `cpi`, each
- *  year's flow is divided by CPI_t first (real terms). */
+/** Σ over years 1..N of net cash flow minus the cash outside it (`acqOutflow`); with
+ *  `cpi`, each year's flow is divided by CPI_t first (real terms). */
 function cumulativeNetCashFlow(
   proj: ProjectionYear[],
   acqOutflow: Decimal[],
@@ -279,7 +279,8 @@ function leveredIrr(
 }
 
 /** Levered cash-flow vector [-equity0, netCF1..netCF_{N-1}, netCF_N + equityN], net of
- *  acquisition outflows and refinance cash (terminal sale at projected value). */
+ *  the cash outside net cash flow (`acqOutflow` in `kpisFrom`; terminal sale at projected
+ *  value). */
 function leveredCashFlows(
   proj: ProjectionYear[],
   acqOutflow: Decimal[],
