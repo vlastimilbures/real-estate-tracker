@@ -148,6 +148,7 @@ Other IDs seen in code comments:
 | [0121](0121-first-positive-cash-flow-strict.md)   | The first cash-flow-positive year is strictly positive                                 | #102                                   |
 | [0122](0122-valuation-persists-past-valid-to.md)  | A valuation keeps governing after its "Valid to" date                                  | #110                                   |
 | [0123](0123-scenario-rules-every-entry-point.md)  | Scenario overrides meet the engine rules; restore needs them readable                  | #107, #108                             |
+| [0124](0124-pre-purchase-debt-service.md)         | Debt service before a future purchase is owner cash                                    | #104                                   |
 | [0125](0125-committed-write-reload-failure.md)    | A committed write whose reload fails is not a failure                                  | #106                                   |
 
 ### Judgment calls and open questions

@@ -7,6 +7,7 @@
 - Amended: 2026-10-04 (independent review of PR #180: decision 3's tranche cut and decision
   5's late first loan, both decided by the owner); 2026-10-04 (#33 PR2: the CSV columns of
   decision 8, decided by the owner)
+- Amended by: ADR 0124 (debt service of a loan that runs before a future purchase date)
 
 ## Context
 
@@ -129,6 +130,7 @@ detail section (PR3) follow.
   raises the debt with no cash in (#181).
 - Migration v10 is covered by a restore tripwire for added columns and by a Rust test that
   applies every migration's SQL on the bundled SQLite (#118 items 1–2).
-- Not decided here: debt service of a loan that runs before a future purchase date (#104), how
-  a not-yet-owned property is shown and costed before its purchase (#126), exit costs and tax
-  (#148), and the development value ramp (#120).
+- Decided later: debt service of a loan that runs before a future purchase date (#104) is
+  owner cash in the years it is paid (ADR 0124).
+- Not decided here: how a not-yet-owned property is shown and costed before its purchase
+  (#126), exit costs and tax (#148), and the development value ramp (#120).
