@@ -18,7 +18,7 @@ import {
   PARITY,
 } from "../../engine/__tests__/support/seed";
 import { near, KC } from "../../engine/__tests__/support/tolerance";
-import { isoDate, money, rate } from "../../engine";
+import { EngineInputError, isoDate, money, rate } from "../../engine";
 import type { Scenario } from "../../engine";
 
 vi.mock("../../lib/today", () => ({
@@ -194,9 +194,12 @@ describe("useScenarioComparison", () => {
         },
       }),
     );
+    // React logs the render error; keep the test output clean.
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
     expect(() =>
       renderHook(() => useScenarioComparison([scenario("Low", "0.01")])),
-    ).toThrow();
+    ).toThrow(EngineInputError);
+    log.mockRestore();
   });
 });
 

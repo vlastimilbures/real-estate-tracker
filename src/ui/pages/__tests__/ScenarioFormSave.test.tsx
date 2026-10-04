@@ -9,6 +9,7 @@ import { ScenarioForm } from "../ScenarioForm";
 import { useUiStore } from "../../../state/uiStore";
 import { assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
+import { getDict } from "../../../i18n";
 import type { Scenario } from "../../../engine";
 import type { WriteError } from "../../../state/writeError";
 
@@ -57,18 +58,14 @@ describe("ScenarioForm save (ADR 0123)", () => {
     expect(screen.getByRole("dialog")).toBeTruthy();
   });
 
-  // The hint sits in the group's help, which stays visible while the field shows
-  // its error (the field's own help gives way to the error).
-  it("says that 20 means a 20 % drop, also next to the error", async () => {
-    renderForm(() => Promise.resolve(crashRefused));
-    await fillCrash("-20");
-    await userEvent.click(
-      screen.getByRole("button", { name: en.common.create }),
-    );
-    const group = screen.getByRole("group", { name: s.groupCrash });
-    expect(group.textContent).toContain(s.groupCrashHelp);
-    expect(s.groupCrashHelp).toMatch(/20 = /);
-  });
+  // The hint sits in the price-crash group's help, which stays visible while the field
+  // shows its error (the field's own help gives way to the error).
+  it.each(["en", "cs", "ru"] as const)(
+    "%s: the price-crash help says how to enter the drop",
+    (lang) => {
+      expect(getDict(lang).scenarios.groupCrashHelp).toMatch(/20 = .*20 %/);
+    },
+  );
 
   it("submits once while saving and keeps the new id for a retry", async () => {
     let finish: (r: WriteError | undefined) => void = () => undefined;

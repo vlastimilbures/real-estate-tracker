@@ -1002,7 +1002,9 @@ describe("portfolioStore refuses a scenario that breaks an engine rule (ADR 0123
       expect(
         await store().saveScenario({ id: "s1", name: "Fine", overrides }),
       ).toMatchObject(refused);
-      expect(store().scenarios.map((s) => s.overrides)).toEqual([{}]);
+      expect(
+        await store().sql!.select("SELECT overrides FROM scenarios"),
+      ).toEqual([{ overrides: '{"version":1}' }]);
     },
   );
 
