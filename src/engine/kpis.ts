@@ -18,7 +18,12 @@ import {
   type PropertySchedule,
 } from "./schedule";
 import { assertInputs } from "./validate";
-import { buildCpiIndex, projectPortfolio, turnOnYear } from "./projections";
+import {
+  buildCpiIndex,
+  prePurchaseDebtService,
+  projectPortfolio,
+  turnOnYear,
+} from "./projections";
 import type {
   Assumptions,
   IrrNoRateReason,
@@ -293,7 +298,9 @@ function leveredCashFlows(
  * Σ principal repaid (scheduled and prepaid, ADR 0109) across active properties within
  * the horizon window. Schedules may
  * extend past it (a future loan amortizing over its own full term), but the parity
- * invariant is "Σ principal Yrs 1–N = initial debt", matching the projection.
+ * invariant is "Σ principal Yrs 1–N = initial debt", matching the projection. The raw
+ * rows include the years before a future buy turns on, so this equals the projection's
+ * principal + prepaid plus `prePurchaseDebtService`'s (ADR 0124).
  */
 function principalRepaidInHorizon(
   portfolio: Portfolio,
@@ -313,16 +320,18 @@ function principalRepaidInHorizon(
   return total;
 }
 
-/** Σ projection interest of years 1..N, nominal and deflated by CPI_t (ADR 0103). */
+/** Σ interest of years 1..N, nominal and deflated by CPI_t (ADR 0103): the projection's
+ *  plus the interest paid before a future buy turns on (ADR 0124). */
 function interestInHorizon(
   proj: ProjectionYear[],
+  prePurchase: { interest: Decimal }[],
   cpi: Decimal[],
   N: number,
 ): { totalInterest: Decimal; totalInterestReal: Decimal } {
   let nominal = ZERO;
   let real = ZERO;
   for (let t = 1; t <= N; t++) {
-    const interest = at(proj, t).interest;
+    const interest = at(proj, t).interest.plus(at(prePurchase, t).interest);
     nominal = nominal.plus(interest);
     real = real.plus(interest.div(at(cpi, t)));
   }
@@ -367,14 +376,25 @@ export function kpisFrom(
   const equity0 = at(proj, 0).equity;
   const equityN = at(proj, N).equity;
   // Cash outside net cash flow: acquisitions out, net refinance cash in (D-47),
-  // prepayments and their fees out (ADR 0109).
+  // prepayments and their fees out (ADR 0109), and the debt service paid before a
+  // future buy turns on (ADR 0124).
   const refiCash = refinanceCash(portfolio, assumptions, schedules);
-  const acqOutflow = acquisitionOutflows(portfolio, assumptions).map((x, t) =>
-    x
+  const prePurchase = prePurchaseDebtService(
+    portfolio,
+    assumptions,
+    scheduleRows(schedules),
+  );
+  const acqOutflow = acquisitionOutflows(portfolio, assumptions).map((x, t) => {
+    const pre = at(prePurchase, t);
+    return x
       .minus(at(refiCash, t))
       .plus(at(proj, t).prepaid)
-      .plus(at(proj, t).prepaymentFees),
-  );
+      .plus(at(proj, t).prepaymentFees)
+      .plus(pre.interest)
+      .plus(pre.principal)
+      .plus(pre.prepaid)
+      .plus(pre.prepaymentFees);
+  });
   const nominalVector = leveredCashFlows(proj, acqOutflow);
   const realVector = nominalVector.map((cf, t) => cf.div(at(cpi, t)));
 
@@ -388,6 +408,6 @@ export function kpisFrom(
       assumptions,
       schedules,
     ),
-    ...interestInHorizon(proj, cpi, N),
+    ...interestInHorizon(proj, prePurchase, cpi, N),
   };
 }
