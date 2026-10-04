@@ -34,6 +34,20 @@ improvement, **P3** later.
   - Data-check panel (#35).
   - Backup recency indicator (#36).
 
+From the 2026-10 code review
+([record](reviews/2026-10-claude-code-review.md), label
+[`review-2026-10-code`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=label%3Areview-2026-10-code),
+#101–#174). Each issue has evidence, decision options and a recommendation.
+
+- **Bugs to fix first (P1).** Value falls back to the purchase price after a valuation's
+  "Valid to" date, property ids derived from the name, Clear sample vs the owner's own
+  property, unchecked scenario rows in a restore, a restore misreported as rolled back,
+  out-of-range scenario inputs, future and development purchases in the returns, a tranche
+  after an instalment recast, and the first cash-flow-positive year (#101–#110).
+- **Decisions (label `decision`).** Modelling and process choices challenged with options and
+  the case for keeping them; weak challenges stay in the record only.
+- **Clean-up (label `tech-debt`), docs, accessibility and smaller fixes (P2, P3).**
+
 ## Feature ideas (no issue yet)
 
 - **Per-property growth in scenarios.** SPEC §7 allows a scenario to override appreciation and
