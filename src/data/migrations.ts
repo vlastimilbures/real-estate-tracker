@@ -512,6 +512,22 @@ export const MIGRATIONS: Migration[] = [
         CONSTRAINT mortgage_recasts_json CHECK (json_valid(recasts));
     `,
   },
+  {
+    version: 10,
+    name: "property acquisition funding",
+    // ADR 0119: the owner's funding record, every part nullable. NULL = unknown (never
+    // backfilled), so every stored property keeps its numbers. Money as TEXT with the
+    // textual sign check of the v7 money columns.
+    sql: `
+      ALTER TABLE properties ADD COLUMN own_cash TEXT
+        CONSTRAINT property_own_cash_not_negative CHECK (${nonNegative("own_cash")});
+      ALTER TABLE properties ADD COLUMN transaction_costs TEXT
+        CONSTRAINT property_transaction_costs_not_negative CHECK (${nonNegative("transaction_costs")});
+      ALTER TABLE properties ADD COLUMN initial_works TEXT
+        CONSTRAINT property_initial_works_not_negative CHECK (${nonNegative("initial_works")});
+      ALTER TABLE properties ADD COLUMN funding_note TEXT;
+    `,
+  },
 ];
 
 function scenarioRows(

@@ -1,7 +1,7 @@
 // Backup round-trip test: export → restore produces identical data + identical engine output.
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
-import { migrate } from "../migrations";
+import { migrate, MIGRATIONS } from "../migrations";
 import { seedIfEmpty } from "../seed";
 import { loadPortfolio, loadAssumptions } from "../repositories";
 import {
@@ -251,6 +251,30 @@ async function rowCounts(db: Sql): Promise<Record<string, number>> {
   return out;
 }
 
+/** Per backup table, the columns of the head schema that the v1 schema lacks. */
+async function columnsAddedAfterV1(): Promise<Record<string, string[]>> {
+  const v1 = openMemorySql();
+  v1.db.exec(MIGRATIONS[0]!.sql);
+  const head = openMemorySql();
+  await migrate(head);
+  const names = async (db: Sql, table: string) =>
+    (
+      await db.select<{ name: string }>(
+        "SELECT name FROM pragma_table_info(?)",
+        [table],
+      )
+    ).map((c) => c.name);
+  const out: Record<string, string[]> = {};
+  for (const table of Object.keys(BACKUP_COLUMNS)) {
+    const old = await names(v1, table);
+    expect(old.length, `${table} exists at v1`).toBeGreaterThan(0);
+    out[table] = (await names(head, table)).filter((c) => !old.includes(c));
+  }
+  v1.db.close();
+  head.db.close();
+  return out;
+}
+
 describe("restoreFromJson — column whitelist (DR-017)", () => {
   it("rejects a backup whose row keys are not known columns, before touching the DB", async () => {
     const db = await freshSeeded();
@@ -300,43 +324,67 @@ describe("restoreFromJson — column whitelist (DR-017)", () => {
   });
 
   it("restores an older backup that lacks later-added columns", async () => {
+    // Tripwire (#118, R3-06): every column a migration added after v1 is stripped, so
+    // the backup looks like one from v1. Each such column must come back as its schema
+    // default, or NULL: a NOT NULL column with no ADDED_COLUMN_DEFAULTS entry fails here.
+    const added = await columnsAddedAfterV1();
+    expect(added.properties).toContain("active");
+    expect(added.mortgage_blocks).toEqual(
+      expect.arrayContaining(["prepayments", "recasts"]),
+    );
     const db = await freshSeeded();
+    await db.execute(
+      `INSERT INTO scenarios (id, name, overrides, created_at) VALUES ('s1', 'Stress', '{"version":1,"appreciationPa":"0.01"}', '2026-01-05')`,
+    );
     const good = await exportToJson(db);
     const before = await rowCounts(db);
+    for (const [table, n] of Object.entries(before))
+      expect(n, `${table} has a row to check`).toBeGreaterThan(0);
     const strip = (rows: Record<string, unknown>[], cols: string[]) =>
       rows.map((r) =>
         Object.fromEntries(
           Object.entries(r).filter(([k]) => !cols.includes(k)),
         ),
       );
-    const old = {
-      ...good,
-      tables: {
-        ...good.tables,
-        properties: strip(good.tables.properties, ["active"]),
-        mortgage_blocks: strip(good.tables.mortgage_blocks, [
-          "loan_term_years",
-          "draws",
-          "interest_only_until",
-          "prepayments",
-          "recasts",
-        ]),
-      },
-    };
-    await restoreFromJson(db, old, checkInputRules);
+    const tables = Object.fromEntries(
+      Object.entries(good.tables).map(([table, rows]) => [
+        table,
+        strip(rows, added[table] ?? []),
+      ]),
+    ) as typeof good.tables;
+    await restoreFromJson(db, { ...good, tables }, checkInputRules);
     expect(await rowCounts(db)).toEqual(before);
-    // A backup from before v9 restores with no prepayments or recasts (ADR 0109).
-    const events = await db.select<{ prepayments: null; recasts: null }>(
-      "SELECT prepayments, recasts FROM mortgage_blocks",
+    for (const [table, cols] of Object.entries(added)) {
+      const info = await db.select<{ name: string; dflt_value: string | null }>(
+        "SELECT name, dflt_value FROM pragma_table_info(?)",
+        [table],
+      );
+      for (const col of cols) {
+        const dflt = info.find((c) => c.name === col)?.dflt_value ?? null;
+        const expected =
+          dflt === null
+            ? null
+            : (await db.select<{ v: unknown }>(`SELECT ${dflt} AS v`))[0]?.v;
+        const restored = await db.select<{ v: unknown }>(
+          `SELECT ${col} AS v FROM ${table}`,
+        );
+        for (const r of restored) expect(r.v, `${table}.${col}`).toBe(expected);
+      }
+    }
+    db.db.close();
+  });
+
+  it("a backup round-trips a funding record (ADR 0119)", async () => {
+    const db = await freshSeeded();
+    await db.execute(
+      "UPDATE properties SET own_cash = '1500000.5', transaction_costs = '95000', initial_works = '0', funding_note = 'Deposit' WHERE rowid = 1",
     );
-    expect(
-      events.every((e) => e.prepayments === null && e.recasts === null),
-    ).toBe(true);
-    const props = await db.select<{ active: number }>(
-      "SELECT active FROM properties",
-    );
-    expect(props).toHaveLength(3);
-    expect(props.every((p) => p.active === 1)).toBe(true);
+    const cols =
+      "SELECT id, own_cash, transaction_costs, initial_works, funding_note FROM properties ORDER BY id";
+    const before = await db.select<Record<string, unknown>>(cols);
+    expect(before.filter((r) => r.own_cash !== null)).toHaveLength(1);
+    await restoreFromJson(db, await exportToJson(db), checkInputRules);
+    expect(await db.select<Record<string, unknown>>(cols)).toEqual(before);
     db.db.close();
   });
 

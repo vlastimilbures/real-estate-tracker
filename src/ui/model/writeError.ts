@@ -24,6 +24,16 @@ const CHECKS: Record<
     rule: "NEGATIVE_AMOUNT",
     field: "purchasePrice",
   },
+  // v10 (ADR 0119)
+  property_own_cash_not_negative: { rule: "NEGATIVE_AMOUNT", field: "ownCash" },
+  property_transaction_costs_not_negative: {
+    rule: "NEGATIVE_AMOUNT",
+    field: "transactionCosts",
+  },
+  property_initial_works_not_negative: {
+    rule: "NEGATIVE_AMOUNT",
+    field: "initialWorks",
+  },
   property_active_flag: { rule: "flag" },
   property_garage_flag: { rule: "flag", field: "garage" },
   mortgage_start_date_iso: { rule: "INVALID_DATE", field: "startDate" },

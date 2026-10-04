@@ -134,6 +134,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The down payment of a property bought after the projection start now starts from its
+  **purchase price**, not its valuation, and subtracts the whole loan that funded the
+  purchase, every development tranche included. Before, a development loan's later
+  tranches were charged to the owner as own cash. The loan that funded the purchase is the
+  property's first loan, when it starts no later than 90 days after the purchase; a first
+  loan that starts later counts as cash paid to the owner in the year it is drawn. A
+  property can now store how its purchase was funded (own cash, transaction costs, initial
+  works and a note; the form follows in a later release); recorded own cash replaces the
+  derived down payment. This changes levered IRR and cumulative cash flow only for
+  properties bought after the projection start, so the sample portfolio's figures do not
+  change. The database upgrades to version 10 (ADR 0119, #33, #103, #140).
+
 - Stored loan prepayments and maturity changes are checked more strictly. An entry with an
   unknown field (for example a misspelt `fees`) makes the loan invalid instead of losing
   the value silently, so a hand-edited backup with extra fields no longer restores. A

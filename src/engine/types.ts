@@ -42,11 +42,11 @@ export interface Assumptions {
   postFixationResetRatePa: Rate;
   horizonYears: number;
   inflationPa: Rate;
-  /** Transaction costs of acquiring a property, as a fraction of its value (e.g. 0.04
-   *  for ~4% transfer tax + fees). Added to the modeled down-payment outflow for a
-   *  property bought *after* baseDate when computing levered IRR / cumulative cash flow.
-   *  Optional; undefined ⇒ 0 ⇒ engine output is byte-identical to the parity targets. Engine-
-   *  only for now (no DB/UI wiring). */
+  /** Transaction costs of acquiring a property, as a fraction of its purchase price in
+   *  [0, 1] (broker, legal and cadastre fees; the Czech acquisition tax ended in 2020).
+   *  The fallback for a property bought *after* baseDate whose funding record has no
+   *  transaction costs (ADR 0119 §6). Optional; undefined ⇒ 0 ⇒ engine output is
+   *  byte-identical to the parity targets. Engine-only (no DB/UI wiring). */
   acquisitionCostPct?: Rate | undefined;
   defaults: CostDefaults;
   // --- Scenario-only shock descriptors (SPEC §7 what-ifs). Portfolio/seed
@@ -72,6 +72,23 @@ export interface Property {
   appreciationOverridePa?: Rate | undefined;
   rentIndexOverridePa?: Rate | undefined;
   active?: boolean | undefined; // false ⇒ excluded from portfolio aggregates & projections; default active
+  /** How the purchase was funded, as the owner recorded it (ADR 0119). Undefined ⇒
+   *  nothing recorded. */
+  funding?: AcquisitionFunding | undefined;
+}
+
+/** The owner's record of a purchase's funding (ADR 0119). Each part is optional on its
+ *  own: undefined is unknown, never 0. The acquisition loan is derived from the mortgage
+ *  blocks, not recorded here. */
+export interface AcquisitionFunding {
+  /** All own money paid in at acquisition: the owner's share of the price, the
+   *  transaction costs and the initial works together. */
+  ownCash?: Money | undefined;
+  /** Broker, legal, cadastre, valuation and similar fees. */
+  transactionCosts?: Money | undefined;
+  /** Renovation or furnishing paid at or right after the purchase. */
+  initialWorks?: Money | undefined;
+  note?: string | undefined;
 }
 
 /** A construction tranche: additional principal drawn down at a future milestone. */
