@@ -354,6 +354,51 @@ describe("ADR 0103: edge cases", () => {
   });
 });
 
+describe("ADR 0117: replaced and repaid outrank passed", () => {
+  const at = (asOf: string, ...blocks: MortgageBlock[]) =>
+    exposure(single(...blocks), isoDate(asOf)).fx;
+
+  it("a block refinanced mid-fixation stays replaced after its fixation end", () => {
+    const a = block({ id: "a", startDate: isoDate("2024-01-10") });
+    const b = block({ id: "b", startDate: isoDate("2027-01-10") });
+    expect(reset(at("2026-06-07", a, b), "a").status).toBe("replaced");
+    expect(reset(at("2029-06-01", a, b), "a").status).toBe("replaced");
+  });
+
+  it("a refix on the fixation end stays replaced after it", () => {
+    const a = block({
+      id: "a",
+      startDate: isoDate("2024-01-10"),
+      fixationYears: 3,
+    });
+    const b = block({
+      id: "b",
+      startDate: isoDate("2027-01-10"),
+      fixationYears: 2,
+    });
+    expect(reset(at("2026-12-01", a, b), "a").status).toBe("replaced");
+    expect(reset(at("2027-06-01", a, b), "a").status).toBe("replaced");
+  });
+
+  it("a loan repaid before its fixation end stays repaid after it", () => {
+    const short = block({
+      id: "short",
+      startDate: isoDate("2025-06-10"),
+      initialPrincipal: money("300000"),
+    });
+    expect(reset(at("2026-06-07", short), "short").status).toBe("repaid");
+    expect(reset(at("2030-07-01", short), "short").status).toBe("repaid");
+  });
+
+  it("a reset that happened in the model has passed; one before baseDate too (ADR 0030)", () => {
+    expect(
+      reset(exposure(portfolio, isoDate("2031-06-01")).fx, "m-javorova").status,
+    ).toBe("passed");
+    const old = block({ id: "old", startDate: isoDate("2016-01-10") });
+    expect(reset(at("2026-06-07", old), "old").status).toBe("passed");
+  });
+});
+
 describe("ADR 0103: upcoming events", () => {
   const withoutFollowOn: Portfolio = {
     ...portfolio,

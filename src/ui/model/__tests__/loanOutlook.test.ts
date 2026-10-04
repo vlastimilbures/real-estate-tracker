@@ -102,11 +102,11 @@ describe("ADR 0117: loan outlook rows", () => {
     ]);
   });
 
-  it("a reset on or before the as-of date has passed; a later one is upcoming", () => {
+  it("a refix on the fixation end stays replaced; a reset that happened has passed", () => {
     const blocks = [block("a", "2024-01-10", 3), block("b", "2027-01-10", 2)];
     const o = outlook(blocks, isoDate("2027-06-01"));
     expect(o.resets.map((r) => [r.blockId, r.status])).toEqual([
-      ["a", "passed"],
+      ["a", "replaced"],
       ["b", "nextReset"],
     ]);
     const passed = outlook(javorova(), isoDate("2031-06-01"));

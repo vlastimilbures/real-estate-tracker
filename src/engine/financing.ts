@@ -36,8 +36,8 @@ export interface FixationReset {
   fixationEnd: IsoDate;
   /** Grid month of the fixation-end payment (the reset row is the next one). */
   gridMonth: number;
-  /** passed: on/before as-of · replaced: a successor takes over first · repaid: no
-   *  balance left by then · upcoming: otherwise. */
+  /** First match wins (ADR 0117): replaced: a successor takes over first · repaid: no
+   *  balance left by then · passed: on/before as-of · upcoming: otherwise. */
   status: "upcoming" | "passed" | "replaced" | "repaid";
   /** Balance after the fixation-end payment; 0 unless upcoming. */
   balance: Decimal;
@@ -95,7 +95,11 @@ function inWindow(date: Date, asOf: Date, months: number): boolean {
   return isAfter(date, asOf) && isOnOrBefore(date, edate(asOf, months));
 }
 
-/** The status of a fixation end at grid month `m`, before the balance is read. */
+/**
+ * The status of a fixation end at grid month `m`, before the balance is read. Replaced
+ * and repaid outrank passed, so a past fixation end keeps its outcome (ADR 0117). One on
+ * or before baseDate (m ≤ 0) has no schedule row: passed unless replaced (ADR 0030).
+ */
 function resetStatus(
   fixationEnd: Date,
   m: number,
@@ -103,7 +107,6 @@ function resetStatus(
   rows: AmortizationRow[],
   ctx: { asOf: Date; baseDate: Date },
 ): FixationReset["status"] {
-  if (isOnOrBefore(fixationEnd, ctx.asOf)) return "passed";
   if (
     next &&
     (isOnOrBefore(next.startDate, fixationEnd) ||
@@ -111,8 +114,9 @@ function resetStatus(
   )
     return "replaced";
   const row = rows[m - 1];
-  if (!row || row.endBalance.lessThanOrEqualTo(DEBT_FREE_EPSILON))
+  if (m > 0 && (!row || row.endBalance.lessThanOrEqualTo(DEBT_FREE_EPSILON)))
     return "repaid";
+  if (isOnOrBefore(fixationEnd, ctx.asOf)) return "passed";
   return "upcoming";
 }
 
