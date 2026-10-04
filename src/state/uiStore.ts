@@ -2,6 +2,7 @@
 // Nominal/Real lens, and the UI language. No business logic here — purely navigation +
 // presentation mode.
 import { create } from "zustand";
+import { isDictionaryLoaded, loadDictionary } from "../i18n";
 import type { Language } from "../i18n/types";
 import type { Mode } from "../ui/model/lens";
 import type {
@@ -187,6 +188,9 @@ function guarded(
   else set(target);
 }
 
+/** The language last passed to setLanguage, so a slower earlier load cannot win. */
+let requestedLanguage: Language | null = null;
+
 export const useUiStore = create<UiState>((set, get) => ({
   route: "dashboard",
   selectedPropertyId: null,
@@ -248,8 +252,19 @@ export const useUiStore = create<UiState>((set, get) => ({
     set({ theme });
   },
   setLanguage: (language) => {
-    persist(LANGUAGE_KEY, language);
-    set({ language });
+    // Show a language only once its dictionary has loaded (DR-009): the UI keeps the
+    // current one meanwhile, and the last choice wins when loads finish out of order.
+    requestedLanguage = language;
+    const apply = () => {
+      if (requestedLanguage !== language) return;
+      persist(LANGUAGE_KEY, language);
+      set({ language });
+    };
+    if (isDictionaryLoaded(language)) apply();
+    else
+      loadDictionary(language).then(apply, (error: unknown) => {
+        console.error(`Could not load the "${language}" dictionary:`, error);
+      });
   },
   openSettings: (tab) =>
     guarded(
@@ -293,3 +308,16 @@ export const useUiStore = create<UiState>((set, get) => ({
 
 // Amounts are always Kč (UX-017); drop a currency picked in an older version.
 clearLegacyCurrency();
+
+/** Load the saved language's dictionary before the first render (src/main.tsx, DR-009).
+ *  If it fails, show English for this session; the saved choice is kept. */
+export async function loadStartupDictionary(): Promise<void> {
+  const language = useUiStore.getState().language;
+  try {
+    await loadDictionary(language);
+  } catch (error) {
+    console.error(`Could not load the "${language}" dictionary:`, error);
+    await loadDictionary("en");
+    useUiStore.setState({ language: "en" });
+  }
+}

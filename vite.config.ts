@@ -46,6 +46,8 @@ export default defineConfig(async () => ({
     // --localstorage-file and hides jsdom's own storage. Off in test workers (DR-094).
     execArgv: ["--no-experimental-webstorage"],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    // The app loads only the active dictionary (DR-009); tests get all three up front.
+    setupFiles: ["src/i18n/__tests__/preload.ts"],
     // Engine benchmarks (P9, `pnpm bench`); git-ignored evidence benches stay out.
     benchmark: { include: ["src/**/*.bench.ts"] },
     // Coverage ratchet. Thresholds are per folder and only ever go up: the target where
