@@ -42,12 +42,13 @@ From the 2026-10 code review
 [`review-2026-10-code`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=label%3Areview-2026-10-code),
 #101–#174). Each issue has evidence, decision options and a recommendation.
 
-- **Bugs to fix first (P1).** Property ids derived from the name, Clear sample vs the owner's
-  own property, unchecked scenario rows in a restore, a restore misreported as rolled back,
-  out-of-range scenario inputs, and future and development purchases in the returns (#101,
-  #103–#108). Fixed: a tranche after an instalment recast (#109, ADR 0120), the first
-  cash-flow-positive year (#102, ADR 0121), and the value after a valuation's "Valid to" date
-  (#110, ADR 0122).
+- **Bugs to fix first (P1).** Property ids derived from the name, and Clear sample vs the
+  owner's own property (#101, #105). Fixed: a development purchase's later tranches in the
+  returns (#103, ADR 0119), a tranche after an instalment recast (#109, ADR 0120), the
+  first cash-flow-positive year (#102, ADR 0121), the value after a valuation's "Valid to"
+  date (#110, ADR 0122), unchecked scenario rows in a restore and out-of-range scenario
+  inputs (#107, #108, ADR 0123), debt service before a future purchase (#104, ADR 0124),
+  and a restore misreported as rolled back (#106, ADR 0125).
 - **Decisions (label `decision`).** Modelling and process choices challenged with options and
   the case for keeping them; weak challenges stay in the record only.
 - **Clean-up (label `tech-debt`), docs, accessibility and smaller fixes (P2, P3).**
@@ -121,8 +122,6 @@ product's positioning changes.
   boolean flags are typed as numbers at the database boundary (DR-080); `D()` still accepts a
   JS `number` (DR-078).
 - **Tests.** The two optional Playwright smoke tests do not run in CI (ADR 0006). (DR-094)
-- **Dead fallback.** A no-schedule snapshot fallback for development loans is unreachable from
-  the app and could be removed. (DR-118)
 - **Row editor focus.** Adding a prepayment or maturity-change row does not move focus to
   its date, and removing one leaves focus on the next row's button or the page (PR #100
   review).

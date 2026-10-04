@@ -7,7 +7,6 @@ import {
   lastGridMonthOnOrBefore,
   isAfter,
   isOnOrBefore,
-  lastOnOrBefore,
   inForceOrUpcoming,
 } from "./dates";
 import type {
@@ -271,8 +270,8 @@ export function amortizationHealth(block: MortgageBlock): AmortizationHealth {
 
 /**
  * Outstanding balance of a block as of `asOf` after every payment due by then
- * (D-21), using the *original* rate & instalment (the snapshot is taken before any
- * refix). Floored at 0.
+ * (D-21), using the *original* rate & instalment, so it holds only before any refix
+ * (the schedule's plain-loan opening uses it at baseDate). Floored at 0.
  */
 export function currentBalance(block: MortgageBlock, asOf: Date): Decimal {
   const n = lastGridMonthOnOrBefore(block.startDate, asOf);
@@ -284,14 +283,6 @@ export function currentBalance(block: MortgageBlock, asOf: Date): Decimal {
     block.initialPrincipal,
   ).negated();
   return bal.isNegative() ? ZERO : bal;
-}
-
-/** Pick the active block for a property as of `asOf` (latest startDate ≤ asOf). */
-export function activeBlock(
-  blocks: MortgageBlock[],
-  asOf: Date,
-): MortgageBlock | undefined {
-  return lastOnOrBefore(blocks, asOf, (b) => b.startDate);
 }
 
 /**

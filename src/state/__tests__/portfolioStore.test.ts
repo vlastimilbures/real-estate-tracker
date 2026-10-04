@@ -111,13 +111,11 @@ describe("portfolioStore mutations", () => {
     );
   });
 
-  it("surfaces a refresh failure after a successful write (state stays stale, no throw)", async () => {
+  it("a write whose reload fails succeeds and marks the screen stale (ADR 0125)", async () => {
     // The other half of mutate()'s contract: the write reaches disk but the follow-up
     // refresh() throws. The write has already committed (multi-step writes run in one
-    // transaction, D-14) and refresh() is a separate read, so there is nothing to roll
-    // back here — mutate() must still not throw, must surface the
-    // refresh error, and must return { ok: false }. In-memory state legitimately stays
-    // stale relative to disk on this path (acknowledged, no-code-change behaviour).
+    // transaction, D-14), so it is reported as done: the form closes, and the stale
+    // banner asks for a Reload instead of a retry being refused as a duplicate (#106).
     await usePortfolioStore.getState().init(openSeeded);
     const real = usePortfolioStore.getState().sql!;
 
@@ -141,19 +139,18 @@ describe("portfolioStore mutations", () => {
       marketValue: money("14000000"),
     });
 
-    expect(result.ok).toBe(false);
-    if (result.ok) throw new Error("expected failure");
-    expect(text(result.error)).toMatch(/read timeout/i);
-    expect(text(usePortfolioStore.getState().error)).toMatch(/read timeout/i);
+    expect(result).toEqual({ ok: true });
+    expect(usePortfolioStore.getState().error).toBeNull();
+    expect(usePortfolioStore.getState().stale).toBe(true);
     // refresh() never completed, so the in-memory portfolio is stale (the new row is on
-    // disk but not reflected here) — and crucially the call did not throw.
+    // disk but not reflected here).
     expect(usePortfolioStore.getState().status).toBe("ready");
     expect(usePortfolioStore.getState().portfolio!.valuations.length).toBe(
       before,
     );
 
     // Reconnect a healthy Sql and refresh: the persisted write is now visible, proving
-    // the write really did reach disk during the failed mutation.
+    // the write really did reach disk.
     usePortfolioStore.setState({ sql: real });
     await usePortfolioStore.getState().refresh();
     expect(usePortfolioStore.getState().portfolio!.valuations.length).toBe(

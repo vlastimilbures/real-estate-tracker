@@ -160,7 +160,7 @@ describe("D-17: every loan path raises the typed error", () => {
     caught(() => portfolioKpis(p, assumptions));
   });
 
-  it("snapshot without schedules (closed-form fallback) agrees", () => {
+  it("snapshot without schedules agrees", () => {
     caught(() => portfolioSnapshot(p, assumptions));
     if (!javorova) throw new Error("seed property missing");
     caught(() => propertySnapshot(javorova, p, assumptions));
