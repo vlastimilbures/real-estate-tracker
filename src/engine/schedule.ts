@@ -253,8 +253,8 @@ function undrawnRow(
 // ---------------------------------------------------------------------------
 
 /** First step k in [1,maxStep] whose cadence date (anchor + k months) is on/after
- *  `date`, capped at maxStep. Validation rejects a draw on/after the loan's final
- *  payment date (DR-074), so a valid draw never reaches the cap. */
+ *  `date`, capped at maxStep. Validation rejects a draw after the loan's last-but-one
+ *  payment date (DR-074, ADR 0129 §3), so a valid draw never reaches the cap. */
 function firstStepOnOrAfter(anchor: Date, date: Date, maxStep: number): number {
   const cap = Math.max(1, maxStep);
   return Math.min(firstGridMonthOnOrAfter(anchor, date, cap - 1), cap);

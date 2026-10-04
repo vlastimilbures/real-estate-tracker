@@ -222,33 +222,34 @@ function checkDerivedTerm(b: MortgageBlock, report: Report): void {
   if (problem) report(problem.code, problem.field);
 }
 
-/** The final payment date (start + term), or undefined without a valid term (then
- *  MISSING_TERM_FOR_DEV_LOAN or INVALID_TERM reports instead). */
-function finalPaymentDate(b: MortgageBlock): Date | undefined {
+/** The last-but-one payment date (start + term − 1 month), or undefined without a
+ *  valid term (then MISSING_TERM_FOR_DEV_LOAN or INVALID_TERM reports instead). */
+function lastDrawDate(b: MortgageBlock): Date | undefined {
   return b.loanTermYears != null && Number.isInteger(b.loanTermYears)
-    ? edate(b.startDate, b.loanTermYears * 12)
+    ? edate(b.startDate, b.loanTermYears * 12 - 1)
     : undefined;
 }
 
 function checkDrawDate(
   date: Date,
   b: MortgageBlock,
-  end: Date | undefined,
+  lastDraw: Date | undefined,
   report: Report,
 ): void {
   if (badDate(date)) report("INVALID_DATE", "draws");
   // A draw on the start date itself belongs in the initial principal (D-42).
   else if (isOnOrBefore(date, b.startDate))
     report("DRAW_BEFORE_START", "draws");
-  // A draw on or after the final payment has no payment left to repay it (DR-074).
-  else if (end && isOnOrBefore(end, date))
+  // A later draw lands on the final payment, which would repay it in one shot
+  // (DR-074, ADR 0129 §3).
+  else if (lastDraw && isAfter(date, lastDraw))
     report("DRAW_AFTER_SCHEDULE_END", "draws");
 }
 
 function checkDevFeatures(b: MortgageBlock, report: Report): void {
-  const end = finalPaymentDate(b);
+  const lastDraw = lastDrawDate(b);
   for (const d of b.draws ?? []) {
-    checkDrawDate(d.date, b, end, report);
+    checkDrawDate(d.date, b, lastDraw, report);
     if (badNumber(d.amount)) report("NON_FINITE_NUMBER", "draws");
     else if (!d.amount.greaterThan(ZERO)) report("NON_POSITIVE_DRAW", "draws");
   }

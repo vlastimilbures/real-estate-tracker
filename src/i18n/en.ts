@@ -98,7 +98,7 @@ export const en = {
     DRAW_BEFORE_START:
       "A draw must be dated after the loan start; money drawn on the start date belongs in the initial principal",
     DRAW_AFTER_SCHEDULE_END:
-      "A draw must be dated before the loan's final payment date (start date plus loan term)",
+      "A draw must be dated on or before the loan's last-but-one payment date (start date plus loan term, less one month)",
     COMPLETION_BEFORE_START:
       "The interest-only end date is before the loan start",
     DUPLICATE_BLOCK_START:
