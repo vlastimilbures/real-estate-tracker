@@ -528,6 +528,72 @@ describe("ADR 0103: upcoming events", () => {
       { numRuns: 40 },
     );
   });
+
+  it("a replaced fixation end and a loan repaid before baseDate are not events", () => {
+    // a's fixation ends 2029-01-10, inside the window, but b replaces a first.
+    const a = block({ id: "a", startDate: isoDate("2024-01-10") });
+    const b = block({ id: "b", startDate: isoDate("2027-01-10") });
+    const refi = single(a, b);
+    const { fx: refiFx } = exposure(refi);
+    expect(reset(refiFx, "a").status).toBe("replaced");
+    expect(upcomingEvents(refi, refiFx, 36)).toEqual([]);
+
+    const old = single(
+      block({
+        id: "old",
+        startDate: isoDate("2020-01-10"),
+        initialPrincipal: money("300000"),
+      }),
+    );
+    const { fx } = exposure(old);
+    expect(loan(fx, "p").payoffDate).toBeNull();
+    expect(upcomingEvents(old, fx, 360)).toEqual([]);
+  });
+
+  it("one completion per development loan; none when a successor replaces it first", () => {
+    const dev = exposure(mixed, isoDate("2026-12-01")).fx;
+    expect(
+      upcomingEvents(mixed, dev, 12).filter((e) => e.kind === "devCompletion"),
+    ).toEqual([
+      { date: isoDate("2027-08-20"), kind: "devCompletion", propertyId: "dev" },
+    ]);
+
+    // The successor starts 2027-01-10, before the 2027-08-20 completion.
+    const replaced = single(
+      { ...devBlock, propertyId: "p" },
+      block({ id: "succ", startDate: isoDate("2027-01-10") }),
+    );
+    const kinds = upcomingEvents(replaced, exposure(replaced).fx, 24).map(
+      (e) => e.kind,
+    );
+    expect(kinds).not.toContain("devCompletion");
+  });
+
+  it("lease ends of active properties only; same-day events by property id", () => {
+    const owned = (id: string, active?: boolean) => ({
+      id,
+      name: id,
+      purchaseDate: isoDate("2015-01-01"),
+      purchasePrice: money("5000000"),
+      ...(active === undefined ? {} : { active }),
+    });
+    const lease = (propertyId: string) => ({
+      id: `l-${propertyId}`,
+      propertyId,
+      startDate: isoDate("2025-01-01"),
+      endDate: isoDate("2026-12-31"),
+      monthlyRent: money("20000"),
+    });
+    const p: Portfolio = {
+      ...single(),
+      properties: [owned("b", true), owned("a"), owned("x", false)],
+      leases: [lease("b"), lease("a"), lease("x")],
+    };
+    expect(upcomingEvents(p, exposure(p).fx, 12)).toEqual([
+      { date: isoDate("2026-12-31"), kind: "leaseEnd", propertyId: "a" },
+      { date: isoDate("2026-12-31"), kind: "leaseEnd", propertyId: "b" },
+    ]);
+  });
 });
 
 describe("ADR 0103: properties", () => {
