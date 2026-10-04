@@ -233,7 +233,8 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
 
   // A new property's id is random and made once, so a retry cannot add a second row
   // (ADR 0127); an edit keeps the property's id.
-  const [id] = useState(() => propertyId ?? crypto.randomUUID());
+  const [newId] = useState(() => crypto.randomUUID());
+  const id = propertyId ?? newId;
   const [form, setForm] = useState<PropertyFormState>(BLANK_PROPERTY_FORM);
   // What the form opened with (blank, or the loaded property): input differing from it
   // is unsaved, so Esc / backdrop clicks are ignored (UX-029).

@@ -468,11 +468,12 @@ export function planImport(
 const batchIds = new WeakMap<CsvImportBatch, Map<string, string>>();
 
 function idsFor(batch: CsvImportBatch): (key: string) => string {
-  const ids = batchIds.get(batch) ?? new Map<string, string>();
-  batchIds.set(batch, ids);
+  let ids = batchIds.get(batch);
+  if (!ids) batchIds.set(batch, (ids = new Map()));
+  const known = ids;
   return (key) => {
-    let id = ids.get(key);
-    if (id === undefined) ids.set(key, (id = crypto.randomUUID()));
+    let id = known.get(key);
+    if (id === undefined) known.set(key, (id = crypto.randomUUID()));
     return id;
   };
 }

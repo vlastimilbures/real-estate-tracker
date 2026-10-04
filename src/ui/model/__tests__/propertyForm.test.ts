@@ -53,8 +53,7 @@ describe("parsePropertyForm", () => {
     expect(result.errors.name).toBe(en.propertyForm.errNameExists);
   });
 
-  it("allows an edit-mode save to keep its own (excluded) name", () => {
-    // Caller excludes the property's own current name from existingNames.
+  it("accepts an edit that keeps its name once the caller leaves it out of existingNames", () => {
     const result = parsePropertyForm(valid, "vinohrady-2kk", [], en);
     expect(result.valid).toBe(true);
   });

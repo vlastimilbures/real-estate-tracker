@@ -30,6 +30,9 @@ const FH =
 
 let sql: TestSql;
 
+const UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
 /** A property's id, found by its name: new ids are random (ADR 0127). */
 const idOf = (name: string) =>
   (
@@ -418,7 +421,7 @@ describe("new property ids (ADR 0127)", () => {
       ).rows,
     });
     const id = idOf("Квартира");
-    expect(id).not.toBe("");
+    expect(id).toMatch(UUID);
     expect(sql.db.prepare("SELECT property_id FROM leases").all()).toEqual([
       { property_id: id },
     ]);
@@ -430,6 +433,22 @@ describe("new property ids (ADR 0127)", () => {
         "name,purchase_date,purchase_price\nJavorová,2020-01-01,3000000",
       ).rows,
     });
-    expect(idOf("Javorová")).not.toBe("javorova");
+    expect(idOf("Javorová")).toMatch(UUID);
+  });
+
+  it("importing the same batch again after a rename adds a property with a new id", async () => {
+    const batch = {
+      properties: parseProperties(
+        "name,purchase_date,purchase_price\nByt N,2020-01-01,3000000",
+      ).rows,
+    };
+    await importCsv(sql, batch);
+    const first = idOf("Byt N");
+    sql.db.exec(
+      "UPDATE properties SET name = 'Byt N renamed' WHERE name = 'Byt N'",
+    );
+    await importCsv(sql, batch);
+    expect(idOf("Byt N")).toMatch(UUID);
+    expect(idOf("Byt N")).not.toBe(first);
   });
 });

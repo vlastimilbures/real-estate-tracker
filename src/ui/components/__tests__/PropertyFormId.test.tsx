@@ -9,7 +9,11 @@ import { PropertyFormModal } from "../PropertyFormModal";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
-import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import {
+  portfolio,
+  assumptions,
+  withPropertyId,
+} from "../../../engine/__tests__/support/seed";
 import type { HoldingCost, Property } from "../../../engine";
 import type { MutationResult } from "../../../state/portfolioStore";
 
@@ -20,9 +24,13 @@ const UUID =
 let addProperty: ReturnType<
   typeof vi.fn<(p: Property, c: HoldingCost) => Promise<MutationResult>>
 >;
+let editProperty: ReturnType<
+  typeof vi.fn<(p: Property) => Promise<MutationResult>>
+>;
 
 beforeEach(() => {
   addProperty = vi.fn(() => Promise.resolve({ ok: true as const }));
+  editProperty = vi.fn(() => Promise.resolve({ ok: true as const }));
   act(() => {
     useUiStore.setState({ language: "en" });
     usePortfolioStore.setState({
@@ -30,6 +38,7 @@ beforeEach(() => {
       assumptions,
       status: "ready",
       addProperty,
+      editProperty,
       getPropertyExtras: () => Promise.resolve({ address: null, garage: null }),
     });
   });
@@ -69,5 +78,26 @@ describe("a new property's id (ADR 0127)", () => {
     expect(addProperty.mock.calls[1]![0].id).toBe(
       addProperty.mock.calls[0]![0].id,
     );
+  });
+});
+
+describe("an edited property's id (ADR 0127)", () => {
+  it('saves a property stored with the id "" under that id', async () => {
+    const own = portfolio.properties[0]!;
+    act(() =>
+      usePortfolioStore.setState({ portfolio: withPropertyId(own.id, "") }),
+    );
+    render(
+      <PropertyFormModal mode="edit" propertyId="" onClose={() => undefined} />,
+    );
+    await screen.findByDisplayValue(own.name);
+    await userEvent.click(
+      screen.getByRole("button", { name: getDict("en").common.saveChanges }),
+    );
+    expect(editProperty).toHaveBeenCalledTimes(1);
+    expect(editProperty.mock.calls[0]![0]).toMatchObject({
+      id: "",
+      name: own.name,
+    });
   });
 });
