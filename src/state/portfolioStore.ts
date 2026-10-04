@@ -101,7 +101,8 @@ function assertRows(candidate: Portfolio, ids: string[]): void {
 /** The outcome of a mutation. Callers (forms, modals) branch on `ok` — e.g. a modal
  *  closes only on success and keeps itself open, showing `error`, on failure. The
  *  store also stashes `error` so a global banner can surface it without every caller
- *  wiring it up. */
+ *  wiring it up. `ok` means the write landed; when the reload after it failed, the
+ *  store's `stale` flag says so (ADR 0125). */
 export type MutationResult = { ok: true } | { ok: false; error: WriteError };
 
 /** Open + migrate + seed the database. Normally the on-disk Tauri SQLite; lazy so
@@ -145,12 +146,14 @@ interface PortfolioState {
   /** A typed data-layer failure that stopped startup (P5a), for a translated screen. */
   startupError: { code: DataErrorCode; details: string[] } | null;
   /** The reload after a write failed, so the screen may not show what is on disk
-   *  (DR-086). Cleared by the next successful load. */
+   *  (DR-086). The write itself still counts as done (ADR 0125). Cleared by the next
+   *  successful load. */
   stale: boolean;
 
   init: (open?: () => Promise<Sql>) => Promise<void>;
   refresh: () => Promise<void>;
-  /** The banner's Reload: refresh, keeping `stale` set when it fails again. */
+  /** Refresh; on failure log it and set `stale`. Never throws: the banner's Reload,
+   *  and the reload after every write (ADR 0125). */
   reload: () => Promise<void>;
   clearError: () => void;
 
@@ -210,7 +213,8 @@ interface PortfolioState {
   /** "Keep exploring": hide the sample banner for good. */
   dismissSampleBanner: () => Promise<MutationResult>;
   // whole-database operations. They throw their own typed errors (CsvImportError,
-  // RestoreError, …) for the page to show, and leave the banner `error` alone.
+  // RestoreError, …) for the page to show, and leave the banner `error` alone. They
+  // throw only before the commit: a failed reload after it marks `stale` (ADR 0125).
   /** What a CSV import would add and update (ADR 0096). Reads only; queued behind
    *  pending writes so it sees their result. */
   previewCsv: (batch: CsvImportBatch) => Promise<CsvImportPreview>;
@@ -251,8 +255,10 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
   }
 
   /** Run `op` in the mutation queue, then reload; rethrow its failure unchanged
-   *  (after reconciling in-memory state with the DB). For operations whose callers
-   *  show their own typed errors (DR-047: pages no longer touch the raw `sql`). */
+   *  (after reloading in-memory state from the DB). For operations whose callers
+   *  show their own typed errors (DR-047: pages no longer touch the raw `sql`). Once
+   *  `op` has resolved it has committed: a failed reload only marks the state stale
+   *  (ADR 0125). */
   function exclusive<T>(
     op: (sql: Sql) => Promise<T>,
     changesData = true,
@@ -262,29 +268,15 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       try {
         const result = await op(sql);
         if (changesData) await markChanged(sql);
-        await reconcile();
+        await get().reload();
         return result;
       } catch (e) {
-        try {
-          await reconcile();
-        } catch {
-          // a secondary failure while reconciling shouldn't mask the original error
-        }
+        await get().reload();
         throw e;
       }
     });
     queue = run.catch(() => undefined);
     return run;
-  }
-
-  /** Reload after a write; on failure mark the state stale and rethrow. */
-  async function reconcile(): Promise<void> {
-    try {
-      await get().refresh();
-    } catch (e) {
-      set({ stale: true });
-      throw e;
-    }
   }
 
   /** Data was written: the last backup no longer has it (ADR 0110). Best effort — a
@@ -306,9 +298,11 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
 
   /** Persist via `op`, then reload portfolio + assumptions so the engine recomputes.
    *  Never throws into the void: a failure is captured, surfaced via `error`, and
-   *  returned to the caller as `{ ok: false }`. On failure we still `refresh()` so the
+   *  returned to the caller as `{ ok: false }`. On failure we still reload so the
    *  in-memory state matches what actually reached disk. Multi-statement writes are
-   *  atomic (`Sql.transaction`, D-14), so a failed op leaves the DB unchanged. */
+   *  atomic (`Sql.transaction`, D-14), so a failed op leaves the DB unchanged, and a
+   *  resolved op has committed: a failed reload after it returns `{ ok: true }` with
+   *  the state marked stale (ADR 0125). */
   async function mutateNow(
     op: (sql: Sql) => Promise<void>,
     changesData: boolean,
@@ -323,7 +317,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       perfMark("edit:start");
       await op(sql);
       if (changesData) await markChanged(sql);
-      await reconcile();
+      await get().reload();
       // Write + reload; the recompute and page render are measured where they run.
       perfMeasure("edit-saved", "edit:start");
       set({ error: null });
@@ -338,11 +332,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       }
       logFailure("WRITE", e);
       const error = toWriteError(e);
-      try {
-        await reconcile();
-      } catch {
-        // a secondary failure while reconciling shouldn't mask the original error
-      }
+      await get().reload();
       set({ error });
       return { ok: false, error };
     }

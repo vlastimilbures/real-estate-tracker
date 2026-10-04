@@ -185,7 +185,8 @@ export function Import() {
       setMortgages(null);
       showToast(t.importPage.importComplete);
     } catch (e) {
-      // Import is one transaction: on any failure nothing was written (DR-023).
+      // Import is one transaction: only a failure before the commit lands here, so
+      // nothing was written (DR-023). A failed reload after it resolves (ADR 0125).
       if (e instanceof CsvImportError) setRefused(e.problems);
       else if (e instanceof CsvPlanChangedError) {
         setPlanChanged(true);

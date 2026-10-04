@@ -223,8 +223,11 @@ export function AssumptionsPanel() {
         fail(formWriteErrors(t, result.error, names).fieldErrors);
         return;
       }
-      // Saved: show the stored values again, so the form is no longer "unsaved".
-      setDraft(null);
+      // Saved: show the stored values again, so the form is no longer "unsaved". If the
+      // reload after the save failed, the store still holds the old values: keep the
+      // saved ones until Reload, so the next save cannot write the old ones back
+      // (ADR 0125).
+      if (!usePortfolioStore.getState().stale) setDraft(null);
       setFailed(false);
       showToast(t.assumptions.saved);
     });

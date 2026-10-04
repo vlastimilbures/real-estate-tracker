@@ -226,7 +226,8 @@ export function BackupRestorePanel() {
       setPendingBackup(null);
       showToast(t.backup.restored(safetyBackup));
     } catch (e) {
-      // One transaction: on any failure the current data is unchanged (DR-019).
+      // One transaction: only a failure before the commit lands here, so the current
+      // data is unchanged (DR-019). A failed reload after it resolves (ADR 0125).
       fail(e, t.backup.restoreFailed);
     } finally {
       setRestoring(false);
