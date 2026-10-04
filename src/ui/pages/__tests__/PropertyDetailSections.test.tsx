@@ -2,7 +2,8 @@
 //
 // ADR 0107 (#23): Property detail has an in-page section nav (focus moves to the section
 // heading, the section in view is aria-current) and a collapsed amortization schedule
-// whose export stays available.
+// whose export stays available. ADR 0118 (#35) adds the Data check section, whose fix
+// links move to the section that fixes a finding, also when opened from the Dashboard.
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -12,6 +13,7 @@ import { useUiStore } from "../../../state/uiStore";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { isoDate, money } from "../../../engine";
+import { fmtCzk } from "../../../lib/format";
 
 vi.mock("../../../data/errorLog", () => ({ logFailure: vi.fn() }));
 
@@ -94,6 +96,7 @@ describe("Property detail section nav (ADR 0107)", () => {
     const links = within(nav()).getAllByRole("link");
     expect(links.map((a) => a.textContent)).toEqual([
       pd.sectionOverview,
+      en.dataCheck.title,
       pd.sectionRecords,
       pd.sectionFinancing,
       pd.sectionHolding,
@@ -224,5 +227,62 @@ describe("Property detail amortization disclosure (ADR 0107)", () => {
     );
     expect(within(amortization()).queryByRole("table")).toBeNull();
     expect(useUiStore.getState().amortizationOpen).toBe(false);
+  });
+});
+
+describe("Property detail data check (ADR 0118)", () => {
+  const dataCheck = () => document.getElementById("pd-dataCheck")!;
+  const withoutValuation = {
+    ...portfolio,
+    valuations: portfolio.valuations.filter((v) => v.propertyId !== owner.id),
+  };
+
+  beforeEach(() => {
+    act(() =>
+      useUiStore.setState({ asOf: assumptions.baseDate, propertyTarget: null }),
+    );
+  });
+
+  it("lists the property's findings; a fix link moves to the section that fixes it", async () => {
+    setPortfolio(withoutValuation);
+    render(<PropertyDetail />);
+    const section = within(dataCheck());
+    expect(
+      section.getByText(en.dataCheck.noValuation(fmtCzk(owner.purchasePrice))),
+    ).toBeTruthy();
+    expect(section.getByText(en.dataCheck.growthBoth)).toBeTruthy();
+    await userEvent.click(
+      section.getByRole("button", { name: "Go to Records" }),
+    );
+    expect(document.activeElement).toBe(
+      screen.getByRole("heading", { name: pd.valuationsTitle }),
+    );
+  });
+
+  it("the growth finding opens the property form", async () => {
+    render(<PropertyDetail />);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await userEvent.click(
+      within(dataCheck()).getByRole("button", {
+        name: en.properties.editProperty,
+      }),
+    );
+    expect(screen.getByRole("dialog")).toBeTruthy();
+  });
+
+  it("lands once on the section a Dashboard fix link asked for", () => {
+    act(() => useUiStore.setState({ propertyTarget: "financing" }));
+    render(<PropertyDetail />);
+    expect(document.activeElement).toBe(
+      screen.getByRole("heading", { name: pd.mortgagesTitle }),
+    );
+    expect(useUiStore.getState().propertyTarget).toBeNull();
+  });
+
+  it("opens the property form when the Dashboard link asked for it", () => {
+    act(() => useUiStore.setState({ propertyTarget: "edit" }));
+    render(<PropertyDetail />);
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(useUiStore.getState().propertyTarget).toBeNull();
   });
 });
