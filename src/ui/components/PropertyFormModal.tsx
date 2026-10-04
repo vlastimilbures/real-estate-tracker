@@ -231,6 +231,9 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
   const addProperty = usePortfolioStore((s) => s.addProperty);
   const editProperty = usePortfolioStore((s) => s.editProperty);
 
+  // A new property's id is random and made once, so a retry cannot add a second row
+  // (ADR 0127); an edit keeps the property's id.
+  const [id] = useState(() => propertyId ?? crypto.randomUUID());
   const [form, setForm] = useState<PropertyFormState>(BLANK_PROPERTY_FORM);
   // What the form opened with (blank, or the loaded property): input differing from it
   // is unsaved, so Esc / backdrop clicks are ignored (UX-029).
@@ -293,7 +296,7 @@ export function PropertyFormModal({ mode, propertyId, onClose }: Props) {
     const existingNames = (portfolio?.properties ?? [])
       .filter((p) => mode === "add" || p.id !== propertyId)
       .map((p) => p.name.toLowerCase());
-    const result = parsePropertyForm(form, mode, propertyId, existingNames, t);
+    const result = parsePropertyForm(form, id, existingNames, t);
     showErrors(result.errors);
     if (!result.valid) return;
     const { property, address, garage } = result;

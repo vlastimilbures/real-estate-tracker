@@ -659,6 +659,21 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
     expect(usePortfolioStore.getState().error).toBeNull();
   });
 
+  it("a previewed batch that adds a property imports with the previewed id (ADR 0096, ADR 0127)", async () => {
+    await usePortfolioStore.getState().init(openSeeded);
+    const batch = {
+      properties: parseProperties(
+        "name,purchase_date,purchase_price\nКвартира,2020-01-01,1000000",
+      ).rows,
+    };
+    const preview = await usePortfolioStore.getState().previewCsv(batch);
+    await usePortfolioStore.getState().importCsv(batch, preview.fingerprint);
+    const added = usePortfolioStore
+      .getState()
+      .portfolio!.properties.find((p) => p.name === "Квартира");
+    expect(added?.id).toBe(preview.items[0]?.propertyId);
+  });
+
   it("importCsv rethrows a refused file unchanged and writes nothing", async () => {
     await usePortfolioStore.getState().init(openSeeded);
     const before = usePortfolioStore.getState().portfolio!;

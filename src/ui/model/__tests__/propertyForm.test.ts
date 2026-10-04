@@ -26,11 +26,11 @@ const valid: PropertyFormState = {
 
 describe("parsePropertyForm", () => {
   it("accepts a fully valid add-mode form and assembles the Property + extras", () => {
-    const result = parsePropertyForm(valid, "add", undefined, [], en);
+    const result = parsePropertyForm(valid, "p-new", [], en);
     expect(result.valid).toBe(true);
     if (!result.valid) throw new Error("expected valid");
     expect(result.errors).toEqual({});
-    expect(result.property.id).toBe("vinohrady-2-kk");
+    expect(result.property.id).toBe("p-new");
     expect(result.property.name).toBe("Vinohrady 2+kk");
     expect(result.property.sizeM2).toBe(58);
     expect(result.address).toBe("Korunní 100");
@@ -38,13 +38,7 @@ describe("parsePropertyForm", () => {
   });
 
   it("requires name and purchase date/price", () => {
-    const result = parsePropertyForm(
-      BLANK_PROPERTY_FORM,
-      "add",
-      undefined,
-      [],
-      en,
-    );
+    const result = parsePropertyForm(BLANK_PROPERTY_FORM, "p-new", [], en);
     expect(result.valid).toBe(false);
     if (result.valid) throw new Error("expected invalid");
     expect(result.errors.name).toBe(en.propertyForm.errRequired);
@@ -53,13 +47,7 @@ describe("parsePropertyForm", () => {
   });
 
   it("rejects a name that collides with another property (case-insensitive)", () => {
-    const result = parsePropertyForm(
-      valid,
-      "add",
-      undefined,
-      ["vinohrady 2+kk"],
-      en,
-    );
+    const result = parsePropertyForm(valid, "p-new", ["vinohrady 2+kk"], en);
     expect(result.valid).toBe(false);
     if (result.valid) throw new Error("expected invalid");
     expect(result.errors.name).toBe(en.propertyForm.errNameExists);
@@ -67,12 +55,12 @@ describe("parsePropertyForm", () => {
 
   it("allows an edit-mode save to keep its own (excluded) name", () => {
     // Caller excludes the property's own current name from existingNames.
-    const result = parsePropertyForm(valid, "edit", "vinohrady-2kk", [], en);
+    const result = parsePropertyForm(valid, "vinohrady-2kk", [], en);
     expect(result.valid).toBe(true);
   });
 
-  it("keeps the edit-mode id stable rather than re-deriving it from the name", () => {
-    const result = parsePropertyForm(valid, "edit", "some-fixed-id", [], en);
+  it("uses the id it is given, never one made from the name (ADR 0127)", () => {
+    const result = parsePropertyForm(valid, "some-fixed-id", [], en);
     if (!result.valid) throw new Error("expected valid");
     expect(result.property.id).toBe("some-fixed-id");
   });
@@ -80,8 +68,7 @@ describe("parsePropertyForm", () => {
   it("rejects an unparseable purchase date", () => {
     const result = parsePropertyForm(
       { ...valid, purchase_date: "not-a-date" },
-      "add",
-      undefined,
+      "p-new",
       [],
       en,
     );
@@ -93,8 +80,7 @@ describe("parsePropertyForm", () => {
   it("rejects an unparseable purchase price", () => {
     const result = parsePropertyForm(
       { ...valid, purchase_price: "not-a-number" },
-      "add",
-      undefined,
+      "p-new",
       [],
       en,
     );
@@ -106,8 +92,7 @@ describe("parsePropertyForm", () => {
   it("rejects a non-whole size and an invalid percentage override, leaving optional fields blank as valid", () => {
     const result = parsePropertyForm(
       { ...valid, size_m2: "58.5", appreciation_override_pa: "abc" },
-      "add",
-      undefined,
+      "p-new",
       [],
       en,
     );
@@ -120,7 +105,7 @@ describe("parsePropertyForm", () => {
   });
 
   it("treats optional overrides as valid when blank", () => {
-    const result = parsePropertyForm(valid, "add", undefined, [], en);
+    const result = parsePropertyForm(valid, "p-new", [], en);
     if (!result.valid) throw new Error("expected valid");
     expect(result.property.appreciationOverridePa).toBeUndefined();
     expect(result.property.rentIndexOverridePa).toBeUndefined();
@@ -129,13 +114,7 @@ describe("parsePropertyForm", () => {
   it("bounds the size to 1–10 000 m² (ADR 0075, DR-078)", () => {
     const hint = "Enter a whole number from 1 to 10 000";
     for (const size_m2 of ["0", "10001", "9".repeat(400)]) {
-      const result = parsePropertyForm(
-        { ...valid, size_m2 },
-        "add",
-        undefined,
-        [],
-        en,
-      );
+      const result = parsePropertyForm({ ...valid, size_m2 }, "p-new", [], en);
       expect(result.valid).toBe(false);
       expect(result.errors.size_m2).toBe(
         size_m2.length > 9 ? en.propertyForm.errWholeNumber : hint,
@@ -143,8 +122,7 @@ describe("parsePropertyForm", () => {
     }
     const max = parsePropertyForm(
       { ...valid, size_m2: "10000" },
-      "add",
-      undefined,
+      "p-new",
       [],
       en,
     );
@@ -158,7 +136,6 @@ describe("parsePropertyForm — acquisition funding", () => {
   const funding = (form: Partial<PropertyFormState>): AcquisitionFunding => {
     const result = parsePropertyForm(
       { ...valid, ...form },
-      "edit",
       "vinohrady",
       [],
       en,
@@ -208,8 +185,7 @@ describe("parsePropertyForm — acquisition funding", () => {
         transaction_costs: "1.2.3",
         initial_works: "x",
       },
-      "add",
-      undefined,
+      "p-new",
       [],
       en,
     );

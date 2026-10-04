@@ -315,16 +315,16 @@ describe("importCsv — parity (parity targets via CSV)", () => {
   });
 });
 
-// --- importCsv slug collision ---
+// --- importCsv near-identical names ---
 
-describe("importCsv — slug collision", () => {
-  // Two distinct names that slugify to the same base ("byt-a"); the second must get
-  // a uniqued id rather than clobber the first on the primary key.
+describe("importCsv — near-identical names", () => {
+  // Two distinct names that differ only in punctuation once got the same id made from
+  // the name (slug "byt-a"). Ids are random now (ADR 0127); both must still be kept.
   const COLLIDING_CSV = `name,purchase_date,purchase_price
 Byt A!,2020-01-01,1000000
 Byt A?,2020-01-01,2000000`;
 
-  it("gives distinct slug-colliding names distinct ids, keeps both, stays idempotent", async () => {
+  it("gives near-identical names distinct ids, keeps both, stays idempotent", async () => {
     const csql = openMemorySql();
     try {
       await migrate(csql);
@@ -335,7 +335,7 @@ Byt A?,2020-01-01,2000000`;
       const after = await loadPortfolio(csql);
       expect(after.properties).toHaveLength(2);
       const ids = after.properties.map((p) => p.id);
-      expect(new Set(ids).size).toBe(2); // distinct ids despite same slug base
+      expect(new Set(ids).size).toBe(2); // distinct ids
 
       // Re-import upserts by name (no new rows), so the count holds.
       await importCsv(csql, {

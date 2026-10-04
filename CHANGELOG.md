@@ -229,6 +229,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "Open property" link and the Dashboard filter treated it as "no property", and a CSV file
   could not add its loans, valuations or rents. Such a property now works like any other
   (ADR 0127, #105).
+- A new property gets a random internal id, from the property form and from a CSV import,
+  instead of one made from its name (ADR 0127, #105). A Cyrillic name no longer gets an
+  empty id, and a CSV file can add such a property together with its loans, valuations and
+  rents. Names that differ only in punctuation or accents ("Byt 1" and "Byt-1", "Lipová 2"
+  and "Lipova 2") no longer fail with "a record with the same internal id already exists".
 - A restore, Clear sample, Load sample or CSV import that went through but whose screen
   could not reload said it had failed and been rolled back, with the data unchanged. It now
   reports success, naming the safety backup, and the banner asks you to reload. A form save
