@@ -86,10 +86,15 @@ describe("irr — widened search and non-unique roots (DR-158, ADR 0079)", () =>
   });
 
   it("a run of scan points within the NPV tolerance is one root", () => {
-    // Flows of 1e-8 Kč: |NPV| < 1e-9 from −5 % to +10 %, around the one root at 0 %.
-    const r = irrResult([D("-1e-8"), D("1e-8"), D("-1e-12")]);
+    // Flows of 1e-8 Kč: |NPV| < 1e-9 from −7.5 % to +10 %, around the one root near
+    // −0.01 %. Bisection may stop anywhere in that run, so pin the IRR contract: the
+    // rate it returns has an NPV within the tolerance.
+    const flows = [D("-1e-8"), D("1e-8"), D("-1e-12")];
+    const r = irrResult(flows);
     expect(r.reason).toBeNull();
-    expect(r.rate).not.toBeNull();
+    const v = D(1).div(D(1).plus(r.rate!));
+    const npv = flows.reduce((s, c, t) => s.plus(c.times(v.pow(t))), D(0));
+    expect(npv.abs().lessThan("1e-9")).toBe(true);
   });
 });
 

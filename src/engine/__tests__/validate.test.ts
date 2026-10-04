@@ -13,33 +13,16 @@ import {
 import type {
   Assumptions,
   IsoDate,
-  MortgageBlock,
   MortgageBlockFields,
   Portfolio,
 } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 import { devBlock, mixed } from "./support/mixed";
+import { loan, withLoan } from "./support/loan";
 import { money } from "../brands";
 
 const codes = (p: Portfolio, a: Assumptions = assumptions, asOf?: Date) =>
   validateInputs(p, a, asOf).map((e) => e.code);
-
-const loan = (b: Partial<MortgageBlockFields>): MortgageBlock =>
-  ({
-    id: "m-x",
-    propertyId: "javorova",
-    startDate: isoDate("2021-01-17"),
-    initialPrincipal: money("1912500"),
-    fixationYears: 10,
-    interestRatePa: rate("0.0169"),
-    monthlyInstalment: money("6721.8"),
-    ...b,
-  }) as MortgageBlock;
-
-const withLoan = (b: Partial<MortgageBlockFields>): Portfolio => ({
-  ...portfolio,
-  mortgages: [loan(b)],
-});
 
 const expectCode = (p: Portfolio, code: ValidationCode) =>
   expect(codes(p)).toContain(code);

@@ -185,9 +185,15 @@ describe("D-17: every loan path raises the typed error", () => {
   });
 
   it("termMonths and amortizationHealth: no NaN or Infinity term", () => {
-    expect(caught(() => termMonths(bad)).errors[0]?.code).toBe(
-      "INSTALMENT_BELOW_INTEREST",
-    );
+    // termMonths names the mortgage it cannot derive a term for.
+    expect(caught(() => termMonths(bad)).errors).toEqual([
+      {
+        code: "INSTALMENT_BELOW_INTEREST",
+        entity: "mortgage",
+        id: "m-x",
+        field: "monthlyInstalment",
+      },
+    ]);
     const zero = loan({ interestRatePa: rate(0), monthlyInstalment: money(0) });
     expect(caught(() => amortizationHealth(zero)).errors[0]?.code).toBe(
       "ZERO_RATE_ZERO_INSTALMENT",

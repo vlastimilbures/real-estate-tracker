@@ -691,6 +691,7 @@ describe("ADR 0109: refinance handovers", () => {
   // D-47: a second successor drawn in the same grid month pays off what the first one
   // drew; the first handover's prepayment belongs to Javorova and is not paid twice.
   it("two successors in one grid month: the second pays off the first one's draw", () => {
+    // #223: rows[55].prepaid/prepaymentFee are dropped here; deliberately not asserted.
     const second = {
       ...refi("2031-01-20"),
       id: "refi-2",

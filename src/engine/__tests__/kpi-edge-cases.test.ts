@@ -157,7 +157,7 @@ describe("ADR 0126: debt-free year", () => {
     expect(k.debtFreeYear).toBe(2031);
   });
 
-  it("debt that never exceeds the epsilon, first owed after year 1, was never carried", () => {
+  it("debt within the epsilon, first owed after year 1, is not carried by year 1, so no debt-free year", () => {
     // 0.004 Kč from 2030: 0.0035 Kč at the end of year 4, nothing before.
     const { proj, k } = onlyLoan("2030-01-01", "0.004", "0.0001");
     expect(proj[1].balance.isZero()).toBe(true);
