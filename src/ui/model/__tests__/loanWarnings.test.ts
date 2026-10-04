@@ -155,7 +155,7 @@ describe("loanWarningText", () => {
 });
 
 // ADR 0129 §4 (#135 G2-1-08): a later block silences the warning only when it starts
-// on or before the first payment after the fixation end.
+// before the first payment after the fixation end falls due.
 describe("fixation ended before a later block", () => {
   const fixationEnded = (blocks: MortgageBlock[]) =>
     loanWarnings(blocks, baseDate).filter((w) => w.kind === "fixationEnded");
@@ -173,20 +173,24 @@ describe("fixation ended before a later block", () => {
     ]);
   });
 
-  it("is silent when the next block starts by the first floating payment", () => {
+  it("is silent only when the next block starts before the first floating payment", () => {
     // Fixation ends 2026-06-01 (on/before baseDate); first floating payment 2026-07-01.
+    // A block starting on 07-01 still leaves that payment, at the reset rate, with the
+    // old block: the handover keeps a payment due on the successor's start (D-47).
     const a = block({ startDate: isoDate("2021-06-01"), fixationYears: 5 });
-    const on = block({ id: "m2", startDate: isoDate("2026-07-01") });
-    const after = block({ id: "m2", startDate: isoDate("2026-07-02") });
-    expect(fixationEnded([a, on])).toEqual([]);
-    expect(fixationEnded([a, after])).toEqual([
-      {
-        kind: "fixationEnded",
-        block: a,
-        fixationEnd: isoDate("2026-06-01"),
-        until: isoDate("2026-07-02"),
-      },
-    ]);
+    const before = block({ id: "m2", startDate: isoDate("2026-06-30") });
+    expect(fixationEnded([a, before])).toEqual([]);
+    for (const start of ["2026-07-01", "2026-07-02"]) {
+      const next = block({ id: "m2", startDate: isoDate(start) });
+      expect(fixationEnded([a, next])).toEqual([
+        {
+          kind: "fixationEnded",
+          block: a,
+          fixationEnd: isoDate("2026-06-01"),
+          until: isoDate(start),
+        },
+      ]);
+    }
   });
 
   it("with no later block there is no `until`", () => {

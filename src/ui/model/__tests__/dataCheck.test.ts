@@ -291,7 +291,7 @@ describe("data check: fixation (ADR 0118)", () => {
     });
     const asOf = isoDate("2029-01-20");
     expect(
-      kinds(check("lipova", asOf, later("2029-02-15")).attention),
+      kinds(check("lipova", asOf, later("2029-02-14")).attention),
     ).not.toContain("fixationEnded");
     expect(check("lipova", asOf, later("2029-06-15")).attention).toContainEqual(
       {

@@ -57,9 +57,10 @@ export type LoanWarning =
     };
 
 /**
- * The months an ended fixation runs at the assumed reset rate: from its end, when no
- * next block starts by the first payment after it — until that block, if there is one
- * (D-30, ADR 0129 §4). Undefined while the fixation runs or the next block covers it.
+ * The months an ended fixation runs at the assumed reset rate: from its end, unless the
+ * next block starts before the first payment after it falls due — until that block, if
+ * there is one (D-30, ADR 0129 §4). Undefined while the fixation runs or the next block
+ * covers it.
  */
 function refixGap(
   current: MortgageBlock,
@@ -73,7 +74,8 @@ function refixGap(
     current.startDate,
     current.fixationYears * 12 + 1,
   );
-  return next.startDate.getTime() > firstFloating.getTime()
+  // A payment due on the next block's start stays with this one (D-47).
+  return next.startDate.getTime() >= firstFloating.getTime()
     ? { fixationEnd, until: next.startDate }
     : undefined;
 }
