@@ -56,10 +56,53 @@ const refinanced: Portfolio = {
   ],
 };
 
+/** The seed with valuations that end (ADR 0122): Javorova's closed in the projection,
+ *  Lipova's closed with a gap before the next one, Dubova's closed over an older
+ *  open-ended one. */
+const closedValuations: Portfolio = {
+  ...portfolio,
+  valuations: [
+    {
+      id: "v-javorova",
+      propertyId: "javorova",
+      validFrom: isoDate("2026-06-01"),
+      validTo: isoDate("2027-12-31"),
+      marketValue: money("10200000"),
+    },
+    {
+      id: "v-lipova",
+      propertyId: "lipova",
+      validFrom: isoDate("2026-06-01"),
+      validTo: isoDate("2026-12-31"),
+      marketValue: money("8925000"),
+    },
+    {
+      id: "v-lipova-2",
+      propertyId: "lipova",
+      validFrom: isoDate("2029-01-01"),
+      marketValue: money("9500000"),
+    },
+    {
+      id: "v-dubova-old",
+      propertyId: "dubova",
+      validFrom: isoDate("2020-01-01"),
+      marketValue: money("6000000"),
+    },
+    {
+      id: "v-dubova",
+      propertyId: "dubova",
+      validFrom: isoDate("2026-06-01"),
+      validTo: isoDate("2028-06-30"),
+      marketValue: money("9605000"),
+    },
+  ],
+};
+
 const CASES: [string, Portfolio][] = [
   ["seed", portfolio],
   ["mixed", mixed],
   ["refinanced", refinanced],
+  ["closed valuations", closedValuations],
 ];
 
 const sum = (xs: Decimal[]) => xs.reduce((s, x) => s.plus(x), ZERO);

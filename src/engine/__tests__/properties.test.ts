@@ -348,7 +348,7 @@ describe("random effective-dated leases and valuations", () => {
     );
   });
 
-  it("selectValuation: in force, else latest started, else nearest upcoming (ADR 0122)", () => {
+  it("selectValuation: latest started (validTo not read), else nearest upcoming (ADR 0122)", () => {
     fc.assert(
       fc.property(records, fc.integer({ min: 0, max: 2500 }), (rs, asOfDay) => {
         const asOf = dayToDate(asOfDay);
@@ -367,9 +367,7 @@ describe("random effective-dated leases and valuations", () => {
           .filter((v) => v.validFrom > asOf)
           .sort((a, b) => a.validFrom.getTime() - b.validFrom.getTime())[0];
         expect(selectValuation(vals, asOf)?.id).toBe(
-          oracle(vals, asOf, from, (v) => v.validTo) ??
-            oracle(vals, asOf, from, () => undefined) ??
-            upcoming?.id,
+          oracle(vals, asOf, from, () => undefined) ?? upcoming?.id,
         );
         // The purchase price (1 Kč here) stands in only when there is no valuation.
         const property: Property = {

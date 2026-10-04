@@ -1,7 +1,8 @@
-// ADR 0122 (#110): a valuation's "Valid to" date does not end its value. When no
-// valuation is in force, the latest one that started governs, then the nearest
-// upcoming one; the purchase price stands in only when the property has none. Before,
-// a closed last valuation dropped the value to the purchase price grown from baseDate.
+// ADR 0122 (#110): a valuation's "Valid to" date does not end its value. The latest
+// valuation that started governs (its validTo is not read), else the nearest upcoming
+// one; the purchase price stands in only when the property has none. Before, a closed
+// last valuation dropped the value to the purchase price grown from baseDate, or to an
+// older open-ended valuation.
 import { describe, it, expect } from "vitest";
 import { money } from "../brands";
 import { isoDate } from "../dates";
@@ -9,7 +10,7 @@ import { propertySnapshot, selectValuation } from "../metrics";
 import { portfolioProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
 import type { Portfolio, Property, Valuation } from "../types";
-import { assumptions, portfolio } from "./support/seed";
+import { PARITY, assumptions, portfolio } from "./support/seed";
 
 const withJavorovaValidTo = (validTo: string): Portfolio => ({
   ...portfolio,
@@ -20,15 +21,15 @@ const withJavorovaValidTo = (validTo: string): Portfolio => ({
 const values = (p: Portfolio) =>
   portfolioProjection(p, assumptions).map((y) => y.value.toFixed(6));
 
-describe("ADR 0122: a closed last valuation keeps governing", () => {
+describe("ADR 0122: the latest started valuation governs, closed or not", () => {
   it.each(["2028-06-30", "2027-12-31"])(
     "seed: Javorova's valuation closed on %s changes no year's value",
     (validTo) => {
       const closed = withJavorovaValidTo(validTo);
       expect(values(closed)).toEqual(values(portfolio));
       expect(
-        portfolioKpis(closed, assumptions).netWorthNominal.toFixed(2),
-      ).toBe("93182810.46");
+        portfolioKpis(closed, assumptions).netWorthNominal.toNumber(),
+      ).toBeCloseTo(PARITY.kpis.netWorthNominal, 2);
       const javorova = portfolio.properties[0] as Property;
       const asOf = isoDate("2028-07-01");
       expect(
@@ -102,12 +103,25 @@ describe("ADR 0122: a closed last valuation keeps governing", () => {
     );
   });
 
-  it("the one in force wins over a later-started closed one", () => {
+  it("a later-started closed one wins over an older open-ended one", () => {
     const open = val("open", "2020-01-01", 5_000_000);
     const closed = val("closed", "2022-01-01", 6_000_000, "2022-12-31");
     expect(selectValuation([open, closed], isoDate("2026-06-07"))?.id).toBe(
-      "open",
+      "closed",
     );
+  });
+
+  it("seed with an older open-ended valuation: closing the newer one changes nothing", () => {
+    // ADR 0099 "Keep as is" (or data from before it) leaves the older row open.
+    const older: Valuation = {
+      ...val("v-old", "2020-01-01", 5_000_000),
+      propertyId: "javorova",
+    };
+    const open = { ...portfolio, valuations: [older, ...portfolio.valuations] };
+    const closedRows = withJavorovaValidTo("2027-12-31").valuations;
+    const closed = { ...portfolio, valuations: [older, ...closedRows] };
+    expect(values(closed)).toEqual(values(open));
+    expect(values(open)).toEqual(values(portfolio));
   });
 
   it("before the first valuation, the nearest upcoming one governs (unchanged)", () => {
