@@ -230,6 +230,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Loan schedule edge cases (ADR 0129, #135):
+  - A prepayment or maturity change dated after the last payment due by the snapshot date
+    now counts a development-loan tranche drawn earlier in that window. A 300,000 Kč
+    prepayment was cut to the balance before the tranche, depending on the snapshot date's
+    day.
+  - A development loan's payment is interest-only when its due date is on or before the
+    completion date, in the projection as in the history. The projection read it on the
+    grid date, so a payment due just before completion could amortize.
+  - A tranche dated after the loan's last-but-one payment is refused: the final payment
+    would have repaid it in one shot.
+  - The "Fixation ended" warning (property page and Data check) also shows when the next
+    loan block starts after the first payment at the assumed reset rate, with "from …
+    until …".
+  - An error raised for an invalid stored prepayment or maturity change names its row.
+
 - Assumptions that broke the maths are refused instead of showing `Infinity`, `NaN` or
   negative interest (ADR 0128, #114). The Assumptions page, the scenario form, the property
   form, CSV import and restore now check that:

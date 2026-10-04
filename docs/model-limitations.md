@@ -65,8 +65,9 @@ work still to do is in the [roadmap](roadmap.md).
   [SPEC §4.2](../SPEC.md#42-derived-per-mortgage-block-values).
 - **Refix at fixation end.** When a fixation ends, the model switches to the block's reset rate
   and recalculates the instalment over the remaining term. Once you know the real new terms,
-  enter them as a new block. If a fixation has already ended and there is no new block, the
-  app warns you.
+  enter them as a new block. If a fixation has already ended and there is no new block, or
+  the next block starts after the first payment at the reset rate, the app warns you
+  (ADR 0129).
 - **One development loan per property.** You can enter more than one, but the property's value
   during construction follows only the first. One development loan per property, optionally
   refinanced into a plain loan, is the supported case.
@@ -83,6 +84,11 @@ work still to do is in the [roadmap](roadmap.md).
   assumptions, covers the loan's whole remaining life and is not net of fees (ADR 0116).
   Prepayments and maturity changes entered on a loan block that a later block had already
   replaced before the projection start have no effect, and no warning says so.
+  A development-loan tranche counts in full for every prepayment and maturity change
+  settled after the same payment, even one dated before the tranche. The exception is the
+  window between the last payment due and the projection start: there an event counts only
+  the tranches dated on or before it, and never a tranche dated after the projection start
+  (ADR 0129).
   See [SPEC §4.4](../SPEC.md#44-monthly-amortization-the-engine-within-the-engine) and
   ADR 0109.
 - **The maturity check uses the contract term.** The implied-maturity warning compares the
