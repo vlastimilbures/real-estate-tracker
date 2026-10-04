@@ -12,7 +12,13 @@ import {
   SampleNotEmptyError,
   seedIfEmpty,
 } from "../seed";
-import { SafetyBackupError } from "../backup";
+import {
+  confirmRestore,
+  exportToJson,
+  restoreFromJson,
+  SafetyBackupError,
+} from "../backup";
+import { checkInputRules } from "../../import/inputRules";
 import {
   insertLease,
   insertPropertyWithCosts,
@@ -222,6 +228,45 @@ describe("clearSample (ADR 0094)", () => {
     expect(await ids(sql, "properties")).toEqual([...SAMPLE, "mine"].sort());
     expect(await ids(sql, "leases")).toContain("l-javorova-user");
     expect(await meta(sql)).toEqual(["sample_active", "sample_seeded"]);
+  });
+});
+
+describe("restore and the sample (ADR 0127)", () => {
+  /** A backup of the owner's own data: their flat "Lipová", whose id came from its name. */
+  async function ownBackup() {
+    const own = openMemorySql();
+    await migrate(own);
+    await seedIfEmpty(own);
+    await own.execute("DELETE FROM properties WHERE id <> 'lipova'");
+    await own.execute(
+      "UPDATE properties SET name = 'Lipová' WHERE id = 'lipova'",
+    );
+    return exportToJson(own);
+  }
+
+  /** A new Mac: the first launch seeded the sample, and its banner was dismissed. */
+  async function freshInstall(): Promise<TestSql> {
+    const sql = openMemorySql();
+    await migrate(sql);
+    await seedIfEmpty(sql);
+    await dismissSampleBanner(sql);
+    return sql;
+  }
+
+  it("a restore clears the sample markers, so the owner's data is not a sample", async () => {
+    const sql = await freshInstall();
+    await confirmRestore(sql, await ownBackup(), checkInputRules);
+    expect(await meta(sql)).toEqual(["sample_seeded"]);
+    expect((await loadState(sql)).sample).toEqual({
+      active: false,
+      dismissed: false,
+    });
+  });
+
+  it("so does a restore without a safety backup", async () => {
+    const sql = await freshInstall();
+    await restoreFromJson(sql, await ownBackup(), checkInputRules);
+    expect(await meta(sql)).toEqual(["sample_seeded"]);
   });
 });
 

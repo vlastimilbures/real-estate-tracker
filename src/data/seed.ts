@@ -15,6 +15,7 @@ import {
   insertStatement,
   upsertAssumptions,
   countProperties,
+  DELETE_SAMPLE_MARKERS,
   SAMPLE_ACTIVE,
   SAMPLE_DISMISSED,
   SAMPLE_PROPERTY_IDS,
@@ -300,10 +301,7 @@ export async function clearSample(
       query: `DELETE FROM properties WHERE id IN (${SAMPLE_PROPERTY_IDS.map(() => "?").join(", ")})`,
       params: [...SAMPLE_PROPERTY_IDS],
     },
-    {
-      query: "DELETE FROM app_meta WHERE key IN (?, ?)",
-      params: [SAMPLE_ACTIVE, SAMPLE_DISMISSED],
-    },
+    DELETE_SAMPLE_MARKERS,
   ]);
   return { safetyBackup };
 }

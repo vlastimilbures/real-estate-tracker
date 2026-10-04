@@ -322,6 +322,11 @@ export const SAMPLE_PROPERTY_IDS = ["javorova", "lipova", "dubova"] as const;
 export const SAMPLE_ACTIVE = "sample_active";
 export const SAMPLE_DISMISSED = "sample_banner_dismissed";
 const SAMPLE_META_QUERY = `SELECT key FROM app_meta WHERE key IN ('${SAMPLE_ACTIVE}', '${SAMPLE_DISMISSED}')`;
+/** Removes both sample markers: Clear sample (ADR 0094) and every restore (ADR 0127). */
+export const DELETE_SAMPLE_MARKERS: SqlStatement = {
+  query: "DELETE FROM app_meta WHERE key IN (?, ?)",
+  params: [SAMPLE_ACTIVE, SAMPLE_DISMISSED],
+};
 
 /** Whether the sample is still in place (marker set and at least one sample property
  *  left) and whether its banner was dismissed (ADR 0094). */

@@ -234,6 +234,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   empty id, and a CSV file can add such a property together with its loans, valuations and
   rents. Names that differ only in punctuation or accents ("Byt 1" and "Byt-1", "Lipová 2"
   and "Lipova 2") no longer fail with "a record with the same internal id already exists".
+- After a restore, the sample banner no longer comes back over your own data. On a new Mac,
+  the first launch fills in the sample; restoring your backup then kept the sample label,
+  and **Clear sample** could delete your own flat if its internal id matched a sample one
+  (for example a flat named "Lipová"). A restore now clears the sample label (ADR 0127,
+  #101).
 - A restore, Clear sample, Load sample or CSV import that went through but whose screen
   could not reload said it had failed and been rolled back, with the data unchanged. It now
   reports success, naming the safety backup, and the banner asks you to reload. A form save
