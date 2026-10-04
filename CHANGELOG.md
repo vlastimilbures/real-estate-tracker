@@ -230,6 +230,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Interest saved and the refinance difference (ADR 0130, #172):
+  - **Interest saved by prepayments** is shown only when a prepayment repaid some
+    principal; a prepayment that a later block replaced, or one after payoff, no longer
+    shows 0 Kč. When a maturity change takes effect only because of the prepayment, the
+    figure would be negative: the property page and the Dashboard show "n/a: a recast
+    depends on the prepayment" instead, and the Dashboard total leaves it out.
+  - A planned refix (a later loan block) no longer makes the **Drawn** and **Draws**
+    columns appear. The successor's principal less the balance it pays off shows in its
+    own **Refinance difference** column, in the amortization table, the projection grid
+    and both Excel exports. Optional columns appear from half a haléř, so a successor
+    typed to the haléř shows no column.
+
 - Loan schedule edge cases (ADR 0129, #135):
   - A prepayment or maturity change dated after the last payment due by the snapshot date
     now counts a development-loan tranche drawn earlier in that window. A 300,000 Kč
