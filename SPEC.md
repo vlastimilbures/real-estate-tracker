@@ -76,7 +76,8 @@ Assumptions {
   postFixationResetRatePa: Rate    // default 0.045
   horizonYears: int                // default 30
   inflationPa: Rate                // default 0.025  (CPI; drives real terms)
-  acquisitionCostPct?: Rate        // transaction-cost rate applied to future buys
+  acquisitionCostPct?: Rate        // 0–1 of the price; costs of a future buy with none
+                                   // recorded (engine-only, ADR 0119)
   defaults: { propertyTaxYr, insuranceYr, mgmtPctRent, maintPctRent, svjMonthly, otherYr }
   // scenario-only shock overrides (not stored in the base assumptions table):
   inflationShock?: { deltaPa, durationYears }  // temporary CPI spike from baseDate, then revert
@@ -87,8 +88,13 @@ Assumptions {
 
 Property { id, name, type?, sizeM2?, purchaseDate, purchasePrice,
            appreciationOverridePa?, rentIndexOverridePa?,
-           active?: boolean }        // false ⇒ excluded from totals, projections, KPIs
+           active?: boolean,         // false ⇒ excluded from totals, projections, KPIs
+           funding?: AcquisitionFunding }
            // address and garage are stored in the DB / CSV but not used by the engine
+
+AcquisitionFunding { ownCash?, transactionCosts?, initialWorks?: Money, note? }
+           // ADR 0119: each part unknown when blank (never 0); own cash = all own money
+           // paid in at acquisition, costs and works included
 
 MortgageDraw { date: IsoDate, amount: Money }     // additional principal tranche (> 0)
 MortgagePrepayment { date, amount: Money, effect: "lowerInstalment" | "shortenTerm",
@@ -129,8 +135,9 @@ ADR 0036). The codes: `INVALID_DATE`, `NON_FINITE_NUMBER`, `NEGATIVE_AMOUNT`,
 `DRAW_BEFORE_START`, `COMPLETION_BEFORE_START`, `DUPLICATE_BLOCK_START`, `END_BEFORE_START`,
 `DUPLICATE_HOLDING_COST`, `ORPHAN_ROW`, `HORIZON_NOT_POSITIVE`, `INVALID_TERM`,
 `SHOCK_OUT_OF_RANGE`, `ASOF_BEFORE_BASEDATE`. Ranges (ADR 0038): interest 0–100 %; vacancy,
-cost shares and value haircut 0–1; shock durations whole years ≥ 0; horizon a whole number
-≥ 1; growth, indexation and inflation may be negative (finite only). The form, the CSV
+cost shares, value haircut and the acquisition cost rate 0–1 (ADR 0119); shock durations
+whole years ≥ 0; horizon a whole number ≥ 1; growth, indexation and inflation may be
+negative (finite only). The funding record's amounts must not be negative. The form, the CSV
 importer and backup restore reject the same rows with a translated message (ADR 0037).
 
 **Whole-number bounds.** On top of the engine rules, every user-data entry point — the
@@ -326,8 +333,25 @@ flows zero. Each row carries `year` (0…horizon), `calendarYear` and its period
 (`owned = false`) and does not appear in year-0 totals. It turns on in the year it is
 acquired, with partial-year pro-rating (`activeMonthsInYear`). Rent gates separately on the
 effective lease date, so a unit can be owned-but-not-yet-let. In the acquisition year, a
-**down-payment outflow** (value − loan principal + `acquisitionCostPct·value`) is subtracted
-from net cash flow for levered IRR / cumulative cash-flow purposes.
+**down-payment outflow** is subtracted from net cash flow for levered IRR / cumulative
+cash-flow purposes (ADR 0119):
+
+- the recorded **own cash**, when the funding record has it;
+- otherwise purchase price − acquisition loan + costs + works. Costs are the recorded
+  transaction costs, else `acquisitionCostPct · price`, else 0; works are the recorded
+  initial works, else 0. The price is used, not the valuation: a valuation above the price
+  shows as equity the owner did not pay for.
+
+The **acquisition loan** is the property's earliest block when it starts no later than 90
+days after the purchase date (an earlier start counts: an off-plan loan drawn before
+handover). It counts its initial principal and every tranche dated on or before the start
+of the block that replaces it (the schedule's cut, D-47). A later block is a successor,
+never the acquisition loan. A future buy's first loan that starts after the window is not
+the acquisition loan: its initial principal is **cash in** in the projection year it is
+drawn, like refinance cash; its tranches are not. **Sources and uses** (for the Property
+detail page, #33 PR3; never a blocker): uses = price + recorded costs + recorded works;
+sources = own cash + acquisition loan; gap = uses − sources, only while own cash is known.
+A funding record on a property bought on or before baseDate changes no figure.
 
 **Deactivated properties** (`active = false`) are excluded from all projection rows and KPIs.
 

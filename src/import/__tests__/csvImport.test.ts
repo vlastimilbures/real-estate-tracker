@@ -214,6 +214,42 @@ describe("importCsv — matching and preserved fields", () => {
     ]);
   });
 
+  it("a re-import keeps a stored funding record; a new property has none (ADR 0119)", async () => {
+    sql.db.exec(`
+      UPDATE properties SET own_cash = '1500000', transaction_costs = '95000',
+        initial_works = '0', funding_note = 'Deposit' WHERE id = 'byt-a';
+    `);
+    await importCsv(sql, {
+      properties: parseProperties(
+        "name,purchase_date,purchase_price\nByt A,2020-01-01,5100000\nByt C,2024-01-01,3000000",
+      ).rows,
+    });
+    expect(
+      sql.db
+        .prepare(
+          "SELECT id, purchase_price, own_cash, transaction_costs, initial_works, funding_note FROM properties WHERE id IN ('byt-a', 'byt-c') ORDER BY id",
+        )
+        .all(),
+    ).toEqual([
+      {
+        id: "byt-a",
+        purchase_price: "5100000",
+        own_cash: "1500000",
+        transaction_costs: "95000",
+        initial_works: "0",
+        funding_note: "Deposit",
+      },
+      {
+        id: "byt-c",
+        purchase_price: "3000000",
+        own_cash: null,
+        transaction_costs: null,
+        initial_works: null,
+        funding_note: null,
+      },
+    ]);
+  });
+
   it("gives every new property a holding-costs row", async () => {
     await importCsv(sql, {
       properties: parseProperties(

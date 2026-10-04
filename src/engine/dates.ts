@@ -44,6 +44,16 @@ export function dayBefore(date: Date): IsoDate {
   );
 }
 
+/** `date` moved by whole calendar days (negative = earlier); rolls over months and
+ *  years (ADR 0119: the acquisition-loan window). */
+export function addDays(date: Date, days: number): IsoDate {
+  return utc(
+    date.getUTCFullYear(),
+    date.getUTCMonth() + 1,
+    date.getUTCDate() + days,
+  );
+}
+
 /** Add whole years as EDATE(date, 12·years), so Feb 29 clamps to Feb 28. */
 export function addYears(date: Date, years: number): IsoDate {
   return edate(date, years * 12);

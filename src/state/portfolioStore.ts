@@ -511,7 +511,12 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         const stored = get().portfolio?.properties.find(
           (x) => x.id === edited.id,
         );
-        const p = { ...edited, active: edited.active ?? stored?.active };
+        // The form carries neither flag nor funding record (ADR 0119): keep the stored.
+        const p = {
+          ...edited,
+          active: edited.active ?? stored?.active,
+          funding: edited.funding ?? stored?.funding,
+        };
         checkEdit(
           (pf) => ({ ...pf, properties: withRow(pf.properties, p) }),
           [p.id],

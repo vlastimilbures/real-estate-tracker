@@ -3,7 +3,7 @@
 import { describe, it, expect } from "vitest";
 import { describeWriteError, formWriteErrors } from "../writeError";
 import { getDict } from "../../../i18n";
-import { V7_TABLES } from "../../../data/migrations";
+import { MIGRATIONS, V7_TABLES } from "../../../data/migrations";
 import type { WriteError } from "../../../state/writeError";
 
 const en = getDict("en");
@@ -88,6 +88,35 @@ describe("describeWriteError", () => {
     expect(describeWriteError(en, check("mortgage_recasts_json")).field).toBe(
       "recasts",
     );
+  });
+
+  it("translates every CHECK a later migration adds by name (tripwire)", () => {
+    const names = MIGRATIONS.flatMap((m) =>
+      [...m.sql.matchAll(/CONSTRAINT (\w+) CHECK/g)].map((x) => x[1]),
+    );
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "mortgage_prepayments_json",
+        "property_own_cash_not_negative",
+      ]),
+    );
+    for (const name of names) {
+      expect(describeWriteError(en, check(name)).message, name).not.toBe(
+        en.writeErrors.otherConstraint,
+      );
+    }
+  });
+
+  it("puts a negative funding amount on its field (ADR 0119)", () => {
+    for (const [column, field] of [
+      ["own_cash", "ownCash"],
+      ["transaction_costs", "transactionCosts"],
+      ["initial_works", "initialWorks"],
+    ]) {
+      expect(
+        describeWriteError(en, check(`property_${column}_not_negative`)),
+      ).toEqual({ message: en.inputRules.NEGATIVE_AMOUNT, field });
+    }
   });
 
   it("falls back to a generic sentence for an unknown constraint", () => {
