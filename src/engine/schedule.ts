@@ -450,18 +450,33 @@ function prepaymentIssue(
   return applied.lessThan(requested) ? "PREPAYMENT_EXCEEDS_BALANCE" : null;
 }
 
-/** Pay the period's prepayments in date order, each clamped to the balance left. */
+/**
+ * What an event sees on top of the balance it settles against: the late tranches
+ * (after the last payment due by baseDate, on/before baseDate) dated on or before the
+ * event. They join grid month 1 (D-41), so only the late settle counts them; every
+ * other settle sees none (ADR 0129 §1).
+ */
+type SeenTranches = (date: Date) => Decimal;
+const NO_TRANCHES: SeenTranches = () => ZERO;
+
+/** Pay the period's prepayments in date order, each clamped to the balance left plus
+ *  the tranches it sees. `seenAfter` is what the last applied one saw. */
 function applyPrepayments(
   ev: LoanEvents,
   done: PaymentDone,
   prepayments: MortgagePrepayment[],
-): Omit<Settled, "terms"> & { effect: PrepaymentEffect | null } {
+  seen: SeenTranches,
+): Omit<Settled, "terms"> & {
+  effect: PrepaymentEffect | null;
+  seenAfter: Decimal;
+} {
   let { balance } = done;
-  let [prepaid, fee] = [ZERO, ZERO];
+  let [prepaid, fee, seenAfter] = [ZERO, ZERO, ZERO];
   let effect: PrepaymentEffect | null = null;
   const outcomes: Outcome[] = [];
   for (const p of prepayments) {
-    const applied = p.amount.lessThan(balance) ? p.amount : balance;
+    const available = balance.plus(seen(p.date));
+    const applied = p.amount.lessThan(available) ? p.amount : available;
     const charged = applied.greaterThan(ZERO) ? (p.fee ?? ZERO) : ZERO;
     if (applied.greaterThan(ZERO)) {
       [balance, prepaid, fee] = [
@@ -470,6 +485,7 @@ function applyPrepayments(
         fee.plus(charged),
       ];
       effect = p.effect;
+      seenAfter = seen(p.date);
     }
     outcomes.push({
       blockId: ev.block.id,
@@ -483,7 +499,7 @@ function applyPrepayments(
       enteredFee: p.fee ?? ZERO,
     });
   }
-  return { balance, prepaid, fee, effect, outcomes };
+  return { balance, prepaid, fee, effect, seenAfter, outcomes };
 }
 
 /**
@@ -543,16 +559,19 @@ function recastTerms(
       };
 }
 
+/** The period's recasts in date order, each on the balance plus the tranches it sees. */
 function applyRecasts(
   ev: LoanEvents,
   done: PaymentDone,
   recasts: LoanRecast[],
+  seen: SeenTranches,
 ): { terms: TermState; outcomes: Outcome[] } {
   let { terms } = done;
   const outcomes: Outcome[] = [];
   for (const r of recasts) {
-    const result = done.balance.greaterThan(ZERO)
-      ? recastTerms(ev, { ...done, terms }, r)
+    const balance = done.balance.plus(seen(r.date));
+    const result = balance.greaterThan(ZERO)
+      ? recastTerms(ev, { ...done, balance, terms }, r)
       : { terms, issue: "RECAST_AFTER_PAYOFF" as const };
     terms = result.terms;
     outcomes.push({
@@ -570,19 +589,24 @@ function applyRecasts(
 }
 
 /** After payment `p`: its prepayments, the bank's answer to them, then its recasts
- *  (ADR 0109). */
+ *  (ADR 0109). The balance checks count the tranches `seen` names (ADR 0129 §1); the
+ *  balance returned does not, so the tranche is still added once, in grid month 1. */
 function settleEvents(
   ev: LoanEvents,
   done: PaymentDone,
   period: PeriodEvents,
+  seen: SeenTranches = NO_TRANCHES,
 ): Settled {
   if (period.prepayments.length === 0 && period.recasts.length === 0) {
     return { ...done, prepaid: ZERO, fee: ZERO, outcomes: [] };
   }
-  const paid = applyPrepayments(ev, done, period.prepayments);
+  const paid = applyPrepayments(ev, done, period.prepayments, seen);
   const after = { ...done, balance: paid.balance };
-  const terms = prepaymentTerms(paid.effect, after);
-  const recast = applyRecasts(ev, { ...after, terms }, period.recasts);
+  const terms = prepaymentTerms(paid.effect, {
+    ...after,
+    balance: paid.balance.plus(paid.seenAfter),
+  });
+  const recast = applyRecasts(ev, { ...after, terms }, period.recasts, seen);
   return {
     balance: paid.balance,
     prepaid: paid.prepaid,
@@ -605,6 +629,19 @@ function paymentRow(
     prepaymentFee: settled.fee,
     endBalance: settled.balance,
   };
+}
+
+/** A development loan's tranches after the last payment due by baseDate and on/before
+ *  baseDate: grid month 1 draws them, the baseDate debt counts them (D-41, D-44). */
+function lateTranches(block: MortgageBlock, baseDate: Date): MortgageDraw[] {
+  const lastDue = lastPaymentDue(block, baseDate);
+  return (block.draws ?? []).filter(
+    (d) => isAfter(d.date, lastDue) && isOnOrBefore(d.date, baseDate),
+  );
+}
+
+function sumDraws(draws: readonly MortgageDraw[]): Decimal {
+  return draws.reduce((sum, d) => sum.plus(d.amount), ZERO);
 }
 
 /** True when an event is dated on/before baseDate: the opening balance replays it. */
@@ -721,7 +758,9 @@ function simulateToBaseDate(
   };
   for (let k = 1; k <= steps; k++) s = catchUpStep(s, k, ctx);
   // Events after the last payment due and on/before baseDate are history too: they
-  // follow that payment (or the start, when none is due yet).
+  // follow that payment (or the start, when none is due yet), and see the late
+  // tranches dated on or before them (ADR 0129 §1).
+  const tranches = lateTranches(block, baseDate);
   const late = settleEvents(
     ctx.events,
     {
@@ -734,6 +773,7 @@ function simulateToBaseDate(
       terms: s.terms,
     },
     eventsAt(ctx.events, steps + 1),
+    (date) => sumDraws(tranches.filter((d) => isOnOrBefore(d.date, date))),
   );
   return {
     balance: late.balance,
@@ -1330,13 +1370,9 @@ export function openingBalance(
     const offset = paymentOffset(block, baseDate);
     return plainOpening(block, assumptions, offset).balance;
   }
-  const lastDue = lastPaymentDue(block, baseDate);
-  return (block.draws ?? [])
-    .filter((d) => isAfter(d.date, lastDue) && isOnOrBefore(d.date, baseDate))
-    .reduce(
-      (sum, d) => sum.plus(d.amount),
-      simulateToBaseDate(block, assumptions).balance,
-    );
+  return simulateToBaseDate(block, assumptions).balance.plus(
+    sumDraws(lateTranches(block, baseDate)),
+  );
 }
 
 /** Opening (baseDate) debt of a property: its block in force at baseDate, if any. */
