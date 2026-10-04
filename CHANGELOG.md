@@ -226,6 +226,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Saving a form no longer rounds a stored amount it did not change (ADR 0131, #201). An
+  amount imported or restored with more than two decimals (e.g. own cash `1000.005`) was
+  rewritten to two (`1000.01`) by any edit of the same record, such as a rename. Forms now
+  show and save the stored amount in full.
 - Headline KPIs no longer contradict their inputs in edge cases (ADR 0126, #129):
   - The net-worth multiple shows "—" when equity at the projection start is zero or less,
     instead of "0,00x" or a negative multiple (−31,19x after a deep crash at Today).

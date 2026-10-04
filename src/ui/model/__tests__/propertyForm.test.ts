@@ -242,6 +242,26 @@ describe("fundingDraft", () => {
     });
   });
 
+  it("keeps a stored amount's precision, so an unrelated edit saves it unchanged (ADR 0131)", () => {
+    const stored: AcquisitionFunding = {
+      ownCash: money("1000.005"),
+      transactionCosts: money("95000.125"),
+      initialWorks: money("0.0001"),
+    };
+    const result = parsePropertyForm(
+      { ...valid, name: "Renamed", ...fundingDraft(stored) },
+      "edit",
+      "vinohrady",
+      [],
+      en,
+    );
+    if (!result.valid) throw new Error("expected valid");
+    const saved = result.property.funding!;
+    expect(saved.ownCash!.equals(stored.ownCash!)).toBe(true);
+    expect(saved.transactionCosts!.equals(stored.transactionCosts!)).toBe(true);
+    expect(saved.initialWorks!.equals(stored.initialWorks!)).toBe(true);
+  });
+
   it("drafts no record as blank fields", () => {
     expect(fundingDraft(undefined)).toEqual({
       own_cash: "",
