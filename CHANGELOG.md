@@ -231,6 +231,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gap between two valuations the earlier one governs. The purchase price stands in only when
   a property has no valuation, and the Data check then says "No valuation is recorded"
   (ADR 0122, #110).
+- The levered IRR no longer reports "No IRR between −90 % and +1000 %" when the cash flows
+  break even exactly at −90 % or at one of the search bounds (+100 % … +1000 %); that rate is
+  now the IRR (ADR 0121, #185).
 - The "first cash-flow-positive year" no longer names a year that earned nothing. With only
   properties bought in the future (or a Dashboard filter on them), it showed the first
   projection year; it now shows the first year whose net cash flow is above zero, or "—"

@@ -56,9 +56,18 @@ export function irrResult(cashflows: Decimal[]): IrrResult {
   if (signChanges(cashflows) > 1 && npvSignChanges(npv) > 1) {
     return { rate: null, reason: "NOT_UNIQUE" };
   }
+  // All-zero flows: every rate is a root, so there is no IRR (DR-061).
+  if (cashflows.every((cf) => cf.isZero())) {
+    return { rate: null, reason: "NO_ROOT" };
+  }
+  // A bracket end whose NPV is exactly 0 is the root. The sign of a product cannot tell:
+  // 0 × x is ±0 and Decimal(+0).isPositive() is true (ADR 0121, #185).
   const nlo = npv(IRR_BRACKET_LOW);
+  if (nlo.isZero()) return { rate: IRR_BRACKET_LOW, reason: null };
   for (const hi of [IRR_BRACKET_HIGH, ...IRR_BRACKET_EXTENSIONS]) {
-    if (!nlo.times(npv(hi)).isPositive()) {
+    const nhi = npv(hi);
+    if (nhi.isZero()) return { rate: hi, reason: null };
+    if (nlo.times(nhi).isNegative()) {
       return { rate: bisect(npv, IRR_BRACKET_LOW, nlo, hi), reason: null };
     }
   }
@@ -83,7 +92,7 @@ function signChanges(values: Decimal[]): number {
   return changes;
 }
 
-/** Bisect [lo, hi], whose NPVs differ in sign (or one is zero), to the root. */
+/** Bisect [lo, hi], whose NPVs are non-zero and differ in sign, to the root. */
 function bisect(
   npv: (rate: Decimal) => Decimal,
   lo: Decimal,

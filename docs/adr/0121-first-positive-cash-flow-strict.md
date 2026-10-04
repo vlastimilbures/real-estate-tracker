@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-04
 - Source: issue #102 (2026-10 code review, findings R8-01 and R2-03)
+- Amended: 2026-10-04 (issue #185, found by the independent review of PR #183: the same zero
+  trap in the IRR bracket, decided by the owner)
 - Related: [0022](0022-year-labelling.md) (D-22), [0034](0034-cagr-null.md),
   [0097](0097-compare-delta-view.md)
 
@@ -40,6 +42,16 @@ would have confirmed the bug. It now pins the seed's 2031 and checks that the pr
 in that year. The new tests pin the examples above. They also check that the KPI year nets
 above 0 and that no earlier year does.
 
+**The same trap in the IRR bracket (#185).** `irrResult` looked for a bracket whose end NPVs
+differ in sign by testing `!nlo.times(npv(hi)).isPositive()`. When an end's NPV is exactly 0,
+the product is ±0: +0 counted as "same sign", so the bracket was skipped, and −0 reached
+`bisect` only by accident. A root that sits exactly on a bracket end (−90 %, or +100 %, +200 %,
++400 %, +800 %, +1000 %) is now returned as that rate. A bracket is bisected only when both end
+NPVs are non-zero and their product is negative. Testing the product with
+`lessThanOrEqualTo(ZERO)` alone would not do: with a zero NPV at −90 % and a positive NPV above
+it, `bisect` would move away from the root and return a wrong rate. Cash flows that are all zero
+have a zero NPV at every rate, so they keep having no IRR (`NO_ROOT`, DR-061).
+
 ## Consequences
 
 - A future-only portfolio or filter now shows the first year whose net cash flow (after debt
@@ -47,3 +59,7 @@ above 0 and that no earlier year does.
 - An empty or fully deactivated portfolio now returns `null` inside the engine. Before, it
   returned year 1. The UI shows the empty state for these, so nothing visible changes there.
 - No parity target changes: the seed stays 2031 (Y5). The golden master does not change.
+- IRR (#185): `[−1, 11]` now gives +1000 % and `[10, −1]` gives −90 %; both gave no IRR
+  ("No IRR between −90 % and +1000 %"). `[−1, 5]` and `[−10, 1]` now give exactly +400 % and
+  −90 % instead of a bisection value next to them. Real portfolio cash flows almost never hit
+  an exact zero on a bracket end, so no parity target, golden figure or visible KPI changes.

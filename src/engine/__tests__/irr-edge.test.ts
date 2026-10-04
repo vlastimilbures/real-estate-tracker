@@ -78,3 +78,35 @@ describe("irr — widened search and non-unique roots (DR-158, ADR 0079)", () =>
     );
   });
 });
+
+describe("irr — an exact root on a bracket end (#185, ADR 0121)", () => {
+  // decimal.js: Decimal(0).isPositive() is true, so a bracket whose end NPV is exactly 0
+  // must not be tested by the sign of a product (0 × x is ±0).
+  const rateOf = (flows: number[]) =>
+    irrResult(flows.map((x) => D(x))).rate?.toString();
+
+  it("a root exactly on the last upper bound (+1000 %)", () => {
+    expect(rateOf([-1, 11])).toBe("10");
+  });
+
+  it("a root exactly on a widened upper bound (+400 %)", () => {
+    // 1 / (1 + 4) = 0.2 is exact, so the NPV there is exactly 0.
+    expect(rateOf([-1, 5])).toBe("4");
+  });
+
+  it("a root exactly on the lower bound (−90 %), NPV positive above it", () => {
+    // 10 now, −1 in a year: 10 = 1 / (1 + r) ⇒ r = −0.9.
+    expect(rateOf([10, -1])).toBe("-0.9");
+  });
+
+  it("a root exactly on the lower bound (−90 %), NPV negative above it", () => {
+    expect(rateOf([-10, 1])).toBe("-0.9");
+  });
+
+  it("all-zero flows (NPV 0 at every rate) still have no IRR", () => {
+    expect(irrResult([D(0), D(0), D(0)])).toEqual({
+      rate: null,
+      reason: "NO_ROOT",
+    });
+  });
+});

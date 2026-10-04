@@ -445,8 +445,9 @@ netCF_N + equity_N]` — acquisition outflows, refinance cash and prepayments wi
   +1000 %. Uniqueness: with at most one sign change in the cash flows the NPV has at most
   one root (Descartes' rule of signs), so no check is needed; with more than one, the NPV's
   sign is scanned over a rate grid across the domain (`IRR_SCAN_GRID`) and more than one
-  NPV sign change gives no IRR with reason **`NOT_UNIQUE`**. When no bracket holds a root
-  the reason is **`NO_ROOT`**. In either case the IRR is null and the UI shows "n/a" with
+  NPV sign change gives no IRR with reason **`NOT_UNIQUE`**. A bracket end whose NPV is
+  exactly 0 is the IRR (ADR 0121, #185). When no bracket holds a root the reason is
+  **`NO_ROOT`**. In either case the IRR is null and the UI shows "n/a" with
   the reason: "No unique IRR: the cash flows break even at more than one rate" or "No IRR
   between −90 % and +1000 %" (`src/ui/model/irr.ts`).
 - `totalPrincipalRepaid` (sanity invariant): Σ principal repaid over the horizon, prepaid
