@@ -136,6 +136,13 @@ function constraintText(t: Dictionary, c: ConstraintFailure): WriteErrorText {
 const formField = (field: string | undefined) =>
   field?.replace(/^defaults\./, "");
 
+/** The base field a scenario's shock shifts (ADR 0128 §6): an assumptions edit that
+ *  breaks a saved scenario shows on the level it changed. */
+const SHIFTED_LEVEL: Record<string, string> = {
+  rateShock: "postFixationResetRatePa",
+  inflationShock: "inflationPa",
+};
+
 /** One text per problem (an input error can break several rules at once), without
  *  repeats. */
 export function writeErrorTexts(
@@ -145,9 +152,17 @@ export function writeErrorTexts(
   if (e.kind !== "input") return [describeWriteError(t, e)];
   const seen = new Set<string>();
   const out: WriteErrorText[] = [];
+  const { scenario } = e;
   for (const err of e.errors) {
-    const message = t.inputRules[err.code];
-    const field = formField(err.field);
+    const rule = t.inputRules[err.code];
+    const message =
+      scenario === undefined
+        ? rule
+        : t.writeErrors.scenarioBreaks(scenario, rule);
+    const field =
+      scenario === undefined
+        ? formField(err.field)
+        : SHIFTED_LEVEL[err.field ?? ""];
     const key = `${field ?? ""}|${err.index ?? ""}|${message}`;
     if (seen.has(key)) continue;
     seen.add(key);

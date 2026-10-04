@@ -272,6 +272,36 @@ describe("data check: fixation (ADR 0118)", () => {
       kinds(check("lipova", isoDate("2029-02-01"), p).attention),
     ).not.toContain("fixationEnded");
   });
+
+  it("a block starting after the first floating payment leaves a gap (ADR 0129 §4)", () => {
+    const later = (start: string): Portfolio => ({
+      ...portfolio,
+      mortgages: [
+        ...portfolio.mortgages,
+        {
+          id: "m-lipova-2",
+          propertyId: "lipova",
+          startDate: isoDate(start),
+          initialPrincipal: money("4300000"),
+          fixationYears: 5,
+          interestRatePa: rate("0.049"),
+          monthlyInstalment: money("27500"),
+        },
+      ],
+    });
+    const asOf = isoDate("2029-01-20");
+    expect(
+      kinds(check("lipova", asOf, later("2029-02-14")).attention),
+    ).not.toContain("fixationEnded");
+    expect(check("lipova", asOf, later("2029-06-15")).attention).toContainEqual(
+      {
+        kind: "fixationEnded",
+        block: block("m-lipova"),
+        fixationEnd: isoDate("2029-01-15"),
+        until: isoDate("2029-06-15"),
+      },
+    );
+  });
 });
 
 describe("data check: portfolio defaults (ADR 0118)", () => {

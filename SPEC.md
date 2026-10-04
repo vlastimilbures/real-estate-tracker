@@ -135,13 +135,20 @@ ADR 0036). The codes: `INVALID_DATE`, `NON_FINITE_NUMBER`, `NEGATIVE_AMOUNT`,
 `ZERO_RATE_ZERO_INSTALMENT`, `MISSING_TERM_FOR_DEV_LOAN`, `NON_POSITIVE_DRAW`,
 `DRAW_BEFORE_START`, `COMPLETION_BEFORE_START`, `DUPLICATE_BLOCK_START`, `END_BEFORE_START`,
 `DUPLICATE_HOLDING_COST`, `ORPHAN_ROW`, `HORIZON_NOT_POSITIVE`, `INVALID_TERM`,
-`SHOCK_OUT_OF_RANGE`, `ASOF_BEFORE_BASEDATE`. Ranges (ADR 0038): interest 0–100 %; vacancy,
-cost shares, value haircut and the acquisition cost rate 0–1 (ADR 0119); shock durations
-whole years ≥ 0; horizon a whole number ≥ 1; growth, indexation and inflation may be
-negative (finite only). The funding record's amounts must not be negative. The form, the CSV
-importer and backup restore reject the same rows with a translated message (ADR 0037). A
-scenario is checked the same way when it is saved: its overrides applied to the saved
-assumptions, counting only the fields it sets. Restore only needs a scenario to be readable
+`SHOCK_OUT_OF_RANGE`, `GROWTH_OUT_OF_RANGE`, `SHOCKED_RATE_OUT_OF_RANGE`,
+`SHOCKED_INFLATION_OUT_OF_RANGE`, `ASOF_BEFORE_BASEDATE`. Ranges (ADR 0038, ADR 0128):
+interest 0–100 %, the post-fixation reset rate included; vacancy, cost shares, value haircut
+and the acquisition cost rate 0–1 (ADR 0119); shock durations whole years ≥ 0; horizon a
+whole number ≥ 1; growth, indexation, inflation and a property's growth overrides may be
+negative but must be above −100 % (`GROWTH_OUT_OF_RANGE`); the reset rate plus a rate shock
+stays within 0–100 % (`SHOCKED_RATE_OUT_OF_RANGE` on `rateShock`) and inflation plus an
+inflation shock above −100 % (`SHOCKED_INFLATION_OUT_OF_RANGE` on `inflationShock`), checked
+only when the level itself is valid; a value crash percentage must be finite. The funding
+record's amounts must not be negative. The form, the CSV importer and backup restore reject
+the same rows with a translated message (ADR 0037). A scenario is checked the same way when
+it is saved: its overrides applied to the saved assumptions, counting only the fields it
+sets. Saving the assumptions refuses an edit that newly breaks a saved scenario's shocked
+level and names the scenario (ADR 0128). Restore only needs a scenario to be readable
 (ADR 0123, §7).
 
 **Whole-number bounds.** On top of the engine rules, every user-data entry point — the
@@ -269,7 +276,9 @@ the next payment.
 - **Expired fixation without a successor** (fixation ended before baseDate and no later
   block): the opening balance is replayed on the loan's own due dates with the reset applied
   from the true fixation end, and the UI warns the owner to enter the refix terms as a new
-  block (ADR 0030).
+  block (ADR 0030). The warning also shows, "from … until …", when the next block starts
+  on or after the due date of the first payment following the fixation end, so at least
+  one payment runs at the reset rate (ADR 0129).
 - **Loan starting after baseDate**: opening balance 0; the loan appears as new debt in the
   grid month it is drawn (ADR 0033).
 - **Refinance handover** (successor block, D-47 in ADR 0027): the successor draws in the
@@ -277,6 +286,9 @@ the next payment.
   still paid (one falling in the draw month is carried by the draw row); later ones are
   dropped. Net refinance cash (successor principal − predecessor balance paid off) counts in
   the handover year's cumulative net cash flow and levered IRR, like an acquisition outflow.
+  The handover row holds the successor's principal less the balance it pays off as
+  `refinanced`, apart from `drawn` (ADR 0130); a tranche the successor draws in that month
+  stays in `drawn`.
 
 **Prepayments and recasts** (ADR 0109), on plain and development loans:
 
@@ -284,7 +296,9 @@ the next payment.
   own due dates, so moving baseDate does not move it. The one exception (ADR 0116) is an
   event dated after the last payment due on or before baseDate and on or before baseDate
   itself: it settles right after that payment, so its placement depends on baseDate by less
-  than one period. Within one payment period the order is:
+  than one period. Its balance checks (prepayment clamp, the bank's `NPER`, recast checks)
+  count the development-loan tranches of that window dated on or before it; the tranche
+  itself still joins grid month 1 (ADR 0129). Within one payment period the order is:
   scheduled payment, then prepayments (date order), then recast. A prepayment dated
   between two due dates waits for the next one (interest is overstated by under a month).
 - The schedule carries the loan's **maturity in force**: the contract term until an event
@@ -309,20 +323,25 @@ the next payment.
   event outcome, never raised. Events dated after a successor block's start are dropped and
   reported; a prepayment the handover drops is paid at the handover, before the successor
   pays off the rest.
-- Row identity: `endBalance = previous − principal − prepaid + drawn`.
+- Row identity: `endBalance = previous − principal − prepaid + drawn + refinanced`
+  (`refinanced` is non-zero only on a refinance handover row, ADR 0130).
 
 **Dev/phased loans** — additional rules applied before the plain path:
 
-- While `date ≤ completionDate`: **interest-only** — no principal, instalment = interest.
+- While the payment's due date `EDATE(start, p)` ≤ `completionDate`: **interest-only** —
+  no principal, instalment = interest. Like the rate, it is read on the due date, not the
+  grid date (ADR 0129).
 - Each `MortgageDraw` tranche adds its `amount` to the balance **in the grid month it
   lands**, and the instalment re-amortizes in that month over the term remaining to
   `startDate + loanTermYears` (ADR 0024). After `completionDate` the fully drawn balance
   re-amortizes the same way. The trigger fires only on a real draw or completion.
 - A tranche must be dated strictly after the loan start (`DRAW_BEFORE_START`; money drawn on
-  the start date belongs in the initial principal, D-42). A tranche between the last payment
-  due by baseDate and baseDate joins grid month 1 and is part of the baseDate debt (D-41);
-  one dated after baseDate within grid month 1 is new debt in that month (D-44). A tranche
-  landing in a future loan's first draw month joins that draw (D-46).
+  the start date belongs in the initial principal, D-42), and on or before the last-but-one
+  payment `EDATE(start, term·12 − 1)` (`DRAW_AFTER_SCHEDULE_END`, ADR 0129). A tranche
+  between the last payment due by baseDate and baseDate joins grid month 1 and is part of
+  the baseDate debt (D-41); one dated after baseDate within grid month 1 is new debt in that
+  month (D-44). A tranche landing in a future loan's first draw month joins that draw
+  (D-46).
 - During construction the property's market value is scaled by `drawnFraction` (see §4.3).
 
 Aggregate monthly interest / principal / debt-service / draws / prepaid / prepayment fees /
@@ -600,8 +619,12 @@ price crash**, each with a legend and one line of help (ADR 0102).
 - **Rules (ADR 0123):** adding, saving and duplicating a scenario run the engine's
   assumption rules on its overrides applied to the saved assumptions, counting only the
   fields the scenario sets (vacancy and the value crash 0–100 %, shock years whole and
-  ≥ 0, levels finite). A refused save writes nothing and shows the rule on its field
-  (Vacancy, Value crash) or above the buttons. A scenario that still breaks a rule (saved
+  ≥ 0, levels finite, growth levels above −100 %, the reset rate 0–100 %, and with a shock
+  the shocked reset rate 0–100 % and shocked inflation above −100 %, ADR 0128). A refused
+  save writes nothing and shows the rule on its field (a level, the value crash, a shock's
+  delta) or above the buttons. Saving the assumptions refuses an edit that newly breaks a
+  saved scenario's shocked level, naming the scenario on the level field; a scenario that
+  broke the rule before the edit does not block it. A scenario that still breaks a rule (saved
   before this check, or restored) is left out of the compare and named in a notice above
   it. Restore only needs a scenario row to be readable, so every backup the app writes
   restores. A stored scenario row the app cannot read is left out at startup and listed

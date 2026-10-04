@@ -12,6 +12,7 @@ import {
   RESET_WINDOWS,
   financingLabels,
   financingPanel,
+  type InterestSavedShown,
   type ResetWindow,
 } from "../model/financing";
 import type { Mode } from "../model/lens";
@@ -61,6 +62,12 @@ export function FinancingPanel({
   const m = financingPanel(fx, portfolio, kpis, mode, span, t);
   const labels = financingLabels(t, mode, span, horizonYears);
   const next = m.nextReset;
+  const savedValue = (x: InterestSavedShown) =>
+    x === "n/a" ? (
+      d.financingInterestSavedNa
+    ) : (
+      <Money value={x} parens={false} />
+    );
   return (
     <Panel
       title={d.financingTitle}
@@ -118,7 +125,7 @@ export function FinancingPanel({
               ? [
                   {
                     k: d.financingInterestSaved,
-                    v: <Money value={m.interestSaved.total} parens={false} />,
+                    v: savedValue(m.interestSaved.total),
                   },
                 ]
               : []),
@@ -139,7 +146,7 @@ export function FinancingPanel({
                   onOpen={onOpenProperty}
                 />
               ),
-              v: <Money value={r.amount} parens={false} />,
+              v: savedValue(r.amount),
             }))}
           />
         </details>

@@ -52,6 +52,8 @@ export type ChartRow = {
 // value-side effect. The three stacks still sum *exactly* to equity[t]−equity[t−1]:
 //   appreciation + paydown + drawdown = (equity Δ − principal + draws) + principal − draws.
 // In the nominal lens this collapses to appreciation = value Δ exactly (unchanged behaviour).
+// A refinance handover's difference (`refinanced`, ADR 0130) moves the balance like a
+// draw, so the drawdown bar carries it too (negative when the owner pays down at a refix).
 export type EquityChangeRow = {
   year: number;
   calendarYear: number;
@@ -76,10 +78,11 @@ export function toEquityChangeRows(series: SeriesRow[]): EquityChangeRow[] {
           .minus(prev.equity)
           .minus(r.principal)
           .minus(r.prepaid)
-          .plus(r.draws),
+          .plus(r.draws)
+          .plus(r.refinanced),
       ),
       paydown: n(r.principal.plus(r.prepaid)),
-      drawdown: n(r.draws.negated()),
+      drawdown: n(r.draws.plus(r.refinanced).negated()),
     };
   });
 }

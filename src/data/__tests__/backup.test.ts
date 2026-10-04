@@ -6,6 +6,7 @@ import { seedIfEmpty } from "../seed";
 import { loadPortfolio, loadAssumptions } from "../repositories";
 import {
   exportToJson,
+  prepareRestore,
   restoreFromJson,
   validateBackup,
   SCHEMA_HEAD,
@@ -94,6 +95,86 @@ describe("Backup round-trip", () => {
     await restoreFromJson(sql, backup, checkInputRules);
     const props = await sql.select<unknown[]>("SELECT * FROM properties");
     expect(props).toHaveLength(3);
+  });
+});
+
+// ADR 0132 (#138, R3-05): the export reads one snapshot, so a write that commits while it
+// runs is wholly in or wholly out of the file, never half.
+describe("exportToJson reads one database state", () => {
+  /** A copy of the first `table` row with `changes`, as one INSERT. */
+  async function copyRow(
+    db: Sql,
+    table: string,
+    changes: Record<string, unknown>,
+  ): Promise<{ query: string; params: unknown[] }> {
+    const [row] = await db.select(`SELECT * FROM ${table} LIMIT 1`);
+    const r = { ...row, ...changes };
+    const cols = Object.keys(r);
+    return {
+      query: `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`,
+      params: Object.values(r),
+    };
+  }
+
+  it("a property and its valuation added mid-export are not split across the file", async () => {
+    const db = openMemorySql();
+    await migrate(db);
+    await seedIfEmpty(db);
+    const before = await exportToJson(db);
+    const write = [
+      await copyRow(db, "properties", { id: "p-late", name: "Late" }),
+      await copyRow(db, "valuations", { id: "v-late", property_id: "p-late" }),
+    ];
+    // The write commits right after the export's first read returns.
+    let wrote = false;
+    const afterFirstRead = async <T>(read: Promise<T>): Promise<T> => {
+      const rows = await read;
+      if (!wrote) {
+        wrote = true;
+        await db.transaction(write);
+      }
+      return rows;
+    };
+    const racing: Sql = {
+      ...db,
+      select: (q, p) => afterFirstRead(db.select(q, p)),
+      selectSnapshot: (st) => afterFirstRead(db.selectSnapshot(st)),
+    };
+
+    const file = await exportToJson(racing);
+
+    expect(wrote).toBe(true);
+    expect(() => prepareRestore(file, checkInputRules)).not.toThrow();
+    expect(file.tables).toEqual(before.tables);
+  });
+
+  it("refuses a snapshot short of a table instead of writing it empty", async () => {
+    const short: Sql = {
+      ...sql,
+      selectSnapshot: async (st) => (await sql.selectSnapshot(st)).slice(0, -2),
+    };
+    await expect(exportToJson(short)).rejects.toThrow(
+      "the snapshot returned 6 of 8 result sets",
+    );
+  });
+
+  // Pins what the race test above cannot see: the schema version is in the same snapshot.
+  it("reads the tables and the schema version in one snapshot call", async () => {
+    let snapshots = 0;
+    let selects = 0;
+    const counting: Sql = {
+      ...sql,
+      select: (q, p) => {
+        selects++;
+        return sql.select(q, p);
+      },
+      selectSnapshot: (st) => {
+        snapshots++;
+        return sql.selectSnapshot(st);
+      },
+    };
+    await exportToJson(counting);
+    expect({ snapshots, selects }).toEqual({ snapshots: 1, selects: 0 });
   });
 });
 

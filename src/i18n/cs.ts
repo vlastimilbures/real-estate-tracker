@@ -88,7 +88,7 @@ export const cs: Dictionary = {
     DRAW_BEFORE_START:
       "Čerpání musí mít datum po začátku úvěru; částka čerpaná v den začátku patří do počáteční jistiny",
     DRAW_AFTER_SCHEDULE_END:
-      "Čerpání musí mít datum před poslední splátkou úvěru (začátek plus doba splatnosti)",
+      "Čerpání musí mít datum nejpozději v den předposlední splátky úvěru (začátek plus doba splatnosti bez jednoho měsíce)",
     COMPLETION_BEFORE_START: "Konec splácení jen úroků je před začátkem úvěru",
     DUPLICATE_BLOCK_START:
       "Tato nemovitost už má hypotéku začínající ve stejný den",
@@ -99,6 +99,11 @@ export const cs: Dictionary = {
     HORIZON_NOT_POSITIVE: "Horizont projekce musí být alespoň jeden rok",
     INVALID_TERM: "Doba v letech není platná",
     SHOCK_OUT_OF_RANGE: "Šok scénáře je mimo povolený rozsah",
+    GROWTH_OUT_OF_RANGE: "Musí být vyšší než −100 %",
+    SHOCKED_RATE_OUT_OF_RANGE:
+      "Sazba po skončení fixace plus šok sazby musí zůstat od 0 % do 100 %",
+    SHOCKED_INFLATION_OUT_OF_RANGE:
+      "Inflace plus inflační šok musí zůstat vyšší než −100 %",
     ASOF_BEFORE_BASEDATE: "Datum je před výchozím datem",
     NON_POSITIVE_PREPAYMENT: "Každá mimořádná splátka musí být vyšší než nula",
     EVENT_BEFORE_START:
@@ -123,6 +128,8 @@ export const cs: Dictionary = {
     invalidJson: "Uloženou hodnotu nelze přečíst",
     missingValue: "Chybí povinná hodnota",
     otherConstraint: "Databáze změnu odmítla, nic se nezměnilo",
+    scenarioBreaks: (name, rule) =>
+      `Tato hodnota by porušila scénář „${name}“. ${rule}. Změňte hodnotu, nebo nejdřív upravte scénář`,
   },
 
   dataErrors: {
@@ -321,6 +328,8 @@ export const cs: Dictionary = {
     financingTotalInterestReal: (n) => `Úroky celkem (roky 1–${n}, reálně)`,
     financingInterestSaved: "Úrok ušetřený mimořádnými splátkami (nominálně)",
     financingInterestSavedByProperty: "Podle nemovitosti",
+    financingInterestSavedNa:
+      "n/a: změna splatnosti závisí na mimořádné splátce",
     financingUpcoming: "Příštích 12 měsíců",
     financingNoEvents: "Model v příštích 12 měsících nic neočekává.",
     financingMoreEvents: (n) => `+ dalších ${n}`,
@@ -532,6 +541,7 @@ export const cs: Dictionary = {
     loanPayoff: "Modelované doplacení",
     loanPayoffNone: "Splaceno",
     interestSaved: "Úrok ušetřený mimořádnými splátkami (nominálně)",
+    interestSavedNa: "n/a: změna splatnosti závisí na mimořádné splátce",
     remainingTerm: "Zbývající doba splácení",
     outlookResetsTitle: "Konce fixace podle úvěrových bloků",
     colFixationEnd: "Konec fixace",
@@ -558,6 +568,8 @@ export const cs: Dictionary = {
     maturityCheck: "Zkontrolujte splátku nebo datum splatnosti.",
     fixationEnded: (end, rate) =>
       `Fixace skončila ${end} a není zadán navazující blok, proto aplikace od té doby počítá s resetovací sazbou ${rate}. Zadejte podmínky refixace jako nový blok hypotéky.`,
+    fixationEndedUntil: (end, until, rate) =>
+      `Fixace skončila ${end} a další blok začíná až ${until}, proto aplikace počítá s resetovací sazbou ${rate} od ${end} do ${until}. Zadejte podmínky pro toto období jako blok hypotéky.`,
     fieldPrepayments: "Mimořádné splátky",
     helpPrepayments:
       "Mimořádné splacení jistiny k datu. Snížení splátky zachová splatnost; zkrácení splatnosti zachová splátku. Poplatek se platí z vlastních prostředků a dluh nesnižuje.",
@@ -624,6 +636,7 @@ export const cs: Dictionary = {
     amColInterest: "Úrok",
     amColPrincipal: "Jistina",
     amColDrawn: "Čerpáno",
+    amColRefinanced: "Rozdíl při refinancování",
     amColPrepaid: "Mimořádně splaceno",
     amColPrepaymentFee: "Poplatek za mimořádnou splátku",
     amColEndBalance: "Konečný zůstatek",
@@ -1086,6 +1099,7 @@ export const cs: Dictionary = {
     principal: "Jistina",
     debtSvc: "Dluh. služba",
     draws: "Čerpání",
+    refinanced: "Rozdíl při refinancování",
     prepaid: "Mimořádně splaceno",
     prepaymentFees: "Poplatky za mimořádné splátky",
     netCf: "Čistý CF",

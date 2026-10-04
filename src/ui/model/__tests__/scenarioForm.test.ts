@@ -174,3 +174,49 @@ describe("scenarioWriteErrors (ADR 0123)", () => {
     expect(other.formError).toBeTruthy();
   });
 });
+
+// ADR 0128: a level rule shows on its level field, a shocked level on the shock's delta.
+describe("scenarioWriteErrors — ADR 0128 bounds", () => {
+  const input = (...errors: EngineValidationError[]): WriteError => ({
+    kind: "input",
+    errors,
+  });
+
+  it("puts a level rule on its field and a shocked level on the delta", () => {
+    expect(
+      scenarioWriteErrors(
+        en,
+        input(
+          {
+            code: "GROWTH_OUT_OF_RANGE",
+            entity: "assumptions",
+            field: "inflationPa",
+          },
+          {
+            code: "RATE_OUT_OF_RANGE",
+            entity: "assumptions",
+            field: "postFixationResetRatePa",
+          },
+          {
+            code: "SHOCKED_RATE_OUT_OF_RANGE",
+            entity: "assumptions",
+            field: "rateShock",
+          },
+          {
+            code: "SHOCKED_INFLATION_OUT_OF_RANGE",
+            entity: "assumptions",
+            field: "inflationShock",
+          },
+        ),
+      ),
+    ).toEqual({
+      fieldErrors: {
+        inflationPa: en.inputRules.GROWTH_OUT_OF_RANGE,
+        postFixationResetRatePa: en.inputRules.RATE_OUT_OF_RANGE,
+        rateShockDelta: en.inputRules.SHOCKED_RATE_OUT_OF_RANGE,
+        inflationShockDelta: en.inputRules.SHOCKED_INFLATION_OUT_OF_RANGE,
+      },
+      formError: null,
+    });
+  });
+});

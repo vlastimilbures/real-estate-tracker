@@ -15,6 +15,10 @@ work still to do is in the [roadmap](roadmap.md).
 - **Tested arithmetic, not tested assumptions.** Money is computed in exact decimals and checked
   against reference figures within ±1 Kč. That proves the formulas run as specified; it does
   not make the assumptions right.
+- **Assumption bounds catch typos, not implausible values.** Interest rates, the reset rate
+  included, must lie within 0–100 %, and growth, rent indexation and inflation above −100 %,
+  also with a scenario's shock added (ADR 0128). Anything inside those bounds is computed as
+  entered: a 40 % growth rate for 50 years gives large but valid numbers.
 
 ## Returns start at the projection start
 
@@ -61,8 +65,11 @@ work still to do is in the [roadmap](roadmap.md).
   [SPEC §4.2](../SPEC.md#42-derived-per-mortgage-block-values).
 - **Refix at fixation end.** When a fixation ends, the model switches to the block's reset rate
   and recalculates the instalment over the remaining term. Once you know the real new terms,
-  enter them as a new block. If a fixation has already ended and there is no new block, the
-  app warns you.
+  enter them as a new block. If a fixation has already ended and there is no new block, or
+  the next block leaves at least one payment at the reset rate, the app warns you
+  (ADR 0129). A new block's principal less the balance it pays off shows as the
+  "Refinance difference", not as a draw, even when the previous loan was already repaid
+  and the new block pays off nothing (ADR 0130).
 - **One development loan per property.** You can enter more than one, but the property's value
   during construction follows only the first. One development loan per property, optionally
   refinanced into a plain loan, is the supported case.
@@ -77,8 +84,19 @@ work still to do is in the [roadmap](roadmap.md).
   prepayment larger than the balance, or after the loan is repaid, is cut to what is owed,
   and the property page warns about it. Interest saved is nominal, uses the base-case
   assumptions, covers the loan's whole remaining life and is not net of fees (ADR 0116).
+  It is shown only when a prepayment repaid some principal. When a maturity change takes
+  effect only because of the prepayment (a lower instalment that the higher balance without
+  it could not carry), the comparison measures that change too and can come out negative:
+  the app then shows "n/a" instead of a figure (ADR 0130). A prepayment on the day a new
+  block starts saves nothing in the model, because the new block's principal is what you
+  enter, so no figure is shown for it.
   Prepayments and maturity changes entered on a loan block that a later block had already
   replaced before the projection start have no effect, and no warning says so.
+  A development-loan tranche counts in full for every prepayment and maturity change
+  settled after the same payment, even one dated before the tranche. The exception is the
+  window between the last payment due and the projection start: there an event counts only
+  the tranches dated on or before it, and never a tranche dated after the projection start
+  (ADR 0129).
   See [SPEC §4.4](../SPEC.md#44-monthly-amortization-the-engine-within-the-engine) and
   ADR 0109.
 - **The maturity check uses the contract term.** The implied-maturity warning compares the

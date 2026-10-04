@@ -50,7 +50,11 @@ From the 2026-10 code review
   a restore misreported as rolled back (#106, ADR 0125), and property ids made from the
   name with Clear sample deleting the owner's own property (#101, #105, ADR 0127).
   P2 fixed: degenerate KPIs (negative multiple, NaN CAGR, stale debt-free year,
-  "Shortfall" with no debt; #129, ADR 0126).
+  "Shortfall" with no debt; #129, ADR 0126) and assumptions that produced NaN, Infinity or
+  negative interest (reset rate 0–100 %, growth and inflation above −100 %, shocked levels;
+  #114, ADR 0128), and loan schedule edge cases (a late prepayment clamped before an earlier
+  tranche, interest-only read on two dates, a draw in the final payment period, a refix gap
+  with no warning; #135, ADR 0129).
 - **Decisions (label `decision`).** Modelling and process choices challenged with options and
   the case for keeping them; weak challenges stay in the record only.
 - **Clean-up (label `tech-debt`), docs, accessibility and smaller fixes (P2, P3).**
@@ -105,8 +109,6 @@ product's positioning changes.
 - **Several development loans on one property.** The value ramp during construction follows
   the first development loan in input order; one development loan per property (optionally
   refinanced into a plain loan) is the supported case. (DR-124)
-- **Form drafts round percentages to 4 decimal places** when a value is edited and saved.
-  (DR-079)
 - **Month-end base dates.** The engine counts payments and grid months on loan due dates, so
   results are correct, but two date helpers remain whose semantics differ at month ends; new
   code should use `lastGridMonthOnOrBefore`. (DR-070)

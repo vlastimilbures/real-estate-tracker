@@ -89,7 +89,7 @@ export const ru: Dictionary = {
     DRAW_BEFORE_START:
       "Транш должен быть датирован позже начала кредита; сумма, выданная в день начала, относится к начальному долгу",
     DRAW_AFTER_SCHEDULE_END:
-      "Транш должен быть датирован раньше последнего платежа по кредиту (начало плюс срок кредита)",
+      "Транш должен быть датирован не позднее даты предпоследнего платежа по кредиту (начало плюс срок кредита минус один месяц)",
     COMPLETION_BEFORE_START:
       "Конец периода выплаты только процентов раньше начала кредита",
     DUPLICATE_BLOCK_START:
@@ -101,6 +101,11 @@ export const ru: Dictionary = {
     HORIZON_NOT_POSITIVE: "Горизонт прогноза должен быть не меньше одного года",
     INVALID_TERM: "Срок в годах неверен",
     SHOCK_OUT_OF_RANGE: "Шок сценария вне допустимого диапазона",
+    GROWTH_OUT_OF_RANGE: "Должно быть больше −100 %",
+    SHOCKED_RATE_OUT_OF_RANGE:
+      "Ставка после фиксации плюс шок ставки должна оставаться от 0 % до 100 %",
+    SHOCKED_INFLATION_OUT_OF_RANGE:
+      "Инфляция плюс шок инфляции должна оставаться выше −100 %",
     ASOF_BEFORE_BASEDATE: "Дата раньше базовой даты",
     NON_POSITIVE_PREPAYMENT: "Каждый досрочный платёж должен быть больше нуля",
     EVENT_BEFORE_START:
@@ -126,6 +131,8 @@ export const ru: Dictionary = {
     invalidJson: "Сохранённое значение не удаётся прочитать",
     missingValue: "Не указано обязательное значение",
     otherConstraint: "База данных отклонила изменение, ничего не изменено",
+    scenarioBreaks: (name, rule) =>
+      `Это значение нарушит сценарий «${name}». ${rule}. Измените значение или сначала отредактируйте сценарий`,
   },
 
   dataErrors: {
@@ -328,6 +335,8 @@ export const ru: Dictionary = {
     financingInterestSaved:
       "Сэкономлено процентов досрочными платежами (номинально)",
     financingInterestSavedByProperty: "По объектам",
+    financingInterestSavedNa:
+      "н/д: изменение срока зависит от досрочного платежа",
     financingUpcoming: "Ближайшие 12 месяцев",
     financingNoEvents: "По модели в ближайшие 12 месяцев ничего не ожидается.",
     financingMoreEvents: (n) => `+ ещё ${n}`,
@@ -538,6 +547,7 @@ export const ru: Dictionary = {
     loanPayoff: "Расчётное погашение",
     loanPayoffNone: "Погашен",
     interestSaved: "Сэкономлено процентов досрочными платежами (номинально)",
+    interestSavedNa: "н/д: изменение срока зависит от досрочного платежа",
     remainingTerm: "Оставшийся срок",
     outlookResetsTitle: "Окончания фиксации по блокам кредита",
     colFixationEnd: "Конец фиксации",
@@ -564,6 +574,8 @@ export const ru: Dictionary = {
     maturityCheck: "Проверьте платёж или дату погашения.",
     fixationEnded: (end, rate) =>
       `Фиксация закончилась ${end}, а следующий блок не введён, поэтому приложение с этого момента использует ставку после сброса ${rate}. Добавьте условия рефиксации как новый блок ипотеки.`,
+    fixationEndedUntil: (end, until, rate) =>
+      `Фиксация закончилась ${end}, а следующий блок начинается только ${until}, поэтому приложение использует ставку после сброса ${rate} с ${end} по ${until}. Добавьте условия на этот период как блок ипотеки.`,
     fieldPrepayments: "Досрочные платежи",
     helpPrepayments:
       "Досрочное погашение основного долга на дату. Снижение платежа сохраняет срок; сокращение срока сохраняет платёж. Комиссия оплачивается из собственных средств и долг не уменьшает.",
@@ -630,6 +642,7 @@ export const ru: Dictionary = {
     amColInterest: "Проценты",
     amColPrincipal: "Тело",
     amColDrawn: "Выдано",
+    amColRefinanced: "Разница при рефинансировании",
     amColPrepaid: "Досрочно погашено",
     amColPrepaymentFee: "Комиссия за досрочный платёж",
     amColEndBalance: "Конечный остаток",
@@ -1095,6 +1108,7 @@ export const ru: Dictionary = {
     principal: "Тело",
     debtSvc: "Обсл. долга",
     draws: "Выдано",
+    refinanced: "Разница при рефинансировании",
     prepaid: "Досрочно погашено",
     prepaymentFees: "Комиссии за досрочные платежи",
     netCf: "Чистый ДП",

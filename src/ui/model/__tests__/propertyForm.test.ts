@@ -8,7 +8,8 @@ import {
   BLANK_PROPERTY_FORM,
   type PropertyFormState,
 } from "../propertyForm";
-import { money, type AcquisitionFunding } from "../../../engine";
+import { percentDraft } from "../formParse";
+import { money, rate, type AcquisitionFunding } from "../../../engine";
 import { en } from "../../../i18n/en";
 
 const valid: PropertyFormState = {
@@ -35,6 +36,27 @@ describe("parsePropertyForm", () => {
     expect(result.property.sizeM2).toBe(58);
     expect(result.address).toBe("Korunní 100");
     expect(result.garage).toBe(true);
+  });
+
+  it("keeps a stored growth override's precision, so a rename saves it unchanged (ADR 0131, #208)", () => {
+    const appreciation = rate("0.03591234");
+    const rentIndex = rate("-0.0000001");
+    const result = parsePropertyForm(
+      {
+        ...valid,
+        name: "Renamed",
+        appreciation_override_pa: percentDraft(appreciation),
+        rent_index_override_pa: percentDraft(rentIndex),
+      },
+      "vinohrady",
+      [],
+      en,
+    );
+    if (!result.valid) throw new Error("expected valid");
+    expect(result.property.appreciationOverridePa!.equals(appreciation)).toBe(
+      true,
+    );
+    expect(result.property.rentIndexOverridePa!.equals(rentIndex)).toBe(true);
   });
 
   it("requires name and purchase date/price", () => {

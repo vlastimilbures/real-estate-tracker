@@ -31,7 +31,16 @@ function separate(p: Portfolio, a: Assumptions, asOf: IsoDate) {
     snapshot: portfolioSnapshot(p, a, asOf, schedules),
     projection: portfolioProjection(p, a),
     kpis: portfolioKpis(p, a),
-    financing: financingExposure(p, a, schedules, asOf),
+    financing: financingExposure(
+      p,
+      a,
+      propertySchedules(
+        p.mortgages,
+        p.properties.map((x) => x.id),
+        a,
+      ),
+      asOf,
+    ),
   };
 }
 

@@ -69,8 +69,10 @@ export function parseDate(raw: string): IsoDate | null {
 export function moneyDraft(d: Decimal | undefined): string {
   return d == null ? "" : d.toFixed();
 }
+/** A stored ratio as its exact percentage, for the same reason (ADR 0131, #208): the
+ *  `times(100)` and the parse's `div(100)` are exact at Decimal precision. */
 export function percentDraft(d: Decimal | undefined): string {
-  return d == null ? "" : d.times(100).toDecimalPlaces(4).toString();
+  return d == null ? "" : d.times(100).toFixed();
 }
 export function dateDraft(date: Date | undefined): string {
   if (!date) return "";

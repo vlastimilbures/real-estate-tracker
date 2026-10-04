@@ -26,9 +26,11 @@ const d = en.propertyDetail;
 
 function outlook(blocks: MortgageBlock[], asOf: IsoDate = BASE_DATE) {
   const pid = blocks[0].propertyId;
-  const rows =
-    propertySchedules(blocks, [pid], assumptions).get(pid)?.rows ?? [];
-  const financing = propertyLoanExposure(blocks, assumptions, rows, asOf);
+  const schedule = propertySchedules(blocks, [pid], assumptions).get(pid) ?? {
+    rows: [],
+    eventOutcomes: [],
+  };
+  const financing = propertyLoanExposure(blocks, assumptions, schedule, asOf);
   if (!financing) throw new Error("no loan");
   return loanOutlook(financing, blocks, d);
 }

@@ -14,10 +14,10 @@
 //
 // Calendar (D-21, J-03 a′): rows sit on the baseDate grid EDATE(baseDate, m), but each
 // row carries payment number p = paymentsDueAtBase + m (running loan) or m − drawMonth
-// (future loan), and its rate is read on that payment's due date EDATE(start, p). So
-// the payment due on the fixation end is still at the fixed rate (DR-101), and a
-// clamped month-end due date counts as paid (DR-070). Interest-only and tranche
-// landing stay on the grid.
+// (future loan), and its rate and interest-only are read on that payment's due date
+// EDATE(start, p) (ADR 0129 §2). So the payment due on the fixation end is still at
+// the fixed rate (DR-101), and a clamped month-end due date counts as paid (DR-070).
+// Tranche landing stays on the grid.
 import { PMT, ZERO, type Decimal } from "../lib/money";
 import {
   edate,
@@ -220,6 +220,7 @@ function zeroRow(
     interest: ZERO,
     principal: ZERO,
     drawn: ZERO,
+    refinanced: ZERO,
     prepaid: ZERO,
     prepaymentFee: ZERO,
     endBalance,
@@ -253,8 +254,9 @@ function undrawnRow(
 // ---------------------------------------------------------------------------
 
 /** First step k in [1,maxStep] whose cadence date (anchor + k months) is on/after
- *  `date`, capped at maxStep. Validation rejects a draw on/after the loan's final
- *  payment date (DR-074), so a valid draw never reaches the cap. */
+ *  `date`, capped at maxStep. Validation rejects a draw after the loan's last-but-one
+ *  payment date (DR-074, ADR 0129 §3), so a valid draw never reaches the cap. On the
+ *  baseDate grid a month-end clamp can still land it on the final payment (#218). */
 function firstStepOnOrAfter(anchor: Date, date: Date, maxStep: number): number {
   const cap = Math.max(1, maxStep);
   return Math.min(firstGridMonthOnOrAfter(anchor, date, cap - 1), cap);
@@ -440,7 +442,12 @@ interface Settled {
   fee: Decimal;
   terms: TermState;
   outcomes: Outcome[];
+  /** The seen tranches behind the terms the events set: grid month 1 does not treat
+   *  them as a new tranche again (ADR 0129 §1). Zero outside the late settle. */
+  counted: Decimal;
 }
+
+const larger = (a: Decimal, b: Decimal): Decimal => (a.greaterThan(b) ? a : b);
 
 function prepaymentIssue(
   requested: Decimal,
@@ -450,18 +457,33 @@ function prepaymentIssue(
   return applied.lessThan(requested) ? "PREPAYMENT_EXCEEDS_BALANCE" : null;
 }
 
-/** Pay the period's prepayments in date order, each clamped to the balance left. */
+/**
+ * What an event sees on top of the balance it settles against: the late tranches
+ * (after the last payment due by baseDate, on/before baseDate) dated on or before the
+ * event. They join grid month 1 (D-41), so only the late settle counts them; every
+ * other settle sees none (ADR 0129 §1).
+ */
+type SeenTranches = (date: Date) => Decimal;
+const NO_TRANCHES: SeenTranches = () => ZERO;
+
+/** Pay the period's prepayments in date order, each clamped to the balance left plus
+ *  the tranches it sees. `seenAfter` is what the last applied one saw. */
 function applyPrepayments(
   ev: LoanEvents,
   done: PaymentDone,
   prepayments: MortgagePrepayment[],
-): Omit<Settled, "terms"> & { effect: PrepaymentEffect | null } {
+  seen: SeenTranches,
+): Omit<Settled, "terms" | "counted"> & {
+  effect: PrepaymentEffect | null;
+  seenAfter: Decimal;
+} {
   let { balance } = done;
-  let [prepaid, fee] = [ZERO, ZERO];
+  let [prepaid, fee, seenAfter] = [ZERO, ZERO, ZERO];
   let effect: PrepaymentEffect | null = null;
   const outcomes: Outcome[] = [];
   for (const p of prepayments) {
-    const applied = p.amount.lessThan(balance) ? p.amount : balance;
+    const available = balance.plus(seen(p.date));
+    const applied = p.amount.lessThan(available) ? p.amount : available;
     const charged = applied.greaterThan(ZERO) ? (p.fee ?? ZERO) : ZERO;
     if (applied.greaterThan(ZERO)) {
       [balance, prepaid, fee] = [
@@ -470,6 +492,7 @@ function applyPrepayments(
         fee.plus(charged),
       ];
       effect = p.effect;
+      seenAfter = seen(p.date);
     }
     outcomes.push({
       blockId: ev.block.id,
@@ -483,7 +506,7 @@ function applyPrepayments(
       enteredFee: p.fee ?? ZERO,
     });
   }
-  return { balance, prepaid, fee, effect, outcomes };
+  return { balance, prepaid, fee, effect, seenAfter, outcomes };
 }
 
 /**
@@ -543,17 +566,23 @@ function recastTerms(
       };
 }
 
+/** The period's recasts in date order, each on the balance plus the tranches it sees;
+ *  `counted` is what the last one that set new terms saw. */
 function applyRecasts(
   ev: LoanEvents,
   done: PaymentDone,
   recasts: LoanRecast[],
-): { terms: TermState; outcomes: Outcome[] } {
+  seen: SeenTranches,
+): { terms: TermState; outcomes: Outcome[]; counted: Decimal } {
   let { terms } = done;
+  let counted = ZERO;
   const outcomes: Outcome[] = [];
   for (const r of recasts) {
-    const result = done.balance.greaterThan(ZERO)
-      ? recastTerms(ev, { ...done, terms }, r)
+    const balance = done.balance.plus(seen(r.date));
+    const result = balance.greaterThan(ZERO)
+      ? recastTerms(ev, { ...done, balance, terms }, r)
       : { terms, issue: "RECAST_AFTER_PAYOFF" as const };
+    if (result.terms !== terms) counted = seen(r.date);
     terms = result.terms;
     outcomes.push({
       blockId: ev.block.id,
@@ -566,29 +595,38 @@ function applyRecasts(
       issue: result.issue,
     });
   }
-  return { terms, outcomes };
+  return { terms, outcomes, counted };
 }
 
 /** After payment `p`: its prepayments, the bank's answer to them, then its recasts
- *  (ADR 0109). */
+ *  (ADR 0109). The balance checks count the tranches `seen` names (ADR 0129 §1); the
+ *  balance returned does not, so the tranche is still added once, in grid month 1. */
 function settleEvents(
   ev: LoanEvents,
   done: PaymentDone,
   period: PeriodEvents,
+  seen: SeenTranches = NO_TRANCHES,
 ): Settled {
   if (period.prepayments.length === 0 && period.recasts.length === 0) {
-    return { ...done, prepaid: ZERO, fee: ZERO, outcomes: [] };
+    return { ...done, prepaid: ZERO, fee: ZERO, outcomes: [], counted: ZERO };
   }
-  const paid = applyPrepayments(ev, done, period.prepayments);
+  const paid = applyPrepayments(ev, done, period.prepayments, seen);
   const after = { ...done, balance: paid.balance };
-  const terms = prepaymentTerms(paid.effect, after);
-  const recast = applyRecasts(ev, { ...after, terms }, period.recasts);
+  const terms = prepaymentTerms(paid.effect, {
+    ...after,
+    balance: paid.balance.plus(paid.seenAfter),
+  });
+  const recast = applyRecasts(ev, { ...after, terms }, period.recasts, seen);
   return {
     balance: paid.balance,
     prepaid: paid.prepaid,
     fee: paid.fee,
     terms: recast.terms,
     outcomes: [...paid.outcomes, ...recast.outcomes],
+    counted: larger(
+      terms === done.terms ? ZERO : paid.seenAfter,
+      recast.counted,
+    ),
   };
 }
 
@@ -601,10 +639,24 @@ function paymentRow(
   return {
     ...head,
     ...step,
+    refinanced: ZERO,
     prepaid: settled.prepaid,
     prepaymentFee: settled.fee,
     endBalance: settled.balance,
   };
+}
+
+/** A development loan's tranches after the last payment due by baseDate and on/before
+ *  baseDate: grid month 1 draws them, the baseDate debt counts them (D-41, D-44). */
+function lateTranches(block: MortgageBlock, baseDate: Date): MortgageDraw[] {
+  const lastDue = lastPaymentDue(block, baseDate);
+  return (block.draws ?? []).filter(
+    (d) => isAfter(d.date, lastDue) && isOnOrBefore(d.date, baseDate),
+  );
+}
+
+function sumDraws(draws: readonly MortgageDraw[]): Decimal {
+  return draws.reduce((sum, d) => sum.plus(d.amount), ZERO);
 }
 
 /** True when an event is dated on/before baseDate: the opening balance replays it. */
@@ -696,7 +748,7 @@ function catchUpStep(
 function simulateToBaseDate(
   block: MortgageBlock,
   assumptions: Assumptions,
-): Opening {
+): Opening & { counted: Decimal } {
   const { baseDate } = assumptions;
   const steps = lastGridMonthOnOrBefore(block.startDate, baseDate);
   const ctx: CatchUpContext = {
@@ -721,7 +773,9 @@ function simulateToBaseDate(
   };
   for (let k = 1; k <= steps; k++) s = catchUpStep(s, k, ctx);
   // Events after the last payment due and on/before baseDate are history too: they
-  // follow that payment (or the start, when none is due yet).
+  // follow that payment (or the start, when none is due yet), and see the late
+  // tranches dated on or before them (ADR 0129 §1).
+  const tranches = lateTranches(block, baseDate);
   const late = settleEvents(
     ctx.events,
     {
@@ -734,12 +788,14 @@ function simulateToBaseDate(
       terms: s.terms,
     },
     eventsAt(ctx.events, steps + 1),
+    (date) => sumDraws(tranches.filter((d) => isOnOrBefore(d.date, date))),
   );
   return {
     balance: late.balance,
     currentInstalment: s.currentInstalment,
     terms: late.terms,
     outcomes: [...s.outcomes, ...late.outcomes],
+    counted: late.counted,
   };
 }
 
@@ -756,7 +812,7 @@ interface DevScheduleState {
 function initDevScheduleState(
   block: DevelopmentLoan,
   assumptions: Assumptions,
-): { state: DevScheduleState; outcomes: Outcome[] } {
+): { state: DevScheduleState; outcomes: Outcome[]; counted: Decimal } {
   const { baseDate } = assumptions;
   if (isAfter(block.startDate, baseDate)) {
     return {
@@ -769,6 +825,7 @@ function initDevScheduleState(
         terms: initialTerms(block),
       },
       outcomes: [],
+      counted: ZERO,
     };
   }
   const sim = simulateToBaseDate(block, assumptions);
@@ -791,6 +848,7 @@ function initDevScheduleState(
       terms: sim.terms,
     },
     outcomes: sim.outcomes,
+    counted: sim.counted,
   };
 }
 
@@ -806,6 +864,10 @@ interface DevScheduleContext {
   newDebtByMonth: Map<number, Decimal>;
   /** Prepayments and recasts dated after baseDate (ADR 0109). */
   events: LoanEvents;
+  /** The part of grid month 1's tranches a late-window event already counted in the
+   *  terms it set: no second contract-term restore or agreed-instalment deferral for
+   *  it (ADR 0129 §1). */
+  openingCounted: Decimal;
 }
 
 type DevMonthStep = {
@@ -837,7 +899,11 @@ function undrawnMonthStep(
         : state.currentInstalment,
       drawn: true,
       prevRate: rateOfPayment(ctx.startToBase + m, block, assumptions),
-      prevInterestOnly: interestOnlyAt(block, date),
+      // Payment 0, on the loan start (ADR 0129 §2).
+      prevInterestOnly: interestOnlyAt(
+        block,
+        edate(block.startDate, ctx.startToBase + m),
+      ),
     },
     outcomes: [],
   };
@@ -860,7 +926,8 @@ function devPaymentStep(
   ctx: DevScheduleContext,
 ): DevMonthStep {
   const { m, p, date, draw, ratePa, io } = mo;
-  const terms = termsForTranche(state.terms, draw, p, ctx.events.contractTerm);
+  const fresh = m === 1 ? draw.minus(ctx.openingCounted) : draw;
+  const terms = termsForTranche(state.terms, fresh, p, ctx.events.contractTerm);
   const trigger = reamortizes(
     draw,
     state.prevInterestOnly,
@@ -886,7 +953,7 @@ function devPaymentStep(
       ratePa,
       instalment: step.instalment,
       interestOnly: io,
-      terms: paidTerms(terms, io, draw),
+      terms: paidTerms(terms, io, fresh),
     },
     eventsAt(ctx.events, p),
   );
@@ -921,7 +988,7 @@ function devMonthStep(
   const p = ctx.startToBase + m;
   const draw = ctx.drawsByMonth.get(m) ?? ZERO;
   const ratePa = rateOfPayment(p, block, assumptions);
-  const io = interestOnlyAt(block, date);
+  const io = interestOnlyAt(block, edate(block.startDate, p)); // ADR 0129 §2
   // Payoff guard, as in the plain grid: once repaid (and no tranche lands) nothing
   // is due, rather than the held instalment on a zero balance (DR-044).
   if (!state.balance.plus(draw).greaterThan(ZERO)) {
@@ -1057,6 +1124,7 @@ function buildDevSchedule(
   const drawnAfter = isAfter(block.startDate, baseDate)
     ? baseDate
     : lastPaymentDue(block, baseDate);
+  const opening = initDevScheduleState(block, assumptions);
   const ctx: DevScheduleContext = {
     block,
     assumptions,
@@ -1068,8 +1136,8 @@ function buildDevSchedule(
       isAfter(d, baseDate),
     ),
     events: loanEvents(block, assumptions, (d) => isAfter(d, baseDate)),
+    openingCounted: opening.counted,
   };
-  const opening = initDevScheduleState(block, assumptions);
   const contract = scheduleMonths(block, assumptions);
   const quiet = quietFrom(
     contract,
@@ -1330,13 +1398,9 @@ export function openingBalance(
     const offset = paymentOffset(block, baseDate);
     return plainOpening(block, assumptions, offset).balance;
   }
-  const lastDue = lastPaymentDue(block, baseDate);
-  return (block.draws ?? [])
-    .filter((d) => isAfter(d.date, lastDue) && isOnOrBefore(d.date, baseDate))
-    .reduce(
-      (sum, d) => sum.plus(d.amount),
-      simulateToBaseDate(block, assumptions).balance,
-    );
+  return simulateToBaseDate(block, assumptions).balance.plus(
+    sumDraws(lateTranches(block, baseDate)),
+  );
 }
 
 /** Opening (baseDate) debt of a property: its block in force at baseDate, if any. */
@@ -1371,6 +1435,7 @@ export function instalmentAtMonth(
     row.principal.greaterThan(ZERO) &&
     next !== undefined &&
     next.drawn.isZero() &&
+    next.refinanced.isZero() &&
     next.ratePa.equals(row.ratePa);
   return {
     instalment: after ? next.instalment : row.instalment,
@@ -1440,6 +1505,8 @@ export function blockChain(
  * owner drawn in month d itself (two successors in one grid month) pays off its draw.
  * A prepayment dated on/before the successor's start that the owner's dropped rows
  * carried is paid at the handover, before the successor pays off the rest (ADR 0109).
+ * The merged row's `drawn` is real new debt only; `refinanced` is the successor's
+ * principal less the balance it pays off (ADR 0130).
  */
 function spliceSuccessor(
   current: BlockSchedule,
@@ -1468,11 +1535,20 @@ function spliceSuccessor(
   const row =
     own && kept ? { ...own, endBalance: drawRow.endBalance } : drawRow;
   const prepaid = row.prepaid.plus(late.applied);
+  // The rest of the handover's net new debt (D-47, DR-092) is the refinance difference.
+  const drawn = handoverDrawn(drawRow, next, own, {
+    counted: kept || d === 1 || drawMonth(owner, baseDate) === d,
+  });
+  const netNew = row.endBalance
+    .minus(carriedIn)
+    .plus(row.principal)
+    .plus(prepaid);
   const merged = {
     ...row,
     prepaid,
     prepaymentFee: row.prepaymentFee.plus(late.fee),
-    drawn: row.endBalance.minus(carriedIn).plus(row.principal).plus(prepaid),
+    drawn,
+    refinanced: netNew.minus(drawn),
   };
   return {
     rows: [...head, merged, ...nextRows.slice(d)],
@@ -1517,6 +1593,21 @@ function handoverPrepayments(
     return { ...o, month: d, applied: paid, fee: charged, issue };
   });
   return { applied, fee, outcomes: out };
+}
+
+/**
+ * A handover row's real new debt (ADR 0130): a tranche the successor draws with its
+ * principal, plus what the owner's month-d row drew when the balance the successor pays
+ * off `counted` it (a kept row, grid month 1, or an owner drawn in month d).
+ */
+function handoverDrawn(
+  drawRow: AmortizationRow,
+  next: MortgageBlock,
+  own: AmortizationRow | undefined,
+  { counted }: { counted: boolean },
+): Decimal {
+  const ownDrew = own && counted ? own.drawn : ZERO;
+  return drawRow.drawn.minus(next.initialPrincipal).plus(ownDrew);
 }
 
 /**

@@ -98,7 +98,7 @@ export const en = {
     DRAW_BEFORE_START:
       "A draw must be dated after the loan start; money drawn on the start date belongs in the initial principal",
     DRAW_AFTER_SCHEDULE_END:
-      "A draw must be dated before the loan's final payment date (start date plus loan term)",
+      "A draw must be dated on or before the loan's last-but-one payment date (start date plus loan term, less one month)",
     COMPLETION_BEFORE_START:
       "The interest-only end date is before the loan start",
     DUPLICATE_BLOCK_START:
@@ -110,6 +110,11 @@ export const en = {
     HORIZON_NOT_POSITIVE: "The projection horizon must be at least one year",
     INVALID_TERM: "The term in years is not valid",
     SHOCK_OUT_OF_RANGE: "A scenario shock is outside its allowed range",
+    GROWTH_OUT_OF_RANGE: "Must be above −100 %",
+    SHOCKED_RATE_OUT_OF_RANGE:
+      "The post-fixation reset rate plus the rate shock must stay between 0 % and 100 %",
+    SHOCKED_INFLATION_OUT_OF_RANGE:
+      "Inflation plus the inflation shock must stay above −100 %",
     ASOF_BEFORE_BASEDATE: "The date is before the base date",
     NON_POSITIVE_PREPAYMENT: "Each prepayment must be above zero",
     EVENT_BEFORE_START:
@@ -137,6 +142,9 @@ export const en = {
     invalidJson: "A stored value could not be read",
     missingValue: "A required value is missing",
     otherConstraint: "The database refused the change, so nothing was changed",
+    // ADR 0128 §6: an assumptions edit that would break a saved scenario.
+    scenarioBreaks: (name: string, rule: string) =>
+      `This value would break the scenario “${name}”. ${rule}. Change the value or edit the scenario first`,
   },
 
   dataErrors: {
@@ -344,6 +352,7 @@ export const en = {
       `Total interest (Yrs 1–${n}, real)`,
     financingInterestSaved: "Interest saved by prepayments (nominal)",
     financingInterestSavedByProperty: "By property",
+    financingInterestSavedNa: "n/a: a recast depends on the prepayment",
     financingUpcoming: "Next 12 months",
     financingNoEvents: "Nothing modelled in the next 12 months.",
     financingMoreEvents: (n: number) => `+ ${n} more`,
@@ -567,6 +576,7 @@ export const en = {
     loanPayoff: "Modelled payoff",
     loanPayoffNone: "Repaid",
     interestSaved: "Interest saved by prepayments (nominal)",
+    interestSavedNa: "n/a: a recast depends on the prepayment",
     // ADR 0117: the remaining term and each block's reset.
     remainingTerm: "Remaining term",
     outlookResetsTitle: "Fixation resets by loan block",
@@ -594,6 +604,8 @@ export const en = {
     maturityCheck: "Check the instalment or the maturity date.",
     fixationEnded: (end: string, rate: string) =>
       `Its fixation ended on ${end} and no follow-on block is entered, so the app assumes the reset rate of ${rate} from then on. Add the refix terms as a new mortgage block.`,
+    fixationEndedUntil: (end: string, until: string, rate: string) =>
+      `Its fixation ended on ${end} and the next block starts only on ${until}, so the app assumes the reset rate of ${rate} from ${end} until ${until}. Add the terms for those months as a mortgage block.`,
     fieldPrepayments: "Prepayments",
     helpPrepayments:
       "Extra repayments of principal on a date. Lowering the instalment keeps the term; shortening the term keeps the instalment. The fee is paid in cash and does not reduce the debt.",
@@ -660,6 +672,7 @@ export const en = {
     amColInterest: "Interest",
     amColPrincipal: "Principal",
     amColDrawn: "Drawn",
+    amColRefinanced: "Refinance difference",
     amColPrepaid: "Prepaid",
     amColPrepaymentFee: "Prepayment fee",
     amColEndBalance: "End balance",
@@ -1133,6 +1146,7 @@ export const en = {
     principal: "Principal",
     debtSvc: "Debt svc",
     draws: "Draws",
+    refinanced: "Refinance difference",
     prepaid: "Prepaid",
     prepaymentFees: "Prepayment fees",
     netCf: "Net CF",

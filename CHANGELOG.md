@@ -230,6 +230,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Interest saved and the refinance difference (ADR 0130, #172):
+  - **Interest saved by prepayments** is shown only when a prepayment repaid some
+    principal and saved something; a prepayment that a later block replaced, one after
+    payoff, or one on the day a new block starts no longer shows 0 Kč. When a maturity change takes effect only because of the prepayment, the
+    figure would be negative: the property page and the Dashboard show "n/a: a recast
+    depends on the prepayment" instead, and the Dashboard total leaves it out.
+  - A planned refix (a later loan block) no longer makes the **Drawn** and **Draws**
+    columns appear. The successor's principal less the balance it pays off shows in its
+    own **Refinance difference** column, in the amortization table, the projection grid
+    and both Excel exports. Optional columns appear from half a haléř, so a successor
+    typed to the haléř shows no column.
+
+- Loan schedule edge cases (ADR 0129, #135):
+  - A prepayment or maturity change dated after the last payment due by the snapshot date
+    now counts a development-loan tranche drawn earlier in that window. A 300,000 Kč
+    prepayment was cut to the balance before the tranche, depending on the snapshot date's
+    day.
+  - A development loan's payment is interest-only when its due date is on or before the
+    completion date, in the projection as in the history. The projection read it on the
+    grid date, so a payment due just before completion could amortize.
+  - A tranche dated after the loan's last-but-one payment is refused: the final payment
+    would have repaid it in one shot.
+  - The "Fixation ended" warning (property page and Data check) also shows when the next
+    loan block leaves at least one payment at the assumed reset rate, with "from … until
+    …".
+  - An error raised for an invalid stored prepayment or maturity change names its row.
+
+- Saving a form no longer rounds a stored rate it did not change (ADR 0131, #208). A rate
+  imported or restored with more than six decimals (e.g. interest rate `0.03591234`) was
+  rewritten to six (`0.035912`) by any edit of the same record. Forms now show and save the
+  stored rate in full, as a percentage (`3.591234`).
+
+- Assumptions that broke the maths are refused instead of showing `Infinity`, `NaN` or
+  negative interest (ADR 0128, #114). The Assumptions page, the scenario form, the property
+  form, CSV import and restore now check that:
+  - the post-fixation reset rate lies within 0–100 %, like a loan's own rate;
+  - growth, rent indexation, inflation and a property's growth overrides are above −100 %
+    (an inflation of −100 % gave an infinite real net worth);
+  - a scenario's rate shock keeps the reset rate within 0–100 %, and its inflation shock
+    keeps inflation above −100 %; the scenario form shows this on the shock's field;
+  - a value crash percentage is a finite number.
+
+  Saving the assumptions is refused when the new value would break a saved scenario's
+  shock; the message names the scenario. A scenario that broke the rule before the edit
+  does not block it. Stored values are not changed: a value already outside these bounds
+  shows the invalid-input message until it is corrected.
+
+- A backup exported while a change was being saved could mix the data from before and
+  after it: for example a new flat's valuation without the flat. Such a file could fail its
+  own restore check, or restore with records missing, and the export still reported
+  success. The export, and the safety backup before a restore or Clear sample, now read the
+  whole database at one moment (ADR 0132, #138). A backup file now lists each record's
+  fields in alphabetical order; every backup, old or new, restores as before.
+- The **Reload** button on the "change may not be shown yet" banner could finish after a
+  save made while it ran and put the older data back on screen, with the banner gone: the
+  saved record seemed to vanish until the next change. Reload now waits for pending saves
+  and shows what they wrote (ADR 0132, #138, #199).
 - A property whose name has no Latin letters or digits (for example a Cyrillic name) was
   saved with an empty internal id. It showed in the list, but its page, its edit form, its
   "Open property" link and the Dashboard filter treated it as "no property", and a CSV file

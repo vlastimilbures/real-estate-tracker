@@ -37,8 +37,9 @@ import { money } from "../brands";
 // year-periods.test.ts), DR-092's `drawn` / `draws` (pinned in draws.test.ts against
 // the balances hashed here), DR-158's IRR reasons (pinned in irr-edge.test.ts) and
 // ADR 0087's real-lens KPIs (pinned in real-kpis.test.ts), ADR 0103's total interest
-// (pinned in total-interest.test.ts) and ADR 0109's prepayment fields and event
-// outcomes (pinned in loan-events.test.ts; zero or empty without events). Leaving them
+// (pinned in total-interest.test.ts), ADR 0109's prepayment fields and event
+// outcomes (pinned in loan-events.test.ts; zero or empty without events) and ADR 0130's
+// `refinanced` (pinned in refinance-difference.test.ts). Leaving them
 // out keeps every hash comparable (no number moved).
 const ADDED_FIELDS = new Set([
   "periodStart",
@@ -47,6 +48,7 @@ const ADDED_FIELDS = new Set([
   "debtFreeProjectionYear",
   "drawn",
   "draws",
+  "refinanced",
   "leveredIrrNominalReason",
   "leveredIrrRealReason",
   "netWorthMultipleReal",

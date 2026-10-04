@@ -18,7 +18,7 @@ import type {
 } from "../engine";
 import { migrate } from "../data/migrations";
 import { DataError, type DataErrorCode } from "../data/errors";
-import { toWriteError, type WriteError } from "./writeError";
+import { ScenarioRuleError, toWriteError, type WriteError } from "./writeError";
 import { logFailure } from "../data/errorLog";
 import {
   clearSample,
@@ -37,7 +37,11 @@ import type {
   CsvImportPreview,
   CsvImportReport,
 } from "../import/csvImport";
-import { checkInputRules, scenarioRuleErrors } from "../import/inputRules";
+import {
+  checkInputRules,
+  scenarioErrorsAddedBy,
+  scenarioRuleErrors,
+} from "../import/inputRules";
 import {
   loadState,
   upsertScenario,
@@ -151,9 +155,11 @@ interface PortfolioState {
   stale: boolean;
 
   init: (open?: () => Promise<Sql>) => Promise<void>;
+  /** Load every table into the store. Does not queue itself: outside a queued job, only
+   *  `init` calls it; everything else uses `reload`. */
   refresh: () => Promise<void>;
-  /** Refresh; on failure log it and set `stale`. Never throws: the banner's Reload,
-   *  and the reload after every write (ADR 0125). */
+  /** The banner's Reload: refresh after every pending write, so it never shows data older
+   *  than theirs (ADR 0132). On failure log it and set `stale`; never throws. */
   reload: () => Promise<void>;
   clearError: () => void;
 
@@ -233,26 +239,34 @@ interface PortfolioState {
    *  SampleNotEmptyError when any property exists. */
   loadSample: () => Promise<void>;
   /** Write a backup file through the save dialog. Read-only, so not queued: an open
-   *  dialog must not hold up edits. A saved file is then recorded (ADR 0110). */
+   *  dialog must not hold up edits. It reads one snapshot, so the file holds one database
+   *  state (ADR 0132). A saved file is then recorded (ADR 0110). */
   exportBackup: () => Promise<ExportOutcome>;
 }
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => {
   /** Tail of the mutation queue: each mutation (write + refresh) starts only after the
    *  previous one settled, so writes reach the DB in call order and a refresh never
-   *  interleaves with another write (DR-085). */
+   *  interleaves with another write (DR-085). The CSV preview and the banner's Reload
+   *  wait in it too (ADR 0132). */
   let queue: Promise<unknown> = Promise.resolve();
   /** Data writes so far: an export keeps the changed flag when one landed while its
    *  save dialog was open, since the file does not hold it (ADR 0110). */
   let writes = 0;
 
+  /** Run `job` after everything queued before it has settled. A failed job never blocks
+   *  the ones after it. */
+  function enqueue<T>(job: () => Promise<T>): Promise<T> {
+    const run = queue.then(job);
+    queue = run.catch(() => undefined);
+    return run;
+  }
+
   function mutate(
     op: (sql: Sql) => Promise<void>,
     changesData = true,
   ): Promise<MutationResult> {
-    const run = queue.then(() => mutateNow(op, changesData));
-    queue = run;
-    return run;
+    return enqueue(() => mutateNow(op, changesData));
   }
 
   /** Run `op` in the mutation queue, then reload; rethrow its failure unchanged
@@ -264,20 +278,18 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     op: (sql: Sql) => Promise<T>,
     changesData = true,
   ): Promise<T> {
-    const run = queue.then(async () => {
+    return enqueue(async () => {
       const sql = requireSql();
       try {
         const result = await op(sql);
         if (changesData) await markChanged(sql);
-        await get().reload();
+        await refreshOrMarkStale();
         return result;
       } catch (e) {
-        await get().reload();
+        await refreshOrMarkStale();
         throw e;
       }
     });
-    queue = run.catch(() => undefined);
-    return run;
   }
 
   /** Data was written: the last backup no longer has it (ADR 0110). Best effort — a
@@ -288,6 +300,17 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       await markDataChanged(sql);
     } catch (e) {
       logFailure("WRITE", e);
+    }
+  }
+
+  /** Refresh; on failure log it and set `stale` (ADR 0125). Never throws. Not queued: the
+   *  reload inside a queued write, where queueing it would wait for itself. */
+  async function refreshOrMarkStale(): Promise<void> {
+    try {
+      await get().refresh();
+    } catch (e) {
+      logFailure("WRITE", e);
+      set({ stale: true });
     }
   }
 
@@ -318,7 +341,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       perfMark("edit:start");
       await op(sql);
       if (changesData) await markChanged(sql);
-      await get().reload();
+      await refreshOrMarkStale();
       // Write + reload; the recompute and page render are measured where they run.
       perfMeasure("edit-saved", "edit:start");
       set({ error: null });
@@ -333,7 +356,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       }
       logFailure("WRITE", e);
       const error = toWriteError(e);
-      await get().reload();
+      await refreshOrMarkStale();
       set({ error });
       return { ok: false, error };
     }
@@ -346,7 +369,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     if (p) assertRows(edit(p), ids);
   }
 
-  /** Engine rules of the assumptions themselves (horizon, rates, shocks, D-38). */
+  /** Engine rules of the assumptions themselves (horizon, rates, shocks, D-38), then
+   *  the saved scenarios the edit would newly break (ADR 0128 §6). */
   function checkAssumptions(a: Assumptions): void {
     const p = get().portfolio;
     if (!p) return;
@@ -354,6 +378,14 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       (e) => e.entity === "assumptions",
     );
     if (errors.length > 0) throw new EngineInputError(errors);
+    // ADR 0128 §6: a shock meets the level it shifts, so an edit can break a saved
+    // scenario. Refuse only one the edit newly breaks, and name the first.
+    const old = get().assumptions;
+    if (!old) return;
+    for (const s of get().scenarios) {
+      const added = scenarioErrorsAddedBy(old, a, s.overrides);
+      if (added.length > 0) throw new ScenarioRuleError(s.name, added);
+    }
   }
 
   /** Engine rules a scenario's own overrides break on top of the saved assumptions
@@ -409,14 +441,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
 
     clearError: () => set({ error: null }),
 
-    async reload() {
-      try {
-        await get().refresh();
-      } catch (e) {
-        logFailure("WRITE", e);
-        set({ stale: true });
-      }
-    },
+    reload: () => enqueue(refreshOrMarkStale),
 
     addValuation: (v) =>
       mutate(async (sql) => {
@@ -577,14 +602,11 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     dismissSampleBanner: () => mutate(dismissSampleBanner, false),
 
     // Loaded on first use: keeps the CSV parser out of the startup bundle (P9).
-    previewCsv: (batch) => {
-      const run = queue.then(async () => {
+    previewCsv: (batch) =>
+      enqueue(async () => {
         const { previewImport } = await import("../import/csvImport");
         return previewImport(requireSql(), batch);
-      });
-      queue = run.catch(() => undefined);
-      return run;
-    },
+      }),
     importCsv: (batch, expected) =>
       exclusive(async (sql) => {
         const { importCsv } = await import("../import/csvImport");

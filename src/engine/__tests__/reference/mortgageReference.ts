@@ -13,6 +13,8 @@
 //     clamped); a payment is "made by" a date when its due date is on/before it;
 //   • the fixed rate applies to every payment due on/before the fixation end
 //     (start + fixationMonths); later payments use the reset rate (± rate shock);
+//   • a development loan pays interest only on every payment due on/before its
+//     completion date (ADR 0129 §2);
 //   • on any rate change, the end of interest-only, or a tranche draw, the instalment
 //     re-amortizes the balance over the payments left to the (implied) maturity
 //     start + term (constant maturity); between those events the instalment holds;
@@ -316,10 +318,13 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
   let maturity = term;
   let reamortizeNext = false;
   let agreedInstalment: Dec | null = null;
+  // ADR 0129 §1: late tranches a late-window event already counted in the terms it
+  // set; the next payment's draw holds them but they are not a new tranche again.
+  let known = ZERO;
 
   /** One payment period ending on `date`; `k` = payment number since loan start.
-   *  The rate is read on `rateDate` (the grid date, unless J-03 a′ keys it on the due
-   *  date). Interest-only and draws stay on `date`. */
+   *  The rate and interest-only are read on `rateDate` (the grid date, unless J-03 a′
+   *  keys them on the due date; ADR 0129 §2). Draws stay on `date`. */
   const step = (
     date: Iso,
     k: number,
@@ -328,9 +333,11 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
     rateDate: Iso = date,
   ): RefRow => {
     balance = balance.plus(draw);
+    const fresh = Dec.max(draw.minus(known), ZERO);
+    known = ZERO;
     const ratePa = rateAt(rateDate);
     const r = ratePa.div(12);
-    const io = ioAt(date);
+    const io = ioAt(rateDate);
     const zero = (): RefRow => ({
       month,
       date,
@@ -368,7 +375,7 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
       };
     }
     // A tranche on or after the maturity in force goes back to the contract term (ADR 0116).
-    if (draw.greaterThan(ZERO) && k >= maturity)
+    if (fresh.greaterThan(ZERO) && k >= maturity)
       maturity = Math.max(maturity, term);
     let trigger = (prevIo && !io) || !ratePa.equals(prevRate) || reamortizeNext;
     if (draw.greaterThan(ZERO) && drawTiming === "landing") trigger = true;
@@ -379,7 +386,7 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
     // ADR 0120: a tranche landing on the agreed instalment's payment does not change
     // that payment; the next payment re-amortizes over the maturity in force (in either
     // draw timing; with "nextMonth" a pending tranche would re-amortize there anyway).
-    const owedNext = agreedInstalment !== null && draw.greaterThan(ZERO);
+    const owedNext = agreedInstalment !== null && fresh.greaterThan(ZERO);
     if (agreedInstalment) {
       instalment = agreedInstalment;
     } else if (trigger) {
@@ -426,18 +433,18 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
     .map((r): RefRecast & Pending => ({ ...r, done: false }));
 
-  /** Apply one recast after payment k. */
-  const recast = (r: RefRecast, k: number) => {
+  /** Apply one recast after payment k, on the balance `owed`; false when ignored. */
+  const recast = (r: RefRecast, k: number, owed: Dec): boolean => {
     if ("maturity" in r) {
       maturity = paymentsMadeBy(loan.start, r.maturity);
       reamortizeNext = true;
       agreedInstalment = null;
-      return;
+      return true;
     }
     const a = d(r.instalment);
     const rNext = rateAt(addMonths(loan.start, k + 1)).div(12);
-    if (a.lessThanOrEqualTo(balance.times(rNext))) return; // never repays: ignored
-    const last = k + annuityPeriods(rNext, a, balance).ceil().toNumber();
+    if (a.lessThanOrEqualTo(owed.times(rNext))) return false; // never repays: ignored
+    const last = k + annuityPeriods(rNext, a, owed).ceil().toNumber();
     const cap = Math.max(REF_MAX_TERM, term);
     if (last > cap) {
       maturity = cap;
@@ -448,37 +455,55 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
       reamortizeNext = false;
       agreedInstalment = a;
     }
+    return true;
   };
 
-  /** After payment k (row `row`): the prepayments, then the recasts, that `due` picks. */
+  /** After payment k (row `row`): the prepayments, then the recasts, that `due` picks.
+   *  Each event owes the balance plus the not-yet-added tranches `seen` dates on or
+   *  before it (ADR 0129 §1: the late window); `balance` itself stays without them.
+   *  The tranches behind the terms the events set become `known` to the next payment. */
   const settle = (
     row: RefRow,
     k: number,
     due: (e: Pending) => boolean,
+    seen: (date: Iso) => Dec = () => ZERO,
   ): RefRow => {
     let prepaid = ZERO;
     let fee = ZERO;
     let effect: RefPrepayment["effect"] | null = null;
+    let effectSeen = ZERO;
     for (const p of prepays.filter((e) => !e.done && due(e))) {
       p.done = true;
-      const applied = Dec.min(d(p.amount), balance);
+      const applied = Dec.min(d(p.amount), balance.plus(seen(p.date)));
       if (!applied.greaterThan(ZERO)) continue;
       balance = balance.minus(applied);
       prepaid = prepaid.plus(applied);
       fee = fee.plus(p.fee ?? 0);
       effect = p.effect;
+      effectSeen = seen(p.date);
     }
-    if (effect && balance.greaterThan(ZERO) && !ioAt(row.date)) {
-      if (effect === "lowerInstalment") reamortizeNext = true;
-      else {
-        const n = annuityPeriods(row.ratePa.div(12), row.instalment, balance);
+    const owedAfter = balance.plus(effectSeen);
+    let counted = ZERO;
+    // `prevIo`: whether payment k (just made) was interest-only (ADR 0129 §2).
+    if (effect && owedAfter.greaterThan(ZERO) && !prevIo) {
+      if (effect === "lowerInstalment") {
+        reamortizeNext = true;
+        counted = effectSeen;
+      } else if (
+        row.instalment.greaterThan(owedAfter.times(row.ratePa.div(12)))
+      ) {
+        // An instalment that does not cover the interest has no NPER: no change.
+        const n = annuityPeriods(row.ratePa.div(12), row.instalment, owedAfter);
         maturity = Math.min(maturity, k + n.ceil().toNumber());
+        counted = effectSeen;
       }
     }
     for (const r of recasts.filter((e) => !e.done && due(e))) {
       r.done = true;
-      if (balance.greaterThan(ZERO)) recast(r, k);
+      const owed = balance.plus(seen(r.date));
+      if (owed.greaterThan(ZERO) && recast(r, k, owed)) counted = seen(r.date);
     }
+    if (counted.greaterThan(ZERO)) known = counted;
     return prepaid.isZero() && fee.isZero()
       ? { ...row, endBalance: balance }
       : { ...row, prepaid, fee, endBalance: balance };
@@ -499,7 +524,9 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
       prev = date;
     }
     // Events dated after the last payment due and on/before baseDate are history too:
-    // they follow that payment (or the start, when none is due yet).
+    // they follow that payment (or the start, when none is due yet), owing the
+    // tranches drawn since that payment up to their own date.
+    const lastDue = prev;
     settle(
       last ?? {
         month: 0,
@@ -516,6 +543,7 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
       },
       n,
       (e) => e.date <= base,
+      (date) => drawsIn(lastDue, date),
     );
     // Tranches between the last payment and baseDate: folded into the opening
     // balance, or (D-41) carried into the next payment period.
@@ -578,7 +606,7 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
         ) {
           instalment = annuityPayment(d(loan.ratePa).div(12), term, balance);
         }
-        prevIo = ioAt(date);
+        prevIo = ioAt(gridRateDate(date, 0));
         rows.push({
           month: m,
           date,

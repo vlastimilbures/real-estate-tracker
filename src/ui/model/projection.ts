@@ -29,6 +29,8 @@ export interface SeriesRow {
   // New debt drawn this year (lensed), from the engine (DR-092): zero unless a loan,
   // tranche or refinance draws in the year; zero in year 0.
   draws: Decimal;
+  // A refinance handover's difference this year (lensed, ADR 0130); zero in year 0.
+  refinanced: Decimal;
   // Extra principal prepaid this year (lensed, ADR 0109); zero in year 0.
   prepaid: Decimal;
   // Fees charged on this year's prepayments (lensed, ADR 0109); zero in year 0.
@@ -92,6 +94,7 @@ export function projectionSeries(
     netCashFlow: y.netCashFlow,
     dscr: y.dscr,
     draws: y.draws,
+    refinanced: y.refinanced,
     prepaid: y.prepaid,
     prepaymentFees: y.prepaymentFees,
   }));
@@ -104,6 +107,7 @@ export function projectionSeries(
 export function projectionExtras(rows: SeriesRow[], g: Dictionary["projGrid"]) {
   return nonZeroColumns(rows, [
     { key: "draws", header: g.draws },
+    { key: "refinanced", header: g.refinanced },
     { key: "prepaid", header: g.prepaid },
     { key: "prepaymentFees", header: g.prepaymentFees },
   ]);

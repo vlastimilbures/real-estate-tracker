@@ -309,7 +309,12 @@ export function LoanSummary({ outlook }: { outlook: LoanOutlook }) {
   if (outlook.interestSaved)
     rows.push({
       k: d.interestSaved,
-      v: <Money value={outlook.interestSaved} parens={false} />,
+      v:
+        outlook.interestSaved === "n/a" ? (
+          d.interestSavedNa
+        ) : (
+          <Money value={outlook.interestSaved} parens={false} />
+        ),
     });
   return (
     <Panel title={d.loanSummaryTitle} hint={d.loanSummaryHint}>
