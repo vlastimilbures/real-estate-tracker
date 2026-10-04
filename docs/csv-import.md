@@ -60,7 +60,8 @@ An optional column may be left empty.
 The last three columns record how the purchase was funded. Own cash covers your share of the
 price, the costs and the works together; the costs and works only break down what it paid
 for. For a property bought after the base date, a known own cash is the down payment in its
-purchase year. An empty cell never clears a stored amount (see
+projection year of its purchase. An empty cell or a missing column never clears a stored
+amount (see
 [Matching](#matching-and-updates)).
 
 ```csv
@@ -150,9 +151,9 @@ matched to an existing record by its natural key:
 - **A match updates only the CSV columns.** What the CSV does not hold is left as stored: a
   property's active/inactive state and holding costs, and a mortgage block's draws and
   interest-only date. An empty `contract_maturity_date` keeps the stored date, and an empty
-  `own_cash`, `transaction_costs` or `initial_works` keeps the stored amount. A CSV can set
-  or change an amount, never erase it.
-- **An update writes every CSV column.** An empty optional cell clears the stored value (for
+  or missing `own_cash`, `transaction_costs` or `initial_works` column keeps the stored
+  amount. A CSV can set or change an amount, never erase it.
+- **Any other empty cell clears.** An empty optional cell clears the stored value (for
   example an empty `address`), except `contract_maturity_date` and the three funding columns
   as above.
 - **Each key may appear once per file.** A second row with the same key — including names
