@@ -121,3 +121,34 @@ describe("saved assumptions whose reload fails (ADR 0125)", () => {
     expect(store().assumptions).toEqual(next);
   });
 });
+
+describe("a failed write whose reload also fails (ADR 0125)", () => {
+  /** Nothing commits, and the reload after the failure fails too. */
+  const writeAndReloadFail = (): Sql => ({
+    ...reloadFails(db),
+    transaction: () => Promise.reject(new Error("disk is full")),
+  });
+
+  it("a whole-database action rejects with its own error and marks the screen stale", async () => {
+    usePortfolioStore.setState({ sql: writeAndReloadFail() });
+
+    await expect(store().clearSample()).rejects.toThrow("disk is full");
+
+    expect(store().stale).toBe(true);
+    expect(await propertiesOnDisk()).toBe(3);
+  });
+
+  it("a form write returns its own error and marks the screen stale", async () => {
+    const before = store().assumptions!;
+    usePortfolioStore.setState({ sql: writeAndReloadFail() });
+
+    const error = { kind: "other", message: "disk is full" };
+    expect(
+      await store().saveAssumptions({ ...before, horizonYears: 25 }),
+    ).toEqual({ ok: false, error });
+
+    expect(store().error).toEqual(error);
+    expect(store().stale).toBe(true);
+    expect(store().assumptions).toBe(before);
+  });
+});
