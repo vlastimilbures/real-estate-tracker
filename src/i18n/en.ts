@@ -354,6 +354,23 @@ export const en = {
       "Dates are modelled from the loans and leases you entered. They are not deadlines from your lender; check exact dates with your bank.",
   },
 
+  // Data check (ADR 0118).
+  dataCheck: {
+    valuationStale: (age: string, date: string) =>
+      `The latest valuation is ${age} old (${date}). Value, equity and LTV rest on it and the appreciation assumption.`,
+    noValuation: (price: string) =>
+      `No valuation is entered, so the purchase price of ${price} stands in as the market value.`,
+    noLease: (date: string) =>
+      `No lease is in force on ${date}, so rent counts as 0.`,
+    leaseEnding: (date: string) =>
+      `The lease ends on ${date} and no next lease is entered. The projection assumes it is renewed.`,
+    growthBoth: "Uses the portfolio appreciation and rent indexation.",
+    growthAppreciation: "Uses the portfolio appreciation.",
+    growthRentIndexation: "Uses the portfolio rent indexation.",
+    costDefaults: (fields: string) =>
+      `Holding costs use the portfolio defaults for: ${fields}.`,
+  },
+
   properties: {
     title: "Properties",
     subtitle: (n: number) => `${n} ${enPlural(n, ["apartment", "apartments"])}`,

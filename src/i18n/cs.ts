@@ -331,6 +331,23 @@ export const cs: Dictionary = {
       "Data vycházejí z modelu podle zadaných úvěrů a nájmů. Nejsou to termíny banky; přesná data si ověřte u banky.",
   },
 
+  // Kontrola dat (ADR 0118).
+  dataCheck: {
+    valuationStale: (age, date) =>
+      `Poslední ocenění je staré ${age} (${date}). Hodnota, vlastní kapitál a LTV vycházejí z něj a z předpokladu zhodnocení.`,
+    noValuation: (price) =>
+      `Není zadáno žádné ocenění, proto se jako tržní hodnota použije kupní cena ${price}.`,
+    noLease: (date) =>
+      `K ${date} neplatí žádný nájem, proto se nájemné počítá jako 0.`,
+    leaseEnding: (date) =>
+      `Nájem končí ${date} a další nájem není zadán. Projekce předpokládá jeho prodloužení.`,
+    growthBoth: "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    growthAppreciation: "Používá zhodnocení z předpokladů portfolia.",
+    growthRentIndexation: "Používá indexaci nájmu z předpokladů portfolia.",
+    costDefaults: (fields) =>
+      `Náklady na držbu používají výchozí hodnoty portfolia pro: ${fields}.`,
+  },
+
   properties: {
     title: "Nemovitosti",
     subtitle: (n) => `${n} ${csPlural(n, ["byt", "byty", "bytů"])}`,
