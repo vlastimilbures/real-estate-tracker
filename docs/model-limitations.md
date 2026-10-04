@@ -82,6 +82,10 @@ work still to do is in the [roadmap](roadmap.md).
   prepayment larger than the balance, or after the loan is repaid, is cut to what is owed,
   and the property page warns about it. Interest saved is nominal, uses the base-case
   assumptions, covers the loan's whole remaining life and is not net of fees (ADR 0116).
+  It is shown only when a prepayment repaid some principal. When a maturity change takes
+  effect only because of the prepayment (a lower instalment that the higher balance without
+  it could not carry), the comparison measures that change too and can come out negative:
+  the app then shows "n/a" instead of a figure (ADR 0130).
   Prepayments and maturity changes entered on a loan block that a later block had already
   replaced before the projection start have no effect, and no warning says so.
   A development-loan tranche counts in full for every prepayment and maturity change

@@ -5,6 +5,9 @@
 - Source: issue #32 (#32b); independent review of PR #91 (2026-10-03)
 - Amends: [0109](0109-loan-prepayments-and-recasts.md)
 - Amended: 2026-10-03 (#32b-2: how the form and the outputs show events, decisions 9 and 11)
+- Amended by: ADR 0129 (§1: the late window), ADR 0130 (§9: interest saved needs an applied
+  prepayment and a negative figure shows a note; §12: sub-haléř values and the refinance
+  difference column)
 
 ## Context
 
