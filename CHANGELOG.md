@@ -148,6 +148,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Properties are listed by name in Czech alphabetical order, with numbers by value ("Byt 2"
+  before "Byt 10"), wherever the app lists them (ADR 0127). Before, the order followed an
+  internal id, which only roughly matched the names.
+
 - The down payment of a property bought after the projection start now starts from its
   **purchase price**, not its valuation, and subtracts the whole loan that funded the
   purchase, every development tranche included. Before, a development loan's later

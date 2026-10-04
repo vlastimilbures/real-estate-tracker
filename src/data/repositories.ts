@@ -278,6 +278,10 @@ const ASSUMPTIONS_QUERY = "SELECT * FROM assumptions WHERE id = 1";
 // Creation order (DR-181): older yyyy-mm-dd rows sort before same-day timestamps, by id.
 const SCENARIOS_QUERY = "SELECT * FROM scenarios ORDER BY created_at, id";
 
+// Properties are listed by name in Czech order, numbers by value (ADR 0127: ids are random).
+// The sort is stable, so the query's id order breaks ties.
+const byName = new Intl.Collator("cs", { numeric: true }).compare;
+
 function toPortfolio([
   properties,
   mortgages,
@@ -286,7 +290,9 @@ function toPortfolio([
   holdingCosts,
 ]: unknown[][]): Portfolio {
   return {
-    properties: (properties as PropertyRow[]).map(rowToProperty),
+    properties: (properties as PropertyRow[])
+      .map(rowToProperty)
+      .sort((a, b) => byName(a.name, b.name)),
     mortgages: (mortgages as MortgageBlockRow[]).map(rowToMortgageBlock),
     valuations: (valuations as ValuationRow[]).map(rowToValuation),
     leases: (leases as LeaseRow[]).map(rowToLease),

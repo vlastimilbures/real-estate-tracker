@@ -699,7 +699,8 @@ offline badge, and controls for language and theme.
    property section (or form) that fixes it. The panel opens when something needs
    attention; a property not yet purchased has no findings.
 
-2. **Properties** — list with per-property summary and LTV/DSCR health bands; "+ Add property"
+2. **Properties** — list with per-property summary and LTV/DSCR health bands, sorted by name in
+   Czech order with numbers by value (every property list follows it, ADR 0127); "+ Add property"
    button opens a form modal (name, address, type, size_m2, garage, purchase_date,
    purchase_price, optional per-property growth overrides, and an optional collapsed
    **Acquisition** section: own cash, transaction costs, initial works and a funding note,
