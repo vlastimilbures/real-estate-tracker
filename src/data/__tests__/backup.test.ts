@@ -333,8 +333,13 @@ describe("restoreFromJson — column whitelist (DR-017)", () => {
       expect.arrayContaining(["prepayments", "recasts"]),
     );
     const db = await freshSeeded();
+    await db.execute(
+      `INSERT INTO scenarios (id, name, overrides, created_at) VALUES ('s1', 'Stress', '{"version":1,"appreciationPa":"0.01"}', '2026-01-05')`,
+    );
     const good = await exportToJson(db);
     const before = await rowCounts(db);
+    for (const [table, n] of Object.entries(before))
+      expect(n, `${table} has a row to check`).toBeGreaterThan(0);
     const strip = (rows: Record<string, unknown>[], cols: string[]) =>
       rows.map((r) =>
         Object.fromEntries(

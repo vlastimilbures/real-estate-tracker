@@ -188,6 +188,19 @@ describe("ADR 0119 §3: the acquisition loan", () => {
     });
     expect(summary(withBuy([refi, loan()])).loan?.toString()).toBe("2000000");
   });
+
+  it("takes the earliest block, not the latest one inside the window", () => {
+    // An off-plan loan a year before handover, then a successor 14 days after it.
+    const offPlan = loan({ id: "m-offplan", startDate: isoDate("2028-01-01") });
+    const handover = loan({
+      id: "m-handover",
+      startDate: isoDate("2029-01-15"),
+      initialPrincipal: money(3_500_000),
+    });
+    expect(summary(withBuy([handover, offPlan])).loan?.toString()).toBe(
+      "2000000",
+    );
+  });
 });
 
 describe("ADR 0119 §4: sources and uses", () => {

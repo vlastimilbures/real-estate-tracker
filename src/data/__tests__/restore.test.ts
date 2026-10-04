@@ -145,6 +145,31 @@ describe("restore checks every row before touching the DB (DR-019)", () => {
     expect(dump(sql)).toEqual(before);
   });
 
+  it("a negative funding amount, on its column (ADR 0119)", async () => {
+    const before = dump(sql);
+    const bad = await edited("properties", (rows) => {
+      rows[0].own_cash = "-1";
+      rows[1].transaction_costs = "-0.5";
+      return rows;
+    });
+    const e = await rejection(restoreFromJson(sql, bad, checkInputRules));
+    expect(e.issues).toEqual([
+      {
+        table: "properties",
+        id: bad.tables.properties[0].id,
+        column: "own_cash",
+        rule: "NEGATIVE_AMOUNT",
+      },
+      {
+        table: "properties",
+        id: bad.tables.properties[1].id,
+        column: "transaction_costs",
+        rule: "NEGATIVE_AMOUNT",
+      },
+    ]);
+    expect(dump(sql)).toEqual(before);
+  });
+
   it("a duplicate natural key", async () => {
     const before = dump(sql);
     const bad = await edited("valuations", (rows) => [
