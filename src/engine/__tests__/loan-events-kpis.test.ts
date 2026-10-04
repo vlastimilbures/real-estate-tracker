@@ -130,7 +130,9 @@ describe("ADR 0109: prepayments in the KPIs", () => {
       kpis.leveredIrrNominal?.equals(baseKpis.leveredIrrNominal ?? ZERO),
     ).toBe(false);
     // The prepayment year's own net cash flow is not reduced by the outflow.
-    const firstPositive = proj.slice(1).find((y) => y.netCashFlow.isPositive());
+    const firstPositive = proj
+      .slice(1)
+      .find((y) => y.netCashFlow.greaterThan(ZERO));
     expect(kpis.firstCashFlowPositiveYear).toBe(
       firstPositive?.calendarYear ?? null,
     );

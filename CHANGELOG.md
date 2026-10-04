@@ -194,6 +194,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The "first cash-flow-positive year" no longer names a year that earned nothing. With only
+  properties bought in the future (or a Dashboard filter on them), it showed the first
+  projection year; it now shows the first year whose net cash flow is above zero, or "—"
+  (ADR 0121, #102).
 - Stat lists (the property page's Loan outlook, the Dashboard financing panel, Backup) no
   longer draw a short line under their last label (ADR 0117).
 - A development loan completed after its last payment before the projection start, with no
