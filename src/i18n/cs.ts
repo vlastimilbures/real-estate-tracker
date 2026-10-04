@@ -338,7 +338,7 @@ export const cs: Dictionary = {
       `k řešení: ${attention} · výchozí hodnoty portfolia: ${defaults}`,
     attentionTitle: "Vyžaduje pozornost",
     attentionNone: "Nic nevyžaduje pozornost.",
-    defaultsTitle: "Používá výchozí hodnoty portfolia",
+    defaultsTitle: "Výchozí hodnoty portfolia",
     asOfNote: (date) => `Zkontrolováno k ${date}.`,
     show: "Zobrazit kontrolu dat",
     hide: "Skrýt kontrolu dat",
@@ -352,7 +352,7 @@ export const cs: Dictionary = {
     leaseEnded: (date) =>
       `Nájem skončil ${date} a další nájem není zadán. Snímek po tomto datu nepočítá žádné nájemné; projekce počítá s prodloužením tohoto nájmu.`,
     leaseEnding: (date) =>
-      `Nájem končí ${date} a další nájem není zadán. Projekce předpokládá jeho prodloužení.`,
+      `Nájem končí ${date} a další nájem není zadán. Projekce počítá s prodloužením stávajícího nájmu.`,
     growthBoth: "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
     growthAppreciation: "Používá zhodnocení z předpokladů portfolia.",
     growthRentIndexation: "Používá indexaci nájmu z předpokladů portfolia.",
