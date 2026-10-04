@@ -354,6 +354,35 @@ export const en = {
       "Dates are modelled from the loans and leases you entered. They are not deadlines from your lender; check exact dates with your bank.",
   },
 
+  // Data check (ADR 0118).
+  dataCheck: {
+    title: "Data check",
+    summary: (attention: number, defaults: number) =>
+      `${attention} to review · ${defaults} on portfolio defaults`,
+    attentionTitle: "Needs attention",
+    attentionNone: "Nothing needs attention.",
+    defaultsTitle: "Using portfolio defaults",
+    asOfNote: (date: string) => `Checked as of ${date}.`,
+    show: "Show data check",
+    hide: "Hide data check",
+    goTo: (section: string) => `Go to ${section}`,
+    valuationStale: (age: string, date: string) =>
+      `The valuation in use is ${age} old (${date}). Value, equity and LTV rest on it.`,
+    noValuation: (date: string, price: string) =>
+      `No valuation is in force on ${date}, so the purchase price of ${price} stands in as the market value.`,
+    noLease: (date: string) =>
+      `No lease is in force on ${date}, so rent counts as 0.`,
+    leaseEnded: (date: string) =>
+      `The lease ended on ${date} and no next lease is entered. The snapshot counts no rent after that date; the projection assumes the lease is renewed.`,
+    leaseEnding: (date: string) =>
+      `The lease ends on ${date} and no next lease is entered. The projection assumes it is renewed.`,
+    growthBoth: "Uses the portfolio appreciation and rent indexation.",
+    growthAppreciation: "Uses the portfolio appreciation.",
+    growthRentIndexation: "Uses the portfolio rent indexation.",
+    costDefaults: (fields: string) =>
+      `Holding costs use the portfolio defaults for: ${fields}.`,
+  },
+
   properties: {
     title: "Properties",
     subtitle: (n: number) => `${n} ${enPlural(n, ["apartment", "apartments"])}`,
@@ -1122,6 +1151,9 @@ export const en = {
     cardEffectiveTitle: "Records are effective-dated",
     cardEffectiveBody:
       "Valuations, leases and mortgages each have a date range. For any day the engine picks the one in force — so an expiring lease hands over to the next.",
+    cardDataCheckTitle: "The data check shows the fallbacks",
+    cardDataCheckBody:
+      "When a valuation is old or missing, no lease is in force, a fixation ended without new terms, or a property uses the portfolio defaults, the Data check on the Dashboard and on each property says so, what it changes and where to fix it.",
     snapshotTitle: "Snapshot metrics",
     snapshotHint: "The current picture of a property or the portfolio",
     snapshotProse:

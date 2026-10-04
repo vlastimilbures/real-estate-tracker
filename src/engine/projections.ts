@@ -122,6 +122,20 @@ function propertyBasis(
 }
 
 /**
+ * The lease the projection keeps renting past its end date, treated as renewed: the last
+ * lease (latest start) when it has an end date on or after the basis date. Shared by the
+ * rent plan and the data check (ADR 0118).
+ */
+export function renewedLease(leases: Lease[], basis: Date): Lease | undefined {
+  const last = [...leases]
+    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
+    .at(-1);
+  return last?.endDate !== undefined && isOnOrBefore(basis, last.endDate)
+    ? last
+    : undefined;
+}
+
+/**
  * The rent of every grid month (DR-045, ADR 0080): the lease in force on the month's
  * grid date `edate(baseDate, m)` (D-21), from the first month on/after the basis date;
  * no lease in force ⇒ no rent (a gap between leases). The last lease (latest start)
@@ -133,13 +147,9 @@ function buildRentPlan(
   basis: Date,
   assumptions: Assumptions,
 ): (RentTerm | undefined)[] {
-  const last = [...leases]
-    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
-    .at(-1);
+  const renewed = renewedLease(leases, basis);
   const inPlan = leases.map((l) =>
-    l === last && l.endDate !== undefined && isOnOrBefore(basis, l.endDate)
-      ? { ...l, endDate: undefined }
-      : l,
+    l === renewed ? { ...l, endDate: undefined } : l,
   );
   const terms = new Map<Lease, RentTerm>();
   const termOf = (l: Lease): RentTerm => {

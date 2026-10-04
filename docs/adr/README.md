@@ -142,6 +142,7 @@ Other IDs seen in code comments:
 | [0115](0115-sample-panel-hint.md)                 | Sample panel hint does not say how the sample arrived                                  | #97                                    |
 | [0116](0116-prepayments-ui-and-review-fixes.md)   | Prepayments: form, outputs and review fixes                                            | #32                                    |
 | [0117](0117-property-loan-outlook.md)             | Property loan outlook: each block's reset and the remaining term                       | #31                                    |
+| [0118](0118-data-check.md)                        | Data check: stale, defaulted and missing inputs                                        | #35                                    |
 
 ### Judgment calls and open questions
 

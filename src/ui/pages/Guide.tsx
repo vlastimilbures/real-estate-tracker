@@ -119,6 +119,10 @@ export function Guide() {
             <h4>{g.cardEffectiveTitle}</h4>
             <p>{g.cardEffectiveBody}</p>
           </div>
+          <div className="guide-card">
+            <h4>{g.cardDataCheckTitle}</h4>
+            <p>{g.cardDataCheckBody}</p>
+          </div>
         </div>
         {/* ADR 0105: the same line as About — language never changes Kč or the formats. */}
         <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>

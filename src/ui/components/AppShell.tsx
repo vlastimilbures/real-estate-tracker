@@ -188,15 +188,18 @@ export function AppShell({
   }, [route, selectedPropertyId]);
 
   // The topbar's height as --topbar-h on the page, so an in-page jump lands a section
-  // below the sticky topbar (scroll-margin-top), whatever rows the topbar wraps to.
+  // below the sticky topbar (scroll-margin-top), whatever rows the topbar wraps to. Set
+  // once before observing: the observer reports only after the next layout, and a jump
+  // made right after navigation (a data check fix link, ADR 0118) needs it now.
   const topbarRef = useRef<HTMLElement>(null);
   useEffect(() => {
     const bar = topbarRef.current;
     if (!bar || typeof ResizeObserver === "undefined") return;
     const root = document.documentElement;
-    const observer = new ResizeObserver(() =>
-      root.style.setProperty("--topbar-h", `${bar.offsetHeight}px`),
-    );
+    const measure = () =>
+      root.style.setProperty("--topbar-h", `${bar.offsetHeight}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
     observer.observe(bar);
     return () => {
       observer.disconnect();

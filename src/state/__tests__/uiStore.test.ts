@@ -177,3 +177,42 @@ describe("scenario compare state", () => {
     useUiStore.setState({ presetsOpen: null });
   });
 });
+
+// ADR 0118 (#35): a data check fix link opens a property on the section that fixes it.
+describe("data check state", () => {
+  beforeEach(() => {
+    useUiStore.setState({
+      propertyTarget: null,
+      unsavedChanges: false,
+      pendingLeave: null,
+    });
+  });
+
+  it("openProperty() with a target records where the page lands, once", () => {
+    useUiStore.getState().openProperty("lipova", "records");
+    let s = useUiStore.getState();
+    expect(s.route).toBe("property");
+    expect(s.selectedPropertyId).toBe("lipova");
+    expect(s.propertyTarget).toBe("records");
+    s.clearPropertyTarget();
+    expect(useUiStore.getState().propertyTarget).toBeNull();
+    useUiStore.getState().openProperty("dubova");
+    s = useUiStore.getState();
+    expect(s.propertyTarget).toBeNull();
+  });
+
+  it("the target waits behind unsaved edits like the navigation (UX-030)", () => {
+    useUiStore.setState({ unsavedChanges: true });
+    useUiStore.getState().openProperty("lipova", "edit");
+    expect(useUiStore.getState().propertyTarget).toBeNull();
+    useUiStore.getState().confirmLeave();
+    expect(useUiStore.getState().propertyTarget).toBe("edit");
+  });
+
+  it("panel: no manual choice at first, then the one set", () => {
+    expect(useUiStore.getInitialState().dataCheckOpen).toBeNull();
+    useUiStore.getState().setDataCheckOpen(true);
+    expect(useUiStore.getState().dataCheckOpen).toBe(true);
+    useUiStore.setState({ dataCheckOpen: null });
+  });
+});

@@ -1,5 +1,5 @@
 // ADR 0107 (#23): Property detail's section nav lists the sections on the page, in page
-// order, and marks the one in view.
+// order, and marks the one in view. ADR 0118 adds the Data check after the Overview.
 import { describe, it, expect } from "vitest";
 import { pickCurrent, propertySections, sectionId } from "../sectionNav";
 
@@ -13,6 +13,7 @@ describe("propertySections", () => {
       }),
     ).toEqual([
       "overview",
+      "dataCheck",
       "records",
       "financing",
       "holding",
@@ -35,7 +36,14 @@ describe("propertySections", () => {
         projection: true,
         amortization: false,
       }),
-    ).toEqual(["overview", "records", "financing", "holding", "projection"]);
+    ).toEqual([
+      "overview",
+      "dataCheck",
+      "records",
+      "financing",
+      "holding",
+      "projection",
+    ]);
   });
 
   it("gives each section a stable element id", () => {

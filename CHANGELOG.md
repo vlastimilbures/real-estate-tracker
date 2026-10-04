@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A **Data check** shows which inputs behind the numbers are stale, missing or left at a
+  default, at the snapshot date (ADR 0118, #35). A panel on the Dashboard and a section on
+  each property list, with their effect:
+  - under **Needs attention**: a valuation more than 12 months old, no valuation (the
+    purchase price stands in), a lease that ended with no next lease (no rent in the
+    snapshot; the projection assumes it is renewed), no lease in force (rent counts as 0),
+    a lease ending within 3 months with no next lease, and a fixation that ended with no
+    follow-on block;
+  - under **Using portfolio defaults**: the portfolio appreciation and rent indexation, and
+    blank holding-cost fields.
+  - Each row links to the section that fixes it, or to the property form. The Dashboard
+    panel opens when something needs attention. No figure changes.
+
 - The property page's **Loan outlook** shows the loan's remaining term ("24 yrs 8 months")
   and lists every loan block, oldest first, with its fixation end, the balance that moves
   to the new rate (nominal) and a status: next rate reset, upcoming, passed, replaced by a later

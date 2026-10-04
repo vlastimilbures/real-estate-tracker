@@ -331,6 +331,35 @@ export const cs: Dictionary = {
       "Data vycházejí z modelu podle zadaných úvěrů a nájmů. Nejsou to termíny banky; přesná data si ověřte u banky.",
   },
 
+  // Kontrola dat (ADR 0118).
+  dataCheck: {
+    title: "Kontrola dat",
+    summary: (attention, defaults) =>
+      `k řešení: ${attention} · výchozí hodnoty portfolia: ${defaults}`,
+    attentionTitle: "Vyžaduje pozornost",
+    attentionNone: "Nic nevyžaduje pozornost.",
+    defaultsTitle: "Výchozí hodnoty portfolia",
+    asOfNote: (date) => `Zkontrolováno k ${date}.`,
+    show: "Zobrazit kontrolu dat",
+    hide: "Skrýt kontrolu dat",
+    goTo: (section) => `Přejít do sekce ${section}`,
+    valuationStale: (age, date) =>
+      `Použité ocenění je staré ${age} (${date}). Hodnota, vlastní kapitál a LTV vycházejí z něj.`,
+    noValuation: (date, price) =>
+      `K ${date} neplatí žádné ocenění, proto se jako tržní hodnota použije kupní cena ${price}.`,
+    noLease: (date) =>
+      `K ${date} neplatí žádný nájem, proto se nájemné počítá jako 0.`,
+    leaseEnded: (date) =>
+      `Nájem skončil ${date} a další nájem není zadán. Snímek po tomto datu nepočítá žádné nájemné; projekce počítá s prodloužením tohoto nájmu.`,
+    leaseEnding: (date) =>
+      `Nájem končí ${date} a další nájem není zadán. Projekce počítá s prodloužením stávajícího nájmu.`,
+    growthBoth: "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    growthAppreciation: "Používá zhodnocení z předpokladů portfolia.",
+    growthRentIndexation: "Používá indexaci nájmu z předpokladů portfolia.",
+    costDefaults: (fields) =>
+      `Náklady na držbu používají výchozí hodnoty portfolia pro: ${fields}.`,
+  },
+
   properties: {
     title: "Nemovitosti",
     subtitle: (n) => `${n} ${csPlural(n, ["byt", "byty", "bytů"])}`,
@@ -1074,6 +1103,9 @@ export const cs: Dictionary = {
     cardEffectiveTitle: "Záznamy mají platnost k datu",
     cardEffectiveBody:
       "Ocenění, nájmy a hypotéky mají vždy časové rozmezí. Pro kterýkoli den engine vybere ten platný — takže končící nájem předá štafetu dalšímu.",
+    cardDataCheckTitle: "Kontrola dat ukáže náhradní hodnoty",
+    cardDataCheckBody:
+      "Když je ocenění staré nebo chybí, neplatí žádný nájem, fixace skončila bez nových podmínek nebo nemovitost používá výchozí hodnoty portfolia, Kontrola dat na Přehledu a u každé nemovitosti to uvede, včetně toho, co to mění a kde to opravit.",
     snapshotTitle: "Ukazatele snímku",
     snapshotHint: "Aktuální obrázek nemovitosti nebo portfolia",
     snapshotProse:

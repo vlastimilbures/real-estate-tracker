@@ -73,8 +73,9 @@ From the 2026-10 code review
 - **Planned capital expenditure.** Dated one-off repairs and renovations, modelled separately from
   the percentage maintenance allowance.
 - **Optional property details.** Notes, parking spaces, a structured category and layout,
-  building year, floor and energy rating, and the source of each valuation. Ownership share comes
-  later, because it changes how debt, costs and income are attributed.
+  building year, floor and energy rating, and the source of each valuation (the Data check, ADR
+  0118, could then name it). Ownership share comes later, because it changes how debt, costs and
+  income are attributed.
 - **Sort and search on lists.** Sortable columns and search on Properties and Scenarios for
   larger portfolios.
 - **Mortgage draw editor.** Date/amount rows instead of the one-tranche-per-line text field (see
