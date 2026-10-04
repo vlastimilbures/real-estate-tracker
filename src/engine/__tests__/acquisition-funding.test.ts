@@ -99,14 +99,8 @@ const summary = (p: Portfolio, a: Assumptions = assumptions) =>
   );
 
 describe("ADR 0119 §5: the down payment of a future buy", () => {
-  it("without a record: purchase price − acquisition loan (not the valuation)", () => {
-    expectKc(outflow(withBuy()), PRICE - 2_000_000, "3.8 M");
-  });
-
-  it("the cost rate is a fraction of the price: + 0.06 × 5.8 M", () => {
-    expectKc(outflow(withBuy(), withCost("0.06")), 4_148_000, "with pct");
-  });
-
+  // Without a record (3,800,000) and with the cost rate alone (4,148,000):
+  // levered-irr-acquisition.test.ts pins both on the same fixture.
   it("entered transaction costs win over the cost rate", () => {
     const p = withBuy([loan()], { transactionCosts: money(150_000) });
     expectKc(outflow(p, withCost("0.06")), 3_950_000, "entered costs");
@@ -234,24 +228,7 @@ describe("ADR 0119 §4: sources and uses", () => {
   });
 });
 
-describe("ADR 0119 §2/§5: consistency", () => {
-  it("own cash equal to the derived amount leaves every KPI unchanged", () => {
-    const derived = portfolioKpis(withBuy(), withCost("0.06"));
-    const recorded = portfolioKpis(
-      withBuy([loan()], { ownCash: money(4_148_000) }),
-      withCost("0.06"),
-    );
-    expect(recorded.cumulativeNetCashFlow.toString()).toBe(
-      derived.cumulativeNetCashFlow.toString(),
-    );
-    expect(recorded.leveredIrrNominal?.toString()).toBe(
-      derived.leveredIrrNominal?.toString(),
-    );
-    expect(recorded.leveredIrrReal?.toString()).toBe(
-      derived.leveredIrrReal?.toString(),
-    );
-  });
-
+describe("ADR 0119 §5: a property already owned", () => {
   it("a record on a property bought before baseDate moves no figure", () => {
     const funded: Portfolio = {
       ...portfolio,

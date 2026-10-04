@@ -32,7 +32,7 @@ export interface AcquisitionSummary {
  * The block that funded the purchase (ADR 0119 §3): the property's earliest block, when
  * it starts no later than 90 days after the purchase date. Any earlier start counts (an
  * off-plan loan drawn before handover). A later block is a successor, never this one.
- * `blocks` must be the property's own; ties keep input order (DR-071).
+ * `blocks` must be the property's own.
  */
 function acquisitionLoanBlock(
   property: Property,
@@ -102,17 +102,18 @@ export function acquisitionSummary(
     forProperty(portfolio.mortgages, property.id),
   );
   const loan = block ? scheduledPrincipal(block) : null;
+  const loanOrZero = loan ?? ZERO;
   const parts = recorded(property);
   return {
     price,
     loan,
     ...parts,
-    ...sourcesAndUses(price, loan ?? ZERO, parts),
+    ...sourcesAndUses(price, loanOrZero, parts),
     outflow:
       parts.ownCash ??
       derivedDownPayment(
         price,
-        loan ?? ZERO,
+        loanOrZero,
         parts,
         assumptions.acquisitionCostPct ?? ZERO,
       ),
