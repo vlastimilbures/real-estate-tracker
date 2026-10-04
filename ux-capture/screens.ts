@@ -389,7 +389,7 @@ export const SCREENS: Screen[] = [
       await expect(
         p.getByRole("table", { name: d.outlookResetsTitle }),
       ).toBeVisible();
-      await expect(p.getByText(d.remainingTerm)).toBeVisible();
+      await expect(p.getByText(d.remainingTerm, { exact: true })).toBeVisible();
       await p.scrollIntoViewIfNeeded();
       await ux.capture("29b-property-loan-outlook", { fullPage: false });
     },
