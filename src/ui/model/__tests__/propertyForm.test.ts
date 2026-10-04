@@ -48,7 +48,6 @@ describe("parsePropertyForm", () => {
         appreciation_override_pa: percentDraft(appreciation),
         rent_index_override_pa: percentDraft(rentIndex),
       },
-      "edit",
       "vinohrady",
       [],
       en,
