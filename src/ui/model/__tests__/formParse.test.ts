@@ -135,9 +135,21 @@ describe("draft formatters round-trip", () => {
     }
   });
 
-  it("percentDraft → parsePercentToRatio preserves the ratio", () => {
-    const v = D("0.0359");
-    expect(parsePercentToRatio(percentDraft(v))!.equals(v)).toBe(true);
+  // ADR 0131 (#208): the rate twin of moneyDraft — a stored ratio of up to 40 significant
+  // digits drafts as its exact percentage, so a save writes back the rate it read.
+  it("percentDraft keeps a stored rate's full precision in plain notation", () => {
+    for (const [stored, draft] of [
+      ["0.03591234", "3.591234"],
+      ["0.0359", "3.59"],
+      ["1e-12", "0.0000000001"],
+      ["-0.1", "-10"],
+      ["-0", "0"],
+      ["1e+20", "10000000000000000000000"],
+    ] as const) {
+      const v = D(stored);
+      expect(percentDraft(v)).toBe(draft);
+      expect(parsePercentToRatio(percentDraft(v))!.equals(v)).toBe(true);
+    }
     expect(percentDraft(undefined)).toBe("");
   });
 

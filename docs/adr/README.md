@@ -154,7 +154,7 @@ Other IDs seen in code comments:
 | [0127](0127-opaque-property-ids-sample-match.md)  | Random property ids; the sample is matched by id and name                              | #101, #105                             |
 | [0128](0128-assumption-bounds.md)                 | Assumption bounds: reset rate, growth floor, shocked levels                            | #114                                   |
 | [0129](0129-loan-schedule-edge-cases.md)          | Loan schedule edge cases: late tranches, interest-only date, last draw, refix gap      | #135                                   |
-| [0131](0131-lossless-money-draft.md)              | A form drafts a stored money amount at full precision                                  | #201                                   |
+| [0131](0131-lossless-money-draft.md)              | A form drafts a stored amount or rate at full precision                                | #201, #208                             |
 
 ### Judgment calls and open questions
 

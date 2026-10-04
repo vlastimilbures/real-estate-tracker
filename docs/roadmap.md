@@ -109,8 +109,6 @@ product's positioning changes.
 - **Several development loans on one property.** The value ramp during construction follows
   the first development loan in input order; one development loan per property (optionally
   refinanced into a plain loan) is the supported case. (DR-124)
-- **Form drafts round percentages to 4 decimal places** when a value is edited and saved.
-  (DR-079)
 - **Month-end base dates.** The engine counts payments and grid months on loan due dates, so
   results are correct, but two date helpers remain whose semantics differ at month ends; new
   code should use `lastGridMonthOnOrBefore`. (DR-070)
