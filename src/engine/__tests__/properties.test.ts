@@ -249,10 +249,19 @@ describe("random valid plain loans", { timeout: HEAVY_TIMEOUT_MS }, () => {
             near(s.debt, proj[n].balance.toNumber(), KC, `debt N=${n}`);
         }
         const k = portfolioKpis(portfolio, assumptions);
-        // D-34: CAGR is null exactly when equity₀ ≤ 0; every KPI present is finite.
+        // D-34, ADR 0126: the multiples are null exactly when equity₀ ≤ 0, a CAGR also
+        // when its end net worth ≤ 0; every KPI present is finite.
         const noGrowthBase = !proj[0].equity.greaterThan(ZERO);
-        expect(k.cagrNominal === null, "cagrNominal null").toBe(noGrowthBase);
-        expect(k.cagrReal === null, "cagrReal null").toBe(noGrowthBase);
+        expect(k.netWorthMultiple === null, "multiple null").toBe(noGrowthBase);
+        expect(k.netWorthMultipleReal === null, "real multiple null").toBe(
+          noGrowthBase,
+        );
+        expect(k.cagrNominal === null, "cagrNominal null").toBe(
+          noGrowthBase || !k.netWorthNominal.greaterThan(ZERO),
+        );
+        expect(k.cagrReal === null, "cagrReal null").toBe(
+          noGrowthBase || !k.netWorthReal.greaterThan(ZERO),
+        );
         for (const [key, v] of Object.entries(k)) {
           if (v !== null && typeof v === "object")
             expect((v as Decimal).isFinite(), key).toBe(true);

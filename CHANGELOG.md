@@ -226,6 +226,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Headline KPIs no longer contradict their inputs in edge cases (ADR 0126, #129):
+  - The net-worth multiple shows "—" when equity at the projection start is zero or less,
+    instead of "0,00x" or a negative multiple (−31,19x after a deep crash at Today).
+  - CAGR shows "—" when net worth at the horizon is zero or less, instead of "NaN %".
+  - "Debt fully repaid" is the year from which debt stays repaid; debt drawn later moves it
+    on, and it shows "—" while debt is still owed at the horizon.
+  - A property or portfolio with no debt shows DSCR "—" with no "Shortfall" badge.
 - A restore, Clear sample, Load sample or CSV import that went through but whose screen
   could not reload said it had failed and been rolled back, with the data unchanged. It now
   reports success, naming the safety backup, and the banner asks you to reload. A form save

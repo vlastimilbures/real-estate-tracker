@@ -208,12 +208,14 @@ function refinanceCash(
 }
 
 /**
- * Net-worth growth. A growth rate needs a *positive* opening equity base, so the CAGRs
- * are null when equity0 ≤ 0 — no growth base, shown as "—" (D-34). `greaterThan`,
- * because `isPositive()` is also true for ZERO (DR-107). Real CAGR
- * is taken off the CPI-deflated net worth — identical to (1+cagr)/(1+infl)−1 under
- * constant inflation, so parity holds. The real multiple divides that same deflated net
- * worth by equity0 (CPI₀ = 1, so equity0 is already in base-date Kč; ADR 0087).
+ * Net-worth growth. A multiple or a growth rate needs a *positive* opening equity base, so
+ * both multiples and both CAGRs are null when equity0 ≤ 0 — no growth base, shown as "—"
+ * (D-34, ADR 0126). A CAGR also needs a positive end: a negative base to the power 1/N is
+ * NaN (ADR 0017), so it is null when the end net worth ≤ 0. `greaterThan`, because
+ * `isPositive()` is also true for ZERO (DR-107). Real CAGR is taken off the CPI-deflated
+ * net worth — identical to (1+cagr)/(1+infl)−1 under constant inflation, so parity holds.
+ * The real multiple divides that same deflated net worth by equity0 (CPI₀ = 1, so equity0
+ * is already in base-date Kč; ADR 0087).
  */
 function equityGrowth(
   equity0: Decimal,
@@ -222,10 +224,10 @@ function equityGrowth(
   N: number,
 ) {
   const netWorthReal = equityN.div(cpiN);
-  const multiple = (end: Decimal) =>
-    equity0.isZero() ? ZERO : end.div(equity0);
+  const hasBase = equity0.greaterThan(ZERO);
+  const multiple = (end: Decimal) => (hasBase ? end.div(equity0) : null);
   const cagr = (end: Decimal) =>
-    equity0.greaterThan(ZERO)
+    hasBase && end.greaterThan(ZERO)
       ? end.div(equity0).pow(ONE.div(N)).minus(ONE)
       : null;
   return {
@@ -239,8 +241,8 @@ function equityGrowth(
 
 /**
  * Cumulative net cash flow (net of the cash outside it, `acqOutflow` in `kpisFrom`), the
- * first calendar year with a positive net cash flow, and the first year the portfolio is
- * debt-free. A debt-free year only counts once the portfolio has carried debt (a
+ * first calendar year with a positive net cash flow, and the year from which the portfolio
+ * stays debt-free (ADR 0126). A debt-free year only counts once the portfolio has carried debt (a
  * never-leveraged portfolio reports null). NB: greaterThan(ZERO), not isPositive() —
  * ZERO.isPositive() is true, and a year with no active property nets exactly 0 (ADR 0121).
  * The real cumulative cash flow deflates each year by its own CPI_t (ADR 0087).
@@ -278,16 +280,22 @@ function cumulativeNetCashFlow(
   return total;
 }
 
-/** The first year (from year 1) at or below DEBT_FREE_EPSILON after the portfolio has
- *  carried debt (in year 0 or any year up to and including that one); null if none. */
+/** The first year (from year 1) from which the balance stays at or below
+ *  DEBT_FREE_EPSILON through year N, once the portfolio has carried debt (in year 0 or
+ *  any year up to and including that one); null if debt is owed at N or was never carried.
+ *  Debt drawn again after a repaid year moves the year on (ADR 0126). */
 function firstDebtFreeYear(proj: ProjectionYear[]): ProjectionYear | null {
-  let seenDebt = at(proj, 0).balance.greaterThan(ZERO);
-  for (let t = 1; t < proj.length; t++) {
-    const y = at(proj, t);
-    if (y.balance.greaterThan(ZERO)) seenDebt = true;
-    if (seenDebt && y.balance.lessThanOrEqualTo(DEBT_FREE_EPSILON)) return y;
-  }
-  return null;
+  let from = proj.length;
+  while (
+    from > 1 &&
+    at(proj, from - 1).balance.lessThanOrEqualTo(DEBT_FREE_EPSILON)
+  )
+    from--;
+  if (from === proj.length) return null;
+  const seenDebt = proj
+    .slice(0, from + 1)
+    .some((y) => y.balance.greaterThan(ZERO));
+  return seenDebt ? at(proj, from) : null;
 }
 
 /** The levered IRR KPIs, each with the reason it has no value (DR-158). */

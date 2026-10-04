@@ -272,7 +272,7 @@ describe("Δ vs Base view (ADR 0097)", () => {
   });
 
   it("the multiple shows a signed multiple", () => {
-    const m = crash.kpis.netWorthMultiple.minus(base.kpis.netWorthMultiple);
+    const m = crash.kpis.netWorthMultiple!.minus(base.kpis.netWorthMultiple!);
     expect(row(sc.kpiNetWorthMultiple).fmt(crash)).toBe(
       plus(m, fmtMultiple(m)),
     );
@@ -319,11 +319,27 @@ describe("Δ vs Base view (ADR 0097)", () => {
     expect(vsNullBase.note?.(crash)).toBe(sc.deltaNoBaseValue);
   });
 
+  it("a multiple with no growth base reads — (ADR 0126)", () => {
+    const noBase: CompareResult = {
+      ...base,
+      id: "nobase",
+      kpis: { ...base.kpis, netWorthMultiple: null, cagrNominal: null },
+    };
+    const values = compareKpiRows(en, "nominal").find(
+      (r) => r.label === sc.kpiNetWorthMultiple,
+    )!;
+    expect(values.fmt(noBase)).toBe("—");
+    expect(row(sc.kpiNetWorthMultiple).fmt(noBase)).toBe("—");
+    const vsNullBase = row(sc.kpiNetWorthMultiple, "nominal", noBase);
+    expect(vsNullBase.fmt(crash)).toBe("—");
+    expect(vsNullBase.note?.(crash)).toBe(sc.deltaNoBaseValue);
+  });
+
   it("the real lens uses the real figures", () => {
     const nw = crash.kpis.netWorthReal.minus(base.kpis.netWorthReal);
     expect(row(sc.kpiNetWorthReal, "real").fmt(crash)).toBe(fmtCzkM(nw));
-    const m = crash.kpis.netWorthMultipleReal.minus(
-      base.kpis.netWorthMultipleReal,
+    const m = crash.kpis.netWorthMultipleReal!.minus(
+      base.kpis.netWorthMultipleReal!,
     );
     expect(row(sc.kpiNetWorthMultiple, "real").fmt(crash)).toBe(
       plus(m, fmtMultiple(m)),

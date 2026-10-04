@@ -23,7 +23,7 @@ import {
   type EquityChangeRow,
 } from "../model/chartData";
 import { fmtCzkM, fmtMultiple, fmtPct } from "../../lib/format";
-import { dscrBand, dscrBandWord, ltvBand, ltvBandWord } from "../model/health";
+import { dscrBadge, ltvBand, ltvBandWord } from "../model/health";
 import type { MonthlyFlow } from "../model/dashboard";
 import type { LeveredIrr } from "../model/irr";
 import { lensKpis } from "../model/lensKpis";
@@ -50,7 +50,7 @@ export function HeroTiles({
   horizonYears: number;
   /** Calendar year of the last projection row (ADR 0088). */
   horizonEndYear: number;
-  netWorthMultiple: Decimal;
+  netWorthMultiple: Decimal | null;
   modeWord: string;
   irr: LeveredIrr;
 }) {
@@ -79,7 +79,7 @@ export function HeroTiles({
         label={t.dashboard.netWorthInYear(horizonEndYear, horizonYears)}
         value={fmtCzkM(horizon)}
         foot={t.dashboard.multipleFromStartMode(
-          fmtMultiple(netWorthMultiple),
+          netWorthMultiple ? fmtMultiple(netWorthMultiple) : "—",
           modeWord,
         )}
       />
@@ -118,10 +118,7 @@ export function RiskTiles({
         delay={24}
         label={t.dashboard.portfolioDscr}
         value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
-        badge={{
-          band: dscrBand(s.dscr),
-          text: dscrBandWord(t, s.dscr) ?? t.dashboard.badgeShortfall,
-        }}
+        badge={dscrBadge(t, s.dscr)}
         foot={t.dashboard.noiOverDebtService}
       />
       <KpiTile
@@ -327,7 +324,11 @@ export function KpiListPanel({
           },
           {
             k: t.dashboard.kpiNetWorthMultiple,
-            v: <Mult value={lens.netWorthMultiple} />,
+            v: lens.netWorthMultiple ? (
+              <Mult value={lens.netWorthMultiple} />
+            ) : (
+              "—"
+            ),
           },
           {
             k: t.dashboard.kpiNetWorthCagr,

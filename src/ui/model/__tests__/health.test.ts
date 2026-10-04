@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   bandPill,
+  dscrBadge,
   dscrBand,
   dscrBandWord,
   ltvBand,
@@ -54,5 +55,21 @@ describe("band words", () => {
   it("the pill text joins the number and the word", () => {
     expect(bandPill("62,0 %", "Moderate")).toBe("62,0 % · Moderate");
     expect(bandPill("—", null)).toBe("—");
+  });
+});
+
+describe("DSCR badge (ADR 0126)", () => {
+  it("no debt (null DSCR) has no badge", () => {
+    expect(dscrBadge(en, null)).toBeUndefined();
+  });
+  it("a DSCR has its band and word", () => {
+    expect(dscrBadge(en, D(1.5))).toEqual({
+      band: "good",
+      text: en.dashboard.badgeCoversDebt,
+    });
+    expect(dscrBadge(en, D(0.8))).toEqual({
+      band: "bad",
+      text: en.dashboard.badgeShortfall,
+    });
   });
 });

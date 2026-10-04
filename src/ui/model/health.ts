@@ -48,6 +48,15 @@ export function dscrBandWord(
     : t.dashboard.badgeShortfall;
 }
 
+/** The DSCR tile badge: its band and word; no debt (null) has no badge (ADR 0126). */
+export function dscrBadge(
+  t: Pick<Dictionary, "dashboard">,
+  value: Decimal | null,
+): { band: Band; text: string } | undefined {
+  const text = dscrBandWord(t, value);
+  return text === null ? undefined : { band: dscrBand(value), text };
+}
+
 /** Badge text: the formatted number followed by its band word, when there is one. */
 export function bandPill(number: string, word: string | null): string {
   return word ? `${number} · ${word}` : number;

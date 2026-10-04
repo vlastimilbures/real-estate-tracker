@@ -39,6 +39,7 @@ export interface CompareValueRow extends CompareKpiRow {
 }
 
 const pct = (d: Decimal | null) => (d ? fmtPct(d) : "—");
+const mult = (d: Decimal | null) => (d ? fmtMultiple(d) : "—");
 
 const rowsOf = (r: CompareResult, mode: Mode) =>
   mode === "real" ? r.realProjection : r.projection;
@@ -216,7 +217,7 @@ function kpiRowSpecs(
     },
     {
       label: s.kpiNetWorthMultiple,
-      fmt: (r) => fmtMultiple(multiple(r)),
+      fmt: (r) => mult(multiple(r)),
       kind: "multiple",
       value: multiple,
       mark: rebased,

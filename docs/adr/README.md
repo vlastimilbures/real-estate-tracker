@@ -150,6 +150,7 @@ Other IDs seen in code comments:
 | [0123](0123-scenario-rules-every-entry-point.md)  | Scenario overrides meet the engine rules; restore needs them readable                  | #107, #108                             |
 | [0124](0124-pre-purchase-debt-service.md)         | Debt service before a future purchase is owner cash                                    | #104                                   |
 | [0125](0125-committed-write-reload-failure.md)    | A committed write whose reload fails is not a failure                                  | #106                                   |
+| [0126](0126-degenerate-kpis.md)                   | Degenerate KPIs: no growth base, debt-free from, no-debt badge                         | #129                                   |
 
 ### Judgment calls and open questions
 
