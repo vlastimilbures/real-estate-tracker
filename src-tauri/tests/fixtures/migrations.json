@@ -1,0 +1,123 @@
+{
+  "migrations": [
+    {
+      "version": 1,
+      "name": "initial schema",
+      "sql": "\n      CREATE TABLE properties (\n        id                       TEXT PRIMARY KEY,\n        name                     TEXT NOT NULL,\n        address                  TEXT,\n        type                     TEXT,\n        size_m2                  INTEGER,\n        garage                   INTEGER,                 -- 0/1\n        purchase_date            TEXT NOT NULL,           -- ISO yyyy-mm-dd\n        purchase_price           TEXT NOT NULL,           -- decimal string\n        appreciation_override_pa TEXT,                    -- decimal string, nullable\n        rent_index_override_pa   TEXT\n      );\n\n      CREATE TABLE mortgage_blocks (\n        id                 TEXT PRIMARY KEY,\n        property_id        TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,\n        start_date         TEXT NOT NULL,\n        initial_principal  TEXT NOT NULL,\n        fixation_years     INTEGER NOT NULL,\n        interest_rate_pa   TEXT NOT NULL,\n        monthly_instalment TEXT NOT NULL\n      );\n\n      CREATE TABLE valuations (\n        id           TEXT PRIMARY KEY,\n        property_id  TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,\n        valid_from   TEXT NOT NULL,\n        valid_to     TEXT,                                -- nullable: open-ended\n        market_value TEXT NOT NULL\n      );\n\n      CREATE TABLE leases (\n        id           TEXT PRIMARY KEY,\n        property_id  TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,\n        start_date   TEXT NOT NULL,\n        end_date     TEXT,                                -- nullable: current lease\n        monthly_rent TEXT NOT NULL\n      );\n\n      CREATE TABLE holding_costs (\n        id              TEXT PRIMARY KEY,\n        property_id     TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,\n        property_tax_yr TEXT,                             -- all nullable: NULL ⇒ default\n        insurance_yr    TEXT,\n        mgmt_pct_rent   TEXT,\n        maint_pct_rent  TEXT,\n        svj_monthly     TEXT,\n        other_yr        TEXT\n      );\n\n      CREATE TABLE assumptions (\n        id                          INTEGER PRIMARY KEY CHECK (id = 1),  -- single row\n        base_date                   TEXT NOT NULL,\n        appreciation_pa             TEXT NOT NULL,\n        rent_indexation_pa          TEXT NOT NULL,\n        vacancy_allowance           TEXT NOT NULL,\n        post_fixation_reset_rate_pa TEXT NOT NULL,\n        horizon_years               INTEGER NOT NULL,\n        inflation_pa                TEXT NOT NULL,\n        default_property_tax_yr     TEXT NOT NULL,\n        default_insurance_yr        TEXT NOT NULL,\n        default_mgmt_pct_rent       TEXT NOT NULL,\n        default_maint_pct_rent      TEXT NOT NULL,\n        default_svj_monthly         TEXT NOT NULL,\n        default_other_yr            TEXT NOT NULL\n      );\n\n      CREATE TABLE scenarios (\n        id         TEXT PRIMARY KEY,\n        name       TEXT NOT NULL,\n        overrides  TEXT NOT NULL,                         -- JSON assumption overrides\n        created_at TEXT NOT NULL\n      );\n    ",
+      "foreignKeysOff": false
+    },
+    {
+      "version": 2,
+      "name": "mortgage loan term",
+      "sql": "\n      ALTER TABLE mortgage_blocks ADD COLUMN loan_term_years INTEGER;\n    ",
+      "foreignKeysOff": false
+    },
+    {
+      "version": 3,
+      "name": "mortgage development draws + interest-only",
+      "sql": "\n      ALTER TABLE mortgage_blocks ADD COLUMN draws TEXT;\n      ALTER TABLE mortgage_blocks ADD COLUMN interest_only_until TEXT;\n    ",
+      "foreignKeysOff": false
+    },
+    {
+      "version": 4,
+      "name": "property active flag",
+      "sql": "\n      ALTER TABLE properties ADD COLUMN active INTEGER NOT NULL DEFAULT 1;\n    ",
+      "foreignKeysOff": false
+    },
+    {
+      "version": 5,
+      "name": "app meta (first-run seed flag)",
+      "sql": "\n      CREATE TABLE IF NOT EXISTS app_meta (\n        key   TEXT PRIMARY KEY,\n        value TEXT NOT NULL\n      );\n      INSERT OR IGNORE INTO app_meta (key, value)\n        SELECT 'sample_seeded', '1'\n        WHERE EXISTS (SELECT 1 FROM assumptions) OR EXISTS (SELECT 1 FROM properties);\n    ",
+      "foreignKeysOff": false
+    },
+    {
+      "version": 6,
+      "name": "mortgage contract maturity date",
+      "sql": "\n      ALTER TABLE mortgage_blocks ADD COLUMN contract_maturity_date TEXT;\n    ",
+      "foreignKeysOff": false
+    },
+    {
+      "version": 7,
+      "name": "constraints (unique natural keys, checks)",
+      "sql": "\n      CREATE TABLE properties_new (\n        id TEXT PRIMARY KEY,\n        name TEXT NOT NULL,\n        address TEXT,\n        type TEXT,\n        size_m2 INTEGER,\n        garage INTEGER,\n        purchase_date TEXT NOT NULL,\n        purchase_price TEXT NOT NULL,\n        appreciation_override_pa TEXT,\n        rent_index_override_pa TEXT,\n        active INTEGER NOT NULL DEFAULT 1,\n        CONSTRAINT property_purchase_date_iso CHECK (purchase_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT property_purchase_price_not_negative CHECK (purchase_price NOT GLOB '-*'),\n        CONSTRAINT property_active_flag CHECK (active IN (0, 1)),\n        CONSTRAINT property_garage_flag CHECK (garage IN (0, 1)),\n        UNIQUE (name)\n      );\n      INSERT INTO properties_new (id, name, address, type, size_m2, garage, purchase_date, purchase_price, appreciation_override_pa, rent_index_override_pa, active) SELECT id, name, address, type, size_m2, garage, purchase_date, purchase_price, appreciation_override_pa, rent_index_override_pa, active FROM properties;\n      DROP TABLE properties;\n      ALTER TABLE properties_new RENAME TO properties;\n  \n\n      CREATE TABLE mortgage_blocks_new (\n        id TEXT PRIMARY KEY,\n        property_id TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,\n        start_date TEXT NOT NULL,\n        initial_principal TEXT NOT NULL,\n        fixation_years INTEGER NOT NULL,\n        interest_rate_pa TEXT NOT NULL,\n        monthly_instalment TEXT NOT NULL,\n        loan_term_years INTEGER,\n        draws TEXT,\n        interest_only_until TEXT,\n        contract_maturity_date TEXT,\n        CONSTRAINT mortgage_start_date_iso CHECK (start_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT mortgage_principal_not_negative CHECK (initial_principal NOT GLOB '-*'),\n        CONSTRAINT mortgage_instalment_not_negative CHECK (monthly_instalment NOT GLOB '-*'),\n        CONSTRAINT mortgage_rate_0_to_1 CHECK (CAST(interest_rate_pa AS REAL) BETWEEN 0 AND 1),\n        CONSTRAINT mortgage_fixation_whole_years CHECK (typeof(fixation_years) = 'integer' AND fixation_years >= 0),\n        CONSTRAINT mortgage_term_positive CHECK (loan_term_years > 0),\n        CONSTRAINT mortgage_interest_only_until_iso CHECK (interest_only_until GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT mortgage_contract_maturity_iso CHECK (contract_maturity_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT mortgage_draws_json CHECK (json_valid(draws)),\n        UNIQUE (property_id, start_date)\n      );\n      INSERT INTO mortgage_blocks_new (id, property_id, start_date, initial_principal, fixation_years, interest_rate_pa, monthly_instalment, loan_term_years, draws, interest_only_until, contract_maturity_date) SELECT id, property_id, start_date, initial_principal, fixation_years, interest_rate_pa, monthly_instalment, loan_term_years, draws, interest_only_until, contract_maturity_date FROM mortgage_blocks;\n      DROP TABLE mortgage_blocks;\n      ALTER TABLE mortgage_blocks_new RENAME TO mortgage_blocks;\n  \n\n      CREATE TABLE valuations_new (\n        id TEXT PRIMARY KEY,\n        property_id TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,\n        valid_from TEXT NOT NULL,\n        valid_to TEXT,\n        market_value TEXT NOT NULL,\n        CONSTRAINT valuation_valid_from_iso CHECK (valid_from GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT valuation_valid_to_iso CHECK (valid_to GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT valuation_end_not_before_start CHECK (valid_to >= valid_from),\n        CONSTRAINT valuation_value_not_negative CHECK (market_value NOT GLOB '-*'),\n        UNIQUE (property_id, valid_from)\n      );\n      INSERT INTO valuations_new (id, property_id, valid_from, valid_to, market_value) SELECT id, property_id, valid_from, valid_to, market_value FROM valuations;\n      DROP TABLE valuations;\n      ALTER TABLE valuations_new RENAME TO valuations;\n  \n\n      CREATE TABLE leases_new (\n        id TEXT PRIMARY KEY,\n        property_id TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,\n        start_date TEXT NOT NULL,\n        end_date TEXT,\n        monthly_rent TEXT NOT NULL,\n        CONSTRAINT lease_start_date_iso CHECK (start_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT lease_end_date_iso CHECK (end_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT lease_end_not_before_start CHECK (end_date >= start_date),\n        CONSTRAINT lease_rent_not_negative CHECK (monthly_rent NOT GLOB '-*'),\n        UNIQUE (property_id, start_date)\n      );\n      INSERT INTO leases_new (id, property_id, start_date, end_date, monthly_rent) SELECT id, property_id, start_date, end_date, monthly_rent FROM leases;\n      DROP TABLE leases;\n      ALTER TABLE leases_new RENAME TO leases;\n  \n\n      CREATE TABLE holding_costs_new (\n        id TEXT PRIMARY KEY,\n        property_id TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,\n        property_tax_yr TEXT,\n        insurance_yr TEXT,\n        mgmt_pct_rent TEXT,\n        maint_pct_rent TEXT,\n        svj_monthly TEXT,\n        other_yr TEXT,\n        UNIQUE (property_id)\n      );\n      INSERT INTO holding_costs_new (id, property_id, property_tax_yr, insurance_yr, mgmt_pct_rent, maint_pct_rent, svj_monthly, other_yr) SELECT id, property_id, property_tax_yr, insurance_yr, mgmt_pct_rent, maint_pct_rent, svj_monthly, other_yr FROM holding_costs;\n      DROP TABLE holding_costs;\n      ALTER TABLE holding_costs_new RENAME TO holding_costs;\n  \n\n      CREATE TABLE assumptions_new (\n        id INTEGER PRIMARY KEY CHECK (id = 1),\n        base_date TEXT NOT NULL,\n        appreciation_pa TEXT NOT NULL,\n        rent_indexation_pa TEXT NOT NULL,\n        vacancy_allowance TEXT NOT NULL,\n        post_fixation_reset_rate_pa TEXT NOT NULL,\n        horizon_years INTEGER NOT NULL,\n        inflation_pa TEXT NOT NULL,\n        default_property_tax_yr TEXT NOT NULL,\n        default_insurance_yr TEXT NOT NULL,\n        default_mgmt_pct_rent TEXT NOT NULL,\n        default_maint_pct_rent TEXT NOT NULL,\n        default_svj_monthly TEXT NOT NULL,\n        default_other_yr TEXT NOT NULL,\n        CONSTRAINT assumptions_base_date_iso CHECK (base_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT assumptions_horizon_positive CHECK (typeof(horizon_years) = 'integer' AND horizon_years > 0),\n        CONSTRAINT assumptions_vacancy_0_to_1 CHECK (CAST(vacancy_allowance AS REAL) BETWEEN 0 AND 1),\n        CONSTRAINT assumptions_mgmt_0_to_1 CHECK (CAST(default_mgmt_pct_rent AS REAL) BETWEEN 0 AND 1),\n        CONSTRAINT assumptions_maint_0_to_1 CHECK (CAST(default_maint_pct_rent AS REAL) BETWEEN 0 AND 1)\n      );\n      INSERT INTO assumptions_new (id, base_date, appreciation_pa, rent_indexation_pa, vacancy_allowance, post_fixation_reset_rate_pa, horizon_years, inflation_pa, default_property_tax_yr, default_insurance_yr, default_mgmt_pct_rent, default_maint_pct_rent, default_svj_monthly, default_other_yr) SELECT id, base_date, appreciation_pa, rent_indexation_pa, vacancy_allowance, post_fixation_reset_rate_pa, horizon_years, inflation_pa, default_property_tax_yr, default_insurance_yr, default_mgmt_pct_rent, default_maint_pct_rent, default_svj_monthly, default_other_yr FROM assumptions;\n      DROP TABLE assumptions;\n      ALTER TABLE assumptions_new RENAME TO assumptions;\n  \n\n      CREATE TABLE scenarios_new (\n        id TEXT PRIMARY KEY,\n        name TEXT NOT NULL,\n        overrides TEXT NOT NULL,\n        created_at TEXT NOT NULL,\n        CONSTRAINT scenario_overrides_json CHECK (json_valid(overrides))\n      );\n      INSERT INTO scenarios_new (id, name, overrides, created_at) SELECT id, name, overrides, created_at FROM scenarios;\n      DROP TABLE scenarios;\n      ALTER TABLE scenarios_new RENAME TO scenarios;\n  ",
+      "foreignKeysOff": true
+    },
+    {
+      "version": 8,
+      "name": "versioned scenario overrides JSON",
+      "sql": "",
+      "foreignKeysOff": false
+    },
+    {
+      "version": 9,
+      "name": "mortgage prepayments and recasts",
+      "sql": "\n      ALTER TABLE mortgage_blocks ADD COLUMN prepayments TEXT\n        CONSTRAINT mortgage_prepayments_json CHECK (json_valid(prepayments));\n      ALTER TABLE mortgage_blocks ADD COLUMN recasts TEXT\n        CONSTRAINT mortgage_recasts_json CHECK (json_valid(recasts));\n    ",
+      "foreignKeysOff": false
+    }
+  ],
+  "headColumns": {
+    "properties": [
+      "id",
+      "name",
+      "address",
+      "type",
+      "size_m2",
+      "garage",
+      "purchase_date",
+      "purchase_price",
+      "appreciation_override_pa",
+      "rent_index_override_pa",
+      "active"
+    ],
+    "mortgage_blocks": [
+      "id",
+      "property_id",
+      "start_date",
+      "initial_principal",
+      "fixation_years",
+      "interest_rate_pa",
+      "monthly_instalment",
+      "loan_term_years",
+      "draws",
+      "interest_only_until",
+      "contract_maturity_date",
+      "prepayments",
+      "recasts"
+    ],
+    "valuations": [
+      "id",
+      "property_id",
+      "valid_from",
+      "valid_to",
+      "market_value"
+    ],
+    "leases": ["id", "property_id", "start_date", "end_date", "monthly_rent"],
+    "holding_costs": [
+      "id",
+      "property_id",
+      "property_tax_yr",
+      "insurance_yr",
+      "mgmt_pct_rent",
+      "maint_pct_rent",
+      "svj_monthly",
+      "other_yr"
+    ],
+    "assumptions": [
+      "id",
+      "base_date",
+      "appreciation_pa",
+      "rent_indexation_pa",
+      "vacancy_allowance",
+      "post_fixation_reset_rate_pa",
+      "horizon_years",
+      "inflation_pa",
+      "default_property_tax_yr",
+      "default_insurance_yr",
+      "default_mgmt_pct_rent",
+      "default_maint_pct_rent",
+      "default_svj_monthly",
+      "default_other_yr"
+    ],
+    "scenarios": ["id", "name", "overrides", "created_at"]
+  }
+}
