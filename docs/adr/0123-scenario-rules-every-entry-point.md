@@ -41,8 +41,9 @@ Owner, 2026-10-04 (Track 8 PR1 plan):
    check first, as saving the assumptions does. A refused scenario writes nothing.
 3. **The form shows the broken rule on its field**, with the engine's own text: the same
    text as the error banner and the Assumptions page. Vacancy and Value crash are the fields
-   the form can get wrong; anything else is shown above the buttons. The Value crash help
-   says that 20 means values drop 20 %. The form creates a new scenario's id once and
+   the form can get wrong; anything else is shown above the buttons. The price-crash
+   group's help, which stays visible next to the field's error, says to enter the drop as a
+   positive number (20 = values fall by 20 %). The form creates a new scenario's id once and
    ignores a second submit while saving, so a double Enter no longer saves two scenarios.
 4. **Restore reads every scenario row before anything is written.** A missing or invalid
    `created_at` (its first ten characters must be a real date) is refused on column
@@ -71,6 +72,6 @@ Owner, 2026-10-04 (Track 8 PR1 plan):
   same numbers and no engine logic changes (`Scenario` loses one field).
 - User-visible: the scenario form and restore refuse values they accepted before; the
   compare can show a "Not compared" notice; the Scenarios page can list unreadable rows; the
-  Value crash help text changes.
+  price-crash help text changes.
 - A non-finite value-crash percentage is still not covered by any engine rule. The parser
   cannot produce one today; it is left to the engine track.

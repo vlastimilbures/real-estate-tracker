@@ -57,14 +57,17 @@ describe("ScenarioForm save (ADR 0123)", () => {
     expect(screen.getByRole("dialog")).toBeTruthy();
   });
 
-  it("says that 20 means a 20 % drop", () => {
-    renderForm(() => Promise.resolve());
-    const crash = screen.getByLabelText(s.fieldValueCrash);
-    const ids = crash.getAttribute("aria-describedby")!.split(" ");
-    expect(ids.map((id) => document.getElementById(id)?.textContent)).toContain(
-      s.permanentCorrection,
+  // The hint sits in the group's help, which stays visible while the field shows
+  // its error (the field's own help gives way to the error).
+  it("says that 20 means a 20 % drop, also next to the error", async () => {
+    renderForm(() => Promise.resolve(crashRefused));
+    await fillCrash("-20");
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.create }),
     );
-    expect(s.permanentCorrection).toMatch(/20/);
+    const group = screen.getByRole("group", { name: s.groupCrash });
+    expect(group.textContent).toContain(s.groupCrashHelp);
+    expect(s.groupCrashHelp).toMatch(/20 = /);
   });
 
   it("submits once while saving and keeps the new id for a retry", async () => {
