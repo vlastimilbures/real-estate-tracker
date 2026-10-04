@@ -244,9 +244,11 @@ describe("ADR 0124: debt service before a future purchase is owner cash", () => 
     expectKc(y1.drawn, 2_000_000, "tranche drawn in year 1");
     expectKc(y1.principal.plus(y2.principal), 0, "interest only");
     expectKc(y2.interest, 200_000, "year 2: 4 M × 5 %");
+    // Year 1: 5 payments on 2 M, then 7 on 4 M, at 5 % / 12.
+    expectKc(y1.interest, 41_666.67 + 116_666.67, "year 1 interest");
     expectKc(
       outflow(p),
-      DOWN_PAYMENT + y1.interest.toNumber() + 200_000,
+      DOWN_PAYMENT + 158_333.33 + 200_000,
       "interest only, no tranche",
     );
   });
@@ -263,5 +265,100 @@ describe("ADR 0124: debt service before a future purchase is owner cash", () => 
       0,
       "inactive",
     );
+  });
+});
+
+/**
+ * Conservation, an oracle independent of how the years are split: for a portfolio of
+ * only the buy, with every loan drawn after baseDate and inside the horizon,
+ *   cumulative CF + equity_N − Σ NOI + total interest + Σ fees = value_N − price.
+ * Every koruna of principal the owner repays comes back as equity; net refinance cash
+ * comes back as debt. Before ADR 0124 the pre-purchase principal, prepaid and fees broke
+ * it.
+ */
+describe("ADR 0124: owner cash is conserved around the turn-on year", () => {
+  const AFTER_BASE = isoDate("2027-01-10");
+
+  function buyOnly(
+    blocks: MortgageBlock[],
+    purchaseDate = PURCHASE,
+  ): Portfolio {
+    const p = withBuy(blocks, purchaseDate);
+    const own = (x: { propertyId: string }) => x.propertyId === "buy";
+    return {
+      properties: p.properties.filter((x) => x.id === "buy"),
+      mortgages: p.mortgages.filter(own),
+      valuations: p.valuations.filter(own),
+      leases: p.leases.filter(own),
+      holdingCosts: [],
+    };
+  }
+
+  function expectConserved(p: Portfolio, label: string) {
+    const proj = portfolioProjection(p, assumptions);
+    const k = portfolioKpis(p, assumptions);
+    const rows =
+      propertySchedules(p.mortgages, ["buy"], assumptions).get("buy")?.rows ??
+      [];
+    const fees = rows
+      .filter((r) => r.month <= 12 * N)
+      .reduce((s, r) => s.plus(r.prepaymentFee), ZERO);
+    const noi = proj.slice(1).reduce((s, y) => s.plus(y.noi), ZERO);
+    const lhs = k.cumulativeNetCashFlow
+      .plus(proj[N].equity)
+      .minus(noi)
+      .plus(k.totalInterest)
+      .plus(fees);
+    expectKc(lhs, proj[N].value.minus(PRICE).toNumber(), label);
+  }
+
+  it("a loan drawn after baseDate, with a prepayment and fee before the purchase", () => {
+    const l = loan({
+      startDate: AFTER_BASE,
+      prepayments: [
+        {
+          date: isoDate("2027-09-01"),
+          amount: money(500_000),
+          effect: "shortenTerm",
+          fee: money(5_000),
+        },
+      ],
+    });
+    expectConserved(buyOnly([l]), "prepayment before the purchase");
+  });
+
+  it("a cash-out refinance before the purchase", () => {
+    const refi = loan({
+      id: "m-refi",
+      startDate: isoDate("2028-06-10"),
+      initialPrincipal: money(4_500_000),
+      monthlyInstalment: money(28_000),
+    });
+    expectConserved(
+      buyOnly([loan({ startDate: AFTER_BASE }), refi]),
+      "refinance before the purchase",
+    );
+  });
+
+  it("a purchase on a grid point and one day after it", () => {
+    const l = loan({ startDate: AFTER_BASE });
+    expectConserved(buyOnly([l], isoDate("2029-01-07")), "on grid point 31");
+    expectConserved(buyOnly([l], isoDate("2029-01-08")), "one day after");
+  });
+
+  it("development tranches before and after the purchase", () => {
+    // Interest only before the purchase: no principal to conserve, so this case held
+    // before ADR 0124 too (the interest tests above pin the pre-purchase interest).
+    const dev = loan({
+      startDate: AFTER_BASE,
+      initialPrincipal: money(2_000_000),
+      loanTermYears: 30,
+      draws: [
+        { date: isoDate("2028-05-10"), amount: money(1_000_000) },
+        { date: isoDate("2029-06-10"), amount: money(1_000_000) },
+      ],
+      completionDate: isoDate("2029-06-10"),
+    });
+    expectConserved(buyOnly([dev]), "dev tranches");
   });
 });
