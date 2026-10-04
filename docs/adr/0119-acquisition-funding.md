@@ -4,6 +4,8 @@
 - Date: 2026-10-04
 - Source: issue #33 (pre-release review 2026-10, F1 + F2); code review 2026-10 issues #103,
   #140 and #118 (items 1–2)
+- Amended: 2026-10-04 (independent review of PR #180: decision 3's tranche cut and decision
+  5's late first loan, both decided by the owner)
 
 ## Context
 
@@ -51,9 +53,10 @@ detail section (PR3) follow.
 3. **Acquisition loan.** The loan that funded the purchase is derived, not entered. It is the
    property's **earliest** mortgage block, when that block starts no later than **90 days
    after the purchase date**. Any earlier start counts: an off-plan loan drawn before handover
-   funded the purchase. Its amount is the block's whole scheduled principal: the initial
-   principal plus every tranche. A later block (a refinance or refix successor) is never the
-   acquisition loan. When the earliest block starts more than 90 days after the purchase, or
+   funded the purchase. Its amount is the initial principal plus every tranche dated on or
+   before the start of the block that replaces it, the same cut the schedule makes (D-47); a
+   tranche after that start is never drawn. A later block (a refinance or refix successor)
+   is never the acquisition loan. When the earliest block starts more than 90 days after the purchase, or
    the property has no block, there is no acquisition loan.
 4. **Sources and uses.** Uses = purchase price + transaction costs + initial works (the
    entered parts). Sources = own cash + acquisition loan. The gap = uses − sources: positive
@@ -72,6 +75,13 @@ detail section (PR3) follow.
    the derived amount leaves every figure unchanged. A valuation above the price shows up as
    equity the owner did not pay for, which is the gain the valuation claims. The outflow is
    not clamped: a loan larger than every use gives a negative outflow (cash out), as before.
+
+   A future buy's first loan that is **not** its acquisition loan (it starts more than 90
+   days after the purchase, for example a loan that refinances own funds) pays its initial
+   principal to the owner. That principal counts as **cash in**, in the projection year the
+   loan is drawn, like the net cash of a refinance. Otherwise its debt would lower equity and
+   its payments would lower net cash flow while the money itself never appeared. Its later
+   tranches do not count as cash (the development value ramp, #120).
 
    For a property bought on or before baseDate, the record is information only. No figure
    changes when it is entered.
@@ -103,7 +113,13 @@ detail section (PR3) follow.
   and both levered IRRs change; the projection and schedule hashes do not.
 - A future buy with a development loan is now charged its own money only (#103).
 - A future buy whose first loan starts more than 90 days after the purchase is now charged
-  the whole price plus costs; before, that later loan reduced the outflow.
+  the whole price plus costs in its turn-on year, and the loan's initial principal comes back
+  as cash in the year it is drawn. Before, the loan reduced the down payment instead. When
+  both fall in the same projection year, no figure changes.
+- A development loan refinanced before its last tranche counts only the tranches drawn
+  before the refinance.
+- Still open: a first loan drawn after baseDate on a property already owned at baseDate
+  raises the debt with no cash in (follow-up issue).
 - Migration v10 is covered by a restore tripwire for added columns and by a Rust test that
   applies every migration's SQL on the bundled SQLite (#118 items 1–2).
 - Not decided here: debt service of a loan that runs before a future purchase date (#104), how
