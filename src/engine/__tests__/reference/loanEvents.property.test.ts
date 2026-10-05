@@ -12,8 +12,8 @@ import type { AmortizationRow } from "../../types";
 import { fcRuns } from "../support/fcRuns";
 import { assumptions as A0 } from "../support/seed";
 import { TIGHT, both, chainBoth, maxDev, sum, toBlock } from "./eventHarness";
-import { addMonths, paymentsMadeBy, type RefLoan } from "./mortgageReference";
-import { isValid, loanWithEvents, shockOf, type RandomLoan } from "./loanGen";
+import { type RefLoan } from "./mortgageReference";
+import { isValid, loanWithEvents, shockOf } from "./loanGen";
 
 // Fixed seed ⇒ reproducible in CI; nightly runs 2000 with a date seed (`fcRuns`).
 // Hunt locally with FC_SEED=<n> FC_RUNS=<n>.
@@ -27,31 +27,6 @@ function leak(rows: AmortizationRow[], opening: Decimal) {
   const newDebt = sum(rows, (x) => x.drawn.plus(x.refinanced));
   const repaid = sum(rows, (x) => x.principal.plus(x.prepaid));
   return repaid.plus(last).minus(opening).minus(newDebt).abs().toNumber();
-}
-
-/**
- * #229: an owner tranche dated on/before the successor's start, in the handover grid
- * month, is lost when the owner's payment there is dropped (grid month 2 on). The
- * reference pays it off (ADR 0079 §2). Excluded until #229 is fixed.
- */
-function hits229({ loan, base, successor }: RandomLoan): boolean {
-  if (!successor) return false;
-  const firstGrid = (date: string) => {
-    let m = 0;
-    while (addMonths(base, m) < date) m++;
-    return m;
-  };
-  const d = firstGrid(successor.start); // the handover's grid month
-  if (d < 2) return false;
-  const due =
-    loan.start <= base
-      ? addMonths(loan.start, paymentsMadeBy(loan.start, base) + d)
-      : addMonths(loan.start, d - firstGrid(loan.start));
-  if (due <= successor.start) return false; // the owner's payment is kept
-  const from = addMonths(base, d - 1);
-  return (loan.draws ?? []).some(
-    (x) => x.date > from && x.date <= successor.start,
-  );
 }
 
 /** Engine and reference for a refinance, compared row by row and per handover. */
@@ -79,7 +54,7 @@ describe("ADR 0109: random loans with random events", () => {
     () => {
       fc.assert(
         fc.property(loanWithEvents, (g) => {
-          fc.pre(isValid(g) && !hits229(g)); // #229
+          fc.pre(isValid(g));
           const { loan, base, successor } = g;
           const { opts, extra } = shockOf(g);
           if (!successor) {
@@ -112,9 +87,9 @@ describe("ADR 0109: random loans with random events", () => {
     TIMEOUT,
   );
 
-  // #229: the 15,000 Kč tranche dated 08-01 lands in the handover month (grid month 2,
-  // 08-07), whose owner payment is dropped; the engine pays off 297,561.46, not
-  // 312,561.46.
+  // ADR 0138 (#229): the 15,000 Kč tranche dated 08-01 lands in the handover month
+  // (grid month 2, 08-07), whose owner payment is dropped; the successor pays off
+  // 312,561.46 Kč, the tranche included.
   const loan229: RefLoan = {
     start: "2026-06-07",
     principal: 300000,
@@ -131,16 +106,8 @@ describe("ADR 0109: random loans with random events", () => {
     instalment: 1520,
     fixationMonths: 12,
   };
-  it("#229: the exclusion matches its probe", () => {
-    expect(
-      hits229({ loan: loan229, base: "2026-06-07", successor: successor229 }),
-    ).toBe(true);
+  it("#229: a tranche before the successor's start, payment dropped, is paid off", () => {
+    const { e, r } = chainBoth([loan229, successor229], "2026-06-07");
+    expectChainAgrees(e, r);
   });
-  it.fails(
-    "#229: a tranche before the successor's start, payment dropped",
-    () => {
-      const { e, r } = chainBoth([loan229, successor229], "2026-06-07");
-      expectChainAgrees(e, r);
-    },
-  );
 });

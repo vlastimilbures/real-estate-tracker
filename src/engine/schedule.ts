@@ -1505,8 +1505,9 @@ export function blockChain(
 /**
  * Splice `next` into the chain's rows from its draw month `d` (D-47). The owner's
  * payment in month d is still paid when due on/before the successor's start, and the
- * draw row carries it; otherwise the owner pays off its balance before month d. An
- * owner drawn in month d itself (two successors in one grid month) pays off its draw.
+ * draw row carries it; otherwise the owner pays off its balance before month d plus
+ * the tranches it drew in month d (ADR 0138). An owner drawn in month d itself (two
+ * successors in one grid month) pays off its draw.
  * A prepayment dated on/before the successor's start that the owner's dropped rows
  * carried is paid at the handover, before the successor pays off the rest (ADR 0109).
  * The merged row's `drawn` is real new debt only; `refinanced` is the successor's
@@ -1532,17 +1533,19 @@ function spliceSuccessor(
     own !== undefined &&
     own.interest.plus(own.principal).greaterThan(ZERO) &&
     isOnOrBefore(due, next.startDate);
+  const ownerDrawn = drawMonth(owner, baseDate) === d;
   const { before, carriedIn } = handoverBalances(head, own, d);
+  // A dropped row's tranches are dated on/before the successor's start (`cutAt`): the
+  // successor pays them off too, as `before` already holds them in grid month 1.
   const owed =
-    own && (kept || drawMonth(owner, baseDate) === d) ? own.endBalance : before;
+    own && (kept || ownerDrawn)
+      ? own.endBalance
+      : before.plus(d > 1 && own ? own.drawn : ZERO);
   const late = handoverPrepayments(current.outcomes, owner, d, kept, owed);
-  const row =
-    own && kept ? { ...own, endBalance: drawRow.endBalance } : drawRow;
+  const row = handoverRow(drawRow, own, { kept, ownerDrawn });
   const prepaid = row.prepaid.plus(late.applied);
   // The rest of the handover's net new debt (D-47, DR-092) is the refinance difference.
-  const drawn = handoverDrawn(drawRow, next, own, {
-    counted: kept || d === 1 || drawMonth(owner, baseDate) === d,
-  });
+  const drawn = handoverDrawn(drawRow, next, own);
   const netNew = row.endBalance
     .minus(carriedIn)
     .plus(row.principal)
@@ -1600,25 +1603,44 @@ function handoverPrepayments(
 }
 
 /**
+ * The row a handover starts from: the owner's kept row ending on the successor's draw,
+ * else the successor's draw row. An owner drawn in month d keeps the prepayments and
+ * fees its merged row already paid there: its own and its handover's (ADR 0138).
+ */
+function handoverRow(
+  drawRow: AmortizationRow,
+  own: AmortizationRow | undefined,
+  { kept, ownerDrawn }: { kept: boolean; ownerDrawn: boolean },
+): AmortizationRow {
+  if (own && kept) return { ...own, endBalance: drawRow.endBalance };
+  if (!own || !ownerDrawn) return drawRow;
+  return {
+    ...drawRow,
+    prepaid: drawRow.prepaid.plus(own.prepaid),
+    prepaymentFee: drawRow.prepaymentFee.plus(own.prepaymentFee),
+  };
+}
+
+/**
  * A handover row's real new debt (ADR 0130): a tranche the successor draws with its
- * principal, plus what the owner's month-d row drew when the balance the successor pays
- * off `counted` it (a kept row, grid month 1, or an owner drawn in month d).
+ * principal, plus what the owner's month-d row drew, which the balance the successor
+ * pays off always holds (ADR 0138).
  */
 function handoverDrawn(
   drawRow: AmortizationRow,
   next: MortgageBlock,
   own: AmortizationRow | undefined,
-  { counted }: { counted: boolean },
 ): Decimal {
-  const ownDrew = own && counted ? own.drawn : ZERO;
-  return drawRow.drawn.minus(next.initialPrincipal).plus(ownDrew);
+  return drawRow.drawn.minus(next.initialPrincipal).plus(own?.drawn ?? ZERO);
 }
 
 /**
  * The owner's balance going into the handover month `d` (`before`, what the successor
  * pays off unless the owner's month-d row is kept) and the balance carried into the
  * merged row: the handover's net new debt (DR-092) is what the successor draws, less
- * the predecessor balance it pays off, plus anything the kept row itself drew.
+ * the predecessor balance it pays off, plus anything the kept row itself drew. In grid
+ * month 1 that is the row's opening balance, before a merged row's earlier handover
+ * (ADR 0138).
  */
 function handoverBalances(
   head: AmortizationRow[],
@@ -1631,7 +1653,10 @@ function handoverBalances(
   }
   if (!own) return { before: ZERO, carriedIn: ZERO };
   const before = own.endBalance.plus(own.principal).plus(own.prepaid);
-  return { before, carriedIn: before.minus(own.drawn) };
+  return {
+    before,
+    carriedIn: before.minus(own.drawn).minus(own.refinanced),
+  };
 }
 
 /** An event a successor replaced before it applied (ADR 0109). */
