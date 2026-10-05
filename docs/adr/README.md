@@ -160,6 +160,7 @@ Other IDs seen in code comments:
 | [0133](0133-ltv-yield-zero-value.md)              | LTV and yields with no value read n/a, not 0 %                                         | #129                                   |
 | [0134](0134-acquisition-cash-gaps.md)             | Later first loan of an owned property; principal repaid before baseDate                | #181, #193                             |
 | [0135](0135-whole-year-loan-term.md)              | A loan term must be whole years                                                        | #226                                   |
+| [0136](0136-shorten-term-agreed-instalment.md)    | Shorten term keeps the instalment the next payment pays                                | #228                                   |
 
 ### Judgment calls and open questions
 
