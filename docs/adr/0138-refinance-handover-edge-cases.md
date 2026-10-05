@@ -1,6 +1,6 @@
 # 0138. Refinance handover edge cases
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-05
 - Source: issues #229 (random loans, #130 R1-08), #221 (review of PR #219), #223 (DR-168
   mutant work)
