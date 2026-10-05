@@ -1542,8 +1542,7 @@ function spliceSuccessor(
       ? own.endBalance
       : before.plus(d > 1 && own ? own.drawn : ZERO);
   const late = handoverPrepayments(current.outcomes, owner, d, kept, owed);
-  const row =
-    own && kept ? { ...own, endBalance: drawRow.endBalance } : drawRow;
+  const row = handoverRow(drawRow, own, { kept, ownerDrawn });
   const prepaid = row.prepaid.plus(late.applied);
   // The rest of the handover's net new debt (D-47, DR-092) is the refinance difference.
   const drawn = handoverDrawn(drawRow, next, own);
@@ -1601,6 +1600,25 @@ function handoverPrepayments(
     return { ...o, month: d, applied: paid, fee: charged, issue };
   });
   return { applied, fee, outcomes: out };
+}
+
+/**
+ * The row a handover starts from: the owner's kept row ending on the successor's draw,
+ * else the successor's draw row. An owner drawn in month d keeps the prepayment and
+ * fee its own handover paid there (ADR 0138).
+ */
+function handoverRow(
+  drawRow: AmortizationRow,
+  own: AmortizationRow | undefined,
+  { kept, ownerDrawn }: { kept: boolean; ownerDrawn: boolean },
+): AmortizationRow {
+  if (own && kept) return { ...own, endBalance: drawRow.endBalance };
+  if (!own || !ownerDrawn) return drawRow;
+  return {
+    ...drawRow,
+    prepaid: drawRow.prepaid.plus(own.prepaid),
+    prepaymentFee: drawRow.prepaymentFee.plus(own.prepaymentFee),
+  };
 }
 
 /**

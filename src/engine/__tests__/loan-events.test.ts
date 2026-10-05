@@ -689,9 +689,9 @@ describe("ADR 0109: refinance handovers", () => {
   });
 
   // D-47: a second successor drawn in the same grid month pays off what the first one
-  // drew; the first handover's prepayment belongs to Javorova and is not paid twice.
+  // drew; the first handover's prepayment belongs to Javorova and is not paid twice,
+  // and the merged row keeps it (ADR 0138).
   it("two successors in one grid month: the second pays off the first one's draw", () => {
-    // #223: rows[55].prepaid/prepaymentFee are dropped here; deliberately not asserted.
     const second = {
       ...refi("2031-01-20"),
       id: "refi-2",
@@ -699,7 +699,9 @@ describe("ADR 0109: refinance handovers", () => {
     } as MortgageBlock;
     const s = propertySchedule(
       [
-        withEvents(javorova, [prepay("2031-01-05", 100000)]),
+        withEvents(javorova, [
+          prepay("2031-01-05", 100000, "lowerInstalment", 500),
+        ]),
         { ...refi("2031-01-10"), initialPrincipal: money(1000000) },
         second,
       ],
@@ -722,6 +724,21 @@ describe("ADR 0109: refinance handovers", () => {
       month: 56,
       issue: null,
     });
+    const [prev, row] = [s.rows[54], s.rows[55]];
+    expect(row.prepaid.toFixed(2)).toBe("100000.00");
+    expect(row.prepaymentFee.toFixed(2)).toBe("500.00");
+    expect(row.drawn.toString()).toBe("0");
+    // ADR 0130's row identity holds: the refinance difference nets the prepayment.
+    expect(
+      prev.endBalance
+        .minus(row.principal)
+        .minus(row.prepaid)
+        .plus(row.drawn)
+        .plus(row.refinanced)
+        .minus(row.endBalance)
+        .abs()
+        .toNumber(),
+    ).toBeLessThanOrEqual(1e-9);
   });
 
   it("a recast in the handover period no longer applies", () => {
