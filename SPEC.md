@@ -390,8 +390,11 @@ schedule's interest, principal, prepaid and prepayment fees are **owner cash out
 the year paid, beside the down payment (for cumulative cash flow and levered IRR). Tranches
 drawn in those years are the bank's money, not cash; the balance arrives as the turn-on year's
 draw (DR-092). The turn-on year's row already holds all twelve schedule months. A property
-bought after the horizon pays every in-window instalment but never enters equity. Principal
-repaid before baseDate is not counted (#193).
+bought after the horizon pays every in-window instalment but never enters equity. The
+principal the acquisition loan repaid before baseDate (drawn by baseDate − its balance at
+baseDate) is charged with the down payment in the turn-on year, when that loan is still the
+block in force at baseDate; a successor already in force at baseDate is not traced
+(ADR 0134).
 
 **Deactivated properties** (`active = false`) are excluded from all projection rows and KPIs.
 

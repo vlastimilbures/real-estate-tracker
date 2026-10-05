@@ -1,8 +1,9 @@
-# 0134. Acquisition cash gaps: a later first loan on an owned property
+# 0134. Acquisition cash gaps: an owned property's later first loan, principal repaid before baseDate
 
 - Status: Accepted
 - Date: 2026-10-05
-- Source: issue #181 (independent review of PR #180, ADR 0119)
+- Source: issues #181 (independent review of PR #180, ADR 0119) and #193 (planning of
+  #104, ADR 0124 §7)
 - Amends: SPEC §4.5 (acquisition outflows) and §4.6 (what enters cumulative net cash flow
   and levered IRR)
 - Related: [0119](0119-acquisition-funding.md) (§5, the same rule for a future buy),
@@ -23,9 +24,19 @@ than 90 days after the purchase brings its initial principal as cash in, in the 
 drawn. A refinance successor's net cash counts too (D-47). Only the owned property's first
 loan was left out.
 
+A future buy's acquisition loan can also start **before** baseDate (an off-plan contract
+signed before today, handover after today). The down payment nets off the whole loan
+(price − loan, ADR 0119 §5), but the property turns on with the running balance (DR-092),
+which is lower by the principal the loan repaid before baseDate. That principal showed as
+equity at turn-on with no owner cash against it. In the #104 probe (baseDate 2026-06-07; a
+4,000,000 Kč loan at 5 %, 25,000 Kč a month, drawn 2026-01-10; purchase 2029-01-15) it is
+33,542 Kč. ADR 0124 §7 left it open.
+
 ## Decision
 
-The owner chose option A of #181 on 2026-10-05.
+The owner chose option A of #181 and option B of #193 on 2026-10-05.
+
+### #181: an owned property's first loan after baseDate
 
 1. **Owned property, first loan after baseDate.** For a property bought on or before
    baseDate, its earliest block, when it starts after baseDate, pays its **initial
@@ -40,7 +51,32 @@ The owner chose option A of #181 on 2026-10-05.
 4. The 90-day window of ADR 0119 §3 plays no part here. A property bought shortly before
    baseDate whose acquisition loan is drawn after baseDate is owned at baseDate with no
    debt, so the loan comes back as cash.
-5. The projection and schedule rows do not change. Only the KPIs move.
+
+### #193: principal repaid before baseDate
+
+5. **Charged at turn-on.** For a future buy turning on inside the horizon, whose
+   acquisition loan (ADR 0119 §3) was drawn on or before baseDate and is still the block in
+   force at baseDate, the turn-on year's outflow adds **the principal it repaid before
+   baseDate**: initial principal + tranches dated on or before baseDate − its balance at
+   baseDate (`openingBalance`). Prepayments before baseDate are included, since they lower
+   that balance. A development loan in its interest-only phase adds about 0.
+6. **On top of a recorded own cash.** Own cash is the money paid at purchase; this is debt
+   service paid since, like the pre-purchase payments of ADR 0124. It is added with or
+   without a funding record.
+7. **Booked in the turn-on year, not before baseDate.** That is where the down payment is
+   booked; year 0 (option A, beside −equity0) would change the multiple's and CAGR's base
+   and depends on how a pending property is costed at the start (#126). The money was in
+   fact paid earlier, so levered IRR is still a little flattered, but no longer by the
+   whole principal.
+8. **Not traced: a successor in force at baseDate.** When a refinance successor already
+   replaced the acquisition loan by baseDate, the chain drops the predecessor (`blockChain`)
+   and refinance cash before baseDate is not modelled, so nothing is added. This is a
+   documented limitation.
+
+### Both
+
+9. The projection and schedule rows do not change. Only the KPIs move: cumulative net cash
+   flow (nominal and real) and both levered IRRs.
 
 ## Consequences
 
@@ -51,4 +87,10 @@ The owner chose option A of #181 on 2026-10-05.
   exactly 3,000,000 Kč of cumulative net cash flow, and their levered IRRs rise (nominal
   5.66 % → 6.18 %, 5.68 % → 6.21 %, 7.29 % → 8.24 %). The seed, mixed and scenario cases
   and every projection or schedule hash are unchanged.
-- ADR 0119's "still open" item (#181) is closed.
+- #193 moves no golden case: no fixture has a future buy whose loan was drawn before
+  baseDate (the mixed fixture's loan starts on its purchase date).
+- In the #104 probe, cumulative net cash flow falls by 33,542.25 Kč. The ADR 0124 tests
+  that pinned the old outflow now include it, and the owner-cash conservation identity
+  (cumulative CF + equity_N − Σ NOI + total interest + fees = value_N − price) now holds
+  for a loan drawn before baseDate too; a test pins it.
+- ADR 0119's "still open" item (#181) and ADR 0124 §7 (#193) are closed.

@@ -4,6 +4,7 @@
 import { ZERO, type Decimal } from "../lib/money";
 import { addDays, firstAfter, isAfter, isOnOrBefore } from "./dates";
 import { forProperty } from "./metrics";
+import { blockChain, openingBalance } from "./schedule";
 import type { Assumptions, MortgageBlock, Portfolio, Property } from "./types";
 
 /** A block starting up to this many days after the purchase funded it (ADR 0119 §3). */
@@ -61,6 +62,37 @@ export function laterFirstLoan(
     ? isAfter(first.startDate, assumptions.baseDate)
     : !fundedThePurchase(property, first);
   return later ? first : undefined;
+}
+
+/**
+ * ADR 0134 (#193): the principal a future buy's acquisition loan repaid before baseDate
+ * (an off-plan loan drawn at contract). The down payment nets off the whole loan, but the
+ * property turns on with the running balance, so this is charged with the down payment.
+ * Drawn by baseDate (initial principal + tranches dated on or before it) − its balance at
+ * baseDate. 0 when the loan is drawn after baseDate, and when a successor is already in
+ * force at baseDate: the chain drops the predecessor and refinance cash before baseDate
+ * is not modelled (a documented limit).
+ */
+export function repaidBeforeBase(
+  property: Property,
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+): Decimal {
+  const { baseDate } = assumptions;
+  const blocks = forProperty(portfolio.mortgages, property.id);
+  const first = earliestBlock(blocks);
+  if (
+    !first ||
+    !fundedThePurchase(property, first) ||
+    isAfter(first.startDate, baseDate) ||
+    blockChain(blocks, baseDate)[0] !== first
+  ) {
+    return ZERO;
+  }
+  const drawn = (first.draws ?? [])
+    .filter((d) => isOnOrBefore(d.date, baseDate))
+    .reduce<Decimal>((s, d) => s.plus(d.amount), first.initialPrincipal);
+  return drawn.minus(openingBalance(first, assumptions));
 }
 
 /** A loan's initial principal plus its tranches dated on or before the start of the
