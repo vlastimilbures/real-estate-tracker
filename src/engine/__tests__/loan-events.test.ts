@@ -741,6 +741,50 @@ describe("ADR 0109: refinance handovers", () => {
     ).toBeLessThanOrEqual(1e-9);
   });
 
+  // ADR 0138: Javorova's payment #56 (17.01.2031) is due before the first successor's
+  // start (18.01), so its row is kept with the 05.01 prepayment; the first successor
+  // prepays 30,000 Kč on 20.01, before the second one starts (25.01). The merged row
+  // keeps both prepayments and fees; the second successor pays off the rest.
+  it("two successors in one grid month after a kept payment keep both prepayments", () => {
+    const first = withEvents(
+      { ...refi("2031-01-18"), initialPrincipal: money(1000000) },
+      [prepay("2031-01-20", 30000, "lowerInstalment", 100)],
+    );
+    const second = {
+      ...refi("2031-01-25"),
+      id: "refi-2",
+      initialPrincipal: money(1200000),
+    } as MortgageBlock;
+    const s = propertySchedule(
+      [
+        withEvents(javorova, [
+          prepay("2031-01-05", 100000, "lowerInstalment", 500),
+        ]),
+        first,
+        second,
+      ],
+      assumptions,
+    );
+    expect(s.refinances.map((r) => [r.month, r.paidOff.toFixed(2)])).toEqual([
+      // Javorova's payment #56 leaves 1,386,249.89, less the prepayment.
+      [56, "1286249.89"],
+      [56, "970000.00"],
+    ]);
+    const [prev, row] = [s.rows[54], s.rows[55]];
+    expect(row.prepaid.toFixed(2)).toBe("130000.00");
+    expect(row.prepaymentFee.toFixed(2)).toBe("600.00");
+    expect(
+      prev.endBalance
+        .minus(row.principal)
+        .minus(row.prepaid)
+        .plus(row.drawn)
+        .plus(row.refinanced)
+        .minus(row.endBalance)
+        .abs()
+        .toNumber(),
+    ).toBeLessThanOrEqual(1e-9);
+  });
+
   it("a recast in the handover period no longer applies", () => {
     const s = propertySchedule(
       [
