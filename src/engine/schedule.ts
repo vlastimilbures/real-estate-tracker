@@ -113,17 +113,16 @@ interface MonthStep {
 /**
  * One month of the amortization core on `balanceIn` (any tranche already added):
  * interest-only months pay interest and no principal; otherwise the instalment in
- * force — re-amortized over `reamortizeOver` months when that is not null — is split
- * into interest and principal. The payment at maturity (`atMaturity`: payment
- * number ≥ term) pays the whole balance, so no residual outlives the loan (D-40).
+ * force (`pay.instalment`) — re-amortized over `pay.reamortizeOver` months when that
+ * is not null — is split into interest and principal. The payment at maturity
+ * (`pay.atMaturity`: payment number ≥ term) pays the whole balance, so no residual
+ * outlives the loan (D-40).
  */
 function amortizeMonth(
   balanceIn: Decimal,
   ratePa: Decimal,
   interestOnly: boolean,
-  instalment: Decimal,
-  reamortizeOver: number | null,
-  atMaturity: boolean,
+  pay: PaymentTerms,
 ): MonthStep {
   const rateMonthly = ratePa.div(12);
   if (interestOnly) {
@@ -138,12 +137,12 @@ function amortizeMonth(
     };
   }
   const paid =
-    reamortizeOver === null
-      ? instalment
-      : recomputeInstalment(rateMonthly, reamortizeOver, balanceIn);
+    pay.reamortizeOver === null
+      ? pay.instalment
+      : recomputeInstalment(rateMonthly, pay.reamortizeOver, balanceIn);
   const split = splitPayment(paid, balanceIn, rateMonthly);
   const interest = split.interest;
-  const principal = atMaturity ? balanceIn : split.principal;
+  const principal = pay.atMaturity ? balanceIn : split.principal;
   return {
     instalment: paid,
     interest,
@@ -337,6 +336,14 @@ function paidTerms(
   };
 }
 
+/** How one payment is paid; `agreed`: it pays an agreed instalment (ADR 0109 §6). */
+interface PaymentTerms {
+  instalment: Decimal;
+  agreed: boolean;
+  reamortizeOver: number | null;
+  atMaturity: boolean;
+}
+
 /**
  * How payment `p` is paid: the agreed instalment, else the instalment in force,
  * re-amortized over the payments left to the maturity in force (constant maturity)
@@ -348,10 +355,11 @@ function paymentTerms(
   trigger: boolean,
   p: number,
   instalment: Decimal,
-): { instalment: Decimal; reamortizeOver: number | null; atMaturity: boolean } {
+): PaymentTerms {
   const agreed = terms.agreedInstalment;
   return {
     instalment: agreed ?? instalment,
+    agreed: agreed !== null,
     reamortizeOver:
       agreed === null && (trigger || terms.reamortizeNext)
         ? terms.term - (p - 1)
@@ -715,14 +723,7 @@ function catchUpStep(
   const terms = termsForTranche(s.terms, draw, k, contractTerm);
   const trigger = reamortizes(draw, s.prevInterestOnly, io, ratePa, s.prevRate);
   const pay = paymentTerms(terms, trigger, k, s.currentInstalment);
-  const step = amortizeMonth(
-    s.balance.plus(draw),
-    ratePa,
-    io,
-    pay.instalment,
-    pay.reamortizeOver,
-    pay.atMaturity,
-  );
+  const step = amortizeMonth(s.balance.plus(draw), ratePa, io, pay);
   const settled = settleEvents(
     ctx.events,
     {
@@ -948,14 +949,7 @@ function devPaymentStep(
     state.prevRate,
   );
   const pay = paymentTerms(terms, trigger, p, state.currentInstalment);
-  const step = amortizeMonth(
-    state.balance.plus(draw),
-    ratePa,
-    io,
-    pay.instalment,
-    pay.reamortizeOver,
-    pay.atMaturity,
-  );
+  const step = amortizeMonth(state.balance.plus(draw), ratePa, io, pay);
   const settled = settleEvents(
     ctx.events,
     {
@@ -1258,14 +1252,7 @@ function plainMonthStep(
   }
   const trigger = !ratePa.equals(state.prevRate);
   const pay = paymentTerms(state.terms, trigger, p, state.currentInstalment);
-  const step = amortizeMonth(
-    state.balance,
-    ratePa,
-    false,
-    pay.instalment,
-    pay.reamortizeOver,
-    pay.atMaturity,
-  );
+  const step = amortizeMonth(state.balance, ratePa, false, pay);
   const settled = settleEvents(
     ctx.events,
     {
