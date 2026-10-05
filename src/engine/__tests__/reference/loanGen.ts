@@ -12,7 +12,10 @@
 // a plain loan; a rate shock at the fixation end; one successor block (a refinance).
 // Half the development loans start near their baseDate, so the R1-01 shape (an instalment
 // recast before a tranche, both after baseDate) comes up ~29 times in 1000, not ~10
-// (#232, measured with `fc.sample` over 4 seeds × 10,000).
+// (#232, measured with `fc.sample` over 4 seeds × 10,000). The price: dev loans drawn
+// or completed long before baseDate are about half as common as before (completed
+// before baseDate ~86 in 1000, was ~221); tranches near baseDate (D-41) are twice as
+// common.
 import fc from "fast-check";
 import { D, PMT } from "../../../lib/money";
 import { rate } from "../../brands";
@@ -78,8 +81,8 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
     plainTerm: fc.boolean(),
     fixationYears: fc.integer({ min: 1, max: 10 }),
     startOffset: fc.integer({ min: -180, max: 24 }),
-    // Half the development loans start from a year before to half a year after their
-    // baseDate, so their tranches and recasts fall inside the projection (#232).
+    // Half the development loans start from about a year before to half a year after
+    // their baseDate, so their tranches and recasts fall inside the projection (#232).
     devNearBase: opt(fc.integer({ min: -12, max: 6 })),
     startDay: fc.constantFrom("07", "28", "29", "30", "31"),
     prepays: fc.array(

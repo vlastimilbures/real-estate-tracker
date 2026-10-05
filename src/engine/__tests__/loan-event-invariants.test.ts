@@ -414,19 +414,34 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
   });
 });
 
+/** The R1-01 shape: a development loan with no completion date and an instalment
+ *  recast after baseDate that a later tranche follows. */
+const hasR101Shape = (loan: RefLoan, base: string) =>
+  !loan.completion &&
+  (loan.recasts ?? []).some(
+    (r) =>
+      "instalment" in r &&
+      r.date > base &&
+      (loan.draws ?? []).some((x) => x.date > r.date),
+  );
+
 describe("#130 R1-07: random loans end at the maturity in force", () => {
   it(
     "with a zero balance, no later payment and no balloon",
     () => {
+      let r101 = 0;
       fc.assert(
         fc.property(loanWithEvents, (g) => {
           fc.pre(isValid(g));
           const { loan, base } = g;
           fc.pre(!hits228(loan, base)); // #228
           checkEnd(loan, base, shockOf(g).extra);
+          if (hasR101Shape(loan, base)) r101++;
         }),
         RUNS,
       );
+      // Not vacuous: the generator draws the R1-01 shape (~3 % of loans, #232).
+      expect(r101).toBeGreaterThan(0);
     },
     TIMEOUT,
   );
