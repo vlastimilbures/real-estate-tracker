@@ -457,9 +457,10 @@ describe("the loan event window (ADR 0109, DR-168)", () => {
     expect(loanErrors({ loanTermYears: 0, recasts })).toStrictEqual([
       onLoan("INVALID_TERM", "loanTermYears"),
     ]);
-    // Today (#226): a fractional term is not rejected, but gives no whole-payment
-    // term either, so the maturity goes unchecked.
-    expect(loanErrors({ loanTermYears: 1.5, recasts })).toStrictEqual([]);
+    // A fractional term is rejected too (ADR 0135); the maturity goes unchecked.
+    expect(loanErrors({ loanTermYears: 1.5, recasts })).toStrictEqual([
+      onLoan("INVALID_TERM", "loanTermYears"),
+    ]);
   });
 
   it("a loan without a derivable term leaves the maturity unchecked", () => {

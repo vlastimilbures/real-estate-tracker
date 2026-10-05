@@ -80,17 +80,19 @@ describe("validation problem fields", () => {
     expect(dev({ amount: money(NaN) })).toStrictEqual([
       onLoan("NON_FINITE_NUMBER", "draws"),
     ]);
-    // Today (#226): a fractional term gives no last draw date (start + 17 months
-    // would be 2027-08-01), so no draw is past it.
-    expect(
-      loanErrors({
-        ...devBlock,
-        id: "m-x",
-        propertyId: "javorova",
-        loanTermYears: 1.5,
-        draws: [{ ...draw, date: isoDate("2027-11-15") }],
-      }),
-    ).toStrictEqual([]);
+    // A fractional term is rejected (ADR 0135); it gives no last draw date, so
+    // the draw past its last payment reports nothing more.
+    for (const loanTermYears of [1.5, 0.5])
+      expect(
+        loanErrors({
+          ...devBlock,
+          id: "m-x",
+          propertyId: "javorova",
+          loanTermYears,
+          draws: [{ ...draw, date: isoDate("2027-11-15") }],
+        }),
+        `${loanTermYears}`,
+      ).toStrictEqual([onLoan("INVALID_TERM", "loanTermYears")]);
   });
 
   it("non-finite loan amounts name their field", () => {

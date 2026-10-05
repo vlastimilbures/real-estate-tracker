@@ -372,6 +372,17 @@ function withValidRecasts(b: MortgageBlock): MortgageBlock {
   return { ...b, recasts };
 }
 
+/** Fixation and loan term are whole years (the loan term ADR 0135). */
+function checkTerms(b: MortgageBlock, report: Report): void {
+  if (!Number.isInteger(b.fixationYears) || b.fixationYears < 0)
+    report("INVALID_TERM", "fixationYears");
+  if (
+    b.loanTermYears != null &&
+    !(Number.isInteger(b.loanTermYears) && b.loanTermYears > 0)
+  )
+    report("INVALID_TERM", "loanTermYears");
+}
+
 function checkMortgage(b: MortgageBlock, report: Report): void {
   checkFields(
     b,
@@ -385,10 +396,7 @@ function checkMortgage(b: MortgageBlock, report: Report): void {
     report("NEGATIVE_AMOUNT", "monthlyInstalment");
   if (outsideUnit(b.interestRatePa))
     report("RATE_OUT_OF_RANGE", "interestRatePa");
-  if (!Number.isInteger(b.fixationYears) || b.fixationYears < 0)
-    report("INVALID_TERM", "fixationYears");
-  if (b.loanTermYears != null && !(b.loanTermYears > 0))
-    report("INVALID_TERM", "loanTermYears");
+  checkTerms(b, report);
   checkDevFeatures(b, report);
   if (b.initialPrincipal.isFinite() && b.interestRatePa.isFinite())
     checkDerivedTerm(b, report);
