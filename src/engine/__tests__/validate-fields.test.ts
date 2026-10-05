@@ -81,7 +81,7 @@ describe("validation problem fields", () => {
       onLoan("NON_FINITE_NUMBER", "draws"),
     ]);
     // A fractional term is rejected (ADR 0135); it gives no last draw date, so
-    // the draw past start + 17 months reports nothing more.
+    // the draw past its last payment reports nothing more.
     for (const loanTermYears of [1.5, 0.5])
       expect(
         loanErrors({
