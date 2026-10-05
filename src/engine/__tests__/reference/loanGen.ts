@@ -58,7 +58,8 @@ const opt = <T>(a: fc.Arbitrary<T>) =>
  *  or some months later. */
 const devTerms = opt(
   fc.record({
-    termMonths: fc.integer({ min: 120, max: 360 }),
+    // Whole years: a fractional loan term is rejected (ADR 0135).
+    termMonths: fc.integer({ min: 10, max: 30 }).map((y) => y * 12),
     tranches: fc.array(
       fc.record({
         month: fc.integer({ min: 1, max: 30 }),
@@ -148,7 +149,9 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
       addMonths(`${BASE.slice(0, 4)}-01-${g.startDay}`, k);
     const start = at(month).endsWith(g.startDay) ? at(month) : at(month - 1);
     const r = D(g.bp).div(10_000);
-    const instalment = PMT(r.div(12), g.months, D(-g.principal))
+    // A contract term is whole years (ADR 0135); a derived one may be any length.
+    const months = g.plainTerm ? Math.round(g.months / 12) * 12 : g.months;
+    const instalment = PMT(r.div(12), months, D(-g.principal))
       .ceil()
       .toString();
     const draws = g.dev?.tranches
@@ -179,7 +182,7 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
             ...(completion ? { completion } : {}),
           }
         : g.plainTerm
-          ? { termMonths: g.months }
+          ? { termMonths: months }
           : {}),
     };
     const term = termOf(loan);
