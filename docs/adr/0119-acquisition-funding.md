@@ -144,8 +144,8 @@ detail section (PR3) follow.
   before the refinance.
 - A recorded amount cannot be cleared by a CSV re-import; clearing it is a property form
   edit.
-- Still open: a first loan drawn after baseDate on a property already owned at baseDate
-  raises the debt with no cash in (#181).
+- Decided later: a first loan drawn after baseDate on a property already owned at
+  baseDate brings its initial principal as cash in, as in §5 (#181, ADR 0134).
 - Migration v10 is covered by a restore tripwire for added columns and by a Rust test that
   applies every migration's SQL on the bundled SQLite (#118 items 1–2).
 - Decided later: debt service of a loan that runs before a future purchase date (#104) is

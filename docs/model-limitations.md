@@ -33,8 +33,8 @@ work still to do is in the [roadmap](roadmap.md).
   purchase price minus the loan that funded it, plus any recorded costs and works
   (ADR 0119). The loan that funded the purchase is the property's first loan, if it starts
   no later than 90 days after the purchase. A later first loan counts as cash paid to you in
-  the year it is drawn. A first loan taken out on a property you already own at the
-  projection start does not: its debt counts, but its money does not (#181). A loan that
+  the year it is drawn, and so does a first loan taken out after the projection start on a
+  property you already own (ADR 0134); a development loan's tranches do not. A loan that
   starts before a future purchase date (an off-plan loan drawn at contract) is paid by you
   before the handover: its instalments, prepayments and fees in the projection years before
   the purchase count as cash you paid, although those years show no rows for the property

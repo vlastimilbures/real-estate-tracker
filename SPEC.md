@@ -375,7 +375,9 @@ handover). It counts its initial principal and every tranche dated on or before 
 of the block that replaces it (the schedule's cut, D-47). A later block is a successor,
 never the acquisition loan. A future buy's first loan that starts after the window is not
 the acquisition loan: its initial principal is **cash in** in the projection year it is
-drawn, like refinance cash; its tranches are not. **Sources and uses** (the Property detail
+drawn, like refinance cash; its tranches are not. The same holds for a property owned at
+baseDate whose first loan is drawn after baseDate (ADR 0134): its equity at baseDate holds
+the whole value, so the loan's initial principal is cash in, in its draw year. **Sources and uses** (the Property detail
 Acquisition section, §9; never a blocker): uses = price + recorded costs + recorded works;
 sources = own cash + acquisition loan; gap = uses − sources, only while own cash is known.
 A gap of 1 Kč or more either way is shown as a warning; a smaller one is rounding. A

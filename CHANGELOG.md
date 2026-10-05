@@ -230,6 +230,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A first loan taken out after the projection start on a property you already own now
+  counts its principal as cash paid to you, in the year it is drawn (ADR 0134, #181). Its
+  debt was already counted, but its money was not, so cumulative net cash flow and levered
+  IRR were too low by the loan's principal. A development loan's tranches still do not
+  count: they pay the builder.
 - LTV and the yields read **n/a** when the value is 0, instead of 0 % (ADR 0133, #129). A
   100 % value crash in a scenario, or a 0 Kč valuation, showed LTV 0,0 % in the
   "Conservative" band with the debt still owed, and yields of 0 %. The Dashboard and

@@ -44,16 +44,23 @@ function fundedThePurchase(property: Property, block: MortgageBlock): boolean {
 }
 
 /**
- * ADR 0119 §5: a property's first loan that is not its acquisition loan (it starts after
- * the 90-day window). For a future buy its initial principal reaches the owner as cash in
- * the year it is drawn; its later tranches do not.
+ * A property's first loan whose initial principal reaches the owner as cash in, in the
+ * year it is drawn; its later tranches do not. For a future buy: a first loan that is not
+ * its acquisition loan (it starts after the 90-day window, ADR 0119 §5). For a property
+ * owned at baseDate: a first loan drawn after baseDate (ADR 0134), since its equity at
+ * baseDate holds the whole value.
  */
 export function laterFirstLoan(
   property: Property,
   portfolio: Portfolio,
+  assumptions: Assumptions,
 ): MortgageBlock | undefined {
   const first = earliestBlock(forProperty(portfolio.mortgages, property.id));
-  return first && !fundedThePurchase(property, first) ? first : undefined;
+  if (!first) return undefined;
+  const later = isOnOrBefore(property.purchaseDate, assumptions.baseDate)
+    ? isAfter(first.startDate, assumptions.baseDate)
+    : !fundedThePurchase(property, first);
+  return later ? first : undefined;
 }
 
 /** A loan's initial principal plus its tranches dated on or before the start of the
