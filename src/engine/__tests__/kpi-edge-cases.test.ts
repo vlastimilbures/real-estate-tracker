@@ -124,4 +124,52 @@ describe("ADR 0126: debt-free year", () => {
   it("the seed (repaid once, never again) keeps 2052", () => {
     expect(portfolioKpis(portfolio, assumptions).debtFreeYear).toBe(2052);
   });
+
+  /** The portfolio with one loan on Lipova instead of the seed's three. */
+  function onlyLoan(start: string, principal: string, instalment: string) {
+    const p: Portfolio = {
+      ...portfolio,
+      mortgages: [
+        {
+          id: "m-only",
+          propertyId: "lipova",
+          startDate: isoDate(start),
+          initialPrincipal: money(principal),
+          fixationYears: 5,
+          interestRatePa: rate("0"),
+          monthlyInstalment: money(instalment),
+        },
+      ],
+    };
+    expect(validateInputs(p, assumptions)).toEqual([]);
+    return {
+      proj: portfolioProjection(p, assumptions),
+      k: portfolioKpis(p, assumptions),
+    };
+  }
+
+  it("debt first carried in the year before it is repaid still counts", () => {
+    // No debt until 2030-01-01; owed at the end of year 4, repaid in year 5.
+    const { proj, k } = onlyLoan("2030-01-01", "100000", "10000");
+    expect(proj[3].balance.isZero()).toBe(true);
+    expect(proj[4].balance.greaterThan(DEBT_FREE_EPSILON)).toBe(true);
+    expect(k.debtFreeProjectionYear).toBe(5);
+    expect(k.debtFreeYear).toBe(2031);
+  });
+
+  it("debt within the epsilon, first owed after year 1, is not carried by year 1, so no debt-free year", () => {
+    // 0.004 Kč from 2030: 0.0035 Kč at the end of year 4, nothing before.
+    const { proj, k } = onlyLoan("2030-01-01", "0.004", "0.0001");
+    expect(proj[1].balance.isZero()).toBe(true);
+    expect(proj[4].balance.greaterThan(ZERO)).toBe(true);
+    expect(k.debtFreeYear).toBeNull();
+    expect(k.debtFreeProjectionYear).toBeNull();
+  });
+
+  it("debt within the epsilon at baseDate: debt-free from year 1, not year 0", () => {
+    const { proj, k } = onlyLoan("2026-06-01", "0.004", "0.001");
+    expect(proj[0].balance.toString()).toBe("0.004");
+    expect(k.debtFreeProjectionYear).toBe(1);
+    expect(k.debtFreeYear).toBe(2027);
+  });
 });

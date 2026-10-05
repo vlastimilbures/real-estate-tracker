@@ -1,0 +1,21 @@
+// The engine thresholds are module-load values (DR-076): a bad one throws while
+// constants.ts loads, which breaks the import of every engine test file. Stryker counts a
+// file that fails to import as no test run, so a broken literal "survived" (DR-168). These
+// tests import the module inside the test, so a load failure fails a test.
+import { describe, it, expect } from "vitest";
+
+describe("engine constants (DR-076)", () => {
+  it("the module loads", async () => {
+    await expect(import("../constants")).resolves.toBeDefined();
+  });
+
+  it("the IRR scan grid runs from −90 % to +1000 %, ascending", async () => {
+    const { IRR_SCAN_GRID: grid } = await import("../constants");
+    expect(grid[0]?.toString()).toBe("-0.9");
+    expect(grid.at(-1)?.toString()).toBe("10");
+    expect(grid.map(String)).toContain("0");
+    grid.slice(1).forEach((r, i) => {
+      expect(r.greaterThan(grid[i]!), `${grid[i]} < ${r}`).toBe(true);
+    });
+  });
+});

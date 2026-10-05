@@ -219,6 +219,23 @@ describe("ADR 0103: edge cases", () => {
     expect(reset(exposure(single(toEnd)).fx, "to-end").status).toBe("repaid");
   });
 
+  it("a reset one payment before payoff: upcoming, with the balance after its own payment", () => {
+    // 61 payments of 1,000 at 0 %: 1,000 is left after payment 60 on the fixation end.
+    const short = block({
+      id: "short",
+      startDate: isoDate("2026-06-07"),
+      initialPrincipal: money("61000"),
+      interestRatePa: rate("0"),
+      monthlyInstalment: money("1000"),
+    });
+    const r = reset(exposure(single(short)).fx, "short");
+    expect([r.gridMonth, r.status, r.balance.toString()]).toEqual([
+      60,
+      "upcoming",
+      "1000",
+    ]);
+  });
+
   it("0 fixation years: a floating loan has no fixation end", () => {
     const floating = block({ id: "float", fixationYears: 0 });
     const { fx } = exposure(single(floating));
@@ -406,6 +423,13 @@ describe("ADR 0117: replaced and repaid outrank passed", () => {
     expect(reset(at("2026-06-07", old), "old").status).toBe("passed");
   });
 
+  it("a fixation end paid on baseDate (grid month 0) has passed", () => {
+    // 2021-06-07 + 5 y = baseDate: payment 60 is due by baseDate, so it has no row.
+    const onBase = block({ id: "on-base", startDate: isoDate("2021-06-07") });
+    const r = reset(at("2026-06-07", onBase), "on-base");
+    expect([r.gridMonth, r.status]).toEqual([0, "passed"]);
+  });
+
   it("a fixation end before baseDate has passed, whatever the as-of", () => {
     const old = block({ id: "old", startDate: isoDate("2016-01-10") });
     const fx = at("2020-06-01", old);
@@ -430,6 +454,22 @@ describe("ADR 0117: remaining term = payments due after as-of", () => {
     expect(months("2051-05-16", "javorova")).toBe(1);
     expect(months("2051-05-17", "javorova")).toBe(0);
     expect(months("2051-05-20", "javorova")).toBe(0);
+  });
+
+  it("a refinance chain: each month's payment is on the block drawn before it", () => {
+    // a pays on the 10th; b (drawn in grid month 8) and c (month 32) on the 25th.
+    const chain = single(
+      block({ id: "a" }),
+      block({ id: "b", startDate: isoDate("2027-01-25") }),
+      block({ id: "c", startDate: isoDate("2029-01-25") }),
+    );
+    const view = (asOf: string) => loan(exposure(chain, isoDate(asOf)).fx, "p");
+    // c's 360th payment, on its own day.
+    expect(view("2026-06-07").payoffDate).toEqual(isoDate("2059-01-25"));
+    expect(view("2026-06-07").remainingMonths).toBe(392);
+    // 15.03.2027: a would have paid its March payment, b (due 25.03) has not.
+    expect(view("2027-03-15").remainingMonths).toBe(383);
+    expect(view("2030-01-01").blockId).toBe("c");
   });
 
   it("a loan not yet drawn counts its own payments only", () => {
@@ -537,6 +577,120 @@ describe("ADR 0103: upcoming events", () => {
       ),
       { numRuns: 40 },
     );
+  });
+
+  it("a replaced fixation end and a loan repaid before baseDate are not events", () => {
+    // a's fixation ends 2029-01-10, inside the window, but b replaces a first.
+    const a = block({ id: "a", startDate: isoDate("2024-01-10") });
+    const b = block({ id: "b", startDate: isoDate("2027-01-10") });
+    const refi = single(a, b);
+    const { fx: refiFx } = exposure(refi);
+    expect(reset(refiFx, "a").status).toBe("replaced");
+    expect(upcomingEvents(refi, refiFx, 36)).toEqual([]);
+
+    const old = single(
+      block({
+        id: "old",
+        startDate: isoDate("2020-01-10"),
+        initialPrincipal: money("300000"),
+      }),
+    );
+    const { fx } = exposure(old);
+    expect(loan(fx, "p").payoffDate).toBeNull();
+    expect(loan(fx, "p").remainingMonths).toBeNull();
+    expect(upcomingEvents(old, fx, 360)).toEqual([]);
+  });
+
+  it("one completion per development loan; none when a successor replaces it first", () => {
+    const dev = exposure(mixed, isoDate("2026-12-01")).fx;
+    expect(
+      upcomingEvents(mixed, dev, 12).filter((e) => e.kind === "devCompletion"),
+    ).toEqual([
+      { date: isoDate("2027-08-20"), kind: "devCompletion", propertyId: "dev" },
+    ]);
+
+    // The successor starts 2027-01-10, before the 2027-08-20 completion.
+    const replaced = single(
+      { ...devBlock, propertyId: "p" },
+      block({ id: "succ", startDate: isoDate("2027-01-10") }),
+    );
+    const kinds = upcomingEvents(replaced, exposure(replaced).fx, 24).map(
+      (e) => e.kind,
+    );
+    expect(kinds).not.toContain("devCompletion");
+  });
+
+  it("lease ends of active properties only; same-day events by property id", () => {
+    const owned = (id: string, active?: boolean) => ({
+      id,
+      name: id,
+      purchaseDate: isoDate("2015-01-01"),
+      purchasePrice: money("5000000"),
+      ...(active === undefined ? {} : { active }),
+    });
+    const lease = (propertyId: string) => ({
+      id: `l-${propertyId}`,
+      propertyId,
+      startDate: isoDate("2025-01-01"),
+      endDate: isoDate("2026-12-31"),
+      monthlyRent: money("20000"),
+    });
+    const p: Portfolio = {
+      ...single(),
+      properties: [owned("b", true), owned("a"), owned("x", false)],
+      leases: [lease("b"), lease("a"), lease("x")],
+    };
+    expect(upcomingEvents(p, exposure(p).fx, 12)).toEqual([
+      { date: isoDate("2026-12-31"), kind: "leaseEnd", propertyId: "a" },
+      { date: isoDate("2026-12-31"), kind: "leaseEnd", propertyId: "b" },
+    ]);
+  });
+
+  it("same-day events: fixation end, then payoff, then lease end, whatever the property", () => {
+    const day = isoDate("2026-12-31");
+    const p: Portfolio = {
+      ...single(),
+      properties: [{ ...single().properties[0], id: "a" }],
+      leases: [
+        {
+          id: "l-a",
+          propertyId: "a",
+          startDate: isoDate("2025-01-01"),
+          endDate: day,
+          monthlyRent: money("20000"),
+        },
+      ],
+    };
+    const fx: FinancingExposure = {
+      asOf: BASE_DATE,
+      loans: [
+        {
+          propertyId: "m",
+          blockId: "m",
+          nextFixation: null,
+          payoffDate: day,
+          remainingMonths: 7,
+          interestSaved: null,
+        },
+      ],
+      resets: [
+        {
+          propertyId: "z",
+          blockId: "z",
+          fixationEnd: day,
+          gridMonth: 7,
+          status: "upcoming",
+          balance: money("1"),
+        },
+      ],
+    };
+    expect(
+      upcomingEvents(p, fx, 12).map((e) => [e.kind, e.propertyId]),
+    ).toEqual([
+      ["fixationEnd", "z"],
+      ["loanPayoff", "m"],
+      ["leaseEnd", "a"],
+    ]);
   });
 });
 

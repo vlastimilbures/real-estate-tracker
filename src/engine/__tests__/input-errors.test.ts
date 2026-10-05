@@ -5,7 +5,12 @@ import { describe, it, expect } from "vitest";
 import { rate } from "../brands";
 import { isoDate } from "../dates";
 import { amortizationHealth, termMonths } from "../amortization";
-import { buildSchedule, openingDebt, schedulesByProperty } from "../schedule";
+import {
+  buildSchedule,
+  openingBalance,
+  openingDebt,
+  schedulesByProperty,
+} from "../schedule";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
@@ -160,6 +165,19 @@ describe("D-17: every loan path raises the typed error", () => {
     caught(() => portfolioKpis(p, assumptions));
   });
 
+  it("the opening balance and debt", () => {
+    // The parity path is a closed-form FV: without the check it returns a number.
+    expect(caught(() => openingBalance(bad, assumptions)).errors).toEqual([
+      {
+        code: "INSTALMENT_BELOW_INTEREST",
+        entity: "mortgage",
+        id: "m-x",
+        field: "monthlyInstalment",
+      },
+    ]);
+    caught(() => openingDebt([bad], assumptions));
+  });
+
   it("snapshot without schedules agrees", () => {
     caught(() => portfolioSnapshot(p, assumptions));
     if (!javorova) throw new Error("seed property missing");
@@ -167,9 +185,15 @@ describe("D-17: every loan path raises the typed error", () => {
   });
 
   it("termMonths and amortizationHealth: no NaN or Infinity term", () => {
-    expect(caught(() => termMonths(bad)).errors[0]?.code).toBe(
-      "INSTALMENT_BELOW_INTEREST",
-    );
+    // termMonths names the mortgage it cannot derive a term for.
+    expect(caught(() => termMonths(bad)).errors).toEqual([
+      {
+        code: "INSTALMENT_BELOW_INTEREST",
+        entity: "mortgage",
+        id: "m-x",
+        field: "monthlyInstalment",
+      },
+    ]);
     const zero = loan({ interestRatePa: rate(0), monthlyInstalment: money(0) });
     expect(caught(() => amortizationHealth(zero)).errors[0]?.code).toBe(
       "ZERO_RATE_ZERO_INSTALMENT",

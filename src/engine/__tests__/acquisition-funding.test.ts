@@ -248,6 +248,12 @@ describe("ADR 0119 §5: a first loan after the window", () => {
     );
   });
 
+  it("drawn in the horizon's last year: the principal still comes back", () => {
+    const a = { ...assumptions, horizonYears: 5 };
+    const lastYear = loan({ startDate: isoDate("2031-01-01") }); // projection year 5
+    expectKc(outflow(withBuy([lastYear]), a), 3_800_000, "5.8 M out, 2 M in");
+  });
+
   it("drawn after the horizon: no cash in", () => {
     const a = { ...assumptions, horizonYears: 5 };
     const beyond = loan({ startDate: isoDate("2032-01-01") }); // projection year 6

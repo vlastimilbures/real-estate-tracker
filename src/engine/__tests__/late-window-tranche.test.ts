@@ -6,7 +6,7 @@
 import { describe, it, expect } from "vitest";
 import { isoDate } from "../dates";
 import { openingBalance, propertySchedule } from "../schedule";
-import type { RefLoan } from "./reference/mortgageReference";
+import type { RefLoan, RefRecast } from "./reference/mortgageReference";
 import { both, maxDev, TIGHT, toBlock } from "./reference/eventHarness";
 import { assumptions } from "./support/seed";
 
@@ -19,6 +19,7 @@ const loan: RefLoan = {
   termMonths: 300,
   draws: [{ date: "2026-04-20", amount: 1000000 }],
 };
+const r7000: RefRecast = { date: "2026-04-18", instalment: 7000 };
 const at = (base: string) => ({ ...assumptions, baseDate: isoDate(base) });
 const outcomes = (l: RefLoan, base: string) =>
   propertySchedule([toBlock(l)], at(base)).eventOutcomes;
@@ -125,6 +126,33 @@ describe("ADR 0129 §1: the bank's answer and a recast see it too", () => {
     expect(outcomes(l, "2026-04-28")[0]?.issue).toBe(
       "RECAST_INSTALMENT_BELOW_INTEREST",
     );
+  });
+
+  // A 7,000 Kč recast on 04-18 does not see the 04-20 tranche, so grid month 1 still
+  // owes it a re-amortization (ADR 0120). A later event that sees the tranche but
+  // sets no terms must not mark it counted: month 2 re-amortizes, it does not hold
+  // 7,000 Kč.
+  it.each<[string, Partial<RefLoan>]>([
+    [
+      "a later recast below the interest",
+      { recasts: [r7000, { date: "2026-04-25", instalment: 3000 }] },
+    ],
+    [
+      "a later shortenTerm prepayment the bank cannot answer",
+      {
+        recasts: [r7000],
+        // NPER at the 600 Kč instalment on ≈ 1.1 M Kč never ends: no new term.
+        prepayments: [
+          { date: "2026-04-25", amount: 1000, effect: "shortenTerm" },
+        ],
+      },
+    ],
+  ])("%s does not count the tranche", (_, events) => {
+    const l: RefLoan = { ...loan, ...events };
+    const { e, r } = both(l, "2026-04-28");
+    expect(maxDev(e, r)).toBeLessThan(TIGHT);
+    expect(e[0]?.instalment.toFixed(2)).toBe("7000.00");
+    expect(e[1]?.instalment.greaterThan(80000)).toBe(true);
   });
 
   it("an event dated before the tranche does not see it", () => {

@@ -145,3 +145,47 @@ describe("ADR 0120: a tranche on an instalment recast's payment q", () => {
     ).toBeLessThanOrEqual(1e-6);
   });
 });
+
+describe("ADR 0120: a tranche whose interest exceeds the agreed instalment", () => {
+  // A 2,000,000 Kč tranche on q: interest ≈ 16,231.52 Kč on ≈ 3.98 M Kč, above the
+  // agreed 15,000 Kč that q still pays.
+  const big = (): MortgageBlock =>
+    ({
+      ...loan("2027-01-15", 30),
+      draws: [{ date: isoDate("2027-01-15"), amount: money(2000000) }],
+    }) as MortgageBlock;
+
+  // Today's behaviour (#225): the 1,231.52 Kč shortfall is neither paid nor added to
+  // the balance. Pinned so principal never goes negative; the decision is open.
+  it("today: q pays the agreed 15,000 Kč while more interest accrues (#225)", () => {
+    const rows = buildSchedule(big(), assumptions);
+    const q = at(rows, Q);
+    expect(q.instalment.toNumber()).toBe(AGREED);
+    expect(q.interest.greaterThan(AGREED)).toBe(true);
+    expect(q.principal.toString()).toBe("0");
+    expect(rows.every((x) => !x.principal.isNegative())).toBe(true);
+  });
+
+  it("a shortenTerm prepayment on q keeps the recast maturity", () => {
+    // At 15,000 Kč the bank's NPER on ≈ 3.97 M Kč never ends: no new term, so q+1
+    // still re-amortizes over the recast maturity, as without the prepayment.
+    const plain = buildSchedule(big(), assumptions);
+    const rows = buildSchedule(
+      {
+        ...big(),
+        prepayments: [
+          {
+            date: isoDate("2027-01-20"),
+            amount: money(10000),
+            effect: "shortenTerm",
+          },
+        ],
+      },
+      assumptions,
+    );
+    expect(at(rows, Q).prepaid.toNumber()).toBe(10000);
+    expect(rows.every((x) => x.endBalance.isFinite())).toBe(true);
+    expect(lastPaying(rows).month).toBe(lastPaying(plain).month);
+    expect(lastPaying(rows).endBalance.toString()).toBe("0");
+  });
+});

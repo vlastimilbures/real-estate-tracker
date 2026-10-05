@@ -8,7 +8,7 @@ import { schedulesByProperty } from "../schedule";
 import { isoDate } from "../dates";
 import { D } from "../../lib/money";
 import { assumptions, portfolio } from "./support/seed";
-import type { Portfolio, Property } from "../types";
+import type { Lease, Portfolio, Property } from "../types";
 import { rate } from "../brands";
 import { money } from "../brands";
 
@@ -247,5 +247,47 @@ describe("future property — current snapshot exclusion", () => {
   it("propertySnapshot is true for a past-dated property (no-op guard)", () => {
     const s = propertySnapshot(portfolio.properties[0], portfolio, assumptions);
     expect(s.owned).toBe(true);
+  });
+});
+
+describe("future property — turn-on edges (DR-168)", () => {
+  /** The projection of a loan-free property bought on `purchaseDate`. */
+  const bought = (purchaseDate: string, leases: Lease[] = []) => {
+    const p: Property = {
+      id: "nova",
+      name: "Byt Nova",
+      purchaseDate: isoDate(purchaseDate),
+      purchasePrice: money("5000000"),
+    };
+    const withP: Portfolio = {
+      ...portfolio,
+      properties: [...portfolio.properties, p],
+      leases: [...portfolio.leases, ...leases],
+    };
+    return propertyProjection(p, withP, assumptions, []);
+  };
+
+  it("a lease already running at the purchase pays rent only from the purchase", () => {
+    // baseDate 2026-06-07: the first grid date on/after 2027-03-15 is 2027-04-07,
+    // grid month 10, so year 1 has 3 rented months (10–12), not 12.
+    const proj = bought("2027-03-15", [
+      {
+        id: "l-nova",
+        propertyId: "nova",
+        startDate: isoDate("2026-01-01"),
+        monthlyRent: money("20000"),
+      },
+    ]);
+    expect(proj[1]?.grossRent.toFixed(2)).toBe("60000.00");
+    expect(proj[2]?.grossRent.toFixed(2)).toBe(
+      money("20000").times("1.03").times(12).toFixed(2),
+    );
+  });
+
+  it("a purchase in the horizon's last grid month comes online in the last year", () => {
+    // 2056-06-01 falls in grid month 360 (2056-05-07, 2056-06-07]: year 30, not 31.
+    const proj = bought("2056-06-01");
+    expect(proj[29]?.value.isZero()).toBe(true);
+    expect(proj[30]?.value.greaterThan(0)).toBe(true);
   });
 });

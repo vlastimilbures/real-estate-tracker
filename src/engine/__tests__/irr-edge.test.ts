@@ -77,6 +77,25 @@ describe("irr — widened search and non-unique roots (DR-158, ADR 0079)", () =>
       "irr",
     );
   });
+
+  it("a crossing exactly on a scan grid point (0 %) is one root", () => {
+    // −1 + 1.0001v − 0.0001v²: roots v = 1 (0 %) and v = 10⁴ (below −90 %).
+    const r = irrResult([D(-1), D("1.0001"), D("-0.0001")]);
+    expect(r.reason).toBeNull();
+    near(r.rate!, 0, RATIO, "irr");
+  });
+
+  it("a run of scan points within the NPV tolerance is one root", () => {
+    // Flows of 1e-8 Kč: |NPV| < 1e-9 from −7.5 % to +10 %, around the one root near
+    // −0.01 %. Bisection may stop anywhere in that run, so pin the IRR contract: the
+    // rate it returns has an NPV within the tolerance.
+    const flows = [D("-1e-8"), D("1e-8"), D("-1e-12")];
+    const r = irrResult(flows);
+    expect(r.reason).toBeNull();
+    const v = D(1).div(D(1).plus(r.rate!));
+    const npv = flows.reduce((s, c, t) => s.plus(c.times(v.pow(t))), D(0));
+    expect(npv.abs().lessThan("1e-9")).toBe(true);
+  });
 });
 
 describe("irr — an exact root on a bracket end (#185, ADR 0121)", () => {

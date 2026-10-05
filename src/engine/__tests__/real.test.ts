@@ -69,6 +69,11 @@ describe("cpiAt — price index at an as-of date (baseDate = 1)", () => {
     expect(cpiAt(assumptions, far).toString()).toBe(
       cpi[assumptions.horizonYears].toString(),
     );
+    // Part way into the year after the horizon: no further compounding either.
+    const justPast = edate(BASE_DATE, assumptions.horizonYears * 12 + 6);
+    expect(cpiAt(assumptions, justPast).toString()).toBe(
+      cpi[assumptions.horizonYears].toString(),
+    );
   });
 
   // DR-182 (ADR 0080): months count on the D-21 month-end grid, so the index at

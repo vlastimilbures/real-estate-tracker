@@ -8,8 +8,17 @@ import { isoDate } from "../dates";
 import { isDevLoan } from "../amortization";
 import { buildSchedule, propertySchedule } from "../schedule";
 import { EngineInputError } from "../errors";
-import { validateInputs, type ValidationCode } from "../validate";
+import {
+  assertInputs,
+  assertLoanInputs,
+  assertLoanRows,
+  validateInputs,
+  validatePortfolio,
+  type EngineValidationError,
+  type ValidationCode,
+} from "../validate";
 import type {
+  IsoDate,
   LoanRecast,
   MortgageBlock,
   MortgageBlockFields,
@@ -17,19 +26,7 @@ import type {
 } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 import { devBlock } from "./support/mixed";
-
-// Javorova: 2021-01-17, NPER term 364 payments, last payment 2051-05-17.
-const loan = (b: Partial<MortgageBlockFields>): MortgageBlock =>
-  ({
-    id: "m-x",
-    propertyId: "javorova",
-    startDate: isoDate("2021-01-17"),
-    initialPrincipal: money("1912500"),
-    fixationYears: 10,
-    interestRatePa: rate("0.0169"),
-    monthlyInstalment: money("6721.8"),
-    ...b,
-  }) as MortgageBlock;
+import { loan, onLoan, withLoan } from "./support/loan";
 
 const dev = (b: Partial<MortgageBlockFields>): MortgageBlock =>
   loan({ ...devBlock, id: "m-x", propertyId: "javorova", ...b });
@@ -382,5 +379,120 @@ describe("#135 R1-13: raised loan errors name the item", () => {
     expect(raised(() => propertySchedule([block], assumptions))).toEqual([
       { code: "NON_FINITE_NUMBER", field: "prepayments", index: 1 },
     ]);
+  });
+});
+
+const bad = new Date(NaN) as IsoDate;
+
+/** The problems of a portfolio whose only loan has these fields. */
+const loanErrors = (b: Partial<MortgageBlockFields>) =>
+  validatePortfolio(withLoan(b));
+
+describe("loan asserts raise only their own codes (DR-168)", () => {
+  // INVALID_TERM is a D-17 loan code; a bad date is a D-37 data code.
+  const block = loan({ fixationYears: -1, contractMaturityDate: bad });
+
+  /** Every error `run` raises, in full. */
+  function raisedErrors(run: () => void): readonly EngineValidationError[] {
+    try {
+      run();
+    } catch (e) {
+      if (e instanceof EngineInputError) return e.errors;
+      throw e;
+    }
+    throw new Error("expected an EngineInputError");
+  }
+
+  it("assertLoanInputs raises the loan codes", () => {
+    expect(raisedErrors(() => assertLoanInputs(block))).toStrictEqual([
+      onLoan("INVALID_TERM", "fixationYears"),
+    ]);
+  });
+
+  it("assertLoanRows raises the data codes", () => {
+    expect(raisedErrors(() => assertLoanRows([block]))).toStrictEqual([
+      onLoan("INVALID_DATE", "contractMaturityDate"),
+    ]);
+  });
+
+  it("assertInputs raises the data and range codes only", () => {
+    expect(
+      raisedErrors(() =>
+        assertInputs({ ...portfolio, mortgages: [block] }, assumptions),
+      ),
+    ).toStrictEqual([onLoan("INVALID_DATE", "contractMaturityDate")]);
+  });
+});
+
+describe("the loan event window (ADR 0109, DR-168)", () => {
+  // A 10-year contract: the last payment is due 2031-01-17 (payment 120).
+  const tenYears = { loanTermYears: 10 };
+
+  it("a recast maturity moves the end to that maturity, not to the cap", () => {
+    expect(
+      loanErrors({
+        ...tenYears,
+        recasts: [toMaturity("2025-01-17", "2033-01-17")],
+        prepayments: [prepay("2032-01-20", 1000), prepay("2034-01-20", 1000)],
+      }),
+    ).toStrictEqual([onLoan("EVENT_AFTER_SCHEDULE_END", "prepayments", 1)]);
+  });
+
+  it("a recast with an invalid maturity does not move the end", () => {
+    expect(
+      loanErrors({
+        ...tenYears,
+        recasts: [{ date: isoDate("2025-01-17"), maturity: bad }],
+        prepayments: [prepay("2032-01-20", 1000)],
+      }),
+    ).toStrictEqual([
+      onLoan("EVENT_AFTER_SCHEDULE_END", "prepayments", 0),
+      onLoan("INVALID_DATE", "recasts", 0),
+    ]);
+  });
+
+  it("an invalid contract term leaves the window open and the maturity unchecked", () => {
+    // Payment 13 is due by 2022-03-01, before the recast's next payment (15).
+    const recasts = [toMaturity("2022-03-01", "2022-03-01")];
+    expect(loanErrors({ loanTermYears: 0, recasts })).toStrictEqual([
+      onLoan("INVALID_TERM", "loanTermYears"),
+    ]);
+    // Today (#226): a fractional term is not rejected, but gives no whole-payment
+    // term either, so the maturity goes unchecked.
+    expect(loanErrors({ loanTermYears: 1.5, recasts })).toStrictEqual([]);
+  });
+
+  it("a loan without a derivable term leaves the maturity unchecked", () => {
+    const recasts = [toMaturity("2022-03-01", "2022-03-01")];
+    expect(loanErrors({ initialPrincipal: money(NaN), recasts })).toStrictEqual(
+      [onLoan("NON_FINITE_NUMBER", "initialPrincipal")],
+    );
+    // NPER has no term to give here: it is not asked for one.
+    expect(
+      loanErrors({
+        interestRatePa: rate(0),
+        monthlyInstalment: money(0),
+        recasts,
+      }),
+    ).toStrictEqual([onLoan("ZERO_RATE_ZERO_INSTALMENT", "monthlyInstalment")]);
+  });
+
+  it("an invalid start date sets no window (no payment grid from it)", () => {
+    expect(
+      loanErrors({
+        ...tenYears,
+        startDate: bad,
+        recasts: [{ date: bad, maturity: isoDate("2030-01-17") }],
+      }),
+    ).toStrictEqual([
+      onLoan("INVALID_DATE", "startDate"),
+      onLoan("INVALID_DATE", "recasts", 0),
+    ]);
+  });
+
+  it("a recast dated before the start is not checked further", () => {
+    expect(
+      loanErrors({ recasts: [toMaturity("2020-06-01", "2020-06-01")] }),
+    ).toStrictEqual([onLoan("EVENT_BEFORE_START", "recasts", 0)]);
   });
 });
