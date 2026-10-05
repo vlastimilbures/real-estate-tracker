@@ -1,6 +1,6 @@
 # 0137. Payment q pays at least its interest
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-05
 - Source: issue #225 (found by the DR-168 mutant work, PR #224)
 - Amends: [0109](0109-loan-prepayments-and-recasts.md) §6 (payment `q` pays exactly the
