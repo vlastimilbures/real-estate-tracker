@@ -3,6 +3,8 @@
 // re-amortization (D-24) follows on `q+1`, over the recast maturity. Before, it was
 // dropped: the instalment stayed sized for the smaller balance and the last payment
 // repaid the rest in one go (a ~2.16 M Kč balloon with a 30-year fixation).
+// ADR 0137 (#225): payment `q` pays at least its interest, which a large tranche can
+// lift above the agreed instalment.
 import { describe, it, expect } from "vitest";
 import { money, rate } from "../brands";
 import { isoDate } from "../dates";
@@ -181,8 +183,8 @@ describe("ADR 0120: a tranche whose interest exceeds the agreed instalment", () 
 
   it("a shortenTerm prepayment on q keeps the recast maturity", () => {
     // shortenTerm keeps the instalment q paid, its ≈ 16,231.52 Kč interest (ADR 0137).
-    // On ≈ 3.97 M Kč that NPER never ends: no new term, so q+1 still re-amortizes over
-    // the recast maturity, as without the prepayment.
+    // On ≈ 3.97 M Kč that NPER ends after the maturity in force: no new term, so q+1
+    // still re-amortizes over the recast maturity, as without the prepayment.
     const plain = buildSchedule(big(), assumptions);
     const rows = buildSchedule(
       {
@@ -200,6 +202,27 @@ describe("ADR 0120: a tranche whose interest exceeds the agreed instalment", () 
     expect(at(rows, Q).prepaid.toNumber()).toBe(10000);
     expect(rows.every((x) => x.endBalance.isFinite())).toBe(true);
     expect(lastPaying(rows).month).toBe(lastPaying(plain).month);
+    expect(lastPaying(rows).endBalance.toString()).toBe("0");
+  });
+
+  it("a large shortenTerm prepayment on q sizes the term on q's interest (ADR 0137)", () => {
+    // 2,500,000 Kč leaves ≈ 1.48 M Kč. NPER at the 16,231.52 Kč q paid ends the loan
+    // at grid month 122; at the agreed 15,000 Kč it ended at month 134.
+    const rows = buildSchedule(
+      {
+        ...big(),
+        prepayments: [
+          {
+            date: isoDate("2027-01-20"),
+            amount: money(2500000),
+            effect: "shortenTerm",
+          },
+        ],
+      },
+      assumptions,
+    );
+    expect(at(rows, Q).instalment.toFixed(2)).toBe("16231.52");
+    expect(lastPaying(rows).month).toBe(122);
     expect(lastPaying(rows).endBalance.toString()).toBe("0");
   });
 });
