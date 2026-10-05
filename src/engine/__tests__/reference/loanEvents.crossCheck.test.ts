@@ -70,6 +70,18 @@ const future: RefLoan = {
   fixationMonths: 60,
 };
 
+/** #228: a recast to an instalment, then a `shortenTerm` prepayment in the late window
+ *  after the same payment (baseDate 2026-06-06). */
+const late228: RefLoan = {
+  start: "2025-06-07",
+  principal: "300000",
+  ratePa: "0.045",
+  instalment: "2000",
+  fixationMonths: 120,
+  prepayments: [shorten("2026-06-06", 3000)],
+  recasts: [{ date: "2026-05-07", instalment: 1600 }],
+};
+
 type Case = [
   string,
   RefLoan,
@@ -340,6 +352,28 @@ const CASES: Case[] = [
   [
     "dev loan, tranche after a shortened term",
     { ...devDrawsOnly, prepayments: [shorten("2026-09-10", 1950000)] },
+  ],
+  [
+    "plain loan, late shortenTerm after an instalment recast (ADR 0136)",
+    late228,
+    "2026-06-06",
+  ],
+  [
+    "plain loan, late shortenTerm after an instalment recast on the fixation end (ADR 0136)",
+    { ...late228, start: "2025-05-07", ratePa: "0.03", fixationMonths: 12 },
+    "2026-06-06",
+  ],
+  [
+    "dev loan, late shortenTerm after an instalment recast (ADR 0136)",
+    {
+      ...late228,
+      ratePa: "0.005",
+      termMonths: 120,
+      draws: [{ date: "2026-04-07", amount: "15000" }],
+      completion: "2026-04-07",
+      recasts: [{ date: "2026-05-07", instalment: 921 }],
+    },
+    "2026-06-06",
   ],
 ];
 
