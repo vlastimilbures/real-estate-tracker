@@ -2,9 +2,12 @@ name: Nightly (mutation testing, bench budgets, property runs)
 
 # Stryker on src/engine (J-09 → D-26, D-68). The run fails when the mutation score drops
 # below thresholds.break in stryker.config.json. The bench job fails when a budgeted
-# engine bench's p99 exceeds 2 × its budget (ADR 0066, ADR 0073). The property job runs
-# the loan-event property tests at 2000 runs with a new seed each night (#232). Scheduled
-# runs skip when main has no commit in the last 24 h; a manual run always runs all three.
+# engine bench's p99 exceeds 2 × its budget (ADR 0066, ADR 0073). Scheduled runs of these
+# two skip when main has no commit in the last 24 h; a manual run always runs both.
+#
+# The property job runs the loan-event property tests at 2000 runs every night, quiet
+# days included: the seed, not the code, is what changes (#232). The seed is the run's
+# UTC creation date (YYYYMMDD), so "Re-run failed jobs" replays it.
 #
 # Stryker runs incrementally (D-72): the previous run's result file is restored from the
 # Actions cache, so only mutants in changed engine code or tests rerun. The first run on a
@@ -16,7 +19,7 @@ on:
   workflow_dispatch:
     inputs:
       fc_seed:
-        description: "fast-check seed for the property job (default: today's date, YYYYMMDD)"
+        description: "fast-check seed for the property job, up to 9 digits (default: the run's date, YYYYMMDD)"
         required: false
         default: ""
 
@@ -133,11 +136,13 @@ jobs:
 
   properties:
     name: Loan-event property tests (2000 runs)
-    needs: changed
-    if: needs.changed.outputs.run == 'true'
     runs-on: ubuntu-latest
-    # 2000 runs take ~40 s locally; shrinking a failure can take many minutes.
+    # 2000 runs take ~40 s locally. Vitest cannot interrupt a synchronous fc.assert, so
+    # this bounds a long shrink or a hang; the seed is printed before the tests start.
     timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: read # the run's creation date, for the seed
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -157,10 +162,16 @@ jobs:
       - name: Pick the seed
         env:
           INPUT_SEED: ${{ inputs.fc_seed }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          seed="${INPUT_SEED:-$(date -u +%Y%m%d)}"
-          if [[ ! "$seed" =~ ^[1-9][0-9]*$ ]]; then
-            echo "fc_seed must be a positive integer, got '$seed'" >&2
+          seed="$INPUT_SEED"
+          if [[ -z "$seed" ]]; then
+            created=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .created_at) ||
+              created=$(date -u +%Y-%m-%d)
+            seed="${created:0:4}${created:5:2}${created:8:2}"
+          fi
+          if [[ ! "$seed" =~ ^[0-9]{1,9}$ ]]; then
+            echo "fc_seed must be 1-9 digits, got '$seed'" >&2
             exit 1
           fi
           echo "FC_SEED=$seed" >> "$GITHUB_ENV"

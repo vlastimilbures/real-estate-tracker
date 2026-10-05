@@ -66,8 +66,8 @@ still describe it. Which document owns what is listed in
   locally after an engine change.
 - **Property tests** (#232): the random loan-event tests run at a fixed seed in PR CI
   (`loan-event-invariants.test.ts` 200 runs, `reference/loanEvents.property.test.ts` 80).
-  The nightly run repeats both at 2000 runs with the UTC date as the seed and prints that
-  seed. Reproduce a failure with
+  The nightly run repeats both at 2000 runs, every night, with the run's UTC date
+  (`YYYYMMDD`) as the seed, and prints that seed; "Re-run failed jobs" replays it. Reproduce a failure with
   `FC_SEED=<seed> FC_RUNS=2000 pnpm exec vitest run <file>`. A failure there is an engine
   or harness bug: fix it, or file it and exclude its shape with the issue ID (`fc.pre`).
   Never lower the runs to pass.
