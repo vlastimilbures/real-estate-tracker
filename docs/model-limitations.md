@@ -33,13 +33,16 @@ work still to do is in the [roadmap](roadmap.md).
   purchase price minus the loan that funded it, plus any recorded costs and works
   (ADR 0119). The loan that funded the purchase is the property's first loan, if it starts
   no later than 90 days after the purchase. A later first loan counts as cash paid to you in
-  the year it is drawn. A first loan taken out on a property you already own at the
-  projection start does not: its debt counts, but its money does not (#181). A loan that
+  the year it is drawn, and so does a first loan taken out after the projection start on a
+  property you already own (ADR 0134); a development loan's tranches do not. A loan that
   starts before a future purchase date (an off-plan loan drawn at contract) is paid by you
   before the handover: its instalments, prepayments and fees in the projection years before
   the purchase count as cash you paid, although those years show no rows for the property
-  (ADR 0124). The principal it repaid before the projection start is not counted, so it
-  shows as equity you did not pay for (#193). A property bought after the horizon pays its
+  (ADR 0124). The principal it repaid before the projection start is charged with the down
+  payment, in the purchase year rather than when it was paid, so the IRR reads a little
+  high. When the loan was already refinanced before the projection start, neither the
+  principal repaid nor the cash from that refinance is traced, so the cash you paid can
+  read too high or too low (ADR 0134). A property bought after the horizon pays its
   instalments inside the horizon but never adds its value. With equity of zero or less
   at the start, the multiple and CAGR show "—", and so does CAGR when net worth at the
   horizon is zero or less; when the cash flows give no single answer, IRR shows "n/a"

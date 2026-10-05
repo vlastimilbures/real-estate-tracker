@@ -10,7 +10,11 @@ import {
   IRR_NPV_TOLERANCE,
   IRR_SCAN_GRID,
 } from "./constants";
-import { acquisitionSummary, laterFirstLoan } from "./acquisition";
+import {
+  acquisitionSummary,
+  laterFirstLoan,
+  repaidBeforeBase,
+} from "./acquisition";
 import { at } from "./arrays";
 import {
   propertySchedules,
@@ -146,10 +150,12 @@ function bisect(
  * Down-payment outflows by projection year: a property bought *after* baseDate turns
  * its equity on at tStart > 0, so its down payment (the recorded own cash, else price −
  * acquisition loan + costs + works, ADR 0119) is paid in year tStart; levered IRR /
- * cumulative CF aren't flattered by free terminal equity. A first loan that did not fund
- * the purchase pays its initial principal back to the owner, as cash in (a negative
- * outflow) in the year it is drawn. All zero for an all-owned portfolio (the seed ⇒
- * parity targets unchanged).
+ * cumulative CF aren't flattered by free terminal equity. With it goes the principal its
+ * acquisition loan repaid before baseDate (ADR 0134). A first loan that did not fund
+ * the purchase, or one drawn after baseDate on a property owned at baseDate (ADR 0134),
+ * pays its initial principal back to the owner, as cash in (a negative outflow) in the
+ * year it is drawn. All zero when every property is owned and every first loan was drawn
+ * by baseDate (the seed ⇒ parity targets unchanged).
  */
 function acquisitionOutflows(
   portfolio: Portfolio,
@@ -160,15 +166,16 @@ function acquisitionOutflows(
   for (const p of portfolio.properties) {
     if (p.active === false) continue;
     const tStart = turnOnYear(p.purchaseDate, assumptions);
-    if (tStart > 0 && tStart <= N) {
-      out[tStart] = at(out, tStart).plus(
-        acquisitionSummary(p, portfolio, assumptions).outflow,
-      );
-      const late = laterFirstLoan(p, portfolio);
-      const tLoan = late ? turnOnYear(late.startDate, assumptions) : N + 1;
-      if (late && tLoan <= N) {
-        out[tLoan] = at(out, tLoan).minus(late.initialPrincipal);
-      }
+    if (tStart > N) continue;
+    if (tStart > 0) {
+      out[tStart] = at(out, tStart)
+        .plus(acquisitionSummary(p, portfolio, assumptions).outflow)
+        .plus(repaidBeforeBase(p, portfolio, assumptions));
+    }
+    const late = laterFirstLoan(p, portfolio, assumptions);
+    const tLoan = late ? turnOnYear(late.startDate, assumptions) : N + 1;
+    if (late && tLoan <= N) {
+      out[tLoan] = at(out, tLoan).minus(late.initialPrincipal);
     }
   }
   return out;
