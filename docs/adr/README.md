@@ -161,6 +161,7 @@ Other IDs seen in code comments:
 | [0134](0134-acquisition-cash-gaps.md)             | Later first loan of an owned property; principal repaid before baseDate                | #181, #193                             |
 | [0135](0135-whole-year-loan-term.md)              | A loan term must be whole years                                                        | #226                                   |
 | [0136](0136-shorten-term-agreed-instalment.md)    | Shorten term keeps the instalment the next payment pays                                | #228                                   |
+| [0137](0137-agreed-instalment-pays-interest.md)   | Payment q pays at least its interest                                                   | #225                                   |
 
 ### Judgment calls and open questions
 
