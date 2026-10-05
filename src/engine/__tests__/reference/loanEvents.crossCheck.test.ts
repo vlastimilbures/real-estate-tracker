@@ -497,6 +497,38 @@ describe("ADR 0109: refinance handovers with prepayments", () => {
     });
   });
 
+  // ADR 0138 (#229): grid month 6 (07.12.2026) holds the 15.11 tranche, the 10.11
+  // prepayment and the owner's 01.12 payment, due after the 20.11 start: dropped. The
+  // successor pays off the tranche too.
+  it("tranche and prepayment before a refinance that drops the payment: engine = reference, conserved", () => {
+    const { e, r } = chainBoth([
+      { ...devIo, prepayments: [lower("2026-11-10", 100000, 1000)] },
+      refi("2026-11-20"),
+    ]);
+    expect(maxDev(e.rows, r.rows, r.handovers)).toBeLessThanOrEqual(TIGHT);
+    const [x] = e.refinances;
+    const [h] = r.handovers;
+    expect(x.month).toBe(6);
+    expect(h.month).toBe(6);
+    expect(
+      x.paidOff.minus(h.paidOff.toString()).abs().toNumber(),
+    ).toBeLessThanOrEqual(TIGHT);
+    expect(e.rows[5].drawn.toFixed(2)).toBe("1500000.00");
+    // Σ principal + Σ prepaid + final balance = opening + Σ drawn + Σ refinanced.
+    const first = e.rows[0];
+    const opening = first.endBalance
+      .plus(first.principal)
+      .plus(first.prepaid)
+      .minus(first.drawn)
+      .minus(first.refinanced);
+    const repaid = sum(e.rows, (x) => x.principal.plus(x.prepaid));
+    const added = sum(e.rows, (x) => x.drawn.plus(x.refinanced));
+    const last = e.rows.at(-1)?.endBalance ?? D(0);
+    expect(
+      repaid.plus(last).minus(opening).minus(added).abs().toNumber(),
+    ).toBeLessThanOrEqual(TIGHT);
+  });
+
   it.each(cases)(
     "%s: Σ principal + Σ prepaid = debt + Σ(drawn − paid off)",
     (_, loans) => {
