@@ -25,7 +25,7 @@ import { openingBalance, paymentOffset, propertySchedule } from "../schedule";
 import type { AmortizationRow, Assumptions, LoanEventOutcome } from "../types";
 import type { RefLoan } from "./reference/mortgageReference";
 import { TIGHT, toBlock } from "./reference/eventHarness";
-import { loanWithEvents } from "./reference/loanGen";
+import { isValid, loanWithEvents, shockOf } from "./reference/loanGen";
 import { assumptions as A0 } from "./support/seed";
 
 const RUNS = {
@@ -33,7 +33,13 @@ const RUNS = {
   numRuns: Number(process.env.FC_RUNS ?? 200),
 };
 
-const at = (base: string): Assumptions => ({ ...A0, baseDate: isoDate(base) });
+/** A rate shock, if the loan has one (`shockOf`). */
+type Extra = Partial<Assumptions>;
+const at = (base: string, extra: Extra = {}): Assumptions => ({
+  ...A0,
+  baseDate: isoDate(base),
+  ...extra,
+});
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const days = (a: string, b: string) =>
   (Date.parse(b) - Date.parse(a)) / 86_400_000;
@@ -41,10 +47,10 @@ const sum = (rows: AmortizationRow[], f: (r: AmortizationRow) => Decimal) =>
   rows.reduce((s, r) => s.plus(f(r)), D(0));
 const dev = (a: Decimal, b: Decimal) => a.minus(b).abs().toNumber();
 
-function run(loan: RefLoan, base: string) {
+function run(loan: RefLoan, base: string, extra: Extra = {}) {
   const block = toBlock(loan);
-  const s = propertySchedule([block], at(base));
-  return { ...s, opening: openingBalance(block, at(base)) };
+  const s = propertySchedule([block], at(base, extra));
+  return { ...s, opening: openingBalance(block, at(base, extra)) };
 }
 
 /** Grid month of the last row that pays anything. */
@@ -94,7 +100,12 @@ type Shift = "equal" | "late" | "skipped";
  * differently, or a tranche that grid month 1 counts under b1 but a late event under b2
  * does not see (ADR 0129, "What stays as it is").
  */
-function checkShift(loan: RefLoan, b1: string, b2: string): Shift {
+function checkShift(
+  loan: RefLoan,
+  b1: string,
+  b2: string,
+  extra: Extra = {},
+): Shift {
   const block = toBlock(loan);
   const o = paymentsDueBy(block, isoDate(b1));
   expect(paymentsDueBy(block, isoDate(b2))).toBe(o);
@@ -112,18 +123,24 @@ function checkShift(loan: RefLoan, b1: string, b2: string): Shift {
   // answer is comparable only when o and o+1 are alike: not when o is the last
   // interest-only payment (a `shortenTerm` there acts like `lowerInstalment`, ADR 0109
   // §5), nor the last fixed-rate one (`shortenTerm` reads the rate of its payment,
-  // #164), nor when another prepayment also follows o (the last effect wins, §5).
+  // #164), nor when a rate shock prices o+1 but not o (history, ADR 0079 §3), nor when
+  // a tranche re-amortizes o+1 (D-41), nor when another event also follows o or o+1
+  // (the window's prepayment then shares a period with it: the last effect wins, §5).
   const dueO = iso(edate(block.startDate, o));
+  const fix = loan.fixationMonths;
+  const shock = extra.rateShock;
   const termComparable =
     !(loan.completion && dueO <= loan.completion) &&
-    o !== loan.fixationMonths &&
-    !(loan.prepayments ?? []).some(
-      (p) =>
-        !inWindow(p.date) && paymentOnOrAfter(block, isoDate(p.date)) === o,
-    );
+    o !== fix &&
+    !(shock && o + 1 > fix && o + 1 <= fix + shock.durationYears * 12) &&
+    !draws.some((x) => x.date > dueO && x.date <= nextGrid) &&
+    ![...(loan.prepayments ?? []), ...(loan.recasts ?? [])].some((e) => {
+      const p = paymentOnOrAfter(block, isoDate(e.date));
+      return !inWindow(e.date) && (p === o || p === o + 1);
+    });
 
-  const one = run(loan, b1);
-  const two = run(loan, b2);
+  const one = run(loan, b1, extra);
+  const two = run(loan, b2, extra);
   expect(two.eventOutcomes.length).toBe(one.eventOutcomes.length);
   // The debt taken on: opening + new draws, plus what the late events under b2 took
   // off the opening balance (under b1 they are in the rows).
@@ -221,9 +238,9 @@ function contractTerm(loan: RefLoan): number {
 const paid = (r: AmortizationRow) => r.interest.plus(r.principal);
 
 /** Checks how one loan ends with baseDate `base` (see the header). */
-function checkEnd(loan: RefLoan, base: string): void {
+function checkEnd(loan: RefLoan, base: string, extra: Extra = {}): void {
   const block = toBlock(loan);
-  const s = run(loan, base);
+  const s = run(loan, base, extra);
   const offset = paymentOffset(block, isoDate(base));
   for (const r of s.rows)
     expect(r.endBalance.isNegative(), `row ${r.month} balance`).toBe(false);
@@ -288,14 +305,16 @@ function checkEnd(loan: RefLoan, base: string): void {
  *  an earlier day on or after the last payment due by b2. */
 const shifted = fc
   .tuple(loanWithEvents, fc.double({ min: 0, max: 1, noNaN: true }))
-  .map(([{ loan, base }, x]) => {
+  .filter(([g]) => isValid(g))
+  .map(([g, x]) => {
+    const { loan, base } = g;
     const block = toBlock(loan);
     const lastDue = iso(
       edate(block.startDate, paymentsDueBy(block, isoDate(base))),
     );
     const room = days(lastDue, base);
     const b1 = iso(addDays(isoDate(lastDue), Math.floor(x * room)));
-    return { loan, b1, b2: base };
+    return { loan, b1, b2: base, extra: shockOf(g).extra };
   })
   .filter(({ loan, b1, b2 }) => loan.start <= b1 && b1 < b2);
 
@@ -303,9 +322,9 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
   it("moves no payment, and a late event's amount only by one payment", () => {
     const seen: Record<Shift, number> = { equal: 0, late: 0, skipped: 0 };
     fc.assert(
-      fc.property(shifted, ({ loan, b1, b2 }) => {
+      fc.property(shifted, ({ loan, b1, b2, extra }) => {
         fc.pre(!hits228(loan, b2)); // #228
-        seen[checkShift(loan, b1, b2)]++;
+        seen[checkShift(loan, b1, b2, extra)]++;
       }),
       RUNS,
     );
@@ -375,9 +394,11 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
 describe("#130 R1-07: random loans end at the maturity in force", () => {
   it("with a zero balance, no later payment and no balloon", () => {
     fc.assert(
-      fc.property(loanWithEvents, ({ loan, base }) => {
+      fc.property(loanWithEvents, (g) => {
+        fc.pre(isValid(g));
+        const { loan, base } = g;
         fc.pre(!hits228(loan, base)); // #228
-        checkEnd(loan, base);
+        checkEnd(loan, base, shockOf(g).extra);
       }),
       RUNS,
     );
