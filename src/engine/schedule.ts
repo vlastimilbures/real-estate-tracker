@@ -1604,8 +1604,8 @@ function handoverPrepayments(
 
 /**
  * The row a handover starts from: the owner's kept row ending on the successor's draw,
- * else the successor's draw row. An owner drawn in month d keeps the prepayment and
- * fee its own handover paid there (ADR 0138).
+ * else the successor's draw row. An owner drawn in month d keeps the prepayments and
+ * fees its merged row already paid there: its own and its handover's (ADR 0138).
  */
 function handoverRow(
   drawRow: AmortizationRow,

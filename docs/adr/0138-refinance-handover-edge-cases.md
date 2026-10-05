@@ -50,6 +50,12 @@ The owner chose on 2026-10-05: #229 / #221 item 2 option A, #221 item 1 fix, #22
   off 1,000,000 → 1,200,000 Kč; `drawn` 0 → 200,000; `refinanced` 300,000 → 100,000). Net
   refinance cash (D-47: the successor's principal less the balance paid off) falls by the
   tranche, which the owner's lender now receives back.
+- Decision 1 also raises the cap on a prepayment paid at such a handover (ADR 0109): it can
+  now use the tranche too. A prepayment above the balance before month `d` but within the
+  balance with the tranche was capped with `PREPAYMENT_CAPPED`; it is now applied in full
+  with no issue. Example (`loanEvents.crossCheck.test.ts`): a development loan owing
+  2,000,000 Kč before the handover month and drawing a 1,500,000 Kč tranche in it; a
+  2,500,000 Kč prepayment was capped at 2,000,000 and is now applied in full.
 - Decision 2 changes only `refinanced` in that row (Javorová + successors on 2026-06-10 and
   2026-06-20: 100,000 → 157,092.69 Kč). The balance does not move.
 - Decision 3 changes the row's `prepaid`, `prepaymentFee` and `refinanced`; the balance does
@@ -64,6 +70,7 @@ The owner chose on 2026-10-05: #229 / #221 item 2 option A, #221 item 1 fix, #22
   throws), and `reference/loanGen.ts` never generates that shape. Decisions 2 and 3 are
   covered by fixed tests only (`refinance-difference.test.ts`, `loan-events.test.ts`).
 - Tests: `refinance-difference.test.ts` (decisions 1 and 2), `loan-events.test.ts` "two
-  successors in one grid month" (decision 3), `loanEvents.crossCheck.test.ts` (a development
-  loan's tranche and prepayment before a refinance that drops the payment, engine = reference),
+  successors in one grid month" and its variant after a kept payment (decision 3),
+  `loanEvents.crossCheck.test.ts` (a development loan's tranche and a 100,000 or 2,500,000 Kč
+  prepayment before a refinance that drops the payment, engine = reference),
   `loanEvents.property.test.ts` (#229 pin).
