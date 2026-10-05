@@ -26,12 +26,11 @@ import type { AmortizationRow, Assumptions, LoanEventOutcome } from "../types";
 import type { RefLoan } from "./reference/mortgageReference";
 import { TIGHT, toBlock } from "./reference/eventHarness";
 import { isValid, loanWithEvents, share, shockOf } from "./reference/loanGen";
+import { fcRuns } from "./support/fcRuns";
 import { assumptions as A0 } from "./support/seed";
 
-const RUNS = {
-  seed: Number(process.env.FC_SEED ?? 20261005),
-  numRuns: Number(process.env.FC_RUNS ?? 200),
-};
+// Fixed seed ⇒ reproducible in CI; nightly runs 2000 with a date seed (`fcRuns`).
+const { runs: RUNS, timeout: TIMEOUT } = fcRuns(20261005, 200);
 
 /** A rate shock, if the loan has one (`shockOf`). */
 type Extra = Partial<Assumptions>;
@@ -334,25 +333,29 @@ const shifted = fc
   .filter(({ loan, b1, b2 }) => loan.start <= b1 && b1 < b2);
 
 describe("#130 R1-07: a baseDate shift inside a payment period", () => {
-  it("moves no payment, and a late event's amount only by one payment", () => {
-    const seen: Record<Shift, number> = {
-      equal: 0,
-      late: 0,
-      lateTerm: 0,
-      skipped: 0,
-    };
-    fc.assert(
-      fc.property(shifted, ({ loan, b1, b2, extra }) => {
-        fc.pre(!hits228(loan, b2)); // #228
-        seen[checkShift(loan, b1, b2, extra)]++;
-      }),
-      RUNS,
-    );
-    // Not vacuous: both kinds of case occur.
-    expect(seen.equal).toBeGreaterThan(RUNS.numRuns / 4);
-    expect(seen.late + seen.lateTerm).toBeGreaterThan(0);
-    expect(seen.lateTerm).toBeGreaterThan(0);
-  }, 60_000);
+  it(
+    "moves no payment, and a late event's amount only by one payment",
+    () => {
+      const seen: Record<Shift, number> = {
+        equal: 0,
+        late: 0,
+        lateTerm: 0,
+        skipped: 0,
+      };
+      fc.assert(
+        fc.property(shifted, ({ loan, b1, b2, extra }) => {
+          fc.pre(!hits228(loan, b2)); // #228
+          seen[checkShift(loan, b1, b2, extra)]++;
+        }),
+        RUNS,
+      );
+      // Not vacuous: both kinds of case occur.
+      expect(seen.equal).toBeGreaterThan(RUNS.numRuns / 4);
+      expect(seen.late + seen.lateTerm).toBeGreaterThan(0);
+      expect(seen.lateTerm).toBeGreaterThan(0);
+    },
+    TIMEOUT,
+  );
 
   // The shapes the review found (#135): they must hold on fixed inputs too.
   it("R1-03: a late prepayment after a late tranche (#135 probe)", () => {
@@ -412,17 +415,21 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
 });
 
 describe("#130 R1-07: random loans end at the maturity in force", () => {
-  it("with a zero balance, no later payment and no balloon", () => {
-    fc.assert(
-      fc.property(loanWithEvents, (g) => {
-        fc.pre(isValid(g));
-        const { loan, base } = g;
-        fc.pre(!hits228(loan, base)); // #228
-        checkEnd(loan, base, shockOf(g).extra);
-      }),
-      RUNS,
-    );
-  }, 60_000);
+  it(
+    "with a zero balance, no later payment and no balloon",
+    () => {
+      fc.assert(
+        fc.property(loanWithEvents, (g) => {
+          fc.pre(isValid(g));
+          const { loan, base } = g;
+          fc.pre(!hits228(loan, base)); // #228
+          checkEnd(loan, base, shockOf(g).extra);
+        }),
+        RUNS,
+      );
+    },
+    TIMEOUT,
+  );
 
   // R1-01 (#109): a tranche on the payment after an instalment recast was never
   // re-amortized, and the last payment repaid ~2.16 M Kč (ADR 0120).
