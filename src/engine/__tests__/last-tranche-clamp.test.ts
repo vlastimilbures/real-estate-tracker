@@ -27,7 +27,8 @@ const paid = (r: AmortizationRow) => r.interest.plus(r.principal);
 const CASES: [string, number, string][] = [
   ["2026-02-28", 22, "2027-12-28"],
   ["2026-04-30", 20, "2027-12-30"],
-  // A future loan: drawn in grid month 1, payment 23 in grid month 24.
+  // Regression guard, cap inactive: a future loan draws in grid month 1, so the grid
+  // month carrying payment 23 (month 24) is never dated before its due date.
   ["2025-12-31", 24, "2027-12-31"],
 ];
 
