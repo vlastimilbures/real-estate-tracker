@@ -3,9 +3,10 @@
 - Status: Proposed
 - Date: 2026-10-05
 - Source: issue #225 (found by the DR-168 mutant work, PR #224)
-- Amends: [0120](0120-tranche-on-recast-payment.md) decision 1 (payment `q` pays the agreed
-  instalment) and the wording of decision 4 (the instalment `q` paid)
-- Related: [0109](0109-loan-prepayments-and-recasts.md) §6, [0136](0136-shorten-term-agreed-instalment.md)
+- Amends: [0109](0109-loan-prepayments-and-recasts.md) §6 (payment `q` pays exactly the
+  agreed instalment); [0120](0120-tranche-on-recast-payment.md) decision 1 and the wording of
+  decision 4 (the instalment `q` paid)
+- Related: [0136](0136-shorten-term-agreed-instalment.md)
 
 ## Context
 
@@ -37,20 +38,26 @@ The owner chose option 2 of #225 on 2026-10-05.
 2. Payment `q+1` re-amortizes over the maturity in force, as ADR 0120 decision 2 says.
 3. ADR 0120 decision 4: a `shortenTerm` prepayment after `q` keeps the instalment `q` paid,
    which is now the higher of the agreed instalment and `q`'s interest.
-4. The rule is stated for any payment that pays an agreed instalment, not only one with a
-   tranche, so it also holds if a later change makes another case reachable.
+4. The floor is written for any payment that pays an agreed instalment. Only a tranche on
+   `q` reaches it today, and that tranche also makes `q+1` re-amortize. If a later change
+   let the floor bite without a tranche, `q+1` would not re-amortize and the loan would pay
+   interest only until maturity; such a change must add the re-amortization.
 5. The reference model (`reference/mortgageReference.ts`) follows this wording:
    `max(agreed instalment, rounded interest)`.
 
 ## Consequences
 
-- Only the instalment column of payment `q` changes. The interest and principal columns, the
-  balance, and every later payment were already as they are now, so cash flow, debt service,
-  DSCR and the payoff year do not move. The row's instalment and `monthlyInstalment` now
-  agree with the cash charged.
+- Without a `shortenTerm` prepayment after `q`, only the instalment column of payment `q`
+  changes. The interest and principal columns, the balance, and every later payment were
+  already as they are now, so cash flow, debt service, DSCR and the payoff year do not move.
+  The row's instalment and `monthlyInstalment` now agree with the cash charged.
+- With a `shortenTerm` prepayment after `q`, decision 3 sizes the new term on the higher
+  instalment, so the loan can end earlier. In the #225 example with 2,500,000 Kč
+  `shortenTerm` dated 2027-01-20 (30-year fixation), `q+1` goes from 14,998.95 to
+  16,209.51 Kč and the last payment from grid month 134 to 122.
 - #225 example, before → after:
 
-  | Fixation | `q` instalment     | `q+1`     | 2031-04 (grid 58) | Last payment        | Σ interest   |
+  | Fixation | `q` instalment     | `q+1`     | 2031-04 (grid 58) | Last principal      | Σ interest   |
   | -------- | ------------------ | --------- | ----------------- | ------------------- | ------------ |
   | 30 y     | 15,000 → 16,231.52 | 30,222.38 | 30,222.38         | grid 197, 30,099.47 | 1,809,936.56 |
   | 5 y      | 15,000 → 16,231.52 | 30,222.38 | 29,585.48         | grid 197, 29,474.95 | 1,720,770.51 |
@@ -61,5 +68,6 @@ The owner chose option 2 of #225 on 2026-10-05.
     lower agreed instalment (#225)". It checks the instalment equals the interest
     (16,231.52), principal 0, the end balance, and Σ principal = debt. The comment on "a
     shortenTerm prepayment on q keeps the recast maturity" now names the kept instalment.
+    A new test pins the 2,500,000 Kč `shortenTerm` on `q` (last payment at grid month 122).
   - `loanEvents.crossCheck.test.ts` gains the #225 tranche with a 30-year and a 5-year
-    fixation.
+    fixation, and the 30-year case with the 2,500,000 Kč `shortenTerm`.
