@@ -1,6 +1,6 @@
 # 0135. A loan term must be whole years
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-05
 - Source: issue #226 (found by the DR-168 mutant work, PR #224)
 - Amends: [0017](0017-reject-invalid-loan-inputs.md) (invalid loan inputs are rejected)
