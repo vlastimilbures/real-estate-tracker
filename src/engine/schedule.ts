@@ -114,7 +114,8 @@ interface MonthStep {
  * One month of the amortization core on `balanceIn` (any tranche already added):
  * interest-only months pay interest and no principal; otherwise the instalment in
  * force (`pay.instalment`) — re-amortized over `pay.reamortizeOver` months when that
- * is not null — is split into interest and principal. The payment at maturity
+ * is not null; an agreed instalment at least the interest — is split into interest
+ * and principal. The payment at maturity
  * (`pay.atMaturity`: payment number ≥ term) pays the whole balance, so no residual
  * outlives the loan (D-40).
  */
@@ -136,10 +137,14 @@ function amortizeMonth(
       endBalance: balanceIn,
     };
   }
-  const paid =
+  const scheduled =
     pay.reamortizeOver === null
       ? pay.instalment
       : recomputeInstalment(rateMonthly, pay.reamortizeOver, balanceIn);
+  // An agreed instalment pays at least the month's interest (ADR 0137): a tranche on
+  // its payment can lift the interest above it, and the shortfall would be lost.
+  const owed = balanceIn.times(rateMonthly);
+  const paid = pay.agreed && owed.greaterThan(scheduled) ? owed : scheduled;
   const split = splitPayment(paid, balanceIn, rateMonthly);
   const interest = split.interest;
   const principal = pay.atMaturity ? balanceIn : split.principal;
