@@ -159,6 +159,7 @@ Other IDs seen in code comments:
 | [0132](0132-reload-export-write-order.md)         | The banner Reload and the backup export follow the write order                         | #138, #199                             |
 | [0133](0133-ltv-yield-zero-value.md)              | LTV and yields with no value read n/a, not 0 %                                         | #129                                   |
 | [0134](0134-acquisition-cash-gaps.md)             | Later first loan of an owned property; principal repaid before baseDate                | #181, #193                             |
+| [0135](0135-whole-year-loan-term.md)              | A loan term must be whole years                                                        | #226                                   |
 
 ### Judgment calls and open questions
 

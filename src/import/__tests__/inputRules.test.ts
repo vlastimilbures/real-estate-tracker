@@ -68,6 +68,7 @@ describe("checkInputRules whole-number bounds (ADR 0086)", () => {
     for (const [field, n, code] of [
       ["horizonYears", 0, "HORIZON_NOT_POSITIVE"],
       ["fixationYears", -1, "INVALID_TERM"],
+      ["loanTermYears", 1.5, "INVALID_TERM"], // restore refuses it (ADR 0135)
     ] as const) {
       const [p, a] = withValue(field, n);
       const engine = validateInputs(p, a);
