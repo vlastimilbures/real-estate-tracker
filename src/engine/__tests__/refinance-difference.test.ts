@@ -170,6 +170,25 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
     ).toBeLessThanOrEqual(1e-9);
   });
 
+  it("two successors drawn in grid month 1: the row still reconciles", () => {
+    // ADR 0138 (#221): both start before Javorova's payment #1 (17.06.2026) and draw in
+    // grid month 1; the second splice carries in Javorova's opening balance, not the
+    // first successor's merged row.
+    const blocks = [
+      ...javorova,
+      refi("2026-06-10", "1700000", { id: "m-b" }),
+      refi("2026-06-20", "1800000", { id: "m-c" }),
+    ];
+    const s = propertySchedule(blocks, assumptions);
+    const row = s.rows[0]!;
+    expect(s.refinances.map((r) => r.month)).toEqual([1, 1]);
+    expect(row.drawn.toString()).toBe("0");
+    expect(row.refinanced.toFixed(2)).toBe("157092.69");
+    expect(
+      identityGap(s.rows, openingDebt(javorova, assumptions)),
+    ).toBeLessThanOrEqual(1e-9);
+  });
+
   it("every row reconciles with drawn + refinanced", () => {
     for (const principal of ["1386000", "1186249.89", "1633000"]) {
       const { s } = handover(refi("2031-01-17", principal));

@@ -1620,7 +1620,9 @@ function handoverDrawn(
  * The owner's balance going into the handover month `d` (`before`, what the successor
  * pays off unless the owner's month-d row is kept) and the balance carried into the
  * merged row: the handover's net new debt (DR-092) is what the successor draws, less
- * the predecessor balance it pays off, plus anything the kept row itself drew.
+ * the predecessor balance it pays off, plus anything the kept row itself drew. In grid
+ * month 1 that is the row's opening balance, before a merged row's earlier handover
+ * (ADR 0138).
  */
 function handoverBalances(
   head: AmortizationRow[],
@@ -1633,7 +1635,10 @@ function handoverBalances(
   }
   if (!own) return { before: ZERO, carriedIn: ZERO };
   const before = own.endBalance.plus(own.principal).plus(own.prepaid);
-  return { before, carriedIn: before.minus(own.drawn) };
+  return {
+    before,
+    carriedIn: before.minus(own.drawn).minus(own.refinanced),
+  };
 }
 
 /** An event a successor replaced before it applied (ADR 0109). */
