@@ -11,7 +11,7 @@ import { openingBalance } from "../../schedule";
 import type { AmortizationRow } from "../../types";
 import { assumptions as A0 } from "../support/seed";
 import { TIGHT, both, chainBoth, maxDev, sum, toBlock } from "./eventHarness";
-import { addMonths, type RefLoan } from "./mortgageReference";
+import { addMonths, paymentsMadeBy, type RefLoan } from "./mortgageReference";
 import { isValid, loanWithEvents, shockOf, type RandomLoan } from "./loanGen";
 
 // Fixed seed ⇒ reproducible in CI. Hunt locally with FC_SEED=<n> FC_RUNS=<n>.
@@ -33,12 +33,23 @@ function leak(rows: AmortizationRow[], opening: Decimal) {
 /**
  * #229: an owner tranche dated on/before the successor's start, in the handover grid
  * month, is lost when the owner's payment there is dropped (grid month 2 on). The
- * reference pays it off (ADR 0079 §2). Excluded until #229 is fixed: any tranche in the
- * month before the successor's start.
+ * reference pays it off (ADR 0079 §2). Excluded until #229 is fixed.
  */
-function hits229({ loan, successor }: RandomLoan): boolean {
+function hits229({ loan, base, successor }: RandomLoan): boolean {
   if (!successor) return false;
-  const from = addMonths(successor.start, -1);
+  const firstGrid = (date: string) => {
+    let m = 0;
+    while (addMonths(base, m) < date) m++;
+    return m;
+  };
+  const d = firstGrid(successor.start); // the handover's grid month
+  if (d < 2) return false;
+  const due =
+    loan.start <= base
+      ? addMonths(loan.start, paymentsMadeBy(loan.start, base) + d)
+      : addMonths(loan.start, d - firstGrid(loan.start));
+  if (due <= successor.start) return false; // the owner's payment is kept
+  const from = addMonths(base, d - 1);
   return (loan.draws ?? []).some(
     (x) => x.date > from && x.date <= successor.start,
   );
@@ -101,27 +112,31 @@ describe("ADR 0109: random loans with random events", () => {
   // #229: the 15,000 Kč tranche dated 08-01 lands in the handover month (grid month 2,
   // 08-07), whose owner payment is dropped; the engine pays off 297,561.46, not
   // 312,561.46.
+  const loan229: RefLoan = {
+    start: "2026-06-07",
+    principal: 300000,
+    ratePa: 0.005,
+    instalment: 5064,
+    fixationMonths: 12,
+    termMonths: 120,
+    draws: [{ date: "2026-08-01", amount: 15000 }],
+  };
+  const successor229: RefLoan = {
+    start: "2026-08-06",
+    principal: 90000,
+    ratePa: 0.005,
+    instalment: 1520,
+    fixationMonths: 12,
+  };
+  it("#229: the exclusion matches its probe", () => {
+    expect(
+      hits229({ loan: loan229, base: "2026-06-07", successor: successor229 }),
+    ).toBe(true);
+  });
   it.fails(
     "#229: a tranche before the successor's start, payment dropped",
     () => {
-      const loan: RefLoan = {
-        start: "2026-06-07",
-        principal: 300000,
-        ratePa: 0.005,
-        instalment: 5064,
-        fixationMonths: 12,
-        termMonths: 120,
-        draws: [{ date: "2026-08-01", amount: 15000 }],
-      };
-      const successor: RefLoan = {
-        start: "2026-08-06",
-        principal: 90000,
-        ratePa: 0.005,
-        instalment: 1520,
-        fixationMonths: 12,
-      };
-      expect(hits229({ loan, base: "2026-06-07", successor })).toBe(true);
-      const { e, r } = chainBoth([loan, successor], "2026-06-07");
+      const { e, r } = chainBoth([loan229, successor229], "2026-06-07");
       expectChainAgrees(e, r);
     },
   );

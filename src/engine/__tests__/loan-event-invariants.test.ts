@@ -12,7 +12,7 @@
 //
 // End of the loan (ADR 0109 §4, D-40): the loan is repaid by the maturity in force,
 // which only the contract term, a recast or a `shortenTerm` sets; the balance never goes
-// negative and ends at zero. The last payment is no balloon (R1-01 was a 1.84 M Kč one)
+// negative and ends at zero. The last payment is no balloon (R1-01 was a 2.16 M Kč one)
 // unless the inputs ask for it: a recast to a maturity one or two payments away, a capped
 // or too-low agreed instalment, or a tranche in the last two payments.
 import { describe, it, expect } from "vitest";
@@ -25,7 +25,7 @@ import { openingBalance, paymentOffset, propertySchedule } from "../schedule";
 import type { AmortizationRow, Assumptions, LoanEventOutcome } from "../types";
 import type { RefLoan } from "./reference/mortgageReference";
 import { TIGHT, toBlock } from "./reference/eventHarness";
-import { isValid, loanWithEvents, shockOf } from "./reference/loanGen";
+import { isValid, loanWithEvents, share, shockOf } from "./reference/loanGen";
 import { assumptions as A0 } from "./support/seed";
 
 const RUNS = {
@@ -89,16 +89,18 @@ function hits228(loan: RefLoan, base: string): boolean {
 
 type Prepay = NonNullable<RefLoan["prepayments"]>[number];
 
-type Shift = "equal" | "late" | "skipped";
+/** `late` cases whose end of loan was compared are `lateTerm`. */
+type Shift = "equal" | "late" | "lateTerm" | "skipped";
 
 /**
  * Checks one loan at baseDates b1 < b2 with the same payments due, and says which case
  * it was. `equal`: no event dated in (b1, b2] and every tranche lands in the same grid
  * month, so every row and outcome is equal. `late`: prepayments dated in (b1, b2] settle
  * after payment o+1 under b1 and after payment o under b2; they apply the same amount
- * up to what payment o+1 repaid, and the loan ends within a few payments. `skipped`: a recast in (b1, b2], a tranche landing
- * differently, or a tranche that grid month 1 counts under b1 but a late event under b2
- * does not see (ADR 0129, "What stays as it is").
+ * up to what payment o+1 repaid, and the loan ends within a few payments. `skipped`: a
+ * recast in (b1, b2], a tranche landing differently, or a tranche that grid month 1
+ * counts under b1 but a late event under b2 does not see (ADR 0129, "What stays as it
+ * is").
  */
 function checkShift(
   loan: RefLoan,
@@ -201,17 +203,26 @@ function checkShift(
   // Under b1 the window's events follow payment o+1 (grid month 1); under b2 they are
   // in the late window and follow payment o (month 0). Payment o+1 repaid at most
   // `slack` more under b2 than under b1. The loan's last payment moves by a few
-  // payments at most: each later term answer rounds `ceil(NPER)` on a slightly different
-  // balance, and a prepayment can clear the loan one payment earlier. Never by a year.
-  // A prepayment that clears the loan under one baseDate only ends it there.
-  const cleared = [...one.eventOutcomes, ...two.eventOutcomes].some(
-    (e) => e.issue !== null,
-  );
-  if (termComparable && !cleared)
+  // payments only: each term answer rounds `ceil(NPER)`, a prepayment can clear the
+  // loan one payment earlier, and under b2 the prepaid amount X saves one more month of
+  // interest, X·r, which grows to X·r·(1+r)^N by the end: that many instalments more.
+  // Not compared when a prepayment is clamped under one baseDate only (it then clears
+  // the loan there).
+  const issues = (s: ReturnType<typeof run>) =>
+    s.eventOutcomes.map((e) => e.issue).join();
+  const termChecked = termComparable && issues(one) === issues(two);
+  // No paying row: the late events repaid the loan; nothing left to compare.
+  const paying = one.rows.filter((x) => x.instalment.gt(0));
+  if (termChecked && paying.length > 0) {
+    const r = Math.max(...paying.map((x) => x.ratePa.toNumber())) / 12;
+    const n = lastPaying(one.rows);
+    const minA = Math.min(...paying.map((x) => x.instalment.toNumber()));
+    const interest = lateApplied.toNumber() * r * (1 + r) ** n;
     expect(
       Math.abs(lastPaying(one.rows) - lastPaying(two.rows)),
       "last payment month",
-    ).toBeLessThanOrEqual(3);
+    ).toBeLessThanOrEqual(3 + Math.ceil(interest / minA));
+  }
   const slack = one.rows[0].principal.plus(TIGHT);
   for (const p of moved) {
     const [x, y] = [outcome(one, p), outcome(two, p)];
@@ -222,7 +233,7 @@ function checkShift(
       `${p.date}: applied ${x.applied} at ${b1}, ${y.applied} at ${b2}`,
     ).toBe(true);
   }
-  return "late";
+  return termChecked && paying.length > 0 ? "lateTerm" : "late";
 }
 
 /** The contract term in payments: explicit, or ceil(NPER) of the entered instalment. */
@@ -255,7 +266,8 @@ function checkEnd(loan: RefLoan, base: string, extra: Extra = {}): void {
   for (const r of s.rows.slice(last.month))
     expect(r.endBalance.isZero() && r.drawn.isZero()).toBe(true);
 
-  // No payment after the latest maturity anything may set.
+  // No payment after the latest maturity anything may set. An instalment recast may
+  // reach the cap (ADR 0109 §6), so with one this bounds little.
   const contract = contractTerm(loan);
   const recasts = loan.recasts ?? [];
   const bound = Math.max(
@@ -286,13 +298,16 @@ function checkEnd(loan: RefLoan, base: string, extra: Extra = {}): void {
         e.issue === "RECAST_TERM_CAPPED" ||
         e.issue === "RECAST_INSTALMENT_BELOW_INTEREST",
     ) ||
-    recasts.some(
-      (r) =>
-        "maturity" in r &&
-        paymentsDueBy(block, isoDate(r.maturity)) -
-          paymentOnOrAfter(block, isoDate(r.date)) <=
-          2,
-    ) ||
+    recasts.some((r) => {
+      const q = paymentOnOrAfter(block, isoDate(r.date));
+      // A maturity one or two payments away, or a recast that re-sets the payment
+      // within the loan's last two (an agreed instalment that clears it, or a new
+      // annuity the loan then ends on).
+      return (
+        lastPayment - q <= 2 ||
+        ("maturity" in r && paymentsDueBy(block, isoDate(r.maturity)) - q <= 2)
+      );
+    }) ||
     (loan.draws ?? []).some((x) => x.date > due(lastPayment - 2));
   if (!asked)
     expect(
@@ -304,7 +319,7 @@ function checkEnd(loan: RefLoan, base: string, extra: Extra = {}): void {
 /** A loan and two baseDates in one payment period: b2 is the generated baseDate, b1
  *  an earlier day on or after the last payment due by b2. */
 const shifted = fc
-  .tuple(loanWithEvents, fc.double({ min: 0, max: 1, noNaN: true }))
+  .tuple(loanWithEvents, share)
   .filter(([g]) => isValid(g))
   .map(([g, x]) => {
     const { loan, base } = g;
@@ -320,7 +335,12 @@ const shifted = fc
 
 describe("#130 R1-07: a baseDate shift inside a payment period", () => {
   it("moves no payment, and a late event's amount only by one payment", () => {
-    const seen: Record<Shift, number> = { equal: 0, late: 0, skipped: 0 };
+    const seen: Record<Shift, number> = {
+      equal: 0,
+      late: 0,
+      lateTerm: 0,
+      skipped: 0,
+    };
     fc.assert(
       fc.property(shifted, ({ loan, b1, b2, extra }) => {
         fc.pre(!hits228(loan, b2)); // #228
@@ -330,7 +350,8 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
     );
     // Not vacuous: both kinds of case occur.
     expect(seen.equal).toBeGreaterThan(RUNS.numRuns / 4);
-    expect(seen.late).toBeGreaterThan(0);
+    expect(seen.late + seen.lateTerm).toBeGreaterThan(0);
+    expect(seen.lateTerm).toBeGreaterThan(0);
   }, 60_000);
 
   // The shapes the review found (#135): they must hold on fixed inputs too.
@@ -352,25 +373,24 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
   });
 
   // #228: the prepayment pulled into the late window under 06-06 sizes the term on the
-  // instalment before the recast; the loan then ends in a 125,586 Kč balloon.
+  // instalment before the recast; the loan then ends in a 125,586 Kč balloon, which the
+  // end-of-loan check sees. (The shift check does not compare the end here: the recast
+  // follows payment o.)
+  const loan228: RefLoan = {
+    start: "2025-06-07",
+    principal: 300000,
+    ratePa: 0.045,
+    instalment: 2000,
+    fixationMonths: 120,
+    prepayments: [{ date: "2026-06-06", amount: 3000, effect: "shortenTerm" }],
+    recasts: [{ date: "2026-05-07", instalment: 1600 }],
+  };
+  it("#228: the exclusion matches its probe", () => {
+    expect(hits228(loan228, "2026-06-06")).toBe(true);
+  });
   it.fails(
     "#228: a late shortenTerm prepayment after an instalment recast",
-    () => {
-      const loan: RefLoan = {
-        start: "2025-06-07",
-        principal: 300000,
-        ratePa: 0.045,
-        instalment: 2000,
-        fixationMonths: 120,
-        prepayments: [
-          { date: "2026-06-06", amount: 3000, effect: "shortenTerm" },
-        ],
-        recasts: [{ date: "2026-05-07", instalment: 1600 }],
-      };
-      expect(hits228(loan, "2026-06-06")).toBe(true);
-      checkEnd(loan, "2026-06-06");
-      checkShift(loan, "2026-05-07", "2026-06-06");
-    },
+    () => checkEnd(loan228, "2026-06-06"),
   );
 
   it("R1-04: a payment due just before completion (#135 probe)", () => {

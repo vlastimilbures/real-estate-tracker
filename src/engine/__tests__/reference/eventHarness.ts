@@ -104,12 +104,17 @@ export function chainBoth(
     months: REF_MONTHS,
     ...opts,
   });
-  // Row 1's draw rebased to the engine's meaning, as in `both` (D-41, DR-092).
+  // Row 1's draw rebased to the engine's meaning, as in `both` (D-41, DR-092). On a
+  // handover in month 1 the row's `draw` is the successor's: rebase the owner's draw
+  // there instead.
   const inForce = loans.filter((l) => l.start <= base).at(-1);
-  if (inForce && r.rows.length > 0)
+  const opening = inForce ? openingDraws(inForce, base) : D(0);
+  const h = r.handovers[0];
+  if (h?.month === 1) h.ownerDraw = h.ownerDraw.minus(opening.toString());
+  else if (r.rows.length > 0)
     r.rows[0] = {
       ...r.rows[0],
-      draw: r.rows[0].draw.minus(openingDraws(inForce, base).toString()),
+      draw: r.rows[0].draw.minus(opening.toString()),
     };
   return { e, r };
 }
@@ -131,12 +136,16 @@ function openingDraws(l: RefLoan, base: string): Decimal {
  * what it paid off (D-47, ADR 0130), the reference's `draw` the successor's gross draw:
  * pass the reference `handovers` so the row is compared as gross − paid off. An owner
  * tranche landing on that row is in the engine's `drawn` there, and in the reference's
- * paid-off balance; the conservation checks count it.
+ * paid-off balance (`ownerDraw`).
  */
 export function maxDev(
   e: AmortizationRow[],
   r: RefRow[],
-  handovers: readonly { month: number; paidOff: { toString(): string } }[] = [],
+  handovers: readonly {
+    month: number;
+    paidOff: { toString(): string };
+    ownerDraw?: { toString(): string };
+  }[] = [],
 ): number {
   if (r.length < e.length) return Infinity;
   let m = 0;
@@ -163,6 +172,11 @@ export function maxDev(
     const draw = h ? r[i].draw.minus(h.paidOff.toString()) : r[i].draw;
     const netNew = h ? e[i].refinanced : e[i].drawn.plus(e[i].refinanced);
     m = Math.max(m, Math.abs(netNew.minus(draw.toString()).toNumber()));
+    if (h?.ownerDraw)
+      m = Math.max(
+        m,
+        Math.abs(e[i].drawn.minus(h.ownerDraw.toString()).toNumber()),
+      );
     if (r[i].payment.greaterThan(0)) {
       m = Math.max(
         m,

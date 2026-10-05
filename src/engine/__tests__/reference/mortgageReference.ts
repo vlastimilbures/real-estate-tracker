@@ -678,6 +678,9 @@ export interface RefHandover {
   paidOff: Dec;
   /** Successor balance drawn (its principal plus tranches up to the draw date). */
   drawn: Dec;
+  /** The predecessor's tranches landing in that month (dated by the successor's start),
+   *  paid off with the rest; the draw row's `draw` shows only the successor's. */
+  ownerDraw: Dec;
 }
 
 /**
@@ -764,7 +767,12 @@ export function referenceChain(
       late = late.plus(paid);
       if (paid.greaterThan(ZERO)) lateFee = lateFee.plus(p.fee ?? 0);
     }
-    handovers.push({ month: D, paidOff: owed, drawn: drawRow.endBalance });
+    handovers.push({
+      month: D,
+      paidOff: owed,
+      drawn: drawRow.endBalance,
+      ownerDraw: own.draw,
+    });
     const head: RefRow = kept
       ? { ...own, draw: drawRow.draw, endBalance: drawRow.endBalance }
       : drawRow;

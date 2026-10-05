@@ -38,8 +38,15 @@ export interface RandomLoan {
 
 const daysBefore = (iso: string, days: number) =>
   new Date(Date.parse(iso) - days * 86_400_000).toISOString().slice(0, 10);
-const share = fc.double({ min: 0, max: 1, noNaN: true });
-const opt = <T>(a: fc.Arbitrary<T>) => fc.option(a, { nil: undefined });
+/** Uniform in [0, 1]. (`fc.double` spreads over the float encoding: most draws land
+ *  below 1e-6 or near 1.) */
+export const share = fc.integer({ min: 0, max: 10_000 }).map((i) => i / 10_000);
+/** Uniform in [lo, hi]. */
+const between = (lo: number, hi: number) =>
+  share.map((x) => lo + x * (hi - lo));
+/** Present half the time. */
+const opt = <T>(a: fc.Arbitrary<T>) =>
+  fc.option(a, { nil: undefined, freq: 2 });
 
 /** Development terms: tranches after the start; completion none, at the last tranche,
  *  or some months later. */
@@ -50,7 +57,7 @@ const devTerms = opt(
       fc.record({
         month: fc.integer({ min: 1, max: 30 }),
         day: fc.integer({ min: 1, max: 28 }),
-        size: fc.double({ min: 0.05, max: 1, noNaN: true }),
+        size: between(0.05, 1),
       }),
       { minLength: 1, maxLength: 3 },
     ),
@@ -71,7 +78,7 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
     prepays: fc.array(
       fc.record({
         at: share,
-        size: fc.double({ min: 0.01, max: 0.7, noNaN: true }),
+        size: between(0.01, 0.7),
         shorten: fc.boolean(),
         early: fc.integer({ min: 0, max: 60 }),
         fee: opt(fc.integer({ min: 0, max: 5000 })),
@@ -82,6 +89,7 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
       fc.record({
         at: share,
         toMaturity: fc.boolean(),
+        soon: fc.boolean(),
         x: share,
         early: fc.integer({ min: 0, max: 27 }),
       }),
@@ -92,7 +100,7 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
     late: opt(
       fc.record({
         days: fc.integer({ min: 0, max: 30 }),
-        size: fc.double({ min: 0.01, max: 0.3, noNaN: true }),
+        size: between(0.01, 0.3),
         shorten: fc.boolean(),
       }),
     ),
@@ -107,7 +115,7 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
         at: share,
         early: fc.integer({ min: 0, max: 27 }),
         bp: fc.integer({ min: 50, max: 900 }),
-        size: fc.double({ min: 0.3, max: 1.2, noNaN: true }),
+        size: between(0.3, 1.2),
         months: fc.integer({ min: 60, max: 360 }),
         fixationYears: fc.integer({ min: 1, max: 10 }),
       }),
@@ -158,12 +166,15 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
           : {}),
     };
     const term = termOf(loan);
+    /** An event date moved back from a due date stays after the start. */
+    const afterStart = (date: string) =>
+      date > start ? date : daysBefore(start, -1);
     /** A payment number from 1 to term − 1. */
     const payment = (at: number) => 1 + Math.floor(at * (term - 2));
     const effect = (shorten: boolean) =>
       shorten ? ("shortenTerm" as const) : ("lowerInstalment" as const);
     const prepayments = g.prepays.map((p) => ({
-      date: daysBefore(addMonths(start, payment(p.at)), p.early),
+      date: afterStart(daysBefore(addMonths(start, payment(p.at)), p.early)),
       amount: String(Math.round(p.size * g.principal)),
       effect: effect(p.shorten),
       ...(p.fee != null ? { fee: String(p.fee) } : {}),
@@ -188,7 +199,11 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
     const completed = completion ? firstPaymentOnOrAfter(start, completion) : 0;
     const recasts = g.recasts
       .map((c): RefRecast => {
-        const k = Math.max(payment(c.at), completion ? completed + 1 : 1);
+        // Half in the first three years, among the tranches.
+        const k = Math.max(
+          c.soon ? 1 + Math.floor(c.at * 35) : payment(c.at),
+          completion ? completed + 1 : 1,
+        );
         const date = daysBefore(addMonths(start, k), c.early);
         const lo = Math.max(k, completed) + 1;
         return c.toMaturity
