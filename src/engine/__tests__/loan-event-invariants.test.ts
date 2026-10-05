@@ -66,26 +66,6 @@ function landing(base: string, date: string): number {
   return m;
 }
 
-/**
- * #228: with baseDate `base`, a `shortenTerm` prepayment in the late window settles after
- * the payment a recast follows, after the recast, and sizes the term on the instalment
- * before it (an instalment recast then ends in a balloon). ADR 0109 §3 settles a
- * period's prepayments before its recast. Known wrong today; excluded until #228 is fixed.
- */
-function hits228(loan: RefLoan, base: string): boolean {
-  const block = toBlock(loan);
-  const o = paymentsDueBy(block, isoDate(base));
-  const lastDue = iso(edate(block.startDate, o));
-  return (
-    (loan.prepayments ?? []).some(
-      (p) => p.effect === "shortenTerm" && p.date > lastDue && p.date <= base,
-    ) &&
-    (loan.recasts ?? []).some(
-      (r) => paymentOnOrAfter(block, isoDate(r.date)) === o,
-    )
-  );
-}
-
 type Prepay = NonNullable<RefLoan["prepayments"]>[number];
 
 /** `late` cases whose end of loan was compared are `lateTerm`. */
@@ -344,7 +324,6 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
       };
       fc.assert(
         fc.property(shifted, ({ loan, b1, b2, extra }) => {
-          fc.pre(!hits228(loan, b2)); // #228
           seen[checkShift(loan, b1, b2, extra)]++;
         }),
         RUNS,
@@ -427,10 +406,11 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
     expect(lastPaid(loan, "2026-05-07")).toBe("373: 1353.26");
     expect(lastPaid(loan, "2026-06-06")).toBe("373: 1353.25");
   });
-  // Known limitation (ADR 0136): a maturity recast leaves no agreed instalment, only an
-  // owed re-amortization, which `shortenTerm` does not see (as in ADR 0120 decision 4).
-  // Under 09-06 the late prepayment sizes the term on the instalment before the recast,
-  // and the loan ends 12 payments earlier than under 08-07. No balloon either way.
+  // Known limitation (ADR 0136, #235): a maturity recast leaves no agreed instalment,
+  // only an owed re-amortization, which `shortenTerm` does not see (as in ADR 0120
+  // decision 4). Under 09-06 the late prepayment sizes the term on the instalment before
+  // the recast, and the loan ends 12 payments earlier than under 08-07. No balloon
+  // either way.
   it("#228: a late shortenTerm after a maturity recast (today: 12 payments earlier)", () => {
     const loan: RefLoan = {
       start: "2023-02-07",
@@ -492,7 +472,6 @@ describe("#130 R1-07: random loans end at the maturity in force", () => {
         fc.property(loanWithEvents, (g) => {
           fc.pre(isValid(g));
           const { loan, base } = g;
-          fc.pre(!hits228(loan, base)); // #228
           checkEnd(loan, base, shockOf(g).extra);
           if (hasR101Shape(loan, base)) r101++;
         }),
