@@ -87,17 +87,35 @@ export function both(
 }
 
 /** Engine chain (`propertySchedule`) and the reference chain for one property's
- *  loans; a single loan is a chain of one. */
-export function chainBoth(loans: RefLoan[]) {
+ *  loans; a single loan is a chain of one. Row 1's draw is rebased as in `both`. */
+export function chainBoth(
+  loans: RefLoan[],
+  base = "2026-06-07",
+  opts: Partial<RefOptions> = {},
+  extra: Partial<Assumptions> = {},
+) {
   const e = propertySchedule(
     loans.map((l, i) => toBlock(l, `b${i}`)),
-    A0,
+    { ...A0, baseDate: isoDate(base), ...extra },
   );
   const r = referenceChain(loans, {
     ...REF,
-    baseDate: "2026-06-07",
+    baseDate: base,
     months: REF_MONTHS,
+    ...opts,
   });
+  // Row 1's draw rebased to the engine's meaning, as in `both` (D-41, DR-092). On a
+  // handover in month 1 the row's `draw` is the successor's: rebase the owner's draw
+  // there instead.
+  const inForce = loans.filter((l) => l.start <= base).at(-1);
+  const opening = inForce ? openingDraws(inForce, base) : D(0);
+  const h = r.handovers[0];
+  if (h?.month === 1) h.ownerDraw = h.ownerDraw.minus(opening.toString());
+  else if (r.rows.length > 0)
+    r.rows[0] = {
+      ...r.rows[0],
+      draw: r.rows[0].draw.minus(opening.toString()),
+    };
   return { e, r };
 }
 
@@ -114,14 +132,20 @@ function openingDraws(l: RefLoan, base: string): Decimal {
  * Max |Δ| over every column; the instalment only where the reference pays. The
  * reference runs longer than the engine (`REF_MONTHS`): every reference row past the
  * engine's last one must be idle, else the engine dropped a row that still pays.
- * On a refinance handover row the engine's `drawn` + `refinanced` is the net new debt
- * (D-47, ADR 0130), the reference's `draw` the successor's gross draw: pass the
- * reference `handovers` so the row is compared as gross − paid off.
+ * On a refinance handover row the engine's `refinanced` is the successor's draw less
+ * what it paid off (D-47, ADR 0130), the reference's `draw` the successor's gross draw:
+ * pass the reference `handovers` so the row is compared as gross − paid off. An owner
+ * tranche landing on that row is in the engine's `drawn` there, and in the reference's
+ * paid-off balance (`ownerDraw`).
  */
 export function maxDev(
   e: AmortizationRow[],
   r: RefRow[],
-  handovers: readonly { month: number; paidOff: { toString(): string } }[] = [],
+  handovers: readonly {
+    month: number;
+    paidOff: { toString(): string };
+    ownerDraw?: { toString(): string };
+  }[] = [],
 ): number {
   if (r.length < e.length) return Infinity;
   let m = 0;
@@ -146,8 +170,13 @@ export function maxDev(
     );
     const h = handovers.find((x) => x.month === e[i].month);
     const draw = h ? r[i].draw.minus(h.paidOff.toString()) : r[i].draw;
-    const netNew = e[i].drawn.plus(e[i].refinanced);
+    const netNew = h ? e[i].refinanced : e[i].drawn.plus(e[i].refinanced);
     m = Math.max(m, Math.abs(netNew.minus(draw.toString()).toNumber()));
+    if (h?.ownerDraw)
+      m = Math.max(
+        m,
+        Math.abs(e[i].drawn.minus(h.ownerDraw.toString()).toNumber()),
+      );
     if (r[i].payment.greaterThan(0)) {
       m = Math.max(
         m,

@@ -678,6 +678,9 @@ export interface RefHandover {
   paidOff: Dec;
   /** Successor balance drawn (its principal plus tranches up to the draw date). */
   drawn: Dec;
+  /** The predecessor's tranches landing in that month (dated by the successor's start),
+   *  paid off with the rest; the draw row's `draw` shows only the successor's. */
+  ownerDraw: Dec;
 }
 
 /**
@@ -686,8 +689,8 @@ export interface RefHandover {
  * a successor. A successor draws on the first grid date on/after its start. The
  * predecessor's payment in that grid month is still paid when due on/before the
  * successor's start, and the draw row carries it; otherwise it is dropped and its
- * balance before that month is paid off (D-47). Tranches dated after the successor's
- * start are dropped (DR-126). Two successors drawing in the same
+ * balance before that month, plus that month's tranches, is paid off (D-47). Tranches
+ * dated after the successor's start are dropped (DR-126). Two successors drawing in the same
  * grid month are not modelled.
  */
 export function referenceChain(
@@ -750,7 +753,9 @@ export function referenceChain(
       loan.start <= base
         ? k - paymentsMadeBy(loan.start, base)
         : k + firstGridOnOrAfter(loan.start);
-    let owed = kept ? own.endBalance : before;
+    // A dropped payment's tranches in that month dated by the successor's start are
+    // still drawn (only later ones are dropped, ADR 0079 §2), so they are paid off too.
+    let owed = kept ? own.endBalance : before.plus(own.draw);
     let [late, lateFee] = [ZERO, ZERO];
     for (const p of [...(owner.prepayments ?? [])].sort((a, b) =>
       a.date < b.date ? -1 : 1,
@@ -762,7 +767,12 @@ export function referenceChain(
       late = late.plus(paid);
       if (paid.greaterThan(ZERO)) lateFee = lateFee.plus(p.fee ?? 0);
     }
-    handovers.push({ month: D, paidOff: owed, drawn: drawRow.endBalance });
+    handovers.push({
+      month: D,
+      paidOff: owed,
+      drawn: drawRow.endBalance,
+      ownerDraw: own.draw,
+    });
     const head: RefRow = kept
       ? { ...own, draw: drawRow.draw, endBalance: drawRow.endBalance }
       : drawRow;
