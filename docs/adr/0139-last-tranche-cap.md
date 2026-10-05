@@ -21,7 +21,9 @@ dated on or after it (`bucketDraws` in `buildDevSchedule`, `src/engine/schedule.
 Payments are numbered on the loan's own due dates, and grid month `m` carries payment
 `offset + m`. With month-end clamping (start day 29–31, DR-070) the grid month that carries
 the last-but-one payment can be dated **before** that payment's due date. A draw on the
-due date then skips that grid month and lands on the final payment.
+due date then skips that grid month and lands on the final payment. This needs a loan
+already running at baseDate: a loan starting after baseDate draws on the first grid date on
+or after its start, so each later grid month falls on or after its payment's due date.
 
 Example: a development loan from 2026-01-31 over 2 years, 100,000 Kč at 5 %, a 500,000 Kč
 tranche on 2027-12-31 (payment 23's due date, accepted). With baseDate 2026-02-28 or
@@ -42,7 +44,7 @@ The owner chose option B of #218 on 2026-10-05.
    used for the grid (`paymentOffset`), negative for a loan that starts after baseDate.
 2. **Everywhere else the baseDate grid stays.** A tranche still joins the first grid month
    dated on or after it; only a tranche that would land past the cap moves back to it.
-   Validation already rejects any draw that could reach the cap other than through a
+   Validation already rejects any draw that could land past the cap other than through a
    month-end clamp.
 3. **The reference model follows the same rule.** On its baseDate grid, the row that
    carries payment `term − 1` takes every tranche dated up to its grid date or the due date
@@ -62,6 +64,6 @@ stays open for a later change if tranches and events are aligned (ADR 0109 §3).
   is refused that was accepted before.
 - The cap is a targeted rule: a clamped month-end loan still lands its other tranches on
   the baseDate grid, which can differ by a payment from the loan's own cadence.
-- Tests: `src/engine/__tests__/last-tranche-clamp.test.ts` (engine and cross-check, past
-  and future loans) and a reference unit test in `reference/mortgageReference.test.ts`,
+- Tests: `src/engine/__tests__/last-tranche-clamp.test.ts` (engine and cross-check for
+  two running loans, plus a future loan where the cap stays inactive) and a reference unit test in `reference/mortgageReference.test.ts`,
   because a cross-check alone passed while both models were wrong.
