@@ -37,10 +37,15 @@ The owner chose option A of #228 on 2026-10-05.
    - an agreed instalment still to pay (from an instalment recast already settled after
      payment `p`), at the rate of payment `p+1`, as the recast itself sized its maturity;
    - otherwise the instalment of payment `p`, at the rate of payment `p` (unchanged).
-2. An owed re-amortization (`reamortizeNext`) is not read. A maturity recast, or a tranche
-   on the payment of an instalment recast (ADR 0120 decision 4, kept by #187), leaves no
-   instalment of its own to keep. In both cases the prepayment still sizes on payment `p`'s
-   instalment.
+2. An owed re-amortization (`reamortizeNext`) is not read. Three cases leave no
+   instalment of their own to keep:
+   - a maturity recast;
+   - an instalment recast capped at 50 years (`RECAST_TERM_CAPPED`), which re-amortizes
+     instead;
+   - a tranche on the payment of an instalment recast (ADR 0120 decision 4, kept by #187).
+
+   In all three the prepayment still sizes on payment `p`'s instalment.
+
 3. Only the late window can reach rule 1. In an ordinary period the payment clears the
    agreed instalment before its prepayments settle (`paidTerms`), and the recast of that
    period settles after them. The rule is stated in general all the same.
@@ -52,7 +57,7 @@ The owner chose option A of #228 on 2026-10-05.
 - The #228 loan ends on payment 310 under all three baseDates. Under 2026-06-06 the
   3,000 Kč is repaid one payment earlier, so the last payment is 1,160.59 Kč instead of
   1,194.91 Kč. The development loan variant ends on payment 373 under both baseDates.
-- Known limitation (rule 2, #235): with a maturity recast the term still depends on
+- Known limitation (rule 2, #235): with a maturity or a capped recast the term still depends on
   baseDate's day. The #228 comment loan (development loan from 2023-02-07, maturity
   recast to 2034-02-07 dated 2025-08-07, `shortenTerm` 3,000 on 2025-09-06) ends at grid
   month 102 with baseDate 2025-08-07 and at month 90 with 2025-09-06. There is no
