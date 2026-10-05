@@ -9,12 +9,19 @@
 // dated between the two baseDates settles one payment earlier under the later one (it is
 // in the late window there). The amount such an event applies may differ only by what
 // that one payment repaid (ADR 0129 §1).
+//
+// End of the loan (ADR 0109 §4, D-40): the loan is repaid by the maturity in force,
+// which only the contract term, a recast or a `shortenTerm` sets; the balance never goes
+// negative and ends at zero. The last payment is no balloon (R1-01 was a 1.84 M Kč one)
+// unless the inputs ask for it: a recast to a maturity one or two payments away, a capped
+// or too-low agreed instalment, or a tranche in the last two payments.
 import { describe, it, expect } from "vitest";
 import fc from "fast-check";
-import { D, type Decimal } from "../../lib/money";
+import { D, NPER, type Decimal } from "../../lib/money";
 import { addDays, edate, isoDate } from "../dates";
 import { paymentOnOrAfter, paymentsDueBy } from "../amortization";
-import { openingBalance, propertySchedule } from "../schedule";
+import { MAX_LOAN_TERM_MONTHS } from "../constants";
+import { openingBalance, paymentOffset, propertySchedule } from "../schedule";
 import type { AmortizationRow, Assumptions, LoanEventOutcome } from "../types";
 import type { RefLoan } from "./reference/mortgageReference";
 import { TIGHT, toBlock } from "./reference/eventHarness";
@@ -201,6 +208,82 @@ function checkShift(loan: RefLoan, b1: string, b2: string): Shift {
   return "late";
 }
 
+/** The contract term in payments: explicit, or ceil(NPER) of the entered instalment. */
+function contractTerm(loan: RefLoan): number {
+  if (loan.termMonths != null) return loan.termMonths;
+  const r = D(String(loan.ratePa)).div(12);
+  return NPER(r, D(String(loan.instalment)).negated(), String(loan.principal))
+    .ceil()
+    .toNumber();
+}
+
+/** A payment's interest + principal (the instalment actually paid). */
+const paid = (r: AmortizationRow) => r.interest.plus(r.principal);
+
+/** Checks how one loan ends with baseDate `base` (see the header). */
+function checkEnd(loan: RefLoan, base: string): void {
+  const block = toBlock(loan);
+  const s = run(loan, base);
+  const offset = paymentOffset(block, isoDate(base));
+  for (const r of s.rows)
+    expect(r.endBalance.isNegative(), `row ${r.month} balance`).toBe(false);
+  const paying = s.rows.filter((r) => paid(r).plus(r.prepaid).gt(0));
+  const last = paying.at(-1);
+  if (!last) {
+    // Repaid before baseDate (or by a late prepayment): nothing is owed.
+    expect(s.opening.isZero()).toBe(true);
+    return;
+  }
+  expect(last.endBalance.toNumber(), "balance after the last payment").toBe(0);
+  for (const r of s.rows.slice(last.month))
+    expect(r.endBalance.isZero() && r.drawn.isZero()).toBe(true);
+
+  // No payment after the latest maturity anything may set.
+  const contract = contractTerm(loan);
+  const recasts = loan.recasts ?? [];
+  const bound = Math.max(
+    contract,
+    ...recasts.map((r) =>
+      "maturity" in r
+        ? paymentsDueBy(block, isoDate(r.maturity))
+        : Math.max(MAX_LOAN_TERM_MONTHS, contract),
+    ),
+  );
+  const lastPayment = offset + last.month;
+  expect(lastPayment, "last payment number").toBeLessThanOrEqual(bound);
+  const clamped = s.eventOutcomes.some((e) => e.issue !== null);
+  const shortens = (loan.prepayments ?? []).some(
+    (p) => p.effect === "shortenTerm",
+  );
+  // Nothing moved the maturity: the loan runs exactly to the contract term.
+  if (recasts.length === 0 && !shortens && !clamped)
+    expect(lastPayment, "contract term").toBe(contract);
+
+  // No balloon unless the inputs ask for one.
+  const prev = paying.at(-2);
+  if (!prev || prev.month !== last.month - 1) return;
+  const due = (p: number) => iso(edate(block.startDate, p));
+  const asked =
+    s.eventOutcomes.some(
+      (e) =>
+        e.issue === "RECAST_TERM_CAPPED" ||
+        e.issue === "RECAST_INSTALMENT_BELOW_INTEREST",
+    ) ||
+    recasts.some(
+      (r) =>
+        "maturity" in r &&
+        paymentsDueBy(block, isoDate(r.maturity)) -
+          paymentOnOrAfter(block, isoDate(r.date)) <=
+          2,
+    ) ||
+    (loan.draws ?? []).some((x) => x.date > due(lastPayment - 2));
+  if (!asked)
+    expect(
+      paid(last).lessThanOrEqualTo(paid(prev).times(3)),
+      `last payment ${paid(last).toFixed(2)} after ${paid(prev).toFixed(2)}`,
+    ).toBe(true);
+}
+
 /** A loan and two baseDates in one payment period: b2 is the generated baseDate, b1
  *  an earlier day on or after the last payment due by b2. */
 const shifted = fc
@@ -266,6 +349,7 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
         recasts: [{ date: "2026-05-07", instalment: 1600 }],
       };
       expect(hits228(loan, "2026-06-06")).toBe(true);
+      checkEnd(loan, "2026-06-06");
       checkShift(loan, "2026-05-07", "2026-06-06");
     },
   );
@@ -285,5 +369,33 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
       ["2027-02-08", "2027-03-07"],
     ])
       expect(checkShift(loan, b1, b2)).toBe("equal");
+  });
+});
+
+describe("#130 R1-07: random loans end at the maturity in force", () => {
+  it("with a zero balance, no later payment and no balloon", () => {
+    fc.assert(
+      fc.property(loanWithEvents, ({ loan, base }) => {
+        fc.pre(!hits228(loan, base)); // #228
+        checkEnd(loan, base);
+      }),
+      RUNS,
+    );
+  }, 60_000);
+
+  // R1-01 (#109): a tranche on the payment after an instalment recast was never
+  // re-amortized, and the last payment repaid ~2.16 M Kč (ADR 0120).
+  it("R1-01: a tranche after an instalment recast (#109 probe)", () => {
+    const loan: RefLoan = {
+      start: "2026-03-01",
+      principal: 2000000,
+      ratePa: 0.049,
+      instalment: 11000,
+      fixationMonths: 360,
+      termMonths: 360,
+      draws: [{ date: "2027-01-15", amount: 1000000 }],
+      recasts: [{ date: "2027-01-01", instalment: 15000 }],
+    };
+    checkEnd(loan, "2026-06-07");
   });
 });
