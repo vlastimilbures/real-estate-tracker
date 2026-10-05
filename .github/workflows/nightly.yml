@@ -1,9 +1,10 @@
-name: Nightly (mutation testing, bench budgets)
+name: Nightly (mutation testing, bench budgets, property runs)
 
 # Stryker on src/engine (J-09 → D-26, D-68). The run fails when the mutation score drops
 # below thresholds.break in stryker.config.json. The bench job fails when a budgeted
-# engine bench's p99 exceeds 2 × its budget (ADR 0066, ADR 0073). Scheduled runs skip
-# when main has no commit in the last 24 h; a manual run always runs both.
+# engine bench's p99 exceeds 2 × its budget (ADR 0066, ADR 0073). The property job runs
+# the loan-event property tests at 2000 runs with a new seed each night (#232). Scheduled
+# runs skip when main has no commit in the last 24 h; a manual run always runs all three.
 #
 # Stryker runs incrementally (D-72): the previous run's result file is restored from the
 # Actions cache, so only mutants in changed engine code or tests rerun. The first run on a
@@ -13,6 +14,11 @@ on:
   schedule:
     - cron: "17 2 * * *"
   workflow_dispatch:
+    inputs:
+      fc_seed:
+        description: "fast-check seed for the property job (default: today's date, YYYYMMDD)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -124,3 +130,54 @@ jobs:
           name: bench-report
           path: bench.json
           retention-days: 30
+
+  properties:
+    name: Loan-event property tests (2000 runs)
+    needs: changed
+    if: needs.changed.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    # 2000 runs take ~40 s locally; shrinking a failure can take many minutes.
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Pick the seed
+        env:
+          INPUT_SEED: ${{ inputs.fc_seed }}
+        run: |
+          seed="${INPUT_SEED:-$(date -u +%Y%m%d)}"
+          if [[ ! "$seed" =~ ^[1-9][0-9]*$ ]]; then
+            echo "fc_seed must be a positive integer, got '$seed'" >&2
+            exit 1
+          fi
+          echo "FC_SEED=$seed" >> "$GITHUB_ENV"
+          repro="FC_SEED=$seed FC_RUNS=2000 pnpm exec vitest run src/engine/__tests__/loan-event-invariants.test.ts src/engine/__tests__/reference/loanEvents.property.test.ts"
+          echo "Seed $seed. Reproduce locally: $repro"
+          {
+            echo "### Loan-event property tests"
+            echo "Seed \`$seed\`, 2000 runs. Reproduce locally:"
+            echo '```sh'
+            echo "$repro"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Property tests
+        env:
+          FC_RUNS: "2000"
+        run: >-
+          pnpm exec vitest run
+          src/engine/__tests__/loan-event-invariants.test.ts
+          src/engine/__tests__/reference/loanEvents.property.test.ts
