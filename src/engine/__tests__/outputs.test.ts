@@ -78,6 +78,9 @@ const withEvents = (p: Portfolio): Portfolio => ({
 });
 const seedEvents = withEvents(seed);
 const mixedEvents = withEvents(mixed);
+/** Javorová's recast (2031-02-17) falls after the successor's start (2031-01-17), so the
+ *  successor replaces it; the successor's own events apply (ADR 0109 §10). */
+const refiEvents = withEvents(mixedWithRefi);
 
 const PORTFOLIOS: [string, Portfolio][] = [
   ["seed", seed],
@@ -85,6 +88,7 @@ const PORTFOLIOS: [string, Portfolio][] = [
   ["seed + events", seedEvents],
   ["mixed + events", mixedEvents],
   ["mixed + refinance", mixedWithRefi],
+  ["mixed + refinance + events", refiEvents],
   ["synthetic 20", synthetic(20)],
   [
     "empty",
@@ -122,6 +126,27 @@ describe("portfolioOutputs = the separate public calls", () => {
         ]),
       );
     }
+    const refi = [
+      ...propertySchedules(
+        refiEvents.mortgages,
+        refiEvents.properties.map((x) => x.id),
+        assumptions,
+      ).values(),
+    ].flatMap((s) => s.eventOutcomes);
+    const applied = (id: string) => [
+      [id, "prepayment", null],
+      [id, "prepayment", null],
+      [id, "recast", null],
+    ];
+    expect(refi.map((o) => [o.blockId, o.kind, o.issue])).toEqual([
+      ["m-javorova", "prepayment", null],
+      ["m-javorova", "prepayment", null],
+      ...applied("m-refi"),
+      ["m-javorova", "recast", "RECAST_REPLACED"],
+      ...mixed.mortgages
+        .filter((m) => m.propertyId !== "javorova")
+        .flatMap((m) => applied(m.id)),
+    ]);
     expect(
       propertySchedules(seedEvents.mortgages, ["javorova"], assumptions).get(
         "javorova",
