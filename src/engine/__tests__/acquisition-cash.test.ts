@@ -5,7 +5,8 @@
 // figures on the seed plus one property bought in 2020 for cash.
 import { describe, it, expect } from "vitest";
 import { irr, portfolioKpis } from "../kpis";
-import { portfolioProjection } from "../projections";
+import { cpiIndex, portfolioProjection } from "../projections";
+import { propertySchedules } from "../schedule";
 import { isoDate } from "../dates";
 import { money, rate } from "../brands";
 import { ZERO, type Decimal } from "../../lib/money";
@@ -83,9 +84,40 @@ describe("ADR 0134: an owned property's first loan after baseDate is cash in", (
     near(got, want.toNumber(), RATIO, "IRR");
   });
 
+  it("real lens: the principal deflated by its year's CPI", () => {
+    const p = withOwned();
+    const proj = portfolioProjection(p, assumptions);
+    const cpi = cpiIndex(assumptions);
+    const sumReal = proj
+      .slice(1)
+      .reduce((s, y, i) => s.plus(y.netCashFlow.div(cpi[i + 1])), ZERO);
+    expectKc(
+      portfolioKpis(p, assumptions).cumulativeNetCashFlowReal.minus(sumReal),
+      money(PRINCIPAL).div(cpi[1]).toNumber(),
+      "3 M / CPI_1",
+    );
+  });
+
   it("a later draw year books it there", () => {
-    // 2029-03-01 is grid month 33 → projection year 3; the sum is the same.
+    // 2029-03-01 is grid month 33 → projection year 3: the IRR vector pins the year.
     const p = withOwned([loan({ startDate: isoDate("2029-03-01") })]);
+    expectKc(outflow(p), -PRINCIPAL, "3 M in");
+    const proj = portfolioProjection(p, assumptions);
+    const vector = proj.map((y, t) => {
+      if (t === 0) return y.equity.negated();
+      const cf = t === 3 ? y.netCashFlow.plus(PRINCIPAL) : y.netCashFlow;
+      return t === N ? cf.plus(y.equity) : cf;
+    });
+    const want = irr(vector);
+    const got = portfolioKpis(p, assumptions).leveredIrrNominal;
+    if (!want || !got) throw new Error("IRR expected");
+    near(got, want.toNumber(), 1e-12, "IRR, year 3");
+  });
+
+  it("bought on baseDate, loan drawn the next day: owned, so cash in", () => {
+    const p = withOwned([loan({ startDate: isoDate("2026-06-08") })], {
+      purchaseDate: isoDate("2026-06-07"),
+    });
     expectKc(outflow(p), -PRINCIPAL, "3 M in");
   });
 
@@ -120,18 +152,17 @@ describe("ADR 0134: an owned property's first loan after baseDate is cash in", (
       startDate: isoDate("2028-01-31"),
       initialPrincipal: money(PRINCIPAL),
     });
-    const withRefi = outflow(withOwned([first, refi]));
-    const kpis = portfolioKpis(withOwned([first, refi]), assumptions);
-    const proj = portfolioProjection(withOwned([first, refi]), assumptions);
+    const p = withOwned([first, refi]);
+    const [r] =
+      propertySchedules(p.mortgages, ["owned"], assumptions).get("owned")
+        ?.refinances ?? [];
+    if (!r) throw new Error("expected a handover");
     // Cash in = the refinance difference only: 3 M − the balance it pays off.
-    expect(withRefi.isNegative()).toBe(true);
-    expect(withRefi.abs().lessThan(PRINCIPAL)).toBe(true);
-    expect(kpis.cumulativeNetCashFlow.toString()).toBe(
-      proj
-        .slice(1)
-        .reduce((s, y) => s.plus(y.netCashFlow), ZERO)
-        .minus(withRefi)
-        .toString(),
+    expect(r.paidOff.greaterThan(ZERO)).toBe(true);
+    expectKc(
+      outflow(p),
+      r.drawn.minus(r.paidOff).negated().toNumber(),
+      "D-47 cash only",
     );
   });
 

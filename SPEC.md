@@ -377,11 +377,12 @@ never the acquisition loan. A future buy's first loan that starts after the wind
 the acquisition loan: its initial principal is **cash in** in the projection year it is
 drawn, like refinance cash; its tranches are not. The same holds for a property owned at
 baseDate whose first loan is drawn after baseDate (ADR 0134): its equity at baseDate holds
-the whole value, so the loan's initial principal is cash in, in its draw year. **Sources and uses** (the Property detail
-Acquisition section, §9; never a blocker): uses = price + recorded costs + recorded works;
-sources = own cash + acquisition loan; gap = uses − sources, only while own cash is known.
-A gap of 1 Kč or more either way is shown as a warning; a smaller one is rounding. A
-funding record on a property bought on or before baseDate changes no figure.
+the whole value, so the loan's initial principal is cash in, in its draw year. **Sources
+and uses** (the Property detail Acquisition section, §9; never a blocker): uses = price +
+recorded costs + recorded works; sources = own cash + acquisition loan; gap = uses −
+sources, only while own cash is known. A gap of 1 Kč or more either way is shown as a
+warning; a smaller one is rounding. A funding record on a property bought on or before
+baseDate changes no figure.
 
 **Debt service before the purchase** (ADR 0124): a future buy's loan can start before its
 purchase date (an off-plan loan drawn at contract). Its schedule runs from its own start, while

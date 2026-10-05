@@ -13,7 +13,7 @@ import { money, rate } from "../brands";
 import { ZERO, type Decimal } from "../../lib/money";
 import type { Assumptions, MortgageBlock, Portfolio, Property } from "../types";
 import { assumptions as seedAssumptions, portfolio } from "./support/seed";
-import { expectKc, expectRatio } from "./support/tolerance";
+import { expectKc, near } from "./support/tolerance";
 
 const assumptions: Assumptions = { ...seedAssumptions, horizonYears: 10 };
 const N = assumptions.horizonYears;
@@ -25,7 +25,8 @@ const DOWN_PAYMENT = PRICE - PRINCIPAL; // no cost rate, no record (ADR 0119 §5
 const INSTALMENT = 25_000;
 /** ADR 0134 (#193): the principal the loan repaid before baseDate, charged with the down
  *  payment. By hand: the 4 instalments due 10.02.–10.05.2026 at 5 % / 12 split
- *  8,333.33 + 8,368.06 + 8,402.92 + 8,437.93 of principal (4 M → 3,966,457.75). */
+ *  ≈ 8,333.33 + 8,368.06 + 8,402.92 + 8,437.93 of principal (each rounded; unrounded
+ *  4 M → 3,966,457.755, so 33,542.245). */
 const REPAID = 33_542.25;
 
 const loan = (patch: Partial<MortgageBlock> = {}): MortgageBlock =>
@@ -166,13 +167,14 @@ describe("ADR 0124: debt service before a future purchase is owner cash", () => 
       nominal.push(cf);
     }
     const k = portfolioKpis(p, assumptions);
-    // REPAID is the hand figure to the haléř, so the IRRs match within the ratio tolerance.
+    // REPAID is the hand figure to the haléř (< 0.005 Kč off), so the IRRs agree to 1e-9:
+    // tight enough to catch the charge itself (it moves the IRR by ~1.4e-4).
     const wantNominal = irr(nominal);
     const wantReal = irr(nominal.map((cf, t) => cf.div(cpi[t])));
     if (!k.leveredIrrNominal || !k.leveredIrrReal || !wantNominal || !wantReal)
       throw new Error("IRR expected");
-    expectRatio(k.leveredIrrNominal, wantNominal.toNumber(), "nominal IRR");
-    expectRatio(k.leveredIrrReal, wantReal.toNumber(), "real IRR");
+    near(k.leveredIrrNominal, wantNominal.toNumber(), 1e-9, "nominal IRR");
+    near(k.leveredIrrReal, wantReal.toNumber(), 1e-9, "real IRR");
     const real = nominal
       .slice(1)
       .map((cf, i) => (i + 1 === N ? cf.minus(proj[N].equity) : cf))
@@ -357,6 +359,28 @@ describe("ADR 0124: owner cash is conserved around the turn-on year", () => {
     // The principal repaid before baseDate is charged with the down payment; before
     // ADR 0134 it came back as equity with no cash against it.
     expectConserved(buyOnly([loan()]), "loan before baseDate");
+  });
+
+  it("a loan drawn before baseDate with a prepayment before baseDate (ADR 0134)", () => {
+    const l = loan({
+      prepayments: [
+        {
+          date: isoDate("2026-03-01"),
+          amount: money(200_000),
+          effect: "shortenTerm",
+        },
+      ],
+    });
+    expectConserved(buyOnly([l]), "prepayment before baseDate");
+  });
+
+  it("a development loan with a late tranche before baseDate (ADR 0134, D-41)", () => {
+    // 2026-05-20: after the last payment due (10.05.) and before baseDate.
+    const dev = loan({
+      loanTermYears: 30,
+      draws: [{ date: isoDate("2026-05-20"), amount: money(1_000_000) }],
+    });
+    expectConserved(buyOnly([dev]), "late tranche before baseDate");
   });
 
   it("a purchase on a grid point and one day after it", () => {

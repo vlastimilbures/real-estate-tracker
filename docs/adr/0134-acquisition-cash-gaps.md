@@ -16,8 +16,9 @@ A property already owned at the projection start can get its **first** loan afte
 baseDate: a mortgage on a flat bought for cash, or a loan drawn shortly after a purchase
 made just before baseDate. The engine books the loan as new debt in the grid month it is
 drawn ([0033](0033-loan-first-grid-month.md)): equity falls by the principal and the
-instalments lower net cash flow. The loan's money never showed up as cash. Its equity at baseDate already holds the whole
-value, so levered IRR and cumulative net cash flow were understated by the principal.
+instalments lower net cash flow. The loan's money never showed up as cash. Its equity at
+baseDate already holds the whole value, so levered IRR and cumulative net cash flow were
+understated by the principal.
 
 ADR 0119 §5 already counts this cash for a **future buy**: a first loan that starts more
 than 90 days after the purchase brings its initial principal as cash in, in the year it is
@@ -70,8 +71,9 @@ The owner chose option A of #181 and option B of #193 on 2026-10-05.
    whole principal.
 8. **Not traced: a successor in force at baseDate.** When a refinance successor already
    replaced the acquisition loan by baseDate, the chain drops the predecessor (`blockChain`)
-   and refinance cash before baseDate is not modelled, so nothing is added. This is a
-   documented limitation.
+   and refinance cash before baseDate is not modelled, so nothing is added. Neither the
+   principal repaid nor that refinance's cash-out or pay-down is traced, so the owner's
+   cash can be off either way. This is a documented limitation.
 
 ### Both
 

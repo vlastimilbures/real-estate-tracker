@@ -40,8 +40,9 @@ work still to do is in the [roadmap](roadmap.md).
   the purchase count as cash you paid, although those years show no rows for the property
   (ADR 0124). The principal it repaid before the projection start is charged with the down
   payment, in the purchase year rather than when it was paid, so the IRR reads a little
-  high. When the loan was already refinanced before the projection start, that principal
-  is not traced and shows as equity you did not pay for (ADR 0134). A property bought after the horizon pays its
+  high. When the loan was already refinanced before the projection start, neither the
+  principal repaid nor the cash from that refinance is traced, so the cash you paid can
+  read too high or too low (ADR 0134). A property bought after the horizon pays its
   instalments inside the horizon but never adds its value. With equity of zero or less
   at the start, the multiple and CAGR show "—", and so does CAGR when net worth at the
   horizon is zero or less; when the cash flows give no single answer, IRR shows "n/a"

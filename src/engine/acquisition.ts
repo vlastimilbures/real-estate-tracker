@@ -4,7 +4,8 @@
 import { ZERO, type Decimal } from "../lib/money";
 import { addDays, firstAfter, isAfter, isOnOrBefore } from "./dates";
 import { forProperty } from "./metrics";
-import { blockChain, openingBalance } from "./schedule";
+import { selectBlock } from "./amortization";
+import { openingBalance } from "./schedule";
 import type { Assumptions, MortgageBlock, Portfolio, Property } from "./types";
 
 /** A block starting up to this many days after the purchase funded it (ADR 0119 §3). */
@@ -69,9 +70,9 @@ export function laterFirstLoan(
  * (an off-plan loan drawn at contract). The down payment nets off the whole loan, but the
  * property turns on with the running balance, so this is charged with the down payment.
  * Drawn by baseDate (initial principal + tranches dated on or before it) − its balance at
- * baseDate. 0 when the loan is drawn after baseDate, and when a successor is already in
- * force at baseDate: the chain drops the predecessor and refinance cash before baseDate
- * is not modelled (a documented limit).
+ * baseDate. 0 for a property owned at baseDate, for a loan drawn after baseDate, and when
+ * a successor is already in force at baseDate: the chain drops the predecessor and
+ * refinance cash before baseDate is not modelled (a documented limit).
  */
 export function repaidBeforeBase(
   property: Property,
@@ -79,20 +80,27 @@ export function repaidBeforeBase(
   assumptions: Assumptions,
 ): Decimal {
   const { baseDate } = assumptions;
+  // An owned property's opening debt is already inside equity0.
+  if (isOnOrBefore(property.purchaseDate, baseDate)) return ZERO;
   const blocks = forProperty(portfolio.mortgages, property.id);
   const first = earliestBlock(blocks);
+  // Drawn before a later purchase, so it is the acquisition loan (ADR 0119 §3).
   if (
     !first ||
-    !fundedThePurchase(property, first) ||
     isAfter(first.startDate, baseDate) ||
-    blockChain(blocks, baseDate)[0] !== first
+    selectBlock(blocks, baseDate) !== first
   ) {
     return ZERO;
   }
-  const drawn = (first.draws ?? [])
-    .filter((d) => isOnOrBefore(d.date, baseDate))
-    .reduce<Decimal>((s, d) => s.plus(d.amount), first.initialPrincipal);
-  return drawn.minus(openingBalance(first, assumptions));
+  return drawnBy(first, baseDate).minus(openingBalance(first, assumptions));
+}
+
+/** A loan's initial principal plus its tranches dated on or before `cutoff` (all of them
+ *  without one). */
+function drawnBy(block: MortgageBlock, cutoff?: Date): Decimal {
+  return (block.draws ?? [])
+    .filter((d) => !cutoff || isOnOrBefore(d.date, cutoff))
+    .reduce<Decimal>((s, d) => s.plus(d.amount), block.initialPrincipal);
 }
 
 /** A loan's initial principal plus its tranches dated on or before the start of the
@@ -103,9 +111,7 @@ function principalUntilReplaced(
   blocks: MortgageBlock[],
 ): Decimal {
   const next = firstAfter(blocks, block.startDate, (b) => b.startDate);
-  return (block.draws ?? [])
-    .filter((d) => !next || isOnOrBefore(d.date, next.startDate))
-    .reduce<Decimal>((s, d) => s.plus(d.amount), block.initialPrincipal);
+  return drawnBy(block, next?.startDate);
 }
 
 /** The recorded parts of a funding record, null where unknown. */
