@@ -64,6 +64,13 @@ still describe it. Which document owns what is listed in
   p99 ≤ 150 ms for one recompute and ≤ 450 ms for a 3-scenario compare. The nightly run fails
   when a p99 exceeds twice its budget (`pnpm bench:check`); check the budgets themselves
   locally after an engine change.
+- **Property tests** (#232): the random loan-event tests run at a fixed seed in PR CI
+  (`loan-event-invariants.test.ts` 200 runs, `reference/loanEvents.property.test.ts` 80).
+  The nightly run repeats both at 2000 runs with the UTC date as the seed and prints that
+  seed. Reproduce a failure with
+  `FC_SEED=<seed> FC_RUNS=2000 pnpm exec vitest run <file>`. A failure there is an engine
+  or harness bug: fix it, or file it and exclude its shape with the issue ID (`fc.pre`).
+  Never lower the runs to pass.
 - **Accessibility** (ADR 0078): CI's `axe` job runs `pnpm ux:capture` (English, light + dark,
   1280×800 + minimum window) and `pnpm ux:axe-check ci`, which fails on any axe violation.
   Run the same locally after UI work; a new screen or state gets a capture entry.
