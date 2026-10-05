@@ -1,6 +1,6 @@
 # 0136. Shorten term keeps the instalment the next payment pays
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-05
 - Source: issue #228 (found by the baseDate-shift invariant, #130 R1-07, PR #231)
 - Amends: [0109](0109-loan-prepayments-and-recasts.md) §5 (effect of a `shortenTerm`
