@@ -388,7 +388,8 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
     // draw timing; with "nextMonth" a pending tranche would re-amortize there anyway).
     const owedNext = agreedInstalment !== null && fresh.greaterThan(ZERO);
     if (agreedInstalment) {
-      instalment = agreedInstalment;
+      // ADR 0137: the agreed instalment pays at least the month's interest.
+      instalment = Dec.max(agreedInstalment, roundInterest(balance.times(r)));
     } else if (trigger) {
       const remaining = maturity - (k - 1);
       instalment =

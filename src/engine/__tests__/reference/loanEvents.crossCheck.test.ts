@@ -313,6 +313,27 @@ const CASES: Case[] = [
     "2027-01-20",
   ],
   [
+    "dev loan, tranche on the recast's payment above its agreed instalment (ADR 0137)",
+    {
+      ...onRecastPayment,
+      fixationMonths: 360,
+      draws: [{ date: "2027-01-15", amount: "2000000" }],
+    },
+  ],
+  [
+    "dev loan, tranche on the recast's payment above its agreed instalment, then a reset (ADR 0137)",
+    { ...onRecastPayment, draws: [{ date: "2027-01-15", amount: "2000000" }] },
+  ],
+  [
+    "dev loan, tranche above the agreed instalment, then a large shorten on q (ADR 0137)",
+    {
+      ...onRecastPayment,
+      fixationMonths: 360,
+      draws: [{ date: "2027-01-15", amount: "2000000" }],
+      prepayments: [shorten("2027-01-20", 2500000)],
+    },
+  ],
+  [
     "dev loan, tranche on a recast's payment that is its maturity (ADR 0116, 0120)",
     {
       ...onRecastPayment,
