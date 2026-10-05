@@ -70,6 +70,8 @@ The owner chose option C of #104 (2026-10-04): model the payments, do not reject
    equity at turn-on with no cash against it. Its place would be the year-0 investment,
    beside −equity0, which is how a not-yet-owned property is costed at the start (#126),
    and a refinance chain before baseDate cannot be traced. Issue #193 holds it.
+   Decided later: it is charged with the down payment in the turn-on year when the loan
+   is still in force at baseDate (ADR 0134).
 
 ## Consequences
 
