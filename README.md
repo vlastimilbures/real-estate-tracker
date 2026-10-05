@@ -241,6 +241,7 @@ Every check CI runs has a local command; the full list is in [CONTRIBUTING.md](C
 | `cargo clippy` · `cargo test`  | Rust lints and integration tests                                         |
 | `pnpm ux:axe-check ci`         | axe scan of every screen: English, light and dark, two window sizes      |
 | `pnpm mutation` · `pnpm bench` | Nightly: Stryker mutation score on the engine; performance budgets       |
+| `FC_RUNS=2000` property tests  | Nightly: loan-event property tests with a new seed each night            |
 
 ## Architecture
 

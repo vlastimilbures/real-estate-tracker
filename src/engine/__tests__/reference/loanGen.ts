@@ -10,6 +10,12 @@
 // may then come before a tranche, the R1-01 shape) or one after the last tranche; up to
 // three recasts of either form, off the due dates; prepayment fees; an explicit term on
 // a plain loan; a rate shock at the fixation end; one successor block (a refinance).
+// Half the development loans start near their baseDate, so the R1-01 shape (an instalment
+// recast before a tranche, both after baseDate) comes up ~29 times in 1000, not ~10
+// (#232, measured with `fc.sample` over 4 seeds × 10,000). The price: dev loans drawn
+// or completed long before baseDate are about half as common as before (completed
+// before baseDate ~86 in 1000, was ~221); tranches near baseDate (D-41) are twice as
+// common.
 import fc from "fast-check";
 import { D, PMT } from "../../../lib/money";
 import { rate } from "../../brands";
@@ -61,7 +67,8 @@ const devTerms = opt(
       }),
       { minLength: 1, maxLength: 3 },
     ),
-    completion: fc.constantFrom("none", "last", "later"),
+    // "none" half the time: the R1-01 shape needs it (#232).
+    completion: fc.constantFrom("none", "none", "last", "later"),
     later: fc.integer({ min: 1, max: 6 }),
   }),
 );
@@ -74,6 +81,9 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
     plainTerm: fc.boolean(),
     fixationYears: fc.integer({ min: 1, max: 10 }),
     startOffset: fc.integer({ min: -180, max: 24 }),
+    // Half the development loans start from about a year before to half a year after
+    // their baseDate, so their tranches and recasts fall inside the projection (#232).
+    devNearBase: opt(fc.integer({ min: -12, max: 6 })),
     startDay: fc.constantFrom("07", "28", "29", "30", "31"),
     prepays: fc.array(
       fc.record({
@@ -123,10 +133,17 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
   })
   .map((g): RandomLoan => {
     const base = daysBefore(BASE, -g.baseShift);
-    // Day `startDay` of month BASE + startOffset. addMonths clamps a missing day (31 April)
-    // to the month end; step back to the month before, which always has 31 days, so the
-    // start keeps its day and only the later due dates clamp.
-    const month = g.startOffset + Number(BASE.slice(5, 7)) - 1;
+    // Day `startDay` of month BASE + startOffset, or of month base + devNearBase.
+    // addMonths clamps a missing day (31 April) to the month end; step back to the month
+    // before, which always has 31 days, so the start keeps its day and only the later
+    // due dates clamp.
+    const near = g.dev ? g.devNearBase : undefined;
+    const from = near == null ? BASE : base;
+    const month =
+      (near ?? g.startOffset) +
+      12 * (Number(from.slice(0, 4)) - Number(BASE.slice(0, 4))) +
+      Number(from.slice(5, 7)) -
+      1;
     const at = (k: number) =>
       addMonths(`${BASE.slice(0, 4)}-01-${g.startDay}`, k);
     const start = at(month).endsWith(g.startDay) ? at(month) : at(month - 1);

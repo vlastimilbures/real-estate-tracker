@@ -9,16 +9,15 @@ import { D, type Decimal } from "../../../lib/money";
 import { isoDate } from "../../dates";
 import { openingBalance } from "../../schedule";
 import type { AmortizationRow } from "../../types";
+import { fcRuns } from "../support/fcRuns";
 import { assumptions as A0 } from "../support/seed";
 import { TIGHT, both, chainBoth, maxDev, sum, toBlock } from "./eventHarness";
 import { addMonths, paymentsMadeBy, type RefLoan } from "./mortgageReference";
 import { isValid, loanWithEvents, shockOf, type RandomLoan } from "./loanGen";
 
-// Fixed seed ⇒ reproducible in CI. Hunt locally with FC_SEED=<n> FC_RUNS=<n>.
-const RUNS = {
-  seed: Number(process.env.FC_SEED ?? 20261003),
-  numRuns: Number(process.env.FC_RUNS ?? 80),
-};
+// Fixed seed ⇒ reproducible in CI; nightly runs 2000 with a date seed (`fcRuns`).
+// Hunt locally with FC_SEED=<n> FC_RUNS=<n>.
+const { runs: RUNS, timeout: TIMEOUT } = fcRuns(20261003, 80);
 
 /** Σ principal + Σ prepaid + final balance − opening − Σ new debt; zero when the
  *  balance is conserved. The final balance must not be negative. */
@@ -75,39 +74,43 @@ function expectChainAgrees(
 }
 
 describe("ADR 0109: random loans with random events", () => {
-  it("agree with the reference to 1e-6 Kč and conserve principal", () => {
-    fc.assert(
-      fc.property(loanWithEvents, (g) => {
-        fc.pre(isValid(g) && !hits229(g)); // #229
-        const { loan, base, successor } = g;
-        const { opts, extra } = shockOf(g);
-        if (!successor) {
-          const { e, r } = both(loan, base, opts, extra);
-          expect(maxDev(e, r)).toBeLessThanOrEqual(TIGHT);
-          const opening = openingBalance(toBlock(loan), {
-            ...A0,
-            baseDate: isoDate(base),
-            ...extra,
-          });
-          expect(leak(e, opening)).toBeLessThanOrEqual(TIGHT);
-          return;
-        }
-        // A refinance (D-47): compare the handovers too, and conserve from the first
-        // row's opening balance.
-        const { e, r } = chainBoth([loan, successor], base, opts, extra);
-        expectChainAgrees(e, r);
-        const first = e.rows[0];
-        if (!first) return;
-        const opening = first.endBalance
-          .plus(first.principal)
-          .plus(first.prepaid)
-          .minus(first.drawn)
-          .minus(first.refinanced);
-        expect(leak(e.rows, opening)).toBeLessThanOrEqual(TIGHT);
-      }),
-      RUNS,
-    );
-  }, 60_000);
+  it(
+    "agree with the reference to 1e-6 Kč and conserve principal",
+    () => {
+      fc.assert(
+        fc.property(loanWithEvents, (g) => {
+          fc.pre(isValid(g) && !hits229(g)); // #229
+          const { loan, base, successor } = g;
+          const { opts, extra } = shockOf(g);
+          if (!successor) {
+            const { e, r } = both(loan, base, opts, extra);
+            expect(maxDev(e, r)).toBeLessThanOrEqual(TIGHT);
+            const opening = openingBalance(toBlock(loan), {
+              ...A0,
+              baseDate: isoDate(base),
+              ...extra,
+            });
+            expect(leak(e, opening)).toBeLessThanOrEqual(TIGHT);
+            return;
+          }
+          // A refinance (D-47): compare the handovers too, and conserve from the first
+          // row's opening balance.
+          const { e, r } = chainBoth([loan, successor], base, opts, extra);
+          expectChainAgrees(e, r);
+          const first = e.rows[0];
+          if (!first) return;
+          const opening = first.endBalance
+            .plus(first.principal)
+            .plus(first.prepaid)
+            .minus(first.drawn)
+            .minus(first.refinanced);
+          expect(leak(e.rows, opening)).toBeLessThanOrEqual(TIGHT);
+        }),
+        RUNS,
+      );
+    },
+    TIMEOUT,
+  );
 
   // #229: the 15,000 Kč tranche dated 08-01 lands in the handover month (grid month 2,
   // 08-07), whose owner payment is dropped; the engine pays off 297,561.46, not
