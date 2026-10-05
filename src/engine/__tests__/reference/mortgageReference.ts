@@ -484,16 +484,20 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
     }
     const owedAfter = balance.plus(effectSeen);
     let counted = ZERO;
+    // shortenTerm keeps the instalment the next payment pays: an agreed one still to
+    // pay (a recast settled before it, after payment k) at payment k+1's rate (ADR 0136).
+    const kept = agreedInstalment ?? row.instalment;
+    const keptRate = agreedInstalment
+      ? rateAt(addMonths(loan.start, k + 1)).div(12)
+      : row.ratePa.div(12);
     // `prevIo`: whether payment k (just made) was interest-only (ADR 0129 §2).
     if (effect && owedAfter.greaterThan(ZERO) && !prevIo) {
       if (effect === "lowerInstalment") {
         reamortizeNext = true;
         counted = effectSeen;
-      } else if (
-        row.instalment.greaterThan(owedAfter.times(row.ratePa.div(12)))
-      ) {
+      } else if (kept.greaterThan(owedAfter.times(keptRate))) {
         // An instalment that does not cover the interest has no NPER: no change.
-        const n = annuityPeriods(row.ratePa.div(12), row.instalment, owedAfter);
+        const n = annuityPeriods(keptRate, kept, owedAfter);
         maturity = Math.min(maturity, k + n.ceil().toNumber());
         counted = effectSeen;
       }

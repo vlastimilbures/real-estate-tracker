@@ -375,10 +375,11 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
     expect(checkShift(loan, "2026-04-28", "2026-05-14")).toBe("equal");
   });
 
-  // #228: the prepayment pulled into the late window under 06-06 sizes the term on the
-  // instalment before the recast; the loan then ends in a 125,586 Kč balloon, which the
-  // end-of-loan check sees. (The shift check does not compare the end here: the recast
-  // follows payment o.)
+  // #228 (ADR 0136): under 06-06 the late window pulls the prepayment back to the
+  // payment the recast follows. It sizes the term on the agreed 1,600 Kč the next
+  // payment pays, not on the 2,000 Kč before the recast (that ended in a 125,586 Kč
+  // balloon). (The shift check does not compare the end here: the recast follows
+  // payment o.)
   const loan228: RefLoan = {
     start: "2025-06-07",
     principal: 300000,
@@ -388,13 +389,70 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
     prepayments: [{ date: "2026-06-06", amount: 3000, effect: "shortenTerm" }],
     recasts: [{ date: "2026-05-07", instalment: 1600 }],
   };
-  it("#228: the exclusion matches its probe", () => {
-    expect(hits228(loan228, "2026-06-06")).toBe(true);
+  /** The loan's last payment: its number and what it pays. */
+  const lastPaid = (loan: RefLoan, base: string) => {
+    const rows = run(loan, base).rows;
+    const last = rows.find((r) => r.month === lastPaying(rows));
+    const offset = paymentOffset(toBlock(loan), isoDate(base));
+    return last ? `${offset + last.month}: ${paid(last).toFixed(2)}` : "none";
+  };
+  // The loan ends on the same payment under all three baseDates. Under 06-06 the
+  // 3,000 Kč is repaid one payment earlier, so the last payment is a little lower.
+  it("#228: a late shortenTerm prepayment after an instalment recast", () => {
+    for (const [base, last] of [
+      ["2026-05-07", "310: 1194.91"],
+      ["2026-06-06", "310: 1160.59"],
+      ["2026-06-07", "310: 1194.91"],
+    ]) {
+      checkEnd(loan228, base);
+      expect(lastPaid(loan228, base), base).toBe(last);
+    }
   });
-  it.fails(
-    "#228: a late shortenTerm prepayment after an instalment recast",
-    () => checkEnd(loan228, "2026-06-06"),
-  );
+  it("#228: the same on a development loan (222,632 Kč balloon before)", () => {
+    const loan: RefLoan = {
+      start: "2025-06-07",
+      principal: 300000,
+      ratePa: 0.005,
+      instalment: 2565,
+      termMonths: 120,
+      fixationMonths: 120,
+      draws: [{ date: "2026-04-07", amount: 15000 }],
+      completion: "2026-04-07",
+      prepayments: [
+        { date: "2026-06-06", amount: 3000, effect: "shortenTerm" },
+      ],
+      recasts: [{ date: "2026-05-07", instalment: 921 }],
+    };
+    for (const base of ["2026-05-07", "2026-06-06"]) checkEnd(loan, base);
+    expect(lastPaid(loan, "2026-05-07")).toBe("373: 1353.26");
+    expect(lastPaid(loan, "2026-06-06")).toBe("373: 1353.25");
+  });
+  // Known limitation (ADR 0136): a maturity recast leaves no agreed instalment, only an
+  // owed re-amortization, which `shortenTerm` does not see (as in ADR 0120 decision 4).
+  // Under 09-06 the late prepayment sizes the term on the instalment before the recast,
+  // and the loan ends 12 payments earlier than under 08-07. No balloon either way.
+  it("#228: a late shortenTerm after a maturity recast (today: 12 payments earlier)", () => {
+    const loan: RefLoan = {
+      start: "2023-02-07",
+      principal: 300000,
+      ratePa: 0.005,
+      instalment: 2565,
+      termMonths: 120,
+      fixationMonths: 12,
+      draws: [
+        { date: "2023-03-01", amount: 43442 },
+        { date: "2025-07-01", amount: 33985 },
+      ],
+      completion: "2025-07-01",
+      prepayments: [
+        { date: "2025-09-06", amount: 3000, effect: "shortenTerm" },
+      ],
+      recasts: [{ date: "2025-08-07", maturity: "2034-02-07" }],
+    };
+    for (const base of ["2025-08-07", "2025-09-06"]) checkEnd(loan, base);
+    expect(lastPaying(run(loan, "2025-08-07").rows)).toBe(102);
+    expect(lastPaying(run(loan, "2025-09-06").rows)).toBe(90);
+  });
 
   it("R1-04: a payment due just before completion (#135 probe)", () => {
     const loan: RefLoan = {

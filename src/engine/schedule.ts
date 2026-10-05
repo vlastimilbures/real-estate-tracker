@@ -512,17 +512,29 @@ function applyPrepayments(
 /**
  * The bank's answer to the period's prepayments, once, on the balance after all of
  * them (the last one's effect): lower the instalment from the next payment, or keep
- * it and end the loan after `ceil(NPER)` more payments at this payment's rate.
+ * the instalment the next payment pays and end the loan after `ceil(NPER)` more
+ * payments at this payment's rate. An agreed instalment still to pay (a recast after
+ * this payment, settled in the late window) is that instalment, at the next
+ * payment's rate (ADR 0136); an owed re-amortization is not (ADR 0120 decision 4).
  * Interest-only months pay no instalment to keep: completion re-amortizes anyway.
  */
 function prepaymentTerms(
+  ev: LoanEvents,
   effect: PrepaymentEffect | null,
   done: PaymentDone,
 ): TermState {
   const { terms, balance } = done;
   if (!effect || done.interestOnly || !balance.greaterThan(ZERO)) return terms;
   if (effect === "lowerInstalment") return { ...terms, reamortizeNext: true };
-  const left = nperMonths(done.ratePa.div(12), done.instalment, balance);
+  const agreed = terms.agreedInstalment;
+  const left =
+    agreed !== null
+      ? nperMonths(
+          rateOfPayment(done.p + 1, ev.block, ev.assumptions).div(12),
+          agreed,
+          balance,
+        )
+      : nperMonths(done.ratePa.div(12), done.instalment, balance);
   return Number.isFinite(left) && left > 0
     ? { ...terms, term: Math.min(terms.term, done.p + left) }
     : terms;
@@ -612,7 +624,7 @@ function settleEvents(
   }
   const paid = applyPrepayments(ev, done, period.prepayments, seen);
   const after = { ...done, balance: paid.balance };
-  const terms = prepaymentTerms(paid.effect, {
+  const terms = prepaymentTerms(ev, paid.effect, {
     ...after,
     balance: paid.balance.plus(paid.seenAfter),
   });
