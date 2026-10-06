@@ -88,7 +88,7 @@ export function EntityTable<T extends { id: string }>({
 
 /** The one inline confirm for a destructive action (ADR 0143). It runs `onConfirm` and
  *  stays open with the reason when the write fails (UX-050); the caller closes it on
- *  success. Focus moves to the confirm button on open and back to the trigger on Cancel;
+ *  success. Focus moves to Cancel on open and back to the trigger on Cancel;
  *  both buttons are described by the question, so a screen reader reads it. */
 export function ConfirmRow({
   message,
@@ -115,7 +115,9 @@ export function ConfirmRow({
     // focus back on the trigger, so that is what is remembered here.
     if (document.activeElement instanceof HTMLElement)
       opener.current = document.activeElement;
-    rowRef.current?.querySelector("button")?.focus();
+    // Cancel, the last button: the safe choice, so a held Enter on the trigger cannot
+    // reach the destructive one (ADR 0143).
+    [...(rowRef.current?.querySelectorAll("button") ?? [])].at(-1)?.focus();
   }, []);
   return (
     <div className="confirm-row" ref={rowRef}>

@@ -604,7 +604,7 @@ export const SCREENS: Screen[] = [
       const p = panel(ux, ux.t.propertyDetail.valuationsTitle);
       await p.getByRole("button", { name: ux.t.common.delete }).first().click();
       await expect(
-        p.getByRole("button", { name: ux.t.common.yesDelete }),
+        p.getByRole("button", { name: ux.t.common.cancel }),
       ).toBeFocused();
       await p.scrollIntoViewIfNeeded();
       await ux.capture("21b-property-valuation-delete-confirm");
@@ -785,7 +785,7 @@ export const SCREENS: Screen[] = [
   },
   {
     id: "45-scenario-delete-confirm",
-    desc: "Scenario delete confirm, focus on Yes (ADR 0143)",
+    desc: "Scenario delete confirm, focus on Cancel (ADR 0143)",
     route: "scenarios",
     run: async (ux) => {
       await boot(ux.page);
@@ -799,7 +799,7 @@ export const SCREENS: Screen[] = [
         .first()
         .click();
       await expect(
-        ux.page.getByRole("button", { name: ux.t.common.yesDelete }),
+        ux.page.getByRole("button", { name: ux.t.common.cancel }),
       ).toBeFocused();
       await ux.capture("45-scenario-delete-confirm");
     },
