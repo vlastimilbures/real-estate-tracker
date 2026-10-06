@@ -136,8 +136,9 @@ export function EntityPanel<
         <ConfirmRow
           key={mode.id}
           message={
-            (deletingRow && describe?.(deletingRow)) ??
-            tr.common.confirmDeleteRow
+            deletingRow && describe
+              ? describe(deletingRow)
+              : tr.common.confirmDeleteRow
           }
           confirmLabel={tr.common.yesDelete}
           busyLabel={tr.common.deleting}

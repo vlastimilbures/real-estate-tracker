@@ -100,6 +100,7 @@ export function ConfirmRow({
   message: string;
   confirmLabel: string;
   busyLabel: string;
+  /** Resolves with the write's outcome and never rejects, like the store's mutations. */
   onConfirm: () => Promise<MutationResult>;
   onCancel: () => void;
 }) {
