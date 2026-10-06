@@ -438,6 +438,19 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
     expect(reloaded.completionDate?.getTime()).toBe(completionDate.getTime());
   });
 
+  it("a broken input rule is only returned: the banner stays empty (#125)", async () => {
+    // ADR 0141: the form that submitted the write shows the refusal itself.
+    const existing = pf().mortgages[0];
+    const blocked = await usePortfolioStore.getState().saveMortgageBlock({
+      ...existing,
+      draws: [{ date: isoDate("2026-09-01"), amount: money("2300000") }],
+      completionDate: isoDate("2028-10-10"),
+    } as unknown as MortgageBlock); // deliberately invalid (no term)
+    expect(blocked.ok).toBe(false);
+    expect(blocked.ok ? null : blocked.error.kind).toBe("input");
+    expect(usePortfolioStore.getState().error).toBeNull();
+  });
+
   it("saveHoldingCost updates an existing row", async () => {
     const existing = pf().holdingCosts.find((h) => h.propertyId === pid())!;
     const result = await usePortfolioStore

@@ -162,6 +162,8 @@ interface PortfolioState {
    *  than theirs (ADR 0132). On failure log it and set `stale`; never throws. */
   reload: () => Promise<void>;
   clearError: () => void;
+  /** Show `error` in the banner: for a refusal no form is open to show (ADR 0141). */
+  showError: (error: WriteError) => void;
 
   // valuations
   addValuation: (v: Valuation) => Promise<MutationResult>;
@@ -348,12 +350,10 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       return { ok: true };
     } catch (e) {
       // A broken input rule is the user's to fix in the form, not a failure to log;
-      // it is thrown before anything is written, so there is nothing to reload.
-      if (e instanceof EngineInputError) {
-        const error = toWriteError(e);
-        set({ error });
-        return { ok: false, error };
-      }
+      // it is thrown before anything is written, so there is nothing to reload. Only
+      // returned: the form shows it, and a non-form caller uses showError (ADR 0141).
+      if (e instanceof EngineInputError)
+        return { ok: false, error: toWriteError(e) };
       logFailure("WRITE", e);
       const error = toWriteError(e);
       await refreshOrMarkStale();
@@ -440,6 +440,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     },
 
     clearError: () => set({ error: null }),
+    showError: (error) => set({ error }),
 
     reload: () => enqueue(refreshOrMarkStale),
 

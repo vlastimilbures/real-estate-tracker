@@ -409,6 +409,17 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
     [formKey, setUnsavedChanges],
   );
 
+  /** Edit fields; their errors go with the edit (ADR 0141, as the property form). */
+  function patch(p: Record<string, string>) {
+    setDraft((d) => ({ ...d, ...p }));
+    setErrors((e) => {
+      const copy = { ...e };
+      for (const name of Object.keys(p)) delete copy[name];
+      return copy;
+    });
+  }
+  const edit = (name: string, v: string) => patch({ [name]: v });
+
   async function submit() {
     const { values, errors: errs } = collectValues(specs, draft, formRules(t));
     // Cross-field rules only run once every field parses, so messages point at the
@@ -456,7 +467,7 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
         if (!busy) void submit();
       }}
     >
-      {header?.(draft, (p) => setDraft((d) => ({ ...d, ...p })))}
+      {header?.(draft, patch)}
       <div className="form-grid">
         {specs.map((spec) => {
           if (hiddenFields?.(draft).includes(spec.name)) return null;
@@ -494,19 +505,17 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
                 rows={3}
                 value={draft[spec.name] ?? ""}
                 placeholder={t.forms.drawsPlaceholder}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, [spec.name]: e.target.value }))
-                }
+                onChange={(e) => edit(spec.name, e.target.value)}
               />
             ) : spec.kind === "date" ? (
               <DateInput
                 value={draft[spec.name] ?? ""}
-                onChange={(v) => setDraft((d) => ({ ...d, [spec.name]: v }))}
+                onChange={(v) => edit(spec.name, v)}
               />
             ) : (
               <TextInput
                 value={draft[spec.name] ?? ""}
-                onChange={(v) => setDraft((d) => ({ ...d, [spec.name]: v }))}
+                onChange={(v) => edit(spec.name, v)}
                 suffix={spec.suffix}
                 inputMode="decimal"
                 placeholder={
@@ -530,10 +539,7 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
                     size="sm"
                     title={action.title ?? action.label}
                     disabled={!action.patch}
-                    onClick={() =>
-                      action.patch &&
-                      setDraft((d) => ({ ...d, ...action.patch }))
-                    }
+                    onClick={() => action.patch && patch(action.patch)}
                   >
                     {action.label}
                   </Button>
