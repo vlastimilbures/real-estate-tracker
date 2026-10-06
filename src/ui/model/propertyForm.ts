@@ -1,16 +1,9 @@
 // Pure validation + DTO assembly for the property add/edit form. Kept out of the
 // modal component so it's unit-testable in the node test env (no DOM), mirroring
 // ./mortgageForm.ts.
-import {
-  collectValues,
-  intRangeHint,
-  moneyDraft,
-  parseMoney,
-  type CollectRules,
-  type FieldSpec,
-} from "./formParse";
-import { FORM_PARSERS } from "./formParsers";
-import { inRange, INT_RANGES } from "../../lib/intRanges";
+import { collectValues, moneyDraft, type FieldSpec } from "./formParse";
+import { formRules } from "./formParsers";
+import { INT_RANGES } from "../../lib/intRanges";
 import type { AcquisitionFunding, Property } from "../../engine";
 import type { Dictionary } from "../../i18n";
 
@@ -84,7 +77,13 @@ function propertySpecs(t: Dictionary) {
   return [
     { name: "purchase_date", label: p.purchaseDate, kind: "date" },
     { name: "purchase_price", label: p.purchasePrice, kind: "money" },
-    { name: "size_m2", label: p.size, kind: "int", optional: true },
+    {
+      name: "size_m2",
+      label: p.size,
+      kind: "int",
+      optional: true,
+      range: INT_RANGES.sizeM2, // ADR 0075 (DR-078)
+    },
     {
       name: "appreciation_override_pa",
       label: p.appreciationOverride,
@@ -111,28 +110,6 @@ function propertySpecs(t: Dictionary) {
       optional: true,
     },
   ] as const satisfies readonly FieldSpec[];
-}
-
-/** The property form's own messages. Money keeps its sign: a negative price or funding
- *  amount is left for the engine to refuse. */
-function propertyRules(t: Dictionary): CollectRules {
-  const p = t.propertyForm;
-  return {
-    parsers: { ...FORM_PARSERS, money: parseMoney },
-    blank: () => p.errRequired,
-    invalid: (spec) => {
-      switch (spec.kind) {
-        case "date":
-          return p.errUseDate;
-        case "int":
-          return p.errWholeNumber;
-        case "pct":
-          return p.errInvalidPercentage;
-        default:
-          return p.errInvalidNumber;
-      }
-    },
-  };
 }
 
 export type PropertyFormResult =
@@ -167,22 +144,15 @@ export function parsePropertyForm(
 ): PropertyFormResult {
   const specs = propertySpecs(t);
   const draft = Object.fromEntries(specs.map((f) => [f.name, form[f.name]]));
-  const { values: v, errors } = collectValues(specs, draft, propertyRules(t));
+  const { values: v, errors } = collectValues(specs, draft, formRules(t));
   const errs: PropertyFormErrors = errors;
 
   const name = form.name.trim();
   if (!name) {
-    errs.name = t.propertyForm.errRequired;
+    errs.name = t.forms.required;
   } else if (existingNames.includes(name.toLowerCase())) {
     errs.name = t.propertyForm.errNameExists;
   }
-
-  if (
-    !errs.size_m2 &&
-    v.size_m2 !== null &&
-    !inRange(v.size_m2, INT_RANGES.sizeM2)
-  )
-    errs.size_m2 = intRangeHint(t, INT_RANGES.sizeM2); // ADR 0075 (DR-078)
 
   if (Object.keys(errs).length > 0) {
     return {

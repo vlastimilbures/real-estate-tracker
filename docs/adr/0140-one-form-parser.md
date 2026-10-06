@@ -52,8 +52,8 @@ an untouched legacy amount.
      decimals are never refused.
    - `forms.invalidHint.money` says to group thousands with a space.
 4. **Scenario years are bounded by the horizon.** A shock lasts 1–100 years and the crash lands
-   at year 0–100 (`INT_RANGES.shockYears`, `INT_RANGES.crashYear`; the horizon is at most 100
-   years, `INT_RANGES.horizonYears`). Before, any 9-digit count was accepted, with no effect
+   at year 0–100 (the horizon is at most 100 years, `INT_RANGES.horizonYears`). The bounds
+   live in the scenario form, not `INT_RANGES`, which CSV import shares. Before, any 9-digit count was accepted, with no effect
    past the horizon. A blank delta (or crash) still ignores its years.
 5. The property form's whole-number size uses `forms.intRange` for any bad entry (before:
    "Must be a whole number" for a non-number, the range for an out-of-range number).

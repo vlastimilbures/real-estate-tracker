@@ -814,10 +814,6 @@ export const cs: Dictionary = {
     defaultYears: (n) => `výchozí ${n}`,
     zeroIsStart: (date) => `0 = začátek projekce (${date})`,
     none: "žádný",
-    invalidPct: "Neplatné %",
-    geOne: "≥ 1",
-    geZero: "≥ 0",
-    required: "Povinné",
   },
 
   importPage: {
@@ -1026,7 +1022,8 @@ export const cs: Dictionary = {
     required: "Povinné",
     invalidHint: {
       date: "Zadejte datum ve tvaru dd.mm.yyyy",
-      money: "Zadejte částku 0 nebo vyšší, např. 1 250 000",
+      money:
+        "Zadejte částku 0 nebo vyšší, např. 1 250 000 (tisíce oddělte mezerou)",
       pct: "Zadejte procenta, např. 4,5",
       int: "Zadejte celé číslo, např. 25",
       prepayments:
@@ -1059,12 +1056,7 @@ export const cs: Dictionary = {
     appreciationOverride: "Vlastní zhodnocení",
     rentIndexOverride: "Vlastní indexace nájmu",
     overrideHelp: "Nechte prázdné pro globální hodnotu z Předpokladů",
-    errRequired: "Povinné",
     errNameExists: "Nemovitost s tímto názvem už existuje",
-    errUseDate: "Použijte dd.mm.yyyy",
-    errInvalidNumber: "Neplatné číslo",
-    errWholeNumber: "Musí být celé číslo",
-    errInvalidPercentage: "Neplatné procento",
     acquisitionSection: "Pořízení (nepovinné)",
     acquisitionHelp:
       "Jak byl nákup financován. Prázdná částka je neznámá; 0 je částka. U nemovitosti koupené po začátku projekce jsou vlastní zdroje platbou při koupi.",

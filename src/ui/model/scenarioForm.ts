@@ -1,7 +1,8 @@
 // Pure draft-parsing for the scenario create/edit form. Kept out of ScenarioForm.tsx
 // so it's unit-testable without mounting the component (mirrors ./mortgageForm.ts).
-import { collectValues, type CollectRules, type FieldSpec } from "./formParse";
-import { FORM_PARSERS } from "./formParsers";
+import { collectValues, type FieldSpec } from "./formParse";
+import { formRules } from "./formParsers";
+import { INT_RANGES } from "../../lib/intRanges";
 import { formWriteErrors } from "./writeError";
 import type {
   EngineValidationError,
@@ -14,6 +15,10 @@ import type { WriteError } from "../../state/writeError";
 
 // A temporary shock reverts to trend after this many years (shared with the preset bar).
 export const DEFAULT_SHOCK_YEARS = 3;
+
+// A shock's years and the crash year reach at most the longest horizon (ADR 0140 §4).
+const SHOCK_YEARS = { min: 1, max: INT_RANGES.horizonYears.max };
+const CRASH_YEAR = { min: 0, max: INT_RANGES.horizonYears.max };
 
 // The five permanent level overrides (Decimal-valued keys of ScenarioOverrides).
 export type LevelKey =
@@ -61,9 +66,6 @@ export function overrideLabel(t: Dictionary, key: LevelKey): string {
   }
 }
 
-/** Years the parser accepts: whole and at most 9 digits, from `min`. */
-const yearsFrom = (min: number) => ({ min, max: 999_999_999 });
-
 /** The draft's parsed fields; all optional, a blank one inherits (or means no shock). */
 function scenarioSpecs(t: Dictionary) {
   const s = t.scenarios;
@@ -88,7 +90,7 @@ function scenarioSpecs(t: Dictionary) {
       label: s.fieldInflation,
       kind: "int",
       optional: true,
-      range: yearsFrom(1),
+      range: SHOCK_YEARS,
     },
     {
       name: "rateShockDelta",
@@ -101,7 +103,7 @@ function scenarioSpecs(t: Dictionary) {
       label: s.fieldPostFixationReset,
       kind: "int",
       optional: true,
-      range: yearsFrom(1),
+      range: SHOCK_YEARS,
     },
     { name: "valueShockPct", label: s.groupCrash, kind: "pct", optional: true },
     {
@@ -109,24 +111,9 @@ function scenarioSpecs(t: Dictionary) {
       label: s.groupCrash,
       kind: "int",
       optional: true,
-      range: yearsFrom(0),
+      range: CRASH_YEAR,
     },
   ] as const satisfies readonly FieldSpec[];
-}
-
-/** The scenario form's own messages. */
-function scenarioRules(t: Dictionary): CollectRules {
-  const s = t.scenarios;
-  return {
-    parsers: FORM_PARSERS,
-    blank: () => s.required,
-    invalid: (spec) =>
-      spec.kind === "pct"
-        ? s.invalidPct
-        : spec.range?.min === 1
-          ? s.geOne
-          : s.geZero,
-  };
 }
 
 /** Each timed field and the field it times: its years count only once that one is set. */
@@ -151,13 +138,13 @@ export function parseScenarioDraft(
   const { values: v, errors: errs } = collectValues(
     scenarioSpecs(t),
     { ...draft },
-    scenarioRules(t),
+    formRules(t),
   );
   // A blank or invalid delta (or crash) ignores its years.
   for (const [years, of] of TIMED) {
     if (v[of] === null || errs[of] !== undefined) delete errs[years];
   }
-  if (draft.name.trim() === "") errs.name = t.scenarios.required;
+  if (draft.name.trim() === "") errs.name = t.forms.required;
   const overrides: ScenarioOverrides = {};
 
   // Level overrides: blank = inherit Base.

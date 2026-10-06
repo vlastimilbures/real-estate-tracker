@@ -857,10 +857,6 @@ export const en = {
     defaultYears: (n: number) => `default ${n}`,
     zeroIsStart: (date: string) => `0 = projection start (${date})`,
     none: "none",
-    invalidPct: "Invalid %",
-    geOne: "≥ 1",
-    geZero: "≥ 0",
-    required: "Required",
   },
 
   importPage: {
@@ -1072,7 +1068,8 @@ export const en = {
     required: "Required",
     invalidHint: {
       date: "Enter a date as dd.mm.yyyy",
-      money: "Enter an amount of 0 or more, e.g. 1 250 000",
+      money:
+        "Enter an amount of 0 or more, e.g. 1 250 000 (a space between thousands)",
       pct: "Enter a percentage, e.g. 4,5",
       int: "Enter a whole number, e.g. 25",
       prepayments:
@@ -1105,12 +1102,7 @@ export const en = {
     appreciationOverride: "Appreciation override",
     rentIndexOverride: "Rent index override",
     overrideHelp: "Leave blank to use the global Assumptions value",
-    errRequired: "Required",
     errNameExists: "A property with this name already exists",
-    errUseDate: "Use dd.mm.yyyy",
-    errInvalidNumber: "Invalid number",
-    errWholeNumber: "Must be a whole number",
-    errInvalidPercentage: "Invalid percentage",
     acquisitionSection: "Acquisition (optional)",
     acquisitionHelp:
       "How the purchase was funded. A blank amount is unknown; 0 is an amount. For a property bought after the projection start, own cash is its down payment.",

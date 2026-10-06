@@ -821,10 +821,6 @@ export const ru: Dictionary = {
     defaultYears: (n) => `по умолчанию ${n}`,
     zeroIsStart: (date) => `0 = начало прогноза (${date})`,
     none: "нет",
-    invalidPct: "Неверный %",
-    geOne: "≥ 1",
-    geZero: "≥ 0",
-    required: "Обязательно",
   },
 
   importPage: {
@@ -1036,7 +1032,8 @@ export const ru: Dictionary = {
     required: "Обязательно",
     invalidHint: {
       date: "Введите дату в формате dd.mm.yyyy",
-      money: "Введите сумму 0 или больше, например 1 250 000",
+      money:
+        "Введите сумму 0 или больше, например 1 250 000 (тысячи разделяйте пробелом)",
       pct: "Введите процент, например 4,5",
       int: "Введите целое число, например 25",
       prepayments:
@@ -1069,12 +1066,7 @@ export const ru: Dictionary = {
     appreciationOverride: "Своя ставка роста",
     rentIndexOverride: "Своя индексация аренды",
     overrideHelp: "Оставьте пустым для глобального значения из Допущений",
-    errRequired: "Обязательно",
     errNameExists: "Объект с таким названием уже существует",
-    errUseDate: "Используйте dd.mm.yyyy",
-    errInvalidNumber: "Неверное число",
-    errWholeNumber: "Должно быть целым числом",
-    errInvalidPercentage: "Неверный процент",
     acquisitionSection: "Приобретение (необязательно)",
     acquisitionHelp:
       "Как была профинансирована покупка. Пустая сумма неизвестна; 0 — это сумма. Для объекта, купленного после начала прогноза, собственные средства — его первоначальный взнос.",

@@ -243,11 +243,13 @@ describe("property form Acquisition section (ADR 0119 §9)", () => {
     expect(toggle().getAttribute("aria-expanded")).toBe("true");
     const field = screen.getByLabelText(f.transactionCosts).closest(".field");
     expect(field?.className).toContain("invalid");
-    expect(field?.textContent).toContain(f.errInvalidNumber);
+    expect(field?.textContent).toContain(en.forms.invalidHint.money);
     expect(addProperty).not.toHaveBeenCalled();
   });
 
-  it("a negative amount the engine refuses shows on its field and opens the section", async () => {
+  // The form refuses a negative amount itself (ADR 0140); a stubbed engine rule stands in
+  // for any refusal that reaches the store.
+  it("an amount the engine refuses shows on its field and opens the section", async () => {
     editProperty.mockResolvedValue({
       ok: false,
       error: {
@@ -270,7 +272,7 @@ describe("property form Acquisition section (ADR 0119 §9)", () => {
       />,
     );
     await userEvent.click(toggle());
-    await userEvent.type(screen.getByLabelText(f.ownCash), "-5");
+    await userEvent.type(screen.getByLabelText(f.ownCash), "5");
     await userEvent.click(toggle());
     await userEvent.click(
       screen.getByRole("button", { name: en.common.saveChanges }),
