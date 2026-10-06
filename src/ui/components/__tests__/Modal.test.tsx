@@ -118,6 +118,40 @@ describe("modal dirty guard (UX-029)", () => {
   });
 });
 
+// ADR 0142 (#132 R5-21): while a dialog's write runs, ✕, Esc and the backdrop do not
+// close it, so the write's outcome always shows in the dialog.
+describe("busy modal (ADR 0142)", () => {
+  it.fails(
+    "a saving scenario form ignores ✕, Esc and the backdrop (#132)",
+    async () => {
+      const onCancel = vi.fn();
+      render(
+        <ScenarioForm
+          assumptions={assumptions}
+          scenario={null}
+          onSubmit={() => new Promise<void>(() => {})}
+          onCancel={onCancel}
+        />,
+      );
+      await userEvent.type(screen.getByLabelText(en.scenarios.name), "x");
+      await userEvent.click(
+        screen.getByRole("button", { name: en.common.create }),
+      );
+      expect(
+        screen.getByRole("button", { name: en.common.saving }),
+      ).toBeTruthy();
+      const close = screen.getByRole<HTMLButtonElement>("button", {
+        name: en.common.close,
+      });
+      expect(close.disabled).toBe(true);
+      await userEvent.click(close);
+      await userEvent.keyboard("{Escape}");
+      await userEvent.click(document.querySelector(".modal-overlay")!);
+      expect(onCancel).not.toHaveBeenCalled();
+    },
+  );
+});
+
 // DR-148: Esc in the date popover closes only the popover, not the (unchanged) modal
 // around it.
 describe("Esc inside a modal's date popover (DR-148)", () => {
