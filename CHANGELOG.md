@@ -242,6 +242,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Adding a valuation or lease with an end date no longer asks to end the previous
+  open-ended record (ADR 0144, #121). For a lease, ending the previous one removed its
+  rent from the months after the new lease ends. Adding an open-ended record still asks,
+  as before (ADR 0099).
 - A delete confirm in a property's valuations, leases and mortgages names the row, for
   example "Delete the valuation from 01.01.2026?" (ADR 0143, #132). Before, it asked only
   "Delete this record?". Every inline confirm (delete a property, a record or a scenario,
