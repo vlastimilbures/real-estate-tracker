@@ -57,8 +57,14 @@ async function initStore() {
   await act(() => usePortfolioStore.getState().init(openSeeded));
 }
 
+// A test may stub saveAssumptions; each test starts with the store's own.
+const storeSave = usePortfolioStore.getState().saveAssumptions;
+
 beforeEach(() =>
-  act(() => useUiStore.setState({ language: "en", compareIds: [] })),
+  act(() => {
+    useUiStore.setState({ language: "en", compareIds: [] });
+    usePortfolioStore.setState({ saveAssumptions: storeSave });
+  }),
 );
 
 describe("a refused form save stays in the form (R4-05)", () => {
@@ -144,13 +150,14 @@ describe("Assumptions shows a non-field input error in its summary", () => {
     ],
   };
 
-  it("shows a rule on no shown field there (#125)", async () => {
+  /** Save an edit that the store refuses with `error`; returns the edited input. */
+  async function refuseSave(error: WriteError) {
     act(() =>
       usePortfolioStore.setState({
         portfolio,
         assumptions,
         status: "ready",
-        saveAssumptions: async () => ({ ok: false, error: notOnAField }),
+        saveAssumptions: async () => ({ ok: false, error }),
       }),
     );
     render(<AssumptionsPanel />);
@@ -160,10 +167,24 @@ describe("Assumptions shows a non-field input error in its summary", () => {
     await userEvent.click(
       screen.getByRole("button", { name: en.common.saveChanges }),
     );
+    return input;
+  }
+
+  it("shows a rule on no shown field there (#125)", async () => {
+    const input = await refuseSave(notOnAField);
     const summary = document.querySelector(".error-summary");
     expect(summary?.textContent).toContain(
       describeWriteError(en, notOnAField).message,
     );
+    expect(document.activeElement).toBe(summary);
+    // The next edit drops it, like a field's own error.
+    await userEvent.type(input, "5");
+    expect(document.querySelector(".error-summary")).toBeNull();
+  });
+
+  it("leaves any other failure to the banner", async () => {
+    await refuseSave({ kind: "other", message: "disk is full" });
+    expect(document.querySelector(".error-summary")).toBeNull();
   });
 });
 
@@ -181,6 +202,25 @@ describe("editing a field clears its error (R5-07)", () => {
     const input = screen.getByLabelText("Amount");
     expect(input.getAttribute("aria-invalid")).toBe("true");
     await userEvent.type(input, "1");
+    expect(input.getAttribute("aria-invalid")).not.toBe("true");
+  });
+
+  it.fails("in RecordForm, by a field action's fill (#125)", async () => {
+    render(
+      <RecordForm
+        specs={[{ name: "amount", label: "Amount", kind: "money" }]}
+        initial={{ amount: "" }}
+        submitLabel="Save"
+        fieldActions={{
+          amount: () => ({ label: "Fill", patch: { amount: "5" } }),
+        }}
+        onSubmit={async () => undefined}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    const input = screen.getByLabelText("Amount");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    await userEvent.click(screen.getByRole("button", { name: "Fill" }));
     expect(input.getAttribute("aria-invalid")).not.toBe("true");
   });
 
