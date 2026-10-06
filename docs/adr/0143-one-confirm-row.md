@@ -29,11 +29,12 @@ confirms were built four ways, and three defects followed (R5-08):
    start date: "Delete the valuation from 01.01.2026?", "Delete the lease from …?", "Delete
    the mortgage block from …?" (en, cs, ru). Property, scenario and deactivate confirms
    already named their target and keep their texts.
-3. **Focus moves into the row.** When the row opens, focus goes to its confirm button. Cancel
-   puts focus back on the button that opened it. Both buttons are described by the question
-   (`aria-describedby`), so a screen reader reads it with the focused button. Focusing the
-   confirm button rather than Cancel was chosen for speed; the trade-off is that a held Enter
-   on the trigger can reach "Yes" sooner (review of PR #246).
+3. **Focus moves into the row.** When the row opens, focus goes to its Cancel button, the
+   safe choice: a held Enter on the trigger cannot reach the destructive button (owner's
+   choice after the review of PR #246, following the WAI-ARIA alert dialog pattern). Tab
+   reaches the confirm button. Cancel puts focus back on the button that opened it. Both
+   buttons are described by the question (`aria-describedby`), so a screen reader reads it
+   with the focused button.
 4. **It stays open on failure.** A failed write keeps the row open, re-enables its buttons and
    shows the reason in a `role="alert"` next to them (UX-050). This now holds for scenarios
    too: the scenario confirm waits for the delete and closes only when it landed.
