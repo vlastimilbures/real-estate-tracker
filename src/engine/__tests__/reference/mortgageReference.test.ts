@@ -257,6 +257,54 @@ describe("reference first draw of a future loan (D-46)", () => {
   });
 });
 
+describe("reference last tranche lands by payment term−1 (ADR 0139)", () => {
+  // Start 31 Jan 2026, 24 months: the last valid draw is on payment 23's due date,
+  // 31 Dec 2027. A baseDate grid on the 28th or 30th dates the row carrying payment 23
+  // before it; the tranche still joins that row, not the final payment (#218).
+  const loan = {
+    start: "2026-01-31",
+    principal: "100000",
+    ratePa: "0.05",
+    instalment: "0",
+    fixationMonths: 60,
+    termMonths: 24,
+    draws: [{ date: "2027-12-31", amount: "500000" }],
+  };
+  const cases: [string, number][] = [
+    ["2026-02-28", 1],
+    ["2026-04-30", 3],
+  ];
+  for (const [base, paid] of cases) {
+    it(`baseDate ${base}: payment 23 carries the tranche`, () => {
+      const r = referenceSchedule(loan, {
+        baseDate: base,
+        months: 30,
+        resetRatePa: RESET,
+        calendar: "gridDueDate",
+        devInstalment: "fromTerm",
+        openingDraws: "nextPeriod",
+      });
+      const row23 = r[23 - paid - 1];
+      expect(row23.date).toBe(addMonths(base, 23 - paid));
+      near(row23.draw, 500000, 0);
+      // The last payment is one annuity payment, not a one-shot payoff (504,359.06).
+      const last = r[24 - paid - 1];
+      near(last.endBalance, 0, 1e-9);
+      near(last.payment, row23.payment.toNumber(), 0.01);
+      expect(last.principal.lessThan(300000)).toBe(true);
+      const sum = r.reduce(
+        (s, x) => s.plus(x.principal),
+        r[0].principal.times(0),
+      );
+      near(
+        sum,
+        r[0].endBalance.plus(r[0].principal).plus(500000).toNumber(),
+        1e-6,
+      );
+    });
+  }
+});
+
 describe("reference refinance chain (D-47)", () => {
   // 0 % loans so every figure is hand-checkable. A: 4 payments due by baseDate
   // (17 Feb–17 May) ⇒ 116,000; grid month m carries payment 4 + m, due on the 17th.

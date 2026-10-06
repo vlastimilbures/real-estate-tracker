@@ -163,6 +163,7 @@ Other IDs seen in code comments:
 | [0136](0136-shorten-term-agreed-instalment.md)    | Shorten term keeps the instalment the next payment pays                                | #228                                   |
 | [0137](0137-agreed-instalment-pays-interest.md)   | Payment q pays at least its interest                                                   | #225                                   |
 | [0138](0138-refinance-handover-edge-cases.md)     | Refinance handover edge cases                                                          | #229, #221, #223                       |
+| [0139](0139-last-tranche-cap.md)                  | A projection tranche lands no later than payment term−1                                | #218                                   |
 
 ### Judgment calls and open questions
 

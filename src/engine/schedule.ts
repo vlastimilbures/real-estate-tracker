@@ -259,8 +259,10 @@ function undrawnRow(
 
 /** First step k in [1,maxStep] whose cadence date (anchor + k months) is on/after
  *  `date`, capped at maxStep. Validation rejects a draw after the loan's last-but-one
- *  payment date (DR-074, ADR 0129 §3), so a valid draw never reaches the cap. On the
- *  baseDate grid a month-end clamp can still land it on the final payment (#218). */
+ *  payment date (DR-074, ADR 0129 §3). On the baseDate grid a month-end clamp can date
+ *  the grid month carrying that payment before its due date, so the development
+ *  projection caps at that grid month: a valid draw never lands on the final payment
+ *  (ADR 0139). */
 function firstStepOnOrAfter(anchor: Date, date: Date, maxStep: number): number {
   const cap = Math.max(1, maxStep);
   return Math.min(firstGridMonthOnOrAfter(anchor, date, cap - 1), cap);
@@ -1125,6 +1127,13 @@ function buildDevSchedule(
   const { baseDate } = assumptions;
   const startToBase = paymentOffset(block, baseDate);
   const totalMonths = builtMonths(block, assumptions, startToBase);
+  // Grid month m carries payment `startToBase + m`; a valid tranche joins payment
+  // term−1 at the latest (ADR 0129 §3), even where a month-end clamp dates that grid
+  // month before the draw (ADR 0139).
+  const lastDrawMonth = Math.min(
+    totalMonths,
+    termMonths(block) - 1 - startToBase,
+  );
   // Draws after the last payment due by baseDate emit in this baseDate-anchored loop
   // (a future loan: after baseDate); earlier ones were folded into the opening
   // balance by simulateToBaseDate. A tranche between that payment and baseDate lands
@@ -1140,11 +1149,14 @@ function buildDevSchedule(
     block,
     assumptions,
     startToBase,
-    drawsByMonth: bucketDraws(block.draws ?? [], baseDate, totalMonths, (d) =>
+    drawsByMonth: bucketDraws(block.draws ?? [], baseDate, lastDrawMonth, (d) =>
       isAfter(d, drawnAfter),
     ),
-    newDebtByMonth: bucketDraws(block.draws ?? [], baseDate, totalMonths, (d) =>
-      isAfter(d, baseDate),
+    newDebtByMonth: bucketDraws(
+      block.draws ?? [],
+      baseDate,
+      lastDrawMonth,
+      (d) => isAfter(d, baseDate),
     ),
     events: loanEvents(block, assumptions, (d) => isAfter(d, baseDate)),
     openingCounted: opening.counted,

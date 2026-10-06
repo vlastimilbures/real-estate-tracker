@@ -279,6 +279,16 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
     draws
       .filter((x) => x.date > after && x.date <= upTo)
       .reduce((s, x) => s.plus(x.amount), ZERO);
+  // A valid tranche is dated no later than payment term−1 (ADR 0129 §3). On a baseDate
+  // grid the row carrying that payment can be dated before its due date (month-end
+  // clamp), so that row takes every tranche up to the due date and later rows start
+  // after it: no tranche lands on the final payment (ADR 0139).
+  const lastDraw = isDev(loan) ? addMonths(loan.start, term - 1) : undefined;
+  /** Grid date ending row m's tranche window, when row `capRow` carries payment term−1. */
+  const drawEdge = (m: number, capRow: number): Iso => {
+    const date = addMonths(base, m);
+    return lastDraw && m >= capRow && lastDraw > date ? lastDraw : date;
+  };
   const drawsUpTo = (upTo: Iso) =>
     draws
       .filter((x) => x.date <= upTo)
@@ -558,7 +568,8 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
     if (onGrid) {
       for (let m = 1; m <= opts.months; m++) {
         const date = addMonths(base, m);
-        const draw = drawsIn(addMonths(base, m - 1), date);
+        const capRow = term - 1 - n;
+        const draw = drawsIn(drawEdge(m - 1, capRow), drawEdge(m, capRow));
         const withLate = m === 1 && carry ? draw.plus(late) : draw;
         const k = n + m;
         rows.push(
@@ -627,7 +638,8 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
         });
         continue;
       }
-      const draw = drawsIn(addMonths(base, m - 1), date);
+      const capRow = drawnAt + term - 1;
+      const draw = drawsIn(drawEdge(m - 1, capRow), drawEdge(m, capRow));
       const k = m - drawnAt;
       rows.push(
         settle(step(date, k, draw, m, gridRateDate(date, k)), k, at(k)),

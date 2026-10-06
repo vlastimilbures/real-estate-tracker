@@ -9,6 +9,7 @@
   [0021](0021-schedule-calendar.md) (D-21: interest-only is read on the due date too),
   [0079](0079-engine-edge-cases.md) (DR-074: the last draw date),
   [0030](0030-expired-fixation.md) (D-30: the "Fixation ended" warning)
+- Amended by: ADR 0139 (§3: a projection tranche lands no later than payment term−1)
 - Related: [0024](0024-draw-timing.md) (D-41, D-44: tranches around baseDate),
   [0039](0039-golden-master.md) (golden snapshot in the same commit),
   [0117](0117-property-loan-outlook.md) (loan outlook)
