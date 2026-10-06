@@ -29,7 +29,7 @@ const blank: ScenarioDraftFields = {
 describe("parseScenarioDraft", () => {
   it("requires a name", () => {
     const { errors } = parseScenarioDraft(blank, en);
-    expect(errors.name).toBe(en.scenarios.required);
+    expect(errors.name).toBe(en.forms.required);
   });
 
   it("leaves overrides empty when every field is blank (inherits Base)", () => {
@@ -56,7 +56,7 @@ describe("parseScenarioDraft", () => {
       { ...blank, name: "S", appreciationPa: "abc" },
       en,
     );
-    expect(errors.appreciationPa).toBe(en.scenarios.invalidPct);
+    expect(errors.appreciationPa).toBe(en.forms.invalidHint.pct);
   });
 
   it("parses an inflation shock with default duration when years is blank", () => {
@@ -90,7 +90,7 @@ describe("parseScenarioDraft", () => {
       { ...blank, name: "S", rateShockDelta: "1", rateShockYears: "0" },
       en,
     );
-    expect(errors.rateShockYears).toBe(en.scenarios.geOne);
+    expect(errors.rateShockYears).toBe(en.forms.intRange("1", "100"));
   });
 
   it("ignores the years field when delta is blank (no shock)", () => {
@@ -119,7 +119,7 @@ describe("parseScenarioDraft", () => {
       { ...blank, name: "S", valueShockPct: "-10", valueShockYear: "-1" },
       en,
     );
-    expect(errors.valueShockYear).toBe(en.scenarios.geZero);
+    expect(errors.valueShockYear).toBe(en.forms.intRange("0", "100"));
   });
 });
 

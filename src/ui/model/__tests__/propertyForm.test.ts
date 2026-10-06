@@ -63,9 +63,9 @@ describe("parsePropertyForm", () => {
     const result = parsePropertyForm(BLANK_PROPERTY_FORM, "p-new", [], en);
     expect(result.valid).toBe(false);
     if (result.valid) throw new Error("expected invalid");
-    expect(result.errors.name).toBe(en.propertyForm.errRequired);
-    expect(result.errors.purchase_date).toBe(en.propertyForm.errRequired);
-    expect(result.errors.purchase_price).toBe(en.propertyForm.errRequired);
+    expect(result.errors.name).toBe(en.forms.required);
+    expect(result.errors.purchase_date).toBe(en.forms.required);
+    expect(result.errors.purchase_price).toBe(en.forms.required);
   });
 
   it("rejects a name that collides with another property (case-insensitive)", () => {
@@ -95,7 +95,7 @@ describe("parsePropertyForm", () => {
     );
     expect(result.valid).toBe(false);
     if (result.valid) throw new Error("expected invalid");
-    expect(result.errors.purchase_date).toBe(en.propertyForm.errUseDate);
+    expect(result.errors.purchase_date).toBe(en.forms.invalidHint.date);
   });
 
   it("rejects an unparseable purchase price", () => {
@@ -107,7 +107,7 @@ describe("parsePropertyForm", () => {
     );
     expect(result.valid).toBe(false);
     if (result.valid) throw new Error("expected invalid");
-    expect(result.errors.purchase_price).toBe(en.propertyForm.errInvalidNumber);
+    expect(result.errors.purchase_price).toBe(en.forms.invalidHint.money);
   });
 
   it("rejects a non-whole size and an invalid percentage override, leaving optional fields blank as valid", () => {
@@ -119,9 +119,9 @@ describe("parsePropertyForm", () => {
     );
     expect(result.valid).toBe(false);
     if (result.valid) throw new Error("expected invalid");
-    expect(result.errors.size_m2).toBe(en.propertyForm.errWholeNumber);
+    expect(result.errors.size_m2).toBe("Enter a whole number from 1 to 10 000");
     expect(result.errors.appreciation_override_pa).toBe(
-      en.propertyForm.errInvalidPercentage,
+      en.forms.invalidHint.pct,
     );
   });
 
@@ -137,9 +137,7 @@ describe("parsePropertyForm", () => {
     for (const size_m2 of ["0", "10001", "9".repeat(400)]) {
       const result = parsePropertyForm({ ...valid, size_m2 }, "p-new", [], en);
       expect(result.valid).toBe(false);
-      expect(result.errors.size_m2).toBe(
-        size_m2.length > 9 ? en.propertyForm.errWholeNumber : hint,
-      );
+      expect(result.errors.size_m2).toBe(hint);
     }
     const max = parsePropertyForm(
       { ...valid, size_m2: "10000" },
@@ -212,14 +210,20 @@ describe("parsePropertyForm — acquisition funding", () => {
     );
     expect(result.valid).toBe(false);
     expect(result.errors).toEqual({
-      own_cash: en.propertyForm.errInvalidNumber,
-      transaction_costs: en.propertyForm.errInvalidNumber,
-      initial_works: en.propertyForm.errInvalidNumber,
+      own_cash: en.forms.invalidHint.money,
+      transaction_costs: en.forms.invalidHint.money,
+      initial_works: en.forms.invalidHint.money,
     });
   });
 
-  it("passes a negative amount on for the engine to refuse, as the purchase price", () => {
-    expect(funding({ own_cash: "-5" }).ownCash?.toString()).toBe("-5");
+  it("refuses a negative amount in the form, as every money field (ADR 0140)", () => {
+    const result = parsePropertyForm(
+      { ...valid, own_cash: "-5" },
+      "vinohrady",
+      [],
+      en,
+    );
+    expect(result.errors).toEqual({ own_cash: en.forms.invalidHint.money });
   });
 });
 
