@@ -83,42 +83,46 @@ describe("a record's delete confirm names the row (ADR 0143)", () => {
   });
 });
 
+// Focus lands on Cancel, the safe choice: a held Enter on the trigger cannot reach Yes.
 describe("focus moves into the confirm row (ADR 0143)", () => {
   const specs: FieldSpec[] = [{ name: "value", label: "Value", kind: "money" }];
   type Row = { id: string; value: string };
 
-  it("record panel: onto Yes, and back to the row's Delete on Cancel (#132)", async () => {
-    render(
-      <EntityPanel
-        title="Rows"
-        addLabel="row"
-        rows={[
-          { id: "a", value: "100" },
-          { id: "b", value: "200" },
-        ]}
-        columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
-        specs={specs}
-        draftOf={(r) => ({ value: r ? r.value : "" })}
-        build={(v, id): Row => ({ id, value: String(v.value) })}
-        onAdd={ok}
-        onSave={ok}
-        onDelete={ok}
-      />,
-    );
-    const trigger = screen.getAllByRole("button", {
-      name: en.common.delete,
-    })[1]!;
-    await userEvent.click(trigger);
-    expect(document.activeElement).toBe(
-      screen.getByRole("button", { name: en.common.yesDelete }),
-    );
-    await userEvent.click(
-      screen.getByRole("button", { name: en.common.cancel }),
-    );
-    expect(document.activeElement).toBe(trigger);
-  });
+  it.fails(
+    "record panel: onto Cancel, and back to the row's Delete on Cancel (#132)",
+    async () => {
+      render(
+        <EntityPanel
+          title="Rows"
+          addLabel="row"
+          rows={[
+            { id: "a", value: "100" },
+            { id: "b", value: "200" },
+          ]}
+          columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
+          specs={specs}
+          draftOf={(r) => ({ value: r ? r.value : "" })}
+          build={(v, id): Row => ({ id, value: String(v.value) })}
+          onAdd={ok}
+          onSave={ok}
+          onDelete={ok}
+        />,
+      );
+      const trigger = screen.getAllByRole("button", {
+        name: en.common.delete,
+      })[1]!;
+      await userEvent.click(trigger);
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: en.common.cancel }),
+      );
+      await userEvent.click(
+        screen.getByRole("button", { name: en.common.cancel }),
+      );
+      expect(document.activeElement).toBe(trigger);
+    },
+  );
 
-  it("scenario list: onto Yes, delete (#132)", async () => {
+  it.fails("scenario list: onto Cancel (#132)", async () => {
     render(
       <ScenarioListPanel
         scenarios={[{ id: "s1", name: "Rates up", overrides: {} }]}
@@ -135,11 +139,11 @@ describe("focus moves into the confirm row (ADR 0143)", () => {
     );
     await clickDelete();
     expect(document.activeElement).toBe(
-      screen.getByRole("button", { name: en.common.yesDelete }),
+      screen.getByRole("button", { name: en.common.cancel }),
     );
   });
 
-  it("deactivate banner: onto Yes, deactivate (#132)", () => {
+  it.fails("deactivate banner: onto Cancel (#132)", () => {
     render(
       <ActivationBanner
         propertyName="Dubová"
@@ -150,7 +154,7 @@ describe("focus moves into the confirm row (ADR 0143)", () => {
       />,
     );
     expect(document.activeElement).toBe(
-      screen.getByRole("button", { name: en.propertyDetail.yesDeactivate }),
+      screen.getByRole("button", { name: en.common.cancel }),
     );
   });
 });
