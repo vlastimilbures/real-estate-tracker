@@ -167,7 +167,8 @@ describe("add closing the previous record (ADR 0099)", () => {
   // ADR 0144: with a dated new lease, ending the previous one changes the numbers: after
   // the new lease ends, the previous open lease is back in force. So the UI does not offer
   // it. The dated lease ends before the seed's base date (2026-06-07), where outputs read
-  // it. (A valuation's end date is not read since ADR 0122.)
+  // it. (A valuation's end date is not read since ADR 0122.) Needs a seed lease that is
+  // open-ended before 2026-01-01; openLease throws if the seed loses it.
   it("changes the outputs when the new lease has an end date", async () => {
     const from = isoDate("2026-01-01");
     const prev = openLease(from);
