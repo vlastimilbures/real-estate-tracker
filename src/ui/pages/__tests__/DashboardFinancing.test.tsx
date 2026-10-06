@@ -169,7 +169,7 @@ describe("interest saved (ADR 0116)", () => {
   });
 
   // ADR 0144: the label names its window, which is not the "Yrs 1–N" of total interest.
-  it.fails("the label names the loans' remaining life (#172)", () => {
+  it("the label names the loans' remaining life (#172)", () => {
     renderPanel(prepaid);
     expect(
       screen.getByText(

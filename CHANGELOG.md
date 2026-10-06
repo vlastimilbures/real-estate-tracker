@@ -242,6 +242,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The Dashboard's financing panel names the period of its interest-saved figure: "Interest
+  saved over the loans' remaining life (nominal)" (ADR 0144, #172). Before, "Interest saved
+  by prepayments (nominal)" next to "Total interest (Yrs 1–N)" read as the same N years.
+  The figure is unchanged.
 - Adding a valuation or lease with an end date no longer asks to end the previous
   open-ended record (ADR 0144, #121). For a lease, ending the previous one removed its
   rent from the months after the new lease ends. Adding an open-ended record still asks,
