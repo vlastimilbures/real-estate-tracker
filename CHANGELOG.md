@@ -248,7 +248,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   preset or duplicating a scenario, with no form open, still shows the banner.
 - Editing a field clears its error in the record forms, Assumptions and the scenario form,
   as the property form already did (ADR 0141, #125). Before, the error stayed until the next
-  save. The scenario Name is marked required for screen readers.
+  save. The scenario Name is marked required, like the other required fields.
 - A first loan taken out after the projection start on a property you already own now
   counts its principal as cash paid to you, in the year it is drawn (ADR 0134, #181). Its
   debt was already counted, but its money was not, so cumulative net cash flow and levered

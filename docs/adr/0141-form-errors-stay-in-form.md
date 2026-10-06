@@ -44,13 +44,17 @@ input rules.
    The Scenarios page calls it when adding a preset or duplicating a scenario is refused by an
    input rule, since no form is open to show it.
 3. **Assumptions shows a non-field input error in its error summary** (ADR 0095). Such an
-   error names a field the form does not show. (An edit that would break a saved scenario,
-   ADR 0128 §6, already shows on the level it changed.) The summary shows the message, takes focus, and goes on the next edit or
-   Discard. A non-input failure still shows in the banner only.
+   error names a field the form does not show. An edit that would break a saved scenario
+   (ADR 0128 §6) shows on the level a rate or inflation shock shifts; any other break, e.g.
+   a value crash, has no field here and goes to the summary. The summary shows the message,
+   takes focus, and goes on the next edit or Discard. A non-input failure still shows in the
+   banner only.
 4. **Editing a field clears its error**, in RecordForm, Assumptions and the scenario form, as
-   the property form already did. Errors on other fields stay until the next save, and so does the
-   form-level error in RecordForm and the scenario form.
-5. **The scenario Name is marked required** (`aria-required`), like every other required field.
+   the property form already did. In RecordForm this includes a field action's fill (e.g. the
+   suggested instalment) and a header patch. Errors on other fields stay until the next save,
+   and so does the form-level error in RecordForm and the scenario form.
+5. **The scenario Name is marked required** (the label's "\*" and `aria-required`), like
+   every other required field.
 6. **The form-level write error keeps three presentations:** above the buttons in RecordForm
    and the scenario form, above the footer in the property form, and in the error summary in
    Assumptions. They are not unified here. ADR 0095 gives Assumptions, a long page with a
@@ -63,4 +67,7 @@ input rules.
 - A refused form save shows its message once, in the form. Cancel leaves nothing behind.
 - An assumptions save refused by a rule on a field the form does not show now says so in the
   form's error summary, instead of only in the banner at the top of the page.
+- A banner left by an earlier failure (constraint, data, other) stays up when a later save
+  is refused by an input rule, until a write succeeds or the user dismisses it. Clearing it
+  on the refusal would hide an unrelated failure.
 - No engine, parity or golden change. No new strings.
