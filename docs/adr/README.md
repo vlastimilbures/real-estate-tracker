@@ -165,6 +165,7 @@ Other IDs seen in code comments:
 | [0138](0138-refinance-handover-edge-cases.md)     | Refinance handover edge cases                                                          | #229, #221, #223                       |
 | [0139](0139-last-tranche-cap.md)                  | A projection tranche lands no later than payment term−1                                | #218                                   |
 | [0140](0140-one-form-parser.md)                   | One form parser and one message set; a thousands-shaped amount is refused              | #125                                   |
+| [0141](0141-form-errors-stay-in-form.md)          | A form's input errors stay in the form; editing a field clears its error               | #125                                   |
 
 ### Judgment calls and open questions
 
