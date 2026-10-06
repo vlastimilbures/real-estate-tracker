@@ -1,6 +1,6 @@
 # 0142. A row switch asks before it drops typed edits; a busy dialog cannot be closed
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-06
 - Source: issue #132 (R5-01, R5-19, R5-21), Track 10 PR 10.3, owner decision D2 = A
 - Related: [0077](0077-ux-a11y-round-b-forms.md) (leave guard UX-030/UX-073, modal dirty
