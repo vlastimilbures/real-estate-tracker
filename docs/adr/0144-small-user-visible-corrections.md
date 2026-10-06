@@ -1,6 +1,6 @@
 # 0144. "End previous" only for open-ended records; the interest-saved label names its window
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-07
 - Source: issue #121 part 1 (G1-4-02), issue #172 item 3, issue #32 leftovers; Track 10 PR 10.5
 - Related: [0099](0099-close-previous-open-record.md) (corrected here),
