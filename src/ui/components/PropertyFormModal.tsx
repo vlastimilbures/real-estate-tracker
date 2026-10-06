@@ -1,6 +1,9 @@
 import { useState, useEffect, useId, useRef, type RefObject } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { usePortfolioStore } from "../../state/portfolioStore";
+import {
+  usePortfolioStore,
+  type MutationResult,
+} from "../../state/portfolioStore";
 import { dateDraft, moneyDraft, percentDraft } from "../model/formParse";
 import {
   parsePropertyForm,
@@ -320,15 +323,19 @@ export function PropertyFormModal({
     const { property, address, garage } = result;
     setSaving(true);
     setSaveError(null);
-    const saveResult =
-      mode === "add"
-        ? await addProperty(
-            property,
-            { id: `hc-${property.id}`, propertyId: property.id },
-            { address, garage },
-          )
-        : await editProperty(property, { address, garage });
-    setSaving(false);
+    let saveResult: MutationResult;
+    try {
+      saveResult =
+        mode === "add"
+          ? await addProperty(
+              property,
+              { id: `hc-${property.id}`, propertyId: property.id },
+              { address, garage },
+            )
+          : await editProperty(property, { address, garage });
+    } finally {
+      setSaving(false);
+    }
     // Keep the modal open on failure so the user can retry; close only on success.
     if (saveResult.ok) return onClose();
     // A rule tied to a field shows on that field; anything else above the buttons.
