@@ -15,6 +15,9 @@ interface ModalProps {
   /** Unsaved input: Esc and backdrop clicks are ignored; ✕ and Cancel still close
    *  (UX-029). */
   dirty?: boolean;
+  /** A write is running: ✕ is disabled, and Esc and backdrop clicks are ignored, so the
+   *  write's outcome shows in the dialog (ADR 0142). */
+  busy?: boolean;
 }
 
 /**
@@ -32,10 +35,11 @@ export function Modal({
   footer,
   onSubmit,
   dirty = false,
+  busy = false,
 }: ModalProps) {
   // Esc and the backdrop are easy to hit by accident, so they never discard input.
   const dismiss = () => {
-    if (!dirty) onClose();
+    if (!dirty && !busy) onClose();
   };
   const dialogRef = useModalA11y(dismiss, { trap: true, restoreFocus: true });
   const content = (
@@ -64,6 +68,7 @@ export function Modal({
             type="button"
             className="icon-btn"
             onClick={onClose}
+            disabled={busy}
             aria-label={closeLabel}
           >
             <X size={18} />

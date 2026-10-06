@@ -242,6 +242,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- In a property's valuations, leases, mortgages and holding costs, a click on another row's
+  Edit or Delete while the form holds typed edits now asks first (Keep editing / Discard),
+  as leaving the page does (ADR 0142, #132). Before, the edits were lost without a word.
+  A form with unsaved edits in another panel does not make it ask, and keeps its edits.
+- While Clear sample, the property form or the scenario form is writing, ✕ is disabled, and
+  Esc and a click outside do not close the dialog (ADR 0142, #132). Before, ✕ could close it
+  mid-write, so a failure had nowhere to show.
 - A form save refused by an input rule shows its message once, in the form (ADR 0141,
   #125). Before, the banner at the top of the page repeated it and stayed after Cancel. The
   Assumptions form lists a rule on a field it does not show in its error summary. Adding a

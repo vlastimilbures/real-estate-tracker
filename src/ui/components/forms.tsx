@@ -348,6 +348,7 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
   validate,
   header,
   hiddenFields,
+  unsavedKey,
 }: {
   specs: S;
   initial: Record<string, string>;
@@ -387,6 +388,9 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
    *  hidden field should be blank. */
   hiddenFields?:
     ((draft: Record<string, string>) => readonly string[]) | undefined;
+  /** The leave-guard key for this form's unsaved edits, when the parent guards its own
+   *  actions with it (ADR 0142); else the form makes its own. */
+  unsavedKey?: string | undefined;
 }) {
   const t = useT();
   const [draft, setDraft] = useState<Record<string, string>>(initial);
@@ -395,7 +399,8 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
   const [busy, setBusy] = useState(false);
   // Leave guard (UX-073): while the draft differs from the values the form opened with
   // (or last saved), navigation asks first. Each form registers under its own key.
-  const formKey = useId();
+  const ownKey = useId();
+  const formKey = unsavedKey ?? ownKey;
   const [baseline, setBaseline] = useState(initial);
   const setUnsavedChanges = useUiStore((s) => s.setUnsavedChanges);
   const fieldsOf = (r: Record<string, string>) =>

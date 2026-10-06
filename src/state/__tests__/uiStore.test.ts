@@ -1,6 +1,6 @@
 // Navigation/presentation store: pure synchronous state, no DB. Driven directly via
 // getState() (zustand works outside React), so no DOM is needed.
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_COMPARE, useUiStore } from "../uiStore";
 
 beforeEach(() => {
@@ -104,6 +104,66 @@ describe("setUnsavedChanges", () => {
     useUiStore.getState().confirmLeave();
     expect(useUiStore.getState().unsavedSources).toEqual([]);
     expect(useUiStore.getState().unsavedChanges).toBe(false);
+  });
+});
+
+// ADR 0142 (#132): a record panel's row switch asks only when its own form is dirty.
+describe("guardedAction", () => {
+  beforeEach(() => {
+    useUiStore.setState({
+      route: "dashboard",
+      unsavedChanges: false,
+      unsavedSources: [],
+      pendingLeave: null,
+      pendingSource: null,
+    });
+  });
+
+  it("runs at once while its form is clean, even if another form is dirty", () => {
+    const fn = vi.fn();
+    const s = useUiStore.getState();
+    s.setUnsavedChanges("b", true);
+    s.guardedAction("a", fn);
+    expect(fn).toHaveBeenCalledOnce();
+    expect(useUiStore.getState().pendingLeave).toBeNull();
+  });
+
+  it("is held while its form is dirty; Keep editing drops it", () => {
+    const fn = vi.fn();
+    const s = useUiStore.getState();
+    s.setUnsavedChanges("a", true);
+    s.guardedAction("a", fn);
+    expect(fn).not.toHaveBeenCalled();
+    expect(useUiStore.getState().pendingLeave).toBe(fn);
+    useUiStore.getState().cancelLeave();
+    expect(fn).not.toHaveBeenCalled();
+    expect(useUiStore.getState().pendingLeave).toBeNull();
+    expect(useUiStore.getState().pendingSource).toBeNull();
+    expect(useUiStore.getState().unsavedSources).toEqual(["a"]);
+  });
+
+  it("Discard runs it and clears only its own form", () => {
+    const fn = vi.fn();
+    const s = useUiStore.getState();
+    s.setUnsavedChanges("a", true);
+    s.setUnsavedChanges("b", true);
+    s.guardedAction("a", fn);
+    useUiStore.getState().confirmLeave();
+    expect(fn).toHaveBeenCalledOnce();
+    expect(useUiStore.getState().unsavedSources).toEqual(["b"]);
+    expect(useUiStore.getState().unsavedChanges).toBe(true);
+    expect(useUiStore.getState().pendingSource).toBeNull();
+  });
+
+  it("a navigation held after it still clears every form", () => {
+    const s = useUiStore.getState();
+    s.setUnsavedChanges("a", true);
+    s.setUnsavedChanges("b", true);
+    s.guardedAction("a", () => {});
+    useUiStore.getState().navigate("projections");
+    useUiStore.getState().confirmLeave();
+    expect(useUiStore.getState().route).toBe("projections");
+    expect(useUiStore.getState().unsavedSources).toEqual([]);
   });
 });
 

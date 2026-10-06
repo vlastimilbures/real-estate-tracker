@@ -166,6 +166,7 @@ Other IDs seen in code comments:
 | [0139](0139-last-tranche-cap.md)                  | A projection tranche lands no later than payment term−1                                | #218                                   |
 | [0140](0140-one-form-parser.md)                   | One form parser and one message set; a thousands-shaped amount is refused              | #125                                   |
 | [0141](0141-form-errors-stay-in-form.md)          | A form's input errors stay in the form; editing a field clears its error               | #125                                   |
+| [0142](0142-row-switch-guard-busy-dialog.md)      | A row switch asks before it drops typed edits; a busy dialog cannot be closed          | #132                                   |
 
 ### Judgment calls and open questions
 

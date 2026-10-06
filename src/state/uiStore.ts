@@ -165,8 +165,14 @@ interface UiState {
   unsavedSources: readonly string[];
   /** A navigation held back by `unsavedChanges`, waiting for Discard / Keep editing. */
   pendingLeave: (() => void) | null;
+  /** The form whose edits `pendingLeave` drops, when it came from `guardedAction`; null
+   *  for a navigation, which drops every form's edits. */
+  pendingSource: string | null;
   /** Mark the form `source` as holding unsaved edits, or as clean. */
   setUnsavedChanges: (source: string, unsaved: boolean) => void;
+  /** Run `fn` now, or, while the form `source` holds unsaved edits, hold it back for the
+   *  leave guard like a navigation (a row switch in a record panel, ADR 0142). */
+  guardedAction: (source: string, fn: () => void) => void;
   /** Discard the unsaved edits and carry out the held navigation. */
   confirmLeave: () => void;
   /** Keep editing: drop the held navigation. */
@@ -184,7 +190,8 @@ function guarded(
   const moves = (Object.keys(target) as (keyof UiState)[]).some(
     (k) => s[k] !== target[k],
   );
-  if (s.unsavedChanges && moves) set({ pendingLeave: () => set(target) });
+  if (s.unsavedChanges && moves)
+    set({ pendingLeave: () => set(target), pendingSource: null });
   else set(target);
 }
 
@@ -239,6 +246,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   unsavedChanges: false,
   unsavedSources: [],
   pendingLeave: null,
+  pendingSource: null,
   navigate: (route) => guarded(get, set, { route }),
   openProperty: (id, target) =>
     guarded(get, set, {
@@ -298,12 +306,25 @@ export const useUiStore = create<UiState>((set, get) => ({
     const unsavedSources = unsaved ? [...others, source] : others;
     set({ unsavedSources, unsavedChanges: unsavedSources.length > 0 });
   },
+  guardedAction: (source, fn) => {
+    if (get().unsavedSources.includes(source))
+      set({ pendingLeave: fn, pendingSource: source });
+    else fn();
+  },
   confirmLeave: () => {
-    const go = get().pendingLeave;
-    set({ unsavedChanges: false, unsavedSources: [], pendingLeave: null });
+    const { pendingLeave: go, pendingSource: source, unsavedSources } = get();
+    // A guarded action drops only its own form's edits; the other forms stay open with
+    // theirs (ADR 0142). A navigation leaves them all.
+    const kept = source ? unsavedSources.filter((k) => k !== source) : [];
+    set({
+      unsavedChanges: kept.length > 0,
+      unsavedSources: kept,
+      pendingLeave: null,
+      pendingSource: null,
+    });
     go?.();
   },
-  cancelLeave: () => set({ pendingLeave: null }),
+  cancelLeave: () => set({ pendingLeave: null, pendingSource: null }),
 }));
 
 // Amounts are always Kč (UX-017); drop a currency picked in an older version.

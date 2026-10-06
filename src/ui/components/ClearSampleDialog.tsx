@@ -47,7 +47,7 @@ function ClearSampleDialog({ onClose }: { onClose: () => void }) {
       title={t.sample.dialogTitle}
       onClose={onClose}
       closeLabel={t.common.close}
-      dirty={clearing}
+      busy={clearing}
       footer={
         <>
           <Button onClick={onClose} disabled={clearing}>
