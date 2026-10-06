@@ -357,6 +357,7 @@ export function PropertyFormModal({
         if (!saving) void handleSave();
       }}
       dirty={isDirty(baseline, form)}
+      busy={saving}
       footer={
         <>
           <Button onClick={onClose} disabled={saving}>

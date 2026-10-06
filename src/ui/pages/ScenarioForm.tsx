@@ -110,6 +110,7 @@ export function ScenarioForm({
       closeLabel={t.common.close}
       onSubmit={() => void submit()}
       dirty={isDirty(initialDraft, draft)}
+      busy={busy}
       footer={
         <>
           <Button

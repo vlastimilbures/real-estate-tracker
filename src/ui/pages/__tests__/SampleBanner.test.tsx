@@ -164,38 +164,35 @@ describe("Clear sample dialog (ADR 0094)", () => {
     expect(screen.getByRole("dialog")).toBeTruthy();
   });
 
-  it.fails(
-    "cannot be closed while clearing; a failure shows (#132)",
-    async () => {
-      let fail: (e: Error) => void = () => {};
-      const clearSample = vi.fn(
-        () =>
-          new Promise<never>((_resolve, reject) => {
-            fail = reject;
-          }),
-      );
-      act(() => usePortfolioStore.setState({ clearSample }));
-      render(<Dashboard />);
-      await userEvent.click(
-        screen.getByRole("button", { name: en.sample.clearAction }),
-      );
-      await userEvent.click(
-        screen.getByRole("button", { name: en.sample.confirm }),
-      );
-      const close = screen.getByRole<HTMLButtonElement>("button", {
-        name: en.common.close,
-      });
-      expect(close.disabled).toBe(true);
-      await userEvent.click(close);
-      expect(screen.getByRole("dialog")).toBeTruthy();
+  it("cannot be closed while clearing; a failure shows (#132)", async () => {
+    let fail: (e: Error) => void = () => {};
+    const clearSample = vi.fn(
+      () =>
+        new Promise<never>((_resolve, reject) => {
+          fail = reject;
+        }),
+    );
+    act(() => usePortfolioStore.setState({ clearSample }));
+    render(<Dashboard />);
+    await userEvent.click(
+      screen.getByRole("button", { name: en.sample.clearAction }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: en.sample.confirm }),
+    );
+    const close = screen.getByRole<HTMLButtonElement>("button", {
+      name: en.common.close,
+    });
+    expect(close.disabled).toBe(true);
+    await userEvent.click(close);
+    expect(screen.getByRole("dialog")).toBeTruthy();
 
-      await act(async () => fail(new SafetyBackupError("disk full")));
-      expect(
-        screen.getByText(en.sample.safetyBackupFailed("disk full")),
-      ).toBeTruthy();
-      expect(close.disabled).toBe(false);
-    },
-  );
+    await act(async () => fail(new SafetyBackupError("disk full")));
+    expect(
+      screen.getByText(en.sample.safetyBackupFailed("disk full")),
+    ).toBeTruthy();
+    expect(close.disabled).toBe(false);
+  });
 });
 
 describe("Settings → Backup sample panel (ADR 0094)", () => {
