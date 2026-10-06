@@ -419,6 +419,9 @@ export const cs: Dictionary = {
     activateTitle: "Znovu zahrnout tuto nemovitost do přehledů a projekcí",
     confirmDeactivate: (name) =>
       `Deaktivovat ${name}? Bude vyřazena z přehledů a projekcí, dokud ji znovu neaktivujete. Žádná data se nesmažou. Deaktivace nezaznamená prodej, výnos z prodeje ani splacení úvěru.`,
+    confirmDeleteValuation: (date) => `Smazat ocenění od ${date}?`,
+    confirmDeleteLease: (date) => `Smazat nájem od ${date}?`,
+    confirmDeleteMortgage: (date) => `Smazat hypoteční blok od ${date}?`,
     inactiveBadge: "Neaktivní",
     inactiveNote:
       "Tato nemovitost je vyřazena z přehledů a projekcí portfolia.",

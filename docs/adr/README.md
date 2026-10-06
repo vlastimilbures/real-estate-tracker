@@ -167,6 +167,7 @@ Other IDs seen in code comments:
 | [0140](0140-one-form-parser.md)                   | One form parser and one message set; a thousands-shaped amount is refused              | #125                                   |
 | [0141](0141-form-errors-stay-in-form.md)          | A form's input errors stay in the form; editing a field clears its error               | #125                                   |
 | [0142](0142-row-switch-guard-busy-dialog.md)      | A row switch asks before it drops typed edits; a busy dialog cannot be closed          | #132                                   |
+| [0143](0143-one-confirm-row.md)                   | Confirm rows name the record, take focus and stay open on failure                      | #132                                   |
 
 ### Judgment calls and open questions
 

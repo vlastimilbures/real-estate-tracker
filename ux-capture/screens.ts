@@ -595,6 +595,22 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "21b-property-valuation-delete-confirm",
+    desc: "Valuation delete confirm, naming the row (ADR 0143)",
+    route: "property",
+    run: async (ux) => {
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      const p = panel(ux, ux.t.propertyDetail.valuationsTitle);
+      await p.getByRole("button", { name: ux.t.common.delete }).first().click();
+      await expect(
+        p.getByRole("button", { name: ux.t.common.cancel }),
+      ).toBeFocused();
+      await p.scrollIntoViewIfNeeded();
+      await ux.capture("21b-property-valuation-delete-confirm");
+    },
+  },
+  {
     id: "22-property-mortgage-add-errors",
     desc: "Add mortgage block, submitted blank",
     route: "property",
@@ -765,6 +781,27 @@ export const SCREENS: Screen[] = [
         .getByRole("button", { name: ux.t.scenarios.viewDeltaVsBase })
         .click();
       await ux.capture("43-scenarios-compare-delta");
+    },
+  },
+  {
+    id: "45-scenario-delete-confirm",
+    desc: "Scenario delete confirm, focus on Cancel (ADR 0143)",
+    route: "scenarios",
+    run: async (ux) => {
+      await boot(ux.page);
+      await nav(ux, "scenarios");
+      await ux.page
+        .getByRole("button", { name: ux.t.scenarios.plusPp(2), exact: true })
+        .click();
+      await ux.page
+        .locator(".scenario-row")
+        .getByRole("button", { name: ux.t.common.delete })
+        .first()
+        .click();
+      await expect(
+        ux.page.getByRole("button", { name: ux.t.common.cancel }),
+      ).toBeFocused();
+      await ux.capture("45-scenario-delete-confirm");
     },
   },
   {

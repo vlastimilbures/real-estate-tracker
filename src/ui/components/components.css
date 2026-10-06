@@ -1953,6 +1953,10 @@ main.page:focus {
   color: var(--negative);
   flex: 1 1 260px;
 }
+/* Alone in a flush panel (the deactivate confirm): the panel border is the edge. */
+.panel-body.flush > .confirm-row:first-child {
+  border-top: none;
+}
 
 /* ── Settings page ─────────────────────────────────────────────────────── */
 .settings-layout {

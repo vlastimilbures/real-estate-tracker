@@ -25,7 +25,7 @@ import {
   ltvBandWord,
 } from "../model/health";
 import { useT } from "../hooks/useT";
-import { describeWriteError } from "../model/writeError";
+import { ConfirmRow } from "../components/EntityPanelParts";
 import { propertiesSubtitle } from "../model/tableContext";
 
 export function Properties() {
@@ -40,8 +40,6 @@ export function Properties() {
   const clearNewPropertyRequest = useUiStore((s) => s.clearNewPropertyRequest);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // File ▸ New Property… (⌘N, UX-066) lands here with a one-shot request: open the form
   // during render, then clear the request in the store.
@@ -54,13 +52,10 @@ export function Properties() {
   const deleteTarget = perProperty.find((p) => p.propertyId === deletingId);
 
   async function handleDelete(id: string) {
-    setDeleting(true);
-    setDeleteError(null);
     const result = await removeProperty(id);
-    setDeleting(false);
-    // On failure keep the confirm row open and say why, next to the buttons (UX-050).
+    // On failure the confirm row stays open and says why (UX-050).
     if (result.ok) setDeletingId(null);
-    else setDeleteError(describeWriteError(t, result.error).message);
+    return result;
   }
 
   return (
@@ -221,10 +216,7 @@ export function Properties() {
                           size="sm"
                           variant="danger"
                           icon={Trash2}
-                          onClick={() => {
-                            setDeletingId(p.propertyId);
-                            setDeleteError(null);
-                          }}
+                          onClick={() => setDeletingId(p.propertyId)}
                           title={t.properties.deleteProperty}
                         >
                           <span className="btn-label">{t.common.delete}</span>
@@ -238,36 +230,14 @@ export function Properties() {
           </TableWrap>
           {deleteTarget && (
             // Outside .table-wrap so the message is never clipped by the scroll (UX-019).
-            <div className="confirm-row">
-              <div className="confirm-row-content">
-                <span className="confirm-msg">
-                  {t.properties.confirmDelete(deleteTarget.name)}
-                </span>
-                <Button
-                  size="sm"
-                  variant="danger"
-                  disabled={deleting}
-                  onClick={() => handleDelete(deleteTarget.propertyId)}
-                >
-                  {deleting ? t.common.deleting : t.common.yesDelete}
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setDeletingId(null);
-                    setDeleteError(null);
-                  }}
-                  disabled={deleting}
-                >
-                  {t.common.cancel}
-                </Button>
-                {deleteError && (
-                  <span className="error-text" role="alert">
-                    {deleteError}
-                  </span>
-                )}
-              </div>
-            </div>
+            <ConfirmRow
+              key={deleteTarget.propertyId}
+              message={t.properties.confirmDelete(deleteTarget.name)}
+              confirmLabel={t.common.yesDelete}
+              busyLabel={t.common.deleting}
+              onConfirm={() => handleDelete(deleteTarget.propertyId)}
+              onCancel={() => setDeletingId(null)}
+            />
           )}
         </Panel>
       )}

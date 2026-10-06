@@ -441,6 +441,11 @@ export const en = {
     activateTitle: "Include this property in dashboards and projections again",
     confirmDeactivate: (name: string) =>
       `Deactivate ${name}? It will be excluded from dashboards and projections until reactivated. No data is deleted. Deactivating does not record a sale, sale proceeds or a loan payoff.`,
+    confirmDeleteValuation: (date: string) =>
+      `Delete the valuation from ${date}?`,
+    confirmDeleteLease: (date: string) => `Delete the lease from ${date}?`,
+    confirmDeleteMortgage: (date: string) =>
+      `Delete the mortgage block from ${date}?`,
     inactiveBadge: "Inactive",
     inactiveNote:
       "This property is excluded from portfolio dashboards and projections.",

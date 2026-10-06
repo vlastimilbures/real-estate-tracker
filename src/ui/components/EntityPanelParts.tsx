@@ -1,9 +1,11 @@
-// Sub-components pulled out of EntityPanel.tsx to shrink its render tree. Pure
-// presentation — no logic beyond what EntityPanel.tsx already computed.
-import { type ReactNode } from "react";
+// Sub-components pulled out of EntityPanel.tsx to shrink its render tree. Presentation
+// only; ConfirmRow keeps its own busy and error state.
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button, TableWrap } from "./primitives";
 import { useT } from "../hooks/useT";
+import { describeWriteError } from "../model/writeError";
+import type { MutationResult } from "../../state/portfolioStore";
 
 export function EntityTable<T extends { id: string }>({
   label,
@@ -84,47 +86,78 @@ export function EntityTable<T extends { id: string }>({
   );
 }
 
-export function DeleteConfirmRow({
-  busy,
-  error,
+/** The one inline confirm for a destructive action (ADR 0143). It runs `onConfirm` and
+ *  stays open with the reason when the write fails (UX-050); the caller closes it on
+ *  success. Focus moves to Cancel on open and back to the trigger on Cancel;
+ *  both buttons are described by the question, so a screen reader reads it. */
+export function ConfirmRow({
   message,
+  confirmLabel,
+  busyLabel,
   onConfirm,
   onCancel,
 }: {
-  busy: boolean;
-  /** Names what will be deleted; defaults to the generic "Delete this record?". */
-  message?: string | undefined;
-  /** Why the last attempt failed, shown next to the buttons (UX-050). */
-  error?: string | null | undefined;
-  onConfirm: () => void;
+  message: string;
+  confirmLabel: string;
+  busyLabel: string;
+  /** Resolves with the write's outcome and never rejects, like the store's mutations. */
+  onConfirm: () => Promise<MutationResult>;
   onCancel: () => void;
 }) {
   const tr = useT();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
+  const messageId = useId();
+  useEffect(() => {
+    // A passive effect: a guard dialog that closed in the same commit has already put
+    // focus back on the trigger, so that is what is remembered here.
+    if (document.activeElement instanceof HTMLElement)
+      opener.current = document.activeElement;
+    // Cancel, the last button: the safe choice, so a held Enter on the trigger cannot
+    // reach the destructive one (ADR 0143).
+    [...(rowRef.current?.querySelectorAll("button") ?? [])].at(-1)?.focus();
+  }, []);
   return (
-    <div
-      style={{
-        padding: "var(--s4) var(--s5)",
-        borderTop: "1px solid var(--hairline)",
-        display: "flex",
-        alignItems: "center",
-        gap: "var(--s4)",
-        flexWrap: "wrap",
-      }}
-    >
-      <span style={{ color: "var(--negative)" }}>
-        {message ?? tr.common.confirmDeleteRow}
-      </span>
-      <Button size="sm" variant="danger" disabled={busy} onClick={onConfirm}>
-        {busy ? tr.common.deleting : tr.common.yesDelete}
-      </Button>
-      <Button size="sm" disabled={busy} onClick={onCancel}>
-        {tr.common.cancel}
-      </Button>
-      {error && (
-        <p className="error-text" role="alert">
-          {error}
-        </p>
-      )}
+    <div className="confirm-row" ref={rowRef}>
+      <div className="confirm-row-content">
+        <span className="confirm-msg" id={messageId}>
+          {message}
+        </span>
+        <Button
+          size="sm"
+          variant="danger"
+          disabled={busy}
+          aria-describedby={messageId}
+          onClick={async () => {
+            setBusy(true);
+            setError(null);
+            const result = await onConfirm();
+            if (result.ok) return;
+            setBusy(false);
+            setError(describeWriteError(tr, result.error).message);
+          }}
+        >
+          {busy ? busyLabel : confirmLabel}
+        </Button>
+        <Button
+          size="sm"
+          disabled={busy}
+          aria-describedby={messageId}
+          onClick={() => {
+            onCancel();
+            if (opener.current?.isConnected) opener.current.focus();
+          }}
+        >
+          {tr.common.cancel}
+        </Button>
+        {error && (
+          <span className="error-text" role="alert">
+            {error}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

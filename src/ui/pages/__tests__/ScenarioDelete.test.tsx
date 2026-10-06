@@ -8,15 +8,19 @@ import { ScenarioListPanel } from "../ScenariosPanels";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import type { Scenario } from "../../../engine";
+import type { MutationResult } from "../../../state/portfolioStore";
 
 const en = getDict("en");
+const ok = async (): Promise<MutationResult> => ({ ok: true });
 const scenario: Scenario = {
   id: "s1",
   name: "Rates up",
   overrides: {},
 };
 
-function renderList(onDelete: (s: { id: string; name: string }) => void) {
+function renderList(
+  onDelete: (s: { id: string; name: string }) => Promise<MutationResult>,
+) {
   render(
     <ScenarioListPanel
       scenarios={[scenario]}
@@ -37,7 +41,7 @@ beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("scenario delete confirmation (UX-020)", () => {
   it("asks before deleting and names the scenario", async () => {
-    const onDelete = vi.fn();
+    const onDelete = vi.fn(ok);
     renderList(onDelete);
     await userEvent.click(
       screen.getByRole("button", { name: en.common.delete }),
@@ -51,10 +55,14 @@ describe("scenario delete confirmation (UX-020)", () => {
       screen.getByRole("button", { name: en.common.yesDelete }),
     );
     expect(onDelete).toHaveBeenCalledWith(scenario);
+    // Closes once the delete landed (ADR 0143).
+    expect(
+      screen.queryByText(en.scenarios.confirmDelete("Rates up")),
+    ).toBeNull();
   });
 
   it("Cancel keeps the scenario", async () => {
-    const onDelete = vi.fn();
+    const onDelete = vi.fn(ok);
     renderList(onDelete);
     await userEvent.click(
       screen.getByRole("button", { name: en.common.delete }),
@@ -73,7 +81,7 @@ describe("scenario delete confirmation (UX-020)", () => {
 // behind the same confirmation, instead of blocking startup.
 describe("an unreadable scenario (ADR 0123)", () => {
   function renderUnreadable(
-    onDelete: (s: { id: string; name: string }) => void,
+    onDelete: (s: { id: string; name: string }) => Promise<MutationResult>,
   ) {
     render(
       <ScenarioListPanel
@@ -93,7 +101,7 @@ describe("an unreadable scenario (ADR 0123)", () => {
   }
 
   it("is listed with why it is left out, and no compare tick", () => {
-    renderUnreadable(() => undefined);
+    renderUnreadable(ok);
     const row = screen.getByText("Broken").closest("li")!;
     expect(row.textContent).toContain(en.scenarios.unreadableRow);
     expect(row.querySelector("input[type=checkbox]")).toBeNull();
@@ -101,7 +109,7 @@ describe("an unreadable scenario (ADR 0123)", () => {
   });
 
   it("is deleted after the usual confirmation", async () => {
-    const onDelete = vi.fn();
+    const onDelete = vi.fn(ok);
     renderUnreadable(onDelete);
     await userEvent.click(
       screen.getByRole("button", { name: en.common.delete }),

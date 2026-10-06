@@ -3,7 +3,8 @@
 import { useId, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Panel, Button, SegmentedToggle } from "../components/primitives";
-import { DeleteConfirmRow } from "../components/EntityPanelParts";
+import { ConfirmRow } from "../components/EntityPanelParts";
+import type { MutationResult } from "../../state/portfolioStore";
 import { rate, type Scenario, type ScenarioOverrides } from "../../engine";
 import { useT } from "../hooks/useT";
 import {
@@ -296,7 +297,7 @@ export function ScenarioListPanel({
   busy: boolean;
   onEdit: (s: Scenario) => void;
   onDuplicate: (s: Scenario) => void;
-  onDelete: (s: Deletable) => void;
+  onDelete: (s: Deletable) => Promise<MutationResult>;
   /** Which loans the scenario's rate shock hits (ADR 0100). */
   reachText?: (id: string) => string | undefined;
 }) {
@@ -317,12 +318,15 @@ export function ScenarioListPanel({
   const confirmDelete = (item: Deletable) =>
     confirmingId === item.id && (
       <div className="scenario-confirm">
-        <DeleteConfirmRow
-          busy={busy}
+        <ConfirmRow
           message={t.scenarios.confirmDelete(item.name)}
-          onConfirm={() => {
-            setConfirmingId(null);
-            onDelete(item);
+          confirmLabel={t.common.yesDelete}
+          busyLabel={t.common.deleting}
+          onConfirm={async () => {
+            // Close only once the delete landed; a failure stays shown here (UX-050).
+            const result = await onDelete(item);
+            if (result.ok) setConfirmingId(null);
+            return result;
           }}
           onCancel={() => setConfirmingId(null)}
         />
