@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: owner request (2026-10-03)
+- Amended by: [0144](0144-small-user-visible-corrections.md) (decision 3: no prompt for a
+  dated new record)
 
 ## Context
 
