@@ -1,6 +1,6 @@
 // Sub-components pulled out of EntityPanel.tsx to shrink its render tree. Presentation
 // only; ConfirmRow keeps its own busy and error state.
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button, TableWrap } from "./primitives";
 import { useT } from "../hooks/useT";
@@ -88,7 +88,8 @@ export function EntityTable<T extends { id: string }>({
 
 /** The one inline confirm for a destructive action (ADR 0143). It runs `onConfirm` and
  *  stays open with the reason when the write fails (UX-050); the caller closes it on
- *  success. Focus moves to the confirm button on open and back to the trigger on Cancel. */
+ *  success. Focus moves to the confirm button on open and back to the trigger on Cancel;
+ *  both buttons are described by the question, so a screen reader reads it. */
 export function ConfirmRow({
   message,
   confirmLabel,
@@ -107,6 +108,7 @@ export function ConfirmRow({
   const [error, setError] = useState<string | null>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const opener = useRef<HTMLElement | null>(null);
+  const messageId = useId();
   useEffect(() => {
     // A passive effect: a guard dialog that closed in the same commit has already put
     // focus back on the trigger, so that is what is remembered here.
@@ -117,11 +119,14 @@ export function ConfirmRow({
   return (
     <div className="confirm-row" ref={rowRef}>
       <div className="confirm-row-content">
-        <span className="confirm-msg">{message}</span>
+        <span className="confirm-msg" id={messageId}>
+          {message}
+        </span>
         <Button
           size="sm"
           variant="danger"
           disabled={busy}
+          aria-describedby={messageId}
           onClick={async () => {
             setBusy(true);
             setError(null);
@@ -136,6 +141,7 @@ export function ConfirmRow({
         <Button
           size="sm"
           disabled={busy}
+          aria-describedby={messageId}
           onClick={() => {
             onCancel();
             if (opener.current?.isConnected) opener.current.focus();

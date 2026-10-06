@@ -158,7 +158,7 @@ describe("focus moves into the confirm row (ADR 0143)", () => {
 describe("the confirm's buttons are described by its question (ADR 0143)", () => {
   // Focus lands on a button, so a screen reader reads the question only through the
   // button's description.
-  it.fails("deactivate banner: Yes and Cancel (#132)", () => {
+  it("deactivate banner: Yes and Cancel (#132)", () => {
     render(
       <ActivationBanner
         propertyName="Dubová"
