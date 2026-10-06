@@ -98,8 +98,9 @@ mortgage reference model are the regression baseline (ADR 0081).
 - **Don't reinvent.** When a formula is ambiguous, keep the parity targets and follow Czech
   banking practice (ADR 0003) rather than guessing a "better" formula; changing a target
   needs an ADR.
-- **Key correctness invariant:** Σ principal repaid over the horizon must equal the starting debt
-  (principal retires 100% of the balance). A classic spreadsheet bug computes principal as 0
+- **Key correctness invariant:** Σ principal repaid over the horizon (scheduled + prepaid) must
+  equal the starting debt plus any draws (principal retires 100% of the balance; e.g.
+  `recast-tranche.test.ts`). A classic spreadsheet bug computes principal as 0
   so the balance never amortizes — keep this as a tripwire test.
 - **Offline only.** No network calls, analytics, or cloud anything — offline is a requirement
   (enforced by the CSP and capabilities, see `docs/release.md`).
