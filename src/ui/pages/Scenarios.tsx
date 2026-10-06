@@ -67,8 +67,12 @@ export function Scenarios() {
     successMsg?: string,
   ): Promise<MutationResult> {
     setBusy(true);
-    const res = await action();
-    setBusy(false);
+    let res: MutationResult;
+    try {
+      res = await action();
+    } finally {
+      setBusy(false);
+    }
     if (res.ok && successMsg) showToast(successMsg);
     if (!res.ok && res.error.kind === "input") showError(res.error);
     return res;
