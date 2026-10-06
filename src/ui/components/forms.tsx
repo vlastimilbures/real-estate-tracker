@@ -409,6 +409,16 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
     [formKey, setUnsavedChanges],
   );
 
+  /** Edit one field; its error goes with the edit (ADR 0141, as the property form). */
+  function edit(name: string, v: string) {
+    setDraft((d) => ({ ...d, [name]: v }));
+    setErrors((e) => {
+      const copy = { ...e };
+      delete copy[name];
+      return copy;
+    });
+  }
+
   async function submit() {
     const { values, errors: errs } = collectValues(specs, draft, formRules(t));
     // Cross-field rules only run once every field parses, so messages point at the
@@ -494,19 +504,17 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
                 rows={3}
                 value={draft[spec.name] ?? ""}
                 placeholder={t.forms.drawsPlaceholder}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, [spec.name]: e.target.value }))
-                }
+                onChange={(e) => edit(spec.name, e.target.value)}
               />
             ) : spec.kind === "date" ? (
               <DateInput
                 value={draft[spec.name] ?? ""}
-                onChange={(v) => setDraft((d) => ({ ...d, [spec.name]: v }))}
+                onChange={(v) => edit(spec.name, v)}
               />
             ) : (
               <TextInput
                 value={draft[spec.name] ?? ""}
-                onChange={(v) => setDraft((d) => ({ ...d, [spec.name]: v }))}
+                onChange={(v) => edit(spec.name, v)}
                 suffix={spec.suffix}
                 inputMode="decimal"
                 placeholder={

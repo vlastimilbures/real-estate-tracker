@@ -66,8 +66,14 @@ export function ScenarioForm({
   // One id per form, so a retry after a failed save cannot add a second scenario.
   const [id] = useState(() => scenario?.id ?? crypto.randomUUID());
 
+  /** Edit one field; its error goes with the edit (ADR 0141). */
   function set<K extends keyof ScenarioDraftFields>(k: K, v: string) {
     setDraft((d) => ({ ...d, [k]: v }));
+    setErrors((e) => {
+      const copy = { ...e };
+      delete copy[k];
+      return copy;
+    });
   }
 
   async function submit() {
@@ -127,7 +133,7 @@ export function ScenarioForm({
       <div className="record-form">
         <p className="form-hint">{t.scenarios.formHint}</p>
         <div className="form-grid">
-          <Field label={t.scenarios.name} error={errors.name}>
+          <Field label={t.scenarios.name} required error={errors.name}>
             <TextInput
               value={draft.name}
               onChange={(v) => set("name", v)}

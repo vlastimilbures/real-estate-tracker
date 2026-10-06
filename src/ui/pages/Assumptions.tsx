@@ -169,6 +169,11 @@ export function AssumptionsPanel() {
 
   const set = (name: string, v: string) => {
     setDraft({ ...current, [name]: v });
+    setErrors((e) => {
+      const copy = { ...e };
+      delete copy[name];
+      return copy;
+    });
     setFailed(false);
     setFormError(null);
   };

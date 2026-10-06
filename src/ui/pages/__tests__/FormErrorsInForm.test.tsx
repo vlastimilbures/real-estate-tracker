@@ -168,7 +168,7 @@ describe("Assumptions shows a non-field input error in its summary", () => {
 });
 
 describe("editing a field clears its error (R5-07)", () => {
-  it.fails("in RecordForm (#125)", async () => {
+  it("in RecordForm (#125)", async () => {
     render(
       <RecordForm
         specs={[{ name: "amount", label: "Amount", kind: "money" }]}
@@ -184,7 +184,7 @@ describe("editing a field clears its error (R5-07)", () => {
     expect(input.getAttribute("aria-invalid")).not.toBe("true");
   });
 
-  it.fails("in Assumptions (#125)", async () => {
+  it("in Assumptions (#125)", async () => {
     act(() =>
       usePortfolioStore.setState({ portfolio, assumptions, status: "ready" }),
     );
@@ -199,7 +199,7 @@ describe("editing a field clears its error (R5-07)", () => {
     expect(input.getAttribute("aria-invalid")).not.toBe("true");
   });
 
-  it.fails("in the scenario form (#125)", async () => {
+  it("in the scenario form (#125)", async () => {
     render(
       <ScenarioForm
         assumptions={assumptions}
@@ -219,7 +219,7 @@ describe("editing a field clears its error (R5-07)", () => {
 });
 
 describe("the scenario Name is marked required", () => {
-  it.fails("aria-required (#125)", () => {
+  it("aria-required (#125)", () => {
     render(
       <ScenarioForm
         assumptions={assumptions}
