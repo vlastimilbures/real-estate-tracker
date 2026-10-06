@@ -2,13 +2,14 @@
 // modal component so it's unit-testable in the node test env (no DOM), mirroring
 // ./mortgageForm.ts.
 import {
+  collectValues,
   intRangeHint,
   moneyDraft,
-  parseDate,
-  parseIntField,
   parseMoney,
-  parsePercentToRatio,
+  type CollectRules,
+  type FieldSpec,
 } from "./formParse";
+import { FORM_PARSERS } from "./formParsers";
 import { inRange, INT_RANGES } from "../../lib/intRanges";
 import type { AcquisitionFunding, Property } from "../../engine";
 import type { Dictionary } from "../../i18n";
@@ -77,26 +78,61 @@ export function hasFundingError(errors: PropertyFormErrors): boolean {
   return FUNDING_MONEY.some(([key]) => errors[key] !== undefined);
 }
 
-/**
- * The record the form shows (ADR 0119 §8–§9): a blank amount is unknown and a blank note is
- * no note, so all-blank is `{}`, which clears the stored record. A negative amount is left
- * for the engine to refuse, as the purchase price is.
- */
-function parseFunding(
-  form: PropertyFormState,
-  errs: PropertyFormErrors,
-  t: Dictionary,
-): AcquisitionFunding {
-  const funding: AcquisitionFunding = {};
-  for (const [key, field] of FUNDING_MONEY) {
-    if (!form[key].trim()) continue;
-    const parsed = parseMoney(form[key]);
-    if (parsed) funding[field] = parsed;
-    else errs[key] = t.propertyForm.errInvalidNumber;
-  }
-  const note = form.funding_note.trim();
-  if (note) funding.note = note;
-  return funding;
+/** The form's parsed fields; name, address, type, garage and the note are plain text. */
+function propertySpecs(t: Dictionary) {
+  const p = t.propertyForm;
+  return [
+    { name: "purchase_date", label: p.purchaseDate, kind: "date" },
+    { name: "purchase_price", label: p.purchasePrice, kind: "money" },
+    { name: "size_m2", label: p.size, kind: "int", optional: true },
+    {
+      name: "appreciation_override_pa",
+      label: p.appreciationOverride,
+      kind: "pct",
+      optional: true,
+    },
+    {
+      name: "rent_index_override_pa",
+      label: p.rentIndexOverride,
+      kind: "pct",
+      optional: true,
+    },
+    { name: "own_cash", label: p.ownCash, kind: "money", optional: true },
+    {
+      name: "transaction_costs",
+      label: p.transactionCosts,
+      kind: "money",
+      optional: true,
+    },
+    {
+      name: "initial_works",
+      label: p.initialWorks,
+      kind: "money",
+      optional: true,
+    },
+  ] as const satisfies readonly FieldSpec[];
+}
+
+/** The property form's own messages. Money keeps its sign: a negative price or funding
+ *  amount is left for the engine to refuse. */
+function propertyRules(t: Dictionary): CollectRules {
+  const p = t.propertyForm;
+  return {
+    parsers: { ...FORM_PARSERS, money: parseMoney },
+    blank: () => p.errRequired,
+    invalid: (spec) => {
+      switch (spec.kind) {
+        case "date":
+          return p.errUseDate;
+        case "int":
+          return p.errWholeNumber;
+        case "pct":
+          return p.errInvalidPercentage;
+        default:
+          return p.errInvalidNumber;
+      }
+    },
+  };
 }
 
 export type PropertyFormResult =
@@ -129,7 +165,10 @@ export function parsePropertyForm(
   existingNames: string[],
   t: Dictionary,
 ): PropertyFormResult {
-  const errs: PropertyFormErrors = {};
+  const specs = propertySpecs(t);
+  const draft = Object.fromEntries(specs.map((f) => [f.name, form[f.name]]));
+  const { values: v, errors } = collectValues(specs, draft, propertyRules(t));
+  const errs: PropertyFormErrors = errors;
 
   const name = form.name.trim();
   if (!name) {
@@ -138,46 +177,14 @@ export function parsePropertyForm(
     errs.name = t.propertyForm.errNameExists;
   }
 
-  const purchaseDateParsed = form.purchase_date.trim()
-    ? parseDate(form.purchase_date)
-    : null;
-  if (!form.purchase_date.trim())
-    errs.purchase_date = t.propertyForm.errRequired;
-  else if (!purchaseDateParsed) errs.purchase_date = t.propertyForm.errUseDate;
-
-  const purchasePriceParsed = form.purchase_price.trim()
-    ? parseMoney(form.purchase_price)
-    : null;
-  if (!form.purchase_price.trim())
-    errs.purchase_price = t.propertyForm.errRequired;
-  else if (!purchasePriceParsed)
-    errs.purchase_price = t.propertyForm.errInvalidNumber;
-
-  const size_m2 = form.size_m2.trim() ? parseIntField(form.size_m2) : null;
-  if (form.size_m2.trim() && size_m2 === null)
-    errs.size_m2 = t.propertyForm.errWholeNumber;
-  else if (size_m2 !== null && !inRange(size_m2, INT_RANGES.sizeM2))
+  if (
+    !errs.size_m2 &&
+    v.size_m2 !== null &&
+    !inRange(v.size_m2, INT_RANGES.sizeM2)
+  )
     errs.size_m2 = intRangeHint(t, INT_RANGES.sizeM2); // ADR 0075 (DR-078)
 
-  const apprOvr = form.appreciation_override_pa.trim()
-    ? parsePercentToRatio(form.appreciation_override_pa)
-    : null;
-  if (form.appreciation_override_pa.trim() && apprOvr === null)
-    errs.appreciation_override_pa = t.propertyForm.errInvalidPercentage;
-
-  const rentOvr = form.rent_index_override_pa.trim()
-    ? parsePercentToRatio(form.rent_index_override_pa)
-    : null;
-  if (form.rent_index_override_pa.trim() && rentOvr === null)
-    errs.rent_index_override_pa = t.propertyForm.errInvalidPercentage;
-
-  const funding = parseFunding(form, errs, t);
-
-  if (
-    Object.keys(errs).length > 0 ||
-    !purchaseDateParsed ||
-    !purchasePriceParsed
-  ) {
+  if (Object.keys(errs).length > 0) {
     return {
       valid: false,
       errors: errs,
@@ -187,15 +194,25 @@ export function parsePropertyForm(
     };
   }
 
+  // The record the form shows (ADR 0119 §8–§9): a blank amount is unknown and a blank note
+  // is no note, so all-blank is `{}`, which clears the stored record.
+  const funding: AcquisitionFunding = {};
+  for (const [key, field] of FUNDING_MONEY) {
+    const amount = v[key];
+    if (amount !== null) funding[field] = amount;
+  }
+  const note = form.funding_note.trim();
+  if (note) funding.note = note;
+
   const property: Property = {
     id,
     name,
     type: form.type.trim() || undefined,
-    sizeM2: size_m2 ?? undefined,
-    purchaseDate: purchaseDateParsed,
-    purchasePrice: purchasePriceParsed,
-    appreciationOverridePa: apprOvr ?? undefined,
-    rentIndexOverridePa: rentOvr ?? undefined,
+    sizeM2: v.size_m2 ?? undefined,
+    purchaseDate: v.purchase_date,
+    purchasePrice: v.purchase_price,
+    appreciationOverridePa: v.appreciation_override_pa ?? undefined,
+    rentIndexOverridePa: v.rent_index_override_pa ?? undefined,
     funding,
   };
   return {

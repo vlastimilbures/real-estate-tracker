@@ -3,11 +3,10 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
 import {
   collectValues,
-  fieldHint,
   type FieldSpec,
   type ParsedValues,
 } from "../model/formParse";
-import { FORM_PARSERS } from "../model/formParsers";
+import { formRules } from "../model/formParsers";
 import {
   BLANK_ROW,
   draftRowOf,
@@ -411,11 +410,7 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
   );
 
   async function submit() {
-    const { values, errors: errs } = collectValues(specs, draft, {
-      parsers: FORM_PARSERS,
-      blank: () => t.forms.required,
-      invalid: (spec) => fieldHint(t, spec),
-    });
+    const { values, errors: errs } = collectValues(specs, draft, formRules(t));
     // Cross-field rules only run once every field parses, so messages point at the
     // real problem (not a noisy parse error) and `values` is fully populated.
     if (Object.keys(errs).length === 0 && validate) {
