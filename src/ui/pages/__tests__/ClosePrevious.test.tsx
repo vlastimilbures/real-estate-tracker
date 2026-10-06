@@ -51,9 +51,12 @@ async function add(
   addLabel: string,
   dateLabel: string,
   amountLabel: string,
+  endLabel?: string,
 ) {
   await user.click(screen.getByRole("button", { name: addLabel }));
   await user.type(screen.getByLabelText(dateLabel), "01.07.2026");
+  if (endLabel)
+    await user.type(screen.getByLabelText(new RegExp(endLabel)), "30.06.2027");
   await user.type(screen.getByLabelText(new RegExp(amountLabel)), "6000000");
   await user.click(
     screen.getByRole("button", {
@@ -139,4 +142,48 @@ describe("ending the previous open-ended record (ADR 0099)", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(spies.addValuation).toHaveBeenCalledTimes(1);
   });
+
+  // ADR 0144: a dated new record does not ask. Ending the previous one would drop it from
+  // after the new end date, so it is added and the previous record is left as it is.
+  it.fails(
+    "valuation: does not ask when the new one has an end date (#121)",
+    async () => {
+      const user = userEvent.setup();
+      render(<ValuationsPanel propertyId="p1" rows={valuations} />);
+      await add(
+        user,
+        en.propertyDetail.addValuation,
+        en.propertyDetail.fieldValidFrom,
+        en.propertyDetail.fieldMarketValue,
+        en.propertyDetail.fieldValidTo,
+      );
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(spies.addValuation).toHaveBeenCalledTimes(1);
+      const [added] = spies.addValuation.mock.calls[0] as unknown as [
+        Valuation,
+      ];
+      expect(iso(added.validTo)).toBe("2027-06-30");
+      expect(spies.addValuationClosingPrevious).not.toHaveBeenCalled();
+    },
+  );
+
+  it.fails(
+    "lease: does not ask when the new one has an end date (#121)",
+    async () => {
+      const user = userEvent.setup();
+      render(<LeasesPanel propertyId="p1" rows={leases} />);
+      await add(
+        user,
+        en.propertyDetail.addLease,
+        en.propertyDetail.fieldStartDate,
+        en.propertyDetail.fieldMonthlyRent,
+        en.propertyDetail.fieldEndDate,
+      );
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(spies.addLease).toHaveBeenCalledTimes(1);
+      const [added] = spies.addLease.mock.calls[0] as unknown as [Lease];
+      expect(iso(added.endDate)).toBe("2027-06-30");
+      expect(spies.addLeaseClosingPrevious).not.toHaveBeenCalled();
+    },
+  );
 });

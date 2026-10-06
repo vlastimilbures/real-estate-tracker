@@ -167,6 +167,16 @@ describe("interest saved (ADR 0116)", () => {
     );
     expect(onOpen).toHaveBeenCalledWith("lipova");
   });
+
+  // ADR 0144: the label names its window, which is not the "Yrs 1–N" of total interest.
+  it.fails("the label names the loans' remaining life (#172)", () => {
+    renderPanel(prepaid);
+    expect(
+      screen.getByText(
+        "Interest saved over the loans' remaining life (nominal)",
+      ),
+    ).toBeTruthy();
+  });
 });
 
 describe("interest saved with a recast that needs the prepayment (ADR 0130)", () => {

@@ -27,7 +27,8 @@ const store = () => usePortfolioStore.getState();
 const pf = () => store().portfolio!;
 const START = isoDate("2030-01-01");
 
-beforeEach(async () => {
+/** A fresh seeded database. `init` alone is a no-op once the store is ready. */
+async function reset() {
   usePortfolioStore.setState({
     sql: null,
     portfolio: null,
@@ -37,7 +38,9 @@ beforeEach(async () => {
     startupError: null,
   });
   await store().init(openSeeded);
-});
+}
+
+beforeEach(reset);
 
 /** The seed's first property that has an open-ended valuation before START. */
 function openValuation(): Valuation {
@@ -53,12 +56,12 @@ function openValuation(): Valuation {
   }
   throw new Error("seed has no open-ended valuation");
 }
-function openLease(): Lease {
+function openLease(at = START): Lease {
   for (const p of pf().properties) {
     const prev = openPredecessor(
       pf().leases,
       p.id,
-      START,
+      at,
       (l) => l.startDate,
       (l) => l.endDate,
     );
@@ -145,15 +148,46 @@ describe("add closing the previous record (ADR 0099)", () => {
     expect((await store().addLease(l)).ok).toBe(true);
     const plain = outputs();
 
-    await store().init(openSeeded);
-    await store().addValuationClosingPrevious(v, {
-      ...prevV,
-      validTo: dayBefore(START),
-    });
-    await store().addLeaseClosingPrevious(l, {
-      ...prevL,
-      endDate: dayBefore(START),
-    });
+    await reset();
+    expect(
+      await store().addValuationClosingPrevious(v, {
+        ...prevV,
+        validTo: dayBefore(START),
+      }),
+    ).toEqual({ ok: true });
+    expect(
+      await store().addLeaseClosingPrevious(l, {
+        ...prevL,
+        endDate: dayBefore(START),
+      }),
+    ).toEqual({ ok: true });
     expect(outputs()).toBe(plain);
+  });
+
+  // ADR 0144: with a dated new lease, ending the previous one changes the numbers: after
+  // the new lease ends, the previous open lease is back in force. So the UI does not offer
+  // it. The dated lease ends before the seed's base date (2026-06-07), where outputs read
+  // it. (A valuation's end date is not read since ADR 0122.)
+  it("changes the outputs when the new lease has an end date", async () => {
+    const from = isoDate("2026-01-01");
+    const prev = openLease(from);
+    const l: Lease = {
+      id: "l-new",
+      propertyId: prev.propertyId,
+      startDate: from,
+      endDate: isoDate("2026-03-31"),
+      monthlyRent: money("40000"),
+    };
+    expect((await store().addLease(l)).ok).toBe(true);
+    const plain = outputs();
+
+    await reset();
+    expect(
+      await store().addLeaseClosingPrevious(l, {
+        ...prev,
+        endDate: dayBefore(from),
+      }),
+    ).toEqual({ ok: true });
+    expect(outputs()).not.toBe(plain);
   });
 });
