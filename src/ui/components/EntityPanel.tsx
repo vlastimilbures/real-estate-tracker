@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { Plus } from "lucide-react";
 import type { MutationResult } from "../../state/portfolioStore";
 import { Panel, Button } from "./primitives";
@@ -8,6 +8,7 @@ import type { FieldSpec, ParsedValues } from "../model/formParse";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import { Modal } from "./Modal";
+import { useUiStore } from "../../state/uiStore";
 
 const newId = () => crypto.randomUUID();
 
@@ -76,6 +77,10 @@ export function EntityPanel<
   confirmAdd?: (r: T) => AddPrompt<T> | null;
 }) {
   const tr = useT();
+  // The form's leave-guard key: a row's Edit or Delete asks first while this form holds
+  // unsaved edits, and only this form's (ADR 0142).
+  const formSource = useId();
+  const guardedAction = useUiStore((s) => s.guardedAction);
   const [mode, setMode] = useState<
     | { t: "idle" }
     | { t: "add" }
@@ -111,9 +116,13 @@ export function EntityPanel<
         rows={rows}
         columns={columns}
         onDelete={onDelete}
-        onEdit={(id) => setMode({ t: "edit", id })}
+        onEdit={(id) =>
+          guardedAction(formSource, () => setMode({ t: "edit", id }))
+        }
         onConfirmDelete={(id) =>
-          setMode({ t: "confirm-delete", id, busy: false })
+          guardedAction(formSource, () =>
+            setMode({ t: "confirm-delete", id, busy: false }),
+          )
         }
       />
 
@@ -151,6 +160,7 @@ export function EntityPanel<
             // from the new row; otherwise React keeps the previous row's `useState`
             // draft and a row-switch mid-edit saves one row's values onto another.
             key={mode.t === "edit" ? mode.id : "add"}
+            unsavedKey={formSource}
             specs={specs}
             initial={draftOf(editingRow)}
             submitLabel={

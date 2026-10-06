@@ -92,7 +92,7 @@ describe("EntityPanel row-switch", () => {
     expect(onSave).toHaveBeenCalledWith({ id: "b", value: "200" });
   });
 
-  it.fails("asks before a row switch drops typed edits (#132)", async () => {
+  it("asks before a row switch drops typed edits (#132)", async () => {
     const user = userEvent.setup();
     renderPanel();
     await user.click(editButtons()[0]);
@@ -103,7 +103,7 @@ describe("EntityPanel row-switch", () => {
     expect(screen.getByText(en.common.unsavedTitle)).toBeTruthy();
   });
 
-  it.fails("asks before a delete drops typed edits (#132)", async () => {
+  it("asks before a delete drops typed edits (#132)", async () => {
     const user = userEvent.setup();
     renderPanel();
     await user.click(editButtons()[0]);
@@ -114,33 +114,30 @@ describe("EntityPanel row-switch", () => {
     expect(valueInputs()[0].value).toBe("1005");
   });
 
-  it.fails(
-    "Keep editing keeps the draft; Discard switches rows (#132)",
-    async () => {
-      const user = userEvent.setup();
-      const onSave = vi.fn(ok);
-      renderPanel(onSave);
-      await user.click(editButtons()[0]);
-      await user.clear(valueInputs()[0]);
-      await user.type(valueInputs()[0], "150");
+  it("Keep editing keeps the draft; Discard switches rows (#132)", async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn(ok);
+    renderPanel(onSave);
+    await user.click(editButtons()[0]);
+    await user.clear(valueInputs()[0]);
+    await user.type(valueInputs()[0], "150");
 
-      await user.click(editButtons()[1]);
-      await user.click(
-        screen.getByRole("button", { name: en.common.keepEditing }),
-      );
-      expect(guard()).toBeNull();
-      expect(valueInputs()[0].value).toBe("150");
+    await user.click(editButtons()[1]);
+    await user.click(
+      screen.getByRole("button", { name: en.common.keepEditing }),
+    );
+    expect(guard()).toBeNull();
+    expect(valueInputs()[0].value).toBe("150");
 
-      await user.click(editButtons()[1]);
-      await user.click(
-        screen.getByRole("button", { name: en.common.discardChanges }),
-      );
-      expect(guard()).toBeNull();
-      expect(valueInputs()[0].value).toBe("200");
-      await user.click(screen.getByRole("button", { name: "Save changes" }));
-      expect(onSave).toHaveBeenCalledWith({ id: "b", value: "200" });
-    },
-  );
+    await user.click(editButtons()[1]);
+    await user.click(
+      screen.getByRole("button", { name: en.common.discardChanges }),
+    );
+    expect(guard()).toBeNull();
+    expect(valueInputs()[0].value).toBe("200");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(onSave).toHaveBeenCalledWith({ id: "b", value: "200" });
+  });
 
   it("a dirty form in another panel does not ask", async () => {
     const user = userEvent.setup();
@@ -159,31 +156,28 @@ describe("EntityPanel row-switch", () => {
     expect(valueInputs()[0].value).toBe("1005");
   });
 
-  it.fails(
-    "Discard in one panel keeps another panel's unsaved flag (#132)",
-    async () => {
-      const user = userEvent.setup();
-      render(
-        <>
-          <Panel title="First" />
-          <Panel title="Second" />
-          <LeaveGuard />
-        </>,
-      );
-      await user.click(editButtons()[0]); // First, row A
-      await user.type(valueInputs()[0], "5");
-      await user.click(editButtons()[2]); // Second, row A
-      await user.type(valueInputs()[1], "7");
-      expect(useUiStore.getState().unsavedSources).toHaveLength(2);
+  it("Discard in one panel keeps another panel's unsaved flag (#132)", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <Panel title="First" />
+        <Panel title="Second" />
+        <LeaveGuard />
+      </>,
+    );
+    await user.click(editButtons()[0]); // First, row A
+    await user.type(valueInputs()[0], "5");
+    await user.click(editButtons()[2]); // Second, row A
+    await user.type(valueInputs()[1], "7");
+    expect(useUiStore.getState().unsavedSources).toHaveLength(2);
 
-      await user.click(editButtons()[3]); // Second, row B
-      expect(guard()).not.toBeNull();
-      await user.click(
-        screen.getByRole("button", { name: en.common.discardChanges }),
-      );
-      expect(valueInputs()[0].value).toBe("1005");
-      expect(useUiStore.getState().unsavedSources).toHaveLength(1);
-      expect(useUiStore.getState().unsavedChanges).toBe(true);
-    },
-  );
+    await user.click(editButtons()[3]); // Second, row B
+    expect(guard()).not.toBeNull();
+    await user.click(
+      screen.getByRole("button", { name: en.common.discardChanges }),
+    );
+    expect(valueInputs()[0].value).toBe("1005");
+    expect(useUiStore.getState().unsavedSources).toHaveLength(1);
+    expect(useUiStore.getState().unsavedChanges).toBe(true);
+  });
 });
