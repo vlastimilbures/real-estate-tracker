@@ -29,7 +29,7 @@ export function parseDecimal(raw: string): Decimal | null {
 
 /** An English thousands separator: `450,000`, `1.250`, `1 250,000` (ADR 0140). The group
  *  space is mandatory and the first digit is not 0, so `1000.005` and `0.005` are amounts. */
-const THOUSANDS_SHAPE = /^-?[1-9]\d{0,2}(?:\s\d{3})*[.,]\d{3}$/;
+const THOUSANDS_SHAPE = /^-?[1-9]\d{0,2}(?:\s+\d{3})*[.,]\d{3}$/;
 
 /** Money entry → Money (sign kept; callers decide whether negatives are allowed). A
  *  thousands-shaped entry is refused: read as decimals it is 1000× too small. */

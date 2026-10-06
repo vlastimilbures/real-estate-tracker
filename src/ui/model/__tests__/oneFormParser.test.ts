@@ -8,6 +8,12 @@ import {
   parsePercentToRatio,
 } from "../formParse";
 import { FORM_PARSERS, formRules } from "../formParsers";
+import {
+  parsePrepaymentRows,
+  parseRecastRows,
+  rowProblems,
+  writeRows,
+} from "../loanEventRows";
 import { parsePropertyForm, BLANK_PROPERTY_FORM } from "../propertyForm";
 import { parseScenarioDraft, type ScenarioDraftFields } from "../scenarioForm";
 import { en } from "../../../i18n/en";
@@ -20,6 +26,8 @@ const THOUSANDS_SHAPED = [
   "1 250,000",
   "1 250.000",
   "-450,000",
+  "1 250,000",
+  "1  250,000",
 ];
 
 describe("money refuses a thousands-shaped amount (ADR 0140 §3)", () => {
@@ -32,6 +40,24 @@ describe("money refuses a thousands-shaped amount (ADR 0140 §3)", () => {
 
   it("refuses it in a development draw line", () => {
     expect(parseDraws("01.02.2024 = 450,000")).toBeNull();
+  });
+
+  it("refuses it in a prepayment or recast row", () => {
+    const prepayment = {
+      date: "01.02.2024",
+      amount: "450,000",
+      effect: "lowerInstalment",
+      fee: "1,250",
+    } as const;
+    expect(rowProblems(prepayment)).toEqual(["amount", "fee"]);
+    expect(parsePrepaymentRows(writeRows([prepayment]))).toBeNull();
+    const recast = {
+      date: "01.02.2024",
+      mode: "instalment",
+      value: "12.500",
+    } as const;
+    expect(rowProblems(recast)).toEqual(["value"]);
+    expect(parseRecastRows(writeRows([recast]))).toBeNull();
   });
 
   it.each([
