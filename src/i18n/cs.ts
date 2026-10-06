@@ -327,7 +327,7 @@ export const cs: Dictionary = {
     financingTotalInterest: (n) => `Úroky celkem (roky 1–${n})`,
     financingTotalInterestReal: (n) => `Úroky celkem (roky 1–${n}, reálně)`,
     financingInterestSaved:
-      "Úrok ušetřený mimořádnými splátkami za zbývající dobu úvěrů (nominálně)",
+      "Úrok ušetřený mimořádnými splátkami za zbývající dobu splácení úvěrů (nominálně)",
     financingInterestSavedByProperty: "Podle nemovitosti",
     financingInterestSavedNa:
       "n/a: změna splatnosti závisí na mimořádné splátce",

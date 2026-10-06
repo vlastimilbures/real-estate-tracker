@@ -351,7 +351,7 @@ export const en = {
     financingTotalInterestReal: (n: number) =>
       `Total interest (Yrs 1–${n}, real)`,
     financingInterestSaved:
-      "Interest saved over the loans' remaining life (nominal)",
+      "Interest saved by prepayments over the loans' remaining life (nominal)",
     financingInterestSavedByProperty: "By property",
     financingInterestSavedNa: "n/a: a recast depends on the prepayment",
     financingUpcoming: "Next 12 months",

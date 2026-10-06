@@ -39,8 +39,8 @@ Three small user-visible corrections.
    rule, so both panels behave alike (owner decision D3 = A, 2026-10-06). ADR 0099 is
    otherwise unchanged; the store's checked atomic write is untouched.
 2. **The label names its window.** `dashboard.financingInterestSaved` reads "Interest saved
-   over the loans' remaining life (nominal)", with the same meaning in cs and ru. The figure
-   is unchanged.
+   by prepayments over the loans' remaining life (nominal)", with the same meaning in cs and
+   ru. The figure is unchanged.
 3. **Docs.** `docs/csv-import.md` notes that prepayments and recasts cannot be imported and are
    entered in the mortgage form. CLAUDE.md §7 states the invariant as scheduled plus prepaid
    principal (owner's OK, 2026-10-06).
