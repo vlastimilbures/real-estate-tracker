@@ -164,6 +164,7 @@ Other IDs seen in code comments:
 | [0137](0137-agreed-instalment-pays-interest.md)   | Payment q pays at least its interest                                                   | #225                                   |
 | [0138](0138-refinance-handover-edge-cases.md)     | Refinance handover edge cases                                                          | #229, #221, #223                       |
 | [0139](0139-last-tranche-cap.md)                  | A projection tranche lands no later than payment term−1                                | #218                                   |
+| [0140](0140-one-form-parser.md)                   | One form parser and one message set; a thousands-shaped amount is refused              | #125                                   |
 
 ### Judgment calls and open questions
 
