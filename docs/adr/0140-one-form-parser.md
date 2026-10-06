@@ -1,6 +1,6 @@
 # 0140. One form parser and one message set; a thousands-shaped amount is refused
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-06
 - Source: issue #125 (R4-06, R6-05), Track 10 PR 10.1, owner decision D1 = B
 - Related: [0131](0131-lossless-money-draft.md) (lossless drafts, which bound the money rule),
