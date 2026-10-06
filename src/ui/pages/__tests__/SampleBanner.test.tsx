@@ -185,6 +185,8 @@ describe("Clear sample dialog (ADR 0094)", () => {
     });
     expect(close.disabled).toBe(true);
     await userEvent.click(close);
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(document.querySelector(".modal-overlay")!);
     expect(screen.getByRole("dialog")).toBeTruthy();
 
     await act(async () => fail(new SafetyBackupError("disk full")));
