@@ -322,9 +322,11 @@ export function ScenarioListPanel({
           message={t.scenarios.confirmDelete(item.name)}
           confirmLabel={t.common.yesDelete}
           busyLabel={t.common.deleting}
-          onConfirm={() => {
-            setConfirmingId(null);
-            return onDelete(item);
+          onConfirm={async () => {
+            // Close only once the delete landed; a failure stays shown here (UX-050).
+            const result = await onDelete(item);
+            if (result.ok) setConfirmingId(null);
+            return result;
           }}
           onCancel={() => setConfirmingId(null)}
         />

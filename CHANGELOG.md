@@ -242,6 +242,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A delete confirm in a property's valuations, leases and mortgages names the row, for
+  example "Delete the valuation from 01.01.2026?" (ADR 0143, #132). Before, it asked only
+  "Delete this record?". Every inline confirm (delete a property, a record or a scenario,
+  deactivate a property) now moves focus to its confirm button, and Cancel puts focus back
+  on the button that opened it. A failed scenario delete keeps the confirm open with the
+  reason next to the buttons, as the other confirms do; before, it closed before the delete
+  ran.
 - In a property's valuations, leases, mortgages and holding costs, a click on another row's
   Edit or Delete while the form holds typed edits now asks first (Keep editing / Discard),
   as leaving the page does (ADR 0142, #132). Before, the edits were lost without a word.

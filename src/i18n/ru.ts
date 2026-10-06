@@ -426,6 +426,9 @@ export const ru: Dictionary = {
     activateTitle: "Снова включить этот объект в обзоры и прогнозы",
     confirmDeactivate: (name) =>
       `Деактивировать ${name}? Объект будет исключён из обзоров и прогнозов до повторной активации. Данные не удаляются. Деактивация не фиксирует продажу, выручку от продажи или погашение кредита.`,
+    confirmDeleteValuation: (date) => `Удалить оценку от ${date}?`,
+    confirmDeleteLease: (date) => `Удалить аренду с ${date}?`,
+    confirmDeleteMortgage: (date) => `Удалить ипотечный блок от ${date}?`,
     inactiveBadge: "Неактивен",
     inactiveNote: "Этот объект исключён из обзоров и прогнозов портфеля.",
     sizeM2: (n) => `${n} m²`,

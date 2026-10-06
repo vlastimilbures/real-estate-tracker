@@ -36,6 +36,7 @@ function renderPanel(result: MutationResult) {
       onAdd={async () => result}
       onSave={async () => result}
       onDelete={async () => result}
+      describe={(r) => `Delete the row of ${r.value}?`}
     />,
   );
 }
@@ -49,6 +50,8 @@ describe("EntityPanel failures show next to the action", () => {
     expect(screen.getByRole("alert").textContent).toBe(
       getDict("en").dataErrors.ROW_MISSING,
     );
+    // The row stays open, still naming the record (ADR 0143).
+    expect(screen.getByText("Delete the row of 100?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Yes, delete" })).toBeTruthy();
   });
 

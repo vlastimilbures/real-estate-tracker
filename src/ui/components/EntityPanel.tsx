@@ -39,6 +39,7 @@ export function EntityPanel<
   onAdd,
   onSave,
   onDelete,
+  describe,
   addLabel,
   computeHint,
   fieldActions,
@@ -57,6 +58,8 @@ export function EntityPanel<
   onAdd: (r: T) => Promise<MutationResult>;
   onSave: (r: T) => Promise<MutationResult>;
   onDelete?: (id: string) => Promise<MutationResult>;
+  /** Names a row in its delete confirm (ADR 0143); defaults to "Delete this record?". */
+  describe?: (row: T) => string;
   addLabel: string;
   computeHint?: (draft: Record<string, string>) => string | null;
   fieldActions?: FieldActions<S>;
@@ -96,6 +99,10 @@ export function EntityPanel<
 
   const editingRow =
     mode.t === "edit" ? (rows.find((r) => r.id === mode.id) ?? null) : null;
+  const deletingRow =
+    mode.t === "confirm-delete"
+      ? rows.find((r) => r.id === mode.id)
+      : undefined;
 
   return (
     <Panel
@@ -128,7 +135,10 @@ export function EntityPanel<
       {mode.t === "confirm-delete" && onDelete && (
         <ConfirmRow
           key={mode.id}
-          message={tr.common.confirmDeleteRow}
+          message={
+            (deletingRow && describe?.(deletingRow)) ??
+            tr.common.confirmDeleteRow
+          }
           confirmLabel={tr.common.yesDelete}
           busyLabel={tr.common.deleting}
           onConfirm={async () => {

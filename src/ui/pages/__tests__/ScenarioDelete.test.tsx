@@ -55,6 +55,10 @@ describe("scenario delete confirmation (UX-020)", () => {
       screen.getByRole("button", { name: en.common.yesDelete }),
     );
     expect(onDelete).toHaveBeenCalledWith(scenario);
+    // Closes once the delete landed (ADR 0143).
+    expect(
+      screen.queryByText(en.scenarios.confirmDelete("Rates up")),
+    ).toBeNull();
   });
 
   it("Cancel keeps the scenario", async () => {

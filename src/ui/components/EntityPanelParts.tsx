@@ -1,6 +1,6 @@
 // Sub-components pulled out of EntityPanel.tsx to shrink its render tree. Presentation
 // only; ConfirmRow keeps its own busy and error state.
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button, TableWrap } from "./primitives";
 import { useT } from "../hooks/useT";
@@ -88,7 +88,7 @@ export function EntityTable<T extends { id: string }>({
 
 /** The one inline confirm for a destructive action (ADR 0143). It runs `onConfirm` and
  *  stays open with the reason when the write fails (UX-050); the caller closes it on
- *  success. */
+ *  success. Focus moves to the confirm button on open and back to the trigger on Cancel. */
 export function ConfirmRow({
   message,
   confirmLabel,
@@ -105,8 +105,17 @@ export function ConfirmRow({
   const tr = useT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    // A passive effect: a guard dialog that closed in the same commit has already put
+    // focus back on the trigger, so that is what is remembered here.
+    if (document.activeElement instanceof HTMLElement)
+      opener.current = document.activeElement;
+    rowRef.current?.querySelector("button")?.focus();
+  }, []);
   return (
-    <div className="confirm-row">
+    <div className="confirm-row" ref={rowRef}>
       <div className="confirm-row-content">
         <span className="confirm-msg">{message}</span>
         <Button
@@ -124,7 +133,14 @@ export function ConfirmRow({
         >
           {busy ? busyLabel : confirmLabel}
         </Button>
-        <Button size="sm" disabled={busy} onClick={onCancel}>
+        <Button
+          size="sm"
+          disabled={busy}
+          onClick={() => {
+            onCancel();
+            if (opener.current?.isConnected) opener.current.focus();
+          }}
+        >
           {tr.common.cancel}
         </Button>
         {error && (

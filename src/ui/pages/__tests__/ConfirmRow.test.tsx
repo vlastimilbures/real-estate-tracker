@@ -58,7 +58,7 @@ const clickDelete = () =>
   userEvent.click(screen.getByRole("button", { name: en.common.delete }));
 
 describe("a record's delete confirm names the row (ADR 0143)", () => {
-  it.fails("valuation: by its start date (#132)", async () => {
+  it("valuation: by its start date (#132)", async () => {
     render(<ValuationsPanel propertyId="p1" rows={[valuation]} />);
     await clickDelete();
     expect(
@@ -66,13 +66,13 @@ describe("a record's delete confirm names the row (ADR 0143)", () => {
     ).toBeTruthy();
   });
 
-  it.fails("lease: by its start date (#132)", async () => {
+  it("lease: by its start date (#132)", async () => {
     render(<LeasesPanel propertyId="p1" rows={[lease]} />);
     await clickDelete();
     expect(screen.getByText("Delete the lease from 01.03.2025?")).toBeTruthy();
   });
 
-  it.fails("mortgage block: by its start date (#132)", async () => {
+  it("mortgage block: by its start date (#132)", async () => {
     render(<MortgagesPanel propertyId="dubova" rows={[block]} />);
     await clickDelete();
     expect(
@@ -87,41 +87,38 @@ describe("focus moves into the confirm row (ADR 0143)", () => {
   const specs: FieldSpec[] = [{ name: "value", label: "Value", kind: "money" }];
   type Row = { id: string; value: string };
 
-  it.fails(
-    "record panel: onto Yes, and back to the row's Delete on Cancel (#132)",
-    async () => {
-      render(
-        <EntityPanel
-          title="Rows"
-          addLabel="row"
-          rows={[
-            { id: "a", value: "100" },
-            { id: "b", value: "200" },
-          ]}
-          columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
-          specs={specs}
-          draftOf={(r) => ({ value: r ? r.value : "" })}
-          build={(v, id): Row => ({ id, value: String(v.value) })}
-          onAdd={ok}
-          onSave={ok}
-          onDelete={ok}
-        />,
-      );
-      const trigger = screen.getAllByRole("button", {
-        name: en.common.delete,
-      })[1]!;
-      await userEvent.click(trigger);
-      expect(document.activeElement).toBe(
-        screen.getByRole("button", { name: en.common.yesDelete }),
-      );
-      await userEvent.click(
-        screen.getByRole("button", { name: en.common.cancel }),
-      );
-      expect(document.activeElement).toBe(trigger);
-    },
-  );
+  it("record panel: onto Yes, and back to the row's Delete on Cancel (#132)", async () => {
+    render(
+      <EntityPanel
+        title="Rows"
+        addLabel="row"
+        rows={[
+          { id: "a", value: "100" },
+          { id: "b", value: "200" },
+        ]}
+        columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
+        specs={specs}
+        draftOf={(r) => ({ value: r ? r.value : "" })}
+        build={(v, id): Row => ({ id, value: String(v.value) })}
+        onAdd={ok}
+        onSave={ok}
+        onDelete={ok}
+      />,
+    );
+    const trigger = screen.getAllByRole("button", {
+      name: en.common.delete,
+    })[1]!;
+    await userEvent.click(trigger);
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: en.common.yesDelete }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.cancel }),
+    );
+    expect(document.activeElement).toBe(trigger);
+  });
 
-  it.fails("scenario list: onto Yes, delete (#132)", async () => {
+  it("scenario list: onto Yes, delete (#132)", async () => {
     render(
       <ScenarioListPanel
         scenarios={[{ id: "s1", name: "Rates up", overrides: {} }]}
@@ -142,7 +139,7 @@ describe("focus moves into the confirm row (ADR 0143)", () => {
     );
   });
 
-  it.fails("deactivate banner: onto Yes, deactivate (#132)", () => {
+  it("deactivate banner: onto Yes, deactivate (#132)", () => {
     render(
       <ActivationBanner
         propertyName="Dubová"
@@ -159,7 +156,7 @@ describe("focus moves into the confirm row (ADR 0143)", () => {
 });
 
 describe("a failed scenario delete keeps the row open (ADR 0143)", () => {
-  it.fails("shows the reason next to the buttons (#132)", async () => {
+  it("shows the reason next to the buttons (#132)", async () => {
     render(
       <ScenarioListPanel
         scenarios={[{ id: "s1", name: "Rates up", overrides: {} }]}

@@ -60,6 +60,9 @@ export function ValuationsPanel({
       title={t.propertyDetail.valuationsTitle}
       hint={t.propertyDetail.valuationsHint}
       addLabel={t.propertyDetail.addValuation}
+      describe={(r) =>
+        t.propertyDetail.confirmDeleteValuation(fmtDate(r.validFrom))
+      }
       rows={rows}
       columns={[
         {
@@ -157,6 +160,9 @@ export function LeasesPanel({
       title={t.propertyDetail.leasesTitle}
       hint={t.propertyDetail.leasesHint}
       addLabel={t.propertyDetail.addLease}
+      describe={(r) =>
+        t.propertyDetail.confirmDeleteLease(fmtDate(r.startDate))
+      }
       rows={rows}
       columns={[
         {
@@ -253,6 +259,9 @@ export function MortgagesPanel({
       title={t.propertyDetail.mortgagesTitle}
       hint={t.propertyDetail.mortgagesHint}
       addLabel={t.propertyDetail.addMortgage}
+      describe={(r) =>
+        t.propertyDetail.confirmDeleteMortgage(fmtDate(r.startDate))
+      }
       rows={rows}
       columns={[
         {
