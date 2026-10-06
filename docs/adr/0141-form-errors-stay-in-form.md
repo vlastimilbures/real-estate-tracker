@@ -1,6 +1,6 @@
 # 0141. A form's input errors stay in the form
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-06
 - Source: issue #125 (R4-05, R5-07), Track 10 PR 10.2
 - Related: [0095](0095-assumptions-save-row.md) (Assumptions error summary),
