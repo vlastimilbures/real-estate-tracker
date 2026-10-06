@@ -409,15 +409,16 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
     [formKey, setUnsavedChanges],
   );
 
-  /** Edit one field; its error goes with the edit (ADR 0141, as the property form). */
-  function edit(name: string, v: string) {
-    setDraft((d) => ({ ...d, [name]: v }));
+  /** Edit fields; their errors go with the edit (ADR 0141, as the property form). */
+  function patch(p: Record<string, string>) {
+    setDraft((d) => ({ ...d, ...p }));
     setErrors((e) => {
       const copy = { ...e };
-      delete copy[name];
+      for (const name of Object.keys(p)) delete copy[name];
       return copy;
     });
   }
+  const edit = (name: string, v: string) => patch({ [name]: v });
 
   async function submit() {
     const { values, errors: errs } = collectValues(specs, draft, formRules(t));
@@ -466,7 +467,7 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
         if (!busy) void submit();
       }}
     >
-      {header?.(draft, (p) => setDraft((d) => ({ ...d, ...p })))}
+      {header?.(draft, patch)}
       <div className="form-grid">
         {specs.map((spec) => {
           if (hiddenFields?.(draft).includes(spec.name)) return null;
@@ -538,10 +539,7 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
                     size="sm"
                     title={action.title ?? action.label}
                     disabled={!action.patch}
-                    onClick={() =>
-                      action.patch &&
-                      setDraft((d) => ({ ...d, ...action.patch }))
-                    }
+                    onClick={() => action.patch && patch(action.patch)}
                   >
                     {action.label}
                   </Button>

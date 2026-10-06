@@ -205,7 +205,7 @@ describe("editing a field clears its error (R5-07)", () => {
     expect(input.getAttribute("aria-invalid")).not.toBe("true");
   });
 
-  it.fails("in RecordForm, by a field action's fill (#125)", async () => {
+  it("in RecordForm, by a field action's fill (#125)", async () => {
     render(
       <RecordForm
         specs={[{ name: "amount", label: "Amount", kind: "money" }]}
