@@ -30,7 +30,10 @@ confirms were built four ways, and three defects followed (R5-08):
    the mortgage block from …?" (en, cs, ru). Property, scenario and deactivate confirms
    already named their target and keep their texts.
 3. **Focus moves into the row.** When the row opens, focus goes to its confirm button. Cancel
-   puts focus back on the button that opened it.
+   puts focus back on the button that opened it. Both buttons are described by the question
+   (`aria-describedby`), so a screen reader reads it with the focused button. Focusing the
+   confirm button rather than Cancel was chosen for speed; the trade-off is that a held Enter
+   on the trigger can reach "Yes" sooner (review of PR #246).
 4. **It stays open on failure.** A failed write keeps the row open, re-enables its buttons and
    shows the reason in a `role="alert"` next to them (UX-050). This now holds for scenarios
    too: the scenario confirm waits for the delete and closes only when it landed.
@@ -43,4 +46,9 @@ confirms were built four ways, and three defects followed (R5-08):
 - A failed scenario delete stays visible next to the action instead of only in the page
   banner.
 - New strings: three record-naming confirm messages in en, cs and ru.
+- The record, scenario and deactivate confirms take the `.confirm-row` look of the Properties
+  confirm (raised background, spacing); the deactivate confirm sits in a flush panel. The
+  scenario confirm's Yes is no longer disabled by an unrelated page action in progress; its
+  Delete button still is, and writes are queued.
+- Out of scope: focus after a successful delete, Escape to cancel (follow-up issues).
 - No engine, parity or golden change.
