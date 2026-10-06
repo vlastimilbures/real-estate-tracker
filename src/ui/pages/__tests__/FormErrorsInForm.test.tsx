@@ -62,52 +62,47 @@ beforeEach(() =>
 );
 
 describe("a refused form save stays in the form (R4-05)", () => {
-  it.fails(
-    "shows the message once, and nothing is left after Cancel (#125)",
-    async () => {
-      await initStore();
-      const block = usePortfolioStore.getState().portfolio!.mortgages[0]!;
-      const specs: FieldSpec[] = [
-        { name: "value", label: "Value", kind: "money" },
-      ];
-      render(
-        <AppShell title="Loans">
-          <EntityPanel
-            title="Loans"
-            addLabel="loan"
-            rows={[{ id: block.id, value: "1" }]}
-            columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
-            specs={specs}
-            draftOf={(r) => ({ value: r ? r.value : "" })}
-            build={(v, id) => ({ id, value: String(v.value) })}
-            onAdd={async () => ({ ok: true })}
-            // A development loan without a term: the store refuses it (an input rule).
-            onSave={() =>
-              usePortfolioStore.getState().saveMortgageBlock({
-                ...block,
-                draws: [{ date: isoDate("2026-09-01"), amount: money("100") }],
-                completionDate: isoDate("2028-10-10"),
-              } as unknown as MortgageBlock)
-            }
-            onDelete={async () => ({ ok: true })}
-          />
-        </AppShell>,
-      );
-      await userEvent.click(
-        screen.getByRole("button", { name: en.common.edit }),
-      );
-      await userEvent.click(
-        screen.getByRole("button", { name: en.common.saveChanges }),
-      );
-      const message = en.inputRules.MISSING_TERM_FOR_DEV_LOAN;
-      expect(screen.getAllByText(message, { exact: false })).toHaveLength(1);
+  it("shows the message once, and nothing is left after Cancel (#125)", async () => {
+    await initStore();
+    const block = usePortfolioStore.getState().portfolio!.mortgages[0]!;
+    const specs: FieldSpec[] = [
+      { name: "value", label: "Value", kind: "money" },
+    ];
+    render(
+      <AppShell title="Loans">
+        <EntityPanel
+          title="Loans"
+          addLabel="loan"
+          rows={[{ id: block.id, value: "1" }]}
+          columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
+          specs={specs}
+          draftOf={(r) => ({ value: r ? r.value : "" })}
+          build={(v, id) => ({ id, value: String(v.value) })}
+          onAdd={async () => ({ ok: true })}
+          // A development loan without a term: the store refuses it (an input rule).
+          onSave={() =>
+            usePortfolioStore.getState().saveMortgageBlock({
+              ...block,
+              draws: [{ date: isoDate("2026-09-01"), amount: money("100") }],
+              completionDate: isoDate("2028-10-10"),
+            } as unknown as MortgageBlock)
+          }
+          onDelete={async () => ({ ok: true })}
+        />
+      </AppShell>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: en.common.edit }));
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.saveChanges }),
+    );
+    const message = en.inputRules.MISSING_TERM_FOR_DEV_LOAN;
+    expect(screen.getAllByText(message, { exact: false })).toHaveLength(1);
 
-      await userEvent.click(
-        screen.getByRole("button", { name: en.common.cancel }),
-      );
-      expect(screen.queryAllByText(message, { exact: false })).toHaveLength(0);
-    },
-  );
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.cancel }),
+    );
+    expect(screen.queryAllByText(message, { exact: false })).toHaveLength(0);
+  });
 
   it("a refused duplicate, with no form open, still shows the banner", async () => {
     await initStore();
@@ -149,7 +144,7 @@ describe("Assumptions shows a non-field input error in its summary", () => {
     ],
   };
 
-  it.fails("shows a rule on no shown field there (#125)", async () => {
+  it("shows a rule on no shown field there (#125)", async () => {
     act(() =>
       usePortfolioStore.setState({
         portfolio,

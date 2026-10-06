@@ -3,7 +3,10 @@
 // LTV). Scenarios never mutate portfolio data — the engine re-runs over overridden
 // assumptions (+ a transient value-crash portfolio) via useScenarioComparison.
 import { useEffect, useState } from "react";
-import { usePortfolioStore } from "../../state/portfolioStore";
+import {
+  usePortfolioStore,
+  type MutationResult,
+} from "../../state/portfolioStore";
 import { MAX_COMPARE, useUiStore } from "../../state/uiStore";
 import { AppShell } from "../components/AppShell";
 import { Button, EmptyState, Toast } from "../components/primitives";
@@ -27,6 +30,7 @@ export function Scenarios() {
   const saveScenario = usePortfolioStore((s) => s.saveScenario);
   const duplicateScenario = usePortfolioStore((s) => s.duplicateScenario);
   const removeScenario = usePortfolioStore((s) => s.removeScenario);
+  const showError = usePortfolioStore((s) => s.showError);
 
   // Compare selection (saved-scenario ids, capped at MAX_COMPARE), the Base toggle and
   // the crash-preset timing live in uiStore for the session (ADR 0101). Base is shown
@@ -47,7 +51,8 @@ export function Scenarios() {
   const setPresetsOpen = useUiStore((s) => s.setPresetsOpen);
   const [editing, setEditing] = useState<Scenario | "new" | null>(null);
   // One in-flight mutation at a time: disables the action buttons and surfaces a
-  // success toast (errors already surface via the global banner).
+  // success toast. A failure shows in the banner; the store leaves an input refusal
+  // to the caller, so run() shows it there itself (ADR 0141).
   const [busy, setBusy] = useState(false);
   const { toast, showToast } = useToast();
 
@@ -57,14 +62,15 @@ export function Scenarios() {
     [scenarios, pruneCompare],
   );
 
-  async function run<R extends { ok: boolean }>(
-    action: () => Promise<R>,
+  async function run(
+    action: () => Promise<MutationResult>,
     successMsg?: string,
-  ): Promise<R> {
+  ): Promise<MutationResult> {
     setBusy(true);
     const res = await action();
     setBusy(false);
     if (res.ok && successMsg) showToast(successMsg);
+    if (!res.ok && res.error.kind === "input") showError(res.error);
     return res;
   }
 

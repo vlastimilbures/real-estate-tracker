@@ -132,6 +132,8 @@ export function AssumptionsPanel() {
   );
   const [draft, setDraft] = useState<Record<string, string> | null>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // A refusal on no field this form shows, listed in the error summary (ADR 0141).
+  const [formError, setFormError] = useState<string | null>(null);
   const { toast, showToast } = useToast();
   const setUnsavedChanges = useUiStore((s) => s.setUnsavedChanges);
   const [saving, setSaving] = useState(false);
@@ -168,18 +170,25 @@ export function AssumptionsPanel() {
   const set = (name: string, v: string) => {
     setDraft({ ...current, [name]: v });
     setFailed(false);
+    setFormError(null);
   };
 
-  /** Show a failed save: keep the input, and focus the summary when fields are named. */
-  const fail = (fieldErrors: Record<string, string>) => {
+  /** Show a failed save: keep the input, and focus the summary when it lists anything. */
+  const fail = (
+    fieldErrors: Record<string, string>,
+    rest: string | null = null,
+  ) => {
     setErrors(fieldErrors);
+    setFormError(rest);
     setFailed(true);
-    if (Object.keys(fieldErrors).length > 0) setSummaryFocus((n) => n + 1);
+    if (Object.keys(fieldErrors).length > 0 || rest)
+      setSummaryFocus((n) => n + 1);
   };
 
   const onDiscard = () => {
     setDraft(null);
     setErrors({});
+    setFormError(null);
     setFailed(false);
   };
 
@@ -195,6 +204,7 @@ export function AssumptionsPanel() {
       return;
     }
     setErrors({});
+    setFormError(null);
 
     const next: Assumptions = {
       baseDate: v.baseDate,
@@ -213,14 +223,19 @@ export function AssumptionsPanel() {
         maintPctRent: v.maintPctRent,
       },
     };
-    // On failure the AppShell banner shows the message and a broken rule also marks
-    // its field (UX-047); the success toast shows only when the write landed.
+    // On failure a broken rule marks its field (UX-047), or is listed in the error
+    // summary when it names no field shown here (ADR 0141); any other failure shows in
+    // the AppShell banner. The success toast shows only when the write landed.
     setSaving(true);
     void saveAssumptions(next).then((result) => {
       setSaving(false);
       if (!result.ok) {
         const names = [...DRIVERS, ...DEFAULTS].map((s) => s.name);
-        fail(formWriteErrors(t, result.error, names).fieldErrors);
+        const split = formWriteErrors(t, result.error, names);
+        fail(
+          split.fieldErrors,
+          result.error.kind === "input" ? split.formError : null,
+        );
         return;
       }
       // Saved: show the stored values again, so the form is no longer "unsaved".
@@ -281,7 +296,7 @@ export function AssumptionsPanel() {
       >
         <div className="form-grid">{DEFAULTS.map(renderField)}</div>
       </Panel>
-      {invalid.length > 0 && (
+      {(invalid.length > 0 || formError) && (
         <div
           className="error-summary"
           role="group"
@@ -290,23 +305,30 @@ export function AssumptionsPanel() {
           ref={summaryRef}
         >
           <p id={`${formId}-summary`} className="error-text">
-            {t.common.fieldsNeedAttention(invalid.length)}
+            {invalid.length > 0
+              ? t.common.fieldsNeedAttention(invalid.length)
+              : formError}
           </p>
-          <ul>
-            {invalid.map((spec) => (
-              <li key={spec.name}>
-                <button
-                  type="button"
-                  className="link-btn"
-                  onClick={() =>
-                    document.getElementById(fieldId(spec.name))?.focus()
-                  }
-                >
-                  {spec.label}
-                </button>
-              </li>
-            ))}
-          </ul>
+          {invalid.length > 0 && formError && (
+            <p className="error-text">{formError}</p>
+          )}
+          {invalid.length > 0 && (
+            <ul>
+              {invalid.map((spec) => (
+                <li key={spec.name}>
+                  <button
+                    type="button"
+                    className="link-btn"
+                    onClick={() =>
+                      document.getElementById(fieldId(spec.name))?.focus()
+                    }
+                  >
+                    {spec.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
       {/* One Save/Discard row for the whole form, kept in view (ADR 0095). */}

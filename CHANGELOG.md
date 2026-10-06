@@ -242,6 +242,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A form save refused by an input rule shows its message once, in the form (ADR 0141,
+  #125). Before, the banner at the top of the page repeated it and stayed after Cancel. The
+  Assumptions form lists a rule on a field it does not show in its error summary. Adding a
+  preset or duplicating a scenario, with no form open, still shows the banner.
 - A first loan taken out after the projection start on a property you already own now
   counts its principal as cash paid to you, in the year it is drawn (ADR 0134, #181). Its
   debt was already counted, but its money was not, so cumulative net cash flow and levered
