@@ -159,11 +159,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "≥ 1"); they now say what to type, e.g. "Enter a percentage, e.g. 4,5". The property form
   refuses a negative purchase price or funding amount itself instead of passing it to the
   engine. A scenario shock lasts 1–100 years and the price crash lands at year 0–100, the
-  longest horizon.
+  longest horizon; a scenario stored with more must have its years lowered to save.
 - A money field refuses an amount written with an English thousands separator, such as
   `450,000`, `450.000` or `1,250` (ADR 0140, #125). Before, it was read as a decimal and saved
   as 450 Kč or 1.25 Kč. Group thousands with a space: `450 000`. Amounts like `1 250 000`,
-  `25 000,50` and `1000.005` are unaffected, and so are percentages.
+  `25 000,50` and `1000.005` are unaffected, and so are percentages. An amount saved that way
+  earlier (e.g. `850.125`) must be retyped before its form saves.
 
 - Properties are listed by name in Czech alphabetical order, with numbers by value ("Byt 2"
   before "Byt 10"), wherever the app lists them (ADR 0127). Before, the order followed an

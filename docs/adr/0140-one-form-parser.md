@@ -42,8 +42,8 @@ an untouched legacy amount.
    amounts use `FORM_PARSERS.money`, so a negative amount is refused in the form with
    `forms.invalidHint.money`, like every other money field.
 3. **A thousands-shaped amount is refused** (owner decision D1, option B). `parseMoney` refuses
-   trimmed text matching `^-?[1-9]\d{0,2}(?:\s\d{3})*[.,]\d{3}$`: one to three digits, then
-   optional whitespace-separated groups of three, then a single `,` or `.` and exactly three
+   trimmed text matching `^-?[1-9]\d{0,2}(?:\s+\d{3})*[.,]\d{3}$`: one to three digits, then
+   optional groups of three after whitespace, then a single `,` or `.` and exactly three
    digits. It catches `450,000`, `450.000`, `1,250`, `1.250` and `1 250,000`. It covers every
    form money field, development draws and the prepayment and recast rows. Percentages are not
    affected (`4,125` % still parses).
@@ -65,9 +65,14 @@ an untouched legacy amount.
 
 - One message per mistake in every form: a bad percentage says "Enter a percentage, e.g. 4,5"
   in the property, scenario and record forms.
-- A stored amount with one to three integer digits and exactly three decimals (e.g. `850.125`,
-  only possible from CSV import or a restore) blocks a save of its form until it is retyped;
-  the message names the fix. Larger stored amounts such as `1000.005` are unaffected.
+- A stored amount with one to three integer digits and exactly three decimals (e.g. `850.125`)
+  blocks a save of its form until it is retyped; the message names the fix. Such an amount
+  comes from CSV import, a restore, or a form entry made before this ADR, where typing
+  `850,125` meant 850 125 Kč but saved 850.125. Flagging the latter is intended. Larger stored
+  amounts such as `1000.005` are unaffected.
+- A scenario stored with a shock of more than 100 years, or a crash after year 100, blocks a
+  save of its form until the years are lowered. Such a value had no effect, as the horizon is
+  at most 100 years.
 - No engine, parity or golden change.
 - **Follow-ups (not in this ADR):**
   - CSV import keeps its own number grammar: it refuses `1,250` (`csv.ts`) but reads
