@@ -3,10 +3,9 @@ import { Plus } from "lucide-react";
 import type { MutationResult } from "../../state/portfolioStore";
 import { Panel, Button } from "./primitives";
 import { RecordForm, type FieldActions } from "./forms";
-import { EntityTable, DeleteConfirmRow } from "./EntityPanelParts";
+import { EntityTable, ConfirmRow } from "./EntityPanelParts";
 import type { FieldSpec, ParsedValues } from "../model/formParse";
 import { useT } from "../hooks/useT";
-import { describeWriteError } from "../model/writeError";
 import { Modal } from "./Modal";
 import { useUiStore } from "../../state/uiStore";
 
@@ -85,7 +84,7 @@ export function EntityPanel<
     | { t: "idle" }
     | { t: "add" }
     | { t: "edit"; id: string }
-    | { t: "confirm-delete"; id: string; busy: boolean; error?: string }
+    | { t: "confirm-delete"; id: string }
   >({
     t: "idle",
   });
@@ -122,29 +121,20 @@ export function EntityPanel<
           guardedAction(formSource, () => setMode({ t: "edit", id }));
         }}
         onConfirmDelete={(id) =>
-          guardedAction(formSource, () =>
-            setMode({ t: "confirm-delete", id, busy: false }),
-          )
+          guardedAction(formSource, () => setMode({ t: "confirm-delete", id }))
         }
       />
 
-      {mode.t === "confirm-delete" && (
-        <DeleteConfirmRow
-          busy={mode.busy}
-          error={mode.error}
+      {mode.t === "confirm-delete" && onDelete && (
+        <ConfirmRow
+          key={mode.id}
+          message={tr.common.confirmDeleteRow}
+          confirmLabel={tr.common.yesDelete}
+          busyLabel={tr.common.deleting}
           onConfirm={async () => {
-            if (!onDelete) return;
-            setMode({ t: "confirm-delete", id: mode.id, busy: true });
             const result = await onDelete(mode.id);
-            // On failure keep the row open and say why, next to the buttons.
             if (result.ok) setMode({ t: "idle" });
-            else
-              setMode({
-                t: "confirm-delete",
-                id: mode.id,
-                busy: false,
-                error: describeWriteError(tr, result.error).message,
-              });
+            return result;
           }}
           onCancel={() => setMode({ t: "idle" })}
         />

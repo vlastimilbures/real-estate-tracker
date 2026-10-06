@@ -162,14 +162,19 @@ export function PropertyDetail() {
   const isActive = property.active !== false;
   const id = property.id;
 
-  async function setActive(active: boolean) {
+  async function activate() {
     setToggling(true);
     setActiveError(null);
-    const result = await store.setPropertyActive(id, active);
+    const result = await store.setPropertyActive(id, true);
     setToggling(false);
-    // On failure keep the confirm open and say why, next to the buttons (UX-050).
+    if (!result.ok) setActiveError(describeWriteError(t, result.error).message);
+  }
+
+  async function deactivate() {
+    const result = await store.setPropertyActive(id, false);
+    // On failure the confirm stays open and says why (UX-050).
     if (result.ok) setConfirmingDeactivate(false);
-    else setActiveError(describeWriteError(t, result.error).message);
+    return result;
   }
 
   // Tiles under the chosen lens, by the Dashboard's as-of rule (DR-054, D-62): a future
@@ -280,7 +285,7 @@ export function PropertyDetail() {
               variant="primary"
               icon={Power}
               disabled={toggling}
-              onClick={() => setActive(true)}
+              onClick={activate}
               title={t.propertyDetail.activateTitle}
             >
               {toggling
@@ -302,12 +307,8 @@ export function PropertyDetail() {
         propertyName={property.name}
         isActive={isActive}
         confirmingDeactivate={confirmingDeactivate}
-        toggling={toggling}
-        onConfirmDeactivate={() => setActive(false)}
-        onCancelDeactivate={() => {
-          setConfirmingDeactivate(false);
-          setActiveError(null);
-        }}
+        onConfirmDeactivate={deactivate}
+        onCancelDeactivate={() => setConfirmingDeactivate(false)}
         error={activeError}
       />
 

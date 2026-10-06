@@ -6,7 +6,6 @@ import { MetricLabel } from "../components/MetricLabel";
 import {
   KpiTile,
   Panel,
-  Button,
   Badge,
   Money,
   Pct,
@@ -17,6 +16,7 @@ import {
 import { ChartCard, CzkLines, SignedBars } from "../components/charts";
 import { SERIES, type ChartRow } from "../model/chartData";
 import { RecordForm } from "../components/forms";
+import { ConfirmRow } from "../components/EntityPanelParts";
 import { moneyDraft, percentDraft } from "../model/formParse";
 import { fmtDate } from "../../lib/format";
 import { amortizationExtras, type LoanOutlook } from "../model/propertyDetail";
@@ -216,7 +216,6 @@ export function ActivationBanner({
   propertyName,
   isActive,
   confirmingDeactivate,
-  toggling,
   onConfirmDeactivate,
   onCancelDeactivate,
   error,
@@ -224,47 +223,24 @@ export function ActivationBanner({
   propertyName: string;
   isActive: boolean;
   confirmingDeactivate: boolean;
-  toggling: boolean;
-  onConfirmDeactivate: () => void;
+  /** Deactivates; the confirm stays open with the reason when it fails (UX-050). */
+  onConfirmDeactivate: () => Promise<MutationResult>;
   onCancelDeactivate: () => void;
-  /** Why the last (de)activation failed, shown in the banner (UX-050). */
+  /** Why the last activation failed, shown in the inactive banner (UX-050). */
   error?: string | null;
 }) {
   const t = useT();
 
   if (confirmingDeactivate) {
     return (
-      <Panel>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "var(--s4)",
-            flexWrap: "wrap",
-          }}
-        >
-          <span style={{ color: "var(--negative)" }}>
-            {t.propertyDetail.confirmDeactivate(propertyName)}
-          </span>
-          <Button
-            size="sm"
-            variant="danger"
-            disabled={toggling}
-            onClick={onConfirmDeactivate}
-          >
-            {toggling
-              ? t.propertyDetail.deactivating
-              : t.propertyDetail.yesDeactivate}
-          </Button>
-          <Button size="sm" disabled={toggling} onClick={onCancelDeactivate}>
-            {t.common.cancel}
-          </Button>
-          {error && (
-            <span className="error-text" role="alert">
-              {error}
-            </span>
-          )}
-        </div>
+      <Panel flush>
+        <ConfirmRow
+          message={t.propertyDetail.confirmDeactivate(propertyName)}
+          confirmLabel={t.propertyDetail.yesDeactivate}
+          busyLabel={t.propertyDetail.deactivating}
+          onConfirm={onConfirmDeactivate}
+          onCancel={onCancelDeactivate}
+        />
       </Panel>
     );
   }

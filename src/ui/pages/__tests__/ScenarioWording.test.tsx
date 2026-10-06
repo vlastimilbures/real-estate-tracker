@@ -147,7 +147,7 @@ describe("Scenarios wording (ADR 0090)", () => {
         busy={false}
         onEdit={() => undefined}
         onDuplicate={() => undefined}
-        onDelete={() => undefined}
+        onDelete={async () => ({ ok: true })}
       />,
     );
     const hint = en.scenarios.listHint(3);
