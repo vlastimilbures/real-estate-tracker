@@ -1,6 +1,6 @@
 # 0143. Confirm rows name the record, take focus and stay open on failure
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-06
 - Source: issue #132 (R5-08), Track 10 PR 10.4
 - Related: [0142](0142-row-switch-guard-busy-dialog.md) (row-switch guard),
