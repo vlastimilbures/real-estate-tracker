@@ -30,7 +30,8 @@ to lose.
    `guardedAction(source, fn)`: when the form `source` holds unsaved edits, it holds `fn`
    back and the leave-guard dialog asks, with its existing strings (Keep editing /
    Discard); otherwise `fn` runs at once. `EntityPanel` gives its form a stable key and
-   sends the rows' Edit and Delete through `guardedAction` with that key.
+   sends the rows' Edit and Delete through `guardedAction` with that key. Edit on the row
+   already open does nothing, as before: there is nothing to switch to or drop.
 2. **Only the panel's own form counts.** A dirty form in another panel, or on Assumptions,
    does not make a row switch ask, since that form stays open and keeps its edits.
 3. **Discard drops only that form's flag.** Before, Discard cleared every form's unsaved

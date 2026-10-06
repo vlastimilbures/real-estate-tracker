@@ -116,9 +116,11 @@ export function EntityPanel<
         rows={rows}
         columns={columns}
         onDelete={onDelete}
-        onEdit={(id) =>
-          guardedAction(formSource, () => setMode({ t: "edit", id }))
-        }
+        onEdit={(id) => {
+          // The row already open stays as it is: nothing to switch, nothing to drop.
+          if (mode.t === "edit" && mode.id === id) return;
+          guardedAction(formSource, () => setMode({ t: "edit", id }));
+        }}
         onConfirmDelete={(id) =>
           guardedAction(formSource, () =>
             setMode({ t: "confirm-delete", id, busy: false }),

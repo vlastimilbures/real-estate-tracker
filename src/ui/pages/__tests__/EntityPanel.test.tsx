@@ -115,19 +115,16 @@ describe("EntityPanel row-switch", () => {
     expect(valueInputs()[0].value).toBe("1005");
   });
 
-  it.fails(
-    "Edit on the row being edited does nothing; its edits stay guarded (#132)",
-    async () => {
-      const user = userEvent.setup();
-      renderPanel();
-      await user.click(editButtons()[0]);
-      await user.type(valueInputs()[0], "5");
-      await user.click(editButtons()[0]);
-      expect(guard()).toBeNull();
-      expect(valueInputs()[0].value).toBe("1005");
-      expect(useUiStore.getState().unsavedSources).toHaveLength(1);
-    },
-  );
+  it("Edit on the row being edited does nothing; its edits stay guarded (#132)", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await user.click(editButtons()[0]);
+    await user.type(valueInputs()[0], "5");
+    await user.click(editButtons()[0]);
+    expect(guard()).toBeNull();
+    expect(valueInputs()[0].value).toBe("1005");
+    expect(useUiStore.getState().unsavedSources).toHaveLength(1);
+  });
 
   it("Keep editing keeps the draft; Discard switches rows (#132)", async () => {
     const user = userEvent.setup();
