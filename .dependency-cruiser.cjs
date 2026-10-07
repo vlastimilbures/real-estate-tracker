@@ -82,7 +82,7 @@ module.exports = {
         "data may use the decimal/finance lib, not the clock, display or file-save helpers (DR-046 zones); the store injects them (ADR 0072).",
       from: { path: "^src/data/", pathNot: TESTS },
       to: {
-        path: "^src/lib/(today|format)\\.ts$|^src/platform/saveFile\\.ts$",
+        path: "^src/lib/(day|format)\\.ts$|^src/platform/saveFile\\.ts$",
       },
     },
     {
