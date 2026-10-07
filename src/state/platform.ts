@@ -3,3 +3,4 @@
 export { saveFile, type SaveOutcome } from "../platform/saveFile";
 export { onMenuEvent } from "../platform/menuEvents";
 export { setMenuLabels } from "../platform/menuLabels";
+export { revealDataDir } from "../platform/revealDataDir";

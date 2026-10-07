@@ -7,9 +7,11 @@
 //! and are read back and compared before reporting success (DR-112).
 
 use serde::{Deserialize, Serialize};
+use std::ffi::OsString;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
+use std::process::Command;
 use tauri::ipc::{InvokeBody, Request};
 use tauri::{AppHandle, Manager, WebviewWindow};
 use tauri_plugin_dialog::DialogExt;
@@ -274,4 +276,36 @@ pub fn write_app_backup(
     let path = dir.join(&filename);
     atomic_write_private(&path, json.as_bytes())?;
     fs::read_to_string(&path).map_err(AppError::from)
+}
+
+/// The database's file name in the app folder (`sqlite:portfolio.db`, src/data/tauriSql.ts).
+const DB_FILE: &str = "portfolio.db";
+
+/// The `open` arguments that show `dir` in Finder: the database selected when it is
+/// there, else the folder itself. Each path is one argument; no shell is involved.
+pub fn reveal_args(dir: &Path) -> Result<Vec<OsString>, AppError> {
+    if !dir.is_dir() {
+        return Err(AppError::NoFolder(dir.to_path_buf()));
+    }
+    let db = dir.join(DB_FILE);
+    Ok(if db.is_file() {
+        vec![OsString::from("-R"), db.into_os_string()]
+    } else {
+        vec![dir.as_os_str().to_os_string()]
+    })
+}
+
+/// Show the app folder (database and `backups/`) in Finder, for the startup error screen
+/// (#115, ADR 0153). Takes nothing from the webview: the folder is the app's own.
+#[tauri::command]
+pub fn reveal_data_dir(app: AppHandle) -> Result<(), AppError> {
+    let dir = app.path().app_config_dir().map_err(AppError::other)?;
+    let status = Command::new("/usr/bin/open")
+        .args(reveal_args(&dir)?)
+        .status()?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(AppError::Other(format!("open exited with {status}")))
+    }
 }

@@ -11,6 +11,7 @@ fn main() {
             "save_file",
             "open_backup_file",
             "write_app_backup",
+            "reveal_data_dir",
             "set_menu_labels",
         ]),
     ))

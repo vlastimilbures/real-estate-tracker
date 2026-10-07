@@ -3,8 +3,9 @@
 
 use app_lib::files::{
     atomic_write, atomic_write_private, percent_decode, restrict_app_dir, restrict_dir,
-    valid_backup_name, write_verified,
+    reveal_args, valid_backup_name, write_verified,
 };
+use std::ffi::OsString;
 use std::fs;
 use std::path::PathBuf;
 
@@ -196,4 +197,48 @@ fn restrict_dir_ignores_a_missing_folder() {
     let dir = temp_dir("restrict-dir-missing").join("not-yet");
     restrict_dir(&dir).unwrap();
     assert!(!dir.exists());
+}
+
+// #115 (ADR 0153): "Show data folder" on the startup error screen. The folder comes from
+// Rust, never from the webview; `open` gets it as one argument, without a shell.
+
+#[test]
+fn reveal_selects_the_database_when_it_exists() {
+    let dir = temp_dir("reveal-db");
+    fs::write(dir.join("portfolio.db"), b"").unwrap();
+    assert_eq!(
+        reveal_args(&dir).unwrap(),
+        vec![
+            OsString::from("-R"),
+            dir.join("portfolio.db").into_os_string()
+        ]
+    );
+}
+
+#[test]
+fn reveal_opens_the_folder_without_a_database() {
+    let dir = temp_dir("reveal-empty");
+    assert_eq!(reveal_args(&dir).unwrap(), vec![dir.into_os_string()]);
+}
+
+#[test]
+fn reveal_keeps_a_path_with_spaces_as_one_argument() {
+    let dir = temp_dir("reveal space; $(x)");
+    let args = reveal_args(&dir).unwrap();
+    assert_eq!(args.len(), 1);
+    assert_eq!(PathBuf::from(&args[0]), dir);
+}
+
+#[test]
+fn reveal_refuses_a_missing_folder() {
+    let dir = temp_dir("reveal-gone");
+    fs::remove_dir_all(&dir).unwrap();
+    assert!(reveal_args(&dir).is_err());
+}
+
+#[test]
+fn reveal_opens_the_folder_when_the_database_name_is_a_folder() {
+    let dir = temp_dir("reveal-dirdb");
+    fs::create_dir(dir.join("portfolio.db")).unwrap();
+    assert_eq!(reveal_args(&dir).unwrap(), vec![dir.into_os_string()]);
 }
