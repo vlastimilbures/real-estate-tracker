@@ -291,6 +291,22 @@ describe("fieldHint (ADR 0075, DR-078)", () => {
     expect(fieldHint(en, { kind: "int" })).toBe(en.forms.invalidHint.int);
     expect(fieldHint(en, { kind: "money" })).toBe(en.forms.invalidHint.money);
   });
+  // ADR 0149 §5: a date before the floor is refused with a message that names it.
+  it.fails(
+    "the date hint names the 01.01.1900 floor in every language (#119)",
+    () => {
+      for (const lang of ["en", "cs", "ru"] as const)
+        expect(fieldHint(getDict(lang), { kind: "date" })).toContain(
+          "01.01.1900",
+        );
+    },
+  );
+  it("refuses a date before 1900 and accepts the floor", () => {
+    expect(parseDate("31.12.1899")).toBeNull();
+    expect(parseDate("01.01.1900")?.toISOString()).toBe(
+      "1900-01-01T00:00:00.000Z",
+    );
+  });
   it("has the ADR 0075 bounds", () => {
     expect(INT_RANGES).toEqual({
       horizonYears: { min: 1, max: 100 },
