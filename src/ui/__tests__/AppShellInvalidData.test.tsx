@@ -74,14 +74,11 @@ describe("app shell with invalid stored data (ADR 0146)", () => {
     },
   );
 
-  it.fails(
-    "R4-10A: Import opens; it needs only the property names (#131)",
-    async () => {
-      await renderAt("import");
-      expect(notice()).toBe(false);
-      expect(pageTitle()).toBe(en.importPage.title);
-    },
-  );
+  it("R4-10A: Import opens; it needs only the property names (#131)", async () => {
+    await renderAt("import");
+    expect(notice()).toBe(false);
+    expect(pageTitle()).toBe(en.importPage.title);
+  });
 
   it.fails("VG2504A: navigating away clears the notice (#131)", async () => {
     await renderAt("dashboard");

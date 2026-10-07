@@ -242,6 +242,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- With saved data that breaks a calculation rule, Import opens again (ADR 0146, #131). It
+  ran the full calculation only to list the property names, so it showed the invalid-data
+  notice instead of the page that can load a corrected CSV. It now reads the names from
+  the saved properties.
 - Excel exports show text exactly as typed: a scenario named `+2 % rates` was exported as
   `'+2 % rates` (ADR 0145, #139). Text that starts with `=`, `+`, `-` or `@` now gets the
   Text cell format instead of an apostrophe, so re-entering it in Excel keeps it as text. A

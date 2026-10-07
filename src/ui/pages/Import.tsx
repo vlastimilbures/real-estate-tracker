@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
-import { useEngine } from "../../state/useEngine";
 import { AppShell } from "../components/AppShell";
 import { Panel, Button, Toast, ErrorBanner } from "../components/primitives";
 import {
@@ -44,7 +43,6 @@ export function Import() {
   const lastImport = useUiStore((s) => s.lastImport);
   const setLastImport = useUiStore((s) => s.setLastImport);
   const openProperty = useUiStore((s) => s.openProperty);
-  const engine = useEngine();
 
   const [properties, setProperties] =
     useState<FileState<ParsedPropertyRow> | null>(null);
@@ -61,11 +59,12 @@ export function Import() {
   const [planChanged, setPlanChanged] = useState(false);
   const { toast, showToast } = useToast(2400);
 
-  // FK-aware parsers: check child rows against known property names
+  // FK-aware parsers: check child rows against known property names. Read from the
+  // stored portfolio, not the engine, so Import opens even when stored data breaks an
+  // engine rule (ADR 0146).
+  const storedNames = (portfolio?.properties ?? []).map((p) => p.name);
   function knownNames(): Set<string> {
-    const fromDb = new Set<string>(
-      (engine?.snapshot.perProperty ?? []).map((p) => p.name),
-    );
+    const fromDb = new Set<string>(storedNames);
     const fromCsv = properties?.result.rows.map((r) => r.name) ?? [];
     return new Set([...fromDb, ...fromCsv]);
   }
@@ -75,7 +74,7 @@ export function Import() {
     setProperties({ name, bytes, result });
     // Re-validate children FK with updated known names
     const newNames = new Set([
-      ...(engine?.snapshot.perProperty ?? []).map((p) => p.name),
+      ...storedNames,
       ...result.rows.map((r) => r.name),
     ]);
     if (valuations)
