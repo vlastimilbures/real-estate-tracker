@@ -719,3 +719,20 @@ describe("out-of-range stored values (ADR 0148)", () => {
     expect(kinds(check("javorova").attention)).not.toContain("outOfRange");
   });
 });
+
+// ADR 0149 §5 (#119): a stored date before 1900 (an earlier CSV import) keeps loading; the
+// Data check lists it under "Needs attention", like an out-of-range value.
+describe("stored dates before 1900 (ADR 0149)", () => {
+  const legacy: Portfolio = {
+    ...portfolio,
+    properties: portfolio.properties.map((p) =>
+      p.id === "javorova" ? { ...p, purchaseDate: isoDate("1850-01-01") } : p,
+    ),
+  };
+
+  it.fails("lists an 1850 purchase date (#119)", () => {
+    expect(kinds(check("javorova", BASE_DATE, legacy).attention)).toContain(
+      "earlyDate",
+    );
+  });
+});
