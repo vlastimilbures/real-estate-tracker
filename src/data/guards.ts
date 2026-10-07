@@ -7,6 +7,7 @@
 // A failure throws DataError("ROW_INVALID") naming table, row id and column — never the
 // value, so the error is safe to log.
 import { D, type Decimal } from "../lib/money";
+import { PLAIN_DECIMAL } from "../lib/decimalText";
 import {
   isoDate,
   money,
@@ -47,9 +48,16 @@ export function isIsoDate(v: string): boolean {
   );
 }
 
-/** A finite decimal parsed from text (D() accepts "NaN"/"Infinity"; we do not). */
+/** The exponent form decimal.js `toString()` writes for very small or large values
+ *  (`1e-7`, `-1.5e-7`, `1e+21`): one leading digit and a signed exponent. */
+const WRITTEN_EXPONENT = /^-?[1-9](\.\d+)?e[+-]\d+$/;
+
+/** A finite decimal parsed from text: plain notation (the CSV grammar) or the exponent
+ *  form the app itself writes (ADR 0148). D() alone would also take `0x10`, `1_000`,
+ *  `+5`, `1e3`, "NaN" and "Infinity"; we do not. */
 export function parseDecimalText(v: unknown): Decimal | null {
   if (typeof v !== "string") return null;
+  if (!PLAIN_DECIMAL.test(v) && !WRITTEN_EXPONENT.test(v)) return null;
   try {
     const d = D(v);
     return d.isFinite() ? d : null;

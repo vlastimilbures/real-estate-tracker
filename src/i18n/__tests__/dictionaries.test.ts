@@ -203,6 +203,8 @@ describe("i18n dictionaries — plural forms", () => {
       // Backup recency (ADR 0110).
       "backup.agoDays",
       "backup.agoWeeks",
+      // Out-of-range values a restore asks about (ADR 0148).
+      "backup.warnOutOfRange",
     ];
     // Error summary count (ADR 0095); the backup reminder's age (ADR 0110).
     const common = ["common.fieldsNeedAttention", "shell.backupHintOld"];

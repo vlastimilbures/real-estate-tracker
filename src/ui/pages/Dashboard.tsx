@@ -87,6 +87,7 @@ export function Dashboard() {
   useRenderTiming("dashboard", engine);
   const navigate = useUiStore((s) => s.navigate);
   const openProperty = useUiStore((s) => s.openProperty);
+  const openSettings = useUiStore((s) => s.openSettings);
 
   if (!engine || allProperties.length === 0) {
     return (
@@ -202,7 +203,12 @@ export function Dashboard() {
         asOf={snapshot.asOf}
         baseDate={assumptions.baseDate}
         resetRate={assumptions.postFixationResetRatePa}
-        onFix={openProperty}
+        horizonYears={assumptions.horizonYears}
+        onFix={(id, fix) =>
+          fix === "assumptions" || id === null
+            ? openSettings("assumptions")
+            : openProperty(id, fix)
+        }
       />
 
       <TrajectoryCharts

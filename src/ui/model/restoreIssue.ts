@@ -12,7 +12,8 @@ export function restoreIssueText(t: Dictionary, i: RestoreIssue): string {
       return t.backup.issueDuplicate;
     case "MISSING_ASSUMPTIONS":
       return t.backup.issueMissingAssumptions;
-    case "OUT_OF_RANGE": {
+    case "OUT_OF_RANGE":
+    case "BEYOND_LIMIT": {
       // A restore issue always carries its range; "—" guards a hand-built one.
       const n = (v: number | undefined) =>
         v === undefined ? "—" : fmtCzk(v, { suffix: false });

@@ -26,6 +26,45 @@ export interface Screen {
 const fixture = (name: string) => path.resolve("ux-capture", "fixtures", name);
 
 /**
+ * Settings → Backup: exports the sample, edits the file to a legacy 60-year fixation and a
+ * 150-year horizon, and picks it for restore (ADR 0148). The browser has no Tauri file
+ * dialog: the `open_backup_file` and `write_app_backup` commands are answered the way the
+ * Rust side does, after boot (the database adapter is chosen at boot).
+ */
+async function pickOutOfRangeBackup(ux: Ux) {
+  await boot(ux.page);
+  await settingsTab(ux, "backup");
+  const download = ux.page.waitForEvent("download");
+  await ux.page.getByRole("button", { name: ux.t.backup.exportButton }).click();
+  const file = await (await download).path();
+  const { readFile } = await import("node:fs/promises");
+  const backup = JSON.parse(await readFile(file, "utf8")) as {
+    tables: Record<string, Record<string, unknown>[]>;
+  };
+  const [block] = backup.tables.mortgage_blocks ?? [];
+  const [assumptions] = backup.tables.assumptions ?? [];
+  if (!block || !assumptions) throw new Error("the sample has no mortgage");
+  block.fixation_years = 60;
+  assumptions.horizon_years = 150;
+  await ux.page.evaluate((text) => {
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
+      invoke: (cmd: string, args: { json?: string }) =>
+        cmd === "open_backup_file"
+          ? Promise.resolve({ name: "portfolio-backup-legacy.json", text })
+          : cmd === "write_app_backup"
+            ? Promise.resolve(args.json)
+            : Promise.reject(new Error(`no ${cmd} in the browser`)),
+    };
+  }, JSON.stringify(backup));
+  await ux.page.getByRole("button", { name: ux.t.backup.chooseFile }).click();
+  await expect(
+    ux.page.getByRole("button", { name: ux.t.backup.restoreAnyway }),
+  ).toBeVisible();
+  // The export's toast would cover the confirm step.
+  await expect(ux.page.getByText(ux.t.backup.downloaded)).toBeHidden();
+}
+
+/**
  * Opens the first property's first mortgage block for editing and enters two
  * prepayments (the second larger than the balance) and a maturity change (ADR 0116).
  */
@@ -1072,6 +1111,41 @@ export const SCREENS: Screen[] = [
         ux.page.getByRole("button", { name: ux.t.shell.backupHintNone }),
       ).toBeVisible();
       await ux.capture("66-sidebar-backup-hint", { fullPage: false });
+    },
+  },
+  {
+    id: "67-restore-out-of-range",
+    desc: "Restore confirm step: values outside the form ranges listed, Restore anyway (ADR 0148)",
+    route: "settings",
+    run: async (ux) => {
+      await pickOutOfRangeBackup(ux);
+      await expect(
+        ux.page.getByRole("region", { name: ux.t.backup.warningsTitle }),
+      ).toBeVisible();
+      await ux.capture("67-restore-out-of-range");
+    },
+  },
+  {
+    id: "68-data-check-out-of-range",
+    desc: "Dashboard Data check after Restore anyway: the horizon row and the mortgage's fixation (ADR 0148)",
+    route: "dashboard",
+    run: async (ux) => {
+      await pickOutOfRangeBackup(ux);
+      await ux.page
+        .getByRole("button", { name: ux.t.backup.restoreAnyway })
+        .click();
+      await expect(
+        ux.page.getByRole("button", { name: ux.t.backup.chooseFile }),
+      ).toBeVisible();
+      await nav(ux, "dashboard");
+      const p = panel(ux, ux.t.dataCheck.title);
+      await expect(
+        p.getByRole("button", {
+          name: ux.t.dataCheck.goTo(ux.t.dataCheck.assumptions),
+        }),
+      ).toBeVisible();
+      await p.scrollIntoViewIfNeeded();
+      await ux.capture("68-data-check-out-of-range", { fullPage: false });
     },
   },
   {

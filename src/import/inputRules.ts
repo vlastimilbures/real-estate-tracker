@@ -8,38 +8,24 @@ import type {
   EngineValidationError,
   Portfolio,
   ScenarioOverrides,
-  ValidationEntity,
 } from "../engine";
 import type { InputRules, RangeProblem } from "../data/backup";
-import { inRange, INT_RANGES } from "../lib/intRanges";
-
-type BoundedField = keyof typeof INT_RANGES;
+import { outOfRangeFields } from "../lib/intRanges";
 
 /** Every bounded whole-number field outside INT_RANGES (unset optional fields pass). */
 function rangeProblems(
   portfolio: Portfolio,
   assumptions: Assumptions | undefined,
 ): RangeProblem[] {
-  const problems: RangeProblem[] = [];
-  const check = (
-    entity: ValidationEntity,
-    id: string | undefined,
-    field: BoundedField,
-    n: number | undefined,
-  ) => {
-    const range = INT_RANGES[field];
-    if (n !== undefined && !inRange(n, range))
-      problems.push({ code: "OUT_OF_RANGE", entity, id, field, range });
-  };
-  if (assumptions)
-    check("assumptions", undefined, "horizonYears", assumptions.horizonYears);
-  for (const p of portfolio.properties)
-    check("property", p.id, "sizeM2", p.sizeM2);
-  for (const m of portfolio.mortgages) {
-    check("mortgage", m.id, "fixationYears", m.fixationYears);
-    check("mortgage", m.id, "loanTermYears", m.loanTermYears);
-  }
-  return problems;
+  return outOfRangeFields(portfolio, assumptions).map(
+    ({ entity, id, field, range, beyondLimit }) => ({
+      code: beyondLimit ? "BEYOND_LIMIT" : "OUT_OF_RANGE",
+      entity,
+      id,
+      field,
+      range,
+    }),
+  );
 }
 
 const NO_ROWS: Portfolio = {

@@ -28,13 +28,13 @@ import {
   type ValidationEntity,
 } from "../engine";
 import {
-  propertyKey,
   type ParsedMortgageRow,
   type ParsedPropertyRow,
   type ParsedRentRow,
   type ParsedValuationRow,
 } from "./csv";
 import { D } from "../lib/money";
+import { propertyKey } from "../lib/propertyKey";
 
 export interface CsvImportBatch {
   properties?: ParsedPropertyRow[] | undefined;

@@ -398,6 +398,16 @@ export const en = {
     fundingUnknownFuture:
       "Own cash for this purchase is not recorded, so Cash invested is not known and the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
     recordFunding: "Record funding",
+    // Stored values outside the form ranges (ADR 0148).
+    outOfRangeSize: (value: string, range: string) =>
+      `Size ${value} m² is outside the range the forms accept (${range} m²).`,
+    outOfRangeFixation: (date: string, value: string, range: string) =>
+      `Mortgage from ${date}: a fixation of ${value} years is outside the range the forms accept (${range} years).`,
+    outOfRangeTerm: (date: string, value: string, range: string) =>
+      `Mortgage from ${date}: a loan term of ${value} years is outside the range the forms accept (${range} years).`,
+    outOfRangeHorizon: (value: string, range: string) =>
+      `The projection horizon of ${value} years is outside the range the forms accept (${range} years).`,
+    assumptions: "Assumptions",
   },
 
   properties: {
@@ -968,6 +978,13 @@ export const en = {
     restoreWarning:
       "⚠ This will overwrite all current data (properties, mortgages, valuations, leases, assumptions, and scenarios). A safety backup will be saved first.",
     restoreNow: "Restore now",
+    // ADR 0148: values outside the form ranges ask instead of refusing.
+    warnOutOfRange: (n: number) =>
+      n === 1
+        ? "This backup holds 1 value outside the ranges the forms accept. The app computes with it, and the Data check lists it after the restore. Restore anyway?"
+        : `This backup holds ${n} values outside the ranges the forms accept. The app computes with them, and the Data check lists them after the restore. Restore anyway?`,
+    warningsTitle: "Values outside the form ranges",
+    restoreAnyway: "Restore anyway",
     restoring: "Restoring…",
     errorTitle: "Error",
     savedTo: (file: string) => `Backup saved to ${file}`,

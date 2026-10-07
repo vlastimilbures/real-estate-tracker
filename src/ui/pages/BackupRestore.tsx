@@ -9,8 +9,8 @@ import {
   SafetyBackupError,
   SampleNotEmptyError,
   SCHEMA_HEAD,
-  type BackupFile,
   type BackupSummary,
+  type PickedBackup,
   type RestoreIssue,
 } from "../../state/backup";
 import { logFailure, type FailureSite } from "../../state/diagnostics";
@@ -41,11 +41,22 @@ function restoreErrorText(t: Dictionary, e: RestoreError): string {
   }
 }
 
-function IssueTable({ issues }: { issues: RestoreIssue[] }) {
+/** The records of a refused backup, or (`warning`) the out-of-range values a restore asks
+ *  about (ADR 0148). */
+function IssueTable({
+  issues,
+  warning = false,
+}: {
+  issues: RestoreIssue[];
+  warning?: boolean;
+}) {
   const t = useT();
   const b = t.backup;
   return (
-    <TableWrap label={t.backup.errorTitle} style={{ marginTop: "var(--s3)" }}>
+    <TableWrap
+      label={warning ? b.warningsTitle : b.errorTitle}
+      style={{ marginTop: "var(--s3)" }}
+    >
       <table className="data">
         <thead>
           <tr>
@@ -67,7 +78,10 @@ function IssueTable({ issues }: { issues: RestoreIssue[] }) {
               <td className="left">
                 {i.column ? <code>{i.column}</code> : "—"}
               </td>
-              <td className="left" style={{ color: "var(--negative)" }}>
+              <td
+                className="left"
+                style={{ color: warning ? "var(--warn)" : "var(--negative)" }}
+              >
                 {restoreIssueText(t, i)}
               </td>
             </tr>
@@ -145,11 +159,7 @@ export function BackupRestorePanel() {
   const [exporting, setExporting] = useState(false);
   const [loadingSample, setLoadingSample] = useState(false);
   const [restoring, setRestoring] = useState(false);
-  const [pendingBackup, setPendingBackup] = useState<{
-    file: string;
-    backup: BackupFile;
-    summary: BackupSummary;
-  } | null>(null);
+  const [pendingBackup, setPendingBackup] = useState<PickedBackup | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [issues, setIssues] = useState<RestoreIssue[]>([]);
 
@@ -282,6 +292,12 @@ export function BackupRestorePanel() {
               {t.backup.restoreFrom(pendingBackup.file)}
             </p>
             <Summary summary={pendingBackup.summary} />
+            {pendingBackup.warnings.length > 0 && (
+              <div style={{ marginBottom: "var(--s4)" }}>
+                <p>{t.backup.warnOutOfRange(pendingBackup.warnings.length)}</p>
+                <IssueTable issues={pendingBackup.warnings} warning />
+              </div>
+            )}
             <p className="error-text" style={{ marginBottom: "var(--s4)" }}>
               {t.backup.restoreWarning}
             </p>
@@ -297,7 +313,11 @@ export function BackupRestorePanel() {
                 onClick={handleConfirmRestore}
                 disabled={restoring}
               >
-                {restoring ? t.backup.restoring : t.backup.restoreNow}
+                {restoring
+                  ? t.backup.restoring
+                  : pendingBackup.warnings.length > 0
+                    ? t.backup.restoreAnyway
+                    : t.backup.restoreNow}
               </Button>
             </div>
           </div>

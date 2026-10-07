@@ -11,8 +11,8 @@ export {
   RestoreError,
   SafetyBackupError,
   SCHEMA_HEAD,
-  type BackupFile,
   type BackupSummary,
+  type PickedBackup,
   type RestoreIssue,
 } from "../data/backup";
 export { type BackupState } from "../data/repositories";

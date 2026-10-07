@@ -5,7 +5,8 @@
 // P5b: a backup carries the database schema version (DR-038). A restore checks the
 // WHOLE file first — version, shape, every row, the engine's input rules — upgrades an
 // older file in memory, writes and verifies a safety backup, and only then replaces the
-// data in one transaction (D-14): on any failure the current data stays (DR-019).
+// data in one transaction (D-14): on any failure the current data stays (DR-019). A value
+// outside the form bounds only asks (ADR 0148): the database may hold it already.
 import { invoke } from "@tauri-apps/api/core";
 import type { Sql, SqlStatement } from "./sql";
 import {
@@ -15,6 +16,7 @@ import {
 } from "./repositories";
 import { MIGRATIONS, V7_TABLES, stamp } from "./migrations";
 import { DataError, messageOf } from "./errors";
+import { propertyKey } from "../lib/propertyKey";
 import {
   SaveFileError,
   type SaveFileOptions,
@@ -49,9 +51,11 @@ import type {
 import type { IntRange } from "../lib/intRanges";
 
 /** A whole-number field outside the bounds the forms and CSV import apply (ADR 0086).
- *  Restore-only: the engine itself is open-ended. */
+ *  Restore-only: the engine itself is open-ended, so a restore warns and asks instead of
+ *  refusing (ADR 0148). */
 export interface RangeProblem {
-  code: "OUT_OF_RANGE";
+  /** BEYOND_LIMIT: above ten times the form maximum, so restore refuses (ADR 0148). */
+  code: "OUT_OF_RANGE" | "BEYOND_LIMIT";
   entity: ValidationEntity;
   id?: string | undefined;
   field: string;
@@ -163,6 +167,12 @@ const ADDED_COLUMN_DEFAULTS: Partial<Record<string, unknown>> = {
   "properties.active": 1,
 };
 
+/** The values each property flag column may hold (the v7 CHECKs, ADR 0148). */
+const PROPERTY_FLAGS: [column: string, allowed: readonly unknown[]][] = [
+  ["garage", [0, 1, null]],
+  ["active", [0, 1]],
+];
+
 // --- errors ---------------------------------------------------------------------
 
 export type RestoreErrorCode =
@@ -187,8 +197,9 @@ export interface RestoreIssue {
     | "UNREADABLE_VALUE"
     | "DUPLICATE_KEY"
     | "MISSING_ASSUMPTIONS"
-    | "OUT_OF_RANGE";
-  /** The allowed range of an OUT_OF_RANGE field. */
+    | "OUT_OF_RANGE"
+    | "BEYOND_LIMIT";
+  /** The allowed range of an OUT_OF_RANGE or BEYOND_LIMIT field. */
   range?: IntRange;
 }
 
@@ -351,6 +362,17 @@ function upgradeRows(backup: BackupFile): {
       );
     });
   }
+  // The flags the mappers do not check are checked here, so a bad one is named at the confirm
+  // step instead of failing the write on its CHECK (ADR 0148). `active` is NOT NULL.
+  for (const r of tables.properties)
+    for (const [column, allowed] of PROPERTY_FLAGS)
+      if (!allowed.includes(r[column]))
+        issues.push({
+          table: "properties",
+          id: String(r.id),
+          column,
+          rule: "UNREADABLE_VALUE",
+        });
   for (const s of tables.scenarios) {
     const unreadable = (column: string) =>
       issues.push({
@@ -403,6 +425,13 @@ const ENTITY_TABLE: Record<ValidationEntity, BackupTable> = {
 const snake = (field: string) =>
   field.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 
+/** A key cell as restore compares it: a property name as every other entry point
+ *  matches it, trimmed and case-insensitive (D-55, ADR 0148). */
+const keyCell = (table: BackupTable, column: string, v: unknown) =>
+  table === "properties" && column === "name" && typeof v === "string"
+    ? propertyKey(v)
+    : v;
+
 /** Rows repeating an earlier row's id or natural key (the v7 UNIQUE keys). */
 function duplicateKeys(tables: Tables): RestoreIssue[] {
   const issues: RestoreIssue[] = [];
@@ -411,7 +440,7 @@ function duplicateKeys(tables: Tables): RestoreIssue[] {
     for (const key of [["id"], ...(spec?.unique ?? [])]) {
       const seen = new Set<string>();
       for (const r of tables[table]) {
-        const k = JSON.stringify(key.map((c) => r[c]));
+        const k = JSON.stringify(key.map((c) => keyCell(table, c, r[c])));
         if (seen.has(k))
           issues.push({
             table,
@@ -430,11 +459,15 @@ export interface PreparedRestore {
   summary: BackupSummary;
   /** Wipe (children first) and re-insert, for one transaction. */
   statements: SqlStatement[];
+  /** Values outside the form bounds (OUT_OF_RANGE): the confirm step asks before a
+   *  restore with any (ADR 0148). */
+  warnings: RestoreIssue[];
 }
 
 /**
  * Check every row of `backup` and build the replacement statements. Throws a
- * RestoreError and touches nothing when the file cannot be restored as a whole.
+ * RestoreError and touches nothing when the file cannot be restored as a whole; a file
+ * whose only issues are out-of-range values comes back with them as `warnings`.
  */
 export function prepareRestore(
   backup: BackupFile,
@@ -514,7 +547,9 @@ export function prepareRestore(
         ...("range" in e && { range: e.range }),
       });
   }
-  if (issues.length > 0)
+  // A refusal after the rules ran lists the out-of-range values too: one table names
+  // everything to fix.
+  if (issues.some((i) => i.rule !== "OUT_OF_RANGE"))
     throw new RestoreError(
       "BACKUP_ROWS_INVALID",
       `The backup has ${issues.length} record(s) the app cannot restore. Nothing was changed.`,
@@ -529,7 +564,7 @@ export function prepareRestore(
     // The restored data is the owner's, never the sample (ADR 0127).
     DELETE_SAMPLE_MARKERS,
   ];
-  return { summary: summarise(backup), statements };
+  return { summary: summarise(backup), statements, warnings: issues };
 }
 
 /** Check `backup` as a whole, then replace every table in one transaction. */
@@ -602,17 +637,24 @@ export class BackupReadError extends Error {
   }
 }
 
+/** A picked backup file, checked and ready for the confirm step. */
+export interface PickedBackup {
+  file: string;
+  backup: BackupFile;
+  summary: BackupSummary;
+  /** Out-of-range values the confirm step lists before "Restore anyway" (ADR 0148). */
+  warnings: RestoreIssue[];
+}
+
 /**
  * Prompt the user to pick a backup JSON file and check it completely, so the confirm
  * step only ever offers a restorable file. Returns `null` when the user cancels;
  * throws RestoreError for a file that cannot be restored and BackupReadError for one
  * that cannot be read.
  */
-export async function chooseRestoreFile(rules: InputRules): Promise<{
-  file: string;
-  backup: BackupFile;
-  summary: BackupSummary;
-} | null> {
+export async function chooseRestoreFile(
+  rules: InputRules,
+): Promise<PickedBackup | null> {
   // Rust opens the dialog and refuses an oversized file before reading it (DR-138).
   let picked: { name: string; text: string } | null;
   try {
@@ -627,8 +669,8 @@ export async function chooseRestoreFile(rules: InputRules): Promise<{
   if (picked === null) return null;
 
   const backup = parseBackupText(picked.text);
-  const { summary } = prepareRestore(backup, rules);
-  return { file: picked.name, backup, summary };
+  const { summary, warnings } = prepareRestore(backup, rules);
+  return { file: picked.name, backup, summary, warnings };
 }
 
 /** The pre-restore safety backup could not be written or verified; nothing changed. */
@@ -677,7 +719,8 @@ export async function writeSafetyBackup(
 }
 
 /** Full restore workflow: check the whole file, write and verify the safety backup,
- *  then replace everything in one transaction. Returns the safety backup's name. */
+ *  then replace everything in one transaction. Returns the safety backup's name. Any
+ *  out-of-range warnings were shown at the confirm step, so they do not stop it. */
 export async function confirmRestore(
   sql: Sql,
   backup: BackupFile,

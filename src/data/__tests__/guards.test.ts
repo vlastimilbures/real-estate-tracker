@@ -18,7 +18,8 @@ import {
   type ValuationRow,
 } from "../mappers";
 import { DataError } from "../errors";
-import { isIsoDate } from "../guards";
+import { isIsoDate, parseDecimalText } from "../guards";
+import { D } from "../../lib/money";
 import { rate, isoDate } from "../../engine";
 
 function dataError(fn: () => unknown): DataError {
@@ -225,5 +226,55 @@ describe("scenario overrides JSON (versioned)", () => {
       `INSERT INTO scenarios VALUES ('s1', 'Stress', '{"appreciationPa":0.05}', '2026-01-05')`,
     );
     await expect(listScenarios(sql)).rejects.toBeInstanceOf(DataError);
+  });
+});
+
+// ADR 0148 §4 (#133): a stored decimal is plain notation (the CSV grammar) or the exponent
+// form decimal.js writes, at load and at restore alike.
+describe("stored decimal grammar (ADR 0148)", () => {
+  for (const bad of [
+    "0x10",
+    "0b101",
+    "0o7",
+    "1_000",
+    "+5",
+    "1e3",
+    "1E-7",
+    ".5",
+    "5.",
+  ])
+    it(`refuses ${JSON.stringify(bad)} (#133)`, () => {
+      expect(parseDecimalText(bad)).toBeNull();
+    });
+
+  it.each([" 5", "5 ", "NaN", "Infinity", "1,5", ""])("refuses %j", (bad) => {
+    expect(parseDecimalText(bad)).toBeNull();
+  });
+
+  it.each([
+    "0",
+    "-0",
+    "12",
+    "-3.25",
+    "0.045",
+    "9515405.13",
+    "1e-7",
+    "-1.5e-7",
+    "1e+21",
+  ])("reads %j", (good) => {
+    expect(parseDecimalText(good)?.eq(D(good))).toBe(true);
+  });
+
+  it("reads back every decimal the app writes (toString)", () => {
+    for (const v of [
+      "0.0000001",
+      "-0.00000123",
+      "123456789012345678901234",
+      "0.5",
+      "-7",
+    ]) {
+      const written = D(v).toString();
+      expect(parseDecimalText(written)?.eq(D(v))).toBe(true);
+    }
   });
 });
