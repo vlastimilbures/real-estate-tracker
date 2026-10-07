@@ -172,6 +172,7 @@ Other IDs seen in code comments:
 | [0145](0145-xlsx-finite-and-text-format.md)       | Excel: empty cell for a non-finite number; Text format instead of an apostrophe        | #139                                   |
 | [0146](0146-app-shell-survives-page-errors.md)    | App shell: sidebar survives page errors; navigation resets the error and moves focus   | #131                                   |
 | [0147](0147-failure-messages-and-log.md)          | Failure messages and the error log: right labels and messages, masked numbers          | #122                                   |
+| [0148](0148-restore-rules-vs-stored-data.md)      | Restore rules vs stored data: out-of-range values ask, flags and names are checked     | #133                                   |
 
 ### Judgment calls and open questions
 
