@@ -16,7 +16,11 @@ import { en } from "../../../i18n/en";
 import { openMemorySql } from "../../../data/__tests__/betterSqlite";
 import { migrate } from "../../../data/migrations";
 import { seedIfEmpty } from "../../../data/seed";
-import { exportToJson } from "../../../data/backup";
+import {
+  BACKUP_MAX_BYTES,
+  exportToJson,
+  SafetyBackupError,
+} from "../../../data/backup";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("../../../state/diagnostics", async (importOriginal) => ({
@@ -44,6 +48,9 @@ async function pick(text: string) {
   await userEvent.click(
     screen.getByRole("button", { name: en.backup.chooseFile }),
   );
+  expect(invoke).toHaveBeenCalledWith("open_backup_file", {
+    maxBytes: BACKUP_MAX_BYTES,
+  });
 }
 
 beforeEach(() => {
@@ -68,7 +75,9 @@ describe("Restore a backup (#118)", () => {
     restoreBackup.mockResolvedValue({ safetyBackup: "safety.json" });
     await pick(text);
 
-    expect(screen.getByText(en.backup.restoreFrom("backup.json"))).toBeTruthy();
+    expect(
+      await screen.findByText(en.backup.restoreFrom("backup.json")),
+    ).toBeTruthy();
     expect(screen.getByText(en.backup.restoreWarning)).toBeTruthy();
     expect(restoreBackup).not.toHaveBeenCalled();
 
@@ -89,6 +98,7 @@ describe("Restore a backup (#118)", () => {
 
   it("Cancel leaves the data alone", async () => {
     await pick(await backupText());
+    await screen.findByText(en.backup.restoreWarning);
 
     await userEvent.click(
       screen.getByRole("button", { name: en.common.cancel }),
@@ -135,5 +145,34 @@ describe("Restore a backup (#118)", () => {
       screen.queryByRole("button", { name: en.backup.restoreNow }),
     ).toBeNull();
     expect(restoreBackup).not.toHaveBeenCalled();
+  });
+  it("a safety backup that cannot be saved stops the restore and says so", async () => {
+    restoreBackup.mockRejectedValue(new SafetyBackupError("disk full"));
+    await pick(await backupText());
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: en.backup.restoreNow }),
+    );
+
+    expect(
+      await screen.findByText(en.backup.safetyBackupFailed("disk full")),
+    ).toBeTruthy();
+    expect(vi.mocked(logFailure).mock.calls[0]?.[0]).toBe("RESTORE");
+  });
+
+  it("a failed restore says the data is unchanged and logs it", async () => {
+    restoreBackup.mockRejectedValue(new Error("database is locked"));
+    await pick(await backupText());
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: en.backup.restoreNow }),
+    );
+
+    expect(
+      await screen.findByText(
+        /^The restore failed and was rolled back — your current data is unchanged\./,
+      ),
+    ).toBeTruthy();
+    expect(vi.mocked(logFailure).mock.calls[0]?.[0]).toBe("RESTORE");
   });
 });

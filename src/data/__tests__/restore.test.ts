@@ -304,18 +304,24 @@ describe("restore keeps every stored value (#118)", () => {
         .all(table) as { name: string }[];
       for (const { name } of cols)
         expect(
-          (rows as Rows).some((r) => r[name] !== null),
+          (rows as Rows).some((r) => r[name] != null),
           `${table}.${name} is filled`,
         ).toBe(true);
     }
     expect(prepareRestore(b, checkInputRules).warnings).toEqual([]);
   });
 
-  it("a backup file restores to exactly the same rows", async () => {
+  it("a backup file restores to exactly the same rows, in place and on a new database", async () => {
     const before = dump(sql);
     const text = JSON.stringify(await exportToJson(sql, new Date()));
     await restoreFromJson(sql, parseBackupText(text), checkInputRules);
     expect(dump(sql)).toEqual(before);
+
+    const fresh = openMemorySql();
+    await migrate(fresh);
+    await restoreFromJson(fresh, parseBackupText(text), checkInputRules);
+    expect(dump(fresh)).toEqual(before);
+    fresh.db.close();
   });
 
   it("the app reads the restored loan events and scenario", async () => {

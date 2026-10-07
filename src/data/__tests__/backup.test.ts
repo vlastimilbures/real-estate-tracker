@@ -264,8 +264,8 @@ describe("restoreFromJson — refuses an unreadable row before writing", () => {
         rule: "UNREADABLE_VALUE",
       }),
     ]);
-    // No statement wrote anything.
-    expect(rec.queries.some((q) => /^\s*(DELETE|INSERT)/i.test(q))).toBe(false);
+    // Refused before any statement ran.
+    expect(rec.queries).toEqual([]);
 
     // Every table keeps its row count…
     for (const [table, rows] of Object.entries(good.tables)) {
