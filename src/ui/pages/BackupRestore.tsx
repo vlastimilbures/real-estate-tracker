@@ -20,7 +20,7 @@ import { describeWriteError } from "../model/writeError";
 import { restoreIssueText } from "../model/restoreIssue";
 import { toWriteError } from "../../state/writeError";
 import { fmtDate } from "../../lib/format";
-import { todayUtc } from "../../lib/today";
+import { localDay } from "../../lib/day";
 import { useToast } from "../hooks/useToast";
 import { ClearSampleButton } from "../components/ClearSampleDialog";
 import { backupRecency, type BackupAgo } from "../model/backupRecency";
@@ -101,7 +101,7 @@ function Summary({ summary }: { summary: BackupSummary }) {
   return (
     <div style={{ marginBottom: "var(--s4)" }}>
       {!Number.isNaN(exported.getTime()) && (
-        <p>{b.backupDate(fmtDate(todayUtc(exported)))}</p>
+        <p>{b.backupDate(fmtDate(localDay(exported)))}</p>
       )}
       {summary.schemaVersion < SCHEMA_HEAD && (
         <p style={{ color: "var(--ink-soft)" }}>{b.olderVersion}</p>

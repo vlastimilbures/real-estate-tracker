@@ -41,7 +41,7 @@ import {
   LeasesPanel,
   MortgagesPanel,
 } from "./PropertyEntityPanels";
-import { todayUtc } from "../../lib/today";
+import { todayUtc } from "../../lib/day";
 import { fmtDate } from "../../lib/format";
 import { projectionSeries, projectionColumns } from "../model/projection";
 import { exportTableXlsx } from "../exportXlsx";

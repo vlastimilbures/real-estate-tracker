@@ -14,7 +14,8 @@ import { portfolio, assumptions } from "../../engine/__tests__/support/seed";
 import * as engine from "../../engine";
 import { Dashboard } from "../../ui/pages/Dashboard";
 
-vi.mock("../../lib/today", () => ({
+vi.mock("../../lib/day", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/day")>()),
   todayUtc: () => new Date(Date.UTC(2026, 5, 7)), // == baseDate
 }));
 

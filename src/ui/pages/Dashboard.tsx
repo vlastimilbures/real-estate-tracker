@@ -5,7 +5,7 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { AppShell } from "../components/AppShell";
 import { PropertySelect } from "../components/PropertySelect";
 import { AsOfPicker } from "../components/AsOfPicker";
-import { todayUtc } from "../../lib/today";
+import { todayUtc } from "../../lib/day";
 import { Button, EmptyState } from "../components/primitives";
 import { FolderOpen, Plus, Upload } from "lucide-react";
 import { toChartRows, toEquityChangeRows } from "../model/chartData";

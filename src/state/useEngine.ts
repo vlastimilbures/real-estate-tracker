@@ -4,7 +4,7 @@
 import { useMemo } from "react";
 import { usePortfolioStore } from "./portfolioStore";
 import { scenarioRuleErrors } from "../import/inputRules";
-import { todayUtc } from "../lib/today";
+import { todayUtc } from "../lib/day";
 import { timed } from "../lib/perf";
 import {
   acquisitionSummary,

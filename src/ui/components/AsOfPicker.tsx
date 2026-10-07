@@ -4,7 +4,7 @@
 // it keeps the date inside the projection window (UX-059, D-19).
 import { useState, useId } from "react";
 import { parseDate, dateDraft } from "../model/formParse";
-import { todayUtc } from "../../lib/today";
+import { todayUtc } from "../../lib/day";
 import { useT } from "../hooks/useT";
 import { DateInput } from "./DateInput";
 import { clampAsOf, plusYears, type AsOfBounds } from "../model/asOf";

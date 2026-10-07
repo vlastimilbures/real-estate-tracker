@@ -80,7 +80,7 @@ import {
 } from "../data/mappers";
 import { isTauri } from "../lib/tauri";
 import { perfMark, perfMeasure } from "../lib/perf";
-import { localIsoDay } from "../lib/today";
+import { localIsoDay } from "../lib/day";
 import { saveFile } from "../platform/saveFile";
 
 type Status = "idle" | "loading" | "ready" | "error";
