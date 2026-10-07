@@ -27,7 +27,7 @@ beforeEach(() => {
 });
 
 describe("Clear sample failure (ADR 0147)", () => {
-  it.fails("is logged as SAMPLE (#122)", async () => {
+  it("is logged as SAMPLE (#122)", async () => {
     const e = new Error("disk full");
     clearSample.mockRejectedValue(e);
     render(<ClearSampleButton />);

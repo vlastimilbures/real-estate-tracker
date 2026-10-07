@@ -38,7 +38,7 @@ beforeEach(() => {
 });
 
 describe("Backup & Restore failures (ADR 0147)", () => {
-  it.fails("a failed sample load is logged as SAMPLE (#122)", async () => {
+  it("a failed sample load is logged as SAMPLE (#122)", async () => {
     const e = new Error("disk full");
     loadSample.mockRejectedValue(e);
     render(<BackupRestorePanel />);
@@ -51,7 +51,7 @@ describe("Backup & Restore failures (ADR 0147)", () => {
     expect(logFailure).toHaveBeenCalledWith("SAMPLE", e);
   });
 
-  it.fails("a failed restore pick is logged as RESTORE (#122)", async () => {
+  it("a failed restore pick is logged as RESTORE (#122)", async () => {
     vi.mocked(invoke).mockRejectedValue("Operation not permitted (os error 1)");
     render(<BackupRestorePanel />);
 

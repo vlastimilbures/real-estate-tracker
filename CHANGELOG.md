@@ -242,6 +242,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The error log names where a failure happened (ADR 0147, #122). A failed reload after a
+  save was logged as a failed save, and failures to restore a backup, load the sample or
+  clear it were all logged as `BACKUP_FAILED`. They are now `RELOAD_FAILED`,
+  `RESTORE_FAILED` and `SAMPLE_FAILED`.
 - After moving to another page from the sidebar or the menu, keyboard focus is on the new
   page's content (ADR 0146, #131). Before, it fell back to the start of the window, so the
   next Tab went to "Skip to content" again and a screen reader was not told the page

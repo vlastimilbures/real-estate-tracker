@@ -148,22 +148,19 @@ describe("saved assumptions whose reload fails (ADR 0125)", () => {
     expect(store().assumptions).toEqual(next);
   });
 
-  it.fails(
-    "log the failed reload as RELOAD, not as a failed write (#122)",
-    async () => {
-      vi.mocked(logFailure).mockClear();
-      usePortfolioStore.setState({ sql: reloadFails(db) });
+  it("log the failed reload as RELOAD, not as a failed write (#122)", async () => {
+    vi.mocked(logFailure).mockClear();
+    usePortfolioStore.setState({ sql: reloadFails(db) });
 
-      await store().saveAssumptions({
-        ...store().assumptions!,
-        horizonYears: 25,
-      });
+    await store().saveAssumptions({
+      ...store().assumptions!,
+      horizonYears: 25,
+    });
 
-      expect(vi.mocked(logFailure).mock.calls.map(([where]) => where)).toEqual([
-        "RELOAD",
-      ]);
-    },
-  );
+    expect(vi.mocked(logFailure).mock.calls.map(([where]) => where)).toEqual([
+      "RELOAD",
+    ]);
+  });
 });
 
 describe("a failed write whose reload also fails (ADR 0125)", () => {

@@ -17,7 +17,20 @@ export function maskNumbers(text: string): string {
 
 /** Where a failure happened: the prefix of its log code (`<SITE>_FAILED`). */
 export type FailureSite =
-  "STARTUP" | "WRITE" | "BACKUP" | "IMPORT" | "EXPORT" | "TEMPLATE" | "RENDER";
+  | "STARTUP"
+  | "WRITE"
+  // The reload after a write (ADR 0125).
+  | "RELOAD"
+  // Exporting a backup.
+  | "BACKUP"
+  // Choosing or confirming a restore.
+  | "RESTORE"
+  // Loading or clearing the sample.
+  | "SAMPLE"
+  | "IMPORT"
+  | "EXPORT"
+  | "TEMPLATE"
+  | "RENDER";
 
 /** The code + context line written for a failure in `where`. */
 export function describeFailure(

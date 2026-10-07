@@ -311,7 +311,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     try {
       await get().refresh();
     } catch (e) {
-      logFailure("WRITE", e);
+      logFailure("RELOAD", e);
       set({ stale: true });
     }
   }
