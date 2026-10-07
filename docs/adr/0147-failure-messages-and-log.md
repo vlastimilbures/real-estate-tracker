@@ -25,10 +25,11 @@ bug form asks users to paste. The 2026-10 review found five weaknesses.
   `writeSafetyBackup`, so its error is not a `SafetyBackupError`.
 - **A silent import preview (G2-5-09).** A failed preview is logged but not shown. Import
   stays disabled with no reason on screen.
-- **Rust launch failures and panics (G2-5-10).** An error from the setup closure (menu
-  creation) comes back from `build()` and reaches only stderr, which is discarded when the
-  app is opened from Finder. There is no panic hook. A comment claims tauri-plugin-log "has
-  already recorded the cause"; it has not.
+- **Rust launch failures and panics (G2-5-10).** There is no panic hook, so a panic
+  reaches only stderr, which is discarded when the app is opened from Finder. An error
+  from the setup closure (menu creation) is such a panic: Tauri 2 runs `setup` once the
+  event loop is ready, inside `run()`, and panics with "Failed to setup app". A comment at
+  `build()` claims tauri-plugin-log "has already recorded the cause"; it has not.
 - **Free-string, wrong labels (G2-5-12).** A failed reload after a write is logged as
   `WRITE_FAILED`; Clear sample, Load sample and restore failures all log as `BACKUP_FAILED`.
 
@@ -51,7 +52,7 @@ keep names in the log, where they help diagnosis, and fix everything else.
 4. **A failed import preview shows an error banner** in the Import panel ("The files could not
    be checked against your saved data, so nothing can be imported yet. (detail)"). It clears
    when the files or the saved data change, which is what starts a new preview.
-5. **Every number in free text is masked.** `maskNumbers` replaces every digit run, with its
+5. **Every number in free text the webview logs is masked.** `maskNumbers` replaces every digit run, with its
    separators, by `#`: `rent 850 Kč` → `rent # Kč`, `2026-10-03` → `#-#-#`. A `DataError`'s
    details stay as they are: by design (`src/data/errors.ts`) they name tables, ids, columns
    and rules, never amounts. Names stay in the log (option B).
@@ -59,10 +60,12 @@ keep names in the log, where they help diagnosis, and fix everything else.
    log folder becomes `0700` and its files `0600`, like the app folder (ADR 0080). A file the
    plugin rotates in mid-session is created with the default mode inside the `0700` folder,
    and is made `0600` at the next start. `README.md` says this.
-7. **Rust failures reach the log.** A panic hook writes `PANIC <message> at <file:line>`
-   through `log`, then runs the default hook. A `build()` error is logged as
-   `STARTUP_SETUP_FAILED <error>` and the app exits with status 1, instead of panicking with
-   the error on stderr only.
+7. **Rust panics reach the log.** A panic hook writes `PANIC <message> at <file:line>`
+   through `log`, then runs the previous hook (stderr as before). This covers a setup
+   error (`PANIC Failed to setup app: …`). A `build()` error still panics with stderr only:
+   `build()` fails only while creating the runtime or starting a plugin, before
+   tauri-plugin-log (registered last) is up, so there is no log to write to. The comment
+   at `build()` says this.
 8. **The bug form names what to replace** in a log excerpt: property and scenario names,
    record ids built from them (for example `byt-lipova-12`), and folder paths with the
    user name. Amounts are already masked.
@@ -75,5 +78,5 @@ keep names in the log, where they help diagnosis, and fix everything else.
   `cs` and `ru`.
 - Names and name-like ids still reach the log. The bug form, not the log, protects a public
   report. Random property ids (review findings R3-02 / R6-01) would remove most of them.
-- A launch that fails in setup now exits with status 1 rather than a panic; the cause is in
-  `app.log`.
+- A launch that fails in setup still quits with a panic, and the cause is now in `app.log`.
+  A panic line from Rust is not masked.
