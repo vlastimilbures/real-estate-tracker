@@ -2,8 +2,8 @@
 //! touches the user's files.
 
 use app_lib::files::{
-    atomic_write, atomic_write_private, percent_decode, restrict_app_dir, valid_backup_name,
-    write_verified,
+    atomic_write, atomic_write_private, percent_decode, restrict_app_dir, restrict_dir,
+    valid_backup_name, write_verified,
 };
 use std::fs;
 use std::path::PathBuf;
@@ -165,5 +165,35 @@ fn restrict_app_dir_makes_folders_0700_and_files_0600() {
 fn restrict_app_dir_ignores_a_missing_folder() {
     let dir = temp_dir("restrict-missing").join("not-yet");
     restrict_app_dir(&dir).unwrap();
+    assert!(!dir.exists());
+}
+
+#[cfg(unix)]
+#[test]
+fn restrict_dir_makes_one_folder_0700_and_its_files_0600() {
+    let dir = temp_dir("restrict-dir");
+    let sub = dir.join("sub");
+    fs::create_dir(&sub).unwrap();
+    set_mode(&sub, 0o755);
+    for f in ["app.log", "app_2026-10-07_09-00-00.log"] {
+        fs::write(dir.join(f), "x").unwrap();
+        set_mode(&dir.join(f), 0o644);
+    }
+    set_mode(&dir, 0o755);
+
+    restrict_dir(&dir).unwrap();
+
+    assert_eq!(mode(&dir), 0o700);
+    for f in ["app.log", "app_2026-10-07_09-00-00.log"] {
+        assert_eq!(mode(&dir.join(f)), 0o600, "{f}");
+    }
+    // Not recursive: a subfolder keeps its mode.
+    assert_eq!(mode(&sub), 0o755);
+}
+
+#[test]
+fn restrict_dir_ignores_a_missing_folder() {
+    let dir = temp_dir("restrict-dir-missing").join("not-yet");
+    restrict_dir(&dir).unwrap();
     assert!(!dir.exists());
 }
