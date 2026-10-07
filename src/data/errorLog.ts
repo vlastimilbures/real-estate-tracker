@@ -15,9 +15,13 @@ export function maskNumbers(text: string): string {
   return text.replace(/\d(?:[\d\s.,]*\d){3,}/g, "#");
 }
 
-/** The code + context line written for a failure in `where` (STARTUP, WRITE, …). */
+/** Where a failure happened: the prefix of its log code (`<SITE>_FAILED`). */
+export type FailureSite =
+  "STARTUP" | "WRITE" | "BACKUP" | "IMPORT" | "EXPORT" | "TEMPLATE" | "RENDER";
+
+/** The code + context line written for a failure in `where`. */
 export function describeFailure(
-  where: string,
+  where: FailureSite,
   e: unknown,
 ): { code: string; context: string } {
   if (e instanceof DataError)
@@ -26,7 +30,7 @@ export function describeFailure(
 }
 
 /** Fire-and-forget: logging must never turn into a second failure. */
-export function logFailure(where: string, e: unknown): void {
+export function logFailure(where: FailureSite, e: unknown): void {
   if (!isTauri()) return;
   invoke("log_error", describeFailure(where, e)).catch(() => undefined);
 }
