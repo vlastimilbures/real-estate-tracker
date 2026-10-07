@@ -70,19 +70,52 @@ To open the folder, in Finder choose **Go → Go to Folder…** (⇧⌘G) and pa
 ## If an upgrade fails
 
 When the app cannot open or upgrade the database, it shows **Could not open the database**
-with the reason and a **Try again** button.
+with the reason and the steps that can help. Every case has **Show data folder**, which opens
+the app folder in Finder with `portfolio.db` selected. **Try again** appears only where a
+retry can succeed.
 
-- **"The database upgrade failed and was rolled back"**, **"…stopped before changing
-  anything"** or **"…did not start because the safety backup could not be written"**: nothing
-  was changed. The previous version of the app still opens the database. Reinstall that
-  version and report the problem (below). For the safety-backup message, free some disk space
-  first and try again.
+An upgrade runs one step per database version, and each step is saved on its own. Before the
+first step, the app saves a pre-migration copy in `backups/`. So an upgrade that stops can
+leave the database partly upgraded. The screen tells you which case you are in:
+
+- **Nothing was changed**: "The database upgrade failed and was rolled back", "…stopped
+  before changing anything" or "…did not start because the safety backup could not be
+  written". The previous version of the app still opens the database. Reinstall that version
+  and report the problem (below). For the safety-backup message, free some disk space first,
+  then click **Try again**.
+- **Partly upgraded**: "The database upgrade stopped at version N … the database is now at
+  version M". The steps before version N were saved, so the previous app version no longer
+  opens this database. The screen names the pre-migration copy (`pre-migration-…sqlite`). To
+  go back to the previous app version, put that copy back (see
+  [Put back a pre-migration copy](#put-back-a-pre-migration-copy)). Report the problem either
+  way. A brand-new database has no copy, and none is needed: it held no data yet.
 - **"This database was saved by a newer version of the app"**: open it with that newer
   version.
 - **"The database file failed its integrity check"**: the database file is damaged. Restore your
-  latest JSON backup, or put back a pre-migration copy (next section).
+  latest JSON backup (next section), or put back a pre-migration copy.
+- **"A saved record contains a value the app cannot read"**: click **Restore a backup…** on
+  the screen. It works like Restore in Settings: it first saves your current data as
+  `backups/portfolio-before-restore-<date>.json`, then replaces it with the backup. The screen
+  names that safety copy; click **Open the app** to continue.
 
 The details are in the app log: `~/Library/Logs/com.bures.realestate-tracker/app.log`.
+
+## Restore a JSON backup when the app cannot start
+
+Only an unreadable record offers **Restore a backup…** on the startup screen. For any other
+failure, start the app with an empty database, then restore in Settings:
+
+1. **Quit the app** (⌘Q).
+2. Click **Show data folder** on the screen, or open
+   `~/Library/Application Support/com.bures.realestate-tracker/` in Finder (⇧⌘G).
+3. **Move aside, do not delete,** `portfolio.db`, `portfolio.db-wal` and `portfolio.db-shm`
+   (some may not exist). Put them in a new folder outside the app folder, for example on the
+   Desktop. Leave `backups/` where it is.
+4. **Open the app.** It starts with a new database holding the sample portfolio.
+5. Go to **Settings → Backup & Restore**, click **Choose backup file…** and restore your
+   latest JSON backup.
+6. Check your properties. Delete the moved-aside files only once you are sure you do not
+   need them.
 
 ## Put back a pre-migration copy
 

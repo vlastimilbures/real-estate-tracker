@@ -242,6 +242,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The **Could not open the database** screen says what happened and offers a step that works
+  (ADR 0153, #115):
+  - An upgrade that stops after some of its steps were saved says which version the database
+    reached and names the pre-migration copy. Before, it said nothing was changed and that
+    the previous app version still opens the database, but that version refuses it.
+  - **Try again** appears only where a retry can succeed.
+  - **Show data folder** opens the app folder in Finder.
+  - For an unreadable record, **Restore a backup…** restores a JSON backup from the screen,
+    after a safety copy, as in Settings.
+  - Details are listed as "Records involved" only when they are records.
+  - [docs/data-safety.md](docs/data-safety.md) explains how to start with a new database and
+    restore a backup.
 - The **As of** field, the **Today** button and the page subtitles show the date the figures
   are computed for (ADR 0150, #113). With a projection start in the future, the field showed
   today and Today was selected while every figure was for the projection start; a date

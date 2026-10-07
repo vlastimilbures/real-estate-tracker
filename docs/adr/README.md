@@ -196,6 +196,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0150](0150-one-asof-resolver.md)                 | One as-of resolver: the date shown is the date computed, on every page                        | Accepted                                           | #113                                               |
 | [0151](0151-ci-gates-after-going-public.md)       | CI gates after going public                                                                   | Accepted                                           | #111                                               |
 | [0152](0152-wording-log-and-generated-index.md)   | Copy-only changes go to a wording log; the ADR index is generated                             | Accepted                                           | #111                                               |
+| [0153](0153-honest-startup-failures.md)           | Startup failures say what changed and offer a step that works                                 | Proposed                                           | #115                                               |
 
 <!-- adr-index:end -->
 
