@@ -18,6 +18,7 @@ export type {
 export { money, rate } from "./brands";
 export {
   addYears,
+  calendarDay,
   dayBefore,
   edate,
   isoDate,

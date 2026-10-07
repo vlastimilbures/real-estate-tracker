@@ -2,7 +2,7 @@
 // (dates.ts:19,35). Currently only exercised indirectly — a regression here would
 // mis-shift every schedule row before any parity test could localize it.
 import { describe, it, expect } from "vitest";
-import { edate, monthsBetween, isoDate, utc } from "../dates";
+import { calendarDay, edate, monthsBetween, isoDate, utc } from "../dates";
 
 describe("edate — end-of-month clamp", () => {
   it("Jan 31 + 1mo clamps to Feb 28 (2021 non-leap)", () => {
@@ -28,8 +28,26 @@ describe("monthsBetween — day-of-month edge", () => {
 
 // ADR 0149 §5: one constructor with the full year. Date.UTC maps years 0–99 to 1900–1999.
 describe("utc / isoDate — the full year", () => {
-  it.fails("year 99 stays year 99, not 1999 (#119)", () => {
+  it("year 99 stays year 99, not 1999 (#119)", () => {
     expect(utc(99, 3, 1).getUTCFullYear()).toBe(99);
     expect(isoDate("0099-03-01").getUTCFullYear()).toBe(99);
   });
+  it("still rolls an out-of-range day over (edate and addDays rely on it)", () =>
+    expect(utc(2026, 3, 0)).toEqual(isoDate("2026-02-28")));
+});
+
+describe("calendarDay — a day that exists, no roll-over", () => {
+  it("builds a real day", () =>
+    expect(calendarDay(2024, 2, 29)).toEqual(isoDate("2024-02-29")));
+  it("refuses a day the month does not have", () => {
+    expect(calendarDay(2026, 2, 29)).toBeNull();
+    expect(calendarDay(2026, 4, 31)).toBeNull();
+  });
+  it("refuses month 0 and 13 and day 0", () => {
+    expect(calendarDay(2026, 0, 1)).toBeNull();
+    expect(calendarDay(2026, 13, 1)).toBeNull();
+    expect(calendarDay(2026, 1, 0)).toBeNull();
+  });
+  it("keeps a two-digit year", () =>
+    expect(calendarDay(50, 6, 1)?.getUTCFullYear()).toBe(50));
 });

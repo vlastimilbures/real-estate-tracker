@@ -6,9 +6,28 @@
 // host time zone or DST. Month arithmetic follows Excel EDATE (clamp to month end).
 import type { IsoDate } from "./brands";
 
-/** Build a UTC date from y/m/d (m is 1-based). The root IsoDate constructor. */
+/** Build a UTC date from y/m/d (m is 1-based). The root IsoDate constructor. It takes the
+ *  full year (Date.UTC would map 0–99 to 1900–1999, ADR 0149 §5) and rolls an
+ *  out-of-range month or day over, which `edate` / `addDays` rely on. */
 export function utc(year: number, month1: number, day: number): IsoDate {
-  return new Date(Date.UTC(year, month1 - 1, day)) as IsoDate;
+  const date = new Date(0);
+  date.setUTCFullYear(year, month1 - 1, day);
+  return date as IsoDate;
+}
+
+/** The calendar day y/m/d (m is 1-based), or null when it does not exist (2026-02-31,
+ *  month 13): no roll-over. For text read from a user, a file or the database. */
+export function calendarDay(
+  year: number,
+  month1: number,
+  day: number,
+): IsoDate | null {
+  const date = utc(year, month1, day);
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month1 - 1 &&
+    date.getUTCDate() === day
+    ? date
+    : null;
 }
 
 /** Parse an ISO `YYYY-MM-DD` string to a UTC date. */

@@ -243,6 +243,7 @@ export default tseslint.config(
               regex: "(^|/)engine$",
               allowImportNames: [
                 "addYears",
+                "calendarDay",
                 "edate",
                 "isoDate",
                 "money",
