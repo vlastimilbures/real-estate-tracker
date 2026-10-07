@@ -237,6 +237,8 @@ and check the file in a text editor. The app does not convert these files itself
 - **Holding costs** — set them on the property's page.
 - **Mortgage draws, completion date and interest-only period** of a development loan — set
   them in the mortgage form.
+- **Prepayments and recasts** of a mortgage block — enter them in the mortgage form
+  (ADR 0109).
 - **Active/inactive state** of a property.
 - The **funding note** of a property — set it in the property form.
 

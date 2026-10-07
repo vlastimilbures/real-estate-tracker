@@ -498,6 +498,25 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "29d-dashboard-interest-saved",
+    desc: "Dashboard financing panel names the interest-saved window (ADR 0144)",
+    route: "dashboard",
+    run: async (ux) => {
+      const p = await enterLoanEvents(ux);
+      await p
+        .locator(".form-actions")
+        .getByRole("button", { name: ux.t.common.saveChanges })
+        .click();
+      await nav(ux, "dashboard");
+      const f = panel(ux, ux.t.dashboard.financingTitle);
+      await expect(
+        f.getByText(ux.t.dashboard.financingInterestSaved, { exact: true }),
+      ).toBeVisible();
+      await f.scrollIntoViewIfNeeded();
+      await ux.capture("29d-dashboard-interest-saved", { fullPage: false });
+    },
+  },
+  {
     id: "29b-property-loan-outlook",
     desc: "Loan outlook: remaining term and each block's reset (ADR 0117)",
     route: "property",
@@ -608,6 +627,31 @@ export const SCREENS: Screen[] = [
       ).toBeFocused();
       await p.scrollIntoViewIfNeeded();
       await ux.capture("21b-property-valuation-delete-confirm");
+    },
+  },
+  {
+    id: "21c-property-valuation-close-previous",
+    desc: "Adding an open-ended valuation asks to end the previous one (ADR 0099, 0144)",
+    route: "property",
+    run: async (ux) => {
+      const d = ux.t.propertyDetail;
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      const p = panel(ux, d.valuationsTitle);
+      await p.getByRole("button", { name: d.addValuation }).click();
+      await p.getByLabel(d.fieldValidFrom).fill("01.01.2027");
+      await p.getByLabel(new RegExp(d.fieldMarketValue)).fill("9000000");
+      await p
+        .getByRole("button", {
+          name: `${ux.t.common.addVerb} ${d.addValuation}`,
+        })
+        .click();
+      await expect(
+        ux.page.getByRole("dialog", { name: d.closePrevValuationTitle }),
+      ).toBeVisible();
+      await ux.capture("21c-property-valuation-close-previous", {
+        fullPage: false,
+      });
     },
   },
   {

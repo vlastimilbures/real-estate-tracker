@@ -333,7 +333,7 @@ export const ru: Dictionary = {
     financingTotalInterest: (n) => `Проценты всего (годы 1–${n})`,
     financingTotalInterestReal: (n) => `Проценты всего (годы 1–${n}, реально)`,
     financingInterestSaved:
-      "Сэкономлено процентов досрочными платежами (номинально)",
+      "Сэкономлено процентов досрочными платежами за оставшийся срок кредитов (номинально)",
     financingInterestSavedByProperty: "По объектам",
     financingInterestSavedNa:
       "н/д: изменение срока зависит от досрочного платежа",

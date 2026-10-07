@@ -122,11 +122,9 @@ export function ValuationsPanel({
           (r) => r.validFrom,
           (r) => r.validTo,
         );
-        if (
-          !prev ||
-          (v.validTo && v.validTo.getTime() < prev.validFrom.getTime())
-        )
-          return null;
+        // Only an open-ended new record: a dated one would leave the previous record in
+        // force after its end (ADR 0144).
+        if (!prev || v.validTo) return null;
         const end = dayBefore(v.validFrom);
         return {
           title: t.propertyDetail.closePrevValuationTitle,
@@ -222,11 +220,9 @@ export function LeasesPanel({
           (r) => r.startDate,
           (r) => r.endDate,
         );
-        if (
-          !prev ||
-          (l.endDate && l.endDate.getTime() < prev.startDate.getTime())
-        )
-          return null;
+        // Only an open-ended new lease: a dated one would leave the previous lease in
+        // force after its end (ADR 0144).
+        if (!prev || l.endDate) return null;
         const end = dayBefore(l.startDate);
         return {
           title: t.propertyDetail.closePrevLeaseTitle,
