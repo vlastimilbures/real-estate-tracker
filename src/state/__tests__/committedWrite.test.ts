@@ -13,7 +13,9 @@ import { parseProperties } from "../../import/csv";
 import type { Sql } from "../../data/sql";
 import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
 import { money, type IsoDate } from "../../engine";
+import { logFailure } from "../../data/errorLog";
 
+vi.mock("../../data/errorLog", () => ({ logFailure: vi.fn() }));
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn((_command: string, args: { json: string }) =>
     Promise.resolve(args.json),
@@ -145,6 +147,23 @@ describe("saved assumptions whose reload fails (ADR 0125)", () => {
     expect(store().stale).toBe(true);
     expect(store().assumptions).toEqual(next);
   });
+
+  it.fails(
+    "log the failed reload as RELOAD, not as a failed write (#122)",
+    async () => {
+      vi.mocked(logFailure).mockClear();
+      usePortfolioStore.setState({ sql: reloadFails(db) });
+
+      await store().saveAssumptions({
+        ...store().assumptions!,
+        horizonYears: 25,
+      });
+
+      expect(vi.mocked(logFailure).mock.calls.map(([where]) => where)).toEqual([
+        "RELOAD",
+      ]);
+    },
+  );
 });
 
 describe("a failed write whose reload also fails (ADR 0125)", () => {

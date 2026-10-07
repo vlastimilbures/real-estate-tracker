@@ -12,6 +12,12 @@ describe("error log lines", () => {
     expect(maskNumbers("rent 21 675 Kč on row 7")).toBe("rent # Kč on row 7");
   });
 
+  it.fails("masks every number, short ones too (#122)", () => {
+    expect(maskNumbers("rent 850 Kč")).toBe("rent # Kč");
+    expect(maskNumbers("rate 4.59 %")).toBe("rate # %");
+    expect(maskNumbers("valid from 2026-10-03")).toBe("valid from #-#-#");
+  });
+
   it("a DataError logs its code and details as-is", () => {
     const e = new DataError("ROW_INVALID", "msg", [
       "leases l1: monthly_rent is not a finite decimal number",

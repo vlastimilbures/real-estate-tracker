@@ -15,6 +15,7 @@ import {
   exportToJson,
   RestoreError,
   SafetyBackupError,
+  writeSafetyBackup,
   type BackupFile,
 } from "../backup";
 import { checkInputRules } from "../../import/inputRules";
@@ -237,6 +238,21 @@ describe("confirmRestore — safety backup (DR-019, D-52)", () => {
   });
 });
 
+describe("writeSafetyBackup — reading the data is part of it (ADR 0147)", () => {
+  it.fails(
+    "a failed read of the current data is a SafetyBackupError (#122)",
+    async () => {
+      const failing = {
+        ...sql,
+        selectSnapshot: () => Promise.reject(new Error("disk I/O error")),
+      };
+      const err = await writeSafetyBackup(failing).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(SafetyBackupError);
+      expect(commands()).toEqual([]);
+    },
+  );
+});
+
 describe("chooseRestoreFile — the picked backup (DR-138)", () => {
   it("returns null when the open dialog is cancelled", async () => {
     expect(await chooseRestoreFile(checkInputRules)).toBeNull();
@@ -263,6 +279,20 @@ describe("chooseRestoreFile — the picked backup (DR-138)", () => {
       "permission denied",
     );
   });
+
+  it.fails(
+    "a file that cannot be read is a BackupReadError (#122)",
+    async () => {
+      rust.openPick = "Operation not permitted (os error 1)";
+      const err = await chooseRestoreFile(checkInputRules).catch(
+        (e: unknown) => e,
+      );
+      expect(err).toMatchObject({
+        name: "BackupReadError",
+        detail: "Operation not permitted (os error 1)",
+      });
+    },
+  );
 
   it("a picked file is checked completely and named", async () => {
     rust.openPick = {

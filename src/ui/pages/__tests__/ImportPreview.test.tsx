@@ -80,6 +80,22 @@ async function choosePropertiesFile(container: HTMLElement) {
 }
 
 describe("Import preview (ADR 0096)", () => {
+  it.fails(
+    "a failed preview shows why Import is unavailable (#122)",
+    async () => {
+      previewCsv.mockRejectedValue(new Error("disk I/O error"));
+      const { container } = render(<Import />);
+      await choosePropertiesFile(container);
+
+      await waitFor(() => expect(previewCsv).toHaveBeenCalled());
+      expect(
+        await screen.findByText(
+          /could not be checked against your saved data.*disk I\/O error/,
+        ),
+      ).toBeTruthy();
+    },
+  );
+
   it("imports a pure-add plan on the first press, with the previewed plan", async () => {
     previewCsv.mockResolvedValue(plan([add]));
     importCsv.mockResolvedValue({
