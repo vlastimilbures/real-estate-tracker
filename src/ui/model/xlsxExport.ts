@@ -4,8 +4,9 @@
 //
 // D-10: every number cell holds the value rounded exactly as the screen shows it
 // (src/lib/format.ts cell* helpers), as a number with a matching Excel format, so the
-// sheet shows and sums what the app shows. Text cells that Excel could read as a
-// formula are written as literal text (DR-087).
+// sheet shows and sums what the app shows; a non-finite number is an empty cell. Text is
+// written as typed; text Excel could read as a formula gets the Text format (ADR 0145).
+import type { Worksheet } from "exceljs";
 import type { Decimal } from "../../lib/money";
 import { cellMoney, cellMultiple, cellPct } from "../../lib/format";
 import { getActiveCurrency } from "../../lib/currency";
@@ -83,21 +84,29 @@ export function numFmt(kind: CellKind): string | undefined {
   }
 }
 
-/** A text cell starting with = + - @ (or tab / CR) is a formula to Excel: prefix an
- *  apostrophe so it stays literal text (DR-087). */
-export function safeText(text: string): string {
-  return /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
+type Written = number | string | Date | null;
+
+/** The number format of a written cell: Text ('@') for text starting with = + - @ (or
+ *  tab / CR), so re-entering it in Excel keeps it text, not a formula (ADR 0145). A
+ *  shared-string cell in the file is never a formula, so the text itself is unchanged. */
+export function cellFmt(kind: CellKind, written: Written): string | undefined {
+  return typeof written === "string" && /^[=+\-@\t\r]/.test(written)
+    ? "@"
+    : numFmt(kind);
 }
 
-/** The value written to a cell of `kind`. */
-export function cellValue(
-  kind: CellKind,
-  v: Cell,
-): number | string | Date | null {
+/** The value written to a cell of `kind`. A non-finite number is an empty cell
+ *  (ADR 0145, ADR 0108 §5). */
+export function cellValue(kind: CellKind, v: Cell): Written {
   if (v === null) return null;
   if (v instanceof Date) return v;
-  if (kind === "text") return safeText(String(v));
-  if (typeof v === "string") return safeText(v);
+  if (kind === "text") return String(v);
+  if (typeof v === "string") return v;
+  const n = numberFor(kind, v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function numberFor(kind: CellKind, v: Decimal | number): number {
   switch (kind) {
     case "money":
       return cellMoney(v);
@@ -110,6 +119,19 @@ export function cellValue(
     default:
       return typeof v === "number" ? v : v.toNumber();
   }
+}
+
+/** Append one row: each cell's written value and number format. */
+function addCells(ws: Worksheet, cells: { kind: CellKind; value: Cell }[]) {
+  const written = cells.map((c) => {
+    const value = cellValue(c.kind, c.value);
+    return { value, fmt: cellFmt(c.kind, value) };
+  });
+  const row = ws.addRow(written.map((w) => w.value));
+  written.forEach(({ fmt }, i) => {
+    if (fmt) row.getCell(i + 1).numFmt = fmt;
+  });
+  return row;
 }
 
 export const XLSX_MIME =
@@ -139,20 +161,14 @@ export async function buildWorkbook(
   for (const { name, headers, rows, notes } of sheets) {
     const ws = wb.addWorksheet(name);
 
-    const headerRow = ws.addRow(headers.map(safeText));
-    headerRow.font = { bold: true };
+    const text = (value: string) => ({ kind: "text" as const, value });
+    addCells(ws, headers.map(text)).font = { bold: true };
 
-    for (const cells of rows) {
-      const r = ws.addRow(cells.map((c) => cellValue(c.kind, c.value)));
-      cells.forEach((c, i) => {
-        const fmt = numFmt(c.kind);
-        if (fmt) r.getCell(i + 1).numFmt = fmt;
-      });
-    }
+    for (const cells of rows) addCells(ws, cells);
 
     if (notes.length > 0) {
       ws.addRow([]);
-      for (const note of notes) ws.addRow([safeText(note)]);
+      for (const note of notes) addCells(ws, [text(note)]);
     }
 
     // Reasonable column widths from header length.

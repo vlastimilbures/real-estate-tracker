@@ -16,7 +16,7 @@ import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
 import { amortizationColumns } from "../propertyDetail";
 import { projectionSeries, projectionColumns } from "../projection";
-import { cellValue, numFmt } from "../xlsxExport";
+import { cellFmt, cellValue, numFmt } from "../xlsxExport";
 
 const proj = portfolioProjection(portfolio, assumptions);
 const rows = projectionSeries(proj, "nominal", assumptions);
@@ -72,13 +72,14 @@ describe("cell kinds", () => {
     expect(cellValue("money", -2.5)).toBe(-3);
   });
 
-  it.fails(
-    "text that Excel would read as a formula is written as typed (ADR 0145) (#139)",
-    () => {
-      for (const t of ["=SUM(A1)", "+1", "-1", "@x", "\tx", "\rx", "Byt A"])
-        expect(cellValue("text", t)).toBe(t);
-    },
-  );
+  it("text that Excel would read as a formula is written as typed (ADR 0145)", () => {
+    for (const t of ["=SUM(A1)", "+1", "-1", "@x", "\tx", "\rx"]) {
+      expect(cellValue("text", t)).toBe(t);
+      expect(cellFmt("text", t)).toBe("@");
+    }
+    expect(cellValue("text", "Byt A")).toBe("Byt A");
+    expect(cellFmt("text", "Byt A")).toBeUndefined();
+  });
 });
 
 // ADR 0116 §12: owner-cash columns after DSCR, only when some year is non-zero.

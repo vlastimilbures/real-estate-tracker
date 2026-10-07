@@ -71,45 +71,39 @@ describe("buildXlsx — projection sheet", () => {
       }
   });
 
-  it.fails(
-    "a text cell that looks like a formula is text as typed, in the Text format (ADR 0145) (#139)",
-    async () => {
-      const s = await sheet(
-        [{ header: "Name", kind: "text", value: (r: string) => r }],
-        ["=1+1"],
-      );
-      const c = s.getRow(2).getCell(1);
-      expect(c.type).toBe(ExcelJS.ValueType.String);
-      expect(c.value).toBe("=1+1");
-      expect(c.numFmt).toBe("@");
-    },
-  );
+  it("a text cell that looks like a formula is text as typed, in the Text format (ADR 0145)", async () => {
+    const s = await sheet(
+      [{ header: "Name", kind: "text", value: (r: string) => r }],
+      ["=1+1"],
+    );
+    const c = s.getRow(2).getCell(1);
+    expect(c.type).toBe(ExcelJS.ValueType.String);
+    expect(c.value).toBe("=1+1");
+    expect(c.numFmt).toBe("@");
+  });
 
-  it.fails(
-    "a +/- scenario name keeps its text; a NaN money cell is empty (ADR 0145) (#139)",
-    async () => {
-      const s = await sheet(
-        [
-          {
-            header: "Scenario",
-            kind: "text",
-            value: (r: [string, number]) => r[0],
-          },
-          { header: "+2 % rates", kind: "money", value: (r) => r[1] },
-        ],
-        [["-10 % rent", NaN]],
-      );
-      const header = s.getRow(1).getCell(2);
-      expect(header.value).toBe("+2 % rates");
-      expect(header.numFmt).toBe("@");
-      expect(header.font?.bold).toBe(true);
-      const name = s.getRow(2).getCell(1);
-      expect(name.value).toBe("-10 % rent");
-      expect(name.numFmt).toBe("@");
-      expect(s.getRow(2).getCell(2).value).toBeNull();
-      expect(s.getRow(1).getCell(1).numFmt).toBeUndefined();
-    },
-  );
+  it("a +/- scenario name keeps its text; a NaN money cell is empty (ADR 0145)", async () => {
+    const s = await sheet(
+      [
+        {
+          header: "Scenario",
+          kind: "text",
+          value: (r: [string, number]) => r[0],
+        },
+        { header: "+2 % rates", kind: "money", value: (r) => r[1] },
+      ],
+      [["-10 % rent", NaN]],
+    );
+    const header = s.getRow(1).getCell(2);
+    expect(header.value).toBe("+2 % rates");
+    expect(header.numFmt).toBe("@");
+    expect(header.font?.bold).toBe(true);
+    const name = s.getRow(2).getCell(1);
+    expect(name.value).toBe("-10 % rent");
+    expect(name.numFmt).toBe("@");
+    expect(s.getRow(2).getCell(2).value).toBeNull();
+    expect(s.getRow(1).getCell(1).numFmt).toBeUndefined();
+  });
 });
 
 describe("buildWorkbook — several sheets", () => {
@@ -163,16 +157,13 @@ describe("buildWorkbook — several sheets", () => {
     expect(ws.getRow(3).getCell(2).numFmt).toBe(numFmt("percent"));
   });
 
-  it.fails(
-    "notes follow the table after one blank row, as typed text (ADR 0145) (#139)",
-    () => {
-      const ws = wb.getWorksheet("Metrics")!;
-      expect(ws.getRow(4).getCell(1).value).toBeNull();
-      expect(ws.getRow(5).getCell(1).value).toBe("* a note");
-      expect(ws.getRow(5).getCell(1).numFmt).toBeUndefined();
-      expect(ws.getRow(6).getCell(1).value).toBe("=not a formula");
-      expect(ws.getRow(6).getCell(1).numFmt).toBe("@");
-      expect(ws.rowCount).toBe(6);
-    },
-  );
+  it("notes follow the table after one blank row, as typed text (ADR 0145)", () => {
+    const ws = wb.getWorksheet("Metrics")!;
+    expect(ws.getRow(4).getCell(1).value).toBeNull();
+    expect(ws.getRow(5).getCell(1).value).toBe("* a note");
+    expect(ws.getRow(5).getCell(1).numFmt).toBeUndefined();
+    expect(ws.getRow(6).getCell(1).value).toBe("=not a formula");
+    expect(ws.getRow(6).getCell(1).numFmt).toBe("@");
+    expect(ws.rowCount).toBe(6);
+  });
 });
