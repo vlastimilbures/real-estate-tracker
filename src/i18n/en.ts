@@ -57,8 +57,6 @@ export const en = {
     asOfLabel: "As of",
     asOfHintProjection: (year: string, period: string) =>
       `Future dates show the nearest projection year (${year}, ${period})`,
-    asOfHintBeyond: (d: string) =>
-      `Beyond the horizon — showing records in force on ${d}, not a projection`,
     asOfHintSnapshot: (d: string) => `Showing records in force on ${d}`,
     noPortfolioTitle: "No portfolio yet",
     noPortfolioBody: "Add a property or import CSV files to begin.",

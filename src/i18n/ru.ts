@@ -51,8 +51,6 @@ export const ru: Dictionary = {
     asOfLabel: "На дату",
     asOfHintProjection: (year, period) =>
       `Для будущих дат показан ближайший год прогноза (${year}, ${period})`,
-    asOfHintBeyond: (d) =>
-      `За горизонтом — показаны записи, действующие на ${d}, а не прогноз`,
     asOfHintSnapshot: (d) => `Показаны записи, действующие на ${d}`,
     noPortfolioTitle: "Портфеля пока нет",
     noPortfolioBody:

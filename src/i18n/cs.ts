@@ -51,8 +51,6 @@ export const cs: Dictionary = {
     asOfLabel: "K datu",
     asOfHintProjection: (year, period) =>
       `Budoucí datum ukazuje nejbližší rok projekce (${year}, ${period})`,
-    asOfHintBeyond: (d) =>
-      `Za horizontem — zobrazeny záznamy platné k ${d}, nejde o projekci`,
     asOfHintSnapshot: (d) => `Zobrazeny záznamy platné k ${d}`,
     noPortfolioTitle: "Zatím žádné portfolio",
     noPortfolioBody: "Začněte přidáním nemovitosti nebo importem souborů CSV.",

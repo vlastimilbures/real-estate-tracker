@@ -59,13 +59,14 @@ export function projectionYearForAsOf(baseDate: Date, asOf: Date): number {
 /**
  * What the as-of tiles show (ADR 0088): the projection year the date rounds to; else
  * today's effective-dated snapshot; else the records in force on the date (under six
- * months after the base date, or past the horizon). The one as-of rule (#113): the tile
- * mappers and every label read this basis, so tiles and labels agree by construction.
+ * months after the base date). The one as-of rule (ADR 0150): the tile mappers and every
+ * label read this basis, so tiles and labels agree by construction. The date is resolved
+ * into the window first (`resolveAsOf`), so it never rounds past the horizon.
  */
 export type AsOfBasis =
   | { kind: "today" }
   | { kind: "projection"; year: number; calendarYear: number }
-  | { kind: "snapshot"; date: Date; beyondHorizon: boolean };
+  | { kind: "snapshot"; date: Date };
 
 /**
  * Snapshot used to render the dashboard KPI tiles + monthly-flow band. Today or on a
@@ -112,7 +113,7 @@ export function propertyTilesForAsOf(
     : snapshot;
 }
 
-/** The as-of basis of `asOf` (see `AsOfBasis`). */
+/** The as-of basis of a resolved `asOf` (see `AsOfBasis`). */
 export function asOfView(
   baseDate: Date,
   asOf: Date,
@@ -120,14 +121,14 @@ export function asOfView(
   isToday: boolean,
 ): AsOfBasis {
   const n = projectionYearForAsOf(baseDate, asOf);
-  if (n > 0 && n < series.length)
+  if (n > 0)
     return {
       kind: "projection",
       year: n,
       calendarYear: at(series, n).calendarYear,
     };
   if (isToday) return { kind: "today" };
-  return { kind: "snapshot", date: asOf, beyondHorizon: n >= series.length };
+  return { kind: "snapshot", date: asOf };
 }
 
 /**
@@ -245,10 +246,7 @@ export function asOfHint(
   if (basis.kind === "today") return null;
   if (basis.kind === "projection")
     return c.asOfHintProjection(...yearAndPeriod(t, basis, baseDate));
-  const date = fmtDate(basis.date);
-  return basis.beyondHorizon
-    ? c.asOfHintBeyond(date)
-    : c.asOfHintSnapshot(date);
+  return c.asOfHintSnapshot(fmtDate(basis.date));
 }
 
 /**

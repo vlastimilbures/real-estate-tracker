@@ -84,17 +84,14 @@ describe("asOfView (ADR 0088)", () => {
     expect(asOfView(baseDate, d, series, false)).toEqual({
       kind: "snapshot",
       date: d,
-      beyondHorizon: false,
     });
   });
 
-  it("a date that rounds past the last year is beyond the horizon", () => {
-    const d = addYears(baseDate, 40);
-    expect(asOfView(baseDate, d, series, false)).toEqual({
-      kind: "snapshot",
-      date: d,
-      beyondHorizon: true,
-    });
+  it("the end of the window is the last projection year (ADR 0150)", () => {
+    // resolveAsOf keeps every date inside the window, so there is no past-horizon basis.
+    expect(
+      asOfView(baseDate, addYears(baseDate, 30), series, false),
+    ).toMatchObject({ kind: "projection", year: 30 });
   });
 });
 
@@ -150,14 +147,6 @@ describe("as-of labels (ADR 0088)", () => {
     );
   });
 
-  it("beyond the horizon: says it is not a projection", () => {
-    const d = addYears(baseDate, 40);
-    const b = asOfView(baseDate, d, series, false);
-    expect(asOfHint(en, b, baseDate)).toBe(
-      "Beyond the horizon — showing records in force on 07.06.2066, not a projection",
-    );
-  });
-
   it("horizon end year is the last projection row, whatever the as-of", () => {
     expect(horizonEndYear(series)).toBe(2056);
     expect(en.dashboard.netWorthInYear(2056, 30)).toBe(
@@ -177,7 +166,7 @@ describe("ownedOn (ADR 0150)", () => {
   });
 
   it("today or on a date: owned once bought by the as-of date", () => {
-    const on = { kind: "snapshot", date: asOf, beyondHorizon: false } as const;
+    const on = { kind: "snapshot", date: asOf } as const;
     expect(ownedOn(isoDate("2028-03-15"), on, baseDate, asOf)).toBe(false);
     expect(ownedOn(isoDate("2028-01-01"), on, baseDate, asOf)).toBe(true);
   });

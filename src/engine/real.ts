@@ -20,18 +20,21 @@ import type {
  * Price index at `asOf` (baseDate = 1): the yearly index of the last whole projection
  * year, compounded at the next year's rate for the remaining months (months/12), with
  * months on the grid so baseDate + N years gives year N's index. On or before baseDate
- * it is 1; past the horizon it stays at the horizon index. Raises the
- * D-37 / D-38 problems of the assumptions first (ADR 0075, DR-115).
+ * it is 1. Raises the D-37 / D-38 problems of the assumptions first (ADR 0075, DR-115),
+ * and a RangeError for a date after baseDate + horizonYears: the as-of resolver keeps
+ * every date inside the window, so a later one is a caller bug (ADR 0150).
  */
 export function cpiAt(assumptions: Assumptions, asOf: Date): Decimal {
   assertAssumptions(assumptions);
   // Months on the D-21 month-end grid, as value growth counts them (DR-182, ADR 0080).
   const months = lastGridMonthOnOrBefore(assumptions.baseDate, asOf);
   if (months <= 0) return ONE;
+  if (months > assumptions.horizonYears * 12)
+    throw new RangeError(
+      `cpiAt: as-of ${asOf.toISOString().slice(0, 10)} is past the horizon.`,
+    );
   const cpi = buildCpiIndex(assumptions);
   const whole = Math.floor(months / 12);
-  if (whole >= assumptions.horizonYears)
-    return at(cpi, assumptions.horizonYears);
   const rest = months - whole * 12;
   if (rest === 0) return at(cpi, whole);
   const infl = inflationInYear(assumptions, whole + 1);
