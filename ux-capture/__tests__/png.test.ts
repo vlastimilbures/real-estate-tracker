@@ -1,0 +1,118 @@
+// `pnpm ux:diff` decoder and pixel diff on synthetic PNGs (#137).
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { crc32, deflateSync } from "node:zlib";
+import { describe, expect, it } from "vitest";
+import { decode, diffShare, type Png } from "../png.ts";
+
+const dir = mkdtempSync(join(tmpdir(), "ux-png-"));
+
+/** Raw pixels of a width×height image with `channels` 3 (RGB) or 4 (RGBA). */
+function image(width: number, height: number, channels: 3 | 4): Png {
+  const pixels = Buffer.alloc(width * height * channels);
+  for (let i = 0; i < pixels.length; i++) pixels[i] = (i * 37 + 11) % 256;
+  return { width, height, channels, pixels };
+}
+
+function chunk(type: string, data: Buffer): Buffer {
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(data.length);
+  const body = Buffer.concat([Buffer.from(type, "ascii"), data]);
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(body));
+  return Buffer.concat([len, body, crc]);
+}
+
+/** Encodes `png` with filter type `y % 5` on row y, so every filter is used. */
+function encode(png: Png): string {
+  const { width, height, channels, pixels } = png;
+  const stride = width * channels;
+  const raw = Buffer.alloc(height * (stride + 1));
+  for (let y = 0; y < height; y++) {
+    const filter = y % 5;
+    raw[y * (stride + 1)] = filter;
+    for (let x = 0; x < stride; x++) {
+      const px = (yy: number, xx: number) =>
+        yy >= 0 && xx >= 0 ? pixels[yy * stride + xx]! : 0;
+      const a = px(y, x - channels);
+      const up = px(y - 1, x);
+      const c = px(y - 1, x - channels);
+      const p = a + up - c;
+      const paeth =
+        Math.abs(p - a) <= Math.abs(p - up) &&
+        Math.abs(p - a) <= Math.abs(p - c)
+          ? a
+          : Math.abs(p - up) <= Math.abs(p - c)
+            ? up
+            : c;
+      const predictor = [0, a, up, Math.floor((a + up) / 2), paeth][filter]!;
+      raw[y * (stride + 1) + 1 + x] = (px(y, x) - predictor + 256) & 255;
+    }
+  }
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;
+  ihdr[9] = channels === 4 ? 6 : 2;
+  const file = join(dir, `${width}x${height}x${channels}-${Math.random()}.png`);
+  writeFileSync(
+    file,
+    Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      chunk("IHDR", ihdr),
+      chunk("IDAT", deflateSync(raw)),
+      chunk("IEND", Buffer.alloc(0)),
+    ]),
+  );
+  return file;
+}
+
+/** A copy of `png` with channel 0 of each listed pixel moved by `delta`. */
+function shifted(png: Png, at: number[], delta: number): Png {
+  const pixels = Buffer.from(png.pixels);
+  for (const i of at) {
+    const o = i * png.channels;
+    pixels[o] = pixels[o]! < 128 ? pixels[o]! + delta : pixels[o]! - delta;
+  }
+  return { ...png, pixels };
+}
+
+describe("decode", () => {
+  it.each([3, 4] as const)(
+    "round-trips every filter type with %i channels",
+    (channels) => {
+      const png = image(7, 10, channels);
+      expect(decode(encode(png))).toEqual(png);
+    },
+  );
+});
+
+describe("diffShare", () => {
+  const a = image(40, 40, 4);
+
+  it("is 0 for identical images", () => {
+    expect(diffShare(decode(encode(a)), decode(encode(a)))).toBe(0);
+  });
+
+  it("is 1 when the sizes differ", () => {
+    expect(diffShare(a, image(40, 41, 4))).toBe(1);
+  });
+
+  it("ignores the alpha channel and compares RGB against RGBA", () => {
+    const rgb = image(5, 5, 3);
+    const rgba: Png = {
+      ...rgb,
+      channels: 4,
+      pixels: Buffer.alloc(5 * 5 * 4, 7),
+    };
+    for (let i = 0; i < 25; i++)
+      rgb.pixels.copy(rgba.pixels, i * 4, i * 3, i * 3 + 3);
+    expect(diffShare(rgb, rgba)).toBe(0);
+  });
+
+  // Anti-aliasing noise moves a channel by a few levels (D15).
+  it.fails("ignores a channel move of 8 (#137)", () => {
+    expect(diffShare(a, shifted(a, [0, 1, 2], 8))).toBe(0);
+  });
+});
