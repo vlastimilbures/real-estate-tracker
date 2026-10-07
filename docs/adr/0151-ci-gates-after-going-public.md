@@ -1,6 +1,6 @@
 # 0151. CI gates after going public
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-07
 - Source: issue #111 (2026-10 code review, findings R7-07, R8-16); owner decision D1
   (2026-10-07: `strict` checks stay off); Track 11 PR 11.3

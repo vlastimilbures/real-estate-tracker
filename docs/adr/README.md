@@ -194,8 +194,8 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0148](0148-restore-rules-vs-stored-data.md)      | Restore rules vs stored data: out-of-range values ask, flags and names are checked            | Accepted                                           | #133                                               |
 | [0149](0149-calendar-days.md)                     | Calendar days: the local day on every screen, one day module, a 1900 floor for new dates      | Accepted                                           | #119                                               |
 | [0150](0150-one-asof-resolver.md)                 | One as-of resolver: the date shown is the date computed, on every page                        | Accepted                                           | #113                                               |
-| [0151](0151-ci-gates-after-going-public.md)       | CI gates after going public                                                                   | Proposed                                           | #111                                               |
-| [0152](0152-wording-log-and-generated-index.md)   | Copy-only changes go to a wording log; the ADR index is generated                             | Proposed                                           | #111                                               |
+| [0151](0151-ci-gates-after-going-public.md)       | CI gates after going public                                                                   | Accepted                                           | #111                                               |
+| [0152](0152-wording-log-and-generated-index.md)   | Copy-only changes go to a wording log; the ADR index is generated                             | Accepted                                           | #111                                               |
 
 <!-- adr-index:end -->
 

@@ -1,6 +1,6 @@
 # 0152. Copy-only changes go to a wording log; the ADR index is generated
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-07
 - Source: issue #111 (2026-10 code review, findings R7-09, R8-10, R8-11, R7-08, R8-16);
   owner decision D1 (2026-10-07: Group 1 option B, Group 2 option D′); Track 11 PR 11.3
