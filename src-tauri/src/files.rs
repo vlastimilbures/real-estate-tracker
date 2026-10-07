@@ -79,17 +79,23 @@ pub fn restrict_app_dir(dir: &Path) -> Result<(), AppError> {
     if !dir.is_dir() {
         return Ok(());
     }
-    for folder in [dir.to_path_buf(), dir.join("backups")] {
-        if !folder.is_dir() {
-            continue;
-        }
-        set_mode(&folder, PRIVATE_DIR)?;
-        for entry in fs::read_dir(&folder)? {
-            let entry = entry?;
-            // `file_type` does not follow symlinks.
-            if entry.file_type()?.is_file() {
-                restrict_file(&entry.path())?;
-            }
+    restrict_dir(dir)?;
+    restrict_dir(&dir.join("backups"))
+}
+
+/// Make one folder private: 0700, and every regular file directly in it 0600. Symlinks
+/// and subfolders are skipped; a folder that does not exist is left alone. Also used for
+/// the error log's folder (ADR 0147).
+pub fn restrict_dir(folder: &Path) -> Result<(), AppError> {
+    if !folder.is_dir() {
+        return Ok(());
+    }
+    set_mode(folder, PRIVATE_DIR)?;
+    for entry in fs::read_dir(folder)? {
+        let entry = entry?;
+        // `file_type` does not follow symlinks.
+        if entry.file_type()?.is_file() {
+            restrict_file(&entry.path())?;
         }
     }
     Ok(())

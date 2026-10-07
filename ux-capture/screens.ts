@@ -939,6 +939,32 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "54-import-preview-failed",
+    desc: "Import: the preview read failed, so an error says why Import is unavailable (ADR 0147)",
+    route: "import",
+    run: async (ux) => {
+      await boot(ux.page);
+      await nav(ux, "import");
+      // The browser database does not fail on its own: fail the preview the way a broken
+      // read would. Vite serves the store module by URL, so this is the app's own instance.
+      await ux.page.evaluate(async () => {
+        const store = "/src/state/portfolioStore.ts";
+        const { usePortfolioStore } = (await import(
+          /* @vite-ignore */ store
+        )) as typeof import("../src/state/portfolioStore");
+        usePortfolioStore.setState({
+          previewCsv: () => Promise.reject(new Error("disk I/O error")),
+        });
+      });
+      await ux.page
+        .locator("input[type=file]")
+        .first()
+        .setInputFiles(fixture("properties-ok.csv"));
+      await expect(ux.page.getByText(/disk I\/O error/)).toBeVisible();
+      await ux.capture("54-import-preview-failed");
+    },
+  },
+  {
     id: "60-settings-assumptions",
     desc: "Settings → Assumptions",
     route: "settings",

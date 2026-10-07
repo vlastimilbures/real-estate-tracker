@@ -3,6 +3,7 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { Panel, Button, Toast, TableWrap } from "../components/primitives";
 import {
   BackupExportError,
+  BackupReadError,
   chooseRestoreFile,
   RestoreError,
   SafetyBackupError,
@@ -12,7 +13,7 @@ import {
   type BackupSummary,
   type RestoreIssue,
 } from "../../state/backup";
-import { logFailure } from "../../state/diagnostics";
+import { logFailure, type FailureSite } from "../../state/diagnostics";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
@@ -152,8 +153,13 @@ export function BackupRestorePanel() {
   const [error, setError] = useState<string | null>(null);
   const [issues, setIssues] = useState<RestoreIssue[]>([]);
 
-  /** Show a failure: a refused backup with its records, anything else translated. */
-  function fail(e: unknown, other: (detail: string) => string) {
+  /** Show a failure: a refused backup with its records, anything else translated and
+   *  logged under `site`. */
+  function fail(
+    e: unknown,
+    site: FailureSite,
+    other: (detail: string) => string,
+  ) {
     if (e instanceof RestoreError) {
       setError(restoreErrorText(t, e));
       setIssues(e.issues);
@@ -163,13 +169,15 @@ export function BackupRestorePanel() {
       setError(t.sample.errNotEmpty);
       return;
     }
-    logFailure("BACKUP", e);
+    logFailure(site, e);
     setError(
       e instanceof SafetyBackupError
         ? t.backup.safetyBackupFailed(e.detail)
         : e instanceof BackupExportError
           ? t.backup.exportFailed(e.detail)
-          : other(describeWriteError(t, toWriteError(e)).message),
+          : e instanceof BackupReadError
+            ? t.backup.errUnreadable(e.detail)
+            : other(describeWriteError(t, toWriteError(e)).message),
     );
   }
 
@@ -189,7 +197,7 @@ export function BackupRestorePanel() {
         showToast(t.backup.savedTo(outcome.filename));
       else if (outcome.kind === "downloaded") showToast(t.backup.downloaded);
     } catch (e) {
-      fail(e, t.backup.exportFailed);
+      fail(e, "BACKUP", t.backup.exportFailed);
     } finally {
       setExporting(false);
     }
@@ -203,7 +211,7 @@ export function BackupRestorePanel() {
       await loadSample();
       showToast(t.sample.loaded);
     } catch (e) {
-      fail(e, t.sample.loadFailed);
+      fail(e, "SAMPLE", t.sample.loadFailed);
     } finally {
       setLoadingSample(false);
     }
@@ -215,7 +223,7 @@ export function BackupRestorePanel() {
       const picked = await chooseRestoreFile();
       if (picked) setPendingBackup(picked);
     } catch (e) {
-      fail(e, t.backup.errInvalid);
+      fail(e, "RESTORE", t.backup.errInvalid);
     }
   }
 
@@ -230,7 +238,7 @@ export function BackupRestorePanel() {
     } catch (e) {
       // One transaction: only a failure before the commit lands here, so the current
       // data is unchanged (DR-019). A failed reload after it resolves (ADR 0125).
-      fail(e, t.backup.restoreFailed);
+      fail(e, "RESTORE", t.backup.restoreFailed);
     } finally {
       setRestoring(false);
     }

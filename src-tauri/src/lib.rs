@@ -5,6 +5,7 @@ use tauri::{Emitter, Manager};
 use tauri::{RunEvent, WindowEvent};
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
 
+pub mod crash;
 pub mod db;
 pub mod error;
 pub mod files;
@@ -14,6 +15,7 @@ pub mod perf;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    crash::install_panic_hook();
     let started = perf::Started::now();
     tauri::Builder::default()
         .manage(started)
@@ -73,6 +75,16 @@ pub fn run() {
                     }
                 }
                 Err(e) => log::warn!("no app folder to make private: {e}"),
+            }
+            // ADR 0147: the error log is private too. The log plugin has opened app.log
+            // by now; a file it rotates in later is made private at the next start.
+            match app.path().app_log_dir() {
+                Ok(dir) => {
+                    if let Err(e) = files::restrict_dir(&dir) {
+                        log::warn!("could not make the log folder private: {e}");
+                    }
+                }
+                Err(e) => log::warn!("no log folder to make private: {e}"),
             }
             // Native macOS menu: start from the OS default (keeps Edit/Window/Quit), drop the
             // predefined "About {app}" item (which opens an empty native popup) and replace it
@@ -175,8 +187,11 @@ pub fn run() {
             let _ = (window, event);
         })
         .build(tauri::generate_context!())
-        // The only panic path: before any window exists there is nowhere to show an
-        // error; tauri-plugin-log has already recorded the cause.
+        // `build()` fails only while creating the runtime or starting a plugin, before
+        // tauri-plugin-log (registered last) is up, so this panic reaches stderr only.
+        // A setup error (the menu above) does not come back here: Tauri runs `setup`
+        // once the event loop is ready and panics with "Failed to setup app", which the
+        // panic hook writes to app.log (ADR 0147).
         .expect("error while building tauri application")
         .run(|app, event| {
             #[cfg(target_os = "macos")]

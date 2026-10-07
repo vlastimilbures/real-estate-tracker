@@ -4,20 +4,38 @@
 // Offline only: nothing leaves the machine.
 //
 // No personal financial values: a DataError contributes its code and details (table,
-// row id, column, rule — never a value); any other error's message has digit runs
-// masked, so an amount that slipped into a message is not recorded.
+// row id, column, rule — never a value); any other error's message has every number
+// masked, so an amount that slipped into a message is not recorded (ADR 0147). Names
+// are kept (they help diagnosis); the bug form says to replace them before pasting.
 import { invoke } from "@tauri-apps/api/core";
 import { DataError, messageOf } from "./errors";
 import { isTauri } from "../lib/tauri";
 
-/** Mask runs of 4+ digits (with separators) — amounts, never needed for diagnosis. */
+/** Mask every digit run (with its separators): amounts, never needed for diagnosis. */
 export function maskNumbers(text: string): string {
-  return text.replace(/\d(?:[\d\s.,]*\d){3,}/g, "#");
+  return text.replace(/\d(?:[\d\s.,]*\d)?/g, "#");
 }
 
-/** The code + context line written for a failure in `where` (STARTUP, WRITE, …). */
+/** Where a failure happened: the prefix of its log code (`<SITE>_FAILED`). */
+export type FailureSite =
+  | "STARTUP"
+  | "WRITE"
+  // The reload after a write (ADR 0125).
+  | "RELOAD"
+  // Exporting a backup.
+  | "BACKUP"
+  // Choosing or confirming a restore.
+  | "RESTORE"
+  // Loading or clearing the sample.
+  | "SAMPLE"
+  | "IMPORT"
+  | "EXPORT"
+  | "TEMPLATE"
+  | "RENDER";
+
+/** The code + context line written for a failure in `where`. */
 export function describeFailure(
-  where: string,
+  where: FailureSite,
   e: unknown,
 ): { code: string; context: string } {
   if (e instanceof DataError)
@@ -26,7 +44,7 @@ export function describeFailure(
 }
 
 /** Fire-and-forget: logging must never turn into a second failure. */
-export function logFailure(where: string, e: unknown): void {
+export function logFailure(where: FailureSite, e: unknown): void {
   if (!isTauri()) return;
   invoke("log_error", describeFailure(where, e)).catch(() => undefined);
 }

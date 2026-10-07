@@ -892,6 +892,8 @@ export const cs: Dictionary = {
       "Nic nebylo importováno. Opravte tyto řádky a importujte znovu:",
     importFailed: (detail) =>
       `Import selhal a byl vrácen zpět — nic nebylo importováno. (${detail})`,
+    previewFailed: (detail) =>
+      `Soubory se nepodařilo porovnat s uloženými daty, zatím tedy nelze nic importovat. (${detail})`,
     templateFailed: (detail) => `Šablonu se nepodařilo uložit. (${detail})`,
     colFile: "Soubor",
     wholeFile: "Soubor",
@@ -951,6 +953,8 @@ export const cs: Dictionary = {
     errNotJson: "Soubor není záloha ve formátu JSON.",
     errInvalid: (detail) =>
       `Soubor není platná záloha této aplikace. (${detail})`,
+    errUnreadable: (detail) =>
+      `Soubor se nepodařilo přečíst. Zkontrolujte, že je disk připojený a soubor stažený. (${detail})`,
     errNewer: (detail) =>
       `Tuto zálohu vytvořila novější verze aplikace (${detail}). Obnovte ji v té verzi.`,
     errRowsInvalid:

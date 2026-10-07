@@ -210,7 +210,8 @@ Everything runs and stays on your Mac.
   | Automatic backups              | `~/Library/Application Support/com.bures.realestate-tracker/backups/` |
   | Error log (rotating, 5 × 1 MB) | `~/Library/Logs/com.bures.realestate-tracker/app.log`                 |
 
-  Files are readable only by your user (`0600`); they are not encrypted beyond FileVault.
+  These folders are readable only by your user (`0700`, files `0600`); they are not
+  encrypted beyond FileVault.
   How to back up and recover: [Data safety & recovery](docs/data-safety.md).
 
 Found a vulnerability? Please report it privately — see [SECURITY.md](SECURITY.md).
