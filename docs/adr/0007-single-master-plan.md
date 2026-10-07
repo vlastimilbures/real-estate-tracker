@@ -1,6 +1,6 @@
 # 0007. One master plan document
 
-- Status: Accepted
+- Status: Superseded by 0081
 - Date: 2026-09-30 (taken before the refactor programme; recorded in P0)
 - Source IDs: D-07
 

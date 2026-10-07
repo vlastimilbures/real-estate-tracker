@@ -1,6 +1,7 @@
 # 0025. Branded IsoDate and Rate types in the engine API
 
-- Status: Accepted (amended by [0074](0074-type-safety-pass.md): `Money` brand on engine inputs)
+- Status: Accepted
+- Amended by: [0074](0074-type-safety-pass.md) (`Money` brand on engine inputs)
 - Date: 2026-09-30
 - Source IDs: D-25, J-08
 

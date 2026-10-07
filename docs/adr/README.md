@@ -93,7 +93,7 @@ Other IDs seen in code comments:
 | [0063](0063-hardened-runtime-apple-silicon.md)    | Hardened runtime, Apple Silicon only, macOS 13+                                        | D-63, J-10, Q-05                       |
 | [0064](0064-file-io-in-rust.md)                   | File IO in Rust commands                                                               | D-64                                   |
 | [0066](0066-performance-budgets.md)               | Performance budgets and measurement                                                    | D-66, J-11, D-67                       |
-| [0068](0068-no-branch-protection.md)              | No server-side branch protection                                                       | D-68, J-09, D-69                       |
+| [0068](0068-no-branch-protection.md)              | No server-side branch protection                                                       | D-68, D-69                             |
 | [0070](0070-decision-records.md)                  | Decisions are recorded as ADRs                                                         | D-70                                   |
 | [0071](0071-property-form-fixes.md)               | Property form: garage checkbox, extras, active flag                                    |                                        |
 | [0072](0072-layer-map-platform-and-type-edges.md) | Layer map: platform layer, state facades, type edges                                   | DR-163…167                             |

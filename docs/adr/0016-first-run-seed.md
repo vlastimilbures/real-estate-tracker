@@ -1,7 +1,7 @@
 # 0016. Seed the sample portfolio only on first run
 
 - Status: Accepted
-- Amended by: ADR 0081
+- Amended by: ADR 0081, ADR 0112 (the sample loads on demand into an empty portfolio)
 - Date: 2026-09-30
 - Source IDs: D-16, J-18
 
