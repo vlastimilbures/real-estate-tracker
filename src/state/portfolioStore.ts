@@ -125,9 +125,14 @@ async function defaultOpen(): Promise<Sql> {
   // dev server with VITE_E2E=1); production always uses the Tauri SQLite adapter.
   if (import.meta.env.DEV && !inTauri && import.meta.env.VITE_E2E === "1") {
     const { openBrowserSql } = await import("../data/browserSql");
+    // ux:capture forces a startup failure to capture its screen (ADR 0153).
+    const faults = await import("../data/e2eFaults");
+    const fault = faults.e2eFault();
     const sql = await openBrowserSql();
+    await faults.beforeMigrate(sql, fault);
     await migrate(sql);
     await seedIfEmpty(sql);
+    await faults.afterSeed(sql, fault);
     return sql;
   }
   const { openTauriSql } = await import("../data/tauriSql");

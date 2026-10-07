@@ -89,6 +89,58 @@ async function pickEditedBackup(ux: Ux, edit: (tables: BackupTables) => void) {
 }
 
 /**
+ * The startup error screen for a forced failure (ADR 0153): src/data/e2eFaults.ts reads
+ * `sessionStorage["e2e.fault"]` in the browser E2E build, and the data layer then refuses
+ * the database for real.
+ */
+async function bootFailing(ux: Ux, fault: "DB_NEWER" | "ROW_INVALID") {
+  await ux.page.addInitScript(
+    (f) => sessionStorage.setItem("e2e.fault", f),
+    fault,
+  );
+  await ux.page.goto("/");
+  await expect(ux.page.locator(".error-screen")).toBeVisible({
+    timeout: 30_000,
+  });
+}
+
+/**
+ * ROW_INVALID, then Restore a backup… up to its confirm step. The backup is an export of
+ * the sample, taken first in a normal start; the reload then starts with the fault. The
+ * browser has no Tauri file dialog, so `open_backup_file` and `write_app_backup` are
+ * answered the way the Rust side does.
+ */
+async function bootRestoreConfirm(ux: Ux) {
+  await boot(ux.page);
+  await settingsTab(ux, "backup");
+  const download = ux.page.waitForEvent("download");
+  await ux.page.getByRole("button", { name: ux.t.backup.exportButton }).click();
+  const { readFile } = await import("node:fs/promises");
+  const text = await readFile(await (await download).path(), "utf8");
+  await ux.page.addInitScript(() =>
+    sessionStorage.setItem("e2e.fault", "ROW_INVALID"),
+  );
+  await ux.page.reload();
+  await expect(ux.page.locator(".error-screen")).toBeVisible({
+    timeout: 30_000,
+  });
+  await ux.page.evaluate((json) => {
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
+      invoke: (cmd: string, args: { json?: string }) =>
+        cmd === "open_backup_file"
+          ? Promise.resolve({ name: "portfolio-backup.json", text: json })
+          : cmd === "write_app_backup"
+            ? Promise.resolve(args.json)
+            : Promise.reject(new Error(`no ${cmd} in the browser`)),
+    };
+  }, text);
+  await ux.page.getByRole("button", { name: ux.t.boot.restoreBackup }).click();
+  await expect(
+    ux.page.getByRole("button", { name: ux.t.backup.restoreNow }),
+  ).toBeVisible();
+}
+
+/**
  * Opens the first property's first mortgage block for editing and enters two
  * prepayments (the second larger than the balance) and a maturity change (ADR 0116).
  */
@@ -178,6 +230,44 @@ export const SCREENS: Screen[] = [
       await ux.page.goto("/");
       await expect(ux.page.locator(".loading-screen")).toBeVisible();
       await ux.capture("00-loading");
+    },
+  },
+  {
+    id: "00b-boot-row-invalid",
+    desc: "Startup error: an unreadable record (Restore a backup…, records involved)",
+    run: async (ux) => {
+      await bootFailing(ux, "ROW_INVALID");
+      await ux.capture("00b-boot-row-invalid");
+    },
+  },
+  {
+    id: "00c-boot-db-newer",
+    desc: "Startup error: a database from a newer app (details, no Try again)",
+    run: async (ux) => {
+      await bootFailing(ux, "DB_NEWER");
+      await ux.capture("00c-boot-db-newer");
+    },
+  },
+  {
+    id: "00d-boot-restore-confirm",
+    desc: "Startup error: Restore a backup… at its confirm step",
+    run: async (ux) => {
+      await bootRestoreConfirm(ux);
+      await ux.capture("00d-boot-restore-confirm");
+    },
+  },
+  {
+    id: "00e-boot-restored",
+    desc: "Startup error: restored, the safety copy named, Open the app",
+    run: async (ux) => {
+      await bootRestoreConfirm(ux);
+      await ux.page
+        .getByRole("button", { name: ux.t.backup.restoreNow })
+        .click();
+      await expect(
+        ux.page.getByRole("button", { name: ux.t.boot.continue }),
+      ).toBeVisible();
+      await ux.capture("00e-boot-restored");
     },
   },
   {
