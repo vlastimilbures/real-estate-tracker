@@ -36,6 +36,14 @@ a backup with "Byt A" and "byt a" restores and later CSV rows land on one of the
    out-of-range values too, so one table names everything to fix (a file that cannot be read
    as a whole stops before the rules run, as before). So a file the app writes from data it
    loads no longer fails on a bound alone (see Consequences for the remaining cases).
+
+   **A hard limit stays a refusal** (owner, 2026-10-07, after review): a value above ten
+   times the form maximum (horizon above 1 000 years, fixation or loan term above 500 years,
+   size above 100 000 m²) is not legacy data but a broken file, so restore refuses it as
+   `BEYOND_LIMIT` with the same "Must be a whole number from … to …" text. Without it a
+   hand-edited horizon of 2 000 000 000 years would pass as one warning and make every
+   projection loop for ever after the restore. The engine and the database stay open-ended.
+
 2. **The Data check lists stored out-of-range values (C).** Under "Needs attention", with the
    value and the range: a property's size (fix: the property form), a mortgage's fixation or
    loan term (fix: Financing), and on the Dashboard the projection horizon as a portfolio row
@@ -70,5 +78,7 @@ a backup with "Byt A" and "byt a" restores and later CSV rows land on one of the
   accepted: the clash is the bug R6-08 describes, and the issue table names the record.
 - A database holding a decimal in a refused form (only possible through an earlier restore of
   a hand-edited file) no longer loads; the load error names the table, record and column.
+  The startup error screen has no Restore, so the owner fixes that cell in the database file
+  by hand (`docs/data-safety.md`), then presses Try again.
 - Computed numbers do not change: parity, the golden master and the bench budgets are
   unchanged.
