@@ -922,6 +922,8 @@ export const en = {
     errInstalmentRequired:
       "Required (or provide loan_term_years to auto-calculate)",
     errImpossibleDate: (v: string) => `"${v}" is not a real calendar date`,
+    errEarlyDate: (v: string, floor: string) =>
+      `"${v}" is before ${floor}, the earliest date the app accepts — check the year for a typo`,
     errDecimalComma: (v: string) =>
       `"${v}" uses a decimal comma — write numbers with a decimal point and no spaces (e.g. 4800000.40)`,
     errNegativeAmount: (v: string) => `Amount "${v}" must not be negative`,
@@ -1094,7 +1096,7 @@ export const en = {
   forms: {
     required: "Required",
     invalidHint: {
-      date: "Enter a date as dd.mm.yyyy",
+      date: "Enter a date from 01.01.1900 as dd.mm.yyyy",
       money:
         "Enter an amount of 0 or more, e.g. 1 250 000 (a space between thousands)",
       pct: "Enter a percentage, e.g. 4,5",

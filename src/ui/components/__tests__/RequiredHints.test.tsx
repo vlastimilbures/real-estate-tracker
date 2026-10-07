@@ -43,7 +43,9 @@ describe("required marks (UX-040)", () => {
 
 describe("format hints (UX-040)", () => {
   it("invalidHint names the expected format per kind", () => {
-    expect(invalidHint(en, "date")).toBe("Enter a date as dd.mm.yyyy");
+    expect(invalidHint(en, "date")).toBe(
+      "Enter a date from 01.01.1900 as dd.mm.yyyy",
+    );
     expect(invalidHint(en, "money")).toMatch(/1 250 000/);
     expect(invalidHint(en, "pct")).toMatch(/4,5/);
     expect(invalidHint(en, "int")).toMatch(/whole number/);

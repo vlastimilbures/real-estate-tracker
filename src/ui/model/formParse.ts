@@ -3,10 +3,11 @@
 import { D, type Decimal } from "../../lib/money";
 import { fmtCzk, fmtDate } from "../../lib/format";
 import { inRange, type IntRange } from "../../lib/intRanges";
+import { DATE_FLOOR_YEAR } from "../../lib/day";
 import {
+  calendarDay,
   money,
   rate,
-  utc,
   type IsoDate,
   type LoanRecast,
   type Money,
@@ -58,15 +59,11 @@ export function parseDate(raw: string): IsoDate | null {
   const m = raw.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
   if (!m) return null;
   const [, dd, mm, yyyy] = m;
-  const day = Number(dd);
-  const month = Number(mm);
   const year = Number(yyyy);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-  // Date.UTC maps years 0–99 to 1900–1999, so 0099 would save as 1999 (DR-035, UX-052).
-  if (year < 1900) return null;
-  const date = utc(year, month, day); // UTC midnight
-  if (date.getUTCMonth() !== month - 1) return null; // overflow guard
-  return date;
+  // New dates start on 01.01.1900; earlier is almost certainly a typo (ADR 0149 §5,
+  // DR-035, UX-052).
+  if (year < DATE_FLOOR_YEAR) return null;
+  return calendarDay(year, Number(mm), Number(dd)); // UTC midnight, no roll-over
 }
 
 // draft formatters (Decimal/Date → editable string)

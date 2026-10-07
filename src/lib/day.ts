@@ -60,6 +60,9 @@ export function localIsoDay(now: Date = new Date()): string {
  *  refuse an earlier one, which is almost certainly a typo. A stored one only warns. */
 export const DATE_FLOOR_YEAR = 1900;
 
+/** The floor as a UTC-midnight day, for messages that name it. */
+export const DATE_FLOOR: Date = utcMidnight(DATE_FLOOR_YEAR, 0, 1);
+
 /** A UTC-midnight day before the floor. */
 export const isEarlyDate = (day: Date): boolean =>
   day.getUTCFullYear() < DATE_FLOOR_YEAR;

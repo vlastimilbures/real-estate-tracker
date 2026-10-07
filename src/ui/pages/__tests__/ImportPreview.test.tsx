@@ -80,6 +80,22 @@ async function choosePropertiesFile(container: HTMLElement) {
 }
 
 describe("Import preview (ADR 0096)", () => {
+  it("a date before 1900 is refused with a message that names the floor (ADR 0149)", async () => {
+    const [header] = propertiesTemplate().split("\n");
+    const csv = `${header}\nA,,,,,1850-01-01,100,,,,,\n`;
+    const { container } = render(<Import />);
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    await userEvent.upload(
+      input,
+      new File([csv], "properties.csv", { type: "text/csv" }),
+    );
+    expect(
+      await screen.findByText(p.errEarlyDate("1850-01-01", "1900-01-01")),
+    ).toBeTruthy();
+  });
+
   it("a failed preview shows why Import is unavailable (#122)", async () => {
     previewCsv.mockRejectedValue(new Error("disk I/O error"));
     const { container } = render(<Import />);

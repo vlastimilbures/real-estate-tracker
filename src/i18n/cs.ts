@@ -876,6 +876,8 @@ export const cs: Dictionary = {
     errInstalmentRequired:
       "Povinné (nebo zadejte loan_term_years pro automatický výpočet)",
     errImpossibleDate: (v) => `„${v}“ není skutečné kalendářní datum`,
+    errEarlyDate: (v, floor) =>
+      `„${v}“ je před ${floor}, nejstarším datem, které aplikace přijme — zkontrolujte překlep v roce`,
     errDecimalComma: (v) =>
       `„${v}“ používá desetinnou čárku — pište čísla s desetinnou tečkou a bez mezer (např. 4800000.40)`,
     errNegativeAmount: (v) => `Částka „${v}“ nesmí být záporná`,
@@ -1042,7 +1044,7 @@ export const cs: Dictionary = {
   forms: {
     required: "Povinné",
     invalidHint: {
-      date: "Zadejte datum ve tvaru dd.mm.yyyy",
+      date: "Zadejte datum od 01.01.1900 ve tvaru dd.mm.yyyy",
       money:
         "Zadejte částku 0 nebo vyšší, např. 1 250 000 (tisíce oddělte mezerou)",
       pct: "Zadejte procenta, např. 4,5",

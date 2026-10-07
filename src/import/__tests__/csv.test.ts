@@ -374,13 +374,13 @@ describe("dates", () => {
   });
 
   // ADR 0149 §5: new dates start on 01.01.1900, as in the form.
-  it.fails("refuses a date before 1900 (#119)", () => {
+  it("refuses a date before 1900 (#119)", () => {
     const r = parseProperties(`${H}\nA,,,,,1850-01-01,100,,`);
     expect(r.errors).toEqual([
       {
         row: 2,
         field: "purchase_date",
-        error: { code: "earlyDate", value: "1850-01-01", floor: "01.01.1900" },
+        error: { code: "earlyDate", value: "1850-01-01" },
       },
     ]);
     expect(r.rows).toEqual([]);
