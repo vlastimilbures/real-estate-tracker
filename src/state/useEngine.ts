@@ -247,6 +247,32 @@ export function useAllProjections(): {
   }, [portfolio, assumptions]);
 }
 
+/** Every property's year-by-year projection by id, inactive ones included: the Properties
+ *  rows read their Today basis from it, as Property detail does (ADR 0150). */
+export function usePropertyProjections(): Map<string, ProjectionYear[]> | null {
+  const portfolio = usePortfolioStore((s) => s.portfolio);
+  const assumptions = usePortfolioStore((s) => s.assumptions);
+  return useMemo(() => {
+    if (!portfolio || !assumptions) return null;
+    const schedules = schedulesByProperty(
+      portfolio.mortgages,
+      portfolio.properties.map((p) => p.id),
+      assumptions,
+    );
+    return new Map(
+      portfolio.properties.map((p) => [
+        p.id,
+        propertyProjection(
+          p,
+          portfolio,
+          assumptions,
+          schedules.get(p.id) ?? [],
+        ),
+      ]),
+    );
+  }, [portfolio, assumptions]);
+}
+
 export interface PropertyEngineOutput {
   /** The as-of date the snapshot was evaluated at (picked or today, ≥ baseDate). */
   asOf: IsoDate;

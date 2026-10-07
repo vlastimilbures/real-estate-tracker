@@ -399,6 +399,8 @@ export const cs: Dictionary = {
     title: "Nemovitosti",
     subtitle: (n) => `${n} ${csPlural(n, ["byt", "byty", "bytů"])}`,
     asOf: (d) => `k ${d}`,
+    asOfProjection: (d, year, period) =>
+      `k ${d} (rok projekce ${year}, ${period})`,
     unitsNote: "částky v Kč, toky za rok",
     addProperty: "Přidat nemovitost",
     emptyTitle: "Žádné nemovitosti",

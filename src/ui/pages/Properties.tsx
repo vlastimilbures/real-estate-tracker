@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { MetricLabel } from "../components/MetricLabel";
 import { Pencil, Trash2, Plus, Building2, Upload } from "lucide-react";
-import { useEngine } from "../../state/useEngine";
+import { useEngine, usePropertyProjections } from "../../state/useEngine";
+import { todayUtc } from "../../lib/day";
+import { asOfBounds, resolveAsOf } from "../model/asOf";
+import { asOfView, propertyRowsForAsOf } from "../model/dashboard";
+import { projectionSeries } from "../model/projection";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { AppShell } from "../components/AppShell";
@@ -30,7 +34,18 @@ import { propertiesSubtitle } from "../model/tableContext";
 
 export function Properties() {
   const t = useT();
-  const engine = useEngine();
+  // Today by the one resolver, as Property detail shows it at Today (ADR 0150); Properties
+  // does not follow the picked as-of date (ADR 0111).
+  const assumptions = usePortfolioStore((s) => s.assumptions);
+  const view = assumptions
+    ? resolveAsOf(
+        null,
+        todayUtc(),
+        asOfBounds(assumptions.baseDate, assumptions.horizonYears),
+      )
+    : null;
+  const engine = useEngine(null, view?.date ?? null);
+  const projections = usePropertyProjections();
   const removeProperty = usePortfolioStore((s) => s.removeProperty);
   const openProperty = useUiStore((s) => s.openProperty);
   const navigate = useUiStore((s) => s.navigate);
@@ -48,7 +63,27 @@ export function Properties() {
     if (newPropertyRequested) clearNewPropertyRequest();
   }, [newPropertyRequested, clearNewPropertyRequest]);
 
-  const perProperty = engine?.snapshot.perProperty ?? [];
+  // The Today basis of the date, from the portfolio projection (its years are the
+  // properties' years), and each row read by it.
+  const basis =
+    engine && view
+      ? asOfView(
+          engine.assumptions.baseDate,
+          view.date,
+          projectionSeries(engine.projection, "nominal", engine.assumptions),
+          view.isToday,
+        )
+      : null;
+  const perProperty =
+    engine && view && basis && projections
+      ? propertyRowsForAsOf(
+          engine.snapshot.perProperty,
+          projections,
+          basis,
+          view.date,
+          engine.assumptions,
+        )
+      : [];
   const deleteTarget = perProperty.find((p) => p.propertyId === deletingId);
 
   async function handleDelete(id: string) {
@@ -62,8 +97,14 @@ export function Properties() {
     <AppShell
       title={t.properties.title}
       subtitle={
-        engine && perProperty.length > 0
-          ? propertiesSubtitle(t, perProperty.length, engine.snapshot.asOf)
+        engine && basis && perProperty.length > 0
+          ? propertiesSubtitle(
+              t,
+              perProperty.length,
+              engine.snapshot.asOf,
+              basis,
+              engine.assumptions.baseDate,
+            )
           : undefined
       }
       showLens={false}

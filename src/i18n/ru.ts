@@ -406,6 +406,8 @@ export const ru: Dictionary = {
     title: "Объекты",
     subtitle: (n) => `${n} ${ruPlural(n, ["квартира", "квартиры", "квартир"])}`,
     asOf: (d) => `на ${d}`,
+    asOfProjection: (d, year, period) =>
+      `на ${d} (год прогноза ${year}, ${period})`,
     unitsNote: "суммы в Kč, потоки за год",
     addProperty: "Добавить объект",
     emptyTitle: "Нет объектов",

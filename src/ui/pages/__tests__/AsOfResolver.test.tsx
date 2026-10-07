@@ -105,36 +105,33 @@ describe("the date shown is the date computed (ADR 0150)", () => {
 });
 
 describe("Properties uses the Today basis of Property detail (ADR 0150)", () => {
-  it.fails(
-    "base date over six months back: the Lipova row is projection year 1, and the subtitle names it (#113)",
-    () => {
-      clock.today = new Date(Date.UTC(2027, 0, 15));
-      setUp(portfolio, assumptions);
-      // Property detail at Today shows this row (asOfAnchor.test: a property tile is its
-      // projection row for the year).
-      const lipova = portfolio.properties.find((p) => p.id === "lipova")!;
-      const schedules = schedulesByProperty(
-        portfolio.mortgages,
-        portfolio.properties.map((p) => p.id),
-        assumptions,
-      );
-      const y1 = propertyProjection(
-        lipova,
-        portfolio,
-        assumptions,
-        schedules.get("lipova") ?? [],
-      )[1]!;
-      render(<Properties />);
-      const row = screen
-        .getByRole("button", { name: lipova.name })
-        .closest("tr")!;
-      const cells = within(row).getAllByRole("cell");
-      const plain = { parens: false, suffix: false };
-      expect(cells[4]!.textContent).toBe(fmtCzk(y1.value, plain));
-      expect(cells[5]!.textContent).toBe(fmtCzk(y1.balance, plain));
-      expect(subtitle()).toMatch(/projection year Y1 · 2027/);
-    },
-  );
+  it("base date over six months back: the Lipova row is projection year 1, and the subtitle names it (#113)", () => {
+    clock.today = new Date(Date.UTC(2027, 0, 15));
+    setUp(portfolio, assumptions);
+    // Property detail at Today shows this row (asOfAnchor.test: a property tile is its
+    // projection row for the year).
+    const lipova = portfolio.properties.find((p) => p.id === "lipova")!;
+    const schedules = schedulesByProperty(
+      portfolio.mortgages,
+      portfolio.properties.map((p) => p.id),
+      assumptions,
+    );
+    const y1 = propertyProjection(
+      lipova,
+      portfolio,
+      assumptions,
+      schedules.get("lipova") ?? [],
+    )[1]!;
+    render(<Properties />);
+    const row = screen
+      .getByRole("button", { name: lipova.name })
+      .closest("tr")!;
+    const cells = within(row).getAllByRole("cell");
+    const plain = { parens: false, suffix: false };
+    expect(cells[4]!.textContent).toBe(fmtCzk(y1.value, plain));
+    expect(cells[5]!.textContent).toBe(fmtCzk(y1.balance, plain));
+    expect(subtitle()).toMatch(/projection year Y1 · 2027/);
+  });
 });
 
 describe("the ownership label follows the basis (ADR 0150)", () => {

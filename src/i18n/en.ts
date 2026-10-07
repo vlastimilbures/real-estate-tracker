@@ -424,6 +424,8 @@ export const en = {
     title: "Properties",
     subtitle: (n: number) => `${n} ${enPlural(n, ["apartment", "apartments"])}`,
     asOf: (d: string) => `as of ${d}`,
+    asOfProjection: (d: string, year: string, period: string) =>
+      `as of ${d} (projection year ${year}, ${period})`,
     unitsNote: "amounts in Kč, flows per year",
     addProperty: "Add property",
     emptyTitle: "No properties",

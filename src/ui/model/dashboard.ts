@@ -13,12 +13,18 @@ import type {
   Assumptions,
   PortfolioSnapshot,
   PortfolioKPIs,
+  ProjectionYear,
   PropertySnapshot,
 } from "../../engine";
 import { fmtDate } from "../../lib/format";
 import type { Mode } from "./lens";
 import type { Dictionary } from "../../i18n";
-import { periodLabelLocalized, yearLabel, type SeriesRow } from "./projection";
+import {
+  periodLabelLocalized,
+  projectionSeries,
+  yearLabel,
+  type SeriesRow,
+} from "./projection";
 import { at } from "../../lib/arrays";
 
 export interface MonthlyFlow {
@@ -120,6 +126,34 @@ export function asOfView(
     };
   if (isToday) return { kind: "today" };
   return { kind: "snapshot", date: asOf, beyondHorizon: n >= series.length };
+}
+
+/**
+ * The Properties rows (ADR 0150): each property's Property detail tiles at `asOf` under
+ * `basis`, in nominal Kč (the page has no lens), so a row and its detail page show the same
+ * figures for the same date. `projections` holds every listed property's projection.
+ */
+export function propertyRowsForAsOf(
+  perProperty: PropertySnapshot[],
+  projections: ReadonlyMap<string, ProjectionYear[]>,
+  basis: AsOfBasis,
+  asOf: Date,
+  assumptions: Assumptions,
+): PropertySnapshot[] {
+  return perProperty.map((p) =>
+    propertyTilesForAsOf(
+      p,
+      projectionSeries(
+        projections.get(p.propertyId) ?? [],
+        "nominal",
+        assumptions,
+      ),
+      basis,
+      asOf,
+      "nominal",
+      assumptions,
+    ),
+  );
 }
 
 /** Calendar year of the last projection row ("Net worth in 2056"); as-of independent. */
