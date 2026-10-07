@@ -189,18 +189,23 @@ still loads; the Data check lists it.
 an explicit `asOf` date; it defaults to `assumptions.baseDate`. An `asOf` before `baseDate`
 raises `ASOF_BEFORE_BASEDATE` (ADR 0019): earlier dates are reached by moving the Projection
 start in Settings → Assumptions. The UI's **As-of** picker is bounded to
-`[baseDate, baseDate + horizonYears]`, defaults to `max(today, baseDate)` and clamps a stale
-value after a baseDate change. Today's view is the effective-dated snapshot; a future as-of
-date shows a projection-year row on both Dashboard and Property detail (D-62), so the tiles
-agree with the charts. The row is the **nearest whole year** on the baseDate grid:
-`n = round(months(baseDate, asOf) / 12)` in whole months. With baseDate 1 Jan 2026, an
-as-of of 1 Aug 2026 (7 months) shows year 1 and 1 Jul 2028 (30 months) shows year 3. When
-`n` is 0 (as-of less than six months after baseDate), or the date rounds past the last
-projected year, the tiles fall back to the effective-dated snapshot at `asOf` (deflated by
-the CPI index under the Real lens) (`src/ui/model/dashboard.ts` `projectionYearForAsOf`,
-`tilesForAsOf`).
+`[baseDate, baseDate + horizonYears]` and defaults to `max(today, baseDate)`. One resolver
+(`resolveAsOf`, ADR 0150) moves the picked date, or today, into that window on every read, so
+a stale value after a baseDate or horizon change never shows: the engine call, the picker
+text, the Today pill and the page subtitles all use the resolved date. Today counts as today
+only when the resolved date is today (a future baseDate shows the baseDate, dated). A date
+less than six months after baseDate shows the effective-dated snapshot; a later one shows a
+projection-year row on Dashboard, Property detail and, at Today, Properties (D-62, ADR 0150),
+so the tiles agree with the charts. The row is the **nearest whole year** on the baseDate
+grid: `n = round(gridMonths(baseDate, asOf) / 12)`, counting months on the D-21 month-end
+grid (`lastGridMonthOnOrBefore`), as value growth and the CPI index do. With baseDate 1 Jan
+2026, an as-of of 1 Aug 2026 (7 months) shows year 1 and 1 Jul 2028 (30 months) shows year
+3; with baseDate 31 Aug 2026, 28 Feb 2027 is 6 grid months and shows year 1. When `n` is 0
+the tiles show the effective-dated snapshot at `asOf` (deflated by the CPI index under the
+Real lens) (`src/ui/model/dashboard.ts` `asOfView`, `tilesForAsOf`). In a projection year a
+property counts as owned when its purchase date is on or before that year's end.
 
-Labels name that basis (ADR 0088, `asOfBasis`): a projection year reads "projection year
+Labels name that basis (ADR 0088, `asOfView`): a projection year reads "projection year
 Y5 · 2031" with the Projections table's period, and the monthly block becomes "Monthly
 equivalent … (annual projection ÷ 12)"; Today keeps "current" with the hint "annualised run
 rate ÷ 12, leases in force on {date}"; any other date says "records in force on {date}". The
