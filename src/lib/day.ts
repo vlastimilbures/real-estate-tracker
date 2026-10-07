@@ -55,3 +55,116 @@ export function todayUtc(now: Date = new Date()): Date {
 export function localIsoDay(now: Date = new Date()): string {
   return isoDay(localDay(now));
 }
+
+/** New dates start on 01.01.1900 (ADR 0149 §5, DR-035, UX-052): the forms and CSV import
+ *  refuse an earlier one, which is almost certainly a typo. A stored one only warns. */
+export const DATE_FLOOR_YEAR = 1900;
+
+/** A UTC-midnight day before the floor. */
+export const isEarlyDate = (day: Date): boolean =>
+  day.getUTCFullYear() < DATE_FLOOR_YEAR;
+
+/** A stored date field, named as on the engine type; a loan event list is named by the
+ *  list (`draws`, `prepayments`, `recasts`). */
+export type DateField =
+  | "baseDate"
+  | "purchaseDate"
+  | "startDate"
+  | "completionDate"
+  | "contractMaturityDate"
+  | "draws"
+  | "prepayments"
+  | "recasts"
+  | "validFrom"
+  | "validTo"
+  | "endDate";
+
+/** One stored date before the floor. */
+export interface EarlyDateField {
+  entity: "assumptions" | "property" | "mortgage" | "valuation" | "lease";
+  id: string | undefined;
+  field: DateField;
+  /** The earliest early date in the field (a list can hold several). */
+  date: Date;
+}
+
+/** Every stored date before the floor (ADR 0149 §5): the restore warning and the Data
+ *  check. Structural types: lib never imports the engine, whose Portfolio and Assumptions
+ *  fit. A field is listed once, with its earliest date. */
+export function earlyDateFields(
+  portfolio: {
+    properties: readonly { id: string; purchaseDate: Date }[];
+    mortgages: readonly {
+      id: string;
+      startDate: Date;
+      completionDate?: Date | undefined;
+      contractMaturityDate?: Date | undefined;
+      draws?: readonly { date: Date }[] | undefined;
+      prepayments?: readonly { date: Date }[] | undefined;
+      recasts?:
+        readonly { date: Date; maturity?: Date | undefined }[] | undefined;
+    }[];
+    valuations?: readonly {
+      id: string;
+      validFrom: Date;
+      validTo?: Date | undefined;
+    }[];
+    leases?: readonly {
+      id: string;
+      startDate: Date;
+      endDate?: Date | undefined;
+    }[];
+  },
+  assumptions?: { baseDate: Date },
+): EarlyDateField[] {
+  const out: EarlyDateField[] = [];
+  const check = (
+    entity: EarlyDateField["entity"],
+    id: string | undefined,
+    field: DateField,
+    dates: readonly (Date | undefined)[],
+  ) => {
+    const early = dates.filter(
+      (d): d is Date => d !== undefined && isEarlyDate(d),
+    );
+    if (early.length === 0) return;
+    const date = early.reduce((a, b) => (b.getTime() < a.getTime() ? b : a));
+    out.push({ entity, id, field, date });
+  };
+  if (assumptions)
+    check("assumptions", undefined, "baseDate", [assumptions.baseDate]);
+  for (const p of portfolio.properties)
+    check("property", p.id, "purchaseDate", [p.purchaseDate]);
+  for (const m of portfolio.mortgages) {
+    check("mortgage", m.id, "startDate", [m.startDate]);
+    check("mortgage", m.id, "completionDate", [m.completionDate]);
+    check("mortgage", m.id, "contractMaturityDate", [m.contractMaturityDate]);
+    check(
+      "mortgage",
+      m.id,
+      "draws",
+      (m.draws ?? []).map((d) => d.date),
+    );
+    check(
+      "mortgage",
+      m.id,
+      "prepayments",
+      (m.prepayments ?? []).map((p) => p.date),
+    );
+    check(
+      "mortgage",
+      m.id,
+      "recasts",
+      (m.recasts ?? []).flatMap((r) => [r.date, r.maturity]),
+    );
+  }
+  for (const v of portfolio.valuations ?? []) {
+    check("valuation", v.id, "validFrom", [v.validFrom]);
+    check("valuation", v.id, "validTo", [v.validTo]);
+  }
+  for (const l of portfolio.leases ?? []) {
+    check("lease", l.id, "startDate", [l.startDate]);
+    check("lease", l.id, "endDate", [l.endDate]);
+  }
+  return out;
+}
