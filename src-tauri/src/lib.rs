@@ -5,6 +5,7 @@ use tauri::{Emitter, Manager};
 use tauri::{RunEvent, WindowEvent};
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
 
+pub mod crash;
 pub mod db;
 pub mod error;
 pub mod files;
@@ -14,6 +15,7 @@ pub mod perf;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    crash::install_panic_hook();
     let started = perf::Started::now();
     tauri::Builder::default()
         .manage(started)
@@ -185,8 +187,11 @@ pub fn run() {
             let _ = (window, event);
         })
         .build(tauri::generate_context!())
-        // The only panic path: before any window exists there is nowhere to show an
-        // error; tauri-plugin-log has already recorded the cause.
+        // `build()` fails only while creating the runtime or starting a plugin, before
+        // tauri-plugin-log (registered last) is up, so this panic reaches stderr only.
+        // A setup error (the menu above) does not come back here: Tauri runs `setup`
+        // once the event loop is ready and panics with "Failed to setup app", which the
+        // panic hook writes to app.log (ADR 0147).
         .expect("error while building tauri application")
         .run(|app, event| {
             #[cfg(target_os = "macos")]

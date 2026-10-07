@@ -242,6 +242,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A crash in the app's core, including a failure to set up the window menu at start, is
+  now written to the error log (ADR 0147, #122). Before, it reached only the terminal,
+  which is not shown when the app is opened from Finder.
 - The error log's folder is now private to your user (`0700`, files `0600`), as the
   README said (ADR 0147, #122). Only the app's data folder was restricted before.
 - The error log masks every number, not only those of four or more digits, so a short
