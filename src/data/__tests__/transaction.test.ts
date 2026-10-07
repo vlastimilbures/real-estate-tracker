@@ -1,5 +1,6 @@
-// P5a: the `Sql.transaction` / `Sql.backup` contract (D-14). The Node adapter mirrors
-// src-tauri/src/db.rs, whose own behaviour is proven in src-tauri/tests/db_atomic.rs.
+// P5a: the `Sql.transaction` / `Sql.backup` contract (D-14) on the better-sqlite3 test
+// double (betterSqlite.ts), not the app. It mirrors src-tauri/src/db.rs, whose own
+// behaviour is proven in src-tauri/tests/db_atomic.rs (#118).
 import { describe, it, expect } from "vitest";
 import DatabaseConstructor from "better-sqlite3";
 import { openMemorySql, type TestSql } from "./betterSqlite";
@@ -18,7 +19,7 @@ async function schema(): Promise<TestSql> {
 const count = async (sql: TestSql, table: string) =>
   (await sql.select<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table}`))[0].n;
 
-describe("Sql.transaction", () => {
+describe("test double: Sql.transaction", () => {
   it("commits every statement", async () => {
     const sql = await schema();
     await sql.transaction([
@@ -91,7 +92,7 @@ describe("Sql.transaction", () => {
   });
 });
 
-describe("Sql.backup", () => {
+describe("test double: Sql.backup", () => {
   it("writes a verified, readable copy and never overwrites it", async () => {
     const sql = await schema();
     await sql.execute("INSERT INTO p (id, name) VALUES ('a', 'A')");
