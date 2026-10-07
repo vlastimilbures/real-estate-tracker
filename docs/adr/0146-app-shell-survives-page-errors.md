@@ -41,10 +41,12 @@ those headers without calling the engine itself. The owner chose a fallback shel
 2. **Import reads property names from the stored portfolio.** The CSV checks for known
    property names use `portfolio.properties`, not the engine snapshot. For valid data the
    names are the same (the snapshot lists every property); with invalid data Import now opens.
-3. **Navigation clears an error.** `ErrorBoundary` gets a `resetKey`; when it changes while an
-   error is shown, the boundary renders its children again. `PageBoundary` and the App-level
-   boundary use the route as the key. AppShell's inner boundary needs none: the shell mounts
-   again with each page.
+3. **Navigation clears an error.** `ErrorBoundary` gets a `resetKey`. When the key changes, the
+   error is cleared before the children render, so they render once with the new key: an
+   error they throw then is logged once, and the old fallback never shows the new route.
+   `PageBoundary` and the App-level boundary use the route as the key. AppShell's inner
+   boundary gets no key: it mounts again on a page change. A change of property within
+   Property detail keeps it mounted, as before; that page shows engine errors itself.
 4. **Focus moves to the main region after navigation.** When the route changes and focus was
    lost (it is on `<body>`), focus moves to `<main id="main">` (already focusable for the skip
    link, no visible ring) without scrolling. Focus is not moved at startup, so the first Tab
