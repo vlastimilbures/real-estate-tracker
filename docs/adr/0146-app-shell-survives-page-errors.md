@@ -1,6 +1,6 @@
 # 0146. App shell: the sidebar survives page errors; navigation resets the error and moves focus
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-07
 - Source: issue #131 (review findings R5-04, R4-10, G2-5-04, R5-03), option A; Track 10 PR 10.7
 - Related: [0075](0075-input-rejection-gaps.md) (stored data that breaks a rule shows the
