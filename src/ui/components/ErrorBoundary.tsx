@@ -16,6 +16,9 @@ interface Props {
   children: ReactNode;
   /** Optional custom fallback; receives the error and a reset to retry the subtree. */
   fallback?: (error: Error, reset: () => void) => ReactNode;
+  /** When this changes while an error is shown, the subtree renders again, e.g. the
+   *  route: navigating away clears a crash notice (ADR 0146). */
+  resetKey?: unknown;
 }
 interface State {
   error: Error | null;
@@ -35,6 +38,10 @@ export class ErrorBoundary extends Component<Props, State> {
       info.componentStack,
     );
     logFailure("RENDER", error);
+  }
+
+  override componentDidUpdate(prev: Props): void {
+    if (this.state.error && prev.resetKey !== this.props.resetKey) this.reset();
   }
 
   reset = (): void => this.setState({ error: null });

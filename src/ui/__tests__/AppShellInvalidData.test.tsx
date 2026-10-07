@@ -80,7 +80,7 @@ describe("app shell with invalid stored data (ADR 0146)", () => {
     expect(pageTitle()).toBe(en.importPage.title);
   });
 
-  it.fails("VG2504A: navigating away clears the notice (#131)", async () => {
+  it("VG2504A: navigating away clears the notice (#131)", async () => {
     await renderAt("dashboard");
     expect(notice()).toBe(true);
     // The native menu (⌘,) changes the route from outside the page.

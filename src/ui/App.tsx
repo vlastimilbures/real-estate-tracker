@@ -79,6 +79,7 @@ export function App() {
   const theme = useUiStore((s) => s.theme);
   const aboutOpen = useUiStore((s) => s.aboutOpen);
   const closeAbout = useUiStore((s) => s.closeAbout);
+  const route = useUiStore((s) => s.route);
 
   useEffect(() => {
     void init();
@@ -180,9 +181,10 @@ export function App() {
   }
 
   // Top-level backstop: catches render crashes that happen before a page mounts its
-  // own AppShell (whose boundary keeps the nav usable for in-content errors).
+  // own AppShell (whose boundary keeps the nav usable for in-content errors). A route
+  // change, e.g. from the native menu, clears it (ADR 0146).
   return (
-    <ErrorBoundary>
+    <ErrorBoundary resetKey={route}>
       <CurrentPage />
       {aboutOpen && <AboutModal onClose={closeAbout} />}
       <LeaveGuard />

@@ -242,6 +242,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Moving to another page clears a crash notice (ADR 0146, #131). Before, the notice that
+  replaced the window stayed when a menu shortcut (⌘1–⌘5, ⌘,) changed the page; only its
+  own button cleared it.
 - With saved data that breaks a calculation rule, Import opens again (ADR 0146, #131). It
   ran the full calculation only to list the property names, so it showed the invalid-data
   notice instead of the page that can load a corrected CSV. It now reads the names from
