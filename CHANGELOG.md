@@ -242,6 +242,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The **As of** field, the **Today** button and the page subtitles show the date the figures
+  are computed for (ADR 0150, #113). With a projection start in the future, the field showed
+  today and Today was selected while every figure was for the projection start; a date
+  picked before a change of the projection start or the horizon kept showing although the
+  figures had moved to the nearest date in the window.
+- **Properties** shows the same figures as **Property detail** at Today (ADR 0150, #113).
+  Once the projection start is six months or more in the past, Property detail shows
+  projection year Y1, while the Properties table showed the records in force today: the
+  same flat had a different value, debt and LTV on the two screens. The Properties context
+  line now names the projection year and its period, e.g. "as of 15.01.2027 (projection
+  year Y1 · 2027, Jul 2026 – Jun 2027)".
+- A projection start on the 29th–31st maps an **As of** date to the right projection year
+  (ADR 0150, #113): with 31.08.2026, 28.02.2027 now shows year 1, as value growth and
+  inflation count it, instead of the records in force.
+- A property bought within the projection year an **As of** date shows reads "purchased",
+  not "pending", above that year's figures, on Property detail and in the Properties
+  **Pending** badge (ADR 0150, #113).
 - The restore confirm step dates a backup by the local calendar day, like its file name and
   the "Last backup" line (ADR 0149, #119). A backup made just after midnight (before 02:00
   in Prague in summer) showed the previous day.
