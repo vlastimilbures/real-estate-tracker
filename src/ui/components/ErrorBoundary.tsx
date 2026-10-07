@@ -43,35 +43,47 @@ export class ErrorBoundary extends Component<Props, State> {
     const { error } = this.state;
     if (error) {
       if (this.props.fallback) return this.props.fallback(error, this.reset);
-      // Non-reactive read: a class fallback can't use the useT hook, and the language
-      // won't change while a crash is on screen. The active language's dictionary is
-      // loaded before the first render (DR-009).
-      const t = getDict(useUiStore.getState().language);
-      if (error instanceof EngineInputError) {
-        // Stored data breaks an engine rule (UX-049): say which record and which
-        // rule, and offer the property where it can be corrected.
-        return (
-          <InvalidDataNotice
-            t={t}
-            error={error}
-            portfolio={usePortfolioStore.getState().portfolio}
-            onOpenProperty={(id) => {
-              useUiStore.getState().openProperty(id);
-              this.reset();
-            }}
-          />
-        );
-      }
-      return (
-        <div className="error-boundary" role="alert">
-          <h3>{t.errorBoundary.title}</h3>
-          <code>{error.message}</code>
-          <Button type="button" onClick={this.reset}>
-            {t.errorBoundary.tryAgain}
-          </Button>
-        </div>
-      );
+      return <BoundaryFallback error={error} reset={this.reset} />;
     }
     return this.props.children;
   }
+}
+
+/** The default fallback: the invalid-data notice for an engine input error, else a
+ *  generic message with "Try again". Exported so a custom fallback can wrap it. */
+export function BoundaryFallback({
+  error,
+  reset,
+}: {
+  error: Error;
+  reset: () => void;
+}): ReactNode {
+  // Non-reactive read: the fallback doesn't use the useT hook, and the language won't
+  // change while a crash is on screen. The active language's dictionary is loaded
+  // before the first render (DR-009).
+  const t = getDict(useUiStore.getState().language);
+  if (error instanceof EngineInputError) {
+    // Stored data breaks an engine rule (UX-049): say which record and which rule, and
+    // offer the property where it can be corrected.
+    return (
+      <InvalidDataNotice
+        t={t}
+        error={error}
+        portfolio={usePortfolioStore.getState().portfolio}
+        onOpenProperty={(id) => {
+          useUiStore.getState().openProperty(id);
+          reset();
+        }}
+      />
+    );
+  }
+  return (
+    <div className="error-boundary" role="alert">
+      <h3>{t.errorBoundary.title}</h3>
+      <code>{error.message}</code>
+      <Button type="button" onClick={reset}>
+        {t.errorBoundary.tryAgain}
+      </Button>
+    </div>
+  );
 }
