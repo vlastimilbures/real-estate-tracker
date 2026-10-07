@@ -5,7 +5,8 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { Calendar } from "lucide-react";
-import { parseDate } from "../model/formParse";
+import { dateDraft, parseDate } from "../model/formParse";
+import { localDay, localMidnight } from "../../lib/day";
 import { useT } from "../hooks/useT";
 import { useFieldControlProps } from "./fieldContext";
 import type { DateCalendar } from "./DateCalendar";
@@ -19,12 +20,10 @@ async function loadCalendar(): Promise<void> {
 }
 
 // dd.mm.yyyy for a day picked in the calendar. The day comes from react-day-picker as a
-// LOCAL Date, so read local Y/M/D directly (no UTC math) to avoid an off-by-one near
-// midnight. Mirrors dateDraft's zero-padding.
+// LOCAL Date, so take its local calendar day (localDay) to avoid an off-by-one near
+// midnight.
 function localDayToDraft(day: Date): string {
-  const dd = String(day.getDate()).padStart(2, "0");
-  const mm = String(day.getMonth() + 1).padStart(2, "0");
-  return `${dd}.${mm}.${day.getFullYear()}`;
+  return dateDraft(localDay(day));
 }
 
 export function DateInput({
@@ -68,11 +67,9 @@ export function DateInput({
   // The draft is a UTC date; re-express it as a local-midnight date with the same
   // Y/M/D so the highlighted cell matches what the user typed regardless of timezone.
   const utc = parseDate(value);
-  const local = (d: Date) =>
-    new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-  const selected = utc ? local(utc) : undefined;
-  const first = min ? local(min) : undefined;
-  const last = max ? local(max) : undefined;
+  const selected = utc ? localMidnight(utc) : undefined;
+  const first = min ? localMidnight(min) : undefined;
+  const last = max ? localMidnight(max) : undefined;
 
   // Closing also forgets the coords, so the next open stays hidden until measured.
   function close() {

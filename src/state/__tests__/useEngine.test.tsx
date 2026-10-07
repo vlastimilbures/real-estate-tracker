@@ -22,7 +22,8 @@ import { near, KC } from "../../engine/__tests__/support/tolerance";
 import { EngineInputError, isoDate, money, rate } from "../../engine";
 import type { Scenario } from "../../engine";
 
-vi.mock("../../lib/today", () => ({
+vi.mock("../../lib/day", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/day")>()),
   todayUtc: () => new Date(Date.UTC(2026, 5, 7)), // == baseDate
 }));
 

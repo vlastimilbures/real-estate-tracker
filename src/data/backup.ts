@@ -597,7 +597,7 @@ export class BackupExportError extends Error {
 /** What `exportBackup` needs from outside the data layer (ADR 0072, DR-167): the local
  *  calendar day for the file name and the file-save function. */
 export interface ExportDeps {
-  /** Local `yyyy-mm-dd` (lib/today `localIsoDay()`). */
+  /** Local `yyyy-mm-dd` (lib/day `localIsoDay()`). */
   today: string;
   save: (opts: SaveFileOptions) => Promise<SaveOutcome>;
 }

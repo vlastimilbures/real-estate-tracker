@@ -1,7 +1,7 @@
 // Backup recency (ADR 0110): how old the last export is, and when the sidebar hint shows.
 // Pure: "now" is passed in.
 import type { BackupState } from "../../state/backup";
-import { todayUtc } from "../../lib/today";
+import { localDay } from "../../lib/day";
 
 /** A backup older than this many days, with data changed since, shows the hint. */
 export const BACKUP_STALE_DAYS = 30;
@@ -32,8 +32,8 @@ export function backupRecency(state: BackupState, now: Date): BackupRecency {
   const at = state.lastAt === null ? null : new Date(state.lastAt);
   if (at === null || Number.isNaN(at.getTime()))
     return { day: null, days: null, ago: null, showHint: state.changedSince };
-  const day = todayUtc(at);
-  const days = Math.round((todayUtc(now).getTime() - day.getTime()) / DAY_MS);
+  const day = localDay(at);
+  const days = Math.round((localDay(now).getTime() - day.getTime()) / DAY_MS);
   return {
     day,
     days,

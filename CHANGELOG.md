@@ -242,6 +242,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The restore confirm step dates a backup by the local calendar day, like its file name and
+  the "Last backup" line (ADR 0149, #119). A backup made just after midnight (before 02:00
+  in Prague in summer) showed the previous day.
 - A backup with a value outside the ranges the forms accept, such as a 60-year fixation
   from an older version, is no longer refused (ADR 0148, #133). The confirm step lists the
   values and asks to **Restore anyway**. Before, the app refused its own exports and the

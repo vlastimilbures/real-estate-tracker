@@ -19,7 +19,7 @@ import {
   type BackupFile,
 } from "../backup";
 import { checkInputRules } from "../../import/inputRules";
-import { localIsoDay } from "../../lib/today";
+import { localIsoDay } from "../../lib/day";
 import { saveFile } from "../../platform/saveFile";
 
 /** The files the fake commands wrote, by full path. */

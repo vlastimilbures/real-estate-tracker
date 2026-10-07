@@ -25,7 +25,8 @@ import { RiskTiles } from "../DashboardPanels";
 import { PropertySnapshotTiles } from "../PropertyDetailPanels";
 import { Properties } from "../Properties";
 
-vi.mock("../../../lib/today", () => ({
+vi.mock("../../../lib/day", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../lib/day")>()),
   todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
 }));
 

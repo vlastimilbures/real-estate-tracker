@@ -1,7 +1,7 @@
 // Pure parse/format helpers for draft strings ⇄ engine types. Kept out of the form
 // component file so fast-refresh stays happy and the parsing is unit-testable.
 import { D, type Decimal } from "../../lib/money";
-import { fmtCzk } from "../../lib/format";
+import { fmtCzk, fmtDate } from "../../lib/format";
 import { inRange, type IntRange } from "../../lib/intRanges";
 import {
   money,
@@ -81,10 +81,7 @@ export function percentDraft(d: Decimal | undefined): string {
   return d == null ? "" : d.times(100).toFixed();
 }
 export function dateDraft(date: Date | undefined): string {
-  if (!date) return "";
-  const dd = String(date.getUTCDate()).padStart(2, "0");
-  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
-  return `${dd}.${mm}.${date.getUTCFullYear()}`;
+  return date ? fmtDate(date) : "";
 }
 
 /** Development draws, one per line as `dd.mm.yyyy = amount`. null ⇒ a line is

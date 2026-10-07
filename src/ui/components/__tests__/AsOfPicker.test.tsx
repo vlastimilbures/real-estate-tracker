@@ -10,7 +10,8 @@ import { useUiStore } from "../../../state/uiStore";
 import { isoDate } from "../../../engine";
 import { asOfBounds } from "../../model/asOf";
 
-vi.mock("../../../lib/today", () => ({
+vi.mock("../../../lib/day", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../lib/day")>()),
   todayUtc: () => new Date(Date.UTC(2028, 1, 29)),
 }));
 

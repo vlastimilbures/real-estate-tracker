@@ -77,6 +77,14 @@ jobs:
         env:
           TZ: Pacific/Pago_Pago
 
+      # A local-versus-UTC day mix-up shows only on the side of midnight where the two days
+      # differ, which depends on the offset's sign: a positive zone (UTC+14) for the layers
+      # that read local time. The engine never does, and runs in UTC above (#119, ADR 0149).
+      - name: Tests (positive time zone, UI layers)
+        run: pnpm vitest run src/lib src/ui src/state
+        env:
+          TZ: Pacific/Kiritimati
+
   # ── Accessibility: axe scan of every captured screen (F-08, ADR 0078) ────
   # Runs the ux:capture harness on the in-memory sample portfolio (no real data) and fails
   # on any axe WCAG 2.2 AA violation. Screenshots are a by-product; only axe is gated.

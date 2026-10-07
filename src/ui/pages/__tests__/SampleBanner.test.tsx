@@ -16,7 +16,8 @@ import { SafetyBackupError } from "../../../state/backup";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 
-vi.mock("../../../lib/today", () => ({
+vi.mock("../../../lib/day", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../lib/day")>()),
   todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
   localIsoDay: () => "2026-10-01",
 }));
