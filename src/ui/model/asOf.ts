@@ -24,3 +24,20 @@ export function clampAsOf(d: Date, b: AsOfBounds): Date {
 export function plusYears(anchor: Date, years: number): Date {
   return addYears(anchor, years);
 }
+
+/** The as-of date a page computes for (ADR 0150): the picked date, or today when none is
+ *  picked, moved into the window; it is Today only when that date is today. */
+export interface ResolvedAsOf {
+  date: Date;
+  isToday: boolean;
+}
+
+/** The one as-of resolver (ADR 0150): every page and the engine call read its date. */
+export function resolveAsOf(
+  picked: Date | null,
+  today: Date,
+  b: AsOfBounds,
+): ResolvedAsOf {
+  const date = clampAsOf(picked ?? today, b);
+  return { date, isToday: date.getTime() === today.getTime() };
+}

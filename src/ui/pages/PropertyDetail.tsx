@@ -41,7 +41,6 @@ import {
   LeasesPanel,
   MortgagesPanel,
 } from "./PropertyEntityPanels";
-import { todayUtc } from "../../lib/day";
 import { fmtDate } from "../../lib/format";
 import { projectionSeries, projectionColumns } from "../model/projection";
 import { exportTableXlsx } from "../exportXlsx";
@@ -57,6 +56,7 @@ import { acquisitionView } from "../model/acquisition";
 import { useToast } from "../hooks/useToast";
 import { describeWriteError } from "../model/writeError";
 import { useT } from "../hooks/useT";
+import { useAsOf } from "../hooks/useAsOf";
 import { useSectionSpy } from "../hooks/useSectionSpy";
 import {
   isFormTarget,
@@ -90,7 +90,9 @@ export function PropertyDetail() {
       saveHoldingCost: s.saveHoldingCost,
     })),
   );
-  const result = usePropertyEngineResult(propertyId, asOf);
+  // The date the tiles, picker and subtitle are for, clamped to the window (ADR 0150).
+  const view = useAsOf();
+  const result = usePropertyEngineResult(propertyId, view?.date ?? null);
   // Stored data that breaks an engine rule: show the records to fix, no figures (DR-146).
   const invalid = result && "invalid" in result ? result.invalid : null;
   const out = result && !("invalid" in result) ? result : null;
@@ -131,7 +133,8 @@ export function PropertyDetail() {
     !store.portfolio ||
     (!out && !invalid) ||
     !property ||
-    !assumptions
+    !assumptions ||
+    !view
   ) {
     return (
       <AppShell title={t.propertyDetail.fallbackTitle} showLens={false}>
@@ -182,12 +185,7 @@ export function PropertyDetail() {
   // as-of reads the projection year the charts plot; real terms are in base-date prices.
   const series = out ? projectionSeries(out.projection, mode, assumptions) : [];
   const basis = out
-    ? asOfView(
-        assumptions.baseDate,
-        out.asOf,
-        series,
-        asOf === null || asOf.getTime() === todayUtc().getTime(),
-      )
+    ? asOfView(assumptions.baseDate, out.asOf, series, view.isToday)
     : null;
   const s =
     out && basis
@@ -255,9 +253,7 @@ export function PropertyDetail() {
           : s.owned
             ? t.propertyDetail.purchased(fmtDate(property.purchaseDate))
             : t.propertyDetail.pendingPurchase(fmtDate(property.purchaseDate)),
-        asOf && asOf.getTime() !== todayUtc().getTime()
-          ? t.propertyDetail.asOf(fmtDate(asOf))
-          : null,
+        view.isToday ? null : t.propertyDetail.asOf(fmtDate(view.date)),
         isActive ? null : t.propertyDetail.deactivated,
       ]
         .filter(Boolean)

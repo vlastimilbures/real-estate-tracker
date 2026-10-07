@@ -76,41 +76,32 @@ afterEach(() => vi.unstubAllGlobals());
 describe("the date shown is the date computed (ADR 0150)", () => {
   const futureBase = { ...assumptions, baseDate: isoDate("2027-01-01") };
 
-  it.fails(
-    "future base date at Today: the picker and subtitle show the base date, Today is not pressed (#113)",
-    () => {
-      setUp(portfolio, futureBase);
-      render(<Dashboard />);
-      expect(pickerText()).toBe("01.01.2027");
-      expect(todayPressed()).toBe("false");
-      expect(subtitle()).toContain("as of 01.01.2027");
-    },
-  );
+  it("future base date at Today: the picker and subtitle show the base date, Today is not pressed (#113)", () => {
+    setUp(portfolio, futureBase);
+    render(<Dashboard />);
+    expect(pickerText()).toBe("01.01.2027");
+    expect(todayPressed()).toBe("false");
+    expect(subtitle()).toContain("as of 01.01.2027");
+  });
 
-  it.fails(
-    "a stored as-of before a moved base date: the picker and Property detail subtitle show the base date (#113)",
-    () => {
-      setUp(portfolio, futureBase, {
-        asOf: isoDate("2026-11-15"),
-        selectedPropertyId: "lipova",
-      });
-      render(<PropertyDetail />);
-      expect(pickerText()).toBe("01.01.2027");
-      expect(subtitle()).toContain("as of 01.01.2027");
-      expect(subtitle()).not.toContain("15.11.2026");
-    },
-  );
+  it("a stored as-of before a moved base date: the picker and Property detail subtitle show the base date (#113)", () => {
+    setUp(portfolio, futureBase, {
+      asOf: isoDate("2026-11-15"),
+      selectedPropertyId: "lipova",
+    });
+    render(<PropertyDetail />);
+    expect(pickerText()).toBe("01.01.2027");
+    expect(subtitle()).toContain("as of 01.01.2027");
+    expect(subtitle()).not.toContain("15.11.2026");
+  });
 
-  it.fails(
-    "a stored as-of past a lowered horizon: the picker shows the horizon end (#113)",
-    () => {
-      const short = { ...assumptions, horizonYears: 10 };
-      setUp(portfolio, short, { asOf: addYears(assumptions.baseDate, 40) });
-      render(<Dashboard />);
-      expect(pickerText()).toBe("07.06.2036");
-      expect(subtitle()).toContain("as of 07.06.2036");
-    },
-  );
+  it("a stored as-of past a lowered horizon: the picker shows the horizon end (#113)", () => {
+    const short = { ...assumptions, horizonYears: 10 };
+    setUp(portfolio, short, { asOf: addYears(assumptions.baseDate, 40) });
+    render(<Dashboard />);
+    expect(pickerText()).toBe("07.06.2036");
+    expect(subtitle()).toContain("as of 07.06.2036");
+  });
 });
 
 describe("Properties uses the Today basis of Property detail (ADR 0150)", () => {

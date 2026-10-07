@@ -1,7 +1,7 @@
 // UX-059 (DR-015, DR-072, D-19): the As-of picker stays inside the projection window
 // [baseDate, baseDate + horizon] and its "+N years" presets use the engine's EDATE.
 import { describe, it, expect } from "vitest";
-import { asOfBounds, clampAsOf, plusYears } from "../asOf";
+import { asOfBounds, clampAsOf, plusYears, resolveAsOf } from "../asOf";
 import { isoDate } from "../../../engine";
 
 const bounds = asOfBounds(isoDate("2026-06-07"), 30);
@@ -33,6 +33,37 @@ describe("plusYears", () => {
     );
     expect(plusYears(isoDate("2026-10-01"), 5).toISOString().slice(0, 10)).toBe(
       "2031-10-01",
+    );
+  });
+});
+
+describe("resolveAsOf (ADR 0150)", () => {
+  const today = isoDate("2026-10-03");
+
+  it("no pick is today, and Today", () => {
+    expect(resolveAsOf(null, today, bounds)).toEqual({
+      date: today,
+      isToday: true,
+    });
+  });
+  it("a future base date gives the base date, not Today", () => {
+    const later = asOfBounds(isoDate("2027-01-01"), 30);
+    expect(resolveAsOf(null, today, later)).toEqual({
+      date: later.min,
+      isToday: false,
+    });
+  });
+  it("a stale pick moves into the window at either end", () => {
+    expect(resolveAsOf(isoDate("2020-01-01"), today, bounds).date).toEqual(
+      bounds.min,
+    );
+    expect(resolveAsOf(isoDate("2090-01-01"), today, bounds).date).toEqual(
+      bounds.max,
+    );
+  });
+  it("a pick equal to today is Today", () => {
+    expect(resolveAsOf(isoDate("2026-10-03"), today, bounds).isToday).toBe(
+      true,
     );
   });
 });

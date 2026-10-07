@@ -6,6 +6,10 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { AsOfPicker } from "../AsOfPicker";
 import { useUiStore } from "../../../state/uiStore";
+import { isoDate } from "../../../engine";
+import { asOfBounds } from "../../model/asOf";
+
+const bounds = asOfBounds(isoDate("2026-06-07"), 30);
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
@@ -18,13 +22,13 @@ describe("AsOfPicker over midnight (ADR 0149)", () => {
     const onChange = vi.fn();
     vi.setSystemTime(new Date(2026, 9, 2, 23, 59));
     const { rerender } = render(
-      <AsOfPicker value={null} onChange={onChange} />,
+      <AsOfPicker value={null} onChange={onChange} bounds={bounds} />,
     );
     const input = screen.getByTestId<HTMLInputElement>("asof-input");
     expect(input.value).toBe("02.10.2026");
 
     vi.setSystemTime(new Date(2026, 9, 3, 0, 1));
-    rerender(<AsOfPicker value={null} onChange={onChange} />);
+    rerender(<AsOfPicker value={null} onChange={onChange} bounds={bounds} />);
     expect(input.value).toBe("03.10.2026");
 
     fireEvent.blur(input);
