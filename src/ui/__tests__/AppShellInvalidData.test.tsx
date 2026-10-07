@@ -65,7 +65,7 @@ afterEach(() => {
 });
 
 describe("app shell with invalid stored data (ADR 0146)", () => {
-  it.fails.each(["dashboard", "properties", "projections"] as const)(
+  it.each(["dashboard", "properties", "projections"] as const)(
     "R5-04A: %s keeps the sidebar around the notice (#131)",
     async (route) => {
       await renderAt(route);

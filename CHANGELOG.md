@@ -242,6 +242,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- With saved data that breaks a calculation rule, the sidebar stays (ADR 0146, #131).
+  Dashboard, Properties and Projections showed the invalid-data notice in place of the
+  whole window, sidebar included, so Settings (to restore a backup) and Import could not
+  be opened from the sidebar. The notice now shows inside the page, under its title. This
+  holds for any page that fails to render.
 - Moving to another page clears a crash notice (ADR 0146, #131). Before, the notice that
   replaced the window stayed when a menu shortcut (⌘1–⌘5, ⌘,) changed the page; only its
   own button cleared it.
