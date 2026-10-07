@@ -50,7 +50,7 @@ keep names in the log, where they help diagnosis, and fix everything else.
    "Nothing was restored/cleared: a safety backup … could not be saved".
 4. **A failed import preview shows an error banner** in the Import panel ("The files could not
    be checked against your saved data, so nothing can be imported yet. (detail)"). It clears
-   when the files or the saved data change, or when a later preview succeeds.
+   when the files or the saved data change, which is what starts a new preview.
 5. **Every number in free text is masked.** `maskNumbers` replaces every digit run, with its
    separators, by `#`: `rent 850 Kč` → `rent # Kč`, `2026-10-03` → `#-#-#`. A `DataError`'s
    details stay as they are: by design (`src/data/errors.ts`) they name tables, ids, columns
