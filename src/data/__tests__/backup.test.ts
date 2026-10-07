@@ -9,6 +9,7 @@ import {
   prepareRestore,
   restoreFromJson,
   validateBackup,
+  RestoreError,
   SCHEMA_HEAD,
   BACKUP_COLUMNS,
 } from "../backup";
@@ -229,15 +230,14 @@ describe("restoreFromJson — refuses a backup missing a required table", () => 
   });
 });
 
-describe("restoreFromJson — rolls back a partial/failing restore", () => {
-  it("leaves the DB unchanged when a row fails to insert mid-restore", async () => {
+// #118 (R3-11): a row the restore cannot read refuses the whole file before any write.
+// The rollback of a failure inside the write is pinned in restore.test.ts.
+describe("restoreFromJson — refuses an unreadable row before writing", () => {
+  it("a lease without a rent is refused (BACKUP_ROWS_INVALID) and nothing is written", async () => {
     const portfolioBefore = await loadPortfolio(sql);
     const assumptionsBefore = await loadAssumptions(sql);
     const snapBefore = portfolioSnapshot(portfolioBefore, assumptionsBefore);
 
-    // Valid backup that passes the pre-wipe guards (table keys, column whitelist, scalar
-    // cells), but corrupt one late-table row so it fails on INSERT (NOT NULL → sqlite
-    // rejects it) partway through the wipe.
     const good = await exportToJson(sql, new Date());
     const leases = (good.tables.leases as Record<string, unknown>[]).map(
       (r) => ({ ...r }),
@@ -245,12 +245,29 @@ describe("restoreFromJson — rolls back a partial/failing restore", () => {
     expect(leases.length).toBeGreaterThan(0);
     leases[0] = { ...leases[0], monthly_rent: null };
     const bad = { ...good, tables: { ...good.tables, leases } };
+    const rec = recording(sql);
 
-    await expect(
-      restoreFromJson(sql, bad as typeof good, checkInputRules),
-    ).rejects.toThrow();
+    const e: unknown = await restoreFromJson(
+      rec.sql,
+      bad as typeof good,
+      checkInputRules,
+    ).then(
+      () => null,
+      (err: unknown) => err,
+    );
+    expect(e).toBeInstanceOf(RestoreError);
+    expect((e as RestoreError).code).toBe("BACKUP_ROWS_INVALID");
+    expect((e as RestoreError).issues).toEqual([
+      expect.objectContaining({
+        table: "leases",
+        id: leases[0].id,
+        rule: "UNREADABLE_VALUE",
+      }),
+    ]);
+    // No statement wrote anything.
+    expect(rec.queries.some((q) => /^\s*(DELETE|INSERT)/i.test(q))).toBe(false);
 
-    // Every table is back to its original row count (no partial wipe survives).
+    // Every table keeps its row count…
     for (const [table, rows] of Object.entries(good.tables)) {
       const after = await sql.select<Record<string, unknown>>(
         `SELECT * FROM ${table}`,
@@ -260,7 +277,7 @@ describe("restoreFromJson — rolls back a partial/failing restore", () => {
       );
     }
 
-    // …and engine output is identical to before the failed restore.
+    // …and engine output is identical to before the refused restore.
     const portfolioAfter = await loadPortfolio(sql);
     const assumptionsAfter = await loadAssumptions(sql);
     const snapAfter = portfolioSnapshot(portfolioAfter, assumptionsAfter);
