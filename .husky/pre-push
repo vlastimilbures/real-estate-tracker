@@ -1,2 +1,2 @@
-# Full typecheck before code leaves the machine (main has no server-side protection, D-68).
+# Full typecheck before code leaves the machine; CI repeats it as a required check (ADR 0151).
 pnpm typecheck

@@ -128,7 +128,7 @@ product's positioning changes.
   (DR-051); a few helpers still take loose `Record<string, string>` drafts (DR-081); stored
   boolean flags are typed as numbers at the database boundary (DR-080); `D()` still accepts a
   JS `number` (DR-078).
-- **Tests.** The two optional Playwright smoke tests do not run in CI (ADR 0006). (DR-094)
+- **Tests.** The two optional Playwright smoke tests do not run in CI (ADR 0006). (#141)
 - **Row editor focus.** Adding a prepayment or maturity-change row does not move focus to
   its date, and removing one leaves focus on the next row's button or the page (PR #100
   review).

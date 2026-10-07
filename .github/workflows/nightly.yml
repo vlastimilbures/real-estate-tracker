@@ -9,7 +9,7 @@ name: Nightly (mutation testing, bench budgets, property runs)
 # days included: the seed, not the code, is what changes (#232). The seed is the run's
 # UTC creation date (YYYYMMDD), so "Re-run failed jobs" replays it.
 #
-# Stryker runs incrementally (D-72): the previous run's result file is restored from the
+# Stryker runs incrementally (ADR 0151): the previous run's result file is restored from the
 # Actions cache, so only mutants in changed engine code or tests rerun. The first run on a
 # branch has no cache and tests every mutant (~2.5 h on a 4-vCPU runner), hence the
 # timeout; later runs take minutes. Caches made on main are visible to every branch.

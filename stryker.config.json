@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
-  "_comment": "Mutation testing on the pure engine (D-26, D-68): nightly CI via `pnpm mutation`, incremental (D-72): only mutants in changed code or tests rerun; `pnpm mutation --force` reruns all. thresholds.break = DR-168 baseline 98.70 % floored (2026-10-05); raise it, never lower it. Survivors: DR-168.",
+  "_comment": "Mutation testing on the pure engine (D-26, D-68): nightly CI via `pnpm mutation`, incremental (ADR 0151): only mutants in changed code or tests rerun; `pnpm mutation --force` reruns all. thresholds.break = DR-168 baseline 98.70 % floored (2026-10-05); raise it, never lower it. Survivors: DR-168.",
   "packageManager": "pnpm",
   "testRunner": "vitest",
   "vitest": {

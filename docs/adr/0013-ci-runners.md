@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-09-30
 - Source IDs: D-13, Q-02
+- Amended by: [0151](0151-ci-gates-after-going-public.md) (the macOS bundle runs on `v*` tags and manual
+  dispatch, not on PRs or nightly)
 
 ## Context
 
