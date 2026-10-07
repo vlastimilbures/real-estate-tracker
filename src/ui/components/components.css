@@ -1578,6 +1578,14 @@ table.chart-table tbody th.sticky-col {
   gap: var(--s3);
   color: var(--ink-soft);
 }
+/* Grows past the window when a restore's confirm step is open (ADR 0153), and scrolls
+   with the page instead of clipping its top. */
+.error-screen {
+  height: auto;
+  min-height: 100vh;
+  padding: var(--s6) var(--s5);
+  box-sizing: border-box;
+}
 .error-screen code {
   background: var(--paper-2);
   padding: var(--s2) var(--s3);

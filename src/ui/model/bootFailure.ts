@@ -7,6 +7,9 @@ export interface BootView {
   retry: boolean;
   /** The details are records (rows, names); otherwise versions, checks or driver text. */
   records: boolean;
+  /** Offer Restore a backup…: only where the database opened and migrated to head, and
+   *  only reading it failed. SCENARIO_INVALID no longer stops startup (ADR 0123). */
+  restore: boolean;
 }
 
 /** Failures that repeat on every start, so Try again cannot help. */
@@ -29,6 +32,7 @@ export function bootView(code: DataErrorCode | null): BootView {
   return {
     retry: code === null || !LASTING.has(code),
     records: code !== null && RECORDS.has(code),
+    restore: code === "ROW_INVALID",
   };
 }
 

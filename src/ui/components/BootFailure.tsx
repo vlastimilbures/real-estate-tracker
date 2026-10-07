@@ -1,6 +1,7 @@
 // The startup error screen (UX-057, DR-086; #115, ADR 0153). Says what happened, honestly
 // (a stopped upgrade may have changed the database), and offers only what can help:
-// Try again for a failure that may not repeat, and the data folder for every one.
+// Try again for a failure that may not repeat, Restore a backup… where the database is
+// at head and only reading it failed, and the data folder for every one.
 import { useState } from "react";
 import {
   usePortfolioStore,
@@ -12,6 +13,9 @@ import type { Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { Button } from "./primitives";
 import { describeWriteError } from "../model/writeError";
+import { chooseRestoreFile, type PickedBackup } from "../../state/backup";
+import { IssueTable, RestoreConfirm } from "./RestoreConfirm";
+import { backupFailure } from "./restoreFailure";
 import { bootView, fileName, isPartial } from "../model/bootFailure";
 
 /** The message, then what the upgrade left behind or the next step, if any. */
@@ -41,7 +45,18 @@ export function BootFailure() {
   const startupError = usePortfolioStore((s) => s.startupError);
   const error = usePortfolioStore((s) => s.error);
   const init = usePortfolioStore((s) => s.init);
+  const restoreAtStartup = usePortfolioStore((s) => s.restoreAtStartup);
+  const continueAfterRestore = usePortfolioStore((s) => s.continueAfterRestore);
   const [revealFailed, setRevealFailed] = useState(false);
+  const [pending, setPending] = useState<PickedBackup | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  const [failure, setFailure] = useState<ReturnType<
+    typeof backupFailure
+  > | null>(null);
+  const [restored, setRestored] = useState<{
+    file: string;
+    ready: boolean;
+  } | null>(null);
   const view = bootView(startupError?.code ?? null);
 
   async function showFolder() {
@@ -53,6 +68,62 @@ export function BootFailure() {
       setRevealFailed(true);
     }
   }
+
+  async function chooseBackup() {
+    setFailure(null);
+    try {
+      const picked = await chooseRestoreFile();
+      if (picked) setPending(picked);
+    } catch (e) {
+      setFailure(backupFailure(t, e, "RESTORE", t.backup.errInvalid));
+    }
+  }
+
+  async function confirmRestore() {
+    if (!pending) return;
+    setRestoring(true);
+    setFailure(null);
+    try {
+      const { safetyBackup, ready } = await restoreAtStartup(pending.backup);
+      setPending(null);
+      setRestored({ file: safetyBackup, ready });
+    } catch (e) {
+      // One transaction: a failure before the commit leaves the data as it was.
+      setFailure(backupFailure(t, e, "RESTORE", t.backup.restoreFailed));
+    } finally {
+      setRestoring(false);
+    }
+  }
+
+  const folderButton = (
+    <Button onClick={() => void showFolder()}>{t.boot.showDataFolder}</Button>
+  );
+
+  // After a restore the failure above no longer applies: name the safety copy, then go
+  // on into the app (or, when the restored data cannot be loaded either, try again).
+  if (restored)
+    return (
+      <div className="error-screen" role="alert">
+        <p>
+          {restored.ready
+            ? t.backup.restored(restored.file)
+            : t.boot.restoredReloadFailed(restored.file)}
+        </p>
+        {revealFailed && <p className="error-text">{t.boot.revealFailed}</p>}
+        <div className="row" style={{ gap: "var(--s3)" }}>
+          {restored.ready ? (
+            <Button variant="primary" onClick={continueAfterRestore}>
+              {t.boot.continue}
+            </Button>
+          ) : (
+            <Button variant="primary" onClick={() => void init()}>
+              {t.app.tryAgain}
+            </Button>
+          )}
+          {folderButton}
+        </div>
+      </div>
+    );
 
   return (
     <div className="error-screen" role="alert">
@@ -85,16 +156,34 @@ export function BootFailure() {
       {view.retry && <p>{t.app.bootRetryHint}</p>}
       <small>{t.dataErrors.logHint}</small>
       {revealFailed && <p className="error-text">{t.boot.revealFailed}</p>}
-      <div className="row" style={{ gap: "var(--s3)" }}>
-        {view.retry && (
-          <Button variant="primary" onClick={() => void init()}>
-            {t.app.tryAgain}
-          </Button>
-        )}
-        <Button onClick={() => void showFolder()}>
-          {t.boot.showDataFolder}
-        </Button>
-      </div>
+      {failure && (
+        <div>
+          <p className="error-text">{failure.text}</p>
+          {failure.issues.length > 0 && <IssueTable issues={failure.issues} />}
+        </div>
+      )}
+      {pending ? (
+        <RestoreConfirm
+          pending={pending}
+          restoring={restoring}
+          onCancel={() => setPending(null)}
+          onConfirm={() => void confirmRestore()}
+        />
+      ) : (
+        <div className="row" style={{ gap: "var(--s3)" }}>
+          {view.retry && (
+            <Button variant="primary" onClick={() => void init()}>
+              {t.app.tryAgain}
+            </Button>
+          )}
+          {view.restore && (
+            <Button variant="primary" onClick={() => void chooseBackup()}>
+              {t.boot.restoreBackup}
+            </Button>
+          )}
+          {folderButton}
+        </div>
+      )}
     </div>
   );
 }

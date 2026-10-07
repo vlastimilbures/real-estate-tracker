@@ -4,15 +4,18 @@ import { bootView, fileName, isPartial } from "../bootFailure";
 
 describe("bootView", () => {
   it.each([
-    ["DB_INTEGRITY", { retry: false, records: false }],
-    ["DB_NEWER", { retry: false, records: false }],
-    ["MIGRATION_CONFLICT", { retry: false, records: true }],
-    ["MIGRATION_BACKUP_FAILED", { retry: true, records: false }],
-    ["MIGRATION_FAILED", { retry: true, records: false }],
-    ["ROW_INVALID", { retry: false, records: true }],
-    ["ROW_MISSING", { retry: true, records: true }],
-    ["SCENARIO_INVALID", { retry: true, records: true }],
-    [null, { retry: true, records: false }],
+    ["DB_INTEGRITY", { retry: false, records: false, restore: false }],
+    ["DB_NEWER", { retry: false, records: false, restore: false }],
+    ["MIGRATION_CONFLICT", { retry: false, records: true, restore: false }],
+    [
+      "MIGRATION_BACKUP_FAILED",
+      { retry: true, records: false, restore: false },
+    ],
+    ["MIGRATION_FAILED", { retry: true, records: false, restore: false }],
+    ["ROW_INVALID", { retry: false, records: true, restore: true }],
+    ["ROW_MISSING", { retry: true, records: true, restore: false }],
+    ["SCENARIO_INVALID", { retry: true, records: true, restore: false }],
+    [null, { retry: true, records: false, restore: false }],
   ] as const)("%s", (code, view) => {
     expect(bootView(code)).toEqual(view);
   });

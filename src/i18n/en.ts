@@ -178,7 +178,11 @@ export const en = {
     nextIntegrity:
       "Quit the app and move portfolio.db out of the data folder (do not delete it). Reopen the app: it starts empty. Then restore your latest JSON backup in Settings → Backup & Restore, or put back a pre-migration copy from the backups folder.",
     nextRowInvalid:
-      "To restore your latest JSON backup: quit the app, move portfolio.db out of the data folder (do not delete it), reopen the app and restore it in Settings → Backup & Restore. Or report the record below.",
+      "Restore a backup… replaces all data with a JSON backup; a safety copy of the current data is saved first. Or report the record below.",
+    restoreBackup: "Restore a backup…",
+    restoredReloadFailed: (file: string) =>
+      `The backup was restored and your previous data was saved as ${file} in the backups folder, but the data could not be loaded. Try again; if it keeps failing, keep the log file for diagnosis.`,
+    continue: "Open the app",
     detailsOther: "Details",
     showDataFolder: "Show data folder",
     revealFailed:

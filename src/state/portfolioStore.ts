@@ -247,6 +247,14 @@ interface PortfolioState {
   ) => Promise<CsvImportReport>;
   /** Replace the data with a checked backup (after a safety backup), then reload. */
   restoreBackup: (backup: BackupFile) => Promise<{ safetyBackup: string }>;
+  /** Restore from the startup error screen, only after ROW_INVALID: the database is
+   *  open and at head there (ADR 0153). `ready` says the data loaded afterwards; the
+   *  screen stays until `continueAfterRestore`, so the safety copy can be named. */
+  restoreAtStartup: (
+    backup: BackupFile,
+  ) => Promise<{ safetyBackup: string; ready: boolean }>;
+  /** Leave the startup error screen after a restore whose data loaded. */
+  continueAfterRestore: () => void;
   /** Delete the sample properties (after a safety backup), then reload. */
   clearSample: () => Promise<{ safetyBackup: string }>;
   /** Load the sample into an empty portfolio, then reload (ADR 0112). Throws
@@ -631,6 +639,24 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       }),
     restoreBackup: (backup) =>
       exclusive((sql) => confirmRestore(sql, backup, checkInputRules)),
+    restoreAtStartup: async (backup) => {
+      // Only where the database migrated to head and only reading it failed; any
+      // other startup failure leaves a database a restore must not write to.
+      if (
+        get().status !== "error" ||
+        get().startupError?.code !== "ROW_INVALID"
+      )
+        throw new Error("A restore at startup needs a ROW_INVALID failure");
+      const { safetyBackup } = await exclusive((sql) =>
+        confirmRestore(sql, backup, checkInputRules),
+      );
+      return { safetyBackup, ready: get().portfolio !== null && !get().stale };
+    },
+    continueAfterRestore: () => {
+      const s = get();
+      if (s.status !== "error" || s.portfolio === null || s.stale) return;
+      set({ status: "ready", error: null, startupError: null });
+    },
     clearSample: () => exclusive((sql) => clearSample(sql)),
     loadSample: () => exclusive(loadSample),
     exportBackup: async () => {

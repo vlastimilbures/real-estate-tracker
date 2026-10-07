@@ -163,7 +163,11 @@ export const cs: Dictionary = {
     nextIntegrity:
       "Ukončete aplikaci a přesuňte portfolio.db ze složky dat (nemažte ho). Znovu otevřete aplikaci: spustí se prázdná. Pak obnovte poslední zálohu JSON v Nastavení → Záloha a obnova, nebo vraťte kopii před migrací ze složky záloh.",
     nextRowInvalid:
-      "Obnovení poslední zálohy JSON: ukončete aplikaci, přesuňte portfolio.db ze složky dat (nemažte ho), znovu otevřete aplikaci a obnovte zálohu v Nastavení → Záloha a obnova. Nebo nahlaste záznam níže.",
+      "Obnovit zálohu… nahradí všechna data zálohou JSON; bezpečnostní kopie současných dat se uloží nejdřív. Nebo nahlaste záznam níže.",
+    restoreBackup: "Obnovit zálohu…",
+    restoredReloadFailed: (file: string) =>
+      `Záloha byla obnovena a vaše předchozí data byla uložena jako ${file} ve složce záloh, ale data se nepodařilo načíst. Zkuste to znovu; pokud to stále selhává, uschovejte soubor protokolu pro diagnostiku.`,
+    continue: "Otevřít aplikaci",
     detailsOther: "Podrobnosti",
     showDataFolder: "Zobrazit složku dat",
     revealFailed:
