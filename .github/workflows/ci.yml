@@ -60,6 +60,10 @@ jobs:
       - name: Dead code
         run: pnpm knip
 
+      # Generated index and paired Amends / Supersedes links (ADR 0152).
+      - name: ADR index and links
+        run: pnpm adr:check
+
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level=high
 

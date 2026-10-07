@@ -1,15 +1,14 @@
 # 0068. No server-side branch protection
 
 - Status: Accepted
-- Amended by: ADR 0081
+- Amended by: ADR 0081, ADR 0151 (items (1) and (2) and D-69 G-1, G-2: `main` is protected;
+  the macOS bundle runs on `v*` tags and manual dispatch)
 - Date: 2026-10-02
-- Source IDs: D-68, J-09
+- Source IDs: D-68
 
 ## Context
 
 The repository is private on the free plan; the branch-protection API returns 403.
-
-Options considered for J-09 (Mutation testing (Stryker) on the engine): (a) adopt locally and in nightly CI; (b) skip. Recommendation at planning: (a), nightly only. P02 recommendation: see P02-mortgage-audit.md §7
 
 ## Decision
 

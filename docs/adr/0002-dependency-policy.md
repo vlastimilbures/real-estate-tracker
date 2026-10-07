@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-09-30 (taken before the refactor programme; recorded in P0)
 - Source IDs: D-02
+- Amended by: [0152](0152-wording-log-and-generated-index.md) (patch and minor runtime upgrades pass
+  on green CI; a major one gets owner review)
 
 ## Context
 

@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-01
 - Source IDs: D-52
+- Amended by: [0123](0123-scenario-rules-every-entry-point.md) (DR-019: restore checks every row)
 
 ## Context
 

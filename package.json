@@ -53,6 +53,8 @@
     "mutation": "stryker run",
     "depcruise:baseline": "depcruise src --config .dependency-cruiser.cjs --output-type baseline --output-to .dependency-cruiser-known-violations.json",
     "depcruise:baseline-check": "node scripts/check-depcruise-baseline.mjs",
+    "adr:index": "node scripts/adr-index.mjs",
+    "adr:check": "node scripts/adr-index.mjs --check",
     "tauri": "tauri",
     "prepare": "husky"
   },

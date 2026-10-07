@@ -109,11 +109,23 @@ branch.
 Decisions are Architecture Decision Records in [`docs/adr/`](docs/adr/README.md). Write one
 (status **Proposed**) and get it accepted by the maintainer before shipping:
 
-- any change to a computed number or other user-visible behaviour — messages, limits,
-  rejections, exports, UI (ADR 0001), together with a failing test written first;
-- a new or upgraded **runtime** dependency, with a written justification (ADR 0002). Dev-only
-  tools are fine without one. Dependabot opens grouped weekly updates; review a runtime bump
-  as a decision.
+- any change to a computed number or other user-visible behaviour — limits, rejections,
+  exports, stored data, layout, UI (ADR 0001), together with a failing test written first;
+- a new **runtime** dependency, with a written justification (ADR 0002). Dev-only tools are
+  fine without one.
+
+A copy-only change (the text of existing dictionary entries, except text used as an
+accessible name or a live-region announcement) needs no ADR: the maintainer approves it in the
+PR, a failing test is written first, and it gets a dated entry in
+[`docs/decisions/wording.md`](docs/decisions/wording.md) (ADR 0152). ADRs and the log cite
+dictionary keys, not translated strings.
+
+Dependabot opens grouped weekly updates. Patch and minor upgrades of runtime dependencies
+pass on green CI; a major runtime upgrade gets the maintainer's review in its PR (ADR 0152).
+
+The ADR index in `docs/adr/README.md` is generated: run `pnpm adr:index` after adding or
+changing an ADR header. `pnpm adr:check` (in CI) fails on a stale index or a one-sided
+Amends / Amended-by link.
 
 Refactors are behaviour-neutral and need no ADR.
 

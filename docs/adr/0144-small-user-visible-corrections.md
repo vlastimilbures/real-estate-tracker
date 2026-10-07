@@ -6,6 +6,7 @@
 - Related: [0099](0099-close-previous-open-record.md) (corrected here),
   [0130](0130-interest-saved-refinance.md) (interest saved), [0109](0109-loan-prepayments-and-recasts.md)
   (prepayments and recasts)
+- Amends: [0099](0099-close-previous-open-record.md) (decision 3: no prompt for a dated new record)
 
 ## Context
 

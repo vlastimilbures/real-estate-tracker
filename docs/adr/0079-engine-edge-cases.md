@@ -4,6 +4,7 @@
 - Date: 2026-10-02
 - Source IDs: DR-123, DR-126, DR-117, DR-074, DR-158 (P17 plan)
 - Builds on: D-21, D-28, D-32, D-45, D-47, ADR 0001, ADR 0003 (legacy IDs, ADR 0081)
+- Amended by: [0129](0129-loan-schedule-edge-cases.md) (DR-074: the last draw date)
 
 ## Context
 

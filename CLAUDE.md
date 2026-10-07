@@ -111,10 +111,17 @@ mortgage reference model are the regression baseline (ADR 0081).
 ## 8. Change process (permanent)
 
 - **Behaviour changes need an approved decision** (ADR 0001): any change to a computed number
-  or other user-visible behaviour (messages, limits, rejections, exports, UI) needs an accepted
-  ADR and a failing test written first. Refactors are behaviour-neutral.
-- **Dependencies** (ADR 0002): dev-only tools are fine; a new or upgraded runtime dependency
-  needs a written justification and owner approval.
+  or other user-visible behaviour (limits, rejections, exports, stored data, layout, UI) needs
+  an accepted ADR and a failing test written first. A copy-only change (the text of existing
+  dictionary entries, except text used as an accessible name or a live-region announcement)
+  needs the owner's OK and a failing test written first, but an entry in
+  `docs/decisions/wording.md` instead of an ADR (ADR 0152). ADRs cite dictionary keys, not translated strings. Refactors are
+  behaviour-neutral.
+- **ADR index** is generated: run `pnpm adr:index`, never edit the table by hand; numbers are
+  the next free on `origin/main` and open PRs (ADR 0152).
+- **Dependencies** (ADR 0002): dev-only tools are fine; a new runtime dependency needs a
+  written justification and owner approval. Patch/minor upgrades pass on green CI; a major
+  runtime upgrade gets owner review in its PR (ADR 0152).
 - **Commits:** Conventional Commits, one logical change each; a refactor and a behaviour change
   never share a commit. Reference the ADR in a footer (`Refs: ADR 0023`).
 - **Protect the owner's data:** before launching the app (`pnpm tauri dev` / a built app) or

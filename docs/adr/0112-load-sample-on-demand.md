@@ -4,6 +4,7 @@
 - Date: 2026-10-03
 - Source: issue #74; follows ADR 0094 (Consequences: "reseed on demand"); builds on ADR 0016,
   ADR 0014 and ADR 0110
+- Amends: [0016](0016-first-run-seed.md) (an empty portfolio can load the sample on demand)
 
 ## Context
 

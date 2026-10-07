@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-09-30
 - Source IDs: D-17, J-19
+- Amended by: [0135](0135-whole-year-loan-term.md) (the loan term is a whole number of years)
 
 ## Context
 

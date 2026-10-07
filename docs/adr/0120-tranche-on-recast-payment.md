@@ -3,7 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-04
 - Source: issue #109 (2026-10 code review, finding R1-01)
-- Amends: [0109](0109-loan-prepayments-and-recasts.md) §6
+- Amends: [0109](0109-loan-prepayments-and-recasts.md) §6, [0024](0024-draw-timing.md) (a tranche on an agreed instalment's payment)
 - Amended by: ADR 0137 (decisions 1 and 4: payment `q` pays at least its interest)
 - Related: [0024](0024-draw-timing.md) (D-24), [0116](0116-prepayments-ui-and-review-fixes.md)
 

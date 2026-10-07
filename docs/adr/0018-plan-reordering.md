@@ -1,6 +1,6 @@
 # 0018. Re-order the plan for a data-safety hotfix
 
-- Status: Accepted
+- Status: Superseded by 0081
 - Date: 2026-09-30
 - Source IDs: D-18, J-20
 

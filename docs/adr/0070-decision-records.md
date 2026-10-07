@@ -1,7 +1,8 @@
 # 0070. Decisions are recorded as ADRs
 
 - Status: Accepted
-- Amended by: ADR 0081
+- Amended by: ADR 0081, ADR 0152 (the index is generated and checked; numbering checks
+  open PRs)
 - Date: 2026-10-02
 - Source IDs: D-70
 
