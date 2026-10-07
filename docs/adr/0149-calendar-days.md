@@ -1,6 +1,6 @@
 # 0149. Calendar days: the local day on every screen, one day module, a 1900 floor for new dates
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-07
 - Source: issue #119 (review findings G1-3-01, G1-3-04, G1-3-03, G1-3-07, G1-3-05, G1-4-12,
   G1-3-06), owner decision D6 (2026-10-06: item 1 A, item 2 B, item 5 A), item 5 refined by
