@@ -805,13 +805,13 @@ export const SCREENS: Screen[] = [
     },
   },
   {
-    id: "31-projections-real",
+    id: "32-projections-real",
     desc: "Projections grid, real lens",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "projections");
       await pickReal(ux);
-      await ux.capture("31-projections-real", { fullPage: false });
+      await ux.capture("32-projections-real", { fullPage: false });
     },
   },
   {
