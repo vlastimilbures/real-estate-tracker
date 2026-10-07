@@ -74,6 +74,16 @@ pub fn run() {
                 }
                 Err(e) => log::warn!("no app folder to make private: {e}"),
             }
+            // ADR 0147: the error log is private too. The log plugin has opened app.log
+            // by now; a file it rotates in later is made private at the next start.
+            match app.path().app_log_dir() {
+                Ok(dir) => {
+                    if let Err(e) = files::restrict_dir(&dir) {
+                        log::warn!("could not make the log folder private: {e}");
+                    }
+                }
+                Err(e) => log::warn!("no log folder to make private: {e}"),
+            }
             // Native macOS menu: start from the OS default (keeps Edit/Window/Quit), drop the
             // predefined "About {app}" item (which opens an empty native popup) and replace it
             // with a custom "About…" that emits to the webview to open the in-app About page

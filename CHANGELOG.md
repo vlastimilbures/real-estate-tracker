@@ -242,6 +242,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The error log's folder is now private to your user (`0700`, files `0600`), as the
+  README said (ADR 0147, #122). Only the app's data folder was restricted before.
 - The error log masks every number, not only those of four or more digits, so a short
   amount such as `850 Kč` is not recorded (ADR 0147, #122). The bug form names what to
   replace in a pasted log excerpt: property and scenario names, record ids built from

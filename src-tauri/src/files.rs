@@ -84,7 +84,8 @@ pub fn restrict_app_dir(dir: &Path) -> Result<(), AppError> {
 }
 
 /// Make one folder private: 0700, and every regular file directly in it 0600. Symlinks
-/// and subfolders are skipped; a folder that does not exist is left alone.
+/// and subfolders are skipped; a folder that does not exist is left alone. Also used for
+/// the error log's folder (ADR 0147).
 pub fn restrict_dir(folder: &Path) -> Result<(), AppError> {
     if !folder.is_dir() {
         return Ok(());
