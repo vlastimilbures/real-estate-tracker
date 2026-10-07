@@ -66,20 +66,17 @@ describe("asOfView (ADR 0088)", () => {
     });
   });
 
-  it.fails(
-    "a month-end base date counts D-21 grid months, as value growth and CPI do (#113)",
-    () => {
-      // 31 Aug → 28 Feb is six grid months (the clamped month end counts): year 1, as with a
-      // mid-month base date. Calendar months said five, so year 0.
-      const monthEnd = isoDate("2026-08-31");
-      expect(
-        asOfView(monthEnd, isoDate("2027-02-28"), series, false),
-      ).toMatchObject({ kind: "projection", year: 1 });
-      expect(
-        asOfView(monthEnd, isoDate("2028-02-29"), series, false),
-      ).toMatchObject({ kind: "projection", year: 2 });
-    },
-  );
+  it("a month-end base date counts D-21 grid months, as value growth and CPI do (#113)", () => {
+    // 31 Aug → 28 Feb is six grid months (the clamped month end counts): year 1, as with a
+    // mid-month base date. Calendar months said five, so year 0.
+    const monthEnd = isoDate("2026-08-31");
+    expect(
+      asOfView(monthEnd, isoDate("2027-02-28"), series, false),
+    ).toMatchObject({ kind: "projection", year: 1 });
+    expect(
+      asOfView(monthEnd, isoDate("2028-02-29"), series, false),
+    ).toMatchObject({ kind: "projection", year: 2 });
+  });
 
   it("a non-today date under six months out shows the records in force", () => {
     const d = edate(baseDate, 3);

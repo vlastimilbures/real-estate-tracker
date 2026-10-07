@@ -22,6 +22,7 @@ export {
   dayBefore,
   edate,
   isoDate,
+  lastGridMonthOnOrBefore,
   monthsBetween,
   utc,
 } from "./dates";

@@ -3,7 +3,7 @@
 import type { Decimal } from "../../lib/money";
 import {
   cpiAt,
-  monthsBetween,
+  lastGridMonthOnOrBefore,
   portfolioSnapshotAtYear,
   propertySnapshotAtYear,
   realPortfolioSnapshot,
@@ -39,9 +39,11 @@ export function netWorthHorizon(kpis: PortfolioKPIs, mode: Mode): Decimal {
 }
 
 /** Projection year (0..horizon) closest to an as-of date, on the baseDate-anchored
- *  whole-year grid the projection/charts use. ≤ baseDate ⇒ 0 (the current snapshot). */
+ *  whole-year grid the projection/charts use. ≤ baseDate ⇒ 0 (the current snapshot).
+ *  Months count on the D-21 month-end grid, as value growth and the CPI index count them,
+ *  so 31 Aug → 28 Feb is six months (ADR 0150). */
 export function projectionYearForAsOf(baseDate: Date, asOf: Date): number {
-  const months = monthsBetween(baseDate, asOf);
+  const months = lastGridMonthOnOrBefore(baseDate, asOf);
   if (months <= 0) return 0;
   return Math.round(months / 12);
 }
