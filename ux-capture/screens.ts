@@ -1,10 +1,13 @@
 // Screen manifest for the UX capture run. One entry = one user-visible state; `run`
 // drives the app there through the UI and calls `ux.capture(id)` (PNG + axe scan).
-// To add a screen: append an entry here (ids are zero-padded so files sort in flow order).
+// To add a screen: add an entry here with a free id. The id's leading number groups
+// screens by area (0x dashboard, 1x properties, 2x property detail, …); the order of
+// this list is the flow order and need not match the file order.
 import path from "node:path";
 import type { Route } from "../src/state/uiStore";
 import {
   expect,
+  addTwoPresetsAndCompare,
   nav,
   openFirstProperty,
   panel,
@@ -16,9 +19,8 @@ import {
 
 export interface Screen {
   id: string;
-  /** What the capture shows (goes into summary.md). */
+  /** What the capture shows (the test title in the capture run). */
   desc: string;
-  route: Route;
   run: (ux: Ux) => Promise<void>;
 }
 
@@ -167,7 +169,6 @@ export const SCREENS: Screen[] = [
   {
     id: "00-loading",
     desc: "Startup loading screen (sql.js init delayed)",
-    route: "dashboard",
     run: async (ux) => {
       // Hold the wasm download so the loading screen stays up long enough to capture.
       await ux.page.route("**/*.wasm*", async (r) => {
@@ -182,7 +183,6 @@ export const SCREENS: Screen[] = [
   {
     id: "01-dashboard",
     desc: "Dashboard, nominal, as of today",
-    route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
       await ux.capture("01-dashboard");
@@ -191,7 +191,6 @@ export const SCREENS: Screen[] = [
   {
     id: "02-dashboard-real",
     desc: "Dashboard, real lens",
-    route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
       await pickReal(ux);
@@ -201,7 +200,6 @@ export const SCREENS: Screen[] = [
   {
     id: "03-dashboard-asof-5y",
     desc: "Dashboard, as-of +5y preset",
-    route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
       const preset = ux.page.getByTestId("asof-5y");
@@ -213,7 +211,6 @@ export const SCREENS: Screen[] = [
   {
     id: "04-dashboard-calendar",
     desc: "As-of calendar popover open",
-    route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
       await ux.page.locator(".asof .date-trigger").click();
@@ -224,7 +221,6 @@ export const SCREENS: Screen[] = [
   {
     id: "05-dashboard-filter",
     desc: "Dashboard filtered to one property",
-    route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
       // The pill variant: "All" first, then one pill per property.
@@ -243,7 +239,6 @@ export const SCREENS: Screen[] = [
   {
     id: "06-sidebar-collapsed",
     desc: "Sidebar collapsed to icon rail",
-    route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
       await ux.page
@@ -255,7 +250,6 @@ export const SCREENS: Screen[] = [
   {
     id: "07-dashboard-chart-table",
     desc: "Dashboard, value and LTV charts shown as tables (UX-075)",
-    route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
       const toggles = ux.page.getByRole("button", {
@@ -271,7 +265,6 @@ export const SCREENS: Screen[] = [
   {
     id: "08-dashboard-chart-tooltip",
     desc: "Value chart focused from the keyboard: named surface, tooltip with series swatches, axe on the open tooltip (ADR 0114)",
-    route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
       const surface = ux.page.getByRole("img", {
@@ -306,7 +299,6 @@ export const SCREENS: Screen[] = [
   {
     id: "09-dashboard-data-check",
     desc: "Data check five years on: open with stale valuations and ended fixations, then the defaults (ADR 0118)",
-    route: "dashboard",
     run: async (ux) => {
       const d = ux.t.dataCheck;
       await boot(ux.page);
@@ -341,7 +333,6 @@ export const SCREENS: Screen[] = [
   {
     id: "09b-dashboard-cash-invested",
     desc: "Dashboard KPI list with Cash invested once every property has own cash (ADR 0119 §9)",
-    route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
@@ -366,7 +357,6 @@ export const SCREENS: Screen[] = [
   {
     id: "10-properties",
     desc: "Properties list",
-    route: "properties",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
@@ -376,7 +366,6 @@ export const SCREENS: Screen[] = [
   {
     id: "10b-properties-today-projection",
     desc: "Properties at Today seven months after the projection start: rows and context line name projection year Y1 (ADR 0150)",
-    route: "properties",
     run: async (ux) => {
       await ux.page.clock.setFixedTime(new Date("2027-01-15T10:00:00Z"));
       await boot(ux.page);
@@ -387,7 +376,6 @@ export const SCREENS: Screen[] = [
   {
     id: "11-property-add-modal",
     desc: "Add-property modal, empty",
-    route: "properties",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
@@ -401,7 +389,6 @@ export const SCREENS: Screen[] = [
   {
     id: "12-property-add-errors",
     desc: "Add-property modal after submitting blank",
-    route: "properties",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
@@ -420,7 +407,6 @@ export const SCREENS: Screen[] = [
   {
     id: "13-property-delete-confirm",
     desc: "Delete-property inline confirmation",
-    route: "properties",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
@@ -436,7 +422,6 @@ export const SCREENS: Screen[] = [
   {
     id: "14-properties-long-name",
     desc: "Properties list with a very long property name",
-    route: "properties",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
@@ -476,7 +461,6 @@ export const SCREENS: Screen[] = [
   {
     id: "15-property-edit-acquisition",
     desc: "Edit-property dialog with the Acquisition section open and filled (ADR 0119 §9)",
-    route: "properties",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
@@ -500,7 +484,6 @@ export const SCREENS: Screen[] = [
   {
     id: "20-property-detail",
     desc: "Property detail (first property): section nav, amortization collapsed (ADR 0107)",
-    route: "property",
     run: async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -510,7 +493,6 @@ export const SCREENS: Screen[] = [
   {
     id: "26-property-amortization-open",
     desc: "Property detail with the amortization schedule expanded: every section (ADR 0107)",
-    route: "property",
     run: async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -524,7 +506,6 @@ export const SCREENS: Screen[] = [
   {
     id: "27-property-section-nav-focus",
     desc: "Section nav from the keyboard: Financing's heading focused below the topbar (ADR 0107)",
-    route: "property",
     run: async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -549,7 +530,6 @@ export const SCREENS: Screen[] = [
   {
     id: "28-property-mortgage-events",
     desc: "Mortgage form with prepayment and maturity-change rows (ADR 0116)",
-    route: "property",
     run: async (ux) => {
       const p = await enterLoanEvents(ux);
       await p
@@ -561,7 +541,6 @@ export const SCREENS: Screen[] = [
   {
     id: "29-property-prepayment-outputs",
     desc: "After saving events: loan outlook, event warning, Prepaid and fee columns (ADR 0116)",
-    route: "property",
     run: async (ux) => {
       const d = ux.t.propertyDetail;
       const p = await enterLoanEvents(ux);
@@ -586,7 +565,6 @@ export const SCREENS: Screen[] = [
   {
     id: "29d-dashboard-interest-saved",
     desc: "Dashboard financing panel names the interest-saved window (ADR 0144)",
-    route: "dashboard",
     run: async (ux) => {
       const p = await enterLoanEvents(ux);
       await p
@@ -605,7 +583,6 @@ export const SCREENS: Screen[] = [
   {
     id: "29b-property-loan-outlook",
     desc: "Loan outlook: remaining term and each block's reset (ADR 0117)",
-    route: "property",
     run: async (ux) => {
       const d = ux.t.propertyDetail;
       await boot(ux.page);
@@ -622,7 +599,6 @@ export const SCREENS: Screen[] = [
   {
     id: "29c-property-acquisition",
     desc: "Property detail Acquisition section: sources and uses with the gap warning (ADR 0119 §9)",
-    route: "property",
     run: async (ux) => {
       const d = ux.t.propertyDetail;
       await boot(ux.page);
@@ -646,7 +622,6 @@ export const SCREENS: Screen[] = [
   {
     id: "31-property-data-check",
     desc: "Property detail's Data check five years on, after the Overview; its link moves to Records, Record funding opens the form's Acquisition section (ADR 0118)",
-    route: "property",
     run: async (ux) => {
       const d = ux.t.dataCheck;
       await boot(ux.page);
@@ -689,7 +664,6 @@ export const SCREENS: Screen[] = [
   {
     id: "21-property-valuation-edit",
     desc: "Valuation row in edit mode",
-    route: "property",
     run: async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -702,7 +676,6 @@ export const SCREENS: Screen[] = [
   {
     id: "21b-property-valuation-delete-confirm",
     desc: "Valuation delete confirm, naming the row (ADR 0143)",
-    route: "property",
     run: async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -718,7 +691,6 @@ export const SCREENS: Screen[] = [
   {
     id: "21c-property-valuation-close-previous",
     desc: "Adding an open-ended valuation asks to end the previous one (ADR 0099, 0144)",
-    route: "property",
     run: async (ux) => {
       const d = ux.t.propertyDetail;
       await boot(ux.page);
@@ -743,7 +715,6 @@ export const SCREENS: Screen[] = [
   {
     id: "22-property-mortgage-add-errors",
     desc: "Add mortgage block, submitted blank",
-    route: "property",
     run: async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -764,7 +735,6 @@ export const SCREENS: Screen[] = [
   {
     id: "25-property-mortgage-development",
     desc: "Add mortgage block as Development, with the successor note (ADR 0098)",
-    route: "property",
     run: async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -790,7 +760,6 @@ export const SCREENS: Screen[] = [
   {
     id: "24-property-record-leave-guard",
     desc: "Edited valuation form, then a sidebar click: the leave guard asks (UX-073)",
-    route: "property",
     run: async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -811,7 +780,6 @@ export const SCREENS: Screen[] = [
   {
     id: "23-property-deactivate-confirm",
     desc: "Deactivate-property confirmation banner",
-    route: "property",
     run: async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -830,7 +798,6 @@ export const SCREENS: Screen[] = [
   {
     id: "30-projections",
     desc: "Projections grid, portfolio, nominal",
-    route: "projections",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "projections");
@@ -840,7 +807,6 @@ export const SCREENS: Screen[] = [
   {
     id: "31-projections-real",
     desc: "Projections grid, real lens",
-    route: "projections",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "projections");
@@ -851,7 +817,6 @@ export const SCREENS: Screen[] = [
   {
     id: "40-scenarios",
     desc: "Scenarios, no saved scenarios",
-    route: "scenarios",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "scenarios");
@@ -861,7 +826,6 @@ export const SCREENS: Screen[] = [
   {
     id: "41-scenario-form",
     desc: "New-scenario modal",
-    route: "scenarios",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "scenarios");
@@ -875,18 +839,10 @@ export const SCREENS: Screen[] = [
   {
     id: "42-scenarios-compare",
     desc: "Two stress presets added and compared with Base",
-    route: "scenarios",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "scenarios");
-      await ux.page
-        .getByRole("button", { name: ux.t.scenarios.plusPp(2), exact: true })
-        .click();
-      await ux.page.getByRole("button", { name: "−20%", exact: true }).click();
-      const picks = ux.page.locator(".scenario-row input[type=checkbox]");
-      await expect(picks).toHaveCount(3);
-      await picks.nth(1).check();
-      await picks.nth(2).check();
+      await addTwoPresetsAndCompare(ux);
       // Re-open the page: with saved scenarios the presets start collapsed (ADR 0106).
       await nav(ux, "dashboard");
       await nav(ux, "scenarios");
@@ -896,18 +852,10 @@ export const SCREENS: Screen[] = [
   {
     id: "43-scenarios-compare-delta",
     desc: "Compare key figures as Δ vs Base (ADR 0097)",
-    route: "scenarios",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "scenarios");
-      await ux.page
-        .getByRole("button", { name: ux.t.scenarios.plusPp(2), exact: true })
-        .click();
-      await ux.page.getByRole("button", { name: "−20%", exact: true }).click();
-      const picks = ux.page.locator(".scenario-row input[type=checkbox]");
-      await expect(picks).toHaveCount(3);
-      await picks.nth(1).check();
-      await picks.nth(2).check();
+      await addTwoPresetsAndCompare(ux);
       await nav(ux, "dashboard");
       await nav(ux, "scenarios");
       const delta = ux.page.getByRole("button", {
@@ -921,7 +869,6 @@ export const SCREENS: Screen[] = [
   {
     id: "45-scenario-delete-confirm",
     desc: "Scenario delete confirm, focus on Cancel (ADR 0143)",
-    route: "scenarios",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "scenarios");
@@ -942,7 +889,6 @@ export const SCREENS: Screen[] = [
   {
     id: "44-scenario-form-errors",
     desc: "New-scenario modal refusing a crash typed as −20 % (ADR 0123)",
-    route: "scenarios",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "scenarios");
@@ -965,7 +911,6 @@ export const SCREENS: Screen[] = [
   {
     id: "50-import",
     desc: "Import page, nothing chosen",
-    route: "import",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "import");
@@ -975,7 +920,6 @@ export const SCREENS: Screen[] = [
   {
     id: "51-import-errors",
     desc: "Import: valid properties.csv + valuations.csv with row errors",
-    route: "import",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "import");
@@ -989,7 +933,6 @@ export const SCREENS: Screen[] = [
   {
     id: "52-import-done",
     desc: "Import report after a successful import",
-    route: "import",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "import");
@@ -1010,7 +953,6 @@ export const SCREENS: Screen[] = [
   {
     id: "53-import-preview",
     desc: "Import preview: one add, one update, overwrite confirmation open",
-    route: "import",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "import");
@@ -1032,7 +974,6 @@ export const SCREENS: Screen[] = [
   {
     id: "54-import-preview-failed",
     desc: "Import: the preview read failed, so an error says why Import is unavailable (ADR 0147)",
-    route: "import",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "import");
@@ -1058,7 +999,6 @@ export const SCREENS: Screen[] = [
   {
     id: "60-settings-assumptions",
     desc: "Settings → Assumptions",
-    route: "settings",
     run: async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "assumptions");
@@ -1068,7 +1008,6 @@ export const SCREENS: Screen[] = [
   {
     id: "61-settings-assumptions-error",
     desc: "Assumptions with an invalid value after Save",
-    route: "settings",
     run: async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "assumptions");
@@ -1086,7 +1025,6 @@ export const SCREENS: Screen[] = [
   {
     id: "62-settings-assumptions-bounds",
     desc: "Assumptions with an out-of-range horizon and a negative cost after Save (ADR 0075)",
-    route: "settings",
     run: async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "assumptions");
@@ -1104,7 +1042,6 @@ export const SCREENS: Screen[] = [
   {
     id: "63-settings-assumptions-unsaved",
     desc: "Assumptions with an unsaved edit: the sticky Save row in the window (ADR 0095)",
-    route: "settings",
     run: async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "assumptions");
@@ -1119,7 +1056,6 @@ export const SCREENS: Screen[] = [
   {
     id: "64-settings-backup",
     desc: "Settings → Backup / Restore",
-    route: "settings",
     run: async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "backup");
@@ -1129,7 +1065,6 @@ export const SCREENS: Screen[] = [
   {
     id: "65-about",
     desc: "About modal (opened from the native menu in the app; here via the UI store)",
-    route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
       // The browser has no native menu: open it the way the menu://about bridge does.
@@ -1148,7 +1083,6 @@ export const SCREENS: Screen[] = [
   {
     id: "66-sidebar-backup-hint",
     desc: "Sidebar backup reminder after an edit with no backup yet (ADR 0110)",
-    route: "settings",
     run: async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "assumptions");
@@ -1168,7 +1102,6 @@ export const SCREENS: Screen[] = [
   {
     id: "67-restore-out-of-range",
     desc: "Restore confirm step: values outside the form ranges listed, Restore anyway (ADR 0148)",
-    route: "settings",
     run: async (ux) => {
       await pickOutOfRangeBackup(ux);
       await expect(
@@ -1180,7 +1113,6 @@ export const SCREENS: Screen[] = [
   {
     id: "68-data-check-out-of-range",
     desc: "Dashboard Data check after Restore anyway: the horizon row and the mortgage's fixation (ADR 0148)",
-    route: "dashboard",
     run: async (ux) => {
       await pickOutOfRangeBackup(ux);
       await ux.page
@@ -1203,7 +1135,6 @@ export const SCREENS: Screen[] = [
   {
     id: "69-restore-early-date",
     desc: "Restore confirm step: a stored date before 1900 listed, Restore anyway (ADR 0149)",
-    route: "settings",
     run: async (ux) => {
       await pickEarlyDateBackup(ux);
       await expect(
@@ -1215,7 +1146,6 @@ export const SCREENS: Screen[] = [
   {
     id: "69b-data-check-early-date",
     desc: "Dashboard Data check after Restore anyway: the property's purchase date before 1900 (ADR 0149)",
-    route: "dashboard",
     run: async (ux) => {
       await pickEarlyDateBackup(ux);
       await ux.page
@@ -1236,7 +1166,6 @@ export const SCREENS: Screen[] = [
   {
     id: "70-guide",
     desc: "Guide (full page)",
-    route: "guide",
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "guide");
@@ -1246,7 +1175,6 @@ export const SCREENS: Screen[] = [
   {
     id: "80-empty-portfolio",
     desc: "Dashboard after deleting every property",
-    route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
       await deleteAllProperties(ux);
@@ -1258,7 +1186,6 @@ export const SCREENS: Screen[] = [
   {
     id: "81-clear-sample-dialog",
     desc: "Clear sample confirmation, opened from the sample banner (ADR 0094)",
-    route: "dashboard",
     run: async (ux) => {
       // Opened only: the browser build has no app backups folder for the safety backup.
       await boot(ux.page);
@@ -1272,7 +1199,6 @@ export const SCREENS: Screen[] = [
   {
     id: "82-load-sample",
     desc: "Load sample portfolio on an empty portfolio, then its banner (ADR 0112)",
-    route: "settings",
     run: async (ux) => {
       await boot(ux.page);
       await deleteAllProperties(ux);
@@ -1293,7 +1219,6 @@ export const SCREENS: Screen[] = [
   {
     id: "90-keyboard-focus",
     desc: "Keyboard-only: Tab order from page load, with focus screenshots",
-    route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
       const order: string[] = [];
@@ -1370,7 +1295,6 @@ export const SCREENS: Screen[] = [
   {
     id: "91-nav-focus",
     desc: "Keyboard: Enter on Properties in the sidebar moves focus to the new page's main region",
-    route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
       await ux.page

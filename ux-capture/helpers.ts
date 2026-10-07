@@ -204,6 +204,21 @@ export async function settingsTab(
   await ux.page.getByRole("tab", { name: ux.t.settings.tabs[tab] }).click();
 }
 
+/**
+ * Scenarios page: add the +2 pp and −20 % stress presets and tick both for the compare
+ * next to Base.
+ */
+export async function addTwoPresetsAndCompare(ux: Ux) {
+  await ux.page
+    .getByRole("button", { name: ux.t.scenarios.plusPp(2), exact: true })
+    .click();
+  await ux.page.getByRole("button", { name: "−20%", exact: true }).click();
+  const picks = ux.page.locator(".scenario-row input[type=checkbox]");
+  await expect(picks).toHaveCount(3);
+  await picks.nth(1).check();
+  await picks.nth(2).check();
+}
+
 /** Delete every property through the Properties page, leaving an empty portfolio. */
 export async function deleteAllProperties(ux: Ux) {
   await nav(ux, "properties");

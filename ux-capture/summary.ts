@@ -1,16 +1,8 @@
 // Global teardown: fold the per-screen axe JSON into `<run>/summary.md`.
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-
-interface AxeFile {
-  screen: string;
-  violations: {
-    id: string;
-    impact: string | null;
-    help: string;
-    nodes: number;
-  }[];
-}
+import { readAxeScans } from "./axeFiles.ts";
+import { UX_DATE } from "./helpers";
 
 const IMPACTS = ["critical", "serious", "moderate", "minor"] as const;
 
@@ -20,7 +12,7 @@ export default function summary() {
   const lines: string[] = [
     `# UX capture — ${path.basename(out)}`,
     "",
-    `Frozen date: ${process.env.UX_DATE ?? "2026-10-01T10:00:00Z (default)"}`,
+    `Frozen date: ${UX_DATE}${process.env.UX_DATE ? "" : " (default)"}`,
     "",
   ];
 
@@ -34,16 +26,7 @@ export default function summary() {
     const pngs = readdirSync(dir)
       .filter((f) => f.endsWith(".png"))
       .sort();
-    const axeDir = path.join(dir, "axe");
-    const scans: AxeFile[] = existsSync(axeDir)
-      ? readdirSync(axeDir)
-          .filter((f) => f.endsWith(".json"))
-          .sort()
-          .map(
-            (f) =>
-              JSON.parse(readFileSync(path.join(axeDir, f), "utf8")) as AxeFile,
-          )
-      : [];
+    const scans = readAxeScans(dir);
 
     lines.push(
       `## ${variant}`,
