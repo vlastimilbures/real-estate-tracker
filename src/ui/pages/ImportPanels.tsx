@@ -9,6 +9,7 @@ import { saveFile } from "../../state/platform";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { fmtCzk } from "../../lib/format";
+import { DATE_FLOOR, isoDay } from "../../lib/day";
 import type { CsvErrorCode, CsvRowError, ImportItem } from "../../state/csv";
 import { changeText, groupByFile, itemLabel } from "../model/importPreview";
 
@@ -48,6 +49,9 @@ function csvErrorText(t: Dictionary, e: CsvErrorCode): string {
       return p.errInstalmentRequired;
     case "impossibleDate":
       return p.errImpossibleDate(e.value);
+    case "earlyDate":
+      // CSV dates are yyyy-mm-dd, so the floor is named that way too.
+      return p.errEarlyDate(e.value, isoDay(DATE_FLOOR));
     case "decimalComma":
       return p.errDecimalComma(e.value);
     case "negativeAmount":

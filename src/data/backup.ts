@@ -62,15 +62,32 @@ export interface RangeProblem {
   range: IntRange;
 }
 
-/** The engine's input rules plus the whole-number bounds over the restored rows
- *  (assumptions absent ⇒ portfolio rules only). Injected by the caller: the data layer
- *  never calls engine functions; `checkInputRules` in src/import/inputRules.ts is the one
- *  the app uses. Scenarios only need to be readable (ADR 0123): one that breaks a rule
- *  restores and is handled like a saved one, so every backup the app writes restores. */
+/** A stored date before 01.01.1900, the floor the forms and CSV import apply (ADR 0149
+ *  §5). Restore-only, like OUT_OF_RANGE: restore warns and asks. */
+export interface DateProblem {
+  code: "EARLY_DATE";
+  entity: ValidationEntity;
+  id?: string | undefined;
+  field: string;
+}
+
+/** The engine's input rules plus the form bounds (whole numbers, the date floor) over
+ *  the restored rows (assumptions absent ⇒ portfolio rules only). Injected by the
+ *  caller: the data layer never calls engine functions; `checkInputRules` in
+ *  src/import/inputRules.ts is the one the app uses. Scenarios only need to be readable
+ *  (ADR 0123): one that breaks a rule restores and is handled like a saved one, so every
+ *  backup the app writes restores. */
 export type InputRules = (
   portfolio: Portfolio,
   assumptions?: Assumptions,
-) => (EngineValidationError | RangeProblem)[];
+) => (EngineValidationError | RangeProblem | DateProblem)[];
+
+/** The rules a restore only asks about ("Restore anyway"): the form bounds a database
+ *  may already break (ADR 0148 §1, ADR 0149 §5). Every other issue refuses the file. */
+const WARNING_RULES: ReadonlySet<RestoreIssue["rule"]> = new Set([
+  "OUT_OF_RANGE",
+  "EARLY_DATE",
+]);
 
 /** The newest schema this app writes and reads (the last migration). */
 export const SCHEMA_HEAD = Math.max(...MIGRATIONS.map((m) => m.version));
@@ -198,7 +215,8 @@ export interface RestoreIssue {
     | "DUPLICATE_KEY"
     | "MISSING_ASSUMPTIONS"
     | "OUT_OF_RANGE"
-    | "BEYOND_LIMIT";
+    | "BEYOND_LIMIT"
+    | "EARLY_DATE";
   /** The allowed range of an OUT_OF_RANGE or BEYOND_LIMIT field. */
   range?: IntRange;
 }
@@ -237,8 +255,10 @@ const invalid = (detail: string) =>
 // --- export ---------------------------------------------------------------------
 
 /** Every backup table and the schema version, read in one snapshot (DR-134), so a write
- *  that commits during the export is wholly in or wholly out of the file (ADR 0132). */
-export async function exportToJson(sql: Sql): Promise<BackupFile> {
+ *  that commits during the export is wholly in or wholly out of the file (ADR 0132).
+ *  `now` becomes `exportedAt`: the caller reads the clock once and names the file from
+ *  the same moment (ADR 0149 §6). */
+export async function exportToJson(sql: Sql, now: Date): Promise<BackupFile> {
   const statements = [
     ...BACKUP_TABLES.map((table) => ({ query: `SELECT * FROM ${table}` })),
     { query: "SELECT MAX(version) AS v FROM schema_migrations" },
@@ -254,7 +274,7 @@ export async function exportToJson(sql: Sql): Promise<BackupFile> {
   const version = results[BACKUP_TABLES.length]?.[0]?.v as number | null;
   return {
     schemaVersion: Number(version ?? SCHEMA_HEAD),
-    exportedAt: new Date().toISOString(),
+    exportedAt: now.toISOString(),
     tables,
   };
 }
@@ -459,15 +479,16 @@ export interface PreparedRestore {
   summary: BackupSummary;
   /** Wipe (children first) and re-insert, for one transaction. */
   statements: SqlStatement[];
-  /** Values outside the form bounds (OUT_OF_RANGE): the confirm step asks before a
-   *  restore with any (ADR 0148). */
+  /** Values outside the form bounds (OUT_OF_RANGE, EARLY_DATE): the confirm step asks
+   *  before a restore with any (ADR 0148, ADR 0149). */
   warnings: RestoreIssue[];
 }
 
 /**
  * Check every row of `backup` and build the replacement statements. Throws a
  * RestoreError and touches nothing when the file cannot be restored as a whole; a file
- * whose only issues are out-of-range values comes back with them as `warnings`.
+ * whose only issues are values outside the form bounds comes back with them as
+ * `warnings`.
  */
 export function prepareRestore(
   backup: BackupFile,
@@ -547,9 +568,9 @@ export function prepareRestore(
         ...("range" in e && { range: e.range }),
       });
   }
-  // A refusal after the rules ran lists the out-of-range values too: one table names
-  // everything to fix.
-  if (issues.some((i) => i.rule !== "OUT_OF_RANGE"))
+  // A refusal after the rules ran lists the warnings too: one table names everything to
+  // fix.
+  if (issues.some((i) => !WARNING_RULES.has(i.rule)))
     throw new RestoreError(
       "BACKUP_ROWS_INVALID",
       `The backup has ${issues.length} record(s) the app cannot restore. Nothing was changed.`,
@@ -594,10 +615,13 @@ export class BackupExportError extends Error {
   }
 }
 
-/** What `exportBackup` needs from outside the data layer (ADR 0072, DR-167): the local
- *  calendar day for the file name and the file-save function. */
+/** What `exportBackup` needs from outside the data layer (ADR 0072, DR-167): the one
+ *  clock read of the export, its local calendar day for the file name, and the
+ *  file-save function. */
 export interface ExportDeps {
-  /** Local `yyyy-mm-dd` (lib/day `localIsoDay()`). */
+  /** The export's moment, written as `exportedAt` (ADR 0149 §6). */
+  now: Date;
+  /** The local `yyyy-mm-dd` of `now` (lib/day `localIsoDay(now)`). */
   today: string;
   save: (opts: SaveFileOptions) => Promise<SaveOutcome>;
 }
@@ -609,9 +633,9 @@ export interface ExportDeps {
  */
 export async function exportBackup(
   sql: Sql,
-  { today, save }: ExportDeps,
+  { now, today, save }: ExportDeps,
 ): Promise<ExportOutcome> {
-  const backup = await exportToJson(sql);
+  const backup = await exportToJson(sql, now);
   try {
     return await save({
       filename: `portfolio-backup-${today}.json`,
@@ -701,7 +725,7 @@ export async function writeSafetyBackup(
   const filename = `${prefix}-${stamp(now)}.json`;
   try {
     // Reading the current data is part of the safety backup (ADR 0147).
-    const safetyBackup = await exportToJson(sql);
+    const safetyBackup = await exportToJson(sql, now);
     const json = JSON.stringify(safetyBackup, null, 2);
     // Temp file + rename in `<app config>/backups`, read back (src-tauri/src/files.rs).
     const readBack = await invoke<string>("write_app_backup", {
@@ -720,7 +744,7 @@ export async function writeSafetyBackup(
 
 /** Full restore workflow: check the whole file, write and verify the safety backup,
  *  then replace everything in one transaction. Returns the safety backup's name. Any
- *  out-of-range warnings were shown at the confirm step, so they do not stop it. */
+ *  warnings were shown at the confirm step, so they do not stop it. */
 export async function confirmRestore(
   sql: Sql,
   backup: BackupFile,

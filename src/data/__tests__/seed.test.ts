@@ -41,7 +41,7 @@ describe("seedIfEmpty — first run only (DR-024)", () => {
   it("does not re-seed after restoring a backup with an empty portfolio", async () => {
     sql = openMemorySql();
     await launch();
-    const b = await exportToJson(sql);
+    const b = await exportToJson(sql, new Date());
     await restoreFromJson(
       sql,
       {

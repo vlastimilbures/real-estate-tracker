@@ -149,6 +149,14 @@ describe("row guards", () => {
     expect(isIsoDate("2025-02-29")).toBe(false);
   });
 
+  it("isIsoDate keeps the stored years 0100–9999, below the forms' floor too (ADR 0149)", () => {
+    expect(isIsoDate("0099-12-31")).toBe(false);
+    expect(isIsoDate("0000-01-01")).toBe(false);
+    expect(isIsoDate("0100-01-01")).toBe(true);
+    expect(isIsoDate("1850-01-01")).toBe(true);
+    expect(isIsoDate("9999-12-31")).toBe(true);
+  });
+
   it("one bad row fails the load with a message naming it", async () => {
     const sql = openMemorySql();
     await migrate(sql);

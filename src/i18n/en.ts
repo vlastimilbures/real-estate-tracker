@@ -407,6 +407,16 @@ export const en = {
       `Mortgage from ${date}: a loan term of ${value} years is outside the range the forms accept (${range} years).`,
     outOfRangeHorizon: (value: string, range: string) =>
       `The projection horizon of ${value} years is outside the range the forms accept (${range} years).`,
+    // ADR 0149: a stored date before the forms' floor; `record` from earlyDateRecord.
+    earlyDate: (record: string, date: string, floor: string) =>
+      `${record} ${date} is before ${floor}, the earliest date the forms accept. Check the year for a typo.`,
+    earlyDateRecord: {
+      property: "Purchase date",
+      mortgage: "A mortgage date",
+      valuation: "A valuation date",
+      lease: "A lease date",
+      assumptions: "The base date",
+    },
     assumptions: "Assumptions",
   },
 
@@ -922,6 +932,8 @@ export const en = {
     errInstalmentRequired:
       "Required (or provide loan_term_years to auto-calculate)",
     errImpossibleDate: (v: string) => `"${v}" is not a real calendar date`,
+    errEarlyDate: (v: string, floor: string) =>
+      `"${v}" is before ${floor}, the earliest date the app accepts — check the year for a typo`,
     errDecimalComma: (v: string) =>
       `"${v}" uses a decimal comma — write numbers with a decimal point and no spaces (e.g. 4800000.40)`,
     errNegativeAmount: (v: string) => `Amount "${v}" must not be negative`,
@@ -978,12 +990,13 @@ export const en = {
     restoreWarning:
       "⚠ This will overwrite all current data (properties, mortgages, valuations, leases, assumptions, and scenarios). A safety backup will be saved first.",
     restoreNow: "Restore now",
-    // ADR 0148: values outside the form ranges ask instead of refusing.
+    // ADR 0148, ADR 0149: values the forms refuse (outside a range, a date before 1900)
+    // ask instead of refusing.
     warnOutOfRange: (n: number) =>
       n === 1
-        ? "This backup holds 1 value outside the ranges the forms accept. The app computes with it, and the Data check lists it after the restore. Restore anyway?"
-        : `This backup holds ${n} values outside the ranges the forms accept. The app computes with them, and the Data check lists them after the restore. Restore anyway?`,
-    warningsTitle: "Values outside the form ranges",
+        ? "This backup holds 1 value the forms do not accept. The app computes with it, and the Data check lists it after the restore. Restore anyway?"
+        : `This backup holds ${n} values the forms do not accept. The app computes with them, and the Data check lists them after the restore. Restore anyway?`,
+    warningsTitle: "Values the forms do not accept",
     restoreAnyway: "Restore anyway",
     restoring: "Restoring…",
     errorTitle: "Error",
@@ -1031,6 +1044,7 @@ export const en = {
       "The file must hold exactly one assumptions record",
     issueOutOfRange: (min: string, max: string) =>
       `Must be a whole number from ${min} to ${max}`,
+    issueEarlyDate: (floor: string) => `Must be a date from ${floor}`,
   },
 
   // First-run sample portfolio (ADR 0094).
@@ -1094,7 +1108,7 @@ export const en = {
   forms: {
     required: "Required",
     invalidHint: {
-      date: "Enter a date as dd.mm.yyyy",
+      date: "Enter a date from 01.01.1900 as dd.mm.yyyy",
       money:
         "Enter an amount of 0 or more, e.g. 1 250 000 (a space between thousands)",
       pct: "Enter a percentage, e.g. 4,5",

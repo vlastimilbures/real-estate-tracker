@@ -287,7 +287,7 @@ describe("restore and the sample (ADR 0127)", () => {
     await own.execute(
       "UPDATE properties SET name = 'Lipová' WHERE id = 'lipova'",
     );
-    return exportToJson(own);
+    return exportToJson(own, new Date());
   }
 
   /** A new Mac: the first launch seeded the sample, and its banner was dismissed. */

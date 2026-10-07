@@ -34,7 +34,7 @@ afterAll(() => sql.db.close());
 
 describe("Backup round-trip", () => {
   it("exports the seeded portfolio to a valid BackupFile", async () => {
-    const backup = await exportToJson(sql);
+    const backup = await exportToJson(sql, new Date());
     expect(backup.schemaVersion).toBe(SCHEMA_HEAD);
     expect(typeof backup.exportedAt).toBe("string");
     expect(backup.tables.properties).toHaveLength(3);
@@ -46,7 +46,7 @@ describe("Backup round-trip", () => {
   });
 
   it("restores to identical row counts and engine output", async () => {
-    const backup = await exportToJson(sql);
+    const backup = await exportToJson(sql, new Date());
     const portfolioBefore = await loadPortfolio(sql);
     const assumptionsBefore = await loadAssumptions(sql);
     const snapBefore = portfolioSnapshot(portfolioBefore, assumptionsBefore);
@@ -90,7 +90,7 @@ describe("Backup round-trip", () => {
   });
 
   it("restore is idempotent (second restore from same backup gives same counts)", async () => {
-    const backup = await exportToJson(sql);
+    const backup = await exportToJson(sql, new Date());
     await restoreFromJson(sql, backup, checkInputRules);
     await restoreFromJson(sql, backup, checkInputRules);
     const props = await sql.select<unknown[]>("SELECT * FROM properties");
@@ -120,7 +120,7 @@ describe("exportToJson reads one database state", () => {
     const db = openMemorySql();
     await migrate(db);
     await seedIfEmpty(db);
-    const before = await exportToJson(db);
+    const before = await exportToJson(db, new Date());
     const write = [
       await copyRow(db, "properties", { id: "p-late", name: "Late" }),
       await copyRow(db, "valuations", { id: "v-late", property_id: "p-late" }),
@@ -141,7 +141,7 @@ describe("exportToJson reads one database state", () => {
       selectSnapshot: (st) => afterFirstRead(db.selectSnapshot(st)),
     };
 
-    const file = await exportToJson(racing);
+    const file = await exportToJson(racing, new Date());
 
     expect(wrote).toBe(true);
     expect(() => prepareRestore(file, checkInputRules)).not.toThrow();
@@ -153,7 +153,7 @@ describe("exportToJson reads one database state", () => {
       ...sql,
       selectSnapshot: async (st) => (await sql.selectSnapshot(st)).slice(0, -2),
     };
-    await expect(exportToJson(short)).rejects.toThrow(
+    await expect(exportToJson(short, new Date())).rejects.toThrow(
       "the snapshot returned 6 of 8 result sets",
     );
   });
@@ -173,14 +173,14 @@ describe("exportToJson reads one database state", () => {
         return sql.selectSnapshot(st);
       },
     };
-    await exportToJson(counting);
+    await exportToJson(counting, new Date());
     expect({ snapshots, selects }).toEqual({ snapshots: 1, selects: 0 });
   });
 });
 
 describe("validateBackup", () => {
   it("accepts a valid backup object", async () => {
-    const backup = await exportToJson(sql);
+    const backup = await exportToJson(sql, new Date());
     expect(() => validateBackup(backup)).not.toThrow();
   });
 
@@ -210,7 +210,7 @@ describe("validateBackup", () => {
 describe("restoreFromJson — refuses a backup missing a required table", () => {
   it("throws AND leaves the live assumptions row intact (no destructive wipe)", async () => {
     const live = await loadAssumptions(sql); // the seeded, live assumptions
-    const good = await exportToJson(sql);
+    const good = await exportToJson(sql, new Date());
     // A backup whose `assumptions` table key is absent at runtime (corrupt/partial file).
     const bad = { ...good, tables: { ...good.tables } };
     delete (bad.tables as Record<string, unknown>).assumptions;
@@ -238,7 +238,7 @@ describe("restoreFromJson — rolls back a partial/failing restore", () => {
     // Valid backup that passes the pre-wipe guards (table keys, column whitelist, scalar
     // cells), but corrupt one late-table row so it fails on INSERT (NOT NULL → sqlite
     // rejects it) partway through the wipe.
-    const good = await exportToJson(sql);
+    const good = await exportToJson(sql, new Date());
     const leases = (good.tables.leases as Record<string, unknown>[]).map(
       (r) => ({ ...r }),
     );
@@ -359,7 +359,7 @@ async function columnsAddedAfterV1(): Promise<Record<string, string[]>> {
 describe("restoreFromJson — column whitelist (DR-017)", () => {
   it("rejects a backup whose row keys are not known columns, before touching the DB", async () => {
     const db = await freshSeeded();
-    const good = await exportToJson(db);
+    const good = await exportToJson(db, new Date());
     const before = await rowCounts(db);
     const scenarios = [
       {
@@ -384,7 +384,7 @@ describe("restoreFromJson — column whitelist (DR-017)", () => {
 
   it("rejects a non-scalar cell (object/array) before touching the DB", async () => {
     const db = await freshSeeded();
-    const good = await exportToJson(db);
+    const good = await exportToJson(db, new Date());
     const before = await rowCounts(db);
     for (const cell of [{ nested: 1 }, [1, 2], true]) {
       const leases = good.tables.leases.map((r) => ({ ...r }));
@@ -417,7 +417,7 @@ describe("restoreFromJson — column whitelist (DR-017)", () => {
     await db.execute(
       `INSERT INTO scenarios (id, name, overrides, created_at) VALUES ('s1', 'Stress', '{"version":1,"appreciationPa":"0.01"}', '2026-01-05')`,
     );
-    const good = await exportToJson(db);
+    const good = await exportToJson(db, new Date());
     const before = await rowCounts(db);
     for (const [table, n] of Object.entries(before))
       expect(n, `${table} has a row to check`).toBeGreaterThan(0);
@@ -464,7 +464,11 @@ describe("restoreFromJson — column whitelist (DR-017)", () => {
       "SELECT id, own_cash, transaction_costs, initial_works, funding_note FROM properties ORDER BY id";
     const before = await db.select<Record<string, unknown>>(cols);
     expect(before.filter((r) => r.own_cash !== null)).toHaveLength(1);
-    await restoreFromJson(db, await exportToJson(db), checkInputRules);
+    await restoreFromJson(
+      db,
+      await exportToJson(db, new Date()),
+      checkInputRules,
+    );
     expect(await db.select<Record<string, unknown>>(cols)).toEqual(before);
     db.db.close();
   });

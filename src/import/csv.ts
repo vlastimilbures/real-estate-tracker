@@ -6,8 +6,8 @@
 // error names the physical file line and column, so it can be found in an editor.
 import Papa from "papaparse";
 import { D, ceilCzk } from "../lib/money";
-import { instalmentFor } from "../engine";
-import { isIsoDate } from "../data/guards";
+import { calendarDay, instalmentFor } from "../engine";
+import { DATE_FLOOR_YEAR } from "../lib/day";
 import { inRange, INT_RANGES, type IntRange } from "../lib/intRanges";
 import { PLAIN_DECIMAL } from "../lib/decimalText";
 import { propertyKey } from "../lib/propertyKey";
@@ -22,6 +22,8 @@ export type CsvErrorCode =
   | { code: "required" }
   | { code: "invalidDate"; value: string }
   | { code: "impossibleDate"; value: string }
+  /** Before 01.01.1900, the floor for new dates (ADR 0149 §5). */
+  | { code: "earlyDate"; value: string }
   | { code: "invalidNumber"; value: string }
   | { code: "decimalComma"; value: string }
   | { code: "negativeAmount"; value: string }
@@ -271,9 +273,13 @@ class RowCtx {
   private date(field: string, v: string): string | null {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(v))
       return this.fail(field, { code: "invalidDate", value: v });
+    const [y, m, d] = v.split("-").map(Number) as [number, number, number];
     // A real calendar date — 2026-02-31 is refused, not rolled over (DR-035).
-    if (!isIsoDate(v))
+    if (!calendarDay(y, m, d))
       return this.fail(field, { code: "impossibleDate", value: v });
+    // New dates start on 01.01.1900, as in the form (ADR 0149 §5).
+    if (y < DATE_FLOOR_YEAR)
+      return this.fail(field, { code: "earlyDate", value: v });
     return v;
   }
 

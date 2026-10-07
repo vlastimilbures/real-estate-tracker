@@ -78,12 +78,12 @@ describe("backup recency in app_meta (ADR 0110)", () => {
 
   it("a backup file does not carry the recency keys", async () => {
     await recordBackup(sql, "2026-09-12T08:30:00.000Z", "a.json");
-    const backup = await exportToJson(sql);
+    const backup = await exportToJson(sql, new Date());
     expect(Object.keys(backup.tables)).not.toContain("app_meta");
   });
 
   it("a restore keeps the local last backup, even from a file with a forged app_meta", async () => {
-    const old = await exportToJson(sql);
+    const old = await exportToJson(sql, new Date());
     await recordBackup(sql, "2026-10-01T10:00:00.000Z", "local.json");
     const forged: BackupFile = {
       ...old,

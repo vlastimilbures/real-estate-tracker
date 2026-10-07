@@ -108,7 +108,7 @@ async function propertyCount(): Promise<number> {
 
 /** A valid backup holding an empty portfolio — restoring it would wipe everything. */
 async function emptyBackup(): Promise<BackupFile> {
-  const b = await exportToJson(sql);
+  const b = await exportToJson(sql, new Date());
   return {
     ...b,
     tables: {
@@ -284,7 +284,7 @@ describe("chooseRestoreFile — the picked backup (DR-138)", () => {
   it("a picked file is checked completely and named", async () => {
     rust.openPick = {
       name: "my-backup.json",
-      text: JSON.stringify(await exportToJson(sql)),
+      text: JSON.stringify(await exportToJson(sql, new Date())),
     };
     const picked = await chooseRestoreFile(checkInputRules);
     expect(picked?.file).toBe("my-backup.json");
@@ -302,8 +302,8 @@ describe("chooseRestoreFile — the picked backup (DR-138)", () => {
 
 describe("exportBackup — honest outcome in Tauri (DR-026)", () => {
   // As the store action wires it (src/state/portfolioStore.ts).
-  const exportWithAppDeps = (s: TestSql) =>
-    exportBackup(s, { today: localIsoDay(), save: saveFile });
+  const exportWithAppDeps = (s: TestSql, now = new Date()) =>
+    exportBackup(s, { now, today: localIsoDay(now), save: saveFile });
 
   beforeEach(() => vi.stubGlobal("window", { __TAURI_INTERNALS__: {} }));
   afterEach(() => vi.unstubAllGlobals());
@@ -350,5 +350,15 @@ describe("exportBackup — honest outcome in Tauri (DR-026)", () => {
     });
     const json = files.get("/Users/me/my-backup.json")!;
     expect((JSON.parse(json) as BackupFile).tables.properties).toHaveLength(3);
+  });
+
+  // ADR 0149 §6: one clock read names the file and stamps `exportedAt`.
+  it("dates the file name and exportedAt from the same moment", async () => {
+    rust.savePick = "/Users/me/my-backup.json";
+    const now = new Date(2026, 9, 1, 23, 59, 30); // just before local midnight
+    await exportWithAppDeps(sql, now);
+    expect(suggestedName()).toBe("portfolio-backup-2026-10-01.json");
+    const json = files.get("/Users/me/my-backup.json")!;
+    expect((JSON.parse(json) as BackupFile).exportedAt).toBe(now.toISOString());
   });
 });

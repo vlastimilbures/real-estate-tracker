@@ -619,12 +619,16 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     loadSample: () => exclusive(loadSample),
     exportBackup: async () => {
       const writesBefore = writes;
+      // One clock read names the file and stamps `exportedAt` (ADR 0149 §6).
+      const now = new Date();
       const outcome = await exportBackup(requireSql(), {
-        today: localIsoDay(),
+        now,
+        today: localIsoDay(now),
         save: saveFile,
       });
       if (outcome.kind !== "cancelled") {
         // The file is saved; failing to record it must not turn that into an error.
+        // "Last backup" is the time the file was saved, after the dialog (ADR 0110).
         const at = new Date().toISOString();
         await exclusive(
           (sql) =>

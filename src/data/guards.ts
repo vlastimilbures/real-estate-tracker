@@ -9,6 +9,7 @@
 import { D, type Decimal } from "../lib/money";
 import { PLAIN_DECIMAL } from "../lib/decimalText";
 import {
+  calendarDay,
   isoDate,
   money,
   rate,
@@ -35,17 +36,17 @@ function invalid(ref: RowRef, column: string, problem: string): never {
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-/** True for a real calendar date in ISO yyyy-mm-dd form (no 2026-02-31 roll-over). */
+/** The earliest year a stored date may have. The guard checks shape only, so this is not
+ *  the forms' 1900 floor: a database holding an earlier date keeps loading (ADR 0149 §5). */
+const STORED_MIN_YEAR = 100;
+
+/** True for a real calendar date in ISO yyyy-mm-dd form (no 2026-02-31 roll-over) from
+ *  year 0100 on. */
 export function isIsoDate(v: string): boolean {
   const m = ISO_DATE.exec(v);
   if (!m) return false;
   const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
-  const date = new Date(Date.UTC(y, mo - 1, d));
-  return (
-    date.getUTCFullYear() === y &&
-    date.getUTCMonth() === mo - 1 &&
-    date.getUTCDate() === d
-  );
+  return y >= STORED_MIN_YEAR && calendarDay(y, mo, d) !== null;
 }
 
 /** The exponent form decimal.js `toString()` writes for very small or large values

@@ -48,7 +48,9 @@ off-by-one) was made in one copy of the helper, and five copies exist.
    not only when the picked value does, so "Today" after midnight shows the new day.
 5. **A 1900 floor for new dates; stored dates only warn** (D6 item 5 A, owner 2026-10-07):
    - One date constructor builds every calendar day from year, month and day with the full
-     year (no two-digit mapping) and refuses a day that does not exist.
+     year (no two-digit mapping) and refuses a day that does not exist. There is one per
+     layer: the engine's (`utc`, `calendarDay`) and a twin in `src/lib/day.ts`, because lib
+     and the engine may not import each other; a test checks that the two agree.
    - The form and CSV import refuse a date before 01.01.1900, with a message that names the
      floor.
    - Loading the database does not apply the floor: the database guard checks only that a

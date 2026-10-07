@@ -47,7 +47,7 @@ async function edited(
   table: string,
   edit: (rows: Rows) => Rows,
 ): Promise<BackupFile> {
-  const b = await exportToJson(sql);
+  const b = await exportToJson(sql, new Date());
   const rows = (b.tables[table] as Rows).map((r) => ({ ...r }));
   return { ...b, tables: { ...b.tables, [table]: edit(rows) } };
 }
@@ -83,7 +83,7 @@ describe("stored out-of-range values ask at restore (ADR 0148 §1)", () => {
     const { portfolio, assumptions } = await loadState(sql);
     expect(validateInputs(portfolio, assumptions)).toEqual([]);
 
-    const backup = await exportToJson(sql);
+    const backup = await exportToJson(sql, new Date());
     expect(() => prepareRestore(backup, checkInputRules)).not.toThrow();
     expect(prepareRestore(backup, checkInputRules)).toMatchObject({
       warnings: [

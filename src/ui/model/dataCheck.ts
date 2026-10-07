@@ -23,6 +23,12 @@ import type { Dictionary } from "../../i18n";
 import { fmtCzk, fmtDate } from "../../lib/format";
 import { outOfRangeFields, type IntRange } from "../../lib/intRanges";
 import {
+  DATE_FLOOR,
+  earlyDateFields,
+  type DateField,
+  type EarlyDateField,
+} from "../../lib/day";
+import {
   loanWarnings,
   loanWarningText,
   type LoanWarning,
@@ -75,6 +81,14 @@ export type DataFinding =
       value: number;
       range: IntRange;
       loanStart?: IsoDate;
+    }
+  /** A stored date before 01.01.1900, the earliest the forms accept (ADR 0149 §5): an
+   *  earlier CSV import kept it, and a restore asks about it. `date` is the earliest. */
+  | {
+      kind: "earlyDate";
+      entity: EarlyDateField["entity"];
+      field: DateField;
+      date: Date;
     };
 
 /** A property's findings: "needs attention" (counted) and "using portfolio defaults". */
@@ -110,9 +124,17 @@ export function propertyDataCheck(
   const own = <T extends { propertyId: string }>(rows: T[]) =>
     rows.filter((r) => r.propertyId === property.id);
   // Stored values, not dated: listed at any as-of date.
-  const outOfRange = rangeFindings(property, own(portfolio.mortgages));
+  const stored = [
+    ...rangeFindings(property, own(portfolio.mortgages)),
+    ...earlyDateFindings({
+      properties: [property],
+      mortgages: own(portfolio.mortgages),
+      valuations: own(portfolio.valuations),
+      leases: own(portfolio.leases),
+    }),
+  ];
   if (property.purchaseDate.getTime() > asOf.getTime())
-    return { attention: outOfRange, defaults: fundingOf(property, baseDate) };
+    return { attention: stored, defaults: fundingOf(property, baseDate) };
   const attention: DataFinding[] = [];
 
   const valuation = selectValuation(own(portfolio.valuations), asOf);
@@ -150,7 +172,7 @@ export function propertyDataCheck(
 
   for (const w of loanWarnings(own(portfolio.mortgages), asOf))
     if (w.kind === "fixationEnded") attention.push(w);
-  attention.push(...outOfRange);
+  attention.push(...stored);
 
   return {
     attention,
@@ -180,17 +202,37 @@ function rangeFindings(
   );
 }
 
-/** The portfolio's own findings (ADR 0148): a stored projection horizon outside the form
- *  range, as a row without a property. */
-export function portfolioDataCheck(horizonYears: number): DataCheckItem[] {
-  return outOfRangeFields(
-    { properties: [], mortgages: [] },
-    { horizonYears },
-  ).map(({ field, value, range }) => ({
-    propertyId: null,
-    name: null,
-    finding: { kind: "outOfRange", field, value, range },
+/** Stored dates before the forms' floor (ADR 0149 §5). */
+function earlyDateFindings(
+  rows: Parameters<typeof earlyDateFields>[0],
+  assumptions?: { baseDate: Date },
+): DataFinding[] {
+  return earlyDateFields(rows, assumptions).map(({ entity, field, date }) => ({
+    kind: "earlyDate",
+    entity,
+    field,
+    date,
   }));
+}
+
+/** The portfolio's own findings, as rows without a property: a stored projection horizon
+ *  outside the form range (ADR 0148) and a base date before the date floor (ADR 0149). */
+export function portfolioDataCheck(assumptions: {
+  horizonYears: number;
+  baseDate: Date;
+}): DataCheckItem[] {
+  const findings: DataFinding[] = [
+    ...outOfRangeFields({ properties: [], mortgages: [] }, assumptions).map(
+      ({ field, value, range }): DataFinding => ({
+        kind: "outOfRange",
+        field,
+        value,
+        range,
+      }),
+    ),
+    ...earlyDateFindings({ properties: [], mortgages: [] }, assumptions),
+  ];
+  return findings.map((finding) => ({ propertyId: null, name: null, finding }));
 }
 
 /** No own cash recorded (#178): a record with only costs, works or a note counts too. */
@@ -238,6 +280,15 @@ export function dataCheckItems(
   return { attention: rows("attention"), defaults: rows("defaults") };
 }
 
+/** Where a stored date is fixed, by its record. */
+const EARLY_DATE_FIX: Record<EarlyDateField["entity"], DataCheckFix> = {
+  property: "edit",
+  mortgage: "financing",
+  valuation: "records",
+  lease: "records",
+  assumptions: "assumptions",
+};
+
 /** Where the finding is fixed. */
 export function findingFix(f: DataFinding): DataCheckFix {
   switch (f.kind) {
@@ -261,6 +312,8 @@ export function findingFix(f: DataFinding): DataCheckFix {
         : f.field === "horizonYears"
           ? "assumptions"
           : "financing";
+    case "earlyDate":
+      return EARLY_DATE_FIX[f.entity];
   }
 }
 
@@ -299,6 +352,12 @@ export function findingText(
       );
     case "fundingUnknown":
       return f.future ? d.fundingUnknownFuture : d.fundingUnknown;
+    case "earlyDate":
+      return d.earlyDate(
+        d.earlyDateRecord[f.entity],
+        fmtDate(f.date),
+        fmtDate(DATE_FLOOR),
+      );
     case "outOfRange": {
       const n = (v: number) => fmtCzk(v, { suffix: false });
       const value = n(f.value);

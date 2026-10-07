@@ -48,7 +48,10 @@ export function DataCheckPanel({
     baseDate,
   );
   // The portfolio's own rows come first (ADR 0148).
-  const attention = [...portfolioDataCheck(horizonYears), ...items.attention];
+  const attention = [
+    ...portfolioDataCheck({ horizonYears, baseDate }),
+    ...items.attention,
+  ];
   const { defaults } = items;
   const empty = attention.length + defaults.length === 0;
   const open = !empty && (choice ?? attention.length > 0);

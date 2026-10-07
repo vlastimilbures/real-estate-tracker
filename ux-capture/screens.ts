@@ -25,13 +25,39 @@ export interface Screen {
 // Resolved from the repo root (the cwd of `pnpm ux:capture`).
 const fixture = (name: string) => path.resolve("ux-capture", "fixtures", name);
 
+type BackupTables = Record<string, Record<string, unknown>[]>;
+
 /**
  * Settings → Backup: exports the sample, edits the file to a legacy 60-year fixation and a
- * 150-year horizon, and picks it for restore (ADR 0148). The browser has no Tauri file
- * dialog: the `open_backup_file` and `write_app_backup` commands are answered the way the
- * Rust side does, after boot (the database adapter is chosen at boot).
+ * 150-year horizon, and picks it for restore (ADR 0148).
  */
 async function pickOutOfRangeBackup(ux: Ux) {
+  await pickEditedBackup(ux, (tables) => {
+    const [block] = tables.mortgage_blocks ?? [];
+    const [assumptions] = tables.assumptions ?? [];
+    if (!block || !assumptions) throw new Error("the sample has no mortgage");
+    block.fixation_years = 60;
+    assumptions.horizon_years = 150;
+  });
+}
+
+/** Settings → Backup: exports the sample, edits the first property's purchase date to
+ *  1850 (an earlier CSV import could store it), and picks it for restore (ADR 0149). */
+async function pickEarlyDateBackup(ux: Ux) {
+  await pickEditedBackup(ux, (tables) => {
+    const [property] = tables.properties ?? [];
+    if (!property) throw new Error("the sample has no property");
+    property.purchase_date = "1850-01-01";
+  });
+}
+
+/**
+ * Settings → Backup: exports the sample, edits the file and picks it for restore, up to
+ * the confirm step that asks to restore anyway. The browser has no Tauri file dialog:
+ * the `open_backup_file` and `write_app_backup` commands are answered the way the Rust
+ * side does, after boot (the database adapter is chosen at boot).
+ */
+async function pickEditedBackup(ux: Ux, edit: (tables: BackupTables) => void) {
   await boot(ux.page);
   await settingsTab(ux, "backup");
   const download = ux.page.waitForEvent("download");
@@ -39,13 +65,9 @@ async function pickOutOfRangeBackup(ux: Ux) {
   const file = await (await download).path();
   const { readFile } = await import("node:fs/promises");
   const backup = JSON.parse(await readFile(file, "utf8")) as {
-    tables: Record<string, Record<string, unknown>[]>;
+    tables: BackupTables;
   };
-  const [block] = backup.tables.mortgage_blocks ?? [];
-  const [assumptions] = backup.tables.assumptions ?? [];
-  if (!block || !assumptions) throw new Error("the sample has no mortgage");
-  block.fixation_years = 60;
-  assumptions.horizon_years = 150;
+  edit(backup.tables);
   await ux.page.evaluate((text) => {
     (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
       invoke: (cmd: string, args: { json?: string }) =>
@@ -1146,6 +1168,39 @@ export const SCREENS: Screen[] = [
       ).toBeVisible();
       await p.scrollIntoViewIfNeeded();
       await ux.capture("68-data-check-out-of-range", { fullPage: false });
+    },
+  },
+  {
+    id: "69-restore-early-date",
+    desc: "Restore confirm step: a stored date before 1900 listed, Restore anyway (ADR 0149)",
+    route: "settings",
+    run: async (ux) => {
+      await pickEarlyDateBackup(ux);
+      await expect(
+        ux.page.getByRole("region", { name: ux.t.backup.warningsTitle }),
+      ).toBeVisible();
+      await ux.capture("69-restore-early-date");
+    },
+  },
+  {
+    id: "69b-data-check-early-date",
+    desc: "Dashboard Data check after Restore anyway: the property's purchase date before 1900 (ADR 0149)",
+    route: "dashboard",
+    run: async (ux) => {
+      await pickEarlyDateBackup(ux);
+      await ux.page
+        .getByRole("button", { name: ux.t.backup.restoreAnyway })
+        .click();
+      await expect(
+        ux.page.getByRole("button", { name: ux.t.backup.chooseFile }),
+      ).toBeVisible();
+      await nav(ux, "dashboard");
+      const p = panel(ux, ux.t.dataCheck.title);
+      await expect(
+        p.getByText(/01\.01\.1850/, { exact: false }).first(),
+      ).toBeVisible();
+      await p.scrollIntoViewIfNeeded();
+      await ux.capture("69b-data-check-early-date", { fullPage: false });
     },
   },
   {

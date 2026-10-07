@@ -2,7 +2,8 @@
 // only the rule and, for OUT_OF_RANGE, the allowed range (ADR 0086).
 import type { Dictionary } from "../../i18n";
 import type { RestoreIssue } from "../../state/backup";
-import { fmtCzk } from "../../lib/format";
+import { fmtCzk, fmtDate } from "../../lib/format";
+import { DATE_FLOOR } from "../../lib/day";
 
 export function restoreIssueText(t: Dictionary, i: RestoreIssue): string {
   switch (i.rule) {
@@ -19,6 +20,8 @@ export function restoreIssueText(t: Dictionary, i: RestoreIssue): string {
         v === undefined ? "—" : fmtCzk(v, { suffix: false });
       return t.backup.issueOutOfRange(n(i.range?.min), n(i.range?.max));
     }
+    case "EARLY_DATE":
+      return t.backup.issueEarlyDate(fmtDate(DATE_FLOOR));
     default:
       return t.inputRules[i.rule];
   }
