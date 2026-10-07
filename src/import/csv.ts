@@ -9,6 +9,8 @@ import { D, ceilCzk } from "../lib/money";
 import { instalmentFor } from "../engine";
 import { isIsoDate } from "../data/guards";
 import { inRange, INT_RANGES, type IntRange } from "../lib/intRanges";
+import { PLAIN_DECIMAL } from "../lib/decimalText";
+import { propertyKey } from "../lib/propertyKey";
 
 /** D-53: per-file limits, checked before any row is validated. */
 export const CSV_MAX_BYTES = 2 * 1024 * 1024;
@@ -102,11 +104,6 @@ export interface ParsedMortgageRow extends Located {
   loan_term_years: number | null; // optional; blank ⇒ derive term from instalment
   /** Optional; blank ⇒ a re-import keeps the stored value (DR-129). */
   contract_maturity_date: string | null;
-}
-
-/** The one rule for matching property names (D-55): trimmed, case-insensitive. */
-export function propertyKey(name: string): string {
-  return name.trim().toLowerCase();
 }
 
 // --- reading the file ---
@@ -295,7 +292,7 @@ class RowCtx {
   private decimal(field: string, v: string, rule: DecimalRule): string | null {
     // Plain decimal notation only: no exponent, hex, `+`, `Infinity` or grouping
     // (DR-036). Parsed straight from the string — never via Number() (CLAUDE.md §5).
-    if (!DECIMAL.test(v)) {
+    if (!PLAIN_DECIMAL.test(v)) {
       const code = DECIMAL_COMMA.test(v) ? "decimalComma" : "invalidNumber";
       return this.fail(field, { code, value: v });
     }
@@ -364,7 +361,6 @@ class RowCtx {
 /** `amount`: money, never negative · `unitRate`: a fraction in 0–1 · `any`: signed. */
 type DecimalRule = "amount" | "unitRate" | "any";
 
-const DECIMAL = /^-?\d+(\.\d+)?$/;
 /** Czech-Excel style `1 234,5` / `0,0169` (D-49). */
 const DECIMAL_COMMA = /^-?\d{1,3}([ \u00A0]\d{3})*,\d+$|^-?\d+,\d+$/;
 

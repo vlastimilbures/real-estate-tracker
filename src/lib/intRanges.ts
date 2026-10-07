@@ -17,3 +17,50 @@ export const INT_RANGES = {
 
 export const inRange = (n: number, r: IntRange): boolean =>
   n >= r.min && n <= r.max;
+
+/** A bounded whole-number field and where it is stored. */
+export type BoundedField = keyof typeof INT_RANGES;
+
+/** One stored whole-number value outside INT_RANGES. */
+export interface OutOfRangeField {
+  entity: "assumptions" | "property" | "mortgage";
+  id: string | undefined;
+  field: BoundedField;
+  value: number;
+  range: IntRange;
+}
+
+/** Every bounded whole-number field outside INT_RANGES (unset optional fields pass).
+ *  Structural types: lib never imports the engine, whose Portfolio and Assumptions fit. */
+export function outOfRangeFields(
+  portfolio: {
+    properties: readonly { id: string; sizeM2?: number | undefined }[];
+    mortgages: readonly {
+      id: string;
+      fixationYears: number;
+      loanTermYears?: number | undefined;
+    }[];
+  },
+  assumptions?: { horizonYears: number },
+): OutOfRangeField[] {
+  const out: OutOfRangeField[] = [];
+  const check = (
+    entity: OutOfRangeField["entity"],
+    id: string | undefined,
+    field: BoundedField,
+    value: number | undefined,
+  ) => {
+    const range = INT_RANGES[field];
+    if (value !== undefined && !inRange(value, range))
+      out.push({ entity, id, field, value, range });
+  };
+  if (assumptions)
+    check("assumptions", undefined, "horizonYears", assumptions.horizonYears);
+  for (const p of portfolio.properties)
+    check("property", p.id, "sizeM2", p.sizeM2);
+  for (const m of portfolio.mortgages) {
+    check("mortgage", m.id, "fixationYears", m.fixationYears);
+    check("mortgage", m.id, "loanTermYears", m.loanTermYears);
+  }
+  return out;
+}
