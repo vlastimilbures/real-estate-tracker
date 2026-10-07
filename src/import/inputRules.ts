@@ -18,8 +18,8 @@ function rangeProblems(
   assumptions: Assumptions | undefined,
 ): RangeProblem[] {
   return outOfRangeFields(portfolio, assumptions).map(
-    ({ entity, id, field, range }) => ({
-      code: "OUT_OF_RANGE",
+    ({ entity, id, field, range, beyondLimit }) => ({
+      code: beyondLimit ? "BEYOND_LIMIT" : "OUT_OF_RANGE",
       entity,
       id,
       field,

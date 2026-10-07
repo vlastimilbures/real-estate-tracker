@@ -54,7 +54,8 @@ import type { IntRange } from "../lib/intRanges";
  *  Restore-only: the engine itself is open-ended, so a restore warns and asks instead of
  *  refusing (ADR 0148). */
 export interface RangeProblem {
-  code: "OUT_OF_RANGE";
+  /** BEYOND_LIMIT: above ten times the form maximum, so restore refuses (ADR 0148). */
+  code: "OUT_OF_RANGE" | "BEYOND_LIMIT";
   entity: ValidationEntity;
   id?: string | undefined;
   field: string;
@@ -196,8 +197,9 @@ export interface RestoreIssue {
     | "UNREADABLE_VALUE"
     | "DUPLICATE_KEY"
     | "MISSING_ASSUMPTIONS"
-    | "OUT_OF_RANGE";
-  /** The allowed range of an OUT_OF_RANGE field. */
+    | "OUT_OF_RANGE"
+    | "BEYOND_LIMIT";
+  /** The allowed range of an OUT_OF_RANGE or BEYOND_LIMIT field. */
   range?: IntRange;
 }
 

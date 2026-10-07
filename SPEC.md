@@ -157,7 +157,8 @@ forms, the CSV importer and backup restore — bounds the whole-number fields it
 0–50 years, loan term 1–50 years, property size 1–10 000 m². Restore reports a value outside
 its range as `OUT_OF_RANGE` with the allowed range (a restore-only rule). It is a warning, not
 a refusal: the confirm step lists it and asks "Restore anyway" (ADR 0148), so a backup the app
-wrote does not fail on a bound alone. The engine (`HORIZON_NOT_POSITIVE`, `INVALID_TERM`) and the database
+wrote does not fail on a bound alone. Above ten times the maximum a value stays a refusal
+(`BEYOND_LIMIT`, ADR 0148). The engine (`HORIZON_NOT_POSITIVE`, `INVALID_TERM`) and the database
 CHECK constraints have no upper bound, so a database that already holds an out-of-range value
 still loads; the Data check lists it.
 

@@ -160,24 +160,21 @@ describe("stored out-of-range values ask at restore (ADR 0148 §1)", () => {
     ["properties", "size_m2", 100_000],
   ];
   for (const [table, column, limit] of LIMITS)
-    it.fails(
-      `${table}.${column} above ${limit} is refused, at ${limit} it asks (#133)`,
-      async () => {
-        const set = (n: number) =>
-          edited(table, (rows) =>
-            rows.map((r, i) => (i === 0 ? { ...r, [column]: n } : r)),
-          );
-        const e = refusal(await set(limit + 1));
-        expect(e.issues.map((i) => `${i.column}:${i.rule}`)).toEqual([
-          `${column}:BEYOND_LIMIT`,
-        ]);
-        expect(
-          prepareRestore(await set(limit), checkInputRules).warnings.map(
-            (i) => `${i.column}:${i.rule}`,
-          ),
-        ).toEqual([`${column}:OUT_OF_RANGE`]);
-      },
-    );
+    it(`${table}.${column} above ${limit} is refused, at ${limit} it asks (#133)`, async () => {
+      const set = (n: number) =>
+        edited(table, (rows) =>
+          rows.map((r, i) => (i === 0 ? { ...r, [column]: n } : r)),
+        );
+      const e = refusal(await set(limit + 1));
+      expect(e.issues.map((i) => `${i.column}:${i.rule}`)).toEqual([
+        `${column}:BEYOND_LIMIT`,
+      ]);
+      expect(
+        prepareRestore(await set(limit), checkInputRules).warnings.map(
+          (i) => `${i.column}:${i.rule}`,
+        ),
+      ).toEqual([`${column}:OUT_OF_RANGE`]);
+    });
 });
 
 describe("restore checks the flag columns (ADR 0148 §3)", () => {

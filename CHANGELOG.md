@@ -246,6 +246,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from an older version, is no longer refused (ADR 0148, #133). The confirm step lists the
   values and asks to **Restore anyway**. Before, the app refused its own exports and the
   safety copy it saved before a restore or Clear sample, so a restore could not be undone.
+  A value above ten times the range (for example a 2 000-year horizon) is still refused.
 - Restore checks a property's garage and active flags before anything is changed (ADR 0148,
   #133). A bad flag passed the confirm step, and the restore then failed with "A yes/no
   value is not valid" after the safety copy was saved; the issue table now names the
