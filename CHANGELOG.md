@@ -242,6 +242,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Excel exports show text exactly as typed: a scenario named `+2 % rates` was exported as
+  `'+2 % rates` (ADR 0145, #139). Text that starts with `=`, `+`, `-` or `@` now gets the
+  Text cell format instead of an apostrophe, so re-entering it in Excel keeps it as text. A
+  figure with no finite value (for example a CAGR that cannot be computed) is an empty cell;
+  before, it was written as `NaN`, which is not a valid number in the file.
 - The Dashboard's financing panel names the period of its interest-saved figure: "Interest
   saved by prepayments over the loans' remaining life (nominal)" (ADR 0144, #172). Before,
   "Interest saved by prepayments (nominal)" next to "Total interest (Yrs 1–N)" read as the same N years.

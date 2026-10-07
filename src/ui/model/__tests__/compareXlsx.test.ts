@@ -15,11 +15,7 @@ import { D } from "../../../lib/money";
 import { fmtCzkM, fmtMultiple, fmtPct } from "../../../lib/format";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
-import {
-  compareKpiRows,
-  mergeCompareMetric,
-  type CompareResult,
-} from "../compare";
+import { compareKpiRows, type CompareResult } from "../compare";
 import { compareWorkbook } from "../compareXlsx";
 import {
   buildWorkbook,
@@ -130,23 +126,76 @@ describe("compareWorkbook — the numbers match the compare (acceptance)", () =>
         });
       });
     });
+  }
 
+  // Written cells of the first, second and last year: [year, base, shock, crash] (#139).
+  const chartCells: Record<Mode, [CellKind, (number | null)[][]][]> = {
+    nominal: [
+      [
+        "money",
+        [
+          [2026, 19214595, 19214595, 13468595],
+          [2027, 20680263, 20680263, 14704423],
+          [2056, 93182810, 93182810, 74546248],
+        ],
+      ],
+      [
+        "money",
+        [
+          [2026, 0, 0, 0],
+          [2027, -32835, -35589, -32835],
+          [2056, 1463571, 1445654, 1463571],
+        ],
+      ],
+      [
+        "percent",
+        [
+          [2026, 0.331, 0.331, 0.414],
+          [2027, 0.308, 0.308, 0.385],
+          [2056, 0, 0, 0],
+        ],
+      ],
+    ],
+    real: [
+      [
+        "money",
+        [
+          [2026, 19214595, 19214595, 13468595],
+          [2027, 20175866, 19060150, 14345778],
+          [2056, 44424223, 37454347, 35539379],
+        ],
+      ],
+      [
+        "money",
+        [
+          [2026, 0, 0, 0],
+          [2027, -32034, -32801, -32034],
+          [2056, 697747, 581073, 697747],
+        ],
+      ],
+      [
+        "percent",
+        [
+          [2026, 0.331, 0.331, 0.414],
+          [2027, 0.308, 0.308, 0.385],
+          [2056, 0, 0, 0],
+        ],
+      ],
+    ],
+  };
+
+  for (const mode of ["nominal", "real"] as const) {
     it(`${mode}: chart sheets hold the plotted rows, whole Kč and LTV fractions`, () => {
       const { sheets } = compareWorkbook(en, results, mode);
-      const plotted = [
-        mergeCompareMetric(results, mode, (y) => y.equity),
-        mergeCompareMetric(results, mode, (y) => y.netCashFlow),
-        mergeCompareMetric(results, mode, (y) => y.ltv),
-      ];
-      const kinds: CellKind[] = ["money", "money", "percent"];
       sheets.slice(1).forEach((s, k) => {
-        s.rows.forEach((cells, t) => {
-          results.forEach((_, j) => {
-            const c = cells[j + 1]!;
-            expect(c.kind).toBe(kinds[k]);
-            expect(c.value).toBe(plotted[k]![t]![`s${j}`]);
-          });
-        });
+        const [kind, expected] = chartCells[mode][k]!;
+        expect(s.rows).toHaveLength(31);
+        const written = [0, 1, 30].map((t) =>
+          s.rows[t]!.map((c) => cellValue(c.kind, c.value)),
+        );
+        expect(written, s.name).toEqual(expected);
+        for (const cells of s.rows)
+          expect(cells.slice(1).map((c) => c.kind)).toEqual([kind, kind, kind]);
       });
     });
   }
