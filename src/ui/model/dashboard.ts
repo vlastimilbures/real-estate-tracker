@@ -3,6 +3,7 @@
 import type { Decimal } from "../../lib/money";
 import {
   cpiAt,
+  edate,
   lastGridMonthOnOrBefore,
   portfolioSnapshotAtYear,
   propertySnapshotAtYear,
@@ -14,6 +15,7 @@ import type {
   PortfolioSnapshot,
   PortfolioKPIs,
   ProjectionYear,
+  Property,
   PropertySnapshot,
 } from "../../engine";
 import { fmtDate } from "../../lib/format";
@@ -129,19 +131,37 @@ export function asOfView(
 }
 
 /**
+ * Whether a property counts as owned under `basis` (ADR 0150): in a projection year, by
+ * that year's end, the date its balances are read at (as the projection turns a purchase
+ * on in the year that holds it); otherwise by the as-of date.
+ */
+export function ownedOn(
+  purchaseDate: Date,
+  basis: AsOfBasis,
+  baseDate: Date,
+  asOf: Date,
+): boolean {
+  const by =
+    basis.kind === "projection" ? edate(baseDate, basis.year * 12) : asOf;
+  return purchaseDate.getTime() <= by.getTime();
+}
+
+/**
  * The Properties rows (ADR 0150): each property's Property detail tiles at `asOf` under
  * `basis`, in nominal Kč (the page has no lens), so a row and its detail page show the same
  * figures for the same date. `projections` holds every listed property's projection.
  */
 export function propertyRowsForAsOf(
   perProperty: PropertySnapshot[],
+  properties: readonly Property[],
   projections: ReadonlyMap<string, ProjectionYear[]>,
   basis: AsOfBasis,
   asOf: Date,
   assumptions: Assumptions,
 ): PropertySnapshot[] {
-  return perProperty.map((p) =>
-    propertyTilesForAsOf(
+  const purchase = new Map(properties.map((p) => [p.id, p.purchaseDate]));
+  return perProperty.map((p) => {
+    const tiles = propertyTilesForAsOf(
       p,
       projectionSeries(
         projections.get(p.propertyId) ?? [],
@@ -152,8 +172,15 @@ export function propertyRowsForAsOf(
       asOf,
       "nominal",
       assumptions,
-    ),
-  );
+    );
+    const bought = purchase.get(p.propertyId);
+    return bought
+      ? {
+          ...tiles,
+          owned: ownedOn(bought, basis, assumptions.baseDate, asOf),
+        }
+      : tiles;
+  });
 }
 
 /** Calendar year of the last projection row ("Net worth in 2056"); as-of independent. */

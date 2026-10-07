@@ -78,6 +78,7 @@ export function Properties() {
     engine && view && basis && projections
       ? propertyRowsForAsOf(
           engine.snapshot.perProperty,
+          engine.portfolio.properties,
           projections,
           basis,
           view.date,

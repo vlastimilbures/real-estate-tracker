@@ -135,31 +135,25 @@ describe("Properties uses the Today basis of Property detail (ADR 0150)", () => 
 });
 
 describe("the ownership label follows the basis (ADR 0150)", () => {
-  it.fails(
-    "Property detail: an as-of that rounds into the purchase year reads purchased (#113)",
-    () => {
-      // Bought 15.03.2028; 01.01.2028 rounds to projection year 2 (to 07.06.2028), whose
-      // tiles hold the loan and the value of the owned flat.
-      setUp(mixed, assumptions, {
-        asOf: isoDate("2028-01-01"),
-        selectedPropertyId: "future",
-      });
-      render(<PropertyDetail />);
-      expect(subtitle()).toContain("purchased 15.03.2028");
-      expect(subtitle()).not.toContain("pending");
-    },
-  );
+  it("Property detail: an as-of that rounds into the purchase year reads purchased (#113)", () => {
+    // Bought 15.03.2028; 01.01.2028 rounds to projection year 2 (to 07.06.2028), whose
+    // tiles hold the loan and the value of the owned flat.
+    setUp(mixed, assumptions, {
+      asOf: isoDate("2028-01-01"),
+      selectedPropertyId: "future",
+    });
+    render(<PropertyDetail />);
+    expect(subtitle()).toContain("purchased 15.03.2028");
+    expect(subtitle()).not.toContain("pending");
+  });
 
-  it.fails(
-    "Properties: no Pending badge once Today's projection year holds the purchase (#113)",
-    () => {
-      clock.today = new Date(Date.UTC(2028, 0, 1));
-      setUp(mixed, assumptions);
-      render(<Properties />);
-      const row = screen
-        .getByRole("button", { name: "Future buy" })
-        .closest("tr")!;
-      expect(within(row).queryByText("Pending")).toBeNull();
-    },
-  );
+  it("Properties: no Pending badge once Today's projection year holds the purchase (#113)", () => {
+    clock.today = new Date(Date.UTC(2028, 0, 1));
+    setUp(mixed, assumptions);
+    render(<Properties />);
+    const row = screen
+      .getByRole("button", { name: "Future buy" })
+      .closest("tr")!;
+    expect(within(row).queryByText("Pending")).toBeNull();
+  });
 });

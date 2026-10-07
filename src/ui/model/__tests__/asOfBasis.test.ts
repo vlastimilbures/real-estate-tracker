@@ -7,6 +7,7 @@ import {
   horizonEndYear,
   monthlyFlowLabels,
   netCashFlowFoot,
+  ownedOn,
   projectionYearForAsOf,
 } from "../dashboard";
 import { periodLabelLocalized, yearLabel, type SeriesRow } from "../projection";
@@ -162,5 +163,22 @@ describe("as-of labels (ADR 0088)", () => {
     expect(en.dashboard.netWorthInYear(2056, 30)).toBe(
       "Net worth in 2056 (30-yr horizon)",
     );
+  });
+});
+
+describe("ownedOn (ADR 0150)", () => {
+  const y2 = { kind: "projection", year: 2, calendarYear: 2028 } as const;
+  const asOf = isoDate("2028-01-01");
+
+  it("in a projection year: owned once bought by that year's end", () => {
+    expect(ownedOn(isoDate("2028-03-15"), y2, baseDate, asOf)).toBe(true);
+    expect(ownedOn(isoDate("2028-06-07"), y2, baseDate, asOf)).toBe(true);
+    expect(ownedOn(isoDate("2028-06-08"), y2, baseDate, asOf)).toBe(false);
+  });
+
+  it("today or on a date: owned once bought by the as-of date", () => {
+    const on = { kind: "snapshot", date: asOf, beyondHorizon: false } as const;
+    expect(ownedOn(isoDate("2028-03-15"), on, baseDate, asOf)).toBe(false);
+    expect(ownedOn(isoDate("2028-01-01"), on, baseDate, asOf)).toBe(true);
   });
 });

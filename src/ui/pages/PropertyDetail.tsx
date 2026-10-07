@@ -45,7 +45,12 @@ import { fmtDate } from "../../lib/format";
 import { projectionSeries, projectionColumns } from "../model/projection";
 import { exportTableXlsx } from "../exportXlsx";
 import { slug } from "../../lib/slug";
-import { asOfView, asOfHint, propertyTilesForAsOf } from "../model/dashboard";
+import {
+  asOfView,
+  asOfHint,
+  ownedOn,
+  propertyTilesForAsOf,
+} from "../model/dashboard";
 import {
   amortizationColumns,
   loanOutlook,
@@ -248,9 +253,9 @@ export function PropertyDetail() {
       subtitle={[
         property.type,
         property.sizeM2 ? t.propertyDetail.sizeM2(property.sizeM2) : null,
-        !s
+        !out || !basis
           ? null
-          : s.owned
+          : ownedOn(property.purchaseDate, basis, baseDate, out.asOf)
             ? t.propertyDetail.purchased(fmtDate(property.purchaseDate))
             : t.propertyDetail.pendingPurchase(fmtDate(property.purchaseDate)),
         view.isToday ? null : t.propertyDetail.asOf(fmtDate(view.date)),
