@@ -951,6 +951,8 @@ export const cs: Dictionary = {
     errNotJson: "Soubor není záloha ve formátu JSON.",
     errInvalid: (detail) =>
       `Soubor není platná záloha této aplikace. (${detail})`,
+    errUnreadable: (detail) =>
+      `Soubor se nepodařilo přečíst. Zkontrolujte, že je disk připojený a soubor stažený. (${detail})`,
     errNewer: (detail) =>
       `Tuto zálohu vytvořila novější verze aplikace (${detail}). Obnovte ji v té verzi.`,
     errRowsInvalid:

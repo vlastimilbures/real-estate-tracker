@@ -242,6 +242,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A backup file that cannot be read (an unplugged disk, a file not yet downloaded from
+  iCloud) now says "The file could not be read" (ADR 0147, #122). It said the file was not
+  a valid backup of this app, which could make you throw away a good backup. A failure to
+  read your current data for the safety backup before a restore or Clear sample now says
+  that the safety backup could not be saved, not that the action failed and was rolled
+  back.
 - The error log names where a failure happened (ADR 0147, #122). A failed reload after a
   save was logged as a failed save, and failures to restore a backup, load the sample or
   clear it were all logged as `BACKUP_FAILED`. They are now `RELOAD_FAILED`,

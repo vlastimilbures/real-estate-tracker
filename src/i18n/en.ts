@@ -996,6 +996,8 @@ export const en = {
     errNotJson: "The file is not a JSON backup.",
     errInvalid: (detail: string) =>
       `The file is not a valid backup of this app. (${detail})`,
+    errUnreadable: (detail: string) =>
+      `The file could not be read. Check that the disk is connected and the file is downloaded. (${detail})`,
     errNewer: (detail: string) =>
       `This backup was written by a newer version of the app (${detail}). Restore it with that version.`,
     errRowsInvalid:

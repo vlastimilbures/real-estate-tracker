@@ -3,6 +3,7 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { Panel, Button, Toast, TableWrap } from "../components/primitives";
 import {
   BackupExportError,
+  BackupReadError,
   chooseRestoreFile,
   RestoreError,
   SafetyBackupError,
@@ -174,7 +175,9 @@ export function BackupRestorePanel() {
         ? t.backup.safetyBackupFailed(e.detail)
         : e instanceof BackupExportError
           ? t.backup.exportFailed(e.detail)
-          : other(describeWriteError(t, toWriteError(e)).message),
+          : e instanceof BackupReadError
+            ? t.backup.errUnreadable(e.detail)
+            : other(describeWriteError(t, toWriteError(e)).message),
     );
   }
 

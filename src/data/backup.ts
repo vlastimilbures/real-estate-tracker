@@ -589,10 +589,24 @@ export async function exportBackup(
   }
 }
 
+/** The picked backup file could not be read (an unplugged disk, a file not downloaded
+ *  from iCloud): nothing is known about its content (ADR 0147). */
+export class BackupReadError extends Error {
+  /** The underlying failure, for display. */
+  readonly detail: string;
+  constructor(cause: unknown) {
+    const detail = messageOf(cause);
+    super(`Could not read the backup file: ${detail}`, { cause });
+    this.name = "BackupReadError";
+    this.detail = detail;
+  }
+}
+
 /**
  * Prompt the user to pick a backup JSON file and check it completely, so the confirm
  * step only ever offers a restorable file. Returns `null` when the user cancels;
- * throws RestoreError for a file that cannot be restored.
+ * throws RestoreError for a file that cannot be restored and BackupReadError for one
+ * that cannot be read.
  */
 export async function chooseRestoreFile(rules: InputRules): Promise<{
   file: string;
@@ -608,7 +622,7 @@ export async function chooseRestoreFile(rules: InputRules): Promise<{
     );
   } catch (e) {
     if (e === "BACKUP_TOO_LARGE") throw backupTooLarge();
-    throw e;
+    throw new BackupReadError(e);
   }
   if (picked === null) return null;
 
@@ -642,10 +656,11 @@ export async function writeSafetyBackup(
   now: Date = new Date(),
   prefix = "portfolio-before-restore",
 ): Promise<string> {
-  const safetyBackup = await exportToJson(sql);
-  const json = JSON.stringify(safetyBackup, null, 2);
   const filename = `${prefix}-${stamp(now)}.json`;
   try {
+    // Reading the current data is part of the safety backup (ADR 0147).
+    const safetyBackup = await exportToJson(sql);
+    const json = JSON.stringify(safetyBackup, null, 2);
     // Temp file + rename in `<app config>/backups`, read back (src-tauri/src/files.rs).
     const readBack = await invoke<string>("write_app_backup", {
       filename,

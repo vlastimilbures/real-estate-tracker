@@ -63,7 +63,7 @@ describe("Backup & Restore failures (ADR 0147)", () => {
     expect(vi.mocked(logFailure).mock.calls[0]?.[0]).toBe("RESTORE");
   });
 
-  it.fails("a backup file that cannot be read says so (#122)", async () => {
+  it("a backup file that cannot be read says so (#122)", async () => {
     vi.mocked(invoke).mockRejectedValue("Operation not permitted (os error 1)");
     render(<BackupRestorePanel />);
 

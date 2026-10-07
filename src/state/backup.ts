@@ -7,6 +7,7 @@ import { checkInputRules } from "../import/inputRules";
 
 export {
   BackupExportError,
+  BackupReadError,
   RestoreError,
   SafetyBackupError,
   SCHEMA_HEAD,
