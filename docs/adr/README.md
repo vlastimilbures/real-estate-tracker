@@ -170,6 +170,7 @@ Other IDs seen in code comments:
 | [0143](0143-one-confirm-row.md)                   | Confirm rows name the record, take focus and stay open on failure                      | #132                                   |
 | [0144](0144-small-user-visible-corrections.md)    | "End previous" only for open-ended records; the interest-saved label names its window  | #121, #172, #32                        |
 | [0145](0145-xlsx-finite-and-text-format.md)       | Excel: empty cell for a non-finite number; Text format instead of an apostrophe        | #139                                   |
+| [0146](0146-app-shell-survives-page-errors.md)    | App shell: sidebar survives page errors; navigation resets the error and moves focus   | #131                                   |
 
 ### Judgment calls and open questions
 
