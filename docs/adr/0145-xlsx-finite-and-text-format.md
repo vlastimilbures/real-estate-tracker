@@ -1,6 +1,6 @@
 # 0145. Excel cells: an empty cell for a non-finite number, the Text format instead of an apostrophe
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-07
 - Source: issue #139 (review findings G2-2-01, G2-2-02, G2-2-11); Track 10 PR 10.6
 - Amends: [0010](0010-excel-export-rounded.md) (formula-injection protection)
