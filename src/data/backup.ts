@@ -360,7 +360,7 @@ function upgradeRows(backup: BackupFile): {
       );
     });
   }
-  // The flags no mapper reads are checked here, so a bad one is named at the confirm
+  // The flags the mappers do not check are checked here, so a bad one is named at the confirm
   // step instead of failing the write on its CHECK (ADR 0148). `active` is NOT NULL.
   for (const r of tables.properties)
     for (const [column, allowed] of PROPERTY_FLAGS)
@@ -545,7 +545,8 @@ export function prepareRestore(
         ...("range" in e && { range: e.range }),
       });
   }
-  // A refusal lists the out-of-range values too: one table names everything to fix.
+  // A refusal after the rules ran lists the out-of-range values too: one table names
+  // everything to fix.
   if (issues.some((i) => i.rule !== "OUT_OF_RANGE"))
     throw new RestoreError(
       "BACKUP_ROWS_INVALID",

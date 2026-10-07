@@ -32,14 +32,17 @@ a backup with "Byt A" and "byt a" restores and later CSV rows land on one of the
    allowed range; never the value), says the app computes with them and the Data check lists
    them, and the restore button reads "Restore anyway". Shape problems, unreadable values,
    duplicate keys, a missing assumptions row and the engine's input rules stay blocking. When
-   a file has blocking issues, the refusal lists its out-of-range values too, so one table
-   names everything to fix. So every file the app writes from data it loads restores.
+   a file's blocking issues are duplicates or engine rules, the refusal lists its
+   out-of-range values too, so one table names everything to fix (a file that cannot be read
+   as a whole stops before the rules run, as before). So a file the app writes from data it
+   loads no longer fails on a bound alone (see Consequences for the remaining cases).
 2. **The Data check lists stored out-of-range values (C).** Under "Needs attention", with the
    value and the range: a property's size (fix: the property form), a mortgage's fixation or
    loan term (fix: Financing), and on the Dashboard the projection horizon as a portfolio row
    (fix: Settings → Assumptions). The forms already refuse to save them, so the owner fixes
    them there.
-3. **Restore checks the columns no mapper reads (D).** `properties.garage` must be 0, 1 or
+3. **Restore checks the property flags (D).** No mapper reads `garage`, and the mapper
+   collapses any `active` other than 0 to active. `properties.garage` must be 0, 1 or
    empty; `properties.active` must be 0 or 1 (the column is NOT NULL; a backup without the
    column still gets 1). Anything else is "A value cannot be read" for that record and column,
    at the confirm step, before anything is written.
