@@ -667,3 +667,61 @@ describe("data check lists (ADR 0118)", () => {
     });
   });
 });
+
+// ADR 0148 (#133): stored whole-number values outside the form ranges (a legacy database
+// keeps loading them) are listed under "Needs attention", with their fix.
+describe("out-of-range stored values (ADR 0148)", () => {
+  const legacy: Portfolio = {
+    ...portfolio,
+    properties: portfolio.properties.map((p) =>
+      p.id === "javorova" ? { ...p, sizeM2: 0 } : p,
+    ),
+    mortgages: portfolio.mortgages.map((m) =>
+      m.id === "m-javorova"
+        ? { ...m, fixationYears: 60, loanTermYears: 60 }
+        : m,
+    ),
+  };
+
+  it.fails(
+    "lists the size, fixation and loan term with the range and the fix (#133)",
+    () => {
+      const found = check("javorova", BASE_DATE, legacy).attention.filter(
+        (f) => (f.kind as string) === "outOfRange",
+      );
+      expect(found).toMatchObject([
+        { field: "sizeM2", value: 0, range: { min: 1, max: 10_000 } },
+        { field: "fixationYears", value: 60, range: { min: 0, max: 50 } },
+        { field: "loanTermYears", value: 60, range: { min: 1, max: 50 } },
+      ]);
+      expect(found.map(findingFix)).toEqual(["edit", "financing", "financing"]);
+      const text = found.map((f) =>
+        findingText(en, f, assumptions.postFixationResetRatePa).replace(
+          /\s/g,
+          " ",
+        ),
+      );
+      expect(text).toEqual([
+        "Size 0 m² is outside the range the forms accept (1–10 000 m²).",
+        "Mortgage from 17.01.2021: a fixation of 60 years is outside the range the forms accept (0–50 years).",
+        "Mortgage from 17.01.2021: a loan term of 60 years is outside the range the forms accept (1–50 years).",
+      ]);
+    },
+  );
+
+  it.fails(
+    "lists them before the purchase date too: they are stored, not dated (#133)",
+    () => {
+      const before = edate(
+        portfolio.properties[0]?.purchaseDate ?? BASE_DATE,
+        -1,
+      );
+      const kindsBefore = kinds(check("javorova", before, legacy).attention);
+      expect(kindsBefore).toEqual(["outOfRange", "outOfRange", "outOfRange"]);
+    },
+  );
+
+  it("a value inside the ranges is not listed", () => {
+    expect(kinds(check("javorova").attention)).not.toContain("outOfRange");
+  });
+});
