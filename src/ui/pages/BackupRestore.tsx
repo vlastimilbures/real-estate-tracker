@@ -20,6 +20,7 @@ import { describeWriteError } from "../model/writeError";
 import { restoreIssueText } from "../model/restoreIssue";
 import { toWriteError } from "../../state/writeError";
 import { fmtDate } from "../../lib/format";
+import { todayUtc } from "../../lib/today";
 import { useToast } from "../hooks/useToast";
 import { ClearSampleButton } from "../components/ClearSampleDialog";
 import { backupRecency, type BackupAgo } from "../model/backupRecency";
@@ -95,11 +96,12 @@ function IssueTable({
 function Summary({ summary }: { summary: BackupSummary }) {
   const t = useT();
   const b = t.backup;
+  // The local calendar day, like the file name and "Last backup" (ADR 0149).
   const exported = new Date(summary.exportedAt);
   return (
     <div style={{ marginBottom: "var(--s4)" }}>
       {!Number.isNaN(exported.getTime()) && (
-        <p>{b.backupDate(fmtDate(exported))}</p>
+        <p>{b.backupDate(fmtDate(todayUtc(exported)))}</p>
       )}
       {summary.schemaVersion < SCHEMA_HEAD && (
         <p style={{ color: "var(--ink-soft)" }}>{b.olderVersion}</p>

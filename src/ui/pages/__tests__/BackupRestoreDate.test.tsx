@@ -40,7 +40,7 @@ beforeEach(() => {
   });
 });
 
-it.fails("shows the local day of a backup made at 00:30 (#119)", async () => {
+it("shows the local day of a backup made at 00:30 (#119)", async () => {
   const exportedAt = new Date(2026, 9, 3, 0, 30); // 03.10.2026 00:30 Prague
   expect(exportedAt.toISOString()).toBe("2026-10-02T22:30:00.000Z");
   const sql = openMemorySql();
