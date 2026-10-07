@@ -46,7 +46,7 @@ import { fmtDate } from "../../lib/format";
 import { projectionSeries, projectionColumns } from "../model/projection";
 import { exportTableXlsx } from "../exportXlsx";
 import { slug } from "../../lib/slug";
-import { asOfBasis, asOfHint, propertyTilesForAsOf } from "../model/dashboard";
+import { asOfView, asOfHint, propertyTilesForAsOf } from "../model/dashboard";
 import {
   amortizationColumns,
   loanOutlook,
@@ -181,23 +181,28 @@ export function PropertyDetail() {
   // Tiles under the chosen lens, by the Dashboard's as-of rule (DR-054, D-62): a future
   // as-of reads the projection year the charts plot; real terms are in base-date prices.
   const series = out ? projectionSeries(out.projection, mode, assumptions) : [];
-  const s = out
-    ? propertyTilesForAsOf(out.snapshot, series, out.asOf, mode, assumptions)
-    : null;
-  const chartRows = toChartRows(series);
-  // Picker hint by the same as-of rule as the tiles (ADR 0088).
-  const pickerHint = out
-    ? asOfHint(
-        t,
-        asOfBasis(
-          assumptions.baseDate,
-          out.asOf,
-          series,
-          asOf === null || asOf.getTime() === todayUtc().getTime(),
-        ),
+  const basis = out
+    ? asOfView(
         assumptions.baseDate,
+        out.asOf,
+        series,
+        asOf === null || asOf.getTime() === todayUtc().getTime(),
       )
     : null;
+  const s =
+    out && basis
+      ? propertyTilesForAsOf(
+          out.snapshot,
+          series,
+          basis,
+          out.asOf,
+          mode,
+          assumptions,
+        )
+      : null;
+  const chartRows = toChartRows(series);
+  // Picker hint by the same as-of basis as the tiles (ADR 0088).
+  const pickerHint = basis ? asOfHint(t, basis, assumptions.baseDate) : null;
 
   const baseDate = assumptions.baseDate;
   // Loan checks for every block from the one in force onward (UX-054).

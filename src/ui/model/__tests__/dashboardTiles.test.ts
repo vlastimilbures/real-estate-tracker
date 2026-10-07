@@ -3,6 +3,7 @@
 // the charts plot), not from a point-in-time annualized snapshot.
 import { describe, it, expect } from "vitest";
 import {
+  asOfView,
   projectionYearForAsOf,
   tilesForAsOf,
   dashboardSubtitle,
@@ -85,23 +86,22 @@ describe("projectionYearForAsOf", () => {
 });
 
 describe("tilesForAsOf", () => {
-  it("at year 0 (current) keeps the effective-dated snapshot", () => {
-    const s = tilesForAsOf(
-      snapshotAt(baseDate),
+  const tilesAt = (asOf: Date) =>
+    tilesForAsOf(
+      snapshotAt(asOf),
       series,
+      asOfView(baseDate, asOf, series, false),
       "nominal",
       tileAssumptions,
     );
+
+  it("at year 0 (current) keeps the effective-dated snapshot", () => {
+    const s = tilesAt(baseDate);
     expect(toNumber(s.netCashFlow)).toBeCloseTo(-57334.2, 6);
   });
 
   it("at a future as-of date sources tiles from the matching projection year (== chart)", () => {
-    const s = tilesForAsOf(
-      snapshotAt(edate(baseDate, 60)),
-      series,
-      "nominal",
-      tileAssumptions,
-    );
+    const s = tilesAt(edate(baseDate, 60));
     // Card == the chart's year-5 value, not the annualized snapshot run-rate.
     expect(toNumber(s.netCashFlow)).toBeCloseTo(
       toNumber(series[5].netCashFlow),

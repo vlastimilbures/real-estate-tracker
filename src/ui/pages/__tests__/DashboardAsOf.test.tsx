@@ -16,7 +16,7 @@ import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { projectionSeries } from "../../model/projection";
 import {
-  asOfBasis,
+  asOfView,
   horizonEndYear,
   monthlyFlow,
   monthlyFlowLabels,
@@ -35,8 +35,8 @@ const base = assumptions.baseDate;
 
 function renderAt(asOf: IsoDate, isToday: boolean) {
   const snapshot = portfolioSnapshot(portfolio, assumptions, asOf);
-  const s = tilesForAsOf(snapshot, series, "nominal", assumptions);
-  const basis = asOfBasis(base, asOf, series, isToday);
+  const basis = asOfView(base, asOf, series, isToday);
+  const s = tilesForAsOf(snapshot, series, basis, "nominal", assumptions);
   const labels = monthlyFlowLabels(en, basis, base, asOf);
   return render(
     <>

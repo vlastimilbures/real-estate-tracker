@@ -47,10 +47,21 @@ export function projectionYearForAsOf(baseDate: Date, asOf: Date): number {
 }
 
 /**
- * Snapshot used to render the dashboard KPI tiles + monthly-flow band. For the current
- * snapshot (as-of ≤ baseDate, year 0) this is the effective-dated engine snapshot under
- * the chosen lens. For a FUTURE as-of date it is sourced from the projection year that
- * the as-of date lands on — the SAME `series` the charts plot — so the cards and the
+ * What the as-of tiles show (ADR 0088): the projection year the date rounds to; else
+ * today's effective-dated snapshot; else the records in force on the date (under six
+ * months after the base date, or past the horizon). The one as-of rule (#113): the tile
+ * mappers and every label read this basis, so tiles and labels agree by construction.
+ */
+export type AsOfBasis =
+  | { kind: "today" }
+  | { kind: "projection"; year: number; calendarYear: number }
+  | { kind: "snapshot"; date: Date; beyondHorizon: boolean };
+
+/**
+ * Snapshot used to render the dashboard KPI tiles + monthly-flow band. Today or on a
+ * records-in-force date this is the effective-dated engine snapshot under the chosen
+ * lens, deflated (real mode) by the engine price index from baseDate. In a projection
+ * year it is that year of `series` — the SAME rows the charts plot — so the cards and the
  * "Net cash flow by year" chart agree by construction (rather than diverging because the
  * snapshot annualizes a point-in-time run-rate while the chart sums the projected year).
  * `series` is already lens-adjusted, so no further deflation is applied on that path.
@@ -60,52 +71,39 @@ export function projectionYearForAsOf(baseDate: Date, asOf: Date): number {
 export function tilesForAsOf(
   snapshot: PortfolioSnapshot,
   series: SeriesRow[],
+  basis: AsOfBasis,
   mode: Mode,
   assumptions: Assumptions,
 ): PortfolioSnapshot {
-  const n = projectionYearForAsOf(assumptions.baseDate, snapshot.asOf);
-  if (n <= 0 || n >= series.length) {
-    // Today / past, or beyond the projected horizon: keep the effective-dated snapshot,
-    // deflated (real mode) by the engine price index from baseDate.
-    return mode === "real"
-      ? realPortfolioSnapshot(snapshot, cpiAt(assumptions, snapshot.asOf))
-      : snapshot;
-  }
-  return portfolioSnapshotAtYear(snapshot, at(series, n));
+  if (basis.kind === "projection")
+    return portfolioSnapshotAtYear(snapshot, at(series, basis.year));
+  return mode === "real"
+    ? realPortfolioSnapshot(snapshot, cpiAt(assumptions, snapshot.asOf))
+    : snapshot;
 }
 
 /**
- * Property-detail counterpart of `tilesForAsOf` (DR-054, D-62): the same as-of rule, so
+ * Property-detail counterpart of `tilesForAsOf` (DR-054, D-62): the same as-of basis, so
  * the property tiles add up to the Dashboard. The property snapshot carries no `asOf`,
  * so the caller passes the date it was evaluated at.
  */
 export function propertyTilesForAsOf(
   snapshot: PropertySnapshot,
   series: SeriesRow[],
+  basis: AsOfBasis,
   asOf: Date,
   mode: Mode,
   assumptions: Assumptions,
 ): PropertySnapshot {
-  const n = projectionYearForAsOf(assumptions.baseDate, asOf);
-  if (n <= 0 || n >= series.length) {
-    return mode === "real"
-      ? realPropertySnapshot(snapshot, cpiAt(assumptions, asOf))
-      : snapshot;
-  }
-  return propertySnapshotAtYear(snapshot, at(series, n));
+  if (basis.kind === "projection")
+    return propertySnapshotAtYear(snapshot, at(series, basis.year));
+  return mode === "real"
+    ? realPropertySnapshot(snapshot, cpiAt(assumptions, asOf))
+    : snapshot;
 }
 
-/**
- * What the as-of tiles show (ADR 0088), by the same rule as `tilesForAsOf`: the projection
- * year the date rounds to; else today's effective-dated snapshot; else the records in force
- * on the date (under six months after the base date, or past the horizon).
- */
-export type AsOfBasis =
-  | { kind: "today" }
-  | { kind: "projection"; year: number; calendarYear: number }
-  | { kind: "snapshot"; date: Date; beyondHorizon: boolean };
-
-export function asOfBasis(
+/** The as-of basis of `asOf` (see `AsOfBasis`). */
+export function asOfView(
   baseDate: Date,
   asOf: Date,
   series: SeriesRow[],

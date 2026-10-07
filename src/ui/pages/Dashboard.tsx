@@ -16,7 +16,7 @@ import {
   monthlyFlow,
   netWorthHorizon,
   tilesForAsOf,
-  asOfBasis,
+  asOfView,
   asOfHint,
   horizonEndYear,
   monthlyFlowLabels,
@@ -122,19 +122,18 @@ export function Dashboard() {
   const series = projectionSeries(projection, mode, assumptions);
   const rows = toChartRows(series);
   const eqChange = toEquityChangeRows(series);
+  const isToday = asOf === null || asOf.getTime() === todayUtc().getTime();
+  const basis = asOfView(assumptions.baseDate, snapshot.asOf, series, isToday);
   // Tiles + the flow band: for the current snapshot this is the effective-dated engine
-  // snapshot under the chosen lens; for a future as-of date it is sourced from the
-  // projection year that date lands on (the same `series` the charts plot), so the cards
-  // and the per-year charts agree.
-  const s = tilesForAsOf(snapshot, series, mode, assumptions);
+  // snapshot under the chosen lens; in a projection year it is that year of `series`
+  // (the rows the charts plot), so the cards and the per-year charts agree.
+  const s = tilesForAsOf(snapshot, series, basis, mode, assumptions);
   const flow = monthlyFlow(s);
   const horizon = netWorthHorizon(kpis, mode);
   const irr = leveredIrr(kpis, mode);
 
   const modeWord = mode === "real" ? t.common.realLower : t.common.nominalLower;
   const filterActive = effectiveIds.length > 0;
-  const isToday = asOf === null || asOf.getTime() === todayUtc().getTime();
-  const basis = asOfBasis(assumptions.baseDate, s.asOf, series, isToday);
   const flowLabels = monthlyFlowLabels(t, basis, assumptions.baseDate, s.asOf);
   const subtitle = dashboardSubtitle(
     t,
