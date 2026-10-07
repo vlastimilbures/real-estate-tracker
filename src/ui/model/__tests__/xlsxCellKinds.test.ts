@@ -1,7 +1,7 @@
 // The remaining cell kinds keep their value and format (D-10).
 import { describe, it, expect } from "vitest";
 import { D } from "../../../lib/money";
-import { cellValue, numFmt } from "../xlsxExport";
+import { cellValue, numFmt, type CellKind } from "../xlsxExport";
 
 describe("other cell kinds", () => {
   it("dates stay dates with dd.mm.yyyy", () => {
@@ -17,8 +17,26 @@ describe("other cell kinds", () => {
     expect(numFmt("text")).toBeUndefined();
   });
 
-  it("a string in a number column is written as safe text", () => {
-    expect(cellValue("money", "n/a")).toBe("n/a");
-    expect(cellValue("money", "=1")).toBe("'=1");
-  });
+  it.fails(
+    "a string in a number column is written as typed (ADR 0145) (#139)",
+    () => {
+      expect(cellValue("money", "n/a")).toBe("n/a");
+      expect(cellValue("money", "=1")).toBe("=1");
+    },
+  );
+});
+
+describe("non-finite numbers (ADR 0145)", () => {
+  const kinds: CellKind[] = ["money", "percent", "rate", "multiple", "int"];
+
+  for (const kind of kinds)
+    it.fails(
+      `${kind}: NaN and ±Infinity, as a number or a Decimal, are an empty cell (#139)`,
+      () => {
+        for (const v of [NaN, Infinity, -Infinity]) {
+          expect(cellValue(kind, v), `${v}`).toBeNull();
+          expect(cellValue(kind, D(v)), `D(${v})`).toBeNull();
+        }
+      },
+    );
 });
