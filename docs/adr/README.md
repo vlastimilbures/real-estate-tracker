@@ -173,6 +173,7 @@ Other IDs seen in code comments:
 | [0146](0146-app-shell-survives-page-errors.md)    | App shell: sidebar survives page errors; navigation resets the error and moves focus   | #131                                   |
 | [0147](0147-failure-messages-and-log.md)          | Failure messages and the error log: right labels and messages, masked numbers          | #122                                   |
 | [0148](0148-restore-rules-vs-stored-data.md)      | Restore rules vs stored data: out-of-range values ask, flags and names are checked     | #133                                   |
+| [0149](0149-calendar-days.md)                     | Calendar days: the local day on screen, one day module, a 1900 floor for new dates     | #119                                   |
 
 ### Judgment calls and open questions
 
