@@ -35,6 +35,19 @@ describe("backupRecency (ADR 0110)", () => {
     expect(r.ago).toEqual({ unit: "weeks", n: 3 });
   });
 
+  // Near local midnight the UTC day differs: a backup at 00:30 is the previous UTC day
+  // under a positive offset, one at 23:30 the next UTC day under a negative one (#119).
+  it("near local midnight, still the local calendar day", () => {
+    const at = (h: number, m: number) =>
+      new Date(2026, 9, 2, h, m).toISOString();
+    const early = backupRecency(state(at(0, 30), false), now);
+    expect(early.day).toEqual(new Date(Date.UTC(2026, 9, 2)));
+    expect(early.days).toBe(1);
+    const late = backupRecency(state(at(23, 30), false), now);
+    expect(late.day).toEqual(new Date(Date.UTC(2026, 9, 2)));
+    expect(late.days).toBe(1);
+  });
+
   it("today, days, then whole weeks from 14 days", () => {
     const ago = (n: number) =>
       backupRecency(state(daysBefore(n), false), now).ago;
