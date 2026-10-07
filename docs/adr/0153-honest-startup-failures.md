@@ -1,6 +1,6 @@
 # 0153. Startup failures say what changed and offer a step that works
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-07
 - Source: issue #115 (2026-10 code review, findings G2-5-01, G2-5-03, G2-5-06, G2-5-13);
   owner decision D6 (2026-10-07: upgrade message A, screen B, per-code heading); Track 11
