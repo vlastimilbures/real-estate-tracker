@@ -2,7 +2,15 @@
 // the fictional sample portfolio, written to docs/screenshots/<name>-<theme>.png. Uses the
 // same frozen clock, seed and settling as the UX capture (helpers.ts).
 import path from "node:path";
-import { test, expect, boot, nav, openFirstProperty, settle } from "./helpers";
+import {
+  test,
+  expect,
+  addTwoPresetsAndCompare,
+  boot,
+  nav,
+  openFirstProperty,
+  settle,
+} from "./helpers";
 import type { Ux } from "./helpers";
 
 const OUT = path.resolve("docs/screenshots");
@@ -26,14 +34,7 @@ const SHOTS: { name: string; run: (ux: Ux) => Promise<void> }[] = [
     name: "scenarios",
     run: async (ux) => {
       await nav(ux, "scenarios");
-      await ux.page
-        .getByRole("button", { name: ux.t.scenarios.plusPp(2), exact: true })
-        .click();
-      await ux.page.getByRole("button", { name: "−20%", exact: true }).click();
-      const picks = ux.page.locator(".scenario-row input[type=checkbox]");
-      await expect(picks).toHaveCount(3);
-      await picks.nth(1).check();
-      await picks.nth(2).check();
+      await addTwoPresetsAndCompare(ux);
     },
   },
 ];

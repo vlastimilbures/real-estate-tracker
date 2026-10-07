@@ -1,116 +1,99 @@
-// Compare two capture runs screen by screen (DR-147). Chromium's rasterization is not
-// bit-stable between runs: two runs of one commit differ by up to ~0.8 % of a screen's
-// pixels (anti-aliasing on charts, tiles and focus rings), so a PNG hash cannot prove a
-// no-op. This counts differing pixels and passes a screen when at most UX_DIFF_MAX
-// (default 1 %) of them differ; look at any screen it lists. Node built-ins only.
+// Compare two capture runs screen by screen (DR-147, D15). A pixel counts as changed when
+// its R, G or B moves by more than UX_DIFF_TOLERANCE levels (default 8), which ignores
+// anti-aliasing noise; a screen fails when more than UX_DIFF_MAX_PX pixels (default 50)
+// changed. One changed KPI digit (a 21×30 px box) is about 300 changed px, so it fails
+// (#137). Screens in only one run are listed as MISSING (run A only) or NEW (run B only)
+// and fail too. A bad setting or an empty run stops it with exit 2. Node built-ins only.
 //
 //   pnpm ux:diff <runA> <runB>        # folders under ux-screens/
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { inflateSync } from "node:zlib";
-
-interface Png {
-  width: number;
-  height: number;
-  channels: number;
-  pixels: Buffer;
-}
-
-/** 8-bit RGB/RGBA, non-interlaced PNG (what Playwright writes). */
-function decode(file: string): Png {
-  const b = readFileSync(file);
-  let o = 8;
-  let width = 0;
-  let height = 0;
-  let colorType = 0;
-  const idat: Buffer[] = [];
-  while (o < b.length) {
-    const len = b.readUInt32BE(o);
-    const type = b.toString("ascii", o + 4, o + 8);
-    const data = b.subarray(o + 8, o + 8 + len);
-    if (type === "IHDR") {
-      width = data.readUInt32BE(0);
-      height = data.readUInt32BE(4);
-      colorType = data[9]!;
-    } else if (type === "IDAT") idat.push(data);
-    o += 12 + len;
-  }
-  const channels = colorType === 6 ? 4 : 3;
-  const raw = inflateSync(Buffer.concat(idat));
-  const stride = width * channels;
-  const pixels = Buffer.alloc(height * stride);
-  for (let y = 0; y < height; y++) {
-    const filter = raw[y * (stride + 1)]!;
-    const row = y * (stride + 1) + 1;
-    for (let x = 0; x < stride; x++) {
-      const a = x >= channels ? pixels[y * stride + x - channels]! : 0;
-      const up = y > 0 ? pixels[(y - 1) * stride + x]! : 0;
-      const c =
-        x >= channels && y > 0 ? pixels[(y - 1) * stride + x - channels]! : 0;
-      let v = raw[row + x]!;
-      if (filter === 1) v += a;
-      else if (filter === 2) v += up;
-      else if (filter === 3) v += Math.floor((a + up) / 2);
-      else if (filter === 4) {
-        const p = a + up - c;
-        const pa = Math.abs(p - a);
-        const pb = Math.abs(p - up);
-        const pc = Math.abs(p - c);
-        v += pa <= pb && pa <= pc ? a : pb <= pc ? up : c;
-      }
-      pixels[y * stride + x] = v & 255;
-    }
-  }
-  return { width, height, channels, pixels };
-}
-
-/** Share of pixels whose RGB differs; 1 when the sizes differ. */
-function diffShare(a: Png, b: Png): number {
-  if (a.width !== b.width || a.height !== b.height) return 1;
-  let n = 0;
-  for (let i = 0; i < a.width * a.height; i++) {
-    const ia = i * a.channels;
-    const ib = i * b.channels;
-    if (
-      a.pixels[ia] !== b.pixels[ib] ||
-      a.pixels[ia + 1] !== b.pixels[ib + 1] ||
-      a.pixels[ia + 2] !== b.pixels[ib + 2]
-    )
-      n++;
-  }
-  return n / (a.width * a.height);
-}
+import { decode, diffShare } from "./png.ts";
 
 const [runA, runB] = process.argv.slice(2);
 if (!runA || !runB) {
   console.error("usage: pnpm ux:diff <runA> <runB>");
   process.exit(2);
 }
-const max = Number(process.env.UX_DIFF_MAX ?? "0.01");
+/** A whole number ≥ 0 from the environment; anything else stops the diff (exit 2). */
+function setting(name: string, fallback: number): number {
+  const text = process.env[name];
+  if (text === undefined) return fallback;
+  const value = Number(text);
+  if (text.trim() === "" || !Number.isInteger(value) || value < 0) {
+    console.error(`${name} must be a whole number ≥ 0, got "${text}"`);
+    process.exit(2);
+  }
+  return value;
+}
+if (process.env.UX_DIFF_MAX !== undefined) {
+  console.error("UX_DIFF_MAX is gone: use UX_DIFF_MAX_PX (pixels, default 50)");
+  process.exit(2);
+}
+const tolerance = setting("UX_DIFF_TOLERANCE", 8);
+const maxPx = setting("UX_DIFF_MAX_PX", 50);
 const dirA = join("ux-screens", runA);
 const dirB = join("ux-screens", runB);
-let failed = 0;
-let compared = 0;
-for (const variant of readdirSync(dirA)) {
-  const va = join(dirA, variant);
-  const vb = join(dirB, variant);
-  if (!statSync(va).isDirectory() || variant.startsWith(".")) continue;
-  for (const png of readdirSync(va).filter((f) => f.endsWith(".png"))) {
-    const fb = join(vb, png);
-    compared++;
-    if (!existsSync(fb)) {
-      console.log(`MISSING  ${variant}/${png}`);
-      failed++;
-      continue;
-    }
-    const share = diffShare(decode(join(va, png)), decode(fb));
-    if (share > max) {
-      console.log(`CHANGED  ${variant}/${png}  ${(share * 100).toFixed(3)} %`);
-      failed++;
-    }
+for (const dir of [dirA, dirB]) {
+  if (!existsSync(dir)) {
+    console.error(`no capture at ${dir}`);
+    process.exit(2);
   }
 }
+
+/** `<variant>/<screen>.png` for every screenshot in a run. */
+function screens(root: string): Set<string> {
+  const found = new Set<string>();
+  for (const variant of readdirSync(root)) {
+    const dir = join(root, variant);
+    if (variant.startsWith(".") || !statSync(dir).isDirectory()) continue;
+    for (const png of readdirSync(dir).filter((f) => f.endsWith(".png")))
+      found.add(`${variant}/${png}`);
+  }
+  return found;
+}
+
+const inA = screens(dirA);
+const inB = screens(dirB);
+if (inA.size === 0 && inB.size === 0) {
+  console.error(`no screenshots under ${dirA} or ${dirB}`);
+  process.exit(2);
+}
+let failed = 0;
+let compared = 0;
+let largest = { changed: 0, screen: "" };
+for (const screen of [...inA].sort()) {
+  if (!inB.has(screen)) {
+    console.log(`MISSING  ${screen}`);
+    failed++;
+    continue;
+  }
+  compared++;
+  let pair;
+  try {
+    pair = [decode(join(dirA, screen)), decode(join(dirB, screen))] as const;
+  } catch (e) {
+    console.log(`UNREADABLE ${screen}  ${(e as Error).message}`);
+    failed++;
+    continue;
+  }
+  const { changed, share } = diffShare(pair[0], pair[1], tolerance);
+  if (changed > largest.changed) largest = { changed, screen };
+  if (changed > maxPx) {
+    console.log(
+      `CHANGED  ${screen}  ${changed} px (${(share * 100).toFixed(3)} %)`,
+    );
+    failed++;
+  }
+}
+for (const screen of [...inB].sort()) {
+  if (inA.has(screen)) continue;
+  console.log(`NEW      ${screen}`);
+  failed++;
+}
 console.log(
-  `${compared} screens compared, ${failed} changed beyond ${(max * 100).toFixed(3)} %`,
+  `${compared} screens compared (channel delta > ${tolerance} counts), ` +
+    `${failed} failed (over ${maxPx} px, missing or new); largest: ` +
+    (largest.changed ? `${largest.changed} px in ${largest.screen}` : "0 px"),
 );
 process.exit(failed > 0 ? 1 : 0);

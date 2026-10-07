@@ -13,12 +13,10 @@ import { en, type Dictionary } from "../src/i18n/en";
 import { cs } from "../src/i18n/cs";
 import { ru } from "../src/i18n/ru";
 import type { Route } from "../src/state/uiStore";
+import { UX_DATE } from "./clock";
 
 export type Lang = "en" | "cs" | "ru";
 const DICTS: Record<Lang, Dictionary> = { en, cs, ru };
-
-/** Frozen "now" so runs are comparable before/after (override with UX_DATE). */
-export const UX_DATE = process.env.UX_DATE ?? "2026-10-01T10:00:00Z";
 
 /** WCAG 2.2 AA rule set for the axe scan. */
 const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -146,6 +144,8 @@ export async function settle(page: Page) {
       same = now === last ? same + 1 : 0;
       last = now;
     }
+    // A shot of a chart still moving would differ from run to run (#137).
+    if (same < 3) throw new Error("charts did not settle within 8 s");
   }
 }
 
@@ -165,14 +165,20 @@ const NAV_KEY: Partial<Record<Route, keyof Dictionary["nav"]>> = {
   guide: "guide",
 };
 
-/** Navigate through the sidebar, the way a user does. */
+/**
+ * Navigate through the sidebar, the way a user does, and wait until the clicked entry is
+ * the current page: the old page's title is visible too, so it cannot be the signal (#137).
+ * The wait proves nothing when the entry is already current, e.g. Properties on a
+ * property detail page (AppShell marks it for both routes).
+ */
 export async function nav(ux: Ux, route: Route) {
   const key = NAV_KEY[route];
   if (!key) throw new Error(`route "${route}" has no sidebar entry`);
-  await ux.page
+  const entry = ux.page
     .locator(".nav")
-    .getByRole("button", { name: ux.t.nav[key] })
-    .click();
+    .getByRole("button", { name: ux.t.nav[key] });
+  await entry.click();
+  await expect(entry).toHaveAttribute("aria-current", "page");
   await expect(ux.page.locator(".page-title")).toBeVisible();
 }
 
@@ -196,6 +202,21 @@ export async function settingsTab(
 ) {
   await nav(ux, "settings");
   await ux.page.getByRole("tab", { name: ux.t.settings.tabs[tab] }).click();
+}
+
+/**
+ * Scenarios page: add the +2 pp and −20 % stress presets and tick both for the compare
+ * next to Base.
+ */
+export async function addTwoPresetsAndCompare(ux: Ux) {
+  await ux.page
+    .getByRole("button", { name: ux.t.scenarios.plusPp(2), exact: true })
+    .click();
+  await ux.page.getByRole("button", { name: "−20%", exact: true }).click();
+  const picks = ux.page.locator(".scenario-row input[type=checkbox]");
+  await expect(picks).toHaveCount(3);
+  await picks.nth(1).check();
+  await picks.nth(2).check();
 }
 
 /** Delete every property through the Properties page, leaving an empty portfolio. */

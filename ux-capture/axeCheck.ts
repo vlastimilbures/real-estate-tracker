@@ -2,19 +2,9 @@
 // there is any. The capture itself only records them; this decides. Node built-ins only.
 //
 //   pnpm ux:axe-check <run>        # folder under ux-screens/
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-
-interface AxeFile {
-  screen: string;
-  violations: {
-    id: string;
-    impact: string | null;
-    help: string;
-    nodes: number;
-    targets: { target: string }[];
-  }[];
-}
+import { readAxeScans } from "./axeFiles.ts";
 
 const run = process.argv[2];
 if (!run) {
@@ -30,12 +20,9 @@ if (!existsSync(root)) {
 let scans = 0;
 let failures = 0;
 for (const variant of readdirSync(root).sort()) {
-  const axeDir = join(root, variant, "axe");
-  if (variant.startsWith(".") || !existsSync(axeDir)) continue;
-  for (const f of readdirSync(axeDir).sort()) {
-    if (!f.endsWith(".json")) continue;
+  if (variant.startsWith(".")) continue;
+  for (const scan of readAxeScans(join(root, variant))) {
     scans += 1;
-    const scan = JSON.parse(readFileSync(join(axeDir, f), "utf8")) as AxeFile;
     for (const v of scan.violations) {
       failures += 1;
       console.log(

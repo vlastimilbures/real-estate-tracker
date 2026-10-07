@@ -38,12 +38,26 @@ Set `UX_RUN_ID=<name>` to write several variant runs into one folder (one shared
 pnpm ux:diff <runA> <runB>     # e.g. p07c-before p07c-after (folders under ux-screens/)
 ```
 
-Lists every screen whose pixels differ by more than `UX_DIFF_MAX` (default `0.01` = 1 %)
-and exits non-zero if any do. Two runs of the same commit are not bit-identical (Chromium
-anti-aliasing moves up to ~0.8 % of a screen's pixels), so PNG hashes cannot prove a no-op
-(DR-147). The capture emulates "Reduce motion" (charts skip their entry animation),
-turns CSS transitions off (DR-160) and waits until animations stop and the charts' SVG is
-stable before each shot.
+A pixel counts as changed when its red, green or blue moves by more than
+`UX_DIFF_TOLERANCE` levels (default `8`). A screen fails when more than `UX_DIFF_MAX_PX`
+pixels changed (default `50`). Screens found in only one run are listed as `MISSING` (run A
+only) or `NEW` (run B only) and fail too. The diff exits non-zero on any failure and always
+prints the largest change.
+
+Two runs of the same commit are not always bit-identical: Chromium anti-aliasing moves a
+few channel levels on charts, tooltips and focus rings. Measured on 2026-10-07 (en, light
+and dark, 1280x800 and min, 280 screens): with tolerance 0, up to 150 px on a screen; with
+the default tolerance 8, at most 14 px. One changed KPI digit (a 21×30 px box) is about
+300 changed px, so the defaults catch it (#137). For an exact comparison, set both
+variables to `0`. A bad value stops the diff with exit 2.
+
+Known flake: under load, the last x-axis tick label of the dashboard charts can land 1 px
+off (about 700 px on `02-dashboard-real` at `min`). Re-capture that screen before treating
+it as a change.
+
+PNG hashes cannot prove a no-op (DR-147). The capture emulates "Reduce motion" (charts
+skip their entry animation), turns CSS transitions off (DR-160) and waits until animations
+stop and the charts' SVG is stable before each shot.
 
 ## Axe gate
 
