@@ -4,15 +4,16 @@
 // Offline only: nothing leaves the machine.
 //
 // No personal financial values: a DataError contributes its code and details (table,
-// row id, column, rule — never a value); any other error's message has digit runs
-// masked, so an amount that slipped into a message is not recorded.
+// row id, column, rule — never a value); any other error's message has every number
+// masked, so an amount that slipped into a message is not recorded (ADR 0147). Names
+// are kept (they help diagnosis); the bug form says to replace them before pasting.
 import { invoke } from "@tauri-apps/api/core";
 import { DataError, messageOf } from "./errors";
 import { isTauri } from "../lib/tauri";
 
-/** Mask runs of 4+ digits (with separators) — amounts, never needed for diagnosis. */
+/** Mask every digit run (with its separators): amounts, never needed for diagnosis. */
 export function maskNumbers(text: string): string {
-  return text.replace(/\d(?:[\d\s.,]*\d){3,}/g, "#");
+  return text.replace(/\d(?:[\d\s.,]*\d)?/g, "#");
 }
 
 /** Where a failure happened: the prefix of its log code (`<SITE>_FAILED`). */

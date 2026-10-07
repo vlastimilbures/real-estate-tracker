@@ -1,6 +1,7 @@
 // Typed data-layer errors (P5a). Each code maps to an i18n message (`t.dataErrors`), and
 // `details` carries what the message lists: table names, row ids, property names and
-// rule names — never money amounts, so a DataError is also safe to write to the log.
+// rule names — never money amounts, so a DataError is written to the log as it is.
+// Names and ids built from names stay in it (ADR 0147).
 
 export type DataErrorCode =
   /** `PRAGMA integrity_check` did not return ok at startup. */

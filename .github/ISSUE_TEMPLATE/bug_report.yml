@@ -41,5 +41,5 @@ body:
     id: log
     attributes:
       label: Error log excerpt (optional)
-      description: "~/Library/Logs/com.bures.realestate-tracker/app.log — remove anything personal."
+      description: "~/Library/Logs/com.bures.realestate-tracker/app.log. Amounts are already masked, but lines can name your properties and scenarios. Before pasting, replace those names, record ids made from them (such as byt-lipova-12) and folder paths with your user name."
       render: text

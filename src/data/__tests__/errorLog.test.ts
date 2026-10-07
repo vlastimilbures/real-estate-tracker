@@ -9,10 +9,11 @@ describe("error log lines", () => {
     expect(maskNumbers("[DecimalError] Invalid argument: 9515405.13")).toBe(
       "[DecimalError] Invalid argument: #",
     );
-    expect(maskNumbers("rent 21 675 Kč on row 7")).toBe("rent # Kč on row 7");
+    // ADR 0147: every number, so the row number too (it was kept before).
+    expect(maskNumbers("rent 21 675 Kč on row 7")).toBe("rent # Kč on row #");
   });
 
-  it.fails("masks every number, short ones too (#122)", () => {
+  it("masks every number, short ones too (#122)", () => {
     expect(maskNumbers("rent 850 Kč")).toBe("rent # Kč");
     expect(maskNumbers("rate 4.59 %")).toBe("rate # %");
     expect(maskNumbers("valid from 2026-10-03")).toBe("valid from #-#-#");

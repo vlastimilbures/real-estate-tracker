@@ -242,6 +242,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The error log masks every number, not only those of four or more digits, so a short
+  amount such as `850 Kč` is not recorded (ADR 0147, #122). The bug form names what to
+  replace in a pasted log excerpt: property and scenario names, record ids built from
+  them, and folder paths.
 - When Import cannot check the chosen files against your saved data, an error says so
   (ADR 0147, #122). Before, the Import button stayed greyed out with no reason.
 - A backup file that cannot be read (an unplugged disk, a file not yet downloaded from
