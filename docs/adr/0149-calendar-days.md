@@ -37,7 +37,7 @@ off-by-one) was made in one copy of the helper, and five copies exist.
 ## Decision
 
 1. **The restore screen shows the local day** of `exportedAt`, the same day as the file name
-   and the "Last backup" line: `fmtDate(todayUtc(exported))` (D6 item 1 A). No time of day.
+   and the "Last backup" line: `fmtDate(localDay(exported))` (D6 item 1 A). No time of day.
 2. **CI tests the layers that read local time in a positive zone too** (D6 item 2 B): a
    Pacific/Kiritimati (UTC+14) step runs `src/lib`, `src/ui` and `src/state`. The engine never
    reads local time and stays covered in UTC; Pago_Pago keeps running the full suite. The
