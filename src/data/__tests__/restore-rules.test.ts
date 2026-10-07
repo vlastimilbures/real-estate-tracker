@@ -159,26 +159,21 @@ describe("restore checks the flag columns (ADR 0148 §3)", () => {
     ["garage", "1"],
   ];
   for (const [column, value] of BAD)
-    it.fails(
-      `refuses ${column} = ${JSON.stringify(value)} at the confirm step (#133)`,
-      async () => {
-        // R3-04A: the write would otherwise fail on the CHECK after the safety backup.
-        const backup = await edited("properties", (rows) =>
-          rows.map((r) =>
-            r.id === "javorova" ? { ...r, [column]: value } : r,
-          ),
-        );
-        const e = refusal(backup);
-        expect(e.issues).toEqual([
-          {
-            table: "properties",
-            id: "javorova",
-            column,
-            rule: "UNREADABLE_VALUE",
-          },
-        ]);
-      },
-    );
+    it(`refuses ${column} = ${JSON.stringify(value)} at the confirm step (#133)`, async () => {
+      // R3-04A: the write would otherwise fail on the CHECK after the safety backup.
+      const backup = await edited("properties", (rows) =>
+        rows.map((r) => (r.id === "javorova" ? { ...r, [column]: value } : r)),
+      );
+      const e = refusal(backup);
+      expect(e.issues).toEqual([
+        {
+          table: "properties",
+          id: "javorova",
+          column,
+          rule: "UNREADABLE_VALUE",
+        },
+      ]);
+    });
 
   it("accepts garage 0, 1 or empty and active 0 or 1", async () => {
     const backup = await edited("properties", (rows) =>
@@ -204,29 +199,26 @@ describe("restore checks the flag columns (ADR 0148 §3)", () => {
 });
 
 describe("property names repeat case-insensitively at restore (ADR 0148 §5)", () => {
-  it.fails(
-    "refuses two names that match trimmed and case-insensitively (#133)",
-    async () => {
-      // R6-3: "Byt A" and " byt a" would both restore; CSV rows for either land on one.
-      const backup = await edited("properties", (rows) =>
-        rows.map((r, n) =>
-          n === 0
-            ? { ...r, name: "Byt A" }
-            : n === 1
-              ? { ...r, name: " byt a" }
-              : r,
-        ),
-      );
-      const second = (backup.tables.properties as Rows)[1]?.id;
-      const e = refusal(backup);
-      expect(e.issues).toEqual([
-        {
-          table: "properties",
-          id: second,
-          column: "name",
-          rule: "DUPLICATE_KEY",
-        },
-      ]);
-    },
-  );
+  it("refuses two names that match trimmed and case-insensitively (#133)", async () => {
+    // R6-3: "Byt A" and " byt a" would both restore; CSV rows for either land on one.
+    const backup = await edited("properties", (rows) =>
+      rows.map((r, n) =>
+        n === 0
+          ? { ...r, name: "Byt A" }
+          : n === 1
+            ? { ...r, name: " byt a" }
+            : r,
+      ),
+    );
+    const second = (backup.tables.properties as Rows)[1]?.id;
+    const e = refusal(backup);
+    expect(e.issues).toEqual([
+      {
+        table: "properties",
+        id: second,
+        column: "name",
+        rule: "DUPLICATE_KEY",
+      },
+    ]);
+  });
 });

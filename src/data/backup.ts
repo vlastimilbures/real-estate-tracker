@@ -16,6 +16,7 @@ import {
 } from "./repositories";
 import { MIGRATIONS, V7_TABLES, stamp } from "./migrations";
 import { DataError, messageOf } from "./errors";
+import { propertyKey } from "../lib/propertyKey";
 import {
   SaveFileError,
   type SaveFileOptions,
@@ -164,6 +165,12 @@ export const BACKUP_COLUMNS: Record<BackupTable, readonly string[]> = {
 const ADDED_COLUMN_DEFAULTS: Partial<Record<string, unknown>> = {
   "properties.active": 1,
 };
+
+/** The values each property flag column may hold (the v7 CHECKs, ADR 0148). */
+const PROPERTY_FLAGS: [column: string, allowed: readonly unknown[]][] = [
+  ["garage", [0, 1, null]],
+  ["active", [0, 1]],
+];
 
 // --- errors ---------------------------------------------------------------------
 
@@ -353,6 +360,17 @@ function upgradeRows(backup: BackupFile): {
       );
     });
   }
+  // The flags no mapper reads are checked here, so a bad one is named at the confirm
+  // step instead of failing the write on its CHECK (ADR 0148). `active` is NOT NULL.
+  for (const r of tables.properties)
+    for (const [column, allowed] of PROPERTY_FLAGS)
+      if (!allowed.includes(r[column]))
+        issues.push({
+          table: "properties",
+          id: String(r.id),
+          column,
+          rule: "UNREADABLE_VALUE",
+        });
   for (const s of tables.scenarios) {
     const unreadable = (column: string) =>
       issues.push({
@@ -405,6 +423,13 @@ const ENTITY_TABLE: Record<ValidationEntity, BackupTable> = {
 const snake = (field: string) =>
   field.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 
+/** A key cell as restore compares it: a property name as every other entry point
+ *  matches it, trimmed and case-insensitive (D-55, ADR 0148). */
+const keyCell = (table: BackupTable, column: string, v: unknown) =>
+  table === "properties" && column === "name" && typeof v === "string"
+    ? propertyKey(v)
+    : v;
+
 /** Rows repeating an earlier row's id or natural key (the v7 UNIQUE keys). */
 function duplicateKeys(tables: Tables): RestoreIssue[] {
   const issues: RestoreIssue[] = [];
@@ -413,7 +438,7 @@ function duplicateKeys(tables: Tables): RestoreIssue[] {
     for (const key of [["id"], ...(spec?.unique ?? [])]) {
       const seen = new Set<string>();
       for (const r of tables[table]) {
-        const k = JSON.stringify(key.map((c) => r[c]));
+        const k = JSON.stringify(key.map((c) => keyCell(table, c, r[c])));
         if (seen.has(k))
           issues.push({
             table,

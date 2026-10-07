@@ -246,6 +246,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from an older version, is no longer refused (ADR 0148, #133). The confirm step lists the
   values and asks to **Restore anyway**. Before, the app refused its own exports and the
   safety copy it saved before a restore or Clear sample, so a restore could not be undone.
+- Restore checks a property's garage and active flags before anything is changed (ADR 0148,
+  #133). A bad flag passed the confirm step, and the restore then failed with "A yes/no
+  value is not valid" after the safety copy was saved; the issue table now names the
+  record and column.
+- A backup holding two property names that differ only in case or surrounding spaces
+  ("Byt A", "byt a") is refused as a duplicate (ADR 0148, #133), as CSV import and the
+  property form already match names. Before, it restored, and later CSV rows for either
+  name went to one of them.
+- A saved amount or rate is read only in the app's own decimal notation (ADR 0148, #133).
+  Forms such as `0x10`, `1_000`, `+5` or `1e3` in a hand-edited backup are refused, as in
+  CSV import; the very small or large values the app writes as `1e-7` still read.
 - A crash in the app's core, including a failure to set up the window menu at start, is
   now written to the error log (ADR 0147, #122). Before, it reached only the terminal,
   which is not shown when the app is opened from Finder.

@@ -243,7 +243,7 @@ describe("stored decimal grammar (ADR 0148)", () => {
     ".5",
     "5.",
   ])
-    it.fails(`refuses ${JSON.stringify(bad)} (#133)`, () => {
+    it(`refuses ${JSON.stringify(bad)} (#133)`, () => {
       expect(parseDecimalText(bad)).toBeNull();
     });
 
