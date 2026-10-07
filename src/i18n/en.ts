@@ -968,6 +968,13 @@ export const en = {
     restoreWarning:
       "⚠ This will overwrite all current data (properties, mortgages, valuations, leases, assumptions, and scenarios). A safety backup will be saved first.",
     restoreNow: "Restore now",
+    // ADR 0148: values outside the form ranges ask instead of refusing.
+    warnOutOfRange: (n: number) =>
+      n === 1
+        ? "This backup holds 1 value outside the ranges the forms accept. The app computes with it, and the Data check lists it after the restore. Restore anyway?"
+        : `This backup holds ${n} values outside the ranges the forms accept. The app computes with them, and the Data check lists them after the restore. Restore anyway?`,
+    warningsTitle: "Values outside the form ranges",
+    restoreAnyway: "Restore anyway",
     restoring: "Restoring…",
     errorTitle: "Error",
     savedTo: (file: string) => `Backup saved to ${file}`,

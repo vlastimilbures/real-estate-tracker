@@ -242,6 +242,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A backup with a value outside the ranges the forms accept, such as a 60-year fixation
+  from an older version, is no longer refused (ADR 0148, #133). The confirm step lists the
+  values and asks to **Restore anyway**. Before, the app refused its own exports and the
+  safety copy it saved before a restore or Clear sample, so a restore could not be undone.
 - A crash in the app's core, including a failure to set up the window menu at start, is
   now written to the error log (ADR 0147, #122). Before, it reached only the terminal,
   which is not shown when the app is opened from Finder.

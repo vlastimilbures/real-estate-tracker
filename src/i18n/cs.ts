@@ -924,6 +924,10 @@ export const cs: Dictionary = {
     restoreWarning:
       "⚠ Toto přepíše všechna aktuální data (nemovitosti, hypotéky, ocenění, nájmy, předpoklady a scénáře). Nejprve se uloží bezpečnostní záloha.",
     restoreNow: "Obnovit nyní",
+    warnOutOfRange: (n) =>
+      `Záloha obsahuje ${n} ${csPlural(n, ["hodnotu", "hodnoty", "hodnot"])} mimo rozsah, který formuláře přijímají. Aplikace s ${n === 1 ? "ní" : "nimi"} počítá a Kontrola dat ${n === 1 ? "ji" : "je"} po obnovení uvede. Přesto obnovit?`,
+    warningsTitle: "Hodnoty mimo rozsah formulářů",
+    restoreAnyway: "Přesto obnovit",
     restoring: "Obnovování…",
     errorTitle: "Chyba",
     savedTo: (file) => `Záloha uložena do ${file}`,

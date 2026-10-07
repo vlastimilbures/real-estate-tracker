@@ -5,7 +5,8 @@
 // P5b: a backup carries the database schema version (DR-038). A restore checks the
 // WHOLE file first — version, shape, every row, the engine's input rules — upgrades an
 // older file in memory, writes and verifies a safety backup, and only then replaces the
-// data in one transaction (D-14): on any failure the current data stays (DR-019).
+// data in one transaction (D-14): on any failure the current data stays (DR-019). A value
+// outside the form bounds only asks (ADR 0148): the database may hold it already.
 import { invoke } from "@tauri-apps/api/core";
 import type { Sql, SqlStatement } from "./sql";
 import {
@@ -49,7 +50,8 @@ import type {
 import type { IntRange } from "../lib/intRanges";
 
 /** A whole-number field outside the bounds the forms and CSV import apply (ADR 0086).
- *  Restore-only: the engine itself is open-ended. */
+ *  Restore-only: the engine itself is open-ended, so a restore warns and asks instead of
+ *  refusing (ADR 0148). */
 export interface RangeProblem {
   code: "OUT_OF_RANGE";
   entity: ValidationEntity;
@@ -430,11 +432,15 @@ export interface PreparedRestore {
   summary: BackupSummary;
   /** Wipe (children first) and re-insert, for one transaction. */
   statements: SqlStatement[];
+  /** Values outside the form bounds (OUT_OF_RANGE): the confirm step asks before a
+   *  restore with any (ADR 0148). */
+  warnings: RestoreIssue[];
 }
 
 /**
  * Check every row of `backup` and build the replacement statements. Throws a
- * RestoreError and touches nothing when the file cannot be restored as a whole.
+ * RestoreError and touches nothing when the file cannot be restored as a whole; a file
+ * whose only issues are out-of-range values comes back with them as `warnings`.
  */
 export function prepareRestore(
   backup: BackupFile,
@@ -514,7 +520,8 @@ export function prepareRestore(
         ...("range" in e && { range: e.range }),
       });
   }
-  if (issues.length > 0)
+  // A refusal lists the out-of-range values too: one table names everything to fix.
+  if (issues.some((i) => i.rule !== "OUT_OF_RANGE"))
     throw new RestoreError(
       "BACKUP_ROWS_INVALID",
       `The backup has ${issues.length} record(s) the app cannot restore. Nothing was changed.`,
@@ -529,7 +536,7 @@ export function prepareRestore(
     // The restored data is the owner's, never the sample (ADR 0127).
     DELETE_SAMPLE_MARKERS,
   ];
-  return { summary: summarise(backup), statements };
+  return { summary: summarise(backup), statements, warnings: issues };
 }
 
 /** Check `backup` as a whole, then replace every table in one transaction. */
@@ -602,17 +609,24 @@ export class BackupReadError extends Error {
   }
 }
 
+/** A picked backup file, checked and ready for the confirm step. */
+export interface PickedBackup {
+  file: string;
+  backup: BackupFile;
+  summary: BackupSummary;
+  /** Out-of-range values the confirm step lists before "Restore anyway" (ADR 0148). */
+  warnings: RestoreIssue[];
+}
+
 /**
  * Prompt the user to pick a backup JSON file and check it completely, so the confirm
  * step only ever offers a restorable file. Returns `null` when the user cancels;
  * throws RestoreError for a file that cannot be restored and BackupReadError for one
  * that cannot be read.
  */
-export async function chooseRestoreFile(rules: InputRules): Promise<{
-  file: string;
-  backup: BackupFile;
-  summary: BackupSummary;
-} | null> {
+export async function chooseRestoreFile(
+  rules: InputRules,
+): Promise<PickedBackup | null> {
   // Rust opens the dialog and refuses an oversized file before reading it (DR-138).
   let picked: { name: string; text: string } | null;
   try {
@@ -627,8 +641,8 @@ export async function chooseRestoreFile(rules: InputRules): Promise<{
   if (picked === null) return null;
 
   const backup = parseBackupText(picked.text);
-  const { summary } = prepareRestore(backup, rules);
-  return { file: picked.name, backup, summary };
+  const { summary, warnings } = prepareRestore(backup, rules);
+  return { file: picked.name, backup, summary, warnings };
 }
 
 /** The pre-restore safety backup could not be written or verified; nothing changed. */
@@ -677,7 +691,8 @@ export async function writeSafetyBackup(
 }
 
 /** Full restore workflow: check the whole file, write and verify the safety backup,
- *  then replace everything in one transaction. Returns the safety backup's name. */
+ *  then replace everything in one transaction. Returns the safety backup's name. Any
+ *  out-of-range warnings were shown at the confirm step, so they do not stop it. */
 export async function confirmRestore(
   sql: Sql,
   backup: BackupFile,

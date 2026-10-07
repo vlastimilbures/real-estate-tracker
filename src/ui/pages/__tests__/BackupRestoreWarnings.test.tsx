@@ -51,7 +51,7 @@ beforeEach(() => {
 });
 
 describe("Restore with out-of-range values (ADR 0148)", () => {
-  it.fails("lists the values and asks to restore anyway (#133)", async () => {
+  it("lists the values and asks to restore anyway (#133)", async () => {
     const text = await legacyBackupText();
     vi.mocked(invoke).mockResolvedValue({ name: "old.json", text });
     restoreBackup.mockResolvedValue({ safetyBackup: "safety.json" });

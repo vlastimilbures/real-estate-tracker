@@ -71,77 +71,68 @@ const firstBlock = () =>
   ).id;
 
 describe("stored out-of-range values ask at restore (ADR 0148 §1)", () => {
-  it.fails(
-    "the app's own export of legacy out-of-range data restores with warnings (#133)",
-    async () => {
-      // G2-4-4: the database holds values the forms no longer accept; it loads and computes.
-      sql.db
-        .prepare("UPDATE properties SET size_m2 = 0 WHERE id = 'javorova'")
-        .run();
-      const block = firstBlock();
-      sql.db
-        .prepare("UPDATE mortgage_blocks SET fixation_years = 60 WHERE id = ?")
-        .run(block);
-      const { portfolio, assumptions } = await loadState(sql);
-      expect(validateInputs(portfolio, assumptions)).toEqual([]);
+  it("the app's own export of legacy out-of-range data restores with warnings (#133)", async () => {
+    // G2-4-4: the database holds values the forms no longer accept; it loads and computes.
+    sql.db
+      .prepare("UPDATE properties SET size_m2 = 0 WHERE id = 'javorova'")
+      .run();
+    const block = firstBlock();
+    sql.db
+      .prepare("UPDATE mortgage_blocks SET fixation_years = 60 WHERE id = ?")
+      .run(block);
+    const { portfolio, assumptions } = await loadState(sql);
+    expect(validateInputs(portfolio, assumptions)).toEqual([]);
 
-      const backup = await exportToJson(sql);
-      expect(() => prepareRestore(backup, checkInputRules)).not.toThrow();
-      expect(prepareRestore(backup, checkInputRules)).toMatchObject({
-        warnings: [
-          {
-            table: "properties",
-            id: "javorova",
-            column: "size_m2",
-            rule: "OUT_OF_RANGE",
-            range: { min: 1, max: 10_000 },
-          },
-          {
-            table: "mortgage_blocks",
-            id: block,
-            column: "fixation_years",
-            rule: "OUT_OF_RANGE",
-            range: { min: 0, max: 50 },
-          },
-        ],
-      });
-    },
-  );
+    const backup = await exportToJson(sql);
+    expect(() => prepareRestore(backup, checkInputRules)).not.toThrow();
+    expect(prepareRestore(backup, checkInputRules)).toMatchObject({
+      warnings: [
+        {
+          table: "properties",
+          id: "javorova",
+          column: "size_m2",
+          rule: "OUT_OF_RANGE",
+          range: { min: 1, max: 10_000 },
+        },
+        {
+          table: "mortgage_blocks",
+          id: block,
+          column: "fixation_years",
+          rule: "OUT_OF_RANGE",
+          range: { min: 0, max: 50 },
+        },
+      ],
+    });
+  });
 
-  it.fails(
-    "confirming a restore with warnings replaces the data (#133)",
-    async () => {
-      const backup = await edited("assumptions", (rows) =>
-        rows.map((r) => ({ ...r, horizon_years: 150 })),
-      );
-      await confirmRestore(sql, backup, checkInputRules);
-      const { assumptions } = await loadState(sql);
-      expect(assumptions.horizonYears).toBe(150);
-      expect(written.size).toBe(1);
-    },
-  );
+  it("confirming a restore with warnings replaces the data (#133)", async () => {
+    const backup = await edited("assumptions", (rows) =>
+      rows.map((r) => ({ ...r, horizon_years: 150 })),
+    );
+    await confirmRestore(sql, backup, checkInputRules);
+    const { assumptions } = await loadState(sql);
+    expect(assumptions.horizonYears).toBe(150);
+    expect(written.size).toBe(1);
+  });
 
-  it.fails(
-    "the safety backup Clear sample writes restores (#133)",
-    async () => {
-      // G2-4-01A: the undo path of Clear sample, with a legacy 150-year horizon.
-      sql.db.prepare("UPDATE assumptions SET horizon_years = 150").run();
-      const { safetyBackup } = await clearSample(sql);
-      const text = written.get(safetyBackup);
-      expect(text).toBeDefined();
-      const backup = parseBackupText(text ?? "");
-      expect(() => prepareRestore(backup, checkInputRules)).not.toThrow();
-      expect(prepareRestore(backup, checkInputRules)).toMatchObject({
-        warnings: [
-          {
-            table: "assumptions",
-            column: "horizon_years",
-            rule: "OUT_OF_RANGE",
-          },
-        ],
-      });
-    },
-  );
+  it("the safety backup Clear sample writes restores (#133)", async () => {
+    // G2-4-01A: the undo path of Clear sample, with a legacy 150-year horizon.
+    sql.db.prepare("UPDATE assumptions SET horizon_years = 150").run();
+    const { safetyBackup } = await clearSample(sql);
+    const text = written.get(safetyBackup);
+    expect(text).toBeDefined();
+    const backup = parseBackupText(text ?? "");
+    expect(() => prepareRestore(backup, checkInputRules)).not.toThrow();
+    expect(prepareRestore(backup, checkInputRules)).toMatchObject({
+      warnings: [
+        {
+          table: "assumptions",
+          column: "horizon_years",
+          rule: "OUT_OF_RANGE",
+        },
+      ],
+    });
+  });
 
   it("a file with a blocking issue is refused and lists its out-of-range values too", async () => {
     const backup = await edited("properties", (rows) =>

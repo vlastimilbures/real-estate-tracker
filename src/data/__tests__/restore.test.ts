@@ -10,6 +10,7 @@ import {
   BACKUP_MAX_BYTES,
   exportToJson,
   parseBackupText,
+  prepareRestore,
   restoreFromJson,
   RestoreError,
   validateBackup,
@@ -189,23 +190,21 @@ describe("restore checks every row before touching the DB (DR-019)", () => {
     expect(dump(sql)).toEqual(before);
   });
 
-  // ADR 0086 (#38): the form and CSV whole-number bounds apply to restore too.
+  // ADR 0086 (#38): the form and CSV whole-number bounds apply to restore too; since
+  // ADR 0148 (#133) a value outside them is a warning the confirm step asks about.
   it.each([
     ["assumptions", "horizon_years", 101, 100, { min: 1, max: 100 }],
     ["mortgage_blocks", "fixation_years", 51, 50, { min: 0, max: 50 }],
     ["mortgage_blocks", "loan_term_years", 51, 50, { min: 1, max: 50 }],
     ["properties", "size_m2", 10_001, 10_000, { min: 1, max: 10_000 }],
   ])("%s.%s outside its range", async (table, column, out, edge, range) => {
-    const before = dump(sql);
     const set = (n: number) =>
       edited(table, (rows) => {
         rows[0][column] = n;
         return rows;
       });
     const bad = await set(out);
-    const e = await rejection(restoreFromJson(sql, bad, checkInputRules));
-    expect(e.code).toBe("BACKUP_ROWS_INVALID");
-    expect(e.issues).toEqual([
+    expect(prepareRestore(bad, checkInputRules).warnings).toEqual([
       {
         table,
         ...(table !== "assumptions" && { id: bad.tables[table][0].id }),
@@ -214,7 +213,9 @@ describe("restore checks every row before touching the DB (DR-019)", () => {
         range,
       },
     ]);
-    expect(dump(sql)).toEqual(before);
+    expect(prepareRestore(await set(edge), checkInputRules).warnings).toEqual(
+      [],
+    );
 
     await restoreFromJson(sql, await set(edge), checkInputRules);
     const id = bad.tables[table][0].id;
