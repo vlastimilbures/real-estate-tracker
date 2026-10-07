@@ -407,6 +407,16 @@ export const en = {
       `Mortgage from ${date}: a loan term of ${value} years is outside the range the forms accept (${range} years).`,
     outOfRangeHorizon: (value: string, range: string) =>
       `The projection horizon of ${value} years is outside the range the forms accept (${range} years).`,
+    // ADR 0149: a stored date before the forms' floor; `record` from earlyDateRecord.
+    earlyDate: (record: string, date: string, floor: string) =>
+      `${record} ${date} is before ${floor}, the earliest date the forms accept. Check the year for a typo.`,
+    earlyDateRecord: {
+      property: "Purchase date",
+      mortgage: "A mortgage date",
+      valuation: "A valuation date",
+      lease: "A lease date",
+      assumptions: "The base date",
+    },
     assumptions: "Assumptions",
   },
 

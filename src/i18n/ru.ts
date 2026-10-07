@@ -390,6 +390,15 @@ export const ru: Dictionary = {
       `Ипотека с ${date}: срок кредита ${value} вне диапазона, который принимают формы (${range} лет).`,
     outOfRangeHorizon: (value, range) =>
       `Горизонт прогноза ${value} вне диапазона, который принимают формы (${range} лет).`,
+    earlyDate: (record, date, floor) =>
+      `${record} ${date} раньше ${floor} — самой ранней даты, которую принимают формы. Проверьте год на опечатку.`,
+    earlyDateRecord: {
+      property: "Дата покупки",
+      mortgage: "Дата по ипотеке",
+      valuation: "Дата оценки",
+      lease: "Дата аренды",
+      assumptions: "Базовая дата",
+    },
     assumptions: "Допущения",
   },
 

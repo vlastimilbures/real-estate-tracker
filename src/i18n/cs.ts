@@ -383,6 +383,15 @@ export const cs: Dictionary = {
       `Hypotéka od ${date}: doba splatnosti ${value} je mimo rozsah, který formuláře přijímají (${range} let).`,
     outOfRangeHorizon: (value, range) =>
       `Horizont projekce ${value} je mimo rozsah, který formuláře přijímají (${range} let).`,
+    earlyDate: (record, date, floor) =>
+      `${record} ${date} je před ${floor}, nejstarším datem, které formuláře přijímají. Zkontrolujte překlep v roce.`,
+    earlyDateRecord: {
+      property: "Datum nákupu",
+      mortgage: "Datum u hypotéky",
+      valuation: "Datum ocenění",
+      lease: "Datum nájmu",
+      assumptions: "Výchozí datum",
+    },
     assumptions: "Předpoklady",
   },
 

@@ -22,6 +22,7 @@ import {
   findingFix,
   findingText,
   fixLabel,
+  portfolioDataCheck,
   propertyDataCheck,
   type DataFinding,
 } from "../dataCheck";
@@ -730,9 +731,77 @@ describe("stored dates before 1900 (ADR 0149)", () => {
     ),
   };
 
-  it.fails("lists an 1850 purchase date (#119)", () => {
+  it("lists an 1850 purchase date (#119)", () => {
     expect(kinds(check("javorova", BASE_DATE, legacy).attention)).toContain(
       "earlyDate",
     );
   });
+
+  it("names the record and the floor, and fixes each in its own place", () => {
+    const early = isoDate("1850-01-01");
+    const all: Portfolio = {
+      ...legacy,
+      mortgages: legacy.mortgages.map((m) =>
+        m.propertyId === "javorova" ? { ...m, contractMaturityDate: early } : m,
+      ),
+      valuations: legacy.valuations.map((v) =>
+        v.propertyId === "javorova" ? { ...v, validFrom: early } : v,
+      ),
+      leases: legacy.leases.map((l) =>
+        l.propertyId === "javorova" ? { ...l, startDate: early } : l,
+      ),
+    };
+    const found = check("javorova", BASE_DATE, all).attention.filter(
+      (f) => f.kind === "earlyDate",
+    );
+    expect(found.map((f) => f.kind === "earlyDate" && f.field)).toEqual([
+      "purchaseDate",
+      "contractMaturityDate",
+      "validFrom",
+      "startDate",
+    ]);
+    expect(found.map(findingFix)).toEqual([
+      "edit",
+      "financing",
+      "records",
+      "records",
+    ]);
+    expect(
+      findingText(en, found[0]!, assumptions.postFixationResetRatePa),
+    ).toBe(
+      "Purchase date 01.01.1850 is before 01.01.1900, the earliest date the forms accept. Check the year for a typo.",
+    );
+  });
+
+  it("lists it before the purchase date too: it is stored, not dated", () => {
+    const before = isoDate("1849-01-01");
+    expect(kinds(check("javorova", before, legacy).attention)).toEqual([
+      "earlyDate",
+    ]);
+  });
+
+  it("an early base date is a portfolio row", () => {
+    const rows = portfolioDataCheck({
+      horizonYears: 30,
+      baseDate: isoDate("1826-06-07"),
+    });
+    expect(rows).toMatchObject([
+      {
+        propertyId: null,
+        name: null,
+        finding: {
+          kind: "earlyDate",
+          entity: "assumptions",
+          field: "baseDate",
+        },
+      },
+    ]);
+    expect(rows.map((r) => findingFix(r.finding))).toEqual(["assumptions"]);
+    expect(
+      portfolioDataCheck({ horizonYears: 30, baseDate: BASE_DATE }),
+    ).toEqual([]);
+  });
+
+  it("a date from 1900 on is not listed", () =>
+    expect(kinds(check("javorova").attention)).not.toContain("earlyDate"));
 });

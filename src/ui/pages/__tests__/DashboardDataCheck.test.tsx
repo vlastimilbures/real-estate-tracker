@@ -2,9 +2,9 @@
 //
 // ADR 0118 (#35): the Dashboard "Data check" panel.
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { edate, money, type Portfolio } from "../../../engine";
+import { edate, isoDate, money, type Portfolio } from "../../../engine";
 import {
   BASE_DATE,
   assumptions,
@@ -215,5 +215,52 @@ describe("Data check on the Dashboard: the projection horizon (ADR 0148)", () =>
     );
     const ui = useUiStore.getState();
     expect([ui.route, ui.settingsTab]).toEqual(["settings", "assumptions"]);
+  });
+});
+
+// ADR 0149 §5: stored dates before 1900 under "Needs attention", with their fix.
+describe("Data check on the Dashboard: dates before 1900 (ADR 0149)", () => {
+  it("lists a property's early date on its row; the fix opens its record", async () => {
+    const legacy: Portfolio = {
+      ...portfolio,
+      leases: portfolio.leases.map((l) =>
+        l.propertyId === "dubova"
+          ? { ...l, startDate: isoDate("1025-07-01") }
+          : l,
+      ),
+    };
+    const { onFix } = renderPanel(legacy);
+    const row = screen
+      .getByText(
+        "A lease date 01.07.1025 is before 01.01.1900, the earliest date the forms accept. Check the year for a typo.",
+      )
+      .closest("li") as HTMLElement;
+    expect(within(row).getByText("Byt Dubova:")).toBeTruthy();
+    await userEvent.click(
+      within(row).getByRole("button", { name: "Go to Records" }),
+    );
+    expect(onFix).toHaveBeenCalledWith("dubova", "records");
+  });
+
+  it("lists an early base date as a portfolio row; the fix opens Assumptions", async () => {
+    const onFix = vi.fn();
+    render(
+      <DataCheckPanel
+        portfolio={portfolio}
+        asOf={BASE_DATE}
+        baseDate={isoDate("1826-06-07")}
+        resetRate={assumptions.postFixationResetRatePa}
+        horizonYears={assumptions.horizonYears}
+        onFix={onFix}
+      />,
+    );
+    const row = screen.getByText(
+      "The base date 07.06.1826 is before 01.01.1900, the earliest date the forms accept. Check the year for a typo.",
+    );
+    expect(row.textContent).not.toMatch(/:/);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Go to Assumptions" }),
+    );
+    expect(onFix).toHaveBeenCalledWith(null, "assumptions");
   });
 });
