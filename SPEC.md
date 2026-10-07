@@ -189,7 +189,7 @@ still loads; the Data check lists it.
 an explicit `asOf` date; it defaults to `assumptions.baseDate`. An `asOf` before `baseDate`
 raises `ASOF_BEFORE_BASEDATE` (ADR 0019): earlier dates are reached by moving the Projection
 start in Settings → Assumptions. The UI's **As-of** picker is bounded to
-`[baseDate, baseDate + horizonYears]` and defaults to `max(today, baseDate)`. One resolver
+`[baseDate, baseDate + horizonYears]` and defaults to today moved into that window. One resolver
 (`resolveAsOf`, ADR 0150) moves the picked date, or today, into that window on every read, so
 a stale value after a baseDate or horizon change never shows: the engine call, the picker
 text, the Today pill and the page subtitles all use the resolved date. Today counts as today

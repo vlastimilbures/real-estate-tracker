@@ -53,7 +53,7 @@ bounds)` (`src/ui/model/asOf.ts`) returns the date the pages compute for: the pi
 2. **Today means today** (owner, 2026-10-07). The Today pill is pressed, and the labels say
    "current", only when the resolved date is today. With a future base date the picker shows
    the base date, the pill is not pressed and the labels are dated ("as of 01.01.2027").
-   Pressing Today still selects the default, max(today, baseDate).
+   Pressing Today still selects the default: today moved into the window. A RangeError from `cpiAt` would surface as a crash, not as the invalid-data notice; it is unreachable by construction.
 3. **One basis rule with the grid month count** (amends ADR 0088 decision 1). `asOfView`
    (`src/ui/model/dashboard.ts`) decides the basis once; the tile mappers and every label read
    it. The projection year is the nearest whole year of D-21 grid months
@@ -72,7 +72,7 @@ bounds)` (`src/ui/model/asOf.ts`) returns the date the pages compute for: the pi
 6. **Properties uses the same Today basis and names it** (amends ADR 0111 decision 1). Each
    Properties row is the Property detail tile at Today, in nominal Kč (the page has no lens).
    When today maps to a projection year, the context line names it:
-   "3 apartments · as of 15.01.2027 (projection year Y1 · 2027, Jun 2026 – Jun 2027) · amounts
+   "3 apartments · as of 15.01.2027 (projection year Y1 · 2027, Jul 2026 – Jun 2027) · amounts
    in Kč, flows per year". Otherwise the line is unchanged. Properties does not follow the
    picked as-of date and gets no as-of control (that was option B).
 

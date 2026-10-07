@@ -256,9 +256,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A projection start on the 29th–31st maps an **As of** date to the right projection year
   (ADR 0150, #113): with 31.08.2026, 28.02.2027 now shows year 1, as value growth and
   inflation count it, instead of the records in force.
-- A property bought within the projection year an **As of** date shows reads "purchased",
-  not "pending", above that year's figures, on Property detail and in the Properties
-  **Pending** badge (ADR 0150, #113).
+- When the **As of** date shows the projection year a property is bought in, Property
+  detail reads "purchased", not "pending", above that year's figures, and Properties drops
+  its **Pending** badge (ADR 0150, #113).
 - The restore confirm step dates a backup by the local calendar day, like its file name and
   the "Last backup" line (ADR 0149, #119). A backup made just after midnight (before 02:00
   in Prague in summer) showed the previous day.
