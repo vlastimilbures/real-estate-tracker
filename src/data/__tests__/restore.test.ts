@@ -241,6 +241,107 @@ describe("restore checks every row before touching the DB (DR-019)", () => {
       { table: "assumptions", rule: "MISSING_ASSUMPTIONS" },
     ]);
   });
+
+  it("a prepayment dated before its loan starts (#118, ADR 0109)", async () => {
+    const before = dump(sql);
+    const bad = await edited("mortgage_blocks", (rows) => {
+      rows[0].prepayments = JSON.stringify([
+        { date: "2020-01-01", amount: "100000", effect: "shortenTerm" },
+      ]);
+      return rows;
+    });
+    const e = await rejection(restoreFromJson(sql, bad, checkInputRules));
+    expect(e.code).toBe("BACKUP_ROWS_INVALID");
+    expect(e.issues).toEqual([
+      {
+        table: "mortgage_blocks",
+        id: bad.tables.mortgage_blocks[0].id,
+        column: "prepayments",
+        rule: "EVENT_BEFORE_START",
+      },
+    ]);
+    expect(dump(sql)).toEqual(before);
+  });
+});
+
+// #118 (R3-11): restore copies every stored value back exactly. The fixture fills every
+// nullable column, both recast kinds and a scenario with every shock, so a value the
+// restore drops or rewrites (e.g. the overrides rewrite) fails the dump comparison.
+describe("restore keeps every stored value (#118)", () => {
+  const OVERRIDES =
+    '{"version":1,"appreciationPa":"0.01","rentIndexationPa":"0.02","vacancyAllowance":"0.08","postFixationResetRatePa":"0.055","inflationPa":"0.035","inflationShock":{"deltaPa":"0.02","durationYears":3},"rateShock":{"deltaPa":"0.015","durationYears":2},"valueShock":{"pct":"0.2","atYear":1}}';
+
+  beforeEach(() => {
+    sql.db.exec(`
+      UPDATE properties SET appreciation_override_pa = '0.03',
+        rent_index_override_pa = '0.02', own_cash = '1500000.5',
+        transaction_costs = '95000', initial_works = '40000', funding_note = 'Deposit'
+        WHERE id = 'javorova';
+      UPDATE properties SET active = 0 WHERE id = 'dubova';
+      UPDATE mortgage_blocks SET loan_term_years = 25,
+        contract_maturity_date = '2046-01-17', interest_only_until = '2021-06-30',
+        draws = '[{"date":"2021-03-01","amount":"100000"}]'
+        WHERE id = 'm-javorova';
+      UPDATE mortgage_blocks SET
+        prepayments = '[{"date":"2027-02-01","amount":"100000","effect":"shortenTerm"},{"date":"2028-02-01","amount":"50000","effect":"lowerInstalment","fee":"1500"}]',
+        recasts = '[{"date":"2029-02-01","instalment":"20000"}]'
+        WHERE id = 'm-lipova';
+      UPDATE mortgage_blocks SET loan_term_years = 30,
+        recasts = '[{"date":"2030-02-01","maturity":"2050-02-01"}]'
+        WHERE id = 'm-dubova';
+      INSERT INTO valuations (id, property_id, valid_from, valid_to, market_value)
+        VALUES ('v-javorova-old', 'javorova', '2024-01-01', '2026-05-31', '9800000');
+      INSERT INTO scenarios (id, name, overrides, created_at)
+        VALUES ('s-all', 'Every shock', '${OVERRIDES}', '2026-06-07T10:00:00.000Z');
+    `);
+  });
+
+  it("the fixture fills every column of every table", async () => {
+    const b = await exportToJson(sql, new Date());
+    for (const [table, rows] of Object.entries(b.tables)) {
+      const cols = sql.db
+        .prepare("SELECT name FROM pragma_table_info(?)")
+        .all(table) as { name: string }[];
+      for (const { name } of cols)
+        expect(
+          (rows as Rows).some((r) => r[name] !== null),
+          `${table}.${name} is filled`,
+        ).toBe(true);
+    }
+    expect(prepareRestore(b, checkInputRules).warnings).toEqual([]);
+  });
+
+  it("a backup file restores to exactly the same rows", async () => {
+    const before = dump(sql);
+    const text = JSON.stringify(await exportToJson(sql, new Date()));
+    await restoreFromJson(sql, parseBackupText(text), checkInputRules);
+    expect(dump(sql)).toEqual(before);
+  });
+
+  it("the app reads the restored loan events and scenario", async () => {
+    await restoreFromJson(
+      sql,
+      await exportToJson(sql, new Date()),
+      checkInputRules,
+    );
+    const { portfolio, scenarios } = await loadState(sql);
+    const block = (id: string) => portfolio.mortgages.find((m) => m.id === id)!;
+    expect(block("m-javorova").draws).toHaveLength(1);
+    expect(block("m-lipova").prepayments?.map((p) => p.effect)).toEqual([
+      "shortenTerm",
+      "lowerInstalment",
+    ]);
+    expect(block("m-lipova").recasts?.[0]?.instalment?.toString()).toBe(
+      "20000",
+    );
+    expect(block("m-dubova").recasts?.[0]?.maturity).toBeDefined();
+    const o = scenarios[0]!.overrides;
+    expect([
+      o.inflationShock?.durationYears,
+      o.rateShock?.durationYears,
+      o.valueShock?.atYear,
+    ]).toEqual([3, 2, 1]);
+  });
 });
 
 describe("restore is one transaction", () => {
