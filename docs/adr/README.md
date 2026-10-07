@@ -4,10 +4,12 @@ Each file records one decision: its context, the decision itself and its consequ
 
 ## How ADRs are numbered
 
-The ADRs were written at the end of the 2026 refactor programme from its decision log. An ADR's
-number matches the programme decision it records (`D-23` → `0023`), so the many code comments
-that cite `D-nn` resolve directly. Gaps are decisions that were phase gates or narrow follow-ups;
-those are quoted inside the ADR they refine ("Related follow-up decisions").
+The ADRs were written at the end of the 2026 refactor programme from its decision log. For
+`D-01` to `D-70`, an ADR's number matches the programme decision it records (`D-23` → `0023`),
+so the many code comments that cite `D-nn` resolve directly. A `D-nn` without its own ADR
+(a phase gate or a narrow follow-up, such as D-69) is quoted inside the ADR it refines
+("Related follow-up decisions"). `D-71` and later do **not** map by number (D-72 is not ADR
+0072): find them in the IDs column of the index.
 
 Other IDs seen in code comments:
 
@@ -19,20 +21,29 @@ Other IDs seen in code comments:
 
 ## Writing a new ADR
 
-1. Copy the template below to `NNNN-short-slug.md`, using the next free number above 0070.
+1. Copy the template below to `NNNN-short-slug.md`, using the next number that is free on
+   `origin/main` and in open pull requests (`gh pr list`).
 2. Status starts as **Proposed**; the owner accepts or rejects it. Superseding an ADR means a new
-   ADR plus `Status: Superseded by NNNN` on the old one.
+   ADR with `Supersedes: NNNN` plus `Status: Superseded by NNNN` on the old one. Amending one
+   means `Amends:` on the new ADR plus `Amended by:` on the old one. Both sides are required.
 3. A change to a computed number or any other user-visible behaviour needs an accepted ADR and a
-   failing test first (ADR 0001). A change to a parity target also needs an old → new row in the
-   target change log in `.claude/rules/engine-parity.md` (ADR 0003).
-4. Reference the ADR in the commit footer: `Refs: ADR 0071`.
+   failing test first (ADR 0001). A copy-only change (the text of existing dictionary entries)
+   gets an entry in [`docs/decisions/wording.md`](../decisions/wording.md) instead (ADR 0152).
+   Cite dictionary keys, not translated strings. A change to a parity target also needs an
+   old → new row in the target change log in `.claude/rules/engine-parity.md` (ADR 0003).
+4. Run `pnpm adr:index` to regenerate the index below; `pnpm adr:check` (in CI) fails on a
+   stale index or a one-sided link. Never edit the index table by hand.
+5. Reference the ADR in the commit footer: `Refs: ADR 0071`.
 
 ```markdown
 # NNNN. Title
 
-- Status: Proposed | Accepted | Superseded by NNNN
+- Status: Proposed | Accepted | Rejected | Superseded by NNNN
 - Date: YYYY-MM-DD
-- Source IDs: (optional) issue or debt IDs
+- Source: (optional) issue numbers (#nn) and finding or debt IDs
+- Supersedes: (optional) [NNNN](NNNN-slug.md)
+- Amends: (optional) [NNNN](NNNN-slug.md) (what changes)
+- Amended by: (optional, added later by the amending ADR) [NNNN](NNNN-slug.md)
 
 ## Context
 

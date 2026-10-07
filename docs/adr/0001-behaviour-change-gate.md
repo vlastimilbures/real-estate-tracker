@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-09-30 (taken before the refactor programme; recorded in P0)
 - Source IDs: D-01
+- Amended by: [0152](0152-wording-log-and-generated-index.md) (a copy-only change is recorded in
+  the wording log, not an ADR)
 
 ## Context
 

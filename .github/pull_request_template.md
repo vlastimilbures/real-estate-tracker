@@ -6,6 +6,7 @@
 
 - [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm depcruise`, `pnpm knip` and Prettier pass
 - [ ] Engine changes have tests written first; parity targets unchanged, or changed with an ADR
-- [ ] User-visible change: ADR accepted (ADR 0001) and `CHANGELOG.md` `[Unreleased]` updated
+- [ ] User-visible change: ADR accepted (ADR 0001), or for a copy-only change an entry in `docs/decisions/wording.md` (ADR 0152); `CHANGELOG.md` `[Unreleased]` updated
+- [ ] New or changed ADR header: `pnpm adr:index` run (index regenerated)
 - [ ] Docs impact checked (SPEC / Guide / README / user docs / roadmap)
 - [ ] No real personal data (databases, backups, statements, screenshots of real portfolios)
