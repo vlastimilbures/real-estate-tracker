@@ -2,7 +2,7 @@
 import { existsSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { readAxeScans } from "./axeFiles.ts";
-import { UX_DATE } from "./helpers";
+import { UX_DATE } from "./clock.ts";
 
 const IMPACTS = ["critical", "serious", "moderate", "minor"] as const;
 
@@ -12,7 +12,7 @@ export default function summary() {
   const lines: string[] = [
     `# UX capture — ${path.basename(out)}`,
     "",
-    `Frozen date: ${UX_DATE}${process.env.UX_DATE ? "" : " (default)"}`,
+    `Frozen date: ${UX_DATE}${process.env.UX_DATE === undefined ? " (default)" : ""}`,
     "",
   ];
 
