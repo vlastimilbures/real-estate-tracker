@@ -172,11 +172,11 @@ export const en = {
     partialFailed: (reached: number, stoppedAt: number) =>
       `The database upgrade failed at version ${stoppedAt}, and that step was rolled back. The steps before it went through, so the database is now at version ${reached}, and the previous app version no longer opens it.`,
     copyAt: (file: string) =>
-      `A copy from before the upgrade is in the backups folder: ${file}. To go back to the previous app version, quit the app, move portfolio.db aside, and put a copy of that file in its place, renamed portfolio.db.`,
+      `A copy from before the upgrade is in the backups folder: ${file}. To go back to the previous app version, quit the app, move portfolio.db, portfolio.db-wal and portfolio.db-shm aside (some may not exist), and put a copy of that file in its place, renamed portfolio.db.`,
     copyMissing:
       "The database was new, so there was nothing to copy before the upgrade.",
     nextIntegrity:
-      "Quit the app and move portfolio.db out of the data folder (do not delete it). Reopen the app: it starts empty. Then restore your latest JSON backup in Settings → Backup & Restore, or put back a pre-migration copy from the backups folder.",
+      "Quit the app and move portfolio.db, portfolio.db-wal and portfolio.db-shm out of the data folder (do not delete them; some may not exist). Reopen the app: it starts empty. Then restore your latest JSON backup in Settings → Backup & Restore, or put back a pre-migration copy from the backups folder.",
     nextRowInvalid:
       "Restore a backup… replaces all data with a JSON backup; a safety copy of the current data is saved first. Or report the record below.",
     restoreBackup: "Restore a backup…",

@@ -10,6 +10,7 @@ import { App } from "../App";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { en } from "../../i18n/en";
+import { getDict } from "../../i18n";
 import type { DataErrorCode, UpgradeStop } from "../../data/errors";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn() }));
@@ -67,6 +68,18 @@ describe("startup error screen (UX-057)", () => {
     );
     expect(init.mock.calls.length).toBe(before + 1);
   });
+
+  it.each(["en", "cs", "ru"] as const)(
+    "%s: every move-aside step names the -wal and -shm files too",
+    (lang) => {
+      // A stale write-ahead log left next to a swapped-in database file can damage it.
+      const d = getDict(lang);
+      for (const step of [d.boot.nextIntegrity, d.boot.copyAt("x.sqlite")]) {
+        expect(step).toContain("portfolio.db-wal");
+        expect(step).toContain("portfolio.db-shm");
+      }
+    },
+  );
 
   it("the retry hint no longer claims nothing changed on disk (#115)", () => {
     expect(en.app.bootRetryHint).not.toMatch(/nothing/i);
