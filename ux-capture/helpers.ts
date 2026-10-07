@@ -170,6 +170,8 @@ const NAV_KEY: Partial<Record<Route, keyof Dictionary["nav"]>> = {
 /**
  * Navigate through the sidebar, the way a user does, and wait until the clicked entry is
  * the current page: the old page's title is visible too, so it cannot be the signal (#137).
+ * The wait proves nothing when the entry is already current, e.g. Properties on a
+ * property detail page (AppShell marks it for both routes).
  */
 export async function nav(ux: Ux, route: Route) {
   const key = NAV_KEY[route];

@@ -47,11 +47,17 @@ prints the largest change.
 Two runs of the same commit are not always bit-identical: Chromium anti-aliasing moves a
 few channel levels on charts, tooltips and focus rings. Measured on 2026-10-07 (en, light
 and dark, 1280x800 and min, 280 screens): with tolerance 0, up to 150 px on a screen; with
-the default tolerance 8, at most 14 px. One changed KPI digit is about 300 px, so the
-defaults catch it (#137). Use `UX_DIFF_TOLERANCE=0 UX_DIFF_MAX_PX=0` for an exact
-comparison. PNG hashes cannot prove a no-op (DR-147). The capture emulates "Reduce motion" (charts skip their entry animation),
-turns CSS transitions off (DR-160) and waits until animations stop and the charts' SVG is
-stable before each shot.
+the default tolerance 8, at most 14 px. One changed KPI digit (a 21×30 px box) is about
+300 changed px, so the defaults catch it (#137). For an exact comparison, set both
+variables to `0`. A bad value stops the diff with exit 2.
+
+Known flake: under load, the last x-axis tick label of the dashboard charts can land 1 px
+off (about 700 px on `02-dashboard-real` at `min`). Re-capture that screen before treating
+it as a change.
+
+PNG hashes cannot prove a no-op (DR-147). The capture emulates "Reduce motion" (charts
+skip their entry animation), turns CSS transitions off (DR-160) and waits until animations
+stop and the charts' SVG is stable before each shot.
 
 ## Axe gate
 

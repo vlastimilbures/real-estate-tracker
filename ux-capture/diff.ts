@@ -1,9 +1,9 @@
 // Compare two capture runs screen by screen (DR-147, D15). A pixel counts as changed when
 // its R, G or B moves by more than UX_DIFF_TOLERANCE levels (default 8), which ignores
 // anti-aliasing noise; a screen fails when more than UX_DIFF_MAX_PX pixels (default 50)
-// changed. One changed KPI digit is about 300 px, so it fails (#137). Screens that exist
-// in only one run are listed as MISSING (run A only) or NEW (run B only) and fail too.
-// Node built-ins only.
+// changed. One changed KPI digit (a 21×30 px box) is about 300 changed px, so it fails
+// (#137). Screens in only one run are listed as MISSING (run A only) or NEW (run B only)
+// and fail too. A bad setting or an empty run stops it with exit 2. Node built-ins only.
 //
 //   pnpm ux:diff <runA> <runB>        # folders under ux-screens/
 import { existsSync, readdirSync, statSync } from "node:fs";
@@ -15,8 +15,23 @@ if (!runA || !runB) {
   console.error("usage: pnpm ux:diff <runA> <runB>");
   process.exit(2);
 }
-const tolerance = Number(process.env.UX_DIFF_TOLERANCE ?? "8");
-const maxPx = Number(process.env.UX_DIFF_MAX_PX ?? "50");
+/** A whole number ≥ 0 from the environment; anything else stops the diff (exit 2). */
+function setting(name: string, fallback: number): number {
+  const text = process.env[name];
+  if (text === undefined) return fallback;
+  const value = Number(text);
+  if (text.trim() === "" || !Number.isInteger(value) || value < 0) {
+    console.error(`${name} must be a whole number ≥ 0, got "${text}"`);
+    process.exit(2);
+  }
+  return value;
+}
+if (process.env.UX_DIFF_MAX !== undefined) {
+  console.error("UX_DIFF_MAX is gone: use UX_DIFF_MAX_PX (pixels, default 50)");
+  process.exit(2);
+}
+const tolerance = setting("UX_DIFF_TOLERANCE", 8);
+const maxPx = setting("UX_DIFF_MAX_PX", 50);
 const dirA = join("ux-screens", runA);
 const dirB = join("ux-screens", runB);
 for (const dir of [dirA, dirB]) {
@@ -40,6 +55,10 @@ function screens(root: string): Set<string> {
 
 const inA = screens(dirA);
 const inB = screens(dirB);
+if (inA.size === 0 && inB.size === 0) {
+  console.error(`no screenshots under ${dirA} or ${dirB}`);
+  process.exit(2);
+}
 let failed = 0;
 let compared = 0;
 let largest = { changed: 0, screen: "" };
@@ -50,11 +69,15 @@ for (const screen of [...inA].sort()) {
     continue;
   }
   compared++;
-  const { changed, share } = diffShare(
-    decode(join(dirA, screen)),
-    decode(join(dirB, screen)),
-    tolerance,
-  );
+  let pair;
+  try {
+    pair = [decode(join(dirA, screen)), decode(join(dirB, screen))] as const;
+  } catch (e) {
+    console.log(`UNREADABLE ${screen}  ${(e as Error).message}`);
+    failed++;
+    continue;
+  }
+  const { changed, share } = diffShare(pair[0], pair[1], tolerance);
   if (changed > largest.changed) largest = { changed, screen };
   if (changed > maxPx) {
     console.log(

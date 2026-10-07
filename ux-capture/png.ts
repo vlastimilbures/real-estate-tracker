@@ -9,7 +9,7 @@ export interface Png {
   pixels: Buffer;
 }
 
-/** 8-bit RGB/RGBA, non-interlaced PNG (what Playwright writes). */
+/** 8-bit RGB/RGBA, non-interlaced PNG (what Playwright writes); throws on any other. */
 export function decode(file: string): Png {
   const b = readFileSync(file);
   let o = 8;
@@ -25,6 +25,14 @@ export function decode(file: string): Png {
       width = data.readUInt32BE(0);
       height = data.readUInt32BE(4);
       colorType = data[9]!;
+      if (
+        data[8] !== 8 ||
+        (colorType !== 2 && colorType !== 6) ||
+        data[12] !== 0
+      )
+        throw new Error(
+          `${file}: only 8-bit RGB/RGBA non-interlaced PNGs are supported`,
+        );
     } else if (type === "IDAT") idat.push(data);
     o += 12 + len;
   }
@@ -34,6 +42,8 @@ export function decode(file: string): Png {
   const pixels = Buffer.alloc(height * stride);
   for (let y = 0; y < height; y++) {
     const filter = raw[y * (stride + 1)]!;
+    if (filter > 4)
+      throw new Error(`${file}: bad filter ${filter} on row ${y}`);
     const row = y * (stride + 1) + 1;
     for (let x = 0; x < stride; x++) {
       const a = x >= channels ? pixels[y * stride + x - channels]! : 0;
