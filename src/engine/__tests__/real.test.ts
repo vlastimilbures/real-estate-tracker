@@ -63,6 +63,23 @@ describe("cpiAt — price index at an as-of date (baseDate = 1)", () => {
     );
   });
 
+  // ADR 0150: the as-of resolver never passes a date past the horizon, so a later date is
+  // a caller bug and raises instead of returning a stopped index.
+  it.fails(
+    "raises past baseDate + horizon, and still returns the horizon index on it (#113)",
+    () => {
+      const cpi = cpiIndex(assumptions);
+      const end = edate(BASE_DATE, assumptions.horizonYears * 12);
+      expect(cpiAt(assumptions, end).toString()).toBe(
+        cpi[assumptions.horizonYears].toString(),
+      );
+      const justPast = edate(BASE_DATE, assumptions.horizonYears * 12 + 1);
+      expect(() => cpiAt(assumptions, justPast)).toThrow(RangeError);
+      const far = edate(BASE_DATE, (assumptions.horizonYears + 5) * 12);
+      expect(() => cpiAt(assumptions, far)).toThrow(RangeError);
+    },
+  );
+
   it("stops at the horizon index beyond it", () => {
     const cpi = cpiIndex(assumptions);
     const far = edate(BASE_DATE, (assumptions.horizonYears + 5) * 12);
