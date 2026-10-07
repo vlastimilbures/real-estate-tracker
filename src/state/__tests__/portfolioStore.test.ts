@@ -236,6 +236,27 @@ describe("portfolioStore init & refresh", () => {
     expect(s.startupError).toEqual({ code: "MIGRATION_CONFLICT", details });
   });
 
+  it("a stopped upgrade keeps how far it got for the screen (#115)", async () => {
+    const upgrade = {
+      from: 6,
+      reached: 7,
+      stoppedAt: 8,
+      backupPath: "/a/backups/pre-migration-v6-to-v10.sqlite",
+    };
+    await usePortfolioStore.getState().init(() =>
+      Promise.reject(
+        new DataError("MIGRATION_CONFLICT", "upgrade stopped", ["x"], {
+          upgrade,
+        }),
+      ),
+    );
+    expect(usePortfolioStore.getState().startupError).toEqual({
+      code: "MIGRATION_CONFLICT",
+      details: ["x"],
+      upgrade,
+    });
+  });
+
   it("any other startup failure keeps the raw message only", async () => {
     await usePortfolioStore
       .getState()

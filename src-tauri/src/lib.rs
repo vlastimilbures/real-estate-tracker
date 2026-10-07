@@ -63,6 +63,7 @@ pub fn run() {
             files::save_file,
             files::open_backup_file,
             files::write_app_backup,
+            files::reveal_data_dir,
             menu::set_menu_labels
         ])
         .setup(|app| {

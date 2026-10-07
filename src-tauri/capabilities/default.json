@@ -17,6 +17,7 @@
     "allow-save-file",
     "allow-open-backup-file",
     "allow-write-app-backup",
+    "allow-reveal-data-dir",
     "allow-set-menu-labels"
   ]
 }

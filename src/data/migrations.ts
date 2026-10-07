@@ -13,7 +13,7 @@
 // verified backup; each migration then runs in ONE transaction together with its
 // schema_migrations row, so it applies completely or not at all.
 import type { Sql, SqlStatement } from "./sql";
-import { DataError, messageOf } from "./errors";
+import { DataError, messageOf, type UpgradeStop } from "./errors";
 import { parseOverrides, serializeOverrides } from "./mappers";
 
 export interface Migration {
@@ -563,6 +563,14 @@ export interface MigrateResult {
   backupPath: string | null;
 }
 
+/** What a stopped upgrade left behind, for the log-side message (the screen builds its
+ *  own text from `DataError.upgrade`). */
+function outcome(u: UpgradeStop): string {
+  if (u.reached === u.from) return "Nothing was changed.";
+  const copy = u.backupPath ?? "none (new database)";
+  return `The database was upgraded to v${u.reached}; pre-upgrade copy: ${copy}.`;
+}
+
 /** `PRAGMA integrity_check` must answer exactly "ok". */
 export async function checkIntegrity(sql: Sql): Promise<void> {
   const rows = await sql.select<{ integrity_check: string }>(
@@ -616,13 +624,33 @@ export async function migrate(
   const to = last.version;
 
   let backupPath: string | null = null;
+  // The last committed version: a later step can stop after earlier ones committed
+  // (ADR 0153), so the error says how far the upgrade got.
+  let reached = from;
+  const stop = (m: Migration): UpgradeStop => ({
+    from,
+    reached,
+    stoppedAt: m.version,
+    backupPath,
+  });
   for (const m of pending) {
-    const conflicts = m.precheck ? await m.precheck(sql) : [];
+    let conflicts: string[];
+    try {
+      conflicts = m.precheck ? await m.precheck(sql) : [];
+    } catch (e) {
+      throw new DataError(
+        "MIGRATION_FAILED",
+        `Database upgrade to v${m.version} failed in its check. ${outcome(stop(m))}`,
+        [messageOf(e)],
+        { cause: e, upgrade: stop(m) },
+      );
+    }
     if (conflicts.length > 0) {
       throw new DataError(
         "MIGRATION_CONFLICT",
-        `Database upgrade to v${m.version} stopped: ${conflicts.length} record(s) conflict with the new rules. Nothing was changed.`,
+        `Database upgrade to v${m.version} stopped: ${conflicts.length} record(s) conflict with the new rules. ${outcome(stop(m))}`,
         conflicts,
+        { upgrade: stop(m) },
       );
     }
     if (done.size > 0 && backupPath === null) {
@@ -631,6 +659,8 @@ export async function migrate(
           `pre-migration-v${from}-to-v${to}-${stamp(now())}`,
         );
       } catch (e) {
+        // Only before the first commit (the copy is written once, first), so this
+        // one is always "nothing changed".
         throw new DataError(
           "MIGRATION_BACKUP_FAILED",
           "Database upgrade stopped: the safety backup could not be written or verified. Nothing was changed.",
@@ -655,11 +685,12 @@ export async function migrate(
     } catch (e) {
       throw new DataError(
         "MIGRATION_FAILED",
-        `Database upgrade to v${m.version} failed and was rolled back.`,
+        `Database upgrade to v${m.version} failed and was rolled back. ${outcome(stop(m))}`,
         [messageOf(e)],
-        { cause: e },
+        { cause: e, upgrade: stop(m) },
       );
     }
+    reached = m.version;
   }
   return { from, to, backupPath };
 }

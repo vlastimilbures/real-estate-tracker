@@ -73,7 +73,7 @@ export const en = {
     loading: "Loading your portfolio…",
     dbErrorEyebrow: "Could not open the database",
     bootRetryHint:
-      "Nothing on disk was changed. Try again; if it keeps failing, quit and reopen the app, and keep the log file for diagnosis.",
+      "Try again; if it keeps failing, quit and reopen the app, and keep the log file for diagnosis.",
     tryAgain: "Try again",
   },
 
@@ -147,7 +147,7 @@ export const en = {
 
   dataErrors: {
     DB_INTEGRITY:
-      "The database file failed its integrity check. Nothing was changed. Close the app and restore your most recent copy of the database.",
+      "The database file failed its integrity check. Nothing was changed.",
     DB_NEWER:
       "This database was saved by a newer version of the app. Nothing was changed. Open it with that version.",
     MIGRATION_CONFLICT:
@@ -163,6 +163,30 @@ export const en = {
     detailsHeading: "Records involved",
     logHint:
       "Details are in the app log: ~/Library/Logs/com.bures.realestate-tracker/app.log",
+  },
+
+  // The startup error screen (#115, ADR 0153).
+  boot: {
+    partialConflict: (reached: number, stoppedAt: number) =>
+      `The database upgrade stopped at version ${stoppedAt}: some saved records conflict with the new data rules. The steps before it went through, so the database is now at version ${reached}, and the previous app version no longer opens it.`,
+    partialFailed: (reached: number, stoppedAt: number) =>
+      `The database upgrade failed at version ${stoppedAt}, and that step was rolled back. The steps before it went through, so the database is now at version ${reached}, and the previous app version no longer opens it.`,
+    copyAt: (file: string) =>
+      `A copy from before the upgrade is in the backups folder: ${file}. To go back to the previous app version, quit the app, move portfolio.db, portfolio.db-wal and portfolio.db-shm aside (some may not exist), and put a copy of that file in its place, renamed portfolio.db.`,
+    partialNew: (reached: number, stoppedAt: number) =>
+      `Setting up the new database stopped at version ${stoppedAt}; it is at version ${reached} and holds no data yet. Try again.`,
+    nextIntegrity:
+      "Quit the app and move portfolio.db, portfolio.db-wal and portfolio.db-shm out of the data folder (do not delete them; some may not exist). Then either reopen the app, which starts with a new database holding the sample portfolio, and restore your latest JSON backup in Settings → Backup & Restore; or, before you reopen it, put a copy of a pre-migration file from the backups folder in the data folder, renamed portfolio.db.",
+    nextRowInvalid:
+      "Restore a backup… replaces all data with a JSON backup; a safety copy of the current data is saved first. Or report the record below.",
+    restoreBackup: "Restore a backup…",
+    restoredReloadFailed: (file: string) =>
+      `The backup was restored and your previous data was saved as ${file} in the backups folder, but the data could not be loaded. Try again; if it keeps failing, keep the log file for diagnosis.`,
+    continue: "Open the app",
+    detailsOther: "Details",
+    showDataFolder: "Show data folder",
+    revealFailed:
+      "Could not open the folder. It is at ~/Library/Application Support/com.bures.realestate-tracker/",
   },
 
   errorBoundary: {

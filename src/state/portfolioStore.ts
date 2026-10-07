@@ -17,7 +17,11 @@ import type {
   ScenarioOverrides,
 } from "../engine";
 import { migrate } from "../data/migrations";
-import { DataError, type DataErrorCode } from "../data/errors";
+import {
+  DataError,
+  type DataErrorCode,
+  type UpgradeStop,
+} from "../data/errors";
 import { ScenarioRuleError, toWriteError, type WriteError } from "./writeError";
 import { logFailure } from "../data/errorLog";
 import {
@@ -121,9 +125,14 @@ async function defaultOpen(): Promise<Sql> {
   // dev server with VITE_E2E=1); production always uses the Tauri SQLite adapter.
   if (import.meta.env.DEV && !inTauri && import.meta.env.VITE_E2E === "1") {
     const { openBrowserSql } = await import("../data/browserSql");
+    // ux:capture forces a startup failure to capture its screen (ADR 0153).
+    const faults = await import("../data/e2eFaults");
+    const fault = faults.e2eFault();
     const sql = await openBrowserSql();
+    await faults.beforeMigrate(sql, fault);
     await migrate(sql);
     await seedIfEmpty(sql);
+    await faults.afterSeed(sql, fault);
     return sql;
   }
   const { openTauriSql } = await import("../data/tauriSql");
@@ -131,6 +140,14 @@ async function defaultOpen(): Promise<Sql> {
   await migrate(sql);
   await seedIfEmpty(sql);
   return sql;
+}
+
+/** A typed failure that stopped startup; `upgrade` says how far a stopped upgrade got
+ *  (ADR 0153). */
+export interface StartupError {
+  code: DataErrorCode;
+  details: string[];
+  upgrade?: UpgradeStop;
 }
 
 interface PortfolioState {
@@ -148,7 +165,7 @@ interface PortfolioState {
   /** The last failed write (or the startup failure), translated by the UI. */
   error: WriteError | null;
   /** A typed data-layer failure that stopped startup (P5a), for a translated screen. */
-  startupError: { code: DataErrorCode; details: string[] } | null;
+  startupError: StartupError | null;
   /** The reload after a write failed, so the screen may not show what is on disk
    *  (DR-086). The write itself still counts as done (ADR 0125). Cleared by the next
    *  successful load. */
@@ -235,6 +252,14 @@ interface PortfolioState {
   ) => Promise<CsvImportReport>;
   /** Replace the data with a checked backup (after a safety backup), then reload. */
   restoreBackup: (backup: BackupFile) => Promise<{ safetyBackup: string }>;
+  /** Restore from the startup error screen, only after ROW_INVALID: the database is
+   *  open and at head there (ADR 0153). `ready` says the data loaded afterwards; the
+   *  screen stays until `continueAfterRestore`, so the safety copy can be named. */
+  restoreAtStartup: (
+    backup: BackupFile,
+  ) => Promise<{ safetyBackup: string; ready: boolean }>;
+  /** Leave the startup error screen after a restore whose data loaded. */
+  continueAfterRestore: () => void;
   /** Delete the sample properties (after a safety backup), then reload. */
   clearSample: () => Promise<{ safetyBackup: string }>;
   /** Load the sample into an empty portfolio, then reload (ADR 0112). Throws
@@ -425,7 +450,11 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
           error: toWriteError(e),
           startupError:
             e instanceof DataError
-              ? { code: e.code, details: e.details }
+              ? {
+                  code: e.code,
+                  details: e.details,
+                  ...(e.upgrade && { upgrade: e.upgrade }),
+                }
               : null,
         });
       }
@@ -615,6 +644,24 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       }),
     restoreBackup: (backup) =>
       exclusive((sql) => confirmRestore(sql, backup, checkInputRules)),
+    restoreAtStartup: async (backup) => {
+      // Only where the database migrated to head and only reading it failed; any
+      // other startup failure leaves a database a restore must not write to.
+      if (
+        get().status !== "error" ||
+        get().startupError?.code !== "ROW_INVALID"
+      )
+        throw new Error("A restore at startup needs a ROW_INVALID failure");
+      const { safetyBackup } = await exclusive((sql) =>
+        confirmRestore(sql, backup, checkInputRules),
+      );
+      return { safetyBackup, ready: get().portfolio !== null && !get().stale };
+    },
+    continueAfterRestore: () => {
+      const s = get();
+      if (s.status !== "error" || s.portfolio === null || s.stale) return;
+      set({ status: "ready", error: null, startupError: null });
+    },
     clearSample: () => exclusive((sql) => clearSample(sql)),
     loadSample: () => exclusive(loadSample),
     exportBackup: async () => {

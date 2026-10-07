@@ -163,15 +163,21 @@ describe("diffShare", () => {
     expect(diffShare(a, shifted(a, [0, 1, 2], 1), 0).changed).toBe(3);
   });
 
-  // The #137 probe: one changed KPI digit is a 21×30 px box on a 1280×2854 page.
-  it("counts a changed 21×30 box on a full page above the 50 px budget", () => {
-    const page = image(1280, 2854, 4);
-    const box = Array.from({ length: 30 }, (_, y) =>
-      Array.from({ length: 21 }, (_, x) => (400 + y) * 1280 + 600 + x),
-    ).flat();
-    const diff = diffShare(decode(encode(page)), shifted(page, box, 60), 8);
-    expect(diff.changed).toBe(630);
-    expect(diff.changed).toBeGreaterThan(50);
-    expect(diff.share).toBeLessThan(0.01);
-  });
+  // The #137 probe: one changed KPI digit is a 21×30 px box on a 1280×2854 page. The
+  // full-page encode in plain JS takes about 8 s on the CI runner, past vitest's 5 s
+  // default (#269), so this test alone gets a longer limit; the assertions are unchanged.
+  it(
+    "counts a changed 21×30 box on a full page above the 50 px budget",
+    { timeout: 30_000 },
+    () => {
+      const page = image(1280, 2854, 4);
+      const box = Array.from({ length: 30 }, (_, y) =>
+        Array.from({ length: 21 }, (_, x) => (400 + y) * 1280 + 600 + x),
+      ).flat();
+      const diff = diffShare(decode(encode(page)), shifted(page, box, 60), 8);
+      expect(diff.changed).toBe(630);
+      expect(diff.changed).toBeGreaterThan(50);
+      expect(diff.share).toBeLessThan(0.01);
+    },
+  );
 });

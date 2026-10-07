@@ -21,20 +21,33 @@ export type DataErrorCode =
   /** A saved scenario's overrides JSON is unreadable (DR-037). */
   | "SCENARIO_INVALID";
 
+/** How far a stopped upgrade got (ADR 0153). Each step commits on its own, so the
+ *  database is at `reached`, which is `from` only when nothing changed. */
+export interface UpgradeStop {
+  from: number;
+  reached: number;
+  stoppedAt: number;
+  /** The pre-upgrade copy; null when none was written yet (or a brand-new database). */
+  backupPath: string | null;
+}
+
 export class DataError extends Error {
   readonly code: DataErrorCode;
   /** One human-readable line per offending record, without financial values. */
   readonly details: string[];
+  /** Set on MIGRATION_CONFLICT and MIGRATION_FAILED (ADR 0153). */
+  readonly upgrade?: UpgradeStop;
   constructor(
     code: DataErrorCode,
     message: string,
     details: string[] = [],
-    options?: { cause?: unknown },
+    options?: { cause?: unknown; upgrade?: UpgradeStop },
   ) {
     super(message, options);
     this.name = "DataError";
     this.code = code;
     this.details = details;
+    if (options?.upgrade) this.upgrade = options.upgrade;
   }
 }
 

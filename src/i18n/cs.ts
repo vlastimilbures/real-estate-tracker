@@ -66,7 +66,7 @@ export const cs: Dictionary = {
     loading: "Načítání portfolia…",
     dbErrorEyebrow: "Nepodařilo se otevřít databázi",
     bootRetryHint:
-      "Na disku se nic nezměnilo. Zkuste to znovu; pokud to stále selhává, ukončete a znovu otevřete aplikaci a uschovejte soubor protokolu pro diagnostiku.",
+      "Zkuste to znovu; pokud to stále selhává, ukončete a znovu otevřete aplikaci a uschovejte soubor protokolu pro diagnostiku.",
     tryAgain: "Zkusit znovu",
   },
 
@@ -132,7 +132,7 @@ export const cs: Dictionary = {
 
   dataErrors: {
     DB_INTEGRITY:
-      "Soubor databáze neprošel kontrolou integrity. Nic nebylo změněno. Zavřete aplikaci a obnovte poslední kopii databáze.",
+      "Soubor databáze neprošel kontrolou integrity. Nic nebylo změněno.",
     DB_NEWER:
       "Tuto databázi uložila novější verze aplikace. Nic nebylo změněno. Otevřete ji v té verzi.",
     MIGRATION_CONFLICT:
@@ -148,6 +148,30 @@ export const cs: Dictionary = {
     detailsHeading: "Dotčené záznamy",
     logHint:
       "Podrobnosti jsou v protokolu aplikace: ~/Library/Logs/com.bures.realestate-tracker/app.log",
+  },
+
+  // The startup error screen (#115, ADR 0153).
+  boot: {
+    partialConflict: (reached: number, stoppedAt: number) =>
+      `Aktualizace databáze se zastavila u verze ${stoppedAt}: některé uložené záznamy jsou v rozporu s novými pravidly. Předchozí kroky proběhly, takže databáze je teď ve verzi ${reached} a předchozí verze aplikace ji už neotevře.`,
+    partialFailed: (reached: number, stoppedAt: number) =>
+      `Aktualizace databáze selhala u verze ${stoppedAt} a tento krok byl vrácen zpět. Předchozí kroky proběhly, takže databáze je teď ve verzi ${reached} a předchozí verze aplikace ji už neotevře.`,
+    copyAt: (file: string) =>
+      `Kopie z doby před aktualizací je ve složce záloh: ${file}. Chcete-li se vrátit k předchozí verzi aplikace, ukončete aplikaci, přesuňte portfolio.db, portfolio.db-wal a portfolio.db-shm stranou (některé nemusí existovat) a na místo portfolio.db dejte kopii tohoto souboru přejmenovanou na portfolio.db.`,
+    partialNew: (reached: number, stoppedAt: number) =>
+      `Zakládání nové databáze se zastavilo u verze ${stoppedAt}; databáze je ve verzi ${reached} a zatím neobsahuje žádná data. Zkuste to znovu.`,
+    nextIntegrity:
+      "Ukončete aplikaci a přesuňte portfolio.db, portfolio.db-wal a portfolio.db-shm ze složky dat (nemažte je; některé nemusí existovat). Pak buď znovu otevřete aplikaci, která se spustí s novou databází s ukázkovým portfoliem, a obnovte poslední zálohu JSON v Nastavení → Záloha a obnova; nebo ještě před otevřením dejte do složky dat kopii souboru před migrací ze složky záloh, přejmenovanou na portfolio.db.",
+    nextRowInvalid:
+      "Obnovit zálohu… nahradí všechna data zálohou JSON; bezpečnostní kopie současných dat se uloží nejdřív. Nebo nahlaste záznam níže.",
+    restoreBackup: "Obnovit zálohu…",
+    restoredReloadFailed: (file: string) =>
+      `Záloha byla obnovena a vaše předchozí data byla uložena jako ${file} ve složce záloh, ale data se nepodařilo načíst. Zkuste to znovu; pokud to stále selhává, uschovejte soubor protokolu pro diagnostiku.`,
+    continue: "Otevřít aplikaci",
+    detailsOther: "Podrobnosti",
+    showDataFolder: "Zobrazit složku dat",
+    revealFailed:
+      "Složku se nepodařilo otevřít. Najdete ji zde: ~/Library/Application Support/com.bures.realestate-tracker/",
   },
 
   errorBoundary: {

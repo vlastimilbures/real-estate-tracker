@@ -277,6 +277,8 @@ describe("migration safety: abort paths leave the database unchanged", () => {
     expect(e.code).toBe("MIGRATION_BACKUP_FAILED");
     expect(e.details).toEqual(["BACKUP_FAILED: disk full"]);
     expect(snapshot(sql)).toBe(before);
+    // Only before the first commit, so never a partial upgrade (ADR 0153).
+    expect(e.upgrade).toBeUndefined();
   });
 
   it("a migration whose statements fail is rolled back whole", async () => {
@@ -339,6 +341,131 @@ describe("migration safety: abort paths leave the database unchanged", () => {
     expect(e.code).toBe("DB_INTEGRITY");
     expect(e.details).toEqual(["row 3 missing from index x"]);
     await checkIntegrity(sql); // a healthy DB passes
+  });
+});
+
+// #115 (ADR 0153): each step commits on its own, so an upgrade that stops after the first
+// step has changed the database. The error says how far it got and where the copy is.
+describe("a stopped upgrade reports how far it got", () => {
+  const COPY = new RegExp(
+    `pre-migration-v6-to-v${HEAD}-20261001T073512Z\\.sqlite$`,
+  );
+
+  async function v6WithScenario(overrides: string): Promise<TestSql> {
+    const sql = await schemaAt(6);
+    await fill(sql, 6);
+    await sql.execute("UPDATE scenarios SET overrides = ? WHERE id = 's1'", [
+      overrides,
+    ]);
+    return sql;
+  }
+
+  async function versions(sql: Sql): Promise<number[]> {
+    const rows = await sql.select<{ version: number }>(
+      "SELECT version FROM schema_migrations ORDER BY version",
+    );
+    return rows.map((r) => r.version);
+  }
+
+  it("a conflict at v8 after v7 committed reports v7 and the pre-upgrade copy", async () => {
+    // Valid JSON that v8 cannot read: a number where a decimal string belongs.
+    const sql = await v6WithScenario('{"appreciationPa":0.05}');
+
+    const e = await rejection(migrate(sql, { now: NOW }));
+
+    expect(e.code).toBe("MIGRATION_CONFLICT");
+    expect(await versions(sql)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(e.upgrade).toEqual({
+      from: 6,
+      reached: 7,
+      stoppedAt: 8,
+      backupPath: expect.stringMatching(COPY),
+    });
+    expect(e.message).toContain("upgraded to v7");
+    expect(e.message).not.toContain("Nothing was changed");
+  });
+
+  it("a conflict at the first step changed nothing and has no copy yet", async () => {
+    const sql = await schemaAt(6);
+    await fill(sql, 6);
+    await sql.execute(
+      "INSERT INTO properties (id, name, purchase_date, purchase_price) VALUES ('p3', 'Flat One', '2025-01-01', '1')",
+    );
+
+    const e = await rejection(migrate(sql, { now: NOW }));
+
+    expect(e.code).toBe("MIGRATION_CONFLICT");
+    expect(e.upgrade).toEqual({
+      from: 6,
+      reached: 6,
+      stoppedAt: 7,
+      backupPath: null,
+    });
+    expect(e.message).toContain("Nothing was changed");
+  });
+
+  it("a failed step after v7 committed reports v7 and the copy", async () => {
+    const sql = await v6WithScenario('{"appreciationPa":"0.01"}');
+    const real = sql.transaction.bind(sql);
+    let calls = 0;
+    sql.transaction = (statements, options) =>
+      ++calls === 2
+        ? Promise.reject(new Error("disk I/O error"))
+        : real(statements, options);
+
+    const e = await rejection(migrate(sql, { now: NOW }));
+
+    expect(e.code).toBe("MIGRATION_FAILED");
+    expect(await versions(sql)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(e.upgrade).toEqual({
+      from: 6,
+      reached: 7,
+      stoppedAt: 8,
+      backupPath: expect.stringMatching(COPY),
+    });
+    expect(e.message).not.toContain("Nothing was changed");
+  });
+
+  it("a precheck that throws is a typed failure too, not a raw error", async () => {
+    const sql = await v6WithScenario('{"appreciationPa":"0.01"}');
+    const realSelect = sql.select.bind(sql);
+    const realTx = sql.transaction.bind(sql);
+    let committed = 0;
+    sql.transaction = async (statements, options) => {
+      await realTx(statements, options);
+      committed += 1;
+    };
+    sql.select = <T>(q: string, p?: unknown[]) =>
+      committed > 0 && q.includes("FROM scenarios")
+        ? Promise.reject(new Error("no such column: overrides"))
+        : realSelect<T>(q, p);
+
+    const e = await rejection(migrate(sql, { now: NOW }));
+
+    expect(e.code).toBe("MIGRATION_FAILED");
+    expect(e.details).toEqual(["no such column: overrides"]);
+    expect(e.upgrade).toMatchObject({ from: 6, reached: 7, stoppedAt: 8 });
+  });
+
+  it("a build step that throws is a failed step at that version", async () => {
+    const sql = await v6WithScenario('{"appreciationPa":"0.01"}');
+    const v8 = MIGRATIONS.find((m) => m.version === 8)!;
+    const build = v8.build!;
+    v8.build = () => Promise.reject(new Error("database is locked"));
+    try {
+      const e = await rejection(migrate(sql, { now: NOW }));
+
+      expect(e.code).toBe("MIGRATION_FAILED");
+      expect(await versions(sql)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+      expect(e.upgrade).toEqual({
+        from: 6,
+        reached: 7,
+        stoppedAt: 8,
+        backupPath: expect.stringMatching(COPY),
+      });
+    } finally {
+      v8.build = build;
+    }
   });
 });
 
