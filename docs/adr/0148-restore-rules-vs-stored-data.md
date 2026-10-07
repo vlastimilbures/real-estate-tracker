@@ -1,6 +1,6 @@
 # 0148. Restore rules vs stored data: out-of-range values ask, flags and names are checked
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-07
 - Source: issue #133 (review findings G2-4-01, R3-04, R6-08), options B + C + D (owner
   decision D5, 2026-10-06); decimal grammar (owner, 2026-10-07); Track 10 PR 10.9
