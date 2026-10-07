@@ -1,6 +1,6 @@
 # 0150. One as-of resolver: the date shown is the date computed, on every page
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-07
 - Source: issue #113 (review findings G1-3-02, G2-1-04, G1-1-08, G2-1-13, G2-1-03, R2-07),
   owner decision D7 option A (2026-10-06); future base date and `cpiAt` answered by the
