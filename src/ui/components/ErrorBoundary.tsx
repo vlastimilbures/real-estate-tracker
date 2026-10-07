@@ -22,12 +22,26 @@ interface Props {
 }
 interface State {
   error: Error | null;
+  /** The resetKey the current error belongs to. */
+  resetKey: unknown;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
-  override state: State = { error: null };
+  override state: State = { error: null, resetKey: this.props.resetKey };
 
-  static getDerivedStateFromError(error: Error): State {
+  // A new key clears the error before rendering, so the children render once with the
+  // new key: an error they throw then is caught and logged once, and the old fallback
+  // never renders with the new key (ADR 0146).
+  static getDerivedStateFromProps(
+    props: Props,
+    state: State,
+  ): Partial<State> | null {
+    return props.resetKey === state.resetKey
+      ? null
+      : { error: null, resetKey: props.resetKey };
+  }
+
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { error };
   }
 
@@ -38,10 +52,6 @@ export class ErrorBoundary extends Component<Props, State> {
       info.componentStack,
     );
     logFailure("RENDER", error);
-  }
-
-  override componentDidUpdate(prev: Props): void {
-    if (this.state.error && prev.resetKey !== this.props.resetKey) this.reset();
   }
 
   reset = (): void => this.setState({ error: null });
