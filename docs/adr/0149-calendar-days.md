@@ -9,6 +9,7 @@
 - Related: [0148](0148-restore-rules-vs-stored-data.md) (restore rules vs stored data),
   [0118](0118-data-check.md) (data check), DR-068 (local-day file name), DR-072 (injectable
   today), DR-035 and UX-052 (form dates, 1900 floor)
+- Implementation: decisions 1–3 in PR 10.10a; decisions 4–6 in PR 10.10b
 
 ## Context
 
