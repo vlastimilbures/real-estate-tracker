@@ -2,6 +2,7 @@ import { Fragment, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { Panel, Button, Toast, TableWrap } from "../components/primitives";
 import {
+  BACKUP_MAX_BYTES,
   BackupExportError,
   BackupReadError,
   chooseRestoreFile,
@@ -30,7 +31,7 @@ function restoreErrorText(t: Dictionary, e: RestoreError): string {
   const b = t.backup;
   switch (e.code) {
     case "BACKUP_TOO_LARGE":
-      return b.errTooLarge(20);
+      return b.errTooLarge(BACKUP_MAX_BYTES / (1024 * 1024));
     case "BACKUP_NOT_JSON":
       return b.errNotJson;
     case "BACKUP_INVALID":

@@ -6,6 +6,7 @@ import { chooseRestoreFile as chooseWithRules } from "../data/backup";
 import { checkInputRules } from "../import/inputRules";
 
 export {
+  BACKUP_MAX_BYTES,
   BackupExportError,
   BackupReadError,
   RestoreError,
