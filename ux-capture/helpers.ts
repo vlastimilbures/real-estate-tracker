@@ -146,6 +146,8 @@ export async function settle(page: Page) {
       same = now === last ? same + 1 : 0;
       last = now;
     }
+    // A shot of a chart still moving would differ from run to run (#137).
+    if (same < 3) throw new Error("charts did not settle within 8 s");
   }
 }
 
@@ -165,14 +167,18 @@ const NAV_KEY: Partial<Record<Route, keyof Dictionary["nav"]>> = {
   guide: "guide",
 };
 
-/** Navigate through the sidebar, the way a user does. */
+/**
+ * Navigate through the sidebar, the way a user does, and wait until the clicked entry is
+ * the current page: the old page's title is visible too, so it cannot be the signal (#137).
+ */
 export async function nav(ux: Ux, route: Route) {
   const key = NAV_KEY[route];
   if (!key) throw new Error(`route "${route}" has no sidebar entry`);
-  await ux.page
+  const entry = ux.page
     .locator(".nav")
-    .getByRole("button", { name: ux.t.nav[key] })
-    .click();
+    .getByRole("button", { name: ux.t.nav[key] });
+  await entry.click();
+  await expect(entry).toHaveAttribute("aria-current", "page");
   await expect(ux.page.locator(".page-title")).toBeVisible();
 }
 

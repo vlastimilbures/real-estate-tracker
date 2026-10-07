@@ -154,6 +154,15 @@ async function saveProperty(ux: Ux) {
   await expect(dialog).toBeHidden();
 }
 
+/** Topbar lens toggle → Real, and check it took (#137). */
+async function pickReal(ux: Ux) {
+  const real = ux.page
+    .getByRole("group", { name: ux.t.shell.nominalOrReal })
+    .getByRole("button", { name: ux.t.common.real, exact: true });
+  await real.click();
+  await expect(real).toHaveAttribute("aria-pressed", "true");
+}
+
 export const SCREENS: Screen[] = [
   {
     id: "00-loading",
@@ -185,9 +194,7 @@ export const SCREENS: Screen[] = [
     route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
-      await ux.page
-        .getByRole("button", { name: ux.t.common.real, exact: true })
-        .click();
+      await pickReal(ux);
       await ux.capture("02-dashboard-real");
     },
   },
@@ -197,7 +204,9 @@ export const SCREENS: Screen[] = [
     route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
-      await ux.page.getByTestId("asof-5y").click();
+      const preset = ux.page.getByTestId("asof-5y");
+      await preset.click();
+      await expect(preset).toHaveAttribute("aria-pressed", "true");
       await ux.capture("03-dashboard-asof-5y");
     },
   },
@@ -218,11 +227,16 @@ export const SCREENS: Screen[] = [
     route: "dashboard",
     run: async (ux) => {
       await boot(ux.page);
-      await ux.page
+      // The pill variant: "All" first, then one pill per property.
+      const all = ux.page.getByTestId("dashboard-filter-all");
+      await expect(all).toBeVisible();
+      const first = ux.page
         .getByTestId("dashboard-filter")
         .getByRole("button")
-        .nth(1)
-        .click();
+        .nth(1);
+      await first.click();
+      await expect(first).toHaveAttribute("aria-pressed", "true");
+      await expect(all).toHaveAttribute("aria-pressed", "false");
       await ux.capture("05-dashboard-filter");
     },
   },
@@ -805,6 +819,11 @@ export const SCREENS: Screen[] = [
         .locator(".topbar")
         .getByRole("button", { name: ux.t.propertyDetail.deactivate })
         .click();
+      await expect(
+        ux.page.getByRole("button", {
+          name: ux.t.propertyDetail.yesDeactivate,
+        }),
+      ).toBeVisible();
       await ux.capture("23-property-deactivate-confirm", { fullPage: false });
     },
   },
@@ -825,9 +844,7 @@ export const SCREENS: Screen[] = [
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "projections");
-      await ux.page
-        .getByRole("button", { name: ux.t.common.real, exact: true })
-        .click();
+      await pickReal(ux);
       await ux.capture("31-projections-real", { fullPage: false });
     },
   },
@@ -893,9 +910,11 @@ export const SCREENS: Screen[] = [
       await picks.nth(2).check();
       await nav(ux, "dashboard");
       await nav(ux, "scenarios");
-      await ux.page
-        .getByRole("button", { name: ux.t.scenarios.viewDeltaVsBase })
-        .click();
+      const delta = ux.page.getByRole("button", {
+        name: ux.t.scenarios.viewDeltaVsBase,
+      });
+      await delta.click();
+      await expect(delta).toHaveAttribute("aria-pressed", "true");
       await ux.capture("43-scenarios-compare-delta");
     },
   },
@@ -1345,6 +1364,7 @@ export const SCREENS: Screen[] = [
             !!tr.querySelector("a,[role=link],td:not(.actions-col) button"),
         );
       ux.writeJson("90-keyboard-property-row.json", { rowFocusable });
+      expect(rowFocusable).toBe(true);
     },
   },
   {
