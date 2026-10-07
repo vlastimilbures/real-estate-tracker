@@ -1,8 +1,18 @@
 // P5a step 5: what the local error log records. No personal financial values: a
 // DataError gives code + details (ids, columns, rules); other messages are masked.
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { invoke } from "@tauri-apps/api/core";
 import { describeFailure, logFailure, maskNumbers } from "../errorLog";
 import { DataError } from "../errors";
+import { isTauri } from "../../lib/tauri";
+
+vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
+vi.mock("../../lib/tauri", () => ({ isTauri: vi.fn(() => false) }));
+
+afterEach(() => {
+  vi.mocked(isTauri).mockReturnValue(false);
+  vi.mocked(invoke).mockReset();
+});
 
 describe("error log lines", () => {
   it("masks amounts in free-text messages", () => {
@@ -43,5 +53,27 @@ describe("error log lines", () => {
 
   it("is a silent no-op outside the desktop app", () => {
     expect(() => logFailure("STARTUP", new Error("x"))).not.toThrow();
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
+  it("in the desktop app, sends the line to log_error (#115)", () => {
+    vi.mocked(isTauri).mockReturnValue(true);
+    vi.mocked(invoke).mockResolvedValue(undefined);
+    logFailure("WRITE", new Error("disk full at 123456"));
+    expect(invoke).toHaveBeenCalledWith("log_error", {
+      code: "WRITE_FAILED",
+      context: "disk full at #",
+    });
+  });
+
+  it("swallows a failed log_error, so logging is never a second failure (#115)", async () => {
+    vi.mocked(isTauri).mockReturnValue(true);
+    const rejected = Promise.reject(new Error("log plugin gone"));
+    // The rejection must get a handler; an unhandled one would surface as a new error.
+    const handled = vi.spyOn(rejected, "catch");
+    vi.mocked(invoke).mockReturnValue(rejected);
+    expect(() => logFailure("STARTUP", new Error("x"))).not.toThrow();
+    expect(handled).toHaveBeenCalledOnce();
+    await expect(handled.mock.results[0]?.value).resolves.toBeUndefined();
   });
 });

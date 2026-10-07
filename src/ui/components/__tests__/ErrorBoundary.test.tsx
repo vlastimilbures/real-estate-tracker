@@ -10,6 +10,7 @@ import { ErrorBoundary } from "../ErrorBoundary";
 import { useUiStore } from "../../../state/uiStore";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { EngineInputError } from "../../../engine";
+import { logFailure } from "../../../data/errorLog";
 import { getDict } from "../../../i18n";
 import {
   portfolio,
@@ -105,6 +106,20 @@ describe("ErrorBoundary with invalid stored data", () => {
     expect(screen.getByRole("alert").textContent).toContain(
       getDict("cs").errorBoundary.title,
     );
+  });
+
+  it("logs the crash under RENDER (#115)", () => {
+    const crash = new Error("plain bug");
+    function Other(): never {
+      throw crash;
+    }
+    vi.mocked(logFailure).mockClear();
+    render(
+      <ErrorBoundary>
+        <Other />
+      </ErrorBoundary>,
+    );
+    expect(logFailure).toHaveBeenCalledWith("RENDER", crash);
   });
 });
 
