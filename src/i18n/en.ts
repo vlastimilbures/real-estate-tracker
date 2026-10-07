@@ -176,7 +176,7 @@ export const en = {
     copyMissing:
       "The database was new, so there was nothing to copy before the upgrade.",
     nextIntegrity:
-      "Quit the app and move portfolio.db, portfolio.db-wal and portfolio.db-shm out of the data folder (do not delete them; some may not exist). Reopen the app: it starts empty. Then restore your latest JSON backup in Settings → Backup & Restore, or put back a pre-migration copy from the backups folder.",
+      "Quit the app and move portfolio.db, portfolio.db-wal and portfolio.db-shm out of the data folder (do not delete them; some may not exist). Reopen the app: it starts with a new database holding the sample portfolio. Then restore your latest JSON backup in Settings → Backup & Restore, or put back a pre-migration copy from the backups folder.",
     nextRowInvalid:
       "Restore a backup… replaces all data with a JSON backup; a safety copy of the current data is saved first. Or report the record below.",
     restoreBackup: "Restore a backup…",

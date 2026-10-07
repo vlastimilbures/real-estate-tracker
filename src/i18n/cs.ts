@@ -161,7 +161,7 @@ export const cs: Dictionary = {
     copyMissing:
       "Databáze byla nová, takže před aktualizací nebylo co kopírovat.",
     nextIntegrity:
-      "Ukončete aplikaci a přesuňte portfolio.db, portfolio.db-wal a portfolio.db-shm ze složky dat (nemažte je; některé nemusí existovat). Znovu otevřete aplikaci: spustí se prázdná. Pak obnovte poslední zálohu JSON v Nastavení → Záloha a obnova, nebo vraťte kopii před migrací ze složky záloh.",
+      "Ukončete aplikaci a přesuňte portfolio.db, portfolio.db-wal a portfolio.db-shm ze složky dat (nemažte je; některé nemusí existovat). Znovu otevřete aplikaci: spustí se s novou databází s ukázkovým portfoliem. Pak obnovte poslední zálohu JSON v Nastavení → Záloha a obnova, nebo vraťte kopii před migrací ze složky záloh.",
     nextRowInvalid:
       "Obnovit zálohu… nahradí všechna data zálohou JSON; bezpečnostní kopie současných dat se uloží nejdřív. Nebo nahlaste záznam níže.",
     restoreBackup: "Obnovit zálohu…",
