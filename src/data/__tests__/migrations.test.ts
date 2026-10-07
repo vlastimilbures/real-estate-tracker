@@ -277,6 +277,8 @@ describe("migration safety: abort paths leave the database unchanged", () => {
     expect(e.code).toBe("MIGRATION_BACKUP_FAILED");
     expect(e.details).toEqual(["BACKUP_FAILED: disk full"]);
     expect(snapshot(sql)).toBe(before);
+    // Only before the first commit, so never a partial upgrade (ADR 0153).
+    expect(e.upgrade).toBeUndefined();
   });
 
   it("a migration whose statements fail is rolled back whole", async () => {
@@ -443,6 +445,27 @@ describe("a stopped upgrade reports how far it got", () => {
     expect(e.code).toBe("MIGRATION_FAILED");
     expect(e.details).toEqual(["no such column: overrides"]);
     expect(e.upgrade).toMatchObject({ from: 6, reached: 7, stoppedAt: 8 });
+  });
+
+  it("a build step that throws is a failed step at that version", async () => {
+    const sql = await v6WithScenario('{"appreciationPa":"0.01"}');
+    const v8 = MIGRATIONS.find((m) => m.version === 8)!;
+    const build = v8.build!;
+    v8.build = () => Promise.reject(new Error("database is locked"));
+    try {
+      const e = await rejection(migrate(sql, { now: NOW }));
+
+      expect(e.code).toBe("MIGRATION_FAILED");
+      expect(await versions(sql)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+      expect(e.upgrade).toEqual({
+        from: 6,
+        reached: 7,
+        stoppedAt: 8,
+        backupPath: expect.stringMatching(COPY),
+      });
+    } finally {
+      v8.build = build;
+    }
   });
 });
 

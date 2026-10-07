@@ -94,4 +94,10 @@ describe("restoring from the startup error screen", () => {
     await expect(store().restoreAtStartup(good)).rejects.toThrow(/ROW_INVALID/);
     expect(vi.mocked(invoke)).not.toHaveBeenCalled();
   });
+
+  it("is refused once the app is running, even with a stale ROW_INVALID", async () => {
+    usePortfolioStore.setState({ status: "ready" });
+    await expect(store().restoreAtStartup(good)).rejects.toThrow(/ROW_INVALID/);
+    expect(vi.mocked(invoke)).not.toHaveBeenCalled();
+  });
 });
