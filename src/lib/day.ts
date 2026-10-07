@@ -12,9 +12,11 @@ function utcMidnight(year: number, month0: number, day: number): Date {
   return date;
 }
 function localMidnightOf(year: number, month0: number, day: number): Date {
+  // Time first: the epoch can be a local hour a DST gap skips on the target day (23:00
+  // in Atlantic/Azores), which would roll the date into the next day.
   const date = new Date(0);
-  date.setFullYear(year, month0, day);
   date.setHours(0, 0, 0, 0);
+  date.setFullYear(year, month0, day);
   return date;
 }
 

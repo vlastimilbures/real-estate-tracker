@@ -14,30 +14,24 @@ afterAll(() => {
 });
 
 describe("localMidnight in Atlantic/Azores", () => {
-  it.fails(
-    "keeps the day on a spring-forward day with a 23:00 gap (#119)",
-    () => {
-      const day = new Date(Date.UTC(1924, 3, 16));
-      const local = localMidnight(day);
-      expect([local.getFullYear(), local.getMonth(), local.getDate()]).toEqual([
-        1924, 3, 16,
-      ]);
-    },
-  );
+  it("keeps the day on a spring-forward day with a 23:00 gap (#119)", () => {
+    const day = new Date(Date.UTC(1924, 3, 16));
+    const local = localMidnight(day);
+    expect([local.getFullYear(), local.getMonth(), local.getDate()]).toEqual([
+      1924, 3, 16,
+    ]);
+  });
 
-  it.fails(
-    "matches the local Date constructor for every day of 1916–1946 (#119)",
-    () => {
-      const misses: string[] = [];
-      for (let t = Date.UTC(1916, 0, 1); t < Date.UTC(1947, 0, 1); t += 864e5) {
-        const day = new Date(t);
-        const y = day.getUTCFullYear();
-        const m = day.getUTCMonth();
-        const d = day.getUTCDate();
-        if (localMidnight(day).getTime() !== new Date(y, m, d).getTime())
-          misses.push(`${y}-${m + 1}-${d}`);
-      }
-      expect(misses).toEqual([]);
-    },
-  );
+  it("matches the local Date constructor for every day of 1916–1946 (#119)", () => {
+    const misses: string[] = [];
+    for (let t = Date.UTC(1916, 0, 1); t < Date.UTC(1947, 0, 1); t += 864e5) {
+      const day = new Date(t);
+      const y = day.getUTCFullYear();
+      const m = day.getUTCMonth();
+      const d = day.getUTCDate();
+      if (localMidnight(day).getTime() !== new Date(y, m, d).getTime())
+        misses.push(`${y}-${m + 1}-${d}`);
+    }
+    expect(misses).toEqual([]);
+  });
 });
