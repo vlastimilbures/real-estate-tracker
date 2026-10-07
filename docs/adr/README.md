@@ -9,7 +9,8 @@ The ADRs were written at the end of the 2026 refactor programme from its decisio
 so the many code comments that cite `D-nn` resolve directly. A `D-nn` without its own ADR
 (a phase gate or a narrow follow-up, such as D-69) is quoted inside the ADR it refines
 ("Related follow-up decisions"). `D-71` and later do **not** map by number (D-72 is not ADR
-0072): find them in the IDs column of the index.
+0072). Where an ADR records one, it is in that ADR's IDs column below; the rest survive only
+in code comments.
 
 Other IDs seen in code comments:
 
@@ -27,8 +28,10 @@ Other IDs seen in code comments:
    ADR with `Supersedes: NNNN` plus `Status: Superseded by NNNN` on the old one. Amending one
    means `Amends:` on the new ADR plus `Amended by:` on the old one. Both sides are required.
 3. A change to a computed number or any other user-visible behaviour needs an accepted ADR and a
-   failing test first (ADR 0001). A copy-only change (the text of existing dictionary entries)
-   gets an entry in [`docs/decisions/wording.md`](../decisions/wording.md) instead (ADR 0152).
+   failing test first (ADR 0001). A copy-only change (the text of existing dictionary entries,
+   except text used as an accessible name or a live-region announcement) still needs the
+   failing test, but gets an entry in [`docs/decisions/wording.md`](../decisions/wording.md)
+   instead of an ADR (ADR 0152).
    Cite dictionary keys, not translated strings. A change to a parity target also needs an
    old → new row in the target change log in `.claude/rules/engine-parity.md` (ADR 0003).
 4. Run `pnpm adr:index` to regenerate the index below; `pnpm adr:check` (in CI) fails on a
@@ -149,7 +152,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0106](0106-collapsible-stress-presets.md)        | Scenarios: collapsible stress presets                                                         | Accepted                                           | #54, #15                                           |
 | [0107](0107-property-section-nav.md)              | Property detail: section navigation and a collapsed amortization schedule                     | Accepted                                           | #23                                                |
 | [0108](0108-scenario-compare-xlsx-export.md)      | Scenario compare: export to Excel                                                             | Accepted                                           | #56, #15                                           |
-| [0109](0109-loan-prepayments-and-recasts.md)      | Loan prepayments and recasts                                                                  | Accepted · amended by 0116, 0120, 0136, 0137, 0129 | #32, D-04                                          |
+| [0109](0109-loan-prepayments-and-recasts.md)      | Loan prepayments and recasts                                                                  | Accepted · amended by 0116, 0120, 0129, 0136, 0137 | #32                                                |
 | [0110](0110-backup-recency-indicator.md)          | Backup recency indicator                                                                      | Accepted · amended by 0149                         | #36                                                |
 | [0111](0111-table-context-line.md)                | Table context line and a visible export label                                                 | Accepted · amended by 0150                         | #21                                                |
 | [0112](0112-load-sample-on-demand.md)             | Load the sample portfolio on demand                                                           | Accepted                                           | #74                                                |
@@ -175,10 +178,10 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0132](0132-reload-export-write-order.md)         | The banner Reload and the backup export follow the write order                                | Accepted                                           | #138, #199                                         |
 | [0133](0133-ltv-yield-zero-value.md)              | LTV and yields with no value: "n/a", not 0 %                                                  | Accepted                                           | #129                                               |
 | [0134](0134-acquisition-cash-gaps.md)             | Acquisition cash gaps: an owned property's later first loan, principal repaid before baseDate | Accepted                                           | #181, #193, #104                                   |
-| [0135](0135-whole-year-loan-term.md)              | A loan term must be whole years                                                               | Accepted                                           | #226, DR-168                                       |
+| [0135](0135-whole-year-loan-term.md)              | A loan term must be whole years                                                               | Accepted                                           | #226                                               |
 | [0136](0136-shorten-term-agreed-instalment.md)    | Shorten term keeps the instalment the next payment pays                                       | Accepted                                           | #228, #130                                         |
-| [0137](0137-agreed-instalment-pays-interest.md)   | Payment q pays at least its interest                                                          | Accepted                                           | #225, DR-168                                       |
-| [0138](0138-refinance-handover-edge-cases.md)     | Refinance handover edge cases                                                                 | Accepted                                           | #229, #130, #221, #223, DR-168                     |
+| [0137](0137-agreed-instalment-pays-interest.md)   | Payment q pays at least its interest                                                          | Accepted                                           | #225                                               |
+| [0138](0138-refinance-handover-edge-cases.md)     | Refinance handover edge cases                                                                 | Accepted                                           | #229, #130, #221, #223                             |
 | [0139](0139-last-tranche-cap.md)                  | A projection tranche lands no later than payment term−1                                       | Accepted                                           | #218                                               |
 | [0140](0140-one-form-parser.md)                   | One form parser and one message set; a thousands-shaped amount is refused                     | Accepted                                           | #125                                               |
 | [0141](0141-form-errors-stay-in-form.md)          | A form's input errors stay in the form                                                        | Accepted                                           | #125                                               |

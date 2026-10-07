@@ -1,4 +1,7 @@
 // `pnpm adr:index` / `pnpm adr:check` on synthetic ADRs, plus the real docs/adr (ADR 0152).
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   checkAdrs,
@@ -84,6 +87,34 @@ describe("parseAdr", () => {
     expect(a.ids).toEqual(["D-68", "DR-161", "F-03", "D-71", "D-69"]);
   });
 
+  it("takes programme IDs only from Source IDs, not from free text", () => {
+    const a = parse("0109", "loan", "Loan", [
+      "- Status: Accepted",
+      "- Date: 2026-10-03",
+      "- Source: issue #32; design note §1 (D-04)",
+    ]);
+    expect(a.ids).toEqual(["#32"]);
+  });
+
+  it("rejects a misspelt key and a header bullet without a colon", () => {
+    const a = parse("0130", "x", "X", [
+      "- Status: Accepted",
+      "- Date: 2026-10-04",
+      "- Amended-by: ADR 0139",
+      "- Amended by ADR 0140",
+    ]);
+    expect(a.errors).toEqual([
+      '0130-x.md: header line is not "- Key: value": - Amended-by: ADR 0139',
+      '0130-x.md: header line is not "- Key: value": - Amended by ADR 0140',
+    ]);
+    const b = parse("0131", "x", "X", [
+      "- Status: Accepted",
+      "- Date: 2026-10-04",
+      "- Superseeds: ADR 0011",
+    ]);
+    expect(b.errors).toEqual(['0131-x.md: unknown header key "Superseeds"']);
+  });
+
   it("reports a bad heading, a bad status and a missing date", () => {
     const a = parseAdr(
       "0005-x.md",
@@ -165,7 +196,7 @@ describe("renderIndex and replaceIndex", () => {
     ]),
     parse("0003", "czech", "Czech practice", [
       "- Status: Accepted",
-      "- Amended by: ADR 0081, [0150](0150-x.md)",
+      "- Amended by: [0150](0150-x.md), ADR 0081",
       "- Date: 2026-09-30",
       "- Source IDs: D-03",
     ]),
@@ -202,6 +233,29 @@ describe("renderIndex and replaceIndex", () => {
     expect(() => replaceIndex("# no markers", "NEW")).toThrow(
       "adr-index:start",
     );
+  });
+});
+
+describe("generateReadme", () => {
+  it("flags a file that is not named NNNN-short-slug.md", async () => {
+    const dir = `${mkdtempSync(join(tmpdir(), "adr-"))}/`;
+    writeFileSync(
+      `${dir}README.md`,
+      "# ADRs\n\n<!-- adr-index:start -->\n<!-- adr-index:end -->\n",
+    );
+    writeFileSync(
+      `${dir}0001-ok.md`,
+      adr("0001", "Ok", ["- Status: Accepted", "- Date: 2026-10-07"]),
+    );
+    writeFileSync(
+      `${dir}151-short.md`,
+      adr("0151", "Short", ["- Status: Accepted", "- Date: 2026-10-07"]),
+    );
+    const { errors, expected } = await generateReadme(dir);
+    expect(errors).toEqual([
+      "151-short.md: an ADR file is named NNNN-short-slug.md",
+    ]);
+    expect(expected).toContain("[0001](0001-ok.md)");
   });
 });
 
