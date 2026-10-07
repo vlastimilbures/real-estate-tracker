@@ -138,7 +138,7 @@ describe("per-code screen (#115)", () => {
     expect(text).not.toMatch(/nothing was changed/i);
   });
 
-  it("MIGRATION_FAILED after a committed step of a new database: no copy was needed", () => {
+  it("MIGRATION_FAILED while setting up a new database: no previous version, no copy", () => {
     fail("MIGRATION_FAILED", ["disk I/O error"], {
       from: 0,
       reached: 4,
@@ -146,8 +146,8 @@ describe("per-code screen (#115)", () => {
       backupPath: null,
     });
     render(<App />);
-    expect(alert().textContent).toContain(en.boot.partialFailed(4, 5));
-    expect(alert().textContent).toContain(en.boot.copyMissing);
+    expect(alert().textContent).toContain(en.boot.partialNew(4, 5));
+    expect(alert().textContent).not.toContain(en.boot.partialFailed(4, 5));
     expect(alert().textContent).toContain(en.boot.detailsOther);
     expect(button(en.app.tryAgain)).not.toBeNull();
   });

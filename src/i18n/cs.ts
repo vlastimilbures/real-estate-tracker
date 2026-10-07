@@ -158,10 +158,10 @@ export const cs: Dictionary = {
       `Aktualizace databáze selhala u verze ${stoppedAt} a tento krok byl vrácen zpět. Předchozí kroky proběhly, takže databáze je teď ve verzi ${reached} a předchozí verze aplikace ji už neotevře.`,
     copyAt: (file: string) =>
       `Kopie z doby před aktualizací je ve složce záloh: ${file}. Chcete-li se vrátit k předchozí verzi aplikace, ukončete aplikaci, přesuňte portfolio.db, portfolio.db-wal a portfolio.db-shm stranou (některé nemusí existovat) a na místo portfolio.db dejte kopii tohoto souboru přejmenovanou na portfolio.db.`,
-    copyMissing:
-      "Databáze byla nová, takže před aktualizací nebylo co kopírovat.",
+    partialNew: (reached: number, stoppedAt: number) =>
+      `Zakládání nové databáze se zastavilo u verze ${stoppedAt}; databáze je ve verzi ${reached} a zatím neobsahuje žádná data. Zkuste to znovu.`,
     nextIntegrity:
-      "Ukončete aplikaci a přesuňte portfolio.db, portfolio.db-wal a portfolio.db-shm ze složky dat (nemažte je; některé nemusí existovat). Znovu otevřete aplikaci: spustí se s novou databází s ukázkovým portfoliem. Pak obnovte poslední zálohu JSON v Nastavení → Záloha a obnova, nebo vraťte kopii před migrací ze složky záloh.",
+      "Ukončete aplikaci a přesuňte portfolio.db, portfolio.db-wal a portfolio.db-shm ze složky dat (nemažte je; některé nemusí existovat). Pak buď znovu otevřete aplikaci, která se spustí s novou databází s ukázkovým portfoliem, a obnovte poslední zálohu JSON v Nastavení → Záloha a obnova; nebo ještě před otevřením dejte do složky dat kopii souboru před migrací ze složky záloh, přejmenovanou na portfolio.db.",
     nextRowInvalid:
       "Obnovit zálohu… nahradí všechna data zálohou JSON; bezpečnostní kopie současných dat se uloží nejdřív. Nebo nahlaste záznam níže.",
     restoreBackup: "Obnovit zálohu…",

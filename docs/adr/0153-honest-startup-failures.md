@@ -39,7 +39,7 @@ not reach this screen. The store already keeps the open `sql` when loading fails
      error.
    - When `reached > from`, the screen shows `boot.partialConflict` or
      `boot.partialFailed`, then `boot.copyAt` with the copy's file name. A brand-new
-     database has no copy, so it shows `boot.copyMissing` instead.
+     database (`from` 0) shows `boot.partialNew` instead: no previous version, no copy.
    - Pending prechecks are not run ahead of the first commit. That would need a
      minimum-schema guard for every precheck.
 2. **Per-code actions.** One table, `bootView` in `src/ui/model/bootFailure.ts`:
