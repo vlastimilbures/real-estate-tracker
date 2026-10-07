@@ -130,7 +130,7 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
   });
 
   it("a restore keeps the local last backup and marks the data as changed", async () => {
-    const file = await exportToJson(db);
+    const file = await exportToJson(db, new Date());
     outcome({ kind: "saved", filename: "local.json" });
     await usePortfolioStore.getState().exportBackup();
     await usePortfolioStore.getState().restoreBackup(file);

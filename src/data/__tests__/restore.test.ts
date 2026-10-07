@@ -53,7 +53,7 @@ async function edited(
   table: string,
   edit: (rows: Rows) => Rows,
 ): Promise<BackupFile> {
-  const b = await exportToJson(sql);
+  const b = await exportToJson(sql, new Date());
   const rows = (b.tables[table] as Rows).map((r) => ({ ...r }));
   return { ...b, tables: { ...b.tables, [table]: edit(rows) } };
 }
@@ -69,17 +69,20 @@ async function rejection(p: Promise<unknown>): Promise<RestoreError> {
 
 describe("backup version (DR-038)", () => {
   it("a backup carries the database schema version", async () => {
-    expect((await exportToJson(sql)).schemaVersion).toBe(HEAD);
+    expect((await exportToJson(sql, new Date())).schemaVersion).toBe(HEAD);
   });
 
   it("refuses a backup from a newer app version before touching anything", async () => {
-    const b = { ...(await exportToJson(sql)), schemaVersion: HEAD + 1 };
+    const b = {
+      ...(await exportToJson(sql, new Date())),
+      schemaVersion: HEAD + 1,
+    };
     const e = await rejection(Promise.resolve().then(() => validateBackup(b)));
     expect(e.code).toBe("BACKUP_NEWER");
   });
 
   it("accepts every older version, including the legacy constant 1", async () => {
-    const b = await exportToJson(sql);
+    const b = await exportToJson(sql, new Date());
     for (let v = 1; v <= HEAD; v++)
       expect(validateBackup({ ...b, schemaVersion: v }).schemaVersion).toBe(v);
   });
@@ -120,7 +123,7 @@ describe("restore checks every row before touching the DB (DR-019)", () => {
 
   it("an engine input rule (D-17) and a holding-cost share above 1 (D-54)", async () => {
     const before = dump(sql);
-    const b = await exportToJson(sql);
+    const b = await exportToJson(sql, new Date());
     const mortgages = (b.tables.mortgage_blocks as Rows).map((r) => ({ ...r }));
     mortgages[0].monthly_instalment = "1";
     const costs = (b.tables.holding_costs as Rows).map((r) => ({ ...r }));
@@ -256,7 +259,7 @@ describe("restore is one transaction", () => {
           o,
         ),
     };
-    const b = await exportToJson(sql);
+    const b = await exportToJson(sql, new Date());
     await expect(restoreFromJson(failing, b, checkInputRules)).rejects.toThrow(
       /no_such_table/,
     );
@@ -267,7 +270,7 @@ describe("restore is one transaction", () => {
 
 describe("older backups are upgraded in memory", () => {
   it("restores a legacy v1 file: missing columns, flat valueShockPct", async () => {
-    const b = await exportToJson(sql);
+    const b = await exportToJson(sql, new Date());
     const strip = (rows: Rows, cols: string[]) =>
       rows.map((r) =>
         Object.fromEntries(
@@ -376,7 +379,11 @@ describe("restore reads every scenario row (ADR 0123)", () => {
         checkInputRules,
       );
       expect((await loadState(sql)).scenarios.map((s) => s.id)).toEqual(["s1"]);
-      await restoreFromJson(sql, await exportToJson(sql), checkInputRules);
+      await restoreFromJson(
+        sql,
+        await exportToJson(sql, new Date()),
+        checkInputRules,
+      );
     },
   );
 

@@ -30,7 +30,7 @@ async function legacyBackupText(
   await migrate(sql);
   await seedIfEmpty(sql);
   sql.db.prepare(update).run();
-  const backup = await exportToJson(sql);
+  const backup = await exportToJson(sql, new Date());
   sql.db.close();
   return JSON.stringify(backup);
 }

@@ -255,8 +255,10 @@ const invalid = (detail: string) =>
 // --- export ---------------------------------------------------------------------
 
 /** Every backup table and the schema version, read in one snapshot (DR-134), so a write
- *  that commits during the export is wholly in or wholly out of the file (ADR 0132). */
-export async function exportToJson(sql: Sql): Promise<BackupFile> {
+ *  that commits during the export is wholly in or wholly out of the file (ADR 0132).
+ *  `now` becomes `exportedAt`: the caller reads the clock once and names the file from
+ *  the same moment (ADR 0149 §6). */
+export async function exportToJson(sql: Sql, now: Date): Promise<BackupFile> {
   const statements = [
     ...BACKUP_TABLES.map((table) => ({ query: `SELECT * FROM ${table}` })),
     { query: "SELECT MAX(version) AS v FROM schema_migrations" },
@@ -272,7 +274,7 @@ export async function exportToJson(sql: Sql): Promise<BackupFile> {
   const version = results[BACKUP_TABLES.length]?.[0]?.v as number | null;
   return {
     schemaVersion: Number(version ?? SCHEMA_HEAD),
-    exportedAt: new Date().toISOString(),
+    exportedAt: now.toISOString(),
     tables,
   };
 }
@@ -613,10 +615,13 @@ export class BackupExportError extends Error {
   }
 }
 
-/** What `exportBackup` needs from outside the data layer (ADR 0072, DR-167): the local
- *  calendar day for the file name and the file-save function. */
+/** What `exportBackup` needs from outside the data layer (ADR 0072, DR-167): the one
+ *  clock read of the export, its local calendar day for the file name, and the
+ *  file-save function. */
 export interface ExportDeps {
-  /** Local `yyyy-mm-dd` (lib/day `localIsoDay()`). */
+  /** The export's moment, written as `exportedAt` (ADR 0149 §6). */
+  now: Date;
+  /** The local `yyyy-mm-dd` of `now` (lib/day `localIsoDay(now)`). */
   today: string;
   save: (opts: SaveFileOptions) => Promise<SaveOutcome>;
 }
@@ -628,9 +633,9 @@ export interface ExportDeps {
  */
 export async function exportBackup(
   sql: Sql,
-  { today, save }: ExportDeps,
+  { now, today, save }: ExportDeps,
 ): Promise<ExportOutcome> {
-  const backup = await exportToJson(sql);
+  const backup = await exportToJson(sql, now);
   try {
     return await save({
       filename: `portfolio-backup-${today}.json`,
@@ -720,7 +725,7 @@ export async function writeSafetyBackup(
   const filename = `${prefix}-${stamp(now)}.json`;
   try {
     // Reading the current data is part of the safety backup (ADR 0147).
-    const safetyBackup = await exportToJson(sql);
+    const safetyBackup = await exportToJson(sql, now);
     const json = JSON.stringify(safetyBackup, null, 2);
     // Temp file + rename in `<app config>/backups`, read back (src-tauri/src/files.rs).
     const readBack = await invoke<string>("write_app_backup", {

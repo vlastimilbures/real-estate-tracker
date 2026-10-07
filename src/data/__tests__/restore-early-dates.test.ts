@@ -46,7 +46,7 @@ describe("stored dates before 1900 (ADR 0149 §5)", () => {
   });
 
   it("restore: the app's own export restores with an EARLY_DATE warning (#119)", async () => {
-    const backup = await exportToJson(sql);
+    const backup = await exportToJson(sql, new Date());
     expect(prepareRestore(backup, checkInputRules).warnings).toEqual([
       {
         table: "properties",
@@ -58,14 +58,14 @@ describe("stored dates before 1900 (ADR 0149 §5)", () => {
   });
 
   it("restore: confirming replaces the data", async () => {
-    const backup = await exportToJson(sql);
+    const backup = await exportToJson(sql, new Date());
     await confirmRestore(sql, backup, checkInputRules);
     const { portfolio } = await loadState(sql);
     expect(portfolio.properties).toHaveLength(3);
   });
 
   it("restore: a refused file lists its early dates too (#119)", async () => {
-    const backup = await exportToJson(sql);
+    const backup = await exportToJson(sql, new Date());
     const leases = (backup.tables.leases as Record<string, unknown>[]).map(
       (r, i) => (i === 0 ? { ...r, monthly_rent: "-1" } : r),
     );

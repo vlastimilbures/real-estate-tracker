@@ -78,7 +78,7 @@ const propertiesOnDisk = async () =>
 
 describe("a committed whole-database action whose reload fails (ADR 0125)", () => {
   it("a restore resolves with the safety backup and marks the screen stale", async () => {
-    const file = await exportToJson(db);
+    const file = await exportToJson(db, new Date());
     await store().clearSample();
     usePortfolioStore.setState({ sql: reloadFails(db) });
 
@@ -221,7 +221,7 @@ describe("a safety backup waits for a write queued before it (ADR 0132)", () => 
       run: (file: BackupFile) => store().restoreBackup(file),
     },
   ])("$action backs up the queued write", async ({ run }) => {
-    const file = await exportToJson(db);
+    const file = await exportToJson(db, new Date());
     const { sql, release } = heldFirstWrite(db);
     usePortfolioStore.setState({ sql });
     vi.mocked(invoke).mockClear();

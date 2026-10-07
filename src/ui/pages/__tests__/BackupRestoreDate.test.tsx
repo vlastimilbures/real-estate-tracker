@@ -48,7 +48,7 @@ it("shows the local day of a backup made at 00:30 (#119)", async () => {
   const sql = openMemorySql();
   await migrate(sql);
   await seedIfEmpty(sql);
-  const backup = await exportToJson(sql);
+  const backup = await exportToJson(sql, new Date());
   sql.db.close();
   const text = JSON.stringify({
     ...backup,
