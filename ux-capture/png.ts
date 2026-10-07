@@ -57,19 +57,32 @@ export function decode(file: string): Png {
   return { width, height, channels, pixels };
 }
 
-/** Share of pixels whose RGB differs; 1 when the sizes differ. */
-export function diffShare(a: Png, b: Png): number {
-  if (a.width !== b.width || a.height !== b.height) return 1;
-  let n = 0;
+export interface PixelDiff {
+  /** Pixels where some RGB channel moved by more than the tolerance. */
+  changed: number;
+  /** `changed` as a share of the pixels; 1 when the sizes differ. */
+  share: number;
+}
+
+/**
+ * Pixels whose R, G or B moved by more than `tolerance` levels (0 = any change). When
+ * the sizes differ, every pixel of the larger image counts as changed.
+ */
+export function diffShare(a: Png, b: Png, tolerance: number): PixelDiff {
+  if (a.width !== b.width || a.height !== b.height) {
+    return {
+      changed: Math.max(a.width * a.height, b.width * b.height),
+      share: 1,
+    };
+  }
+  const moved = (ia: number, ib: number) =>
+    Math.abs(a.pixels[ia]! - b.pixels[ib]!) > tolerance;
+  let changed = 0;
   for (let i = 0; i < a.width * a.height; i++) {
     const ia = i * a.channels;
     const ib = i * b.channels;
-    if (
-      a.pixels[ia] !== b.pixels[ib] ||
-      a.pixels[ia + 1] !== b.pixels[ib + 1] ||
-      a.pixels[ia + 2] !== b.pixels[ib + 2]
-    )
-      n++;
+    if (moved(ia, ib) || moved(ia + 1, ib + 1) || moved(ia + 2, ib + 2))
+      changed++;
   }
-  return n / (a.width * a.height);
+  return { changed, share: changed / (a.width * a.height) };
 }

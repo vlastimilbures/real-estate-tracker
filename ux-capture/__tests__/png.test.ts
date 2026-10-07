@@ -91,12 +91,18 @@ describe("decode", () => {
 describe("diffShare", () => {
   const a = image(40, 40, 4);
 
-  it("is 0 for identical images", () => {
-    expect(diffShare(decode(encode(a)), decode(encode(a)))).toBe(0);
+  it("finds no change between identical images", () => {
+    expect(diffShare(decode(encode(a)), decode(encode(a)), 0)).toEqual({
+      changed: 0,
+      share: 0,
+    });
   });
 
-  it("is 1 when the sizes differ", () => {
-    expect(diffShare(a, image(40, 41, 4))).toBe(1);
+  it("counts every pixel of the larger image when the sizes differ", () => {
+    expect(diffShare(a, image(40, 41, 4), 8)).toEqual({
+      changed: 40 * 41,
+      share: 1,
+    });
   });
 
   it("ignores the alpha channel and compares RGB against RGBA", () => {
@@ -108,11 +114,28 @@ describe("diffShare", () => {
     };
     for (let i = 0; i < 25; i++)
       rgb.pixels.copy(rgba.pixels, i * 4, i * 3, i * 3 + 3);
-    expect(diffShare(rgb, rgba)).toBe(0);
+    expect(diffShare(rgb, rgba, 0).changed).toBe(0);
   });
 
   // Anti-aliasing noise moves a channel by a few levels (D15).
-  it.fails("ignores a channel move of 8 (#137)", () => {
-    expect(diffShare(a, shifted(a, [0, 1, 2], 8))).toBe(0);
+  it("ignores a channel move of 8 (#137)", () => {
+    expect(diffShare(a, shifted(a, [0, 1, 2], 8), 8).changed).toBe(0);
+  });
+
+  it("counts a channel move of 9, and any move at tolerance 0", () => {
+    expect(diffShare(a, shifted(a, [0, 1, 2], 9), 8).changed).toBe(3);
+    expect(diffShare(a, shifted(a, [0, 1, 2], 1), 0).changed).toBe(3);
+  });
+
+  // The #137 probe: one changed KPI digit is a 21×30 px box on a 1280×2854 page.
+  it("counts a changed 21×30 box on a full page above the 50 px budget", () => {
+    const page = image(1280, 2854, 4);
+    const box = Array.from({ length: 30 }, (_, y) =>
+      Array.from({ length: 21 }, (_, x) => (400 + y) * 1280 + 600 + x),
+    ).flat();
+    const diff = diffShare(decode(encode(page)), shifted(page, box, 60), 8);
+    expect(diff.changed).toBe(630);
+    expect(diff.changed).toBeGreaterThan(50);
+    expect(diff.share).toBeLessThan(0.01);
   });
 });
