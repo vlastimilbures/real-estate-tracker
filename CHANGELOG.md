@@ -242,6 +242,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- After moving to another page from the sidebar or the menu, keyboard focus is on the new
+  page's content (ADR 0146, #131). Before, it fell back to the start of the window, so the
+  next Tab went to "Skip to content" again and a screen reader was not told the page
+  changed. Focus is not moved at startup, and focus a page sets itself (a dialog, a
+  glossary term, a section) is kept.
 - With saved data that breaks a calculation rule, the sidebar stays (ADR 0146, #131).
   Dashboard, Properties and Projections showed the invalid-data notice in place of the
   whole window, sidebar included, so Settings (to restore a backup) and Import could not

@@ -43,17 +43,14 @@ describe("focus after navigation (ADR 0146)", () => {
     expect(document.activeElement).toBe(document.body);
   });
 
-  it.fails(
-    "VR503A: a sidebar page change focuses the main region (#131)",
-    async () => {
-      const user = userEvent.setup();
-      render(<App />);
-      screen.getByRole("button", { name: en.nav.guide }).focus();
-      await user.keyboard("{Enter}");
-      await waitFor(() => expect(pageTitle()).toBe(en.guide.title));
-      expect(document.activeElement?.id).toBe("main");
-    },
-  );
+  it("VR503A: a sidebar page change focuses the main region (#131)", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    screen.getByRole("button", { name: en.nav.guide }).focus();
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(pageTitle()).toBe(en.guide.title));
+    expect(document.activeElement?.id).toBe("main");
+  });
 
   it("keeps the focus a page sets: a glossary term from a metric link", async () => {
     render(<App />);
@@ -61,5 +58,12 @@ describe("focus after navigation (ADR 0146)", () => {
     await waitFor(() =>
       expect(document.activeElement?.id).toBe("glossary-fixation"),
     );
+  });
+
+  it("keeps the focus a page sets: the New Property dialog (⌘N)", async () => {
+    render(<App />);
+    act(() => useUiStore.getState().requestNewProperty());
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.contains(document.activeElement)).toBe(true);
   });
 });
