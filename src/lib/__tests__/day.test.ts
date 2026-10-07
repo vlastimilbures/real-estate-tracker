@@ -41,3 +41,18 @@ describe("isoDay", () => {
     expect(isoDay(new Date(Date.UTC(2026, 0, 5)))).toBe("2026-01-05");
   });
 });
+
+// ADR 0149 §5: the lib twin of the engine's full-year constructor. Date.UTC and the
+// local Date constructor map years 0–99 to 1900–1999.
+describe("the full year", () => {
+  it.fails("localDay keeps years 0–99 (#119)", () => {
+    const instant = new Date(2026, 5, 1, 12);
+    instant.setFullYear(50);
+    expect(localDay(instant).getUTCFullYear()).toBe(50);
+  });
+  it.fails("localMidnight keeps years 0–99 (#119)", () => {
+    const day = new Date(0);
+    day.setUTCFullYear(99, 2, 1);
+    expect(localMidnight(day).getFullYear()).toBe(99);
+  });
+});
