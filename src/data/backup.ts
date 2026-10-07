@@ -62,15 +62,32 @@ export interface RangeProblem {
   range: IntRange;
 }
 
-/** The engine's input rules plus the whole-number bounds over the restored rows
- *  (assumptions absent ⇒ portfolio rules only). Injected by the caller: the data layer
- *  never calls engine functions; `checkInputRules` in src/import/inputRules.ts is the one
- *  the app uses. Scenarios only need to be readable (ADR 0123): one that breaks a rule
- *  restores and is handled like a saved one, so every backup the app writes restores. */
+/** A stored date before 01.01.1900, the floor the forms and CSV import apply (ADR 0149
+ *  §5). Restore-only, like OUT_OF_RANGE: restore warns and asks. */
+export interface DateProblem {
+  code: "EARLY_DATE";
+  entity: ValidationEntity;
+  id?: string | undefined;
+  field: string;
+}
+
+/** The engine's input rules plus the form bounds (whole numbers, the date floor) over
+ *  the restored rows (assumptions absent ⇒ portfolio rules only). Injected by the
+ *  caller: the data layer never calls engine functions; `checkInputRules` in
+ *  src/import/inputRules.ts is the one the app uses. Scenarios only need to be readable
+ *  (ADR 0123): one that breaks a rule restores and is handled like a saved one, so every
+ *  backup the app writes restores. */
 export type InputRules = (
   portfolio: Portfolio,
   assumptions?: Assumptions,
-) => (EngineValidationError | RangeProblem)[];
+) => (EngineValidationError | RangeProblem | DateProblem)[];
+
+/** The rules a restore only asks about ("Restore anyway"): the form bounds a database
+ *  may already break (ADR 0148 §1, ADR 0149 §5). Every other issue refuses the file. */
+const WARNING_RULES: ReadonlySet<RestoreIssue["rule"]> = new Set([
+  "OUT_OF_RANGE",
+  "EARLY_DATE",
+]);
 
 /** The newest schema this app writes and reads (the last migration). */
 export const SCHEMA_HEAD = Math.max(...MIGRATIONS.map((m) => m.version));
@@ -198,7 +215,8 @@ export interface RestoreIssue {
     | "DUPLICATE_KEY"
     | "MISSING_ASSUMPTIONS"
     | "OUT_OF_RANGE"
-    | "BEYOND_LIMIT";
+    | "BEYOND_LIMIT"
+    | "EARLY_DATE";
   /** The allowed range of an OUT_OF_RANGE or BEYOND_LIMIT field. */
   range?: IntRange;
 }
@@ -459,15 +477,16 @@ export interface PreparedRestore {
   summary: BackupSummary;
   /** Wipe (children first) and re-insert, for one transaction. */
   statements: SqlStatement[];
-  /** Values outside the form bounds (OUT_OF_RANGE): the confirm step asks before a
-   *  restore with any (ADR 0148). */
+  /** Values outside the form bounds (OUT_OF_RANGE, EARLY_DATE): the confirm step asks
+   *  before a restore with any (ADR 0148, ADR 0149). */
   warnings: RestoreIssue[];
 }
 
 /**
  * Check every row of `backup` and build the replacement statements. Throws a
  * RestoreError and touches nothing when the file cannot be restored as a whole; a file
- * whose only issues are out-of-range values comes back with them as `warnings`.
+ * whose only issues are values outside the form bounds comes back with them as
+ * `warnings`.
  */
 export function prepareRestore(
   backup: BackupFile,
@@ -547,9 +566,9 @@ export function prepareRestore(
         ...("range" in e && { range: e.range }),
       });
   }
-  // A refusal after the rules ran lists the out-of-range values too: one table names
-  // everything to fix.
-  if (issues.some((i) => i.rule !== "OUT_OF_RANGE"))
+  // A refusal after the rules ran lists the warnings too: one table names everything to
+  // fix.
+  if (issues.some((i) => !WARNING_RULES.has(i.rule)))
     throw new RestoreError(
       "BACKUP_ROWS_INVALID",
       `The backup has ${issues.length} record(s) the app cannot restore. Nothing was changed.`,
@@ -720,7 +739,7 @@ export async function writeSafetyBackup(
 
 /** Full restore workflow: check the whole file, write and verify the safety backup,
  *  then replace everything in one transaction. Returns the safety backup's name. Any
- *  out-of-range warnings were shown at the confirm step, so they do not stop it. */
+ *  warnings were shown at the confirm step, so they do not stop it. */
 export async function confirmRestore(
   sql: Sql,
   backup: BackupFile,

@@ -45,20 +45,17 @@ describe("stored dates before 1900 (ADR 0149 §5)", () => {
     expect(p?.purchaseDate.toISOString().slice(0, 10)).toBe("1850-01-01");
   });
 
-  it.fails(
-    "restore: the app's own export restores with an EARLY_DATE warning (#119)",
-    async () => {
-      const backup = await exportToJson(sql);
-      expect(prepareRestore(backup, checkInputRules).warnings).toEqual([
-        {
-          table: "properties",
-          id: "javorova",
-          column: "purchase_date",
-          rule: "EARLY_DATE",
-        },
-      ]);
-    },
-  );
+  it("restore: the app's own export restores with an EARLY_DATE warning (#119)", async () => {
+    const backup = await exportToJson(sql);
+    expect(prepareRestore(backup, checkInputRules).warnings).toEqual([
+      {
+        table: "properties",
+        id: "javorova",
+        column: "purchase_date",
+        rule: "EARLY_DATE",
+      },
+    ]);
+  });
 
   it("restore: confirming replaces the data", async () => {
     const backup = await exportToJson(sql);
@@ -67,26 +64,23 @@ describe("stored dates before 1900 (ADR 0149 §5)", () => {
     expect(portfolio.properties).toHaveLength(3);
   });
 
-  it.fails(
-    "restore: a refused file lists its early dates too (#119)",
-    async () => {
-      const backup = await exportToJson(sql);
-      const leases = (backup.tables.leases as Record<string, unknown>[]).map(
-        (r, i) => (i === 0 ? { ...r, monthly_rent: "-1" } : r),
+  it("restore: a refused file lists its early dates too (#119)", async () => {
+    const backup = await exportToJson(sql);
+    const leases = (backup.tables.leases as Record<string, unknown>[]).map(
+      (r, i) => (i === 0 ? { ...r, monthly_rent: "-1" } : r),
+    );
+    let e: unknown = null;
+    try {
+      prepareRestore(
+        { ...backup, tables: { ...backup.tables, leases } },
+        checkInputRules,
       );
-      let e: unknown = null;
-      try {
-        prepareRestore(
-          { ...backup, tables: { ...backup.tables, leases } },
-          checkInputRules,
-        );
-      } catch (err) {
-        e = err;
-      }
-      expect(e).toBeInstanceOf(RestoreError);
-      expect((e as RestoreError).issues.map((i) => i.rule)).toContain(
-        "EARLY_DATE",
-      );
-    },
-  );
+    } catch (err) {
+      e = err;
+    }
+    expect(e).toBeInstanceOf(RestoreError);
+    expect((e as RestoreError).issues.map((i) => i.rule)).toContain(
+      "EARLY_DATE",
+    );
+  });
 });

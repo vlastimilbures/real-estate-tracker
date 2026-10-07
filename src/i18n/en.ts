@@ -980,12 +980,13 @@ export const en = {
     restoreWarning:
       "⚠ This will overwrite all current data (properties, mortgages, valuations, leases, assumptions, and scenarios). A safety backup will be saved first.",
     restoreNow: "Restore now",
-    // ADR 0148: values outside the form ranges ask instead of refusing.
+    // ADR 0148, ADR 0149: values the forms refuse (outside a range, a date before 1900)
+    // ask instead of refusing.
     warnOutOfRange: (n: number) =>
       n === 1
-        ? "This backup holds 1 value outside the ranges the forms accept. The app computes with it, and the Data check lists it after the restore. Restore anyway?"
-        : `This backup holds ${n} values outside the ranges the forms accept. The app computes with them, and the Data check lists them after the restore. Restore anyway?`,
-    warningsTitle: "Values outside the form ranges",
+        ? "This backup holds 1 value the forms do not accept. The app computes with it, and the Data check lists it after the restore. Restore anyway?"
+        : `This backup holds ${n} values the forms do not accept. The app computes with them, and the Data check lists them after the restore. Restore anyway?`,
+    warningsTitle: "Values the forms do not accept",
     restoreAnyway: "Restore anyway",
     restoring: "Restoring…",
     errorTitle: "Error",
@@ -1033,6 +1034,7 @@ export const en = {
       "The file must hold exactly one assumptions record",
     issueOutOfRange: (min: string, max: string) =>
       `Must be a whole number from ${min} to ${max}`,
+    issueEarlyDate: (floor: string) => `Must be a date from ${floor}`,
   },
 
   // First-run sample portfolio (ADR 0094).

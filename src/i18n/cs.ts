@@ -936,8 +936,8 @@ export const cs: Dictionary = {
       "⚠ Toto přepíše všechna aktuální data (nemovitosti, hypotéky, ocenění, nájmy, předpoklady a scénáře). Nejprve se uloží bezpečnostní záloha.",
     restoreNow: "Obnovit nyní",
     warnOutOfRange: (n) =>
-      `Záloha obsahuje ${n} ${csPlural(n, ["hodnotu", "hodnoty", "hodnot"])} mimo rozsah, který formuláře přijímají. Aplikace s ${n === 1 ? "ní" : "nimi"} počítá a Kontrola dat ${n === 1 ? "ji" : "je"} po obnovení uvede. Přesto obnovit?`,
-    warningsTitle: "Hodnoty mimo rozsah formulářů",
+      `Záloha obsahuje ${n} ${csPlural(n, ["hodnotu", "hodnoty", "hodnot"])}, ${csPlural(n, ["kterou", "které", "které"])} formuláře nepřijímají. Aplikace s ${n === 1 ? "ní" : "nimi"} počítá a Kontrola dat ${n === 1 ? "ji" : "je"} po obnovení uvede. Přesto obnovit?`,
+    warningsTitle: "Hodnoty, které formuláře nepřijímají",
     restoreAnyway: "Přesto obnovit",
     restoring: "Obnovování…",
     errorTitle: "Chyba",
@@ -983,6 +983,7 @@ export const cs: Dictionary = {
     issueMissingAssumptions:
       "Soubor musí obsahovat právě jeden záznam předpokladů",
     issueOutOfRange: (min, max) => `Musí být celé číslo od ${min} do ${max}`,
+    issueEarlyDate: (floor) => `Musí být datum od ${floor}`,
   },
 
   sample: {
