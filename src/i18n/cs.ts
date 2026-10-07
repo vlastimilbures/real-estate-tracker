@@ -892,6 +892,8 @@ export const cs: Dictionary = {
       "Nic nebylo importováno. Opravte tyto řádky a importujte znovu:",
     importFailed: (detail) =>
       `Import selhal a byl vrácen zpět — nic nebylo importováno. (${detail})`,
+    previewFailed: (detail) =>
+      `Soubory se nepodařilo porovnat s uloženými daty, zatím tedy nelze nic importovat. (${detail})`,
     templateFailed: (detail) => `Šablonu se nepodařilo uložit. (${detail})`,
     colFile: "Soubor",
     wholeFile: "Soubor",

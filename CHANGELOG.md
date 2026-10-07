@@ -242,6 +242,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- When Import cannot check the chosen files against your saved data, an error says so
+  (ADR 0147, #122). Before, the Import button stayed greyed out with no reason.
 - A backup file that cannot be read (an unplugged disk, a file not yet downloaded from
   iCloud) now says "The file could not be read" (ADR 0147, #122). It said the file was not
   a valid backup of this app, which could make you throw away a good backup. A failure to

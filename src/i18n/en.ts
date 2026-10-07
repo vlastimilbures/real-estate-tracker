@@ -937,6 +937,8 @@ export const en = {
     importRefused: "Nothing was imported. Correct these rows and import again:",
     importFailed: (detail: string) =>
       `The import failed and was rolled back — nothing was imported. (${detail})`,
+    previewFailed: (detail: string) =>
+      `The files could not be checked against your saved data, so nothing can be imported yet. (${detail})`,
     templateFailed: (detail: string) =>
       `The template could not be saved. (${detail})`,
     colFile: "File",

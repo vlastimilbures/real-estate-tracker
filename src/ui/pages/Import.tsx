@@ -55,6 +55,10 @@ export function Import() {
   const [importError, setImportError] = useState<string | null>(null);
   const [refused, setRefused] = useState<CsvImportProblem[] | null>(null);
   const [preview, setPreview] = useState<CsvImportPreview | null>(null);
+  // Why the last preview failed (ADR 0147); translated at render, like importError's detail.
+  const [previewFailure, setPreviewFailure] = useState<{
+    error: unknown;
+  } | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [planChanged, setPlanChanged] = useState(false);
   const { toast, showToast } = useToast(2400);
@@ -137,6 +141,7 @@ export function Import() {
   ) {
     setSeen({ batch, portfolio, previewCsv });
     setConfirming(false);
+    setPreviewFailure(null);
     if (!hasAnyFile || !allValid) setPreview(null);
   }
   useEffect(() => {
@@ -148,7 +153,10 @@ export function Import() {
       },
       (e: unknown) => {
         logFailure("IMPORT", e);
-        if (current) setPreview(null);
+        if (current) {
+          setPreview(null);
+          setPreviewFailure({ error: e });
+        }
       },
     );
     return () => {
@@ -250,6 +258,17 @@ export function Import() {
             <p className="error-text" style={{ marginBottom: "var(--s3)" }}>
               {t.importPage.fixErrors}
             </p>
+          )}
+          {previewFailure && (
+            <div style={{ marginBottom: "var(--s3)" }}>
+              <ErrorBanner
+                message={t.importPage.previewFailed(
+                  describeWriteError(t, toWriteError(previewFailure.error))
+                    .message,
+                )}
+                onDismiss={() => setPreviewFailure(null)}
+              />
+            </div>
           )}
           {preview && preview.problems.length > 0 && (
             <RefusedTable problems={preview.problems} />
