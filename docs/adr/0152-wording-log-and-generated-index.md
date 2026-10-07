@@ -27,11 +27,12 @@ The docs also say a "new or upgraded" runtime dependency needs a justification, 
 ## Decision
 
 1. **Copy-only changes go to a wording log.** A change that only edits the text of existing
-   i18n dictionary entries is recorded as a dated entry in `docs/decisions/wording.md`,
-   with the owner's OK, not as an ADR. The entry cites dictionary keys, the issue or PR, what
-   changed, and the rejected option. A change to a number, a limit, a rejection, an export,
-   the stored data, the layout or what assistive technology announces still needs an ADR. The
-   gate of ADR 0001 is unchanged: owner sign-off and a test first.
+   i18n dictionary entries, except text used as an accessible name or a live-region
+   announcement, is recorded as a dated entry in `docs/decisions/wording.md`, with the
+   owner's OK, not as an ADR. The entry cites dictionary keys, the issue or PR, what changed,
+   and the rejected option. A change to a number, a limit, a rejection, an export, the stored
+   data, the layout or what assistive technology announces still needs an ADR. The gate of
+   ADR 0001 is unchanged: the owner's OK and a failing test written first.
 2. **ADRs cite dictionary keys, not translated strings**, so they stay true when the copy
    changes.
 3. **Runtime dependencies.** A new runtime dependency needs a written justification and owner

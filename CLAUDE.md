@@ -113,8 +113,9 @@ mortgage reference model are the regression baseline (ADR 0081).
 - **Behaviour changes need an approved decision** (ADR 0001): any change to a computed number
   or other user-visible behaviour (limits, rejections, exports, stored data, layout, UI) needs
   an accepted ADR and a failing test written first. A copy-only change (the text of existing
-  dictionary entries) needs the owner's OK and an entry in `docs/decisions/wording.md`
-  instead (ADR 0152). ADRs cite dictionary keys, not translated strings. Refactors are
+  dictionary entries, except text used as an accessible name or a live-region announcement)
+  needs the owner's OK and a failing test written first, but an entry in
+  `docs/decisions/wording.md` instead of an ADR (ADR 0152). ADRs cite dictionary keys, not translated strings. Refactors are
   behaviour-neutral.
 - **ADR index** is generated: run `pnpm adr:index`, never edit the table by hand; numbers are
   the next free on `origin/main` and open PRs (ADR 0152).

@@ -114,8 +114,9 @@ Decisions are Architecture Decision Records in [`docs/adr/`](docs/adr/README.md)
 - a new **runtime** dependency, with a written justification (ADR 0002). Dev-only tools are
   fine without one.
 
-A copy-only change (the text of existing dictionary entries, nothing else) needs no ADR: the
-maintainer approves it in the PR and it gets a dated entry in
+A copy-only change (the text of existing dictionary entries, except text used as an
+accessible name or a live-region announcement) needs no ADR: the maintainer approves it in the
+PR, a failing test is written first, and it gets a dated entry in
 [`docs/decisions/wording.md`](docs/decisions/wording.md) (ADR 0152). ADRs and the log cite
 dictionary keys, not translated strings.
 

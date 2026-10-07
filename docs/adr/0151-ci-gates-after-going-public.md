@@ -42,8 +42,8 @@ ADR 0068 items (3) to (6) stay in force.
 
 ## Consequences
 
-- `.husky/pre-push`, `nightly.yml` and `stryker.config.json` cite this ADR instead of D-68 and
-  "D-72".
+- `.husky/pre-push` cites this ADR instead of D-68; `nightly.yml` and `stryker.config.json`
+  cite it instead of "D-72" (their D-68 citation for the Stryker threshold stays).
 - If parallel tracks come back and two green PRs break `main` together, revisit `strict`.
 - Changing the required checks (a renamed CI job, a new required job) needs an ADR that
   amends this one.
