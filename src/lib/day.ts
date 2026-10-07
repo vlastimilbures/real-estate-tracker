@@ -3,17 +3,38 @@
 // stamp are local moments. Each crossing between the two goes through this module, so a
 // time-zone fix is made once (DR-068, DR-072).
 
+// The full-year builders. Date.UTC and `new Date(y, m, d)` map years 0–99 to 1900–1999.
+// These are lib's twin of the engine's `utc()` (lib never imports the engine), one
+// constructor per layer (ADR 0149 §5). month0 is 0-based.
+function utcMidnight(year: number, month0: number, day: number): Date {
+  const date = new Date(0);
+  date.setUTCFullYear(year, month0, day);
+  return date;
+}
+function localMidnightOf(year: number, month0: number, day: number): Date {
+  const date = new Date(0);
+  date.setFullYear(year, month0, day);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
 /** The local calendar day of `instant`, at UTC midnight (the engine's convention). */
 export function localDay(instant: Date): Date {
-  return new Date(
-    Date.UTC(instant.getFullYear(), instant.getMonth(), instant.getDate()),
+  return utcMidnight(
+    instant.getFullYear(),
+    instant.getMonth(),
+    instant.getDate(),
   );
 }
 
 /** The inverse of `localDay`: a UTC-midnight day as local midnight of the same day, for
  *  widgets that work in local time (the calendar popover). */
 export function localMidnight(day: Date): Date {
-  return new Date(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate());
+  return localMidnightOf(
+    day.getUTCFullYear(),
+    day.getUTCMonth(),
+    day.getUTCDate(),
+  );
 }
 
 /** A UTC-midnight day as YYYY-MM-DD. */
