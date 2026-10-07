@@ -107,3 +107,23 @@ describe("ErrorBoundary with invalid stored data", () => {
     );
   });
 });
+
+describe("ErrorBoundary resetKey (ADR 0146)", () => {
+  it("VG2504A: a new key clears the error (#131)", () => {
+    function Other(): never {
+      throw new Error("plain bug");
+    }
+    const { rerender } = render(
+      <ErrorBoundary resetKey="a">
+        <Other />
+      </ErrorBoundary>,
+    );
+    expect(screen.getByRole("alert")).toBeTruthy();
+    rerender(
+      <ErrorBoundary resetKey="b">
+        <p>recovered</p>
+      </ErrorBoundary>,
+    );
+    expect(screen.queryByText("recovered")).not.toBeNull();
+  });
+});

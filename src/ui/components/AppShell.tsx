@@ -149,6 +149,10 @@ const BRAND_SPLIT = APP_NAME.lastIndexOf(" ");
 const BRAND_HEAD = APP_NAME.slice(0, BRAND_SPLIT).replace(/ /g, "\u00a0");
 const BRAND_TAIL = APP_NAME.slice(BRAND_SPLIT + 1);
 
+// The route the last mounted shell showed. Module scope: each page renders its own shell,
+// so a page change mounts a new one (ADR 0146).
+let shownRoute: Route | null = null;
+
 export function AppShell({
   title,
   subtitle,
@@ -186,6 +190,19 @@ export function AppShell({
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [route, selectedPropertyId]);
+
+  // A page change removes the nav button that was pressed, and focus falls to <body>.
+  // Move it to the new page's main region, so Tab continues there and a screen reader
+  // hears the change (ADR 0146). Not at startup, and not when the page already placed
+  // focus (a dialog, a glossary term, a section): only focus that was lost moves.
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const changed = shownRoute !== null && shownRoute !== route;
+    shownRoute = route;
+    const active = document.activeElement;
+    const lost = active === null || active === document.body;
+    if (changed && lost) mainRef.current?.focus({ preventScroll: true });
+  }, [route]);
 
   // The topbar's height as --topbar-h on the page, so an in-page jump lands a section
   // below the sticky topbar (scroll-margin-top), whatever rows the topbar wraps to. Set
@@ -300,7 +317,7 @@ export function AppShell({
           </div>
           {subnav && <div className="topbar-subnav">{subnav}</div>}
         </header>
-        <main className="page" id="main" tabIndex={-1}>
+        <main className="page" id="main" tabIndex={-1} ref={mainRef}>
           {stale && (
             <ErrorBanner
               message={t.common.staleData}

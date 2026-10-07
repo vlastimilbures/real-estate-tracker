@@ -8,6 +8,7 @@ import { Properties } from "./pages/Properties";
 import { AboutModal } from "./components/AboutModal";
 import { LeaveGuard } from "./components/LeaveGuard";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { PageBoundary } from "./components/PageBoundary";
 import { Button } from "./components/primitives";
 import { applyTheme, onSystemThemeChange } from "./theme";
 import { useT } from "./hooks/useT";
@@ -38,11 +39,14 @@ const Guide = lazy(() =>
   import("./pages/Guide").then((m) => ({ default: m.Guide })),
 );
 
+// A page that fails to render keeps the sidebar (ADR 0146).
 function CurrentPage() {
   return (
-    <Suspense fallback={null}>
-      <Page />
-    </Suspense>
+    <PageBoundary>
+      <Suspense fallback={null}>
+        <Page />
+      </Suspense>
+    </PageBoundary>
   );
 }
 
@@ -79,6 +83,7 @@ export function App() {
   const theme = useUiStore((s) => s.theme);
   const aboutOpen = useUiStore((s) => s.aboutOpen);
   const closeAbout = useUiStore((s) => s.closeAbout);
+  const route = useUiStore((s) => s.route);
 
   useEffect(() => {
     void init();
@@ -179,10 +184,11 @@ export function App() {
     );
   }
 
-  // Top-level backstop: catches render crashes that happen before a page mounts its
-  // own AppShell (whose boundary keeps the nav usable for in-content errors).
+  // Top-level backstop for a crash outside the page (a dialog, the leave guard); page
+  // errors stop at PageBoundary. A route change, e.g. from the native menu, clears it
+  // (ADR 0146).
   return (
-    <ErrorBoundary>
+    <ErrorBoundary resetKey={route}>
       <CurrentPage />
       {aboutOpen && <AboutModal onClose={closeAbout} />}
       <LeaveGuard />

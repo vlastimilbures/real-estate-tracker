@@ -1181,6 +1181,36 @@ export const SCREENS: Screen[] = [
       ux.writeJson("90-keyboard-property-row.json", { rowFocusable });
     },
   },
+  {
+    id: "91-nav-focus",
+    desc: "Keyboard: Enter on Properties in the sidebar moves focus to the new page's main region",
+    route: "dashboard",
+    run: async (ux) => {
+      await boot(ux.page);
+      await ux.page
+        .locator(".nav")
+        .getByRole("button", { name: ux.t.nav.properties })
+        .focus();
+      await ux.page.keyboard.press("Enter");
+      await expect(ux.page.locator(".page-title")).toHaveText(
+        ux.t.properties.title,
+      );
+      // ADR 0146: focus lands on <main>, not <body>, and Tab continues in the page.
+      const afterNav = await ux.page.evaluate(() => document.activeElement?.id);
+      expect(afterNav).toBe("main");
+      await ux.page.keyboard.press("Tab");
+      const afterTab = await ux.page.evaluate(() => {
+        const el = document.activeElement;
+        return {
+          inMain: !!el?.closest("main"),
+          tag: el?.tagName.toLowerCase() ?? "",
+        };
+      });
+      expect(afterTab.inMain).toBe(true);
+      ux.writeJson("91-nav-focus.json", { afterNav, afterTab });
+      await ux.capture("91-nav-focus", { fullPage: false });
+    },
+  },
 ];
 
 /** Every route must have at least one capture; a new Route fails typecheck here. */
