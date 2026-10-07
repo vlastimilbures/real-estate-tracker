@@ -34,11 +34,12 @@ export function AsOfPicker({
   const effective = value ?? today;
   const [draft, setDraft] = useState(dateDraft(effective));
 
-  // Keep the text in sync when presets change the value externally: adjust the draft
-  // during render when the value changes, rather than in an effect.
-  const [syncedValue, setSyncedValue] = useState(value);
-  if (value !== syncedValue) {
-    setSyncedValue(value);
+  // Keep the text in sync when the shown day changes: a preset changes the value, and at
+  // Today midnight changes the day (ADR 0149 §4). Adjust the draft during render, rather
+  // than in an effect.
+  const [syncedTime, setSyncedTime] = useState(effective.getTime());
+  if (effective.getTime() !== syncedTime) {
+    setSyncedTime(effective.getTime());
     setDraft(dateDraft(effective));
   }
 

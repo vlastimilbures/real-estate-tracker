@@ -14,23 +14,20 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 describe("AsOfPicker over midnight (ADR 0149)", () => {
-  it.fails(
-    "shows the new day after midnight and a blur keeps Today (#119)",
-    () => {
-      const onChange = vi.fn();
-      vi.setSystemTime(new Date(2026, 9, 2, 23, 59));
-      const { rerender } = render(
-        <AsOfPicker value={null} onChange={onChange} />,
-      );
-      const input = screen.getByTestId<HTMLInputElement>("asof-input");
-      expect(input.value).toBe("02.10.2026");
+  it("shows the new day after midnight and a blur keeps Today (#119)", () => {
+    const onChange = vi.fn();
+    vi.setSystemTime(new Date(2026, 9, 2, 23, 59));
+    const { rerender } = render(
+      <AsOfPicker value={null} onChange={onChange} />,
+    );
+    const input = screen.getByTestId<HTMLInputElement>("asof-input");
+    expect(input.value).toBe("02.10.2026");
 
-      vi.setSystemTime(new Date(2026, 9, 3, 0, 1));
-      rerender(<AsOfPicker value={null} onChange={onChange} />);
-      expect(input.value).toBe("03.10.2026");
+    vi.setSystemTime(new Date(2026, 9, 3, 0, 1));
+    rerender(<AsOfPicker value={null} onChange={onChange} />);
+    expect(input.value).toBe("03.10.2026");
 
-      fireEvent.blur(input);
-      expect(onChange).not.toHaveBeenCalledWith(new Date(Date.UTC(2026, 9, 2)));
-    },
-  );
+    fireEvent.blur(input);
+    expect(onChange).not.toHaveBeenCalledWith(new Date(Date.UTC(2026, 9, 2)));
+  });
 });
