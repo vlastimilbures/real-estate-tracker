@@ -62,8 +62,12 @@ export function AsOfPicker({
 
   // Highlight a preset chip when the shown date equals its target. Reuse the exact
   // plusYears(presetAnchor, n) the onClick uses so they can never drift.
-  const is1y = effective.getTime() === plusYears(presetAnchor, 1).getTime();
-  const is5y = effective.getTime() === plusYears(presetAnchor, 5).getTime();
+  const is1y =
+    value !== null &&
+    effective.getTime() === plusYears(presetAnchor, 1).getTime();
+  const is5y =
+    value !== null &&
+    effective.getTime() === plusYears(presetAnchor, 5).getTime();
 
   return (
     <div
