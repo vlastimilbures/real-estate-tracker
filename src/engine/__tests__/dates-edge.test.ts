@@ -2,7 +2,7 @@
 // (dates.ts:19,35). Currently only exercised indirectly — a regression here would
 // mis-shift every schedule row before any parity test could localize it.
 import { describe, it, expect } from "vitest";
-import { edate, monthsBetween, isoDate } from "../dates";
+import { edate, monthsBetween, isoDate, utc } from "../dates";
 
 describe("edate — end-of-month clamp", () => {
   it("Jan 31 + 1mo clamps to Feb 28 (2021 non-leap)", () => {
@@ -24,4 +24,12 @@ describe("monthsBetween — day-of-month edge", () => {
     expect(monthsBetween(isoDate("2021-01-17"), isoDate("2026-06-17"))).toBe(
       65,
     ));
+});
+
+// ADR 0149 §5: one constructor with the full year. Date.UTC maps years 0–99 to 1900–1999.
+describe("utc / isoDate — the full year", () => {
+  it.fails("year 99 stays year 99, not 1999 (#119)", () => {
+    expect(utc(99, 3, 1).getUTCFullYear()).toBe(99);
+    expect(isoDate("0099-03-01").getUTCFullYear()).toBe(99);
+  });
 });
