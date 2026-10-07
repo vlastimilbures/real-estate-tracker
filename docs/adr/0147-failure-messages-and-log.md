@@ -1,6 +1,6 @@
 # 0147. Failure messages and the error log: right labels, right messages, masked numbers
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-07
 - Source: issue #122 (review findings G2-5-02, G2-5-08, G2-5-09, G2-5-10, G2-5-12), log
   policy option B (owner decision D4, 2026-10-06); Track 10 PR 10.8
