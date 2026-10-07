@@ -26,6 +26,7 @@ function renderPanel(p: Portfolio, asOf: Date = BASE_DATE) {
       asOf={asOf}
       baseDate={BASE_DATE}
       resetRate={assumptions.postFixationResetRatePa}
+      horizonYears={assumptions.horizonYears}
       onFix={onFix}
     />,
   );
@@ -166,37 +167,34 @@ describe("Data check on the Dashboard page (ADR 0118)", () => {
 });
 
 describe("Data check on the Dashboard: the projection horizon (ADR 0148)", () => {
-  it.fails(
-    "lists a stored horizon outside the form range; the fix opens Assumptions (#133)",
-    async () => {
-      act(() => {
-        usePortfolioStore.setState({
-          status: "ready",
-          portfolio,
-          assumptions: { ...assumptions, horizonYears: 150 },
-          scenarios: [],
-          sample: { active: false, dismissed: true },
-        });
-        useUiStore.setState({
-          route: "dashboard",
-          dashboardPropertyIds: [],
-          asOf: BASE_DATE,
-          propertyTarget: null,
-          unsavedChanges: false,
-          unsavedSources: [],
-          pendingLeave: null,
-        });
+  it("lists a stored horizon outside the form range; the fix opens Assumptions (#133)", async () => {
+    act(() => {
+      usePortfolioStore.setState({
+        status: "ready",
+        portfolio,
+        assumptions: { ...assumptions, horizonYears: 150 },
+        scenarios: [],
+        sample: { active: false, dismissed: true },
       });
-      render(<Dashboard />);
-      const row = screen.getByText(
-        "The projection horizon of 150 years is outside the range the forms accept (1–100 years).",
-      );
-      expect(row.textContent).not.toMatch(/:/);
-      await userEvent.click(
-        screen.getByRole("button", { name: "Go to Assumptions" }),
-      );
-      const ui = useUiStore.getState();
-      expect([ui.route, ui.settingsTab]).toEqual(["settings", "assumptions"]);
-    },
-  );
+      useUiStore.setState({
+        route: "dashboard",
+        dashboardPropertyIds: [],
+        asOf: BASE_DATE,
+        propertyTarget: null,
+        unsavedChanges: false,
+        unsavedSources: [],
+        pendingLeave: null,
+      });
+    });
+    render(<Dashboard />);
+    const row = screen.getByText(
+      "The projection horizon of 150 years is outside the range the forms accept (1–100 years).",
+    );
+    expect(row.textContent).not.toMatch(/:/);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Go to Assumptions" }),
+    );
+    const ui = useUiStore.getState();
+    expect([ui.route, ui.settingsTab]).toEqual(["settings", "assumptions"]);
+  });
 });

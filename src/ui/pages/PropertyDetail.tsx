@@ -72,6 +72,7 @@ export function PropertyDetail() {
   const t = useT();
   const propertyId = useUiStore((s) => s.selectedPropertyId);
   const navigate = useUiStore((s) => s.navigate);
+  const openSettings = useUiStore((s) => s.openSettings);
   const mode = useUiStore((s) => s.mode);
   const asOf = useUiStore((s) => s.asOf);
   const setAsOf = useUiStore((s) => s.setAsOf);
@@ -351,7 +352,11 @@ export function PropertyDetail() {
             baseDate={baseDate}
             resetRate={assumptions.postFixationResetRatePa}
             onFix={(fix) =>
-              isFormTarget(fix) ? setEditing(fix) : focusSection(sectionId(fix))
+              fix === "assumptions"
+                ? openSettings("assumptions")
+                : isFormTarget(fix)
+                  ? setEditing(fix)
+                  : focusSection(sectionId(fix))
             }
           />
         </div>

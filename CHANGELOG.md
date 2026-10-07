@@ -257,6 +257,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A saved amount or rate is read only in the app's own decimal notation (ADR 0148, #133).
   Forms such as `0x10`, `1_000`, `+5` or `1e3` in a hand-edited backup are refused, as in
   CSV import; the very small or large values the app writes as `1e-7` still read.
+- The Data check lists a saved value outside the range the forms accept, under **Needs
+  attention**, with the value, the range and a link to fix it (ADR 0148, #133): a
+  property's size, a mortgage's fixation or loan term, and on the Dashboard the projection
+  horizon. Such values could come from an older version and were not shown anywhere.
 - A crash in the app's core, including a failure to set up the window menu at start, is
   now written to the error log (ADR 0147, #122). Before, it reached only the terminal,
   which is not shown when the app is opened from Finder.

@@ -25,7 +25,8 @@ export function DataCheckList({
   resetRate: Rate;
   /** Prefix each row with its property's name (the Dashboard lists several). */
   showNames: boolean;
-  onFix: (propertyId: string, fix: DataCheckFix) => void;
+  /** `propertyId` is null for a portfolio row (ADR 0148). */
+  onFix: (propertyId: string | null, fix: DataCheckFix) => void;
 }) {
   const t = useT();
   const d = t.dataCheck;
@@ -34,13 +35,15 @@ export function DataCheckList({
   const baseId = useId();
   const rows = (items: DataCheckItem[], className: string) => (
     <ul className={className}>
-      {items.map(({ propertyId, name, finding }) => {
+      {items.map(({ propertyId, name, finding }, n) => {
         const fix = findingFix(finding);
-        const textId = `${baseId}-${propertyId}-${finding.kind}`;
+        // One property can have several findings of a kind (ADR 0148): the index keeps
+        // the id unique; the lists are rebuilt as a whole, never reordered in place.
+        const textId = `${baseId}-${n}`;
         return (
-          <li key={`${propertyId}-${finding.kind}`}>
+          <li key={`${propertyId ?? ""}-${finding.kind}-${n}`}>
             <span id={textId}>
-              {showNames && <strong>{name}: </strong>}
+              {showNames && name !== null && <strong>{name}: </strong>}
               {findingText(t, finding, resetRate)}
             </span>
             <Button

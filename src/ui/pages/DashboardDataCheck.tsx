@@ -9,13 +9,18 @@ import { useUiStore } from "../../state/uiStore";
 import { DataCheckList } from "../components/DataCheckList";
 import { Button, Panel } from "../components/primitives";
 import { useT } from "../hooks/useT";
-import { dataCheckItems, type DataCheckFix } from "../model/dataCheck";
+import {
+  dataCheckItems,
+  portfolioDataCheck,
+  type DataCheckFix,
+} from "../model/dataCheck";
 
 export function DataCheckPanel({
   portfolio,
   asOf,
   baseDate,
   resetRate,
+  horizonYears,
   onFix,
 }: {
   /** The properties in view (the Dashboard filter applied). */
@@ -25,7 +30,10 @@ export function DataCheckPanel({
   /** The projection start. */
   baseDate: Date;
   resetRate: Rate;
-  onFix: (propertyId: string, fix: DataCheckFix) => void;
+  /** The stored projection horizon, checked against the form range (ADR 0148). */
+  horizonYears: number;
+  /** `propertyId` is null for a portfolio row. */
+  onFix: (propertyId: string | null, fix: DataCheckFix) => void;
 }) {
   const t = useT();
   const d = t.dataCheck;
@@ -33,12 +41,15 @@ export function DataCheckPanel({
   const choice = useUiStore((s) => s.dataCheckOpen);
   const setOpen = useUiStore((s) => s.setDataCheckOpen);
   // Inactive properties are left out, as from the Dashboard's totals.
-  const { attention, defaults } = dataCheckItems(
+  const items = dataCheckItems(
     portfolio.properties.filter((p) => p.active !== false),
     portfolio,
     asOf,
     baseDate,
   );
+  // The portfolio's own rows come first (ADR 0148).
+  const attention = [...portfolioDataCheck(horizonYears), ...items.attention];
+  const { defaults } = items;
   const empty = attention.length + defaults.length === 0;
   const open = !empty && (choice ?? attention.length > 0);
   return (

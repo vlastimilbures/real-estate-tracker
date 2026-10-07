@@ -398,6 +398,16 @@ export const en = {
     fundingUnknownFuture:
       "Own cash for this purchase is not recorded, so Cash invested is not known and the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
     recordFunding: "Record funding",
+    // Stored values outside the form ranges (ADR 0148).
+    outOfRangeSize: (value: string, range: string) =>
+      `Size ${value} m² is outside the range the forms accept (${range} m²).`,
+    outOfRangeFixation: (date: string, value: string, range: string) =>
+      `Mortgage from ${date}: a fixation of ${value} years is outside the range the forms accept (${range} years).`,
+    outOfRangeTerm: (date: string, value: string, range: string) =>
+      `Mortgage from ${date}: a loan term of ${value} years is outside the range the forms accept (${range} years).`,
+    outOfRangeHorizon: (value: string, range: string) =>
+      `The projection horizon of ${value} years is outside the range the forms accept (${range} years).`,
+    assumptions: "Assumptions",
   },
 
   properties: {

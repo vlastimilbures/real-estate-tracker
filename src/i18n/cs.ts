@@ -375,6 +375,15 @@ export const cs: Dictionary = {
     fundingUnknownFuture:
       "Vlastní zdroje na tento nákup nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám a projekce platbu při koupi odvodí: cena minus úvěr plus zadané transakční náklady a úpravy.",
     recordFunding: "Zadat financování",
+    outOfRangeSize: (value, range) =>
+      `Plocha ${value} m² je mimo rozsah, který formuláře přijímají (${range} m²).`,
+    outOfRangeFixation: (date, value, range) =>
+      `Hypotéka od ${date}: doba fixace ${value} je mimo rozsah, který formuláře přijímají (${range} let).`,
+    outOfRangeTerm: (date, value, range) =>
+      `Hypotéka od ${date}: doba splatnosti ${value} je mimo rozsah, který formuláře přijímají (${range} let).`,
+    outOfRangeHorizon: (value, range) =>
+      `Horizont projekce ${value} je mimo rozsah, který formuláře přijímají (${range} let).`,
+    assumptions: "Předpoklady",
   },
 
   properties: {

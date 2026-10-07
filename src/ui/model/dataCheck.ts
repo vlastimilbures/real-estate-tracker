@@ -14,12 +14,14 @@ import type {
   HoldingCost,
   IsoDate,
   Money,
+  MortgageBlock,
   Portfolio,
   Property,
   Rate,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import { fmtCzk, fmtDate } from "../../lib/format";
+import { outOfRangeFields, type IntRange } from "../../lib/intRanges";
 import {
   loanWarnings,
   loanWarningText,
@@ -64,7 +66,16 @@ export type DataFinding =
   | { kind: "costDefaults"; fields: CostField[] }
   /** No own cash recorded (ADR 0119): Cash invested is unknown; for a property bought
    *  after the base date (`future`) the projection derives its down payment. */
-  | { kind: "fundingUnknown"; future: boolean };
+  | { kind: "fundingUnknown"; future: boolean }
+  /** A stored whole number outside the range the forms accept (ADR 0148): a legacy
+   *  database keeps it, and a restore asks about it. `loanStart` names the mortgage. */
+  | {
+      kind: "outOfRange";
+      field: "sizeM2" | "fixationYears" | "loanTermYears" | "horizonYears";
+      value: number;
+      range: IntRange;
+      loanStart?: IsoDate;
+    };
 
 /** A property's findings: "needs attention" (counted) and "using portfolio defaults". */
 export interface DataCheck {
@@ -72,18 +83,20 @@ export interface DataCheck {
   defaults: DataFinding[];
 }
 
-/** One row of a Data check list: the finding and its property. */
+/** One row of a Data check list: the finding and its property (`null` for a portfolio
+ *  row, such as the projection horizon). */
 export interface DataCheckItem {
-  propertyId: string;
-  name: string;
+  propertyId: string | null;
+  name: string | null;
   finding: DataFinding;
 }
 
-/** Where a finding is fixed: a Property detail section, or the property form (with its
- *  Acquisition section open for `editFunding`). */
+/** Where a finding is fixed: a Property detail section, the property form (with its
+ *  Acquisition section open for `editFunding`), or Settings → Assumptions. */
 export type DataCheckFix =
   | Extract<PropertySection, "records" | "financing" | "holding">
-  | PropertyFormTarget;
+  | PropertyFormTarget
+  | "assumptions";
 
 /** The property's findings at `asOf`; before its purchase date only the own-cash one.
  *  `baseDate` = the projection start, for what the projection assumes about an ended
@@ -94,10 +107,12 @@ export function propertyDataCheck(
   asOf: Date,
   baseDate: Date,
 ): DataCheck {
-  if (property.purchaseDate.getTime() > asOf.getTime())
-    return { attention: [], defaults: fundingOf(property, baseDate) };
   const own = <T extends { propertyId: string }>(rows: T[]) =>
     rows.filter((r) => r.propertyId === property.id);
+  // Stored values, not dated: listed at any as-of date.
+  const outOfRange = rangeFindings(property, own(portfolio.mortgages));
+  if (property.purchaseDate.getTime() > asOf.getTime())
+    return { attention: outOfRange, defaults: fundingOf(property, baseDate) };
   const attention: DataFinding[] = [];
 
   const valuation = selectValuation(own(portfolio.valuations), asOf);
@@ -135,6 +150,7 @@ export function propertyDataCheck(
 
   for (const w of loanWarnings(own(portfolio.mortgages), asOf))
     if (w.kind === "fixationEnded") attention.push(w);
+  attention.push(...outOfRange);
 
   return {
     attention,
@@ -143,6 +159,38 @@ export function propertyDataCheck(
       ...fundingOf(property, baseDate),
     ],
   };
+}
+
+/** The property's size and its mortgages' fixation and term outside the form ranges. */
+function rangeFindings(
+  property: Property,
+  mortgages: MortgageBlock[],
+): DataFinding[] {
+  return outOfRangeFields({ properties: [property], mortgages }).map(
+    ({ id, field, value, range }) => {
+      const loanStart = mortgages.find((m) => m.id === id)?.startDate;
+      return {
+        kind: "outOfRange",
+        field,
+        value,
+        range,
+        ...(field !== "sizeM2" && loanStart && { loanStart }),
+      };
+    },
+  );
+}
+
+/** The portfolio's own findings (ADR 0148): a stored projection horizon outside the form
+ *  range, as a row without a property. */
+export function portfolioDataCheck(horizonYears: number): DataCheckItem[] {
+  return outOfRangeFields(
+    { properties: [], mortgages: [] },
+    { horizonYears },
+  ).map(({ field, value, range }) => ({
+    propertyId: null,
+    name: null,
+    finding: { kind: "outOfRange", field, value, range },
+  }));
 }
 
 /** No own cash recorded (#178): a record with only costs, works or a note counts too. */
@@ -207,6 +255,12 @@ export function findingFix(f: DataFinding): DataCheckFix {
       return "edit";
     case "fundingUnknown":
       return "editFunding";
+    case "outOfRange":
+      return f.field === "sizeM2"
+        ? "edit"
+        : f.field === "horizonYears"
+          ? "assumptions"
+          : "financing";
   }
 }
 
@@ -245,6 +299,22 @@ export function findingText(
       );
     case "fundingUnknown":
       return f.future ? d.fundingUnknownFuture : d.fundingUnknown;
+    case "outOfRange": {
+      const n = (v: number) => fmtCzk(v, { suffix: false });
+      const value = n(f.value);
+      const range = `${n(f.range.min)}–${n(f.range.max)}`;
+      const loan = f.loanStart ? fmtDate(f.loanStart) : "";
+      switch (f.field) {
+        case "sizeM2":
+          return d.outOfRangeSize(value, range);
+        case "fixationYears":
+          return d.outOfRangeFixation(loan, value, range);
+        case "loanTermYears":
+          return d.outOfRangeTerm(loan, value, range);
+        case "horizonYears":
+          return d.outOfRangeHorizon(value, range);
+      }
+    }
   }
 }
 
@@ -265,6 +335,8 @@ export function fixLabel(
       return t.properties.editProperty;
     case "editFunding":
       return t.dataCheck.recordFunding;
+    case "assumptions":
+      return t.dataCheck.goTo(t.dataCheck.assumptions);
   }
 }
 
