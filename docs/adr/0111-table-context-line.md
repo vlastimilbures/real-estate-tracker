@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #21 (pre-release review 2026-10, finding A06)
+- Amended by: [0150](0150-one-asof-resolver.md) (Properties uses the Today basis of Property detail and names it)
 
 ## Context
 

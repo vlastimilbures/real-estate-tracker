@@ -1,13 +1,19 @@
 // "As of" date picker for the Dashboard / Property detail snapshot. A dd.mm.yyyy
 // text input (app convention) plus quick presets. `value === null` means "today".
-// Presentational: it resolves today and emits Date | null (null = Today). With `bounds`
-// it keeps the date inside the projection window (UX-059, D-19).
+// Presentational: it emits Date | null (null = Today) and keeps the date inside the
+// projection window (UX-059, D-19). It shows the date the page computes for, by the one
+// resolver (ADR 0150): a stale stored value or a future base date shows the clamped date.
 import { useState, useId } from "react";
 import { parseDate, dateDraft } from "../model/formParse";
 import { todayUtc } from "../../lib/day";
 import { useT } from "../hooks/useT";
 import { DateInput } from "./DateInput";
-import { clampAsOf, plusYears, type AsOfBounds } from "../model/asOf";
+import {
+  clampAsOf,
+  plusYears,
+  resolveAsOf,
+  type AsOfBounds,
+} from "../model/asOf";
 
 export function AsOfPicker({
   value,
@@ -19,7 +25,7 @@ export function AsOfPicker({
   value: Date | null;
   onChange: (date: Date | null) => void;
   /** The projection window; a date outside it moves to its nearest end. */
-  bounds?: AsOfBounds;
+  bounds: AsOfBounds;
   // Date the "+Ny" presets step from. Defaults to today; every caller uses the
   // default so presets always mean "N years from now", not from a stored date.
   anchor?: Date;
@@ -31,7 +37,7 @@ export function AsOfPicker({
   const hintId = useId();
   const today = todayUtc();
   const presetAnchor = anchor ?? today;
-  const effective = value ?? today;
+  const { date: effective, isToday } = resolveAsOf(value, today, bounds);
   const [draft, setDraft] = useState(dateDraft(effective));
 
   // Keep the text in sync when the shown day changes: a preset changes the value, and at
@@ -44,7 +50,7 @@ export function AsOfPicker({
   }
 
   const pick = (d: Date) => {
-    const inside = bounds ? clampAsOf(d, bounds) : d;
+    const inside = clampAsOf(d, bounds);
     if (inside.getTime() !== d.getTime()) setDraft(dateDraft(inside));
     onChange(inside.getTime() === today.getTime() ? null : inside);
   };
@@ -54,13 +60,14 @@ export function AsOfPicker({
     else setDraft(dateDraft(effective)); // revert invalid input
   };
 
-  const isToday = value === null || value.getTime() === today.getTime();
-  // Highlight a preset chip when the selected date equals its target. Reuse the
-  // exact plusYears(presetAnchor, n) the onClick uses so they can never drift.
+  // Highlight a preset chip when the shown date equals its target. Reuse the exact
+  // plusYears(presetAnchor, n) the onClick uses so they can never drift.
   const is1y =
-    value !== null && value.getTime() === plusYears(presetAnchor, 1).getTime();
+    value !== null &&
+    effective.getTime() === plusYears(presetAnchor, 1).getTime();
   const is5y =
-    value !== null && value.getTime() === plusYears(presetAnchor, 5).getTime();
+    value !== null &&
+    effective.getTime() === plusYears(presetAnchor, 5).getTime();
 
   return (
     <div
@@ -83,8 +90,8 @@ export function AsOfPicker({
           e.key === "Enter" && commit((e.target as HTMLInputElement).value)
         }
         data-testid="asof-input"
-        min={bounds?.min}
-        max={bounds?.max}
+        min={bounds.min}
+        max={bounds.max}
       />
       <div className="pill-group">
         <button

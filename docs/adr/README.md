@@ -174,6 +174,7 @@ Other IDs seen in code comments:
 | [0147](0147-failure-messages-and-log.md)          | Failure messages and the error log: right labels and messages, masked numbers          | #122                                   |
 | [0148](0148-restore-rules-vs-stored-data.md)      | Restore rules vs stored data: out-of-range values ask, flags and names are checked     | #133                                   |
 | [0149](0149-calendar-days.md)                     | Calendar days: the local day on screen, one day module, a 1900 floor for new dates     | #119                                   |
+| [0150](0150-one-asof-resolver.md)                 | One as-of resolver: the date shown is the date computed, Properties names its basis    | #113                                   |
 
 ### Judgment calls and open questions
 

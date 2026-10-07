@@ -51,8 +51,6 @@ export const ru: Dictionary = {
     asOfLabel: "На дату",
     asOfHintProjection: (year, period) =>
       `Для будущих дат показан ближайший год прогноза (${year}, ${period})`,
-    asOfHintBeyond: (d) =>
-      `За горизонтом — показаны записи, действующие на ${d}, а не прогноз`,
     asOfHintSnapshot: (d) => `Показаны записи, действующие на ${d}`,
     noPortfolioTitle: "Портфеля пока нет",
     noPortfolioBody:
@@ -406,6 +404,8 @@ export const ru: Dictionary = {
     title: "Объекты",
     subtitle: (n) => `${n} ${ruPlural(n, ["квартира", "квартиры", "квартир"])}`,
     asOf: (d) => `на ${d}`,
+    asOfProjection: (d, year, period) =>
+      `на ${d} (год прогноза ${year}, ${period})`,
     unitsNote: "суммы в Kč, потоки за год",
     addProperty: "Добавить объект",
     emptyTitle: "Нет объектов",

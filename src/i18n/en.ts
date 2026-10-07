@@ -57,8 +57,6 @@ export const en = {
     asOfLabel: "As of",
     asOfHintProjection: (year: string, period: string) =>
       `Future dates show the nearest projection year (${year}, ${period})`,
-    asOfHintBeyond: (d: string) =>
-      `Beyond the horizon — showing records in force on ${d}, not a projection`,
     asOfHintSnapshot: (d: string) => `Showing records in force on ${d}`,
     noPortfolioTitle: "No portfolio yet",
     noPortfolioBody: "Add a property or import CSV files to begin.",
@@ -424,6 +422,8 @@ export const en = {
     title: "Properties",
     subtitle: (n: number) => `${n} ${enPlural(n, ["apartment", "apartments"])}`,
     asOf: (d: string) => `as of ${d}`,
+    asOfProjection: (d: string, year: string, period: string) =>
+      `as of ${d} (projection year ${year}, ${period})`,
     unitsNote: "amounts in Kč, flows per year",
     addProperty: "Add property",
     emptyTitle: "No properties",

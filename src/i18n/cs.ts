@@ -51,8 +51,6 @@ export const cs: Dictionary = {
     asOfLabel: "K datu",
     asOfHintProjection: (year, period) =>
       `Budoucí datum ukazuje nejbližší rok projekce (${year}, ${period})`,
-    asOfHintBeyond: (d) =>
-      `Za horizontem — zobrazeny záznamy platné k ${d}, nejde o projekci`,
     asOfHintSnapshot: (d) => `Zobrazeny záznamy platné k ${d}`,
     noPortfolioTitle: "Zatím žádné portfolio",
     noPortfolioBody: "Začněte přidáním nemovitosti nebo importem souborů CSV.",
@@ -399,6 +397,8 @@ export const cs: Dictionary = {
     title: "Nemovitosti",
     subtitle: (n) => `${n} ${csPlural(n, ["byt", "byty", "bytů"])}`,
     asOf: (d) => `k ${d}`,
+    asOfProjection: (d, year, period) =>
+      `k ${d} (rok projekce ${year}, ${period})`,
     unitsNote: "částky v Kč, toky za rok",
     addProperty: "Přidat nemovitost",
     emptyTitle: "Žádné nemovitosti",

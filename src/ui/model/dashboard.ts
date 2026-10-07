@@ -3,7 +3,8 @@
 import type { Decimal } from "../../lib/money";
 import {
   cpiAt,
-  monthsBetween,
+  edate,
+  lastGridMonthOnOrBefore,
   portfolioSnapshotAtYear,
   propertySnapshotAtYear,
   realPortfolioSnapshot,
@@ -13,12 +14,19 @@ import type {
   Assumptions,
   PortfolioSnapshot,
   PortfolioKPIs,
+  ProjectionYear,
+  Property,
   PropertySnapshot,
 } from "../../engine";
 import { fmtDate } from "../../lib/format";
 import type { Mode } from "./lens";
 import type { Dictionary } from "../../i18n";
-import { periodLabelLocalized, yearLabel, type SeriesRow } from "./projection";
+import {
+  periodLabelLocalized,
+  projectionSeries,
+  yearLabel,
+  type SeriesRow,
+} from "./projection";
 import { at } from "../../lib/arrays";
 
 export interface MonthlyFlow {
@@ -39,18 +47,32 @@ export function netWorthHorizon(kpis: PortfolioKPIs, mode: Mode): Decimal {
 }
 
 /** Projection year (0..horizon) closest to an as-of date, on the baseDate-anchored
- *  whole-year grid the projection/charts use. ≤ baseDate ⇒ 0 (the current snapshot). */
+ *  whole-year grid the projection/charts use. ≤ baseDate ⇒ 0 (the current snapshot).
+ *  Months count on the D-21 month-end grid, as value growth and the CPI index count them,
+ *  so 31 Aug → 28 Feb is six months (ADR 0150). */
 export function projectionYearForAsOf(baseDate: Date, asOf: Date): number {
-  const months = monthsBetween(baseDate, asOf);
+  const months = lastGridMonthOnOrBefore(baseDate, asOf);
   if (months <= 0) return 0;
   return Math.round(months / 12);
 }
 
 /**
- * Snapshot used to render the dashboard KPI tiles + monthly-flow band. For the current
- * snapshot (as-of ≤ baseDate, year 0) this is the effective-dated engine snapshot under
- * the chosen lens. For a FUTURE as-of date it is sourced from the projection year that
- * the as-of date lands on — the SAME `series` the charts plot — so the cards and the
+ * What the as-of tiles show (ADR 0088): the projection year the date rounds to; else
+ * today's effective-dated snapshot; else the records in force on the date (under six
+ * months after the base date). The one as-of rule (ADR 0150): the tile mappers and every
+ * label read this basis, so tiles and labels agree by construction. The date is resolved
+ * into the window first (`resolveAsOf`), so it never rounds past the horizon.
+ */
+export type AsOfBasis =
+  | { kind: "today" }
+  | { kind: "projection"; year: number; calendarYear: number }
+  | { kind: "snapshot"; date: Date };
+
+/**
+ * Snapshot used to render the dashboard KPI tiles + monthly-flow band. Today or on a
+ * records-in-force date this is the effective-dated engine snapshot under the chosen
+ * lens, deflated (real mode) by the engine price index from baseDate. In a projection
+ * year it is that year of `series` — the SAME rows the charts plot — so the cards and the
  * "Net cash flow by year" chart agree by construction (rather than diverging because the
  * snapshot annualizes a point-in-time run-rate while the chart sums the projected year).
  * `series` is already lens-adjusted, so no further deflation is applied on that path.
@@ -60,66 +82,105 @@ export function projectionYearForAsOf(baseDate: Date, asOf: Date): number {
 export function tilesForAsOf(
   snapshot: PortfolioSnapshot,
   series: SeriesRow[],
+  basis: AsOfBasis,
   mode: Mode,
   assumptions: Assumptions,
 ): PortfolioSnapshot {
-  const n = projectionYearForAsOf(assumptions.baseDate, snapshot.asOf);
-  if (n <= 0 || n >= series.length) {
-    // Today / past, or beyond the projected horizon: keep the effective-dated snapshot,
-    // deflated (real mode) by the engine price index from baseDate.
-    return mode === "real"
-      ? realPortfolioSnapshot(snapshot, cpiAt(assumptions, snapshot.asOf))
-      : snapshot;
-  }
-  return portfolioSnapshotAtYear(snapshot, at(series, n));
+  if (basis.kind === "projection")
+    return portfolioSnapshotAtYear(snapshot, at(series, basis.year));
+  return mode === "real"
+    ? realPortfolioSnapshot(snapshot, cpiAt(assumptions, snapshot.asOf))
+    : snapshot;
 }
 
 /**
- * Property-detail counterpart of `tilesForAsOf` (DR-054, D-62): the same as-of rule, so
+ * Property-detail counterpart of `tilesForAsOf` (DR-054, D-62): the same as-of basis, so
  * the property tiles add up to the Dashboard. The property snapshot carries no `asOf`,
  * so the caller passes the date it was evaluated at.
  */
 export function propertyTilesForAsOf(
   snapshot: PropertySnapshot,
   series: SeriesRow[],
+  basis: AsOfBasis,
   asOf: Date,
   mode: Mode,
   assumptions: Assumptions,
 ): PropertySnapshot {
-  const n = projectionYearForAsOf(assumptions.baseDate, asOf);
-  if (n <= 0 || n >= series.length) {
-    return mode === "real"
-      ? realPropertySnapshot(snapshot, cpiAt(assumptions, asOf))
-      : snapshot;
-  }
-  return propertySnapshotAtYear(snapshot, at(series, n));
+  if (basis.kind === "projection")
+    return propertySnapshotAtYear(snapshot, at(series, basis.year));
+  return mode === "real"
+    ? realPropertySnapshot(snapshot, cpiAt(assumptions, asOf))
+    : snapshot;
 }
 
-/**
- * What the as-of tiles show (ADR 0088), by the same rule as `tilesForAsOf`: the projection
- * year the date rounds to; else today's effective-dated snapshot; else the records in force
- * on the date (under six months after the base date, or past the horizon).
- */
-export type AsOfBasis =
-  | { kind: "today" }
-  | { kind: "projection"; year: number; calendarYear: number }
-  | { kind: "snapshot"; date: Date; beyondHorizon: boolean };
-
-export function asOfBasis(
+/** The as-of basis of a resolved `asOf` (see `AsOfBasis`). */
+export function asOfView(
   baseDate: Date,
   asOf: Date,
   series: SeriesRow[],
   isToday: boolean,
 ): AsOfBasis {
   const n = projectionYearForAsOf(baseDate, asOf);
-  if (n > 0 && n < series.length)
+  if (n > 0)
     return {
       kind: "projection",
       year: n,
       calendarYear: at(series, n).calendarYear,
     };
   if (isToday) return { kind: "today" };
-  return { kind: "snapshot", date: asOf, beyondHorizon: n >= series.length };
+  return { kind: "snapshot", date: asOf };
+}
+
+/**
+ * Whether a property counts as owned under `basis` (ADR 0150): in a projection year, by
+ * that year's end, the date its balances are read at (as the projection turns a purchase
+ * on in the year that holds it); otherwise by the as-of date.
+ */
+export function ownedOn(
+  purchaseDate: Date,
+  basis: AsOfBasis,
+  baseDate: Date,
+  asOf: Date,
+): boolean {
+  const by =
+    basis.kind === "projection" ? edate(baseDate, basis.year * 12) : asOf;
+  return purchaseDate.getTime() <= by.getTime();
+}
+
+/**
+ * The Properties rows (ADR 0150): each property's Property detail tiles at `asOf` under
+ * `basis`, in nominal Kč (the page has no lens), so a row and its detail page show the same
+ * figures for the same date. `projections` holds every listed property's projection.
+ */
+export function propertyRowsForAsOf(
+  perProperty: PropertySnapshot[],
+  properties: readonly Property[],
+  projections: ReadonlyMap<string, ProjectionYear[]>,
+  basis: AsOfBasis,
+  asOf: Date,
+  assumptions: Assumptions,
+): PropertySnapshot[] {
+  const purchase = new Map(properties.map((p) => [p.id, p.purchaseDate]));
+  return perProperty.map((p) => {
+    const tiles = propertyTilesForAsOf(
+      p,
+      projectionSeries(
+        projections.get(p.propertyId) ?? [],
+        "nominal",
+        assumptions,
+      ),
+      basis,
+      asOf,
+      "nominal",
+      assumptions,
+    );
+    // Every row comes from `properties`, so its purchase date is always there.
+    const bought = purchase.get(p.propertyId) ?? asOf;
+    return {
+      ...tiles,
+      owned: ownedOn(bought, basis, assumptions.baseDate, asOf),
+    };
+  });
 }
 
 /** Calendar year of the last projection row ("Net worth in 2056"); as-of independent. */
@@ -184,10 +245,7 @@ export function asOfHint(
   if (basis.kind === "today") return null;
   if (basis.kind === "projection")
     return c.asOfHintProjection(...yearAndPeriod(t, basis, baseDate));
-  const date = fmtDate(basis.date);
-  return basis.beyondHorizon
-    ? c.asOfHintBeyond(date)
-    : c.asOfHintSnapshot(date);
+  return c.asOfHintSnapshot(fmtDate(basis.date));
 }
 
 /**

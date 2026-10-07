@@ -360,6 +360,17 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "10b-properties-today-projection",
+    desc: "Properties at Today seven months after the projection start: rows and context line name projection year Y1 (ADR 0150)",
+    route: "properties",
+    run: async (ux) => {
+      await ux.page.clock.setFixedTime(new Date("2027-01-15T10:00:00Z"));
+      await boot(ux.page);
+      await nav(ux, "properties");
+      await ux.capture("10b-properties-today-projection");
+    },
+  },
+  {
     id: "11-property-add-modal",
     desc: "Add-property modal, empty",
     route: "properties",

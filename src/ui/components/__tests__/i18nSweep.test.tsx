@@ -10,6 +10,8 @@ import { DateInput } from "../DateInput";
 import { StressPresetsPanel } from "../../pages/ScenariosPanels";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
+import { isoDate } from "../../../engine";
+import { asOfBounds } from "../../model/asOf";
 
 vi.mock("../../../lib/day", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/day")>()),
@@ -29,7 +31,13 @@ beforeAll(async () => {
 
 describe("UX-034 i18n sweep", () => {
   it("As-of picker: group name and year chips", () => {
-    render(<AsOfPicker value={null} onChange={() => undefined} />);
+    render(
+      <AsOfPicker
+        value={null}
+        onChange={() => undefined}
+        bounds={asOfBounds(isoDate("2026-06-07"), 30)}
+      />,
+    );
     expect(
       screen.getByRole("group", { name: ru.common.asOfGroup }),
     ).toBeTruthy();

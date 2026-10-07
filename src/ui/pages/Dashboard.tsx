@@ -5,7 +5,6 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { AppShell } from "../components/AppShell";
 import { PropertySelect } from "../components/PropertySelect";
 import { AsOfPicker } from "../components/AsOfPicker";
-import { todayUtc } from "../../lib/day";
 import { Button, EmptyState } from "../components/primitives";
 import { FolderOpen, Plus, Upload } from "lucide-react";
 import { toChartRows, toEquityChangeRows } from "../model/chartData";
@@ -16,7 +15,7 @@ import {
   monthlyFlow,
   netWorthHorizon,
   tilesForAsOf,
-  asOfBasis,
+  asOfView,
   asOfHint,
   horizonEndYear,
   monthlyFlowLabels,
@@ -34,6 +33,7 @@ import { FinancingPanel } from "./DashboardFinancing";
 import { DataCheckPanel } from "./DashboardDataCheck";
 import { cashInvestedTotal } from "../model/acquisition";
 import { useT } from "../hooks/useT";
+import { useAsOf } from "../hooks/useAsOf";
 import { useRenderTiming } from "../hooks/useRenderTiming";
 import { SampleBanner, SampleClearedNotice } from "../components/SampleBanner";
 
@@ -83,13 +83,15 @@ export function Dashboard() {
   );
   const activeIds = new Set(allProperties.map((p) => p.id));
   const effectiveIds = dashboardPropertyIds.filter((id) => activeIds.has(id));
-  const engine = useEngine(effectiveIds, asOf);
+  // The date the tiles, picker and subtitle are for, clamped to the window (ADR 0150).
+  const view = useAsOf();
+  const engine = useEngine(effectiveIds, view?.date ?? null);
   useRenderTiming("dashboard", engine);
   const navigate = useUiStore((s) => s.navigate);
   const openProperty = useUiStore((s) => s.openProperty);
   const openSettings = useUiStore((s) => s.openSettings);
 
-  if (!engine || allProperties.length === 0) {
+  if (!engine || !view || allProperties.length === 0) {
     return (
       <AppShell title={t.dashboard.title} showLens={false}>
         <SampleClearedNotice />
@@ -122,19 +124,18 @@ export function Dashboard() {
   const series = projectionSeries(projection, mode, assumptions);
   const rows = toChartRows(series);
   const eqChange = toEquityChangeRows(series);
+  const { isToday } = view;
+  const basis = asOfView(assumptions.baseDate, snapshot.asOf, series, isToday);
   // Tiles + the flow band: for the current snapshot this is the effective-dated engine
-  // snapshot under the chosen lens; for a future as-of date it is sourced from the
-  // projection year that date lands on (the same `series` the charts plot), so the cards
-  // and the per-year charts agree.
-  const s = tilesForAsOf(snapshot, series, mode, assumptions);
+  // snapshot under the chosen lens; in a projection year it is that year of `series`
+  // (the rows the charts plot), so the cards and the per-year charts agree.
+  const s = tilesForAsOf(snapshot, series, basis, mode, assumptions);
   const flow = monthlyFlow(s);
   const horizon = netWorthHorizon(kpis, mode);
   const irr = leveredIrr(kpis, mode);
 
   const modeWord = mode === "real" ? t.common.realLower : t.common.nominalLower;
   const filterActive = effectiveIds.length > 0;
-  const isToday = asOf === null || asOf.getTime() === todayUtc().getTime();
-  const basis = asOfBasis(assumptions.baseDate, s.asOf, series, isToday);
   const flowLabels = monthlyFlowLabels(t, basis, assumptions.baseDate, s.asOf);
   const subtitle = dashboardSubtitle(
     t,

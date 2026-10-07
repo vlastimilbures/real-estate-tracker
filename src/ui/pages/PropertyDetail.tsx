@@ -41,12 +41,16 @@ import {
   LeasesPanel,
   MortgagesPanel,
 } from "./PropertyEntityPanels";
-import { todayUtc } from "../../lib/day";
 import { fmtDate } from "../../lib/format";
 import { projectionSeries, projectionColumns } from "../model/projection";
 import { exportTableXlsx } from "../exportXlsx";
 import { slug } from "../../lib/slug";
-import { asOfBasis, asOfHint, propertyTilesForAsOf } from "../model/dashboard";
+import {
+  asOfView,
+  asOfHint,
+  ownedOn,
+  propertyTilesForAsOf,
+} from "../model/dashboard";
 import {
   amortizationColumns,
   loanOutlook,
@@ -57,6 +61,7 @@ import { acquisitionView } from "../model/acquisition";
 import { useToast } from "../hooks/useToast";
 import { describeWriteError } from "../model/writeError";
 import { useT } from "../hooks/useT";
+import { useAsOf } from "../hooks/useAsOf";
 import { useSectionSpy } from "../hooks/useSectionSpy";
 import {
   isFormTarget,
@@ -90,7 +95,9 @@ export function PropertyDetail() {
       saveHoldingCost: s.saveHoldingCost,
     })),
   );
-  const result = usePropertyEngineResult(propertyId, asOf);
+  // The date the tiles, picker and subtitle are for, clamped to the window (ADR 0150).
+  const view = useAsOf();
+  const result = usePropertyEngineResult(propertyId, view?.date ?? null);
   // Stored data that breaks an engine rule: show the records to fix, no figures (DR-146).
   const invalid = result && "invalid" in result ? result.invalid : null;
   const out = result && !("invalid" in result) ? result : null;
@@ -131,7 +138,8 @@ export function PropertyDetail() {
     !store.portfolio ||
     (!out && !invalid) ||
     !property ||
-    !assumptions
+    !assumptions ||
+    !view
   ) {
     return (
       <AppShell title={t.propertyDetail.fallbackTitle} showLens={false}>
@@ -181,23 +189,23 @@ export function PropertyDetail() {
   // Tiles under the chosen lens, by the Dashboard's as-of rule (DR-054, D-62): a future
   // as-of reads the projection year the charts plot; real terms are in base-date prices.
   const series = out ? projectionSeries(out.projection, mode, assumptions) : [];
-  const s = out
-    ? propertyTilesForAsOf(out.snapshot, series, out.asOf, mode, assumptions)
+  const basis = out
+    ? asOfView(assumptions.baseDate, out.asOf, series, view.isToday)
     : null;
-  const chartRows = toChartRows(series);
-  // Picker hint by the same as-of rule as the tiles (ADR 0088).
-  const pickerHint = out
-    ? asOfHint(
-        t,
-        asOfBasis(
-          assumptions.baseDate,
-          out.asOf,
+  const s =
+    out && basis
+      ? propertyTilesForAsOf(
+          out.snapshot,
           series,
-          asOf === null || asOf.getTime() === todayUtc().getTime(),
-        ),
-        assumptions.baseDate,
-      )
-    : null;
+          basis,
+          out.asOf,
+          mode,
+          assumptions,
+        )
+      : null;
+  const chartRows = toChartRows(series);
+  // Picker hint by the same as-of basis as the tiles (ADR 0088).
+  const pickerHint = basis ? asOfHint(t, basis, assumptions.baseDate) : null;
 
   const baseDate = assumptions.baseDate;
   // Loan checks for every block from the one in force onward (UX-054).
@@ -245,14 +253,12 @@ export function PropertyDetail() {
       subtitle={[
         property.type,
         property.sizeM2 ? t.propertyDetail.sizeM2(property.sizeM2) : null,
-        !s
+        !out || !basis
           ? null
-          : s.owned
+          : ownedOn(property.purchaseDate, basis, baseDate, out.asOf)
             ? t.propertyDetail.purchased(fmtDate(property.purchaseDate))
             : t.propertyDetail.pendingPurchase(fmtDate(property.purchaseDate)),
-        asOf && asOf.getTime() !== todayUtc().getTime()
-          ? t.propertyDetail.asOf(fmtDate(asOf))
-          : null,
+        view.isToday ? null : t.propertyDetail.asOf(fmtDate(view.date)),
         isActive ? null : t.propertyDetail.deactivated,
       ]
         .filter(Boolean)

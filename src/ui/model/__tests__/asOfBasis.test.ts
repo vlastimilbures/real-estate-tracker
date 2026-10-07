@@ -2,11 +2,12 @@
 // records in force on a date, or the projection year the as-of date rounds to.
 import { describe, it, expect } from "vitest";
 import {
-  asOfBasis,
+  asOfView,
   asOfHint,
   horizonEndYear,
   monthlyFlowLabels,
   netCashFlowFoot,
+  ownedOn,
   projectionYearForAsOf,
 } from "../dashboard";
 import { periodLabelLocalized, yearLabel, type SeriesRow } from "../projection";
@@ -44,44 +45,53 @@ function row(year: number): SeriesRow {
 const series = Array.from({ length: 31 }, (_, y) => row(y));
 const plus5 = addYears(baseDate, 5);
 
-describe("asOfBasis (ADR 0088)", () => {
+describe("asOfView (ADR 0088)", () => {
   it("today at the base date is today", () => {
-    expect(asOfBasis(baseDate, baseDate, series, true)).toEqual({
+    expect(asOfView(baseDate, baseDate, series, true)).toEqual({
       kind: "today",
     });
   });
 
   it("+5y is projection year 5, the row tilesForAsOf reads", () => {
-    const b = asOfBasis(baseDate, plus5, series, false);
+    const b = asOfView(baseDate, plus5, series, false);
     expect(b).toEqual({ kind: "projection", year: 5, calendarYear: 2031 });
     expect(projectionYearForAsOf(baseDate, plus5)).toBe(5);
   });
 
   it("today is a projection year once the base date is ≥ 6 months back", () => {
     const today = edate(baseDate, 24);
-    expect(asOfBasis(baseDate, today, series, true)).toEqual({
+    expect(asOfView(baseDate, today, series, true)).toEqual({
       kind: "projection",
       year: 2,
       calendarYear: 2028,
     });
   });
 
+  it("a month-end base date counts D-21 grid months, as value growth and CPI do (#113)", () => {
+    // 31 Aug → 28 Feb is six grid months (the clamped month end counts): year 1, as with a
+    // mid-month base date. Calendar months said five, so year 0.
+    const monthEnd = isoDate("2026-08-31");
+    expect(
+      asOfView(monthEnd, isoDate("2027-02-28"), series, false),
+    ).toMatchObject({ kind: "projection", year: 1 });
+    expect(
+      asOfView(monthEnd, isoDate("2028-02-29"), series, false),
+    ).toMatchObject({ kind: "projection", year: 2 });
+  });
+
   it("a non-today date under six months out shows the records in force", () => {
     const d = edate(baseDate, 3);
-    expect(asOfBasis(baseDate, d, series, false)).toEqual({
+    expect(asOfView(baseDate, d, series, false)).toEqual({
       kind: "snapshot",
       date: d,
-      beyondHorizon: false,
     });
   });
 
-  it("a date that rounds past the last year is beyond the horizon", () => {
-    const d = addYears(baseDate, 40);
-    expect(asOfBasis(baseDate, d, series, false)).toEqual({
-      kind: "snapshot",
-      date: d,
-      beyondHorizon: true,
-    });
+  it("the end of the window is the last projection year (ADR 0150)", () => {
+    // resolveAsOf keeps every date inside the window, so there is no past-horizon basis.
+    expect(
+      asOfView(baseDate, addYears(baseDate, 30), series, false),
+    ).toMatchObject({ kind: "projection", year: 30 });
   });
 });
 
@@ -95,7 +105,7 @@ describe("as-of labels (ADR 0088)", () => {
   const y5 = yearLabel(en, 5, 2031);
 
   it("projection year: monthly equivalent with the Projections row label and period", () => {
-    const b = asOfBasis(baseDate, plus5, series, false);
+    const b = asOfView(baseDate, plus5, series, false);
     const { title, hint } = monthlyFlowLabels(en, b, baseDate, plus5);
     expect(y5).toBe("Y5 · 2031");
     expect(period5).toBe("Jul 2030 – Jun 2031");
@@ -114,7 +124,7 @@ describe("as-of labels (ADR 0088)", () => {
   });
 
   it("today: current wording, run-rate hint with the date, no picker hint", () => {
-    const b = asOfBasis(baseDate, baseDate, series, true);
+    const b = asOfView(baseDate, baseDate, series, true);
     expect(monthlyFlowLabels(en, b, baseDate, baseDate)).toEqual({
       title: "Current monthly cash flow",
       hint: "annualised run rate ÷ 12, leases in force on 07.06.2026",
@@ -125,7 +135,7 @@ describe("as-of labels (ADR 0088)", () => {
 
   it("records in force on a date: dated wording, never today/current", () => {
     const d = edate(baseDate, 3);
-    const b = asOfBasis(baseDate, d, series, false);
+    const b = asOfView(baseDate, d, series, false);
     const { title, hint } = monthlyFlowLabels(en, b, baseDate, d);
     expect(title).toBe("Monthly cash flow on 07.09.2026");
     expect(hint).toBe(
@@ -137,18 +147,27 @@ describe("as-of labels (ADR 0088)", () => {
     );
   });
 
-  it("beyond the horizon: says it is not a projection", () => {
-    const d = addYears(baseDate, 40);
-    const b = asOfBasis(baseDate, d, series, false);
-    expect(asOfHint(en, b, baseDate)).toBe(
-      "Beyond the horizon — showing records in force on 07.06.2066, not a projection",
-    );
-  });
-
   it("horizon end year is the last projection row, whatever the as-of", () => {
     expect(horizonEndYear(series)).toBe(2056);
     expect(en.dashboard.netWorthInYear(2056, 30)).toBe(
       "Net worth in 2056 (30-yr horizon)",
     );
+  });
+});
+
+describe("ownedOn (ADR 0150)", () => {
+  const y2 = { kind: "projection", year: 2, calendarYear: 2028 } as const;
+  const asOf = isoDate("2028-01-01");
+
+  it("in a projection year: owned once bought by that year's end", () => {
+    expect(ownedOn(isoDate("2028-03-15"), y2, baseDate, asOf)).toBe(true);
+    expect(ownedOn(isoDate("2028-06-07"), y2, baseDate, asOf)).toBe(true);
+    expect(ownedOn(isoDate("2028-06-08"), y2, baseDate, asOf)).toBe(false);
+  });
+
+  it("today or on a date: owned once bought by the as-of date", () => {
+    const on = { kind: "snapshot", date: asOf } as const;
+    expect(ownedOn(isoDate("2028-03-15"), on, baseDate, asOf)).toBe(false);
+    expect(ownedOn(isoDate("2028-01-01"), on, baseDate, asOf)).toBe(true);
   });
 });

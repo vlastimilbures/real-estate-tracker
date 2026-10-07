@@ -15,7 +15,7 @@ import {
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { ZERO, type Decimal } from "../../../lib/money";
 import { projectionSeries } from "../projection";
-import { propertyTilesForAsOf, tilesForAsOf } from "../dashboard";
+import { asOfView, propertyTilesForAsOf, tilesForAsOf } from "../dashboard";
 import type { Mode } from "../lens";
 
 const schedules = schedulesByProperty(
@@ -26,16 +26,13 @@ const schedules = schedulesByProperty(
 
 function tiles(asOf: IsoDate, mode: Mode) {
   const snap = portfolioSnapshot(portfolio, assumptions, asOf, schedules);
-  const dashboard = tilesForAsOf(
-    snap,
-    projectionSeries(
-      portfolioProjection(portfolio, assumptions),
-      mode,
-      assumptions,
-    ),
+  const series = projectionSeries(
+    portfolioProjection(portfolio, assumptions),
     mode,
     assumptions,
   );
+  const basis = asOfView(assumptions.baseDate, asOf, series, false);
+  const dashboard = tilesForAsOf(snap, series, basis, mode, assumptions);
   const perProperty = portfolio.properties.map((p) => {
     const schedule = schedules.get(p.id) ?? [];
     return propertyTilesForAsOf(
@@ -45,6 +42,7 @@ function tiles(asOf: IsoDate, mode: Mode) {
         mode,
         assumptions,
       ),
+      basis,
       asOf,
       mode,
       assumptions,
