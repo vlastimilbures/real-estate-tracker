@@ -31,7 +31,9 @@ export type FailureSite =
   | "IMPORT"
   | "EXPORT"
   | "TEMPLATE"
-  | "RENDER";
+  | "RENDER"
+  // Showing the data folder from the startup error screen (ADR 0153).
+  | "REVEAL";
 
 /** The code + context line written for a failure in `where`. */
 export function describeFailure(

@@ -9,10 +9,9 @@ import { AboutModal } from "./components/AboutModal";
 import { LeaveGuard } from "./components/LeaveGuard";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PageBoundary } from "./components/PageBoundary";
-import { Button } from "./components/primitives";
+import { BootFailure } from "./components/BootFailure";
 import { applyTheme, onSystemThemeChange } from "./theme";
 import { useT } from "./hooks/useT";
-import { describeWriteError } from "./model/writeError";
 import { menuLabels, menuRoute } from "./model/menu";
 import { isTauri } from "../lib/tauri";
 import { onMenuEvent, setMenuLabels } from "../state/platform";
@@ -77,8 +76,6 @@ function Page() {
 export function App() {
   const t = useT();
   const status = usePortfolioStore((s) => s.status);
-  const error = usePortfolioStore((s) => s.error);
-  const startupError = usePortfolioStore((s) => s.startupError);
   const init = usePortfolioStore((s) => s.init);
   const theme = useUiStore((s) => s.theme);
   const aboutOpen = useUiStore((s) => s.aboutOpen);
@@ -149,40 +146,7 @@ export function App() {
     );
   }
 
-  if (status === "error") {
-    return (
-      <div className="error-screen" role="alert">
-        <span className="eyebrow">{t.app.dbErrorEyebrow}</span>
-        {startupError ? (
-          <>
-            <p>{t.dataErrors[startupError.code]}</p>
-            {startupError.details.length > 0 && (
-              <div className="error-screen-details">
-                <span>{t.dataErrors.detailsHeading}</span>
-                <ul>
-                  {startupError.details.map((d) => (
-                    <li key={d}>
-                      <code>{d}</code>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </>
-        ) : (
-          error && <code>{describeWriteError(t, error).message}</code>
-        )}
-        {/* Not a dead end (DR-086): what to do next, and a retry of the startup. */}
-        <p>{t.app.bootRetryHint}</p>
-        <small>{t.dataErrors.logHint}</small>
-        <div>
-          <Button variant="primary" onClick={() => void init()}>
-            {t.app.tryAgain}
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  if (status === "error") return <BootFailure />;
 
   // Top-level backstop for a crash outside the page (a dialog, the leave guard); page
   // errors stop at PageBoundary. A route change, e.g. from the native menu, clears it

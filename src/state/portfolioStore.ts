@@ -17,7 +17,11 @@ import type {
   ScenarioOverrides,
 } from "../engine";
 import { migrate } from "../data/migrations";
-import { DataError, type DataErrorCode } from "../data/errors";
+import {
+  DataError,
+  type DataErrorCode,
+  type UpgradeStop,
+} from "../data/errors";
 import { ScenarioRuleError, toWriteError, type WriteError } from "./writeError";
 import { logFailure } from "../data/errorLog";
 import {
@@ -133,6 +137,14 @@ async function defaultOpen(): Promise<Sql> {
   return sql;
 }
 
+/** A typed failure that stopped startup; `upgrade` says how far a stopped upgrade got
+ *  (ADR 0153). */
+export interface StartupError {
+  code: DataErrorCode;
+  details: string[];
+  upgrade?: UpgradeStop;
+}
+
 interface PortfolioState {
   sql: Sql | null;
   portfolio: Portfolio | null;
@@ -148,7 +160,7 @@ interface PortfolioState {
   /** The last failed write (or the startup failure), translated by the UI. */
   error: WriteError | null;
   /** A typed data-layer failure that stopped startup (P5a), for a translated screen. */
-  startupError: { code: DataErrorCode; details: string[] } | null;
+  startupError: StartupError | null;
   /** The reload after a write failed, so the screen may not show what is on disk
    *  (DR-086). The write itself still counts as done (ADR 0125). Cleared by the next
    *  successful load. */
@@ -425,7 +437,11 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
           error: toWriteError(e),
           startupError:
             e instanceof DataError
-              ? { code: e.code, details: e.details }
+              ? {
+                  code: e.code,
+                  details: e.details,
+                  ...(e.upgrade && { upgrade: e.upgrade }),
+                }
               : null,
         });
       }
