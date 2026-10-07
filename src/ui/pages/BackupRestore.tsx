@@ -1,124 +1,20 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
-import { Panel, Button, Toast, TableWrap } from "../components/primitives";
+import { Panel, Button, Toast } from "../components/primitives";
 import {
-  BACKUP_MAX_BYTES,
-  BackupExportError,
-  BackupReadError,
   chooseRestoreFile,
-  RestoreError,
-  SafetyBackupError,
-  SampleNotEmptyError,
-  SCHEMA_HEAD,
-  type BackupSummary,
   type PickedBackup,
   type RestoreIssue,
 } from "../../state/backup";
-import { logFailure, type FailureSite } from "../../state/diagnostics";
+import { type FailureSite } from "../../state/diagnostics";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
-import { describeWriteError } from "../model/writeError";
-import { restoreIssueText } from "../model/restoreIssue";
-import { toWriteError } from "../../state/writeError";
 import { fmtDate } from "../../lib/format";
-import { localDay } from "../../lib/day";
 import { useToast } from "../hooks/useToast";
 import { ClearSampleButton } from "../components/ClearSampleDialog";
 import { backupRecency, type BackupAgo } from "../model/backupRecency";
-
-/** A refused backup as a translated message; `issues` are listed separately. */
-function restoreErrorText(t: Dictionary, e: RestoreError): string {
-  const b = t.backup;
-  switch (e.code) {
-    case "BACKUP_TOO_LARGE":
-      return b.errTooLarge(BACKUP_MAX_BYTES / (1024 * 1024));
-    case "BACKUP_NOT_JSON":
-      return b.errNotJson;
-    case "BACKUP_INVALID":
-      return b.errInvalid(e.detail);
-    case "BACKUP_NEWER":
-      return b.errNewer(e.detail);
-    case "BACKUP_ROWS_INVALID":
-      return b.errRowsInvalid;
-  }
-}
-
-/** The records of a refused backup, or (`warning`) the out-of-range values a restore asks
- *  about (ADR 0148). */
-function IssueTable({
-  issues,
-  warning = false,
-}: {
-  issues: RestoreIssue[];
-  warning?: boolean;
-}) {
-  const t = useT();
-  const b = t.backup;
-  return (
-    <TableWrap
-      label={warning ? b.warningsTitle : b.errorTitle}
-      style={{ marginTop: "var(--s3)" }}
-    >
-      <table className="data">
-        <thead>
-          <tr>
-            <th className="left">{b.colTable}</th>
-            <th className="left">{b.colRecord}</th>
-            <th className="left">{b.colColumn}</th>
-            <th className="left">{b.colProblem}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {issues.map((i, n) => (
-            <tr key={n}>
-              <td className="left">
-                <code>{i.table}</code>
-              </td>
-              <td className="left">
-                {i.id !== undefined ? <code>{i.id}</code> : "—"}
-              </td>
-              <td className="left">
-                {i.column ? <code>{i.column}</code> : "—"}
-              </td>
-              <td
-                className="left"
-                style={{ color: warning ? "var(--warn)" : "var(--negative)" }}
-              >
-                {restoreIssueText(t, i)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </TableWrap>
-  );
-}
-
-function Summary({ summary }: { summary: BackupSummary }) {
-  const t = useT();
-  const b = t.backup;
-  // The local calendar day, like the file name and "Last backup" (ADR 0149).
-  const exported = new Date(summary.exportedAt);
-  return (
-    <div style={{ marginBottom: "var(--s4)" }}>
-      {!Number.isNaN(exported.getTime()) && (
-        <p>{b.backupDate(fmtDate(localDay(exported)))}</p>
-      )}
-      {summary.schemaVersion < SCHEMA_HEAD && (
-        <p style={{ color: "var(--ink-soft)" }}>{b.olderVersion}</p>
-      )}
-      <p style={{ marginTop: "var(--s2)" }}>{b.holds}</p>
-      <div className="statlist">
-        {Object.entries(summary.counts).map(([table, n]) => (
-          <Fragment key={table}>
-            <div className="k">{b.tables[table as keyof typeof b.tables]}</div>
-            <div className="v num">{n}</div>
-          </Fragment>
-        ))}
-      </div>
-    </div>
-  );
-}
+import { IssueTable, RestoreConfirm } from "../components/RestoreConfirm";
+import { backupFailure } from "../components/restoreFailure";
 
 function agoText(t: Dictionary, ago: BackupAgo): string {
   switch (ago.unit) {
@@ -173,25 +69,9 @@ export function BackupRestorePanel() {
     site: FailureSite,
     other: (detail: string) => string,
   ) {
-    if (e instanceof RestoreError) {
-      setError(restoreErrorText(t, e));
-      setIssues(e.issues);
-      return;
-    }
-    if (e instanceof SampleNotEmptyError) {
-      setError(t.sample.errNotEmpty);
-      return;
-    }
-    logFailure(site, e);
-    setError(
-      e instanceof SafetyBackupError
-        ? t.backup.safetyBackupFailed(e.detail)
-        : e instanceof BackupExportError
-          ? t.backup.exportFailed(e.detail)
-          : e instanceof BackupReadError
-            ? t.backup.errUnreadable(e.detail)
-            : other(describeWriteError(t, toWriteError(e)).message),
-    );
+    const { text, issues } = backupFailure(t, e, site, other);
+    setError(text);
+    setIssues(issues);
   }
 
   function clearError() {
@@ -290,40 +170,12 @@ export function BackupRestorePanel() {
             {t.backup.chooseFile}
           </Button>
         ) : (
-          <div>
-            <p style={{ marginBottom: "var(--s4)" }}>
-              {t.backup.restoreFrom(pendingBackup.file)}
-            </p>
-            <Summary summary={pendingBackup.summary} />
-            {pendingBackup.warnings.length > 0 && (
-              <div style={{ marginBottom: "var(--s4)" }}>
-                <p>{t.backup.warnOutOfRange(pendingBackup.warnings.length)}</p>
-                <IssueTable issues={pendingBackup.warnings} warning />
-              </div>
-            )}
-            <p className="error-text" style={{ marginBottom: "var(--s4)" }}>
-              {t.backup.restoreWarning}
-            </p>
-            <div className="row" style={{ gap: "var(--s3)" }}>
-              <Button
-                onClick={() => setPendingBackup(null)}
-                disabled={restoring}
-              >
-                {t.common.cancel}
-              </Button>
-              <Button
-                variant="danger"
-                onClick={handleConfirmRestore}
-                disabled={restoring}
-              >
-                {restoring
-                  ? t.backup.restoring
-                  : pendingBackup.warnings.length > 0
-                    ? t.backup.restoreAnyway
-                    : t.backup.restoreNow}
-              </Button>
-            </div>
-          </div>
+          <RestoreConfirm
+            pending={pendingBackup}
+            restoring={restoring}
+            onCancel={() => setPendingBackup(null)}
+            onConfirm={handleConfirmRestore}
+          />
         )}
       </Panel>
 
