@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #36 (pre-release review 2026-10, §6)
+- Amended by: [0149](0149-calendar-days.md) (the backup date on the restore screen is the local day)
 
 ## Context
 

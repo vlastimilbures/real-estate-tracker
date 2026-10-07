@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-09-30
 - Source IDs: D-19, J-17
+- Amended by: [0150](0150-one-asof-resolver.md) (one resolver clamps the as-of date at both ends on every read; Today only when the resolved date is today)
 
 ## Context
 
