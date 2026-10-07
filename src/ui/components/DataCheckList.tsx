@@ -33,13 +33,17 @@ export function DataCheckList({
   // The row's text describes its fix button: on the Dashboard several buttons share a
   // name ("Go to Records"), and the description tells them apart.
   const baseId = useId();
-  const rows = (items: DataCheckItem[], className: string) => (
+  const rows = (
+    items: DataCheckItem[],
+    list: "attention" | "defaults",
+    className: string,
+  ) => (
     <ul className={className}>
       {items.map(({ propertyId, name, finding }, n) => {
         const fix = findingFix(finding);
-        // One property can have several findings of a kind (ADR 0148): the index keeps
-        // the id unique; the lists are rebuilt as a whole, never reordered in place.
-        const textId = `${baseId}-${n}`;
+        // One property can have several findings of a kind (ADR 0148): the list and the
+        // index keep the id unique; the lists are rebuilt whole, never reordered in place.
+        const textId = `${baseId}-${list}-${n}`;
         return (
           <li key={`${propertyId ?? ""}-${finding.kind}-${n}`}>
             <span id={textId}>
@@ -63,14 +67,14 @@ export function DataCheckList({
     <div className="data-check">
       <h4 className="panel-subhead">{d.attentionTitle}</h4>
       {attention.length > 0 ? (
-        rows(attention, "data-check-list")
+        rows(attention, "attention", "data-check-list")
       ) : (
         <p className="panel-note">{d.attentionNone}</p>
       )}
       {defaults.length > 0 && (
         <>
           <h4 className="panel-subhead">{d.defaultsTitle}</h4>
-          {rows(defaults, "data-check-list quiet")}
+          {rows(defaults, "defaults", "data-check-list quiet")}
         </>
       )}
     </div>

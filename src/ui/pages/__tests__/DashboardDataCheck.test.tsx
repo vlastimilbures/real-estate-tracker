@@ -49,27 +49,24 @@ describe("Data check panel (ADR 0118)", () => {
     expect(screen.queryByText(d.attentionTitle)).toBeNull();
   });
 
-  it.fails(
-    "each fix button is described by its own row, in both lists (#133)",
-    () => {
-      // ADR 0148 review: the row ids restarted at 0 in the second list, so the defaults
-      // rows' buttons were described by the attention rows' text.
-      renderPanel(portfolio, edate(BASE_DATE, 60));
-      const buttons = screen
-        .getAllByRole("button")
-        .filter((b) => b.hasAttribute("aria-describedby"));
-      const ids = buttons.map((b) => b.getAttribute("aria-describedby") ?? "");
-      expect(new Set(ids).size).toBe(ids.length);
-      for (const b of buttons)
-        expect(
-          b
-            .closest("li")
-            ?.contains(
-              document.getElementById(b.getAttribute("aria-describedby") ?? ""),
-            ),
-        ).toBe(true);
-    },
-  );
+  it("each fix button is described by its own row, in both lists (#133)", () => {
+    // ADR 0148 review: the row ids restarted at 0 in the second list, so the defaults
+    // rows' buttons were described by the attention rows' text.
+    renderPanel(portfolio, edate(BASE_DATE, 60));
+    const buttons = screen
+      .getAllByRole("button")
+      .filter((b) => b.hasAttribute("aria-describedby"));
+    const ids = buttons.map((b) => b.getAttribute("aria-describedby") ?? "");
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const b of buttons)
+      expect(
+        b
+          .closest("li")
+          ?.contains(
+            document.getElementById(b.getAttribute("aria-describedby") ?? ""),
+          ),
+      ).toBe(true);
+  });
 
   it("something needs attention: open, each row named and linked to its fix", async () => {
     const { onFix } = renderPanel(portfolio, edate(BASE_DATE, 60));
