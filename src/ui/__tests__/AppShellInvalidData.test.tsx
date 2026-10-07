@@ -5,7 +5,9 @@
 // Settings and Import remain reachable. Navigating away clears the notice.
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { App } from "../App";
+import { logFailure } from "../../data/errorLog";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore, type Route } from "../../state/uiStore";
 import { portfolio, assumptions } from "../../engine/__tests__/support/seed";
@@ -89,4 +91,30 @@ describe("app shell with invalid stored data (ADR 0146)", () => {
     expect(notice()).toBe(false);
     expect(pageTitle()).toBe(en.settings.title);
   });
+
+  it.fails(
+    "review: entering a crashing page logs the error once (#131)",
+    async () => {
+      await renderAt("settings");
+      vi.mocked(logFailure).mockClear();
+      await act(async () => useUiStore.getState().navigate("dashboard"));
+      await settled();
+      expect(notice()).toBe(true);
+      expect(vi.mocked(logFailure)).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.fails(
+    "review: leaving the notice by the sidebar focuses the main region (#131)",
+    async () => {
+      const user = userEvent.setup();
+      await renderAt("dashboard");
+      expect(notice()).toBe(true);
+      screen.getByRole("button", { name: en.nav.settings }).focus();
+      await user.keyboard("{Enter}");
+      await settled();
+      expect(pageTitle()).toBe(en.settings.title);
+      expect(document.activeElement?.id).toBe("main");
+    },
+  );
 });
