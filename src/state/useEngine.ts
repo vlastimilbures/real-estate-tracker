@@ -40,8 +40,8 @@ import type {
 
 /**
  * The as-of date the engine sees: the picked date or today, never before baseDate
- * (D-19 default max(today, baseDate); the engine rejects an earlier one). Bounding the
- * picker itself is P7. UI-boundary dates are UTC midnight by construction (todayUtc,
+ * (D-19 default max(today, baseDate); the engine rejects an earlier one). The pages pass
+ * a date already resolved into the window (`resolveAsOf`, ADR 0150). UI-boundary dates are UTC midnight by construction (todayUtc,
  * DateInput, AsOfPicker); `utc` rebuilds the same day as a branded IsoDate (D-25). The
  * memos below key on getTime(), so the fresh object does not trigger a recompute.
  */

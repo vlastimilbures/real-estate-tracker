@@ -174,13 +174,12 @@ export function propertyRowsForAsOf(
       "nominal",
       assumptions,
     );
-    const bought = purchase.get(p.propertyId);
-    return bought
-      ? {
-          ...tiles,
-          owned: ownedOn(bought, basis, assumptions.baseDate, asOf),
-        }
-      : tiles;
+    // Every row comes from `properties`, so its purchase date is always there.
+    const bought = purchase.get(p.propertyId) ?? asOf;
+    return {
+      ...tiles,
+      owned: ownedOn(bought, basis, assumptions.baseDate, asOf),
+    };
   });
 }
 
