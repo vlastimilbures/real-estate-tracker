@@ -24,7 +24,9 @@ beforeAll(() => {
   process.env.TZ = "Europe/Prague";
 });
 afterAll(() => {
-  process.env.TZ = suiteTz;
+  // Assigning undefined would store the string "undefined" (UTC), not unset it.
+  if (suiteTz === undefined) delete process.env.TZ;
+  else process.env.TZ = suiteTz;
 });
 
 beforeEach(() => {
