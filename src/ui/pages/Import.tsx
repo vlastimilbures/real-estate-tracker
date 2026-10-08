@@ -173,8 +173,9 @@ export function Import() {
 
   async function runImport(confirmed: boolean) {
     if (!canImport || !preview) return;
-    // Updates overwrite stored records: ask first (ADR 0096).
-    if (counts.updated > 0 && !confirmed) {
+    // Updates overwrite stored records, and an added loan block can stop saved loan
+    // events: ask first (ADR 0096, ADR 0160).
+    if ((counts.updated > 0 || counts.replacing > 0) && !confirmed) {
       setConfirming(true);
       return;
     }
@@ -309,16 +310,25 @@ export function Import() {
           {confirming && (
             <div className="confirm-row">
               <div className="confirm-row-content">
-                <span className="confirm-msg">
-                  {t.importPage.confirmOverwriteMsg(counts.updated)}
-                </span>
+                {counts.updated > 0 && (
+                  <span className="confirm-msg">
+                    {t.importPage.confirmOverwriteMsg(counts.updated)}
+                  </span>
+                )}
+                {counts.replacing > 0 && (
+                  <span className="confirm-msg">
+                    {t.importPage.confirmReplaceMsg(counts.replacing)}
+                  </span>
+                )}
                 <Button
                   size="sm"
                   variant="danger"
                   disabled={importing}
                   onClick={() => void runImport(true)}
                 >
-                  {t.importPage.confirmOverwrite(counts.updated)}
+                  {counts.updated > 0
+                    ? t.importPage.confirmOverwrite(counts.updated)
+                    : t.importPage.confirmReplace}
                 </Button>
                 <Button
                   size="sm"

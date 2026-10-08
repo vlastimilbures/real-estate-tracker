@@ -11,7 +11,13 @@ import { useT } from "../hooks/useT";
 import { fmtCzk } from "../../lib/format";
 import { DATE_FLOOR, isoDay } from "../../lib/day";
 import type { CsvErrorCode, CsvRowError, ImportItem } from "../../state/csv";
-import { changeText, groupByFile, itemLabel } from "../model/importPreview";
+import {
+  changeText,
+  groupByFile,
+  itemLabel,
+  itemNotes,
+  storedEventText,
+} from "../model/importPreview";
 
 export interface FileState<T> {
   name: string;
@@ -139,7 +145,9 @@ export function RefusedTable({ problems }: { problems: CsvImportProblem[] }) {
               <td className="left" style={{ color: "var(--negative)" }}>
                 {e.problem.code === "unknownProperty"
                   ? p.errUnknownProperty(e.problem.value)
-                  : t.inputRules[e.problem.rule]}
+                  : e.problem.code === "storedEvent"
+                    ? storedEventText(t, e.problem)
+                    : t.inputRules[e.problem.rule]}
               </td>
             </tr>
           ))}
@@ -304,12 +312,30 @@ export function ImportSummary({
             ].join(" · ")}
           </span>
           {g.added.length > 0 && (
-            <details>
+            // Open in the preview when an add has notes to read (ADR 0160).
+            <details
+              open={
+                mode === "preview" &&
+                g.added.some((i) => itemNotes(t, i).length > 0)
+              }
+            >
               <summary>{addLabel(g.added.length)}</summary>
               <ul>
-                {g.added.map((i) => (
-                  <li key={i.row}>{name(i)}</li>
-                ))}
+                {g.added.map((i) => {
+                  const notes = itemNotes(t, i);
+                  return (
+                    <li key={i.row}>
+                      {name(i)}
+                      {notes.length > 0 && (
+                        <ul className="changes">
+                          {notes.map((n) => (
+                            <li key={n}>{n}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </details>
           )}

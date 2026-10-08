@@ -959,6 +959,20 @@ export const en = {
       `Overwrite ${n} existing ${enPlural(n, ["record", "records"])}`,
     confirmOverwriteMsg: (n: number) =>
       `This import changes ${n} existing ${enPlural(n, ["record", "records"])}. Review the changes above.`,
+    // ADR 0160: loan events stored on a mortgage block (set in the mortgage form).
+    confirmReplaceMsg: (n: number) =>
+      `${n} new loan ${enPlural(n, ["block stops", "blocks stop"])} saved loan events of the previous block. Review them above.`,
+    confirmReplace: "Import anyway",
+    replacedEvent: (issue: string) => `Previous loan block: ${issue}`,
+    noEffectNote:
+      "Starts before the loan block in force, so it has no effect on the projection.",
+    storedEventKind: {
+      prepayments: "prepayment",
+      recasts: "maturity change",
+      draws: "draw",
+    },
+    errStoredEvent: (event: string, date: string, rule: string) =>
+      `${rule} — the saved ${event} of ${date}. It is set in the property's mortgage form, not in the CSV: change or remove it there first, or keep the old value in this file.`,
     planChanged:
       "Your data changed since this preview, so nothing was imported. Review the updated preview and import again.",
     // Error-code → message map (csv.ts emits codes; UI renders these)

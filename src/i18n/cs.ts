@@ -910,6 +910,19 @@ export const cs: Dictionary = {
       `Přepsat ${n} ${csPlural(n, ["existující záznam", "existující záznamy", "existujících záznamů"])}`,
     confirmOverwriteMsg: (n) =>
       `Import změní ${n} ${csPlural(n, ["existující záznam", "existující záznamy", "existujících záznamů"])}. Zkontrolujte změny výše.`,
+    confirmReplaceMsg: (n) =>
+      `${n} ${csPlural(n, ["nový úvěrový blok ruší", "nové úvěrové bloky ruší", "nových úvěrových bloků ruší"])} uložené úvěrové události předchozího bloku. Zkontrolujte je výše.`,
+    confirmReplace: "Přesto importovat",
+    replacedEvent: (issue) => `Předchozí úvěrový blok: ${issue}`,
+    noEffectNote:
+      "Začíná před platným úvěrovým blokem, proto nemá na projekci žádný vliv.",
+    storedEventKind: {
+      prepayments: "mimořádná splátka",
+      recasts: "změna splatnosti",
+      draws: "čerpání",
+    },
+    errStoredEvent: (event, date, rule) =>
+      `${rule} — uložená položka „${event}“ k ${date}. Zadává se ve formuláři hypotéky u nemovitosti, ne v CSV: nejdřív ji tam změňte nebo odstraňte, nebo v tomto souboru ponechte původní hodnotu.`,
     planChanged:
       "Data se od zobrazení náhledu změnila, proto se nic neimportovalo. Zkontrolujte aktualizovaný náhled a importujte znovu.",
     errRequired: "Povinné",

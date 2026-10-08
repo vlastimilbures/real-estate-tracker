@@ -200,6 +200,8 @@ describe("i18n dictionaries — plural forms", () => {
       "importPage.importScope",
       "importPage.confirmOverwrite",
       "importPage.confirmOverwriteMsg",
+      // Added loan blocks that stop saved loan events (ADR 0160).
+      "importPage.confirmReplaceMsg",
       // Backup recency (ADR 0110).
       "backup.agoDays",
       "backup.agoWeeks",

@@ -2,7 +2,12 @@
 // record labels, and each changed column as display text. Replaces the per-table
 // "N added or updated" rows (UX-034).
 import type { Dictionary } from "../../i18n";
-import type { CsvFile, FieldChange, ImportItem } from "../../import/csvImport";
+import type {
+  CsvFile,
+  CsvImportProblemCode,
+  FieldChange,
+  ImportItem,
+} from "../../import/csvImport";
 import { isoDate } from "../../engine";
 import { fmtCzk, fmtDate, fmtPct } from "../../lib/format";
 
@@ -48,18 +53,49 @@ export function groupByFile(t: Dictionary, items: ImportItem[]): FileGroup[] {
   });
 }
 
-/** Records the import adds and updates; unchanged ones are not counted. */
+/** Records the import adds and updates; unchanged ones are not counted. `replacing`
+ *  counts the added loan blocks that stop saved loan events (ADR 0160). */
 export function importCounts(items: ImportItem[]): {
   added: number;
   updated: number;
+  replacing: number;
 } {
   return {
     added: items.filter((i) => i.kind === "add").length,
     updated: items.filter((i) => i.kind === "update").length,
+    replacing: items.filter((i) => (i.replaces?.length ?? 0) > 0).length,
   };
 }
 
 const showDate = (iso: string) => fmtDate(isoDate(iso));
+
+/** An added loan block's notes (ADR 0160): the previous block's events it stops, in
+ *  the property page's wording, or that it has no effect. */
+export function itemNotes(t: Dictionary, item: ImportItem): string[] {
+  const p = t.importPage;
+  const issue = t.propertyDetail.eventIssue;
+  const notes = (item.replaces ?? []).map((e) =>
+    p.replacedEvent(
+      e.kind === "prepayment"
+        ? issue.PREPAYMENT_REPLACED(showDate(e.date))
+        : issue.RECAST_REPLACED(showDate(e.date)),
+    ),
+  );
+  return item.noEffect ? [...notes, p.noEffectNote] : notes;
+}
+
+/** A stored loan event a CSV change breaks, as the refused-rows table says it. */
+export function storedEventText(
+  t: Dictionary,
+  problem: Extract<CsvImportProblemCode, { code: "storedEvent" }>,
+): string {
+  const p = t.importPage;
+  return p.errStoredEvent(
+    p.storedEventKind[problem.list],
+    showDate(problem.date),
+    t.inputRules[problem.rule],
+  );
+}
 
 /** `Byt Javorova`, or `Byt Javorova · 01.06.2026` for a child row. */
 export function itemLabel(item: ImportItem): string {

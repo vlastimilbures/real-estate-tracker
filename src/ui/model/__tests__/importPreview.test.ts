@@ -52,7 +52,18 @@ describe("importCounts", () => {
         item({ kind: "update" }),
         item({ kind: "unchanged" }),
       ]),
-    ).toEqual({ added: 1, updated: 1 });
+    ).toEqual({ added: 1, updated: 1, replacing: 0 });
+  });
+
+  it("counts the added loan blocks that stop saved loan events (ADR 0160)", () => {
+    const replaces = [{ kind: "prepayment" as const, date: "2032-01-17" }];
+    expect(
+      importCounts([
+        item({ replaces }),
+        item({ replaces: [] }),
+        item({ noEffect: true }),
+      ]),
+    ).toEqual({ added: 3, updated: 0, replacing: 1 });
   });
 });
 
