@@ -252,6 +252,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keyboard and screen-reader gaps (ADR 0157, #128):
+  - With more than five properties, the property selector on the Dashboard and Projections
+    now moves focus into its list when opened. Arrow keys, Home, End, Space and Enter work,
+    the list is one Tab stop, and Escape puts focus back on the selector. A multiple
+    selection is named in the interface language.
+  - One Escape closes only the top-most dialog, and About no longer opens over another
+    dialog from the app menu.
+  - Every page has one level-one heading (its title), and the headings below it no longer
+    skip a level. The Settings tabs follow the tab pattern: arrow keys move between them,
+    Enter or Space switches.
+  - The edit/delete columns have a name for screen readers, and the loan warnings on a
+    property's page are no longer announced as alerts on each visit.
+  - Dark-mode red text and badges, and the N/A dash in totals rows, now meet 4.5:1 contrast
+    on every row background, including a row under the pointer.
+  - The accessibility scan now also checks axe's best-practice rules.
+
 - A property not yet purchased no longer shows figures as if it were owned (ADR 0156,
   #126). Before, Properties and its page showed its whole value as equity, an LTV of 0 %
   "Conservative" and a negative NOI. Its Properties row now shows "—" with the purchase
