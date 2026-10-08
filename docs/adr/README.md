@@ -199,7 +199,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0153](0153-honest-startup-failures.md)           | Startup failures say what changed and offer a step that works                                 | Accepted · amended by 0154                         | #115                                               |
 | [0154](0154-one-outcome-path.md)                  | One outcome path: notices that follow the owner, one toast                                    | Accepted                                           | #136                                               |
 | [0155](0155-lifecycle-states-on-the-pages.md)     | Lifecycle states on the pages: deactivated portfolio, inactive property, filter               | Accepted                                           | #127                                               |
-| [0156](0156-pending-purchase-display.md)          | A pending purchase shows no figures before it is owned                                        | Proposed                                           | #126, #276                                         |
+| [0156](0156-pending-purchase-display.md)          | A pending purchase shows no figures before it is owned                                        | Accepted                                           | #126, #276                                         |
 
 <!-- adr-index:end -->
 
