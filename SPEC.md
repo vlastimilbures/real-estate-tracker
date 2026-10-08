@@ -479,8 +479,10 @@ debt) for every property; when every loan retires within the horizon (as in the 
   shown "—"); with equity₀ > 0 a multiple keeps its sign (ADR 0126).
 - Cumulative net cash flow (Years 1…N), net of acquisition outflows, refinance cash,
   prepayments with their fees (ADR 0109) and debt service paid before a future purchase
-  (ADR 0124).
-  **Real** cumulative net cash flow = Σ_{t=1..N} (netCF_t − acquisition outflow_t) / CPI_t:
+  (ADR 0124): Σ_{t=1..N} (netCF_t − cashOutside_t), where cashOutside_t = acquisition
+  outflow_t − net refinance cash_t + prepaid_t + prepayment fees_t + pre-purchase debt
+  service_t (`cashOutsideNetCf` in `src/engine/kpis.ts`).
+  **Real** cumulative net cash flow = Σ_{t=1..N} (netCF_t − cashOutside_t) / CPI_t:
   each year is deflated by its own index, as in the real IRR (ADR 0087). The Dashboard and
   Scenario compare show the multiple and the cumulative cash flow of the lens; Σ principal
   repaid stays nominal and is labelled "(nominal)" in the Real lens.
