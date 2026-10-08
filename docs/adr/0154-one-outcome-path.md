@@ -35,19 +35,20 @@ The app reported the outcome of an action in three ways, and they had drifted:
 
 ## Decision
 
-1. **Notice.** `uiStore.notice` holds the outcome of a whole-database action until
-   Dismiss:
-   - a restore's safety backup (`restored`);
-   - Clear sample's safety backup (`sampleCleared`, replacing `sampleClearedBackup`);
-   - a failure (`failed`) of a restore, a backup pick, a backup export, Load sample, an
-     import write or an `.xlsx` export.
+1. **Notice and failure.** Two slots in `uiStore`, each kept until Dismiss:
+   - `notice`: the safety copy a restore (`restored`) or Clear sample (`sampleCleared`,
+     replacing `sampleClearedBackup`) wrote, the owner's undo file;
+   - `failure`: the last failed restore, backup pick, backup export, Load sample, import
+     write or `.xlsx` export. Starting one of these actions dismisses only the failure.
 
-   There is one slot, and the latest outcome wins. The notice holds data, not text. It is
-   translated when it renders, so a language switch re-translates it. The app shell shows
-   it at the top of every page, under the stale-data and edit-error banners. Because the
-   handlers write to the store, not to page state, the outcome reaches the owner on
-   whatever page they are on. A refused backup's records (`IssueTable`) stay with its
-   notice. Failures are logged once, where they are caught (`logBackupFailure`).
+   The slots are separate, so neither a failure nor a routine action hides the safety
+   copy's name; only a newer replacement of the data or Dismiss does. Both hold data, not
+   text, and are translated when they render, so a language switch re-translates them.
+   The app shell shows them at the top of every page, under the stale-data and edit-error
+   banners. Because the handlers write to the store, not to page state, the outcome
+   reaches the owner on whatever page they are on. A refused backup's records
+   (`IssueTable`) stay with its failure. Failures are logged once, where they are caught
+   (`logBackupFailure`).
 
 2. **Toast.** `uiStore.toast` with one duration, `TOAST_MS = 4000`. A newer toast replaces
    the text and restarts the timer (DR-058). The app shell keeps an empty
@@ -55,15 +56,18 @@ The app reported the outcome of an action in three ways, and they had drifted:
    `useToast()` takes no duration. Toasts are kept for short confirmations that need no
    follow-up: saved, exported, sample loaded.
 3. **Replaced data.** On success, restore, Clear sample and Load sample call
-   `dataReplaced()`, which clears the notice and `lastImport`. In `portfolioStore` the same
+   `dataReplaced()`, which clears the notice, the failure and `lastImport`. In `portfolioStore` the same
    three actions clear the edit-error banner (`error`), as a successful edit does. The
    caller then sets its own outcome. Clear sample followed by Load sample therefore shows
    only the sample banner.
-4. **One action at a time on Settings → Backup.** While a restore or Load sample runs, the
-   panel's export, choose-file, Clear sample and Load sample buttons are disabled.
-   Elsewhere the store's write queue already serialises whole-database work.
+4. **One action at a time on Settings → Backup.** While a restore, Clear sample or Load
+   sample is queued or runs, the panel's export, choose-file, Clear sample and Load sample
+   buttons are disabled. `portfolioStore.replacing` counts them, so this holds after
+   leaving the page and coming back. Elsewhere the store's write queue already serialises
+   whole-database work.
 5. **Startup screen.** Continue (or Try again) after a restore from the startup error screen
-   sets the `restored` notice, so the safety copy stays named inside the app.
+   sets the `restored` notice, so the safety copy stays named inside the app. When Try
+   again fails again, the new error screen reads that notice and still names the copy.
 
 No navigation guard (option C, or a busy source next to ADR 0142): the notice already
 survives a page change, and the app never locks.
