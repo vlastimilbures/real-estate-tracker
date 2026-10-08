@@ -67,4 +67,5 @@ preview and the report, and a confirmation step for adds that replace loan event
 computed number, parity target or golden output changes. The plan fingerprint covers the new
 notes, so the plan-change guard (ADR 0096 §5) also catches a stored event edited between the
 preview and the import. The engine's `blockChain` is exported for the import plan; the
-engine's input-rule errors for draws now carry an index. New ux-capture screens `53` and `54`.
+engine's input-rule errors for draws now carry an index. The refused-rows message cell
+wraps, so a long refusal stays inside the panel. New ux-capture screens `55` and `56`.
