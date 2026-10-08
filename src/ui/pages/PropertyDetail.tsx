@@ -107,11 +107,12 @@ export function PropertyDetail() {
   const [activeError, setActiveError] = useState<string | null>(null);
   const { showToast } = useToast();
   const property = store.portfolio?.properties.find((p) => p.id === propertyId);
+  const isActive = property?.active !== false;
   // The page's sections in order (ADR 0107); computed before the early return so the
   // spy hook runs on every render. A deactivated property has no Data check (ADR 0155).
   const sections = propertySections({
     overview: out !== null,
-    dataCheck: out !== null && property?.active !== false,
+    dataCheck: out !== null && isActive,
     projection: out !== null,
     amortization: out !== null && out.schedule.length > 0,
   });
@@ -168,7 +169,6 @@ export function PropertyDetail() {
   const holding = store.portfolio.holdingCosts.find(
     (h) => h.propertyId === propertyId,
   );
-  const isActive = property.active !== false;
   const id = property.id;
 
   async function activate() {

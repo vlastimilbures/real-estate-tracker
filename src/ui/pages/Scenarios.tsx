@@ -136,6 +136,8 @@ export function Scenarios() {
     <AppShell
       title={t.scenarios.title}
       subtitle={t.scenarios.subtitle}
+      // With nothing to compare there is no lens to switch (ADR 0155).
+      showLens={!state || state.kind === "ready"}
       actions={
         <Button variant="primary" onClick={() => setEditing("new")}>
           {t.scenarios.newScenario}

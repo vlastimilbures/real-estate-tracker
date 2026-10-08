@@ -66,7 +66,7 @@ export const en = {
         ? "The only property is deactivated"
         : `All ${n} properties are deactivated`,
     allInactiveBody:
-      "Their records are kept. Figures cover active properties only: open a property and choose Activate to include it again.",
+      "The records are kept. Figures cover active properties only: open a property and choose Activate to include it again.",
     openProperties: "Open Properties",
     importCsv: "Import CSV",
     nominal: "Nominal",

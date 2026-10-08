@@ -4,7 +4,7 @@
 // deactivated, one deactivated, only a pending purchase active, no property at all. Real
 // stores and the real engine; no page mocks.
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { Dashboard } from "../Dashboard";
 import { Projections } from "../Projections";
 import { Scenarios } from "../Scenarios";
@@ -114,6 +114,10 @@ describe("every property deactivated (#127 item 1)", () => {
     expect(
       screen.getByRole("button", { name: en.scenarios.newScenario }),
     ).toBeTruthy();
+    // Nothing to switch between nominal and real.
+    expect(
+      screen.queryByRole("group", { name: en.shell.nominalOrReal }),
+    ).toBeNull();
   });
 });
 
@@ -144,9 +148,13 @@ describe("one property deactivated (mixed as is)", () => {
 
   it("Projections offers only the active properties", () => {
     load(mixed, { route: "projections" });
-    render(<Projections />);
-    expect(screen.queryByRole("option", { name: "Sold flat" })).toBeNull();
-    expect(screen.queryByText("Sold flat")).toBeNull();
+    const { container } = render(<Projections />);
+    // Six choices: past five, the selector is a closed dropdown; open it.
+    fireEvent.click(container.querySelector('[aria-haspopup="listbox"]')!);
+    const names = screen.getAllByRole("option").map((o) => o.textContent);
+    expect(names).toContain("Dev unit");
+    expect(names).toContain("Future buy");
+    expect(names).not.toContain("Sold flat");
   });
 
   it("its detail page raises no loan nudge and says what the figures are (#127 item 2)", () => {

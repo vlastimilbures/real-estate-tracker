@@ -28,8 +28,8 @@ inactive properties in projections and KPIs (SPEC.md §4.5). The pages around it
    inactive note (`propertyDetail.inactiveNote`) did not say that the page's own tiles
    still show the property as if it were active.
 3. The Dashboard pruned its saved filter to active properties but treated any non-empty
-   filter as a filter. A filter left with one property read "1 of 1 properties"
-   (`dashboard.subFilter`) with no control to clear it; selecting every chip read "n of n".
+   filter as a filter. A filter left with one property showed `dashboard.subFilter` for one
+   of one, with no control to clear it; selecting every chip showed it for n of n.
 4. No page test used the `mixed` fixture, so none of this was caught.
 
 ## Decision
@@ -47,9 +47,9 @@ inactive properties in projections and KPIs (SPEC.md §4.5). The pages around it
      keeps its first-run screen (ADR 0094).
    - Projections: `empty` and `allInactive` show the notice instead of the table and its
      export.
-   - Scenarios: the notice replaces only the comparison. Presets, the saved list and New
-     scenario stay, because scenarios are assumption overrides that apply again once a
-     property is active.
+   - Scenarios: the notice replaces only the comparison, and the lens toggle is hidden.
+     Presets, the saved list and New scenario stay, because scenarios are assumption
+     overrides that apply again once a property is active.
    - Notices and toasts from the app shell (ADR 0154) show on these states as on any page.
 3. **Inactive property.** Its page runs no loan warnings and has no Data check section or
    section-nav entry; both return on reactivation. The tiles, charts, projection and loan

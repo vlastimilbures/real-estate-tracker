@@ -61,7 +61,7 @@ export const cs: Dictionary = {
         `Všech ${n} nemovitostí je deaktivováno`,
       ]),
     allInactiveBody:
-      "Jejich záznamy zůstávají uložené. Čísla zahrnují jen aktivní nemovitosti: otevřete nemovitost a zvolte Aktivovat.",
+      "Záznamy zůstávají uložené. Čísla zahrnují jen aktivní nemovitosti: otevřete nemovitost a zvolte Aktivovat.",
     openProperties: "Otevřít Nemovitosti",
     importCsv: "Importovat CSV",
     nominal: "Nominální",
