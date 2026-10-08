@@ -959,6 +959,8 @@ export const SCREENS: Screen[] = [
       // Re-open the page: with saved scenarios the presets start collapsed (ADR 0106).
       await nav(ux, "dashboard");
       await nav(ux, "scenarios");
+      // The toast outlives a page change (ADR 0154); this screen shows the page.
+      await expect(ux.page.locator(".toast")).toBeHidden({ timeout: 10_000 });
       await ux.capture("42-scenarios-compare");
     },
   },
@@ -976,6 +978,8 @@ export const SCREENS: Screen[] = [
       });
       await delta.click();
       await expect(delta).toHaveAttribute("aria-pressed", "true");
+      // The toast outlives a page change (ADR 0154); this screen shows the page.
+      await expect(ux.page.locator(".toast")).toBeHidden({ timeout: 10_000 });
       await ux.capture("43-scenarios-compare-delta");
     },
   },
@@ -1353,6 +1357,8 @@ export const SCREENS: Screen[] = [
       await ux.capture("82-load-sample-loaded");
       await nav(ux, "dashboard");
       await expect(ux.page.getByText(ux.t.sample.banner)).toBeVisible();
+      // The toast outlives a page change (ADR 0154); this screen shows the page.
+      await expect(ux.page.locator(".toast")).toBeHidden({ timeout: 10_000 });
       await ux.capture("82-load-sample-banner");
     },
   },
