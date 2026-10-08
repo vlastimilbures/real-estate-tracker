@@ -60,6 +60,14 @@ export const en = {
     asOfHintSnapshot: (d: string) => `Showing records in force on ${d}`,
     noPortfolioTitle: "No portfolio yet",
     noPortfolioBody: "Add a property or import CSV files to begin.",
+    /** Every property is deactivated: the pages say so instead of "no portfolio" (ADR 0155). */
+    allInactiveTitle: (n: number) =>
+      n === 1
+        ? "The only property is deactivated"
+        : `All ${n} properties are deactivated`,
+    allInactiveBody:
+      "The records are kept. Figures cover active properties only: open a property and choose Activate to include it again.",
+    openProperties: "Open Properties",
     importCsv: "Import CSV",
     nominal: "Nominal",
     real: "Real",
@@ -494,6 +502,8 @@ export const en = {
     inactiveBadge: "Inactive",
     inactiveNote:
       "This property is excluded from portfolio dashboards and projections.",
+    inactivePreviewNote:
+      "The figures below show it as if it were still active.",
     sizeM2: (n: number) => `${n} m²`,
     marketValue: "Market value",
     debt: "Debt",

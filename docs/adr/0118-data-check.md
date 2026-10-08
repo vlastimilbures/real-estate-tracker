@@ -5,7 +5,9 @@
 - Source: issue #35 (pre-release review 2026-10, §6 and F5); independent review of PR #179
 - Amended: 2026-10-04 (#178: the own-cash finding in decisions 4, 5, 7 and 8, decided by
   the owner)
-- Amended by: ADR 0122 (a closed last valuation stays in use)
+- Amended by: ADR 0122 (a closed last valuation stays in use),
+  [0155](0155-lifecycle-states-on-the-pages.md) (no Data check on an inactive property's
+  page)
 
 ## Context
 

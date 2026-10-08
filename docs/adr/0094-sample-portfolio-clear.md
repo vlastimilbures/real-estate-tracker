@@ -6,7 +6,9 @@
 - Amended by: [0127](0127-opaque-property-ids-sample-match.md) (§3, §5: the sample is matched by
   id and seeded name; a restore clears the sample markers),
   [0154](0154-one-outcome-path.md) (the "sample cleared" notice shows on every page and is
-  cleared when the data is replaced)
+  cleared when the data is replaced),
+  [0155](0155-lifecycle-states-on-the-pages.md) (§6: the empty-portfolio screen is for no
+  property; every property deactivated has its own notice)
 
 ## Context
 

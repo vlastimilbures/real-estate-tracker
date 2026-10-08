@@ -16,10 +16,13 @@ import { projectionsSubtitle } from "../model/tableContext";
 import { exportTableXlsx } from "../exportXlsx";
 import { slug } from "../../lib/slug";
 import { useT } from "../hooks/useT";
+import { PortfolioStateNotice } from "../components/PortfolioStateNotice";
+import { portfolioState } from "../model/portfolioState";
 
 export function Projections() {
   const t = useT();
   const all = useAllProjections();
+  const portfolio = usePortfolioStore((s) => s.portfolio);
   const assumptions = usePortfolioStore((s) => s.assumptions);
   const mode = useUiStore((s) => s.mode);
   const [entity, setEntity] = useState<string>("portfolio");
@@ -30,6 +33,16 @@ export function Projections() {
         <EmptyState title={t.common.noPortfolioTitle} icon={FolderOpen}>
           {t.common.noPortfolioBody}
         </EmptyState>
+      </AppShell>
+    );
+  }
+
+  // No property, or none active: no table of zeros (ADR 0155).
+  const state = portfolio ? portfolioState(portfolio) : null;
+  if (state && state.kind !== "ready") {
+    return (
+      <AppShell title={t.projections.title} showLens={false}>
+        <PortfolioStateNotice state={state} />
       </AppShell>
     );
   }

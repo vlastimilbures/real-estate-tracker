@@ -55,6 +55,17 @@ export const ru: Dictionary = {
     noPortfolioTitle: "Портфеля пока нет",
     noPortfolioBody:
       "Добавьте объект или импортируйте файлы CSV, чтобы начать.",
+    allInactiveTitle: (n) =>
+      n === 1
+        ? "Единственный объект деактивирован"
+        : ruPlural(n, [
+            `Все ${n} объект деактивированы`,
+            `Все ${n} объекта деактивированы`,
+            `Все ${n} объектов деактивированы`,
+          ]),
+    allInactiveBody:
+      "Записи сохранены. Расчёты учитывают только активные объекты: откройте объект и выберите «Активировать».",
+    openProperties: "Открыть «Объекты»",
     importCsv: "Импорт CSV",
     nominal: "Номинал",
     real: "Реальные",
@@ -473,6 +484,8 @@ export const ru: Dictionary = {
     confirmDeleteMortgage: (date) => `Удалить ипотечный блок от ${date}?`,
     inactiveBadge: "Неактивен",
     inactiveNote: "Этот объект исключён из обзоров и прогнозов портфеля.",
+    inactivePreviewNote:
+      "Цифры ниже показывают его так, как если бы он был активен.",
     sizeM2: (n) => `${n} m²`,
     marketValue: "Рыночная стоимость",
     debt: "Долг",

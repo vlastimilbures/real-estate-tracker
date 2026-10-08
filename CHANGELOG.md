@@ -252,6 +252,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Deactivated properties no longer mislead (ADR 0155, #127):
+  - With every property deactivated, the Dashboard and Projections say "All N properties
+    are deactivated" with a link to Properties. Before, the Dashboard said "No portfolio
+    yet" and offered the first-run steps, and Projections showed a table of zeros.
+    Scenarios shows the same note in place of the comparison; saved scenarios stay
+    editable. Projections and Scenarios with no property at all show the empty-portfolio
+    note instead of zeros.
+  - A deactivated property's page no longer asks for refix terms or shows a Data check,
+    and its note says the figures on the page show it as if it were still active.
+  - A Dashboard filter that keeps every active property no longer reads "1 of 1
+    properties" or "n of n properties".
+
 - The **Could not open the database** screen says what happened and offers a step that works
   (ADR 0153, #115):
   - An upgrade that stops after some of its steps were saved says which version the database

@@ -54,6 +54,15 @@ export const cs: Dictionary = {
     asOfHintSnapshot: (d) => `Zobrazeny záznamy platné k ${d}`,
     noPortfolioTitle: "Zatím žádné portfolio",
     noPortfolioBody: "Začněte přidáním nemovitosti nebo importem souborů CSV.",
+    allInactiveTitle: (n) =>
+      csPlural(n, [
+        "Jediná nemovitost je deaktivovaná",
+        `Všechny ${n} nemovitosti jsou deaktivované`,
+        `Všech ${n} nemovitostí je deaktivováno`,
+      ]),
+    allInactiveBody:
+      "Záznamy zůstávají uložené. Čísla zahrnují jen aktivní nemovitosti: otevřete nemovitost a zvolte Aktivovat.",
+    openProperties: "Otevřít Nemovitosti",
     importCsv: "Importovat CSV",
     nominal: "Nominální",
     real: "Reálné",
@@ -468,6 +477,7 @@ export const cs: Dictionary = {
     inactiveBadge: "Neaktivní",
     inactiveNote:
       "Tato nemovitost je vyřazena z přehledů a projekcí portfolia.",
+    inactivePreviewNote: "Čísla níže ji ukazují, jako by byla stále aktivní.",
     sizeM2: (n) => `${n} m²`,
     marketValue: "Tržní hodnota",
     debt: "Dluh",
