@@ -204,6 +204,11 @@ describe("buildWorkbook — several sheets", () => {
     expect(ws.getRow(3).getCell(2).numFmt).toBe(numFmt("percent"));
   });
 
+  // ADR 0159: a note overflows into the next cells; it does not widen the first column.
+  it("notes do not count toward the first column's width", () => {
+    expect(wb.getWorksheet("Metrics")!.getColumn(1).width).toBe(10);
+  });
+
   it("notes follow the table after one blank row, as typed text (ADR 0145)", () => {
     const ws = wb.getWorksheet("Metrics")!;
     expect(ws.getRow(4).getCell(1).value).toBeNull();

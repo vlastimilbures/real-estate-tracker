@@ -50,9 +50,11 @@ Owner, 2026-10-08 (D9 = A): fix the whole batch.
 - **Negatives.** Money cells use `#,##0" Kč";[Red](#,##0" Kč")`: a loss is red in
   parentheses, as on screen.
 - **File names.** `exportFilename(name, fallback, kind, mode?)` (`src/lib/slug.ts`)
-  lowercases, folds Latin diacritics (`á` → `a`), keeps other scripts (`й` stays `й`) and
-  joins the rest with dashes. A name with no letter or digit uses the fallback (the property
-  id, or `portfolio`). Projections names a property by its full name, so both pages give
+  lowercases, folds decomposable Latin diacritics (`á` → `a`; `ł`, `ø`, `ß` stay as they
+  are), keeps other scripts (`й` stays `й`), drops marks not on a letter (an emoji's
+  variation selector) and joins the rest with dashes. The name part is at most 100
+  characters. A name with no letter or digit uses the fallback (the property id, or
+  `portfolio`). Projections names a property by its full name, so both pages give
   the same file name.
 - **Opening-year flows.** `mergeCompareMetric(…, { flow: true })` leaves year 0 empty for
   net cash flow, in the compare sheet and chart.
@@ -67,5 +69,5 @@ No computed number changes. Exported files gain note rows under the table, wider
 frozen header row and first column, and red negatives. File names change: Czech names keep
 their words without diacritics as before, Cyrillic names keep their letters, and the
 Projections export of one property now starts with the full name (`byt-…`). The compare Net
-cash flow chart starts at year 1. ADR 0111's "no export content change" no longer holds for
+cash flow chart has no year-0 point, and its table view shows "—" there. ADR 0111's "no export content change" no longer holds for
 the projection exports.
