@@ -44,12 +44,7 @@ import { fmtDate } from "../../lib/format";
 import { projectionSeries, projectionColumns } from "../model/projection";
 import { exportTableXlsx } from "../exportXlsx";
 import { slug } from "../../lib/slug";
-import {
-  asOfView,
-  asOfHint,
-  ownedOn,
-  propertyTilesForAsOf,
-} from "../model/dashboard";
+import { asOfView, asOfHint, propertyTilesForAsOf } from "../model/dashboard";
 import {
   amortizationColumns,
   loanOutlook,
@@ -201,6 +196,7 @@ export function PropertyDetail() {
           out.asOf,
           mode,
           assumptions,
+          property.purchaseDate,
         )
       : null;
   const chartRows = toChartRows(series);
@@ -254,9 +250,10 @@ export function PropertyDetail() {
       subtitle={[
         property.type,
         property.sizeM2 ? t.propertyDetail.sizeM2(property.sizeM2) : null,
-        !out || !basis
+        // The tiles' own `owned`, so the subtitle and the tiles agree (ADR 0156).
+        !s
           ? null
-          : ownedOn(property.purchaseDate, basis, baseDate, out.asOf)
+          : s.owned
             ? t.propertyDetail.purchased(fmtDate(property.purchaseDate))
             : t.propertyDetail.pendingPurchase(fmtDate(property.purchaseDate)),
         view.isToday ? null : t.propertyDetail.asOf(fmtDate(view.date)),
@@ -324,7 +321,7 @@ export function PropertyDetail() {
         <InvalidDataNotice t={t} error={invalid} portfolio={store.portfolio} />
       )}
 
-      {s && (
+      {s && out && (
         <div className="pd-section" id={sectionId("overview")}>
           <h2 className="sr-only" tabIndex={-1}>
             {t.propertyDetail.sectionOverview}
@@ -346,6 +343,11 @@ export function PropertyDetail() {
             s={s}
             chartRows={chartRows}
             modeWord={modeWord}
+            purchase={{
+              purchaseDate: property.purchaseDate,
+              price: out.acquisition.price,
+              loan: out.acquisition.loan,
+            }}
           />
         </div>
       )}

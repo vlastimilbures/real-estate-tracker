@@ -46,6 +46,7 @@ function tiles(asOf: IsoDate, mode: Mode) {
       asOf,
       mode,
       assumptions,
+      p.purchaseDate,
     );
   });
   return { dashboard, perProperty };

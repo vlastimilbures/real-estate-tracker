@@ -91,7 +91,18 @@ describe("Property detail tiles", () => {
   it("LTV reads n/a with no badge", () => {
     const s = propertySnapshot(javorova, javorovaAtZero, assumptions);
     expect(s.ltv).toBeNull();
-    render(<PropertySnapshotTiles s={s} chartRows={[]} modeWord="nominal" />);
+    render(
+      <PropertySnapshotTiles
+        s={s}
+        chartRows={[]}
+        modeWord="nominal"
+        purchase={{
+          purchaseDate: javorova.purchaseDate,
+          price: javorova.purchasePrice,
+          loan: null,
+        }}
+      />,
+    );
     // "Debt" also names a chart series: take the tile that carries the LTV foot.
     const debt = screen
       .getAllByText(en.propertyDetail.debt)

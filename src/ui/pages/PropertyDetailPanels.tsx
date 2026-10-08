@@ -29,19 +29,35 @@ import type {
   AmortizationRow,
 } from "../../engine";
 import type { MutationResult } from "../../state/portfolioStore";
+import type { Decimal } from "../../lib/money";
 import { useT } from "../hooks/useT";
 
 const newId = () => crypto.randomUUID();
 
-/** Snapshot KPI tiles (value / debt / equity / DSCR) + the two mini charts. */
+/** What a not-yet-owned property will be bought for (ADR 0156). */
+export interface NotOwned {
+  purchaseDate: Date;
+  price: Decimal;
+  /** The acquisition loan; null when there is none. */
+  loan: Decimal | null;
+}
+
+/**
+ * Snapshot KPI tiles (value / debt / equity / DSCR) + the two mini charts. A property not
+ * owned yet on the date has no snapshot figures: a short purchase panel takes the tiles'
+ * place, and the charts stay (ADR 0156).
+ */
 export function PropertySnapshotTiles({
   s,
   chartRows,
   modeWord,
+  purchase,
 }: {
   s: PropertySnapshot;
   chartRows: ChartRow[];
   modeWord: string;
+  /** Shown instead of the tiles while `s` is not owned. */
+  purchase: NotOwned;
 }) {
   const t = useT();
   const pd = t.propertyDetail;
@@ -55,37 +71,7 @@ export function PropertySnapshotTiles({
   ];
   return (
     <>
-      <div className="tiles">
-        <KpiTile
-          label={t.propertyDetail.marketValue}
-          value={<Money value={s.value} parens={false} suffix={false} />}
-        />
-        <KpiTile
-          label={t.propertyDetail.debt}
-          value={<Money value={s.debt} parens={false} suffix={false} />}
-          foot={
-            <>
-              <MetricLabel term="ltv">{t.propertyDetail.ltv}</MetricLabel>{" "}
-              <Pct value={s.ltv} />
-            </>
-          }
-          badge={ltvBadge(t, s.ltv)}
-        />
-        <KpiTile
-          label={t.propertyDetail.equity}
-          value={<Money value={s.equity} parens={false} suffix={false} />}
-        />
-        <KpiTile
-          label={<MetricLabel term="dscr">{t.propertyDetail.dscr}</MetricLabel>}
-          value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
-          badge={dscrBadge(t, s.dscr)}
-          foot={
-            <>
-              {t.propertyDetail.netCf} <Money value={s.netCashFlow} signed />
-            </>
-          }
-        />
-      </div>
+      {s.owned ? <SnapshotTiles s={s} /> : <NotOwnedPanel {...purchase} />}
 
       <div className="chart-grid">
         <ChartCard
@@ -112,6 +98,64 @@ export function PropertySnapshotTiles({
         </ChartCard>
       </div>
     </>
+  );
+}
+
+/** A property not owned yet: when it is bought, for how much, with what loan (ADR 0156). */
+function NotOwnedPanel({ purchaseDate, price, loan }: NotOwned) {
+  const t = useT();
+  const d = t.propertyDetail;
+  return (
+    <Panel title={d.notOwnedTitle} hint={d.notOwnedHint}>
+      <StatList
+        rows={[
+          { k: t.propertyForm.purchaseDate, v: fmtDate(purchaseDate) },
+          { k: d.acqPrice, v: <Money value={price} parens={false} /> },
+          {
+            k: d.acqLoan,
+            v: loan ? <Money value={loan} parens={false} /> : d.acqLoanNone,
+          },
+        ]}
+      />
+    </Panel>
+  );
+}
+
+/** The four snapshot KPI tiles of an owned property. */
+function SnapshotTiles({ s }: { s: PropertySnapshot }) {
+  const t = useT();
+  return (
+    <div className="tiles">
+      <KpiTile
+        label={t.propertyDetail.marketValue}
+        value={<Money value={s.value} parens={false} suffix={false} />}
+      />
+      <KpiTile
+        label={t.propertyDetail.debt}
+        value={<Money value={s.debt} parens={false} suffix={false} />}
+        foot={
+          <>
+            <MetricLabel term="ltv">{t.propertyDetail.ltv}</MetricLabel>{" "}
+            <Pct value={s.ltv} />
+          </>
+        }
+        badge={ltvBadge(t, s.ltv)}
+      />
+      <KpiTile
+        label={t.propertyDetail.equity}
+        value={<Money value={s.equity} parens={false} suffix={false} />}
+      />
+      <KpiTile
+        label={<MetricLabel term="dscr">{t.propertyDetail.dscr}</MetricLabel>}
+        value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
+        badge={dscrBadge(t, s.dscr)}
+        foot={
+          <>
+            {t.propertyDetail.netCf} <Money value={s.netCashFlow} signed />
+          </>
+        }
+      />
+    </div>
   );
 }
 

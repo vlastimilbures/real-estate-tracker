@@ -96,7 +96,9 @@ export function tilesForAsOf(
 /**
  * Property-detail counterpart of `tilesForAsOf` (DR-054, D-62): the same as-of basis, so
  * the property tiles add up to the Dashboard. The property snapshot carries no `asOf`,
- * so the caller passes the date it was evaluated at.
+ * so the caller passes the date it was evaluated at. `owned` follows `ownedOn` under the
+ * same basis, so a pending purchase reads the same on the tiles, the subtitle and the
+ * Properties row (ADR 0156).
  */
 export function propertyTilesForAsOf(
   snapshot: PropertySnapshot,
@@ -105,12 +107,18 @@ export function propertyTilesForAsOf(
   asOf: Date,
   mode: Mode,
   assumptions: Assumptions,
+  purchaseDate: Date,
 ): PropertySnapshot {
-  if (basis.kind === "projection")
-    return propertySnapshotAtYear(snapshot, at(series, basis.year));
-  return mode === "real"
-    ? realPropertySnapshot(snapshot, cpiAt(assumptions, asOf))
-    : snapshot;
+  const tiles =
+    basis.kind === "projection"
+      ? propertySnapshotAtYear(snapshot, at(series, basis.year))
+      : mode === "real"
+        ? realPropertySnapshot(snapshot, cpiAt(assumptions, asOf))
+        : snapshot;
+  return {
+    ...tiles,
+    owned: ownedOn(purchaseDate, basis, assumptions.baseDate, asOf),
+  };
 }
 
 /** The as-of basis of a resolved `asOf` (see `AsOfBasis`). */
@@ -161,8 +169,8 @@ export function propertyRowsForAsOf(
   assumptions: Assumptions,
 ): PropertySnapshot[] {
   const purchase = new Map(properties.map((p) => [p.id, p.purchaseDate]));
-  return perProperty.map((p) => {
-    const tiles = propertyTilesForAsOf(
+  return perProperty.map((p) =>
+    propertyTilesForAsOf(
       p,
       projectionSeries(
         projections.get(p.propertyId) ?? [],
@@ -173,14 +181,10 @@ export function propertyRowsForAsOf(
       asOf,
       "nominal",
       assumptions,
-    );
-    // Every row comes from `properties`, so its purchase date is always there.
-    const bought = purchase.get(p.propertyId) ?? asOf;
-    return {
-      ...tiles,
-      owned: ownedOn(bought, basis, assumptions.baseDate, asOf),
-    };
-  });
+      // Every row comes from `properties`, so its purchase date is always there.
+      purchase.get(p.propertyId) ?? asOf,
+    ),
+  );
 }
 
 /** Calendar year of the last projection row ("Net worth in 2056"); as-of independent. */

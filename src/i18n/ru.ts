@@ -454,6 +454,7 @@ export const ru: Dictionary = {
     colNetCashFlow: "Чистый денежный поток",
     colDscr: "DSCR",
     badgePending: "Ожидает",
+    pendingPurchaseOn: (d) => `покупка ${d}`,
     badgeInactive: "Неактивен",
     editProperty: "Изменить объект",
     deleteProperty: "Удалить объект",
@@ -468,6 +469,9 @@ export const ru: Dictionary = {
     allProperties: "‹ Все объекты",
     purchased: (d) => `куплено ${d}`,
     pendingPurchase: (d) => `ожидает — покупка ${d}`,
+    notOwnedTitle: "Ещё не в собственности",
+    notOwnedHint:
+      "Показатели начинаются с даты покупки; графики ниже показывают годы после неё.",
     asOf: (d) => `на ${d}`,
     deactivated: "деактивировано",
     deactivate: "Деактивировать",
