@@ -229,8 +229,9 @@
   justify-content: flex-end;
   margin-left: auto;
 }
-/* A page's section nav (ADR 0107): a full-width last row of the sticky topbar. It
-   scrolls sideways at narrow widths instead of wrapping the topbar taller. */
+/* A page's section nav (ADR 0107): a full-width last row of the sticky topbar. Its
+   links wrap to a second row when they do not fit, so none is hidden (ADR 0158);
+   --topbar-h follows the taller topbar. */
 .topbar-subnav {
   flex: 1 1 100%;
   min-width: 0;
@@ -238,12 +239,11 @@
 }
 .section-nav ul {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--s1);
   list-style: none;
   margin: 0;
   padding: 0 0 var(--s1);
-  overflow-x: auto;
-  scrollbar-width: thin;
 }
 .section-nav a {
   display: block;
@@ -396,13 +396,20 @@
   box-shadow: var(--shadow-tile);
   overflow: hidden;
 }
+/* A head wraps its action (a segmented toggle) to a second row rather than squeezing
+   it when the title and hint are long (ADR 0158). */
 .panel > .panel-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--s4);
   padding: var(--s4) var(--s5);
   border-bottom: 1px solid var(--hairline);
+}
+.panel > .panel-head > .segmented {
+  flex-shrink: 0;
+  margin-left: auto;
 }
 .panel > .panel-head h2 {
   font-size: 15px;
@@ -548,6 +555,25 @@ table.data thead th {
   padding: var(--s3) var(--s3);
   border-bottom: 1px solid var(--hairline-strong);
   white-space: nowrap;
+}
+/* Properties list: a long header (Russian Net cash flow) wraps to two balanced lines
+   instead of pushing the risk columns under the pinned actions (ADR 0085, ADR 0158).
+   The label is as wide as its text up to 11em, so a squeezed table cannot break it onto
+   a third line, and a short label keeps its column narrow. A band badge (LTV, DSCR)
+   wraps its word under the figure when the table is squeezed. */
+table.data.wrap-head thead th {
+  vertical-align: bottom;
+}
+table.data.wrap-head .th-label {
+  display: inline-block;
+  width: max-content;
+  max-width: 11em;
+  white-space: normal;
+  text-wrap: balance;
+}
+table.data.wrap-head tbody td .badge {
+  white-space: normal;
+  text-wrap: balance;
 }
 table.data thead th.left,
 table.data tbody td.left {
@@ -1788,21 +1814,49 @@ table.chart-table tbody th.sticky-col {
   font-size: 12px;
   color: var(--ink-soft);
 }
+/* One grid for the whole list, shared by every row (subgrid), so the action buttons line
+   up across rows (ADR 0158). In a narrow panel the summary moves under the name, full
+   width, instead of shrinking to a one-word column. */
+.scenario-list-wrap {
+  container-type: inline-size;
+}
 .scenario-list {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 2fr auto;
+  column-gap: var(--s3);
   list-style: none;
   margin: 0;
   padding: 0;
 }
 .scenario-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) 2fr auto;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: var(--s3);
+  row-gap: var(--s2);
   padding: var(--s2) 0;
   border-bottom: 1px solid var(--hairline);
 }
-.scenario-confirm {
+.scenario-confirm,
+.scenario-empty {
   grid-column: 1 / -1;
+}
+@container (max-width: 640px) {
+  .scenario-list {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .scenario-pick {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .scenario-actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .scenario-summary {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
 }
 .scenario-row:last-child {
   border-bottom: none;

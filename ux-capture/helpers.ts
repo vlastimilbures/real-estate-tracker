@@ -204,6 +204,28 @@ export function panel(ux: Ux, title: string): Locator {
   });
 }
 
+/**
+ * Fails when `el` hides part of its content: a clipped or scrolled overflow, or a child
+ * that ends past its right edge. Layouts must not depend on string length (ADR 0158).
+ */
+export async function expectNotClipped(el: Locator) {
+  const m = await el.evaluate((node) => {
+    const box = node.getBoundingClientRect();
+    const ends = Array.from(
+      node.children,
+      (c) => c.getBoundingClientRect().right,
+    );
+    return {
+      scroll: node.scrollWidth,
+      client: node.clientWidth,
+      end: Math.max(box.left, ...ends),
+      right: box.right,
+    };
+  });
+  expect(m.scroll, "content width").toBeLessThanOrEqual(m.client + 1);
+  expect(m.end, "last child's right edge").toBeLessThanOrEqual(m.right + 1);
+}
+
 export async function settingsTab(
   ux: Ux,
   tab: keyof Dictionary["settings"]["tabs"],

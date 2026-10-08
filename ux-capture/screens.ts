@@ -15,6 +15,7 @@ import {
   settingsTab,
   boot,
   deleteAllProperties,
+  expectNotClipped,
   type Ux,
 } from "./helpers";
 
@@ -331,6 +332,12 @@ export const SCREENS: Screen[] = [
     desc: "Dashboard, nominal, as of today",
     run: async (ux) => {
       await boot(ux.page);
+      // The reset-window toggle shows every option, inside its panel head (ADR 0158).
+      const head = panel(ux, ux.t.dashboard.financingTitle).locator(
+        ".panel-head",
+      );
+      await expectNotClipped(head.locator(".segmented"));
+      await expectNotClipped(head);
       await ux.capture("01-dashboard");
     },
   },
@@ -616,6 +623,23 @@ export const SCREENS: Screen[] = [
           .boundingBox();
         expect(box!.x + box!.width).toBeLessThanOrEqual(actions!.x);
       }
+      // In every language: headers wrap to at most two lines to make room (ADR 0158).
+      const heads = await ux.page
+        .locator("table.data thead th")
+        .evaluateAll((ths) =>
+          ths.map((th) => {
+            const s = getComputedStyle(th);
+            const lineHeight =
+              parseFloat(s.lineHeight) || 1.2 * parseFloat(s.fontSize);
+            const range = document.createRange();
+            range.selectNodeContents(th);
+            const lines = range.getBoundingClientRect().height / lineHeight;
+            return { text: th.textContent, lines };
+          }),
+        );
+      for (const h of heads) {
+        expect(h.lines, `"${h.text}" header lines`).toBeLessThan(2.5);
+      }
       await ux.capture("14-properties-long-name");
     },
   },
@@ -648,6 +672,14 @@ export const SCREENS: Screen[] = [
     run: async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
+      // Every section link is in view; the nav wraps rather than scrolls (ADR 0158).
+      await expectNotClipped(
+        ux.page
+          .getByRole("navigation", {
+            name: ux.t.propertyDetail.sectionNavLabel,
+          })
+          .getByRole("list"),
+      );
       await ux.capture("20-property-detail");
     },
   },
@@ -1025,6 +1057,17 @@ export const SCREENS: Screen[] = [
       await nav(ux, "scenarios");
       // The toast outlives a page change (ADR 0154); this screen shows the page.
       await expect(ux.page.locator(".toast")).toBeHidden({ timeout: 10_000 });
+      // One grid for the list: actions line up across rows and the summary stays
+      // readable in every language (ADR 0158).
+      const rows = ux.page.locator(".scenario-row");
+      await expect(rows).toHaveCount(3);
+      const xs: number[] = [];
+      for (const row of await rows.all()) {
+        xs.push((await row.locator(".scenario-actions").boundingBox())!.x);
+        const summary = await row.locator(".scenario-summary").boundingBox();
+        expect(summary!.width).toBeGreaterThanOrEqual(200);
+      }
+      for (const x of xs) expect(Math.abs(x - xs[0]!)).toBeLessThanOrEqual(1);
       await ux.capture("42-scenarios-compare");
     },
   },

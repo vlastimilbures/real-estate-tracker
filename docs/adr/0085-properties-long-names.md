@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #17 (pre-release review 2026-10, finding A05)
+- Amended by: [0158](0158-layouts-hold-in-czech-and-russian.md) (the promise holds in every
+  UI language; headers and band badges may wrap)
 
 ## Context
 

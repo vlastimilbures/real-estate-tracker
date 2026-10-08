@@ -155,7 +155,7 @@ export function Properties() {
       ) : (
         <Panel flush>
           <TableWrap label={t.properties.title}>
-            <table className="data">
+            <table className="data wrap-head">
               <thead>
                 <tr>
                   <th scope="col" className="left sticky-col">
@@ -166,15 +166,26 @@ export function Properties() {
                   <th scope="col">
                     <MetricLabel term="ltv">{t.properties.colLtv}</MetricLabel>
                   </th>
-                  <th scope="col">{t.properties.colNetCashFlow}</th>
+                  {/* A word label wraps to at most two lines (ADR 0158). */}
+                  <th scope="col">
+                    <span className="th-label">
+                      {t.properties.colNetCashFlow}
+                    </span>
+                  </th>
                   <th scope="col">
                     <MetricLabel term="dscr">
                       {t.properties.colDscr}
                     </MetricLabel>
                   </th>
-                  <th scope="col">{t.properties.colValue}</th>
-                  <th scope="col">{t.properties.colDebt}</th>
-                  <th scope="col">{t.properties.colEquity}</th>
+                  <th scope="col">
+                    <span className="th-label">{t.properties.colValue}</span>
+                  </th>
+                  <th scope="col">
+                    <span className="th-label">{t.properties.colDebt}</span>
+                  </th>
+                  <th scope="col">
+                    <span className="th-label">{t.properties.colEquity}</span>
+                  </th>
                   <th scope="col">
                     <MetricLabel term="noi">{t.properties.colNoi}</MetricLabel>
                   </th>

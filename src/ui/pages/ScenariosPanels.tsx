@@ -337,67 +337,69 @@ export function ScenarioListPanel({
       title={t.scenarios.listTitle}
       hint={t.scenarios.listHint(maxCompare)}
     >
-      <ul className="scenario-list">
-        <li className="scenario-row">
-          <label className="scenario-pick">
-            <input type="checkbox" checked={baseOn} onChange={onToggleBase} />
-            <span className="scenario-name">{t.scenarios.base}</span>
-          </label>
-          <span className="scenario-summary">
-            {t.scenarios.savedAssumptions}
-          </span>
-          <span className="scenario-actions" />
-        </li>
-        {scenarios.map((s) => (
-          <li className="scenario-row" key={s.id}>
+      <div className="scenario-list-wrap">
+        <ul className="scenario-list">
+          <li className="scenario-row">
             <label className="scenario-pick">
-              <input
-                type="checkbox"
-                checked={selectedIds.includes(s.id)}
-                disabled={
-                  !selectedIds.includes(s.id) &&
-                  selectedIds.length >= maxCompare
-                }
-                onChange={() => onToggle(s.id)}
-              />
-              <span className="scenario-name">{s.name}</span>
+              <input type="checkbox" checked={baseOn} onChange={onToggleBase} />
+              <span className="scenario-name">{t.scenarios.base}</span>
             </label>
             <span className="scenario-summary">
-              {summarize(s, t, reachText?.(s.id))}
+              {t.scenarios.savedAssumptions}
             </span>
-            <span className="scenario-actions">
-              <Button size="sm" variant="ghost" onClick={() => onEdit(s)}>
-                {t.common.edit}
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={busy}
-                onClick={() => onDuplicate(s)}
-              >
-                {t.scenarios.duplicate}
-              </Button>
-              {deleteButton(s)}
-            </span>
-            {confirmDelete(s)}
+            <span className="scenario-actions" />
           </li>
-        ))}
-        {unreadable.map((u) => (
-          <li className="scenario-row" key={u.id}>
-            <span className="scenario-pick">
-              <span className="scenario-name">{u.name}</span>
-            </span>
-            <span className="scenario-summary">
-              {t.scenarios.unreadableRow}
-            </span>
-            <span className="scenario-actions">{deleteButton(u)}</span>
-            {confirmDelete(u)}
-          </li>
-        ))}
-        {scenarios.length === 0 && unreadable.length === 0 && (
-          <li className="scenario-empty">{t.scenarios.emptyList}</li>
-        )}
-      </ul>
+          {scenarios.map((s) => (
+            <li className="scenario-row" key={s.id}>
+              <label className="scenario-pick">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(s.id)}
+                  disabled={
+                    !selectedIds.includes(s.id) &&
+                    selectedIds.length >= maxCompare
+                  }
+                  onChange={() => onToggle(s.id)}
+                />
+                <span className="scenario-name">{s.name}</span>
+              </label>
+              <span className="scenario-summary">
+                {summarize(s, t, reachText?.(s.id))}
+              </span>
+              <span className="scenario-actions">
+                <Button size="sm" variant="ghost" onClick={() => onEdit(s)}>
+                  {t.common.edit}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => onDuplicate(s)}
+                >
+                  {t.scenarios.duplicate}
+                </Button>
+                {deleteButton(s)}
+              </span>
+              {confirmDelete(s)}
+            </li>
+          ))}
+          {unreadable.map((u) => (
+            <li className="scenario-row" key={u.id}>
+              <span className="scenario-pick">
+                <span className="scenario-name">{u.name}</span>
+              </span>
+              <span className="scenario-summary">
+                {t.scenarios.unreadableRow}
+              </span>
+              <span className="scenario-actions">{deleteButton(u)}</span>
+              {confirmDelete(u)}
+            </li>
+          ))}
+          {scenarios.length === 0 && unreadable.length === 0 && (
+            <li className="scenario-empty">{t.scenarios.emptyList}</li>
+          )}
+        </ul>
+      </div>
     </Panel>
   );
 }
