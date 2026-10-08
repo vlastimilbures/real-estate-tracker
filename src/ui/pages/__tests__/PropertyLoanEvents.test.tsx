@@ -95,7 +95,7 @@ describe("ADR 0116: loan outlook on Property detail", () => {
     expect(loan.payoffDate!.getTime()).toBeLessThan(
       isoDate("2051-05-17").getTime(),
     );
-    expect(screen.queryAllByRole("alert")).toHaveLength(0);
+    expect(document.querySelectorAll(".banner.warn")).toHaveLength(0);
   });
 
   it("warns about a prepayment larger than the balance", () => {
@@ -107,10 +107,11 @@ describe("ADR 0116: loan outlook on Property detail", () => {
       },
     ]);
     render(<PropertyDetail />);
-    const alert = screen
-      .getAllByRole("alert")
+    // Loan warnings are status, not alerts (ADR 0157).
+    const warning = screen
+      .getAllByRole("status")
       .find((a) => a.textContent?.includes("17.01.2031"));
-    expect(alert?.textContent).toContain("is more than the balance");
+    expect(warning?.textContent).toContain("is more than the balance");
   });
 });
 

@@ -18,6 +18,7 @@ export const cs: Dictionary = {
     plusYears: (n) => `+${n} r.`,
     searchProperties: "Hledat nemovitosti",
     nSelected: (n) => `Vybráno: ${n}`,
+    actions: "Akce",
     searchPlaceholder: "Hledat…",
     /** Short word for thousands on chart axes (UX-034). */
     thousandsShort: "tis.",

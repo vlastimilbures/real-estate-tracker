@@ -58,6 +58,7 @@ export function CompareView({
           <EmptyState
             title={t.scenarios.nothingSelectedTitle}
             icon={GitCompare}
+            level={3}
           >
             {t.scenarios.nothingSelectedBody}
           </EmptyState>

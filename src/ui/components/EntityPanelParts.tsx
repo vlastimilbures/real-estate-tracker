@@ -34,7 +34,9 @@ export function EntityTable<T extends { id: string }>({
                 {c.head}
               </th>
             ))}
-            <th scope="col"></th>
+            <th scope="col">
+              <span className="sr-only">{tr.common.actions}</span>
+            </th>
           </tr>
         </thead>
         <tbody>

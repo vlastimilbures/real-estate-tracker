@@ -96,7 +96,7 @@ export function BoundaryFallback({
   }
   return (
     <div className="error-boundary" role="alert">
-      <h3>{t.errorBoundary.title}</h3>
+      <h2>{t.errorBoundary.title}</h2>
       <code>{error.message}</code>
       <Button type="button" onClick={reset}>
         {t.errorBoundary.tryAgain}

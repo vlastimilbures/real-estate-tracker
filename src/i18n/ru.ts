@@ -18,6 +18,7 @@ export const ru: Dictionary = {
     plusYears: (n) => `+${n} г.`,
     searchProperties: "Поиск объектов",
     nSelected: (n) => `Выбрано: ${n}`,
+    actions: "Действия",
     searchPlaceholder: "Поиск…",
     /** Short word for thousands on chart axes (UX-034). */
     thousandsShort: "тыс.",

@@ -24,25 +24,25 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
       <div className="about-hero">
         <BrandMark size={56} className="about-logo" />
         <div className="about-hero-text">
-          <h2 className="about-name">{a.subtitle}</h2>
+          <p className="about-name">{a.subtitle}</p>
           <div className="about-version">{a.version(__APP_VERSION__)}</div>
           <p className="about-tagline">{a.tagline}</p>
         </div>
       </div>
 
       <section className="about-section">
-        <h4>{a.appTitle}</h4>
+        <h3>{a.appTitle}</h3>
         <p className="about-prose">{a.appBody}</p>
         <p className="about-prose">{a.formatsNote}</p>
       </section>
 
       <section className="about-section">
-        <h4>{a.privacyTitle}</h4>
+        <h3>{a.privacyTitle}</h3>
         <p className="about-prose">{a.privacyBody}</p>
       </section>
 
       <section className="about-section">
-        <h4>{a.developerTitle}</h4>
+        <h3>{a.developerTitle}</h3>
         <div className="about-dev">
           <span className="about-dev-name">{a.developerName}</span>
           <dl className="about-meta">
@@ -59,7 +59,7 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
       </section>
 
       <section className="about-section">
-        <h4>{a.builtWithTitle}</h4>
+        <h3>{a.builtWithTitle}</h3>
         <p className="about-stack">{a.builtWithBody}</p>
         <p className="about-prose">{a.precisionNote}</p>
       </section>

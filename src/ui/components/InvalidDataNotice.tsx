@@ -23,7 +23,7 @@ export function InvalidDataNotice({
   const target = lines.find((l) => l.propertyId !== undefined)?.propertyId;
   return (
     <div className="error-boundary" role="alert">
-      <h3>{t.errorBoundary.invalidDataTitle}</h3>
+      <h2>{t.errorBoundary.invalidDataTitle}</h2>
       <p>{t.errorBoundary.invalidDataBody}</p>
       <ul>
         {lines.map((l) => (

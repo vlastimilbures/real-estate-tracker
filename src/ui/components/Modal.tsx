@@ -76,7 +76,7 @@ export function Modal({
         tabIndex={-1}
       >
         <div className="modal-head">
-          <h3 id={titleId}>{title}</h3>
+          <h2 id={titleId}>{title}</h2>
           <button
             type="button"
             className="icon-btn"

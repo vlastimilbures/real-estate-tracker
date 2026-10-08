@@ -114,19 +114,19 @@ export function Guide() {
       <Panel title={g.howItWorksTitle} hint={g.howItWorksHint}>
         <div className="guide-cards">
           <div className="guide-card">
-            <h4>{g.cardFlowTitle}</h4>
+            <h3>{g.cardFlowTitle}</h3>
             <p>{g.cardFlowBody}</p>
           </div>
           <div className="guide-card">
-            <h4>{g.cardAsOfTitle}</h4>
+            <h3>{g.cardAsOfTitle}</h3>
             <p>{g.cardAsOfBody}</p>
           </div>
           <div className="guide-card">
-            <h4>{g.cardEffectiveTitle}</h4>
+            <h3>{g.cardEffectiveTitle}</h3>
             <p>{g.cardEffectiveBody}</p>
           </div>
           <div className="guide-card">
-            <h4>{g.cardDataCheckTitle}</h4>
+            <h3>{g.cardDataCheckTitle}</h3>
             <p>{g.cardDataCheckBody}</p>
           </div>
         </div>

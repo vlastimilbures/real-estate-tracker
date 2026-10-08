@@ -130,10 +130,10 @@ export function App() {
 
   if (status === "loading" || status === "idle") {
     return (
-      <div className="loading-screen">
-        <span className="eyebrow">{t.app.loadingEyebrow}</span>
+      <main className="loading-screen">
+        <h1 className="eyebrow">{t.app.loadingEyebrow}</h1>
         <span>{t.app.loading}</span>
-      </div>
+      </main>
     );
   }
 

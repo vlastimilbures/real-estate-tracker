@@ -3,7 +3,7 @@
 // UX-064 (D-64): the offline app opens nothing outside itself, so About shows the source
 // address and the feedback (issues) address as plain, selectable text — no links.
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AboutModal } from "../AboutModal";
 import { Modal } from "../Modal";
@@ -99,5 +99,14 @@ describe("About over another dialog (#128 R5-14)", () => {
     );
     await user.keyboard("{Escape}");
     expect(onForm).toHaveBeenCalledOnce();
+  });
+
+  it("is a dialog named by a level-2 heading", () => {
+    render(<AboutModal onClose={() => {}} />);
+    const dialog = screen.getByRole("dialog", { name: en.about.title });
+    expect(
+      screen.getByRole("heading", { level: 2, name: en.about.title }),
+    ).toBeTruthy();
+    expect(dialog.querySelector(".modal-head h2")).not.toBeNull();
   });
 });

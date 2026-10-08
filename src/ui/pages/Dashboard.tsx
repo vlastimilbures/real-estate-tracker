@@ -54,7 +54,7 @@ function GettingStarted() {
   ];
   return (
     <section className="getting-started" aria-labelledby="getting-started">
-      <h3 id="getting-started">{t.sample.gettingStartedTitle}</h3>
+      <h2 id="getting-started">{t.sample.gettingStartedTitle}</h2>
       <ol>
         {steps.map((s) => (
           <li key={s.label}>
