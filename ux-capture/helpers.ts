@@ -18,8 +18,16 @@ import { UX_DATE } from "./clock";
 export type Lang = "en" | "cs" | "ru";
 const DICTS: Record<Lang, Dictionary> = { en, cs, ru };
 
-/** WCAG 2.2 AA rule set for the axe scan. */
-const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+/** WCAG 2.2 AA rule set plus axe's best practices (headings, landmarks, empty table
+ *  headers) for the axe scan (ADR 0157). */
+const AXE_TAGS = [
+  "wcag2a",
+  "wcag2aa",
+  "wcag21a",
+  "wcag21aa",
+  "wcag22aa",
+  "best-practice",
+];
 
 export interface Ux {
   page: Page;

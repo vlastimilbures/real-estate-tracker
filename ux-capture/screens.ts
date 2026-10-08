@@ -4,6 +4,7 @@
 // screens by area (0x dashboard, 1x properties, 2x property detail, …); the order of
 // this list is the flow order and need not match the file order.
 import path from "node:path";
+import type { Locator } from "@playwright/test";
 import type { Route } from "../src/state/uiStore";
 import {
   expect,
@@ -206,6 +207,33 @@ async function fillFunding(
   return dialog;
 }
 
+/** Pick a property-select dropdown's trigger and check focus moved into the list. */
+async function openDropdown(ux: Ux, trigger: Locator, focused: string) {
+  await trigger.click();
+  const list = ux.page.getByRole("listbox");
+  await expect(list).toBeVisible();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await expect(list.getByRole("option", { name: focused })).toBeFocused();
+}
+
+/** A sixth (owned) property: past five, the property selectors become dropdowns. */
+async function addSixthProperty(ux: Ux) {
+  await nav(ux, "properties");
+  await ux.page
+    .getByRole("button", { name: ux.t.properties.addProperty })
+    .click();
+  const dialog = ux.page.getByRole("dialog");
+  const f = ux.t.propertyForm;
+  await dialog.getByLabel(f.name, { exact: true }).fill("Byt Lipová");
+  await dialog.getByLabel(f.purchaseDate, { exact: true }).fill("01.02.2024");
+  await dialog.getByLabel(f.purchasePrice, { exact: true }).fill("4500000");
+  await dialog
+    .locator(".modal-foot")
+    .getByRole("button", { name: f.addTitle })
+    .click();
+  await expect(dialog).toBeHidden();
+}
+
 /** Saves the open property dialog and waits for it to close. */
 async function saveProperty(ux: Ux) {
   const dialog = ux.page.getByRole("dialog");
@@ -347,6 +375,21 @@ export const SCREENS: Screen[] = [
       await expect(first).toHaveAttribute("aria-pressed", "true");
       await expect(all).toHaveAttribute("aria-pressed", "false");
       await ux.capture("05-dashboard-filter");
+    },
+  },
+  {
+    id: "05b-dashboard-filter-open",
+    desc: "Six properties: the Dashboard filter is a dropdown, open, focus on All (ADR 0157)",
+    run: async (ux) => {
+      await boot(ux.page);
+      await addSixthProperty(ux);
+      await nav(ux, "dashboard");
+      await openDropdown(
+        ux,
+        ux.page.getByTestId("dashboard-filter-trigger"),
+        ux.t.common.all,
+      );
+      await ux.capture("05b-dashboard-filter-open", { fullPage: false });
     },
   },
   {
@@ -915,6 +958,21 @@ export const SCREENS: Screen[] = [
       await boot(ux.page);
       await nav(ux, "projections");
       await ux.capture("30-projections");
+    },
+  },
+  {
+    id: "30b-projections-entity-open",
+    desc: "Six properties: the Projections entity picker is a dropdown, open (ADR 0157)",
+    run: async (ux) => {
+      await boot(ux.page);
+      await addSixthProperty(ux);
+      await nav(ux, "projections");
+      await openDropdown(
+        ux,
+        ux.page.getByRole("button", { name: ux.t.projections.entity }),
+        ux.t.projections.portfolio,
+      );
+      await ux.capture("30b-projections-entity-open", { fullPage: false });
     },
   },
   {
