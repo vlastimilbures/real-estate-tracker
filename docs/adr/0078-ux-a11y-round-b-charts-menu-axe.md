@@ -4,6 +4,8 @@
 - Date: 2026-10-02
 - Source IDs: DR-144, DR-155, F-08, DR-180 (P16b plan)
 - Builds on: ADR 0077, UX-023, UX-066, D-06 (legacy IDs, ADR 0081)
+- Amended by: [0158](0158-layouts-hold-in-czech-and-russian.md) (CI also captures the
+  layout screens in Czech and Russian)
 
 ## Context
 

@@ -22,7 +22,7 @@ import { PropertyFormModal } from "../components/PropertyFormModal";
 import { SampleBanner } from "../components/SampleBanner";
 import { fmtDate, fmtPct, fmtDscr } from "../../lib/format";
 import {
-  bandPill,
+  bandPillParts,
   dscrBand,
   dscrBandWord,
   ltvBand,
@@ -31,6 +31,18 @@ import {
 import { useT } from "../hooks/useT";
 import { ConfirmRow } from "../components/EntityPanelParts";
 import { propertiesSubtitle } from "../model/tableContext";
+
+/** A band badge's figure and word as unbreakable parts; the badge wraps only between
+ *  them (ADR 0158). The text still reads as `bandPill`. */
+function pillParts([figure, word]: [string] | [string, string]): ReactNode {
+  if (word === undefined) return figure;
+  return (
+    <>
+      <span className="band-part">{figure}</span>{" "}
+      <span className="band-part">{word}</span>
+    </>
+  );
+}
 
 export function Properties() {
   const t = useT();
@@ -155,7 +167,7 @@ export function Properties() {
       ) : (
         <Panel flush>
           <TableWrap label={t.properties.title}>
-            <table className="data">
+            <table className="data wrap-head">
               <thead>
                 <tr>
                   <th scope="col" className="left sticky-col">
@@ -166,15 +178,26 @@ export function Properties() {
                   <th scope="col">
                     <MetricLabel term="ltv">{t.properties.colLtv}</MetricLabel>
                   </th>
-                  <th scope="col">{t.properties.colNetCashFlow}</th>
+                  {/* A word label wraps to at most two lines (ADR 0158). */}
+                  <th scope="col">
+                    <span className="th-label">
+                      {t.properties.colNetCashFlow}
+                    </span>
+                  </th>
                   <th scope="col">
                     <MetricLabel term="dscr">
                       {t.properties.colDscr}
                     </MetricLabel>
                   </th>
-                  <th scope="col">{t.properties.colValue}</th>
-                  <th scope="col">{t.properties.colDebt}</th>
-                  <th scope="col">{t.properties.colEquity}</th>
+                  <th scope="col">
+                    <span className="th-label">{t.properties.colValue}</span>
+                  </th>
+                  <th scope="col">
+                    <span className="th-label">{t.properties.colDebt}</span>
+                  </th>
+                  <th scope="col">
+                    <span className="th-label">{t.properties.colEquity}</span>
+                  </th>
                   <th scope="col">
                     <MetricLabel term="noi">{t.properties.colNoi}</MetricLabel>
                   </th>
@@ -233,7 +256,12 @@ export function Properties() {
                           <Pct value={null} />
                         ) : (
                           <Badge band={ltvBand(p.ltv)}>
-                            {bandPill(fmtPct(p.ltv), ltvBandWord(t, p.ltv))}
+                            {pillParts(
+                              bandPillParts(
+                                fmtPct(p.ltv),
+                                ltvBandWord(t, p.ltv),
+                              ),
+                            )}
                           </Badge>
                         ),
                       )}
@@ -249,7 +277,12 @@ export function Properties() {
                         p.owned,
                         p.dscr ? (
                           <Badge band={dscrBand(p.dscr)}>
-                            {bandPill(fmtDscr(p.dscr), dscrBandWord(t, p.dscr))}
+                            {pillParts(
+                              bandPillParts(
+                                fmtDscr(p.dscr),
+                                dscrBandWord(t, p.dscr),
+                              ),
+                            )}
                           </Badge>
                         ) : (
                           "—"

@@ -204,6 +204,53 @@ export function panel(ux: Ux, title: string): Locator {
   });
 }
 
+/**
+ * Fails when `el` hides part of its content: a clipped or scrolled overflow, or a child
+ * that ends past its right edge. Layouts must not depend on string length (ADR 0158).
+ */
+export async function expectNotClipped(el: Locator) {
+  const m = await el.evaluate((node) => {
+    const box = node.getBoundingClientRect();
+    const ends = Array.from(
+      node.children,
+      (c) => c.getBoundingClientRect().right,
+    );
+    return {
+      scroll: node.scrollWidth,
+      client: node.clientWidth,
+      end: Math.max(box.left, ...ends),
+      right: box.right,
+    };
+  });
+  expect(m.scroll, "content width").toBeLessThanOrEqual(m.client + 1);
+  expect(m.end, "last child's right edge").toBeLessThanOrEqual(m.right + 1);
+}
+
+/**
+ * Every panel head's action (a toggle or button) ends at the head's right edge, whether
+ * it sits beside the title or has wrapped under it (ADR 0158).
+ */
+export async function expectPanelActionsRight(page: Page) {
+  const actions = await page
+    .locator(".panel > .panel-head")
+    .evaluateAll((heads) =>
+      heads.flatMap((head) => {
+        const right =
+          head.getBoundingClientRect().right -
+          parseFloat(getComputedStyle(head).paddingRight);
+        return Array.from(head.children)
+          .filter((c) => !c.classList.contains("panel-head-titles"))
+          .map((c) => ({
+            text: c.textContent,
+            gap: right - c.getBoundingClientRect().right,
+          }));
+      }),
+    );
+  for (const a of actions) {
+    expect(Math.abs(a.gap), `"${a.text}" panel action`).toBeLessThanOrEqual(1);
+  }
+}
+
 export async function settingsTab(
   ux: Ux,
   tab: keyof Dictionary["settings"]["tabs"],

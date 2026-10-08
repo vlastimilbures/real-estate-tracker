@@ -4,7 +4,9 @@
 - Date: 2026-10-03
 - Source: issue #23 (pre-release review 2026-10, finding A07 and F6)
 - Amended by: [0155](0155-lifecycle-states-on-the-pages.md) (an inactive property shows no
-  loan warnings and has no Data check entry)
+  loan warnings and has no Data check entry),
+  [0158](0158-layouts-hold-in-czech-and-russian.md) (the section nav wraps instead of
+  scrolling sideways)
 
 ## Context
 

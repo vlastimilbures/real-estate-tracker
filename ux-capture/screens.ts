@@ -15,6 +15,8 @@ import {
   settingsTab,
   boot,
   deleteAllProperties,
+  expectNotClipped,
+  expectPanelActionsRight,
   type Ux,
 } from "./helpers";
 
@@ -216,6 +218,20 @@ async function openDropdown(ux: Ux, trigger: Locator, focused: string) {
   await expect(list.getByRole("option", { name: focused })).toBeFocused();
 }
 
+/** One grid for the scenario list: actions line up across rows and the summary stays
+ *  readable in every language (ADR 0158). */
+async function expectScenarioGrid(ux: Ux) {
+  const xs: number[] = [];
+  for (const row of await ux.page.locator(".scenario-row").all()) {
+    xs.push((await row.locator(".scenario-actions").boundingBox())!.x);
+    const summary = await row.locator(".scenario-summary").boundingBox();
+    expect(summary!.width, "scenario summary width").toBeGreaterThanOrEqual(
+      200,
+    );
+  }
+  for (const x of xs) expect(Math.abs(x - xs[0]!)).toBeLessThanOrEqual(1);
+}
+
 /** Owned properties added until Properties lists six: past five, the property selectors
  *  become dropdowns. */
 async function addPropertiesToSix(ux: Ux) {
@@ -331,6 +347,13 @@ export const SCREENS: Screen[] = [
     desc: "Dashboard, nominal, as of today",
     run: async (ux) => {
       await boot(ux.page);
+      // The reset-window toggle shows every option, inside its panel head (ADR 0158).
+      const head = panel(ux, ux.t.dashboard.financingTitle).locator(
+        ".panel-head",
+      );
+      await expectNotClipped(head.locator(".segmented"));
+      await expectNotClipped(head);
+      await expectPanelActionsRight(ux.page);
       await ux.capture("01-dashboard");
     },
   },
@@ -616,6 +639,42 @@ export const SCREENS: Screen[] = [
           .boundingBox();
         expect(box!.x + box!.width).toBeLessThanOrEqual(actions!.x);
       }
+      // In every language: headers wrap to at most two lines to make room (ADR 0158).
+      const heads = await ux.page
+        .locator("table.data thead th")
+        .evaluateAll((ths) =>
+          ths.map((th) => {
+            const s = getComputedStyle(th);
+            const lineHeight =
+              parseFloat(s.lineHeight) || 1.2 * parseFloat(s.fontSize);
+            const range = document.createRange();
+            range.selectNodeContents(th);
+            const lines = range.getBoundingClientRect().height / lineHeight;
+            return { text: th.textContent, lines };
+          }),
+        );
+      for (const h of heads) {
+        expect(h.lines, `"${h.text}" header lines`).toBeLessThan(2.5);
+      }
+      // A band badge wraps at most once: the figure, then the whole word (ADR 0158).
+      const badges = await ux.page
+        .locator("table.data tbody td:not(.sticky-col) .badge")
+        .evaluateAll((els) =>
+          els.map((el) => {
+            const s = getComputedStyle(el);
+            const lineHeight =
+              parseFloat(s.lineHeight) || 1.2 * parseFloat(s.fontSize);
+            const content =
+              el.clientHeight -
+              parseFloat(s.paddingTop) -
+              parseFloat(s.paddingBottom);
+            return { text: el.textContent, lines: content / lineHeight };
+          }),
+        );
+      expect(badges.length).toBeGreaterThan(0);
+      for (const b of badges) {
+        expect(b.lines, `"${b.text}" badge lines`).toBeLessThan(2.5);
+      }
       await ux.capture("14-properties-long-name");
     },
   },
@@ -648,6 +707,15 @@ export const SCREENS: Screen[] = [
     run: async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
+      // Every section link is in view; the nav wraps rather than scrolls (ADR 0158).
+      await expectNotClipped(
+        ux.page
+          .getByRole("navigation", {
+            name: ux.t.propertyDetail.sectionNavLabel,
+          })
+          .getByRole("list"),
+      );
+      await expectPanelActionsRight(ux.page);
       await ux.capture("20-property-detail");
     },
   },
@@ -1025,6 +1093,16 @@ export const SCREENS: Screen[] = [
       await nav(ux, "scenarios");
       // The toast outlives a page change (ADR 0154); this screen shows the page.
       await expect(ux.page.locator(".toast")).toBeHidden({ timeout: 10_000 });
+      await expect(ux.page.locator(".scenario-row")).toHaveCount(3);
+      await expectScenarioGrid(ux);
+      await expectPanelActionsRight(ux.page);
+      // Also around the narrow-layout breakpoint, between the captured windows.
+      const window = ux.page.viewportSize()!;
+      for (const width of [960, 1000, 1040, 1100, 1160]) {
+        await ux.page.setViewportSize({ width, height: window.height });
+        await expectScenarioGrid(ux);
+      }
+      await ux.page.setViewportSize(window);
       await ux.capture("42-scenarios-compare");
     },
   },
