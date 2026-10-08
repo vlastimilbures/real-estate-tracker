@@ -965,7 +965,7 @@ export const en = {
     confirmReplace: "Import anyway",
     replacedEvent: (issue: string) => `Previous loan block: ${issue}`,
     noEffectNote:
-      "Starts before the loan block in force, so it has no effect on the projection.",
+      "Starts before the loan block in force, so the amortization schedule does not use it. It can still count as the acquisition loan.",
     storedEventKind: {
       prepayments: "prepayment",
       recasts: "maturity change",

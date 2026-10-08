@@ -915,7 +915,7 @@ export const cs: Dictionary = {
     confirmReplace: "Přesto importovat",
     replacedEvent: (issue) => `Předchozí úvěrový blok: ${issue}`,
     noEffectNote:
-      "Začíná před platným úvěrovým blokem, proto nemá na projekci žádný vliv.",
+      "Začíná před platným úvěrovým blokem, proto ho umořovací plán nepoužije. Může se ale počítat jako úvěr na koupi.",
     storedEventKind: {
       prepayments: "mimořádná splátka",
       recasts: "změna splatnosti",
