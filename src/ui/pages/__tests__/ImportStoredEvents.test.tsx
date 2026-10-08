@@ -148,6 +148,20 @@ describe("Import and stored loan events (ADR 0160)", () => {
     expect(importCsv.mock.calls[0]?.[1]).toBe("plan-1");
   });
 
+  it("Cancel on the replace confirmation imports nothing", async () => {
+    previewCsv.mockResolvedValue(plan([replacing]));
+    const { container } = render(<Import />);
+    await chooseFile(container);
+    await userEvent.click(
+      await screen.findByRole("button", { name: p.importScope(1, 1, 0) }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.cancel }),
+    );
+    expect(screen.queryByText(p.confirmReplaceMsg(1))).toBeNull();
+    expect(importCsv).not.toHaveBeenCalled();
+  });
+
   it("with updates too, the confirm row names both and keeps the overwrite button", async () => {
     previewCsv.mockResolvedValue(plan([replacing, update]));
     const { container } = render(<Import />);

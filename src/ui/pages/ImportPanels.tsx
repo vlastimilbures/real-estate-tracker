@@ -315,13 +315,8 @@ export function ImportSummary({
             ].join(" · ")}
           </span>
           {g.added.length > 0 && (
-            // Open in the preview when an add has notes to read (ADR 0160).
-            <details
-              open={
-                mode === "preview" &&
-                g.added.some((i) => itemNotes(t, i).length > 0)
-              }
-            >
+            // Open when an add has notes to read, in the preview and the report (ADR 0160).
+            <details open={g.added.some((i) => itemNotes(t, i).length > 0)}>
               <summary>{addLabel(g.added.length)}</summary>
               <ul>
                 {g.added.map((i) => {
@@ -331,8 +326,9 @@ export function ImportSummary({
                       {name(i)}
                       {notes.length > 0 && (
                         <ul className="changes">
-                          {notes.map((n) => (
-                            <li key={n}>{n}</li>
+                          {notes.map((n, k) => (
+                            // Two events on one date give the same text.
+                            <li key={k}>{n}</li>
                           ))}
                         </ul>
                       )}

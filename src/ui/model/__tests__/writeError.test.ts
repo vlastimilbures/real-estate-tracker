@@ -205,6 +205,12 @@ describe("formWriteErrors with list rows", () => {
     });
   });
 
+  it("one sentence names a rule once, however many items break it (ADR 0160)", () => {
+    expect(describeWriteError(en, input).message).toBe(
+      `${en.inputRules.EVENT_BEFORE_START} · ${en.inputRules.INVALID_RECAST}`,
+    );
+  });
+
   it("falls back to the field when the row is unknown", () => {
     expect(
       formWriteErrors(en, input, fields, () => null).fieldErrors.prepayments,
