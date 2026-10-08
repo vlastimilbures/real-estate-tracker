@@ -193,12 +193,13 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0147](0147-failure-messages-and-log.md)          | Failure messages and the error log: right labels, right messages, masked numbers              | Accepted                                           | #122                                               |
 | [0148](0148-restore-rules-vs-stored-data.md)      | Restore rules vs stored data: out-of-range values ask, flags and names are checked            | Accepted                                           | #133                                               |
 | [0149](0149-calendar-days.md)                     | Calendar days: the local day on every screen, one day module, a 1900 floor for new dates      | Accepted                                           | #119                                               |
-| [0150](0150-one-asof-resolver.md)                 | One as-of resolver: the date shown is the date computed, on every page                        | Accepted                                           | #113                                               |
+| [0150](0150-one-asof-resolver.md)                 | One as-of resolver: the date shown is the date computed, on every page                        | Accepted · amended by 0156                         | #113                                               |
 | [0151](0151-ci-gates-after-going-public.md)       | CI gates after going public                                                                   | Accepted                                           | #111                                               |
 | [0152](0152-wording-log-and-generated-index.md)   | Copy-only changes go to a wording log; the ADR index is generated                             | Accepted                                           | #111                                               |
 | [0153](0153-honest-startup-failures.md)           | Startup failures say what changed and offer a step that works                                 | Accepted · amended by 0154                         | #115                                               |
 | [0154](0154-one-outcome-path.md)                  | One outcome path: notices that follow the owner, one toast                                    | Accepted                                           | #136                                               |
 | [0155](0155-lifecycle-states-on-the-pages.md)     | Lifecycle states on the pages: deactivated portfolio, inactive property, filter               | Accepted                                           | #127                                               |
+| [0156](0156-pending-purchase-display.md)          | A pending purchase shows no figures before it is owned                                        | Proposed                                           | #126, #276                                         |
 
 <!-- adr-index:end -->
 

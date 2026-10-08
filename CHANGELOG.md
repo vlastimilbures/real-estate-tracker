@@ -252,6 +252,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A property not yet purchased no longer shows figures as if it were owned (ADR 0156,
+  #126). Before, Properties and its page showed its whole value as equity, an LTV of 0 %
+  "Conservative" and a negative NOI. Its Properties row now shows "—" with the purchase
+  date under the name, and its page shows a **Not owned yet** panel (purchase date, price,
+  acquisition loan) in place of the tiles until the as-of date reaches the purchase.
+
 - Deactivated properties no longer mislead (ADR 0155, #127):
   - With every property deactivated, the Dashboard and Projections say "All N properties
     are deactivated" with a link to Properties. Before, the Dashboard said "No portfolio
