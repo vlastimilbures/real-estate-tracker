@@ -247,8 +247,8 @@ function equityGrowth(
 }
 
 /**
- * Cumulative net cash flow (net of the cash outside it, `acqOutflow` in `kpisFrom`), the
- * first calendar year with a positive net cash flow, and the year from which the portfolio
+ * Cumulative net cash flow (Σ `flows`, see `kpisFrom`), the first calendar year with a
+ * positive net cash flow, and the year from which the portfolio
  * stays debt-free (ADR 0126). A debt-free year only counts once the portfolio has carried debt (a
  * never-leveraged portfolio reports null). NB: greaterThan(ZERO), not isPositive() —
  * ZERO.isPositive() is true, and a year with no active property nets exactly 0 (ADR 0121).
@@ -256,15 +256,15 @@ function equityGrowth(
  */
 function cashFlowMilestones(
   proj: ProjectionYear[],
-  acqOutflow: Decimal[],
+  flows: Decimal[],
   cpi: Decimal[],
 ) {
   const firstCashFlowPositive =
     proj.slice(1).find((y) => y.netCashFlow.greaterThan(ZERO)) ?? null;
   const debtFree = firstDebtFreeYear(proj);
   return {
-    cumulativeNetCashFlow: cumulativeNetCashFlow(proj, acqOutflow),
-    cumulativeNetCashFlowReal: cumulativeNetCashFlow(proj, acqOutflow, cpi),
+    cumulativeNetCashFlow: cumulativeNetCashFlow(flows),
+    cumulativeNetCashFlowReal: cumulativeNetCashFlow(flows, cpi),
     firstCashFlowPositiveYear: firstCashFlowPositive?.calendarYear ?? null,
     firstCashFlowPositiveProjectionYear: firstCashFlowPositive?.year ?? null,
     debtFreeYear: debtFree?.calendarYear ?? null,
@@ -272,16 +272,12 @@ function cashFlowMilestones(
   };
 }
 
-/** Σ over years 1..N of net cash flow minus the cash outside it (`acqOutflow`); with
- *  `cpi`, each year's flow is divided by CPI_t first (real terms). */
-function cumulativeNetCashFlow(
-  proj: ProjectionYear[],
-  acqOutflow: Decimal[],
-  cpi?: Decimal[],
-): Decimal {
+/** Σ over years 1..N of `flows` (net cash flow minus the cash outside it); with `cpi`,
+ *  each year's flow is divided by CPI_t first (real terms). */
+function cumulativeNetCashFlow(flows: Decimal[], cpi?: Decimal[]): Decimal {
   let total = ZERO;
-  for (let t = 1; t < proj.length; t++) {
-    const flow = at(proj, t).netCashFlow.minus(at(acqOutflow, t));
+  for (let t = 1; t < flows.length; t++) {
+    const flow = at(flows, t);
     total = total.plus(cpi ? flow.div(at(cpi, t)) : flow);
   }
   return total;
@@ -326,19 +322,15 @@ function leveredIrr(
   };
 }
 
-/** Levered cash-flow vector [-equity0, netCF1..netCF_{N-1}, netCF_N + equityN], net of
- *  the cash outside net cash flow (`acqOutflow` in `kpisFrom`; terminal sale at projected
- *  value). */
-function leveredCashFlows(
-  proj: ProjectionYear[],
-  acqOutflow: Decimal[],
-): Decimal[] {
+/** Levered cash-flow vector [-equity0, flows_1..flows_{N-1}, flows_N + equityN], where
+ *  `flows` is net cash flow minus the cash outside it (see `kpisFrom`; terminal sale at
+ *  projected value). */
+function leveredCashFlows(proj: ProjectionYear[], flows: Decimal[]): Decimal[] {
   const N = proj.length - 1;
   const vector: Decimal[] = [at(proj, 0).equity.negated()];
   for (let t = 1; t <= N; t++) {
-    let cf = at(proj, t).netCashFlow.minus(at(acqOutflow, t));
-    if (t === N) cf = cf.plus(at(proj, N).equity);
-    vector.push(cf);
+    const cf = at(flows, t);
+    vector.push(t === N ? cf.plus(at(proj, N).equity) : cf);
   }
   return vector;
 }
@@ -433,24 +425,32 @@ export function kpisFrom(
     assumptions,
     scheduleRows(schedules),
   );
-  const acqOutflow = acquisitionOutflows(portfolio, assumptions).map((x, t) => {
-    const pre = at(prePurchase, t);
-    return x
-      .minus(at(refiCash, t))
-      .plus(at(proj, t).prepaid)
-      .plus(at(proj, t).prepaymentFees)
-      .plus(pre.interest)
-      .plus(pre.principal)
-      .plus(pre.prepaid)
-      .plus(pre.prepaymentFees);
-  });
-  const nominalVector = leveredCashFlows(proj, acqOutflow);
+  const cashOutsideNetCf = acquisitionOutflows(portfolio, assumptions).map(
+    (x, t) => {
+      const pre = at(prePurchase, t);
+      return x
+        .minus(at(refiCash, t))
+        .plus(at(proj, t).prepaid)
+        .plus(at(proj, t).prepaymentFees)
+        .plus(pre.interest)
+        .plus(pre.principal)
+        .plus(pre.prepaid)
+        .plus(pre.prepaymentFees);
+    },
+  );
+  // The owner's flow each year, built once: flows[t] = netCF_t − cashOutsideNetCf_t. The
+  // nominal and real cumulative cash flow and both IRR vectors derive from it (#117);
+  // index 0 is not read (year 0 is the opening equity).
+  const flows = proj.map((y, t) =>
+    y.netCashFlow.minus(at(cashOutsideNetCf, t)),
+  );
+  const nominalVector = leveredCashFlows(proj, flows);
   const realVector = nominalVector.map((cf, t) => cf.div(at(cpi, t)));
 
   return {
     netWorthNominal: equityN,
     ...equityGrowth(equity0, equityN, at(cpi, N), N),
-    ...cashFlowMilestones(proj, acqOutflow, cpi),
+    ...cashFlowMilestones(proj, flows, cpi),
     ...leveredIrr(nominalVector, realVector),
     totalPrincipalRepaid: principalRepaidInHorizon(
       portfolio,
