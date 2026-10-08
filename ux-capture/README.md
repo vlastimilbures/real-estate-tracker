@@ -2,7 +2,9 @@
 
 Screenshots of every screen and state, plus an axe WCAG 2.2 AA scan of each one. Use it
 for UX reviews and for before/after evidence of UI changes. CI runs it too (job `axe`:
-English, light + dark, 1280×800 + `min`) and fails on any axe violation (F-08, ADR 0078).
+English, light + dark, 1280×800 + `min`; plus the layout screens in Czech and Russian, light,
+1280×800 + `min`, ADR 0158) and fails on any axe violation or layout assertion (F-08,
+ADR 0078).
 
 ```bash
 pnpm ux:capture                                  # en, light, 1280×800

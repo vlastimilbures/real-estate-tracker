@@ -127,6 +127,19 @@ jobs:
       - name: Fail on any axe violation
         run: pnpm ux:axe-check ci
 
+      # The layout screens in Czech and Russian: their strings are longer, and the screens
+      # assert nothing is clipped or covered (ADR 0158).
+      - name: Capture layout screens in Czech and Russian
+        run: pnpm ux:capture --grep "01-dashboard|14-properties-long-name|20-property-detail|27-property-section-nav-focus|42-scenarios-compare"
+        env:
+          UX_RUN_ID: ci-i18n
+          UX_LANG: cs,ru
+          UX_THEME: light
+          UX_VIEWPORT: 1280x800,min
+
+      - name: Fail on any axe violation in Czech and Russian
+        run: pnpm ux:axe-check ci-i18n
+
       # The whole run: screenshots, axe JSON, summary.md and the Playwright traces of
       # failed captures, which live in the hidden ux-screens/ci/.playwright folder (#137).
       - name: Upload capture evidence
@@ -134,7 +147,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ux-capture-ci
-          path: ux-screens/ci/
+          path: |
+            ux-screens/ci/
+            ux-screens/ci-i18n/
           include-hidden-files: true
           retention-days: 14
 
