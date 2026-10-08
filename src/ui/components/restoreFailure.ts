@@ -31,19 +31,24 @@ function restoreErrorText(t: Dictionary, e: RestoreError): string {
   }
 }
 
-/** The text for a failure: a refused backup with its records, anything else translated
- *  and logged under `site`. */
-export function backupFailure(
+/** A refused backup or a non-empty portfolio is the user's to fix, not a failure to
+ *  log; anything else is logged under `site`. Call once, where the failure is caught. */
+export function logBackupFailure(site: FailureSite, e: unknown): void {
+  if (e instanceof RestoreError || e instanceof SampleNotEmptyError) return;
+  logFailure(site, e);
+}
+
+/** The text for a failure, translated: a refused backup with its records listed
+ *  separately. Pure, so it can run at render. */
+export function backupFailureText(
   t: Dictionary,
   e: unknown,
-  site: FailureSite,
   other: (detail: string) => string,
 ): { text: string; issues: RestoreIssue[] } {
   if (e instanceof RestoreError)
     return { text: restoreErrorText(t, e), issues: e.issues };
   if (e instanceof SampleNotEmptyError)
     return { text: t.sample.errNotEmpty, issues: [] };
-  logFailure(site, e);
   const text =
     e instanceof SafetyBackupError
       ? t.backup.safetyBackupFailed(e.detail)
@@ -53,4 +58,16 @@ export function backupFailure(
           ? t.backup.errUnreadable(e.detail)
           : other(describeWriteError(t, toWriteError(e)).message);
   return { text, issues: [] };
+}
+
+/** The text for a failure: a refused backup with its records, anything else translated
+ *  and logged under `site`. */
+export function backupFailure(
+  t: Dictionary,
+  e: unknown,
+  site: FailureSite,
+  other: (detail: string) => string,
+): { text: string; issues: RestoreIssue[] } {
+  logBackupFailure(site, e);
+  return backupFailureText(t, e, other);
 }
