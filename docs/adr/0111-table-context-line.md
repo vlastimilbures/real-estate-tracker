@@ -3,7 +3,9 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #21 (pre-release review 2026-10, finding A06)
-- Amended by: [0150](0150-one-asof-resolver.md) (Properties uses the Today basis of Property detail and names it)
+- Amended by: [0150](0150-one-asof-resolver.md) (Properties uses the Today basis of Property detail and names it),
+  [0159](0159-excel-exports-carry-their-context.md) (the projection exports carry the
+  context line as notes)
 
 ## Context
 

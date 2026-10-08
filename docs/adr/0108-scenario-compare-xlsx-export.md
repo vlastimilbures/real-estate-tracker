@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #56 (Scenarios critical review after #15)
+- Amended by: [0159](0159-excel-exports-carry-their-context.md) (the Real lens note names
+  the base date; no opening-year net cash flow)
 
 ## Context
 
