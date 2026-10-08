@@ -3,7 +3,22 @@ import { pickCurrent } from "../model/sectionNav";
 
 /** Height of the sticky topbar: the band a section must reach starts below it. */
 function topbarHeight() {
-  return document.querySelector(".topbar")?.getBoundingClientRect().height ?? 0;
+  return Math.round(
+    document.querySelector(".topbar")?.getBoundingClientRect().height ?? 0,
+  );
+}
+
+/** The topbar's height, kept current: the section nav can wrap it a row taller (ADR 0158). */
+function useTopbarHeight() {
+  const [height, setHeight] = useState(topbarHeight);
+  useEffect(() => {
+    const bar = document.querySelector(".topbar");
+    if (!bar || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => setHeight(topbarHeight()));
+    observer.observe(bar);
+    return () => observer.disconnect();
+  }, []);
+  return height;
 }
 
 /**
@@ -15,6 +30,7 @@ function topbarHeight() {
 export function useSectionSpy(ids: readonly string[]) {
   const [current, setCurrent] = useState<string | null>(null);
   const key = ids.join(" ");
+  const top = useTopbarHeight();
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
     const order = key.split(" ");
@@ -30,7 +46,7 @@ export function useSectionSpy(ids: readonly string[]) {
         }
         update();
       },
-      { rootMargin: `-${Math.round(topbarHeight())}px 0px -50% 0px` },
+      { rootMargin: `-${top}px 0px -50% 0px` },
     );
     for (const id of order) {
       const el = document.getElementById(id);
@@ -52,7 +68,7 @@ export function useSectionSpy(ids: readonly string[]) {
       band.disconnect();
       window.removeEventListener("scroll", onScroll);
     };
-  }, [key]);
+  }, [key, top]);
   const shown = current !== null && ids.includes(current) ? current : ids[0];
   return [shown ?? null, setCurrent] as const;
 }

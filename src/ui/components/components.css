@@ -407,7 +407,13 @@
   padding: var(--s4) var(--s5);
   border-bottom: 1px solid var(--hairline);
 }
-.panel > .panel-head > .segmented {
+/* The titles fill the row and shrink first (their hint wraps), down to 16em; only then
+   does the action wrap, still at the right edge. */
+.panel > .panel-head > .panel-head-titles {
+  flex: 1 1 16em;
+  min-width: 0;
+}
+.panel > .panel-head > :not(.panel-head-titles) {
   flex-shrink: 0;
   margin-left: auto;
 }
@@ -571,7 +577,7 @@ table.data.wrap-head .th-label {
   white-space: normal;
   text-wrap: balance;
 }
-table.data.wrap-head tbody td .badge {
+table.data.wrap-head tbody td:not(.sticky-col) .badge {
   white-space: normal;
   text-wrap: balance;
 }
@@ -1822,7 +1828,7 @@ table.chart-table tbody th.sticky-col {
 }
 .scenario-list {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) 2fr auto;
+  grid-template-columns: minmax(180px, 1fr) minmax(200px, 2fr) auto;
   column-gap: var(--s3);
   list-style: none;
   margin: 0;
@@ -1841,7 +1847,7 @@ table.chart-table tbody th.sticky-col {
 .scenario-empty {
   grid-column: 1 / -1;
 }
-@container (max-width: 640px) {
+@container (max-width: 48rem) {
   .scenario-list {
     grid-template-columns: minmax(0, 1fr) auto;
   }

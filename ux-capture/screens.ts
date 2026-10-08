@@ -16,6 +16,7 @@ import {
   boot,
   deleteAllProperties,
   expectNotClipped,
+  expectPanelActionsRight,
   type Ux,
 } from "./helpers";
 
@@ -217,6 +218,20 @@ async function openDropdown(ux: Ux, trigger: Locator, focused: string) {
   await expect(list.getByRole("option", { name: focused })).toBeFocused();
 }
 
+/** One grid for the scenario list: actions line up across rows and the summary stays
+ *  readable in every language (ADR 0158). */
+async function expectScenarioGrid(ux: Ux) {
+  const xs: number[] = [];
+  for (const row of await ux.page.locator(".scenario-row").all()) {
+    xs.push((await row.locator(".scenario-actions").boundingBox())!.x);
+    const summary = await row.locator(".scenario-summary").boundingBox();
+    expect(summary!.width, "scenario summary width").toBeGreaterThanOrEqual(
+      200,
+    );
+  }
+  for (const x of xs) expect(Math.abs(x - xs[0]!)).toBeLessThanOrEqual(1);
+}
+
 /** Owned properties added until Properties lists six: past five, the property selectors
  *  become dropdowns. */
 async function addPropertiesToSix(ux: Ux) {
@@ -338,6 +353,7 @@ export const SCREENS: Screen[] = [
       );
       await expectNotClipped(head.locator(".segmented"));
       await expectNotClipped(head);
+      await expectPanelActionsRight(ux.page);
       await ux.capture("01-dashboard");
     },
   },
@@ -680,6 +696,7 @@ export const SCREENS: Screen[] = [
           })
           .getByRole("list"),
       );
+      await expectPanelActionsRight(ux.page);
       await ux.capture("20-property-detail");
     },
   },
@@ -1057,17 +1074,16 @@ export const SCREENS: Screen[] = [
       await nav(ux, "scenarios");
       // The toast outlives a page change (ADR 0154); this screen shows the page.
       await expect(ux.page.locator(".toast")).toBeHidden({ timeout: 10_000 });
-      // One grid for the list: actions line up across rows and the summary stays
-      // readable in every language (ADR 0158).
-      const rows = ux.page.locator(".scenario-row");
-      await expect(rows).toHaveCount(3);
-      const xs: number[] = [];
-      for (const row of await rows.all()) {
-        xs.push((await row.locator(".scenario-actions").boundingBox())!.x);
-        const summary = await row.locator(".scenario-summary").boundingBox();
-        expect(summary!.width).toBeGreaterThanOrEqual(200);
+      await expect(ux.page.locator(".scenario-row")).toHaveCount(3);
+      await expectScenarioGrid(ux);
+      await expectPanelActionsRight(ux.page);
+      // Also around the narrow-layout breakpoint, between the captured windows.
+      const window = ux.page.viewportSize()!;
+      for (const width of [960, 1000, 1040, 1100, 1160]) {
+        await ux.page.setViewportSize({ width, height: window.height });
+        await expectScenarioGrid(ux);
       }
-      for (const x of xs) expect(Math.abs(x - xs[0]!)).toBeLessThanOrEqual(1);
+      await ux.page.setViewportSize(window);
       await ux.capture("42-scenarios-compare");
     },
   },

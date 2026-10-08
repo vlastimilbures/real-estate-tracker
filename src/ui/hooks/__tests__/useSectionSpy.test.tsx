@@ -142,6 +142,33 @@ describe("useSectionSpy (ADR 0107)", () => {
     expect(FakeObserver.all).toEqual([]);
   });
 
+  it("moves the band when the topbar grows (the section nav wraps, ADR 0158)", () => {
+    let resized: ResizeObserverCallback = () => {};
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(cb: ResizeObserverCallback) {
+          resized = cb;
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    const bar = document.querySelector(".topbar")!;
+    let height = 100;
+    vi.spyOn(bar, "getBoundingClientRect").mockImplementation(
+      () => ({ height }) as DOMRect,
+    );
+    renderHook(() => useSectionSpy(ids));
+    expect(last().options?.rootMargin).toBe("-100px 0px -50% 0px");
+    const first = last();
+    height = 140;
+    act(() => resized([], {} as ResizeObserver));
+    expect(first.disconnected).toBe(true);
+    expect(last().options?.rootMargin).toBe("-140px 0px -50% 0px");
+  });
+
   it("is null for a page with no sections", () => {
     const { result } = renderHook(() => useSectionSpy([]));
     expect(result.current[0]).toBeNull();
