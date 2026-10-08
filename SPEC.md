@@ -762,6 +762,10 @@ offline badge, and controls for language and theme.
    available here too. Two **Excel export** buttons save the projection and amortization
    schedule as `.xlsx` files. A **Deactivate / Activate** action takes the property out of
    (or back into) all projections and KPIs (§4.5), after confirmation when deactivating.
+   A deactivated property's page still shows its own figures as a preview and says so; it
+   raises no loan warnings and has no Data check section (ADR 0155). When every property
+   is deactivated, the Dashboard and Projections say so with a link to Properties, and
+   Scenarios shows that note in place of the comparison (ADR 0155).
    The Financing section's **Loan outlook** (ADR 0116, ADR 0117) shows the modelled payoff,
    the remaining term and the interest prepayments save, then every loan block, oldest
    first, with its fixation end, the nominal balance at reset and a status: next rate reset,
