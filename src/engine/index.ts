@@ -44,6 +44,7 @@ export {
 export { MAX_LOAN_TERM_MONTHS } from "./constants";
 export { basisDate, scheduledPrincipal } from "./growth";
 export {
+  blockChain,
   effectiveMaturity,
   propertySchedules,
   schedulesByProperty,

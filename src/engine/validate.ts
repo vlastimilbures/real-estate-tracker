@@ -234,25 +234,27 @@ function checkDrawDate(
   date: Date,
   b: MortgageBlock,
   lastDraw: Date | undefined,
+  i: number,
   report: Report,
 ): void {
-  if (badDate(date)) report("INVALID_DATE", "draws");
+  if (badDate(date)) report("INVALID_DATE", "draws", i);
   // A draw on the start date itself belongs in the initial principal (D-42).
   else if (isOnOrBefore(date, b.startDate))
-    report("DRAW_BEFORE_START", "draws");
+    report("DRAW_BEFORE_START", "draws", i);
   // A later draw lands on the final payment, which would repay it in one shot
   // (DR-074, ADR 0129 §3).
   else if (lastDraw && isAfter(date, lastDraw))
-    report("DRAW_AFTER_SCHEDULE_END", "draws");
+    report("DRAW_AFTER_SCHEDULE_END", "draws", i);
 }
 
 function checkDevFeatures(b: MortgageBlock, report: Report): void {
   const lastDraw = lastDrawDate(b);
-  for (const d of b.draws ?? []) {
-    checkDrawDate(d.date, b, lastDraw, report);
-    if (badNumber(d.amount)) report("NON_FINITE_NUMBER", "draws");
-    else if (!d.amount.greaterThan(ZERO)) report("NON_POSITIVE_DRAW", "draws");
-  }
+  (b.draws ?? []).forEach((d, i) => {
+    checkDrawDate(d.date, b, lastDraw, i, report);
+    if (badNumber(d.amount)) report("NON_FINITE_NUMBER", "draws", i);
+    else if (!d.amount.greaterThan(ZERO))
+      report("NON_POSITIVE_DRAW", "draws", i);
+  });
   if (b.completionDate && isAfter(b.startDate, b.completionDate)) {
     report("COMPLETION_BEFORE_START", "completionDate");
   }
