@@ -12,7 +12,7 @@ import {
   projectionColumns,
   shortPropertyName,
 } from "../model/projection";
-import { projectionsSubtitle } from "../model/tableContext";
+import { lensLabel, projectionsSubtitle } from "../model/tableContext";
 import { exportTableXlsx } from "../exportXlsx";
 import { slug } from "../../lib/slug";
 import { useT } from "../hooks/useT";
@@ -62,8 +62,7 @@ export function Projections() {
   const rows = projectionSeries(selected, mode, assumptions);
   const entityLabel =
     options.find((o) => o.value === entity)?.label ?? t.projections.portfolio;
-  const lens =
-    mode === "real" ? t.projections.realTerms : t.projections.nominalKc;
+  const lens = lensLabel(t, mode);
   const exportProjection = () =>
     exportTableXlsx({
       filename: `${slug(entityLabel)}-projection-${mode}.xlsx`,

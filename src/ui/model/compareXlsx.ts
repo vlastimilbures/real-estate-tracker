@@ -7,6 +7,7 @@ import type { Decimal } from "../../lib/money";
 import type { Mode } from "./lens";
 import { irrReasonText, leveredIrr } from "./irr";
 import { tableValue } from "./chartData";
+import { lensLabel } from "./tableContext";
 import {
   compareBase,
   compareFootnote,
@@ -31,8 +32,7 @@ export function compareWorkbook(
   mode: Mode,
 ): { filename: string; sheets: XlsxSheetCells[] } {
   const names = t.xlsx.sheetNames;
-  const lens =
-    mode === "real" ? t.projections.realTerms : t.projections.nominalKc;
+  const lens = lensLabel(t, mode);
   const chart = (
     name: string,
     kind: CellKind,

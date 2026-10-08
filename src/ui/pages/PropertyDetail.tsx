@@ -42,6 +42,7 @@ import {
 } from "./PropertyEntityPanels";
 import { fmtDate } from "../../lib/format";
 import { projectionSeries, projectionColumns } from "../model/projection";
+import { lensLabel } from "../model/tableContext";
 import { exportTableXlsx } from "../exportXlsx";
 import { slug } from "../../lib/slug";
 import { asOfView, asOfHint, propertyTilesForAsOf } from "../model/dashboard";
@@ -214,10 +215,7 @@ export function PropertyDetail() {
     ? loanOutlook(out.financing, mortgages, t.propertyDetail)
     : null;
 
-  const lens =
-    mode === "real"
-      ? t.propertyDetail.realTermsLens
-      : t.propertyDetail.nominalKcLens;
+  const lens = lensLabel(t, mode);
   const modeWord = mode === "real" ? t.common.realLower : t.common.nominalLower;
   const sectionLabel: Record<PropertySection, string> = {
     overview: t.propertyDetail.sectionOverview,

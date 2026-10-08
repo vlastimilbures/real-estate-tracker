@@ -12,6 +12,7 @@ import {
 } from "../components/primitives";
 import { exportWorkbookXlsx } from "../exportXlsx";
 import { compareWorkbook } from "../model/compareXlsx";
+import { lensLabel } from "../model/tableContext";
 import { GitCompare } from "lucide-react";
 import { ChartCard, CzkLines, PctLines } from "../components/charts";
 import type { Scenario } from "../../engine";
@@ -83,8 +84,7 @@ export function CompareView({
   // Δ vs Base needs Base; without it the table shows values (ADR 0097).
   const base = compareBase(results);
   const shownView: CompareView = base ? view : "values";
-  const lensSub =
-    mode === "real" ? t.projections.realTerms : t.projections.nominalKc;
+  const lensSub = lensLabel(t, mode);
 
   return (
     <>

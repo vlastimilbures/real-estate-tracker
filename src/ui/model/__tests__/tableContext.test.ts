@@ -1,7 +1,11 @@
 // ADR 0111 (#21): Properties and Projections name the currency, period and date of their
 // tables in one context line (the page subtitle); column headers stay unit-free.
 import { describe, it, expect } from "vitest";
-import { projectionsSubtitle, propertiesSubtitle } from "../tableContext";
+import {
+  lensLabel,
+  projectionsSubtitle,
+  propertiesSubtitle,
+} from "../tableContext";
 import { isoDate } from "../../../engine";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
@@ -48,6 +52,19 @@ describe("projectionsSubtitle", () => {
   it("is translated", () => {
     expect(projectionsSubtitle(cs, "real", baseDate)).toBe(
       "Rok po roce · reálné hodnoty (Kč k začátku projekce 07.06.2026) · toky za rok, zůstatky ke konci roku",
+    );
+  });
+});
+
+describe("lensLabel", () => {
+  const baseDate = isoDate("2026-06-07");
+
+  it("names the lens, and the base date in Real mode when given", () => {
+    expect(lensLabel(en, "nominal")).toBe("nominal Kč");
+    expect(lensLabel(en, "real")).toBe("real terms");
+    expect(lensLabel(en, "nominal", baseDate)).toBe("nominal Kč");
+    expect(lensLabel(en, "real", baseDate)).toBe(
+      "real terms (Kč at projection start 07.06.2026)",
     );
   });
 });
