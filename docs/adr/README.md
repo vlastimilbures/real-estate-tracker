@@ -197,7 +197,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0151](0151-ci-gates-after-going-public.md)       | CI gates after going public                                                                   | Accepted                                           | #111                                               |
 | [0152](0152-wording-log-and-generated-index.md)   | Copy-only changes go to a wording log; the ADR index is generated                             | Accepted                                           | #111                                               |
 | [0153](0153-honest-startup-failures.md)           | Startup failures say what changed and offer a step that works                                 | Accepted · amended by 0154                         | #115                                               |
-| [0154](0154-one-outcome-path.md)                  | One outcome path: notices that follow the owner, one toast                                    | Proposed                                           | #136                                               |
+| [0154](0154-one-outcome-path.md)                  | One outcome path: notices that follow the owner, one toast                                    | Accepted                                           | #136                                               |
 
 <!-- adr-index:end -->
 

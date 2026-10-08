@@ -1,6 +1,6 @@
 # 0154. One outcome path: notices that follow the owner, one toast
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-08
 - Source: issue #136 (2026-10 code review, findings R5-11, G2-4-05, G2-4-06); owner
   decision D14 (2026-10-08: option A without a navigation guard; the startup screen's
