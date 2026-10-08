@@ -170,6 +170,9 @@ interface PortfolioState {
    *  (DR-086). The write itself still counts as done (ADR 0125). Cleared by the next
    *  successful load. */
   stale: boolean;
+  /** Restores, Clear samples and Load samples queued or running. Settings → Backup
+   *  waits while one is, across page changes (ADR 0154). */
+  replacing: number;
 
   init: (open?: () => Promise<Sql>) => Promise<void>;
   /** Load every table into the store. Does not queue itself: outside a queued job, only
@@ -321,12 +324,18 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     });
   }
 
-  /** `exclusive` for an operation that replaces the data: on success the banner `error`
-   *  from an earlier edit no longer applies (ADR 0154). */
+  /** `exclusive` for an operation that replaces the data, counted in `replacing` from
+   *  the call until it settles. On success the banner `error` from an earlier edit no
+   *  longer applies (ADR 0154). */
   async function replaceData<T>(op: (sql: Sql) => Promise<T>): Promise<T> {
-    const result = await exclusive(op);
-    set({ error: null });
-    return result;
+    set({ replacing: get().replacing + 1 });
+    try {
+      const result = await exclusive(op);
+      set({ error: null });
+      return result;
+    } finally {
+      set({ replacing: get().replacing - 1 });
+    }
   }
 
   /** Data was written: the last backup no longer has it (ADR 0110). Best effort — a
@@ -444,6 +453,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     error: null,
     startupError: null,
     stale: false,
+    replacing: 0,
 
     async init(open = defaultOpen) {
       if (get().status === "loading" || get().status === "ready") return;

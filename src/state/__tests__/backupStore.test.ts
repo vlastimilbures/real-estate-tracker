@@ -147,4 +147,17 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
     await usePortfolioStore.getState().restoreBackup(file);
     expect(usePortfolioStore.getState().error).toBeNull();
   });
+
+  it("counts a restore in `replacing` until it settles (#136 review)", async () => {
+    const file = await exportToJson(db, new Date());
+    const running = usePortfolioStore.getState().restoreBackup(file);
+    expect(usePortfolioStore.getState().replacing).toBe(1);
+    await running;
+    expect(usePortfolioStore.getState().replacing).toBe(0);
+
+    await expect(
+      usePortfolioStore.getState().restoreBackup({} as never),
+    ).rejects.toThrow();
+    expect(usePortfolioStore.getState().replacing).toBe(0);
+  });
 });

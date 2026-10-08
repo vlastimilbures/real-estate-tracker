@@ -13,6 +13,7 @@ beforeEach(() => {
     route: "settings",
     toast: null,
     notice: null,
+    failure: null,
     lastImport: null,
     unsavedChanges: false,
     unsavedSources: [],
@@ -71,12 +72,22 @@ describe("notice (ADR 0154)", () => {
     expect(ui().route).toBe("dashboard");
   });
 
-  it("dataReplaced clears the notice and the last import report", () => {
+  it("dataReplaced clears the notice, the failure and the last import report", () => {
     const report = { items: [] } as unknown as CsvImportReport;
     ui().setLastImport(report);
     ui().showSampleCleared("before-clear.json");
+    ui().setFailure("import", new Error("x"));
     ui().dataReplaced();
     expect(ui().notice).toBeNull();
+    expect(ui().failure).toBeNull();
     expect(ui().lastImport).toBeNull();
+  });
+
+  it("starting another action dismisses only the failure (#136 review)", () => {
+    ui().setNotice({ kind: "restored", file: "safety.json" });
+    ui().setFailure("backupExport", new Error("x"));
+    ui().dismissFailure();
+    expect(ui().failure).toBeNull();
+    expect(ui().notice).toEqual({ kind: "restored", file: "safety.json" });
   });
 });

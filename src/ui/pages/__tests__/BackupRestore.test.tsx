@@ -76,8 +76,14 @@ beforeEach(() => {
       assumptions,
       sample: { active: false, dismissed: false },
       restoreBackup,
+      replacing: 0,
     } as never);
-    useUiStore.setState({ notice: null, toast: null, lastImport: null });
+    useUiStore.setState({
+      notice: null,
+      failure: null,
+      toast: null,
+      lastImport: null,
+    });
   });
 });
 
@@ -257,5 +263,23 @@ describe("Restore a backup (#118)", () => {
     await act(async () => finish({ safetyBackup: "safety.json" }));
     expect(exportButton.disabled).toBe(false);
     expect(clearButton.disabled).toBe(false);
+  });
+
+  it("the buttons still wait after leaving and coming back mid-restore (#136 review)", () => {
+    act(() =>
+      usePortfolioStore.setState({
+        replacing: 1,
+        sample: { active: true, dismissed: false },
+      }),
+    );
+    renderPanel();
+    for (const name of [
+      en.backup.exportButton,
+      en.backup.chooseFile,
+      en.sample.clearAction,
+    ])
+      expect(
+        screen.getByRole<HTMLButtonElement>("button", { name }).disabled,
+      ).toBe(true);
   });
 });

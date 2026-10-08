@@ -58,21 +58,24 @@ export function BackupRestorePanel() {
   const [pendingBackup, setPendingBackup] = useState<PickedBackup | null>(null);
   const { showToast } = useToast();
   const setNotice = useUiStore((s) => s.setNotice);
-  const dismissNotice = useUiStore((s) => s.dismissNotice);
+  const setFailure = useUiStore((s) => s.setFailure);
+  const dismissFailure = useUiStore((s) => s.dismissFailure);
   const dataReplaced = useUiStore((s) => s.dataReplaced);
-  // Whole-database work in progress: the other actions wait for it (ADR 0154).
-  const replacing = restoring || loadingSample;
+  // Whole-database work in progress, also one started before this page last opened:
+  // the other actions wait for it (ADR 0154).
+  const queued = usePortfolioStore((s) => s.replacing > 0);
+  const replacing = restoring || loadingSample || queued;
 
   /** Report a failure in the notice, which follows the owner to any page; a refused
    *  backup keeps its records there, anything else is logged under `site` (ADR 0154). */
   function fail(e: unknown, site: FailureSite, action: OutcomeAction) {
     logBackupFailure(site, e);
-    setNotice({ kind: "failed", action, error: e });
+    setFailure(action, e);
   }
 
   async function handleExport() {
     setExporting(true);
-    dismissNotice();
+    dismissFailure();
     try {
       const outcome = await exportBackup();
       // A cancelled save dialog is the user's own choice: no toast (UX-001).
@@ -89,7 +92,7 @@ export function BackupRestorePanel() {
   /** Load the sample into the empty portfolio (ADR 0112). */
   async function handleLoadSample() {
     setLoadingSample(true);
-    dismissNotice();
+    dismissFailure();
     try {
       await loadSample();
       dataReplaced();
@@ -102,7 +105,7 @@ export function BackupRestorePanel() {
   }
 
   async function handleChooseRestore() {
-    dismissNotice();
+    dismissFailure();
     try {
       const picked = await chooseRestoreFile();
       if (picked) setPendingBackup(picked);
@@ -114,7 +117,7 @@ export function BackupRestorePanel() {
   async function handleConfirmRestore() {
     if (!pendingBackup) return;
     setRestoring(true);
-    dismissNotice();
+    dismissFailure();
     try {
       const { safetyBackup } = await restoreBackup(pendingBackup.backup);
       setPendingBackup(null);

@@ -35,7 +35,7 @@ export type { Theme } from "./themePreference";
 /** How long a toast stays: one duration for every page (ADR 0154). */
 export const TOAST_MS = 4000;
 
-/** A whole-database action, or an export, whose failure a notice reports (ADR 0154). */
+/** A whole-database action, or an export, whose failure is reported (ADR 0154). */
 export type OutcomeAction =
   | "restore"
   | "pickBackup"
@@ -44,12 +44,18 @@ export type OutcomeAction =
   | "import"
   | "xlsxExport";
 
-/** The outcome of a whole-database action, shown on every page until dismissed. It
- *  holds data, not text, so it is translated when it renders (ADR 0154). */
+/** The safety copy a restore or Clear sample wrote: the owner's undo file, named on
+ *  every page until dismissed (ADR 0154). */
 export type Notice =
-  | { kind: "restored"; file: string }
-  | { kind: "sampleCleared"; file: string }
-  | { kind: "failed"; action: OutcomeAction; error: unknown };
+  { kind: "restored"; file: string } | { kind: "sampleCleared"; file: string };
+
+/** A failed action, shown on every page until dismissed or the next action starts. Its
+ *  own slot, so a failure never hides the safety copy's name (ADR 0154). Data, not
+ *  text: it is translated when it renders. */
+export interface Failure {
+  action: OutcomeAction;
+  error: unknown;
+}
 
 /** Saved scenarios the compare shows at most; Base is always available alongside. */
 export const MAX_COMPARE = 3;
@@ -123,12 +129,16 @@ interface UiState {
   toast: { message: string; id: number } | null;
   /** Show `message` as the toast; a newer one replaces it and restarts the timer. */
   showToast: (message: string) => void;
-  /** The last whole-database outcome, until dismissed (ADR 0154). In-memory only. */
+  /** The last safety copy, until dismissed (ADR 0154). In-memory only. */
   notice: Notice | null;
   setNotice: (notice: Notice) => void;
   dismissNotice: () => void;
-  /** The data was replaced (restore, Clear sample, Load sample): drop the notice and
-   *  the import report, which describe the old data (ADR 0154). */
+  /** The last failed action, until dismissed or the next action starts. In-memory. */
+  failure: Failure | null;
+  setFailure: (action: OutcomeAction, error: unknown) => void;
+  dismissFailure: () => void;
+  /** The data was replaced (restore, Clear sample, Load sample): drop the notice, the
+   *  failure and the import report, which describe the old data (ADR 0154). */
   dataReplaced: () => void;
   /** The sidebar backup reminder was hidden for this session (ADR 0110). In-memory. */
   backupHintDismissed: boolean;
@@ -255,7 +265,10 @@ export const useUiStore = create<UiState>((set, get) => ({
   notice: null,
   setNotice: (notice) => set({ notice }),
   dismissNotice: () => set({ notice: null }),
-  dataReplaced: () => set({ notice: null, lastImport: null }),
+  failure: null,
+  setFailure: (action, error) => set({ failure: { action, error } }),
+  dismissFailure: () => set({ failure: null }),
+  dataReplaced: () => set({ notice: null, failure: null, lastImport: null }),
   backupHintDismissed: false,
   lastImport: null,
   setLastImport: (lastImport) => set({ lastImport }),

@@ -27,7 +27,7 @@ beforeEach(() => {
   vi.mocked(invoke).mockReset();
   loadSample.mockReset();
   act(() => {
-    useUiStore.setState({ language: "en", notice: null });
+    useUiStore.setState({ language: "en", notice: null, failure: null });
     usePortfolioStore.setState({
       status: "ready",
       portfolio: { ...portfolio, properties: [] },

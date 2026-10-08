@@ -20,7 +20,14 @@ vi.mock("../../../state/diagnostics", async (importOriginal) => ({
 }));
 
 beforeEach(() => {
-  act(() => useUiStore.setState({ language: "en", toast: null, notice: null }));
+  act(() =>
+    useUiStore.setState({
+      language: "en",
+      toast: null,
+      notice: null,
+      failure: null,
+    }),
+  );
 });
 
 afterEach(() => {
@@ -60,10 +67,9 @@ describe("notice (#136)", () => {
 
   it("a refused restore lists the records with the reason", () => {
     act(() =>
-      useUiStore.getState().setNotice({
-        kind: "failed",
-        action: "restore",
-        error: new RestoreError("BACKUP_ROWS_INVALID", "rows", {
+      useUiStore.getState().setFailure(
+        "restore",
+        new RestoreError("BACKUP_ROWS_INVALID", "rows", {
           issues: [
             {
               table: "leases",
@@ -73,7 +79,7 @@ describe("notice (#136)", () => {
             },
           ],
         }),
-      }),
+      ),
     );
     render(<OutcomeRegions />);
     expect(screen.getByText(en.backup.errRowsInvalid)).toBeTruthy();
@@ -95,6 +101,16 @@ describe("notice (#136)", () => {
       screen.getByRole("button", { name: en.xlsx.exportToExcel }),
     );
     act(() => vi.advanceTimersByTime(60_000));
+    expect(screen.getByText(en.xlsx.exportFailed("disk full"))).toBeTruthy();
+  });
+
+  it("a failure does not hide the safety copy's name (#136 review)", () => {
+    act(() => {
+      useUiStore.getState().setNotice({ kind: "restored", file: "s.json" });
+      useUiStore.getState().setFailure("xlsxExport", new Error("disk full"));
+    });
+    render(<OutcomeRegions />);
+    expect(screen.getByText(en.backup.restored("s.json"))).toBeTruthy();
     expect(screen.getByText(en.xlsx.exportFailed("disk full"))).toBeTruthy();
   });
 });

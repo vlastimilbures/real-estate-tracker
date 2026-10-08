@@ -43,8 +43,8 @@ export function Import() {
   const lastImport = useUiStore((s) => s.lastImport);
   const setLastImport = useUiStore((s) => s.setLastImport);
   const openProperty = useUiStore((s) => s.openProperty);
-  const setNotice = useUiStore((s) => s.setNotice);
-  const dismissNotice = useUiStore((s) => s.dismissNotice);
+  const setFailure = useUiStore((s) => s.setFailure);
+  const dismissFailure = useUiStore((s) => s.dismissFailure);
 
   const [properties, setProperties] =
     useState<FileState<ParsedPropertyRow> | null>(null);
@@ -180,7 +180,7 @@ export function Import() {
     }
     setConfirming(false);
     setImporting(true);
-    dismissNotice();
+    dismissFailure();
     setRefused(null);
     setPlanChanged(false);
     try {
@@ -204,7 +204,7 @@ export function Import() {
         // A constraint the CSV checks missed (a generated-id clash was one, now fixed: DR-137)
         // gets the translated wording, not SQLite's text. In the notice, so it reaches the
         // owner on any page (ADR 0154).
-        setNotice({ kind: "failed", action: "import", error: e });
+        setFailure("import", e);
       }
     } finally {
       setImporting(false);

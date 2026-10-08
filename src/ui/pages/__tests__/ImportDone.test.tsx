@@ -39,7 +39,7 @@ const previewCsv = vi.fn(async () => ({
 
 beforeEach(() =>
   act(() => {
-    useUiStore.setState({ language: "en", route: "import", notice: null });
+    useUiStore.setState({ language: "en", route: "import", failure: null });
     usePortfolioStore.setState({
       portfolio,
       assumptions,
@@ -97,8 +97,7 @@ describe("Import failure (ADR 0154)", () => {
       }),
     );
     await waitFor(() =>
-      expect(useUiStore.getState().notice).toMatchObject({
-        kind: "failed",
+      expect(useUiStore.getState().failure).toMatchObject({
         action: "import",
       }),
     );

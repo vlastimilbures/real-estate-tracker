@@ -57,6 +57,7 @@ beforeEach(async () => {
       route: "settings",
       settingsTab: "backup",
       notice: null,
+      failure: null,
       toast: null,
       unsavedSources: [],
       unsavedChanges: false,

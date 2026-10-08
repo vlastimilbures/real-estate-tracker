@@ -58,10 +58,17 @@ export function BootFailure() {
   const [failure, setFailure] = useState<ReturnType<
     typeof backupFailure
   > | null>(null);
+  // A restore done here before a Try again that failed: the screen is new, but the
+  // safety copy is still named (ADR 0154).
   const [restored, setRestored] = useState<{
     file: string;
     ready: boolean;
-  } | null>(null);
+  } | null>(() => {
+    const carried = useUiStore.getState().notice;
+    return carried?.kind === "restored"
+      ? { file: carried.file, ready: false }
+      : null;
+  });
   const view = bootView(startupError?.code ?? null);
 
   async function showFolder() {

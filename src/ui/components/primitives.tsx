@@ -204,7 +204,7 @@ export function ExportXlsxButton({
   const btnLabel = label ?? t.xlsx.exportToExcel;
   const [busy, setBusy] = useState(false);
   const { showToast } = useToast();
-  const setNotice = useUiStore((s) => s.setNotice);
+  const setFailure = useUiStore((s) => s.setFailure);
 
   const run = async () => {
     setBusy(true);
@@ -214,7 +214,7 @@ export function ExportXlsxButton({
         showToast(t.xlsx.exported(outcome.filename));
     } catch (e) {
       logFailure("EXPORT", e);
-      setNotice({ kind: "failed", action: "xlsxExport", error: e });
+      setFailure("xlsxExport", e);
     } finally {
       setBusy(false);
     }
