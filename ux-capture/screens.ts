@@ -1363,6 +1363,40 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "83-all-deactivated",
+    desc: "An inactive property's page, then every property deactivated (ADR 0155)",
+    run: async (ux) => {
+      await boot(ux.page);
+      await nav(ux, "properties");
+      const count = await ux.page.locator("table.data tbody tr").count();
+      for (let i = 0; i < count; i++) {
+        await nav(ux, "properties");
+        await ux.page.locator("table.data tbody tr td.left").nth(i).click();
+        const topbar = ux.page.locator(".topbar");
+        await topbar
+          .getByRole("button", { name: ux.t.propertyDetail.deactivate })
+          .click();
+        await ux.page
+          .getByRole("button", { name: ux.t.propertyDetail.yesDeactivate })
+          .click();
+        await expect(
+          topbar.getByRole("button", { name: ux.t.propertyDetail.activate }),
+        ).toBeVisible();
+        if (i === 0) await ux.capture("83-property-inactive");
+      }
+      const notice = ux.page.getByText(ux.t.common.allInactiveTitle(count));
+      await nav(ux, "dashboard");
+      await expect(notice).toBeVisible();
+      await ux.capture("83-all-deactivated-dashboard");
+      await nav(ux, "projections");
+      await expect(notice).toBeVisible();
+      await ux.capture("83-all-deactivated-projections");
+      await nav(ux, "scenarios");
+      await expect(notice).toBeVisible();
+      await ux.capture("83-all-deactivated-scenarios");
+    },
+  },
+  {
     id: "90-keyboard-focus",
     desc: "Keyboard-only: Tab order from page load, with focus screenshots",
     run: async (ux) => {
