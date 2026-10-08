@@ -150,16 +150,18 @@ matched to an existing record by its natural key:
   as another lease; the old one stays. Edit or delete the old record in the app.
 - **A match updates only the CSV columns.** What the CSV does not hold is left as stored: a
   property's active/inactive state and holding costs, and a mortgage block's draws,
-  interest-only date, prepayments and maturity changes. An empty `contract_maturity_date` keeps the stored date, and an empty
-  or missing `own_cash`, `transaction_costs` or `initial_works` column keeps the stored
-  amount. A CSV can set or change an amount, never erase it: clear an amount in the
-  property form.
+  interest-only date, prepayments and maturity changes. An empty `contract_maturity_date`
+  keeps the stored date, and an empty or missing `own_cash`, `transaction_costs` or
+  `initial_works` column keeps the stored amount. A CSV can set or change an amount, never
+  erase it: clear an amount in the property form.
 - **Any other empty cell clears.** An empty optional cell clears the stored value (for
   example an empty `address`), except `contract_maturity_date` and the three funding columns
   as above.
 - **Each key may appear once per file.** A second row with the same key — including names
   that differ only by case or spaces — is an error that points at the first row.
 - **Nothing is deleted.** A record missing from the CSV stays in the app.
+- A new property gets an empty holding-costs record, so its costs follow the Assumptions
+  defaults until you set them.
 
 ### Mortgage rows and saved loan events
 
@@ -174,16 +176,19 @@ them (ADR 0160):
   import again. Otherwise keep the old value in the CSV.
 - **A new block replaces the previous block's later events.** A row with a new `start_date`
   adds a block (a refixation or a refinance) that takes over from the previous block on that
-  date. The previous block's prepayments and maturity changes dated after it stop applying;
-  those dated on or before it still apply. The preview lists the events that stop under the
-  new row, and the import asks you to confirm with **Import anyway**. The saved events are
-  not changed: delete the new block and they apply again.
-- **A block that starts before the block in force has no effect.** The projection starts from
-  the block in force at the base date and follows later blocks only. A row dated earlier (for
-  example a corrected typo in `start_date`) is added as another block, but the preview notes
-  that it has no effect. Delete the block you do not want in the app.
-- A new property gets an empty holding-costs record, so its costs follow the Assumptions
-  defaults until you set them.
+  date. The previous block's prepayments and maturity changes dated after it stop applying,
+  and so does a maturity change in the month of the handover; a prepayment dated on or before
+  the new start is still paid. The preview lists the events that stop under the new row, as
+  the property page would warn about them, and the import asks you to confirm with **Import
+  anyway**. The saved events are not changed: delete the new block and they apply again. The
+  preview does not list a development loan's draws dated after the new start, which the new
+  block also replaces.
+- **A block that starts before the block in force is not used by the schedule.** The
+  amortization schedule starts from the block in force at the base date and follows later
+  blocks only. A row dated earlier (for example a corrected typo in `start_date`) is added as
+  another block, and the preview notes that the schedule does not use it. As the property's
+  earliest block it can still count as the acquisition loan. Delete the block you do not want
+  in the app.
 
 ## Preview and confirmation
 
