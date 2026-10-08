@@ -200,7 +200,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0154](0154-one-outcome-path.md)                  | One outcome path: notices that follow the owner, one toast                                    | Accepted                                           | #136                                               |
 | [0155](0155-lifecycle-states-on-the-pages.md)     | Lifecycle states on the pages: deactivated portfolio, inactive property, filter               | Accepted                                           | #127                                               |
 | [0156](0156-pending-purchase-display.md)          | A pending purchase shows no figures before it is owned                                        | Accepted                                           | #126, #276                                         |
-| [0157](0157-accessibility-batch.md)               | Keyboard and screen-reader batch: dropdown, dialog stack, headings, tabs, contrast            | Proposed                                           | #128, #276                                         |
+| [0157](0157-accessibility-batch.md)               | Keyboard and screen-reader batch: dropdown, dialog stack, headings, tabs, contrast            | Accepted                                           | #128, #276                                         |
 
 <!-- adr-index:end -->
 

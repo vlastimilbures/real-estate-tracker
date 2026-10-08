@@ -1,6 +1,6 @@
 # 0157. Keyboard and screen-reader batch: dropdown, dialog stack, headings, tabs, contrast
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-08
 - Source: issue #128 (2026-10 code review, findings R5-05, R5-14, G2-3-09, G2-3-10,
   R5-15); owner decision D12 (2026-10-08: option A, keep the custom popover and fix the
@@ -41,18 +41,21 @@ review found five gaps on fresh `main`:
 ## Decision
 
 1. **Dropdown (D12 = A).** The custom popover stays. Its open list is a child component
-   that mounts on open, so `useModalA11y` moves focus in and, on Escape or a pick that
-   closes the list, returns it to the trigger. The options use a roving tabindex (one Tab
+   that mounts on open, so `useModalA11y` moves focus in; Escape, or a pick that closes
+   the list, returns focus to the trigger. The options use a roving tabindex (one Tab
    stop): ArrowUp/ArrowDown move, Home/End jump, Space and Enter pick. Focus starts on the
-   selected option (single mode) or on `common.all` (multi mode); ArrowDown or ArrowUp on
-   the trigger opens the list. Tabbing out or clicking elsewhere closes it without pulling
-   focus back. The trigger has `aria-controls`; the listbox is named and holds options
+   selected option (single mode) or on `common.all` (multi mode); a list with more than 12
+   options starts on its search box, and Tab moves from there into the list. ArrowDown or
+   ArrowUp on the trigger opens the list. Tabbing out or clicking elsewhere closes it and
+   never moves focus to the trigger. The trigger has `aria-controls`; the listbox is named and holds options
    only (the search box sits beside it). A multiple selection reads `common.nSelected`.
    The two modes share one implementation. The look is unchanged, plus a focus ring on the
    focused option.
 2. **Dialog stack.** `useModalA11y` keeps a stack of open dialogs and popovers: Escape and
    the Tab trap act on the top-most only, so one Escape closes one layer. On close, focus
-   returns to the opener only when it was lost with the dialog's nodes. `menu://about`
+   returns to the opener only when it was lost: fallen back to `<body>` with the dialog's
+   nodes, or still inside the dialog (StrictMode runs the effect's cleanup once before the
+   real close). `menu://about`
    waits for an open dialog like the other menu items, and About renders through `Modal`
    (its scrolling body stays a focusable region, UX-071).
 3. **Action columns.** Both headers carry a visually hidden `common.actions`.
