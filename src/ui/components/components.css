@@ -1551,6 +1551,12 @@ table.chart-table tbody th.sticky-col {
   text-align: left;
 }
 
+/* h2 since ADR 0157 (one level under the page h1); they keep the h3 size they had. */
+.getting-started h2,
+.error-boundary h2 {
+  font-size: 1.17em;
+}
+
 .getting-started ol {
   margin: var(--s2) 0 0;
   padding-left: var(--s5);
