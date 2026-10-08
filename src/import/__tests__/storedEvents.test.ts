@@ -159,6 +159,34 @@ describe("a new block replaces the previous block's later events (G1-5-2)", () =
     ]);
   });
 
+  it("a new block in force at the base date replaces the old block's later events", async () => {
+    storeEvents({
+      prepayments: [prepayment("2024-01-17"), prepayment("2028-01-17")],
+    });
+    const p = await previewImport(sql, {
+      mortgages: mortgages("Byt A,2025-01-17,1800000,5,0.045,,20,"),
+    });
+    expect(p.items[0]?.replaces).toEqual([
+      { kind: "prepayment", date: "2028-01-17" },
+    ]);
+  });
+
+  it("two new blocks: each lists only the events it stops", async () => {
+    storeEvents({
+      prepayments: [prepayment("2032-01-17"), prepayment("2034-01-17")],
+    });
+    const p = await previewImport(sql, {
+      mortgages: mortgages(SUCCESSOR, "Byt A,2033-01-17,1200000,5,0.04,,10,"),
+    });
+    expect(p.items.map((i) => i.replaces)).toEqual([
+      [
+        { kind: "prepayment", date: "2032-01-17" },
+        { kind: "prepayment", date: "2034-01-17" },
+      ],
+      undefined,
+    ]);
+  });
+
   it("an add that replaces nothing carries neither note", async () => {
     const p = await previewImport(sql, { mortgages: mortgages(SUCCESSOR) });
     expect(p.items[0]).not.toHaveProperty("replaces");
