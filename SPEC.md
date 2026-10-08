@@ -752,7 +752,8 @@ offline badge, and controls for language and theme.
    where a blank amount is unknown and clearing every field clears the record, ADR 0119
    §9). Each row has Edit and Delete
    actions; a deactivated property shows an "Inactive" badge and one not yet purchased a
-   "Pending" badge (activate/deactivate is on Property detail). Delete cascades to all
+   "Pending" badge with its purchase date and "—" in every figure column (ADR 0156)
+   (activate/deactivate is on Property detail). Delete cascades to all
    linked mortgages, valuations, leases, and holding costs (after confirmation).
 
 3. **Property detail** — valuations, leases, mortgage blocks (including dev-loan tranche draws,
@@ -763,7 +764,10 @@ offline badge, and controls for language and theme.
    schedule as `.xlsx` files. A **Deactivate / Activate** action takes the property out of
    (or back into) all projections and KPIs (§4.5), after confirmation when deactivating.
    A deactivated property's page still shows its own figures as a preview and says so; it
-   raises no loan warnings and has no Data check section (ADR 0155). When every property
+   raises no loan warnings and has no Data check section (ADR 0155). A property not owned
+   under the as-of basis (by the as-of date, or in a projection year by that year's end,
+   ADR 0150) shows a "Not owned yet" panel (purchase date, price,
+   acquisition loan) in place of the snapshot tiles; the projection charts stay (ADR 0156). When every property
    is deactivated, the Dashboard and Projections say so with a link to Properties, and
    Scenarios shows that note in place of the comparison (ADR 0155).
    The Financing section's **Loan outlook** (ADR 0116, ADR 0117) shows the modelled payoff,

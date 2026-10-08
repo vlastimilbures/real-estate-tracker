@@ -8,6 +8,8 @@
 - Amends: [0019](0019-projection-start-asof.md) (the as-of clamp),
   [0088](0088-asof-basis-labels.md) (the year count, the past-horizon basis, the ownership
   label), [0111](0111-table-context-line.md) (the Properties date)
+- Amended by: [0156](0156-pending-purchase-display.md) (a property not owned under the
+  basis shows no figures on its Properties row or tiles; the tiles' `owned` follows `ownedOn`)
 - Related: [0021](0021-schedule-calendar.md) and [0080](0080-close-out.md) (D-21 month-end
   grid, DR-182), [0149](0149-calendar-days.md)
   (calendar days), D-62 (one as-of rule on Dashboard and Property detail)

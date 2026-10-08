@@ -591,6 +591,14 @@ table.data thead th.sticky-col {
   white-space: nowrap;
   vertical-align: bottom;
 }
+/* A second line under the name (a pending purchase's date, ADR 0156): it adds height,
+   not width, so the figure columns keep their room (ADR 0085). */
+.cell-sub {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
 /* Pinned columns cover the .table-wrap scroll shadow, so they draw their own edge
    shadow while content scrolls beneath them (ADR 0085). The scroll timeline is
    inactive when the table does not overflow, so no shadow shows then. */

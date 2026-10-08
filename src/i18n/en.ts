@@ -469,6 +469,7 @@ export const en = {
     colNetCashFlow: "Net cash flow",
     colDscr: "DSCR",
     badgePending: "Pending",
+    pendingPurchaseOn: (d: string) => `purchase ${d}`,
     badgeInactive: "Inactive",
     editProperty: "Edit property",
     deleteProperty: "Delete property",
@@ -483,6 +484,9 @@ export const en = {
     allProperties: "‹ All properties",
     purchased: (d: string) => `purchased ${d}`,
     pendingPurchase: (d: string) => `pending — purchase ${d}`,
+    notOwnedTitle: "Not owned yet",
+    notOwnedHint:
+      "Its figures start once it is bought; until then the charts show 0.",
     asOf: (d: string) => `as of ${d}`,
     deactivated: "deactivated",
     deactivate: "Deactivate",

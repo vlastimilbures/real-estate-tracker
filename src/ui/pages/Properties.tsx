@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { MetricLabel } from "../components/MetricLabel";
 import { Pencil, Trash2, Plus, Building2, Upload } from "lucide-react";
 import { useEngine, usePropertyProjections } from "../../state/useEngine";
@@ -20,7 +20,7 @@ import {
 } from "../components/primitives";
 import { PropertyFormModal } from "../components/PropertyFormModal";
 import { SampleBanner } from "../components/SampleBanner";
-import { fmtPct, fmtDscr } from "../../lib/format";
+import { fmtDate, fmtPct, fmtDscr } from "../../lib/format";
 import {
   bandPill,
   dscrBand,
@@ -86,6 +86,21 @@ export function Properties() {
         )
       : [];
   const deleteTarget = perProperty.find((p) => p.propertyId === deletingId);
+  const purchaseDates = new Map(
+    engine?.portfolio.properties.map((p) => [p.id, p.purchaseDate]) ?? [],
+  );
+  /** A pending purchase has no figures yet, only its purchase date (ADR 0156). */
+  const fig = (owned: boolean, cell: ReactNode) => (owned ? cell : "—");
+  const purchaseOn = (id: string) => {
+    const date = purchaseDates.get(id);
+    return (
+      date && (
+        <span className="cell-sub">
+          {t.properties.pendingPurchaseOn(fmtDate(date))}
+        </span>
+      )
+    );
+  };
 
   async function handleDelete(id: string) {
     const result = await removeProperty(id);
@@ -206,39 +221,59 @@ export function Properties() {
                           </Badge>
                         </span>
                       )}
+                      {/* After both badges, so they stay on the name's line. */}
+                      {!p.owned && purchaseOn(p.propertyId)}
                     </td>
                     <td>
-                      {p.ltv === null ? (
-                        <Pct value={null} />
-                      ) : (
-                        <Badge band={ltvBand(p.ltv)}>
-                          {bandPill(fmtPct(p.ltv), ltvBandWord(t, p.ltv))}
-                        </Badge>
+                      {fig(
+                        p.owned,
+                        p.ltv === null ? (
+                          <Pct value={null} />
+                        ) : (
+                          <Badge band={ltvBand(p.ltv)}>
+                            {bandPill(fmtPct(p.ltv), ltvBandWord(t, p.ltv))}
+                          </Badge>
+                        ),
                       )}
                     </td>
                     <td>
-                      <Money value={p.netCashFlow} suffix={false} signed />
-                    </td>
-                    <td>
-                      {p.dscr ? (
-                        <Badge band={dscrBand(p.dscr)}>
-                          {bandPill(fmtDscr(p.dscr), dscrBandWord(t, p.dscr))}
-                        </Badge>
-                      ) : (
-                        "—"
+                      {fig(
+                        p.owned,
+                        <Money value={p.netCashFlow} suffix={false} signed />,
                       )}
                     </td>
                     <td>
-                      <Money value={p.value} parens={false} suffix={false} />
+                      {fig(
+                        p.owned,
+                        p.dscr ? (
+                          <Badge band={dscrBand(p.dscr)}>
+                            {bandPill(fmtDscr(p.dscr), dscrBandWord(t, p.dscr))}
+                          </Badge>
+                        ) : (
+                          "—"
+                        ),
+                      )}
                     </td>
                     <td>
-                      <Money value={p.debt} parens={false} suffix={false} />
+                      {fig(
+                        p.owned,
+                        <Money value={p.value} parens={false} suffix={false} />,
+                      )}
                     </td>
                     <td>
-                      <Money value={p.equity} suffix={false} />
+                      {fig(
+                        p.owned,
+                        <Money value={p.debt} parens={false} suffix={false} />,
+                      )}
                     </td>
                     <td>
-                      <Money value={p.noi} parens={false} suffix={false} />
+                      {fig(p.owned, <Money value={p.equity} suffix={false} />)}
+                    </td>
+                    <td>
+                      {fig(
+                        p.owned,
+                        <Money value={p.noi} parens={false} suffix={false} />,
+                      )}
                     </td>
                     <td
                       className="actions-col"

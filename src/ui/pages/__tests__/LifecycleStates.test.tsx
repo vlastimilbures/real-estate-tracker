@@ -16,6 +16,9 @@ import { getDict } from "../../../i18n";
 import type { Portfolio, Scenario } from "../../../engine";
 import { assumptions } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
+import { fmtCzk, fmtCzkM, fmtPct } from "../../../lib/format";
+import { D } from "../../../lib/money";
+import { isoDate } from "../../../engine";
 
 vi.mock("../../../lib/day", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/day")>()),
@@ -214,5 +217,163 @@ describe("only a pending purchase active", () => {
     render(<Dashboard />);
     expect(screen.queryByText(en.common.noPortfolioTitle)).toBeNull();
     expect(screen.getByText(en.dashboard.subtitleDefault)).toBeTruthy();
+  });
+
+  it("Dashboard totals are today's: nothing owned yet (ADR 0156 leaves them)", () => {
+    load(activeOnly("future"), { route: "dashboard" });
+    render(<Dashboard />);
+    expect(screen.getByTestId("kpi-networth").textContent).toBe(
+      fmtCzk(D(0), { suffix: false }),
+    );
+    const ltv = tile(en.dashboard.portfolioLtv);
+    expect(ltv.textContent).toContain(fmtPct(D(0), 1));
+    expect(ltv.textContent).toContain(en.dashboard.badgeConservative);
+  });
+});
+
+/** The KPI tile whose label is `label` (the label may also head a table column). */
+function tile(label: string): HTMLElement {
+  const tiles = screen
+    .getAllByText(label)
+    .map((e) => e.closest<HTMLElement>(".tile"))
+    .filter((e) => e !== null);
+  expect(tiles).toHaveLength(1);
+  return tiles[0]!;
+}
+const hasTile = (label: string) =>
+  screen.queryAllByText(label).some((e) => e.closest(".tile") !== null);
+
+describe("a pending purchase (#126 item 1, ADR 0156)", () => {
+  const purchase = "15.03.2028";
+
+  it("Properties shows its purchase date and no figures", () => {
+    load(mixed, { route: "properties" });
+    render(<Properties />);
+    const row = screen.getByText("Future buy").closest("tr")!;
+    expect(within(row).getByText(en.properties.badgePending)).toBeTruthy();
+    expect(
+      within(row).getByText(en.properties.pendingPurchaseOn(purchase)),
+    ).toBeTruthy();
+    expect(within(row).queryByText(en.dashboard.badgeConservative)).toBeNull();
+    // Every figure column (LTV, net cash flow, DSCR, value, debt, equity, NOI) is "—".
+    const figures = Array.from(row.querySelectorAll("td")).slice(1, -1);
+    expect(figures.map((c) => c.textContent)).toEqual(Array(7).fill("—"));
+  });
+
+  it("an owned row keeps its figures", () => {
+    load(mixed, { route: "properties" });
+    render(<Properties />);
+    const row = screen.getByText("Dev unit").closest("tr")!;
+    expect(within(row).queryByText(en.properties.badgePending)).toBeNull();
+    // Value, debt, equity and NOI are figures, not "—".
+    const figures = Array.from(row.querySelectorAll("td")).slice(4, -1);
+    expect(figures).toHaveLength(4);
+    for (const c of figures) expect(c.textContent).toMatch(/\d/);
+  });
+
+  it("its detail page says it is not owned yet instead of the tiles", () => {
+    load(mixed, { route: "property", selectedPropertyId: "future" });
+    render(<PropertyDetail />);
+    const panel = screen
+      .getByText(pd.notOwnedTitle)
+      .closest<HTMLElement>(".panel")!;
+    expect(panel.textContent).toContain(purchase);
+    expect(panel.textContent).toContain(fmtCzk(D("6000000")));
+    expect(panel.textContent).toContain(fmtCzk(D("4200000")));
+    expect(hasTile(pd.marketValue)).toBe(false);
+    expect(screen.queryByText(en.dashboard.badgeConservative)).toBeNull();
+    // The projection charts stay: they show the years before the purchase as zero.
+    expect(screen.getByText(pd.chartValueVsDebtVsEquity)).toBeTruthy();
+    // The Data check stays, reduced to the own-cash finding (dataCheck.ts).
+    expect(screen.getByText(en.dataCheck.fundingUnknownFuture)).toBeTruthy();
+  });
+
+  it("an inactive pending row keeps both badges on the name's line, the date under it", () => {
+    const off: Portfolio = {
+      ...mixed,
+      properties: mixed.properties.map((p) =>
+        p.id === "future" ? { ...p, active: false } : p,
+      ),
+    };
+    load(off, { route: "properties" });
+    render(<Properties />);
+    const cell = screen.getByText("Future buy").closest("td")!;
+    expect(within(cell).getByText(en.properties.badgeInactive)).toBeTruthy();
+    expect(cell.lastElementChild?.textContent).toBe(
+      en.properties.pendingPurchaseOn(purchase),
+    );
+  });
+
+  it("a projection year that ends before the purchase keeps the panel, after the date too", () => {
+    // Bought 01.08.2028; 01.11.2028 rounds to year 2, which ends 07.06.2028 (ADR 0150).
+    const later: Portfolio = {
+      ...mixed,
+      properties: mixed.properties.map((p) =>
+        p.id === "future" ? { ...p, purchaseDate: isoDate("2028-08-01") } : p,
+      ),
+    };
+    load(later, {
+      route: "property",
+      selectedPropertyId: "future",
+      asOf: new Date(Date.UTC(2028, 10, 1)),
+    });
+    render(<PropertyDetail />);
+    expect(screen.getByText(pd.notOwnedTitle)).toBeTruthy();
+    expect(document.body.textContent).toContain(
+      pd.pendingPurchase("01.08.2028"),
+    );
+  });
+
+  it("a projection year still before the purchase keeps the panel", () => {
+    load(mixed, {
+      route: "property",
+      selectedPropertyId: "future",
+      asOf: new Date(Date.UTC(2027, 5, 7)),
+    });
+    render(<PropertyDetail />);
+    expect(screen.getByText(pd.notOwnedTitle)).toBeTruthy();
+  });
+
+  it("a projection year that holds the purchase shows the tiles, as the subtitle says", () => {
+    // 01.02.2028 rounds to year 2 (to 07.06.2028), which holds 15.03.2028 (ADR 0150).
+    load(mixed, {
+      route: "property",
+      selectedPropertyId: "future",
+      asOf: new Date(Date.UTC(2028, 1, 1)),
+    });
+    render(<PropertyDetail />);
+    expect(screen.queryByText(pd.notOwnedTitle)).toBeNull();
+    expect(hasTile(pd.marketValue)).toBe(true);
+    expect(document.body.textContent).toContain(pd.purchased(purchase));
+  });
+});
+
+describe("other lifecycle states keep their tiles (#276 item 1)", () => {
+  it("a developing property's detail page shows its tiles", () => {
+    load(mixed, { route: "property", selectedPropertyId: "dev" });
+    render(<PropertyDetail />);
+    expect(hasTile(pd.marketValue)).toBe(true);
+    expect(screen.queryByText(pd.notOwnedTitle)).toBeNull();
+  });
+
+  it("a debt-free property: hero shows no debt, LTV 0 % Conservative, no DSCR", () => {
+    const debtFree: Portfolio = {
+      ...activeOnly("javorova"),
+      mortgages: mixed.mortgages.filter((m) => m.propertyId !== "javorova"),
+    };
+    load(debtFree, { route: "dashboard" });
+    render(<Dashboard />);
+    const hero = tile(en.dashboard.netWorth);
+    expect(screen.getByTestId("kpi-networth").textContent).not.toBe(
+      fmtCzk(D(0), { suffix: false }),
+    );
+    // The foot reads the value as assets and a zero debt.
+    const foot = hero.querySelector(".foot")!.textContent;
+    const assets = foot.match(/^Assets (.+?) · /)![1]!;
+    expect(foot).toBe(en.dashboard.assetsDebtEquity(assets, fmtCzkM(D(0))));
+    const ltv = tile(en.dashboard.portfolioLtv);
+    expect(ltv.textContent).toContain(fmtPct(D(0), 1));
+    expect(ltv.textContent).toContain(en.dashboard.badgeConservative);
+    expect(tile(en.dashboard.portfolioDscr).textContent).toContain("—");
   });
 });

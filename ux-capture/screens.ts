@@ -1397,6 +1397,41 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "84-pending-property",
+    desc: "A future purchase: its Properties row and its page (ADR 0156)",
+    run: async (ux) => {
+      await boot(ux.page);
+      await nav(ux, "properties");
+      await ux.page
+        .getByRole("button", { name: ux.t.properties.addProperty })
+        .click();
+      const dialog = ux.page.getByRole("dialog");
+      const f = ux.t.propertyForm;
+      await dialog.getByLabel(f.name, { exact: true }).fill("Byt Lesní");
+      await dialog
+        .getByLabel(f.purchaseDate, { exact: true })
+        .fill("15.03.2028");
+      await dialog.getByLabel(f.purchasePrice, { exact: true }).fill("6000000");
+      await dialog
+        .locator(".modal-foot")
+        .getByRole("button", { name: f.addTitle })
+        .click();
+      await expect(dialog).toBeHidden();
+      const row = ux.page.locator("table.data tbody tr", {
+        hasText: "Byt Lesní",
+      });
+      await expect(
+        row.getByText(ux.t.properties.pendingPurchaseOn("15.03.2028")),
+      ).toBeVisible();
+      await ux.capture("84-properties-pending");
+      await row.getByRole("button", { name: "Byt Lesní" }).click();
+      await expect(
+        ux.page.getByText(ux.t.propertyDetail.notOwnedTitle),
+      ).toBeVisible();
+      await ux.capture("84-property-pending");
+    },
+  },
+  {
     id: "90-keyboard-focus",
     desc: "Keyboard-only: Tab order from page load, with focus screenshots",
     run: async (ux) => {
