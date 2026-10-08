@@ -201,7 +201,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0155](0155-lifecycle-states-on-the-pages.md)     | Lifecycle states on the pages: deactivated portfolio, inactive property, filter               | Accepted                                           | #127                                               |
 | [0156](0156-pending-purchase-display.md)          | A pending purchase shows no figures before it is owned                                        | Accepted                                           | #126, #276                                         |
 | [0157](0157-accessibility-batch.md)               | Keyboard and screen-reader batch: dropdown, dialog stack, headings, tabs, contrast            | Accepted                                           | #128, #276                                         |
-| [0158](0158-layouts-hold-in-czech-and-russian.md) | Layouts hold in Czech and Russian at the minimum window                                       | Proposed                                           | #134                                               |
+| [0158](0158-layouts-hold-in-czech-and-russian.md) | Layouts hold in Czech and Russian at the minimum window                                       | Accepted                                           | #134                                               |
 
 <!-- adr-index:end -->
 
