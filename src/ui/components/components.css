@@ -1928,8 +1928,9 @@ main.page:focus {
   gap: var(--s3);
 }
 /* Dense projection table: N/A flow cells and the period column. */
+/* --ink-soft, not --ink-faint: totals rows sit on --paper-2 (ADR 0157). */
 .proj-na {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 .proj-period {
   color: var(--ink-soft);
