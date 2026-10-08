@@ -1,6 +1,6 @@
 # 0159. Excel exports carry their context and open readable
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-08
 - Source: issue #123 (2026-10 code review, findings G2-2-03, R4-07, G2-2-13, G2-2-06,
   G2-2-05, G2-2-07); owner decision D9 (2026-10-08: option A, the whole batch); Track 11
