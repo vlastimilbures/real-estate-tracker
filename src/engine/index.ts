@@ -44,7 +44,6 @@ export {
 export { MAX_LOAN_TERM_MONTHS } from "./constants";
 export { basisDate, scheduledPrincipal } from "./growth";
 export {
-  blockChain,
   effectiveMaturity,
   propertySchedules,
   schedulesByProperty,
@@ -93,4 +92,9 @@ export type {
 export type { PortfolioOutputs } from "./outputs";
 export { applyScenario } from "./scenarios";
 export { validateInputs, validatePortfolio } from "./validate";
+export {
+  loanChainChanges,
+  type LoanChainChanges,
+  type StoppedLoanEvent,
+} from "./chainChanges";
 export { EngineInputError } from "./errors";
