@@ -1,6 +1,6 @@
 # 0160. CSV import explains how it meets stored loan events
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-08
 - Source: issue #116 (2026-10 code review, findings G1-5-02, G1-5-01, G1-5-04, G1-5-12);
   owner decision D7 (2026-10-08: option A, all four items); Track 11 PR 11.11
