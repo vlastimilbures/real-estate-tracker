@@ -154,6 +154,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- After a restore, the name of the safety backup (your undo copy) now stays on screen until
+  you dismiss it, as it does after Clear sample (ADR 0154, #136). Before, it went away
+  after 2.4 seconds. The outcome of a restore, Load sample, import or export now shows
+  at the top of whichever page you are on, so it is not lost when you leave
+  Settings → Backup while the action runs. A refused backup still lists its records.
+  Restoring, clearing or loading the sample clears the old "Sample cleared" notice and
+  the last import report, which described the old data. While a restore runs, the other
+  Backup buttons wait. Short confirmations use one toast duration, 4 seconds. A restore
+  from the startup error screen keeps naming the safety copy after Continue.
+
 - Every form now uses the same messages for a blank or mistyped field (ADR 0140, #125). The
   property and scenario forms used their own short messages ("Invalid number", "Invalid %",
   "≥ 1"); they now say what to type, e.g. "Enter a percentage, e.g. 4,5". The property form
