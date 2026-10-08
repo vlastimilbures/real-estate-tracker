@@ -194,7 +194,7 @@ export async function nav(ux: Ux, route: Route) {
 export async function openFirstProperty(ux: Ux) {
   await nav(ux, "properties");
   await ux.page.locator("table.data tbody tr td.left").first().click();
-  await expect(ux.page.locator(".panel h3").first()).toBeVisible();
+  await expect(ux.page.locator(".panel-head h2").first()).toBeVisible();
 }
 
 /** A `section.panel` by its heading text. */

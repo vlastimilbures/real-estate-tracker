@@ -71,7 +71,7 @@ export function SettingsPage() {
                 role="tab"
                 id={tabId(s.tab)}
                 aria-selected={active}
-                aria-controls={PANEL_ID}
+                aria-controls={active ? PANEL_ID : undefined}
                 tabIndex={active ? 0 : -1}
                 className={active ? "active" : ""}
                 onClick={() => setSettingsTab(s.tab)}

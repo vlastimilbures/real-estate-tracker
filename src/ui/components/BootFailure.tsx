@@ -125,8 +125,8 @@ export function BootFailure() {
   if (restored)
     return (
       <main>
+        <h1 className="sr-only">{APP_NAME}</h1>
         <div className="error-screen" role="alert">
-          <h1 className="sr-only">{APP_NAME}</h1>
           <p>
             {restored.ready
               ? t.backup.restored(restored.file)

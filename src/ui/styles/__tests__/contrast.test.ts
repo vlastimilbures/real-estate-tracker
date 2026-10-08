@@ -82,9 +82,10 @@ function ratio(fg: Rgba, bg: Rgba): number {
 /** The token a components.css rule colours its text with. */
 function ruleColour(selector: string): string {
   const esc = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const m = new RegExp(`${esc}\\s*\\{[^}]*color:\\s*var\\((--[\\w-]+)\\)`).exec(
-    componentsCss,
-  );
+  // `color:` as a declaration of its own, not the tail of `background-color:`.
+  const m = new RegExp(
+    `${esc}\\s*\\{(?:[^}]*;)?\\s*color:\\s*var\\((--[\\w-]+)\\)`,
+  ).exec(componentsCss);
   if (!m) throw new Error(`no colour for ${selector}`);
   return m[1]!;
 }
