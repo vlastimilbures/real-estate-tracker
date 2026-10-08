@@ -12,7 +12,7 @@ import {
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { D } from "../../../lib/money";
-import { fmtCzkM, fmtMultiple, fmtPct } from "../../../lib/format";
+import { fmtCzkM, fmtDate, fmtMultiple, fmtPct } from "../../../lib/format";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { compareKpiRows, type CompareResult } from "../compare";
@@ -142,7 +142,7 @@ describe("compareWorkbook — the numbers match the compare (acceptance)", () =>
       [
         "money",
         [
-          [2026, 0, 0, 0],
+          [2026, null, null, null], // ADR 0159: no opening-year flow
           [2027, -32835, -35589, -32835],
           [2056, 1463571, 1445654, 1463571],
         ],
@@ -168,7 +168,7 @@ describe("compareWorkbook — the numbers match the compare (acceptance)", () =>
       [
         "money",
         [
-          [2026, 0, 0, 0],
+          [2026, null, null, null], // ADR 0159: no opening-year flow
           [2027, -32034, -32801, -32034],
           [2056, 697747, 581073, 697747],
         ],
@@ -247,7 +247,10 @@ describe("compareWorkbook — n/a cells and notes", () => {
 
   it("notes: the lens first, then the rebased-returns footnote", () => {
     const s = keyFigures("real");
-    expect(s.notes[0]).toBe(en.projections.realTerms);
+    // ADR 0159: Real names the base date, as the Projections context line does.
+    expect(s.notes[0]).toBe(
+      en.projections.realTermsDated(fmtDate(assumptions.baseDate)),
+    );
     expect(s.notes).toContain(
       `* ${en.scenarios.rebasedReturnsFootnote("crash")}`,
     );
@@ -265,6 +268,17 @@ describe("compareWorkbook — n/a cells and notes", () => {
     const { sheets } = compareWorkbook(en, results, "nominal");
     for (const s of sheets.slice(1))
       expect(s.notes).toEqual([en.projections.nominalKc]);
+  });
+
+  // ADR 0159 (#123): a flow has no opening year, as in the projection export.
+  it("the net cash flow sheet leaves the opening year blank", () => {
+    const ncf = compareWorkbook(en, results, "nominal").sheets[2]!;
+    expect(ncf.rows[0]?.slice(1).map((c) => c.value)).toEqual([
+      null,
+      null,
+      null,
+    ]);
+    expect(ncf.rows[1]?.[1]?.value).not.toBeNull();
   });
 });
 

@@ -6,6 +6,8 @@ import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { portfolioProjection } from "../../../engine";
 import { projectionSeries, projectionColumns } from "../projection";
 import { en } from "../../../i18n/en";
+import { cs } from "../../../i18n/cs";
+import { fmtCzk, fmtMultiple, fmtPct } from "../../../lib/format";
 import { D, type Decimal } from "../../../lib/money";
 import {
   buildWorkbook,
@@ -50,7 +52,9 @@ describe("buildXlsx — projection sheet", () => {
 
   it("applies the number format of each column's kind", () => {
     const r = ws.getRow(2);
-    expect(r.getCell(colIdx("Value")).numFmt).toBe('#,##0" Kč"');
+    expect(r.getCell(colIdx("Value")).numFmt).toBe(
+      '#,##0" Kč";[Red](#,##0" Kč")',
+    );
     expect(r.getCell(colIdx("LTV")).numFmt).toBe(numFmt("percent"));
     expect(r.getCell(colIdx("DSCR")).numFmt).toBe(numFmt("multiple"));
   });
@@ -103,6 +107,49 @@ describe("buildXlsx — projection sheet", () => {
     expect(name.numFmt).toBe("@");
     expect(s.getRow(2).getCell(2).value).toBeNull();
     expect(s.getRow(1).getCell(1).numFmt).toBeUndefined();
+  });
+});
+
+// ADR 0159 (#123): no column opens as "####", the header row and Year column stay in view,
+// and a loss shows red in parentheses as on screen (CLAUDE.md §5).
+describe("buildXlsx — layout", () => {
+  for (const t of [en, cs]) {
+    it(`${t === en ? "en" : "cs"}: each column is as wide as its widest shown value`, async () => {
+      const cols = projectionColumns(t, assumptions.baseDate, rows);
+      const s = await sheet(cols, rows);
+      cols.forEach((c, i) => {
+        const shown = rows.map((r) => {
+          const v = c.value(r);
+          if (v === null) return "";
+          if (c.kind === "money") return fmtCzk(v as Decimal, { parens: true });
+          if (c.kind === "percent") return fmtPct(v as Decimal, 1);
+          if (c.kind === "multiple") return fmtMultiple(v as Decimal, 2);
+          return String(v);
+        });
+        const widest = Math.max(c.header.length, ...shown.map((x) => x.length));
+        expect(s.getColumn(i + 1).width, c.header).toBeGreaterThanOrEqual(
+          widest + 2,
+        );
+      });
+    });
+  }
+
+  it("caps a very long text column at 40", async () => {
+    const s = await sheet(
+      [{ header: "Name", kind: "text", value: (r: string) => r }],
+      ["x".repeat(100)],
+    );
+    expect(s.getColumn(1).width).toBe(40);
+  });
+
+  it("freezes the header row and the first column", () => {
+    expect(ws.views).toEqual([
+      expect.objectContaining({ state: "frozen", xSplit: 1, ySplit: 1 }),
+    ]);
+  });
+
+  it("a negative money cell shows red in parentheses", () => {
+    expect(numFmt("money")).toBe('#,##0" Kč";[Red](#,##0" Kč")');
   });
 });
 

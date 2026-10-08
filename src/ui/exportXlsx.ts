@@ -15,11 +15,15 @@ export async function exportTableXlsx<R>(opts: {
   sheetName: string;
   columns: XlsxColumn<R>[];
   rows: R[];
+  /** Lines under the table: what the screen shows around it (ADR 0159). */
+  notes?: string[];
 }): Promise<SaveOutcome> {
-  const { filename, sheetName, columns, rows } = opts;
+  const { filename, sheetName, columns, rows, notes } = opts;
   return exportWorkbookXlsx({
     filename,
-    sheets: [xlsxSheet({ name: sheetName, columns, rows })],
+    sheets: [
+      xlsxSheet({ name: sheetName, columns, rows, ...(notes && { notes }) }),
+    ],
   });
 }
 

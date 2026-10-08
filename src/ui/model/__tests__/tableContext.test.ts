@@ -3,6 +3,7 @@
 import { describe, it, expect } from "vitest";
 import {
   lensLabel,
+  projectionExportNotes,
   projectionsSubtitle,
   propertiesSubtitle,
 } from "../tableContext";
@@ -56,6 +57,7 @@ describe("projectionsSubtitle", () => {
   });
 });
 
+// ADR 0159 (#123): one lens label for every page and export.
 describe("lensLabel", () => {
   const baseDate = isoDate("2026-06-07");
 
@@ -66,5 +68,16 @@ describe("lensLabel", () => {
     expect(lensLabel(en, "real", baseDate)).toBe(
       "real terms (Kč at projection start 07.06.2026)",
     );
+  });
+});
+
+// ADR 0159 (#123): a projection export carries what the screen shows above the table.
+describe("projectionExportNotes", () => {
+  it("names the entity, then the page's context line", () => {
+    const baseDate = isoDate("2026-06-07");
+    expect(projectionExportNotes(en, "Portfolio", "real", baseDate)).toEqual([
+      "Portfolio",
+      projectionsSubtitle(en, "real", baseDate),
+    ]);
   });
 });

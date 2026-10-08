@@ -12,9 +12,13 @@ import {
   projectionColumns,
   shortPropertyName,
 } from "../model/projection";
-import { lensLabel, projectionsSubtitle } from "../model/tableContext";
+import {
+  lensLabel,
+  projectionExportNotes,
+  projectionsSubtitle,
+} from "../model/tableContext";
 import { exportTableXlsx } from "../exportXlsx";
-import { slug } from "../../lib/slug";
+import { exportFilename } from "../../lib/slug";
 import { useT } from "../hooks/useT";
 import { PortfolioStateNotice } from "../components/PortfolioStateNotice";
 import { portfolioState } from "../model/portfolioState";
@@ -54,21 +58,35 @@ export function Projections() {
       label: shortPropertyName(p.name),
     })),
   ];
-  const selected =
+  const property =
     entity === "portfolio"
-      ? all.portfolio
-      : (all.perProperty.find((p) => p.id === entity)?.projection ??
-        all.portfolio);
+      ? undefined
+      : all.perProperty.find((p) => p.id === entity);
+  const selected = property?.projection ?? all.portfolio;
   const rows = projectionSeries(selected, mode, assumptions);
   const entityLabel =
     options.find((o) => o.value === entity)?.label ?? t.projections.portfolio;
   const lens = lensLabel(t, mode);
+  // The file names the property by its full name, as Property detail does (ADR 0159).
   const exportProjection = () =>
     exportTableXlsx({
-      filename: `${slug(entityLabel)}-projection-${mode}.xlsx`,
+      filename: property
+        ? exportFilename(property.name, property.id, "projection", mode)
+        : exportFilename(
+            t.projections.portfolio,
+            "portfolio",
+            "projection",
+            mode,
+          ),
       sheetName: t.xlsx.sheetNames.projection,
       columns: projectionColumns(t, assumptions.baseDate, rows),
       rows,
+      notes: projectionExportNotes(
+        t,
+        property?.name ?? t.projections.portfolio,
+        mode,
+        assumptions.baseDate,
+      ),
     });
 
   return (

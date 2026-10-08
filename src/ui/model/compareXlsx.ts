@@ -32,11 +32,13 @@ export function compareWorkbook(
   mode: Mode,
 ): { filename: string; sheets: XlsxSheetCells[] } {
   const names = t.xlsx.sheetNames;
-  const lens = lensLabel(t, mode);
+  // Real names the base date its Kč are in: the opening year is the base-date point (D-22).
+  const lens = lensLabel(t, mode, results[0]?.projection[0]?.periodEnd);
   const chart = (
     name: string,
     kind: CellKind,
     pick: (y: ProjectionYear) => Decimal | null,
+    opts: { flow?: boolean } = {},
   ) =>
     xlsxSheet<ChartRow>({
       name,
@@ -52,7 +54,7 @@ export function compareWorkbook(
           value: (y) => tableValue(y[`s${i}`]),
         })),
       ],
-      rows: mergeCompareMetric(results, mode, pick),
+      rows: mergeCompareMetric(results, mode, pick, opts),
       notes: [lens],
     });
 
@@ -61,7 +63,9 @@ export function compareWorkbook(
     sheets: [
       keyFiguresSheet(t, results, mode, lens),
       chart(names.compareNetWorth, "money", (y) => y.equity),
-      chart(names.compareNetCashFlow, "money", (y) => y.netCashFlow),
+      chart(names.compareNetCashFlow, "money", (y) => y.netCashFlow, {
+        flow: true,
+      }),
       chart(names.compareLtv, "percent", (y) => y.ltv),
     ],
   };

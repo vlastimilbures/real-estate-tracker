@@ -77,7 +77,9 @@ export function CompareView({
 
   // Each scenario under the Nominal/Real lens, real by its own CPI (UX-055).
   const netWorthRows = mergeCompareMetric(results, mode, (y) => y.equity);
-  const cashFlowRows = mergeCompareMetric(results, mode, (y) => y.netCashFlow);
+  const cashFlowRows = mergeCompareMetric(results, mode, (y) => y.netCashFlow, {
+    flow: true,
+  });
   const ltvRows = mergeCompareMetric(results, mode, (y) => y.ltv);
   // Owner's loss next to the rebased returns of a crash at Today (ADR 0089).
   const footnote = compareFootnote(t, results);

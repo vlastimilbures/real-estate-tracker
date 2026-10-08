@@ -71,6 +71,20 @@ describe("mergeCompareMetric", () => {
     );
     expect(rows[10].s1).toBeLessThan(rows[10].s0!);
   });
+
+  // ADR 0159 (#123): a flow has no opening year, so the chart has no fake zero point.
+  it("a flow metric leaves the opening year empty; a balance keeps it", () => {
+    const flow = mergeCompareMetric(
+      [base, shocked],
+      "nominal",
+      (y) => y.netCashFlow,
+      { flow: true },
+    );
+    expect([flow[0].s0, flow[0].s1]).toEqual([null, null]);
+    expect(flow[1].s0).toBe(toNumber(base.projection[1].netCashFlow));
+    const balance = mergeCompareMetric([base], "nominal", (y) => y.equity);
+    expect(balance[0].s0).toBe(toNumber(base.projection[0].equity));
+  });
 });
 
 describe("compareKpiRows", () => {

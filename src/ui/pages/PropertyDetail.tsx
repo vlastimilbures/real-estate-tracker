@@ -42,9 +42,9 @@ import {
 } from "./PropertyEntityPanels";
 import { fmtDate } from "../../lib/format";
 import { projectionSeries, projectionColumns } from "../model/projection";
-import { lensLabel } from "../model/tableContext";
+import { lensLabel, projectionExportNotes } from "../model/tableContext";
 import { exportTableXlsx } from "../exportXlsx";
-import { slug } from "../../lib/slug";
+import { exportFilename } from "../../lib/slug";
 import { asOfView, asOfHint, propertyTilesForAsOf } from "../model/dashboard";
 import {
   amortizationColumns,
@@ -229,17 +229,20 @@ export function PropertyDetail() {
   };
   const exportProjection = () =>
     exportTableXlsx({
-      filename: `${slug(property.name)}-projection-${mode}.xlsx`,
+      filename: exportFilename(property.name, property.id, "projection", mode),
       sheetName: t.xlsx.sheetNames.projection,
       columns: projectionColumns(t, baseDate, series),
       rows: series,
+      notes: projectionExportNotes(t, property.name, mode, baseDate),
     });
+  // Always nominal and dated per row: the property's name is the only context (ADR 0159).
   const exportAmortization = () =>
     exportTableXlsx({
-      filename: `${slug(property.name)}-amortization.xlsx`,
+      filename: exportFilename(property.name, property.id, "amortization"),
       sheetName: t.xlsx.sheetNames.amortization,
       columns: amortizationColumns(t, out?.schedule ?? []),
       rows: out?.schedule ?? [],
+      notes: [property.name],
     });
 
   return (
