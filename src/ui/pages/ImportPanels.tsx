@@ -142,7 +142,10 @@ export function RefusedTable({ problems }: { problems: CsvImportProblem[] }) {
               </td>
               <td>{e.row}</td>
               <td className="left">{e.field ? <code>{e.field}</code> : "—"}</td>
-              <td className="left" style={{ color: "var(--negative)" }}>
+              <td
+                className="left cell-message"
+                style={{ color: "var(--negative)" }}
+              >
                 {e.problem.code === "unknownProperty"
                   ? p.errUnknownProperty(e.problem.value)
                   : e.problem.code === "storedEvent"
