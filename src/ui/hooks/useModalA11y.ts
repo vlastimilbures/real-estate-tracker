@@ -79,9 +79,11 @@ export function useModalA11y(
     return () => {
       document.removeEventListener("keydown", onKey);
       stack.splice(stack.indexOf(self), 1);
-      // Focus that left with the dialog's nodes falls back to <body>; only then return it.
+      // Return focus only when it is lost: fallen back to <body> with the dialog's nodes,
+      // or still inside the dialog (StrictMode's rehearsal cleanup, before a real close).
+      const active = document.activeElement;
       const lost =
-        !document.activeElement || document.activeElement === document.body;
+        !active || active === document.body || !!el?.contains(active);
       if (restoreFocus && lost && opener?.isConnected) opener.focus();
     };
   }, [trap, restoreFocus]); // constant per call site, so this runs once on mount

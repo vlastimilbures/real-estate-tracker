@@ -3,6 +3,7 @@
 // #128 R5-05 (ADR 0157): past five options the property selector is a listbox popover.
 // Opening it moves focus in, the options follow the listbox keyboard pattern (one Tab
 // stop, arrows, Home/End, Space and Enter), and Escape puts focus back on the trigger.
+import { StrictMode } from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -129,6 +130,38 @@ describe("PropertySelect dropdown, multi mode (#128 R5-05)", () => {
     expect(document.activeElement).toBe(
       screen.getByRole("button", { name: "Outside" }),
     );
+  });
+
+  // Review of #279: restoring focus to the trigger on a pointer close focused it
+  // before the clicked element, which can scroll the page back to the trigger.
+  it("never focuses the trigger on a click outside", async () => {
+    const user = userEvent.setup();
+    multi();
+    const t = screen.getByTestId("dashboard-filter-trigger");
+    await user.click(t);
+    const onFocus = vi.fn();
+    t.addEventListener("focus", onFocus);
+    await user.click(screen.getByRole("button", { name: "Outside" }));
+    expect(onFocus).not.toHaveBeenCalled();
+  });
+
+  it("returns focus to the trigger under StrictMode", async () => {
+    const user = userEvent.setup();
+    render(
+      <StrictMode>
+        <PropertySelect
+          mode="multi"
+          options={OPTIONS}
+          allLabel="All"
+          selected={[]}
+          onChange={() => {}}
+        />
+      </StrictMode>,
+    );
+    const t = screen.getByTestId("dashboard-filter-trigger");
+    await user.click(t);
+    await user.keyboard("{ArrowDown}{Escape}");
+    expect(document.activeElement).toBe(t);
   });
 
   it("names a multiple selection in the interface language", () => {

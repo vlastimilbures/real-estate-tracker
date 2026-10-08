@@ -2,6 +2,7 @@
 //
 // useModalA11y reads `onClose` through a ref: Escape calls the latest handler, and the
 // focus effect runs once on mount, not on every re-render with a fresh handler.
+import { StrictMode, useState } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -77,6 +78,49 @@ function Stack({
     </>
   );
 }
+
+// Review of #279: StrictMode (dev, E2E, ux-capture) runs the effect twice. The first
+// cleanup sees focus inside the dialog, not on <body>; focus must still go back to the
+// element that opened it.
+function Box({ onClose }: { onClose: () => void }) {
+  const ref = useModalA11y(onClose, { restoreFocus: true });
+  return (
+    <div ref={ref} role="dialog" aria-label="Box">
+      <button type="button">Inside</button>
+    </div>
+  );
+}
+
+function Opener() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        Open
+      </button>
+      {open && <Box onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+describe("useModalA11y focus restore", () => {
+  it("returns focus to the opener under StrictMode", async () => {
+    const user = userEvent.setup();
+    render(
+      <StrictMode>
+        <Opener />
+      </StrictMode>,
+    );
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Inside" }),
+    );
+    await user.keyboard("{Escape}");
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Open" }),
+    );
+  });
+});
 
 describe("useModalA11y dialog stack (#128 R5-14)", () => {
   it("one Escape closes only the top-most dialog", async () => {

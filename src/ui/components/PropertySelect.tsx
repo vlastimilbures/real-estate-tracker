@@ -134,10 +134,9 @@ function SinglePills({
 type Row = { key: string; label: string; checked: boolean; pick: () => void };
 
 /**
- * The open list (#128, ADR 0157). It mounts on open, so useModalA11y moves focus in and,
- * on Escape or a pick that closes it, puts focus back on the trigger. The options use a
- * roving tabindex (one Tab stop): ArrowUp/ArrowDown move, Home/End jump, Space and Enter
- * pick.
+ * The open list (#128, ADR 0157). It mounts on open, so useModalA11y moves focus in;
+ * Escape calls `onClose`. The options use a roving tabindex (one Tab stop):
+ * ArrowUp/ArrowDown move, Home/End jump, Space and Enter pick.
  */
 function ListboxPopover({
   id,
@@ -156,7 +155,7 @@ function ListboxPopover({
   onClose: () => void;
   search?: ReactNode;
 }) {
-  const ref = useModalA11y(onClose, { restoreFocus: true });
+  const ref = useModalA11y(onClose);
   const [active, setActive] = useState(initial);
   const optionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const current = Math.max(0, Math.min(active, rows.length - 1));
@@ -246,15 +245,22 @@ function Dropdown({
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const listId = useId();
   const close = useCallback(() => setOpen(false), []);
+  // Escape and a pick that closes the list hand focus back to the trigger. A click or Tab
+  // elsewhere does not: focus is already where the user put it (review of #279).
+  const closeToTrigger = useCallback(() => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  }, []);
   useClickOutside(rootRef, close);
   const picked = closeOnPick
     ? rows.map((r) => ({
         ...r,
         pick: () => {
           r.pick();
-          close();
+          closeToTrigger();
         },
       }))
     : rows;
@@ -271,6 +277,7 @@ function Dropdown({
       }}
     >
       <button
+        ref={triggerRef}
         type="button"
         className={triggerClass}
         aria-haspopup="listbox"
@@ -305,7 +312,7 @@ function Dropdown({
           rows={picked}
           initial={initial}
           multi={multi}
-          onClose={close}
+          onClose={closeToTrigger}
           search={search}
         />
       )}
