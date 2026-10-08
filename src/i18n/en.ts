@@ -486,7 +486,7 @@ export const en = {
     pendingPurchase: (d: string) => `pending — purchase ${d}`,
     notOwnedTitle: "Not owned yet",
     notOwnedHint:
-      "Figures start on the purchase date; the charts below show the years after it.",
+      "Its figures start once it is bought; until then the charts show 0.",
     asOf: (d: string) => `as of ${d}`,
     deactivated: "deactivated",
     deactivate: "Deactivate",

@@ -45,15 +45,20 @@ skip it. The pages showed those figures as if the flat were owned:
    hint `propertyDetail.notOwnedHint` replaces the four tiles. It lists the purchase date
    (`propertyForm.purchaseDate`), the price (`propertyDetail.acqPrice`) and the acquisition
    loan (`propertyDetail.acqLoan`, or `propertyDetail.acqLoanNone`), from the engine's
-   acquisition summary. The two projection charts stay. The as-of picker moves the page to
-   a year that holds the purchase, and the tiles come back.
+   acquisition summary. The two projection charts stay; they show 0 before the purchase.
+   Ownership follows ADR 0150: at a date by that date, in a projection year by the year's
+   end. So an as-of a few months after the purchase can still read a year that ends before
+   it, and the panel stays, as the subtitle (`propertyDetail.pendingPurchase`) says. An
+   as-of whose year holds the purchase brings the tiles back.
 5. **Unchanged on purpose.** A pending property keeps its Data check, which before the
    purchase date has only the own-cash finding (`dataCheck.ts`), and its loan warnings: the
    future loan is real data to get right before handover. The Dashboard with only pending
    purchases active shows today's totals (0 Kč, LTV 0 %), which are true at the date.
-6. **Tests.** `LifecycleStates.test.tsx` covers the pending row, the pending page before
-   and after the purchase year, a developing property's page, a debt-free Dashboard and the
-   only-pending Dashboard. Screen `84-pending-property` captures the row and the page.
+6. **Tests.** `LifecycleStates.test.tsx` covers the pending row (also inactive), the
+   pending page before, in and after the purchase year (including an as-of after the
+   purchase whose year ends before it), a developing property's page, a debt-free Dashboard
+   and the only-pending Dashboard. `pendingOwned.test.ts` checks `owned` on every basis
+   kind under both lenses. Screen `84-pending-property` captures the row and the page.
 
 ## Consequences
 

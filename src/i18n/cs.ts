@@ -462,7 +462,7 @@ export const cs: Dictionary = {
     purchased: (d) => `koupeno ${d}`,
     pendingPurchase: (d) => `čeká — koupě ${d}`,
     notOwnedTitle: "Zatím není ve vlastnictví",
-    notOwnedHint: "Čísla začínají datem koupě; grafy níže ukazují roky po něm.",
+    notOwnedHint: "Čísla začínají koupí; do té doby grafy ukazují 0.",
     asOf: (d) => `k ${d}`,
     deactivated: "deaktivováno",
     deactivate: "Deaktivovat",

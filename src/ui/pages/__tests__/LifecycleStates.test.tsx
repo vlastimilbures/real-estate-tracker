@@ -18,6 +18,7 @@ import { assumptions } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
 import { fmtCzk, fmtCzkM, fmtPct } from "../../../lib/format";
 import { D } from "../../../lib/money";
+import { isoDate } from "../../../engine";
 
 vi.mock("../../../lib/day", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/day")>()),
@@ -285,6 +286,42 @@ describe("a pending purchase (#126 item 1, ADR 0156)", () => {
     expect(screen.getByText(pd.chartValueVsDebtVsEquity)).toBeTruthy();
     // The Data check stays, reduced to the own-cash finding (dataCheck.ts).
     expect(screen.getByText(en.dataCheck.fundingUnknownFuture)).toBeTruthy();
+  });
+
+  it("an inactive pending row keeps both badges on the name's line, the date under it", () => {
+    const off: Portfolio = {
+      ...mixed,
+      properties: mixed.properties.map((p) =>
+        p.id === "future" ? { ...p, active: false } : p,
+      ),
+    };
+    load(off, { route: "properties" });
+    render(<Properties />);
+    const cell = screen.getByText("Future buy").closest("td")!;
+    expect(within(cell).getByText(en.properties.badgeInactive)).toBeTruthy();
+    expect(cell.lastElementChild?.textContent).toBe(
+      en.properties.pendingPurchaseOn(purchase),
+    );
+  });
+
+  it("a projection year that ends before the purchase keeps the panel, after the date too", () => {
+    // Bought 01.08.2028; 01.11.2028 rounds to year 2, which ends 07.06.2028 (ADR 0150).
+    const later: Portfolio = {
+      ...mixed,
+      properties: mixed.properties.map((p) =>
+        p.id === "future" ? { ...p, purchaseDate: isoDate("2028-08-01") } : p,
+      ),
+    };
+    load(later, {
+      route: "property",
+      selectedPropertyId: "future",
+      asOf: new Date(Date.UTC(2028, 10, 1)),
+    });
+    render(<PropertyDetail />);
+    expect(screen.getByText(pd.notOwnedTitle)).toBeTruthy();
+    expect(document.body.textContent).toContain(
+      pd.pendingPurchase("01.08.2028"),
+    );
   });
 
   it("a projection year still before the purchase keeps the panel", () => {

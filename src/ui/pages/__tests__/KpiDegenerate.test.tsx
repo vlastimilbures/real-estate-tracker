@@ -42,18 +42,7 @@ describe("no debt: no DSCR badge (ADR 0126)", () => {
     const p = debtFree.properties[0];
     const s = propertySnapshot(p, debtFree, assumptions);
     expect(s.dscr).toBeNull();
-    render(
-      <PropertySnapshotTiles
-        s={s}
-        chartRows={[]}
-        modeWord="nominal"
-        purchase={{
-          purchaseDate: p.purchaseDate,
-          price: p.purchasePrice,
-          loan: null,
-        }}
-      />,
-    );
+    render(<PropertySnapshotTiles s={s} chartRows={[]} modeWord="nominal" />);
     const dscr = tile(en.propertyDetail.dscr);
     expect(dscr.textContent).not.toContain("Short");
     expect(dscr.querySelector(".badge")).toBeNull();

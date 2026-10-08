@@ -214,7 +214,6 @@ export function Properties() {
                           </Badge>
                         </span>
                       )}
-                      {!p.owned && purchaseOn(p.propertyId)}
                       {!p.active && (
                         <span style={{ marginLeft: "var(--s2)" }}>
                           <Badge band="neutral">
@@ -222,6 +221,8 @@ export function Properties() {
                           </Badge>
                         </span>
                       )}
+                      {/* After both badges, so they stay on the name's line. */}
+                      {!p.owned && purchaseOn(p.propertyId)}
                     </td>
                     <td>
                       {fig(

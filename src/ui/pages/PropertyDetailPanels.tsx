@@ -57,7 +57,7 @@ export function PropertySnapshotTiles({
   chartRows: ChartRow[];
   modeWord: string;
   /** Shown instead of the tiles while `s` is not owned. */
-  purchase: NotOwned;
+  purchase?: NotOwned | undefined;
 }) {
   const t = useT();
   const pd = t.propertyDetail;
@@ -71,7 +71,11 @@ export function PropertySnapshotTiles({
   ];
   return (
     <>
-      {s.owned ? <SnapshotTiles s={s} /> : <NotOwnedPanel {...purchase} />}
+      {!s.owned && purchase ? (
+        <NotOwnedPanel {...purchase} />
+      ) : (
+        <SnapshotTiles s={s} />
+      )}
 
       <div className="chart-grid">
         <ChartCard
