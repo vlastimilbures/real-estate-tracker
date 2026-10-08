@@ -146,6 +146,20 @@ describe("a new block replaces the previous block's later events (G1-5-2)", () =
     ]);
   });
 
+  it("a maturity change in the handover month is listed, as the schedule replaces it (review P2)", async () => {
+    storeEvents({
+      recasts: [
+        { date: "2030-12-20", maturity: "2049-01-17" },
+        { date: "2031-01-17", maturity: "2049-01-17" },
+      ],
+    });
+    const p = await previewImport(sql, { mortgages: mortgages(SUCCESSOR) });
+    expect(p.items[0]?.replaces).toEqual([
+      { kind: "recast", date: "2030-12-20" },
+      { kind: "recast", date: "2031-01-17" },
+    ]);
+  });
+
   it("an event a later stored block already replaced is not listed again", async () => {
     await importCsv(sql, {
       mortgages: mortgages("Byt A,2036-01-17,1000000,5,0.04,,10,"),
@@ -216,7 +230,7 @@ describe("a block starting before the block in force (G1-5-2, probe 2b)", () => 
     expect(p.items[0]).not.toHaveProperty("replaces");
   });
 
-  it("without a stored base date neither note is planned", () => {
+  it("without stored assumptions neither note is planned", () => {
     storeEvents({ prepayments: [prepayment("2032-01-17")] });
     const all = (table: string) =>
       sql.db.prepare(`SELECT * FROM ${table} ORDER BY id`).all();

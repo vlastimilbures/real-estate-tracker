@@ -11,11 +11,13 @@
 import type { Sql, SqlStatement } from "../data/sql";
 import { insertStatement } from "../data/repositories";
 import {
+  rowToAssumptions,
   rowToHoldingCost,
   rowToLease,
   rowToMortgageBlock,
   rowToProperty,
   rowToValuation,
+  type AssumptionsRow,
   type HoldingCostRow,
   type LeaseRow,
   type MortgageBlockRow,
@@ -23,9 +25,9 @@ import {
   type ValuationRow,
 } from "../data/mappers";
 import {
-  blockChain,
-  isoDate,
+  loanChainChanges,
   validatePortfolio,
+  type Assumptions,
   type EngineValidationError,
   type MortgageBlock,
   type ValidationCode,
@@ -162,21 +164,19 @@ export interface ImportTables {
   valuations: ValuationRow[];
   leases: LeaseRow[];
   holding_costs: HoldingCostRow[];
-  /** The stored base date (ISO); without it the plan adds no loan-chain notes. */
-  baseDate?: string | undefined;
+  /** The stored assumptions; without them the plan adds no loan-chain notes. */
+  assumptions?: AssumptionsRow | undefined;
 }
 
 async function readTables(sql: Sql): Promise<ImportTables> {
-  const [properties, mortgage_blocks, valuations, leases, holding_costs, base] =
+  const [properties, mortgage_blocks, valuations, leases, holding_costs, a] =
     await Promise.all([
       sql.select<PropertyRow>("SELECT * FROM properties ORDER BY id"),
       sql.select<MortgageBlockRow>("SELECT * FROM mortgage_blocks ORDER BY id"),
       sql.select<ValuationRow>("SELECT * FROM valuations ORDER BY id"),
       sql.select<LeaseRow>("SELECT * FROM leases ORDER BY id"),
       sql.select<HoldingCostRow>("SELECT * FROM holding_costs ORDER BY id"),
-      sql.select<{ base_date: string }>(
-        "SELECT base_date FROM assumptions WHERE id = 1",
-      ),
+      sql.select<AssumptionsRow>("SELECT * FROM assumptions WHERE id = 1"),
     ]);
   return {
     properties,
@@ -184,7 +184,7 @@ async function readTables(sql: Sql): Promise<ImportTables> {
     valuations,
     leases,
     holding_costs,
-    baseDate: base[0]?.base_date,
+    assumptions: a[0],
   };
 }
 
@@ -256,58 +256,38 @@ function storedEventDate(
   return date && !Number.isNaN(date.getTime()) ? isoDay(date) : undefined;
 }
 
-const time = (d: Date) => d.getTime();
-
 /**
- * ADR 0160: what each added mortgage block does to its property's loan chain at the
- * base date (`blockChain`, D-27, D-43). A block outside the new chain starts before
- * the block in force: `noEffect`. A block that now takes over from a stored block
- * lists the stored block's prepayments and maturity changes it stops: dated after the
- * new start (on/before it still applies, as in `cutAt`) and not already stopped by the
- * stored block's previous successor.
+ * ADR 0160: what each added mortgage block does to its property's loan chain, as the
+ * engine's schedule sees it (`loanChainChanges`). A block the schedule does not use
+ * (it starts before the block in force) gets `noEffect`; a block that takes over from
+ * a stored block lists the stored prepayments and maturity changes it stops.
  */
 function noteChainEffects(
   added: Map<string, ImportItem>,
   stored: MortgageBlock[],
   merged: MortgageBlock[],
-  baseDate: Date,
+  assumptions: Assumptions,
 ): void {
   const properties = new Set([...added.values()].map((i) => i.propertyId));
   for (const propertyId of properties) {
     const mine = (b: MortgageBlock) => b.propertyId === propertyId;
-    const before = blockChain(stored.filter(mine), baseDate);
-    const after = blockChain(merged.filter(mine), baseDate);
-    for (const [id, item] of added)
-      if (item.propertyId === propertyId && !after.some((b) => b.id === id))
-        item.noEffect = true;
-    before.forEach((prev, k) => {
-      const i = after.findIndex((b) => b.id === prev.id);
-      // Still in the chain: its next block now; dropped: the new block in force.
-      const taker = i >= 0 ? after[i + 1] : after[0];
-      const item = taker && added.get(taker.id);
-      if (!taker || !item) return;
-      const until = before[k + 1]?.startDate;
-      const stops = (date: Date) =>
-        time(date) > time(taker.startDate) &&
-        (until === undefined || time(date) <= time(until));
-      const events = [
-        ...(prev.prepayments ?? []).map((p) => ({
-          kind: "prepayment" as const,
-          date: p.date,
-        })),
-        ...(prev.recasts ?? []).map((r) => ({
-          kind: "recast" as const,
-          date: r.date,
-        })),
-      ]
-        .filter((ev) => stops(ev.date))
-        .sort((a, b) => time(a.date) - time(b.date));
-      if (events.length > 0)
+    const { stopped, unused } = loanChainChanges(
+      stored.filter(mine),
+      merged.filter(mine),
+      assumptions,
+    );
+    for (const id of unused) {
+      const item = added.get(id);
+      if (item) item.noEffect = true;
+    }
+    for (const s of stopped) {
+      const item = added.get(s.by);
+      if (item)
         item.replaces = [
           ...(item.replaces ?? []),
-          ...events.map((ev) => ({ kind: ev.kind, date: isoDay(ev.date) })),
+          { kind: s.kind, date: isoDay(s.date) },
         ];
-    });
+    }
   }
 }
 
@@ -591,12 +571,12 @@ export function planImport(
             },
       );
     }
-    if (problems.length === 0 && addedBlocks.size > 0 && tables.baseDate)
+    if (problems.length === 0 && addedBlocks.size > 0 && tables.assumptions)
       noteChainEffects(
         addedBlocks,
         tables.mortgage_blocks.map(rowToMortgageBlock),
         merged.mortgages,
-        isoDate(tables.baseDate),
+        rowToAssumptions(tables.assumptions),
       );
   }
   const fingerprint = JSON.stringify({ items, statements });
