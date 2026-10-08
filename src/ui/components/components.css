@@ -1476,18 +1476,22 @@ table.chart-table tbody th.sticky-col {
   background: var(--brass);
 }
 
-.toast {
+/* The live region is always mounted (ADR 0154); fixed, so it never takes a slot in the
+   page's flex column, empty or not. */
+.toast-region {
   position: fixed;
   bottom: var(--s5);
   left: 50%;
   transform: translateX(-50%);
+  z-index: 50;
+}
+.toast {
   background: var(--ink);
   color: var(--paper);
   padding: var(--s3) var(--s5);
   border-radius: var(--r-md);
   box-shadow: var(--shadow-pop);
   font-size: 13px;
-  z-index: 50;
 }
 
 .record-form .form-hint {

@@ -40,7 +40,7 @@ beforeEach(() =>
       language: "en",
       route: "dashboard",
       settingsTab: "assumptions",
-      sampleClearedBackup: null,
+      notice: null,
       unsavedSources: [],
       unsavedChanges: false,
     });
@@ -128,7 +128,10 @@ describe("Clear sample dialog (ADR 0094)", () => {
     expect(clearSample).toHaveBeenCalledOnce();
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(useUiStore.getState().route).toBe("dashboard");
-    expect(useUiStore.getState().sampleClearedBackup).toBe("before.json");
+    expect(useUiStore.getState().notice).toEqual({
+      kind: "sampleCleared",
+      file: "before.json",
+    });
   });
 
   it("the Dashboard names the safety backup until dismissed", async () => {
@@ -137,13 +140,47 @@ describe("Clear sample dialog (ADR 0094)", () => {
         portfolio: empty,
         sample: { active: false, dismissed: false },
       });
-      useUiStore.setState({ sampleClearedBackup: "before.json" });
+      useUiStore.setState({
+        notice: { kind: "sampleCleared", file: "before.json" },
+      });
     });
     render(<Dashboard />);
     expect(screen.getByText(en.sample.cleared("before.json"))).toBeTruthy();
     await userEvent.click(
       screen.getByRole("button", { name: en.common.dismiss }),
     );
+    expect(screen.queryByText(en.sample.cleared("before.json"))).toBeNull();
+  });
+
+  it("Clear, then Load sample: the Dashboard shows only the sample banner (#136)", async () => {
+    const loadSample = vi.fn(() => {
+      usePortfolioStore.setState({
+        portfolio,
+        sample: { active: true, dismissed: false },
+      });
+      return Promise.resolve();
+    });
+    act(() => {
+      usePortfolioStore.setState({
+        portfolio: empty,
+        sample: { active: false, dismissed: false },
+        loadSample,
+      });
+      useUiStore.setState({
+        route: "settings",
+        settingsTab: "backup",
+        notice: { kind: "sampleCleared", file: "before.json" },
+      });
+    });
+    const { unmount } = render(<Settings />);
+    await userEvent.click(
+      screen.getByRole("button", { name: en.sample.loadAction }),
+    );
+    expect(loadSample).toHaveBeenCalledOnce();
+    unmount();
+
+    render(<Dashboard />);
+    expect(screen.getByText(en.sample.banner)).toBeTruthy();
     expect(screen.queryByText(en.sample.cleared("before.json"))).toBeNull();
   });
 

@@ -1,35 +1,31 @@
 // @vitest-environment jsdom
+//
+// useToast shows through the store (ADR 0154): the timer lives there, so unmounting the
+// page that raised a toast keeps it. Duration and restart: uiStoreOutcomes.test.ts.
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { useToast } from "../useToast";
+import { TOAST_MS, useUiStore } from "../../../state/uiStore";
 
 afterEach(() => vi.useRealTimers());
 
 describe("useToast", () => {
-  it("clears the message after the duration", () => {
+  it("shows the message in the store's toast", () => {
     vi.useFakeTimers();
-    const { result } = renderHook(() => useToast(1000));
+    const { result } = renderHook(() => useToast());
     act(() => result.current.showToast("Saved"));
-    expect(result.current.toast).toBe("Saved");
-    act(() => vi.advanceTimersByTime(1000));
-    expect(result.current.toast).toBeNull();
+    expect(useUiStore.getState().toast?.message).toBe("Saved");
+    act(() => vi.advanceTimersByTime(TOAST_MS));
+    expect(useUiStore.getState().toast).toBeNull();
   });
 
-  it("a newer toast restarts the timer instead of being cut short", () => {
+  it("unmounting the page keeps the toast until its time is up", () => {
     vi.useFakeTimers();
-    const { result } = renderHook(() => useToast(1000));
-    act(() => result.current.showToast("First"));
-    act(() => vi.advanceTimersByTime(800));
-    act(() => result.current.showToast("Second"));
-    act(() => vi.advanceTimersByTime(800));
-    expect(result.current.toast).toBe("Second");
-  });
-
-  it("unmounting cancels the pending timer", () => {
-    vi.useFakeTimers();
-    const { result, unmount } = renderHook(() => useToast(1000));
+    const { result, unmount } = renderHook(() => useToast());
     act(() => result.current.showToast("Bye"));
     unmount();
-    expect(vi.getTimerCount()).toBe(0);
+    expect(useUiStore.getState().toast?.message).toBe("Bye");
+    act(() => vi.advanceTimersByTime(TOAST_MS));
+    expect(useUiStore.getState().toast).toBeNull();
   });
 });

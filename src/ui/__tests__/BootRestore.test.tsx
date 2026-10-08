@@ -4,7 +4,7 @@
 // The screen offers Restore a backup…, which runs the same checked restore as Settings,
 // names the safety copy, and then lets the user into the app.
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BootFailure } from "../components/BootFailure";
 import { usePortfolioStore } from "../../state/portfolioStore";
@@ -39,7 +39,7 @@ const reloadFails = (real: Sql): Sql => ({
 });
 
 beforeEach(async () => {
-  act(() => useUiStore.setState({ language: "en" }));
+  act(() => useUiStore.setState({ language: "en", notice: null }));
   usePortfolioStore.setState({
     sql: null,
     portfolio: null,
@@ -85,6 +85,39 @@ describe("restore from the startup error screen (ROW_INVALID)", () => {
     await userEvent.click(button(en.boot.continue));
     expect(store().status).toBe("ready");
     expect(store().portfolio!.properties.length).toBeGreaterThan(0);
+  });
+
+  it("a Try again that fails again still names the safety copy (#136 review)", async () => {
+    usePortfolioStore.setState({ sql: reloadFails(db) });
+    await restoreFromScreen();
+    const named = /portfolio-before-restore-.*\.json/.exec(
+      screen.getByRole("alert").textContent ?? "",
+    )?.[0];
+    expect(named).toBeDefined();
+    // Try again: the notice is set before init, which unmounts this screen; a failed
+    // init mounts a new one.
+    act(() =>
+      useUiStore.getState().setNotice({ kind: "restored", file: named! }),
+    );
+    cleanup();
+
+    render(<BootFailure />);
+    expect(screen.getByRole("alert").textContent).toContain(named);
+    expect(button(en.app.tryAgain)).toBeDefined();
+  });
+
+  it("Continue keeps the safety copy's name in the app (#136)", async () => {
+    await restoreFromScreen();
+    const named = /portfolio-before-restore-.*\.json/.exec(
+      screen.getByRole("alert").textContent ?? "",
+    )?.[0];
+    expect(named).toBeDefined();
+
+    await userEvent.click(button(en.boot.continue));
+    expect(useUiStore.getState().notice).toEqual({
+      kind: "restored",
+      file: named,
+    });
   });
 
   it("Cancel goes back without restoring", async () => {

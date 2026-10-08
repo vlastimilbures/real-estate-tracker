@@ -21,6 +21,7 @@ import { BrandMark } from "./BrandMark";
 import { BackupHint } from "./BackupHint";
 import { SkipLink } from "./SkipLink";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { OutcomeRegions } from "./OutcomeRegions";
 import { fmtDate } from "../../lib/format";
 import { APP_NAME, LANGUAGES, type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
@@ -330,6 +331,7 @@ export function AppShell({
               onDismiss={clearError}
             />
           )}
+          <OutcomeRegions />
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>

@@ -54,12 +54,15 @@ async function pickEarlyDateBackup(ux: Ux) {
 }
 
 /**
- * Settings → Backup: exports the sample, edits the file and picks it for restore, up to
- * the confirm step that asks to restore anyway. The browser has no Tauri file dialog:
- * the `open_backup_file` and `write_app_backup` commands are answered the way the Rust
- * side does, after boot (the database adapter is chosen at boot).
+ * Settings → Backup: exports the sample, edits the file and picks it for restore. The
+ * browser has no Tauri file dialog: the `open_backup_file` and `write_app_backup`
+ * commands are answered the way the Rust side does, after boot (the database adapter
+ * is chosen at boot).
  */
-async function pickEditedBackup(ux: Ux, edit: (tables: BackupTables) => void) {
+async function chooseEditedBackup(
+  ux: Ux,
+  edit: (tables: BackupTables) => void,
+) {
   await boot(ux.page);
   await settingsTab(ux, "backup");
   const download = ux.page.waitForEvent("download");
@@ -81,6 +84,11 @@ async function pickEditedBackup(ux: Ux, edit: (tables: BackupTables) => void) {
     };
   }, JSON.stringify(backup));
   await ux.page.getByRole("button", { name: ux.t.backup.chooseFile }).click();
+}
+
+/** `chooseEditedBackup` up to the confirm step that asks to restore anyway. */
+async function pickEditedBackup(ux: Ux, edit: (tables: BackupTables) => void) {
+  await chooseEditedBackup(ux, edit);
   await expect(
     ux.page.getByRole("button", { name: ux.t.backup.restoreAnyway }),
   ).toBeVisible();
@@ -268,6 +276,21 @@ export const SCREENS: Screen[] = [
         ux.page.getByRole("button", { name: ux.t.boot.continue }),
       ).toBeVisible();
       await ux.capture("00e-boot-restored");
+    },
+  },
+  {
+    id: "00f-boot-restored-app",
+    desc: "After Continue: the app keeps naming the safety copy until dismissed (ADR 0154)",
+    run: async (ux) => {
+      await bootRestoreConfirm(ux);
+      await ux.page
+        .getByRole("button", { name: ux.t.backup.restoreNow })
+        .click();
+      await ux.page.getByRole("button", { name: ux.t.boot.continue }).click();
+      await expect(
+        ux.page.getByText(/portfolio-before-restore-.*\.json/),
+      ).toBeVisible();
+      await ux.capture("00f-boot-restored-app", { fullPage: false });
     },
   },
   {
@@ -936,6 +959,8 @@ export const SCREENS: Screen[] = [
       // Re-open the page: with saved scenarios the presets start collapsed (ADR 0106).
       await nav(ux, "dashboard");
       await nav(ux, "scenarios");
+      // The toast outlives a page change (ADR 0154); this screen shows the page.
+      await expect(ux.page.locator(".toast")).toBeHidden({ timeout: 10_000 });
       await ux.capture("42-scenarios-compare");
     },
   },
@@ -953,6 +978,8 @@ export const SCREENS: Screen[] = [
       });
       await delta.click();
       await expect(delta).toHaveAttribute("aria-pressed", "true");
+      // The toast outlives a page change (ADR 0154); this screen shows the page.
+      await expect(ux.page.locator(".toast")).toBeHidden({ timeout: 10_000 });
       await ux.capture("43-scenarios-compare-delta");
     },
   },
@@ -1153,6 +1180,33 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "64b-settings-backup-refused",
+    desc: "Settings → Backup: a refused backup in the notice, with its records (ADR 0154)",
+    run: async (ux) => {
+      await chooseEditedBackup(ux, (tables) => {
+        const [lease] = tables.leases ?? [];
+        if (!lease) throw new Error("the sample has no lease");
+        lease.monthly_rent = "abc";
+      });
+      await expect(ux.page.getByText(ux.t.backup.errRowsInvalid)).toBeVisible();
+      await expect(ux.page.getByText(ux.t.backup.downloaded)).toBeHidden();
+      await ux.capture("64b-settings-backup-refused", { fullPage: false });
+    },
+  },
+  {
+    id: "64c-settings-backup-toast",
+    desc: "Settings → Backup: the export's toast in the shell's live region (ADR 0154)",
+    run: async (ux) => {
+      await boot(ux.page);
+      await settingsTab(ux, "backup");
+      await ux.page
+        .getByRole("button", { name: ux.t.backup.exportButton })
+        .click();
+      await expect(ux.page.locator(".toast")).toBeVisible();
+      await ux.capture("64c-settings-backup-toast", { fullPage: false });
+    },
+  },
+  {
     id: "65-about",
     desc: "About modal (opened from the native menu in the app; here via the UI store)",
     run: async (ux) => {
@@ -1303,6 +1357,8 @@ export const SCREENS: Screen[] = [
       await ux.capture("82-load-sample-loaded");
       await nav(ux, "dashboard");
       await expect(ux.page.getByText(ux.t.sample.banner)).toBeVisible();
+      // The toast outlives a page change (ADR 0154); this screen shows the page.
+      await expect(ux.page.locator(".toast")).toBeHidden({ timeout: 10_000 });
       await ux.capture("82-load-sample-banner");
     },
   },

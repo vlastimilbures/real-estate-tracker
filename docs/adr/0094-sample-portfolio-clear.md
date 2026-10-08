@@ -4,7 +4,9 @@
 - Date: 2026-10-03
 - Source: issue #18 (pre-release review 2026-10, finding A13); builds on ADR 0016 and ADR 0052
 - Amended by: [0127](0127-opaque-property-ids-sample-match.md) (§3, §5: the sample is matched by
-  id and seeded name; a restore clears the sample markers)
+  id and seeded name; a restore clears the sample markers),
+  [0154](0154-one-outcome-path.md) (the "sample cleared" notice shows on every page and is
+  cleared when the data is replaced)
 
 ## Context
 

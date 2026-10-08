@@ -5,6 +5,8 @@
 - Source: issue #115 (2026-10 code review, findings G2-5-01, G2-5-03, G2-5-06, G2-5-13);
   owner decision D6 (2026-10-07: upgrade message A, screen B, per-code heading); Track 11
   PR 11.4
+- Amended by: [0154](0154-one-outcome-path.md) (Continue keeps the safety copy's name in
+  the app)
 - Related: [0014](0014-rust-transaction-command.md) (migrations run through the Rust
   transaction command), [0064](0064-file-io-in-rust.md) §P8(2) (an open failure keeps the
   in-app error screen), [0072](0072-layer-map-platform-and-type-edges.md) (the UI reaches platform code through

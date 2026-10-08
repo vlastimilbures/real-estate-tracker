@@ -7,6 +7,7 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { invoke } from "@tauri-apps/api/core";
 import { BackupRestorePanel } from "../BackupRestore";
+import { OutcomeRegions } from "../../components/OutcomeRegions";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { logFailure } from "../../../state/diagnostics";
@@ -26,7 +27,7 @@ beforeEach(() => {
   vi.mocked(invoke).mockReset();
   loadSample.mockReset();
   act(() => {
-    useUiStore.setState({ language: "en" });
+    useUiStore.setState({ language: "en", notice: null, failure: null });
     usePortfolioStore.setState({
       status: "ready",
       portfolio: { ...portfolio, properties: [] },
@@ -41,7 +42,12 @@ describe("Backup & Restore failures (ADR 0147)", () => {
   it("a failed sample load is logged as SAMPLE (#122)", async () => {
     const e = new Error("disk full");
     loadSample.mockRejectedValue(e);
-    render(<BackupRestorePanel />);
+    render(
+      <>
+        <BackupRestorePanel />
+        <OutcomeRegions />
+      </>,
+    );
 
     await userEvent.click(
       screen.getByRole("button", { name: en.sample.loadAction }),
@@ -53,7 +59,12 @@ describe("Backup & Restore failures (ADR 0147)", () => {
 
   it("a failed restore pick is logged as RESTORE (#122)", async () => {
     vi.mocked(invoke).mockRejectedValue("Operation not permitted (os error 1)");
-    render(<BackupRestorePanel />);
+    render(
+      <>
+        <BackupRestorePanel />
+        <OutcomeRegions />
+      </>,
+    );
 
     await userEvent.click(
       screen.getByRole("button", { name: en.backup.chooseFile }),
@@ -65,7 +76,12 @@ describe("Backup & Restore failures (ADR 0147)", () => {
 
   it("a backup file that cannot be read says so (#122)", async () => {
     vi.mocked(invoke).mockRejectedValue("Operation not permitted (os error 1)");
-    render(<BackupRestorePanel />);
+    render(
+      <>
+        <BackupRestorePanel />
+        <OutcomeRegions />
+      </>,
+    );
 
     await userEvent.click(
       screen.getByRole("button", { name: en.backup.chooseFile }),

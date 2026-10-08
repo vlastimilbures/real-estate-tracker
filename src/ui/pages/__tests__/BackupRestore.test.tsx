@@ -3,11 +3,12 @@
 // #118 (R7-06): the restore flow on Settings → Backup. A picked backup asks for
 // confirmation; Cancel leaves the data alone, Restore replaces it and names the safety
 // backup; a refused file shows why.
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { invoke } from "@tauri-apps/api/core";
 import { BackupRestorePanel } from "../BackupRestore";
+import { OutcomeRegions } from "../../components/OutcomeRegions";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { logFailure } from "../../../state/diagnostics";
@@ -41,10 +42,20 @@ async function backupText(update?: string): Promise<string> {
   return JSON.stringify(backup);
 }
 
+/** The panel with the app shell's outcome regions, where its toasts and notices show. */
+function renderPanel() {
+  return render(
+    <>
+      <BackupRestorePanel />
+      <OutcomeRegions />
+    </>,
+  );
+}
+
 /** Render the panel and pick a backup file holding `text`. */
 async function pick(text: string) {
   vi.mocked(invoke).mockResolvedValue({ name: "backup.json", text });
-  render(<BackupRestorePanel />);
+  renderPanel();
   await userEvent.click(
     screen.getByRole("button", { name: en.backup.chooseFile }),
   );
@@ -65,8 +76,19 @@ beforeEach(() => {
       assumptions,
       sample: { active: false, dismissed: false },
       restoreBackup,
+      replacing: 0,
     } as never);
+    useUiStore.setState({
+      notice: null,
+      failure: null,
+      toast: null,
+      lastImport: null,
+    });
   });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("Restore a backup (#118)", () => {
@@ -114,7 +136,7 @@ describe("Restore a backup (#118)", () => {
 
   it("a file over the size limit is refused with the limit", async () => {
     vi.mocked(invoke).mockRejectedValue("BACKUP_TOO_LARGE");
-    render(<BackupRestorePanel />);
+    renderPanel();
 
     await userEvent.click(
       screen.getByRole("button", { name: en.backup.chooseFile }),
@@ -174,5 +196,90 @@ describe("Restore a backup (#118)", () => {
       ),
     ).toBeTruthy();
     expect(vi.mocked(logFailure).mock.calls[0]?.[0]).toBe("RESTORE");
+  });
+
+  it("the safety backup name stays until dismissed (#136)", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    restoreBackup.mockResolvedValue({ safetyBackup: "safety.json" });
+    vi.mocked(invoke).mockResolvedValue({
+      name: "backup.json",
+      text: await backupText(),
+    });
+    renderPanel();
+    await user.click(
+      screen.getByRole("button", { name: en.backup.chooseFile }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: en.backup.restoreNow }),
+    );
+    await screen.findByText(en.backup.restored("safety.json"));
+
+    act(() => vi.advanceTimersByTime(60_000));
+    expect(screen.getByText(en.backup.restored("safety.json"))).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: en.common.dismiss }));
+    expect(screen.queryByText(en.backup.restored("safety.json"))).toBeNull();
+  });
+
+  it("a restore clears the last import report (#136)", async () => {
+    restoreBackup.mockResolvedValue({ safetyBackup: "safety.json" });
+    act(() => useUiStore.setState({ lastImport: { items: [] } as never }));
+    await pick(await backupText());
+    await userEvent.click(
+      await screen.findByRole("button", { name: en.backup.restoreNow }),
+    );
+    await screen.findByText(en.backup.restored("safety.json"));
+    expect(useUiStore.getState().lastImport).toBeNull();
+  });
+
+  it("the other buttons wait while a restore runs (#136)", async () => {
+    let finish: (v: { safetyBackup: string }) => void = () => {};
+    restoreBackup.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    act(() =>
+      usePortfolioStore.setState({
+        sample: { active: true, dismissed: false },
+      }),
+    );
+    await pick(await backupText());
+    await userEvent.click(
+      await screen.findByRole("button", { name: en.backup.restoreNow }),
+    );
+
+    const exportButton = screen.getByRole<HTMLButtonElement>("button", {
+      name: en.backup.exportButton,
+    });
+    const clearButton = screen.getByRole<HTMLButtonElement>("button", {
+      name: en.sample.clearAction,
+    });
+    expect(exportButton.disabled).toBe(true);
+    expect(clearButton.disabled).toBe(true);
+
+    await act(async () => finish({ safetyBackup: "safety.json" }));
+    expect(exportButton.disabled).toBe(false);
+    expect(clearButton.disabled).toBe(false);
+  });
+
+  it("the buttons still wait after leaving and coming back mid-restore (#136 review)", () => {
+    act(() =>
+      usePortfolioStore.setState({
+        replacing: 1,
+        sample: { active: true, dismissed: false },
+      }),
+    );
+    renderPanel();
+    for (const name of [
+      en.backup.exportButton,
+      en.backup.chooseFile,
+      en.sample.clearAction,
+    ])
+      expect(
+        screen.getByRole<HTMLButtonElement>("button", { name }).disabled,
+      ).toBe(true);
   });
 });

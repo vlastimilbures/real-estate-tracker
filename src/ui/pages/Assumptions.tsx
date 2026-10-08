@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { isDirty } from "../model/dirty";
-import { Panel, Button, Toast, EmptyState } from "../components/primitives";
+import { Panel, Button, EmptyState } from "../components/primitives";
 import { FolderOpen } from "lucide-react";
 import { Field, TextInput } from "../components/forms";
 import { DateInput } from "../components/DateInput";
@@ -134,7 +134,7 @@ export function AssumptionsPanel() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   // A refusal on no field this form shows, listed in the error summary (ADR 0141).
   const [formError, setFormError] = useState<string | null>(null);
-  const { toast, showToast } = useToast();
+  const { showToast } = useToast();
   const setUnsavedChanges = useUiStore((s) => s.setUnsavedChanges);
   const [saving, setSaving] = useState(false);
   // A failed save keeps the input and says so until the next edit (ADR 0095).
@@ -353,7 +353,6 @@ export function AssumptionsPanel() {
           {saving ? t.common.saving : t.common.saveChanges}
         </Button>
       </div>
-      {toast && <Toast message={toast} />}
     </form>
   );
 }

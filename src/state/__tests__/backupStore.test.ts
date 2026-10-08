@@ -140,4 +140,24 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
       changedSince: true,
     });
   });
+
+  it("a restore clears the banner left by an earlier failed edit (#136)", async () => {
+    const file = await exportToJson(db, new Date());
+    usePortfolioStore.setState({ error: { kind: "other", message: "old" } });
+    await usePortfolioStore.getState().restoreBackup(file);
+    expect(usePortfolioStore.getState().error).toBeNull();
+  });
+
+  it("counts a restore in `replacing` until it settles (#136 review)", async () => {
+    const file = await exportToJson(db, new Date());
+    const running = usePortfolioStore.getState().restoreBackup(file);
+    expect(usePortfolioStore.getState().replacing).toBe(1);
+    await running;
+    expect(usePortfolioStore.getState().replacing).toBe(0);
+
+    await expect(
+      usePortfolioStore.getState().restoreBackup({} as never),
+    ).rejects.toThrow();
+    expect(usePortfolioStore.getState().replacing).toBe(0);
+  });
 });

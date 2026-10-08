@@ -4,6 +4,8 @@
 - Date: 2026-10-03
 - Source: issue #34 (pre-release review 2026-10, finding A10 and §6 "import dry run with
   separate additions and updates")
+- Amended by: [0154](0154-one-outcome-path.md) (the import report is also cleared when the
+  data is replaced)
 
 ## Context
 
