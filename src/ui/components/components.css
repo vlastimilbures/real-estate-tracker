@@ -566,7 +566,7 @@ table.data thead th {
    instead of pushing the risk columns under the pinned actions (ADR 0085, ADR 0158).
    The label is as wide as its text up to 12em, so a squeezed table cannot break it onto
    a third line, and a short label keeps its column narrow. A band badge (LTV, DSCR)
-   wraps its word under the figure when the table is squeezed. */
+   wraps its whole word under the figure when the table is squeezed (`bandPillParts`). */
 table.data.wrap-head thead th {
   vertical-align: bottom;
 }
@@ -578,8 +578,9 @@ table.data.wrap-head .th-label {
   text-wrap: balance;
 }
 table.data.wrap-head tbody td:not(.sticky-col) .badge {
-  white-space: normal;
-  text-wrap: balance;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 0.3em;
 }
 table.data thead th.left,
 table.data tbody td.left {

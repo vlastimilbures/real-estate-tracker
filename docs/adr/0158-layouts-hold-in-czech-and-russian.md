@@ -40,7 +40,8 @@ Owner, 2026-10-08 (D13 = A): fix the layouts so they do not depend on string len
 - **Properties list.** The word headers (`properties.colNetCashFlow`, `colValue`, `colDebt`,
   `colEquity`) are as wide as their text up to 12em and wrap to at most two balanced lines.
   A band badge in the LTV and DSCR columns wraps its word under the figure when the table is
-  squeezed (the Pending and Inactive badges in the name cell do not). The
+  squeezed: two lines at most, the figure and then the whole word (`bandPillParts`). The
+  Pending and Inactive badges in the name cell do not wrap. The
   metric headers (LTV, DSCR, NOI) are unchanged. The ADR 0085 promise (LTV and Net cash
   flow visible without scrolling at 1280×800 and at the minimum window, with a long name)
   now holds in English, Czech and Russian.

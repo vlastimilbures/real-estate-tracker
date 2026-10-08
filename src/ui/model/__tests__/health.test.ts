@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   bandPill,
+  bandPillParts,
   dscrBadge,
   dscrBand,
   dscrBandWord,
@@ -55,6 +56,16 @@ describe("band words", () => {
   it("the pill text joins the number and the word", () => {
     expect(bandPill("62,0 %", "Moderate")).toBe("62,0 % · Moderate");
     expect(bandPill("—", null)).toBe("—");
+  });
+  it("splits the pill into the figure and the whole word, the only wrap point (ADR 0158)", () => {
+    expect(bandPillParts("2,85x", "Covers debt")).toEqual([
+      "2,85x ·",
+      "Covers debt",
+    ]);
+    expect(bandPillParts("—", null)).toEqual(["—"]);
+    expect(bandPillParts("62,0 %", "Moderate").join(" ")).toBe(
+      bandPill("62,0 %", "Moderate"),
+    );
   });
 });
 

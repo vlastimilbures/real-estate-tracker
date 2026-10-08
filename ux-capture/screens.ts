@@ -656,6 +656,25 @@ export const SCREENS: Screen[] = [
       for (const h of heads) {
         expect(h.lines, `"${h.text}" header lines`).toBeLessThan(2.5);
       }
+      // A band badge wraps at most once: the figure, then the whole word (ADR 0158).
+      const badges = await ux.page
+        .locator("table.data tbody td:not(.sticky-col) .badge")
+        .evaluateAll((els) =>
+          els.map((el) => {
+            const s = getComputedStyle(el);
+            const lineHeight =
+              parseFloat(s.lineHeight) || 1.2 * parseFloat(s.fontSize);
+            const content =
+              el.clientHeight -
+              parseFloat(s.paddingTop) -
+              parseFloat(s.paddingBottom);
+            return { text: el.textContent, lines: content / lineHeight };
+          }),
+        );
+      expect(badges.length).toBeGreaterThan(0);
+      for (const b of badges) {
+        expect(b.lines, `"${b.text}" badge lines`).toBeLessThan(2.5);
+      }
       await ux.capture("14-properties-long-name");
     },
   },

@@ -71,5 +71,16 @@ export function dscrBadge(
 
 /** Badge text: the formatted number followed by its band word, when there is one. */
 export function bandPill(number: string, word: string | null): string {
-  return word ? `${number} · ${word}` : number;
+  return bandPillParts(number, word).join(" ");
+}
+
+/**
+ * The badge text in its unbreakable parts: the number with the separator, then the whole
+ * band word. A squeezed table wraps a badge only between them (ADR 0158).
+ */
+export function bandPillParts(
+  number: string,
+  word: string | null,
+): [string] | [string, string] {
+  return word ? [`${number} ·`, word] : [number];
 }
