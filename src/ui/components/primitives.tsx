@@ -1,5 +1,5 @@
 // Reusable presentation primitives. They format and render engine output — no maths.
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { X, FileSpreadsheet } from "lucide-react";
 import type { Decimal } from "../../lib/money";
@@ -14,6 +14,7 @@ import {
 import type { Band } from "../model/health";
 import { irrReasonText, type LeveredIrr } from "../model/irr";
 import { useT } from "../hooks/useT";
+import { useToast } from "../hooks/useToast";
 import type { SaveOutcome } from "../../state/platform";
 import { logFailure, messageOf } from "../../state/diagnostics";
 
@@ -201,17 +202,7 @@ export function ExportXlsxButton({
   const t = useT();
   const btnLabel = label ?? t.xlsx.exportToExcel;
   const [busy, setBusy] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
-
-  // Don't leak the dismiss timer (or setState after unmount).
-  useEffect(() => () => clearTimeout(timer.current), []);
-
-  const flash = (message: string) => {
-    setToast(message);
-    clearTimeout(timer.current);
-    timer.current = setTimeout(() => setToast(null), 2500);
-  };
+  const { toast, showToast: flash } = useToast(2500);
 
   const run = async () => {
     setBusy(true);
