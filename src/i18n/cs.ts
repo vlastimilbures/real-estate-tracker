@@ -701,8 +701,6 @@ export const cs: Dictionary = {
     amColPrepaid: "Mimořádně splaceno",
     amColPrepaymentFee: "Poplatek za mimořádnou splátku",
     amColEndBalance: "Konečný zůstatek",
-    realTermsLens: "reálné hodnoty",
-    nominalKcLens: "nominální Kč",
   },
 
   assumptions: {

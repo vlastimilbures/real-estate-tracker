@@ -710,8 +710,6 @@ export const ru: Dictionary = {
     amColPrepaid: "Досрочно погашено",
     amColPrepaymentFee: "Комиссия за досрочный платёж",
     amColEndBalance: "Конечный остаток",
-    realTermsLens: "реальные значения",
-    nominalKcLens: "номинальные Kč",
   },
 
   assumptions: {

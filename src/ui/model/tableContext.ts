@@ -34,15 +34,33 @@ export function propertiesSubtitle(
   ].join(" · ");
 }
 
+/** The lens in words; with `baseDate`, Real names the date its Kč are in (ADR 0159). */
+export function lensLabel(t: Dictionary, mode: Mode, baseDate?: Date): string {
+  if (mode === "nominal") return t.projections.nominalKc;
+  return baseDate
+    ? t.projections.realTermsDated(fmtDate(baseDate))
+    : t.projections.realTerms;
+}
+
 /** Projections: the money terms (Real names the base date) and the period of each column. */
 export function projectionsSubtitle(
   t: Dictionary,
   mode: Mode,
   baseDate: Date,
 ): string {
-  const lens =
-    mode === "real"
-      ? t.projections.realTermsDated(fmtDate(baseDate))
-      : t.projections.nominalKc;
-  return [t.projections.subtitle(lens), t.projections.periodNote].join(" · ");
+  return [
+    t.projections.subtitle(lensLabel(t, mode, baseDate)),
+    t.projections.periodNote,
+  ].join(" · ");
+}
+
+/** The note lines of a projection export: whose table it is, then the screen's context
+ *  line, so the file still says its lens and period once it leaves the app (ADR 0159). */
+export function projectionExportNotes(
+  t: Dictionary,
+  entityName: string,
+  mode: Mode,
+  baseDate: Date,
+): string[] {
+  return [entityName, projectionsSubtitle(t, mode, baseDate)];
 }

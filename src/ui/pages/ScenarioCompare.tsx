@@ -12,6 +12,7 @@ import {
 } from "../components/primitives";
 import { exportWorkbookXlsx } from "../exportXlsx";
 import { compareWorkbook } from "../model/compareXlsx";
+import { lensLabel } from "../model/tableContext";
 import { GitCompare } from "lucide-react";
 import { ChartCard, CzkLines, PctLines } from "../components/charts";
 import type { Scenario } from "../../engine";
@@ -76,15 +77,16 @@ export function CompareView({
 
   // Each scenario under the Nominal/Real lens, real by its own CPI (UX-055).
   const netWorthRows = mergeCompareMetric(results, mode, (y) => y.equity);
-  const cashFlowRows = mergeCompareMetric(results, mode, (y) => y.netCashFlow);
+  const cashFlowRows = mergeCompareMetric(results, mode, (y) => y.netCashFlow, {
+    flow: true,
+  });
   const ltvRows = mergeCompareMetric(results, mode, (y) => y.ltv);
   // Owner's loss next to the rebased returns of a crash at Today (ADR 0089).
   const footnote = compareFootnote(t, results);
   // Δ vs Base needs Base; without it the table shows values (ADR 0097).
   const base = compareBase(results);
   const shownView: CompareView = base ? view : "values";
-  const lensSub =
-    mode === "real" ? t.projections.realTerms : t.projections.nominalKc;
+  const lensSub = lensLabel(t, mode);
 
   return (
     <>

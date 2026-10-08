@@ -8,7 +8,14 @@
 // written as typed; text Excel could read as a formula gets the Text format (ADR 0145).
 import type { Worksheet } from "exceljs";
 import type { Decimal } from "../../lib/money";
-import { cellMoney, cellMultiple, cellPct } from "../../lib/format";
+import {
+  cellMoney,
+  cellMultiple,
+  cellPct,
+  fmtCzk,
+  fmtMultiple,
+  fmtPct,
+} from "../../lib/format";
 import { getActiveCurrency } from "../../lib/currency";
 
 /** How a column's value is shown — and therefore rounded and formatted. */
@@ -66,11 +73,14 @@ export function xlsxSheet<R>(sheet: XlsxSheet<R>): XlsxSheetCells {
   };
 }
 
-/** Excel number format per kind (CLAUDE.md §5 display conventions). */
+/** Excel number format per kind (CLAUDE.md §5 display conventions). Money has a negative
+ *  section: a loss is red in parentheses, as on screen (ADR 0159). */
 export function numFmt(kind: CellKind): string | undefined {
   switch (kind) {
-    case "money":
-      return `#,##0" ${getActiveCurrency().symbol}"`;
+    case "money": {
+      const amount = `#,##0" ${getActiveCurrency().symbol}"`;
+      return `${amount};[Red](${amount})`;
+    }
     case "percent":
       return "0.0%";
     case "rate":
@@ -121,6 +131,43 @@ function numberFor(kind: CellKind, v: Decimal | number): number {
   }
 }
 
+/** About how many characters a written cell shows, by the screen's formatters. */
+function shownLength(kind: CellKind, written: Written): number {
+  if (written === null) return 0;
+  if (written instanceof Date) return "dd.mm.yyyy".length;
+  if (typeof written === "string") return written.length;
+  switch (kind) {
+    case "money":
+      return fmtCzk(written, { parens: true }).length;
+    case "percent":
+      return fmtPct(written, 1).length;
+    case "rate":
+      return fmtPct(written, 2).length;
+    case "multiple":
+      return fmtMultiple(written, 2).length;
+    default:
+      return String(written).length;
+  }
+}
+
+const MIN_WIDTH = 10;
+const MAX_WIDTH = 40;
+
+/** Each column wide enough for its header and widest shown cell, so none opens as
+ *  "####"; capped so one long text does not push the table off screen (ADR 0159). */
+function columnWidths(sheet: XlsxSheetCells): number[] {
+  return sheet.headers.map((h, i) => {
+    const widest = Math.max(
+      h.length,
+      ...sheet.rows.map((cells) => {
+        const c = cells[i];
+        return c ? shownLength(c.kind, cellValue(c.kind, c.value)) : 0;
+      }),
+    );
+    return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, widest + 2));
+  });
+}
+
 /** Append one row: each cell's written value and number format. */
 function addCells(ws: Worksheet, cells: { kind: CellKind; value: Cell }[]) {
   const written = cells.map((c) => {
@@ -158,8 +205,12 @@ export async function buildWorkbook(
   const ExcelJS = (mod as unknown as { default?: typeof mod }).default ?? mod;
   const wb = new ExcelJS.Workbook();
 
-  for (const { name, headers, rows, notes } of sheets) {
-    const ws = wb.addWorksheet(name);
+  for (const sheet of sheets) {
+    const { name, headers, rows, notes } = sheet;
+    // The header row and first column stay in view, as the grid's sticky Year column.
+    const ws = wb.addWorksheet(name, {
+      views: [{ state: "frozen", xSplit: 1, ySplit: 1 }],
+    });
 
     const text = (value: string) => ({ kind: "text" as const, value });
     addCells(ws, headers.map(text)).font = { bold: true };
@@ -171,9 +222,8 @@ export async function buildWorkbook(
       for (const note of notes) addCells(ws, [text(note)]);
     }
 
-    // Reasonable column widths from header length.
-    headers.forEach((h, i) => {
-      ws.getColumn(i + 1).width = Math.max(10, h.length + 2);
+    columnWidths(sheet).forEach((width, i) => {
+      ws.getColumn(i + 1).width = width;
     });
   }
 

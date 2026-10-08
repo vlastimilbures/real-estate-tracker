@@ -744,8 +744,6 @@ export const en = {
     amColPrepaid: "Prepaid",
     amColPrepaymentFee: "Prepayment fee",
     amColEndBalance: "End balance",
-    realTermsLens: "real terms",
-    nominalKcLens: "nominal Kč",
   },
 
   assumptions: {

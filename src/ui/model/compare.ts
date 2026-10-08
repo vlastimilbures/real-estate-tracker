@@ -298,11 +298,13 @@ export function compareHint(t: Dictionary, mode: Mode): string {
 }
 
 /** One chart row per year with each scenario's metric under the lens, keyed s0, s1, …
- *  A null metric (LTV on no value, ADR 0133) stays null: a gap, not 0. */
+ *  A null metric (LTV on no value, ADR 0133) stays null: a gap, not 0. A `flow` metric
+ *  has no opening year, so year 0 is null too, as in the projection grid (ADR 0159). */
 export function mergeCompareMetric(
   results: CompareResult[],
   mode: Mode,
   pick: (y: ProjectionYear) => Decimal | null,
+  opts: { flow?: boolean } = {},
 ): Record<string, number | null>[] {
   return rowsOf(at(results, 0), mode).map((y, t) => {
     const row: Record<string, number | null> = {
@@ -310,7 +312,7 @@ export function mergeCompareMetric(
       calendarYear: y.calendarYear,
     };
     results.forEach((r, i) => {
-      const v = pick(at(rowsOf(r, mode), t));
+      const v = opts.flow && y.year <= 0 ? null : pick(at(rowsOf(r, mode), t));
       row[`s${i}`] = v === null ? null : toNumber(v);
     });
     return row;
