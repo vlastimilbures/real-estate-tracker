@@ -481,7 +481,9 @@ debt) for every property; when every loan retires within the horizon (as in the 
   prepayments with their fees (ADR 0109) and debt service paid before a future purchase
   (ADR 0124): Σ_{t=1..N} (netCF_t − cashOutside_t), where cashOutside_t = acquisition
   outflow_t − net refinance cash_t + prepaid_t + prepayment fees_t + pre-purchase debt
-  service_t (`cashOutsideNetCf` in `src/engine/kpis.ts`).
+  service_t (`cashOutsideNetCf` in `src/engine/kpis.ts`). The acquisition outflow is the
+  down payment plus the principal repaid before baseDate (ADR 0134), less a later first
+  loan's initial principal, which is cash in (§4.5).
   **Real** cumulative net cash flow = Σ_{t=1..N} (netCF_t − cashOutside_t) / CPI_t:
   each year is deflated by its own index, as in the real IRR (ADR 0087). The Dashboard and
   Scenario compare show the multiple and the cumulative cash flow of the lens; Σ principal

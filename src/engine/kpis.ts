@@ -248,8 +248,8 @@ function equityGrowth(
 
 /**
  * Cumulative net cash flow (Σ `flows`, see `kpisFrom`), the first calendar year with a
- * positive net cash flow, and the year from which the portfolio
- * stays debt-free (ADR 0126). A debt-free year only counts once the portfolio has carried debt (a
+ * positive net cash flow, and the year from which the portfolio stays debt-free (ADR
+ * 0126). A debt-free year only counts once the portfolio has carried debt (a
  * never-leveraged portfolio reports null). NB: greaterThan(ZERO), not isPositive() —
  * ZERO.isPositive() is true, and a year with no active property nets exactly 0 (ADR 0121).
  * The real cumulative cash flow deflates each year by its own CPI_t (ADR 0087).
@@ -416,9 +416,10 @@ export function kpisFrom(
   const cpi = buildCpiIndex(assumptions);
   const equity0 = at(proj, 0).equity;
   const equityN = at(proj, N).equity;
-  // Cash outside net cash flow: acquisitions out, net refinance cash in (D-47),
-  // prepayments and their fees out (ADR 0109), and the debt service paid before a
-  // future buy turns on (ADR 0124).
+  // Cash outside net cash flow: acquisitions out (down payment and the principal repaid
+  // before baseDate, less a later first loan's principal in; `acquisitionOutflows`), net
+  // refinance cash in (D-47), prepayments and their fees out (ADR 0109), and the debt
+  // service paid before a future buy turns on (ADR 0124).
   const refiCash = refinanceCash(portfolio, assumptions, schedules);
   const prePurchase = prePurchaseDebtService(
     portfolio,
