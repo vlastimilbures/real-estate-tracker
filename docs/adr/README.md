@@ -139,7 +139,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0093](0093-scenario-add-flow.md)                 | Scenario add flow: no duplicate presets, new scenarios join the compare                       | Accepted                                           | #48, #49, #15                                      |
 | [0094](0094-sample-portfolio-clear.md)            | Label the sample portfolio and clear it in one step                                           | Accepted · amended by 0127, 0154, 0155             | #18                                                |
 | [0095](0095-assumptions-save-row.md)              | Assumptions: sticky Save row, unsaved state and error summary                                 | Accepted                                           | #19                                                |
-| [0096](0096-csv-import-preview.md)                | CSV import preview: adds and updates before importing                                         | Accepted · amended by 0154                         | #34                                                |
+| [0096](0096-csv-import-preview.md)                | CSV import preview: adds and updates before importing                                         | Accepted · amended by 0154, 0160                   | #34                                                |
 | [0097](0097-compare-delta-view.md)                | Scenario compare: Values / Δ vs Base view                                                     | Accepted                                           | #53, #15                                           |
 | [0098](0098-mortgage-loan-type.md)                | Mortgage form: Standard vs Development switch and successor note                              | Accepted                                           | #20                                                |
 | [0099](0099-close-previous-open-record.md)        | Offer to close the previous open-ended valuation or lease                                     | Accepted · amended by 0144                         |                                                    |
@@ -203,6 +203,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0157](0157-accessibility-batch.md)               | Keyboard and screen-reader batch: dropdown, dialog stack, headings, tabs, contrast            | Accepted                                           | #128, #276                                         |
 | [0158](0158-layouts-hold-in-czech-and-russian.md) | Layouts hold in Czech and Russian at the minimum window                                       | Accepted                                           | #134                                               |
 | [0159](0159-excel-exports-carry-their-context.md) | Excel exports carry their context and open readable                                           | Accepted                                           | #123                                               |
+| [0160](0160-csv-import-and-stored-loan-events.md) | CSV import explains how it meets stored loan events                                           | Accepted                                           | #116                                               |
 
 <!-- adr-index:end -->
 

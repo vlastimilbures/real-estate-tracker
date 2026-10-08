@@ -124,6 +124,24 @@ describe("validateInputs", () => {
     );
   });
 
+  it("a draw error names the draw's index, like prepayments (ADR 0160)", () => {
+    const p = withLoan({
+      ...devBlock,
+      propertyId: "javorova",
+      draws: [
+        { date: isoDate("2027-01-01"), amount: money(1) },
+        { date: isoDate("2070-01-01"), amount: money(0) },
+      ],
+    });
+    const draws = validateInputs(p, assumptions)
+      .filter((e) => e.field === "draws")
+      .map((e) => [e.code, e.index]);
+    expect(draws).toEqual([
+      ["DRAW_AFTER_SCHEDULE_END", 1],
+      ["NON_POSITIVE_DRAW", 1],
+    ]);
+  });
+
   it("duplicate block starts and orphans", () => {
     const p: Portfolio = {
       ...portfolio,

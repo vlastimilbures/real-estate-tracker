@@ -127,6 +127,8 @@ describe("D-17: buildSchedule raises a typed error per invalid-loan code", () =>
       entity: "mortgage",
       id: "m-x",
       field,
+      // A draw error names its draw, like a loan event (ADR 0160).
+      ...(field === "draws" && { index: 0 }),
     });
     expect(e).toBeInstanceOf(Error);
     expect(e.name).toBe("EngineInputError");

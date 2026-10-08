@@ -712,6 +712,12 @@ table.data tbody td {
 table.data tbody tr:hover td {
   background: var(--hover-wash);
 }
+/* A sentence in a cell (an import refusal naming a saved loan event, ADR 0160) wraps
+   instead of widening the table past the panel. */
+table.data tbody td.cell-message {
+  white-space: normal;
+  min-width: 20em;
+}
 table.data tbody tr.is-strong td {
   font-weight: 600;
   background: var(--paper-2);

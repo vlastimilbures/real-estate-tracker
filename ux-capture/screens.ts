@@ -1256,6 +1256,69 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "55-import-loan-events",
+    desc: "Import preview: a new block lists the saved events it stops and asks first; an earlier start has no effect (ADR 0160)",
+    run: async (ux) => {
+      const p = await enterLoanEvents(ux);
+      await p
+        .locator(".form-actions")
+        .getByRole("button", { name: ux.t.common.saveChanges })
+        .click();
+      await expect(
+        panel(ux, ux.t.propertyDetail.loanSummaryTitle).getByText(
+          ux.t.propertyDetail.interestSaved,
+        ),
+      ).toBeVisible();
+      await nav(ux, "import");
+      await ux.page
+        .locator("input[type=file]")
+        .nth(3)
+        .setInputFiles(fixture("mortgages-successor.csv"));
+      await expect(
+        ux.page.getByText(ux.t.importPage.noEffectNote),
+      ).toBeVisible();
+      await ux.page
+        .getByRole("button", { name: ux.t.importPage.importScope(2, 2, 0) })
+        .click();
+      await expect(
+        ux.page.getByRole("button", { name: ux.t.importPage.confirmReplace }),
+      ).toBeVisible();
+      await ux.capture("55-import-loan-events");
+    },
+  },
+  {
+    id: "56-import-stored-event",
+    desc: "Import refused: a shorter term breaks a saved prepayment, named with its date (ADR 0160)",
+    run: async (ux) => {
+      // One prepayment only: a maturity change would move the loan's end with it.
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      const d = ux.t.propertyDetail;
+      const p = panel(ux, d.mortgagesTitle);
+      await p.getByRole("button", { name: ux.t.common.edit }).first().click();
+      await p.getByRole("button", { name: d.eventAddPrepayment }).click();
+      const row = p.getByRole("group", { name: d.eventPrepaymentRow(1) });
+      await row.getByLabel(d.eventDate, { exact: true }).fill("17.01.2031");
+      await row.getByLabel(d.eventAmount).fill("500000");
+      await p
+        .locator(".form-actions")
+        .getByRole("button", { name: ux.t.common.saveChanges })
+        .click();
+      await expect(
+        panel(ux, d.loanSummaryTitle).getByText(d.interestSaved),
+      ).toBeVisible();
+      await nav(ux, "import");
+      await ux.page
+        .locator("input[type=file]")
+        .nth(3)
+        .setInputFiles(fixture("mortgages-shorter-term.csv"));
+      await expect(
+        ux.page.locator("td.cell-message", { hasText: "17.01.2031" }),
+      ).toBeVisible();
+      await ux.capture("56-import-stored-event");
+    },
+  },
+  {
     id: "60-settings-assumptions",
     desc: "Settings → Assumptions",
     run: async (ux) => {

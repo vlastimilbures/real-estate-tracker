@@ -211,7 +211,8 @@ export function describeWriteError(
     case "input": {
       const texts = writeErrorTexts(t, e);
       return {
-        message: texts.map((x) => x.message).join(" · "),
+        // One line per message: two list items breaking one rule read once.
+        message: [...new Set(texts.map((x) => x.message))].join(" · "),
         field: texts[0]?.field,
       };
     }

@@ -76,9 +76,11 @@ describe("validation problem fields", () => {
         propertyId: "javorova",
         draws: [{ ...draw, ...d }],
       });
-    expect(dev({ date: bad })).toStrictEqual([onLoan("INVALID_DATE", "draws")]);
+    expect(dev({ date: bad })).toStrictEqual([
+      onLoan("INVALID_DATE", "draws", 0),
+    ]);
     expect(dev({ amount: money(NaN) })).toStrictEqual([
-      onLoan("NON_FINITE_NUMBER", "draws"),
+      onLoan("NON_FINITE_NUMBER", "draws", 0),
     ]);
     // A fractional term is rejected (ADR 0135); it gives no last draw date, so
     // the draw past its last payment reports nothing more.

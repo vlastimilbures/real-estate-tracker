@@ -149,11 +149,11 @@ matched to an existing record by its natural key:
 - **Changing a key date creates a new record.** A lease row with a new `start_date` is added
   as another lease; the old one stays. Edit or delete the old record in the app.
 - **A match updates only the CSV columns.** What the CSV does not hold is left as stored: a
-  property's active/inactive state and holding costs, and a mortgage block's draws and
-  interest-only date. An empty `contract_maturity_date` keeps the stored date, and an empty
-  or missing `own_cash`, `transaction_costs` or `initial_works` column keeps the stored
-  amount. A CSV can set or change an amount, never erase it: clear an amount in the
-  property form.
+  property's active/inactive state and holding costs, and a mortgage block's draws,
+  interest-only date, prepayments and maturity changes. An empty `contract_maturity_date`
+  keeps the stored date, and an empty or missing `own_cash`, `transaction_costs` or
+  `initial_works` column keeps the stored amount. A CSV can set or change an amount, never
+  erase it: clear an amount in the property form.
 - **Any other empty cell clears.** An empty optional cell clears the stored value (for
   example an empty `address`), except `contract_maturity_date` and the three funding columns
   as above.
@@ -162,6 +162,33 @@ matched to an existing record by its natural key:
 - **Nothing is deleted.** A record missing from the CSV stays in the app.
 - A new property gets an empty holding-costs record, so its costs follow the Assumptions
   defaults until you set them.
+
+### Mortgage rows and saved loan events
+
+Prepayments, maturity changes and development-loan draws are entered in the property's
+mortgage form, never in the CSV. A re-import keeps them, but a mortgage row can still affect
+them (ADR 0160):
+
+- **A change can make a saved event invalid.** For example, a shorter `loan_term_years` can
+  put a saved prepayment after the loan's last payment. The import is then refused, and the
+  refused-rows table names the event and its date, for example _"the saved prepayment of
+  17.01.2045"_. To keep the change, edit or remove that event in the mortgage form first, then
+  import again. Otherwise keep the old value in the CSV.
+- **A new block replaces the previous block's later events.** A row with a new `start_date`
+  adds a block (a refixation or a refinance) that takes over from the previous block on that
+  date. The previous block's prepayments and maturity changes dated after it stop applying,
+  and so does a maturity change in the month of the handover; a prepayment dated on or before
+  the new start is still paid. The preview lists the events that stop under the new row, as
+  the property page would warn about them, and the import asks you to confirm with **Import
+  anyway**. The saved events are not changed: delete the new block and they apply again. The
+  preview does not list a development loan's draws dated after the new start, which the new
+  block also replaces.
+- **A block that starts before the block in force is not used by the schedule.** The
+  amortization schedule starts from the block in force at the base date and follows later
+  blocks only. A row dated earlier (for example a corrected typo in `start_date`) is added as
+  another block, and the preview notes that the schedule does not use it. As the property's
+  earliest block it can still count as the acquisition loan. Delete the block you do not want
+  in the app.
 
 ## Preview and confirmation
 
@@ -176,7 +203,8 @@ written. For each file it lists how many records it will add, update and leave u
 Expand a list to see each record by name (`Byt Javorova`, or `Byt Javorova · 01.06.2026` for
 a dated record). The button states the scope, for example **Import 4 records (3 new, 1
 update)**. If the import updates existing records, pressing it asks you to confirm with
-**Overwrite 1 existing record**; an import that only adds records starts at once. When every
+**Overwrite 1 existing record**. An added mortgage block that stops saved loan events also
+asks first (see above); any other import that only adds records starts at once. When every
 row is unchanged there is nothing to import, and the button stays disabled.
 
 If your data changes between the preview and the import (for example you edited a property

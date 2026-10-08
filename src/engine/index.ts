@@ -92,4 +92,9 @@ export type {
 export type { PortfolioOutputs } from "./outputs";
 export { applyScenario } from "./scenarios";
 export { validateInputs, validatePortfolio } from "./validate";
+export {
+  loanChainChanges,
+  type LoanChainChanges,
+  type StoppedLoanEvent,
+} from "./chainChanges";
 export { EngineInputError } from "./errors";

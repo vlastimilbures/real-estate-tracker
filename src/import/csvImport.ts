@@ -11,11 +11,13 @@
 import type { Sql, SqlStatement } from "../data/sql";
 import { insertStatement } from "../data/repositories";
 import {
+  rowToAssumptions,
   rowToHoldingCost,
   rowToLease,
   rowToMortgageBlock,
   rowToProperty,
   rowToValuation,
+  type AssumptionsRow,
   type HoldingCostRow,
   type LeaseRow,
   type MortgageBlockRow,
@@ -23,10 +25,15 @@ import {
   type ValuationRow,
 } from "../data/mappers";
 import {
+  loanChainChanges,
   validatePortfolio,
+  type Assumptions,
+  type EngineValidationError,
+  type MortgageBlock,
   type ValidationCode,
   type ValidationEntity,
 } from "../engine";
+import { isoDay } from "../lib/day";
 import {
   type ParsedMortgageRow,
   type ParsedPropertyRow,
@@ -68,7 +75,26 @@ export interface ImportItem {
   date: string | null;
   /** Empty unless `kind` is `"update"`. */
   changes: FieldChange[];
+  /** An added mortgage block: the previous block's events it stops (ADR 0160). */
+  replaces?: ReplacedEvent[];
+  /** An added mortgage block that starts before the block in force (ADR 0160). */
+  noEffect?: true;
 }
+
+/** A stored prepayment or maturity change that a new block replaces (ADR 0109 §9). */
+export interface ReplacedEvent {
+  kind: "prepayment" | "recast";
+  /** ISO date. */
+  date: string;
+}
+
+/** The loan event lists only the mortgage form edits; a CSV keeps them (ADR 0109). */
+export type StoredEventList = "prepayments" | "recasts" | "draws";
+const STORED_EVENT_LISTS: readonly string[] = [
+  "prepayments",
+  "recasts",
+  "draws",
+];
 
 export interface CsvImportReport {
   upserted: {
@@ -91,7 +117,15 @@ export interface CsvImportPreview {
 export type CsvImportProblemCode =
   | { code: "unknownProperty"; value: string }
   /** The merged data breaks an engine input rule (D-17, D-27, D-37, D-42). */
-  | { code: "inputRule"; rule: ValidationCode };
+  | { code: "inputRule"; rule: ValidationCode }
+  /** The CSV row makes a stored loan event break a rule (ADR 0160). */
+  | {
+      code: "storedEvent";
+      list: StoredEventList;
+      /** The event's ISO date. */
+      date: string;
+      rule: ValidationCode;
+    };
 
 export interface CsvImportProblem {
   file: CsvFile;
@@ -130,18 +164,28 @@ export interface ImportTables {
   valuations: ValuationRow[];
   leases: LeaseRow[];
   holding_costs: HoldingCostRow[];
+  /** The stored assumptions; without them the plan adds no loan-chain notes. */
+  assumptions?: AssumptionsRow | undefined;
 }
 
 async function readTables(sql: Sql): Promise<ImportTables> {
-  const [properties, mortgage_blocks, valuations, leases, holding_costs] =
+  const [properties, mortgage_blocks, valuations, leases, holding_costs, a] =
     await Promise.all([
       sql.select<PropertyRow>("SELECT * FROM properties ORDER BY id"),
       sql.select<MortgageBlockRow>("SELECT * FROM mortgage_blocks ORDER BY id"),
       sql.select<ValuationRow>("SELECT * FROM valuations ORDER BY id"),
       sql.select<LeaseRow>("SELECT * FROM leases ORDER BY id"),
       sql.select<HoldingCostRow>("SELECT * FROM holding_costs ORDER BY id"),
+      sql.select<AssumptionsRow>("SELECT * FROM assumptions WHERE id = 1"),
     ]);
-  return { properties, mortgage_blocks, valuations, leases, holding_costs };
+  return {
+    properties,
+    mortgage_blocks,
+    valuations,
+    leases,
+    holding_costs,
+    assumptions: a[0],
+  };
 }
 
 /** UPDATE `table` SET <only these columns> WHERE id = ? — columns the CSV does not
@@ -197,6 +241,55 @@ function changesOf(stored: object, fields: object): FieldChange[] {
 
 const kindOf = (existing: unknown, changes: FieldChange[]): ImportKind =>
   !existing ? "add" : changes.length > 0 ? "update" : "unchanged";
+
+/** The ISO date of the stored loan event an input-rule error names, if it names one. */
+function storedEventDate(
+  blocks: MortgageBlock[],
+  e: EngineValidationError,
+): string | undefined {
+  if (e.entity !== "mortgage" || e.index === undefined) return undefined;
+  if (!STORED_EVENT_LISTS.includes(e.field ?? "")) return undefined;
+  const block = blocks.find((b) => b.id === e.id);
+  const list = block?.[e.field as StoredEventList] as
+    { date: Date }[] | undefined;
+  const date = list?.[e.index]?.date;
+  return date && !Number.isNaN(date.getTime()) ? isoDay(date) : undefined;
+}
+
+/**
+ * ADR 0160: what each added mortgage block does to its property's loan chain, as the
+ * engine's schedule sees it (`loanChainChanges`). A block the schedule does not use
+ * (it starts before the block in force) gets `noEffect`; a block that takes over from
+ * a stored block lists the stored prepayments and maturity changes it stops.
+ */
+function noteChainEffects(
+  added: Map<string, ImportItem>,
+  stored: MortgageBlock[],
+  merged: MortgageBlock[],
+  assumptions: Assumptions,
+): void {
+  const properties = new Set([...added.values()].map((i) => i.propertyId));
+  for (const propertyId of properties) {
+    const mine = (b: MortgageBlock) => b.propertyId === propertyId;
+    const { stopped, unused } = loanChainChanges(
+      stored.filter(mine),
+      merged.filter(mine),
+      assumptions,
+    );
+    for (const id of unused) {
+      const item = added.get(id);
+      if (item) item.noEffect = true;
+    }
+    for (const s of stopped) {
+      const item = added.get(s.by);
+      if (item)
+        item.replaces = [
+          ...(item.replaces ?? []),
+          { kind: s.kind, date: isoDay(s.date) },
+        ];
+    }
+  }
+}
 
 /** What an import would write, computed without touching the DB. */
 export interface ImportPlan extends CsvImportPreview {
@@ -316,7 +409,8 @@ export function planImport(
     return id;
   };
 
-  /** Update the row with the same natural key, or insert a new one. */
+  /** Update the row with the same natural key, or insert a new one. Returns the
+   *  plan item and the id of the row written. */
   function upsertChild<R extends { id: string; property_id: string }>(
     table: "mortgage_blocks" | "valuations" | "leases",
     entity: ValidationEntity,
@@ -326,10 +420,10 @@ export function planImport(
     fields: Partial<R>,
     at: { file: CsvFile; row: number },
     date: string,
-  ): void {
+  ): { item: ImportItem; id: string } {
     const existing = rows.find(match);
     const changes = existing ? changesOf(existing, fields) : [];
-    items.push({
+    const item: ImportItem = {
       ...at,
       kind: kindOf(existing, changes),
       propertyId: fresh.property_id,
@@ -337,7 +431,8 @@ export function planImport(
         db.properties.find((p) => p.id === fresh.property_id)?.name ?? "",
       date,
       changes,
-    });
+    };
+    items.push(item);
     // A stored row whose date was edited after an earlier import keeps the id generated
     // from its old date; suffix a fresh id instead of clashing on the key (DR-137).
     let id = fresh.id;
@@ -350,8 +445,11 @@ export function planImport(
     );
     put(rows, row);
     origin.set(`${entity}:${row.id}`, at);
+    return { item, id: row.id };
   }
 
+  /** The mortgage blocks this import adds, by row id (ADR 0160). */
+  const addedBlocks = new Map<string, ImportItem>();
   for (const m of batch.mortgages ?? []) {
     const propId = resolve("mortgages", m.line, m.property_name);
     if (propId === undefined) continue;
@@ -367,7 +465,7 @@ export function planImport(
         contract_maturity_date: m.contract_maturity_date,
       }),
     };
-    upsertChild(
+    const { item, id } = upsertChild(
       "mortgage_blocks",
       "mortgage",
       db.mortgage_blocks,
@@ -391,6 +489,7 @@ export function planImport(
       { file: "mortgages", row: m.line },
       m.start_date,
     );
+    if (item.kind === "add") addedBlocks.set(id, item);
     report.upserted.mortgage_blocks++;
   }
 
@@ -450,13 +549,35 @@ export function planImport(
     };
     for (const e of validatePortfolio(merged)) {
       const at = origin.get(`${e.entity}:${e.id}`);
-      if (at)
-        problems.push({
-          ...at,
-          field: e.field ? snake(e.field) : "",
-          problem: { code: "inputRule", rule: e.code },
-        });
+      if (!at) continue;
+      // A stored event is not a CSV column: name the event, not a field (ADR 0160).
+      const date = storedEventDate(merged.mortgages, e);
+      problems.push(
+        date === undefined
+          ? {
+              ...at,
+              field: e.field ? snake(e.field) : "",
+              problem: { code: "inputRule", rule: e.code },
+            }
+          : {
+              ...at,
+              field: "",
+              problem: {
+                code: "storedEvent",
+                list: e.field as StoredEventList,
+                date,
+                rule: e.code,
+              },
+            },
+      );
     }
+    if (problems.length === 0 && addedBlocks.size > 0 && tables.assumptions)
+      noteChainEffects(
+        addedBlocks,
+        tables.mortgage_blocks.map(rowToMortgageBlock),
+        merged.mortgages,
+        rowToAssumptions(tables.assumptions),
+      );
   }
   const fingerprint = JSON.stringify({ items, statements });
   return { statements, problems, items, fingerprint, report };
