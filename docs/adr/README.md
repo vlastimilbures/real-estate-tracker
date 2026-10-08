@@ -107,7 +107,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0049](0049-czech-excel-csv.md)                   | Czech-Excel CSV files are rejected precisely                                                  | Accepted                                           | D-49, J-12, D-55                                   |
 | [0052](0052-restore-safety-backup.md)             | Restore safety backup                                                                         | Accepted · amended by 0123                         | D-52                                               |
 | [0053](0053-import-limits.md)                     | Import and restore size limits                                                                | Accepted                                           | D-53                                               |
-| [0057](0057-ux-capture-tool.md)                   | Permanent UX capture tool                                                                     | Accepted                                           | D-57                                               |
+| [0057](0057-ux-capture-tool.md)                   | Permanent UX capture tool                                                                     | Accepted · amended by 0157                         | D-57                                               |
 | [0058](0058-remove-currency-tab.md)               | Remove the Currency tab; CZK is locked                                                        | Accepted                                           | D-58, Q-04                                         |
 | [0063](0063-hardened-runtime-apple-silicon.md)    | Hardened runtime, Apple Silicon only, macOS 13+                                               | Accepted                                           | D-63, J-10, Q-05                                   |
 | [0064](0064-file-io-in-rust.md)                   | File IO in Rust commands                                                                      | Accepted                                           | D-64                                               |
@@ -200,6 +200,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0154](0154-one-outcome-path.md)                  | One outcome path: notices that follow the owner, one toast                                    | Accepted                                           | #136                                               |
 | [0155](0155-lifecycle-states-on-the-pages.md)     | Lifecycle states on the pages: deactivated portfolio, inactive property, filter               | Accepted                                           | #127                                               |
 | [0156](0156-pending-purchase-display.md)          | A pending purchase shows no figures before it is owned                                        | Accepted                                           | #126, #276                                         |
+| [0157](0157-accessibility-batch.md)               | Keyboard and screen-reader batch: dropdown, dialog stack, headings, tabs, contrast            | Proposed                                           | #128, #276                                         |
 
 <!-- adr-index:end -->
 

@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-01
 - Source IDs: D-57
+- Amended by: [0157](0157-accessibility-batch.md) (the axe scan adds the `best-practice`
+  rule set)
 
 ## Context
 
