@@ -119,7 +119,7 @@ describe("Properties long names and narrow windows (ADR 0085)", () => {
       p.colDebt,
       p.colEquity,
       p.colNoi,
-      "",
+      en.common.actions, // sr-only (ADR 0157)
     ]);
   });
 

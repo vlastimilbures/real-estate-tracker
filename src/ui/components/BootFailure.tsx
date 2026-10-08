@@ -10,7 +10,7 @@ import {
 import { revealDataDir } from "../../state/platform";
 import { useUiStore } from "../../state/uiStore";
 import { logFailure } from "../../state/diagnostics";
-import type { Dictionary } from "../../i18n";
+import { APP_NAME, type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { Button } from "./primitives";
 import { describeWriteError } from "../model/writeError";
@@ -120,95 +120,104 @@ export function BootFailure() {
 
   // After a restore the failure above no longer applies: name the safety copy, then go
   // on into the app (or, when the restored data cannot be loaded either, try again).
+  // Both screens are the page's main landmark with an h1 (ADR 0157); the restored
+  // screen has no title line, so its h1 is for screen readers only.
   if (restored)
     return (
-      <div className="error-screen" role="alert">
-        <p>
-          {restored.ready
-            ? t.backup.restored(restored.file)
-            : t.boot.restoredReloadFailed(restored.file)}
-        </p>
-        {revealFailed && <p className="error-text">{t.boot.revealFailed}</p>}
-        <div className="row" style={{ gap: "var(--s3)" }}>
-          {restored.ready ? (
-            <Button
-              variant="primary"
-              onClick={() => leave(restored.file, continueAfterRestore)}
-            >
-              {t.boot.continue}
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
-              onClick={() => leave(restored.file, () => void init())}
-            >
-              {t.app.tryAgain}
-            </Button>
-          )}
-          {folderButton}
+      <main>
+        <h1 className="sr-only">{APP_NAME}</h1>
+        <div className="error-screen" role="alert">
+          <p>
+            {restored.ready
+              ? t.backup.restored(restored.file)
+              : t.boot.restoredReloadFailed(restored.file)}
+          </p>
+          {revealFailed && <p className="error-text">{t.boot.revealFailed}</p>}
+          <div className="row" style={{ gap: "var(--s3)" }}>
+            {restored.ready ? (
+              <Button
+                variant="primary"
+                onClick={() => leave(restored.file, continueAfterRestore)}
+              >
+                {t.boot.continue}
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                onClick={() => leave(restored.file, () => void init())}
+              >
+                {t.app.tryAgain}
+              </Button>
+            )}
+            {folderButton}
+          </div>
         </div>
-      </div>
+      </main>
     );
 
   return (
-    <div className="error-screen" role="alert">
-      <span className="eyebrow">{t.app.dbErrorEyebrow}</span>
-      {startupError ? (
-        <>
-          {startupText(t, startupError).map((line) => (
-            <p key={line}>{line}</p>
-          ))}
-          {startupError.details.length > 0 && (
-            <div className="error-screen-details">
-              <span>
-                {view.records
-                  ? t.dataErrors.detailsHeading
-                  : t.boot.detailsOther}
-              </span>
-              <ul>
-                {startupError.details.map((d) => (
-                  <li key={d}>
-                    <code>{d}</code>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </>
-      ) : (
-        error && <code>{describeWriteError(t, error).message}</code>
-      )}
-      {view.retry && <p>{t.app.bootRetryHint}</p>}
-      <small>{t.dataErrors.logHint}</small>
-      {revealFailed && <p className="error-text">{t.boot.revealFailed}</p>}
-      {failure && (
-        <div>
-          <p className="error-text">{failure.text}</p>
-          {failure.issues.length > 0 && <IssueTable issues={failure.issues} />}
-        </div>
-      )}
-      {pending ? (
-        <RestoreConfirm
-          pending={pending}
-          restoring={restoring}
-          onCancel={() => setPending(null)}
-          onConfirm={() => void confirmRestore()}
-        />
-      ) : (
-        <div className="row" style={{ gap: "var(--s3)" }}>
-          {view.retry && (
-            <Button variant="primary" onClick={() => void init()}>
-              {t.app.tryAgain}
-            </Button>
-          )}
-          {view.restore && (
-            <Button variant="primary" onClick={() => void chooseBackup()}>
-              {t.boot.restoreBackup}
-            </Button>
-          )}
-          {folderButton}
-        </div>
-      )}
-    </div>
+    <main>
+      <div className="error-screen" role="alert">
+        <h1 className="eyebrow">{t.app.dbErrorEyebrow}</h1>
+        {startupError ? (
+          <>
+            {startupText(t, startupError).map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+            {startupError.details.length > 0 && (
+              <div className="error-screen-details">
+                <span>
+                  {view.records
+                    ? t.dataErrors.detailsHeading
+                    : t.boot.detailsOther}
+                </span>
+                <ul>
+                  {startupError.details.map((d) => (
+                    <li key={d}>
+                      <code>{d}</code>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        ) : (
+          error && <code>{describeWriteError(t, error).message}</code>
+        )}
+        {view.retry && <p>{t.app.bootRetryHint}</p>}
+        <small>{t.dataErrors.logHint}</small>
+        {revealFailed && <p className="error-text">{t.boot.revealFailed}</p>}
+        {failure && (
+          <div>
+            <p className="error-text">{failure.text}</p>
+            {failure.issues.length > 0 && (
+              <IssueTable issues={failure.issues} />
+            )}
+          </div>
+        )}
+        {pending ? (
+          <RestoreConfirm
+            pending={pending}
+            restoring={restoring}
+            onCancel={() => setPending(null)}
+            onConfirm={() => void confirmRestore()}
+          />
+        ) : (
+          <div className="row" style={{ gap: "var(--s3)" }}>
+            {view.retry && (
+              <Button variant="primary" onClick={() => void init()}>
+                {t.app.tryAgain}
+              </Button>
+            )}
+            {view.restore && (
+              <Button variant="primary" onClick={() => void chooseBackup()}>
+                {t.boot.restoreBackup}
+              </Button>
+            )}
+            {folderButton}
+          </div>
+        )}
+      </div>
+    </main>
   );
 }

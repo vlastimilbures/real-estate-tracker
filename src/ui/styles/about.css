@@ -17,8 +17,12 @@
   flex-direction: column;
   gap: 2px;
 }
+/* A paragraph styled as a display line: the dialog's title is its heading. */
 .about-name {
   margin: 0;
+  font-family: var(--font-display);
+  font-weight: 460;
+  letter-spacing: -0.01em;
   font-size: 20px;
   line-height: 1.2;
   color: var(--ink);
@@ -42,7 +46,7 @@
   padding-top: var(--s4);
   border-top: 1px solid var(--hairline);
 }
-.about-section h4 {
+.about-section h3 {
   margin: 0 0 var(--s3);
   font-size: 14px;
   color: var(--ink);

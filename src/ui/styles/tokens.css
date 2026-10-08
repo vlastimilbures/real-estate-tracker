@@ -85,7 +85,7 @@
   --surface: #202427;
   --ink: #e9e6df;
   --ink-soft: #a8a49b;
-  --ink-faint: #8f8a80; /* WCAG-AA: 5.18:1 on paper, 4.3:1 on surface */
+  --ink-faint: #8f8a80; /* WCAG-AA: 5.18:1 on paper, 4.55:1 on surface */
   --hairline: #2c3033;
   --hairline-strong: #3a3f43;
   --surface-raised: #262b2e; /* inset/confirmation rows that sit above --surface */
@@ -101,13 +101,11 @@
   /* semantic */
   --positive: #66c08a;
   --positive-wash: rgba(102, 192, 138, 0.14);
-  --negative: #e07a6b;
-  --negative-wash: rgba(
-    224,
-    122,
-    107,
-    0.1
-  ); /* .badge.bad text 4.61:1 on surface (UX-025) */
+  /* WCAG-AA on every table row (ADR 0157, contrast.test.ts): 6.37:1 on surface, 5.33:1
+     on a hovered row, 4.74:1 on a milestone row; .badge.bad text 5.39:1 on surface,
+     4.52:1 on a hovered row. */
+  --negative: #ea8c7e;
+  --negative-wash: rgba(234, 140, 126, 0.1);
   --warn: #d9b873;
 
   /* chart series (brightened) */

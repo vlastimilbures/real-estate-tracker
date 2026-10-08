@@ -175,7 +175,7 @@ export function Panel({
         <div className="panel-head">
           <div className="panel-head-titles">
             {/* Focusable from script only: an in-page link lands here (ADR 0107). */}
-            {title && <h3 tabIndex={-1}>{title}</h3>}
+            {title && <h2 tabIndex={-1}>{title}</h2>}
             {hint && <span className="hint">{hint}</span>}
           </div>
           {action}
@@ -294,12 +294,16 @@ export function EmptyState({
   children,
   action,
   icon: Icon,
+  level = 2,
 }: {
   title: string;
   children?: ReactNode | undefined;
   action?: ReactNode | undefined;
   icon?: LucideIcon | undefined;
+  /** Its heading level: 2 right under the page title, 3 inside a titled panel. */
+  level?: 2 | 3;
 }) {
+  const Heading = level === 2 ? "h2" : "h3";
   return (
     <div className="empty">
       {Icon && (
@@ -307,7 +311,7 @@ export function EmptyState({
           <Icon size={20} strokeWidth={1.75} />
         </div>
       )}
-      <h3>{title}</h3>
+      <Heading>{title}</Heading>
       {children && <p>{children}</p>}
       {action}
     </div>

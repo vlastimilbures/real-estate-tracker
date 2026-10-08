@@ -18,6 +18,9 @@ interface ModalProps {
   /** A write is running: ✕ is disabled, and Esc and backdrop clicks are ignored, so the
    *  write's outcome shows in the dialog (ADR 0142). */
   busy?: boolean;
+  /** A long, read-only body that scrolls: it becomes a focusable region named by the
+   *  title, so the keyboard can scroll it (UX-071). */
+  scrollRegion?: boolean;
 }
 
 /**
@@ -36,6 +39,7 @@ export function Modal({
   onSubmit,
   dirty = false,
   busy = false,
+  scrollRegion = false,
 }: ModalProps) {
   // Esc and the backdrop are easy to hit by accident, so they never discard input.
   const dismiss = () => {
@@ -44,7 +48,16 @@ export function Modal({
   const dialogRef = useModalA11y(dismiss, { trap: true, restoreFocus: true });
   const content = (
     <>
-      <div className="modal-body">{children}</div>
+      <div
+        className="modal-body"
+        {...(scrollRegion && {
+          role: "region",
+          "aria-labelledby": titleId,
+          tabIndex: 0,
+        })}
+      >
+        {children}
+      </div>
       {footer && <div className="form-actions modal-foot">{footer}</div>}
     </>
   );
@@ -63,7 +76,7 @@ export function Modal({
         tabIndex={-1}
       >
         <div className="modal-head">
-          <h3 id={titleId}>{title}</h3>
+          <h2 id={titleId}>{title}</h2>
           <button
             type="button"
             className="icon-btn"

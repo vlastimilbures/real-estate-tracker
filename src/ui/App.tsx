@@ -86,27 +86,18 @@ export function App() {
     void init();
   }, [init]);
 
-  // Bridge the native macOS menu (App → About…) to the About modal. Guard with the
-  // Tauri-environment check (mirrors src/data/tauriSql.ts) so browser/E2E never crash on
-  // the unavailable event bridge.
-  useEffect(() => {
-    if (!isTauri()) return;
-    const unlisten = onMenuEvent("menu://about", () => {
-      useUiStore.getState().openAbout();
-    });
-    return () => {
-      void unlisten.then((off) => off());
-    };
-  }, []);
-
-  // Native menu shortcuts (UX-066): View ▸ page (⌘1–⌘5), File ▸ New Property… (⌘N) and
-  // Settings… (⌘,, UX-074). Ignored while a dialog is open, so a menu key never leaves a
-  // form behind.
+  // Native menu items (UX-066): App ▸ About…, View ▸ page (⌘1–⌘5), File ▸ New Property…
+  // (⌘N) and Settings… (⌘,, UX-074). Ignored while a dialog is open, so a menu key never
+  // leaves a form behind or stacks About over it (ADR 0157). Guarded by the Tauri check
+  // (mirrors src/data/tauriSql.ts) so browser/E2E never crash on the missing event bridge.
   useEffect(() => {
     if (!isTauri()) return;
     const dialogOpen = () =>
       document.querySelector('[aria-modal="true"]') !== null;
     const offs = [
+      onMenuEvent("menu://about", () => {
+        if (!dialogOpen()) useUiStore.getState().openAbout();
+      }),
       onMenuEvent("menu://navigate", (e) => {
         const route = menuRoute(e.payload);
         if (route && !dialogOpen()) useUiStore.getState().navigate(route);
@@ -139,10 +130,10 @@ export function App() {
 
   if (status === "loading" || status === "idle") {
     return (
-      <div className="loading-screen">
-        <span className="eyebrow">{t.app.loadingEyebrow}</span>
+      <main className="loading-screen">
+        <h1 className="eyebrow">{t.app.loadingEyebrow}</h1>
         <span>{t.app.loading}</span>
-      </div>
+      </main>
     );
   }
 

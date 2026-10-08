@@ -178,7 +178,9 @@ export function Properties() {
                   <th scope="col">
                     <MetricLabel term="noi">{t.properties.colNoi}</MetricLabel>
                   </th>
-                  <th scope="col" className="actions-col"></th>
+                  <th scope="col" className="actions-col">
+                    <span className="sr-only">{t.common.actions}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>

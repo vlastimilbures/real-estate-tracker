@@ -180,7 +180,8 @@ describe("Property detail section nav (ADR 0107)", () => {
     });
     render(<PropertyDetail />);
     const financing = document.getElementById("pd-financing")!;
-    expect(within(financing).getAllByRole("alert").length).toBeGreaterThan(0);
+    // A status, not an alert: standing state (ADR 0157).
+    expect(within(financing).getAllByRole("status").length).toBeGreaterThan(0);
   });
 
   it("lists only the record sections when stored data is invalid", () => {

@@ -16,11 +16,17 @@ function focusables(root: HTMLElement): HTMLElement[] {
  *
  * Options (UX-029), off by default so popovers keep their lighter behaviour:
  * - `trap`: Tab / Shift+Tab wrap inside the dialog instead of walking into the page.
- * - `restoreFocus`: on close, focus returns to the element that had it on open.
+ * - `restoreFocus`: on close, focus returns to the element that had it on open, unless
+ *   focus has already moved on (a click outside a popover keeps its target focused).
+ *
+ * Open dialogs and popovers form a stack (ADR 0157): Escape and the Tab trap act on the
+ * top-most one only, so one Escape closes one layer.
  *
  * `onClose` is read through a ref so an inline-arrow handler (a fresh identity each
  * render) doesn't re-run the focus effect on every keystroke — it runs once on mount.
  */
+const stack: symbol[] = [];
+
 export function useModalA11y(
   onClose: () => void,
   { trap = false, restoreFocus = false } = {},
@@ -34,11 +40,14 @@ export function useModalA11y(
   });
 
   useEffect(() => {
+    const self = Symbol("dialog");
+    stack.push(self);
     const opener =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
     function onKey(e: KeyboardEvent) {
+      if (stack.at(-1) !== self) return;
       if (e.key === "Escape") closeRef.current();
       else if (trap && e.key === "Tab") wrapTab(e);
     }
@@ -69,7 +78,13 @@ export function useModalA11y(
     (first ?? el)?.focus();
     return () => {
       document.removeEventListener("keydown", onKey);
-      if (restoreFocus && opener?.isConnected) opener.focus();
+      stack.splice(stack.indexOf(self), 1);
+      // Return focus only when it is lost: fallen back to <body> with the dialog's nodes,
+      // or still inside the dialog (StrictMode's rehearsal cleanup, before a real close).
+      const active = document.activeElement;
+      const lost =
+        !active || active === document.body || !!el?.contains(active);
+      if (restoreFocus && lost && opener?.isConnected) opener.focus();
     };
   }, [trap, restoreFocus]); // constant per call site, so this runs once on mount
 

@@ -41,7 +41,7 @@
   padding: var(--s4);
   background: var(--surface);
 }
-.guide-card h4 {
+.guide-card h3 {
   font-size: 13.5px;
   margin: 0 0 var(--s2);
   color: var(--ink);

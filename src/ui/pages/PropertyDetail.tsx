@@ -377,13 +377,14 @@ export function PropertyDetail() {
         <LeasesPanel propertyId={propertyId} rows={leases} />
       </div>
 
-      {/* The loan warnings sit with the blocks they describe (ADR 0107). */}
+      {/* The loan warnings sit with the blocks they describe (ADR 0107). They are
+          standing state, not news: a status, not an alert on every visit (ADR 0157). */}
       <div className="pd-section" id={sectionId("financing")}>
         <MortgagesPanel propertyId={propertyId} rows={mortgages} />
         {warnings.map((w, i) => (
           <div
             className="banner warn"
-            role="alert"
+            role="status"
             key={`${w.kind}-${w.block.id}-${i}`}
           >
             {loanWarningText(t, w, assumptions.postFixationResetRatePa)}

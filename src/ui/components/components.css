@@ -275,10 +275,10 @@
   gap: var(--s6);
   scroll-margin-top: calc(var(--topbar-h, 0px) + var(--s3));
 }
-.panel > .panel-head h3:focus {
+.panel > .panel-head h2:focus {
   outline: none;
 }
-.panel > .panel-head h3:focus-visible {
+.panel > .panel-head h2:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -286,7 +286,12 @@
   padding: var(--s4) var(--s5);
 }
 
+/* The page title is the page's h1 (ADR 0157); it keeps the look it had as a div. */
 .topbar .page-title {
+  font-family: inherit;
+  font-weight: inherit;
+  letter-spacing: normal;
+  color: inherit;
   font-size: 20px;
 }
 .topbar .page-sub {
@@ -399,7 +404,7 @@
   padding: var(--s4) var(--s5);
   border-bottom: 1px solid var(--hairline);
 }
-.panel > .panel-head h3 {
+.panel > .panel-head h2 {
   font-size: 15px;
 }
 .panel > .panel-head .hint {
@@ -914,6 +919,11 @@ table.data tbody tr:hover td.sticky-col {
   background: var(--paper-2);
   outline: none;
 }
+/* Arrow keys move focus between the rows (ADR 0157): mark it beyond the hover tint. */
+.property-select-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
 .property-select-row.checked {
   color: var(--accent);
 }
@@ -1322,7 +1332,7 @@ table.data tbody tr:hover td.sticky-col {
   gap: var(--s3);
   align-items: center;
 }
-.empty h3 {
+.empty :is(h2, h3) {
   font-family: var(--font-display);
   font-size: 18px;
 }
@@ -1541,6 +1551,12 @@ table.chart-table tbody th.sticky-col {
   text-align: left;
 }
 
+/* h2 since ADR 0157 (one level under the page h1); they keep the h3 size they had. */
+.getting-started h2,
+.error-boundary h2 {
+  font-size: 1.17em;
+}
+
 .getting-started ol {
   margin: var(--s2) 0 0;
   padding-left: var(--s5);
@@ -1655,7 +1671,7 @@ table.chart-table tbody th.sticky-col {
   padding: var(--s4) var(--s5);
   border-bottom: 1px solid var(--hairline);
 }
-.modal-head h3 {
+.modal-head h2 {
   font-size: 16px;
 }
 .modal-body {
@@ -1918,8 +1934,9 @@ main.page:focus {
   gap: var(--s3);
 }
 /* Dense projection table: N/A flow cells and the period column. */
+/* --ink-soft, not --ink-faint: totals rows sit on --paper-2 (ADR 0157). */
 .proj-na {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 .proj-period {
   color: var(--ink-soft);

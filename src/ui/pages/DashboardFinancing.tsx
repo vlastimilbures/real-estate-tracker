@@ -151,7 +151,7 @@ export function FinancingPanel({
           />
         </details>
       )}
-      <h4 className="panel-subhead">{d.financingUpcoming}</h4>
+      <h3 className="panel-subhead">{d.financingUpcoming}</h3>
       {m.events.length > 0 ? (
         <StatList
           rows={m.events.map((e) => ({

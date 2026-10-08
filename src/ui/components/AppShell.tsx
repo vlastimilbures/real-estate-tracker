@@ -299,7 +299,7 @@ export function AppShell({
       <div className="content">
         <header className="topbar" ref={topbarRef}>
           <div>
-            <div className="page-title">{title}</div>
+            <h1 className="page-title">{title}</h1>
             {subtitle && <div className="page-sub">{subtitle}</div>}
           </div>
           <div className="row">

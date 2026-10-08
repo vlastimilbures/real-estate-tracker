@@ -2,6 +2,7 @@
 //
 // useModalA11y reads `onClose` through a ref: Escape calls the latest handler, and the
 // focus effect runs once on mount, not on every re-render with a fresh handler.
+import { StrictMode, useState } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -36,5 +37,118 @@ describe("useModalA11y", () => {
     await user.click(screen.getByLabelText("Second"));
     rerender(<Dialog onClose={() => {}} />);
     expect(document.activeElement).toBe(screen.getByLabelText("Second"));
+  });
+});
+
+// #128 R5-14 (ADR 0157): open dialogs form a stack. Escape and the Tab trap act on the
+// top-most dialog only, so one Escape closes one dialog.
+function Named({
+  name,
+  onClose,
+  trap = false,
+}: {
+  name: string;
+  onClose: () => void;
+  trap?: boolean;
+}) {
+  const ref = useModalA11y(onClose, { trap });
+  return (
+    <div ref={ref} role="dialog" aria-label={name}>
+      <button type="button">{`${name} first`}</button>
+      <button type="button">{`${name} last`}</button>
+    </div>
+  );
+}
+
+function Stack({
+  showTop,
+  onBottom,
+  onTop,
+  trap = false,
+}: {
+  showTop: boolean;
+  onBottom: () => void;
+  onTop: () => void;
+  trap?: boolean;
+}) {
+  return (
+    <>
+      <Named name="Bottom" onClose={onBottom} trap={trap} />
+      {showTop && <Named name="Top" onClose={onTop} trap={trap} />}
+    </>
+  );
+}
+
+// Review of #279: StrictMode (dev, E2E, ux-capture) runs the effect twice. The first
+// cleanup sees focus inside the dialog, not on <body>; focus must still go back to the
+// element that opened it.
+function Box({ onClose }: { onClose: () => void }) {
+  const ref = useModalA11y(onClose, { restoreFocus: true });
+  return (
+    <div ref={ref} role="dialog" aria-label="Box">
+      <button type="button">Inside</button>
+    </div>
+  );
+}
+
+function Opener() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        Open
+      </button>
+      {open && <Box onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+describe("useModalA11y focus restore", () => {
+  it("returns focus to the opener under StrictMode", async () => {
+    const user = userEvent.setup();
+    render(
+      <StrictMode>
+        <Opener />
+      </StrictMode>,
+    );
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Inside" }),
+    );
+    await user.keyboard("{Escape}");
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Open" }),
+    );
+  });
+});
+
+describe("useModalA11y dialog stack (#128 R5-14)", () => {
+  it("one Escape closes only the top-most dialog", async () => {
+    const user = userEvent.setup();
+    const onBottom = vi.fn();
+    const onTop = vi.fn();
+    const { rerender } = render(
+      <Stack showTop onBottom={onBottom} onTop={onTop} />,
+    );
+    await user.keyboard("{Escape}");
+    expect(onTop).toHaveBeenCalledOnce();
+    expect(onBottom).not.toHaveBeenCalled();
+    rerender(<Stack showTop={false} onBottom={onBottom} onTop={onTop} />);
+    await user.keyboard("{Escape}");
+    expect(onBottom).toHaveBeenCalledOnce();
+    expect(onTop).toHaveBeenCalledOnce();
+  });
+
+  it("only the top-most dialog wraps Tab", async () => {
+    const user = userEvent.setup();
+    render(<Stack showTop trap onBottom={() => {}} onTop={() => {}} />);
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Top first" }),
+    );
+    await user.tab();
+    await user.tab();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Top first" }),
+    );
   });
 });
