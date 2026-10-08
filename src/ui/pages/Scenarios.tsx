@@ -19,6 +19,8 @@ import { CompareView } from "./ScenarioCompare";
 import { ScenarioForm } from "./ScenarioForm";
 import { StressPresetsPanel, ScenarioListPanel } from "./ScenariosPanels";
 import { useToast } from "../hooks/useToast";
+import { PortfolioStateNotice } from "../components/PortfolioStateNotice";
+import { portfolioState } from "../model/portfolioState";
 
 export function Scenarios() {
   const t = useT();
@@ -88,6 +90,7 @@ export function Scenarios() {
     );
   }
 
+  const state = portfolio ? portfolioState(portfolio) : null;
   const base = baseScenario(t);
   const selected: Scenario[] = [
     ...(baseOn ? [base] : []),
@@ -184,7 +187,13 @@ export function Scenarios() {
         reachText={reachText}
       />
 
-      <CompareView selected={selected} reachText={reachText} />
+      {/* No property, or none active: the saved scenarios stay editable, but there is
+          nothing to compare (ADR 0155). */}
+      {state && state.kind !== "ready" ? (
+        <PortfolioStateNotice state={state} />
+      ) : (
+        <CompareView selected={selected} reachText={reachText} />
+      )}
     </AppShell>
   );
 }

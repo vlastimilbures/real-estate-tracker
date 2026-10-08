@@ -257,6 +257,8 @@ export function ActivationBanner({
         >
           <Badge band="neutral">{t.propertyDetail.inactiveBadge}</Badge>
           <span>{t.propertyDetail.inactiveNote}</span>
+          {/* The page still runs its own figures: a preview before reactivating (ADR 0155). */}
+          <span>{t.propertyDetail.inactivePreviewNote}</span>
         </span>
         {error && (
           <p className="error-text" role="alert">

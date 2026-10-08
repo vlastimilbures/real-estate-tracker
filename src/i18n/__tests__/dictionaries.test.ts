@@ -206,8 +206,13 @@ describe("i18n dictionaries — plural forms", () => {
       // Out-of-range values a restore asks about (ADR 0148).
       "backup.warnOutOfRange",
     ];
-    // Error summary count (ADR 0095); the backup reminder's age (ADR 0110).
-    const common = ["common.fieldsNeedAttention", "shell.backupHintOld"];
+    // Error summary count (ADR 0095); every property deactivated (ADR 0155); the backup
+    // reminder's age (ADR 0110).
+    const common = [
+      "common.fieldsNeedAttention",
+      "common.allInactiveTitle",
+      "shell.backupHintOld",
+    ];
     // Financing & upcoming panel (ADR 0103).
     const financing = [
       "dashboard.financingResettingWithin",

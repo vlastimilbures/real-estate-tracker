@@ -17,11 +17,14 @@ export type PropertySection =
  *  output too, follows Financing (ADR 0119 §9). */
 export function propertySections(has: {
   overview: boolean;
+  /** False for a deactivated property: no data-entry nudges (ADR 0155). */
+  dataCheck: boolean;
   projection: boolean;
   amortization: boolean;
 }): PropertySection[] {
   return [
-    ...(has.overview ? (["overview", "dataCheck"] as const) : []),
+    ...(has.overview ? (["overview"] as const) : []),
+    ...(has.dataCheck ? (["dataCheck"] as const) : []),
     "records",
     "financing",
     ...(has.overview ? (["acquisition"] as const) : []),

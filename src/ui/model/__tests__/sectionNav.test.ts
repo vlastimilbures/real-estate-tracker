@@ -1,6 +1,7 @@
 // ADR 0107 (#23): Property detail's section nav lists the sections on the page, in page
 // order, and marks the one in view. ADR 0118 adds the Data check after the Overview;
-// ADR 0119 §9 the Acquisition section after Financing.
+// ADR 0119 §9 the Acquisition section after Financing. ADR 0155 drops the Data check for
+// a deactivated property.
 import { describe, it, expect } from "vitest";
 import { pickCurrent, propertySections, sectionId } from "../sectionNav";
 
@@ -9,6 +10,7 @@ describe("propertySections", () => {
     expect(
       propertySections({
         overview: true,
+        dataCheck: true,
         projection: true,
         amortization: true,
       }),
@@ -28,6 +30,7 @@ describe("propertySections", () => {
     expect(
       propertySections({
         overview: false,
+        dataCheck: false,
         projection: false,
         amortization: false,
       }),
@@ -35,12 +38,31 @@ describe("propertySections", () => {
     expect(
       propertySections({
         overview: true,
+        dataCheck: true,
         projection: true,
         amortization: false,
       }),
     ).toEqual([
       "overview",
       "dataCheck",
+      "records",
+      "financing",
+      "acquisition",
+      "holding",
+      "projection",
+    ]);
+  });
+
+  it("drops the Data check for a deactivated property (ADR 0155)", () => {
+    expect(
+      propertySections({
+        overview: true,
+        dataCheck: false,
+        projection: true,
+        amortization: false,
+      }),
+    ).toEqual([
+      "overview",
       "records",
       "financing",
       "acquisition",

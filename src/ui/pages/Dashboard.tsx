@@ -36,6 +36,8 @@ import { useT } from "../hooks/useT";
 import { useAsOf } from "../hooks/useAsOf";
 import { useRenderTiming } from "../hooks/useRenderTiming";
 import { SampleBanner } from "../components/SampleBanner";
+import { PortfolioStateNotice } from "../components/PortfolioStateNotice";
+import { portfolioState } from "../model/portfolioState";
 
 /** First steps for an empty portfolio, each linking to its page; no wizard (ADR 0094). */
 function GettingStarted() {
@@ -91,6 +93,17 @@ export function Dashboard() {
   const openProperty = useUiStore((s) => s.openProperty);
   const openSettings = useUiStore((s) => s.openSettings);
 
+  // Every property deactivated: say so, and point at Properties (ADR 0155).
+  const state = fullPortfolio ? portfolioState(fullPortfolio) : null;
+  if (state?.kind === "allInactive") {
+    return (
+      <AppShell title={t.dashboard.title} showLens={false}>
+        <SampleBanner />
+        <PortfolioStateNotice state={state} />
+      </AppShell>
+    );
+  }
+
   if (!engine || !view || allProperties.length === 0) {
     return (
       <AppShell title={t.dashboard.title} showLens={false}>
@@ -134,7 +147,9 @@ export function Dashboard() {
   const irr = leveredIrr(kpis, mode);
 
   const modeWord = mode === "real" ? t.common.realLower : t.common.nominalLower;
-  const filterActive = effectiveIds.length > 0;
+  // A filter that keeps every active property filters nothing (ADR 0155).
+  const filterActive =
+    effectiveIds.length > 0 && effectiveIds.length < allProperties.length;
   const flowLabels = monthlyFlowLabels(t, basis, assumptions.baseDate, s.asOf);
   const subtitle = dashboardSubtitle(
     t,

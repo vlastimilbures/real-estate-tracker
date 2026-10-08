@@ -106,10 +106,12 @@ export function PropertyDetail() {
   const [toggling, setToggling] = useState(false);
   const [activeError, setActiveError] = useState<string | null>(null);
   const { showToast } = useToast();
+  const property = store.portfolio?.properties.find((p) => p.id === propertyId);
   // The page's sections in order (ADR 0107); computed before the early return so the
-  // spy hook runs on every render.
+  // spy hook runs on every render. A deactivated property has no Data check (ADR 0155).
   const sections = propertySections({
     overview: out !== null,
+    dataCheck: out !== null && property?.active !== false,
     projection: out !== null,
     amortization: out !== null && out.schedule.length > 0,
   });
@@ -119,7 +121,6 @@ export function PropertyDetail() {
   // A Dashboard data check link lands on its section, or opens the property form, once
   // the page shows the property (ADR 0118). The form opens during render, as Properties'
   // ⌘N request does; the effect moves focus and clears the request.
-  const property = store.portfolio?.properties.find((p) => p.id === propertyId);
   const shown = property !== undefined;
   if (isFormTarget(propertyTarget) && shown && !editing)
     setEditing(propertyTarget);
@@ -208,10 +209,11 @@ export function PropertyDetail() {
 
   const baseDate = assumptions.baseDate;
   // Loan checks for every block from the one in force onward (UX-054).
-  // Skipped while the stored data breaks an engine rule (the checks would throw too).
-  const warnings = out
-    ? loanWarnings(mortgages, baseDate, out.eventOutcomes)
-    : [];
+  // Skipped while the stored data breaks an engine rule (the checks would throw too),
+  // and for a deactivated property: no data-entry nudge for a loan it no longer has
+  // (ADR 0155).
+  const warnings =
+    out && isActive ? loanWarnings(mortgages, baseDate, out.eventOutcomes) : [];
   const outlook = out?.financing
     ? loanOutlook(out.financing, mortgages, t.propertyDetail)
     : null;
@@ -348,7 +350,7 @@ export function PropertyDetail() {
         </div>
       )}
 
-      {out && (
+      {out && isActive && (
         <div className="pd-section" id={sectionId("dataCheck")}>
           <PropertyDataCheckPanel
             property={property}

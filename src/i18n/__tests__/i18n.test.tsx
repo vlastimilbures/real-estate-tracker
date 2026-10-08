@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { useT } from "../../ui/hooks/useT";
 import { csPlural, ruPlural, enPlural } from "../plural";
+import { getDict } from "..";
 import { useUiStore } from "../../state/uiStore";
 
 function Probe() {
@@ -50,5 +51,19 @@ describe("plural pickers", () => {
     expect(ruPlural(5, f)).toBe("строк");
     expect(ruPlural(11, f)).toBe("строк"); // exception: 11 is "many", not "one"
     expect(ruPlural(21, f)).toBe("строка");
+  });
+
+  it("counts deactivated properties in each language (ADR 0155)", () => {
+    const n = (lang: "en" | "cs" | "ru") =>
+      getDict(lang).common.allInactiveTitle;
+    expect(n("en")(1)).toBe("The only property is deactivated");
+    expect(n("en")(2)).toBe("All 2 properties are deactivated");
+    expect(n("cs")(1)).toBe("Jediná nemovitost je deaktivovaná");
+    expect(n("cs")(3)).toBe("Všechny 3 nemovitosti jsou deaktivované");
+    expect(n("cs")(6)).toBe("Všech 6 nemovitostí je deaktivováno");
+    expect(n("ru")(1)).toBe("Единственный объект деактивирован");
+    expect(n("ru")(3)).toBe("Все 3 объекта деактивированы");
+    expect(n("ru")(6)).toBe("Все 6 объектов деактивированы");
+    expect(n("ru")(21)).toBe("Все 21 объект деактивированы");
   });
 });
