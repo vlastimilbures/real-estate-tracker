@@ -1,6 +1,7 @@
 // Unified property selector: pill chips for small portfolios, dropdown past threshold.
 // Presentational only — no store, no maths.
-import { useState, useRef, useEffect } from "react";
+import type { ReactNode } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useModalA11y } from "../hooks/useModalA11y";
 import { useT } from "../hooks/useT";
 
@@ -94,113 +95,6 @@ function MultiPills({
   );
 }
 
-function MultiDropdown({
-  options,
-  allLabel,
-  selected,
-  onChange,
-  testId,
-}: MultiProps) {
-  const t = useT();
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const rootRef = useRef<HTMLDivElement>(null);
-  const panelRef = useModalA11y(() => setOpen(false));
-  useClickOutside(rootRef, () => setOpen(false));
-
-  const allActive = selected.length === 0;
-  const toggle = (id: string) =>
-    onChange(
-      selected.includes(id)
-        ? selected.filter((x) => x !== id)
-        : [...selected, id],
-    );
-  const filtered = options.filter((o) =>
-    o.label.toLowerCase().includes(query.toLowerCase()),
-  );
-  const triggerLabel = allActive
-    ? allLabel
-    : selected.length === 1
-      ? (options.find((o) => o.value === selected[0])?.label ?? allLabel)
-      : `${selected.length} selected`;
-
-  return (
-    <div
-      className="property-select"
-      ref={rootRef}
-      data-testid={testId ?? "dashboard-filter"}
-    >
-      <button
-        type="button"
-        className={`property-select-trigger pill${!allActive ? " on" : ""}`}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        data-testid={testId ? `${testId}-trigger` : "dashboard-filter-trigger"}
-      >
-        {triggerLabel}
-        <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true">
-          <path
-            d="M1 1l4 4 4-4"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-      {open && (
-        <div
-          className="property-select-pop"
-          role="listbox"
-          aria-multiselectable="true"
-          ref={panelRef}
-        >
-          {options.length > 12 && (
-            <input
-              className="property-select-search"
-              type="search"
-              placeholder={t.common.searchPlaceholder}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label={t.common.searchProperties}
-            />
-          )}
-          <div
-            className={`property-select-row${allActive ? " checked" : ""}`}
-            role="option"
-            aria-selected={allActive}
-            tabIndex={0}
-            onClick={() => onChange([])}
-            onKeyDown={(e) => e.key === "Enter" && onChange([])}
-          >
-            {allActive && <CheckIcon />}
-            {allLabel}
-          </div>
-          {filtered.map((o) => {
-            const checked = selected.includes(o.value);
-            return (
-              <div
-                key={o.value}
-                className={`property-select-row${checked ? " checked" : ""}`}
-                role="option"
-                aria-selected={checked}
-                tabIndex={0}
-                onClick={() => toggle(o.value)}
-                onKeyDown={(e) => e.key === "Enter" && toggle(o.value)}
-              >
-                {checked && <CheckIcon />}
-                {o.label}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── Single-select ───────────────────────────────────────────────────────────
 
 function SinglePills({
@@ -235,32 +129,164 @@ function SinglePills({
   );
 }
 
-function SingleDropdown({
-  options,
-  selected,
-  onChange,
+// ─── Dropdown (past the pill threshold) ──────────────────────────────────────
+
+type Row = { key: string; label: string; checked: boolean; pick: () => void };
+
+/**
+ * The open list (#128, ADR 0157). It mounts on open, so useModalA11y moves focus in and,
+ * on Escape or a pick that closes it, puts focus back on the trigger. The options use a
+ * roving tabindex (one Tab stop): ArrowUp/ArrowDown move, Home/End jump, Space and Enter
+ * pick.
+ */
+function ListboxPopover({
+  id,
+  label,
+  rows,
+  initial,
+  multi,
+  onClose,
+  search,
+}: {
+  id: string;
+  label: string;
+  rows: Row[];
+  initial: number;
+  multi: boolean;
+  onClose: () => void;
+  search?: ReactNode;
+}) {
+  const ref = useModalA11y(onClose, { restoreFocus: true });
+  const [active, setActive] = useState(initial);
+  const optionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const current = Math.max(0, Math.min(active, rows.length - 1));
+
+  function move(to: number) {
+    const next = Math.max(0, Math.min(to, rows.length - 1));
+    setActive(next);
+    optionRefs.current[next]?.focus();
+  }
+
+  function onKeyDown(e: React.KeyboardEvent, i: number, row: Row) {
+    const to = {
+      ArrowDown: i + 1,
+      ArrowUp: i - 1,
+      Home: 0,
+      End: rows.length - 1,
+    }[e.key];
+    if (to !== undefined) {
+      e.preventDefault();
+      move(to);
+    } else if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      row.pick();
+    }
+  }
+
+  // The search box sits beside the listbox, not in it: a listbox holds options only.
+  return (
+    <div className="property-select-pop" ref={ref}>
+      {search}
+      <div
+        role="listbox"
+        id={id}
+        aria-label={label}
+        aria-multiselectable={multi || undefined}
+      >
+        {rows.map((r, i) => (
+          <div
+            key={r.key}
+            ref={(el) => {
+              optionRefs.current[i] = el;
+            }}
+            className={`property-select-row${r.checked ? " checked" : ""}`}
+            role="option"
+            aria-selected={r.checked}
+            tabIndex={i === current ? 0 : -1}
+            onClick={() => {
+              setActive(i);
+              r.pick();
+            }}
+            onKeyDown={(e) => onKeyDown(e, i, r)}
+          >
+            {r.checked && <CheckIcon />}
+            {r.label}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Trigger plus popover, shared by both modes. */
+function Dropdown({
+  label,
+  listLabel,
+  triggerClass,
   ariaLabel,
-  testId,
-}: SingleProps) {
+  rootTestId,
+  triggerTestId,
+  rows,
+  initial,
+  multi,
+  closeOnPick,
+  search,
+}: {
+  label: string;
+  listLabel: string;
+  triggerClass: string;
+  ariaLabel?: string | undefined;
+  rootTestId?: string | undefined;
+  triggerTestId?: string;
+  rows: Row[];
+  initial: number;
+  multi: boolean;
+  closeOnPick: boolean;
+  search?: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const panelRef = useModalA11y(() => setOpen(false));
-  useClickOutside(rootRef, () => setOpen(false));
-
-  const selectedLabel =
-    options.find((o) => o.value === selected)?.label ?? options[0]?.label;
+  const listId = useId();
+  const close = useCallback(() => setOpen(false), []);
+  useClickOutside(rootRef, close);
+  const picked = closeOnPick
+    ? rows.map((r) => ({
+        ...r,
+        pick: () => {
+          r.pick();
+          close();
+        },
+      }))
+    : rows;
 
   return (
-    <div className="property-select" ref={rootRef} data-testid={testId}>
+    <div
+      className="property-select"
+      ref={rootRef}
+      data-testid={rootTestId}
+      // Tabbing out of the list closes it (a click elsewhere is useClickOutside's).
+      onBlur={(e) => {
+        const to = e.relatedTarget as Node | null;
+        if (to && !rootRef.current?.contains(to)) close();
+      }}
+    >
       <button
         type="button"
-        className="property-select-trigger pill on"
+        className={triggerClass}
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-controls={open ? listId : undefined}
         aria-label={ariaLabel}
         onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            setOpen(true);
+          }
+        }}
+        data-testid={triggerTestId}
       >
-        {selectedLabel}
+        {label}
         <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true">
           <path
             d="M1 1l4 4 4-4"
@@ -273,35 +299,113 @@ function SingleDropdown({
         </svg>
       </button>
       {open && (
-        <div className="property-select-pop" role="listbox" ref={panelRef}>
-          {options.map((o) => {
-            const on = o.value === selected;
-            return (
-              <div
-                key={o.value}
-                className={`property-select-row${on ? " checked" : ""}`}
-                role="option"
-                aria-selected={on}
-                tabIndex={0}
-                onClick={() => {
-                  onChange(o.value);
-                  setOpen(false);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    onChange(o.value);
-                    setOpen(false);
-                  }
-                }}
-              >
-                {on && <CheckIcon />}
-                {o.label}
-              </div>
-            );
-          })}
-        </div>
+        <ListboxPopover
+          id={listId}
+          label={listLabel}
+          rows={picked}
+          initial={initial}
+          multi={multi}
+          onClose={close}
+          search={search}
+        />
       )}
     </div>
+  );
+}
+
+function MultiDropdown({
+  options,
+  allLabel,
+  selected,
+  onChange,
+  testId,
+}: MultiProps) {
+  const t = useT();
+  const [query, setQuery] = useState("");
+  const allActive = selected.length === 0;
+  const toggle = (id: string) =>
+    onChange(
+      selected.includes(id)
+        ? selected.filter((x) => x !== id)
+        : [...selected, id],
+    );
+  const filtered = options.filter((o) =>
+    o.label.toLowerCase().includes(query.toLowerCase()),
+  );
+  const label = allActive
+    ? allLabel
+    : selected.length === 1
+      ? (options.find((o) => o.value === selected[0])?.label ?? allLabel)
+      : t.common.nSelected(selected.length);
+  const rows: Row[] = [
+    {
+      key: "",
+      label: allLabel,
+      checked: allActive,
+      pick: () => onChange([]),
+    },
+    ...filtered.map((o) => ({
+      key: o.value,
+      label: o.label,
+      checked: selected.includes(o.value),
+      pick: () => toggle(o.value),
+    })),
+  ];
+
+  return (
+    <Dropdown
+      label={label}
+      listLabel={allLabel}
+      triggerClass={`property-select-trigger pill${!allActive ? " on" : ""}`}
+      rootTestId={testId ?? "dashboard-filter"}
+      triggerTestId={testId ? `${testId}-trigger` : "dashboard-filter-trigger"}
+      rows={rows}
+      initial={0}
+      multi
+      closeOnPick={false}
+      search={
+        options.length > 12 && (
+          <input
+            className="property-select-search"
+            type="search"
+            placeholder={t.common.searchPlaceholder}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label={t.common.searchProperties}
+          />
+        )
+      }
+    />
+  );
+}
+
+function SingleDropdown({
+  options,
+  selected,
+  onChange,
+  ariaLabel,
+  testId,
+}: SingleProps) {
+  const index = options.findIndex((o) => o.value === selected);
+  const label = options[index]?.label ?? options[0]?.label ?? "";
+  const rows: Row[] = options.map((o) => ({
+    key: o.value,
+    label: o.label,
+    checked: o.value === selected,
+    pick: () => onChange(o.value),
+  }));
+  return (
+    <Dropdown
+      label={label}
+      listLabel={ariaLabel ?? label}
+      triggerClass="property-select-trigger pill on"
+      ariaLabel={ariaLabel}
+      rootTestId={testId}
+      rows={rows}
+      initial={Math.max(index, 0)}
+      multi={false}
+      closeOnPick
+    />
   );
 }
 

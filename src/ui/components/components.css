@@ -914,6 +914,11 @@ table.data tbody tr:hover td.sticky-col {
   background: var(--paper-2);
   outline: none;
 }
+/* Arrow keys move focus between the rows (ADR 0157): mark it beyond the hover tint. */
+.property-select-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
 .property-select-row.checked {
   color: var(--accent);
 }

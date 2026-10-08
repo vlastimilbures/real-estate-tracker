@@ -96,6 +96,18 @@ describe("About menu item", () => {
     emit("menu://about");
     expect(useUiStore.getState().aboutOpen).toBe(true);
   });
+
+  // #128 R5-14 (ADR 0157): like the other menu items, About waits for an open dialog.
+  it("does nothing while a dialog is open", async () => {
+    act(() => useUiStore.setState({ aboutOpen: false }));
+    render(<App />);
+    await act(async () => {});
+    const dialog = document.createElement("div");
+    dialog.setAttribute("aria-modal", "true");
+    document.body.appendChild(dialog);
+    emit("menu://about");
+    expect(useUiStore.getState().aboutOpen).toBe(false);
+  });
 });
 
 // UX-074 (DR-154, ADR 0077): ⌘, follows the same rule as the other shortcuts.

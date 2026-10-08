@@ -38,3 +38,73 @@ describe("useModalA11y", () => {
     expect(document.activeElement).toBe(screen.getByLabelText("Second"));
   });
 });
+
+// #128 R5-14 (ADR 0157): open dialogs form a stack. Escape and the Tab trap act on the
+// top-most dialog only, so one Escape closes one dialog.
+function Named({
+  name,
+  onClose,
+  trap = false,
+}: {
+  name: string;
+  onClose: () => void;
+  trap?: boolean;
+}) {
+  const ref = useModalA11y(onClose, { trap });
+  return (
+    <div ref={ref} role="dialog" aria-label={name}>
+      <button type="button">{`${name} first`}</button>
+      <button type="button">{`${name} last`}</button>
+    </div>
+  );
+}
+
+function Stack({
+  showTop,
+  onBottom,
+  onTop,
+  trap = false,
+}: {
+  showTop: boolean;
+  onBottom: () => void;
+  onTop: () => void;
+  trap?: boolean;
+}) {
+  return (
+    <>
+      <Named name="Bottom" onClose={onBottom} trap={trap} />
+      {showTop && <Named name="Top" onClose={onTop} trap={trap} />}
+    </>
+  );
+}
+
+describe("useModalA11y dialog stack (#128 R5-14)", () => {
+  it("one Escape closes only the top-most dialog", async () => {
+    const user = userEvent.setup();
+    const onBottom = vi.fn();
+    const onTop = vi.fn();
+    const { rerender } = render(
+      <Stack showTop onBottom={onBottom} onTop={onTop} />,
+    );
+    await user.keyboard("{Escape}");
+    expect(onTop).toHaveBeenCalledOnce();
+    expect(onBottom).not.toHaveBeenCalled();
+    rerender(<Stack showTop={false} onBottom={onBottom} onTop={onTop} />);
+    await user.keyboard("{Escape}");
+    expect(onBottom).toHaveBeenCalledOnce();
+    expect(onTop).toHaveBeenCalledOnce();
+  });
+
+  it("only the top-most dialog wraps Tab", async () => {
+    const user = userEvent.setup();
+    render(<Stack showTop trap onBottom={() => {}} onTop={() => {}} />);
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Top first" }),
+    );
+    await user.tab();
+    await user.tab();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Top first" }),
+    );
+  });
+});

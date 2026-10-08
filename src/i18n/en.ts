@@ -21,6 +21,8 @@ export const en = {
     asOfGroup: "As of date",
     plusYears: (n: number) => `+${n}y`,
     searchProperties: "Search properties",
+    /** A dropdown trigger naming a multiple selection (ADR 0157). */
+    nSelected: (n: number) => `${n} selected`,
     searchPlaceholder: "Search…",
     /** Short word for thousands on chart axes (UX-034). */
     thousandsShort: "k",
