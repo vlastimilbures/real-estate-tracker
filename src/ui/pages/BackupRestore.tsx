@@ -1,11 +1,8 @@
 import { useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
-import { Panel, Button, Toast } from "../components/primitives";
-import {
-  chooseRestoreFile,
-  type PickedBackup,
-  type RestoreIssue,
-} from "../../state/backup";
+import { useUiStore, type OutcomeAction } from "../../state/uiStore";
+import { Panel, Button } from "../components/primitives";
+import { chooseRestoreFile, type PickedBackup } from "../../state/backup";
 import { type FailureSite } from "../../state/diagnostics";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
@@ -13,8 +10,8 @@ import { fmtDate } from "../../lib/format";
 import { useToast } from "../hooks/useToast";
 import { ClearSampleButton } from "../components/ClearSampleDialog";
 import { backupRecency, type BackupAgo } from "../model/backupRecency";
-import { IssueTable, RestoreConfirm } from "../components/RestoreConfirm";
-import { backupFailure } from "../components/restoreFailure";
+import { RestoreConfirm } from "../components/RestoreConfirm";
+import { logBackupFailure } from "../components/restoreFailure";
 
 function agoText(t: Dictionary, ago: BackupAgo): string {
   switch (ago.unit) {
@@ -59,30 +56,23 @@ export function BackupRestorePanel() {
   const [loadingSample, setLoadingSample] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [pendingBackup, setPendingBackup] = useState<PickedBackup | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [issues, setIssues] = useState<RestoreIssue[]>([]);
+  const { showToast } = useToast();
+  const setNotice = useUiStore((s) => s.setNotice);
+  const dismissNotice = useUiStore((s) => s.dismissNotice);
+  const dataReplaced = useUiStore((s) => s.dataReplaced);
+  // Whole-database work in progress: the other actions wait for it (ADR 0154).
+  const replacing = restoring || loadingSample;
 
-  /** Show a failure: a refused backup with its records, anything else translated and
-   *  logged under `site`. */
-  function fail(
-    e: unknown,
-    site: FailureSite,
-    other: (detail: string) => string,
-  ) {
-    const { text, issues } = backupFailure(t, e, site, other);
-    setError(text);
-    setIssues(issues);
+  /** Report a failure in the notice, which follows the owner to any page; a refused
+   *  backup keeps its records there, anything else is logged under `site` (ADR 0154). */
+  function fail(e: unknown, site: FailureSite, action: OutcomeAction) {
+    logBackupFailure(site, e);
+    setNotice({ kind: "failed", action, error: e });
   }
-
-  function clearError() {
-    setError(null);
-    setIssues([]);
-  }
-  const { toast, showToast } = useToast(2400);
 
   async function handleExport() {
     setExporting(true);
-    clearError();
+    dismissNotice();
     try {
       const outcome = await exportBackup();
       // A cancelled save dialog is the user's own choice: no toast (UX-001).
@@ -90,7 +80,7 @@ export function BackupRestorePanel() {
         showToast(t.backup.savedTo(outcome.filename));
       else if (outcome.kind === "downloaded") showToast(t.backup.downloaded);
     } catch (e) {
-      fail(e, "BACKUP", t.backup.exportFailed);
+      fail(e, "BACKUP", "backupExport");
     } finally {
       setExporting(false);
     }
@@ -99,39 +89,42 @@ export function BackupRestorePanel() {
   /** Load the sample into the empty portfolio (ADR 0112). */
   async function handleLoadSample() {
     setLoadingSample(true);
-    clearError();
+    dismissNotice();
     try {
       await loadSample();
+      dataReplaced();
       showToast(t.sample.loaded);
     } catch (e) {
-      fail(e, "SAMPLE", t.sample.loadFailed);
+      fail(e, "SAMPLE", "loadSample");
     } finally {
       setLoadingSample(false);
     }
   }
 
   async function handleChooseRestore() {
-    clearError();
+    dismissNotice();
     try {
       const picked = await chooseRestoreFile();
       if (picked) setPendingBackup(picked);
     } catch (e) {
-      fail(e, "RESTORE", t.backup.errInvalid);
+      fail(e, "RESTORE", "pickBackup");
     }
   }
 
   async function handleConfirmRestore() {
     if (!pendingBackup) return;
     setRestoring(true);
-    clearError();
+    dismissNotice();
     try {
       const { safetyBackup } = await restoreBackup(pendingBackup.backup);
       setPendingBackup(null);
-      showToast(t.backup.restored(safetyBackup));
+      // The only pointer to the undo copy: a notice until dismissed (ADR 0154).
+      dataReplaced();
+      setNotice({ kind: "restored", file: safetyBackup });
     } catch (e) {
       // One transaction: only a failure before the commit lands here, so the current
       // data is unchanged (DR-019). A failed reload after it resolves (ADR 0125).
-      fail(e, "RESTORE", t.backup.restoreFailed);
+      fail(e, "RESTORE", "restore");
     } finally {
       setRestoring(false);
     }
@@ -150,7 +143,11 @@ export function BackupRestorePanel() {
           {t.backup.exportBody}
         </p>
         <LastBackup />
-        <Button variant="primary" onClick={handleExport} disabled={exporting}>
+        <Button
+          variant="primary"
+          onClick={handleExport}
+          disabled={exporting || replacing}
+        >
           {exporting ? t.backup.exporting : t.backup.exportButton}
         </Button>
       </Panel>
@@ -166,7 +163,7 @@ export function BackupRestorePanel() {
           {t.backup.restoreBody}
         </p>
         {!pendingBackup ? (
-          <Button onClick={handleChooseRestore} disabled={restoring}>
+          <Button onClick={handleChooseRestore} disabled={replacing}>
             {t.backup.chooseFile}
           </Button>
         ) : (
@@ -190,7 +187,7 @@ export function BackupRestorePanel() {
           >
             {t.sample.panelBody}
           </p>
-          <ClearSampleButton />
+          <ClearSampleButton disabled={replacing} />
         </Panel>
       )}
 
@@ -205,20 +202,11 @@ export function BackupRestorePanel() {
           >
             {t.sample.loadBody}
           </p>
-          <Button onClick={handleLoadSample} disabled={loadingSample}>
+          <Button onClick={handleLoadSample} disabled={replacing}>
             {loadingSample ? t.sample.loading : t.sample.loadAction}
           </Button>
         </Panel>
       )}
-
-      {error && (
-        <Panel title={t.backup.errorTitle}>
-          <p className="error-text">{error}</p>
-          {issues.length > 0 && <IssueTable issues={issues} />}
-        </Panel>
-      )}
-
-      {toast && <Toast message={toast} />}
     </>
   );
 }

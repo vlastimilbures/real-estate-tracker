@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { AppShell } from "../components/AppShell";
-import { Panel, Button, Toast, ErrorBanner } from "../components/primitives";
+import { Panel, Button, ErrorBanner } from "../components/primitives";
 import {
   parseProperties,
   parseValuations,
@@ -43,6 +43,8 @@ export function Import() {
   const lastImport = useUiStore((s) => s.lastImport);
   const setLastImport = useUiStore((s) => s.setLastImport);
   const openProperty = useUiStore((s) => s.openProperty);
+  const setNotice = useUiStore((s) => s.setNotice);
+  const dismissNotice = useUiStore((s) => s.dismissNotice);
 
   const [properties, setProperties] =
     useState<FileState<ParsedPropertyRow> | null>(null);
@@ -52,16 +54,15 @@ export function Import() {
   const [mortgages, setMortgages] =
     useState<FileState<ParsedMortgageRow> | null>(null);
   const [importing, setImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
   const [refused, setRefused] = useState<CsvImportProblem[] | null>(null);
   const [preview, setPreview] = useState<CsvImportPreview | null>(null);
-  // Why the last preview failed (ADR 0147); translated at render, like importError's detail.
+  // Why the last preview failed (ADR 0147); translated at render, like the import failure's notice.
   const [previewFailure, setPreviewFailure] = useState<{
     error: unknown;
   } | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [planChanged, setPlanChanged] = useState(false);
-  const { toast, showToast } = useToast(2400);
+  const { showToast } = useToast();
 
   // FK-aware parsers: check child rows against known property names. Read from the
   // stored portfolio, not the engine, so Import opens even when stored data breaks an
@@ -179,7 +180,7 @@ export function Import() {
     }
     setConfirming(false);
     setImporting(true);
-    setImportError(null);
+    dismissNotice();
     setRefused(null);
     setPlanChanged(false);
     try {
@@ -201,12 +202,9 @@ export function Import() {
       } else {
         logFailure("IMPORT", e);
         // A constraint the CSV checks missed (a generated-id clash was one, now fixed: DR-137)
-        // gets the translated wording, not SQLite's text.
-        setImportError(
-          t.importPage.importFailed(
-            describeWriteError(t, toWriteError(e)).message,
-          ),
-        );
+        // gets the translated wording, not SQLite's text. In the notice, so it reaches the
+        // owner on any page (ADR 0154).
+        setNotice({ kind: "failed", action: "import", error: e });
       }
     } finally {
       setImporting(false);
@@ -333,14 +331,6 @@ export function Import() {
             </div>
           )}
           {refused && <RefusedTable problems={refused} />}
-          {importError && (
-            <div style={{ marginTop: "var(--s3)" }}>
-              <ErrorBanner
-                message={importError}
-                onDismiss={() => setImportError(null)}
-              />
-            </div>
-          )}
         </Panel>
       )}
 
@@ -353,8 +343,6 @@ export function Import() {
           />
         </Panel>
       )}
-
-      {toast && <Toast message={toast} />}
     </AppShell>
   );
 }

@@ -12,6 +12,11 @@ import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { propertiesTemplate } from "../../../import/csv";
 import { en } from "../../../i18n/en";
 
+vi.mock("../../../state/diagnostics", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../state/diagnostics")>()),
+  logFailure: vi.fn(),
+}));
+
 const added = {
   file: "properties" as const,
   row: 2,
@@ -34,7 +39,7 @@ const previewCsv = vi.fn(async () => ({
 
 beforeEach(() =>
   act(() => {
-    useUiStore.setState({ language: "en", route: "import" });
+    useUiStore.setState({ language: "en", route: "import", notice: null });
     usePortfolioStore.setState({
       portfolio,
       assumptions,
@@ -72,5 +77,33 @@ describe("Import after success (UX-038)", () => {
     expect(
       screen.queryByText("properties.csv", { selector: "span.num" }),
     ).toBeNull();
+  });
+});
+
+describe("Import failure (ADR 0154)", () => {
+  it("is reported in the notice, which follows the owner to any page", async () => {
+    importCsv.mockRejectedValueOnce(new Error("database is locked"));
+    const { container } = render(<Import />);
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    await userEvent.upload(
+      input,
+      new File([propertiesTemplate()], "properties.csv", { type: "text/csv" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: en.importPage.importScope(1, 1, 0),
+      }),
+    );
+    await waitFor(() =>
+      expect(useUiStore.getState().notice).toMatchObject({
+        kind: "failed",
+        action: "import",
+      }),
+    );
+    expect(screen.getByRole("alert").textContent).toMatch(
+      /^The import failed and was rolled back/,
+    );
   });
 });

@@ -32,6 +32,25 @@ export type { Mode } from "../ui/model/lens";
 export type PropertyTarget = PropertySection | PropertyFormTarget;
 export type { Theme } from "./themePreference";
 
+/** How long a toast stays: one duration for every page (ADR 0154). */
+export const TOAST_MS = 4000;
+
+/** A whole-database action, or an export, whose failure a notice reports (ADR 0154). */
+export type OutcomeAction =
+  | "restore"
+  | "pickBackup"
+  | "backupExport"
+  | "loadSample"
+  | "import"
+  | "xlsxExport";
+
+/** The outcome of a whole-database action, shown on every page until dismissed. It
+ *  holds data, not text, so it is translated when it renders (ADR 0154). */
+export type Notice =
+  | { kind: "restored"; file: string }
+  | { kind: "sampleCleared"; file: string }
+  | { kind: "failed"; action: OutcomeAction; error: unknown };
+
 /** Saved scenarios the compare shows at most; Base is always available alongside. */
 export const MAX_COMPARE = 3;
 
@@ -100,12 +119,21 @@ interface UiState {
    *  data check fix link, ADR 0118). In-memory only. */
   propertyTarget: PropertyTarget | null;
   clearPropertyTarget: () => void;
-  /** Safety backup written by the last "Clear sample", for the Dashboard's confirmation
-   *  (ADR 0094). In-memory only. */
-  sampleClearedBackup: string | null;
+  /** A short confirmation, cleared after TOAST_MS. `id` tells a repeat apart. */
+  toast: { message: string; id: number } | null;
+  /** Show `message` as the toast; a newer one replaces it and restarts the timer. */
+  showToast: (message: string) => void;
+  /** The last whole-database outcome, until dismissed (ADR 0154). In-memory only. */
+  notice: Notice | null;
+  setNotice: (notice: Notice) => void;
+  dismissNotice: () => void;
+  /** The data was replaced (restore, Clear sample, Load sample): drop the notice and
+   *  the import report, which describe the old data (ADR 0154). */
+  dataReplaced: () => void;
   /** The sidebar backup reminder was hidden for this session (ADR 0110). In-memory. */
   backupHintDismissed: boolean;
-  /** The last CSV import's report, kept until the next import (ADR 0096). In-memory. */
+  /** The last CSV import's report, kept until the next import or until the data is
+   *  replaced (ADR 0096, ADR 0154). In-memory. */
   lastImport: CsvImportReport | null;
   setLastImport: (report: CsvImportReport | null) => void;
   /** Scenarios compare: ticked saved-scenario ids (at most MAX_COMPARE), the Base
@@ -154,9 +182,9 @@ interface UiState {
   requestNewProperty: () => void;
   /** Properties has opened the Add form for `newPropertyRequested`. */
   clearNewPropertyRequest: () => void;
-  /** The sample was cleared: open the Dashboard and name the safety backup there. */
+  /** The sample was cleared: name the safety backup in the notice (ADR 0094) and open
+   *  the Dashboard. */
   showSampleCleared: (safetyBackup: string) => void;
-  dismissSampleCleared: () => void;
   dismissBackupHint: () => void;
   /** Some open form holds unsaved edits (UX-030): `unsavedSources` is not empty. */
   unsavedChanges: boolean;
@@ -195,6 +223,10 @@ function guarded(
   else set(target);
 }
 
+/** The pending toast dismissal; a newer toast restarts it (DR-058). */
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
+let toastSeq = 0;
+
 /** The language last passed to setLanguage, so a slower earlier load cannot win. */
 let requestedLanguage: Language | null = null;
 
@@ -213,7 +245,17 @@ export const useUiStore = create<UiState>((set, get) => ({
   newPropertyRequested: false,
   propertyTarget: null,
   clearPropertyTarget: () => set({ propertyTarget: null }),
-  sampleClearedBackup: null,
+  toast: null,
+  showToast: (message) => {
+    clearTimeout(toastTimer);
+    toastSeq += 1;
+    set({ toast: { message, id: toastSeq } });
+    toastTimer = setTimeout(() => set({ toast: null }), TOAST_MS);
+  },
+  notice: null,
+  setNotice: (notice) => set({ notice }),
+  dismissNotice: () => set({ notice: null }),
+  dataReplaced: () => set({ notice: null, lastImport: null }),
   backupHintDismissed: false,
   lastImport: null,
   setLastImport: (lastImport) => set({ lastImport }),
@@ -296,10 +338,9 @@ export const useUiStore = create<UiState>((set, get) => ({
     guarded(get, set, { route: "properties", newPropertyRequested: true }),
   clearNewPropertyRequest: () => set({ newPropertyRequested: false }),
   showSampleCleared: (safetyBackup) => {
-    set({ sampleClearedBackup: safetyBackup });
+    set({ notice: { kind: "sampleCleared", file: safetyBackup } });
     guarded(get, set, { route: "dashboard" });
   },
-  dismissSampleCleared: () => set({ sampleClearedBackup: null }),
   dismissBackupHint: () => set({ backupHintDismissed: true }),
   setUnsavedChanges: (source, unsaved) => {
     const others = get().unsavedSources.filter((k) => k !== source);

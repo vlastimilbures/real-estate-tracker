@@ -8,6 +8,7 @@ import {
   type StartupError,
 } from "../../state/portfolioStore";
 import { revealDataDir } from "../../state/platform";
+import { useUiStore } from "../../state/uiStore";
 import { logFailure } from "../../state/diagnostics";
 import type { Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
@@ -49,6 +50,8 @@ export function BootFailure() {
   const init = usePortfolioStore((s) => s.init);
   const restoreAtStartup = usePortfolioStore((s) => s.restoreAtStartup);
   const continueAfterRestore = usePortfolioStore((s) => s.continueAfterRestore);
+  const dataReplaced = useUiStore((s) => s.dataReplaced);
+  const setNotice = useUiStore((s) => s.setNotice);
   const [revealFailed, setRevealFailed] = useState(false);
   const [pending, setPending] = useState<PickedBackup | null>(null);
   const [restoring, setRestoring] = useState(false);
@@ -97,6 +100,13 @@ export function BootFailure() {
     }
   }
 
+  /** Leave the screen: the app keeps naming the safety copy until dismissed (ADR 0154). */
+  function leave(file: string, go: () => void) {
+    dataReplaced();
+    setNotice({ kind: "restored", file });
+    go();
+  }
+
   const folderButton = (
     <Button onClick={() => void showFolder()}>{t.boot.showDataFolder}</Button>
   );
@@ -114,11 +124,17 @@ export function BootFailure() {
         {revealFailed && <p className="error-text">{t.boot.revealFailed}</p>}
         <div className="row" style={{ gap: "var(--s3)" }}>
           {restored.ready ? (
-            <Button variant="primary" onClick={continueAfterRestore}>
+            <Button
+              variant="primary"
+              onClick={() => leave(restored.file, continueAfterRestore)}
+            >
               {t.boot.continue}
             </Button>
           ) : (
-            <Button variant="primary" onClick={() => void init()}>
+            <Button
+              variant="primary"
+              onClick={() => leave(restored.file, () => void init())}
+            >
               {t.app.tryAgain}
             </Button>
           )}

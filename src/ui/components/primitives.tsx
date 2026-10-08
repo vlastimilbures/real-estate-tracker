@@ -15,8 +15,9 @@ import type { Band } from "../model/health";
 import { irrReasonText, type LeveredIrr } from "../model/irr";
 import { useT } from "../hooks/useT";
 import { useToast } from "../hooks/useToast";
+import { useUiStore } from "../../state/uiStore";
 import type { SaveOutcome } from "../../state/platform";
-import { logFailure, messageOf } from "../../state/diagnostics";
+import { logFailure } from "../../state/diagnostics";
 
 type Num = Decimal | number;
 
@@ -187,9 +188,9 @@ export function Panel({
 
 /**
  * Icon button for a Panel `action` slot that exports the panel's table to .xlsx.
- * Self-contained feedback: disables while writing, then surfaces a confirmation toast
- * naming the saved file, nothing for a cancelled dialog (the user's own choice), or an
- * error toast with the reason (DR-112).
+ * Disables while writing, then shows a toast naming the saved file, nothing for a
+ * cancelled dialog (the user's own choice), or a notice with the reason, which stays
+ * until dismissed (DR-112, ADR 0154).
  */
 export function ExportXlsxButton({
   onExport,
@@ -202,17 +203,18 @@ export function ExportXlsxButton({
   const t = useT();
   const btnLabel = label ?? t.xlsx.exportToExcel;
   const [busy, setBusy] = useState(false);
-  const { toast, showToast: flash } = useToast(2500);
+  const { showToast } = useToast();
+  const setNotice = useUiStore((s) => s.setNotice);
 
   const run = async () => {
     setBusy(true);
     try {
       const outcome = await onExport();
       if (outcome.kind !== "cancelled")
-        flash(t.xlsx.exported(outcome.filename));
+        showToast(t.xlsx.exported(outcome.filename));
     } catch (e) {
       logFailure("EXPORT", e);
-      flash(t.xlsx.exportFailed(messageOf(e)));
+      setNotice({ kind: "failed", action: "xlsxExport", error: e });
     } finally {
       setBusy(false);
     }
@@ -230,7 +232,6 @@ export function ExportXlsxButton({
       >
         {btnLabel}
       </Button>
-      {toast && <Toast message={toast} />}
     </>
   );
 }
@@ -309,14 +310,6 @@ export function EmptyState({
       <h3>{title}</h3>
       {children && <p>{children}</p>}
       {action}
-    </div>
-  );
-}
-
-export function Toast({ message }: { message: string }) {
-  return (
-    <div className="toast" role="status" aria-live="polite">
-      {message}
     </div>
   );
 }

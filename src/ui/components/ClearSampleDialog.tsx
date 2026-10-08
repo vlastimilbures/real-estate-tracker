@@ -16,6 +16,7 @@ function ClearSampleDialog({ onClose }: { onClose: () => void }) {
   const titleId = useId();
   const clearSample = usePortfolioStore((s) => s.clearSample);
   const showSampleCleared = useUiStore((s) => s.showSampleCleared);
+  const dataReplaced = useUiStore((s) => s.dataReplaced);
   const [clearing, setClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +26,7 @@ function ClearSampleDialog({ onClose }: { onClose: () => void }) {
     try {
       const { safetyBackup } = await clearSample();
       onClose();
+      dataReplaced();
       showSampleCleared(safetyBackup);
     } catch (e) {
       // One transaction after a verified backup: only a failure before the commit lands
@@ -80,14 +82,22 @@ function ClearSampleDialog({ onClose }: { onClose: () => void }) {
 /** The "Clear sample and start my own" button with its confirmation dialog. */
 export function ClearSampleButton({
   variant,
+  disabled = false,
 }: {
   variant?: "primary" | undefined;
+  /** Another whole-database action is running (ADR 0154). */
+  disabled?: boolean | undefined;
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button size="sm" variant={variant} onClick={() => setOpen(true)}>
+      <Button
+        size="sm"
+        variant={variant}
+        onClick={() => setOpen(true)}
+        disabled={disabled}
+      >
         {t.sample.clearAction}
       </Button>
       {open && <ClearSampleDialog onClose={() => setOpen(false)} />}

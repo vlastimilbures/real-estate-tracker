@@ -239,8 +239,10 @@ interface PortfolioState {
   /** "Keep exploring": hide the sample banner for good. */
   dismissSampleBanner: () => Promise<MutationResult>;
   // whole-database operations. They throw their own typed errors (CsvImportError,
-  // RestoreError, …) for the page to show, and leave the banner `error` alone. They
-  // throw only before the commit: a failed reload after it marks `stale` (ADR 0125).
+  // RestoreError, …) for the caller to show, and leave the banner `error` alone on a
+  // failure; one that replaces the data (restore, Clear sample, Load sample) clears it
+  // on success, since it described the old data (ADR 0154). They throw only before the
+  // commit: a failed reload after it marks `stale` (ADR 0125).
   /** What a CSV import would add and update (ADR 0096). Reads only; queued behind
    *  pending writes so it sees their result. */
   previewCsv: (batch: CsvImportBatch) => Promise<CsvImportPreview>;
@@ -317,6 +319,14 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         throw e;
       }
     });
+  }
+
+  /** `exclusive` for an operation that replaces the data: on success the banner `error`
+   *  from an earlier edit no longer applies (ADR 0154). */
+  async function replaceData<T>(op: (sql: Sql) => Promise<T>): Promise<T> {
+    const result = await exclusive(op);
+    set({ error: null });
+    return result;
   }
 
   /** Data was written: the last backup no longer has it (ADR 0110). Best effort — a
@@ -643,7 +653,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         return importCsv(sql, batch, expected);
       }),
     restoreBackup: (backup) =>
-      exclusive((sql) => confirmRestore(sql, backup, checkInputRules)),
+      replaceData((sql) => confirmRestore(sql, backup, checkInputRules)),
     restoreAtStartup: async (backup) => {
       // Only where the database migrated to head and only reading it failed; any
       // other startup failure leaves a database a restore must not write to.
@@ -662,8 +672,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       if (s.status !== "error" || s.portfolio === null || s.stale) return;
       set({ status: "ready", error: null, startupError: null });
     },
-    clearSample: () => exclusive((sql) => clearSample(sql)),
-    loadSample: () => exclusive(loadSample),
+    clearSample: () => replaceData((sql) => clearSample(sql)),
+    loadSample: () => replaceData(loadSample),
     exportBackup: async () => {
       const writesBefore = writes;
       // One clock read names the file and stamps `exportedAt` (ADR 0149 §6).

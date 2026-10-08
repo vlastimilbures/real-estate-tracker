@@ -76,6 +76,8 @@ describe("portfolioStore sample (ADR 0094)", () => {
       await seedIfEmpty(db);
       return db;
     });
+    // A banner from an earlier failed edit describes data that is gone (#136).
+    usePortfolioStore.setState({ error: { kind: "other", message: "old" } });
     const { safetyBackup } = await usePortfolioStore.getState().clearSample();
     expect(safetyBackup).toMatch(
       /^portfolio-before-clear-sample-\d{8}T\d{6}Z\.json$/,
@@ -112,12 +114,14 @@ describe("portfolioStore sample (ADR 0094)", () => {
     // Pretend a backup was exported after the clear.
     await db.execute("DELETE FROM app_meta WHERE key = 'changed_since_backup'");
 
+    usePortfolioStore.setState({ error: { kind: "other", message: "old" } });
     await usePortfolioStore.getState().loadSample();
 
     const s = usePortfolioStore.getState();
     expect(s.portfolio!.properties).toHaveLength(3);
     expect(s.sample).toEqual({ active: true, dismissed: false });
     expect(s.backup.changedSince).toBe(true);
+    expect(s.error).toBeNull();
   });
 
   it("loadSample throws the refusal when the portfolio is not empty", async () => {

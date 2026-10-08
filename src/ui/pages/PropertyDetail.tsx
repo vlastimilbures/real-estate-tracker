@@ -18,7 +18,6 @@ import {
   Panel,
   Button,
   EmptyState,
-  Toast,
   ExportXlsxButton,
 } from "../components/primitives";
 import { PropertyFormModal } from "../components/PropertyFormModal";
@@ -106,7 +105,7 @@ export function PropertyDetail() {
   const [confirmingDeactivate, setConfirmingDeactivate] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [activeError, setActiveError] = useState<string | null>(null);
-  const { toast, showToast } = useToast();
+  const { showToast } = useToast();
   // The page's sections in order (ADR 0107); computed before the early return so the
   // spy hook runs on every render.
   const sections = propertySections({
@@ -463,7 +462,6 @@ export function PropertyDetail() {
           onClose={() => setEditing(false)}
         />
       )}
-      {toast && <Toast message={toast} />}
     </AppShell>
   );
 }

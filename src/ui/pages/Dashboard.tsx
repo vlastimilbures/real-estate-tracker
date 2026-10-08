@@ -35,7 +35,7 @@ import { cashInvestedTotal } from "../model/acquisition";
 import { useT } from "../hooks/useT";
 import { useAsOf } from "../hooks/useAsOf";
 import { useRenderTiming } from "../hooks/useRenderTiming";
-import { SampleBanner, SampleClearedNotice } from "../components/SampleBanner";
+import { SampleBanner } from "../components/SampleBanner";
 
 /** First steps for an empty portfolio, each linking to its page; no wizard (ADR 0094). */
 function GettingStarted() {
@@ -94,7 +94,6 @@ export function Dashboard() {
   if (!engine || !view || allProperties.length === 0) {
     return (
       <AppShell title={t.dashboard.title} showLens={false}>
-        <SampleClearedNotice />
         <EmptyState
           title={t.common.noPortfolioTitle}
           icon={FolderOpen}
@@ -148,7 +147,6 @@ export function Dashboard() {
 
   return (
     <AppShell title={t.dashboard.title} subtitle={subtitle}>
-      <SampleClearedNotice />
       <SampleBanner />
       <div className="filter-bar">
         {allProperties.length > 1 ? (

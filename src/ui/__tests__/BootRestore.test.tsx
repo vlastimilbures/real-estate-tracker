@@ -39,7 +39,7 @@ const reloadFails = (real: Sql): Sql => ({
 });
 
 beforeEach(async () => {
-  act(() => useUiStore.setState({ language: "en" }));
+  act(() => useUiStore.setState({ language: "en", notice: null }));
   usePortfolioStore.setState({
     sql: null,
     portfolio: null,
@@ -85,6 +85,20 @@ describe("restore from the startup error screen (ROW_INVALID)", () => {
     await userEvent.click(button(en.boot.continue));
     expect(store().status).toBe("ready");
     expect(store().portfolio!.properties.length).toBeGreaterThan(0);
+  });
+
+  it("Continue keeps the safety copy's name in the app (#136)", async () => {
+    await restoreFromScreen();
+    const named = /portfolio-before-restore-.*\.json/.exec(
+      screen.getByRole("alert").textContent ?? "",
+    )?.[0];
+    expect(named).toBeDefined();
+
+    await userEvent.click(button(en.boot.continue));
+    expect(useUiStore.getState().notice).toEqual({
+      kind: "restored",
+      file: named,
+    });
   });
 
   it("Cancel goes back without restoring", async () => {

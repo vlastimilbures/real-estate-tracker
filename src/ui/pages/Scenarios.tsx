@@ -9,7 +9,7 @@ import {
 } from "../../state/portfolioStore";
 import { MAX_COMPARE, useUiStore } from "../../state/uiStore";
 import { AppShell } from "../components/AppShell";
-import { Button, EmptyState, Toast } from "../components/primitives";
+import { Button, EmptyState } from "../components/primitives";
 import { FolderOpen } from "lucide-react";
 import type { Scenario, ScenarioOverrides } from "../../engine";
 import { useT } from "../hooks/useT";
@@ -54,7 +54,7 @@ export function Scenarios() {
   // success toast. A failure shows in the banner; the store leaves an input refusal
   // to the caller, so run() shows it there itself (ADR 0141).
   const [busy, setBusy] = useState(false);
-  const { toast, showToast } = useToast();
+  const { showToast } = useToast();
 
   // A deleted (or restored-away) scenario leaves the compare selection.
   useEffect(
@@ -185,7 +185,6 @@ export function Scenarios() {
       />
 
       <CompareView selected={selected} reachText={reachText} />
-      {toast && <Toast message={toast} />}
     </AppShell>
   );
 }
