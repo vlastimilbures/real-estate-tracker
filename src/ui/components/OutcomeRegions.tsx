@@ -38,7 +38,7 @@ function NoticeView({ notice }: { notice: Notice }) {
   if (notice.kind === "failed") {
     const { error } = notice;
     return (
-      <div style={{ marginBottom: "var(--s4)" }}>
+      <div>
         <ErrorBanner
           message={failureText(t, notice.action, error)}
           onDismiss={dismiss}
@@ -70,7 +70,12 @@ export function OutcomeRegions() {
   return (
     <>
       {notice && <NoticeView notice={notice} />}
-      <div role="status" aria-live="polite" aria-atomic="true">
+      <div
+        className="toast-region"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {toast && (
           <div className="toast" key={toast.id}>
             {toast.message}
