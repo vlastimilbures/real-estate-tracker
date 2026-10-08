@@ -54,12 +54,15 @@ async function pickEarlyDateBackup(ux: Ux) {
 }
 
 /**
- * Settings → Backup: exports the sample, edits the file and picks it for restore, up to
- * the confirm step that asks to restore anyway. The browser has no Tauri file dialog:
- * the `open_backup_file` and `write_app_backup` commands are answered the way the Rust
- * side does, after boot (the database adapter is chosen at boot).
+ * Settings → Backup: exports the sample, edits the file and picks it for restore. The
+ * browser has no Tauri file dialog: the `open_backup_file` and `write_app_backup`
+ * commands are answered the way the Rust side does, after boot (the database adapter
+ * is chosen at boot).
  */
-async function pickEditedBackup(ux: Ux, edit: (tables: BackupTables) => void) {
+async function chooseEditedBackup(
+  ux: Ux,
+  edit: (tables: BackupTables) => void,
+) {
   await boot(ux.page);
   await settingsTab(ux, "backup");
   const download = ux.page.waitForEvent("download");
@@ -81,6 +84,11 @@ async function pickEditedBackup(ux: Ux, edit: (tables: BackupTables) => void) {
     };
   }, JSON.stringify(backup));
   await ux.page.getByRole("button", { name: ux.t.backup.chooseFile }).click();
+}
+
+/** `chooseEditedBackup` up to the confirm step that asks to restore anyway. */
+async function pickEditedBackup(ux: Ux, edit: (tables: BackupTables) => void) {
+  await chooseEditedBackup(ux, edit);
   await expect(
     ux.page.getByRole("button", { name: ux.t.backup.restoreAnyway }),
   ).toBeVisible();
@@ -268,6 +276,21 @@ export const SCREENS: Screen[] = [
         ux.page.getByRole("button", { name: ux.t.boot.continue }),
       ).toBeVisible();
       await ux.capture("00e-boot-restored");
+    },
+  },
+  {
+    id: "00f-boot-restored-app",
+    desc: "After Continue: the app keeps naming the safety copy until dismissed (ADR 0154)",
+    run: async (ux) => {
+      await bootRestoreConfirm(ux);
+      await ux.page
+        .getByRole("button", { name: ux.t.backup.restoreNow })
+        .click();
+      await ux.page.getByRole("button", { name: ux.t.boot.continue }).click();
+      await expect(
+        ux.page.getByText(/portfolio-before-restore-.*\.json/),
+      ).toBeVisible();
+      await ux.capture("00f-boot-restored-app", { fullPage: false });
     },
   },
   {
@@ -1150,6 +1173,33 @@ export const SCREENS: Screen[] = [
       await boot(ux.page);
       await settingsTab(ux, "backup");
       await ux.capture("64-settings-backup");
+    },
+  },
+  {
+    id: "64b-settings-backup-refused",
+    desc: "Settings → Backup: a refused backup in the notice, with its records (ADR 0154)",
+    run: async (ux) => {
+      await chooseEditedBackup(ux, (tables) => {
+        const [lease] = tables.leases ?? [];
+        if (!lease) throw new Error("the sample has no lease");
+        lease.monthly_rent = "abc";
+      });
+      await expect(ux.page.getByText(ux.t.backup.errRowsInvalid)).toBeVisible();
+      await expect(ux.page.getByText(ux.t.backup.downloaded)).toBeHidden();
+      await ux.capture("64b-settings-backup-refused", { fullPage: false });
+    },
+  },
+  {
+    id: "64c-settings-backup-toast",
+    desc: "Settings → Backup: the export's toast in the shell's live region (ADR 0154)",
+    run: async (ux) => {
+      await boot(ux.page);
+      await settingsTab(ux, "backup");
+      await ux.page
+        .getByRole("button", { name: ux.t.backup.exportButton })
+        .click();
+      await expect(ux.page.locator(".toast")).toBeVisible();
+      await ux.capture("64c-settings-backup-toast", { fullPage: false });
     },
   },
   {
