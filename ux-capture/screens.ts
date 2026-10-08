@@ -1313,7 +1313,7 @@ export const SCREENS: Screen[] = [
         .nth(3)
         .setInputFiles(fixture("mortgages-shorter-term.csv"));
       await expect(
-        ux.page.getByText(ux.t.importPage.importRefused, { selector: "p" }),
+        ux.page.locator("td.cell-message", { hasText: "17.01.2031" }),
       ).toBeVisible();
       await ux.capture("56-import-stored-event");
     },
