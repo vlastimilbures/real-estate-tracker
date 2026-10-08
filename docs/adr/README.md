@@ -198,7 +198,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0152](0152-wording-log-and-generated-index.md)   | Copy-only changes go to a wording log; the ADR index is generated                             | Accepted                                           | #111                                               |
 | [0153](0153-honest-startup-failures.md)           | Startup failures say what changed and offer a step that works                                 | Accepted · amended by 0154                         | #115                                               |
 | [0154](0154-one-outcome-path.md)                  | One outcome path: notices that follow the owner, one toast                                    | Accepted                                           | #136                                               |
-| [0155](0155-lifecycle-states-on-the-pages.md)     | Lifecycle states on the pages: deactivated portfolio, inactive property, filter               | Proposed                                           | #127                                               |
+| [0155](0155-lifecycle-states-on-the-pages.md)     | Lifecycle states on the pages: deactivated portfolio, inactive property, filter               | Accepted                                           | #127                                               |
 
 <!-- adr-index:end -->
 

@@ -1,6 +1,6 @@
 # 0155. Lifecycle states on the pages: deactivated portfolio, inactive property, filter
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-08
 - Source: issue #127 (2026-10 code review, findings G2-1-05, G2-1-07, G2-1-09, G2-1-12);
   owner decision D11 (2026-10-08: option A; on Scenarios the notice replaces only the
