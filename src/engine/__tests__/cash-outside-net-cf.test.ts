@@ -5,7 +5,11 @@
 // these exact values (recorded before the refactor) prove it is behaviour-neutral.
 import { describe, it, expect } from "vitest";
 import { portfolioKpis } from "../kpis";
-import { portfolioProjection, prePurchaseDebtService } from "../projections";
+import {
+  portfolioProjection,
+  prePurchaseDebtService,
+  turnOnYear,
+} from "../projections";
 import { propertySchedules, scheduleRows } from "../schedule";
 import { isoDate } from "../dates";
 import { money } from "../brands";
@@ -38,7 +42,9 @@ const fixture: Portfolio = {
 };
 
 describe("#117: the KPIs net of the cash outside net cash flow", () => {
-  it("the fixture has every kind of cash outside net cash flow", () => {
+  // Not here: prepayments before the turn-on and a later first loan's cash in (pinned in
+  // pre-purchase-debt-service.test.ts and acquisition-cash.test.ts).
+  it("the fixture has acquisition, refinance, prepayment and pre-purchase cash", () => {
     const schedules = propertySchedules(
       fixture.mortgages,
       fixture.properties.map((p) => p.id),
@@ -50,9 +56,21 @@ describe("#117: the KPIs net of the cash outside net cash flow", () => {
       assumptions,
       scheduleRows(schedules),
     );
-    expect(schedules.get("javorova")?.refinances.length).toBe(1);
+    // Javorova's refinance hands over in year 5 and releases cash.
+    const refis = schedules.get("javorova")?.refinances ?? [];
+    expect(refis.length).toBe(1);
+    expect(Math.ceil(refis[0]!.month / 12)).toBeLessThanOrEqual(
+      assumptions.horizonYears,
+    );
+    expect(refis[0]!.drawn.greaterThan(refis[0]!.paidOff)).toBe(true);
+    // The future buy turns on inside the horizon (its down payment) and its loan ran
+    // before it.
+    const tStart = turnOnYear(isoDate("2028-03-15"), assumptions);
+    expect(tStart).toBeGreaterThan(0);
+    expect(tStart).toBeLessThanOrEqual(assumptions.horizonYears);
     const sum = (f: (t: number) => typeof ZERO) =>
       proj.reduce((s, _, t) => s.plus(f(t)), ZERO);
+    expect(sum((t) => pre[t]!.principal).greaterThan(ZERO)).toBe(true);
     expect(sum((t) => proj[t]!.prepaid).greaterThan(ZERO)).toBe(true);
     expect(sum((t) => proj[t]!.prepaymentFees).greaterThan(ZERO)).toBe(true);
     expect(sum((t) => pre[t]!.interest).greaterThan(ZERO)).toBe(true);
