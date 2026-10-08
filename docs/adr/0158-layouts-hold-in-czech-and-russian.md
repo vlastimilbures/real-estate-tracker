@@ -38,7 +38,7 @@ Several layouts were sized for English strings. At the minimum window (900×600)
 Owner, 2026-10-08 (D13 = A): fix the layouts so they do not depend on string length.
 
 - **Properties list.** The word headers (`properties.colNetCashFlow`, `colValue`, `colDebt`,
-  `colEquity`) are as wide as their text up to 11em and wrap to at most two balanced lines.
+  `colEquity`) are as wide as their text up to 12em and wrap to at most two balanced lines.
   A band badge in the LTV and DSCR columns wraps its word under the figure when the table is
   squeezed (the Pending and Inactive badges in the name cell do not). The
   metric headers (LTV, DSCR, NOI) are unchanged. The ADR 0085 promise (LTV and Net cash

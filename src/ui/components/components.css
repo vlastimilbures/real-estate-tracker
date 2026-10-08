@@ -564,7 +564,7 @@ table.data thead th {
 }
 /* Properties list: a long header (Russian Net cash flow) wraps to two balanced lines
    instead of pushing the risk columns under the pinned actions (ADR 0085, ADR 0158).
-   The label is as wide as its text up to 11em, so a squeezed table cannot break it onto
+   The label is as wide as its text up to 12em, so a squeezed table cannot break it onto
    a third line, and a short label keeps its column narrow. A band badge (LTV, DSCR)
    wraps its word under the figure when the table is squeezed. */
 table.data.wrap-head thead th {
@@ -573,7 +573,7 @@ table.data.wrap-head thead th {
 table.data.wrap-head .th-label {
   display: inline-block;
   width: max-content;
-  max-width: 11em;
+  max-width: 12em;
   white-space: normal;
   text-wrap: balance;
 }
