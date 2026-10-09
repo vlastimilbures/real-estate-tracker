@@ -64,6 +64,7 @@ export function realProjection(
       debtService: d(y.debtService),
       netCashFlow: d(y.netCashFlow),
       draws: d(y.draws),
+      acquiredValue: d(y.acquiredValue),
       refinanced: d(y.refinanced),
       prepaid: d(y.prepaid),
       prepaymentFees: d(y.prepaymentFees),

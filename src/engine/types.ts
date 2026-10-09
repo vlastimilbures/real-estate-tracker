@@ -350,6 +350,10 @@ export interface ProjectionYear {
   // refinanced it explains the balance move: balance[t] = balance[t−1] − principal[t]
   // − prepaid[t] + draws[t] + refinanced[t].
   draws: Decimal;
+  // ADR 0165: the value a future purchase comes online with, in its turn-on year (its
+  // value at the purchase date); 0 in every other year and for a property owned at
+  // baseDate. Lets the equity change split a purchase from appreciation.
+  acquiredValue: Decimal;
   // ADR 0130: the year's refinance handover differences (Σ row `refinanced`).
   refinanced: Decimal;
   // ADR 0109: extra principal prepaid in the year and the fees paid with it. Owner
