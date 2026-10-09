@@ -234,6 +234,7 @@ function buildYear0(
   baseYear: number,
   tStart: number,
   crash: (value: Decimal, t: number) => Decimal,
+  undrawn0: Decimal,
 ): YearRow {
   if (tStart > 0) return zeroYear(0, baseYear, assumptions.baseDate);
   // The debt at baseDate, not grid month 1's opening balance: a loan drawn after
@@ -241,7 +242,7 @@ function buildYear0(
   const balance0 =
     b.schedule.length > 0 ? openingDebt(blocks, assumptions) : ZERO;
   // ADR 0166: plus the development tranches not drawn yet.
-  const committed0 = balance0.plus(undrawnPrincipal(blocks, assumptions, 0));
+  const committed0 = balance0.plus(undrawn0);
   const value0 = crash(b.v0, 0);
   return {
     year: 0,
@@ -441,8 +442,10 @@ function propertyYears(
   // Development principal not drawn yet at each year end, 0 before the property is
   // owned (ADR 0166).
   const undrawn = (t: number): Decimal =>
-    t < tStart ? ZERO : undrawnPrincipal(blocks, assumptions, t * 12);
-  years.push(buildYear0(b, blocks, assumptions, baseYear, tStart, crash));
+    t < tStart ? ZERO : undrawnPrincipal(property, blocks, assumptions, t * 12);
+  years.push(
+    buildYear0(b, blocks, assumptions, baseYear, tStart, crash, undrawn(0)),
+  );
 
   for (let t = 1; t <= assumptions.horizonYears; t++) {
     if (t < tStart) {

@@ -257,8 +257,8 @@ Derived per-property values:
 - **NOI** = effective gross − holding.
 - **Debt service (annual)** = 12 × active monthly instalment.
 - **Net cash flow** = NOI − debt service.
-- **Equity** = value − committed debt. **LTV** = committed debt ÷ value (null, shown "n/a", when the value is 0
-  and debt is owed; 0 when both are 0; ADR 0133).
+- **Equity** = value − committed debt. **LTV** = committed debt ÷ value (null, shown "n/a",
+  when the value is 0 and debt is owed; 0 when both are 0; ADR 0133).
 - **Gross yield** = grossAnnual ÷ value. **Net yield (cap rate)** = NOI ÷ value. Both are
   null ("n/a") when the value is 0 (ADR 0133).
 - **DSCR** = NOI ÷ debt service (null when debt service = 0; displayed as ">99×" above 99,
@@ -410,9 +410,11 @@ handover). It counts its initial principal and every tranche dated on or before 
 of the block that replaces it (the schedule's cut, D-47). A later block is a successor,
 never the acquisition loan. A future buy's first loan that starts after the window is not
 the acquisition loan: its initial principal is **cash in** in the projection year it is
-drawn, like refinance cash; its tranches are not. The same holds for a property owned at
-baseDate whose first loan is drawn after baseDate (ADR 0134): its equity at baseDate holds
-the whole value, so the loan's initial principal is cash in, in its draw year. **Sources
+drawn, like refinance cash; its tranches are not, and the loan is committed debt only from
+its draw month (ADR 0166). The same holds for a property owned at baseDate whose first plain
+loan is drawn after baseDate (ADR 0134): its equity at baseDate holds the whole value, so the
+loan's initial principal is cash in, in its draw year. A development loan there pays the
+developer instead: it is committed debt from baseDate and brings no cash in (ADR 0166). **Sources
 and uses** (the Property detail Acquisition section, §9; never a blocker): uses = price +
 recorded costs + recorded works; sources = own cash + acquisition loan; gap = uses −
 sources, only while own cash is known. A gap of 1 Kč or more either way is shown as a

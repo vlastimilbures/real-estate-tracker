@@ -8,12 +8,13 @@ import { describe, it, expect } from "vitest";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
-import { buildSchedule, propertySchedule } from "../schedule";
+import { buildSchedule, propertySchedule, undrawnPrincipal } from "../schedule";
 import { isoDate, edate } from "../dates";
 import { assumptions } from "./support/seed";
 import { devBlock as mixedDevBlock, mixed } from "./support/mixed";
 import type { MortgageBlock, Portfolio, Property } from "../types";
 import { near, KC } from "./support/tolerance";
+import { ZERO, type Decimal } from "../../lib/money";
 import { rate } from "../brands";
 import { money } from "../brands";
 
@@ -253,7 +254,7 @@ describe("probe R8-2: returns match the completed flat with the same debt (#120)
 });
 
 describe("committed debt edge cases", () => {
-  it("an owned flat whose development loan starts after baseDate owes the whole loan as committed", () => {
+  it("an owned flat's development loan drawn after baseDate is committed from baseDate, with no cash in", () => {
     const late: MortgageBlock = {
       ...devBlock,
       startDate: isoDate("2026-09-01"),
@@ -264,12 +265,35 @@ describe("committed debt edge cases", () => {
       completionDate: isoDate("2027-09-01"),
     };
     const pf = portfolioWith(late);
-    const y0 = portfolioProjection(pf, assumptions)[0];
-    near(y0.balance, 0, KC, "nothing drawn at baseDate");
-    near(y0.committedDebt, 2_250_000 + 7_000_000, KC, "committed");
-    near(y0.value, COMPLETED, KC, "value");
-    const s = portfolioSnapshot(pf, assumptions);
-    near(s.totalCommittedDebt, 9_250_000, KC, "snapshot committed");
+    const proj = portfolioProjection(pf, assumptions);
+    // The loan pays the developer, not the owner (ADR 0166 narrows ADR 0134 to plain
+    // loans): it is owed from baseDate and its initial principal is no cash in.
+    near(proj[0].balance, 0, KC, "nothing drawn at baseDate");
+    near(proj[0].committedDebt, TOTAL, KC, "year 0 committed");
+    near(proj[0].equity, COMPLETED - TOTAL, KC, "year 0 equity");
+    near(
+      portfolioSnapshot(pf, assumptions).totalCommittedDebt,
+      TOTAL,
+      KC,
+      "snapshot committed",
+    );
+    expect(proj[1].cashToOwner.toString()).toBe(proj[1].netCashFlow.toString());
+    // Year 1 (2027-06-07): drawn 2.25M + 3.0M; the 4.0M tranche is still ahead.
+    near(
+      proj[1].committedDebt.minus(proj[1].balance),
+      4_000_000,
+      KC,
+      "year 1 undrawn",
+    );
+    // Starting the same loan three months later does not lift the IRR by points.
+    const early = portfolioKpis(portfolioWith(devBlock), assumptions);
+    const later = portfolioKpis(pf, assumptions);
+    near(
+      later.leveredIrrNominal!,
+      early.leveredIrrNominal!.toNumber(),
+      0.005,
+      "levered IRR",
+    );
   });
 
   it("tranches of a development loan replaced by a successor are not committed after the handover", () => {
@@ -396,5 +420,50 @@ describe("committedDraws explains the committed-debt move (ADR 0166)", () => {
     expect(proj[1].draws.greaterThan(0)).toBe(true);
     near(proj[1].committedDraws, 0, KC, "year 1");
     near(proj[2].committedDraws, 0, KC, "year 2");
+  });
+});
+
+// Review of PR #300: the undrawn principal is exactly what the schedule still draws,
+// including a tranche the schedule moves to its last draw month (ADR 0139).
+describe("undrawn principal = the schedule's later draws", () => {
+  const owner: Property = {
+    id: "dev",
+    name: "Dev unit",
+    purchaseDate: isoDate("2020-01-01"),
+    purchasePrice: money("8000000"),
+  };
+  const leap: MortgageBlock = {
+    id: "m-leap",
+    propertyId: "dev",
+    startDate: isoDate("2026-03-31"),
+    initialPrincipal: money("1000000"),
+    fixationYears: 2,
+    interestRatePa: rate("0.05"),
+    monthlyInstalment: money("45000"),
+    loanTermYears: 2,
+    // Payment 23's due date: valid, but the schedule draws it in grid month 12.
+    draws: [{ date: isoDate("2028-02-29"), amount: money("500000") }],
+  };
+  const cases: [string, MortgageBlock, string][] = [
+    ["running dev loan", devBlock, "2026-06-07"],
+    ["mixed dev loan", mixedDevBlock, "2026-06-07"],
+    [
+      "dev loan drawn after baseDate",
+      { ...devBlock, startDate: isoDate("2026-08-01") },
+      "2026-06-07",
+    ],
+    ["tranche capped at the last draw month", leap, "2027-02-28"],
+  ];
+  it.each(cases)("%s", (_, block, base) => {
+    const a = { ...assumptions, baseDate: isoDate(base) };
+    const rows = propertySchedule([block], a).rows;
+    for (let m = 0; m <= rows.length; m++) {
+      const later = rows
+        .slice(m)
+        .reduce<Decimal>((s, r) => s.plus(r.drawn), ZERO);
+      expect(undrawnPrincipal(owner, [block], a, m).toString(), `m=${m}`).toBe(
+        later.toString(),
+      );
+    }
   });
 });

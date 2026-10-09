@@ -2,6 +2,7 @@
 // block selection. The month-by-month schedules live in ./schedule.
 import { FV, PMT, NPER, ZERO, ceilCzk, type Decimal } from "../lib/money";
 import {
+  addDays,
   edate,
   firstGridMonthOnOrAfter,
   lastGridMonthOnOrBefore,
@@ -15,10 +16,24 @@ import type {
   IsoDate,
   MortgageBlock,
   MortgageBlockFields,
+  Property,
 } from "./types";
 import type { ValidationCode } from "./validate";
 import { EngineInputError } from "./errors";
 import { FULLY_AMORTIZES_TOLERANCE, MAX_LOAN_TERM_MONTHS } from "./constants";
+
+/** A block starting up to this many days after the purchase funded it (ADR 0119 §3). */
+const ACQUISITION_LOAN_WINDOW_DAYS = 90;
+
+/** ADR 0119 §3: a block starting no later than 90 days after the purchase funded it;
+ *  any earlier start counts too (an off-plan loan drawn before handover). */
+export function fundedThePurchase(
+  property: Property,
+  block: MortgageBlock,
+): boolean {
+  const latest = addDays(property.purchaseDate, ACQUISITION_LOAN_WINDOW_DAYS);
+  return isOnOrBefore(block.startDate, latest);
+}
 
 /** End of the fixation period: startDate + fixationYears*12 months (EDATE). */
 export function blockEndDate(block: MortgageBlock): Date {

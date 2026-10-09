@@ -286,7 +286,12 @@ describe("P4a golden master (full precision)", () => {
         currentBalance(block, edate(block.startDate, m)).toString(),
       ),
       undrawn: [0, 3, 9, 15, 24].map((m) =>
-        undrawnPrincipal([block], seedAssumptions, m).toString(),
+        undrawnPrincipal(
+          seed.properties[0]!,
+          [block],
+          seedAssumptions,
+          m,
+        ).toString(),
       ),
     }).toMatchSnapshot();
   });

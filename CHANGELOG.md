@@ -273,6 +273,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on the drawn part only, and LTV is unchanged. Bank draws no longer add equity, so the
   net-worth multiple, CAGR and levered IRR match a finished flat with the same loan (the
   review's probe: 13.9x down to about 6.1x).
+  A development loan that starts after the projection start on a flat you already own now
+  counts as debt from the start and is no longer booked as cash paid to you. The projection
+  grid's Draws column is now **New debt**.
 
 - Future purchases (ADR 0165, #126):
   - The Dashboard's equity-change chart shows a flat bought during the projection as

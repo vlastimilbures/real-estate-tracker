@@ -279,6 +279,7 @@ function snapshotProperty(
   const committedDebt = owned
     ? debt.plus(
         undrawnPrincipal(
+          property,
           blocks,
           assumptions,
           lastGridMonthOnOrBefore(assumptions.baseDate, asOf),

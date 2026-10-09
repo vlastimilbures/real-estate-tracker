@@ -31,6 +31,7 @@ import {
   currentBalance,
   drawMonth,
   eventTermMonths,
+  fundedThePurchase,
   instalmentFor,
   isDevLoan,
   maxTermMonths,
@@ -63,6 +64,7 @@ import type {
   MortgagePrepayment,
   PlainLoan,
   PrepaymentEffect,
+  Property,
   Refinance,
 } from "./types";
 
@@ -1129,6 +1131,22 @@ function runGrid<S>(
   return { rows, outcomes };
 }
 
+/**
+ * The last grid month a development tranche can land in: grid month m carries payment
+ * `startToBase + m`, and a valid tranche joins payment term−1 at the latest (ADR 0129
+ * §3), even where a month-end clamp dates that grid month before the draw (ADR 0139).
+ */
+function devLastDrawMonth(
+  block: DevelopmentLoan,
+  assumptions: Assumptions,
+): number {
+  const startToBase = paymentOffset(block, assumptions.baseDate);
+  return Math.min(
+    builtMonths(block, assumptions, startToBase),
+    termMonths(block) - 1 - startToBase,
+  );
+}
+
 function buildDevSchedule(
   block: DevelopmentLoan,
   assumptions: Assumptions,
@@ -1136,13 +1154,7 @@ function buildDevSchedule(
   const { baseDate } = assumptions;
   const startToBase = paymentOffset(block, baseDate);
   const totalMonths = builtMonths(block, assumptions, startToBase);
-  // Grid month m carries payment `startToBase + m`; a valid tranche joins payment
-  // term−1 at the latest (ADR 0129 §3), even where a month-end clamp dates that grid
-  // month before the draw (ADR 0139).
-  const lastDrawMonth = Math.min(
-    totalMonths,
-    termMonths(block) - 1 - startToBase,
-  );
+  const lastDrawMonth = devLastDrawMonth(block, assumptions);
   // Draws after the last payment due by baseDate emit in this baseDate-anchored loop
   // (a future loan: after baseDate); earlier ones were folded into the opening
   // balance by simulateToBaseDate. A tranche between that payment and baseDate lands
@@ -1454,31 +1466,41 @@ export function openingDebt(
  * loan has not drawn it, plus the tranches still ahead. It follows the schedule's
  * grid, so committed debt = balance + this never drifts from the schedule: an item
  * lands in the first grid month on/after its date, and one dated on/before baseDate
- * is opening debt (D-44). A development loan that follows another block counts from
- * its own draw month (the predecessor's debt is owed before), and stops at its
- * successor's draw month; a tranche dated after the successor's start is never drawn.
+ * is opening debt (D-44); a tranche past the last month it may land in joins that month
+ * (ADR 0139). Before its own draw month a property's first loan counts: on a flat owned at
+ * baseDate it pays the developer, and a future buy's acquisition loan is already netted
+ * by the down payment (ADR 0119 §3). A future buy's later first loan pays its initial
+ * principal to the owner as cash (ADR 0119 §5), and a successor replaces a debt owed
+ * before, so both count only from their own draw month. A loan stops at its successor's draw
+ * month, and a tranche dated after the successor's start is never drawn.
  */
 export function undrawnPrincipal(
+  property: Property,
   blocks: MortgageBlock[],
   assumptions: Assumptions,
   month: number,
 ): Decimal {
   const { baseDate } = assumptions;
-  const ahead = (date: Date) =>
-    isAfter(date, baseDate) && firstGridMonthOnOrAfter(baseDate, date) > month;
+  const futureBuy = isAfter(property.purchaseDate, baseDate);
   const chain = blockChain(blocks, baseDate);
   return chain.reduce<Decimal>((sum, block, i) => {
     if (!isDevLoan(block)) return sum;
     const next = chain[i + 1];
-    if (i > 0 && month < drawMonth(block, baseDate)) return sum;
+    const start = drawMonth(block, baseDate);
+    const early = i === 0 && (!futureBuy || fundedThePurchase(property, block));
+    if (month < start && !early) return sum;
     if (next && month >= drawMonth(next, baseDate)) return sum;
-    const tranches = (block.draws ?? []).filter(
-      (d) => !(next && isAfter(d.date, next.startDate)) && ahead(d.date),
-    );
-    return tranches.reduce<Decimal>(
-      (s, d) => s.plus(d.amount),
-      sum.plus(ahead(block.startDate) ? block.initialPrincipal : ZERO),
-    );
+    const last = devLastDrawMonth(block, assumptions);
+    const ahead = (d: MortgageDraw) =>
+      isAfter(d.date, baseDate) &&
+      firstStepOnOrAfter(baseDate, d.date, last) > month &&
+      !(next && isAfter(d.date, next.startDate));
+    return (block.draws ?? [])
+      .filter(ahead)
+      .reduce<Decimal>(
+        (s, d) => s.plus(d.amount),
+        sum.plus(month < start ? block.initialPrincipal : ZERO),
+      );
   }, ZERO);
 }
 
