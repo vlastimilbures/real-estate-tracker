@@ -333,8 +333,8 @@ export const cs: Dictionary = {
     kpiNetWorthMultiple: "Násobek čistého jmění",
     kpiNetWorthCagr: "CAGR čistého jmění",
     kpiLeveredIrr: "Pákové IRR",
-    kpiCumulativeNetCashFlow: (n) =>
-      `Kumulativní čistý cash flow (roky 1–${n})`,
+    kpiCumulativeCashToOwner: (n) =>
+      `Kumulativní hotovost vlastníkovi (roky 1–${n})`,
     kpiFirstCfPositiveYear: "První rok s kladným cash flow",
     kpiDebtFullyRepaid: "Dluh plně splacen",
     kpiSumPrincipalRepaid: (n) => `Σ splacené jistiny (roky 1–${n})`,
@@ -816,7 +816,7 @@ export const cs: Dictionary = {
     kpiNetWorthMultiple: "Násobek čistého jmění",
     kpiCagrNominal: "CAGR (nominální)",
     kpiCagrReal: "CAGR (reálné)",
-    kpiCumulativeNetCf: "Kumulativní čistý CF",
+    kpiCumulativeCashToOwner: "Kumulativní hotovost vlastníkovi",
     kpiLeveredIrrNominal: "Pákové IRR (nominální)",
     kpiLeveredIrrReal: "Pákové IRR (reálné)",
     kpiFirstCfPositiveYear: "První rok kladného CF",
@@ -1178,6 +1178,7 @@ export const cs: Dictionary = {
     prepaid: "Mimořádně splaceno",
     prepaymentFees: "Poplatky za mimořádné splátky",
     netCf: "Čistý CF",
+    cashToOwner: "Hotovost vlastníkovi",
     dscr: "DSCR",
     caption: "Projekce rok po roku",
   },
@@ -1263,7 +1264,7 @@ export const cs: Dictionary = {
     mortgagesProse2Post:
       ", aby splatila zbývající zůstatek za zbývající dobu, takže se platba k tomu datu může zvýšit nebo snížit. Výhled úvěru na stránce nemovitosti ukazuje u každého úvěrového bloku modelovaný konec fixace a dluh, který přejde na novou sazbu, a také zbývající dobu splácení.",
     mortgagesProse3:
-      "Mimořádné splátky a změny splatnosti zadáte u každého úvěrového bloku v jeho formuláři. Mimořádná splátka k datu splatí jistinu navíc a buď sníží splátku, nebo zkrátí splatnost; poplatek se platí z vlastních prostředků a dluh nesnižuje. Změna splatnosti převede úvěr na nové datum splatnosti nebo novou splátku. Mimořádné splátky jsou vaše vlastní prostředky, mimo čistý cash flow a DSCR. Stránka nemovitosti ukazuje modelované doplacení a úrok, který mimořádné splátky ušetří za zbývající dobu úvěru, a upozorní, když je splátka vyšší než zůstatek nebo připadá po doplacení.",
+      "Mimořádné splátky a změny splatnosti zadáte u každého úvěrového bloku v jeho formuláři. Mimořádná splátka k datu splatí jistinu navíc a buď sníží splátku, nebo zkrátí splatnost; poplatek se platí z vlastních prostředků a dluh nesnižuje. Změna splatnosti převede úvěr na nové datum splatnosti nebo novou splátku. Mimořádné splátky jsou vaše vlastní prostředky, mimo čistý cash flow a DSCR, ale započítávají se do hotovosti vlastníkovi a IRR. Stránka nemovitosti ukazuje modelované doplacení a úrok, který mimořádné splátky ušetří za zbývající dobu úvěru, a upozorní, když je splátka vyšší než zůstatek nebo připadá po doplacení.",
     projectionTitle: "Projekce do horizontu",
     projectionHint: "Posunutí snímku do budoucna",
     projectionProse1:

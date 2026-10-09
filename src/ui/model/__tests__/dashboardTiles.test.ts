@@ -40,6 +40,7 @@ function seriesRow(year: number, netCashFlow: string): SeriesRow {
     principal: D("100000"),
     debtService: D("760000"),
     netCashFlow: D(netCashFlow),
+    cashToOwner: D(netCashFlow),
     dscr: D("0.9"),
     draws: ZERO,
     refinanced: ZERO,

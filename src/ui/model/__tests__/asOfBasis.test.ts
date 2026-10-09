@@ -33,6 +33,7 @@ function row(year: number): SeriesRow {
     principal: ZERO,
     debtService: ZERO,
     netCashFlow: D("1"),
+    cashToOwner: D("1"),
     dscr: null,
     draws: ZERO,
     refinanced: ZERO,

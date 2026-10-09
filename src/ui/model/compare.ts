@@ -232,7 +232,7 @@ function kpiRowSpecs(
       delta: decimalDelta(cagr, pp),
     },
     {
-      label: s.kpiCumulativeNetCf,
+      label: s.kpiCumulativeCashToOwner,
       fmt: (r) => fmtCzkM(cumCf(r)),
       kind: "money",
       value: cumCf,

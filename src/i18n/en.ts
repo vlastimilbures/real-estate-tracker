@@ -357,8 +357,8 @@ export const en = {
     kpiNetWorthMultiple: "Net-worth multiple",
     kpiNetWorthCagr: "Net-worth CAGR",
     kpiLeveredIrr: "Levered IRR",
-    kpiCumulativeNetCashFlow: (n: number) =>
-      `Cumulative net cash flow (Yrs 1–${n})`,
+    kpiCumulativeCashToOwner: (n: number) =>
+      `Cumulative cash to owner (Yrs 1–${n})`,
     kpiFirstCfPositiveYear: "First cash-flow-positive year",
     kpiDebtFullyRepaid: "Debt fully repaid",
     kpiSumPrincipalRepaid: (n: number) => `Σ principal repaid (Yrs 1–${n})`,
@@ -861,7 +861,7 @@ export const en = {
     kpiNetWorthMultiple: "Net-worth multiple",
     kpiCagrNominal: "CAGR (nominal)",
     kpiCagrReal: "CAGR (real)",
-    kpiCumulativeNetCf: "Cumulative net CF",
+    kpiCumulativeCashToOwner: "Cumulative cash to owner",
     kpiLeveredIrrNominal: "Levered IRR (nominal)",
     kpiLeveredIrrReal: "Levered IRR (real)",
     kpiFirstCfPositiveYear: "First CF-positive year",
@@ -1237,6 +1237,7 @@ export const en = {
     prepaid: "Prepaid",
     prepaymentFees: "Prepayment fees",
     netCf: "Net CF",
+    cashToOwner: "Cash to owner",
     dscr: "DSCR",
     caption: "Year-by-year projection",
   },
@@ -1323,7 +1324,7 @@ export const en = {
     mortgagesProse2Post:
       " to clear the remaining balance over the remaining term, so the payment can step up or down at that date. The property page's Loan outlook lists each loan block's modelled fixation end, the balance that moves to the new rate, and the loan's remaining term.",
     mortgagesProse3:
-      "Prepayments and maturity changes are entered on each loan block, in its form. A prepayment repays extra principal on its date and either lowers the instalment or shortens the term; its fee is paid in cash and does not reduce the debt. A maturity change moves the loan to a new maturity date or a new instalment. Prepayments are your own cash, kept outside net cash flow and DSCR. The property page shows the modelled payoff and the interest the prepayments save over the loan's remaining life, and warns when one is larger than the balance or falls after payoff.",
+      "Prepayments and maturity changes are entered on each loan block, in its form. A prepayment repays extra principal on its date and either lowers the instalment or shortens the term; its fee is paid in cash and does not reduce the debt. A maturity change moves the loan to a new maturity date or a new instalment. Prepayments are your own cash, kept outside net cash flow and DSCR, but counted in cash to owner and the IRR. The property page shows the modelled payoff and the interest the prepayments save over the loan's remaining life, and warns when one is larger than the balance or falls after payoff.",
     projectionTitle: "Projection to the horizon",
     projectionHint: "Rolling the snapshot forward",
     projectionProse1:

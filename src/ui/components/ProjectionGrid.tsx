@@ -58,6 +58,7 @@ export function ProjectionGrid({
             <th scope="col">{t.projGrid.principal}</th>
             <th scope="col">{t.projGrid.debtSvc}</th>
             <th scope="col">{t.projGrid.netCf}</th>
+            <th scope="col">{t.projGrid.cashToOwner}</th>
             <th scope="col">
               <MetricLabel term="dscr">{t.projGrid.dscr}</MetricLabel>
             </th>
@@ -122,6 +123,7 @@ export function ProjectionGrid({
                 <td>{flow(r.principal)}</td>
                 <td>{flow(r.debtService)}</td>
                 <td>{flow(r.netCashFlow, true)}</td>
+                <td>{flow(r.cashToOwner, true)}</td>
                 <td>{r.dscr ? fmtDscr(r.dscr) : "—"}</td>
                 {extras.map(({ key }) => (
                   <td key={key}>{flow(r[key])}</td>
