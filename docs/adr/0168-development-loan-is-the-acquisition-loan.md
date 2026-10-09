@@ -78,12 +78,14 @@ purchase.
   - no part of the loan is booked as cash in.
 - Edge case accepted: a cash purchase followed months later by a renovation loan paid in
   tranches now counts that loan as the acquisition loan. At worst the Acquisition check
-  shows "sources exceed the uses", a warning and never a blocker. Recorded in
-  `docs/model-limitations.md`.
+  shows "sources exceed the uses", a warning and never a blocker. On a future buy that
+  loan is also netted off a derived down payment, and it is committed debt from the
+  turn-on year with no works value beside it. Before, its initial principal was cash in.
+  The start date has no upper limit: a development loan starting after the horizon is
+  still netted and committed. Recorded in `docs/model-limitations.md`.
 - **Parity targets do not change**: the sample portfolio has no development loan, so no
-  row is added to the target change log. Golden-master cases with a future buy whose
-  development loan starts after the window move. The snapshot is updated in the same
-  commit as the fix (ADR 0039).
+  row is added to the target change log. No golden-master case has a future buy with a
+  development loan starting after the window, so the snapshot does not move.
 - Tests:
   - the ADR 0168 cases in `acquisition-funding.test.ts`, which replace the old "only its
     initial principal comes back" pin;
