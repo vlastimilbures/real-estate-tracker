@@ -1469,8 +1469,9 @@ export function openingDebt(
  * is opening debt (D-44); a tranche past the last month it may land in joins that month
  * (ADR 0139). Before its own draw month a property's first loan counts: on a flat owned at
  * baseDate it pays the developer, and a future buy's acquisition loan is already netted
- * by the down payment (ADR 0119 §3). A future buy's later first loan pays its initial
- * principal to the owner as cash (ADR 0119 §5), and a successor replaces a debt owed
+ * by the down payment (ADR 0119 §3; a development loan always is, ADR 0168). A future
+ * buy's later first plain loan pays its initial principal to the owner as cash (ADR 0119
+ * §5), and a successor replaces a debt owed
  * before, so both count only from their own draw month. A loan stops at its successor's draw
  * month, and a tranche dated after the successor's start is never drawn.
  */

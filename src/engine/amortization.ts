@@ -25,12 +25,15 @@ import { FULLY_AMORTIZES_TOLERANCE, MAX_LOAN_TERM_MONTHS } from "./constants";
 /** A block starting up to this many days after the purchase funded it (ADR 0119 §3). */
 const ACQUISITION_LOAN_WINDOW_DAYS = 90;
 
-/** ADR 0119 §3: a block starting no later than 90 days after the purchase funded it;
- *  any earlier start counts too (an off-plan loan drawn before handover). */
+/** ADR 0119 §3: the property's earliest block funded the purchase when it starts no later
+ *  than 90 days after it; any earlier start counts too (an off-plan loan drawn before
+ *  handover). A development loan funds it whatever its start: the bank pays the developer,
+ *  never the owner (ADR 0168). */
 export function fundedThePurchase(
   property: Property,
   block: MortgageBlock,
 ): boolean {
+  if (isDevLoan(block)) return true;
   const latest = addDays(property.purchaseDate, ACQUISITION_LOAN_WINDOW_DAYS);
   return isOnOrBefore(block.startDate, latest);
 }

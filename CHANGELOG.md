@@ -283,6 +283,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A development loan that starts more than 90 days after the purchase date now counts as
+  the loan that funded the purchase (ADR 0168). The Acquisition check no longer shows the
+  whole loan as a gap. The "Value vs debt vs equity" chart shows the debt in the purchase
+  year, beside the value. The loan's first draw is no longer counted as cash to you.
+
 - A development flat under construction no longer inflates the returns (ADR 0166, #120). It
   now counts at its completed value, and its debt includes the loan tranches the bank has
   not paid yet ("incl. … not drawn yet" on the debt tiles). Interest and payments still run

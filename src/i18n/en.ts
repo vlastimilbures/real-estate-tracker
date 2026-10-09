@@ -757,7 +757,7 @@ export const en = {
     acqGapOver: (amount: string) =>
       `The recorded sources exceed the uses by ${amount}. Check the own cash, the costs and works, or the loan.`,
     acqNote:
-      "— means not recorded; the uses count only the recorded costs and works. The acquisition loan is the first loan block when it starts no later than 90 days after the purchase. Set the amounts in Edit property.",
+      "— means not recorded; the uses count only the recorded costs and works. The acquisition loan is the first loan block when it starts no later than 90 days after the purchase, or a development loan whatever its start. Set the amounts in Edit property.",
     acqRecordedNote: (note: string) => `Note: ${note}`,
     showAmortization: (n: number) =>
       `Show amortization schedule (${n} ${enPlural(n, ["payment", "payments"])})`,
@@ -1579,7 +1579,7 @@ export const en = {
         formula:
           "uses = price + costs + works; sources = own cash + acquisition loan",
         meaning:
-          "A check of the recorded funding on each property page. A gap of 1 Kč or more either way shows as a warning, never a blocker. The acquisition loan is the first loan block when it starts no later than 90 days after the purchase.",
+          "A check of the recorded funding on each property page. A gap of 1 Kč or more either way shows as a warning, never a blocker. The acquisition loan is the first loan block when it starts no later than 90 days after the purchase, or a development loan whatever its start.",
         eg: "uses 7.30M, sources 7.25M → 50k short.",
       },
     },

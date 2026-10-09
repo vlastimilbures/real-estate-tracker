@@ -1,7 +1,7 @@
 // ADR 0119 (#33, #103, #140): the down payment of a property bought after baseDate is
 // the recorded own cash, else purchase price − acquisition loan + costs + works. The
-// acquisition loan is the earliest block starting no later than 90 days after the
-// purchase, with every tranche. Hand-calculated figures; the seed has no future buy, so
+// acquisition loan is the earliest block, with every tranche, when it starts no later
+// than 90 days after the purchase or is a development loan (ADR 0168). Hand-calculated figures; the seed has no future buy, so
 // a funding record on an owned property moves nothing.
 import { describe, it, expect } from "vitest";
 import { acquisitionSummary } from "../acquisition";
@@ -259,14 +259,57 @@ describe("ADR 0119 §5: a first loan after the window", () => {
     const beyond = loan({ startDate: isoDate("2032-01-01") }); // projection year 6
     expectKc(outflow(withBuy([beyond]), a), PRICE, "price only");
   });
+});
 
-  it("only its initial principal comes back, not its tranches", () => {
-    const lateDev: MortgageBlock = {
-      ...devLoan,
-      startDate: isoDate("2029-06-01"),
-    };
+describe("ADR 0168: a first development loan funds the purchase whatever its start", () => {
+  // 212 days after the purchase, and after the turn-on year's grid date (2029-06-07).
+  const lateDev: MortgageBlock = {
+    ...devLoan,
+    startDate: isoDate("2029-08-01"),
+  };
+  const LOAN = 8_000_000; // 2 M + 3 M + 3 M
+
+  it("the Acquisition check counts the whole loan", () => {
+    const s = summary(
+      withBuy(
+        [lateDev],
+        { ownCash: money(2_000_000), transactionCosts: money(4_000) },
+        10_000_000,
+        10_000_000,
+      ),
+    );
+    expect(s.loan?.toString()).toBe(String(LOAN));
+    expect(s.sources?.toString()).toBe("10000000"); // 2 M own + 8 M loan
+    expect(s.gap?.toString()).toBe("4000"); // only the costs
+  });
+
+  it("the down payment nets the loan, and no principal comes back", () => {
     const p = withBuy([lateDev], undefined, 10_000_000, 10_000_000);
-    expectKc(outflow(p), 8_000_000, "10 M out, 2 M in");
+    expectKc(outflow(p), 2_000_000, "10 M price − 8 M loan");
+  });
+
+  it("a plain loan after the window still pays its principal to the owner", () => {
+    const p = withBuy([loan({ startDate: isoDate("2029-08-01") })]);
+    expect(summary(p).loan).toBeNull();
+    expectKc(outflow(p), 3_800_000, "5.8 M out, 2 M in");
+  });
+
+  it("an owned flat's Acquisition check counts its late development loan", () => {
+    const owned = withBuy(
+      [{ ...lateDev, startDate: isoDate("2025-08-01") }],
+      { ownCash: money(2_000_000) },
+      10_000_000,
+      10_000_000,
+    );
+    const p: Portfolio = {
+      ...owned,
+      properties: owned.properties.map((x) =>
+        x.id === "buy" ? { ...x, purchaseDate: isoDate("2025-01-01") } : x,
+      ),
+    };
+    const s = summary(p);
+    expect(s.loan?.toString()).toBe(String(LOAN)); // 212 days after the purchase
+    expect(s.gap?.toString()).toBe("0");
   });
 });
 

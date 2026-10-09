@@ -37,9 +37,13 @@ work still to do is in the [roadmap](roadmap.md).
   cash recorded for the purchase (the property form's Acquisition section); without it, the
   purchase price minus the loan that funded it, plus any recorded costs and works
   (ADR 0119). The loan that funded the purchase is the property's first loan, if it starts
-  no later than 90 days after the purchase. A later first loan counts as cash paid to you in
-  the year it is drawn, and so does a first loan taken out after the projection start on a
-  property you already own (ADR 0134); a development loan's tranches do not. A development
+  no later than 90 days after the purchase or is a development loan (ADR 0168). A later
+  first plain loan counts as cash paid to you in the year it is drawn, and so does a first
+  plain loan taken out after the projection start on a property you already own (ADR 0134).
+  A renovation loan paid in tranches after a cash purchase also counts as the loan that
+  funded it: the Acquisition check then shows the sources above the uses. On a future buy
+  without recorded own cash, that loan also lowers the derived down payment, and it counts
+  as debt from the purchase with no works value beside it (ADR 0168). A development
   loan on a flat you already own pays the developer, not you: it brings no cash in and its
   whole amount counts as debt from the projection start (ADR 0166). A loan that
   starts before a future purchase date (an off-plan loan drawn at contract) is paid by you

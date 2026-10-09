@@ -37,8 +37,9 @@ function earliestBlock(blocks: MortgageBlock[]): MortgageBlock | undefined {
 
 /**
  * A property's first loan whose initial principal reaches the owner as cash in, in the
- * year it is drawn; its later tranches do not. For a future buy: a first loan that is not
- * its acquisition loan (it starts after the 90-day window, ADR 0119 §5). For a property
+ * year it is drawn; its later tranches do not. For a future buy: a first plain loan that is
+ * not its acquisition loan (it starts after the 90-day window, ADR 0119 §5; a development
+ * loan always is, ADR 0168). For a property
  * owned at baseDate: a first plain loan drawn after baseDate (ADR 0134), since its equity
  * at baseDate holds the whole value. A development loan there pays the developer, not the
  * owner: it is committed debt from baseDate instead (ADR 0166).

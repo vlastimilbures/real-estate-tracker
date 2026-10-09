@@ -367,6 +367,54 @@ describe("committed debt edge cases", () => {
     );
   });
 
+  it("a future buy's development loan starting after the window is committed from the turn-on year, with no cash in (ADR 0168)", () => {
+    // Purchase 2027-03-01 (turn-on year 1, grid date 2027-06-07); the loan contract
+    // follows 122 days later, as an off-plan loan often does.
+    const lateDev: MortgageBlock = {
+      ...mixedDevBlock,
+      startDate: isoDate("2027-07-01"),
+      loanTermYears: 30,
+      draws: [
+        { date: isoDate("2027-11-15"), amount: money("1500000") },
+        { date: isoDate("2028-08-20"), amount: money("1000000") },
+      ],
+      completionDate: isoDate("2028-08-20"),
+    };
+    const pf: Portfolio = {
+      ...mixedDevOnly([lateDev]),
+      properties: [
+        {
+          id: "dev",
+          name: "Dev unit",
+          purchaseDate: isoDate("2027-03-01"),
+          purchasePrice: money("7000000"),
+        },
+      ],
+      valuations: [
+        {
+          id: "v-dev",
+          propertyId: "dev",
+          validFrom: isoDate("2027-03-01"),
+          marketValue: money("9500000"),
+        },
+      ],
+    };
+    const proj = portfolioProjection(pf, assumptions);
+    // Turn-on year: value and the whole loan come in together.
+    near(proj[1].acquiredValue, 9_500_000, KC, "acquired value");
+    near(proj[1].balance, 0, KC, "nothing drawn yet");
+    near(proj[1].committedDebt, 4_500_000, KC, "year 1 committed");
+    near(proj[1].committedDraws, 4_500_000, KC, "year 1 new debt");
+    near(
+      proj[1].equity,
+      proj[1].value.minus(4_500_000).toNumber(),
+      KC,
+      "year 1 equity = value − whole loan",
+    );
+    // The bank pays the developer: the initial principal is no cash to the owner.
+    expect(proj[2].cashToOwner.toString()).toBe(proj[2].netCashFlow.toString());
+  });
+
   it("a plain loan has no committed part beyond its balance", () => {
     const plain = { ...devBlock, draws: undefined, completionDate: undefined };
     const proj = portfolioProjection(portfolioWith(plain), assumptions);

@@ -12,6 +12,9 @@
 - Amended by: [0166](0166-development-committed-debt.md) (decision 5: the later tranches
   of such a loan are committed debt; a development loan on a flat owned at baseDate is
   no cash in)
+- Amended by: [0168](0168-development-loan-is-the-acquisition-loan.md) (decisions 3 and
+  5: a first development loan is the acquisition loan whatever its start, and is never
+  cash in)
 
 ## Context
 

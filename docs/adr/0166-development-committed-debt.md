@@ -10,6 +10,8 @@
   committed debt; and a development loan on a flat owned at baseDate is no cash in),
   [0134](0134-acquisition-cash-gaps.md) (a first loan drawn after baseDate on a flat owned at
   baseDate is cash in only when it is a plain loan)
+- Amended by: [0168](0168-development-loan-is-the-acquisition-loan.md) (decision 7 applies
+  to plain loans only: a future buy's first development loan is its acquisition loan)
 - Related: [0024](0024-draw-timing.md) (draw timing),
   [0003](0003-czech-practice-decides.md), [0039](0039-golden-master.md),
   [0001](0001-behaviour-change-gate.md), [0126](0126-degenerate-kpis.md) (no
