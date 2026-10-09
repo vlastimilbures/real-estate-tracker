@@ -370,6 +370,7 @@ export interface PortfolioKPIs {
   netWorthMultipleReal: Decimal | null; // real net worth / equity₀ (ADR 0087, 0126)
   cagrNominal: Decimal | null; // null when equity₀ ≤ 0 or the end ≤ 0 (D-34, ADR 0126)
   cagrReal: Decimal | null;
+  // Cumulative cash to owner: Σ cashToOwner_t, years 1..N (ADR 0161; the name predates it).
   cumulativeNetCashFlow: Decimal;
   cumulativeNetCashFlowReal: Decimal; // Σ flow_t / CPI_t (ADR 0087)
   firstCashFlowPositiveYear: number | null; // calendar year

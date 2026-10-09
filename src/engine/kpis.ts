@@ -166,7 +166,7 @@ function equityGrowth(
 }
 
 /**
- * Cumulative net cash flow (Σ `flows`, see `kpisFrom`), the first calendar year with a
+ * Cumulative cash to owner (Σ `flows`, see `kpisFrom`), the first calendar year with a
  * positive net cash flow, and the year from which the portfolio stays debt-free (ADR
  * 0126). A debt-free year only counts once the portfolio has carried debt (a
  * never-leveraged portfolio reports null). NB: greaterThan(ZERO), not isPositive() —
