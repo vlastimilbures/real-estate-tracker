@@ -43,6 +43,7 @@ function seriesRow(year: number, netCashFlow: string): SeriesRow {
     cashToOwner: D(netCashFlow),
     dscr: D("0.9"),
     draws: ZERO,
+    acquiredValue: ZERO,
     refinanced: ZERO,
     prepaid: ZERO,
     prepaymentFees: ZERO,

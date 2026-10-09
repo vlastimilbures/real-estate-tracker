@@ -343,6 +343,7 @@ export const en = {
     seriesDebt: "Debt",
     seriesEquity: "Equity",
     seriesAppreciation: "Appreciation",
+    seriesPurchases: "Purchases",
     seriesDebtPaydown: "Debt repayment",
     seriesDebtDrawn: "Debt drawn",
     seriesNetEquityChange: "Net change",

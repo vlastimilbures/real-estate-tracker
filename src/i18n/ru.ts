@@ -326,6 +326,7 @@ export const ru: Dictionary = {
     seriesDebt: "Долг",
     seriesEquity: "Капитал",
     seriesAppreciation: "Рост стоимости",
+    seriesPurchases: "Покупки",
     seriesDebtPaydown: "Погашение долга",
     seriesDebtDrawn: "Выборка долга",
     seriesNetEquityChange: "Чистое изменение",

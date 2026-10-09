@@ -36,6 +36,7 @@ function row(year: number): SeriesRow {
     cashToOwner: D("1"),
     dscr: null,
     draws: ZERO,
+    acquiredValue: ZERO,
     refinanced: ZERO,
     prepaid: ZERO,
     prepaymentFees: ZERO,

@@ -19,6 +19,7 @@ import {
 } from "../components/charts";
 import {
   SERIES,
+  hasPurchases,
   type ChartRow,
   type EquityChangeRow,
 } from "../model/chartData";
@@ -197,6 +198,10 @@ export function TrajectoryCharts({
   ];
   const equitySeries = [
     { key: "appreciation", name: d.seriesAppreciation, color: SERIES.petrol },
+    // ADR 0165: only when a purchase falls inside the projection.
+    ...(hasPurchases(eqChange)
+      ? [{ key: "purchases", name: d.seriesPurchases, color: SERIES.slate }]
+      : []),
     { key: "paydown", name: d.seriesDebtPaydown, color: SERIES.brass },
     { key: "drawdown", name: d.seriesDebtDrawn, color: SERIES.clay },
   ];

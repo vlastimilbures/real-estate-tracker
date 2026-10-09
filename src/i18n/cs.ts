@@ -319,6 +319,7 @@ export const cs: Dictionary = {
     seriesDebt: "Dluh",
     seriesEquity: "Kapitál",
     seriesAppreciation: "Zhodnocení",
+    seriesPurchases: "Nákupy",
     seriesDebtPaydown: "Splátka dluhu",
     seriesDebtDrawn: "Čerpání dluhu",
     seriesNetEquityChange: "Čistá změna",
