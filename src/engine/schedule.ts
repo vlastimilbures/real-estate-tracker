@@ -209,7 +209,8 @@ function interestOnlyAt(block: MortgageBlock, date: Date): boolean {
   );
 }
 
-/** A no-payment row (undrawn future loan, or a fully repaid loan past payoff). */
+/** A no-payment row (undrawn future loan, or a fully repaid loan past payoff): no
+ *  payment is due, so no due date (ADR 0164). */
 function zeroRow(
   month: number,
   date: IsoDate,
@@ -219,6 +220,7 @@ function zeroRow(
   return {
     month,
     date,
+    dueDate: null,
     ratePa,
     instalment: ZERO,
     interest: ZERO,
@@ -659,7 +661,10 @@ function settleEvents(
 
 /** A paid month's row: the payment, then the prepayments it was followed by. */
 function paymentRow(
-  head: Pick<AmortizationRow, "month" | "date" | "ratePa" | "drawn">,
+  head: Pick<
+    AmortizationRow,
+    "month" | "date" | "dueDate" | "ratePa" | "drawn"
+  >,
   step: MonthStep,
   settled: Settled,
 ): AmortizationRow {
@@ -934,6 +939,8 @@ interface DevMonth {
   m: number;
   p: number;
   date: IsoDate;
+  /** Payment p's due date, EDATE(start, p) (ADR 0164). */
+  dueDate: IsoDate;
   draw: Decimal;
   ratePa: Decimal;
   io: boolean;
@@ -945,7 +952,7 @@ function devPaymentStep(
   mo: DevMonth,
   ctx: DevScheduleContext,
 ): DevMonthStep {
-  const { m, p, date, draw, ratePa, io } = mo;
+  const { m, p, date, dueDate, draw, ratePa, io } = mo;
   const fresh = m === 1 ? draw.minus(ctx.openingCounted) : draw;
   const terms = termsForTranche(state.terms, fresh, p, ctx.events.contractTerm);
   const trigger = reamortizes(
@@ -972,7 +979,7 @@ function devPaymentStep(
   );
   const drawn = ctx.newDebtByMonth.get(m) ?? ZERO;
   return {
-    row: paymentRow({ month: m, date, ratePa, drawn }, step, settled),
+    row: paymentRow({ month: m, date, dueDate, ratePa, drawn }, step, settled),
     state: {
       balance: settled.balance,
       currentInstalment: io ? state.currentInstalment : step.instalment,
@@ -1001,7 +1008,8 @@ function devMonthStep(
   const p = ctx.startToBase + m;
   const draw = ctx.drawsByMonth.get(m) ?? ZERO;
   const ratePa = rateOfPayment(p, block, assumptions);
-  const io = interestOnlyAt(block, edate(block.startDate, p)); // ADR 0129 §2
+  const dueDate = edate(block.startDate, p);
+  const io = interestOnlyAt(block, dueDate); // ADR 0129 §2
   // Payoff guard, as in the plain grid: once repaid (and no tranche lands) nothing
   // is due, rather than the held instalment on a zero balance (DR-044).
   if (!state.balance.plus(draw).greaterThan(ZERO)) {
@@ -1011,7 +1019,8 @@ function devMonthStep(
       outcomes: repaidOutcomes(ctx.events, p, m, state),
     };
   }
-  return devPaymentStep(state, { m, p, date, draw, ratePa, io }, ctx);
+  const mo = { m, p, date, dueDate, draw, ratePa, io };
+  return devPaymentStep(state, mo, ctx);
 }
 
 /** Events meeting a repaid loan: nothing to prepay, no maturity to change. */
@@ -1284,7 +1293,17 @@ function plainMonthStep(
     eventsAt(ctx.events, p),
   );
   return {
-    row: paymentRow({ month: m, date, ratePa, drawn: ZERO }, step, settled),
+    row: paymentRow(
+      {
+        month: m,
+        date,
+        dueDate: edate(block.startDate, p),
+        ratePa,
+        drawn: ZERO,
+      },
+      step,
+      settled,
+    ),
     state: {
       balance: settled.balance,
       currentInstalment: step.instalment,
@@ -1523,7 +1542,10 @@ export function blockChain(
  * A prepayment dated on/before the successor's start that the owner's dropped rows
  * carried is paid at the handover, before the successor pays off the rest (ADR 0109).
  * The merged row's `drawn` is real new debt only; `refinanced` is the successor's
- * principal less the balance it pays off (ADR 0130).
+ * principal less the balance it pays off (ADR 0130). A kept row keeps the owner's due
+ * date; the successor's draw row has none unless it pays a handover prepayment (then
+ * the owner's month-d due date), and its later rows fall due on its own cadence
+ * (ADR 0164).
  */
 function spliceSuccessor(
   current: BlockSchedule,
@@ -1564,6 +1586,9 @@ function spliceSuccessor(
     .plus(prepaid);
   const merged = {
     ...row,
+    // A replaced row paying the owner's handover prepayment falls due on the owner's
+    // month-d date (ADR 0164).
+    dueDate: row.dueDate ?? (prepaid.greaterThan(ZERO) ? due : null),
     prepaid,
     prepaymentFee: row.prepaymentFee.plus(late.fee),
     drawn,

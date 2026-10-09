@@ -205,6 +205,16 @@ describe("translated export headers", () => {
     expect(amortizationColumns(en, rowsOf(seed))).toHaveLength(7);
   });
 
+  it("the date column is the payment due date, empty with none (ADR 0164)", () => {
+    const seed = portfolio.mortgages.find((m) => m.propertyId === "javorova")!;
+    const due = amortizationColumns(en, [])[1]!;
+    expect(due.header).toBe("Due date");
+    expect(due.kind).toBe("date");
+    const row56 = rowsOf(seed)[55]!;
+    expect(due.value(row56)).toEqual(isoDate("2031-01-17"));
+    expect(due.value({ ...row56, dueDate: null })).toBeNull();
+  });
+
   it("adds Drawn for a development loan's tranches", () => {
     const headers = amortizationColumns(en, rowsOf(devBlock)).map(
       (c) => c.header,

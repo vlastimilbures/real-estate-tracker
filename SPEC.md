@@ -275,7 +275,11 @@ and rising principal.
 simplification; the loan's payment day is not modelled, see §10). The **rate in effect and
 the count of elapsed payments are keyed on each loan's own due dates** `EDATE(startDate, k)`:
 the payment due on the fixation-end date is still at the fixed rate; the reset applies from
-the next payment.
+the next payment. Each row carries both dates: `date` (the grid date the projection buckets
+by) and `dueDate`, the due date `EDATE(startDate, p)` of the payment it holds on the paying
+block (ADR 0164). `dueDate` is null when no payment is due: an undrawn month, the draw row,
+a repaid loan, or a refinance handover row the successor's draw replaces (unless it pays a handover prepayment: then the owner's due date). The amortization
+table and its export show `dueDate`.
 
 **Plain loans** — for each row with previous balance `B`:
 
@@ -780,7 +784,8 @@ offline badge, and controls for language and theme.
 
 3. **Property detail** — valuations, leases, mortgage blocks (including dev-loan tranche draws,
    completion date and the optional contract maturity date), holding costs (edit forms),
-   30-year projection table + mini charts, amortization schedule, and a health check
+   30-year projection table + mini charts, amortization schedule (dated by each payment's
+   due date, ADR 0164), and a health check
    (`amortizationHealth`, including the maturity and refix warnings). The **AsOfPicker** is
    available here too. Two **Excel export** buttons save the projection and amortization
    schedule as `.xlsx` files. A **Deactivate / Activate** action takes the property out of

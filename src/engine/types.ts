@@ -263,7 +263,12 @@ export interface PortfolioSnapshot {
 
 export interface AmortizationRow {
   month: number; // 1-based, from baseDate
+  /** Grid date EDATE(baseDate, month): the projection buckets the row by it (D-21). */
   date: IsoDate;
+  /** Due date of the payment this row carries, on the paying block's own cadence
+   *  EDATE(startDate, p) (ADR 0164). Null when no payment is due: an undrawn month,
+   *  the draw row, a repaid loan, or a handover row the successor's draw replaces. */
+  dueDate: IsoDate | null;
   ratePa: Decimal;
   instalment: Decimal;
   interest: Decimal;

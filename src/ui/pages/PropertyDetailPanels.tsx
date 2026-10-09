@@ -451,7 +451,9 @@ export function AmortizationTable({
             return (
               <tr key={row.month} className={reset ? "is-milestone" : ""}>
                 <td className="left">{row.month}</td>
-                <td className="left">{fmtDate(row.date)}</td>
+                <td className="left">
+                  {row.dueDate ? fmtDate(row.dueDate) : "—"}
+                </td>
                 <td>
                   <Pct value={row.ratePa} dp={2} />
                 </td>

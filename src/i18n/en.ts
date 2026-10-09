@@ -737,7 +737,7 @@ export const en = {
     amortizationMonths: (n: number) =>
       `${n} ${enPlural(n, ["month", "months"])}`,
     amColMonth: "Month",
-    amColDate: "Date",
+    amColDate: "Due date",
     amColRate: "Rate",
     amColInstalment: "Instalment",
     amColInterest: "Interest",

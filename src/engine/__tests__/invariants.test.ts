@@ -413,6 +413,22 @@ describe("Invariant — schedule sanity", () => {
           );
         });
       });
+      it(`${name}/${block.id}: a paying row has a due date, an idle row none, within its grid month at the fixture baseDate (ADR 0164)`, () => {
+        const rows = schedulesOf(p).get(block.propertyId)!.rows;
+        for (const r of rows) {
+          // Every fixture rate is above 0, so a scheduled payment always pays something.
+          // The grid-month bound holds at baseDate 2026-06-07 (no month-end clamp).
+          const pays = r.interest
+            .plus(r.principal)
+            .plus(r.prepaid)
+            .greaterThan(ZERO);
+          expect(r.dueDate !== null, `m${r.month} due date`).toBe(pays);
+          if (r.dueDate === null) continue;
+          const prev = edate(assumptions.baseDate, r.month - 1);
+          expect(isAfter(r.dueDate, prev), `m${r.month} after`).toBe(true);
+          expect(isOnOrBefore(r.dueDate, r.date), `m${r.month} by`).toBe(true);
+        }
+      });
       if (!isDevLoan(block)) {
         it(`${name}/${block.id}: plain-loan balance is non-increasing once drawn, except where a successor draws`, () => {
           const rows = schedulesOf(p).get(block.propertyId)!.rows;

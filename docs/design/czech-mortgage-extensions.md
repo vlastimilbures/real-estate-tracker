@@ -178,8 +178,9 @@ changes only that cadence anchor:
   projection year buckets (D-22) do not change.
 - The partial first period this creates is feature 4.
 
-**UI touchpoints.** Mortgage form field; amortization table shows the due date next to the grid
-month (two dates per row — P6 UX decision); the D-29 maturity mismatch check uses the new cadence.
+**UI touchpoints.** Mortgage form field; the D-29 maturity mismatch check uses the new cadence.
+The amortization table already shows each row's due date instead of the grid date (ADR 0164);
+with a payment day, `dueDate` follows that day.
 
 **Test strategy.** Inert default (`paymentDay` absent or equal to the start day ⇒ golden
 unchanged); month-end clamping (day 31 in February and April, day 29 in a non-leap February);
