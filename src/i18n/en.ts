@@ -663,7 +663,7 @@ export const en = {
     drawdownFull: (total: string) => `Fully drawn: ${total}`,
     drawdownIoEnd: (date: string) => `Interest-only until ${date}`,
     drawdownNote:
-      "A draw counts as drawn once its date is on or before the as-of date. The whole loan counts as debt from the start; interest is due only on what is drawn.",
+      "A draw counts as drawn once its date is on or before the as-of date; the debt figures count it from the next payment date. The whole loan counts as debt from the start; interest is due only on what is drawn.",
     drawdownTable: "Each draw",
     colDraw: "Draw",
     drawStatus: {

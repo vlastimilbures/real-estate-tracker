@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { propertyLoanExposure } from "../financing";
 import { propertySchedule, undrawnPrincipal } from "../schedule";
-import { isoDate } from "../dates";
+import { isoDate, lastGridMonthOnOrBefore } from "../dates";
 import { money } from "../brands";
 import type { IsoDate, MortgageBlock } from "../types";
 import { BASE_DATE, assumptions, portfolio } from "./support/seed";
@@ -52,6 +52,20 @@ describe("drawdown progress (ADR 0167)", () => {
     expectKc(
       ahead,
       undrawnPrincipal(dev, [devBlock], assumptions, 0).toNumber(),
+    );
+  });
+
+  it("between a tranche's date and its payment date the drawdown leads committed debt (owner decision 2026-10-09)", () => {
+    // As-of 15.11.2026: the tranche is dated that day, but the schedule draws it at the
+    // grid month of 07.12.2026, so committed debt still counts it as undrawn.
+    const asOf = isoDate("2026-11-15");
+    const [dd] = drawdowns([devBlock], asOf);
+    expectKc(dd!.total.minus(dd!.drawn), 1000000);
+    const dev = mixed.properties.find((p) => p.id === "dev")!;
+    const month = lastGridMonthOnOrBefore(BASE_DATE, asOf);
+    expectKc(
+      undrawnPrincipal(dev, [devBlock], assumptions, month).toNumber(),
+      2500000,
     );
   });
 
