@@ -5,7 +5,8 @@
 - Source: issue #32 (pre-release review 2026-10, F3); design `docs/design/czech-mortgage-extensions.md` §1 (D-04)
 - Amended by: ADR 0116, ADR 0120 (§6: a tranche on payment `q`), ADR 0136 (§5: `shortenTerm`
   keeps the instalment the next payment pays), ADR 0137 (§6: payment `q` pays at least
-  its interest), ADR 0129 (§3 and §8: what a late-window event sees)
+  its interest), ADR 0129 (§3 and §8: what a late-window event sees), ADR 0161 (§11: the cumulative
+  cash flow is named cash to owner and shown as its own row)
 
 ## Context
 

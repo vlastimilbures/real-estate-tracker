@@ -14,7 +14,12 @@ import {
   scheduleMonths,
   termMonths,
 } from "../amortization";
-import { buildSchedule, schedulesByProperty } from "../schedule";
+import {
+  buildSchedule,
+  EMPTY_PROPERTY_SCHEDULE,
+  propertySchedules,
+  scheduleRows,
+} from "../schedule";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import {
   cpiIndex,
@@ -39,7 +44,8 @@ import { money } from "../brands";
 // ADR 0087's real-lens KPIs (pinned in real-kpis.test.ts), ADR 0103's total interest
 // (pinned in total-interest.test.ts), ADR 0109's prepayment fields and event
 // outcomes (pinned in loan-events.test.ts; zero or empty without events) and ADR 0130's
-// `refinanced` (pinned in refinance-difference.test.ts). Leaving them
+// `refinanced` (pinned in refinance-difference.test.ts) and ADR 0161's `cashToOwner`
+// (pinned in cash-to-owner.test.ts against the KPIs hashed here). Leaving them
 // out keeps every hash comparable (no number moved).
 const ADDED_FIELDS = new Set([
   "periodStart",
@@ -59,6 +65,7 @@ const ADDED_FIELDS = new Set([
   "prepaymentFee",
   "prepaymentFees",
   "eventOutcomes",
+  "cashToOwner",
 ]);
 
 function canon(v: unknown): unknown {
@@ -107,7 +114,8 @@ function hashOrCodes(run: () => unknown): string {
 /** Everything the engine produces for one portfolio + assumptions pair. */
 function fullRun(portfolio: Portfolio, a: Assumptions) {
   const ids = portfolio.properties.map((p) => p.id);
-  const schedules = schedulesByProperty(portfolio.mortgages, ids, a);
+  const fullSchedules = propertySchedules(portfolio.mortgages, ids, a);
+  const schedules = scheduleRows(fullSchedules);
   const asOfs = [
     a.baseDate,
     edate(a.baseDate, 1),
@@ -128,7 +136,14 @@ function fullRun(portfolio: Portfolio, a: Assumptions) {
     schedules: hash(schedules),
     snapshotsWithSchedules,
     propertyProjections: portfolio.properties.map((p) =>
-      hash(propertyProjection(p, portfolio, a, schedules.get(p.id) ?? [])),
+      hash(
+        propertyProjection(
+          p,
+          portfolio,
+          a,
+          fullSchedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
+        ),
+      ),
     ),
     projection: hash(portfolioProjection(portfolio, a)),
     kpis: canon(portfolioKpis(portfolio, a)),

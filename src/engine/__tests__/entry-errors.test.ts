@@ -5,7 +5,12 @@
 import { describe, it, expect } from "vitest";
 import { rate } from "../brands";
 import { isoDate } from "../dates";
-import { schedulesByProperty } from "../schedule";
+import {
+  EMPTY_PROPERTY_SCHEDULE,
+  propertySchedules,
+  scheduleRows,
+  schedulesByProperty,
+} from "../schedule";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
@@ -21,11 +26,12 @@ import { money } from "../brands";
 
 const NaD = new Date(NaN) as IsoDate;
 const ids = (p: Portfolio) => p.properties.map((x) => x.id);
-const seedSchedules = schedulesByProperty(
+const seedFull = propertySchedules(
   portfolio.mortgages,
   ids(portfolio),
   assumptions,
 );
+const seedSchedules = scheduleRows(seedFull);
 
 /** Every public entry point that takes a portfolio, run on `p` and `a`. */
 function entryPoints(p: Portfolio, a: Assumptions) {
@@ -37,7 +43,12 @@ function entryPoints(p: Portfolio, a: Assumptions) {
     propertySnapshot: () => propertySnapshot(first, p, a),
     portfolioProjection: () => portfolioProjection(p, a),
     propertyProjection: () =>
-      propertyProjection(first, p, a, seedSchedules.get(first.id) ?? []),
+      propertyProjection(
+        first,
+        p,
+        a,
+        seedFull.get(first.id) ?? EMPTY_PROPERTY_SCHEDULE,
+      ),
     portfolioKpis: () => portfolioKpis(p, a),
   };
 }

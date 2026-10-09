@@ -25,6 +25,9 @@ export interface SeriesRow {
   principal: Decimal;
   debtService: Decimal;
   netCashFlow: Decimal;
+  // Net cash flow less the owner's cash outside it (lensed, ADR 0161); Σ of years
+  // 1..N is the Dashboard's cumulative cash to owner. Zero in year 0.
+  cashToOwner: Decimal;
   dscr: Decimal | null;
   // New debt drawn this year (lensed), from the engine (DR-092): zero unless a loan,
   // tranche or refinance draws in the year; zero in year 0.
@@ -92,6 +95,7 @@ export function projectionSeries(
     principal: y.principal,
     debtService: y.debtService,
     netCashFlow: y.netCashFlow,
+    cashToOwner: y.cashToOwner,
     dscr: y.dscr,
     draws: y.draws,
     refinanced: y.refinanced,
@@ -151,6 +155,11 @@ export function projectionColumns(
     { header: g.principal, kind: "money", value: flow((r) => r.principal) },
     { header: g.debtSvc, kind: "money", value: flow((r) => r.debtService) },
     { header: g.netCf, kind: "money", value: flow((r) => r.netCashFlow) },
+    {
+      header: g.cashToOwner,
+      kind: "money",
+      value: flow((r) => r.cashToOwner),
+    },
     { header: g.dscr, kind: "multiple", value: (r) => r.dscr },
     ...projectionExtras(rows, g).map(
       ({ key, header }): XlsxColumn<SeriesRow> => ({

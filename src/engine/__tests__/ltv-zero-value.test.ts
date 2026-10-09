@@ -16,7 +16,7 @@ import {
   realProjection,
 } from "../real";
 import { applyScenario } from "../scenarios";
-import { schedulesByProperty } from "../schedule";
+import { EMPTY_PROPERTY_SCHEDULE, propertySchedules } from "../schedule";
 import { money, rate } from "../brands";
 import { D, ZERO } from "../../lib/money";
 import { at } from "../arrays";
@@ -83,7 +83,7 @@ describe("ADR 0133: 100 % value crash at the start", () => {
 
   it("a property projection follows the same rule", () => {
     const javorova = property("javorova");
-    const schedules = schedulesByProperty(
+    const schedules = propertySchedules(
       portfolio.mortgages,
       [javorova.id],
       crashed,
@@ -93,7 +93,7 @@ describe("ADR 0133: 100 % value crash at the start", () => {
         javorova,
         portfolio,
         crashed,
-        schedules.get(javorova.id) ?? [],
+        schedules.get(javorova.id) ?? EMPTY_PROPERTY_SCHEDULE,
       ),
       0,
     );

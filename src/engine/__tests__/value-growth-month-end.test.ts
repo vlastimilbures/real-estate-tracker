@@ -4,7 +4,7 @@
 import { describe, it, expect } from "vitest";
 import { growthYears, propertySnapshot } from "../metrics";
 import { propertyProjection } from "../projections";
-import { schedulesByProperty } from "../schedule";
+import { propertySchedules } from "../schedule";
 import { edate, isoDate } from "../dates";
 import { money } from "../brands";
 import type { Assumptions, Portfolio } from "../types";
@@ -29,9 +29,15 @@ const javorovaOnly: Portfolio = {
 
 function snapshotVsProjection(p: Portfolio, a: Assumptions, n: number) {
   const prop = p.properties[0]!;
-  const sched = schedulesByProperty(p.mortgages, [prop.id], a).get(prop.id)!;
+  const sched = propertySchedules(p.mortgages, [prop.id], a).get(prop.id)!;
   const proj = propertyProjection(prop, p, a, sched);
-  const snap = propertySnapshot(prop, p, a, edate(a.baseDate, n * 12), sched);
+  const snap = propertySnapshot(
+    prop,
+    p,
+    a,
+    edate(a.baseDate, n * 12),
+    sched.rows,
+  );
   return { snap: snap.value, proj: proj[n]!.value };
 }
 

@@ -18,21 +18,21 @@ sources (P02 §3.3 C-15: the direct fetch of Act No. 257/2016 Coll. returned HTT
 
 ## 0. The engine today: where the hooks are
 
-| Concern               | Where (after P4a/P4b/P4c)                                                                                                                                      |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Month-step kernel     | `src/engine/schedule.ts` `amortizeMonth` (split, re-amortize, payoff at maturity), `reamortizes` (trigger), `recomputeInstalment`                              |
-| Grid loops            | `buildPlainSchedule`, `buildDevSchedule` / `devMonthStep`; catch-up to baseDate `simulateToBaseDate`; plain opening `plainOpening` (closed form or replay)     |
-| Calendar              | `paymentOffset`, `lastPaymentDue`, `rateOfPayment` (rate on due date `EDATE(start, p)`, D-21); `src/engine/dates.ts` `edate`, `lastGridMonthOnOrBefore`        |
-| Grid-bucketed events  | `bucketDraws` (tranches → grid month); `newDebtByMonth` (DR-092)                                                                                               |
-| Refinance chain       | `blockChain`, `spliceSuccessor` (handover row, `Refinance { month, paidOff, drawn }`), `propertySchedule`                                                      |
-| Row fields            | `AmortizationRow { month, date, ratePa, instalment, interest, principal, drawn, endBalance }`; identity `end = prev − principal + drawn` (DR-092)              |
-| Projection            | `src/engine/projections.ts` `yearSlice` (sums a year's rows), `buildYearRow`; `ProjectionYear.draws`                                                           |
-| KPIs / IRR cash flows | `src/engine/kpis.ts` `leveredCashFlows`, `acquisitionOutflows`, `refinanceCash` (cash outside the projection rows), `principalRepaidInHorizon`                 |
-| Term and maturity     | `src/engine/amortization.ts` `termMonths` (D-08), `scheduleMonths`, `impliedMaturity` / `maturityMismatch` (D-29), `currentBalance` (closed-form FV)           |
-| Validation            | `src/engine/validate.ts` `ValidationCode`, `checkMortgage`, `LOAN_ERROR_CODES` (raise), `validateInputs` (report)                                              |
-| Scenarios             | `src/engine/scenarios.ts` `applyScenario`: overrides Assumptions only, never portfolio data (CLAUDE.md)                                                        |
-| Persistence           | `mortgage_blocks` table (`src/data/migrations.ts`), `src/data/mappers.ts` (the `draws` JSON column is the precedent), `src/data/backup.ts` `BACKUP_COLUMNS`    |
-| UI                    | Mortgage form `src/ui/model/mortgageForm.ts`, `formParse.ts` (`drawsDraft`); `src/ui/pages/PropertyDetail.tsx`; `PropertyDetailPanels.tsx` `AmortizationTable` |
+| Concern               | Where (after P4a/P4b/P4c)                                                                                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Month-step kernel     | `src/engine/schedule.ts` `amortizeMonth` (split, re-amortize, payoff at maturity), `reamortizes` (trigger), `recomputeInstalment`                                        |
+| Grid loops            | `buildPlainSchedule`, `buildDevSchedule` / `devMonthStep`; catch-up to baseDate `simulateToBaseDate`; plain opening `plainOpening` (closed form or replay)               |
+| Calendar              | `paymentOffset`, `lastPaymentDue`, `rateOfPayment` (rate on due date `EDATE(start, p)`, D-21); `src/engine/dates.ts` `edate`, `lastGridMonthOnOrBefore`                  |
+| Grid-bucketed events  | `bucketDraws` (tranches → grid month); `newDebtByMonth` (DR-092)                                                                                                         |
+| Refinance chain       | `blockChain`, `spliceSuccessor` (handover row, `Refinance { month, paidOff, drawn }`), `propertySchedule`                                                                |
+| Row fields            | `AmortizationRow { month, date, ratePa, instalment, interest, principal, drawn, endBalance }`; identity `end = prev − principal + drawn` (DR-092)                        |
+| Projection            | `src/engine/yearGrid.ts` `yearSlice` (sums a year's rows); `src/engine/projections.ts` `buildYearRow`; `ProjectionYear.draws`                                            |
+| KPIs / IRR cash flows | `src/engine/kpis.ts` `leveredCashFlows`, `principalRepaidInHorizon`; `src/engine/ownerCash.ts` `acquisitionOutflows`, `refinanceCash` (cash outside the projection rows) |
+| Term and maturity     | `src/engine/amortization.ts` `termMonths` (D-08), `scheduleMonths`, `impliedMaturity` / `maturityMismatch` (D-29), `currentBalance` (closed-form FV)                     |
+| Validation            | `src/engine/validate.ts` `ValidationCode`, `checkMortgage`, `LOAN_ERROR_CODES` (raise), `validateInputs` (report)                                                        |
+| Scenarios             | `src/engine/scenarios.ts` `applyScenario`: overrides Assumptions only, never portfolio data (CLAUDE.md)                                                                  |
+| Persistence           | `mortgage_blocks` table (`src/data/migrations.ts`), `src/data/mappers.ts` (the `draws` JSON column is the precedent), `src/data/backup.ts` `BACKUP_COLUMNS`              |
+| UI                    | Mortgage form `src/ui/model/mortgageForm.ts`, `formParse.ts` (`drawsDraft`); `src/ui/pages/PropertyDetail.tsx`; `PropertyDetailPanels.tsx` `AmortizationTable`           |
 
 The seed has no prepayments, payment day or first partial month, so every feature below must be
 **inert by default**: with the new fields absent, all 105 parity targets and the golden master

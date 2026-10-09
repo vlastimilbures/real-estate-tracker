@@ -8,7 +8,12 @@ import { edate, isoDate } from "../dates";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { currentBalance } from "../amortization";
-import { schedulesByProperty } from "../schedule";
+import {
+  EMPTY_PROPERTY_SCHEDULE,
+  propertySchedules,
+  scheduleRows,
+  schedulesByProperty,
+} from "../schedule";
 import { assumptions, portfolio } from "./support/seed";
 import type { MortgageBlock, Portfolio } from "../types";
 import { devBlock } from "./support/mixed";
@@ -139,11 +144,12 @@ describe("Valuation re-anchor: a newer valuation overrides the modeled curve", (
       },
     ],
   };
-  const sch = schedulesByProperty(
+  const schFull = propertySchedules(
     reval.mortgages,
     reval.properties.map((p) => p.id),
     assumptions,
   );
+  const sch = scheduleRows(schFull);
 
   it("snapshot exactly on the new valuation date uses it (no growth yet)", () => {
     const snap = portfolioSnapshot(reval, assumptions, atYears(4), sch);
@@ -156,7 +162,7 @@ describe("Valuation re-anchor: a newer valuation overrides the modeled curve", (
       reval.properties.find((p) => p.id === "javorova")!,
       reval,
       assumptions,
-      sch.get("javorova") ?? [],
+      schFull.get("javorova") ?? EMPTY_PROPERTY_SCHEDULE,
     );
     near(proj[4].value.toNumber(), 20_000_000, KC, "proj y4 = new valuation");
     near(
@@ -172,7 +178,7 @@ describe("Valuation re-anchor: a newer valuation overrides the modeled curve", (
       reval.properties.find((p) => p.id === "javorova")!,
       reval,
       assumptions,
-      sch.get("javorova") ?? [],
+      schFull.get("javorova") ?? EMPTY_PROPERTY_SCHEDULE,
     );
     near(
       proj[3].value.toNumber(),
@@ -211,7 +217,7 @@ describe("baseDate predates the first valuation (the user's real shape)", () => 
     leases: [],
     holdingCosts: [],
   };
-  const proj = propertyProjection(prop, pf, a, []);
+  const proj = propertyProjection(prop, pf, a, EMPTY_PROPERTY_SCHEDULE);
 
   it("projection year 0 uses the valuation, not the purchase price", () =>
     near(proj[0].value.toNumber(), 10_200_000, KC, "y0"));

@@ -70,7 +70,7 @@ weighted-avg rate, net-worth multiple) within **±0.0001**. Base date **2026-06-
 | Net-worth multiple                     | 4.8496×                                                                           |
 | Net-worth CAGR (nominal)               | 0.0540                                                                            |
 | Net-worth CAGR (real)                  | 0.0283                                                                            |
-| Cumulative net cash flow (Yrs 1–30)    | 14,705,700.29                                                                     |
+| Cumulative cash to owner (Yrs 1–30)    | 14,705,700.29                                                                     |
 | First year net cash flow positive      | 2031                                                                              |
 | Year portfolio debt fully repaid       | 2052                                                                              |
 | Levered IRR (nominal)                  | 0.061795                                                                          |

@@ -13,7 +13,7 @@ import {
   propertySnapshot,
   portfolioProjection,
   propertyProjection,
-  schedulesByProperty,
+  EMPTY_PROPERTY_SCHEDULE,
   propertySchedules,
   propertyLoanExposure,
   applyScenario,
@@ -224,7 +224,7 @@ export function useAllProjections(): {
   const assumptions = usePortfolioStore((s) => s.assumptions);
   return useMemo(() => {
     if (!portfolio || !assumptions) return null;
-    const schedules = schedulesByProperty(
+    const schedules = propertySchedules(
       portfolio.mortgages,
       portfolio.properties.map((p) => p.id),
       assumptions,
@@ -240,7 +240,7 @@ export function useAllProjections(): {
             p,
             portfolio,
             assumptions,
-            schedules.get(p.id) ?? [],
+            schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
           ),
         })),
     };
@@ -254,7 +254,7 @@ export function usePropertyProjections(): Map<string, ProjectionYear[]> | null {
   const assumptions = usePortfolioStore((s) => s.assumptions);
   return useMemo(() => {
     if (!portfolio || !assumptions) return null;
-    const schedules = schedulesByProperty(
+    const schedules = propertySchedules(
       portfolio.mortgages,
       portfolio.properties.map((p) => p.id),
       assumptions,
@@ -266,7 +266,7 @@ export function usePropertyProjections(): Map<string, ProjectionYear[]> | null {
           p,
           portfolio,
           assumptions,
-          schedules.get(p.id) ?? [],
+          schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
         ),
       ]),
     );
@@ -310,12 +310,11 @@ export function usePropertyEngineResult(
     const property = portfolio.properties.find((p) => p.id === propertyId);
     if (!property) return null;
     try {
-      const built = propertySchedules(
-        portfolio.mortgages,
-        [propertyId],
-        assumptions,
-      ).get(propertyId);
-      const schedule = built?.rows ?? [];
+      const built =
+        propertySchedules(portfolio.mortgages, [propertyId], assumptions).get(
+          propertyId,
+        ) ?? EMPTY_PROPERTY_SCHEDULE;
+      const schedule = built.rows;
       return {
         asOf: asOfDate,
         snapshot: propertySnapshot(
@@ -325,18 +324,13 @@ export function usePropertyEngineResult(
           asOfDate,
           schedule,
         ),
-        projection: propertyProjection(
-          property,
-          portfolio,
-          assumptions,
-          schedule,
-        ),
+        projection: propertyProjection(property, portfolio, assumptions, built),
         schedule,
-        eventOutcomes: built?.eventOutcomes ?? [],
+        eventOutcomes: built.eventOutcomes,
         financing: propertyLoanExposure(
           portfolio.mortgages.filter((b) => b.propertyId === propertyId),
           assumptions,
-          { rows: schedule, eventOutcomes: built?.eventOutcomes ?? [] },
+          { rows: schedule, eventOutcomes: built.eventOutcomes },
           asOfDate,
         ),
         acquisition: acquisitionSummary(property, portfolio, assumptions),

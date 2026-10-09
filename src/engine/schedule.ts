@@ -1747,6 +1747,13 @@ export interface PropertySchedule {
   eventOutcomes: LoanEventOutcome[];
 }
 
+/** The schedule of a property without a loan: no rows, refinances or events. */
+export const EMPTY_PROPERTY_SCHEDULE: PropertySchedule = Object.freeze({
+  rows: [],
+  refinances: [],
+  eventOutcomes: [],
+});
+
 /**
  * One property's schedule on the baseDate grid, following its refinance chain: each
  * successor block starting after baseDate replaces its predecessor from the grid month

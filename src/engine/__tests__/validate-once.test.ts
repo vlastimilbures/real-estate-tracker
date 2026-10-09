@@ -9,7 +9,7 @@ import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
 import { portfolioOutputs, projectionAndKpis } from "../outputs";
-import { schedulesByProperty } from "../schedule";
+import { EMPTY_PROPERTY_SCHEDULE, propertySchedules } from "../schedule";
 import { assumptions, portfolio } from "./support/seed";
 
 vi.mock("../validate", async (importOriginal) => {
@@ -52,9 +52,9 @@ describe("DR-128 — assertInputs runs once per public call", () => {
   it("propertyProjection and propertySnapshot still validate on their own", () => {
     const first = portfolio.properties[0];
     const schedule =
-      schedulesByProperty(portfolio.mortgages, [first.id], assumptions).get(
+      propertySchedules(portfolio.mortgages, [first.id], assumptions).get(
         first.id,
-      ) ?? [];
+      ) ?? EMPTY_PROPERTY_SCHEDULE;
     propertyProjection(first, portfolio, assumptions, schedule);
     propertySnapshot(first, portfolio, assumptions);
     expect(calls()).toBe(2);

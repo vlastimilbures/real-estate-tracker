@@ -38,7 +38,7 @@ describe("Dashboard horizon labels (ADR 0084)", () => {
     );
     expect(screen.getByText("25-year trajectory")).toBeTruthy();
     expect(
-      screen.getByText("Cumulative net cash flow (Yrs 1–25)"),
+      screen.getByText("Cumulative cash to owner (Yrs 1–25)"),
     ).toBeTruthy();
     expect(screen.getByText("Σ principal repaid (Yrs 1–25)")).toBeTruthy();
     expect(container.textContent).not.toMatch(/30-year|1–30/);

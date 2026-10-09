@@ -9,6 +9,8 @@ import {
   portfolioSnapshot,
   propertyProjection,
   propertySnapshot,
+  EMPTY_PROPERTY_SCHEDULE,
+  propertySchedules,
   schedulesByProperty,
   type IsoDate,
 } from "../../../engine";
@@ -18,11 +20,9 @@ import { projectionSeries } from "../projection";
 import { asOfView, propertyTilesForAsOf, tilesForAsOf } from "../dashboard";
 import type { Mode } from "../lens";
 
-const schedules = schedulesByProperty(
-  portfolio.mortgages,
-  portfolio.properties.map((p) => p.id),
-  assumptions,
-);
+const ids = portfolio.properties.map((p) => p.id);
+const schedules = schedulesByProperty(portfolio.mortgages, ids, assumptions);
+const fullSchedules = propertySchedules(portfolio.mortgages, ids, assumptions);
 
 function tiles(asOf: IsoDate, mode: Mode) {
   const snap = portfolioSnapshot(portfolio, assumptions, asOf, schedules);
@@ -35,10 +35,11 @@ function tiles(asOf: IsoDate, mode: Mode) {
   const dashboard = tilesForAsOf(snap, series, basis, mode, assumptions);
   const perProperty = portfolio.properties.map((p) => {
     const schedule = schedules.get(p.id) ?? [];
+    const full = fullSchedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE;
     return propertyTilesForAsOf(
       propertySnapshot(p, portfolio, assumptions, asOf, schedule),
       projectionSeries(
-        propertyProjection(p, portfolio, assumptions, schedule),
+        propertyProjection(p, portfolio, assumptions, full),
         mode,
         assumptions,
       ),
@@ -75,8 +76,8 @@ describe("one as-of rule on both screens (UX-053)", () => {
 
   it("future as-of: a property tile is its projection row for that year", () => {
     const p = portfolio.properties[1];
-    const schedule = schedules.get(p.id) ?? [];
-    const row = propertyProjection(p, portfolio, assumptions, schedule)[5];
+    const full = fullSchedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE;
+    const row = propertyProjection(p, portfolio, assumptions, full)[5];
     const s = tiles(future, "nominal").perProperty[1];
     expect(s.debt.toString()).toBe(row.balance.toString());
     expect(s.netCashFlow.toString()).toBe(row.netCashFlow.toString());

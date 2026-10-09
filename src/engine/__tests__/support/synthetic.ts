@@ -4,7 +4,7 @@
 // every id suffixed, then cut to `n` properties.
 import { rate } from "../../brands";
 import { edate, isoDate } from "../../dates";
-import type { Portfolio } from "../../types";
+import type { MortgageBlock, Portfolio } from "../../types";
 import { mixed } from "./mixed";
 import { money } from "../../brands";
 
@@ -23,6 +23,31 @@ export const mixedWithRefi: Portfolio = {
       monthlyInstalment: money("9800"),
     },
   ],
+};
+
+/**
+ * #117: `mixedWithRefi` (Javorova's cash-out refinance, D-47) with the future buy
+ * (purchase 15.03.2028) on a loan drawn before baseDate (pre-purchase debt service,
+ * ADR 0124) and a 300,000 Kč prepayment with a 3,000 Kč fee (ADR 0109).
+ */
+export const mixedCashOutside: Portfolio = {
+  ...mixedWithRefi,
+  mortgages: mixedWithRefi.mortgages.map((m): MortgageBlock =>
+    m.id === "m-future"
+      ? {
+          ...m,
+          startDate: isoDate("2026-01-10"),
+          prepayments: [
+            {
+              date: isoDate("2030-03-15"),
+              amount: money("300000"),
+              effect: "shortenTerm",
+              fee: money("3000"),
+            },
+          ],
+        }
+      : m,
+  ),
 };
 
 // Shift every Date (also inside draws) back by k months and suffix ids, so clones

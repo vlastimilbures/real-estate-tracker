@@ -252,7 +252,7 @@ describe("DR-092 — ProjectionYear.draws + refinanced equals the balance back-o
       const blocksOf = (id: string) =>
         p.mortgages.filter((m) => m.propertyId === id);
       for (const prop of p.properties.filter((x) => x.active !== false)) {
-        const schedule = propertySchedule(blocksOf(prop.id), a).rows;
+        const schedule = propertySchedule(blocksOf(prop.id), a);
         expectDrawsMatchBackOut(
           propertyProjection(prop, p, a, schedule),
           `${name}/${prop.id}`,

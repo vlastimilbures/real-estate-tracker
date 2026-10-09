@@ -12,9 +12,10 @@ import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import {
   addYears,
+  EMPTY_PROPERTY_SCHEDULE,
   isoDate,
   propertyProjection,
-  schedulesByProperty,
+  propertySchedules,
   type Assumptions,
   type Portfolio,
 } from "../../../engine";
@@ -111,7 +112,7 @@ describe("Properties uses the Today basis of Property detail (ADR 0150)", () => 
     // Property detail at Today shows this row (asOfAnchor.test: a property tile is its
     // projection row for the year).
     const lipova = portfolio.properties.find((p) => p.id === "lipova")!;
-    const schedules = schedulesByProperty(
+    const schedules = propertySchedules(
       portfolio.mortgages,
       portfolio.properties.map((p) => p.id),
       assumptions,
@@ -120,7 +121,7 @@ describe("Properties uses the Today basis of Property detail (ADR 0150)", () => 
       lipova,
       portfolio,
       assumptions,
-      schedules.get("lipova") ?? [],
+      schedules.get("lipova") ?? EMPTY_PROPERTY_SCHEDULE,
     )[1]!;
     render(<Properties />);
     const row = screen

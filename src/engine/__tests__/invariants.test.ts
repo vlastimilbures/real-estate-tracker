@@ -7,7 +7,12 @@ import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
 import { isDevLoan } from "../amortization";
-import { propertySchedule, schedulesByProperty } from "../schedule";
+import {
+  EMPTY_PROPERTY_SCHEDULE,
+  propertySchedule,
+  propertySchedules,
+  scheduleRows,
+} from "../schedule";
 import { drawnFraction } from "../growth";
 import { applyScenario } from "../scenarios";
 import { edate, isAfter, isOnOrBefore, isoDate } from "../dates";
@@ -108,7 +113,7 @@ const sum = (xs: Decimal[]) => xs.reduce((s, x) => s.plus(x), ZERO);
 const activeProps = (p: Portfolio) =>
   p.properties.filter((x) => x.active !== false);
 const schedulesOf = (p: Portfolio, a: Assumptions = assumptions) =>
-  schedulesByProperty(
+  propertySchedules(
     p.mortgages,
     p.properties.map((x) => x.id),
     a,
@@ -161,7 +166,7 @@ describe("Invariant — principal conservation", () => {
           prop,
           p,
           assumptions,
-          schedules.get(prop.id) ?? [],
+          schedules.get(prop.id) ?? EMPTY_PROPERTY_SCHEDULE,
         );
         const N = assumptions.horizonYears;
         const sumPrincipal = sum(proj.slice(1).map((y) => y.principal));
@@ -207,11 +212,11 @@ function assertSnapshotMatchesProjection(
 ) {
   const schedules = schedulesOf(p);
   for (const prop of activeProps(p).filter((x) => ids.includes(x.id))) {
-    const sched = schedules.get(prop.id) ?? [];
+    const sched = schedules.get(prop.id) ?? EMPTY_PROPERTY_SCHEDULE;
     const proj = propertyProjection(prop, p, assumptions, sched);
     for (let n = 0; n <= assumptions.horizonYears; n++) {
       const asOf = edate(assumptions.baseDate, n * 12);
-      const s = propertySnapshot(prop, p, assumptions, asOf, sched);
+      const s = propertySnapshot(prop, p, assumptions, asOf, sched.rows);
       if (!s.owned) continue; // pre-purchase years: see characterisation below
       const want = field === "value" ? proj[n].value : proj[n].balance;
       near(s[field], want.toNumber(), KC, `${prop.id} N=${n} ${field}`);
@@ -339,7 +344,7 @@ describe("Characterisation — snapshot vs projection are NOT equal for rent/NOI
     portfolio,
     assumptions,
     edate(assumptions.baseDate, 12),
-    sched,
+    sched.rows,
   );
 
   it("Lipova year 1: snapshot annualises the 23,205 lease; projection sums the year's months", () => {
@@ -355,7 +360,7 @@ describe("Characterisation — snapshot vs projection are NOT equal for rent/NOI
   it("Lipova year 1: snapshot DS = 12 × instalment; projection DS = Σ payments", () => {
     near(s1.annualDebtService, 25_567.15 * 12, KC, "snapshot DS");
     const paid = sum(
-      sched.slice(0, 12).map((r) => r.interest.plus(r.principal)),
+      sched.rows.slice(0, 12).map((r) => r.interest.plus(r.principal)),
     );
     near(proj[1].debtService, paid.toNumber(), KC, "projection DS");
   });
@@ -368,7 +373,7 @@ describe("Characterisation — snapshot vs projection are NOT equal for rent/NOI
       mixed,
       assumptions,
       assumptions.baseDate,
-      sched2,
+      sched2.rows,
     );
     const p0 = propertyProjection(future, mixed, assumptions, sched2)[0];
     expect(s.owned).toBe(false);
@@ -398,7 +403,7 @@ describe("Invariant — schedule sanity", () => {
   for (const [name, p] of CASES) {
     for (const block of p.mortgages) {
       it(`${name}/${block.id}: balance ≥ 0 and principal ≤ opening balance every month`, () => {
-        const rows = schedulesOf(p).get(block.propertyId)!;
+        const rows = schedulesOf(p).get(block.propertyId)!.rows;
         rows.forEach((r, i) => {
           expect(r.endBalance.gte(ZERO), `m${r.month} balance`).toBe(true);
           if (i === 0) return; // month-1 opening is only known via the schedule itself
@@ -410,7 +415,7 @@ describe("Invariant — schedule sanity", () => {
       });
       if (!isDevLoan(block)) {
         it(`${name}/${block.id}: plain-loan balance is non-increasing once drawn, except where a successor draws`, () => {
-          const rows = schedulesOf(p).get(block.propertyId)!;
+          const rows = schedulesOf(p).get(block.propertyId)!.rows;
           // A successor's draw month may raise the balance (a cash-out refinance, D-47).
           const handovers = new Set(
             propertySchedule(
@@ -455,7 +460,8 @@ function deepFreeze<T>(x: T): T {
 }
 
 function runAll(p: Portfolio, a: Assumptions) {
-  const schedules = schedulesOf(p, a);
+  const full = schedulesOf(p, a);
+  const schedules = scheduleRows(full);
   return {
     snapshot: portfolioSnapshot(p, a, a.baseDate, schedules),
     snapshotLater: portfolioSnapshot(p, a, edate(a.baseDate, 30), schedules),

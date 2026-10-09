@@ -39,7 +39,7 @@ const kind = (v: unknown) =>
 /** Year ranges ("Yrs 1–n") hold a literal 1 that collides with the count 1 (ADR 0084);
  *  so does the monthly hint's "÷ 12" (ADR 0088). */
 const RANGE_LABELS = new Set([
-  "dashboard.kpiCumulativeNetCashFlow",
+  "dashboard.kpiCumulativeCashToOwner",
   "dashboard.kpiSumPrincipalRepaid",
   "dashboard.kpiSumPrincipalRepaidNominal",
   "dashboard.monthlyHint",
@@ -257,7 +257,7 @@ describe("i18n dictionaries — plural forms", () => {
     for (const l of LANGS) {
       for (const k of [
         "dashboard.trajectory",
-        "dashboard.kpiCumulativeNetCashFlow",
+        "dashboard.kpiCumulativeCashToOwner",
         "dashboard.kpiSumPrincipalRepaid",
         "propertyDetail.projectionTitle",
       ]) {

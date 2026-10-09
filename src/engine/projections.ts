@@ -10,7 +10,14 @@ import {
 } from "./dates";
 import { isDevLoan } from "./amortization";
 import { at } from "./arrays";
-import { schedulesByProperty, openingDebt } from "./schedule";
+import {
+  EMPTY_PROPERTY_SCHEDULE,
+  openingDebt,
+  propertySchedules,
+  type PropertySchedule,
+} from "./schedule";
+import { turnOnYear, yearSlice } from "./yearGrid";
+import { cashOutsideNetCf } from "./ownerCash";
 import { assertAssumptions, assertInputs } from "./validate";
 import { basisDate, valueAt, drawnFraction } from "./growth";
 import {
@@ -178,43 +185,6 @@ function buildRentPlan(
   return plan;
 }
 
-/** Sum a schedule's months for projection year t (months (t-1)*12+1 .. t*12). */
-function yearSlice(schedule: AmortizationRow[], t: number) {
-  const start = (t - 1) * 12;
-  const end = t * 12;
-  let interest = ZERO;
-  let principal = ZERO;
-  let drawn = ZERO;
-  let refinanced = ZERO;
-  let prepaid = ZERO;
-  let prepaymentFees = ZERO;
-  let balance = ZERO;
-  let lastRate: Decimal | null = null;
-  for (const row of schedule.slice(start, end)) {
-    interest = interest.plus(row.interest);
-    principal = principal.plus(row.principal);
-    drawn = drawn.plus(row.drawn);
-    refinanced = refinanced.plus(row.refinanced);
-    prepaid = prepaid.plus(row.prepaid);
-    prepaymentFees = prepaymentFees.plus(row.prepaymentFee);
-    balance = row.endBalance;
-    if (row.principal.plus(row.interest).isPositive()) {
-      lastRate = row.ratePa;
-    }
-  }
-  return {
-    interest,
-    principal,
-    debtService: interest.plus(principal),
-    drawn,
-    refinanced,
-    prepaid,
-    prepaymentFees,
-    balance,
-    rate: lastRate,
-  };
-}
-
 /**
  * Debt on a schedule at the end of grid month `m`: the baseDate debt for m = 0 (a
  * grid-month-1 draw is not debt yet, D-33, D-44), else that row's end balance.
@@ -265,7 +235,7 @@ function buildYear0(
   tStart: number,
   crash: (value: Decimal, t: number) => Decimal,
   ramp: (value: Decimal, date: Date) => Decimal,
-): ProjectionYear {
+): YearRow {
   if (tStart > 0) return zeroYear(0, baseYear, assumptions.baseDate);
   // The debt at baseDate, not grid month 1's opening balance: a loan drawn after
   // baseDate is new debt in its year, not opening debt (D-33).
@@ -374,7 +344,7 @@ function buildYearRow(
   rc: RentAndCosts,
   slice: ReturnType<typeof yearSlice>,
   draws: Decimal,
-): ProjectionYear {
+): YearRow {
   const netCashFlow = rc.noi.minus(slice.debtService);
   return {
     year: t,
@@ -406,7 +376,7 @@ export function propertyProjection(
   property: Property,
   portfolio: Portfolio,
   assumptions: Assumptions,
-  schedule: AmortizationRow[],
+  schedule: PropertySchedule,
 ): ProjectionYear[] {
   assertInputs(portfolio, assumptions); // D-37
   return projectProperty(property, portfolio, assumptions, schedule);
@@ -417,13 +387,28 @@ function projectProperty(
   property: Property,
   portfolio: Portfolio,
   assumptions: Assumptions,
-  schedule: AmortizationRow[],
+  built: PropertySchedule,
 ): ProjectionYear[] {
+  const years = propertyYears(property, portfolio, assumptions, built.rows);
+  const own = new Map([[property.id, built]]);
+  return withCashToOwner(
+    years,
+    cashOutsideNetCf([property], portfolio, assumptions, own, years),
+  );
+}
+
+/** A property's projection years before their cash to owner (ADR 0161). */
+function propertyYears(
+  property: Property,
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+  schedule: AmortizationRow[],
+): YearRow[] {
   const b = propertyBasis(property, portfolio, assumptions, schedule);
   const baseYear = assumptions.baseDate.getUTCFullYear();
   const vacancy = assumptions.vacancyAllowance;
   const cpi = buildCpiIndex(assumptions);
-  const years: ProjectionYear[] = [];
+  const years: YearRow[] = [];
 
   // A timed, permanent value correction: from projection year `atYear` the value curve
   // is scaled by `1 − pct` and growth resumes from the lower base (debt & rent untouched).
@@ -484,6 +469,23 @@ function projectProperty(
   return years;
 }
 
+/** A projection year before its `cashToOwner` is known (ADR 0161). */
+type YearRow = Omit<ProjectionYear, "cashToOwner">;
+
+/**
+ * ADR 0161: each year's cash to owner = net cash flow − the cash outside it
+ * (`cashOutsideNetCf` of the same properties); year 0 is the opening position, 0.
+ */
+function withCashToOwner(
+  years: YearRow[],
+  outside: Decimal[],
+): ProjectionYear[] {
+  return years.map((y, t) => ({
+    ...y,
+    cashToOwner: t === 0 ? ZERO : y.netCashFlow.minus(at(outside, t)),
+  }));
+}
+
 /**
  * 1-based baseDate grid month in which `date` first becomes active. Returns 1 when
  * `date ≤ baseDate` (already owned/let ⇒ active the whole horizon, so the seed keeps
@@ -507,19 +509,6 @@ function activeMonthsInYear(firstGridMonth: number, t: number): number {
 }
 
 /**
- * Projection year-slice (1..horizon) containing `date`, matching where
- * `buildSchedule` first draws a future loan (first month grid point ≥ date).
- * Returns 0 when the date is on/before baseDate (already owned → no gating), and
- * horizon+1 when it falls beyond the horizon (property never appears).
- */
-export function turnOnYear(date: Date, assumptions: Assumptions): number {
-  const { baseDate, horizonYears } = assumptions;
-  if (isOnOrBefore(date, baseDate)) return 0;
-  const m = firstGridMonthOnOrAfter(baseDate, date, horizonYears * 12);
-  return m > horizonYears * 12 ? horizonYears + 1 : Math.ceil(m / 12);
-}
-
-/**
  * Projection year `t`'s period (D-22): grid months 12(t−1)+1 … 12t, i.e. the dates
  * (periodStart, periodEnd], on the month-end-clamped grid (D-21). Year 0 is baseDate.
  */
@@ -531,11 +520,7 @@ function yearPeriod(baseDate: Date, t: number) {
 }
 
 /** A fully-empty projection year for periods before a property is owned. */
-function zeroYear(
-  year: number,
-  calendarYear: number,
-  baseDate: Date,
-): ProjectionYear {
+function zeroYear(year: number, calendarYear: number, baseDate: Date): YearRow {
   return {
     year,
     calendarYear,
@@ -563,12 +548,12 @@ function zeroYear(
 
 /**
  * Portfolio projection = element-wise sum of property projections by year. Pass
- * `schedules` (from `schedulesByProperty` on the same inputs) to reuse them (DR-042).
+ * `schedules` (from `propertySchedules` on the same inputs) to reuse them (DR-042).
  */
 export function portfolioProjection(
   portfolio: Portfolio,
   assumptions: Assumptions,
-  schedules?: Map<string, AmortizationRow[]>,
+  schedules?: Map<string, PropertySchedule>,
 ): ProjectionYear[] {
   assertInputs(portfolio, assumptions); // D-37
   return projectPortfolio(portfolio, assumptions, schedules);
@@ -581,21 +566,27 @@ export function portfolioProjection(
 export function projectPortfolio(
   portfolio: Portfolio,
   assumptions: Assumptions,
-  schedules = schedulesByProperty(
+  schedules = propertySchedules(
     portfolio.mortgages,
     portfolio.properties.map((p) => p.id),
     assumptions,
   ),
 ): ProjectionYear[] {
-  const perProp = portfolio.properties
-    .filter((p) => p.active !== false)
-    .map((p) =>
-      projectProperty(p, portfolio, assumptions, schedules.get(p.id) ?? []),
-    );
+  const active = portfolio.properties.filter((p) => p.active !== false);
+  // The property years without their own cash to owner: the portfolio's is computed
+  // once below, not summed from them.
+  const perProp = active.map((p) =>
+    propertyYears(
+      p,
+      portfolio,
+      assumptions,
+      (schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE).rows,
+    ),
+  );
   const baseYear = assumptions.baseDate.getUTCFullYear();
-  const out: ProjectionYear[] = [];
+  const out: YearRow[] = [];
   for (let t = 0; t <= assumptions.horizonYears; t++) {
-    const acc = (sel: (y: ProjectionYear) => Decimal) =>
+    const acc = (sel: (y: YearRow) => Decimal) =>
       perProp.reduce((s, yrs) => s.plus(sel(at(yrs, t))), ZERO);
     const value = acc((y) => y.value);
     const balance = acc((y) => y.balance);
@@ -625,51 +616,10 @@ export function projectPortfolio(
       ratePa: null,
     });
   }
-  return out;
-}
-
-/** What a loan's schedule takes from the owner in one projection year. */
-interface DebtServicePaid {
-  interest: Decimal;
-  principal: Decimal;
-  prepaid: Decimal;
-  prepaymentFees: Decimal;
-}
-
-/**
- * ADR 0124 (#104): the debt service the owner pays before a future buy turns on, by
- * projection year (index 0..N, year 0 always zero). A loan drawn before the purchase
- * date runs its schedule while the property's rows are still empty (years before
- * tStart), so its interest, principal, prepaid and fees are owner cash outside the rows.
- * The same months and fields as the rows (`yearSlice`); draws are the bank's money and
- * arrive as the turn-on year's carried-in debt (DR-092). Zero for an all-owned portfolio.
- */
-export function prePurchaseDebtService(
-  portfolio: Portfolio,
-  assumptions: Assumptions,
-  schedules: Map<string, AmortizationRow[]>,
-): DebtServicePaid[] {
-  const N = assumptions.horizonYears;
-  const out: DebtServicePaid[] = Array.from({ length: N + 1 }, () => ({
-    interest: ZERO,
-    principal: ZERO,
-    prepaid: ZERO,
-    prepaymentFees: ZERO,
-  }));
-  for (const p of portfolio.properties) {
-    if (p.active === false) continue;
-    const schedule = schedules.get(p.id) ?? [];
-    const last = Math.min(turnOnYear(p.purchaseDate, assumptions) - 1, N);
-    for (let t = 1; t <= last; t++) {
-      const slice = yearSlice(schedule, t);
-      const y = at(out, t);
-      out[t] = {
-        interest: y.interest.plus(slice.interest),
-        principal: y.principal.plus(slice.principal),
-        prepaid: y.prepaid.plus(slice.prepaid),
-        prepaymentFees: y.prepaymentFees.plus(slice.prepaymentFees),
-      };
-    }
-  }
-  return out;
+  // Σ net cash flow − the portfolio's cash outside it, not Σ of the property rows: the
+  // KPIs sum these, and another summation order would move their last digits.
+  return withCashToOwner(
+    out,
+    cashOutsideNetCf(active, portfolio, assumptions, schedules, out),
+  );
 }

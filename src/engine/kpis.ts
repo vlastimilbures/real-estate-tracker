@@ -10,24 +10,11 @@ import {
   IRR_NPV_TOLERANCE,
   IRR_SCAN_GRID,
 } from "./constants";
-import {
-  acquisitionSummary,
-  laterFirstLoan,
-  repaidBeforeBase,
-} from "./acquisition";
 import { at } from "./arrays";
-import {
-  propertySchedules,
-  scheduleRows,
-  type PropertySchedule,
-} from "./schedule";
+import { propertySchedules, type PropertySchedule } from "./schedule";
 import { assertInputs } from "./validate";
-import {
-  buildCpiIndex,
-  prePurchaseDebtService,
-  projectPortfolio,
-  turnOnYear,
-} from "./projections";
+import { buildCpiIndex, projectPortfolio } from "./projections";
+import { prePurchaseDebtService, scheduleOf } from "./ownerCash";
 import type {
   Assumptions,
   IrrNoRateReason,
@@ -147,74 +134,6 @@ function bisect(
 }
 
 /**
- * Down-payment outflows by projection year: a property bought *after* baseDate turns
- * its equity on at tStart > 0, so its down payment (the recorded own cash, else price −
- * acquisition loan + costs + works, ADR 0119) is paid in year tStart; levered IRR /
- * cumulative CF aren't flattered by free terminal equity. With it goes the principal its
- * acquisition loan repaid before baseDate (ADR 0134). A first loan that did not fund
- * the purchase, or one drawn after baseDate on a property owned at baseDate (ADR 0134),
- * pays its initial principal back to the owner, as cash in (a negative outflow) in the
- * year it is drawn. All zero when every property is owned and every first loan was drawn
- * by baseDate (the seed ⇒ parity targets unchanged).
- */
-function acquisitionOutflows(
-  portfolio: Portfolio,
-  assumptions: Assumptions,
-): Decimal[] {
-  const N = assumptions.horizonYears;
-  const out: Decimal[] = Array.from({ length: N + 1 }, () => ZERO);
-  for (const p of portfolio.properties) {
-    if (p.active === false) continue;
-    const tStart = turnOnYear(p.purchaseDate, assumptions);
-    if (tStart > N) continue;
-    if (tStart > 0) {
-      out[tStart] = at(out, tStart)
-        .plus(acquisitionSummary(p, portfolio, assumptions).outflow)
-        .plus(repaidBeforeBase(p, portfolio, assumptions));
-    }
-    const late = laterFirstLoan(p, portfolio, assumptions);
-    const tLoan = late ? turnOnYear(late.startDate, assumptions) : N + 1;
-    if (late && tLoan <= N) {
-      out[tLoan] = at(out, tLoan).minus(late.initialPrincipal);
-    }
-  }
-  return out;
-}
-
-/** A property's schedule from the shared map (every property id has an entry). */
-function scheduleOf(
-  schedules: Map<string, PropertySchedule>,
-  propertyId: string,
-): PropertySchedule {
-  return (
-    schedules.get(propertyId) ?? { rows: [], refinances: [], eventOutcomes: [] }
-  );
-}
-
-/**
- * Net refinance cash by projection year (D-47): a successor's balance drawn − the
- * predecessor balance it pays off, in the year of its handover month. Positive for a
- * cash-out refinance, negative for a pay-down. All zero without successors (the seed
- * ⇒ parity targets unchanged).
- */
-function refinanceCash(
-  portfolio: Portfolio,
-  assumptions: Assumptions,
-  schedules: Map<string, PropertySchedule>,
-): Decimal[] {
-  const N = assumptions.horizonYears;
-  const out: Decimal[] = Array.from({ length: N + 1 }, () => ZERO);
-  for (const p of portfolio.properties) {
-    if (p.active === false) continue;
-    for (const r of scheduleOf(schedules, p.id).refinances) {
-      const t = Math.ceil(r.month / 12);
-      if (t <= N) out[t] = at(out, t).plus(r.drawn).minus(r.paidOff);
-    }
-  }
-  return out;
-}
-
-/**
  * Net-worth growth. A multiple or a growth rate needs a *positive* opening equity base, so
  * both multiples and both CAGRs are null when equity0 ≤ 0 — no growth base, shown as "—"
  * (D-34, ADR 0126). A CAGR also needs a positive end: a negative base to the power 1/N is
@@ -247,7 +166,7 @@ function equityGrowth(
 }
 
 /**
- * Cumulative net cash flow (Σ `flows`, see `kpisFrom`), the first calendar year with a
+ * Cumulative cash to owner (Σ `flows`, see `kpisFrom`), the first calendar year with a
  * positive net cash flow, and the year from which the portfolio stays debt-free (ADR
  * 0126). A debt-free year only counts once the portfolio has carried debt (a
  * never-leveraged portfolio reports null). NB: greaterThan(ZERO), not isPositive() —
@@ -391,11 +310,7 @@ export function portfolioKpis(
     assumptions,
   );
   // Validated above (DR-128).
-  const proj = projectPortfolio(
-    portfolio,
-    assumptions,
-    scheduleRows(schedules),
-  );
+  const proj = projectPortfolio(portfolio, assumptions, schedules);
   return kpisFrom(portfolio, assumptions, proj, schedules);
 }
 
@@ -416,35 +331,12 @@ export function kpisFrom(
   const cpi = buildCpiIndex(assumptions);
   const equity0 = at(proj, 0).equity;
   const equityN = at(proj, N).equity;
-  // Cash outside net cash flow: acquisitions out (down payment and the principal repaid
-  // before baseDate, less a later first loan's principal in; `acquisitionOutflows`), net
-  // refinance cash in (D-47), prepayments and their fees out (ADR 0109), and the debt
-  // service paid before a future buy turns on (ADR 0124).
-  const refiCash = refinanceCash(portfolio, assumptions, schedules);
-  const prePurchase = prePurchaseDebtService(
-    portfolio,
-    assumptions,
-    scheduleRows(schedules),
-  );
-  const cashOutsideNetCf = acquisitionOutflows(portfolio, assumptions).map(
-    (x, t) => {
-      const pre = at(prePurchase, t);
-      return x
-        .minus(at(refiCash, t))
-        .plus(at(proj, t).prepaid)
-        .plus(at(proj, t).prepaymentFees)
-        .plus(pre.interest)
-        .plus(pre.principal)
-        .plus(pre.prepaid)
-        .plus(pre.prepaymentFees);
-    },
-  );
-  // The owner's flow each year, built once: flows[t] = netCF_t − cashOutsideNetCf_t. The
-  // nominal and real cumulative cash flow and both IRR vectors derive from it (#117);
-  // index 0 is not read (year 0 is the opening equity).
-  const flows = proj.map((y, t) =>
-    y.netCashFlow.minus(at(cashOutsideNetCf, t)),
-  );
+  const active = portfolio.properties.filter((p) => p.active !== false);
+  const prePurchase = prePurchaseDebtService(active, assumptions, schedules);
+  // The owner's flow each year: the projection's cash to owner, netCF_t −
+  // cashOutsideNetCf_t (ADR 0161). The nominal and real cumulative cash flow and both
+  // IRR vectors derive from it (#117); index 0 is not read (year 0 is the opening equity).
+  const flows = proj.map((y) => y.cashToOwner);
   const nominalVector = leveredCashFlows(proj, flows);
   const realVector = nominalVector.map((cf, t) => cf.div(at(cpi, t)));
 

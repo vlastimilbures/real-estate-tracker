@@ -17,7 +17,11 @@ import {
 } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { portfolioKpis, irr } from "../kpis";
-import { schedulesByProperty } from "../schedule";
+import {
+  propertySchedules,
+  scheduleRows,
+  schedulesByProperty,
+} from "../schedule";
 import { applyScenario, type ScenarioOverrides } from "../scenarios";
 import type { Lease, Portfolio, Valuation } from "../types";
 import { assumptions, portfolio, PARITY } from "./support/seed";
@@ -26,11 +30,13 @@ import { rate } from "../brands";
 import { EngineInputError } from "../errors";
 import { money } from "../brands";
 
-const schedules = schedulesByProperty(
+const fullSchedules = propertySchedules(
   portfolio.mortgages,
   portfolio.properties.map((p) => p.id),
   assumptions,
 );
+
+const schedules = scheduleRows(fullSchedules);
 const lipova = portfolio.properties.find((p) => p.id === "lipova")!;
 const snapAt = (iso: string) =>
   propertySnapshot(
@@ -56,7 +62,7 @@ describe("Finding G — the one-day lease gap on 2026-08-31 // DR-045", () => {
       lipova,
       portfolio,
       assumptions,
-      schedules.get("lipova")!,
+      fullSchedules.get("lipova")!,
     );
     near(proj[1].grossRent, 2 * 21_675 * 1.03 + 10 * 23_205, KC, "year 1 rent"); // DR-045 fixed
   });

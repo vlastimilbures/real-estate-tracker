@@ -340,7 +340,7 @@ export function KpiListPanel({
             v: <IrrValue irr={irr} dp={2} />,
           },
           {
-            k: t.dashboard.kpiCumulativeNetCashFlow(horizonYears),
+            k: t.dashboard.kpiCumulativeCashToOwner(horizonYears),
             v: <Money value={lens.cumulativeNetCashFlow} signed />,
           },
           {

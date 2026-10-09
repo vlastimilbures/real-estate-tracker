@@ -7,7 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { isoDate } from "../dates";
 import { propertyProjection, renewedLease } from "../projections";
-import { schedulesByProperty } from "../schedule";
+import { EMPTY_PROPERTY_SCHEDULE, propertySchedules } from "../schedule";
 import type { Lease, Portfolio, Property } from "../types";
 import { money } from "../brands";
 import { assumptions, portfolio } from "./support/seed";
@@ -42,9 +42,12 @@ function rentByYear(leases: Lease[], property: Property = owned): number[] {
     leases,
     holdingCosts: [],
   };
-  return propertyProjection(property, p, assumptions, []).map((y) =>
-    y.grossRent.toNumber(),
-  );
+  return propertyProjection(
+    property,
+    p,
+    assumptions,
+    EMPTY_PROPERTY_SCHEDULE,
+  ).map((y) => y.grossRent.toNumber());
 }
 
 const A = 20_000;
@@ -138,7 +141,7 @@ describe("renewedLease: the lease the projection keeps renting (ADR 0118)", () =
 });
 
 describe("seed: Lipova steps 21,675 → 23,205 on 2026-09-01 (DR-045)", () => {
-  const schedules = schedulesByProperty(
+  const schedules = propertySchedules(
     portfolio.mortgages,
     portfolio.properties.map((p) => p.id),
     assumptions,
@@ -148,7 +151,7 @@ describe("seed: Lipova steps 21,675 → 23,205 on 2026-09-01 (DR-045)", () => {
     lipova,
     portfolio,
     assumptions,
-    schedules.get("lipova") ?? [],
+    schedules.get("lipova") ?? EMPTY_PROPERTY_SCHEDULE,
   );
 
   it("year 1: two months at the old rent, ten at the new", () =>

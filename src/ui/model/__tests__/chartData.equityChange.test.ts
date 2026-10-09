@@ -99,6 +99,7 @@ describe("toEquityChangeRows", () => {
       principal: D(principal),
       debtService: ZERO,
       netCashFlow: ZERO,
+      cashToOwner: ZERO,
       dscr: null,
       draws: D(draws),
       refinanced: D(0),

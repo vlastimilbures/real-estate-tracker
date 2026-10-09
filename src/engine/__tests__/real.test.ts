@@ -10,7 +10,11 @@ import {
   portfolioProjection,
   propertyProjection,
 } from "../projections";
-import { schedulesByProperty } from "../schedule";
+import {
+  EMPTY_PROPERTY_SCHEDULE,
+  propertySchedules,
+  scheduleRows,
+} from "../schedule";
 import { applyScenario } from "../scenarios";
 import {
   cpiAt,
@@ -117,6 +121,7 @@ describe("realProjection — every money field ÷ the year's CPI", () => {
         "debtService",
         "netCashFlow",
         "draws",
+        "cashToOwner",
       ] as const) {
         expect(r[k].toString()).toBe(n[k].div(cpi[t]).toString());
       }
@@ -151,11 +156,12 @@ describe("realProjection — every money field ÷ the year's CPI", () => {
 });
 
 describe("snapshot at a projection year and real snapshots", () => {
-  const schedules = schedulesByProperty(
+  const fullSchedules = propertySchedules(
     portfolio.mortgages,
     portfolio.properties.map((p) => p.id),
     assumptions,
   );
+  const schedules = scheduleRows(fullSchedules);
   const asOf = edate(BASE_DATE, 60);
   const snap = portfolioSnapshot(portfolio, assumptions, asOf, schedules);
   const rows = portfolioProjection(portfolio, assumptions);
@@ -184,9 +190,10 @@ describe("snapshot at a projection year and real snapshots", () => {
 
   it("propertySnapshotAtYear does the same for one property", () => {
     const p = portfolio.properties[0];
-    const schedule = schedules.get(p.id) ?? [];
+    const full = fullSchedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE;
+    const schedule = full.rows;
     const ps = propertySnapshot(p, portfolio, assumptions, asOf, schedule);
-    const r = propertyProjection(p, portfolio, assumptions, schedule)[5];
+    const r = propertyProjection(p, portfolio, assumptions, full)[5];
     const s = propertySnapshotAtYear(ps, r);
     expect(s.value).toBe(r.value);
     expect(s.debt).toBe(r.balance);
