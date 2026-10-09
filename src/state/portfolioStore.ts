@@ -22,6 +22,7 @@ import type {
   HoldingCost,
   Scenario,
   ScenarioOverrides,
+  EngineValidationError,
 } from "../engine";
 import { migrate } from "../data/migrations";
 import {
@@ -106,12 +107,19 @@ function withRow<T extends { id: string }>(rows: T[], row: T): T[] {
 /** Throw the engine input rules broken by the rows `ids` of the candidate portfolio
  *  (D-17, D-27, D-37, D-42, D-54), and the write-time lease overlap rule (ADR 0163), so
  *  a form shows the rule before anything is written (UX-047). Problems in other rows
- *  are not this edit's to report: a stored overlap does not block other edits. */
-function assertRows(candidate: Portfolio, ids: string[]): void {
+ *  are not this edit's to report: a stored overlap does not block other edits.
+ *  `overlapIds` (default `ids`) narrows the overlap rule to the rows that can add one. */
+function assertRows(
+  candidate: Portfolio,
+  ids: string[],
+  overlapIds: string[] = ids,
+): void {
+  const of = (rows: string[]) => (e: EngineValidationError) =>
+    e.id !== undefined && rows.includes(e.id);
   const errors = [
-    ...validatePortfolio(candidate),
-    ...leaseOverlapErrors(candidate),
-  ].filter((e) => e.id !== undefined && ids.includes(e.id));
+    ...validatePortfolio(candidate).filter(of(ids)),
+    ...leaseOverlapErrors(candidate).filter(of(overlapIds)),
+  ];
   if (errors.length > 0) throw new EngineInputError(errors);
 }
 
@@ -412,11 +420,15 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     }
   }
 
-  /** Check the loaded portfolio with `edit` applied for the rows `ids`. Runs inside the
-   *  queued op, so it sees every earlier write. */
-  function checkEdit(edit: (p: Portfolio) => Portfolio, ids: string[]): void {
+  /** Check the loaded portfolio with `edit` applied for the rows `ids` (`overlapIds`:
+   *  see assertRows). Runs inside the queued op, so it sees every earlier write. */
+  function checkEdit(
+    edit: (p: Portfolio) => Portfolio,
+    ids: string[],
+    overlapIds?: string[],
+  ): void {
     const p = get().portfolio;
-    if (p) assertRows(edit(p), ids);
+    if (p) assertRows(edit(p), ids, overlapIds);
   }
 
   /** Engine rules of the assumptions themselves (horizon, rates, shocks, D-38), then
@@ -543,9 +555,12 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
           return;
         }
         const closedPrev = { ...prev, endDate: dayBefore(l.startDate) };
+        // Ending the predecessor only shortens it: an overlap it already had with another
+        // stored lease is not this add's to report (ADR 0163 §4).
         checkEdit(
           (p) => ({ ...p, leases: withRow(withRow(p.leases, closedPrev), l) }),
           [l.id, closedPrev.id],
+          [l.id],
         );
         await insertLeaseClosingPrevious(sql, l, closedPrev);
       }),
