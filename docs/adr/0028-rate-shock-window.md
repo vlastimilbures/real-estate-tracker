@@ -1,6 +1,7 @@
 # 0028. Rate-shock window starts at each loan's fixation end
 
 - Status: Accepted
+- Amended by: [0162](0162-floating-block-rate.md) (a floating block)
 - Date: 2026-09-30
 - Source IDs: D-28, J-15
 

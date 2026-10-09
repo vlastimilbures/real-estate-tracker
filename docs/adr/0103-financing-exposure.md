@@ -5,6 +5,8 @@
   payments due)
 - Amended by: [0124](0124-pre-purchase-debt-service.md) (total interest adds the interest paid
   before a future purchase)
+- Amended by: [0162](0162-floating-block-rate.md) (point 2: a 0-year block pays its entered
+  rate up to baseDate)
 - Date: 2026-10-03
 - Source: issue #31 (pre-release review 2026-10, F5 and §6)
 

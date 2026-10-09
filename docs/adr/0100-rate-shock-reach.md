@@ -1,6 +1,7 @@
 # 0100. Scenarios: show which loans a rate shock hits
 
 - Status: Accepted
+- Amended by: [0162](0162-floating-block-rate.md) (a floating block)
 - Date: 2026-10-03
 - Source: issue #47 (Scenarios critical review after #15)
 
