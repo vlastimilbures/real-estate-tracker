@@ -1,6 +1,6 @@
 # 0163. Leases of one apartment never overlap
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-09
 - Source: issue #121 part 2 (2026-10 code review); owner decision D8 (2026-10-09: "leases
   cannot overlap on a single apartment"); Track 11 PR 11.15

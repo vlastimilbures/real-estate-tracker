@@ -206,7 +206,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0160](0160-csv-import-and-stored-loan-events.md) | CSV import explains how it meets stored loan events                                           | Accepted                                                 | #116                                               |
 | [0161](0161-cash-to-owner.md)                     | Cash to owner: the row the cumulative cash flow tile sums                                     | Accepted                                                 | #117                                               |
 | [0162](0162-floating-block-rate.md)               | A floating (0-year) block keeps its entered rate up to baseDate                               | Accepted                                                 | #124                                               |
-| [0163](0163-leases-never-overlap.md)              | Leases of one apartment never overlap                                                         | Proposed                                                 | #121                                               |
+| [0163](0163-leases-never-overlap.md)              | Leases of one apartment never overlap                                                         | Accepted                                                 | #121                                               |
 
 <!-- adr-index:end -->
 
