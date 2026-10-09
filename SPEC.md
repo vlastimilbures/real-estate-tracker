@@ -407,12 +407,12 @@ purposes (ADR 0119):
 
 The **acquisition loan** is the property's earliest block when it starts no later than 90
 days after the purchase date (an earlier start counts: an off-plan loan drawn before
-handover). It counts its initial principal and every tranche dated on or before the start
+handover), or when it is a development loan, whatever its start: the bank pays the
+developer, never the owner (ADR 0168). It counts its initial principal and every tranche dated on or before the start
 of the block that replaces it (the schedule's cut, D-47). A later block is a successor,
-never the acquisition loan. A future buy's first loan that starts after the window is not
+never the acquisition loan. A future buy's first plain loan that starts after the window is not
 the acquisition loan: its initial principal is **cash in** in the projection year it is
-drawn, like refinance cash; its tranches are not, and the loan is committed debt only from
-its draw month (ADR 0166). The same holds for a property owned at baseDate whose first plain
+drawn, like refinance cash. The same holds for a property owned at baseDate whose first plain
 loan is drawn after baseDate (ADR 0134): its equity at baseDate holds the whole value, so the
 loan's initial principal is cash in, in its draw year. A development loan there pays the
 developer instead: it is committed debt from baseDate and brings no cash in (ADR 0166). **Sources
