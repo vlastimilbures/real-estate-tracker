@@ -10,7 +10,7 @@ import { parseMortgages, parseProperties } from "../csv";
 import { INT_RANGES, type IntRange } from "../../lib/intRanges";
 import { collectValues } from "../../ui/model/formParse";
 import { FORM_PARSERS } from "../../ui/model/formParsers";
-import { rate, validateInputs } from "../../engine";
+import { isoDate, rate, validateInputs } from "../../engine";
 import type { Assumptions, Portfolio, ScenarioOverrides } from "../../engine";
 import { assumptions, portfolio } from "../../engine/__tests__/support/seed";
 
@@ -294,5 +294,19 @@ describe("restore applies the ADR 0128 bounds", () => {
         field: "appreciationOverridePa",
       },
     ]);
+  });
+});
+
+describe("overlapping leases (ADR 0163)", () => {
+  it("are not a restore problem: a backup with them restores, the Data check lists them", () => {
+    const [l0] = portfolio.leases;
+    const later = {
+      ...l0!,
+      id: "l-later",
+      startDate: isoDate("2027-01-01"),
+    };
+    const p = { ...portfolio, leases: [...portfolio.leases, later] };
+    expect(checkInputRules(p, assumptions)).toEqual([]);
+    expect(checkInputRules(p)).toEqual([]);
   });
 });

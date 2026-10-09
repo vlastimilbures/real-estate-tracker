@@ -5,13 +5,15 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import {
+  insertLease,
   loadAssumptions,
   loadPortfolio,
   upsertAssumptions,
 } from "../../data/repositories";
 import { SEED_ASSUMPTIONS } from "../../data/seed";
 import type { Sql } from "../../data/sql";
-import { portfolioKpis } from "../../engine";
+import { isoDate, money, portfolioKpis } from "../../engine";
+import { leaseToRow } from "../../data/mappers";
 import {
   parseMortgages,
   parseProperties,
@@ -450,5 +452,88 @@ describe("new property ids (ADR 0127)", () => {
     await importCsv(sql, batch);
     expect(idOf("Byt N")).toMatch(UUID);
     expect(idOf("Byt N")).not.toBe(first);
+  });
+});
+
+describe("importCsv — leases never overlap (ADR 0163)", () => {
+  const RH = "property_name,start_date,end_date,monthly_rent";
+  const leasesOf = (name: string) =>
+    sql.db
+      .prepare(
+        "SELECT start_date, end_date FROM leases WHERE property_id = ? ORDER BY start_date",
+      )
+      .all(idOf(name));
+
+  it("a rent row overlapping a stored lease rejects the file and names the line", async () => {
+    await importCsv(sql, {
+      rents: parseRents(`${RH}\nByt A,2024-01-01,,20000`).rows,
+    });
+    const before = dump(sql);
+    const e = await refused(
+      importCsv(sql, {
+        rents: parseRents(`${RH}\nByt A,2026-01-01,,22000`).rows,
+      }),
+    );
+    expect(e.problems).toEqual([
+      {
+        file: "rents",
+        row: 2,
+        field: "start_date",
+        problem: { code: "inputRule", rule: "LEASE_OVERLAP" },
+      },
+    ]);
+    expect(dump(sql)).toEqual(before);
+  });
+
+  it("two overlapping rows in one file are both named", async () => {
+    const e = await refused(
+      importCsv(sql, {
+        rents: parseRents(
+          `${RH}\nByt A,2024-01-01,2025-01-31,20000\nByt A,2025-01-01,,22000`,
+        ).rows,
+      }),
+    );
+    expect(e.problems.map((p) => [p.row, p.problem])).toEqual([
+      [2, { code: "inputRule", rule: "LEASE_OVERLAP" }],
+      [3, { code: "inputRule", rule: "LEASE_OVERLAP" }],
+    ]);
+  });
+
+  it("ending the earlier lease in the same file imports both (same start_date updates it)", async () => {
+    await importCsv(sql, {
+      rents: parseRents(`${RH}\nByt A,2024-01-01,,20000`).rows,
+    });
+    await importCsv(sql, {
+      rents: parseRents(
+        `${RH}\nByt A,2024-01-01,2025-12-31,20000\nByt A,2026-01-01,,22000`,
+      ).rows,
+    });
+    expect(leasesOf("Byt A")).toEqual([
+      { start_date: "2024-01-01", end_date: "2025-12-31" },
+      { start_date: "2026-01-01", end_date: null },
+    ]);
+  });
+
+  it("a stored overlap the import does not touch does not reject it", async () => {
+    const id = idOf("Byt A");
+    for (const [lid, start] of [
+      ["l-1", "2024-01-01"],
+      ["l-2", "2026-01-01"],
+    ] as const)
+      await insertLease(
+        sql,
+        leaseToRow({
+          id: lid,
+          propertyId: id,
+          startDate: isoDate(start),
+          monthlyRent: money("20000"),
+        }),
+      );
+    await importCsv(sql, {
+      rents: parseRents(`${RH}\nByt B,2025-01-01,,15000`).rows,
+    });
+    expect(leasesOf("Byt B")).toEqual([
+      { start_date: "2025-01-01", end_date: null },
+    ]);
   });
 });

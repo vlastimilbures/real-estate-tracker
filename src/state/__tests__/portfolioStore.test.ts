@@ -363,6 +363,12 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
     });
     expect(add.ok).toBe(true);
     expect(pf().leases.some((l) => l.id === "l-new")).toBe(true);
+    // ADR 0163: the property's open lease ends the day before the new one starts.
+    expect(
+      pf()
+        .leases.filter((l) => l.propertyId === pid() && l.id !== "l-new")
+        .map((l) => l.endDate?.toISOString().slice(0, 10)),
+    ).toContain("2029-12-31");
 
     const save = await usePortfolioStore.getState().saveLease({
       id: "l-new",
