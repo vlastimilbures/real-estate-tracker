@@ -606,7 +606,8 @@ Clearing a funding amount is a property form edit too: a blank CSV cell keeps it
 - `property_name` matches a property after trimming, case-insensitively; the stored
   spelling is kept. Two names in one file differing only by case or spaces are a duplicate
   (fatal). An unknown name is fatal (D-55).
-- Each row also passes the engine's `validateInputs` rules (§4.1).
+- Each row also passes the engine's `validateInputs` rules (§4.1) and the lease overlap
+  rule (§4.3, ADR 0163).
 - **All or nothing across the batch** ([guide](docs/csv-import.md#all-or-nothing)): every
   file chosen for one import is parsed, its property names resolved and the merged portfolio
   validated before anything is written. If any row in any file has an error, nothing is

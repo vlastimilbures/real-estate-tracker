@@ -46,7 +46,10 @@ tenant contract at a time, so an overlap is a data error, not a case to model.
 4. **It is a write-time rule only.** `LEASE_OVERLAP` is not part of `validatePortfolio` or
    `validateInputs`. A database or backup that already holds an overlap (from "Keep as is"
    or an earlier import) still loads and restores, and a stored pair never blocks an edit or
-   import of other rows. The owner's data is never locked out.
+   import of other rows. Adding a lease after one lease of a pair is not blocked either:
+   ending that lease only shortens it. A lease of the pair itself can be changed only in a
+   way that resolves the overlap (an end date before the later start, or a delete), so the
+   owner's data is never locked out.
 5. **The Data check lists a stored overlap** under "Needs attention" (`leaseOverlap`), one
    row per pair with both start dates, at any as-of date (like other stored values the forms
    no longer accept). The fix link goes to the property's records.
@@ -64,4 +67,4 @@ tenant contract at a time, so an overlap is a data error, not a case to model.
   longer `propertyDetail.leasesHint`. `closePrevLeaseTitle` and `closePrevLeaseBody` are
   removed.
 - The store action `addLeaseClosingPrevious` is removed; `addLease` does it.
-- `docs/csv-import.md`, `docs/model-limitations.md` and SPEC §4.3/§4.5 state the rule.
+- `docs/csv-import.md`, `docs/model-limitations.md` and SPEC §4.3, §6 and §9 state the rule.
