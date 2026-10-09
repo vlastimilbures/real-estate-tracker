@@ -210,7 +210,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0164](0164-amortization-due-date.md)             | Amortization rows show the payment due date                                                   | Accepted                                                 | #112                                               |
 | [0165](0165-future-purchases.md)                  | Future purchases: acquired value, holding costs from the base date, pending debt              | Accepted · amended by 0166                               | #126, #104                                         |
 | [0166](0166-development-committed-debt.md)        | Development loans: completed value and committed debt during construction                     | Accepted                                                 | #120                                               |
-| [0167](0167-drawdown-schedule.md)                 | Development loans: drawdown schedule editor and drawn/undrawn read-back                       | Proposed                                                 | #75                                                |
+| [0167](0167-drawdown-schedule.md)                 | Development loans: drawdown schedule editor and drawn/undrawn read-back                       | Accepted                                                 | #75                                                |
 
 <!-- adr-index:end -->
 

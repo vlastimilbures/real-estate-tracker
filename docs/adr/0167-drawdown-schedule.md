@@ -1,6 +1,6 @@
 # 0167. Development loans: drawdown schedule editor and drawn/undrawn read-back
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-09
 - Source: issue #75 (follow-up deferred by ADR 0098); owner decisions 2026-10-09
 - Amends: [0098](0098-mortgage-loan-type.md) (decision 5 and "Considered and deferred": the
