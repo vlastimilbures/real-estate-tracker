@@ -10,7 +10,12 @@ import {
 } from "./dates";
 import { isDevLoan } from "./amortization";
 import { at } from "./arrays";
-import { schedulesByProperty, openingDebt } from "./schedule";
+import {
+  EMPTY_PROPERTY_SCHEDULE,
+  openingDebt,
+  propertySchedules,
+  type PropertySchedule,
+} from "./schedule";
 import { turnOnYear, yearSlice } from "./yearGrid";
 import { assertAssumptions, assertInputs } from "./validate";
 import { basisDate, valueAt, drawnFraction } from "./growth";
@@ -370,7 +375,7 @@ export function propertyProjection(
   property: Property,
   portfolio: Portfolio,
   assumptions: Assumptions,
-  schedule: AmortizationRow[],
+  schedule: PropertySchedule,
 ): ProjectionYear[] {
   assertInputs(portfolio, assumptions); // D-37
   return projectProperty(property, portfolio, assumptions, schedule);
@@ -381,8 +386,9 @@ function projectProperty(
   property: Property,
   portfolio: Portfolio,
   assumptions: Assumptions,
-  schedule: AmortizationRow[],
+  built: PropertySchedule,
 ): ProjectionYear[] {
+  const schedule = built.rows;
   const b = propertyBasis(property, portfolio, assumptions, schedule);
   const baseYear = assumptions.baseDate.getUTCFullYear();
   const vacancy = assumptions.vacancyAllowance;
@@ -514,12 +520,12 @@ function zeroYear(
 
 /**
  * Portfolio projection = element-wise sum of property projections by year. Pass
- * `schedules` (from `schedulesByProperty` on the same inputs) to reuse them (DR-042).
+ * `schedules` (from `propertySchedules` on the same inputs) to reuse them (DR-042).
  */
 export function portfolioProjection(
   portfolio: Portfolio,
   assumptions: Assumptions,
-  schedules?: Map<string, AmortizationRow[]>,
+  schedules?: Map<string, PropertySchedule>,
 ): ProjectionYear[] {
   assertInputs(portfolio, assumptions); // D-37
   return projectPortfolio(portfolio, assumptions, schedules);
@@ -532,7 +538,7 @@ export function portfolioProjection(
 export function projectPortfolio(
   portfolio: Portfolio,
   assumptions: Assumptions,
-  schedules = schedulesByProperty(
+  schedules = propertySchedules(
     portfolio.mortgages,
     portfolio.properties.map((p) => p.id),
     assumptions,
@@ -541,7 +547,12 @@ export function projectPortfolio(
   const perProp = portfolio.properties
     .filter((p) => p.active !== false)
     .map((p) =>
-      projectProperty(p, portfolio, assumptions, schedules.get(p.id) ?? []),
+      projectProperty(
+        p,
+        portfolio,
+        assumptions,
+        schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
+      ),
     );
   const baseYear = assumptions.baseDate.getUTCFullYear();
   const out: ProjectionYear[] = [];

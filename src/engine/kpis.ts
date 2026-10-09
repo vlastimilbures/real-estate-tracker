@@ -11,11 +11,7 @@ import {
   IRR_SCAN_GRID,
 } from "./constants";
 import { at } from "./arrays";
-import {
-  propertySchedules,
-  scheduleRows,
-  type PropertySchedule,
-} from "./schedule";
+import { propertySchedules, type PropertySchedule } from "./schedule";
 import { assertInputs } from "./validate";
 import { buildCpiIndex, projectPortfolio } from "./projections";
 import {
@@ -318,11 +314,7 @@ export function portfolioKpis(
     assumptions,
   );
   // Validated above (DR-128).
-  const proj = projectPortfolio(
-    portfolio,
-    assumptions,
-    scheduleRows(schedules),
-  );
+  const proj = projectPortfolio(portfolio, assumptions, schedules);
   return kpisFrom(portfolio, assumptions, proj, schedules);
 }
 

@@ -6,7 +6,7 @@ import { describe, it, expect } from "vitest";
 import fc from "fast-check";
 import { termMonths } from "../amortization";
 import { EngineInputError } from "../errors";
-import { buildSchedule, schedulesByProperty } from "../schedule";
+import { buildSchedule, propertySchedules } from "../schedule";
 import {
   propertySnapshot,
   leaseInForce,
@@ -210,7 +210,7 @@ describe("random valid plain loans", { timeout: HEAVY_TIMEOUT_MS }, () => {
     fc.assert(
       fc.property(plainLoan, ({ block }) => {
         const { portfolio, property } = onePropertyPortfolio(block);
-        const sched = schedulesByProperty(
+        const sched = propertySchedules(
           portfolio.mortgages,
           ["p"],
           assumptions,
@@ -247,7 +247,7 @@ describe("random valid plain loans", { timeout: HEAVY_TIMEOUT_MS }, () => {
             portfolio,
             assumptions,
             edate(assumptions.baseDate, n * 12),
-            sched,
+            sched.rows,
           );
           // Pre-purchase years are outside the invariant (see DR-106 in characterisation).
           if (s.owned)

@@ -4,7 +4,7 @@
 // project zero forever (the single-snapshot rent0 bug) and not start it at purchase.
 import { describe, it, expect } from "vitest";
 import { propertyProjection } from "../projections";
-import { schedulesByProperty } from "../schedule";
+import { EMPTY_PROPERTY_SCHEDULE, propertySchedules } from "../schedule";
 import { isoDate } from "../dates";
 import { assumptions, portfolio } from "./support/seed";
 import type { Portfolio, Property } from "../types";
@@ -65,7 +65,7 @@ const withFuture: Portfolio = {
   holdingCosts: portfolio.holdingCosts,
 };
 
-const schedules = schedulesByProperty(
+const schedules = propertySchedules(
   withFuture.mortgages,
   withFuture.properties.map((p) => p.id),
   assumptions,
@@ -74,7 +74,7 @@ const proj = propertyProjection(
   slovanske,
   withFuture,
   assumptions,
-  schedules.get("slovanske") ?? [],
+  schedules.get("slovanske") ?? EMPTY_PROPERTY_SCHEDULE,
 );
 
 describe("future property — rent gates to the lease effective date", () => {

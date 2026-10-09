@@ -45,7 +45,7 @@ export function portfolioOutputs(
   );
   const schedules = scheduleRows(built);
   const snapshot = portfolioSnapshot(portfolio, assumptions, asOf, schedules); // D-37
-  const projection = projectPortfolio(portfolio, assumptions, schedules);
+  const projection = projectPortfolio(portfolio, assumptions, built);
   return {
     schedules,
     snapshot,
@@ -66,11 +66,7 @@ export function projectionAndKpis(
     portfolio.properties.map((p) => p.id),
     assumptions,
   );
-  const projection = projectPortfolio(
-    portfolio,
-    assumptions,
-    scheduleRows(built),
-  );
+  const projection = projectPortfolio(portfolio, assumptions, built);
   return {
     projection,
     kpis: kpisFrom(portfolio, assumptions, projection, built),

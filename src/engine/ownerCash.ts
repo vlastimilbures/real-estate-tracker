@@ -9,7 +9,7 @@ import {
   repaidBeforeBase,
 } from "./acquisition";
 import { at } from "./arrays";
-import type { PropertySchedule } from "./schedule";
+import { EMPTY_PROPERTY_SCHEDULE, type PropertySchedule } from "./schedule";
 import { turnOnYear, yearSlice } from "./yearGrid";
 import type { Assumptions, Portfolio, Property } from "./types";
 
@@ -18,9 +18,7 @@ export function scheduleOf(
   schedules: Map<string, PropertySchedule>,
   propertyId: string,
 ): PropertySchedule {
-  return (
-    schedules.get(propertyId) ?? { rows: [], refinances: [], eventOutcomes: [] }
-  );
+  return schedules.get(propertyId) ?? EMPTY_PROPERTY_SCHEDULE;
 }
 
 /**

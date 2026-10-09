@@ -6,7 +6,7 @@ import { money, rate } from "../brands";
 import { isoDate } from "../dates";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
-import { schedulesByProperty } from "../schedule";
+import { EMPTY_PROPERTY_SCHEDULE, propertySchedules } from "../schedule";
 import type {
   Assumptions,
   MortgageBlock,
@@ -43,7 +43,7 @@ describe("projection year periods (D-22)", () => {
   });
 
   it("every property row has the portfolio row's period, owned or not", () => {
-    const schedules = schedulesByProperty(
+    const schedules = propertySchedules(
       mixed.mortgages,
       mixed.properties.map((p) => p.id),
       assumptions,
@@ -54,7 +54,7 @@ describe("projection year periods (D-22)", () => {
         p,
         mixed,
         assumptions,
-        schedules.get(p.id) ?? [],
+        schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
       );
       expect(periods(rows)).toEqual(total);
     }

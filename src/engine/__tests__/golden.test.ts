@@ -14,7 +14,12 @@ import {
   scheduleMonths,
   termMonths,
 } from "../amortization";
-import { buildSchedule, schedulesByProperty } from "../schedule";
+import {
+  buildSchedule,
+  EMPTY_PROPERTY_SCHEDULE,
+  propertySchedules,
+  scheduleRows,
+} from "../schedule";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import {
   cpiIndex,
@@ -107,7 +112,8 @@ function hashOrCodes(run: () => unknown): string {
 /** Everything the engine produces for one portfolio + assumptions pair. */
 function fullRun(portfolio: Portfolio, a: Assumptions) {
   const ids = portfolio.properties.map((p) => p.id);
-  const schedules = schedulesByProperty(portfolio.mortgages, ids, a);
+  const fullSchedules = propertySchedules(portfolio.mortgages, ids, a);
+  const schedules = scheduleRows(fullSchedules);
   const asOfs = [
     a.baseDate,
     edate(a.baseDate, 1),
@@ -128,7 +134,14 @@ function fullRun(portfolio: Portfolio, a: Assumptions) {
     schedules: hash(schedules),
     snapshotsWithSchedules,
     propertyProjections: portfolio.properties.map((p) =>
-      hash(propertyProjection(p, portfolio, a, schedules.get(p.id) ?? [])),
+      hash(
+        propertyProjection(
+          p,
+          portfolio,
+          a,
+          fullSchedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
+        ),
+      ),
     ),
     projection: hash(portfolioProjection(portfolio, a)),
     kpis: canon(portfolioKpis(portfolio, a)),

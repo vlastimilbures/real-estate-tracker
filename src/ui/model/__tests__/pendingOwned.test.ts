@@ -4,6 +4,8 @@ import { describe, it, expect } from "vitest";
 import {
   propertyProjection,
   propertySnapshot,
+  EMPTY_PROPERTY_SCHEDULE,
+  propertySchedules,
   schedulesByProperty,
   isoDate,
   type IsoDate,
@@ -19,12 +21,18 @@ const schedules = schedulesByProperty(
   mixed.properties.map((p) => p.id),
   assumptions,
 );
+const fullSchedules = propertySchedules(
+  mixed.mortgages,
+  mixed.properties.map((p) => p.id),
+  assumptions,
+);
 const future = mixed.properties.find((p) => p.id === "future")!;
 const schedule = schedules.get(future.id) ?? [];
+const fullSchedule = fullSchedules.get(future.id) ?? EMPTY_PROPERTY_SCHEDULE;
 
 function ownedAt(asOf: IsoDate, mode: Mode, isToday = false): boolean {
   const series = projectionSeries(
-    propertyProjection(future, mixed, assumptions, schedule),
+    propertyProjection(future, mixed, assumptions, fullSchedule),
     mode,
     assumptions,
   );

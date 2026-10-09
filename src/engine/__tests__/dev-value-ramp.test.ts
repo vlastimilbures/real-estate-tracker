@@ -8,7 +8,7 @@ import { drawnFraction } from "../growth";
 import { propertySnapshot } from "../metrics";
 import { propertyProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
-import { buildSchedule } from "../schedule";
+import { buildSchedule, propertySchedule } from "../schedule";
 import { D } from "../../lib/money";
 import { isoDate, edate } from "../dates";
 import { assumptions } from "./support/seed";
@@ -147,7 +147,7 @@ describe("snapshot value ramps with construction progress", () => {
 
 describe("snapshot ↔ projection consistency (the invariant anchor)", () => {
   const pf = portfolioWith(devBlock);
-  const schedule = buildSchedule(devBlock, assumptions);
+  const schedule = propertySchedule([devBlock], assumptions);
   const proj = propertyProjection(property, pf, assumptions, schedule);
 
   it("propertySnapshot(baseDate+N·12mo).value == projection year N value, across the draw window", () => {
@@ -158,7 +158,7 @@ describe("snapshot ↔ projection consistency (the invariant anchor)", () => {
         pf,
         assumptions,
         asOf,
-        schedule,
+        schedule.rows,
       ).value;
       near(snap.toNumber(), proj[N].value.toNumber(), 1, `year ${N} value`);
       near(

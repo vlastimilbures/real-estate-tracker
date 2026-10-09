@@ -4,7 +4,7 @@
 import { describe, it, expect } from "vitest";
 import { propertyProjection } from "../projections";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
-import { schedulesByProperty } from "../schedule";
+import { EMPTY_PROPERTY_SCHEDULE, propertySchedules } from "../schedule";
 import { isoDate } from "../dates";
 import { D } from "../../lib/money";
 import { assumptions, portfolio } from "./support/seed";
@@ -64,7 +64,7 @@ const withFuture: Portfolio = {
   holdingCosts: portfolio.holdingCosts, // falls back to assumption defaults
 };
 
-const schedules = schedulesByProperty(
+const schedules = propertySchedules(
   withFuture.mortgages,
   withFuture.properties.map((p) => p.id),
   assumptions,
@@ -73,7 +73,7 @@ const proj = propertyProjection(
   slovanske,
   withFuture,
   assumptions,
-  schedules.get("slovanske") ?? [],
+  schedules.get("slovanske") ?? EMPTY_PROPERTY_SCHEDULE,
 );
 
 describe("future property — projection gating", () => {
@@ -108,7 +108,7 @@ describe("future property — projection gating", () => {
 });
 
 describe("future property — amortization draw", () => {
-  const sched = schedules.get("slovanske")!;
+  const sched = schedules.get("slovanske")!.rows;
 
   it("is undrawn (zero rows) before the mortgage start date", () => {
     const pre = sched.filter((r) => r.date.getTime() < PURCHASE.getTime());
@@ -183,7 +183,7 @@ describe("future property — mid-year purchase (turn-on alignment)", () => {
     ],
     holdingCosts: portfolio.holdingCosts,
   };
-  const midSched = schedulesByProperty(
+  const midSched = propertySchedules(
     midPortfolio.mortgages,
     midPortfolio.properties.map((p) => p.id),
     assumptions,
@@ -192,7 +192,7 @@ describe("future property — mid-year purchase (turn-on alignment)", () => {
     midProp,
     midPortfolio,
     assumptions,
-    midSched.get("mid") ?? [],
+    midSched.get("mid") ?? EMPTY_PROPERTY_SCHEDULE,
   );
   const turnOn = midProj.find((y) => y.calendarYear === TURN_ON_YEAR)!;
 
@@ -264,7 +264,7 @@ describe("future property — turn-on edges (DR-168)", () => {
       properties: [...portfolio.properties, p],
       leases: [...portfolio.leases, ...leases],
     };
-    return propertyProjection(p, withP, assumptions, []);
+    return propertyProjection(p, withP, assumptions, EMPTY_PROPERTY_SCHEDULE);
   };
 
   it("a lease already running at the purchase pays rent only from the purchase", () => {
