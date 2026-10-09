@@ -213,7 +213,7 @@ describe("leases never overlap (ADR 0163)", () => {
       startDate: isoDate("2025-07-01"),
       monthlyRent: money("20000"),
     });
-    expect(r.ok).toBe(false);
+    expect(inputCodes(r)).toContain("LEASE_OVERLAP");
     expect(pf().leases.some((x) => x.id === "l-new")).toBe(false);
   });
 
@@ -277,5 +277,36 @@ describe("leases never overlap (ADR 0163)", () => {
       });
       expect(await store().removeLease(legacy.id)).toEqual({ ok: true });
     });
+  });
+
+  it("adds a lease that overlaps nothing although its predecessor keeps a stored overlap", async () => {
+    // dubova: a dated lease from before the rule overlaps the seed's open l-dubova
+    // (from 2025-07-01). Ending l-dubova for the new lease cannot add an overlap, so the
+    // old pair is not the new lease's to report (ADR 0163 §4).
+    const old: Lease = {
+      id: "l-dubova-old",
+      propertyId: "dubova",
+      startDate: isoDate("2024-01-01"),
+      endDate: isoDate("2025-12-31"),
+      monthlyRent: money("19000"),
+    };
+    await reset(async () => {
+      const sql = await openSeeded();
+      await insertLease(sql, leaseToRow(old));
+      return sql;
+    });
+    const r = await store().addLease({
+      id: "l-new",
+      propertyId: "dubova",
+      startDate: isoDate("2027-01-01"),
+      monthlyRent: money("25000"),
+    });
+    expect(r).toEqual({ ok: true });
+    expect(day(pf().leases.find((x) => x.id === "l-dubova")!.endDate)).toBe(
+      "2026-12-31",
+    );
+    expect(day(pf().leases.find((x) => x.id === old.id)!.endDate)).toBe(
+      "2025-12-31",
+    );
   });
 });

@@ -536,4 +536,47 @@ describe("importCsv — leases never overlap (ADR 0163)", () => {
       { start_date: "2025-01-01", end_date: null },
     ]);
   });
+
+  it("an update of a stored lease whose new end reaches the next lease is refused", async () => {
+    await importCsv(sql, {
+      rents: parseRents(
+        `${RH}\nByt A,2024-01-01,2025-12-31,20000\nByt A,2026-01-01,,22000`,
+      ).rows,
+    });
+    const before = dump(sql);
+    const e = await refused(
+      importCsv(sql, {
+        rents: parseRents(`${RH}\nByt A,2024-01-01,2026-01-01,20000`).rows,
+      }),
+    );
+    expect(e.problems.map((p) => [p.row, p.problem])).toEqual([
+      [2, { code: "inputRule", rule: "LEASE_OVERLAP" }],
+    ]);
+    expect(dump(sql)).toEqual(before);
+  });
+
+  it("re-importing a row of a stored overlap is refused until the overlap is fixed", async () => {
+    const id = idOf("Byt A");
+    for (const [lid, start] of [
+      ["l-1", "2024-01-01"],
+      ["l-2", "2026-01-01"],
+    ] as const)
+      await insertLease(
+        sql,
+        leaseToRow({
+          id: lid,
+          propertyId: id,
+          startDate: isoDate(start),
+          monthlyRent: money("20000"),
+        }),
+      );
+    const e = await refused(
+      importCsv(sql, {
+        rents: parseRents(`${RH}\nByt A,2026-01-01,,21000`).rows,
+      }),
+    );
+    expect(e.problems.map((p) => [p.row, p.problem])).toEqual([
+      [2, { code: "inputRule", rule: "LEASE_OVERLAP" }],
+    ]);
+  });
 });
