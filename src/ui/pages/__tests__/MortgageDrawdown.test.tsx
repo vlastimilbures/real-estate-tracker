@@ -59,8 +59,12 @@ async function openEdit(block: MortgageBlock) {
 }
 
 const schedule = () => screen.getByRole("group", { name: d.fieldDraws });
-const startRow = () =>
-  within(schedule()).getByRole("group", { name: d.drawnAtStart });
+/** The start draw's amount, labelled "Drawn at start" on screen (review of PR #301). */
+const startAmount = () =>
+  within(schedule()).getByLabelText(
+    new RegExp(`^${d.drawnAtStart}`),
+  ) as HTMLInputElement;
+const startRow = () => startAmount().closest<HTMLElement>(".event-row")!;
 const tranche = (n: number) =>
   within(schedule()).getByRole("group", { name: d.trancheRow(n) });
 const addTranche = () =>
@@ -79,7 +83,7 @@ describe("drawdown schedule (ADR 0167)", () => {
   it("opens a development block with the start draw first and the tranches below", async () => {
     await openEdit(dev);
     expect(startRow().textContent).toContain("12.03.2024");
-    expect(cell(startRow(), d.eventAmount).value).toBe("3034500");
+    expect(startAmount().value).toBe("3034500");
     // The initial principal moved into the schedule: no second copy in the grid.
     expect(
       screen.queryByLabelText(new RegExp(`^${d.fieldInitialPrincipal}`)),
@@ -117,8 +121,8 @@ describe("drawdown schedule (ADR 0167)", () => {
 
   it("editing the start draw changes the saved initial principal", async () => {
     await openEdit(dev);
-    await userEvent.clear(cell(startRow(), d.eventAmount));
-    await userEvent.type(cell(startRow(), d.eventAmount), "3000000");
+    await userEvent.clear(startAmount());
+    await userEvent.type(startAmount(), "3000000");
     await userEvent.click(saveButton());
     expect(saved().initialPrincipal).toEqual(money("3000000"));
   });

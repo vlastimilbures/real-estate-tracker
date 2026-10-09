@@ -979,10 +979,7 @@ export const SCREENS: Screen[] = [
         .getByLabel(d.fieldStartDate, { exact: false })
         .first()
         .fill("01.03.2027");
-      await schedule
-        .getByRole("group", { name: d.drawnAtStart })
-        .getByLabel(d.eventAmount)
-        .fill("1200000");
+      await schedule.getByLabel(d.drawnAtStart).fill("1200000");
       await p
         .getByLabel(d.fieldCompletionDate, { exact: false })
         .fill("31.03.2028");

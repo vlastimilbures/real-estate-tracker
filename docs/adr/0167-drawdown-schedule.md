@@ -51,7 +51,7 @@ example `DRAW_AFTER_SCHEDULE_END`) cannot say which line it means.
    - two tranches on the same date: "Same date as another tranche; the amounts are added
      together".
 4. **Focus.** Add moves focus to the new row's date. Remove moves focus to the next row's
-   date, or to the Add button when no row is left. This applies to the prepayment and recast
+   date, or to the Add button when no row follows. This applies to the prepayment and recast
    rows as well. It closes the item deferred by the PR #100 review.
 5. **Mortgage table.** The Development column reads "N tranches · Total loan X Kč" in place
    of the bare "Σ".

@@ -63,7 +63,7 @@ function draftIsDev(draft: Record<string, string>): boolean {
 
 /**
  * The drawdown schedule's notes (ADR 0167): the soft warnings of each tranche row and the
- * total loan footer, or no footer until the start draw is an amount above 0.
+ * total loan footer, or no footer until the start draw is an amount of 0 or more.
  */
 export function drawdownNotes(
   t: Dictionary,

@@ -200,15 +200,15 @@ export const parseDrawRows = (draft: string) => parseRows(draft, toDraw);
 /**
  * The total loan the form shows under the drawdown schedule: the start draw plus every
  * tranche row that parses (ADR 0167). Display only; the saved block's total is the
- * engine's `scheduledPrincipal`. Null until the start draw is an amount above 0.
+ * engine's `scheduledPrincipal`. Null until the start draw is an amount of 0 or more.
  */
 export function drawdownTotal(
   startDraft: string,
-  drawsDraft: string,
+  draft: string,
 ): { total: Decimal; tranches: number } | null {
-  const start = positive(startDraft);
-  if (!start) return null;
-  const amounts = readRows<DrawRow>(drawsDraft)
+  const start = parseMoney(startDraft);
+  if (!start || start.isNegative()) return null;
+  const amounts = readRows<DrawRow>(draft)
     .map((row) => (isBlank(row) ? null : toDraw(row)))
     .filter((x): x is MortgageDraw => x !== null)
     .map((x) => x.amount);
@@ -226,11 +226,11 @@ export type DrawWarning = "afterCompletion" | "sameDate";
  * added together. A row without a valid date gets none.
  */
 export function drawWarnings(
-  drawsDraft: string,
+  draft: string,
   completionDraft: string,
 ): DrawWarning[][] {
   const completion = parseDate(completionDraft);
-  const dates = readRows<DrawRow>(drawsDraft).map((row) =>
+  const dates = readRows<DrawRow>(draft).map((row) =>
     parseDate(row.date)?.getTime(),
   );
   return dates.map((t) => {

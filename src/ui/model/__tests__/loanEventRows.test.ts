@@ -173,7 +173,9 @@ describe("drawdown rows (ADR 0167)", () => {
     expect(t.total.toString()).toBe("2000000");
     expect(t.tranches).toBe(1);
     expect(drawdownTotal("", draft)).toBeNull();
-    expect(drawdownTotal("0", "")).toBeNull();
+    expect(drawdownTotal("x", draft)).toBeNull();
+    // Nothing drawn at start is a valid construction loan (review of PR #301).
+    expect(drawdownTotal("0", draft)!.total.toString()).toBe("800000");
     expect(drawdownTotal("1200000", "")!.tranches).toBe(0);
   });
 

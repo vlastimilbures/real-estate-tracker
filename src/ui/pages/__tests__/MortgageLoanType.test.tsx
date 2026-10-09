@@ -151,6 +151,15 @@ describe("mortgage loan type (ADR 0098)", () => {
     expect((completionField() as HTMLInputElement).value).toBe("");
   });
 
+  it("a blank tranche row left behind by going back to Standard is dropped, so nothing is unsaved", async () => {
+    await openEdit([plain], 0);
+    await userEvent.click(typeButton(d.loanTypeDevelopment));
+    await userEvent.click(screen.getByRole("button", { name: d.addTranche }));
+    await userEvent.click(typeButton(d.loanTypeStandard));
+    expect(screen.queryByText(d.loanTypeClearWarning)).toBeNull();
+    expect(useUiStore.getState().unsavedChanges).toBe(false);
+  });
+
   it("switching an empty Development form back to Standard needs no confirm", async () => {
     await openAdd([]);
     await userEvent.click(typeButton(d.loanTypeDevelopment));

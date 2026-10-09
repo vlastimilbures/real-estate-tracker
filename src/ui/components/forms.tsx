@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   collectValues,
+  parseDate,
   type FieldSpec,
   type LeadRow,
   type ParsedValues,
@@ -17,6 +18,7 @@ import {
   type EventListKind,
 } from "../model/loanEventRows";
 import { currencySymbol } from "../../lib/currency";
+import { fmtDate } from "../../lib/format";
 import { Button } from "./primitives";
 import { DateInput } from "./DateInput";
 import { FieldContext, useFieldControlProps } from "./fieldContext";
@@ -211,6 +213,7 @@ function LoanEventRows({
   const set = (i: number, patch: Record<string, string>) =>
     onChange(writeRows(rows.map((r, j) => (j === i ? { ...r, ...patch } : r))));
   const box = useRef<HTMLFieldSetElement>(null);
+  const leadDate = lead ? parseDate(lead.date) : null;
   // Where focus goes once an add or remove has rendered: a row index or the Add button.
   const focusTo = useRef<number | "add" | null>(null);
   useEffect(() => {
@@ -255,14 +258,14 @@ function LoanEventRows({
         </p>
       )}
       {lead && (
-        <div role="group" aria-label={lead.label} className="event-row lead">
+        <div className="event-row lead">
           <div className="field lead-date">
             <span className="label">{d.eventDate}</span>
             <span className="value">
-              {lead.date.trim() || lead.dateFallback}
+              {leadDate ? fmtDate(leadDate) : lead.dateFallback}
             </span>
           </div>
-          <Field label={d.eventAmount} required error={lead.error}>
+          <Field label={lead.label} required error={lead.error}>
             {money(lead.value, lead.onChange)}
           </Field>
         </div>
@@ -399,8 +402,9 @@ function LoanEventRows({
             ? d.eventAddRecast
             : d.addTranche}
       </Button>
-      {notes?.footer && (
-        <p className="total" aria-live="polite">
+      {notes && (
+        // Mounted while the list shows, so a screen reader hears the total change.
+        <p className="total" aria-live="polite" aria-atomic="true">
           {notes.footer}
         </p>
       )}
