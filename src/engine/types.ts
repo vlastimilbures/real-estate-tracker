@@ -55,8 +55,9 @@ export interface Assumptions {
   /** Inflation elevated by `deltaPa` for the first `durationYears`, then reverts to
    *  `inflationPa`. Affects holding-cost growth, the real-terms deflator, and real IRR. */
   inflationShock?: ShockBand | undefined;
-  /** At each mortgage's fixation end the reset rate is `postFixationResetRatePa + deltaPa`
-   *  for `durationYears`, then reverts to `postFixationResetRatePa`. */
+  /** At each mortgage's fixation end (a floating block's: baseDate or its later start,
+   *  ADR 0162) the reset rate is `postFixationResetRatePa + deltaPa` for
+   *  `durationYears`, then reverts to `postFixationResetRatePa`. */
   rateShock?: ShockBand | undefined;
   /** A permanent value haircut applied from year `atYear` onward. */
   valueShock?: ValueShock | undefined;

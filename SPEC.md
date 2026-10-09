@@ -82,7 +82,8 @@ Assumptions {
   // scenario-only shock overrides (not stored in the base assumptions table):
   inflationShock?: { deltaPa, durationYears }  // temporary CPI spike from baseDate, then revert
   rateShock?:      { deltaPa, durationYears }  // temporary reset-rate spike; the window starts
-                                               // at each loan's own fixation end (ADR 0028)
+                                               // at each loan's own fixation end (ADR 0028),
+                                               // a floating block's at baseDate (ADR 0162)
   valueShock?:     { pct, atYear }             // permanent value haircut from year N
 }
 
@@ -274,10 +275,11 @@ the next payment.
 
 **Plain loans** — for each row with previous balance `B`:
 
-- **Rate in effect**: the block's `interestRatePa` until its fixation end, then
+- **Rate in effect**: the block's `interestRatePa` until its fixation end (a floating
+  block: until baseDate or its later start, ADR 0162), then
   `postFixationResetRatePa`. (Monthly rate = annual/12.) A `rateShock` raises the reset
   rate by `deltaPa` for `durationYears` from each loan's own fixation end, then reverts
-  (ADR 0028).
+  (ADR 0028); a floating block's window starts at baseDate or its later start.
 - **Instalment**: the entered instalment until the reset; at the reset re-amortize
   `instalment = PMT(reset/12, remainingPayments, -B)` and hold it thereafter
   (constant-maturity refix). The instalment is **not rounded** (ADR 0020).

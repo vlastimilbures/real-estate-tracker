@@ -4,9 +4,11 @@
 - Date: 2026-10-09
 - Source: issue #124 (2026-10 code review); owner decision D4 (2026-10-09: option A);
   Track 11 PR 11.14
-- Amends: [0103](0103-financing-exposure.md) (point 2: what a 0-year block's rate is)
-- Related: D-21 (the payment due on the fixation end is still fixed), D-30 (an ended fixation
-  needs new terms), [0100](0100-rate-shock-reach.md) (which loans a rate shock reaches),
+- Amends: [0103](0103-financing-exposure.md) (point 2: what a 0-year block's rate is),
+  [0028](0028-rate-shock-window.md) (a floating block's shock window starts at baseDate),
+  [0030](0030-expired-fixation.md) (a floating block is never an expired fixation),
+  [0100](0100-rate-shock-reach.md) (which floating loans a rate shock reaches)
+- Related: D-21 (the payment due on the fixation end is still fixed),
   [0129](0129-loan-schedule-edge-cases.md) (§4 refix gap warning)
 
 ## Context
@@ -55,4 +57,6 @@ No test pinned this behaviour, and no parity or golden fixture has a 0-year bloc
 - The entered rate stands for the whole past. If a floating loan's rate moved in the past,
   the opening balance is an approximation; entering the past rate changes as blocks gives the
   exact history (docs/model-limitations.md).
-- No new strings and no new fields.
+- No new fields. The Scenarios rate-shock help (`scenarios.rateShockHelp`, en, cs, ru) now
+  says where a floating loan's shock starts (Today). The ADR 0100 reach list reports a
+  floating block repaid by baseDate as repaid, not as fixed to maturity.

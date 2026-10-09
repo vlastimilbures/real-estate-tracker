@@ -4,6 +4,7 @@
 - Date: 2026-09-30
 - Source IDs: D-30, J-21
 - Amended by: [0129](0129-loan-schedule-edge-cases.md) (the "Fixation ended" warning)
+- Amended by: [0162](0162-floating-block-rate.md) (a floating block never expires)
 
 ## Context
 
