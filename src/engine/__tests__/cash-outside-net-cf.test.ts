@@ -5,9 +5,10 @@
 // these exact values (recorded before the refactor) prove it is behaviour-neutral.
 import { describe, it, expect } from "vitest";
 import { portfolioKpis } from "../kpis";
-import { portfolioProjection, prePurchaseDebtService } from "../projections";
+import { portfolioProjection } from "../projections";
+import { prePurchaseDebtService } from "../ownerCash";
 import { turnOnYear } from "../yearGrid";
-import { propertySchedules, scheduleRows } from "../schedule";
+import { propertySchedules } from "../schedule";
 import { isoDate } from "../dates";
 import { money } from "../brands";
 import { ZERO } from "../../lib/money";
@@ -49,9 +50,9 @@ describe("#117: the KPIs net of the cash outside net cash flow", () => {
     );
     const proj = portfolioProjection(fixture, assumptions);
     const pre = prePurchaseDebtService(
-      fixture,
+      fixture.properties,
       assumptions,
-      scheduleRows(schedules),
+      schedules,
     );
     // Javorova's refinance hands over in year 5 and releases cash.
     const refis = schedules.get("javorova")?.refinances ?? [];
