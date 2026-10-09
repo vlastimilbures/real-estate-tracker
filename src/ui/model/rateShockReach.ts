@@ -144,7 +144,10 @@ function blockReach(
   // The maturity in force after prepayments and recasts (ADR 0116). The base
   // schedule decides: before the fixation end the shock changes no rate, so no event.
   const maturity = effectiveMaturity(b, a, next);
-  if (ms(fixEnd) >= ms(maturity)) return miss("fixedToMaturity");
+  // A floating block has no fixation to run to maturity (ADR 0162): repaid by
+  // baseDate, it misses as repaid below.
+  if (b.fixationYears > 0 && ms(fixEnd) >= ms(maturity))
+    return miss("fixedToMaturity");
   const offset = paymentOffset(b, a.baseDate);
   const k = Math.max(1, offset + 1, b.fixationYears * 12 + 1);
   const due = edate(b.startDate, k);
