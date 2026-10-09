@@ -404,6 +404,7 @@ describe("committed debt edge cases", () => {
     near(proj[1].acquiredValue, 9_500_000, KC, "acquired value");
     near(proj[1].balance, 0, KC, "nothing drawn yet");
     near(proj[1].committedDebt, 4_500_000, KC, "year 1 committed");
+    near(proj[1].committedDraws, 4_500_000, KC, "year 1 new debt");
     near(
       proj[1].equity,
       proj[1].value.minus(4_500_000).toNumber(),

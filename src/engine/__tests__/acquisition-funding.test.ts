@@ -293,6 +293,24 @@ describe("ADR 0168: a first development loan funds the purchase whatever its sta
     expect(summary(p).loan).toBeNull();
     expectKc(outflow(p), 3_800_000, "5.8 M out, 2 M in");
   });
+
+  it("an owned flat's Acquisition check counts its late development loan", () => {
+    const owned = withBuy(
+      [{ ...lateDev, startDate: isoDate("2025-08-01") }],
+      { ownCash: money(2_000_000) },
+      10_000_000,
+      10_000_000,
+    );
+    const p: Portfolio = {
+      ...owned,
+      properties: owned.properties.map((x) =>
+        x.id === "buy" ? { ...x, purchaseDate: isoDate("2025-01-01") } : x,
+      ),
+    };
+    const s = summary(p);
+    expect(s.loan?.toString()).toBe(String(LOAN)); // 212 days after the purchase
+    expect(s.gap?.toString()).toBe("0");
+  });
 });
 
 describe("ADR 0119 §4: sources and uses", () => {
