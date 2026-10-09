@@ -147,7 +147,12 @@ matched to an existing record by its natural key:
   `Byt Javorova 2` is a different key, so it is added as a new property next to the old one.
   Rename a property in the app instead.
 - **Changing a key date creates a new record.** A lease row with a new `start_date` is added
-  as another lease; the old one stays. Edit or delete the old record in the app.
+  as another lease; the old one stays. Edit or delete the old record in the app. If the old
+  lease has no end date, the new row overlaps it: see the next point.
+- **Leases of one property cannot overlap** (ADR 0163). A `rents.csv` row whose lease would
+  be in force on the same day as another lease of the property, in the file or stored, is a
+  row error. Give the earlier lease an `end_date` before the later `start_date` (a row with
+  the same `start_date` updates the stored lease). The import does not end a lease for you.
 - **A match updates only the CSV columns.** What the CSV does not hold is left as stored: a
   property's active/inactive state and holding costs, and a mortgage block's draws,
   interest-only date, prepayments and maturity changes. An empty `contract_maturity_date`

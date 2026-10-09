@@ -225,7 +225,11 @@ valuation date, the nearest upcoming record is used (so year 0 lines up with the
 **Leases** have no such fallback (DR-045): snapshot rent is the contractual monthly rent of the lease in force at
 `asOf` × 12, unindexed, and 0 when no lease is in force — before the first lease, in a gap
 between leases (a one-day gap is rent-free) and after the last lease's end date. The
-projection treats rent differently (§4.5).
+projection treats rent differently (§4.5). **Leases of one property never overlap**
+(ADR 0163): adding a lease ends the open-ended lease before it on the day before the new
+start, and a lease write or CSV import that would put two leases in force on one day is
+refused (`LEASE_OVERLAP`). A database from before the rule may still hold an overlap; it
+loads, and the Data check lists it.
 
 Derived per-property values:
 
@@ -602,7 +606,8 @@ Clearing a funding amount is a property form edit too: a blank CSV cell keeps it
 - `property_name` matches a property after trimming, case-insensitively; the stored
   spelling is kept. Two names in one file differing only by case or spaces are a duplicate
   (fatal). An unknown name is fatal (D-55).
-- Each row also passes the engine's `validateInputs` rules (§4.1).
+- Each row also passes the engine's `validateInputs` rules (§4.1) and the lease overlap
+  rule (§4.3, ADR 0163).
 - **All or nothing across the batch** ([guide](docs/csv-import.md#all-or-nothing)): every
   file chosen for one import is parsed, its property names resolved and the merged portfolio
   validated before anything is written. If any row in any file has an error, nothing is
@@ -752,7 +757,8 @@ offline badge, and controls for language and theme.
    falls back on: under "Needs attention" a valuation more than 12 months old, no valuation
    (purchase price used), a last lease that ended (no rent in the snapshot, renewed in the
    projection), no lease in force (rent 0), a lease ending within 3 months with no next
-   lease, and a fixation that ended with no follow-on block; under "Using portfolio
+   lease, a fixation that ended with no follow-on block, and two stored leases that overlap
+   (any date, ADR 0163); under "Using portfolio
    defaults" the portfolio growth, blank holding-cost fields and own cash at purchase not
    recorded (Cash invested unknown; for a property bought after the base date the down
    payment is derived, ADR 0119). Each row links to the property section (or form) that

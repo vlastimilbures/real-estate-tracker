@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 //
-// ADR 0099: adding a valuation or lease after an open-ended one asks to end that one
+// ADR 0099: adding a valuation after an open-ended one asks to end that one
 // on the day before the new start; confirming sends it with that end date.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
@@ -35,7 +35,6 @@ const spies = {
   addValuation: vi.fn(ok),
   addValuationClosingPrevious: vi.fn(ok),
   addLease: vi.fn(ok),
-  addLeaseClosingPrevious: vi.fn(ok),
 };
 
 beforeEach(() =>
@@ -89,7 +88,9 @@ describe("ending the previous open-ended record (ADR 0099)", () => {
     expect(spies.addValuation).not.toHaveBeenCalled();
   });
 
-  it("lease: Keep as is adds without touching the previous one", async () => {
+  // ADR 0163: leases never overlap, so there is no choice to make. The panel adds the
+  // lease and the store ends the open lease before it (state/__tests__/closePrevious).
+  it("lease: adds without asking", async () => {
     const user = userEvent.setup();
     render(<LeasesPanel propertyId="p1" rows={leases} />);
     await add(
@@ -98,31 +99,10 @@ describe("ending the previous open-ended record (ADR 0099)", () => {
       en.propertyDetail.fieldStartDate,
       en.propertyDetail.fieldMonthlyRent,
     );
-    expect(screen.getByRole("dialog").textContent).toContain(
-      en.propertyDetail.closePrevLeaseBody("01.01.2025", "30.06.2026"),
-    );
-    await user.click(
-      screen.getByRole("button", { name: en.propertyDetail.closePrevKeep }),
-    );
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(spies.addLease).toHaveBeenCalledTimes(1);
-    expect(spies.addLeaseClosingPrevious).not.toHaveBeenCalled();
-  });
-
-  it("lease: confirming ends the previous lease the day before", async () => {
-    const user = userEvent.setup();
-    render(<LeasesPanel propertyId="p1" rows={leases} />);
-    await add(
-      user,
-      en.propertyDetail.addLease,
-      en.propertyDetail.fieldStartDate,
-      en.propertyDetail.fieldMonthlyRent,
-    );
-    await user.click(
-      screen.getByRole("button", { name: en.propertyDetail.closePrevConfirm }),
-    );
-    const [, closed] = spies.addLeaseClosingPrevious.mock
-      .calls[0] as unknown as [Lease, Lease];
-    expect(iso(closed.endDate)).toBe("2026-06-30");
+    const [added] = spies.addLease.mock.calls[0] as unknown as [Lease];
+    expect(iso(added.startDate)).toBe("2026-07-01");
   });
 
   it("does not ask when the new record starts before the open one", async () => {
@@ -176,6 +156,5 @@ describe("ending the previous open-ended record (ADR 0099)", () => {
     expect(spies.addLease).toHaveBeenCalledTimes(1);
     const [added] = spies.addLease.mock.calls[0] as unknown as [Lease];
     expect(iso(added.endDate)).toBe("2027-06-30");
-    expect(spies.addLeaseClosingPrevious).not.toHaveBeenCalled();
   });
 });

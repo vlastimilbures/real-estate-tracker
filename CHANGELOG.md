@@ -154,6 +154,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Leases of one apartment can no longer overlap (ADR 0163, #121). Adding a lease ends the
+  open-ended lease before it on the day before the new one starts, with no dialog; this
+  also holds for a lease with an end date. A lease save or a `rents.csv` import that would
+  overlap another lease is refused with a message, and nothing is written. A database or
+  backup that already holds overlapping leases still opens and restores; the Data check
+  lists each pair under **Needs attention**. Before, the Dashboard cards and the charts
+  read such a pair differently. Valuations keep the "end previous" dialog.
+
 - After a restore, the name of the safety backup (your undo copy) now stays on screen until
   you dismiss it, as it does after Clear sample (ADR 0154, #136). Before, it went away
   after 2.4 seconds. The outcome of a restore, Load sample, import or export now shows

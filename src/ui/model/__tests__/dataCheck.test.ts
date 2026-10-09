@@ -818,3 +818,51 @@ describe("stored dates before 1900 (ADR 0149)", () => {
   it("a date from 1900 on is not listed", () =>
     expect(kinds(check("javorova").attention)).not.toContain("earlyDate"));
 });
+
+// ADR 0163: leases of one apartment never overlap. A pair stored before the rule (ADR 0099
+// "Keep as is", or an earlier CSV import) keeps loading; the Data check lists it under
+// "Needs attention", like other stored data the forms no longer accept.
+describe("overlapping leases (ADR 0163)", () => {
+  // Javorova's open lease from 2025-09-01, plus an open one from 2027-01-01.
+  const later = isoDate("2027-01-01");
+  const overlap: Portfolio = {
+    ...portfolio,
+    leases: [
+      ...portfolio.leases,
+      {
+        id: "l-javorova-later",
+        propertyId: "javorova",
+        startDate: later,
+        monthlyRent: money("30000"),
+      },
+    ],
+  };
+  const finding: DataFinding = {
+    kind: "leaseOverlap",
+    first: isoDate("2025-09-01"),
+    second: later,
+  };
+
+  it("lists each overlapping pair with both start dates", () => {
+    expect(check("javorova", BASE_DATE, overlap).attention).toEqual([finding]);
+  });
+
+  it("lists it at any as-of date, before the purchase date too: it is stored, not dated", () => {
+    expect(check("javorova", isoDate("2030-01-01"), overlap).attention).toEqual(
+      expect.arrayContaining([finding]),
+    );
+    const before = edate(portfolio.properties[0]!.purchaseDate, -1);
+    expect(check("javorova", before, overlap).attention).toEqual([finding]);
+  });
+
+  it("back-to-back leases (the sample's Lipova) are not listed", () => {
+    expect(kinds(check("lipova").attention)).not.toContain("leaseOverlap");
+  });
+
+  it("states the overlap and links to the records", () => {
+    expect(findingText(en, finding, rate("0.045"))).toBe(
+      "The leases from 01.09.2025 and from 01.01.2027 overlap. Leases on one apartment cannot overlap: set an end date on the earlier lease before the later one starts.",
+    );
+    expect(findingFix(finding)).toBe("records");
+  });
+});

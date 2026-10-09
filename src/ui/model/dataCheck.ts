@@ -7,12 +7,14 @@ import {
   leaseEndWithoutFollowOn,
   leaseInForce,
   monthsBetween,
+  overlappingLeases,
   renewedLease,
   selectValuation,
 } from "../../engine";
 import type {
   HoldingCost,
   IsoDate,
+  Lease,
   Money,
   MortgageBlock,
   Portfolio,
@@ -89,7 +91,10 @@ export type DataFinding =
       entity: EarlyDateField["entity"];
       field: DateField;
       date: Date;
-    };
+    }
+  /** Two stored leases of the property that overlap (ADR 0163), by start date: a
+   *  database from before the rule keeps them. */
+  | { kind: "leaseOverlap"; first: IsoDate; second: IsoDate };
 
 /** A property's findings: "needs attention" (counted) and "using portfolio defaults". */
 export interface DataCheck {
@@ -132,6 +137,7 @@ export function propertyDataCheck(
       valuations: own(portfolio.valuations),
       leases: own(portfolio.leases),
     }),
+    ...leaseOverlapFindings(own(portfolio.leases)),
   ];
   if (property.purchaseDate.getTime() > asOf.getTime())
     return { attention: stored, defaults: fundingOf(property, baseDate) };
@@ -212,6 +218,16 @@ function earlyDateFindings(
     entity,
     field,
     date,
+  }));
+}
+
+/** Stored leases that overlap (ADR 0163): the forms and the CSV import no longer write
+ *  them, but a database from before the rule keeps them. One finding per pair. */
+function leaseOverlapFindings(leases: Lease[]): DataFinding[] {
+  return overlappingLeases(leases).map(([a, b]) => ({
+    kind: "leaseOverlap",
+    first: a.startDate,
+    second: b.startDate,
   }));
 }
 
@@ -297,6 +313,7 @@ export function findingFix(f: DataFinding): DataCheckFix {
     case "noLease":
     case "leaseEnded":
     case "leaseEnding":
+    case "leaseOverlap":
       return "records";
     case "fixationEnded":
       return "financing";
@@ -338,6 +355,8 @@ export function findingText(
       return d.leaseEnded(fmtDate(f.endDate));
     case "leaseEnding":
       return d.leaseEnding(fmtDate(f.endDate));
+    case "leaseOverlap":
+      return d.leaseOverlap(fmtDate(f.first), fmtDate(f.second));
     case "fixationEnded":
       return loanWarningText(t, f, resetRate);
     case "growthDefault":

@@ -25,6 +25,7 @@ import {
   type ValuationRow,
 } from "../data/mappers";
 import {
+  leaseOverlapErrors,
   loanChainChanges,
   validatePortfolio,
   type Assumptions,
@@ -538,8 +539,10 @@ export function planImport(
   }
 
   if (problems.length === 0) {
-    // The engine's input rules over the merged portfolio; only rows this import wrote
-    // can be at fault (stored rows passed the same rules when they were saved).
+    // The engine's input rules and the lease overlap rule (ADR 0163) over the merged
+    // portfolio; only rows this import wrote can be at fault (stored rows passed the
+    // rules when they were saved, or predate them: a stored overlap is not this
+    // import's to report).
     const merged = {
       properties: db.properties.map(rowToProperty),
       mortgages: db.mortgage_blocks.map(rowToMortgageBlock),
@@ -547,7 +550,10 @@ export function planImport(
       leases: db.leases.map(rowToLease),
       holdingCosts: db.holding_costs.map(rowToHoldingCost),
     };
-    for (const e of validatePortfolio(merged)) {
+    for (const e of [
+      ...validatePortfolio(merged),
+      ...leaseOverlapErrors(merged),
+    ]) {
       const at = origin.get(`${e.entity}:${e.id}`);
       if (!at) continue;
       // A stored event is not a CSV column: name the event, not a field (ADR 0160).

@@ -26,7 +26,7 @@ export {
   monthsBetween,
   utc,
 } from "./dates";
-export { openPredecessor } from "./succession";
+export { openPredecessor, overlappingLeases } from "./succession";
 
 // Loans
 export {
@@ -93,7 +93,11 @@ export type {
 } from "./financing";
 export type { PortfolioOutputs } from "./outputs";
 export { applyScenario } from "./scenarios";
-export { validateInputs, validatePortfolio } from "./validate";
+export {
+  leaseOverlapErrors,
+  validateInputs,
+  validatePortfolio,
+} from "./validate";
 export {
   loanChainChanges,
   type LoanChainChanges,

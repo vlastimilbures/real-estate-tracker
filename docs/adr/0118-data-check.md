@@ -7,7 +7,7 @@
   the owner)
 - Amended by: ADR 0122 (a closed last valuation stays in use),
   [0155](0155-lifecycle-states-on-the-pages.md) (no Data check on an inactive property's
-  page)
+  page), [0163](0163-leases-never-overlap.md) (stored overlapping leases need attention)
 
 ## Context
 

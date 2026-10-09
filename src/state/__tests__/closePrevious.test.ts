@@ -1,10 +1,14 @@
-// ADR 0099: adding a valuation/lease can end the previous open-ended one in the same
-// write. Both rows pass the engine input checks, and no computed number changes.
+// ADR 0099: adding a valuation can end the previous open-ended one in the same write. Both
+// rows pass the engine input checks, and no computed number changes.
+// ADR 0163: leases of one apartment never overlap. Adding a lease ends the open lease
+// before it the day before, and a write that would overlap another lease is refused.
 import { beforeEach, describe, expect, it } from "vitest";
-import { usePortfolioStore } from "../portfolioStore";
+import { usePortfolioStore, type MutationResult } from "../portfolioStore";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
+import { insertLease } from "../../data/repositories";
+import { leaseToRow } from "../../data/mappers";
 import {
   dayBefore,
   isoDate,
@@ -27,8 +31,9 @@ const store = () => usePortfolioStore.getState();
 const pf = () => store().portfolio!;
 const START = isoDate("2030-01-01");
 
-/** A fresh seeded database. `init` alone is a no-op once the store is ready. */
-async function reset() {
+/** A fresh database from `open` (default: the seed). `init` alone is a no-op once the
+ *  store is ready. */
+async function reset(open: () => Promise<Sql> = openSeeded) {
   usePortfolioStore.setState({
     sql: null,
     portfolio: null,
@@ -37,10 +42,10 @@ async function reset() {
     error: null,
     startupError: null,
   });
-  await store().init(openSeeded);
+  await store().init(open);
 }
 
-beforeEach(reset);
+beforeEach(() => reset());
 
 /** The seed's first property that has an open-ended valuation before START. */
 function openValuation(): Valuation {
@@ -72,8 +77,11 @@ function openLease(at = START): Lease {
 
 const outputs = () =>
   JSON.stringify(portfolioOutputs(pf(), store().assumptions!));
+const day = (d: Date | undefined) => d?.toISOString().slice(0, 10);
+const inputCodes = (r: MutationResult) =>
+  r.ok || r.error.kind !== "input" ? [] : r.error.errors.map((e) => e.code);
 
-describe("add closing the previous record (ADR 0099)", () => {
+describe("add closing the previous valuation (ADR 0099)", () => {
   it("adds the valuation and ends the previous one the day before", async () => {
     const prev = openValuation();
     const v: Valuation = {
@@ -88,26 +96,8 @@ describe("add closing the previous record (ADR 0099)", () => {
     });
     expect(result.ok).toBe(true);
     const old = pf().valuations.find((x) => x.id === prev.id)!;
-    expect(old.validTo?.toISOString().slice(0, 10)).toBe("2029-12-31");
+    expect(day(old.validTo)).toBe("2029-12-31");
     expect(pf().valuations.some((x) => x.id === "v-new")).toBe(true);
-  });
-
-  it("adds the lease and ends the previous one the day before", async () => {
-    const prev = openLease();
-    const l: Lease = {
-      id: "l-new",
-      propertyId: prev.propertyId,
-      startDate: START,
-      monthlyRent: money("40000"),
-    };
-    const result = await store().addLeaseClosingPrevious(l, {
-      ...prev,
-      endDate: dayBefore(START),
-    });
-    expect(result.ok).toBe(true);
-    const old = pf().leases.find((x) => x.id === prev.id)!;
-    expect(old.endDate?.toISOString().slice(0, 10)).toBe("2029-12-31");
-    expect(pf().leases.some((x) => x.id === "l-new")).toBe(true);
   });
 
   it("rejects an end date before the previous start and writes nothing", async () => {
@@ -130,46 +120,44 @@ describe("add closing the previous record (ADR 0099)", () => {
   });
 
   it("computes the same outputs as the plain add", async () => {
-    const prevV = openValuation();
-    const prevL = openLease();
+    const prev = openValuation();
     const v: Valuation = {
       id: "v-new",
-      propertyId: prevV.propertyId,
+      propertyId: prev.propertyId,
       validFrom: START,
       marketValue: money("15000000"),
     };
-    const l: Lease = {
-      id: "l-new",
-      propertyId: prevL.propertyId,
-      startDate: START,
-      monthlyRent: money("40000"),
-    };
     expect((await store().addValuation(v)).ok).toBe(true);
-    expect((await store().addLease(l)).ok).toBe(true);
     const plain = outputs();
 
     await reset();
     expect(
       await store().addValuationClosingPrevious(v, {
-        ...prevV,
+        ...prev,
         validTo: dayBefore(START),
-      }),
-    ).toEqual({ ok: true });
-    expect(
-      await store().addLeaseClosingPrevious(l, {
-        ...prevL,
-        endDate: dayBefore(START),
       }),
     ).toEqual({ ok: true });
     expect(outputs()).toBe(plain);
   });
+});
 
-  // ADR 0144: with a dated new lease, ending the previous one changes the numbers: after
-  // the new lease ends, the previous open lease is back in force. So the UI does not offer
-  // it. The dated lease ends before the seed's base date (2026-06-07), where outputs read
-  // it. (A valuation's end date is not read since ADR 0122.) Needs a seed lease that is
-  // open-ended before 2026-01-01; openLease throws if the seed loses it.
-  it("changes the outputs when the new lease has an end date", async () => {
+describe("leases never overlap (ADR 0163)", () => {
+  it("adding an open-ended lease ends the open lease before it the day before", async () => {
+    const prev = openLease();
+    const l: Lease = {
+      id: "l-new",
+      propertyId: prev.propertyId,
+      startDate: START,
+      monthlyRent: money("40000"),
+    };
+    expect(await store().addLease(l)).toEqual({ ok: true });
+    expect(day(pf().leases.find((x) => x.id === prev.id)!.endDate)).toBe(
+      "2029-12-31",
+    );
+    expect(pf().leases.some((x) => x.id === "l-new")).toBe(true);
+  });
+
+  it("adding a dated lease ends the open lease before it too", async () => {
     const from = isoDate("2026-01-01");
     const prev = openLease(from);
     const l: Lease = {
@@ -179,16 +167,146 @@ describe("add closing the previous record (ADR 0099)", () => {
       endDate: isoDate("2026-03-31"),
       monthlyRent: money("40000"),
     };
-    expect((await store().addLease(l)).ok).toBe(true);
-    const plain = outputs();
+    expect(await store().addLease(l)).toEqual({ ok: true });
+    expect(day(pf().leases.find((x) => x.id === prev.id)!.endDate)).toBe(
+      "2025-12-31",
+    );
+  });
 
-    await reset();
-    expect(
-      await store().addLeaseClosingPrevious(l, {
-        ...prev,
-        endDate: dayBefore(from),
+  it("a lease after the last one has no open lease to end and is added as is", async () => {
+    // lipova: l-lipova-1 ends 2026-08-30, l-lipova-2 is open from 2026-09-01.
+    const l: Lease = {
+      id: "l-new",
+      propertyId: "lipova",
+      startDate: START,
+      monthlyRent: money("30000"),
+    };
+    expect(await store().addLease(l)).toEqual({ ok: true });
+    const lipova = pf().leases.filter((x) => x.propertyId === "lipova");
+    expect(lipova.map((x) => [x.id, day(x.endDate)])).toEqual(
+      expect.arrayContaining([
+        ["l-lipova-1", "2026-08-30"],
+        ["l-lipova-2", "2029-12-31"],
+        ["l-new", undefined],
+      ]),
+    );
+  });
+
+  it("refuses a new lease that runs into a later lease and writes nothing", async () => {
+    // lipova: a lease for 2026-08-31..09-01 reaches l-lipova-2 (open from 2026-09-01).
+    const before = JSON.stringify(pf().leases);
+    const r = await store().addLease({
+      id: "l-new",
+      propertyId: "lipova",
+      startDate: isoDate("2026-08-31"),
+      endDate: isoDate("2026-09-01"),
+      monthlyRent: money("20000"),
+    });
+    expect(inputCodes(r)).toContain("LEASE_OVERLAP");
+    expect(JSON.stringify(pf().leases)).toBe(before);
+  });
+
+  it("refuses a new lease with the same start as a stored one", async () => {
+    const r = await store().addLease({
+      id: "l-new",
+      propertyId: "dubova",
+      startDate: isoDate("2025-07-01"),
+      monthlyRent: money("20000"),
+    });
+    expect(inputCodes(r)).toContain("LEASE_OVERLAP");
+    expect(pf().leases.some((x) => x.id === "l-new")).toBe(false);
+  });
+
+  it("refuses an edit that makes two leases overlap", async () => {
+    const lipova1 = pf().leases.find((x) => x.id === "l-lipova-1")!;
+    const r = await store().saveLease({
+      ...lipova1,
+      endDate: isoDate("2026-09-01"),
+    });
+    expect(inputCodes(r)).toEqual(["LEASE_OVERLAP"]);
+    expect(day(pf().leases.find((x) => x.id === "l-lipova-1")!.endDate)).toBe(
+      "2026-08-30",
+    );
+  });
+
+  describe("a stored overlap (written before ADR 0163)", () => {
+    // dubova: the seed's open lease from 2025-07-01, plus an open one from 2027-01-01.
+    const legacy: Lease = {
+      id: "l-dubova-legacy",
+      propertyId: "dubova",
+      startDate: isoDate("2027-01-01"),
+      monthlyRent: money("25000"),
+    };
+    beforeEach(() =>
+      reset(async () => {
+        const sql = await openSeeded();
+        await insertLease(sql, leaseToRow(legacy));
+        return sql;
       }),
-    ).toEqual({ ok: true });
-    expect(outputs()).not.toBe(plain);
+    );
+
+    it("loads, and does not block writes to other rows", async () => {
+      expect(pf().leases.some((x) => x.id === legacy.id)).toBe(true);
+      const javorova = pf().leases.find((x) => x.id === "l-javorova")!;
+      expect(
+        await store().saveLease({ ...javorova, monthlyRent: money("28000") }),
+      ).toEqual({ ok: true });
+    });
+
+    it("refuses an edit of either lease while they overlap", async () => {
+      const r = await store().saveLease({
+        ...legacy,
+        monthlyRent: money("26000"),
+      });
+      expect(inputCodes(r)).toEqual(["LEASE_OVERLAP"]);
+    });
+
+    it("is fixed by ending the earlier lease, or by deleting one of them", async () => {
+      const dubova = pf().leases.find((x) => x.id === "l-dubova")!;
+      expect(
+        await store().saveLease({
+          ...dubova,
+          endDate: isoDate("2026-12-31"),
+        }),
+      ).toEqual({ ok: true });
+
+      await reset(async () => {
+        const sql = await openSeeded();
+        await insertLease(sql, leaseToRow(legacy));
+        return sql;
+      });
+      expect(await store().removeLease(legacy.id)).toEqual({ ok: true });
+    });
+  });
+
+  it("adds a lease that overlaps nothing although its predecessor keeps a stored overlap", async () => {
+    // dubova: a dated lease from before the rule overlaps the seed's open l-dubova
+    // (from 2025-07-01). Ending l-dubova for the new lease cannot add an overlap, so the
+    // old pair is not the new lease's to report (ADR 0163 §4).
+    const old: Lease = {
+      id: "l-dubova-old",
+      propertyId: "dubova",
+      startDate: isoDate("2024-01-01"),
+      endDate: isoDate("2025-12-31"),
+      monthlyRent: money("19000"),
+    };
+    await reset(async () => {
+      const sql = await openSeeded();
+      await insertLease(sql, leaseToRow(old));
+      return sql;
+    });
+    const r = await store().addLease({
+      id: "l-new",
+      propertyId: "dubova",
+      startDate: isoDate("2027-01-01"),
+      monthlyRent: money("25000"),
+    });
+    expect(r).toEqual({ ok: true });
+    expect(day(pf().leases.find((x) => x.id === "l-dubova")!.endDate)).toBe(
+      "2026-12-31",
+    );
+    expect(day(pf().leases.find((x) => x.id === old.id)!.endDate)).toBe(
+      "2025-12-31",
+    );
   });
 });

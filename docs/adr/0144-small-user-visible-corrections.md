@@ -7,6 +7,8 @@
   [0130](0130-interest-saved-refinance.md) (interest saved), [0109](0109-loan-prepayments-and-recasts.md)
   (prepayments and recasts)
 - Amends: [0099](0099-close-previous-open-record.md) (decision 3: no prompt for a dated new record)
+- Amended by: [0163](0163-leases-never-overlap.md) (decision 1 for leases: adding a lease
+  ends the open predecessor; leases never overlap)
 
 ## Context
 
