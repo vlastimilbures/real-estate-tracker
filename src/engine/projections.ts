@@ -305,8 +305,10 @@ interface RentAndCosts {
 
 /**
  * Rent for year `t`: each lease's indexed monthly rent (off its own turn-on year) times
- * its months in the year's slice of the rent plan. Holding costs pro-rated by months
- * owned in the turn-on year (12 once owned from a prior year).
+ * its months in the year's slice of the rent plan. Fixed holding costs are base-date
+ * prices inflated from the base date, `fixed0 × CPI_t` (SPEC §4.5; a future purchase is
+ * not rebased to its turn-on year, ADR 0165), pro-rated by months owned in the turn-on
+ * year (12 once owned from a prior year).
  */
 function computeRentAndCosts(
   b: PropertyBasis,
@@ -330,7 +332,7 @@ function computeRentAndCosts(
   }
   const effectiveRent = grossRent.times(ONE.minus(vacancy));
   const holdingCosts = b.fixed0
-    .times(at(cpi, t).div(at(cpi, gates.tStart)))
+    .times(at(cpi, t))
     .times(ownedMonths)
     .div(12)
     .plus(b.varPct.times(grossRent));

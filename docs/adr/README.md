@@ -167,7 +167,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0121](0121-first-positive-cash-flow-strict.md)   | The first cash-flow-positive year is strictly positive                                        | Accepted                                                 | #102, #185                                         |
 | [0122](0122-valuation-persists-past-valid-to.md)  | A valuation keeps governing after its "Valid to" date                                         | Accepted                                                 | #110, #121                                         |
 | [0123](0123-scenario-rules-every-entry-point.md)  | Scenario overrides meet the engine rules; restore needs them readable                         | Accepted · amended by 0128                               | #107, #108                                         |
-| [0124](0124-pre-purchase-debt-service.md)         | Debt service before a future purchase is owner cash                                           | Accepted                                                 | #104                                               |
+| [0124](0124-pre-purchase-debt-service.md)         | Debt service before a future purchase is owner cash                                           | Accepted · amended by 0165                               | #104                                               |
 | [0125](0125-committed-write-reload-failure.md)    | A committed write whose reload fails is not a failure                                         | Accepted                                                 | #106                                               |
 | [0126](0126-degenerate-kpis.md)                   | Degenerate KPIs: no growth base, debt-free from, no-debt badge                                | Accepted                                                 | #129                                               |
 | [0127](0127-opaque-property-ids-sample-match.md)  | Random property ids; the sample is matched by id and name                                     | Accepted                                                 | #101, #105                                         |
@@ -208,6 +208,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0162](0162-floating-block-rate.md)               | A floating (0-year) block keeps its entered rate up to baseDate                               | Accepted                                                 | #124                                               |
 | [0163](0163-leases-never-overlap.md)              | Leases of one apartment never overlap                                                         | Accepted                                                 | #121                                               |
 | [0164](0164-amortization-due-date.md)             | Amortization rows show the payment due date                                                   | Accepted                                                 | #112                                               |
+| [0165](0165-future-purchases.md)                  | Future purchases: acquired value, holding costs from the base date, pending debt              | Proposed                                                 | #126, #104                                         |
 
 <!-- adr-index:end -->
 
