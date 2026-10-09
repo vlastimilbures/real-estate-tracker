@@ -439,9 +439,9 @@ export function SignedBars({
   );
 }
 
-/** Stacked CZK bars (e.g. equity change = appreciation + debt paydown). Stacks share one
- *  `stackId`; negative segments drop below the zero reference line. `totalLabel`, when set,
- *  adds a net-of-stack summary row to the tooltip. */
+/** Stacked CZK bars (e.g. equity change = appreciation + purchases + debt paydown + new
+ *  debt). Stacks share one `stackId`; negative segments drop below the zero reference line.
+ *  `totalLabel`, when set, adds a net-of-stack summary row to the tooltip. */
 export function StackedCzkBars({
   data,
   series,

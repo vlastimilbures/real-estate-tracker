@@ -277,7 +277,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     cash flow and IRR a little lower.
   - A property not bought yet whose loan is already drawn (an off-plan loan drawn at
     contract) now counts that debt in total debt, net worth, LTV and the average rate.
-    Its value still counts only from the purchase.
+    Its value still counts only from the purchase. Its row on Properties shows that debt.
+  - The equity-change chart's subtitle reads "appreciation, purchases and debt".
 
 - Keyboard and screen-reader gaps (ADR 0157, #128):
   - With more than five properties, the property selector on the Dashboard and Projections

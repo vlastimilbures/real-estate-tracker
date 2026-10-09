@@ -59,6 +59,24 @@ describe("ProjectionYear.acquiredValue (ADR 0165)", () => {
     );
   });
 
+  it("takes a shock that starts in the turn-on year, like that year's value", () => {
+    // The shock applies from year atYear's value on; the bought-in value of that same
+    // year is on the same curve, so the loss is not shown as negative appreciation.
+    const shocked = {
+      ...assumptions,
+      valueShock: { pct: rate("0.2"), atYear: T_START },
+    };
+    const proj = propertyProjection(
+      future,
+      mixed,
+      shocked,
+      EMPTY_PROPERTY_SCHEDULE,
+    );
+    expect(
+      proj[T_START].acquiredValue.equals(VALUE_AT_PURCHASE.times(D("0.8"))),
+    ).toBe(true);
+  });
+
   it("follows a value shock in force at the turn-on year", () => {
     const shocked = {
       ...assumptions,

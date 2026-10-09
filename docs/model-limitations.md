@@ -43,9 +43,11 @@ work still to do is in the [roadmap](roadmap.md).
   high. When the loan was already refinanced before the projection start, neither the
   principal repaid nor the cash from that refinance is traced, so the cash you paid can
   read too high or too low (ADR 0134). Today's net worth on the Dashboard counts the debt
-  such a loan already carries, without the flat's value (ADR 0165); the projection's
-  opening year leaves both out, so the multiple, CAGR and IRR start from equity without
-  that debt and see it as new debt in the purchase year. A property bought after the
+  such a loan already carries, without the flat's value (ADR 0165); the projection leaves
+  both out until the purchase year, so the multiple, CAGR and IRR start from equity
+  without that debt and see it as new debt in the purchase year. Moving the as-of date to
+  a projection year before the purchase therefore raises net worth by that debt, while the
+  average rate shown there is still today's, which includes it. A property bought after the
   horizon pays its instalments inside the horizon but never adds its value. With equity of zero or less
   at the start, the multiple and CAGR show "—", and so does CAGR when net worth at the
   horizon is zero or less; when the cash flows give no single answer, IRR shows "n/a"

@@ -315,7 +315,7 @@ export const ru: Dictionary = {
     nominalKc: "Номинальные Kč",
     chartValueVsDebtVsEquity: "Стоимость vs долг vs капитал",
     chartEquityChange: "Изменение капитала по годам",
-    subEquityChange: "рост стоимости + погашение долга",
+    subEquityChange: "рост стоимости, покупки и долг",
     chartNetCashFlowByYear: "Чистый денежный поток по годам",
     chartRentGrossVsEffective: "Аренда — валовая vs эффективная",
     chartNoiVsDebtService: "NOI vs обслуживание долга",

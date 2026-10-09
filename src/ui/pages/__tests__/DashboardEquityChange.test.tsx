@@ -37,6 +37,13 @@ describe("Dashboard equity-change chart: purchases (ADR 0165)", () => {
     expect(screen.getAllByText("Appreciation").length).toBeGreaterThan(0);
   });
 
+  it("the subtitle names what the bars split equity into", () => {
+    renderCharts(portfolio);
+    expect(
+      screen.getByText(/— appreciation, purchases and debt$/),
+    ).toBeTruthy();
+  });
+
   it("has no Purchases series when every property is owned at baseDate", () => {
     renderCharts(portfolio);
     expect(screen.queryByText("Purchases")).toBeNull();

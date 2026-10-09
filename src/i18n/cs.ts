@@ -308,7 +308,7 @@ export const cs: Dictionary = {
     nominalKc: "Nominální Kč",
     chartValueVsDebtVsEquity: "Hodnota vs dluh vs kapitál",
     chartEquityChange: "Změna kapitálu podle roku",
-    subEquityChange: "zhodnocení + splátka dluhu",
+    subEquityChange: "zhodnocení, nákupy a dluh",
     chartNetCashFlowByYear: "Čistý cash flow podle roku",
     chartRentGrossVsEffective: "Nájem — hrubý vs efektivní",
     chartNoiVsDebtService: "NOI vs dluhová služba",

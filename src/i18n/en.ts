@@ -332,7 +332,7 @@ export const en = {
     nominalKc: "Nominal Kč",
     chartValueVsDebtVsEquity: "Value vs debt vs equity",
     chartEquityChange: "Equity change by year",
-    subEquityChange: "appreciation + debt repayment",
+    subEquityChange: "appreciation, purchases and debt",
     chartNetCashFlowByYear: "Net cash flow by year",
     chartRentGrossVsEffective: "Rent — gross vs effective",
     chartNoiVsDebtService: "NOI vs debt service",
