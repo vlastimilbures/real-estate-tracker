@@ -141,7 +141,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0095](0095-assumptions-save-row.md)              | Assumptions: sticky Save row, unsaved state and error summary                                 | Accepted                                                 | #19                                                |
 | [0096](0096-csv-import-preview.md)                | CSV import preview: adds and updates before importing                                         | Accepted · amended by 0154, 0160                         | #34                                                |
 | [0097](0097-compare-delta-view.md)                | Scenario compare: Values / Δ vs Base view                                                     | Accepted                                                 | #53, #15                                           |
-| [0098](0098-mortgage-loan-type.md)                | Mortgage form: Standard vs Development switch and successor note                              | Accepted                                                 | #20                                                |
+| [0098](0098-mortgage-loan-type.md)                | Mortgage form: Standard vs Development switch and successor note                              | Accepted · amended by 0167                               | #20                                                |
 | [0099](0099-close-previous-open-record.md)        | Offer to close the previous open-ended valuation or lease                                     | Accepted · amended by 0144, 0163                         |                                                    |
 | [0100](0100-rate-shock-reach.md)                  | Scenarios: show which loans a rate shock hits                                                 | Accepted · amended by 0162                               | #47, #15                                           |
 | [0101](0101-scenario-session-state.md)            | Scenarios: keep the compare state for the session; crash timing is a setting                  | Accepted                                                 | #50, #51, #15                                      |
@@ -210,6 +210,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0164](0164-amortization-due-date.md)             | Amortization rows show the payment due date                                                   | Accepted                                                 | #112                                               |
 | [0165](0165-future-purchases.md)                  | Future purchases: acquired value, holding costs from the base date, pending debt              | Accepted · amended by 0166                               | #126, #104                                         |
 | [0166](0166-development-committed-debt.md)        | Development loans: completed value and committed debt during construction                     | Accepted                                                 | #120                                               |
+| [0167](0167-drawdown-schedule.md)                 | Development loans: drawdown schedule editor and drawn/undrawn read-back                       | Proposed                                                 | #75                                                |
 
 <!-- adr-index:end -->
 

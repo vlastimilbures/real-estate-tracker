@@ -4,6 +4,8 @@
 - Date: 2026-10-03
 - Source: issue #20 (pre-release review 2026-10, finding A08); builds on ADR 0024, ADR 0027
   and ADR 0031
+- Amended by: [0167](0167-drawdown-schedule.md) (decision 5 and the deferred row editor:
+  the draws are a drawdown schedule whose first row is the initial principal)
 
 ## Context
 
@@ -43,7 +45,7 @@ expired-fixation warning.
 ### Considered and deferred
 
 - **Row editor for draws.** A date + amount row editor would replace the draws text area. It
-  is a follow-up idea and not part of this decision.
+  is a follow-up idea and not part of this decision. Done by ADR 0167.
 - **Several development loans per property.** This remains a known limitation (DR-124).
 
 ## Consequences
