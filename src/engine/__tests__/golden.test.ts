@@ -46,7 +46,8 @@ import { money } from "../brands";
 // outcomes (pinned in loan-events.test.ts; zero or empty without events) and ADR 0130's
 // `refinanced` (pinned in refinance-difference.test.ts) and ADR 0161's `cashToOwner`
 // (pinned in cash-to-owner.test.ts against the KPIs hashed here) and ADR 0164's
-// amortization `dueDate` (pinned in due-date.test.ts). Leaving them
+// amortization `dueDate` (pinned in due-date.test.ts) and ADR 0165's `acquiredValue`
+// (pinned in acquired-value.test.ts). Leaving them
 // out keeps every hash comparable (no number moved).
 const ADDED_FIELDS = new Set([
   "periodStart",
@@ -68,6 +69,7 @@ const ADDED_FIELDS = new Set([
   "eventOutcomes",
   "cashToOwner",
   "dueDate",
+  "acquiredValue",
 ]);
 
 function canon(v: unknown): unknown {

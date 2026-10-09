@@ -5,6 +5,8 @@
 - Source: issue #104 (2026-10 code review, finding R2-02)
 - Amends: [0119](0119-acquisition-funding.md) (its open point on a loan that runs before a
   future purchase date), [0103](0103-financing-exposure.md) (rule 6, total interest)
+- Amended by: [0165](0165-future-purchases.md) (the baseDate snapshot counts the debt such a
+  loan already carries)
 - Related: [0033](0033-loan-first-grid-month.md), [0109](0109-loan-prepayments-and-recasts.md),
   DR-092
 

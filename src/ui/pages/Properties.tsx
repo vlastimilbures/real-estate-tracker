@@ -296,8 +296,10 @@ export function Properties() {
                       )}
                     </td>
                     <td>
+                      {/* A pending loan already drawn is owed now: the Dashboard's
+                          total debt counts it (ADR 0165). */}
                       {fig(
-                        p.owned,
+                        p.owned || !p.debt.isZero(),
                         <Money value={p.debt} parens={false} suffix={false} />,
                       )}
                     </td>

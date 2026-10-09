@@ -37,7 +37,7 @@ export type ChartRow = {
   netCashFlow: number | null;
 };
 
-// Year-on-year equity change, split into the three forces that drive it. Because
+// Year-on-year equity change, split into the four things that drive it. Because
 // equity = value − balance and balance[t] = balance[t−1] − principal[t] + draws[t], the
 // balance delta is two economically opposite things: principal *repaid* (raises equity)
 // and new debt *drawn* (lowers equity). Splitting them keeps a development loan's draw
@@ -52,19 +52,23 @@ export type ChartRow = {
 // value-side effect. The three stacks still sum *exactly* to equity[t]−equity[t−1]:
 //   appreciation + paydown + drawdown = (equity Δ − principal + draws) + principal − draws.
 // In the nominal lens this collapses to appreciation = value Δ exactly (unchanged behaviour).
+// A future purchase's value enters equity in its turn-on year; the engine reports it as
+// `acquiredValue` (ADR 0165), shown as its own "purchases" stack and taken out of the
+// appreciation residual, so the stacks still sum exactly to the equity change.
 // A refinance handover's difference (`refinanced`, ADR 0130) moves the balance like a
 // draw, so the drawdown bar carries it too (negative when the owner pays down at a refix).
 export type EquityChangeRow = {
   year: number;
   calendarYear: number;
-  appreciation: number; // value[t] − value[t−1]              (negative in a crash year)
+  appreciation: number; // value[t] − value[t−1] − purchases  (negative in a crash year)
+  purchases: number; // value a purchase brings in in year t (≥ 0, ADR 0165)
   paydown: number; // principal repaid in year t, prepaid included (≥ 0) (equity gained by repaying)
   drawdown: number; // −(new debt drawn in year t) (≤ 0)       (equity lost to fresh borrowing)
 };
 
-/** Per-year equity change decomposed into appreciation + debt paydown + new draws. Starts
- *  at year 1 (year 0 is the opening snapshot — no prior year). Deltas computed in Decimal,
- *  converted to number at this chart boundary. */
+/** Per-year equity change decomposed into appreciation + purchases + debt paydown + new
+ *  draws. Starts at year 1 (year 0 is the opening snapshot — no prior year). Deltas
+ *  computed in Decimal, converted to number at this chart boundary. */
 export function toEquityChangeRows(series: SeriesRow[]): EquityChangeRow[] {
   const n = (d: Decimal) => toNumber(d);
   return series.slice(1).map((r, i) => {
@@ -72,19 +76,27 @@ export function toEquityChangeRows(series: SeriesRow[]): EquityChangeRow[] {
     return {
       year: r.year,
       calendarYear: r.calendarYear,
-      // residual: keeps appreciation + paydown + drawdown === equity[t] − equity[t−1].
+      // residual: keeps the four stacks === equity[t] − equity[t−1].
       appreciation: n(
         r.equity
           .minus(prev.equity)
+          .minus(r.acquiredValue)
           .minus(r.principal)
           .minus(r.prepaid)
           .plus(r.draws)
           .plus(r.refinanced),
       ),
+      purchases: n(r.acquiredValue),
       paydown: n(r.principal.plus(r.prepaid)),
       drawdown: n(r.draws.plus(r.refinanced).negated()),
     };
   });
+}
+
+/** True when some year has a purchase: the chart shows the Purchases stack only then
+ *  (ADR 0165), so a portfolio owned at baseDate keeps its three stacks. */
+export function hasPurchases(rows: EquityChangeRow[]): boolean {
+  return rows.some((r) => r.purchases !== 0);
 }
 
 /** Decimal series → plain-number rows for plotting. */

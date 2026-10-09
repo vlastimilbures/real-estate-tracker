@@ -267,6 +267,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Future purchases (ADR 0165, #126):
+  - The Dashboard's equity-change chart shows a flat bought during the projection as
+    **Purchases**, no longer as appreciation in its purchase year. The stack appears only
+    when a purchase falls inside the projection.
+  - A future purchase's fixed holding costs (tax, insurance, SVJ, other) are entered at
+    today's prices and now inflate from today, as for every other property, instead of
+    starting at today's prices in the purchase year. Its costs are a little higher, and
+    cash flow and IRR a little lower.
+  - A property not bought yet whose loan is already drawn (an off-plan loan drawn at
+    contract) now counts that debt in total debt, net worth, LTV and the average rate.
+    Its value still counts only from the purchase. Its row on Properties shows that debt.
+  - The equity-change chart's subtitle reads "appreciation, purchases and debt".
+
 - Keyboard and screen-reader gaps (ADR 0157, #128):
   - With more than five properties, the property selector on the Dashboard and Projections
     now moves focus into its list when opened. Arrow keys, Home, End, Space and Enter work,

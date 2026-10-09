@@ -7,6 +7,7 @@ import { propertyProjection } from "../projections";
 import { EMPTY_PROPERTY_SCHEDULE, propertySchedules } from "../schedule";
 import { isoDate } from "../dates";
 import { assumptions, portfolio } from "./support/seed";
+import { mixed } from "./support/mixed";
 import type { Portfolio, Property } from "../types";
 import { rate } from "../brands";
 import { money } from "../brands";
@@ -121,13 +122,40 @@ describe("future property — rent gates to the lease effective date", () => {
   it("pro-rates fixed holding costs by months owned in the turn-on year", () => {
     // Purchase 2026-09-01 → grid month 3 → projection year 1 (2027), owned 10/12 months.
     // Rent is zero until 2029, so holding costs here are the fixed portion only.
-    // Defaults (no override): tax 2550 + insurance 2550 + svj 1700×12 = 25,500 /yr.
+    // Defaults (no override): tax 2550 + insurance 2550 + svj 1700×12 = 25,500 /yr at
+    // base-date prices, inflated from the base date (SPEC §4.5, ADR 0165): CPI_t.
     const FIXED_YR = 25_500;
-    const y2027 = proj.find((r) => r.calendarYear === 2027)!; // owned 10 months, e=0
-    const y2028 = proj.find((r) => r.calendarYear === 2028)!; // owned 12 months, e=1
+    const y2027 = proj.find((r) => r.calendarYear === 2027)!; // owned 10 months, CPI_1
+    const y2028 = proj.find((r) => r.calendarYear === 2028)!; // owned 12 months, CPI_2
     expect(y2027.grossRent.isZero()).toBe(true);
-    expect(y2027.holdingCosts.toNumber()).toBeCloseTo((FIXED_YR * 10) / 12, 2);
-    expect(y2028.holdingCosts.toNumber()).toBeCloseTo(FIXED_YR * 1.025, 2);
+    expect(y2027.holdingCosts.toNumber()).toBeCloseTo(
+      (FIXED_YR * 1.025 * 10) / 12,
+      2,
+    );
+    expect(y2028.holdingCosts.toNumber()).toBeCloseTo(FIXED_YR * 1.025 ** 2, 2);
+  });
+
+  it("inflates a later turn-on year's fixed costs from the base date, not from the purchase (ADR 0165)", () => {
+    // mixed "Future buy": purchase 15.03.2028 → grid month 22 → projection year 2,
+    // owned 3 of its 12 months. The fixed part is the default 25,500 × CPI_2 × 3/12.
+    const schedules = propertySchedules(
+      mixed.mortgages,
+      mixed.properties.map((p) => p.id),
+      assumptions,
+    );
+    const future = mixed.properties.find((p) => p.id === "future")!;
+    const rows = propertyProjection(
+      future,
+      mixed,
+      assumptions,
+      schedules.get("future") ?? EMPTY_PROPERTY_SCHEDULE,
+    );
+    const VAR_PCT = 0.15 + 0.05;
+    const fixedPart = (t: number) =>
+      rows[t].holdingCosts.minus(rows[t].grossRent.times(VAR_PCT)).toNumber();
+    expect(fixedPart(1)).toBe(0);
+    expect(fixedPart(2)).toBeCloseTo((25_500 * 1.025 ** 2 * 3) / 12, 6);
+    expect(fixedPart(3)).toBeCloseTo(25_500 * 1.025 ** 3, 6);
   });
 
   it("indexes rent annually between full years", () => {

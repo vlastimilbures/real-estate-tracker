@@ -332,19 +332,25 @@ export function portfolioSnapshot(
   const perProperty = portfolio.properties.map((p) =>
     snapshotProperty(p, portfolio, assumptions, asOf, built.get(p.id) ?? []),
   );
-  // Not-yet-owned and deactivated properties are listed but excluded from current totals.
+  // Not-yet-owned and deactivated properties are listed but excluded from current totals,
+  // except that a pending property's loan already drawn at asOf is owed now: its debt
+  // counts, its value does not (ADR 0165). A loan starting at the purchase adds 0.
   const owned = perProperty.filter((s) => s.owned && s.active);
-  const sum = (sel: (s: PropertySnapshot) => Decimal): Decimal =>
-    owned.reduce((acc, s) => acc.plus(sel(s)), ZERO);
+  const owing = perProperty.filter((s) => s.active);
+  const sumOf =
+    (rows: PropertySnapshot[]) =>
+    (sel: (s: PropertySnapshot) => Decimal): Decimal =>
+      rows.reduce((acc, s) => acc.plus(sel(s)), ZERO);
+  const sum = sumOf(owned);
 
   const totalValue = sum((s) => s.value);
-  const totalDebt = sum((s) => s.debt);
+  const totalDebt = sumOf(owing)((s) => s.debt);
   const grossAnnualRent = sum((s) => s.grossAnnualRent);
   const effectiveGrossIncome = sum((s) => s.effectiveGrossIncome);
   const holdingCosts = sum((s) => s.holdingCosts);
   const noi = sum((s) => s.noi);
   const annualDebtService = sum((s) => s.annualDebtService);
-  const weightedNumerator = sum((s) => s.weightedRateNumerator);
+  const weightedNumerator = sumOf(owing)((s) => s.weightedRateNumerator);
 
   return {
     asOf,

@@ -16,9 +16,10 @@ import { getDict } from "../../../i18n";
 import type { Portfolio, Scenario } from "../../../engine";
 import { assumptions } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
+import { mixedCashOutside } from "../../../engine/__tests__/support/synthetic";
 import { fmtCzk, fmtCzkM, fmtPct } from "../../../lib/format";
 import { D } from "../../../lib/money";
-import { isoDate } from "../../../engine";
+import { isoDate, portfolioSnapshot } from "../../../engine";
 
 vi.mock("../../../lib/day", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/day")>()),
@@ -228,6 +229,48 @@ describe("only a pending purchase active", () => {
     const ltv = tile(en.dashboard.portfolioLtv);
     expect(ltv.textContent).toContain(fmtPct(D(0), 1));
     expect(ltv.textContent).toContain(en.dashboard.badgeConservative);
+  });
+});
+
+// ADR 0165 (#126 (d)): the future buy's loan drawn before baseDate is owed today.
+describe("a pending purchase whose loan is already drawn (ADR 0165)", () => {
+  const owing = (() => {
+    // At today (the mocked 01.10.2026), the date the pages read.
+    const today = isoDate("2026-10-01");
+    const snap = portfolioSnapshot(mixedCashOutside, assumptions, today);
+    return snap.perProperty.find((s) => s.propertyId === "future")!.debt;
+  })();
+
+  it("Properties shows its debt, the other figures stay empty", () => {
+    load(mixedCashOutside, { route: "properties" });
+    render(<Properties />);
+    const row = screen.getByText("Future buy").closest("tr")!;
+    const figures = Array.from(row.querySelectorAll("td")).slice(1, -1);
+    // LTV, net cash flow, DSCR, value, debt, equity, NOI: only debt is a figure.
+    expect(figures.map((c) => c.textContent)).toEqual([
+      "—",
+      "—",
+      "—",
+      "—",
+      fmtCzk(owing, { suffix: false }),
+      "—",
+      "—",
+    ]);
+  });
+
+  it("Dashboard with only it active: net worth is minus that debt", () => {
+    const only: Portfolio = {
+      ...mixedCashOutside,
+      properties: mixedCashOutside.properties.map((p) => ({
+        ...p,
+        active: p.id === "future",
+      })),
+    };
+    load(only, { route: "dashboard" });
+    render(<Dashboard />);
+    expect(screen.getByTestId("kpi-networth").textContent).toBe(
+      fmtCzk(owing.negated(), { suffix: false }),
+    );
   });
 });
 

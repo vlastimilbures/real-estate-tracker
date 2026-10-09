@@ -32,6 +32,9 @@ export interface SeriesRow {
   // New debt drawn this year (lensed), from the engine (DR-092): zero unless a loan,
   // tranche or refinance draws in the year; zero in year 0.
   draws: Decimal;
+  // The value a future purchase brings in, in its turn-on year (lensed, ADR 0165); zero
+  // in every other year.
+  acquiredValue: Decimal;
   // A refinance handover's difference this year (lensed, ADR 0130); zero in year 0.
   refinanced: Decimal;
   // Extra principal prepaid this year (lensed, ADR 0109); zero in year 0.
@@ -98,6 +101,7 @@ export function projectionSeries(
     cashToOwner: y.cashToOwner,
     dscr: y.dscr,
     draws: y.draws,
+    acquiredValue: y.acquiredValue,
     refinanced: y.refinanced,
     prepaid: y.prepaid,
     prepaymentFees: y.prepaymentFees,
