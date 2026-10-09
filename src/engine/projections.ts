@@ -573,18 +573,20 @@ export function projectPortfolio(
   ),
 ): ProjectionYear[] {
   const active = portfolio.properties.filter((p) => p.active !== false);
+  // The property years without their own cash to owner: the portfolio's is computed
+  // once below, not summed from them.
   const perProp = active.map((p) =>
-    projectProperty(
+    propertyYears(
       p,
       portfolio,
       assumptions,
-      schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
+      (schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE).rows,
     ),
   );
   const baseYear = assumptions.baseDate.getUTCFullYear();
   const out: YearRow[] = [];
   for (let t = 0; t <= assumptions.horizonYears; t++) {
-    const acc = (sel: (y: ProjectionYear) => Decimal) =>
+    const acc = (sel: (y: YearRow) => Decimal) =>
       perProp.reduce((s, yrs) => s.plus(sel(at(yrs, t))), ZERO);
     const value = acc((y) => y.value);
     const balance = acc((y) => y.balance);
