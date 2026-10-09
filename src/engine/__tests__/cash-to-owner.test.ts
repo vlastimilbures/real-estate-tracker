@@ -42,16 +42,19 @@ function perProperty(p: Portfolio): Map<string, ProjectionYear[]> {
   );
 }
 
-/** Largest |portfolio row − Σ property rows| of `cashToOwner` over years 0..N. */
-function propertyGap(p: Portfolio): number {
+/** Whether |portfolio row − Σ property rows| of `cashToOwner` is ≤ 1e-20 Kč in every
+ *  year 0..N: the two sum the same values in another order, so they differ only by
+ *  Decimal(40) rounding; a missing or extra item would be a whole amount. */
+function propertiesSumToPortfolio(p: Portfolio): boolean {
   const proj = portfolioProjection(p, assumptions);
   const props = [...perProperty(p).values()];
-  let gap = 0;
-  for (let t = 0; t <= N; t++) {
-    const total = props.reduce((s, yrs) => s.plus(yrs[t]!.cashToOwner), ZERO);
-    gap = Math.max(gap, total.minus(proj[t]!.cashToOwner).abs().toNumber());
-  }
-  return gap;
+  return proj.every((y, t) =>
+    props
+      .reduce((s, yrs) => s.plus(yrs[t]!.cashToOwner), ZERO)
+      .minus(y.cashToOwner)
+      .abs()
+      .lessThanOrEqualTo("1e-20"),
+  );
 }
 
 /** The KPIs and the projection reconcile: Σ cashToOwner is the cumulative cash flow,
@@ -115,7 +118,7 @@ describe("ADR 0161: cash to owner", () => {
     expect(
       lipova[1]!.netCashFlow.minus(lipova[1]!.cashToOwner).toFixed(2),
     ).toBe("1005000.00");
-    expect(propertyGap(prepaid)).toBeLessThanOrEqual(1e-9);
+    expect(propertiesSumToPortfolio(prepaid)).toBe(true);
   });
 
   it("reconciles on acquisition, refinance, prepayment and pre-purchase cash", () => {
@@ -124,7 +127,7 @@ describe("ADR 0161: cash to owner", () => {
     // The portfolio row is Σ net cash flow − the portfolio's cash outside it, not Σ of
     // the property rows (that would sum in another order and move the KPI's last
     // digits); the two agree far below a haléř.
-    expect(propertyGap(mixedCashOutside)).toBeLessThanOrEqual(1e-9);
+    expect(propertiesSumToPortfolio(mixedCashOutside)).toBe(true);
     const props = perProperty(mixedCashOutside);
     expect(props.has("inactive")).toBe(false);
     // Before the future buy turns on (year 2), its row has no net cash flow but the
@@ -192,6 +195,6 @@ describe("ADR 0161: cash to owner", () => {
       paid.negated().toFixed(6),
     );
     expectReconciles(p);
-    expect(propertyGap(p)).toBeLessThanOrEqual(1e-9);
+    expect(propertiesSumToPortfolio(p)).toBe(true);
   });
 });

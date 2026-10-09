@@ -27,7 +27,7 @@ describe("#117: the KPIs net of the cash outside net cash flow", () => {
     );
     const proj = portfolioProjection(fixture, assumptions);
     const pre = prePurchaseDebtService(
-      fixture.properties,
+      fixture.properties.filter((p) => p.active !== false),
       assumptions,
       schedules,
     );
