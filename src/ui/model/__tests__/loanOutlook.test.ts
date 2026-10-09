@@ -21,6 +21,7 @@ import { devBlock } from "../../../engine/__tests__/support/mixed";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
+import { fmtCzk, fmtPct } from "../../../lib/format";
 
 const d = en.propertyDetail;
 
@@ -227,5 +228,45 @@ describe("ADR 0117: remaining term", () => {
   it("is hidden once the loan is repaid", () => {
     const o = outlook(javorova(), isoDate("2052-01-01"));
     expect(o.remainingTerm).toBeNull();
+  });
+});
+
+// ADR 0167 §6: a development loan's drawdown in the Loan outlook: drawn of total, the
+// share for the bar, and each draw's status as text.
+describe("ADR 0167: drawdown in the loan outlook", () => {
+  it("shows drawn of total, the share and each draw's status at baseDate", () => {
+    const [dd] = outlook([devBlock]).drawdowns;
+    expect(dd!.full).toBe(false);
+    expect(dd!.share.toFixed(4)).toBe("0.4444");
+    expect(dd!.progress).toBe(
+      d.drawdownProgress(fmtCzk(2000000), fmtCzk(4500000), fmtPct(dd!.share)),
+    );
+    expect(dd!.completion).toBe("20.08.2027");
+    expect(dd!.rows.map((r) => [r.date, r.draw, r.status, r.label])).toEqual([
+      ["01.03.2026", d.drawnAtStart, "drawn", d.drawStatus.drawn],
+      ["15.11.2026", d.trancheRow(1), "ahead", d.drawStatus.ahead],
+      ["20.08.2027", d.trancheRow(2), "ahead", d.drawStatus.ahead],
+    ]);
+  });
+
+  it("is fully drawn once every draw is dated on or before as-of", () => {
+    const [dd] = outlook([devBlock], isoDate("2028-01-01")).drawdowns;
+    expect(dd!.full).toBe(true);
+    expect(dd!.progress).toBe(d.drawdownFull(fmtCzk(4500000)));
+  });
+
+  it("a plain loan has none", () => {
+    expect(outlook(javorova()).drawdowns).toEqual([]);
+  });
+
+  it("leaves out a start draw of 0 (review of PR #302)", () => {
+    const [dd] = outlook([
+      mortgageBlock({ ...devBlock, initialPrincipal: money(0) }),
+    ]).drawdowns;
+    expect(dd!.rows.map((r) => r.draw)).toEqual([
+      d.trancheRow(1),
+      d.trancheRow(2),
+    ]);
+    expect(dd!.full).toBe(false);
   });
 });

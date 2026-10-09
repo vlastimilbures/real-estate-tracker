@@ -13,6 +13,8 @@ import {
 } from "../../engine";
 import type {
   AmortizationRow,
+  Drawdown,
+  DrawdownTranche,
   FixationReset,
   IsoDate,
   LoanEventIssue,
@@ -24,7 +26,7 @@ import type {
 import type { XlsxColumn } from "./xlsxExport";
 import { nonZeroColumns } from "./columns";
 import { interestSavedShown, type InterestSavedShown } from "./financing";
-import type { Decimal } from "../../lib/money";
+import { ZERO, type Decimal } from "../../lib/money";
 import { fmtCzk, fmtDate, fmtPct } from "../../lib/format";
 import type { Dictionary } from "../../i18n";
 
@@ -195,6 +197,31 @@ export interface LoanOutlookRow {
   label: string;
 }
 
+/** One draw of a development loan in the Loan outlook (ADR 0167). */
+export interface DrawdownRow {
+  date: string;
+  /** "Drawn at start" or "Tranche n". */
+  draw: string;
+  amount: Decimal;
+  status: DrawdownTranche["status"];
+  label: string;
+}
+
+/** A development loan's drawdown in the Loan outlook (ADR 0167 §6). */
+export interface DrawdownView {
+  blockId: string;
+  /** Drawn ÷ total, for the bar (0 when nothing counts). */
+  share: Decimal;
+  full: boolean;
+  /** "Drawdown", or "Drawdown · from dd.mm.yyyy" when the loan has several. */
+  title: string;
+  /** "Drawn X of Y (Z %)", or "Fully drawn: Y". */
+  progress: string;
+  /** The interest-only end, when set. */
+  completion: string | null;
+  rows: DrawdownRow[];
+}
+
 export interface LoanOutlook {
   payoff: string;
   /** Null once repaid or with no payment left to count. */
@@ -202,6 +229,7 @@ export interface LoanOutlook {
   /** Null hides the line; "n/a" shows the note (ADR 0130). */
   interestSaved: InterestSavedShown | null;
   resets: LoanOutlookRow[];
+  drawdowns: DrawdownView[];
 }
 
 /** Months as "24 yrs 8 months", "25 yrs" or "7 months" (ADR 0117). */
@@ -258,6 +286,49 @@ export function loanOutlook(
       : null,
     interestSaved: interestSavedShown(loan.interestSaved),
     resets: rows,
+    drawdowns: financing.drawdowns.map((dd, _, all) =>
+      drawdownView(
+        dd,
+        blocks.find((b) => b.id === dd.blockId),
+        all.length,
+        d,
+      ),
+    ),
+  };
+}
+
+function drawdownView(
+  dd: Drawdown,
+  block: MortgageBlock | undefined,
+  count: number,
+  d: Dictionary["propertyDetail"],
+): DrawdownView {
+  const share = dd.total.isZero() ? ZERO : dd.drawn.div(dd.total);
+  const full = !dd.total.isZero() && dd.drawn.equals(dd.total);
+  let n = 0;
+  return {
+    blockId: dd.blockId,
+    share,
+    full,
+    progress: full
+      ? d.drawdownFull(fmtCzk(dd.total))
+      : d.drawdownProgress(fmtCzk(dd.drawn), fmtCzk(dd.total), fmtPct(share)),
+    completion: block?.completionDate ? fmtDate(block.completionDate) : null,
+    // Several development blocks: each heading names its block's start (unique names).
+    title:
+      count > 1 && block
+        ? d.drawdownTitleFrom(fmtDate(block.startDate))
+        : d.drawdownTitle,
+    // Nothing drawn at start: no "Drawn at start 0 Kč" row (review of PR #302).
+    rows: dd.tranches
+      .filter((t) => !(t.start && t.amount.isZero()))
+      .map((t) => ({
+        date: fmtDate(t.date),
+        draw: t.start ? d.drawnAtStart : d.trancheRow(++n),
+        amount: t.amount,
+        status: t.status,
+        label: d.drawStatus[t.status],
+      })),
   };
 }
 

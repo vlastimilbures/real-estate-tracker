@@ -164,6 +164,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in any loan row list now moves focus to the row. Stored data and every number are
   unchanged.
 
+- A development loan's **Loan outlook** on the property page shows its **Drawdown**
+  (ADR 0167, #75): a bar and "Drawn X of Y (Z %)", or **Fully drawn**, and a table of
+  every draw with its date, amount and status: **Drawn** when dated on or before the as-of
+  date, **Not drawn yet**, or **Not drawn — replaced** for a tranche dated after a later
+  block's start. The status is an icon plus text. The as-of control moves it.
+
 - The amortization table on a property page, and its Excel export, now date each row by
   the payment's due date, under the heading **Due date** (ADR 0164, #112). Before, the
   column showed the app's monthly grid date, which could be up to a month off the date on

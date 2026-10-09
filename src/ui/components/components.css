@@ -2199,3 +2199,50 @@ main.page:focus {
 .import-summary .link-button {
   text-decoration: underline;
 }
+
+/* ============ Loan outlook: drawdown (ADR 0167) ============ */
+.drawdown {
+  margin: var(--s4) 0 var(--s5);
+}
+.drawdown-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--hairline);
+  overflow: hidden;
+}
+.drawdown-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.drawdown-bar.full > span {
+  background: var(--positive);
+}
+.drawdown-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s1);
+  margin: var(--s2) 0 var(--s3);
+  font-size: 13px;
+  font-weight: 600;
+  font-feature-settings: var(--num);
+}
+.drawdown-io {
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+.draw-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+}
+.draw-status.drawn {
+  color: var(--positive);
+}
+.draw-status.ahead {
+  color: var(--ink-soft);
+}
+.draw-status.cancelled {
+  color: var(--ink-faint);
+}

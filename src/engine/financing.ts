@@ -61,6 +61,26 @@ export interface LoanExposure {
   interestSaved: Decimal | null;
 }
 
+/** One draw of a development loan as of a date (ADR 0167). */
+export interface DrawdownTranche {
+  date: IsoDate;
+  amount: Decimal;
+  /** True for the start draw (the initial principal on the start date). */
+  start: boolean;
+  /** drawn: dated on/before as-of · ahead: later · cancelled: dated after the next
+   *  block's start, so never drawn (ADR 0166). */
+  status: "drawn" | "ahead" | "cancelled";
+}
+
+/** A development loan's draws as of a date: the start draw first, then each tranche. */
+export interface Drawdown {
+  blockId: string;
+  /** The draws that are drawn or ahead (cancelled ones never count). */
+  total: Decimal;
+  drawn: Decimal;
+  tranches: DrawdownTranche[];
+}
+
 /** One property's loan view: its exposure, every chain block's reset, the chain (ADR 0117). */
 export interface PropertyLoan {
   loan: LoanExposure;
@@ -68,6 +88,8 @@ export interface PropertyLoan {
   resets: FixationReset[];
   /** Ids of the blocks driving the schedule, in order (D-27). */
   chain: string[];
+  /** Each chain block with tranches that no successor has replaced by as-of (ADR 0167). */
+  drawdowns: Drawdown[];
 }
 
 export interface FinancingExposure {
@@ -219,6 +241,47 @@ export function prepaymentInterestSaved(
   );
 }
 
+/**
+ * A development block's draws as of `asOf` (ADR 0167). A draw dated on or before as-of is
+ * drawn: the calendar date the owner sees, not the schedule's grid month. A tranche dated
+ * after the next block's start is never drawn, as in `undrawnPrincipal` (ADR 0166).
+ */
+function blockDrawdown(
+  block: MortgageBlock,
+  next: MortgageBlock | undefined,
+  asOf: Date,
+): Drawdown {
+  const draw = (
+    date: IsoDate,
+    amount: Decimal,
+    start: boolean,
+  ): DrawdownTranche => ({
+    date,
+    amount,
+    start,
+    status:
+      !start && next && isAfter(date, next.startDate)
+        ? "cancelled"
+        : isOnOrBefore(date, asOf)
+          ? "drawn"
+          : "ahead",
+  });
+  const tranches = [
+    draw(block.startDate, block.initialPrincipal, true),
+    ...[...(block.draws ?? [])]
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .map((d) => draw(d.date, d.amount, false)),
+  ];
+  const sum = (keep: (t: DrawdownTranche) => boolean) =>
+    tranches.filter(keep).reduce<Decimal>((s, t) => s.plus(t.amount), ZERO);
+  return {
+    blockId: block.id,
+    total: sum((t) => t.status !== "cancelled"),
+    drawn: sum((t) => t.status === "drawn"),
+    tranches,
+  };
+}
+
 /** One property's loan exposure, resets and chain (none without a loan). */
 function propertyExposure(
   blocks: MortgageBlock[],
@@ -245,6 +308,14 @@ function propertyExposure(
     },
     resets,
     chain: chain.map((b) => b.id),
+    // A block with tranches, until a successor is in force at as-of (ADR 0167).
+    drawdowns: chain.flatMap((b, i) => {
+      const next = chain[i + 1];
+      const replaced = next && isOnOrBefore(next.startDate, ctx.asOf);
+      return b.draws?.length && !replaced
+        ? [blockDrawdown(b, next, ctx.asOf)]
+        : [];
+    }),
   };
 }
 

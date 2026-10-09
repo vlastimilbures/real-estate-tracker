@@ -65,6 +65,10 @@ example `DRAW_AFTER_SCHEDULE_END`) cannot say which line it means.
      committed debt, ADR 0166).
    - The as-of date is the page's as-of date, so the as-of control moves it.
      The statuses come from a pure engine function. The UI does not compare dates itself.
+     Drawn follows the calendar date (owner decision 2026-10-09, review of PR #302). The
+     Debt tile counts a tranche from the payment date it joins (ADR 0166), so for up to a
+     month after a tranche's date the two differ. The drawdown note says so; at baseDate
+     they always agree.
 7. Stored data, CSV import, backup, the engine's schedule and every computed number are
    unchanged. All new text is translated in en, cs and ru.
 

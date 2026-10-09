@@ -1,7 +1,8 @@
 // Presentational panels extracted from PropertyDetail.tsx: the snapshot KPI tiles +
 // mini charts, and the always-editable holding-costs form. Pure rendering — the finance
 // lives in the engine; these take already-computed props / store actions.
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
+import { Ban, Check, Clock } from "lucide-react";
 import { MetricLabel } from "../components/MetricLabel";
 import {
   KpiTile,
@@ -20,7 +21,12 @@ import { ConfirmRow } from "../components/EntityPanelParts";
 import { moneyDraft, percentDraft } from "../model/formParse";
 import { fmtCzkM, fmtDate } from "../../lib/format";
 import { undrawnPart } from "../model/debt";
-import { amortizationExtras, type LoanOutlook } from "../model/propertyDetail";
+import {
+  amortizationExtras,
+  type DrawdownRow,
+  type DrawdownView,
+  type LoanOutlook,
+} from "../model/propertyDetail";
 import type { AcquisitionView } from "../model/acquisition";
 import { dscrBadge, ltvBadge } from "../model/health";
 import { currencySymbol } from "../../lib/currency";
@@ -328,6 +334,89 @@ export function ActivationBanner({
   return null;
 }
 
+const DRAW_ICON: Record<DrawdownRow["status"], typeof Check> = {
+  drawn: Check,
+  ahead: Clock,
+  cancelled: Ban,
+};
+
+/** A development loan's drawdown: a bar of drawn over total and each draw's status as
+ *  an icon plus text (ADR 0167 §6). */
+function DrawdownSection({ dd }: { dd: DrawdownView }) {
+  const t = useT();
+  const d = t.propertyDetail;
+  const headingId = useId();
+  const pct = Math.round(dd.share.toNumber() * 100);
+  return (
+    <section className="drawdown" aria-labelledby={headingId}>
+      <h3 className="panel-subhead" id={headingId}>
+        {dd.title}
+      </h3>
+      <div
+        className={`drawdown-bar${dd.full ? " full" : ""}`}
+        role="progressbar"
+        aria-labelledby={headingId}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={pct}
+        aria-valuetext={dd.progress}
+      >
+        <span style={{ width: `${pct}%` }} />
+      </div>
+      <p className="drawdown-progress">
+        {dd.full && <Check size={14} strokeWidth={2} aria-hidden="true" />}
+        {dd.progress}
+        {dd.completion && (
+          <span className="drawdown-io">
+            {" "}
+            · {d.drawdownIoEnd(dd.completion)}
+          </span>
+        )}
+      </p>
+      <TableWrap label={`${dd.title} — ${d.drawdownTable}`}>
+        <table className="data">
+          <caption className="sr-only">{`${dd.title} — ${d.drawdownTable}`}</caption>
+          <thead>
+            <tr>
+              <th scope="col" className="left">
+                {d.eventDate}
+              </th>
+              <th scope="col" className="left">
+                {d.colDraw}
+              </th>
+              <th scope="col">{d.eventAmount}</th>
+              <th scope="col" className="left">
+                {d.colStatus}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {dd.rows.map((r, i) => {
+              const Icon = DRAW_ICON[r.status];
+              return (
+                <tr key={i} className={`draw-${r.status}`}>
+                  <td className="left">{r.date}</td>
+                  <td className="left">{r.draw}</td>
+                  <td>
+                    <Money value={r.amount} parens={false} />
+                  </td>
+                  <td className="left">
+                    <span className={`draw-status ${r.status}`}>
+                      <Icon size={14} strokeWidth={2} aria-hidden="true" />
+                      {r.label}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </TableWrap>
+      <p className="panel-note">{d.drawdownNote}</p>
+    </section>
+  );
+}
+
 /**
  * The loan's modelled payoff, remaining term and the interest its prepayments save
  * (ADR 0116 §9), then each block's fixation end and balance at reset (ADR 0117).
@@ -353,6 +442,9 @@ export function LoanSummary({ outlook }: { outlook: LoanOutlook }) {
   return (
     <Panel title={d.loanSummaryTitle} hint={d.loanSummaryHint}>
       <StatList rows={rows} />
+      {outlook.drawdowns.map((dd) => (
+        <DrawdownSection key={dd.blockId} dd={dd} />
+      ))}
       <TableWrap label={d.outlookResetsTitle}>
         <table className="data">
           <caption className="sr-only">{d.outlookResetsTitle}</caption>

@@ -827,6 +827,41 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "29e-property-drawdown",
+    desc: "Loan outlook drawdown of a development loan: drawn of total and each draw's status (ADR 0167)",
+    run: async (ux) => {
+      const d = ux.t.propertyDetail;
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      const m = panel(ux, d.mortgagesTitle);
+      await m.getByRole("button", { name: ux.t.common.edit }).first().click();
+      await m.getByRole("button", { name: d.loanTypeDevelopment }).click();
+      await m.getByLabel(d.fieldLoanTermYears, { exact: false }).fill("30");
+      const schedule = m.getByRole("group", { name: d.fieldDraws });
+      const tranches: [string, string][] = [
+        ["01.09.2024", "400000"],
+        ["01.03.2027", "500000"],
+      ];
+      for (const [i, [date, amount]] of tranches.entries()) {
+        await schedule.getByRole("button", { name: d.addTranche }).click();
+        const row = schedule.getByRole("group", { name: d.trancheRow(i + 1) });
+        await row.getByLabel(d.eventDate, { exact: true }).fill(date);
+        await row.getByLabel(d.eventAmount).fill(amount);
+      }
+      await m.getByRole("button", { name: ux.t.common.saveChanges }).click();
+      const p = panel(ux, d.loanSummaryTitle);
+      const drawdown = p.getByRole("region", {
+        name: d.drawdownTitle,
+        exact: true,
+      });
+      await expect(drawdown.getByRole("progressbar")).toBeVisible();
+      await expect(drawdown.getByText(d.drawStatus.ahead)).toBeVisible();
+      await drawdown.scrollIntoViewIfNeeded();
+      await ux.page.mouse.move(0, 0);
+      await ux.capture("29e-property-drawdown", { fullPage: false });
+    },
+  },
+  {
     id: "29c-property-acquisition",
     desc: "Property detail Acquisition section: sources and uses with the gap warning (ADR 0119 §9)",
     run: async (ux) => {

@@ -84,6 +84,8 @@ export {
   upcomingEvents,
 } from "./financing";
 export type {
+  Drawdown,
+  DrawdownTranche,
   FinancingEvent,
   FinancingEventKind,
   FinancingExposure,
