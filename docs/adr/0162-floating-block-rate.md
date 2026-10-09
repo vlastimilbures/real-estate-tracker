@@ -1,6 +1,6 @@
 # 0162. A floating (0-year) block keeps its entered rate up to baseDate
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-09
 - Source: issue #124 (2026-10 code review); owner decision D4 (2026-10-09: option A);
   Track 11 PR 11.14
