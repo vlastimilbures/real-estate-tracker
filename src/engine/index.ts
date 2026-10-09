@@ -33,6 +33,7 @@ export {
   amortizationHealth,
   blockEndDate,
   fixationExpired,
+  rateFixedUntil,
   impliedMaturity,
   instalmentFor,
   isDevLoan,
