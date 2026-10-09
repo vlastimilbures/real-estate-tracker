@@ -154,6 +154,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The amortization table on a property page, and its Excel export, now date each row by
+  the payment's due date, under the heading **Due date** (ADR 0164, #112). Before, the
+  column showed the app's monthly grid date, which could be up to a month off the date on
+  the bank statement (21 days for the sample's Javorova loan). A row with no payment due
+  (before the loan is drawn, the draw itself, after payoff) shows "—", and an empty cell in
+  Excel. The rows now match the Financing section's payoff date. No amount changes.
+
 - Leases of one apartment can no longer overlap (ADR 0163, #121). Adding a lease ends the
   open-ended lease before it on the day before the new one starts, with no dialog; this
   also holds for a lease with an end date. A lease save or a `rents.csv` import that would
