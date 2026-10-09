@@ -1543,8 +1543,9 @@ export function blockChain(
  * carried is paid at the handover, before the successor pays off the rest (ADR 0109).
  * The merged row's `drawn` is real new debt only; `refinanced` is the successor's
  * principal less the balance it pays off (ADR 0130). A kept row keeps the owner's due
- * date; the successor's draw row has none, and its later rows fall due on its own
- * cadence (ADR 0164).
+ * date; the successor's draw row has none unless it pays a handover prepayment (then
+ * the owner's month-d due date), and its later rows fall due on its own cadence
+ * (ADR 0164).
  */
 function spliceSuccessor(
   current: BlockSchedule,
@@ -1585,6 +1586,9 @@ function spliceSuccessor(
     .plus(prepaid);
   const merged = {
     ...row,
+    // A replaced row paying the owner's handover prepayment falls due on the owner's
+    // month-d date (ADR 0164).
+    dueDate: row.dueDate ?? (prepaid.greaterThan(ZERO) ? due : null),
     prepaid,
     prepaymentFee: row.prepaymentFee.plus(late.fee),
     drawn,

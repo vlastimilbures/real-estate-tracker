@@ -138,17 +138,81 @@ describe("ADR 0164: amortization rows carry the payment due date", () => {
       expect(s.rows[55]!.dueDate).toBeNull();
       expect(iso(s.rows[56]!.dueDate)).toBe("2031-02-10");
     });
-  });
 
-  it("the Financing payoff is the last payment row's due date", () => {
-    for (const blocks of [
-      [javorova],
-      mixed.mortgages.filter((m) => m.propertyId === "dev"),
-    ]) {
+    it("a replaced handover row paying the owner's prepayment is due on the owner's day", () => {
+      const owner: MortgageBlock = {
+        ...javorova,
+        prepayments: [
+          {
+            date: isoDate("2031-01-05"),
+            amount: money("100000"),
+            effect: "shortenTerm",
+          },
+        ],
+      };
+      const s = propertySchedule(
+        [owner, refi("2031-01-10", "1400000")],
+        assumptions,
+      );
+      expect(s.rows[55]!.prepaid.toString()).toBe("100000");
+      expect(s.rows[55]!.interest.plus(s.rows[55]!.principal).toString()).toBe(
+        "0",
+      );
+      expect(iso(s.rows[55]!.dueDate)).toBe("2031-01-17");
+    });
+
+    /** The Financing payoff, from the schedule and blocks. */
+    const payoff = (blocks: MortgageBlock[]) => {
       const s = propertySchedule(blocks, assumptions);
       const loan = propertyLoanExposure(blocks, assumptions, s, BASE_DATE)!;
-      const last = s.rows.filter(paid).at(-1)!;
-      expect(iso(loan.loan.payoffDate)).toBe(iso(last.dueDate));
-    }
+      return { s, at: iso(loan.loan.payoffDate) };
+    };
+    /** Grid month of the schedule's last payment (interest, principal or prepaid). */
+    const lastPaid = (rows: AmortizationRow[]) =>
+      rows.map((r) => paid(r) || r.prepaid.greaterThan(0)).lastIndexOf(true) +
+      1;
+
+    it("the payoff is the successor's last payment, on its own day", () => {
+      for (const start of ["2031-01-17", "2031-01-10"]) {
+        const { s, at } = payoff([javorova, refi(start, "1386000")]);
+        // The successor draws in grid month 56: payment 1 is in grid month 57.
+        expect(at).toBe(iso(edate(isoDate(start), lastPaid(s.rows) - 56)));
+      }
+    });
+
+    it("the payoff is the owner's day when the handover's prepayment is the last payment", () => {
+      const owner: MortgageBlock = {
+        ...javorova,
+        prepayments: [
+          {
+            date: isoDate("2031-01-05"),
+            amount: money("100000"),
+            effect: "shortenTerm",
+          },
+        ],
+      };
+      const { s, at } = payoff([
+        owner,
+        { ...refi("2031-01-10", "0"), monthlyInstalment: money("1") },
+      ]);
+      expect(lastPaid(s.rows)).toBe(56);
+      expect(at).toBe("2031-01-17");
+    });
+  });
+
+  it("the Financing payoff: Javorova on 17.05.2051, the dev loan on its own day", () => {
+    expect(payoffOf([javorova])).toBe("2051-05-17");
+    const dev = mixed.mortgages.filter((m) => m.propertyId === "dev");
+    const s = propertySchedule(dev, assumptions);
+    const last = s.rows.map(paid).lastIndexOf(true) + 1;
+    const offset = paymentOffset(devBlock, assumptions.baseDate);
+    expect(payoffOf(dev)).toBe(iso(edate(devBlock.startDate, offset + last)));
   });
 });
+
+function payoffOf(blocks: MortgageBlock[]) {
+  const s = propertySchedule(blocks, assumptions);
+  return iso(
+    propertyLoanExposure(blocks, assumptions, s, BASE_DATE)!.loan.payoffDate,
+  );
+}

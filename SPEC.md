@@ -278,7 +278,7 @@ the payment due on the fixation-end date is still at the fixed rate; the reset a
 the next payment. Each row carries both dates: `date` (the grid date the projection buckets
 by) and `dueDate`, the due date `EDATE(startDate, p)` of the payment it holds on the paying
 block (ADR 0164). `dueDate` is null when no payment is due: an undrawn month, the draw row,
-a repaid loan, or a refinance handover row the successor's draw replaces. The amortization
+a repaid loan, or a refinance handover row the successor's draw replaces (unless it pays a handover prepayment: then the owner's due date). The amortization
 table and its export show `dueDate`.
 
 **Plain loans** — for each row with previous balance `B`:

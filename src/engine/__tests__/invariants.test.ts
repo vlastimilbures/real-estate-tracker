@@ -413,10 +413,15 @@ describe("Invariant — schedule sanity", () => {
           );
         });
       });
-      it(`${name}/${block.id}: a row has a due date exactly when it pays, within its grid month (ADR 0164)`, () => {
+      it(`${name}/${block.id}: a paying row has a due date, an idle row none, within its grid month at the fixture baseDate (ADR 0164)`, () => {
         const rows = schedulesOf(p).get(block.propertyId)!.rows;
         for (const r of rows) {
-          const pays = r.interest.plus(r.principal).greaterThan(ZERO);
+          // Every fixture rate is above 0, so a scheduled payment always pays something.
+          // The grid-month bound holds at baseDate 2026-06-07 (no month-end clamp).
+          const pays = r.interest
+            .plus(r.principal)
+            .plus(r.prepaid)
+            .greaterThan(ZERO);
           expect(r.dueDate !== null, `m${r.month} due date`).toBe(pays);
           if (r.dueDate === null) continue;
           const prev = edate(assumptions.baseDate, r.month - 1);

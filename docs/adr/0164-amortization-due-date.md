@@ -33,7 +33,7 @@ date; C, a caption only. The owner chose A.
    `EDATE(paying block's startDate, p)`. It is `null` when the row carries no scheduled
    payment: an undrawn month, the draw row of a future loan or of a first development draw,
    a repaid loan's trailing rows, and a refinance handover row that the successor's draw
-   replaces. A handover row the owner still pays ([ADR 0138](0138-refinance-handover-edge-cases.md)) keeps the owner's due date; the
+   replaces (unless that row pays the owner's handover prepayment, ADR 0109: it then falls due on the owner's date for that month, as the payoff did before). A handover row the owner still pays ([ADR 0138](0138-refinance-handover-edge-cases.md)) keeps the owner's due date; the
    rows after a handover fall due on the successor's own day.
 2. **The grid date stays.** `date` is still `EDATE(baseDate, m)`, and the projection still
    buckets rows by it into years (D-22). Interest per row is unchanged.
