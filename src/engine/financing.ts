@@ -170,13 +170,6 @@ function payerAt(payers: Payer[], m: number): number {
   return k;
 }
 
-/** Due date of grid month `m`'s payment on the block paying it. */
-function dueDate(payers: Payer[], m: number): IsoDate {
-  const p = payers[payerAt(payers, m)];
-  if (!p) throw new RangeError("dueDate: empty chain");
-  return edate(p.start, p.offset + m);
-}
-
 /**
  * Schedule payments due after `asOf`, each on its paying block's own day (ADR 0117).
  * A block's payment of grid month m is due on or before as-of when offset + m is at most
@@ -245,7 +238,7 @@ function propertyExposure(
       propertyId: first.propertyId,
       blockId: (inForce.at(-1) ?? first).id,
       nextFixation: resets.find((r) => r.status === "upcoming") ?? null,
-      payoffDate: last > 0 ? dueDate(payers, last) : null,
+      payoffDate: rows[last - 1]?.dueDate ?? null, // ADR 0164
       remainingMonths:
         last > 0 ? paymentsDueAfter(rows, payers, ctx.asOf) : null,
       interestSaved: prepaymentInterestSaved(blocks, ctx.assumptions, schedule),
