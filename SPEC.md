@@ -295,7 +295,7 @@ the next payment.
   first grid month on/after its start. Predecessor payments due on or before that start are
   still paid (one falling in the draw month is carried by the draw row); later ones are
   dropped. Net refinance cash (successor principal − predecessor balance paid off) counts in
-  the handover year's cumulative net cash flow and levered IRR, like an acquisition outflow.
+  the handover year's cash to owner and levered IRR, like an acquisition outflow.
   The handover row holds the successor's principal less the balance it pays off as
   `refinanced`, apart from `drawn` (ADR 0130); a tranche the successor draws in that month
   stays in `drawn`.
@@ -368,8 +368,8 @@ flows zero. Each row carries `year` (0…horizon), `calendarYear` and its period
 (`owned = false`) and does not appear in year-0 totals. It turns on in the year it is
 acquired, with partial-year pro-rating (`activeMonthsInYear`). Rent gates separately on the
 effective lease date, so a unit can be owned-but-not-yet-let. In the acquisition year, a
-**down-payment outflow** is subtracted from net cash flow for levered IRR / cumulative
-cash-flow purposes (ADR 0119):
+**down-payment outflow** is subtracted from net cash flow for levered IRR / cash-to-owner
+purposes (ADR 0119):
 
 - the recorded **own cash**, when the funding record has it;
 - otherwise purchase price − acquisition loan + costs + works. Costs are the recorded
@@ -477,16 +477,20 @@ debt) for every property; when every loan retires within the horizon (as in the 
   **Real multiple** = net worth realₙ / equity₀ (CPI₀ = 1, so equity₀ is already in
   base-date Kč; ADR 0087). Both multiples are **null** when equity₀ ≤ 0 (no growth base,
   shown "—"); with equity₀ > 0 a multiple keeps its sign (ADR 0126).
-- Cumulative net cash flow (Years 1…N), net of acquisition outflows, refinance cash,
-  prepayments with their fees (ADR 0109) and debt service paid before a future purchase
-  (ADR 0124): Σ_{t=1..N} (netCF_t − cashOutside_t), where cashOutside_t = acquisition
-  outflow_t − net refinance cash_t + prepaid_t + prepayment fees_t + pre-purchase debt
-  service_t (`cashOutsideNetCf` in `src/engine/kpis.ts`). The acquisition outflow is the
+- **Cumulative cash to owner** (Years 1…N; ADR 0161) — net cash flow net of acquisition
+  outflows, refinance cash, prepayments with their fees (ADR 0109) and debt service paid
+  before a future purchase (ADR 0124): Σ_{t=1..N} cashToOwner_t, where cashToOwner_t =
+  netCF_t − cashOutside_t and cashOutside_t = acquisition outflow_t − net refinance
+  cash_t + prepaid_t + prepayment fees_t + pre-purchase debt service_t
+  (`cashOutsideNetCf` in `src/engine/ownerCash.ts`). The acquisition outflow is the
   down payment plus the principal repaid before baseDate (ADR 0134), less a later first
-  loan's initial principal, which is cash in (§4.5).
-  **Real** cumulative net cash flow = Σ_{t=1..N} (netCF_t − cashOutside_t) / CPI_t:
+  loan's initial principal, which is cash in (§4.5). Each projection year carries
+  `cashToOwner` (year 0 = 0); a property's row carries its own share, and the portfolio
+  row is Σ netCF_t − the portfolio's cashOutside_t. The Projections grid and its Excel
+  export show it as "Cash to owner" after "Net CF", so Σ of that column is the tile.
+  **Real** cumulative cash to owner = Σ_{t=1..N} cashToOwner_t / CPI_t:
   each year is deflated by its own index, as in the real IRR (ADR 0087). The Dashboard and
-  Scenario compare show the multiple and the cumulative cash flow of the lens; Σ principal
+  Scenario compare show the multiple and the cumulative cash to owner of the lens; Σ principal
   repaid stays nominal and is labelled "(nominal)" in the Real lens.
 - First calendar year net cash flow turns positive; first year from which portfolio debt
   stays 0 through year N (null while debt is owed at N; ADR 0126) — each reported with its
@@ -513,7 +517,7 @@ netCF_N + equity_N]` — acquisition outflows, refinance cash, prepayments with 
   (tripwire for the classic zero-principal spreadsheet bug).
 - **Total interest** (ADR 0103): Σ projection interest of Years 1…N plus the interest paid
   before a future purchase (ADR 0124); the **real** figure is Σ interest_t / CPI_t, deflated
-  like the real cumulative cash flow.
+  like the real cumulative cash to owner.
 
 ### 4.7 Financing exposure and upcoming events (ADR 0103)
 
