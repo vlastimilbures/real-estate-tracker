@@ -420,6 +420,8 @@ export const cs: Dictionary = {
       `Horizont projekce ${value} je mimo rozsah, který formuláře přijímají (${range} let).`,
     earlyDate: (record, date, floor) =>
       `${record} ${date} je před ${floor}, nejstarším datem, které formuláře přijímají. Zkontrolujte překlep v roce.`,
+    leaseOverlap: (first, second) =>
+      `Nájmy od ${first} a od ${second} se překrývají. Nájmy jednoho bytu se překrývat nemohou: nastavte dřívějšímu nájmu datum konce před začátkem pozdějšího.`,
     earlyDateRecord: {
       property: "Datum nákupu",
       mortgage: "Datum u hypotéky",
@@ -507,7 +509,8 @@ export const cs: Dictionary = {
     colValidTo: "Platné do",
     colMarketValue: "Tržní hodnota",
     leasesTitle: "Nájmy",
-    leasesHint: "zobrazený nájem určuje smlouva platná k datu „K datu“",
+    leasesHint:
+      "zobrazený nájem určuje smlouva platná k datu „K datu“; nový nájem ukončí otevřený nájem před ním předchozím dnem",
     addLease: "nájem",
     colStart: "Začátek",
     colEnd: "Konec",
@@ -528,9 +531,6 @@ export const cs: Dictionary = {
     closePrevValuationTitle: "Ukončit předchozí ocenění?",
     closePrevValuationBody: (from, end) =>
       `Ocenění od ${from} nemá datum konce. Ukončit ho ${end}, den před začátkem nového?`,
-    closePrevLeaseTitle: "Ukončit předchozí nájem?",
-    closePrevLeaseBody: (from, end) =>
-      `Nájem od ${from} nemá datum konce. Ukončit ho ${end}, den před začátkem nového?`,
     closePrevConfirm: "Ukončit předchozí",
     closePrevKeep: "Ponechat",
     instalmentHint: (years, amount) =>

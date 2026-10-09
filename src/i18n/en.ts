@@ -446,6 +446,9 @@ export const en = {
     // ADR 0149: a stored date before the forms' floor; `record` from earlyDateRecord.
     earlyDate: (record: string, date: string, floor: string) =>
       `${record} ${date} is before ${floor}, the earliest date the forms accept. Check the year for a typo.`,
+    // ADR 0163: two stored leases of one apartment overlap (a database from before the rule).
+    leaseOverlap: (first: string, second: string) =>
+      `The leases from ${first} and from ${second} overlap. Leases on one apartment cannot overlap: set an end date on the earlier lease before the later one starts.`,
     earlyDateRecord: {
       property: "Purchase date",
       mortgage: "A mortgage date",
@@ -537,7 +540,8 @@ export const en = {
     colValidTo: "Valid to",
     colMarketValue: "Market value",
     leasesTitle: "Leases",
-    leasesHint: "the lease in force on the As-of date sets the rent shown",
+    leasesHint:
+      "the lease in force on the As-of date sets the rent shown; a new lease ends the open one before it on the previous day",
     addLease: "lease",
     colStart: "Start",
     colEnd: "End",
@@ -559,9 +563,6 @@ export const en = {
     closePrevValuationTitle: "End the previous valuation?",
     closePrevValuationBody: (from: string, end: string) =>
       `The valuation from ${from} has no end date. End it on ${end}, the day before the new one starts?`,
-    closePrevLeaseTitle: "End the previous lease?",
-    closePrevLeaseBody: (from: string, end: string) =>
-      `The lease from ${from} has no end date. End it on ${end}, the day before the new one starts?`,
     closePrevConfirm: "End previous",
     closePrevKeep: "Keep as is",
     // Mortgage form hints and the instalment "Calc" button (DR-059)

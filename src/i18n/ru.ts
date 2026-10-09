@@ -429,6 +429,8 @@ export const ru: Dictionary = {
       `Горизонт прогноза ${value} вне диапазона, который принимают формы (${range} лет).`,
     earlyDate: (record, date, floor) =>
       `${record} ${date} раньше ${floor} — самой ранней даты, которую принимают формы. Проверьте год на опечатку.`,
+    leaseOverlap: (first, second) =>
+      `Аренды с ${first} и с ${second} пересекаются. Аренды одной квартиры не могут пересекаться: укажите для более ранней аренды дату окончания до начала более поздней.`,
     earlyDateRecord: {
       property: "Дата покупки",
       mortgage: "Дата по ипотеке",
@@ -517,7 +519,7 @@ export const ru: Dictionary = {
     colMarketValue: "Рыночная стоимость",
     leasesTitle: "Аренды",
     leasesHint:
-      "показанную аренду определяет договор, действующий на дату «На дату»",
+      "показанную аренду определяет договор, действующий на дату «На дату»; новая аренда завершает открытую аренду перед ней предыдущим днём",
     addLease: "аренду",
     colStart: "Начало",
     colEnd: "Конец",
@@ -538,9 +540,6 @@ export const ru: Dictionary = {
     closePrevValuationTitle: "Завершить предыдущую оценку?",
     closePrevValuationBody: (from, end) =>
       `У оценки от ${from} нет даты окончания. Завершить её ${end}, за день до начала новой?`,
-    closePrevLeaseTitle: "Завершить предыдущую аренду?",
-    closePrevLeaseBody: (from, end) =>
-      `У аренды от ${from} нет даты окончания. Завершить её ${end}, за день до начала новой?`,
     closePrevConfirm: "Завершить предыдущую",
     closePrevKeep: "Оставить как есть",
     instalmentHint: (years, amount) =>
