@@ -204,7 +204,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0158](0158-layouts-hold-in-czech-and-russian.md) | Layouts hold in Czech and Russian at the minimum window                                       | Accepted                                                 | #134                                               |
 | [0159](0159-excel-exports-carry-their-context.md) | Excel exports carry their context and open readable                                           | Accepted                                                 | #123                                               |
 | [0160](0160-csv-import-and-stored-loan-events.md) | CSV import explains how it meets stored loan events                                           | Accepted                                                 | #116                                               |
-| [0161](0161-cash-to-owner.md)                     | Cash to owner: the row the cumulative cash flow tile sums                                     | Proposed                                                 | #117                                               |
+| [0161](0161-cash-to-owner.md)                     | Cash to owner: the row the cumulative cash flow tile sums                                     | Accepted                                                 | #117                                               |
 
 <!-- adr-index:end -->
 
