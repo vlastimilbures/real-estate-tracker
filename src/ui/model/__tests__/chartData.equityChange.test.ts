@@ -6,7 +6,8 @@ import { describe, it, expect } from "vitest";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { portfolioProjection } from "../../../engine";
 import { projectionSeries, type SeriesRow } from "../projection";
-import { toEquityChangeRows } from "../chartData";
+import { hasPurchases, toEquityChangeRows } from "../chartData";
+import { mixed } from "../../../engine/__tests__/support/mixed";
 import { D, ZERO, toNumber } from "../../../lib/money";
 
 const projection = portfolioProjection(portfolio, assumptions);
@@ -84,6 +85,7 @@ describe("toEquityChangeRows", () => {
       principal: string,
       draws: string,
       prepaid = "0",
+      acquired = "0",
     ): SeriesRow => ({
       year,
       calendarYear: 2026 + year,
@@ -102,6 +104,7 @@ describe("toEquityChangeRows", () => {
       cashToOwner: ZERO,
       dscr: null,
       draws: D(draws),
+      acquiredValue: D(acquired),
       refinanced: D(0),
       prepaid: D(prepaid),
       prepaymentFees: D(0),
@@ -130,5 +133,66 @@ describe("toEquityChangeRows", () => {
       toNumber(prepaid[1].equity.minus(prepaid[0].equity)),
       6,
     );
+  });
+});
+
+// ADR 0165 (#126 item 2): a flat bought in year t brings its value in as a purchase, not
+// as appreciation. The four stacks still sum exactly to the equity change.
+describe("toEquityChangeRows: purchases (ADR 0165)", () => {
+  const mixedProjection = portfolioProjection(mixed, assumptions);
+  const lenses = {
+    nominal: projectionSeries(mixedProjection, "nominal", assumptions),
+    real: projectionSeries(mixedProjection, "real", assumptions),
+  };
+  // "Future buy" (purchase 15.03.2028) turns on in projection year 2.
+  const BUY_YEAR = 2;
+
+  it.each(["nominal", "real"] as const)(
+    "the purchase year's bar carries the acquired value as purchases (%s)",
+    (lens) => {
+      const series = lenses[lens];
+      const rows = toEquityChangeRows(series);
+      const buy = rows.find((r) => r.year === BUY_YEAR)!;
+      expect(buy.purchases).toBeCloseTo(
+        toNumber(series[BUY_YEAR].acquiredValue),
+        6,
+      );
+      expect(buy.purchases).toBeGreaterThan(0);
+      rows
+        .filter((r) => r.year !== BUY_YEAR)
+        .forEach((r) => expect(r.purchases).toBe(0));
+    },
+  );
+
+  it("nominal appreciation is the value change less the value bought in", () => {
+    const series = lenses.nominal;
+    toEquityChangeRows(series).forEach((r, i) => {
+      const cur = series[i + 1];
+      const valueDelta = cur.value
+        .minus(series[i].value)
+        .minus(cur.acquiredValue);
+      expect(r.appreciation).toBeCloseTo(toNumber(valueDelta), 6);
+    });
+  });
+
+  it.each(["nominal", "real"] as const)(
+    "reconciles: appreciation + purchases + paydown + drawdown === equity Δ (%s)",
+    (lens) => {
+      const series = lenses[lens];
+      toEquityChangeRows(series).forEach((r, i) => {
+        const equityDelta = toNumber(
+          series[i + 1].equity.minus(series[i].equity),
+        );
+        expect(
+          r.appreciation + r.purchases + r.paydown + r.drawdown,
+        ).toBeCloseTo(equityDelta, 6);
+      });
+    },
+  );
+
+  it("hasPurchases is true only when some year has a purchase", () => {
+    expect(hasPurchases(toEquityChangeRows(lenses.nominal))).toBe(true);
+    expect(hasPurchases(toEquityChangeRows(nominal))).toBe(false);
+    expect(hasPurchases([])).toBe(false);
   });
 });
