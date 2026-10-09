@@ -1,6 +1,6 @@
 # 0166. Development loans: completed value and committed debt during construction
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-09
 - Source: issue #120 (2026-10 code review, finding R8-02); owner decision D3 = B
   (2026-10-09); Track 11 PR 11.18
