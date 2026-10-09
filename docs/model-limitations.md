@@ -126,6 +126,11 @@ work still to do is in the [roadmap](roadmap.md).
 - **The Data check flags a lease end only when no later lease is entered** (ADR 0118). A gap
   between two entered leases is not flagged until a date inside the gap, when the check shows
   no lease in force.
+- **Overlapping leases from before ADR 0163 are read two ways.** The app no longer writes
+  two leases in force on one day, but an older database may hold them. The snapshot takes
+  the lease with the latest start in force on its date, so an earlier open lease returns
+  after a later dated one ends. The projection renews the latest-start lease, so it never
+  returns. The Data check lists each such pair; set an end date on the earlier lease.
 
 ## Dates: snapshot vs projection
 

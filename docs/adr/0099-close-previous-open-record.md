@@ -4,7 +4,8 @@
 - Date: 2026-10-03
 - Source: owner request (2026-10-03)
 - Amended by: [0144](0144-small-user-visible-corrections.md) (decision 3: no prompt for a
-  dated new record)
+  dated new record), [0163](0163-leases-never-overlap.md) (leases: adding one ends the open
+  predecessor without asking)
 
 ## Context
 
