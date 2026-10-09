@@ -149,6 +149,7 @@ describe("translated export headers", () => {
       cs.projGrid.principal,
       cs.projGrid.debtSvc,
       cs.projGrid.netCf,
+      cs.projGrid.cashToOwner,
       cs.projGrid.dscr,
     ]);
   });

@@ -93,7 +93,11 @@ describe("compareKpiRows", () => {
     const labels = rows.map((r) => r.label);
     expect(labels).toContain(en.scenarios.kpiCagrNominal);
     expect(labels).toContain(en.scenarios.kpiLeveredIrrNominal);
-    expect(labels).toContain(en.scenarios.kpiCumulativeNetCf);
+    expect(labels).toContain(en.scenarios.kpiCumulativeCashToOwner);
+    // ADR 0161: the same KPI as the Dashboard tile, under the same name.
+    expect(en.scenarios.kpiCumulativeCashToOwner).toBe(
+      "Cumulative cash to owner",
+    );
   });
 
   it("real: CAGR and IRR rows switch to their real values and labels", () => {
@@ -110,7 +114,7 @@ describe("compareKpiRows", () => {
         .find((r) => r.label === label)
         ?.fmt(base);
     const multiple = en.scenarios.kpiNetWorthMultiple;
-    const cumCf = en.scenarios.kpiCumulativeNetCf;
+    const cumCf = en.scenarios.kpiCumulativeCashToOwner;
     expect(value("real", multiple)).toBe("2,31x");
     expect(value("nominal", multiple)).toBe("4,85x");
     expect(value("real", cumCf)).not.toBe(value("nominal", cumCf));
@@ -254,7 +258,7 @@ describe("Δ vs Base view (ADR 0097)", () => {
     const cf = rateShock.kpis.cumulativeNetCashFlow.minus(
       base.kpis.cumulativeNetCashFlow,
     );
-    expect(row(sc.kpiCumulativeNetCf).fmt(rateShock)).toBe(
+    expect(row(sc.kpiCumulativeCashToOwner).fmt(rateShock)).toBe(
       plus(cf, fmtCzkM(cf)),
     );
   });

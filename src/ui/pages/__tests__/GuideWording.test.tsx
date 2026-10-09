@@ -152,7 +152,10 @@ describe("Guide prepayments (ADR 0116)", () => {
   });
 
   it("says prepayments stay outside net cash flow and fees do not reduce the debt", () => {
-    expect(en.guide.mortgagesProse3).toMatch(/outside net cash flow and DSCR/);
+    // ADR 0161: but they are counted in cash to owner and the IRR.
+    expect(en.guide.mortgagesProse3).toMatch(
+      /outside net cash flow and DSCR, but counted in cash to owner and the IRR/,
+    );
     expect(en.guide.mortgagesProse3).toMatch(/does not reduce the debt/);
   });
 });
