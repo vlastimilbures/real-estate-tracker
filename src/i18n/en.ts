@@ -656,6 +656,20 @@ export const en = {
       LoanEventIssue,
       (date: string, requested: string, applied: string) => string
     >,
+    drawdownTitle: "Drawdown",
+    drawdownProgress: (drawn: string, total: string, pct: string) =>
+      `Drawn ${drawn} of ${total} (${pct})`,
+    drawdownFull: (total: string) => `Fully drawn: ${total}`,
+    drawdownIoEnd: (date: string) => `Interest-only until ${date}`,
+    drawdownNote:
+      "A draw counts as drawn once its date is on or before the as-of date. The whole loan counts as debt from the start; interest is due only on what is drawn.",
+    drawdownTable: "Each draw",
+    colDraw: "Draw",
+    drawStatus: {
+      drawn: "Drawn",
+      ahead: "Not drawn yet",
+      cancelled: "Not drawn — replaced",
+    },
     loanSummaryTitle: "Loan outlook",
     loanSummaryHint: "modelled from your loans, prepayments and recasts",
     loanPayoff: "Modelled payoff",

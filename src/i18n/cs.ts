@@ -610,6 +610,20 @@ export const cs: Dictionary = {
       RECAST_TERM_CAPPED: (date) =>
         `nová splátka od ${date} by překročila nejdelší povolenou splatnost, proto se úvěr přepočítá na tuto splatnost.`,
     },
+    drawdownTitle: "Čerpání",
+    drawdownProgress: (drawn, total, pct) =>
+      `Načerpáno ${drawn} z ${total} (${pct})`,
+    drawdownFull: (total) => `Plně načerpáno: ${total}`,
+    drawdownIoEnd: (date) => `Pouze úroky do ${date}`,
+    drawdownNote:
+      "Čerpání se počítá jako načerpané, jakmile je jeho datum ke dni zobrazení nebo dříve. Celý úvěr se od začátku počítá do dluhu; úrok se platí jen z načerpané částky.",
+    drawdownTable: "Jednotlivá čerpání",
+    colDraw: "Čerpání",
+    drawStatus: {
+      drawn: "Načerpáno",
+      ahead: "Zatím nečerpáno",
+      cancelled: "Nečerpáno — nahrazeno",
+    },
     loanSummaryTitle: "Výhled úvěru",
     loanSummaryHint:
       "modelováno z úvěrů, mimořádných splátek a změn splatnosti",

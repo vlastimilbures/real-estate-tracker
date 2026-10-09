@@ -11,8 +11,8 @@ import { useUiStore } from "../../../state/uiStore";
 import { assumptions } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
 import { en } from "../../../i18n/en";
-import { isoDate } from "../../../engine";
-import { fmtCzk } from "../../../lib/format";
+import { isoDate, money } from "../../../engine";
+import { fmtCzk, fmtPct } from "../../../lib/format";
 
 vi.mock("../../../data/errorLog", () => ({ logFailure: vi.fn() }));
 vi.stubGlobal(
@@ -58,7 +58,11 @@ describe("drawdown in the Loan outlook (ADR 0167)", () => {
     expect(bar.getAttribute("aria-valuenow")).toBe("44");
     expect(bar.getAttribute("aria-valuetext")).toContain(fmtCzk(2000000));
     expect(drawdown().textContent).toContain(
-      pd.drawdownProgress(fmtCzk(2000000), fmtCzk(4500000), "44,4 %"),
+      pd.drawdownProgress(
+        fmtCzk(2000000),
+        fmtCzk(4500000),
+        fmtPct(money(2000000).div(4500000)),
+      ),
     );
     const rows = within(drawdown()).getAllByRole("row").slice(1);
     expect(rows.map((r) => r.textContent)).toEqual([

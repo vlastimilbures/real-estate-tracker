@@ -619,6 +619,20 @@ export const ru: Dictionary = {
       RECAST_TERM_CAPPED: (date) =>
         `новый платёж с ${date} вышел бы за наибольший допустимый срок, поэтому кредит пересчитывается на этот срок.`,
     },
+    drawdownTitle: "Выборка",
+    drawdownProgress: (drawn, total, pct) =>
+      `Выбрано ${drawn} из ${total} (${pct})`,
+    drawdownFull: (total) => `Выбрано полностью: ${total}`,
+    drawdownIoEnd: (date) => `Только проценты до ${date}`,
+    drawdownNote:
+      "Транш считается выбранным, когда его дата не позже даты просмотра. Весь кредит с самого начала входит в долг; проценты начисляются только на выбранную сумму.",
+    drawdownTable: "Все выдачи",
+    colDraw: "Выдача",
+    drawStatus: {
+      drawn: "Выбрано",
+      ahead: "Ещё не выбрано",
+      cancelled: "Не выбрано — заменено",
+    },
     loanSummaryTitle: "Прогноз по кредиту",
     loanSummaryHint: "по кредитам, досрочным платежам и изменениям срока",
     loanPayoff: "Расчётное погашение",
