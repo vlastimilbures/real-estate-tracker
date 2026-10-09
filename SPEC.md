@@ -164,7 +164,11 @@ still loads; the Data check lists it.
 
 ### 4.2 Derived per-mortgage-block values
 
-- `fixationEnd = startDate + fixationYears*12 months` (EDATE).
+- `fixationEnd = startDate + fixationYears*12 months` (EDATE). A 0-year (floating) block
+  has no fixation end: it pays its entered rate on every payment due on or before baseDate
+  and the reset rate after it (`rateFixedUntil`; a floating block that starts after
+  baseDate pays the reset rate from its first payment). It never counts as an ended
+  fixation, so it gets no refix warning (ADR 0162).
 - `termMonths` — for plain loans without `loanTermYears`:
   `ceil(NPER(rate/12, -instalment, initialPrincipal))`. The **entered instalment is
   authoritative**; the term follows from it (ADR 0008). With `loanTermYears` set,
@@ -527,7 +531,7 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
 
 - **Fixation end** = `blockEndDate`. Its payment is still fixed (D-21), so the **balance at
   fixation end** is the end balance of grid month `fixationYears·12 − paymentOffset`, and the
-  reset row is the next one. A 0-year (floating) block has no fixation end.
+  reset row is the next one. A 0-year (floating) block has no fixation end (ADR 0162).
 - Status at as-of, first match wins (ADR 0117): **replaced** (a successor starts on or before
   it, or in the same schedule month), **repaid** (no balance left by then), **passed** (on or
   before as-of, incl. ADR 0030), else **upcoming**. A loan's **next fixation** is its earliest
@@ -631,7 +635,8 @@ data (properties/mortgages/etc.) is shared; only assumptions differ. The engine'
 - **Temporary inflation shock** (`inflationShock`): raises inflation by `deltaPa` for
   `durationYears` years from baseDate, then reverts.
 - **Temporary rate shock** (`rateShock`): raises the reset rate by `deltaPa` for
-  `durationYears` years starting at **each loan's own fixation end** (ADR 0028).
+  `durationYears` years starting at **each loan's own fixation end** (ADR 0028); for a
+  floating block, at baseDate or its later start (ADR 0162).
 - **Permanent value shock** (`valueShock`): haircut property values by `pct` starting from
   year `atYear`; appreciation resumes off the lower base thereafter.
 
