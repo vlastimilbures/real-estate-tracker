@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Field, RecordForm, SelectInput } from "../forms";
+import { Field, RecordForm, SelectInput, TextArea } from "../forms";
 import { PropertyFormModal } from "../PropertyFormModal";
 import { ScenarioForm } from "../../pages/ScenarioForm";
 import { useUiStore } from "../../../state/uiStore";
@@ -46,6 +46,9 @@ describe("Field labels its control (UX-018)", () => {
           submitLabel="Save"
           onSubmit={() => undefined}
         />
+        <Field label="Note">
+          <TextArea rows={2} value="" onChange={() => undefined} />
+        </Field>
         <Field label="Kind">
           <SelectInput
             value="a"
@@ -57,7 +60,11 @@ describe("Field labels its control (UX-018)", () => {
     );
     expect(screen.getByLabelText("Price").tagName).toBe("INPUT");
     expect(screen.getByLabelText("Start date").tagName).toBe("INPUT");
-    expect(screen.getByLabelText("Draws").tagName).toBe("TEXTAREA");
+    expect(screen.getByLabelText("Note").tagName).toBe("TEXTAREA");
+    // The draws are a row list (ADR 0167): a named group.
+    expect(screen.getByRole("group", { name: "Draws" }).tagName).toBe(
+      "FIELDSET",
+    );
     expect(screen.getByLabelText("Kind").tagName).toBe("SELECT");
     expect(unlabelled(document.body)).toEqual([]);
   });

@@ -108,7 +108,7 @@ export const en = {
       "A loan with draws or an interest-only period needs a loan term",
     NON_POSITIVE_DRAW: "Each draw must be above zero",
     DRAW_BEFORE_START:
-      "A draw must be dated after the loan start; money drawn on the start date belongs in the initial principal",
+      "A draw must be dated after the loan start; money drawn on the start date belongs in Drawn at start (the initial principal)",
     DRAW_AFTER_SCHEDULE_END:
       "A draw must be dated on or before the loan's last-but-one payment date (start date plus loan term, less one month)",
     COMPLETION_BEFORE_START:
@@ -560,7 +560,8 @@ export const en = {
     colDevelopment: "Development",
     yrs: (n: number) => `${n} ${enPlural(n, ["yr", "yrs"])}`,
     auto: "auto",
-    draws: (n: number) => `${n} ${enPlural(n, ["draw", "draws"])}`,
+    tranches: (n: number) => `${n} ${enPlural(n, ["tranche", "tranches"])}`,
+    totalLoan: (total: string) => `Total loan ${total}`,
     ioUntil: (d: string) => `IO→${d}`,
     // ADR 0099: adding a valuation/lease offers to end the open-ended previous one.
     closePrevValuationTitle: "End the previous valuation?",
@@ -572,7 +573,7 @@ export const en = {
     instalmentHint: (years: string, amount: string) =>
       `Amortizing instalment over ${years} ≈ ${amount}`,
     instalmentHintDev: (base: string) =>
-      `${base} — for the initial principal; re-amortizes at each draw and at completion. Loan term is required.`,
+      `${base} — for the amount drawn at start; re-amortizes at each draw and at completion. Loan term is required.`,
     devTermNeeded:
       "Development loan — set an explicit loan term (years); it is required for draws / interest-only.",
     calc: "Calc",
@@ -592,9 +593,19 @@ export const en = {
       "blank = infer from instalment; required for development loans",
     fieldInterestRate: "Interest rate p.a.",
     fieldMonthlyInstalment: "Monthly instalment",
-    fieldDraws: "Development draws (after start)",
+    fieldDraws: "Drawdown schedule",
     helpDraws:
-      "ADDITIONAL tranches drawn AFTER the start date — one per line: dd.mm.yyyy = amount. The first drawdown is the Initial principal field (do not repeat it here). Total loan = initial principal + these draws; the tranches not drawn yet count as debt from the start, while interest is charged only on what is drawn.",
+      "How the bank pays the loan out. The first row is the amount drawn on the start date; add a row for each later tranche. The whole loan counts as debt from the start; interest is charged only on what is drawn.",
+    drawnAtStart: "Drawn at start",
+    drawnAtStartNoDate: "on the start date",
+    trancheRow: (n: number) => `Tranche ${n}`,
+    addTranche: "Add tranche",
+    drawdownTotal: (total: string, n: number) =>
+      `Total loan ${total} · ${n} ${enPlural(n, ["tranche", "tranches"])} after start`,
+    warnAfterCompletion:
+      "Drawn after the interest-only period ends; the loan re-amortizes again at this draw",
+    warnSameDate:
+      "Same date as another tranche; the amounts are added together",
     fieldCompletionDate: "Interest-only until (completion)",
     helpCompletionDate: "pay interest only until this date, then re-amortize",
     // Loan type switch and successor note (ADR 0098)
@@ -1177,13 +1188,13 @@ export const en = {
         "Check the marked rows: a date as dd.mm.yyyy, an amount above 0 and a fee of 0 or more",
       recasts:
         "Check the marked rows: a date as dd.mm.yyyy, and a new maturity date or an instalment above 0",
-      draws: "One tranche per line: dd.mm.yyyy = amount",
+      draws:
+        "Check the marked rows: a date as dd.mm.yyyy and an amount above 0",
     },
     /** A bounded whole-number field (UX-068, ADR 0075). */
     positiveAmount: "Enter an amount above 0, e.g. 500 000",
     intRange: (min: string, max: string) =>
       `Enter a whole number from ${min} to ${max}`,
-    drawsPlaceholder: "dd.mm.yyyy = amount  (one tranche per line)",
     datePlaceholder: "dd.mm.yyyy",
     defaultPlaceholder: "default",
   },
@@ -1361,7 +1372,7 @@ export const en = {
     developmentProseMid: ". During construction the loan is ",
     developmentInterestOnly: "interest-only",
     developmentProsePost:
-      " (no principal). The property counts at its completed value, and the whole loan counts as debt: the tranches not drawn yet are committed, though interest is charged only on what is drawn. When a tranche lands or construction completes, the loan re-amortizes onto a normal repaying schedule.",
+      " (no principal). The property counts at its completed value, and the whole loan counts as debt: the tranches not drawn yet are committed, though interest is charged only on what is drawn. When a tranche lands or construction completes, the loan re-amortizes onto a normal repaying schedule. In the mortgage form, choose Development and fill in the drawdown schedule: the amount drawn on the start date, then a row for each later tranche.",
     limitsTitle: "Limits and data safety",
     limitsProse:
       "These figures are planning estimates, not lender quotes or guaranteed outcomes. Two documents in the source repository explain what the model simplifies or leaves out, and how to back up your data and recover it after a failed upgrade.",

@@ -8,6 +8,7 @@ import {
   parsePercentToRatio,
   parseIntField,
 } from "./formParse";
+import { drawWarnings, drawdownTotal, hasRows } from "./loanEventRows";
 import { mortgageBlock, suggestedInstalment } from "../../engine";
 import type {
   IsoDate,
@@ -52,12 +53,34 @@ export function loanTypeOf(draft: Record<string, string>): LoanType {
   return draftIsDev(draft) ? "development" : "standard";
 }
 
-/** A draft is a development loan when it carries tranche draws or a completion date. */
+/** A draft is a development loan when it carries a tranche row worth saving or a
+ *  completion date (ADR 0167: a blank added row alone is not one). */
 function draftIsDev(draft: Record<string, string>): boolean {
   return (
-    (draft.draws ?? "").trim() !== "" ||
-    (draft.completionDate ?? "").trim() !== ""
+    hasRows(draft.draws ?? "") || (draft.completionDate ?? "").trim() !== ""
   );
+}
+
+/**
+ * The drawdown schedule's notes (ADR 0167): the soft warnings of each tranche row and the
+ * total loan footer, or no footer until the start draw is an amount above 0.
+ */
+export function drawdownNotes(
+  t: Dictionary,
+  draft: Record<string, string>,
+): { rows: string[][]; footer: string | null } {
+  const d = t.propertyDetail;
+  const text = {
+    afterCompletion: d.warnAfterCompletion,
+    sameDate: d.warnSameDate,
+  };
+  const total = drawdownTotal(draft.initialPrincipal ?? "", draft.draws ?? "");
+  return {
+    rows: drawWarnings(draft.draws ?? "", draft.completionDate ?? "").map((w) =>
+      w.map((code) => text[code]),
+    ),
+    footer: total && d.drawdownTotal(fmtCzk(total.total), total.tranches),
+  };
 }
 
 /** Live "suggested instalment" hint from the in-progress mortgage draft. */

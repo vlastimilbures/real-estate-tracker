@@ -10,8 +10,6 @@ import {
   moneyDraft,
   percentDraft,
   dateDraft,
-  drawsDraft,
-  parseDraws,
   parseMoney,
   collectValues,
   fieldHint,
@@ -24,7 +22,6 @@ import { INT_RANGES } from "../../../lib/intRanges";
 import { D } from "../../../lib/money";
 import { getDict } from "../../../i18n";
 import {
-  isoDate,
   type IsoDate,
   type Money,
   type LoanRecast,
@@ -323,36 +320,5 @@ describe("fieldHint (ADR 0075, DR-078)", () => {
         fieldHint(en, { kind: "int", range: INT_RANGES.sizeM2 }),
       );
     }
-  });
-});
-
-describe("parseDraws / drawsDraft (development tranches)", () => {
-  it("parses one tranche per line, sorted by date, and round-trips", () => {
-    const raw = "01.09.2027 = 2 000 000\n01.03.2027 = 1500000";
-    const draws = parseDraws(raw)!;
-    expect(draws.map((d) => d.amount.toString())).toEqual([
-      "1500000",
-      "2000000",
-    ]); // sorted
-    expect(draws[0].date.getTime()).toBe(isoDate("2027-03-01").getTime());
-    // formatter → parser round-trip yields the same dates & amounts
-    const back = parseDraws(drawsDraft(draws))!;
-    expect(back.map((d) => d.amount.toString())).toEqual([
-      "1500000",
-      "2000000",
-    ]);
-  });
-
-  it("rejects a malformed line (returns null ⇒ invalid)", () => {
-    expect(parseDraws("01.03.2027 1500000")).toBeNull(); // missing '='
-    expect(parseDraws("bad = 1000")).toBeNull();
-    expect(parseDraws("01.03.2027 = -5")).toBeNull(); // non-positive amount
-    expect(FORM_PARSERS.draws("01.03.2027 1500000")).toBeNull();
-  });
-
-  it("treats whitespace-only as empty and formats empty draws to ''", () => {
-    expect(parseDraws("   \n  ")).toEqual([]);
-    expect(drawsDraft(undefined)).toBe("");
-    expect(drawsDraft([])).toBe("");
   });
 });

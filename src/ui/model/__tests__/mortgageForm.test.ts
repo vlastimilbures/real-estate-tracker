@@ -57,7 +57,7 @@ describe("suggestedInstalmentHint / instalmentFill", () => {
       draws: writeRows([{ date: "01.09.2027", amount: "500000" }]),
     };
     expect(suggestedInstalmentHint(en, dev)).toMatch(
-      /— for the initial principal; re-amortizes at each draw and at completion\. Loan term is required\.$/,
+      /— for the amount drawn at start; re-amortizes at each draw and at completion\. Loan term is required\.$/,
     );
     expect(suggestedInstalmentHint(en, { completionDate: "01.01.2028" })).toBe(
       "Development loan — set an explicit loan term (years); it is required for draws / interest-only.",

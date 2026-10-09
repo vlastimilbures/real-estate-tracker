@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 //
 // ADR 0098: the mortgage form starts with a Standard | Development switch. Standard
-// hides the draws and the completion date; the type comes from the block's data; going
+// hides the drawdown schedule (ADR 0167) and the completion date; the type comes from the block's data; going
 // back to Standard with development data asks first and clears it; a note says a new
 // block replaces the current one.
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -50,7 +50,16 @@ const startsWith = (label: string) =>
 const typeGroup = () => screen.getByRole("group", { name: d.loanType });
 const typeButton = (label: string) =>
   within(typeGroup()).getByRole("button", { name: label });
-const drawsField = () => screen.queryByLabelText(startsWith(d.fieldDraws));
+const drawsField = () => screen.queryByRole("group", { name: d.fieldDraws });
+/** The first tranche's amount, or "" when the schedule has no tranche row (ADR 0167). */
+const firstTrancheAmount = () => {
+  const row = within(drawsField()!).queryByRole("group", {
+    name: d.trancheRow(1),
+  });
+  return row
+    ? (within(row).getByLabelText(d.eventAmount) as HTMLInputElement).value
+    : "";
+};
 const completionField = () =>
   screen.queryByLabelText(startsWith(d.fieldCompletionDate));
 
@@ -94,7 +103,7 @@ describe("mortgage loan type (ADR 0098)", () => {
     expect(typeButton(d.loanTypeDevelopment).getAttribute("aria-pressed")).toBe(
       "true",
     );
-    expect((drawsField() as HTMLTextAreaElement).value).toContain("500");
+    expect(firstTrancheAmount()).toBe("500000");
     expect((completionField() as HTMLInputElement).value).toBe("31.03.2025");
   });
 
@@ -126,7 +135,7 @@ describe("mortgage loan type (ADR 0098)", () => {
     );
     expect(screen.queryByText(d.loanTypeClearWarning)).toBeNull();
     expect(drawsField()).toBeTruthy();
-    expect((drawsField() as HTMLTextAreaElement).value).toContain("500");
+    expect(firstTrancheAmount()).toBe("500000");
   });
 
   it("Clear and switch empties the development fields and hides them", async () => {
@@ -138,7 +147,7 @@ describe("mortgage loan type (ADR 0098)", () => {
     expect(drawsField()).toBeNull();
     expect(completionField()).toBeNull();
     await userEvent.click(typeButton(d.loanTypeDevelopment));
-    expect((drawsField() as HTMLTextAreaElement).value).toBe("");
+    expect(firstTrancheAmount()).toBe("");
     expect((completionField() as HTMLInputElement).value).toBe("");
   });
 

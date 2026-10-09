@@ -964,23 +964,39 @@ export const SCREENS: Screen[] = [
   },
   {
     id: "25-property-mortgage-development",
-    desc: "Add mortgage block as Development, with the successor note (ADR 0098)",
+    desc: "Add mortgage block as Development: the successor note (ADR 0098) and a drawdown schedule with a start draw, two tranches and a warning (ADR 0167)",
     run: async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
-      const p = panel(ux, ux.t.propertyDetail.mortgagesTitle);
+      const d = ux.t.propertyDetail;
+      const p = panel(ux, d.mortgagesTitle);
+      await p.getByRole("button", { name: d.addMortgage }).click();
+      await expect(p.getByText(d.successorNote)).toBeVisible();
+      await p.getByRole("button", { name: d.loanTypeDevelopment }).click();
+      const schedule = p.getByRole("group", { name: d.fieldDraws });
+      await expect(schedule).toBeVisible();
       await p
-        .getByRole("button", { name: ux.t.propertyDetail.addMortgage })
-        .click();
-      await expect(
-        p.getByText(ux.t.propertyDetail.successorNote),
-      ).toBeVisible();
+        .getByLabel(d.fieldStartDate, { exact: false })
+        .first()
+        .fill("01.03.2027");
+      await schedule
+        .getByRole("group", { name: d.drawnAtStart })
+        .getByLabel(d.eventAmount)
+        .fill("1200000");
       await p
-        .getByRole("button", { name: ux.t.propertyDetail.loanTypeDevelopment })
-        .click();
-      await expect(
-        p.getByLabel(ux.t.propertyDetail.fieldDraws, { exact: false }),
-      ).toBeVisible();
+        .getByLabel(d.fieldCompletionDate, { exact: false })
+        .fill("31.03.2028");
+      const tranches: [string, string][] = [
+        ["01.09.2027", "800000"],
+        ["01.06.2028", "500000"],
+      ];
+      for (const [i, [date, amount]] of tranches.entries()) {
+        await schedule.getByRole("button", { name: d.addTranche }).click();
+        const row = schedule.getByRole("group", { name: d.trancheRow(i + 1) });
+        await row.getByLabel(d.eventDate, { exact: true }).fill(date);
+        await row.getByLabel(d.eventAmount).fill(amount);
+      }
+      await expect(schedule.getByText(d.warnAfterCompletion)).toBeVisible();
       // The pointer stays where the toggle was; once the form grows it can rest on a
       // chart and open its tooltip. Park it so the scan covers the form, not a hover.
       await ux.page.mouse.move(0, 0);

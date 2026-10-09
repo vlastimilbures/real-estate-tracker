@@ -2,7 +2,7 @@ import { useId, useState, type ReactNode } from "react";
 import { Plus } from "lucide-react";
 import type { MutationResult } from "../../state/portfolioStore";
 import { Panel, Button } from "./primitives";
-import { RecordForm, type FieldActions } from "./forms";
+import { RecordForm, type FieldActions, type ListNotes } from "./forms";
 import { EntityTable, ConfirmRow } from "./EntityPanelParts";
 import type { FieldSpec, ParsedValues } from "../model/formParse";
 import { useT } from "../hooks/useT";
@@ -46,6 +46,7 @@ export function EntityPanel<
   validate,
   formHeader,
   hiddenFields,
+  listNotes,
   confirmAdd,
 }: {
   title: string;
@@ -70,6 +71,7 @@ export function EntityPanel<
     adding: boolean,
   ) => ReactNode;
   hiddenFields?: (draft: Record<string, string>) => readonly string[];
+  listNotes?: (name: string, draft: Record<string, string>) => ListNotes | null;
   validate?: (
     values: ParsedValues<S>,
     draft: Record<string, string>,
@@ -180,6 +182,7 @@ export function EntityPanel<
               ((draft, patch) => formHeader(draft, patch, mode.t === "add"))
             }
             hiddenFields={hiddenFields}
+            listNotes={listNotes}
             onSubmit={async (values) => {
               const id = mode.t === "edit" ? mode.id : newId();
               const entity = build(values, id);

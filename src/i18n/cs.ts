@@ -96,7 +96,7 @@ export const cs: Dictionary = {
       "Úvěr s čerpáním nebo obdobím splácení jen úroků potřebuje dobu splatnosti",
     NON_POSITIVE_DRAW: "Každé čerpání musí být vyšší než nula",
     DRAW_BEFORE_START:
-      "Čerpání musí mít datum po začátku úvěru; částka čerpaná v den začátku patří do počáteční jistiny",
+      "Čerpání musí mít datum po začátku úvěru; částka čerpaná v den začátku patří do pole Čerpáno při startu (počáteční jistina)",
     DRAW_AFTER_SCHEDULE_END:
       "Čerpání musí mít datum nejpozději v den předposlední splátky úvěru (začátek plus doba splatnosti bez jednoho měsíce)",
     COMPLETION_BEFORE_START: "Konec splácení jen úroků je před začátkem úvěru",
@@ -528,7 +528,8 @@ export const cs: Dictionary = {
     colDevelopment: "Development",
     yrs: (n) => `${n} ${csPlural(n, ["rok", "roky", "let"])}`,
     auto: "auto",
-    draws: (n) => `${n} čerpání`,
+    tranches: (n) => `${n} ${csPlural(n, ["tranše", "tranše", "tranší"])}`,
+    totalLoan: (total) => `Celkový úvěr ${total}`,
     ioUntil: (d) => `IO→${d}`,
     closePrevValuationTitle: "Ukončit předchozí ocenění?",
     closePrevValuationBody: (from, end) =>
@@ -538,7 +539,7 @@ export const cs: Dictionary = {
     instalmentHint: (years, amount) =>
       `Anuitní splátka na ${years} ≈ ${amount}`,
     instalmentHintDev: (base) =>
-      `${base} — pro počáteční jistinu; přepočítá se při každém čerpání a při dokončení. Doba splatnosti je povinná.`,
+      `${base} — pro částku čerpanou při startu; přepočítá se při každém čerpání a při dokončení. Doba splatnosti je povinná.`,
     devTermNeeded:
       "Developerský úvěr — zadejte dobu splatnosti v letech; u čerpání a období jen úroků je povinná.",
     calc: "Spočítat",
@@ -557,9 +558,18 @@ export const cs: Dictionary = {
       "prázdné = odvodit ze splátky; povinné u developerských úvěrů",
     fieldInterestRate: "Úroková sazba p.a.",
     fieldMonthlyInstalment: "Měsíční splátka",
-    fieldDraws: "Developerská čerpání (po startu)",
+    fieldDraws: "Harmonogram čerpání",
     helpDraws:
-      "DALŠÍ tranše čerpané PO datu startu — jedna na řádek: dd.mm.yyyy = částka. První čerpání je pole Počáteční jistina (zde ho neopakujte). Celkový úvěr = počáteční jistina + tato čerpání; dosud nečerpané tranše se od začátku počítají do dluhu, úrok se platí jen z načerpané částky.",
+      "Jak banka úvěr vyplácí. První řádek je částka čerpaná v den startu; každou další tranši přidejte jako řádek. Celý úvěr se od začátku počítá do dluhu; úrok se platí jen z načerpané částky.",
+    drawnAtStart: "Čerpáno při startu",
+    drawnAtStartNoDate: "v den startu",
+    trancheRow: (n) => `Tranše ${n}`,
+    addTranche: "Přidat tranši",
+    drawdownTotal: (total, n) =>
+      `Celkový úvěr ${total} · ${n} ${csPlural(n, ["tranše", "tranše", "tranší"])} po startu`,
+    warnAfterCompletion:
+      "Čerpáno po konci období jen úroků; úvěr se při tomto čerpání znovu přepočte",
+    warnSameDate: "Stejné datum jako jiná tranše; částky se sečtou",
     fieldCompletionDate: "Pouze úroky do (dokončení)",
     helpCompletionDate: "do tohoto data platit jen úroky, poté znovu umořovat",
     loanType: "Typ úvěru",
@@ -1117,13 +1127,13 @@ export const cs: Dictionary = {
         "Zkontrolujte označené řádky: datum jako dd.mm.yyyy, částka nad 0 a poplatek 0 nebo více",
       recasts:
         "Zkontrolujte označené řádky: datum jako dd.mm.yyyy a nové datum splatnosti nebo splátka nad 0",
-      draws: "Jedna tranše na řádek: dd.mm.yyyy = částka",
+      draws:
+        "Zkontrolujte označené řádky: datum jako dd.mm.yyyy a částku nad 0",
     },
     /** A bounded whole-number field (UX-068, ADR 0075). */
     positiveAmount: "Zadejte částku vyšší než 0, např. 500 000",
     intRange: (min: string, max: string) =>
       `Zadejte celé číslo od ${min} do ${max}`,
-    drawsPlaceholder: "dd.mm.yyyy = částka  (jedna tranše na řádek)",
     datePlaceholder: "dd.mm.yyyy",
     defaultPlaceholder: "výchozí",
   },
@@ -1299,7 +1309,7 @@ export const cs: Dictionary = {
     developmentProseMid: ". Během výstavby je úvěr ",
     developmentInterestOnly: "pouze úrokový",
     developmentProsePost:
-      " (bez jistiny). Nemovitost se počítá v dokončené hodnotě a do dluhu celý úvěr: dosud nečerpané tranše jsou přislíbené, úrok se ale platí jen z načerpané částky. Když přijde tranše nebo se výstavba dokončí, úvěr se znovu umoří na běžný splátkový plán.",
+      " (bez jistiny). Nemovitost se počítá v dokončené hodnotě a do dluhu celý úvěr: dosud nečerpané tranše jsou přislíbené, úrok se ale platí jen z načerpané částky. Když přijde tranše nebo se výstavba dokončí, úvěr se znovu umoří na běžný splátkový plán. Ve formuláři hypotéky zvolte Developerský a vyplňte harmonogram čerpání: částku čerpanou v den startu a pak řádek pro každou další tranši.",
     limitsTitle: "Omezení a bezpečnost dat",
     limitsProse:
       "Tato čísla jsou plánovací odhady, ne nabídka banky ani zaručený výsledek. Dva dokumenty ve zdrojovém repozitáři vysvětlují, co model zjednodušuje nebo vynechává, a jak data zálohovat a obnovit po neúspěšné aktualizaci.",

@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 //
-// UX-028: pressing Return in a form field saves the form; Return in the draws text box
-// still adds a new line, and picking a day in the calendar popover does not submit.
+// UX-028: pressing Return in a form field saves the form, a tranche row's cells included
+// (ADR 0167), and picking a day in the calendar popover does not submit.
 import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RecordForm } from "../forms";
 import { PropertyFormModal } from "../PropertyFormModal";
@@ -56,12 +56,24 @@ describe("Return submits forms (UX-028)", () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
-  it("Return in the draws box adds a line instead of saving", async () => {
+  it("Return in a tranche row saves like any field (ADR 0167)", async () => {
     const onSubmit = renderRecordForm();
-    const draws = screen.getByLabelText("Draws") as HTMLTextAreaElement;
-    await userEvent.type(draws, "a{Enter}b");
-    expect(draws.value).toBe("a\nb");
-    expect(onSubmit).not.toHaveBeenCalled();
+    await userEvent.type(screen.getByLabelText("Price"), "100");
+    await userEvent.click(
+      screen.getByRole("button", { name: en.propertyDetail.addTranche }),
+    );
+    const row = screen.getByRole("group", {
+      name: en.propertyDetail.trancheRow(1),
+    });
+    await userEvent.type(
+      within(row).getByLabelText(en.propertyDetail.eventDate),
+      "01.02.2027",
+    );
+    await userEvent.type(
+      within(row).getByLabelText(en.propertyDetail.eventAmount),
+      "500000{Enter}",
+    );
+    expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
   it("picking a day in the calendar does not save", async () => {

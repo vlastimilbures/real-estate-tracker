@@ -4,13 +4,12 @@
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { Money, Pct } from "../components/primitives";
 import { EntityPanel } from "../components/EntityPanel";
+import { moneyDraft, percentDraft, dateDraft } from "../model/formParse";
 import {
-  moneyDraft,
-  percentDraft,
-  dateDraft,
   drawsDraft,
-} from "../model/formParse";
-import { prepaymentsDraft, recastsDraft } from "../model/loanEventRows";
+  prepaymentsDraft,
+  recastsDraft,
+} from "../model/loanEventRows";
 import { INT_RANGES } from "../../lib/intRanges";
 import { fmtDate, fmtCzk } from "../../lib/format";
 import { currencySymbol } from "../../lib/currency";
@@ -19,6 +18,7 @@ import {
   instalmentFill,
   mortgageFromForm,
   DEV_FIELDS,
+  drawdownNotes,
   loanTypeOf,
 } from "../model/mortgageForm";
 import { LoanTypeSwitch } from "../components/LoanTypeSwitch";
@@ -31,11 +31,11 @@ import { useT } from "../hooks/useT";
 function devSummary(r: MortgageBlock, t: Dictionary): string {
   const parts: string[] = [];
   if (r.draws?.length) {
-    // Total scheduled principal = initial drawdown + every later tranche. Surfacing it
-    // lets the user sanity-check the loan isn't double-counting the first draw.
+    // Total loan = start draw + every later tranche (ADR 0167). Surfacing it lets the
+    // user sanity-check the loan isn't double-counting the first draw.
     const total = scheduledPrincipal(r);
     parts.push(
-      `${t.propertyDetail.draws(r.draws.length)} · Σ ${fmtCzk(total)}`,
+      `${t.propertyDetail.tranches(r.draws.length)} · ${t.propertyDetail.totalLoan(fmtCzk(total))}`,
     );
   }
   if (r.completionDate)
@@ -279,6 +279,21 @@ export function MortgagesPanel({
           kind: "date",
         },
         {
+          // Development only: the start draw (the initial principal) is its first row
+          // (ADR 0167).
+          name: "draws",
+          label: t.propertyDetail.fieldDraws,
+          kind: "draws",
+          optional: true,
+          help: t.propertyDetail.helpDraws,
+          lead: {
+            field: "initialPrincipal",
+            dateField: "startDate",
+            label: t.propertyDetail.drawnAtStart,
+            dateFallback: t.propertyDetail.drawnAtStartNoDate,
+          },
+        },
+        {
           name: "initialPrincipal",
           label: t.propertyDetail.fieldInitialPrincipal,
           kind: "money",
@@ -311,13 +326,6 @@ export function MortgagesPanel({
           label: t.propertyDetail.fieldMonthlyInstalment,
           kind: "money",
           suffix: currencySymbol(),
-        },
-        {
-          name: "draws",
-          label: t.propertyDetail.fieldDraws,
-          kind: "draws",
-          optional: true,
-          help: t.propertyDetail.helpDraws,
         },
         {
           name: "completionDate",
@@ -375,9 +383,13 @@ export function MortgagesPanel({
         />
       )}
       hiddenFields={(draft) =>
+        // A development loan shows the initial principal in its drawdown schedule.
         (draft.loanType ?? loanTypeOf(draft)) === "development"
-          ? []
+          ? ["initialPrincipal"]
           : DEV_FIELDS
+      }
+      listNotes={(name, draft) =>
+        name === "draws" ? drawdownNotes(t, draft) : null
       }
       build={(v, id) =>
         mortgageFromForm(

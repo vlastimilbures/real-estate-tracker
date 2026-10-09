@@ -3,14 +3,17 @@
 import {
   fieldHint,
   parseDate,
-  parseDraws,
   parseIntField,
   parseMoney,
   parsePercentToRatio,
   type CollectRules,
   type KindParsers,
 } from "./formParse";
-import { parsePrepaymentRows, parseRecastRows } from "./loanEventRows";
+import {
+  parseDrawRows,
+  parsePrepaymentRows,
+  parseRecastRows,
+} from "./loanEventRows";
 import type { Dictionary } from "../../i18n";
 
 /** RecordForm's parsers. Money is non-negative everywhere it's entered (price, rent,
@@ -24,7 +27,7 @@ export const FORM_PARSERS: KindParsers = {
   },
   pct: parsePercentToRatio,
   int: parseIntField,
-  draws: parseDraws,
+  draws: parseDrawRows,
   prepayments: parsePrepaymentRows,
   recasts: parseRecastRows,
 };
