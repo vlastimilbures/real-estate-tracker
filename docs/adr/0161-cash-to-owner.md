@@ -37,16 +37,17 @@ cash, kept outside net cash flow and DSCR" invited the wrong reading.
    portfolio row: cumulative cash to owner = Σ_{t=1..N} cashToOwner_t, and the levered IRR
    vector uses it for years 1..N. The real lens deflates it by CPI_t like the other money
    fields, and its Σ is the real KPI.
-3. **Grid and Excel.** The Projections grid and its Excel export show a "Cash to owner"
-   column right after "Net CF", always (it is not an optional column). Σ of that column over
-   years 1..N is the tile.
+3. **Grid and Excel.** The projection grid and its Excel export, on the Projections page and
+   on a property's page, show a "Cash to owner" column right after "Net CF", always (it is
+   not an optional column). Σ of the portfolio column over years 1..N is the tile.
 4. **Guide.** The mortgages section says prepayments are "kept outside net cash flow and
    DSCR, but counted in cash to owner and the IRR".
 
 ## Consequences
 
-- No KPI value, parity target or golden-master value changes; the golden master adds the
-  new field without a snapshot change.
+- No KPI value, parity target or golden-master value changes. The golden master leaves the
+  new field out (`ADDED_FIELDS`), so there is no snapshot change; `cash-to-owner.test.ts`
+  pins it against the KPIs.
 - An owner can reconcile the tile with the grid: Σ Cash to owner = the tile, and
   Net CF − Cash to owner in a year is that year's acquisition, refinance, prepayment and
   pre-purchase cash.

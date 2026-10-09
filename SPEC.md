@@ -486,8 +486,9 @@ debt) for every property; when every loan retires within the horizon (as in the 
   down payment plus the principal repaid before baseDate (ADR 0134), less a later first
   loan's initial principal, which is cash in (§4.5). Each projection year carries
   `cashToOwner` (year 0 = 0); a property's row carries its own share, and the portfolio
-  row is Σ netCF_t − the portfolio's cashOutside_t. The Projections grid and its Excel
-  export show it as "Cash to owner" after "Net CF", so Σ of that column is the tile.
+  row is Σ netCF_t − the portfolio's cashOutside_t. The projection grid and its Excel
+  export (Projections page and property page) show it as "Cash to owner" after "Net CF",
+  so Σ of the portfolio column is the tile.
   **Real** cumulative cash to owner = Σ_{t=1..N} cashToOwner_t / CPI_t:
   each year is deflated by its own index, as in the real IRR (ADR 0087). The Dashboard and
   Scenario compare show the multiple and the cumulative cash to owner of the lens; Σ principal
