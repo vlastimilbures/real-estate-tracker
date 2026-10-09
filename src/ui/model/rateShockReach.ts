@@ -4,7 +4,7 @@
 // tripwire test runs the engine with and without the shock so this cannot drift from
 // `rateAt`.
 import {
-  blockEndDate,
+  rateFixedUntil,
   edate,
   effectiveMaturity,
   EngineInputError,
@@ -59,7 +59,7 @@ export function rateShockReach(
       );
       if (chain.length === 0) return [];
       const reached = chain.map((b, i) => ({
-        year: blockEndDate(b).getUTCFullYear(),
+        year: rateFixedUntil(b, assumptions.baseDate).getUTCFullYear(),
         ...blockReach(b, chain[i + 1], assumptions, shock),
       }));
       const refixYears = uniqueSorted(
@@ -129,7 +129,9 @@ function blockChain(blocks: MortgageBlock[], baseDate: Date): MortgageBlock[] {
  * k − offset. The shock reaches it when it is due after the fixation end and after
  * baseDate and on or before fixation end + N years, and the projection counts it: up to
  * maturity, in the horizon, before the successor takes over. Every bound but the first
- * two is an upper bound, so the first payment past both lower bounds decides.
+ * two is an upper bound, so the first payment past both lower bounds decides. The
+ * fixation end is `rateFixedUntil`: baseDate (or a later start) for a floating block
+ * (ADR 0162).
  */
 function blockReach(
   b: MortgageBlock,
@@ -138,7 +140,7 @@ function blockReach(
   shock: ShockBand,
 ): BlockReach {
   const miss = (reason: MissReason) => ({ blockId: b.id, hit: false, reason });
-  const fixEnd = blockEndDate(b);
+  const fixEnd = rateFixedUntil(b, a.baseDate);
   // The maturity in force after prepayments and recasts (ADR 0116). The base
   // schedule decides: before the fixation end the shock changes no rate, so no event.
   const maturity = effectiveMaturity(b, a, next);
