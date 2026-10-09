@@ -274,6 +274,19 @@ describe("data check: fixation (ADR 0118)", () => {
     ).not.toContain("fixationEnded");
   });
 
+  it("a floating (0-year) block is never an ended fixation (ADR 0162)", () => {
+    const p: Portfolio = {
+      ...portfolio,
+      mortgages: portfolio.mortgages.map((m) =>
+        m.propertyId === "lipova" ? { ...m, fixationYears: 0 } : m,
+      ),
+    };
+    for (const asOf of [BASE_DATE, isoDate("2031-06-07")])
+      expect(kinds(check("lipova", asOf, p).attention)).not.toContain(
+        "fixationEnded",
+      );
+  });
+
   it("a block starting after the first floating payment leaves a gap (ADR 0129 §4)", () => {
     const later = (start: string): Portfolio => ({
       ...portfolio,

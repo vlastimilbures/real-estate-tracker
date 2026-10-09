@@ -134,6 +134,19 @@ describe("rateShockReach", () => {
     expect(loan?.refixYears).toEqual([2025]);
   });
 
+  // ADR 0162: a floating block's window starts at baseDate, or at a later start.
+  it("hits a floating block started long ago, from baseDate's year", () => {
+    const [loan] = reachOf([block("a", "2015-01-01", 0)], 1);
+    expect(loan?.hit).toBe(true);
+    expect(loan?.refixYears).toEqual([2026]);
+  });
+
+  it("hits a future floating block from its start year", () => {
+    const [loan] = reachOf([block("a", "2027-03-01", 0)], 1);
+    expect(loan?.hit).toBe(true);
+    expect(loan?.refixYears).toEqual([2027]);
+  });
+
   it("hits a loan whose fixation ends on baseDate", () => {
     const [loan] = reachOf([block("a", "2019-06-07", 7)], 1);
     expect(loan?.hit).toBe(true);
@@ -339,6 +352,17 @@ describe("tripwire: the helper agrees with the engine", () => {
       m.propertyId === "dubova" ? pastHorizon(m) : { ...m, fixationYears: 1 },
     ),
     variant("only lipova refixes in the window", true, onlyLipova),
+    // ADR 0162: a floating block is shocked from baseDate, however old it is.
+    variant(
+      "javorova floats, 1-year shock",
+      true,
+      (m) =>
+        m.propertyId === "javorova"
+          ? { ...m, fixationYears: 0 }
+          : pastHorizon(m),
+      [],
+      1,
+    ),
     variant("successor fixed to maturity", false, onlyLipova, [
       lipovaSuccessor(25),
     ]),

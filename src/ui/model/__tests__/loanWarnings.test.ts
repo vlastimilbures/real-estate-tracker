@@ -193,6 +193,15 @@ describe("fixation ended before a later block", () => {
     }
   });
 
+  // ADR 0162: a floating block pays its entered rate up to baseDate and floats after
+  // it by design; there are no refix terms to enter.
+  it("a floating (0-year) block never warns, with or without a later block", () => {
+    const a = block({ fixationYears: 0 });
+    expect(fixationEnded([a])).toEqual([]);
+    const next = block({ id: "m2", startDate: isoDate("2027-03-01") });
+    expect(fixationEnded([a, next])).toEqual([]);
+  });
+
   it("with no later block there is no `until`", () => {
     const a = block({ startDate: isoDate("2019-05-01"), fixationYears: 5 });
     expect(fixationEnded([a])[0]).not.toHaveProperty("until");
