@@ -4,7 +4,14 @@
 // so the memoized engine recomputes (CLAUDE.md §4).
 import { create } from "zustand";
 import type { Sql } from "../data/sql";
-import { EngineInputError, validateInputs, validatePortfolio } from "../engine";
+import {
+  dayBefore,
+  EngineInputError,
+  leaseOverlapErrors,
+  openPredecessor,
+  validateInputs,
+  validatePortfolio,
+} from "../engine";
 import type {
   Portfolio,
   Assumptions,
@@ -97,12 +104,14 @@ function withRow<T extends { id: string }>(rows: T[], row: T): T[] {
 }
 
 /** Throw the engine input rules broken by the rows `ids` of the candidate portfolio
- *  (D-17, D-27, D-37, D-42, D-54), so a form shows the rule before anything is
- *  written (UX-047). Problems in other rows are not this edit's to report. */
+ *  (D-17, D-27, D-37, D-42, D-54), and the write-time lease overlap rule (ADR 0163), so
+ *  a form shows the rule before anything is written (UX-047). Problems in other rows
+ *  are not this edit's to report: a stored overlap does not block other edits. */
 function assertRows(candidate: Portfolio, ids: string[]): void {
-  const errors = validatePortfolio(candidate).filter(
-    (e) => e.id !== undefined && ids.includes(e.id),
-  );
+  const errors = [
+    ...validatePortfolio(candidate),
+    ...leaseOverlapErrors(candidate),
+  ].filter((e) => e.id !== undefined && ids.includes(e.id));
   if (errors.length > 0) throw new EngineInputError(errors);
 }
 
@@ -196,12 +205,9 @@ interface PortfolioState {
   saveValuation: (v: Valuation) => Promise<MutationResult>;
   removeValuation: (id: string) => Promise<MutationResult>;
   // leases
+  /** Add `l`. Leases never overlap (ADR 0163): the open-ended lease before it ends the
+   *  day before `l` starts, in the same write. */
   addLease: (l: Lease) => Promise<MutationResult>;
-  /** Add `l` and save `closedPrev` with its new end date in one write (ADR 0099). */
-  addLeaseClosingPrevious: (
-    l: Lease,
-    closedPrev: Lease,
-  ) => Promise<MutationResult>;
   saveLease: (l: Lease) => Promise<MutationResult>;
   removeLease: (id: string) => Promise<MutationResult>;
   // mortgage blocks
@@ -524,11 +530,19 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
 
     addLease: (l) =>
       mutate(async (sql) => {
-        checkEdit((p) => ({ ...p, leases: withRow(p.leases, l) }), [l.id]);
-        await insertLease(sql, leaseToRow(l));
-      }),
-    addLeaseClosingPrevious: (l, closedPrev) =>
-      mutate(async (sql) => {
+        const prev = openPredecessor(
+          get().portfolio?.leases ?? [],
+          l.propertyId,
+          l.startDate,
+          (x) => x.startDate,
+          (x) => x.endDate,
+        );
+        if (!prev) {
+          checkEdit((p) => ({ ...p, leases: withRow(p.leases, l) }), [l.id]);
+          await insertLease(sql, leaseToRow(l));
+          return;
+        }
+        const closedPrev = { ...prev, endDate: dayBefore(l.startDate) };
         checkEdit(
           (p) => ({ ...p, leases: withRow(withRow(p.leases, closedPrev), l) }),
           [l.id, closedPrev.id],

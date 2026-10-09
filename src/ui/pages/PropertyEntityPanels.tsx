@@ -152,7 +152,6 @@ export function LeasesPanel({
   const add = usePortfolioStore((s) => s.addLease);
   const save = usePortfolioStore((s) => s.saveLease);
   const remove = usePortfolioStore((s) => s.removeLease);
-  const addClosing = usePortfolioStore((s) => s.addLeaseClosingPrevious);
   return (
     <EntityPanel
       title={t.propertyDetail.leasesTitle}
@@ -209,32 +208,11 @@ export function LeasesPanel({
         endDate: v.endDate ?? undefined,
         monthlyRent: v.monthlyRent,
       })}
+      // Leases never overlap (ADR 0163): the store ends the open lease before a new one,
+      // so there is nothing to ask.
       onAdd={add}
       onSave={save}
       onDelete={remove}
-      confirmAdd={(l) => {
-        const prev = openPredecessor(
-          rows,
-          l.propertyId,
-          l.startDate,
-          (r) => r.startDate,
-          (r) => r.endDate,
-        );
-        // Only an open-ended new lease: a dated one would leave the previous lease in
-        // force after its end (ADR 0144).
-        if (!prev || l.endDate) return null;
-        const end = dayBefore(l.startDate);
-        return {
-          title: t.propertyDetail.closePrevLeaseTitle,
-          message: t.propertyDetail.closePrevLeaseBody(
-            fmtDate(prev.startDate),
-            fmtDate(end),
-          ),
-          confirmLabel: t.propertyDetail.closePrevConfirm,
-          keepLabel: t.propertyDetail.closePrevKeep,
-          onConfirm: (n) => addClosing(n, { ...prev, endDate: end }),
-        };
-      }}
     />
   );
 }
