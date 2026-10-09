@@ -259,8 +259,11 @@ Derived per-property values:
   null ("n/a") when the value is 0 (ADR 0133).
 - **DSCR** = NOI ÷ debt service (null when debt service = 0; displayed as ">99×" above 99,
   ADR 0035).
-- Portfolio = sums across **active** properties; portfolio **LTV** = Σdebt ÷ Σvalue;
-  **DSCR** = ΣNOI ÷ Σdebt service; **weighted-avg rate** = Σ(balance×rate) ÷ Σbalance.
+- Portfolio = sums across **active** properties owned at `asOf`; portfolio **LTV** =
+  Σdebt ÷ Σvalue; **DSCR** = ΣNOI ÷ Σdebt service; **weighted-avg rate** =
+  Σ(balance×rate) ÷ Σbalance. A property bought after `asOf` whose loan is already drawn
+  (an off-plan loan drawn at contract) adds its **debt** to Σdebt (so equity, LTV and the
+  weighted rate) but not its value, income or debt service (ADR 0165).
 - **Real terms** of a snapshot divide money by the cumulative CPI index at `asOf`
   (`cpiAt`, ADR 0023); ratios are lens-invariant.
 
@@ -431,10 +434,16 @@ appreciation; rent index `idx` likewise):
 - `gross_t` = Σ of the year's monthly rents, lease by lease (see **Projected rent** below);
   `effective_t = gross_t × (1−vacancy)`
 - `holding_t = fixed0 * CPI_t + (mgmtPct+maintPct) * gross_t`, where `CPI_t` is the
-  cumulative per-year index (honours any `inflationShock`: spike, then revert).
+  cumulative per-year index (honours any `inflationShock`: spike, then revert). `fixed0`
+  is at base-date prices for every property: a future purchase's fixed costs inflate from
+  the base date, not from its purchase year, pro-rated by the months owned in its turn-on
+  year (ADR 0165).
 - `NOI_t = effective_t − holding_t`
 - `interest_t / principal_t / debtService_t / draws_t / balance_t` from the monthly schedule;
   `balance_t = balance_{t−1} − principal_t + draws_t`.
+- `acquiredValue_t` = a future purchase's value at its purchase date in its turn-on year,
+  else 0 (ADR 0165). The Dashboard's equity-change chart shows it as **Purchases**, apart
+  from appreciation (shown only when some year has one).
 - `netCashFlow_t = NOI_t − debtService_t`
 - `equity_t = value_t − balance_t`; `LTV_t = balance_t / value_t` (null when
   `value_t = 0 < balance_t`, 0 when both are 0; ADR 0133);
