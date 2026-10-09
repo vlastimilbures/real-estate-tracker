@@ -827,7 +827,7 @@ export const SCREENS: Screen[] = [
     },
   },
   {
-    id: "29d-property-drawdown",
+    id: "29e-property-drawdown",
     desc: "Loan outlook drawdown of a development loan: drawn of total and each draw's status (ADR 0167)",
     run: async (ux) => {
       const d = ux.t.propertyDetail;
@@ -850,12 +850,15 @@ export const SCREENS: Screen[] = [
       }
       await m.getByRole("button", { name: ux.t.common.saveChanges }).click();
       const p = panel(ux, d.loanSummaryTitle);
-      const drawdown = p.getByRole("region", { name: d.drawdownTitle });
+      const drawdown = p.getByRole("region", {
+        name: d.drawdownTitle,
+        exact: true,
+      });
       await expect(drawdown.getByRole("progressbar")).toBeVisible();
       await expect(drawdown.getByText(d.drawStatus.ahead)).toBeVisible();
       await drawdown.scrollIntoViewIfNeeded();
       await ux.page.mouse.move(0, 0);
-      await ux.capture("29d-property-drawdown", { fullPage: false });
+      await ux.capture("29e-property-drawdown", { fullPage: false });
     },
   },
   {
