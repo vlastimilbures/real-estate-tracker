@@ -1,6 +1,6 @@
 # 0165. Future purchases: acquired value, holding costs from the base date, pending debt
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-09
 - Source: issue #126 items 2 and 3 (2026-10 code review, findings R2-08 and R2-09) and its
   hand-off (d) from #104; owner decision D10 items 2, 3 and (d) = A (2026-10-09); Track 11

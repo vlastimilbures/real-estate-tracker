@@ -208,7 +208,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0162](0162-floating-block-rate.md)               | A floating (0-year) block keeps its entered rate up to baseDate                               | Accepted                                                 | #124                                               |
 | [0163](0163-leases-never-overlap.md)              | Leases of one apartment never overlap                                                         | Accepted                                                 | #121                                               |
 | [0164](0164-amortization-due-date.md)             | Amortization rows show the payment due date                                                   | Accepted                                                 | #112                                               |
-| [0165](0165-future-purchases.md)                  | Future purchases: acquired value, holding costs from the base date, pending debt              | Proposed                                                 | #126, #104                                         |
+| [0165](0165-future-purchases.md)                  | Future purchases: acquired value, holding costs from the base date, pending debt              | Accepted                                                 | #126, #104                                         |
 
 <!-- adr-index:end -->
 
