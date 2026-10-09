@@ -1177,7 +1177,7 @@ export const cs: Dictionary = {
     interest: "Úrok",
     principal: "Jistina",
     debtSvc: "Dluh. služba",
-    draws: "Čerpání",
+    draws: "Nový dluh",
     refinanced: "Rozdíl při refinancování",
     prepaid: "Mimořádně splaceno",
     prepaymentFees: "Poplatky za mimořádné splátky",
@@ -1314,7 +1314,7 @@ export const cs: Dictionary = {
       },
       debt: {
         name: "Dluh",
-        formula: "zůstatek k datu",
+        formula: "zůstatek k datu + dosud nečerpané tranše",
         meaning:
           "Zbývající zůstatek úvěru z umořovacího plánu — odráží každou splátku i případný reset sazby. U developerského úvěru se počítají i dosud nečerpané tranše: jsou přislíbené, úrok se z nich platí až po načerpání.",
       },

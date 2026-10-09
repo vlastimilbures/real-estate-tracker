@@ -120,7 +120,8 @@ export function projectionSeries(
  */
 export function projectionExtras(rows: SeriesRow[], g: Dictionary["projGrid"]) {
   return nonZeroColumns(rows, [
-    { key: "draws", header: g.draws },
+    // New committed debt, so the Debt column reconciles year to year (ADR 0166).
+    { key: "committedDraws", header: g.draws },
     { key: "refinanced", header: g.refinanced },
     { key: "prepaid", header: g.prepaid },
     { key: "prepaymentFees", header: g.prepaymentFees },

@@ -1238,7 +1238,7 @@ export const en = {
     interest: "Interest",
     principal: "Principal",
     debtSvc: "Debt svc",
-    draws: "Draws",
+    draws: "New debt",
     refinanced: "Refinance difference",
     prepaid: "Prepaid",
     prepaymentFees: "Prepayment fees",
@@ -1377,7 +1377,7 @@ export const en = {
       },
       debt: {
         name: "Debt",
-        formula: "outstanding balance on the date",
+        formula: "outstanding balance + development tranches not drawn yet",
         meaning:
           "Remaining loan balance from the amortization schedule — reflects every payment and any rate reset. A development loan also counts its tranches not drawn yet: they are committed, though no interest is due on them until drawn.",
       },
