@@ -88,7 +88,7 @@ describe("drawdown progress (ADR 0167)", () => {
     };
     const blocks = [devBlock, successor];
     expect(drawdowns(blocks)).toHaveLength(1);
-    const [dd] = drawdowns(blocks, isoDate("2028-01-01"));
+    const [dd] = drawdowns(blocks, isoDate("2027-02-01"));
     expect(dd!.tranches.map((t) => t.status)).toEqual([
       "drawn",
       "drawn",
@@ -96,6 +96,14 @@ describe("drawdown progress (ADR 0167)", () => {
     ]);
     expectKc(dd!.total, 3500000);
     expectKc(dd!.drawn, 3500000);
+    // Once the successor is in force the replaced block shows no drawdown (review of
+    // PR #302).
+    expect(drawdowns(blocks, isoDate("2027-03-01"))).toEqual([]);
+  });
+
+  it("a development block without tranches has no drawdown", () => {
+    const ioOnly: MortgageBlock = { ...devBlock, draws: undefined };
+    expect(drawdowns([ioOnly])).toEqual([]);
   });
 
   it("a plain loan has no drawdown", () => {

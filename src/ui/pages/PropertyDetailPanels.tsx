@@ -334,10 +334,6 @@ export function ActivationBanner({
   return null;
 }
 
-/**
- * The loan's modelled payoff, remaining term and the interest its prepayments save
- * (ADR 0116 §9), then each block's fixation end and balance at reset (ADR 0117).
- */
 const DRAW_ICON: Record<DrawdownRow["status"], typeof Check> = {
   drawn: Check,
   ahead: Clock,
@@ -354,7 +350,7 @@ function DrawdownSection({ dd }: { dd: DrawdownView }) {
   return (
     <section className="drawdown" aria-labelledby={headingId}>
       <h3 className="panel-subhead" id={headingId}>
-        {d.drawdownTitle}
+        {dd.title}
       </h3>
       <div
         className={`drawdown-bar${dd.full ? " full" : ""}`}
@@ -377,9 +373,9 @@ function DrawdownSection({ dd }: { dd: DrawdownView }) {
           </span>
         )}
       </p>
-      <TableWrap label={d.drawdownTable}>
+      <TableWrap label={`${dd.title} — ${d.drawdownTable}`}>
         <table className="data">
-          <caption className="sr-only">{d.drawdownTable}</caption>
+          <caption className="sr-only">{`${dd.title} — ${d.drawdownTable}`}</caption>
           <thead>
             <tr>
               <th scope="col" className="left">
@@ -421,6 +417,10 @@ function DrawdownSection({ dd }: { dd: DrawdownView }) {
   );
 }
 
+/**
+ * The loan's modelled payoff, remaining term and the interest its prepayments save
+ * (ADR 0116 §9), then each block's fixation end and balance at reset (ADR 0117).
+ */
 export function LoanSummary({ outlook }: { outlook: LoanOutlook }) {
   const t = useT();
   const d = t.propertyDetail;

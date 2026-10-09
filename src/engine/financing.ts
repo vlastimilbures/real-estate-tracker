@@ -88,7 +88,7 @@ export interface PropertyLoan {
   resets: FixationReset[];
   /** Ids of the blocks driving the schedule, in order (D-27). */
   chain: string[];
-  /** Each development block of the chain, as of the exposure's as-of (ADR 0167). */
+  /** Each chain block with tranches that no successor has replaced by as-of (ADR 0167). */
   drawdowns: Drawdown[];
 }
 
@@ -308,9 +308,14 @@ function propertyExposure(
     },
     resets,
     chain: chain.map((b) => b.id),
-    drawdowns: chain.flatMap((b, i) =>
-      isDevLoan(b) ? [blockDrawdown(b, chain[i + 1], ctx.asOf)] : [],
-    ),
+    // A block with tranches, until a successor is in force at as-of (ADR 0167).
+    drawdowns: chain.flatMap((b, i) => {
+      const next = chain[i + 1];
+      const replaced = next && isOnOrBefore(next.startDate, ctx.asOf);
+      return b.draws?.length && !replaced
+        ? [blockDrawdown(b, next, ctx.asOf)]
+        : [];
+    }),
   };
 }
 

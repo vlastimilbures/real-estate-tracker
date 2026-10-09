@@ -657,6 +657,7 @@ export const en = {
       (date: string, requested: string, applied: string) => string
     >,
     drawdownTitle: "Drawdown",
+    drawdownTitleFrom: (date: string) => `Drawdown · from ${date}`,
     drawdownProgress: (drawn: string, total: string, pct: string) =>
       `Drawn ${drawn} of ${total} (${pct})`,
     drawdownFull: (total: string) => `Fully drawn: ${total}`,

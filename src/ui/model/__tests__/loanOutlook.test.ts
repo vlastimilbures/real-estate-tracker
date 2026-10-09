@@ -258,4 +258,15 @@ describe("ADR 0167: drawdown in the loan outlook", () => {
   it("a plain loan has none", () => {
     expect(outlook(javorova()).drawdowns).toEqual([]);
   });
+
+  it("leaves out a start draw of 0 (review of PR #302)", () => {
+    const [dd] = outlook([
+      mortgageBlock({ ...devBlock, initialPrincipal: money(0) }),
+    ]).drawdowns;
+    expect(dd!.rows.map((r) => r.draw)).toEqual([
+      d.trancheRow(1),
+      d.trancheRow(2),
+    ]);
+    expect(dd!.full).toBe(false);
+  });
 });
