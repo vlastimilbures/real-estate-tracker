@@ -141,6 +141,20 @@ describe("0-year floating block (ADR 0162)", () => {
     expect(fixationExpired(floating, BASE_DATE)).toBe(false);
   });
 
+  it("a prepayment before baseDate replays history at the entered rate", () => {
+    const prepayments = [
+      {
+        date: isoDate("2024-03-01"),
+        amount: money("200000"),
+        effect: "lowerInstalment" as const,
+      },
+    ];
+    const fixedFor30 = loan({ fixationYears: 30, prepayments });
+    expect(
+      openingBalance(loan({ fixationYears: 0, prepayments }), assumptions),
+    ).toEqual(openingBalance(fixedFor30, assumptions));
+  });
+
   it("a future floating block runs at the reset rate from its first payment, shocked from its start", () => {
     const future = loan({ fixationYears: 0, startDate: isoDate("2027-01-31") });
     const due1 = edate(future.startDate, 1);

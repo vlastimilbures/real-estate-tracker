@@ -147,6 +147,13 @@ describe("rateShockReach", () => {
     expect(loan?.refixYears).toEqual([2027]);
   });
 
+  it("misses a floating block repaid before baseDate as repaid", () => {
+    const old = block("a", "2000-01-01", 0, 10);
+    const [loan] = reachOf([{ ...old, monthlyInstalment: money("31000") }]);
+    expect(loan?.hit).toBe(false);
+    expect(loan?.blocks[0]?.reason).toBe("repaid");
+  });
+
   it("hits a loan whose fixation ends on baseDate", () => {
     const [loan] = reachOf([block("a", "2019-06-07", 7)], 1);
     expect(loan?.hit).toBe(true);
@@ -361,6 +368,21 @@ describe("tripwire: the helper agrees with the engine", () => {
           ? { ...m, fixationYears: 0 }
           : pastHorizon(m),
       [],
+      1,
+    ),
+    // A fixed successor takes over before the floating lipova block's first payment
+    // after baseDate, so the shock window has nothing to reach.
+    variant(
+      "floating lipova replaced at baseDate by a fixed block",
+      false,
+      (m) =>
+        m.propertyId === "lipova" ? { ...m, fixationYears: 0 } : pastHorizon(m),
+      [
+        {
+          ...block("m-lipova-2", "2026-06-10", 25, 25, "lipova"),
+          monthlyInstalment: money("25000"),
+        },
+      ],
       1,
     ),
     variant("successor fixed to maturity", false, onlyLipova, [
