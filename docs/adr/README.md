@@ -146,7 +146,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0100](0100-rate-shock-reach.md)                  | Scenarios: show which loans a rate shock hits                                                 | Accepted                                                 | #47, #15                                           |
 | [0101](0101-scenario-session-state.md)            | Scenarios: keep the compare state for the session; crash timing is a setting                  | Accepted                                                 | #50, #51, #15                                      |
 | [0102](0102-scenario-form-groups.md)              | Scenario form: group levels, shocks and crash; no per-property override                       | Accepted                                                 | #52, #15                                           |
-| [0103](0103-financing-exposure.md)                | Financing exposure and upcoming events                                                        | Accepted · amended by 0117, 0124                         | #31                                                |
+| [0103](0103-financing-exposure.md)                | Financing exposure and upcoming events                                                        | Accepted · amended by 0117, 0124, 0162                   | #31                                                |
 | [0104](0104-combined-stress-presets.md)           | Scenarios: combined stress presets                                                            | Accepted                                                 | #55, #15                                           |
 | [0105](0105-one-product-name-and-format-note.md)  | One product name on every surface; language does not change formats                           | Accepted                                                 | #22                                                |
 | [0106](0106-collapsible-stress-presets.md)        | Scenarios: collapsible stress presets                                                         | Accepted                                                 | #54, #15                                           |
@@ -205,6 +205,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0159](0159-excel-exports-carry-their-context.md) | Excel exports carry their context and open readable                                           | Accepted                                                 | #123                                               |
 | [0160](0160-csv-import-and-stored-loan-events.md) | CSV import explains how it meets stored loan events                                           | Accepted                                                 | #116                                               |
 | [0161](0161-cash-to-owner.md)                     | Cash to owner: the row the cumulative cash flow tile sums                                     | Accepted                                                 | #117                                               |
+| [0162](0162-floating-block-rate.md)               | A floating (0-year) block keeps its entered rate up to baseDate                               | Proposed                                                 | #124                                               |
 
 <!-- adr-index:end -->
 
