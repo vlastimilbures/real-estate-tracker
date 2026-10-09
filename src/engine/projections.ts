@@ -17,6 +17,7 @@ import {
   type PropertySchedule,
 } from "./schedule";
 import { turnOnYear, yearSlice } from "./yearGrid";
+import { cashOutsideNetCf } from "./ownerCash";
 import { assertAssumptions, assertInputs } from "./validate";
 import { basisDate, valueAt, drawnFraction } from "./growth";
 import {
@@ -234,7 +235,7 @@ function buildYear0(
   tStart: number,
   crash: (value: Decimal, t: number) => Decimal,
   ramp: (value: Decimal, date: Date) => Decimal,
-): ProjectionYear {
+): YearRow {
   if (tStart > 0) return zeroYear(0, baseYear, assumptions.baseDate);
   // The debt at baseDate, not grid month 1's opening balance: a loan drawn after
   // baseDate is new debt in its year, not opening debt (D-33).
@@ -343,7 +344,7 @@ function buildYearRow(
   rc: RentAndCosts,
   slice: ReturnType<typeof yearSlice>,
   draws: Decimal,
-): ProjectionYear {
+): YearRow {
   const netCashFlow = rc.noi.minus(slice.debtService);
   return {
     year: t,
@@ -388,12 +389,26 @@ function projectProperty(
   assumptions: Assumptions,
   built: PropertySchedule,
 ): ProjectionYear[] {
-  const schedule = built.rows;
+  const years = propertyYears(property, portfolio, assumptions, built.rows);
+  const own = new Map([[property.id, built]]);
+  return withCashToOwner(
+    years,
+    cashOutsideNetCf([property], portfolio, assumptions, own, years),
+  );
+}
+
+/** A property's projection years before their cash to owner (ADR 0161). */
+function propertyYears(
+  property: Property,
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+  schedule: AmortizationRow[],
+): YearRow[] {
   const b = propertyBasis(property, portfolio, assumptions, schedule);
   const baseYear = assumptions.baseDate.getUTCFullYear();
   const vacancy = assumptions.vacancyAllowance;
   const cpi = buildCpiIndex(assumptions);
-  const years: ProjectionYear[] = [];
+  const years: YearRow[] = [];
 
   // A timed, permanent value correction: from projection year `atYear` the value curve
   // is scaled by `1 − pct` and growth resumes from the lower base (debt & rent untouched).
@@ -454,6 +469,23 @@ function projectProperty(
   return years;
 }
 
+/** A projection year before its `cashToOwner` is known (ADR 0161). */
+type YearRow = Omit<ProjectionYear, "cashToOwner">;
+
+/**
+ * ADR 0161: each year's cash to owner = net cash flow − the cash outside it
+ * (`cashOutsideNetCf` of the same properties); year 0 is the opening position, 0.
+ */
+function withCashToOwner(
+  years: YearRow[],
+  outside: Decimal[],
+): ProjectionYear[] {
+  return years.map((y, t) => ({
+    ...y,
+    cashToOwner: t === 0 ? ZERO : y.netCashFlow.minus(at(outside, t)),
+  }));
+}
+
 /**
  * 1-based baseDate grid month in which `date` first becomes active. Returns 1 when
  * `date ≤ baseDate` (already owned/let ⇒ active the whole horizon, so the seed keeps
@@ -488,11 +520,7 @@ function yearPeriod(baseDate: Date, t: number) {
 }
 
 /** A fully-empty projection year for periods before a property is owned. */
-function zeroYear(
-  year: number,
-  calendarYear: number,
-  baseDate: Date,
-): ProjectionYear {
+function zeroYear(year: number, calendarYear: number, baseDate: Date): YearRow {
   return {
     year,
     calendarYear,
@@ -544,18 +572,17 @@ export function projectPortfolio(
     assumptions,
   ),
 ): ProjectionYear[] {
-  const perProp = portfolio.properties
-    .filter((p) => p.active !== false)
-    .map((p) =>
-      projectProperty(
-        p,
-        portfolio,
-        assumptions,
-        schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
-      ),
-    );
+  const active = portfolio.properties.filter((p) => p.active !== false);
+  const perProp = active.map((p) =>
+    projectProperty(
+      p,
+      portfolio,
+      assumptions,
+      schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
+    ),
+  );
   const baseYear = assumptions.baseDate.getUTCFullYear();
-  const out: ProjectionYear[] = [];
+  const out: YearRow[] = [];
   for (let t = 0; t <= assumptions.horizonYears; t++) {
     const acc = (sel: (y: ProjectionYear) => Decimal) =>
       perProp.reduce((s, yrs) => s.plus(sel(at(yrs, t))), ZERO);
@@ -587,5 +614,10 @@ export function projectPortfolio(
       ratePa: null,
     });
   }
-  return out;
+  // Σ net cash flow − the portfolio's cash outside it, not Σ of the property rows: the
+  // KPIs sum these, and another summation order would move their last digits.
+  return withCashToOwner(
+    out,
+    cashOutsideNetCf(active, portfolio, assumptions, schedules, out),
+  );
 }

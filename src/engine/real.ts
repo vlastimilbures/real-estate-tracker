@@ -67,6 +67,7 @@ export function realProjection(
       refinanced: d(y.refinanced),
       prepaid: d(y.prepaid),
       prepaymentFees: d(y.prepaymentFees),
+      cashToOwner: d(y.cashToOwner),
     };
   });
 }

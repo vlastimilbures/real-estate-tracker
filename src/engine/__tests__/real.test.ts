@@ -121,6 +121,7 @@ describe("realProjection — every money field ÷ the year's CPI", () => {
         "debtService",
         "netCashFlow",
         "draws",
+        "cashToOwner",
       ] as const) {
         expect(r[k].toString()).toBe(n[k].div(cpi[t]).toString());
       }

@@ -351,6 +351,10 @@ export interface ProjectionYear {
   // flow and the IRR subtract both.
   prepaid: Decimal;
   prepaymentFees: Decimal;
+  // ADR 0161: net cash flow minus the cash outside it (acquisitions, refinance cash,
+  // prepayments with their fees, debt service before a future buy); 0 in year 0.
+  // Σ of the portfolio's years 1..N is the cumulative cash flow KPI.
+  cashToOwner: Decimal;
   dscr: Decimal | null;
   ratePa: Decimal | null; // dominant mortgage rate in effect; null if no debt
 }

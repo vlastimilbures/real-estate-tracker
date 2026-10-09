@@ -14,11 +14,7 @@ import { at } from "./arrays";
 import { propertySchedules, type PropertySchedule } from "./schedule";
 import { assertInputs } from "./validate";
 import { buildCpiIndex, projectPortfolio } from "./projections";
-import {
-  cashOutsideNetCf,
-  prePurchaseDebtService,
-  scheduleOf,
-} from "./ownerCash";
+import { prePurchaseDebtService, scheduleOf } from "./ownerCash";
 import type {
   Assumptions,
   IrrNoRateReason,
@@ -337,17 +333,10 @@ export function kpisFrom(
   const equityN = at(proj, N).equity;
   const active = portfolio.properties.filter((p) => p.active !== false);
   const prePurchase = prePurchaseDebtService(active, assumptions, schedules);
-  const outside = cashOutsideNetCf(
-    active,
-    portfolio,
-    assumptions,
-    schedules,
-    proj,
-  );
-  // The owner's flow each year, built once: flows[t] = netCF_t − cashOutsideNetCf_t. The
-  // nominal and real cumulative cash flow and both IRR vectors derive from it (#117);
-  // index 0 is not read (year 0 is the opening equity).
-  const flows = proj.map((y, t) => y.netCashFlow.minus(at(outside, t)));
+  // The owner's flow each year: the projection's cash to owner, netCF_t −
+  // cashOutsideNetCf_t (ADR 0161). The nominal and real cumulative cash flow and both
+  // IRR vectors derive from it (#117); index 0 is not read (year 0 is the opening equity).
+  const flows = proj.map((y) => y.cashToOwner);
   const nominalVector = leveredCashFlows(proj, flows);
   const realVector = nominalVector.map((cf, t) => cf.div(at(cpi, t)));
 
