@@ -1,6 +1,6 @@
 # 0164. Amortization rows show the payment due date
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-09
 - Source: issue #112 (2026-10 code review, finding G2-6-01); owner decision D5 = A
   (2026-10-09); Track 11 PR 11.16
