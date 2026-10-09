@@ -4,7 +4,13 @@
 import { describe, it, expect } from "vitest";
 import { isoDate, money } from "../../../engine";
 import {
+  BLANK_ROW,
   draftRowOf,
+  drawdownTotal,
+  drawsDraft,
+  drawWarnings,
+  hasRows,
+  parseDrawRows,
   parsePrepaymentRows,
   parseRecastRows,
   prepaymentsDraft,
@@ -12,6 +18,7 @@ import {
   recastsDraft,
   rowProblems,
   writeRows,
+  type DrawRow,
   type PrepaymentRow,
   type RecastRow,
 } from "../loanEventRows";
@@ -113,5 +120,84 @@ describe("loan event rows", () => {
     expect(draftRowOf(draft, 0)).toBe(1);
     expect(draftRowOf(draft, 1)).toBe(3);
     expect(draftRowOf(draft, 2)).toBeNull();
+  });
+});
+
+// ADR 0167: a development loan's tranches are rows too. The start draw is the initial
+// principal; the total loan is it plus every tranche that parses; soft warnings flag a
+// tranche after the interest-only end or two tranches on the same date.
+describe("drawdown rows (ADR 0167)", () => {
+  const draw = (r: Partial<DrawRow> = {}): DrawRow => ({
+    date: "01.09.2027",
+    amount: "800000",
+    ...r,
+  });
+  const blank = draw({ date: "", amount: "" });
+
+  it("round-trips stored draws through the draft, keeping their precision", () => {
+    const stored = [
+      { date: isoDate("2027-09-01"), amount: money("800000.005") },
+      { date: isoDate("2028-03-01"), amount: money(500000) },
+    ];
+    expect(parseDrawRows(drawsDraft(stored))).toEqual(stored);
+    expect(drawsDraft(undefined)).toBe("");
+    expect(drawsDraft([])).toBe("");
+    expect(BLANK_ROW.draws).toEqual(blank);
+  });
+
+  it("ignores blank rows, keeps the draft order, and fails on a bad row", () => {
+    const draft = writeRows([draw({ date: "01.03.2028" }), blank, draw()]);
+    expect(parseDrawRows(draft)?.map((x) => x.date)).toEqual([
+      isoDate("2028-03-01"),
+      isoDate("2027-09-01"),
+    ]);
+    expect(parseDrawRows(writeRows([blank]))).toEqual([]);
+    expect(parseDrawRows(writeRows([draw({ amount: "0" })]))).toBeNull();
+    expect(rowProblems(draw({ date: "31.02.2027", amount: "-5" }))).toEqual([
+      "date",
+      "amount",
+    ]);
+    expect(rowProblems(blank)).toEqual([]);
+    expect(draftRowOf(writeRows([blank, draw()]), 0)).toBe(1);
+  });
+
+  it("knows whether a list has a row worth saving", () => {
+    expect(hasRows("")).toBe(false);
+    expect(hasRows(writeRows([blank]))).toBe(false);
+    expect(hasRows(writeRows([blank, draw({ amount: "" })]))).toBe(true);
+  });
+
+  it("totals the start draw and the tranches that parse", () => {
+    const draft = writeRows([draw(), blank, draw({ amount: "x" })]);
+    const t = drawdownTotal("1 200 000", draft)!;
+    expect(t.total.toString()).toBe("2000000");
+    expect(t.tranches).toBe(1);
+    expect(drawdownTotal("", draft)).toBeNull();
+    expect(drawdownTotal("0", "")).toBeNull();
+    expect(drawdownTotal("1200000", "")!.tranches).toBe(0);
+  });
+
+  it("warns on a tranche after the interest-only end and on a shared date", () => {
+    const draft = writeRows([
+      draw({ date: "01.09.2027" }),
+      draw({ date: "01.06.2028" }),
+      blank,
+      draw({ date: "01.09.2027" }),
+      draw({ date: "bad" }),
+    ]);
+    expect(drawWarnings(draft, "31.03.2028")).toEqual([
+      ["sameDate"],
+      ["afterCompletion"],
+      [],
+      ["sameDate"],
+      [],
+    ]);
+    // On the completion date itself is still inside the interest-only period.
+    expect(
+      drawWarnings(writeRows([draw({ date: "31.03.2028" })]), "31.03.2028"),
+    ).toEqual([[]]);
+    expect(drawWarnings(writeRows([draw({ date: "01.06.2028" })]), "")).toEqual(
+      [[]],
+    );
   });
 });
