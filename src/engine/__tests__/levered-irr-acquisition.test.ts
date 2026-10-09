@@ -2,7 +2,7 @@
 // its turn-on year, so levered IRR / cumulative cash flow aren't flattered by free
 // terminal equity. The isolation tests vary only the `acquisitionCostPct` knob (a
 // strictly-monotonic input to the injected outflow) so the direction can't pass for an
-// unrelated reason; parity (acqOutflow all-zero on the all-owned seed) is covered by
+// unrelated reason; parity (cashOutsideNetCf all-zero on the all-owned seed) is covered by
 // projection.test.ts and re-asserted here.
 import { describe, it, expect } from "vitest";
 import { portfolioKpis } from "../kpis";
