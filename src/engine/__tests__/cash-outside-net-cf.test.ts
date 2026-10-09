@@ -10,34 +10,11 @@ import { prePurchaseDebtService } from "../ownerCash";
 import { turnOnYear } from "../yearGrid";
 import { propertySchedules } from "../schedule";
 import { isoDate } from "../dates";
-import { money } from "../brands";
 import { ZERO } from "../../lib/money";
-import type { MortgageBlock, Portfolio } from "../types";
 import { assumptions } from "./support/seed";
-import { mixedWithRefi } from "./support/synthetic";
+import { mixedCashOutside } from "./support/synthetic";
 
-// The future buy (purchase 15.03.2028) with its loan drawn before baseDate (pre-purchase
-// debt service, ADR 0124) and a 300,000 Kč prepayment with a 3,000 Kč fee (ADR 0109);
-// `mixedWithRefi` adds Javorova's cash-out refinance (D-47).
-const fixture: Portfolio = {
-  ...mixedWithRefi,
-  mortgages: mixedWithRefi.mortgages.map((m): MortgageBlock =>
-    m.id === "m-future"
-      ? {
-          ...m,
-          startDate: isoDate("2026-01-10"),
-          prepayments: [
-            {
-              date: isoDate("2030-03-15"),
-              amount: money("300000"),
-              effect: "shortenTerm",
-              fee: money("3000"),
-            },
-          ],
-        }
-      : m,
-  ),
-};
+const fixture = mixedCashOutside;
 
 describe("#117: the KPIs net of the cash outside net cash flow", () => {
   // Not here: prepayments before the turn-on and a later first loan's cash in (pinned in
