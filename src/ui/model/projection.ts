@@ -154,7 +154,7 @@ export function projectionColumns(
   }
   cols.push(
     { header: g.value, kind: "money", value: (r) => r.value },
-    { header: g.debt, kind: "money", value: (r) => r.balance },
+    { header: g.debt, kind: "money", value: (r) => r.committedDebt },
     { header: g.equity, kind: "money", value: (r) => r.equity },
     { header: g.ltv, kind: "percent", value: (r) => r.ltv },
     { header: g.grossRent, kind: "money", value: flow((r) => r.grossRent) },

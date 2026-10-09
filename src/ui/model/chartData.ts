@@ -110,7 +110,8 @@ export function toChartRows(series: SeriesRow[]): ChartRow[] {
       year: r.year,
       calendarYear: r.calendarYear,
       value: n(r.value),
-      balance: n(r.balance),
+      // The debt line shows committed debt, so value − debt = equity (ADR 0166).
+      balance: n(r.committedDebt),
       equity: n(r.equity),
       ltv: r.ltv === null ? null : n(r.ltv),
       grossRent: flow(r.grossRent),

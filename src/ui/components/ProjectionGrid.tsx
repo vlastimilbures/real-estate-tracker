@@ -107,7 +107,11 @@ export function ProjectionGrid({
                   <Money value={r.value} parens={false} suffix={false} />
                 </td>
                 <td>
-                  <Money value={r.balance} parens={false} suffix={false} />
+                  <Money
+                    value={r.committedDebt}
+                    parens={false}
+                    suffix={false}
+                  />
                 </td>
                 <td>
                   <Money value={r.equity} suffix={false} />
