@@ -13,7 +13,6 @@ import {
   propertySchedules,
   scheduleRows,
 } from "../schedule";
-import { drawnFraction } from "../growth";
 import { applyScenario } from "../scenarios";
 import { edate, isAfter, isOnOrBefore, isoDate } from "../dates";
 import { ZERO, type Decimal } from "../../lib/money";
@@ -24,7 +23,7 @@ import type {
   Portfolio,
 } from "../types";
 import { assumptions, portfolio, PARITY } from "./support/seed";
-import { devBlock, mixed } from "./support/mixed";
+import { mixed } from "./support/mixed";
 import { KC, near } from "./support/tolerance";
 import { rate } from "../brands";
 import type { IsoDate } from "../brands";
@@ -208,7 +207,7 @@ describe("Invariant — principal conservation", () => {
 function assertSnapshotMatchesProjection(
   p: Portfolio,
   ids: string[],
-  field: "value" | "debt",
+  field: "value" | "debt" | "committedDebt",
 ) {
   const schedules = schedulesOf(p);
   for (const prop of activeProps(p).filter((x) => ids.includes(x.id))) {
@@ -218,7 +217,12 @@ function assertSnapshotMatchesProjection(
       const asOf = edate(assumptions.baseDate, n * 12);
       const s = propertySnapshot(prop, p, assumptions, asOf, sched.rows);
       if (!s.owned) continue; // pre-purchase years: see characterisation below
-      const want = field === "value" ? proj[n].value : proj[n].balance;
+      const want =
+        field === "value"
+          ? proj[n].value
+          : field === "debt"
+            ? proj[n].balance
+            : proj[n].committedDebt;
       near(s[field], want.toNumber(), KC, `${prop.id} N=${n} ${field}`);
     }
   }
@@ -238,6 +242,12 @@ describe("Invariant — snapshot(baseDate + N y) == projection year N", () => {
         p,
         activeProps(p).map((x) => x.id),
         "debt",
+      ));
+    it(`${name}: COMMITTED DEBT matches for every active property, N = 0…horizon // ADR 0166`, () =>
+      assertSnapshotMatchesProjection(
+        p,
+        activeProps(p).map((x) => x.id),
+        "committedDebt",
       ));
   }
 
@@ -293,7 +303,7 @@ describe("Invariant — snapshot(baseDate + N y) == projection year N", () => {
       "value",
     ));
 
-  it("dev property: both sides scale the value by the same drawnFraction", () => {
+  it("dev property: the value is the completed value, as for the same flat on a plain loan // ADR 0166", () => {
     const plain: Portfolio = {
       ...mixed,
       mortgages: mixed.mortgages.map((m) =>
@@ -316,18 +326,10 @@ describe("Invariant — snapshot(baseDate + N y) == projection year N", () => {
       schedulesOf(plain).get("dev")!,
     );
     for (let n = 0; n <= assumptions.horizonYears; n++) {
-      const date = edate(assumptions.baseDate, n * 12);
-      const f = drawnFraction(devBlock, date);
-      near(
-        devProj[n].value,
-        plainProj[n].value.times(f).toNumber(),
-        KC,
-        `N=${n}`,
-      );
+      near(devProj[n].value, plainProj[n].value.toNumber(), KC, `N=${n}`);
     }
-    // Fraction ramps from 2.0/4.5 at baseDate to 1 after the last draw.
-    near(drawnFraction(devBlock, assumptions.baseDate), 2 / 4.5, 1e-12);
-    near(drawnFraction(devBlock, edate(assumptions.baseDate, 24)), 1, 0);
+    // The whole 4.5M loan is committed from baseDate: 2.0M drawn + 2.5M of tranches.
+    near(devProj[0].committedDebt, 4_500_000, KC, "committed at baseDate");
   });
 });
 
