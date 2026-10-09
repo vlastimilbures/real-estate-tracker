@@ -26,8 +26,8 @@ import {
   buildCpiIndex,
   prePurchaseDebtService,
   projectPortfolio,
-  turnOnYear,
 } from "./projections";
+import { turnOnYear } from "./yearGrid";
 import type {
   Assumptions,
   IrrNoRateReason,

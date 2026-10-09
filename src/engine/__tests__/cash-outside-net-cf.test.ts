@@ -5,11 +5,8 @@
 // these exact values (recorded before the refactor) prove it is behaviour-neutral.
 import { describe, it, expect } from "vitest";
 import { portfolioKpis } from "../kpis";
-import {
-  portfolioProjection,
-  prePurchaseDebtService,
-  turnOnYear,
-} from "../projections";
+import { portfolioProjection, prePurchaseDebtService } from "../projections";
+import { turnOnYear } from "../yearGrid";
 import { propertySchedules, scheduleRows } from "../schedule";
 import { isoDate } from "../dates";
 import { money } from "../brands";
