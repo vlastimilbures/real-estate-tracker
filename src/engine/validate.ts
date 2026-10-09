@@ -16,6 +16,7 @@ import {
   termMonths,
 } from "./amortization";
 import { EngineInputError } from "./errors";
+import { overlappingLeases } from "./succession";
 import type {
   Assumptions,
   LoanRecast,
@@ -53,7 +54,8 @@ export type ValidationCode =
   | "EVENT_AFTER_SCHEDULE_END"
   | "INVALID_RECAST"
   | "INVALID_RECAST_MATURITY"
-  | "RECAST_INSTALMENT_BEFORE_COMPLETION";
+  | "RECAST_INSTALMENT_BEFORE_COMPLETION"
+  | "LEASE_OVERLAP";
 
 export type ValidationEntity =
   | "assumptions"
@@ -684,6 +686,26 @@ export function validatePortfolio(
   const errors: EngineValidationError[] = [];
   checkPortfolio(portfolio, (e) => errors.push(e));
   return errors;
+}
+
+/**
+ * LEASE_OVERLAP on each lease that overlaps another lease of its property (ADR 0163),
+ * once per lease, in start order. A write-time rule: the store and CSV import apply it to
+ * the rows they write. It is not part of `validatePortfolio`/`validateInputs`, so a
+ * stored overlap from before the rule still loads and restores (the Data check lists it).
+ */
+export function leaseOverlapErrors(
+  portfolio: Portfolio,
+): EngineValidationError[] {
+  const named = new Set<string>();
+  for (const pair of overlappingLeases(portfolio.leases))
+    for (const l of pair) named.add(l.id);
+  return [...named].map((id) => ({
+    code: "LEASE_OVERLAP",
+    entity: "lease",
+    id,
+    field: "startDate",
+  }));
 }
 
 /**

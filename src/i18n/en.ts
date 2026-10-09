@@ -137,6 +137,8 @@ export const en = {
       "The new maturity must be after the next payment and after a development loan's completion, and at most 50 years after the loan start (or the contract term, if longer)",
     RECAST_INSTALMENT_BEFORE_COMPLETION:
       "A new instalment can only be set after the interest-only period ends; set a new maturity date instead",
+    LEASE_OVERLAP:
+      "This lease overlaps another lease of the same property. Leases cannot overlap: end the earlier lease before the later one starts",
   } satisfies Record<ValidationCode, string>,
 
   // A write the database refused (P7a, DR-133). Shown in place of SQLite's raw text.

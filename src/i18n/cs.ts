@@ -125,6 +125,8 @@ export const cs: Dictionary = {
       "Nová splatnost musí být po příští splátce a u úvěru na výstavbu po dokončení, a nejvýše 50 let od začátku úvěru (nebo smluvní doba, je-li delší)",
     RECAST_INSTALMENT_BEFORE_COMPLETION:
       "Novou splátku lze nastavit až po skončení splácení jen úroků; zadejte místo toho nové datum splatnosti",
+    LEASE_OVERLAP:
+      "Tento nájem se překrývá s jiným nájmem téže nemovitosti. Nájmy se nesmí překrývat: ukončete dřívější nájem před začátkem pozdějšího",
   },
 
   writeErrors: {
