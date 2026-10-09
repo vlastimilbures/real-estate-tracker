@@ -43,4 +43,19 @@ describe("ADR 0116: amortization table columns", () => {
     const cells = screen.getAllByRole("cell").map((c) => c.textContent);
     expect(cells).toContain("500 000");
   });
+
+  it("dates each row by its payment's due date (ADR 0164)", () => {
+    const rows = rowsOf(seed);
+    // Payment 56, due on the fixation end; its grid date is 07.02.2031.
+    render(
+      <AmortizationTable
+        schedule={[rows[55]!, { ...rows[56]!, dueDate: null }]}
+      />,
+    );
+    expect(headers()[1]).toBe("Due date");
+    const cells = screen.getAllByRole("cell").map((c) => c.textContent);
+    expect(cells).toContain("17.01.2031");
+    expect(cells).not.toContain("07.02.2031");
+    expect(cells[cells.indexOf("57") + 1]).toBe("—");
+  });
 });

@@ -701,7 +701,7 @@ export const ru: Dictionary = {
     amortizationMonths: (n) =>
       `${n} ${ruPlural(n, ["месяц", "месяца", "месяцев"])}`,
     amColMonth: "Месяц",
-    amColDate: "Дата",
+    amColDate: "Дата платежа",
     amColRate: "Ставка",
     amColInstalment: "Платёж",
     amColInterest: "Проценты",

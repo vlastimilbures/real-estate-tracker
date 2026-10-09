@@ -285,7 +285,7 @@ export function amortizationColumns(
   const d = t.propertyDetail;
   return [
     { header: d.amColMonth, kind: "int", value: (r) => r.month },
-    { header: d.amColDate, kind: "date", value: (r) => r.date },
+    { header: d.amColDate, kind: "date", value: (r) => r.dueDate },
     { header: d.amColRate, kind: "rate", value: (r) => r.ratePa },
     { header: d.amColInstalment, kind: "money", value: (r) => r.instalment },
     { header: d.amColInterest, kind: "money", value: (r) => r.interest },

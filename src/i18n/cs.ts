@@ -693,7 +693,7 @@ export const cs: Dictionary = {
     amortizationMonths: (n) =>
       `${n} ${csPlural(n, ["měsíc", "měsíce", "měsíců"])}`,
     amColMonth: "Měsíc",
-    amColDate: "Datum",
+    amColDate: "Datum splatnosti",
     amColRate: "Sazba",
     amColInstalment: "Splátka",
     amColInterest: "Úrok",
