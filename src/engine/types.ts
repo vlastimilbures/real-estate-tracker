@@ -228,6 +228,9 @@ export interface PropertySnapshot {
   active: boolean; // false ⇒ deactivated: listed but excluded from portfolio totals
   value: Decimal;
   debt: Decimal;
+  // ADR 0166: debt + the development tranches not drawn yet; equity and LTV use it.
+  // Equals `debt` except while a development loan is still drawing.
+  committedDebt: Decimal;
   equity: Decimal;
   ltv: Decimal | null; // null when debt is owed on no value (ADR 0133)
   grossAnnualRent: Decimal;
@@ -247,6 +250,7 @@ export interface PortfolioSnapshot {
   perProperty: PropertySnapshot[];
   totalValue: Decimal;
   totalDebt: Decimal;
+  totalCommittedDebt: Decimal; // ADR 0166: Σ committedDebt; totalEquity and ltv use it
   totalEquity: Decimal;
   ltv: Decimal | null; // null when debt is owed on no value (ADR 0133)
   grossAnnualRent: Decimal;
@@ -335,6 +339,9 @@ export interface ProjectionYear {
   // stocks
   value: Decimal;
   balance: Decimal;
+  // ADR 0166: balance + the development tranches not drawn yet (interest and
+  // payments stay on `balance`); equity = value − committedDebt, LTV uses it too.
+  committedDebt: Decimal;
   equity: Decimal;
   ltv: Decimal | null; // null when debt is owed on no value (ADR 0133)
   // flows (blank/zero in year 0)
@@ -350,6 +357,11 @@ export interface ProjectionYear {
   // refinanced it explains the balance move: balance[t] = balance[t−1] − principal[t]
   // − prepaid[t] + draws[t] + refinanced[t].
   draws: Decimal;
+  // ADR 0166: the change in committed debt from new borrowing: draws[t] less the part
+  // that was already committed (a development tranche), plus the undrawn part of a loan
+  // that came in this year. committedDebt[t] = committedDebt[t−1] − principal[t]
+  // − prepaid[t] + committedDraws[t] + refinanced[t]; 0 in year 0.
+  committedDraws: Decimal;
   // ADR 0165: the value a future purchase comes online with, in its turn-on year (its
   // value at the purchase date); 0 in every other year and for a property owned at
   // baseDate. Lets the equity change split a purchase from appreciation.

@@ -19,6 +19,7 @@ import {
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedules,
   scheduleRows,
+  undrawnPrincipal,
 } from "../schedule";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import {
@@ -27,7 +28,6 @@ import {
   propertyProjection,
 } from "../projections";
 import { irr, portfolioKpis } from "../kpis";
-import { drawnFraction } from "../growth";
 import { EngineInputError } from "../errors";
 import { applyScenario, type ScenarioOverrides } from "../scenarios";
 import type { Assumptions, MortgageBlock, Portfolio } from "../types";
@@ -50,6 +50,9 @@ import { money } from "../brands";
 // (pinned in acquired-value.test.ts). Leaving them
 // out keeps every hash comparable (no number moved).
 const ADDED_FIELDS = new Set([
+  "committedDebt",
+  "committedDraws",
+  "totalCommittedDebt",
   "periodStart",
   "periodEnd",
   "firstCashFlowPositiveProjectionYear",
@@ -282,8 +285,8 @@ describe("P4a golden master (full precision)", () => {
       balances: [0, 1, 17, 64, 120].map((m) =>
         currentBalance(block, edate(block.startDate, m)).toString(),
       ),
-      drawn: [0, 3, 9, 15, 24].map((m) =>
-        drawnFraction(block, edate(seedAssumptions.baseDate, m)).toString(),
+      undrawn: [0, 3, 9, 15, 24].map((m) =>
+        undrawnPrincipal([block], seedAssumptions, m).toString(),
       ),
     }).toMatchSnapshot();
   });

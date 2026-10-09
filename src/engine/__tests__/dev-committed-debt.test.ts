@@ -284,8 +284,9 @@ describe("committed debt edge cases", () => {
     };
     const pf = mixedDevOnly([mixedDevBlock, refi]);
     const proj = portfolioProjection(pf, assumptions);
-    // Year 0: the 2.5M of tranches are still ahead on the development loan.
-    near(proj[0].committedDebt.minus(proj[0].balance), 2_500_000, KC, "year 0");
+    // Year 0: the 1.5M tranche of 2026-11-15 is still ahead; the 1.0M one of 2027-08-20
+    // is dated after the successor starts, so it is never drawn and not committed.
+    near(proj[0].committedDebt.minus(proj[0].balance), 1_500_000, KC, "year 0");
     // Year 1 (2027-06-07): the successor runs; the 2027-08-20 tranche never comes.
     for (const n of [1, 2, 5]) {
       expect(proj[n].committedDebt.toString()).toBe(proj[n].balance.toString());
@@ -296,6 +297,7 @@ describe("committed debt edge cases", () => {
     const futureDev: MortgageBlock = {
       ...mixedDevBlock,
       startDate: isoDate("2027-03-01"),
+      loanTermYears: 30,
       draws: [
         { date: isoDate("2027-11-15"), amount: money("1500000") },
         { date: isoDate("2028-08-20"), amount: money("1000000") },
@@ -335,7 +337,7 @@ describe("committed debt edge cases", () => {
     near(proj[1].committedDebt, 4_500_000, KC, "year 1 committed");
     near(
       proj[1].committedDebt.minus(proj[1].balance),
-      1_000_000,
+      2_500_000, // both tranches are dated after 2027-06-07
       KC,
       "year 1 undrawn",
     );
@@ -359,5 +361,40 @@ describe("portfolio KPIs on a development property", () => {
     expect(kpis.netWorthMultiple).toBeNull(); // equity0 ≤ 0 (ADR 0126)
     expect(kpis.cagrNominal).toBeNull(); // non-positive equity0 → null, not NaN (D-34)
     expect(kpis.cagrReal).toBeNull();
+  });
+});
+
+describe("committedDraws explains the committed-debt move (ADR 0166)", () => {
+  const cases: [string, Portfolio][] = [
+    ["mixed", mixed],
+    ["dev flat", portfolioWith(devBlock)],
+  ];
+  it.each(cases)(
+    "%s: committed[t] = committed[t−1] − principal − prepaid + committedDraws + refinanced",
+    (_, pf) => {
+      const proj = portfolioProjection(pf, assumptions);
+      expect(proj[0].committedDraws.isZero()).toBe(true);
+      for (let t = 1; t < proj.length; t++) {
+        const y = proj[t];
+        near(
+          y.committedDebt,
+          proj[t - 1].committedDebt
+            .minus(y.principal)
+            .minus(y.prepaid)
+            .plus(y.committedDraws)
+            .plus(y.refinanced)
+            .toNumber(),
+          KC,
+          `t=${t}`,
+        );
+      }
+    },
+  );
+
+  it("a tranche year commits nothing new", () => {
+    const proj = portfolioProjection(portfolioWith(devBlock), assumptions);
+    expect(proj[1].draws.greaterThan(0)).toBe(true);
+    near(proj[1].committedDraws, 0, KC, "year 1");
+    near(proj[2].committedDraws, 0, KC, "year 2");
   });
 });

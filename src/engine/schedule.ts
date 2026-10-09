@@ -1449,6 +1449,40 @@ export function openingDebt(
 }
 
 /**
+ * Development-loan principal not drawn yet at the end of grid month `month` (0 =
+ * baseDate), counted as committed debt (ADR 0166): the initial principal while the
+ * loan has not drawn it, plus the tranches still ahead. It follows the schedule's
+ * grid, so committed debt = balance + this never drifts from the schedule: an item
+ * lands in the first grid month on/after its date, and one dated on/before baseDate
+ * is opening debt (D-44). A development loan that follows another block counts from
+ * its own draw month (the predecessor's debt is owed before), and stops at its
+ * successor's draw month; a tranche dated after the successor's start is never drawn.
+ */
+export function undrawnPrincipal(
+  blocks: MortgageBlock[],
+  assumptions: Assumptions,
+  month: number,
+): Decimal {
+  const { baseDate } = assumptions;
+  const ahead = (date: Date) =>
+    isAfter(date, baseDate) && firstGridMonthOnOrAfter(baseDate, date) > month;
+  const chain = blockChain(blocks, baseDate);
+  return chain.reduce<Decimal>((sum, block, i) => {
+    if (!isDevLoan(block)) return sum;
+    const next = chain[i + 1];
+    if (i > 0 && month < drawMonth(block, baseDate)) return sum;
+    if (next && month >= drawMonth(next, baseDate)) return sum;
+    const tranches = (block.draws ?? []).filter(
+      (d) => !(next && isAfter(d.date, next.startDate)) && ahead(d.date),
+    );
+    return tranches.reduce<Decimal>(
+      (s, d) => s.plus(d.amount),
+      sum.plus(ahead(block.startDate) ? block.initialPrincipal : ZERO),
+    );
+  }, ZERO);
+}
+
+/**
  * Instalment & rate in force at a baseDate-anchored schedule month — reads the
  * row at that month so a future as-of date past the fixation reset reflects the
  * re-amortized instalment and reset rate. Month ≤ 0 (baseDate) uses the first row.

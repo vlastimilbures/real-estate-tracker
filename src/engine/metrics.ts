@@ -7,16 +7,16 @@ import {
   lastOnOrBefore,
   inForceOrUpcoming,
 } from "./dates";
-import { isDevLoan } from "./amortization";
 import {
   balanceAtMonth,
   instalmentAtMonth,
   openingDebt,
   propertySchedule,
   schedulesByProperty,
+  undrawnPrincipal,
 } from "./schedule";
 import { assertAsOf, assertInputs } from "./validate";
-import { basisDate, valueAt, drawnFraction } from "./growth";
+import { basisDate, valueAt } from "./growth";
 import type {
   Assumptions,
   Portfolio,
@@ -178,28 +178,6 @@ function valueAsOf(
 }
 
 /**
- * Snapshot value. For a development property the valuation is the *completed* value,
- * scaled by the drawn fraction so it ramps with construction progress (0 before the
- * first draw → full at the last draw). Non-dev properties skip the multiply.
- */
-function snapshotValue(
-  property: Property,
-  portfolio: Portfolio,
-  assumptions: Assumptions,
-  asOf: Date,
-  blocks: MortgageBlock[],
-): Decimal {
-  const rawValue = valueAsOf(
-    forProperty(portfolio.valuations, property.id),
-    property,
-    assumptions,
-    asOf,
-  );
-  const devBlock = blocks.find(isDevLoan);
-  return devBlock ? rawValue.times(drawnFraction(devBlock, asOf)) : rawValue;
-}
-
-/**
  * Debt, instalment and rate at `asOf`, read from the fixation-aware schedule (so a
  * future asOf past a reset reflects the re-amortized instalment). `schedule` must be
  * the property's rows built from the same inputs: it has no rows only when the
@@ -280,7 +258,13 @@ function snapshotProperty(
   schedule: AmortizationRow[],
 ): PropertySnapshot {
   const blocks = forProperty(portfolio.mortgages, property.id);
-  const value = snapshotValue(property, portfolio, assumptions, asOf, blocks);
+  // A development property is valued at its completed value (ADR 0166).
+  const value = valueAsOf(
+    forProperty(portfolio.valuations, property.id),
+    property,
+    assumptions,
+    asOf,
+  );
   const { debt, monthlyInstalment, rate } = snapshotDebt(
     blocks,
     assumptions,
@@ -289,16 +273,29 @@ function snapshotProperty(
   );
   const income = snapshotIncome(property, portfolio, assumptions, asOf);
   const annualDebtService = monthlyInstalment.times(12);
+  const owned = isOnOrBefore(property.purchaseDate, asOf);
+  // ADR 0166: an owned property also owes the development tranches not drawn yet,
+  // on the schedule grid the debt is read from.
+  const committedDebt = owned
+    ? debt.plus(
+        undrawnPrincipal(
+          blocks,
+          assumptions,
+          lastGridMonthOnOrBefore(assumptions.baseDate, asOf),
+        ),
+      )
+    : debt;
 
   return {
     propertyId: property.id,
     name: property.name,
-    owned: isOnOrBefore(property.purchaseDate, asOf),
+    owned,
     active: property.active !== false,
     value,
     debt,
-    equity: value.minus(debt),
-    ltv: ltvOf(debt, value),
+    committedDebt,
+    equity: value.minus(committedDebt),
+    ltv: ltvOf(committedDebt, value),
     ...income,
     annualDebtService,
     netCashFlow: income.noi.minus(annualDebtService),
@@ -345,6 +342,7 @@ export function portfolioSnapshot(
 
   const totalValue = sum((s) => s.value);
   const totalDebt = sumOf(owing)((s) => s.debt);
+  const totalCommittedDebt = sumOf(owing)((s) => s.committedDebt);
   const grossAnnualRent = sum((s) => s.grossAnnualRent);
   const effectiveGrossIncome = sum((s) => s.effectiveGrossIncome);
   const holdingCosts = sum((s) => s.holdingCosts);
@@ -357,8 +355,9 @@ export function portfolioSnapshot(
     perProperty,
     totalValue,
     totalDebt,
-    totalEquity: totalValue.minus(totalDebt),
-    ltv: ltvOf(totalDebt, totalValue),
+    totalCommittedDebt,
+    totalEquity: totalValue.minus(totalCommittedDebt),
+    ltv: ltvOf(totalCommittedDebt, totalValue),
     grossAnnualRent,
     effectiveGrossIncome,
     holdingCosts,

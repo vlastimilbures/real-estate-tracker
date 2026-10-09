@@ -91,6 +91,7 @@ describe("toEquityChangeRows", () => {
       calendarYear: 2026 + year,
       value: D(value),
       balance: D(balance),
+      committedDebt: D(balance),
       equity: D(value).minus(D(balance)),
       ltv: ZERO,
       grossRent: ZERO,
@@ -104,6 +105,7 @@ describe("toEquityChangeRows", () => {
       cashToOwner: ZERO,
       dscr: null,
       draws: D(draws),
+      committedDraws: D(draws),
       acquiredValue: D(acquired),
       refinanced: D(0),
       prepaid: D(prepaid),
@@ -195,4 +197,39 @@ describe("toEquityChangeRows: purchases (ADR 0165)", () => {
     expect(hasPurchases(toEquityChangeRows(nominal))).toBe(false);
     expect(hasPurchases([])).toBe(false);
   });
+});
+
+// ADR 0166 (#120): equity is value − committed debt, so a development tranche drawn in a
+// year was already committed and shows no new-debt bar, under either lens.
+describe("toEquityChangeRows: development tranches (ADR 0166)", () => {
+  const only = <T extends { propertyId: string }>(rows: T[]) =>
+    rows.filter((r) => r.propertyId === "dev");
+  const devOnly = {
+    properties: mixed.properties.filter((p) => p.id === "dev"),
+    mortgages: only(mixed.mortgages),
+    valuations: only(mixed.valuations),
+    leases: only(mixed.leases),
+    holdingCosts: [],
+  };
+  const devProjection = portfolioProjection(devOnly, assumptions);
+
+  it.each(["nominal", "real"] as const)(
+    "the tranche years (1 and 2) have no drawdown bar and still reconcile (%s)",
+    (lens) => {
+      const series = projectionSeries(devProjection, lens, assumptions);
+      const rows = toEquityChangeRows(series);
+      // The engine reports the draws, but they were committed at baseDate.
+      expect(toNumber(series[1].draws)).toBeGreaterThan(0);
+      expect(toNumber(series[2].draws)).toBeGreaterThan(0);
+      rows.forEach((r, i) => {
+        expect(r.drawdown).toBeCloseTo(0, 6);
+        const equityDelta = toNumber(
+          series[i + 1].equity.minus(series[i].equity),
+        );
+        expect(
+          r.appreciation + r.purchases + r.paydown + r.drawdown,
+        ).toBeCloseTo(equityDelta, 4);
+      });
+    },
+  );
 });
