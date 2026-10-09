@@ -413,6 +413,17 @@ describe("Invariant — schedule sanity", () => {
           );
         });
       });
+      it(`${name}/${block.id}: a row has a due date exactly when it pays, within its grid month (ADR 0164)`, () => {
+        const rows = schedulesOf(p).get(block.propertyId)!.rows;
+        for (const r of rows) {
+          const pays = r.interest.plus(r.principal).greaterThan(ZERO);
+          expect(r.dueDate !== null, `m${r.month} due date`).toBe(pays);
+          if (r.dueDate === null) continue;
+          const prev = edate(assumptions.baseDate, r.month - 1);
+          expect(isAfter(r.dueDate, prev), `m${r.month} after`).toBe(true);
+          expect(isOnOrBefore(r.dueDate, r.date), `m${r.month} by`).toBe(true);
+        }
+      });
       if (!isDevLoan(block)) {
         it(`${name}/${block.id}: plain-loan balance is non-increasing once drawn, except where a successor draws`, () => {
           const rows = schedulesOf(p).get(block.propertyId)!.rows;
