@@ -1,9 +1,11 @@
 // Form components — presentational fields plus a generic record form. Parsing/formatting
 // helpers live in ../model/formParse (pure, re-exported here for convenient importing).
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   collectValues,
+  parseDate,
   type FieldSpec,
+  type LeadRow,
   type ParsedValues,
 } from "../model/formParse";
 import { formRules } from "../model/formParsers";
@@ -16,6 +18,7 @@ import {
   type EventListKind,
 } from "../model/loanEventRows";
 import { currencySymbol } from "../../lib/currency";
+import { fmtDate } from "../../lib/format";
 import { Button } from "./primitives";
 import { DateInput } from "./DateInput";
 import { FieldContext, useFieldControlProps } from "./fieldContext";
@@ -149,12 +152,36 @@ export function Checkbox(
   return <input type="checkbox" {...fieldProps} {...props} />;
 }
 
+/** Draft-derived notes of a row list: soft warnings per draft row and a footer line. */
+export interface ListNotes {
+  rows: readonly (readonly string[])[];
+  footer: string | null;
+}
+
+/** The fixed first row of a row list, bound to another field of the draft (ADR 0167). */
+interface LeadBinding extends LeadRow {
+  value: string;
+  date: string;
+  error: string | undefined;
+  onChange: (v: string) => void;
+}
+
+const ROW_NAME: Record<
+  EventListKind,
+  (d: ReturnType<typeof useT>["propertyDetail"], n: number) => string
+> = {
+  prepayments: (d, n) => d.eventPrepaymentRow(n),
+  recasts: (d, n) => d.eventRecastRow(n),
+  draws: (d, n) => d.trancheRow(n),
+};
+
 /**
- * A loan's prepayment or recast rows (ADR 0116 §11): a fieldset with a group per row,
- * a labelled control per cell, and add/remove buttons. The rows live in `value` as one
- * JSON draft (loanEventRows.ts). After a failed save, `errors` holds the list's parse
- * message under `name` (its bad cells are then marked) and an engine message per row
- * under `name.row`.
+ * A loan's prepayment, recast or tranche rows (ADR 0116 §11, ADR 0167): a fieldset with
+ * a group per row, a labelled control per cell, and add/remove buttons. The rows live in
+ * `value` as one JSON draft (loanEventRows.ts). After a failed save, `errors` holds the
+ * list's parse message under `name` (its bad cells are then marked) and an engine message
+ * per row under `name.row`. Add focuses the new row; Remove focuses the next row, or Add
+ * when none follows.
  */
 function LoanEventRows({
   kind,
@@ -164,6 +191,8 @@ function LoanEventRows({
   value,
   errors,
   onChange,
+  lead,
+  notes,
 }: {
   kind: EventListKind;
   name: string;
@@ -172,6 +201,8 @@ function LoanEventRows({
   value: string;
   errors: Record<string, string>;
   onChange: (v: string) => void;
+  lead?: LeadBinding | undefined;
+  notes?: ListNotes | null | undefined;
 }) {
   const t = useT();
   const d = t.propertyDetail;
@@ -181,6 +212,22 @@ function LoanEventRows({
   const listError = errors[name];
   const set = (i: number, patch: Record<string, string>) =>
     onChange(writeRows(rows.map((r, j) => (j === i ? { ...r, ...patch } : r))));
+  const box = useRef<HTMLFieldSetElement>(null);
+  const leadDate = lead ? parseDate(lead.date) : null;
+  // Where focus goes once an add or remove has rendered: a row index or the Add button.
+  const focusTo = useRef<number | "add" | null>(null);
+  useEffect(() => {
+    const to = focusTo.current;
+    if (to === null) return;
+    focusTo.current = null;
+    const target =
+      to === "add"
+        ? box.current?.querySelector<HTMLElement>("[data-add]")
+        : box.current
+            ?.querySelectorAll<HTMLElement>("[data-row]")
+            [to]?.querySelector<HTMLElement>("input, select");
+    target?.focus();
+  });
   const money = (v: string, onCell: (v: string) => void) => (
     <TextInput
       value={v}
@@ -191,7 +238,8 @@ function LoanEventRows({
   );
   return (
     <fieldset
-      className="event-rows"
+      ref={box}
+      className={`event-rows ${kind}`}
       aria-describedby={
         [listError && `${helpId}-err`, help && helpId]
           .filter(Boolean)
@@ -209,13 +257,25 @@ function LoanEventRows({
           {listError}
         </p>
       )}
+      {lead && (
+        <div className="event-row lead">
+          <div className="field lead-date">
+            <span className="label">{d.eventDate}</span>
+            <span className="value">
+              {leadDate ? fmtDate(leadDate) : lead.dateFallback}
+            </span>
+          </div>
+          <Field label={lead.label} required error={lead.error}>
+            {money(lead.value, lead.onChange)}
+          </Field>
+        </div>
+      )}
       {rows.map((row, i) => {
-        const rowName =
-          kind === "prepayments"
-            ? d.eventPrepaymentRow(i + 1)
-            : d.eventRecastRow(i + 1);
+        const rowName = ROW_NAME[kind](d, i + 1);
         const rowError = errors[`${name}.${i}`];
         const rowErrorId = `${helpId}-row${i}`;
+        const rowNotes = notes?.rows[i] ?? [];
+        const noteId = `${helpId}-note${i}`;
         // Unparseable cells are marked only once a save has failed on the list.
         const bad = listError ? rowProblems(row) : [];
         const err = (cell: string, message: string) =>
@@ -223,9 +283,14 @@ function LoanEventRows({
         return (
           <div
             key={i}
+            data-row
             role="group"
             aria-label={rowName}
-            aria-describedby={rowError ? rowErrorId : undefined}
+            aria-describedby={
+              [rowError && rowErrorId, rowNotes.length > 0 && noteId]
+                .filter(Boolean)
+                .join(" ") || undefined
+            }
             className={`event-row${rowError ? " invalid" : ""}`}
           >
             <Field label={d.eventDate} error={err("date", hint.date)}>
@@ -234,7 +299,14 @@ function LoanEventRows({
                 onChange={(v) => set(i, { date: v })}
               />
             </Field>
-            {"amount" in row ? (
+            {!("effect" in row) && !("mode" in row) ? (
+              <Field
+                label={d.eventAmount}
+                error={err("amount", t.forms.positiveAmount)}
+              >
+                {money(row.amount, (v) => set(i, { amount: v }))}
+              </Field>
+            ) : "effect" in row ? (
               <>
                 <Field
                   label={d.eventAmount}
@@ -295,9 +367,10 @@ function LoanEventRows({
               type="button"
               size="sm"
               variant="ghost"
-              onClick={() =>
-                onChange(writeRows(rows.filter((_, j) => j !== i)))
-              }
+              onClick={() => {
+                focusTo.current = i < rows.length - 1 ? i : "add";
+                onChange(writeRows(rows.filter((_, j) => j !== i)));
+              }}
             >
               {d.eventRemove(rowName)}
             </Button>
@@ -306,22 +379,41 @@ function LoanEventRows({
                 {rowError}
               </p>
             )}
+            {rowNotes.length > 0 && (
+              <p className="note" id={noteId}>
+                {rowNotes.join(" ")}
+              </p>
+            )}
           </div>
         );
       })}
       <Button
+        data-add
         type="button"
         size="sm"
-        onClick={() => onChange(writeRows([...rows, BLANK_ROW[kind]]))}
+        onClick={() => {
+          focusTo.current = rows.length;
+          onChange(writeRows([...rows, BLANK_ROW[kind]]));
+        }}
       >
-        {kind === "prepayments" ? d.eventAddPrepayment : d.eventAddRecast}
+        {kind === "prepayments"
+          ? d.eventAddPrepayment
+          : kind === "recasts"
+            ? d.eventAddRecast
+            : d.addTranche}
       </Button>
+      {notes && (
+        // Mounted while the list shows, so a screen reader hears the total change.
+        <p className="total" aria-live="polite" aria-atomic="true">
+          {notes.footer}
+        </p>
+      )}
     </fieldset>
   );
 }
 
 const listKind = (kind: string | undefined): kind is EventListKind =>
-  kind === "prepayments" || kind === "recasts";
+  kind === "prepayments" || kind === "recasts" || kind === "draws";
 
 /** Field-row buttons keyed by field name (see RecordForm's `fieldActions`). */
 export type FieldActions<S extends readonly FieldSpec[]> = Partial<
@@ -348,6 +440,7 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
   validate,
   header,
   hiddenFields,
+  listNotes,
   unsavedKey,
 }: {
   specs: S;
@@ -388,6 +481,10 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
    *  hidden field should be blank. */
   hiddenFields?:
     ((draft: Record<string, string>) => readonly string[]) | undefined;
+  /** Soft warnings and a footer for a row list, from the draft (ADR 0167). */
+  listNotes?:
+    | ((name: string, draft: Record<string, string>) => ListNotes | null)
+    | undefined;
   /** The leave-guard key for this form's unsaved edits, when the parent guards its own
    *  actions with it (ADR 0142); else the form makes its own. */
   unsavedKey?: string | undefined;
@@ -424,6 +521,15 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
     });
   }
   const edit = (name: string, v: string) => patch({ [name]: v });
+  /** A row list's fixed first row, bound to its field in the draft (ADR 0167). */
+  const leadOf = (lead: LeadRow | undefined): LeadBinding | undefined =>
+    lead && {
+      ...lead,
+      value: draft[lead.field] ?? "",
+      date: draft[lead.dateField] ?? "",
+      error: errors[lead.field],
+      onChange: (v) => edit(lead.field, v),
+    };
 
   async function submit() {
     const { values, errors: errs } = collectValues(specs, draft, formRules(t));
@@ -486,6 +592,8 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
                   help={spec.help}
                   value={draft[spec.name] ?? ""}
                   errors={errors}
+                  notes={listNotes?.(spec.name, draft)}
+                  lead={leadOf(spec.lead)}
                   onChange={(v) => {
                     setDraft((d) => ({ ...d, [spec.name]: v }));
                     // Row errors are keyed by position: an edit can move rows, so the
@@ -505,14 +613,7 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
           const action =
             fieldActions?.[spec.name as S[number]["name"]]?.(draft) ?? null;
           const input =
-            spec.kind === "draws" ? (
-              <TextArea
-                rows={3}
-                value={draft[spec.name] ?? ""}
-                placeholder={t.forms.drawsPlaceholder}
-                onChange={(e) => edit(spec.name, e.target.value)}
-              />
-            ) : spec.kind === "date" ? (
+            spec.kind === "date" ? (
               <DateInput
                 value={draft[spec.name] ?? ""}
                 onChange={(v) => edit(spec.name, v)}

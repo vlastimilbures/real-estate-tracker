@@ -154,6 +154,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A development loan's draws are entered as a **Drawdown schedule** (ADR 0167, #75). Its
+  first row is the amount drawn on the start date (the initial principal, now labelled
+  **Drawn at start**); each later tranche is a row with a date and an amount, added and
+  removed with buttons. A line under the rows shows the **total loan**. An error the
+  engine finds in a tranche shows on that row. A tranche dated after the interest-only end,
+  or two tranches on one date, get a warning that does not block the save. The mortgage
+  table's Development column labels the total as **Total loan**. Adding or removing a row
+  in any loan row list now moves focus to the row. Stored data and every number are
+  unchanged.
+
 - The amortization table on a property page, and its Excel export, now date each row by
   the payment's due date, under the heading **Due date** (ADR 0164, #112). Before, the
   column showed the app's monthly grid date, which could be up to a month off the date on

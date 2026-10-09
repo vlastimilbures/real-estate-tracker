@@ -1240,6 +1240,48 @@ table.data tbody tr:hover td.sticky-col {
 .event-rows > button {
   align-self: flex-start;
 }
+/* ADR 0167: the drawdown schedule lines its columns up under the fixed start row. */
+.event-rows.draws .event-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 10rem;
+}
+.event-rows.draws .event-row > .err,
+.event-rows.draws .event-row > .note {
+  grid-column: 1 / -1;
+}
+.event-row.lead {
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--hairline);
+}
+.event-row.lead .lead-date .value {
+  padding: var(--s2) 0;
+  font-size: 13.5px;
+  font-feature-settings: var(--num);
+  color: var(--ink-soft);
+}
+.event-row.lead .lead-date .label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.event-row > .note {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--warn);
+}
+.event-rows > .total {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-feature-settings: var(--num);
+  color: var(--ink);
+}
+@media (max-width: 560px) {
+  .event-rows.draws .event-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
 .form-actions {
   display: flex;
   gap: var(--s2);

@@ -81,32 +81,6 @@ export function dateDraft(date: Date | undefined): string {
   return date ? fmtDate(date) : "";
 }
 
-/** Development draws, one per line as `dd.mm.yyyy = amount`. null ⇒ a line is
- *  malformed; [] ⇒ no draws. Sorted by date. */
-export function parseDraws(raw: string): MortgageDraw[] | null {
-  const lines = raw
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l !== "");
-  const out: MortgageDraw[] = [];
-  for (const line of lines) {
-    const eq = line.indexOf("=");
-    if (eq < 0) return null;
-    const date = parseDate(line.slice(0, eq));
-    const amount = parseMoney(line.slice(eq + 1));
-    if (!date || !amount || amount.lessThanOrEqualTo(0)) return null;
-    out.push({ date, amount });
-  }
-  out.sort((a, b) => a.date.getTime() - b.date.getTime());
-  return out;
-}
-export function drawsDraft(draws: MortgageDraw[] | undefined): string {
-  if (!draws || draws.length === 0) return "";
-  return draws
-    .map((d) => `${dateDraft(d.date)} = ${moneyDraft(d.amount)}`)
-    .join("\n");
-}
-
 // ---- field specs + kind parsing -------------------------------------------
 
 export type FieldKind =
@@ -121,6 +95,18 @@ export interface FieldSpec {
   help?: string;
   /** Bounds of an `int` field; a parsed value outside them is invalid. */
   range?: IntRange;
+  /** A row list's fixed first row (ADR 0167): another spec's money field shown as the
+   *  list's first row, dated by a date field it mirrors read-only. Hide that spec from
+   *  the grid while the list shows. */
+  lead?: LeadRow;
+}
+
+export interface LeadRow {
+  field: string;
+  dateField: string;
+  label: string;
+  /** Shown in place of the date while the date field is blank. */
+  dateFallback: string;
 }
 
 /** The message for a value that does not parse: the expected format of its kind (UX-040). */

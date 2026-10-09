@@ -368,7 +368,8 @@ table and its export show `dueDate`.
   `startDate + loanTermYears` (ADR 0024). After `completionDate` the fully drawn balance
   re-amortizes the same way. The trigger fires only on a real draw or completion.
 - A tranche must be dated strictly after the loan start (`DRAW_BEFORE_START`; money drawn on
-  the start date belongs in the initial principal, D-42), and on or before the last-but-one
+  the start date belongs in the initial principal, D-42; the mortgage form shows it as the
+  drawdown schedule's first row, "Drawn at start", ADR 0167), and on or before the last-but-one
   payment `EDATE(start, term·12 − 1)` (`DRAW_AFTER_SCHEDULE_END`, ADR 0129). A tranche
   between the last payment due by baseDate and baseDate joins grid month 1 and is part of
   the baseDate debt (D-41); one dated after baseDate within grid month 1 is new debt in that

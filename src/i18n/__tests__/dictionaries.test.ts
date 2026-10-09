@@ -188,7 +188,9 @@ describe("i18n dictionaries — plural forms", () => {
     const rest = [
       "properties.subtitle",
       "propertyDetail.yrs",
-      "propertyDetail.draws",
+      // Development tranches (ADR 0167).
+      "propertyDetail.tranches",
+      "propertyDetail.drawdownTotal",
       "propertyDetail.monthsCount",
       // Amortization disclosure (ADR 0107).
       "propertyDetail.showAmortization",
@@ -233,10 +235,7 @@ describe("i18n dictionaries — plural forms", () => {
     ];
     expect(countInflected("en")).toEqual(counted);
     expect(countInflected("ru")).toEqual(withIrrFoot);
-    // Czech "čerpání" is the same for every count (1 · 2 · 5 čerpání).
-    expect(countInflected("cs")).toEqual(
-      withIrrFoot.filter((k) => k !== "propertyDetail.draws"),
-    );
+    expect(countInflected("cs")).toEqual(withIrrFoot);
   });
 
   it("horizon years inflect in every language (ADR 0084, ADR 0088)", () => {

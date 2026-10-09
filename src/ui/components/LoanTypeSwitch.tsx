@@ -29,7 +29,13 @@ export function LoanTypeSwitch({
       return;
     }
     setConfirming(false);
-    patch({ loanType: next });
+    // Back to Standard with nothing worth keeping: drop any blank tranche row too, so a
+    // hidden row does not leave the form unsaved.
+    patch(
+      next === "standard"
+        ? { loanType: next, draws: "", completionDate: "" }
+        : { loanType: next },
+    );
   }
 
   return (

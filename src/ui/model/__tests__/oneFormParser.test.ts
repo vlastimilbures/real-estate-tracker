@@ -1,14 +1,10 @@
 // ADR 0140 (#125): every form parses through collectValues with one message set, and a
 // money field refuses an amount shaped like an English thousands separator.
 import { describe, it, expect } from "vitest";
-import {
-  collectValues,
-  parseDraws,
-  parseMoney,
-  parsePercentToRatio,
-} from "../formParse";
+import { collectValues, parseMoney, parsePercentToRatio } from "../formParse";
 import { FORM_PARSERS, formRules } from "../formParsers";
 import {
+  parseDrawRows,
   parsePrepaymentRows,
   parseRecastRows,
   rowProblems,
@@ -38,8 +34,10 @@ describe("money refuses a thousands-shaped amount (ADR 0140 §3)", () => {
     }
   });
 
-  it("refuses it in a development draw line", () => {
-    expect(parseDraws("01.02.2024 = 450,000")).toBeNull();
+  it("refuses it in a development draw row", () => {
+    expect(
+      parseDrawRows(writeRows([{ date: "01.02.2024", amount: "450,000" }])),
+    ).toBeNull();
   });
 
   it("refuses it in a prepayment or recast row", () => {

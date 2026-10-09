@@ -89,8 +89,6 @@ From the 2026-10 code review
   income are attributed.
 - **Sort and search on lists.** Sortable columns and search on Properties and Scenarios for
   larger portfolios.
-- **Mortgage draw editor.** Date/amount rows instead of the one-tranche-per-line text field (see
-  #20).
 - **Auto-convert Czech-Excel CSV files** (semicolon, decimal comma, Windows-1250). Today such
   files are rejected with a message that names the fix (ADR 0049).
 - **Native-speaker review of the Russian translation.** All three languages are complete and
