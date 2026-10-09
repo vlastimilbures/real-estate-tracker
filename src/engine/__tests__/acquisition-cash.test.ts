@@ -132,7 +132,9 @@ describe("ADR 0134: an owned property's first loan after baseDate is cash in", (
     expectKc(outflow(p, a), 0, "none");
   });
 
-  it("only the initial principal comes back, not the tranches", () => {
+  // ADR 0166 (owner, 2026-10-09): a development loan pays the developer, not the owner;
+  // on a flat owned at baseDate it is committed debt from baseDate instead.
+  it("a development loan drawn after baseDate brings no cash in (ADR 0166)", () => {
     const dev = loan({
       loanTermYears: 30,
       draws: [
@@ -141,7 +143,7 @@ describe("ADR 0134: an owned property's first loan after baseDate is cash in", (
       ],
       completionDate: isoDate("2028-03-01"),
     } as Partial<MortgageBlock>);
-    expectKc(outflow(withOwned([dev])), -PRINCIPAL, "3 M in");
+    expectKc(outflow(withOwned([dev])), 0, "none");
   });
 
   it("a successor of a loan drawn before baseDate is a refinance, not a first loan", () => {

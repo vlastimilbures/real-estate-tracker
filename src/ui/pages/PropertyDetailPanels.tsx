@@ -18,7 +18,8 @@ import { SERIES, type ChartRow } from "../model/chartData";
 import { RecordForm } from "../components/forms";
 import { ConfirmRow } from "../components/EntityPanelParts";
 import { moneyDraft, percentDraft } from "../model/formParse";
-import { fmtDate } from "../../lib/format";
+import { fmtCzkM, fmtDate } from "../../lib/format";
+import { undrawnPart } from "../model/debt";
 import { amortizationExtras, type LoanOutlook } from "../model/propertyDetail";
 import type { AcquisitionView } from "../model/acquisition";
 import { dscrBadge, ltvBadge } from "../model/health";
@@ -128,6 +129,7 @@ function NotOwnedPanel({ purchaseDate, price, loan }: NotOwned) {
 /** The four snapshot KPI tiles of an owned property. */
 function SnapshotTiles({ s }: { s: PropertySnapshot }) {
   const t = useT();
+  const undrawn = undrawnPart(s.committedDebt, s.debt);
   return (
     <div className="tiles">
       <KpiTile
@@ -136,11 +138,17 @@ function SnapshotTiles({ s }: { s: PropertySnapshot }) {
       />
       <KpiTile
         label={t.propertyDetail.debt}
-        value={<Money value={s.debt} parens={false} suffix={false} />}
+        value={<Money value={s.committedDebt} parens={false} suffix={false} />}
         foot={
           <>
             <MetricLabel term="ltv">{t.propertyDetail.ltv}</MetricLabel>{" "}
             <Pct value={s.ltv} />
+            {undrawn && (
+              <>
+                {" · "}
+                {t.common.undrawnDebt(fmtCzkM(undrawn))}
+              </>
+            )}
           </>
         }
         badge={ltvBadge(t, s.ltv)}

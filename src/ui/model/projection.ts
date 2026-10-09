@@ -15,6 +15,7 @@ export interface SeriesRow {
   calendarYear: number;
   value: Decimal;
   balance: Decimal;
+  committedDebt: Decimal; // balance + undrawn development tranches (ADR 0166)
   equity: Decimal;
   ltv: Decimal | null; // null when debt is owed on no value (ADR 0133)
   grossRent: Decimal;
@@ -32,6 +33,9 @@ export interface SeriesRow {
   // New debt drawn this year (lensed), from the engine (DR-092): zero unless a loan,
   // tranche or refinance draws in the year; zero in year 0.
   draws: Decimal;
+  // New committed debt in the year: draws less development tranches already committed
+  // (ADR 0166); the equity-change chart's new-debt stack.
+  committedDraws: Decimal;
   // The value a future purchase brings in, in its turn-on year (lensed, ADR 0165); zero
   // in every other year.
   acquiredValue: Decimal;
@@ -88,6 +92,7 @@ export function projectionSeries(
     calendarYear: y.calendarYear,
     value: y.value,
     balance: y.balance,
+    committedDebt: y.committedDebt,
     equity: y.equity,
     ltv: y.ltv,
     grossRent: y.grossRent,
@@ -101,6 +106,7 @@ export function projectionSeries(
     cashToOwner: y.cashToOwner,
     dscr: y.dscr,
     draws: y.draws,
+    committedDraws: y.committedDraws,
     acquiredValue: y.acquiredValue,
     refinanced: y.refinanced,
     prepaid: y.prepaid,
@@ -114,7 +120,8 @@ export function projectionSeries(
  */
 export function projectionExtras(rows: SeriesRow[], g: Dictionary["projGrid"]) {
   return nonZeroColumns(rows, [
-    { key: "draws", header: g.draws },
+    // New committed debt, so the Debt column reconciles year to year (ADR 0166).
+    { key: "committedDraws", header: g.draws },
     { key: "refinanced", header: g.refinanced },
     { key: "prepaid", header: g.prepaid },
     { key: "prepaymentFees", header: g.prepaymentFees },
@@ -148,7 +155,7 @@ export function projectionColumns(
   }
   cols.push(
     { header: g.value, kind: "money", value: (r) => r.value },
-    { header: g.debt, kind: "money", value: (r) => r.balance },
+    { header: g.debt, kind: "money", value: (r) => r.committedDebt },
     { header: g.equity, kind: "money", value: (r) => r.equity },
     { header: g.ltv, kind: "percent", value: (r) => r.ltv },
     { header: g.grossRent, kind: "money", value: flow((r) => r.grossRent) },

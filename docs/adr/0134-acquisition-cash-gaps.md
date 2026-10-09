@@ -6,6 +6,8 @@
   #104, ADR 0124 §7)
 - Amends: SPEC §4.5 (acquisition outflows) and §4.6 (what enters cumulative net cash flow
   and levered IRR)
+- Amended by: [0166](0166-development-committed-debt.md) (a development loan on a flat owned
+  at baseDate is committed debt from baseDate, not cash in)
 - Related: [0119](0119-acquisition-funding.md) (§5, the same rule for a future buy),
   [0124](0124-pre-purchase-debt-service.md), D-47 in [0027](0027-one-active-block.md)
   (refinance cash), [0039](0039-golden-master.md)

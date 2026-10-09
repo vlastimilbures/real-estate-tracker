@@ -2,14 +2,11 @@
 // loan derived from the mortgage blocks, the sources-and-uses check, and the down
 // payment a property bought after baseDate is charged in its turn-on year.
 import { ZERO, type Decimal } from "../lib/money";
-import { addDays, firstAfter, isAfter, isOnOrBefore } from "./dates";
+import { firstAfter, isAfter, isOnOrBefore } from "./dates";
 import { forProperty } from "./metrics";
-import { selectBlock } from "./amortization";
+import { fundedThePurchase, isDevLoan, selectBlock } from "./amortization";
 import { openingBalance } from "./schedule";
 import type { Assumptions, MortgageBlock, Portfolio, Property } from "./types";
-
-/** A block starting up to this many days after the purchase funded it (ADR 0119 §3). */
-const ACQUISITION_LOAN_WINDOW_DAYS = 90;
 
 /** What funded a purchase and what it paid for. Null = unknown (never 0). */
 export interface AcquisitionSummary {
@@ -38,19 +35,13 @@ function earliestBlock(blocks: MortgageBlock[]): MortgageBlock | undefined {
   return earliest;
 }
 
-/** ADR 0119 §3: a block starting no later than 90 days after the purchase funded it;
- *  any earlier start counts too (an off-plan loan drawn before handover). */
-function fundedThePurchase(property: Property, block: MortgageBlock): boolean {
-  const latest = addDays(property.purchaseDate, ACQUISITION_LOAN_WINDOW_DAYS);
-  return isOnOrBefore(block.startDate, latest);
-}
-
 /**
  * A property's first loan whose initial principal reaches the owner as cash in, in the
  * year it is drawn; its later tranches do not. For a future buy: a first loan that is not
  * its acquisition loan (it starts after the 90-day window, ADR 0119 §5). For a property
- * owned at baseDate: a first loan drawn after baseDate (ADR 0134), since its equity at
- * baseDate holds the whole value.
+ * owned at baseDate: a first plain loan drawn after baseDate (ADR 0134), since its equity
+ * at baseDate holds the whole value. A development loan there pays the developer, not the
+ * owner: it is committed debt from baseDate instead (ADR 0166).
  */
 export function laterFirstLoan(
   property: Property,
@@ -60,7 +51,7 @@ export function laterFirstLoan(
   const first = earliestBlock(forProperty(portfolio.mortgages, property.id));
   if (!first) return undefined;
   const later = isOnOrBefore(property.purchaseDate, assumptions.baseDate)
-    ? isAfter(first.startDate, assumptions.baseDate)
+    ? isAfter(first.startDate, assumptions.baseDate) && !isDevLoan(first)
     : !fundedThePurchase(property, first);
   return later ? first : undefined;
 }

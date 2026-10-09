@@ -57,6 +57,8 @@ export type ChartRow = {
 // appreciation residual, so the stacks still sum exactly to the equity change.
 // A refinance handover's difference (`refinanced`, ADR 0130) moves the balance like a
 // draw, so the drawdown bar carries it too (negative when the owner pays down at a refix).
+// Equity is value − committed debt (ADR 0166), so the new-debt stack is `committedDraws`:
+// a development tranche drawn this year was already committed and shows no bar.
 export type EquityChangeRow = {
   year: number;
   calendarYear: number;
@@ -83,12 +85,12 @@ export function toEquityChangeRows(series: SeriesRow[]): EquityChangeRow[] {
           .minus(r.acquiredValue)
           .minus(r.principal)
           .minus(r.prepaid)
-          .plus(r.draws)
+          .plus(r.committedDraws)
           .plus(r.refinanced),
       ),
       purchases: n(r.acquiredValue),
       paydown: n(r.principal.plus(r.prepaid)),
-      drawdown: n(r.draws.plus(r.refinanced).negated()),
+      drawdown: n(r.committedDraws.plus(r.refinanced).negated()),
     };
   });
 }
@@ -108,7 +110,8 @@ export function toChartRows(series: SeriesRow[]): ChartRow[] {
       year: r.year,
       calendarYear: r.calendarYear,
       value: n(r.value),
-      balance: n(r.balance),
+      // The debt line shows committed debt, so value − debt = equity (ADR 0166).
+      balance: n(r.committedDebt),
       equity: n(r.equity),
       ltv: r.ltv === null ? null : n(r.ltv),
       grossRent: flow(r.grossRent),

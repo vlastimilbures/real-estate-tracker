@@ -8,18 +8,18 @@ import {
   isAfter,
   isOnOrBefore,
 } from "./dates";
-import { isDevLoan } from "./amortization";
 import { at } from "./arrays";
 import {
   EMPTY_PROPERTY_SCHEDULE,
   openingDebt,
   propertySchedules,
+  undrawnPrincipal,
   type PropertySchedule,
 } from "./schedule";
 import { turnOnYear, yearSlice } from "./yearGrid";
 import { cashOutsideNetCf } from "./ownerCash";
 import { assertAssumptions, assertInputs } from "./validate";
-import { basisDate, valueAt, drawnFraction } from "./growth";
+import { basisDate, valueAt } from "./growth";
 import {
   valueAnchor,
   growthYears,
@@ -234,22 +234,25 @@ function buildYear0(
   baseYear: number,
   tStart: number,
   crash: (value: Decimal, t: number) => Decimal,
-  ramp: (value: Decimal, date: Date) => Decimal,
+  undrawn0: Decimal,
 ): YearRow {
   if (tStart > 0) return zeroYear(0, baseYear, assumptions.baseDate);
   // The debt at baseDate, not grid month 1's opening balance: a loan drawn after
   // baseDate is new debt in its year, not opening debt (D-33).
   const balance0 =
     b.schedule.length > 0 ? openingDebt(blocks, assumptions) : ZERO;
-  const value0 = crash(ramp(b.v0, assumptions.baseDate), 0);
+  // ADR 0166: plus the development tranches not drawn yet.
+  const committed0 = balance0.plus(undrawn0);
+  const value0 = crash(b.v0, 0);
   return {
     year: 0,
     calendarYear: baseYear,
     ...yearPeriod(assumptions.baseDate, 0),
     value: value0,
     balance: balance0,
-    equity: value0.minus(balance0),
-    ltv: ltvOf(balance0, value0),
+    committedDebt: committed0,
+    equity: value0.minus(committed0),
+    ltv: ltvOf(committed0, value0),
     grossRent: ZERO,
     effectiveRent: ZERO,
     holdingCosts: ZERO,
@@ -259,6 +262,7 @@ function buildYear0(
     debtService: ZERO,
     netCashFlow: ZERO,
     draws: ZERO,
+    committedDraws: ZERO,
     acquiredValue: ZERO,
     refinanced: ZERO,
     prepaid: ZERO,
@@ -281,7 +285,6 @@ function computeValueForYear(
   t: number,
   yearDate: Date,
   crash: (value: Decimal, t: number) => Decimal,
-  ramp: (value: Decimal, date: Date) => Decimal,
 ): Decimal {
   const { value, anchor } = valueAnchor(
     b.valuations,
@@ -293,7 +296,7 @@ function computeValueForYear(
     anchor.getTime() === assumptions.baseDate.getTime()
       ? t
       : growthYears(anchor, yearDate);
-  return crash(ramp(valueAt(value, b.g, years), yearDate), t);
+  return crash(valueAt(value, b.g, years), t);
 }
 
 interface RentAndCosts {
@@ -346,18 +349,26 @@ function buildYearRow(
   value: Decimal,
   rc: RentAndCosts,
   slice: ReturnType<typeof yearSlice>,
-  draws: Decimal,
-  acquiredValue: Decimal,
+  parts: {
+    draws: Decimal;
+    acquiredValue: Decimal;
+    undrawn: Decimal;
+    undrawnBefore: Decimal;
+  },
 ): YearRow {
+  const { draws, acquiredValue } = parts;
   const netCashFlow = rc.noi.minus(slice.debtService);
+  // ADR 0166: the debt owed includes the development tranches not drawn yet.
+  const committedDebt = slice.balance.plus(parts.undrawn);
   return {
     year: t,
     calendarYear: baseDate.getUTCFullYear() + t,
     ...yearPeriod(baseDate, t),
     value,
     balance: slice.balance,
-    equity: value.minus(slice.balance),
-    ltv: ltvOf(slice.balance, value),
+    committedDebt,
+    equity: value.minus(committedDebt),
+    ltv: ltvOf(committedDebt, value),
     grossRent: rc.grossRent,
     effectiveRent: rc.effectiveRent,
     holdingCosts: rc.holdingCosts,
@@ -367,6 +378,8 @@ function buildYearRow(
     debtService: slice.debtService,
     netCashFlow,
     draws,
+    // A tranche drawn this year was already committed (ADR 0166).
+    committedDraws: draws.minus(parts.undrawnBefore.minus(parts.undrawn)),
     acquiredValue,
     refinanced: slice.refinanced,
     prepaid: slice.prepaid,
@@ -417,25 +430,22 @@ function propertyYears(
 
   // A timed, permanent value correction: from projection year `atYear` the value curve
   // is scaled by `1 − pct` and growth resumes from the lower base (debt & rent untouched).
-  // Applied as the outermost multiply (after ramp/re-anchor); undefined ⇒ no change.
+  // Applied as the outermost multiply (after re-anchor); undefined ⇒ no change.
   const vs = assumptions.valueShock;
   const crash = (value: Decimal, t: number): Decimal =>
     vs && t >= vs.atYear ? value.times(ONE.minus(vs.pct)) : value;
-
-  // Development property: the valuation is the *completed* value, so scale it by the
-  // construction-progress (drawn) fraction at each year's date. Resolved once; for a
-  // non-dev property `ramp` is the identity, so the value curve is unchanged.
-  const devBlock = forProperty(portfolio.mortgages, property.id).find(
-    isDevLoan,
-  );
-  const ramp = (value: Decimal, date: Date): Decimal =>
-    devBlock ? value.times(drawnFraction(devBlock, date)) : value;
 
   const gates = computeTurnOnGates(property, assumptions);
   const { tStart } = gates;
 
   const blocks = forProperty(portfolio.mortgages, property.id);
-  years.push(buildYear0(b, blocks, assumptions, baseYear, tStart, crash, ramp));
+  // Development principal not drawn yet at each year end, 0 before the property is
+  // owned (ADR 0166).
+  const undrawn = (t: number): Decimal =>
+    t < tStart ? ZERO : undrawnPrincipal(property, blocks, assumptions, t * 12);
+  years.push(
+    buildYear0(b, blocks, assumptions, baseYear, tStart, crash, undrawn(0)),
+  );
 
   for (let t = 1; t <= assumptions.horizonYears; t++) {
     if (t < tStart) {
@@ -450,7 +460,6 @@ function propertyYears(
       t,
       yearDate,
       crash,
-      ramp,
     );
     const rc = computeRentAndCosts(b, gates, t, cpi, vacancy);
     const slice = yearSlice(schedule, t);
@@ -461,17 +470,15 @@ function propertyYears(
       ? debtAtGridMonth(schedule, blocks, assumptions, (t - 1) * 12)
       : ZERO;
     years.push(
-      buildYearRow(
-        t,
-        assumptions.baseDate,
-        value,
-        rc,
-        slice,
-        slice.drawn.plus(carriedIn),
+      buildYearRow(t, assumptions.baseDate, value, rc, slice, {
+        draws: slice.drawn.plus(carriedIn),
         // ADR 0165: the value it comes online with is its value at the purchase date
-        // (the basis is anchored there), bought in rather than appreciation.
-        turnsOn ? crash(ramp(b.v0, property.purchaseDate), t) : ZERO,
-      ),
+        // (the basis is anchored there), bought in rather than appreciation. A
+        // development flat comes in at its completed value (ADR 0166).
+        acquiredValue: turnsOn ? crash(b.v0, t) : ZERO,
+        undrawn: undrawn(t),
+        undrawnBefore: undrawn(t - 1),
+      }),
     );
   }
   return years;
@@ -535,6 +542,7 @@ function zeroYear(year: number, calendarYear: number, baseDate: Date): YearRow {
     ...yearPeriod(baseDate, year),
     value: ZERO,
     balance: ZERO,
+    committedDebt: ZERO,
     equity: ZERO,
     ltv: ZERO,
     grossRent: ZERO,
@@ -546,6 +554,7 @@ function zeroYear(year: number, calendarYear: number, baseDate: Date): YearRow {
     debtService: ZERO,
     netCashFlow: ZERO,
     draws: ZERO,
+    committedDraws: ZERO,
     acquiredValue: ZERO,
     refinanced: ZERO,
     prepaid: ZERO,
@@ -599,6 +608,7 @@ export function projectPortfolio(
       perProp.reduce((s, yrs) => s.plus(sel(at(yrs, t))), ZERO);
     const value = acc((y) => y.value);
     const balance = acc((y) => y.balance);
+    const committedDebt = acc((y) => y.committedDebt);
     const noi = acc((y) => y.noi);
     const debtService = acc((y) => y.debtService);
     out.push({
@@ -607,8 +617,9 @@ export function projectPortfolio(
       ...yearPeriod(assumptions.baseDate, t),
       value,
       balance,
-      equity: value.minus(balance),
-      ltv: ltvOf(balance, value),
+      committedDebt,
+      equity: value.minus(committedDebt),
+      ltv: ltvOf(committedDebt, value),
       grossRent: acc((y) => y.grossRent),
       effectiveRent: acc((y) => y.effectiveRent),
       holdingCosts: acc((y) => y.holdingCosts),
@@ -618,6 +629,7 @@ export function projectPortfolio(
       debtService,
       netCashFlow: acc((y) => y.netCashFlow),
       draws: acc((y) => y.draws),
+      committedDraws: acc((y) => y.committedDraws),
       acquiredValue: acc((y) => y.acquiredValue),
       refinanced: acc((y) => y.refinanced),
       prepaid: acc((y) => y.prepaid),

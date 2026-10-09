@@ -9,6 +9,9 @@
   decision 8, decided by the owner); 2026-10-04 (#33 PR3: the form section and the display of
   decision 9, decided by the owner)
 - Amended by: ADR 0124 (debt service of a loan that runs before a future purchase date)
+- Amended by: [0166](0166-development-committed-debt.md) (decision 5: the later tranches
+  of such a loan are committed debt; a development loan on a flat owned at baseDate is
+  no cash in)
 
 ## Context
 

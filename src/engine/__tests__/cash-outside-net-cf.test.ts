@@ -53,6 +53,8 @@ describe("#117: the KPIs net of the cash outside net cash flow", () => {
 
   // ADR 0165 moved these: the future buy's fixed holding costs inflate from the base
   // date (CPI_t), no longer from its turn-on year.
+  // ADR 0166 moved the IRRs: the dev flat's year-0 equity is its completed value less
+  // the whole loan, so its later tranche draws no longer add equity.
   it("pins the cumulative cash flow and the levered IRR", () => {
     const k = portfolioKpis(fixture, assumptions);
     expect({
@@ -65,8 +67,8 @@ describe("#117: the KPIs net of the cash outside net cash flow", () => {
     }).toEqual({
       cumulativeNetCashFlow: "15034596.92321763171557107335755497217649",
       cumulativeNetCashFlowReal: "6800388.720350774326976094626652203044966",
-      leveredIrrNominal: "0.06674233817007343243232764251615662942655",
-      leveredIrrReal: "0.04072423236104725161044193271209223894405",
+      leveredIrrNominal: "0.06276135050086684846748497079715889412925",
+      leveredIrrReal: "0.0368403419520652189965426170914497561171",
       leveredIrrNominalReason: null,
       leveredIrrRealReason: null,
     });

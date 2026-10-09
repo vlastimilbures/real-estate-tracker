@@ -28,8 +28,15 @@ describe("pending property's existing debt in portfolio totals (ADR 0165)", () =
   it("total debt adds the pending property's debt; equity and LTV follow", () => {
     const debt = sum(owned, (s) => s.debt).plus(pending.debt);
     expect(snap.totalDebt.equals(debt)).toBe(true);
-    expect(snap.totalEquity.equals(snap.totalValue.minus(debt))).toBe(true);
-    expect(snap.ltv?.equals(debt.div(snap.totalValue))).toBe(true);
+    // ADR 0166: equity and LTV read the committed debt (the dev flat's undrawn
+    // tranches too); a pending property commits only the debt it owes.
+    expect(pending.committedDebt.equals(pending.debt)).toBe(true);
+    const committed = sum(owned, (s) => s.committedDebt).plus(pending.debt);
+    expect(snap.totalCommittedDebt.equals(committed)).toBe(true);
+    expect(snap.totalEquity.equals(snap.totalValue.minus(committed))).toBe(
+      true,
+    );
+    expect(snap.ltv?.equals(committed.div(snap.totalValue))).toBe(true);
   });
 
   it("the weighted rate weights the pending debt too", () => {

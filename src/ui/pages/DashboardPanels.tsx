@@ -28,6 +28,7 @@ import { dscrBadge, ltvBadge } from "../model/health";
 import type { MonthlyFlow } from "../model/dashboard";
 import type { LeveredIrr } from "../model/irr";
 import { lensKpis } from "../model/lensKpis";
+import { undrawnPart } from "../model/debt";
 import type { PortfolioKPIs, PortfolioSnapshot } from "../../engine";
 import type { Decimal } from "../../lib/money";
 import type { Mode } from "../../state/uiStore";
@@ -56,6 +57,7 @@ export function HeroTiles({
   irr: LeveredIrr;
 }) {
   const t = useT();
+  const undrawn = undrawnPart(s.totalCommittedDebt, s.totalDebt);
   return (
     <div className="tiles">
       <KpiTile
@@ -69,8 +71,9 @@ export function HeroTiles({
           <>
             {t.dashboard.assetsDebtEquity(
               fmtCzkM(s.totalValue),
-              fmtCzkM(s.totalDebt),
+              fmtCzkM(s.totalCommittedDebt),
             )}
+            {undrawn ? ` · ${t.common.undrawnDebt(fmtCzkM(undrawn))}` : ""}
             {mode === "real" && !isToday ? t.dashboard.realTodayKc : ""}
           </>
         }

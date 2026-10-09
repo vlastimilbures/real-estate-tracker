@@ -27,6 +27,11 @@ work still to do is in the [roadmap](roadmap.md).
   invested. They are not returns on the cash you paid at purchase, and the app has no
   since-purchase performance. The recorded own cash is shown as "Cash invested", but no
   return is measured from it. See [SPEC §4.6](../SPEC.md#46-portfolio-kpis).
+- **A flat under construction counts as finished, with its whole loan.** Its value is the
+  completed value, and the loan tranches the bank has not paid yet count as debt (interest
+  is charged only on what is drawn). Own funds you have not paid the developer yet are
+  treated as already invested, because the acquisition record has no payment dates. So the
+  return KPIs measure the flat as if bought complete at the projection start (ADR 0166).
 - **What enters the IRR.** The yearly net cash flows, the down payment for a property bought
   after the projection start, and the net cash from a refinance. The down payment is the own
   cash recorded for the purchase (the property form's Acquisition section); without it, the
@@ -34,7 +39,9 @@ work still to do is in the [roadmap](roadmap.md).
   (ADR 0119). The loan that funded the purchase is the property's first loan, if it starts
   no later than 90 days after the purchase. A later first loan counts as cash paid to you in
   the year it is drawn, and so does a first loan taken out after the projection start on a
-  property you already own (ADR 0134); a development loan's tranches do not. A loan that
+  property you already own (ADR 0134); a development loan's tranches do not. A development
+  loan on a flat you already own pays the developer, not you: it brings no cash in and its
+  whole amount counts as debt from the projection start (ADR 0166). A loan that
   starts before a future purchase date (an off-plan loan drawn at contract) is paid by you
   before the handover: its instalments, prepayments and fees in the projection years before
   the purchase count as cash you paid, although those years show no rows for the property

@@ -239,12 +239,16 @@ Derived per-property values:
   Months are counted with the month-end rule, so a 29 Feb baseDate still counts a full year
   (D-45). A valuation that started on or before baseDate is anchored at baseDate, not at its
   `validFrom`, so its value is not grown for the months before baseDate.
-  Falls back to `purchasePrice` only when the property has no valuation (ADR 0122). For dev
-  loans the completed value is scaled by `drawnFraction` (cumulative principal drawn ÷ total
-  scheduled principal), so value ramps with construction progress.
+  Falls back to `purchasePrice` only when the property has no valuation (ADR 0122). A
+  development property counts at its completed value throughout construction (ADR 0166).
 - **Outstanding debt** — the property's schedule balance at `asOf` (refinance chain,
   fixation resets, prepayments and recasts included); the instalment and rate are the
   schedule's at that month.
+- **Committed debt** — outstanding debt + the development loan's principal not drawn yet at
+  `asOf`: its initial principal while it has not started, plus its tranches still ahead, on
+  the schedule's grid (`undrawnPrincipal`, ADR 0166). It equals outstanding debt except
+  while a development loan is drawing, and only for a property owned at `asOf`. Interest,
+  debt service and the weighted rate stay on outstanding debt.
 - **Monthly rent** — lease in force at `asOf`; **gross annual** = ×12.
 - **Effective gross** = gross × (1 − vacancy).
 - **Holding costs** = `fixed + variable`, where
@@ -253,17 +257,18 @@ Derived per-property values:
 - **NOI** = effective gross − holding.
 - **Debt service (annual)** = 12 × active monthly instalment.
 - **Net cash flow** = NOI − debt service.
-- **Equity** = value − debt. **LTV** = debt ÷ value (null, shown "n/a", when the value is 0
-  and debt is owed; 0 when both are 0; ADR 0133).
+- **Equity** = value − committed debt. **LTV** = committed debt ÷ value (null, shown "n/a",
+  when the value is 0 and debt is owed; 0 when both are 0; ADR 0133).
 - **Gross yield** = grossAnnual ÷ value. **Net yield (cap rate)** = NOI ÷ value. Both are
   null ("n/a") when the value is 0 (ADR 0133).
 - **DSCR** = NOI ÷ debt service (null when debt service = 0; displayed as ">99×" above 99,
   ADR 0035).
 - Portfolio = sums across **active** properties owned at `asOf`; portfolio **LTV** =
-  Σdebt ÷ Σvalue; **DSCR** = ΣNOI ÷ Σdebt service; **weighted-avg rate** =
+  Σcommitted debt ÷ Σvalue; **DSCR** = ΣNOI ÷ Σdebt service; **weighted-avg rate** =
   Σ(balance×rate) ÷ Σbalance. A property bought after `asOf` whose loan is already drawn
   (an off-plan loan drawn at contract) adds its **debt** to Σdebt (so equity, LTV and the
-  weighted rate) but not its value, income or debt service (ADR 0165).
+  weighted rate) but not its value, income or debt service (ADR 0165). Equity and LTV read
+  Σcommitted debt (`totalCommittedDebt`, ADR 0166); `totalDebt` stays the drawn sum.
 - **Real terms** of a snapshot divide money by the cumulative CPI index at `asOf`
   (`cpiAt`, ADR 0023); ratios are lens-invariant.
 
@@ -369,7 +374,12 @@ table and its export show `dueDate`.
   the baseDate debt (D-41); one dated after baseDate within grid month 1 is new debt in that
   month (D-44). A tranche landing in a future loan's first draw month joins that draw
   (D-46).
-- During construction the property's market value is scaled by `drawnFraction` (see §4.3).
+- During construction the property counts at its completed value and its tranches not drawn
+  yet are committed debt (§4.3, ADR 0166); interest and payments run on the drawn balance
+  only. The projection year carries `committedDebt` (balance + undrawn) and
+  `committedDraws` (draws less tranches already committed, plus the undrawn part of a
+  loan that comes in), so `committedDebt[t] = committedDebt[t−1] − principal − prepaid +
+committedDraws + refinanced`.
 
 Aggregate monthly interest / principal / debt-service / draws / prepaid / prepayment fees /
 year-end balance for the annual projection. Prepaid principal and its fees are owner cash
@@ -400,9 +410,11 @@ handover). It counts its initial principal and every tranche dated on or before 
 of the block that replaces it (the schedule's cut, D-47). A later block is a successor,
 never the acquisition loan. A future buy's first loan that starts after the window is not
 the acquisition loan: its initial principal is **cash in** in the projection year it is
-drawn, like refinance cash; its tranches are not. The same holds for a property owned at
-baseDate whose first loan is drawn after baseDate (ADR 0134): its equity at baseDate holds
-the whole value, so the loan's initial principal is cash in, in its draw year. **Sources
+drawn, like refinance cash; its tranches are not, and the loan is committed debt only from
+its draw month (ADR 0166). The same holds for a property owned at baseDate whose first plain
+loan is drawn after baseDate (ADR 0134): its equity at baseDate holds the whole value, so the
+loan's initial principal is cash in, in its draw year. A development loan there pays the
+developer instead: it is committed debt from baseDate and brings no cash in (ADR 0166). **Sources
 and uses** (the Property detail Acquisition section, §9; never a blocker): uses = price +
 recorded costs + recorded works; sources = own cash + acquisition loan; gap = uses −
 sources, only while own cash is known. A gap of 1 Kč or more either way is shown as a
@@ -488,11 +500,14 @@ the lease on each grid date, indexes it, and renews the last lease. Both give no
 gap between leases and neither falls back to an upcoming lease.
 
 **Invariants:** `propertySnapshot(asOf = baseDate + N years)` == projection year N (value,
-debt) for every property; when every loan retires within the horizon (as in the seed),
+debt, committed debt) for every property; when every loan retires within the horizon (as in the seed),
 Σ principal repaid equals the starting debt plus later draws.
 
 ### 4.6 Portfolio KPIs
 
+- Equity is value − committed debt (§4.3), so a development flat under construction starts
+  from its completed value less its whole loan, and later tranche draws add no equity
+  (ADR 0166).
 - Net worth at horizon (nominal & real); net-worth **multiple** = equityₙ/equity₀;
   **CAGR** nominal = (equityₙ/equity₀)^(1/horizon) − 1; **CAGR real** from the CPI-deflated
   net worth (equal to (1+CAGRₙ)/(1+infl) − 1 under constant inflation). CAGR is **null**

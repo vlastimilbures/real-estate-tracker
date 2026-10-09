@@ -13,6 +13,8 @@ export const en = {
   common: {
     /** A KPI with no value, e.g. a levered IRR (UX-079). */
     notApplicable: "n/a",
+    /** Part of a debt figure a development loan has not drawn yet (ADR 0166). */
+    undrawnDebt: (amount: string) => `incl. ${amount} not drawn yet`,
     irrNotUnique:
       "No unique IRR: the cash flows break even at more than one rate",
     irrNoRoot: "No IRR between −90 % and +1000 %",
@@ -535,7 +537,7 @@ export const en = {
     // Entity panels
     valuationsTitle: "Valuations",
     valuationsHint:
-      "effective-dated market values — for a development property this is the completed (target) value; the shown value ramps with the mortgage draws",
+      "effective-dated market values — for a development property this is the completed (target) value, shown in full while it is built; the loan tranches not drawn yet count as debt",
     addValuation: "valuation",
     colValidFrom: "Valid from",
     colValidTo: "Valid to",
@@ -592,7 +594,7 @@ export const en = {
     fieldMonthlyInstalment: "Monthly instalment",
     fieldDraws: "Development draws (after start)",
     helpDraws:
-      "ADDITIONAL tranches drawn AFTER the start date — one per line: dd.mm.yyyy = amount. The first drawdown is the Initial principal field (do not repeat it here). Total loan = initial principal + these draws; property value ramps with cumulative drawn ÷ total.",
+      "ADDITIONAL tranches drawn AFTER the start date — one per line: dd.mm.yyyy = amount. The first drawdown is the Initial principal field (do not repeat it here). Total loan = initial principal + these draws; the tranches not drawn yet count as debt from the start, while interest is charged only on what is drawn.",
     fieldCompletionDate: "Interest-only until (completion)",
     helpCompletionDate: "pay interest only until this date, then re-amortize",
     // Loan type switch and successor note (ADR 0098)
@@ -1236,7 +1238,7 @@ export const en = {
     interest: "Interest",
     principal: "Principal",
     debtSvc: "Debt svc",
-    draws: "Draws",
+    draws: "New debt",
     refinanced: "Refinance difference",
     prepaid: "Prepaid",
     prepaymentFees: "Prepayment fees",
@@ -1359,7 +1361,7 @@ export const en = {
     developmentProseMid: ". During construction the loan is ",
     developmentInterestOnly: "interest-only",
     developmentProsePost:
-      " (no principal) and the value ramps up with the fraction of the loan drawn so far. When a tranche lands or construction completes, the loan re-amortizes onto a normal repaying schedule.",
+      " (no principal). The property counts at its completed value, and the whole loan counts as debt: the tranches not drawn yet are committed, though interest is charged only on what is drawn. When a tranche lands or construction completes, the loan re-amortizes onto a normal repaying schedule.",
     limitsTitle: "Limits and data safety",
     limitsProse:
       "These figures are planning estimates, not lender quotes or guaranteed outcomes. Two documents in the source repository explain what the model simplifies or leaves out, and how to back up your data and recover it after a failed upgrade.",
@@ -1375,9 +1377,9 @@ export const en = {
       },
       debt: {
         name: "Debt",
-        formula: "outstanding balance on the date",
+        formula: "outstanding balance + development tranches not drawn yet",
         meaning:
-          "Remaining loan balance from the amortization schedule — reflects every payment and any rate reset.",
+          "Remaining loan balance from the amortization schedule — reflects every payment and any rate reset. A development loan also counts its tranches not drawn yet: they are committed, though no interest is due on them until drawn.",
       },
       equity: {
         name: "Equity",
