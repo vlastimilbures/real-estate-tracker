@@ -63,13 +63,16 @@ export type ChartRow = {
 // appreciation residual, so the stacks still sum exactly to the equity change.
 // A refinance handover's difference (`refinanced`, ADR 0130) moves the balance like a
 // draw, so the drawdown bar carries it too (negative when the owner pays down at a refix).
-// Equity is value − committed debt (ADR 0166), so the new-debt stack is `committedDraws`:
-// a development tranche drawn this year was already committed and shows no bar.
+// The stacks follow the shown figures, drawn debt and value less the undrawn tranches
+// (ADR 0169, ADR 0170): the new-debt stack is the drawn `draws`, and a development draw
+// also releases its value into the purchases stack (`draws − committedDraws`, the fall in
+// the undrawn tranches; zero for a plain loan). The two cancel, as a draw creates no
+// equity (ADR 0166), so appreciation is unchanged.
 export type EquityChangeRow = {
   year: number;
   calendarYear: number;
   appreciation: number; // value[t] − value[t−1] − purchases  (negative in a crash year)
-  purchases: number; // value a purchase brings in in year t (≥ 0, ADR 0165)
+  purchases: number; // value bought in + value drawn into a development flat in year t (ADR 0165, 0170)
   paydown: number; // principal repaid in year t, prepaid included (≥ 0) (equity gained by repaying)
   drawdown: number; // −(new debt drawn in year t) (≤ 0)       (equity lost to fresh borrowing)
 };
@@ -94,15 +97,16 @@ export function toEquityChangeRows(series: SeriesRow[]): EquityChangeRow[] {
           .plus(r.committedDraws)
           .plus(r.refinanced),
       ),
-      purchases: n(r.acquiredValue),
+      purchases: n(r.acquiredValue.plus(r.draws).minus(r.committedDraws)),
       paydown: n(r.principal.plus(r.prepaid)),
-      drawdown: n(r.committedDraws.plus(r.refinanced).negated()),
+      drawdown: n(r.draws.plus(r.refinanced).negated()),
     };
   });
 }
 
-/** True when some year has a purchase: the chart shows the Purchases stack only then
- *  (ADR 0165), so a portfolio owned at baseDate keeps its three stacks. */
+/** True when some year has a purchase or a development draw: the chart shows the
+ *  Purchases stack only then (ADR 0165, ADR 0170), so a portfolio owned at baseDate
+ *  without one keeps its three stacks. */
 export function hasPurchases(rows: EquityChangeRow[]): boolean {
   return rows.some((r) => r.purchases !== 0);
 }
