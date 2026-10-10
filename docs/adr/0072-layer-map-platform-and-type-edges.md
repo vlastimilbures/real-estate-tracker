@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-02
 - Source IDs: DR-163, DR-164, DR-165, DR-166, DR-167 (P11 follow-up F-03, D-71)
+- Amended by: [0171](0171-layer-map-corrections.md) (rows Data, Import, UI model and i18n; the
+  facades' benefit is the list of UI entry points, not testability)
 
 ## Context
 
