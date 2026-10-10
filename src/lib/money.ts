@@ -135,11 +135,6 @@ export function NPER(
   return numerator.div(denominator).ln().div(r.plus(ONE).ln());
 }
 
-/** Round a Decimal to whole CZK (display helper). */
-export function roundCzk(value: Numeric): Decimal {
-  return D(value).toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
-}
-
 /**
  * Round up to whole Kč. Used for a derived loan instalment: ceiling (as banks do)
  * guarantees the payment fully amortizes the principal — nearest-rounding can
@@ -148,11 +143,6 @@ export function roundCzk(value: Numeric): Decimal {
  */
 export function ceilCzk(value: Numeric): Decimal {
   return D(value).toDecimalPlaces(0, Decimal.ROUND_CEIL);
-}
-
-/** Convert a Decimal to a plain number at the display boundary only. */
-export function toNumber(value: Numeric): number {
-  return D(value).toNumber();
 }
 
 export { Decimal };

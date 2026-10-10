@@ -1,8 +1,14 @@
 // Pure presentation model for Scenario compare: picks each scenario's nominal or real
 // projection (the engine deflates with the scenario's own CPI, D-23) and the key-figure
 // rows for the lens (UX-055, DR-093). Moved out of ScenarioCompare.tsx.
-import { fmtCzkM, fmtMultiple, fmtPct, fmtPp } from "../../lib/format";
-import { toNumber, type Decimal } from "../../lib/money";
+import {
+  fmtCzkM,
+  fmtMultiple,
+  fmtPct,
+  fmtPp,
+  toNumber,
+} from "../../lib/format";
+import type { Decimal } from "../../lib/money";
 import type { PortfolioKPIs, ProjectionYear } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import type { Mode } from "./lens";

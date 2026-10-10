@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { D, powInt, FV, PMT, NPER, roundCzk, ceilCzk } from "../money";
+import { D, powInt, FV, PMT, NPER, ceilCzk } from "../money";
 
 // Tolerances per the parity targets in .claude/rules/engine-parity.md.
 const KC = 1; // ±1 Kč
@@ -70,13 +70,6 @@ describe("PMT/FV/NPER round-trip", () => {
     const pmt = PMT(r, 300, 5_610_000);
     const n = NPER(r, pmt, 5_610_000);
     nearly(n.toNumber(), 300, RATIO);
-  });
-});
-
-describe("roundCzk", () => {
-  it("rounds half up to whole CZK", () => {
-    expect(roundCzk(1932832.126).toNumber()).toBe(1932832);
-    expect(roundCzk(0.5).toNumber()).toBe(1);
   });
 });
 

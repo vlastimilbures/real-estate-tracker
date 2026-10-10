@@ -13,7 +13,7 @@ import {
 } from "../amortization";
 import { buildSchedule, openingBalance } from "../schedule";
 import { edate, isoDate } from "../dates";
-import { D, PMT, roundCzk, ceilCzk } from "../../lib/money";
+import { D, Decimal, PMT, ceilCzk } from "../../lib/money";
 import type { Assumptions, MortgageBlock } from "../types";
 import { assumptions, BASE_DATE } from "./support/seed";
 import { loan } from "./support/loan";
@@ -59,7 +59,9 @@ describe("instalmentFor — annuity instalment from principal/rate/term", () => 
   });
   it("nearest-rounded instalment would NOT fully amortize (why we ceil)", () => {
     expect(
-      amortizationHealth(blockWith(roundCzk(exact28))).fullyAmortizes,
+      amortizationHealth(
+        blockWith(exact28.toDecimalPlaces(0, Decimal.ROUND_HALF_UP)),
+      ).fullyAmortizes,
     ).toBe(false);
   });
 });

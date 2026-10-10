@@ -9,7 +9,8 @@ import {
   dashboardSubtitle,
 } from "../dashboard";
 import type { SeriesRow } from "../projection";
-import { D, ZERO, toNumber } from "../../../lib/money";
+import { D, ZERO } from "../../../lib/money";
+import { toNumber } from "../../../lib/format";
 import { edate, isoDate } from "../../../engine";
 import type { PortfolioSnapshot, IsoDate } from "../../../engine";
 import { en } from "../../../i18n/en";
