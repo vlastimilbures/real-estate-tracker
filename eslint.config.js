@@ -156,6 +156,22 @@ export default tseslint.config(
     rules: {
       "no-restricted-syntax": ["error", ...testBans, ...brandCastBans],
       "@typescript-eslint/no-non-null-assertion": "error",
+      // Shipped code runs in the WebView: no Node globals. tsconfig cannot hide them,
+      // since @types/papaparse pulls in @types/node (#154).
+      "no-restricted-globals": [
+        "error",
+        ...[
+          "process",
+          "Buffer",
+          "global",
+          "require",
+          "__dirname",
+          "__filename",
+        ].map((name) => ({
+          name,
+          message: "Node global: shipped code runs in the WebView.",
+        })),
+      ],
     },
   },
   // Layering boundaries (CLAUDE.md §4) enforced by lint, not just review/convention.
