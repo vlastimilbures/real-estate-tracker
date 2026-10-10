@@ -345,7 +345,8 @@ export function portfolioSnapshot(
   const totalValue = sum((s) => s.value);
   const totalDebt = sumOf(owing)((s) => s.debt);
   const totalCommittedDebt = sumOf(owing)((s) => s.committedDebt);
-  // Only an owned property has undrawn debt, so the reported value sums the owned rows.
+  // Summed over the owing rows like committed debt; a not-owned row's undrawn is 0, so
+  // totalReportedValue − totalDebt = totalEquity (ADR 0169).
   const totalUndrawnDebt = sumOf(owing)((s) => s.undrawnDebt);
   const grossAnnualRent = sum((s) => s.grossAnnualRent);
   const effectiveGrossIncome = sum((s) => s.effectiveGrossIncome);

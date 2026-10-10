@@ -20,7 +20,8 @@ import {
 } from "../components/primitives";
 import { PropertyFormModal } from "../components/PropertyFormModal";
 import { SampleBanner } from "../components/SampleBanner";
-import { fmtDate, fmtPct, fmtDscr } from "../../lib/format";
+import { fmtCzkM, fmtDate, fmtPct, fmtDscr } from "../../lib/format";
+import { undrawnPart } from "../model/debt";
 import {
   bandPillParts,
   dscrBand,
@@ -305,7 +306,14 @@ export function Properties() {
                           value less the tranches not drawn yet (ADR 0169). */}
                       {fig(
                         p.owned || !p.debt.isZero(),
-                        <Money value={p.debt} parens={false} suffix={false} />,
+                        <>
+                          <Money value={p.debt} parens={false} suffix={false} />
+                          {undrawnPart(p.undrawnDebt) && (
+                            <span className="cell-sub">
+                              {t.common.undrawnDebt(fmtCzkM(p.undrawnDebt))}
+                            </span>
+                          )}
+                        </>,
                       )}
                     </td>
                     <td>

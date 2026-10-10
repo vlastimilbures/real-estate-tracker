@@ -70,13 +70,13 @@ describe("Dashboard hero foot", () => {
     hero(devOnly);
     const foot = heroFoot();
     // 9.5 M completed − 2.5 M not drawn yet; 2.0 M drawn.
+    // The undrawn note follows the debt it adds to.
     expect(foot).toContain(
       en.dashboard.assetsDebtEquity(
         fmtCzkM(D("7000000")),
-        fmtCzkM(D("2000000")),
+        `${fmtCzkM(D("2000000"))} (${NOTE})`,
       ),
     );
-    expect(foot).toContain(NOTE);
   });
 
   it("has no undrawn note when every loan is drawn", () => {

@@ -16,7 +16,7 @@ import {
 } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
 import { isoDate, propertySnapshot, type Portfolio } from "../../../engine";
-import { fmtCzk } from "../../../lib/format";
+import { fmtCzk, fmtCzkM } from "../../../lib/format";
 import type { Decimal } from "../../../lib/money";
 
 vi.mock("../../../lib/day", async (importOriginal) => ({
@@ -196,7 +196,10 @@ describe("Properties: development flat under construction (ADR 0169)", () => {
       .map((c) => c.textContent);
     const money = (v: Decimal) => fmtCzk(v, { suffix: false });
     expect(cells).toContain(money(s.reportedValue));
-    expect(cells).toContain(money(s.debt));
-    expect(cells).not.toContain(money(s.committedDebt));
+    // The drawn debt, with the tranches still to draw named under it.
+    expect(cells).toContain(
+      money(s.debt) + en.common.undrawnDebt(fmtCzkM(s.undrawnDebt)),
+    );
+    expect(cells.join()).not.toContain(money(s.committedDebt));
   });
 });

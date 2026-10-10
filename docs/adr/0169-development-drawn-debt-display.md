@@ -56,7 +56,8 @@ value (loan to gross development value).
    - The Projection grid and its export add an "Undrawn" column (cs "Nečerpáno", ru "Не
      выбрано") after Debt, shown only when some year has a tranche ahead.
    - The debt tiles' sub-line now reads "plus {amount} still to draw" (cs "plus {amount}
-     k dočerpání", ru "плюс {amount} к выборке"). The Property detail value tile adds
+     k dočerpání", ru "плюс {amount} к выборке"). The Dashboard hero foot puts it in brackets right after the debt. The
+     Properties list shows it under the debt. The Property detail value tile adds
      "completed value {amount}" (cs "hodnota po dokončení {amount}", ru "стоимость после
      завершения {amount}") while a tranche is ahead.
 4. **New debt is the drawn new debt.** The grid's "New debt" column shows `draws`, so the

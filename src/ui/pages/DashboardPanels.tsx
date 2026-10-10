@@ -71,11 +71,13 @@ export function HeroTiles({
         value={<Money value={s.totalEquity} parens={false} suffix={false} />}
         foot={
           <>
+            {/* The undrawn note sits right after the debt it adds to (ADR 0169). */}
             {t.dashboard.assetsDebtEquity(
               fmtCzkM(s.totalReportedValue),
-              fmtCzkM(s.totalDebt),
+              undrawn
+                ? `${fmtCzkM(s.totalDebt)} (${t.common.undrawnDebt(fmtCzkM(undrawn))})`
+                : fmtCzkM(s.totalDebt),
             )}
-            {undrawn ? ` · ${t.common.undrawnDebt(fmtCzkM(undrawn))}` : ""}
             {mode === "real" && !isToday ? t.dashboard.realTodayKc : ""}
           </>
         }

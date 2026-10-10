@@ -8,6 +8,7 @@ import { describe, it, expect } from "vitest";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
+import { cpiAt, realPortfolioSnapshot } from "../real";
 import { buildSchedule, propertySchedule, undrawnPrincipal } from "../schedule";
 import { isoDate, edate } from "../dates";
 import { assumptions } from "./support/seed";
@@ -587,5 +588,35 @@ describe("undrawn principal = the schedule's later draws", () => {
         later.toString(),
       );
     }
+  });
+});
+
+describe("portfolio identity with pending, deactivated and drawing properties (ADR 0169)", () => {
+  // mixed: the seed, a future purchase with a drawn loan, a drawing dev flat and a
+  // deactivated property.
+  for (const N of [0, 1, 2, 3, 5]) {
+    it(`totalReportedValue − totalDebt = totalEquity at baseDate + ${N}y, nominal and real`, () => {
+      const asOf = edate(assumptions.baseDate, N * 12);
+      const s = portfolioSnapshot(mixed, assumptions, asOf);
+      expect(s.totalReportedValue.minus(s.totalDebt).toString()).toBe(
+        s.totalEquity.toString(),
+      );
+      expect(s.totalUndrawnDebt.toString()).toBe(
+        s.totalCommittedDebt.minus(s.totalDebt).toString(),
+      );
+      const r = realPortfolioSnapshot(s, cpiAt(assumptions, asOf));
+      near(
+        r.totalReportedValue.minus(r.totalDebt),
+        r.totalEquity.toNumber(),
+        1e-6,
+        "real",
+      );
+    });
+  }
+
+  it("the drawing dev flat has undrawn debt at baseDate", () => {
+    expect(
+      portfolioSnapshot(mixed, assumptions).totalUndrawnDebt.isZero(),
+    ).toBe(false);
   });
 });

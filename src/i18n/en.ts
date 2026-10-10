@@ -13,7 +13,7 @@ export const en = {
   common: {
     /** A KPI with no value, e.g. a levered IRR (UX-079). */
     notApplicable: "n/a",
-    /** Part of a debt figure a development loan has not drawn yet (ADR 0166). */
+    /** The development tranches not drawn yet, beside the drawn debt (ADR 0169). */
     undrawnDebt: (amount: string) => `plus ${amount} still to draw`,
     /** A development property's completed value, beside its value less the tranches
      *  not drawn yet (ADR 0169). */

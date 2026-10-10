@@ -226,12 +226,12 @@ function computeTurnOnGates(
   };
 }
 
-/** Year 0 — opening position (stocks only). Empty if not owned yet. */
 /**
  * A year's stocks. Committed debt = the drawn balance + the development tranches not
  * drawn yet (ADR 0166); equity and LTV use it. The screens show the drawn balance beside
  * the value less those tranches (`reportedValue`, ADR 0169). The portfolio passes its own
- * Σ committed debt, so its sums keep their order.
+ * Σ committed debt: Σbalance + Σundrawn could round differently in the last digits and
+ * move the golden hashes (ADR 0039).
  */
 function stocks(
   value: Decimal,
@@ -250,6 +250,7 @@ function stocks(
   };
 }
 
+/** Year 0 — opening position (stocks only). Empty if not owned yet. */
 function buildYear0(
   b: PropertyBasis,
   blocks: MortgageBlock[],
