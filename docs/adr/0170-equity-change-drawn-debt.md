@@ -41,15 +41,24 @@ construction. So a draw is value and debt added in the same year, with no equity
 
 ## Decision
 
-1. **New debt = drawn new debt:** `drawdown = −(draws + refinanced)`.
-2. **Purchases = value bought in + value drawn into a development flat:**
-   `purchases = acquiredValue + draws − committedDraws`. `draws − committedDraws` is the fall
-   in the undrawn tranches in the year; it is zero for a plain loan, whose draw is still cash
-   in and not value.
-3. **Appreciation stays the residual**, and does not change: decisions 1 and 2 move the same
-   amount into both stacks. The four stacks still sum exactly to the equity change, under
-   both lenses: `draws` and `committedDraws` are flows deflated by one year factor, so no
-   inflation residual shows as a bar.
+1. **The fall in the undrawn tranches is split by what it is.** It is
+   `released = draws − committedDraws`, zero for a plain loan, whose draw is still cash in
+   and not value. The part that is value, `built`, is `released` kept between
+   `−acquiredValue` and `draws`:
+   - a development draw releases its value (up to the year's draws);
+   - a purchase brings in its value less the tranches it has not drawn yet (a negative
+     `released`, down to the value bought in).
+
+   The rest is a commitment change with no value, such as a refinance handover into a
+   development loan, which commits its tranches before any is drawn.
+
+2. **Purchases = value bought in + `built`; new debt = `−(draws + refinanced)` plus the
+   commitment change `released − built`.** A handover that commits tranches shows them as
+   new debt in its year, as ADR 0166 did. The Purchases stack is never negative.
+3. **Appreciation stays the residual**, and does not change: purchases + new debt still
+   equal `acquiredValue − committedDraws − refinanced`. The four stacks still sum exactly
+   to the equity change, under both lenses: `draws` and `committedDraws` are flows
+   deflated by one year factor, so no inflation residual shows as a bar.
 4. **The stack's legend** `dashboard.seriesPurchases` reads "Purchases & construction" (cs
    "Nákupy a výstavba", ru "Покупки и строительство"). It shows whenever some year has a
    purchase or a development draw, so also for a development flat owned at baseDate.
@@ -65,6 +74,9 @@ construction. So a draw is value and debt added in the same year, with no equity
 - Own funds have no payment dates (ADR 0119, ADR 0166), so the chart cannot show the owner's
   own payments as construction progress. Bars are yearly: a draw shows at the end of its
   projection year.
+- A handover into a development loan shows its tranches twice as new debt: committed in
+  the handover year, and drawn in their own year, with the value beside it. Equity is
+  right in both years.
 - Tests: `chartData.equityChange.test.ts` (the tranche years of an owned flat and of a future
-  buy, under both lenses; a plain draw adds no purchase; Σ purchases = Σ value bought in);
+  buy, under both lenses; a handover into a development loan; a plain draw adds no purchase; Σ purchases = Σ value bought in);
   `DashboardEquityChange.test.tsx` (the legend).
