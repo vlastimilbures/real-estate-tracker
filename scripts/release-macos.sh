@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Build, ad-hoc sign and verify the macOS release (P8, D-09, D-63: Apple Silicon only,
 # macOS 13+). Usage: scripts/release-macos.sh [--skip-checks]
-# Never launches the app and never touches the database. See docs/release.md.
+# Refuses a dirty tree, so the build is exactly the commit that gets tagged. Without
+# --skip-checks it runs the CI gates first. Never launches the app and never touches the
+# database. See docs/release.md.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -22,11 +24,19 @@ conf_version=$(node -p "require('./src-tauri/tauri.conf.json').version")
   fail "package.json $pkg_version != src-tauri/Cargo.toml $cargo_version"
 echo "version $pkg_version"
 
+step "Clean tree (the build must match the commit you tag)"
+[[ -z "$(git status --porcelain)" ]] || fail "uncommitted changes; commit them before building"
+
 if [[ "${1:-}" != "--skip-checks" ]]; then
   step "Checks"
   pnpm typecheck
   pnpm lint
-  pnpm test
+  pnpm exec prettier --check .
+  pnpm depcruise
+  pnpm knip
+  pnpm adr:check
+  pnpm audit --prod --audit-level=high
+  pnpm test:coverage
   cargo fmt --check --manifest-path src-tauri/Cargo.toml
   cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
   cargo test --manifest-path src-tauri/Cargo.toml
@@ -38,8 +48,15 @@ rustup target list --installed | grep -qx "$TARGET" || rustup target add "$TARGE
 pnpm tauri build --target "$TARGET"
 
 APP=$(find "$BUNDLE_DIR/macos" -maxdepth 1 -name '*.app' | head -1)
-DMG=$(find "$BUNDLE_DIR/dmg" -maxdepth 1 -name '*.dmg' | head -1)
-[[ -n "$APP" && -n "$DMG" ]] || fail "bundle not found under $BUNDLE_DIR"
+[[ -n "$APP" ]] || fail "app not found under $BUNDLE_DIR/macos"
+# By version: the bundle folder keeps older dmgs between builds.
+DMG="$BUNDLE_DIR/dmg/Real Estate Tracker_${pkg_version}_aarch64.dmg"
+[[ -f "$DMG" ]] || fail "dmg not found: $DMG"
+
+step "No sql.js in the frontend bundle (E2E only, src/data/browserSql.ts)"
+status=0
+grep -rlE 'sql-wasm|initSqlJs' dist/assets || status=$?
+[[ $status == 1 ]] || fail "sql.js reached dist/assets, or dist/assets is unreadable"
 
 step "Verify signature"
 codesign --verify --deep --strict --verbose=2 "$APP"
