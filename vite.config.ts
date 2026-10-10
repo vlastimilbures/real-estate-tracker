@@ -27,19 +27,16 @@ export default defineConfig({
     port: 1420,
     strictPort: true,
     host: host || false,
-    hmr: host
-      ? {
-          protocol: "ws",
-          host,
-          port: 1421,
-        }
-      : undefined,
+    // Without a host, `hmr` stays unset (Vite's default).
+    ...(host ? { hmr: { protocol: "ws", host, port: 1421 } } : {}),
     watch: {
       ignored: ["**/src-tauri/**"],
     },
   },
 
   test: {
+    // Global describe/afterEach stay on at runtime: Testing Library's auto-cleanup hooks
+    // into the global afterEach. Tests still import from "vitest" (no global types).
     globals: true,
     environment: "node",
     // Node 25+ turns Web Storage on: its `localStorage` warns in every worker without

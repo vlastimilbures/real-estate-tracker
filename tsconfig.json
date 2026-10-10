@@ -21,7 +21,7 @@
     "noImplicitOverride": true,
     "noUncheckedSideEffectImports": true,
     "exactOptionalPropertyTypes": true,
-    "types": ["vitest/globals"]
+    "types": []
   },
   "include": ["src"]
 }

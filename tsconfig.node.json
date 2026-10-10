@@ -1,0 +1,13 @@
+{
+  // Typecheck for the Node-side config files and the E2E specs (#154). Run by
+  // `pnpm typecheck`. vite.config.ts holds the build target and the coverage floors, so a
+  // mistyped option there must fail here instead of being ignored.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "resolveJsonModule": true,
+    // As strict as production code: these files index little, so the guard costs nothing.
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["vite.config.ts", "playwright.config.ts", "e2e"]
+}
