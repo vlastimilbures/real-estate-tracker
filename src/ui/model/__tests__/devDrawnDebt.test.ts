@@ -12,7 +12,7 @@ import {
   projectionSeries,
 } from "../projection";
 import { en } from "../../../i18n/en";
-import { toNumber } from "../../../lib/money";
+import { toNumber } from "../../../lib/format";
 
 const only = <T extends { propertyId: string }>(rows: T[]) =>
   rows.filter((r) => r.propertyId === "dev");

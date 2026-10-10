@@ -13,7 +13,7 @@ import {
   tooltipTotal,
 } from "../chartData";
 import { getDict } from "../../../i18n";
-import { toNumber } from "../../../lib/money";
+import { toNumber } from "../../../lib/format";
 
 const series = projectionSeries(
   portfolioProjection(portfolio, assumptions),

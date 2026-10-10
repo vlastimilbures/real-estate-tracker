@@ -1,12 +1,12 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import pkg from "./package.json";
+import pkg from "./package.json" with { type: "json" };
 
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig({
   plugins: [react()],
 
   // Build-time app version (read by the About page). Injected as a constant so it works
@@ -27,19 +27,16 @@ export default defineConfig(async () => ({
     port: 1420,
     strictPort: true,
     host: host || false,
-    hmr: host
-      ? {
-          protocol: "ws",
-          host,
-          port: 1421,
-        }
-      : undefined,
+    // Without a host, `hmr` stays unset (Vite's default).
+    ...(host ? { hmr: { protocol: "ws", host, port: 1421 } } : {}),
     watch: {
       ignored: ["**/src-tauri/**"],
     },
   },
 
   test: {
+    // Global describe/afterEach stay on at runtime: Testing Library's auto-cleanup hooks
+    // into the global afterEach. Tests still import from "vitest" (no global types).
     globals: true,
     environment: "node",
     // Node 25+ turns Web Storage on: its `localStorage` warns in every worker without
@@ -78,4 +75,4 @@ export default defineConfig(async () => ({
       },
     },
   },
-}));
+});

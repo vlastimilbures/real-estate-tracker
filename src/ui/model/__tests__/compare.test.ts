@@ -10,8 +10,8 @@ import {
   realProjection,
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { toNumber, type Decimal } from "../../../lib/money";
-import { fmtCzkM, fmtMultiple, fmtPp } from "../../../lib/format";
+import type { Decimal } from "../../../lib/money";
+import { fmtCzkM, fmtMultiple, fmtPp, toNumber } from "../../../lib/format";
 import { en } from "../../../i18n/en";
 import {
   compareFootnote,

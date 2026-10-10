@@ -1,6 +1,7 @@
 // Pure chart-data helpers (kept out of the component file so fast-refresh stays happy).
 // Engine Decimals → plain numbers happens HERE, the chart boundary.
-import { Decimal, toNumber } from "../../lib/money";
+import { Decimal } from "../../lib/money";
+import { toNumber } from "../../lib/format";
 import { yearLabel, type SeriesRow } from "./projection";
 import type { Dictionary } from "../../i18n";
 import { at } from "../../lib/arrays";

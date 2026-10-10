@@ -45,7 +45,7 @@
     "ux:readme": "UX_SPEC=readme.spec.ts UX_THEME=both UX_VIEWPORT=1440x900 UX_SCALE=2 UX_RUN_ID=readme playwright test -c playwright.ux.config.ts",
     "ux:diff": "node ux-capture/diff.ts",
     "ux:axe-check": "node ux-capture/axeCheck.ts",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.strict.json && tsc --noEmit -p ux-capture/tsconfig.json",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.strict.json && tsc --noEmit -p ux-capture/tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "depcruise": "depcruise src --config .dependency-cruiser.cjs --ignore-known --output-type err",

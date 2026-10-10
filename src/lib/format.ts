@@ -3,7 +3,7 @@
 // Rounding happens HERE and nowhere in the engine. Czech rendering throughout (the app
 // is a Czech real-estate tracker: "Kč", dd.mm.yyyy dates) → space thousands separator,
 // comma decimal separator, space before the unit.
-import { D, roundCzk, type Numeric } from "./money";
+import { D, Decimal, type Numeric } from "./money";
 import { getActiveCurrency } from "./currency";
 
 const MINUS = "−"; // real minus sign, not a hyphen
@@ -23,6 +23,19 @@ function fmtFixed(value: Numeric, dp: number): { neg: boolean; body: string } {
   const [int = "", frac] = fixed.split(".");
   const body = groupThousands(int) + (frac ? `,${frac}` : "");
   return { neg, body };
+}
+
+// Display-only number helpers. They live here, not in lib/money, so the engine (which may
+// import lib/money only) cannot reach a float conversion (CLAUDE.md §5, #154).
+
+/** Round a Decimal to whole CZK (display helper). */
+export function roundCzk(value: Numeric): Decimal {
+  return D(value).toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
+}
+
+/** Convert a Decimal to a plain number at the display boundary only. */
+export function toNumber(value: Numeric): number {
+  return D(value).toNumber();
 }
 
 export interface MoneyOpts {

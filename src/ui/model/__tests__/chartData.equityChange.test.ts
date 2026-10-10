@@ -14,7 +14,8 @@ import {
 import { projectionSeries, type SeriesRow } from "../projection";
 import { hasPurchases, toEquityChangeRows } from "../chartData";
 import { devBlock, mixed } from "../../../engine/__tests__/support/mixed";
-import { D, ZERO, toNumber } from "../../../lib/money";
+import { D, ZERO } from "../../../lib/money";
+import { toNumber } from "../../../lib/format";
 
 const projection = portfolioProjection(portfolio, assumptions);
 const nominal = projectionSeries(projection, "nominal", assumptions);

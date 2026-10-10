@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { utc } from "../../engine";
 import {
   fmtCzk,
+  roundCzk,
   fmtCzkM,
   fmtPct,
   fmtPp,
@@ -273,5 +274,12 @@ describe("rounding boundaries (half-up, away from zero)", () => {
     expect(fmtDate(utc(2026, 1, 5))).toBe("05.01.2026");
     expect(fmtDate(utc(2024, 2, 29))).toBe("29.02.2024");
     expect(fmtDate(utc(2026, 12, 31))).toBe("31.12.2026");
+  });
+});
+
+describe("roundCzk", () => {
+  it("rounds half up to whole CZK", () => {
+    expect(roundCzk(1932832.126).toNumber()).toBe(1932832);
+    expect(roundCzk(0.5).toNumber()).toBe(1);
   });
 });
