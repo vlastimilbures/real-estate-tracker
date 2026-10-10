@@ -15,7 +15,12 @@ import {
   StatList,
 } from "../components/primitives";
 import { ChartCard, CzkLines, SignedBars } from "../components/charts";
-import { SERIES, type ChartRow } from "../model/chartData";
+import {
+  COMMITTED_DASH,
+  SERIES,
+  hasUndrawn,
+  type ChartRow,
+} from "../model/chartData";
 import { RecordForm } from "../components/forms";
 import { ConfirmRow } from "../components/EntityPanelParts";
 import { moneyDraft, percentDraft } from "../model/formParse";
@@ -71,6 +76,17 @@ export function PropertySnapshotTiles({
   const valueSeries = [
     { key: "value", name: pd.seriesValue, color: SERIES.petrol },
     { key: "balance", name: pd.seriesDebt, color: SERIES.clay },
+    // ADR 0169: dashed while a development loan has tranches ahead.
+    ...(hasUndrawn(chartRows)
+      ? [
+          {
+            key: "committedDebt",
+            name: pd.seriesCommittedDebt,
+            color: SERIES.clay,
+            dash: COMMITTED_DASH,
+          },
+        ]
+      : []),
     { key: "equity", name: pd.seriesEquity, color: SERIES.brass },
   ];
   const cashFlowSeries = [
@@ -135,16 +151,18 @@ function NotOwnedPanel({ purchaseDate, price, loan }: NotOwned) {
 /** The four snapshot KPI tiles of an owned property. */
 function SnapshotTiles({ s }: { s: PropertySnapshot }) {
   const t = useT();
-  const undrawn = undrawnPart(s.committedDebt, s.debt);
+  const undrawn = undrawnPart(s.undrawnDebt);
   return (
     <div className="tiles">
+      {/* ADR 0169: the value less the tranches not drawn yet, beside the drawn debt. */}
       <KpiTile
         label={t.propertyDetail.marketValue}
-        value={<Money value={s.value} parens={false} suffix={false} />}
+        value={<Money value={s.reportedValue} parens={false} suffix={false} />}
+        foot={undrawn && t.common.completedValue(fmtCzkM(s.value))}
       />
       <KpiTile
         label={t.propertyDetail.debt}
-        value={<Money value={s.committedDebt} parens={false} suffix={false} />}
+        value={<Money value={s.debt} parens={false} suffix={false} />}
         foot={
           <>
             <MetricLabel term="ltv">{t.propertyDetail.ltv}</MetricLabel>{" "}

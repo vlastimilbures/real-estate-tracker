@@ -862,6 +862,37 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "29f-property-dev-drawn-debt",
+    desc: "Development loan with tranches ahead: drawn debt and value less the undrawn tranches in the tiles and the chart, with the dashed committed line (ADR 0169)",
+    run: async (ux) => {
+      const d = ux.t.propertyDetail;
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      const m = panel(ux, d.mortgagesTitle);
+      await m.getByRole("button", { name: ux.t.common.edit }).first().click();
+      await m.getByRole("button", { name: d.loanTypeDevelopment }).click();
+      await m.getByLabel(d.fieldLoanTermYears, { exact: false }).fill("30");
+      const schedule = m.getByRole("group", { name: d.fieldDraws });
+      const tranches: [string, string][] = [
+        ["01.03.2027", "1500000"],
+        ["01.03.2028", "1500000"],
+      ];
+      for (const [i, [date, amount]] of tranches.entries()) {
+        await schedule.getByRole("button", { name: d.addTranche }).click();
+        const row = schedule.getByRole("group", { name: d.trancheRow(i + 1) });
+        await row.getByLabel(d.eventDate, { exact: true }).fill(date);
+        await row.getByLabel(d.eventAmount).fill(amount);
+      }
+      await m.getByRole("button", { name: ux.t.common.saveChanges }).click();
+      await expect(
+        ux.page.getByText(d.seriesCommittedDebt).first(),
+      ).toBeVisible();
+      await ux.page.evaluate(() => window.scrollTo(0, 0));
+      await ux.page.mouse.move(0, 0);
+      await ux.capture("29f-property-dev-drawn-debt", { fullPage: false });
+    },
+  },
+  {
     id: "29c-property-acquisition",
     desc: "Property detail Acquisition section: sources and uses with the gap warning (ADR 0119 §9)",
     run: async (ux) => {

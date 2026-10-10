@@ -19,7 +19,9 @@ import {
 } from "../components/charts";
 import {
   SERIES,
+  COMMITTED_DASH,
   hasPurchases,
+  hasUndrawn,
   type ChartRow,
   type EquityChangeRow,
 } from "../model/chartData";
@@ -57,7 +59,7 @@ export function HeroTiles({
   irr: LeveredIrr;
 }) {
   const t = useT();
-  const undrawn = undrawnPart(s.totalCommittedDebt, s.totalDebt);
+  const undrawn = undrawnPart(s.totalUndrawnDebt);
   return (
     <div className="tiles">
       <KpiTile
@@ -70,8 +72,8 @@ export function HeroTiles({
         foot={
           <>
             {t.dashboard.assetsDebtEquity(
-              fmtCzkM(s.totalValue),
-              fmtCzkM(s.totalCommittedDebt),
+              fmtCzkM(s.totalReportedValue),
+              fmtCzkM(s.totalDebt),
             )}
             {undrawn ? ` · ${t.common.undrawnDebt(fmtCzkM(undrawn))}` : ""}
             {mode === "real" && !isToday ? t.dashboard.realTodayKc : ""}
@@ -197,6 +199,17 @@ export function TrajectoryCharts({
   const valueSeries = [
     { key: "value", name: d.seriesValue, color: SERIES.petrol },
     { key: "balance", name: d.seriesDebt, color: SERIES.clay },
+    // ADR 0169: dashed while a development loan has tranches ahead.
+    ...(hasUndrawn(rows)
+      ? [
+          {
+            key: "committedDebt",
+            name: d.seriesCommittedDebt,
+            color: SERIES.clay,
+            dash: COMMITTED_DASH,
+          },
+        ]
+      : []),
     { key: "equity", name: d.seriesEquity, color: SERIES.brass },
   ];
   const equitySeries = [

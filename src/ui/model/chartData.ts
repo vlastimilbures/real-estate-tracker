@@ -18,6 +18,9 @@ export const SERIES = {
   negative: "var(--negative)",
 } as const;
 
+/** The committed-debt line's dash: drawn debt + the tranches not drawn yet (ADR 0169). */
+export const COMMITTED_DASH = "6 3";
+
 // A type alias (not interface) so it's structurally assignable to Record<string, number>
 // — the charts accept arbitrary string-keyed series for the Scenarios compare view.
 export type ChartRow = {
@@ -26,6 +29,9 @@ export type ChartRow = {
   calendarYear: number;
   value: number;
   balance: number;
+  // ADR 0169: the drawn balance + the tranches not drawn yet, plotted dashed only while
+  // a tranche is ahead and in the year after, so it ends on the drawn line; else null.
+  committedDebt: number | null;
   equity: number;
   ltv: number | null; // null: debt on no value, a gap in the line (ADR 0133)
   // Flows are null in year 0 (the opening point has none), so the lines start at year 1
@@ -101,17 +107,28 @@ export function hasPurchases(rows: EquityChangeRow[]): boolean {
   return rows.some((r) => r.purchases !== 0);
 }
 
+/** True when some year has development tranches not drawn yet: the value and debt
+ *  chart then adds the dashed committed-debt line (ADR 0169). */
+export function hasUndrawn(rows: ChartRow[]): boolean {
+  return rows.some((r) => r.committedDebt !== null);
+}
+
 /** Decimal series → plain-number rows for plotting. */
 export function toChartRows(series: SeriesRow[]): ChartRow[] {
   const n = (d: Decimal) => toNumber(d);
-  return series.map((r) => {
+  return series.map((r, i) => {
     const flow = (d: Decimal) => (r.year <= 0 ? null : n(d));
+    const prev = i > 0 ? at(series, i - 1) : undefined;
+    const drawing =
+      !r.undrawnDebt.isZero() || (prev && !prev.undrawnDebt.isZero());
     return {
       year: r.year,
       calendarYear: r.calendarYear,
-      value: n(r.value),
-      // The debt line shows committed debt, so value − debt = equity (ADR 0166).
-      balance: n(r.committedDebt),
+      // The drawn balance, and the value less the tranches not drawn yet, so
+      // value − debt = equity (ADR 0169).
+      value: n(r.reportedValue),
+      balance: n(r.balance),
+      committedDebt: drawing ? n(r.committedDebt) : null,
       equity: n(r.equity),
       ltv: r.ltv === null ? null : n(r.ltv),
       grossRent: flow(r.grossRent),

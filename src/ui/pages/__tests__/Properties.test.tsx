@@ -14,6 +14,10 @@ import {
   assumptions,
   withPropertyId,
 } from "../../../engine/__tests__/support/seed";
+import { mixed } from "../../../engine/__tests__/support/mixed";
+import { isoDate, propertySnapshot, type Portfolio } from "../../../engine";
+import { fmtCzk } from "../../../lib/format";
+import type { Decimal } from "../../../lib/money";
 
 vi.mock("../../../lib/day", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/day")>()),
@@ -159,5 +163,40 @@ describe('A property stored with the id "" (ADR 0127)', () => {
     );
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByDisplayValue(first.name)).toBeTruthy();
+  });
+});
+
+// ADR 0169: a development flat under construction lists its drawn debt and its value less
+// the tranches not drawn yet; equity is unchanged.
+describe("Properties: development flat under construction (ADR 0169)", () => {
+  it("lists the reported value and the drawn debt", () => {
+    const only = <T extends { propertyId: string }>(rows: T[]) =>
+      rows.filter((r) => r.propertyId === "dev");
+    const devOnly: Portfolio = {
+      properties: mixed.properties.filter((p) => p.id === "dev"),
+      mortgages: only(mixed.mortgages),
+      valuations: only(mixed.valuations),
+      leases: only(mixed.leases),
+      holdingCosts: [],
+    };
+    act(() => usePortfolioStore.setState({ portfolio: devOnly }));
+    render(<Properties />);
+    const dev = devOnly.properties[0]!;
+    const s = propertySnapshot(
+      dev,
+      devOnly,
+      assumptions,
+      isoDate("2026-10-01"),
+    );
+    expect(s.undrawnDebt.isZero()).toBe(false);
+    const row = screen.getByRole("button", { name: dev.name }).closest("tr");
+    if (!(row instanceof HTMLElement)) throw new Error("no dev row");
+    const cells = within(row)
+      .getAllByRole("cell")
+      .map((c) => c.textContent);
+    const money = (v: Decimal) => fmtCzk(v, { suffix: false });
+    expect(cells).toContain(money(s.reportedValue));
+    expect(cells).toContain(money(s.debt));
+    expect(cells).not.toContain(money(s.committedDebt));
   });
 });
