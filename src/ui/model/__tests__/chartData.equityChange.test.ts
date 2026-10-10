@@ -4,10 +4,15 @@
 // real engine fixtures via the projection lens.
 import { describe, it, expect } from "vitest";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
-import { portfolioProjection } from "../../../engine";
+import {
+  isoDate,
+  money,
+  portfolioProjection,
+  type Portfolio,
+} from "../../../engine";
 import { projectionSeries, type SeriesRow } from "../projection";
 import { hasPurchases, toEquityChangeRows } from "../chartData";
-import { mixed } from "../../../engine/__tests__/support/mixed";
+import { devBlock, mixed } from "../../../engine/__tests__/support/mixed";
 import { D, ZERO, toNumber } from "../../../lib/money";
 
 const projection = portfolioProjection(portfolio, assumptions);
@@ -157,14 +162,18 @@ describe("toEquityChangeRows: purchases (ADR 0165)", () => {
       const series = lenses[lens];
       const rows = toEquityChangeRows(series);
       const buy = rows.find((r) => r.year === BUY_YEAR)!;
-      expect(buy.purchases).toBeCloseTo(
+      expect(toNumber(series[BUY_YEAR].acquiredValue)).toBeGreaterThan(0);
+      // Each year: the value bought in plus the dev flat's drawn tranches (ADR 0170).
+      rows.forEach((r) => {
+        const cur = series[r.year];
+        expect(r.purchases).toBeCloseTo(
+          toNumber(cur.acquiredValue.plus(cur.draws).minus(cur.committedDraws)),
+          6,
+        );
+      });
+      expect(buy.purchases).toBeGreaterThanOrEqual(
         toNumber(series[BUY_YEAR].acquiredValue),
-        6,
       );
-      expect(buy.purchases).toBeGreaterThan(0);
-      rows
-        .filter((r) => r.year !== BUY_YEAR)
-        .forEach((r) => expect(r.purchases).toBe(0));
     },
   );
 
@@ -201,9 +210,10 @@ describe("toEquityChangeRows: purchases (ADR 0165)", () => {
   });
 });
 
-// ADR 0166 (#120): equity is value − committed debt, so a development tranche drawn in a
-// year was already committed and shows no new-debt bar, under either lens.
-describe("toEquityChangeRows: development tranches (ADR 0166)", () => {
+// ADR 0170: a development loan's draws show as they happen. Each draw is drawn new debt
+// and the value it releases into the Purchases stack (the fall in the undrawn tranches),
+// so the two cancel and the stacks still sum to the equity change, under either lens.
+describe("toEquityChangeRows: development draws (ADR 0170)", () => {
   const only = <T extends { propertyId: string }>(rows: T[]) =>
     rows.filter((r) => r.propertyId === "dev");
   const devOnly = {
@@ -216,15 +226,99 @@ describe("toEquityChangeRows: development tranches (ADR 0166)", () => {
   const devProjection = portfolioProjection(devOnly, assumptions);
 
   it.each(["nominal", "real"] as const)(
-    "the tranche years (1 and 2) have no drawdown bar and still reconcile (%s)",
+    "an owned flat's tranche years (1 and 2) show the draw as value and new debt (%s)",
     (lens) => {
       const series = projectionSeries(devProjection, lens, assumptions);
       const rows = toEquityChangeRows(series);
-      // The engine reports the draws, but they were committed at baseDate.
       expect(toNumber(series[1].draws)).toBeGreaterThan(0);
       expect(toNumber(series[2].draws)).toBeGreaterThan(0);
       rows.forEach((r, i) => {
-        expect(r.drawdown).toBeCloseTo(0, 6);
+        const draws = toNumber(series[i + 1].draws);
+        expect(r.drawdown).toBeCloseTo(-draws, 6);
+        expect(r.purchases).toBeCloseTo(draws, 6);
+        const equityDelta = toNumber(
+          series[i + 1].equity.minus(series[i].equity),
+        );
+        expect(
+          r.appreciation + r.purchases + r.paydown + r.drawdown,
+        ).toBeCloseTo(equityDelta, 4);
+      });
+      expect(hasPurchases(rows)).toBe(true);
+    },
+  );
+
+  // A flat bought on 2027-03-01 (projection year 1) with a 2.0M development loan drawn on
+  // the purchase date and tranches of 1.5M (2027-11-15, year 2) and 1.0M (2028-08-20,
+  // year 3); completed value 9.5M.
+  const futureDev: Portfolio = {
+    ...devOnly,
+    properties: [
+      {
+        id: "dev",
+        name: "Dev unit",
+        purchaseDate: isoDate("2027-03-01"),
+        purchasePrice: money("7000000"),
+      },
+    ],
+    mortgages: [
+      {
+        ...devBlock,
+        startDate: isoDate("2027-03-01"),
+        loanTermYears: 30,
+        draws: [
+          { date: isoDate("2027-11-15"), amount: money("1500000") },
+          { date: isoDate("2028-08-20"), amount: money("1000000") },
+        ],
+        completionDate: isoDate("2028-08-20"),
+      },
+    ],
+    valuations: [
+      {
+        id: "v-dev",
+        propertyId: "dev",
+        validFrom: isoDate("2027-03-01"),
+        marketValue: money("9500000"),
+      },
+    ],
+  };
+  const futureProjection = portfolioProjection(futureDev, assumptions);
+
+  it("a future buy's turn-on year shows the value less the undrawn tranches and the amount drawn", () => {
+    const series = projectionSeries(futureProjection, "nominal", assumptions);
+    const [y1, y2, y3, y4] = toEquityChangeRows(series);
+    expect(y1.purchases).toBeCloseTo(9_500_000 - 2_500_000, 0);
+    expect(y1.drawdown).toBeCloseTo(-2_000_000, 0);
+    expect(y2.purchases).toBeCloseTo(1_500_000, 0);
+    expect(y2.drawdown).toBeCloseTo(-1_500_000, 0);
+    expect(y3.purchases).toBeCloseTo(1_000_000, 0);
+    expect(y3.drawdown).toBeCloseTo(-1_000_000, 0);
+    expect(y4.purchases).toBe(0);
+    expect(y4.drawdown).toBeCloseTo(0, 6);
+  });
+
+  it.each(["nominal", "real"] as const)(
+    "a future buy: Σ purchases = Σ value bought in, and the stacks reconcile (%s)",
+    (lens) => {
+      const series = projectionSeries(futureProjection, lens, assumptions);
+      const rows = toEquityChangeRows(series);
+      const bought = series.reduce((s, r) => s.plus(r.acquiredValue), ZERO);
+      const drawnIn = series.reduce(
+        (s, r) => s.plus(r.draws).minus(r.committedDraws),
+        ZERO,
+      );
+      expect(rows.reduce((s, r) => s + r.purchases, 0)).toBeCloseTo(
+        toNumber(bought.plus(drawnIn)),
+        4,
+      );
+      // Nominal: every tranche is drawn by the horizon, so the value drawn in totals the
+      // undrawn part at turn-on and Σ purchases is the completed value.
+      if (lens === "nominal") {
+        expect(rows.reduce((s, r) => s + r.purchases, 0)).toBeCloseTo(
+          toNumber(bought),
+          0,
+        );
+      }
+      rows.forEach((r, i) => {
         const equityDelta = toNumber(
           series[i + 1].equity.minus(series[i].equity),
         );
@@ -234,4 +328,19 @@ describe("toEquityChangeRows: development tranches (ADR 0166)", () => {
       });
     },
   );
+
+  it("a plain loan's draw adds no purchase", () => {
+    const series = projectionSeries(
+      portfolioProjection(mixed, assumptions),
+      "nominal",
+      assumptions,
+    ).map((r) => ({ ...r, draws: D("500000"), committedDraws: D("500000") }));
+    toEquityChangeRows(series).forEach((r, i) => {
+      expect(r.purchases).toBeCloseTo(toNumber(series[i + 1].acquiredValue), 6);
+      expect(r.drawdown).toBeCloseTo(
+        -500_000 - toNumber(series[i + 1].refinanced),
+        6,
+      );
+    });
+  });
 });
