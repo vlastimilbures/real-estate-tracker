@@ -10,6 +10,8 @@
   sub-line).
 - Amends: [0166](0166-development-committed-debt.md) (decision 5: the UI shows committed
   debt)
+- Amended by: [0170](0170-equity-change-drawn-debt.md) (decision 6: the equity-change
+  chart follows the draws)
 - Related: [0003](0003-czech-practice-decides.md), [0039](0039-golden-master.md),
   [0001](0001-behaviour-change-gate.md), [0167](0167-drawdown-schedule.md)
 
