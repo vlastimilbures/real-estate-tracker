@@ -12,6 +12,8 @@
   baseDate is cash in only when it is a plain loan)
 - Amended by: [0169](0169-development-drawn-debt-display.md) (decision 5: the screens show
   the drawn debt and the value less the undrawn tranches),
+  [0170](0170-equity-change-drawn-debt.md) (decision 5: the equity-change chart's new-debt
+  stack is the drawn new debt),
   [0168](0168-development-loan-is-the-acquisition-loan.md) (decision 7 applies
   to plain loans only: a future buy's first development loan is its acquisition loan)
 - Related: [0024](0024-draw-timing.md) (draw timing),

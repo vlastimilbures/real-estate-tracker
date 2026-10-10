@@ -349,7 +349,7 @@ export const en = {
     seriesCommittedDebt: "Committed debt (incl. undrawn)",
     seriesEquity: "Equity",
     seriesAppreciation: "Appreciation",
-    seriesPurchases: "Purchases",
+    seriesPurchases: "Purchases & construction",
     seriesDebtPaydown: "Debt repayment",
     seriesDebtDrawn: "Debt drawn",
     seriesNetEquityChange: "Net change",
@@ -1393,7 +1393,7 @@ export const en = {
     developmentProseMid: ". During construction the loan is ",
     developmentInterestOnly: "interest-only",
     developmentProsePost:
-      " (no principal). The debt shown is what has been drawn, and the value shown is the completed value less the tranches not drawn yet, so both rise with each draw and equity does not move. Interest is charged only on what is drawn; LTV counts the whole loan against the completed value, as the bank does. When a tranche lands or construction completes, the loan re-amortizes onto a normal repaying schedule. In the mortgage form, choose Development and fill in the drawdown schedule: the amount drawn on the start date, then a row for each later tranche.",
+      " (no principal). The debt shown is what has been drawn, and the value shown is the completed value less the tranches not drawn yet, so both rise with each draw and equity does not move. The equity-change chart shows each draw as construction value and new debt of the same size. Interest is charged only on what is drawn; LTV counts the whole loan against the completed value, as the bank does. When a tranche lands or construction completes, the loan re-amortizes onto a normal repaying schedule. In the mortgage form, choose Development and fill in the drawdown schedule: the amount drawn on the start date, then a row for each later tranche.",
     limitsTitle: "Limits and data safety",
     limitsProse:
       "These figures are planning estimates, not lender quotes or guaranteed outcomes. Two documents in the source repository explain what the model simplifies or leaves out, and how to back up your data and recover it after a failed upgrade.",
