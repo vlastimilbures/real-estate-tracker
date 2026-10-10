@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 //
-// ADR 0166 (#120): a development flat under construction shows its committed debt (drawn
-// + tranches not drawn yet), and the debt tiles name the undrawn part. A portfolio with
-// everything drawn shows no such note.
+// ADR 0166 (#120), ADR 0169: a development flat under construction shows its drawn debt
+// and its value less the tranches not drawn yet; the debt tiles name the undrawn part and
+// the value tile the completed value. A portfolio with everything drawn shows no such note.
 import { describe, it, expect, beforeEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import {
@@ -34,6 +34,7 @@ const devOnly: Portfolio = {
   holdingCosts: [],
 };
 const NOTE = en.common.undrawnDebt(fmtCzkM(D("2500000")));
+const COMPLETED = en.common.completedValue(fmtCzkM(D("9500000")));
 
 /** The net-worth tile's text, foot included. */
 function heroFoot(): string {
@@ -58,36 +59,37 @@ function hero(p: Portfolio) {
 }
 
 describe("undrawnPart", () => {
-  it("is the committed debt above the drawn debt, null when all is drawn", () => {
-    expect(undrawnPart(D("4500000"), D("2000000"))?.toString()).toBe("2500000");
-    expect(undrawnPart(D("2000000"), D("2000000"))).toBeNull();
+  it("is the undrawn amount, null when all is drawn", () => {
+    expect(undrawnPart(D("2500000"))?.toString()).toBe("2500000");
+    expect(undrawnPart(D("0"))).toBeNull();
   });
 });
 
 describe("Dashboard hero foot", () => {
-  it("shows committed debt and names the undrawn part", () => {
+  it("shows the reported value and drawn debt and names the undrawn part", () => {
     hero(devOnly);
     const foot = heroFoot();
+    // 9.5 M completed − 2.5 M not drawn yet; 2.0 M drawn.
+    // The undrawn note follows the debt it adds to.
     expect(foot).toContain(
       en.dashboard.assetsDebtEquity(
-        fmtCzkM(D("9500000")),
-        fmtCzkM(D("4500000")),
+        fmtCzkM(D("7000000")),
+        `${fmtCzkM(D("2000000"))} (${NOTE})`,
       ),
     );
-    expect(foot).toContain(NOTE);
   });
 
   it("has no undrawn note when every loan is drawn", () => {
     hero(portfolio);
     const foot = heroFoot();
-    expect(foot).not.toContain("not drawn yet");
+    expect(foot).not.toContain("still to draw");
   });
 });
 
 describe("Property detail debt tile", () => {
   const dev = devOnly.properties[0]!;
 
-  it("shows the committed 4,500,000 and the undrawn part", () => {
+  it("shows the drawn 2,000,000 and the undrawn part", () => {
     const s = propertySnapshot(dev, devOnly, assumptions);
     render(<PropertySnapshotTiles s={s} chartRows={[]} modeWord="nominal" />);
     const debt = screen
@@ -95,7 +97,18 @@ describe("Property detail debt tile", () => {
       .map((e) => e.closest(".tile"))
       .find((e) => e?.textContent?.includes(en.propertyDetail.ltv));
     if (!(debt instanceof HTMLElement)) throw new Error("no Debt tile");
-    expect(debt.textContent).toMatch(/4\s500\s000/);
+    expect(debt.textContent).toMatch(/2\s000\s000/);
     expect(debt.textContent).toContain(NOTE);
+  });
+
+  it("shows the value less the undrawn part and names the completed value", () => {
+    const s = propertySnapshot(dev, devOnly, assumptions);
+    render(<PropertySnapshotTiles s={s} chartRows={[]} modeWord="nominal" />);
+    const value = screen
+      .getByText(en.propertyDetail.marketValue)
+      .closest(".tile");
+    if (!(value instanceof HTMLElement)) throw new Error("no Value tile");
+    expect(value.textContent).toMatch(/7\s000\s000/);
+    expect(value.textContent).toContain(COMPLETED);
   });
 });

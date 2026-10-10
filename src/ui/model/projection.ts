@@ -16,6 +16,8 @@ export interface SeriesRow {
   value: Decimal;
   balance: Decimal;
   committedDebt: Decimal; // balance + undrawn development tranches (ADR 0166)
+  undrawnDebt: Decimal; // the development tranches not drawn yet (ADR 0169)
+  reportedValue: Decimal; // value − undrawnDebt, shown beside the drawn balance (ADR 0169)
   equity: Decimal;
   ltv: Decimal | null; // null when debt is owed on no value (ADR 0133)
   grossRent: Decimal;
@@ -93,6 +95,8 @@ export function projectionSeries(
     value: y.value,
     balance: y.balance,
     committedDebt: y.committedDebt,
+    undrawnDebt: y.undrawnDebt,
+    reportedValue: y.reportedValue,
     equity: y.equity,
     ltv: y.ltv,
     grossRent: y.grossRent,
@@ -120,12 +124,18 @@ export function projectionSeries(
  */
 export function projectionExtras(rows: SeriesRow[], g: Dictionary["projGrid"]) {
   return nonZeroColumns(rows, [
-    // New committed debt, so the Debt column reconciles year to year (ADR 0166).
-    { key: "committedDraws", header: g.draws },
+    // The Debt column is the drawn balance, so it reconciles year to year (ADR 0169).
+    { key: "draws", header: g.draws },
     { key: "refinanced", header: g.refinanced },
     { key: "prepaid", header: g.prepaid },
     { key: "prepaymentFees", header: g.prepaymentFees },
   ]);
+}
+
+/** The Undrawn column, shown only while a development loan has tranches ahead
+ *  (ADR 0169). It follows Debt. */
+export function undrawnColumn(rows: SeriesRow[], g: Dictionary["projGrid"]) {
+  return nonZeroColumns(rows, [{ key: "undrawnDebt", header: g.undrawn }]);
 }
 
 /**
@@ -154,8 +164,14 @@ export function projectionColumns(
     });
   }
   cols.push(
-    { header: g.value, kind: "money", value: (r) => r.value },
-    { header: g.debt, kind: "money", value: (r) => r.committedDebt },
+    // ADR 0169: the drawn balance, and the value less the tranches not drawn yet.
+    { header: g.value, kind: "money", value: (r) => r.reportedValue },
+    { header: g.debt, kind: "money", value: (r) => r.balance },
+    ...undrawnColumn(rows, g).map(({ header }): XlsxColumn<SeriesRow> => ({
+      header,
+      kind: "money",
+      value: (r) => r.undrawnDebt,
+    })),
     { header: g.equity, kind: "money", value: (r) => r.equity },
     { header: g.ltv, kind: "percent", value: (r) => r.ltv },
     { header: g.grossRent, kind: "money", value: flow((r) => r.grossRent) },

@@ -94,9 +94,12 @@ work still to do is in the [roadmap](roadmap.md).
   the instalment recalculated over the remaining term. If the rate changed in the past,
   today's balance is an approximation; enter each past rate period as its own block for the
   exact history. There is no "fixation ended" warning for such a loan (ADR 0162).
-- **One development loan per property.** You can enter more than one, but the property's value
-  during construction follows only the first. One development loan per property, optionally
-  refinanced into a plain loan, is the supported case.
+- **One development loan per property.** You can enter more than one, but one development
+  loan per property, optionally refinanced into a plain loan, is the supported case.
+- **Value during construction.** While a development loan draws, the value shown is the
+  completed value less the tranches not drawn yet, not the price paid so far. Own funds
+  have no payment dates, so the developer's margin is counted from the start, not at
+  completion (ADR 0169).
 - **Simplified interest.** Interest is computed once a month as balance × rate ÷ 12 (a
   30/360-style simplification). The loan's payment day and interest for a first partial month
   are not modelled, so totals can differ slightly from a bank statement. See

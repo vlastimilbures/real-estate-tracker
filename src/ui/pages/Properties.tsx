@@ -20,7 +20,8 @@ import {
 } from "../components/primitives";
 import { PropertyFormModal } from "../components/PropertyFormModal";
 import { SampleBanner } from "../components/SampleBanner";
-import { fmtDate, fmtPct, fmtDscr } from "../../lib/format";
+import { fmtCzkM, fmtDate, fmtPct, fmtDscr } from "../../lib/format";
+import { undrawnPart } from "../model/debt";
 import {
   bandPillParts,
   dscrBand,
@@ -292,20 +293,27 @@ export function Properties() {
                     <td>
                       {fig(
                         p.owned,
-                        <Money value={p.value} parens={false} suffix={false} />,
+                        <Money
+                          value={p.reportedValue}
+                          parens={false}
+                          suffix={false}
+                        />,
                       )}
                     </td>
                     <td>
                       {/* A pending loan already drawn is owed now: the Dashboard's
-                          total debt counts it (ADR 0165). Committed debt includes
-                          undrawn development tranches (ADR 0166). */}
+                          total debt counts it (ADR 0165). The drawn debt, beside the
+                          value less the tranches not drawn yet (ADR 0169). */}
                       {fig(
                         p.owned || !p.debt.isZero(),
-                        <Money
-                          value={p.committedDebt}
-                          parens={false}
-                          suffix={false}
-                        />,
+                        <>
+                          <Money value={p.debt} parens={false} suffix={false} />
+                          {undrawnPart(p.undrawnDebt) && (
+                            <span className="cell-sub">
+                              {t.common.undrawnDebt(fmtCzkM(p.undrawnDebt))}
+                            </span>
+                          )}
+                        </>,
                       )}
                     </td>
                     <td>

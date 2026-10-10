@@ -7,6 +7,7 @@ import type { Decimal } from "../../lib/money";
 import {
   periodLabelLocalized,
   projectionExtras,
+  undrawnColumn,
   yearLabel,
   showPeriodColumn,
   type SeriesRow,
@@ -26,6 +27,7 @@ export function ProjectionGrid({
   // the spans equal calendar years and the Period column just restates "Year".
   const showPeriod = showPeriodColumn(baseDate);
   const extras = projectionExtras(rows, t.projGrid);
+  const undrawn = undrawnColumn(rows, t.projGrid);
   return (
     <TableWrap label={t.projGrid.caption}>
       <table className="data">
@@ -42,6 +44,11 @@ export function ProjectionGrid({
             )}
             <th scope="col">{t.projGrid.value}</th>
             <th scope="col">{t.projGrid.debt}</th>
+            {undrawn.map(({ key, header }) => (
+              <th key={key} scope="col">
+                {header}
+              </th>
+            ))}
             <th scope="col">{t.projGrid.equity}</th>
             <th scope="col">
               <MetricLabel term="ltv">{t.projGrid.ltv}</MetricLabel>
@@ -103,16 +110,23 @@ export function ProjectionGrid({
                     )}
                   </td>
                 )}
-                <td>
-                  <Money value={r.value} parens={false} suffix={false} />
-                </td>
+                {/* ADR 0169: the value less the tranches not drawn yet, the drawn
+                    balance, and those tranches while a development loan draws. */}
                 <td>
                   <Money
-                    value={r.committedDebt}
+                    value={r.reportedValue}
                     parens={false}
                     suffix={false}
                   />
                 </td>
+                <td>
+                  <Money value={r.balance} parens={false} suffix={false} />
+                </td>
+                {undrawn.map(({ key }) => (
+                  <td key={key}>
+                    <Money value={r[key]} parens={false} suffix={false} />
+                  </td>
+                ))}
                 <td>
                   <Money value={r.equity} suffix={false} />
                 </td>

@@ -24,6 +24,8 @@ function row(year: number): SeriesRow {
     value: ZERO,
     balance: ZERO,
     committedDebt: ZERO,
+    undrawnDebt: ZERO,
+    reportedValue: ZERO,
     equity: ZERO,
     ltv: ZERO,
     grossRent: ZERO,

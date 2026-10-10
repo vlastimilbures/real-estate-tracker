@@ -45,7 +45,9 @@ describe("toChartRows", () => {
   });
 
   it("yields plain numbers for every field", () => {
-    const r = toChartRows(series)[5];
+    // committedDebt is null when nothing is undrawn (ADR 0169), as in the seed.
+    const { committedDebt, ...r } = toChartRows(series)[5];
+    expect(committedDebt).toBeNull();
     for (const v of Object.values(r)) {
       expect(typeof v).toBe("number");
       expect(Number.isFinite(v)).toBe(true);

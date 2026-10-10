@@ -9,7 +9,8 @@ export const cs: Dictionary = {
   common: {
     /** A KPI with no value, e.g. a levered IRR (UX-079). */
     notApplicable: "n/a",
-    undrawnDebt: (amount) => `z toho ${amount} dosud nečerpáno`,
+    undrawnDebt: (amount) => `plus ${amount} k dočerpání`,
+    completedValue: (amount) => `hodnota po dokončení ${amount}`,
     irrNotUnique:
       "IRR není jednoznačné: peněžní toky mají nulovou současnou hodnotu při více sazbách",
     irrNoRoot: "IRR neleží mezi −90 % a +1000 %",
@@ -318,6 +319,7 @@ export const cs: Dictionary = {
     subLtv: "% — klesá s umořováním dluhu",
     seriesValue: "Hodnota",
     seriesDebt: "Dluh",
+    seriesCommittedDebt: "Sjednaný úvěr (vč. nečerpaného)",
     seriesEquity: "Kapitál",
     seriesAppreciation: "Zhodnocení",
     seriesPurchases: "Nákupy",
@@ -501,11 +503,12 @@ export const cs: Dictionary = {
     subMKcMode: (mode) => mode,
     seriesValue: "Hodnota",
     seriesDebt: "Dluh",
+    seriesCommittedDebt: "Sjednaný úvěr (vč. nečerpaného)",
     seriesEquity: "Kapitál",
     seriesNetCashFlow: "Čistý cash flow",
     valuationsTitle: "Ocenění",
     valuationsHint:
-      "tržní hodnoty s platností k datu — u developerské nemovitosti jde o dokončenou (cílovou) hodnotu, zobrazenou v plné výši už během výstavby; dosud nečerpané tranše úvěru se počítají do dluhu",
+      "tržní hodnoty s platností k datu — u developerské nemovitosti jde o dokončenou (cílovou) hodnotu; dokud se úvěr čerpá, zobrazuje se dokončená hodnota snížená o dosud nečerpané tranše",
     addValuation: "ocenění",
     colValidFrom: "Platné od",
     colValidTo: "Platné do",
@@ -1193,6 +1196,7 @@ export const cs: Dictionary = {
     period: "Období",
     value: "Hodnota",
     debt: "Dluh",
+    undrawn: "Nečerpáno",
     equity: "Kapitál",
     ltv: "LTV",
     grossRent: "Hrubý nájem",
@@ -1324,7 +1328,7 @@ export const cs: Dictionary = {
     developmentProseMid: ". Během výstavby je úvěr ",
     developmentInterestOnly: "pouze úrokový",
     developmentProsePost:
-      " (bez jistiny). Nemovitost se počítá v dokončené hodnotě a do dluhu celý úvěr: dosud nečerpané tranše jsou přislíbené, úrok se ale platí jen z načerpané částky. Když přijde tranše nebo se výstavba dokončí, úvěr se znovu umoří na běžný splátkový plán. Ve formuláři hypotéky zvolte Developerský a vyplňte harmonogram čerpání: částku čerpanou v den startu a pak řádek pro každou další tranši.",
+      " (bez jistiny). Dluh ukazuje načerpanou částku a hodnota dokončenou hodnotu sníženou o dosud nečerpané tranše, takže s každým čerpáním rostou obě a kapitál se nemění. Úrok se platí jen z načerpané částky; LTV počítá celý úvěr vůči dokončené hodnotě, stejně jako banka. Když přijde tranše nebo se výstavba dokončí, úvěr se znovu umoří na běžný splátkový plán. Ve formuláři hypotéky zvolte Developerský a vyplňte harmonogram čerpání: částku čerpanou v den startu a pak řádek pro každou další tranši.",
     limitsTitle: "Omezení a bezpečnost dat",
     limitsProse:
       "Tato čísla jsou plánovací odhady, ne nabídka banky ani zaručený výsledek. Dva dokumenty ve zdrojovém repozitáři vysvětlují, co model zjednodušuje nebo vynechává, a jak data zálohovat a obnovit po neúspěšné aktualizaci.",
@@ -1334,14 +1338,14 @@ export const cs: Dictionary = {
         name: "Hodnota",
         formula: "ocenění × (1 + zhodnocení) ^ roky",
         meaning:
-          "Tržní hodnota narostlá z posledního zaznamenaného ocenění. Nové ocenění křivku znovu ukotví.",
+          "Tržní hodnota narostlá z posledního zaznamenaného ocenění. Nové ocenění křivku znovu ukotví. Dokud se developerský úvěr čerpá, zobrazuje se dokončená hodnota snížená o dosud nečerpané tranše.",
         eg: "5,0 M při 4 %/rok → 5,0 M × 1,04² ≈ 5,41 M po 2 letech.",
       },
       debt: {
         name: "Dluh",
-        formula: "zůstatek k datu + dosud nečerpané tranše",
+        formula: "zůstatek k datu",
         meaning:
-          "Zbývající zůstatek úvěru z umořovacího plánu — odráží každou splátku i případný reset sazby. U developerského úvěru se počítají i dosud nečerpané tranše: jsou přislíbené, úrok se z nich platí až po načerpání.",
+          "Zbývající zůstatek úvěru z umořovacího plánu — odráží každou splátku i případný reset sazby. U developerského úvěru se počítá načerpaná částka; dosud nečerpané tranše se zobrazují vedle ní.",
       },
       equity: {
         name: "Kapitál",
@@ -1354,7 +1358,7 @@ export const cs: Dictionary = {
         name: "LTV",
         formula: "dluh ÷ hodnota",
         meaning:
-          "Podíl nemovitosti financovaný bankou. Nižší = bezpečnější polštář proti propadu ceny.",
+          "Podíl nemovitosti financovaný bankou. Nižší = bezpečnější polštář proti propadu ceny. Dokud se developerský úvěr čerpá, jde o celý úvěr ÷ dokončenou hodnotu, jak ho měří banka.",
         eg: "2,6 M ÷ 5,4 M ≈ 48 % financováno.",
       },
       grossRent: {

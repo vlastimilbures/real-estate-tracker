@@ -92,6 +92,8 @@ describe("toEquityChangeRows", () => {
       value: D(value),
       balance: D(balance),
       committedDebt: D(balance),
+      undrawnDebt: ZERO,
+      reportedValue: D(value),
       equity: D(value).minus(D(balance)),
       ltv: ZERO,
       grossRent: ZERO,

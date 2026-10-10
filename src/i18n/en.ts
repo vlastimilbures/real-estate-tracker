@@ -13,8 +13,11 @@ export const en = {
   common: {
     /** A KPI with no value, e.g. a levered IRR (UX-079). */
     notApplicable: "n/a",
-    /** Part of a debt figure a development loan has not drawn yet (ADR 0166). */
-    undrawnDebt: (amount: string) => `incl. ${amount} not drawn yet`,
+    /** The development tranches not drawn yet, beside the drawn debt (ADR 0169). */
+    undrawnDebt: (amount: string) => `plus ${amount} still to draw`,
+    /** A development property's completed value, beside its value less the tranches
+     *  not drawn yet (ADR 0169). */
+    completedValue: (amount: string) => `completed value ${amount}`,
     irrNotUnique:
       "No unique IRR: the cash flows break even at more than one rate",
     irrNoRoot: "No IRR between −90 % and +1000 %",
@@ -343,6 +346,7 @@ export const en = {
     subLtv: "% — falls as debt amortizes",
     seriesValue: "Value",
     seriesDebt: "Debt",
+    seriesCommittedDebt: "Committed debt (incl. undrawn)",
     seriesEquity: "Equity",
     seriesAppreciation: "Appreciation",
     seriesPurchases: "Purchases",
@@ -532,12 +536,13 @@ export const en = {
     subMKcMode: (mode: string) => mode,
     seriesValue: "Value",
     seriesDebt: "Debt",
+    seriesCommittedDebt: "Committed debt (incl. undrawn)",
     seriesEquity: "Equity",
     seriesNetCashFlow: "Net cash flow",
     // Entity panels
     valuationsTitle: "Valuations",
     valuationsHint:
-      "effective-dated market values — for a development property this is the completed (target) value, shown in full while it is built; the loan tranches not drawn yet count as debt",
+      "effective-dated market values — for a development property this is the completed (target) value; while the loan is drawing, the value shown is the completed value less the tranches not drawn yet",
     addValuation: "valuation",
     colValidFrom: "Valid from",
     colValidTo: "Valid to",
@@ -1255,6 +1260,7 @@ export const en = {
     period: "Period",
     value: "Value",
     debt: "Debt",
+    undrawn: "Undrawn",
     equity: "Equity",
     ltv: "LTV",
     grossRent: "Gross rent",
@@ -1387,7 +1393,7 @@ export const en = {
     developmentProseMid: ". During construction the loan is ",
     developmentInterestOnly: "interest-only",
     developmentProsePost:
-      " (no principal). The property counts at its completed value, and the whole loan counts as debt: the tranches not drawn yet are committed, though interest is charged only on what is drawn. When a tranche lands or construction completes, the loan re-amortizes onto a normal repaying schedule. In the mortgage form, choose Development and fill in the drawdown schedule: the amount drawn on the start date, then a row for each later tranche.",
+      " (no principal). The debt shown is what has been drawn, and the value shown is the completed value less the tranches not drawn yet, so both rise with each draw and equity does not move. Interest is charged only on what is drawn; LTV counts the whole loan against the completed value, as the bank does. When a tranche lands or construction completes, the loan re-amortizes onto a normal repaying schedule. In the mortgage form, choose Development and fill in the drawdown schedule: the amount drawn on the start date, then a row for each later tranche.",
     limitsTitle: "Limits and data safety",
     limitsProse:
       "These figures are planning estimates, not lender quotes or guaranteed outcomes. Two documents in the source repository explain what the model simplifies or leaves out, and how to back up your data and recover it after a failed upgrade.",
@@ -1398,14 +1404,14 @@ export const en = {
         name: "Value",
         formula: "valuation × (1 + appreciation) ^ years",
         meaning:
-          "Market value, grown from the latest recorded valuation. A new valuation re-anchors the curve.",
+          "Market value, grown from the latest recorded valuation. A new valuation re-anchors the curve. While a development loan is drawing, the value shown is the completed value less the tranches not drawn yet.",
         eg: "5.0M at 4%/yr → 5.0M × 1.04² ≈ 5.41M after 2 years.",
       },
       debt: {
         name: "Debt",
-        formula: "outstanding balance + development tranches not drawn yet",
+        formula: "outstanding balance",
         meaning:
-          "Remaining loan balance from the amortization schedule — reflects every payment and any rate reset. A development loan also counts its tranches not drawn yet: they are committed, though no interest is due on them until drawn.",
+          "Remaining loan balance from the amortization schedule — reflects every payment and any rate reset. A development loan counts what has been drawn; its tranches not drawn yet are shown beside it.",
       },
       equity: {
         name: "Equity",
@@ -1418,7 +1424,7 @@ export const en = {
         name: "LTV",
         formula: "debt ÷ value",
         meaning:
-          "Share of the property funded by the bank. Lower = safer cushion against a price drop.",
+          "Share of the property funded by the bank. Lower = safer cushion against a price drop. While a development loan is drawing, it is the whole loan ÷ the completed value, as the bank measures it.",
         eg: "2.6M ÷ 5.4M ≈ 48% financed.",
       },
       grossRent: {

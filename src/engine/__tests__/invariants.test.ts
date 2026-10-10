@@ -207,7 +207,7 @@ describe("Invariant — principal conservation", () => {
 function assertSnapshotMatchesProjection(
   p: Portfolio,
   ids: string[],
-  field: "value" | "debt" | "committedDebt",
+  field: "value" | "debt" | "committedDebt" | "undrawnDebt" | "reportedValue",
 ) {
   const schedules = schedulesOf(p);
   for (const prop of activeProps(p).filter((x) => ids.includes(x.id))) {
@@ -222,7 +222,7 @@ function assertSnapshotMatchesProjection(
           ? proj[n].value
           : field === "debt"
             ? proj[n].balance
-            : proj[n].committedDebt;
+            : proj[n][field];
       near(s[field], want.toNumber(), KC, `${prop.id} N=${n} ${field}`);
     }
   }
@@ -249,6 +249,14 @@ describe("Invariant — snapshot(baseDate + N y) == projection year N", () => {
         activeProps(p).map((x) => x.id),
         "committedDebt",
       ));
+    it(`${name}: UNDRAWN DEBT matches for every active property, N = 0…horizon // ADR 0169`, () =>
+      assertSnapshotMatchesProjection(
+        p,
+        activeProps(p).map((x) => x.id),
+        "undrawnDebt",
+      ));
+    it(`${name}: REPORTED VALUE matches for properties owned at baseDate, N = 0…horizon // ADR 0169`, () =>
+      assertSnapshotMatchesProjection(p, ownedAtBase(p), "reportedValue"));
   }
 
   // ADR 0122: valuations closed by validTo, with a gap and over an older open one.

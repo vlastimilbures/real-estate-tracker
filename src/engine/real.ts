@@ -55,6 +55,8 @@ export function realProjection(
       value: d(y.value),
       balance: d(y.balance),
       committedDebt: d(y.committedDebt),
+      undrawnDebt: d(y.undrawnDebt),
+      reportedValue: d(y.reportedValue),
       equity: d(y.equity),
       grossRent: d(y.grossRent),
       effectiveRent: d(y.effectiveRent),
@@ -88,6 +90,8 @@ export function realPortfolioSnapshot(
     totalValue: d(s.totalValue),
     totalDebt: d(s.totalDebt),
     totalCommittedDebt: d(s.totalCommittedDebt),
+    totalUndrawnDebt: d(s.totalUndrawnDebt),
+    totalReportedValue: d(s.totalReportedValue),
     totalEquity: d(s.totalEquity),
     grossAnnualRent: d(s.grossAnnualRent),
     effectiveGrossIncome: d(s.effectiveGrossIncome),
@@ -110,6 +114,8 @@ export function realPropertySnapshot(
     value: d(s.value),
     debt: d(s.debt),
     committedDebt: d(s.committedDebt),
+    undrawnDebt: d(s.undrawnDebt),
+    reportedValue: d(s.reportedValue),
     equity: d(s.equity),
     grossAnnualRent: d(s.grossAnnualRent),
     effectiveGrossIncome: d(s.effectiveGrossIncome),
@@ -126,6 +132,8 @@ export type YearFigures = Pick<
   | "value"
   | "balance"
   | "committedDebt"
+  | "undrawnDebt"
+  | "reportedValue"
   | "equity"
   | "ltv"
   | "grossRent"
@@ -151,6 +159,8 @@ export function portfolioSnapshotAtYear(
     totalValue: r.value,
     totalDebt: r.balance,
     totalCommittedDebt: r.committedDebt,
+    totalUndrawnDebt: r.undrawnDebt,
+    totalReportedValue: r.reportedValue,
     totalEquity: r.equity,
     ltv: r.ltv,
     grossAnnualRent: r.grossRent,
@@ -175,6 +185,8 @@ export function propertySnapshotAtYear(
     value: r.value,
     debt: r.balance,
     committedDebt: r.committedDebt,
+    undrawnDebt: r.undrawnDebt,
+    reportedValue: r.reportedValue,
     equity: r.equity,
     ltv: r.ltv,
     grossAnnualRent: r.grossRent,
