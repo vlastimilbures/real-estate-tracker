@@ -1,6 +1,6 @@
 // Pure chart-data helpers (kept out of the component file so fast-refresh stays happy).
 // Engine Decimals → plain numbers happens HERE, the chart boundary.
-import { toNumber, type Decimal } from "../../lib/money";
+import { Decimal, toNumber } from "../../lib/money";
 import { yearLabel, type SeriesRow } from "./projection";
 import type { Dictionary } from "../../i18n";
 import { at } from "../../lib/arrays";
@@ -64,17 +64,20 @@ export type ChartRow = {
 // A refinance handover's difference (`refinanced`, ADR 0130) moves the balance like a
 // draw, so the drawdown bar carries it too (negative when the owner pays down at a refix).
 // The stacks follow the shown figures, drawn debt and value less the undrawn tranches
-// (ADR 0169, ADR 0170): the new-debt stack is the drawn `draws`, and a development draw
-// also releases its value into the purchases stack (`draws − committedDraws`, the fall in
-// the undrawn tranches; zero for a plain loan). The two cancel, as a draw creates no
-// equity (ADR 0166), so appreciation is unchanged.
+// (ADR 0169, ADR 0170). The fall in the undrawn tranches, `draws − committedDraws` (zero
+// for a plain loan), goes to the purchases stack as far as it is value: what a
+// development draw releases (up to the year's draws) or, in a negative year, the undrawn
+// part a purchase brings in (down to −acquiredValue). The rest is a commitment change with
+// no value, e.g. a handover into a development loan, and stays in the new-debt stack.
+// Purchases + new debt still equal acquiredValue − committedDraws − refinanced, so
+// appreciation is unchanged.
 export type EquityChangeRow = {
   year: number;
   calendarYear: number;
   appreciation: number; // value[t] − value[t−1] − purchases  (negative in a crash year)
-  purchases: number; // value bought in + value drawn into a development flat in year t (ADR 0165, 0170)
+  purchases: number; // value bought in less its undrawn tranches + value drawn into a development flat (≥ 0, ADR 0165, 0170)
   paydown: number; // principal repaid in year t, prepaid included (≥ 0) (equity gained by repaying)
-  drawdown: number; // −(new debt drawn in year t) (≤ 0)       (equity lost to fresh borrowing)
+  drawdown: number; // −(new debt drawn or committed in year t) (equity lost to fresh borrowing)
 };
 
 /** Per-year equity change decomposed into appreciation + purchases + debt paydown + new
@@ -84,6 +87,11 @@ export function toEquityChangeRows(series: SeriesRow[]): EquityChangeRow[] {
   const n = (d: Decimal) => toNumber(d);
   return series.slice(1).map((r, i) => {
     const prev = at(series, i); // sliced: prev is series[i], current is series[i+1] === r
+    const released = r.draws.minus(r.committedDraws);
+    const built = Decimal.min(
+      Decimal.max(released, r.acquiredValue.negated()),
+      r.draws,
+    );
     return {
       year: r.year,
       calendarYear: r.calendarYear,
@@ -97,9 +105,11 @@ export function toEquityChangeRows(series: SeriesRow[]): EquityChangeRow[] {
           .plus(r.committedDraws)
           .plus(r.refinanced),
       ),
-      purchases: n(r.acquiredValue.plus(r.draws).minus(r.committedDraws)),
+      purchases: n(r.acquiredValue.plus(built)),
       paydown: n(r.principal.plus(r.prepaid)),
-      drawdown: n(r.draws.plus(r.refinanced).negated()),
+      drawdown: n(
+        r.draws.plus(r.refinanced).minus(released.minus(built)).negated(),
+      ),
     };
   });
 }
