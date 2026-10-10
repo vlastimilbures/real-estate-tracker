@@ -119,6 +119,12 @@ const engineBarrelPattern = {
 
 export default tseslint.config(
   { ignores: ["dist", "src-tauri/target", "node_modules"] },
+  // Config files and the CI gate scripts run in Node.
+  {
+    files: ["**/*.{js,mjs,cjs}"],
+    extends: [js.configs.recommended],
+    languageOptions: { globals: globals.node },
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
