@@ -139,6 +139,13 @@ Refactors are behaviour-neutral and need no ADR.
   `DR-nnn`, `UX-nnn`).
 - Add user-visible changes to the `[Unreleased]` section of [CHANGELOG.md](CHANGELOG.md).
 - Open a PR against `main`; merge only when CI is green.
+- Open it as a **draft** (`gh pr create --draft`): CI skips draft PRs. Run the checks above
+  locally, push review fixes, settle the ADR number and merge `main` while it is a draft, then
+  mark it ready (`gh pr ready`) for one full CI run.
+- A push that changes only documentation (`docs/`, `.claude/`, `*.md`) takes the docs fast
+  path: CI checks formatting and the ADR index only (`scripts/ci-changes.sh`). This applies
+  when the whole PR is documentation, or when the push follows a fully green one, e.g. an ADR
+  renumber after review.
 
 ## Protecting real data
 
