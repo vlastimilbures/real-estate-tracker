@@ -11,29 +11,42 @@ runtime only, ADR 0063).
 2. **Version bump** — `package.json` is the single source: `tauri.conf.json` reads it
    (`"version": "../package.json"`). Set the same number in `src-tauri/Cargo.toml`; the release
    script refuses to build if they differ.
-3. **Changelog** — move the `Unreleased` notes in `CHANGELOG.md` under the new version and
-   date.
-4. **Docs impact** — if formulas, presets, limits, data formats or UI text changed since the
+3. **Release blockers** — the `Release blockers` list at the top of `Unreleased` in
+   `CHANGELOG.md` says "None". If it lists anything, a feature is half-merged: do not release.
+4. **Changelog** — move the `Unreleased` notes in `CHANGELOG.md` under the new version and
+   date, and leave an empty `Release blockers` list ("None.") at the top of the new
+   `Unreleased`.
+5. **Docs impact** — if formulas, presets, limits, data formats or UI text changed since the
    last release, check that the documents below still describe the app: SPEC, the Guide
    strings (`src/i18n`), README, [`docs/model-limitations.md`](model-limitations.md),
    [`docs/csv-import.md`](csv-import.md) and the [roadmap](roadmap.md). Update them in this
    release, not later.
-5. **Build, sign, verify** — `scripts/release-macos.sh`. It runs typecheck, lint, the JS and
-   Rust tests, `cargo fmt --check`, `cargo clippy -D warnings` and `cargo audit`, then
+6. **Build, sign, verify** — merge the release commit (steps 2, 4 and 5) to `main` through a
+   pull request and wait until CI on `main` passes. Then, on an up-to-date `main`, run
+   `scripts/release-macos.sh`. It refuses uncommitted changes, so the build is the commit you
+   tag in step 8. It runs the CI
+   gates (typecheck, lint, Prettier, depcruise, knip, the ADR index check, the production
+   dependency audit, the JS tests with the coverage floors, `cargo fmt --check`,
+   `cargo clippy -D warnings`, the Rust tests and `cargo audit`), then
    `pnpm tauri build --target aarch64-apple-darwin`, and verifies the result:
+   - no sql.js in the frontend bundle (it is for E2E only);
    - `codesign --verify --deep --strict --verbose=2` passes;
    - `Signature=adhoc` and the `runtime` (hardened runtime) flag are present;
    - the binary is `arm64` only and `LSMinimumSystemVersion` is `13.0`.
 
    Artefacts: `src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Real Estate Tracker.app`
-   and `…/bundle/dmg/Real Estate Tracker_<version>_aarch64.dmg` (the script prints its SHA-256).
+   and `…/bundle/dmg/Real Estate Tracker_<version>_aarch64.dmg` (the script picks it by version
+   and prints its SHA-256).
 
-6. **Install and smoke-test** — open the dmg, drag the app to Applications, open it. Check:
+7. **Install and smoke-test** — open the dmg, drag the app to Applications, open it. Check:
    the data is there; it works with Wi-Fi off; no light flash on start in dark mode; an export
    saves; the window reopens where you left it.
-7. **Commit and tag** — `git tag v<version>` on the release commit, push the tag.
-   The `Release (macOS)` workflow then builds and verifies the bundle on a macOS runner and
-   attaches the dmg to the tag's GitHub release (creating the release if needed).
+8. **Tag** — `git tag v<version>` on the commit you built in step 6, and push the tag. The
+   `Release (macOS)` workflow then builds and verifies the bundle on a macOS runner and
+   attaches the dmg to the tag's GitHub release (creating the release if needed). It skips
+   the checks, trusting the green CI on `main` from step 6. It fails if the tag is not `v` +
+   the `package.json` version or not on `main`, and it never replaces a dmg the release
+   already has: delete that asset by hand first to rebuild.
 
 The script never launches the app and never touches the database.
 
