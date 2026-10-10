@@ -37,8 +37,20 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # The base branch's copy decides, so a pull request cannot rewrite its own gate. A push
+      # to main, or a base without the script yet, gets the full checks.
       - id: diff
-        run: scripts/ci-changes.sh
+        run: |
+          if [[ "$EVENT" != pull_request ]]; then
+            echo "code=true" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git fetch --no-tags --depth=1 origin "$GITHUB_BASE_REF"
+          if ! git show FETCH_HEAD:scripts/ci-changes.sh >"$RUNNER_TEMP/ci-changes.sh"; then
+            echo "code=true" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          bash "$RUNNER_TEMP/ci-changes.sh"
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT: ${{ github.event_name }}
@@ -46,6 +58,7 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
           BEFORE: ${{ github.event.action == 'synchronize' && github.event.before || '' }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
 
   # ── Docs fast path: what a documentation-only change can break ───────────
   docs:
@@ -75,8 +88,13 @@ jobs:
       - name: ADR index and links
         run: pnpm adr:check
 
+      # The tests that read documentation: the CSV guide's examples and the real docs/adr.
+      - name: Tests that read docs
+        run: pnpm vitest run src/import/__tests__/csvGuide.test.ts scripts/__tests__/adr-index.test.mjs
+
   # ── Frontend: TypeScript, lint, formatting, unit tests ────────────────────
-  # Two parallel jobs; the required check "Frontend (…)" below passes only if both pass.
+  # Two parallel jobs; the required check "Frontend (…)" below passes only if both pass, or,
+  # on the docs fast path, only if the docs job passes (it is not a required check itself).
   frontend-checks:
     name: Frontend checks and coverage
     needs: changes
@@ -178,16 +196,20 @@ jobs:
 
   frontend:
     name: Frontend (typecheck · lint · format · test)
-    needs: [changes, frontend-checks, frontend-time-zones]
+    needs: [changes, docs, frontend-checks, frontend-time-zones]
     if: >-
-      !cancelled() && needs.changes.outputs.code != 'false' &&
+      !cancelled() &&
       (github.event_name == 'push' || !github.event.pull_request.draft)
     runs-on: ubuntu-latest
     steps:
-      - name: Both frontend jobs passed
+      - name: The frontend jobs passed
         run: |
-          [[ "${{ needs.frontend-checks.result }}" == success ]]
-          [[ "${{ needs.frontend-time-zones.result }}" == success ]]
+          if [[ "${{ needs.changes.outputs.code }}" == false ]]; then
+            [[ "${{ needs.docs.result }}" == success ]]
+          else
+            [[ "${{ needs.frontend-checks.result }}" == success ]]
+            [[ "${{ needs.frontend-time-zones.result }}" == success ]]
+          fi
 
   # ── Accessibility: axe scan of every captured screen (F-08, ADR 0078) ────
   # Runs the ux:capture harness on the in-memory sample portfolio (no real data) and fails
