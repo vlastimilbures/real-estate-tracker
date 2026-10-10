@@ -73,6 +73,10 @@ const ADDED_FIELDS = new Set([
   "cashToOwner",
   "dueDate",
   "acquiredValue",
+  "undrawnDebt",
+  "reportedValue",
+  "totalUndrawnDebt",
+  "totalReportedValue",
 ]);
 
 function canon(v: unknown): unknown {

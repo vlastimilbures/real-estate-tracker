@@ -192,6 +192,80 @@ describe("projection: draws move debt from undrawn to drawn and create no equity
   });
 });
 
+describe("reported figures: debt follows the draws, value moves with it (ADR 0169)", () => {
+  const pf = portfolioWith(devBlock);
+  const schedule = propertySchedule([devBlock], assumptions);
+  const proj = propertyProjection(property, pf, assumptions, schedule);
+  const port = portfolioProjection(pf, assumptions);
+
+  it("undrawn debt = committed − drawn and reported value = value − undrawn, every year", () => {
+    for (const rows of [proj, port]) {
+      for (let n = 0; n <= assumptions.horizonYears; n++) {
+        const y = rows[n];
+        expect(y.undrawnDebt.toString()).toBe(
+          y.committedDebt.minus(y.balance).toString(),
+        );
+        expect(y.reportedValue.toString()).toBe(
+          y.value.minus(y.undrawnDebt).toString(),
+        );
+        // Equity reads the same from either pair.
+        expect(y.reportedValue.minus(y.balance).toString()).toBe(
+          y.equity.toString(),
+        );
+      }
+    }
+  });
+
+  it("a draw year lifts drawn debt and reported value by the tranche; equity and bank LTV do not move", () => {
+    // Years 0–2 interest-only: drawn 2.25M → 4.55M → 8.55M; undrawn 7.0M → 4.7M → 0.7M.
+    const drawn = [2_250_000, 4_550_000, 8_550_000];
+    for (const n of [0, 1, 2]) {
+      near(proj[n].balance, drawn[n], KC, `year ${n} drawn`);
+      near(
+        proj[n].reportedValue,
+        proj[n].value.toNumber() - (TOTAL - drawn[n]),
+        KC,
+        `year ${n} reported value`,
+      );
+      // Bank LTV: the whole loan ÷ the completed value.
+      near(
+        proj[n].ltv!,
+        proj[n].committedDebt.div(proj[n].value).toNumber(),
+        1e-12,
+        `year ${n} ltv`,
+      );
+    }
+    expect(proj[3].undrawnDebt.isZero()).toBe(true);
+    expect(proj[3].reportedValue.toString()).toBe(proj[3].value.toString());
+  });
+
+  it("snapshot: reported value and undrawn debt, per property and in portfolio totals", () => {
+    const s = propertySnapshot(
+      property,
+      pf,
+      assumptions,
+      assumptions.baseDate,
+      schedule.rows,
+    );
+    near(s.undrawnDebt, TOTAL - 2_250_000, KC, "undrawn");
+    near(
+      s.reportedValue,
+      COMPLETED - (TOTAL - 2_250_000),
+      KC,
+      "reported value",
+    );
+    near(s.reportedValue.minus(s.debt), s.equity.toNumber(), KC, "equity");
+    const t = portfolioSnapshot(pf, assumptions);
+    near(t.totalUndrawnDebt, TOTAL - 2_250_000, KC, "total undrawn");
+    near(
+      t.totalReportedValue.minus(t.totalDebt),
+      t.totalEquity.toNumber(),
+      KC,
+      "total equity",
+    );
+  });
+});
+
 describe("snapshot ↔ projection consistency (the invariant anchor)", () => {
   const pf = portfolioWith(devBlock);
   const schedule = propertySchedule([devBlock], assumptions);

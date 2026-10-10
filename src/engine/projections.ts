@@ -227,6 +227,29 @@ function computeTurnOnGates(
 }
 
 /** Year 0 — opening position (stocks only). Empty if not owned yet. */
+/**
+ * A year's stocks. Committed debt = the drawn balance + the development tranches not
+ * drawn yet (ADR 0166); equity and LTV use it. The screens show the drawn balance beside
+ * the value less those tranches (`reportedValue`, ADR 0169). The portfolio passes its own
+ * Σ committed debt, so its sums keep their order.
+ */
+function stocks(
+  value: Decimal,
+  balance: Decimal,
+  undrawnDebt: Decimal,
+  committedDebt = balance.plus(undrawnDebt),
+) {
+  return {
+    value,
+    balance,
+    committedDebt,
+    undrawnDebt,
+    reportedValue: value.minus(undrawnDebt),
+    equity: value.minus(committedDebt),
+    ltv: ltvOf(committedDebt, value),
+  };
+}
+
 function buildYear0(
   b: PropertyBasis,
   blocks: MortgageBlock[],
@@ -241,18 +264,11 @@ function buildYear0(
   // baseDate is new debt in its year, not opening debt (D-33).
   const balance0 =
     b.schedule.length > 0 ? openingDebt(blocks, assumptions) : ZERO;
-  // ADR 0166: plus the development tranches not drawn yet.
-  const committed0 = balance0.plus(undrawn0);
-  const value0 = crash(b.v0, 0);
   return {
     year: 0,
     calendarYear: baseYear,
     ...yearPeriod(assumptions.baseDate, 0),
-    value: value0,
-    balance: balance0,
-    committedDebt: committed0,
-    equity: value0.minus(committed0),
-    ltv: ltvOf(committed0, value0),
+    ...stocks(crash(b.v0, 0), balance0, undrawn0),
     grossRent: ZERO,
     effectiveRent: ZERO,
     holdingCosts: ZERO,
@@ -358,17 +374,11 @@ function buildYearRow(
 ): YearRow {
   const { draws, acquiredValue } = parts;
   const netCashFlow = rc.noi.minus(slice.debtService);
-  // ADR 0166: the debt owed includes the development tranches not drawn yet.
-  const committedDebt = slice.balance.plus(parts.undrawn);
   return {
     year: t,
     calendarYear: baseDate.getUTCFullYear() + t,
     ...yearPeriod(baseDate, t),
-    value,
-    balance: slice.balance,
-    committedDebt,
-    equity: value.minus(committedDebt),
-    ltv: ltvOf(committedDebt, value),
+    ...stocks(value, slice.balance, parts.undrawn),
     grossRent: rc.grossRent,
     effectiveRent: rc.effectiveRent,
     holdingCosts: rc.holdingCosts,
@@ -543,6 +553,8 @@ function zeroYear(year: number, calendarYear: number, baseDate: Date): YearRow {
     value: ZERO,
     balance: ZERO,
     committedDebt: ZERO,
+    undrawnDebt: ZERO,
+    reportedValue: ZERO,
     equity: ZERO,
     ltv: ZERO,
     grossRent: ZERO,
@@ -606,20 +618,18 @@ export function projectPortfolio(
   for (let t = 0; t <= assumptions.horizonYears; t++) {
     const acc = (sel: (y: YearRow) => Decimal) =>
       perProp.reduce((s, yrs) => s.plus(sel(at(yrs, t))), ZERO);
-    const value = acc((y) => y.value);
-    const balance = acc((y) => y.balance);
-    const committedDebt = acc((y) => y.committedDebt);
     const noi = acc((y) => y.noi);
     const debtService = acc((y) => y.debtService);
     out.push({
       year: t,
       calendarYear: baseYear + t,
       ...yearPeriod(assumptions.baseDate, t),
-      value,
-      balance,
-      committedDebt,
-      equity: value.minus(committedDebt),
-      ltv: ltvOf(committedDebt, value),
+      ...stocks(
+        acc((y) => y.value),
+        acc((y) => y.balance),
+        acc((y) => y.undrawnDebt),
+        acc((y) => y.committedDebt),
+      ),
       grossRent: acc((y) => y.grossRent),
       effectiveRent: acc((y) => y.effectiveRent),
       holdingCosts: acc((y) => y.holdingCosts),

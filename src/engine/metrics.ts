@@ -276,16 +276,15 @@ function snapshotProperty(
   const owned = isOnOrBefore(property.purchaseDate, asOf);
   // ADR 0166: an owned property also owes the development tranches not drawn yet,
   // on the schedule grid the debt is read from.
-  const committedDebt = owned
-    ? debt.plus(
-        undrawnPrincipal(
-          property,
-          blocks,
-          assumptions,
-          lastGridMonthOnOrBefore(assumptions.baseDate, asOf),
-        ),
+  const undrawnDebt = owned
+    ? undrawnPrincipal(
+        property,
+        blocks,
+        assumptions,
+        lastGridMonthOnOrBefore(assumptions.baseDate, asOf),
       )
-    : debt;
+    : ZERO;
+  const committedDebt = debt.plus(undrawnDebt);
 
   return {
     propertyId: property.id,
@@ -295,6 +294,8 @@ function snapshotProperty(
     value,
     debt,
     committedDebt,
+    undrawnDebt,
+    reportedValue: value.minus(undrawnDebt),
     equity: value.minus(committedDebt),
     ltv: ltvOf(committedDebt, value),
     ...income,
@@ -344,6 +345,8 @@ export function portfolioSnapshot(
   const totalValue = sum((s) => s.value);
   const totalDebt = sumOf(owing)((s) => s.debt);
   const totalCommittedDebt = sumOf(owing)((s) => s.committedDebt);
+  // Only an owned property has undrawn debt, so the reported value sums the owned rows.
+  const totalUndrawnDebt = sumOf(owing)((s) => s.undrawnDebt);
   const grossAnnualRent = sum((s) => s.grossAnnualRent);
   const effectiveGrossIncome = sum((s) => s.effectiveGrossIncome);
   const holdingCosts = sum((s) => s.holdingCosts);
@@ -357,6 +360,8 @@ export function portfolioSnapshot(
     totalValue,
     totalDebt,
     totalCommittedDebt,
+    totalUndrawnDebt,
+    totalReportedValue: totalValue.minus(totalUndrawnDebt),
     totalEquity: totalValue.minus(totalCommittedDebt),
     ltv: ltvOf(totalCommittedDebt, totalValue),
     grossAnnualRent,

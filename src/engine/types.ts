@@ -231,6 +231,11 @@ export interface PropertySnapshot {
   // ADR 0166: debt + the development tranches not drawn yet; equity and LTV use it.
   // Equals `debt` except while a development loan is still drawing.
   committedDebt: Decimal;
+  // ADR 0169: committedDebt − debt, the development tranches not drawn yet.
+  undrawnDebt: Decimal;
+  // ADR 0169: the value shown beside the drawn debt: value − undrawnDebt, so
+  // reportedValue − debt = equity. Equals `value` once every tranche is drawn.
+  reportedValue: Decimal;
   equity: Decimal;
   ltv: Decimal | null; // null when debt is owed on no value (ADR 0133)
   grossAnnualRent: Decimal;
@@ -251,6 +256,8 @@ export interface PortfolioSnapshot {
   totalValue: Decimal;
   totalDebt: Decimal;
   totalCommittedDebt: Decimal; // ADR 0166: Σ committedDebt; totalEquity and ltv use it
+  totalUndrawnDebt: Decimal; // ADR 0169: totalCommittedDebt − totalDebt
+  totalReportedValue: Decimal; // ADR 0169: totalValue − totalUndrawnDebt
   totalEquity: Decimal;
   ltv: Decimal | null; // null when debt is owed on no value (ADR 0133)
   grossAnnualRent: Decimal;
@@ -342,6 +349,11 @@ export interface ProjectionYear {
   // ADR 0166: balance + the development tranches not drawn yet (interest and
   // payments stay on `balance`); equity = value − committedDebt, LTV uses it too.
   committedDebt: Decimal;
+  // ADR 0169: committedDebt − balance, the development tranches not drawn yet.
+  undrawnDebt: Decimal;
+  // ADR 0169: the value shown beside the drawn balance: value − undrawnDebt, so
+  // reportedValue − balance = equity.
+  reportedValue: Decimal;
   equity: Decimal;
   ltv: Decimal | null; // null when debt is owed on no value (ADR 0133)
   // flows (blank/zero in year 0)
