@@ -1,5 +1,5 @@
-// Architecture rules as code: the layer map in docs/adr/0072 (first written in P10 from
-// ADR 0072, CLAUDE.md §3–§4). ESLint mirrors the engine rules
+// Architecture rules as code: the layer map in docs/adr/0072, amended by 0171 (first
+// written in P10 from ADR 0072, CLAUDE.md §3–§4). ESLint mirrors the engine rules
 // for editor feedback; this file is the full map and runs in CI (`pnpm depcruise`).
 //
 // .dependency-cruiser-known-violations.json is empty since P12 (ADR 0072). A new violation
@@ -86,11 +86,14 @@ module.exports = {
       },
     },
     {
-      name: "import-no-upper-layers",
+      name: "import-layer",
       severity: "error",
-      comment: "import (CSV) sits under state: never state/ui/react.",
+      comment:
+        "import (CSV) sits under state: data, engine and lib only — never state/ui/platform/i18n, react or Tauri (ADR 0171).",
       from: { path: "^src/import/", pathNot: TESTS },
-      to: { path: "^src/(state|ui)/|node_modules/(react|react-dom)/" },
+      to: {
+        path: "^src/(state|ui|platform|i18n)/|node_modules/(react|react-dom|@tauri-apps)/",
+      },
     },
     {
       name: "state-no-ui",
@@ -129,9 +132,17 @@ module.exports = {
       name: "i18n-leaf",
       severity: "error",
       comment:
-        "i18n dictionaries depend on nothing but themselves (and engine types).",
+        "i18n dictionaries depend on nothing but themselves (and engine types, see i18n-engine-types-only).",
       from: { path: "^src/i18n/", pathNot: TESTS },
-      to: { path: "^src/(data|state|ui|import|lib)/" },
+      to: { path: "^src/", pathNot: "^src/(i18n|engine)/" },
+    },
+    {
+      name: "i18n-engine-types-only",
+      severity: "error",
+      comment:
+        "i18n takes only types from the engine (validation and loan-event codes), never engine code (ADR 0171).",
+      from: { path: "^src/i18n/", pathNot: TESTS },
+      to: { path: "^src/engine/", dependencyTypesNot: ["type-only"] },
     },
     {
       name: "i18n-dictionaries-lazy",
