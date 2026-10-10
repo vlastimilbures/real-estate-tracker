@@ -249,6 +249,10 @@ Derived per-property values:
   the schedule's grid (`undrawnPrincipal`, ADR 0166). It equals outstanding debt except
   while a development loan is drawing, and only for a property owned at `asOf`. Interest,
   debt service and the weighted rate stay on outstanding debt.
+- **Undrawn debt** = committed debt − outstanding debt; **reported value** = value −
+  undrawn debt, so reported value − outstanding debt = equity. The screens show the
+  outstanding (drawn) debt beside the reported value, and the undrawn debt next to them
+  (ADR 0169).
 - **Monthly rent** — lease in force at `asOf`; **gross annual** = ×12.
 - **Effective gross** = gross × (1 − vacancy).
 - **Holding costs** = `fixed + variable`, where
@@ -380,7 +384,9 @@ table and its export show `dueDate`.
   only. The projection year carries `committedDebt` (balance + undrawn) and
   `committedDraws` (draws less tranches already committed, plus the undrawn part of a
   loan that comes in), so `committedDebt[t] = committedDebt[t−1] − principal − prepaid +
-committedDraws + refinanced`.
+committedDraws + refinanced`. It also carries `undrawnDebt` (committedDebt − balance)
+  and `reportedValue` (value − undrawnDebt), the figures the charts and the grid show
+  beside the drawn balance (ADR 0169).
 
 Aggregate monthly interest / principal / debt-service / draws / prepaid / prepayment fees /
 year-end balance for the annual projection. Prepaid principal and its fees are owner cash

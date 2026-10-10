@@ -209,9 +209,10 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0163](0163-leases-never-overlap.md)                     | Leases of one apartment never overlap                                                         | Accepted                                                 | #121                                               |
 | [0164](0164-amortization-due-date.md)                    | Amortization rows show the payment due date                                                   | Accepted                                                 | #112                                               |
 | [0165](0165-future-purchases.md)                         | Future purchases: acquired value, holding costs from the base date, pending debt              | Accepted · amended by 0166                               | #126, #104                                         |
-| [0166](0166-development-committed-debt.md)               | Development loans: completed value and committed debt during construction                     | Accepted · amended by 0168                               | #120                                               |
+| [0166](0166-development-committed-debt.md)               | Development loans: completed value and committed debt during construction                     | Accepted · amended by 0168, 0169                         | #120                                               |
 | [0167](0167-drawdown-schedule.md)                        | Development loans: drawdown schedule editor and drawn/undrawn read-back                       | Accepted                                                 | #75                                                |
 | [0168](0168-development-loan-is-the-acquisition-loan.md) | A development loan is the acquisition loan, whatever its start                                | Accepted                                                 |                                                    |
+| [0169](0169-development-drawn-debt-display.md)           | Development loans: show the drawn debt, and the value less the undrawn tranches               | Accepted                                                 |                                                    |
 
 <!-- adr-index:end -->
 
