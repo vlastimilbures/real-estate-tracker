@@ -322,7 +322,7 @@ export const cs: Dictionary = {
     seriesCommittedDebt: "Sjednaný úvěr (vč. nečerpaného)",
     seriesEquity: "Kapitál",
     seriesAppreciation: "Zhodnocení",
-    seriesPurchases: "Nákupy",
+    seriesPurchases: "Nákupy a výstavba",
     seriesDebtPaydown: "Splátka dluhu",
     seriesDebtDrawn: "Čerpání dluhu",
     seriesNetEquityChange: "Čistá změna",
@@ -1328,7 +1328,7 @@ export const cs: Dictionary = {
     developmentProseMid: ". Během výstavby je úvěr ",
     developmentInterestOnly: "pouze úrokový",
     developmentProsePost:
-      " (bez jistiny). Dluh ukazuje načerpanou částku a hodnota dokončenou hodnotu sníženou o dosud nečerpané tranše, takže s každým čerpáním rostou obě a kapitál se nemění. Úrok se platí jen z načerpané částky; LTV počítá celý úvěr vůči dokončené hodnotě, stejně jako banka. Když přijde tranše nebo se výstavba dokončí, úvěr se znovu umoří na běžný splátkový plán. Ve formuláři hypotéky zvolte Developerský a vyplňte harmonogram čerpání: částku čerpanou v den startu a pak řádek pro každou další tranši.",
+      " (bez jistiny). Dluh ukazuje načerpanou částku a hodnota dokončenou hodnotu sníženou o dosud nečerpané tranše, takže s každým čerpáním rostou obě a kapitál se nemění. Graf změny kapitálu ukazuje každé čerpání jako hodnotu výstavby a nový dluh ve stejné výši. Úrok se platí jen z načerpané částky; LTV počítá celý úvěr vůči dokončené hodnotě, stejně jako banka. Když přijde tranše nebo se výstavba dokončí, úvěr se znovu umoří na běžný splátkový plán. Ve formuláři hypotéky zvolte Developerský a vyplňte harmonogram čerpání: částku čerpanou v den startu a pak řádek pro každou další tranši.",
     limitsTitle: "Omezení a bezpečnost dat",
     limitsProse:
       "Tato čísla jsou plánovací odhady, ne nabídka banky ani zaručený výsledek. Dva dokumenty ve zdrojovém repozitáři vysvětlují, co model zjednodušuje nebo vynechává, a jak data zálohovat a obnovit po neúspěšné aktualizaci.",
