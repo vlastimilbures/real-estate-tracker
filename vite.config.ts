@@ -1,12 +1,12 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import pkg from "./package.json";
+import pkg from "./package.json" with { type: "json" };
 
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig({
   plugins: [react()],
 
   // Build-time app version (read by the About page). Injected as a constant so it works
@@ -78,4 +78,4 @@ export default defineConfig(async () => ({
       },
     },
   },
-}));
+});
