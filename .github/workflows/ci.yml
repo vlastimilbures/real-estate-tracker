@@ -5,7 +5,11 @@ name: CI
 on:
   push:
     branches: [main]
+  # ready_for_review: a draft PR runs no checks (every job below is skipped), so a session
+  # can push review fixes, an ADR renumber and a main merge for free, then mark the PR ready
+  # for one full run (CONTRIBUTING.md, "Pull requests").
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 # Least-privilege: workflows only need to read the repo.
 permissions:
@@ -17,9 +21,86 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ── Changes: full checks, or the docs fast path (scripts/ci-changes.sh) ──
+  # A skipped job counts as passed for a required check, so the heavy jobs below run unless
+  # this job positively says `code=false`; if it fails, they run in full.
+  changes:
+    name: Changes
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The base branch's copy decides, so a pull request cannot rewrite its own gate. A push
+      # to main, or a base without the script yet, gets the full checks.
+      - id: diff
+        run: |
+          if [[ "$EVENT" != pull_request ]]; then
+            echo "code=true" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git fetch --no-tags --depth=1 origin "$GITHUB_BASE_REF"
+          if ! git show FETCH_HEAD:scripts/ci-changes.sh >"$RUNNER_TEMP/ci-changes.sh"; then
+            echo "code=true" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          bash "$RUNNER_TEMP/ci-changes.sh"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          BEFORE: ${{ github.event.action == 'synchronize' && github.event.before || '' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+
+  # ── Docs fast path: what a documentation-only change can break ───────────
+  docs:
+    name: Docs (format · ADR index)
+    needs: changes
+    if: needs.changes.outputs.code == 'false'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm exec prettier --check .
+
+      - name: ADR index and links
+        run: pnpm adr:check
+
+      # The tests that read documentation: the CSV guide's examples and the real docs/adr.
+      - name: Tests that read docs
+        run: pnpm vitest run src/import/__tests__/csvGuide.test.ts scripts/__tests__/adr-index.test.mjs
+
   # ── Frontend: TypeScript, lint, formatting, unit tests ────────────────────
-  frontend:
-    name: Frontend (typecheck · lint · format · test)
+  # Two parallel jobs; the required check "Frontend (…)" below passes only if both pass, or,
+  # on the docs fast path, only if the docs job passes (it is not a required check itself).
+  frontend-checks:
+    name: Frontend checks and coverage
+    needs: changes
+    if: >-
+      !cancelled() && needs.changes.outputs.code != 'false' &&
+      (github.event_name == 'push' || !github.event.pull_request.draft)
     runs-on: ubuntu-latest
 
     steps:
@@ -75,6 +156,30 @@ jobs:
       - name: Test with coverage thresholds
         run: pnpm test:coverage
 
+  frontend-time-zones:
+    name: Frontend tests in other time zones
+    needs: changes
+    if: >-
+      !cancelled() && needs.changes.outputs.code != 'false' &&
+      (github.event_name == 'push' || !github.event.pull_request.draft)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Version comes from package.json "packageManager".
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       # Dates are UTC by convention; a non-UTC zone (UTC−11) catches local-time leaks.
       - name: Tests (non-UTC time zone)
         run: pnpm test
@@ -89,17 +194,45 @@ jobs:
         env:
           TZ: Pacific/Kiritimati
 
+  frontend:
+    name: Frontend (typecheck · lint · format · test)
+    needs: [changes, docs, frontend-checks, frontend-time-zones]
+    if: >-
+      !cancelled() &&
+      (github.event_name == 'push' || !github.event.pull_request.draft)
+    runs-on: ubuntu-latest
+    steps:
+      - name: The frontend jobs passed
+        run: |
+          if [[ "${{ needs.changes.outputs.code }}" == false ]]; then
+            [[ "${{ needs.docs.result }}" == success ]]
+          else
+            [[ "${{ needs.frontend-checks.result }}" == success ]]
+            [[ "${{ needs.frontend-time-zones.result }}" == success ]]
+          fi
+
   # ── Accessibility: axe scan of every captured screen (F-08, ADR 0078) ────
   # Runs the ux:capture harness on the in-memory sample portfolio (no real data) and fails
   # on any axe WCAG 2.2 AA violation. Screenshots are a by-product; only axe is gated.
-  axe:
-    name: Accessibility (axe scan)
+  # Split into 4 parallel shards (one shard on 2 workers took 20 min); the required check
+  # "Accessibility (axe scan)" below passes only if every shard passes.
+  axe-shard:
+    name: Axe shard ${{ matrix.shard }}/4
+    needs: changes
+    if: >-
+      !cancelled() && needs.changes.outputs.code != 'false' &&
+      (github.event_name == 'push' || !github.event.pull_request.draft)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # Version comes from package.json "packageManager".
       - name: Set up pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
@@ -117,7 +250,7 @@ jobs:
 
       # English, light + dark, default and minimum window (owner, ADR 0078).
       - name: Capture screens with axe scans
-        run: pnpm ux:capture
+        run: pnpm ux:capture --shard ${{ matrix.shard }}/4
         env:
           UX_RUN_ID: ci
           UX_LANG: en
@@ -130,7 +263,7 @@ jobs:
       # The layout screens in Czech and Russian: their strings are longer, and the screens
       # assert nothing is clipped or covered (ADR 0158).
       - name: Capture layout screens in Czech and Russian
-        run: pnpm ux:capture --grep "01-dashboard|14-properties-long-name|20-property-detail|27-property-section-nav-focus|42-scenarios-compare"
+        run: pnpm ux:capture --shard ${{ matrix.shard }}/4 --grep "01-dashboard|14-properties-long-name|20-property-detail|27-property-section-nav-focus|42-scenarios-compare"
         env:
           UX_RUN_ID: ci-i18n
           UX_LANG: cs,ru
@@ -146,16 +279,31 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ux-capture-ci
+          name: ux-capture-ci-${{ matrix.shard }}
           path: |
             ux-screens/ci/
             ux-screens/ci-i18n/
           include-hidden-files: true
           retention-days: 14
 
+  axe:
+    name: Accessibility (axe scan)
+    needs: [changes, axe-shard]
+    if: >-
+      !cancelled() && needs.changes.outputs.code != 'false' &&
+      (github.event_name == 'push' || !github.event.pull_request.draft)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every axe shard passed
+        run: '[[ "${{ needs.axe-shard.result }}" == success ]]'
+
   # ── Rust / Tauri shell: formatting, clippy, tests, build ──────────────────
   rust:
     name: Rust (fmt · clippy · test · audit · build)
+    needs: changes
+    if: >-
+      !cancelled() && needs.changes.outputs.code != 'false' &&
+      (github.event_name == 'push' || !github.event.pull_request.draft)
     runs-on: ubuntu-latest
 
     steps:
