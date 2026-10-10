@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Release blockers
+
+None. While this list is not empty, do not tag a release (docs/release.md, checklist). Add a
+feature here when part of it is merged but it must not ship yet, for example schema and
+engine without the form, and remove it when the last part lands.
+
 ### Added
 
 - The property form has an optional **Acquisition** section to record how a purchase was

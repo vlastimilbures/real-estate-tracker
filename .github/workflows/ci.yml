@@ -156,6 +156,22 @@ jobs:
       - name: Test with coverage thresholds
         run: pnpm test:coverage
 
+      # Only the production build exercises Rolldown chunking, `?url` asset imports and the
+      # dead-code elimination that keeps the E2E-only sql.js (src/data/browserSql.ts) out of
+      # the app bundle; otherwise a break shows up only at release time (#161).
+      - name: Production build
+        run: pnpm exec vite build
+
+      # grep exits 1 for no match; 0 (a match) and 2 (no dist/assets, a read error) fail.
+      - name: sql.js stays out of the bundle
+        run: |
+          status=0
+          grep -rlE 'sql-wasm|initSqlJs' dist/assets || status=$?
+          if [[ $status == 0 ]]; then
+            echo "::error::sql.js reached dist/assets; src/data/browserSql.ts is for E2E only"
+          fi
+          [[ $status == 1 ]]
+
   frontend-time-zones:
     name: Frontend tests in other time zones
     needs: changes
