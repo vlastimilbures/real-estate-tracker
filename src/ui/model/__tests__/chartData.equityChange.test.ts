@@ -8,6 +8,7 @@ import {
   isoDate,
   money,
   portfolioProjection,
+  rate,
   type Portfolio,
 } from "../../../engine";
 import { projectionSeries, type SeriesRow } from "../projection";
@@ -319,6 +320,65 @@ describe("toEquityChangeRows: development draws (ADR 0170)", () => {
         );
       }
       rows.forEach((r, i) => {
+        const equityDelta = toNumber(
+          series[i + 1].equity.minus(series[i].equity),
+        );
+        expect(
+          r.appreciation + r.purchases + r.paydown + r.drawdown,
+        ).toBeCloseTo(equityDelta, 4);
+      });
+    },
+  );
+
+  // Review of PR 305: a plain loan refinanced on 2027-01-01 (year 1) into a development
+  // loan with a 1.0M tranche on 2027-11-15 (year 2). The handover commits the tranche with
+  // no draw and no value: that is new committed debt, not a negative purchase.
+  it.each(["nominal", "real"] as const)(
+    "a handover into a development loan shows its undrawn tranche as new debt, not a negative purchase (%s)",
+    (lens) => {
+      const pf: Portfolio = {
+        ...devOnly,
+        mortgages: [
+          {
+            id: "m-plain",
+            propertyId: "dev",
+            startDate: isoDate("2026-03-01"),
+            initialPrincipal: money("3000000"),
+            fixationYears: 5,
+            interestRatePa: rate("0.049"),
+            monthlyInstalment: money("16000"),
+          },
+          {
+            ...devBlock,
+            id: "m-dev-refi",
+            startDate: isoDate("2027-01-01"),
+            initialPrincipal: money("2900000"),
+            loanTermYears: 30,
+            draws: [{ date: isoDate("2027-11-15"), amount: money("1000000") }],
+            completionDate: isoDate("2027-11-15"),
+          },
+        ],
+      };
+      const series = projectionSeries(
+        portfolioProjection(pf, assumptions),
+        lens,
+        assumptions,
+      );
+      const rows = toEquityChangeRows(series);
+      const [y1, y2] = rows;
+      const committed = toNumber(series[1].undrawnDebt);
+      expect(committed).toBeGreaterThan(0);
+      expect(y1.purchases).toBe(0);
+      expect(y1.drawdown).toBeCloseTo(
+        -toNumber(series[1].refinanced) - committed,
+        4,
+      );
+      const drawn = toNumber(series[2].draws);
+      expect(drawn).toBeGreaterThan(0);
+      expect(y2.purchases).toBeCloseTo(drawn, 4);
+      expect(y2.drawdown).toBeCloseTo(-drawn, 4);
+      rows.forEach((r, i) => {
+        expect(r.purchases).toBeGreaterThanOrEqual(0);
         const equityDelta = toNumber(
           series[i + 1].equity.minus(series[i].equity),
         );
