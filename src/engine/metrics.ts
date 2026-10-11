@@ -31,19 +31,6 @@ import type {
   PortfolioSnapshot,
 } from "./types";
 
-/** Valuation in force at `asOf`: latest validFrom ≤ asOf, validTo blank or ≥ asOf. */
-export function valuationInForce(
-  valuations: Valuation[],
-  asOf: Date,
-): Valuation | undefined {
-  return lastOnOrBefore(
-    valuations,
-    asOf,
-    (v) => v.validFrom,
-    (v) => v.validTo,
-  );
-}
-
 /** Lease in force at `asOf`: latest startDate ≤ asOf, endDate blank or ≥ asOf. */
 export function leaseInForce(leases: Lease[], asOf: Date): Lease | undefined {
   return lastOnOrBefore(

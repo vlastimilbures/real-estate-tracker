@@ -9,12 +9,7 @@
 import { describe, it, expect } from "vitest";
 import { D, ZERO } from "../../lib/money";
 import { isoDate } from "../dates";
-import {
-  leaseInForce,
-  valuationInForce,
-  portfolioSnapshot,
-  propertySnapshot,
-} from "../metrics";
+import { leaseInForce, portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { portfolioKpis, irr } from "../kpis";
 import {
@@ -23,7 +18,7 @@ import {
   schedulesByProperty,
 } from "../schedule";
 import { applyScenario, type ScenarioOverrides } from "../scenarios";
-import type { Lease, Portfolio, Valuation } from "../types";
+import type { Lease, Portfolio } from "../types";
 import { assumptions, portfolio, PARITY } from "./support/seed";
 import { KC, RATIO, near } from "./support/tolerance";
 import { rate } from "../brands";
@@ -76,24 +71,13 @@ describe("Effective-dating boundaries are inclusive on both ends", () => {
     endDate: isoDate("2027-12-31"),
     monthlyRent: money(10_000),
   };
-  const val: Valuation = {
-    id: "v",
-    propertyId: "p",
-    validFrom: isoDate("2027-03-01"),
-    validTo: isoDate("2027-12-31"),
-    marketValue: money(5_000_000),
-  };
   it("start == asOf is in force; the day before is not", () => {
     expect(leaseInForce([lease], isoDate("2027-03-01"))?.id).toBe("l");
     expect(leaseInForce([lease], isoDate("2027-02-28"))).toBeUndefined();
-    expect(valuationInForce([val], isoDate("2027-03-01"))?.id).toBe("v");
-    expect(valuationInForce([val], isoDate("2027-02-28"))).toBeUndefined();
   });
-  it("end/validTo == asOf is in force; the day after is not", () => {
+  it("endDate == asOf is in force; the day after is not", () => {
     expect(leaseInForce([lease], isoDate("2027-12-31"))?.id).toBe("l");
     expect(leaseInForce([lease], isoDate("2028-01-01"))).toBeUndefined();
-    expect(valuationInForce([val], isoDate("2027-12-31"))?.id).toBe("v");
-    expect(valuationInForce([val], isoDate("2028-01-01"))).toBeUndefined();
   });
 });
 

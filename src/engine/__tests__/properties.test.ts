@@ -7,12 +7,7 @@ import fc from "fast-check";
 import { termMonths } from "../amortization";
 import { EngineInputError } from "../errors";
 import { buildSchedule, propertySchedules } from "../schedule";
-import {
-  propertySnapshot,
-  leaseInForce,
-  selectValuation,
-  valuationInForce,
-} from "../metrics";
+import { propertySnapshot, leaseInForce, selectValuation } from "../metrics";
 import { propertyProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
 import { edate, isAfter, isOnOrBefore, utc } from "../dates";
@@ -310,7 +305,7 @@ describe(
   "random effective-dated leases and valuations",
   { timeout: TIMEOUT },
   () => {
-    it("leaseInForce / valuationInForce pick the record in force at asOf", () => {
+    it("leaseInForce picks the lease in force at asOf", () => {
       fc.assert(
         fc.property(
           records,
@@ -327,30 +322,12 @@ describe(
                   : dayToDate(r.startDay + r.lengthDays),
               monthlyRent: money(r.amount),
             }));
-            const vals: Valuation[] = rs.map((r, i) => ({
-              id: `v${i}`,
-              propertyId: "p",
-              validFrom: dayToDate(r.startDay),
-              validTo:
-                r.lengthDays === undefined
-                  ? undefined
-                  : dayToDate(r.startDay + r.lengthDays),
-              marketValue: money(r.amount * 100),
-            }));
             expect(leaseInForce(leases, asOf)?.id).toBe(
               oracle(
                 leases,
                 asOf,
                 (l) => l.startDate,
                 (l) => l.endDate,
-              ),
-            );
-            expect(valuationInForce(vals, asOf)?.id).toBe(
-              oracle(
-                vals,
-                asOf,
-                (v) => v.validFrom,
-                (v) => v.validTo,
               ),
             );
           },
