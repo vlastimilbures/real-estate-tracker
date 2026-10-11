@@ -456,6 +456,9 @@ export const en = {
     // ADR 0149: a stored date before the forms' floor; `record` from earlyDateRecord.
     earlyDate: (record: string, date: string, floor: string) =>
       `${record} ${date} is before ${floor}, the earliest date the forms accept. Check the year for a typo.`,
+    // ADR 0180 §3: an early mortgage date other than the start date, named by the loan.
+    earlyDateLoan: (loan: string, date: string, floor: string) =>
+      `Mortgage from ${loan}: a date ${date} is before ${floor}, the earliest date the forms accept. Check the year for a typo.`,
     // ADR 0163: two stored leases of one apartment overlap (a database from before the rule).
     leaseOverlap: (first: string, second: string) =>
       `The leases from ${first} and from ${second} overlap. Leases on one apartment cannot overlap: set an end date on the earlier lease before the later one starts.`,

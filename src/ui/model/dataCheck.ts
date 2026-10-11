@@ -86,12 +86,14 @@ export type DataFinding =
       loanStart?: IsoDate;
     }
   /** A stored date before 01.01.1900, the earliest the forms accept (ADR 0149 §5): an
-   *  earlier CSV import kept it, and a restore asks about it. `date` is the earliest. */
+   *  earlier CSV import kept it, and a restore asks about it. `date` is the earliest;
+   *  `loanStart` names the mortgage unless the date is its start (ADR 0180 §3). */
   | {
       kind: "earlyDate";
       entity: EarlyDateField["entity"];
       field: DateField;
       date: Date;
+      loanStart?: IsoDate;
     }
   /** Two stored leases of the property that overlap (ADR 0163), by start date: a
    *  database from before the rule keeps them. */
@@ -209,17 +211,28 @@ function rangeFindings(
   );
 }
 
-/** Stored dates before the forms' floor (ADR 0149 §5). */
+/** Stored dates before the forms' floor (ADR 0149 §5); a mortgage's names its loan. */
 function earlyDateFindings(
-  rows: Parameters<typeof earlyDateFields>[0],
+  rows: { mortgages: readonly MortgageBlock[] } & Parameters<
+    typeof earlyDateFields
+  >[0],
   assumptions?: { baseDate: Date },
 ): DataFinding[] {
-  return earlyDateFields(rows, assumptions).map(({ entity, field, date }) => ({
-    kind: "earlyDate",
-    entity,
-    field,
-    date,
-  }));
+  return earlyDateFields(rows, assumptions).map(
+    ({ entity, id, field, date }) => {
+      const loanStart =
+        entity === "mortgage" && field !== "startDate"
+          ? rows.mortgages.find((m) => m.id === id)?.startDate
+          : undefined;
+      return {
+        kind: "earlyDate",
+        entity,
+        field,
+        date,
+        ...(loanStart && { loanStart }),
+      };
+    },
+  );
 }
 
 /** Stored leases that overlap (ADR 0163): the forms and the CSV import no longer write
@@ -373,11 +386,17 @@ export function findingText(
     case "fundingUnknown":
       return f.future ? d.fundingUnknownFuture : d.fundingUnknown;
     case "earlyDate":
-      return d.earlyDate(
-        d.earlyDateRecord[f.entity],
-        fmtDate(f.date),
-        fmtDate(DATE_FLOOR),
-      );
+      return f.loanStart
+        ? d.earlyDateLoan(
+            fmtDate(f.loanStart),
+            fmtDate(f.date),
+            fmtDate(DATE_FLOOR),
+          )
+        : d.earlyDate(
+            d.earlyDateRecord[f.entity],
+            fmtDate(f.date),
+            fmtDate(DATE_FLOOR),
+          );
     case "outOfRange": {
       // The stored value with every decimal (ADR 0180 §2); the bounds are whole numbers.
       const n = (v: number) => fmtCzk(v, { suffix: false });

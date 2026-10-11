@@ -426,6 +426,8 @@ export const cs: Dictionary = {
       `Horizont projekce ${value} je mimo rozsah, který formuláře přijímají (${range} let).`,
     earlyDate: (record, date, floor) =>
       `${record} ${date} je před ${floor}, nejstarším datem, které formuláře přijímají. Zkontrolujte překlep v roce.`,
+    earlyDateLoan: (loan, date, floor) =>
+      `Hypotéka od ${loan}: datum ${date} je před ${floor}, nejstarším datem, které formuláře přijímají. Zkontrolujte překlep v roce.`,
     leaseOverlap: (first, second) =>
       `Nájmy od ${first} a od ${second} se překrývají. Nájmy jednoho bytu se překrývat nemohou: nastavte dřívějšímu nájmu datum konce před začátkem pozdějšího.`,
     earlyDateRecord: {
