@@ -45,6 +45,19 @@ module.exports = {
       },
     },
     {
+      name: "reference-model-engine-free",
+      severity: "error",
+      comment:
+        "The independent reference models import nothing from the engine or lib (ADR 0174): they are written from SPEC, so they cannot inherit an engine mistake.",
+      from: {
+        path: "^src/engine/__tests__/reference/(mortgageReference|kpiReference|seedLoans)\\.ts$",
+      },
+      to: {
+        path: "^src/",
+        pathNot: "^src/engine/__tests__/reference/",
+      },
+    },
+    {
       name: "lib-no-app-layers",
       severity: "error",
       comment: "lib is the bottom layer: it never imports the app layers.",
