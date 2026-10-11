@@ -642,8 +642,8 @@ export const en = {
     fieldInsurance: "Insurance /yr",
     fieldSvjMo: "SVJ /mo",
     fieldOther: "Other /yr",
-    fieldMgmtPct: "Management (% rent)",
-    fieldMaintPct: "Maintenance (% rent)",
+    fieldMgmtPct: "Management (% of collected rent)",
+    fieldMaintPct: "Maintenance (% of contracted rent)",
     saveHoldingCosts: "Save holding costs",
     holdingCostsSaved: "Holding costs saved",
     // Projection + amortization
@@ -817,8 +817,8 @@ export const en = {
     insurance: "Insurance /yr",
     svj: "SVJ / fond oprav /mo",
     other: "Other /yr",
-    mgmt: "Management (% rent)",
-    maint: "Maintenance (% rent)",
+    mgmt: "Management (% of collected rent)",
+    maint: "Maintenance (% of contracted rent)",
   },
 
   settings: {
@@ -1459,17 +1459,17 @@ export const en = {
       },
       holdingCosts: {
         name: "Holding costs",
-        formula: "fixed + (mgmt% + maint%) × gross rent",
+        formula: "fixed + mgmt% × effective income + maint% × gross rent",
         meaning:
-          "Annual running cost: fixed line items (tax, insurance, SVJ, other) plus % -of-rent management and maintenance.",
-        eg: "36k + (15%+5%)×240k = 84k.",
+          "Annual running cost: fixed line items (tax, insurance, SVJ, other), plus management as a % of the rent collected and maintenance as a % of the contracted rent.",
+        eg: "36k + 15%×228k + 5%×240k = 82.2k.",
       },
       noi: {
         name: "NOI",
         formula: "effective income − holding costs",
         meaning:
           "Operating profit before the mortgage — the cash the asset itself throws off.",
-        eg: "228k − 84k = 144k.",
+        eg: "228k − 82.2k = 145.8k.",
       },
       debtService: {
         name: "Annual debt service",
@@ -1484,14 +1484,14 @@ export const en = {
         meaning:
           "Modelled yearly cash flow after costs and mortgage — an estimate, not a bank-account record. Can be negative.",
         caveat: "Not actual receipts.",
-        eg: "144k − 120k = +24k.",
+        eg: "145.8k − 120k = +25.8k.",
       },
       dscr: {
         name: "DSCR",
         formula: "NOI ÷ debt service",
         meaning:
           "Whether rent covers the mortgage. Above 1.0 the property pays its own loan; below, you top it up.",
-        eg: "144k ÷ 120k = 1.20× (20% to spare).",
+        eg: "145.8k ÷ 120k = 1.215× (21.5% to spare).",
       },
       grossYield: {
         name: "Gross yield",
@@ -1505,7 +1505,7 @@ export const en = {
         formula: "NOI ÷ value",
         meaning:
           "Return on value after running costs, ignoring the mortgage — the standard comparison.",
-        eg: "144k ÷ 5.4M ≈ 2.7%.",
+        eg: "145.8k ÷ 5.4M = 2.7%.",
       },
       weightedAvgRate: {
         name: "Weighted-avg rate",
@@ -1531,7 +1531,7 @@ export const en = {
         name: "Vacancy",
         formula: "applied every year",
         meaning:
-          "The vacancy allowance is taken on rent each year, as in the snapshot.",
+          "The vacancy allowance is taken on rent each year, as in the snapshot; management is charged on the rent after it.",
       },
       costs: {
         name: "Costs",

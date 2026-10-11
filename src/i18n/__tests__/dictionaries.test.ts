@@ -356,3 +356,68 @@ describe("ru restore warning", () => {
     );
   });
 });
+
+// ADR 0182: management is charged on the rent collected, maintenance on the rent
+// contracted. The labels (accessible names) and the Guide say which rent each follows.
+describe("rent-percentage costs name their base (ADR 0182)", () => {
+  const labels = {
+    en: [
+      "Management (% of collected rent)",
+      "Maintenance (% of contracted rent)",
+    ],
+    cs: ["Správa (% z vybraného nájmu)", "Údržba (% ze sjednaného nájmu)"],
+    ru: [
+      "Управление (% от собранной аренды)",
+      "Обслуживание (% от договорной аренды)",
+    ],
+  } as const;
+  it.each(LANGS)("%s: the Assumptions and property form labels", (l) => {
+    const d = DICTS[l];
+    expect([d.assumptions.mgmt, d.assumptions.maint]).toEqual(labels[l]);
+    expect([
+      d.propertyDetail.fieldMgmtPct,
+      d.propertyDetail.fieldMaintPct,
+    ]).toEqual(labels[l]);
+  });
+  // 36k + 15 % × 228k + 5 % × 240k = 36k + 34.2k + 12k = 82.2k; NOI 228k − 82.2k.
+  const guide = {
+    en: {
+      formula: "fixed + mgmt% × effective income + maint% × gross rent",
+      holding: "36k + 15%×228k + 5%×240k = 82.2k.",
+      noi: "228k − 82.2k = 145.8k.",
+      ncf: "145.8k − 120k = +25.8k.",
+      dscr: "145.8k ÷ 120k = 1.215× (21.5% to spare).",
+      netYield: "145.8k ÷ 5.4M = 2.7%.",
+    },
+    cs: {
+      formula: "fixní + správa % × efektivní příjem + údržba % × hrubý nájem",
+      holding: "36 k + 15 %×228 k + 5 %×240 k = 82,2 k.",
+      noi: "228 k − 82,2 k = 145,8 k.",
+      ncf: "145,8 k − 120 k = +25,8 k.",
+      dscr: "145,8 k ÷ 120 k = 1,215× (21,5 % rezerva).",
+      netYield: "145,8 k ÷ 5,4 M = 2,7 %.",
+    },
+    ru: {
+      formula: "фикс. + управл.% × эффективный доход + обсл.% × валовая аренда",
+      holding: "36 k + 15%×228 k + 5%×240 k = 82,2 k.",
+      noi: "228 k − 82,2 k = 145,8 k.",
+      ncf: "145,8 k − 120 k = +25,8 k.",
+      dscr: "145,8 k ÷ 120 k = 1,215× (21,5% запаса).",
+      netYield: "145,8 k ÷ 5,4 M = 2,7%.",
+    },
+  } as const;
+  it.each(LANGS)(
+    "%s: the Guide example charges management on collected rent",
+    (l) => {
+      const g = DICTS[l].guide.snapshotDefs;
+      expect({
+        formula: g.holdingCosts.formula,
+        holding: g.holdingCosts.eg,
+        noi: g.noi.eg,
+        ncf: g.netCashFlow.eg,
+        dscr: g.dscr.eg,
+        netYield: g.netYield.eg,
+      }).toEqual(guide[l]);
+    },
+  );
+});
