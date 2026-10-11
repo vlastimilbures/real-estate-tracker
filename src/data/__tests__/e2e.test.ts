@@ -98,20 +98,21 @@ describe("Effective-dating survives the DB round trip", () => {
 // must not import engine test fixtures). After the DB round trip it must still equal the
 // engine fixture. Compared on the union of both sides' keys, as strings (Decimal/Date ⇒
 // text), so a field only one copy has fails too. A DB-only default the fixture leaves
-// out is compared against its default value.
+// out is compared against its default value (fixture side only, so a DB row that
+// drops the field still fails).
 const DB_ONLY_DEFAULTS: Record<string, unknown> = { active: true };
 function onAllKeys(actual: object, expected: object): [unknown, unknown] {
   const a = actual as Record<string, unknown>;
   const e = expected as Record<string, unknown>;
   const keys = [...new Set([...Object.keys(a), ...Object.keys(e)])].sort();
-  const side = (r: Record<string, unknown>) =>
+  const side = (
+    r: Record<string, unknown>,
+    defaults: Record<string, unknown>,
+  ) =>
     Object.fromEntries(
-      keys.map((k) => [
-        k,
-        String(k in r ? r[k] : (DB_ONLY_DEFAULTS[k] ?? r[k])),
-      ]),
+      keys.map((k) => [k, String(k in r ? r[k] : defaults[k])]),
     );
-  return [side(a), side(e)];
+  return [side(a, {}), side(e, DB_ONLY_DEFAULTS)];
 }
 const sortById = <T extends { id: string }>(xs: T[]) =>
   [...xs].sort((a, b) => a.id.localeCompare(b.id));

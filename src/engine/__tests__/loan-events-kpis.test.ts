@@ -17,6 +17,7 @@ import type {
   ProjectionYear,
 } from "../types";
 import { BASE_DATE, assumptions, portfolio } from "./support/seed";
+import { RATIO, near as nearNum } from "./support/tolerance";
 
 /** The seed with Javorova prepaying 500,000 Kč (+ fee) on its 2031-01-17 refix. */
 function prepaid(
@@ -133,7 +134,7 @@ describe("ADR 0109: prepayments in the KPIs", () => {
     expect(
       kpis.leveredIrrNominal?.equals(baseKpis.leveredIrrNominal ?? ZERO),
     ).toBe(false);
-    expect(kpis.leveredIrrNominal?.toFixed(6)).toBe("0.061652");
+    nearNum(kpis.leveredIrrNominal!.toNumber(), 0.061652, RATIO, "prepaid irr");
     // The prepayment lands in Y5 (2031), the seed's first positive year; its outflow
     // does not reduce that year's own net cash flow, so the KPI stays 2031.
     expect(proj[5]?.prepaid.greaterThan(ZERO)).toBe(true);
