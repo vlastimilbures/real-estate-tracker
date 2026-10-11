@@ -104,6 +104,14 @@ branch.
 - Write engine tests first. Engine changes keep the parity tests green: money within ±1 Kč,
   ratios within ±0.0001 of the targets in `.claude/rules/engine-parity.md`. A mismatch is an
   engine bug, not a target to adjust.
+- Three regression layers (ADR 0174): the independent reference models in
+  `src/engine/__tests__/reference/` (engine-free, written from `SPEC.md`; they check
+  correctness), the parity targets (engine values since ADR 0081 for money; they pin the
+  sample) and the golden master (detects change, proves nothing correct).
+- A new engine output field shows in the golden master's v2 snapshot as added lines only:
+  update it in the field's own commit (`vitest -u`) and check the diff has no changed or
+  removed line (no tool checks this; the reviewer does). A changed line is a moved number and needs an approved behaviour change
+  (ADR 0001).
 - A target changes only through an accepted ADR under the Czech-practice rule (ADR 0003): add
   an old → new row to the target change log, update `src/engine/__tests__/support/seed.ts` and
   the golden-master snapshot (`vitest -u` for that change only, ADR 0039) in the same commit.

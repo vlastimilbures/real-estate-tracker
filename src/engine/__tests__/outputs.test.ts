@@ -17,6 +17,7 @@ import type { Assumptions, IsoDate, Portfolio } from "../types";
 import { assumptions, portfolio as seed } from "./support/seed";
 import { mixed } from "./support/mixed";
 import { mixedWithRefi, synthetic } from "./support/synthetic";
+import { withEvents } from "./support/events";
 import { money } from "../brands";
 
 /** The `useEngine` memo body before P9, plus ADR 0103's financing exposure. */
@@ -51,31 +52,6 @@ const shocked = applyScenario(assumptions, {
   valueShock: { pct: rate("0.2"), atYear: 2 },
 });
 
-/** Every loan with two prepayments and a recast (ADR 0109; #130 G1-6-04). Javorová's
- *  and the inactive loan's first prepayments replay as history, the dev loan meets its
- *  events after completion, the future loan after its draw. */
-const withEvents = (p: Portfolio): Portfolio => ({
-  ...p,
-  mortgages: p.mortgages.map((m) => ({
-    ...m,
-    prepayments: [
-      {
-        date: edate(m.startDate, 61),
-        amount: money("150000"),
-        effect: "shortenTerm",
-      },
-      {
-        date: edate(m.startDate, 97),
-        amount: money("100000"),
-        effect: "lowerInstalment",
-        fee: money("2000"),
-      },
-    ],
-    recasts: [
-      { date: edate(m.startDate, 121), maturity: edate(m.startDate, 300) },
-    ],
-  })),
-});
 const seedEvents = withEvents(seed);
 const mixedEvents = withEvents(mixed);
 /** Javorová's recast (2031-02-17) falls after the successor's start (2031-01-17), so the

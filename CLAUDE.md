@@ -19,7 +19,7 @@ A local-first **macOS desktop app** (offline, single user): a rental-apartment p
 with 30-year nominal/real projections, charts, KPIs, and what-if scenarios, modelled on Czech
 mortgage practice. `SPEC.md` is the functional spec; the **parity targets** for the fictional
 sample portfolio (`.claude/rules/engine-parity.md`), the golden master and the independent
-mortgage reference model are the regression baseline (ADR 0081).
+reference models (mortgage, KPI) are the regression baseline (ADR 0081, 0174).
 
 ## 2. Stack (locked — do not substitute without asking)
 

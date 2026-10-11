@@ -193,6 +193,30 @@ export default tseslint.config(
       "no-restricted-imports": ["error", { patterns: [engineLayerPattern] }],
     },
   },
+  // The reference models import only each other (ADR 0174): no engine, lib or support
+  // code, and not the adapters beside them (eventHarness.ts, loanGen.ts), which bridge to
+  // the engine. So they cannot inherit an engine mistake.
+  {
+    files: [
+      "src/engine/__tests__/reference/mortgageReference.ts",
+      "src/engine/__tests__/reference/kpiReference.ts",
+      "src/engine/__tests__/reference/seedLoans.ts",
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex:
+                "^\\.{1,2}/(?!(mortgageReference|kpiReference|seedLoans)$)",
+              message: "Reference model is engine-free (ADR 0174, #160).",
+            },
+          ],
+        },
+      ],
+    },
+  },
   {
     files: ["src/engine/**/*.ts"],
     ignores: ["src/engine/**/__tests__/**"],

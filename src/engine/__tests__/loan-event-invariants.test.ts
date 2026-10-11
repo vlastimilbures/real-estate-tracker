@@ -329,10 +329,17 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
         }),
         RUNS,
       );
-      // Not vacuous: both kinds of case occur.
-      expect(seen.equal).toBeGreaterThan(RUNS.numRuns / 4);
-      expect(seen.late + seen.lateTerm).toBeGreaterThan(0);
-      expect(seen.lateTerm).toBeGreaterThan(0);
+      // Not vacuous: both kinds of case occur. Measured over 4 seeds × 5000 runs: equal
+      // ~80 %, late or lateTerm ~11.6 %, lateTerm ~6 %. Checked on the fixed seed
+      // (deterministic) and on runs of 1000 or more, as below (#237). A small FC_RUNS
+      // with another seed may draw no lateTerm case by chance (at 20 runs P(0) ≈ 0.94^20
+      // ≈ 29 %; at 200 runs ≈ e^-12), so a replay of a failure with few runs does not
+      // fail here.
+      if (RUNS.seed === SEED || RUNS.numRuns >= 1000) {
+        expect(seen.equal).toBeGreaterThan(RUNS.numRuns / 4);
+        expect(seen.late + seen.lateTerm).toBeGreaterThan(0);
+        expect(seen.lateTerm).toBeGreaterThan(0);
+      }
     },
     TIMEOUT,
   );
