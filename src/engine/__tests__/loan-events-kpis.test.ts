@@ -17,6 +17,7 @@ import type {
   ProjectionYear,
 } from "../types";
 import { BASE_DATE, assumptions, portfolio } from "./support/seed";
+import { RATIO, near as nearNum } from "./support/tolerance";
 
 /** The seed with Javorova prepaying 500,000 Kč (+ fee) on its 2031-01-17 refix. */
 function prepaid(
@@ -75,9 +76,13 @@ describe("ADR 0109: prepayments in the projection", () => {
     for (const y of proj.slice(1)) {
       near(y.debtService, y.interest.plus(y.principal));
       near(y.netCashFlow, y.noi.minus(y.debtService));
+      if (y.debtService.isZero()) expect(y.dscr).toBeNull();
+      else near(y.dscr!, y.noi.div(y.debtService));
     }
-    // Year 5's payments before the prepayment are unchanged.
-    expect(proj[5].noi.equals(base[5].noi)).toBe(true);
+    // Debt service before the prepayment year is unchanged.
+    for (let t = 1; t < 5; t++) {
+      expect(proj[t].debtService.equals(base[t].debtService)).toBe(true);
+    }
   });
 
   it("explains the balance move with principal, prepaid and draws", () => {
@@ -129,6 +134,7 @@ describe("ADR 0109: prepayments in the KPIs", () => {
     expect(
       kpis.leveredIrrNominal?.equals(baseKpis.leveredIrrNominal ?? ZERO),
     ).toBe(false);
+    nearNum(kpis.leveredIrrNominal!.toNumber(), 0.061652, RATIO, "prepaid irr");
     // The prepayment lands in Y5 (2031), the seed's first positive year; its outflow
     // does not reduce that year's own net cash flow, so the KPI stays 2031.
     expect(proj[5]?.prepaid.greaterThan(ZERO)).toBe(true);

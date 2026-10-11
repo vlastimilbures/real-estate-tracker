@@ -1,7 +1,11 @@
 // View-model parity: the numbers that reach the screen must still be the parity targets (.claude/rules/engine-parity.md)
 // numbers, under both the Nominal and Real lens. Drives off the engine fixtures.
 import { describe, it, expect } from "vitest";
-import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import {
+  portfolio,
+  assumptions,
+  PARITY,
+} from "../../../engine/__tests__/support/seed";
 import {
   portfolioSnapshot,
   portfolioProjection,
@@ -22,11 +26,21 @@ const snap = portfolioSnapshot(portfolio, assumptions);
 describe("projectionSeries — Nominal/Real lens", () => {
   it("nominal year-30 equity == net worth nominal (parity)", () => {
     const rows = projectionSeries(proj, "nominal", assumptions);
-    near(rows[30].equity.toNumber(), 93_182_810.46, 1, "nom equity");
+    near(
+      rows[30].equity.toNumber(),
+      PARITY.kpis.netWorthNominal,
+      1,
+      "nom equity",
+    );
   });
   it("real year-30 equity == net worth real (parity)", () => {
     const rows = projectionSeries(proj, "real", assumptions);
-    near(rows[30].equity.toNumber(), 44_424_223.27, 1, "real equity");
+    near(
+      rows[30].equity.toNumber(),
+      PARITY.kpis.netWorthReal,
+      1,
+      "real equity",
+    );
   });
   it("LTV is lens-invariant", () => {
     const nom = projectionSeries(proj, "nominal", assumptions);
@@ -39,16 +53,41 @@ describe("projectionSeries — Nominal/Real lens", () => {
 describe("monthlyFlow (Dashboard) ", () => {
   it("net baseline == netCashFlow / 12 (≈ −4 778)", () => {
     const f = monthlyFlow(snap);
-    near(f.net.toNumber(), -57_334.2 / 12, 0.01, "net monthly");
-    near(f.inflow.toNumber(), 804_270 / 12, 0.01, "inflow");
-    near(f.outflow.toNumber(), (215_220 + 646_384.2) / 12, 0.01, "outflow");
+    near(
+      f.net.toNumber(),
+      PARITY.snapshot.netCashFlow / 12,
+      0.01,
+      "net monthly",
+    );
+    near(
+      f.inflow.toNumber(),
+      PARITY.snapshot.effectiveGrossIncome / 12,
+      0.01,
+      "inflow",
+    );
+    near(
+      f.outflow.toNumber(),
+      (PARITY.snapshot.holdingCosts + PARITY.snapshot.annualDebtService) / 12,
+      0.01,
+      "outflow",
+    );
   });
 });
 
 describe("netWorthHorizon", () => {
   it("selects nominal vs real", () => {
-    near(netWorthHorizon(kpis, "nominal").toNumber(), 93_182_810.46, 1, "nom");
-    near(netWorthHorizon(kpis, "real").toNumber(), 44_424_223.27, 1, "real");
+    near(
+      netWorthHorizon(kpis, "nominal").toNumber(),
+      PARITY.kpis.netWorthNominal,
+      1,
+      "nom",
+    );
+    near(
+      netWorthHorizon(kpis, "real").toNumber(),
+      PARITY.kpis.netWorthReal,
+      1,
+      "real",
+    );
   });
 });
 

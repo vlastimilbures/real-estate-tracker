@@ -221,9 +221,14 @@ describe("baseDate predates the first valuation (the user's real shape)", () => 
 
   it("projection year 0 uses the valuation, not the purchase price", () =>
     near(proj[0].value.toNumber(), 10_200_000, KC, "y0"));
-  it("no year-0 → year-1 jump (within one year's appreciation)", () =>
-    expect(proj[1].value.toNumber() / proj[0].value.toNumber()).toBeLessThan(
-      1.05,
+  it("no year-0 → year-1 jump (grows 9 months from the valuation)", () =>
+    // Valuation 2026-03-01 → year-1 end 2026-12-31 = 9 whole months (monthsBetween)
+    // at 4 %.
+    near(
+      proj[1].value.toNumber(),
+      10_200_000 * Math.pow(1.04, 9 / 12),
+      KC,
+      "y1",
     ));
   it("snapshot at baseDate uses the valuation too", () => {
     const snap = portfolioSnapshot(pf, a, baseDate);
