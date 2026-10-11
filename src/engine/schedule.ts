@@ -1,12 +1,13 @@
 // Monthly amortization schedules with the Czech fixation reset (SPEC §4.4).
 //
-// One payment kernel (`payAndSettle`: the month step `amortizeMonth`, then the
-// payment's prepayments and recasts) drives all three loops: the plain-loan grid, the
-// development-loan grid, and the catch-up from startDate to baseDate. The catch-up
-// opens every development loan running at baseDate, and a plain loan once its fixation
-// has ended or an event is dated by baseDate (D-30, ADR 0109). The loops differ only
-// where the behaviour differs, and each difference is named below rather than silently
-// unified:
+// One payment kernel (`payAndSettle`: pay payment p — tranche terms, re-amortization
+// trigger, `amortizeMonth` — then settle its prepayments and recasts) drives all three
+// loops: the plain-loan grid, the development-loan grid, and the catch-up from
+// startDate to baseDate. The catch-up opens every development loan running at
+// baseDate, and a plain loan once the rate of its last payment due differs from the
+// contract rate (fixation ended, D-30) or an event is dated by baseDate (ADR 0109).
+// The loops differ only where the behaviour differs, and each difference is named
+// below rather than silently unified:
 //   • payoff guard — both grids emit zero rows once the balance is repaid (DR-044);
 //   • re-amortization trigger — plain: a rate change; development: a tranche landing,
 //     the end of interest-only, or a rate change (D-24). Any loan also re-amortizes
