@@ -48,6 +48,10 @@ export interface Assumptions {
    *  transaction costs (ADR 0119 §6). Optional; undefined ⇒ 0 ⇒ engine output is
    *  byte-identical to the parity targets. Engine-only (no DB/UI wiring). */
   acquisitionCostPct?: Rate | undefined;
+  /** Selling costs of a sale at the horizon, as a fraction of the projected market value
+   *  in [0, 1] (agent, legal and escrow fees). Taken off the levered IRR's terminal value
+   *  only; net worth stays value minus debt (ADR 0183). Undefined ⇒ 0. */
+  sellingCostPct?: Rate | undefined;
   defaults: CostDefaults;
   // --- Scenario-only shock descriptors (SPEC §7 what-ifs). Portfolio/seed
   // Assumptions NEVER set these; they are populated solely by `applyScenario`.

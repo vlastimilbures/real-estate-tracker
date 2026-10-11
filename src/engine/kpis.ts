@@ -236,15 +236,21 @@ function leveredIrr(
   };
 }
 
-/** Levered cash-flow vector [-equity0, flows_1..flows_{N-1}, flows_N + equityN], where
- *  `flows` is net cash flow minus the cash outside it (see `kpisFrom`; terminal sale at
- *  projected value). */
-function leveredCashFlows(proj: ProjectionYear[], flows: Decimal[]): Decimal[] {
+/** Levered cash-flow vector [-equity0, flows_1..flows_{N-1}, flows_N + terminal], where
+ *  `flows` is net cash flow minus the cash outside it (see `kpisFrom`) and the terminal
+ *  sale yields equityN less the selling costs on the projected market value (ADR 0183). */
+function leveredCashFlows(
+  proj: ProjectionYear[],
+  flows: Decimal[],
+  sellingCostPct: Decimal,
+): Decimal[] {
   const N = proj.length - 1;
+  const end = at(proj, N);
+  const terminal = end.equity.minus(end.value.times(sellingCostPct));
   const vector: Decimal[] = [at(proj, 0).equity.negated()];
   for (let t = 1; t <= N; t++) {
     const cf = at(flows, t);
-    vector.push(t === N ? cf.plus(at(proj, N).equity) : cf);
+    vector.push(t === N ? cf.plus(terminal) : cf);
   }
   return vector;
 }
@@ -347,7 +353,11 @@ export function kpisFrom(
   // cashOutsideNetCf_t (ADR 0161). The nominal and real cumulative cash flow and both
   // IRR vectors derive from it (#117); index 0 is not read (year 0 is the opening equity).
   const flows = proj.map((y) => y.cashToOwner);
-  const nominalVector = leveredCashFlows(proj, flows);
+  const nominalVector = leveredCashFlows(
+    proj,
+    flows,
+    assumptions.sellingCostPct ?? ZERO,
+  );
   const realVector = nominalVector.map((cf, t) => cf.div(at(cpi, t)));
 
   return {

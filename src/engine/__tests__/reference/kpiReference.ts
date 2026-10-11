@@ -30,7 +30,8 @@
 //     cashToOwner_t = netCF_t − prepaid_t − fees_t (ADR 0109, 0161);
 //   • KPIs as §4.6: net worth = equity_N, multiple and CAGR from equity₀ (null when
 //     equity₀ ≤ 0, CAGR also when the end ≤ 0), levered IRR of
-//     [−equity₀, cashToOwner_1, …, cashToOwner_N + equity_N], real figures ÷ CPI_t.
+//     [−equity₀, cashToOwner_1, …, cashToOwner_N + equity_N − value_N·sellingCost],
+//     real figures ÷ CPI_t; the selling cost touches only the IRR (ADR 0183).
 import {
   Dec,
   addMonths,
@@ -63,6 +64,8 @@ export interface RefAssumptions {
   resetRatePa: Value;
   horizonYears: number;
   inflationPa: Value;
+  /** 0–1 of the horizon value, off the IRR's terminal entry only; absent ⇒ 0. */
+  sellingCostPct?: Value;
   defaults: Required<RefCosts>;
   /** Not modelled: set ⇒ the model throws. */
   unsupported?: string[];
@@ -365,11 +368,12 @@ export function referenceKpis(
   let free: RefYear | undefined;
   for (let t = n; t >= 1 && ys[t]!.balance.isZero(); t--) free = ys[t];
   if (ys.every((y) => y.balance.isZero())) free = undefined;
+  const sellingCost = d(a.sellingCostPct ?? 0);
   const flows = ys.map((y, t) =>
     t === 0
       ? eq0.negated()
       : t === n
-        ? y.cashToOwner.plus(y.equity)
+        ? y.cashToOwner.plus(y.equity).minus(y.value.times(sellingCost))
         : y.cashToOwner,
   );
   return {

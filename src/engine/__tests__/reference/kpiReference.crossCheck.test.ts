@@ -97,6 +97,7 @@ function fromEngine(
       resetRatePa: a.postFixationResetRatePa.toString(),
       horizonYears: a.horizonYears,
       inflationPa: a.inflationPa.toString(),
+      ...(a.sellingCostPct && { sellingCostPct: a.sellingCostPct.toString() }),
       defaults: {
         propertyTaxYr: dft.propertyTaxYr.toString(),
         insuranceYr: dft.insuranceYr.toString(),
@@ -196,10 +197,10 @@ const gap = (
 ) => Math.abs(Number(x?.toString()) - Number(y?.toString()));
 
 /** Engine and reference agree per year (every column) and per KPI. */
-function expectEngineMatches(p: Portfolio) {
-  const ref = fromEngine(p, assumptions);
+function expectEngineMatches(p: Portfolio, a: Assumptions = assumptions) {
+  const ref = fromEngine(p, a);
   const ys = referenceProjection(ref.props, ref.a);
-  const engine = portfolioProjection(p, assumptions);
+  const engine = portfolioProjection(p, a);
   expect(engine).toHaveLength(ys.length);
   engine.forEach((e, t) => {
     const r = ys[t]!;
@@ -207,7 +208,7 @@ function expectEngineMatches(p: Portfolio) {
     for (const c of COLS)
       expect(gap(e[c], r[c]), `year ${t} ${c}`).toBeLessThanOrEqual(TIGHT);
   });
-  const k: PortfolioKPIs = portfolioKpis(p, assumptions);
+  const k: PortfolioKPIs = portfolioKpis(p, a);
   const rk = referenceKpis(ref.props, ref.a);
   for (const c of MONEY_KPIS)
     expect(gap(k[c], rk[c]), c).toBeLessThanOrEqual(TIGHT);
@@ -346,6 +347,19 @@ describe("KPI reference model (engine-free, ADR 0174)", () => {
     expect(gap(rk.totalPrincipalRepaid, ys[0]!.balance)).toBeLessThanOrEqual(
       TIGHT,
     );
+  });
+
+  it("agrees with the engine with 4 % selling costs (ADR 0183)", () => {
+    const { rk } = expectEngineMatches(portfolio, {
+      ...assumptions,
+      sellingCostPct: rate("0.04"),
+    });
+    // Only the IRR's terminal entry moves (ADR 0182 model: 0.062038 / 0.036135 at 0).
+    expect(Number(rk.leveredIrrNominal).toFixed(6)).toBe("0.060819");
+    expect(Number(rk.leveredIrrReal).toFixed(6)).toBe("0.034945");
+    expect(
+      gap(rk.netWorthNominal, PARITY.kpis.netWorthNominal),
+    ).toBeLessThanOrEqual(KC);
   });
 
   it("agrees with the engine on every lease edge (renewal, gap, ended)", () => {
