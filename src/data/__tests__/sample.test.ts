@@ -4,6 +4,7 @@
 // again on demand, only into an empty portfolio.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
+import { failOn } from "./support/failOn";
 import { migrate } from "../migrations";
 import {
   clearSample,
@@ -46,20 +47,6 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 const NOW = new Date(Date.UTC(2026, 9, 3, 12, 30, 0));
 const SAMPLE = ["dubova", "javorova", "lipova"];
-
-/** Wraps a Sql so that any transaction statement matching `pattern` fails, failing the
- *  whole transaction (as in atomic-writes.test.ts). */
-function failOn(inner: TestSql, pattern: RegExp): Sql {
-  const boom = { query: "INSERT INTO no_such_table VALUES (1)" };
-  return {
-    ...inner,
-    transaction: (statements, options) =>
-      inner.transaction(
-        statements.map((s) => (pattern.test(s.query) ? boom : s)),
-        options,
-      ),
-  };
-}
 
 const meta = async (sql: Sql) =>
   (

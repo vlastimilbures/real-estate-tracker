@@ -20,6 +20,7 @@ import {
 import { importCsv } from "../csvImport";
 import { SEED_ASSUMPTIONS } from "../../data/seed";
 import { portfolioSnapshot } from "../../engine";
+import { KC, RATIO, near } from "../../engine/__tests__/support/tolerance";
 
 // seed sample data as CSV strings
 const PROPERTIES_CSV = `name,address,type,size_m2,garage,purchase_date,purchase_price,appreciation_override_pa,rent_index_override_pa
@@ -245,11 +246,6 @@ beforeAll(async () => {
 afterAll(() => sql.db.close());
 
 describe("importCsv — parity (parity targets via CSV)", () => {
-  const KC = 1;
-  const RATIO = 0.0001;
-  const near = (a: number, b: number, tol: number, label: string) =>
-    expect(Math.abs(a - b), `${label}: ${a} vs ${b}`).toBeLessThanOrEqual(tol);
-
   let snap: ReturnType<typeof portfolioSnapshot>;
 
   beforeAll(async () => {
