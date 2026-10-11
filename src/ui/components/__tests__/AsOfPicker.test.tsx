@@ -80,6 +80,45 @@ describe("AsOfPicker (UX-059)", () => {
     expect(input.value).toBe("29.02.2028");
   });
 
+  // ADR 0180 §6 (#263 item 6, #265 item 6): committing the date already shown changes
+  // nothing in the store; the text is reformatted.
+  it("a re-typed shown day is reformatted on Enter and on blur, and stores nothing", async () => {
+    const onChange = vi.fn();
+    const shown = new Date(Date.UTC(2030, 5, 15));
+    render(<AsOfPicker value={shown} onChange={onChange} bounds={bounds} />);
+    const input = screen.getByTestId<HTMLInputElement>("asof-input");
+    await userEvent.clear(input);
+    await userEvent.type(input, "15.6.2030{Enter}");
+    expect(input.value).toBe("15.06.2030");
+    await userEvent.clear(input);
+    await userEvent.type(input, "15.6.2030");
+    await userEvent.tab();
+    expect(input.value).toBe("15.06.2030");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("focus and blur at a future base date store no pick", async () => {
+    const onChange = vi.fn();
+    const future = asOfBounds(isoDate("2029-01-01"), 30);
+    render(<AsOfPicker value={null} onChange={onChange} bounds={future} />);
+    const input = screen.getByTestId<HTMLInputElement>("asof-input");
+    expect(input.value).toBe("01.01.2029");
+    await userEvent.click(input);
+    await userEvent.tab();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("a typed day before the window that clamps onto the shown date stores nothing", async () => {
+    const onChange = vi.fn();
+    const future = asOfBounds(isoDate("2029-01-01"), 30);
+    render(<AsOfPicker value={null} onChange={onChange} bounds={future} />);
+    const input = screen.getByTestId<HTMLInputElement>("asof-input");
+    await userEvent.clear(input);
+    await userEvent.type(input, "01.01.2020{Enter}");
+    expect(input.value).toBe("01.01.2029");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it("renders no hint when none is given", () => {
     render(<AsOfPicker value={null} onChange={vi.fn()} bounds={bounds} />);
     expect(screen.queryByTestId("asof-hint")).toBeNull();

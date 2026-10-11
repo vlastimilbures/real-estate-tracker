@@ -54,10 +54,13 @@ export function AsOfPicker({
     if (inside.getTime() !== d.getTime()) setDraft(dateDraft(inside));
     onChange(inside.getTime() === today.getTime() ? null : inside);
   };
+  // The date already shown changes nothing in the store, so a blur never stores a pick
+  // nobody made; the text is reformatted (ADR 0180 §6). Invalid input reverts.
   const commit = (raw: string) => {
     const parsed = parseDate(raw);
-    if (parsed) pick(parsed);
-    else setDraft(dateDraft(effective)); // revert invalid input
+    if (parsed && clampAsOf(parsed, bounds).getTime() !== effective.getTime())
+      pick(parsed);
+    else setDraft(dateDraft(effective));
   };
 
   // Highlight a preset chip when the shown date equals its target. Reuse the exact
