@@ -69,11 +69,17 @@ describe("irr — widened search and non-unique roots (DR-158, ADR 0079)", () =>
 
   it("several cash-flow sign changes but one NPV root still has an IRR", () => {
     // A future purchase gives a negative year mid-vector; NPV still has one root.
-    near(irr([D(-100), D(10), D(-50), D(20), D(200)])!, 0.145, 0.001, "irr");
+    // Targets are the exact NPV roots (bisection to 1e-15), held to RATIO.
+    near(
+      irr([D(-100), D(10), D(-50), D(20), D(200)])!,
+      0.1457335,
+      RATIO,
+      "irr",
+    );
     near(
       irr([D(-100), D(-20), D(30), D(-10), D(40), D(150)])!,
-      0.14,
-      0.001,
+      0.1408789,
+      RATIO,
       "irr",
     );
   });
