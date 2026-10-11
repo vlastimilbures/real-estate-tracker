@@ -58,6 +58,7 @@ export function fmtCzk(value: Numeric, opts: MoneyOpts = {}): string {
  *  decimal kept — 10000.4 → "10 000,4", where `fmtCzk` would round it to "10 000". */
 export function fmtNumber(value: Numeric): string {
   const d = D(value);
+  if (!d.isFinite()) return d.toString(); // "NaN" / "Infinity", never a render crash
   const { neg, body } = fmtFixed(d, d.decimalPlaces());
   return neg ? `${MINUS}${body}` : body;
 }

@@ -331,5 +331,14 @@ describe("fmtNumber", () => {
   });
   it("signs a negative with a real minus", () => {
     expect(fmtNumber(-1.5)).toBe("−1,5");
+    expect(fmtNumber(-0)).toBe("0");
+  });
+  it("writes tiny and huge values out in full", () => {
+    expect(fmtNumber(1e-7)).toBe("0,0000001");
+    expect(fmtNumber(1e21)).toBe("1 000 000 000 000 000 000 000");
+  });
+  it("prints a value that is not finite instead of throwing", () => {
+    expect(fmtNumber(Infinity)).toBe("Infinity");
+    expect(fmtNumber(NaN)).toBe("NaN");
   });
 });
