@@ -78,9 +78,12 @@ as-of resolver (#264, ADR 0150) and the lifecycle states (#275, ADR 0155) left s
    property that is not active, the Dashboard writes back the filter it shows: the active ids,
    or no filter (`[]`) when those filter nothing (none left, or every active property). So
    `["dev", "inactive"]` with only `dev` active becomes no filter, and a reactivated property
-   finds All. The cost: a filter `[a, b]` of `{a, b, c}` reads as All once `c` is deactivated,
-   and stays All when `c` returns (selling and buying back an apartment). A saved filter of
-   active properties only is left as picked, every active property included.
+   finds All. A saved filter of active properties only is left as picked, every active
+   property included: `[a, b]` of `{a, b, c}` reads as All while `c` is deactivated and as
+   "2 of 3" again when `c` returns. The cost: a filter that names the deactivated property is
+   rewritten. `[a, x]` of `{a, b, x}` becomes `[a]` once `x` is deactivated, so `x` does not
+   come back with it; and `[a, x]` of `{a, x}` becomes no filter, so it stays All when `x`
+   returns (selling and buying back an apartment).
 
 ## Consequences
 
