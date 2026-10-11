@@ -21,7 +21,6 @@ import { basisDate, growthRate, valueAt } from "./growth";
 import {
   valueAnchor,
   growthYears,
-  openingValue,
   leaseInForce,
   forProperty,
   holdingCostBasis,
@@ -97,10 +96,10 @@ function propertyBasis(
   // project zero rent forever. Past purchases collapse to baseDate (unchanged).
   const asOf = basisDate(property, assumptions.baseDate);
   const valuations = forProperty(portfolio.valuations, property.id);
-  // The valuation governing the basis date (`selectValuation`): before the first
+  // The snapshot's anchored value at the basis date (`valueAnchor`): before the first
   // recorded valuation, the nearest upcoming one rather than the stale purchase
-  // price — so year 0 lines up with the snapshot tile (no jump).
-  const v0 = openingValue(valuations, property, asOf);
+  // price — so year 0 lines up with the snapshot tile (no jump, one fallback rule).
+  const v0 = valueAnchor(valuations, property, assumptions, asOf).value;
   const rentPlan = buildRentPlan(
     forProperty(portfolio.leases, property.id),
     asOf,

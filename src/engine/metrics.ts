@@ -107,20 +107,6 @@ export function forProperty<T extends { propertyId: string }>(
   return rows.filter((r) => r.propertyId === propertyId);
 }
 
-/**
- * Opening value at `asOf`: the governing valuation's market value (`selectValuation`),
- * else the purchase price. The projection basis (a future buy's down payment starts
- * from its price instead, ADR 0119).
- */
-export function openingValue(
-  valuations: Valuation[],
-  property: Property,
-  asOf: Date,
-): Decimal {
-  const val = selectValuation(valuations, asOf);
-  return val ? val.marketValue : property.purchasePrice;
-}
-
 /** LTV = debt ÷ value; null when debt is owed on no value, 0 when neither (ADR 0133). */
 export function ltvOf(debt: Decimal, value: Decimal): Decimal | null {
   if (!value.isZero()) return debt.div(value);
