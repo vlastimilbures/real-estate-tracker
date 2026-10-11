@@ -15,7 +15,9 @@
 // (#232, measured with `fc.sample` over 4 seeds × 10,000). The price: dev loans drawn
 // or completed long before baseDate are about half as common as before (completed
 // before baseDate ~86 in 1000, was ~221); tranches near baseDate (D-41) are twice as
-// common.
+// common. One late prepayment in four also gets a recast on payment o, so the #228 shape
+// (a late `shortenTerm` after a recast on payment o, ADR 0136) comes up ~18 times in
+// 1000, not ~1 (#237, measured the same way).
 import fc from "fast-check";
 import { D, PMT } from "../../../lib/money";
 import { rate } from "../../brands";
@@ -25,6 +27,7 @@ import type { Assumptions } from "../../types";
 import {
   addMonths,
   firstPaymentOnOrAfter,
+  paymentsMadeBy,
   termOf,
   type RefLoan,
   type RefOptions,
@@ -113,6 +116,12 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
         days: fc.integer({ min: 0, max: 30 }),
         size: between(0.01, 0.3),
         shorten: fc.boolean(),
+        // One in four: a recast on payment o, the last payment due by baseDate (the
+        // #228 shape when the prepayment is a late `shortenTerm`, #237).
+        recastOnO: fc.integer({ min: 0, max: 3 }),
+        toMaturity: fc.boolean(),
+        x: share,
+        early: fc.integer({ min: 0, max: 27 }),
       }),
     ),
     shock: opt(
@@ -217,26 +226,43 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
     // must follow the payment it lands on (ADR 0116). Without one, a recast may come
     // before a tranche (ADR 0116 §2, the R1-01 shape).
     const completed = completion ? firstPaymentOnOrAfter(start, completion) : 0;
-    const recasts = g.recasts
-      .map((c): RefRecast => {
-        // Half in the first three years, among the tranches.
-        const k = Math.max(
-          c.soon ? 1 + Math.floor(c.at * 35) : payment(c.at),
-          completion ? completed + 1 : 1,
-        );
-        const date = daysBefore(addMonths(start, k), c.early);
-        const lo = Math.max(k, completed) + 1;
-        return c.toMaturity
+    const recasts: RefRecast[] = g.recasts.map((c): RefRecast => {
+      // Half in the first three years, among the tranches.
+      const k = Math.max(
+        c.soon ? 1 + Math.floor(c.at * 35) : payment(c.at),
+        completion ? completed + 1 : 1,
+      );
+      const date = daysBefore(addMonths(start, k), c.early);
+      const lo = Math.max(k, completed) + 1;
+      return c.toMaturity
+        ? {
+            date,
+            maturity: addMonths(start, lo + Math.floor(c.x * (599 - lo))),
+          }
+        : {
+            date,
+            instalment: String(Math.round((0.4 + c.x) * Number(instalment))),
+          };
+    });
+    // The #228 shape (#237): a recast on payment o next to the late prepayment. With a
+    // completion date only after it, as above.
+    const o = paymentsMadeBy(start, base);
+    if (g.late?.recastOnO === 0 && o >= 1 && o < term && o > completed) {
+      const { toMaturity, x, early } = g.late;
+      const date = afterStart(daysBefore(addMonths(start, o), early));
+      recasts.push(
+        toMaturity
           ? {
               date,
-              maturity: addMonths(start, lo + Math.floor(c.x * (599 - lo))),
+              maturity: addMonths(start, o + 1 + Math.floor(x * (598 - o))),
             }
           : {
               date,
-              instalment: String(Math.round((0.4 + c.x) * Number(instalment))),
-            };
-      })
-      .sort((a, b) => a.date.localeCompare(b.date));
+              instalment: String(Math.round((0.4 + x) * Number(instalment))),
+            },
+      );
+    }
+    recasts.sort((a, b) => a.date.localeCompare(b.date));
     // At least a grid month after the start: a future loan and its successor never
     // draw in one grid month (the reference does not model two successors there; the
     // engine's ADR 0138 cases have fixed tests). At most 20
