@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore, type OutcomeAction } from "../../state/uiStore";
 import { Panel, Button } from "../components/primitives";
 import { chooseRestoreFile, type PickedBackup } from "../../state/backup";
-import { type FailureSite } from "../../state/diagnostics";
+import { logFailure, type FailureSite } from "../../state/diagnostics";
+import { revealDataDir } from "../../state/platform";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { fmtDate } from "../../lib/format";
@@ -57,6 +58,7 @@ export function BackupRestorePanel() {
   const [restoring, setRestoring] = useState(false);
   const [pendingBackup, setPendingBackup] = useState<PickedBackup | null>(null);
   const { showToast } = useToast();
+  const folderHintId = useId();
   const setNotice = useUiStore((s) => s.setNotice);
   const setFailure = useUiStore((s) => s.setFailure);
   const dismissFailure = useUiStore((s) => s.dismissFailure);
@@ -101,6 +103,18 @@ export function BackupRestorePanel() {
       fail(e, "SAMPLE", "loadSample");
     } finally {
       setLoadingSample(false);
+    }
+  }
+
+  /** Show the app folder in Finder (ADR 0153 §4); its `backups` folder holds the
+   *  safety and pre-migration copies (ADR 0175). */
+  async function handleShowFolder() {
+    dismissFailure();
+    try {
+      await revealDataDir();
+    } catch (e) {
+      logFailure("REVEAL", e);
+      setFailure("revealFolder", e);
     }
   }
 
@@ -152,6 +166,22 @@ export function BackupRestorePanel() {
           disabled={exporting || replacing}
         >
           {exporting ? t.backup.exporting : t.backup.exportButton}
+        </Button>
+        <p
+          id={folderHintId}
+          style={{
+            color: "var(--ink-soft)",
+            fontSize: 13,
+            margin: "var(--s4) 0 var(--s2)",
+          }}
+        >
+          {t.backup.folderHint}
+        </p>
+        <Button
+          onClick={() => void handleShowFolder()}
+          aria-describedby={folderHintId}
+        >
+          {t.boot.showDataFolder}
         </Button>
       </Panel>
 

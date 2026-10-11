@@ -4,6 +4,8 @@
 - Date: 2026-10-01
 - Source IDs: D-52
 - Amended by: [0123](0123-scenario-rules-every-entry-point.md) (DR-019: restore checks every row)
+- Amended by: [0175](0175-verified-file-writes-error-codes-backup-folder.md) (the safety backup is compared byte
+  for byte before the rename)
 
 ## Context
 

@@ -29,6 +29,12 @@ vi.mock("../../../state/diagnostics", async (importOriginal) => ({
   logFailure: vi.fn(),
 }));
 
+const revealDataDir = vi.hoisted(() => vi.fn(async () => {}));
+vi.mock("../../../state/platform", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../state/platform")>()),
+  revealDataDir,
+}));
+
 const restoreBackup = vi.fn();
 
 /** The sample as a backup file, after `update` when given. */
@@ -68,6 +74,7 @@ beforeEach(() => {
   vi.mocked(invoke).mockReset();
   vi.mocked(logFailure).mockClear();
   restoreBackup.mockReset();
+  revealDataDir.mockReset();
   act(() => {
     useUiStore.setState({ language: "en" });
     usePortfolioStore.setState({
@@ -281,5 +288,32 @@ describe("Restore a backup (#118)", () => {
       expect(
         screen.getByRole<HTMLButtonElement>("button", { name }).disabled,
       ).toBe(true);
+  });
+});
+
+describe("Show data folder (ADR 0175, #151 item 7)", () => {
+  it("says where the safety backups are and shows the folder", async () => {
+    renderPanel();
+    const button = screen.getByRole("button", {
+      name: en.boot.showDataFolder,
+      description: en.backup.folderHint,
+    });
+    await userEvent.click(button);
+    expect(revealDataDir).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(logFailure).not.toHaveBeenCalled();
+  });
+
+  it("a failure is logged under REVEAL and says where the folder is", async () => {
+    const error = new Error("open exited with 1");
+    revealDataDir.mockRejectedValueOnce(error);
+    renderPanel();
+    await userEvent.click(
+      screen.getByRole("button", { name: en.boot.showDataFolder }),
+    );
+    expect(logFailure).toHaveBeenCalledWith("REVEAL", error);
+    expect(screen.getByRole("alert").textContent).toContain(
+      en.boot.revealFailed,
+    );
   });
 });

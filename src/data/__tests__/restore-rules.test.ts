@@ -25,7 +25,7 @@ vi.mock("@tauri-apps/api/core", () => ({
     if (command !== "write_app_backup")
       return Promise.reject(new Error(`unexpected command ${command}`));
     written.set(args.filename, args.json);
-    return Promise.resolve(args.json);
+    return Promise.resolve();
   }),
 }));
 

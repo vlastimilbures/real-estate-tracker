@@ -258,6 +258,8 @@ export function Import() {
               {t.importPage.fixErrors}
             </p>
           )}
+          {/* No dismiss: Import stays unavailable until a new preview, so the reason
+              stays on screen (ADR 0175). */}
           {previewFailure && (
             <div style={{ marginBottom: "var(--s3)" }}>
               <ErrorBanner
@@ -265,7 +267,6 @@ export function Import() {
                   describeWriteError(t, toWriteError(previewFailure.error))
                     .message,
                 )}
-                onDismiss={() => setPreviewFailure(null)}
               />
             </div>
           )}

@@ -11,10 +11,8 @@ import type { Sql } from "../../data/sql";
 
 const disk = vi.hoisted(() => ({ fail: false }));
 vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn((_command: string, args: { json: string }) =>
-    disk.fail
-      ? Promise.reject("No space left on device")
-      : Promise.resolve(args.json),
+  invoke: vi.fn(() =>
+    disk.fail ? Promise.reject("No space left on device") : Promise.resolve(),
   ),
 }));
 

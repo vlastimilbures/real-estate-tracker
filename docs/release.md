@@ -92,7 +92,9 @@ quit the app first and copy `portfolio.db` together with its `-wal` and `-shm` f
 with `VACUUM INTO` and are always consistent.
 
 The app folder is `0700` and every file in it and in `backups/` is `0600`: the app sets these
-modes at every start and writes its backups `0600` (ADR 0080), so only your user can read them. **Encryption at rest
+modes at every start and writes its backups `0600` (ADR 0080), so only your user can read them.
+The log folder is `0700` and its files `0600` from each start (ADR 0147); a log file rotated
+in mid-session is `0644` inside the `0700` folder until the next start. **Encryption at rest
 is not provided** (backlog): FileVault protects the disk as a whole.
 
 ## Security posture

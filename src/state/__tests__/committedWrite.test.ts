@@ -17,9 +17,7 @@ import { logFailure } from "../../data/errorLog";
 
 vi.mock("../../data/errorLog", () => ({ logFailure: vi.fn() }));
 vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn((_command: string, args: { json: string }) =>
-    Promise.resolve(args.json),
-  ),
+  invoke: vi.fn(() => Promise.resolve()),
 }));
 
 /** `real`, but the reload's snapshot read fails: the write commits, the reload after it
