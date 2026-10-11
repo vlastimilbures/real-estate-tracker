@@ -391,7 +391,10 @@ export interface ProjectionYear {
   // Σ of the portfolio's years 1..N is the cumulative cash flow KPI.
   cashToOwner: Decimal;
   dscr: Decimal | null;
-  ratePa: Decimal | null; // dominant mortgage rate in effect; null if no debt
+  // A property row's rate of the year's last month with a payment (interest +
+  // principal > 0); null when no month in the year has one, in year 0, before the
+  // property turns on, and always on the portfolio row (rates are not summed).
+  ratePa: Decimal | null;
 }
 
 /** Why a levered IRR has no value (DR-158): no root in the search range, or the NPV
