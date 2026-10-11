@@ -43,9 +43,13 @@ describe("tauriSql.execute (ADR 0175)", () => {
     ]);
   });
 
-  it("does not mistake a word that starts like a keyword", async () => {
+  it("lets a statement through that only contains a keyword", async () => {
     const sql = await openTauriSql();
-    await sql.execute("ENDPOINTS_TABLE_DOES_NOT_EXIST");
-    expect(db.execute).toHaveBeenCalledOnce();
+    await sql.execute(
+      "UPDATE notes SET text = 'BEGIN; COMMIT' WHERE id = ?",
+      [1],
+    );
+    await sql.execute("DELETE FROM endpoints");
+    expect(db.execute).toHaveBeenCalledTimes(2);
   });
 });

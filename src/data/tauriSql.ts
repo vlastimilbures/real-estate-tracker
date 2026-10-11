@@ -37,7 +37,8 @@ export async function openTauriSql(
       query: string,
       params: unknown[] = [],
     ): Promise<ExecuteResult> {
-      // A tripwire: multi-step writes go through `transaction` (ADR 0014, ADR 0175).
+      // A tripwire for a mistake, not a guard: a leading comment slips past it.
+      // Multi-step writes go through `transaction` (ADR 0014, ADR 0175).
       if (TRANSACTION_CONTROL.test(query))
         throw new Error(
           "execute refuses transaction control; use transaction() for multi-step writes",

@@ -140,6 +140,19 @@ describe("confirmRestore — safety backup (DR-019, D-52)", () => {
     expect(await propertyCount()).toBe(3);
   });
 
+  it("stops when a safety backup of that name exists (ADR 0175)", async () => {
+    rust.writeError =
+      "BACKUP_EXISTS: /app-config/backups/portfolio-before-restore-20261001T120000Z.json";
+    const err = await confirmRestore(
+      sql,
+      await emptyBackup(),
+      checkInputRules,
+    ).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(SafetyBackupError);
+    expect((err as SafetyBackupError).detail).toMatch(/^BACKUP_EXISTS: /);
+    expect(await propertyCount()).toBe(3);
+  });
+
   it("refuses an invalid backup before writing any safety file", async () => {
     const backup = await emptyBackup();
     const bad = { ...backup, tables: { ...backup.tables, assumptions: [] } };
