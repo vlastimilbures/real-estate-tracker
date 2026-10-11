@@ -67,11 +67,15 @@ describe("fmtSigned", () => {
   it("signs a gain that shows", () => {
     expect(fmtSigned(D("0.01"), fmtPp)).toBe("+1,0");
     expect(fmtSigned(D("60000"), fmtCzkM)).toBe("+0,1 M Kč");
+    expect(fmtSigned(D("0.68"), fmtMultiple)).toBe("+0,68x");
+    expect(fmtSigned(D("0.005"), fmtPct)).toBe("+0,5 %");
   });
   it("leaves a gain that rounds to zero bare", () => {
     expect(fmtSigned(D("0.0004"), fmtPp)).toBe("0,0");
     expect(fmtSigned(D("30000"), fmtCzkM)).toBe("0,0 M Kč");
     expect(fmtSigned(D("0"), fmtPp)).toBe("0,0");
+    expect(fmtSigned(D("0.004"), fmtMultiple)).toBe("0,00x");
+    expect(fmtSigned(D("0.0004"), fmtPct)).toBe("0,0 %");
   });
   it("leaves the sign of a loss to the formatter", () => {
     expect(fmtSigned(D("-0.01"), fmtPp)).toBe("−1,0");

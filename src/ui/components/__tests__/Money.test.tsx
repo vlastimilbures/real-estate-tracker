@@ -46,6 +46,9 @@ describe("Money tone (UX-026)", () => {
   });
 
   it("a value that rounds away from zero keeps its tone", () => {
+    const half = render(<Money value={D("-0.5")} />).container;
+    expect(toneOf(half)).toBe("tone-negative");
+    expect(half.textContent).toBe("(1 Kč)");
     const neg = render(<Money value={D("-0.6")} />).container;
     const pos = render(<Money value={D("0.5")} signed />).container;
     expect(toneOf(neg)).toBe("tone-negative");
