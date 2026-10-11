@@ -366,7 +366,8 @@ const isRecord = (v: unknown): v is Record<string, unknown> =>
 
 /** Every leaf of `v` under its path (array indices dropped, `[]` marks an array), with
  *  the indices it was found at. An empty array or record is a leaf of its own, so a
- *  section that fills or empties changes a line rather than only adding one. */
+ *  section that fills or empties changes a line rather than only adding one. `null` and
+ *  `undefined` hash alike (`canon`); a key absent from every record has no line. */
 function leaves(
   v: unknown,
   path: string,
@@ -540,6 +541,13 @@ describe("golden master v2 (every field, per field; ADR 0174)", () => {
       true,
     );
     expect(built.get("javorova")?.refinances).toHaveLength(1);
+  });
+
+  it("the cash-outside fixture is not vacuous", () => {
+    const ys = portfolioProjection(mixedCashOutside, seedAssumptions);
+    expect(ys.some((y) => y.prepaid.gt(0))).toBe(true);
+    // Pre-purchase debt service and the prepayment are cash outside net cash flow.
+    expect(ys.some((y) => !y.cashToOwner.eq(y.netCashFlow))).toBe(true);
   });
 
   const cases: [string, Portfolio][] = [
