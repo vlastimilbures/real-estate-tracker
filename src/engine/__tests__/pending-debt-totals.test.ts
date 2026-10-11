@@ -109,6 +109,19 @@ describe("pending property's existing debt in portfolio totals (ADR 0165)", () =
     const debt = sum(owing, (s) => s.debt);
     expect(nominal.totalDebt.equals(debt)).toBe(true);
     expect(real.totalDebt.equals(debt.div(k))).toBe(true);
+    // The pending debt is in the real total: it exceeds the owned debt alone by it
+    // (up to Decimal rounding: the engine sums nominal rows, then divides).
+    const ownedReal = sum(nominal.perProperty.filter(ownedActive), (s) =>
+      s.debt.div(k),
+    );
+    expect(real.totalDebt.greaterThan(ownedReal)).toBe(true);
+    expect(
+      real.totalDebt
+        .minus(ownedReal)
+        .minus(stillPending.debt.div(k))
+        .abs()
+        .lessThan("1e-20"),
+    ).toBe(true);
     expect(
       real.totalCommittedDebt.equals(nominal.totalCommittedDebt.div(k)),
     ).toBe(true);
