@@ -2,8 +2,9 @@ name: Nightly (mutation testing, bench budgets, property runs)
 
 # Stryker on src/engine (J-09 → D-26, D-68). The run fails when the mutation score drops
 # below thresholds.break in stryker.config.json. The bench job fails when a budgeted
-# engine bench's p99 exceeds 2 × its budget (ADR 0066, ADR 0073). Scheduled runs of these
-# two skip when main has no commit in the last 24 h; a manual run always runs both.
+# engine bench's p99 exceeds 2 × its budget, or the recast build outgrows the plain build
+# in the same run (ADR 0066, ADR 0073, ADR 0172). Scheduled runs of these two skip when
+# main has no commit in the last 24 h; a manual run always runs both.
 #
 # The property job runs every fast-check property test at 2000 runs every night, quiet
 # days included: the seed, not the code, is what changes (#232, #167). The seed is the
@@ -123,7 +124,7 @@ jobs:
       - name: Bench
         run: pnpm bench --outputJson bench.json
 
-      - name: Check p99 against 2 × budget
+      - name: Check p99 against 2 × budget and the same-run ratio
         run: pnpm bench:check bench.json
 
       - name: Upload the bench report

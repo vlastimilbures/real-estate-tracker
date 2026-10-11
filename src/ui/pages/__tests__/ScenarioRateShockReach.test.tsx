@@ -56,7 +56,6 @@ const { ScenarioForm } = await import("../ScenarioForm");
 const reach = "hits 3 of 3 loans (refix 2029, 2031)";
 
 beforeEach(() => {
-  window.scrollTo = vi.fn();
   act(() => {
     useUiStore.setState({
       language: "en",

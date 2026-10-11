@@ -40,6 +40,7 @@ vi.mock("recharts", async (importOriginal) => {
 });
 
 const realRect = HTMLElement.prototype.getBoundingClientRect;
+const realMatchMedia = window.matchMedia;
 beforeAll(() => {
   // Recharts draws nothing without a measured box; jsdom has none.
   globalThis.ResizeObserver ??= class {
@@ -64,7 +65,7 @@ beforeAll(() => {
 });
 afterAll(() => {
   HTMLElement.prototype.getBoundingClientRect = realRect;
-  Reflect.deleteProperty(window, "matchMedia");
+  window.matchMedia = realMatchMedia;
 });
 beforeEach(() => {
   seen.length = 0;

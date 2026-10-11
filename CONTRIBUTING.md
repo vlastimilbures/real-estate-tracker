@@ -40,6 +40,7 @@ pnpm exec prettier --check .
 pnpm depcruise                  # layer rules, no runtime cycles
 pnpm knip                       # no unused files, exports or dependencies
 pnpm test:coverage              # full suite + per-folder coverage floors
+pnpm coverage:ratchet           # no floor more than 3 points below measured
 cargo fmt --check --manifest-path src-tauri/Cargo.toml
 cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 ```
@@ -53,17 +54,20 @@ still describe it. Which document owns what is listed in
 - **Git hooks** (husky + lint-staged): on commit, staged files are formatted, linted and their
   related Vitest tests run; on push, the full typecheck runs. A green CI run is required to
   merge — do not bypass the hooks.
-- **Coverage floors** live in `vite.config.ts` (`src/engine` 95 % lines, `src/ui/model` 94 %,
-  and so on). Raise a floor when coverage rises; never lower one to pass.
+- **Coverage floors** live in `coverage-floors.json` (per folder, lines and branches), set to
+  measured minus 1-2 points. Never lower one to pass. CI runs `pnpm coverage:ratchet` after
+  `pnpm test:coverage` and fails when a floor sits more than 3 points below measured; raise it
+  to measured minus 1-2 points then.
 - **Mutation testing** (ADR 0026): `pnpm mutation` runs Stryker on `src/engine`. CI runs it
   nightly when main changed. Runs are incremental: only mutants in changed code or tests are
   retested against the last result (`reports/mutation/stryker-incremental.json`, cached in
   CI); `pnpm mutation --force` retests every mutant. `thresholds.break` in
   `stryker.config.json` is the floored baseline score; raise it, never lower it.
-- **Performance budgets** (ADR 0066, ADR 0073): `pnpm bench` times the engine; 20 properties
-  p99 ≤ 150 ms for one recompute and ≤ 450 ms for a 3-scenario compare. The nightly run fails
-  when a p99 exceeds twice its budget (`pnpm bench:check`); check the budgets themselves
-  locally after an engine change.
+- **Performance budgets** (ADR 0066, ADR 0073, ADR 0172): `pnpm bench` times the engine; 20
+  properties p99 ≤ 150 ms for one recompute, ≤ 450 ms for a 3-scenario compare and ≤ 80 ms for
+  a schedule build with a recast or a prepayment on every loan. The nightly run fails when a p99
+  exceeds twice its budget or the recast build's median exceeds 1.40 × the plain build's
+  (`pnpm bench:check`); check the budgets themselves locally after an engine change.
 - **Property tests** (#232, #167): every fast-check test takes its seed and run count from
   `fcRuns` (`src/engine/__tests__/support/fcRuns.ts`), so PR CI runs a fixed seed per file
   (for example `loan-event-invariants.test.ts` 200 runs). A new property file gets its own
@@ -77,7 +81,8 @@ still describe it. Which document owns what is listed in
   1280×800 + minimum window) and `pnpm ux:axe-check ci`, which fails on any axe violation.
   Run the same locally after UI work; a new screen or state gets a capture entry.
 - **E2E** (`pnpm test:e2e`, Playwright) is optional (ADR 0006): keep the existing tests green;
-  they run in CI only on manual dispatch.
+  CI runs them nightly and on manual dispatch, never as a merge check. They start their own
+  Vite server on port 1440 (`E2E_PORT`), so a running `pnpm tauri dev` does not interfere.
 - **Rust integration tests** (`cargo test`) run in CI, locally and in
   `scripts/release-macos.sh` when run without `--skip-checks`. One timing-dependent H-14 probe
   is `#[ignore]`d (DR-169); `cargo test -- --ignored` runs it.

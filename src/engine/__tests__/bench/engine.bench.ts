@@ -17,6 +17,7 @@ import {
   projectionAndKpis,
   realProjection,
   type Assumptions,
+  type MortgageBlock,
   type Portfolio,
   type ScenarioOverrides,
 } from "../..";
@@ -88,6 +89,20 @@ describe("pieces, synthetic 20 properties", () => {
   bench("irr (31 cash flows)", () => void irr(vector), opts);
 });
 
+/** A year after the latest of baseDate, the loan's start and any completion. */
+function aYearOn(m: MortgageBlock) {
+  return edate(
+    new Date(
+      Math.max(
+        assumptions.baseDate.getTime(),
+        m.startDate.getTime(),
+        m.completionDate?.getTime() ?? 0,
+      ),
+    ),
+    13,
+  );
+}
+
 // ADR 0116: an instalment recast lets a loan run to the 50-year cap, so the build
 // stops at the last payment instead of building every one of the 600 months.
 describe("recasts, synthetic 20 properties", () => {
@@ -97,17 +112,7 @@ describe("recasts, synthetic 20 properties", () => {
       ...m,
       recasts: [
         {
-          // A year after the latest of baseDate, the start and any completion.
-          date: edate(
-            new Date(
-              Math.max(
-                assumptions.baseDate.getTime(),
-                m.startDate.getTime(),
-                m.completionDate?.getTime() ?? 0,
-              ),
-            ),
-            13,
-          ),
+          date: aYearOn(m),
           instalment: money(m.monthlyInstalment.times(1.2)),
         },
       ],
@@ -116,6 +121,30 @@ describe("recasts, synthetic 20 properties", () => {
   bench(
     "schedulesByProperty, an instalment recast on every loan",
     () => void schedulesByProperty(recast, ids, assumptions),
+    opts,
+  );
+});
+
+// ADR 0109: a prepayment re-amortizes the rest of the loan (a lower instalment or a
+// shorter term); the synthetic portfolio has none, so this case adds one per loan
+// (#141), alternating the two effects.
+describe("prepayments, synthetic 20 properties", () => {
+  const ids = p20.properties.map((x) => x.id);
+  const prepaid = p20.mortgages.map((m, i) =>
+    mortgageBlock({
+      ...m,
+      prepayments: [
+        {
+          date: aYearOn(m),
+          amount: money(m.initialPrincipal.times(0.1)),
+          effect: i % 2 === 0 ? "lowerInstalment" : "shortenTerm",
+        },
+      ],
+    }),
+  );
+  bench(
+    "schedulesByProperty, a prepayment on every loan",
+    () => void schedulesByProperty(prepaid, ids, assumptions),
     opts,
   );
 });

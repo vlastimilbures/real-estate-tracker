@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { en, exportedToast } from "./labels";
 
 // Exercises the real export path in a browser: Vite resolves the exceljs browser bundle,
 // the dynamic import runs, exceljs.writeBuffer() produces a Blob, and downloadBlob fires a
@@ -10,10 +11,13 @@ test("Projections export icon downloads an .xlsx", async ({ page }) => {
     timeout: 30_000,
   });
 
-  await page.getByRole("button", { name: "Projections" }).click();
+  await page.getByRole("button", { name: en.nav.projections }).click();
 
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Export to Excel" }).first().click();
+  await page
+    .getByRole("button", { name: en.xlsx.exportToExcel })
+    .first()
+    .click();
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toMatch(
@@ -21,7 +25,7 @@ test("Projections export icon downloads an .xlsx", async ({ page }) => {
   );
   // The click surfaces a confirmation toast naming the saved file.
   await expect(
-    page.getByText(/Exported .*-projection-(nominal|real)\.xlsx/),
+    page.getByText(exportedToast(".*-projection-(nominal|real)\\.xlsx")),
   ).toBeVisible();
 });
 
@@ -33,18 +37,22 @@ test("Property detail amortization export downloads an .xlsx", async ({
     timeout: 30_000,
   });
 
-  await page.getByRole("button", { name: "Properties" }).click();
+  await page.getByRole("button", { name: en.nav.properties }).click();
   await page.locator("table.data tbody tr td.left").first().click();
 
   // The amortization panel's export button (the second export icon on the page).
   const amortPanel = page.locator("section.panel").filter({
-    has: page.getByRole("heading", { name: "Amortization schedule" }),
+    has: page.getByRole("heading", {
+      name: en.propertyDetail.amortizationTitle,
+    }),
   });
 
   const downloadPromise = page.waitForEvent("download");
-  await amortPanel.getByRole("button", { name: "Export to Excel" }).click();
+  await amortPanel.getByRole("button", { name: en.xlsx.exportToExcel }).click();
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toMatch(/-amortization\.xlsx$/);
-  await expect(page.getByText(/Exported .*-amortization\.xlsx/)).toBeVisible();
+  await expect(
+    page.getByText(exportedToast(".*-amortization\\.xlsx")),
+  ).toBeVisible();
 });

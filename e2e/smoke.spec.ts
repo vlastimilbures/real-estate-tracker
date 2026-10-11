@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { en } from "./labels";
 
 // End-to-end smoke test: boot the real React app (sql.js seed via VITE_E2E), edit a
 // valuation through the actual UI, and confirm the Dashboard's "Net worth today" KPI
@@ -26,24 +27,29 @@ test("editing a valuation moves the Dashboard net-worth KPI", async ({
   const before = await readNetWorth(page);
 
   // Drill into the first property from the keyboard: its name is a button (UX-022).
-  await page.getByRole("button", { name: "Properties" }).click();
+  await page.getByRole("button", { name: en.nav.properties }).click();
   await page.locator("table.data tbody tr td.left button").first().focus();
   await page.keyboard.press("Enter");
 
   // Scope to the Valuations panel, edit the in-force valuation to a large value.
-  const valuations = page
-    .locator("section.panel")
-    .filter({ has: page.getByRole("heading", { name: "Valuations" }) });
-  await valuations.getByRole("button", { name: "Edit" }).first().click();
+  const valuations = page.locator("section.panel").filter({
+    has: page.getByRole("heading", {
+      name: en.propertyDetail.valuationsTitle,
+    }),
+  });
+  await valuations
+    .getByRole("button", { name: en.common.edit })
+    .first()
+    .click();
 
   const marketValue = valuations
-    .locator(".field", { hasText: "Market value" })
+    .locator(".field", { hasText: en.propertyDetail.fieldMarketValue })
     .locator("input");
   await marketValue.fill("99000000");
-  await valuations.getByRole("button", { name: "Save changes" }).click();
+  await valuations.getByRole("button", { name: en.common.saveChanges }).click();
 
   // Back to the Dashboard — equity (= value − debt) must have risen.
-  await page.getByRole("button", { name: "Dashboard" }).click();
+  await page.getByRole("button", { name: en.nav.dashboard }).click();
   await expect(kpi).toBeVisible();
   await expect
     .poll(async () => readNetWorth(page), { timeout: 10_000 })
