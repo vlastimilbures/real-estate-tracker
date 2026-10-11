@@ -67,6 +67,9 @@ the colour or the visibility from the unrounded value:
 - **Compare Δ money stays in M Kč with one decimal** (owner, 2026-10-11): a difference under
   50,000 Kč reads "0,0 M Kč", now without a "+".
 - Built-in preset names and the preset buttons' titles do not change.
+- Not covered by the rule yet: interest saved still hides or notes on its unrounded figure
+  (`interestSavedShown`, ADR 0130 §2), tracked in #327. Charts are out of scope: a tooltip
+  swatch or bar colour by sign and the undrawn-debt series visibility are not text.
 
 ## Consequences
 

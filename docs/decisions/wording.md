@@ -29,7 +29,7 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 
 ## Entries
 
-### 2026-10-11 · #146 (R4-04) / Track 14 PR N2
+### 2026-10-11 · #146 / PR #326
 
 - Keys: `scenarios.sumInflationShock`, `scenarios.sumRateShock` (cs)
 - Change: the Czech scenario list summary declines the year word with `csPlural`
@@ -37,5 +37,5 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   in the same keys is ADR 0178's.
 - Rejected: also renaming the presets (`scenarios.rateForYears`, `scenarios.inflForYears`),
   because a preset is found by its saved name (ADR 0093) and a preset saved under the old
-  name would be added a second time; leaving it for the N7b Czech copy batch.
+  name would be added a second time; leaving it for a later Czech copy pass.
 - Approved by: owner, 2026-10-11
