@@ -293,24 +293,35 @@ function interestInHorizon(
   return { totalInterest: nominal, totalInterestReal: real };
 }
 
-/** Portfolio KPIs (SPEC §4.6) from the portfolio projection. */
-export function portfolioKpis(
+/** `portfolioProjection` and `portfolioKpis` in one pass (one scenario of a compare). */
+export function projectionAndKpis(
   portfolio: Portfolio,
   assumptions: Assumptions,
-): PortfolioKPIs {
+): { projection: ProjectionYear[]; kpis: PortfolioKPIs } {
   assertInputs(portfolio, assumptions); // D-37
-  const schedules = propertySchedules(
+  const built = propertySchedules(
     portfolio.mortgages,
     portfolio.properties.map((p) => p.id),
     assumptions,
   );
   // Validated above (DR-128).
-  const { years, prePurchase } = projectPortfolioParts(
+  const { years: projection, prePurchase } = projectPortfolioParts(
     portfolio,
     assumptions,
-    schedules,
+    built,
   );
-  return kpisFrom(portfolio, assumptions, years, schedules, prePurchase);
+  return {
+    projection,
+    kpis: kpisFrom(portfolio, assumptions, projection, built, prePurchase),
+  };
+}
+
+/** Portfolio KPIs (SPEC §4.6) from the portfolio projection. */
+export function portfolioKpis(
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+): PortfolioKPIs {
+  return projectionAndKpis(portfolio, assumptions).kpis;
 }
 
 /**
