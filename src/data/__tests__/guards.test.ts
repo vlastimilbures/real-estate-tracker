@@ -273,6 +273,15 @@ describe("stored decimal grammar (ADR 0148)", () => {
     expect(parseDecimalText(good)?.eq(D(good))).toBe(true);
   });
 
+  // ADR 0180 §5 (#260 item 2): forms toString() never writes, kept because the same reader
+  // loads the live database.
+  it.each([
+    ["1e+5", "100000"],
+    ["1.50e-7", "0.00000015"],
+  ])("also reads %j", (loose, value) => {
+    expect(parseDecimalText(loose)?.eq(D(value))).toBe(true);
+  });
+
   it("reads back every decimal the app writes (toString)", () => {
     for (const v of [
       "0.0000001",

@@ -383,3 +383,17 @@ describe("a non-integer whole-number value asks at restore (ADR 0180 §2)", () =
     expect(issues[0]?.rule).not.toBe("OUT_OF_RANGE");
   });
 });
+
+describe("refusals before the rules run (ADR 0148 §1, #260 item 6)", () => {
+  it("an unreadable cell refuses without listing the out-of-range values", async () => {
+    // The rules (and the bounds) run only on a file read as a whole.
+    const backup = await edited("properties", (rows) =>
+      rows.map((r, n) =>
+        n === 0 ? { ...r, purchase_date: "not a date", size_m2: 20_000 } : r,
+      ),
+    );
+    expect(refusal(backup).issues.map((i) => i.rule)).toEqual([
+      "UNREADABLE_VALUE",
+    ]);
+  });
+});
