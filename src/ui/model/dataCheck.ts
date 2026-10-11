@@ -57,8 +57,14 @@ type CostField = (typeof COST_FIELDS)[number];
 export type DataFinding =
   /** The valuation in use is more than 12 months old; `months` = whole months of age. */
   | { kind: "valuationStale"; validFrom: IsoDate; months: number }
-  /** No valuation recorded: the purchase price stands in as the market value (ADR 0122). */
-  | { kind: "noValuation"; purchasePrice: Money; asOf: Date }
+  /** No valuation recorded: the purchase price, grown since `purchaseDate`, stands in as
+   *  the market value (ADR 0122, ADR 0181). */
+  | {
+      kind: "noValuation";
+      purchasePrice: Money;
+      purchaseDate: IsoDate;
+      asOf: Date;
+    }
   /** No lease in force at the as-of date and none the projection renews: rent is 0. */
   | { kind: "noLease"; asOf: Date }
   /** The last lease ended before the as-of date: the snapshot has no rent after it, the
@@ -151,6 +157,7 @@ export function propertyDataCheck(
     attention.push({
       kind: "noValuation",
       purchasePrice: property.purchasePrice,
+      purchaseDate: property.purchaseDate,
       asOf,
     });
   else if (
@@ -362,7 +369,7 @@ export function findingText(
         fmtDate(f.validFrom),
       );
     case "noValuation":
-      return d.noValuation(fmtCzk(f.purchasePrice));
+      return d.noValuation(fmtCzk(f.purchasePrice), fmtDate(f.purchaseDate));
     case "noLease":
       return d.noLease(fmtDate(f.asOf));
     case "leaseEnded":

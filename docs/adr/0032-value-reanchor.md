@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-09-30
 - Source IDs: D-32, J-23
+- Amended by: [0181](0181-purchase-price-fallback-grows.md) (with no valuation, the
+  purchase price grows from the purchase date to the basis)
 
 ## Context
 

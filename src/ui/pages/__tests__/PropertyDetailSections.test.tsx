@@ -17,7 +17,7 @@ import {
 } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { isoDate, money } from "../../../engine";
-import { fmtCzk } from "../../../lib/format";
+import { fmtCzk, fmtDate } from "../../../lib/format";
 
 vi.mock("../../../data/errorLog", () => ({ logFailure: vi.fn() }));
 
@@ -258,7 +258,12 @@ describe("Property detail data check (ADR 0118)", () => {
     render(<PropertyDetail />);
     const section = within(dataCheck());
     expect(
-      section.getByText(en.dataCheck.noValuation(fmtCzk(owner.purchasePrice))),
+      section.getByText(
+        en.dataCheck.noValuation(
+          fmtCzk(owner.purchasePrice),
+          fmtDate(owner.purchaseDate),
+        ),
+      ),
     ).toBeTruthy();
     expect(section.getByText(en.dataCheck.growthBoth)).toBeTruthy();
     await userEvent.click(

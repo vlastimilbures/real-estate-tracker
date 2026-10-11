@@ -159,3 +159,17 @@ describe("Guide prepayments (ADR 0116)", () => {
     expect(en.guide.mortgagesProse3).toMatch(/does not reduce the debt/);
   });
 });
+
+// ADR 0181 (#152 item 1): today's value is the valuation in force on the projection start,
+// as entered; with none, the purchase price grown since the purchase.
+describe("Guide value anchor (ADR 0181)", () => {
+  it("says how today's value is anchored, in every language", () => {
+    const v = en.guide.snapshotDefs.value;
+    expect(v.meaning).not.toMatch(/latest recorded valuation/);
+    expect(v.meaning).toMatch(/in force on the projection start, as entered/);
+    expect(v.meaning).toMatch(/purchase price grown/);
+    expect(v.eg).toMatch(/in force on the projection start/);
+    expect(cs.guide.snapshotDefs.value.meaning).toMatch(/k začátku projekce/);
+    expect(ru.guide.snapshotDefs.value.meaning).toMatch(/на начало прогноза/);
+  });
+});
