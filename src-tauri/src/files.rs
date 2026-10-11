@@ -23,8 +23,8 @@ const SAVE_OPTIONS_HEADER: &str = "x-save-options";
 
 /// Write `data` to `dest` via a temp file in the same folder: the temp file is created
 /// exclusively, fsynced and read back (it must hold exactly `data`), then renamed over
-/// `dest`, and the folder is fsynced so the rename survives a power loss. On a failure
-/// before the rename the temp file is removed and `dest` is left as it was.
+/// `dest`, and the folder is fsynced (best effort) so the rename survives a power loss. On
+/// a failure before the rename the temp file is removed and `dest` is left as it was.
 pub fn atomic_write(dest: &Path, data: &[u8]) -> Result<(), AppError> {
     write_via_temp(dest, data, None)
 }
@@ -36,7 +36,9 @@ pub fn atomic_write_private(dest: &Path, data: &[u8]) -> Result<(), AppError> {
 }
 
 /// A new app file (a safety backup): `atomic_write_private`, but an existing file is
-/// refused with `BACKUP_EXISTS` and left as it was, as `db_backup` does (ADR 0175).
+/// refused with `BACKUP_EXISTS` and left as it was, as `db_backup` does (ADR 0175). The
+/// check runs before the write, so it is not atomic against a concurrent write of the
+/// same name; the webview writes safety backups one at a time.
 pub fn write_new_private(dest: &Path, data: &[u8]) -> Result<(), AppError> {
     if dest.exists() {
         return Err(AppError::BackupExists(dest.to_path_buf()));
@@ -65,7 +67,10 @@ fn write_via_temp(dest: &Path, data: &[u8], mode: Option<u32>) -> Result<(), App
         let _ = fs::remove_file(&tmp);
     }
     written?;
-    sync_dir(dir)
+    // The file is in place. Some file systems a save may target (exFAT, network shares)
+    // refuse a folder fsync; that must not report a written file as failed.
+    sync_dir(dir);
+    Ok(())
 }
 
 /// Create a new temp file next to the target. Never opens an existing file or follows
@@ -112,15 +117,12 @@ fn create_new(path: &Path, mode: Option<u32>) -> std::io::Result<fs::File> {
     options.open(path)
 }
 
-/// Fsync a folder, so a rename in it is on disk (unix; a no-op elsewhere).
-#[cfg(unix)]
-fn sync_dir(dir: &Path) -> Result<(), AppError> {
-    Ok(fs::File::open(dir)?.sync_all()?)
-}
-
-#[cfg(not(unix))]
-fn sync_dir(_dir: &Path) -> Result<(), AppError> {
-    Ok(())
+/// Fsync a folder, so a rename in it is on disk; best effort (unix; a no-op elsewhere).
+fn sync_dir(dir: &Path) {
+    #[cfg(unix)]
+    let _ = fs::File::open(dir).and_then(|d| d.sync_all());
+    #[cfg(not(unix))]
+    let _ = dir;
 }
 
 /// Make the app's folder private (DR-157): the folder and its `backups/` become 0700 and
