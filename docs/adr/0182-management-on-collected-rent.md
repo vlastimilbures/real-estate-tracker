@@ -7,7 +7,8 @@
 - Amends: SPEC.md §4.3 (holding costs) and §4.5 (`holding_t`); the parity targets of
   `.claude/rules/engine-parity.md` (target change log)
 - Related: [0001](0001-behaviour-change-gate.md) (behaviour-change gate),
-  [0003](0003-czech-practice-decides.md) (Czech practice decides),
+  [0003](0003-czech-practice-decides.md) (Czech practice decides where a formula is in
+  doubt; here the rule is the owner's decision),
   [0039](0039-golden-master.md) (golden master updated in the same commit),
   [0174](0174-golden-master-loan-events-regression-layers.md) (the KPI reference model and
   the v2 golden cases)
@@ -17,15 +18,18 @@
 Holding costs are a fixed part plus two percentages of rent: management (`mgmtPctRent`) and
 maintenance (`maintPctRent`). Both were charged on the **gross** (contracted) rent, in the
 snapshot (`metrics.ts` `snapshotIncome`) and in every projection year (`projections.ts`
-`computeRentAndCosts`), while income is the rent after the vacancy allowance. So a flat that
-sits empty still paid its manager: at 100 % vacancy the sample portfolio charged 126,990 Kč
-a year of percentages on rent nobody paid.
+`computeRentAndCosts`), while income is the rent after the vacancy allowance. So rent lost to the
+vacancy allowance still paid the manager: at 100 % vacancy the sample portfolio charged
+169,320 Kč a year of percentages on rent nobody paid, 126,990 Kč of it management.
 
-A Czech property manager (správce) bills a share of the rent actually collected (z
-vybraného nájemného); an empty month earns the manager nothing. Maintenance is different:
-wear, repairs and the upkeep reserve follow the flat, not the rent receipt, and do not stop
-when a tenant leaves. The percentage of contracted rent stays a proxy for the size and
-standard of the flat.
+The owner chose management only (#150 option A). It matches the usual terms of a Czech
+property manager (správce), who bills a share of the rent actually collected (z vybraného
+nájemného), though the owner's own contract decides. Maintenance is different: wear,
+repairs and the upkeep reserve follow the flat, not the rent receipt. The percentage of
+contracted rent stays a proxy for the size and standard of the flat. It is charged on the
+rent of the months with a lease, as before: months before the first lease and gaps between
+leases carry no percentage costs (only the vacancy allowance keeps maintenance on rent that
+is not collected).
 
 ## Decision
 
