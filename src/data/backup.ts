@@ -712,8 +712,8 @@ export class SafetyBackupError extends Error {
 /**
  * Pre-restore snapshot, so a bad restore is still recoverable from the Restore screen
  * (D-52): `<app config>/backups/portfolio-before-restore-<UTC stamp>.json`, next to the
- * database and its pre-migration backups (DR-136). Written to a temp file and renamed
- * into place, then read back: its row counts must equal the live data. Any failure
+ * database and its pre-migration backups (DR-136). Rust writes a temp file, reads it
+ * back and compares the bytes, then renames it into place (ADR 0175). Any failure
  * throws `SafetyBackupError` — without a verified file a restore must not start.
  * `prefix` names the file for other destructive actions. Returns the file name.
  */
@@ -727,15 +727,8 @@ export async function writeSafetyBackup(
     // Reading the current data is part of the safety backup (ADR 0147).
     const safetyBackup = await exportToJson(sql, now);
     const json = JSON.stringify(safetyBackup, null, 2);
-    // Temp file + rename in `<app config>/backups`, read back (src-tauri/src/files.rs).
-    const readBack = await invoke<string>("write_app_backup", {
-      filename,
-      json,
-    });
-    const written = validateBackup(JSON.parse(readBack));
-    for (const t of BACKUP_TABLES)
-      if (written.tables[t]?.length !== safetyBackup.tables[t]?.length)
-        throw new Error(`the saved copy of "${t}" does not match`);
+    // Verified temp file + rename in `<app config>/backups` (src-tauri/src/files.rs).
+    await invoke("write_app_backup", { filename, json });
   } catch (e) {
     throw new SafetyBackupError(e);
   }

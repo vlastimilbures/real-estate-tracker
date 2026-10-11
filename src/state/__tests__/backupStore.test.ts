@@ -17,9 +17,7 @@ vi.mock("../../platform/saveFile", async (importOriginal) => ({
   saveFile: vi.fn(() => save.next()),
 }));
 vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn((_command: string, args: { json: string }) =>
-    Promise.resolve(args.json),
-  ),
+  invoke: vi.fn(() => Promise.resolve()),
 }));
 
 let db: TestSql;

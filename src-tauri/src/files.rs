@@ -287,14 +287,14 @@ pub async fn open_backup_file(
 }
 
 /// Write `json` to `<app-config>/backups/<filename>` (the database's own folder, D-52)
-/// via temp file + rename, 0600 (DR-157), and return what reads back, for the caller to
-/// verify.
+/// through the verified temp-file write, 0600 (DR-157). Async, so the write of a large
+/// backup never runs on the main thread.
 #[tauri::command]
-pub fn write_app_backup(
+pub async fn write_app_backup(
     app: AppHandle,
     filename: String,
     json: String,
-) -> Result<String, AppError> {
+) -> Result<(), AppError> {
     if !valid_backup_name(&filename) {
         return Err(AppError::InvalidBackupName(filename));
     }
@@ -304,9 +304,7 @@ pub fn write_app_backup(
         .map_err(AppError::other)?
         .join("backups");
     fs::create_dir_all(&dir)?;
-    let path = dir.join(&filename);
-    atomic_write_private(&path, json.as_bytes())?;
-    fs::read_to_string(&path).map_err(AppError::from)
+    atomic_write_private(&dir.join(&filename), json.as_bytes())
 }
 
 /// The database's file name in the app folder (`sqlite:portfolio.db`, src/data/tauriSql.ts).

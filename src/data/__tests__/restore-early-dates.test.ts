@@ -16,9 +16,9 @@ import {
 import { checkInputRules } from "../../import/inputRules";
 
 vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn((command: string, args: { json: string }) =>
+  invoke: vi.fn((command: string) =>
     command === "write_app_backup"
-      ? Promise.resolve(args.json)
+      ? Promise.resolve()
       : Promise.reject(new Error(`unexpected command ${command}`)),
   ),
 }));

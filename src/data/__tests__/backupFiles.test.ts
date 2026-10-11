@@ -65,7 +65,7 @@ async function fakeInvoke(
       if (rust.writeError) throw rust.writeError;
       const path = `/app-config/backups/${filename}`;
       files.set(path, json);
-      return rust.readBack(path, json);
+      return undefined;
     }
     default:
       throw new Error(`unexpected command ${command}`);
@@ -137,24 +137,6 @@ describe("confirmRestore — safety backup (DR-019, D-52)", () => {
     );
     expect(err).toBeInstanceOf(SafetyBackupError);
     expect((err as Error).message).toMatch(/disk full/);
-    expect(await propertyCount()).toBe(3);
-  });
-
-  it("aborts when the saved copy does not read back complete", async () => {
-    rust.readBack = (_path, text) => {
-      const saved = JSON.parse(text) as BackupFile;
-      return JSON.stringify({
-        ...saved,
-        tables: { ...saved.tables, leases: [] },
-      });
-    };
-    const err = await confirmRestore(
-      sql,
-      await emptyBackup(),
-      checkInputRules,
-    ).catch((e: unknown) => e);
-    expect(err).toBeInstanceOf(SafetyBackupError);
-    expect((err as Error).message).toMatch(/leases/);
     expect(await propertyCount()).toBe(3);
   });
 
