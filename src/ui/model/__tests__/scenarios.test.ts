@@ -3,6 +3,8 @@
 import { describe, it, expect } from "vitest";
 import { baseScenario, findByName, summarize } from "../scenarios";
 import { en } from "../../../i18n/en";
+import { cs } from "../../../i18n/cs";
+import { ru } from "../../../i18n/ru";
 import { rate } from "../../../engine";
 import type { Scenario } from "../../../engine";
 
@@ -56,6 +58,23 @@ describe("summarize", () => {
     expect(summarize(s, en)).toBe(
       "inflation +3,0 pp for 3y · rates +2,0 pp for 3y",
     );
+  });
+
+  // ADR 0178 (#146 R4-04): a negative shock is signed once, by the formatter.
+  it("signs a negative shock once", () => {
+    const s = withOverrides({
+      inflationShock: { deltaPa: rate("-0.005"), durationYears: 3 },
+      rateShock: { deltaPa: rate("-0.01"), durationYears: 2 },
+    });
+    expect(summarize(s, en)).toBe(
+      "inflation −0,5 pp for 3y · rates −1,0 pp for 2y",
+    );
+    expect(summarize(s, cs)).not.toContain("+");
+    expect(summarize(s, cs)).toContain("inflace −0,5 p. b.");
+    expect(summarize(s, cs)).toContain("sazby −1,0 p. b.");
+    expect(summarize(s, ru)).toContain("инфляция −0,5 п. п.");
+    expect(summarize(s, ru)).toContain("ставки −1,0 п. п.");
+    expect(summarize(s, ru)).not.toContain("+");
   });
 
   // ADR 0100: the rate shock's reach note follows the rate shock.

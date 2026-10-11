@@ -866,8 +866,8 @@ export const ru: Dictionary = {
     sumVacancy: (v) => `простой ${v}`,
     sumResetRate: (v) => `ставка после фиксации ${v}`,
     sumInflation: (v) => `инфляция ${v}`,
-    sumInflationShock: (v, years) => `инфляция +${v} п. п. на ${years} г.`,
-    sumRateShock: (v, years) => `ставки +${v} п. п. на ${years} г.`,
+    sumInflationShock: (v, years) => `инфляция ${v} п. п. на ${years} г.`,
+    sumRateShock: (v, years) => `ставки ${v} п. п. на ${years} г.`,
     reachHits: (n, m, years) =>
       `затрагивает ${n} из ${m} ${ruPlural(m, ["кредита", "кредитов", "кредитов"])} (конец фиксации ${years})`,
     reachNone:

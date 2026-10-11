@@ -910,8 +910,8 @@ export const en = {
     sumResetRate: (v: string) => `reset rate ${v}`,
     sumInflation: (v: string) => `inflation ${v}`,
     sumInflationShock: (v: string, years: number) =>
-      `inflation +${v} pp for ${years}y`,
-    sumRateShock: (v: string, years: number) => `rates +${v} pp for ${years}y`,
+      `inflation ${v} pp for ${years}y`,
+    sumRateShock: (v: string, years: number) => `rates ${v} pp for ${years}y`,
     // Which loans a rate shock reaches (ADR 0100)
     reachHits: (n: number, m: number, years: string) =>
       `hits ${n} of ${m} ${enPlural(m, ["loan", "loans"])} (refix ${years})`,
