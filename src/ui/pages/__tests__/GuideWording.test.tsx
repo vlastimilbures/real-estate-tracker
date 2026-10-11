@@ -187,4 +187,11 @@ describe("Guide — the IRR names the selling costs and why tax is left out (ADR
     // The tax reason: the expense method (the 30 % flat allowance).
     expect(meaning).toContain("30 %");
   });
+
+  it("names the tax and the percent precisely (cs, ru)", () => {
+    expect(cs.guide.returnsDefs.irr.meaning).toContain("daň z příjmů z nájmu");
+    expect(ru.assumptions.sellingCostHelp).toContain(
+      "в процентах от стоимости",
+    );
+  });
 });
