@@ -414,12 +414,14 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
     expect(lastPaid(loan, "2026-05-07")).toBe("373: 1353.26");
     expect(lastPaid(loan, "2026-06-06")).toBe("373: 1353.25");
   });
-  // Known limitation (ADR 0136, #235): a maturity recast leaves no agreed instalment,
-  // only an owed re-amortization, which `shortenTerm` does not see (as in ADR 0120
-  // decision 4). Under 09-06 the late prepayment sizes the term on the instalment before
-  // the recast, and the loan ends 12 payments earlier than under 08-07. No balloon
-  // either way.
-  it("#228: a late shortenTerm after a maturity recast (today: 12 payments earlier)", () => {
+  // #235 (ADR 0179): a maturity recast leaves only an owed re-amortization. The late
+  // shortenTerm under 09-06 keeps the annuity payment 31 would pay without it, as the
+  // forward path under 08-07 keeps the one payment 31 re-amortized to. Both repay the
+  // loan with payment 131 (due 2034-01-07); under 08-07 ceil(NPER) rounds 100.000… up,
+  // so payment 132 clears a 0.0039 Kč residue. Before ADR 0179 the late prepayment
+  // sized the term on the instalment before the recast and 09-06 ended 12 payments
+  // earlier (grid month 90). No balloon either way.
+  it("#235: a late shortenTerm after a maturity recast ends on the same payment", () => {
     const loan: RefLoan = {
       start: "2023-02-07",
       principal: 300000,
@@ -439,7 +441,9 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
     };
     for (const base of ["2025-08-07", "2025-09-06"]) checkEnd(loan, base);
     expect(lastPaying(run(loan, "2025-08-07").rows)).toBe(102);
-    expect(lastPaying(run(loan, "2025-09-06").rows)).toBe(90);
+    expect(lastPaying(run(loan, "2025-09-06").rows)).toBe(101);
+    expect(lastPaid(loan, "2025-08-07")).toBe("132: 0.00");
+    expect(lastPaid(loan, "2025-09-06")).toBe("131: 4378.14");
   });
 
   it("R1-04: a payment due just before completion (#135 probe)", () => {

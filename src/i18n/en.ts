@@ -669,6 +669,8 @@ export const en = {
         `the new instalment from ${date} does not cover the interest, so the loan keeps its terms.`,
       RECAST_TERM_CAPPED: (date: string) =>
         `the new instalment from ${date} would run past the longest allowed term, so the loan is re-amortized to that term instead.`,
+      PREPAYMENT_TERM_NOT_SHORTENED: (date: string) =>
+        `the prepayment on ${date} does not shorten the term: at the next payment's rate, the monthly instalment kept would not repay the loan by its maturity, so the maturity stays.`,
     } satisfies Record<
       LoanEventIssue,
       (date: string, requested: string, applied: string) => string

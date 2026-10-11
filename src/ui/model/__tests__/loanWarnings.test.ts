@@ -255,7 +255,7 @@ describe("event warnings", () => {
     const issues = Object.keys(
       en.propertyDetail.eventIssue,
     ) as LoanEventIssue[];
-    expect(issues).toHaveLength(7);
+    expect(issues).toHaveLength(8);
     for (const dict of [en, cs, ru]) {
       for (const issue of issues) {
         const kind = issue.startsWith("RECAST") ? "recast" : "prepayment";
@@ -265,6 +265,15 @@ describe("event warnings", () => {
         expect(loanWarningText(dict, w!, reset)).toContain("17.01.2031");
       }
     }
+  });
+
+  it("says a shortenTerm prepayment did not shorten the term (ADR 0179)", () => {
+    const [w] = loanWarnings([block()], baseDate, [
+      outcome("PREPAYMENT_TERM_NOT_SHORTENED"),
+    ]);
+    expect(loanWarningText(en, w!, reset)).toBe(
+      "Loan from 17.01.2021: the prepayment on 17.01.2031 does not shorten the term: at the next payment's rate, the monthly instalment kept would not repay the loan by its maturity, so the maturity stays.",
+    );
   });
 
   it("skips an outcome of a block the page does not list", () => {

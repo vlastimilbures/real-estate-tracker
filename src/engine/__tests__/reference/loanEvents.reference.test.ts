@@ -5,6 +5,7 @@
 import { describe, it, expect } from "vitest";
 import {
   annuityPayment,
+  annuityPeriods,
   firstPaymentOnOrAfter,
   referenceBalanceAt,
   referenceSchedule,
@@ -52,16 +53,23 @@ describe("ADR 0109 reference: prepayment at the 2031 fixation end", () => {
     expect(lastPayment(rows)).toBe(300);
   });
 
-  it("shorten term: 146 more payments, re-amortized over them at the reset", () => {
+  it("shorten term: 183 more payments, re-amortized over them at the reset", () => {
+    // ADR 0179: the kept 6,721.80 Kč is sized at payment 121's 4.5 %:
+    // NPER(4.5 %/12, 6,721.80, 886,249.89) = 182.22 → 183 more payments.
     const rows = run({
       prepayments: [
         { date: "2031-01-17", amount: 500000, effect: "shortenTerm" },
       ],
     });
-    expect(rows[56].instalment.toFixed(4)).toBe("7893.8980");
-    // Last payment 266 = grid month 202, due 2043-03-17.
-    expect(lastPayment(rows)).toBe(202);
-    expect(rows[201].endBalance.isZero()).toBe(true);
+    expect(
+      annuityPeriods(0.045 / 12, "6721.80", rows[55].endBalance).toFixed(2),
+    ).toBe("182.22");
+    const expected = annuityPayment(0.045 / 12, 183, rows[55].endBalance);
+    expect(rows[56].instalment.toFixed(4)).toBe(expected.toFixed(4));
+    expect(rows[56].instalment.toFixed(4)).toBe("6701.9254");
+    // Last payment 303 = grid month 239, due 2046-04-17.
+    expect(lastPayment(rows)).toBe(239);
+    expect(rows[238].endBalance.isZero()).toBe(true);
   });
 
   it("both effects repay the same principal; shorten pays less interest", () => {

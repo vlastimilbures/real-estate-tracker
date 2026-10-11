@@ -40,7 +40,7 @@ describe("ADR 0116: effective maturity", () => {
     expect(day(effectiveMaturity(fast, assumptions))).toBe("2027-11-10");
   });
 
-  it("moves to the shortened term (ADR 0109 example: 2043-03-17)", () => {
+  it("moves to the shortened term (ADR 0179 example: 2046-04-17)", () => {
     const b = {
       ...javorova,
       prepayments: [
@@ -51,7 +51,7 @@ describe("ADR 0116: effective maturity", () => {
         },
       ],
     } as MortgageBlock;
-    expect(day(effectiveMaturity(b, assumptions))).toBe("2043-03-17");
+    expect(day(effectiveMaturity(b, assumptions))).toBe("2046-04-17");
   });
 
   it("follows a maturity recast", () => {
