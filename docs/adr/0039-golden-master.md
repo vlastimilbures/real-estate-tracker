@@ -1,7 +1,7 @@
 # 0039. Keep the engine golden-master test
 
 - Status: Accepted
-- Amended by: ADR 0081
+- Amended by: ADR 0081, [0174](0174-golden-master-loan-events-regression-layers.md) (v2 cases hash every field; the exclusion list is frozen)
 - Date: 2026-09-30
 - Source IDs: D-39, J-29
 

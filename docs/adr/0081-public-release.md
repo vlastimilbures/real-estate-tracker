@@ -4,6 +4,7 @@
 - Date: 2026-10-03
 - Supersedes: ADR 0005, ADR 0007, ADR 0011, ADR 0012, ADR 0018 (the refactor programme and its plan are retired)
 - Amends: ADR 0003, ADR 0016, ADR 0039, ADR 0068, ADR 0070
+- Amended by: [0174](0174-golden-master-loan-events-regression-layers.md) (the baseline is three named layers)
 
 ## Context
 
