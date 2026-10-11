@@ -289,6 +289,10 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- On the Import page, the message that the files could not be checked against your saved
+  data can no longer be closed (ADR 0175, #258). It stays until you choose the files again
+  or the data changes, so a greyed-out Import button always shows why.
+
 - The error log keeps OS and SQLite error codes, such as `os error 13` or `(code: 2067)`,
   so a pasted log line says what failed (ADR 0175, #258). Every other number is still
   masked. A Rust panic's message in the log is cut to 500 characters.
