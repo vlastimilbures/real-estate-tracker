@@ -1,7 +1,7 @@
 // Annual projection per property and for the portfolio, and the CPI index behind real
 // terms (SPEC §4.5). KPIs are computed from this projection in ./kpis.
 import { powInt, ZERO, ONE, type Decimal } from "../lib/money";
-import { addYears, edate, isAfter, isOnOrBefore } from "./dates";
+import { addYears, byStart, edate, isAfter, isOnOrBefore } from "./dates";
 import { at } from "./arrays";
 import {
   EMPTY_PROPERTY_SCHEDULE,
@@ -133,9 +133,7 @@ function propertyBasis(
  * rent plan and the data check (ADR 0118).
  */
 export function renewedLease(leases: Lease[], basis: Date): Lease | undefined {
-  const last = [...leases]
-    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
-    .at(-1);
+  const last = [...leases].sort(byStart((l) => l.startDate)).at(-1);
   return last?.endDate !== undefined && isOnOrBefore(basis, last.endDate)
     ? last
     : undefined;

@@ -178,7 +178,7 @@ export function inForceOrUpcoming<T>(
  * start keep their input order: `lastOnOrBefore` picks the last of them and
  * `firstAfter` the first (DR-071 — documented, not validated).
  */
-function byStart<T>(getStart: (x: T) => Date) {
+export function byStart<T>(getStart: (x: T) => Date) {
   return (a: T, b: T) => getStart(a).getTime() - getStart(b).getTime();
 }
 
