@@ -558,7 +558,7 @@ debt, committed debt) for every property; when every loan retires within the hor
   stays 0 through year N (null while debt is owed at N; ADR 0126) — each reported with its
   projection year (ADR 0022).
 - **Levered IRR** (nominal & real): IRR of the vector `[−equity₀, netCF₁, …, netCF_{N−1},
-netCF_N + equity_N]` — acquisition outflows, refinance cash, prepayments with their
+netCF_N + equity_N − value_N · sellingCostPct]` — acquisition outflows, refinance cash, prepayments with their
   fees and debt service paid before a future purchase (ADR 0124) adjust the relevant year's entry; terminal = projected equity at horizon less the
   selling costs, `equity_N − value_N · sellingCostPct` on the market value (ADR 0183; 0
   when unset). Net worth, the multiple and CAGR stay value minus debt. Real IRR deflates each entry by `CPI_t`.
