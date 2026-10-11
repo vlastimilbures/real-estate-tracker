@@ -7,6 +7,8 @@
   before a future purchase)
 - Amended by: [0162](0162-floating-block-rate.md) (point 2: a 0-year block pays its entered
   rate up to baseDate)
+- Amended by: [0176](0176-refinance-cash-successor-principal-event-order.md) (point 7:
+  same-day events of one kind follow the portfolio order)
 - Date: 2026-10-03
 - Source: issue #31 (pre-release review 2026-10, F5 and §6)
 

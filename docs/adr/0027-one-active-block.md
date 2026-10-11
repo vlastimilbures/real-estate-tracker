@@ -4,6 +4,8 @@
 - Date: 2026-09-30
 - Source IDs: D-27, J-14
 - Amended by: [0130](0130-interest-saved-refinance.md) (D-47: the handover row)
+- Amended by: [0176](0176-refinance-cash-successor-principal-event-order.md) (D-47 point 2:
+  successor principal = its initial principal; a handover-month tranche is new debt)
 
 ## Context
 
