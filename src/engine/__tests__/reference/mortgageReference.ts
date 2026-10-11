@@ -479,6 +479,7 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
     due: (e: Pending) => boolean,
     seen: (date: Iso) => Dec = () => ZERO,
   ): RefRow => {
+    const owedBeforePrepaying = balance;
     let prepaid = ZERO;
     let fee = ZERO;
     let effect: RefPrepayment["effect"] | null = null;
@@ -495,12 +496,24 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
     }
     const owedAfter = balance.plus(effectSeen);
     let counted = ZERO;
-    // shortenTerm keeps the instalment the next payment pays: an agreed one still to
-    // pay (a recast settled before it, after payment k; ADR 0136), else payment k's.
-    // The bank sizes the new term at payment k+1's rate, the rate the kept instalment
-    // is paid at (ADR 0179: a fixation reset on k+1 counts).
-    const kept = agreedInstalment ?? row.instalment;
+    // shortenTerm keeps the instalment payment k+1 would pay without the prepayments
+    // (ADR 0179), at payment k+1's rate (a fixation reset on k+1 counts):
+    //   • an agreed one still to pay (a recast settled before it, after payment k;
+    //     ADR 0136);
+    //   • else, when payment k+1 owes a re-amortization (a maturity or capped recast, a
+    //     lowerInstalment, a tranche on an agreed instalment's payment), the annuity of
+    //     the balance before the prepayments over the payments left to the maturity;
+    //   • else payment k's instalment.
     const keptRate = rateAt(addMonths(loan.start, k + 1)).div(12);
+    const owedBefore = owedBeforePrepaying.plus(effectSeen);
+    const left = maturity - k;
+    const kept =
+      agreedInstalment ??
+      (reamortizeNext
+        ? left > 0
+          ? roundInstalment(annuityPayment(keptRate, left, owedBefore))
+          : owedBefore.plus(owedBefore.times(keptRate))
+        : row.instalment);
     // `prevIo`: whether payment k (just made) was interest-only (ADR 0129 §2).
     if (effect && owedAfter.greaterThan(ZERO) && !prevIo) {
       if (effect === "lowerInstalment") {

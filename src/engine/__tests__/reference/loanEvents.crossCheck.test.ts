@@ -82,6 +82,24 @@ const late228: RefLoan = {
   recasts: [{ date: "2026-05-07", instalment: 1600 }],
 };
 
+/** #235: a development loan recast to a maturity on its last payment due by baseDate
+ *  2025-09-06, then a `shortenTerm` prepayment in the late window. */
+const late235: RefLoan = {
+  start: "2023-02-07",
+  principal: "300000",
+  ratePa: "0.005",
+  instalment: "2565",
+  termMonths: 120,
+  fixationMonths: 12,
+  draws: [
+    { date: "2023-03-01", amount: "43442" },
+    { date: "2025-07-01", amount: "33985" },
+  ],
+  completion: "2025-07-01",
+  prepayments: [shorten("2025-09-06", 3000)],
+  recasts: [{ date: "2025-08-07", maturity: "2034-02-07" }],
+};
+
 type Case = [
   string,
   RefLoan,
@@ -431,6 +449,32 @@ const CASES: Case[] = [
       start: "2025-05-07",
       ratePa: "0.03",
       fixationMonths: 12,
+      recasts: [],
+    },
+    "2026-06-06",
+  ],
+  // ADR 0179 (#235): after an owed re-amortization, the annuity the next payment would
+  // pay without the prepayment is kept.
+  [
+    "dev loan, late shorten after a maturity recast (ADR 0179)",
+    late235,
+    "2025-09-06",
+  ],
+  [
+    "dev loan, shorten after a maturity recast, forward (ADR 0179)",
+    late235,
+    "2025-08-07",
+  ],
+  [
+    "plain loan, late shorten after a capped instalment recast (ADR 0179)",
+    { ...late228, recasts: [{ date: "2026-05-07", instalment: 1150 }] },
+    "2026-06-06",
+  ],
+  [
+    "plain loan, late shorten after a lower on the last payment due (ADR 0179)",
+    {
+      ...late228,
+      prepayments: [lower("2026-05-07", 20000), shorten("2026-06-06", 3000)],
       recasts: [],
     },
     "2026-06-06",
