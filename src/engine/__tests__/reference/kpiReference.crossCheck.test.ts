@@ -341,7 +341,8 @@ describe("KPI reference model (engine-free, ADR 0174)", () => {
   it("agrees with the engine with a shortenTerm prepayment at the refix (ADR 0179)", () => {
     const { ys, rk } = expectEngineMatches(withShortenTerm);
     expect(ys.some((y) => y.prepaid.gt(0))).toBe(true);
-    expect(Number(rk.leveredIrrNominal).toFixed(7)).toBe("0.0616724");
+    // ADR 0182: management on collected rent (was 0.0616724, ADR 0179).
+    expect(Number(rk.leveredIrrNominal).toFixed(7)).toBe("0.0619133");
     expect(gap(rk.totalPrincipalRepaid, ys[0]!.balance)).toBeLessThanOrEqual(
       TIGHT,
     );
@@ -359,12 +360,15 @@ describe("KPI reference model (engine-free, ADR 0174)", () => {
     expect(rk.debtFreeYear).toBeNull();
   });
 
-  it("finds the IRR only for one sign change", () => {
+  it("finds the IRR only for a unique root (one sign change, or Norström)", () => {
     const flows = (xs: number[]) => xs.map((x) => new Dec(x));
-    expect(() => referenceIrr(flows([-100, 230, -132]))).toThrow(
-      /one sign change/,
-    );
+    expect(() => referenceIrr(flows([-100, 230, -132]))).toThrow(/unique root/);
     expect(Number(referenceIrr(flows([-100, 10, 110])))).toBeCloseTo(0.1, 12);
+    // Three sign changes, but the running sums −100, −50, −60, 40 change sign once.
+    expect(Number(referenceIrr(flows([-100, 50, -10, 100])))).toBeCloseTo(
+      0.158622126,
+      9,
+    );
   });
 
   const unsupported: [string, Portfolio, Assumptions?][] = [

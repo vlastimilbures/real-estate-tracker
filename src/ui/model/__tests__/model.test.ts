@@ -49,7 +49,7 @@ describe("projectionSeries — Nominal/Real lens", () => {
 });
 
 describe("monthlyFlow (Dashboard) ", () => {
-  it("net baseline == netCashFlow / 12 (≈ −4 778)", () => {
+  it("net baseline == netCashFlow / 12 (≈ −4 249, ADR 0182)", () => {
     const f = monthlyFlow(snap);
     near(
       f.net.toNumber(),

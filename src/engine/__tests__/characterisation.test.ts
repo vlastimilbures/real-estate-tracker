@@ -324,7 +324,7 @@ describe("Scenario shocks — windows and edges // DR-094", () => {
     });
     near(both.netWorthNominal, PARITY.kpis.netWorthNominal, KC, "nominal NW");
     near(both.netWorthReal, 40_741_222.87, KC, "real NW");
-    near(both.cumulativeNetCashFlow, 13_987_681.8, KC, "cum CF"); // D-80 (was 13,612,311.18)
+    near(both.cumulativeNetCashFlow, 14_302_578.01, KC, "cum CF"); // ADR 0182 (was 13,987,681.8; D-80 13,612,311.18)
     near(
       both.totalPrincipalRepaid,
       PARITY.snapshot.totalDebt,
@@ -344,7 +344,7 @@ describe("Scenario shocks — windows and edges // DR-094", () => {
     near(
       kpis({ rateShock: { deltaPa: rate("-0.01"), durationYears: 5 } })
         .cumulativeNetCashFlow,
-      15_128_179.62, // D-80 (was 14,752,809.00)
+      15_443_075.83, // ADR 0182 (was 15,128,179.62; D-80 14,752,809.00)
       KC,
       "cheaper refix raises cum CF",
     );

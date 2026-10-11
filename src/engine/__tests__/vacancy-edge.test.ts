@@ -5,6 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { portfolioSnapshot } from "../metrics";
 import { portfolioKpis } from "../kpis";
+import { portfolioProjection } from "../projections";
 import { applyScenario } from "../scenarios";
 import { assumptions, portfolio } from "./support/seed";
 import { KC, near } from "./support/tolerance";
@@ -20,6 +21,20 @@ describe("100% vacancy (vacancyAllowance = 1)", () => {
     expect(snap.noi.isNegative()).toBe(true);
     near(snap.noi.toNumber(), -snap.holdingCosts.toNumber(), KC, "noi");
   });
+  // ADR 0182: management is charged on collected rent, maintenance on contracted rent.
+  // 3 × (2,550 + 2,550 + 850 × 12) fixed + 5 % maintenance × 846,600 = 45,900 + 42,330.
+  it("holding costs are the fixed part plus maintenance on contracted rent", () =>
+    near(snap.holdingCosts.toNumber(), 88_230, KC, "holding"));
+  it("projection year 1: no management fee on rent that is not collected", () => {
+    const y1 = portfolioProjection(portfolio, a)[1]!;
+    const fixed = 45_900 * 1.025; // fixed0 × CPI_1
+    near(
+      y1.holdingCosts.toNumber(),
+      fixed + 0.05 * y1.grossRent.toNumber(),
+      KC,
+      "holding y1",
+    );
+  });
   it("portfolio DSCR is negative (rent covers nothing)", () =>
     expect(snap.dscr!.isNegative()).toBe(true));
 
@@ -27,6 +42,19 @@ describe("100% vacancy (vacancyAllowance = 1)", () => {
     const kpis = portfolioKpis(portfolio, a);
     near(kpis.totalPrincipalRepaid.toNumber(), 9_515_405, KC, "Σ principal");
   });
+});
+
+// ADR 0182: at 50 % vacancy management is charged on half the rent, maintenance on all of it.
+// 45,900 fixed + 15 % × 423,300 + 5 % × 846,600 = 45,900 + 63,495 + 42,330.
+describe("50% vacancy (vacancyAllowance = 0.5)", () => {
+  const a = applyScenario(assumptions, { vacancyAllowance: rate("0.5") });
+  it("management on collected rent, maintenance on contracted rent", () =>
+    near(
+      portfolioSnapshot(portfolio, a).holdingCosts.toNumber(),
+      151_725,
+      KC,
+      "holding",
+    ));
 });
 
 describe("0% vacancy (vacancyAllowance = 0)", () => {

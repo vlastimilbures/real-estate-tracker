@@ -225,6 +225,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0179](0179-shorten-term-next-payment-rate.md)                 | Shorten term keeps the next payment's instalment at the next payment's rate                   | Accepted                                                       | #164, #235                                         |
 | [0180](0180-data-check-restore-asof-polish.md)                 | Data check, restore and as-of polish: stored columns, non-integers, a pick nobody made        | Accepted                                                       | #263, #260, #265, #276                             |
 | [0181](0181-purchase-price-fallback-grows.md)                  | A property with no valuation grows its purchase price to the projection start                 | Accepted                                                       | #157, #152                                         |
+| [0182](0182-management-on-collected-rent.md)                   | Management is charged on collected rent                                                       | Accepted                                                       | #150                                               |
 
 <!-- adr-index:end -->
 

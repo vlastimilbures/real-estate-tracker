@@ -164,6 +164,16 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- The **management** percentage is charged on the rent collected (after the vacancy
+  allowance), not on the full contracted rent; **maintenance** stays on the contracted
+  rent (ADR 0182, #150). The rule is the same for today's figures and every projection
+  year. Rent lost to the vacancy allowance no longer pays the manager: on the sample
+  portfolio holding costs fall from 215,220 to 208,870.5 Kč, NOI rises from 589,050 to
+  595,399.5 Kč, DSCR from 0.91 to 0.92, the levered IRR from 6.18 % to 6.20 %, and cash
+  flow turns positive in 2029 instead of 2031. The labels read "Management (% of collected
+  rent)" and "Maintenance (% of contracted rent)", and the Guide's examples follow the new
+  rule.
+
 - A property with no valuation at all now grows its purchase price to the projection start
   (ADR 0181, #157). Before, the price stood in unchanged, so the value stayed flat when the
   base date moved and jumped when a valuation was entered: a flat bought in June 2015 for

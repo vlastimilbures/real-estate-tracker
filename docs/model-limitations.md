@@ -144,7 +144,9 @@ work still to do is in the [roadmap](roadmap.md).
 ## Rent and leases
 
 - **Rent follows your leases.** Months before the first lease and gaps between leases earn
-  nothing. The vacancy allowance applies on top. See
+  nothing, and carry no management or maintenance percentage either. The vacancy allowance
+  applies on top: management is charged on the rent after it, maintenance on the rent
+  before it (ADR 0182). See
   [SPEC §4.5](../SPEC.md#45-annual-projection-year-0--horizon).
 - **The last lease is treated as renewed** in the projection, indexed every year, unless it
   ended before the projection start.

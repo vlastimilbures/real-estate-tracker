@@ -75,10 +75,11 @@ describe("importCsv — parity (parity targets via CSV)", () => {
   it("portfolio LTV", () => near(snap.ltv!.toNumber(), 0.3312, RATIO, "ltv"));
   it("gross rent", () =>
     near(snap.grossAnnualRent.toNumber(), 846_600, KC, "gross"));
-  it("NOI", () => near(snap.noi.toNumber(), 589_050, KC, "noi"));
+  // ADR 0182 moved NOI, net cash flow and DSCR (was 589,050, −57,334.2 and 0.9113).
+  it("NOI", () => near(snap.noi.toNumber(), 595_399.5, KC, "noi"));
   it("net cash flow", () =>
-    near(snap.netCashFlow.toNumber(), -57_334.2, KC, "ncf"));
-  it("DSCR", () => near(snap.dscr!.toNumber(), 0.9113, RATIO, "dscr"));
+    near(snap.netCashFlow.toNumber(), -50_984.7, KC, "ncf"));
+  it("DSCR", () => near(snap.dscr!.toNumber(), 0.92112, RATIO, "dscr"));
   it("weighted-avg rate", () =>
     near(snap.weightedAvgRate.toNumber(), 0.035226, RATIO, "war"));
 

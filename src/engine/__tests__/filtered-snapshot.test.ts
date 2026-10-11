@@ -21,16 +21,17 @@ const filterTo = (ids: string[]): Portfolio => {
   };
 };
 
+// ADR 0182 moved the NOI, net cash flow and DSCR pins (management on collected rent).
 describe("Filtered snapshot — single property (parity targets)", () => {
   const snap = portfolioSnapshot(filterTo(["javorova"]), assumptions);
   it("value", () => near(snap.totalValue.toNumber(), 10_200_000, KC, "value"));
   it("debt", () => near(snap.totalDebt.toNumber(), 1_642_907.31, KC, "debt"));
-  it("NOI", () => near(snap.noi.toNumber(), 229_500, KC, "noi"));
+  it("NOI", () => near(snap.noi.toNumber(), 231_948, KC, "noi"));
   it("debt service", () =>
     near(snap.annualDebtService.toNumber(), 80_661.6, KC, "ds"));
   it("net cash flow", () =>
-    near(snap.netCashFlow.toNumber(), 148_838.4, KC, "ncf"));
-  it("DSCR", () => near(snap.dscr!.toNumber(), 2.84522, RATIO, "dscr"));
+    near(snap.netCashFlow.toNumber(), 151_286.4, KC, "ncf"));
+  it("DSCR", () => near(snap.dscr!.toNumber(), 2.87557, RATIO, "dscr"));
 });
 
 describe("Filtered snapshot — two properties sum to their parts", () => {
@@ -40,7 +41,7 @@ describe("Filtered snapshot — two properties sum to their parts", () => {
   it("debt = sum", () =>
     near(snap.totalDebt.toNumber(), 1_642_907.31 + 2_755_908.88, KC, "debt"));
   it("net cash flow = sum", () =>
-    near(snap.netCashFlow.toNumber(), 148_838.4 + -79_141.8, KC, "ncf"));
+    near(snap.netCashFlow.toNumber(), 151_286.4 + -77_191.05, KC, "ncf"));
 });
 
 describe("Filtered projection — amortization runs correctly (parity invariant)", () => {

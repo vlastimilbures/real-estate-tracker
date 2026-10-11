@@ -593,8 +593,8 @@ export const cs: Dictionary = {
     fieldInsurance: "Pojištění /rok",
     fieldSvjMo: "SVJ /měs",
     fieldOther: "Ostatní /rok",
-    fieldMgmtPct: "Správa (% nájmu)",
-    fieldMaintPct: "Údržba (% nájmu)",
+    fieldMgmtPct: "Správa (% z vybraného nájmu)",
+    fieldMaintPct: "Údržba (% ze sjednaného nájmu)",
     saveHoldingCosts: "Uložit náklady na držbu",
     holdingCostsSaved: "Náklady na držbu uloženy",
     projectionTitle: (n) => `${n}letá projekce`,
@@ -760,8 +760,8 @@ export const cs: Dictionary = {
     insurance: "Pojištění /rok",
     svj: "SVJ / fond oprav /měs",
     other: "Ostatní /rok",
-    mgmt: "Správa (% nájmu)",
-    maint: "Údržba (% nájmu)",
+    mgmt: "Správa (% z vybraného nájmu)",
+    maint: "Údržba (% ze sjednaného nájmu)",
   },
 
   settings: {
@@ -1387,17 +1387,17 @@ export const cs: Dictionary = {
       },
       holdingCosts: {
         name: "Náklady na držbu",
-        formula: "fixní + (správa % + údržba %) × hrubý nájem",
+        formula: "fixní + správa % × efektivní příjem + údržba % × hrubý nájem",
         meaning:
-          "Roční provozní náklad: fixní položky (daň, pojištění, SVJ, ostatní) plus správa a údržba jako % z nájmu.",
-        eg: "36 k + (15 %+5 %)×240 k = 84 k.",
+          "Roční provozní náklad: fixní položky (daň, pojištění, SVJ, ostatní), plus správa jako % z vybraného nájmu a údržba jako % ze sjednaného nájmu.",
+        eg: "36 k + 15 %×228 k + 5 %×240 k = 82,2 k.",
       },
       noi: {
         name: "NOI",
         formula: "efektivní příjem − náklady na držbu",
         meaning:
           "Provozní zisk před hypotékou — hotovost, kterou sám aktivum vynáší.",
-        eg: "228 k − 84 k = 144 k.",
+        eg: "228 k − 82,2 k = 145,8 k.",
       },
       debtService: {
         name: "Roční dluhová služba",
@@ -1411,14 +1411,14 @@ export const cs: Dictionary = {
         meaning:
           "Modelovaný roční cash flow po nákladech a hypotéce — odhad, ne záznam z bankovního účtu. Může být záporný.",
         caveat: "Nejde o skutečné příjmy.",
-        eg: "144 k − 120 k = +24 k.",
+        eg: "145,8 k − 120 k = +25,8 k.",
       },
       dscr: {
         name: "DSCR",
         formula: "NOI ÷ dluhová služba",
         meaning:
           "Zda nájem pokryje hypotéku. Nad 1,0 si nemovitost splácí úvěr sama; pod tím doplácíte.",
-        eg: "144 k ÷ 120 k = 1,20× (20 % rezerva).",
+        eg: "145,8 k ÷ 120 k = 1,215× (21,5 % rezerva).",
       },
       grossYield: {
         name: "Hrubý výnos",
@@ -1432,7 +1432,7 @@ export const cs: Dictionary = {
         formula: "NOI ÷ hodnota",
         meaning:
           "Výnos z hodnoty po provozních nákladech, bez hypotéky — standardní srovnání.",
-        eg: "144 k ÷ 5,4 M ≈ 2,7 %.",
+        eg: "145,8 k ÷ 5,4 M = 2,7 %.",
       },
       weightedAvgRate: {
         name: "Vážená průměrná sazba",
@@ -1458,7 +1458,7 @@ export const cs: Dictionary = {
         name: "Neobsazenost",
         formula: "uplatněna každý rok",
         meaning:
-          "Rezerva na neobsazenost se z nájmu bere každý rok, stejně jako ve snímku.",
+          "Rezerva na neobsazenost se z nájmu bere každý rok, stejně jako ve snímku; správa se počítá z nájmu sníženého o tuto rezervu.",
       },
       costs: {
         name: "Náklady",

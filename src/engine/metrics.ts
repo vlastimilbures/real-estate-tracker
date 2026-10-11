@@ -83,20 +83,21 @@ export function fixedHoldingCost(c: {
 }
 
 /**
- * A property's holding-cost basis: the fixed annual cost and the share of rent (mgmt +
- * maint), each field from its holding-cost row, else the assumption default. One
- * holding-cost row per property (DUPLICATE_HOLDING_COST, D-37).
+ * A property's holding-cost basis: the fixed annual cost and the management and
+ * maintenance shares of rent, each field from its holding-cost row, else the assumption
+ * default. One holding-cost row per property (DUPLICATE_HOLDING_COST, D-37).
  */
 export function holdingCostBasis(
   property: Property,
   portfolio: Portfolio,
   assumptions: Assumptions,
-): { fixed: Decimal; varPct: Decimal } {
+): { fixed: Decimal; mgmtPct: Decimal; maintPct: Decimal } {
   const cost = forProperty(portfolio.holdingCosts, property.id).at(0);
   const c = effectiveCosts(cost, assumptions);
   return {
     fixed: fixedHoldingCost(c),
-    varPct: c.mgmtPctRent.plus(c.maintPctRent),
+    mgmtPct: c.mgmtPctRent,
+    maintPct: c.maintPctRent,
   };
 }
 
@@ -218,8 +219,15 @@ function snapshotIncome(
   const effectiveGrossIncome = grossAnnualRent.times(
     ONE.minus(assumptions.vacancyAllowance),
   );
-  const { fixed, varPct } = holdingCostBasis(property, portfolio, assumptions);
-  const holdingCosts = fixed.plus(varPct.times(grossAnnualRent));
+  const { fixed, mgmtPct, maintPct } = holdingCostBasis(
+    property,
+    portfolio,
+    assumptions,
+  );
+  // Management on the rent collected, maintenance on the rent contracted (ADR 0182).
+  const holdingCosts = fixed
+    .plus(mgmtPct.times(effectiveGrossIncome))
+    .plus(maintPct.times(grossAnnualRent));
   const noi = effectiveGrossIncome.minus(holdingCosts);
   return { grossAnnualRent, effectiveGrossIncome, holdingCosts, noi };
 }
