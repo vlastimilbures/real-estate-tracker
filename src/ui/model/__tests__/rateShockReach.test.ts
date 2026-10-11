@@ -385,6 +385,15 @@ describe("tripwire: the helper agrees with the engine", () => {
       ],
       1,
     ),
+    // #293: a future floating block is shocked from its own start (ADR 0162), so a
+    // 1-year shock reaches a successor that starts two years after baseDate.
+    variant(
+      "future floating successor, 1-year shock",
+      true,
+      pastHorizon,
+      [lipovaSuccessor(0)],
+      1,
+    ),
     variant("successor fixed to maturity", false, onlyLipova, [
       lipovaSuccessor(25),
     ]),

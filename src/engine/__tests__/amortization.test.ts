@@ -157,6 +157,40 @@ describe("0-year floating block (ADR 0162)", () => {
     ).toEqual(openingBalance(fixedFor30, assumptions));
   });
 
+  // #293: the edges the ADR 0162 review probed by hand.
+  it("a floating development loan with interest-only months and a tranche before baseDate replays history like its long-fixation twin", () => {
+    const dev = (fixationYears: number) =>
+      loan({
+        fixationYears,
+        startDate: isoDate("2025-01-15"),
+        initialPrincipal: money("1000000"),
+        loanTermYears: 30,
+        draws: [{ date: isoDate("2025-09-10"), amount: money("500000") }],
+        completionDate: isoDate("2026-12-31"),
+      });
+    expect(openingBalance(dev(0), assumptions)).toEqual(
+      openingBalance(dev(30), assumptions),
+    );
+  });
+
+  it("a recast before baseDate replays history at the entered rate", () => {
+    const recasts = [
+      { date: isoDate("2024-03-01"), instalment: money("8000") },
+    ];
+    expect(
+      openingBalance(loan({ fixationYears: 0, recasts }), assumptions),
+    ).toEqual(
+      openingBalance(loan({ fixationYears: 30, recasts }), assumptions),
+    );
+  });
+
+  it("a floating block that starts on baseDate pays its first row at the reset rate", () => {
+    const today = loan({ fixationYears: 0, startDate: BASE_DATE });
+    const rows = buildSchedule(today, assumptions);
+    expect(rows[0]!.ratePa.toString()).toBe(RESET.toString());
+    expect(fixationExpired(today, BASE_DATE)).toBe(false);
+  });
+
   it("a future floating block runs at the reset rate from its first payment, shocked from its start", () => {
     const future = loan({ fixationYears: 0, startDate: isoDate("2027-01-31") });
     const due1 = edate(future.startDate, 1);
