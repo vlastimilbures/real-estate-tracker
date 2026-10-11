@@ -5,6 +5,9 @@
 - Source: issue #228 (found by the baseDate-shift invariant, #130 R1-07, PR #231)
 - Amends: [0109](0109-loan-prepayments-and-recasts.md) §5 (effect of a `shortenTerm`
   prepayment), as reached through the late window of §3
+- Amended by: [0179](0179-shorten-term-next-payment-rate.md) (decisions 1 and 2 and the
+  known limitation: every branch at payment `p+1`'s rate; an owed re-amortization keeps
+  the annuity `p+1` would pay)
 - Related: [0116](0116-prepayments-ui-and-review-fixes.md), [0120](0120-tranche-on-recast-payment.md)
   (decision 4, kept by #187), [0129](0129-loan-schedule-edge-cases.md) (§1: the late window);
   follow-up #235

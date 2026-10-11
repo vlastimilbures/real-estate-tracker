@@ -181,10 +181,10 @@ describe("ADR 0120: a tranche whose interest exceeds the agreed instalment", () 
     expect(rows.every((x) => !x.principal.isNegative())).toBe(true);
   });
 
-  it("a shortenTerm prepayment on q keeps the recast maturity", () => {
-    // shortenTerm keeps the instalment q paid, its ≈ 16,231.52 Kč interest (ADR 0137).
-    // On ≈ 3.97 M Kč that NPER ends after the maturity in force: no new term, so q+1
-    // still re-amortizes over the recast maturity, as without the prepayment.
+  it("a small shortenTerm prepayment on q keeps the recast maturity", () => {
+    // The tranche on q owes q+1 a re-amortization, so shortenTerm keeps the annuity q+1
+    // would pay without the prepayment (ADR 0179, #235). 10,000 Kč takes less than one
+    // payment off that annuity's term: ceil(NPER) is still the maturity in force.
     const plain = buildSchedule(big(), assumptions);
     const rows = buildSchedule(
       {
@@ -205,9 +205,13 @@ describe("ADR 0120: a tranche whose interest exceeds the agreed instalment", () 
     expect(lastPaying(rows).endBalance.toString()).toBe("0");
   });
 
-  it("a large shortenTerm prepayment on q sizes the term on q's interest (ADR 0137)", () => {
-    // 2,500,000 Kč leaves ≈ 1.48 M Kč. NPER at the 16,231.52 Kč q paid ends the loan
-    // at grid month 122; at the agreed 15,000 Kč it ended at month 134.
+  it("a large shortenTerm prepayment on q keeps the annuity q+1 owes (ADR 0179)", () => {
+    // 2,500,000 Kč leaves ≈ 1.48 M Kč. The tranche on q owes q+1 a re-amortization of
+    // the ≈ 3.97 M Kč before the prepayment over the recast maturity, 30,222.38 Kč
+    // (ADR 0137's table); kept, it ends the loan at grid month 63. q+1 re-amortizes
+    // over that shorter term, so it pays a little less than the kept instalment (the
+    // NPER round-up). On the 16,231.52 Kč q paid the loan ended at month 122
+    // (ADR 0137), on the agreed 15,000 Kč at month 134.
     const rows = buildSchedule(
       {
         ...big(),
@@ -222,7 +226,8 @@ describe("ADR 0120: a tranche whose interest exceeds the agreed instalment", () 
       assumptions,
     );
     expect(at(rows, Q).instalment.toFixed(2)).toBe("16231.52");
-    expect(lastPaying(rows).month).toBe(122);
+    expect(at(rows, Q + 1).instalment.toFixed(2)).toBe("29998.11");
+    expect(lastPaying(rows).month).toBe(63);
     expect(lastPaying(rows).endBalance.toString()).toBe("0");
   });
 });

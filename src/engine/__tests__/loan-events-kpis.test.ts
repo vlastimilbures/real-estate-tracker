@@ -134,7 +134,8 @@ describe("ADR 0109: prepayments in the KPIs", () => {
     expect(
       kpis.leveredIrrNominal?.equals(baseKpis.leveredIrrNominal ?? ZERO),
     ).toBe(false);
-    nearNum(kpis.leveredIrrNominal!.toNumber(), 0.061652, RATIO, "prepaid irr");
+    // The KPI reference model gives 0.0616724 for this portfolio (ADR 0179).
+    nearNum(kpis.leveredIrrNominal!.toNumber(), 0.061672, RATIO, "prepaid irr");
     // The prepayment lands in Y5 (2031), the seed's first positive year; its outflow
     // does not reduce that year's own net cash flow, so the KPI stays 2031.
     expect(proj[5]?.prepaid.greaterThan(ZERO)).toBe(true);
@@ -146,7 +147,7 @@ describe("ADR 0109: prepayments in the KPIs", () => {
     expect(
       portfolioKpis(prepaid("shortenTerm", javorovaOnly), assumptions)
         .debtFreeYear,
-    ).toBe(2043);
+    ).toBe(2046);
     expect(
       portfolioKpis(prepaid("lowerInstalment", javorovaOnly), assumptions)
         .debtFreeYear,
@@ -155,12 +156,12 @@ describe("ADR 0109: prepayments in the KPIs", () => {
 });
 
 describe("ADR 0109: the modelled payoff moves with a shorter term", () => {
-  it("payoff date 2043-03-17 after the shortenTerm prepayment", () => {
+  it("payoff date 2046-04-17 after the shortenTerm prepayment (ADR 0179)", () => {
     const p = prepaid("shortenTerm");
     const ids = p.properties.map((x) => x.id);
     const schedules = propertySchedules(p.mortgages, ids, assumptions);
     const fx = financingExposure(p, assumptions, schedules, BASE_DATE);
     const loan = fx.loans.find((l) => l.propertyId === "javorova");
-    expect(loan?.payoffDate?.toISOString().slice(0, 10)).toBe("2043-03-17");
+    expect(loan?.payoffDate?.toISOString().slice(0, 10)).toBe("2046-04-17");
   });
 });

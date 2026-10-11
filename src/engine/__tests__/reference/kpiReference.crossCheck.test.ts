@@ -241,6 +241,27 @@ const withEvents: Portfolio = {
   ),
 };
 
+/** The seed with Javorová prepaying 500 000 Kč (+ 2 000 Kč fee) on its 2031 refix to
+ *  shorten the term: the kept instalment is sized at the 4.5 % reset (ADR 0179). */
+const withShortenTerm: Portfolio = {
+  ...portfolio,
+  mortgages: portfolio.mortgages.map((m): MortgageBlock =>
+    m.propertyId === "javorova"
+      ? {
+          ...m,
+          prepayments: [
+            {
+              date: isoDate("2031-01-17"),
+              amount: money("500000"),
+              effect: "shortenTerm",
+              fee: money("2000"),
+            },
+          ],
+        }
+      : m,
+  ),
+};
+
 /** The seed with every lease edge of SPEC §4.5: Javorová's last lease ends in 2027 and is
  *  renewed, Lipová's first lease ends 2026-08-01 so the 2026-08-07 grid month is a gap,
  *  and Dubová's only lease ended before baseDate (no rent). */
@@ -312,6 +333,15 @@ describe("KPI reference model (engine-free, ADR 0174)", () => {
     const { ys, rk } = expectEngineMatches(withEvents);
     expect(ys.some((y) => y.prepaid.gt(0))).toBe(true);
     // Principal retires the whole opening debt (CLAUDE.md §7).
+    expect(gap(rk.totalPrincipalRepaid, ys[0]!.balance)).toBeLessThanOrEqual(
+      TIGHT,
+    );
+  });
+
+  it("agrees with the engine with a shortenTerm prepayment at the refix (ADR 0179)", () => {
+    const { ys, rk } = expectEngineMatches(withShortenTerm);
+    expect(ys.some((y) => y.prepaid.gt(0))).toBe(true);
+    expect(Number(rk.leveredIrrNominal).toFixed(7)).toBe("0.0616724");
     expect(gap(rk.totalPrincipalRepaid, ys[0]!.balance)).toBeLessThanOrEqual(
       TIGHT,
     );

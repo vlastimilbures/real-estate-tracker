@@ -307,7 +307,10 @@ export type LoanEventIssue =
   | "RECAST_AFTER_PAYOFF"
   | "RECAST_REPLACED"
   | "RECAST_INSTALMENT_BELOW_INTEREST"
-  | "RECAST_TERM_CAPPED";
+  | "RECAST_TERM_CAPPED"
+  /** A `shortenTerm` prepayment whose kept instalment would not repay the loan by the
+   *  maturity in force: the term stays (ADR 0179). */
+  | "PREPAYMENT_TERM_NOT_SHORTENED";
 
 /** What one prepayment or recast did in the schedule (ADR 0109). */
 export interface LoanEventOutcome {

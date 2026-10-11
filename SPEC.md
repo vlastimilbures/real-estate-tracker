@@ -345,8 +345,14 @@ table and its export show `dueDate`.
 - **Prepayment**: `applied = min(amount, B)` is subtracted after the payment (row column
   `prepaid`; the fee is in `prepaymentFee`). Effect of the period's last prepayment, once:
   `lowerInstalment` re-amortizes from the next payment to the same maturity;
-  `shortenTerm` keeps the instalment and sets the maturity to the payment plus
-  `ceil(NPER)` at its rate. During interest-only both effects are the same.
+  `shortenTerm` keeps the instalment already set for the next payment (an agreed one still
+  to pay; else, when that payment owes a re-amortization, the annuity of the balance before
+  the prepayments over the payments left; else this payment's instalment, a rate change or
+  tranche on the next payment not anticipated) and sets the maturity to the payment plus
+  `ceil(NPER)` at the next payment's rate (ADR 0179).
+  The maturity never moves later: when that instalment does not repay the loan by it, the
+  term stays and the outcome reports `PREPAYMENT_TERM_NOT_SHORTENED`. During interest-only
+  both effects are the same.
 - **Recast**: to a `maturity`, the last payment becomes the last one due on or before it
   and the next payment re-amortizes; to an `instalment`, the next payment pays exactly that
   and the maturity follows from `ceil(NPER)` at that payment's rate. The maturity is capped

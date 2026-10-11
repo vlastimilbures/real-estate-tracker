@@ -6,6 +6,8 @@
 - Amends: [0109](0109-loan-prepayments-and-recasts.md) §6 (payment `q` pays exactly the
   agreed instalment); [0120](0120-tranche-on-recast-payment.md) decision 1 and the wording of
   decision 4 (the instalment `q` paid)
+- Amended by: [0179](0179-shorten-term-next-payment-rate.md) (decision 3 and its example: a
+  `shortenTerm` after `q` keeps the annuity `q+1` owes)
 - Related: [0136](0136-shorten-term-agreed-instalment.md)
 
 ## Context
