@@ -47,9 +47,8 @@ export function edate(date: Date, months: number): IsoDate {
   const targetMonthIndex = m + months;
   const targetYear = y + Math.floor(targetMonthIndex / 12);
   const targetMonth = ((targetMonthIndex % 12) + 12) % 12;
-  const lastDay = new Date(
-    Date.UTC(targetYear, targetMonth + 1, 0),
-  ).getUTCDate();
+  // Day 0 of the next month is this month's last day; `utc` keeps years 0–99.
+  const lastDay = utc(targetYear, targetMonth + 2, 0).getUTCDate();
   return utc(targetYear, targetMonth + 1, Math.min(d, lastDay));
 }
 

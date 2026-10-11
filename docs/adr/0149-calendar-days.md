@@ -10,6 +10,8 @@
   [0118](0118-data-check.md) (data check), DR-068 (local-day file name), DR-072 (injectable
   today), DR-035 and UX-052 (form dates, 1900 floor)
 - Implementation: decisions 1–3 in PR 10.10a; decisions 4–6 in PR 10.10b
+- Amended: 2026-10-11 (#263 item 1: `edate`'s month-end clamp also reads the full year,
+  decision 5)
 
 ## Context
 
@@ -51,6 +53,9 @@ off-by-one) was made in one copy of the helper, and five copies exist.
      year (no two-digit mapping) and refuses a day that does not exist. There is one per
      layer: the engine's (`utc`, `calendarDay`) and a twin in `src/lib/day.ts`, because lib
      and the engine may not import each other; a test checks that the two agree.
+     Engine date arithmetic derives from it too: `edate` finds the month's last day with
+     `utc`, not `Date.UTC`, so year 0 (a leap year) clamps to 29 February (#263). Only
+     years 0–99 could change, and stored data starts at 0100.
    - The form and CSV import refuse a date before 01.01.1900, with a message that names the
      floor.
    - Loading the database does not apply the floor: the database guard checks only that a

@@ -13,6 +13,16 @@ describe("edate — end-of-month clamp", () => {
   });
   it("Jan 31 + 1mo clamps to Feb 29 in a leap year (2024)", () =>
     expect(edate(isoDate("2024-01-31"), 1).getUTCDate()).toBe(29));
+  // #263 item 1 (ADR 0149 §5): the clamp reads the full year too. Year 0 is a leap year;
+  // Date.UTC read it as 1900, which is not.
+  it("Jan 31 + 1mo clamps to Feb 29 in year 0 (a leap year)", () =>
+    expect(edate(isoDate("0000-01-31"), 1).toISOString().slice(0, 10)).toBe(
+      "0000-02-29",
+    ));
+  it("Jan 31 + 1mo clamps to Feb 28 in year 99 (not a leap year)", () =>
+    expect(edate(isoDate("0099-01-31"), 1).toISOString().slice(0, 10)).toBe(
+      "0099-02-28",
+    ));
 });
 
 describe("monthsBetween — day-of-month edge", () => {
