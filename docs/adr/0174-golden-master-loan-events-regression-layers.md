@@ -34,10 +34,11 @@ all proved the engine correct. They do not:
    byte-for-byte identical. The list is not extended any more.
 2. **v2 golden cases hash every field, per field.** New cases (loan events with a refinance;
    a cash-outside prepayment on a future buy; each with base and shocked assumptions) hash the
-   whole output with no exclusions. Each section is snapshotted as one hash per field: per
-   column for an array of records, per key for a record. They cover schedules and event
+   whole output with no exclusions. Each section is snapshotted as one hash per field path
+   (for an array of records, the field across all rows). They cover schedules and event
    outcomes, snapshots, property and portfolio projections, KPIs, CPI, the real lens,
-   year snapshots, `portfolioOutputs` and financing exposure.
+   year snapshots and financing exposure; the one-pass `portfolioOutputs` is compared with
+   those parts.
 3. **Adding a field is not a behaviour change; changing one is.** A new engine output field
    shows in the v2 snapshot as added lines only. It is recorded in the same commit as the
    field, under the field's own ADR. A changed existing line means a number moved: it needs
@@ -45,8 +46,10 @@ all proved the engine correct. They do not:
 4. **Three named layers.** The docs name them and say what each proves:
    - **Independent references** — engine-free models written from `SPEC.md`: the mortgage
      model and, new, a KPI model (rent, holding costs, NOI, debt service, net cash flow,
-     equity, cash to owner, levered IRR, CAGR and multiples). They check correctness. ESLint
-     and dependency-cruiser fail any import of engine or `src/lib` code into them.
+     equity, cash to owner, levered IRR, CAGR and multiples). Where they agree with the
+     engine, two implementations written apart give the same number, so an error has to
+     be made twice to pass. ESLint and dependency-cruiser allow them no import but each
+     other (no engine, `src/lib`, support or adapter code).
    - **Parity targets** — the numbers the engine must reproduce. Money targets are engine
      values since ADR 0081; ratio, rate and year targets did not move. For a change, a
      mismatch is still an engine bug (CLAUDE.md §6).
@@ -54,9 +57,14 @@ all proved the engine correct. They do not:
      nothing correct.
 5. **Scope of the KPI model.** It covers the sample portfolio (checked against the parity
    targets and the engine) and one event case (a prepayment and a recast, checked against the
-   engine). It throws on any input it does not model (inactive or future properties, growth
-   overrides, funding records, more than one loan per property, development loans, shocks,
-   acquisition costs, more than one valuation), so it never silently ignores one.
+   engine), plus the lease edges of SPEC §4.5 and a portfolio without loans. It throws on any
+   input outside that scope, so it never silently ignores one: it checks its own inputs
+   (future purchases, valuations, overlapping leases, more than one loan per property,
+   development loans, events on or before baseDate), and the test adapter flags the engine
+   fields it has no input for (inactive properties, growth overrides, funding records,
+   shocks, acquisition costs).
+6. **"Additions only" is checked in review.** No tool fails a snapshot update that changes
+   an existing line; the reviewer of a `vitest -u` diff checks it.
 
 ## Consequences
 

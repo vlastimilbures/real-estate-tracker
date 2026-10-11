@@ -223,8 +223,9 @@ What the checks do and do not prove:
 - **Arithmetic.** Money uses exact decimal arithmetic; results are rounded only for display.
 - **Engine figures.** Two independent models, written from the specification without the
   engine's code, check the mortgage maths and the sample portfolio's projection and KPIs.
-  Parity targets pin the sample's figures within ±1 Kč (money) and ±0.0001 (ratios); they are
-  the engine's own values, so they catch a change rather than prove a figure. A golden master
+  Parity targets pin the sample's figures within ±1 Kč (money) and ±0.0001 (ratios); the
+  money targets are the engine's own values, so they catch a change rather than prove a
+  figure. A golden master
   catches any other change. A target changes only through an ADR, recorded in the
   [target change log](.claude/rules/engine-parity.md#target-change-log). These tests show the
   formulas run as specified; they do not show that the economic assumptions are right — see

@@ -20,10 +20,11 @@ The regression baseline has three named layers (ADR 0174):
 1. **Independent references** — engine-free models written from `SPEC.md` in
    `src/engine/__tests__/reference/`: the mortgage model (`mortgageReference.ts`) and the KPI
    model (`kpiReference.ts`: rent, holding costs, NOI, debt service, net cash flow, equity,
-   cash to owner, multiples, CAGR, levered IRR). They check correctness: the KPI model
-   reproduces these targets on the seed and agrees with the engine on the seed and on a
-   prepayment + recast case. ESLint and dependency-cruiser reject any import from the engine
-   or `src/lib` into them. Known limit: the KPI model reuses the mortgage model for loan rows,
+   cash to owner, multiples, CAGR, levered IRR). The KPI model reproduces these targets on
+   the seed and agrees with the engine on the seed, a prepayment + recast case, the lease
+   edges and a portfolio without loans: two implementations written apart, so an error has
+   to be made twice to pass. ESLint and dependency-cruiser allow them no import but each
+   other (no engine, `src/lib`, support or adapter code). Known limit: the KPI model reuses the mortgage model for loan rows,
    so a loan-maths error shared by both is not caught there.
 2. **Parity targets** — this file: the numbers the engine must reproduce.
 3. **Characterisation snapshot** — the full-precision golden master
