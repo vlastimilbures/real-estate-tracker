@@ -3,7 +3,7 @@
 // rate (never a scenario level). Before, the price stood in ungrown at the basis, so the
 // value stayed flat when the base date moved and jumped when a valuation was entered.
 import { describe, it, expect } from "vitest";
-import { rate } from "../brands";
+import { money, rate } from "../brands";
 import { isoDate } from "../dates";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection } from "../projections";
@@ -91,5 +91,52 @@ describe("ADR 0181: the purchase-price fallback grows to the projection start", 
     expect(valueOf(future, assumptions, isoDate("2029-03-01"))).toBe(
       "4243200.00",
     );
+  });
+
+  it("counts whole months only: a purchase day after the base day counts one month less", () => {
+    const midMonth = withJavorova({ purchaseDate: isoDate("2015-06-10") });
+    // 131 whole months to 2026-06-07: 4,080,000 × 1.04^(131/12)
+    expect(valueOf(midMonth, assumptions)).toBe("6260477.38");
+  });
+
+  it("a 29 Feb purchase counts a full month at a 28 Feb base date (D-45)", () => {
+    const leap = withJavorova({ purchaseDate: isoDate("2024-02-29") });
+    const feb = { ...assumptions, baseDate: isoDate("2026-02-28") };
+    // 24 whole months: 4,080,000 × 1.04²
+    expect(valueOf(leap, feb)).toBe("4412928.00");
+  });
+
+  it("a scenario applied on top of another keeps the base opening rate", () => {
+    const twice = applyScenario(
+      applyScenario(assumptions, { appreciationPa: rate("0.02") }),
+      { appreciationPa: rate("0.06") },
+    );
+    expect(valueOf(noJavorovaValuation, twice)).toBe("6280972.55");
+  });
+
+  it("projection year 0 is the same under a scenario and under Base", () => {
+    const low = applyScenario(assumptions, { appreciationPa: rate("0.02") });
+    const year0 = (a: Assumptions) =>
+      portfolioProjection(noJavorovaValuation, a)[0]?.value.toFixed(6);
+    expect(year0(low)).toBe(year0(assumptions));
+  });
+
+  it("a loan with a tranche still to draw reports the grown value less the undrawn part", () => {
+    const pf: Portfolio = {
+      ...noJavorovaValuation,
+      mortgages: noJavorovaValuation.mortgages.map((m) =>
+        m.propertyId === "javorova"
+          ? {
+              ...m,
+              loanTermYears: 30,
+              draws: [{ date: isoDate("2027-01-17"), amount: money("500000") }],
+            }
+          : m,
+      ),
+    };
+    const snap = propertySnapshot(javorova(pf), pf, assumptions);
+    expect(snap.value.toFixed(2)).toBe("6280972.55");
+    expect(snap.undrawnDebt.toFixed(2)).toBe("500000.00");
+    expect(snap.reportedValue.toFixed(2)).toBe("5780972.55");
   });
 });
