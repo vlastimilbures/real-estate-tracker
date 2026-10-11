@@ -405,6 +405,36 @@ const CASES: Case[] = [
     },
     "2026-06-06",
   ],
+  // ADR 0179 (#164): the kept instalment is sized at payment p+1's rate.
+  [
+    "shorten at the refix, too small to shorten: the term stays (ADR 0179)",
+    { ...J, prepayments: [shorten("2031-01-17", 100000)] },
+  ],
+  [
+    "shorten at the refix, the reset above what the kept instalment covers (ADR 0179)",
+    { ...J, prepayments: [shorten("2031-01-17", 500000)] },
+    "2026-06-07",
+    { resetRatePa: "0.10" },
+    { postFixationResetRatePa: rate("0.10") },
+  ],
+  [
+    "shorten on the last shocked payment: the next one reverts (ADR 0179)",
+    { ...J, prepayments: [shorten("2033-01-17", 500000)] },
+    "2026-06-07",
+    { rateShock: { deltaPa: "0.03", months: 24, anchor: "fixationEnd" } },
+    { rateShock: { deltaPa: rate("0.03"), durationYears: 2 } },
+  ],
+  [
+    "late shorten on the fixation end: the next payment is the first at the reset (ADR 0179)",
+    {
+      ...late228,
+      start: "2025-05-07",
+      ratePa: "0.03",
+      fixationMonths: 12,
+      recasts: [],
+    },
+    "2026-06-06",
+  ],
 ];
 
 describe("ADR 0109: engine = reference with prepayments and recasts", () => {

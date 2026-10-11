@@ -445,7 +445,6 @@ interface PaymentDone {
   p: number;
   month: number;
   balance: Decimal;
-  ratePa: Decimal;
   instalment: Decimal;
   interestOnly: boolean;
   terms: TermState;
@@ -532,9 +531,9 @@ function applyPrepayments(
  * The bank's answer to the period's prepayments, once, on the balance after all of
  * them (the last one's effect): lower the instalment from the next payment, or keep
  * the instalment the next payment pays and end the loan after `ceil(NPER)` more
- * payments at this payment's rate. An agreed instalment still to pay (a recast after
- * this payment, settled in the late window) is that instalment, at the next
- * payment's rate (ADR 0136); an owed re-amortization is not (ADR 0120 decision 4).
+ * payments at the next payment's rate, the rate it is paid at (ADR 0179). An agreed
+ * instalment still to pay (a recast after this payment, settled in the late window) is
+ * that instalment (ADR 0136); an owed re-amortization is not (ADR 0120 decision 4).
  * Interest-only months pay no instalment to keep: completion re-amortizes anyway.
  */
 function prepaymentTerms(
@@ -545,15 +544,12 @@ function prepaymentTerms(
   const { terms, balance } = done;
   if (!effect || done.interestOnly || !balance.greaterThan(ZERO)) return terms;
   if (effect === "lowerInstalment") return { ...terms, reamortizeNext: true };
-  const agreed = terms.agreedInstalment;
-  const left =
-    agreed !== null
-      ? nperMonths(
-          rateOfPayment(done.p + 1, ev.block, ev.assumptions).div(12),
-          agreed,
-          balance,
-        )
-      : nperMonths(done.ratePa.div(12), done.instalment, balance);
+  const next = rateOfPayment(done.p + 1, ev.block, ev.assumptions).div(12);
+  const left = nperMonths(
+    next,
+    terms.agreedInstalment ?? done.instalment,
+    balance,
+  );
   return Number.isFinite(left) && left > 0
     ? { ...terms, term: Math.min(terms.term, done.p + left) }
     : terms;
@@ -700,7 +696,6 @@ function payAndSettle(
       p,
       month: mo.month,
       balance: step.endBalance,
-      ratePa,
       instalment: step.instalment,
       interestOnly: io,
       terms: paidTerms(terms, io, fresh),
@@ -846,7 +841,6 @@ function simulateToBaseDate(
       p: steps,
       month: 0,
       balance: s.balance,
-      ratePa: s.prevRate,
       instalment: s.currentInstalment,
       interestOnly: s.prevInterestOnly,
       terms: s.terms,
@@ -1058,7 +1052,6 @@ function repaidOutcomes(
       p,
       month: m,
       balance: ZERO,
-      ratePa: state.prevRate,
       instalment: state.currentInstalment,
       interestOnly: false,
       terms: state.terms,

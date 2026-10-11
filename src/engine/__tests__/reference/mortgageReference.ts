@@ -496,11 +496,11 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
     const owedAfter = balance.plus(effectSeen);
     let counted = ZERO;
     // shortenTerm keeps the instalment the next payment pays: an agreed one still to
-    // pay (a recast settled before it, after payment k) at payment k+1's rate (ADR 0136).
+    // pay (a recast settled before it, after payment k; ADR 0136), else payment k's.
+    // The bank sizes the new term at payment k+1's rate, the rate the kept instalment
+    // is paid at (ADR 0179: a fixation reset on k+1 counts).
     const kept = agreedInstalment ?? row.instalment;
-    const keptRate = agreedInstalment
-      ? rateAt(addMonths(loan.start, k + 1)).div(12)
-      : row.ratePa.div(12);
+    const keptRate = rateAt(addMonths(loan.start, k + 1)).div(12);
     // `prevIo`: whether payment k (just made) was interest-only (ADR 0129 §2).
     if (effect && owedAfter.greaterThan(ZERO) && !prevIo) {
       if (effect === "lowerInstalment") {
