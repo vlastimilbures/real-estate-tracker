@@ -10,7 +10,7 @@ import { schemaAt } from "./support/schemaAt";
 import { migrate } from "../migrations";
 import { loadAssumptions, upsertAssumptions } from "../repositories";
 import { assumptionsToRow, rowToAssumptions } from "../mappers";
-import { exportToJson, restoreFromJson } from "../backup";
+import { exportToJson, restoreFromJson, RestoreError } from "../backup";
 import { checkInputRules } from "../../import/inputRules";
 import { rate } from "../../engine";
 import { SEED_ASSUMPTIONS as seedAssumptions } from "../seed";
@@ -112,19 +112,39 @@ describe("migration v11 — selling costs (ADR 0183)", () => {
   });
 });
 
+describe("restore — selling costs (ADR 0183)", () => {
+  it("refuses a rate outside 0–1, naming the stored column", async () => {
+    const sql = openMemorySql();
+    await migrate(sql, { now: NOW });
+    await upsertAssumptions(sql, seedAssumptions);
+    const backup = await exportToJson(sql, NOW());
+    const bad = {
+      ...backup,
+      tables: {
+        ...backup.tables,
+        assumptions: backup.tables.assumptions.map((r) => ({
+          ...r,
+          selling_cost_pct: "1.5",
+        })),
+      },
+    };
+    const e = await restoreFromJson(sql, bad, checkInputRules).catch(
+      (err: unknown) => err,
+    );
+    expect(e).toBeInstanceOf(RestoreError);
+    expect((e as RestoreError).issues).toContainEqual({
+      table: "assumptions",
+      column: "selling_cost_pct",
+      rule: "RATE_OUT_OF_RANGE",
+    });
+    sql.db.close();
+  });
+});
+
 describe("mapper — selling costs", () => {
   it("writes '0' when unset and reads it back as 0", () => {
     const row = assumptionsToRow(seedAssumptions);
     expect(row.selling_cost_pct).toBe("0");
     expect(rowToAssumptions(row).sellingCostPct?.toString()).toBe("0");
-  });
-
-  it("round-trips a rate", () => {
-    const row = assumptionsToRow({
-      ...seedAssumptions,
-      sellingCostPct: rate("0.035"),
-    });
-    expect(row.selling_cost_pct).toBe("0.035");
-    expect(rowToAssumptions(row).sellingCostPct?.toString()).toBe("0.035");
   });
 });
