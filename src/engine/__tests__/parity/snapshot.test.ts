@@ -46,3 +46,23 @@ describe("Effective-dating", () => {
     expect(lease?.monthlyRent.toNumber()).toBe(21_675);
   });
 });
+
+describe("RATIO_KEYS guard", () => {
+  // The tolerance is chosen by key name, and an unlisted key defaults to ±1 Kč. Every
+  // money target here is in the thousands, so a numeric target below 100 is a ratio
+  // and must be listed, or a wrong ratio would pass at ±1.
+  it("lists every ratio-sized snapshot, per-property and KPI target", () => {
+    const rows = [
+      PARITY.snapshot,
+      PARITY.kpis,
+      ...Object.values(PARITY.perProperty),
+    ];
+    const unlisted = rows.flatMap((row) =>
+      Object.entries(row)
+        .filter(([, v]) => typeof v === "number" && Math.abs(v) < 100)
+        .map(([k]) => k)
+        .filter((k) => !RATIO_KEYS.has(k)),
+    );
+    expect(unlisted).toEqual([]);
+  });
+});
