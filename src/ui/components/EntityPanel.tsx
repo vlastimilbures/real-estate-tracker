@@ -145,8 +145,13 @@ export function EntityPanel<
           confirmLabel={tr.common.yesDelete}
           busyLabel={tr.common.deleting}
           onConfirm={async () => {
-            const result = await onDelete(mode.id);
-            if (result.ok) setMode({ t: "idle" });
+            const { id } = mode;
+            const result = await onDelete(id);
+            // Close only this row's confirm: another row opened meanwhile stays (#248).
+            if (result.ok)
+              setMode((m) =>
+                m.t === "confirm-delete" && m.id === id ? { t: "idle" } : m,
+              );
             return result;
           }}
           onCancel={() => setMode({ t: "idle" })}
@@ -184,6 +189,7 @@ export function EntityPanel<
             hiddenFields={hiddenFields}
             listNotes={listNotes}
             onSubmit={async (values) => {
+              const saved = mode;
               const id = mode.t === "edit" ? mode.id : newId();
               const entity = build(values, id);
               const prompt = mode.t === "add" ? confirmAdd?.(entity) : null;
@@ -204,7 +210,13 @@ export function EntityPanel<
               // Keep the form open (preserving input) on failure, with the failure
               // shown in the form. Close only when the write actually landed.
               if (!result.ok) return result.error;
-              setMode({ t: "idle" });
+              // Close only the form that saved: a row opened meanwhile stays (#245).
+              setMode((m) =>
+                (m.t === "edit" && saved.t === "edit" && m.id === saved.id) ||
+                (m.t === "add" && saved.t === "add")
+                  ? { t: "idle" }
+                  : m,
+              );
               return undefined;
             }}
           />
