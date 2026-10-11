@@ -130,7 +130,7 @@ export function prePurchaseDebtService(
  * baseDate, less a later first loan's principal in; `acquisitionOutflows`), net
  * refinance cash in (D-47), prepayments and their fees out (ADR 0109; read from `rows`,
  * the projection of the same properties), and the debt service paid before a future
- * buy turns on (ADR 0124).
+ * buy turns on (ADR 0124; `prePurchase`, computed here unless the caller has it).
  */
 export function cashOutsideNetCf(
   properties: Property[],
@@ -138,13 +138,9 @@ export function cashOutsideNetCf(
   assumptions: Assumptions,
   schedules: Map<string, PropertySchedule>,
   rows: { prepaid: Decimal; prepaymentFees: Decimal }[],
+  prePurchase = prePurchaseDebtService(properties, assumptions, schedules),
 ): Decimal[] {
   const refiCash = refinanceCash(properties, assumptions, schedules);
-  const prePurchase = prePurchaseDebtService(
-    properties,
-    assumptions,
-    schedules,
-  );
   return acquisitionOutflows(properties, portfolio, assumptions).map((x, t) => {
     const pre = at(prePurchase, t);
     return x
