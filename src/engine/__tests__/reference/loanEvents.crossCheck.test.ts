@@ -465,6 +465,19 @@ const CASES: Case[] = [
     late235,
     "2025-08-07",
   ],
+  ...(["2025-08-07", "2025-09-06"] as const).map((base): Case => [
+    `dev loan, shorten after a maturity recast, the next payment the first at the reset, ${base} (ADR 0179)`,
+    {
+      ...late235,
+      start: "2023-08-07",
+      fixationMonths: 24,
+      draws: [
+        { date: "2023-09-01", amount: "43442" },
+        { date: "2025-07-01", amount: "33985" },
+      ],
+    },
+    base,
+  ]),
   [
     "plain loan, late shorten after a capped instalment recast (ADR 0179)",
     { ...late228, recasts: [{ date: "2026-05-07", instalment: 1150 }] },

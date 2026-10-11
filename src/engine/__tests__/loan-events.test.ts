@@ -745,6 +745,21 @@ describe("ADR 0109: refinance handovers", () => {
     expect(s.rows[55].prepaid.toFixed(0)).toBe("500000");
   });
 
+  it("a shortenTerm on the refix date the successor takes over from reports no term (ADR 0179)", () => {
+    // 100,000 Kč could not shorten Javorova's term, but the owner pays nothing after
+    // payment 120: the successor replaces the loan, so there is nothing to warn about.
+    const s = propertySchedule(
+      [
+        withEvents(javorova, [prepay("2031-01-17", 100000, "shortenTerm")]),
+        refi("2031-01-17"),
+      ],
+      assumptions,
+    );
+    expect(s.eventOutcomes).toHaveLength(1);
+    expect(s.eventOutcomes[0]).toMatchObject({ month: 56, issue: null });
+    expect(s.rows[55].prepaid.toFixed(0)).toBe("100000");
+  });
+
   it("a prepayment in a dropped payment period is paid at the handover", () => {
     const plain = propertySchedule([javorova, refi("2031-01-10")], assumptions);
     const s = propertySchedule(
