@@ -162,4 +162,50 @@ describe("validation problem fields", () => {
       },
     ]);
   });
+
+  it("cost ranges: the defaults and a holding-cost row raise the same codes in the same order", () => {
+    const allBad = {
+      propertyTaxYr: money(-1),
+      insuranceYr: money(-1),
+      svjMonthly: money(-1),
+      otherYr: money(-1),
+      mgmtPctRent: rate("1.5"),
+      maintPctRent: rate("-0.1"),
+    };
+    const hc = portfolio.holdingCosts[0];
+    expect(
+      validateInputs(
+        {
+          ...portfolio,
+          holdingCosts: [
+            { ...hc, ...allBad },
+            ...portfolio.holdingCosts.slice(1),
+          ],
+        },
+        { ...assumptions, defaults: { ...assumptions.defaults, ...allBad } },
+      ),
+    ).toStrictEqual([
+      ...[
+        ["NEGATIVE_AMOUNT", "defaults.propertyTaxYr"],
+        ["NEGATIVE_AMOUNT", "defaults.insuranceYr"],
+        ["NEGATIVE_AMOUNT", "defaults.svjMonthly"],
+        ["NEGATIVE_AMOUNT", "defaults.otherYr"],
+        ["RATE_OUT_OF_RANGE", "defaults.mgmtPctRent"],
+        ["RATE_OUT_OF_RANGE", "defaults.maintPctRent"],
+      ].map(([code, field]) => ({ code, entity: "assumptions", field })),
+      ...[
+        ["NEGATIVE_AMOUNT", "propertyTaxYr"],
+        ["NEGATIVE_AMOUNT", "insuranceYr"],
+        ["NEGATIVE_AMOUNT", "svjMonthly"],
+        ["NEGATIVE_AMOUNT", "otherYr"],
+        ["RATE_OUT_OF_RANGE", "mgmtPctRent"],
+        ["RATE_OUT_OF_RANGE", "maintPctRent"],
+      ].map(([code, field]) => ({
+        code,
+        entity: "holdingCost",
+        id: hc.id,
+        field,
+      })),
+    ]);
+  });
 });
