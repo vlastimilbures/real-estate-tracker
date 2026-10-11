@@ -5,7 +5,7 @@
 // when the write fails.
 import { useState } from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   LeasesPanel,
@@ -18,6 +18,7 @@ import { Properties } from "../Properties";
 import { EntityPanel } from "../../components/EntityPanel";
 import { LeaveGuard } from "../../components/LeaveGuard";
 import { Modal } from "../../components/Modal";
+import { PropertySelect } from "../../components/PropertySelect";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import type { MutationResult } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
@@ -566,6 +567,34 @@ describe("Escape cancels a confirm row (#247)", () => {
     act(() => cancelButton().focus());
     await userEvent.keyboard("{Escape}");
     expect(onClose).toHaveBeenCalledOnce();
+    expect(confirmOpen()).toBe(true);
+  });
+
+  // Review of PR #318: a popover (the property dropdown's listbox) is a layer too.
+  it("leaves the row open while the property dropdown's list is open", async () => {
+    render(
+      <>
+        <RecordPanel />
+        <PropertySelect
+          mode="single"
+          options={Array.from({ length: 6 }, (_, i) => ({
+            value: `p${i}`,
+            label: `Byt ${i}`,
+          }))}
+          selected="p0"
+          onChange={() => undefined}
+          ariaLabel="Entity"
+        />
+      </>,
+    );
+    await userEvent.click(
+      screen.getAllByRole("button", { name: en.common.delete })[0]!,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Entity" }));
+    expect(screen.getByRole("listbox")).toBeTruthy();
+    // An Escape that reaches the row while the list is open: the list owns it.
+    fireEvent.keyDown(cancelButton(), { key: "Escape" });
+    expect(screen.queryByRole("listbox")).toBeNull();
     expect(confirmOpen()).toBe(true);
   });
 });
