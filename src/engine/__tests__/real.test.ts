@@ -2,7 +2,7 @@
 // baseDate), not from a constant UI deflator. With no inflation shock the index is
 // (1+inflation)^t, so the seed's real figures are unchanged.
 import { describe, it, expect } from "vitest";
-import { D, ONE, powInt, powYears } from "../../lib/money";
+import { D, Decimal, ONE, powInt, powYears } from "../../lib/money";
 import { edate, isoDate } from "../dates";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import {
@@ -25,6 +25,9 @@ import {
   realPropertySnapshot,
 } from "../real";
 import { assumptions, portfolio, BASE_DATE } from "./support/seed";
+import { mixed } from "./support/mixed";
+import { mixedCashOutside } from "./support/synthetic";
+import type { Portfolio, ProjectionYear } from "../types";
 import { rate } from "../brands";
 
 const shocked = applyScenario(assumptions, {
@@ -103,34 +106,62 @@ describe("realProjection — every money field ÷ the year's CPI", () => {
   const nominal = portfolioProjection(portfolio, shocked);
   const real = realProjection(nominal, cpiIndex(shocked));
 
-  it("deflates money fields and keeps ratios, years and periods", () => {
-    const cpi = cpiIndex(shocked);
-    for (const t of [0, 1, 3, 4, 30]) {
-      const n = nominal[t];
-      const r = real[t];
-      for (const k of [
-        "value",
-        "balance",
-        "equity",
-        "grossRent",
-        "effectiveRent",
-        "holdingCosts",
-        "noi",
-        "interest",
-        "principal",
-        "debtService",
-        "netCashFlow",
-        "draws",
-        "cashToOwner",
-      ] as const) {
-        expect(r[k].toString()).toBe(n[k].div(cpi[t]).toString());
+  // #159 item 4: the money fields come from ProjectionYear itself, so a new one is
+  // checked too. Every Decimal field is money except the three ratios.
+  const RATIOS = ["ltv", "dscr", "ratePa"] as const;
+  const NOT_MONEY = new Set<string>([
+    ...RATIOS,
+    "year",
+    "calendarYear",
+    "periodStart",
+    "periodEnd",
+  ]);
+  const moneyFields = (y: ProjectionYear) =>
+    (Object.keys(y) as (keyof ProjectionYear)[]).filter(
+      (k) => !NOT_MONEY.has(k),
+    );
+
+  it("every field but the ratios, years and periods is a Decimal", () => {
+    for (const y of nominal) {
+      for (const k of moneyFields(y)) {
+        expect(y[k], `${k} @ ${y.year}`).toBeInstanceOf(Decimal);
       }
-      expect(r.ltv).toBe(n.ltv);
-      expect(r.dscr).toBe(n.dscr);
-      expect(r.ratePa).toBe(n.ratePa);
-      expect(r.year).toBe(n.year);
-      expect(r.calendarYear).toBe(n.calendarYear);
-      expect(r.periodEnd).toBe(n.periodEnd);
+    }
+  });
+
+  it.each([
+    ["the seed", portfolio],
+    ["mixed", mixed],
+    ["mixedCashOutside", mixedCashOutside],
+  ] as [string, Portfolio][])(
+    "deflates every money field and keeps ratios, years and periods (%s)",
+    (_, pf) => {
+      const n = portfolioProjection(pf, shocked);
+      const r = realProjection(n, cpiIndex(shocked));
+      const cpi = cpiIndex(shocked);
+      for (let t = 0; t <= shocked.horizonYears; t++) {
+        for (const k of moneyFields(n[t])) {
+          const want = (n[t][k] as Decimal).div(cpi[t]);
+          expect((r[t][k] as Decimal).equals(want), `${k} @ ${t}`).toBe(true);
+        }
+        for (const k of RATIOS) expect(r[t][k]).toBe(n[t][k]);
+        expect(r[t].year).toBe(n[t].year);
+        expect(r[t].calendarYear).toBe(n[t].calendarYear);
+        expect(r[t].periodStart).toBe(n[t].periodStart);
+        expect(r[t].periodEnd).toBe(n[t].periodEnd);
+      }
+    },
+  );
+
+  it("the fixtures make every money field non-zero in some year", () => {
+    const rows = [portfolio, mixed, mixedCashOutside].flatMap((pf) =>
+      portfolioProjection(pf, shocked),
+    );
+    for (const k of moneyFields(rows[0]!)) {
+      expect(
+        rows.some((y) => !(y[k] as Decimal).isZero()),
+        k,
+      ).toBe(true);
     }
   });
 
