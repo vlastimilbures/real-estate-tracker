@@ -3,7 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #36 (pre-release review 2026-10, §6)
-- Amended by: [0149](0149-calendar-days.md) (the backup date on the restore screen is the local day)
+- Amended by: [0149](0149-calendar-days.md) (the backup date on the restore screen is the local day),
+  [0178](0178-display-follows-rounded-value.md) (§5: backup age in months from 60 days)
 
 ## Context
 

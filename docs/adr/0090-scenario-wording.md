@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #15 (pre-release review 2026-10, findings A09 and D03(d))
+- Amended by: [0178](0178-display-follows-rounded-value.md) (§2: the summary signs a shock once; Czech year word)
 
 ## Context
 

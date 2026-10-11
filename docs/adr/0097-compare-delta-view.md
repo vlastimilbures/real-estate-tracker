@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #53 (Scenarios critical review after #15)
+- Amended by: [0178](0178-display-follows-rounded-value.md) ("+" only on a non-zero displayed value)
 
 ## Context
 
