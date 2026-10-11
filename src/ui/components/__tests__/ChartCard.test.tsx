@@ -9,6 +9,7 @@ import { seriesTipItems } from "../../model/chartData";
 import { useUiStore } from "../../../state/uiStore";
 
 const realRect = HTMLElement.prototype.getBoundingClientRect;
+const realMatchMedia = window.matchMedia;
 beforeAll(() => {
   // Recharts' ResponsiveContainer needs a ResizeObserver and a measured box; jsdom has
   // neither, so the chart would not render at all.
@@ -35,7 +36,7 @@ beforeAll(() => {
 });
 afterAll(() => {
   HTMLElement.prototype.getBoundingClientRect = realRect;
-  Reflect.deleteProperty(window, "matchMedia");
+  window.matchMedia = realMatchMedia;
 });
 beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 

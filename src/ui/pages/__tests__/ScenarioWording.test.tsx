@@ -157,7 +157,6 @@ describe("Scenarios wording (ADR 0090)", () => {
   });
 
   it("the lens toggle on Scenarios switches the compare rows", async () => {
-    window.scrollTo = vi.fn();
     act(() => usePortfolioStore.setState({ assumptions, scenarios: [] }));
     render(<Scenarios />);
     const lens = screen.getByRole("group", { name: en.shell.nominalOrReal });

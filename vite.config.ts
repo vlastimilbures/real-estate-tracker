@@ -48,7 +48,11 @@ export default defineConfig({
       "scripts/**/*.test.mjs",
     ],
     // The app loads only the active dictionary (DR-009); tests get all three up front.
-    setupFiles: ["src/i18n/__tests__/preload.ts"],
+    // The jsdom file stubs scrollTo and matchMedia once for every jsdom test (#141).
+    setupFiles: [
+      "src/i18n/__tests__/preload.ts",
+      "src/__tests__/setup/jsdom.ts",
+    ],
     // Engine benchmarks (P9, `pnpm bench`); git-ignored evidence benches stay out.
     benchmark: { include: ["src/**/*.bench.ts"] },
     // Coverage ratchet. Thresholds are per folder and only ever go up: the target where
