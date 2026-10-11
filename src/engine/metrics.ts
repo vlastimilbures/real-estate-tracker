@@ -16,7 +16,7 @@ import {
   undrawnPrincipal,
 } from "./schedule";
 import { assertAsOf, assertInputs } from "./validate";
-import { basisDate, valueAt } from "./growth";
+import { basisDate, growthRate, valueAt } from "./growth";
 import type {
   Assumptions,
   Portfolio,
@@ -80,6 +80,24 @@ export function fixedHoldingCost(c: {
     .plus(c.insuranceYr)
     .plus(c.svjMonthly.times(12))
     .plus(c.otherYr);
+}
+
+/**
+ * A property's holding-cost basis: the fixed annual cost and the share of rent (mgmt +
+ * maint), each field from its holding-cost row, else the assumption default. One
+ * holding-cost row per property (DUPLICATE_HOLDING_COST, D-37).
+ */
+export function holdingCostBasis(
+  property: Property,
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+): { fixed: Decimal; varPct: Decimal } {
+  const cost = forProperty(portfolio.holdingCosts, property.id).at(0);
+  const c = effectiveCosts(cost, assumptions);
+  return {
+    fixed: fixedHoldingCost(c),
+    varPct: c.mgmtPctRent.plus(c.maintPctRent),
+  };
 }
 
 export function forProperty<T extends { propertyId: string }>(
@@ -154,7 +172,7 @@ function valueAsOf(
   assumptions: Assumptions,
   asOf: Date,
 ): Decimal {
-  const g = property.appreciationOverridePa ?? assumptions.appreciationPa;
+  const g = growthRate(property, assumptions);
   const { value, anchor } = valueAnchor(
     valuations,
     property,
@@ -204,11 +222,8 @@ function snapshotIncome(
   const effectiveGrossIncome = grossAnnualRent.times(
     ONE.minus(assumptions.vacancyAllowance),
   );
-  // DR-071: the first holding-cost row wins when a property has duplicates.
-  const cost = forProperty(portfolio.holdingCosts, property.id).at(0);
-  const c = effectiveCosts(cost, assumptions);
-  const variable = c.mgmtPctRent.plus(c.maintPctRent).times(grossAnnualRent);
-  const holdingCosts = fixedHoldingCost(c).plus(variable);
+  const { fixed, varPct } = holdingCostBasis(property, portfolio, assumptions);
+  const holdingCosts = fixed.plus(varPct.times(grossAnnualRent));
   const noi = effectiveGrossIncome.minus(holdingCosts);
   return { grossAnnualRent, effectiveGrossIncome, holdingCosts, noi };
 }

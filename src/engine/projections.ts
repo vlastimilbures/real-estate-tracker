@@ -17,15 +17,14 @@ import {
   type DebtServicePaid,
 } from "./ownerCash";
 import { assertAssumptions, assertInputs } from "./validate";
-import { basisDate, valueAt } from "./growth";
+import { basisDate, growthRate, valueAt } from "./growth";
 import {
   valueAnchor,
   growthYears,
   openingValue,
   leaseInForce,
-  effectiveCosts,
-  fixedHoldingCost,
   forProperty,
+  holdingCostBasis,
   ltvOf,
 } from "./metrics";
 import type {
@@ -107,11 +106,12 @@ function propertyBasis(
     asOf,
     assumptions,
   );
-  const cost = forProperty(portfolio.holdingCosts, property.id).at(0);
-  const c = effectiveCosts(cost, assumptions);
-  const fixed0 = fixedHoldingCost(c);
-  const varPct = c.mgmtPctRent.plus(c.maintPctRent);
-  const g = property.appreciationOverridePa ?? assumptions.appreciationPa;
+  const { fixed: fixed0, varPct } = holdingCostBasis(
+    property,
+    portfolio,
+    assumptions,
+  );
+  const g = growthRate(property, assumptions);
   const idx = property.rentIndexOverridePa ?? assumptions.rentIndexationPa;
   return {
     v0,
