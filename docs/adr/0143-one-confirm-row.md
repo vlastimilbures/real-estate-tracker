@@ -5,6 +5,8 @@
 - Source: issue #132 (R5-08), Track 10 PR 10.4
 - Related: [0142](0142-row-switch-guard-busy-dialog.md) (row-switch guard),
   [0077](0077-ux-a11y-round-b-forms.md) (forms a11y round)
+- Amended by: [0173](0173-record-panel-races-confirm-focus.md) (the caller closes only the
+  row it confirmed; focus after a successful confirm; Escape cancels)
 
 ## Context
 
