@@ -193,9 +193,9 @@ export default tseslint.config(
       "no-restricted-imports": ["error", { patterns: [engineLayerPattern] }],
     },
   },
-  // The reference models themselves import nothing outside reference/ (ADR 0174): no
-  // engine, lib or support code, so they cannot inherit an engine mistake. The adapters
-  // (eventHarness.ts, loanGen.ts) and the tests bridge to the engine and stay outside.
+  // The reference models import only each other (ADR 0174): no engine, lib or support
+  // code, and not the adapters beside them (eventHarness.ts, loanGen.ts), which bridge to
+  // the engine. So they cannot inherit an engine mistake.
   {
     files: [
       "src/engine/__tests__/reference/mortgageReference.ts",
@@ -208,7 +208,8 @@ export default tseslint.config(
         {
           patterns: [
             {
-              regex: "^\\.\\./",
+              regex:
+                "^\\.{1,2}/(?!(mortgageReference|kpiReference|seedLoans)$)",
               message: "Reference model is engine-free (ADR 0174, #160).",
             },
           ],

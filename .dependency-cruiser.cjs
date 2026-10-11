@@ -48,13 +48,14 @@ module.exports = {
       name: "reference-model-engine-free",
       severity: "error",
       comment:
-        "The independent reference models import nothing from the engine or lib (ADR 0174): they are written from SPEC, so they cannot inherit an engine mistake.",
+        "The independent reference models import only each other (ADR 0174): no engine, lib or support code and not the adapters beside them. They are written from SPEC, so they cannot inherit an engine mistake.",
       from: {
         path: "^src/engine/__tests__/reference/(mortgageReference|kpiReference|seedLoans)\\.ts$",
       },
       to: {
         path: "^src/",
-        pathNot: "^src/engine/__tests__/reference/",
+        pathNot:
+          "^src/engine/__tests__/reference/(mortgageReference|kpiReference|seedLoans)\\.ts$",
       },
     },
     {
