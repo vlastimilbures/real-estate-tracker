@@ -29,4 +29,13 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 
 ## Entries
 
-None yet.
+### 2026-10-11 · #146 (R4-04) / Track 14 PR N2
+
+- Keys: `scenarios.sumInflationShock`, `scenarios.sumRateShock` (cs)
+- Change: the Czech scenario list summary declines the year word with `csPlural`
+  ("na 1 rok", "na 3 roky", "na 5 let") instead of "l." for every count. The sign change
+  in the same keys is ADR 0178's.
+- Rejected: also renaming the presets (`scenarios.rateForYears`, `scenarios.inflForYears`),
+  because a preset is found by its saved name (ADR 0093) and a preset saved under the old
+  name would be added a second time; leaving it for the N7b Czech copy batch.
+- Approved by: owner, 2026-10-11

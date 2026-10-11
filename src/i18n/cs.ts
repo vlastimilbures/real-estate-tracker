@@ -858,8 +858,10 @@ export const cs: Dictionary = {
     sumVacancy: (v) => `neobsazenost ${v}`,
     sumResetRate: (v) => `sazba po fixaci ${v}`,
     sumInflation: (v) => `inflace ${v}`,
-    sumInflationShock: (v, years) => `inflace ${v} p. b. na ${years} l.`,
-    sumRateShock: (v, years) => `sazby ${v} p. b. na ${years} l.`,
+    sumInflationShock: (v, years) =>
+      `inflace ${v} p. b. na ${years} ${csPlural(years, ["rok", "roky", "let"])}`,
+    sumRateShock: (v, years) =>
+      `sazby ${v} p. b. na ${years} ${csPlural(years, ["rok", "roky", "let"])}`,
     reachHits: (n, m, years) =>
       `zasáhne ${n} z ${m} ${csPlural(m, ["úvěru", "úvěrů", "úvěrů"])} (refixace ${years})`,
     reachNone: "v okně šoku se žádný úvěr nerefixuje, takže bez vlivu",

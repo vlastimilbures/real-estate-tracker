@@ -233,9 +233,16 @@ describe("i18n dictionaries — plural forms", () => {
       ...financing,
       ...rest,
     ];
+    // Czech declines the shock summary's year word; English and Russian abbreviate it
+    // ("3y", "3 г."), as the wording log of 2026-10-11 records (#146 R4-04).
+    const csShocks = withIrrFoot.flatMap((k) =>
+      k === "scenarios.reachHits"
+        ? ["scenarios.sumInflationShock", "scenarios.sumRateShock", k]
+        : [k],
+    );
     expect(countInflected("en")).toEqual(counted);
     expect(countInflected("ru")).toEqual(withIrrFoot);
-    expect(countInflected("cs")).toEqual(withIrrFoot);
+    expect(countInflected("cs")).toEqual(csShocks);
   });
 
   it("horizon years inflect in every language (ADR 0084, ADR 0088)", () => {
