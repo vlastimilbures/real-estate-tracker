@@ -88,6 +88,11 @@ const CHECKS: Record<
     rule: "RATE_OUT_OF_RANGE",
     field: "maintPctRent",
   },
+  // v11 (ADR 0183)
+  assumptions_selling_cost_0_to_1: {
+    rule: "RATE_OUT_OF_RANGE",
+    field: "sellingCostPct",
+  },
   scenario_overrides_json: { rule: "json" },
 };
 

@@ -1429,8 +1429,12 @@ export const SCREENS: Screen[] = [
     run: async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "assumptions");
+      // By the label's start: "Horizon" is also a word of the selling-cost field's
+      // label and help (ADR 0183), so a text match would find two fields.
       const field = (label: string) =>
-        ux.page.locator(".field", { hasText: label }).locator("input");
+        ux.page.getByLabel(
+          new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}`),
+        );
       await field(ux.t.assumptions.horizon).fill("101");
       await field(ux.t.assumptions.other).fill("-500");
       await ux.page

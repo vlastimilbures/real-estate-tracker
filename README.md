@@ -46,8 +46,8 @@ and costs, and see where the portfolio is heading over the next 30 years.**
   active loan block per property at a time (refinancing is a successor block).
 - **Estimates, not quotes:** figures are planning projections, not lender quotes or valuations.
   Returns are measured from the projection start, not from your purchase.
-- **Not modelled:** income or capital-gains tax, selling costs, early repayments and a
-  bank-account ledger.
+- **Not modelled:** income or capital-gains tax, early repayments and a bank-account ledger.
+  Selling costs only lower the levered IRR (a rate in Settings → Assumptions, 0 % unless set).
 
 [Model assumptions & limitations](docs/model-limitations.md) lists everything the model
 simplifies or leaves out.

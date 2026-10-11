@@ -158,6 +158,7 @@ function checkAssumptions(a: Assumptions, report: Report): void {
     "postFixationResetRatePa",
     "inflationPa",
     "acquisitionCostPct",
+    "sellingCostPct",
   ];
   checkFields(a, ["baseDate"], rates, report);
   checkFields(a.defaults, [], Object.keys(a.defaults), report);
@@ -192,6 +193,9 @@ function checkLevelRanges(a: Assumptions, report: Report): void {
   // ADR 0119 §6: a fraction of the purchase price.
   if (outsideUnit(a.acquisitionCostPct))
     report("RATE_OUT_OF_RANGE", "acquisitionCostPct");
+  // ADR 0183: a fraction of the projected value at the horizon.
+  if (outsideUnit(a.sellingCostPct))
+    report("RATE_OUT_OF_RANGE", "sellingCostPct");
   // ADR 0128 §1: the reset rate is an interest rate (ADR 0038).
   if (outsideUnit(a.postFixationResetRatePa))
     report("RATE_OUT_OF_RANGE", "postFixationResetRatePa");

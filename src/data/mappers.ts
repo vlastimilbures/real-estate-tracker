@@ -108,6 +108,8 @@ export interface AssumptionsRow {
   default_maint_pct_rent: string;
   default_svj_monthly: string;
   default_other_yr: string;
+  /** v11 (ADR 0183). */
+  selling_cost_pct: string;
 }
 
 // --- small helpers -------------------------------------------------------------
@@ -546,6 +548,7 @@ export function rowToAssumptions(r: AssumptionsRow): Assumptions {
     postFixationResetRatePa: rt("post_fixation_reset_rate_pa"),
     horizonYears: g.num(ref, "horizon_years", r.horizon_years),
     inflationPa: rt("inflation_pa"),
+    sellingCostPct: rt("selling_cost_pct"),
     defaults: {
       propertyTaxYr: mon("default_property_tax_yr"),
       insuranceYr: mon("default_insurance_yr"),
@@ -670,5 +673,6 @@ export function assumptionsToRow(a: Assumptions): AssumptionsRow {
     default_maint_pct_rent: a.defaults.maintPctRent.toString(),
     default_svj_monthly: a.defaults.svjMonthly.toString(),
     default_other_yr: a.defaults.otherYr.toString(),
+    selling_cost_pct: (a.sellingCostPct ?? "0").toString(),
   };
 }

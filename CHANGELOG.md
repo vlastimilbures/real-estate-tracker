@@ -15,6 +15,14 @@ engine without the form, and remove it when the last part lands.
 
 ### Added
 
+- Settings → Assumptions has a **Selling costs at horizon** rate (ADR 0183, #148). It
+  takes agent and legal fees on a sale at the end of the horizon off the levered IRR's end
+  value only; net worth, the multiple and CAGR stay value minus debt. It is 0 % unless set,
+  so no figure changes on upgrade. The sample portfolio's IRR at 4 % is 6.08 % instead of
+  6.20 %. The database moves to schema v11 (one new column; a verified copy is saved
+  first), and backups carry the rate; an older backup restores with 0 %. The Guide's IRR
+  entry says why income tax is left out (it depends on the expense method).
+
 - Settings → Backup has a **Show data folder** button and says that the safety copies
   saved before a restore, Clear sample or an app upgrade are in the `backups` folder there
   (ADR 0175, #151). Nothing is listed or deleted.

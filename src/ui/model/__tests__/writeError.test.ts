@@ -98,6 +98,7 @@ describe("describeWriteError", () => {
       expect.arrayContaining([
         "mortgage_prepayments_json",
         "property_own_cash_not_negative",
+        "assumptions_selling_cost_0_to_1",
       ]),
     );
     for (const name of names) {
@@ -117,6 +118,15 @@ describe("describeWriteError", () => {
         describeWriteError(en, check(`property_${column}_not_negative`)),
       ).toEqual({ message: en.inputRules.NEGATIVE_AMOUNT, field });
     }
+  });
+
+  it("puts a selling-cost rate outside 0–1 on its field (ADR 0183)", () => {
+    expect(
+      describeWriteError(en, check("assumptions_selling_cost_0_to_1")),
+    ).toEqual({
+      message: en.inputRules.RATE_OUT_OF_RANGE,
+      field: "sellingCostPct",
+    });
   });
 
   it("falls back to a generic sentence for an unknown constraint", () => {

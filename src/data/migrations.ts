@@ -528,6 +528,16 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE properties ADD COLUMN funding_note TEXT;
     `,
   },
+  {
+    version: 11,
+    name: "assumptions selling costs",
+    // ADR 0183: the selling-cost rate of a sale at the horizon (levered IRR only). NOT NULL
+    // like every assumptions column; DEFAULT '0' fills the one existing row, so the
+    // owner's numbers do not change. A rate as TEXT with the 0–1 check of the v7 rates.
+    sql: `
+      ALTER TABLE assumptions ADD COLUMN selling_cost_pct TEXT NOT NULL DEFAULT '0' CONSTRAINT assumptions_selling_cost_0_to_1 CHECK (${unitRate("selling_cost_pct")});
+    `,
+  },
 ];
 
 function scenarioRows(

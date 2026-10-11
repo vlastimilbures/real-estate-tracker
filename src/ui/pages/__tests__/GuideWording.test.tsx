@@ -55,7 +55,10 @@ describe("Guide wording (ADR 0091)", () => {
       "equity at horizon ÷ equity at projection start",
     );
     expect(rd.irr.meaning).toMatch(/projection start/);
-    expect(rd.irr.meaning).toMatch(/no selling costs or tax/);
+    // ADR 0183 (amends 0091): the terminal equity is net of the selling costs, and the
+    // IRR is before income tax (was "no selling costs or tax").
+    expect(rd.irr.meaning).toMatch(/less your selling costs/);
+    expect(rd.irr.meaning).toMatch(/Before income tax/);
   });
 
   it("qualifies the principal check with full repayment and later draws", () => {
@@ -171,5 +174,24 @@ describe("Guide value anchor (ADR 0181)", () => {
     expect(v.eg).toMatch(/in force on the projection start/);
     expect(cs.guide.snapshotDefs.value.meaning).toMatch(/k začátku projekce/);
     expect(ru.guide.snapshotDefs.value.meaning).toMatch(/на начало прогноза/);
+  });
+});
+
+describe("Guide — the IRR names the selling costs and why tax is left out (ADR 0183)", () => {
+  it.each(["en", "cs", "ru"] as const)("%s", (lang) => {
+    const t = DICTS[lang];
+    const meaning = t.guide.returnsDefs.irr.meaning;
+    // Points at the field by its tab and says the default.
+    expect(meaning).toContain(t.settings.tabs.assumptions);
+    expect(meaning).toContain("0 %");
+    // The tax reason: the expense method (the 30 % flat allowance).
+    expect(meaning).toContain("30 %");
+  });
+
+  it("names the tax and the percent precisely (cs, ru)", () => {
+    expect(cs.guide.returnsDefs.irr.meaning).toContain("daň z příjmů z nájmu");
+    expect(ru.assumptions.sellingCostHelp).toContain(
+      "в процентах от стоимости",
+    );
   });
 });

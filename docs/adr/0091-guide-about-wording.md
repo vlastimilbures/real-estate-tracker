@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #16 (pre-release review 2026-10, findings A15 and D08, in-app part)
+- Amended by: [0183](0183-selling-costs-in-irr-terminal.md) (the IRR's terminal equity is net
+  of the selling costs set in the Assumptions; the Guide says why income tax is left out)
 
 ## Context
 

@@ -73,10 +73,14 @@ describe("seedIfEmpty — first run only (DR-024)", () => {
       "SELECT * FROM assumptions",
     );
     fresh.db.close();
-    const cols = Object.keys(assumptions);
+    // Only the columns v4 has (later migrations add more).
+    const v4 = await sql.select<{ name: string }>(
+      "SELECT name FROM pragma_table_info('assumptions')",
+    );
+    const cols = v4.map((c) => c.name);
     await sql.execute(
       `INSERT INTO assumptions (${cols.join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`,
-      Object.values(assumptions),
+      cols.map((c) => assumptions[c]),
     );
 
     expect(await launch()).toBe(false);

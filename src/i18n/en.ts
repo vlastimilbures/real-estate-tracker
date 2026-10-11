@@ -813,6 +813,9 @@ export const en = {
     inflation: "Inflation (CPI) p.a.",
     vacancy: "Vacancy allowance",
     postFixationReset: "Post-fixation reset rate",
+    sellingCost: "Selling costs at horizon",
+    sellingCostHelp:
+      "Agent and legal fees on a sale at the end of the horizon, as a share of value. Used only in the levered IRR; net worth stays value minus debt.",
     propertyTax: "Property tax /yr",
     insurance: "Insurance /yr",
     svj: "SVJ / fond oprav /mo",
@@ -1584,7 +1587,7 @@ export const en = {
         name: "Levered IRR",
         formula: "rate where NPV = 0",
         meaning:
-          "The annual return from the projection start, treating that day's equity as the amount invested, plus yearly cash flows and the projected equity at the horizon (no selling costs or tax), with the mortgage in the mix.",
+          "The annual return from the projection start, treating that day's equity as the amount invested, plus yearly cash flows and the projected equity at the horizon less your selling costs (Settings → Assumptions, 0 % unless set), with the mortgage in the mix. Before income tax: rental income tax depends on the expense method (actual costs or the 30 % flat allowance), so it is not estimated.",
         caveat: "Not the return on your original purchase cash.",
         eg: "negative early, large equity at horizon → ≈ 6%/yr.",
       },

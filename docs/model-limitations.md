@@ -67,8 +67,10 @@ work still to do is in the [roadmap](roadmap.md).
   horizon is zero or less; when the cash flows give no single answer, IRR shows "n/a"
   with the reason.
 - **The end value is projected equity.** At the horizon the model counts each property's
-  projected value minus its remaining debt. It does not sell anything: there are no selling
-  costs, agent fees or taxes on a sale.
+  projected value minus its remaining debt. It does not sell anything. Only the levered IRR
+  takes selling costs off that end value, at the rate set in Settings → Assumptions (0 %
+  unless set, ADR 0183); net worth, the multiple and CAGR stay value minus debt. Taxes on a
+  sale are not modelled.
 
 ## Cash flow and tax
 
@@ -76,8 +78,10 @@ work still to do is in the [roadmap](roadmap.md).
   costs and mortgage payments). It is not a record of your bank account and is not
   reconciled with one. See [SPEC §10](../SPEC.md#10-out-of-scope--future).
 - **Property tax only.** The property tax (daň z nemovitých věcí) is a holding cost. Income tax
-  and capital-gains tax are not modelled, so all figures are before those taxes. (The Czech
-  property acquisition tax was abolished in 2020.)
+  and capital-gains tax are not modelled, so all figures are before those taxes: rental
+  income tax depends on the expense method you choose (actual costs or the 30 % flat
+  allowance), so the app does not estimate it. (The Czech property acquisition tax was
+  abolished in 2020.)
 
 ## Mortgages
 

@@ -756,6 +756,9 @@ export const cs: Dictionary = {
     inflation: "Inflace (CPI) p.a.",
     vacancy: "Rezerva na neobsazenost",
     postFixationReset: "Sazba po skončení fixace",
+    sellingCost: "Náklady na prodej na konci horizontu",
+    sellingCostHelp:
+      "Provize makléře a právní poplatky při prodeji na konci horizontu, jako podíl z hodnoty. Počítají se jen do pákového IRR; čisté jmění zůstává hodnota minus dluh.",
     propertyTax: "Daň z nemovitosti /rok",
     insurance: "Pojištění /rok",
     svj: "SVJ / fond oprav /měs",
@@ -1510,7 +1513,7 @@ export const cs: Dictionary = {
         name: "Pákové IRR",
         formula: "sazba, kde NPV = 0",
         meaning:
-          "Roční návratnost od začátku projekce: kapitál k tomuto dni se bere jako vložená částka, k tomu roční cash flow a projektovaný kapitál na horizontu (bez nákladů na prodej a daní), s hypotékou v rovnici.",
+          "Roční návratnost od začátku projekce: kapitál k tomuto dni se bere jako vložená částka, k tomu roční cash flow a projektovaný kapitál na horizontu po odečtení nákladů na prodej (Nastavení → Předpoklady, 0 %, pokud je nezadáte), s hypotékou v rovnici. Před daní z příjmů: daň z příjmů z nájmu závisí na způsobu uplatnění výdajů (skutečné výdaje, nebo paušál 30 %), proto se neodhaduje.",
         caveat: "Nejde o návratnost vašich původních peněz vložených do koupě.",
         eg: "zpočátku záporné, velký kapitál na horizontu → ≈ 6 %/rok.",
       },

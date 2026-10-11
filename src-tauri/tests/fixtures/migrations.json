@@ -59,6 +59,12 @@
       "name": "property acquisition funding",
       "sql": "\n      ALTER TABLE properties ADD COLUMN own_cash TEXT\n        CONSTRAINT property_own_cash_not_negative CHECK (own_cash NOT GLOB '-*');\n      ALTER TABLE properties ADD COLUMN transaction_costs TEXT\n        CONSTRAINT property_transaction_costs_not_negative CHECK (transaction_costs NOT GLOB '-*');\n      ALTER TABLE properties ADD COLUMN initial_works TEXT\n        CONSTRAINT property_initial_works_not_negative CHECK (initial_works NOT GLOB '-*');\n      ALTER TABLE properties ADD COLUMN funding_note TEXT;\n    ",
       "foreignKeysOff": false
+    },
+    {
+      "version": 11,
+      "name": "assumptions selling costs",
+      "sql": "\n      ALTER TABLE assumptions ADD COLUMN selling_cost_pct TEXT NOT NULL DEFAULT '0' CONSTRAINT assumptions_selling_cost_0_to_1 CHECK (CAST(selling_cost_pct AS REAL) BETWEEN 0 AND 1);\n    ",
+      "foreignKeysOff": false
     }
   ],
   "headColumns": {
@@ -126,7 +132,8 @@
       "default_mgmt_pct_rent",
       "default_maint_pct_rent",
       "default_svj_monthly",
-      "default_other_yr"
+      "default_other_yr",
+      "selling_cost_pct"
     ],
     "scenarios": ["id", "name", "overrides", "created_at"]
   }
