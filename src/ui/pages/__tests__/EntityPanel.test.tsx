@@ -271,4 +271,59 @@ describe("EntityPanel: a late write closes only its own row", () => {
     expect(valueInputs()).toHaveLength(1);
     expect(valueInputs()[0].value).toBe("200");
   });
+
+  // Review of PR #318: the same row (or the add form) opened again is a new form; the
+  // earlier write must not close it either.
+  it("an add that lands after the add form was opened again keeps the new add form", async () => {
+    const user = userEvent.setup();
+    const add = deferred();
+    renderPanel(ok, { onAdd: add.write });
+    await user.click(screen.getByRole("button", { name: "row" }));
+    await user.type(valueInputs()[0], "300");
+    await user.click(screen.getByRole("button", { name: "Add row" }));
+    await user.click(editButtons()[1]);
+    await user.click(
+      screen.getByRole("button", { name: en.common.discardChanges }),
+    );
+    await user.click(screen.getByRole("button", { name: en.common.cancel }));
+    await user.click(screen.getByRole("button", { name: "row" }));
+    await user.type(valueInputs()[0], "400");
+    await act(async () => add.finish({ ok: true }));
+    expect(valueInputs()).toHaveLength(1);
+    expect(valueInputs()[0].value).toBe("400");
+  });
+
+  it("a save of row A that lands after A was opened again keeps the new form", async () => {
+    const user = userEvent.setup();
+    const save = deferred();
+    renderPanel(save.write);
+    await user.click(editButtons()[0]);
+    await user.type(valueInputs()[0], "5");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(editButtons()[1]);
+    await user.click(
+      screen.getByRole("button", { name: en.common.discardChanges }),
+    );
+    await user.click(editButtons()[0]);
+    expect(valueInputs()[0].value).toBe("100");
+    await act(async () => save.finish({ ok: true }));
+    expect(valueInputs()).toHaveLength(1);
+    expect(valueInputs()[0].value).toBe("100");
+  });
+
+  // A delete is different: once it lands the row is gone, so a confirm for that same row
+  // opened again meanwhile names nothing and closes with it.
+  it("a delete of row A closes A's confirm opened again meanwhile", async () => {
+    const user = userEvent.setup();
+    const del = deferred();
+    renderPanel(ok, { onDelete: del.write });
+    await user.click(deleteButtons()[0]);
+    await user.click(screen.getByRole("button", { name: en.common.yesDelete }));
+    await user.click(deleteButtons()[1]);
+    await user.click(deleteButtons()[0]);
+    await act(async () => del.finish({ ok: true }));
+    expect(
+      screen.queryByRole("button", { name: en.common.yesDelete }),
+    ).toBeNull();
+  });
 });

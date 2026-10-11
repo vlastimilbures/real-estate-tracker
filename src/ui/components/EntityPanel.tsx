@@ -148,6 +148,8 @@ export function EntityPanel<
             const { id } = mode;
             const result = await onDelete(id);
             // Close only this row's confirm: another row opened meanwhile stays (#248).
+            // By row, not by open: once the delete lands the row is gone, so its confirm
+            // opened again meanwhile names nothing and closes too (ADR 0173).
             if (result.ok)
               setMode((m) =>
                 m.t === "confirm-delete" && m.id === id ? { t: "idle" } : m,
@@ -210,13 +212,10 @@ export function EntityPanel<
               // Keep the form open (preserving input) on failure, with the failure
               // shown in the form. Close only when the write actually landed.
               if (!result.ok) return result.error;
-              // Close only the form that saved: a row opened meanwhile stays (#245).
-              setMode((m) =>
-                (m.t === "edit" && saved.t === "edit" && m.id === saved.id) ||
-                (m.t === "add" && saved.t === "add")
-                  ? { t: "idle" }
-                  : m,
-              );
+              // Close only the form that saved: every open is a new `mode` object, so a
+              // form opened meanwhile stays, even the same row's or the add form opened
+              // again (#245, ADR 0173).
+              setMode((m) => (m === saved ? { t: "idle" } : m));
               return undefined;
             }}
           />

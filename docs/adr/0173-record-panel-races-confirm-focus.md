@@ -31,12 +31,15 @@ stays usable meanwhile (ADR 0142 keeps the other rows reachable). Four gaps foll
 
 ## Decision
 
-1. **A late write closes only its own row (#245 B, #248).** When a save or a delete
-   succeeds, the record panel closes the form or confirm only if it still names the row that
-   was written: the same row's edit form, the add form for an add, the same row's delete
-   confirm. The Properties page closes its delete confirm only if it still names the deleted
-   property. Anything opened meanwhile stays open. The scenario list needs no change: its
-   Delete buttons are disabled while a scenario write runs, so no other confirm can open.
+1. **A late write closes only its own row (#245 B, #248).** When a save or an add
+   succeeds, the record panel closes the form only if it is still the same opened form: not
+   just the same row, but the form opened for that write. A form opened meanwhile stays
+   open, even the same row's edit form or the add form opened again. When a delete
+   succeeds, the record panel and the Properties page close the delete confirm only if it
+   still names the deleted row or property; a confirm for that same row opened again
+   meanwhile closes with it, because the row is gone. Anything else opened meanwhile stays
+   open. The scenario list needs no change: its Delete buttons are disabled while a
+   scenario write runs, so no other confirm can open.
 2. **Focus after a successful confirm (#247 part 1).** When the confirm row closes after its
    write landed, focus moves to the panel that held it: the panel's `section` takes focus
    from script only (`tabIndex=-1`). It stays unnamed: a named `section` is a region
