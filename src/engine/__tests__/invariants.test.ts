@@ -427,6 +427,8 @@ describe("Invariant — schedule sanity", () => {
         const rows = schedulesOf(p).get(block.propertyId)!.rows;
         for (const r of rows) {
           // Every fixture rate is above 0, so a scheduled payment always pays something.
+          // At 0 % an interest-only row pays nothing yet keeps its due date (ADR 0164,
+          // #297): pinned in due-date.test.ts, not here.
           // The grid-month bound holds at baseDate 2026-06-07 (no month-end clamp).
           const pays = r.interest
             .plus(r.principal)

@@ -8,6 +8,7 @@
   [0117](0117-property-loan-outlook.md) (payoff = due date of the last payment),
   [0116](0116-prepayments-ui-and-review-fixes.md) §12 (amortization columns), [0109](0109-loan-prepayments-and-recasts.md)
   (a prepayment applies after the first payment due on or after its date)
+- Amended: 2026-10-11 (#297, owner decision A: a 0 % interest-only row keeps its due date)
 
 ## Context
 
@@ -34,7 +35,9 @@ date; C, a caption only. The owner chose A.
    payment: an undrawn month, the draw row of a future loan or of a first development draw,
    a repaid loan's trailing rows, and a refinance handover row that the successor's draw
    replaces (unless that row pays the owner's handover prepayment, ADR 0109: it then falls due on the owner's date for that month, as the payoff did before). A handover row the owner still pays ([ADR 0138](0138-refinance-handover-edge-cases.md)) keeps the owner's due date; the
-   rows after a handover fall due on the successor's own day.
+   rows after a handover fall due on the successor's own day. A payment of 0 Kč is still a
+   payment due: an interest-only row at a 0 % rate (interest 0, principal 0) keeps its due
+   date (#297).
 2. **The grid date stays.** `date` is still `EDATE(baseDate, m)`, and the projection still
    buckets rows by it into years (D-22). Interest per row is unchanged.
 3. **The table and the export show the due date.** The column is headed "Due date"
@@ -53,6 +56,7 @@ date; C, a caption only. The owner chose A.
   the export, in en, cs and ru.
 - A per-loan payment day (`docs/design/czech-mortgage-extensions.md`, feature 3) is still
   open. The due date follows the loan start day until then.
-- Tests: `due-date.test.ts` (probe G2-6-01 and the null cases), an invariant in
+- Tests: `due-date.test.ts` (probe G2-6-01, the null cases and the 0 % interest-only row
+  of #297), an invariant in
   `invariants.test.ts` (a row has a due date exactly when it pays, within its grid month),
   and the table and export tests.
