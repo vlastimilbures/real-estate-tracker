@@ -355,3 +355,31 @@ describe("the restore table names the stored column (ADR 0180 §1)", () => {
     expect(unknown).toEqual([]);
   });
 });
+
+describe("a non-integer whole-number value asks at restore (ADR 0180 §2)", () => {
+  it("a fractional size inside the range warns OUT_OF_RANGE (#260)", async () => {
+    const backup = await edited("properties", (rows) =>
+      rows.map((r) => (r.id === "javorova" ? { ...r, size_m2: 50.5 } : r)),
+    );
+    expect(prepareRestore(backup, checkInputRules).warnings).toEqual([
+      {
+        table: "properties",
+        id: "javorova",
+        column: "size_m2",
+        rule: "OUT_OF_RANGE",
+        range: { min: 1, max: 10_000 },
+      },
+    ]);
+  });
+
+  it("a fractional fixation stays the engine's refusal, reported once", async () => {
+    const block = firstBlock();
+    const backup = await edited("mortgage_blocks", (rows) =>
+      rows.map((r) => (r.id === block ? { ...r, fixation_years: 5.5 } : r)),
+    );
+    const issues = refusal(backup).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatchObject({ column: "fixation_years" });
+    expect(issues[0]?.rule).not.toBe("OUT_OF_RANGE");
+  });
+});

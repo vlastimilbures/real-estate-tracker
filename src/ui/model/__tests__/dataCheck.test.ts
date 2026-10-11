@@ -733,6 +733,44 @@ describe("out-of-range stored values (ADR 0148)", () => {
   it("a value inside the ranges is not listed", () => {
     expect(kinds(check("javorova").attention)).not.toContain("outOfRange");
   });
+
+  // ADR 0180 §2 (#260 item 1): a stored size keeps its decimals, and a fraction inside the
+  // range is listed too — the forms accept whole m² only.
+  const sized = (sizeM2: number): Portfolio => ({
+    ...portfolio,
+    properties: portfolio.properties.map((p) =>
+      p.id === "javorova" ? { ...p, sizeM2 } : p,
+    ),
+  });
+  const sizeText = (sizeM2: number) =>
+    check("javorova", BASE_DATE, sized(sizeM2))
+      .attention.filter((f) => f.kind === "outOfRange")
+      .map((f) =>
+        findingText(en, f, assumptions.postFixationResetRatePa).replace(
+          /\s/g,
+          " ",
+        ),
+      );
+
+  it("shows an out-of-range size with its decimals (#260)", () => {
+    expect(sizeText(10000.4)).toEqual([
+      "Size 10 000,4 m² is outside the range the forms accept (1–10 000 m²).",
+    ]);
+    expect(sizeText(0.4)).toEqual([
+      "Size 0,4 m² is outside the range the forms accept (1–10 000 m²).",
+    ]);
+  });
+
+  it("lists a fractional size inside the range, fixed in the property form (#260)", () => {
+    const found = check("javorova", BASE_DATE, sized(50.5)).attention.filter(
+      (f) => f.kind === "outOfRange",
+    );
+    expect(found).toMatchObject([{ field: "sizeM2", value: 50.5 }]);
+    expect(found.map(findingFix)).toEqual(["edit"]);
+    expect(sizeText(50.5)).toEqual([
+      "Size 50,5 m² is not a whole number; the forms accept whole numbers only (1–10 000 m²).",
+    ]);
+  });
 });
 
 // ADR 0149 §5 (#119): a stored date before 1900 (an earlier CSV import) keeps loading; the

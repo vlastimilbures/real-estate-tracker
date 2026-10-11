@@ -425,6 +425,8 @@ export const ru: Dictionary = {
     recordFunding: "Указать финансирование",
     outOfRangeSize: (value, range) =>
       `Площадь ${value} м² вне диапазона, который принимают формы (${range} м²).`,
+    notWholeSize: (value, range) =>
+      `Площадь ${value} м² — не целое число; формы принимают только целые числа (${range} м²).`,
     outOfRangeFixation: (date, value, range) =>
       `Ипотека с ${date}: срок фиксации ${value} вне диапазона, который принимают формы (${range} лет).`,
     outOfRangeTerm: (date, value, range) =>

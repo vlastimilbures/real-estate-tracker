@@ -15,6 +15,7 @@ import {
   pickCzkAxisUnit,
   fmtCzkAxisValue,
   fmtCzkAxisTick,
+  fmtNumber,
 } from "../format";
 
 describe("fmtCzk", () => {
@@ -316,5 +317,19 @@ describe("roundCzk", () => {
   it("rounds half up to whole CZK", () => {
     expect(roundCzk(1932832.126).toNumber()).toBe(1932832);
     expect(roundCzk(0.5).toNumber()).toBe(1);
+  });
+});
+
+// ADR 0180 §2: a stored number as written — grouped, comma decimal, every decimal kept.
+describe("fmtNumber", () => {
+  it("keeps every decimal and groups thousands", () => {
+    expect(fmtNumber(10000.4)).toBe("10 000,4");
+    expect(fmtNumber(0.4)).toBe("0,4");
+    expect(fmtNumber(50.25)).toBe("50,25");
+    expect(fmtNumber(60)).toBe("60");
+    expect(fmtNumber(0)).toBe("0");
+  });
+  it("signs a negative with a real minus", () => {
+    expect(fmtNumber(-1.5)).toBe("−1,5");
   });
 });

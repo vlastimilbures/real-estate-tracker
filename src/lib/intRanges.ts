@@ -26,7 +26,7 @@ export const HARD_LIMIT_FACTOR = 10;
 /** A bounded whole-number field and where it is stored. */
 export type BoundedField = keyof typeof INT_RANGES;
 
-/** One stored whole-number value outside INT_RANGES. */
+/** One stored whole-number value outside INT_RANGES, or not a whole number (ADR 0180 §2). */
 export interface OutOfRangeField {
   entity: "assumptions" | "property" | "mortgage";
   id: string | undefined;
@@ -37,7 +37,8 @@ export interface OutOfRangeField {
   beyondLimit: boolean;
 }
 
-/** Every bounded whole-number field outside INT_RANGES (unset optional fields pass).
+/** Every bounded whole-number field outside INT_RANGES or not a whole number, as the forms
+ *  refuse both (ADR 0180 §2; unset optional fields pass).
  *  Structural types: lib never imports the engine, whose Portfolio and Assumptions fit. */
 export function outOfRangeFields(
   portfolio: {
@@ -58,7 +59,10 @@ export function outOfRangeFields(
     value: number | undefined,
   ) => {
     const range = INT_RANGES[field];
-    if (value !== undefined && !inRange(value, range))
+    if (
+      value !== undefined &&
+      (!Number.isInteger(value) || !inRange(value, range))
+    )
       out.push({
         entity,
         id,

@@ -416,6 +416,8 @@ export const cs: Dictionary = {
     recordFunding: "Zadat financování",
     outOfRangeSize: (value, range) =>
       `Plocha ${value} m² je mimo rozsah, který formuláře přijímají (${range} m²).`,
+    notWholeSize: (value, range) =>
+      `Plocha ${value} m² není celé číslo; formuláře přijímají jen celá čísla (${range} m²).`,
     outOfRangeFixation: (date, value, range) =>
       `Hypotéka od ${date}: doba fixace ${value} je mimo rozsah, který formuláře přijímají (${range} let).`,
     outOfRangeTerm: (date, value, range) =>

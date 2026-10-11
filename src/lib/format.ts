@@ -54,6 +54,14 @@ export function fmtCzk(value: Numeric, opts: MoneyOpts = {}): string {
   return parens ? `(${withUnit})` : `${MINUS}${withUnit}`;
 }
 
+/** A stored number as written (ADR 0180 §2): grouped thousands, a comma decimal and every
+ *  decimal kept — 10000.4 → "10 000,4", where `fmtCzk` would round it to "10 000". */
+export function fmtNumber(value: Numeric): string {
+  const d = D(value);
+  const { neg, body } = fmtFixed(d, d.decimalPlaces());
+  return neg ? `${MINUS}${body}` : body;
+}
+
 /** `M Kč` — millions with `dp` decimals, for hero tiles and chart axes. */
 export function fmtCzkM(value: Numeric, dp = 1): string {
   const millions = D(value).div(1_000_000);

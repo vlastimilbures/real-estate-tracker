@@ -50,7 +50,8 @@ import type {
 } from "../engine";
 import type { IntRange } from "../lib/intRanges";
 
-/** A whole-number field outside the bounds the forms and CSV import apply (ADR 0086).
+/** A whole-number field outside the bounds the forms and CSV import apply (ADR 0086), or
+ *  not a whole number (ADR 0180 §2).
  *  Restore-only: the engine itself is open-ended, so a restore warns and asks instead of
  *  refusing (ADR 0148). */
 export interface RangeProblem {

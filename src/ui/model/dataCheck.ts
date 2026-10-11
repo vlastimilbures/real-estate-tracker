@@ -22,8 +22,8 @@ import type {
   Rate,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
-import { fmtCzk, fmtDate } from "../../lib/format";
-import { outOfRangeFields, type IntRange } from "../../lib/intRanges";
+import { fmtCzk, fmtDate, fmtNumber } from "../../lib/format";
+import { inRange, outOfRangeFields, type IntRange } from "../../lib/intRanges";
 import {
   DATE_FLOOR,
   earlyDateFields,
@@ -75,8 +75,9 @@ export type DataFinding =
   /** No own cash recorded (ADR 0119): Cash invested is unknown; for a property bought
    *  after the base date (`future`) the projection derives its down payment. */
   | { kind: "fundingUnknown"; future: boolean }
-  /** A stored whole number outside the range the forms accept (ADR 0148): a legacy
-   *  database keeps it, and a restore asks about it. `loanStart` names the mortgage. */
+  /** A stored whole number outside the range the forms accept (ADR 0148), or not a whole
+   *  number (ADR 0180 §2): a legacy database keeps it, and a restore asks about it.
+   *  `loanStart` names the mortgage. */
   | {
       kind: "outOfRange";
       field: "sizeM2" | "fixationYears" | "loanTermYears" | "horizonYears";
@@ -378,13 +379,17 @@ export function findingText(
         fmtDate(DATE_FLOOR),
       );
     case "outOfRange": {
+      // The stored value with every decimal (ADR 0180 §2); the bounds are whole numbers.
       const n = (v: number) => fmtCzk(v, { suffix: false });
-      const value = n(f.value);
+      const value = fmtNumber(f.value);
       const range = `${n(f.range.min)}–${n(f.range.max)}`;
       const loan = f.loanStart ? fmtDate(f.loanStart) : "";
       switch (f.field) {
         case "sizeM2":
-          return d.outOfRangeSize(value, range);
+          // Only the size can hold a fraction: the engine refuses one in the others.
+          return inRange(f.value, f.range)
+            ? d.notWholeSize(value, range)
+            : d.outOfRangeSize(value, range);
         case "fixationYears":
           return d.outOfRangeFixation(loan, value, range);
         case "loanTermYears":

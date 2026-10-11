@@ -444,6 +444,9 @@ export const en = {
     // Stored values outside the form ranges (ADR 0148).
     outOfRangeSize: (value: string, range: string) =>
       `Size ${value} m² is outside the range the forms accept (${range} m²).`,
+    // ADR 0180 §2: a stored size inside the range that is not a whole number.
+    notWholeSize: (value: string, range: string) =>
+      `Size ${value} m² is not a whole number; the forms accept whole numbers only (${range} m²).`,
     outOfRangeFixation: (date: string, value: string, range: string) =>
       `Mortgage from ${date}: a fixation of ${value} years is outside the range the forms accept (${range} years).`,
     outOfRangeTerm: (date: string, value: string, range: string) =>
