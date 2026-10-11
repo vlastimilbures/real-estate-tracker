@@ -2,6 +2,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import pkg from "./package.json" with { type: "json" };
+import coverageFloors from "./coverage-floors.json" with { type: "json" };
 
 const host = process.env.TAURI_DEV_HOST;
 
@@ -55,28 +56,17 @@ export default defineConfig({
     ],
     // Engine benchmarks (P9, `pnpm bench`); git-ignored evidence benches stay out.
     benchmark: { include: ["src/**/*.bench.ts"] },
-    // Coverage ratchet. Thresholds are per folder and only ever go up: the target where
-    // met, else the measured value floored. Enforced by `pnpm test:coverage` in CI.
-    // Re-baselined once for Vitest 4's AST-based v8 counting (ADR 0083).
+    // Coverage ratchet. Thresholds are per folder (coverage-floors.json) and only ever go
+    // up: measured minus a 1-2 point buffer (2 for UI folders, where new code lands less
+    // covered). Enforced by `pnpm test:coverage` in CI; `pnpm coverage:ratchet` fails when
+    // a floor lags measured by more than 3 points (#141). Re-baselined once for Vitest 4's
+    // AST-based v8 counting (ADR 0083).
     coverage: {
       provider: "v8",
       include: ["src/**"],
       exclude: ["**/__tests__/**", "**/*.test.*"],
       reporter: ["text-summary", "json-summary"],
-      thresholds: {
-        "src/engine/**": { lines: 95, branches: 90 },
-        "src/data/**": { lines: 85, branches: 80 },
-        "src/import/**": { lines: 85, branches: 80 },
-        "src/lib/**": { lines: 95, branches: 90 },
-        "src/ui/model/**": { lines: 94, branches: 92 },
-        "src/state/**": { lines: 84, branches: 78 },
-        "src/platform/**": { lines: 65, branches: 50 },
-        // UI floors (P12, DR-171): measured values floored; raise over time.
-        "src/ui/pages/**": { lines: 57, branches: 43 },
-        "src/ui/components/**": { lines: 72, branches: 67 },
-        "src/ui/hooks/**": { lines: 96, branches: 84 },
-        "src/ui/*.{ts,tsx}": { lines: 60, branches: 64 },
-      },
+      thresholds: coverageFloors,
     },
   },
 });

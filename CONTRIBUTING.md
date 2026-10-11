@@ -40,6 +40,7 @@ pnpm exec prettier --check .
 pnpm depcruise                  # layer rules, no runtime cycles
 pnpm knip                       # no unused files, exports or dependencies
 pnpm test:coverage              # full suite + per-folder coverage floors
+pnpm coverage:ratchet           # no floor more than 3 points below measured
 cargo fmt --check --manifest-path src-tauri/Cargo.toml
 cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 ```
@@ -53,8 +54,10 @@ still describe it. Which document owns what is listed in
 - **Git hooks** (husky + lint-staged): on commit, staged files are formatted, linted and their
   related Vitest tests run; on push, the full typecheck runs. A green CI run is required to
   merge — do not bypass the hooks.
-- **Coverage floors** live in `vite.config.ts` (`src/engine` 95 % lines, `src/ui/model` 94 %,
-  and so on). Raise a floor when coverage rises; never lower one to pass.
+- **Coverage floors** live in `coverage-floors.json` (per folder, lines and branches), set to
+  measured minus 1-2 points. Never lower one to pass. CI runs `pnpm coverage:ratchet` after
+  `pnpm test:coverage` and fails when a floor sits more than 3 points below measured; raise it
+  to measured minus 1-2 points then.
 - **Mutation testing** (ADR 0026): `pnpm mutation` runs Stryker on `src/engine`. CI runs it
   nightly when main changed. Runs are incremental: only mutants in changed code or tests are
   retested against the last result (`reports/mutation/stryker-incremental.json`, cached in

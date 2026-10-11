@@ -152,9 +152,13 @@ jobs:
       - name: Parity tests
         run: pnpm test:parity
 
-      # Full suite + per-folder coverage ratchet (thresholds in vite.config.ts).
+      # Full suite + per-folder coverage ratchet (floors in coverage-floors.json).
       - name: Test with coverage thresholds
         run: pnpm test:coverage
+
+      # A floor more than 3 points below measured must be raised (#141).
+      - name: Coverage floors keep up
+        run: pnpm coverage:ratchet
 
       # Only the production build exercises Rolldown chunking, `?url` asset imports and the
       # dead-code elimination that keeps the E2E-only sql.js (src/data/browserSql.ts) out of

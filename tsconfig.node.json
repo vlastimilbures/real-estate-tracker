@@ -1,7 +1,7 @@
 {
   // Typecheck for the Node-side config files and the E2E specs (#154). Run by
-  // `pnpm typecheck`. vite.config.ts holds the build target and the coverage floors, so a
-  // mistyped option there must fail here instead of being ignored.
+  // `pnpm typecheck`. vite.config.ts holds the build target and imports the coverage floors
+  // (coverage-floors.json), so a mistyped option there must fail here instead of being ignored.
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "types": ["node"],
