@@ -4,7 +4,7 @@ import { describe, it, expect } from "vitest";
 import { prunedFilter } from "../dashboard";
 
 describe("prunedFilter", () => {
-  const active = ["a", "b", "c"];
+  const active = new Set(["a", "b", "c"]);
 
   it("leaves a filter of active properties alone", () => {
     expect(prunedFilter([], active)).toBeNull();
@@ -21,7 +21,7 @@ describe("prunedFilter", () => {
   it("becomes no filter when what is left filters nothing", () => {
     expect(prunedFilter(["gone"], active)).toEqual([]);
     expect(prunedFilter(["a", "b", "c", "gone"], active)).toEqual([]);
-    expect(prunedFilter(["dev", "inactive"], ["dev"])).toEqual([]);
-    expect(prunedFilter(["x"], [])).toEqual([]);
+    expect(prunedFilter(["dev", "inactive"], new Set(["dev"]))).toEqual([]);
+    expect(prunedFilter(["x"], new Set())).toEqual([]);
   });
 });

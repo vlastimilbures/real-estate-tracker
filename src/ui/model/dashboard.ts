@@ -276,9 +276,9 @@ export function dashboardSubtitle(
  *  nothing. `null` when every saved id is active, so a filter picked by hand stays. */
 export function prunedFilter(
   saved: readonly string[],
-  activeIds: readonly string[],
+  activeIds: ReadonlySet<string>,
 ): string[] | null {
-  const kept = saved.filter((id) => activeIds.includes(id));
+  const kept = saved.filter((id) => activeIds.has(id));
   if (kept.length === saved.length) return null;
-  return kept.length < activeIds.length ? kept : [];
+  return kept.length < activeIds.size ? kept : [];
 }

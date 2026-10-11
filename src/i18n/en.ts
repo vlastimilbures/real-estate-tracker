@@ -447,7 +447,8 @@ export const en = {
     // ADR 0180 §2: a stored size inside the range that is not a whole number.
     notWholeSize: (value: string, range: string) =>
       `Size ${value} m² is not a whole number; the forms accept whole numbers only (${range} m²).`,
-    // `n` = the value as a number, for the year word.
+    // `n` = the value as a number, for the year word; en always reads "years" for the
+    // reachable values (51 and up) but takes `n` so the signature fits cs and ru.
     outOfRangeFixation: (
       date: string,
       value: string,

@@ -90,7 +90,7 @@ export function Dashboard() {
   // Store the pruned filter, so a deactivated property's id cannot come back with it
   // (ADR 0180 §7). Only once the portfolio is loaded: before, every id looks inactive.
   const pruned = fullPortfolio
-    ? prunedFilter(dashboardPropertyIds, [...activeIds])
+    ? prunedFilter(dashboardPropertyIds, activeIds)
     : null;
   useEffect(() => {
     if (pruned) setDashboardPropertyIds(pruned);

@@ -398,14 +398,14 @@ export function findingText(
             fmtDate(DATE_FLOOR),
           );
     case "outOfRange": {
-      // The stored value with every decimal (ADR 0180 §2); the bounds are whole numbers.
-      const n = (v: number) => fmtCzk(v, { suffix: false });
+      // The stored value with every decimal (ADR 0180 §2).
       const value = fmtNumber(f.value);
-      const range = `${n(f.range.min)}–${n(f.range.max)}`;
+      const range = `${fmtNumber(f.range.min)}–${fmtNumber(f.range.max)}`;
       const loan = f.loanStart ? fmtDate(f.loanStart) : "";
       switch (f.field) {
         case "sizeM2":
-          // Only the size can hold a fraction: the engine refuses one in the others.
+          // Only the size can hold a fraction: the engine refuses one in the others
+          // (validate.ts, whole years), so they never reach the Data check.
           return inRange(f.value, f.range)
             ? d.notWholeSize(value, range)
             : d.outOfRangeSize(value, range);
