@@ -1,14 +1,19 @@
 // Monthly amortization schedules with the Czech fixation reset (SPEC §4.4).
 //
 // One month-step kernel (`amortizeMonth`) drives all three loops: the plain-loan grid,
-// the development-loan grid, and the development-loan catch-up from startDate to
-// baseDate. The loops differ only where the behaviour differs, and each difference
-// is named below rather than silently unified:
+// the development-loan grid, and the catch-up from startDate to baseDate. The catch-up
+// opens every development loan running at baseDate, and a plain loan once its fixation
+// has ended or an event is dated by baseDate (D-30, ADR 0109). The loops differ only
+// where the behaviour differs, and each difference is named below rather than silently
+// unified:
 //   • payoff guard — both grids emit zero rows once the balance is repaid (DR-044);
-//   • re-amortization trigger — plain: a rate change only; development: a tranche
-//     landing, the end of interest-only, or a rate change (D-24). Between events the
-//     instalment holds; a development loan opens with the annuity of its principal
-//     over the required term (D-31, `scheduledInstalment`);
+//   • re-amortization trigger — plain: a rate change; development: a tranche landing,
+//     the end of interest-only, or a rate change (D-24). Any loan also re-amortizes
+//     when an event owes it: a lowerInstalment prepayment, a maturity recast or a
+//     capped instalment recast (ADR 0109), or a tranche on the payment of an agreed
+//     instalment (ADR 0120). Between these the instalment holds, or the agreed one is
+//     paid; a development loan opens with the annuity of its principal over the
+//     required term (D-31, `scheduledInstalment`);
 //   • instalment during interest-only — the catch-up adopts the interest as the
 //     instalment in force; the grid keeps the pre-interest-only instalment.
 //
