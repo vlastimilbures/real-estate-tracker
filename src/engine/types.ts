@@ -61,6 +61,11 @@ export interface Assumptions {
   rateShock?: ShockBand | undefined;
   /** A permanent value haircut applied from year `atYear` onward. */
   valueShock?: ValueShock | undefined;
+  /** The base appreciation level, kept by `applyScenario` when a scenario overrides
+   *  `appreciationPa`: a purchase price with no valuation grows at it up to the basis, so
+   *  today's value is the same in every scenario (ADR 0181). Undefined ⇒ `appreciationPa`
+   *  is the base level. */
+  openingAppreciationPa?: Rate | undefined;
 }
 
 export interface Property {
