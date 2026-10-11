@@ -118,8 +118,7 @@ function toDraft(a: Assumptions): Record<string, string> {
     inflationPa: percentDraft(a.inflationPa),
     vacancyAllowance: percentDraft(a.vacancyAllowance),
     postFixationResetRatePa: percentDraft(a.postFixationResetRatePa),
-    // Unset means 0 (ADR 0183); the stored row always holds a rate.
-    sellingCostPct: a.sellingCostPct ? percentDraft(a.sellingCostPct) : "0",
+    sellingCostPct: percentDraft(a.sellingCostPct) || "0", // unset ⇒ 0 (ADR 0183)
     propertyTaxYr: moneyDraft(a.defaults.propertyTaxYr),
     insuranceYr: moneyDraft(a.defaults.insuranceYr),
     svjMonthly: moneyDraft(a.defaults.svjMonthly),
