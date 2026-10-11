@@ -36,8 +36,8 @@
      (`stripped.snap`); restore both files;
    - remove the field and re-record;
    - `diff stripped.snap new.snap` shows only the deleted v2 lines of that field, nothing else.
-     The first step shows that the v1 hashes with the key filtered out equal the new v1
-     hashes; the diff shows that no v2 line other than the field's own changed.
+     No v1 line in that diff means the old v1 hashes with the key filtered out equal the
+     new v1 hashes; no v2 line but the field's own means no other v2 value changed.
      The proof output goes into the ADR and the PR body. Any other line in the diff means a
      number moved: stop and treat it as a behaviour change.
 3. **`ProjectionYear.ratePa` stays.** SPEC.md lists it; its comment was corrected in E4a-1.
@@ -58,7 +58,7 @@
   0
   $ grep '^<' proof.diff | grep -c '"perProperty\[\].weightedRateNumerator"'
   36
-  $ grep -v '^[<>]' proof.diff | grep -vc 'd'               # hunks that are not pure deletions
+  $ grep -cE '^[0-9]+(,[0-9]+)?[ac]' proof.diff           # hunks that add or change lines
   0
   ```
 
@@ -67,5 +67,7 @@
   sections that hold a property snapshot). The 36 v2 `weightedAvgRate` lines are unchanged.
 
 - `PropertySnapshot` loses one field; the engine's public API is otherwise unchanged. No
-  computed number, parity target, tolerance, stored data, export or UI changes.
+  computed number changes: the golden-master fixtures show it, and the weighting runs the
+  same Decimal operations in the same order. No parity target, tolerance, stored data,
+  export or UI changes.
 - A later removal follows decision 2; an addition still follows ADR 0174 decision 3.

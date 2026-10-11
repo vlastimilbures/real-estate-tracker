@@ -255,7 +255,10 @@ interface RatedSnapshot {
   rate: Decimal;
 }
 
-/** Σ debt × rate over the active (owing) rows, in portfolio order from 0 (ADR 0177). */
+/**
+ * Σ debt × rate over the active rows (the `owing` rows of `portfolioSnapshot`; keep the
+ * two filters alike), in portfolio order from 0 (ADR 0177).
+ */
 function weightedRateNumerator(rated: RatedSnapshot[]): Decimal {
   return rated
     .filter((r) => r.snapshot.active)
