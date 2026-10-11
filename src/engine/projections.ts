@@ -78,7 +78,6 @@ interface RentTerm {
 
 interface PropertyBasis {
   v0: Decimal;
-  basisDate: Date; // date v0 is anchored at (baseDate, or purchaseDate for a future buy)
   valuations: Valuation[]; // this property's valuations, for per-year re-anchoring
   rentPlan: (RentTerm | undefined)[]; // per grid month (index m − 1); undefined = no rent
   fixed0: Decimal;
@@ -116,7 +115,6 @@ function propertyBasis(
   const idx = property.rentIndexOverridePa ?? assumptions.rentIndexationPa;
   return {
     v0,
-    basisDate: asOf,
     valuations,
     rentPlan,
     fixed0,
@@ -259,8 +257,7 @@ function buildYear0(
   if (tStart > 0) return zeroYear(0, baseYear, assumptions.baseDate);
   // The debt at baseDate, not grid month 1's opening balance: a loan drawn after
   // baseDate is new debt in its year, not opening debt (D-33).
-  const balance0 =
-    b.schedule.length > 0 ? openingDebt(blocks, assumptions) : ZERO;
+  const balance0 = debtAtGridMonth(b.schedule, blocks, assumptions, 0);
   return {
     year: 0,
     calendarYear: baseYear,
