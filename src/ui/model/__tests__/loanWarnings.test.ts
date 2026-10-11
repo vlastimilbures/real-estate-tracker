@@ -272,7 +272,7 @@ describe("event warnings", () => {
       outcome("PREPAYMENT_TERM_NOT_SHORTENED"),
     ]);
     expect(loanWarningText(en, w!, reset)).toBe(
-      "Loan from 17.01.2021: the prepayment on 17.01.2031 does not shorten the term: at the next payment's rate, the instalment kept would not repay the loan by its maturity, so the maturity stays.",
+      "Loan from 17.01.2021: the prepayment on 17.01.2031 does not shorten the term: at the next payment's rate, the monthly instalment kept would not repay the loan by its maturity, so the maturity stays.",
     );
   });
 
