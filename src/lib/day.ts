@@ -39,11 +39,12 @@ export function localMidnight(day: Date): Date {
   );
 }
 
-/** A UTC-midnight day as YYYY-MM-DD. */
+/** A UTC-midnight day as YYYY-MM-DD; a year below 1000 is padded (ADR 0178). */
 export function isoDay(day: Date): string {
+  const yyyy = String(day.getUTCFullYear()).padStart(4, "0");
   const mm = String(day.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(day.getUTCDate()).padStart(2, "0");
-  return `${day.getUTCFullYear()}-${mm}-${dd}`;
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 /** Today: the local calendar day of `now`. The UI-boundary clock; `now` is injectable for

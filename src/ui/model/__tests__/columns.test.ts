@@ -1,5 +1,6 @@
-// ADR 0116 §12, ADR 0130: optional columns show from half a haléř; a refix shows a
-// "Refinance difference" column, not "Drawn" / "Draws".
+// ADR 0116 §12, ADR 0130, ADR 0178: optional columns show once a value rounds to a
+// whole Kč (from half a crown); a refix shows a "Refinance difference" column, not
+// "Drawn" / "Draws".
 import { describe, it, expect } from "vitest";
 import {
   isoDate,
@@ -52,14 +53,16 @@ function extras(p: Portfolio) {
   };
 }
 
-describe("nonZeroColumns: from half a haléř (ADR 0130)", () => {
+describe("nonZeroColumns: from half a crown (ADR 0178, amends ADR 0130 §5)", () => {
   const cols = [{ key: "a" as const, header: "A" }];
   it.each([
     ["0", false],
-    ["0.0049", false],
-    ["-0.0049", false],
-    ["0.005", true],
-    ["-0.005", true],
+    ["0.005", false],
+    ["-0.005", false],
+    ["0.49", false],
+    ["-0.49", false],
+    ["0.5", true],
+    ["-0.5", true],
     ["-249.89", true],
   ])("a column whose only value is %s is shown: %s", (v, shown) => {
     expect(nonZeroColumns([{ a: D(v) }], cols).length).toBe(shown ? 1 : 0);
@@ -71,6 +74,13 @@ describe("the refinance difference column (ADR 0130)", () => {
     const { amortization, projection } = extras(withRefi("1386000"));
     expect(amortization).toEqual(["refinanced"]);
     expect(projection).toEqual(["refinanced"]);
+  });
+
+  it("a refix a few tenths of a crown off the payoff balance shows no column (#220)", () => {
+    // 1,386,249.50 against the engine's 1,386,249.89: −0.39 Kč prints "0 Kč".
+    const { amortization, projection } = extras(withRefi("1386249.50"));
+    expect(amortization).toEqual([]);
+    expect(projection).toEqual([]);
   });
 
   it("a refix typed to the haléř shows no column", () => {

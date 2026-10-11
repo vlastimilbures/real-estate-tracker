@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { utc } from "../../engine";
+import { D } from "../money";
 import {
   fmtCzk,
   roundCzk,
@@ -9,6 +10,7 @@ import {
   fmtMultiple,
   fmtDscr,
   fmtDate,
+  fmtSigned,
   signTone,
   pickCzkAxisUnit,
   fmtCzkAxisValue,
@@ -57,6 +59,27 @@ describe("fmtPct", () => {
     expect(fmtPct(0.3312)).toBe("33,1 %");
     expect(fmtPct(0.035226, 2)).toBe("3,52 %");
     expect(fmtPct(0.0205, 2)).toBe("2,05 %");
+  });
+});
+
+// ADR 0178 (#146): "+" only on a value whose printed text is not zero.
+describe("fmtSigned", () => {
+  it("signs a gain that shows", () => {
+    expect(fmtSigned(D("0.01"), fmtPp)).toBe("+1,0");
+    expect(fmtSigned(D("60000"), fmtCzkM)).toBe("+0,1 M Kč");
+    expect(fmtSigned(D("0.68"), fmtMultiple)).toBe("+0,68x");
+    expect(fmtSigned(D("0.005"), fmtPct)).toBe("+0,5 %");
+  });
+  it("leaves a gain that rounds to zero bare", () => {
+    expect(fmtSigned(D("0.0004"), fmtPp)).toBe("0,0");
+    expect(fmtSigned(D("30000"), fmtCzkM)).toBe("0,0 M Kč");
+    expect(fmtSigned(D("0"), fmtPp)).toBe("0,0");
+    expect(fmtSigned(D("0.004"), fmtMultiple)).toBe("0,00x");
+    expect(fmtSigned(D("0.0004"), fmtPct)).toBe("0,0 %");
+  });
+  it("leaves the sign of a loss to the formatter", () => {
+    expect(fmtSigned(D("-0.01"), fmtPp)).toBe("−1,0");
+    expect(fmtSigned(D("-0.0004"), fmtPp)).toBe("0,0");
   });
 });
 
@@ -274,6 +297,18 @@ describe("rounding boundaries (half-up, away from zero)", () => {
     expect(fmtDate(utc(2026, 1, 5))).toBe("05.01.2026");
     expect(fmtDate(utc(2024, 2, 29))).toBe("29.02.2024");
     expect(fmtDate(utc(2026, 12, 31))).toBe("31.12.2026");
+  });
+
+  // #263 item 5, ADR 0178: the year has four digits, as dd.mm.yyyy says.
+  it("fmtDate pads a year below 1000 to four digits", () => {
+    const year = (y: number) => {
+      const d = new Date(0);
+      d.setUTCFullYear(y, 0, 1);
+      return d;
+    };
+    expect(fmtDate(year(850))).toBe("01.01.0850");
+    expect(fmtDate(year(100))).toBe("01.01.0100");
+    expect(fmtDate(year(1850))).toBe("01.01.1850");
   });
 });
 

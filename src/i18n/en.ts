@@ -910,8 +910,8 @@ export const en = {
     sumResetRate: (v: string) => `reset rate ${v}`,
     sumInflation: (v: string) => `inflation ${v}`,
     sumInflationShock: (v: string, years: number) =>
-      `inflation +${v} pp for ${years}y`,
-    sumRateShock: (v: string, years: number) => `rates +${v} pp for ${years}y`,
+      `inflation ${v} pp for ${years}y`,
+    sumRateShock: (v: string, years: number) => `rates ${v} pp for ${years}y`,
     // Which loans a rate shock reaches (ADR 0100)
     reachHits: (n: number, m: number, years: string) =>
       `hits ${n} of ${m} ${enPlural(m, ["loan", "loans"])} (refix ${years})`,
@@ -1070,6 +1070,7 @@ export const en = {
     agoToday: "today",
     agoDays: (n: number) => `${n} ${enPlural(n, ["day", "days"])} ago`,
     agoWeeks: (n: number) => `${n} ${enPlural(n, ["week", "weeks"])} ago`,
+    agoMonths: (n: number) => `${n} ${enPlural(n, ["month", "months"])} ago`,
     offDevice: "Keep a copy somewhere other than this Mac.",
     folderHint:
       "The safety copies saved before a restore, before Clear sample and before an app upgrade are in the backups folder inside the data folder.",

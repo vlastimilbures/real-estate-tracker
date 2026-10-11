@@ -155,6 +155,18 @@ export function fmtPp(value: Numeric, dp = 1): string {
   return neg ? `${MINUS}${body}` : body;
 }
 
+/** A difference with "+" on a gain, by any formatter above. The sign follows the printed
+ *  value: a gain whose text equals the formatted zero stays bare, and a loss is signed by
+ *  `fmt` itself (DR-110, ADR 0178). */
+export function fmtSigned(
+  value: Numeric,
+  fmt: (value: Decimal) => string,
+): string {
+  const d = D(value);
+  const text = fmt(d);
+  return d.greaterThan(0) && text !== fmt(D(0)) ? `+${text}` : text;
+}
+
 /** `0.00x` — multiple → "4,85x". */
 export function fmtMultiple(value: Numeric, dp = 2): string {
   const { neg, body } = fmtFixed(value, dp);
@@ -191,11 +203,11 @@ export function cellMultiple(value: Numeric, dp = 2): number {
   return D(value).toDecimalPlaces(dp).toNumber();
 }
 
-/** `dd.mm.yyyy` from a UTC Date. */
+/** `dd.mm.yyyy` from a UTC Date; a year below 1000 is padded (ADR 0178). */
 export function fmtDate(date: Date): string {
   const dd = String(date.getUTCDate()).padStart(2, "0");
   const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const yyyy = date.getUTCFullYear();
+  const yyyy = String(date.getUTCFullYear()).padStart(4, "0");
   return `${dd}.${mm}.${yyyy}`;
 }
 

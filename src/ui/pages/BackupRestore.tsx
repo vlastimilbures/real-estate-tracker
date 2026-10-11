@@ -22,6 +22,8 @@ function agoText(t: Dictionary, ago: BackupAgo): string {
       return t.backup.agoDays(ago.n);
     case "weeks":
       return t.backup.agoWeeks(ago.n);
+    case "months":
+      return t.backup.agoMonths(ago.n);
   }
 }
 

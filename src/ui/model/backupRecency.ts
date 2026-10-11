@@ -11,7 +11,8 @@ const DAY_MS = 86_400_000;
 export type BackupAgo =
   | { unit: "today"; n: 0 }
   | { unit: "days"; n: number }
-  | { unit: "weeks"; n: number };
+  | { unit: "weeks"; n: number }
+  | { unit: "months"; n: number };
 
 export interface BackupRecency {
   /** The local calendar day of the last backup, as a UTC-midnight date (`fmtDate`). */
@@ -25,7 +26,9 @@ export interface BackupRecency {
 function agoOf(days: number): BackupAgo {
   if (days <= 0) return { unit: "today", n: 0 };
   if (days < 14) return { unit: "days", n: days };
-  return { unit: "weeks", n: Math.floor(days / 7) };
+  // Whole months of 30 days from 60 days: a year-old backup read "57 weeks ago" (ADR 0178).
+  if (days < 60) return { unit: "weeks", n: Math.floor(days / 7) };
+  return { unit: "months", n: Math.floor(days / 30) };
 }
 
 export function backupRecency(state: BackupState, now: Date): BackupRecency {

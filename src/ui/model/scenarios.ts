@@ -1,7 +1,7 @@
 // Pure presentation helpers for the Scenarios page: the implicit Base scenario and
 // the one-line human summary of a scenario's deltas vs base. Extracted from
 // Scenarios.tsx so they're unit-testable without mounting the component.
-import { fmtPct, fmtPp } from "../../lib/format";
+import { fmtPct, fmtPp, fmtSigned } from "../../lib/format";
 import { rate, type Scenario, type ScenarioOverrides } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import { DEFAULT_SHOCK_YEARS } from "./scenarioForm";
@@ -15,7 +15,8 @@ export function baseScenario(t: Dictionary): Scenario {
 }
 
 /** One-line human summary of a scenario's deltas vs base (for the list). `reach` is
- *  the rate shock's reach note, shown after it (ADR 0100). */
+ *  the rate shock's reach note, shown after it (ADR 0100). A shock delta comes signed
+ *  (ADR 0178); the templates add no sign. */
 export function summarize(s: Scenario, t: Dictionary, reach?: string): string {
   const parts: string[] = [];
   const o = s.overrides;
@@ -31,13 +32,13 @@ export function summarize(s: Scenario, t: Dictionary, reach?: string): string {
   if (o.inflationShock)
     parts.push(
       sc.sumInflationShock(
-        fmtPp(o.inflationShock.deltaPa),
+        fmtSigned(o.inflationShock.deltaPa, fmtPp),
         o.inflationShock.durationYears,
       ),
     );
   if (o.rateShock) {
     const shock = sc.sumRateShock(
-      fmtPp(o.rateShock.deltaPa),
+      fmtSigned(o.rateShock.deltaPa, fmtPp),
       o.rateShock.durationYears,
     );
     parts.push(reach ? `${shock}, ${reach}` : shock);

@@ -9,6 +9,7 @@
   [0027](0027-one-active-block.md) and [0021](0021-schedule-calendar.md) (D-47: the handover row)
 - Related: [0109](0109-loan-prepayments-and-recasts.md) (event outcomes),
   [0039](0039-golden-master.md) (golden master added fields)
+- Amended by: [0178](0178-display-follows-rounded-value.md) (§5: optional columns show from half a crown)
 
 ## Context
 

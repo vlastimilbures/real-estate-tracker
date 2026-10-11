@@ -8,6 +8,7 @@ import {
   fmtPct,
   fmtMultiple,
   fmtDscr,
+  roundCzk,
   signTone,
   type Tone,
 } from "../../lib/format";
@@ -22,7 +23,8 @@ import { logFailure } from "../../state/diagnostics";
 type Num = Decimal | number;
 
 /** Money value with accounting conventions: red parentheses for negatives. Only a
- *  `signed` flow (net cash flow, NOI) is also green when positive (UX-026). */
+ *  `signed` flow (net cash flow, NOI) is also green when positive (UX-026). The tone
+ *  follows the value as printed, so "0 Kč" is never coloured (ADR 0178). */
 export function Money({
   value,
   parens = true,
@@ -34,7 +36,7 @@ export function Money({
   suffix?: boolean | undefined;
   signed?: boolean | undefined;
 }) {
-  const sign: Tone = signTone(value);
+  const sign: Tone = signTone(roundCzk(value));
   const t: Tone = signed || sign === "negative" ? sign : "neutral";
   return (
     <span className={`num tone-${t}`}>{fmtCzk(value, { parens, suffix })}</span>

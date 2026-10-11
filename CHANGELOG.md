@@ -164,6 +164,9 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- Settings → Backup counts a backup older than 60 days in months ("13 months ago" instead
+  of "57 weeks ago") (ADR 0178, #146).
+
 - A development loan's draws are entered as a **Drawdown schedule** (ADR 0167, #75). Its
   first row is the amount drawn on the start date (the initial principal, now labelled
   **Drawn at start**); each later tranche is a row with a date and an amount, added and
@@ -292,6 +295,18 @@ engine without the form, and remove it when the last part lands.
   The Guide's value-crash entry says the same (ADR 0089, #14).
 
 ### Fixed
+
+- Amounts that round to "0 Kč" are no longer red or green, and an optional table column
+  (Drawn, Prepaid, Prepayment fee, Refinance difference, Undrawn) appears only once a value
+  rounds to at least 1 Kč, on screen and in both Excel exports (ADR 0178, #186, #220). A
+  refinance a few tenths of a crown off the bank's payoff balance no longer shows a column
+  of "0 Kč".
+
+- Compare "Δ vs Base" no longer shows "+0,0 M Kč" for a gain that rounds to zero, and the
+  scenario list no longer reads "rates +−1,0 pp" for a rate cut (ADR 0178, #146). The Czech
+  summary declines the year word ("na 3 roky"); preset names are unchanged.
+
+- Dates show a four-digit year, such as 01.01.0850 for an early stored date (ADR 0178, #263).
 
 - On the Import page, the message that the files could not be checked against your saved
   data can no longer be closed (ADR 0175, #258). It stays until you choose the files again

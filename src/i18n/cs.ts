@@ -858,8 +858,10 @@ export const cs: Dictionary = {
     sumVacancy: (v) => `neobsazenost ${v}`,
     sumResetRate: (v) => `sazba po fixaci ${v}`,
     sumInflation: (v) => `inflace ${v}`,
-    sumInflationShock: (v, years) => `inflace +${v} p. b. na ${years} l.`,
-    sumRateShock: (v, years) => `sazby +${v} p. b. na ${years} l.`,
+    sumInflationShock: (v, years) =>
+      `inflace ${v} p. b. na ${years} ${csPlural(years, ["rok", "roky", "let"])}`,
+    sumRateShock: (v, years) =>
+      `sazby ${v} p. b. na ${years} ${csPlural(years, ["rok", "roky", "let"])}`,
     reachHits: (n, m, years) =>
       `zasáhne ${n} z ${m} ${csPlural(m, ["úvěru", "úvěrů", "úvěrů"])} (refixace ${years})`,
     reachNone: "v okně šoku se žádný úvěr nerefixuje, takže bez vlivu",
@@ -1015,6 +1017,8 @@ export const cs: Dictionary = {
     agoDays: (n: number) => `před ${n} ${csPlural(n, ["dnem", "dny", "dny"])}`,
     agoWeeks: (n: number) =>
       `před ${n} ${csPlural(n, ["týdnem", "týdny", "týdny"])}`,
+    agoMonths: (n: number) =>
+      `před ${n} ${csPlural(n, ["měsícem", "měsíci", "měsíci"])}`,
     offDevice: "Uchovávejte kopii i jinde než na tomto Macu.",
     folderHint:
       "Bezpečnostní kopie uložené před obnovením, před smazáním ukázky a před aktualizací aplikace jsou ve složce backups uvnitř složky dat.",

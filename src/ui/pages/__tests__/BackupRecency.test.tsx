@@ -66,6 +66,18 @@ describe("Settings → Backup: last backup (ADR 0110)", () => {
       screen.getByText("Last backup: 12.09.2026 (3 weeks ago)"),
     ).toBeTruthy();
   });
+
+  it("counts an old backup in months (ADR 0178)", () => {
+    setBackup({
+      lastAt: new Date(2025, 8, 29, 9, 0).toISOString(),
+      lastFile: "portfolio-backup-2025-09-29.json",
+      changedSince: false,
+    });
+    render(<Settings />);
+    expect(
+      screen.getByText("Last backup: 29.09.2025 (12 months ago)"),
+    ).toBeTruthy();
+  });
 });
 
 describe("sidebar backup reminder (ADR 0110)", () => {

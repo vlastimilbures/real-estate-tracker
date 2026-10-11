@@ -866,8 +866,8 @@ export const ru: Dictionary = {
     sumVacancy: (v) => `простой ${v}`,
     sumResetRate: (v) => `ставка после фиксации ${v}`,
     sumInflation: (v) => `инфляция ${v}`,
-    sumInflationShock: (v, years) => `инфляция +${v} п. п. на ${years} г.`,
-    sumRateShock: (v, years) => `ставки +${v} п. п. на ${years} г.`,
+    sumInflationShock: (v, years) => `инфляция ${v} п. п. на ${years} г.`,
+    sumRateShock: (v, years) => `ставки ${v} п. п. на ${years} г.`,
     reachHits: (n, m, years) =>
       `затрагивает ${n} из ${m} ${ruPlural(m, ["кредита", "кредитов", "кредитов"])} (конец фиксации ${years})`,
     reachNone:
@@ -1025,6 +1025,8 @@ export const ru: Dictionary = {
       `${n} ${ruPlural(n, ["день", "дня", "дней"])} назад`,
     agoWeeks: (n: number) =>
       `${n} ${ruPlural(n, ["неделю", "недели", "недель"])} назад`,
+    agoMonths: (n: number) =>
+      `${n} ${ruPlural(n, ["месяц", "месяца", "месяцев"])} назад`,
     offDevice: "Храните копию не только на этом Mac.",
     folderHint:
       "Резервные копии, сохранённые перед восстановлением, перед удалением примера и перед обновлением приложения, лежат в папке backups внутри папки данных.",
