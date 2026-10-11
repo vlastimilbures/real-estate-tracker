@@ -384,6 +384,15 @@ const CASES: Case[] = [
     { ...late228, start: "2025-05-07", ratePa: "0.03", fixationMonths: 12 },
     "2026-06-06",
   ],
+  // #237: the rate shock starts at payment o + 1, the first payment after baseDate, so
+  // the term sized after payment o and the next payment's rate must agree.
+  [
+    "plain loan, late shortenTerm after an instalment recast on the fixation end, rate shock (ADR 0136)",
+    { ...late228, start: "2025-05-07", ratePa: "0.03", fixationMonths: 12 },
+    "2026-06-06",
+    { rateShock: { deltaPa: "0.02", months: 12, anchor: "fixationEnd" } },
+    { rateShock: { deltaPa: rate("0.02"), durationYears: 1 } },
+  ],
   [
     "dev loan, late shortenTerm after an instalment recast (ADR 0136)",
     {

@@ -9,11 +9,12 @@ import {
 } from "../projections";
 import { realProjection } from "../real";
 import { EMPTY_PROPERTY_SCHEDULE } from "../schedule";
-import { rate } from "../brands";
+import { isoDate } from "../dates";
+import { money, rate } from "../brands";
 import { D } from "../../lib/money";
 import { assumptions, portfolio as seed } from "./support/seed";
-import { mixed } from "./support/mixed";
-import type { Property } from "../types";
+import { devBlock, mixed } from "./support/mixed";
+import type { MortgageBlock, Portfolio, Property } from "../types";
 
 const future = mixed.properties.find((p) => p.id === "future") as Property;
 // Purchase 15.03.2028 on the 2026-06-07 grid: projection year 2 (2028).
@@ -91,5 +92,86 @@ describe("ProjectionYear.acquiredValue (ADR 0165)", () => {
     expect(
       proj[T_START].acquiredValue.equals(VALUE_AT_PURCHASE.times(D("0.8"))),
     ).toBe(true);
+  });
+
+  // #299 item 1: the edges the ADR 0165 review listed.
+  it("is the completed value at the purchase date for a development future buy (ADR 0166)", () => {
+    // The dev-committed-debt.test.ts future buy: purchase 2027-03-01 (turn-on year 1),
+    // a development loan drawing after it, valued 9,500,000 from the purchase date.
+    const futureDev: MortgageBlock = {
+      ...devBlock,
+      startDate: isoDate("2027-03-01"),
+      loanTermYears: 30,
+      draws: [
+        { date: isoDate("2027-11-15"), amount: money("1500000") },
+        { date: isoDate("2028-08-20"), amount: money("1000000") },
+      ],
+      completionDate: isoDate("2028-08-20"),
+    };
+    const pf: Portfolio = {
+      properties: [
+        {
+          id: "dev",
+          name: "Dev unit",
+          purchaseDate: isoDate("2027-03-01"),
+          purchasePrice: money("7000000"),
+        },
+      ],
+      mortgages: [futureDev],
+      valuations: [
+        {
+          id: "v-dev",
+          propertyId: "dev",
+          validFrom: isoDate("2027-03-01"),
+          marketValue: money("9500000"),
+        },
+      ],
+      leases: [],
+      holdingCosts: [],
+    };
+    const proj = portfolioProjection(pf, assumptions);
+    expect(proj[1].acquiredValue.equals(D("9500000"))).toBe(true);
+    expect(proj.filter((y) => !y.acquiredValue.isZero()).length).toBe(1);
+  });
+
+  it("keeps the value at the purchase date when a valuation re-anchors later in the turn-on year", () => {
+    // A new valuation between the purchase (15.03.2028) and the year's grid date
+    // (07.06.2028) shows as appreciation, not as bought-in value.
+    const pf: Portfolio = {
+      ...mixed,
+      valuations: [
+        ...mixed.valuations,
+        {
+          id: "v-future-2",
+          propertyId: "future",
+          validFrom: isoDate("2028-05-01"),
+          marketValue: money("7000000"),
+        },
+      ],
+    };
+    const proj = propertyProjection(
+      future,
+      pf,
+      assumptions,
+      EMPTY_PROPERTY_SCHEDULE,
+    );
+    expect(proj[T_START].acquiredValue.equals(VALUE_AT_PURCHASE)).toBe(true);
+    expect(proj[T_START].value.equals(VALUE_AT_PURCHASE)).toBe(false);
+  });
+
+  it("equals the turn-on year's value for a purchase on the grid date", () => {
+    const onGrid: Property = { ...future, purchaseDate: isoDate("2028-06-07") };
+    const pf: Portfolio = {
+      ...mixed,
+      properties: mixed.properties.map((p) => (p.id === "future" ? onGrid : p)),
+    };
+    const proj = propertyProjection(
+      onGrid,
+      pf,
+      assumptions,
+      EMPTY_PROPERTY_SCHEDULE,
+    );
+    expect(proj[T_START].acquiredValue.isZero()).toBe(false);
+    expect(proj[T_START].acquiredValue.equals(proj[T_START].value)).toBe(true);
   });
 });
