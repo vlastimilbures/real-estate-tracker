@@ -294,10 +294,11 @@ describe("Restore a backup (#118)", () => {
 describe("Show data folder (ADR 0175, #151 item 7)", () => {
   it("says where the safety backups are and shows the folder", async () => {
     renderPanel();
-    expect(screen.getByText(en.backup.folderHint)).toBeTruthy();
-    await userEvent.click(
-      screen.getByRole("button", { name: en.boot.showDataFolder }),
-    );
+    const button = screen.getByRole("button", {
+      name: en.boot.showDataFolder,
+      description: en.backup.folderHint,
+    });
+    await userEvent.click(button);
     expect(revealDataDir).toHaveBeenCalledOnce();
     expect(screen.queryByRole("alert")).toBeNull();
     expect(logFailure).not.toHaveBeenCalled();

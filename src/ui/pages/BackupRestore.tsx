@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore, type OutcomeAction } from "../../state/uiStore";
 import { Panel, Button } from "../components/primitives";
@@ -58,6 +58,7 @@ export function BackupRestorePanel() {
   const [restoring, setRestoring] = useState(false);
   const [pendingBackup, setPendingBackup] = useState<PickedBackup | null>(null);
   const { showToast } = useToast();
+  const folderHintId = useId();
   const setNotice = useUiStore((s) => s.setNotice);
   const setFailure = useUiStore((s) => s.setFailure);
   const dismissFailure = useUiStore((s) => s.dismissFailure);
@@ -167,6 +168,7 @@ export function BackupRestorePanel() {
           {exporting ? t.backup.exporting : t.backup.exportButton}
         </Button>
         <p
+          id={folderHintId}
           style={{
             color: "var(--ink-soft)",
             fontSize: 13,
@@ -175,7 +177,10 @@ export function BackupRestorePanel() {
         >
           {t.backup.folderHint}
         </p>
-        <Button onClick={() => void handleShowFolder()}>
+        <Button
+          onClick={() => void handleShowFolder()}
+          aria-describedby={folderHintId}
+        >
           {t.boot.showDataFolder}
         </Button>
       </Panel>
