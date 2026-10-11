@@ -68,7 +68,7 @@ function main() {
     console.log(
       `${r.ok ? "ok  " : "FAIL"}  ${r.glob} ${r.metric}: floor ${r.floor}, ` +
         `measured ${r.measured.toFixed(1)}` +
-        (r.ok ? "" : ` (more than ${MAX_SLACK} points above: raise the floor)`),
+        (r.ok ? "" : ` (floor more than ${MAX_SLACK} points below: raise it)`),
     );
   }
   process.exit(failed ? 1 : 0);

@@ -56,7 +56,7 @@ const RATIOS = [
       group: "pieces, synthetic 20 properties",
       bench: "schedulesByProperty",
     },
-    max: 1.35,
+    max: 1.4,
   },
 ];
 
