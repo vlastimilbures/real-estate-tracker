@@ -44,6 +44,9 @@ describe("Finding F — projection year vs calendar-year labels", () => {
     for (const y of proj) expect(y.calendarYear).toBe(2026 + y.year);
   });
   it("year t spans grid months (t−1)·12+1 … t·12, e.g. year 5 = 2030-07-07 … 2031-06-07", () => {
+    // (periodStart, periodEnd] holds grid months 49 … 60.
+    expect(proj[5].periodStart.toISOString().slice(0, 10)).toBe("2030-06-07");
+    expect(proj[5].periodEnd.toISOString().slice(0, 10)).toBe("2031-06-07");
     expect(
       edate(A0.baseDate, 4 * 12 + 1)
         .toISOString()
