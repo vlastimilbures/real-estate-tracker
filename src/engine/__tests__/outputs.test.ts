@@ -154,13 +154,15 @@ describe("portfolioOutputs = the separate public calls", () => {
   });
 });
 
-describe("projectionAndKpis = portfolioProjection + portfolioKpis", () => {
+// portfolioKpis reads projectionAndKpis, so the KPIs are compared with portfolioOutputs,
+// which builds them in its own pass.
+describe("projectionAndKpis = portfolioProjection + portfolioOutputs' KPIs", () => {
   for (const [pName, p] of PORTFOLIOS) {
     for (const [aName, a] of ASSUMPTIONS) {
       it(`${pName}, ${aName}`, () => {
         expect(projectionAndKpis(p, a)).toEqual({
           projection: portfolioProjection(p, a),
-          kpis: portfolioKpis(p, a),
+          kpis: portfolioOutputs(p, a).kpis,
         });
       });
     }
