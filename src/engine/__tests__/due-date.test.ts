@@ -91,6 +91,26 @@ describe("ADR 0164: amortization rows carry the payment due date", () => {
     expectOwnCadence(devBlock, buildSchedule(devBlock, assumptions));
   });
 
+  // #297 (owner decision A): a 0 % interest-only row pays 0 Kč, but a payment is still
+  // due, so the row keeps its due date. (Not `expectOwnCadence`: it reads "pays" from
+  // interest + principal, which are both 0 here.)
+  it("a 0 % interest-only row pays nothing but keeps its due date", () => {
+    const block = mortgageBlock({ ...devBlock, interestRatePa: rate("0") });
+    const offset = paymentOffset(block, assumptions.baseDate);
+    const rows = buildSchedule(block, assumptions);
+    // devBlock: fixed for 5 years from 01.03.2026, interest-only to 20.08.2027.
+    const io = rows.filter((r) => r.date <= devBlock.completionDate!);
+    expect(io.length).toBeGreaterThan(0);
+    for (const r of io) {
+      expect(r.interest.isZero(), `m${r.month} interest`).toBe(true);
+      expect(r.principal.isZero(), `m${r.month} principal`).toBe(true);
+      expect(r.endBalance.greaterThan(0), `m${r.month} balance`).toBe(true);
+      expect(iso(r.dueDate), `m${r.month} due date`).toBe(
+        iso(edate(block.startDate, offset + r.month)),
+      );
+    }
+  });
+
   it("a repaid loan's trailing rows have no due date", () => {
     const block: MortgageBlock = {
       ...javorova,
