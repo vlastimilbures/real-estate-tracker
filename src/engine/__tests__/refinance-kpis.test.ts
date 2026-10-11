@@ -2,7 +2,7 @@
 // drawn − balance paid off) is counted in the handover year in cumulative net cash flow
 // and levered IRR, like the acquisition outflow; the projection rows are unchanged.
 import { describe, it, expect } from "vitest";
-import { irr, portfolioKpis } from "../kpis";
+import { irrResult, portfolioKpis } from "../kpis";
 import { portfolioProjection } from "../projections";
 import { propertySchedule } from "../schedule";
 import { isoDate } from "../dates";
@@ -51,7 +51,7 @@ function expectedKpis(p: Portfolio) {
   const cumulative = proj
     .slice(1)
     .reduce((s, y, i) => s.plus(y.netCashFlow).plus(extra(i + 1)), ZERO);
-  return { cumulative, irrNominal: irr(vector), cash };
+  return { cumulative, irrNominal: irrResult(vector).rate, cash };
 }
 
 describe("D-47: net refinance cash in the KPIs", () => {

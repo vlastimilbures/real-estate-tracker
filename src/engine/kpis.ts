@@ -27,11 +27,6 @@ import type {
 type IrrResult =
   { rate: Decimal; reason: null } | { rate: null; reason: IrrNoRateReason };
 
-/** The IRR of `cashflows`, or null when there is none (see `irrResult`). */
-export function irr(cashflows: Decimal[]): Decimal | null {
-  return irrResult(cashflows).rate;
-}
-
 /**
  * IRR via bisection on the decimal NPV (DR-158, ADR 0079). NOT_UNIQUE when an NPV scan
  * over [−90 %, +1000 %] finds more than one root (counting cash-flow sign changes would

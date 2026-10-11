@@ -4,7 +4,7 @@
 import { bench, describe } from "vitest";
 import { D } from "../../../lib/money";
 import { money, rate } from "../../brands";
-import { irr } from "../../kpis";
+import { irrResult } from "../../kpis";
 import { mortgageBlock } from "../../amortization";
 import { edate } from "../../dates";
 import { schedulesByProperty } from "../../schedule";
@@ -86,7 +86,7 @@ describe("pieces, synthetic 20 properties", () => {
     opts,
   );
   bench("portfolioKpis", () => void portfolioKpis(p20, assumptions), opts);
-  bench("irr (31 cash flows)", () => void irr(vector), opts);
+  bench("irr (31 cash flows)", () => void irrResult(vector).rate, opts);
 });
 
 /** A year after the latest of baseDate, the loan's start and any completion. */

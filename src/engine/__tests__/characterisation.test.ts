@@ -11,7 +11,7 @@ import { D, ZERO } from "../../lib/money";
 import { isoDate } from "../dates";
 import { leaseInForce, portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
-import { portfolioKpis, irr } from "../kpis";
+import { portfolioKpis, irrResult } from "../kpis";
 import {
   propertySchedules,
   scheduleRows,
@@ -374,16 +374,16 @@ describe("Scenario shocks — windows and edges // DR-094", () => {
 
 describe("IRR edge cases // DR-061", () => {
   it("IRR = 0 when the cash flows just return the outlay", () => {
-    near(irr([D(-100), D(50), D(50)])!, 0, RATIO, "irr 0");
+    near(irrResult([D(-100), D(50), D(50)]).rate!, 0, RATIO, "irr 0");
   });
   it("root above the [−90 %, 100 %] bracket is found by widening (+900 %) // DR-158", () => {
-    near(irr([D(-1), D(10)])!, 9, RATIO, "irr 900 %");
+    near(irrResult([D(-1), D(10)]).rate!, 9, RATIO, "irr 900 %");
   });
   it("two roots (10 % and 20 %) ⇒ null, not unique // DR-158", () => {
-    expect(irr([D(-100), D(230), D(-132)])).toBeNull();
+    expect(irrResult([D(-100), D(230), D(-132)]).rate).toBeNull();
   });
   it("an all-zero vector ⇒ null", () => {
-    expect(irr([ZERO, ZERO, ZERO])).toBeNull();
+    expect(irrResult([ZERO, ZERO, ZERO]).rate).toBeNull();
   });
 });
 
