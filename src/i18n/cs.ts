@@ -395,9 +395,9 @@ export const cs: Dictionary = {
     hide: "Skrýt kontrolu dat",
     goTo: (section) => `Přejít do sekce ${section}`,
     valuationStale: (age, date) =>
-      `Použité ocenění je staré ${age} (${date}). Hodnota, vlastní kapitál a LTV vycházejí z něj.`,
-    noValuation: (price) =>
-      `Není zadané žádné ocenění, proto se jako tržní hodnota použije kupní cena ${price}.`,
+      `Použité ocenění je staré ${age} (${date}). Hodnota, vlastní kapitál a LTV ho použijí tak, jak je zadané; k začátku projekce se nezhodnocuje.`,
+    noValuation: (price, date) =>
+      `Není zadané žádné ocenění, proto se jako tržní hodnota použije kupní cena ${price} navýšená o roční zhodnocení od ${date}.`,
     noLease: (date) =>
       `K ${date} neplatí žádný nájem, proto se nájemné počítá jako 0.`,
     leaseEnded: (date) =>
@@ -1349,8 +1349,8 @@ export const cs: Dictionary = {
         name: "Hodnota",
         formula: "ocenění × (1 + zhodnocení) ^ roky",
         meaning:
-          "Tržní hodnota narostlá z posledního zaznamenaného ocenění. Nové ocenění křivku znovu ukotví. Dokud se developerský úvěr čerpá, zobrazuje se dokončená hodnota snížená o dosud nečerpané tranše.",
-        eg: "5,0 M při 4 %/rok → 5,0 M × 1,04² ≈ 5,41 M po 2 letech.",
+          "Tržní hodnota: ocenění platné k začátku projekce, tak jak je zadané, zhodnocované od tohoto data (nebo od data pozdějšího ocenění, které křivku znovu ukotví). Bez ocenění kupní cena navýšená o roční zhodnocení od nákupu. Dokud se developerský úvěr čerpá, zobrazuje se dokončená hodnota snížená o dosud nečerpané tranše.",
+        eg: "Ocenění 5,0 M platné k začátku projekce, při 4 %/rok → 5,0 M × 1,04² ≈ 5,41 M o 2 roky později.",
       },
       debt: {
         name: "Dluh",

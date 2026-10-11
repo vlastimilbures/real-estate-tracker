@@ -803,8 +803,9 @@ offline badge, and controls for language and theme.
    active properties in the filter, future buys included, shown only when every one of them
    has it; the real lens labels it nominal.
    A **Data check** panel (ADR 0118) lists, at the snapshot date, the inputs the engine
-   falls back on: under "Needs attention" a valuation more than 12 months old, no valuation
-   (purchase price used), a last lease that ended (no rent in the snapshot, renewed in the
+   falls back on: under "Needs attention" a valuation more than 12 months old (used as
+   entered, not grown to the projection start), no valuation (purchase price grown since the
+   purchase, ADR 0181), a last lease that ended (no rent in the snapshot, renewed in the
    projection), no lease in force (rent 0), a lease ending within 3 months with no next
    lease, a fixation that ended with no follow-on block, and two stored leases that overlap
    (any date, ADR 0163); under "Using portfolio
