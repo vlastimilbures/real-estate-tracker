@@ -60,10 +60,11 @@ still describe it. Which document owns what is listed in
   retested against the last result (`reports/mutation/stryker-incremental.json`, cached in
   CI); `pnpm mutation --force` retests every mutant. `thresholds.break` in
   `stryker.config.json` is the floored baseline score; raise it, never lower it.
-- **Performance budgets** (ADR 0066, ADR 0073): `pnpm bench` times the engine; 20 properties
-  p99 ≤ 150 ms for one recompute and ≤ 450 ms for a 3-scenario compare. The nightly run fails
-  when a p99 exceeds twice its budget (`pnpm bench:check`); check the budgets themselves
-  locally after an engine change.
+- **Performance budgets** (ADR 0066, ADR 0073, ADR 0172): `pnpm bench` times the engine; 20
+  properties p99 ≤ 150 ms for one recompute, ≤ 450 ms for a 3-scenario compare and ≤ 80 ms for
+  a schedule build with a recast or a prepayment on every loan. The nightly run fails when a p99
+  exceeds twice its budget or the recast build's median exceeds 1.35 × the plain build's
+  (`pnpm bench:check`); check the budgets themselves locally after an engine change.
 - **Property tests** (#232, #167): every fast-check test takes its seed and run count from
   `fcRuns` (`src/engine/__tests__/support/fcRuns.ts`), so PR CI runs a fixed seed per file
   (for example `loan-event-invariants.test.ts` 200 runs). A new property file gets its own

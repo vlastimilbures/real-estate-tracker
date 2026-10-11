@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-02
 - Source IDs: DR-172 (P11 follow-up F-10, D-71); extends ADR 0066
+- Amended by: [0172](0172-recast-prepayment-bench-budgets.md) (recast and prepayment budgets, a
+  same-run ratio for the recast case, a checked factor)
 
 ## Context
 
