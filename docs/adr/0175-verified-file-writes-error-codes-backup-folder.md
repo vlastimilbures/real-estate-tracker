@@ -8,8 +8,7 @@
 - Amends: [0052](0052-restore-safety-backup.md) (the safety backup is checked byte for byte
   before the rename, not by row counts after it), [0147](0147-failure-messages-and-log.md)
   (decision 5 and its consequence: OS and SQLite error codes stay in the log; decision 4: the
-  preview failure banner has no dismiss; decision 7: the panic line is capped and the hook
-  guarded), [0153](0153-honest-startup-failures.md) (decision 4: `reveal_data_dir` is also
+  preview failure banner has no dismiss; decision 7: the panic line is capped), [0153](0153-honest-startup-failures.md) (decision 4: `reveal_data_dir` is also
   reached from Settings → Backup)
 - Related: [0014](0014-rust-transaction-command.md) (multi-step writes go through the Rust
   transaction command), [0064](0064-file-io-in-rust.md) (file IO in Rust),
@@ -45,9 +44,13 @@
    (`BACKUP_EXISTS`, as `db_backup` does). Two safety backups in the same second: the second
    fails with `BACKUP_EXISTS` instead of replacing the first, so its restore or Clear sample
    does not start. Practically unreachable: each needs a dialog.
-3. **Panic hook.** A re-entry guard skips logging when the hook runs again on the same thread
-   (it still runs the previous hook). The line is capped at 500 characters, like
-   `log_error`'s context. It is still not masked (ADR 0147, consequence).
+3. **Panic hook.** The panic line's message is capped at 500 characters, like
+   `log_error`'s context. It is still not masked (ADR 0147, consequence). No re-entry
+   guard (#258 item 1 proposed one): std aborts on a panic inside a panic hook without
+   running the hook again ("thread panicked while processing panic"), so a guard could
+   never fire. A panic inside the logger while it holds its own lock can still block the
+   hook's log call; the hook cannot see that lock. Accepted as a known limit: the logger
+   is tauri-plugin-log, and a hang there needs a panic inside its own write.
 4. **Error codes stay in the log.** Masking keeps a run of 1–5 digits right after `os error `
    or `code: ` / `code ` (sqlx prints `(code: 2067) …`). Every other number is masked as
    before; a longer run after `code` is masked too. Amends ADR 0147 decision 5 and its

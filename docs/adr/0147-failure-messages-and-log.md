@@ -8,8 +8,8 @@
   backups), [0096](0096-csv-import-preview.md) (import preview), [0125](0125-committed-write-reload-failure.md)
   (a failed reload after a write)
 - Amended by: [0175](0175-verified-file-writes-error-codes-backup-folder.md) (decision 5: OS and SQLite error
-  codes stay; decision 4: the preview failure banner has no dismiss; decision 7: capped,
-  guarded panic hook)
+  codes stay; decision 4: the preview failure banner has no dismiss; decision 7: the panic line is
+  capped)
 
 ## Context
 
