@@ -6,9 +6,10 @@
 // corrupt data and D-38 ranges via `assertInputs` / `assertAssumptions` (P4b).
 // Entry-point rejection is P5b/P7; messages belong to P7.
 import { ONE, ZERO, type Decimal } from "../lib/money";
-import { edate, isAfter, isOnOrBefore } from "./dates";
+import { isAfter, isOnOrBefore } from "./dates";
 import {
   derivedTermProblem,
+  dueDate,
   eventTermMonths,
   maxTermMonths,
   paymentOnOrAfter,
@@ -234,7 +235,7 @@ function checkDerivedTerm(b: MortgageBlock, report: Report): void {
  *  valid term (then MISSING_TERM_FOR_DEV_LOAN or INVALID_TERM reports instead). */
 function lastDrawDate(b: MortgageBlock): Date | undefined {
   return b.loanTermYears != null && Number.isInteger(b.loanTermYears)
-    ? edate(b.startDate, b.loanTermYears * 12 - 1)
+    ? dueDate(b, b.loanTermYears * 12 - 1)
     : undefined;
 }
 
@@ -369,7 +370,7 @@ function checkLoanEvents(b: MortgageBlock, report: Report): void {
   const end =
     term === undefined || badDate(b.startDate)
       ? undefined
-      : edate(b.startDate, eventTermMonths(withValidRecasts(b), term));
+      : dueDate(b, eventTermMonths(withValidRecasts(b), term));
   checkPrepayments(b, end, report);
   checkRecasts(b, term, end, report);
 }

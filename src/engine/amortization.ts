@@ -160,6 +160,12 @@ export function paymentsDueBy(block: MortgageBlock, date: Date): number {
   return lastGridMonthOnOrBefore(block.startDate, date);
 }
 
+/** Due date of payment `p`, EDATE(start, p) on the loan's own cadence (D-21); payment 0
+ *  is the start. */
+export function dueDate(block: MortgageBlock, p: number): IsoDate {
+  return edate(block.startDate, p);
+}
+
 /** The latest last payment a recast may set: loan start + 50 years, or the contract
  *  term when that is longer (ADR 0109). */
 export function maxTermMonths(contractTerm: number): number {
@@ -220,9 +226,7 @@ export function scheduleMonths(
   const term = termMonths(block);
   const d = drawMonth(block, baseDate);
   const payoffMonth =
-    d > 0
-      ? d + term
-      : Math.max(0, term - lastGridMonthOnOrBefore(block.startDate, baseDate));
+    d > 0 ? d + term : Math.max(0, term - paymentsDueBy(block, baseDate));
   return Math.max(horizonYears * 12, payoffMonth);
 }
 
@@ -305,7 +309,7 @@ export function amortizationHealth(block: MortgageBlock): AmortizationHealth {
  * (the schedule's plain-loan opening uses it at baseDate). Floored at 0.
  */
 export function currentBalance(block: MortgageBlock, asOf: Date): Decimal {
-  const n = lastGridMonthOnOrBefore(block.startDate, asOf);
+  const n = paymentsDueBy(block, asOf);
   if (n <= 0) return block.initialPrincipal;
   const bal = FV(
     block.interestRatePa.div(12),
@@ -342,7 +346,7 @@ export function mortgageBlock(fields: MortgageBlockFields): MortgageBlock {
  * explicit. Unchanged by a refix (constant maturity).
  */
 export function impliedMaturity(block: MortgageBlock): IsoDate | null {
-  return isDevLoan(block) ? null : edate(block.startDate, termMonths(block));
+  return isDevLoan(block) ? null : dueDate(block, termMonths(block));
 }
 
 /**

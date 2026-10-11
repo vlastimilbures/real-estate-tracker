@@ -1,14 +1,21 @@
 // Monthly amortization schedules with the Czech fixation reset (SPEC §4.4).
 //
-// One month-step kernel (`amortizeMonth`) drives all three loops: the plain-loan grid,
-// the development-loan grid, and the development-loan catch-up from startDate to
-// baseDate. The loops differ only where the behaviour differs, and each difference
-// is named below rather than silently unified:
+// One payment kernel (`payAndSettle`: pay payment p — tranche terms, re-amortization
+// trigger, `amortizeMonth` — then settle its prepayments and recasts) drives all three
+// loops: the plain-loan grid, the development-loan grid, and the catch-up from
+// startDate to baseDate. The catch-up opens every development loan running at
+// baseDate, and a plain loan once the rate of its last payment due differs from the
+// contract rate (fixation ended, D-30) or an event is dated by baseDate (ADR 0109).
+// The loops differ only where the behaviour differs, and each difference is named
+// below rather than silently unified:
 //   • payoff guard — both grids emit zero rows once the balance is repaid (DR-044);
-//   • re-amortization trigger — plain: a rate change only; development: a tranche
-//     landing, the end of interest-only, or a rate change (D-24). Between events the
-//     instalment holds; a development loan opens with the annuity of its principal
-//     over the required term (D-31, `scheduledInstalment`);
+//   • re-amortization trigger — plain: a rate change; development: a tranche landing,
+//     the end of interest-only, or a rate change (D-24). Any loan also re-amortizes
+//     when an event owes it: a lowerInstalment prepayment, a maturity recast or a
+//     capped instalment recast (ADR 0109), or a tranche on the payment of an agreed
+//     instalment (ADR 0120). Between these the instalment holds, or the agreed one is
+//     paid; a development loan opens with the annuity of its principal over the
+//     required term (D-31, `scheduledInstalment`);
 //   • instalment during interest-only — the catch-up adopts the interest as the
 //     instalment in force; the grid keeps the pre-interest-only instalment.
 //
@@ -25,11 +32,11 @@ import {
   firstGridMonthOnOrAfter,
   isAfter,
   isOnOrBefore,
-  lastGridMonthOnOrBefore,
 } from "./dates";
 import {
   currentBalance,
   drawMonth,
+  dueDate,
   eventTermMonths,
   fundedThePurchase,
   instalmentFor,
@@ -37,6 +44,7 @@ import {
   maxTermMonths,
   mortgageBlock,
   nperMonths,
+  paymentOnOrAfter,
   paymentsDueBy,
   rateAt,
   scheduledInstalment,
@@ -166,15 +174,12 @@ function amortizeMonth(
 export function paymentOffset(block: MortgageBlock, baseDate: Date): number {
   return isAfter(block.startDate, baseDate)
     ? -drawMonth(block, baseDate)
-    : lastGridMonthOnOrBefore(block.startDate, baseDate);
+    : paymentsDueBy(block, baseDate);
 }
 
 /** Due date of the last payment due by baseDate (the start when none is due yet). */
 function lastPaymentDue(block: MortgageBlock, baseDate: Date): Date {
-  return edate(
-    block.startDate,
-    lastGridMonthOnOrBefore(block.startDate, baseDate),
-  );
+  return dueDate(block, paymentsDueBy(block, baseDate));
 }
 
 /** The rate of payment `p`, read on its due date EDATE(start, p) (D-21). */
@@ -183,7 +188,7 @@ function rateOfPayment(
   block: MortgageBlock,
   assumptions: Assumptions,
 ): Decimal {
-  return rateAt(edate(block.startDate, p), block, assumptions);
+  return rateAt(dueDate(block, p), block, assumptions);
 }
 
 /** Re-amortization trigger: a tranche landing, the end of interest-only, or a rate
@@ -272,18 +277,17 @@ function firstStepOnOrAfter(anchor: Date, date: Date, maxStep: number): number {
   return Math.min(firstGridMonthOnOrAfter(anchor, date, cap - 1), cap);
 }
 
-/** Group dated items by the cadence step (anchor + k months) they land in, in input
- *  order, over the items the `include` predicate accepts. */
+/** Group dated items by the step `stepOf` gives their date, in input order, over the
+ *  items the `include` predicate accepts. */
 function bucketByStep<T extends { date: IsoDate }>(
   items: readonly T[],
-  anchor: Date,
-  maxStep: number,
   include: (d: Date) => boolean,
+  stepOf: (d: Date) => number,
 ): Map<number, T[]> {
   const buckets = new Map<number, T[]>();
   for (const item of items) {
     if (!include(item.date)) continue;
-    const k = firstStepOnOrAfter(anchor, item.date, maxStep);
+    const k = stepOf(item.date);
     buckets.set(k, [...(buckets.get(k) ?? []), item]);
   }
   return buckets;
@@ -298,7 +302,8 @@ function bucketDraws(
   include: (d: Date) => boolean,
 ): Map<number, Decimal> {
   const sums = new Map<number, Decimal>();
-  for (const [k, items] of bucketByStep(draws, anchor, maxStep, include)) {
+  const stepOf = (d: Date) => firstStepOnOrAfter(anchor, d, maxStep);
+  for (const [k, items] of bucketByStep(draws, include, stepOf)) {
     sums.set(
       k,
       items.reduce((sum, d) => sum.plus(d.amount), ZERO),
@@ -408,18 +413,13 @@ function loanEvents(
   assumptions: Assumptions,
   include: (d: Date) => boolean,
 ): LoanEvents {
-  const start = block.startDate;
+  const payment = (d: Date) => paymentOnOrAfter(block, d);
   return {
     block,
     assumptions,
     contractTerm: termMonths(block),
-    prepaymentsAt: bucketByStep(
-      byDate(block.prepayments),
-      start,
-      Infinity,
-      include,
-    ),
-    recastsAt: bucketByStep(byDate(block.recasts), start, Infinity, include),
+    prepaymentsAt: bucketByStep(byDate(block.prepayments), include, payment),
+    recastsAt: bucketByStep(byDate(block.recasts), include, payment),
   };
 }
 
@@ -661,6 +661,55 @@ function settleEvents(
   };
 }
 
+/** The running loan a payment meets; every loop carries it (plain: never interest-only). */
+interface PayState {
+  balance: Decimal;
+  currentInstalment: Decimal;
+  terms: TermState;
+  prevRate: Decimal;
+  prevInterestOnly: boolean;
+}
+
+/** What payment `p` (grid month `month`) meets. `draw` lands before the split; `fresh`
+ *  is its part no late-window event already counted (ADR 0129 §1): the part that
+ *  restores the contract term or owes the next payment a re-amortization. */
+interface PaymentMonth {
+  p: number;
+  month: number;
+  draw: Decimal;
+  fresh: Decimal;
+  ratePa: Decimal;
+  io: boolean;
+}
+
+/** Payment `p`, then its prepayments and recasts (ADR 0109): the step all three loops
+ *  share. Each caller keeps only what it does with the result. */
+function payAndSettle(
+  ev: LoanEvents,
+  s: PayState,
+  mo: PaymentMonth,
+): { step: MonthStep; settled: Settled } {
+  const { p, draw, fresh, ratePa, io } = mo;
+  const terms = termsForTranche(s.terms, fresh, p, ev.contractTerm);
+  const trigger = reamortizes(draw, s.prevInterestOnly, io, ratePa, s.prevRate);
+  const pay = paymentTerms(terms, trigger, p, s.currentInstalment);
+  const step = amortizeMonth(s.balance.plus(draw), ratePa, io, pay);
+  const settled = settleEvents(
+    ev,
+    {
+      p,
+      month: mo.month,
+      balance: step.endBalance,
+      ratePa,
+      instalment: step.instalment,
+      interestOnly: io,
+      terms: paidTerms(terms, io, fresh),
+    },
+    eventsAt(ev, p),
+  );
+  return { step, settled };
+}
+
 /** A paid month's row: the payment, then the prepayments it was followed by. */
 function paymentRow(
   head: Pick<
@@ -712,10 +761,7 @@ interface Opening {
   outcomes: Outcome[];
 }
 
-interface CatchUpState extends Opening {
-  prevRate: Decimal;
-  prevInterestOnly: boolean;
-}
+type CatchUpState = Opening & PayState;
 
 interface CatchUpContext {
   events: LoanEvents;
@@ -729,28 +775,19 @@ function catchUpStep(
   k: number,
   ctx: CatchUpContext,
 ): CatchUpState {
-  const { block, assumptions, contractTerm } = ctx.events;
-  const date = edate(block.startDate, k);
+  const { block, assumptions } = ctx.events;
+  const date = dueDate(block, k);
   const draw = ctx.drawsByStep.get(k) ?? ZERO;
   const ratePa = rateAt(date, block, assumptions);
   const io = interestOnlyAt(block, date);
-  const terms = termsForTranche(s.terms, draw, k, contractTerm);
-  const trigger = reamortizes(draw, s.prevInterestOnly, io, ratePa, s.prevRate);
-  const pay = paymentTerms(terms, trigger, k, s.currentInstalment);
-  const step = amortizeMonth(s.balance.plus(draw), ratePa, io, pay);
-  const settled = settleEvents(
-    ctx.events,
-    {
-      p: k,
-      month: k - ctx.steps,
-      balance: step.endBalance,
-      ratePa,
-      instalment: step.instalment,
-      interestOnly: io,
-      terms: paidTerms(terms, io, draw),
-    },
-    eventsAt(ctx.events, k),
-  );
+  const { step, settled } = payAndSettle(ctx.events, s, {
+    p: k,
+    month: k - ctx.steps,
+    draw,
+    fresh: draw,
+    ratePa,
+    io,
+  });
   return {
     balance: settled.balance,
     currentInstalment: step.instalment,
@@ -765,7 +802,7 @@ function catchUpStep(
  * Opening state of a loan already running at baseDate. The closed-form
  * `currentBalance` (a single FV at the original rate) can't see tranches,
  * interest-only months, a fixation that already ended or a prepayment, so we
- * simulate month-by-month on the loan's OWN cadence (`edate(startDate, k)`) for the
+ * simulate month-by-month on the loan's OWN cadence (`dueDate(block, k)`) for the
  * payments due by baseDate — counted like `currentBalance` (D-21). Development loans
  * always take this path; plain loans once their fixation has ended (D-30) or when an
  * event is dated on/before baseDate (ADR 0109). Returns the balance, the instalment
@@ -777,7 +814,7 @@ function simulateToBaseDate(
   assumptions: Assumptions,
 ): Opening & { counted: Decimal } {
   const { baseDate } = assumptions;
-  const steps = lastGridMonthOnOrBefore(block.startDate, baseDate);
+  const steps = paymentsDueBy(block, baseDate);
   const ctx: CatchUpContext = {
     events: loanEvents(block, assumptions, (d) => isOnOrBefore(d, baseDate)),
     // Only tranches up to the last payment due: a later one (still on/before
@@ -870,7 +907,7 @@ function initDevScheduleState(
       // trigger the re-amortization at grid month 1 (D-24, ADR 0116).
       prevInterestOnly: interestOnlyAt(
         block,
-        edate(block.startDate, paymentOffset(block, baseDate)),
+        dueDate(block, paymentOffset(block, baseDate)),
       ),
       terms: sim.terms,
     },
@@ -929,7 +966,7 @@ function undrawnMonthStep(
       // Payment 0, on the loan start (ADR 0129 §2).
       prevInterestOnly: interestOnlyAt(
         block,
-        edate(block.startDate, ctx.startToBase + m),
+        dueDate(block, ctx.startToBase + m),
       ),
     },
     outcomes: [],
@@ -954,34 +991,17 @@ function devPaymentStep(
   mo: DevMonth,
   ctx: DevScheduleContext,
 ): DevMonthStep {
-  const { m, p, date, dueDate, draw, ratePa, io } = mo;
+  const { m, date, draw, ratePa, io } = mo;
   const fresh = m === 1 ? draw.minus(ctx.openingCounted) : draw;
-  const terms = termsForTranche(state.terms, fresh, p, ctx.events.contractTerm);
-  const trigger = reamortizes(
-    draw,
-    state.prevInterestOnly,
-    io,
-    ratePa,
-    state.prevRate,
-  );
-  const pay = paymentTerms(terms, trigger, p, state.currentInstalment);
-  const step = amortizeMonth(state.balance.plus(draw), ratePa, io, pay);
-  const settled = settleEvents(
-    ctx.events,
-    {
-      p,
-      month: m,
-      balance: step.endBalance,
-      ratePa,
-      instalment: step.instalment,
-      interestOnly: io,
-      terms: paidTerms(terms, io, fresh),
-    },
-    eventsAt(ctx.events, p),
-  );
+  const { step, settled } = payAndSettle(ctx.events, state, {
+    ...mo,
+    month: m,
+    fresh,
+  });
   const drawn = ctx.newDebtByMonth.get(m) ?? ZERO;
+  const head = { month: m, date, dueDate: mo.dueDate, ratePa, drawn };
   return {
-    row: paymentRow({ month: m, date, dueDate, ratePa, drawn }, step, settled),
+    row: paymentRow(head, step, settled),
     state: {
       balance: settled.balance,
       currentInstalment: io ? state.currentInstalment : step.instalment,
@@ -1010,8 +1030,8 @@ function devMonthStep(
   const p = ctx.startToBase + m;
   const draw = ctx.drawsByMonth.get(m) ?? ZERO;
   const ratePa = rateOfPayment(p, block, assumptions);
-  const dueDate = edate(block.startDate, p);
-  const io = interestOnlyAt(block, dueDate); // ADR 0129 §2
+  const due = dueDate(block, p);
+  const io = interestOnlyAt(block, due); // ADR 0129 §2
   // Payoff guard, as in the plain grid: once repaid (and no tranche lands) nothing
   // is due, rather than the held instalment on a zero balance (DR-044).
   if (!state.balance.plus(draw).greaterThan(ZERO)) {
@@ -1021,7 +1041,7 @@ function devMonthStep(
       outcomes: repaidOutcomes(ctx.events, p, m, state),
     };
   }
-  const mo = { m, p, date, dueDate, draw, ratePa, io };
+  const mo = { m, p, date, dueDate: due, draw, ratePa, io };
   return devPaymentStep(state, mo, ctx);
 }
 
@@ -1288,28 +1308,17 @@ function plainMonthStep(
       outcomes: repaidOutcomes(ctx.events, p, m, state),
     };
   }
-  const trigger = !ratePa.equals(state.prevRate);
-  const pay = paymentTerms(state.terms, trigger, p, state.currentInstalment);
-  const step = amortizeMonth(state.balance, ratePa, false, pay);
-  const settled = settleEvents(
+  const { step, settled } = payAndSettle(
     ctx.events,
-    {
-      p,
-      month: m,
-      balance: step.endBalance,
-      ratePa,
-      instalment: step.instalment,
-      interestOnly: false,
-      terms: paidTerms(state.terms, false, ZERO),
-    },
-    eventsAt(ctx.events, p),
+    { ...state, prevInterestOnly: false },
+    { p, month: m, draw: ZERO, fresh: ZERO, ratePa, io: false },
   );
   return {
     row: paymentRow(
       {
         month: m,
         date,
-        dueDate: edate(block.startDate, p),
+        dueDate: dueDate(block, p),
         ratePa,
         drawn: ZERO,
       },
@@ -1548,8 +1557,8 @@ export function effectiveMaturity(
 ): IsoDate {
   const b = next ? cutAt(block, next).block : block;
   const { rows } = blockSchedule(b, assumptions);
-  return edate(
-    b.startDate,
+  return dueDate(
+    b,
     paymentOffset(b, assumptions.baseDate) + lastPaymentMonth(rows),
   );
 }
@@ -1619,7 +1628,7 @@ function spliceSuccessor(
   // Rows past the owner's schedule are undrawn months of the successor.
   const head = [...rows.slice(0, d - 1), ...nextRows.slice(rows.length, d - 1)];
   const own = rows[d - 1];
-  const due = edate(owner.startDate, paymentOffset(owner, baseDate) + d);
+  const due = dueDate(owner, paymentOffset(owner, baseDate) + d);
   const kept =
     own !== undefined &&
     own.interest.plus(own.principal).greaterThan(ZERO) &&
