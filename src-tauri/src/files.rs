@@ -2,15 +2,15 @@
 //! safety backup.
 //!
 //! Rust opens the native dialogs itself, so the webview never hands Rust a file path and
-//! needs no fs or dialog permission. Writes go to a temp file in the target folder,
-//! then rename over the target (a crash mid-write never leaves a partial file, DR-139),
-//! and are read back and compared before reporting success (DR-112).
+//! needs no fs or dialog permission. Writes go to a new temp file in the target folder,
+//! which is read back and compared before it is renamed over the target (a crash or a
+//! failed check never leaves a partial file, DR-139, DR-112, ADR 0175).
 
 use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
 use std::fs;
-use std::io::Write;
-use std::path::Path;
+use std::io::{ErrorKind, Read, Seek, Write};
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use tauri::ipc::{InvokeBody, Request};
 use tauri::{AppHandle, Manager, WebviewWindow};
@@ -21,8 +21,10 @@ use crate::error::AppError;
 /// Header carrying the save-dialog options (percent-encoded JSON) next to the raw body.
 const SAVE_OPTIONS_HEADER: &str = "x-save-options";
 
-/// Write `data` to `dest` via a temp file in the same folder, fsync it, then rename it
-/// over `dest`. On failure the temp file is removed and `dest` is left as it was.
+/// Write `data` to `dest` via a temp file in the same folder: the temp file is created
+/// exclusively, fsynced and read back (it must hold exactly `data`), then renamed over
+/// `dest`, and the folder is fsynced so the rename survives a power loss. On a failure
+/// before the rename the temp file is removed and `dest` is left as it was.
 pub fn atomic_write(dest: &Path, data: &[u8]) -> Result<(), AppError> {
     write_via_temp(dest, data, None)
 }
@@ -37,6 +39,9 @@ pub fn atomic_write_private(dest: &Path, data: &[u8]) -> Result<(), AppError> {
 const PRIVATE_FILE: u32 = 0o600;
 const PRIVATE_DIR: u32 = 0o700;
 
+/// Temp names tried before giving up (`.{name}.tmp-{pid}-{n}`).
+const TEMP_TRIES: u32 = 100;
+
 fn write_via_temp(dest: &Path, data: &[u8], mode: Option<u32>) -> Result<(), AppError> {
     let dir = dest
         .parent()
@@ -45,24 +50,49 @@ fn write_via_temp(dest: &Path, data: &[u8], mode: Option<u32>) -> Result<(), App
         .file_name()
         .ok_or_else(|| AppError::NoFileName(dest.to_path_buf()))?
         .to_string_lossy();
-    let tmp = dir.join(format!(".{name}.tmp-{}", std::process::id()));
-    let written = create_new(&tmp, mode)
-        .and_then(|mut f| {
-            f.write_all(data)?;
-            f.sync_all()
-        })
-        .and_then(|()| fs::rename(&tmp, dest));
-    if let Err(e) = written {
+    let (tmp, file) = create_temp(dir, &name, mode)?;
+    let written = fill_and_check(file, data).and_then(|()| Ok(fs::rename(&tmp, dest)?));
+    if written.is_err() {
         let _ = fs::remove_file(&tmp);
-        return Err(e.into());
+    }
+    written?;
+    sync_dir(dir)
+}
+
+/// Create a new temp file next to the target. Never opens an existing file or follows
+/// a symlink at the name (`O_EXCL`); a taken name moves on to the next counter.
+fn create_temp(dir: &Path, name: &str, mode: Option<u32>) -> Result<(PathBuf, fs::File), AppError> {
+    let pid = std::process::id();
+    for n in 0..TEMP_TRIES {
+        let tmp = dir.join(format!(".{name}.tmp-{pid}-{n}"));
+        match create_new(&tmp, mode) {
+            Ok(file) => return Ok((tmp, file)),
+            Err(e) if e.kind() == ErrorKind::AlreadyExists => continue,
+            Err(e) => return Err(e.into()),
+        }
+    }
+    Err(std::io::Error::new(ErrorKind::AlreadyExists, "no free temp file name").into())
+}
+
+/// Write `data`, fsync, then read the file back through the same handle: it must hold
+/// exactly `data`.
+fn fill_and_check(mut file: fs::File, data: &[u8]) -> Result<(), AppError> {
+    file.write_all(data)?;
+    file.sync_all()?;
+    file.rewind()?;
+    let mut back = Vec::with_capacity(data.len());
+    file.read_to_end(&mut back)?;
+    if back != data {
+        return Err(AppError::SavedFileMismatch);
     }
     Ok(())
 }
 
-/// Create (or truncate) `path` for writing, with `mode` when given (unix).
+/// Create `path` exclusively (it must not exist) for reading and writing, with `mode`
+/// when given (unix).
 fn create_new(path: &Path, mode: Option<u32>) -> std::io::Result<fs::File> {
     let mut options = fs::OpenOptions::new();
-    options.write(true).create(true).truncate(true);
+    options.read(true).write(true).create_new(true);
     #[cfg(unix)]
     if let Some(m) = mode {
         use std::os::unix::fs::OpenOptionsExt;
@@ -71,6 +101,17 @@ fn create_new(path: &Path, mode: Option<u32>) -> std::io::Result<fs::File> {
     #[cfg(not(unix))]
     let _ = mode;
     options.open(path)
+}
+
+/// Fsync a folder, so a rename in it is on disk (unix; a no-op elsewhere).
+#[cfg(unix)]
+fn sync_dir(dir: &Path) -> Result<(), AppError> {
+    Ok(fs::File::open(dir)?.sync_all()?)
+}
+
+#[cfg(not(unix))]
+fn sync_dir(_dir: &Path) -> Result<(), AppError> {
+    Ok(())
 }
 
 /// Make the app's folder private (DR-157): the folder and its `backups/` become 0700 and
@@ -116,16 +157,6 @@ fn set_mode(path: &Path, mode: u32) -> Result<(), AppError> {
 
 #[cfg(not(unix))]
 fn set_mode(_path: &Path, _mode: u32) -> Result<(), AppError> {
-    Ok(())
-}
-
-/// `atomic_write`, then read the file back: it must hold exactly `data`.
-pub fn write_verified(dest: &Path, data: &[u8]) -> Result<(), AppError> {
-    atomic_write(dest, data)?;
-    let back = fs::read(dest)?;
-    if back != data {
-        return Err(AppError::SavedFileMismatch);
-    }
     Ok(())
 }
 
@@ -209,7 +240,7 @@ pub async fn save_file(
         return Ok(SaveOutcome::Cancelled);
     };
     let path = picked.into_path().map_err(AppError::other)?;
-    write_verified(&path, data)?;
+    atomic_write(&path, data)?;
     let filename = path
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())

@@ -3,7 +3,7 @@
 
 use app_lib::files::{
     atomic_write, atomic_write_private, percent_decode, restrict_app_dir, restrict_dir,
-    reveal_args, valid_backup_name, write_verified,
+    reveal_args, valid_backup_name,
 };
 use std::ffi::OsString;
 use std::fs;
@@ -67,11 +67,41 @@ fn atomic_write_into_a_missing_folder_fails_with_its_reason() {
 }
 
 #[test]
-fn write_verified_reads_the_file_back() {
+fn atomic_write_keeps_utf8_bytes_exactly() {
     let dir = temp_dir("verified");
     let dest = dir.join("t.csv");
-    write_verified(&dest, "název;Kč\n".as_bytes()).unwrap();
+    atomic_write(&dest, "název;Kč\n".as_bytes()).unwrap();
     assert_eq!(fs::read_to_string(&dest).unwrap(), "název;Kč\n");
+}
+
+// ADR 0175 (#151 item 3): the temp file is created exclusively, so a file or symlink
+// planted at its predictable name is neither followed nor truncated.
+fn first_temp_name(dir: &std::path::Path, name: &str) -> PathBuf {
+    dir.join(format!(".{name}.tmp-{}-0", std::process::id()))
+}
+
+#[test]
+fn atomic_write_skips_a_file_planted_at_the_temp_name() {
+    let dir = temp_dir("planted-file");
+    let planted = first_temp_name(&dir, "p.csv");
+    fs::write(&planted, "someone else's").unwrap();
+    atomic_write(&dir.join("p.csv"), b"mine").unwrap();
+    assert_eq!(fs::read_to_string(&planted).unwrap(), "someone else's");
+    assert_eq!(fs::read_to_string(dir.join("p.csv")).unwrap(), "mine");
+    let planted_name = planted.file_name().unwrap().to_string_lossy().into_owned();
+    assert_eq!(entries(&dir), vec![planted_name, "p.csv".to_string()]);
+}
+
+#[cfg(unix)]
+#[test]
+fn atomic_write_does_not_follow_a_symlink_at_the_temp_name() {
+    let dir = temp_dir("planted-link");
+    let outside = temp_dir("planted-link-outside").join("target.txt");
+    fs::write(&outside, "keep me").unwrap();
+    std::os::unix::fs::symlink(&outside, first_temp_name(&dir, "p.csv")).unwrap();
+    atomic_write(&dir.join("p.csv"), b"mine").unwrap();
+    assert_eq!(fs::read_to_string(&outside).unwrap(), "keep me");
+    assert_eq!(fs::read_to_string(dir.join("p.csv")).unwrap(), "mine");
 }
 
 #[test]
