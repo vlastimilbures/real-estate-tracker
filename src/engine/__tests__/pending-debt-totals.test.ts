@@ -4,6 +4,8 @@
 // does not own yet — conservative, like ADR 0124. Everything else stays owned-only.
 import { describe, it, expect } from "vitest";
 import { portfolioSnapshot } from "../metrics";
+import { cpiAt, realPortfolioSnapshot } from "../real";
+import { isoDate } from "../dates";
 import { ZERO, type Decimal } from "../../lib/money";
 import { assumptions } from "./support/seed";
 import { mixed } from "./support/mixed";
@@ -73,5 +75,43 @@ describe("pending property's existing debt in portfolio totals (ADR 0165)", () =
     expect(
       s.totalDebt.equals(sum(s.perProperty.filter(ownedActive), (x) => x.debt)),
     ).toBe(true);
+  });
+
+  // #299 item 2.
+  it("an as-of date after the purchase counts the property as owned, nothing pending", () => {
+    // Purchase 15.03.2028: on 07.06.2028 the flat is owned, so its debt is owned debt.
+    const asOf = isoDate("2028-06-07");
+    const later = portfolioSnapshot(mixedCashOutside, assumptions, asOf);
+    const bought = later.perProperty.find((s) => s.propertyId === "future")!;
+    expect(bought.owned).toBe(true);
+    const ownedNow = later.perProperty.filter(ownedActive);
+    expect(ownedNow).toContain(bought);
+    expect(later.totalDebt.equals(sum(ownedNow, (s) => s.debt))).toBe(true);
+    expect(
+      later.totalCommittedDebt.equals(sum(ownedNow, (s) => s.committedDebt)),
+    ).toBe(true);
+  });
+
+  it("the real lens deflates the pending debt with the rest", () => {
+    const asOf = isoDate("2027-06-07");
+    const nominal = portfolioSnapshot(mixedCashOutside, assumptions, asOf);
+    const stillPending = nominal.perProperty.find(
+      (s) => s.propertyId === "future",
+    )!;
+    expect(stillPending.owned).toBe(false);
+    expect(stillPending.debt.greaterThan(ZERO)).toBe(true);
+    const k = cpiAt(assumptions, asOf);
+    expect(k.greaterThan(1)).toBe(true);
+    const real = realPortfolioSnapshot(nominal, k);
+    // Owned and pending rows in portfolio order, as the engine sums them.
+    const owing = nominal.perProperty.filter((s) => s.active);
+    expect(owing).toContain(stillPending);
+    const debt = sum(owing, (s) => s.debt);
+    expect(nominal.totalDebt.equals(debt)).toBe(true);
+    expect(real.totalDebt.equals(debt.div(k))).toBe(true);
+    expect(
+      real.totalCommittedDebt.equals(nominal.totalCommittedDebt.div(k)),
+    ).toBe(true);
+    expect(real.totalEquity.equals(nominal.totalEquity.div(k))).toBe(true);
   });
 });
