@@ -1458,7 +1458,7 @@ export const cs: Dictionary = {
         name: "Neobsazenost",
         formula: "uplatněna každý rok",
         meaning:
-          "Rezerva na neobsazenost se z nájmu bere každý rok, stejně jako ve snímku; správa se počítá z nájmu po ní.",
+          "Rezerva na neobsazenost se z nájmu bere každý rok, stejně jako ve snímku; správa se počítá z nájmu sníženého o tuto rezervu.",
       },
       costs: {
         name: "Náklady",
