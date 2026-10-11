@@ -5,6 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { portfolioSnapshot } from "../metrics";
 import { cpiAt, realPortfolioSnapshot } from "../real";
+import { instalmentAtMonth, schedulesByProperty } from "../schedule";
 import { isoDate } from "../dates";
 import { ZERO, type Decimal } from "../../lib/money";
 import { assumptions } from "./support/seed";
@@ -42,9 +43,16 @@ describe("pending property's existing debt in portfolio totals (ADR 0165)", () =
   });
 
   it("the weighted rate weights the pending debt too", () => {
-    const numerator = sum(owned, (s) => s.weightedRateNumerator).plus(
-      pending.weightedRateNumerator,
+    // Each row's debt × the rate in force at baseDate (grid month 0, ADR 0177).
+    const rows = schedulesByProperty(
+      mixedCashOutside.mortgages,
+      mixedCashOutside.properties.map((p) => p.id),
+      assumptions,
     );
+    const weighted = (s: PropertySnapshot) =>
+      s.debt.times(instalmentAtMonth(rows.get(s.propertyId) ?? [], 0).ratePa);
+    const numerator = sum(owned, weighted).plus(weighted(pending));
+    expect(numerator.greaterThan(ZERO)).toBe(true);
     expect(snap.weightedAvgRate.equals(numerator.div(snap.totalDebt))).toBe(
       true,
     );
