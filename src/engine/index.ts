@@ -6,8 +6,6 @@
 // Types (inputs, outputs, brands)
 export * from "./types";
 export type { Scenario, ScenarioOverrides } from "./scenarios";
-export type { AmortizationHealth } from "./amortization";
-export type { YearFigures } from "./real";
 export type {
   EngineValidationError,
   ValidationCode,
@@ -78,7 +76,6 @@ export { portfolioKpis, projectionAndKpis } from "./kpis";
 export { portfolioOutputs } from "./outputs";
 export {
   debtResettingWithin,
-  financingExposure,
   leaseEndWithoutFollowOn,
   propertyLoanExposure,
   upcomingEvents,
@@ -86,23 +83,16 @@ export {
 export type {
   Drawdown,
   DrawdownTranche,
-  FinancingEvent,
   FinancingEventKind,
   FinancingExposure,
   FixationReset,
-  LoanExposure,
   PropertyLoan,
 } from "./financing";
-export type { PortfolioOutputs } from "./outputs";
 export { applyScenario } from "./scenarios";
 export {
   leaseOverlapErrors,
   validateInputs,
   validatePortfolio,
 } from "./validate";
-export {
-  loanChainChanges,
-  type LoanChainChanges,
-  type StoppedLoanEvent,
-} from "./chainChanges";
+export { loanChainChanges } from "./chainChanges";
 export { EngineInputError } from "./errors";
