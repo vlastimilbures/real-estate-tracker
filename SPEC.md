@@ -752,9 +752,11 @@ price crash**, each with a legend and one line of help (ADR 0102).
   the release build (cold start to dashboard, edit to dashboard); 20 properties × 360 months
   × 30 years recompute well under a second; recompute on input change (memoized via
   `useEngine`).
-- **Correctness:** engine covered by parity tests against the targets in
-  `.claude/rules/engine-parity.md`, invariant and property-based tests, a golden master
-  (ADR 0039) and nightly mutation testing (ADR 0026).
+- **Correctness:** engine checked against independent, engine-free reference models of the
+  mortgage maths and of the sample portfolio's projection and KPIs, pinned by parity tests
+  against the targets in `.claude/rules/engine-parity.md` and a golden master that detects
+  any change (ADR 0039, 0174), plus invariant and property-based tests and nightly mutation
+  testing (ADR 0026).
 - **Privacy & security:** offline; no network calls, enforced by a strict Content Security
   Policy, least-privilege Tauri capabilities and a navigation guard. File dialogs and writes
   run in Rust; the webview never handles file paths (ADR 0064). Data, backup and log

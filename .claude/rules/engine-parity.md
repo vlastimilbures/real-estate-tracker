@@ -9,15 +9,31 @@ paths:
 
 # Engine parity targets & sample portfolio
 
-Loaded automatically when Claude works on `src/engine/**`. These are the verified targets the
-engine must reproduce for the fictional sample portfolio below. Treat any mismatch as a bug in
-the engine, not in the target. The parity tests read these numbers from
-`src/engine/__tests__/support/seed.ts`; keep the two in step.
+Loaded automatically when Claude works on `src/engine/**`. These are the targets the engine
+must reproduce for the fictional sample portfolio below. Treat any mismatch as a bug in the
+engine, not in the target. The money targets are engine values since the scaled seed
+(ADR 0081); ratio, rate and year targets did not move. The parity tests read these numbers
+from `src/engine/__tests__/support/seed.ts`; keep the two in step.
 
-The targets are cross-checked three ways: an independent mortgage reference model
-(`src/engine/__tests__/reference/`, imports nothing from the engine), invariant and
-property-based tests (Σ principal = starting debt, conservation over random loans and
-leases), and the full-precision golden master (`src/engine/__tests__/golden.test.ts`).
+The regression baseline has three named layers (ADR 0174):
+
+1. **Independent references** — engine-free models written from `SPEC.md` in
+   `src/engine/__tests__/reference/`: the mortgage model (`mortgageReference.ts`) and the KPI
+   model (`kpiReference.ts`: rent, holding costs, NOI, debt service, net cash flow, equity,
+   cash to owner, multiples, CAGR, levered IRR). They check correctness: the KPI model
+   reproduces these targets on the seed and agrees with the engine on the seed and on a
+   prepayment + recast case. ESLint and dependency-cruiser reject any import from the engine
+   or `src/lib` into them. Known limit: the KPI model reuses the mortgage model for loan rows,
+   so a loan-maths error shared by both is not caught there.
+2. **Parity targets** — this file: the numbers the engine must reproduce.
+3. **Characterisation snapshot** — the full-precision golden master
+   (`src/engine/__tests__/golden.test.ts`). It detects any change; it proves nothing correct.
+   v1 cases are frozen with their exclusion list; v2 cases hash every field, one hash per
+   field path, so a new output field adds snapshot lines only (recorded in the field's own
+   commit and ADR) and a changed line is a moved number (ADR 0001).
+
+Invariant and property-based tests (Σ principal = starting debt, conservation over random
+loans and leases) back all three.
 
 **Tolerances:** money within **±1 Kč**; ratios/rates/multiples (LTV, DSCR, yields, CAGR, IRR,
 weighted-avg rate, net-worth multiple) within **±0.0001**. Base date **2026-06-07**.
