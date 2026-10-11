@@ -42,7 +42,8 @@ export type FailureSite =
   | "EXPORT"
   | "TEMPLATE"
   | "RENDER"
-  // Showing the data folder from the startup error screen (ADR 0153).
+  // Showing the data folder: the startup error screen (ADR 0153), Settings → Backup
+  // (ADR 0175).
   | "REVEAL";
 
 /** The code + context line written for a failure in `where`. */

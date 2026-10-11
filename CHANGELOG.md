@@ -15,6 +15,10 @@ engine without the form, and remove it when the last part lands.
 
 ### Added
 
+- Settings → Backup has a **Show data folder** button and says that the safety copies
+  saved before a restore, Clear sample or an app upgrade are in the `backups` folder there
+  (ADR 0175, #151). Nothing is listed or deleted.
+
 - The property form has an optional **Acquisition** section to record how a purchase was
   funded: own cash, transaction costs, initial works and a note (ADR 0119, #33). A blank
   amount is unknown; clearing every field clears the record. Each property page gets an

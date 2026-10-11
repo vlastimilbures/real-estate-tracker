@@ -3,7 +3,8 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore, type OutcomeAction } from "../../state/uiStore";
 import { Panel, Button } from "../components/primitives";
 import { chooseRestoreFile, type PickedBackup } from "../../state/backup";
-import { type FailureSite } from "../../state/diagnostics";
+import { logFailure, type FailureSite } from "../../state/diagnostics";
+import { revealDataDir } from "../../state/platform";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { fmtDate } from "../../lib/format";
@@ -104,6 +105,18 @@ export function BackupRestorePanel() {
     }
   }
 
+  /** Show the app folder in Finder (ADR 0153 §4); its `backups` folder holds the
+   *  safety and pre-migration copies (ADR 0175). */
+  async function handleShowFolder() {
+    dismissFailure();
+    try {
+      await revealDataDir();
+    } catch (e) {
+      logFailure("REVEAL", e);
+      setFailure("revealFolder", e);
+    }
+  }
+
   async function handleChooseRestore() {
     dismissFailure();
     try {
@@ -152,6 +165,18 @@ export function BackupRestorePanel() {
           disabled={exporting || replacing}
         >
           {exporting ? t.backup.exporting : t.backup.exportButton}
+        </Button>
+        <p
+          style={{
+            color: "var(--ink-soft)",
+            fontSize: 13,
+            margin: "var(--s4) 0 var(--s2)",
+          }}
+        >
+          {t.backup.folderHint}
+        </p>
+        <Button onClick={() => void handleShowFolder()}>
+          {t.boot.showDataFolder}
         </Button>
       </Panel>
 
