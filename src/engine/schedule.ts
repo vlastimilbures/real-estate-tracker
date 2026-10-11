@@ -1,7 +1,8 @@
 // Monthly amortization schedules with the Czech fixation reset (SPEC §4.4).
 //
-// One month-step kernel (`amortizeMonth`) drives all three loops: the plain-loan grid,
-// the development-loan grid, and the catch-up from startDate to baseDate. The catch-up
+// One payment kernel (`payAndSettle`: the month step `amortizeMonth`, then the
+// payment's prepayments and recasts) drives all three loops: the plain-loan grid, the
+// development-loan grid, and the catch-up from startDate to baseDate. The catch-up
 // opens every development loan running at baseDate, and a plain loan once its fixation
 // has ended or an event is dated by baseDate (D-30, ADR 0109). The loops differ only
 // where the behaviour differs, and each difference is named below rather than silently
@@ -659,6 +660,52 @@ function settleEvents(
   };
 }
 
+/** The running loan a payment meets; every loop carries it (plain: never interest-only). */
+type PayState = Pick<
+  CatchUpState,
+  "balance" | "currentInstalment" | "terms" | "prevRate" | "prevInterestOnly"
+>;
+
+/** What payment `p` (grid month `month`) meets. `draw` lands before the split; `fresh`
+ *  is its part no late-window event already counted (ADR 0129 §1): the part that
+ *  restores the contract term or owes the next payment a re-amortization. */
+interface PaymentMonth {
+  p: number;
+  month: number;
+  draw: Decimal;
+  fresh: Decimal;
+  ratePa: Decimal;
+  io: boolean;
+}
+
+/** Payment `p`, then its prepayments and recasts (ADR 0109): the step all three loops
+ *  share. Each caller keeps only what it does with the result. */
+function payAndSettle(
+  ev: LoanEvents,
+  s: PayState,
+  mo: PaymentMonth,
+): { step: MonthStep; settled: Settled } {
+  const { p, draw, fresh, ratePa, io } = mo;
+  const terms = termsForTranche(s.terms, fresh, p, ev.contractTerm);
+  const trigger = reamortizes(draw, s.prevInterestOnly, io, ratePa, s.prevRate);
+  const pay = paymentTerms(terms, trigger, p, s.currentInstalment);
+  const step = amortizeMonth(s.balance.plus(draw), ratePa, io, pay);
+  const settled = settleEvents(
+    ev,
+    {
+      p,
+      month: mo.month,
+      balance: step.endBalance,
+      ratePa,
+      instalment: step.instalment,
+      interestOnly: io,
+      terms: paidTerms(terms, io, fresh),
+    },
+    eventsAt(ev, p),
+  );
+  return { step, settled };
+}
+
 /** A paid month's row: the payment, then the prepayments it was followed by. */
 function paymentRow(
   head: Pick<
@@ -727,28 +774,19 @@ function catchUpStep(
   k: number,
   ctx: CatchUpContext,
 ): CatchUpState {
-  const { block, assumptions, contractTerm } = ctx.events;
+  const { block, assumptions } = ctx.events;
   const date = dueDate(block, k);
   const draw = ctx.drawsByStep.get(k) ?? ZERO;
   const ratePa = rateAt(date, block, assumptions);
   const io = interestOnlyAt(block, date);
-  const terms = termsForTranche(s.terms, draw, k, contractTerm);
-  const trigger = reamortizes(draw, s.prevInterestOnly, io, ratePa, s.prevRate);
-  const pay = paymentTerms(terms, trigger, k, s.currentInstalment);
-  const step = amortizeMonth(s.balance.plus(draw), ratePa, io, pay);
-  const settled = settleEvents(
-    ctx.events,
-    {
-      p: k,
-      month: k - ctx.steps,
-      balance: step.endBalance,
-      ratePa,
-      instalment: step.instalment,
-      interestOnly: io,
-      terms: paidTerms(terms, io, draw),
-    },
-    eventsAt(ctx.events, k),
-  );
+  const { step, settled } = payAndSettle(ctx.events, s, {
+    p: k,
+    month: k - ctx.steps,
+    draw,
+    fresh: draw,
+    ratePa,
+    io,
+  });
   return {
     balance: settled.balance,
     currentInstalment: step.instalment,
@@ -952,31 +990,13 @@ function devPaymentStep(
   mo: DevMonth,
   ctx: DevScheduleContext,
 ): DevMonthStep {
-  const { m, p, date, dueDate, draw, ratePa, io } = mo;
+  const { m, date, dueDate, draw, ratePa, io } = mo;
   const fresh = m === 1 ? draw.minus(ctx.openingCounted) : draw;
-  const terms = termsForTranche(state.terms, fresh, p, ctx.events.contractTerm);
-  const trigger = reamortizes(
-    draw,
-    state.prevInterestOnly,
-    io,
-    ratePa,
-    state.prevRate,
-  );
-  const pay = paymentTerms(terms, trigger, p, state.currentInstalment);
-  const step = amortizeMonth(state.balance.plus(draw), ratePa, io, pay);
-  const settled = settleEvents(
-    ctx.events,
-    {
-      p,
-      month: m,
-      balance: step.endBalance,
-      ratePa,
-      instalment: step.instalment,
-      interestOnly: io,
-      terms: paidTerms(terms, io, fresh),
-    },
-    eventsAt(ctx.events, p),
-  );
+  const { step, settled } = payAndSettle(ctx.events, state, {
+    ...mo,
+    month: m,
+    fresh,
+  });
   const drawn = ctx.newDebtByMonth.get(m) ?? ZERO;
   return {
     row: paymentRow({ month: m, date, dueDate, ratePa, drawn }, step, settled),
@@ -1286,21 +1306,10 @@ function plainMonthStep(
       outcomes: repaidOutcomes(ctx.events, p, m, state),
     };
   }
-  const trigger = !ratePa.equals(state.prevRate);
-  const pay = paymentTerms(state.terms, trigger, p, state.currentInstalment);
-  const step = amortizeMonth(state.balance, ratePa, false, pay);
-  const settled = settleEvents(
+  const { step, settled } = payAndSettle(
     ctx.events,
-    {
-      p,
-      month: m,
-      balance: step.endBalance,
-      ratePa,
-      instalment: step.instalment,
-      interestOnly: false,
-      terms: paidTerms(state.terms, false, ZERO),
-    },
-    eventsAt(ctx.events, p),
+    { ...state, prevInterestOnly: false },
+    { p, month: m, draw: ZERO, fresh: ZERO, ratePa, io: false },
   );
   return {
     row: paymentRow(
