@@ -42,7 +42,9 @@ export type OutcomeAction =
   | "backupExport"
   | "loadSample"
   | "import"
-  | "xlsxExport";
+  | "xlsxExport"
+  // Show data folder in Settings → Backup (ADR 0175).
+  | "revealFolder";
 
 /** The safety copy a restore or Clear sample wrote: the owner's undo file, named on
  *  every page until dismissed (ADR 0154). */

@@ -15,6 +15,10 @@ engine without the form, and remove it when the last part lands.
 
 ### Added
 
+- Settings → Backup has a **Show data folder** button and says that the safety copies
+  saved before a restore, Clear sample or an app upgrade are in the `backups` folder there
+  (ADR 0175, #151). Nothing is listed or deleted.
+
 - The property form has an optional **Acquisition** section to record how a purchase was
   funded: own cash, transaction costs, initial works and a note (ADR 0119, #33). A blank
   amount is unknown; clearing every field clears the record. Each property page gets an
@@ -288,6 +292,18 @@ engine without the form, and remove it when the last part lands.
   The Guide's value-crash entry says the same (ADR 0089, #14).
 
 ### Fixed
+
+- On the Import page, the message that the files could not be checked against your saved
+  data can no longer be closed (ADR 0175, #258). It stays until you choose the files again
+  or the data changes, so a greyed-out Import button always shows why.
+
+- The error log keeps OS and SQLite error codes, such as `os error 13` or `(code: 2067)`,
+  so a pasted log line says what failed (ADR 0175, #258). Every other number is still
+  masked. A Rust panic's message in the log is cut to 500 characters.
+
+- A safety backup written before a restore or Clear sample never replaces an existing one
+  of the same name (ADR 0175, #151). If two were made in the same second, the second action
+  stops with a message instead of overwriting the first copy.
 
 - Upcoming financing events on the same day, such as two flats' lease ends, now show in the
   portfolio's property order (by name) instead of a random order (ADR 0176, #207).

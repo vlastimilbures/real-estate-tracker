@@ -1071,6 +1071,8 @@ export const en = {
     agoDays: (n: number) => `${n} ${enPlural(n, ["day", "days"])} ago`,
     agoWeeks: (n: number) => `${n} ${enPlural(n, ["week", "weeks"])} ago`,
     offDevice: "Keep a copy somewhere other than this Mac.",
+    folderHint:
+      "The safety copies saved before a restore, before Clear sample and before an app upgrade are in the backups folder inside the data folder.",
     exporting: "Exporting…",
     restoreTitle: "Restore from backup",
     restoreHint: "Overwrites all current data",

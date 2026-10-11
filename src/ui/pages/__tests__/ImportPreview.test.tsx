@@ -3,7 +3,7 @@
 // ADR 0096 (#34): the Import page previews adds and updates, asks before overwriting,
 // refuses a plan that changed since the preview, and keeps the report with links.
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Import } from "../Import";
 import { usePortfolioStore } from "../../../state/portfolioStore";
@@ -107,6 +107,19 @@ describe("Import preview (ADR 0096)", () => {
         /could not be checked against your saved data.*disk I\/O error/,
       ),
     ).toBeTruthy();
+  });
+
+  it("the failed-preview banner cannot be dismissed (ADR 0175, #258 item 7)", async () => {
+    previewCsv.mockRejectedValue(new Error("disk I/O error"));
+    const { container } = render(<Import />);
+    await choosePropertiesFile(container);
+
+    const banner = (await screen.findByText(/could not be checked/)).closest(
+      '[role="alert"]',
+    ) as HTMLElement;
+    expect(
+      within(banner).queryByRole("button", { name: en.common.dismiss }),
+    ).toBeNull();
   });
 
   it("the failed-preview error goes once the files are previewed again (ADR 0147)", async () => {

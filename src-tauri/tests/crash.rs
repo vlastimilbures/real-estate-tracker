@@ -29,3 +29,20 @@ fn panic_line_names_the_message_and_where() {
     assert!(line.starts_with("PANIC boom here at "), "{line}");
     assert!(line.contains("crash.rs:"), "{line}");
 }
+
+#[test]
+fn panic_line_caps_a_long_message_and_keeps_where() {
+    // ADR 0175 (#258 item 3): capped like `log_error`'s context, 500 characters.
+    let long: &(dyn std::any::Any + Send) = &"ž".repeat(2_000);
+    let location = std::panic::Location::caller();
+    let line = panic_line(long, Some(location));
+    let message = line
+        .strip_prefix("PANIC ")
+        .and_then(|rest| rest.split(" at ").next())
+        .unwrap();
+    assert_eq!(message.chars().count(), 500, "{line}");
+    assert!(
+        line.ends_with(&format!("crash.rs:{}", location.line())),
+        "{line}"
+    );
+}

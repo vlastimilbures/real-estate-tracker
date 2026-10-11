@@ -12,6 +12,11 @@ import type {
 } from "./sql";
 import { isTauri } from "../lib/tauri";
 
+/** Transaction control. Each `execute` may run on another pooled connection, so these sent
+ *  as separate calls would not make the statements between them atomic (H-14). */
+const TRANSACTION_CONTROL =
+  /^\s*(BEGIN|COMMIT|END|ROLLBACK|SAVEPOINT|RELEASE)\b/i;
+
 /**
  * Open (or create) the on-disk SQLite database in the app's config dir and return an
  * `Sql` adapter over it. `migrate`/`seedIfEmpty` can then be run against the result.
@@ -32,6 +37,12 @@ export async function openTauriSql(
       query: string,
       params: unknown[] = [],
     ): Promise<ExecuteResult> {
+      // A tripwire for a mistake, not a guard: a leading comment slips past it.
+      // Multi-step writes go through `transaction` (ADR 0014, ADR 0175).
+      if (TRANSACTION_CONTROL.test(query))
+        throw new Error(
+          "execute refuses transaction control; use transaction() for multi-step writes",
+        );
       const { rowsAffected } = await db.execute(query, params);
       return { rowsAffected };
     },

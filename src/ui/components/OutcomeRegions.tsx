@@ -30,6 +30,8 @@ function failureText(t: Dictionary, action: OutcomeAction, e: unknown): string {
       return backupFailureText(t, e, t.importPage.importFailed).text;
     case "xlsxExport":
       return t.xlsx.exportFailed(messageOf(e));
+    case "revealFolder":
+      return t.boot.revealFailed;
   }
 }
 

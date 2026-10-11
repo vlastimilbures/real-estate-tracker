@@ -1016,6 +1016,8 @@ export const cs: Dictionary = {
     agoWeeks: (n: number) =>
       `před ${n} ${csPlural(n, ["týdnem", "týdny", "týdny"])}`,
     offDevice: "Uchovávejte kopii i jinde než na tomto Macu.",
+    folderHint:
+      "Bezpečnostní kopie uložené před obnovením, před smazáním ukázky a před aktualizací aplikace jsou ve složce backups uvnitř složky dat.",
     exporting: "Exportování…",
     restoreTitle: "Obnovit ze zálohy",
     restoreHint: "Přepíše všechna aktuální data",

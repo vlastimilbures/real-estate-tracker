@@ -78,11 +78,11 @@ async function chooseEditedBackup(
   edit(backup.tables);
   await ux.page.evaluate((text) => {
     (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
-      invoke: (cmd: string, args: { json?: string }) =>
+      invoke: (cmd: string) =>
         cmd === "open_backup_file"
           ? Promise.resolve({ name: "portfolio-backup-legacy.json", text })
           : cmd === "write_app_backup"
-            ? Promise.resolve(args.json)
+            ? Promise.resolve()
             : Promise.reject(new Error(`no ${cmd} in the browser`)),
     };
   }, JSON.stringify(backup));
@@ -137,11 +137,11 @@ async function bootRestoreConfirm(ux: Ux) {
   });
   await ux.page.evaluate((json) => {
     (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
-      invoke: (cmd: string, args: { json?: string }) =>
+      invoke: (cmd: string) =>
         cmd === "open_backup_file"
           ? Promise.resolve({ name: "portfolio-backup.json", text: json })
           : cmd === "write_app_backup"
-            ? Promise.resolve(args.json)
+            ? Promise.resolve()
             : Promise.reject(new Error(`no ${cmd} in the browser`)),
     };
   }, text);

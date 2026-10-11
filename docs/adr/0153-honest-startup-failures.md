@@ -7,6 +7,8 @@
   PR 11.4
 - Amended by: [0154](0154-one-outcome-path.md) (Continue keeps the safety copy's name in
   the app)
+- Amended by: [0175](0175-verified-file-writes-error-codes-backup-folder.md) (decision 4: also reached from
+  Settings → Backup)
 - Related: [0014](0014-rust-transaction-command.md) (migrations run through the Rust
   transaction command), [0064](0064-file-io-in-rust.md) §P8(2) (an open failure keeps the
   in-app error screen), [0072](0072-layer-map-platform-and-type-edges.md) (the UI reaches platform code through
