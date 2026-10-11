@@ -164,6 +164,17 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- A **Shorten the term** prepayment keeps the instalment the next payment would pay and
+  works out the new term at that payment's rate (ADR 0179, #164, #235). At a fixation end
+  the term is now sized at the new rate instead of the old one: Javorová's 500,000 Kč
+  prepayment on its 2031 refix ends the loan in April 2046 at 6,701.93 Kč a month, not in
+  March 2043 at 7,893.90 Kč. After a maturity change, a capped instalment change, a
+  lower-the-instalment prepayment or a tranche on an agreed instalment's payment, the kept
+  instalment is the one the next payment re-amortizes to, so the result no longer depends
+  on the as-of date's day. When the kept instalment cannot repay the loan by its maturity
+  at the new rate, the maturity stays and the property page warns that the prepayment does
+  not shorten the term. Parity targets are unchanged.
+
 - Settings → Backup counts a backup older than 60 days in months ("13 months ago" instead
   of "57 weeks ago") (ADR 0178, #146).
 
