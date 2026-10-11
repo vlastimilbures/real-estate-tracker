@@ -24,6 +24,11 @@ vi.mock("@tauri-apps/api/core", () => ({
       : Promise.resolve(args.json),
   ),
 }));
+const logFailure = vi.hoisted(() => vi.fn());
+vi.mock("../../state/diagnostics", async (actual) => ({
+  ...(await actual<typeof import("../../state/diagnostics")>()),
+  logFailure,
+}));
 
 let db: TestSql;
 let good: BackupFile;
@@ -39,6 +44,7 @@ const reloadFails = (real: Sql): Sql => ({
 });
 
 beforeEach(async () => {
+  logFailure.mockReset();
   act(() => useUiStore.setState({ language: "en", notice: null }));
   usePortfolioStore.setState({
     sql: null,
@@ -147,5 +153,19 @@ describe("restore from the startup error screen (ROW_INVALID)", () => {
     expect(screen.queryByRole("button", { name: en.boot.continue })).toBeNull();
     expect(button(en.app.tryAgain)).toBeDefined();
     expect(store().status).toBe("error");
+  });
+
+  it("a failed restore is logged under RESTORE (#258 item 6)", async () => {
+    usePortfolioStore.setState({
+      sql: {
+        ...db,
+        transaction: () => Promise.reject(new Error("disk full")),
+      },
+    });
+    await restoreFromScreen();
+
+    expect(screen.getByRole("alert").textContent).toContain("disk full");
+    expect(logFailure).toHaveBeenCalledOnce();
+    expect(logFailure.mock.calls[0][0]).toBe("RESTORE");
   });
 });
