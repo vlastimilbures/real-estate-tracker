@@ -46,7 +46,6 @@ export {
   EMPTY_PROPERTY_SCHEDULE,
   effectiveMaturity,
   propertySchedules,
-  schedulesByProperty,
 } from "./schedule";
 
 // Snapshot, projection, KPIs, scenarios, validation

@@ -6,7 +6,6 @@ import {
   propertySnapshot,
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedules,
-  schedulesByProperty,
   isoDate,
   type IsoDate,
 } from "../../../engine";
@@ -16,18 +15,12 @@ import { projectionSeries } from "../projection";
 import { asOfView, propertyTilesForAsOf } from "../dashboard";
 import type { Mode } from "../lens";
 
-const schedules = schedulesByProperty(
-  mixed.mortgages,
-  mixed.properties.map((p) => p.id),
-  assumptions,
-);
 const fullSchedules = propertySchedules(
   mixed.mortgages,
   mixed.properties.map((p) => p.id),
   assumptions,
 );
 const future = mixed.properties.find((p) => p.id === "future")!;
-const schedule = schedules.get(future.id) ?? [];
 const fullSchedule = fullSchedules.get(future.id) ?? EMPTY_PROPERTY_SCHEDULE;
 
 function ownedAt(asOf: IsoDate, mode: Mode, isToday = false): boolean {
@@ -37,7 +30,7 @@ function ownedAt(asOf: IsoDate, mode: Mode, isToday = false): boolean {
     assumptions,
   );
   return propertyTilesForAsOf(
-    propertySnapshot(future, mixed, assumptions, asOf, schedule),
+    propertySnapshot(future, mixed, assumptions, asOf, fullSchedule.rows),
     series,
     asOfView(assumptions.baseDate, asOf, series, isToday),
     asOf,

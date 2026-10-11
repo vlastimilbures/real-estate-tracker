@@ -214,8 +214,8 @@ function snapshotIncome(
 }
 
 /**
- * One property's snapshot at `asOf`. Pass its `schedule` (from `schedulesByProperty` on
- * the same inputs) to reuse it; an omitted one is built here (DR-042, DR-118).
+ * One property's snapshot at `asOf`. Pass its `schedule` (the rows from `propertySchedules`
+ * on the same inputs) to reuse it; an omitted one is built here (DR-042, DR-118).
  */
 export function propertySnapshot(
   property: Property,
@@ -296,8 +296,8 @@ function snapshotProperty(
 }
 
 /**
- * Portfolio snapshot at `asOf`. Pass `schedules` (from `schedulesByProperty` on the same
- * inputs) to reuse them; omitted ones are built here (DR-042, DR-118).
+ * Portfolio snapshot at `asOf`. Pass `schedules` (the rows from `propertySchedules` on the
+ * same inputs) to reuse them; omitted ones are built here (DR-042, DR-118).
  */
 export function portfolioSnapshot(
   portfolio: Portfolio,

@@ -11,7 +11,6 @@ import {
   propertySnapshot,
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedules,
-  schedulesByProperty,
   type IsoDate,
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
@@ -21,11 +20,10 @@ import { asOfView, propertyTilesForAsOf, tilesForAsOf } from "../dashboard";
 import type { Mode } from "../lens";
 
 const ids = portfolio.properties.map((p) => p.id);
-const schedules = schedulesByProperty(portfolio.mortgages, ids, assumptions);
 const fullSchedules = propertySchedules(portfolio.mortgages, ids, assumptions);
 
 function tiles(asOf: IsoDate, mode: Mode) {
-  const snap = portfolioSnapshot(portfolio, assumptions, asOf, schedules);
+  const snap = portfolioSnapshot(portfolio, assumptions, asOf);
   const series = projectionSeries(
     portfolioProjection(portfolio, assumptions),
     mode,
@@ -34,10 +32,9 @@ function tiles(asOf: IsoDate, mode: Mode) {
   const basis = asOfView(assumptions.baseDate, asOf, series, false);
   const dashboard = tilesForAsOf(snap, series, basis, mode, assumptions);
   const perProperty = portfolio.properties.map((p) => {
-    const schedule = schedules.get(p.id) ?? [];
     const full = fullSchedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE;
     return propertyTilesForAsOf(
-      propertySnapshot(p, portfolio, assumptions, asOf, schedule),
+      propertySnapshot(p, portfolio, assumptions, asOf, full.rows),
       projectionSeries(
         propertyProjection(p, portfolio, assumptions, full),
         mode,
@@ -87,7 +84,7 @@ describe("one as-of rule on both screens (UX-053)", () => {
   it("as-of inside year 0: the effective-dated snapshot, deflated from baseDate", () => {
     const asOf = edate(assumptions.baseDate, 4); // 4 months after the projection start
     const p = portfolio.properties[0];
-    const schedule = schedules.get(p.id) ?? [];
+    const schedule = fullSchedules.get(p.id)?.rows ?? [];
     const snap = propertySnapshot(p, portfolio, assumptions, asOf, schedule);
     const nominal = tiles(asOf, "nominal").perProperty[0];
     const real = tiles(asOf, "real").perProperty[0];
