@@ -55,7 +55,10 @@ describe("Guide wording (ADR 0091)", () => {
       "equity at horizon ÷ equity at projection start",
     );
     expect(rd.irr.meaning).toMatch(/projection start/);
-    expect(rd.irr.meaning).toMatch(/no selling costs or tax/);
+    // ADR 0183 (amends 0091): the terminal equity is net of the selling costs, and the
+    // IRR is before income tax (was "no selling costs or tax").
+    expect(rd.irr.meaning).toMatch(/less your selling costs/);
+    expect(rd.irr.meaning).toMatch(/Before income tax/);
   });
 
   it("qualifies the principal check with full repayment and later draws", () => {
