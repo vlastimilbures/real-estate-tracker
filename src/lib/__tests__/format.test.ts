@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { utc } from "../../engine";
+import { D } from "../money";
 import {
   fmtCzk,
   roundCzk,
@@ -9,6 +10,7 @@ import {
   fmtMultiple,
   fmtDscr,
   fmtDate,
+  fmtSigned,
   signTone,
   pickCzkAxisUnit,
   fmtCzkAxisValue,
@@ -57,6 +59,23 @@ describe("fmtPct", () => {
     expect(fmtPct(0.3312)).toBe("33,1 %");
     expect(fmtPct(0.035226, 2)).toBe("3,52 %");
     expect(fmtPct(0.0205, 2)).toBe("2,05 %");
+  });
+});
+
+// ADR 0178 (#146): "+" only on a value whose printed text is not zero.
+describe("fmtSigned", () => {
+  it("signs a gain that shows", () => {
+    expect(fmtSigned(D("0.01"), fmtPp)).toBe("+1,0");
+    expect(fmtSigned(D("60000"), fmtCzkM)).toBe("+0,1 M Kč");
+  });
+  it("leaves a gain that rounds to zero bare", () => {
+    expect(fmtSigned(D("0.0004"), fmtPp)).toBe("0,0");
+    expect(fmtSigned(D("30000"), fmtCzkM)).toBe("0,0 M Kč");
+    expect(fmtSigned(D("0"), fmtPp)).toBe("0,0");
+  });
+  it("leaves the sign of a loss to the formatter", () => {
+    expect(fmtSigned(D("-0.01"), fmtPp)).toBe("−1,0");
+    expect(fmtSigned(D("-0.0004"), fmtPp)).toBe("0,0");
   });
 });
 

@@ -155,6 +155,18 @@ export function fmtPp(value: Numeric, dp = 1): string {
   return neg ? `${MINUS}${body}` : body;
 }
 
+/** A difference with "+" on a gain, by any formatter above. The sign follows the printed
+ *  value: a gain whose text equals the formatted zero stays bare, and a loss is signed by
+ *  `fmt` itself (DR-110, ADR 0178). */
+export function fmtSigned(
+  value: Numeric,
+  fmt: (value: Decimal) => string,
+): string {
+  const d = D(value);
+  const text = fmt(d);
+  return d.greaterThan(0) && text !== fmt(D(0)) ? `+${text}` : text;
+}
+
 /** `0.00x` — multiple → "4,85x". */
 export function fmtMultiple(value: Numeric, dp = 2): string {
   const { neg, body } = fmtFixed(value, dp);

@@ -6,6 +6,7 @@ import {
   fmtMultiple,
   fmtPct,
   fmtPp,
+  fmtSigned,
   toNumber,
 } from "../../lib/format";
 import type { Decimal } from "../../lib/money";
@@ -98,10 +99,6 @@ interface KpiRowSpec extends CompareValueRow {
   delta?: (r: CompareResult, base: CompareResult) => DeltaCell;
 }
 
-/** "+" for a gain; the formatters already sign a loss and leave zero bare. */
-const signed = (d: Decimal, fmt: (d: Decimal) => string) =>
-  d.gt(0) ? `+${fmt(d)}` : fmt(d);
-
 /** Key-figure rows. Starting equity and Δ net worth vs Base lead (ADR 0089); net worth
  *  shows both lenses; the multiple, CAGR, cumulative cash flow and IRR follow the lens
  *  (ADR 0087). The Δ row needs Base in the comparison. In the Δ view (with Base) every
@@ -159,7 +156,7 @@ function kpiRowSpecs(
       const w = pick(b);
       if (v === null) return { text: "—" };
       if (w === null) return missingBase;
-      return { text: signed(v.minus(w), fmt) };
+      return { text: fmtSigned(v.minus(w), fmt) };
     };
   const yearDelta =
     (pick: (r: CompareResult) => number | null) =>
@@ -199,7 +196,7 @@ function kpiRowSpecs(
             label: s.kpiNetWorthDeltaVsBase,
             fmt: (r: CompareResult) => {
               if (r.id === base.id) return "—";
-              return signed(netWorth(r).minus(netWorth(base)), fmtCzkM);
+              return fmtSigned(netWorth(r).minus(netWorth(base)), fmtCzkM);
             },
             kind: "money" as const,
             value: (r: CompareResult) =>

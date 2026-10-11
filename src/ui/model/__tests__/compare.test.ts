@@ -187,6 +187,18 @@ describe("compare owner loss (ADR 0089)", () => {
     expect(row("nominal", delta)?.fmt(gain)).toBe("+1,0 M Kč");
   });
 
+  it("a net worth gain that rounds to zero carries no plus sign (ADR 0178)", () => {
+    const tiny: CompareResult = {
+      ...base,
+      id: "tiny",
+      kpis: {
+        ...base.kpis,
+        netWorthNominal: base.kpis.netWorthNominal.plus(20_000),
+      },
+    };
+    expect(row("nominal", delta)?.fmt(tiny)).toBe("0,0 M Kč");
+  });
+
   it("without Base in the comparison there is no Δ row", () => {
     const labels = compareKpiRows(en, "nominal").map((r) => r.label);
     expect(labels).toContain(start);
@@ -273,6 +285,27 @@ describe("Δ vs Base view (ADR 0097)", () => {
       },
     };
     expect(row(sc.kpiNetWorthNominal).fmt(gain)).toBe("+1,0 M Kč");
+  });
+
+  // ADR 0178 (#146 R4-08): the "+" follows the printed value, so a gain that rounds to
+  // zero reads like a loss that rounds to zero.
+  it("a gain or loss that rounds to zero carries no sign", () => {
+    const off = (id: string, cf: number, irr: string): CompareResult => ({
+      ...base,
+      id,
+      kpis: {
+        ...base.kpis,
+        cumulativeNetCashFlow: base.kpis.cumulativeNetCashFlow.plus(cf),
+        leveredIrrNominal: base.kpis.leveredIrrNominal!.plus(irr),
+      },
+    });
+    const cf = row(sc.kpiCumulativeCashToOwner);
+    const irr = row(sc.kpiLeveredIrrNominal);
+    expect(cf.fmt(off("up", 20_000, "0.000004"))).toBe("0,0 M Kč");
+    expect(cf.fmt(off("down", -20_000, "-0.000004"))).toBe("0,0 M Kč");
+    expect(cf.fmt(off("more", 200_000, "0"))).toBe("+0,2 M Kč");
+    expect(irr.fmt(off("up", 0, "0.000004"))).toBe(`0,0 ${sc.ppSuffix}`);
+    expect(irr.fmt(off("down", 0, "-0.000004"))).toBe(`0,0 ${sc.ppSuffix}`);
   });
 
   it("rate rows show signed percentage points", () => {
