@@ -661,10 +661,13 @@ function settleEvents(
 }
 
 /** The running loan a payment meets; every loop carries it (plain: never interest-only). */
-type PayState = Pick<
-  CatchUpState,
-  "balance" | "currentInstalment" | "terms" | "prevRate" | "prevInterestOnly"
->;
+interface PayState {
+  balance: Decimal;
+  currentInstalment: Decimal;
+  terms: TermState;
+  prevRate: Decimal;
+  prevInterestOnly: boolean;
+}
 
 /** What payment `p` (grid month `month`) meets. `draw` lands before the split; `fresh`
  *  is its part no late-window event already counted (ADR 0129 §1): the part that
@@ -757,10 +760,7 @@ interface Opening {
   outcomes: Outcome[];
 }
 
-interface CatchUpState extends Opening {
-  prevRate: Decimal;
-  prevInterestOnly: boolean;
-}
+type CatchUpState = Opening & PayState;
 
 interface CatchUpContext {
   events: LoanEvents;
@@ -990,7 +990,7 @@ function devPaymentStep(
   mo: DevMonth,
   ctx: DevScheduleContext,
 ): DevMonthStep {
-  const { m, date, dueDate, draw, ratePa, io } = mo;
+  const { m, date, draw, ratePa, io } = mo;
   const fresh = m === 1 ? draw.minus(ctx.openingCounted) : draw;
   const { step, settled } = payAndSettle(ctx.events, state, {
     ...mo,
@@ -998,8 +998,9 @@ function devPaymentStep(
     fresh,
   });
   const drawn = ctx.newDebtByMonth.get(m) ?? ZERO;
+  const head = { month: m, date, dueDate: mo.dueDate, ratePa, drawn };
   return {
-    row: paymentRow({ month: m, date, dueDate, ratePa, drawn }, step, settled),
+    row: paymentRow(head, step, settled),
     state: {
       balance: settled.balance,
       currentInstalment: io ? state.currentInstalment : step.instalment,
