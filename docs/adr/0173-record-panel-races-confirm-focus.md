@@ -41,13 +41,16 @@ stays usable meanwhile (ADR 0142 keeps the other rows reachable). Four gaps foll
    open. The scenario list needs no change: its Delete buttons are disabled while a
    scenario write runs, so no other confirm can open.
 2. **Focus after a successful confirm (#247 part 1).** When the confirm row closes after its
-   write landed, focus moves to the panel that held it: the panel's `section` takes focus
-   from script only (`tabIndex=-1`). It stays unnamed: a named `section` is a region
-   landmark, and a record panel's table is already a region named by the panel's title. When that panel
-   is gone (the last property deleted, the page shows its empty state), focus moves to the
-   page's `h1`, which also takes focus from script only. Focus moves only when it was lost
+   write landed, focus moves to the panel that held it (its `section`). When that panel is
+   gone (the last property deleted, the page shows its empty state), focus moves to the
+   page title, the app shell's `h1`. Either takes focus from script only: `tabIndex=-1` is
+   set just before the focus and removed again on blur. Focus moves only when it was lost
    (on `<body>` or still in the row), so a row or form opened meanwhile keeps it. The focus
-   ring shows for keyboard focus only (`:focus-visible`), like the panel headings.
+   ring shows for keyboard focus only (`:focus-visible`), like the panel headings. The
+   section is unnamed by design: a named `section` is a region landmark, and a record
+   panel's table is already a region named by the panel's title, which axe's
+   `landmark-unique` rule rejects. A screen reader may therefore announce little when the
+   panel takes focus; accepted, since the user's place on the page is kept.
 3. **Escape cancels a confirm row (#247 part 2).** Escape in the row takes the Cancel path:
    the row closes and focus goes back to the button that opened it. It does nothing while
    the write runs, or while a dialog or popover is open (the top-most layer owns Escape,
@@ -71,3 +74,5 @@ stays usable meanwhile (ADR 0142 keeps the other rows reachable). Four gaps foll
 - Visual change: a panel focused from the keyboard after a confirm shows the focus ring.
   No new or changed text.
 - No engine, parity, golden-master, stored-data or export change.
+- Out of scope: a write that fails after its row has unmounted (the user opened another
+  row meanwhile) stays silent, as it did before this ADR; its failure has no row to show in.
