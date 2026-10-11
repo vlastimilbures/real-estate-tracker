@@ -22,6 +22,9 @@ import {
   undrawnPrincipal,
 } from "../schedule";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
+import { portfolioSnapshotAtYear, realProjection } from "../real";
+import { portfolioOutputs } from "../outputs";
+import { financingExposure } from "../financing";
 import {
   cpiIndex,
   portfolioProjection,
@@ -36,6 +39,8 @@ import {
   portfolio as seed,
 } from "./support/seed";
 import { devBlock, mixed } from "./support/mixed";
+import { mixedCashOutside, mixedWithRefi } from "./support/synthetic";
+import { withEvents } from "./support/events";
 import { money } from "../brands";
 
 // Fields added after the golden master was recorded: D-22's (pinned in
@@ -48,7 +53,8 @@ import { money } from "../brands";
 // (pinned in cash-to-owner.test.ts against the KPIs hashed here) and ADR 0164's
 // amortization `dueDate` (pinned in due-date.test.ts) and ADR 0165's `acquiredValue`
 // (pinned in acquired-value.test.ts). Leaving them
-// out keeps every hash comparable (no number moved).
+// out keeps every hash comparable (no number moved). Frozen by ADR 0174: a new field is
+// not added here; the v2 cases below hash it.
 const ADDED_FIELDS = new Set([
   "committedDebt",
   "committedDraws",
@@ -344,4 +350,215 @@ describe("P4a golden master (full precision)", () => {
       ),
     ).toMatchSnapshot();
   });
+});
+
+// ADR 0174: v2 cases hash every field (no ADDED_FIELDS), one hash per leaf path, so a new
+// output field shows as added snapshot lines only and a changed line means a number moved.
+
+/** A plain record (not a Decimal, Date or Map). */
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" &&
+  v !== null &&
+  !Array.isArray(v) &&
+  !(v instanceof Map) &&
+  !(v instanceof Date) &&
+  !Decimal.isDecimal(v);
+
+/** Every leaf of `v` under its path (array indices dropped, `[]` marks an array), with
+ *  the indices it was found at. An empty array or record is a leaf of its own, so a
+ *  section that fills or empties changes a line rather than only adding one. */
+function leaves(
+  v: unknown,
+  path: string,
+  at: number[],
+  out: Map<string, [number[], unknown][]>,
+): void {
+  const push = (p: string, x: unknown) => {
+    const list = out.get(p) ?? [];
+    list.push([at, x]);
+    out.set(p, list);
+  };
+  if (v instanceof Map) {
+    if (v.size === 0) return push(path, "{}");
+    for (const [k, x] of v) leaves(x, `${path}.${String(k)}`, at, out);
+  } else if (Array.isArray(v)) {
+    if (v.length === 0) return push(path, "[]");
+    v.forEach((x, i) => leaves(x, `${path}[]`, [...at, i], out));
+  } else if (isRecord(v)) {
+    const keys = Object.keys(v);
+    if (keys.length === 0) return push(path, "{}");
+    for (const k of keys) leaves(v[k], path ? `${path}.${k}` : k, at, out);
+  } else push(path, canon(v));
+}
+
+/** One sha256 per leaf path of `v`; error codes as they are. */
+function fieldHashes(v: unknown): Record<string, string> | string {
+  if (typeof v === "string") return v;
+  const out = new Map<string, [number[], unknown][]>();
+  leaves(v, "", [], out);
+  return Object.fromEntries(
+    [...out]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([p, xs]) => [
+        p || "(value)",
+        createHash("sha256").update(JSON.stringify(xs)).digest("hex"),
+      ]),
+  );
+}
+
+/** Everything the engine produces for one portfolio + assumptions pair, per field. */
+function fullRunV2(portfolio: Portfolio, a: Assumptions) {
+  const ids = portfolio.properties.map((p) => p.id);
+  const built = propertySchedules(portfolio.mortgages, ids, a);
+  const schedules = scheduleRows(built);
+  const asOfs = [
+    a.baseDate,
+    edate(a.baseDate, 1),
+    isoDate("2026-08-31"),
+    isoDate("2026-09-01"),
+    edate(a.baseDate, 12 * 5),
+    edate(a.baseDate, 12 * a.horizonYears),
+    isoDate("2024-01-01"),
+  ];
+  const projection = portfolioProjection(portfolio, a);
+  const cpi = cpiIndex(a);
+  const snapshot = portfolioSnapshot(portfolio, a, a.baseDate, schedules);
+  const later = [a.baseDate, edate(a.baseDate, 12 * 5)];
+  const financing = Object.fromEntries(
+    later.map((d) => [d.getTime(), financingExposure(portfolio, a, built, d)]),
+  );
+  // The one-pass outputs the UI reads are the parts hashed here (DR-042), so they are
+  // compared, not hashed again.
+  for (const d of later)
+    expect(portfolioOutputs(portfolio, a, d)).toEqual({
+      schedules,
+      snapshot: portfolioSnapshot(portfolio, a, d, schedules),
+      projection,
+      kpis: portfolioKpis(portfolio, a),
+      financing: financing[d.getTime()],
+    });
+  return {
+    schedules: fieldHashes(built),
+    snapshots: Object.fromEntries(
+      asOfs.map((d) => [
+        d.toISOString().slice(0, 10),
+        fieldHashes(
+          orCodes(() => portfolioSnapshot(portfolio, a, d, schedules)),
+        ),
+      ]),
+    ),
+    propertyProjections: Object.fromEntries(
+      portfolio.properties.map((p) => [
+        p.id,
+        fieldHashes(
+          propertyProjection(
+            p,
+            portfolio,
+            a,
+            built.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
+          ),
+        ),
+      ]),
+    ),
+    projection: fieldHashes(projection),
+    kpis: fieldHashes(portfolioKpis(portfolio, a)),
+    cpi: fieldHashes(cpi),
+    realProjection: fieldHashes(realProjection(projection, cpi)),
+    snapshotAtYear: Object.fromEntries(
+      [0, 5, a.horizonYears].map((y) => [
+        y,
+        fieldHashes(portfolioSnapshotAtYear(snapshot, projection[y]!)),
+      ]),
+    ),
+    financing: Object.fromEntries(
+      later.map((d) => [
+        d.toISOString().slice(0, 10),
+        fieldHashes(financing[d.getTime()]),
+      ]),
+    ),
+  };
+}
+
+/** The loan events of ADR 0109 on the refinance fixture, plus Dubová's second recast
+ *  in the instalment form (both recast forms run). */
+const eventsWithRefi: Portfolio = (() => {
+  const p = withEvents(mixedWithRefi);
+  return {
+    ...p,
+    mortgages: p.mortgages.map((m) =>
+      m.id === "m-dubova"
+        ? {
+            ...m,
+            recasts: [
+              ...(m.recasts ?? []),
+              { date: edate(m.startDate, 180), instalment: money("25000") },
+            ],
+          }
+        : m,
+    ),
+  };
+})();
+
+describe("golden master v2 (every field, per field; ADR 0174)", () => {
+  it("the event fixture is not vacuous", () => {
+    const a = seedAssumptions;
+    const built = propertySchedules(
+      eventsWithRefi.mortgages,
+      eventsWithRefi.properties.map((p) => p.id),
+      a,
+    );
+    const outcomes = [...built.values()].flatMap((s) => s.eventOutcomes);
+    const planned = eventsWithRefi.mortgages.reduce(
+      (n, m) => n + (m.prepayments?.length ?? 0) + (m.recasts?.length ?? 0),
+      0,
+    );
+    expect(outcomes).toHaveLength(planned);
+    const applied = (kind: string, form?: "instalment") =>
+      outcomes.some(
+        (o) =>
+          o.kind === kind &&
+          o.issue === null &&
+          o.month !== null &&
+          o.month > 0 &&
+          (form === undefined ||
+            eventsWithRefi.mortgages.some(
+              (m) =>
+                m.id === o.blockId &&
+                m.recasts?.some(
+                  (r) =>
+                    r.instalment !== undefined &&
+                    r.date.getTime() === o.date.getTime(),
+                ),
+            )),
+      );
+    expect(applied("prepayment")).toBe(true);
+    expect(applied("recast")).toBe(true);
+    expect(applied("recast", "instalment")).toBe(true);
+    const rows = [...built.values()].flatMap((s) => s.rows);
+    expect(rows.reduce((t, r) => t.plus(r.prepaid), D(0)).gt(0)).toBe(true);
+    expect(rows.reduce((t, r) => t.plus(r.prepaymentFee), D(0)).gt(0)).toBe(
+      true,
+    );
+    expect(built.get("javorova")?.refinances).toHaveLength(1);
+  });
+
+  const cases: [string, Portfolio][] = [
+    ["events with a refinance", eventsWithRefi],
+    ["cash-outside prepayment on a future buy", mixedCashOutside],
+  ];
+  const lenses: [string, Assumptions][] = [
+    ["base", seedAssumptions],
+    [
+      "rate and inflation shock",
+      applyScenario(
+        applyScenario(seedAssumptions, shocks.rateShock!),
+        shocks.inflationShock!,
+      ),
+    ],
+  ];
+  for (const [name, p] of cases)
+    for (const [lens, a] of lenses)
+      it(`${name}, ${lens}`, () => {
+        expect(fullRunV2(p, a)).toMatchSnapshot();
+      });
 });
