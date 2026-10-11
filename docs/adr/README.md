@@ -217,9 +217,10 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0171](0171-layer-map-corrections.md)                          | Layer map corrections: import uses the engine, i18n takes engine types only                   | Accepted                                                 | #154                                               |
 | [0172](0172-recast-prepayment-bench-budgets.md)                | Recast and prepayment bench budgets, a same-run ratio, a checked factor                       | Accepted                                                 | #141                                               |
 | [0173](0173-record-panel-races-confirm-focus.md)               | Record panel races and confirm-row focus                                                      | Accepted                                                 | #245, #248, #247, #280, #249                       |
-| [0174](0174-golden-master-loan-events-regression-layers.md)    | Golden master covers loan events; three named regression layers                               | Accepted                                                 | #160                                               |
+| [0174](0174-golden-master-loan-events-regression-layers.md)    | Golden master covers loan events; three named regression layers                               | Accepted · amended by 0177                               | #160                                               |
 | [0175](0175-verified-file-writes-error-codes-backup-folder.md) | File writes verify before replace; error-log codes; backup folder button                      | Accepted                                                 | #151, #258, #171                                   |
 | [0176](0176-refinance-cash-successor-principal-event-order.md) | Refinance cash counts the successor's principal; same-day events in portfolio order           | Accepted                                                 | #288, #207, #289                                   |
+| [0177](0177-remove-unused-engine-output-fields.md)             | Removing an unused engine output field: proof that no number moved                            | Accepted                                                 | #145                                               |
 
 <!-- adr-index:end -->
 

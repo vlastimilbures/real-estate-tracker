@@ -247,7 +247,6 @@ export interface PropertySnapshot {
   grossYield: Decimal | null; // null when there is no value (ADR 0133)
   netYield: Decimal | null;
   dscr: Decimal | null; // null when debt service is 0
-  weightedRateNumerator: Decimal; // balance*rate, for portfolio weighting
 }
 
 export interface PortfolioSnapshot {

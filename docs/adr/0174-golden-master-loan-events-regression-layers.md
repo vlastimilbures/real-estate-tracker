@@ -9,6 +9,8 @@
   the baseline is three named layers, and the docs say which of them checks correctness)
 - Related: [0001](0001-behaviour-change-gate.md) (behaviour-change gate),
   [0109](0109-loan-prepayments-and-recasts.md) (prepayments, recasts and event outcomes)
+- Amended by: [0177](0177-remove-unused-engine-output-fields.md) (decisions 1 and 3: an unread
+  field may be removed and v1 re-recorded, under a stripped-snapshot proof)
 
 ## Context
 

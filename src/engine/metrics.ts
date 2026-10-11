@@ -245,12 +245,29 @@ export function propertySnapshot(
     schedule ??
     propertySchedule(forProperty(portfolio.mortgages, property.id), assumptions)
       .rows;
-  return snapshotProperty(property, portfolio, assumptions, asOf, rows);
+  return snapshotProperty(property, portfolio, assumptions, asOf, rows)
+    .snapshot;
+}
+
+/** A property snapshot and the rate in force at its `asOf` (0 without debt). */
+interface RatedSnapshot {
+  snapshot: PropertySnapshot;
+  rate: Decimal;
+}
+
+/**
+ * Σ debt × rate over the active rows (the `owing` rows of `portfolioSnapshot`; keep the
+ * two filters alike), in portfolio order from 0 (ADR 0177).
+ */
+function weightedRateNumerator(rated: RatedSnapshot[]): Decimal {
+  return rated
+    .filter((r) => r.snapshot.active)
+    .reduce((acc, r) => acc.plus(r.snapshot.debt.times(r.rate)), ZERO);
 }
 
 /**
  * `propertySnapshot` on inputs and an as-of date the caller has already validated
- * (DR-128).
+ * (DR-128), with the rate `portfolioSnapshot` weights by the debt (ADR 0177).
  */
 function snapshotProperty(
   property: Property,
@@ -258,7 +275,7 @@ function snapshotProperty(
   assumptions: Assumptions,
   asOf: IsoDate,
   schedule: AmortizationRow[],
-): PropertySnapshot {
+): RatedSnapshot {
   const blocks = forProperty(portfolio.mortgages, property.id);
   // A development property is valued at its completed value (ADR 0166).
   const value = valueAsOf(
@@ -288,7 +305,7 @@ function snapshotProperty(
     : ZERO;
   const committedDebt = debt.plus(undrawnDebt);
 
-  return {
+  const snapshot: PropertySnapshot = {
     propertyId: property.id,
     name: property.name,
     owned,
@@ -306,8 +323,8 @@ function snapshotProperty(
     grossYield: yieldOf(income.grossAnnualRent, value),
     netYield: yieldOf(income.noi, value),
     dscr: annualDebtService.isZero() ? null : income.noi.div(annualDebtService),
-    weightedRateNumerator: debt.times(rate),
   };
+  return { snapshot, rate };
 }
 
 /**
@@ -330,9 +347,10 @@ export function portfolioSnapshot(
       portfolio.properties.map((p) => p.id),
       assumptions,
     );
-  const perProperty = portfolio.properties.map((p) =>
+  const rated = portfolio.properties.map((p) =>
     snapshotProperty(p, portfolio, assumptions, asOf, built.get(p.id) ?? []),
   );
+  const perProperty = rated.map((r) => r.snapshot);
   // Not-yet-owned and deactivated properties are listed but excluded from current totals,
   // except that a pending property's loan already drawn at asOf is owed now: its debt
   // counts, its value does not (ADR 0165). A loan starting at the purchase adds 0.
@@ -355,7 +373,7 @@ export function portfolioSnapshot(
   const holdingCosts = sum((s) => s.holdingCosts);
   const noi = sum((s) => s.noi);
   const annualDebtService = sum((s) => s.annualDebtService);
-  const weightedNumerator = sumOf(owing)((s) => s.weightedRateNumerator);
+  const weightedNumerator = weightedRateNumerator(rated);
 
   return {
     asOf,

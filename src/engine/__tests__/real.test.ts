@@ -233,7 +233,6 @@ describe("snapshot at a projection year and real snapshots", () => {
     expect(s.dscr).toBe(r.dscr);
     expect(s.netYield?.toString()).toBe(r.noi.div(r.value).toString());
     expect(s.propertyId).toBe(p.id);
-    expect(s.weightedRateNumerator).toBe(ps.weightedRateNumerator);
   });
 
   it("zero value gives no yields (ADR 0133), not a division by zero", () => {
