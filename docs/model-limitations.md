@@ -115,8 +115,8 @@ work still to do is in the [roadmap](roadmap.md).
   and the property page warns about it. Interest saved is nominal, uses the base-case
   assumptions, covers the loan's whole remaining life and is not net of fees (ADR 0116).
   It is shown only when a prepayment repaid some principal.
-  A prepayment that shortens the term keeps the instalment the next payment would pay and
-  sizes the new term at that payment's rate (ADR 0179). At a fixation end that rate is the
+  A prepayment that shortens the term keeps today's instalment (or one already agreed for
+  the next payment) and sizes the new term at the next payment's rate (ADR 0179). At a fixation end that rate is the
   new one: if today's instalment cannot repay the rest by the maturity at the new rate,
   the maturity stays, the instalment is recalculated to it as with "lower the instalment",
   and the property page warns. A bank may offer other terms at a refix; enter them as a new

@@ -42,8 +42,10 @@ payments (ADR 0109 §5). Two parts of that rule disagreed with what the bank doe
 The owner chose #164 option A and #235 option B on 2026-10-11, and a warning for the case
 where the term cannot shorten.
 
-1. **The kept instalment is the one payment `p+1` would pay without the prepayments**, and
-   NPER runs at payment `p+1`'s rate, on the balance after the period's prepayments:
+1. **The kept instalment is the instalment in force after payment `p`, or the one already
+   set for payment `p+1`**, and NPER runs at payment `p+1`'s rate, on the balance after the
+   period's prepayments. A rate change or a tranche on `p+1` is not anticipated in the
+   instalment (only in the rate). In order:
    - an agreed instalment still to pay (an instalment recast settled before the
      prepayment, after payment `p`; ADR 0136);
    - else, when payment `p+1` owes a re-amortization, the annuity of the balance before
@@ -66,7 +68,8 @@ where the term cannot shorten.
    en/cs/ru). Only the period's last applied prepayment, whose effect applies, carries it.
    It is not raised for an interest-only payment (both effects are the same there), for a
    prepayment that repays the loan, or for a prepayment kept on the payment a successor
-   block takes over from (the owner pays nothing after it). When `p + ceil(NPER)` equals
+   block takes over from (the owner pays nothing after it; an earlier prepayment's warning
+   stays, as the owner still pays up to the handover). When `p + ceil(NPER)` equals
    the maturity exactly, the kept instalment repays by it: the term stays without a
    warning.
 4. **A re-amortization on `p+1` runs over the shortened term** (constant maturity,
@@ -117,6 +120,7 @@ are shown the same way.
 - Tests: the pins above (`loan-events`, `effective-maturity`, `loan-events-kpis`,
   `reference/loanEvents.reference`, `loan-event-invariants`, `recast-tranche`); new engine =
   reference cases (a small and an uncovered refix prepayment, the shock revert on `p+1`, a
-  late prepayment before the first reset payment, and the three #235 late-window cases);
+  late prepayment before the first reset payment, the three #235 late-window cases, and a
+  maturity recast followed by a prepayment whose next payment is the first at the reset);
   a KPI-model case for the 500,000 Kč prepayment; the warning in the engine, at a handover
-  (`chain-changes`) and in every language (`loanWarnings`).
+  (`chain-changes`, `loan-events`) and in every language (`loanWarnings`).

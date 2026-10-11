@@ -7,7 +7,8 @@
   keeps the instalment the next payment pays), ADR 0137 (§6: payment `q` pays at least
   its interest), ADR 0129 (§3 and §8: what a late-window event sees), ADR 0161 (§11: the cumulative
   cash flow is named cash to owner and shown as its own row), ADR 0179 (§5: `shortenTerm`
-  keeps the instalment the next payment would pay, at that payment's rate)
+  sizes the term at the next payment's rate; after an owed re-amortization it keeps that
+  annuity)
 
 ## Context
 

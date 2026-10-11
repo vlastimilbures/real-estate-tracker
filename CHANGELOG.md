@@ -164,8 +164,8 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
-- A **Shorten the term** prepayment keeps the instalment the next payment would pay and
-  works out the new term at that payment's rate (ADR 0179, #164, #235). At a fixation end
+- A **Shorten the term** prepayment keeps the instalment and works out the new term at the
+  next payment's rate (ADR 0179, #164, #235). At a fixation end
   the term is now sized at the new rate instead of the old one: Javorová's 500,000 Kč
   prepayment on its 2031 refix ends the loan in April 2046 at 6,701.93 Kč a month, not in
   March 2043 at 7,893.90 Kč. After a maturity change, a capped instalment change, a

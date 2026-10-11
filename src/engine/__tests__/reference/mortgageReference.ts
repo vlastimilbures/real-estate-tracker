@@ -496,8 +496,9 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
     }
     const owedAfter = balance.plus(effectSeen);
     let counted = ZERO;
-    // shortenTerm keeps the instalment payment k+1 would pay without the prepayments
-    // (ADR 0179), at payment k+1's rate (a fixation reset on k+1 counts):
+    // shortenTerm keeps the instalment already set for payment k+1 (ADR 0179) and sizes
+    // the term at payment k+1's rate (a fixation reset on k+1 counts in the rate, not in
+    // the instalment):
     //   • an agreed one still to pay (a recast settled before it, after payment k;
     //     ADR 0136);
     //   • else, when payment k+1 owes a re-amortization (a maturity or capped recast, a

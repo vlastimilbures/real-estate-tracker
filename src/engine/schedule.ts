@@ -530,12 +530,13 @@ function applyPrepayments(
 /**
  * The bank's answer to the period's prepayments, once, on the balance after all of
  * them (the last one's effect): lower the instalment from the next payment, or keep
- * the instalment the next payment would pay without them and end the loan after
- * `ceil(NPER)` more payments at the next payment's rate (ADR 0179). That instalment is
+ * the instalment already set for the next payment and end the loan after `ceil(NPER)`
+ * more payments at the next payment's rate (ADR 0179). That instalment is
  * an agreed one still to pay (a recast after this payment, settled in the late window;
  * ADR 0136); else, when the next payment owes a re-amortization, the annuity of
  * `before` (the balance before the prepayments) over the payments left; else this
- * payment's. The maturity never moves later: when that instalment does not repay the
+ * payment's (a rate change or tranche on the next payment is not anticipated). The
+ * maturity never moves later: when that instalment does not repay the
  * loan by it (or never covers the interest), the term stays and the prepayment is
  * reported as not shortening it.
  * Interest-only months pay no instalment to keep: completion re-amortizes anyway.
