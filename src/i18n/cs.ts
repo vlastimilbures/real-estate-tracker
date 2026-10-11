@@ -1017,6 +1017,8 @@ export const cs: Dictionary = {
     agoDays: (n: number) => `před ${n} ${csPlural(n, ["dnem", "dny", "dny"])}`,
     agoWeeks: (n: number) =>
       `před ${n} ${csPlural(n, ["týdnem", "týdny", "týdny"])}`,
+    agoMonths: (n: number) =>
+      `před ${n} ${csPlural(n, ["měsícem", "měsíci", "měsíci"])}`,
     offDevice: "Uchovávejte kopii i jinde než na tomto Macu.",
     folderHint:
       "Bezpečnostní kopie uložené před obnovením, před smazáním ukázky a před aktualizací aplikace jsou ve složce backups uvnitř složky dat.",

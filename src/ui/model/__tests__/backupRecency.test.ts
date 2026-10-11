@@ -58,6 +58,16 @@ describe("backupRecency (ADR 0110)", () => {
     expect(ago(45)).toEqual({ unit: "weeks", n: 6 });
   });
 
+  // ADR 0178 (#146 R4-20): a year-old backup read "57 weeks ago".
+  it("whole months of 30 days from 60 days", () => {
+    const ago = (n: number) =>
+      backupRecency(state(daysBefore(n), false), now).ago;
+    expect(ago(59)).toEqual({ unit: "weeks", n: 8 });
+    expect(ago(60)).toEqual({ unit: "months", n: 2 });
+    expect(ago(89)).toEqual({ unit: "months", n: 2 });
+    expect(ago(399)).toEqual({ unit: "months", n: 13 });
+  });
+
   it("30 days old and changed: no hint yet; 31 days: hint", () => {
     expect(backupRecency(state(daysBefore(30), true), now).showHint).toBe(
       false,

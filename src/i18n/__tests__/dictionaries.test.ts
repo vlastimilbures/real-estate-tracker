@@ -184,6 +184,29 @@ describe("i18n dictionaries — plural forms", () => {
     ]);
   });
 
+  it("backup age in months reads naturally in every language (ADR 0178)", () => {
+    const months = (lang: "en" | "cs" | "ru") =>
+      [1, 2, 5, 13].map((n) => render(L[lang].get("backup.agoMonths"), n));
+    expect(months("en")).toEqual([
+      "1 month ago",
+      "2 months ago",
+      "5 months ago",
+      "13 months ago",
+    ]);
+    expect(months("cs")).toEqual([
+      "před 1 měsícem",
+      "před 2 měsíci",
+      "před 5 měsíci",
+      "před 13 měsíci",
+    ]);
+    expect(months("ru")).toEqual([
+      "1 месяц назад",
+      "2 месяца назад",
+      "5 месяцев назад",
+      "13 месяцев назад",
+    ]);
+  });
+
   it("every language inflects the same count strings (DR-111, UX-034)", () => {
     const rest = [
       "properties.subtitle",
@@ -207,6 +230,7 @@ describe("i18n dictionaries — plural forms", () => {
       // Backup recency (ADR 0110).
       "backup.agoDays",
       "backup.agoWeeks",
+      "backup.agoMonths",
       // Out-of-range values a restore asks about (ADR 0148).
       "backup.warnOutOfRange",
     ];

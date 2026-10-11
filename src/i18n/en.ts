@@ -1070,6 +1070,7 @@ export const en = {
     agoToday: "today",
     agoDays: (n: number) => `${n} ${enPlural(n, ["day", "days"])} ago`,
     agoWeeks: (n: number) => `${n} ${enPlural(n, ["week", "weeks"])} ago`,
+    agoMonths: (n: number) => `${n} ${enPlural(n, ["month", "months"])} ago`,
     offDevice: "Keep a copy somewhere other than this Mac.",
     folderHint:
       "The safety copies saved before a restore, before Clear sample and before an app upgrade are in the backups folder inside the data folder.",
