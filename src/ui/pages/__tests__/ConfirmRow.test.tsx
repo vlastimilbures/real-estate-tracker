@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 //
 // ADR 0143 (#132 R5-08): an inline destructive confirm names the record, moves focus to
-// its confirm button (and back to the trigger on Cancel), and stays open with the reason
+// its Cancel button (and back to the trigger on Cancel), and stays open with the reason
 // when the write fails.
+import { useState } from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -13,15 +14,22 @@ import {
 } from "../PropertyEntityPanels";
 import { ScenarioListPanel } from "../ScenariosPanels";
 import { ActivationBanner } from "../PropertyDetailPanels";
+import { Properties } from "../Properties";
 import { EntityPanel } from "../../components/EntityPanel";
+import { LeaveGuard } from "../../components/LeaveGuard";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import type { MutationResult } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { fmtDate } from "../../../lib/format";
-import { portfolio } from "../../../engine/__tests__/support/seed";
+import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { isoDate, money, type Lease, type Valuation } from "../../../engine";
 import type { FieldSpec } from "../../model/formParse";
+
+vi.mock("../../../lib/day", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../lib/day")>()),
+  todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
+}));
 
 const ok = async (): Promise<MutationResult> => ({ ok: true });
 const gone: MutationResult = {
@@ -50,9 +58,74 @@ beforeEach(() =>
       removeLease: vi.fn(ok),
       removeMortgageBlock: vi.fn(ok),
     });
-    useUiStore.setState({ language: "en" });
+    useUiStore.setState({
+      language: "en",
+      route: "properties",
+      unsavedChanges: false,
+      unsavedSources: [],
+      pendingLeave: null,
+      pendingSource: null,
+    });
   }),
 );
+
+const cancelButton = () =>
+  screen.getByRole("button", { name: en.common.cancel });
+
+/** A write that resolves only when the test says so. */
+function deferred() {
+  let finish: (r: MutationResult) => void = () => undefined;
+  const promise = new Promise<MutationResult>((r) => (finish = r));
+  return { promise, finish: (r: MutationResult) => finish(r) };
+}
+
+const recordSpecs: FieldSpec[] = [
+  { name: "value", label: "Value", kind: "money" },
+];
+type RecordRow = { id: string; value: string };
+
+function RecordPanel({
+  onDelete = ok,
+}: {
+  onDelete?: (id: string) => Promise<MutationResult>;
+}) {
+  return (
+    <EntityPanel
+      title="Rows"
+      addLabel="row"
+      rows={[
+        { id: "a", value: "100" },
+        { id: "b", value: "200" },
+      ]}
+      columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
+      specs={recordSpecs}
+      draftOf={(r) => ({ value: r ? r.value : "" })}
+      build={(v, id): RecordRow => ({ id, value: String(v.value) })}
+      onAdd={ok}
+      onSave={ok}
+      onDelete={onDelete}
+    />
+  );
+}
+
+/** The deactivate confirm opens from a page button; this stands in for it. */
+function DeactivateHarness() {
+  const [confirming, setConfirming] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setConfirming(true)}>
+        Deactivate
+      </button>
+      <ActivationBanner
+        propertyName="Dubová"
+        isActive
+        confirmingDeactivate={confirming}
+        onConfirmDeactivate={ok}
+        onCancelDeactivate={() => setConfirming(false)}
+      />
+    </>
+  );
+}
 
 const clickDelete = () =>
   userEvent.click(screen.getByRole("button", { name: en.common.delete }));
@@ -85,27 +158,8 @@ describe("a record's delete confirm names the row (ADR 0143)", () => {
 
 // Focus lands on Cancel, the safe choice: a held Enter on the trigger cannot reach Yes.
 describe("focus moves into the confirm row (ADR 0143)", () => {
-  const specs: FieldSpec[] = [{ name: "value", label: "Value", kind: "money" }];
-  type Row = { id: string; value: string };
-
   it("record panel: onto Cancel, and back to the row's Delete on Cancel (#132)", async () => {
-    render(
-      <EntityPanel
-        title="Rows"
-        addLabel="row"
-        rows={[
-          { id: "a", value: "100" },
-          { id: "b", value: "200" },
-        ]}
-        columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
-        specs={specs}
-        draftOf={(r) => ({ value: r ? r.value : "" })}
-        build={(v, id): Row => ({ id, value: String(v.value) })}
-        onAdd={ok}
-        onSave={ok}
-        onDelete={ok}
-      />,
-    );
+    render(<RecordPanel />);
     const trigger = screen.getAllByRole("button", {
       name: en.common.delete,
     })[1]!;
@@ -205,6 +259,106 @@ describe("a failed scenario delete keeps the row open (ADR 0143)", () => {
     expect(
       screen.getByText(en.scenarios.confirmDelete("Rates up")),
     ).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toBe(
+      en.dataErrors.ROW_MISSING,
+    );
+  });
+});
+
+// #249: today's ConfirmRow behaviour on every caller (ADR 0143), pinned.
+describe("ConfirmRow focus on every caller (#249)", () => {
+  it("Properties delete: onto Cancel, and back to the row's Delete on Cancel", async () => {
+    act(() =>
+      usePortfolioStore.setState({ portfolio, assumptions, status: "ready" }),
+    );
+    render(<Properties />);
+    const trigger = screen.getAllByRole("button", {
+      name: en.common.delete,
+    })[1]!;
+    await userEvent.click(trigger);
+    expect(document.activeElement).toBe(cancelButton());
+    await userEvent.click(cancelButton());
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("scenario list: Cancel puts focus back on the scenario's Delete", async () => {
+    render(
+      <ScenarioListPanel
+        scenarios={[{ id: "s1", name: "Rates up", overrides: {} }]}
+        baseOn
+        onToggleBase={() => undefined}
+        selectedIds={[]}
+        maxCompare={4}
+        onToggle={() => undefined}
+        busy={false}
+        onEdit={() => undefined}
+        onDuplicate={() => undefined}
+        onDelete={ok}
+      />,
+    );
+    const trigger = screen.getByRole("button", { name: en.common.delete });
+    await userEvent.click(trigger);
+    await userEvent.click(cancelButton());
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("deactivate banner: Cancel puts focus back on the Deactivate button", async () => {
+    render(<DeactivateHarness />);
+    const trigger = screen.getByRole("button", { name: "Deactivate" });
+    await userEvent.click(trigger);
+    expect(document.activeElement).toBe(cancelButton());
+    await userEvent.click(cancelButton());
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("leave-guard path: Discard opens the confirm with focus on Cancel; Cancel goes back to that row's Delete", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <RecordPanel />
+        <LeaveGuard />
+      </>,
+    );
+    await user.click(
+      screen.getAllByRole("button", { name: en.common.edit })[0]!,
+    );
+    await user.type(screen.getByRole("textbox", { name: "Value" }), "5");
+    const trigger = screen.getAllByRole("button", {
+      name: en.common.delete,
+    })[1]!;
+    await user.click(trigger);
+    await user.click(
+      screen.getByRole("button", { name: en.common.discardChanges }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(cancelButton());
+    await user.click(cancelButton());
+    expect(document.activeElement).toBe(trigger);
+  });
+});
+
+describe("ConfirmRow busy state (#249)", () => {
+  it("disables both buttons and shows the busy label while the write runs; a failure enables them again", async () => {
+    const write = deferred();
+    render(<RecordPanel onDelete={() => write.promise} />);
+    await userEvent.click(
+      screen.getAllByRole("button", { name: en.common.delete })[0]!,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.yesDelete }),
+    );
+    const busy = screen.getByRole<HTMLButtonElement>("button", {
+      name: en.common.deleting,
+    });
+    expect(busy.disabled).toBe(true);
+    expect(cancelButton()).toHaveProperty("disabled", true);
+    await act(async () => write.finish(gone));
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", {
+        name: en.common.yesDelete,
+      }).disabled,
+    ).toBe(false);
+    expect(cancelButton()).toHaveProperty("disabled", false);
     expect(screen.getByRole("alert").textContent).toBe(
       en.dataErrors.ROW_MISSING,
     );
