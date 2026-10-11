@@ -235,6 +235,81 @@ describe("ADR 0179: shortenTerm sizes the term at the next payment's rate (#164)
   });
 });
 
+describe("ADR 0179: a shortenTerm that cannot shorten is reported", () => {
+  const issues = (b: MortgageBlock, a: Assumptions = assumptions) =>
+    outcomesOf(b, a).map((o) => o.issue);
+  const at10 = { ...assumptions, postFixationResetRatePa: rate("0.10") };
+
+  it("100,000 Kč at the refix: PREPAYMENT_TERM_NOT_SHORTENED, still applied", () => {
+    const [o] = outcomesOf(
+      withEvents(javorova, [prepay("2031-01-17", 100000, "shortenTerm")]),
+    );
+    expect(o).toMatchObject({
+      kind: "prepayment",
+      month: 56,
+      issue: "PREPAYMENT_TERM_NOT_SHORTENED",
+    });
+    expect(o?.applied.toFixed(0)).toBe("100000");
+  });
+
+  it("the kept instalment below the reset's interest is reported too", () => {
+    expect(
+      issues(
+        withEvents(javorova, [prepay("2031-01-17", 500000, "shortenTerm")]),
+        at10,
+      ),
+    ).toEqual(["PREPAYMENT_TERM_NOT_SHORTENED"]);
+  });
+
+  it("a prepayment that shortens, a lowerInstalment and an interest-only one are not", () => {
+    expect(
+      issues(
+        withEvents(javorova, [prepay("2031-01-17", 500000, "shortenTerm")]),
+      ),
+    ).toEqual([null]);
+    expect(
+      issues(withEvents(javorova, [prepay("2031-01-17", 100000)])),
+    ).toEqual([null]);
+    const dev = withEvents({ ...devBlock, id: "m-dev" } as MortgageBlock, [
+      prepay("2027-01-10", 200000, "shortenTerm"),
+    ]);
+    expect(issues(dev)).toEqual([null]);
+  });
+
+  it("only the period's last applied prepayment, whose effect applies, is reported", () => {
+    expect(
+      issues(
+        withEvents(javorova, [
+          prepay("2031-01-10", 50000, "shortenTerm"),
+          prepay("2031-01-17", 50000, "shortenTerm"),
+        ]),
+      ),
+    ).toEqual([null, "PREPAYMENT_TERM_NOT_SHORTENED"]);
+  });
+
+  it("a replayed one is reported as well (before baseDate)", () => {
+    // Javorova five years earlier: its fixation ends 2026-01-17, before baseDate, and
+    // the 100,000 Kč prepayment there is replayed into the opening balance.
+    const earlier = {
+      ...javorova,
+      startDate: isoDate("2016-01-17"),
+    } as MortgageBlock;
+    const [o] = outcomesOf(
+      withEvents(earlier, [prepay("2026-01-17", 100000, "shortenTerm")]),
+    );
+    expect(o?.month).toBeLessThanOrEqual(0);
+    expect(o?.issue).toBe("PREPAYMENT_TERM_NOT_SHORTENED");
+  });
+
+  it("less than one payment off the term at an unchanged rate is not reported", () => {
+    // 2026-01-17 follows payment 60; payment 61 is at the same 1.69 %. The kept
+    // instalment still repays by the maturity, only the last payment is lower.
+    expect(
+      issues(withEvents(javorova, [prepay("2026-01-17", 1000, "shortenTerm")])),
+    ).toEqual([null]);
+  });
+});
+
 describe("ADR 0109: clamps are reported, not raised", () => {
   it("a prepayment equal to the balance pays the loan off", () => {
     const rows = buildSchedule(javorova, assumptions);

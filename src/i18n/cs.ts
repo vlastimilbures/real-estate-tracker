@@ -612,6 +612,8 @@ export const cs: Dictionary = {
         `nová splátka od ${date} nepokryje úrok, proto úvěr zůstává na původních podmínkách.`,
       RECAST_TERM_CAPPED: (date) =>
         `nová splátka od ${date} by překročila nejdelší povolenou splatnost, proto se úvěr přepočítá na tuto splatnost.`,
+      PREPAYMENT_TERM_NOT_SHORTENED: (date) =>
+        `mimořádná splátka k ${date} nezkrátí splatnost: při sazbě příští splátky by ponechaná splátka úvěr do data splatnosti nesplatila, proto splatnost zůstává.`,
     },
     drawdownTitle: "Čerpání",
     drawdownTitleFrom: (date) => `Čerpání · od ${date}`,

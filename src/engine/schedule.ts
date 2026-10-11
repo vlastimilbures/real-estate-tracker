@@ -535,18 +535,27 @@ function applyPrepayments(
  * an agreed one still to pay (a recast after this payment, settled in the late window;
  * ADR 0136); else, when the next payment owes a re-amortization, the annuity of
  * `before` (the balance before the prepayments) over the payments left; else this
- * payment's. Interest-only months pay no instalment to keep: completion re-amortizes
- * anyway.
+ * payment's. The maturity never moves later: when that instalment does not repay the
+ * loan by it (or never covers the interest), the term stays and the prepayment is
+ * reported as not shortening it.
+ * Interest-only months pay no instalment to keep: completion re-amortizes anyway.
  */
 function prepaymentTerms(
   ev: LoanEvents,
   effect: PrepaymentEffect | null,
   done: PaymentDone,
   before: Decimal,
-): TermState {
+): { terms: TermState; repaysByMaturity: boolean } {
   const { terms, balance } = done;
-  if (!effect || done.interestOnly || !balance.greaterThan(ZERO)) return terms;
-  if (effect === "lowerInstalment") return { ...terms, reamortizeNext: true };
+  if (!effect || done.interestOnly || !balance.greaterThan(ZERO)) {
+    return { terms, repaysByMaturity: true };
+  }
+  if (effect === "lowerInstalment") {
+    return {
+      terms: { ...terms, reamortizeNext: true },
+      repaysByMaturity: true,
+    };
+  }
   const next = rateOfPayment(done.p + 1, ev.block, ev.assumptions).div(12);
   const kept =
     terms.agreedInstalment ??
@@ -554,9 +563,13 @@ function prepaymentTerms(
       ? recomputeInstalment(next, terms.term - done.p, before)
       : done.instalment);
   const left = nperMonths(next, kept, balance);
-  return Number.isFinite(left) && left > 0
-    ? { ...terms, term: Math.min(terms.term, done.p + left) }
-    : terms;
+  const sized = Number.isFinite(left) && left > 0;
+  return {
+    terms: sized
+      ? { ...terms, term: Math.min(terms.term, done.p + left) }
+      : terms,
+    repaysByMaturity: sized && done.p + left <= terms.term,
+  };
 }
 
 /**
@@ -629,6 +642,18 @@ function applyRecasts(
   return { terms, outcomes, counted };
 }
 
+/** The last applied prepayment — the one whose `shortenTerm` effect applies — is
+ *  reported as not shortening the term (ADR 0179). */
+function notShortened(outcomes: Outcome[]): Outcome[] {
+  const last = outcomes.reduce(
+    (at, o, i) => (o.applied.greaterThan(ZERO) ? i : at),
+    -1,
+  );
+  return outcomes.map((o, i) =>
+    i === last ? { ...o, issue: "PREPAYMENT_TERM_NOT_SHORTENED" } : o,
+  );
+}
+
 /** After payment `p`: its prepayments, the bank's answer to them, then its recasts
  *  (ADR 0109). The balance checks count the tranches `seen` names (ADR 0129 §1); the
  *  balance returned does not, so the tranche is still added once, in grid month 1. */
@@ -643,7 +668,7 @@ function settleEvents(
   }
   const paid = applyPrepayments(ev, done, period.prepayments, seen);
   const after = { ...done, balance: paid.balance };
-  const terms = prepaymentTerms(
+  const { terms, repaysByMaturity } = prepaymentTerms(
     ev,
     paid.effect,
     { ...after, balance: paid.balance.plus(paid.seenAfter) },
@@ -655,7 +680,10 @@ function settleEvents(
     prepaid: paid.prepaid,
     fee: paid.fee,
     terms: recast.terms,
-    outcomes: [...paid.outcomes, ...recast.outcomes],
+    outcomes: [
+      ...(repaysByMaturity ? paid.outcomes : notShortened(paid.outcomes)),
+      ...recast.outcomes,
+    ],
     counted: larger(
       terms === done.terms ? ZERO : paid.seenAfter,
       recast.counted,
@@ -1673,7 +1701,9 @@ function spliceSuccessor(
 /**
  * The owner's events in rows the handover drops (month d unless kept, and later):
  * each prepayment is paid at the handover, in order, out of the balance `owed`; a
- * recast no longer applies, as the successor replaces the loan (ADR 0109).
+ * recast no longer applies, as the successor replaces the loan (ADR 0109). A kept
+ * month-d prepayment no longer reports the owner's term: the owner pays nothing after
+ * it (ADR 0179).
  */
 function handoverPrepayments(
   outcomes: Outcome[],
@@ -1688,7 +1718,13 @@ function handoverPrepayments(
     (o.month > d || (o.month === d && !(kept && o.kind === "prepayment")));
   let [left, applied, fee] = [owed, ZERO, ZERO];
   const out = outcomes.map((o): Outcome => {
-    if (!dropped(o)) return o;
+    if (!dropped(o)) {
+      return o.blockId === owner.id &&
+        o.month === d &&
+        o.issue === "PREPAYMENT_TERM_NOT_SHORTENED"
+        ? { ...o, issue: null }
+        : o;
+    }
     if (o.kind === "recast")
       return { ...o, month: null, issue: "RECAST_REPLACED" };
     const paid = o.requested.lessThan(left) ? o.requested : left;
