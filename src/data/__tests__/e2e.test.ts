@@ -96,14 +96,22 @@ describe("Effective-dating survives the DB round trip", () => {
 
 // Drift tripwire (DR-062): src/data/seed.ts keeps its own copy of the seed (the data layer
 // must not import engine test fixtures). After the DB round trip it must still equal the
-// engine fixture. Compared on the fixture's own keys, as strings (Decimal/Date ⇒ text).
-function onFixtureKeys(actual: object, expected: object): unknown {
-  const pick = (a: Record<string, unknown>, e: Record<string, unknown>) =>
-    Object.fromEntries(Object.keys(e).map((k) => [k, String(a[k])]));
-  return pick(
-    actual as Record<string, unknown>,
-    expected as Record<string, unknown>,
-  );
+// engine fixture. Compared on the union of both sides' keys, as strings (Decimal/Date ⇒
+// text), so a field only one copy has fails too. A DB-only default the fixture leaves
+// out is compared against its default value.
+const DB_ONLY_DEFAULTS: Record<string, unknown> = { active: true };
+function onAllKeys(actual: object, expected: object): [unknown, unknown] {
+  const a = actual as Record<string, unknown>;
+  const e = expected as Record<string, unknown>;
+  const keys = [...new Set([...Object.keys(a), ...Object.keys(e)])].sort();
+  const side = (r: Record<string, unknown>) =>
+    Object.fromEntries(
+      keys.map((k) => [
+        k,
+        String(k in r ? r[k] : (DB_ONLY_DEFAULTS[k] ?? r[k])),
+      ]),
+    );
+  return [side(a), side(e)];
 }
 const sortById = <T extends { id: string }>(xs: T[]) =>
   [...xs].sort((a, b) => a.id.localeCompare(b.id));
@@ -121,19 +129,18 @@ describe("Seed drift tripwire — data/seed.ts == engine fixture", () => {
       const got = sortById(loaded[c] as { id: string }[]);
       const want = sortById(FIXTURE[c] as { id: string }[]);
       expect(got.map((g) => g.id)).toEqual(want.map((w) => w.id));
-      got.forEach((g, i) =>
-        expect(onFixtureKeys(g, want[i]), `${c} ${g.id}`).toEqual(
-          onFixtureKeys(want[i], want[i]),
-        ),
-      );
+      got.forEach((g, i) => {
+        const [a, e] = onAllKeys(g, want[i]);
+        expect(a, `${c} ${g.id}`).toEqual(e);
+      });
     });
   }
   it("assumptions", () => {
     const { defaults, ...rest } = FIXTURE_ASSUMPTIONS;
     const { defaults: gotDefaults, ...gotRest } = loadedAssumptions;
-    expect(onFixtureKeys(gotRest, rest)).toEqual(onFixtureKeys(rest, rest));
-    expect(onFixtureKeys(gotDefaults, defaults)).toEqual(
-      onFixtureKeys(defaults, defaults),
-    );
+    const [a, e] = onAllKeys(gotRest, rest);
+    expect(a).toEqual(e);
+    const [ad, ed] = onAllKeys(gotDefaults, defaults);
+    expect(ad).toEqual(ed);
   });
 });
