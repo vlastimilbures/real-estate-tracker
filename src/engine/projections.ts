@@ -80,7 +80,8 @@ interface PropertyBasis {
   valuations: Valuation[]; // this property's valuations, for per-year re-anchoring
   rentPlan: (RentTerm | undefined)[]; // per grid month (index m − 1); undefined = no rent
   fixed0: Decimal;
-  varPct: Decimal; // mgmt + maint
+  mgmtPct: Decimal; // management share of rent
+  maintPct: Decimal; // maintenance share of rent
   g: Decimal; // appreciation
   idx: Decimal; // rent indexation
   schedule: AmortizationRow[];
@@ -106,11 +107,11 @@ function propertyBasis(
     asOf,
     assumptions,
   );
-  const { fixed: fixed0, varPct } = holdingCostBasis(
-    property,
-    portfolio,
-    assumptions,
-  );
+  const {
+    fixed: fixed0,
+    mgmtPct,
+    maintPct,
+  } = holdingCostBasis(property, portfolio, assumptions);
   const g = growthRate(property, assumptions);
   const idx = property.rentIndexOverridePa ?? assumptions.rentIndexationPa;
   return {
@@ -118,7 +119,8 @@ function propertyBasis(
     valuations,
     rentPlan,
     fixed0,
-    varPct,
+    mgmtPct,
+    maintPct,
     g,
     idx,
     schedule,
@@ -348,7 +350,7 @@ function computeRentAndCosts(
     .times(at(cpi, t))
     .times(ownedMonths)
     .div(12)
-    .plus(b.varPct.times(grossRent));
+    .plus(b.mgmtPct.plus(b.maintPct).times(grossRent));
   const noi = effectiveRent.minus(holdingCosts);
   return { grossRent, effectiveRent, holdingCosts, noi };
 }
