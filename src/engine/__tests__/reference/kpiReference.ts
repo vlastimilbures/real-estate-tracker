@@ -6,10 +6,11 @@
 // uses the mortgage reference's own Decimal clone, ISO dates and loan schedule.
 //
 // It models a portfolio like the sample one and throws on anything else, so an input it
-// does not model is never silently ignored: every property active and owned at baseDate,
+// does not model is never silently ignored. It checks its own inputs: owned at baseDate,
 // one valuation in force at baseDate, non-overlapping leases, at most one plain loan drawn
-// by baseDate whose prepayments and recasts all fall after baseDate, no growth
-// overrides, funding records, scenario shocks or acquisition costs.
+// by baseDate whose prepayments and recasts all fall after baseDate. Inputs it has no
+// field for (inactive properties, growth overrides, funding records, scenario shocks,
+// acquisition costs) arrive as `unsupported` from the adapter, which must flag them.
 //
 // Formulas (SPEC.md):
 //   • grid month m is dated addMonths(baseDate, m); year t covers months 12(t−1)+1 … 12t
@@ -144,16 +145,16 @@ const FLOWS = [
 const MONEY = ["value", "balance", "equity", ...FLOWS] as const;
 
 function assertModelled(p: RefProperty, a: RefAssumptions): void {
-  const no = (what: string) => {
+  const no = (what: string): never => {
     throw new RangeError(`kpiReference does not model ${what} (${p.id}).`);
   };
   if (a.unsupported?.length) no(a.unsupported.join(", "));
   if (p.unsupported?.length) no(p.unsupported.join(", "));
   if (p.purchaseDate > a.baseDate) no("a purchase after baseDate");
   const [v, ...more] = p.valuations;
-  if (!v || more.length > 0) no("other than one valuation");
-  if (v && v.validFrom > a.baseDate) no("a valuation after baseDate");
-  if (v?.validTo !== undefined) no("a valuation end date");
+  if (!v || more.length > 0) return no("other than one valuation");
+  if (v.validFrom > a.baseDate) no("a valuation after baseDate");
+  if (v.validTo !== undefined) no("a valuation end date");
   const leases = [...p.leases].sort((x, y) => (x.start < y.start ? -1 : 1));
   leases.forEach((l, i) => {
     const next = leases[i + 1];
@@ -340,9 +341,11 @@ export function referenceKpis(
   const cagr = (end: Dec) =>
     growth && end.gt(0) ? end.div(eq0).pow(ONE.div(n)).minus(ONE) : null;
   const positive = later.find((y) => y.netCashFlow.gt(0));
-  // The first year from which debt stays 0 through year N.
+  // The first year t ≥ 1 from which debt stays 0 through year N; none when the
+  // portfolio never carried debt (ADR 0126 §3, not spelled out in SPEC §4.6).
   let free: RefYear | undefined;
   for (let t = n; t >= 1 && ys[t]!.balance.isZero(); t--) free = ys[t];
+  if (ys.every((y) => y.balance.isZero())) free = undefined;
   const flows = ys.map((y, t) =>
     t === 0
       ? eq0.negated()

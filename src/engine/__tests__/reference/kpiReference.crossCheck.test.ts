@@ -21,6 +21,7 @@ import {
   referenceIrr,
   referenceKpis,
   referenceProjection,
+  referencePropertyProjection,
   type RefAssumptions,
   type RefProperty,
   type RefYear,
@@ -240,7 +241,45 @@ const withEvents: Portfolio = {
   ),
 };
 
+/** The seed with every lease edge of SPEC §4.5: Javorová's last lease ends in 2027 and is
+ *  renewed, Lipová's first lease ends 2026-08-01 so the 2026-08-07 grid month is a gap,
+ *  and Dubová's only lease ended before baseDate (no rent). */
+const leaseEdges: Portfolio = {
+  ...portfolio,
+  leases: portfolio.leases.map((l) =>
+    l.id === "l-javorova"
+      ? { ...l, endDate: isoDate("2027-03-01") }
+      : l.id === "l-lipova-1"
+        ? { ...l, endDate: isoDate("2026-08-01") }
+        : l.id === "l-dubova"
+          ? { ...l, endDate: isoDate("2026-05-31") }
+          : l,
+  ),
+};
+
 describe("KPI reference model (engine-free, ADR 0174)", () => {
+  it("reproduces the projected-rent example of SPEC §4.5", () => {
+    const flat: RefProperty = {
+      id: "example",
+      purchaseDate: "2020-01-01",
+      valuations: [{ validFrom: "2020-01-01", marketValue: 5_000_000 }],
+      leases: [
+        { start: "2025-01-01", end: "2026-06-30", monthlyRent: 20_000 },
+        { start: "2026-08-01", end: "2027-07-31", monthlyRent: 22_000 },
+      ],
+      costs: {},
+      loans: [],
+    };
+    const { a } = fromEngine(portfolio, assumptions);
+    const ys = referencePropertyProjection(flat, {
+      ...a,
+      baseDate: "2026-01-01",
+      rentIndexationPa: "0.03",
+    });
+    expect(ys[1]!.grossRent.toString()).toBe("235000");
+    expect(ys[2]!.grossRent.toString()).toBe("271920");
+  });
+
   it("reads the seed loans the mortgage reference is checked on", () => {
     const { props } = fromEngine(portfolio, assumptions);
     expect(Object.fromEntries(props.map((p) => [p.id, p.loans[0]]))).toEqual(
@@ -278,6 +317,18 @@ describe("KPI reference model (engine-free, ADR 0174)", () => {
     );
   });
 
+  it("agrees with the engine on every lease edge (renewal, gap, ended)", () => {
+    const { ys } = expectEngineMatches(leaseEdges);
+    expect(
+      ys[1]!.grossRent.lt(expectEngineMatches(portfolio).ys[1]!.grossRent),
+    ).toBe(true);
+  });
+
+  it("agrees with the engine without any loan (never debt-free, ADR 0126)", () => {
+    const { rk } = expectEngineMatches({ ...portfolio, mortgages: [] });
+    expect(rk.debtFreeYear).toBeNull();
+  });
+
   it("finds the IRR only for one sign change", () => {
     const flows = (xs: number[]) => xs.map((x) => new Dec(x));
     expect(() => referenceIrr(flows([-100, 230, -132]))).toThrow(
@@ -302,6 +353,37 @@ describe("KPI reference model (engine-free, ADR 0174)", () => {
         ...portfolio,
         properties: portfolio.properties.map((p, i) =>
           i === 0 ? { ...p, purchaseDate: isoDate("2027-01-01") } : p,
+        ),
+      },
+    ],
+    [
+      "a loan drawn after baseDate",
+      {
+        ...portfolio,
+        mortgages: portfolio.mortgages.map((m, i) =>
+          i === 0 ? { ...m, startDate: isoDate("2027-01-17") } : m,
+        ),
+      },
+    ],
+    [
+      "a valuation after baseDate",
+      {
+        ...portfolio,
+        valuations: portfolio.valuations.map((v, i) =>
+          i === 0 ? { ...v, validFrom: isoDate("2027-01-01") } : v,
+        ),
+      },
+    ],
+    [
+      "other than one valuation",
+      { ...portfolio, valuations: portfolio.valuations.slice(1) },
+    ],
+    [
+      "a rent index override",
+      {
+        ...portfolio,
+        properties: portfolio.properties.map((p, i) =>
+          i === 0 ? { ...p, rentIndexOverridePa: rate("0.01") } : p,
         ),
       },
     ],
@@ -410,6 +492,19 @@ describe("KPI reference model (engine-free, ADR 0174)", () => {
         ...assumptions,
         rateShock: { deltaPa: rate("0.01"), durationYears: 2 },
       },
+    ],
+    [
+      "an inflation shock",
+      portfolio,
+      {
+        ...assumptions,
+        inflationShock: { deltaPa: rate("0.01"), durationYears: 2 },
+      },
+    ],
+    [
+      "a value shock",
+      portfolio,
+      { ...assumptions, valueShock: { pct: rate("0.1"), atYear: 3 } },
     ],
     [
       "acquisition costs",
