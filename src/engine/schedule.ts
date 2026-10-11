@@ -42,6 +42,7 @@ import {
   maxTermMonths,
   mortgageBlock,
   nperMonths,
+  paymentOnOrAfter,
   paymentsDueBy,
   rateAt,
   scheduledInstalment,
@@ -277,18 +278,17 @@ function firstStepOnOrAfter(anchor: Date, date: Date, maxStep: number): number {
   return Math.min(firstGridMonthOnOrAfter(anchor, date, cap - 1), cap);
 }
 
-/** Group dated items by the cadence step (anchor + k months) they land in, in input
- *  order, over the items the `include` predicate accepts. */
+/** Group dated items by the step `stepOf` gives their date, in input order, over the
+ *  items the `include` predicate accepts. */
 function bucketByStep<T extends { date: IsoDate }>(
   items: readonly T[],
-  anchor: Date,
-  maxStep: number,
   include: (d: Date) => boolean,
+  stepOf: (d: Date) => number,
 ): Map<number, T[]> {
   const buckets = new Map<number, T[]>();
   for (const item of items) {
     if (!include(item.date)) continue;
-    const k = firstStepOnOrAfter(anchor, item.date, maxStep);
+    const k = stepOf(item.date);
     buckets.set(k, [...(buckets.get(k) ?? []), item]);
   }
   return buckets;
@@ -303,7 +303,8 @@ function bucketDraws(
   include: (d: Date) => boolean,
 ): Map<number, Decimal> {
   const sums = new Map<number, Decimal>();
-  for (const [k, items] of bucketByStep(draws, anchor, maxStep, include)) {
+  const stepOf = (d: Date) => firstStepOnOrAfter(anchor, d, maxStep);
+  for (const [k, items] of bucketByStep(draws, include, stepOf)) {
     sums.set(
       k,
       items.reduce((sum, d) => sum.plus(d.amount), ZERO),
@@ -413,18 +414,13 @@ function loanEvents(
   assumptions: Assumptions,
   include: (d: Date) => boolean,
 ): LoanEvents {
-  const start = block.startDate;
+  const payment = (d: Date) => paymentOnOrAfter(block, d);
   return {
     block,
     assumptions,
     contractTerm: termMonths(block),
-    prepaymentsAt: bucketByStep(
-      byDate(block.prepayments),
-      start,
-      Infinity,
-      include,
-    ),
-    recastsAt: bucketByStep(byDate(block.recasts), start, Infinity, include),
+    prepaymentsAt: bucketByStep(byDate(block.prepayments), include, payment),
+    recastsAt: bucketByStep(byDate(block.recasts), include, payment),
   };
 }
 
