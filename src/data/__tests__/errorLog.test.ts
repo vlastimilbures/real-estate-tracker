@@ -49,6 +49,10 @@ describe("error log lines", () => {
     expect(maskNumbers("code 1234567")).toBe("code #");
     expect(maskNumbers("code: 12 345 Kč")).toBe("code: # Kč");
     expect(maskNumbers("code 4.59 %")).toBe("code # %");
+    expect(maskNumbers("postcode 11000, zipcode 12345")).toBe(
+      "postcode #, zipcode #",
+    );
+    expect(maskNumbers("unicode 1234")).toBe("unicode #");
     expect(maskNumbers("rent 21 675 Kč (os error 2)")).toBe(
       "rent # Kč (os error 2)",
     );
