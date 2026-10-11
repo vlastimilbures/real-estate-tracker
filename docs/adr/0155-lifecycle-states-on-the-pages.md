@@ -10,6 +10,8 @@
   [0107](0107-property-section-nav.md) (an inactive property shows no loan warnings and
   its section nav has no Data check entry), [0118](0118-data-check.md) (no Data check
   section on an inactive property's page)
+- Amended by: [0180](0180-data-check-restore-asof-polish.md) (§4: the Dashboard stores the
+  filter it shows)
 - Related: D-55 (a CSV re-import keeps the stored active flag, `csvImport.ts`)
 
 ## Context

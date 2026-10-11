@@ -5,6 +5,9 @@
 - Source: issue #133 (review findings G2-4-01, R3-04, R6-08), options B + C + D (owner
   decision D5, 2026-10-06); decimal grammar (owner, 2026-10-07); Track 10 PR 10.9
 - Amends: [0086](0086-restore-int-bounds.md) §4
+- Amended by: [0180](0180-data-check-restore-asof-polish.md) (§1–§2: a non-integer is a value
+  the forms do not accept; where the Data check lists a value · §4: the reader stays as loose
+  as written)
 - Related: [0052](0052-restore-safety-backup.md) (safety backup), [0094](0094-sample-portfolio-clear.md)
   (Clear sample), [0118](0118-data-check.md) (data check), D-55 (name matching), DR-036 (CSV
   decimals)
