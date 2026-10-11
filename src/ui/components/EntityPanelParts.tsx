@@ -7,6 +7,7 @@ import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import type { MutationResult } from "../../state/portfolioStore";
 import { focusPanelAfter, usePanelRef } from "./panelFocus";
+import { layerOpen } from "../hooks/useModalA11y";
 
 export function EntityTable<T extends { id: string }>({
   label,
@@ -91,8 +92,8 @@ export function EntityTable<T extends { id: string }>({
 
 /** The one inline confirm for a destructive action (ADR 0143). It runs `onConfirm` and
  *  stays open with the reason when the write fails (UX-050); the caller closes it on
- *  success. Focus moves to Cancel on open and back to the trigger on Cancel, and to the
- *  enclosing panel once a successful confirm has closed the row (ADR 0173);
+ *  success. Focus moves to Cancel on open and back to the trigger on Cancel or Escape,
+ *  and to the enclosing panel once a successful confirm has closed the row (ADR 0173);
  *  both buttons are described by the question, so a screen reader reads it. */
 export function ConfirmRow({
   message,
@@ -136,8 +137,20 @@ export function ConfirmRow({
       if (succeeded.current) focusPanelAfter(panel, row);
     };
   }, [panel]);
+  const cancel = () => {
+    onCancel();
+    if (opener.current?.isConnected) opener.current.focus();
+  };
   return (
-    <div className="confirm-row" ref={rowRef}>
+    // Escape takes the Cancel path; not while the write runs, nor while a dialog or
+    // popover is open, which owns Escape (ADR 0173).
+    <div
+      className="confirm-row"
+      ref={rowRef}
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && !busy && !layerOpen()) cancel();
+      }}
+    >
       <div className="confirm-row-content">
         <span className="confirm-msg" id={messageId}>
           {message}
@@ -167,10 +180,7 @@ export function ConfirmRow({
           size="sm"
           disabled={busy}
           aria-describedby={messageId}
-          onClick={() => {
-            onCancel();
-            if (opener.current?.isConnected) opener.current.focus();
-          }}
+          onClick={cancel}
         >
           {tr.common.cancel}
         </Button>

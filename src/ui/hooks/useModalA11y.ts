@@ -27,6 +27,9 @@ function focusables(root: HTMLElement): HTMLElement[] {
  */
 const stack: symbol[] = [];
 
+/** True while a dialog or popover is open: it owns Escape (ADR 0157, ADR 0173). */
+export const layerOpen = (): boolean => stack.length > 0;
+
 export function useModalA11y(
   onClose: () => void,
   { trap = false, restoreFocus = false } = {},

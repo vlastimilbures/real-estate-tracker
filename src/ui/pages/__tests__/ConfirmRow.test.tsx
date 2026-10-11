@@ -17,6 +17,7 @@ import { ActivationBanner } from "../PropertyDetailPanels";
 import { Properties } from "../Properties";
 import { EntityPanel } from "../../components/EntityPanel";
 import { LeaveGuard } from "../../components/LeaveGuard";
+import { Modal } from "../../components/Modal";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import type { MutationResult } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
@@ -491,5 +492,80 @@ describe("focus after a successful confirm (#247)", () => {
     );
     await act(async () => write.finish({ ok: true }));
     expect(document.activeElement).toBe(cancelButton());
+  });
+});
+
+// #247 part 2 (ADR 0173): Escape in a confirm row takes the Cancel path, but not while the
+// write runs or while a dialog is open (the top-most layer owns Escape, ADR 0157).
+describe("Escape cancels a confirm row (#247)", () => {
+  const confirmOpen = () =>
+    screen.queryByRole("button", { name: en.common.yesDelete }) !== null;
+
+  it("closes the row and puts focus back on the row's Delete", async () => {
+    const onDelete = vi.fn(ok);
+    render(<RecordPanel onDelete={onDelete} />);
+    const trigger = screen.getAllByRole("button", {
+      name: en.common.delete,
+    })[1]!;
+    await userEvent.click(trigger);
+    await userEvent.keyboard("{Escape}");
+    expect(confirmOpen()).toBe(false);
+    expect(onDelete).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("does nothing while the write runs", async () => {
+    const write = deferred();
+    render(<RecordPanel onDelete={() => write.promise} />);
+    await userEvent.click(
+      screen.getAllByRole("button", { name: en.common.delete })[0]!,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.yesDelete }),
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(
+      screen.getByRole("button", { name: en.common.deleting }),
+    ).toBeTruthy();
+    await act(async () => write.finish(gone));
+    expect(confirmOpen()).toBe(true);
+  });
+
+  it("leaves the row open while a dialog is open; Escape closes the dialog", async () => {
+    const onClose = vi.fn();
+    function WithDialog() {
+      const [dialog, setDialog] = useState(false);
+      return (
+        <>
+          <RecordPanel />
+          <button type="button" onClick={() => setDialog(true)}>
+            Open dialog
+          </button>
+          {dialog && (
+            <Modal
+              titleId="t"
+              title="Dialog"
+              closeLabel={en.common.close}
+              onClose={() => {
+                onClose();
+                setDialog(false);
+              }}
+            >
+              <p>Body</p>
+            </Modal>
+          )}
+        </>
+      );
+    }
+    render(<WithDialog />);
+    await userEvent.click(
+      screen.getAllByRole("button", { name: en.common.delete })[0]!,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Open dialog" }));
+    // Focus back in the row while the dialog is still open.
+    act(() => cancelButton().focus());
+    await userEvent.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(confirmOpen()).toBe(true);
   });
 });
