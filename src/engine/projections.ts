@@ -1,13 +1,7 @@
 // Annual projection per property and for the portfolio, and the CPI index behind real
 // terms (SPEC §4.5). KPIs are computed from this projection in ./kpis.
 import { powInt, ZERO, ONE, type Decimal } from "../lib/money";
-import {
-  addYears,
-  edate,
-  firstGridMonthOnOrAfter,
-  isAfter,
-  isOnOrBefore,
-} from "./dates";
+import { addYears, edate, isAfter, isOnOrBefore } from "./dates";
 import { at } from "./arrays";
 import {
   EMPTY_PROPERTY_SCHEDULE,
@@ -16,7 +10,7 @@ import {
   undrawnPrincipal,
   type PropertySchedule,
 } from "./schedule";
-import { turnOnYear, yearSlice } from "./yearGrid";
+import { firstActiveGridMonth, turnOnYear, yearSlice } from "./yearGrid";
 import {
   cashOutsideNetCf,
   prePurchaseDebtService,
@@ -514,18 +508,6 @@ function withCashToOwner(
     ...y,
     cashToOwner: t === 0 ? ZERO : y.netCashFlow.minus(at(outside, t)),
   }));
-}
-
-/**
- * 1-based baseDate grid month in which `date` first becomes active. Returns 1 when
- * `date ≤ baseDate` (already owned/let ⇒ active the whole horizon, so the seed keeps
- * 12 months/year and parity holds), else the first month grid point on/after it,
- * else horizon+1 (never active in-window).
- */
-function firstActiveGridMonth(date: Date, assumptions: Assumptions): number {
-  const { baseDate, horizonYears } = assumptions;
-  if (isOnOrBefore(date, baseDate)) return 1;
-  return firstGridMonthOnOrAfter(baseDate, date, horizonYears * 12);
 }
 
 /**
