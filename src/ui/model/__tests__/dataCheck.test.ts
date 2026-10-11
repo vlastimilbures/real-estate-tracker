@@ -16,6 +16,8 @@ import {
   portfolio,
 } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
+import { cs } from "../../../i18n/cs";
+import { ru } from "../../../i18n/ru";
 import { fmtCzk } from "../../../lib/format";
 import {
   dataCheckItems,
@@ -719,6 +721,36 @@ describe("out-of-range stored values (ADR 0148)", () => {
       "Mortgage from 17.01.2021: a fixation of 60 years is outside the range the forms accept (0–50 years).",
       "Mortgage from 17.01.2021: a loan term of 60 years is outside the range the forms accept (1–50 years).",
     ]);
+  });
+
+  // #260 item 4 (wording log): cs and ru say the year word after the value, as en does.
+  it("cs and ru name the unit after the value", () => {
+    const found = check("javorova", BASE_DATE, legacy).attention.filter(
+      (f) => f.kind === "outOfRange" && f.field !== "sizeM2",
+    );
+    const say = (t: typeof en, f: DataFinding) =>
+      findingText(t, f, assumptions.postFixationResetRatePa);
+    expect(found.map((f) => say(cs, f))).toEqual([
+      "Hypotéka od 17.01.2021: doba fixace 60 let je mimo rozsah, který formuláře přijímají (0–50 let).",
+      "Hypotéka od 17.01.2021: doba splatnosti 60 let je mimo rozsah, který formuláře přijímají (1–50 let).",
+    ]);
+    expect(found.map((f) => say(ru, f))).toEqual([
+      "Ипотека с 17.01.2021: срок фиксации 60 лет вне диапазона, который принимают формы (0–50 лет).",
+      "Ипотека с 17.01.2021: срок кредита 60 лет вне диапазона, который принимают формы (1–50 лет).",
+    ]);
+    const [horizon] = portfolioDataCheck({
+      horizonYears: 101,
+      baseDate: BASE_DATE,
+    });
+    expect(horizon && say(ru, horizon.finding)).toBe(
+      "Горизонт прогноза 101 год вне диапазона, который принимают формы (1–100 лет).",
+    );
+    expect(horizon && say(cs, horizon.finding)).toBe(
+      "Horizont projekce 101 let je mimo rozsah, který formuláře přijímají (1–100 let).",
+    );
+    expect(horizon && say(en, horizon.finding)).toBe(
+      "The projection horizon of 101 years is outside the range the forms accept (1–100 years).",
+    );
   });
 
   it("lists them before the purchase date too: they are stored, not dated (#133)", () => {

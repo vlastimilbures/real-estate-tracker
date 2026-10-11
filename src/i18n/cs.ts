@@ -418,12 +418,12 @@ export const cs: Dictionary = {
       `Plocha ${value} m² je mimo rozsah, který formuláře přijímají (${range} m²).`,
     notWholeSize: (value, range) =>
       `Plocha ${value} m² není celé číslo; formuláře přijímají jen celá čísla (${range} m²).`,
-    outOfRangeFixation: (date, value, range) =>
-      `Hypotéka od ${date}: doba fixace ${value} je mimo rozsah, který formuláře přijímají (${range} let).`,
-    outOfRangeTerm: (date, value, range) =>
-      `Hypotéka od ${date}: doba splatnosti ${value} je mimo rozsah, který formuláře přijímají (${range} let).`,
-    outOfRangeHorizon: (value, range) =>
-      `Horizont projekce ${value} je mimo rozsah, který formuláře přijímají (${range} let).`,
+    outOfRangeFixation: (date, value, range, n) =>
+      `Hypotéka od ${date}: doba fixace ${value} ${csPlural(n, ["rok", "roky", "let"])} je mimo rozsah, který formuláře přijímají (${range} let).`,
+    outOfRangeTerm: (date, value, range, n) =>
+      `Hypotéka od ${date}: doba splatnosti ${value} ${csPlural(n, ["rok", "roky", "let"])} je mimo rozsah, který formuláře přijímají (${range} let).`,
+    outOfRangeHorizon: (value, range, n) =>
+      `Horizont projekce ${value} ${csPlural(n, ["rok", "roky", "let"])} je mimo rozsah, který formuláře přijímají (${range} let).`,
     earlyDate: (record, date, floor) =>
       `${record} ${date} je před ${floor}, nejstarším datem, které formuláře přijímají. Zkontrolujte překlep v roce.`,
     earlyDateLoan: (loan, date, floor) =>

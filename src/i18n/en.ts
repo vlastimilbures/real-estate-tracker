@@ -447,12 +447,18 @@ export const en = {
     // ADR 0180 §2: a stored size inside the range that is not a whole number.
     notWholeSize: (value: string, range: string) =>
       `Size ${value} m² is not a whole number; the forms accept whole numbers only (${range} m²).`,
-    outOfRangeFixation: (date: string, value: string, range: string) =>
-      `Mortgage from ${date}: a fixation of ${value} years is outside the range the forms accept (${range} years).`,
-    outOfRangeTerm: (date: string, value: string, range: string) =>
-      `Mortgage from ${date}: a loan term of ${value} years is outside the range the forms accept (${range} years).`,
-    outOfRangeHorizon: (value: string, range: string) =>
-      `The projection horizon of ${value} years is outside the range the forms accept (${range} years).`,
+    // `n` = the value as a number, for the year word.
+    outOfRangeFixation: (
+      date: string,
+      value: string,
+      range: string,
+      n: number,
+    ) =>
+      `Mortgage from ${date}: a fixation of ${value} ${enPlural(n, ["year", "years"])} is outside the range the forms accept (${range} years).`,
+    outOfRangeTerm: (date: string, value: string, range: string, n: number) =>
+      `Mortgage from ${date}: a loan term of ${value} ${enPlural(n, ["year", "years"])} is outside the range the forms accept (${range} years).`,
+    outOfRangeHorizon: (value: string, range: string, n: number) =>
+      `The projection horizon of ${value} ${enPlural(n, ["year", "years"])} is outside the range the forms accept (${range} years).`,
     // ADR 0149: a stored date before the forms' floor; `record` from earlyDateRecord.
     earlyDate: (record: string, date: string, floor: string) =>
       `${record} ${date} is before ${floor}, the earliest date the forms accept. Check the year for a typo.`,

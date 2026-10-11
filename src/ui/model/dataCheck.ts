@@ -410,11 +410,11 @@ export function findingText(
             ? d.notWholeSize(value, range)
             : d.outOfRangeSize(value, range);
         case "fixationYears":
-          return d.outOfRangeFixation(loan, value, range);
+          return d.outOfRangeFixation(loan, value, range, f.value);
         case "loanTermYears":
-          return d.outOfRangeTerm(loan, value, range);
+          return d.outOfRangeTerm(loan, value, range, f.value);
         case "horizonYears":
-          return d.outOfRangeHorizon(value, range);
+          return d.outOfRangeHorizon(value, range, f.value);
       }
     }
   }
