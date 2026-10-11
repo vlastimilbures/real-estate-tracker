@@ -46,9 +46,12 @@ To open the folder, in Finder choose **Go → Go to Folder…** (⇧⌘G) and pa
   are restored. Restore accepts only the app's JSON backups. Every record is checked first,
   scenarios included; a file with a record the app cannot use is refused and lists it, and
   nothing changes. A value outside the ranges the forms accept (for example a 60-year
-  fixation from an older version) is not refused: the confirm step lists it and the button
-  reads **Restore anyway**. After the restore, the Data check lists it so you can fix it. Restored data is always treated as yours: after a restore the app shows no
-  sample banner, even on a new Mac whose first launch filled in the sample.
+  fixation from an older version, or a fractional size) is not refused: the confirm step
+  lists it and the button reads **Restore anyway**. After the restore, the Data check lists
+  it so you can fix it: on the Dashboard for the active properties it shows, on Property
+  detail for that property. An inactive property's values are listed once you reactivate
+  it. Restored data is always treated as yours: after a restore the app shows no sample
+  banner, even on a new Mac whose first launch filled in the sample.
 - **A scenario the app cannot read.** It is left out and listed on the Scenarios page with
   a Delete button. Delete it before you export: a backup that contains it cannot be
   restored.

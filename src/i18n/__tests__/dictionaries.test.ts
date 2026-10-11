@@ -247,7 +247,9 @@ describe("i18n dictionaries — plural forms", () => {
       "dashboard.financingResettingWithinNominal",
       "dashboard.financingLoans",
     ];
-    const counted = [...common, ...financing, ...rest];
+    // The year word after a stored horizon outside the form range (#260 item 4).
+    const dataCheck = ["dataCheck.outOfRangeHorizon"];
+    const counted = [...common, ...financing, ...dataCheck, ...rest];
     // English writes the horizon and the IRR foot as compounds ("25-yr"); Czech and
     // Russian count years.
     const withIrrFoot = [
@@ -255,6 +257,7 @@ describe("i18n dictionaries — plural forms", () => {
       "dashboard.netWorthInYear",
       "dashboard.irrFoot",
       ...financing,
+      ...dataCheck,
       ...rest,
     ];
     // Czech declines the shock summary's year word; English and Russian abbreviate it
@@ -337,6 +340,19 @@ describe("Excel sheet names", () => {
     );
     expect(ru.xlsx.sheetNames.amortization).not.toBe(
       en.xlsx.sheetNames.amortization,
+    );
+  });
+});
+
+// #260 item 4 (wording log): the ru restore warning says the app uses the values in its
+// calculations.
+describe("ru restore warning", () => {
+  it("reads naturally in the singular and the plural", () => {
+    expect(ru.backup.warnOutOfRange(1)).toContain(
+      "Приложение использует его в расчётах",
+    );
+    expect(ru.backup.warnOutOfRange(3)).toContain(
+      "Приложение использует их в расчётах",
     );
   });
 });

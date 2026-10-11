@@ -50,7 +50,9 @@ export function isIsoDate(v: string): boolean {
 }
 
 /** The exponent form decimal.js `toString()` writes for very small or large values
- *  (`1e-7`, `-1.5e-7`, `1e+21`): one leading digit and a signed exponent. */
+ *  (`1e-7`, `-1.5e-7`, `1e+21`): one leading digit and a signed exponent. It also takes
+ *  forms `toString()` never writes (`1e+5`, `1.50e-7`); kept, because this reader loads
+ *  the live database too (ADR 0180 §5). */
 const WRITTEN_EXPONENT = /^-?[1-9](\.\d+)?e[+-]\d+$/;
 
 /** A finite decimal parsed from text: plain notation (the CSV grammar) or the exponent

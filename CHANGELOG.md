@@ -307,6 +307,15 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- Data check, restore and as-of polish (ADR 0180, #263, #260, #265, #276): the restore table
+  names the stored column (`interest_only_until`, `default_property_tax_yr`); a stored size
+  that is not a whole number is listed in the Data check with its decimals and asked about
+  at restore; an early mortgage date names its loan; Czech and Russian out-of-range rows say
+  the year word. Typing or leaving the As-of date that is already shown no longer stores a
+  pick, so the page keeps following Today, and the text is reformatted. The Dashboard stores
+  its filter without deactivated properties, so a reactivated property no longer brings an
+  old filter back.
+
 - Amounts that round to "0 Kč" are no longer red or green, and an optional table column
   (Drawn, Prepaid, Prepayment fee, Refinance difference, Undrawn) appears only once a value
   rounds to at least 1 Kč, on screen and in both Excel exports (ADR 0178, #186, #220). A

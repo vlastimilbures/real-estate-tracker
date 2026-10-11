@@ -444,15 +444,28 @@ export const en = {
     // Stored values outside the form ranges (ADR 0148).
     outOfRangeSize: (value: string, range: string) =>
       `Size ${value} m² is outside the range the forms accept (${range} m²).`,
-    outOfRangeFixation: (date: string, value: string, range: string) =>
-      `Mortgage from ${date}: a fixation of ${value} years is outside the range the forms accept (${range} years).`,
-    outOfRangeTerm: (date: string, value: string, range: string) =>
-      `Mortgage from ${date}: a loan term of ${value} years is outside the range the forms accept (${range} years).`,
-    outOfRangeHorizon: (value: string, range: string) =>
-      `The projection horizon of ${value} years is outside the range the forms accept (${range} years).`,
+    // ADR 0180 §2: a stored size inside the range that is not a whole number.
+    notWholeSize: (value: string, range: string) =>
+      `Size ${value} m² is not a whole number; the forms accept whole numbers only (${range} m²).`,
+    // `n` = the value as a number, for the year word; en always reads "years" for the
+    // reachable values (51 and up) but takes `n` so the signature fits cs and ru.
+    outOfRangeFixation: (
+      date: string,
+      value: string,
+      range: string,
+      n: number,
+    ) =>
+      `Mortgage from ${date}: a fixation of ${value} ${enPlural(n, ["year", "years"])} is outside the range the forms accept (${range} years).`,
+    outOfRangeTerm: (date: string, value: string, range: string, n: number) =>
+      `Mortgage from ${date}: a loan term of ${value} ${enPlural(n, ["year", "years"])} is outside the range the forms accept (${range} years).`,
+    outOfRangeHorizon: (value: string, range: string, n: number) =>
+      `The projection horizon of ${value} ${enPlural(n, ["year", "years"])} is outside the range the forms accept (${range} years).`,
     // ADR 0149: a stored date before the forms' floor; `record` from earlyDateRecord.
     earlyDate: (record: string, date: string, floor: string) =>
       `${record} ${date} is before ${floor}, the earliest date the forms accept. Check the year for a typo.`,
+    // ADR 0180 §3: an early mortgage date other than the start date, named by the loan.
+    earlyDateLoan: (loan: string, date: string, floor: string) =>
+      `Mortgage from ${loan}: a date ${date} is before ${floor}, the earliest date the forms accept. Check the year for a typo.`,
     // ADR 0163: two stored leases of one apartment overlap (a database from before the rule).
     leaseOverlap: (first: string, second: string) =>
       `The leases from ${first} and from ${second} overlap. Leases on one apartment cannot overlap: set an end date on the earlier lease before the later one starts.`,
@@ -463,7 +476,6 @@ export const en = {
       lease: "A lease date",
       assumptions: "The base date",
     },
-    assumptions: "Assumptions",
   },
 
   properties: {

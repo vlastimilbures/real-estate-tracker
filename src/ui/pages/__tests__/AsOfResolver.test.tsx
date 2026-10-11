@@ -14,6 +14,7 @@ import {
   addYears,
   EMPTY_PROPERTY_SCHEDULE,
   isoDate,
+  portfolioProjection,
   propertyProjection,
   propertySchedules,
   type Assumptions,
@@ -22,6 +23,7 @@ import {
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
 import { fmtCzk } from "../../../lib/format";
+import { projectionSeries } from "../../model/projection";
 
 const clock = vi.hoisted(() => ({ today: new Date(Date.UTC(2026, 9, 3)) }));
 
@@ -102,6 +104,24 @@ describe("the date shown is the date computed (ADR 0150)", () => {
     render(<Dashboard />);
     expect(pickerText()).toBe("07.06.2036");
     expect(subtitle()).toContain("as of 07.06.2036");
+    // #265 item 7: the tiles read projection year 10, the year the picker names.
+    const rows = projectionSeries(
+      portfolioProjection(portfolio, short),
+      "nominal",
+      short,
+    );
+    const equity = (year: number) =>
+      fmtCzk(rows[year]!.equity, { parens: false, suffix: false });
+    expect(equity(10)).not.toBe(equity(9));
+    expect(screen.getByTestId("kpi-networth").textContent).toBe(equity(10));
+  });
+
+  it("future base date at Today on Property detail: the picker shows the base date, Today is not pressed (#265)", () => {
+    setUp(portfolio, futureBase, { selectedPropertyId: "lipova" });
+    render(<PropertyDetail />);
+    expect(pickerText()).toBe("01.01.2027");
+    expect(todayPressed()).toBe("false");
+    expect(subtitle()).toContain("as of 01.01.2027");
   });
 });
 

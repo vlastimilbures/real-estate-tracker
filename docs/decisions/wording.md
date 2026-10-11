@@ -39,3 +39,15 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   because a preset is found by its saved name (ADR 0093) and a preset saved under the old
   name would be added a second time; leaving it for a later Czech copy pass.
 - Approved by: owner, 2026-10-11
+
+### 2026-10-11 · #260 / ADR 0180
+
+- Keys: `backup.warnOutOfRange` (ru); `dataCheck.outOfRangeFixation`,
+  `dataCheck.outOfRangeTerm`, `dataCheck.outOfRangeHorizon` (cs, ru)
+- Change: the Russian restore warning says the app uses the values in its calculations
+  instead of the awkward "считает с ними". The Czech and Russian out-of-range rows name the
+  year word after the value, declined with `csPlural` / `ruPlural` ("60 let", "101 год"), as
+  English already says "60 years"; the three entries take the value as a number for it.
+- Rejected: leaving the unit to the range in brackets only, because the value then reads
+  as a bare number ("doba fixace 60 je mimo…").
+- Approved by: owner, 2026-10-11 (#260, all items)

@@ -22,8 +22,8 @@ import type {
   Rate,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
-import { fmtCzk, fmtDate } from "../../lib/format";
-import { outOfRangeFields, type IntRange } from "../../lib/intRanges";
+import { fmtCzk, fmtDate, fmtNumber } from "../../lib/format";
+import { inRange, outOfRangeFields, type IntRange } from "../../lib/intRanges";
 import {
   DATE_FLOOR,
   earlyDateFields,
@@ -75,8 +75,9 @@ export type DataFinding =
   /** No own cash recorded (ADR 0119): Cash invested is unknown; for a property bought
    *  after the base date (`future`) the projection derives its down payment. */
   | { kind: "fundingUnknown"; future: boolean }
-  /** A stored whole number outside the range the forms accept (ADR 0148): a legacy
-   *  database keeps it, and a restore asks about it. `loanStart` names the mortgage. */
+  /** A stored whole number outside the range the forms accept (ADR 0148), or not a whole
+   *  number (ADR 0180 §2): a legacy database keeps it, and a restore asks about it.
+   *  `loanStart` names the mortgage. */
   | {
       kind: "outOfRange";
       field: "sizeM2" | "fixationYears" | "loanTermYears" | "horizonYears";
@@ -85,12 +86,14 @@ export type DataFinding =
       loanStart?: IsoDate;
     }
   /** A stored date before 01.01.1900, the earliest the forms accept (ADR 0149 §5): an
-   *  earlier CSV import kept it, and a restore asks about it. `date` is the earliest. */
+   *  earlier CSV import kept it, and a restore asks about it. `date` is the earliest;
+   *  `loanStart` names the mortgage unless the date is its start (ADR 0180 §3). */
   | {
       kind: "earlyDate";
       entity: EarlyDateField["entity"];
       field: DateField;
       date: Date;
+      loanStart?: IsoDate;
     }
   /** Two stored leases of the property that overlap (ADR 0163), by start date: a
    *  database from before the rule keeps them. */
@@ -208,17 +211,28 @@ function rangeFindings(
   );
 }
 
-/** Stored dates before the forms' floor (ADR 0149 §5). */
+/** Stored dates before the forms' floor (ADR 0149 §5); a mortgage's names its loan. */
 function earlyDateFindings(
-  rows: Parameters<typeof earlyDateFields>[0],
+  rows: { mortgages: readonly MortgageBlock[] } & Parameters<
+    typeof earlyDateFields
+  >[0],
   assumptions?: { baseDate: Date },
 ): DataFinding[] {
-  return earlyDateFields(rows, assumptions).map(({ entity, field, date }) => ({
-    kind: "earlyDate",
-    entity,
-    field,
-    date,
-  }));
+  return earlyDateFields(rows, assumptions).map(
+    ({ entity, id, field, date }) => {
+      const loanStart =
+        entity === "mortgage" && field !== "startDate"
+          ? rows.mortgages.find((m) => m.id === id)?.startDate
+          : undefined;
+      return {
+        kind: "earlyDate",
+        entity,
+        field,
+        date,
+        ...(loanStart && { loanStart }),
+      };
+    },
+  );
 }
 
 /** Stored leases that overlap (ADR 0163): the forms and the CSV import no longer write
@@ -372,25 +386,35 @@ export function findingText(
     case "fundingUnknown":
       return f.future ? d.fundingUnknownFuture : d.fundingUnknown;
     case "earlyDate":
-      return d.earlyDate(
-        d.earlyDateRecord[f.entity],
-        fmtDate(f.date),
-        fmtDate(DATE_FLOOR),
-      );
+      return f.loanStart
+        ? d.earlyDateLoan(
+            fmtDate(f.loanStart),
+            fmtDate(f.date),
+            fmtDate(DATE_FLOOR),
+          )
+        : d.earlyDate(
+            d.earlyDateRecord[f.entity],
+            fmtDate(f.date),
+            fmtDate(DATE_FLOOR),
+          );
     case "outOfRange": {
-      const n = (v: number) => fmtCzk(v, { suffix: false });
-      const value = n(f.value);
-      const range = `${n(f.range.min)}–${n(f.range.max)}`;
+      // The stored value with every decimal (ADR 0180 §2).
+      const value = fmtNumber(f.value);
+      const range = `${fmtNumber(f.range.min)}–${fmtNumber(f.range.max)}`;
       const loan = f.loanStart ? fmtDate(f.loanStart) : "";
       switch (f.field) {
         case "sizeM2":
-          return d.outOfRangeSize(value, range);
+          // Only the size can hold a fraction: the engine refuses one in the others
+          // (validate.ts, whole years), so they never reach the Data check.
+          return inRange(f.value, f.range)
+            ? d.notWholeSize(value, range)
+            : d.outOfRangeSize(value, range);
         case "fixationYears":
-          return d.outOfRangeFixation(loan, value, range);
+          return d.outOfRangeFixation(loan, value, range, f.value);
         case "loanTermYears":
-          return d.outOfRangeTerm(loan, value, range);
+          return d.outOfRangeTerm(loan, value, range, f.value);
         case "horizonYears":
-          return d.outOfRangeHorizon(value, range);
+          return d.outOfRangeHorizon(value, range, f.value);
       }
     }
   }
@@ -398,7 +422,10 @@ export function findingText(
 
 /** The fix link's label: the section it moves to, or the property form. */
 export function fixLabel(
-  t: Pick<Dictionary, "dataCheck" | "propertyDetail" | "properties">,
+  t: Pick<
+    Dictionary,
+    "dataCheck" | "propertyDetail" | "properties" | "settings"
+  >,
   fix: DataCheckFix,
 ): string {
   const d = t.propertyDetail;
@@ -414,7 +441,7 @@ export function fixLabel(
     case "editFunding":
       return t.dataCheck.recordFunding;
     case "assumptions":
-      return t.dataCheck.goTo(t.dataCheck.assumptions);
+      return t.dataCheck.goTo(t.settings.tabs.assumptions);
   }
 }
 

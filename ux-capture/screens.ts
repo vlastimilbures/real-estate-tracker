@@ -1553,7 +1553,7 @@ export const SCREENS: Screen[] = [
       const p = panel(ux, ux.t.dataCheck.title);
       await expect(
         p.getByRole("button", {
-          name: ux.t.dataCheck.goTo(ux.t.dataCheck.assumptions),
+          name: ux.t.dataCheck.goTo(ux.t.settings.tabs.assumptions),
         }),
       ).toBeVisible();
       await p.scrollIntoViewIfNeeded();

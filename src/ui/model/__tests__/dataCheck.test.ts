@@ -16,6 +16,8 @@ import {
   portfolio,
 } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
+import { cs } from "../../../i18n/cs";
+import { ru } from "../../../i18n/ru";
 import { fmtCzk } from "../../../lib/format";
 import {
   dataCheckItems,
@@ -649,6 +651,7 @@ describe("data check: text and fix (ADR 0118)", () => {
     expect(fixLabel(en, "holding")).toBe("Go to Holding costs");
     expect(fixLabel(en, "edit")).toBe("Edit property");
     expect(fixLabel(en, "editFunding")).toBe("Record funding");
+    expect(fixLabel(en, "assumptions")).toBe("Go to Assumptions");
   });
 });
 
@@ -720,6 +723,36 @@ describe("out-of-range stored values (ADR 0148)", () => {
     ]);
   });
 
+  // #260 item 4 (wording log): cs and ru say the year word after the value, as en does.
+  it("cs and ru name the unit after the value", () => {
+    const found = check("javorova", BASE_DATE, legacy).attention.filter(
+      (f) => f.kind === "outOfRange" && f.field !== "sizeM2",
+    );
+    const say = (t: typeof en, f: DataFinding) =>
+      findingText(t, f, assumptions.postFixationResetRatePa);
+    expect(found.map((f) => say(cs, f))).toEqual([
+      "Hypotéka od 17.01.2021: doba fixace 60 let je mimo rozsah, který formuláře přijímají (0–50 let).",
+      "Hypotéka od 17.01.2021: doba splatnosti 60 let je mimo rozsah, který formuláře přijímají (1–50 let).",
+    ]);
+    expect(found.map((f) => say(ru, f))).toEqual([
+      "Ипотека с 17.01.2021: срок фиксации 60 лет вне диапазона, который принимают формы (0–50 лет).",
+      "Ипотека с 17.01.2021: срок кредита 60 лет вне диапазона, который принимают формы (1–50 лет).",
+    ]);
+    const [horizon] = portfolioDataCheck({
+      horizonYears: 101,
+      baseDate: BASE_DATE,
+    });
+    expect(horizon && say(ru, horizon.finding)).toBe(
+      "Горизонт прогноза 101 год вне диапазона, который принимают формы (1–100 лет).",
+    );
+    expect(horizon && say(cs, horizon.finding)).toBe(
+      "Horizont projekce 101 let je mimo rozsah, který formuláře přijímají (1–100 let).",
+    );
+    expect(horizon && say(en, horizon.finding)).toBe(
+      "The projection horizon of 101 years is outside the range the forms accept (1–100 years).",
+    );
+  });
+
   it("lists them before the purchase date too: they are stored, not dated (#133)", () => {
     const before = edate(
       portfolio.properties[0]?.purchaseDate ?? BASE_DATE,
@@ -731,6 +764,44 @@ describe("out-of-range stored values (ADR 0148)", () => {
 
   it("a value inside the ranges is not listed", () => {
     expect(kinds(check("javorova").attention)).not.toContain("outOfRange");
+  });
+
+  // ADR 0180 §2 (#260 item 1): a stored size keeps its decimals, and a fraction inside the
+  // range is listed too — the forms accept whole m² only.
+  const sized = (sizeM2: number): Portfolio => ({
+    ...portfolio,
+    properties: portfolio.properties.map((p) =>
+      p.id === "javorova" ? { ...p, sizeM2 } : p,
+    ),
+  });
+  const sizeText = (sizeM2: number) =>
+    check("javorova", BASE_DATE, sized(sizeM2))
+      .attention.filter((f) => f.kind === "outOfRange")
+      .map((f) =>
+        findingText(en, f, assumptions.postFixationResetRatePa).replace(
+          /\s/g,
+          " ",
+        ),
+      );
+
+  it("shows an out-of-range size with its decimals (#260)", () => {
+    expect(sizeText(10000.4)).toEqual([
+      "Size 10 000,4 m² is outside the range the forms accept (1–10 000 m²).",
+    ]);
+    expect(sizeText(0.4)).toEqual([
+      "Size 0,4 m² is outside the range the forms accept (1–10 000 m²).",
+    ]);
+  });
+
+  it("lists a fractional size inside the range, fixed in the property form (#260)", () => {
+    const found = check("javorova", BASE_DATE, sized(50.5)).attention.filter(
+      (f) => f.kind === "outOfRange",
+    );
+    expect(found).toMatchObject([{ field: "sizeM2", value: 50.5 }]);
+    expect(found.map(findingFix)).toEqual(["edit"]);
+    expect(sizeText(50.5)).toEqual([
+      "Size 50,5 m² is not a whole number; the forms accept whole numbers only (1–10 000 m²).",
+    ]);
   });
 });
 
@@ -784,6 +855,29 @@ describe("stored dates before 1900 (ADR 0149)", () => {
     ).toBe(
       "Purchase date 01.01.1850 is before 01.01.1900, the earliest date the forms accept. Check the year for a typo.",
     );
+  });
+
+  // ADR 0180 §3 (#263 item 4): an early mortgage date names its loan by its start date,
+  // unless it is that start date.
+  it("an early mortgage date names its loan", () => {
+    const early = isoDate("1850-01-01");
+    const text = (patch: (m: MortgageBlock) => MortgageBlock) => {
+      const p: Portfolio = {
+        ...portfolio,
+        mortgages: portfolio.mortgages.map((m) =>
+          m.id === "m-javorova" ? patch(m) : m,
+        ),
+      };
+      return check("javorova", BASE_DATE, p)
+        .attention.filter((f) => f.kind === "earlyDate")
+        .map((f) => findingText(en, f, assumptions.postFixationResetRatePa));
+    };
+    expect(text((m) => ({ ...m, contractMaturityDate: early }))).toEqual([
+      "Mortgage from 17.01.2021: a date 01.01.1850 is before 01.01.1900, the earliest date the forms accept. Check the year for a typo.",
+    ]);
+    expect(text((m) => ({ ...m, startDate: early }))).toEqual([
+      "A mortgage date 01.01.1850 is before 01.01.1900, the earliest date the forms accept. Check the year for a typo.",
+    ]);
   });
 
   it("lists it before the purchase date too: it is stored, not dated", () => {

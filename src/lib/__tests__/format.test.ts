@@ -15,6 +15,7 @@ import {
   pickCzkAxisUnit,
   fmtCzkAxisValue,
   fmtCzkAxisTick,
+  fmtNumber,
 } from "../format";
 
 describe("fmtCzk", () => {
@@ -316,5 +317,28 @@ describe("roundCzk", () => {
   it("rounds half up to whole CZK", () => {
     expect(roundCzk(1932832.126).toNumber()).toBe(1932832);
     expect(roundCzk(0.5).toNumber()).toBe(1);
+  });
+});
+
+// ADR 0180 §2: a stored number as written — grouped, comma decimal, every decimal kept.
+describe("fmtNumber", () => {
+  it("keeps every decimal and groups thousands", () => {
+    expect(fmtNumber(10000.4)).toBe("10 000,4");
+    expect(fmtNumber(0.4)).toBe("0,4");
+    expect(fmtNumber(50.25)).toBe("50,25");
+    expect(fmtNumber(60)).toBe("60");
+    expect(fmtNumber(0)).toBe("0");
+  });
+  it("signs a negative with a real minus", () => {
+    expect(fmtNumber(-1.5)).toBe("−1,5");
+    expect(fmtNumber(-0)).toBe("0");
+  });
+  it("writes tiny and huge values out in full", () => {
+    expect(fmtNumber(1e-7)).toBe("0,0000001");
+    expect(fmtNumber(1e21)).toBe("1 000 000 000 000 000 000 000");
+  });
+  it("prints a value that is not finite instead of throwing", () => {
+    expect(fmtNumber(Infinity)).toBe("Infinity");
+    expect(fmtNumber(NaN)).toBe("NaN");
   });
 });

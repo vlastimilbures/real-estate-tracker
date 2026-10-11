@@ -8,6 +8,7 @@ import { migrate } from "../migrations";
 import { clearSample, seedIfEmpty } from "../seed";
 import { loadState } from "../repositories";
 import {
+  BACKUP_COLUMNS,
   confirmRestore,
   exportToJson,
   parseBackupText,
@@ -245,6 +246,154 @@ describe("property names repeat case-insensitively at restore (ADR 0148 §5)", (
         column: "name",
         rule: "DUPLICATE_KEY",
       },
+    ]);
+  });
+});
+
+/** Every issue of a backup, refused or restored with warnings. */
+function issuesOf(backup: BackupFile) {
+  try {
+    return prepareRestore(backup, checkInputRules).warnings;
+  } catch (e) {
+    if (e instanceof RestoreError) return e.issues;
+    throw e;
+  }
+}
+
+describe("the restore table names the stored column (ADR 0180 §1)", () => {
+  it("a mortgage completion date reads interest_only_until (#263)", async () => {
+    const block = firstBlock();
+    const backup = await edited("mortgage_blocks", (rows) =>
+      rows.map((r) =>
+        r.id === block ? { ...r, interest_only_until: "1850-01-01" } : r,
+      ),
+    );
+    const issues = issuesOf(backup).filter(
+      (i) => i.rule === "EARLY_DATE" || i.rule === "COMPLETION_BEFORE_START",
+    );
+    expect(issues.length).toBeGreaterThan(0);
+    expect(issues.map((i) => i.column)).toEqual(
+      issues.map(() => "interest_only_until"),
+    );
+  });
+
+  it("an assumption default reads its default_ column (#263)", async () => {
+    const backup = await edited("assumptions", (rows) =>
+      rows.map((r) => ({ ...r, default_property_tax_yr: "-1" })),
+    );
+    expect(refusal(backup).issues.map((i) => i.column)).toEqual([
+      "default_property_tax_yr",
+    ]);
+  });
+
+  it("every column an issue names is a column of its table", async () => {
+    // Break every engine-checked value the seed holds, so each field restore can report
+    // is mapped once; a renamed column fails here.
+    let backup = await edited("assumptions", (rows) =>
+      rows.map((r) => {
+        const out = { ...r };
+        for (const c of BACKUP_COLUMNS.assumptions)
+          if (c !== "id" && c !== "base_date" && c !== "horizon_years")
+            out[c] = "-5";
+        return { ...out, base_date: "1850-01-01", horizon_years: 0 };
+      }),
+    );
+    const block = firstBlock();
+    const tables = { ...backup.tables };
+    tables.mortgage_blocks = (tables.mortgage_blocks as Rows).map((r) =>
+      r.id === block
+        ? {
+            ...r,
+            initial_principal: "-1",
+            interest_rate_pa: "-1",
+            monthly_instalment: "-1",
+            fixation_years: -1,
+            loan_term_years: 0,
+            interest_only_until: "1850-01-01",
+            contract_maturity_date: "1850-01-01",
+          }
+        : r,
+    );
+    tables.holding_costs = (tables.holding_costs as Rows).map((r) => ({
+      ...r,
+      property_tax_yr: "-1",
+      insurance_yr: "-1",
+      mgmt_pct_rent: "-1",
+      maint_pct_rent: "-1",
+      svj_monthly: "-1",
+      other_yr: "-1",
+    }));
+    tables.properties = (tables.properties as Rows).map((r) => ({
+      ...r,
+      purchase_price: "-1",
+      own_cash: "-1",
+      transaction_costs: "-1",
+      initial_works: "-1",
+      appreciation_override_pa: "-5",
+      rent_index_override_pa: "-5",
+      size_m2: 0,
+    }));
+    tables.valuations = (tables.valuations as Rows).map((r) => ({
+      ...r,
+      market_value: "-1",
+      valid_to: "1850-01-01",
+    }));
+    tables.leases = (tables.leases as Rows).map((r) => ({
+      ...r,
+      monthly_rent: "-1",
+      end_date: "1850-01-01",
+    }));
+    backup = { ...backup, tables };
+    const issues = issuesOf(backup);
+    expect(issues.length).toBeGreaterThan(20);
+    const columns = BACKUP_COLUMNS as Record<string, readonly string[]>;
+    const unknown = issues.filter(
+      (i) =>
+        i.column !== undefined &&
+        !i.column.split(", ").every((c) => columns[i.table]?.includes(c)),
+    );
+    expect(unknown).toEqual([]);
+  });
+});
+
+describe("a non-integer whole-number value asks at restore (ADR 0180 §2)", () => {
+  it("a fractional size inside the range warns OUT_OF_RANGE (#260)", async () => {
+    const backup = await edited("properties", (rows) =>
+      rows.map((r) => (r.id === "javorova" ? { ...r, size_m2: 50.5 } : r)),
+    );
+    expect(prepareRestore(backup, checkInputRules).warnings).toEqual([
+      {
+        table: "properties",
+        id: "javorova",
+        column: "size_m2",
+        rule: "OUT_OF_RANGE",
+        range: { min: 1, max: 10_000 },
+      },
+    ]);
+  });
+
+  it("a fractional fixation stays the engine's refusal, reported once", async () => {
+    const block = firstBlock();
+    const backup = await edited("mortgage_blocks", (rows) =>
+      rows.map((r) => (r.id === block ? { ...r, fixation_years: 5.5 } : r)),
+    );
+    const issues = refusal(backup).issues;
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatchObject({ column: "fixation_years" });
+    expect(issues[0]?.rule).not.toBe("OUT_OF_RANGE");
+  });
+});
+
+describe("refusals before the rules run (ADR 0148 §1, #260 item 6)", () => {
+  it("an unreadable cell refuses without listing the out-of-range values", async () => {
+    // The rules (and the bounds) run only on a file read as a whole.
+    const backup = await edited("properties", (rows) =>
+      rows.map((r, n) =>
+        n === 0 ? { ...r, purchase_date: "not a date", size_m2: 20_000 } : r,
+      ),
+    );
+    expect(refusal(backup).issues.map((i) => i.rule)).toEqual([
+      "UNREADABLE_VALUE",
     ]);
   });
 });

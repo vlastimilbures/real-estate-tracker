@@ -50,7 +50,8 @@ import type {
 } from "../engine";
 import type { IntRange } from "../lib/intRanges";
 
-/** A whole-number field outside the bounds the forms and CSV import apply (ADR 0086).
+/** A whole-number field outside the bounds the forms and CSV import apply (ADR 0086), or
+ *  not a whole number (ADR 0180 §2).
  *  Restore-only: the engine itself is open-ended, so a restore warns and asks instead of
  *  refusing (ADR 0148). */
 export interface RangeProblem {
@@ -445,6 +446,14 @@ const ENTITY_TABLE: Record<ValidationEntity, BackupTable> = {
 const snake = (field: string) =>
   field.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 
+/** The stored column behind an engine field, as the issue table names it (ADR 0180 §1):
+ *  the mappers store `completionDate` as `interest_only_until` and an assumption default
+ *  `defaults.<field>` as `default_<field>`; every other field is its snake case. */
+const columnOf = (field: string) =>
+  field === "completionDate"
+    ? "interest_only_until"
+    : snake(field.replace(/^defaults\./, "default_"));
+
 /** A key cell as restore compares it: a property name as every other entry point
  *  matches it, trimmed and case-insensitive (D-55, ADR 0148). */
 const keyCell = (table: BackupTable, column: string, v: unknown) =>
@@ -563,7 +572,7 @@ export function prepareRestore(
       issues.push({
         table: ENTITY_TABLE[e.entity],
         ...(e.id !== undefined && { id: e.id }),
-        ...(e.field && { column: snake(e.field) }),
+        ...(e.field && { column: columnOf(e.field) }),
         rule: e.code,
         ...("range" in e && { range: e.range }),
       });
