@@ -19,9 +19,18 @@ describe("edate — end-of-month clamp", () => {
     expect(edate(isoDate("0000-01-31"), 1).toISOString().slice(0, 10)).toBe(
       "0000-02-29",
     ));
+  // A control: years 1–99 match 1901–1999, so this passed before the fix too.
   it("Jan 31 + 1mo clamps to Feb 28 in year 99 (not a leap year)", () =>
     expect(edate(isoDate("0099-01-31"), 1).toISOString().slice(0, 10)).toBe(
       "0099-02-28",
+    ));
+  it("Dec 31 of year 0 + 2mo clamps to Feb 28 of year 1", () =>
+    expect(edate(isoDate("0000-12-31"), 2).toISOString().slice(0, 10)).toBe(
+      "0001-02-28",
+    ));
+  it("Mar 31 of year 0 − 1mo clamps to Feb 29", () =>
+    expect(edate(isoDate("0000-03-31"), -1).toISOString().slice(0, 10)).toBe(
+      "0000-02-29",
     ));
 });
 
