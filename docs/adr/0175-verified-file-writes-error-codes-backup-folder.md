@@ -36,14 +36,20 @@
 ## Decision
 
 1. **One write helper.** Write the temp file exclusively (`O_EXCL`; on `AlreadyExists`, retry
-   with a counter), fsync it, read the **temp** file back and compare the bytes, rename it
-   over the target, then fsync the folder. `save_file` and `write_app_backup` both use it. On
-   any failure the target is left as it was. The byte compare replaces ADR 0052's row-count
-   read-back: equal bytes imply equal rows, so it is stronger with the same intent.
+   with a counter), fsync it, read it back through the same handle and compare the bytes
+   (a guard against a short or garbled write), then rename it over the target. On a failure
+   before the rename the target is left as it was. After the rename the folder is fsynced,
+   best effort: some file systems a save may target (exFAT, network shares) refuse it, and
+   the file is already in place, so that failure is not reported. `save_file` and
+   `write_app_backup` both use it. The Rust-side compare replaces ADR 0052's webview
+   read-back, which compared only row counts per table. A crash between create and rename
+   can still leave a `.{name}.tmp-…` file behind, as before.
 2. **`write_app_backup`** is async, returns nothing and refuses an existing name
-   (`BACKUP_EXISTS`, as `db_backup` does). Two safety backups in the same second: the second
-   fails with `BACKUP_EXISTS` instead of replacing the first, so its restore or Clear sample
-   does not start. Practically unreachable: each needs a dialog.
+   (`BACKUP_EXISTS`, checked before the write, as `db_backup` does). Two safety backups in
+   the same second: the second fails with `BACKUP_EXISTS` instead of replacing the first,
+   so its restore or Clear sample does not start. Practically unreachable: each needs a
+   dialog, and the webview runs them one at a time; the check is not atomic against a
+   concurrent write of the same name.
 3. **Panic hook.** The panic line's message is capped at 500 characters, like
    `log_error`'s context. It is still not masked (ADR 0147, consequence). No re-entry
    guard (#258 item 1 proposed one): std aborts on a panic inside a panic hook without
@@ -74,7 +80,7 @@
 - A failed check on a save leaves the old file in place. A power loss right after a save keeps
   the rename. A planted file at the temp name is neither followed nor truncated.
 - The safety backup no longer crosses IPC twice; the webview's JSON read-back and count loop
-  go away. The Rust tests cover the byte check.
+  go away.
 - The error log shows which OS or SQLite error happened (`os error 13`, `code: 2067`).
 - Visible changes: the Import preview failure banner loses its ✕; Settings → Backup gets a
   button and a hint (one new key, `backup.folderHint`, in `en`, `cs`, `ru`).
