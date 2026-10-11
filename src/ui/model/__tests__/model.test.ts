@@ -6,6 +6,7 @@ import {
   assumptions,
   PARITY,
 } from "../../../engine/__tests__/support/seed";
+import { KC, near } from "../../../engine/__tests__/support/tolerance";
 import {
   portfolioSnapshot,
   portfolioProjection,
@@ -15,9 +16,6 @@ import {
 import { projectionSeries, shortPropertyName } from "../projection";
 import { monthlyFlow, netWorthHorizon } from "../dashboard";
 import { ONE, D } from "../../../lib/money";
-
-const near = (a: number, e: number, tol: number, label: string) =>
-  expect(Math.abs(a - e), `${label}: ${a} vs ${e}`).toBeLessThanOrEqual(tol);
 
 const proj = portfolioProjection(portfolio, assumptions);
 const kpis = portfolioKpis(portfolio, assumptions);
@@ -29,7 +27,7 @@ describe("projectionSeries — Nominal/Real lens", () => {
     near(
       rows[30].equity.toNumber(),
       PARITY.kpis.netWorthNominal,
-      1,
+      KC,
       "nom equity",
     );
   });
@@ -38,7 +36,7 @@ describe("projectionSeries — Nominal/Real lens", () => {
     near(
       rows[30].equity.toNumber(),
       PARITY.kpis.netWorthReal,
-      1,
+      KC,
       "real equity",
     );
   });
@@ -79,13 +77,13 @@ describe("netWorthHorizon", () => {
     near(
       netWorthHorizon(kpis, "nominal").toNumber(),
       PARITY.kpis.netWorthNominal,
-      1,
+      KC,
       "nom",
     );
     near(
       netWorthHorizon(kpis, "real").toNumber(),
       PARITY.kpis.netWorthReal,
-      1,
+      KC,
       "real",
     );
   });
@@ -101,13 +99,13 @@ describe("realPortfolioSnapshot", () => {
     near(
       sv.totalEquity.toNumber(),
       snap.totalEquity.div(k).toNumber(),
-      1,
+      KC,
       "equity",
     );
     near(
       sv.netCashFlow.toNumber(),
       snap.netCashFlow.div(k).toNumber(),
-      1,
+      KC,
       "ncf",
     );
     expect(snap.ltv).not.toBeNull();

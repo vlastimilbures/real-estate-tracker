@@ -5,9 +5,9 @@ name: Nightly (mutation testing, bench budgets, property runs)
 # engine bench's p99 exceeds 2 × its budget (ADR 0066, ADR 0073). Scheduled runs of these
 # two skip when main has no commit in the last 24 h; a manual run always runs both.
 #
-# The property job runs the loan-event property tests at 2000 runs every night, quiet
-# days included: the seed, not the code, is what changes (#232). The seed is the run's
-# UTC creation date (YYYYMMDD), so "Re-run failed jobs" replays it.
+# The property job runs every fast-check property test at 2000 runs every night, quiet
+# days included: the seed, not the code, is what changes (#232, #167). The seed is the
+# run's UTC creation date (YYYYMMDD), so "Re-run failed jobs" replays it.
 #
 # Stryker runs incrementally (ADR 0151): the previous run's result file is restored from the
 # Actions cache, so only mutants in changed engine code or tests rerun. The first run on a
@@ -135,14 +135,24 @@ jobs:
           retention-days: 30
 
   properties:
-    name: Loan-event property tests (2000 runs)
+    name: Property tests (2000 runs)
     runs-on: ubuntu-latest
-    # 2000 runs take ~40 s locally. Vitest cannot interrupt a synchronous fc.assert, so
-    # this bounds a long shrink or a hang; the seed is printed before the tests start.
+    # 2000 runs take ~50 s locally (slowest test ~30 s). Vitest cannot interrupt a
+    # synchronous fc.assert, so this bounds a long shrink or a hang; the seed is printed
+    # before the tests start, and again as an error annotation when they fail.
     timeout-minutes: 45
     permissions:
       contents: read
       actions: read # the run's creation date, for the seed
+    env:
+      # Every file whose fast-check runs come from fcRuns (src/engine/__tests__/support).
+      FILES: >-
+        src/engine/__tests__/properties.test.ts
+        src/engine/__tests__/real-kpis.test.ts
+        src/engine/__tests__/financing.test.ts
+        src/engine/__tests__/irr-equivalence.test.ts
+        src/engine/__tests__/loan-event-invariants.test.ts
+        src/engine/__tests__/reference/loanEvents.property.test.ts
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -174,11 +184,14 @@ jobs:
             echo "fc_seed must be 1-9 digits, got '$seed'" >&2
             exit 1
           fi
-          echo "FC_SEED=$seed" >> "$GITHUB_ENV"
-          repro="FC_SEED=$seed FC_RUNS=2000 pnpm exec vitest run src/engine/__tests__/loan-event-invariants.test.ts src/engine/__tests__/reference/loanEvents.property.test.ts"
+          repro="FC_SEED=$seed FC_RUNS=2000 pnpm exec vitest run $FILES"
+          {
+            echo "FC_SEED=$seed"
+            echo "REPRO=$repro"
+          } >> "$GITHUB_ENV"
           echo "Seed $seed. Reproduce locally: $repro"
           {
-            echo "### Loan-event property tests"
+            echo "### Property tests"
             echo "Seed \`$seed\`, 2000 runs. Reproduce locally:"
             echo '```sh'
             echo "$repro"
@@ -188,7 +201,11 @@ jobs:
       - name: Property tests
         env:
           FC_RUNS: "2000"
-        run: >-
-          pnpm exec vitest run
-          src/engine/__tests__/loan-event-invariants.test.ts
-          src/engine/__tests__/reference/loanEvents.property.test.ts
+        # FILES is unquoted on purpose: one argument per file.
+        run: pnpm exec vitest run $FILES
+
+      - name: Print the seed on failure
+        # Only once a seed was picked: a failed install has no seed to report.
+        if: failure() && env.FC_SEED != ''
+        run: |
+          echo "::error title=Property tests failed::Seed $FC_SEED. Reproduce locally: $REPRO"

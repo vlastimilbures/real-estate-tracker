@@ -2,8 +2,9 @@
 // portfolio later (all properties deleted, or an empty backup restored) stays empty.
 import { describe, it, expect, afterEach } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
-import { migrate, MIGRATIONS } from "../migrations";
+import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
+import { schemaAt } from "./support/schemaAt";
 import { exportToJson, restoreFromJson } from "../backup";
 import { checkInputRules } from "../../import/inputRules";
 
@@ -64,19 +65,7 @@ describe("seedIfEmpty — first run only (DR-024)", () => {
 
   it("treats an existing pre-flag database (schema v4) as already seeded", async () => {
     // Synthetic v4 DB: launched before (assumptions row present), portfolio emptied.
-    sql = openMemorySql();
-    await sql.execute(
-      "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL)",
-    );
-    for (const m of MIGRATIONS.filter((m) => m.version <= 4)) {
-      for (const stmt of m.sql.split(";")) {
-        if (stmt.trim()) await sql.execute(stmt.trim());
-      }
-      await sql.execute(
-        "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
-        [m.version, m.name, "1970-01-01T00:00:00.000Z"],
-      );
-    }
+    sql = await schemaAt(4);
     const fresh = openMemorySql();
     await migrate(fresh);
     await seedIfEmpty(fresh);

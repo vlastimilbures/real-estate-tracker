@@ -15,6 +15,10 @@ import {
   IRR_SCAN_GRID,
 } from "../constants";
 import { irrResult } from "../kpis";
+import { fcRuns } from "./support/fcRuns";
+
+// Fixed seed ⇒ reproducible in CI; nightly runs 2000 with a date seed (`fcRuns`).
+const { runs: RUNS, timeout: TIMEOUT } = fcRuns(20261012, 200);
 
 /** The NPV with one `pow` per cash flow, as before P9. */
 const oracleNpv =
@@ -72,22 +76,26 @@ const same = (v: Decimal[]) => {
 };
 
 describe("irr = the pre-P9 bisection, digit for digit, where that finds a unique root", () => {
-  it("random levered vectors (equity in, yearly cash flows, sale)", () => {
-    const money = fc.integer({ min: -2_000_000, max: 2_000_000 });
-    fc.assert(
-      fc.property(
-        fc.integer({ min: 1_000_000, max: 50_000_000 }),
-        fc.array(money, { minLength: 1, maxLength: 40 }),
-        fc.integer({ min: 0, max: 200_000_000 }),
-        (equity, flows, sale) => {
-          const v = [D(-equity), ...flows.map((x) => D(x))];
-          v[v.length - 1] = v[v.length - 1]!.plus(sale);
-          same(v);
-        },
-      ),
-      { numRuns: 200 },
-    );
-  });
+  it(
+    "random levered vectors (equity in, yearly cash flows, sale)",
+    { timeout: TIMEOUT },
+    () => {
+      const money = fc.integer({ min: -2_000_000, max: 2_000_000 });
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 1_000_000, max: 50_000_000 }),
+          fc.array(money, { minLength: 1, maxLength: 40 }),
+          fc.integer({ min: 0, max: 200_000_000 }),
+          (equity, flows, sale) => {
+            const v = [D(-equity), ...flows.map((x) => D(x))];
+            v[v.length - 1] = v[v.length - 1]!.plus(sale);
+            same(v);
+          },
+        ),
+        RUNS,
+      );
+    },
+  );
 
   it("vectors with fractional amounts and no sign change", () => {
     same([D("-100.25"), D("60.5"), D("60.125")]);

@@ -1,6 +1,7 @@
 // ADR 0099: adding a valuation/lease and ending the previous open-ended one is one write.
 import { describe, it, expect } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
+import { failOn } from "./support/failOn";
 import { migrate } from "../migrations";
 import {
   insertProperty,
@@ -11,21 +12,7 @@ import {
   loadPortfolio,
 } from "../repositories";
 import { propertyToRow, valuationToRow, leaseToRow } from "../mappers";
-import type { Sql } from "../sql";
 import { isoDate, money, type Lease, type Valuation } from "../../engine";
-
-/** Fails any statement matching `pattern`, including inside a transaction. */
-function failOn(inner: TestSql, pattern: RegExp): Sql {
-  const boom = { query: "INSERT INTO no_such_table VALUES (1)" };
-  return {
-    ...inner,
-    transaction: (statements, options) =>
-      inner.transaction(
-        statements.map((s) => (pattern.test(s.query) ? boom : s)),
-        options,
-      ),
-  };
-}
 
 const prevV: Valuation = {
   id: "v-old",

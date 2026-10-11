@@ -16,6 +16,7 @@ import {
 import { checkInputRules } from "../../import/inputRules";
 import type { Sql } from "../sql";
 import { portfolioSnapshot } from "../../engine";
+import { expectKc } from "../../engine/__tests__/support/tolerance";
 import {
   rowToScenario,
   rowToMortgageBlock,
@@ -69,25 +70,8 @@ describe("Backup round-trip", () => {
     const assumptionsAfter = await loadAssumptions(sql);
     const snapAfter = portfolioSnapshot(portfolioAfter, assumptionsAfter);
 
-    const KC = 1;
-    expect(
-      Math.abs(
-        snapAfter.totalValue.toNumber() - snapBefore.totalValue.toNumber(),
-      ),
-    ).toBeLessThanOrEqual(KC);
-    expect(
-      Math.abs(
-        snapAfter.totalDebt.toNumber() - snapBefore.totalDebt.toNumber(),
-      ),
-    ).toBeLessThanOrEqual(KC);
-    expect(
-      Math.abs(snapAfter.noi.toNumber() - snapBefore.noi.toNumber()),
-    ).toBeLessThanOrEqual(KC);
-    expect(
-      Math.abs(
-        snapAfter.netCashFlow.toNumber() - snapBefore.netCashFlow.toNumber(),
-      ),
-    ).toBeLessThanOrEqual(KC);
+    for (const k of ["totalValue", "totalDebt", "noi", "netCashFlow"] as const)
+      expectKc(snapAfter[k], snapBefore[k].toNumber(), k);
   });
 
   it("restore is idempotent (second restore from same backup gives same counts)", async () => {
@@ -281,25 +265,8 @@ describe("restoreFromJson — refuses an unreadable row before writing", () => {
     const portfolioAfter = await loadPortfolio(sql);
     const assumptionsAfter = await loadAssumptions(sql);
     const snapAfter = portfolioSnapshot(portfolioAfter, assumptionsAfter);
-    const KC = 1;
-    expect(
-      Math.abs(
-        snapAfter.totalValue.toNumber() - snapBefore.totalValue.toNumber(),
-      ),
-    ).toBeLessThanOrEqual(KC);
-    expect(
-      Math.abs(
-        snapAfter.totalDebt.toNumber() - snapBefore.totalDebt.toNumber(),
-      ),
-    ).toBeLessThanOrEqual(KC);
-    expect(
-      Math.abs(snapAfter.noi.toNumber() - snapBefore.noi.toNumber()),
-    ).toBeLessThanOrEqual(KC);
-    expect(
-      Math.abs(
-        snapAfter.netCashFlow.toNumber() - snapBefore.netCashFlow.toNumber(),
-      ),
-    ).toBeLessThanOrEqual(KC);
+    for (const k of ["totalValue", "totalDebt", "noi", "netCashFlow"] as const)
+      expectKc(snapAfter[k], snapBefore[k].toNumber(), k);
   });
 });
 

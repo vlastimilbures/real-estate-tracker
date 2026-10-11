@@ -4,7 +4,7 @@
 // round-trips the record; a negative amount is refused.
 import { describe, it, expect } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
-import { schemaAt } from "./schemaAt";
+import { schemaAt } from "./support/schemaAt";
 import { migrate } from "../migrations";
 import { insertProperty, loadPortfolio } from "../repositories";
 import { propertyToRow, rowToProperty, type PropertyRow } from "../mappers";

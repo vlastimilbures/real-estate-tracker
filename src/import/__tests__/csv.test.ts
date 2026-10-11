@@ -1,6 +1,7 @@
 // The pure CSV parser (src/import/csv.ts) on awkward-but-realistic files: strict
 // reading per D-49 / D-53 (P5b; these replace the P3 characterisations of DR-027,
-// DR-035, DR-036, DR-039 and DR-109). Happy paths and templates live in import.test.ts.
+// DR-035, DR-036, DR-039 and DR-109), plus the sample files' happy paths and the
+// templates. The import of those files into a database is in import.test.ts.
 import { describe, it, expect } from "vitest";
 import {
   parseProperties,
@@ -9,13 +10,129 @@ import {
   parseMortgages,
   CSV_MAX_BYTES,
   CSV_MAX_ROWS,
+  propertiesTemplate,
+  valuationsTemplate,
+  rentsTemplate,
+  mortgagesTemplate,
 } from "../csv";
+import {
+  ALL_NAMES,
+  MORTGAGES_CSV,
+  PROPERTIES_CSV,
+  RENTS_CSV,
+  VALUATIONS_CSV,
+} from "./support/sampleCsv";
 
 const H =
   "name,address,type,size_m2,garage,purchase_date,purchase_price,appreciation_override_pa,rent_index_override_pa";
 const MH =
   "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment,loan_term_years";
 const names = (r: { rows: { name: string }[] }) => r.rows.map((x) => x.name);
+
+describe("the sample portfolio files", () => {
+  it("parses 3 valid rows with correct fields", () => {
+    const { rows, errors } = parseProperties(PROPERTIES_CSV);
+    expect(errors, JSON.stringify(errors)).toHaveLength(0);
+    expect(rows).toHaveLength(3);
+    expect(rows[0].name).toBe("Byt Javorova");
+    expect(rows[0].purchase_price).toBe("4080000");
+    expect(rows[0].purchase_date).toBe("2015-06-01");
+    expect(rows[0].garage).toBe(true);
+    expect(rows[0].size_m2).toBe(71);
+    expect(rows[0].appreciation_override_pa).toBeNull();
+    expect(rows[1].garage).toBe(false);
+    expect(rows[2].size_m2).toBe(47);
+  });
+
+  it("parses 3 valid rows", () => {
+    const { rows, errors } = parseValuations(VALUATIONS_CSV, ALL_NAMES);
+    expect(errors, JSON.stringify(errors)).toHaveLength(0);
+    expect(rows).toHaveLength(3);
+    expect(rows[0].market_value).toBe("10200000");
+    expect(rows[0].valid_to).toBeNull();
+  });
+
+  it("parses 4 rows including one with end_date", () => {
+    const { rows, errors } = parseRents(RENTS_CSV, ALL_NAMES);
+    expect(errors, JSON.stringify(errors)).toHaveLength(0);
+    expect(rows).toHaveLength(4);
+    expect(rows[2].end_date).toBe("2026-08-30");
+    expect(rows[3].end_date).toBeNull();
+  });
+
+  it("parses 3 valid rows with correct types", () => {
+    const { rows, errors } = parseMortgages(MORTGAGES_CSV, ALL_NAMES);
+    expect(errors, JSON.stringify(errors)).toHaveLength(0);
+    expect(rows).toHaveLength(3);
+    expect(rows[0].fixation_years).toBe(10);
+    expect(rows[0].interest_rate_pa).toBe("0.0169");
+    expect(rows[0].monthly_instalment).toBe("6721.8");
+  });
+});
+
+describe("required fields and value types", () => {
+  it("errors on missing required name", () => {
+    const { errors } = parseProperties(
+      "name,purchase_date,purchase_price\n,2015-01-01,1000000",
+    );
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0].field).toBe("name");
+  });
+
+  it("errors on missing required purchase_date", () => {
+    const { errors } = parseProperties(
+      "name,purchase_date,purchase_price\nTest,,1000000",
+    );
+    expect(errors.some((e) => e.field === "purchase_date")).toBe(true);
+  });
+
+  it("errors on invalid purchase_price", () => {
+    const { errors } = parseProperties(
+      "name,purchase_date,purchase_price\nTest,2015-01-01,not-a-number",
+    );
+    expect(errors.some((e) => e.field === "purchase_price")).toBe(true);
+  });
+
+  it("errors on invalid garage boolean", () => {
+    const { errors } = parseProperties(
+      "name,purchase_date,purchase_price,garage\nTest,2015-01-01,1000000,maybe",
+    );
+    expect(errors.some((e) => e.field === "garage")).toBe(true);
+  });
+});
+
+describe("mortgage instalment", () => {
+  it("derives the instalment when blank but loan_term_years is given", () => {
+    const csv =
+      "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment,loan_term_years\n" +
+      "Byt Javorova,2021-01-17,1912500,10,0.0169,,25";
+    const { rows, errors } = parseMortgages(csv, ALL_NAMES);
+    expect(errors, JSON.stringify(errors)).toHaveLength(0);
+    expect(rows).toHaveLength(1);
+    // PMT(0.0169/12, 300, −1,912,500) ≈ 7,821 Kč/mo (whole-Kč rounded).
+    expect(
+      Math.abs(Number(rows[0].monthly_instalment) - 7821),
+    ).toBeLessThanOrEqual(2);
+  });
+
+  it("errors when instalment is blank and no loan_term_years is given", () => {
+    const csv =
+      "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment\n" +
+      "Byt Javorova,2021-01-17,1912500,10,0.0169,";
+    const { rows, errors } = parseMortgages(csv, ALL_NAMES);
+    expect(rows).toHaveLength(0);
+    expect(errors.some((e) => e.field === "monthly_instalment")).toBe(true);
+  });
+
+  it("respects a provided instalment (no override) even with a term given", () => {
+    const csv =
+      "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment,loan_term_years\n" +
+      "Byt Javorova,2021-01-17,1912500,10,0.0169,6721.8,25";
+    const { rows, errors } = parseMortgages(csv, ALL_NAMES);
+    expect(errors, JSON.stringify(errors)).toHaveLength(0);
+    expect(rows[0].monthly_instalment).toBe("6721.8");
+  });
+});
 
 describe("encoding and quoting", () => {
   it("strips a UTF-8 BOM before the header", () => {
@@ -217,7 +334,16 @@ describe("number formats", () => {
   });
 
   it("rejects negative money, exponents, hex and Infinity (DR-036)", () => {
-    for (const v of ["-100", "1e3", "0x10", "Infinity", "+5", "1 000"]) {
+    for (const v of [
+      "-100",
+      "1e3",
+      "0x10",
+      "Infinity",
+      "-Infinity",
+      "NaN",
+      "+5",
+      "1 000",
+    ]) {
       const r = parseProperties(`${H}\nA,,,,,2020-01-01,${v},,`);
       expect(r.rows, v).toEqual([]);
       expect(r.errors[0].field).toBe("purchase_price");
@@ -225,6 +351,15 @@ describe("number formats", () => {
     expect(
       parseProperties(`${H}\nA,,,,,2020-01-01,-100,,`).errors[0].error,
     ).toEqual({ code: "negativeAmount", value: "-100" });
+  });
+
+  it("parses a 16-digit amount losslessly (no float round-trip, CLAUDE.md §5)", () => {
+    const big = "1234567890123456"; // 16 sig figs — Number() would corrupt this
+    const { rows, errors } = parseProperties(
+      `name,purchase_date,purchase_price\nTest,2015-01-01,${big}`,
+    );
+    expect(errors, JSON.stringify(errors)).toHaveLength(0);
+    expect(rows[0].purchase_price).toBe(big);
   });
 
   it("keeps a signed growth override", () => {
@@ -407,7 +542,11 @@ describe("dates", () => {
 describe("foreign keys and duplicates", () => {
   const known = new Set(["A"]);
 
-  it("flags an unknown property_name in rents and mortgages", () => {
+  it("flags an unknown property_name in valuations, rents and mortgages", () => {
+    const val = parseValuations(
+      "property_name,valid_from,valid_to,market_value\nNope,2025-01-01,,1000",
+      known,
+    );
     const rent = parseRents(
       "property_name,start_date,end_date,monthly_rent\nNope,2025-01-01,,1000",
       known,
@@ -416,7 +555,7 @@ describe("foreign keys and duplicates", () => {
       `${MH}\nNope,2025-01-01,100000,5,0.03,1000,`,
       known,
     );
-    for (const r of [rent, mort]) {
+    for (const r of [val, rent, mort]) {
       expect(r.rows).toEqual([]);
       expect(r.errors).toEqual([
         {
@@ -426,6 +565,11 @@ describe("foreign keys and duplicates", () => {
         },
       ]);
     }
+  });
+
+  it("skips FK check when knownNames not provided", () => {
+    const { errors } = parseValuations(VALUATIONS_CSV);
+    expect(errors, "no FK check without knownNames").toHaveLength(0);
   });
 
   it("matches property names trimmed and case-insensitively (D-55)", () => {
@@ -455,5 +599,34 @@ describe("foreign keys and duplicates", () => {
         error: { code: "duplicateKey", firstRow: 2 },
       },
     ]);
+  });
+});
+
+describe("template generators", () => {
+  it("properties template has correct header", () =>
+    expect(propertiesTemplate()).toContain(
+      "name,address,type,size_m2,garage,purchase_date,purchase_price",
+    ));
+  it("properties template ends with the funding columns (ADR 0119 §8)", () =>
+    expect(propertiesTemplate().split("\n")[0]).toMatch(
+      /,own_cash,transaction_costs,initial_works$/,
+    ));
+  it("valuations template has correct header", () =>
+    expect(valuationsTemplate()).toContain(
+      "property_name,valid_from,valid_to,market_value",
+    ));
+  it("rents template has correct header", () =>
+    expect(rentsTemplate()).toContain(
+      "property_name,start_date,end_date,monthly_rent",
+    ));
+  it("mortgages template has correct header", () =>
+    expect(mortgagesTemplate()).toContain(
+      "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment",
+    ));
+  it("each template parses cleanly (example row is valid)", () => {
+    expect(parseProperties(propertiesTemplate()).errors).toHaveLength(0);
+    expect(parseValuations(valuationsTemplate()).errors).toHaveLength(0);
+    expect(parseRents(rentsTemplate()).errors).toHaveLength(0);
+    expect(parseMortgages(mortgagesTemplate()).errors).toHaveLength(0);
   });
 });
