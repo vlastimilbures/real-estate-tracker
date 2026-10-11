@@ -182,39 +182,39 @@ export const PARITY = {
     ltv: 0.3312,
     grossAnnualRent: 846_600,
     effectiveGrossIncome: 804_270,
-    holdingCosts: 215_220,
-    noi: 589_050,
+    holdingCosts: 208_870.5, // ADR 0182 (was 215,220)
+    noi: 595_399.5, // ADR 0182 (was 589,050)
     annualDebtService: 646_384.2,
-    netCashFlow: -57_334.2,
+    netCashFlow: -50_984.7, // ADR 0182 (was −57,334.2)
     grossYield: 0.02947,
-    netYield: 0.0205,
-    dscr: 0.9113,
+    netYield: 0.02072, // ADR 0182 (was 0.02050)
+    dscr: 0.92112, // ADR 0182 (was 0.91130)
     weightedAvgRate: 0.035226,
   },
   perProperty: {
     javorova: {
       value: 10_200_000,
       debt: 1_642_907.31,
-      noi: 229_500,
+      noi: 231_948, // ADR 0182 (was 229,500)
       annualDebtService: 80_661.6,
-      netCashFlow: 148_838.4,
-      dscr: 2.84522,
+      netCashFlow: 151_286.4, // ADR 0182 (was 148,838.4)
+      dscr: 2.87557, // ADR 0182 (was 2.84522)
     },
     lipova: {
       value: 8_925_000,
       debt: 5_116_588.94,
-      noi: 179_775,
+      noi: 181_725.75, // ADR 0182 (was 179,775)
       annualDebtService: 306_805.8,
-      netCashFlow: -127_030.8,
-      dscr: 0.585957,
+      netCashFlow: -125_080.05, // ADR 0182 (was −127,030.8)
+      dscr: 0.592315, // ADR 0182 (was 0.585957)
     },
     dubova: {
       value: 9_605_000,
       debt: 2_755_908.88,
-      noi: 179_775,
+      noi: 181_725.75, // ADR 0182 (was 179,775)
       annualDebtService: 258_916.8,
-      netCashFlow: -79_141.8,
-      dscr: 0.694335,
+      netCashFlow: -77_191.05, // ADR 0182 (was −79,141.8)
+      dscr: 0.701869, // ADR 0182 (was 0.694335)
     },
   },
   /** Byt Javorova schedule rows (1-based month from baseDate). */
@@ -232,11 +232,11 @@ export const PARITY = {
     netWorthMultiple: 4.8496,
     cagrNominal: 0.054,
     cagrReal: 0.0283,
-    cumulativeNetCashFlow: 14_705_700.29,
-    firstCashFlowPositiveYear: 2031,
+    cumulativeNetCashFlow: 15_020_596.5, // ADR 0182 (was 14,705,700.29)
+    firstCashFlowPositiveYear: 2029, // ADR 0182 (was 2031)
     debtFreeYear: 2052,
-    leveredIrrNominal: 0.061795,
-    leveredIrrReal: 0.035898,
+    leveredIrrNominal: 0.062038, // ADR 0182 (was 0.061795)
+    leveredIrrReal: 0.036135, // ADR 0182 (was 0.035898)
     totalPrincipalRepaid: 9_515_405,
   },
 } as const;

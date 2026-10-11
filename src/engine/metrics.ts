@@ -228,9 +228,10 @@ function snapshotIncome(
     portfolio,
     assumptions,
   );
-  const holdingCosts = fixed.plus(
-    mgmtPct.plus(maintPct).times(grossAnnualRent),
-  );
+  // Management on the rent collected, maintenance on the rent contracted (ADR 0182).
+  const holdingCosts = fixed
+    .plus(mgmtPct.times(effectiveGrossIncome))
+    .plus(maintPct.times(grossAnnualRent));
   const noi = effectiveGrossIncome.minus(holdingCosts);
   return { grossAnnualRent, effectiveGrossIncome, holdingCosts, noi };
 }

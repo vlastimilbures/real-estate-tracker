@@ -153,10 +153,12 @@ describe("future property — rent gates to the lease effective date", () => {
       assumptions,
       schedules.get("future") ?? EMPTY_PROPERTY_SCHEDULE,
     );
+    // Management on collected rent, maintenance on contracted rent (ADR 0182).
     const { mgmtPctRent, maintPctRent } = assumptions.defaults;
-    const VAR_PCT = mgmtPctRent.plus(maintPctRent);
     const costs = (t: number, months: number) =>
-      fixedCost(t, months).plus(VAR_PCT.times(rows[t].grossRent));
+      fixedCost(t, months)
+        .plus(mgmtPctRent.times(rows[t].effectiveRent))
+        .plus(maintPctRent.times(rows[t].grossRent));
     expect(rows[1].holdingCosts.isZero()).toBe(true);
     expect(rows[2].grossRent.isZero()).toBe(false);
     expect(rows[2].holdingCosts.equals(costs(2, 3))).toBe(true);

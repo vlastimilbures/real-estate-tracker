@@ -21,8 +21,9 @@
 //     before baseDate; monthly_t = rent·(1+idx)^(t−t₀), t₀ = 0 for the lease in force at
 //     baseDate, else the year of its first grid month on/after its start;
 //     effective_t = gross_t·(1−vacancy);
-//   • holding_t = fixed0·CPI_t + (mgmt+maint)·gross_t, each cost field falling back to the
-//     default when blank (§4.1), fixed0 = tax + insurance + 12·SVJ + other;
+//   • holding_t = fixed0·CPI_t + mgmt·effective_t + maint·gross_t (ADR 0182), each cost
+//     field falling back to the default when blank (§4.1),
+//     fixed0 = tax + insurance + 12·SVJ + other;
 //     CPI_t = (1+inflation)^t;
 //   • NOI_t = effective_t − holding_t; debtService_t = interest_t + principal_t;
 //     netCF_t = NOI_t − debtService_t; equity_t = value_t − balance_t;
@@ -230,7 +231,8 @@ export function referencePropertyProjection(
     .plus(cost(p, a, "insuranceYr"))
     .plus(cost(p, a, "svjMonthly").times(12))
     .plus(cost(p, a, "otherYr"));
-  const pctOfRent = cost(p, a, "mgmtPctRent").plus(cost(p, a, "maintPctRent"));
+  const mgmt = cost(p, a, "mgmtPctRent");
+  const maint = cost(p, a, "maintPctRent");
   const years: RefYear[] = [];
   let balance = opening;
   for (let t = 0; t <= a.horizonYears; t++) {
@@ -259,7 +261,8 @@ export function referencePropertyProjection(
       flow.effectiveRent = gross.times(ONE.minus(a.vacancyAllowance));
       flow.holdingCosts = fixed0
         .times(cpiAt(a, t))
-        .plus(pctOfRent.times(gross));
+        .plus(mgmt.times(flow.effectiveRent))
+        .plus(maint.times(gross));
       flow.noi = flow.effectiveRent.minus(flow.holdingCosts);
       flow.interest = sum((r) => r.interest);
       flow.principal = sum((r) => r.principal);
@@ -304,14 +307,28 @@ export function referenceProjection(
 const npv = (flows: Dec[], r: Dec) =>
   flows.reduce((s, f, t) => s.plus(f.div(ONE.plus(r).pow(t))), ZERO);
 
-/** IRR by bisection on [−0.9, 10]. Throws unless the flows change sign exactly once
- *  (then the root is unique, Descartes) and the bracket holds it. */
+const signChanges = (xs: Dec[]) => {
+  const signs = xs.filter((x) => !x.isZero()).map((x) => x.isNegative());
+  return signs.filter((s, i) => i > 0 && s !== signs[i - 1]).length;
+};
+
+/** IRR by bisection. The root must be unique: either the flows change sign exactly once
+ *  (Descartes; bracket [−0.9, 10]), or they start negative and their running sums change
+ *  sign exactly once (Norström; the one positive root, bracket [0, 10]) — as when a
+ *  prepayment turns one year's cash negative between positive years. Throws otherwise,
+ *  or when the bracket does not hold the root. */
 export function referenceIrr(flows: Dec[]): Dec {
-  const signs = flows.filter((f) => !f.isZero()).map((f) => f.isNegative());
-  const changes = signs.filter((s, i) => i > 0 && s !== signs[i - 1]).length;
-  if (changes !== 1)
+  const changes = signChanges(flows);
+  let sum = ZERO;
+  const running = flows.map((f) => (sum = sum.plus(f)));
+  const norstrom =
+    changes > 1 &&
+    flows[0]!.isNegative() &&
+    signChanges(running) === 1 &&
+    !sum.isZero();
+  if (changes !== 1 && !norstrom)
     throw new RangeError(`IRR needs one sign change, got ${changes}.`);
-  let lo = d("-0.9");
+  let lo = d(norstrom ? 0 : "-0.9");
   let hi = d(10);
   const fLo = npv(flows, lo);
   if (fLo.isNegative() === npv(flows, hi).isNegative())

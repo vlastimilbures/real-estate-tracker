@@ -58,11 +58,12 @@ describe("Finding F — projection year vs calendar-year labels", () => {
         .slice(0, 10),
     ).toBe("2031-06-07");
   });
-  it("first positive cash-flow year 2031 = projection year 5", () => {
-    expect(kpis.firstCashFlowPositiveYear).toBe(2031);
-    expect(proj[4].netCashFlow.isNegative()).toBe(true);
-    expect(proj[5].netCashFlow.greaterThan(0)).toBe(true);
-    expect(proj[5].calendarYear).toBe(2031);
+  // ADR 0182: 2029 = year 3 (2031 = year 5 before management followed collected rent).
+  it("first positive cash-flow year 2029 = projection year 3", () => {
+    expect(kpis.firstCashFlowPositiveYear).toBe(2029);
+    expect(proj[2].netCashFlow.isNegative()).toBe(true);
+    expect(proj[3].netCashFlow.greaterThan(0)).toBe(true);
+    expect(proj[3].calendarYear).toBe(2029);
   });
   it("debt-free year 2052 = projection year 26 (last loan paid off in grid month 306)", () => {
     expect(kpis.debtFreeYear).toBe(2052);

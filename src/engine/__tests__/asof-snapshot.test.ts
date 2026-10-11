@@ -72,9 +72,10 @@ describe("Regression: snapshot at baseDate == the parity targets", () => {
     near(snap.totalValue.toNumber(), 28_730_000, KC, "value"));
   it("total debt 9,515,405.13", () =>
     near(snap.totalDebt.toNumber(), 9_515_405.13, KC, "debt"));
-  it("net cash flow -57,334.2", () =>
-    near(snap.netCashFlow.toNumber(), -57_334.2, KC, "ncf"));
-  it("DSCR 0.9113", () => near(snap.dscr!.toNumber(), 0.9113, RATIO, "dscr"));
+  // ADR 0182 moved these (management on collected rent; was −57,334.2 and 0.9113).
+  it("net cash flow -50,984.7", () =>
+    near(snap.netCashFlow.toNumber(), -50_984.7, KC, "ncf"));
+  it("DSCR 0.92112", () => near(snap.dscr!.toNumber(), 0.92112, RATIO, "dscr"));
 });
 
 describe("DR-118: an omitted schedule is built from the same inputs", () => {

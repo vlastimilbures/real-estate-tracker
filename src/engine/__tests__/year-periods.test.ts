@@ -62,16 +62,18 @@ describe("projection year periods (D-22)", () => {
 });
 
 describe("KPI projection years (D-22)", () => {
-  it("seed: first positive cash flow in Y5 (2031), debt-free in Y26 (2052)", () => {
+  // ADR 0182: Y3 (2029), was Y5 (2031) before management followed collected rent.
+  it("seed: first positive cash flow in Y3 (2029), debt-free in Y26 (2052)", () => {
     const k = portfolioKpis(portfolio, assumptions);
-    expect(k.firstCashFlowPositiveYear).toBe(2031);
-    expect(k.firstCashFlowPositiveProjectionYear).toBe(5);
+    expect(k.firstCashFlowPositiveYear).toBe(2029);
+    expect(k.firstCashFlowPositiveProjectionYear).toBe(3);
     expect(k.debtFreeYear).toBe(2052);
     expect(k.debtFreeProjectionYear).toBe(26);
   });
 
   it("null together with the calendar year", () => {
-    const k = portfolioKpis(portfolio, { ...assumptions, horizonYears: 3 });
+    // Horizon 2 ends before the first positive year, Y3 (horizon 3 until ADR 0182).
+    const k = portfolioKpis(portfolio, { ...assumptions, horizonYears: 2 });
     expect(k.firstCashFlowPositiveYear).toBeNull();
     expect(k.firstCashFlowPositiveProjectionYear).toBeNull();
     expect(k.debtFreeYear).toBeNull();

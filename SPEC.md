@@ -257,7 +257,8 @@ Derived per-property values:
 - **Effective gross** = gross × (1 − vacancy).
 - **Holding costs** = `fixed + variable`, where
   `fixed = tax + insurance + svjMonthly*12 + other` (each blank ⇒ default) and
-  `variable = (mgmtPct + maintPct) * grossAnnualRent`.
+  `variable = mgmtPct * effectiveGross + maintPct * grossAnnualRent`: management is paid
+  on the rent collected, maintenance on the rent contracted (ADR 0182).
 - **NOI** = effective gross − holding.
 - **Debt service (annual)** = 12 × active monthly instalment.
 - **Net cash flow** = NOI − debt service.
@@ -460,7 +461,8 @@ appreciation; rent index `idx` likewise):
   (growth resumes off the lower base).
 - `gross_t` = Σ of the year's monthly rents, lease by lease (see **Projected rent** below);
   `effective_t = gross_t × (1−vacancy)`
-- `holding_t = fixed0 * CPI_t + (mgmtPct+maintPct) * gross_t`, where `CPI_t` is the
+- `holding_t = fixed0 * CPI_t + mgmtPct * effective_t + maintPct * gross_t` (management
+  on collected rent, maintenance on contracted rent, ADR 0182), where `CPI_t` is the
   cumulative per-year index (honours any `inflationShock`: spike, then revert). `fixed0`
   is at base-date prices for every property: a future purchase's fixed costs inflate from
   the base date, not from its purchase year, pro-rated by the months owned in its turn-on

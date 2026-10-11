@@ -143,8 +143,9 @@ describe("compareWorkbook — the numbers match the compare (acceptance)", () =>
         "money",
         [
           [2026, null, null, null], // ADR 0159: no opening-year flow
-          [2027, -32835, -35589, -32835],
-          [2056, 1463571, 1445654, 1463571],
+          // ADR 0182: management on collected rent (was −32,835 … and 1,463,571 …).
+          [2027, -26229, -28983, -26229],
+          [2056, 1479169, 1461253, 1479169],
         ],
       ],
       [
@@ -169,8 +170,9 @@ describe("compareWorkbook — the numbers match the compare (acceptance)", () =>
         "money",
         [
           [2026, null, null, null], // ADR 0159: no opening-year flow
-          [2027, -32034, -32801, -32034],
-          [2056, 697747, 581073, 697747],
+          // ADR 0182: management on collected rent (was −32,034 … and 697,747 …).
+          [2027, -25589, -26713, -25589],
+          [2056, 705183, 587343, 705183],
         ],
       ],
       [

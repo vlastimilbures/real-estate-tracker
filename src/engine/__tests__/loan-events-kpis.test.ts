@@ -134,12 +134,16 @@ describe("ADR 0109: prepayments in the KPIs", () => {
     expect(
       kpis.leveredIrrNominal?.equals(baseKpis.leveredIrrNominal ?? ZERO),
     ).toBe(false);
-    // The KPI reference model gives 0.0616724 for this portfolio (ADR 0179).
-    nearNum(kpis.leveredIrrNominal!.toNumber(), 0.061672, RATIO, "prepaid irr");
-    // The prepayment lands in Y5 (2031), the seed's first positive year; its outflow
-    // does not reduce that year's own net cash flow, so the KPI stays 2031.
+    // The KPI reference model gives 0.0619133 for this portfolio (ADR 0182; was
+    // 0.0616724 under ADR 0179, before management followed collected rent).
+    nearNum(kpis.leveredIrrNominal!.toNumber(), 0.061913, RATIO, "prepaid irr");
+    // The prepayment lands in Y5 (2031); its outflow does not reduce that year's own net
+    // cash flow: Y5 nets positive while its cash to owner is negative. The KPI stays the
+    // seed's operating year, Y3 (2029 since ADR 0182; Y5 2031 before).
     expect(proj[5]?.prepaid.greaterThan(ZERO)).toBe(true);
-    expect(kpis.firstCashFlowPositiveYear).toBe(2031);
+    expect(proj[5]?.netCashFlow.greaterThan(ZERO)).toBe(true);
+    expect(proj[5]?.cashToOwner.lessThan(ZERO)).toBe(true);
+    expect(kpis.firstCashFlowPositiveYear).toBe(2029);
   });
 
   it("a shorter term makes the loan debt-free earlier", () => {

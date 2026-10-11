@@ -51,22 +51,22 @@ weighted-avg rate, net-worth multiple) within **±0.0001**. Base date **2026-06-
 | Portfolio LTV                          | 0.33120       |
 | Annual rental income (gross)           | 846,600       |
 | Effective gross income (after vacancy) | 804,270       |
-| Annual holding costs                   | 215,220       |
-| Net operating income (NOI)             | 589,050       |
+| Annual holding costs                   | 208,870.5     |
+| Net operating income (NOI)             | 595,399.5     |
 | Annual debt service                    | 646,384.2     |
-| Annual net cash flow                   | −57,334.2     |
+| Annual net cash flow                   | −50,984.7     |
 | Gross yield                            | 0.02947       |
-| Net yield (cap rate)                   | 0.02050       |
-| Portfolio DSCR                         | 0.91130       |
+| Net yield (cap rate)                   | 0.02072       |
+| Portfolio DSCR                         | 0.92112       |
 | Weighted-avg interest rate             | 0.035226      |
 
 ### Current snapshot — per property
 
-| Property     | Value      | Debt         | NOI     | Debt service | Net CF     | DSCR     |
-| ------------ | ---------- | ------------ | ------- | ------------ | ---------- | -------- |
-| Byt Javorova | 10,200,000 | 1,642,907.31 | 229,500 | 80,661.6     | 148,838.4  | 2.84522  |
-| Byt Lipova   | 8,925,000  | 5,116,588.94 | 179,775 | 306,805.8    | −127,030.8 | 0.585957 |
-| Byt Dubova   | 9,605,000  | 2,755,908.88 | 179,775 | 258,916.8    | −79,141.8  | 0.694335 |
+| Property     | Value      | Debt         | NOI        | Debt service | Net CF      | DSCR     |
+| ------------ | ---------- | ------------ | ---------- | ------------ | ----------- | -------- |
+| Byt Javorova | 10,200,000 | 1,642,907.31 | 231,948    | 80,661.6     | 151,286.4   | 2.87557  |
+| Byt Lipova   | 8,925,000  | 5,116,588.94 | 181,725.75 | 306,805.8    | −125,080.05 | 0.592315 |
+| Byt Dubova   | 9,605,000  | 2,755,908.88 | 181,725.75 | 258,916.8    | −77,191.05  | 0.701869 |
 
 ### Amortization (Byt Javorova; rate 1.69%, instalment 6,721.8; baseDate balance 1,642,907.31)
 
@@ -87,11 +87,11 @@ weighted-avg rate, net-worth multiple) within **±0.0001**. Base date **2026-06-
 | Net-worth multiple                     | 4.8496×                                                                           |
 | Net-worth CAGR (nominal)               | 0.0540                                                                            |
 | Net-worth CAGR (real)                  | 0.0283                                                                            |
-| Cumulative cash to owner (Yrs 1–30)    | 14,705,700.29                                                                     |
-| First year net cash flow positive      | 2031                                                                              |
+| Cumulative cash to owner (Yrs 1–30)    | 15,020,596.50                                                                     |
+| First year net cash flow positive      | 2029                                                                              |
 | Year portfolio debt fully repaid       | 2052                                                                              |
-| Levered IRR (nominal)                  | 0.061795                                                                          |
-| Levered IRR (real)                     | 0.035898                                                                          |
+| Levered IRR (nominal)                  | 0.062038                                                                          |
+| Levered IRR (real)                     | 0.036135                                                                          |
 | **Σ principal repaid, Yrs 1–30**       | **9,515,405** (= initial debt — invariant: principal retires 100% of the balance) |
 
 > The last invariant is the single most important correctness check: the sum of all principal
@@ -133,7 +133,8 @@ svjMonthly 1700; otherYr 0.
 
 **Holding costs** (per property; override of the SVJ default): propertyTaxYr 2550,
 insuranceYr 2550, mgmtPctRent 0.15, maintPctRent 0.05, **svjMonthly 850**, otherYr 0,
-for each of the three properties.
+for each of the three properties. Management is charged on the rent collected (after
+vacancy), maintenance on the rent contracted (ADR 0182).
 
 > Note: Lipova's rent in force at baseDate (2026-06-07) is **21,675** (the lease ending
 > 2026-08-30), not 23,205 — the snapshot must pick the lease valid _on_ the base date. This is a
@@ -146,7 +147,12 @@ Every change to a target above needs a row here, backed by an accepted ADR. Upda
 golden-master snapshot in the same commit (ADR 0039). Changes before the public release are
 described in the ADRs themselves (ADR 0021 schedule calendar, ADR 0080 lease steps).
 
-| Target                                  | Old                                 | New                                          | ADR  | Date       |
-| --------------------------------------- | ----------------------------------- | -------------------------------------------- | ---- | ---------- |
-| Every money target (sample re-based)    | previous sample portfolio's figures | engine values for the ×0.85 fictional sample | 0081 | 2026-10-03 |
-| Ratio, rate, IRR, CAGR and year targets | —                                   | unchanged                                    | 0081 | 2026-10-03 |
+| Target                                                                             | Old                                               | New                                                   | ADR  | Date       |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------- | ---- | ---------- |
+| Every money target (sample re-based)                                               | previous sample portfolio's figures               | engine values for the ×0.85 fictional sample          | 0081 | 2026-10-03 |
+| Ratio, rate, IRR, CAGR and year targets                                            | —                                                 | unchanged                                             | 0081 | 2026-10-03 |
+| Annual holding costs · NOI · net cash flow · net yield · DSCR (portfolio snapshot) | 215,220 · 589,050 · −57,334.2 · 0.02050 · 0.91130 | 208,870.5 · 595,399.5 · −50,984.7 · 0.02072 · 0.92112 | 0182 | 2026-10-11 |
+| Javorova NOI · net CF · DSCR                                                       | 229,500 · 148,838.4 · 2.84522                     | 231,948 · 151,286.4 · 2.87557                         | 0182 | 2026-10-11 |
+| Lipova NOI · net CF · DSCR                                                         | 179,775 · −127,030.8 · 0.585957                   | 181,725.75 · −125,080.05 · 0.592315                   | 0182 | 2026-10-11 |
+| Dubova NOI · net CF · DSCR                                                         | 179,775 · −79,141.8 · 0.694335                    | 181,725.75 · −77,191.05 · 0.701869                    | 0182 | 2026-10-11 |
+| Cumulative cash to owner · first year net CF positive · levered IRR nominal / real | 14,705,700.29 · 2031 · 0.061795 / 0.035898        | 15,020,596.50 · 2029 · 0.062038 / 0.036135            | 0182 | 2026-10-11 |

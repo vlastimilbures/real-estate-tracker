@@ -350,7 +350,9 @@ function computeRentAndCosts(
     .times(at(cpi, t))
     .times(ownedMonths)
     .div(12)
-    .plus(b.mgmtPct.plus(b.maintPct).times(grossRent));
+    // Management on the rent collected, maintenance on the rent contracted (ADR 0182).
+    .plus(b.mgmtPct.times(effectiveRent))
+    .plus(b.maintPct.times(grossRent));
   const noi = effectiveRent.minus(holdingCosts);
   return { grossRent, effectiveRent, holdingCosts, noi };
 }
