@@ -52,6 +52,8 @@
 - The golden master does not move (no fixture has a handover-month tranche or same-day
   events of one kind); the KPI reference model has no refinances or development loans.
 - Levered IRR and cash to owner move only for a development successor that draws in its
-  handover month.
+  handover month. At the extreme, a successor with no initial principal that pays off the
+  predecessor from a handover-month tranche books the whole payoff as a pay-down (refinance
+  cash = −the balance paid off) and the tranche as new debt.
 - The upcoming-events order no longer depends on random ids: two portfolios with the same
   data list same-day events alike.
