@@ -30,7 +30,8 @@ import { fcRuns } from "./support/fcRuns";
 import { assumptions as A0 } from "./support/seed";
 
 // Fixed seed ⇒ reproducible in CI; nightly runs 2000 with a date seed (`fcRuns`).
-const { runs: RUNS, timeout: TIMEOUT } = fcRuns(20261005, 200);
+const SEED = 20261005;
+const { runs: RUNS, timeout: TIMEOUT } = fcRuns(SEED, 200);
 
 /** A rate shock, if the loan has one (`shockOf`). */
 type Extra = Partial<Assumptions>;
@@ -497,9 +498,14 @@ describe("#130 R1-07: random loans end at the maturity in force", () => {
         RUNS,
       );
       // Not vacuous: the generator draws the R1-01 shape (~3 % of loans, #232) and the
-      // #228 one (#237).
-      expect(r101).toBeGreaterThan(0);
-      expect(s228).toBeGreaterThan(0);
+      // #228 one (~1.8 %, #237). Checked on the fixed seed (deterministic) and on runs
+      // of 1000 or more. A small FC_RUNS with another seed may draw neither by chance
+      // (#228 at 200 runs: P(0) ≈ e^-3.6 ≈ 3 %; at 1000 runs ≈ e^-18), so a replay of
+      // a failure with few runs does not fail here.
+      if (RUNS.seed === SEED || RUNS.numRuns >= 1000) {
+        expect(r101).toBeGreaterThan(0);
+        expect(s228).toBeGreaterThan(0);
+      }
     },
     TIMEOUT,
   );
