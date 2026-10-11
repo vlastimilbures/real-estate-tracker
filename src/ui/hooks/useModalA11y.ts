@@ -17,7 +17,9 @@ function focusables(root: HTMLElement): HTMLElement[] {
  * Options (UX-029), off by default so popovers keep their lighter behaviour:
  * - `trap`: Tab / Shift+Tab wrap inside the dialog instead of walking into the page.
  * - `restoreFocus`: on close, focus returns to the element that had it on open, unless
- *   focus has already moved on (a click outside a popover keeps its target focused).
+ *   focus has already moved on (a click outside a popover keeps its target focused). When
+ *   that element has left the page, focus goes to the first focusable element of its
+ *   nearest ancestor still on the page (ADR 0173).
  *
  * Open dialogs and popovers form a stack (ADR 0157): Escape and the Tab trap act on the
  * top-most one only, so one Escape closes one layer.
@@ -49,6 +51,11 @@ export function useModalA11y(
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
+    // The opener's ancestors, nearest first: the fallback when the opener itself has left
+    // the page by the time the dialog closes (ADR 0173, #280).
+    const ancestors: HTMLElement[] = [];
+    for (let a = opener?.parentElement; a; a = a.parentElement)
+      ancestors.push(a);
     function onKey(e: KeyboardEvent) {
       if (stack.at(-1) !== self) return;
       if (e.key === "Escape") closeRef.current();
@@ -87,7 +94,14 @@ export function useModalA11y(
       const active = document.activeElement;
       const lost =
         !active || active === document.body || !!el?.contains(active);
-      if (restoreFocus && lost && opener?.isConnected) opener.focus();
+      if (!restoreFocus || !lost || !opener) return;
+      if (opener.isConnected) opener.focus();
+      else {
+        // Gone with its popover (a dropdown option): the first focusable element of the
+        // nearest ancestor still on the page, such as the dropdown's trigger.
+        const home = ancestors.find((a) => a.isConnected);
+        if (home) focusables(home)[0]?.focus();
+      }
     };
   }, [trap, restoreFocus]); // constant per call site, so this runs once on mount
 

@@ -152,3 +152,44 @@ describe("useModalA11y dialog stack (#128 R5-14)", () => {
     );
   });
 });
+
+// #280 (ADR 0173, amends ADR 0157 decision 2): when the opener has left the page by the
+// time the dialog closes (a dropdown option, its list closed on blur), focus goes to the
+// first focusable element of the opener's nearest ancestor still on the page.
+function Dropdown({ listOpen }: { listOpen: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <div>
+        <button type="button">Trigger</button>
+        {listOpen && (
+          <ul>
+            <li>
+              <button type="button" onClick={() => setOpen(true)}>
+                Option
+              </button>
+            </li>
+          </ul>
+        )}
+      </div>
+      {open && <Box onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+describe("useModalA11y focus fallback (#280)", () => {
+  it("returns focus to the nearest connected element when the opener is gone", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<Dropdown listOpen />);
+    await user.click(screen.getByRole("button", { name: "Option" }));
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Inside" }),
+    );
+    rerender(<Dropdown listOpen={false} />);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Trigger" }),
+    );
+  });
+});
