@@ -35,6 +35,15 @@ pub fn atomic_write_private(dest: &Path, data: &[u8]) -> Result<(), AppError> {
     write_via_temp(dest, data, Some(PRIVATE_FILE))
 }
 
+/// A new app file (a safety backup): `atomic_write_private`, but an existing file is
+/// refused with `BACKUP_EXISTS` and left as it was, as `db_backup` does (ADR 0175).
+pub fn write_new_private(dest: &Path, data: &[u8]) -> Result<(), AppError> {
+    if dest.exists() {
+        return Err(AppError::BackupExists(dest.to_path_buf()));
+    }
+    atomic_write_private(dest, data)
+}
+
 /// Mode of the app's own files and folders (DR-157): user only.
 const PRIVATE_FILE: u32 = 0o600;
 const PRIVATE_DIR: u32 = 0o700;
@@ -287,8 +296,9 @@ pub async fn open_backup_file(
 }
 
 /// Write `json` to `<app-config>/backups/<filename>` (the database's own folder, D-52)
-/// through the verified temp-file write, 0600 (DR-157). Async, so the write of a large
-/// backup never runs on the main thread.
+/// through the verified temp-file write, 0600 (DR-157). An existing file of that name is
+/// refused (`BACKUP_EXISTS`), never replaced. Async, so the write of a large backup never
+/// runs on the main thread.
 #[tauri::command]
 pub async fn write_app_backup(
     app: AppHandle,
@@ -304,7 +314,7 @@ pub async fn write_app_backup(
         .map_err(AppError::other)?
         .join("backups");
     fs::create_dir_all(&dir)?;
-    atomic_write_private(&dir.join(&filename), json.as_bytes())
+    write_new_private(&dir.join(&filename), json.as_bytes())
 }
 
 /// The database's file name in the app folder (`sqlite:portfolio.db`, src/data/tauriSql.ts).

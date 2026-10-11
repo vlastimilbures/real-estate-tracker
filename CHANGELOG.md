@@ -289,6 +289,10 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- A safety backup written before a restore or Clear sample never replaces an existing one
+  of the same name (ADR 0175, #151). If two were made in the same second, the second action
+  stops with a message instead of overwriting the first copy.
+
 - Upcoming financing events on the same day, such as two flats' lease ends, now show in the
   portfolio's property order (by name) instead of a random order (ADR 0176, #207).
 

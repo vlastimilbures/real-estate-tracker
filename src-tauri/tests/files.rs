@@ -3,7 +3,7 @@
 
 use app_lib::files::{
     atomic_write, atomic_write_private, percent_decode, restrict_app_dir, restrict_dir,
-    reveal_args, valid_backup_name,
+    reveal_args, valid_backup_name, write_new_private,
 };
 use std::ffi::OsString;
 use std::fs;
@@ -126,6 +126,30 @@ fn backup_names_stay_inside_the_backups_folder() {
     assert!(!valid_backup_name(".hidden.json"));
     assert!(!valid_backup_name("portfolio.db"));
     assert!(!valid_backup_name(""));
+}
+
+// ADR 0175 (#151 item 5): a safety backup never replaces an existing one, as `db_backup`
+// refuses an existing target.
+#[test]
+fn write_new_private_refuses_an_existing_file() {
+    let dir = temp_dir("new-private");
+    let dest = dir.join("portfolio-before-restore-20261001T120000Z.json");
+    fs::write(&dest, "first").unwrap();
+    let err = write_new_private(&dest, b"second").unwrap_err().to_string();
+    assert!(err.starts_with("BACKUP_EXISTS: "), "{err}");
+    assert_eq!(fs::read_to_string(&dest).unwrap(), "first");
+    assert_eq!(
+        entries(&dir),
+        vec!["portfolio-before-restore-20261001T120000Z.json"]
+    );
+}
+
+#[test]
+fn write_new_private_writes_a_new_file() {
+    let dir = temp_dir("new-private-ok");
+    let dest = dir.join("b.json");
+    write_new_private(&dest, b"{}").unwrap();
+    assert_eq!(fs::read(&dest).unwrap(), b"{}");
 }
 
 // DR-157 (ADR 0080): the app's own files are private to the user.
