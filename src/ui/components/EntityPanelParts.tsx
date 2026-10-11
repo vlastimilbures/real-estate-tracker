@@ -6,6 +6,7 @@ import { Button, TableWrap } from "./primitives";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import type { MutationResult } from "../../state/portfolioStore";
+import { focusPanelAfter, usePanelRef } from "./panelFocus";
 
 export function EntityTable<T extends { id: string }>({
   label,
@@ -90,7 +91,8 @@ export function EntityTable<T extends { id: string }>({
 
 /** The one inline confirm for a destructive action (ADR 0143). It runs `onConfirm` and
  *  stays open with the reason when the write fails (UX-050); the caller closes it on
- *  success. Focus moves to Cancel on open and back to the trigger on Cancel;
+ *  success. Focus moves to Cancel on open and back to the trigger on Cancel, and to the
+ *  enclosing panel once a successful confirm has closed the row (ADR 0173);
  *  both buttons are described by the question, so a screen reader reads it. */
 export function ConfirmRow({
   message,
@@ -112,6 +114,11 @@ export function ConfirmRow({
   const rowRef = useRef<HTMLDivElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const messageId = useId();
+  const panel = usePanelRef();
+  // Set once the write landed: the caller then closes the row, and focus follows it to
+  // the panel (ADR 0173). `mounted` tells whether that close has already happened.
+  const succeeded = useRef(false);
+  const mounted = useRef(false);
   useEffect(() => {
     // A passive effect: a guard dialog that closed in the same commit has already put
     // focus back on the trigger, so that is what is remembered here.
@@ -121,6 +128,14 @@ export function ConfirmRow({
     // reach the destructive one (ADR 0143).
     [...(rowRef.current?.querySelectorAll("button") ?? [])].at(-1)?.focus();
   }, []);
+  useEffect(() => {
+    mounted.current = true;
+    const row = rowRef.current;
+    return () => {
+      mounted.current = false;
+      if (succeeded.current) focusPanelAfter(panel, row);
+    };
+  }, [panel]);
   return (
     <div className="confirm-row" ref={rowRef}>
       <div className="confirm-row-content">
@@ -136,7 +151,12 @@ export function ConfirmRow({
             setBusy(true);
             setError(null);
             const result = await onConfirm();
-            if (result.ok) return;
+            if (result.ok) {
+              succeeded.current = true;
+              // Already closed by the caller: focus follows now, not on unmount.
+              if (!mounted.current) focusPanelAfter(panel, null);
+              return;
+            }
             setBusy(false);
             setError(describeWriteError(tr, result.error).message);
           }}

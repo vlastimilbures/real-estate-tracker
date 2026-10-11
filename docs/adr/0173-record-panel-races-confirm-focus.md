@@ -39,7 +39,8 @@ stays usable meanwhile (ADR 0142 keeps the other rows reachable). Four gaps foll
    Delete buttons are disabled while a scenario write runs, so no other confirm can open.
 2. **Focus after a successful confirm (#247 part 1).** When the confirm row closes after its
    write landed, focus moves to the panel that held it: the panel's `section` takes focus
-   from script only (`tabIndex=-1`) and is named by its title when it has one. When that panel
+   from script only (`tabIndex=-1`). It stays unnamed: a named `section` is a region
+   landmark, and a record panel's table is already a region named by the panel's title. When that panel
    is gone (the last property deleted, the page shows its empty state), focus moves to the
    page's `h1`, which also takes focus from script only. Focus moves only when it was lost
    (on `<body>` or still in the row), so a row or form opened meanwhile keeps it. The focus

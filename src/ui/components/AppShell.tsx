@@ -299,7 +299,11 @@ export function AppShell({
       <div className="content">
         <header className="topbar" ref={topbarRef}>
           <div>
-            <h1 className="page-title">{title}</h1>
+            {/* Focusable from script only: focus lands here after a confirmed action
+                removed its panel (ADR 0173). */}
+            <h1 className="page-title" tabIndex={-1}>
+              {title}
+            </h1>
             {subtitle && <div className="page-sub">{subtitle}</div>}
           </div>
           <div className="row">

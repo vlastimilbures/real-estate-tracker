@@ -108,9 +108,11 @@ function RecordPanel({
   );
 }
 
-/** The deactivate confirm opens from a page button; this stands in for it. */
+/** The deactivate confirm opens from a page button; this stands in for it. A landed
+ *  deactivate closes the confirm and shows the inactive banner, as Property detail does. */
 function DeactivateHarness() {
   const [confirming, setConfirming] = useState(false);
+  const [active, setActive] = useState(true);
   return (
     <>
       <button type="button" onClick={() => setConfirming(true)}>
@@ -118,9 +120,13 @@ function DeactivateHarness() {
       </button>
       <ActivationBanner
         propertyName="Dubová"
-        isActive
+        isActive={active}
         confirmingDeactivate={confirming}
-        onConfirmDeactivate={ok}
+        onConfirmDeactivate={async () => {
+          setConfirming(false);
+          setActive(false);
+          return { ok: true };
+        }}
         onCancelDeactivate={() => setConfirming(false)}
       />
     </>
@@ -362,5 +368,128 @@ describe("ConfirmRow busy state (#249)", () => {
     expect(screen.getByRole("alert").textContent).toBe(
       en.dataErrors.ROW_MISSING,
     );
+  });
+});
+
+// #247 part 1 (ADR 0173): after a confirm lands, focus moves to the panel that held the
+// row, or to the page's h1 when that panel is gone; never away from a row opened meanwhile.
+describe("focus after a successful confirm (#247)", () => {
+  const yes = () => screen.getByRole("button", { name: en.common.yesDelete });
+  const sectionOf = (el: HTMLElement) => el.closest("section");
+
+  it("record panel: onto the panel", async () => {
+    render(<RecordPanel />);
+    await userEvent.click(
+      screen.getAllByRole("button", { name: en.common.delete })[0]!,
+    );
+    await userEvent.click(yes());
+    expect(document.activeElement).toBe(
+      sectionOf(screen.getByRole("heading", { name: "Rows" })),
+    );
+  });
+
+  it("scenario list: onto the panel", async () => {
+    render(
+      <ScenarioListPanel
+        scenarios={[{ id: "s1", name: "Rates up", overrides: {} }]}
+        baseOn
+        onToggleBase={() => undefined}
+        selectedIds={[]}
+        maxCompare={4}
+        onToggle={() => undefined}
+        busy={false}
+        onEdit={() => undefined}
+        onDuplicate={() => undefined}
+        onDelete={ok}
+      />,
+    );
+    await clickDelete();
+    await userEvent.click(yes());
+    expect(document.activeElement).toBe(
+      sectionOf(screen.getByRole("heading", { name: en.scenarios.listTitle })),
+    );
+  });
+
+  it("deactivate: onto the inactive banner that replaces the confirm", async () => {
+    render(<DeactivateHarness />);
+    await userEvent.click(screen.getByRole("button", { name: "Deactivate" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: en.propertyDetail.yesDeactivate }),
+    );
+    expect(document.activeElement).toBe(
+      sectionOf(screen.getByText(en.propertyDetail.inactiveNote)),
+    );
+  });
+
+  it("Properties: onto the table's panel", async () => {
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio,
+        assumptions,
+        status: "ready",
+        removeProperty: vi.fn(ok),
+      }),
+    );
+    render(<Properties />);
+    await userEvent.click(
+      screen.getAllByRole("button", { name: en.common.delete })[0]!,
+    );
+    await userEvent.click(yes());
+    expect(document.activeElement).toBe(
+      sectionOf(screen.getByRole("region", { name: en.properties.title })),
+    );
+  });
+
+  it("Properties, the last property deleted: onto the page heading", async () => {
+    const only = portfolio.properties[0]!.id;
+    const empty = {
+      properties: [],
+      mortgages: [],
+      valuations: [],
+      leases: [],
+      holdingCosts: [],
+    };
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: {
+          properties: portfolio.properties.filter((p) => p.id === only),
+          mortgages: portfolio.mortgages.filter((m) => m.propertyId === only),
+          valuations: portfolio.valuations.filter((v) => v.propertyId === only),
+          leases: portfolio.leases.filter((l) => l.propertyId === only),
+          holdingCosts: portfolio.holdingCosts.filter(
+            (h) => h.propertyId === only,
+          ),
+        },
+        assumptions,
+        status: "ready",
+        removeProperty: vi.fn(async () => {
+          usePortfolioStore.setState({ portfolio: empty });
+          return { ok: true as const };
+        }),
+      }),
+    );
+    render(<Properties />);
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.delete }),
+    );
+    await userEvent.click(yes());
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(document.activeElement).toBe(
+      screen.getByRole("heading", { level: 1 }),
+    );
+  });
+
+  it("a delete that lands after another row's confirm opened leaves focus there", async () => {
+    const write = deferred();
+    render(<RecordPanel onDelete={() => write.promise} />);
+    await userEvent.click(
+      screen.getAllByRole("button", { name: en.common.delete })[0]!,
+    );
+    await userEvent.click(yes());
+    await userEvent.click(
+      screen.getAllByRole("button", { name: en.common.delete })[1]!,
+    );
+    await act(async () => write.finish({ ok: true }));
+    expect(document.activeElement).toBe(cancelButton());
   });
 });

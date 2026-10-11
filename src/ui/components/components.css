@@ -275,10 +275,16 @@
   gap: var(--s6);
   scroll-margin-top: calc(var(--topbar-h, 0px) + var(--s3));
 }
-.panel > .panel-head h2:focus {
+.panel > .panel-head h2:focus,
+.panel:focus,
+.topbar .page-title:focus {
   outline: none;
 }
-.panel > .panel-head h2:focus-visible {
+/* A panel or the page title focused from script after a confirm (ADR 0173) shows the
+   ring only for keyboard focus, like a panel heading. */
+.panel > .panel-head h2:focus-visible,
+.panel:focus-visible,
+.topbar .page-title:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
