@@ -3,7 +3,7 @@
 // ("needs owner input" — never guessed); the mapper round-trips the new field.
 import { describe, it, expect } from "vitest";
 import { openMemorySql } from "./betterSqlite";
-import { schemaAt } from "./schemaAt";
+import { schemaAt } from "./support/schemaAt";
 import { migrate, MIGRATIONS } from "../migrations";
 import { loadPortfolio } from "../repositories";
 import {

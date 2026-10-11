@@ -3,7 +3,7 @@
 // events, same numbers); the mapper round-trips both lists; bad JSON is refused.
 import { describe, it, expect } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
-import { schemaAt } from "./schemaAt";
+import { schemaAt } from "./support/schemaAt";
 import { migrate } from "../migrations";
 import { loadPortfolio } from "../repositories";
 import {

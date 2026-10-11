@@ -4,7 +4,7 @@
 import { describe, it, expect } from "vitest";
 import DatabaseConstructor from "better-sqlite3";
 import { openMemorySql, type TestSql } from "./betterSqlite";
-import { schemaAt } from "./schemaAt";
+import { schemaAt } from "./support/schemaAt";
 import { checkIntegrity, migrate, MIGRATIONS } from "../migrations";
 import { DataError } from "../errors";
 import { loadAssumptions, loadPortfolio, listScenarios } from "../repositories";

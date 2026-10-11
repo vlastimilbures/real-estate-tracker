@@ -1,6 +1,6 @@
 // A database at a historical schema version, for the migration tests.
-import { openMemorySql, type TestSql } from "./betterSqlite";
-import { MIGRATIONS } from "../migrations";
+import { openMemorySql, type TestSql } from "../betterSqlite";
+import { MIGRATIONS } from "../../migrations";
 
 /** A database at schema `version`, built from the historical migrations exactly as the
  *  pre-P5a runner applied them (statement by statement, no transaction). */
