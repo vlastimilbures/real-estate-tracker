@@ -164,6 +164,14 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- The **management** percentage is charged on the rent collected (after the vacancy
+  allowance), not on the full contracted rent; **maintenance** stays on the contracted rent
+  (ADR 0182, #150). The rule is the same for today's figures and every projection year. An
+  empty flat no longer pays its manager: on the sample portfolio holding costs fall from
+  215,220 to 208,870.5 Kč, NOI rises from 589,050 to 595,399.5 Kč, DSCR from 0.91 to 0.92,
+  the levered IRR from 6.18 % to 6.20 %, and cash flow turns positive in 2029 instead of 2031. The labels read "Management (% of collected rent)" and "Maintenance (% of
+  contracted rent)", and the Guide's examples follow the new rule.
+
 - A **Shorten the term** prepayment keeps the instalment and works out the new term at the
   next payment's rate (ADR 0179, #164, #235). At a fixation end
   the term is now sized at the new rate instead of the old one: Javorová's 500,000 Kč
