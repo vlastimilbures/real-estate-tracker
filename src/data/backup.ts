@@ -175,14 +175,17 @@ export const BACKUP_COLUMNS: Record<BackupTable, readonly string[]> = {
     "default_maint_pct_rent",
     "default_svj_monthly",
     "default_other_yr",
+    "selling_cost_pct",
   ],
   scenarios: ["id", "name", "overrides", "created_at"],
 };
 
 /** Value for a column an older backup lacks: every column added by a later migration
- *  is nullable, except `properties.active` (v4, default 1). */
+ *  is nullable, except `properties.active` (v4, default 1) and
+ *  `assumptions.selling_cost_pct` (v11, default '0', ADR 0183). */
 const ADDED_COLUMN_DEFAULTS: Partial<Record<string, unknown>> = {
   "properties.active": 1,
+  "assumptions.selling_cost_pct": "0",
 };
 
 /** The values each property flag column may hold (the v7 CHECKs, ADR 0148). */

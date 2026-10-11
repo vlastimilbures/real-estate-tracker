@@ -182,3 +182,38 @@ async fn the_funding_sign_checks_hold_on_the_bundled_sqlite() {
     }
     cleanup(path, pool).await;
 }
+
+/// ADR 0183 (v11): the existing assumptions row reads the default '0' and the 0–1 check
+/// holds on the bundled SQLite.
+#[tokio::test]
+async fn the_selling_cost_column_defaults_to_zero_and_checks_its_range() {
+    let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
+    let migrations = fixture["migrations"].as_array().unwrap();
+    let (path, pool) = open("selling-cost").await;
+    apply(&pool, &migrations[0]).await;
+    pool.execute(V1_ROWS).await.unwrap();
+    for migration in &migrations[1..] {
+        apply(&pool, migration).await;
+    }
+    let stored: String = sqlx::query("SELECT selling_cost_pct FROM assumptions")
+        .fetch_one(&pool)
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(stored, "0");
+    pool.execute("UPDATE assumptions SET selling_cost_pct = '0.04'")
+        .await
+        .unwrap();
+    for bad in ["1.5", "-0.01"] {
+        let err = pool
+            .execute(format!("UPDATE assumptions SET selling_cost_pct = '{bad}'").as_str())
+            .await
+            .unwrap_err()
+            .to_string();
+        assert!(
+            err.contains("assumptions_selling_cost_0_to_1"),
+            "{bad}: {err}"
+        );
+    }
+    cleanup(path, pool).await;
+}

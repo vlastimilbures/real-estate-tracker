@@ -100,7 +100,10 @@ describe("Effective-dating survives the DB round trip", () => {
 // text), so a field only one copy has fails too. A DB-only default the fixture leaves
 // out is compared against its default value (fixture side only, so a DB row that
 // drops the field still fails).
-const DB_ONLY_DEFAULTS: Record<string, unknown> = { active: true };
+const DB_ONLY_DEFAULTS: Record<string, unknown> = {
+  active: true,
+  sellingCostPct: "0", // v11 column, NOT NULL DEFAULT '0' (ADR 0183)
+};
 function onAllKeys(actual: object, expected: object): [unknown, unknown] {
   const a = actual as Record<string, unknown>;
   const e = expected as Record<string, unknown>;
