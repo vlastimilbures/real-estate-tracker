@@ -270,3 +270,15 @@ export function dashboardSubtitle(
   if (!isToday) parts.push(t.dashboard.asOf(fmtDate(asOf)));
   return parts.length ? parts.join(" · ") : t.dashboard.subtitleDefault;
 }
+
+/** The Dashboard filter to store once the saved one names a property that is no longer
+ *  active (ADR 0180 §7): the active ids it keeps, or no filter (`[]`) when those filter
+ *  nothing. `null` when every saved id is active, so a filter picked by hand stays. */
+export function prunedFilter(
+  saved: readonly string[],
+  activeIds: readonly string[],
+): string[] | null {
+  const kept = saved.filter((id) => activeIds.includes(id));
+  if (kept.length === saved.length) return null;
+  return kept.length < activeIds.length ? kept : [];
+}

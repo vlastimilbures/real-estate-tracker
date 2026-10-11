@@ -205,6 +205,31 @@ describe("Dashboard filter (#127 item 3)", () => {
     expect(screen.getByText(en.dashboard.subtitleDefault)).toBeTruthy();
   });
 
+  // ADR 0180 §7 (#276 item 3): the pruned filter is written back, so it cannot come back.
+  it("a filter left with one active property is cleared, so a reactivated one finds All", () => {
+    load(activeOnly("dev"), {
+      route: "dashboard",
+      dashboardPropertyIds: ["dev", "inactive"],
+    });
+    const { unmount } = render(<Dashboard />);
+    expect(useUiStore.getState().dashboardPropertyIds).toEqual([]);
+    unmount();
+    act(() =>
+      usePortfolioStore.setState({ portfolio: activeOnly("dev", "future") }),
+    );
+    render(<Dashboard />);
+    expect(screen.getByText(en.dashboard.subtitleDefault)).toBeTruthy();
+  });
+
+  it("a filter that loses a deactivated property keeps the rest", () => {
+    load(mixed, {
+      route: "dashboard",
+      dashboardPropertyIds: ["dev", "inactive"],
+    });
+    render(<Dashboard />);
+    expect(useUiStore.getState().dashboardPropertyIds).toEqual(["dev"]);
+  });
+
   it("a real subset still reads n of N", () => {
     load(mixed, { route: "dashboard", dashboardPropertyIds: ["dev"] });
     render(<Dashboard />);

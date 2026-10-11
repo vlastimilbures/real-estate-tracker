@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useEngine } from "../../state/useEngine";
 import { asOfBounds } from "../model/asOf";
 import { useUiStore } from "../../state/uiStore";
@@ -21,6 +22,7 @@ import {
   monthlyFlowLabels,
   netCashFlowFoot,
   dashboardSubtitle,
+  prunedFilter,
 } from "../model/dashboard";
 import {
   HeroTiles,
@@ -85,6 +87,14 @@ export function Dashboard() {
   );
   const activeIds = new Set(allProperties.map((p) => p.id));
   const effectiveIds = dashboardPropertyIds.filter((id) => activeIds.has(id));
+  // Store the pruned filter, so a deactivated property's id cannot come back with it
+  // (ADR 0180 §7). Only once the portfolio is loaded: before, every id looks inactive.
+  const pruned = fullPortfolio
+    ? prunedFilter(dashboardPropertyIds, [...activeIds])
+    : null;
+  useEffect(() => {
+    if (pruned) setDashboardPropertyIds(pruned);
+  }, [pruned, setDashboardPropertyIds]);
   // The date the tiles, picker and subtitle are for, clamped to the window (ADR 0150).
   const view = useAsOf();
   const engine = useEngine(effectiveIds, view?.date ?? null);
