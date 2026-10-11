@@ -362,9 +362,7 @@ describe("KPI reference model (engine-free, ADR 0174)", () => {
 
   it("finds the IRR only for a unique root (one sign change, or Norström)", () => {
     const flows = (xs: number[]) => xs.map((x) => new Dec(x));
-    expect(() => referenceIrr(flows([-100, 230, -132]))).toThrow(
-      /one sign change/,
-    );
+    expect(() => referenceIrr(flows([-100, 230, -132]))).toThrow(/unique root/);
     expect(Number(referenceIrr(flows([-100, 10, 110])))).toBeCloseTo(0.1, 12);
     // Three sign changes, but the running sums −100, −50, −60, 40 change sign once.
     expect(Number(referenceIrr(flows([-100, 50, -10, 100])))).toBeCloseTo(

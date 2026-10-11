@@ -44,6 +44,19 @@ describe("100% vacancy (vacancyAllowance = 1)", () => {
   });
 });
 
+// ADR 0182: at 50 % vacancy management is charged on half the rent, maintenance on all of it.
+// 45,900 fixed + 15 % × 423,300 + 5 % × 846,600 = 45,900 + 63,495 + 42,330.
+describe("50% vacancy (vacancyAllowance = 0.5)", () => {
+  const a = applyScenario(assumptions, { vacancyAllowance: rate("0.5") });
+  it("management on collected rent, maintenance on contracted rent", () =>
+    near(
+      portfolioSnapshot(portfolio, a).holdingCosts.toNumber(),
+      151_725,
+      KC,
+      "holding",
+    ));
+});
+
 describe("0% vacancy (vacancyAllowance = 0)", () => {
   const a = applyScenario(assumptions, { vacancyAllowance: rate("0") });
   const snap = portfolioSnapshot(portfolio, a);

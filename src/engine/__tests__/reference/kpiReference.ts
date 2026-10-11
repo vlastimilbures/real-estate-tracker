@@ -327,7 +327,9 @@ export function referenceIrr(flows: Dec[]): Dec {
     signChanges(running) === 1 &&
     !sum.isZero();
   if (changes !== 1 && !norstrom)
-    throw new RangeError(`IRR needs one sign change, got ${changes}.`);
+    throw new RangeError(
+      `IRR needs a unique root (one sign change, or running sums changing sign once), got ${changes} sign changes.`,
+    );
   let lo = d(norstrom ? 0 : "-0.9");
   let hi = d(10);
   const fLo = npv(flows, lo);
