@@ -1,13 +1,7 @@
 // Annual projection per property and for the portfolio, and the CPI index behind real
 // terms (SPEC §4.5). KPIs are computed from this projection in ./kpis.
 import { powInt, ZERO, ONE, type Decimal } from "../lib/money";
-import {
-  addYears,
-  edate,
-  firstGridMonthOnOrAfter,
-  isAfter,
-  isOnOrBefore,
-} from "./dates";
+import { addYears, byStart, edate, isAfter, isOnOrBefore } from "./dates";
 import { at } from "./arrays";
 import {
   EMPTY_PROPERTY_SCHEDULE,
@@ -16,22 +10,21 @@ import {
   undrawnPrincipal,
   type PropertySchedule,
 } from "./schedule";
-import { turnOnYear, yearSlice } from "./yearGrid";
+import { firstActiveGridMonth, turnOnYear, yearSlice } from "./yearGrid";
 import {
   cashOutsideNetCf,
   prePurchaseDebtService,
   type DebtServicePaid,
 } from "./ownerCash";
 import { assertAssumptions, assertInputs } from "./validate";
-import { basisDate, valueAt } from "./growth";
+import { basisDate, growthRate, valueAt } from "./growth";
 import {
   valueAnchor,
   growthYears,
   openingValue,
   leaseInForce,
-  effectiveCosts,
-  fixedHoldingCost,
   forProperty,
+  holdingCostBasis,
   ltvOf,
 } from "./metrics";
 import type {
@@ -84,7 +77,6 @@ interface RentTerm {
 
 interface PropertyBasis {
   v0: Decimal;
-  basisDate: Date; // date v0 is anchored at (baseDate, or purchaseDate for a future buy)
   valuations: Valuation[]; // this property's valuations, for per-year re-anchoring
   rentPlan: (RentTerm | undefined)[]; // per grid month (index m − 1); undefined = no rent
   fixed0: Decimal;
@@ -114,15 +106,15 @@ function propertyBasis(
     asOf,
     assumptions,
   );
-  const cost = forProperty(portfolio.holdingCosts, property.id).at(0);
-  const c = effectiveCosts(cost, assumptions);
-  const fixed0 = fixedHoldingCost(c);
-  const varPct = c.mgmtPctRent.plus(c.maintPctRent);
-  const g = property.appreciationOverridePa ?? assumptions.appreciationPa;
+  const { fixed: fixed0, varPct } = holdingCostBasis(
+    property,
+    portfolio,
+    assumptions,
+  );
+  const g = growthRate(property, assumptions);
   const idx = property.rentIndexOverridePa ?? assumptions.rentIndexationPa;
   return {
     v0,
-    basisDate: asOf,
     valuations,
     rentPlan,
     fixed0,
@@ -139,9 +131,7 @@ function propertyBasis(
  * rent plan and the data check (ADR 0118).
  */
 export function renewedLease(leases: Lease[], basis: Date): Lease | undefined {
-  const last = [...leases]
-    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
-    .at(-1);
+  const last = [...leases].sort(byStart((l) => l.startDate)).at(-1);
   return last?.endDate !== undefined && isOnOrBefore(basis, last.endDate)
     ? last
     : undefined;
@@ -267,8 +257,7 @@ function buildYear0(
   if (tStart > 0) return zeroYear(0, baseYear, assumptions.baseDate);
   // The debt at baseDate, not grid month 1's opening balance: a loan drawn after
   // baseDate is new debt in its year, not opening debt (D-33).
-  const balance0 =
-    b.schedule.length > 0 ? openingDebt(blocks, assumptions) : ZERO;
+  const balance0 = debtAtGridMonth(b.schedule, blocks, assumptions, 0);
   return {
     year: 0,
     calendarYear: baseYear,
@@ -514,18 +503,6 @@ function withCashToOwner(
     ...y,
     cashToOwner: t === 0 ? ZERO : y.netCashFlow.minus(at(outside, t)),
   }));
-}
-
-/**
- * 1-based baseDate grid month in which `date` first becomes active. Returns 1 when
- * `date ≤ baseDate` (already owned/let ⇒ active the whole horizon, so the seed keeps
- * 12 months/year and parity holds), else the first month grid point on/after it,
- * else horizon+1 (never active in-window).
- */
-function firstActiveGridMonth(date: Date, assumptions: Assumptions): number {
-  const { baseDate, horizonYears } = assumptions;
-  if (isOnOrBefore(date, baseDate)) return 1;
-  return firstGridMonthOnOrAfter(baseDate, date, horizonYears * 12);
 }
 
 /**

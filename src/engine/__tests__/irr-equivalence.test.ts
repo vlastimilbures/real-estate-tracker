@@ -1,4 +1,4 @@
-// P9 (DR-041): `irr` evaluates the NPV by Horner's rule instead of one `pow` per cash
+// P9 (DR-041): `irrResult` evaluates the NPV by Horner's rule instead of one `pow` per cash
 // flow. The bisection midpoints are computed exactly as before and the NPV is read only
 // for its sign and the tolerance test, so the result must be the identical Decimal.
 // The pre-P9 implementation is kept here as the oracle. DR-158 (ADR 0079) changed the

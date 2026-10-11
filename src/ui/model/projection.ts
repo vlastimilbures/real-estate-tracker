@@ -10,44 +10,35 @@ import type { XlsxColumn } from "./xlsxExport";
 import { nonZeroColumns } from "./columns";
 import type { Dictionary } from "../../i18n";
 
-export interface SeriesRow {
-  year: number;
-  calendarYear: number;
-  value: Decimal;
-  balance: Decimal;
-  committedDebt: Decimal; // balance + undrawn development tranches (ADR 0166)
-  undrawnDebt: Decimal; // the development tranches not drawn yet (ADR 0169)
-  reportedValue: Decimal; // value − undrawnDebt, shown beside the drawn balance (ADR 0169)
-  equity: Decimal;
-  ltv: Decimal | null; // null when debt is owed on no value (ADR 0133)
-  grossRent: Decimal;
-  effectiveRent: Decimal;
-  holdingCosts: Decimal;
-  noi: Decimal;
-  interest: Decimal;
-  principal: Decimal;
-  debtService: Decimal;
-  netCashFlow: Decimal;
-  // Net cash flow less the owner's cash outside it (lensed, ADR 0161); Σ of years
-  // 1..N is the Dashboard's cumulative cash to owner. Zero in year 0.
-  cashToOwner: Decimal;
-  dscr: Decimal | null;
-  // New debt drawn this year (lensed), from the engine (DR-092): zero unless a loan,
-  // tranche or refinance draws in the year; zero in year 0.
-  draws: Decimal;
-  // New committed debt in the year: draws less development tranches already committed
-  // (ADR 0166); the equity-change chart's new-debt stack.
-  committedDraws: Decimal;
-  // The value a future purchase brings in, in its turn-on year (lensed, ADR 0165); zero
-  // in every other year.
-  acquiredValue: Decimal;
-  // A refinance handover's difference this year (lensed, ADR 0130); zero in year 0.
-  refinanced: Decimal;
-  // Extra principal prepaid this year (lensed, ADR 0109); zero in year 0.
-  prepaid: Decimal;
-  // Fees charged on this year's prepayments (lensed, ADR 0109); zero in year 0.
-  prepaymentFees: Decimal;
-}
+/** A projection year as the grid, charts and tiles read it, under the chosen lens. */
+export type SeriesRow = Pick<
+  ProjectionYear,
+  | "year"
+  | "calendarYear"
+  | "value"
+  | "balance"
+  | "committedDebt"
+  | "undrawnDebt"
+  | "reportedValue"
+  | "equity"
+  | "ltv"
+  | "grossRent"
+  | "effectiveRent"
+  | "holdingCosts"
+  | "noi"
+  | "interest"
+  | "principal"
+  | "debtService"
+  | "netCashFlow"
+  | "cashToOwner"
+  | "dscr"
+  | "draws"
+  | "committedDraws"
+  | "acquiredValue"
+  | "refinanced"
+  | "prepaid"
+  | "prepaymentFees"
+>;
 
 /** "Y5 · 2031": projection year t with its calendar year (D-22, UX-032). The prefix is
  *  the UI language's one-letter abbreviation for "year". */
@@ -85,37 +76,9 @@ export function projectionSeries(
   mode: Mode,
   assumptions: Assumptions,
 ): SeriesRow[] {
-  const rows =
-    mode === "real"
-      ? realProjection(projection, cpiIndex(assumptions))
-      : projection;
-  return rows.map((y) => ({
-    year: y.year,
-    calendarYear: y.calendarYear,
-    value: y.value,
-    balance: y.balance,
-    committedDebt: y.committedDebt,
-    undrawnDebt: y.undrawnDebt,
-    reportedValue: y.reportedValue,
-    equity: y.equity,
-    ltv: y.ltv,
-    grossRent: y.grossRent,
-    effectiveRent: y.effectiveRent,
-    holdingCosts: y.holdingCosts,
-    noi: y.noi,
-    interest: y.interest,
-    principal: y.principal,
-    debtService: y.debtService,
-    netCashFlow: y.netCashFlow,
-    cashToOwner: y.cashToOwner,
-    dscr: y.dscr,
-    draws: y.draws,
-    committedDraws: y.committedDraws,
-    acquiredValue: y.acquiredValue,
-    refinanced: y.refinanced,
-    prepaid: y.prepaid,
-    prepaymentFees: y.prepaymentFees,
-  }));
+  return mode === "real"
+    ? realProjection(projection, cpiIndex(assumptions))
+    : projection;
 }
 
 /**

@@ -1,6 +1,6 @@
 // ADR 0099: which open-ended record a newly added valuation or lease succeeds; ADR 0163:
 // which leases overlap.
-import { isAfter, isOnOrBefore } from "./dates";
+import { byStart, isAfter, isOnOrBefore } from "./dates";
 import type { Lease } from "./types";
 
 /**
@@ -31,12 +31,10 @@ export function openPredecessor<T extends { propertyId: string }>(
  * the rule. Ordered by start (stable), each pair earlier start first.
  */
 export function overlappingLeases(leases: readonly Lease[]): [Lease, Lease][] {
-  const byStart = [...leases].sort(
-    (a, b) => a.startDate.getTime() - b.startDate.getTime(),
-  );
+  const sorted = [...leases].sort(byStart((l) => l.startDate));
   const pairs: [Lease, Lease][] = [];
-  byStart.forEach((a, i) => {
-    for (const b of byStart.slice(i + 1)) {
+  sorted.forEach((a, i) => {
+    for (const b of sorted.slice(i + 1)) {
       if (b.propertyId !== a.propertyId) continue;
       if (a.endDate === undefined || isOnOrBefore(b.startDate, a.endDate))
         pairs.push([a, b]);

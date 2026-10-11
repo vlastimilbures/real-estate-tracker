@@ -5,7 +5,12 @@
 //   • a loan is a property's block chain (D-27), its payoff the schedule's last payment.
 // Dates are modelled from the entered data, not lender deadlines (the wording is UI).
 import { ZERO, type Decimal } from "../lib/money";
-import { drawMonth, isDevLoan, mortgageBlock } from "./amortization";
+import {
+  blockEndDate,
+  drawMonth,
+  isDevLoan,
+  mortgageBlock,
+} from "./amortization";
 import { DEBT_FREE_EPSILON } from "./constants";
 import {
   edate,
@@ -156,7 +161,7 @@ function chainResets(
   const resets: FixationReset[] = [];
   for (const [i, block] of chain.entries()) {
     if (block.fixationYears === 0) continue;
-    const fixationEnd = edate(block.startDate, block.fixationYears * 12);
+    const fixationEnd = blockEndDate(block);
     const m = block.fixationYears * 12 - paymentOffset(block, ctx.baseDate);
     const status = resetStatus(fixationEnd, m, chain[i + 1], rows, ctx);
     resets.push({

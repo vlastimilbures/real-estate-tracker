@@ -8,8 +8,8 @@ import { edate, isoDate } from "../dates";
 import { propertySchedules, schedulesByProperty } from "../schedule";
 import { portfolioSnapshot } from "../metrics";
 import { portfolioProjection } from "../projections";
-import { portfolioKpis } from "../kpis";
-import { portfolioOutputs, projectionAndKpis } from "../outputs";
+import { portfolioKpis, projectionAndKpis } from "../kpis";
+import { portfolioOutputs } from "../outputs";
 import { financingExposure } from "../financing";
 import { applyScenario } from "../scenarios";
 import { EngineInputError } from "../errors";
@@ -154,13 +154,15 @@ describe("portfolioOutputs = the separate public calls", () => {
   });
 });
 
-describe("projectionAndKpis = portfolioProjection + portfolioKpis", () => {
+// portfolioKpis reads projectionAndKpis, so the KPIs are compared with portfolioOutputs,
+// which builds them in its own pass.
+describe("projectionAndKpis = portfolioProjection + portfolioOutputs' KPIs", () => {
   for (const [pName, p] of PORTFOLIOS) {
     for (const [aName, a] of ASSUMPTIONS) {
       it(`${pName}, ${aName}`, () => {
         expect(projectionAndKpis(p, a)).toEqual({
           projection: portfolioProjection(p, a),
-          kpis: portfolioKpis(p, a),
+          kpis: portfolioOutputs(p, a).kpis,
         });
       });
     }

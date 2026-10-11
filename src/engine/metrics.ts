@@ -16,7 +16,7 @@ import {
   undrawnPrincipal,
 } from "./schedule";
 import { assertAsOf, assertInputs } from "./validate";
-import { basisDate, valueAt } from "./growth";
+import { basisDate, growthRate, valueAt } from "./growth";
 import type {
   Assumptions,
   Portfolio,
@@ -30,19 +30,6 @@ import type {
   PropertySnapshot,
   PortfolioSnapshot,
 } from "./types";
-
-/** Valuation in force at `asOf`: latest validFrom ≤ asOf, validTo blank or ≥ asOf. */
-export function valuationInForce(
-  valuations: Valuation[],
-  asOf: Date,
-): Valuation | undefined {
-  return lastOnOrBefore(
-    valuations,
-    asOf,
-    (v) => v.validFrom,
-    (v) => v.validTo,
-  );
-}
 
 /** Lease in force at `asOf`: latest startDate ≤ asOf, endDate blank or ≥ asOf. */
 export function leaseInForce(leases: Lease[], asOf: Date): Lease | undefined {
@@ -93,6 +80,24 @@ export function fixedHoldingCost(c: {
     .plus(c.insuranceYr)
     .plus(c.svjMonthly.times(12))
     .plus(c.otherYr);
+}
+
+/**
+ * A property's holding-cost basis: the fixed annual cost and the share of rent (mgmt +
+ * maint), each field from its holding-cost row, else the assumption default. One
+ * holding-cost row per property (DUPLICATE_HOLDING_COST, D-37).
+ */
+export function holdingCostBasis(
+  property: Property,
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+): { fixed: Decimal; varPct: Decimal } {
+  const cost = forProperty(portfolio.holdingCosts, property.id).at(0);
+  const c = effectiveCosts(cost, assumptions);
+  return {
+    fixed: fixedHoldingCost(c),
+    varPct: c.mgmtPctRent.plus(c.maintPctRent),
+  };
 }
 
 export function forProperty<T extends { propertyId: string }>(
@@ -167,7 +172,7 @@ function valueAsOf(
   assumptions: Assumptions,
   asOf: Date,
 ): Decimal {
-  const g = property.appreciationOverridePa ?? assumptions.appreciationPa;
+  const g = growthRate(property, assumptions);
   const { value, anchor } = valueAnchor(
     valuations,
     property,
@@ -217,18 +222,15 @@ function snapshotIncome(
   const effectiveGrossIncome = grossAnnualRent.times(
     ONE.minus(assumptions.vacancyAllowance),
   );
-  // DR-071: the first holding-cost row wins when a property has duplicates.
-  const cost = forProperty(portfolio.holdingCosts, property.id).at(0);
-  const c = effectiveCosts(cost, assumptions);
-  const variable = c.mgmtPctRent.plus(c.maintPctRent).times(grossAnnualRent);
-  const holdingCosts = fixedHoldingCost(c).plus(variable);
+  const { fixed, varPct } = holdingCostBasis(property, portfolio, assumptions);
+  const holdingCosts = fixed.plus(varPct.times(grossAnnualRent));
   const noi = effectiveGrossIncome.minus(holdingCosts);
   return { grossAnnualRent, effectiveGrossIncome, holdingCosts, noi };
 }
 
 /**
- * One property's snapshot at `asOf`. Pass its `schedule` (from `schedulesByProperty` on
- * the same inputs) to reuse it; an omitted one is built here (DR-042, DR-118).
+ * One property's snapshot at `asOf`. Pass its `schedule` (the rows from `propertySchedules`
+ * on the same inputs) to reuse it; an omitted one is built here (DR-042, DR-118).
  */
 export function propertySnapshot(
   property: Property,
@@ -309,8 +311,8 @@ function snapshotProperty(
 }
 
 /**
- * Portfolio snapshot at `asOf`. Pass `schedules` (from `schedulesByProperty` on the same
- * inputs) to reuse them; omitted ones are built here (DR-042, DR-118).
+ * Portfolio snapshot at `asOf`. Pass `schedules` (the rows from `propertySchedules` on the
+ * same inputs) to reuse them; omitted ones are built here (DR-042, DR-118).
  */
 export function portfolioSnapshot(
   portfolio: Portfolio,

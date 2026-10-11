@@ -5,7 +5,7 @@
 // payment (ADR 0119). Hand-calculated figures: a flat 25,000 Kč instalment, no reset
 // inside the window that matters.
 import { describe, it, expect } from "vitest";
-import { irr, portfolioKpis } from "../kpis";
+import { irrResult, portfolioKpis } from "../kpis";
 import { cpiIndex, portfolioProjection } from "../projections";
 import { propertySchedules } from "../schedule";
 import { isoDate } from "../dates";
@@ -169,8 +169,8 @@ describe("ADR 0124: debt service before a future purchase is owner cash", () => 
     const k = portfolioKpis(p, assumptions);
     // REPAID is the hand figure to the haléř (< 0.005 Kč off), so the IRRs agree to 1e-9:
     // tight enough to catch the charge itself (it moves the IRR by ~1.4e-4).
-    const wantNominal = irr(nominal);
-    const wantReal = irr(nominal.map((cf, t) => cf.div(cpi[t])));
+    const wantNominal = irrResult(nominal).rate;
+    const wantReal = irrResult(nominal.map((cf, t) => cf.div(cpi[t]))).rate;
     if (!k.leveredIrrNominal || !k.leveredIrrReal || !wantNominal || !wantReal)
       throw new Error("IRR expected");
     near(k.leveredIrrNominal, wantNominal.toNumber(), 1e-9, "nominal IRR");

@@ -4,7 +4,7 @@
 // builder. Only the KPIs move; the projection rows are unchanged. Hand-calculated
 // figures on the seed plus one property bought in 2020 for cash.
 import { describe, it, expect } from "vitest";
-import { irr, portfolioKpis } from "../kpis";
+import { irrResult, portfolioKpis } from "../kpis";
 import { cpiIndex, portfolioProjection } from "../projections";
 import { propertySchedules } from "../schedule";
 import { acquisitionSummary, laterFirstLoan } from "../acquisition";
@@ -81,7 +81,7 @@ describe("ADR 0134: an owned property's first loan after baseDate is cash in", (
       const cf = t === 1 ? y.netCashFlow.plus(PRINCIPAL) : y.netCashFlow;
       return t === N ? cf.plus(y.equity) : cf;
     });
-    const want = irr(vector);
+    const want = irrResult(vector).rate;
     const got = portfolioKpis(p, assumptions).leveredIrrNominal;
     if (!want || !got) throw new Error("IRR expected");
     near(got, want.toNumber(), RATIO, "IRR");
@@ -111,7 +111,7 @@ describe("ADR 0134: an owned property's first loan after baseDate is cash in", (
       const cf = t === 3 ? y.netCashFlow.plus(PRINCIPAL) : y.netCashFlow;
       return t === N ? cf.plus(y.equity) : cf;
     });
-    const want = irr(vector);
+    const want = irrResult(vector).rate;
     const got = portfolioKpis(p, assumptions).leveredIrrNominal;
     if (!want || !got) throw new Error("IRR expected");
     near(got, want.toNumber(), 1e-12, "IRR, year 3");

@@ -43,14 +43,28 @@ export function yearSlice(schedule: AmortizationRow[], t: number) {
 }
 
 /**
+ * 1-based baseDate grid month in which `date` first becomes active. Returns 1 when
+ * `date ≤ baseDate` (already owned/let ⇒ active the whole horizon, so the seed keeps
+ * 12 months/year and parity holds), else the first month grid point on/after it,
+ * else horizon+1 (never active in-window).
+ */
+export function firstActiveGridMonth(
+  date: Date,
+  assumptions: Assumptions,
+): number {
+  const { baseDate, horizonYears } = assumptions;
+  if (isOnOrBefore(date, baseDate)) return 1;
+  return firstGridMonthOnOrAfter(baseDate, date, horizonYears * 12);
+}
+
+/**
  * Projection year-slice (1..horizon) containing `date`, matching where
  * `buildSchedule` first draws a future loan (first month grid point ≥ date).
  * Returns 0 when the date is on/before baseDate (already owned → no gating), and
- * horizon+1 when it falls beyond the horizon (property never appears).
+ * horizon+1 when it falls beyond the horizon (property never appears): grid month
+ * horizon·12 + 1 is in year horizon + 1.
  */
 export function turnOnYear(date: Date, assumptions: Assumptions): number {
-  const { baseDate, horizonYears } = assumptions;
-  if (isOnOrBefore(date, baseDate)) return 0;
-  const m = firstGridMonthOnOrAfter(baseDate, date, horizonYears * 12);
-  return m > horizonYears * 12 ? horizonYears + 1 : Math.ceil(m / 12);
+  if (isOnOrBefore(date, assumptions.baseDate)) return 0;
+  return Math.ceil(firstActiveGridMonth(date, assumptions) / 12);
 }

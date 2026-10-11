@@ -30,7 +30,7 @@ import {
   portfolioProjection,
   propertyProjection,
 } from "../projections";
-import { irr, portfolioKpis } from "../kpis";
+import { irrResult, portfolioKpis } from "../kpis";
 import { EngineInputError } from "../errors";
 import { applyScenario, type ScenarioOverrides } from "../scenarios";
 import type { Assumptions, MortgageBlock, Portfolio } from "../types";
@@ -340,7 +340,7 @@ describe("P4a golden master (full precision)", () => {
       [D(-100), D(230), D(-132)],
       [D(-1000), D(0), D(0), D(0), D(2000)],
     ];
-    expect(vectors.map((v) => canon(irr(v)))).toMatchSnapshot();
+    expect(vectors.map((v) => canon(irrResult(v).rate))).toMatchSnapshot();
   });
 
   it("horizon lengths 1 and 5", () => {

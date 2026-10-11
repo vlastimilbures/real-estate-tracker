@@ -39,7 +39,7 @@ export function fundedThePurchase(
 }
 
 /** End of the fixation period: startDate + fixationYears*12 months (EDATE). */
-export function blockEndDate(block: MortgageBlock): Date {
+export function blockEndDate(block: MortgageBlock): IsoDate {
   return edate(block.startDate, block.fixationYears * 12);
 }
 

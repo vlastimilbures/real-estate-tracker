@@ -13,8 +13,8 @@ import {
 } from "../schedule";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
-import { portfolioKpis } from "../kpis";
-import { portfolioOutputs, projectionAndKpis } from "../outputs";
+import { portfolioKpis, projectionAndKpis } from "../kpis";
+import { portfolioOutputs } from "../outputs";
 import { cpiIndex } from "../projections";
 import { cpiAt } from "../real";
 import { EngineInputError } from "../errors";

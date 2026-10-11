@@ -7,8 +7,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { assertInputs } from "../validate";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
-import { portfolioKpis } from "../kpis";
-import { portfolioOutputs, projectionAndKpis } from "../outputs";
+import { portfolioKpis, projectionAndKpis } from "../kpis";
+import { portfolioOutputs } from "../outputs";
 import { EMPTY_PROPERTY_SCHEDULE, propertySchedules } from "../schedule";
 import { assumptions, portfolio } from "./support/seed";
 

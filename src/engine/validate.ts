@@ -19,6 +19,8 @@ import { EngineInputError } from "./errors";
 import { overlappingLeases } from "./succession";
 import type {
   Assumptions,
+  CostDefaults,
+  HoldingCost,
   LoanRecast,
   MortgageBlock,
   Portfolio,
@@ -131,16 +133,20 @@ const HOLDING_COST_MONEY = [
   "otherYr",
 ] as const;
 
-/** D-38 shares and ADR 0075 (DR-176) non-negative costs: the bounds D-54 puts on the
- *  overrides. */
-function checkDefaultRanges(d: Assumptions["defaults"], report: Report): void {
+/** D-38 shares and ADR 0075 (DR-176) non-negative costs on the assumption defaults
+ *  (`prefix` "defaults."), and the same bounds on a holding-cost row (D-54, DR-127). */
+function checkCostRanges(
+  c: CostDefaults | HoldingCost,
+  prefix: string,
+  report: Report,
+): void {
   for (const f of HOLDING_COST_MONEY) {
-    if (isNegativeAmount(d[f])) report("NEGATIVE_AMOUNT", `defaults.${f}`);
+    if (isNegativeAmount(c[f])) report("NEGATIVE_AMOUNT", `${prefix}${f}`);
   }
-  if (outsideUnit(d.mgmtPctRent))
-    report("RATE_OUT_OF_RANGE", "defaults.mgmtPctRent");
-  if (outsideUnit(d.maintPctRent))
-    report("RATE_OUT_OF_RANGE", "defaults.maintPctRent");
+  if (outsideUnit(c.mgmtPctRent))
+    report("RATE_OUT_OF_RANGE", `${prefix}mgmtPctRent`);
+  if (outsideUnit(c.maintPctRent))
+    report("RATE_OUT_OF_RANGE", `${prefix}maintPctRent`);
 }
 
 function checkAssumptions(a: Assumptions, report: Report): void {
@@ -158,7 +164,7 @@ function checkAssumptions(a: Assumptions, report: Report): void {
     report("HORIZON_NOT_POSITIVE", "horizonYears");
   }
   checkLevelRanges(a, report);
-  checkDefaultRanges(a.defaults, report);
+  checkCostRanges(a.defaults, "defaults.", report);
   checkShock(a.inflationShock, "inflationShock", report);
   checkShock(a.rateShock, "rateShock", report);
   // ADR 0128 §3: a shock shifts a level, so the shifted level keeps the level's bound.
@@ -639,13 +645,7 @@ function checkHoldingCosts(p: Portfolio, on: ReporterFor): void {
   for (const h of p.holdingCosts) {
     const report = on("holdingCost", h.id, h.propertyId);
     checkFields(h, [], HOLDING_COST_FIELDS, report);
-    // D-54 (DR-127): the same bounds D-38 puts on the assumption defaults.
-    for (const f of HOLDING_COST_MONEY) {
-      if (isNegativeAmount(h[f])) report("NEGATIVE_AMOUNT", f);
-    }
-    if (outsideUnit(h.mgmtPctRent)) report("RATE_OUT_OF_RANGE", "mgmtPctRent");
-    if (outsideUnit(h.maintPctRent))
-      report("RATE_OUT_OF_RANGE", "maintPctRent");
+    checkCostRanges(h, "", report); // D-54 (DR-127): the defaults' bounds
     if (owners.has(h.propertyId)) report("DUPLICATE_HOLDING_COST"); // DR-071
     owners.add(h.propertyId);
   }

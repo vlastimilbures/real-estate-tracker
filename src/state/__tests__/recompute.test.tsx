@@ -28,7 +28,6 @@ vi.mock("../../engine", async (importOriginal) => {
     portfolioKpis: vi.fn(actual.portfolioKpis),
     propertyProjection: vi.fn(actual.propertyProjection),
     propertySnapshot: vi.fn(actual.propertySnapshot),
-    schedulesByProperty: vi.fn(actual.schedulesByProperty),
     portfolioOutputs: vi.fn(actual.portfolioOutputs),
     projectionAndKpis: vi.fn(actual.projectionAndKpis),
   };
@@ -40,7 +39,6 @@ const spies = [
   engine.portfolioKpis,
   engine.propertyProjection,
   engine.propertySnapshot,
-  engine.schedulesByProperty,
   engine.portfolioOutputs,
   engine.projectionAndKpis,
 ] as unknown as ReturnType<typeof vi.fn>[];

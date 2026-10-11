@@ -1,8 +1,9 @@
-// One-pass engine runs for the UI's recompute paths (P9, DR-042). The separate public
-// calls each rebuild every loan schedule (and the KPIs rebuild the projection); these
-// build the schedules once and share them. The results are exactly those of the
-// separate calls, made in the same order, so the same error is thrown first.
-import { assertInputs } from "./validate";
+// The one-pass engine run for the UI's recompute path (P9, DR-042). The separate public
+// calls each rebuild every loan schedule (and the KPIs rebuild the projection); this
+// builds the schedules once and shares them. The results are exactly those of the
+// separate calls, made in the same order, so the same error is thrown first. The
+// projection + KPIs pass (`projectionAndKpis`) lives in kpis.ts, next to `portfolioKpis`,
+// which reads it.
 import { propertySchedules, scheduleRows } from "./schedule";
 import { portfolioSnapshot } from "./metrics";
 import { projectPortfolioParts } from "./projections";
@@ -30,7 +31,7 @@ export interface PortfolioOutputs {
 
 /**
  * Schedules, snapshot at `asOf`, projection and KPIs in one pass: equal to
- * `schedulesByProperty` → `portfolioSnapshot` → `portfolioProjection` → `portfolioKpis`,
+ * `propertySchedules` → `portfolioSnapshot` → `portfolioProjection` → `portfolioKpis`,
  * plus the financing exposure at `asOf` from the same schedules (ADR 0103).
  */
 export function portfolioOutputs(
@@ -56,27 +57,5 @@ export function portfolioOutputs(
     projection,
     kpis: kpisFrom(portfolio, assumptions, projection, built, prePurchase),
     financing: financingExposure(portfolio, assumptions, built, asOf),
-  };
-}
-
-/** `portfolioProjection` and `portfolioKpis` in one pass (one scenario of a compare). */
-export function projectionAndKpis(
-  portfolio: Portfolio,
-  assumptions: Assumptions,
-): { projection: ProjectionYear[]; kpis: PortfolioKPIs } {
-  assertInputs(portfolio, assumptions); // D-37
-  const built = propertySchedules(
-    portfolio.mortgages,
-    portfolio.properties.map((p) => p.id),
-    assumptions,
-  );
-  const { years: projection, prePurchase } = projectPortfolioParts(
-    portfolio,
-    assumptions,
-    built,
-  );
-  return {
-    projection,
-    kpis: kpisFrom(portfolio, assumptions, projection, built, prePurchase),
   };
 }
