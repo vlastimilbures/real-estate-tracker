@@ -395,7 +395,7 @@ export const cs: Dictionary = {
     hide: "Skrýt kontrolu dat",
     goTo: (section) => `Přejít do sekce ${section}`,
     valuationStale: (age, date) =>
-      `Použité ocenění je staré ${age} (${date}). Hodnota, vlastní kapitál a LTV ho použijí tak, jak je zadané; k začátku projekce se nezhodnocuje.`,
+      `Použité ocenění je staré ${age} (${date}). Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.`,
     noValuation: (price, date) =>
       `Není zadané žádné ocenění, proto se jako tržní hodnota použije kupní cena ${price} navýšená o roční zhodnocení od ${date}.`,
     noLease: (date) =>

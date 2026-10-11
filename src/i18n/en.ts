@@ -422,7 +422,7 @@ export const en = {
     hide: "Hide data check",
     goTo: (section: string) => `Go to ${section}`,
     valuationStale: (age: string, date: string) =>
-      `The valuation in use is ${age} old (${date}). Value, equity and LTV use it as entered; it is not grown to the projection start.`,
+      `The valuation in use is ${age} old (${date}). Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.`,
     noValuation: (price: string, date: string) =>
       `No valuation is recorded, so the purchase price of ${price}, grown at the appreciation rate since ${date}, stands in as the market value.`,
     noLease: (date: string) =>

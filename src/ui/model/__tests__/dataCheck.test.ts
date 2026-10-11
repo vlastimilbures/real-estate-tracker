@@ -564,7 +564,7 @@ describe("data check: text and fix (ADR 0118)", () => {
         months: 26,
       }),
     ).toBe(
-      "The valuation in use is 26 months old (01.08.2024). Value, equity and LTV use it as entered; it is not grown to the projection start.",
+      "The valuation in use is 26 months old (01.08.2024). Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.",
     );
     expect(
       text({
@@ -629,13 +629,13 @@ describe("data check: text and fix (ADR 0118)", () => {
     };
     const price = fmtCzk(javorovaPrice);
     expect(findingText(cs, stale, resetRate)).toBe(
-      "Použité ocenění je staré 26 měsíců (01.08.2024). Hodnota, vlastní kapitál a LTV ho použijí tak, jak je zadané; k začátku projekce se nezhodnocuje.",
+      "Použité ocenění je staré 26 měsíců (01.08.2024). Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.",
     );
     expect(findingText(cs, none, resetRate)).toBe(
       `Není zadané žádné ocenění, proto se jako tržní hodnota použije kupní cena ${price} navýšená o roční zhodnocení od 01.06.2015.`,
     );
     expect(findingText(ru, stale, resetRate)).toBe(
-      "Используемой оценке 26 месяцев (01.08.2024). Стоимость, собственный капитал и LTV берут её как введено; до начала прогноза она не растёт.",
+      "Используемой оценке 26 месяцев (01.08.2024). Стоимость, собственный капитал и LTV исходят из неё в том виде, как она введена: рост за время между её датой и началом прогноза не учитывается.",
     );
     expect(findingText(ru, none, resetRate)).toBe(
       `Оценка не указана, поэтому рыночной стоимостью считается цена покупки ${price}, выросшая по ставке роста стоимости с 01.06.2015.`,

@@ -49,8 +49,10 @@ The projection read its year-0 value through a second copy of the rule (`opening
    - `dataCheck.noValuation` names the purchase date: the price "grown at the appreciation
      rate since {date}" stands in. The finding carries the purchase date; the UI computes no
      grown number (CLAUDE.md §4).
-   - `dataCheck.valuationStale` adds that value, equity and LTV use the valuation as entered;
-     it is not grown to the projection start (owner Q3). No Settings note.
+   - `dataCheck.valuationStale` adds that value, equity and LTV start from the valuation as
+     entered: the time between its date and the projection start is not grown (owner Q3). The
+     sentence holds at any as-of date, since after the projection start the value does grow.
+     No Settings note.
    - Guide `snapshotDefs.value` (`meaning`, `eg`): today's value is the valuation in force on
      the projection start, as entered, and grows from there or from a later valuation's
      date; with no valuation, the purchase price grown since the purchase.
