@@ -29,6 +29,31 @@ describe("error log lines", () => {
     expect(maskNumbers("valid from 2026-10-03")).toBe("valid from #-#-#");
   });
 
+  it("keeps an OS or SQLite error code (ADR 0175, #258 item 5)", () => {
+    expect(maskNumbers("Permission denied (os error 13)")).toBe(
+      "Permission denied (os error 13)",
+    );
+    expect(
+      maskNumbers(
+        "error returned from database: (code: 2067) UNIQUE constraint failed",
+      ),
+    ).toBe(
+      "error returned from database: (code: 2067) UNIQUE constraint failed",
+    );
+    expect(maskNumbers("SQLITE_BUSY code 5 on row 7")).toBe(
+      "SQLITE_BUSY code 5 on row #",
+    );
+  });
+
+  it("still masks a long run or an amount after `code` (ADR 0175)", () => {
+    expect(maskNumbers("code 1234567")).toBe("code #");
+    expect(maskNumbers("code: 12 345 Kč")).toBe("code: # Kč");
+    expect(maskNumbers("code 4.59 %")).toBe("code # %");
+    expect(maskNumbers("rent 21 675 Kč (os error 2)")).toBe(
+      "rent # Kč (os error 2)",
+    );
+  });
+
   it("a DataError logs its code and details as-is", () => {
     const e = new DataError("ROW_INVALID", "msg", [
       "leases l1: monthly_rent is not a finite decimal number",

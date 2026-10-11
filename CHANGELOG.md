@@ -289,6 +289,10 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- The error log keeps OS and SQLite error codes, such as `os error 13` or `(code: 2067)`,
+  so a pasted log line says what failed (ADR 0175, #258). Every other number is still
+  masked. A Rust panic's message in the log is cut to 500 characters.
+
 - A safety backup written before a restore or Clear sample never replaces an existing one
   of the same name (ADR 0175, #151). If two were made in the same second, the second action
   stops with a message instead of overwriting the first copy.
