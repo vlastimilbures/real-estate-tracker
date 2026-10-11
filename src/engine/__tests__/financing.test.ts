@@ -628,7 +628,7 @@ describe("ADR 0103: upcoming events", () => {
     expect(kinds).not.toContain("devCompletion");
   });
 
-  it("lease ends of active properties only; same-day events by property id", () => {
+  it("lease ends of active properties only; same-day events in portfolio order (ADR 0176)", () => {
     const owned = (id: string, active?: boolean) => ({
       id,
       name: id,
@@ -649,8 +649,8 @@ describe("ADR 0103: upcoming events", () => {
       leases: [lease("b"), lease("a"), lease("x")],
     };
     expect(upcomingEvents(p, exposure(p).fx, 12)).toEqual([
-      { date: isoDate("2026-12-31"), kind: "leaseEnd", propertyId: "a" },
       { date: isoDate("2026-12-31"), kind: "leaseEnd", propertyId: "b" },
+      { date: isoDate("2026-12-31"), kind: "leaseEnd", propertyId: "a" },
     ]);
   });
 

@@ -587,7 +587,8 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
   page, active or not: its exposure, its chain blocks' resets and the ids of the chain blocks.
 - **Upcoming events** (`upcomingEvents`) in (as-of, as-of + M months], sorted by date: fixation
   ends (with the balance), modelled payoffs, development completions, and the in-force
-  lease's end when no later lease is entered.
+  lease's end when no later lease is entered. Same-day events sort by kind in that order,
+  then by the portfolio's property order (by name; ADR 0176).
 
 ## 5. Data layer
 
