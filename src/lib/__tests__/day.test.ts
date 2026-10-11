@@ -41,6 +41,11 @@ describe("isoDay", () => {
   it("is the UTC-midnight day as YYYY-MM-DD, zero-padded", () => {
     expect(isoDay(new Date(Date.UTC(2026, 0, 5)))).toBe("2026-01-05");
   });
+  it("pads a year below 1000 to four digits (#263, ADR 0178)", () => {
+    const day = new Date(0);
+    day.setUTCFullYear(850, 0, 1);
+    expect(isoDay(day)).toBe("0850-01-01");
+  });
 });
 
 // ADR 0149 §5: the lib twin of the engine's full-year constructor. Date.UTC and the

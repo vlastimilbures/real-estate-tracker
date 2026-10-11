@@ -203,11 +203,11 @@ export function cellMultiple(value: Numeric, dp = 2): number {
   return D(value).toDecimalPlaces(dp).toNumber();
 }
 
-/** `dd.mm.yyyy` from a UTC Date. */
+/** `dd.mm.yyyy` from a UTC Date; a year below 1000 is padded (ADR 0178). */
 export function fmtDate(date: Date): string {
   const dd = String(date.getUTCDate()).padStart(2, "0");
   const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const yyyy = date.getUTCFullYear();
+  const yyyy = String(date.getUTCFullYear()).padStart(4, "0");
   return `${dd}.${mm}.${yyyy}`;
 }
 

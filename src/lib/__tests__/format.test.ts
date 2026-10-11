@@ -294,6 +294,18 @@ describe("rounding boundaries (half-up, away from zero)", () => {
     expect(fmtDate(utc(2024, 2, 29))).toBe("29.02.2024");
     expect(fmtDate(utc(2026, 12, 31))).toBe("31.12.2026");
   });
+
+  // #263 item 5, ADR 0178: the year has four digits, as dd.mm.yyyy says.
+  it("fmtDate pads a year below 1000 to four digits", () => {
+    const year = (y: number) => {
+      const d = new Date(0);
+      d.setUTCFullYear(y, 0, 1);
+      return d;
+    };
+    expect(fmtDate(year(850))).toBe("01.01.0850");
+    expect(fmtDate(year(100))).toBe("01.01.0100");
+    expect(fmtDate(year(1850))).toBe("01.01.1850");
+  });
 });
 
 describe("roundCzk", () => {
