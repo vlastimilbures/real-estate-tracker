@@ -44,5 +44,7 @@ export function applyScenario(
     inflationShock: overrides.inflationShock ?? base.inflationShock,
     rateShock: overrides.rateShock ?? base.rateShock,
     valueShock: overrides.valueShock ?? base.valueShock,
+    // Today's value never depends on the scenario (ADR 0181).
+    openingAppreciationPa: base.openingAppreciationPa ?? base.appreciationPa,
   };
 }

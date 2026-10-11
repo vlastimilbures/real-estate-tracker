@@ -24,6 +24,21 @@ export function growthRate(
   return property.appreciationOverridePa ?? assumptions.appreciationPa;
 }
 
+/**
+ * The rate a purchase price with no valuation grows at before the basis: the property's
+ * own override, else the base level, never a scenario's (ADR 0181).
+ */
+export function openingGrowthRate(
+  property: Property,
+  assumptions: Assumptions,
+): Decimal {
+  return (
+    property.appreciationOverridePa ??
+    assumptions.openingAppreciationPa ??
+    assumptions.appreciationPa
+  );
+}
+
 /** Appreciated value: v0 × (1+g)^years. `years` may be fractional (partial year). */
 export function valueAt(v0: Decimal, g: Numeric, years: number): Decimal {
   if (years <= 0) return v0;

@@ -16,7 +16,7 @@ import {
   undrawnPrincipal,
 } from "./schedule";
 import { assertAsOf, assertInputs } from "./validate";
-import { basisDate, growthRate, valueAt } from "./growth";
+import { basisDate, growthRate, openingGrowthRate, valueAt } from "./growth";
 import type {
   Assumptions,
   Portfolio,
@@ -108,20 +108,6 @@ export function forProperty<T extends { propertyId: string }>(
   return rows.filter((r) => r.propertyId === propertyId);
 }
 
-/**
- * Opening value at `asOf`: the governing valuation's market value (`selectValuation`),
- * else the purchase price. The projection basis (a future buy's down payment starts
- * from its price instead, ADR 0119).
- */
-export function openingValue(
-  valuations: Valuation[],
-  property: Property,
-  asOf: Date,
-): Decimal {
-  const val = selectValuation(valuations, asOf);
-  return val ? val.marketValue : property.purchasePrice;
-}
-
 /** LTV = debt ÷ value; null when debt is owed on no value, 0 when neither (ADR 0133). */
 export function ltvOf(debt: Decimal, value: Decimal): Decimal | null {
   if (!value.isZero()) return debt.div(value);
@@ -136,7 +122,9 @@ export function yieldOf(income: Decimal, value: Decimal): Decimal | null {
 /**
  * The value that growth starts from at `asOf`, and the date it starts. The valuation
  * governing `asOf` (`selectValuation`: the latest started, else the nearest
- * upcoming), else the purchase price. Growth starts at the later of its validFrom
+ * upcoming), as entered; with no valuation at all, the purchase price grown by whole
+ * months from the purchase date to the basis at `openingGrowthRate` (ADR 0181; 0 months
+ * for a future buy). Growth starts at the later of its validFrom
  * and the basis (baseDate, or purchaseDate for a future buy), so a valuation dated
  * after the basis re-anchors growth from its own validFrom. Shared by the snapshot and
  * the projection, so snapshot(baseDate + N y) == projection year N (D-32).
@@ -149,7 +137,15 @@ export function valueAnchor(
 ): { value: Decimal; anchor: Date } {
   const basis = basisDate(property, assumptions.baseDate);
   const gov = selectValuation(valuations, asOf);
-  if (!gov) return { value: property.purchasePrice, anchor: basis };
+  if (!gov)
+    return {
+      value: valueAt(
+        property.purchasePrice,
+        openingGrowthRate(property, assumptions),
+        growthYears(property.purchaseDate, basis),
+      ),
+      anchor: basis,
+    };
   return {
     value: gov.marketValue,
     anchor: isAfter(gov.validFrom, basis) ? gov.validFrom : basis,

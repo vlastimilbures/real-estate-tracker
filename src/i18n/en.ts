@@ -422,9 +422,9 @@ export const en = {
     hide: "Hide data check",
     goTo: (section: string) => `Go to ${section}`,
     valuationStale: (age: string, date: string) =>
-      `The valuation in use is ${age} old (${date}). Value, equity and LTV rest on it.`,
-    noValuation: (price: string) =>
-      `No valuation is recorded, so the purchase price of ${price} stands in as the market value.`,
+      `The valuation in use is ${age} old (${date}). Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.`,
+    noValuation: (price: string, date: string) =>
+      `No valuation is recorded, so the purchase price of ${price}, grown at the appreciation rate since ${date}, stands in as the market value.`,
     noLease: (date: string) =>
       `No lease is in force on ${date}, so rent counts as 0.`,
     leaseEnded: (date: string) =>
@@ -1421,8 +1421,8 @@ export const en = {
         name: "Value",
         formula: "valuation × (1 + appreciation) ^ years",
         meaning:
-          "Market value, grown from the latest recorded valuation. A new valuation re-anchors the curve. While a development loan is drawing, the value shown is the completed value less the tranches not drawn yet.",
-        eg: "5.0M at 4%/yr → 5.0M × 1.04² ≈ 5.41M after 2 years.",
+          "Market value: the valuation in force on the projection start, as entered, grown from there (or from a later valuation's date, which re-anchors the curve). With no valuation, the purchase price grown at the appreciation rate since the purchase. While a development loan is drawing, the value shown is the completed value less the tranches not drawn yet.",
+        eg: "A 5.0M valuation in force on the projection start, at 4%/yr → 5.0M × 1.04² ≈ 5.41M 2 years later.",
       },
       debt: {
         name: "Debt",

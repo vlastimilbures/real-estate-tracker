@@ -52,6 +52,7 @@ const without = (p: Portfolio, ids: string[]): Portfolio => ({
 });
 
 const javorovaPrice = portfolio.properties[0].purchasePrice;
+const javorovaBought = portfolio.properties[0].purchaseDate;
 
 describe("data check: valuation (ADR 0118)", () => {
   // Javorova's valuation is dated 2026-06-01.
@@ -73,10 +74,15 @@ describe("data check: valuation (ADR 0118)", () => {
     ]);
   });
 
-  it("no valuation: the purchase price stands in", () => {
+  it("no valuation: the purchase price, grown since the purchase, stands in (ADR 0181)", () => {
     const p = without(portfolio, ["v-javorova"]);
     expect(check("javorova", BASE_DATE, p).attention).toEqual([
-      { kind: "noValuation", purchasePrice: javorovaPrice, asOf: BASE_DATE },
+      {
+        kind: "noValuation",
+        purchasePrice: javorovaPrice,
+        purchaseDate: javorovaBought,
+        asOf: BASE_DATE,
+      },
     ]);
   });
 
@@ -558,16 +564,17 @@ describe("data check: text and fix (ADR 0118)", () => {
         months: 26,
       }),
     ).toBe(
-      "The valuation in use is 26 months old (01.08.2024). Value, equity and LTV rest on it.",
+      "The valuation in use is 26 months old (01.08.2024). Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.",
     );
     expect(
       text({
         kind: "noValuation",
         purchasePrice: javorovaPrice,
+        purchaseDate: javorovaBought,
         asOf: BASE_DATE,
       }),
     ).toBe(
-      `No valuation is recorded, so the purchase price of ${fmtCzk(javorovaPrice)} stands in as the market value.`,
+      `No valuation is recorded, so the purchase price of ${fmtCzk(javorovaPrice)}, grown at the appreciation rate since 01.06.2015, stands in as the market value.`,
     );
     expect(text({ kind: "noLease", asOf: BASE_DATE })).toBe(
       "No lease is in force on 07.06.2026, so rent counts as 0.",
@@ -607,12 +614,41 @@ describe("data check: text and fix (ADR 0118)", () => {
     );
   });
 
+  // ADR 0181: the valuation texts say how value is anchored, in every language.
+  it("cs and ru say the valuation is used as entered and the price is grown", () => {
+    const stale: DataFinding = {
+      kind: "valuationStale",
+      validFrom: isoDate("2024-08-01"),
+      months: 26,
+    };
+    const none: DataFinding = {
+      kind: "noValuation",
+      purchasePrice: javorovaPrice,
+      purchaseDate: javorovaBought,
+      asOf: BASE_DATE,
+    };
+    const price = fmtCzk(javorovaPrice);
+    expect(findingText(cs, stale, resetRate)).toBe(
+      "Použité ocenění je staré 26 měsíců (01.08.2024). Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.",
+    );
+    expect(findingText(cs, none, resetRate)).toBe(
+      `Není zadané žádné ocenění, proto se jako tržní hodnota použije kupní cena ${price} navýšená o roční zhodnocení od 01.06.2015.`,
+    );
+    expect(findingText(ru, stale, resetRate)).toBe(
+      "Используемой оценке 26 месяцев (01.08.2024). Стоимость, собственный капитал и LTV исходят из неё в том виде, как она введена: рост за время между её датой и началом прогноза не учитывается.",
+    );
+    expect(findingText(ru, none, resetRate)).toBe(
+      `Оценка не указана, поэтому рыночной стоимостью считается цена покупки ${price}, выросшая по ставке роста стоимости с 01.06.2015.`,
+    );
+  });
+
   it("links each finding to the place that fixes it", () => {
     expect(findingFix({ kind: "noLease", asOf: BASE_DATE })).toBe("records");
     expect(
       findingFix({
         kind: "noValuation",
         purchasePrice: javorovaPrice,
+        purchaseDate: javorovaBought,
         asOf: BASE_DATE,
       }),
     ).toBe("records");

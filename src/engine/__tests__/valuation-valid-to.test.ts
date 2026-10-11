@@ -130,11 +130,12 @@ describe("ADR 0122: the latest started valuation governs, closed or not", () => 
     expect(selectValuation([c, b], isoDate("2026-06-07"))?.id).toBe("b");
   });
 
-  it("no valuation: the purchase price stands in (unchanged)", () => {
+  it("no valuation: the purchase price grown to the base date stands in (ADR 0181)", () => {
     expect(selectValuation([], isoDate("2026-06-07"))).toBeUndefined();
     const pf: Portfolio = { ...single(), valuations: [] };
+    // Bought 2018-03-01 for 4,000,000: 99 whole months at 4 % to 2026-06-07.
     expect(propertySnapshot(property, pf, assumptions).value.toFixed(0)).toBe(
-      "4000000",
+      "5528216",
     );
   });
 });
