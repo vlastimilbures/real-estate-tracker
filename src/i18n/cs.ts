@@ -433,7 +433,6 @@ export const cs: Dictionary = {
       lease: "Datum nájmu",
       assumptions: "Výchozí datum",
     },
-    assumptions: "Předpoklady",
   },
 
   properties: {

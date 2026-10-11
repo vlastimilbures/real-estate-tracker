@@ -442,7 +442,6 @@ export const ru: Dictionary = {
       lease: "Дата аренды",
       assumptions: "Базовая дата",
     },
-    assumptions: "Допущения",
   },
 
   properties: {

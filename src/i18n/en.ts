@@ -463,7 +463,6 @@ export const en = {
       lease: "A lease date",
       assumptions: "The base date",
     },
-    assumptions: "Assumptions",
   },
 
   properties: {

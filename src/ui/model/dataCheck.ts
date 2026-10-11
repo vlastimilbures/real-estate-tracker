@@ -398,7 +398,10 @@ export function findingText(
 
 /** The fix link's label: the section it moves to, or the property form. */
 export function fixLabel(
-  t: Pick<Dictionary, "dataCheck" | "propertyDetail" | "properties">,
+  t: Pick<
+    Dictionary,
+    "dataCheck" | "propertyDetail" | "properties" | "settings"
+  >,
   fix: DataCheckFix,
 ): string {
   const d = t.propertyDetail;
@@ -414,7 +417,7 @@ export function fixLabel(
     case "editFunding":
       return t.dataCheck.recordFunding;
     case "assumptions":
-      return t.dataCheck.goTo(t.dataCheck.assumptions);
+      return t.dataCheck.goTo(t.settings.tabs.assumptions);
   }
 }
 

@@ -649,6 +649,7 @@ describe("data check: text and fix (ADR 0118)", () => {
     expect(fixLabel(en, "holding")).toBe("Go to Holding costs");
     expect(fixLabel(en, "edit")).toBe("Edit property");
     expect(fixLabel(en, "editFunding")).toBe("Record funding");
+    expect(fixLabel(en, "assumptions")).toBe("Go to Assumptions");
   });
 });
 
