@@ -79,7 +79,8 @@ as-of resolver (#264, ADR 0150) and the lifecycle states (#275, ADR 0155) left s
    or no filter (`[]`) when those filter nothing (none left, or every active property). So
    `["dev", "inactive"]` with only `dev` active becomes no filter, and a reactivated property
    finds All. The cost: a filter `[a, b]` of `{a, b, c}` reads as All once `c` is deactivated,
-   and stays All when `c` returns (selling and buying back an apartment).
+   and stays All when `c` returns (selling and buying back an apartment). A saved filter of
+   active properties only is left as picked, every active property included.
 
 ## Consequences
 
