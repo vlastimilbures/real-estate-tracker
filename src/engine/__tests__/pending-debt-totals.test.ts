@@ -52,7 +52,7 @@ describe("pending property's existing debt in portfolio totals (ADR 0165)", () =
     const weighted = (s: PropertySnapshot) =>
       s.debt.times(instalmentAtMonth(rows.get(s.propertyId) ?? [], 0).ratePa);
     const numerator = sum(owned, weighted).plus(weighted(pending));
-    expect(numerator.greaterThan(ZERO)).toBe(true);
+    expect(weighted(pending).greaterThan(ZERO)).toBe(true);
     expect(snap.weightedAvgRate.equals(numerator.div(snap.totalDebt))).toBe(
       true,
     );
