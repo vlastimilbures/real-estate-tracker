@@ -152,3 +152,123 @@ describe("useModalA11y dialog stack (#128 R5-14)", () => {
     );
   });
 });
+
+// #280 (ADR 0173, amends ADR 0157 decision 2): when the opener has left the page by the
+// time the dialog closes (a dropdown option, its list closed on blur), focus goes to the
+// first focusable element of the opener's nearest ancestor still on the page.
+function Dropdown({ listOpen }: { listOpen: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <div>
+        <button type="button">Trigger</button>
+        {listOpen && (
+          <ul>
+            <li>
+              <button type="button" onClick={() => setOpen(true)}>
+                Option
+              </button>
+            </li>
+          </ul>
+        )}
+      </div>
+      {open && <Box onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+describe("useModalA11y focus fallback (#280)", () => {
+  it("returns focus to the nearest connected element when the opener is gone", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<Dropdown listOpen />);
+    await user.click(screen.getByRole("button", { name: "Option" }));
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Inside" }),
+    );
+    rerender(<Dropdown listOpen={false} />);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Trigger" }),
+    );
+  });
+});
+
+// Review of PR #318: the fallback skips hidden or inert elements, and stops below the app
+// root, so it never lands on the page's first focusable (the skip link).
+function Page({ showGroup }: { showGroup: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button">Skip to content</button>
+      {showGroup && (
+        <div>
+          <div>
+            <button type="button" onClick={() => setOpen(true)}>
+              Option
+            </button>
+          </div>
+        </div>
+      )}
+      {open && <Box onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+/** Renders into a `#root` element, as the app does. */
+function renderInRoot(ui: React.ReactElement) {
+  const root = document.createElement("div");
+  root.id = "root";
+  document.body.appendChild(root);
+  return render(ui, { container: root });
+}
+
+describe("useModalA11y focus fallback edges (#280)", () => {
+  it("whole ancestor chain gone: no throw, and focus does not jump to the skip link", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderInRoot(<Page showGroup />);
+    await user.click(screen.getByRole("button", { name: "Option" }));
+    rerender(<Page showGroup={false} />);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).not.toBe(
+      screen.getByRole("button", { name: "Skip to content" }),
+    );
+  });
+
+  it("skips an inert or aria-hidden element and picks the next one", async () => {
+    const user = userEvent.setup();
+    function Removable({ list }: { list: boolean }) {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <div>
+            {/* React 18 knows no `inert` prop: set the attribute as a string. */}
+            <div {...{ inert: "" }}>
+              <button type="button">Inert</button>
+            </div>
+            <button type="button" aria-hidden="true">
+              Hidden
+            </button>
+            <button type="button">Trigger</button>
+            {list && (
+              <div>
+                <button type="button" onClick={() => setOpen(true)}>
+                  Option
+                </button>
+              </div>
+            )}
+          </div>
+          {open && <Box onClose={() => setOpen(false)} />}
+        </>
+      );
+    }
+    const { rerender } = renderInRoot(<Removable list />);
+    await user.click(screen.getByRole("button", { name: "Option" }));
+    rerender(<Removable list={false} />);
+    await user.keyboard("{Escape}");
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Trigger" }),
+    );
+  });
+});

@@ -11,6 +11,8 @@
 - Related: [0078](0078-ux-a11y-round-b-charts-menu-axe.md) (CI fails on any axe violation),
   [0107](0107-property-section-nav.md) (section headings take focus),
   [0114](0114-a11y-skip-link-charts.md) (the previous accessibility round)
+- Amended by: [0173](0173-record-panel-races-confirm-focus.md) (decision 2: when the opener
+  is gone, focus falls back to the nearest connected element)
 
 ## Context
 

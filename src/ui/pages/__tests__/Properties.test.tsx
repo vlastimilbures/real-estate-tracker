@@ -6,7 +6,10 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Properties } from "../Properties";
-import { usePortfolioStore } from "../../../state/portfolioStore";
+import {
+  usePortfolioStore,
+  type MutationResult,
+} from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import {
@@ -79,6 +82,58 @@ describe("Properties delete confirmation (UX-019)", () => {
       .getAllByRole("button", { name: en.common.delete })[0]!
       .closest("td")!;
     expect(cell.className).toContain("actions-col");
+  });
+});
+
+// #248 (ADR 0173): a delete that lands late closes the confirm only when it still names
+// the deleted property.
+describe("Properties: a late delete closes only its own confirm (#248)", () => {
+  it("keeps the confirm for another property opened while the first delete ran", async () => {
+    let finish: (r: MutationResult) => void = () => undefined;
+    const removeProperty = vi.fn(
+      () => new Promise<MutationResult>((r) => (finish = r)),
+    );
+    act(() => usePortfolioStore.setState({ removeProperty }));
+    render(<Properties />);
+    const second = portfolio.properties[1]!;
+    await userEvent.click(
+      screen.getAllByRole("button", { name: en.common.delete })[0]!,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.yesDelete }),
+    );
+    await userEvent.click(
+      screen.getAllByRole("button", { name: en.common.delete })[1]!,
+    );
+    expect(
+      screen.getByText(en.properties.confirmDelete(second.name)),
+    ).toBeTruthy();
+    await act(async () => finish({ ok: true }));
+    expect(
+      screen.getByText(en.properties.confirmDelete(second.name)),
+    ).toBeTruthy();
+  });
+  // Once the delete lands the property is gone, so its confirm opened again meanwhile
+  // (X, then Y, then X) names nothing and closes with it.
+  it("closes the deleted property's confirm opened again meanwhile", async () => {
+    let finish: (r: MutationResult) => void = () => undefined;
+    const removeProperty = vi.fn(
+      () => new Promise<MutationResult>((r) => (finish = r)),
+    );
+    act(() => usePortfolioStore.setState({ removeProperty }));
+    render(<Properties />);
+    const deletes = () =>
+      screen.getAllByRole("button", { name: en.common.delete });
+    await userEvent.click(deletes()[0]!);
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.yesDelete }),
+    );
+    await userEvent.click(deletes()[1]!);
+    await userEvent.click(deletes()[0]!);
+    await act(async () => finish({ ok: true }));
+    expect(
+      screen.queryByText(en.properties.confirmDelete(first.name)),
+    ).toBeNull();
   });
 });
 

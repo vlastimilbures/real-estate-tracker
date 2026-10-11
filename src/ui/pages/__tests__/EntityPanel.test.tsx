@@ -11,20 +11,27 @@ import { EntityPanel } from "../../components/EntityPanel";
 import { LeaveGuard } from "../../components/LeaveGuard";
 import type { FieldSpec } from "../../model/formParse";
 import { useUiStore } from "../../../state/uiStore";
+import type { MutationResult } from "../../../state/portfolioStore";
 import { en } from "../../../i18n/en";
 
 type Row = { id: string; value: string };
 
 const specs: FieldSpec[] = [{ name: "value", label: "Value", kind: "money" }];
 
-const ok = async (): Promise<{ ok: true }> => ({ ok: true });
+const ok = async (): Promise<MutationResult> => ({ ok: true });
+
+type Write<A> = (a: A) => Promise<MutationResult>;
 
 function Panel({
   title,
   onSave = ok,
+  onAdd = ok,
+  onDelete = ok,
 }: {
   title: string;
-  onSave?: (r: Row) => Promise<{ ok: true }>;
+  onSave?: Write<Row>;
+  onAdd?: Write<Row>;
+  onDelete?: Write<string>;
 }) {
   const rows: Row[] = [
     { id: "a", value: "100" },
@@ -42,20 +49,30 @@ function Panel({
         id,
         value: String(v.value),
       })}
-      onAdd={ok}
+      onAdd={onAdd}
       onSave={onSave}
-      onDelete={ok}
+      onDelete={onDelete}
     />
   );
 }
 
-function renderPanel(onSave: (r: Row) => Promise<{ ok: true }> = ok) {
+function renderPanel(
+  onSave: Write<Row> = ok,
+  writes: { onAdd?: Write<Row>; onDelete?: Write<string> } = {},
+) {
   return render(
     <>
-      <Panel title="Rows" onSave={onSave} />
+      <Panel title="Rows" onSave={onSave} {...writes} />
       <LeaveGuard />
     </>,
   );
+}
+
+/** A write that resolves only when the test says so. */
+function deferred() {
+  let finish: (r: MutationResult) => void = () => undefined;
+  const promise = new Promise<MutationResult>((r) => (finish = r));
+  return { write: () => promise, finish: (r: MutationResult) => finish(r) };
 }
 
 const editButtons = () => screen.getAllByRole("button", { name: "Edit" });
@@ -191,5 +208,122 @@ describe("EntityPanel row-switch", () => {
     expect(valueInputs()[0].value).toBe("1005");
     expect(useUiStore.getState().unsavedSources).toHaveLength(1);
     expect(useUiStore.getState().unsavedChanges).toBe(true);
+  });
+});
+
+// #245 (option B) and #248 (ADR 0173): a save or delete that lands late closes the form or
+// confirm only when the panel still names the row it wrote.
+describe("EntityPanel: a late write closes only its own row", () => {
+  it("a save of row A that lands after a switch to row B keeps B's form open (#245)", async () => {
+    const user = userEvent.setup();
+    const save = deferred();
+    renderPanel(save.write);
+    await user.click(editButtons()[0]);
+    await user.type(valueInputs()[0], "5");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(editButtons()[1]);
+    await user.click(
+      screen.getByRole("button", { name: en.common.discardChanges }),
+    );
+    expect(valueInputs()[0].value).toBe("200");
+    await act(async () => save.finish({ ok: true }));
+    expect(valueInputs()).toHaveLength(1);
+    expect(valueInputs()[0].value).toBe("200");
+  });
+
+  it("an add that lands after a switch to row B keeps B's form open (#245)", async () => {
+    const user = userEvent.setup();
+    const add = deferred();
+    renderPanel(ok, { onAdd: add.write });
+    await user.click(screen.getByRole("button", { name: "row" }));
+    await user.type(valueInputs()[0], "300");
+    await user.click(screen.getByRole("button", { name: "Add row" }));
+    await user.click(editButtons()[1]);
+    await user.click(
+      screen.getByRole("button", { name: en.common.discardChanges }),
+    );
+    await act(async () => add.finish({ ok: true }));
+    expect(valueInputs()).toHaveLength(1);
+    expect(valueInputs()[0].value).toBe("200");
+  });
+
+  it("a delete of row A that lands after row B's confirm opened keeps B's confirm (#248)", async () => {
+    const user = userEvent.setup();
+    const del = deferred();
+    renderPanel(ok, { onDelete: del.write });
+    await user.click(deleteButtons()[0]);
+    await user.click(screen.getByRole("button", { name: en.common.yesDelete }));
+    await user.click(deleteButtons()[1]);
+    await act(async () => del.finish({ ok: true }));
+    expect(
+      screen.getByRole("button", { name: en.common.yesDelete }),
+    ).toBeTruthy();
+  });
+
+  it("a delete of row A that lands after row B's form opened keeps B's form (#248)", async () => {
+    const user = userEvent.setup();
+    const del = deferred();
+    renderPanel(ok, { onDelete: del.write });
+    await user.click(deleteButtons()[0]);
+    await user.click(screen.getByRole("button", { name: en.common.yesDelete }));
+    await user.click(editButtons()[1]);
+    await act(async () => del.finish({ ok: true }));
+    expect(valueInputs()).toHaveLength(1);
+    expect(valueInputs()[0].value).toBe("200");
+  });
+
+  // Review of PR #318: the same row (or the add form) opened again is a new form; the
+  // earlier write must not close it either.
+  it("an add that lands after the add form was opened again keeps the new add form", async () => {
+    const user = userEvent.setup();
+    const add = deferred();
+    renderPanel(ok, { onAdd: add.write });
+    await user.click(screen.getByRole("button", { name: "row" }));
+    await user.type(valueInputs()[0], "300");
+    await user.click(screen.getByRole("button", { name: "Add row" }));
+    await user.click(editButtons()[1]);
+    await user.click(
+      screen.getByRole("button", { name: en.common.discardChanges }),
+    );
+    await user.click(screen.getByRole("button", { name: en.common.cancel }));
+    await user.click(screen.getByRole("button", { name: "row" }));
+    await user.type(valueInputs()[0], "400");
+    await act(async () => add.finish({ ok: true }));
+    expect(valueInputs()).toHaveLength(1);
+    expect(valueInputs()[0].value).toBe("400");
+  });
+
+  it("a save of row A that lands after A was opened again keeps the new form", async () => {
+    const user = userEvent.setup();
+    const save = deferred();
+    renderPanel(save.write);
+    await user.click(editButtons()[0]);
+    await user.type(valueInputs()[0], "5");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(editButtons()[1]);
+    await user.click(
+      screen.getByRole("button", { name: en.common.discardChanges }),
+    );
+    await user.click(editButtons()[0]);
+    expect(valueInputs()[0].value).toBe("100");
+    await act(async () => save.finish({ ok: true }));
+    expect(valueInputs()).toHaveLength(1);
+    expect(valueInputs()[0].value).toBe("100");
+  });
+
+  // A delete is different: once it lands the row is gone, so a confirm for that same row
+  // opened again meanwhile names nothing and closes with it.
+  it("a delete of row A closes A's confirm opened again meanwhile", async () => {
+    const user = userEvent.setup();
+    const del = deferred();
+    renderPanel(ok, { onDelete: del.write });
+    await user.click(deleteButtons()[0]);
+    await user.click(screen.getByRole("button", { name: en.common.yesDelete }));
+    await user.click(deleteButtons()[1]);
+    await user.click(deleteButtons()[0]);
+    await act(async () => del.finish({ ok: true }));
+    expect(
+      screen.queryByRole("button", { name: en.common.yesDelete }),
+    ).toBeNull();
   });
 });
