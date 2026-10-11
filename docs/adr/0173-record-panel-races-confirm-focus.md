@@ -55,7 +55,10 @@ stays usable meanwhile (ADR 0142 keeps the other rows reachable). Four gaps foll
 4. **Dialog focus fallback (#280 B; amends ADR 0157 decision 2).** When a dialog or popover
    closes and focus is lost but its opener has left the page, focus goes to the first
    focusable element of the opener's nearest ancestor still on the page (for #280: the
-   dropdown's trigger). The ancestors are recorded when the dialog opens.
+   dropdown's trigger). The ancestors are recorded when the dialog opens. Elements inside
+   an inert, `aria-hidden` or hidden subtree, or not rendered, are skipped. The walk stops
+   below the app root: when no ancestor below it is left, focus stays where it fell, as
+   before, rather than jumping to the page's first focusable (the skip link).
 5. **Tests (#249).** The existing ConfirmRow behaviour is pinned on every caller: the
    Properties delete, Cancel restoring focus for the scenario and deactivate confirms, the
    leave-guard path, and the busy state.
