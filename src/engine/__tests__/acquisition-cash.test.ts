@@ -191,13 +191,15 @@ describe("ADR 0134: an owned property's first loan after baseDate is cash in", (
 // cash lands in or after the turn-on year. Tripwire for ownerCash's year-0 case.
 describe("ADR 0176 (#289): a future buy's later first loan never brings year-0 cash", () => {
   const FUTURE = { purchaseDate: isoDate("2028-03-15") };
-  const owned = (p: Portfolio): Property[] =>
-    p.properties.filter((x) => x.id === "owned");
+  const ownedOf = (p: Portfolio): Property => {
+    const prop = p.properties.find((x) => x.id === "owned");
+    if (!prop) throw new Error("expected the property");
+    return prop;
+  };
 
   it("a plain first loan dated before baseDate is the acquisition loan", () => {
     const p = withOwned([loan({ startDate: isoDate("2025-05-10") })], FUTURE);
-    const [prop] = owned(p);
-    if (!prop) throw new Error("expected the property");
+    const prop = ownedOf(p);
     expect(laterFirstLoan(prop, p, assumptions)).toBeUndefined();
     expect(acquisitionSummary(prop, p, assumptions).loan).not.toBeNull();
     expectKc(
@@ -218,8 +220,7 @@ describe("ADR 0176 (#289): a future buy's later first loan never brings year-0 c
       completionDate: isoDate("2028-03-01"),
     } as Partial<MortgageBlock>);
     const p = withOwned([dev], FUTURE);
-    const [prop] = owned(p);
-    if (!prop) throw new Error("expected the property");
+    const prop = ownedOf(p);
     expect(laterFirstLoan(prop, p, assumptions)).toBeUndefined();
     expect(acquisitionSummary(prop, p, assumptions).loan).not.toBeNull();
     expectKc(
@@ -232,17 +233,18 @@ describe("ADR 0176 (#289): a future buy's later first loan never brings year-0 c
   it("a plain first loan > 90 days after the purchase is cash in its own year", () => {
     const late = loan({ startDate: isoDate("2028-07-01") });
     const p = withOwned([late], FUTURE);
-    const [prop] = owned(p);
-    if (!prop) throw new Error("expected the property");
+    const prop = ownedOf(p);
     expect(laterFirstLoan(prop, p, assumptions)).toBe(late);
-    const tLoan = turnOnYear(late.startDate, assumptions);
-    const tBuy = turnOnYear(prop.purchaseDate, assumptions);
-    expect(tLoan).toBeGreaterThanOrEqual(tBuy);
-    expect(tBuy).toBeGreaterThan(0);
+    // baseDate 2026-06-07: bought in year 2, the loan drawn in year 3.
+    expect(turnOnYear(prop.purchaseDate, assumptions)).toBe(2);
+    expect(turnOnYear(late.startDate, assumptions)).toBe(3);
     const out = acquisitionOutflows([prop], p, assumptions);
     expectKc(out[0] ?? ZERO, 0, "year 0");
-    const down = acquisitionSummary(prop, p, assumptions).outflow;
-    const want = tLoan === tBuy ? down.minus(PRINCIPAL) : money(-PRINCIPAL);
-    expectKc(out[tLoan] ?? ZERO, want.toNumber(), "3 M in");
+    expectKc(
+      out[2] ?? ZERO,
+      acquisitionSummary(prop, p, assumptions).outflow.toNumber(),
+      "down payment",
+    );
+    expectKc(out[3] ?? ZERO, -PRINCIPAL, "3 M in");
   });
 });
