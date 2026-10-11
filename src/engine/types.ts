@@ -332,7 +332,8 @@ export interface Refinance {
   month: number;
   /** Predecessor balance the successor pays off. */
   paidOff: Decimal;
-  /** Successor balance drawn in that month. */
+  /** The successor's initial principal (D-47); a tranche it draws in the handover month is
+   *  new debt in the row's `drawn`, not refinance cash (ADR 0176). */
   drawn: Decimal;
 }
 

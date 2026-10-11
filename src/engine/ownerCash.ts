@@ -57,8 +57,9 @@ export function acquisitionOutflows(
 }
 
 /**
- * Net refinance cash by projection year (D-47): a successor's balance drawn − the
- * predecessor balance it pays off, in the year of its handover month. Positive for a
+ * Net refinance cash by projection year (D-47): a successor's initial principal − the
+ * predecessor balance it pays off, in the year of its handover month; its tranches are
+ * new debt, also one drawn in the handover month (ADR 0176). Positive for a
  * cash-out refinance, negative for a pay-down. All zero without successors (the seed
  * ⇒ parity targets unchanged).
  */

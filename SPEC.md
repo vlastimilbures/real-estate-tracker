@@ -320,8 +320,10 @@ table and its export show `dueDate`.
 - **Refinance handover** (successor block, D-47 in ADR 0027): the successor draws in the
   first grid month on/after its start. Predecessor payments due on or before that start are
   still paid (one falling in the draw month is carried by the draw row); later ones are
-  dropped. Net refinance cash (successor principal − predecessor balance paid off) counts in
-  the handover year's cash to owner and levered IRR, like an acquisition outflow.
+  dropped. Net refinance cash (successor's initial principal − predecessor balance paid off)
+  counts in the handover year's cash to owner and levered IRR, like an acquisition outflow;
+  a tranche the successor draws, also in the handover month, is new debt, not refinance
+  cash (ADR 0176).
   The handover row holds the successor's principal less the balance it pays off as
   `refinanced`, apart from `drawn` (ADR 0130); a tranche the successor draws in that month
   stays in `drawn`.
