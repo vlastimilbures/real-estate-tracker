@@ -17,7 +17,11 @@ import {
   type PropertySchedule,
 } from "./schedule";
 import { turnOnYear, yearSlice } from "./yearGrid";
-import { cashOutsideNetCf } from "./ownerCash";
+import {
+  cashOutsideNetCf,
+  prePurchaseDebtService,
+  type DebtServicePaid,
+} from "./ownerCash";
 import { assertAssumptions, assertInputs } from "./validate";
 import { basisDate, valueAt } from "./growth";
 import {
@@ -587,14 +591,15 @@ export function portfolioProjection(
   schedules?: Map<string, PropertySchedule>,
 ): ProjectionYear[] {
   assertInputs(portfolio, assumptions); // D-37
-  return projectPortfolio(portfolio, assumptions, schedules);
+  return projectPortfolioParts(portfolio, assumptions, schedules).years;
 }
 
 /**
  * `portfolioProjection` on inputs the caller has already validated (DR-128): the
- * portfolio is checked once per public call, not again per property.
+ * portfolio is checked once per public call, not again per property. Also returns the
+ * debt service paid before a future buy turns on (ADR 0124), so the KPIs reuse it (#291).
  */
-export function projectPortfolio(
+export function projectPortfolioParts(
   portfolio: Portfolio,
   assumptions: Assumptions,
   schedules = propertySchedules(
@@ -602,7 +607,7 @@ export function projectPortfolio(
     portfolio.properties.map((p) => p.id),
     assumptions,
   ),
-): ProjectionYear[] {
+): { years: ProjectionYear[]; prePurchase: DebtServicePaid[] } {
   const active = portfolio.properties.filter((p) => p.active !== false);
   // The property years without their own cash to owner: the portfolio's is computed
   // once below, not summed from them.
@@ -614,6 +619,26 @@ export function projectPortfolio(
       (schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE).rows,
     ),
   );
+  const out = sumYears(perProp, assumptions);
+  const prePurchase = prePurchaseDebtService(active, assumptions, schedules);
+  // Σ net cash flow − the portfolio's cash outside it, not Σ of the property rows: the
+  // KPIs sum these, and another summation order would move their last digits.
+  const years = withCashToOwner(
+    out,
+    cashOutsideNetCf(
+      active,
+      portfolio,
+      assumptions,
+      schedules,
+      out,
+      prePurchase,
+    ),
+  );
+  return { years, prePurchase };
+}
+
+/** The portfolio's year rows: each field summed across the property years. */
+function sumYears(perProp: YearRow[][], assumptions: Assumptions): YearRow[] {
   const baseYear = assumptions.baseDate.getUTCFullYear();
   const out: YearRow[] = [];
   for (let t = 0; t <= assumptions.horizonYears; t++) {
@@ -649,10 +674,5 @@ export function projectPortfolio(
       ratePa: null,
     });
   }
-  // Σ net cash flow − the portfolio's cash outside it, not Σ of the property rows: the
-  // KPIs sum these, and another summation order would move their last digits.
-  return withCashToOwner(
-    out,
-    cashOutsideNetCf(active, portfolio, assumptions, schedules, out),
-  );
+  return out;
 }

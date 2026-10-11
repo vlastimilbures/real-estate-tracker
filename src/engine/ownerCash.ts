@@ -57,8 +57,9 @@ export function acquisitionOutflows(
 }
 
 /**
- * Net refinance cash by projection year (D-47): a successor's balance drawn − the
- * predecessor balance it pays off, in the year of its handover month. Positive for a
+ * Net refinance cash by projection year (D-47): a successor's initial principal − the
+ * predecessor balance it pays off, in the year of its handover month; its tranches are
+ * new debt, also one drawn in the handover month (ADR 0176). Positive for a
  * cash-out refinance, negative for a pay-down. All zero without successors (the seed
  * ⇒ parity targets unchanged).
  */
@@ -129,7 +130,7 @@ export function prePurchaseDebtService(
  * baseDate, less a later first loan's principal in; `acquisitionOutflows`), net
  * refinance cash in (D-47), prepayments and their fees out (ADR 0109; read from `rows`,
  * the projection of the same properties), and the debt service paid before a future
- * buy turns on (ADR 0124).
+ * buy turns on (ADR 0124; `prePurchase`, computed here unless the caller has it).
  */
 export function cashOutsideNetCf(
   properties: Property[],
@@ -137,13 +138,9 @@ export function cashOutsideNetCf(
   assumptions: Assumptions,
   schedules: Map<string, PropertySchedule>,
   rows: { prepaid: Decimal; prepaymentFees: Decimal }[],
+  prePurchase = prePurchaseDebtService(properties, assumptions, schedules),
 ): Decimal[] {
   const refiCash = refinanceCash(properties, assumptions, schedules);
-  const prePurchase = prePurchaseDebtService(
-    properties,
-    assumptions,
-    schedules,
-  );
   return acquisitionOutflows(properties, portfolio, assumptions).map((x, t) => {
     const pre = at(prePurchase, t);
     return x

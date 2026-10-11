@@ -433,13 +433,16 @@ function leaseEnds(portfolio: Portfolio, asOf: Date): FinancingEvent[] {
 /**
  * Fixation ends (with the balance), modelled payoffs, development completions and lease
  * ends without a follow-on lease, in (as-of, as-of + `months`], sorted by date, then
- * kind, then property (ADR 0103).
+ * kind (ADR 0103), then the portfolio's property order (by name, ADR 0127): random ids
+ * never decide (ADR 0176).
  */
 export function upcomingEvents(
   portfolio: Portfolio,
   fx: FinancingExposure,
   months: number,
 ): FinancingEvent[] {
+  const n = portfolio.properties.length;
+  const order = new Map(portfolio.properties.map((p, i) => [p.id, i]));
   const resets: FinancingEvent[] = fx.resets
     .filter((r) => r.status === "upcoming")
     .map((r) => ({
@@ -470,6 +473,6 @@ export function upcomingEvents(
       (a, b) =>
         a.date.getTime() - b.date.getTime() ||
         KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) ||
-        a.propertyId.localeCompare(b.propertyId),
+        (order.get(a.propertyId) ?? n) - (order.get(b.propertyId) ?? n),
     );
 }

@@ -6,6 +6,9 @@
   decision D2 (2026-10-08: option A, the projection carries the row); Track 11 PR 11.12
 - Amends: [0109](0109-loan-prepayments-and-recasts.md) (§11: the cumulative cash flow is
   named cash to owner, and the projection shows it as its own row)
+- Amended by: [0176](0176-refinance-cash-successor-principal-event-order.md) (both
+  "Not changed here" items settled: a handover-month tranche is new debt; the year-0 case
+  cannot occur)
 - Related: D-47 (refinance cash), [0087](0087-real-lens-multiple-cumulative-cf.md) (real
   lens), [0124](0124-pre-purchase-debt-service.md) (debt service before a future buy),
   [0134](0134-acquisition-cash-gaps.md) (acquisition outflow)

@@ -137,9 +137,10 @@ describe("ADR 0161: cash to owner", () => {
     expect(future[1]!.cashToOwner.isNegative()).toBe(true);
   });
 
-  it("a successor's handover-month tranche counts as refinance cash (D-47)", () => {
+  it("a successor's handover-month tranche is new debt, not refinance cash (ADR 0176)", () => {
     // Javorova's successor on 17.01.2031 (grid month 56, year 5) pays off 1,386,249.89 Kč
-    // with 1,386,000 Kč and draws a 100,000 Kč tranche in the handover month.
+    // with 1,386,000 Kč and draws a 100,000 Kč tranche in the handover month: refinance
+    // cash = 1,386,000 − 1,386,249.89 (the row's refinance difference), not the tranche.
     const p: Portfolio = {
       ...portfolio,
       mortgages: [
@@ -161,7 +162,7 @@ describe("ADR 0161: cash to owner", () => {
     const javorova = perProperty(p).get("javorova")!;
     expect(
       javorova[5]!.cashToOwner.minus(javorova[5]!.netCashFlow).toFixed(2),
-    ).toBe("99750.11");
+    ).toBe("-249.89");
     expectReconciles(p);
   });
 

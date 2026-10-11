@@ -5,7 +5,7 @@
 import { assertInputs } from "./validate";
 import { propertySchedules, scheduleRows } from "./schedule";
 import { portfolioSnapshot } from "./metrics";
-import { projectPortfolio } from "./projections";
+import { projectPortfolioParts } from "./projections";
 import { kpisFrom } from "./kpis";
 import { financingExposure, type FinancingExposure } from "./financing";
 import type {
@@ -45,12 +45,16 @@ export function portfolioOutputs(
   );
   const schedules = scheduleRows(built);
   const snapshot = portfolioSnapshot(portfolio, assumptions, asOf, schedules); // D-37
-  const projection = projectPortfolio(portfolio, assumptions, built);
+  const { years: projection, prePurchase } = projectPortfolioParts(
+    portfolio,
+    assumptions,
+    built,
+  );
   return {
     schedules,
     snapshot,
     projection,
-    kpis: kpisFrom(portfolio, assumptions, projection, built),
+    kpis: kpisFrom(portfolio, assumptions, projection, built, prePurchase),
     financing: financingExposure(portfolio, assumptions, built, asOf),
   };
 }
@@ -66,9 +70,13 @@ export function projectionAndKpis(
     portfolio.properties.map((p) => p.id),
     assumptions,
   );
-  const projection = projectPortfolio(portfolio, assumptions, built);
+  const { years: projection, prePurchase } = projectPortfolioParts(
+    portfolio,
+    assumptions,
+    built,
+  );
   return {
     projection,
-    kpis: kpisFrom(portfolio, assumptions, projection, built),
+    kpis: kpisFrom(portfolio, assumptions, projection, built, prePurchase),
   };
 }

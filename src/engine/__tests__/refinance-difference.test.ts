@@ -102,6 +102,8 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
     expect(row.drawn.toFixed(2)).toBe("100000.00");
     expect(row.refinanced.toFixed(2)).toBe("-249.89");
     expect(r.paidOff.toFixed(2)).toBe("1386249.89");
+    // ADR 0176: refinance cash counts the initial principal, not the tranche.
+    expect(r.drawn.toFixed(2)).toBe("1386000.00");
   });
 
   it("a predecessor drawn in the handover month is drawn, the rest refinanced", () => {

@@ -289,6 +289,14 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- Upcoming financing events on the same day, such as two flats' lease ends, now show in the
+  portfolio's property order (by name) instead of a random order (ADR 0176, #207).
+
+- A development loan that refinances an earlier loan and draws a tranche in its first month
+  no longer counts that tranche as cash paid to you (ADR 0176, #288). Refinance cash is the
+  new loan's principal less the balance it pays off; every tranche is new debt, as in later
+  months. Cash to owner and levered IRR fall by the tranche in the handover year.
+
 - A development loan that starts more than 90 days after the purchase date now counts as
   the loan that funded the purchase (ADR 0168). The Acquisition check no longer shows the
   whole loan as a gap. The "Value vs debt vs equity" chart shows the debt in the purchase

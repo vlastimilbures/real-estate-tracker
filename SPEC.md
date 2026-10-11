@@ -320,8 +320,10 @@ table and its export show `dueDate`.
 - **Refinance handover** (successor block, D-47 in ADR 0027): the successor draws in the
   first grid month on/after its start. Predecessor payments due on or before that start are
   still paid (one falling in the draw month is carried by the draw row); later ones are
-  dropped. Net refinance cash (successor principal − predecessor balance paid off) counts in
-  the handover year's cash to owner and levered IRR, like an acquisition outflow.
+  dropped. Net refinance cash (successor's initial principal − predecessor balance paid off)
+  counts in the handover year's cash to owner and levered IRR, like an acquisition outflow;
+  a tranche the successor draws, also in the handover month, is new debt, not refinance
+  cash (ADR 0176).
   The handover row holds the successor's principal less the balance it pays off as
   `refinanced`, apart from `drawn` (ADR 0130); a tranche the successor draws in that month
   stays in `drawn`.
@@ -585,7 +587,8 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
   page, active or not: its exposure, its chain blocks' resets and the ids of the chain blocks.
 - **Upcoming events** (`upcomingEvents`) in (as-of, as-of + M months], sorted by date: fixation
   ends (with the balance), modelled payoffs, development completions, and the in-force
-  lease's end when no later lease is entered.
+  lease's end when no later lease is entered. Same-day events sort by kind in that order,
+  then by the portfolio's property order (by name; ADR 0176).
 
 ## 5. Data layer
 

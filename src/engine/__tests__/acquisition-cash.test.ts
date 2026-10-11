@@ -7,6 +7,9 @@ import { describe, it, expect } from "vitest";
 import { irr, portfolioKpis } from "../kpis";
 import { cpiIndex, portfolioProjection } from "../projections";
 import { propertySchedules } from "../schedule";
+import { acquisitionSummary, laterFirstLoan } from "../acquisition";
+import { acquisitionOutflows } from "../ownerCash";
+import { turnOnYear } from "../yearGrid";
 import { isoDate } from "../dates";
 import { money, rate } from "../brands";
 import { ZERO, type Decimal } from "../../lib/money";
@@ -179,5 +182,69 @@ describe("ADR 0134: an owned property's first loan after baseDate is cash in", (
       purchaseDate: isoDate("2026-05-01"),
     });
     expectKc(outflow(p), -PRINCIPAL, "3 M in");
+  });
+});
+
+// ADR 0176 (#289): a future buy's first loan dated on or before baseDate is always its
+// acquisition loan (ADR 0119 §3; a development loan always is, ADR 0168), so it never
+// brings cash in year 0. A later first loan starts > 90 days after the purchase, so its
+// cash lands in or after the turn-on year. Tripwire for ownerCash's year-0 case.
+describe("ADR 0176 (#289): a future buy's later first loan never brings year-0 cash", () => {
+  const FUTURE = { purchaseDate: isoDate("2028-03-15") };
+  const ownedOf = (p: Portfolio): Property => {
+    const prop = p.properties.find((x) => x.id === "owned");
+    if (!prop) throw new Error("expected the property");
+    return prop;
+  };
+
+  it("a plain first loan dated before baseDate is the acquisition loan", () => {
+    const p = withOwned([loan({ startDate: isoDate("2025-05-10") })], FUTURE);
+    const prop = ownedOf(p);
+    expect(laterFirstLoan(prop, p, assumptions)).toBeUndefined();
+    expect(acquisitionSummary(prop, p, assumptions).loan).not.toBeNull();
+    expectKc(
+      acquisitionOutflows([prop], p, assumptions)[0] ?? ZERO,
+      0,
+      "year 0",
+    );
+  });
+
+  it("a development first loan dated before baseDate is the acquisition loan", () => {
+    const dev = loan({
+      startDate: isoDate("2025-05-10"),
+      loanTermYears: 30,
+      draws: [
+        { date: isoDate("2027-09-01"), amount: money(1_000_000) },
+        { date: isoDate("2028-03-01"), amount: money(500_000) },
+      ],
+      completionDate: isoDate("2028-03-01"),
+    } as Partial<MortgageBlock>);
+    const p = withOwned([dev], FUTURE);
+    const prop = ownedOf(p);
+    expect(laterFirstLoan(prop, p, assumptions)).toBeUndefined();
+    expect(acquisitionSummary(prop, p, assumptions).loan).not.toBeNull();
+    expectKc(
+      acquisitionOutflows([prop], p, assumptions)[0] ?? ZERO,
+      0,
+      "year 0",
+    );
+  });
+
+  it("a plain first loan > 90 days after the purchase is cash in its own year", () => {
+    const late = loan({ startDate: isoDate("2028-07-01") });
+    const p = withOwned([late], FUTURE);
+    const prop = ownedOf(p);
+    expect(laterFirstLoan(prop, p, assumptions)).toBe(late);
+    // baseDate 2026-06-07: bought in year 2, the loan drawn in year 3.
+    expect(turnOnYear(prop.purchaseDate, assumptions)).toBe(2);
+    expect(turnOnYear(late.startDate, assumptions)).toBe(3);
+    const out = acquisitionOutflows([prop], p, assumptions);
+    expectKc(out[0] ?? ZERO, 0, "year 0");
+    expectKc(
+      out[2] ?? ZERO,
+      acquisitionSummary(prop, p, assumptions).outflow.toNumber(),
+      "down payment",
+    );
+    expectKc(out[3] ?? ZERO, -PRINCIPAL, "3 M in");
   });
 });

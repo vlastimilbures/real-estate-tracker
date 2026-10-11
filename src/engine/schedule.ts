@@ -1657,7 +1657,7 @@ function spliceSuccessor(
     refinance: {
       month: d,
       paidOff: owed.minus(late.applied),
-      drawn: drawRow.endBalance,
+      drawn: next.initialPrincipal,
     },
   };
 }
