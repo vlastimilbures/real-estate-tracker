@@ -6,7 +6,6 @@ import { Button, TableWrap } from "./primitives";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import type { MutationResult } from "../../state/portfolioStore";
-import { focusPanelAfter, usePanelRef } from "./panelFocus";
 import { layerOpen } from "../hooks/useModalA11y";
 
 export function EntityTable<T extends { id: string }>({
@@ -90,6 +89,34 @@ export function EntityTable<T extends { id: string }>({
   );
 }
 
+/**
+ * After a confirmed action closed its row (ADR 0173): focus the panel that held the row,
+ * or the page's title (the AppShell h1) when that panel has left the page. Only when focus
+ * is lost (on `<body>`, or still inside `row`), so a row or form opened meanwhile keeps it.
+ * The target takes focus from script only: `tabIndex=-1` is set for the focus and removed
+ * again on blur. The section stays unnamed: a named section is a region landmark, and a
+ * record panel's table is already a region named by the panel's title.
+ */
+function focusPanelAfter(
+  panel: HTMLElement | null,
+  row: HTMLElement | null,
+): void {
+  const active = document.activeElement;
+  const lost = !active || active === document.body || !!row?.contains(active);
+  if (!lost) return;
+  const target = panel?.isConnected
+    ? panel
+    : document.querySelector<HTMLElement>(".topbar .page-title");
+  if (!target) return;
+  if (!target.hasAttribute("tabindex")) {
+    target.tabIndex = -1;
+    target.addEventListener("blur", () => target.removeAttribute("tabindex"), {
+      once: true,
+    });
+  }
+  target.focus();
+}
+
 /** The one inline confirm for a destructive action (ADR 0143). It runs `onConfirm` and
  *  stays open with the reason when the write fails (UX-050); the caller closes it on
  *  success. Focus moves to Cancel on open and back to the trigger on Cancel or Escape,
@@ -115,7 +142,10 @@ export function ConfirmRow({
   const rowRef = useRef<HTMLDivElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const messageId = useId();
-  const panel = usePanelRef();
+  // The panel that holds the row, found while the row is on the page (a cleanup runs
+  // after the row has left it). The deactivate confirm relies on ActivationBanner
+  // rendering <Panel> in both branches: the section is reused for the inactive banner.
+  const panel = useRef<HTMLElement | null>(null);
   // Set once the write landed: the caller then closes the row, and focus follows it to
   // the panel (ADR 0173). `mounted` tells whether that close has already happened.
   const succeeded = useRef(false);
@@ -132,11 +162,12 @@ export function ConfirmRow({
   useEffect(() => {
     mounted.current = true;
     const row = rowRef.current;
+    panel.current = row?.closest<HTMLElement>("section.panel") ?? null;
     return () => {
       mounted.current = false;
-      if (succeeded.current) focusPanelAfter(panel, row);
+      if (succeeded.current) focusPanelAfter(panel.current, row);
     };
-  }, [panel]);
+  }, []);
   const cancel = () => {
     onCancel();
     if (opener.current?.isConnected) opener.current.focus();
@@ -167,7 +198,7 @@ export function ConfirmRow({
             if (result.ok) {
               succeeded.current = true;
               // Already closed by the caller: focus follows now, not on unmount.
-              if (!mounted.current) focusPanelAfter(panel, null);
+              if (!mounted.current) focusPanelAfter(panel.current, null);
               return;
             }
             setBusy(false);

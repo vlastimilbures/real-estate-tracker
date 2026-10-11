@@ -1,5 +1,5 @@
 // Reusable presentation primitives. They format and render engine output — no maths.
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { X, FileSpreadsheet } from "lucide-react";
 import type { Decimal } from "../../lib/money";
@@ -18,7 +18,6 @@ import { useToast } from "../hooks/useToast";
 import { useUiStore } from "../../state/uiStore";
 import type { SaveOutcome } from "../../state/platform";
 import { logFailure } from "../../state/diagnostics";
-import { PanelContext } from "./panelFocus";
 
 type Num = Decimal | number;
 
@@ -170,12 +169,8 @@ export function Panel({
   flush?: boolean | undefined;
   children: ReactNode;
 }) {
-  const ref = useRef<HTMLElement>(null);
   return (
-    // Focusable from script only: focus lands here after a confirmed action (ADR 0173).
-    // Left unnamed: a named section is a region landmark, and a record panel's table is
-    // already a region with the panel's title as its name.
-    <section className="panel" ref={ref} tabIndex={-1}>
+    <section className="panel">
       {(title || action) && (
         <div className="panel-head">
           <div className="panel-head-titles">
@@ -186,9 +181,7 @@ export function Panel({
           {action}
         </div>
       )}
-      <div className={`panel-body${flush ? " flush" : ""}`}>
-        <PanelContext.Provider value={ref}>{children}</PanelContext.Provider>
-      </div>
+      <div className={`panel-body${flush ? " flush" : ""}`}>{children}</div>
     </section>
   );
 }
