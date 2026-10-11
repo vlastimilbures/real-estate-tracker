@@ -167,8 +167,8 @@ engine without the form, and remove it when the last part lands.
 - A property with no valuation at all now grows its purchase price to the projection start
   (ADR 0181, #157). Before, the price stood in unchanged, so the value stayed flat when the
   base date moved and jumped when a valuation was entered: a flat bought in June 2015 for
-  4,080,000 Kč now reads 6,280,973 Kč on 7 June 2026 at 4 % a year, and a year more a year
-  later. The price grows at the property's own appreciation, else the Base rate, so today's
+  4,080,000 Kč now reads 6,280,973 Kč on 7 June 2026 at 4 % a year, and one year later it
+  reads a year's growth more. The price grows at the property's own appreciation, else the Base rate, so today's
   value is the same in every scenario. Recorded valuations and future purchases are
   unchanged. The Data check says a stale valuation is used as entered, not grown, and that
   a missing one is replaced by the grown purchase price; the Guide's Value entry says the

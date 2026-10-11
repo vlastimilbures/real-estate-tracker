@@ -31,7 +31,7 @@ The projection read its year-0 value through a second copy of the rule (`opening
 ## Decision
 
 1. **One rule.** The projection's year-0 value reads `valueAnchor`, the snapshot's rule;
-   `openingValue` is removed. This part is a refactor and moves no number.
+   `openingValue` (cited by ADR 0122 §4) is removed. This part is a refactor and moves no number.
 2. **The purchase-price fallback grows to the basis.** With no valuation, the value at the
    basis date (the base date, or the purchase date of a property bought after it) is
    `purchasePrice × (1 + g) ^ (months / 12)`, where `months` counts whole months from the
@@ -66,7 +66,8 @@ The projection read its year-0 value through a second copy of the rule (`opening
 - One test pin moves: `valuation-valid-to.test.ts`, a property bought 2018-03-01 for
   4,000,000 with no valuation, reads 5,528,216 at the base date 2026-06-07 (99 months at 4 %).
 - A portfolio with a property without any valuation shows a higher value, equity and net
-  worth, and a lower LTV and IRR, than before. Example: the sample with Javorová's valuation
+  worth, a lower LTV, and lower returns measured from today's equity (IRR, CAGR, multiple),
+  than before. Example: the sample with Javorová's valuation
   removed values Javorová at 6,280,972.55 (4,080,000 × 1.04^11), not 4,080,000; one year
   later it reads 6,532,211.45, with no jump.
 - The Data check still lists "no valuation" as needing attention: the grown price is an

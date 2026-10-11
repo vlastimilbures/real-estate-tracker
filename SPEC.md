@@ -242,8 +242,8 @@ Derived per-property values:
   Falls back to `purchasePrice` only when the property has no valuation (ADR 0122); the
   price then grows by whole months from the purchase date to the anchor, at the property's
   own appreciation rate, else the base rate (not a scenario's), so today's value is the
-  same in every scenario (ADR 0181). A
-  development property counts at its completed value throughout construction (ADR 0166).
+  same in every scenario (ADR 0181). A development property counts at its completed value
+  throughout construction (ADR 0166).
 - **Outstanding debt** — the property's schedule balance at `asOf` (refinance chain,
   fixation resets, prepayments and recasts included); the instalment and rate are the
   schedule's at that month.
