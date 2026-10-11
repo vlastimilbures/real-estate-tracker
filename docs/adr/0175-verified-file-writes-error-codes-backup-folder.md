@@ -58,11 +58,12 @@
 5. **The import preview failure banner has no dismiss.** It clears when the files or the
    saved data change, which starts a new preview (ADR 0147 decision 4). The banner for a plan
    that changed before import (`importPage.planChanged`) keeps its dismiss.
-6. **Settings → Backup shows the data folder.** The Export panel gets **Show data folder**
-   (`backup.showFolder`), which calls `reveal_data_dir` unchanged (ADR 0153 decision 4: the
-   app folder in Finder, `portfolio.db` selected), and a hint (`backup.folderHint`) that safety
-   and pre-migration backups are in its `backups` folder. A failure is logged under `REVEAL`
-   and shown in the outcome banner (ADR 0154) with the folder's path (`boot.revealFailed`).
+6. **Settings → Backup shows the data folder.** The Export panel gets a hint
+   (`backup.folderHint`) that the safety and pre-migration copies are in the `backups`
+   folder inside the data folder, and **Show data folder** (the startup screen's
+   `boot.showDataFolder`), which calls `reveal_data_dir` unchanged (ADR 0153 decision 4: the
+   app folder in Finder, `portfolio.db` selected). A failure is logged under `REVEAL` and
+   shown in the outcome banner (ADR 0154) with the folder's path (`boot.revealFailed`).
    Nothing is listed, counted or deleted.
 7. **`execute` refuses transaction control.** `tauriSql.execute` rejects a statement that
    starts with `BEGIN`, `COMMIT`, `END`, `ROLLBACK`, `SAVEPOINT` or `RELEASE`, with a message
@@ -76,7 +77,7 @@
   go away. The Rust tests cover the byte check.
 - The error log shows which OS or SQLite error happened (`os error 13`, `code: 2067`).
 - Visible changes: the Import preview failure banner loses its ✕; Settings → Backup gets a
-  button and a hint (`en`, `cs`, `ru`).
+  button and a hint (one new key, `backup.folderHint`, in `en`, `cs`, `ru`).
 - No engine, parity, golden-master, stored-data, export or CSV change.
 - Out of scope: the ADR 0064 / `docs/release.md` wording of the raw-SQL risk (#171, a docs
   PR) and an `ATTACH` deny (#171 option B, not chosen). Backup retention (#151 option D, not
