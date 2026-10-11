@@ -26,6 +26,7 @@ import type {
   Valuation,
 } from "../types";
 import { validateInputs } from "../validate";
+import { fcRuns } from "./support/fcRuns";
 import {
   assumptions,
   BASE_DATE,
@@ -35,16 +36,9 @@ import { KC, near } from "./support/tolerance";
 import { rate as brandRate, type IsoDate, type Rate } from "../brands";
 import { money } from "../brands";
 
-// Fixed seed ⇒ reproducible in CI. Hunt locally with FC_SEED=<n> FC_RUNS=<n>.
-const RUNS = {
-  seed: Number(process.env.FC_SEED ?? 20260930),
-  numRuns: Number(process.env.FC_RUNS ?? 120),
-};
-
-// Time budget for the heavy random-loan properties: each run builds a schedule of up to 480 rows and
-// projects it, ~1 s per test locally but past the 5 s default on CI runners under v8 coverage.
-// A time budget only — the checks and run count are unchanged.
-const HEAVY_TIMEOUT_MS = 30_000;
+// Fixed seed ⇒ reproducible in CI; nightly runs 2000 with a date seed (`fcRuns`).
+// Hunt locally with FC_SEED=<n> FC_RUNS=<n>.
+const { runs: RUNS, timeout: TIMEOUT } = fcRuns(20260930, 120);
 
 // ---------------------------------------------------------------------------
 // Arbitraries
@@ -123,7 +117,7 @@ const finite = (d: Decimal | null) => d === null || d.isFinite();
 // Annuity helpers
 // ---------------------------------------------------------------------------
 
-describe("PMT / FV / NPER round-trip", () => {
+describe("PMT / FV / NPER round-trip", { timeout: TIMEOUT }, () => {
   it("NPER(PMT(r, n, P)) = n and FV after n payments = 0", () => {
     fc.assert(
       fc.property(
@@ -162,7 +156,7 @@ describe("PMT / FV / NPER round-trip", () => {
 // Random valid loans
 // ---------------------------------------------------------------------------
 
-describe("random valid plain loans", { timeout: HEAVY_TIMEOUT_MS }, () => {
+describe("random valid plain loans", { timeout: TIMEOUT }, () => {
   it("term is finite and within the 12–480-month design range", () => {
     fc.assert(
       fc.property(plainLoan, ({ block, months }) => {
@@ -312,145 +306,164 @@ function oracle<T extends { id: string }>(
   return best?.id;
 }
 
-describe("random effective-dated leases and valuations", () => {
-  it("leaseInForce / valuationInForce pick the record in force at asOf", () => {
-    fc.assert(
-      fc.property(
-        records,
-        fc.integer({ min: -2500, max: 2500 }),
-        (rs, asOfDay) => {
-          const asOf = dayToDate(asOfDay);
-          const leases: Lease[] = rs.map((r, i) => ({
-            id: `l${i}`,
-            propertyId: "p",
-            startDate: dayToDate(r.startDay),
-            endDate:
-              r.lengthDays === undefined
-                ? undefined
-                : dayToDate(r.startDay + r.lengthDays),
-            monthlyRent: money(r.amount),
-          }));
-          const vals: Valuation[] = rs.map((r, i) => ({
-            id: `v${i}`,
-            propertyId: "p",
-            validFrom: dayToDate(r.startDay),
-            validTo:
-              r.lengthDays === undefined
-                ? undefined
-                : dayToDate(r.startDay + r.lengthDays),
-            marketValue: money(r.amount * 100),
-          }));
-          expect(leaseInForce(leases, asOf)?.id).toBe(
-            oracle(
+describe(
+  "random effective-dated leases and valuations",
+  { timeout: TIMEOUT },
+  () => {
+    it("leaseInForce / valuationInForce pick the record in force at asOf", () => {
+      fc.assert(
+        fc.property(
+          records,
+          fc.integer({ min: -2500, max: 2500 }),
+          (rs, asOfDay) => {
+            const asOf = dayToDate(asOfDay);
+            const leases: Lease[] = rs.map((r, i) => ({
+              id: `l${i}`,
+              propertyId: "p",
+              startDate: dayToDate(r.startDay),
+              endDate:
+                r.lengthDays === undefined
+                  ? undefined
+                  : dayToDate(r.startDay + r.lengthDays),
+              monthlyRent: money(r.amount),
+            }));
+            const vals: Valuation[] = rs.map((r, i) => ({
+              id: `v${i}`,
+              propertyId: "p",
+              validFrom: dayToDate(r.startDay),
+              validTo:
+                r.lengthDays === undefined
+                  ? undefined
+                  : dayToDate(r.startDay + r.lengthDays),
+              marketValue: money(r.amount * 100),
+            }));
+            expect(leaseInForce(leases, asOf)?.id).toBe(
+              oracle(
+                leases,
+                asOf,
+                (l) => l.startDate,
+                (l) => l.endDate,
+              ),
+            );
+            expect(valuationInForce(vals, asOf)?.id).toBe(
+              oracle(
+                vals,
+                asOf,
+                (v) => v.validFrom,
+                (v) => v.validTo,
+              ),
+            );
+          },
+        ),
+        RUNS,
+      );
+    });
+
+    it("selectValuation: latest started (validTo not read), else nearest upcoming (ADR 0122)", () => {
+      fc.assert(
+        fc.property(
+          records,
+          fc.integer({ min: 0, max: 2500 }),
+          (rs, asOfDay) => {
+            const asOf = dayToDate(asOfDay);
+            const vals: Valuation[] = rs.map((r, i) => ({
+              id: `v${i}`,
+              propertyId: "p",
+              validFrom: dayToDate(r.startDay),
+              validTo:
+                r.lengthDays === undefined
+                  ? undefined
+                  : dayToDate(r.startDay + r.lengthDays),
+              marketValue: money(r.amount * 100),
+            }));
+            const from = (v: Valuation) => v.validFrom;
+            const upcoming = vals
+              .filter((v) => v.validFrom > asOf)
+              .sort((a, b) => a.validFrom.getTime() - b.validFrom.getTime())[0];
+            expect(selectValuation(vals, asOf)?.id).toBe(
+              oracle(vals, asOf, from, () => undefined) ?? upcoming?.id,
+            );
+            // The purchase price (1 Kč here) stands in only when there is no valuation.
+            const property: Property = {
+              id: "p",
+              name: "P",
+              purchaseDate: utc(2020, 1, 1),
+              purchasePrice: money(1),
+            };
+            const p: Portfolio = {
+              properties: [property],
+              mortgages: [],
+              valuations: vals,
+              leases: [],
+              holdingCosts: [],
+            };
+            const value = propertySnapshot(
+              property,
+              p,
+              assumptions,
+              asOf,
+            ).value;
+            expect(value.greaterThanOrEqualTo(100_000)).toBe(vals.length > 0);
+          },
+        ),
+        RUNS,
+      );
+    });
+
+    it("snapshot gross rent = 12 × the lease in force (0 in a gap, no fallback)", () => {
+      fc.assert(
+        fc.property(
+          records,
+          fc.integer({ min: 0, max: 2500 }),
+          (rs, asOfDay) => {
+            const leases: Lease[] = rs.map((r, i) => ({
+              id: `l${i}`,
+              propertyId: "p",
+              startDate: dayToDate(r.startDay),
+              endDate:
+                r.lengthDays === undefined
+                  ? undefined
+                  : dayToDate(r.startDay + r.lengthDays),
+              monthlyRent: money(r.amount),
+            }));
+            const property: Property = {
+              id: "p",
+              name: "P",
+              purchaseDate: utc(2020, 1, 1),
+              purchasePrice: money(5_000_000),
+            };
+            const p: Portfolio = {
+              properties: [property],
+              mortgages: [],
+              valuations: [],
               leases,
-              asOf,
-              (l) => l.startDate,
-              (l) => l.endDate,
-            ),
-          );
-          expect(valuationInForce(vals, asOf)?.id).toBe(
-            oracle(
-              vals,
-              asOf,
-              (v) => v.validFrom,
-              (v) => v.validTo,
-            ),
-          );
-        },
-      ),
-      RUNS,
-    );
-  });
-
-  it("selectValuation: latest started (validTo not read), else nearest upcoming (ADR 0122)", () => {
-    fc.assert(
-      fc.property(records, fc.integer({ min: 0, max: 2500 }), (rs, asOfDay) => {
-        const asOf = dayToDate(asOfDay);
-        const vals: Valuation[] = rs.map((r, i) => ({
-          id: `v${i}`,
-          propertyId: "p",
-          validFrom: dayToDate(r.startDay),
-          validTo:
-            r.lengthDays === undefined
-              ? undefined
-              : dayToDate(r.startDay + r.lengthDays),
-          marketValue: money(r.amount * 100),
-        }));
-        const from = (v: Valuation) => v.validFrom;
-        const upcoming = vals
-          .filter((v) => v.validFrom > asOf)
-          .sort((a, b) => a.validFrom.getTime() - b.validFrom.getTime())[0];
-        expect(selectValuation(vals, asOf)?.id).toBe(
-          oracle(vals, asOf, from, () => undefined) ?? upcoming?.id,
-        );
-        // The purchase price (1 Kč here) stands in only when there is no valuation.
-        const property: Property = {
-          id: "p",
-          name: "P",
-          purchaseDate: utc(2020, 1, 1),
-          purchasePrice: money(1),
-        };
-        const p: Portfolio = {
-          properties: [property],
-          mortgages: [],
-          valuations: vals,
-          leases: [],
-          holdingCosts: [],
-        };
-        const value = propertySnapshot(property, p, assumptions, asOf).value;
-        expect(value.greaterThanOrEqualTo(100_000)).toBe(vals.length > 0);
-      }),
-      RUNS,
-    );
-  });
-
-  it("snapshot gross rent = 12 × the lease in force (0 in a gap, no fallback)", () => {
-    fc.assert(
-      fc.property(records, fc.integer({ min: 0, max: 2500 }), (rs, asOfDay) => {
-        const leases: Lease[] = rs.map((r, i) => ({
-          id: `l${i}`,
-          propertyId: "p",
-          startDate: dayToDate(r.startDay),
-          endDate:
-            r.lengthDays === undefined
-              ? undefined
-              : dayToDate(r.startDay + r.lengthDays),
-          monthlyRent: money(r.amount),
-        }));
-        const property: Property = {
-          id: "p",
-          name: "P",
-          purchaseDate: utc(2020, 1, 1),
-          purchasePrice: money(5_000_000),
-        };
-        const p: Portfolio = {
-          properties: [property],
-          mortgages: [],
-          valuations: [],
-          leases,
-          holdingCosts: [],
-        };
-        const asOf = dayToDate(asOfDay);
-        const s = propertySnapshot(property, p, assumptions, asOf);
-        const inForce = leaseInForce(leases, asOf);
-        near(
-          s.grossAnnualRent,
-          inForce ? inForce.monthlyRent.toNumber() * 12 : 0,
-          0,
-          "rent",
-        );
-        expect([s.value, s.noi, s.netCashFlow].every((d) => d.isFinite())).toBe(
-          true,
-        );
-        // No value, no yield (ADR 0133); otherwise a finite one.
-        expect(
-          s.grossYield === null ? s.value.isZero() : s.grossYield.isFinite(),
-        ).toBe(true);
-      }),
-      RUNS,
-    );
-  });
-});
+              holdingCosts: [],
+            };
+            const asOf = dayToDate(asOfDay);
+            const s = propertySnapshot(property, p, assumptions, asOf);
+            const inForce = leaseInForce(leases, asOf);
+            near(
+              s.grossAnnualRent,
+              inForce ? inForce.monthlyRent.toNumber() * 12 : 0,
+              0,
+              "rent",
+            );
+            expect(
+              [s.value, s.noi, s.netCashFlow].every((d) => d.isFinite()),
+            ).toBe(true);
+            // No value, no yield (ADR 0133); otherwise a finite one.
+            expect(
+              s.grossYield === null
+                ? s.value.isZero()
+                : s.grossYield.isFinite(),
+            ).toBe(true);
+          },
+        ),
+        RUNS,
+      );
+    });
+  },
+);
 
 // ---------------------------------------------------------------------------
 // Invalid input — loans raise a typed error (D-17); horizon 0 is today's behaviour
@@ -465,7 +478,7 @@ const codeOf = (fn: () => unknown): string | undefined => {
   return undefined;
 };
 
-describe("invalid loans — typed errors (D-17)", () => {
+describe("invalid loans — typed errors (D-17)", { timeout: TIMEOUT }, () => {
   it("instalment below the first month's interest ⇒ INSTALMENT_BELOW_INTEREST (DR-014)", () => {
     fc.assert(
       fc.property(
@@ -646,7 +659,7 @@ const validInputs = fc
 
 describe(
   "random valid assumptions, shocks and horizon (R2-12, ADR 0128)",
-  { timeout: HEAVY_TIMEOUT_MS },
+  { timeout: TIMEOUT },
   () => {
     it("every input passes validation and every KPI present is finite", () => {
       fc.assert(

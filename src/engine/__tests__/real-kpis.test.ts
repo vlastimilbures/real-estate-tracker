@@ -11,7 +11,11 @@ import { isoDate } from "../dates";
 import { rate } from "../brands";
 import type { Assumptions } from "../types";
 import { assumptions, portfolio } from "./support/seed";
+import { fcRuns } from "./support/fcRuns";
 import { KC, RATIO, near } from "./support/tolerance";
+
+// Fixed seed ⇒ reproducible in CI; nightly runs 2000 with a date seed (`fcRuns`).
+const { runs: RUNS, timeout: TIMEOUT } = fcRuns(20261003, 20);
 
 const N = assumptions.horizonYears;
 
@@ -98,30 +102,34 @@ describe("ADR 0087: real cumulative net cash flow", () => {
 });
 
 describe("ADR 0087: with zero inflation real equals nominal", () => {
-  it("for the multiple and the cumulative cash flow", () => {
-    fc.assert(
-      fc.property(
-        fc.integer({ min: 1, max: 40 }),
-        fc.integer({ min: 0, max: 800 }),
-        fc.integer({ min: 0, max: 600 }),
-        (horizonYears, appBp, rentBp) => {
-          const a: Assumptions = {
-            ...assumptions,
-            horizonYears,
-            inflationPa: rate("0"),
-            appreciationPa: rate(String(appBp / 10_000)),
-            rentIndexationPa: rate(String(rentBp / 10_000)),
-          };
-          const k = portfolioKpis(portfolio, a);
-          expect(k.netWorthMultipleReal!.toString()).toBe(
-            k.netWorthMultiple!.toString(),
-          );
-          expect(k.cumulativeNetCashFlowReal.toString()).toBe(
-            k.cumulativeNetCashFlow.toString(),
-          );
-        },
-      ),
-      { seed: 20261003, numRuns: 20 },
-    );
-  });
+  it(
+    "for the multiple and the cumulative cash flow",
+    { timeout: TIMEOUT },
+    () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 1, max: 40 }),
+          fc.integer({ min: 0, max: 800 }),
+          fc.integer({ min: 0, max: 600 }),
+          (horizonYears, appBp, rentBp) => {
+            const a: Assumptions = {
+              ...assumptions,
+              horizonYears,
+              inflationPa: rate("0"),
+              appreciationPa: rate(String(appBp / 10_000)),
+              rentIndexationPa: rate(String(rentBp / 10_000)),
+            };
+            const k = portfolioKpis(portfolio, a);
+            expect(k.netWorthMultipleReal!.toString()).toBe(
+              k.netWorthMultiple!.toString(),
+            );
+            expect(k.cumulativeNetCashFlowReal.toString()).toBe(
+              k.cumulativeNetCashFlow.toString(),
+            );
+          },
+        ),
+        RUNS,
+      );
+    },
+  );
 });

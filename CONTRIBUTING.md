@@ -64,9 +64,11 @@ still describe it. Which document owns what is listed in
   p99 ≤ 150 ms for one recompute and ≤ 450 ms for a 3-scenario compare. The nightly run fails
   when a p99 exceeds twice its budget (`pnpm bench:check`); check the budgets themselves
   locally after an engine change.
-- **Property tests** (#232): the random loan-event tests run at a fixed seed in PR CI
-  (`loan-event-invariants.test.ts` 200 runs, `reference/loanEvents.property.test.ts` 80).
-  The nightly run repeats both at 2000 runs, every night, with the run's UTC date
+- **Property tests** (#232, #167): every fast-check test takes its seed and run count from
+  `fcRuns` (`src/engine/__tests__/support/fcRuns.ts`), so PR CI runs a fixed seed per file
+  (for example `loan-event-invariants.test.ts` 200 runs). A new property file gets its own
+  `fcRuns(<seed>, <runs>)` and a line in `FILES` in `nightly.yml`.
+  The nightly run repeats them all at 2000 runs, every night, with the run's UTC date
   (`YYYYMMDD`) as the seed, and prints that seed; "Re-run failed jobs" replays it. Reproduce a failure with
   `FC_SEED=<seed> FC_RUNS=2000 pnpm exec vitest run <file>`. A failure there is an engine
   or harness bug: fix it, or file it and exclude its shape with the issue ID (`fc.pre`).

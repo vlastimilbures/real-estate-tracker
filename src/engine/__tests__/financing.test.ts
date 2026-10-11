@@ -28,7 +28,11 @@ import type {
 import { BASE_DATE, assumptions, portfolio } from "./support/seed";
 import { devBlock, mixed } from "./support/mixed";
 import { mixedWithRefi } from "./support/synthetic";
+import { fcRuns } from "./support/fcRuns";
 import { expectKc } from "./support/tolerance";
+
+// Fixed seed ⇒ reproducible in CI; nightly runs 2000 with a date seed (`fcRuns`).
+const { runs: RUNS, timeout: TIMEOUT } = fcRuns(20261011, 40);
 
 function exposure(p: Portfolio, asOf: IsoDate = BASE_DATE) {
   const ids = p.properties.map((x) => x.id);
@@ -554,30 +558,34 @@ describe("ADR 0103: upcoming events", () => {
     });
   });
 
-  it("is sorted by date, and every event is inside the window", () => {
-    fc.assert(
-      fc.property(
-        fc.integer({ min: 0, max: 300 }),
-        fc.integer({ min: 1, max: 60 }),
-        (k, months) => {
-          const asOf = edate(BASE_DATE, k);
-          const { fx } = exposure(mixedWithRefi, asOf);
-          const events = upcomingEvents(mixedWithRefi, fx, months);
-          const end = edate(asOf, months).getTime();
-          for (const [i, e] of events.entries()) {
-            expect(e.date.getTime()).toBeGreaterThan(asOf.getTime());
-            expect(e.date.getTime()).toBeLessThanOrEqual(end);
-            if (i > 0) {
-              expect(e.date.getTime()).toBeGreaterThanOrEqual(
-                events[i - 1].date.getTime(),
-              );
+  it(
+    "is sorted by date, and every event is inside the window",
+    { timeout: TIMEOUT },
+    () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 0, max: 300 }),
+          fc.integer({ min: 1, max: 60 }),
+          (k, months) => {
+            const asOf = edate(BASE_DATE, k);
+            const { fx } = exposure(mixedWithRefi, asOf);
+            const events = upcomingEvents(mixedWithRefi, fx, months);
+            const end = edate(asOf, months).getTime();
+            for (const [i, e] of events.entries()) {
+              expect(e.date.getTime()).toBeGreaterThan(asOf.getTime());
+              expect(e.date.getTime()).toBeLessThanOrEqual(end);
+              if (i > 0) {
+                expect(e.date.getTime()).toBeGreaterThanOrEqual(
+                  events[i - 1].date.getTime(),
+                );
+              }
             }
-          }
-        },
-      ),
-      { numRuns: 40 },
-    );
-  });
+          },
+        ),
+        RUNS,
+      );
+    },
+  );
 
   it("a replaced fixation end and a loan repaid before baseDate are not events", () => {
     // a's fixation ends 2029-01-10, inside the window, but b replaces a first.
@@ -695,36 +703,40 @@ describe("ADR 0103: upcoming events", () => {
 });
 
 describe("ADR 0103: properties", () => {
-  it("debt resetting is Σ upcoming balances in the window, monotone in N, within the schedule", () => {
-    fc.assert(
-      fc.property(fc.integer({ min: 0, max: 300 }), (k) => {
-        const asOf = edate(BASE_DATE, k);
-        const { fx, schedules } = exposure(mixedWithRefi, asOf);
-        let prev = ZERO;
-        for (const years of [1, 3, 5, 30]) {
-          const end = edate(asOf, years * 12).getTime();
-          const inWindow = fx.resets.filter(
-            (r) => r.status === "upcoming" && r.fixationEnd.getTime() <= end,
-          );
-          const sum = inWindow.reduce((s, r) => s.plus(r.balance), ZERO);
-          const got = debtResettingWithin(fx, years);
-          expect(got.amount.toString()).toBe(sum.toString());
-          expect(got.loans).toBe(inWindow.length);
-          expect(got.amount.greaterThanOrEqualTo(prev)).toBe(true);
-          prev = got.amount;
-        }
-        for (const r of fx.resets) {
-          expect(r.balance.isNegative()).toBe(false);
-          if (r.status !== "upcoming") continue;
-          expect(r.fixationEnd.getTime()).toBeGreaterThan(asOf.getTime());
-          const peak = rowsOf(schedules, r.propertyId).reduce(
-            (m, row) => (row.endBalance.greaterThan(m) ? row.endBalance : m),
-            ZERO,
-          );
-          expect(r.balance.lessThanOrEqualTo(peak)).toBe(true);
-        }
-      }),
-      { numRuns: 40 },
-    );
-  });
+  it(
+    "debt resetting is Σ upcoming balances in the window, monotone in N, within the schedule",
+    { timeout: TIMEOUT },
+    () => {
+      fc.assert(
+        fc.property(fc.integer({ min: 0, max: 300 }), (k) => {
+          const asOf = edate(BASE_DATE, k);
+          const { fx, schedules } = exposure(mixedWithRefi, asOf);
+          let prev = ZERO;
+          for (const years of [1, 3, 5, 30]) {
+            const end = edate(asOf, years * 12).getTime();
+            const inWindow = fx.resets.filter(
+              (r) => r.status === "upcoming" && r.fixationEnd.getTime() <= end,
+            );
+            const sum = inWindow.reduce((s, r) => s.plus(r.balance), ZERO);
+            const got = debtResettingWithin(fx, years);
+            expect(got.amount.toString()).toBe(sum.toString());
+            expect(got.loans).toBe(inWindow.length);
+            expect(got.amount.greaterThanOrEqualTo(prev)).toBe(true);
+            prev = got.amount;
+          }
+          for (const r of fx.resets) {
+            expect(r.balance.isNegative()).toBe(false);
+            if (r.status !== "upcoming") continue;
+            expect(r.fixationEnd.getTime()).toBeGreaterThan(asOf.getTime());
+            const peak = rowsOf(schedules, r.propertyId).reduce(
+              (m, row) => (row.endBalance.greaterThan(m) ? row.endBalance : m),
+              ZERO,
+            );
+            expect(r.balance.lessThanOrEqualTo(peak)).toBe(true);
+          }
+        }),
+        RUNS,
+      );
+    },
+  );
 });
