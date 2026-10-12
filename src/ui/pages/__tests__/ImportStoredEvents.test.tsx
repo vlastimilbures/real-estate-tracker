@@ -15,7 +15,7 @@ import {
   CsvPlanChangedError,
   type CsvImportPreview,
   type ImportItem,
-} from "../../../import/csvImport";
+} from "../../../state/csv";
 import { en } from "../../../i18n/en";
 
 const p = en.importPage;
@@ -200,6 +200,12 @@ describe("Import and stored loan events (ADR 0160)", () => {
     );
     expect(screen.getByText(p.confirmReplaceMsg(1))).toBeTruthy();
     expect(importCsv).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: p.confirmReplace }),
+    );
+    await waitFor(() => expect(importCsv).toHaveBeenCalledTimes(2));
+    expect(importCsv.mock.calls[1]?.[1]).toBe("plan-2");
   });
 
   it("with updates too, the confirm row names both and keeps the overwrite button", async () => {

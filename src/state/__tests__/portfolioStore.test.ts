@@ -16,13 +16,7 @@ import type { WriteError } from "../writeError";
 import { parseProperties, parseRents } from "../../import/csv";
 import { CsvImportError } from "../../import/csvImport";
 import { money } from "../../engine";
-import type { CsvImportBatch } from "../../import/csvImport";
-
-/** The Import page's flow: preview the batch, then import that plan (ADR 0096). */
-async function importNow(batch: CsvImportBatch) {
-  const { fingerprint } = await usePortfolioStore.getState().previewCsv(batch);
-  return usePortfolioStore.getState().importCsv(batch, fingerprint);
-}
+import { importNow } from "./support/importNow";
 
 /** The underlying text of an untyped failure (kind "other"); "" for typed ones. */
 const text = (e: WriteError | null) => (e?.kind === "other" ? e.message : "");
@@ -757,6 +751,15 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
         return real.transaction(stmts);
       },
     };
+    // Previewed before the gate, so only importCsv itself can wait in the queue.
+    const batch = {
+      properties: parseProperties(
+        "name,purchase_date,purchase_price\nQueued Import,2020-01-01,1",
+      ).rows,
+    };
+    const { fingerprint } = await usePortfolioStore
+      .getState()
+      .previewCsv(batch);
     usePortfolioStore.setState({ sql: slow });
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
     const a = usePortfolioStore.getState().addValuation({
@@ -765,11 +768,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
       validFrom: new Date(Date.UTC(2033, 0, 1)) as IsoDate,
       marketValue: money("1"),
     });
-    const b = importNow({
-      properties: parseProperties(
-        "name,purchase_date,purchase_price\nQueued Import,2020-01-01,1",
-      ).rows,
-    });
+    const b = usePortfolioStore.getState().importCsv(batch, fingerprint);
     await new Promise((r) => setTimeout(r, 0));
     expect(log).toEqual(["valuation"]);
     release();

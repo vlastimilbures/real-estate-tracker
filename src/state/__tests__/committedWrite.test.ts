@@ -14,13 +14,7 @@ import type { Sql } from "../../data/sql";
 import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
 import { money, type IsoDate } from "../../engine";
 import { logFailure } from "../../data/errorLog";
-import type { CsvImportBatch } from "../../import/csvImport";
-
-/** The Import page's flow: preview the batch, then import that plan (ADR 0096). */
-async function importNow(batch: CsvImportBatch) {
-  const { fingerprint } = await usePortfolioStore.getState().previewCsv(batch);
-  return usePortfolioStore.getState().importCsv(batch, fingerprint);
-}
+import { importNow } from "./support/importNow";
 
 vi.mock("../../data/errorLog", () => ({ logFailure: vi.fn() }));
 vi.mock("@tauri-apps/api/core", () => ({
