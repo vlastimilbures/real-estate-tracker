@@ -10,6 +10,7 @@ import { parseMortgages, parseProperties } from "../csv";
 import { planImport, previewImport } from "../csvImport";
 import { importNow } from "./support/importNow";
 
+const PH = "name,address,purchase_date,purchase_price";
 const PROPS = `name,address,purchase_date,purchase_price
 Byt A,Javorova 12,2020-01-01,5000000`;
 const MH =
@@ -202,6 +203,23 @@ describe("a new block replaces the previous block's later events (G1-5-2)", () =
     ]);
   });
 
+  it("adds for two properties in one batch: each lists its own property's events (#286)", async () => {
+    await importNow(sql, {
+      properties: parseProperties(`${PH}\nByt B,,2021-01-01,6000000`).rows,
+      mortgages: mortgages("Byt B,2022-03-01,3000000,10,0.02,,30,"),
+    });
+    storeEvents({ prepayments: [prepayment("2032-01-17")] });
+    storeEvents({ prepayments: [prepayment("2033-03-01")] }, "2022-03-01");
+    const p = await previewImport(sql, {
+      mortgages: mortgages(SUCCESSOR, "Byt B,2032-03-01,2000000,5,0.04,,15,"),
+    });
+    expect(p.problems).toEqual([]);
+    expect(p.items.map((i) => [i.propertyName, i.kind, i.replaces])).toEqual([
+      ["Byt A", "add", [{ kind: "prepayment", date: "2032-01-17" }]],
+      ["Byt B", "add", [{ kind: "prepayment", date: "2033-03-01" }]],
+    ]);
+  });
+
   it("an add that replaces nothing carries neither note", async () => {
     const p = await previewImport(sql, { mortgages: mortgages(SUCCESSOR) });
     expect(p.items[0]).not.toHaveProperty("replaces");
@@ -256,5 +274,30 @@ describe("a block starting before the block in force (G1-5-2, probe 2b)", () => 
       expect(i).not.toHaveProperty("replaces");
       expect(i).not.toHaveProperty("noEffect");
     }
+  });
+});
+
+describe("a new property imported with its historical blocks (#286)", () => {
+  // Owner decision 2026-10-12 (#286.2): the "not used" note on each earlier block stays;
+  // this pins today's notes.
+  it("notes every block the schedule does not use", async () => {
+    const p = await previewImport(sql, {
+      properties: parseProperties(`${PH}\nByt N,,2010-01-01,3000000`).rows,
+      mortgages: mortgages(
+        "Byt N,2010-02-01,2400000,5,0.04,,30,",
+        "Byt N,2015-02-01,2100000,5,0.03,,25,",
+        "Byt N,2020-02-01,1800000,5,0.02,,20,",
+      ),
+    });
+    expect(p.problems).toEqual([]);
+    expect(
+      p.items
+        .filter((i) => i.file === "mortgages")
+        .map((i) => [i.date, i.noEffect ?? false, i.replaces]),
+    ).toEqual([
+      ["2010-02-01", true, undefined],
+      ["2015-02-01", true, undefined],
+      ["2020-02-01", false, undefined],
+    ]);
   });
 });
