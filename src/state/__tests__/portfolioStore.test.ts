@@ -17,9 +17,7 @@ import { parseProperties, parseRents } from "../../import/csv";
 import { CsvImportError } from "../../import/csvImport";
 import { money } from "../../engine";
 import { importNow } from "./support/importNow";
-
-/** Address and garage left unknown (written as NULL). */
-const noExtras = { address: null, garage: null };
+import { noExtras } from "../../data/__tests__/support/noExtras";
 
 /** The underlying text of an untyped failure (kind "other"); "" for typed ones. */
 const text = (e: WriteError | null) => (e?.kind === "other" ? e.message : "");

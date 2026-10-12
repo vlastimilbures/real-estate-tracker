@@ -19,9 +19,7 @@ import { propertyToRow, holdingCostToRow } from "../mappers";
 import type { Sql } from "../sql";
 import { isoDate } from "../../engine";
 import { money } from "../../engine";
-
-/** Address and garage left unknown (written as NULL). */
-const noExtras = { address: null, garage: null };
+import { noExtras } from "./support/noExtras";
 
 async function ready(): Promise<TestSql> {
   const sql = openMemorySql();

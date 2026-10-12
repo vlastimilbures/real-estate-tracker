@@ -10,9 +10,7 @@ import { insertProperty, loadPortfolio } from "../repositories";
 import { propertyToRow, rowToProperty, type PropertyRow } from "../mappers";
 import { DataError } from "../errors";
 import { isoDate, money, type Property } from "../../engine";
-
-/** Address and garage left unknown (written as NULL). */
-const noExtras = { address: null, garage: null };
+import { noExtras } from "./support/noExtras";
 
 const property: Property = {
   id: "p1",

@@ -15,9 +15,7 @@ import {
 } from "../repositories";
 import { propertyToRow, valuationToRow, leaseToRow } from "../mappers";
 import { isoDate, money, type Lease, type Valuation } from "../../engine";
-
-/** Address and garage left unknown (written as NULL). */
-const noExtras = { address: null, garage: null };
+import { noExtras } from "./support/noExtras";
 
 const prevV: Valuation = {
   id: "v-old",

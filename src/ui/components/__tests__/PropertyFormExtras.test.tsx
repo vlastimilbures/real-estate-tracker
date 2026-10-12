@@ -13,10 +13,10 @@ import {
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import type { PropertyExtras as Extras } from "../../../state/portfolioStore";
 
 const en = getDict("en");
 const id = portfolio.properties[0]!.id;
-type Extras = { address: string | null; garage: boolean | null };
 
 let editProperty: ReturnType<typeof vi.fn<() => Promise<MutationResult>>>;
 type Settle = { resolve: (e: Extras) => void; reject: (e: Error) => void };

@@ -31,9 +31,7 @@ import {
 import { holdingCostToRow, leaseToRow, propertyToRow } from "../mappers";
 import type { Sql } from "../sql";
 import { isoDate, rate } from "../../engine";
-
-/** Address and garage left unknown (written as NULL). */
-const noExtras = { address: null, garage: null };
+import { noExtras } from "./support/noExtras";
 
 /** Safety backups the fake `write_app_backup` command wrote, by file name. */
 const written = vi.hoisted(() => new Map<string, string>());
