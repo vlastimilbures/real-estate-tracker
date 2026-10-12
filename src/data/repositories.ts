@@ -411,12 +411,16 @@ export async function recordBackup(
   ]);
 }
 
+/** Sets the `app_meta` flag `key` (value '1'); a flag already set stays. */
+export const flagStatement = (key: string): SqlStatement => ({
+  query: "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
+  params: [key],
+});
+
 /** Mark the data as changed since the last backup (ADR 0110). */
 export async function markDataChanged(sql: Sql): Promise<void> {
-  await sql.execute(
-    "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
-    [CHANGED_SINCE_BACKUP],
-  );
+  const { query, params } = flagStatement(CHANGED_SINCE_BACKUP);
+  await sql.execute(query, params);
 }
 
 /** A stored scenario row the app cannot read: left out and listed for deletion. */

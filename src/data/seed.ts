@@ -12,6 +12,7 @@ import {
   holdingCostToRow,
 } from "./mappers";
 import {
+  flagStatement,
   insertStatement,
   upsertAssumptions,
   countProperties,
@@ -201,10 +202,8 @@ function sampleStatements(): SqlStatement[] {
 const SEEDED_FLAG = "sample_seeded";
 
 async function markSeeded(sql: Sql): Promise<void> {
-  await sql.execute(
-    "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
-    [SEEDED_FLAG],
-  );
+  const { query, params } = flagStatement(SEEDED_FLAG);
+  await sql.execute(query, params);
 }
 
 /** Seed the sample portfolio on the first run only (D-16): once the `sample_seeded`
@@ -233,15 +232,9 @@ export async function seedIfEmpty(sql: Sql): Promise<boolean> {
   // failure leaves nothing behind and the next launch simply seeds again.
   await sql.transaction([
     ...sampleStatements(),
-    {
-      query: "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
-      params: [SEEDED_FLAG],
-    },
+    flagStatement(SEEDED_FLAG),
     // Marks the sample for the banner and "Clear sample" (ADR 0094).
-    {
-      query: "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
-      params: [SAMPLE_ACTIVE],
-    },
+    flagStatement(SAMPLE_ACTIVE),
   ]);
   return true;
 }
@@ -263,10 +256,7 @@ export async function loadSample(sql: Sql): Promise<void> {
   if ((await countProperties(sql)) > 0) throw new SampleNotEmptyError();
   await sql.transaction([
     ...sampleStatements(),
-    {
-      query: "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
-      params: [SAMPLE_ACTIVE],
-    },
+    flagStatement(SAMPLE_ACTIVE),
     {
       query: "DELETE FROM app_meta WHERE key = ?",
       params: [SAMPLE_DISMISSED],
@@ -276,10 +266,8 @@ export async function loadSample(sql: Sql): Promise<void> {
 
 /** "Keep exploring": hide the sample banner for good (ADR 0094). */
 export async function dismissSampleBanner(sql: Sql): Promise<void> {
-  await sql.execute(
-    "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
-    [SAMPLE_DISMISSED],
-  );
+  const { query, params } = flagStatement(SAMPLE_DISMISSED);
+  await sql.execute(query, params);
 }
 
 /** "Clear sample and start my own" (ADR 0094): write and verify a safety backup (D-52),
