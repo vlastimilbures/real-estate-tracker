@@ -172,6 +172,14 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- CSV import (ADR 0185, #142, #143): an optional column missing from a file now keeps the
+  stored value on an update, so re-importing a trimmed export changes only the columns it
+  holds. A header name that appears twice rejects the file. The preview shows an update
+  whose values look the same at full precision (`7 908,00 Kč → 7 908,40 Kč`), a file with
+  no data rows gets a neutral "No data rows" badge instead of "0 rows ready", and a
+  duplicate key behind an invalid row is reported in the first round. A problem found only
+  at import time is shown in the preview's table, not in a second one.
+
 - The **management** percentage is charged on the rent collected (after the vacancy
   allowance), not on the full contracted rent; **maintenance** stays on the contracted
   rent (ADR 0182, #150). The rule is the same for today's figures and every projection

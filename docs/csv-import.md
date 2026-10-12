@@ -159,9 +159,11 @@ matched to an existing record by its natural key:
   keeps the stored date, and an empty or missing `own_cash`, `transaction_costs` or
   `initial_works` column keeps the stored amount. A CSV can set or change an amount, never
   erase it: clear an amount in the property form.
-- **Any other empty cell clears.** An empty optional cell clears the stored value (for
-  example an empty `address`), except `contract_maturity_date` and the three funding columns
-  as above.
+- **A missing column keeps.** An optional column that is not in the header is left as
+  stored, so a file trimmed to a few columns changes only those (ADR 0185).
+- **Any other empty cell clears.** An empty cell in an optional column that is in the file
+  clears the stored value (for example an empty `address`), except `contract_maturity_date`
+  and the three funding columns as above.
 - **Each key may appear once per file.** A second row with the same key — including names
   that differ only by case or spaces — is an error that points at the first row.
 - **Nothing is deleted.** A record missing from the CSV stays in the app.
@@ -242,8 +244,8 @@ There is no partial import: one bad row in one file stops the whole batch.
 
 - **UTF-8** text, **comma**-separated, with a header row. A leading byte-order mark is fine.
 - **Header names** are matched exactly (lower case, as in the tables above); spaces around a
-  name are ignored. Columns may be in any order, and extra columns are ignored. A missing
-  required column makes that cell _Required_ on every row.
+  name are ignored. Columns may be in any order, and extra columns are ignored. A name may
+  appear only once. A missing required column makes that cell _Required_ on every row.
 - **Every row has as many cells as the header.** Empty lines are skipped. Put a cell in
   double quotes if it contains a comma: `"Javorova 12, Praha"`.
 - **Dates** `YYYY-MM-DD`; **numbers** with a decimal point and no spaces.
