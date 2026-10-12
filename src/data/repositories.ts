@@ -243,18 +243,11 @@ export async function listScenarios(sql: Sql): Promise<Scenario[]> {
 /** Upsert a scenario by `id` (rename + duplicate both rely on id-keying). On update
  *  only name + overrides change — `created_at` is preserved. */
 export async function upsertScenario(sql: Sql, r: ScenarioRow): Promise<void> {
-  const existing = await sql.select<{ id: string }>(
-    "SELECT id FROM scenarios WHERE id = ?",
-    [r.id],
+  const { query, params } = insertStatement("scenarios", r);
+  await sql.execute(
+    `${query} ON CONFLICT(id) DO UPDATE SET name = excluded.name, overrides = excluded.overrides`,
+    params,
   );
-  if (existing.length > 0) {
-    await sql.execute(
-      "UPDATE scenarios SET name = ?, overrides = ? WHERE id = ?",
-      [r.name, r.overrides, r.id],
-    );
-  } else {
-    await insertRow(sql, "scenarios", r);
-  }
 }
 
 export const deleteScenario = (sql: Sql, id: string) =>
