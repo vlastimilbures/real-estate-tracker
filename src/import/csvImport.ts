@@ -186,13 +186,6 @@ async function readTables(sql: Sql): Promise<ImportTables> {
   };
 }
 
-/** Replace the row with the same id in `rows`, or append it. */
-function put<R extends { id: string }>(rows: R[], row: R): void {
-  const i = rows.findIndex((r) => r.id === row.id);
-  if (i >= 0) rows[i] = row;
-  else rows.push(row);
-}
-
 /** Stored text of a cell value; empty ⇒ `null`. */
 function cellText(v: unknown): string | null {
   if (v === null || v === undefined || v === "") return null;
@@ -270,6 +263,100 @@ function noteChainEffects(
   }
 }
 
+/** The child files, in import order: each file's table, validation entity, key date
+ *  column and the tag in a new row's id. */
+const CHILD_FILES = {
+  mortgages: {
+    table: "mortgage_blocks",
+    entity: "mortgage",
+    dateColumn: "start_date",
+    tag: "m",
+  },
+  valuations: {
+    table: "valuations",
+    entity: "valuation",
+    dateColumn: "valid_from",
+    tag: "v",
+  },
+  rents: {
+    table: "leases",
+    entity: "lease",
+    dateColumn: "start_date",
+    tag: "r",
+  },
+} as const satisfies Record<
+  Exclude<CsvFile, "properties">,
+  { table: string; entity: ValidationEntity; dateColumn: string; tag: string }
+>;
+
+/** One child CSV row, reduced to what the plan needs. */
+interface ChildInput {
+  file: keyof typeof CHILD_FILES;
+  line: number;
+  propertyName: string;
+  /** The key date (`start_date` / `valid_from`). */
+  date: string;
+  /** The CSV columns an update writes. */
+  fields: Record<string, unknown>;
+  /** Columns only a new row sets. */
+  fresh?: object;
+}
+
+function childInputs(batch: CsvImportBatch): ChildInput[] {
+  return [
+    ...(batch.mortgages ?? []).map((m): ChildInput => ({
+      file: "mortgages",
+      line: m.line,
+      propertyName: m.property_name,
+      date: m.start_date,
+      fields: {
+        initial_principal: m.initial_principal,
+        fixation_years: m.fixation_years,
+        interest_rate_pa: m.interest_rate_pa,
+        monthly_instalment: m.monthly_instalment,
+        loan_term_years: m.loan_term_years,
+        // Blank ⇒ keep the stored maturity (DR-129). Draws and the interest-only date
+        // are not CSV columns, so they are never touched.
+        ...(m.contract_maturity_date !== null && {
+          contract_maturity_date: m.contract_maturity_date,
+        }),
+      },
+      fresh: {
+        draws: null,
+        interest_only_until: null,
+        contract_maturity_date: m.contract_maturity_date,
+        prepayments: null,
+        recasts: null,
+      },
+    })),
+    ...(batch.valuations ?? []).map((v): ChildInput => ({
+      file: "valuations",
+      line: v.line,
+      propertyName: v.property_name,
+      date: v.valid_from,
+      fields: { valid_to: v.valid_to, market_value: v.market_value },
+    })),
+    ...(batch.rents ?? []).map((r): ChildInput => ({
+      file: "rents",
+      line: r.line,
+      propertyName: r.property_name,
+      date: r.start_date,
+      fields: { end_date: r.end_date, monthly_rent: r.monthly_rent },
+    })),
+  ];
+}
+
+/** A stored or planned child row, by the columns the plan reads. */
+type ChildRow = { id: string; property_id: string };
+
+/** A row's value in `column`. */
+const columnOf = (row: object, column: string): unknown =>
+  (row as Record<string, unknown>)[column];
+
+/** A child row's natural key in `table`: its property and key date. */
+const naturalKey = (table: string, propertyId: string, date: unknown) =>
+  `${table}\u0000${propertyId}\u0000${String(date)}`;
+
 /** What an import would write, computed without touching the DB. */
 export interface ImportPlan extends CsvImportPreview {
   statements: SqlStatement[];
@@ -284,21 +371,28 @@ export function planImport(
   tables: ImportTables,
   newPropertyId: (key: string) => string,
 ): ImportPlan {
-  const db: ImportTables = {
-    properties: [...tables.properties],
-    mortgage_blocks: [...tables.mortgage_blocks],
-    valuations: [...tables.valuations],
-    leases: [...tables.leases],
-    holding_costs: [...tables.holding_costs],
-  };
   const statements: SqlStatement[] = [];
   const problems: CsvImportProblem[] = [];
   const items: ImportItem[] = [];
   /** Which file line produced each written row, as `${entity}:${id}`. */
   const origin = new Map<string, { file: CsvFile; row: number }>();
 
-  const byKey = new Map(db.properties.map((p) => [propertyKey(p.name), p]));
-  const withCosts = new Set(db.holding_costs.map((h) => h.property_id));
+  // The stored rows, indexed once. A Map keeps a replaced row in its place and appends
+  // a new one, so the merged tables keep the stored order.
+  const byId = <R extends { id: string }>(rows: R[]) =>
+    new Map(rows.map((r) => [r.id, r]));
+  const properties = byId(tables.properties);
+  const holdingCosts = [...tables.holding_costs];
+  const children = {
+    mortgage_blocks: byId(tables.mortgage_blocks),
+    valuations: byId(tables.valuations),
+    leases: byId(tables.leases),
+  };
+
+  const byKey = new Map(
+    [...properties.values()].map((p) => [propertyKey(p.name), p]),
+  );
+  const withCosts = new Set(holdingCosts.map((h) => h.property_id));
 
   // Properties first (FK parent). An existing property keeps its id, stored spelling
   // and active flag; CSV doesn't model activation (D-55).
@@ -339,7 +433,7 @@ export function planImport(
         ? updateStatement("properties", row.id, fields)
         : insertStatement("properties", row),
     );
-    put(db.properties, row);
+    properties.set(row.id, row);
     byKey.set(propertyKey(p.name), row);
     origin.set(`property:${row.id}`, { file: "properties", row: p.line });
     const changes = existing ? changesOf(existing, fields) : [];
@@ -365,148 +459,81 @@ export function planImport(
         other_yr: null,
       };
       statements.push(insertStatement("holding_costs", costs));
-      db.holding_costs.push(costs);
+      holdingCosts.push(costs);
       withCosts.add(row.id);
     }
   }
 
-  const resolve = (file: CsvFile, row: number, name: string) => {
-    const id = byKey.get(propertyKey(name))?.id;
-    if (id === undefined)
-      problems.push({
-        file,
-        row,
-        field: "property_name",
-        problem: { code: "unknownProperty", value: name },
-      });
-    return id;
-  };
-
-  /** Update the row with the same natural key, or insert a new one. Returns the
-   *  plan item and the id of the row written. */
-  function upsertChild<R extends { id: string; property_id: string }>(
-    table: "mortgage_blocks" | "valuations" | "leases",
-    entity: ValidationEntity,
-    rows: R[],
-    match: (r: R) => boolean,
-    fresh: R,
-    fields: Partial<R>,
-    at: { file: CsvFile; row: number },
-    date: string,
-  ): { item: ImportItem; id: string } {
-    const existing = rows.find(match);
-    const changes = existing ? changesOf(existing, fields) : [];
-    const item: ImportItem = {
-      ...at,
-      kind: kindOf(existing, changes),
-      propertyId: fresh.property_id,
-      propertyName:
-        db.properties.find((p) => p.id === fresh.property_id)?.name ?? "",
-      date,
-      changes,
-    };
-    items.push(item);
-    // A stored row whose date was edited after an earlier import keeps the id generated
-    // from its old date; suffix a fresh id instead of clashing on the key (DR-137).
-    let id = fresh.id;
-    for (let n = 2; rows.some((r) => r.id === id); n++) id = `${fresh.id}-${n}`;
-    const row = existing ? { ...existing, ...fields } : { ...fresh, id };
-    statements.push(
-      existing
-        ? updateStatement(table, row.id, fields)
-        : insertStatement(table, row),
-    );
-    put(rows, row);
-    origin.set(`${entity}:${row.id}`, at);
-    return { item, id: row.id };
-  }
+  /** The child rows by natural key; the first stored row wins, as a scan would find. */
+  const keyed = new Map<string, ChildRow>();
+  for (const { table, dateColumn } of Object.values(CHILD_FILES))
+    for (const r of children[table].values()) {
+      const k = naturalKey(table, r.property_id, columnOf(r, dateColumn));
+      if (!keyed.has(k)) keyed.set(k, r);
+    }
 
   /** The mortgage blocks this import adds, by row id (ADR 0160). */
   const addedBlocks = new Map<string, ImportItem>();
-  for (const m of batch.mortgages ?? []) {
-    const propId = resolve("mortgages", m.line, m.property_name);
-    if (propId === undefined) continue;
-    const fields: Partial<MortgageBlockRow> = {
-      initial_principal: m.initial_principal,
-      fixation_years: m.fixation_years,
-      interest_rate_pa: m.interest_rate_pa,
-      monthly_instalment: m.monthly_instalment,
-      loan_term_years: m.loan_term_years,
-      // Blank ⇒ keep the stored maturity (DR-129). Draws and the interest-only date
-      // are not CSV columns, so they are never touched.
-      ...(m.contract_maturity_date !== null && {
-        contract_maturity_date: m.contract_maturity_date,
-      }),
+  // Update the row with the same natural key, or insert a new one.
+  for (const c of childInputs(batch)) {
+    const { table, entity, dateColumn, tag } = CHILD_FILES[c.file];
+    const propId = byKey.get(propertyKey(c.propertyName))?.id;
+    if (propId === undefined) {
+      problems.push({
+        file: c.file,
+        row: c.line,
+        field: "property_name",
+        problem: { code: "unknownProperty", value: c.propertyName },
+      });
+      continue;
+    }
+    const rows: Map<string, ChildRow> = children[table];
+    const k = naturalKey(table, propId, c.date);
+    const existing = keyed.get(k);
+    const changes = existing ? changesOf(existing, c.fields) : [];
+    const at = { file: c.file, row: c.line };
+    const item: ImportItem = {
+      ...at,
+      kind: kindOf(existing, changes),
+      propertyId: propId,
+      propertyName: properties.get(propId)?.name ?? "",
+      date: c.date,
+      changes,
     };
-    const { item, id } = upsertChild(
-      "mortgage_blocks",
-      "mortgage",
-      db.mortgage_blocks,
-      (r) => r.property_id === propId && r.start_date === m.start_date,
-      {
-        id: `${propId}-csv-m-${m.start_date}`,
+    items.push(item);
+    let row: ChildRow;
+    if (existing) {
+      row = { ...existing, ...c.fields };
+      statements.push(updateStatement(table, row.id, c.fields));
+    } else {
+      // A stored row whose date was edited after an earlier import keeps the id
+      // generated from its old date; suffix a fresh id instead of clashing on the key
+      // (DR-137).
+      const base = `${propId}-csv-${tag}-${c.date}`;
+      let id = base;
+      for (let n = 2; rows.has(id); n++) id = `${base}-${n}`;
+      row = {
+        id,
         property_id: propId,
-        start_date: m.start_date,
-        initial_principal: m.initial_principal,
-        fixation_years: m.fixation_years,
-        interest_rate_pa: m.interest_rate_pa,
-        monthly_instalment: m.monthly_instalment,
-        loan_term_years: m.loan_term_years,
-        draws: null,
-        interest_only_until: null,
-        contract_maturity_date: m.contract_maturity_date,
-        prepayments: null,
-        recasts: null,
-      },
-      fields,
-      { file: "mortgages", row: m.line },
-      m.start_date,
-    );
-    if (item.kind === "add") addedBlocks.set(id, item);
+        [dateColumn]: c.date,
+        ...c.fields,
+        ...c.fresh,
+      };
+      statements.push(insertStatement(table, row));
+      if (entity === "mortgage") addedBlocks.set(id, item);
+    }
+    rows.set(row.id, row);
+    keyed.set(k, row);
+    origin.set(`${entity}:${row.id}`, at);
   }
 
-  for (const v of batch.valuations ?? []) {
-    const propId = resolve("valuations", v.line, v.property_name);
-    if (propId === undefined) continue;
-    const fields = { valid_to: v.valid_to, market_value: v.market_value };
-    upsertChild(
-      "valuations",
-      "valuation",
-      db.valuations,
-      (r) => r.property_id === propId && r.valid_from === v.valid_from,
-      {
-        id: `${propId}-csv-v-${v.valid_from}`,
-        property_id: propId,
-        valid_from: v.valid_from,
-        ...fields,
-      },
-      fields,
-      { file: "valuations", row: v.line },
-      v.valid_from,
-    );
-  }
-
-  for (const r of batch.rents ?? []) {
-    const propId = resolve("rents", r.line, r.property_name);
-    if (propId === undefined) continue;
-    const fields = { end_date: r.end_date, monthly_rent: r.monthly_rent };
-    upsertChild(
-      "leases",
-      "lease",
-      db.leases,
-      (l) => l.property_id === propId && l.start_date === r.start_date,
-      {
-        id: `${propId}-csv-r-${r.start_date}`,
-        property_id: propId,
-        start_date: r.start_date,
-        ...fields,
-      },
-      fields,
-      { file: "rents", row: r.line },
-      r.start_date,
-    );
-  }
-
+  const db = {
+    properties: [...properties.values()],
+    mortgage_blocks: [...children.mortgage_blocks.values()],
+    valuations: [...children.valuations.values()],
+    leases: [...children.leases.values()],
+    holding_costs: holdingCosts,
+  };
   if (problems.length === 0) {
     // The engine's input rules and the lease overlap rule (ADR 0163) over the merged
     // portfolio; only rows this import wrote can be at fault (stored rows passed the
