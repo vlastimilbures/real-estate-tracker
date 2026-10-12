@@ -542,6 +542,21 @@ describe("dates", () => {
 describe("foreign keys and duplicates", () => {
   const known = new Set(["A"]);
 
+  // ADR 0185 §1: a repeated header name rejects the file instead of the last column winning.
+  it("rejects a header that names a column twice", () => {
+    const r = parseProperties(
+      "name,purchase_date,purchase_price, purchase_price\nA,2020-01-01,100,999\n",
+    );
+    expect(r.rows).toEqual([]);
+    expect(r.errors).toEqual([
+      {
+        row: 1,
+        field: "purchase_price",
+        error: { code: "duplicateHeader", name: "purchase_price" },
+      },
+    ]);
+  });
+
   it("flags an unknown property_name in valuations, rents and mortgages", () => {
     const val = parseValuations(
       "property_name,valid_from,valid_to,market_value\nNope,2025-01-01,,1000",

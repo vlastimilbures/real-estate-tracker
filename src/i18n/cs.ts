@@ -993,6 +993,8 @@ export const cs: Dictionary = {
     errMalformedRow: (expected, found) =>
       `Tento řádek má ${found} sloupců; záhlaví jich má ${expected}`,
     errBadQuotes: "Neuzavřené uvozovky na tomto řádku",
+    errDuplicateHeader: (name: string) =>
+      `Sloupec ${name} je v záhlaví vícekrát.`,
     errNotUtf8:
       "Soubor není v kódování UTF-8 (pravděpodobně Windows-1250 z Excelu) — uložte ho jako „CSV UTF-8“",
     errSemicolon:

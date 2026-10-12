@@ -1000,6 +1000,8 @@ export const ru: Dictionary = {
     errMalformedRow: (expected, found) =>
       `В этой строке ${found} столбцов, в заголовке ${expected}`,
     errBadQuotes: "Незакрытые кавычки в этой строке",
+    errDuplicateHeader: (name: string) =>
+      `Столбец ${name} встречается в заголовке несколько раз.`,
     errNotUtf8:
       "Файл не в кодировке UTF-8 (вероятно, Windows-1250 из Excel) — сохраните его как «CSV UTF-8»",
     errSemicolon:

@@ -1056,6 +1056,8 @@ export const en = {
     errMalformedRow: (expected: number, found: number) =>
       `This line has ${found} columns; the header has ${expected}`,
     errBadQuotes: "Unbalanced quotation marks on this line",
+    errDuplicateHeader: (name: string) =>
+      `Column ${name} appears more than once in the header.`,
     errNotUtf8:
       'The file is not UTF-8 (probably Windows-1250 from Excel) — save it as "CSV UTF-8"',
     errSemicolon:

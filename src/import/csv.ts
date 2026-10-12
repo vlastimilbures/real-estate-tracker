@@ -37,6 +37,7 @@ export type CsvErrorCode =
   | { code: "duplicateKey"; firstRow: number }
   | { code: "malformedRow"; expected: number; found: number }
   | { code: "badQuotes" }
+  | { code: "duplicateHeader"; name: string }
   | { code: "notUtf8" }
   | { code: "semicolonDelimiter" }
   | { code: "fileTooLarge"; limitBytes: number }
@@ -201,6 +202,19 @@ function readCsv(source: CsvSource): RawFile {
   }
   if (header.length === 1 && header[0]?.includes(";"))
     return fileError({ code: "semicolonDelimiter" }, head.line);
+  // A repeated name would let the right-hand column win silently (ADR 0185 §1).
+  const twice = header.find((h, i) => header.indexOf(h) !== i);
+  if (twice !== undefined)
+    return {
+      records: [],
+      errors: [
+        {
+          row: head.line,
+          field: twice,
+          error: { code: "duplicateHeader", name: twice },
+        },
+      ],
+    };
   if (body.length > CSV_MAX_ROWS)
     return fileError({ code: "tooManyRows", limit: CSV_MAX_ROWS });
 

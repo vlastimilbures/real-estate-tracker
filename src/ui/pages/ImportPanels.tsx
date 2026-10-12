@@ -76,6 +76,8 @@ function csvErrorText(t: Dictionary, e: CsvErrorCode): string {
       return p.errMalformedRow(e.expected, e.found);
     case "badQuotes":
       return p.errBadQuotes;
+    case "duplicateHeader":
+      return p.errDuplicateHeader(e.name);
     case "notUtf8":
       return p.errNotUtf8;
     case "semicolonDelimiter":
