@@ -14,7 +14,6 @@ import {
   parseRents,
   parseMortgages,
 } from "../csv";
-import { importCsv } from "../csvImport";
 import { SEED_ASSUMPTIONS } from "../../data/seed";
 import { portfolioSnapshot } from "../../engine";
 import { KC, RATIO, near } from "../../engine/__tests__/support/tolerance";
@@ -24,6 +23,7 @@ import {
   RENTS_CSV,
   VALUATIONS_CSV,
 } from "./support/sampleCsv";
+import { importNow } from "./support/importNow";
 
 // --- importCsv parity test (seed numbers via CSV) ---
 
@@ -49,7 +49,7 @@ describe("importCsv — parity (parity targets via CSV)", () => {
     expect(valResult.errors).toHaveLength(0);
     expect(rentResult.errors).toHaveLength(0);
     expect(mortResult.errors).toHaveLength(0);
-    await importCsv(sql, {
+    await importNow(sql, {
       properties: propResult.rows,
       valuations: valResult.rows,
       rents: rentResult.rows,
@@ -89,7 +89,7 @@ describe("importCsv — parity (parity targets via CSV)", () => {
   });
 
   it("re-import is idempotent (upserts, no duplicate rows)", async () => {
-    await importCsv(sql, {
+    await importNow(sql, {
       properties: parseProperties(PROPERTIES_CSV).rows,
       valuations: parseValuations(VALUATIONS_CSV).rows,
       rents: parseRents(RENTS_CSV).rows,
@@ -119,14 +119,14 @@ Byt A?,2020-01-01,2000000`;
       const { rows, errors } = parseProperties(COLLIDING_CSV);
       expect(errors, JSON.stringify(errors)).toHaveLength(0);
 
-      await importCsv(csql, { properties: rows });
+      await importNow(csql, { properties: rows });
       const after = await loadPortfolio(csql);
       expect(after.properties).toHaveLength(2);
       const ids = after.properties.map((p) => p.id);
       expect(new Set(ids).size).toBe(2); // distinct ids
 
       // Re-import upserts by name (no new rows), so the count holds.
-      await importCsv(csql, {
+      await importNow(csql, {
         properties: parseProperties(COLLIDING_CSV).rows,
       });
       const reimported = await loadPortfolio(csql);

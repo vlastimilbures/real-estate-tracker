@@ -263,11 +263,11 @@ interface PortfolioState {
   /** What a CSV import would add and update (ADR 0096). Reads only; queued behind
    *  pending writes so it sees their result. */
   previewCsv: (batch: CsvImportBatch) => Promise<CsvImportPreview>;
-  /** CSV import in one transaction, then reload. With `expected` (the previewed
-   *  plan's fingerprint) it refuses with CsvPlanChangedError if the plan changed. */
+  /** CSV import in one transaction, then reload. `expected` is the previewed plan's
+   *  fingerprint: it refuses with CsvPlanChangedError if the plan changed. */
   importCsv: (
     batch: CsvImportBatch,
-    expected?: string,
+    expected: string,
   ) => Promise<CsvImportReport>;
   /** Replace the data with a checked backup (after a safety backup), then reload. */
   restoreBackup: (backup: BackupFile) => Promise<{ safetyBackup: string }>;

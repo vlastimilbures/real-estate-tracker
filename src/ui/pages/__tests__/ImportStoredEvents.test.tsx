@@ -54,7 +54,6 @@ beforeEach(() => {
   previewCsv.mockReset();
   importCsv.mockReset();
   importCsv.mockResolvedValue({
-    upserted: { properties: 0, valuations: 0, leases: 0, mortgage_blocks: 1 },
     items: [replacing],
   });
   act(() => {
@@ -196,12 +195,6 @@ describe("Import and stored loan events (ADR 0160)", () => {
     act(() =>
       useUiStore.setState({
         lastImport: {
-          upserted: {
-            properties: 0,
-            valuations: 0,
-            leases: 0,
-            mortgage_blocks: 1,
-          },
           items: [replacing],
         },
       }),

@@ -7,7 +7,8 @@ import { migrate } from "../../data/migrations";
 import { upsertAssumptions } from "../../data/repositories";
 import { SEED_ASSUMPTIONS } from "../../data/seed";
 import { parseMortgages, parseProperties } from "../csv";
-import { importCsv, planImport, previewImport } from "../csvImport";
+import { planImport, previewImport } from "../csvImport";
+import { importNow } from "./support/importNow";
 
 const PROPS = `name,address,purchase_date,purchase_price
 Byt A,Javorova 12,2020-01-01,5000000`;
@@ -50,7 +51,7 @@ beforeEach(async () => {
   sql = openMemorySql();
   await migrate(sql);
   await upsertAssumptions(sql, SEED_ASSUMPTIONS);
-  await importCsv(sql, {
+  await importNow(sql, {
     properties: parseProperties(PROPS).rows,
     mortgages: mortgages(BLOCK),
   });
@@ -161,7 +162,7 @@ describe("a new block replaces the previous block's later events (G1-5-2)", () =
   });
 
   it("an event a later stored block already replaced is not listed again", async () => {
-    await importCsv(sql, {
+    await importNow(sql, {
       mortgages: mortgages("Byt A,2036-01-17,1000000,5,0.04,,10,"),
     });
     storeEvents({

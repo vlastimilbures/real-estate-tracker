@@ -99,13 +99,8 @@ const STORED_EVENT_LISTS: readonly string[] = [
   "draws",
 ];
 
+/** What an import wrote: one item per CSV row, as the preview showed it. */
 export interface CsvImportReport {
-  upserted: {
-    properties: number;
-    valuations: number;
-    leases: number;
-    mortgage_blocks: number;
-  };
   items: ImportItem[];
 }
 
@@ -278,7 +273,6 @@ function noteChainEffects(
 /** What an import would write, computed without touching the DB. */
 export interface ImportPlan extends CsvImportPreview {
   statements: SqlStatement[];
-  report: CsvImportReport;
 }
 
 /** Match every row against `tables` (D-55), build the write statements and check the
@@ -302,10 +296,6 @@ export function planImport(
   const items: ImportItem[] = [];
   /** Which file line produced each written row, as `${entity}:${id}`. */
   const origin = new Map<string, { file: CsvFile; row: number }>();
-  const report: CsvImportReport = {
-    upserted: { properties: 0, valuations: 0, leases: 0, mortgage_blocks: 0 },
-    items,
-  };
 
   const byKey = new Map(db.properties.map((p) => [propertyKey(p.name), p]));
   const withCosts = new Set(db.holding_costs.map((h) => h.property_id));
@@ -378,7 +368,6 @@ export function planImport(
       db.holding_costs.push(costs);
       withCosts.add(row.id);
     }
-    report.upserted.properties++;
   }
 
   const resolve = (file: CsvFile, row: number, name: string) => {
@@ -474,7 +463,6 @@ export function planImport(
       m.start_date,
     );
     if (item.kind === "add") addedBlocks.set(id, item);
-    report.upserted.mortgage_blocks++;
   }
 
   for (const v of batch.valuations ?? []) {
@@ -496,7 +484,6 @@ export function planImport(
       { file: "valuations", row: v.line },
       v.valid_from,
     );
-    report.upserted.valuations++;
   }
 
   for (const r of batch.rents ?? []) {
@@ -518,7 +505,6 @@ export function planImport(
       { file: "rents", row: r.line },
       r.start_date,
     );
-    report.upserted.leases++;
   }
 
   if (problems.length === 0) {
@@ -569,7 +555,7 @@ export function planImport(
       );
   }
   const fingerprint = JSON.stringify({ items, statements });
-  return { statements, problems, items, fingerprint, report };
+  return { statements, problems, items, fingerprint };
 }
 
 /** The new property ids of each batch (ADR 0127): a batch's preview and its import must
@@ -602,20 +588,20 @@ export async function previewImport(
   return previewOf(planImport(batch, await readTables(sql), idsFor(batch)));
 }
 
-/** Write `batch` in one transaction. With `expected` (a previewed plan's fingerprint),
+/** Write `batch` in one transaction. `expected` is the previewed plan's fingerprint:
  *  refuse with `CsvPlanChangedError` when the plan is no longer the same (ADR 0096). */
 export async function importCsv(
   sql: Sql,
   batch: CsvImportBatch,
-  expected?: string,
+  expected: string,
 ): Promise<CsvImportReport> {
   const plan = planImport(batch, await readTables(sql), idsFor(batch));
   if (plan.problems.length > 0) throw new CsvImportError(plan.problems);
-  if (expected !== undefined && expected !== plan.fingerprint)
+  if (expected !== plan.fingerprint)
     throw new CsvPlanChangedError(previewOf(plan));
 
   await sql.transaction(plan.statements);
   // Written: importing the same batch again makes new ids for any property it adds.
   batchIds.delete(batch);
-  return plan.report;
+  return { items: plan.items };
 }

@@ -14,6 +14,13 @@ import type { Sql } from "../../data/sql";
 import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
 import { money, type IsoDate } from "../../engine";
 import { logFailure } from "../../data/errorLog";
+import type { CsvImportBatch } from "../../import/csvImport";
+
+/** The Import page's flow: preview the batch, then import that plan (ADR 0096). */
+async function importNow(batch: CsvImportBatch) {
+  const { fingerprint } = await usePortfolioStore.getState().previewCsv(batch);
+  return usePortfolioStore.getState().importCsv(batch, fingerprint);
+}
 
 vi.mock("../../data/errorLog", () => ({ logFailure: vi.fn() }));
 vi.mock("@tauri-apps/api/core", () => ({
@@ -119,12 +126,12 @@ describe("a committed whole-database action whose reload fails (ADR 0125)", () =
       action: "a CSV import",
       run: async () => {
         usePortfolioStore.setState({ sql: reloadFails(db) });
-        const report = await store().importCsv({
+        const report = await importNow({
           properties: parseProperties(
             "name,purchase_date,purchase_price\nStore Import,2020-01-01,1000000",
           ).rows,
         });
-        expect(report.upserted.properties).toBe(1);
+        expect(report.items.map((i) => i.kind)).toEqual(["add"]);
         expect(await propertiesOnDisk()).toBe(4);
       },
     },

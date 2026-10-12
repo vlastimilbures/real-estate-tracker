@@ -140,7 +140,6 @@ describe("Import preview (ADR 0096)", () => {
   it("imports a pure-add plan on the first press, with the previewed plan", async () => {
     previewCsv.mockResolvedValue(plan([add]));
     importCsv.mockResolvedValue({
-      upserted: { properties: 1, valuations: 0, leases: 0, mortgage_blocks: 0 },
       items: [add],
     });
     const { container } = render(<Import />);
@@ -161,7 +160,6 @@ describe("Import preview (ADR 0096)", () => {
   it("shows each update's changes and asks before overwriting", async () => {
     previewCsv.mockResolvedValue(plan([add, update], "plan-2"));
     importCsv.mockResolvedValue({
-      upserted: { properties: 2, valuations: 0, leases: 0, mortgage_blocks: 0 },
       items: [add, update],
     });
     const { container } = render(<Import />);
@@ -256,7 +254,6 @@ describe("Import report (ADR 0096)", () => {
   it("survives leaving the page and links to each property", async () => {
     previewCsv.mockResolvedValue(plan([add]));
     importCsv.mockResolvedValue({
-      upserted: { properties: 1, valuations: 0, leases: 0, mortgage_blocks: 0 },
       items: [add],
     });
     const first = render(<Import />);
