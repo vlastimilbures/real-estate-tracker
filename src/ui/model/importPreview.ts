@@ -7,7 +7,7 @@ import type {
   CsvImportProblemCode,
   FieldChange,
   ImportItem,
-} from "../../import/csvImport";
+} from "../../state/csv";
 import { isoDate } from "../../engine";
 import { fmtCzk, fmtDate, fmtPct } from "../../lib/format";
 
