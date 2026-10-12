@@ -61,6 +61,10 @@ export type CsvSource = string | Uint8Array;
 
 // --- parsed row shapes (before DB FK resolution) ---
 
+/** An optional cell: `null` = empty, `undefined` = the column is not in the file, which an
+ *  update leaves as stored (ADR 0185 §2). */
+type Cell<T> = T | null | undefined;
+
 /** Every parsed row remembers its file line, so later checks can point back at it. */
 interface Located {
   line: number;
@@ -68,32 +72,32 @@ interface Located {
 
 export interface ParsedPropertyRow extends Located {
   name: string;
-  address: string | null;
-  type: string | null;
-  size_m2: number | null;
-  garage: boolean | null;
+  address: Cell<string>;
+  type: Cell<string>;
+  size_m2: Cell<number>;
+  garage: Cell<boolean>;
   purchase_date: string; // ISO yyyy-mm-dd
   purchase_price: string; // decimal text
-  appreciation_override_pa: string | null;
-  rent_index_override_pa: string | null;
+  appreciation_override_pa: Cell<string>;
+  rent_index_override_pa: Cell<string>;
   /** ADR 0119 §8: optional amounts; blank ⇒ unknown on a new property, kept on a
    *  re-import. */
-  own_cash: string | null;
-  transaction_costs: string | null;
-  initial_works: string | null;
+  own_cash: Cell<string>;
+  transaction_costs: Cell<string>;
+  initial_works: Cell<string>;
 }
 
 export interface ParsedValuationRow extends Located {
   property_name: string;
   valid_from: string;
-  valid_to: string | null;
+  valid_to: Cell<string>;
   market_value: string;
 }
 
 export interface ParsedRentRow extends Located {
   property_name: string;
   start_date: string;
-  end_date: string | null;
+  end_date: Cell<string>;
   monthly_rent: string;
 }
 
@@ -104,9 +108,9 @@ export interface ParsedMortgageRow extends Located {
   fixation_years: number;
   interest_rate_pa: string;
   monthly_instalment: string;
-  loan_term_years: number | null; // optional; blank ⇒ derive term from instalment
+  loan_term_years: Cell<number>; // optional; blank ⇒ derive term from instalment
   /** Optional; blank ⇒ a re-import keeps the stored value (DR-129). */
-  contract_maturity_date: string | null;
+  contract_maturity_date: Cell<string>;
 }
 
 // --- reading the file ---
@@ -257,12 +261,18 @@ class RowCtx {
     return (this.cells[field] ?? "").trim();
   }
 
+  /** The column is not in the file's header (ADR 0185 §2). */
+  private absent(field: string): boolean {
+    return !(field in this.cells);
+  }
+
   fail(field: string, error: CsvErrorCode): null {
     this.errors.push({ row: this.line, field, error });
     return null;
   }
 
-  optStr(field: string): string | null {
+  optStr(field: string): Cell<string> {
+    if (this.absent(field)) return undefined;
     const v = this.raw(field);
     return v === "" ? null : v;
   }
@@ -279,7 +289,8 @@ class RowCtx {
       : this.date(field, v);
   }
 
-  optDate(field: string): string | null {
+  optDate(field: string): Cell<string> {
+    if (this.absent(field)) return undefined;
     const v = this.raw(field);
     return v === "" ? null : this.date(field, v);
   }
@@ -304,7 +315,8 @@ class RowCtx {
       : this.decimal(field, v, rule);
   }
 
-  optDecimal(field: string, rule: DecimalRule): string | null {
+  optDecimal(field: string, rule: DecimalRule): Cell<string> {
+    if (this.absent(field)) return undefined;
     const v = this.raw(field);
     return v === "" ? null : this.decimal(field, v, rule);
   }
@@ -337,7 +349,8 @@ class RowCtx {
     field: string,
     range: IntRange,
     belowMin?: "notPositive",
-  ): number | null {
+  ): Cell<number> {
+    if (this.absent(field)) return undefined;
     const v = this.raw(field);
     return v === "" ? null : this.int(field, v, range, belowMin);
   }
@@ -360,7 +373,8 @@ class RowCtx {
     return n;
   }
 
-  optBool(field: string): boolean | null {
+  optBool(field: string): Cell<boolean> {
+    if (this.absent(field)) return undefined;
     const v = this.raw(field).toLowerCase();
     if (v === "") return null;
     if (v === "true" || v === "1" || v === "yes") return true;
@@ -538,7 +552,7 @@ export function parseMortgages(
       if (c.raw("monthly_instalment") !== "") {
         monthly_instalment = c.reqDecimal("monthly_instalment", "amount");
       } else if (
-        loan_term_years !== null &&
+        loan_term_years != null &&
         initial_principal &&
         interest_rate_pa
       ) {

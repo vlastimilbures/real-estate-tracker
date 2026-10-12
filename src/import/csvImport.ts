@@ -280,6 +280,23 @@ type ChildRow = MortgageBlockRow | ValuationRow | LeaseRow;
 const keyDate = (r: ChildRow) =>
   "valid_from" in r ? r.valid_from : r.start_date;
 
+/** The columns an update writes: a column missing from the file (`undefined`) is left
+ *  as stored (ADR 0185 §2). */
+function present<T extends object>(o: T): Present<T> {
+  return Object.fromEntries(
+    Object.entries(o).filter(([, v]) => v !== undefined),
+  ) as Present<T>;
+}
+/** `T` with each key that may be `undefined` made optional and defined. */
+type Present<T> = {
+  [K in keyof T as undefined extends T[K] ? never : K]: T[K];
+} & {
+  [K in keyof T as undefined extends T[K] ? K : never]?: Exclude<
+    T[K],
+    undefined
+  >;
+};
+
 /** One child CSV row, reduced to what the plan needs. */
 interface ChildInput {
   file: keyof typeof CHILD_FILES;
@@ -300,7 +317,7 @@ function childInputs(batch: CsvImportBatch): ChildInput[] {
       line: m.line,
       propertyName: m.property_name,
       date: m.start_date,
-      fields: {
+      fields: present({
         initial_principal: m.initial_principal,
         fixation_years: m.fixation_years,
         interest_rate_pa: m.interest_rate_pa,
@@ -308,10 +325,8 @@ function childInputs(batch: CsvImportBatch): ChildInput[] {
         loan_term_years: m.loan_term_years,
         // Blank ⇒ keep the stored maturity (DR-129). Draws and the interest-only date
         // are not CSV columns, so they are never touched.
-        ...(m.contract_maturity_date !== null && {
-          contract_maturity_date: m.contract_maturity_date,
-        }),
-      },
+        contract_maturity_date: m.contract_maturity_date ?? undefined,
+      }),
       newRow: (id, propertyId): MortgageBlockRow => ({
         id,
         property_id: propertyId,
@@ -320,16 +335,19 @@ function childInputs(batch: CsvImportBatch): ChildInput[] {
         fixation_years: m.fixation_years,
         interest_rate_pa: m.interest_rate_pa,
         monthly_instalment: m.monthly_instalment,
-        loan_term_years: m.loan_term_years,
+        loan_term_years: m.loan_term_years ?? null,
         draws: null,
         interest_only_until: null,
-        contract_maturity_date: m.contract_maturity_date,
+        contract_maturity_date: m.contract_maturity_date ?? null,
         prepayments: null,
         recasts: null,
       }),
     })),
     ...(batch.valuations ?? []).map((v): ChildInput => {
-      const fields = { valid_to: v.valid_to, market_value: v.market_value };
+      const fields = present({
+        valid_to: v.valid_to,
+        market_value: v.market_value,
+      });
       return {
         file: "valuations",
         line: v.line,
@@ -340,12 +358,16 @@ function childInputs(batch: CsvImportBatch): ChildInput[] {
           id,
           property_id: propertyId,
           valid_from: v.valid_from,
+          valid_to: null,
           ...fields,
         }),
       };
     }),
     ...(batch.rents ?? []).map((r): ChildInput => {
-      const fields = { end_date: r.end_date, monthly_rent: r.monthly_rent };
+      const fields = present({
+        end_date: r.end_date,
+        monthly_rent: r.monthly_rent,
+      });
       return {
         file: "rents",
         line: r.line,
@@ -356,6 +378,7 @@ function childInputs(batch: CsvImportBatch): ChildInput[] {
           id,
           property_id: propertyId,
           start_date: r.start_date,
+          end_date: null,
           ...fields,
         }),
       };
@@ -404,33 +427,38 @@ export function planImport(
   // and active flag; CSV doesn't model activation (D-55).
   for (const p of batch.properties ?? []) {
     const existing = byKey.get(propertyKey(p.name));
-    const fields = {
+    const fields = present({
       address: p.address,
       type: p.type,
       size_m2: p.size_m2,
-      garage: p.garage === null ? null : p.garage ? 1 : 0,
+      garage: p.garage == null ? p.garage : p.garage ? 1 : 0,
       purchase_date: p.purchase_date,
       purchase_price: p.purchase_price,
       appreciation_override_pa: p.appreciation_override_pa,
       rent_index_override_pa: p.rent_index_override_pa,
       // ADR 0119 §8: a blank funding cell keeps the stored amount; a CSV sets or
       // changes a recorded figure, never erases it.
-      ...(p.own_cash !== null && { own_cash: p.own_cash }),
-      ...(p.transaction_costs !== null && {
-        transaction_costs: p.transaction_costs,
-      }),
-      ...(p.initial_works !== null && { initial_works: p.initial_works }),
-    };
+      own_cash: p.own_cash ?? undefined,
+      transaction_costs: p.transaction_costs ?? undefined,
+      initial_works: p.initial_works ?? undefined,
+    });
     const row: PropertyRow = existing
       ? { ...existing, ...fields }
       : {
           id: newPropertyId(propertyKey(p.name)),
           name: p.name,
+          // A column the file does not hold, or a blank cell, leaves the value unknown.
+          address: null,
+          type: null,
+          size_m2: null,
+          garage: null,
+          appreciation_override_pa: null,
+          rent_index_override_pa: null,
+          own_cash: null,
+          transaction_costs: null,
+          initial_works: null,
           ...fields,
           active: 1,
-          own_cash: p.own_cash,
-          transaction_costs: p.transaction_costs,
-          initial_works: p.initial_works,
           // ADR 0119 §8: the note is not a CSV column.
           funding_note: null,
         };

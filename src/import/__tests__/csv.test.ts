@@ -441,17 +441,21 @@ describe("funding amounts (ADR 0119 §8)", () => {
     });
   });
 
-  it("a blank cell or a missing column is unknown (null)", () => {
+  // A blank cell is null; a missing column is undefined, which an update leaves as
+  // stored (ADR 0185 §2). Both keep the stored amount (ADR 0119 §8).
+  it("a blank cell is unknown (null), a missing column is absent (undefined)", () => {
     const blank = parseProperties(`${FH}\nA,,,,,2020-01-01,100,,,,,`);
     const missing = parseProperties(`${H}\nA,,,,,2020-01-01,100,,`);
-    for (const r of [blank, missing]) {
-      expect(r.errors).toEqual([]);
-      expect(r.rows[0]).toMatchObject({
-        own_cash: null,
-        transaction_costs: null,
-        initial_works: null,
-      });
-    }
+    expect(blank.errors).toEqual([]);
+    expect(blank.rows[0]).toMatchObject({
+      own_cash: null,
+      transaction_costs: null,
+      initial_works: null,
+    });
+    expect(missing.errors).toEqual([]);
+    expect(missing.rows[0]?.own_cash).toBeUndefined();
+    expect(missing.rows[0]?.transaction_costs).toBeUndefined();
+    expect(missing.rows[0]?.initial_works).toBeUndefined();
   });
 
   it("refuses a negative amount on its own column and line", () => {
