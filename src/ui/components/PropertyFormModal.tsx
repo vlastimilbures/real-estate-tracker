@@ -326,7 +326,7 @@ export function PropertyFormModal({
   async function handleSave() {
     const existingNames = (portfolio?.properties ?? [])
       .filter((p) => mode === "add" || p.id !== propertyId)
-      .map((p) => p.name.toLowerCase());
+      .map((p) => p.name);
     const result = parsePropertyForm(form, id, existingNames, t);
     showErrors(result.errors);
     if (!result.valid) return;
