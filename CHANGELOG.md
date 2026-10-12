@@ -339,7 +339,8 @@ engine without the form, and remove it when the last part lands.
   writes only its end date, so a correction saved meanwhile is kept. The Edit property form
   keeps Save disabled until the address and garage have loaded, and shows an error if they
   cannot be loaded, so Save can no longer erase them. A stored mortgage draw with an unknown
-  key is reported as invalid, like prepayments and recasts. The form's duplicate-name check
+  key now stops the app at the startup error screen, like prepayments and recasts (only a
+  hand-edited database has one). The form's duplicate-name check
   ignores surrounding spaces, like CSV import.
 - Data check, restore and as-of polish (ADR 0180, #263, #260, #265, #276): the restore table
   names the stored column (`interest_only_until`, `default_property_tax_yr`); a stored size

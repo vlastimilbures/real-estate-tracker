@@ -34,7 +34,7 @@ Four small gaps in the write paths, found by the 2026-10 review (#144):
 1. **Draws reject unknown keys.** A stored draw allows only `date` and `amount`; any other
    key makes the row invalid (`ROW_INVALID`, "draws has an unknown field …"), like a stored
    prepayment or recast. The app writes only these two keys, so only a hand-edited database
-   is affected; the Data check reports such a row.
+   is affected. As for prepayments, a hand-edited backup with such a key no longer restores.
 2. **Ending the previous record writes only its end date.** The close is
    `UPDATE valuations SET valid_to = ? WHERE id = ? AND valid_to IS NULL` (leases:
    `end_date`), in the same transaction as the new record. Every other column keeps what is
@@ -53,9 +53,12 @@ Four small gaps in the write paths, found by the 2026-10 review (#144):
 ## Consequences
 
 - No computed number changes; golden master and parity targets are unchanged.
-- A database with an unknown draws key, which only manual editing can make, now loads with
-  that mortgage reported as invalid.
+- A database with an unknown draws key, which only manual editing can make, no longer
+  loads: the app stops at the startup error screen (`ROW_INVALID`, naming the row) and
+  offers a restore.
 - The edit form cannot erase a stored address or garage; when their read fails, the owner
   closes the form and opens it again.
-- The stale-copy close is safe if the prompt ever stops being modal; a deleted predecessor
-  is still not reported (decision 2).
+- A correction saved while the prompt is open is no longer reverted. The close is still
+  validated against the prompt's copy, so if the prompt ever stops being modal, an end date
+  set meanwhile is kept without being checked against the new record, and a deleted
+  predecessor is still not reported (decision 2).
