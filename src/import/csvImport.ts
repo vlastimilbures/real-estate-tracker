@@ -9,7 +9,7 @@
 // and the commit share it, and a commit whose plan differs from the previewed one
 // writes nothing.
 import type { Sql, SqlStatement } from "../data/sql";
-import { insertStatement } from "../data/repositories";
+import { insertStatement, updateStatement } from "../data/repositories";
 import {
   rowToAssumptions,
   rowToHoldingCost,
@@ -186,20 +186,6 @@ async function readTables(sql: Sql): Promise<ImportTables> {
     leases,
     holding_costs,
     assumptions: a[0],
-  };
-}
-
-/** UPDATE `table` SET <only these columns> WHERE id = ? — columns the CSV does not
- *  model are left as stored. */
-function updateStatement(
-  table: string,
-  id: string,
-  values: Record<string, unknown>,
-): SqlStatement {
-  const cols = Object.keys(values);
-  return {
-    query: `UPDATE ${table} SET ${cols.map((c) => `${c} = ?`).join(", ")} WHERE id = ?`,
-    params: [...Object.values(values), id],
   };
 }
 

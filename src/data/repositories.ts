@@ -99,22 +99,30 @@ async function byId(
   }
 }
 
-/** Generic UPDATE … SET col=? … WHERE id=? from a row object's own keys (id excluded). */
-function updateStatement(table: string, row: { id: string }): SqlStatement {
-  const entries = Object.entries(row).filter(([k]) => k !== "id");
-  const assignments = entries.map(([k]) => `${k} = ?`).join(", ");
+/** UPDATE `table` SET <only these columns> WHERE id = ? — columns not in `values` are
+ *  left as stored. */
+export function updateStatement(
+  table: string,
+  id: string,
+  values: Record<string, unknown>,
+): SqlStatement {
+  const cols = Object.keys(values);
   return {
-    query: `UPDATE ${table} SET ${assignments} WHERE id = ?`,
-    params: [...entries.map(([, v]) => v), row.id],
+    query: `UPDATE ${table} SET ${cols.map((c) => `${c} = ?`).join(", ")} WHERE id = ?`,
+    params: [...Object.values(values), id],
   };
 }
+
+/** UPDATE of every column of a row object (id excluded). */
+const rowUpdate = (table: string, { id, ...values }: { id: string }) =>
+  updateStatement(table, id, values);
 
 async function updateRow(
   sql: Sql,
   table: string,
   row: { id: string },
 ): Promise<void> {
-  const { query, params } = updateStatement(table, row);
+  const { query, params } = rowUpdate(table, row);
   await byId(table, row.id, sql.execute(query, params));
 }
 
@@ -137,7 +145,7 @@ export const insertValuationClosingPrevious = (
 ) =>
   sql.transaction([
     insertStatement("valuations", valuationToRow(v)),
-    updateStatement("valuations", valuationToRow(closedPrev)),
+    rowUpdate("valuations", valuationToRow(closedPrev)),
   ]);
 /** A new lease plus the end date of the open-ended one it succeeds (ADR 0099). */
 export const insertLeaseClosingPrevious = (
@@ -147,7 +155,7 @@ export const insertLeaseClosingPrevious = (
 ) =>
   sql.transaction([
     insertStatement("leases", leaseToRow(l)),
-    updateStatement("leases", leaseToRow(closedPrev)),
+    rowUpdate("leases", leaseToRow(closedPrev)),
   ]);
 /** Save a property's holding costs: one row per property (UNIQUE property_id, v7).
  *  Inserts the row when the property has none, so an edit is never silently lost. */
