@@ -136,6 +136,19 @@ export const updateLease = (sql: Sql, l: Lease) =>
 export const updateMortgageBlock = (sql: Sql, m: MortgageBlock) =>
   updateRow(sql, "mortgage_blocks", mortgageBlockToRow(m));
 
+/** Ends an open record: only its end column, only while it is still open (ADR 0184 §2),
+ *  so a correction saved after the caller took its copy is kept. A row deleted meanwhile
+ *  changes nothing and is not reported (a documented limit). */
+const closeStatement = (
+  table: string,
+  column: string,
+  id: string,
+  end: string | null,
+): SqlStatement => ({
+  query: `UPDATE ${table} SET ${column} = ? WHERE id = ? AND ${column} IS NULL`,
+  params: [end, id],
+});
+
 /** A new valuation plus the end date of the open-ended one it succeeds, in one
  *  transaction (ADR 0099). */
 export const insertValuationClosingPrevious = (
@@ -145,7 +158,12 @@ export const insertValuationClosingPrevious = (
 ) =>
   sql.transaction([
     insertStatement("valuations", valuationToRow(v)),
-    rowUpdate("valuations", valuationToRow(closedPrev)),
+    closeStatement(
+      "valuations",
+      "valid_to",
+      closedPrev.id,
+      valuationToRow(closedPrev).valid_to,
+    ),
   ]);
 /** A new lease plus the end date of the open-ended one it succeeds (ADR 0099). */
 export const insertLeaseClosingPrevious = (
@@ -155,7 +173,12 @@ export const insertLeaseClosingPrevious = (
 ) =>
   sql.transaction([
     insertStatement("leases", leaseToRow(l)),
-    rowUpdate("leases", leaseToRow(closedPrev)),
+    closeStatement(
+      "leases",
+      "end_date",
+      closedPrev.id,
+      leaseToRow(closedPrev).end_date,
+    ),
   ]);
 /** Save a property's holding costs: one row per property (UNIQUE property_id, v7).
  *  Inserts the row when the property has none, so an edit is never silently lost. */
