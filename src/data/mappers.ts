@@ -132,38 +132,20 @@ function isoTextReq(v: Date): string {
 function isoText(v: Date | undefined): string | null {
   return v == null ? null : isoTextReq(v);
 }
-/** JSON tranche array → MortgageDraw[] (sorted), NULL/empty → undefined. */
+/** JSON tranche array → MortgageDraw[] (sorted), NULL/empty → undefined; only `date` and
+ *  `amount` are allowed (ADR 0184). */
 function parseDraws(
   ref: g.RowRef,
   v: string | null,
 ): MortgageDraw[] | undefined {
-  if (v == null) return undefined;
-  const bad = (problem: string): never => {
-    const line = `${ref.table} ${ref.id}: draws ${problem}`;
-    throw new DataError(
-      "ROW_INVALID",
-      `Corrupt mortgage draws JSON: ${line}.`,
-      [line],
-    );
-  };
-  let arr: unknown;
-  try {
-    arr = JSON.parse(v);
-  } catch {
-    return bad("is not valid JSON");
-  }
-  if (!Array.isArray(arr)) return bad("is not an array");
-  const draws = arr
-    .map((d: unknown) => {
-      const o = (d ?? {}) as { date?: unknown; amount?: unknown };
-      if (typeof o.date !== "string" || !g.isIsoDate(o.date))
-        return bad("has an invalid date");
-      const amount = g.parseDecimalText(o.amount);
-      if (!amount) return bad("has an invalid amount");
-      return { date: g.date(ref, "draws", o.date), amount: money(amount) };
-    })
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
-  return draws.length ? draws : undefined;
+  return parseEventList(ref, "draws", v, ["date", "amount"], (o, bad) => {
+    if (typeof o.date !== "string" || !g.isIsoDate(o.date))
+      return bad("has an invalid date");
+    return {
+      date: g.date(ref, "draws", o.date),
+      amount: eventAmount(o.amount, bad),
+    };
+  });
 }
 /**
  * A JSON array column → items sorted by date, NULL/empty → undefined (ADR 0109). Any
