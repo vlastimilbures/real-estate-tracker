@@ -32,6 +32,7 @@ import {
   rowToScenario,
   rowToValuation,
   serializeOverrides,
+  toColumn,
   type AssumptionsRow,
   type HoldingCostRow,
   type LeaseRow,
@@ -446,16 +447,13 @@ const ENTITY_TABLE: Record<ValidationEntity, BackupTable> = {
   holdingCost: "holding_costs",
 };
 
-const snake = (field: string) =>
-  field.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
-
 /** The stored column behind an engine field, as the issue table names it (ADR 0180 §1):
  *  the mappers store `completionDate` as `interest_only_until` and an assumption default
  *  `defaults.<field>` as `default_<field>`; every other field is its snake case. */
 const columnOf = (field: string) =>
   field === "completionDate"
     ? "interest_only_until"
-    : snake(field.replace(/^defaults\./, "default_"));
+    : toColumn(field.replace(/^defaults\./, "default_"));
 
 /** A key cell as restore compares it: a property name as every other entry point
  *  matches it, trimmed and case-insensitive (D-55, ADR 0148). */

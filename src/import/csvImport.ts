@@ -17,6 +17,7 @@ import {
   rowToMortgageBlock,
   rowToProperty,
   rowToValuation,
+  toColumn,
   type AssumptionsRow,
   type HoldingCostRow,
   type LeaseRow,
@@ -41,6 +42,7 @@ import {
   type ParsedRentRow,
   type ParsedValuationRow,
 } from "./csv";
+import { PLAIN_DECIMAL } from "../lib/decimalText";
 import { D } from "../lib/money";
 import { propertyKey } from "../lib/propertyKey";
 
@@ -189,17 +191,12 @@ async function readTables(sql: Sql): Promise<ImportTables> {
   };
 }
 
-const snake = (field: string) =>
-  field.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
-
 /** Replace the row with the same id in `rows`, or append it. */
 function put<R extends { id: string }>(rows: R[], row: R): void {
   const i = rows.findIndex((r) => r.id === row.id);
   if (i >= 0) rows[i] = row;
   else rows.push(row);
 }
-
-const DECIMAL_TEXT = /^-?\d+(\.\d+)?$/;
 
 /** Stored text of a cell value; empty ⇒ `null`. */
 function cellText(v: unknown): string | null {
@@ -210,7 +207,7 @@ function cellText(v: unknown): string | null {
 /** Equal for the user: both empty, the same decimal value, or the same text. */
 function sameValue(a: string | null, b: string | null): boolean {
   if (a === null || b === null) return a === b;
-  if (DECIMAL_TEXT.test(a) && DECIMAL_TEXT.test(b)) return D(a).eq(D(b));
+  if (PLAIN_DECIMAL.test(a) && PLAIN_DECIMAL.test(b)) return D(a).eq(D(b));
   return a === b;
 }
 
@@ -548,7 +545,7 @@ export function planImport(
         date === undefined
           ? {
               ...at,
-              field: e.field ? snake(e.field) : "",
+              field: e.field ? toColumn(e.field) : "",
               problem: { code: "inputRule", rule: e.code },
             }
           : {
