@@ -11,6 +11,9 @@ import { propertyToRow, rowToProperty, type PropertyRow } from "../mappers";
 import { DataError } from "../errors";
 import { isoDate, money, type Property } from "../../engine";
 
+/** Address and garage left unknown (written as NULL). */
+const noExtras = { address: null, garage: null };
+
 const property: Property = {
   id: "p1",
   name: "Flat One",
@@ -65,7 +68,7 @@ describe("migration v10 — acquisition funding (ADR 0119)", () => {
 
   it("stores and loads a full record, exactly", async () => {
     const sql = await migrated();
-    await insertProperty(sql, propertyToRow(funded));
+    await insertProperty(sql, propertyToRow(funded, noExtras));
     const [p] = (await loadPortfolio(sql)).properties;
     expect(text(p.funding)).toEqual({
       ownCash: "1500000.5",
@@ -81,7 +84,10 @@ describe("migration v10 — acquisition funding (ADR 0119)", () => {
     async (column) => {
       const sql = await migrated();
       await expect(
-        insertProperty(sql, { ...propertyToRow(property), [column]: "-1" }),
+        insertProperty(sql, {
+          ...propertyToRow(property, noExtras),
+          [column]: "-1",
+        }),
       ).rejects.toThrow(`property_${column}_not_negative`);
       sql.db.close();
     },
@@ -89,7 +95,7 @@ describe("migration v10 — acquisition funding (ADR 0119)", () => {
 });
 
 describe("mapper — acquisition funding", () => {
-  const row = propertyToRow(property);
+  const row = propertyToRow(property, noExtras);
   const reason = (patch: Partial<PropertyRow>) => {
     try {
       rowToProperty({ ...row, ...patch });
@@ -107,19 +113,22 @@ describe("mapper — acquisition funding", () => {
       initial_works: null,
       funding_note: null,
     });
-    expect(propertyToRow({ ...property, funding: {} })).toEqual(row);
+    expect(propertyToRow({ ...property, funding: {} }, noExtras)).toEqual(row);
     expect(rowToProperty(row).funding).toBeUndefined();
   });
 
   it("round-trips a full record through row ⇄ property", () => {
-    const back = rowToProperty(propertyToRow(funded));
+    const back = rowToProperty(propertyToRow(funded, noExtras));
     expect(text(back.funding)).toEqual(text(funded.funding));
-    expect(propertyToRow(back)).toEqual(propertyToRow(funded));
+    expect(propertyToRow(back, noExtras)).toEqual(
+      propertyToRow(funded, noExtras),
+    );
   });
 
   it("treats a blank note as no note", () => {
     expect(
-      propertyToRow({ ...property, funding: { note: "  " } }).funding_note,
+      propertyToRow({ ...property, funding: { note: "  " } }, noExtras)
+        .funding_note,
     ).toBeNull();
     expect(rowToProperty({ ...row, funding_note: "" }).funding).toBeUndefined();
   });

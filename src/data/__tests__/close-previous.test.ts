@@ -16,6 +16,9 @@ import {
 import { propertyToRow, valuationToRow, leaseToRow } from "../mappers";
 import { isoDate, money, type Lease, type Valuation } from "../../engine";
 
+/** Address and garage left unknown (written as NULL). */
+const noExtras = { address: null, garage: null };
+
 const prevV: Valuation = {
   id: "v-old",
   propertyId: "p1",
@@ -46,12 +49,15 @@ async function ready(): Promise<TestSql> {
   await migrate(sql);
   await insertProperty(
     sql,
-    propertyToRow({
-      id: "p1",
-      name: "Flat",
-      purchaseDate: isoDate("2024-01-01"),
-      purchasePrice: money("4000000"),
-    }),
+    propertyToRow(
+      {
+        id: "p1",
+        name: "Flat",
+        purchaseDate: isoDate("2024-01-01"),
+        purchasePrice: money("4000000"),
+      },
+      noExtras,
+    ),
   );
   await insertValuation(sql, valuationToRow(prevV));
   await insertLease(sql, leaseToRow(prevL));

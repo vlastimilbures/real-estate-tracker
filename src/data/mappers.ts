@@ -557,14 +557,18 @@ export function rowToScenario(r: ScenarioRow): Scenario {
 
 // --- engine input → row (extra fields for DB fidelity passed alongside) --------
 
-export function propertyToRow(
-  p: Property,
-  extra: { address?: string | null; garage?: boolean | null } = {},
-): PropertyRow {
+/** The stored property fields that are not engine inputs. Every property write passes
+ *  them, so none can write NULL by leaving them out (ADR 0184 §3). */
+export interface PropertyExtras {
+  address: string | null;
+  garage: boolean | null;
+}
+
+export function propertyToRow(p: Property, extra: PropertyExtras): PropertyRow {
   return {
     id: p.id,
     name: p.name,
-    address: extra.address ?? null,
+    address: extra.address,
     type: p.type ?? null,
     size_m2: p.sizeM2 ?? null,
     garage: extra.garage == null ? null : extra.garage ? 1 : 0,

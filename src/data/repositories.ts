@@ -24,6 +24,7 @@ import {
   leaseToRow,
   mortgageBlockToRow,
   holdingCostToRow,
+  type PropertyExtras,
   type PropertyRow,
   type MortgageBlockRow,
   type ValuationRow,
@@ -208,7 +209,7 @@ export const updateProperty = (sql: Sql, r: PropertyRow) =>
 export async function getPropertyExtras(
   sql: Sql,
   id: string,
-): Promise<{ address: string | null; garage: boolean | null }> {
+): Promise<PropertyExtras> {
   const rows = await sql.select<Pick<PropertyRow, "address" | "garage">>(
     "SELECT address, garage FROM properties WHERE id = ?",
     [id],

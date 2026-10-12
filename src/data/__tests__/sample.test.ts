@@ -32,6 +32,9 @@ import { holdingCostToRow, leaseToRow, propertyToRow } from "../mappers";
 import type { Sql } from "../sql";
 import { isoDate, rate } from "../../engine";
 
+/** Address and garage left unknown (written as NULL). */
+const noExtras = { address: null, garage: null };
+
 /** Safety backups the fake `write_app_backup` command wrote, by file name. */
 const written = vi.hoisted(() => new Map<string, string>());
 const disk = vi.hoisted(() => ({ fail: false }));
@@ -70,7 +73,7 @@ async function withOwnData(): Promise<TestSql> {
   const sampleLease = p.leases.find((x) => x.propertyId === "javorova")!;
   await insertPropertyWithCosts(
     sql,
-    propertyToRow({ ...sampleProperty, id: "mine", name: "My flat" }),
+    propertyToRow({ ...sampleProperty, id: "mine", name: "My flat" }, noExtras),
     holdingCostToRow({ ...sampleCost, id: "hc-mine", propertyId: "mine" }),
   );
   await insertLease(
@@ -232,7 +235,7 @@ describe("the sample is matched by id and name (ADR 0127)", () => {
     await sql.execute(`DELETE FROM properties WHERE id = '${id}'`);
     await insertPropertyWithCosts(
       sql,
-      propertyToRow({ ...flat, name }),
+      propertyToRow({ ...flat, name }, noExtras),
       holdingCostToRow(cost),
     );
     await insertLease(sql, leaseToRow({ ...lease, id: `l-own-${id}` }));

@@ -20,6 +20,9 @@ import type { Sql } from "../sql";
 import { isoDate } from "../../engine";
 import { money } from "../../engine";
 
+/** Address and garage left unknown (written as NULL). */
+const noExtras = { address: null, garage: null };
+
 async function ready(): Promise<TestSql> {
   const sql = openMemorySql();
   await migrate(sql);
@@ -69,7 +72,7 @@ describe("atomic writes", () => {
     await expect(
       insertPropertyWithCosts(
         failOn(sql, /INSERT INTO holding_costs/),
-        propertyToRow(p),
+        propertyToRow(p, noExtras),
         holdingCostToRow({ id: "hc-p-new", propertyId: "p-new" }),
       ),
     ).rejects.toThrow();
@@ -77,7 +80,7 @@ describe("atomic writes", () => {
 
     await insertPropertyWithCosts(
       sql,
-      propertyToRow(p),
+      propertyToRow(p, noExtras),
       holdingCostToRow({ id: "hc-p-new", propertyId: "p-new" }),
     );
     expect(await count(sql, "properties")).toBe(1);
