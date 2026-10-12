@@ -19,9 +19,12 @@ const id = portfolio.properties[0]!.id;
 type Extras = { address: string | null; garage: boolean | null };
 
 let editProperty: ReturnType<typeof vi.fn<() => Promise<MutationResult>>>;
-let settle: { resolve: (e: Extras) => void; reject: (e: Error) => void };
+type Settle = { resolve: (e: Extras) => void; reject: (e: Error) => void };
+let settle: Settle;
+let reads: Settle[];
 
 beforeEach(() => {
+  reads = [];
   editProperty = vi.fn(() => Promise.resolve({ ok: true } as const));
   act(() => {
     useUiStore.setState({ language: "en" });
@@ -33,6 +36,7 @@ beforeEach(() => {
       getPropertyExtras: () =>
         new Promise<Extras>((resolve, reject) => {
           settle = { resolve, reject };
+          reads.push(settle);
         }),
     });
   });
@@ -80,6 +84,19 @@ describe("edit form waits for address and garage (ADR 0184 §3)", () => {
       "{Enter}",
     );
     expect(editProperty).not.toHaveBeenCalled();
+  });
+
+  it("ignores a stale read that fails after a newer one loaded", async () => {
+    render(
+      <PropertyFormModal mode="edit" propertyId={id} onClose={() => {}} />,
+    );
+    // A reload while the form is open starts a second read.
+    act(() => usePortfolioStore.setState({ portfolio: { ...portfolio } }));
+    const [first, second] = reads;
+    await act(async () => second!.resolve({ address: "A", garage: null }));
+    await act(async () => first!.reject(new Error("late")));
+    expect(screen.queryByText(en.propertyForm.errExtrasLoad)).toBeNull();
+    expect(save()).toHaveProperty("disabled", false);
   });
 
   it("does not wait in the add form", () => {

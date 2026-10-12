@@ -299,13 +299,21 @@ export function PropertyFormModal({
         ...fundingDraft(p.funding),
       });
     }
+    // Only the latest read counts: an older one settling late must not undo it.
+    let live = true;
     getPropertyExtras(propertyId).then(
       ({ address, garage }) => {
+        if (!live) return;
         load({ address: address ?? "", garage });
         setExtras("ready");
       },
-      () => setExtras("failed"),
+      () => {
+        if (live) setExtras("failed");
+      },
     );
+    return () => {
+      live = false;
+    };
   }, [mode, propertyId, portfolio, getPropertyExtras]);
 
   function set(field: keyof PropertyFormState, value: string | boolean | null) {
