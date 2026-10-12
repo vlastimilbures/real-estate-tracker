@@ -18,6 +18,7 @@ import {
   planImport,
   previewImport,
 } from "../csvImport";
+import { importNow } from "./support/importNow";
 
 const PROPS = `name,address,purchase_date,purchase_price
 Byt A,Javorova 12,2020-01-01,5000000
@@ -58,7 +59,7 @@ beforeEach(async () => {
   sql = openMemorySql();
   await migrate(sql);
   await upsertAssumptions(sql, SEED_ASSUMPTIONS);
-  await importCsv(sql, {
+  await importNow(sql, {
     properties: parseProperties(PROPS).rows,
     mortgages: parseMortgages(`${MH}\n${MORTGAGE}`).rows,
   });
@@ -242,18 +243,55 @@ describe("planImport is pure", () => {
 });
 
 describe("importCsv — commit matches the preview (ADR 0096)", () => {
-  it("the report names the same records as the preview", async () => {
+  it("the import uses the new property id the preview showed", async () => {
     const batch = {
       properties: props("Byt C,,2022-01-01,7000000\nByt A,,2020-01-01,5000000"),
       valuations: parseValuations(`${VH}\nByt C,2026-01-01,,7500000`).rows,
     };
     const preview = await previewImport(sql, batch);
     const report = await importCsv(sql, batch, preview.fingerprint);
-    expect(report.items).toEqual(preview.items);
-    expect(report.upserted.properties).toBe(2);
+    expect(report.items.map((i) => i.kind)).toEqual(["add", "update", "add"]);
     // The new property's id is random, and the import used the one the preview showed.
     expect(idOf("Byt C")).toBe(
       preview.items.find((i) => i.propertyName === "Byt C")?.propertyId,
+    );
+  });
+
+  it("a committed batch previews again as all unchanged (round trip)", async () => {
+    // Adds and updates in every file: each UPDATE / INSERT must store the form the
+    // plan compares, or the second preview reports a change that is not there.
+    const batch = {
+      properties: props(
+        "Byt A,Lipova 3,2020-01-01,5000000.00\nByt C,Nova 1,2022-01-01,7000000",
+      ),
+      mortgages: parseMortgages(
+        `${MH}\nByt A,2021-01-17,2250000,10,0.0179,7908.40,,2046-01-17\nByt C,2022-02-01,4000000,5,0.0450,22000,30,`,
+      ).rows,
+      valuations: parseValuations(
+        `${VH}\nByt A,2024-01-01,,6200000\nByt C,2026-01-01,,7500000`,
+      ).rows,
+      rents: parseRents(
+        `${RH}\nByt A,2024-03-01,,18500\nByt C,2026-02-01,,21000`,
+      ).rows,
+    };
+    const first = await previewImport(sql, batch);
+    expect(first.problems).toEqual([]);
+    expect(first.items.map((i) => [i.file, i.kind])).toEqual([
+      ["properties", "update"],
+      ["properties", "add"],
+      ["mortgages", "update"],
+      ["mortgages", "add"],
+      ["valuations", "add"],
+      ["valuations", "add"],
+      ["rents", "add"],
+      ["rents", "add"],
+    ]);
+    await importCsv(sql, batch, first.fingerprint);
+
+    const again = await previewImport(sql, batch);
+    expect(again.problems).toEqual([]);
+    expect(again.items.map((i) => [i.file, i.row, i.kind, i.changes])).toEqual(
+      first.items.map((i) => [i.file, i.row, "unchanged", []]),
     );
   });
 
@@ -282,12 +320,5 @@ describe("importCsv — commit matches the preview (ADR 0096)", () => {
       }),
     );
     expect(dump(sql)).toEqual(before);
-  });
-
-  it("without an expected plan it imports as before", async () => {
-    const report = await importCsv(sql, {
-      properties: props("Byt C,,2022-01-01,7000000"),
-    });
-    expect(report.items.map((i) => i.kind)).toEqual(["add"]);
   });
 });

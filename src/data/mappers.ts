@@ -23,6 +23,10 @@ import type {
   ScenarioOverrides,
 } from "../engine";
 
+/** The snake_case column name of a camelCase field (`purchasePrice` ⇒ `purchase_price`). */
+export const toColumn = (field: string) =>
+  field.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+
 // --- DB row shapes (all money/rates TEXT, dates TEXT ISO) ----------------------
 
 export interface PropertyRow {

@@ -13,7 +13,7 @@ import {
   parseRents,
   parseValuations,
 } from "../csv";
-import { importCsv } from "../csvImport";
+import { importNow } from "./support/importNow";
 
 const guide = readFileSync(
   join(__dirname, "..", "..", "..", "docs", "csv-import.md"),
@@ -59,17 +59,16 @@ describe("docs/csv-import.md examples", () => {
     sql = openMemorySql();
     await migrate(sql);
     await upsertAssumptions(sql, SEED_ASSUMPTIONS);
-    const report = await importCsv(sql, {
+    const report = await importNow(sql, {
       properties: properties.rows,
       valuations: valuations.rows,
       rents: rents.rows,
       mortgages: mortgages.rows,
     });
-    expect(report.upserted).toEqual({
-      properties: 2,
-      valuations: 3,
-      leases: 3,
-      mortgage_blocks: 2,
-    });
+    const count = (file: string) =>
+      report.items.filter((i) => i.file === file && i.kind === "add").length;
+    expect(
+      ["properties", "valuations", "rents", "mortgages"].map(count),
+    ).toEqual([2, 3, 3, 2]);
   });
 });

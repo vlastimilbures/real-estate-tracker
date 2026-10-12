@@ -20,8 +20,11 @@ export {
 export {
   CsvImportError,
   CsvPlanChangedError,
+  type CsvFile,
   type CsvImportPreview,
   type CsvImportProblem,
+  type CsvImportProblemCode,
   type CsvImportReport,
+  type FieldChange,
   type ImportItem,
 } from "../import/csvImport";

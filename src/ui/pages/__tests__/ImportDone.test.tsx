@@ -27,7 +27,6 @@ const added = {
   changes: [],
 };
 const importCsv = vi.fn(async () => ({
-  upserted: { properties: 1, valuations: 0, leases: 0, mortgage_blocks: 0 },
   items: [added],
 }));
 // ADR 0096: the page previews the plan before it offers the import.

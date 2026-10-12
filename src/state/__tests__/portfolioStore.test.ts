@@ -16,6 +16,7 @@ import type { WriteError } from "../writeError";
 import { parseProperties, parseRents } from "../../import/csv";
 import { CsvImportError } from "../../import/csvImport";
 import { money } from "../../engine";
+import { importNow } from "./support/importNow";
 
 /** The underlying text of an untyped failure (kind "other"); "" for typed ones. */
 const text = (e: WriteError | null) => (e?.kind === "other" ? e.message : "");
@@ -687,12 +688,12 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
   it("importCsv writes, reloads, and leaves the banner alone", async () => {
     await usePortfolioStore.getState().init(openSeeded);
     const before = usePortfolioStore.getState().portfolio!.properties.length;
-    const report = await usePortfolioStore.getState().importCsv({
+    const report = await importNow({
       properties: parseProperties(
         "name,purchase_date,purchase_price\nStore Import,2020-01-01,1000000",
       ).rows,
     });
-    expect(report.upserted.properties).toBe(1);
+    expect(report.items.map((i) => i.kind)).toEqual(["add"]);
     expect(usePortfolioStore.getState().portfolio!.properties.length).toBe(
       before + 1,
     );
@@ -718,7 +719,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
     await usePortfolioStore.getState().init(openSeeded);
     const before = usePortfolioStore.getState().portfolio!;
     await expect(
-      usePortfolioStore.getState().importCsv({
+      importNow({
         rents: parseRents(
           "property_name,start_date,end_date,monthly_rent\nNope,2025-01-01,,1000",
         ).rows,
@@ -750,6 +751,15 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
         return real.transaction(stmts);
       },
     };
+    // Previewed before the gate, so only importCsv itself can wait in the queue.
+    const batch = {
+      properties: parseProperties(
+        "name,purchase_date,purchase_price\nQueued Import,2020-01-01,1",
+      ).rows,
+    };
+    const { fingerprint } = await usePortfolioStore
+      .getState()
+      .previewCsv(batch);
     usePortfolioStore.setState({ sql: slow });
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
     const a = usePortfolioStore.getState().addValuation({
@@ -758,11 +768,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
       validFrom: new Date(Date.UTC(2033, 0, 1)) as IsoDate,
       marketValue: money("1"),
     });
-    const b = usePortfolioStore.getState().importCsv({
-      properties: parseProperties(
-        "name,purchase_date,purchase_price\nQueued Import,2020-01-01,1",
-      ).rows,
-    });
+    const b = usePortfolioStore.getState().importCsv(batch, fingerprint);
     await new Promise((r) => setTimeout(r, 0));
     expect(log).toEqual(["valuation"]);
     release();
@@ -775,7 +781,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
   it("a failed whole-database action does not block later mutations", async () => {
     await usePortfolioStore.getState().init(openSeeded);
     await expect(
-      usePortfolioStore.getState().importCsv({
+      importNow({
         rents: parseRents(
           "property_name,start_date,end_date,monthly_rent\nNope,2025-01-01,,1000",
         ).rows,

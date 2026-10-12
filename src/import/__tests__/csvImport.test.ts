@@ -20,7 +20,8 @@ import {
   parseRents,
   parseValuations,
 } from "../csv";
-import { CsvImportError, importCsv } from "../csvImport";
+import { CsvImportError } from "../csvImport";
+import { importNow } from "./support/importNow";
 
 const PROPS = `name,purchase_date,purchase_price
 Byt A,2020-01-01,5000000
@@ -78,7 +79,7 @@ beforeEach(async () => {
   sql = openMemorySql();
   await migrate(sql);
   await upsertAssumptions(sql, SEED_ASSUMPTIONS);
-  await importCsv(sql, {
+  await importNow(sql, {
     properties: parseProperties(PROPS).rows,
     mortgages: parseMortgages(
       `${MH}\nByt A,2021-01-17,2250000,10,0.0169,7908,,`,
@@ -92,7 +93,7 @@ describe("importCsv — all or nothing", () => {
   it("an unknown property in a child file writes nothing (DR-023)", async () => {
     const before = dump(sql);
     const e = await refused(
-      importCsv(sql, {
+      importNow(sql, {
         properties: parseProperties(
           "name,purchase_date,purchase_price\nNew,2020-01-01,1",
         ).rows,
@@ -123,7 +124,7 @@ describe("importCsv — all or nothing", () => {
         ),
     };
     await expect(
-      importCsv(failing, {
+      importNow(failing, {
         properties: parseProperties(
           "name,purchase_date,purchase_price\nNew,2020-01-01,1\nByt B,2021-01-01,7000000",
         ).rows,
@@ -138,7 +139,7 @@ describe("importCsv — all or nothing", () => {
   it("an engine input rule rejects the file and names the line (D-17)", async () => {
     const before = dump(sql);
     const e = await refused(
-      importCsv(sql, {
+      importNow(sql, {
         mortgages: parseMortgages(
           `${MH}\nByt B,2021-01-01,2000000,5,0.05,100,,`,
         ).rows,
@@ -158,7 +159,7 @@ describe("importCsv — all or nothing", () => {
 
 describe("importCsv — matching and preserved fields", () => {
   it("matches a property name case-insensitively and keeps its spelling (D-55)", async () => {
-    await importCsv(sql, {
+    await importNow(sql, {
       properties: parseProperties(
         "name,purchase_date,purchase_price\n byt a ,2020-01-01,5100000",
       ).rows,
@@ -185,7 +186,7 @@ describe("importCsv — matching and preserved fields", () => {
         interest_only_until = '2021-06-30', loan_term_years = 25,
         draws = '[{"date":"2021-03-01","amount":"100000"}]';
     `);
-    await importCsv(sql, {
+    await importNow(sql, {
       properties: parseProperties(PROPS).rows,
       mortgages: parseMortgages(
         `${MH}\nByt A,2021-01-17,2250000,10,0.0169,7908,25,`,
@@ -208,7 +209,7 @@ describe("importCsv — matching and preserved fields", () => {
         .get(),
     ).toEqual({ active: 0 });
 
-    await importCsv(sql, {
+    await importNow(sql, {
       mortgages: parseMortgages(
         `${MH}\nByt A,2021-01-17,2250000,10,0.0169,7908,25,2046-02-17`,
       ).rows,
@@ -227,7 +228,7 @@ describe("importCsv — matching and preserved fields", () => {
     sql.db
       .prepare("UPDATE mortgage_blocks SET prepayments = ?, recasts = ?")
       .run(prepayments, recasts);
-    await importCsv(sql, {
+    await importNow(sql, {
       mortgages: parseMortgages(
         `${MH}\nByt A,2021-01-17,2250000,10,0.0169,7908,25,\nByt A,2031-01-17,1500000,5,0.045,9000,15,`,
       ).rows,
@@ -249,7 +250,7 @@ describe("importCsv — matching and preserved fields", () => {
       UPDATE properties SET own_cash = '1500000', transaction_costs = '95000',
         initial_works = '0', funding_note = 'Deposit' WHERE name = 'Byt A';
     `);
-    await importCsv(sql, {
+    await importNow(sql, {
       properties: parseProperties(
         "name,purchase_date,purchase_price\nByt A,2020-01-01,5100000\nByt C,2024-01-01,3000000",
       ).rows,
@@ -281,7 +282,7 @@ describe("importCsv — matching and preserved fields", () => {
   });
 
   it("a new property takes its funding amounts from the CSV; a blank cell is unknown (ADR 0119 §8)", async () => {
-    await importCsv(sql, {
+    await importNow(sql, {
       properties: parseProperties(`${FH}\nByt C,2024-01-01,3000000,900000,,0`)
         .rows,
     });
@@ -298,7 +299,7 @@ describe("importCsv — matching and preserved fields", () => {
       UPDATE properties SET own_cash = '1500000', transaction_costs = '95000',
         funding_note = 'Deposit' WHERE name = 'Byt A';
     `);
-    await importCsv(sql, {
+    await importNow(sql, {
       properties: parseProperties(
         `${FH}\nByt A,2020-01-01,5000000,1600000,,25000`,
       ).rows,
@@ -318,11 +319,11 @@ describe("importCsv — matching and preserved fields", () => {
         .cumulativeNetCashFlow;
     // Bought after the seed baseDate (2026-06-07), no loan: the derived down payment is
     // the price, 5,000,000, as the entered costs and works are 0.
-    await importCsv(sql, {
+    await importNow(sql, {
       properties: parseProperties(`${FH}\nByt F,2027-03-01,5000000,,0,0`).rows,
     });
     const derived = await cumulative();
-    await importCsv(sql, {
+    await importNow(sql, {
       properties: parseProperties(`${FH}\nByt F,2027-03-01,5000000,1500000,,`)
         .rows,
     });
@@ -340,7 +341,7 @@ describe("importCsv — matching and preserved fields", () => {
   });
 
   it("gives every new property a holding-costs row", async () => {
-    await importCsv(sql, {
+    await importNow(sql, {
       properties: parseProperties(
         "name,purchase_date,purchase_price\nByt C,2020-01-01,1",
       ).rows,
@@ -361,7 +362,7 @@ describe("importCsv — matching and preserved fields", () => {
 describe("importCsv — generated ids never collide (DR-137)", () => {
   it("re-importing a date whose generated id is taken gets a fresh id", async () => {
     const VH = "property_name,valid_from,valid_to,market_value";
-    await importCsv(sql, {
+    await importNow(sql, {
       valuations: parseValuations(
         `${VH}\nByt A,2026-06-01,,12000000`,
         new Set(["Byt A"]),
@@ -372,13 +373,13 @@ describe("importCsv — generated ids never collide (DR-137)", () => {
         "UPDATE valuations SET valid_from = '2026-07-01' WHERE valid_from = '2026-06-01'",
       )
       .run();
-    const report = await importCsv(sql, {
+    const report = await importNow(sql, {
       valuations: parseValuations(
         `${VH}\nByt A,2026-06-01,,12500000`,
         new Set(["Byt A"]),
       ).rows,
     });
-    expect(report.upserted.valuations).toBe(1);
+    expect(report.items.map((i) => i.kind)).toEqual(["add"]);
     const rows = sql.db
       .prepare("SELECT id, valid_from FROM valuations ORDER BY valid_from")
       .all() as { id: string; valid_from: string }[];
@@ -394,7 +395,7 @@ describe('a property stored with the id "" (ADR 0127)', () => {
         "INSERT INTO properties (id, name, purchase_date, purchase_price) VALUES ('', 'Квартира', '2020-01-01', '3000000')",
       )
       .run();
-    await importCsv(sql, {
+    await importNow(sql, {
       mortgages: parseMortgages(
         `${MH}\nКвартира,2021-01-17,1000000,10,0.0169,3515,,`,
       ).rows,
@@ -414,7 +415,7 @@ describe('a property stored with the id "" (ADR 0127)', () => {
 
 describe("new property ids (ADR 0127)", () => {
   it("a Cyrillic name imports together with its rents", async () => {
-    await importCsv(sql, {
+    await importNow(sql, {
       properties: parseProperties(
         "name,purchase_date,purchase_price\nКвартира,2020-01-01,3000000",
       ).rows,
@@ -430,7 +431,7 @@ describe("new property ids (ADR 0127)", () => {
   });
 
   it("a name like a sample flat's does not get the sample's id", async () => {
-    await importCsv(sql, {
+    await importNow(sql, {
       properties: parseProperties(
         "name,purchase_date,purchase_price\nJavorová,2020-01-01,3000000",
       ).rows,
@@ -444,12 +445,12 @@ describe("new property ids (ADR 0127)", () => {
         "name,purchase_date,purchase_price\nByt N,2020-01-01,3000000",
       ).rows,
     };
-    await importCsv(sql, batch);
+    await importNow(sql, batch);
     const first = idOf("Byt N");
     sql.db.exec(
       "UPDATE properties SET name = 'Byt N renamed' WHERE name = 'Byt N'",
     );
-    await importCsv(sql, batch);
+    await importNow(sql, batch);
     expect(idOf("Byt N")).toMatch(UUID);
     expect(idOf("Byt N")).not.toBe(first);
   });
@@ -465,12 +466,12 @@ describe("importCsv — leases never overlap (ADR 0163)", () => {
       .all(idOf(name));
 
   it("a rent row overlapping a stored lease rejects the file and names the line", async () => {
-    await importCsv(sql, {
+    await importNow(sql, {
       rents: parseRents(`${RH}\nByt A,2024-01-01,,20000`).rows,
     });
     const before = dump(sql);
     const e = await refused(
-      importCsv(sql, {
+      importNow(sql, {
         rents: parseRents(`${RH}\nByt A,2026-01-01,,22000`).rows,
       }),
     );
@@ -487,7 +488,7 @@ describe("importCsv — leases never overlap (ADR 0163)", () => {
 
   it("two overlapping rows in one file are both named", async () => {
     const e = await refused(
-      importCsv(sql, {
+      importNow(sql, {
         rents: parseRents(
           `${RH}\nByt A,2024-01-01,2025-01-31,20000\nByt A,2025-01-01,,22000`,
         ).rows,
@@ -500,10 +501,10 @@ describe("importCsv — leases never overlap (ADR 0163)", () => {
   });
 
   it("ending the earlier lease in the same file imports both (same start_date updates it)", async () => {
-    await importCsv(sql, {
+    await importNow(sql, {
       rents: parseRents(`${RH}\nByt A,2024-01-01,,20000`).rows,
     });
-    await importCsv(sql, {
+    await importNow(sql, {
       rents: parseRents(
         `${RH}\nByt A,2024-01-01,2025-12-31,20000\nByt A,2026-01-01,,22000`,
       ).rows,
@@ -529,7 +530,7 @@ describe("importCsv — leases never overlap (ADR 0163)", () => {
           monthlyRent: money("20000"),
         }),
       );
-    await importCsv(sql, {
+    await importNow(sql, {
       rents: parseRents(`${RH}\nByt B,2025-01-01,,15000`).rows,
     });
     expect(leasesOf("Byt B")).toEqual([
@@ -538,14 +539,14 @@ describe("importCsv — leases never overlap (ADR 0163)", () => {
   });
 
   it("an update of a stored lease whose new end reaches the next lease is refused", async () => {
-    await importCsv(sql, {
+    await importNow(sql, {
       rents: parseRents(
         `${RH}\nByt A,2024-01-01,2025-12-31,20000\nByt A,2026-01-01,,22000`,
       ).rows,
     });
     const before = dump(sql);
     const e = await refused(
-      importCsv(sql, {
+      importNow(sql, {
         rents: parseRents(`${RH}\nByt A,2024-01-01,2026-01-01,20000`).rows,
       }),
     );
@@ -571,7 +572,7 @@ describe("importCsv — leases never overlap (ADR 0163)", () => {
         }),
       );
     const e = await refused(
-      importCsv(sql, {
+      importNow(sql, {
         rents: parseRents(`${RH}\nByt A,2026-01-01,,21000`).rows,
       }),
     );

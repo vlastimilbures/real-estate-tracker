@@ -11,7 +11,11 @@ import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { propertiesTemplate } from "../../../import/csv";
-import type { CsvImportPreview, ImportItem } from "../../../import/csvImport";
+import {
+  CsvPlanChangedError,
+  type CsvImportPreview,
+  type ImportItem,
+} from "../../../state/csv";
 import { en } from "../../../i18n/en";
 
 const p = en.importPage;
@@ -54,7 +58,6 @@ beforeEach(() => {
   previewCsv.mockReset();
   importCsv.mockReset();
   importCsv.mockResolvedValue({
-    upserted: { properties: 0, valuations: 0, leases: 0, mortgage_blocks: 1 },
     items: [replacing],
   });
   act(() => {
@@ -162,6 +165,49 @@ describe("Import and stored loan events (ADR 0160)", () => {
     expect(importCsv).not.toHaveBeenCalled();
   });
 
+  it("a portfolio change closes the replace confirmation (#286)", async () => {
+    previewCsv.mockResolvedValue(plan([replacing]));
+    const { container } = render(<Import />);
+    await chooseFile(container);
+    await userEvent.click(
+      await screen.findByRole("button", { name: p.importScope(1, 1, 0) }),
+    );
+    expect(screen.getByText(p.confirmReplaceMsg(1))).toBeTruthy();
+
+    act(() => usePortfolioStore.setState({ portfolio: { ...portfolio } }));
+    expect(screen.queryByText(p.confirmReplaceMsg(1))).toBeNull();
+    expect(importCsv).not.toHaveBeenCalled();
+  });
+
+  it("a plan changed at commit asks again before replacing (#286)", async () => {
+    previewCsv.mockResolvedValue(plan([replacing]));
+    importCsv.mockRejectedValueOnce(
+      new CsvPlanChangedError({ ...plan([replacing]), fingerprint: "plan-2" }),
+    );
+    const { container } = render(<Import />);
+    await chooseFile(container);
+    await userEvent.click(
+      await screen.findByRole("button", { name: p.importScope(1, 1, 0) }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: p.confirmReplace }),
+    );
+    expect(await screen.findByText(p.planChanged)).toBeTruthy();
+    expect(screen.queryByText(p.confirmReplaceMsg(1))).toBeNull();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: p.importScope(1, 1, 0) }),
+    );
+    expect(screen.getByText(p.confirmReplaceMsg(1))).toBeTruthy();
+    expect(importCsv).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: p.confirmReplace }),
+    );
+    await waitFor(() => expect(importCsv).toHaveBeenCalledTimes(2));
+    expect(importCsv.mock.calls[1]?.[1]).toBe("plan-2");
+  });
+
   it("with updates too, the confirm row names both and keeps the overwrite button", async () => {
     previewCsv.mockResolvedValue(plan([replacing, update]));
     const { container } = render(<Import />);
@@ -196,12 +242,6 @@ describe("Import and stored loan events (ADR 0160)", () => {
     act(() =>
       useUiStore.setState({
         lastImport: {
-          upserted: {
-            properties: 0,
-            valuations: 0,
-            leases: 0,
-            mortgage_blocks: 1,
-          },
           items: [replacing],
         },
       }),
