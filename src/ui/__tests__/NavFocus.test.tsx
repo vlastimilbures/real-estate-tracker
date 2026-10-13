@@ -2,13 +2,11 @@
 //
 // ADR 0146 (#131): every page renders its own shell, so a page change removes the nav
 // button that was pressed. Focus then moves to the new page's main region, not <body>.
-// Focus is not moved at startup, and focus a page sets on purpose wins.
+// Focus is not moved at startup, and focus a page sets on purpose wins. AppShell keeps
+// the last shown route in module state, so each test loads fresh modules (#256).
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { App } from "../App";
-import { usePortfolioStore } from "../../state/portfolioStore";
-import { useUiStore } from "../../state/uiStore";
 import { portfolio, assumptions } from "../../engine/__tests__/support/seed";
 import { en } from "../../i18n/en";
 
@@ -16,7 +14,15 @@ vi.mock("../../data/errorLog", () => ({ logFailure: vi.fn() }));
 
 const pageTitle = () => document.querySelector(".page-title")?.textContent;
 
-beforeEach(() => {
+let App: typeof import("../App").App;
+let useUiStore: typeof import("../../state/uiStore").useUiStore;
+
+beforeEach(async () => {
+  vi.resetModules();
+  await import("../../i18n/__tests__/preload"); // the fresh i18n needs its dictionaries
+  ({ App } = await import("../App"));
+  ({ useUiStore } = await import("../../state/uiStore"));
+  const { usePortfolioStore } = await import("../../state/portfolioStore");
   act(() => {
     usePortfolioStore.setState({
       portfolio,
@@ -52,6 +58,8 @@ describe("focus after navigation (ADR 0146)", () => {
     expect(document.activeElement?.id).toBe("main");
   });
 
+  // An outcome pin: Guide's focus effect runs after AppShell's and wins with or without
+  // the "focus lost" guard; the dialog pin below is the one that exercises the guard.
   it("keeps the focus a page sets: a glossary term from a metric link", async () => {
     render(<App />);
     act(() => useUiStore.getState().openGuide("fixation"));
