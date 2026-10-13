@@ -5,7 +5,6 @@ import { useEngine, useProjections } from "../../state/useEngine";
 import { todayUtc } from "../../lib/day";
 import { asOfBounds, resolveAsOf } from "../model/asOf";
 import { asOfView, propertyRowsForAsOf } from "../model/dashboard";
-import { projectionSeries } from "../model/projection";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { AppShell } from "../components/AppShell";
@@ -76,16 +75,10 @@ export function Properties() {
     if (newPropertyRequested) clearNewPropertyRequest();
   }, [newPropertyRequested, clearNewPropertyRequest]);
 
-  // The Today basis of the date, from the portfolio projection (its years are the
-  // properties' years), and each row read by it.
+  // The Today basis of the date, and each row read by it.
   const basis =
     engine && view
-      ? asOfView(
-          engine.assumptions.baseDate,
-          view.date,
-          projectionSeries(engine.projection, "nominal", engine.assumptions),
-          view.isToday,
-        )
+      ? asOfView(engine.assumptions.baseDate, view.date, view.isToday)
       : null;
   const perProperty =
     engine && view && basis && projections

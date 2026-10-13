@@ -147,7 +147,7 @@ export function Dashboard() {
   const rows = toChartRows(series);
   const eqChange = toEquityChangeRows(series);
   const { isToday } = view;
-  const basis = asOfView(assumptions.baseDate, snapshot.asOf, series, isToday);
+  const basis = asOfView(assumptions.baseDate, snapshot.asOf, isToday);
   // Tiles + the flow band: for the current snapshot this is the effective-dated engine
   // snapshot under the chosen lens; in a projection year it is that year of `series`
   // (the rows the charts plot), so the cards and the per-year charts agree.

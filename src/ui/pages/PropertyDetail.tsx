@@ -186,7 +186,7 @@ export function PropertyDetail() {
   // as-of reads the projection year the charts plot; real terms are in base-date prices.
   const series = out ? projectionSeries(out.projection, mode, assumptions) : [];
   const basis = out
-    ? asOfView(assumptions.baseDate, out.asOf, series, view.isToday)
+    ? asOfView(assumptions.baseDate, out.asOf, view.isToday)
     : null;
   const s =
     out && basis

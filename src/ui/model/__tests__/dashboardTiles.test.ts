@@ -100,7 +100,7 @@ describe("tilesForAsOf", () => {
     tilesForAsOf(
       snapshotAt(asOf),
       series,
-      asOfView(baseDate, asOf, series, false),
+      asOfView(baseDate, asOf, false),
       "nominal",
       tileAssumptions,
     );

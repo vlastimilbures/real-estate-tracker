@@ -32,7 +32,7 @@ function ownedAt(asOf: IsoDate, mode: Mode, isToday = false): boolean {
   return propertyTilesForAsOf(
     propertySnapshot(future, mixed, assumptions, asOf, fullSchedule.rows),
     series,
-    asOfView(assumptions.baseDate, asOf, series, isToday),
+    asOfView(assumptions.baseDate, asOf, isToday),
     asOf,
     mode,
     assumptions,

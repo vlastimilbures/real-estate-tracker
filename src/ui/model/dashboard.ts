@@ -125,7 +125,6 @@ export function propertyTilesForAsOf(
 export function asOfView(
   baseDate: Date,
   asOf: Date,
-  series: SeriesRow[],
   isToday: boolean,
 ): AsOfBasis {
   const n = projectionYearForAsOf(baseDate, asOf);
@@ -133,7 +132,8 @@ export function asOfView(
     return {
       kind: "projection",
       year: n,
-      calendarYear: at(series, n).calendarYear,
+      // As the engine numbers projection rows.
+      calendarYear: baseDate.getUTCFullYear() + n,
     };
   if (isToday) return { kind: "today" };
   return { kind: "snapshot", date: asOf };

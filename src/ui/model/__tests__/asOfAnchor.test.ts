@@ -29,7 +29,7 @@ function tiles(asOf: IsoDate, mode: Mode) {
     mode,
     assumptions,
   );
-  const basis = asOfView(assumptions.baseDate, asOf, series, false);
+  const basis = asOfView(assumptions.baseDate, asOf, false);
   const dashboard = tilesForAsOf(snap, series, basis, mode, assumptions);
   const perProperty = portfolio.properties.map((p) => {
     const full = fullSchedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE;
