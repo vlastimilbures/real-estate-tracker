@@ -110,4 +110,23 @@ describe("stress presets", () => {
       },
     });
   });
+
+  it("saves overrides as the same JSON text, keys in order", () => {
+    const json = (p: Preset) => JSON.stringify(p.overrides);
+    expect(json(ratePreset(2, en))).toBe(
+      '{"rateShock":{"deltaPa":"0.02","durationYears":3}}',
+    );
+    expect(json(inflationPreset(9, en))).toBe(
+      '{"inflationShock":{"deltaPa":"0.09","durationYears":3}}',
+    );
+    expect(json(crashPreset({ label: "−35%", pct: "0.35" }, 5, en))).toBe(
+      '{"valueShock":{"pct":"0.35","atYear":5}}',
+    );
+    const severe = COMBINED_RECIPES[1];
+    expect(severe && json(combinedPreset(severe, 0, en))).toBe(
+      '{"rateShock":{"deltaPa":"0.04","durationYears":3},' +
+        '"inflationShock":{"deltaPa":"0.03","durationYears":3},' +
+        '"valueShock":{"pct":"0.2","atYear":0}}',
+    );
+  });
 });

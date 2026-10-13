@@ -4,11 +4,10 @@ import { describe, it, expect } from "vitest";
 import { openMemorySql } from "./betterSqlite";
 import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
-import { loadState, upsertScenario } from "../repositories";
+import { loadState, upsertAssumptions, upsertScenario } from "../repositories";
 import { scenarioToRow } from "../mappers";
 import { isoDate, rate } from "../../engine";
 import type { Sql } from "../sql";
-import { upsertAssumptions } from "../repositories";
 import { SEED_ASSUMPTIONS } from "../seed";
 
 async function seeded() {
@@ -38,7 +37,8 @@ describe("loadState", () => {
       "javorova",
       "lipova",
     ]);
-    expect(state.assumptions.baseDate).toBeInstanceOf(Date);
+    expect(state.assumptions.baseDate).toEqual(SEED_ASSUMPTIONS.baseDate);
+    expect(state.assumptions.horizonYears).toBe(SEED_ASSUMPTIONS.horizonYears);
     expect(state.scenarios.map((s) => s.id)).toEqual(["s-1"]);
     expect(state).toMatchObject({
       unreadableScenarios: [],

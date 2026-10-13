@@ -20,9 +20,8 @@ import { DataError } from "../errors";
 import { isIsoDate, parseDecimalText } from "../guards";
 import { D } from "../../lib/money";
 import { rate, isoDate } from "../../engine";
-import { loadState } from "../repositories";
 import { loadPortfolio } from "./support/reads";
-import { upsertAssumptions } from "../repositories";
+import { loadState, upsertAssumptions } from "../repositories";
 import { SEED_ASSUMPTIONS } from "../seed";
 
 function dataError(fn: () => unknown): DataError {

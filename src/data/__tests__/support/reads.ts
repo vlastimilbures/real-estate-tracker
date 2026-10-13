@@ -9,8 +9,15 @@ export const loadPortfolio = async (sql: Sql) =>
   (await loadState(sql)).portfolio;
 export const loadAssumptions = async (sql: Sql) =>
   (await loadState(sql)).assumptions;
-export const listScenarios = async (sql: Sql) =>
-  (await loadState(sql)).scenarios;
+/** The readable scenarios; throws when one is not, so a test cannot miss it. */
+export async function listScenarios(sql: Sql) {
+  const { scenarios, unreadableScenarios } = await loadState(sql);
+  if (unreadableScenarios.length > 0)
+    throw new Error(
+      `unreadable scenarios: ${JSON.stringify(unreadableScenarios)}`,
+    );
+  return scenarios;
+}
 
 /** `confirmRestore` without the safety backup: check the file, replace every table. */
 export async function restoreFromJson(
