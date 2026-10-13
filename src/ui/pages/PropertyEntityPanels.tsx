@@ -12,7 +12,7 @@ import {
 } from "../model/loanEventRows";
 import { INT_RANGES } from "../../lib/intRanges";
 import { fmtDate, fmtCzk } from "../../lib/format";
-import { currencySymbol } from "../../lib/currency";
+import { CZK } from "../../lib/currency";
 import {
   suggestedInstalmentHint,
   instalmentFill,
@@ -96,7 +96,7 @@ export function ValuationsPanel({
           name: "marketValue",
           label: t.propertyDetail.fieldMarketValue,
           kind: "money",
-          suffix: currencySymbol(),
+          suffix: CZK.symbol,
         },
       ]}
       draftOf={(r) => ({
@@ -193,7 +193,7 @@ export function LeasesPanel({
           name: "monthlyRent",
           label: t.propertyDetail.fieldMonthlyRent,
           kind: "money",
-          suffix: currencySymbol(),
+          suffix: CZK.symbol,
         },
       ]}
       draftOf={(r) => ({
@@ -297,7 +297,7 @@ export function MortgagesPanel({
           name: "initialPrincipal",
           label: t.propertyDetail.fieldInitialPrincipal,
           kind: "money",
-          suffix: currencySymbol(),
+          suffix: CZK.symbol,
         },
         {
           name: "fixationYears",
@@ -325,7 +325,7 @@ export function MortgagesPanel({
           name: "monthlyInstalment",
           label: t.propertyDetail.fieldMonthlyInstalment,
           kind: "money",
-          suffix: currencySymbol(),
+          suffix: CZK.symbol,
         },
         {
           name: "completionDate",

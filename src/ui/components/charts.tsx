@@ -33,7 +33,7 @@ import {
   type TipItem,
 } from "../model/chartData";
 import { yearLabel } from "../model/projection";
-import { currencySymbol } from "../../lib/currency";
+import { CZK } from "../../lib/currency";
 import { Button, Money, Pct, TableWrap } from "./primitives";
 import { useT } from "../hooks/useT";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
@@ -125,7 +125,7 @@ export function ChartCard({
     kind !== "czk"
       ? undefined
       : asTable
-        ? currencySymbol()
+        ? CZK.symbol
         : czkUnitFromRows(
             rows,
             series.map((s) => s.key),

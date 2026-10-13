@@ -17,7 +17,7 @@ import { Checkbox, Field, TextArea, TextInput } from "./fields";
 import { DateInput } from "./DateInput";
 import { Button, ErrorBanner } from "./primitives";
 import { Modal } from "./Modal";
-import { currencySymbol } from "../../lib/currency";
+import { CZK } from "../../lib/currency";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { formWriteErrors } from "../model/writeError";
@@ -80,7 +80,7 @@ const FINANCIAL_FIELD_SPECS: TextFieldSpec[] = [
   {
     key: "purchase_price",
     label: (t) => t.propertyForm.purchasePrice,
-    suffix: currencySymbol(),
+    suffix: CZK.symbol,
     inputMode: "decimal",
     required: true,
   },
@@ -111,7 +111,7 @@ const fundingSpec = (
   key,
   label,
   help,
-  suffix: currencySymbol(),
+  suffix: CZK.symbol,
   inputMode: "decimal",
   placeholder: (t) => t.propertyForm.unknownPlaceholder,
 });

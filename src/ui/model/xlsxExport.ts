@@ -16,7 +16,7 @@ import {
   fmtMultiple,
   fmtPct,
 } from "../../lib/format";
-import { getActiveCurrency } from "../../lib/currency";
+import { CZK } from "../../lib/currency";
 
 /** How a column's value is shown — and therefore rounded and formatted. */
 export type CellKind =
@@ -82,7 +82,7 @@ export function xlsxSheet<R>(sheet: XlsxSheet<R>): XlsxSheetCells {
 export function numFmt(kind: CellKind): string | undefined {
   switch (kind) {
     case "money": {
-      const amount = `#,##0" ${getActiveCurrency().symbol}"`;
+      const amount = `#,##0" ${CZK.symbol}"`;
       return `${amount};[Red](${amount})`;
     }
     case "percent":

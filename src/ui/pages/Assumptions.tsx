@@ -18,7 +18,7 @@ import {
 import { FORM_PARSERS } from "../model/formParsers";
 import { INT_RANGES } from "../../lib/intRanges";
 import type { Assumptions } from "../../engine";
-import { currencySymbol } from "../../lib/currency";
+import { CZK } from "../../lib/currency";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { formWriteErrors } from "../model/writeError";
@@ -74,25 +74,25 @@ function buildSpecs(t: Dictionary) {
         name: "propertyTaxYr",
         label: a.propertyTax,
         kind: "money",
-        suffix: currencySymbol(),
+        suffix: CZK.symbol,
       },
       {
         name: "insuranceYr",
         label: a.insurance,
         kind: "money",
-        suffix: currencySymbol(),
+        suffix: CZK.symbol,
       },
       {
         name: "svjMonthly",
         label: a.svj,
         kind: "money",
-        suffix: currencySymbol(),
+        suffix: CZK.symbol,
       },
       {
         name: "otherYr",
         label: a.other,
         kind: "money",
-        suffix: currencySymbol(),
+        suffix: CZK.symbol,
       },
       { name: "mgmtPctRent", label: a.mgmt, kind: "pct", suffix: "%" },
       { name: "maintPctRent", label: a.maint, kind: "pct", suffix: "%" },

@@ -34,7 +34,7 @@ import {
 } from "../model/propertyDetail";
 import type { AcquisitionView } from "../model/acquisition";
 import { dscrBadge, ltvBadge } from "../model/health";
-import { currencySymbol } from "../../lib/currency";
+import { CZK } from "../../lib/currency";
 import type {
   PropertySnapshot,
   HoldingCost,
@@ -219,28 +219,28 @@ export function HoldingCostsPanel({
             name: "propertyTaxYr",
             label: t.propertyDetail.fieldPropertyTax,
             kind: "money",
-            suffix: currencySymbol(),
+            suffix: CZK.symbol,
             optional: true,
           },
           {
             name: "insuranceYr",
             label: t.propertyDetail.fieldInsurance,
             kind: "money",
-            suffix: currencySymbol(),
+            suffix: CZK.symbol,
             optional: true,
           },
           {
             name: "svjMonthly",
             label: t.propertyDetail.fieldSvjMo,
             kind: "money",
-            suffix: currencySymbol(),
+            suffix: CZK.symbol,
             optional: true,
           },
           {
             name: "otherYr",
             label: t.propertyDetail.fieldOther,
             kind: "money",
-            suffix: currencySymbol(),
+            suffix: CZK.symbol,
             optional: true,
           },
           {
