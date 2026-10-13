@@ -640,15 +640,17 @@ export const SCREENS: Screen[] = [
         expect(box!.x + box!.width).toBeLessThanOrEqual(actions!.x);
       }
       // In every language: headers wrap to at most two lines to make room (ADR 0158).
+      // Measure the label's own text, not the cell or the glossary button (#282).
       const heads = await ux.page
         .locator("table.data thead th")
         .evaluateAll((ths) =>
           ths.map((th) => {
-            const s = getComputedStyle(th);
+            const label = th.querySelector(".th-label, .metric-term") ?? th;
+            const s = getComputedStyle(label);
             const lineHeight =
               parseFloat(s.lineHeight) || 1.2 * parseFloat(s.fontSize);
             const range = document.createRange();
-            range.selectNodeContents(th);
+            range.selectNodeContents(label);
             const lines = range.getBoundingClientRect().height / lineHeight;
             return { text: th.textContent, lines };
           }),
