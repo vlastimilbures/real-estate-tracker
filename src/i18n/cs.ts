@@ -786,7 +786,7 @@ export const cs: Dictionary = {
     nominalKc: "nominální Kč",
     periodNote: "toky za rok, zůstatky ke konci roku",
     portfolio: "Portfolio",
-    entity: "Subjekt",
+    entity: "Portfolio nebo nemovitost",
   },
 
   scenarios: {
@@ -1303,7 +1303,7 @@ export const cs: Dictionary = {
     mortgagesProse1Pre: "Úvěry jsou ",
     mortgagesProse1Annuities: "anuity",
     mortgagesProse1Mid:
-      " — konstantní měsíční splátka, nejprve rozdělená na úrok: ",
+      " — konstantní měsíční splátka, ze které se nejdřív hradí úrok: ",
     fInterest: "úrok = zůstatek × sazba ÷ 12",
     fPrincipal: "jistina = splátka − úrok",
     fNewBalance: "nový zůstatek = zůstatek − jistina",

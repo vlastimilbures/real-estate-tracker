@@ -98,4 +98,35 @@ describe("N7b wording (#169, #152)", () => {
     );
     expect(ru.propertyDetail.acqHint).toBe("как указано, номинально");
   });
+  it('ru: yearly rates read without a bare "годовых" (#169 G1-2-07)', () => {
+    expect(ru.propertyDetail.fieldInterestRate).toBe(
+      "Годовая процентная ставка",
+    );
+    expect(ru.assumptions.appreciation).toBe("Рост стоимости в год");
+    expect(ru.assumptions.rentIndexation).toBe("Индексация аренды в год");
+    expect(ru.assumptions.inflation).toBe("Инфляция (CPI) в год");
+    expect(ru.scenarios.fieldAppreciation).toBe("Рост стоимости в год");
+    expect(ru.scenarios.fieldRentIndexation).toBe("Индексация аренды в год");
+    expect(ru.scenarios.fieldInflation).toBe("Инфляция в год");
+  });
+
+  it("ru/cs: Guide grammar and meaning (#169 G1-2-07)", () => {
+    expect(ru.guide.projectionProse2).toMatch(
+      /Результаты включают первый год с положительным потоком и год без долга\.$/,
+    );
+    expect(ru.guide.mortgagesProse1Mid).toBe(
+      " — постоянный месячный платёж, из которого сначала покрываются проценты: ",
+    );
+    expect(cs.guide.mortgagesProse1Mid).toBe(
+      " — konstantní měsíční splátka, ze které se nejdřív hradí úrok: ",
+    );
+    expect(ru.guide.snapshotDefs.value.meaning).toContain(
+      "(или с даты более поздней оценки, от которой рост отсчитывается заново)",
+    );
+  });
+
+  it("ru/cs: the Projections picker names portfolio or property (#169 G1-2-07)", () => {
+    expect(ru.projections.entity).toBe("Портфель или объект");
+    expect(cs.projections.entity).toBe("Portfolio nebo nemovitost");
+  });
 });
