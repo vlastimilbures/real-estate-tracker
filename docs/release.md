@@ -108,8 +108,11 @@ is not provided** (backlog): FileVault protects the disk as a whole.
   styles and IPC; there are no remote origins. A navigation guard (`src-tauri/src/nav.rs`)
   refuses any navigation away from the app.
 - Devtools are not compiled into release builds (no `devtools` cargo feature).
-- `sql:allow-load` stays (ADR 0064): the webview could open another SQLite file, but no remote
-  content can run in it.
+- The webview keeps `sql:allow-load`, `sql:allow-execute` and `sql:allow-select` (ADR 0064).
+  It can run any SQL, including `ATTACH DATABASE` to any path the user can write, through the
+  plugin and through `db_transaction` alike. That is accepted because no remote content can
+  run in it. `execute` refuses transaction control (ADR 0175 §7). One Rust SQL path with an
+  `ATTACH` deny waits for a forced sqlx upgrade (#171).
 
 ### Manual check: an outside request is blocked
 
