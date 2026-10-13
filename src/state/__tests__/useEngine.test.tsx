@@ -173,6 +173,61 @@ describe("useScenarioComparison", () => {
     expect(result.current).not.toBe(first);
   });
 
+  // #147: the memo key must cover every override field, shock sub-fields included. The
+  // Record type makes a new ScenarioOverrides field a compile error here until listed.
+  const full: Scenario["overrides"] = {
+    appreciationPa: rate("0.01"),
+    rentIndexationPa: rate("0.02"),
+    vacancyAllowance: rate("0.05"),
+    postFixationResetRatePa: rate("0.05"),
+    inflationPa: rate("0.03"),
+    inflationShock: { deltaPa: rate("0.02"), durationYears: 2 },
+    rateShock: { deltaPa: rate("0.01"), durationYears: 2 },
+    valueShock: { pct: rate("0.1"), atYear: 1 },
+  };
+  const edits: Record<
+    keyof Scenario["overrides"],
+    Partial<Scenario["overrides"]>[]
+  > = {
+    appreciationPa: [{ appreciationPa: rate("0.015") }],
+    rentIndexationPa: [{ rentIndexationPa: rate("0.025") }],
+    vacancyAllowance: [{ vacancyAllowance: rate("0.06") }],
+    postFixationResetRatePa: [{ postFixationResetRatePa: rate("0.06") }],
+    inflationPa: [{ inflationPa: rate("0.035") }],
+    inflationShock: [
+      { inflationShock: { deltaPa: rate("0.03"), durationYears: 2 } },
+      { inflationShock: { deltaPa: rate("0.02"), durationYears: 3 } },
+    ],
+    rateShock: [
+      { rateShock: { deltaPa: rate("0.02"), durationYears: 2 } },
+      { rateShock: { deltaPa: rate("0.01"), durationYears: 3 } },
+    ],
+    valueShock: [
+      { valueShock: { pct: rate("0.2"), atYear: 1 } },
+      { valueShock: { pct: rate("0.1"), atYear: 2 } },
+    ],
+  };
+  it.each(
+    Object.entries(edits).flatMap(([field, list]) =>
+      list.map((edit, i) => [`${field} #${i + 1}`, edit] as const),
+    ),
+  )("recomputes when %s changes", (_, edit) => {
+    const at = (overrides: Scenario["overrides"]): Scenario => ({
+      id: "s1",
+      name: "All",
+      overrides,
+    });
+    const { result, rerender } = renderHook(
+      ({ s }) => useScenarioComparison([s]),
+      { initialProps: { s: at(full) } },
+    );
+    const first = result.current;
+    rerender({ s: at({ ...full }) });
+    expect(result.current).toBe(first);
+    rerender({ s: at({ ...full, ...edit }) });
+    expect(result.current).not.toBe(first);
+  });
+
   it("a rename returns the new name (UX-051, DR-055)", () => {
     const { result, rerender } = renderHook(
       ({ s }) => useScenarioComparison([s]),
