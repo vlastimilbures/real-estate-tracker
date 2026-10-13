@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #14 (pre-release review 2026-10, finding A03)
+- Amended by: [0186](0186-compare-net-worth-excludes-cash.md) (the row says it leaves out
+  cash; the footnote points to cumulative cash to owner too)
 
 ## Context
 
