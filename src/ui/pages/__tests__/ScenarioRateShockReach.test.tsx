@@ -49,6 +49,12 @@ const results = [result("base", "Base"), result("rates", "Rates +2pp", shock)];
 vi.mock("../../../state/useEngine", () => ({
   useScenarioComparison: () => results,
 }));
+vi.mock("../../model/rateShockReach", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../model/rateShockReach")>();
+  return { ...actual, rateShockNote: vi.fn(actual.rateShockNote) };
+});
+const { rateShockNote } = await import("../../model/rateShockReach");
 
 const { Scenarios } = await import("../Scenarios");
 const { ScenarioForm } = await import("../ScenarioForm");
@@ -88,6 +94,16 @@ describe("Rate shock reach (ADR 0100)", () => {
     expect(header.getAttribute("title")).toBe(reach);
     const base = screen.getByRole("columnheader", { name: "Base" });
     expect(base.getAttribute("title")).toBeNull();
+  });
+
+  // #163 R4-09: each note builds a block schedule per loan, so a re-render that changes
+  // no data reuses the notes.
+  it("a re-render without a data change does not rebuild the reach", () => {
+    render(<Scenarios />);
+    const calls = vi.mocked(rateShockNote).mock.calls.length;
+    act(() => useUiStore.getState().setPresetsOpen(true));
+    act(() => useUiStore.getState().setPresetsOpen(false));
+    expect(vi.mocked(rateShockNote).mock.calls.length).toBe(calls);
   });
 
   it("the rate shock help says it starts at each loan's fixation end", () => {

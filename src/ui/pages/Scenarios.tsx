@@ -2,7 +2,7 @@
 // one-click stress presets, and a 2–3-way side-by-side compare (net worth, net cash flow,
 // LTV). Scenarios never mutate portfolio data — the engine re-runs over overridden
 // assumptions (+ a transient value-crash portfolio) via useScenarioComparison.
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   usePortfolioStore,
   type MutationResult,
@@ -58,6 +58,20 @@ export function Scenarios() {
   const [busy, setBusy] = useState(false);
   const { showToast } = useToast();
 
+  // Which loans each saved scenario's rate shock hits (ADR 0100). Each note builds a
+  // block schedule per loan, so it is built once per data change (#163 R4-09).
+  const reach = useMemo(
+    () =>
+      new Map(
+        scenarios.map((s) => [
+          s.id,
+          rateShockNote(s, portfolio, assumptions, t),
+        ]),
+      ),
+    [scenarios, portfolio, assumptions, t],
+  );
+  const reachText = (id: string) => reach.get(id);
+
   // A deleted (or restored-away) scenario leaves the compare selection.
   useEffect(
     () => pruneCompare(scenarios.map((s) => s.id)),
@@ -96,12 +110,6 @@ export function Scenarios() {
     ...(baseOn ? [base] : []),
     ...scenarios.filter((s) => selectedIds.includes(s.id)),
   ];
-
-  /** Which loans a saved scenario's rate shock hits (ADR 0100). */
-  function reachText(id: string): string | undefined {
-    const s = scenarios.find((x) => x.id === id);
-    return s && rateShockNote(s, portfolio, assumptions, t);
-  }
 
   async function addPreset(name: string, overrides: ScenarioOverrides) {
     // A preset that is already saved creates no second row (ADR 0093).
