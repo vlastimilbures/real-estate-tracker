@@ -4,6 +4,7 @@
 import { useMemo } from "react";
 import { usePortfolioStore } from "./portfolioStore";
 import { scenarioRuleErrors } from "../import/inputRules";
+import { serializeOverrides } from "../data/mappers";
 import { todayUtc } from "../lib/day";
 import { timed } from "../lib/perf";
 import {
@@ -153,9 +154,10 @@ export function useScenarioComparison(
 ): ScenarioResult[] | null {
   const portfolio = usePortfolioStore((s) => s.portfolio);
   const assumptions = usePortfolioStore((s) => s.assumptions);
-  // Stable dep: re-run only when a selected scenario's id/overrides/shock change.
+  // Stable dep: re-run only when a selected scenario's id or overrides change. The
+  // stored form lists every override field, so a new field cannot be missed (#147).
   const key = scenarios
-    .map((s) => `${s.id}:${JSON.stringify(serializeForKey(s))}`)
+    .map((s) => `${s.id}:${serializeOverrides(s.overrides)}`)
     .join("|");
   const computed = useMemo(() => {
     if (!portfolio || !assumptions) return null;
@@ -186,27 +188,6 @@ export function useScenarioComparison(
     return computed.map((r) => ({ ...r, name: nameOf.get(r.id) ?? "" }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [computed, names]);
-}
-
-/** Decimals → strings so a scenario's content can key the comparison memo. */
-function serializeForKey(s: Scenario) {
-  const o = s.overrides;
-  return {
-    appreciationPa: o.appreciationPa?.toString(),
-    rentIndexationPa: o.rentIndexationPa?.toString(),
-    vacancyAllowance: o.vacancyAllowance?.toString(),
-    postFixationResetRatePa: o.postFixationResetRatePa?.toString(),
-    inflationPa: o.inflationPa?.toString(),
-    inflationShock: o.inflationShock
-      ? `${o.inflationShock.deltaPa}/${o.inflationShock.durationYears}`
-      : undefined,
-    rateShock: o.rateShock
-      ? `${o.rateShock.deltaPa}/${o.rateShock.durationYears}`
-      : undefined,
-    valueShock: o.valueShock
-      ? `${o.valueShock.pct}@${o.valueShock.atYear}`
-      : undefined,
-  };
 }
 
 export interface NamedProjection {
