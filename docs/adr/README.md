@@ -67,7 +67,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0001](0001-behaviour-change-gate.md)                          | Behaviour changes need an approval gate                                                       | Accepted · amended by 0152                                     | D-01                                               |
 | [0002](0002-dependency-policy.md)                              | Dependency policy                                                                             | Accepted · amended by 0152                                     | D-02                                               |
 | [0003](0003-czech-practice-decides.md)                         | Czech banking practice decides disputed formulas                                              | Accepted · amended by 0081                                     | D-03                                               |
-| [0004](0004-czech-features-design-notes-only.md)               | Unmodelled Czech mortgage features: design notes only                                         | Accepted                                                       | D-04                                               |
+| [0004](0004-czech-features-design-notes-only.md)               | Unmodelled Czech mortgage features: design notes only                                         | Accepted · amended by 0109                                     | D-04                                               |
 | [0005](0005-ux-audit-quick-wins.md)                            | UX: audit plus quick wins                                                                     | Superseded by 0081                                             | D-05                                               |
 | [0006](0006-hardening-scope-e2e-optional.md)                   | Hardening scope; E2E stays optional                                                           | Accepted                                                       | D-06                                               |
 | [0007](0007-single-master-plan.md)                             | One master plan document                                                                      | Superseded by 0081                                             | D-07                                               |
@@ -269,7 +269,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | J-29 | [0039](0039-golden-master.md)                                                      |
 | Q-01 | [0009](0009-ad-hoc-signing.md)                                                     |
 | Q-02 | [0013](0013-ci-runners.md)                                                         |
-| Q-03 | Open: no bank statements were provided; see [0020](0020-no-instalment-rounding.md) |
+| Q-03 | Day count 30E/360 per one bank statement (#153); [0021](0021-schedule-calendar.md) |
 | Q-04 | [0058](0058-remove-currency-tab.md)                                                |
 | Q-05 | [0063](0063-hardened-runtime-apple-silicon.md)                                     |
 | Q-06 | [0029](0029-contract-maturity-date.md)                                             |

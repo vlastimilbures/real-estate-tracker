@@ -19,7 +19,8 @@ runtime only, ADR 0063).
 5. **Docs impact** — if formulas, presets, limits, data formats or UI text changed since the
    last release, check that the documents below still describe the app: SPEC, the Guide
    strings (`src/i18n`), README, [`docs/model-limitations.md`](model-limitations.md),
-   [`docs/csv-import.md`](csv-import.md) and the [roadmap](roadmap.md). Update them in this
+   [`docs/data-safety.md`](data-safety.md), [`docs/csv-import.md`](csv-import.md) and the
+   [roadmap](roadmap.md). Update them in this
    release, not later.
 6. **Build, sign, verify** — merge the release commit (steps 2, 4 and 5) to `main` through a
    pull request and wait until CI on `main` passes. Then, on an up-to-date `main`, run
@@ -107,8 +108,12 @@ is not provided** (backlog): FileVault protects the disk as a whole.
   styles and IPC; there are no remote origins. A navigation guard (`src-tauri/src/nav.rs`)
   refuses any navigation away from the app.
 - Devtools are not compiled into release builds (no `devtools` cargo feature).
-- `sql:allow-load` stays (ADR 0064): the webview could open another SQLite file, but no remote
-  content can run in it.
+- The webview keeps `sql:allow-load`, `sql:allow-execute` and `sql:allow-select` (ADR 0064).
+  It can run any SQL, including `ATTACH DATABASE` to any path the user can write, through the
+  plugin and through `db_transaction` alike. That is accepted because no remote content can
+  run in it. The app's `execute` wrapper refuses transaction control, a tripwire against
+  mistakes, not a security guard (ADR 0175 §7). One Rust SQL path with an
+  `ATTACH` deny waits for a forced sqlx upgrade (#171).
 
 ### Manual check: an outside request is blocked
 

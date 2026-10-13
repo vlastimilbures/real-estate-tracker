@@ -1,4 +1,4 @@
-# Real Estate Portfolio App — Specification
+# Real Estate Tracker — Specification
 
 Describes the behaviour of the current release; planned work lives in
 [`docs/roadmap.md`](docs/roadmap.md).
@@ -137,10 +137,18 @@ override. (The seed sets an explicit `svjMonthly` per property to exercise this.
 ADR 0036). The codes: `INVALID_DATE`, `NON_FINITE_NUMBER`, `NEGATIVE_AMOUNT`,
 `NEGATIVE_PRINCIPAL`, `RATE_OUT_OF_RANGE`, `INSTALMENT_BELOW_INTEREST`,
 `ZERO_RATE_ZERO_INSTALMENT`, `MISSING_TERM_FOR_DEV_LOAN`, `NON_POSITIVE_DRAW`,
-`DRAW_BEFORE_START`, `COMPLETION_BEFORE_START`, `DUPLICATE_BLOCK_START`, `END_BEFORE_START`,
+`DRAW_BEFORE_START`, `DRAW_AFTER_SCHEDULE_END`, `COMPLETION_BEFORE_START`,
+`DUPLICATE_BLOCK_START`, `END_BEFORE_START`,
 `DUPLICATE_HOLDING_COST`, `ORPHAN_ROW`, `HORIZON_NOT_POSITIVE`, `INVALID_TERM`,
 `SHOCK_OUT_OF_RANGE`, `GROWTH_OUT_OF_RANGE`, `SHOCKED_RATE_OUT_OF_RANGE`,
-`SHOCKED_INFLATION_OUT_OF_RANGE`, `ASOF_BEFORE_BASEDATE`. Ranges (ADR 0038, ADR 0128):
+`SHOCKED_INFLATION_OUT_OF_RANGE`, `ASOF_BEFORE_BASEDATE`, `NON_POSITIVE_PREPAYMENT`,
+`EVENT_BEFORE_START`, `EVENT_AFTER_SCHEDULE_END`, `INVALID_RECAST`, `INVALID_RECAST_MATURITY`,
+`RECAST_INSTALMENT_BEFORE_COMPLETION`. Loan events (ADR 0109, ADR 0116): a prepayment
+amount above 0; a prepayment or recast after its block's start and before its schedule end; a
+recast that sets exactly one of a maturity and an instalment; a recast maturity that leaves the next payment, stays within the term cap and, on a development
+loan, falls after the completion's payment; a recast instalment above 0 and dated after the
+completion. `LEASE_OVERLAP` (two leases of one property overlap, ADR 0163) is a write-time
+rule outside `validateInputs`. Ranges (ADR 0038, ADR 0128):
 interest 0–100 %, the post-fixation reset rate included; vacancy, cost shares, value haircut
 and the acquisition cost rate 0–1 (ADR 0119); shock durations whole years ≥ 0; horizon a
 whole number ≥ 1; growth, indexation, inflation and a property's growth overrides may be
@@ -172,7 +180,7 @@ still loads; the Data check lists it.
   has no fixation end: it pays its entered rate on every payment due on or before baseDate
   and the reset rate after it (`rateFixedUntil`; a floating block that starts after
   baseDate pays the reset rate from its first payment). It never counts as an ended
-  fixation, so it gets no refix warning (ADR 0162).
+  fixation, so it gets no fixation-ended warning (ADR 0162).
 - `termMonths` — for plain loans without `loanTermYears`:
   `ceil(NPER(rate/12, -instalment, initialPrincipal))`. The **entered instalment is
   authoritative**; the term follows from it (ADR 0008). With `loanTermYears` set,
@@ -290,8 +298,8 @@ months. Standard Czech **annuity**: constant instalment split into declining int
 and rising principal.
 
 **Calendar** (ADR 0021). Schedule rows sit on the baseDate month grid
-(`EDATE(baseDate, m)`); interest per row = balance × annual rate ÷ 12 (a 30/360-style
-simplification; the loan's payment day is not modelled, see §10). The **rate in effect and
+(`EDATE(baseDate, m)`); interest per row = balance × annual rate ÷ 12 (the 30E/360 day
+count, ADR 0021; the loan's payment day is not modelled, see §10). The **rate in effect and
 the count of elapsed payments are keyed on each loan's own due dates** `EDATE(startDate, k)`:
 the payment due on the fixation-end date is still at the fixed rate; the reset applies from
 the next payment. Each row carries both dates: `date` (the grid date the projection buckets
@@ -306,10 +314,12 @@ table and its export show `dueDate`.
   block: until baseDate or its later start, ADR 0162), then
   `postFixationResetRatePa`. (Monthly rate = annual/12.) A `rateShock` raises the reset
   rate by `deltaPa` for `durationYears` from each loan's own fixation end, then reverts
-  (ADR 0028); a floating block's window starts at baseDate or its later start.
+  (ADR 0028); a floating block's window starts at baseDate or its later start. Only
+  payments due after baseDate are shocked, so a window that began before baseDate is
+  shortened, or gone (ADR 0079).
 - **Instalment**: the entered instalment until the reset; at the reset re-amortize
   `instalment = PMT(reset/12, remainingPayments, -B)` and hold it thereafter
-  (constant-maturity refix). The instalment is **not rounded** (ADR 0020).
+  (constant maturity). The instalment is **not rounded** (ADR 0020).
 - `interest = B * rateMonthly` (0 if `B ≤ 0`).
 - `principal = min(B, instalment − interest)` (floored at 0).
 - `newBalance = max(0, B − principal)`.
@@ -318,7 +328,7 @@ table and its export show `dueDate`.
   residual as a final balloon (D-40, in ADR 0021).
 - **Expired fixation without a successor** (fixation ended before baseDate and no later
   block): the opening balance is replayed on the loan's own due dates with the reset applied
-  from the true fixation end, and the UI warns the owner to enter the refix terms as a new
+  from the true fixation end, and the UI warns the owner to enter the new fixation's terms as a new
   block (ADR 0030). The warning also shows, "from … until …", when the next block starts
   on or after the due date of the first payment following the fixation end, so at least
   one payment runs at the reset rate (ADR 0129).
@@ -475,7 +485,10 @@ appreciation; rent index `idx` likewise):
   year (ADR 0165).
 - `NOI_t = effective_t − holding_t`
 - `interest_t / principal_t / debtService_t / draws_t / balance_t` from the monthly schedule;
-  `balance_t = balance_{t−1} − principal_t + draws_t`.
+  `balance_t = balance_{t−1} − principal_t − prepaid_t + draws_t + refinanced_t`. `draws_t` is
+  new debt drawn (tranches, a future purchase's loan); `refinanced_t` is a refinance
+  handover's difference (successor principal − balance paid off), negative when the refinance
+  pays debt down (ADR 0130).
 - `acquiredValue_t` = a future purchase's value at its purchase date in its turn-on year,
   else 0 (ADR 0165). The Dashboard's equity-change chart shows it as **Purchases**, apart
   from appreciation (shown only when some year has one).
@@ -498,9 +511,9 @@ appreciation; rent index `idx` likewise):
 - The **last lease** (latest start date) keeps renting past its end date — it is treated as
   renewed — unless it ended before the basis date. Only a gap between two leases is empty.
 - Each lease is indexed from its own turn-on year:
-  `monthly_t = monthlyRent × (1+idx)^(t − t₀)`, where `t₀` = 0 for a lease in force at the
-  basis date, else the projection year whose slice contains the lease's start (its first
-  grid month on/after the start date).
+  `monthly_t = monthlyRent × (1+idx)^(t − t₀)`, where `t₀` = the projection year of the
+  lease's first grid month on or after the later of its start date and the basis date (0 when
+  that is baseDate itself; for a future purchase, its turn-on year).
 - `gross_t` = Σ over the year's 12 grid months of that month's `monthly_t`.
 
 _Example_ (baseDate 1 Jan 2026, `idx` = 3 %, vacancy ignored): lease A 20 000 Kč/month,
@@ -606,6 +619,12 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
   ends (with the balance), modelled payoffs, development completions, and the in-force
   lease's end when no later lease is entered. Same-day events sort by kind in that order,
   then by the portfolio's property order (by name; ADR 0176).
+- **Interest saved** (`prepaymentInterestSaved`, ADR 0116 §9, ADR 0130) = the interest of the
+  property's chain with every prepayment removed minus its interest as entered, from the
+  first projection month to payoff. Recasts stay on both sides; past prepayments count
+  through the lower opening balance. It is nominal, uses the base-case assumptions, is not
+  net of fees and is never a KPI. It is null unless a prepayment repaid some principal. The
+  UI hides 0 and shows a negative figure with the note "n/a: a maturity change depends on the prepayment".
 
 ## 5. Data layer
 
@@ -621,7 +640,9 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
   `pre-migration-v<from>-to-v<to>-<stamp>.sqlite` copy to the `backups/` folder next to it.
   A migration that meets data breaking a new rule aborts and leaves the DB unchanged.
 - The sample portfolio is seeded **only on first run**, recorded by a flag in `app_meta`;
-  an empty portfolio later stays empty (ADR 0016).
+  an empty portfolio later stays empty (ADR 0016). It can be cleared in one step, after a
+  safety backup (ADR 0094), and loaded again into an empty portfolio from Settings → Backup
+  (ADR 0112).
 - Errors are typed (`DataError` codes) and logged to a rotating local `app.log`.
 
 ## 6. CSV importer
@@ -700,7 +721,9 @@ data (properties/mortgages/etc.) is shared; only assumptions differ. The engine'
   `durationYears` years from baseDate, then reverts.
 - **Temporary rate shock** (`rateShock`): raises the reset rate by `deltaPa` for
   `durationYears` years starting at **each loan's own fixation end** (ADR 0028); for a
-  floating block, at baseDate or its later start (ADR 0162).
+  floating block, at baseDate or its later start (ADR 0162). Only payments due after
+  baseDate are shocked, so a window that began before baseDate is shortened, or gone
+  (ADR 0079; the reach note says so, ADR 0100).
 - **Permanent value shock** (`valueShock`): haircut property values by `pct` starting from
   year `atYear`; appreciation resumes off the lower base thereafter.
 
@@ -749,7 +772,7 @@ price crash**, each with a legend and one line of help (ADR 0102).
 - **Stress presets** (one-click; each creates a named scenario,
   `src/ui/pages/ScenariosPanels.tsx`). Temporary shocks last `DEFAULT_SHOCK_YEARS` = 3
   years (`src/ui/model/scenarioForm.ts`), then revert to trend:
-  - **Rate shock @ refix**: +2 / +4 / +6 pp for 3 years (`rateShock`).
+  - **Rate shock at fixation end**: +2 / +4 / +6 pp for 3 years (`rateShock`).
   - **Inflation shock**: +3 / +6 / +9 pp for 3 years (`inflationShock`).
   - **Price crash**: −10 % / −20 % / −35 % of property value at Today / +5 years / +10 years
     (projection year 0, 5 or 10; `valueShock`, permanent). The timing is a "When" toggle
@@ -808,9 +831,13 @@ offline badge, and controls for language and theme.
 1. **Dashboard** — hero KPI tiles (net worth today / at horizon, LTV, DSCR), nominal/real
    toggle, charts (value vs debt vs equity, equity change, net cash flow, LTV, etc.), KPI
    list, and a property filter. An **AsOfPicker** (Today / +1y / +5y presets, or any typed
-   date within the projection window) sets the snapshot date (§4.3). A compact **Financing &
+   date within the projection window) sets the snapshot date (§4.3). While the sample
+   portfolio is active, a dismissable banner here and on Properties says so and offers
+   **Clear sample and start my own** (ADR 0094). A compact **Financing &
    upcoming** panel (§4.7, ADR 0103) shows the next rate reset, the debt resetting within
-   1/3/5 years, total interest and the next 12 months' events, each linking to its property.
+   1/3/5 years, total interest, the interest prepayments save (the total of the figures
+   shown, with a per-property disclosure) and the next 12 months' events, each linking to
+   its property.
    The KPI list ends with **Cash invested** (ADR 0119 §9): the recorded own cash of the
    active properties in the filter, future buys included, shown only when every one of them
    has it; the real lens labels it nominal.
@@ -844,7 +871,7 @@ offline badge, and controls for language and theme.
    completion date and the optional contract maturity date), holding costs (edit forms),
    30-year projection table + mini charts, amortization schedule (dated by each payment's
    due date, ADR 0164), and a health check
-   (`amortizationHealth`, including the maturity and refix warnings). The **AsOfPicker** is
+   (`amortizationHealth`, including the maturity and fixation-ended warnings). The **AsOfPicker** is
    available here too. Two **Excel export** buttons save the projection and amortization
    schedule as `.xlsx` files. A **Deactivate / Activate** action takes the property out of
    (or back into) all projections and KPIs (§4.5), after confirmation when deactivating.
@@ -865,8 +892,17 @@ offline badge, and controls for language and theme.
    & uses gap of 1 Kč or more shows as a warning (short or over), never a blocker.
    A section nav lists Overview, Data check (the property's own findings, ADR 0118),
    Records, Financing, Acquisition, Holding costs, Projection and Amortization (ADR 0107).
+   The mortgage form edits each block's prepayments (date, amount, effect, optional fee) and
+   maturity changes (date, then a new maturity or a new instalment) as rows; saving replaces
+   the stored events (ADR 0116 §11). An event the schedule clamps, ignores or drops (for
+   example at a handover, or a term it cannot shorten, `PREPAYMENT_TERM_NOT_SHORTENED`) is a
+   loan warning on the page, never a rejection (ADR 0116 §10). The amortization table shows
+   Drawn, Refinance difference, Prepaid and Prepayment fee only when some row has a non-zero
+   value, on screen and in the export (ADR 0116 §12, ADR 0130).
 
 4. **Projections** — full year-by-year grid (per property + portfolio), nominal/real toggle,
+   with New debt, Refinance difference, Prepaid and Prepayment fees shown only when some
+   year has a non-zero value (ADR 0116 §12, ADR 0130),
    and an **Excel export** of the projection table.
 
 5. **Scenarios** — create, edit, duplicate, delete named scenarios; one-click stress presets;
@@ -888,7 +924,8 @@ offline badge, and controls for language and theme.
      safety backup first
      (ADR 0052), then replaces all tables in one transaction and reloads app state. The
      same transaction removes the sample markers, so restored data never shows as the
-     sample (ADR 0127).
+     sample (ADR 0127). A **Sample portfolio** panel offers **Clear sample and start my own** while the
+     sample is active and **Load sample portfolio** while the portfolio is empty (ADR 0112).
      The tab shows the date of the last successful export (or "No backup exported yet")
      and says to keep a copy off this Mac. A sidebar reminder appears when the data
      changed since then and there is no backup or it is over 30 days old (ADR 0110).

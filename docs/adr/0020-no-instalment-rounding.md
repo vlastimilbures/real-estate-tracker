@@ -17,3 +17,6 @@ Options considered for J-01 (Instalment rounding): (a) none, as today; (b) round
 ## Consequences
 
 No change. C-04 stays documented as an accepted simplification (OWNER TO VERIFY).
+
+The 2026-10-13 statement check (Q-03, #153) settled the day count only; instalment rounding was
+not checked, so this decision stands.

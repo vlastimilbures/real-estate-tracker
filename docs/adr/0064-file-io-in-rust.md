@@ -15,3 +15,9 @@ The webview held fs and dialog permissions and passed file paths, which widened 
 ## Consequences
 
 P8 scope.
+
+Note (2026-10-13, #171): the risk accepted in point (2) is wider than opening another SQLite
+file. With `sql:allow-execute`, and through `db_transaction` as well, the webview can run any
+SQL, including `ATTACH DATABASE` to any path the user can write. It stays accepted because no
+remote content can run in the webview. ADR 0175 §7's refusal of transaction control in the
+app's `execute` wrapper is a tripwire against mistakes, not a security guard.

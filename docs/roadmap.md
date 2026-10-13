@@ -65,6 +65,11 @@ From the 2026-10 code review
 - **Per-property growth in scenarios.** SPEC §7 allows a scenario to override appreciation and
   rent indexation per property; scenarios currently override the portfolio-wide assumptions
   only. A scenario also cannot clear a shock set on the base. (DR-077)
+- **Prepayment what-ifs in Scenarios.** A scenario cannot add, remove or change a prepayment,
+  so "repay 500,000 at the next fixation end" vs "keep the cash" cannot be compared side by
+  side: scenarios change only Assumptions, and a prepayment belongs to one loan. Today: add it,
+  read the KPIs and interest saved, then delete it. Belongs with per-property scenario
+  overrides (DR-077). (#158)
 - **More Czech mortgage features.** The annual partial-prepayment allowance, a per-loan payment
   day and first partial-month interest. Designed but not built:
   [`docs/design/czech-mortgage-extensions.md`](design/czech-mortgage-extensions.md) §§2–4.

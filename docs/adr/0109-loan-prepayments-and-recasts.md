@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #32 (pre-release review 2026-10, F3); design `docs/design/czech-mortgage-extensions.md` §1 (D-04)
+- Amends: [0004](0004-czech-features-design-notes-only.md) (prepayments are built)
 - Amended by: ADR 0116, ADR 0120 (§6: a tranche on payment `q`), ADR 0136 (§5: `shortenTerm`
   keeps the instalment the next payment pays), ADR 0137 (§6: payment `q` pays at least
   its interest), ADR 0129 (§3 and §8: what a late-window event sees), ADR 0161 (§11: the cumulative
@@ -129,3 +130,9 @@ golden hash changes, because the seed has no events.
 
 ADR 0116 closes the gaps that #32b covered: rate-shock reach, the clamp warnings, and the
 snapshot fallback (pinned under DR-118).
+
+**Not built (scope cut, recorded 2026-10-13, #158).** A scenario cannot add, remove or change a
+prepayment, so "repay 500,000 at the next fixation end" vs "keep the cash" cannot be compared
+side by side: scenarios change only Assumptions, and a prepayment belongs to one loan. Today:
+add it, read the KPIs and interest saved, then delete it. It belongs with per-property scenario
+overrides (DR-077).

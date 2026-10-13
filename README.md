@@ -42,11 +42,12 @@ and costs, and see where the portfolio is heading over the next 30 years.**
 - **Platform:** macOS 13 or later on Apple Silicon. Offline and single-user; no sync or sharing.
 - **Currency:** Czech koruna (Kč) only, with Czech number, date and currency formatting. The
   interface is in English, Czech or Russian.
-- **Mortgages:** Czech annuity practice — fixation periods and a rate reset at each refix. One
-  active loan block per property at a time (refinancing is a successor block).
+- **Mortgages:** Czech annuity practice — fixation periods and a rate reset at each fixation
+  end. One active loan block per property at a time (refinancing is a successor block).
 - **Estimates, not quotes:** figures are planning projections, not lender quotes or valuations.
   Returns are measured from the projection start, not from your purchase.
-- **Not modelled:** income or capital-gains tax, early repayments and a bank-account ledger.
+- **Not modelled:** income or capital-gains tax, the annual penalty-free prepayment allowance
+  and a bank-account ledger.
   Selling costs only lower the levered IRR (a rate in Settings → Assumptions, 0 % unless set).
 
 [Model assumptions & limitations](docs/model-limitations.md) lists everything the model
@@ -125,11 +126,11 @@ To switch to your own:
 ## Why
 
 Spreadsheets are a fine start for a few rental flats, but they get fragile once loans have
-fixation periods, rents change mid-year and you want to ask "what if rates jump 2 points at the
-next refix?". Real Estate Tracker is a desktop app with a **pure, tested financial engine**: it
-amortizes Czech annuity mortgages month by month, follows leases and valuations by date, and
-projects value, rent, cash flow and net worth for 30 years in **nominal and real** terms.
-Everything runs and stays on your Mac.
+fixation periods, rents change mid-year and you want to ask "what if rates jump 2 points when
+the next fixation ends?". Real Estate Tracker is a desktop app with a **pure, tested financial
+engine**: it amortizes Czech annuity mortgages month by month, follows leases and valuations
+by date, and projects value, rent, cash flow and net worth for 30 years in **nominal and
+real** terms. Everything runs and stays on your Mac.
 
 ## Features
 
@@ -139,6 +140,8 @@ Everything runs and stays on your Mac.
 - Czech annuity loans with **fixation and rate reset** on the loan's own due dates
 - Refinancing by successor blocks, **development loans** (tranche draws, interest-only
   period), future-dated purchases with partial-year pro-rating
+- One-off prepayments (lower the instalment or shorten the term) and maturity changes, with
+  the interest they save
 - Optional contract maturity date: the loan panel warns when the instalment implies a
   different maturity or a fixation ended without a follow-on block
 
@@ -157,7 +160,7 @@ Everything runs and stays on your Mac.
 - **CSV import** for properties, valuations, leases and mortgages — all-or-nothing, with
   per-row, per-column messages ([guide](docs/csv-import.md))
 - **JSON backup & restore** with validation and an automatic safety backup
-- **Excel export** of projection and amortization tables
+- **Excel export** of projection, amortization and scenario-comparison tables
 
 **App**
 
@@ -240,7 +243,7 @@ Every check CI runs has a local command; the full list is in [CONTRIBUTING.md](C
 | Command                        | Checks                                                                   |
 | ------------------------------ | ------------------------------------------------------------------------ |
 | `pnpm typecheck` · `pnpm lint` | TypeScript strict; ESLint with zero warnings, incl. engine-purity rules  |
-| `pnpm test:coverage`           | ~1,500 Vitest tests with per-folder coverage floors                      |
+| `pnpm test:coverage`           | Vitest tests with per-folder coverage floors                             |
 | `pnpm test:parity`             | Engine and SQLite round trip against the parity targets (±1 Kč, ±0.0001) |
 | `pnpm depcruise` · `pnpm knip` | Layer map and cycles; unused files, exports and dependencies             |
 | `cargo clippy` · `cargo test`  | Rust lints and integration tests                                         |
