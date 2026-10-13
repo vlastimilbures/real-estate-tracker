@@ -938,6 +938,7 @@ export const ru: Dictionary = {
     rowsReady: (n) =>
       `${n} ${ruPlural(n, ["строка готова", "строки готовы", "строк готово"])}`,
     errorsBadge: (n) => `${n} ${ruPlural(n, ["ошибка", "ошибки", "ошибок"])}`,
+    noDataRows: "Нет строк с данными",
     colRow: "Строка",
     colField: "Поле",
     colError: "Ошибка",

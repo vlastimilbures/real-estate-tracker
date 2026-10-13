@@ -276,7 +276,7 @@ export function Import() {
           {planOk && (
             <div style={{ marginBottom: "var(--s3)" }}>
               <ImportSummary items={preview.items} mode="preview" />
-              {toWrite === 0 && (
+              {toWrite === 0 && preview.items.length > 0 && (
                 <p style={{ marginTop: "var(--s3)" }}>
                   {t.importPage.nothingToImport}
                 </p>

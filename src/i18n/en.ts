@@ -991,6 +991,7 @@ export const en = {
     reupload: (name: string) => `Re-upload ${name}`,
     downloadTemplate: "Download template",
     rowsReady: (n: number) => `${n} ${enPlural(n, ["row", "rows"])} ready`,
+    noDataRows: "No data rows",
     errorsBadge: (n: number) => `${n} ${enPlural(n, ["error", "errors"])}`,
     colRow: "Row",
     colField: "Field",
