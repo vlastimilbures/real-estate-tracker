@@ -136,16 +136,23 @@ describe("announced once (#274)", () => {
     expect(screen.getByRole("status").textContent).toContain("b.json");
   });
 
-  it("a failure alerts only where it first shows", () => {
+  it("a failure alerts and scrolls into view only where it first shows", () => {
+    const scroll = vi.fn();
+    Element.prototype.scrollIntoView = scroll;
     act(() =>
       useUiStore.getState().setFailure("xlsxExport", new Error("disk full")),
     );
     const first = render(<OutcomeRegions />);
     expect(screen.getByRole("alert")).toBeTruthy();
+    expect(scroll).toHaveBeenCalledTimes(1);
+    expect(scroll).toHaveBeenCalledWith({ block: "nearest" });
     first.unmount();
 
     render(<OutcomeRegions />);
     expect(screen.getByText(en.xlsx.exportFailed("disk full"))).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
+    expect(scroll).toHaveBeenCalledTimes(1);
+    // jsdom has no scrollIntoView; leave it as found.
+    delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
   });
 });

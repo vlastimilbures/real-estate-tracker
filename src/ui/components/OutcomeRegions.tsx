@@ -1,7 +1,7 @@
 // Where the app reports what an action did (ADR 0154), on whichever page the owner is
 // on: the safety copy a restore or Clear sample wrote and the last failure, each until
 // dismissed, and the toast, whose live region is in the page before its text arrives.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useUiStore,
   type Failure,
@@ -56,8 +56,13 @@ function FailureView({ failure }: { failure: Failure }) {
   const dismiss = useUiStore((s) => s.dismissFailure);
   const { action, error } = failure;
   const live = useFirstShow(failure);
+  const box = useRef<HTMLDivElement>(null);
+  // An owner scrolled down (e.g. to the Import button) sees it too (ADR 0189).
+  useEffect(() => {
+    if (live) box.current?.scrollIntoView?.({ block: "nearest" });
+  }, [live, failure]);
   return (
-    <div>
+    <div className="outcome-failure" ref={box}>
       <ErrorBanner
         message={failureText(t, action, error)}
         onDismiss={dismiss}
