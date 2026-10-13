@@ -2,11 +2,19 @@
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { crc32, deflateSync } from "node:zlib";
+import { crc32, deflateSync, inflateSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import { decode, diffShare, type Png } from "../png.ts";
+import { readFileSync } from "node:fs";
 
 const dir = mkdtempSync(join(tmpdir(), "ux-png-"));
+
+/** RGB of the Chromium fixture's pixel (x, y); see "decodes a PNG that Chromium wrote". */
+const pixel = (x: number, y: number) => [
+  (x * 37 + y * 11) % 256,
+  (x * x * 7 + y * 19) % 256,
+  (x * y * 13 + 5) % 256,
+];
 
 /** Raw pixels of a width×height image with `channels` 3 (RGB) or 4 (RGBA). */
 function image(width: number, height: number, channels: 3 | 4): Png {
@@ -106,6 +114,31 @@ describe("decode", () => {
     expect(() => decode(encode(image(4, 4, 3), header))).toThrow(
       "only 8-bit RGB/RGBA non-interlaced PNGs are supported",
     );
+  });
+
+  // The encoder above shares the decoder's predictor formulas, so a bug in both would
+  // cancel out (#269). This file comes from Chromium instead: a Playwright screenshot of
+  // a 16×16 canvas painted with `pixel(x, y)`. Its rows use the Paeth and Up filters.
+  it("decodes a PNG that Chromium wrote", () => {
+    const file = join(import.meta.dirname, "../fixtures/chromium-16x16.png");
+    const png = decode(file);
+    expect([png.width, png.height]).toEqual([16, 16]);
+    const want = Buffer.alloc(16 * 16 * png.channels, 255);
+    for (let y = 0; y < 16; y++)
+      for (let x = 0; x < 16; x++)
+        want.set(pixel(x, y), (y * 16 + x) * png.channels);
+    expect(png.pixels).toEqual(want);
+    // The file uses more than one filter type, so the predictors are exercised.
+    const b = readFileSync(file);
+    const idat: Buffer[] = [];
+    for (let o = 8; o < b.length; o += 12 + b.readUInt32BE(o))
+      if (b.toString("ascii", o + 4, o + 8) === "IDAT")
+        idat.push(b.subarray(o + 8, o + 8 + b.readUInt32BE(o)));
+    const raw = inflateSync(Buffer.concat(idat));
+    const filters = new Set(
+      Array.from({ length: 16 }, (_, y) => raw[y * (16 * png.channels + 1)]),
+    );
+    expect(filters.size).toBeGreaterThan(1);
   });
 
   it("refuses a filter byte above 4", () => {
