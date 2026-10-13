@@ -881,6 +881,8 @@ export const en = {
     combinedTitle: (level: string, parts: string) => `${level}: ${parts}`,
     addedScenario: (name: string) => `Added “${name}”`,
     duplicatedScenario: (name: string) => `Duplicated “${name}”`,
+    /** The saved name of a duplicate (#169, ADR 0187). */
+    copyName: (name: string) => `${name} (copy)`,
     alreadySaved: (name: string) => `Already saved: “${name}”`,
     addedCompareFull: (name: string, max: number) =>
       `Added “${name}”. Compare already shows ${max} ${enPlural(max, ["scenario", "scenarios"])}, so untick one to add it.`,

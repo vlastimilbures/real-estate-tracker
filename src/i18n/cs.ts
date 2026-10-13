@@ -821,6 +821,7 @@ export const cs: Dictionary = {
     combinedTitle: (level, parts) => `${level}: ${parts}`,
     addedScenario: (name) => `Přidáno „${name}“`,
     duplicatedScenario: (name) => `Zduplikováno „${name}“`,
+    copyName: (name) => `${name} (kopie)`,
     alreadySaved: (name) => `Už uloženo: „${name}“`,
     addedCompareFull: (name, max) =>
       `Přidáno „${name}“. Porovnání už ukazuje ${max} ${csPlural(max, ["scénář", "scénáře", "scénářů"])}, odškrtněte jeden, aby se zobrazil.`,

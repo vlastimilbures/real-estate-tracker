@@ -403,4 +403,14 @@ describe("N7b wording (#169, #152)", () => {
     expect(ru.dashboard.subFilter(1, 21)).toBe("1 из 21 объекта");
     expect(ru.dashboard.subFilter(2, 5)).toBe("2 из 5 объектов");
   });
+  it.each([
+    ["en", en, "Stress (copy)"],
+    ["cs", cs, "Stress (kopie)"],
+    ["ru", ru, "Stress (копия)"],
+  ])(
+    "%s: a duplicate's name takes the suffix in the UI language (#169 R4-03)",
+    (_, d, name) => {
+      expect(d.scenarios.copyName("Stress")).toBe(name);
+    },
+  );
 });

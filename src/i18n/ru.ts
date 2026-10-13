@@ -830,6 +830,7 @@ export const ru: Dictionary = {
     combinedTitle: (level, parts) => `${level}: ${parts}`,
     addedScenario: (name) => `Добавлено «${name}»`,
     duplicatedScenario: (name) => `Дублировано «${name}»`,
+    copyName: (name) => `${name} (копия)`,
     alreadySaved: (name) => `Уже сохранено: «${name}»`,
     addedCompareFull: (name, max) =>
       `Добавлено «${name}». В сравнении уже ${max} ${ruPlural(max, ["сценарий", "сценария", "сценариев"])} — снимите отметку с одного, чтобы показать его.`,

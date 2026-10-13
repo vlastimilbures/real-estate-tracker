@@ -1125,6 +1125,26 @@ describe("portfolioStore refuses a scenario that breaks an engine rule (ADR 0123
     },
   );
 
+  it("stores a duplicate under the name the caller gives (#169)", async () => {
+    await usePortfolioStore.getState().init(openSeeded);
+    await usePortfolioStore
+      .getState()
+      .sql!.execute(
+        "INSERT INTO scenarios (id, name, overrides, created_at) VALUES (?, ?, ?, ?)",
+        ["old", "Stres", '{"version":1}', "2026-01-01T00:00:00.000Z"],
+      );
+    await usePortfolioStore.getState().reload();
+    const r = await usePortfolioStore
+      .getState()
+      .duplicateScenario("old", "copy", "Stres (kopie)");
+    expect(r).toEqual({ ok: true });
+    await usePortfolioStore.getState().reload();
+    const copy = usePortfolioStore
+      .getState()
+      .scenarios.find((x) => x.id === "copy");
+    expect(copy?.name).toBe("Stres (kopie)");
+  });
+
   it("refuses to duplicate a stored scenario that breaks a rule", async () => {
     await usePortfolioStore.getState().init(openSeeded);
     await usePortfolioStore
@@ -1141,7 +1161,7 @@ describe("portfolioStore refuses a scenario that breaks an engine rule (ADR 0123
     await usePortfolioStore.getState().reload();
     const r = await usePortfolioStore
       .getState()
-      .duplicateScenario("old", "copy");
+      .duplicateScenario("old", "copy", "Old (copy)");
     expect(r).toMatchObject({
       ok: false,
       error: { kind: "input", errors: [{ code: "RATE_OUT_OF_RANGE" }] },
