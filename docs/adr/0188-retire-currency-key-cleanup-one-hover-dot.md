@@ -5,12 +5,12 @@
 - Source: issues #145 (R8-18) and #170 (R5-09), 2026-10 review; owner chose on
   2026-10-13 to drop the cleanup with an ADR; Track 14 PR N9b
 - Related: [0058](0058-remove-currency-tab.md) (CZK locked, UX-017),
-  [0114](0114-a11y-skip-link-charts.md) (chart names and series keys)
+  [0114](0114-a11y-skip-link-charts.md) (named charts, keyboard chart navigation)
 
 ## Context
 
 1. Every launch deletes the browser-storage key `ui.currency`, written by the €/$/£ picker
-   that UX-017 removed before 1.1. The app has never read it since, and every install that
+   that UX-017 removed in 1.2. The app has never read it since, and every install that
    started a later build has already cleared it. The cleanup is code and a test kept for a
    key that is harmless when present.
 2. PR N9a (#346) drew every chart through one ChartCard body. The Dashboard LTV line was
