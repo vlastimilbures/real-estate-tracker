@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { MetricLabel } from "../components/MetricLabel";
 import { Pencil, Trash2, Plus, Building2, Upload } from "lucide-react";
-import { useEngine, useProjections } from "../../state/useEngine";
+import { useEngine, usePropertyProjections } from "../../state/useEngine";
 import { useAsOf } from "../hooks/useAsOf";
 import { asOfView, propertyRowsForAsOf } from "../model/dashboard";
 import { usePortfolioStore } from "../../state/portfolioStore";
@@ -49,7 +49,7 @@ export function Properties() {
   // does not follow the picked as-of date (ADR 0111).
   const view = useAsOf({ followPick: false });
   const engine = useEngine(null, view?.date ?? null);
-  const projections = useProjections()?.byProperty;
+  const projections = usePropertyProjections();
   const removeProperty = usePortfolioStore((s) => s.removeProperty);
   const openProperty = useUiStore((s) => s.openProperty);
   const navigate = useUiStore((s) => s.navigate);

@@ -198,7 +198,7 @@ export interface Projections {
 }
 
 /** The portfolio's and every property's year-by-year projection, from one set of loan
- *  schedules (Projections grid; the Properties rows' Today basis, ADR 0150). */
+ *  schedules (Projections grid). */
 export function useProjections(): Projections | null {
   const portfolio = usePortfolioStore((s) => s.portfolio);
   const assumptions = usePortfolioStore((s) => s.assumptions);
@@ -214,6 +214,20 @@ export function useProjections(): Projections | null {
       byProperty: propertyProjections(portfolio, assumptions, schedules),
     };
   }, [portfolio, assumptions]);
+}
+
+/** Every property's projection by id, inactive ones included, without the portfolio
+ *  sum: the Properties rows read their Today basis from it (ADR 0150). */
+export function usePropertyProjections(): Map<string, ProjectionYear[]> | null {
+  const portfolio = usePortfolioStore((s) => s.portfolio);
+  const assumptions = usePortfolioStore((s) => s.assumptions);
+  return useMemo(
+    () =>
+      portfolio && assumptions
+        ? propertyProjections(portfolio, assumptions)
+        : null,
+    [portfolio, assumptions],
+  );
 }
 
 export interface PropertyEngineOutput {

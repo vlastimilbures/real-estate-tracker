@@ -9,6 +9,7 @@ import {
   useEngine,
   useScenarioComparison,
   useProjections,
+  usePropertyProjections,
   usePropertyEngine,
 } from "../useEngine";
 import { usePortfolioStore } from "../portfolioStore";
@@ -293,6 +294,12 @@ describe("useProjections / usePropertyEngine", () => {
     expect(result.current!.portfolio).toHaveLength(
       assumptions.horizonYears + 1,
     );
+  });
+
+  it("usePropertyProjections returns the same projections without the portfolio sum", () => {
+    const all = renderHook(() => useProjections()).result.current!;
+    const byId = renderHook(() => usePropertyProjections()).result.current!;
+    expect(byId).toEqual(all.byProperty);
   });
 
   it("returns one property's snapshot, projection and schedule", () => {
