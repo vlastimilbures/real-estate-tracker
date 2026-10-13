@@ -115,6 +115,24 @@ describe("parseAdr", () => {
     expect(b.errors).toEqual(['0131-x.md: unknown header key "Superseeds"']);
   });
 
+  it("rejects a link key that names no other ADR", () => {
+    const a = parse("0151", "x", "X", [
+      "- Status: Accepted",
+      "- Date: 2026-10-07",
+      "- Superseded in part by: ADR 152 (items 1)",
+      "- Supersedes in part: 0151",
+      "- Amended by: SPEC §4",
+      "- Supersedes: nothing",
+      "- Amends: SPEC §Snapshot",
+    ]);
+    expect(a.errors).toEqual([
+      '0151-x.md: "Supersedes" names no other ADR (NNNN)',
+      '0151-x.md: "Supersedes in part" names no other ADR (NNNN)',
+      '0151-x.md: "Superseded in part by" names no other ADR (NNNN)',
+      '0151-x.md: "Amended by" names no other ADR (NNNN)',
+    ]);
+  });
+
   it("reports a bad heading, a bad status and a missing date", () => {
     const a = parseAdr(
       "0005-x.md",

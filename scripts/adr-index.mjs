@@ -84,6 +84,15 @@ export function parseAdr(file, text) {
       `${file}: Status "${status}" is not Proposed, Accepted, Rejected or Superseded by NNNN`,
     );
   if (values("Date").length === 0) errors.push(`${file}: no Date line`);
+  // `Amends` may cite SPEC sections alone; these keys exist only to link ADRs.
+  for (const key of [
+    "Supersedes",
+    "Supersedes in part",
+    "Superseded in part by",
+    "Amended by",
+  ])
+    if (values(key).length > 0 && refs(key).length === 0)
+      errors.push(`${file}: "${key}" names no other ADR (NNNN)`);
 
   const followUps = [...text.matchAll(/^- \*\*(D-\d+)\*\*/gm)].map((m) => m[1]);
   const ids = unique([
