@@ -2,14 +2,8 @@
 // the one-line human summary of a scenario's deltas vs base. Extracted from
 // Scenarios.tsx so they're unit-testable without mounting the component.
 import { fmtPct, fmtPp, fmtSigned } from "../../lib/format";
-import { D, type Decimal } from "../../lib/money";
-import {
-  rate,
-  type Scenario,
-  type ScenarioOverrides,
-  type ShockBand,
-  type ValueShock,
-} from "../../engine";
+import { D, Decimal } from "../../lib/money";
+import { rate, type Scenario, type ScenarioOverrides } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import { DEFAULT_SHOCK_YEARS } from "./scenarioForm";
 
@@ -55,35 +49,17 @@ export function summarize(s: Scenario, t: Dictionary, reach?: string): string {
   return parts.length ? parts.join(" · ") : sc.noOverrides;
 }
 
-/** Equal when both are unset, or both set and `eq`. */
-const same =
-  <T>(eq: (a: T, b: T) => boolean) =>
-  (a: T | undefined, b: T | undefined): boolean =>
-    a === undefined || b === undefined ? a === b : eq(a, b);
-const sameRate = same<Decimal>((a, b) => a.eq(b));
-const sameBand = same<ShockBand>(
-  (a, b) => a.deltaPa.eq(b.deltaPa) && a.durationYears === b.durationYears,
-);
-
-/** One comparison per override field: a new field fails to compile until it has one. */
-const SAME: {
-  [K in keyof ScenarioOverrides]-?: (
-    a: ScenarioOverrides[K],
-    b: ScenarioOverrides[K],
-  ) => boolean;
-} = {
-  appreciationPa: sameRate,
-  rentIndexationPa: sameRate,
-  vacancyAllowance: sameRate,
-  postFixationResetRatePa: sameRate,
-  inflationPa: sameRate,
-  inflationShock: sameBand,
-  rateShock: sameBand,
-  valueShock: same<ValueShock>(
-    (a, b) => a.pct.eq(b.pct) && a.atYear === b.atYear,
-  ),
-};
-const KEYS = Object.keys(SAME) as (keyof ScenarioOverrides)[];
+/** Equal settings: amounts by value, nested shocks field by field, unset equals unset. */
+function sameSettings(a: unknown, b: unknown): boolean {
+  if (Decimal.isDecimal(a) && Decimal.isDecimal(b)) return a.eq(b);
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    const x = a as Record<string, unknown>;
+    const y = b as Record<string, unknown>;
+    const keys = new Set([...Object.keys(x), ...Object.keys(y)]);
+    return [...keys].every((k) => sameSettings(x[k], y[k]));
+  }
+  return a === b;
+}
 
 /** The saved scenario whose settings equal `overrides`, if any, whatever its name: a
  *  preset that is already saved creates no second row (ADR 0093, ADR 0191 §3). */
@@ -91,14 +67,7 @@ export function findSaved(
   scenarios: Scenario[],
   overrides: ScenarioOverrides,
 ): Scenario | undefined {
-  return scenarios.find((s) =>
-    KEYS.every((k) =>
-      (SAME[k] as (a: unknown, b: unknown) => boolean)(
-        s.overrides[k],
-        overrides[k],
-      ),
-    ),
-  );
+  return scenarios.find((s) => sameSettings(s.overrides, overrides));
 }
 
 /** A saved preset: its name in the UI language and its overrides. */
