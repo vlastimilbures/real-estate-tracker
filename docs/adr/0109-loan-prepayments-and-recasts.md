@@ -130,3 +130,9 @@ golden hash changes, because the seed has no events.
 
 ADR 0116 closes the gaps that #32b covered: rate-shock reach, the clamp warnings, and the
 snapshot fallback (pinned under DR-118).
+
+**Not built (scope cut, recorded 2026-10-13, #158).** A scenario cannot add, remove or change a
+prepayment, so "repay 500,000 at the next fixation end" vs "keep the cash" cannot be compared
+side by side: scenarios change only Assumptions, and a prepayment belongs to one loan. Today:
+add it, read the KPIs and interest saved, then delete it. It belongs with per-property scenario
+overrides (DR-077).
