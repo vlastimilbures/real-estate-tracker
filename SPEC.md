@@ -537,7 +537,8 @@ debt, committed debt) for every property; when every loan retires within the hor
   when equity₀ ≤ 0 or its end net worth ≤ 0, and the tile shows "—" (ADR 0034, 0126).
   **Real multiple** = net worth realₙ / equity₀ (CPI₀ = 1, so equity₀ is already in
   base-date Kč; ADR 0087). Both multiples are **null** when equity₀ ≤ 0 (no growth base,
-  shown "—"); with equity₀ > 0 a multiple keeps its sign (ADR 0126).
+  shown "—"); with equity₀ > 0 a multiple keeps its sign (ADR 0126). Net worth leaves out
+  cash taken out or paid in over the horizon; cumulative cash to owner shows it (ADR 0186).
 - **Cumulative cash to owner** (Years 1…N; ADR 0161) — net cash flow net of acquisition
   outflows, refinance cash, prepayments with their fees (ADR 0109) and debt service paid
   before a future purchase (ADR 0124): Σ_{t=1..N} cashToOwner_t, where cashToOwner_t =
@@ -733,7 +734,9 @@ price crash**, each with a legend and one line of help (ADR 0102).
   Base** (horizon net worth minus Base's, in the lens; only when Base is compared). A
   scenario whose starting equity differs from Base's (a price crash at Today) has its
   multiple, CAGR and IRR marked with a footnote: those returns are measured from its lower
-  starting equity, and Δ net worth shows the loss (ADR 0089).
+  starting equity, and Δ net worth and cumulative cash to owner together show the loss
+  (ADR 0089, 0186). The Δ net worth row says it leaves out cash: a stress that costs only
+  cash, such as a rate shock on loans repaid before the horizon, reads 0 there.
   The ticked scenarios, the Base toggle and the price-crash timing last for the app session
   (in memory, like the lens): leaving the page and coming back keeps them. A deleted
   scenario leaves the selection (ADR 0101).

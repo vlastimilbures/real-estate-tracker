@@ -172,6 +172,13 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- Wording (ADR 0186, #155, #251, #242, #156, #173, #330): Scenario compare's Δ net worth
+  row says it leaves out cash, and the price-crash footnote points to cumulative cash to
+  owner too. The property page's interest saved names its window, a loan-event amount
+  error says to put a space between thousands, the Dashboard's upcoming list is headed
+  "Rate, loan and lease dates in the next 12 months", and the English prepayment help and
+  Guide say own funds, maturity change, and that a prepayment applies after the next due
+  payment. No figure changes.
 - CSV import (ADR 0185, #142, #143): an optional column missing from a file now keeps the
   stored value on an update, so re-importing a trimmed export changes only the columns it
   holds. A header name that appears twice rejects the file. The preview shows an update

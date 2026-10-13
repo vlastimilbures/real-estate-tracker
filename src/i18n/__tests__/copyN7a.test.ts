@@ -115,3 +115,38 @@ describe("N7a wording (#251, #242, #156, #173, #330)", () => {
     );
   });
 });
+
+// ADR 0186 (#155): net worth on the compare page leaves out cash.
+describe("compare says net worth excludes cash (ADR 0186)", () => {
+  it.each([
+    [
+      "en",
+      en,
+      "Δ net worth vs Base (without cash)",
+      "for the loss to you, compare both Δ net worth vs Base and cumulative cash to owner.",
+      "Cash taken out or paid in over the years is not included.",
+    ],
+    [
+      "cs",
+      cs,
+      "Δ čistého jmění vůči Základu (bez hotovosti)",
+      "ztrátu pro vás ukazuje Δ čistého jmění vůči Základu spolu s kumulativní hotovostí vlastníkovi.",
+      "Hotovost vybraná nebo vložená během let se nezapočítává.",
+    ],
+    [
+      "ru",
+      ru,
+      "Δ чистых активов к Базе (без денежных средств)",
+      "ваш убыток показывают Δ чистых активов к Базе и накопленный ДП владельцу.",
+      "Деньги, полученные или внесённые за эти годы, не учитываются.",
+    ],
+  ])("%s", (_, d, row, footnote, guide) => {
+    expect(d.scenarios.kpiNetWorthDeltaVsBase).toBe(row);
+    const note = d.scenarios.rebasedReturnsFootnote("Crash");
+    expect(note).toContain(" Crash ");
+    expect(note.endsWith(`; ${footnote}`)).toBe(true);
+    expect(d.guide.returnsDefs.multiple.meaning.endsWith(` ${guide}`)).toBe(
+      true,
+    );
+  });
+});

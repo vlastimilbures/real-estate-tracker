@@ -845,14 +845,14 @@ export const cs: Dictionary = {
     chartLtv: "Poměr dluhu k hodnotě (LTV)",
     subPct: "%",
     kpiStartingEquity: "Počáteční kapitál",
-    kpiNetWorthDeltaVsBase: "Δ čistého jmění vůči Základu",
+    kpiNetWorthDeltaVsBase: "Δ čistého jmění vůči Základu (bez hotovosti)",
     viewValues: "Hodnoty",
     viewDeltaVsBase: "Δ vůči Základu",
     viewToggleLabel: "Zobrazit hodnoty, nebo rozdíl vůči Základu",
     deltaYears: (n) => (n > 0 ? `+${n} r.` : n < 0 ? `−${-n} r.` : "0 r."),
     deltaNoBaseValue: "Základ nemá hodnotu",
     rebasedReturnsFootnote: (names: string) =>
-      `Výnosy pro ${names} se měří od nižšího počátečního kapitálu po propadu cen; ztrátu pro vás ukazuje Δ čistého jmění vůči Základu.`,
+      `Výnosy pro ${names} se měří od nižšího počátečního kapitálu po propadu cen; ztrátu pro vás ukazuje Δ čistého jmění vůči Základu spolu s kumulativní hotovostí vlastníkovi.`,
     kpiNetWorthNominal: "Čisté jmění (nominální)",
     kpiNetWorthReal: "Čisté jmění (reálné)",
     kpiNetWorthMultiple: "Násobek čistého jmění",
@@ -1507,7 +1507,7 @@ export const cs: Dictionary = {
         name: "Násobek čistého jmění",
         formula: "kapitál na horizontu ÷ kapitál na začátku projekce",
         meaning:
-          "Kolikrát se očekává, že váš kapitál na začátku projekce do horizontu vzroste.",
+          "Kolikrát se očekává, že váš kapitál na začátku projekce do horizontu vzroste. Hotovost vybraná nebo vložená během let se nezapočítává.",
         eg: "22 M → 110 M = 5,0×.",
       },
       cagr: {

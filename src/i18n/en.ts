@@ -905,14 +905,14 @@ export const en = {
     chartLtv: "Loan-to-value",
     subPct: "%",
     kpiStartingEquity: "Starting equity",
-    kpiNetWorthDeltaVsBase: "Δ net worth vs Base",
+    kpiNetWorthDeltaVsBase: "Δ net worth vs Base (without cash)",
     viewValues: "Values",
     viewDeltaVsBase: "Δ vs Base",
     viewToggleLabel: "Show values or the difference to Base",
     deltaYears: (n: number) => (n > 0 ? `+${n}y` : n < 0 ? `−${-n}y` : "0y"),
     deltaNoBaseValue: "Base has no value",
     rebasedReturnsFootnote: (names: string) =>
-      `Returns for ${names} are measured from a lower starting equity after the price crash; compare Δ net worth vs Base for the loss to you.`,
+      `Returns for ${names} are measured from a lower starting equity after the price crash; for the loss to you, compare both Δ net worth vs Base and cumulative cash to owner.`,
     kpiNetWorthNominal: "Net worth (nominal)",
     kpiNetWorthReal: "Net worth (real)",
     kpiNetWorthMultiple: "Net-worth multiple",
@@ -1582,7 +1582,7 @@ export const en = {
         name: "Net-worth multiple",
         formula: "equity at horizon ÷ equity at projection start",
         meaning:
-          "How many times your equity at the projection start is expected to grow by the horizon.",
+          "How many times your equity at the projection start is expected to grow by the horizon. Cash taken out or paid in over the years is not included.",
         eg: "22M → 110M = 5.0×.",
       },
       cagr: {
