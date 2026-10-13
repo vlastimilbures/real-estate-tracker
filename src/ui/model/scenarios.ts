@@ -2,7 +2,7 @@
 // the one-line human summary of a scenario's deltas vs base. Extracted from
 // Scenarios.tsx so they're unit-testable without mounting the component.
 import { fmtPct, fmtPp, fmtSigned } from "../../lib/format";
-import { D } from "../../lib/money";
+import { D, Decimal } from "../../lib/money";
 import { rate, type Scenario, type ScenarioOverrides } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import { DEFAULT_SHOCK_YEARS } from "./scenarioForm";
@@ -49,13 +49,25 @@ export function summarize(s: Scenario, t: Dictionary, reach?: string): string {
   return parts.length ? parts.join(" · ") : sc.noOverrides;
 }
 
-/** The saved scenario with exactly this name, if any: a preset that is already saved
- *  creates no second row (ADR 0093). */
-export function findByName(
+/** Equal settings: amounts by value, nested shocks field by field, unset equals unset. */
+function sameSettings(a: unknown, b: unknown): boolean {
+  if (Decimal.isDecimal(a) && Decimal.isDecimal(b)) return a.eq(b);
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    const x = a as Record<string, unknown>;
+    const y = b as Record<string, unknown>;
+    const keys = new Set([...Object.keys(x), ...Object.keys(y)]);
+    return [...keys].every((k) => sameSettings(x[k], y[k]));
+  }
+  return a === b;
+}
+
+/** The saved scenario whose settings equal `overrides`, if any, whatever its name: a
+ *  preset that is already saved creates no second row (ADR 0093, ADR 0191 §3). */
+export function findSaved(
   scenarios: Scenario[],
-  name: string,
+  overrides: ScenarioOverrides,
 ): Scenario | undefined {
-  return scenarios.find((s) => s.name === name);
+  return scenarios.find((s) => sameSettings(s.overrides, overrides));
 }
 
 /** A saved preset: its name in the UI language and its overrides. */
@@ -147,8 +159,7 @@ export const COMBINED_RECIPES: CombinedRecipe[] = [
 ];
 
 /** The saved name and overrides of a combined preset (ADR 0104). The name lists the parts
- *  in the single presets' wording, so a saved one is found by name (ADR 0093); the crash
- *  takes the "When" timing (ADR 0101). */
+ *  in the single presets' wording; the crash takes the "When" timing (ADR 0101). */
 export function combinedPreset(
   recipe: CombinedRecipe,
   crashAtYear: number,

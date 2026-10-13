@@ -453,6 +453,38 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     }
   }
 
+  /** `mutate` for a scenario write. When it commits but the reload fails, the list shows
+   *  `next` of it, so the ADR 0128 §6 check of the next assumptions save sees the write
+   *  (ADR 0191 §2), as `saveAssumptions` does for the assumptions (ADR 0125). Patched
+   *  inside the queued job, before any later job reads the list. */
+  function mutateScenarios(
+    op: (sql: Sql) => Promise<void>,
+    next: (list: Scenario[]) => Scenario[],
+  ): Promise<MutationResult> {
+    return enqueue(async () => {
+      const result = await mutateNow(op, true);
+      if (result.ok && get().stale) set({ scenarios: next(get().scenarios) });
+      return result;
+    });
+  }
+
+  /** `list` with `s` in place of the row with its id, or added last. */
+  const upsertIn = (list: Scenario[], s: Scenario): Scenario[] =>
+    list.some((x) => x.id === s.id)
+      ? list.map((x) => (x.id === s.id ? s : x))
+      : [...list, s];
+
+  /** Add or save `s`. An insert stamps created_at; an update keeps the stored one
+   *  (ADR 0123). */
+  const writeScenario = (s: Scenario) =>
+    mutateScenarios(
+      async (sql) => {
+        checkScenario(s.overrides);
+        await upsertScenario(sql, scenarioToRow(s, new Date()));
+      },
+      (list) => upsertIn(list, s),
+    );
+
   /** Engine rules a scenario's own overrides break on top of the saved assumptions
    *  (ADR 0123): refused before writing, like the assumptions themselves. */
   function checkScenario(overrides: ScenarioOverrides): void {
@@ -655,26 +687,28 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       return result;
     },
 
-    // An insert stamps created_at; an update keeps the stored one (ADR 0123).
-    addScenario: (s) =>
-      mutate(async (sql) => {
-        checkScenario(s.overrides);
-        await upsertScenario(sql, scenarioToRow(s, new Date()));
-      }),
-    saveScenario: (s) =>
-      mutate(async (sql) => {
-        checkScenario(s.overrides);
-        await upsertScenario(sql, scenarioToRow(s, new Date()));
-      }),
+    addScenario: (s) => writeScenario(s),
+    saveScenario: (s) => writeScenario(s),
     duplicateScenario: (id, newId, name) =>
-      mutate(async (sql) => {
-        const src = get().scenarios.find((x) => x.id === id);
-        if (!src) throw new Error("Scenario not found");
-        checkScenario(src.overrides);
-        const copy: Scenario = { ...src, id: newId, name };
-        await upsertScenario(sql, scenarioToRow(copy, new Date()));
-      }),
-    removeScenario: (id) => mutate((sql) => deleteScenario(sql, id)),
+      mutateScenarios(
+        async (sql) => {
+          const src = get().scenarios.find((x) => x.id === id);
+          if (!src) throw new Error("Scenario not found");
+          checkScenario(src.overrides);
+          const copy: Scenario = { ...src, id: newId, name };
+          await upsertScenario(sql, scenarioToRow(copy, new Date()));
+        },
+        // The write found the source in this list, which the failed reload left as is.
+        (list) => {
+          const src = list.find((x) => x.id === id);
+          return src ? upsertIn(list, { ...src, id: newId, name }) : list;
+        },
+      ),
+    removeScenario: (id) =>
+      mutateScenarios(
+        (sql) => deleteScenario(sql, id),
+        (list) => list.filter((x) => x.id !== id),
+      ),
 
     // Hides a banner: app state, not a data change (ADR 0110).
     dismissSampleBanner: () => mutate(dismissSampleBanner, false),

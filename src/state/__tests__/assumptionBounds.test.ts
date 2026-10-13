@@ -163,3 +163,70 @@ describe("assumption bounds at save time (ADR 0128)", () => {
     expect(await storedResetRate()).toEqual(["0.03"]);
   });
 });
+
+describe("the scenario list after a write whose reload failed (#215, ADR 0191 §2)", () => {
+  /** Writes reach the database; every read after them fails, so the store goes stale. */
+  function failReloads(): void {
+    const real = store().sql!;
+    usePortfolioStore.setState({
+      sql: {
+        execute: real.execute.bind(real),
+        select: () => Promise.reject(new Error("read timeout")),
+        selectSnapshot: () => Promise.reject(new Error("read timeout")),
+        transaction: real.transaction.bind(real),
+        backup: real.backup.bind(real),
+      },
+    });
+  }
+  const rateCut = (deltaPa: string) => ({
+    id: "s1",
+    name: "Rate cut",
+    overrides: { rateShock: shock(deltaPa) },
+  });
+  // Seed reset rate 4.5 %: at 3 % a −4 pp shock breaks, a −2 pp one does not.
+  const lowerReset = () =>
+    store().saveAssumptions({
+      ...store().assumptions!,
+      postFixationResetRatePa: rate("0.03"),
+    });
+
+  it("an added scenario is still checked by the next assumptions save", async () => {
+    failReloads();
+    expect(await store().addScenario(rateCut("-0.04"))).toEqual({ ok: true });
+    expect(store().stale).toBe(true);
+    expect(await lowerReset()).toMatchObject({
+      ok: false,
+      error: { kind: "input", scenario: "Rate cut" },
+    });
+  });
+
+  it("is checked even when the assumptions save is queued right behind the write", async () => {
+    failReloads();
+    const [added, saved] = await Promise.all([
+      store().addScenario(rateCut("-0.04")),
+      lowerReset(),
+    ]);
+    expect(added).toEqual({ ok: true });
+    expect(saved).toMatchObject({
+      ok: false,
+      error: { kind: "input", scenario: "Rate cut" },
+    });
+  });
+
+  it("a saved change replaces the row the check reads", async () => {
+    await store().addScenario(rateCut("-0.04"));
+    failReloads();
+    expect(await store().saveScenario(rateCut("-0.02"))).toEqual({ ok: true });
+    expect(store().scenarios).toEqual([rateCut("-0.02")]);
+    expect(await lowerReset()).toEqual({ ok: true });
+  });
+
+  it("a duplicate joins the list and a removed scenario leaves it", async () => {
+    await store().addScenario(rateCut("-0.02"));
+    failReloads();
+    await store().duplicateScenario("s1", "s2", "Rate cut (copy)");
+    expect(store().scenarios.map((s) => s.id)).toEqual(["s1", "s2"]);
+    await store().removeScenario("s1");
+    expect(store().scenarios.map((s) => s.id)).toEqual(["s2"]);
+  });
+});

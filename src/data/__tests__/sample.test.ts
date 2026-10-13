@@ -19,6 +19,7 @@ import {
   insertLease,
   insertPropertyWithCosts,
   loadState,
+  SAMPLE_PROPERTIES,
   upsertAssumptions,
 } from "../repositories";
 import { holdingCostToRow, leaseToRow, propertyToRow } from "../mappers";
@@ -260,6 +261,36 @@ describe("the sample is matched by id and name (ADR 0127)", () => {
     );
     await clearSample(sql, NOW);
     expect(await ids(sql, "properties")).toEqual(["javorova"]);
+  });
+});
+
+describe("the seed and SAMPLE_PROPERTIES (#211)", () => {
+  // The seed's child rows name their flat by a literal id; this keeps them on the list.
+  it("seeds the listed flats, and every child row belongs to one of them", async () => {
+    const sql = openMemorySql();
+    await migrate(sql);
+    await seedIfEmpty(sql);
+    const flats = await sql.select<{ id: string; name: string }>(
+      "SELECT id, name FROM properties ORDER BY id",
+    );
+    expect(flats).toEqual(
+      [...SAMPLE_PROPERTIES].sort((a, b) => a.id.localeCompare(b.id)),
+    );
+    const listed = SAMPLE_PROPERTIES.map((s) => s.id);
+    for (const table of [
+      "mortgage_blocks",
+      "valuations",
+      "leases",
+      "holding_costs",
+    ]) {
+      const owners = await sql.select<{ property_id: string }>(
+        `SELECT DISTINCT property_id FROM ${table} ORDER BY property_id`,
+      );
+      expect(
+        owners.map((r) => r.property_id),
+        table,
+      ).toEqual([...listed].sort());
+    }
   });
 });
 

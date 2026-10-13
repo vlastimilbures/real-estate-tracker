@@ -1,12 +1,19 @@
 // Base-scenario construction + one-line summary, extracted from Scenarios.tsx so
 // they're unit-testable without mounting the component.
 import { describe, it, expect } from "vitest";
-import { baseScenario, findByName, summarize } from "../scenarios";
+import {
+  baseScenario,
+  COMBINED_RECIPES,
+  combinedPreset,
+  findSaved,
+  ratePreset,
+  summarize,
+} from "../scenarios";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
 import { rate } from "../../../engine";
-import type { Scenario } from "../../../engine";
+import type { Scenario, ScenarioOverrides } from "../../../engine";
 
 describe("baseScenario", () => {
   it("has no overrides and is named Base", () => {
@@ -122,24 +129,56 @@ describe("summarize", () => {
   });
 });
 
-// ADR 0093: a preset whose name is already saved creates no row (#48), and a new
-// scenario joins the compare while there is room (#49).
-describe("findByName", () => {
-  const saved: Scenario[] = [
-    {
-      id: "a",
-      name: "Rates +2 pp for 3y",
-      overrides: {},
-    },
-    { id: "b", name: "Stress", overrides: {} },
-  ];
-
-  it("finds a saved scenario with exactly that name", () => {
-    expect(findByName(saved, "Stress")?.id).toBe("b");
+// ADR 0191 §3 (#162): a preset matches a saved scenario by its settings, not its name.
+describe("findSaved", () => {
+  const preset = ratePreset(2, en);
+  const saved = (id: string, overrides: ScenarioOverrides): Scenario => ({
+    id,
+    name: preset.name,
+    overrides,
   });
 
-  it("returns undefined when no name matches exactly", () => {
-    expect(findByName(saved, "stress")).toBeUndefined();
-    expect(findByName([], "Stress")).toBeUndefined();
+  it("finds a saved scenario with equal settings, whatever its name", () => {
+    const list = [
+      saved("a", {}),
+      { id: "b", name: "My rate test", overrides: preset.overrides },
+    ];
+    expect(findSaved(list, preset.overrides)?.id).toBe("b");
+  });
+
+  it("compares amounts by value, not by how they are written", () => {
+    const list = [
+      saved("a", {
+        rateShock: { deltaPa: rate("0.020"), durationYears: 3 },
+      }),
+    ];
+    expect(findSaved(list, preset.overrides)?.id).toBe("a");
+  });
+
+  it("finds nothing when one setting differs or is missing", () => {
+    const shock = preset.overrides.rateShock!;
+    expect(
+      findSaved(
+        [
+          saved("years", { rateShock: { ...shock, durationYears: 5 } }),
+          saved("delta", { rateShock: { ...shock, deltaPa: rate("0.03") } }),
+          saved("extra", { ...preset.overrides, inflationPa: rate("0.02") }),
+          saved("none", {}),
+        ],
+        preset.overrides,
+      ),
+    ).toBeUndefined();
+    expect(findSaved([], preset.overrides)).toBeUndefined();
+  });
+
+  it("matches a combined preset whatever the order of its parts", () => {
+    const combined = combinedPreset(COMBINED_RECIPES[0], 5, en);
+    const o = combined.overrides;
+    const reordered: ScenarioOverrides = {
+      valueShock: o.valueShock!,
+      ...(o.inflationShock && { inflationShock: o.inflationShock }),
+      rateShock: o.rateShock!,
+    };
+    expect(findSaved([saved("c", reordered)], o)?.id).toBe("c");
   });
 });

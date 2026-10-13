@@ -13,6 +13,7 @@ import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import type { Scenario } from "../../../engine";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import { ratePreset as presetOf } from "../../model/scenarios";
 
 // The compare runs the engine; these tests only need the list and the selection.
 vi.mock("../ScenarioCompare", () => ({
@@ -28,12 +29,13 @@ vi.mock("../ScenarioCompare", () => ({
 const en = getDict("en");
 const sc = en.scenarios;
 const ratePreset = sc.rateForYears(sc.plusPp(2), 3);
+const rateSettings = presetOf(2, en).overrides;
 
-const saved = (id: string, name: string): Scenario => ({
-  id,
-  name,
-  overrides: {},
-});
+const saved = (
+  id: string,
+  name: string,
+  overrides: Scenario["overrides"] = {},
+): Scenario => ({ id, name, overrides });
 
 const addScenario = vi.fn(async (s: Scenario) => {
   usePortfolioStore.setState((st) => ({ scenarios: [...st.scenarios, s] }));
@@ -119,7 +121,7 @@ describe("stress presets do not save duplicates (#48)", () => {
   });
 
   it("a preset that matches a saved scenario ticks it for compare", async () => {
-    seed([saved("s1", ratePreset)]);
+    seed([saved("s1", ratePreset, rateSettings)]);
     render(
       <>
         <Scenarios />
@@ -131,6 +133,43 @@ describe("stress presets do not save duplicates (#48)", () => {
     expect(addScenario).not.toHaveBeenCalled();
     expect(box(ratePreset).checked).toBe(true);
     expect(compared()).toEqual([sc.base, ratePreset]);
+  });
+});
+
+// ADR 0191 §3 (#162): presets match by settings; the toast names the saved scenario.
+describe("a preset matches a saved scenario by its settings (#162)", () => {
+  const page = () =>
+    render(
+      <>
+        <Scenarios />
+        <ToastRegion />
+      </>,
+    );
+
+  it("a renamed preset is still found, and the toast names it", async () => {
+    seed([saved("s1", "My rate test", rateSettings)]);
+    page();
+    await clickPreset();
+    expect(addScenario).not.toHaveBeenCalled();
+    expect(box("My rate test").checked).toBe(true);
+    expect(screen.getByRole("status").textContent).toBe(
+      sc.alreadySaved("My rate test"),
+    );
+  });
+
+  it("a scenario with the preset's name but other settings does not block it", async () => {
+    const fiveYears = {
+      rateShock: { ...rateSettings.rateShock!, durationYears: 5 },
+    };
+    seed([saved("s1", ratePreset, fiveYears)]);
+    page();
+    await clickPreset();
+    expect(addScenario).toHaveBeenCalledWith(
+      expect.objectContaining({ name: ratePreset, overrides: rateSettings }),
+    );
+    expect(screen.getAllByRole("checkbox", { name: ratePreset })).toHaveLength(
+      2,
+    );
   });
 });
 
