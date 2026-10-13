@@ -4,7 +4,8 @@
 - Date: 2026-10-03
 - Source: issue #56 (Scenarios critical review after #15)
 - Amended by: [0159](0159-excel-exports-carry-their-context.md) (the Real lens note names
-  the base date; no opening-year net cash flow)
+  the base date; no opening-year net cash flow), [0190](0190-compare-names-own-rate-properties.md)
+  (Key figures notes name the properties a level does not reach)
 
 ## Context
 
