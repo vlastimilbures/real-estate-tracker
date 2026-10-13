@@ -21,12 +21,7 @@ import type {
 import { fmtDate } from "../../lib/format";
 import type { Mode } from "./lens";
 import type { Dictionary } from "../../i18n";
-import {
-  periodLabelLocalized,
-  projectionSeries,
-  yearLabel,
-  type SeriesRow,
-} from "./projection";
+import { periodLabelLocalized, yearLabel, type SeriesRow } from "./projection";
 import { at } from "../../lib/arrays";
 
 export interface MonthlyFlow {
@@ -172,11 +167,8 @@ export function propertyRowsForAsOf(
   return perProperty.map((p) =>
     propertyTilesForAsOf(
       p,
-      projectionSeries(
-        projections.get(p.propertyId) ?? [],
-        "nominal",
-        assumptions,
-      ),
+      // Nominal rows are the projection itself.
+      projections.get(p.propertyId) ?? [],
       basis,
       asOf,
       "nominal",
