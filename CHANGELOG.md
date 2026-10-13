@@ -381,6 +381,12 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- Small state fixes (ADR 0191): a stress preset already saved under another name, or in
+  another language, is found by its settings: it is ticked again and the "Already saved"
+  toast names it, and a scenario that kept a preset's name but has other settings no longer
+  blocks that preset (#162). On Projections, a property made from the name "Portfolio"
+  before random ids is its own choice, not the whole portfolio (#210). A scenario saved
+  while the screen could not reload is still checked when the assumptions are saved (#215).
 - Data-layer write guards (ADR 0184, #144): ending the previous open valuation or lease
   writes only its end date, so a correction saved meanwhile is kept. The Edit property form
   keeps Save disabled until the address and garage have loaded, and shows an error if they
