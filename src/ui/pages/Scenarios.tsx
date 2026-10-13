@@ -14,7 +14,7 @@ import { FolderOpen } from "lucide-react";
 import type { Scenario, ScenarioOverrides } from "../../engine";
 import { useT } from "../hooks/useT";
 import { rateShockNote } from "../model/rateShockReach";
-import { baseScenario, findByName } from "../model/scenarios";
+import { baseScenario, findSaved } from "../model/scenarios";
 import { CompareView } from "./ScenarioCompare";
 import { ScenarioForm } from "./ScenarioForm";
 import { StressPresetsPanel, ScenarioListPanel } from "./ScenariosPanels";
@@ -112,11 +112,12 @@ export function Scenarios() {
   ];
 
   async function addPreset(name: string, overrides: ScenarioOverrides) {
-    // A preset that is already saved creates no second row (ADR 0093).
-    const existing = findByName(scenarios, name);
+    // A preset that is already saved, under any name, creates no second row (ADR 0093,
+    // ADR 0191 §3); the toast names the saved one.
+    const existing = findSaved(scenarios, overrides);
     if (existing) {
       tick(existing.id);
-      showToast(t.scenarios.alreadySaved(name));
+      showToast(t.scenarios.alreadySaved(existing.name));
       return;
     }
     const id = crypto.randomUUID();

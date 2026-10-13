@@ -2,8 +2,14 @@
 // the one-line human summary of a scenario's deltas vs base. Extracted from
 // Scenarios.tsx so they're unit-testable without mounting the component.
 import { fmtPct, fmtPp, fmtSigned } from "../../lib/format";
-import { D } from "../../lib/money";
-import { rate, type Scenario, type ScenarioOverrides } from "../../engine";
+import { D, type Decimal } from "../../lib/money";
+import {
+  rate,
+  type Scenario,
+  type ScenarioOverrides,
+  type ShockBand,
+  type ValueShock,
+} from "../../engine";
 import type { Dictionary } from "../../i18n";
 import { DEFAULT_SHOCK_YEARS } from "./scenarioForm";
 
@@ -49,13 +55,50 @@ export function summarize(s: Scenario, t: Dictionary, reach?: string): string {
   return parts.length ? parts.join(" · ") : sc.noOverrides;
 }
 
-/** The saved scenario with exactly this name, if any: a preset that is already saved
- *  creates no second row (ADR 0093). */
-export function findByName(
+/** Equal when both are unset, or both set and `eq`. */
+const same =
+  <T>(eq: (a: T, b: T) => boolean) =>
+  (a: T | undefined, b: T | undefined): boolean =>
+    a === undefined || b === undefined ? a === b : eq(a, b);
+const sameRate = same<Decimal>((a, b) => a.eq(b));
+const sameBand = same<ShockBand>(
+  (a, b) => a.deltaPa.eq(b.deltaPa) && a.durationYears === b.durationYears,
+);
+
+/** One comparison per override field: a new field fails to compile until it has one. */
+const SAME: {
+  [K in keyof ScenarioOverrides]-?: (
+    a: ScenarioOverrides[K],
+    b: ScenarioOverrides[K],
+  ) => boolean;
+} = {
+  appreciationPa: sameRate,
+  rentIndexationPa: sameRate,
+  vacancyAllowance: sameRate,
+  postFixationResetRatePa: sameRate,
+  inflationPa: sameRate,
+  inflationShock: sameBand,
+  rateShock: sameBand,
+  valueShock: same<ValueShock>(
+    (a, b) => a.pct.eq(b.pct) && a.atYear === b.atYear,
+  ),
+};
+const KEYS = Object.keys(SAME) as (keyof ScenarioOverrides)[];
+
+/** The saved scenario whose settings equal `overrides`, if any, whatever its name: a
+ *  preset that is already saved creates no second row (ADR 0093, ADR 0191 §3). */
+export function findSaved(
   scenarios: Scenario[],
-  name: string,
+  overrides: ScenarioOverrides,
 ): Scenario | undefined {
-  return scenarios.find((s) => s.name === name);
+  return scenarios.find((s) =>
+    KEYS.every((k) =>
+      (SAME[k] as (a: unknown, b: unknown) => boolean)(
+        s.overrides[k],
+        overrides[k],
+      ),
+    ),
+  );
 }
 
 /** A saved preset: its name in the UI language and its overrides. */
@@ -147,8 +190,7 @@ export const COMBINED_RECIPES: CombinedRecipe[] = [
 ];
 
 /** The saved name and overrides of a combined preset (ADR 0104). The name lists the parts
- *  in the single presets' wording, so a saved one is found by name (ADR 0093); the crash
- *  takes the "When" timing (ADR 0101). */
+ *  in the single presets' wording; the crash takes the "When" timing (ADR 0101). */
 export function combinedPreset(
   recipe: CombinedRecipe,
   crashAtYear: number,
