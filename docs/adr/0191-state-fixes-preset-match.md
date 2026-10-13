@@ -49,10 +49,12 @@ No new dictionary key; `scenarios.alreadySaved` gets the saved scenario's name.
 ## Consequences
 
 - State and selection only: no computed number, parity target, golden master or export
-  content changes.
+  content changes. While the screen is stale, the Scenarios list and compare now show an
+  added or duplicated scenario and drop a removed one.
 - A renamed preset, or one saved in another language, is found again by its settings. ADR
   0093's language-switch caveat no longer applies.
 - Two rows can share a preset's name (an edited preset that kept its name, then the preset
-  itself). The list's overrides summary tells them apart; free names were already the form's
+  itself). The list's overrides summary tells them apart; the compare headers, chart legends
+  and export columns show both under the same name. Free names were already the form's
   rule.
 - An edited preset whose settings match another preset again counts as that preset.
