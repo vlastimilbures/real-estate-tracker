@@ -103,14 +103,7 @@ export function pickCzkAxisUnit(
     if (a > maxAbs) maxAbs = a;
   }
   const cur = getActiveCurrency();
-  if (maxAbs === 0)
-    return {
-      divisor: 1_000_000,
-      dp: 0,
-      label: cur.millionsLabel,
-      shortLabel: "M",
-    };
-  if (maxAbs >= 10_000_000)
+  if (maxAbs === 0 || maxAbs >= 10_000_000)
     return {
       divisor: 1_000_000,
       dp: 0,
