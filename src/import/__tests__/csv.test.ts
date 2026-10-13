@@ -547,6 +547,14 @@ describe("foreign keys and duplicates", () => {
   const known = new Set(["A"]);
 
   // ADR 0185 §1: a repeated header name rejects the file instead of the last column winning.
+  it("ignores repeated empty header cells (trailing spreadsheet columns)", () => {
+    const r = parseProperties(
+      "name,purchase_date,purchase_price,,\nA,2020-01-01,100,,\n",
+    );
+    expect(r.errors).toEqual([]);
+    expect(r.rows).toHaveLength(1);
+  });
+
   it("rejects a header that names a column twice", () => {
     const r = parseProperties(
       "name,purchase_date,purchase_price, purchase_price\nA,2020-01-01,100,999\n",

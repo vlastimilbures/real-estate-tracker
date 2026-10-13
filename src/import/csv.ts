@@ -206,8 +206,9 @@ function readCsv(source: CsvSource): RawFile {
   }
   if (header.length === 1 && header[0]?.includes(";"))
     return fileError({ code: "semicolonDelimiter" }, head.line);
-  // A repeated name would let the right-hand column win silently (ADR 0185 §1).
-  const twice = header.find((h, i) => header.indexOf(h) !== i);
+  // A repeated name would let the right-hand column win silently (ADR 0185 §1). Empty
+  // names (a spreadsheet's trailing blank columns) are extra columns, ignored as before.
+  const twice = header.find((h, i) => h !== "" && header.indexOf(h) !== i);
   if (twice !== undefined)
     return {
       records: [],
