@@ -296,4 +296,23 @@ describe("compareWorkbook — written workbook", () => {
     const ltv = wb.getWorksheet(en.xlsx.sheetNames.compareLtv)!;
     expect(ltv.getRow(2).getCell(2).numFmt).toBe(numFmt("percent"));
   });
+
+  // #254 (ADR 0145): a figure with no finite value is an empty cell end to end, from the
+  // compare's key figures through the written file (the #139 path).
+  it("a NaN key figure is an empty cell in the written file", async () => {
+    const nan: CompareResult = {
+      ...shocked,
+      kpis: { ...shocked.kpis, cagrNominal: D(NaN) },
+    };
+    const wb = new ExcelJS.Workbook();
+    const { sheets } = compareWorkbook(en, [base, nan], "nominal");
+    await wb.xlsx.load((await buildWorkbook(sheets)).buffer as ArrayBuffer);
+    const ws = wb.getWorksheet(en.xlsx.sheetNames.compareKeyFigures)!;
+    const cagr = ws
+      .getColumn(1)
+      .values.findIndex((v) => v === en.scenarios.kpiCagrNominal);
+    expect(cagr).toBeGreaterThan(1);
+    expect(ws.getRow(cagr).getCell(2).value).not.toBeNull();
+    expect(ws.getRow(cagr).getCell(3).value).toBeNull();
+  });
 });

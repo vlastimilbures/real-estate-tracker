@@ -202,6 +202,18 @@ describe("buildWorkbook — several sheets", () => {
     expect(ws.getRow(3).getCell(2).numFmt).toBe(numFmt("percent"));
   });
 
+  // #284: widths follow each row's own kind; "1 234 568 Kč" is 12 characters + 2.
+  it("a per-row kind column is as wide as its widest shown value", () => {
+    expect(wb.getWorksheet("Metrics")!.getColumn(2).width).toBe(14);
+  });
+
+  it("freezes the header row and first column on every sheet", () => {
+    for (const ws of wb.worksheets)
+      expect(ws.views, ws.name).toEqual([
+        expect.objectContaining({ state: "frozen", xSplit: 1, ySplit: 1 }),
+      ]);
+  });
+
   // ADR 0159: a note overflows into the next cells; it does not widen the first column.
   it("notes do not count toward the first column's width", () => {
     expect(wb.getWorksheet("Metrics")!.getColumn(1).width).toBe(10);
