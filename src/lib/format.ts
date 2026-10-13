@@ -43,12 +43,17 @@ export interface MoneyOpts {
   parens?: boolean;
   /** Append the " Kč" suffix (default true). */
   suffix?: boolean;
+  /** Decimal places (default 0: whole CZK). */
+  decimals?: number;
 }
 
 /** `#,##0 "Kč"` — whole CZK, space-grouped. Negatives: parens (accounting) or leading minus. */
 export function fmtCzk(value: Numeric, opts: MoneyOpts = {}): string {
-  const { parens = false, suffix = true } = opts;
-  const { neg, body } = fmtFixed(roundCzk(value), 0);
+  const { parens = false, suffix = true, decimals = 0 } = opts;
+  const { neg, body } = fmtFixed(
+    decimals === 0 ? roundCzk(value) : value,
+    decimals,
+  );
   const withUnit = suffix ? `${body} ${getActiveCurrency().symbol}` : body;
   if (!neg) return withUnit;
   return parens ? `(${withUnit})` : `${MINUS}${withUnit}`;

@@ -136,7 +136,21 @@ function showValue(field: string, v: string | null): string {
   return v;
 }
 
-/** `before → after`, each value formatted for its column. */
+/** A stored cell at full precision: money to the haléř, rates to four decimals. */
+function showExact(field: string, v: string | null): string {
+  if (v === null) return "—";
+  if (MONEY.has(field)) return fmtCzk(v, { decimals: 2 });
+  if (RATES.has(field)) return fmtPct(v, 4);
+  return v;
+}
+
+/** `before → after`, each value formatted for its column; when both sides would read the
+ *  same, both at full precision (ADR 0185 §4). */
 export function changeText(change: FieldChange): string {
-  return `${showValue(change.field, change.before)} → ${showValue(change.field, change.after)}`;
+  const { field, before, after } = change;
+  const show =
+    showValue(field, before) === showValue(field, after)
+      ? showExact
+      : showValue;
+  return `${show(field, before)} → ${show(field, after)}`;
 }
