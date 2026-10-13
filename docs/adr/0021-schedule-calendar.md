@@ -24,3 +24,8 @@ Related follow-up decisions:
 ## Consequences
 
 P4b fixes DR-101 and DR-070 with failing tests first, then re-baselines the parity targets and adds the target change log rows in the same change.
+
+Q-03 answered 2026-10-13 (#153): on one bank statement, a 28-day period's interest equals the
+31-day period's at the same balance, so the bank uses 30E/360 and balance × rate ÷ 12 is exact
+for regular periods. Broken periods (a first partial month, a tranche or prepayment between due
+dates) are still charged per whole period.

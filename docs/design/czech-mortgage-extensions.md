@@ -144,13 +144,14 @@ and the UI showing two dates.
 month; the bank charged interest for the extra days. Include it."
 
 **Data model.** `drawDate` = `startDate` (no new field) and `firstPaymentDate?: IsoDate` (default
-`EDATE(startDate, 1)`, today). A day-count basis on Assumptions: `dayCountBasis?: "ACT/360" |
-"ACT/365" | "30E/360"` (Q-03, **OWNER TO VERIFY** against a statement; ACT/360 adds about 1.4 %
-to annual interest).
+`EDATE(startDate, 1)`, today). No day-count option: a statement check found 30E/360 (Q-03,
+ADR 0021), which regular periods already use, so a broken period counts its days the 30E/360
+way. Tranches and prepayments between two due dates are broken periods too (#153); the same
+helper covers them.
 
 **Engine hooks.**
 
-- One isolated pure function `accruedInterest(balance, ratePa, from, to, basis)` (new
+- One isolated pure function `accruedInterest(balance, ratePa, from, to)` (30E/360 days) (new
   `src/engine/dayCount.ts`), so the day-count stays out of the period-based kernel.
 - In `buildPlainSchedule` / `devMonthStep`, the first payment row after the draw adds the broken
   period interest (from `drawDate` to one month before `firstPaymentDate`) as extra interest with no
@@ -161,14 +162,13 @@ to annual interest).
 - `yearSlice` and KPIs pick it up through `interest`.
 
 **UI touchpoints.** Mortgage form: "first payment date" (optional); amortization table: the first
-row's interest shows the broken period (tooltip); Assumptions page: day-count basis.
+row's interest shows the broken period (tooltip).
 
 **Test strategy.** Inert default (seed loans all started before baseDate ⇒ no change); hand-checked
-cases for each basis (e.g. 3,000,000 at 5 % for 17 days: ACT/360 = 7,083.33, ACT/365 = 6,986.30);
+30E/360 cases (e.g. 3,000,000 at 5 % for 17 days = 7,083.33);
 a future loan in the mixed fixture; February and leap-year spans.
 
-**Risks.** Introduces a day-count into a period engine (contained in one function); unknown bank
-convention (Q-03); whether the bank capitalizes the broken-period interest instead of collecting
+**Risks.** Introduces a day-count into a period engine (contained in one function); whether the bank capitalizes the broken-period interest instead of collecting
 it (then it does change the balance — make it an option only if a statement shows it).
 
 **Effort.** M (S once feature 3's cadence exists).
@@ -180,8 +180,8 @@ it (then it does change the balance — make it an option only if a statement sh
 1. **Prepayment at fixation end.** Built (ADR 0109, ADR 0116).
 2. **Annual allowance (S).** Validation and windows on top of feature 1.
 3. **Per-loan payment day (M).** Calendar-only change; needed before feature 4 is exact.
-4. **First partial-month interest (M, or S after 3).** Only affects future loans; needs the Q-03
-   day-count answer first.
+4. **First partial-month interest (M, or S after 3).** Only affects future loans and tranches;
+   the day count is known (30E/360, Q-03).
 
 Each feature is a separate decision (D-xx) with failing tests first and an inert-default golden
 check; features 1 and 2 also need a D-03 entry only if a seed target moves (none should).

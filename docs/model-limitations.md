@@ -110,9 +110,11 @@ work still to do is in the [roadmap](roadmap.md).
   completed value less the tranches not drawn yet, not the price paid so far. Own funds
   have no payment dates, so the developer's margin is counted from the start, not at
   completion (ADR 0169).
-- **Simplified interest.** Interest is computed once a month as balance × rate ÷ 12 (a
-  30/360-style simplification). The loan's payment day and interest for a first partial month
-  are not modelled, so totals can differ slightly from a bank statement. See
+- **Simplified interest.** Interest is computed once a month as balance × rate ÷ 12 (the
+  30E/360 day count, checked against a bank statement, ADR 0021). The loan's payment day and
+  interest for a first partial month are not modelled, and a development-loan tranche pays a
+  full month of interest in the period it is drawn, up to a month more than a bank charges
+  from the draw date. So totals can differ slightly from a bank statement. See
   [SPEC §4.4](../SPEC.md#44-monthly-amortization-the-engine-within-the-engine).
 - **Prepayments and maturity changes are simplified.** A one-off prepayment is applied right
   after the next payment due on or after its date, so a prepayment between two due dates is

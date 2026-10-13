@@ -269,7 +269,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | J-29 | [0039](0039-golden-master.md)                                                      |
 | Q-01 | [0009](0009-ad-hoc-signing.md)                                                     |
 | Q-02 | [0013](0013-ci-runners.md)                                                         |
-| Q-03 | Open: no bank statements were provided; see [0020](0020-no-instalment-rounding.md) |
+| Q-03 | Day count 30E/360 per one bank statement (#153); [0021](0021-schedule-calendar.md) |
 | Q-04 | [0058](0058-remove-currency-tab.md)                                                |
 | Q-05 | [0063](0063-hardened-runtime-apple-silicon.md)                                     |
 | Q-06 | [0029](0029-contract-maturity-date.md)                                             |
