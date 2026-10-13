@@ -13,7 +13,8 @@ import {
 export async function exportTableXlsx<R>(opts: {
   filename: string;
   sheetName: string;
-  columns: XlsxColumn<R>[];
+  /** Built from the rows, so headers and cells describe the same table. */
+  columns: (rows: R[]) => XlsxColumn<R>[];
   rows: R[];
   /** Lines under the table: what the screen shows around it (ADR 0159). */
   notes?: string[];
@@ -22,7 +23,12 @@ export async function exportTableXlsx<R>(opts: {
   return exportWorkbookXlsx({
     filename,
     sheets: [
-      xlsxSheet({ name: sheetName, columns, rows, ...(notes && { notes }) }),
+      xlsxSheet({
+        name: sheetName,
+        columns: columns(rows),
+        rows,
+        ...(notes && { notes }),
+      }),
     ],
   });
 }
