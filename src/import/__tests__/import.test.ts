@@ -3,11 +3,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
-import {
-  upsertAssumptions,
-  loadPortfolio,
-  loadAssumptions,
-} from "../../data/repositories";
+import { upsertAssumptions } from "../../data/repositories";
 import {
   parseProperties,
   parseValuations,
@@ -24,6 +20,10 @@ import {
   VALUATIONS_CSV,
 } from "./support/sampleCsv";
 import { importNow } from "./support/importNow";
+import {
+  loadAssumptions,
+  loadPortfolio,
+} from "../../data/__tests__/support/reads";
 
 // --- importCsv parity test (seed numbers via CSV) ---
 
@@ -116,6 +116,7 @@ Byt A?,2020-01-01,2000000`;
     const csql = openMemorySql();
     try {
       await migrate(csql);
+      await upsertAssumptions(csql, SEED_ASSUMPTIONS);
       const { rows, errors } = parseProperties(COLLIDING_CSV);
       expect(errors, JSON.stringify(errors)).toHaveLength(0);
 

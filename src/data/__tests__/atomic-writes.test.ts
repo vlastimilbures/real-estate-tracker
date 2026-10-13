@@ -6,7 +6,6 @@ import { failOn } from "./support/failOn";
 import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
 import {
-  loadAssumptions,
   upsertAssumptions,
   insertPropertyWithCosts,
   updateValuation,
@@ -20,6 +19,7 @@ import type { Sql } from "../sql";
 import { isoDate } from "../../engine";
 import { money } from "../../engine";
 import { noExtras } from "./support/noExtras";
+import { loadAssumptions } from "./support/reads";
 
 async function ready(): Promise<TestSql> {
   const sql = openMemorySql();

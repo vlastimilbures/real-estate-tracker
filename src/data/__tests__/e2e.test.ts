@@ -6,7 +6,6 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
 import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
-import { loadPortfolio, loadAssumptions } from "../repositories";
 import { portfolioSnapshot, portfolioKpis } from "../../engine";
 import type {
   Portfolio,
@@ -22,6 +21,7 @@ import {
   RATIO_KEYS,
 } from "../../engine/__tests__/support/seed";
 import { KC, RATIO, near } from "../../engine/__tests__/support/tolerance";
+import { loadAssumptions, loadPortfolio } from "./support/reads";
 
 const tol = (key: string) => (RATIO_KEYS.has(key) ? RATIO : KC);
 

@@ -6,11 +6,13 @@ import { describe, it, expect } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
 import { schemaAt } from "./support/schemaAt";
 import { migrate } from "../migrations";
-import { insertProperty, loadPortfolio } from "../repositories";
 import { propertyToRow, rowToProperty, type PropertyRow } from "../mappers";
 import { DataError } from "../errors";
 import { isoDate, money, type Property } from "../../engine";
 import { noExtras } from "./support/noExtras";
+import { insertProperty, loadPortfolio } from "./support/reads";
+import { upsertAssumptions } from "../repositories";
+import { SEED_ASSUMPTIONS } from "../seed";
 
 const property: Property = {
   id: "p1",
@@ -32,6 +34,7 @@ const funded: Property = {
 async function migrated(): Promise<TestSql> {
   const sql = openMemorySql();
   await migrate(sql);
+  await upsertAssumptions(sql, SEED_ASSUMPTIONS);
   return sql;
 }
 
@@ -49,6 +52,7 @@ describe("migration v10 — acquisition funding (ADR 0119)", () => {
       "INSERT INTO properties (id, name, purchase_date, purchase_price) VALUES ('p1', 'Flat One', '2023-02-01', '6375000')",
     );
     await migrate(sql);
+    await upsertAssumptions(sql, SEED_ASSUMPTIONS);
 
     const [row] = await sql.select<Record<string, unknown>>(
       "SELECT own_cash, transaction_costs, initial_works, funding_note FROM properties",

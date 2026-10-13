@@ -4,18 +4,19 @@ import { openMemorySql, type TestSql } from "./betterSqlite";
 import { failOn } from "./support/failOn";
 import { migrate } from "../migrations";
 import {
-  insertProperty,
   insertValuation,
   insertLease,
   insertValuationClosingPrevious,
   insertLeaseClosingPrevious,
-  loadPortfolio,
   updateLease,
   updateValuation,
+  upsertAssumptions,
 } from "../repositories";
 import { propertyToRow, valuationToRow, leaseToRow } from "../mappers";
 import { isoDate, money, type Lease, type Valuation } from "../../engine";
 import { noExtras } from "./support/noExtras";
+import { insertProperty, loadPortfolio } from "./support/reads";
+import { SEED_ASSUMPTIONS } from "../seed";
 
 const prevV: Valuation = {
   id: "v-old",
@@ -45,6 +46,7 @@ const newL: Lease = {
 async function ready(): Promise<TestSql> {
   const sql = openMemorySql();
   await migrate(sql);
+  await upsertAssumptions(sql, SEED_ASSUMPTIONS);
   await insertProperty(
     sql,
     propertyToRow(

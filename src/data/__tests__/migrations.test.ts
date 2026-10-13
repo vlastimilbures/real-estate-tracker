@@ -7,8 +7,8 @@ import { openMemorySql, type TestSql } from "./betterSqlite";
 import { schemaAt } from "./support/schemaAt";
 import { checkIntegrity, migrate, MIGRATIONS } from "../migrations";
 import { DataError } from "../errors";
-import { loadAssumptions, loadPortfolio, listScenarios } from "../repositories";
 import type { Sql } from "../sql";
+import { listScenarios, loadAssumptions, loadPortfolio } from "./support/reads";
 
 const HEAD = Math.max(...MIGRATIONS.map((m) => m.version));
 const NOW = () => new Date(Date.UTC(2026, 9, 1, 7, 35, 12));

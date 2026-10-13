@@ -13,18 +13,11 @@ import {
   SampleNotEmptyError,
   seedIfEmpty,
 } from "../seed";
-import {
-  confirmRestore,
-  exportToJson,
-  restoreFromJson,
-  SafetyBackupError,
-} from "../backup";
+import { confirmRestore, exportToJson, SafetyBackupError } from "../backup";
 import { checkInputRules } from "../../import/inputRules";
 import {
   insertLease,
   insertPropertyWithCosts,
-  loadAssumptions,
-  loadPortfolio,
   loadState,
   upsertAssumptions,
 } from "../repositories";
@@ -32,6 +25,11 @@ import { holdingCostToRow, leaseToRow, propertyToRow } from "../mappers";
 import type { Sql } from "../sql";
 import { isoDate, rate } from "../../engine";
 import { noExtras } from "./support/noExtras";
+import {
+  loadAssumptions,
+  loadPortfolio,
+  restoreFromJson,
+} from "./support/reads";
 
 /** Safety backups the fake `write_app_backup` command wrote, by file name. */
 const written = vi.hoisted(() => new Map<string, string>());

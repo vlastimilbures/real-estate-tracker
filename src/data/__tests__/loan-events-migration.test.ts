@@ -5,7 +5,6 @@ import { describe, it, expect } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
 import { schemaAt } from "./support/schemaAt";
 import { migrate } from "../migrations";
-import { loadPortfolio } from "../repositories";
 import {
   mortgageBlockToRow,
   rowToMortgageBlock,
@@ -13,6 +12,9 @@ import {
 } from "../mappers";
 import { DataError } from "../errors";
 import { isoDate, money, rate, type MortgageBlock } from "../../engine";
+import { loadPortfolio } from "./support/reads";
+import { upsertAssumptions } from "../repositories";
+import { SEED_ASSUMPTIONS } from "../seed";
 
 const block: MortgageBlock = {
   id: "m1",
@@ -56,6 +58,7 @@ async function insertRow(sql: TestSql, row: Record<string, unknown>) {
 async function withProperty(): Promise<TestSql> {
   const sql = openMemorySql();
   await migrate(sql);
+  await upsertAssumptions(sql, SEED_ASSUMPTIONS);
   await sql.execute(
     "INSERT INTO properties (id, name, purchase_date, purchase_price) VALUES ('p1', 'P', '2023-02-01', '6375000')",
   );
@@ -74,6 +77,7 @@ describe("migration v9 — prepayments and recasts (ADR 0109)", () => {
       "INSERT INTO mortgage_blocks (id, property_id, start_date, initial_principal, fixation_years, interest_rate_pa, monthly_instalment) VALUES ('m1', 'p1', '2024-03-12', '3034500', 7, '0.0449', '21576.4')",
     );
     await migrate(sql);
+    await upsertAssumptions(sql, SEED_ASSUMPTIONS);
 
     const rows = await sql.select<Record<string, unknown>>(
       "SELECT * FROM mortgage_blocks",
