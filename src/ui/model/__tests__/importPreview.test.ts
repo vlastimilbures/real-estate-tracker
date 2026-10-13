@@ -119,6 +119,16 @@ describe("changeText", () => {
     ).toBe(`${fmtPct("0.0169", 4)} → ${fmtPct("0.01694", 4)}`);
   });
 
+  it("falls back to the stored text when even that precision reads the same", () => {
+    expect(
+      changeText({
+        field: "monthly_instalment",
+        before: "7908",
+        after: "7908.004",
+      }),
+    ).toBe("7908 → 7908.004");
+  });
+
   it("formats the funding amounts as money (ADR 0119 §8)", () => {
     for (const field of ["own_cash", "transaction_costs", "initial_works"])
       expect(changeText({ field, before: null, after: "850000" })).toBe(

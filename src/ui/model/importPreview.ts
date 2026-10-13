@@ -144,13 +144,13 @@ function showExact(field: string, v: string | null): string {
   return v;
 }
 
-/** `before → after`, each value formatted for its column; when both sides would read the
- *  same, both at full precision (ADR 0185 §4). */
+/** `before → after`, each value formatted for its column. When both sides would read the
+ *  same, both at full precision, and as stored when even that reads the same (ADR 0185 §4). */
 export function changeText(change: FieldChange): string {
   const { field, before, after } = change;
   const show =
-    showValue(field, before) === showValue(field, after)
-      ? showExact
-      : showValue;
+    [showValue, showExact, (_: string, v: string | null) => v ?? "—"].find(
+      (f) => f(field, before) !== f(field, after),
+    ) ?? showValue;
   return `${show(field, before)} → ${show(field, after)}`;
 }
