@@ -8,7 +8,7 @@ import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { invoke } from "@tauri-apps/api/core";
 import { BackupRestorePanel } from "../BackupRestore";
-import { OutcomeRegions } from "../../components/OutcomeRegions";
+import { OutcomeRegions, ToastRegion } from "../../components/OutcomeRegions";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { logFailure } from "../../../state/diagnostics";
@@ -54,6 +54,7 @@ function renderPanel() {
     <>
       <BackupRestorePanel />
       <OutcomeRegions />
+      <ToastRegion />
     </>,
   );
 }

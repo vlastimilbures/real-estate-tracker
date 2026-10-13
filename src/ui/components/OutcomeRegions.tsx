@@ -1,6 +1,7 @@
 // Where the app reports what an action did (ADR 0154), on whichever page the owner is
 // on: the safety copy a restore or Clear sample wrote and the last failure, each until
 // dismissed, and the toast, whose live region is in the page before its text arrives.
+import { useEffect, useState } from "react";
 import {
   useUiStore,
   type Failure,
@@ -35,15 +36,32 @@ function failureText(t: Dictionary, action: OutcomeAction, e: unknown): string {
   }
 }
 
+/** The notices and failures already shown on some page. */
+const shown = new WeakSet<Notice | Failure>();
+
+/** True only on the page where `item` first shows: each page mounts its own shell, and a
+ *  kept banner is announced once, then stays silent (ADR 0189). */
+function useFirstShow(item: Notice | Failure): boolean {
+  const [mine, setMine] = useState(() => (shown.has(item) ? null : item));
+  // A newer item on this page is shown here first.
+  if (mine !== item && !shown.has(item)) setMine(item);
+  useEffect(() => {
+    shown.add(item);
+  }, [item]);
+  return mine === item;
+}
+
 function FailureView({ failure }: { failure: Failure }) {
   const t = useT();
   const dismiss = useUiStore((s) => s.dismissFailure);
   const { action, error } = failure;
+  const live = useFirstShow(failure);
   return (
     <div>
       <ErrorBanner
         message={failureText(t, action, error)}
         onDismiss={dismiss}
+        live={live}
       />
       {error instanceof RestoreError && error.issues.length > 0 && (
         <IssueTable issues={error.issues} />
@@ -55,8 +73,9 @@ function FailureView({ failure }: { failure: Failure }) {
 function NoticeView({ notice }: { notice: Notice }) {
   const t = useT();
   const dismiss = useUiStore((s) => s.dismissNotice);
+  const live = useFirstShow(notice);
   return (
-    <div className="banner info" role="status">
+    <div className="banner info" role={live ? "status" : undefined}>
       <span>
         {notice.kind === "restored"
           ? t.backup.restored(notice.file)
@@ -69,28 +88,34 @@ function NoticeView({ notice }: { notice: Notice }) {
   );
 }
 
-/** The notice and the failure (if any) and the always-present toast region, for the
- *  app shell. */
+/** The notice and the failure (if any), for the app shell. */
 export function OutcomeRegions() {
   const notice = useUiStore((s) => s.notice);
   const failure = useUiStore((s) => s.failure);
-  const toast = useUiStore((s) => s.toast);
   return (
     <>
       {failure && <FailureView failure={failure} />}
       {notice && <NoticeView notice={notice} />}
-      <div
-        className="toast-region"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        {toast && (
-          <div className="toast" key={toast.id}>
-            {toast.message}
-          </div>
-        )}
-      </div>
     </>
+  );
+}
+
+/** The toast's live region, mounted once beside the page so it outlives a page change
+ *  (ADR 0189). */
+export function ToastRegion() {
+  const toast = useUiStore((s) => s.toast);
+  return (
+    <div
+      className="toast-region"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      {toast && (
+        <div className="toast" key={toast.id}>
+          {toast.message}
+        </div>
+      )}
+    </div>
   );
 }

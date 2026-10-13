@@ -6,7 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { OutcomeRegions } from "../OutcomeRegions";
+import { OutcomeRegions, ToastRegion } from "../OutcomeRegions";
 import { ExportXlsxButton } from "../primitives";
 import { useUiStore } from "../../../state/uiStore";
 import { RestoreError } from "../../../state/backup";
@@ -36,14 +36,14 @@ afterEach(() => {
 
 describe("toast region (#136)", () => {
   it("is in the page, empty, before any toast", () => {
-    render(<OutcomeRegions />);
+    render(<ToastRegion />);
     const region = screen.getByRole("status");
     expect(region.getAttribute("aria-live")).toBe("polite");
     expect(region.textContent).toBe("");
   });
 
   it("shows the toast inside the same region", () => {
-    render(<OutcomeRegions />);
+    render(<ToastRegion />);
     const region = screen.getByRole("status");
     act(() => useUiStore.getState().showToast("Saved"));
     expect(region.textContent).toBe("Saved");
@@ -112,5 +112,40 @@ describe("notice (#136)", () => {
     render(<OutcomeRegions />);
     expect(screen.getByText(en.backup.restored("s.json"))).toBeTruthy();
     expect(screen.getByText(en.xlsx.exportFailed("disk full"))).toBeTruthy();
+  });
+});
+
+// #274 (ADR 0189): each page mounts its own shell. A kept notice or failure is announced
+// where it first appears; on later pages it stays, silent, until dismissed.
+describe("announced once (#274)", () => {
+  it("a notice keeps its live role only where it first shows", () => {
+    act(() =>
+      useUiStore.getState().setNotice({ kind: "restored", file: "a.json" }),
+    );
+    const first = render(<OutcomeRegions />);
+    expect(screen.getByRole("status").textContent).toContain("a.json");
+    first.unmount();
+
+    render(<OutcomeRegions />);
+    expect(screen.getByText(en.backup.restored("a.json"))).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+
+    act(() =>
+      useUiStore.getState().setNotice({ kind: "restored", file: "b.json" }),
+    );
+    expect(screen.getByRole("status").textContent).toContain("b.json");
+  });
+
+  it("a failure alerts only where it first shows", () => {
+    act(() =>
+      useUiStore.getState().setFailure("xlsxExport", new Error("disk full")),
+    );
+    const first = render(<OutcomeRegions />);
+    expect(screen.getByRole("alert")).toBeTruthy();
+    first.unmount();
+
+    render(<OutcomeRegions />);
+    expect(screen.getByText(en.xlsx.exportFailed("disk full"))).toBeTruthy();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });
