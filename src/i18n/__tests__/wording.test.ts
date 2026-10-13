@@ -32,9 +32,18 @@ const SAME_AS_EN = new Set([
   "forms.datePlaceholder", // "dd.mm.yyyy"
   "guide.glossary.svj.term", // the Czech term, glossed in every language
   "guide.glossary.propertyTax.term", // the Czech statutory name
+  // About: brand, author, links and the tech list.
+  "about.subtitle",
+  "about.developerName",
+  "about.feedbackText",
+  "about.sourceText",
+  "about.limitsText",
+  "about.dataSafetyText",
+  "about.builtWithBody",
+  "about.copyright",
 ]);
 const sameAllowed = (key: string, value: string) =>
-  ACRONYM.test(value) || key.startsWith("about.") || SAME_AS_EN.has(key);
+  ACRONYM.test(value) || SAME_AS_EN.has(key);
 
 /** Retired terms and the word that replaced them. */
 const RETIRED: Record<keyof typeof DICTS, [RegExp, string][]> = {
@@ -56,7 +65,7 @@ const RETIRED: Record<keyof typeof DICTS, [RegExp, string][]> = {
     [/выдан/i, "выбрано"],
     [/амортизац/i, "график платежей"],
     [/Номинал([^ь]|$)/, "номинальные"],
-    [/годовых(?! \d)/, "в год / годовая ставка"],
+    [/(?<!%\s?)годовых/, "в год / годовая ставка"],
   ],
 };
 
