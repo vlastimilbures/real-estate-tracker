@@ -42,8 +42,8 @@ and costs, and see where the portfolio is heading over the next 30 years.**
 - **Platform:** macOS 13 or later on Apple Silicon. Offline and single-user; no sync or sharing.
 - **Currency:** Czech koruna (Kč) only, with Czech number, date and currency formatting. The
   interface is in English, Czech or Russian.
-- **Mortgages:** Czech annuity practice — fixation periods and a rate reset at each fixation end. One
-  active loan block per property at a time (refinancing is a successor block).
+- **Mortgages:** Czech annuity practice — fixation periods and a rate reset at each fixation
+  end. One active loan block per property at a time (refinancing is a successor block).
 - **Estimates, not quotes:** figures are planning projections, not lender quotes or valuations.
   Returns are measured from the projection start, not from your purchase.
 - **Not modelled:** income or capital-gains tax, the annual penalty-free prepayment allowance
@@ -127,10 +127,10 @@ To switch to your own:
 
 Spreadsheets are a fine start for a few rental flats, but they get fragile once loans have
 fixation periods, rents change mid-year and you want to ask "what if rates jump 2 points when
-the next fixation ends?". Real Estate Tracker is a desktop app with a **pure, tested financial engine**: it
-amortizes Czech annuity mortgages month by month, follows leases and valuations by date, and
-projects value, rent, cash flow and net worth for 30 years in **nominal and real** terms.
-Everything runs and stays on your Mac.
+the next fixation ends?". Real Estate Tracker is a desktop app with a **pure, tested financial
+engine**: it amortizes Czech annuity mortgages month by month, follows leases and valuations
+by date, and projects value, rent, cash flow and net worth for 30 years in **nominal and
+real** terms. Everything runs and stays on your Mac.
 
 ## Features
 

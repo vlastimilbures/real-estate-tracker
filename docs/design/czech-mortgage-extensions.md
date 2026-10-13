@@ -53,7 +53,8 @@ interest saved. Where the build differs from the original design:
   the schedule's end is `EVENT_AFTER_SCHEDULE_END`.
 - A prepayment before a development loan's completion is allowed, not rejected: during
   interest-only both effects lower the payment (ADR 0109 §5).
-- The `shortenTerm` example (b) keeps the reset instalment, not 8,681.46 (ADR 0109 §5).
+- The `shortenTerm` example (b) is replaced by ADR 0109 §5's hand-checked case; ADR 0179
+  sizes the shorter term at the next payment's rate.
 - Prepayments are owner cash outside net cash flow and DSCR; cumulative cash flow and the IRR
   subtract them with their fees (ADR 0109 §11).
 - Not built: the scenario rule "repay X at the next fixation end" (`prepayAtRefix` on
@@ -69,8 +70,8 @@ anniversary. Tell me when the window is and whether my planned prepayment fits."
 
 **Law (OWNER TO VERIFY).** § 117 Act No. 257/2016 Coll.: up to 25 % once a year within the month
 before each contract anniversary is fee-free (sources disagree whether 25 % of the **total** or the
-**remaining** principal). Outside the windows, for contracts or new fixations from 1.9.2024 the fee is
-capped at 0.25 % per started year of fixation left, max 1 %.
+**remaining** principal). Outside the windows, for contracts or new fixations from 1.9.2024 the fee
+is capped at 0.25 % per started year of fixation left, max 1 %.
 
 **Data model.** Reuses the built `Prepayment` (it has no `kind` field, so an allowance
 prepayment is recognised by its date window). Percentages go in Assumptions,
@@ -168,8 +169,9 @@ row's interest shows the broken period (tooltip).
 30E/360 cases (e.g. 3,000,000 at 5 % for 17 days = 7,083.33);
 a future loan in the mixed fixture; February and leap-year spans.
 
-**Risks.** Introduces a day-count into a period engine (contained in one function); whether the bank capitalizes the broken-period interest instead of collecting
-it (then it does change the balance — make it an option only if a statement shows it).
+**Risks.** Introduces a day-count into a period engine (contained in one function); whether the
+bank capitalizes the broken-period interest instead of collecting it (then it does change the
+balance — make it an option only if a statement shows it).
 
 **Effort.** M (S once feature 3's cadence exists).
 
