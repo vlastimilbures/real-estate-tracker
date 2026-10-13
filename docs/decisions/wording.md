@@ -78,16 +78,25 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 ### 2026-10-13 · #169, #152 / Track 14 N7b
 
 - Keys (plain text; accessible names, form alerts, export text and code are in ADR 0187):
-  `dashboard.kpiSumPrincipalRepaid*`, `dashboard.financingNoLoans`, `dashboard.subFilter`,
-  `dashboard.monthlyHint`, `propertyDetail.helpDraws`, `instalmentHintDev`,
-  `warnAfterCompletion`, `drawnAtStartNoDate`, `drawdownTotal`, `acqHint`, `mortgagesHint`,
-  `helpCompletionDate`, `helpNewBlock`, `fixationEnded`, `fixationGap`, `noEffectNote`;
-  `backup.folderHint`, `restoreBody`,
-  `restoreWarning`, `backup.tables.holding_costs`; `importPage.errMalformedRow`;
-  `about.appBody`; Guide prose and definitions (`cardAsOfBody`, `mortgagesProse1Mid`,
-  `mortgagesProse1Post`, `mortgagesProse2Resets`, `mortgagesProse2Reamortizes`,
-  `projectionProse2`, `developmentProsePost`, `fPrincipal`, `fNewBalance`, value, debt,
-  costs, NOI, debt-service and rate-shock definitions, glossary annuity)
+  `dashboard.kpiSumPrincipalRepaid`, `dashboard.kpiSumPrincipalRepaidNominal`,
+  `dashboard.financingNoLoans`, `dashboard.subFilter`, `dashboard.monthlyHint`,
+  `dataCheck.earlyDateRecord.assumptions`; `propertyDetail.helpDraws`,
+  `propertyDetail.instalmentHintDev`, `propertyDetail.warnAfterCompletion`,
+  `propertyDetail.drawnAtStartNoDate`, `propertyDetail.drawdownTotal`,
+  `propertyDetail.acqHint`, `propertyDetail.mortgagesHint`,
+  `propertyDetail.helpCompletionDate`, `propertyDetail.successorNote`,
+  `propertyDetail.fixationEnded`, `propertyDetail.fixationEndedUntil`;
+  `importPage.noEffectNote`, `importPage.errMalformedRow`; `scenarios.sumResetRate`;
+  `backup.folderHint`, `backup.restoreBody`, `backup.restoreWarning`,
+  `backup.tables.holding_costs`; `about.appBody`; Guide prose and definitions
+  (`guide.cardAsOfBody`, `mortgagesProse1Mid`, `mortgagesProse1Post`,
+  `mortgagesProse2Resets`, `mortgagesProse2Reamortizes`, `projectionProse2`,
+  `developmentProsePost`, `fPrincipal`, `fNewBalance`; `snapshotDefs.value.meaning`,
+  `snapshotDefs.debt.meaning`, `snapshotDefs.noi.meaning`,
+  `snapshotDefs.debtService.meaning`, `projectionDefs.debt.formula`,
+  `projectionDefs.debt.meaning`, `projectionDefs.costs.formula`,
+  `projectionDefs.costs.meaning`, `scenarioDefs.rateShock.formula`,
+  `scenarioDefs.rateShock.meaning`, `glossary.annuity.def`, `glossary.propertyTax.def`)
 - Change: Russian uses "основной долг" for principal, "выбрано / выбранная" for drawing,
   "страховочная копия" for the pre-restore copy, "конец фиксации" and "ставка после
   фиксации", "график платежей", "Результаты" for outputs, and no calques ("переякоривает",

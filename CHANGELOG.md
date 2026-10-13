@@ -178,8 +178,8 @@ engine without the form, and remove it when the last part lands.
   Czech says "konec fixace", "začátek" for a loan's start, "Výstavba", "Náklady na držbu",
   "Daň z nemovitých věcí" and "Splátkový kalendář". English drops "refix" ("Rate shock at
   fixation end"). Count words follow the plural rules (CSV row length, Russian filter
-  subtitle). A duplicated scenario is named "… (kopie)" / "… (копия)" in Czech and Russian,
-  and the save dialogs name their file types in the UI language. The Guide says that only
+  subtitle). A duplicated scenario is named "… (kopie)" / "… (копия)" in Czech and Russian.
+  The Guide says that only
   fixed costs grow with CPI (management and maintenance follow rent) and that the
   base-date snapshot equals year 0 for value, debt and equity, with flows starting in year 1.
   A test now fails on a Czech or Russian string identical to English or using a retired term.

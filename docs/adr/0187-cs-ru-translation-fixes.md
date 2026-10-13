@@ -13,32 +13,48 @@
 The Czech and Russian dictionaries name one concept in several ways (principal, draws,
 fixation end, the payment schedule, the pre-restore safety copy), leave English words
 ("Development", "Start", "refix"), break grammar ("годовых" after no number) and print
-fixed plurals. A duplicated scenario is saved as "Name (copy)" in every language, and the
-save dialogs name their file types in English. Many of these strings are accessible names
+fixed plurals. A duplicated scenario is saved as "Name (copy)" in every language. Many of these strings are accessible names
 (labels, table headers, toggle options, the Projections picker's aria-label), form alerts,
 or text written to the xlsx exports, so the change is recorded here; the plain-text rest is
 in the wording log (2026-10-13 · N7b).
 
 ## Decision
 
-1. Russian uses "основной долг" for principal, "выборка/выбрано" for drawing with "транш"
-   for each portion, "страховочная копия" for the pre-restore copy, "Номинальные" beside
-   "Реальные", "конец фиксации" and "ставка после фиксации", and "График платежей" for the
-   schedule.
-2. Czech uses "konec fixace" and "sazba po skončení fixace", "začátek" for a loan's start,
-   "Výstavba", "Začátek", "Náklady na držbu", "Daň z nemovitých věcí" and
-   "Splátkový kalendář".
-3. English drops "refix" ("Rate shock at fixation end", and the rate-shock reach note
-   that is part of a compare column header's name: "(fixation end 2031)"); "rate reset"
-   stays.
-4. Count words use the plural helpers (CSV row length, Russian filter subtitle, compare-full
-   toasts).
-5. A duplicate's name takes the suffix `scenarios.copyName` in the UI language; names saved
-   before keep "(copy)". The save dialogs take `xlsx.fileType` / `backup.fileType`.
-6. No preset name changes (ADR 0093): the crash labels "−20%" stay as they are.
-7. A test fails when a cs/ru string equals English (allow-list) or uses a retired term.
+The keys below are accessible names (labels, table headers, toggle options, button text,
+the Projections picker's aria-label), form alerts or status toasts, or text written to the
+xlsx exports. Their new text follows one term per concept:
+
+1. Principal, draws and nominal (ru): `propertyDetail.colInitialPrincipal`,
+   `propertyDetail.fieldInitialPrincipal`, `propertyDetail.calcDisabled`,
+   `propertyDetail.amColPrincipal`, `propertyDetail.amColDrawn`, `projGrid.principal`,
+   `inputRules.DRAW_BEFORE_START`, `common.nominal`, `scenarios.kpiNetWorthNominal`,
+   `scenarios.kpiCagrNominal`, `scenarios.kpiLeveredIrrNominal`.
+2. Yearly rates (ru): `propertyDetail.fieldInterestRate`, `assumptions.appreciation`,
+   `assumptions.rentIndexation`, `assumptions.inflation`, `scenarios.fieldAppreciation`,
+   `scenarios.fieldRentIndexation`, `scenarios.fieldInflation`.
+3. Czech names: `propertyDetail.colDevelopment`, `scenarios.atStart`,
+   `propertyDetail.drawnAtStart`, `inputRules.DRAW_BEFORE_START`,
+   `propertyDetail.fieldPropertyTax`, `assumptions.propertyTax`,
+   `inputRules.DUPLICATE_HOLDING_COST`, `inputRules.ASOF_BEFORE_BASEDATE`.
+4. The schedule (cs, ru): `propertyDetail.sectionAmortization`,
+   `propertyDetail.amortizationTitle`, `propertyDetail.showAmortization`,
+   `propertyDetail.hideAmortization`.
+5. The Projections picker (cs, ru): `projections.entity`.
+6. The fixation end (en drops "refix"; cs, ru): `scenarios.rateShockAtRefix`,
+   `scenarios.fieldRateShock`, and `scenarios.reachHits` / `scenarios.reachNone`, which
+   are part of a compare column header's name; `scenarios.keyFiguresHintReal` (the compare
+   export's lens note); `guide.glossary.reset.term`. English keeps "rate reset".
+7. Count words use the plural helpers: `scenarios.addedCompareFull`,
+   `scenarios.duplicatedCompareFull` (status toasts) and `scenarios.listHint` read the same
+   at today's limit of three.
+8. A duplicate's name comes from `scenarios.copyName` in the UI language; names saved
+   before keep "(copy)".
+9. No preset name changes (ADR 0093): the keys that build saved preset names are untouched,
+   and the crash labels "−20%" stay.
+10. A test fails when a cs/ru string equals English (allow-list) or uses a retired term.
 
 ## Consequences
 
 Copy only: no computed number, parity target or golden master changes. Exports carry the new
-headers and lens notes. Raw OS error text in export failures (#169 G2-5-07) stays open.
+headers and lens notes. Raw OS error text in export failures (#169 G2-5-07) stays open. Translated file-type names
+for the save dialogs were tried and dropped: on macOS the dialog shows only the extensions.
