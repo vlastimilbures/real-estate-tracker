@@ -617,6 +617,13 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
   ends (with the balance), modelled payoffs, development completions, and the in-force
   lease's end when no later lease is entered. Same-day events sort by kind in that order,
   then by the portfolio's property order (by name; ADR 0176).
+- **Interest saved** (`prepaymentInterestSaved`, ADR 0116 §9, ADR 0130) = the interest of the
+  property's chain with every prepayment removed minus its interest as entered, from the
+  first projection month to payoff. Recasts stay on both sides; past prepayments count
+  through the lower opening balance. It is nominal, uses the base-case assumptions, covers
+  each block's whole remaining life, is not net of fees and is never a KPI. It is null unless
+  a prepayment repaid some principal. The UI hides 0 and shows a negative figure as "n/a" (a
+  maturity change depends on the prepayment).
 
 ## 5. Data layer
 
@@ -827,7 +834,9 @@ offline badge, and controls for language and theme.
    portfolio is active, a dismissable banner here and on Properties says so and offers
    **Clear sample and start my own** (ADR 0094). A compact **Financing &
    upcoming** panel (§4.7, ADR 0103) shows the next rate reset, the debt resetting within
-   1/3/5 years, total interest and the next 12 months' events, each linking to its property.
+   1/3/5 years, total interest, the interest prepayments save (the total of the figures
+   shown, with a per-property disclosure) and the next 12 months' events, each linking to
+   its property.
    The KPI list ends with **Cash invested** (ADR 0119 §9): the recorded own cash of the
    active properties in the filter, future buys included, shown only when every one of them
    has it; the real lens labels it nominal.
@@ -882,8 +891,17 @@ offline badge, and controls for language and theme.
    & uses gap of 1 Kč or more shows as a warning (short or over), never a blocker.
    A section nav lists Overview, Data check (the property's own findings, ADR 0118),
    Records, Financing, Acquisition, Holding costs, Projection and Amortization (ADR 0107).
+   The mortgage form edits each block's prepayments (date, amount, effect, optional fee) and
+   maturity changes (date, then a new maturity or a new instalment) as rows; saving replaces
+   the stored events (ADR 0116 §11). An event the schedule clamps, ignores or drops (for
+   example at a handover, or a term it cannot shorten, `PREPAYMENT_TERM_NOT_SHORTENED`) is a
+   loan warning on the page, never a rejection (ADR 0116 §10). The amortization table shows
+   Drawn, Refinance difference, Prepaid and Prepayment fee only when some row has a non-zero
+   value, on screen and in the export (ADR 0116 §12, ADR 0130).
 
 4. **Projections** — full year-by-year grid (per property + portfolio), nominal/real toggle,
+   with New debt, Refinance difference, Prepaid and Prepayment fees shown only when some
+   year has a non-zero value (ADR 0116 §12, ADR 0130),
    and an **Excel export** of the projection table.
 
 5. **Scenarios** — create, edit, duplicate, delete named scenarios; one-click stress presets;
