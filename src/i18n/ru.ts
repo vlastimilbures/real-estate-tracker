@@ -273,7 +273,8 @@ export const ru: Dictionary = {
   dashboard: {
     title: "Обзор",
     subtitleDefault: "Обзор портфеля",
-    subFilter: (n, total) => `${n} из ${total} объектов`,
+    subFilter: (n, total) =>
+      `${n} из ${total} ${ruPlural(total, ["объекта", "объектов", "объектов"])}`,
     asOf: (d) => `на ${d}`,
     netWorth: "Чистые активы",
     netWorthInYear: (endYear, n) =>
@@ -1002,7 +1003,7 @@ export const ru: Dictionary = {
     errDuplicateKey: (firstRow) =>
       `Повтор строки ${firstRow} — каждая запись может встречаться в файле только один раз`,
     errMalformedRow: (expected, found) =>
-      `В этой строке ${found} столбцов, в заголовке ${expected}`,
+      `В этой строке ${found} ${ruPlural(found, ["столбец", "столбца", "столбцов"])}, в заголовке ${expected}`,
     errBadQuotes: "Незакрытые кавычки в этой строке",
     errDuplicateHeader: (name: string) =>
       `Столбец ${name} встречается в заголовке несколько раз.`,

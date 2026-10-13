@@ -995,7 +995,7 @@ export const cs: Dictionary = {
     errDuplicateKey: (firstRow) =>
       `Duplicita řádku ${firstRow} — každý záznam smí být v souboru jen jednou`,
     errMalformedRow: (expected, found) =>
-      `Tento řádek má ${found} sloupců; záhlaví jich má ${expected}`,
+      `Tento řádek má ${found} ${csPlural(found, ["sloupec", "sloupce", "sloupců"])}; záhlaví jich má ${expected}`,
     errBadQuotes: "Neuzavřené uvozovky na tomto řádku",
     errDuplicateHeader: (name: string) =>
       `Sloupec ${name} je v záhlaví vícekrát.`,

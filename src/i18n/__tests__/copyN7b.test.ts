@@ -362,4 +362,45 @@ describe("N7b wording (#169, #152)", () => {
       expect(d.guide.projectionDefs.costs.meaning).toBe(meaning);
     },
   );
+  it.each([
+    [
+      "en",
+      en,
+      [
+        "This line has 1 column; the header has 8",
+        "This line has 3 columns; the header has 8",
+        "This line has 5 columns; the header has 8",
+      ],
+    ],
+    [
+      "cs",
+      cs,
+      [
+        "Tento řádek má 1 sloupec; záhlaví jich má 8",
+        "Tento řádek má 3 sloupce; záhlaví jich má 8",
+        "Tento řádek má 5 sloupců; záhlaví jich má 8",
+      ],
+    ],
+    [
+      "ru",
+      ru,
+      [
+        "В этой строке 1 столбец, в заголовке 8",
+        "В этой строке 3 столбца, в заголовке 8",
+        "В этой строке 5 столбцов, в заголовке 8",
+      ],
+    ],
+  ])(
+    "%s: the CSV row-length error declines its count (#169 G1-2-03)",
+    (_, d, texts) => {
+      expect([1, 3, 5].map((n) => d.importPage.errMalformedRow(8, n))).toEqual(
+        texts,
+      );
+    },
+  );
+
+  it("ru: the filter subtitle declines by the total (#169 G1-2-03)", () => {
+    expect(ru.dashboard.subFilter(1, 21)).toBe("1 из 21 объекта");
+    expect(ru.dashboard.subFilter(2, 5)).toBe("2 из 5 объектов");
+  });
 });

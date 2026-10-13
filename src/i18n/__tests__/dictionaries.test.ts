@@ -231,6 +231,8 @@ describe("i18n dictionaries — plural forms", () => {
       "importPage.confirmOverwriteMsg",
       // Added loan blocks that stop saved loan events (ADR 0160).
       "importPage.confirmReplaceMsg",
+      // A short CSV line's cell count (#169).
+      "importPage.errMalformedRow",
       // Backup recency (ADR 0110).
       "backup.agoDays",
       "backup.agoWeeks",
@@ -272,7 +274,12 @@ describe("i18n dictionaries — plural forms", () => {
         : [k],
     );
     expect(countInflected("en")).toEqual(counted);
-    expect(countInflected("ru")).toEqual(withIrrFoot);
+    // Russian declines "из N объекта" by the total; Czech and English need no form.
+    expect(countInflected("ru")).toEqual([
+      ...common,
+      "dashboard.subFilter",
+      ...withIrrFoot.slice(common.length),
+    ]);
     expect(countInflected("cs")).toEqual(csShocks);
   });
 

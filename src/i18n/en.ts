@@ -1058,7 +1058,7 @@ export const en = {
     errDuplicateKey: (firstRow: number) =>
       `Duplicate of row ${firstRow} — each record may appear only once per file`,
     errMalformedRow: (expected: number, found: number) =>
-      `This line has ${found} columns; the header has ${expected}`,
+      `This line has ${found} ${enPlural(found, ["column", "columns"])}; the header has ${expected}`,
     errBadQuotes: "Unbalanced quotation marks on this line",
     errDuplicateHeader: (name: string) =>
       `Column ${name} appears more than once in the header.`,
