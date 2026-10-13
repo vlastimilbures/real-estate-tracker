@@ -822,15 +822,15 @@ export const cs: Dictionary = {
     duplicatedScenario: (name) => `Zduplikováno „${name}“`,
     alreadySaved: (name) => `Už uloženo: „${name}“`,
     addedCompareFull: (name, max) =>
-      `Přidáno „${name}“. Porovnání už ukazuje ${max} scénáře, odškrtněte jeden, aby se zobrazil.`,
+      `Přidáno „${name}“. Porovnání už ukazuje ${max} ${csPlural(max, ["scénář", "scénáře", "scénářů"])}, odškrtněte jeden, aby se zobrazil.`,
     duplicatedCompareFull: (name, max) =>
-      `Zduplikováno „${name}“. Porovnání už ukazuje ${max} scénáře, odškrtněte jeden, aby se zobrazila kopie.`,
+      `Zduplikováno „${name}“. Porovnání už ukazuje ${max} ${csPlural(max, ["scénář", "scénáře", "scénářů"])}, odškrtněte jeden, aby se zobrazila kopie.`,
     confirmDelete: (name: string) =>
       `Smazat scénář „${name}“? Tuto akci nelze vrátit.`,
     deletedScenario: (name) => `Smazáno „${name}“`,
     listTitle: "Scénáře",
     listHint: (max) =>
-      `Zaškrtněte až ${max} scénáře k porovnání. Základ je navíc a nepočítá se.`,
+      `Zaškrtněte až ${max} ${csPlural(max, ["scénář", "scénáře", "scénářů"])} k porovnání. Základ je navíc a nepočítá se.`,
     duplicate: "Duplikovat",
     emptyList:
       "Zatím žádné uložené scénáře — použijte předvolbu nebo „Nový scénář“.",

@@ -218,6 +218,10 @@ describe("i18n dictionaries — plural forms", () => {
       // Amortization disclosure (ADR 0107).
       "propertyDetail.showAmortization",
       "propertyDetail.amortizationMonths",
+      // Compare holds MAX_COMPARE scenarios (#169).
+      "scenarios.addedCompareFull",
+      "scenarios.duplicatedCompareFull",
+      "scenarios.listHint",
       // Rate shock reach (ADR 0100).
       "scenarios.reachHits",
       "importPage.rowsReady",

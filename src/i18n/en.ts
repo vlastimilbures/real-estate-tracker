@@ -883,15 +883,15 @@ export const en = {
     duplicatedScenario: (name: string) => `Duplicated “${name}”`,
     alreadySaved: (name: string) => `Already saved: “${name}”`,
     addedCompareFull: (name: string, max: number) =>
-      `Added “${name}”. Compare already shows ${max} scenarios, so untick one to add it.`,
+      `Added “${name}”. Compare already shows ${max} ${enPlural(max, ["scenario", "scenarios"])}, so untick one to add it.`,
     duplicatedCompareFull: (name: string, max: number) =>
-      `Duplicated “${name}”. Compare already shows ${max} scenarios, so untick one to add the copy.`,
+      `Duplicated “${name}”. Compare already shows ${max} ${enPlural(max, ["scenario", "scenarios"])}, so untick one to add the copy.`,
     confirmDelete: (name: string) =>
       `Delete scenario “${name}”? This cannot be undone.`,
     deletedScenario: (name: string) => `Deleted “${name}”`,
     listTitle: "Scenarios",
     listHint: (max: number) =>
-      `Tick up to ${max} scenarios to compare. Base is extra and does not count.`,
+      `Tick up to ${max} ${enPlural(max, ["scenario", "scenarios"])} to compare. Base is extra and does not count.`,
     duplicate: "Duplicate",
     emptyList: "No saved scenarios yet — use a preset or “New scenario”.",
     compareTitle: "Compare",
