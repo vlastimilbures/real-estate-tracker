@@ -129,22 +129,29 @@ function parseFee(raw: string): Money | null | undefined {
   return fee?.isNegative() ? null : fee;
 }
 
+const prepaymentCells = (row: PrepaymentRow) => ({
+  date: parseDate(row.date),
+  amount: positive(row.amount),
+  fee: parseFee(row.fee),
+});
+
+const recastCells = (row: RecastRow) => ({
+  date: parseDate(row.date),
+  value: row.mode === "maturity" ? parseDate(row.value) : positive(row.value),
+});
+
+const drawCells = (row: DrawRow) => ({
+  date: parseDate(row.date),
+  amount: positive(row.amount),
+});
+
 /** Each cell parsed; null where it does not parse. */
-function cells(row: Row): Record<string, unknown> {
-  if ("effect" in row)
-    return {
-      date: parseDate(row.date),
-      amount: positive(row.amount),
-      fee: parseFee(row.fee),
-    };
-  if ("mode" in row)
-    return {
-      date: parseDate(row.date),
-      value:
-        row.mode === "maturity" ? parseDate(row.value) : positive(row.value),
-    };
-  return { date: parseDate(row.date), amount: positive(row.amount) };
-}
+const cells = (row: Row): Record<string, unknown> =>
+  "effect" in row
+    ? prepaymentCells(row)
+    : "mode" in row
+      ? recastCells(row)
+      : drawCells(row);
 
 /** The cells of a row that do not parse, in column order ([] for a blank row). */
 export function rowProblems(row: Row): string[] {
@@ -155,27 +162,22 @@ export function rowProblems(row: Row): string[] {
 }
 
 function toPrepayment(row: PrepaymentRow): MortgagePrepayment | null {
-  const date = parseDate(row.date);
-  const amount = positive(row.amount);
-  const fee = parseFee(row.fee);
+  const { date, amount, fee } = prepaymentCells(row);
   if (!date || !amount || fee === null) return null;
   return { date, amount, effect: row.effect, ...(fee ? { fee } : {}) };
 }
 
 function toRecast(row: RecastRow): LoanRecast | null {
-  const date = parseDate(row.date);
-  if (!date) return null;
-  if (row.mode === "maturity") {
-    const maturity = parseDate(row.value);
-    return maturity ? { date, maturity } : null;
-  }
-  const instalment = positive(row.value);
-  return instalment ? { date, instalment } : null;
+  const { date, value } = recastCells(row);
+  if (!date || !value) return null;
+  // A maturity parses to a date, an instalment to an amount.
+  return value instanceof Date
+    ? { date, maturity: value }
+    : { date, instalment: value };
 }
 
 function toDraw(row: DrawRow): MortgageDraw | null {
-  const date = parseDate(row.date);
-  const amount = positive(row.amount);
+  const { date, amount } = drawCells(row);
   return date && amount ? { date, amount } : null;
 }
 
