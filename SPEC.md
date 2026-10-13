@@ -137,10 +137,16 @@ override. (The seed sets an explicit `svjMonthly` per property to exercise this.
 ADR 0036). The codes: `INVALID_DATE`, `NON_FINITE_NUMBER`, `NEGATIVE_AMOUNT`,
 `NEGATIVE_PRINCIPAL`, `RATE_OUT_OF_RANGE`, `INSTALMENT_BELOW_INTEREST`,
 `ZERO_RATE_ZERO_INSTALMENT`, `MISSING_TERM_FOR_DEV_LOAN`, `NON_POSITIVE_DRAW`,
-`DRAW_BEFORE_START`, `COMPLETION_BEFORE_START`, `DUPLICATE_BLOCK_START`, `END_BEFORE_START`,
+`DRAW_BEFORE_START`, `DRAW_AFTER_SCHEDULE_END`, `COMPLETION_BEFORE_START`, `DUPLICATE_BLOCK_START`, `END_BEFORE_START`,
 `DUPLICATE_HOLDING_COST`, `ORPHAN_ROW`, `HORIZON_NOT_POSITIVE`, `INVALID_TERM`,
 `SHOCK_OUT_OF_RANGE`, `GROWTH_OUT_OF_RANGE`, `SHOCKED_RATE_OUT_OF_RANGE`,
-`SHOCKED_INFLATION_OUT_OF_RANGE`, `ASOF_BEFORE_BASEDATE`. Ranges (ADR 0038, ADR 0128):
+`SHOCKED_INFLATION_OUT_OF_RANGE`, `ASOF_BEFORE_BASEDATE`, `NON_POSITIVE_PREPAYMENT`,
+`EVENT_BEFORE_START`, `EVENT_AFTER_SCHEDULE_END`, `INVALID_RECAST`, `INVALID_RECAST_MATURITY`,
+`RECAST_INSTALMENT_BEFORE_COMPLETION`, `LEASE_OVERLAP`. Loan events (ADR 0109): a prepayment
+amount above 0; a prepayment or recast after its block's start and before its schedule end; a
+recast maturity that leaves the next payment, stays within the term cap and, on a development
+loan, falls after the completion's payment; a recast instalment above 0 and dated after the
+completion. Two leases of one property must not overlap (ADR 0163). Ranges (ADR 0038, ADR 0128):
 interest 0–100 %, the post-fixation reset rate included; vacancy, cost shares, value haircut
 and the acquisition cost rate 0–1 (ADR 0119); shock durations whole years ≥ 0; horizon a
 whole number ≥ 1; growth, indexation, inflation and a property's growth overrides may be
@@ -306,7 +312,9 @@ table and its export show `dueDate`.
   block: until baseDate or its later start, ADR 0162), then
   `postFixationResetRatePa`. (Monthly rate = annual/12.) A `rateShock` raises the reset
   rate by `deltaPa` for `durationYears` from each loan's own fixation end, then reverts
-  (ADR 0028); a floating block's window starts at baseDate or its later start.
+  (ADR 0028); a floating block's window starts at baseDate or its later start. Only
+  payments due after baseDate are shocked, so a window that began before baseDate is
+  shortened, or gone (ADR 0079).
 - **Instalment**: the entered instalment until the reset; at the reset re-amortize
   `instalment = PMT(reset/12, remainingPayments, -B)` and hold it thereafter
   (constant-maturity refix). The instalment is **not rounded** (ADR 0020).
@@ -475,7 +483,10 @@ appreciation; rent index `idx` likewise):
   year (ADR 0165).
 - `NOI_t = effective_t − holding_t`
 - `interest_t / principal_t / debtService_t / draws_t / balance_t` from the monthly schedule;
-  `balance_t = balance_{t−1} − principal_t + draws_t`.
+  `balance_t = balance_{t−1} − principal_t − prepaid_t + draws_t + refinanced_t`. `draws_t` is
+  new debt drawn (tranches, a future purchase's loan); `refinanced_t` is a refinance
+  handover's difference (successor principal − balance paid off), negative when the refinance
+  pays debt down (ADR 0130).
 - `acquiredValue_t` = a future purchase's value at its purchase date in its turn-on year,
   else 0 (ADR 0165). The Dashboard's equity-change chart shows it as **Purchases**, apart
   from appreciation (shown only when some year has one).
@@ -498,9 +509,9 @@ appreciation; rent index `idx` likewise):
 - The **last lease** (latest start date) keeps renting past its end date — it is treated as
   renewed — unless it ended before the basis date. Only a gap between two leases is empty.
 - Each lease is indexed from its own turn-on year:
-  `monthly_t = monthlyRent × (1+idx)^(t − t₀)`, where `t₀` = 0 for a lease in force at the
-  basis date, else the projection year whose slice contains the lease's start (its first
-  grid month on/after the start date).
+  `monthly_t = monthlyRent × (1+idx)^(t − t₀)`, where `t₀` = the projection year of the
+  lease's first grid month on or after the later of its start date and the basis date (0 when
+  that is baseDate itself; for a future purchase, its turn-on year).
 - `gross_t` = Σ over the year's 12 grid months of that month's `monthly_t`.
 
 _Example_ (baseDate 1 Jan 2026, `idx` = 3 %, vacancy ignored): lease A 20 000 Kč/month,
@@ -700,7 +711,9 @@ data (properties/mortgages/etc.) is shared; only assumptions differ. The engine'
   `durationYears` years from baseDate, then reverts.
 - **Temporary rate shock** (`rateShock`): raises the reset rate by `deltaPa` for
   `durationYears` years starting at **each loan's own fixation end** (ADR 0028); for a
-  floating block, at baseDate or its later start (ADR 0162).
+  floating block, at baseDate or its later start (ADR 0162). Only payments due after
+  baseDate are shocked, so a window that began before baseDate is shortened, or gone
+  (ADR 0079; the reach note says so, ADR 0100).
 - **Permanent value shock** (`valueShock`): haircut property values by `pct` starting from
   year `atYear`; appreciation resumes off the lower base thereafter.
 
