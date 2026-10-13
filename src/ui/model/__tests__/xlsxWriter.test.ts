@@ -11,7 +11,6 @@ import { fmtCzk, fmtMultiple, fmtPct } from "../../../lib/format";
 import { D, type Decimal } from "../../../lib/money";
 import {
   buildWorkbook,
-  buildXlsx,
   numFmt,
   xlsxSheet,
   type XlsxColumn,
@@ -28,7 +27,7 @@ let ws: ExcelJS.Worksheet;
 async function sheet<R>(cols: XlsxColumn<R>[], data: R[]) {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(
-    (await buildXlsx({ sheetName: "S", columns: cols, rows: data }))
+    (await buildWorkbook([xlsxSheet({ name: "S", columns: cols, rows: data })]))
       .buffer as ArrayBuffer,
   );
   return wb.getWorksheet("S")!;
@@ -40,7 +39,7 @@ beforeAll(async () => {
 
 const colIdx = (h: string) => columns.findIndex((c) => c.header === h) + 1;
 
-describe("buildXlsx — projection sheet", () => {
+describe("buildWorkbook — projection sheet", () => {
   it("writes a bold header row with the column headers, then one row per year", () => {
     const header = ws.getRow(1);
     expect(header.font?.bold).toBe(true);
@@ -112,7 +111,7 @@ describe("buildXlsx — projection sheet", () => {
 
 // ADR 0159 (#123): no column opens as "####", the header row and Year column stay in view,
 // and a loss shows red in parentheses as on screen (CLAUDE.md §5).
-describe("buildXlsx — layout", () => {
+describe("buildWorkbook — layout", () => {
   for (const t of [en, cs]) {
     it(`${t === en ? "en" : "cs"}: each column is as wide as its widest shown value`, async () => {
       const cols = projectionColumns(t, assumptions.baseDate, rows);

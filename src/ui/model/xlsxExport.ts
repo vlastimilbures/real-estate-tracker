@@ -184,17 +184,10 @@ function addCells(ws: Worksheet, cells: { kind: CellKind; value: Cell }[]) {
 export const XLSX_MIME =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-/** Build the workbook bytes for one sheet (pure: no download, no dialog). */
-export async function buildXlsx<R>(opts: {
-  sheetName: string;
-  columns: XlsxColumn<R>[];
-  rows: R[];
-}): Promise<Uint8Array> {
-  const { sheetName, columns, rows } = opts;
-  return buildWorkbook([xlsxSheet({ name: sheetName, columns, rows })]);
-}
+const text = (value: string) => ({ kind: "text" as const, value });
 
-/** Build the workbook bytes, one worksheet per sheet in order (pure). */
+/** Build the workbook bytes, one worksheet per sheet in order (pure: no download, no
+ *  dialog). */
 export async function buildWorkbook(
   sheets: XlsxSheetCells[],
 ): Promise<Uint8Array> {
@@ -212,7 +205,6 @@ export async function buildWorkbook(
       views: [{ state: "frozen", xSplit: 1, ySplit: 1 }],
     });
 
-    const text = (value: string) => ({ kind: "text" as const, value });
     addCells(ws, headers.map(text)).font = { bold: true };
 
     for (const cells of rows) addCells(ws, cells);
