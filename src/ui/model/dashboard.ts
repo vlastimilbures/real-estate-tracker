@@ -13,7 +13,6 @@ import {
 import type {
   Assumptions,
   PortfolioSnapshot,
-  PortfolioKPIs,
   ProjectionYear,
   Property,
   PropertySnapshot,
@@ -34,11 +33,6 @@ export function monthlyFlow(s: PortfolioSnapshot): MonthlyFlow {
   const inflow = s.effectiveGrossIncome.div(12);
   const outflow = s.holdingCosts.plus(s.annualDebtService).div(12);
   return { inflow, outflow, net: inflow.minus(outflow) };
-}
-
-/** Net worth at the horizon under the chosen lens (engine already provides both). */
-export function netWorthHorizon(kpis: PortfolioKPIs, mode: Mode): Decimal {
-  return mode === "real" ? kpis.netWorthReal : kpis.netWorthNominal;
 }
 
 /** Projection year (0..horizon) closest to an as-of date, on the baseDate-anchored

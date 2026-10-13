@@ -333,8 +333,8 @@ export function KpiListPanel({
 }) {
   const t = useT();
   const real = mode === "real";
-  const cagr = real ? kpis.cagrReal : kpis.cagrNominal;
   const lens = lensKpis(kpis, mode);
+  const cagr = lens.cagr;
   return (
     <Panel
       title={t.dashboard.kpiTitle}

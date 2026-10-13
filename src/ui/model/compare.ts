@@ -13,7 +13,7 @@ import type { Decimal } from "../../lib/money";
 import type { PortfolioKPIs, ProjectionYear } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import type { Mode } from "./lens";
-import { irrReasonText, leveredIrr } from "./irr";
+import { irrReasonText } from "./irr";
 import { lensKpis } from "./lensKpis";
 import { at } from "../../lib/arrays";
 import { BASE_SCENARIO_ID } from "./scenarios";
@@ -142,8 +142,8 @@ function kpiRowSpecs(
 ): KpiRowSpec[] {
   const s = t.scenarios;
   const real = mode === "real";
-  const netWorth = (r: CompareResult) =>
-    real ? r.kpis.netWorthReal : r.kpis.netWorthNominal;
+  const lens = (r: CompareResult) => lensKpis(r.kpis, mode);
+  const netWorth = (r: CompareResult) => lens(r).netWorth;
   const rebased = (r: CompareResult) =>
     base !== undefined && startsDifferently(r, base);
 
@@ -168,17 +168,14 @@ function kpiRowSpecs(
       return { text: s.deltaYears(v - w) };
     };
   const pp = (d: Decimal) => `${fmtPp(d)} ${s.ppSuffix}`;
-  const irrRate = (r: CompareResult) => leveredIrr(r.kpis, mode).rate;
+  const irrRate = (r: CompareResult) => lens(r).leveredIrr.rate;
   const irrDelta = decimalDelta(irrRate, pp);
 
   // Each row's value, shared by its text, its Δ and its export cell.
   const startEquity = (r: CompareResult) => at(rowsOf(r, mode), 0).equity;
-  const multiple = (r: CompareResult) =>
-    lensKpis(r.kpis, mode).netWorthMultiple;
-  const cagr = (r: CompareResult) =>
-    real ? r.kpis.cagrReal : r.kpis.cagrNominal;
-  const cumCf = (r: CompareResult) =>
-    lensKpis(r.kpis, mode).cumulativeNetCashFlow;
+  const multiple = (r: CompareResult) => lens(r).netWorthMultiple;
+  const cagr = (r: CompareResult) => lens(r).cagr;
+  const cumCf = (r: CompareResult) => lens(r).cumulativeNetCashFlow;
   const firstCfYear = (r: CompareResult) => r.kpis.firstCashFlowPositiveYear;
   const debtFreeYear = (r: CompareResult) => r.kpis.debtFreeYear;
 
@@ -249,14 +246,14 @@ function kpiRowSpecs(
       },
       kind: "percent",
       value: (r) => irrRate(r) ?? t.common.notApplicable,
-      note: (r) => irrReasonText(t, leveredIrr(r.kpis, mode).reason),
+      note: (r) => irrReasonText(t, lens(r).leveredIrr.reason),
       mark: rebased,
       // A scenario IRR without a value keeps its reason (UX-079).
       delta: (r, b) =>
         irrRate(r) === null
           ? {
               text: "—",
-              note: irrReasonText(t, leveredIrr(r.kpis, mode).reason),
+              note: irrReasonText(t, lens(r).leveredIrr.reason),
             }
           : irrDelta(r, b),
     },
