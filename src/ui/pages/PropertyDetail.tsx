@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { asOfBounds } from "../model/asOf";
 import {
   Pencil,
   Power,
@@ -332,10 +331,7 @@ export function PropertyDetail() {
             <AsOfPicker
               value={asOf}
               onChange={setAsOf}
-              bounds={asOfBounds(
-                assumptions.baseDate,
-                assumptions.horizonYears,
-              )}
+              bounds={view.bounds}
               hint={pickerHint}
             />
           </div>

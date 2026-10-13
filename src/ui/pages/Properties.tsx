@@ -2,8 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { MetricLabel } from "../components/MetricLabel";
 import { Pencil, Trash2, Plus, Building2, Upload } from "lucide-react";
 import { useEngine, useProjections } from "../../state/useEngine";
-import { todayUtc } from "../../lib/day";
-import { asOfBounds, resolveAsOf } from "../model/asOf";
+import { useAsOf } from "../hooks/useAsOf";
 import { asOfView, propertyRowsForAsOf } from "../model/dashboard";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
@@ -48,14 +47,7 @@ export function Properties() {
   const t = useT();
   // Today by the one resolver, as Property detail shows it at Today (ADR 0150); Properties
   // does not follow the picked as-of date (ADR 0111).
-  const assumptions = usePortfolioStore((s) => s.assumptions);
-  const view = assumptions
-    ? resolveAsOf(
-        null,
-        todayUtc(),
-        asOfBounds(assumptions.baseDate, assumptions.horizonYears),
-      )
-    : null;
+  const view = useAsOf({ followPick: false });
   const engine = useEngine(null, view?.date ?? null);
   const projections = useProjections()?.byProperty;
   const removeProperty = usePortfolioStore((s) => s.removeProperty);

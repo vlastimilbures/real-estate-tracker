@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useEngine } from "../../state/useEngine";
-import { asOfBounds } from "../model/asOf";
 import { useUiStore } from "../../state/uiStore";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { AppShell } from "../components/AppShell";
@@ -188,7 +187,7 @@ export function Dashboard() {
         <AsOfPicker
           value={asOf}
           onChange={setAsOf}
-          bounds={asOfBounds(assumptions.baseDate, assumptions.horizonYears)}
+          bounds={view.bounds}
           hint={asOfHint(t, basis, assumptions.baseDate)}
         />
       </div>
