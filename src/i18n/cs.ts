@@ -858,6 +858,8 @@ export const cs: Dictionary = {
     deltaNoBaseValue: "Základ nemá hodnotu",
     rebasedReturnsFootnote: (names: string) =>
       `Výnosy pro ${names} se měří od nižšího počátečního kapitálu po propadu cen; ztrátu pro vás ukazuje Δ čistého jmění vůči Základu spolu s kumulativní hotovostí vlastníkovi.`,
+    levelNotApplied: (scenario, names) =>
+      `${scenario} – úroveň neplatí pro: ${names} (vlastní míra růstu)`,
     kpiNetWorthNominal: "Čisté jmění (nominální)",
     kpiNetWorthReal: "Čisté jmění (reálné)",
     kpiNetWorthMultiple: "Násobek čistého jmění",

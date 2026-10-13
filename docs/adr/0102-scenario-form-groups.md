@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #52 (Scenarios critical review after #15)
+- Amended by: [0190](0190-compare-names-own-rate-properties.md) (the compare names the
+  properties a level does not reach)
 
 ## Context
 

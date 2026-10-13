@@ -258,6 +258,21 @@ describe("compareWorkbook — n/a cells and notes", () => {
     );
   });
 
+  // ADR 0190: the own-rate lines follow the footnote, before the IRR reasons.
+  it("notes: own-rate lines after the footnote, before the IRR reasons", () => {
+    const own = en.scenarios.levelNotApplied("flat", "Byt Javorova");
+    const s = sheetOf(
+      compareWorkbook(en, [base, crash, flat], "nominal", [own]).sheets,
+      en.xlsx.sheetNames.compareKeyFigures,
+    );
+    expect(s.notes).toEqual([
+      en.projections.nominalKc,
+      `* ${en.scenarios.rebasedReturnsFootnote("crash")}`,
+      own,
+      `flat: ${en.common.irrNotUnique}`,
+    ]);
+  });
+
   it("without Base: no Δ row and no footnote", () => {
     const s = keyFigures("nominal", [shocked, crash]);
     expect(s.rows.map((r) => r[0]?.value)).not.toContain(

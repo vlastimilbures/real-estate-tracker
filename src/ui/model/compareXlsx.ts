@@ -31,6 +31,8 @@ export function compareWorkbook(
   t: Dictionary,
   results: CompareResult[],
   mode: Mode,
+  /** Extra Key figures notes after the footnote: the own-rate lines (ADR 0190). */
+  notes: string[] = [],
 ): { filename: string; sheets: XlsxSheetCells[] } {
   const names = t.xlsx.sheetNames;
   // Real names the base date its Kč are in: the opening year is the base-date point (D-22).
@@ -62,7 +64,7 @@ export function compareWorkbook(
   return {
     filename: `scenario-compare-${mode}.xlsx`,
     sheets: [
-      keyFiguresSheet(t, results, mode, lens),
+      keyFiguresSheet(t, results, mode, lens, notes),
       chart(names.compareNetWorth, "money", (y) => y.equity),
       chart(names.compareNetCashFlow, "money", (y) => y.netCashFlow, {
         flow: true,
@@ -72,13 +74,14 @@ export function compareWorkbook(
   };
 }
 
-/** Metric rows, one column per scenario; the lens, the rebased-returns footnote and each
- *  n/a IRR's reason follow as notes. */
+/** Metric rows, one column per scenario; the lens, the rebased-returns footnote, the
+ *  own-rate lines and each n/a IRR's reason follow as notes. */
 function keyFiguresSheet(
   t: Dictionary,
   results: CompareResult[],
   mode: Mode,
   lens: string,
+  ownRate: string[],
 ): XlsxSheetCells {
   const footnote = compareFootnote(t, results);
   const irrNotes = results.flatMap((r) => {
@@ -96,6 +99,11 @@ function keyFiguresSheet(
       })),
     ],
     rows: compareValueRows(t, mode, compareBase(results)),
-    notes: [lens, ...(footnote ? [`* ${footnote}`] : []), ...irrNotes],
+    notes: [
+      lens,
+      ...(footnote ? [`* ${footnote}`] : []),
+      ...ownRate,
+      ...irrNotes,
+    ],
   });
 }

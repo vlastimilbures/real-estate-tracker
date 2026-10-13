@@ -15,6 +15,11 @@ engine without the form, and remove it when the last part lands.
 
 ### Added
 
+- Scenario compare names the properties a scenario's growth level does not reach (ADR
+  0190, #166): when a scenario sets the appreciation or rent-indexation level, a line under
+  the key figures lists the active properties that keep their own rate, for example "Low
+  growth – level not applied to: Javorová, Lesní (own growth rate)". The Excel export
+  carries the same lines in its Key figures notes.
 - Settings → Assumptions has a **Selling costs at horizon** rate (ADR 0183, #148). It
   takes agent and legal fees on a sale at the end of the horizon off the levered IRR's end
   value only; net worth, the multiple and CAGR stay value minus debt. It is 0 % unless set,

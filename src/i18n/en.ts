@@ -917,6 +917,9 @@ export const en = {
     deltaNoBaseValue: "Base has no value",
     rebasedReturnsFootnote: (names: string) =>
       `Returns for ${names} are measured from a lower starting equity after the price crash; for the loss to you, compare both Δ net worth vs Base and cumulative cash to owner.`,
+    // A scenario level a property's own rate overrides (ADR 0190)
+    levelNotApplied: (scenario: string, names: string) =>
+      `${scenario} – level not applied to: ${names} (own growth rate)`,
     kpiNetWorthNominal: "Net worth (nominal)",
     kpiNetWorthReal: "Net worth (real)",
     kpiNetWorthMultiple: "Net-worth multiple",

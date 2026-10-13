@@ -19,6 +19,7 @@ import {
   compareKpiRows,
   compareSeriesStyle,
   mergeCompareMetric,
+  ownRateNotes,
   type CompareResult,
 } from "../compare";
 import { SERIES } from "../chartData";
@@ -431,5 +432,99 @@ describe("compareSeriesStyle", () => {
   it("cycles after four lines", () => {
     expect(compareSeriesStyle(4)).toEqual(compareSeriesStyle(0));
     expect(compareSeriesStyle(5)).toEqual(compareSeriesStyle(1));
+  });
+});
+
+// ADR 0190 (#166): a scenario level does not reach a property with its own rate; the
+// compare names those properties, one line per scenario.
+describe("ownRateNotes", () => {
+  const [a, b, c] = portfolio.properties;
+  const props = [
+    { ...a!, appreciationOverridePa: rate("0.01") },
+    { ...b!, rentIndexOverridePa: rate("0.02") },
+    {
+      ...c!,
+      appreciationOverridePa: rate("0.01"),
+      rentIndexOverridePa: rate("0.02"),
+    },
+  ];
+  const scenario = (name: string, overrides = {}) => ({
+    id: name,
+    name,
+    overrides,
+  });
+  const line = (name: string, names: string) =>
+    en.scenarios.levelNotApplied(name, names);
+
+  it("an appreciation level names properties with their own appreciation", () => {
+    expect(
+      ownRateNotes(en, [scenario("Low", { appreciationPa: rate("0") })], props),
+    ).toEqual([line("Low", `${a!.name}, ${c!.name}`)]);
+  });
+
+  it("a rent level names properties with their own indexation", () => {
+    expect(
+      ownRateNotes(
+        en,
+        [scenario("Rent", { rentIndexationPa: rate("0.01") })],
+        props,
+      ),
+    ).toEqual([line("Rent", `${b!.name}, ${c!.name}`)]);
+  });
+
+  it("both levels name each property once, in portfolio order", () => {
+    expect(
+      ownRateNotes(
+        en,
+        [
+          scenario("Both", {
+            appreciationPa: rate("0"),
+            rentIndexationPa: rate("0"),
+          }),
+        ],
+        props,
+      ),
+    ).toEqual([line("Both", `${a!.name}, ${b!.name}, ${c!.name}`)]);
+  });
+
+  it("skips inactive properties", () => {
+    expect(
+      ownRateNotes(
+        en,
+        [scenario("Low", { appreciationPa: rate("0") })],
+        [props[0]!, { ...props[2]!, active: false }],
+      ),
+    ).toEqual([line("Low", a!.name)]);
+  });
+
+  it("Base, shock-only and other levels get no line; one line per scenario", () => {
+    expect(
+      ownRateNotes(
+        en,
+        [
+          scenario("Base"),
+          scenario("Shock", {
+            inflationShock: { deltaPa: rate("0.06"), durationYears: 3 },
+          }),
+          scenario("Vacancy", { vacancyAllowance: rate("0.1") }),
+          scenario("Low", { appreciationPa: rate("0") }),
+          scenario("Rent", { rentIndexationPa: rate("0") }),
+        ],
+        props,
+      ),
+    ).toEqual([
+      line("Low", `${a!.name}, ${c!.name}`),
+      line("Rent", `${b!.name}, ${c!.name}`),
+    ]);
+  });
+
+  it("no property with its own rate: no line", () => {
+    expect(
+      ownRateNotes(
+        en,
+        [scenario("Low", { appreciationPa: rate("0") })],
+        portfolio.properties,
+      ),
+    ).toEqual([]);
   });
 });
