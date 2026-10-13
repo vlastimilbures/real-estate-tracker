@@ -8,8 +8,11 @@ import { ru } from "../ru";
 import { leaves, type Tree } from "./support/leaves";
 
 type Fn = (...args: unknown[]) => unknown;
+// A function renders at 1, 2 and 5 so every plural branch is scanned.
 const text = (v: unknown) =>
-  typeof v === "function" ? String((v as Fn)(5, 5, 5, 5)) : String(v);
+  typeof v === "function"
+    ? [1, 2, 5].map((n) => String((v as Fn)(n, n, n, n))).join(" | ")
+    : String(v);
 const E = leaves(en as unknown as Tree);
 const DICTS = { cs, ru } as const;
 
@@ -54,17 +57,19 @@ const RETIRED: Record<keyof typeof DICTS, [RegExp, string][]> = {
     [/držení/, "náklady na držbu"],
     [/\bstart/i, "začátek"],
     [/Development/, "výstavba"],
-    [/Daň z nemovitosti/, "daň z nemovitých věcí"],
+    [/daň z nemovitosti/i, "daň z nemovitých věcí"],
+    [/výchozí(m)? dat/i, "základní datum"],
+    [/znovu umoř/i, "přepočet splátky"],
   ],
   ru: [
-    [/(^|[^а-яё])тел[оау]([^а-яё]|$)/i, "основной долг"],
+    [/(^|[^а-яё])тел(о|а|у|ом|е)([^а-яё]|$)/i, "основной долг"],
     [/сброс/i, "конец фиксации / смена ставки"],
     [/рефикс|перефикс/i, "конец фиксации / новая фиксация"],
     [/переамортиз/i, "пересчёт платежа"],
     [/переякор/i, "рост отсчитывается заново"],
     [/выдан/i, "выбрано"],
     [/амортизац/i, "график платежей"],
-    [/Номинал([^ь]|$)/, "номинальные"],
+    [/[Нн]оминал(?![ьу])/, "номинальные"],
     [/(?<!%\s?)годовых/, "в год / годовая ставка"],
   ],
 };
