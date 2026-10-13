@@ -14,7 +14,7 @@ import {
   TableWrap,
   StatList,
 } from "../components/primitives";
-import { ChartCard, CzkLines, SignedBars } from "../components/charts";
+import { ChartCard } from "../components/charts";
 import {
   COMMITTED_DASH,
   SERIES,
@@ -107,22 +107,15 @@ export function PropertySnapshotTiles({
           kind="czk"
           rows={chartRows}
           series={valueSeries}
-        >
-          <CzkLines data={chartRows} series={valueSeries} />
-        </ChartCard>
+        />
         <ChartCard
           title={t.propertyDetail.chartNetCashFlowByYear}
           sub={t.propertyDetail.subMKcMode(modeWord)}
           kind="czk"
           rows={chartRows}
+          chart="signed"
           series={cashFlowSeries}
-        >
-          <SignedBars
-            data={chartRows}
-            dataKey="netCashFlow"
-            name={t.propertyDetail.seriesNetCashFlow}
-          />
-        </ChartCard>
+        />
       </div>
     </>
   );

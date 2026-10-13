@@ -13,9 +13,8 @@ import {
   vi,
 } from "vitest";
 import { act, render } from "@testing-library/react";
-import type { ReactElement, ReactNode } from "react";
-import { ResponsiveContainer } from "recharts";
-import { PctLine, PctLines } from "../charts";
+import type { ReactElement } from "react";
+import { ChartCard } from "../charts";
 import { useUiStore } from "../../../state/uiStore";
 
 type TooltipProps = {
@@ -77,12 +76,6 @@ const rows = [
   { year: 1, calendarYear: 2027, ltv: null, s0: 0.31, s1: null },
 ];
 
-const sized = (chart: ReactNode) => (
-  <ResponsiveContainer width="100%" height={196}>
-    {chart}
-  </ResponsiveContainer>
-);
-
 /** Renders the tooltip content the chart handed to Recharts for a hovered gap. */
 function hoverText(p: TooltipProps, dataKey: string): string {
   const el = p.content?.({
@@ -95,17 +88,17 @@ function hoverText(p: TooltipProps, dataKey: string): string {
 }
 
 describe("percent chart tooltips keep a null LTV", () => {
-  it("PctLines (scenario compare)", () => {
+  it("several series (scenario compare)", () => {
     render(
-      sized(
-        <PctLines
-          data={rows}
-          series={[
-            { key: "s0", name: "Base", color: "red" },
-            { key: "s1", name: "Crash", color: "blue" },
-          ]}
-        />,
-      ),
+      <ChartCard
+        title="LTV"
+        kind="pct"
+        rows={rows}
+        series={[
+          { key: "s0", name: "Base", color: "red" },
+          { key: "s1", name: "Crash", color: "blue" },
+        ]}
+      />,
     );
     const p = seen.at(-1)!;
     expect(p.filterNull).toBe(false);
@@ -113,15 +106,16 @@ describe("percent chart tooltips keep a null LTV", () => {
     expect(hoverText(p, "s1")).toContain("n/a");
   });
 
-  it("PctLine (Dashboard LTV)", () => {
+  it("one series (Dashboard LTV)", () => {
     render(
-      sized(
-        <PctLine
-          data={rows as unknown as Parameters<typeof PctLine>[0]["data"]}
-          dataKey="ltv"
-          name="LTV"
-        />,
-      ),
+      <ChartCard
+        title="LTV"
+        kind="pct"
+        rows={rows}
+        series={[
+          { key: "ltv", name: "LTV", color: "red", defaultActiveDot: true },
+        ]}
+      />,
     );
     const p = seen.at(-1)!;
     expect(p.filterNull).toBe(false);
