@@ -109,8 +109,10 @@ describe("summarize", () => {
       rateShock: { deltaPa: rate("0.02"), durationYears: 3 },
       valueShock: { pct: rate("0.1"), atYear: 0 },
     });
-    expect(summarize(s, en, "hits 3 of 3 loans (refix 2029, 2031)")).toBe(
-      "rates +2,0 pp for 3y, hits 3 of 3 loans (refix 2029, 2031) · value −10,0 %",
+    expect(
+      summarize(s, en, "hits 3 of 3 loans (fixation end 2029, 2031)"),
+    ).toBe(
+      "rates +2,0 pp for 3y, hits 3 of 3 loans (fixation end 2029, 2031) · value −10,0 %",
     );
   });
 

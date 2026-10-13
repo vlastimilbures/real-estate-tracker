@@ -28,7 +28,9 @@ in the wording log (2026-10-13 · N7b).
 2. Czech uses "konec fixace" and "sazba po skončení fixace", "začátek" for a loan's start,
    "Výstavba", "Začátek", "Náklady na držbu", "Daň z nemovitých věcí" and
    "Splátkový kalendář".
-3. English drops "refix" ("Rate shock at fixation end"); "rate reset" stays.
+3. English drops "refix" ("Rate shock at fixation end", and the rate-shock reach note
+   that is part of a compare column header's name: "(fixation end 2031)"); "rate reset"
+   stays.
 4. Count words use the plural helpers (CSV row length, Russian filter subtitle, compare-full
    toasts).
 5. A duplicate's name takes the suffix `scenarios.copyName` in the UI language; names saved

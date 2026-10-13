@@ -634,7 +634,7 @@ export const en = {
     loanTypeClearAndSwitch: "Clear and switch",
     loanTypeKeepDevelopment: "Keep development",
     successorNote:
-      "A new block replaces the current one from its start date (refix or refinance). The app models one active loan per property.",
+      "A new block replaces the current one from its start date (new fixation or refinance). The app models one active loan per property.",
     successorLearnMore: "Learn more",
     // Holding costs
     holdingCostsTitle: "Holding costs",
@@ -725,7 +725,7 @@ export const en = {
       `${months} before the contract maturity ${contract}.`,
     maturityCheck: "Check the instalment or the maturity date.",
     fixationEnded: (end: string, rate: string) =>
-      `Its fixation ended on ${end} and no follow-on block is entered, so the app assumes the reset rate of ${rate} from then on. Add the refix terms as a new mortgage block.`,
+      `Its fixation ended on ${end} and no follow-on block is entered, so the app assumes the reset rate of ${rate} from then on. Add the terms of the new fixation as a new mortgage block.`,
     fixationEndedUntil: (end: string, until: string, rate: string) =>
       `Its fixation ended on ${end} and the next block starts only on ${until}, so the app assumes the reset rate of ${rate} from ${end} until ${until}. Add the terms for those months as a mortgage block.`,
     fieldPrepayments: "Prepayments",
@@ -864,7 +864,7 @@ export const en = {
       "Rate, inflation, price-crash and combined shocks are hidden.",
     atStart: "Start",
     atStartTitle: (date: string) => `At projection start (${date})`,
-    rateShockAtRefix: "Rate shock @ refix",
+    rateShockAtRefix: "Rate shock at fixation end",
     inflationShock: "Inflation shock",
     priceCrash: "Price crash",
     crashWhen: "When",
@@ -934,8 +934,8 @@ export const en = {
     sumRateShock: (v: string, years: number) => `rates ${v} pp for ${years}y`,
     // Which loans a rate shock reaches (ADR 0100)
     reachHits: (n: number, m: number, years: string) =>
-      `hits ${n} of ${m} ${enPlural(m, ["loan", "loans"])} (refix ${years})`,
-    reachNone: "no loan refixes inside the shock window, so no effect",
+      `hits ${n} of ${m} ${enPlural(m, ["loan", "loans"])} (fixation end ${years})`,
+    reachNone: "no loan's fixation ends inside the shock window, so no effect",
     // A saved scenario that breaks an engine rule, or cannot be read (ADR 0123)
     unreadableRow:
       "Cannot be read, so it is left out. Delete it before you export: a backup that contains it cannot be restored.",
@@ -957,7 +957,7 @@ export const en = {
     fieldPostFixationReset: "Post-fixation reset rate",
     fieldInflation: "Inflation p.a.",
     fieldInflationShock: "Inflation shock",
-    fieldRateShock: "Rate shock at refix",
+    fieldRateShock: "Rate shock at fixation end",
     fieldValueCrash: "Value crash",
     forYears: "…for years",
     atYear: "…at year",
@@ -1626,8 +1626,8 @@ export const en = {
       },
       rateShock: {
         name: "Rate shock",
-        formula: "+Δ around refix",
-        meaning: "A higher rate around a fixation reset for a set period.",
+        formula: "+Δ around fixation end",
+        meaning: "A higher rate around a fixation end for a set period.",
       },
       valueCrash: {
         name: "Value crash",

@@ -82,7 +82,7 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   `dashboard.monthlyHint`, `propertyDetail.helpDraws`, `instalmentHintDev`,
   `warnAfterCompletion`, `drawnAtStartNoDate`, `drawdownTotal`, `acqHint`, `mortgagesHint`,
   `helpCompletionDate`, `helpNewBlock`, `fixationEnded`, `fixationGap`, `noEffectNote`;
-  `scenarios.reachHits`, `scenarios.reachNone`; `backup.folderHint`, `restoreBody`,
+  `backup.folderHint`, `restoreBody`,
   `restoreWarning`, `backup.tables.holding_costs`; `importPage.errMalformedRow`;
   `about.appBody`; Guide prose and definitions (`cardAsOfBody`, `mortgagesProse1Mid`,
   `mortgagesProse1Post`, `mortgagesProse2Resets`, `mortgagesProse2Reamortizes`,

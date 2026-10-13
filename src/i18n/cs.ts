@@ -115,7 +115,7 @@ export const cs: Dictionary = {
       "Sazba po skončení fixace plus šok sazby musí zůstat od 0 % do 100 %",
     SHOCKED_INFLATION_OUT_OF_RANGE:
       "Inflace plus inflační šok musí zůstat vyšší než −100 %",
-    ASOF_BEFORE_BASEDATE: "Datum je před výchozím datem",
+    ASOF_BEFORE_BASEDATE: "Datum je před základním datem",
     NON_POSITIVE_PREPAYMENT: "Každá mimořádná splátka musí být vyšší než nula",
     EVENT_BEFORE_START:
       "Mimořádná splátka nebo změna splatnosti musí mít datum po začátku úvěru",
@@ -526,7 +526,7 @@ export const cs: Dictionary = {
     colEnd: "Konec",
     colMonthlyRent: "Měsíční nájem",
     mortgagesTitle: "Hypoteční bloky",
-    mortgagesHint: "konec fixace resetuje sazbu a znovu umořuje",
+    mortgagesHint: "na konci fixace se změní sazba a splátka se přepočítá",
     addMortgage: "hypoteční blok",
     colInitialPrincipal: "Počáteční jistina",
     colFixation: "Fixace",
@@ -587,7 +587,7 @@ export const cs: Dictionary = {
     loanTypeClearAndSwitch: "Smazat a přepnout",
     loanTypeKeepDevelopment: "Ponechat developerský",
     successorNote:
-      "Nový blok nahradí současný od svého data začátku (refixace nebo refinancování). Aplikace počítá s jedním aktivním úvěrem na nemovitost.",
+      "Nový blok nahradí současný od svého data začátku (nová fixace nebo refinancování). Aplikace počítá s jedním aktivním úvěrem na nemovitost.",
     successorLearnMore: "Více informací",
     holdingCostsTitle: "Náklady na držbu",
     holdingCostsHint: "nechte prázdné pro globální výchozí hodnotu",
@@ -668,9 +668,9 @@ export const cs: Dictionary = {
       `${months} před splatností podle smlouvy ${contract}.`,
     maturityCheck: "Zkontrolujte splátku nebo datum splatnosti.",
     fixationEnded: (end, rate) =>
-      `Fixace skončila ${end} a není zadán navazující blok, proto aplikace od té doby počítá s resetovací sazbou ${rate}. Zadejte podmínky refixace jako nový blok hypotéky.`,
+      `Fixace skončila ${end} a není zadán navazující blok, proto aplikace od té doby počítá se sazbou po skončení fixace ${rate}. Zadejte podmínky nové fixace jako nový blok hypotéky.`,
     fixationEndedUntil: (end, until, rate) =>
-      `Fixace skončila ${end} a další blok začíná až ${until}, proto aplikace počítá s resetovací sazbou ${rate} od ${end} do ${until}. Zadejte podmínky pro toto období jako blok hypotéky.`,
+      `Fixace skončila ${end} a další blok začíná až ${until}, proto aplikace počítá se sazbou po skončení fixace ${rate} od ${end} do ${until}. Zadejte podmínky pro toto období jako blok hypotéky.`,
     fieldPrepayments: "Mimořádné splátky",
     helpPrepayments:
       "Mimořádné splacení jistiny k datu. Snížení splátky zachová splatnost; zkrácení splatnosti zachová splátku. Poplatek se platí z vlastních prostředků a dluh nesnižuje.",
@@ -807,7 +807,7 @@ export const cs: Dictionary = {
       "Šoky sazeb, inflace, propad cen a kombinované šoky jsou skryté.",
     atStart: "Začátek",
     atStartTitle: (date) => `Na začátku projekce (${date})`,
-    rateShockAtRefix: "Šok sazby @ refix",
+    rateShockAtRefix: "Šok sazby na konci fixace",
     inflationShock: "Inflační šok",
     priceCrash: "Propad cen",
     crashWhen: "Kdy",
@@ -840,7 +840,7 @@ export const cs: Dictionary = {
     nothingSelectedBody: "Zaškrtněte Základ a/nebo scénáře výše pro porovnání.",
     keyFiguresTitle: "Klíčové údaje",
     keyFiguresHint: "nominální Kč",
-    keyFiguresHintReal: "reálně (ceny k datu zahájení)",
+    keyFiguresHintReal: "reálně (ceny k základnímu datu)",
     chartNetWorth: "Čisté jmění (kapitál)",
     chartNetCashFlow: "Čistý cash flow podle roku",
     chartLtv: "Poměr dluhu k hodnotě (LTV)",
@@ -874,8 +874,8 @@ export const cs: Dictionary = {
     sumRateShock: (v, years) =>
       `sazby ${v} p. b. na ${years} ${csPlural(years, ["rok", "roky", "let"])}`,
     reachHits: (n, m, years) =>
-      `zasáhne ${n} z ${m} ${csPlural(m, ["úvěru", "úvěrů", "úvěrů"])} (refixace ${years})`,
-    reachNone: "v okně šoku se žádný úvěr nerefixuje, takže bez vlivu",
+      `zasáhne ${n} z ${m} ${csPlural(m, ["úvěru", "úvěrů", "úvěrů"])} (konec fixace ${years})`,
+    reachNone: "v okně šoku žádnému úvěru nekončí fixace, takže bez vlivu",
     unreadableRow:
       "Nelze přečíst, proto je vynechán. Smažte ho před exportem: zálohu, která ho obsahuje, nepůjde obnovit.",
     notCompared: (name) =>
@@ -895,7 +895,7 @@ export const cs: Dictionary = {
     fieldPostFixationReset: "Sazba po skončení fixace",
     fieldInflation: "Inflace p.a.",
     fieldInflationShock: "Inflační šok",
-    fieldRateShock: "Šok sazby při refixaci",
+    fieldRateShock: "Šok sazby na konci fixace",
     fieldValueCrash: "Propad hodnoty",
     forYears: "…na roky",
     atYear: "…v roce",
@@ -1314,9 +1314,9 @@ export const cs: Dictionary = {
     mortgagesProse2Fixation: "fixační období",
     mortgagesProse2Mid:
       " — roky, kdy je sazba zafixovaná. Když skončí, sazba se ",
-    mortgagesProse2Resets: "resetuje",
+    mortgagesProse2Resets: "změní",
     mortgagesProse2Mid2: " na vaši sazbu po fixaci a splátka se ",
-    mortgagesProse2Reamortizes: "znovu umoří",
+    mortgagesProse2Reamortizes: "přepočítá",
     mortgagesProse2Post:
       ", aby splatila zbývající zůstatek za zbývající dobu, takže se platba k tomu datu může zvýšit nebo snížit. Výhled úvěru na stránce nemovitosti ukazuje u každého úvěrového bloku modelovaný konec fixace a dluh, který přejde na novou sazbu, a také zbývající dobu splácení.",
     mortgagesProse3:
@@ -1368,7 +1368,7 @@ export const cs: Dictionary = {
         name: "Dluh",
         formula: "zůstatek k datu",
         meaning:
-          "Zbývající zůstatek úvěru z umořovacího plánu — odráží každou splátku i případný reset sazby. U developerského úvěru se počítá načerpaná částka; dosud nečerpané tranše se zobrazují vedle ní.",
+          "Zbývající zůstatek úvěru z umořovacího plánu — odráží každou splátku i případnou změnu sazby po fixaci. U developerského úvěru se počítá načerpaná částka; dosud nečerpané tranše se zobrazují vedle ní.",
       },
       equity: {
         name: "Kapitál",
@@ -1481,7 +1481,7 @@ export const cs: Dictionary = {
       debt: {
         name: "Dluh",
         formula: "umořovací plán",
-        meaning: "Sleduje plán včetně resetů po fixaci.",
+        meaning: "Sleduje plán včetně změn sazby na konci fixace.",
       },
       nextReset: {
         name: "Příští změna sazby",
@@ -1552,8 +1552,8 @@ export const cs: Dictionary = {
       },
       rateShock: {
         name: "Šok sazby",
-        formula: "+Δ kolem refixu",
-        meaning: "Vyšší sazba kolem resetu fixace po stanovenou dobu.",
+        formula: "+Δ kolem konce fixace",
+        meaning: "Vyšší sazba kolem konce fixace po stanovenou dobu.",
       },
       valueCrash: {
         name: "Propad hodnoty",
@@ -1588,7 +1588,7 @@ export const cs: Dictionary = {
         def: "Roky, po které je sazba české hypotéky zafixovaná.",
       },
       reset: {
-        term: "Reset / znovu umořit",
+        term: "Konec fixace / přepočet splátky",
         def: "Na konci fixace se sazba změní a splátka se přepočítá.",
       },
       svj: {

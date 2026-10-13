@@ -162,4 +162,115 @@ describe("N7b wording (#169, #152)", () => {
     );
     expect(cs.assumptions.propertyTax).toBe("Daň z nemovitých věcí /rok");
   });
+  it('en: "refix" becomes fixation end (#152 item 3)', () => {
+    expect(en.scenarios.rateShockAtRefix).toBe("Rate shock at fixation end");
+    expect(en.scenarios.fieldRateShock).toBe("Rate shock at fixation end");
+    expect(en.scenarios.reachHits(1, 2, "2030")).toMatch(
+      /\(fixation end 2030\)$/,
+    );
+    expect(en.scenarios.reachNone).toBe(
+      "no loan's fixation ends inside the shock window, so no effect",
+    );
+    expect(en.propertyDetail.successorNote).toContain(
+      "(new fixation or refinance)",
+    );
+    expect(en.propertyDetail.fixationEnded("x", "y")).toMatch(
+      /Add the terms of the new fixation as a new mortgage block\.$/,
+    );
+    expect(en.guide.scenarioDefs.rateShock.formula).toBe(
+      "+Δ around fixation end",
+    );
+    expect(en.guide.scenarioDefs.rateShock.meaning).toBe(
+      "A higher rate around a fixation end for a set period.",
+    );
+  });
+
+  it("cs: one name for the fixation end and the field it points to (#152 items 3, 4)", () => {
+    expect(cs.propertyDetail.mortgagesHint).toBe(
+      "na konci fixace se změní sazba a splátka se přepočítá",
+    );
+    expect(cs.propertyDetail.successorNote).toContain(
+      "(nová fixace nebo refinancování)",
+    );
+    expect(cs.propertyDetail.fixationEnded("x", "4,5 %")).toBe(
+      "Fixace skončila x a není zadán navazující blok, proto aplikace od té doby počítá se sazbou po skončení fixace 4,5 %. Zadejte podmínky nové fixace jako nový blok hypotéky.",
+    );
+    expect(cs.propertyDetail.fixationEndedUntil("x", "y", "4,5 %")).toContain(
+      "počítá se sazbou po skončení fixace 4,5 % od",
+    );
+    expect(cs.scenarios.rateShockAtRefix).toBe("Šok sazby na konci fixace");
+    expect(cs.scenarios.fieldRateShock).toBe("Šok sazby na konci fixace");
+    expect(cs.scenarios.reachHits(1, 2, "2030")).toMatch(
+      /\(konec fixace 2030\)$/,
+    );
+    expect(cs.scenarios.reachNone).toBe(
+      "v okně šoku žádnému úvěru nekončí fixace, takže bez vlivu",
+    );
+    expect(cs.guide.mortgagesProse2Resets).toBe("změní");
+    expect(cs.guide.mortgagesProse2Reamortizes).toBe("přepočítá");
+    expect(cs.guide.snapshotDefs.debt.meaning).toContain(
+      "případnou změnu sazby po fixaci",
+    );
+    expect(cs.guide.projectionDefs.debt.meaning).toBe(
+      "Sleduje plán včetně změn sazby na konci fixace.",
+    );
+    expect(cs.guide.scenarioDefs.rateShock.formula).toBe(
+      "+Δ kolem konce fixace",
+    );
+    expect(cs.guide.scenarioDefs.rateShock.meaning).toBe(
+      "Vyšší sazba kolem konce fixace po stanovenou dobu.",
+    );
+    expect(cs.guide.glossary.reset.term).toBe(
+      "Konec fixace / přepočet splátky",
+    );
+    expect(cs.inputRules.ASOF_BEFORE_BASEDATE).toBe(
+      "Datum je před základním datem",
+    );
+    expect(cs.scenarios.keyFiguresHintReal).toBe(
+      "reálně (ceny k základnímu datu)",
+    );
+  });
+
+  it("ru: one name for the fixation end and the field it points to (#152 items 3, 4)", () => {
+    expect(ru.propertyDetail.mortgagesHint).toBe(
+      "в конце фиксации меняется ставка и пересчитывается платёж",
+    );
+    expect(ru.propertyDetail.helpCompletionDate).toBe(
+      "до этой даты платить только проценты, затем гасить и основной долг",
+    );
+    expect(ru.propertyDetail.successorNote).toContain(
+      "(новая фиксация или рефинансирование)",
+    );
+    expect(ru.propertyDetail.fixationEnded("x", "4,5 %")).toMatch(
+      /ставку после фиксации 4,5 %\. Добавьте условия новой фиксации как новый блок ипотеки\.$/,
+    );
+    expect(ru.propertyDetail.fixationEndedUntil("x", "y", "4,5 %")).toContain(
+      "ставку после фиксации 4,5 % с",
+    );
+    expect(ru.scenarios.rateShockAtRefix).toBe("Шок ставки в конце фиксации");
+    expect(ru.scenarios.fieldRateShock).toBe("Шок ставки в конце фиксации");
+    expect(ru.guide.mortgagesProse2Resets).toBe("меняется");
+    expect(ru.guide.mortgagesProse2Reamortizes).toBe("пересчитывается");
+    expect(ru.guide.developmentProsePost).toContain(
+      "платёж пересчитывается по обычному графику платежей.",
+    );
+    expect(ru.guide.snapshotDefs.debt.meaning).toContain(
+      "любую смену ставки в конце фиксации",
+    );
+    expect(ru.guide.projectionDefs.debt.meaning).toBe(
+      "Следует графику, включая смену ставки в конце фиксации.",
+    );
+    expect(ru.guide.scenarioDefs.rateShock.formula).toBe(
+      "+Δ вокруг конца фиксации",
+    );
+    expect(ru.guide.scenarioDefs.rateShock.meaning).toBe(
+      "Повышенная ставка вокруг конца фиксации на заданный период.",
+    );
+    expect(ru.guide.glossary.reset.term).toBe(
+      "Конец фиксации / пересчёт платежа",
+    );
+    expect(ru.scenarios.keyFiguresHintReal).toBe(
+      "в реальном выражении (Kč на базовую дату)",
+    );
+  });
 });
