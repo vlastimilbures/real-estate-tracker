@@ -1124,7 +1124,10 @@ export const SCREENS: Screen[] = [
       await nav(ux, "projections");
       await openDropdown(
         ux,
-        ux.page.getByRole("button", { name: ux.t.projections.entity }),
+        ux.page.getByRole("button", {
+          name: ux.t.projections.entity,
+          exact: true,
+        }),
         ux.t.projections.portfolio,
       );
       await ux.capture("30b-projections-entity-open", { fullPage: false });
