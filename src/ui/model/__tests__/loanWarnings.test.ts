@@ -267,6 +267,17 @@ describe("event warnings", () => {
     }
   });
 
+  it("names both amounts of a clamped prepayment in every language", () => {
+    const [w] = loanWarnings([block()], baseDate, [
+      outcome("PREPAYMENT_EXCEEDS_BALANCE"),
+    ]);
+    for (const dict of [en, cs, ru]) {
+      const text = loanWarningText(dict, w!, reset);
+      expect(text).toContain(fmtCzk(D(500000)));
+      expect(text).toContain(fmtCzk(D(400000)));
+    }
+  });
+
   it("says a shortenTerm prepayment did not shorten the term (ADR 0179)", () => {
     const [w] = loanWarnings([block()], baseDate, [
       outcome("PREPAYMENT_TERM_NOT_SHORTENED"),
