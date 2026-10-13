@@ -16,6 +16,9 @@ import type { Decimal } from "../../lib/money";
 
 export type EventListKind = "prepayments" | "recasts" | "draws";
 
+export const listKind = (kind: string | undefined): kind is EventListKind =>
+  kind === "prepayments" || kind === "recasts" || kind === "draws";
+
 export interface PrepaymentRow {
   date: string;
   amount: string;
