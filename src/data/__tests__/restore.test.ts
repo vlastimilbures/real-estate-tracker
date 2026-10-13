@@ -17,6 +17,7 @@ import {
   type BackupFile,
 } from "../backup";
 import { checkInputRules } from "../../import/inputRules";
+import { V1_KEYS } from "../mappers";
 import type { Sql } from "../sql";
 
 const HEAD = Math.max(...MIGRATIONS.map((m) => m.version));
@@ -294,6 +295,12 @@ describe("restore keeps every stored value (#118)", () => {
       INSERT INTO scenarios (id, name, overrides, created_at)
         VALUES ('s-all', 'Every shock', '${OVERRIDES}', '2026-06-07T10:00:00.000Z');
     `);
+  });
+
+  it("the fixture holds every scenario override key the parser accepts (#267)", () => {
+    expect(new Set(Object.keys(JSON.parse(OVERRIDES) as object))).toEqual(
+      V1_KEYS,
+    );
   });
 
   it("the fixture fills every column of every table", async () => {
