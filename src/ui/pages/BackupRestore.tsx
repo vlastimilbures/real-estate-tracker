@@ -152,15 +152,7 @@ export function BackupRestorePanel() {
   return (
     <>
       <Panel title={t.backup.exportTitle} hint={t.backup.exportHint}>
-        <p
-          style={{
-            color: "var(--ink-soft)",
-            fontSize: 13,
-            marginBottom: "var(--s4)",
-          }}
-        >
-          {t.backup.exportBody}
-        </p>
+        <p className="muted-note">{t.backup.exportBody}</p>
         <LastBackup />
         <Button
           variant="primary"
@@ -171,11 +163,8 @@ export function BackupRestorePanel() {
         </Button>
         <p
           id={folderHintId}
-          style={{
-            color: "var(--ink-soft)",
-            fontSize: 13,
-            margin: "var(--s4) 0 var(--s2)",
-          }}
+          className="muted-note"
+          style={{ margin: "var(--s4) 0 var(--s2)" }}
         >
           {t.backup.folderHint}
         </p>
@@ -188,15 +177,7 @@ export function BackupRestorePanel() {
       </Panel>
 
       <Panel title={t.backup.restoreTitle} hint={t.backup.restoreHint}>
-        <p
-          style={{
-            color: "var(--ink-soft)",
-            fontSize: 13,
-            marginBottom: "var(--s4)",
-          }}
-        >
-          {t.backup.restoreBody}
-        </p>
+        <p className="muted-note">{t.backup.restoreBody}</p>
         {!pendingBackup ? (
           <Button onClick={handleChooseRestore} disabled={replacing}>
             {t.backup.chooseFile}
@@ -213,30 +194,14 @@ export function BackupRestorePanel() {
 
       {sampleActive && (
         <Panel title={t.sample.panelTitle} hint={t.sample.loadHint}>
-          <p
-            style={{
-              color: "var(--ink-soft)",
-              fontSize: 13,
-              marginBottom: "var(--s4)",
-            }}
-          >
-            {t.sample.panelBody}
-          </p>
+          <p className="muted-note">{t.sample.panelBody}</p>
           <ClearSampleButton disabled={replacing} />
         </Panel>
       )}
 
       {empty && !sampleActive && (
         <Panel title={t.sample.panelTitle} hint={t.sample.loadHint}>
-          <p
-            style={{
-              color: "var(--ink-soft)",
-              fontSize: 13,
-              marginBottom: "var(--s4)",
-            }}
-          >
-            {t.sample.loadBody}
-          </p>
+          <p className="muted-note">{t.sample.loadBody}</p>
           <Button onClick={handleLoadSample} disabled={replacing}>
             {loadingSample ? t.sample.loading : t.sample.loadAction}
           </Button>
