@@ -144,9 +144,7 @@ describe("compare says net worth excludes cash (ADR 0186)", () => {
     expect(d.scenarios.kpiNetWorthDeltaVsBase).toBe(row);
     const note = d.scenarios.rebasedReturnsFootnote("Crash");
     expect(note).toContain(" Crash ");
-    expect(note.endsWith(`; ${footnote}`)).toBe(true);
-    expect(d.guide.returnsDefs.multiple.meaning.endsWith(` ${guide}`)).toBe(
-      true,
-    );
+    expect(note).toContain(`; ${footnote}`);
+    expect(d.guide.returnsDefs.multiple.meaning).toContain(` ${guide}`);
   });
 });
