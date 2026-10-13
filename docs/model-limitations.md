@@ -70,7 +70,8 @@ work still to do is in the [roadmap](roadmap.md).
   projected value minus its remaining debt. It does not sell anything. Only the levered IRR
   takes selling costs off that end value, at the rate set in Settings → Assumptions (0 %
   unless set, ADR 0183); net worth, the multiple and CAGR stay value minus debt. Taxes on a
-  sale are not modelled.
+  sale are not modelled. Net worth also leaves out cash taken out or paid in over the
+  horizon; cumulative cash to owner and the IRR show it (ADR 0186).
 
 ## Cash flow and tax
 

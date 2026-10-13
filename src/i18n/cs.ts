@@ -370,8 +370,9 @@ export const cs: Dictionary = {
     financingInterestSavedByProperty: "Podle nemovitosti",
     financingInterestSavedNa:
       "n/a: změna splatnosti závisí na mimořádné splátce",
-    financingUpcoming: "Příštích 12 měsíců",
-    financingNoEvents: "Model v příštích 12 měsících nic neočekává.",
+    financingUpcoming: "Termíny sazeb, úvěrů a nájmů v příštích 12 měsících",
+    financingNoEvents:
+      "V příštích 12 měsících nejsou žádné termíny sazeb, úvěrů ani nájmů.",
     financingMoreEvents: (n) => `+ dalších ${n}`,
     financingNoLoans: "V tomto výběru není žádná hypotéka.",
     financingEventFixationEnd: "Konec fixace",
@@ -638,7 +639,8 @@ export const cs: Dictionary = {
       "modelováno z úvěrů, mimořádných splátek a změn splatnosti",
     loanPayoff: "Modelované doplacení",
     loanPayoffNone: "Splaceno",
-    interestSaved: "Úrok ušetřený mimořádnými splátkami (nominálně)",
+    interestSaved:
+      "Úrok ušetřený mimořádnými splátkami za zbývající dobu splácení úvěru (nominálně)",
     interestSavedNa: "n/a: změna splatnosti závisí na mimořádné splátce",
     remainingTerm: "Zbývající doba splácení",
     outlookResetsTitle: "Konce fixace podle úvěrových bloků",
@@ -843,14 +845,14 @@ export const cs: Dictionary = {
     chartLtv: "Poměr dluhu k hodnotě (LTV)",
     subPct: "%",
     kpiStartingEquity: "Počáteční kapitál",
-    kpiNetWorthDeltaVsBase: "Δ čistého jmění vůči Základu",
+    kpiNetWorthDeltaVsBase: "Δ čistého jmění vůči Základu (bez hotovosti)",
     viewValues: "Hodnoty",
     viewDeltaVsBase: "Δ vůči Základu",
     viewToggleLabel: "Zobrazit hodnoty, nebo rozdíl vůči Základu",
     deltaYears: (n) => (n > 0 ? `+${n} r.` : n < 0 ? `−${-n} r.` : "0 r."),
     deltaNoBaseValue: "Základ nemá hodnotu",
     rebasedReturnsFootnote: (names: string) =>
-      `Výnosy pro ${names} se měří od nižšího počátečního kapitálu po propadu cen; ztrátu pro vás ukazuje Δ čistého jmění vůči Základu.`,
+      `Výnosy pro ${names} se měří od nižšího počátečního kapitálu po propadu cen; ztrátu pro vás ukazuje Δ čistého jmění vůči Základu spolu s kumulativní hotovostí vlastníkovi.`,
     kpiNetWorthNominal: "Čisté jmění (nominální)",
     kpiNetWorthReal: "Čisté jmění (reálné)",
     kpiNetWorthMultiple: "Násobek čistého jmění",
@@ -1166,7 +1168,8 @@ export const cs: Dictionary = {
         "Zkontrolujte označené řádky: datum jako dd.mm.yyyy a částku nad 0",
     },
     /** A bounded whole-number field (UX-068, ADR 0075). */
-    positiveAmount: "Zadejte částku vyšší než 0, např. 500 000",
+    positiveAmount:
+      "Zadejte částku vyšší než 0, např. 500 000 (tisíce oddělte mezerou)",
     intRange: (min: string, max: string) =>
       `Zadejte celé číslo od ${min} do ${max}`,
     datePlaceholder: "dd.mm.yyyy",
@@ -1316,7 +1319,7 @@ export const cs: Dictionary = {
     mortgagesProse2Post:
       ", aby splatila zbývající zůstatek za zbývající dobu, takže se platba k tomu datu může zvýšit nebo snížit. Výhled úvěru na stránce nemovitosti ukazuje u každého úvěrového bloku modelovaný konec fixace a dluh, který přejde na novou sazbu, a také zbývající dobu splácení.",
     mortgagesProse3:
-      "Mimořádné splátky a změny splatnosti zadáte u každého úvěrového bloku v jeho formuláři. Mimořádná splátka k datu splatí jistinu navíc a buď sníží splátku, nebo zkrátí splatnost; poplatek se platí z vlastních prostředků a dluh nesnižuje. Změna splatnosti převede úvěr na nové datum splatnosti nebo novou splátku. Mimořádné splátky jsou vaše vlastní prostředky, mimo čistý cash flow a DSCR, ale započítávají se do hotovosti vlastníkovi a IRR. Stránka nemovitosti ukazuje modelované doplacení a úrok, který mimořádné splátky ušetří za zbývající dobu úvěru, a upozorní, když je splátka vyšší než zůstatek nebo připadá po doplacení.",
+      "Mimořádné splátky a změny splatnosti zadáte u každého úvěrového bloku v jeho formuláři. Mimořádná splátka se uplatní hned po nejbližší splátce splatné k jejímu datu nebo později a buď sníží splátku, nebo zkrátí splatnost; poplatek se platí z vlastních prostředků a dluh nesnižuje. Změna splatnosti převede úvěr na nové datum splatnosti nebo novou splátku. Mimořádné splátky jsou vaše vlastní prostředky, mimo čistý cash flow a DSCR, ale započítávají se do hotovosti vlastníkovi a IRR. Stránka nemovitosti ukazuje modelované doplacení a úrok, který mimořádné splátky ušetří za zbývající dobu úvěru, a upozorní, když je splátka vyšší než zůstatek, připadá po doplacení nebo nemůže zkrátit splatnost.",
     projectionTitle: "Projekce do horizontu",
     projectionHint: "Posunutí snímku do budoucna",
     projectionProse1:
@@ -1504,7 +1507,7 @@ export const cs: Dictionary = {
         name: "Násobek čistého jmění",
         formula: "kapitál na horizontu ÷ kapitál na začátku projekce",
         meaning:
-          "Kolikrát se očekává, že váš kapitál na začátku projekce do horizontu vzroste.",
+          "Kolikrát se očekává, že váš kapitál na začátku projekce do horizontu vzroste. Hotovost vybraná nebo vložená během let se nezapočítává.",
         eg: "22 M → 110 M = 5,0×.",
       },
       cagr: {

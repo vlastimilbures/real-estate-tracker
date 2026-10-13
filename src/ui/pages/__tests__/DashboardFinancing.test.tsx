@@ -103,7 +103,7 @@ describe("Financing & upcoming panel (ADR 0103)", () => {
     expect(screen.getByText(money(out.kpis.totalInterestReal))).toBeTruthy();
   });
 
-  it("no events: says nothing is modelled in the next 12 months", () => {
+  it("no events: says there are no upcoming dates", () => {
     renderPanel(portfolio);
     expect(screen.getByText(en.dashboard.financingNoEvents)).toBeTruthy();
   });
