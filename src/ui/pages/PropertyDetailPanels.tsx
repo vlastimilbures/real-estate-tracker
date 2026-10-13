@@ -23,6 +23,8 @@ import {
 } from "../model/chartData";
 import { RecordForm } from "../components/forms";
 import { ConfirmRow } from "../components/EntityPanelParts";
+import { focusSection } from "../components/focusSection";
+import { sectionId } from "../model/sectionNav";
 import { moneyDraft, percentDraft } from "../model/formParse";
 import { fmtCzkM, fmtDate } from "../../lib/format";
 import { undrawnPart } from "../model/debt";
@@ -41,17 +43,13 @@ import type {
   AmortizationRow,
 } from "../../engine";
 import type { MutationResult } from "../../state/portfolioStore";
-import type { Decimal } from "../../lib/money";
 import { useT } from "../hooks/useT";
 
 const newId = () => crypto.randomUUID();
 
-/** What a not-yet-owned property will be bought for (ADR 0156). */
+/** When a not-yet-owned property will be bought (ADR 0156, 0189). */
 export interface NotOwned {
   purchaseDate: Date;
-  price: Decimal;
-  /** The acquisition loan; null when there is none. */
-  loan: Decimal | null;
 }
 
 /**
@@ -121,22 +119,23 @@ export function PropertySnapshotTiles({
   );
 }
 
-/** A property not owned yet: when it is bought, for how much, with what loan (ADR 0156). */
-function NotOwnedPanel({ purchaseDate, price, loan }: NotOwned) {
+/** A property not owned yet: when it is bought, and a link to its funding, which the
+ *  Acquisition section lists (ADR 0156, 0189). */
+function NotOwnedPanel({ purchaseDate }: NotOwned) {
   const t = useT();
   const d = t.propertyDetail;
   return (
     <Panel title={d.notOwnedTitle} hint={d.notOwnedHint}>
       <StatList
-        rows={[
-          { k: t.propertyForm.purchaseDate, v: fmtDate(purchaseDate) },
-          { k: d.acqPrice, v: <Money value={price} parens={false} /> },
-          {
-            k: d.acqLoan,
-            v: loan ? <Money value={loan} parens={false} /> : d.acqLoanNone,
-          },
-        ]}
+        rows={[{ k: t.propertyForm.purchaseDate, v: fmtDate(purchaseDate) }]}
       />
+      <button
+        type="button"
+        className="link-btn"
+        onClick={() => focusSection(sectionId("acquisition"))}
+      >
+        {d.notOwnedFundingLink}
+      </button>
     </Panel>
   );
 }

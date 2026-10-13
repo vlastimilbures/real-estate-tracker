@@ -348,8 +348,13 @@ describe("a pending purchase (#126 item 1, ADR 0156)", () => {
       .getByText(pd.notOwnedTitle)
       .closest<HTMLElement>(".panel")!;
     expect(panel.textContent).toContain(purchase);
-    expect(panel.textContent).toContain(fmtCzk(future.purchasePrice));
-    expect(panel.textContent).toContain(fmtCzk(loan.initialPrincipal));
+    // Date and a link only: the price and loan are in the Acquisition section (ADR 0189).
+    expect(panel.textContent).not.toContain(fmtCzk(future.purchasePrice));
+    expect(panel.textContent).not.toContain(fmtCzk(loan.initialPrincipal));
+    fireEvent.click(
+      within(panel).getByRole("button", { name: pd.notOwnedFundingLink }),
+    );
+    expect(document.activeElement?.textContent).toBe(pd.acqTitle);
     expect(hasTile(pd.marketValue)).toBe(false);
     expect(screen.queryByText(en.dashboard.badgeConservative)).toBeNull();
     // The projection charts stay: they show the years before the purchase as zero.

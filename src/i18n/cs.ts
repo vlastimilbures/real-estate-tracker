@@ -478,6 +478,7 @@ export const cs: Dictionary = {
     pendingPurchase: (d) => `čeká — koupě ${d}`,
     notOwnedTitle: "Zatím není ve vlastnictví",
     notOwnedHint: "Čísla začínají koupí; do té doby grafy ukazují 0.",
+    notOwnedFundingLink: "Zobrazit financování koupě",
     asOf: (d) => `k ${d}`,
     deactivated: "deaktivováno",
     deactivate: "Deaktivovat",

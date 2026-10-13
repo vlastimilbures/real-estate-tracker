@@ -488,6 +488,7 @@ export const ru: Dictionary = {
     notOwnedTitle: "Ещё не в собственности",
     notOwnedHint:
       "Показатели начинаются с покупки; до этого графики показывают 0.",
+    notOwnedFundingLink: "См. финансирование покупки",
     asOf: (d) => `на ${d}`,
     deactivated: "деактивировано",
     deactivate: "Деактивировать",

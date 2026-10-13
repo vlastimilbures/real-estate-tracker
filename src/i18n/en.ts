@@ -516,6 +516,7 @@ export const en = {
     notOwnedTitle: "Not owned yet",
     notOwnedHint:
       "Its figures start once it is bought; until then the charts show 0.",
+    notOwnedFundingLink: "See purchase funding",
     asOf: (d: string) => `as of ${d}`,
     deactivated: "deactivated",
     deactivate: "Deactivate",
