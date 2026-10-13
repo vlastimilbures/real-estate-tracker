@@ -14,6 +14,7 @@ import {
   propertySnapshot,
   portfolioProjection,
   propertyProjection,
+  propertyProjections,
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedules,
   propertyLoanExposure,
@@ -190,17 +191,15 @@ export function useScenarioComparison(
   }, [computed, names]);
 }
 
-export interface NamedProjection {
-  id: string;
-  name: string;
-  projection: ProjectionYear[];
+export interface Projections {
+  portfolio: ProjectionYear[];
+  /** Every property's projection by id, inactive ones included (the page filters). */
+  byProperty: Map<string, ProjectionYear[]>;
 }
 
-/** Portfolio + every property's year-by-year projection (for the Projections grid). */
-export function useAllProjections(): {
-  portfolio: ProjectionYear[];
-  perProperty: NamedProjection[];
-} | null {
+/** The portfolio's and every property's year-by-year projection, from one set of loan
+ *  schedules (Projections grid; the Properties rows' Today basis, ADR 0150). */
+export function useProjections(): Projections | null {
   const portfolio = usePortfolioStore((s) => s.portfolio);
   const assumptions = usePortfolioStore((s) => s.assumptions);
   return useMemo(() => {
@@ -212,45 +211,8 @@ export function useAllProjections(): {
     );
     return {
       portfolio: portfolioProjection(portfolio, assumptions, schedules),
-      perProperty: portfolio.properties
-        .filter((p) => p.active !== false)
-        .map((p) => ({
-          id: p.id,
-          name: p.name,
-          projection: propertyProjection(
-            p,
-            portfolio,
-            assumptions,
-            schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
-          ),
-        })),
+      byProperty: propertyProjections(portfolio, assumptions, schedules),
     };
-  }, [portfolio, assumptions]);
-}
-
-/** Every property's year-by-year projection by id, inactive ones included: the Properties
- *  rows read their Today basis from it, as Property detail does (ADR 0150). */
-export function usePropertyProjections(): Map<string, ProjectionYear[]> | null {
-  const portfolio = usePortfolioStore((s) => s.portfolio);
-  const assumptions = usePortfolioStore((s) => s.assumptions);
-  return useMemo(() => {
-    if (!portfolio || !assumptions) return null;
-    const schedules = propertySchedules(
-      portfolio.mortgages,
-      portfolio.properties.map((p) => p.id),
-      assumptions,
-    );
-    return new Map(
-      portfolio.properties.map((p) => [
-        p.id,
-        propertyProjection(
-          p,
-          portfolio,
-          assumptions,
-          schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
-        ),
-      ]),
-    );
   }, [portfolio, assumptions]);
 }
 

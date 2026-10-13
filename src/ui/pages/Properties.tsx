@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { MetricLabel } from "../components/MetricLabel";
 import { Pencil, Trash2, Plus, Building2, Upload } from "lucide-react";
-import { useEngine, usePropertyProjections } from "../../state/useEngine";
+import { useEngine, useProjections } from "../../state/useEngine";
 import { todayUtc } from "../../lib/day";
 import { asOfBounds, resolveAsOf } from "../model/asOf";
 import { asOfView, propertyRowsForAsOf } from "../model/dashboard";
@@ -58,7 +58,7 @@ export function Properties() {
       )
     : null;
   const engine = useEngine(null, view?.date ?? null);
-  const projections = usePropertyProjections();
+  const projections = useProjections()?.byProperty;
   const removeProperty = usePortfolioStore((s) => s.removeProperty);
   const openProperty = useUiStore((s) => s.openProperty);
   const navigate = useUiStore((s) => s.navigate);

@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Profiler } from "react";
 import { act, render, renderHook } from "@testing-library/react";
-import { useEngine, useAllProjections, usePropertyEngine } from "../useEngine";
+import { useEngine, useProjections, usePropertyEngine } from "../useEngine";
 import { usePortfolioStore } from "../portfolioStore";
 import { useUiStore } from "../uiStore";
 import { portfolio, assumptions } from "../../engine/__tests__/support/seed";
@@ -27,6 +27,7 @@ vi.mock("../../engine", async (importOriginal) => {
     portfolioSnapshot: vi.fn(actual.portfolioSnapshot),
     portfolioKpis: vi.fn(actual.portfolioKpis),
     propertyProjection: vi.fn(actual.propertyProjection),
+    propertyProjections: vi.fn(actual.propertyProjections),
     propertySnapshot: vi.fn(actual.propertySnapshot),
     portfolioOutputs: vi.fn(actual.portfolioOutputs),
     projectionAndKpis: vi.fn(actual.projectionAndKpis),
@@ -38,6 +39,7 @@ const spies = [
   engine.portfolioSnapshot,
   engine.portfolioKpis,
   engine.propertyProjection,
+  engine.propertyProjections,
   engine.propertySnapshot,
   engine.portfolioOutputs,
   engine.projectionAndKpis,
@@ -77,7 +79,7 @@ describe("engine recompute", () => {
   it.each(toggles)("%s does not re-run the engine", (_name, toggle) => {
     const hooks = renderHook(() => ({
       all: useEngine(),
-      projections: useAllProjections(),
+      projections: useProjections(),
       property: usePropertyEngine("javorova"),
     }));
     const before = hooks.result.current;

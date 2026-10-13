@@ -8,7 +8,7 @@ import { act, renderHook } from "@testing-library/react";
 import {
   useEngine,
   useScenarioComparison,
-  useAllProjections,
+  useProjections,
   usePropertyEngine,
 } from "../useEngine";
 import { usePortfolioStore } from "../portfolioStore";
@@ -277,8 +277,8 @@ describe("useScenarioComparison", () => {
   });
 });
 
-describe("useAllProjections / usePropertyEngine", () => {
-  it("lists every active property's projection plus the portfolio", () => {
+describe("useProjections / usePropertyEngine", () => {
+  it("returns the portfolio and every property's projection, inactive included", () => {
     const withInactive = {
       ...portfolio,
       properties: portfolio.properties.map((p) =>
@@ -286,11 +286,10 @@ describe("useAllProjections / usePropertyEngine", () => {
       ),
     };
     act(() => usePortfolioStore.setState({ portfolio: withInactive }));
-    const { result } = renderHook(() => useAllProjections());
-    expect(result.current!.perProperty.map((p) => p.id)).toEqual([
-      "javorova",
-      "dubova",
-    ]);
+    const { result } = renderHook(() => useProjections());
+    expect([...result.current!.byProperty.keys()]).toEqual(
+      portfolio.properties.map((p) => p.id),
+    );
     expect(result.current!.portfolio).toHaveLength(
       assumptions.horizonYears + 1,
     );
