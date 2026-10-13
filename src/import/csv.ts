@@ -5,8 +5,8 @@
 // at most 2 MB and 5,000 data rows (D-53), every row as wide as the header — and each
 // error names the physical file line and column, so it can be found in an editor.
 import Papa from "papaparse";
-import { D, ceilCzk } from "../lib/money";
-import { calendarDay, instalmentFor } from "../engine";
+import { D } from "../lib/money";
+import { calendarDay, suggestedInstalment } from "../engine";
 import { DATE_FLOOR_YEAR } from "../lib/day";
 import { inRange, INT_RANGES, type IntRange } from "../lib/intRanges";
 import { PLAIN_DECIMAL } from "../lib/decimalText";
@@ -556,13 +556,11 @@ export function parseMortgages(
         initial_principal &&
         interest_rate_pa
       ) {
-        // Ceil so the derived instalment always fully amortizes (banks round up).
-        monthly_instalment = ceilCzk(
-          instalmentFor(
-            D(initial_principal),
-            D(interest_rate_pa),
-            loan_term_years,
-          ),
+        // The engine's suggestion: ceiled so it always fully amortizes (banks round up).
+        monthly_instalment = suggestedInstalment(
+          D(initial_principal),
+          D(interest_rate_pa),
+          loan_term_years,
         ).toString();
       } else {
         monthly_instalment = c.fail("monthly_instalment", {
