@@ -58,5 +58,9 @@ existing text changes.
 - No computed number, parity target, golden master, stored data or export changes.
 - Screenshot changes: the pending property's page (shorter panel) and wrapped band badges.
 - Page tests that check the toast render the toast region next to the page.
+- Not covered: the app shell's stale-data and edit-error banners still mount with
+  `role="alert"` on every page (#350). Not tested with VoiceOver: WebKit may not announce
+  a `status` node inserted with its text, so the notice's first announcement is not
+  guaranteed; a persistent status region, as the toast has, is the follow-up (#350).
 - Tests: `uiStoreOutcomes.test.ts`, `OutcomeRegions.test.tsx`, `LifecycleStates.test.tsx`,
   `MortgageEventRows.test.tsx`.
