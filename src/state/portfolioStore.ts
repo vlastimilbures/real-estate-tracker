@@ -89,6 +89,7 @@ import {
   holdingCostToRow,
   propertyToRow,
   scenarioToRow,
+  type PropertyExtras,
 } from "../data/mappers";
 import { isTauri } from "../lib/tauri";
 import { perfMark, perfMeasure } from "../lib/perf";
@@ -129,6 +130,8 @@ function assertRows(
  *  wiring it up. `ok` means the write landed; when the reload after it failed, the
  *  store's `stale` flag says so (ADR 0125). */
 export type MutationResult = { ok: true } | { ok: false; error: WriteError };
+/** Address and garage: stored, but not engine inputs (ADR 0184 §3). */
+export type { PropertyExtras };
 
 /** Open + migrate + seed the database. Normally the on-disk Tauri SQLite; lazy so
  *  non-Tauri code paths (e.g. tests) can inject their own opener instead. When running
@@ -228,19 +231,14 @@ interface PortfolioState {
   addProperty: (
     p: Property,
     cost: HoldingCost,
-    extra?: { address?: string | null; garage?: boolean | null },
+    extra: PropertyExtras,
   ) => Promise<MutationResult>;
   /** An omitted `p.active` keeps the stored flag, so an edit never re-activates. An
    *  omitted `p.funding` keeps the stored record; `{}` clears it (ADR 0119 §8). */
-  editProperty: (
-    p: Property,
-    extra: { address?: string | null; garage?: boolean | null },
-  ) => Promise<MutationResult>;
+  editProperty: (p: Property, extra: PropertyExtras) => Promise<MutationResult>;
   /** Address/garage aren't engine inputs so `portfolio.properties` drops them; this
    *  reads them straight from the DB to prefill the edit form. */
-  getPropertyExtras: (
-    id: string,
-  ) => Promise<{ address: string | null; garage: boolean | null }>;
+  getPropertyExtras: (id: string) => Promise<PropertyExtras>;
   setPropertyActive: (id: string, active: boolean) => Promise<MutationResult>;
   removeProperty: (id: string) => Promise<MutationResult>;
   // assumptions

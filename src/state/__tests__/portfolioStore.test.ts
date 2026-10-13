@@ -17,6 +17,7 @@ import { parseProperties, parseRents } from "../../import/csv";
 import { CsvImportError } from "../../import/csvImport";
 import { money } from "../../engine";
 import { importNow } from "./support/importNow";
+import { noExtras } from "../../data/__tests__/support/noExtras";
 
 /** The underlying text of an untyped failure (kind "other"); "" for typed ones. */
 const text = (e: WriteError | null) => (e?.kind === "other" ? e.message : "");
@@ -502,6 +503,7 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
         purchasePrice: money("5000000"),
       },
       { id: "hc-new", propertyId: "p-new", svjMonthly: money("1000") },
+      noExtras,
     );
     expect(add.ok).toBe(true);
     expect(pf().properties.length).toBe(before + 1);
@@ -553,7 +555,7 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
     delete edited.active;
     const edit = await usePortfolioStore
       .getState()
-      .editProperty({ ...edited, name: "Byt Renamed" }, {});
+      .editProperty({ ...edited, name: "Byt Renamed" }, noExtras);
     expect(edit.ok).toBe(true);
     const saved = pf().properties.find((p) => p.id === id)!;
     expect(saved.name).toBe("Byt Renamed");
@@ -572,7 +574,7 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
       (
         await usePortfolioStore
           .getState()
-          .editProperty({ ...stored, funding }, {})
+          .editProperty({ ...stored, funding }, noExtras)
       ).ok,
     ).toBe(true);
     // An edit with no record keeps the stored one; the form always sends one (ADR 0119 §8).
@@ -580,7 +582,7 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
     delete edited.funding;
     const edit = await usePortfolioStore
       .getState()
-      .editProperty({ ...edited, name: "Byt Renamed" }, {});
+      .editProperty({ ...edited, name: "Byt Renamed" }, noExtras);
     expect(edit.ok).toBe(true);
     const saved = pf().properties.find((p) => p.id === id)!;
     expect(saved.name).toBe("Byt Renamed");
@@ -595,12 +597,12 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
     const stored = pf().properties.find((p) => p.id === id)!;
     const store = usePortfolioStore.getState();
     const funding = { ownCash: money("1500000"), note: "Deposit" };
-    expect((await store.editProperty({ ...stored, funding }, {})).ok).toBe(
-      true,
-    );
-    expect((await store.editProperty({ ...stored, funding: {} }, {})).ok).toBe(
-      true,
-    );
+    expect(
+      (await store.editProperty({ ...stored, funding }, noExtras)).ok,
+    ).toBe(true);
+    expect(
+      (await store.editProperty({ ...stored, funding: {} }, noExtras)).ok,
+    ).toBe(true);
     expect(pf().properties.find((p) => p.id === id)!.funding).toBeUndefined();
   });
 
@@ -614,11 +616,11 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
       note: "Deposit",
     };
     expect(
-      (await store.editProperty({ ...stored, funding: full }, {})).ok,
+      (await store.editProperty({ ...stored, funding: full }, noExtras)).ok,
     ).toBe(true);
     const edit = await store.editProperty(
       { ...stored, funding: { ownCash: money("1400000") } },
-      {},
+      noExtras,
     );
     expect(edit.ok).toBe(true);
     const saved = pf().properties.find((p) => p.id === id)!.funding;
@@ -637,6 +639,7 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
         funding: { ownCash: money("0"), initialWorks: money("150000") },
       },
       { id: "hc-new", propertyId: "p-new" },
+      noExtras,
     );
     expect(add.ok).toBe(true);
     const saved = pf().properties.find((p) => p.id === "p-new")!.funding;
@@ -807,6 +810,7 @@ describe("portfolioStore typed write errors (UX-046, DR-133)", () => {
       .addProperty(
         { ...existing, id: "dup-name" },
         { id: "hc-dup-name", propertyId: "dup-name" },
+        noExtras,
       );
     expect(result).toEqual({
       ok: false,

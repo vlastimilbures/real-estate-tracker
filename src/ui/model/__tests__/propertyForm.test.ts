@@ -75,6 +75,14 @@ describe("parsePropertyForm", () => {
     expect(result.errors.name).toBe(en.propertyForm.errNameExists);
   });
 
+  // ADR 0184 §4: names match like CSV import (propertyKey: trimmed, case-insensitive).
+  it("rejects a name that differs from a stored one only by spaces and case", () => {
+    const result = parsePropertyForm(valid, "p-new", ["  VINOHRADY 2+kk "], en);
+    expect(result.valid).toBe(false);
+    if (result.valid) throw new Error("expected invalid");
+    expect(result.errors.name).toBe(en.propertyForm.errNameExists);
+  });
+
   it("accepts an edit that keeps its name once the caller leaves it out of existingNames", () => {
     const result = parsePropertyForm(valid, "vinohrady-2kk", [], en);
     expect(result.valid).toBe(true);
