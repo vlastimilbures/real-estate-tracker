@@ -38,7 +38,7 @@ function result(s: Scenario): CompareResult {
   };
 }
 
-const results = [result(base), result(low)];
+let results = [result(base), result(low)];
 vi.mock("../../../state/useEngine", () => ({
   useScenarioComparison: () => results,
 }));
@@ -62,6 +62,25 @@ describe("Compare own-rate note (ADR 0190)", () => {
     expect(
       screen.getByText(en.scenarios.levelNotApplied("Low growth", own.name)),
     ).toBe(container.querySelector(".ct-footnote"));
+  });
+
+  it("two scenarios with the same name each keep their line", () => {
+    const [first, ...rest] = portfolio.properties;
+    const own = { ...first!, appreciationOverridePa: rate("0.01") };
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: { ...portfolio, properties: [own, ...rest] },
+      }),
+    );
+    const twin = { ...low, id: "low-2" };
+    results = [result(base), result(low), result(twin)];
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(<CompareView selected={[base, low, twin]} />);
+    expect(
+      screen.getAllByText(en.scenarios.levelNotApplied("Low growth", own.name)),
+    ).toHaveLength(2);
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 
   it("no property with its own rate: no note", () => {

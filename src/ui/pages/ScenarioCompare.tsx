@@ -176,8 +176,9 @@ export function CompareView({
             {footnote}
           </p>
         )}
-        {ownRate.map((line) => (
-          <p className="ct-footnote" key={line}>
+        {/* Scenario names may repeat, so the line text is no key. */}
+        {ownRate.map((line, i) => (
+          <p className="ct-footnote" key={i}>
             {line}
           </p>
         ))}
