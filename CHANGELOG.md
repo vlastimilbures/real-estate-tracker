@@ -172,6 +172,14 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- Outcome banners and pending purchases (ADR 0189, #274, #278, #282, #174): a kept
+  "restored" or "sample cleared" notice and a kept failure are read aloud once, where they
+  first appear, and stay silent on later pages until dismissed; a toast outlives a page
+  change in one region; a new failure banner scrolls into view. A pending purchase's
+  "Not owned yet" panel shows the purchase date and a link to its funding instead of
+  repeating the price and loan, and its empty Properties cells say "not owned yet" to a
+  screen reader. A two-line LTV or DSCR badge has soft corners. A prepayment or recast
+  row with an error marks all its inputs invalid, in red.
 - The Dashboard LTV chart marks the hovered year with the same small dot as every other
   line chart (ADR 0188). The app no longer deletes the `ui.currency` browser-storage key
   left by the currency picker removed in 1.2; it is unused either way.
