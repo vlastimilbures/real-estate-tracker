@@ -577,10 +577,10 @@ engine without the form, and remove it when the last part lands.
   the saved properties.
 - Excel exports show text exactly as typed: a scenario named `+2 % rates` was exported as
   `'+2 % rates` (ADR 0145, #139). Text that starts with `=`, `+`, `-`, `@`, a tab or a
-  carriage return now gets the Text cell format instead of an apostrophe, so re-entering it in Excel keeps it as text. A
-  figure with no finite value (`NaN` or Infinity, for example a CAGR that cannot be
-  computed) is an empty cell; before, it was written as `NaN`, which is not a valid number
-  in the file.
+  carriage return now gets the Text cell format instead of an apostrophe, so re-entering
+  it in Excel keeps it as text. A figure with no finite value (`NaN` or Infinity, for
+  example a CAGR that cannot be computed) is an empty cell; before, it was written as
+  `NaN`, which is not a valid number in the file.
 - The Dashboard's financing panel names the period of its interest-saved figure: "Interest
   saved by prepayments over the loans' remaining life (nominal)" (ADR 0144, #172). Before,
   "Interest saved by prepayments (nominal)" next to "Total interest (Yrs 1–N)" read as the same N years.

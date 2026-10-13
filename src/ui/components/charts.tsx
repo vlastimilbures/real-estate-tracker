@@ -318,7 +318,7 @@ interface SeriesDef {
   /** SVG strokeDasharray, e.g. "6 3"; solid when absent (ADR 0114). */
   dash?: string | undefined;
   /** shortcut: the Dashboard LTV line keeps Recharts' default hover dot, as before the
-   *  shared chart body; ADR 0188 gives it the r=3 dot of the other lines. */
+   *  shared chart body; the N9b ADR (#145) gives it the r=3 dot of the other lines. */
   defaultActiveDot?: boolean | undefined;
 }
 

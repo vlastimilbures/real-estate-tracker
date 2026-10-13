@@ -54,7 +54,7 @@ export {
 // Snapshot, projection, KPIs, scenarios, validation
 export {
   leaseInForce,
-  /** @internal test seam (UI and parity tests; the app runs `portfolioOutputs`) */
+  /** @internal test seam (tests; the app runs `portfolioOutputs`) */
   portfolioSnapshot,
   propertySnapshot,
   selectValuation,
@@ -77,7 +77,7 @@ export {
 export { acquisitionSummary } from "./acquisition";
 export type { AcquisitionSummary } from "./acquisition";
 export {
-  /** @internal test seam (parity tests; the app runs `portfolioOutputs`) */
+  /** @internal test seam (tests; the app runs `portfolioOutputs`) */
   portfolioKpis,
   projectionAndKpis,
 } from "./kpis";

@@ -163,6 +163,9 @@ export function combinedPreset(
       recipe.level(t),
       parts.map((p) => p.name).join(" · "),
     ),
-    overrides: Object.assign({}, ...parts.map((p) => p.overrides)),
+    overrides: parts.reduce<ScenarioOverrides>(
+      (o, p) => ({ ...o, ...p.overrides }),
+      {},
+    ),
   };
 }
