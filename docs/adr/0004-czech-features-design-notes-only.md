@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-09-30 (taken before the refactor programme; recorded in P0)
 - Source IDs: D-04
+- Amended by: [0109](0109-loan-prepayments-and-recasts.md) (one-off prepayments and recasts
+  are built)
 
 ## Context
 
@@ -15,3 +17,6 @@ Several Czech mortgage features (prepayment at fixation end, the annual penalty-
 ## Consequences
 
 P2 outlines them; P4c writes `docs/design/` notes only.
+
+Since ADR 0109, one-off prepayments and maturity changes are built; the annual allowance, the
+payment day and first-month interest stay design notes.
