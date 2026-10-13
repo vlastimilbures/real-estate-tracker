@@ -239,7 +239,7 @@ describe("event warnings", () => {
     expect(ws[1]!.block).toBe(b);
   });
 
-  it("names the date, the amount asked for and the amount repaid", () => {
+  it("names the loan and the date (amounts: every language, below)", () => {
     const [w] = loanWarnings([block()], baseDate, [
       outcome("PREPAYMENT_EXCEEDS_BALANCE"),
     ]);
@@ -247,8 +247,6 @@ describe("event warnings", () => {
     expect(text).toContain("Loan from 17.01.2021:");
     expect(text).toContain("17.01.2031");
     expect(text).not.toMatch(/undefined/);
-    expect(text).toContain(fmtCzk(D(500000)));
-    expect(text).toContain(fmtCzk(D(400000)));
   });
 
   it("has a sentence for every issue, in every language", () => {
