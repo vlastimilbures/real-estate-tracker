@@ -231,6 +231,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0185](0185-csv-missing-columns-and-preview-clarity.md)        | CSV missing columns and preview clarity                                                       | Accepted                                                       | #142, #143                                         |
 | [0186](0186-compare-net-worth-excludes-cash.md)                | Scenario compare says net worth excludes cash                                                 | Accepted                                                       | #155                                               |
 | [0187](0187-cs-ru-translation-fixes.md)                        | Czech and Russian translation fixes                                                           | Accepted                                                       | #169, #152                                         |
+| [0188](0188-retire-currency-key-cleanup-one-hover-dot.md)      | Retire the old currency-key cleanup; one hover dot for every line chart                       | Accepted                                                       | #145, #170                                         |
 
 <!-- adr-index:end -->
 
