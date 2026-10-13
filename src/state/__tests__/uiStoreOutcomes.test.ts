@@ -46,6 +46,14 @@ describe("toast (ADR 0154)", () => {
     expect(ui().toast).toBeNull();
   });
 
+  it("an older toast's timer leaves a toast set since then (#274)", () => {
+    ui().showToast("Old");
+    // A test resets the store without clearing the module timer.
+    useUiStore.setState({ toast: { message: "New", id: -1 } });
+    vi.advanceTimersByTime(TOAST_MS);
+    expect(ui().toast?.message).toBe("New");
+  });
+
   it("survives a page change", () => {
     ui().showToast("Saved");
     ui().navigate("dashboard");

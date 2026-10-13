@@ -250,9 +250,12 @@ export const useUiStore = create<UiState>((set, get) => ({
   toast: null,
   showToast: (message) => {
     clearTimeout(toastTimer);
-    toastSeq += 1;
-    set({ toast: { message, id: toastSeq } });
-    toastTimer = setTimeout(() => set({ toast: null }), TOAST_MS);
+    const id = ++toastSeq;
+    set({ toast: { message, id } });
+    // Only its own toast: a store reset (tests) may have set another since (#274).
+    toastTimer = setTimeout(() => {
+      if (get().toast?.id === id) set({ toast: null });
+    }, TOAST_MS);
   },
   notice: null,
   setNotice: (notice) => set({ notice }),
