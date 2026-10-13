@@ -23,23 +23,30 @@ const shock = (deltaPa: string) => ({ deltaPa, durationYears: 3 });
 
 describe("stress presets", () => {
   it("rate and inflation shocks: +pp for the default 3 years", () => {
+    const sc = en.scenarios;
     expect(RATE_LEVELS_PP.map((pp) => named(ratePreset(pp, en)))).toEqual(
-      ["0.02", "0.04", "0.06"].map((d, i) => ({
-        name: en.scenarios.rateForYears(
-          en.scenarios.plusPp(RATE_LEVELS_PP[i] ?? 0),
-          3,
-        ),
+      (
+        [
+          [2, "0.02"],
+          [4, "0.04"],
+          [6, "0.06"],
+        ] as const
+      ).map(([pp, d]) => ({
+        name: sc.rateForYears(sc.plusPp(pp), 3),
         overrides: { rateShock: shock(d) },
       })),
     );
     expect(
       INFLATION_LEVELS_PP.map((pp) => named(inflationPreset(pp, en))),
     ).toEqual(
-      ["0.03", "0.06", "0.09"].map((d, i) => ({
-        name: en.scenarios.inflForYears(
-          en.scenarios.plusPp(INFLATION_LEVELS_PP[i] ?? 0),
-          3,
-        ),
+      (
+        [
+          [3, "0.03"],
+          [6, "0.06"],
+          [9, "0.09"],
+        ] as const
+      ).map(([pp, d]) => ({
+        name: sc.inflForYears(sc.plusPp(pp), 3),
         overrides: { inflationShock: shock(d) },
       })),
     );

@@ -90,7 +90,7 @@ const shock = (pp: number) => ({
   durationYears: DEFAULT_SHOCK_YEARS,
 });
 
-/** A rate-shock preset ("+2 pp rate for 5 years"). */
+/** A rate-shock preset: +`pp` points for the default shock years. */
 export function ratePreset(pp: number, t: Dictionary): Preset {
   const sc = t.scenarios;
   return {
