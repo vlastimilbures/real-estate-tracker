@@ -13,6 +13,7 @@
   screens in Czech and Russian)
 - Related: [0106](0106-collapsible-stress-presets.md) (the Scenarios page layout),
   [0157](0157-accessibility-batch.md) (axe with best practices, 0 violations)
+- Amended by: [0189](0189-outcome-regions-pending-purchase-a11y.md) (a wrapped band badge has 10 px corners)
 
 ## Context
 

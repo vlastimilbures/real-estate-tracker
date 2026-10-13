@@ -7,7 +7,7 @@
 - Amended: 2026-10-03 (#32b-2: how the form and the outputs show events, decisions 9 and 11)
 - Amended by: ADR 0129 (§1: the late window), ADR 0130 (§9: interest saved needs an applied
   prepayment and a negative figure shows a note; §12: sub-haléř values and the refinance
-  difference column), [0184](0184-data-layer-write-guards.md) (§4: draws reject unknown keys too)
+  difference column), [0184](0184-data-layer-write-guards.md) (§4: draws reject unknown keys too), [0189](0189-outcome-regions-pending-purchase-a11y.md) (§11: a row with an error marks all its inputs invalid)
 
 ## Context
 
