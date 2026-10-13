@@ -7,6 +7,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { Properties } from "./pages/Properties";
 import { AboutModal } from "./components/AboutModal";
 import { LeaveGuard } from "./components/LeaveGuard";
+import { ToastRegion } from "./components/OutcomeRegions";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PageBoundary } from "./components/PageBoundary";
 import { BootFailure } from "./components/BootFailure";
@@ -145,6 +146,8 @@ export function App() {
   return (
     <ErrorBoundary resetKey={route}>
       <CurrentPage />
+      {/* Beside the page, so a toast outlives a page change (ADR 0189). */}
+      <ToastRegion />
       {aboutOpen && <AboutModal onClose={closeAbout} />}
       <LeaveGuard />
     </ErrorBoundary>

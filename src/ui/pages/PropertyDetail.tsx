@@ -344,11 +344,7 @@ export function PropertyDetail() {
             s={s}
             chartRows={chartRows}
             modeWord={modeWord}
-            purchase={{
-              purchaseDate: property.purchaseDate,
-              price: out.acquisition.price,
-              loan: out.acquisition.loan,
-            }}
+            purchaseDate={property.purchaseDate}
           />
         </div>
       )}

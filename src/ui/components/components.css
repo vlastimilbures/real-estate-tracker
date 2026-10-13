@@ -275,6 +275,10 @@
   gap: var(--s6);
   scroll-margin-top: calc(var(--topbar-h, 0px) + var(--s3));
 }
+/* A failure scrolled into view lands under the sticky topbar too (ADR 0189). */
+.outcome-failure {
+  scroll-margin-top: calc(var(--topbar-h, 0px) + var(--s3));
+}
 .panel > .panel-head h2:focus,
 .panel:focus,
 .topbar .page-title:focus {
@@ -756,6 +760,13 @@ table.data tbody tr:hover td.sticky-col {
   padding: 2px 8px;
   border-radius: 999px;
   border: 1px solid transparent;
+}
+/* A band badge may wrap its word under the figure (ADR 0158): round ends would crowd
+   two lines, so it keeps one-line pill corners (ADR 0189). */
+.badge:has(.band-part) {
+  border-radius: 10px;
+  /* Half a one-line badge: line + 2 × 2 px padding + 2 × 1 px border. */
+  border-radius: calc(0.5lh + 3px);
 }
 .badge.good {
   color: var(--positive);

@@ -470,6 +470,7 @@ export const ru: Dictionary = {
     colNetCashFlow: "Чистый денежный поток",
     colDscr: "DSCR",
     badgePending: "Ожидает",
+    notOwnedCell: "ещё не в собственности",
     pendingPurchaseOn: (d) => `покупка ${d}`,
     badgeInactive: "Неактивен",
     editProperty: "Изменить объект",
@@ -488,6 +489,7 @@ export const ru: Dictionary = {
     notOwnedTitle: "Ещё не в собственности",
     notOwnedHint:
       "Показатели начинаются с покупки; до этого графики показывают 0.",
+    notOwnedFundingLink: "См. финансирование покупки",
     asOf: (d) => `на ${d}`,
     deactivated: "деактивировано",
     deactivate: "Деактивировать",

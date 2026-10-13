@@ -183,6 +183,14 @@ describe("prepayment and recast rows (ADR 0116)", () => {
     expect(row(1).textContent).toContain(en.inputRules.EVENT_BEFORE_START);
     expect(row(1).getAttribute("aria-describedby")).toBeTruthy();
     expect(row(2).textContent).not.toContain(en.inputRules.EVENT_BEFORE_START);
+    // The whole row is marked: every control in it is invalid (ADR 0189).
+    const controls = (r: HTMLElement) =>
+      Array.from(r.querySelectorAll("input, select"));
+    expect(controls(row(1)).length).toBeGreaterThan(0);
+    for (const c of controls(row(1)))
+      expect(c.getAttribute("aria-invalid")).toBe("true");
+    for (const c of controls(row(2)))
+      expect(c.getAttribute("aria-invalid")).toBeNull();
     await userEvent.click(
       within(row(1)).getByRole("button", {
         name: d.eventRemove(d.eventPrepaymentRow(1)),

@@ -8,7 +8,8 @@
 - Amends: [0150](0150-one-asof-resolver.md) (a Properties row and the Property detail
   tiles of a property not owned under the as-of basis show no figures; `owned` on the tiles
   follows `ownedOn`)
-- Amended by: [0165](0165-future-purchases.md) (a pending row shows a debt it already
+- Amended by: [0189](0189-outcome-regions-pending-purchase-a11y.md) (§4: the panel shows the date and a link to the Acquisition section; §3: each "—" says "not owned yet" to a screen reader),
+  [0165](0165-future-purchases.md) (a pending row shows a debt it already
   owes, and the only-pending Dashboard totals include it)
 - Related: [0155](0155-lifecycle-states-on-the-pages.md) (a pending purchase counts as
   active), [0119](0119-acquisition-funding.md) (the acquisition summary the panel reads)

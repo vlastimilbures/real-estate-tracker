@@ -14,6 +14,7 @@
   (Load sample), [0125](0125-committed-write-reload-failure.md) (a failed reload after a commit),
   [0142](0142-row-switch-guard-busy-dialog.md) (the leave guard, not used here),
   [0147](0147-failure-messages-and-log.md) (failure sites and texts)
+- Amended by: [0189](0189-outcome-regions-pending-purchase-a11y.md) (§1: the notice and failure are announced once and a failure scrolls into view; §2: the toast region is mounted once, in the app frame)
 
 ## Context
 

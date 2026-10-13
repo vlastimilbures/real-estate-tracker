@@ -1713,8 +1713,11 @@ export const SCREENS: Screen[] = [
       ).toBeVisible();
       await ux.capture("84-properties-pending");
       await row.getByRole("button", { name: "Byt Lesní" }).click();
+      // The panel's heading: the Properties cells carry the same words (ADR 0189).
       await expect(
-        ux.page.getByText(ux.t.propertyDetail.notOwnedTitle),
+        ux.page.getByRole("heading", {
+          name: ux.t.propertyDetail.notOwnedTitle,
+        }),
       ).toBeVisible();
       await ux.capture("84-property-pending");
     },

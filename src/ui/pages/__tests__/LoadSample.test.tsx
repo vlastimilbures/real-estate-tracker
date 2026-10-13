@@ -5,6 +5,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+// The toast region sits beside the page, in the app frame (ADR 0189).
+import { ToastRegion } from "../../components/OutcomeRegions";
 import { SettingsPage as Settings } from "../Settings";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
@@ -46,7 +48,12 @@ const loadButton = () =>
 
 describe("Settings → Backup: load sample (ADR 0112)", () => {
   it("is offered on an empty portfolio", () => {
-    render(<Settings />);
+    render(
+      <>
+        <Settings />
+        <ToastRegion />
+      </>,
+    );
     expect(screen.getByText(en.sample.panelTitle)).toBeTruthy();
     expect(screen.getByText(en.sample.loadBody)).toBeTruthy();
     expect(loadButton()).toBeTruthy();
@@ -54,7 +61,12 @@ describe("Settings → Backup: load sample (ADR 0112)", () => {
 
   it("is not offered while the portfolio has properties", () => {
     act(() => usePortfolioStore.setState({ portfolio }));
-    render(<Settings />);
+    render(
+      <>
+        <Settings />
+        <ToastRegion />
+      </>,
+    );
     expect(loadButton()).toBeNull();
   });
 
@@ -67,7 +79,12 @@ describe("Settings → Backup: load sample (ADR 0112)", () => {
       return Promise.resolve();
     });
     act(() => usePortfolioStore.setState({ loadSample }));
-    render(<Settings />);
+    render(
+      <>
+        <Settings />
+        <ToastRegion />
+      </>,
+    );
 
     await userEvent.click(loadButton()!);
 
@@ -82,7 +99,12 @@ describe("Settings → Backup: load sample (ADR 0112)", () => {
   it("shows the refusal when the portfolio is no longer empty", async () => {
     const loadSample = vi.fn(() => Promise.reject(new SampleNotEmptyError()));
     act(() => usePortfolioStore.setState({ loadSample }));
-    render(<Settings />);
+    render(
+      <>
+        <Settings />
+        <ToastRegion />
+      </>,
+    );
 
     await userEvent.click(loadButton()!);
 

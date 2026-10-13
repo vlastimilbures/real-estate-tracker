@@ -498,6 +498,7 @@ export const en = {
     colNetCashFlow: "Net cash flow",
     colDscr: "DSCR",
     badgePending: "Pending",
+    notOwnedCell: "not owned yet",
     pendingPurchaseOn: (d: string) => `purchase ${d}`,
     badgeInactive: "Inactive",
     editProperty: "Edit property",
@@ -516,6 +517,7 @@ export const en = {
     notOwnedTitle: "Not owned yet",
     notOwnedHint:
       "Its figures start once it is bought; until then the charts show 0.",
+    notOwnedFundingLink: "See purchase funding",
     asOf: (d: string) => `as of ${d}`,
     deactivated: "deactivated",
     deactivate: "Deactivate",

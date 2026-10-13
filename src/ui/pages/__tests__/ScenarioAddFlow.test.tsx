@@ -5,6 +5,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+// The toast region sits beside the page, in the app frame (ADR 0189).
+import { ToastRegion } from "../../components/OutcomeRegions";
 import { Scenarios } from "../Scenarios";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
@@ -99,7 +101,12 @@ beforeEach(() => {
 describe("stress presets do not save duplicates (#48)", () => {
   it("a second click on the same preset adds no row", async () => {
     seed([]);
-    render(<Scenarios />);
+    render(
+      <>
+        <Scenarios />
+        <ToastRegion />
+      </>,
+    );
     await clickPreset();
     await clickPreset();
     expect(addScenario).toHaveBeenCalledTimes(1);
@@ -113,7 +120,12 @@ describe("stress presets do not save duplicates (#48)", () => {
 
   it("a preset that matches a saved scenario ticks it for compare", async () => {
     seed([saved("s1", ratePreset)]);
-    render(<Scenarios />);
+    render(
+      <>
+        <Scenarios />
+        <ToastRegion />
+      </>,
+    );
     expect(box(ratePreset).checked).toBe(false);
     await clickPreset();
     expect(addScenario).not.toHaveBeenCalled();
@@ -125,7 +137,12 @@ describe("stress presets do not save duplicates (#48)", () => {
 describe("a new scenario joins the compare (#49)", () => {
   it("ticks a scenario added from a preset", async () => {
     seed([]);
-    render(<Scenarios />);
+    render(
+      <>
+        <Scenarios />
+        <ToastRegion />
+      </>,
+    );
     await clickPreset();
     expect(box(ratePreset).checked).toBe(true);
     expect(compared()).toEqual([sc.base, ratePreset]);
@@ -136,7 +153,12 @@ describe("a new scenario joins the compare (#49)", () => {
 
   it("at the limit keeps the selection and says why", async () => {
     seed([saved("a", "A"), saved("b", "B"), saved("c", "C")]);
-    render(<Scenarios />);
+    render(
+      <>
+        <Scenarios />
+        <ToastRegion />
+      </>,
+    );
     for (const n of ["A", "B", "C"]) await userEvent.click(box(n));
     await clickPreset();
     expect(addScenario).toHaveBeenCalledTimes(1);
@@ -149,7 +171,12 @@ describe("a new scenario joins the compare (#49)", () => {
 
   it("ticks a duplicate", async () => {
     seed([saved("a", "A")]);
-    render(<Scenarios />);
+    render(
+      <>
+        <Scenarios />
+        <ToastRegion />
+      </>,
+    );
     await userEvent.click(screen.getByRole("button", { name: sc.duplicate }));
     expect(duplicateScenario).toHaveBeenCalledTimes(1);
     const newId = duplicateScenario.mock.calls[0]![1];
@@ -160,7 +187,12 @@ describe("a new scenario joins the compare (#49)", () => {
 
   it("ticks a scenario created with the form", async () => {
     seed([]);
-    render(<Scenarios />);
+    render(
+      <>
+        <Scenarios />
+        <ToastRegion />
+      </>,
+    );
     await userEvent.click(screen.getByRole("button", { name: sc.newScenario }));
     await userEvent.type(screen.getByLabelText(sc.name), "Mine");
     await userEvent.click(
@@ -172,7 +204,12 @@ describe("a new scenario joins the compare (#49)", () => {
 
   it("editing a scenario does not change the selection", async () => {
     seed([saved("a", "A")]);
-    render(<Scenarios />);
+    render(
+      <>
+        <Scenarios />
+        <ToastRegion />
+      </>,
+    );
     await userEvent.click(screen.getByRole("button", { name: en.common.edit }));
     const name = screen.getByLabelText(sc.name);
     await userEvent.clear(name);
