@@ -23,6 +23,9 @@ import { useT } from "../hooks/useT";
 import { PortfolioStateNotice } from "../components/PortfolioStateNotice";
 import { portfolioState } from "../model/portfolioState";
 
+/** Property choices carry this prefix, so no property id can equal "portfolio" (ADR 0191). */
+const PROPERTY = "property:";
+
 export function Projections() {
   const t = useT();
   const all = useProjections();
@@ -57,12 +60,11 @@ export function Projections() {
   const options = [
     { value: "portfolio", label: t.projections.portfolio },
     ...active.map((p) => ({
-      value: p.id,
+      value: PROPERTY + p.id,
       label: shortPropertyName(p.name),
     })),
   ];
-  const property =
-    entity === "portfolio" ? undefined : active.find((p) => p.id === entity);
+  const property = active.find((p) => PROPERTY + p.id === entity);
   const selected =
     (property && all.byProperty.get(property.id)) ?? all.portfolio;
   const rows = projectionSeries(selected, mode, assumptions);
