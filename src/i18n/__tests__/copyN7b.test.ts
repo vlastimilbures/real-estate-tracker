@@ -273,4 +273,93 @@ describe("N7b wording (#169, #152)", () => {
       "в реальном выражении (Kč на базовую дату)",
     );
   });
+  it.each([
+    [
+      "cs",
+      cs,
+      "Splátkový kalendář",
+      "Zobrazit splátkový kalendář (2 splátky)",
+      "Skrýt splátkový kalendář",
+    ],
+    [
+      "ru",
+      ru,
+      "График платежей",
+      "Показать график платежей (2 платежа)",
+      "Скрыть график платежей",
+    ],
+  ])(
+    "%s: the schedule has the banks' name (#152 item 5)",
+    (_, d, name, show, hide) => {
+      expect(d.propertyDetail.sectionAmortization).toBe(name);
+      expect(d.propertyDetail.amortizationTitle).toBe(name);
+      expect(d.propertyDetail.showAmortization(2)).toBe(show);
+      expect(d.propertyDetail.hideAmortization).toBe(hide);
+      expect(d.guide.projectionDefs.debt.formula).toBe(name.toLowerCase());
+    },
+  );
+
+  it("cs/ru: prose uses the same schedule name (#152 item 5)", () => {
+    expect(cs.importPage.noEffectNote).toContain("splátkový kalendář");
+    expect(cs.guide.snapshotDefs.debt.meaning).toMatch(
+      /^Zbývající zůstatek úvěru ze splátkového kalendáře/,
+    );
+    expect(cs.guide.developmentProsePost).toContain(
+      "na běžný splátkový kalendář",
+    );
+    expect(ru.importPage.noEffectNote).toContain("график платежей");
+    expect(ru.guide.snapshotDefs.debt.meaning).toMatch(
+      /^Оставшийся остаток кредита из графика платежей/,
+    );
+  });
+
+  it.each([
+    [
+      "en",
+      en,
+      "The base-date snapshot's value, debt and equity equal year 0 of the projection; rent, costs and cash flows start in year 1.",
+    ],
+    [
+      "cs",
+      cs,
+      "Hodnota, dluh a kapitál snímku k základnímu datu se rovnají roku 0 projekce; nájem, náklady a peněžní toky začínají v roce 1.",
+    ],
+    [
+      "ru",
+      ru,
+      "Стоимость, долг и капитал снимка на базовую дату равны году 0 прогноза; аренда, расходы и денежные потоки начинаются с года 1.",
+    ],
+  ])(
+    "%s: the Guide says which figures year 0 shares (#152 item 2)",
+    (_, d, last) => {
+      expect(d.guide.cardAsOfBody.endsWith(last)).toBe(true);
+    },
+  );
+
+  it.each([
+    [
+      "en",
+      en,
+      "fixed part grows with CPI",
+      "Fixed costs (property tax, insurance, SVJ, other) grow with CPI from the inflation rate; management and maintenance stay a share of rent, so they follow rent.",
+    ],
+    [
+      "cs",
+      cs,
+      "fixní část roste s CPI",
+      "Fixní náklady (daň z nemovitých věcí, pojištění, SVJ, ostatní) rostou s CPI podle míry inflace; správa a údržba zůstávají podílem z nájmu, takže sledují nájem.",
+    ],
+    [
+      "ru",
+      ru,
+      "постоянная часть растёт с CPI",
+      "Постоянные расходы (налог на недвижимость, страхование, SVJ, прочие) растут с CPI по ставке инфляции; управление и обслуживание остаются долей аренды и следуют за ней.",
+    ],
+  ])(
+    "%s: the Guide says only fixed costs follow CPI (#152 item 2)",
+    (_, d, formula, meaning) => {
+      expect(d.guide.projectionDefs.costs.formula).toBe(formula);
+      expect(d.guide.projectionDefs.costs.meaning).toBe(meaning);
+    },
+  );
 });

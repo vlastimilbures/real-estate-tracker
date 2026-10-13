@@ -704,7 +704,7 @@ export const cs: Dictionary = {
     sectionFinancing: "Financování",
     sectionHolding: "Náklady na držbu",
     sectionProjection: "Projekce",
-    sectionAmortization: "Umořovací plán",
+    sectionAmortization: "Splátkový kalendář",
     // Acquisition section (ADR 0119 §9)
     sectionAcquisition: "Pořízení",
     acqTitle: "Financování koupě",
@@ -725,9 +725,9 @@ export const cs: Dictionary = {
       "— znamená nezadáno; užití počítá jen zadané náklady a úpravy. Úvěr na koupi je první úvěrový blok, pokud začíná nejpozději 90 dní po koupi, nebo úvěr na výstavbu bez ohledu na začátek. Částky zadáte v dialogu „Upravit nemovitost“.",
     acqRecordedNote: (note) => `Poznámka: ${note}`,
     showAmortization: (n) =>
-      `Zobrazit umořovací plán (${n} ${csPlural(n, ["splátka", "splátky", "splátek"])})`,
-    hideAmortization: "Skrýt umořovací plán",
-    amortizationTitle: "Umořovací plán",
+      `Zobrazit splátkový kalendář (${n} ${csPlural(n, ["splátka", "splátky", "splátek"])})`,
+    hideAmortization: "Skrýt splátkový kalendář",
+    amortizationTitle: "Splátkový kalendář",
     amortizationMonths: (n) =>
       `${n} ${csPlural(n, ["měsíc", "měsíce", "měsíců"])}`,
     amColMonth: "Měsíc",
@@ -961,7 +961,7 @@ export const cs: Dictionary = {
     confirmReplace: "Přesto importovat",
     replacedEvent: (issue) => `Předchozí úvěrový blok: ${issue}`,
     noEffectNote:
-      "Začíná před platným úvěrovým blokem, proto ho umořovací plán nepoužije. Může se ale počítat jako úvěr na koupi.",
+      "Začíná před platným úvěrovým blokem, proto ho splátkový kalendář nepoužije. Může se ale počítat jako úvěr na koupi.",
     storedEventKind: {
       prepayments: "mimořádná splátka",
       recasts: "změna splatnosti",
@@ -1288,7 +1288,7 @@ export const cs: Dictionary = {
       "Vaše záznamy projdou čistým výpočetním enginem a obrazovky zobrazí výsledek. Žádné číslo se nezadává ručně — každé je odvozené.",
     cardAsOfTitle: "Vše je „k“ určitému datu",
     cardAsOfBody:
-      "Snímek je vaše portfolio ve zvolený den; projekce ho posouvá rok po roce. Snímek k základnímu datu se rovná roku 0 projekce.",
+      "Snímek je vaše portfolio ve zvolený den; projekce ho posouvá rok po roce. Hodnota, dluh a kapitál snímku k základnímu datu se rovnají roku 0 projekce; nájem, náklady a peněžní toky začínají v roce 1.",
     cardEffectiveTitle: "Záznamy mají platnost k datu",
     cardEffectiveBody:
       "Ocenění, nájmy a hypotéky mají vždy časové rozmezí. Pro kterýkoli den engine vybere ten platný — takže končící nájem předá štafetu dalšímu.",
@@ -1351,7 +1351,7 @@ export const cs: Dictionary = {
     developmentProseMid: ". Během výstavby je úvěr ",
     developmentInterestOnly: "pouze úrokový",
     developmentProsePost:
-      " (bez jistiny). Dluh ukazuje načerpanou částku a hodnota dokončenou hodnotu sníženou o dosud nečerpané tranše, takže s každým čerpáním rostou obě a kapitál se nemění. Graf změny kapitálu ukazuje každé čerpání jako hodnotu výstavby a nový dluh ve stejné výši. Úrok se platí jen z načerpané částky; LTV počítá celý úvěr vůči dokončené hodnotě, stejně jako banka. Když přijde tranše nebo se výstavba dokončí, úvěr se znovu umoří na běžný splátkový plán. Ve formuláři hypotéky zvolte Developerský a vyplňte harmonogram čerpání: částku čerpanou v den začátku a pak řádek pro každou další tranši.",
+      " (bez jistiny). Dluh ukazuje načerpanou částku a hodnota dokončenou hodnotu sníženou o dosud nečerpané tranše, takže s každým čerpáním rostou obě a kapitál se nemění. Graf změny kapitálu ukazuje každé čerpání jako hodnotu výstavby a nový dluh ve stejné výši. Úrok se platí jen z načerpané částky; LTV počítá celý úvěr vůči dokončené hodnotě, stejně jako banka. Když přijde tranše nebo se výstavba dokončí, úvěr se znovu umoří na běžný splátkový kalendář. Ve formuláři hypotéky zvolte Developerský a vyplňte harmonogram čerpání: částku čerpanou v den začátku a pak řádek pro každou další tranši.",
     limitsTitle: "Omezení a bezpečnost dat",
     limitsProse:
       "Tato čísla jsou plánovací odhady, ne nabídka banky ani zaručený výsledek. Dva dokumenty ve zdrojovém repozitáři vysvětlují, co model zjednodušuje nebo vynechává, a jak data zálohovat a obnovit po neúspěšné aktualizaci.",
@@ -1368,7 +1368,7 @@ export const cs: Dictionary = {
         name: "Dluh",
         formula: "zůstatek k datu",
         meaning:
-          "Zbývající zůstatek úvěru z umořovacího plánu — odráží každou splátku i případnou změnu sazby po fixaci. U developerského úvěru se počítá načerpaná částka; dosud nečerpané tranše se zobrazují vedle ní.",
+          "Zbývající zůstatek úvěru ze splátkového kalendáře — odráží každou splátku i případnou změnu sazby po fixaci. U developerského úvěru se počítá načerpaná částka; dosud nečerpané tranše se zobrazují vedle ní.",
       },
       equity: {
         name: "Kapitál",
@@ -1474,13 +1474,13 @@ export const cs: Dictionary = {
       },
       costs: {
         name: "Náklady",
-        formula: "rostou s CPI",
+        formula: "fixní část roste s CPI",
         meaning:
-          "Náklady na držbu inflují přes index CPI sestavený z míry inflace.",
+          "Fixní náklady (daň z nemovitých věcí, pojištění, SVJ, ostatní) rostou s CPI podle míry inflace; správa a údržba zůstávají podílem z nájmu, takže sledují nájem.",
       },
       debt: {
         name: "Dluh",
-        formula: "umořovací plán",
+        formula: "splátkový kalendář",
         meaning: "Sleduje plán včetně změn sazby na konci fixace.",
       },
       nextReset: {

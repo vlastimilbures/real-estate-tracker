@@ -1359,7 +1359,7 @@ export const en = {
       "Your records run through a pure calculation engine, then the screens display the result. No figure is typed in by hand — every one is derived.",
     cardAsOfTitle: "Everything is “as of” a date",
     cardAsOfBody:
-      "A snapshot is your portfolio on a chosen day; a projection rolls it forward by year. The base-date snapshot equals year 0 of the projection.",
+      "A snapshot is your portfolio on a chosen day; a projection rolls it forward by year. The base-date snapshot's value, debt and equity equal year 0 of the projection; rent, costs and cash flows start in year 1.",
     cardEffectiveTitle: "Records are effective-dated",
     cardEffectiveBody:
       "Valuations, leases and mortgages each have a date range. For any day the engine picks the one in force — so an expiring lease hands over to the next.",
@@ -1547,9 +1547,9 @@ export const en = {
       },
       costs: {
         name: "Costs",
-        formula: "grow with CPI",
+        formula: "fixed part grows with CPI",
         meaning:
-          "Holding costs inflate via a CPI index built from the inflation rate.",
+          "Fixed costs (property tax, insurance, SVJ, other) grow with CPI from the inflation rate; management and maintenance stay a share of rent, so they follow rent.",
       },
       debt: {
         name: "Debt",
