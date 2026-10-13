@@ -155,8 +155,9 @@ export function useScenarioComparison(
 ): ScenarioResult[] | null {
   const portfolio = usePortfolioStore((s) => s.portfolio);
   const assumptions = usePortfolioStore((s) => s.assumptions);
-  // Stable dep: re-run only when a selected scenario's id or overrides change. The
-  // stored form lists every override field, so a new field cannot be missed (#147).
+  // Stable dep: re-run only when a selected scenario's id or overrides change. The key is
+  // the stored form, which the restore tests keep complete; a per-field test pins that
+  // each field re-runs the compare (#147).
   const key = scenarios
     .map((s) => `${s.id}:${serializeOverrides(s.overrides)}`)
     .join("|");
@@ -275,6 +276,8 @@ export function usePropertyEngineResult(
         propertySchedules(blocks, [propertyId], assumptions).get(propertyId) ??
         EMPTY_PROPERTY_SCHEDULE;
       return {
+        portfolio,
+        assumptions,
         property,
         blocks,
         built,
@@ -285,8 +288,7 @@ export function usePropertyEngineResult(
   }, [portfolio, assumptions, propertyId]);
   return useMemo(() => {
     if (!fixed || "invalid" in fixed) return fixed;
-    if (!portfolio || !assumptions) return null; // set whenever `fixed` is
-    const { property, blocks, built, projection, acquisition } = fixed;
+    const { portfolio, assumptions, property, blocks, built } = fixed;
     return reported(() => ({
       asOf: asOfDate,
       snapshot: propertySnapshot(
@@ -296,11 +298,11 @@ export function usePropertyEngineResult(
         asOfDate,
         built.rows,
       ),
-      projection,
+      projection: fixed.projection,
       schedule: built.rows,
       eventOutcomes: built.eventOutcomes,
       financing: propertyLoanExposure(blocks, assumptions, built, asOfDate),
-      acquisition,
+      acquisition: fixed.acquisition,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fixed, asOfKey]);
