@@ -9,6 +9,7 @@
 - Related: [0017](0017-reject-invalid-loan-inputs.md) (no NaN),
   [0075](0075-input-rejection-gaps.md) §1–2 (a new rule on stored data),
   [0119](0119-acquisition-funding.md) §6 (acquisition cost rate, already 0–1)
+- Amended by: [0191](0191-state-fixes-preset-match.md) (§6: the scenario list is updated after a committed write whose reload failed)
 
 ## Context
 

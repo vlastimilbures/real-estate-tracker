@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issues #48 and #49 (Scenarios critical review after #15)
+- Amended by: [0191](0191-state-fixes-preset-match.md) (decision 1: a preset matches a saved scenario by its settings; the language caveat is gone)
 
 ## Context
 
