@@ -1,12 +1,19 @@
 // `pnpm ux:diff` decoder and pixel diff on synthetic PNGs (#137).
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { crc32, deflateSync } from "node:zlib";
+import { crc32, deflateSync, inflateSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import { decode, diffShare, type Png } from "../png.ts";
 
 const dir = mkdtempSync(join(tmpdir(), "ux-png-"));
+
+/** RGB of the Chromium fixture's pixel (x, y); see "decodes a PNG that Chromium wrote". */
+const pixel = (x: number, y: number) => [
+  (x * 37 + y * 11) % 256,
+  (x * x * 7 + y * 19) % 256,
+  (x * y * 13 + 5) % 256,
+];
 
 /** Raw pixels of a width×height image with `channels` 3 (RGB) or 4 (RGBA). */
 function image(width: number, height: number, channels: 3 | 4): Png {
@@ -65,7 +72,12 @@ function encode(png: Png, header: Partial<Header> = {}): string {
   ihdr[8] = header.bitDepth ?? 8;
   ihdr[9] = header.colorType ?? (channels === 4 ? 6 : 2);
   ihdr[12] = header.interlace ?? 0;
-  const file = join(dir, `${width}x${height}x${channels}-${Math.random()}.png`);
+  return write(ihdr, raw);
+}
+
+/** Writes a PNG file from its IHDR fields and its filtered, uncompressed rows. */
+function write(ihdr: Buffer, raw: Buffer): string {
+  const file = join(dir, `${Math.random()}.png`);
   writeFileSync(
     file,
     Buffer.concat([
@@ -106,6 +118,53 @@ describe("decode", () => {
     expect(() => decode(encode(image(4, 4, 3), header))).toThrow(
       "only 8-bit RGB/RGBA non-interlaced PNGs are supported",
     );
+  });
+
+  // The encoder above shares the decoder's predictor formulas, so a bug in both would
+  // cancel out (#269). This file comes from Chromium instead: a Playwright screenshot of
+  // a 16×16 canvas painted with `pixel(x, y)`. Its rows use the Paeth and Up filters.
+  it("decodes a PNG that Chromium wrote", () => {
+    const file = join(import.meta.dirname, "../fixtures/chromium-16x16.png");
+    const png = decode(file);
+    expect([png.width, png.height]).toEqual([16, 16]);
+    const want = Buffer.alloc(16 * 16 * png.channels, 255);
+    for (let y = 0; y < 16; y++)
+      for (let x = 0; x < 16; x++)
+        want.set(pixel(x, y), (y * 16 + x) * png.channels);
+    expect(png.pixels).toEqual(want);
+    // The file uses more than one filter type, so the predictors are exercised.
+    const b = readFileSync(file);
+    const idat: Buffer[] = [];
+    for (let o = 8; o < b.length; o += 12 + b.readUInt32BE(o))
+      if (b.toString("ascii", o + 4, o + 8) === "IDAT")
+        idat.push(b.subarray(o + 8, o + 8 + b.readUInt32BE(o)));
+    const raw = inflateSync(Buffer.concat(idat));
+    const filters = new Set(
+      Array.from({ length: 16 }, (_, y) => raw[y * (16 * png.channels + 1)]),
+    );
+    expect(filters.has(4) && filters.has(2)).toBe(true);
+  });
+
+  // Rows filtered by hand, so no predictor code is shared: a Paeth tie (pa = pc, a ≠ c,
+  // where the spec picks a), an Average of an odd sum, and Sub. Grey RGB, 2×4 (#269).
+  it("decodes hand-filtered Paeth, Average and Sub rows", () => {
+    const ihdr = Buffer.alloc(13);
+    ihdr.writeUInt32BE(2, 0);
+    ihdr.writeUInt32BE(4, 4);
+    ihdr[8] = 8;
+    ihdr[9] = 2;
+    const row = (filter: number, p0: number, p1: number) => [
+      filter,
+      ...[p0, p0, p0, p1, p1, p1],
+    ];
+    const raw = Buffer.from([
+      ...row(0, 10, 15), // None
+      ...row(4, 246, 7), // Paeth: 0 − up 10; then a 0, up 15, c 10 → a
+      ...row(3, 0, 17), // Average: 0; then 20 − ⌊(0 + 7) / 2⌋
+      ...row(1, 5, 4), // Sub: 5; then 9 − 5
+    ]);
+    const grey = [10, 15, 0, 7, 0, 20, 5, 9].flatMap((v) => [v, v, v]);
+    expect(decode(write(ihdr, raw)).pixels).toEqual(Buffer.from(grey));
   });
 
   it("refuses a filter byte above 4", () => {

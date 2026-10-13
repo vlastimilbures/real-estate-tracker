@@ -9,6 +9,9 @@
   [0070](0070-decision-records.md) (numbering and the index)
 - Related: [0081](0081-public-release.md) point 3 (CHANGELOG and ADRs),
   [0151](0151-ci-gates-after-going-public.md) (CI gates)
+- Amended: 2026-10-13 (#271: a new ADR that replaces only part of an old one says
+  `Supersedes in part:` and the old one `Superseded in part by:`; `pnpm adr:check` pairs them
+  and the index shows "partly superseded by NNNN")
 
 ## Context
 

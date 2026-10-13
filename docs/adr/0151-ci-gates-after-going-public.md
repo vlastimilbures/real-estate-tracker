@@ -4,8 +4,9 @@
 - Date: 2026-10-07
 - Source: issue #111 (2026-10 code review, findings R7-07, R8-16); owner decision D1
   (2026-10-07: `strict` checks stay off); Track 11 PR 11.3
-- Amends: [0068](0068-no-branch-protection.md) (supersedes items (1) and (2) and D-69 G-1 and
-  G-2), [0013](0013-ci-runners.md) (Consequences: when the macOS bundle runs)
+- Supersedes in part: [0068](0068-no-branch-protection.md) (items (1) and (2) and D-69 G-1
+  and G-2)
+- Amends: [0013](0013-ci-runners.md) (Consequences: when the macOS bundle runs)
 - Related: [0081](0081-public-release.md) ("a public repository can enable it"),
   [0026](0026-mutation-testing.md) (Stryker nightly)
 
