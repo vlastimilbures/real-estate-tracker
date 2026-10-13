@@ -4,7 +4,7 @@ import { useUiStore } from "../../state/uiStore";
 import { isDirty } from "../model/dirty";
 import { Panel, Button, EmptyState } from "../components/primitives";
 import { FolderOpen } from "lucide-react";
-import { Field, TextInput } from "../components/forms";
+import { Field, TextInput } from "../components/fields";
 import { DateInput } from "../components/DateInput";
 import {
   collectValues,

@@ -5,7 +5,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Field, RecordForm, SelectInput, TextArea } from "../forms";
+import { Field, SelectInput, TextArea } from "../fields";
+import { RecordForm } from "../forms";
 import { PropertyFormModal } from "../PropertyFormModal";
 import { ScenarioForm } from "../../pages/ScenarioForm";
 import { useUiStore } from "../../../state/uiStore";

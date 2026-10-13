@@ -1,7 +1,7 @@
 // Field groups pulled out of ScenarioForm.tsx to shrink its render tree. Pure
 // presentation — no logic beyond what ScenarioForm.tsx already computed.
 import { useId, type ReactNode } from "react";
-import { Field, TextInput } from "../components/forms";
+import { Field, TextInput } from "../components/fields";
 import { fmtPct } from "../../lib/format";
 import {
   OVERRIDE_KEYS,

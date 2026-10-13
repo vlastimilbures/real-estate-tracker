@@ -1,5 +1,5 @@
-// Form components — presentational fields plus a generic record form. Parsing/formatting
-// helpers live in ../model/formParse (pure, re-exported here for convenient importing).
+// Form components — a generic record form; field controls live in ./fields and
+// parsing/formatting helpers in ../model/formParse.
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   collectValues,
@@ -21,136 +21,12 @@ import { currencySymbol } from "../../lib/currency";
 import { fmtDate } from "../../lib/format";
 import { Button } from "./primitives";
 import { DateInput } from "./DateInput";
-import { FieldContext, useFieldControlProps } from "./fieldContext";
+import { Field, SelectInput, TextInput } from "./fields";
 import { useT } from "../hooks/useT";
 import { formWriteErrors } from "../model/writeError";
 import { toWriteError, type WriteError } from "../../state/writeError";
 import { useUiStore } from "../../state/uiStore";
 import { isDirty } from "../model/dirty";
-
-export function Field({
-  id: idProp,
-  label,
-  error,
-  help,
-  required = false,
-  children,
-}: {
-  /** The control's id, when something else must focus it (an error summary link). */
-  id?: string | undefined;
-  label: string;
-  error?: string | undefined;
-  help?: string | undefined;
-  /** Marks the label "*" and the control aria-required (UX-040). */
-  required?: boolean | undefined;
-  children: ReactNode;
-}) {
-  const autoId = useId();
-  const id = idProp ?? autoId;
-  const noteId = `${id}-note`;
-  const note = error ?? help;
-  return (
-    <div className={`field${error ? " invalid" : ""}`}>
-      {/* The "*" is CSS generated content with empty alt text: seen, not read
-          (the control is aria-required instead) (UX-040). */}
-      <label htmlFor={id} className={required ? "required" : undefined}>
-        {label}
-      </label>
-      <FieldContext.Provider
-        value={{
-          id,
-          invalid: Boolean(error),
-          required,
-          describedBy: note ? noteId : undefined,
-        }}
-      >
-        {children}
-      </FieldContext.Provider>
-      {error ? (
-        <span className="err" id={noteId}>
-          {error}
-        </span>
-      ) : help ? (
-        <span className="help" id={noteId}>
-          {help}
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
-export function TextInput({
-  value,
-  onChange,
-  suffix,
-  placeholder,
-  inputMode = "text",
-  ...rest
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  suffix?: string | undefined;
-  placeholder?: string | undefined;
-  inputMode?: "text" | "decimal" | "numeric" | undefined;
-} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange">) {
-  const fieldProps = useFieldControlProps();
-  return (
-    <div className="input-wrap">
-      <input
-        {...fieldProps}
-        className={suffix ? "has-suffix" : ""}
-        value={value}
-        placeholder={placeholder}
-        inputMode={inputMode}
-        onChange={(e) => onChange(e.target.value)}
-        {...rest}
-      />
-      {suffix && <span className="suffix">{suffix}</span>}
-    </div>
-  );
-}
-
-export function SelectInput({
-  value,
-  onChange,
-  options,
-  ...rest
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-} & Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "value" | "onChange">) {
-  const fieldProps = useFieldControlProps();
-  return (
-    <select
-      {...fieldProps}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      {...rest}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
-  );
-}
-
-export function TextArea(
-  props: React.TextareaHTMLAttributes<HTMLTextAreaElement>,
-) {
-  const fieldProps = useFieldControlProps();
-  return <textarea {...fieldProps} {...props} />;
-}
-
-/** A checkbox inside a Field: the Field label and its own wrapping label both name it. */
-export function Checkbox(
-  props: Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">,
-) {
-  const fieldProps = useFieldControlProps();
-  return <input type="checkbox" {...fieldProps} {...props} />;
-}
 
 /** Draft-derived notes of a row list: soft warnings per draft row and a footer line. */
 export interface ListNotes {
