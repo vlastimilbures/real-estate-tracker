@@ -57,7 +57,3 @@ export function perfReport(name: string): void {
   perfMark(name);
   sink?.(name, null);
 }
-
-export function clearPerfMark(name: string): void {
-  timing()?.clearMarks(name);
-}

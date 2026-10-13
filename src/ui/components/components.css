@@ -475,6 +475,12 @@
   font-size: 12.5px;
   color: var(--ink-soft);
 }
+/* A panel's explanatory paragraph above its action (Backup & restore). */
+.muted-note {
+  color: var(--ink-soft);
+  font-size: 13px;
+  margin-bottom: var(--s4);
+}
 /* Data check rows: the finding and its effect, then the link to its fix in a column of
    its own (ADR 0118). */
 .data-check > .panel-subhead:first-child {
@@ -1343,16 +1349,20 @@ table.data tbody tr:hover td.sticky-col {
   padding-left: var(--s5);
 }
 
-.error-summary .link-btn {
-  /* WCAG 2.5.8: at least 24px tall. */
+/* A text button that reads as an underlined link (the error summary's field links, the
+   form-note "learn more"). WCAG 2.5.8: at least 24px tall. */
+.link-btn {
   min-height: 24px;
   font: inherit;
-  color: var(--negative);
+  color: inherit;
   text-decoration: underline;
   background: none;
   border: 0;
   padding: 0;
   cursor: pointer;
+}
+.error-summary .link-btn {
+  color: var(--negative);
 }
 
 /* ADR 0098: mortgage form Standard | Development switch and successor note. */
@@ -1396,17 +1406,6 @@ table.data tbody tr:hover td.sticky-col {
   border-radius: var(--r-sm);
   background: var(--accent-wash);
   font-size: 13px;
-}
-
-.form-note .link-btn {
-  min-height: 24px;
-  font: inherit;
-  color: inherit;
-  text-decoration: underline;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
 }
 
 /* ============ Empty state ============ */

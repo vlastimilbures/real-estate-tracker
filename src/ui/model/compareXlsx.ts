@@ -5,7 +5,8 @@ import type { ProjectionYear } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import type { Decimal } from "../../lib/money";
 import type { Mode } from "./lens";
-import { irrReasonText, leveredIrr } from "./irr";
+import { irrReasonText } from "./irr";
+import { lensKpis } from "./lensKpis";
 import { tableValue } from "./chartData";
 import { lensLabel } from "./tableContext";
 import {
@@ -81,7 +82,7 @@ function keyFiguresSheet(
 ): XlsxSheetCells {
   const footnote = compareFootnote(t, results);
   const irrNotes = results.flatMap((r) => {
-    const reason = irrReasonText(t, leveredIrr(r.kpis, mode).reason);
+    const reason = irrReasonText(t, lensKpis(r.kpis, mode).leveredIrr.reason);
     return reason ? [`${r.name}: ${reason}`] : [];
   });
   return xlsxSheet<CompareValueRow>({
@@ -90,8 +91,7 @@ function keyFiguresSheet(
       { header: t.xlsx.metric, kind: "text", value: (row) => row.label },
       ...results.map((r): XlsxColumn<CompareValueRow> => ({
         header: r.name,
-        kind: "text",
-        kindOf: (row) => row.kind,
+        kind: (row) => row.kind,
         value: (row) => row.value(r),
       })),
     ],

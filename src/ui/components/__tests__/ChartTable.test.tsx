@@ -34,10 +34,6 @@ const rows = [
   },
 ];
 
-function Plot() {
-  return <svg data-testid="plot" />;
-}
-
 function card(kind: "czk" | "pct" = "czk") {
   const series =
     kind === "czk"
@@ -52,9 +48,7 @@ function card(kind: "czk" | "pct" = "czk") {
       kind={kind}
       rows={rows}
       series={series}
-    >
-      <Plot />
-    </ChartCard>,
+    />,
   );
 }
 
@@ -127,9 +121,7 @@ describe("ChartCard table toggle (UX-075)", () => {
         kind="pct"
         rows={[{ year: 0, calendarYear: 2026, ltv: null }]}
         series={[{ key: "ltv", name: "LTV", color: "red" }]}
-      >
-        <Plot />
-      </ChartCard>,
+      />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Table" }));
     const [, first] = screen.getAllByRole("row");

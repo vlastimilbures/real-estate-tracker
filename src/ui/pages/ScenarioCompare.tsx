@@ -14,7 +14,7 @@ import { exportWorkbookXlsx } from "../exportXlsx";
 import { compareWorkbook } from "../model/compareXlsx";
 import { lensLabel } from "../model/tableContext";
 import { GitCompare } from "lucide-react";
-import { ChartCard, CzkLines, PctLines } from "../components/charts";
+import { ChartCard } from "../components/charts";
 import type { Scenario } from "../../engine";
 import { useT } from "../hooks/useT";
 import {
@@ -177,9 +177,7 @@ export function CompareView({
           rows={netWorthRows}
           series={series}
           legend
-        >
-          <CzkLines data={netWorthRows} series={series} />
-        </ChartCard>
+        />
         <ChartCard
           title={t.scenarios.chartNetCashFlow}
           sub={lensSub}
@@ -187,9 +185,7 @@ export function CompareView({
           rows={cashFlowRows}
           series={series}
           legend
-        >
-          <CzkLines data={cashFlowRows} series={series} />
-        </ChartCard>
+        />
         <ChartCard
           title={t.scenarios.chartLtv}
           sub={t.scenarios.subPct}
@@ -197,9 +193,7 @@ export function CompareView({
           rows={ltvRows}
           series={series}
           legend
-        >
-          <PctLines data={ltvRows} series={series} />
-        </ChartCard>
+        />
       </div>
     </>
   );

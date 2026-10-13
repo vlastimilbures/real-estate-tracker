@@ -8,12 +8,13 @@ import DatabaseConstructor from "better-sqlite3";
 import { openMemorySql } from "./betterSqlite";
 import { schemaAt } from "./support/schemaAt";
 import { migrate } from "../migrations";
-import { loadAssumptions, upsertAssumptions } from "../repositories";
+import { upsertAssumptions } from "../repositories";
 import { assumptionsToRow, rowToAssumptions } from "../mappers";
-import { exportToJson, restoreFromJson, RestoreError } from "../backup";
+import { exportToJson, RestoreError } from "../backup";
 import { checkInputRules } from "../../import/inputRules";
 import { rate } from "../../engine";
 import { SEED_ASSUMPTIONS as seedAssumptions } from "../seed";
+import { loadAssumptions, restoreFromJson } from "./support/reads";
 
 const NOW = () => new Date(Date.UTC(2026, 9, 11, 8, 0, 0));
 const V10_ROW = `INSERT INTO assumptions VALUES (1, '2026-06-07', '0.04', '0.03', '0.05', '0.045', 30, '0.025', '2000', '3000', '0.15', '0.05', '1500', '0')`;

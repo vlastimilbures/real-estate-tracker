@@ -5,7 +5,6 @@ import { describe, it, expect } from "vitest";
 import { openMemorySql } from "./betterSqlite";
 import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
-import { loadPortfolio, listScenarios } from "../repositories";
 import {
   rowToMortgageBlock,
   rowToProperty,
@@ -21,6 +20,9 @@ import { DataError } from "../errors";
 import { isIsoDate, parseDecimalText } from "../guards";
 import { D } from "../../lib/money";
 import { rate, isoDate } from "../../engine";
+import { loadPortfolio } from "./support/reads";
+import { loadState, upsertAssumptions } from "../repositories";
+import { SEED_ASSUMPTIONS } from "../seed";
 
 function dataError(fn: () => unknown): DataError {
   try {
@@ -232,13 +234,16 @@ describe("scenario overrides JSON (versioned)", () => {
     expect(e.message).toMatch(/Corrupt scenario overrides JSON for "Stress"/);
   });
 
-  it("a stored scenario with a numeric value no longer loads silently without it", async () => {
+  it("a stored scenario with a numeric value is listed as unreadable, not loaded without it", async () => {
     const sql = openMemorySql();
     await migrate(sql);
+    await upsertAssumptions(sql, SEED_ASSUMPTIONS);
     await sql.execute(
       `INSERT INTO scenarios VALUES ('s1', 'Stress', '{"appreciationPa":0.05}', '2026-01-05')`,
     );
-    await expect(listScenarios(sql)).rejects.toBeInstanceOf(DataError);
+    const state = await loadState(sql);
+    expect(state.scenarios).toEqual([]);
+    expect(state.unreadableScenarios).toEqual([{ id: "s1", name: "Stress" }]);
   });
 });
 

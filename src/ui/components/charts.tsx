@@ -13,7 +13,7 @@ import {
   Tooltip,
   ReferenceLine,
 } from "recharts";
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState } from "react";
 import { Table2 } from "lucide-react";
 import {
   fmtCzk,
@@ -29,11 +29,10 @@ import {
   tableYear,
   tooltipTotal,
   seriesTipItems,
-  type ChartRow,
   type TipItem,
 } from "../model/chartData";
 import { yearLabel } from "../model/projection";
-import { currencySymbol } from "../../lib/currency";
+import { CZK } from "../../lib/currency";
 import { Button, Money, Pct, TableWrap } from "./primitives";
 import { useT } from "../hooks/useT";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
@@ -97,40 +96,46 @@ function SeriesSwatch({
   );
 }
 
-/** A chart card: title, subtitle and a legend built from `series` (by default only for
- *  two or more series). The Table toggle swaps the chart for a table of the same rows,
- *  the keyboard and screen-reader way to read the values (UX-075); not saved. For `kind: "czk"` the subtitle leads with the axis unit taken from the
- *  rows' values (e.g. "M Kč"). */
+/** What the card plots: lines, sign-stacked bars, or one series as green/red bars. */
+type ChartShape = "lines" | "stacked" | "signed";
+
+/** A chart card: title, subtitle, the chart and a legend built from `series` (by default
+ *  only for two or more series). The Table toggle swaps the chart for a table of the same
+ *  rows, the keyboard and screen-reader way to read the values (UX-075); not saved. For
+ *  `kind: "czk"` the axis unit is taken once from the rows' values (e.g. "M Kč"): it
+ *  leads the subtitle and scales the ticks. `totalLabel` adds a net-of-stack row to a
+ *  stacked chart's tooltip. */
 export function ChartCard({
   title,
   sub,
   kind,
+  chart = "lines",
   rows,
   series,
   legend = series.length > 1,
-  children,
+  totalLabel,
 }: {
   title: string;
   sub?: string | undefined;
   kind: "czk" | "pct";
+  chart?: ChartShape;
   rows: readonly Record<string, unknown>[];
   series: readonly SeriesDef[];
   legend?: boolean | undefined;
-  children: ReactNode;
+  totalLabel?: string | undefined;
 }) {
   const t = useT();
   const [asTable, setAsTable] = useState(false);
+  const unit =
+    kind === "czk"
+      ? czkUnitFromRows(
+          rows,
+          series.map((s) => s.key),
+          t.common.thousandsShort,
+        )
+      : undefined;
   // The table lists whole Kč; the chart's axis may count in thousands or millions.
-  const unitLabel =
-    kind !== "czk"
-      ? undefined
-      : asTable
-        ? currencySymbol()
-        : czkUnitFromRows(
-            rows,
-            series.map((s) => s.key),
-            t.common.thousandsShort,
-          ).label;
+  const unitLabel = unit && (asTable ? CZK.symbol : unit.label);
   const resolvedSub = unitLabel
     ? sub
       ? `${unitLabel} — ${sub}`
@@ -158,7 +163,14 @@ export function ChartCard({
       ) : (
         <SurfaceLabel.Provider value={t.charts.surfaceLabel(title)}>
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-            {children}
+            <ChartBody
+              kind={kind}
+              chart={chart}
+              rows={rows}
+              series={series}
+              unit={unit}
+              totalLabel={totalLabel}
+            />
           </ResponsiveContainer>
         </SurfaceLabel.Provider>
       )}
@@ -305,113 +317,138 @@ interface SeriesDef {
   color: string;
   /** SVG strokeDasharray, e.g. "6 3"; solid when absent (ADR 0114). */
   dash?: string | undefined;
+  /** shortcut: the Dashboard LTV line keeps Recharts' default hover dot, as before the
+   *  shared chart body; the N9b ADR (#145) gives it the r=3 dot of the other lines. */
+  defaultActiveDot?: boolean | undefined;
 }
 
-/** A row whose numeric series are addressed by string key (superset of ChartRow). */
-type MultiRow = Record<string, number | null>;
+const MARGIN = { top: 6, right: 8, bottom: 0, left: 4 };
 
-/** Multi-line CZK chart (e.g. value vs debt vs equity, rent gross/effective, NOI vs DS). */
-export function CzkLines({
-  data,
+/** The chart inside a card: one grid and axis frame for every shape. A percent chart's
+ *  axis starts at 0 and its tooltip keeps a null LTV, read as n/a (ADR 0133). */
+function ChartBody({
+  kind,
+  chart,
+  rows,
   series,
+  unit,
+  totalLabel,
 }: {
-  data: MultiRow[];
-  series: SeriesDef[];
+  kind: "czk" | "pct";
+  chart: ChartShape;
+  rows: readonly Record<string, unknown>[];
+  series: readonly SeriesDef[];
+  /** The card's CZK axis unit; none for a percent chart. */
+  unit: CzkAxisUnit | undefined;
+  totalLabel: string | undefined;
 }) {
   // Reduce motion: no entry animation (UX-058).
   const animate = !usePrefersReducedMotion();
   const surface = useSurfaceProps();
-  const t = useT();
-  const keys = series.map((s) => s.key);
-  const unit = czkUnitFromRows(data, keys, t.common.thousandsShort);
-  return (
-    <LineChart
-      data={data}
-      margin={{ top: 6, right: 8, bottom: 0, left: 4 }}
-      {...surface}
-    >
-      <CartesianGrid stroke={GRID} vertical={false} />
-      <XAxis
-        dataKey="calendarYear"
-        tickLine={false}
-        axisLine={false}
-        minTickGap={28}
-      />
-      <YAxis
-        tickFormatter={(v: number) => fmtCzkAxisTick(v, unit)}
-        tickLine={false}
-        axisLine={false}
-        width="auto"
-      />
-      <Tooltip
-        content={({ active, label, payload }) => (
-          <Tip
-            active={active}
-            year={label}
-            point={payload?.[0]?.payload}
-            items={seriesTipItems(payload, series, "czk")}
-          />
-        )}
-      />
-      {series.map((s) => (
-        <Line
-          isAnimationActive={animate}
-          key={s.key}
-          type="monotone"
-          dataKey={s.key}
-          name={s.name}
-          stroke={s.color}
-          // Spread, not strokeDasharray={undefined}: exactOptionalPropertyTypes.
-          {...(s.dash && { strokeDasharray: s.dash })}
-          strokeWidth={2}
-          dot={false}
-          activeDot={{ r: 3 }}
-        />
-      ))}
-    </LineChart>
-  );
-}
+  const data = rows as Record<string, unknown>[];
+  const pct = kind === "pct";
+  const tick = unit ? (v: number) => fmtCzkAxisTick(v, unit) : pctAxis;
+  const frame = [
+    <CartesianGrid key="grid" stroke={GRID} vertical={false} />,
+    <XAxis
+      key="x"
+      dataKey="calendarYear"
+      tickLine={false}
+      axisLine={false}
+      minTickGap={28}
+    />,
+    <YAxis
+      key="y"
+      tickFormatter={tick}
+      tickLine={false}
+      axisLine={false}
+      width="auto"
+      {...(pct && { domain: [0, "auto"] })}
+    />,
+  ];
 
-/** Signed bars (net cash flow): green above zero, red below. */
-export function SignedBars({
-  data,
-  dataKey,
-  name,
-}: {
-  data: ChartRow[];
-  dataKey: keyof ChartRow;
-  name: string;
-}) {
-  // Reduce motion: no entry animation (UX-058).
-  const animate = !usePrefersReducedMotion();
-  const surface = useSurfaceProps();
-  const t = useT();
-  const key = String(dataKey);
-  const unit = czkUnitFromRows(
-    data as unknown as Record<string, unknown>[],
-    [key],
-    t.common.thousandsShort,
-  );
+  if (chart === "lines")
+    return (
+      <LineChart data={data} margin={MARGIN} {...surface}>
+        {frame}
+        <Tooltip
+          {...(pct && { filterNull: false })}
+          content={({ active, label, payload }) => (
+            <Tip
+              active={active}
+              year={label}
+              point={payload?.[0]?.payload}
+              items={seriesTipItems(payload, series, pct ? "pct" : "czk")}
+            />
+          )}
+        />
+        {series.map((s) => (
+          <Line
+            isAnimationActive={animate}
+            key={s.key}
+            type="monotone"
+            dataKey={s.key}
+            name={s.name}
+            stroke={s.color}
+            // Spread, not strokeDasharray={undefined}: exactOptionalPropertyTypes.
+            {...(s.dash && { strokeDasharray: s.dash })}
+            strokeWidth={2}
+            dot={false}
+            {...(!s.defaultActiveDot && { activeDot: { r: 3 } })}
+          />
+        ))}
+      </LineChart>
+    );
+
+  const zero = <ReferenceLine y={0} stroke="var(--hairline-strong)" />;
+  if (chart === "stacked")
+    // Stacks share one `stackId`; negative segments drop below the zero line.
+    return (
+      <BarChart data={data} stackOffset="sign" margin={MARGIN} {...surface}>
+        {frame}
+        {zero}
+        <Tooltip
+          content={({ active, label, payload }) => {
+            const items = seriesTipItems(payload, series, "czk", Number);
+            const total =
+              totalLabel !== undefined
+                ? {
+                    label: totalLabel,
+                    value: tooltipTotal(items.map((it) => it.value ?? 0)),
+                  }
+                : undefined;
+            return (
+              <Tip
+                active={active}
+                year={label}
+                point={payload?.[0]?.payload}
+                items={items}
+                total={total}
+              />
+            );
+          }}
+        />
+        {series.map((s) => (
+          <Bar
+            isAnimationActive={animate}
+            key={s.key}
+            stackId="stack"
+            dataKey={s.key}
+            name={s.name}
+            fill={s.color}
+          />
+        ))}
+      </BarChart>
+    );
+
+  // Signed: one series (net cash flow), green above zero, red below.
+  const { key, name } = series[0] ?? { key: "", name: "" };
+  const sign = (v: unknown) =>
+    Number(v ?? 0) < 0 ? SERIES.negative : SERIES.positive;
   return (
-    <BarChart
-      data={data}
-      margin={{ top: 6, right: 8, bottom: 0, left: 4 }}
-      {...surface}
-    >
-      <CartesianGrid stroke={GRID} vertical={false} />
-      <XAxis
-        dataKey="calendarYear"
-        tickLine={false}
-        axisLine={false}
-        minTickGap={28}
-      />
-      <YAxis
-        tickFormatter={(v: number) => fmtCzkAxisTick(v, unit)}
-        tickLine={false}
-        axisLine={false}
-        width="auto"
-      />
-      <ReferenceLine y={0} stroke="var(--hairline-strong)" />
+    <BarChart data={data} margin={MARGIN} {...surface}>
+      {frame}
+      {zero}
       <Tooltip
         content={({ active, label, payload }) => (
           <Tip
@@ -421,221 +458,17 @@ export function SignedBars({
             items={(payload ?? []).map((p) => ({
               label: name,
               value: tipValue(p.value),
-              color: Number(p.value) < 0 ? SERIES.negative : SERIES.positive,
+              color: sign(p.value),
               kind: "czk",
             }))}
           />
         )}
       />
-      <Bar dataKey={dataKey} name={name} isAnimationActive={animate}>
+      <Bar dataKey={key} name={name} isAnimationActive={animate}>
         {data.map((d, i) => (
-          <Cell
-            key={i}
-            fill={(d[dataKey] ?? 0) < 0 ? SERIES.negative : SERIES.positive}
-          />
+          <Cell key={i} fill={sign(d[key])} />
         ))}
       </Bar>
     </BarChart>
-  );
-}
-
-/** Stacked CZK bars (e.g. equity change = appreciation + purchases + debt paydown + new
- *  debt). Stacks share one `stackId`; negative segments drop below the zero reference line.
- *  `totalLabel`, when set, adds a net-of-stack summary row to the tooltip. */
-export function StackedCzkBars({
-  data,
-  series,
-  totalLabel,
-}: {
-  data: MultiRow[];
-  series: SeriesDef[];
-  totalLabel?: string | undefined;
-}) {
-  // Reduce motion: no entry animation (UX-058).
-  const animate = !usePrefersReducedMotion();
-  const surface = useSurfaceProps();
-  const t = useT();
-  const sKeys = series.map((s) => s.key);
-  const unit = czkUnitFromRows(data, sKeys, t.common.thousandsShort);
-  return (
-    <BarChart
-      data={data}
-      stackOffset="sign"
-      margin={{ top: 6, right: 8, bottom: 0, left: 4 }}
-      {...surface}
-    >
-      <CartesianGrid stroke={GRID} vertical={false} />
-      <XAxis
-        dataKey="calendarYear"
-        tickLine={false}
-        axisLine={false}
-        minTickGap={28}
-      />
-      <YAxis
-        tickFormatter={(v: number) => fmtCzkAxisTick(v, unit)}
-        tickLine={false}
-        axisLine={false}
-        width="auto"
-      />
-      <ReferenceLine y={0} stroke="var(--hairline-strong)" />
-      <Tooltip
-        content={({ active, label, payload }) => {
-          const items = seriesTipItems(payload, series, "czk", Number);
-          const total =
-            totalLabel !== undefined
-              ? {
-                  label: totalLabel,
-                  value: tooltipTotal(items.map((it) => it.value ?? 0)),
-                }
-              : undefined;
-          return (
-            <Tip
-              active={active}
-              year={label}
-              point={payload?.[0]?.payload}
-              items={items}
-              total={total}
-            />
-          );
-        }}
-      />
-      {series.map((s) => (
-        <Bar
-          isAnimationActive={animate}
-          key={s.key}
-          stackId="stack"
-          dataKey={s.key}
-          name={s.name}
-          fill={s.color}
-        />
-      ))}
-    </BarChart>
-  );
-}
-
-/** Multi-line percent chart (e.g. LTV across scenarios). */
-export function PctLines({
-  data,
-  series,
-}: {
-  data: MultiRow[];
-  series: SeriesDef[];
-}) {
-  // Reduce motion: no entry animation (UX-058).
-  const animate = !usePrefersReducedMotion();
-  const surface = useSurfaceProps();
-  return (
-    <LineChart
-      data={data}
-      margin={{ top: 6, right: 8, bottom: 0, left: 4 }}
-      {...surface}
-    >
-      <CartesianGrid stroke={GRID} vertical={false} />
-      <XAxis
-        dataKey="calendarYear"
-        tickLine={false}
-        axisLine={false}
-        minTickGap={28}
-      />
-      <YAxis
-        tickFormatter={pctAxis}
-        tickLine={false}
-        axisLine={false}
-        width="auto"
-        domain={[0, "auto"]}
-      />
-      <Tooltip
-        // Keep a null LTV (no value) in the hover so it reads n/a (ADR 0133).
-        filterNull={false}
-        content={({ active, label, payload }) => (
-          <Tip
-            active={active}
-            year={label}
-            point={payload?.[0]?.payload}
-            items={seriesTipItems(payload, series, "pct")}
-          />
-        )}
-      />
-      {series.map((s) => (
-        <Line
-          isAnimationActive={animate}
-          key={s.key}
-          type="monotone"
-          dataKey={s.key}
-          name={s.name}
-          stroke={s.color}
-          // Spread, not strokeDasharray={undefined}: exactOptionalPropertyTypes.
-          {...(s.dash && { strokeDasharray: s.dash })}
-          strokeWidth={2}
-          dot={false}
-          activeDot={{ r: 3 }}
-        />
-      ))}
-    </LineChart>
-  );
-}
-
-/** Single percent line (LTV). */
-export function PctLine({
-  data,
-  dataKey,
-  name,
-  color = SERIES.slate,
-}: {
-  data: ChartRow[];
-  dataKey: keyof ChartRow;
-  name: string;
-  color?: string | undefined;
-}) {
-  // Reduce motion: no entry animation (UX-058).
-  const animate = !usePrefersReducedMotion();
-  const surface = useSurfaceProps();
-  return (
-    <LineChart
-      data={data}
-      margin={{ top: 6, right: 8, bottom: 0, left: 4 }}
-      {...surface}
-    >
-      <CartesianGrid stroke={GRID} vertical={false} />
-      <XAxis
-        dataKey="calendarYear"
-        tickLine={false}
-        axisLine={false}
-        minTickGap={28}
-      />
-      <YAxis
-        tickFormatter={pctAxis}
-        tickLine={false}
-        axisLine={false}
-        width="auto"
-        domain={[0, "auto"]}
-      />
-      <Tooltip
-        // Keep a null LTV (no value) in the hover so it reads n/a (ADR 0133).
-        filterNull={false}
-        content={({ active, label, payload }) => (
-          <Tip
-            active={active}
-            year={label}
-            point={payload?.[0]?.payload}
-            items={(payload ?? []).map((p) => ({
-              label: name,
-              value: tipValue(p.value),
-              color,
-              kind: "pct",
-            }))}
-          />
-        )}
-      />
-      <Line
-        isAnimationActive={animate}
-        type="monotone"
-        dataKey={dataKey}
-        name={name}
-        stroke={color}
-        strokeWidth={2}
-        dot={false}
-      />
-    </LineChart>
   );
 }

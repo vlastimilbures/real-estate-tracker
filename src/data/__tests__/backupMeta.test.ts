@@ -10,8 +10,9 @@ import {
   markDataChanged,
   recordBackup,
 } from "../repositories";
-import { exportToJson, restoreFromJson, type BackupFile } from "../backup";
+import { exportToJson, type BackupFile } from "../backup";
 import { checkInputRules } from "../../import/inputRules";
+import { restoreFromJson } from "./support/reads";
 
 let sql: TestSql;
 

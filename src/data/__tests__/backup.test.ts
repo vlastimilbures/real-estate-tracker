@@ -3,11 +3,9 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
 import { migrate, MIGRATIONS } from "../migrations";
 import { seedIfEmpty } from "../seed";
-import { loadPortfolio, loadAssumptions } from "../repositories";
 import {
   exportToJson,
   prepareRestore,
-  restoreFromJson,
   validateBackup,
   RestoreError,
   SCHEMA_HEAD,
@@ -23,6 +21,11 @@ import {
   type ScenarioRow,
   type MortgageBlockRow,
 } from "../mappers";
+import {
+  loadAssumptions,
+  loadPortfolio,
+  restoreFromJson,
+} from "./support/reads";
 
 let sql: TestSql;
 

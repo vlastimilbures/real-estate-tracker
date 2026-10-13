@@ -5,8 +5,9 @@ import { openMemorySql, type TestSql } from "./betterSqlite";
 import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
 import { schemaAt } from "./support/schemaAt";
-import { exportToJson, restoreFromJson } from "../backup";
+import { exportToJson } from "../backup";
 import { checkInputRules } from "../../import/inputRules";
+import { restoreFromJson } from "./support/reads";
 
 let sql: TestSql;
 afterEach(() => sql.db.close());

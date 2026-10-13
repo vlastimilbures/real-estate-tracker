@@ -4,7 +4,7 @@
 // series' colour and dash in a swatch, and tooltip labels are text-coloured.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
-import { ChartCard, CzkLines, Tip } from "../charts";
+import { ChartCard, Tip } from "../charts";
 import { seriesTipItems } from "../../model/chartData";
 import { useUiStore } from "../../../state/uiStore";
 
@@ -51,9 +51,7 @@ const series = [
 
 function card() {
   return render(
-    <ChartCard title="Net worth" kind="czk" rows={rows} series={series}>
-      <CzkLines data={rows} series={series} />
-    </ChartCard>,
+    <ChartCard title="Net worth" kind="czk" rows={rows} series={series} />,
   );
 }
 

@@ -598,16 +598,6 @@ export function prepareRestore(
   return { summary: summarise(backup), statements, warnings: issues };
 }
 
-/** Check `backup` as a whole, then replace every table in one transaction. */
-export async function restoreFromJson(
-  sql: Sql,
-  backup: BackupFile,
-  rules: InputRules,
-): Promise<void> {
-  const { statements } = prepareRestore(backup, rules);
-  await sql.transaction(statements);
-}
-
 // --- files ----------------------------------------------------------------------
 
 export type ExportOutcome = SaveOutcome;

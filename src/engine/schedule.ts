@@ -1436,6 +1436,7 @@ function blockSchedule(
  * `initialPrincipal` and then amortizes. Development loans (tranches or interest-only)
  * take the development path; plain loans reproduce the parity targets byte-for-byte.
  * An invalid loan raises an EngineInputError (D-17).
+ * @internal test seam: one loan's schedule; the app runs `propertySchedules`.
  */
 export function buildSchedule(
   block: MortgageBlock,

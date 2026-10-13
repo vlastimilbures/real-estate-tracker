@@ -32,7 +32,7 @@ import { ConfirmRow } from "../components/EntityPanelParts";
 import { propertiesSubtitle } from "../model/tableContext";
 
 /** A band badge's figure and word as unbreakable parts; the badge wraps only between
- *  them (ADR 0158). The text still reads as `bandPill`. */
+ *  them (ADR 0158). The text reads "62,0 % · Moderate". */
 function pillParts([figure, word]: [string] | [string, string]): ReactNode {
   if (word === undefined) return figure;
   return (

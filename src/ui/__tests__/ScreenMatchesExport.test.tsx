@@ -21,7 +21,12 @@ import { D } from "../../lib/money";
 import { fmtCzk, fmtDate, fmtDscr, fmtPct } from "../../lib/format";
 import { projectionColumns, projectionSeries } from "../model/projection";
 import { amortizationColumns } from "../model/propertyDetail";
-import { cellValue, type CellKind, type XlsxColumn } from "../model/xlsxExport";
+import {
+  cellKind,
+  cellValue,
+  type CellKind,
+  type XlsxColumn,
+} from "../model/xlsxExport";
 
 const en = getDict("en");
 
@@ -71,10 +76,9 @@ function expectScreenMatchesExport<R>(
       const text = tr.cells[j]!.textContent;
       // The Year cell reads "Year n · yyyy"; the export keeps the calendar year.
       const onScreen = j === 0 ? text.split(" · ").at(-1)! : text;
-      const written = cellValue(c.kind, c.value(rows[i]!));
-      expect(shown(c.kind, written), `row ${i}, ${c.header}`).toContain(
-        onScreen,
-      );
+      const kind = cellKind(c, rows[i]!);
+      const written = cellValue(kind, c.value(rows[i]!));
+      expect(shown(kind, written), `row ${i}, ${c.header}`).toContain(onScreen);
     });
   });
 }

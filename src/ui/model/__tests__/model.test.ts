@@ -14,7 +14,8 @@ import {
   realPortfolioSnapshot,
 } from "../../../engine";
 import { projectionSeries, shortPropertyName } from "../projection";
-import { monthlyFlow, netWorthHorizon } from "../dashboard";
+import { monthlyFlow } from "../dashboard";
+import { lensKpis } from "../lensKpis";
 import { ONE, D } from "../../../lib/money";
 
 const proj = portfolioProjection(portfolio, assumptions);
@@ -72,16 +73,16 @@ describe("monthlyFlow (Dashboard) ", () => {
   });
 });
 
-describe("netWorthHorizon", () => {
+describe("lensKpis netWorth", () => {
   it("selects nominal vs real", () => {
     near(
-      netWorthHorizon(kpis, "nominal").toNumber(),
+      lensKpis(kpis, "nominal").netWorth.toNumber(),
       PARITY.kpis.netWorthNominal,
       KC,
       "nom",
     );
     near(
-      netWorthHorizon(kpis, "real").toNumber(),
+      lensKpis(kpis, "real").netWorth.toNumber(),
       PARITY.kpis.netWorthReal,
       KC,
       "real",

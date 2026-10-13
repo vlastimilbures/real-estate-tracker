@@ -6,9 +6,12 @@ import { tmpdir } from "node:os";
 import { openMemorySql, type TestSql } from "./betterSqlite";
 import { migrate } from "../migrations";
 import { scenarioToRow, rowToScenario, type ScenarioRow } from "../mappers";
-import { listScenarios, upsertScenario, deleteScenario } from "../repositories";
+import { upsertScenario, deleteScenario } from "../repositories";
 import { isoDate, rate } from "../../engine";
 import type { Scenario } from "../../engine";
+import { listScenarios } from "./support/reads";
+import { upsertAssumptions } from "../repositories";
+import { SEED_ASSUMPTIONS } from "../seed";
 
 const sample: Scenario = {
   id: "s-1",
@@ -60,6 +63,7 @@ describe("scenarios repository", () => {
   beforeAll(async () => {
     sql = openMemorySql();
     await migrate(sql);
+    await upsertAssumptions(sql, SEED_ASSUMPTIONS);
   });
   afterAll(() => sql.db.close());
 
@@ -105,6 +109,7 @@ describe("scenario creation order", () => {
   beforeAll(async () => {
     sql = openMemorySql();
     await migrate(sql);
+    await upsertAssumptions(sql, SEED_ASSUMPTIONS);
   });
   afterAll(() => sql.db.close());
 
@@ -142,13 +147,14 @@ describe("scenario creation order", () => {
 
 describe("scenarios persist across a restart (gate)", () => {
   // A file-backed DB closed and reopened proves the row survives, exercising the same
-  // load path (`listScenarios`) the store's `refresh()` runs on app init.
+  // load path (`loadState`) the store's `refresh()` runs on app init.
   it("a saved scenario is still there after closing and reopening the same file", async () => {
     const dir = mkdtempSync(join(tmpdir(), "ret-scen-"));
     const file = join(dir, "portfolio.db");
     try {
       const first = openMemorySql(file);
       await migrate(first);
+      await upsertAssumptions(first, SEED_ASSUMPTIONS);
       await upsertScenario(first, scenarioToRow(sample, created));
       first.db.close();
 

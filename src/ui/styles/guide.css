@@ -2,17 +2,6 @@
    dark themes follow automatically. Left-aligned throughout (unlike the right-aligned
    StatList primitive, which is for label→number rows). */
 
-.guide-lead {
-  color: var(--ink-soft);
-  font-size: 14px;
-  line-height: 1.55;
-  max-width: 72ch;
-  margin: 0 0 var(--s4);
-}
-.guide-lead:last-child {
-  margin-bottom: 0;
-}
-
 /* Inline formula chip — text font, petrol wash. Not monospace. */
 .guide-formula {
   display: inline-block;

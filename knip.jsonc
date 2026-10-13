@@ -1,6 +1,8 @@
 // Dead-code check (P10, `pnpm knip`): no unused files, exports, types or dependencies.
 // Entry points come from knip's Vite/Vitest/Playwright/ESLint plugins. Every allow-list
 // entry below says why it is a false positive; never add one to silence real dead code.
+// `pnpm knip:prod` (`knip --production`) checks the shipped app only, where an export that
+// only tests use is dead; a deliberate test seam carries an `@internal` JSDoc tag instead.
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   // Helpers exported for tests but also used inside their own module are not dead.

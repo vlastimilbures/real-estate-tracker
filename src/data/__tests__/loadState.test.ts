@@ -1,20 +1,14 @@
 // DR-134 (P9): the store's load reads every table in one point-in-time snapshot.
-// `loadState` must return exactly what the separate loads return, through one
-// `selectSnapshot` call.
+// `loadState` reads everything through one `selectSnapshot` call.
 import { describe, it, expect } from "vitest";
 import { openMemorySql } from "./betterSqlite";
 import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
-import {
-  listScenarios,
-  loadAssumptions,
-  loadPortfolio,
-  loadState,
-  upsertScenario,
-} from "../repositories";
+import { loadState, upsertAssumptions, upsertScenario } from "../repositories";
 import { scenarioToRow } from "../mappers";
 import { isoDate, rate } from "../../engine";
 import type { Sql } from "../sql";
+import { SEED_ASSUMPTIONS } from "../seed";
 
 async function seeded() {
   const db = openMemorySql();
@@ -35,12 +29,18 @@ async function seeded() {
 }
 
 describe("loadState", () => {
-  it("equals loadPortfolio + loadAssumptions + listScenarios + the sample and backup state", async () => {
+  it("returns the portfolio, assumptions, scenarios and the sample and backup state", async () => {
     const db = await seeded();
-    expect(await loadState(db)).toEqual({
-      portfolio: await loadPortfolio(db),
-      assumptions: await loadAssumptions(db),
-      scenarios: await listScenarios(db),
+    const state = await loadState(db);
+    expect(state.portfolio.properties.map((p) => p.id).sort()).toEqual([
+      "dubova",
+      "javorova",
+      "lipova",
+    ]);
+    expect(state.assumptions.baseDate).toEqual(SEED_ASSUMPTIONS.baseDate);
+    expect(state.assumptions.horizonYears).toBe(SEED_ASSUMPTIONS.horizonYears);
+    expect(state.scenarios.map((s) => s.id)).toEqual(["s-1"]);
+    expect(state).toMatchObject({
       unreadableScenarios: [],
       sample: { active: true, dismissed: false },
       backup: { lastAt: null, lastFile: null, changedSince: false },
@@ -121,6 +121,7 @@ describe("property order (ADR 0127)", () => {
   it("lists properties by name in Czech order, numbers by value, not by id", async () => {
     const db = openMemorySql();
     await migrate(db);
+    await upsertAssumptions(db, SEED_ASSUMPTIONS);
     const insert = db.db.prepare(
       "INSERT INTO properties (id, name, purchase_date, purchase_price) VALUES (?, ?, '2020-01-01', '1000000')",
     );
@@ -134,7 +135,7 @@ describe("property order (ADR 0127)", () => {
       ["g", "Byt Dubova"],
     ])
       insert.run(id, name);
-    const names = (await loadPortfolio(db)).properties.map((p) => p.name);
+    const names = (await loadState(db)).portfolio.properties.map((p) => p.name);
     expect(names).toEqual([
       "Byt 2",
       "Byt 10",

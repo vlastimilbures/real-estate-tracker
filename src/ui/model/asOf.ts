@@ -20,11 +20,6 @@ export function clampAsOf(d: Date, b: AsOfBounds): Date {
   return d;
 }
 
-/** A "+N years" preset from `anchor`. */
-export function plusYears(anchor: Date, years: number): Date {
-  return addYears(anchor, years);
-}
-
 /** The as-of date a page computes for (ADR 0150): the picked date, or today when none is
  *  picked, moved into the window; it is Today only when that date is today. */
 export interface ResolvedAsOf {

@@ -8,7 +8,7 @@ import {
   writeRows,
   type EventListKind,
 } from "../model/loanEventRows";
-import { currencySymbol } from "../../lib/currency";
+import { CZK } from "../../lib/currency";
 import { fmtDate } from "../../lib/format";
 import { Button } from "./primitives";
 import { DateInput } from "./DateInput";
@@ -95,7 +95,7 @@ export function LoanEventRows({
     <TextInput
       value={v}
       onChange={onCell}
-      suffix={currencySymbol()}
+      suffix={CZK.symbol}
       inputMode="decimal"
     />
   );

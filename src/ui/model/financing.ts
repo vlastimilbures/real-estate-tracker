@@ -14,6 +14,7 @@ import type { Dictionary } from "../../i18n";
 import { ZERO, type Decimal } from "../../lib/money";
 import { fmtDate } from "../../lib/format";
 import type { Mode } from "./lens";
+import { lensKpis } from "./lensKpis";
 
 /** An interest-saved figure as shown (ADR 0130): a positive amount, or "n/a" in place
  *  of a negative one (a recast that applies only with the prepayment). */
@@ -132,8 +133,7 @@ export function financingPanel(
         }
       : null,
     resetting: debtResettingWithin(fx, Number(span)),
-    totalInterest:
-      mode === "real" ? kpis.totalInterestReal : kpis.totalInterest,
+    totalInterest: lensKpis(kpis, mode).totalInterest,
     interestSaved:
       saved.length > 0
         ? {

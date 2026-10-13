@@ -4,12 +4,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
-import {
-  insertLease,
-  loadAssumptions,
-  loadPortfolio,
-  upsertAssumptions,
-} from "../../data/repositories";
+import { insertLease, upsertAssumptions } from "../../data/repositories";
 import { SEED_ASSUMPTIONS } from "../../data/seed";
 import type { Sql } from "../../data/sql";
 import { isoDate, money, portfolioKpis } from "../../engine";
@@ -22,6 +17,10 @@ import {
 } from "../csv";
 import { CsvPlanChangedError, type CsvImportPreview } from "../csvImport";
 import { importNow } from "./support/importNow";
+import {
+  loadAssumptions,
+  loadPortfolio,
+} from "../../data/__tests__/support/reads";
 
 const PROPS = `name,purchase_date,purchase_price
 Byt A,2020-01-01,5000000

@@ -4,7 +4,7 @@
 // is a Czech real-estate tracker: "Kč", dd.mm.yyyy dates) → space thousands separator,
 // comma decimal separator, space before the unit.
 import { D, Decimal, type Numeric } from "./money";
-import { getActiveCurrency } from "./currency";
+import { CZK } from "./currency";
 
 const MINUS = "−"; // real minus sign, not a hyphen
 const NBSP = "\u00A0";
@@ -54,7 +54,7 @@ export function fmtCzk(value: Numeric, opts: MoneyOpts = {}): string {
     decimals === 0 ? roundCzk(value) : value,
     decimals,
   );
-  const withUnit = suffix ? `${body} ${getActiveCurrency().symbol}` : body;
+  const withUnit = suffix ? `${body} ${CZK.symbol}` : body;
   if (!neg) return withUnit;
   return parens ? `(${withUnit})` : `${MINUS}${withUnit}`;
 }
@@ -72,7 +72,7 @@ export function fmtNumber(value: Numeric): string {
 export function fmtCzkM(value: Numeric, dp = 1): string {
   const millions = D(value).div(1_000_000);
   const { neg, body } = fmtFixed(millions, dp);
-  const withUnit = `${body} ${getActiveCurrency().millionsLabel}`;
+  const withUnit = `${body} ${CZK.millionsLabel}`;
   return neg ? `${MINUS}${withUnit}` : withUnit;
 }
 
@@ -102,36 +102,35 @@ export function pickCzkAxisUnit(
     const a = Math.abs(v);
     if (a > maxAbs) maxAbs = a;
   }
-  const cur = getActiveCurrency();
   if (maxAbs === 0 || maxAbs >= 10_000_000)
     return {
       divisor: 1_000_000,
       dp: 0,
-      label: cur.millionsLabel,
+      label: CZK.millionsLabel,
       shortLabel: "M",
     };
   if (maxAbs >= 1_000_000)
     return {
       divisor: 1_000_000,
       dp: 1,
-      label: cur.millionsLabel,
+      label: CZK.millionsLabel,
       shortLabel: "M",
     };
   if (maxAbs >= 10_000)
     return {
       divisor: 1_000,
       dp: 0,
-      label: `${thousands} ${cur.symbol}`,
+      label: `${thousands} ${CZK.symbol}`,
       shortLabel: thousands,
     };
   if (maxAbs >= 1_000)
     return {
       divisor: 1_000,
       dp: 1,
-      label: `${thousands} ${cur.symbol}`,
+      label: `${thousands} ${CZK.symbol}`,
       shortLabel: thousands,
     };
-  return { divisor: 1, dp: 0, label: cur.symbol, shortLabel: "" };
+  return { divisor: 1, dp: 0, label: CZK.symbol, shortLabel: "" };
 }
 
 /** Format a value for a chart axis using a pre-picked unit (no unit suffix — that's the subtitle). */

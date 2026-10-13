@@ -130,7 +130,8 @@ function assertRows(
  *  wiring it up. `ok` means the write landed; when the reload after it failed, the
  *  store's `stale` flag says so (ADR 0125). */
 export type MutationResult = { ok: true } | { ok: false; error: WriteError };
-/** Address and garage: stored, but not engine inputs (ADR 0184 §3). */
+/** Address and garage: stored, but not engine inputs (ADR 0184 §3).
+ *  @internal test seam: UI tests reach the type through the state facade (ADR 0072). */
 export type { PropertyExtras };
 
 /** Open + migrate + seed the database. Normally the on-disk Tauri SQLite; lazy so

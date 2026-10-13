@@ -9,11 +9,10 @@ import { Button, EmptyState } from "../components/primitives";
 import { FolderOpen, Plus, Upload } from "lucide-react";
 import { toChartRows, toEquityChangeRows } from "../model/chartData";
 import { projectionSeries } from "../model/projection";
-import { leveredIrr } from "../model/irr";
 import { lensKpis } from "../model/lensKpis";
+import { lensWord } from "../model/tableContext";
 import {
   monthlyFlow,
-  netWorthHorizon,
   tilesForAsOf,
   asOfView,
   asOfHint,
@@ -152,10 +151,11 @@ export function Dashboard() {
   // (the rows the charts plot), so the cards and the per-year charts agree.
   const s = tilesForAsOf(snapshot, series, basis, mode, assumptions);
   const flow = monthlyFlow(s);
-  const horizon = netWorthHorizon(kpis, mode);
-  const irr = leveredIrr(kpis, mode);
+  const lens = lensKpis(kpis, mode);
+  const horizon = lens.netWorth;
+  const irr = lens.leveredIrr;
 
-  const modeWord = mode === "real" ? t.common.realLower : t.common.nominalLower;
+  const modeWord = lensWord(t, mode);
   // A filter that keeps every active property filters nothing (ADR 0155).
   const filterActive =
     effectiveIds.length > 0 && effectiveIds.length < allProperties.length;
@@ -199,7 +199,7 @@ export function Dashboard() {
         horizon={horizon}
         horizonYears={assumptions.horizonYears}
         horizonEndYear={horizonEndYear(series)}
-        netWorthMultiple={lensKpis(kpis, mode).netWorthMultiple}
+        netWorthMultiple={lens.netWorthMultiple}
         modeWord={modeWord}
         irr={irr}
       />

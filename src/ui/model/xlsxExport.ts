@@ -16,7 +16,7 @@ import {
   fmtMultiple,
   fmtPct,
 } from "../../lib/format";
-import { getActiveCurrency } from "../../lib/currency";
+import { CZK } from "../../lib/currency";
 
 /** How a column's value is shown — and therefore rounded and formatted. */
 export type CellKind =
@@ -33,9 +33,8 @@ export type Cell = Decimal | number | string | Date | null;
 
 export interface XlsxColumn<R> {
   header: string;
-  kind: CellKind;
-  /** A per-row kind instead of `kind`, for a table whose rows are metrics. */
-  kindOf?: (row: R) => CellKind;
+  /** Per row for a table whose rows are metrics. */
+  kind: CellKind | ((row: R) => CellKind);
   value: (row: R) => Cell;
 }
 
@@ -57,7 +56,12 @@ export interface XlsxSheetCells {
   notes: string[];
 }
 
-/** Extract a sheet's cells: each column's kind (per row with `kindOf`) and value. */
+/** The kind of `column`'s cell in `row`. */
+export function cellKind<R>(column: XlsxColumn<R>, row: R): CellKind {
+  return typeof column.kind === "function" ? column.kind(row) : column.kind;
+}
+
+/** Extract a sheet's cells: each column's kind (per row when it is a function) and value. */
 export function xlsxSheet<R>(sheet: XlsxSheet<R>): XlsxSheetCells {
   const { name, columns, rows, notes = [] } = sheet;
   return {
@@ -65,7 +69,7 @@ export function xlsxSheet<R>(sheet: XlsxSheet<R>): XlsxSheetCells {
     headers: columns.map((c) => c.header),
     rows: rows.map((row) =>
       columns.map((c) => ({
-        kind: c.kindOf ? c.kindOf(row) : c.kind,
+        kind: cellKind(c, row),
         value: c.value(row),
       })),
     ),
@@ -78,7 +82,7 @@ export function xlsxSheet<R>(sheet: XlsxSheet<R>): XlsxSheetCells {
 export function numFmt(kind: CellKind): string | undefined {
   switch (kind) {
     case "money": {
-      const amount = `#,##0" ${getActiveCurrency().symbol}"`;
+      const amount = `#,##0" ${CZK.symbol}"`;
       return `${amount};[Red](${amount})`;
     }
     case "percent":
@@ -184,17 +188,10 @@ function addCells(ws: Worksheet, cells: { kind: CellKind; value: Cell }[]) {
 export const XLSX_MIME =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-/** Build the workbook bytes for one sheet (pure: no download, no dialog). */
-export async function buildXlsx<R>(opts: {
-  sheetName: string;
-  columns: XlsxColumn<R>[];
-  rows: R[];
-}): Promise<Uint8Array> {
-  const { sheetName, columns, rows } = opts;
-  return buildWorkbook([xlsxSheet({ name: sheetName, columns, rows })]);
-}
+const text = (value: string) => ({ kind: "text" as const, value });
 
-/** Build the workbook bytes, one worksheet per sheet in order (pure). */
+/** Build the workbook bytes, one worksheet per sheet in order (pure: no download, no
+ *  dialog). */
 export async function buildWorkbook(
   sheets: XlsxSheetCells[],
 ): Promise<Uint8Array> {
@@ -212,7 +209,6 @@ export async function buildWorkbook(
       views: [{ state: "frozen", xSplit: 1, ySplit: 1 }],
     });
 
-    const text = (value: string) => ({ kind: "text" as const, value });
     addCells(ws, headers.map(text)).font = { bold: true };
 
     for (const cells of rows) addCells(ws, cells);

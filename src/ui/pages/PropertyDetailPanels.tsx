@@ -14,7 +14,7 @@ import {
   TableWrap,
   StatList,
 } from "../components/primitives";
-import { ChartCard, CzkLines, SignedBars } from "../components/charts";
+import { ChartCard } from "../components/charts";
 import {
   COMMITTED_DASH,
   SERIES,
@@ -34,7 +34,7 @@ import {
 } from "../model/propertyDetail";
 import type { AcquisitionView } from "../model/acquisition";
 import { dscrBadge, ltvBadge } from "../model/health";
-import { currencySymbol } from "../../lib/currency";
+import { CZK } from "../../lib/currency";
 import type {
   PropertySnapshot,
   HoldingCost,
@@ -107,22 +107,15 @@ export function PropertySnapshotTiles({
           kind="czk"
           rows={chartRows}
           series={valueSeries}
-        >
-          <CzkLines data={chartRows} series={valueSeries} />
-        </ChartCard>
+        />
         <ChartCard
           title={t.propertyDetail.chartNetCashFlowByYear}
           sub={t.propertyDetail.subMKcMode(modeWord)}
           kind="czk"
           rows={chartRows}
+          chart="signed"
           series={cashFlowSeries}
-        >
-          <SignedBars
-            data={chartRows}
-            dataKey="netCashFlow"
-            name={t.propertyDetail.seriesNetCashFlow}
-          />
-        </ChartCard>
+        />
       </div>
     </>
   );
@@ -219,28 +212,28 @@ export function HoldingCostsPanel({
             name: "propertyTaxYr",
             label: t.propertyDetail.fieldPropertyTax,
             kind: "money",
-            suffix: currencySymbol(),
+            suffix: CZK.symbol,
             optional: true,
           },
           {
             name: "insuranceYr",
             label: t.propertyDetail.fieldInsurance,
             kind: "money",
-            suffix: currencySymbol(),
+            suffix: CZK.symbol,
             optional: true,
           },
           {
             name: "svjMonthly",
             label: t.propertyDetail.fieldSvjMo,
             kind: "money",
-            suffix: currencySymbol(),
+            suffix: CZK.symbol,
             optional: true,
           },
           {
             name: "otherYr",
             label: t.propertyDetail.fieldOther,
             kind: "money",
-            suffix: currencySymbol(),
+            suffix: CZK.symbol,
             optional: true,
           },
           {

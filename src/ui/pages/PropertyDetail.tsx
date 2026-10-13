@@ -41,7 +41,11 @@ import {
 } from "./PropertyEntityPanels";
 import { fmtDate } from "../../lib/format";
 import { projectionSeries, projectionColumns } from "../model/projection";
-import { lensLabel, projectionExportNotes } from "../model/tableContext";
+import {
+  lensLabel,
+  lensWord,
+  projectionExportNotes,
+} from "../model/tableContext";
 import { exportTableXlsx } from "../exportXlsx";
 import { exportFilename } from "../../lib/slug";
 import { asOfView, asOfHint, propertyTilesForAsOf } from "../model/dashboard";
@@ -215,7 +219,7 @@ export function PropertyDetail() {
     : null;
 
   const lens = lensLabel(t, mode);
-  const modeWord = mode === "real" ? t.common.realLower : t.common.nominalLower;
+  const modeWord = lensWord(t, mode);
   const sectionLabel: Record<PropertySection, string> = {
     overview: t.propertyDetail.sectionOverview,
     dataCheck: t.dataCheck.title,

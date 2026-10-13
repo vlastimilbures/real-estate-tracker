@@ -11,7 +11,6 @@ import {
   exportToJson,
   parseBackupText,
   prepareRestore,
-  restoreFromJson,
   RestoreError,
   validateBackup,
   type BackupFile,
@@ -19,6 +18,7 @@ import {
 import { checkInputRules } from "../../import/inputRules";
 import { V1_KEYS } from "../mappers";
 import type { Sql } from "../sql";
+import { restoreFromJson } from "./support/reads";
 
 const HEAD = Math.max(...MIGRATIONS.map((m) => m.version));
 

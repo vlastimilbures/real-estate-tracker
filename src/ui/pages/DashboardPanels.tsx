@@ -10,13 +10,7 @@ import {
   Dscr,
   StatList,
 } from "../components/primitives";
-import {
-  ChartCard,
-  CzkLines,
-  StackedCzkBars,
-  SignedBars,
-  PctLine,
-} from "../components/charts";
+import { ChartCard } from "../components/charts";
 import {
   SERIES,
   COMMITTED_DASH,
@@ -234,7 +228,14 @@ export function TrajectoryCharts({
     { key: "noi", name: d.seriesNoi, color: SERIES.petrol },
     { key: "debtService", name: d.seriesDebtService, color: SERIES.clay },
   ];
-  const ltvSeries = [{ key: "ltv", name: d.seriesLtv, color: SERIES.slate }];
+  const ltvSeries = [
+    {
+      key: "ltv",
+      name: d.seriesLtv,
+      color: SERIES.slate,
+      defaultActiveDot: true,
+    },
+  ];
   return (
     <>
       <div className="section-head">
@@ -249,55 +250,40 @@ export function TrajectoryCharts({
           kind="czk"
           rows={rows}
           series={valueSeries}
-        >
-          <CzkLines data={rows} series={valueSeries} />
-        </ChartCard>
+        />
 
         <ChartCard
           title={d.chartEquityChange}
           sub={d.subEquityChange}
           kind="czk"
           rows={eqChange}
+          chart="stacked"
           series={equitySeries}
-        >
-          <StackedCzkBars
-            data={eqChange}
-            totalLabel={d.seriesNetEquityChange}
-            series={equitySeries}
-          />
-        </ChartCard>
+          totalLabel={d.seriesNetEquityChange}
+        />
 
         <ChartCard
           title={d.chartNetCashFlowByYear}
           sub={d.subNetCashFlow}
           kind="czk"
           rows={rows}
+          chart="signed"
           series={cashFlowSeries}
-        >
-          <SignedBars
-            data={rows}
-            dataKey="netCashFlow"
-            name={d.seriesNetCashFlow}
-          />
-        </ChartCard>
+        />
 
         <ChartCard
           title={d.chartRentGrossVsEffective}
           kind="czk"
           rows={rows}
           series={rentSeries}
-        >
-          <CzkLines data={rows} series={rentSeries} />
-        </ChartCard>
+        />
 
         <ChartCard
           title={d.chartNoiVsDebtService}
           kind="czk"
           rows={rows}
           series={noiSeries}
-        >
-          <CzkLines data={rows} series={noiSeries} />
-        </ChartCard>
+        />
 
         <ChartCard
           title={d.chartLoanToValue}
@@ -305,9 +291,7 @@ export function TrajectoryCharts({
           kind="pct"
           rows={rows}
           series={ltvSeries}
-        >
-          <PctLine data={rows} dataKey="ltv" name={d.seriesLtv} />
-        </ChartCard>
+        />
       </div>
     </>
   );
@@ -333,8 +317,8 @@ export function KpiListPanel({
 }) {
   const t = useT();
   const real = mode === "real";
-  const cagr = real ? kpis.cagrReal : kpis.cagrNominal;
   const lens = lensKpis(kpis, mode);
+  const cagr = lens.cagr;
   return (
     <Panel
       title={t.dashboard.kpiTitle}

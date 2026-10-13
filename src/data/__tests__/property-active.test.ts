@@ -4,10 +4,11 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
 import { migrate } from "../migrations";
-import { insertProperty, setPropertyActive } from "../repositories";
+import { setPropertyActive } from "../repositories";
 import { propertyToRow } from "../mappers";
 import type { Property, IsoDate } from "../../engine";
 import { money } from "../../engine";
+import { insertProperty } from "./support/reads";
 
 let sql: TestSql;
 

@@ -32,15 +32,18 @@ export {
   blockEndDate,
   fixationExpired,
   rateFixedUntil,
+  /** @internal test seam (UI model tests) */
   impliedMaturity,
-  instalmentFor,
   isDevLoan,
   suggestedInstalment,
   maturityMismatch,
   mortgageBlock,
   selectBlock,
 } from "./amortization";
-export { MAX_LOAN_TERM_MONTHS } from "./constants";
+export {
+  /** @internal test seam (CSV import tests) */
+  MAX_LOAN_TERM_MONTHS,
+} from "./constants";
 export { basisDate, scheduledPrincipal } from "./growth";
 export {
   EMPTY_PROPERTY_SCHEDULE,
@@ -51,6 +54,7 @@ export {
 // Snapshot, projection, KPIs, scenarios, validation
 export {
   leaseInForce,
+  /** @internal test seam (tests; the app runs `portfolioOutputs`) */
   portfolioSnapshot,
   propertySnapshot,
   selectValuation,
@@ -72,7 +76,11 @@ export {
 } from "./real";
 export { acquisitionSummary } from "./acquisition";
 export type { AcquisitionSummary } from "./acquisition";
-export { portfolioKpis, projectionAndKpis } from "./kpis";
+export {
+  /** @internal test seam (tests; the app runs `portfolioOutputs`) */
+  portfolioKpis,
+  projectionAndKpis,
+} from "./kpis";
 export { portfolioOutputs } from "./outputs";
 export {
   debtResettingWithin,

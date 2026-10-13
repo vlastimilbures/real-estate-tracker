@@ -6,14 +6,10 @@
 import { useState, useId } from "react";
 import { parseDate, dateDraft } from "../model/formParse";
 import { todayUtc } from "../../lib/day";
+import { addYears } from "../../engine";
 import { useT } from "../hooks/useT";
 import { DateInput } from "./DateInput";
-import {
-  clampAsOf,
-  plusYears,
-  resolveAsOf,
-  type AsOfBounds,
-} from "../model/asOf";
+import { clampAsOf, resolveAsOf, type AsOfBounds } from "../model/asOf";
 
 export function AsOfPicker({
   value,
@@ -64,13 +60,13 @@ export function AsOfPicker({
   };
 
   // Highlight a preset chip when the shown date equals its target. Reuse the exact
-  // plusYears(presetAnchor, n) the onClick uses so they can never drift.
+  // addYears(presetAnchor, n) the onClick uses so they can never drift.
   const is1y =
     value !== null &&
-    effective.getTime() === plusYears(presetAnchor, 1).getTime();
+    effective.getTime() === addYears(presetAnchor, 1).getTime();
   const is5y =
     value !== null &&
-    effective.getTime() === plusYears(presetAnchor, 5).getTime();
+    effective.getTime() === addYears(presetAnchor, 5).getTime();
 
   return (
     <div
@@ -110,7 +106,7 @@ export function AsOfPicker({
           type="button"
           className={`pill${is1y ? " on" : ""}`}
           aria-pressed={is1y}
-          onClick={() => pick(plusYears(presetAnchor, 1))}
+          onClick={() => pick(addYears(presetAnchor, 1))}
           data-testid="asof-1y"
         >
           {t.common.plusYears(1)}
@@ -119,7 +115,7 @@ export function AsOfPicker({
           type="button"
           className={`pill${is5y ? " on" : ""}`}
           aria-pressed={is5y}
-          onClick={() => pick(plusYears(presetAnchor, 5))}
+          onClick={() => pick(addYears(presetAnchor, 5))}
           data-testid="asof-5y"
         >
           {t.common.plusYears(5)}

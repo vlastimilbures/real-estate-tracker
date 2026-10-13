@@ -42,6 +42,11 @@ export function lensLabel(t: Dictionary, mode: Mode, baseDate?: Date): string {
     : t.projections.realTerms;
 }
 
+/** The lens as a lower-case word for running text ("real", "nominal"). */
+export function lensWord(t: Dictionary, mode: Mode): string {
+  return mode === "real" ? t.common.realLower : t.common.nominalLower;
+}
+
 /** Projections: the money terms (Real names the base date) and the period of each column. */
 export function projectionsSubtitle(
   t: Dictionary,

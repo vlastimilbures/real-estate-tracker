@@ -61,8 +61,6 @@ async function insertRow(sql: Sql, table: string, row: object): Promise<void> {
 
 // --- inserts (row-level, used by the store and tests) ----------------------------
 
-export const insertProperty = (sql: Sql, r: PropertyRow) =>
-  insertRow(sql, "properties", r);
 export const insertMortgageBlock = (sql: Sql, r: MortgageBlockRow) =>
   insertRow(sql, "mortgage_blocks", r);
 export const insertValuation = (sql: Sql, r: ValuationRow) =>
@@ -258,12 +256,6 @@ export async function upsertAssumptions(
 
 // --- scenarios (what-if overrides; not part of Portfolio) ----------------------
 
-/** All saved scenarios, oldest first. */
-export async function listScenarios(sql: Sql): Promise<Scenario[]> {
-  const rows = await sql.select<ScenarioRow>(SCENARIOS_QUERY);
-  return rows.map(rowToScenario);
-}
-
 /** Upsert a scenario by `id` (rename + duplicate both rely on id-keying). On update
  *  only name + overrides change — `created_at` is preserved. */
 export async function upsertScenario(sql: Sql, r: ScenarioRow): Promise<void> {
@@ -328,17 +320,6 @@ function toPortfolio([
 function toAssumptions(rows: unknown[]): Assumptions {
   if (rows.length === 0) throw new Error("assumptions row not found (id = 1)");
   return rowToAssumptions(rows[0] as AssumptionsRow);
-}
-
-/** Load the whole portfolio and map each row to its engine input type. */
-export async function loadPortfolio(sql: Sql): Promise<Portfolio> {
-  return toPortfolio(
-    await Promise.all(PORTFOLIO_QUERIES.map((q) => sql.select(q))),
-  );
-}
-
-export async function loadAssumptions(sql: Sql): Promise<Assumptions> {
-  return toAssumptions(await sql.select(ASSUMPTIONS_QUERY));
 }
 
 /** The first-run sample portfolio (ADR 0094): its properties as seeded and the `app_meta`
@@ -457,8 +438,8 @@ export interface LoadedState {
   backup: BackupState;
 }
 
-/** `loadPortfolio` + `loadAssumptions` + `listScenarios` + the sample and backup state, read in one snapshot so a
- *  write landing mid-load cannot mix states (DR-134). */
+/** The portfolio, assumptions, scenarios and the sample and backup state, read in one
+ *  snapshot so a write landing mid-load cannot mix states (DR-134). */
 export async function loadState(sql: Sql): Promise<LoadedState> {
   const results = await sql.selectSnapshot(
     [
