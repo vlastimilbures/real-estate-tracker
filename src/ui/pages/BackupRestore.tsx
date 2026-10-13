@@ -81,7 +81,7 @@ export function BackupRestorePanel() {
     setExporting(true);
     dismissFailure();
     try {
-      const outcome = await exportBackup(t.backup.fileType);
+      const outcome = await exportBackup();
       // A cancelled save dialog is the user's own choice: no toast (UX-001).
       if (outcome.kind === "saved")
         showToast(t.backup.savedTo(outcome.filename));

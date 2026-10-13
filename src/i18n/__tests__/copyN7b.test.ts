@@ -413,15 +413,4 @@ describe("N7b wording (#169, #152)", () => {
       expect(d.scenarios.copyName("Stress")).toBe(name);
     },
   );
-  it.each([
-    ["en", en, "Excel workbook", "JSON backup"],
-    ["cs", cs, "Sešit Excelu", "Záloha JSON"],
-    ["ru", ru, "Книга Excel", "Резервная копия JSON"],
-  ])(
-    "%s: the save dialogs name the file type (#169 R4-03)",
-    (_, d, xlsx, json) => {
-      expect(d.xlsx.fileType).toBe(xlsx);
-      expect(d.backup.fileType).toBe(json);
-    },
-  );
 });

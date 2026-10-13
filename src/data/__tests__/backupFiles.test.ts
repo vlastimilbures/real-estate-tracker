@@ -298,12 +298,7 @@ describe("chooseRestoreFile — the picked backup (DR-138)", () => {
 describe("exportBackup — honest outcome in Tauri (DR-026)", () => {
   // As the store action wires it (src/state/portfolioStore.ts).
   const exportWithAppDeps = (s: TestSql, now = new Date()) =>
-    exportBackup(s, {
-      now,
-      today: localIsoDay(now),
-      save: saveFile,
-      filterName: "JSON backup",
-    });
+    exportBackup(s, { now, today: localIsoDay(now), save: saveFile });
 
   beforeEach(() => vi.stubGlobal("window", { __TAURI_INTERNALS__: {} }));
   afterEach(() => vi.unstubAllGlobals());
@@ -319,21 +314,6 @@ describe("exportBackup — honest outcome in Tauri (DR-026)", () => {
       vi.useRealTimers();
     }
     expect(suggestedName()).toBe("portfolio-backup-2026-10-01.json");
-  });
-
-  it("names the file type in the dialog as the caller says (#169)", async () => {
-    const save = vi.fn(async () => ({ kind: "cancelled" as const }));
-    await exportBackup(sql, {
-      now: new Date(),
-      today: "2026-10-01",
-      save,
-      filterName: "Záloha JSON",
-    });
-    expect(save).toHaveBeenCalledWith(
-      expect.objectContaining({
-        filter: { name: "Záloha JSON", extensions: ["json"] },
-      }),
-    );
   });
 
   it("returns cancelled (and writes nothing) when the save dialog is cancelled", async () => {

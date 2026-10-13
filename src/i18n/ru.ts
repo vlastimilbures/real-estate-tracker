@@ -1088,7 +1088,6 @@ export const ru: Dictionary = {
     errTooLarge: (limitMb) =>
       `Файл больше ${limitMb} МБ, значит это не резервная копия этого приложения.`,
     errNotJson: "Файл не является резервной копией в формате JSON.",
-    fileType: "Резервная копия JSON",
     errInvalid: (detail) =>
       `Файл не является корректной резервной копией этого приложения. (${detail})`,
     errUnreadable: (detail) =>
@@ -1152,7 +1151,6 @@ export const ru: Dictionary = {
   },
   xlsx: {
     exportToExcel: "Экспорт в Excel",
-    fileType: "Книга Excel",
     exported: (name) => `Экспортировано ${name}`,
     exportFailed: (detail) => `Ошибка экспорта (${detail})`,
     // Excel sheet names (DR-152, UX-080): ≤ 31 characters, none of []:*?/\.

@@ -289,8 +289,7 @@ interface PortfolioState {
   /** Write a backup file through the save dialog. Read-only, so not queued: an open
    *  dialog must not hold up edits. It reads one snapshot, so the file holds one database
    *  state (ADR 0132). A saved file is then recorded (ADR 0110). */
-  /** `filterName` names the file type in the save dialog (ADR 0187). */
-  exportBackup: (filterName: string) => Promise<ExportOutcome>;
+  exportBackup: () => Promise<ExportOutcome>;
 }
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => {
@@ -712,7 +711,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     },
     clearSample: () => replaceData((sql) => clearSample(sql)),
     loadSample: () => replaceData(loadSample),
-    exportBackup: async (filterName) => {
+    exportBackup: async () => {
       const writesBefore = writes;
       // One clock read names the file and stamps `exportedAt` (ADR 0149 §6).
       const now = new Date();
@@ -720,7 +719,6 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         now,
         today: localIsoDay(now),
         save: saveFile,
-        filterName,
       });
       if (outcome.kind !== "cancelled") {
         // The file is saved; failing to record it must not turn that into an error.

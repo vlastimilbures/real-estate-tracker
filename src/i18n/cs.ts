@@ -1078,7 +1078,6 @@ export const cs: Dictionary = {
     errTooLarge: (limitMb) =>
       `Soubor je větší než ${limitMb} MB, nejde tedy o zálohu této aplikace.`,
     errNotJson: "Soubor není záloha ve formátu JSON.",
-    fileType: "Záloha JSON",
     errInvalid: (detail) =>
       `Soubor není platná záloha této aplikace. (${detail})`,
     errUnreadable: (detail) =>
@@ -1141,7 +1140,6 @@ export const cs: Dictionary = {
   },
   xlsx: {
     exportToExcel: "Exportovat do Excelu",
-    fileType: "Sešit Excelu",
     exported: (name) => `Exportováno ${name}`,
     exportFailed: (detail) => `Export selhal (${detail})`,
     // Excel sheet names (DR-152, UX-080): ≤ 31 characters, none of []:*?/\.
