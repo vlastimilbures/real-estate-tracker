@@ -236,7 +236,7 @@ describe("reachSummary", () => {
       block("d", "2021-03-01", 10, 30, "p4"),
     ]);
     expect(reachSummary(reach, en)).toBe(
-      "hits 3 of 4 loans (refix 2029, 2031)",
+      "hits 3 of 4 loans (fixation end 2029, 2031)",
     );
   });
 
@@ -251,14 +251,16 @@ describe("reachSummary", () => {
 
   it("uses the singular and the cs/ru plural forms", () => {
     const one = reachOf([block("a", "2021-01-17", 10)]);
-    expect(reachSummary(one, en)).toBe("hits 1 of 1 loan (refix 2031)");
-    expect(reachSummary(one, cs)).toBe("zasáhne 1 z 1 úvěru (refixace 2031)");
+    expect(reachSummary(one, en)).toBe("hits 1 of 1 loan (fixation end 2031)");
+    expect(reachSummary(one, cs)).toBe(
+      "zasáhne 1 z 1 úvěru (konec fixace 2031)",
+    );
     expect(reachSummary(one, ru)).toBe(
       "затрагивает 1 из 1 кредита (конец фиксации 2031)",
     );
     const reach = reachOf(twoLoans);
     expect(reachSummary(reach, cs)).toBe(
-      "zasáhne 2 z 3 úvěrů (refixace 2029, 2031)",
+      "zasáhne 2 z 3 úvěrů (konec fixace 2029, 2031)",
     );
     expect(reachSummary(reach, ru)).toBe(
       "затрагивает 2 из 3 кредитов (конец фиксации 2029, 2031)",
@@ -281,7 +283,7 @@ describe("rateShockNote", () => {
         assumptions,
         en,
       ),
-    ).toBe("hits 3 of 3 loans (refix 2029, 2031)");
+    ).toBe("hits 3 of 3 loans (fixation end 2029, 2031)");
   });
 
   it("is undefined without a rate shock or without data", () => {

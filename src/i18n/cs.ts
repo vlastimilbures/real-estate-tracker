@@ -97,7 +97,7 @@ export const cs: Dictionary = {
       "Úvěr s čerpáním nebo obdobím splácení jen úroků potřebuje dobu splatnosti",
     NON_POSITIVE_DRAW: "Každé čerpání musí být vyšší než nula",
     DRAW_BEFORE_START:
-      "Čerpání musí mít datum po začátku úvěru; částka čerpaná v den začátku patří do pole Čerpáno při startu (počáteční jistina)",
+      "Čerpání musí mít datum po začátku úvěru; částka čerpaná v den začátku patří do pole Čerpáno na začátku (počáteční jistina)",
     DRAW_AFTER_SCHEDULE_END:
       "Čerpání musí mít datum nejpozději v den předposlední splátky úvěru (začátek plus doba splatnosti bez jednoho měsíce)",
     COMPLETION_BEFORE_START: "Konec splácení jen úroků je před začátkem úvěru",
@@ -105,7 +105,7 @@ export const cs: Dictionary = {
       "Tato nemovitost už má hypotéku začínající ve stejný den",
     END_BEFORE_START: "Datum konce je před datem začátku",
     DUPLICATE_HOLDING_COST:
-      "Nemovitost má více než jeden záznam nákladů držení",
+      "Nemovitost má více než jeden záznam nákladů na držbu",
     ORPHAN_ROW: "Záznam patří k nemovitosti, která neexistuje",
     HORIZON_NOT_POSITIVE: "Horizont projekce musí být alespoň jeden rok",
     INVALID_TERM: "Doba v letech není platná",
@@ -115,7 +115,7 @@ export const cs: Dictionary = {
       "Sazba po skončení fixace plus šok sazby musí zůstat od 0 % do 100 %",
     SHOCKED_INFLATION_OUT_OF_RANGE:
       "Inflace plus inflační šok musí zůstat vyšší než −100 %",
-    ASOF_BEFORE_BASEDATE: "Datum je před výchozím datem",
+    ASOF_BEFORE_BASEDATE: "Datum je před základním datem",
     NON_POSITIVE_PREPAYMENT: "Každá mimořádná splátka musí být vyšší než nula",
     EVENT_BEFORE_START:
       "Mimořádná splátka nebo změna splatnosti musí mít datum po začátku úvěru",
@@ -300,7 +300,8 @@ export const cs: Dictionary = {
     monthlyCashFlowOn: (d) => `Měsíční cash flow k ${d}`,
     monthlyEquivalentYear: (year, period) =>
       `Měsíční ekvivalent — rok projekce ${year} (${period})`,
-    monthlyHint: (d) => `roční běžný stav ÷ 12, nájemní smlouvy platné k ${d}`,
+    monthlyHint: (d) =>
+      `roční výše při současných nájmech ÷ 12, nájemní smlouvy platné k ${d}`,
     monthlyHintProjection: "roční projekce ÷ 12",
     inflowLabel: "Příjem · efektivní nájem",
     outflowLabel: "Výdaj · náklady + dluhová služba",
@@ -436,7 +437,7 @@ export const cs: Dictionary = {
       mortgage: "Datum u hypotéky",
       valuation: "Datum ocenění",
       lease: "Datum nájmu",
-      assumptions: "Výchozí datum",
+      assumptions: "Základní datum",
     },
   },
 
@@ -525,14 +526,14 @@ export const cs: Dictionary = {
     colEnd: "Konec",
     colMonthlyRent: "Měsíční nájem",
     mortgagesTitle: "Hypoteční bloky",
-    mortgagesHint: "konec fixace resetuje sazbu a znovu umořuje",
+    mortgagesHint: "na konci fixace se změní sazba a splátka se přepočítá",
     addMortgage: "hypoteční blok",
     colInitialPrincipal: "Počáteční jistina",
     colFixation: "Fixace",
     colTerm: "Doba",
     colRate: "Sazba",
     colInstalment: "Splátka",
-    colDevelopment: "Development",
+    colDevelopment: "Výstavba",
     yrs: (n) => `${n} ${csPlural(n, ["rok", "roky", "let"])}`,
     auto: "auto",
     tranches: (n) => `${n} ${csPlural(n, ["tranše", "tranše", "tranší"])}`,
@@ -546,7 +547,7 @@ export const cs: Dictionary = {
     instalmentHint: (years, amount) =>
       `Anuitní splátka na ${years} ≈ ${amount}`,
     instalmentHintDev: (base) =>
-      `${base} — pro částku čerpanou při startu; přepočítá se při každém čerpání a při dokončení. Doba splatnosti je povinná.`,
+      `${base} — pro částku čerpanou na začátku; přepočítá se při každém čerpání a při dokončení. Doba splatnosti je povinná.`,
     devTermNeeded:
       "Developerský úvěr — zadejte dobu splatnosti v letech; u čerpání a období jen úroků je povinná.",
     calc: "Spočítat",
@@ -567,18 +568,19 @@ export const cs: Dictionary = {
     fieldMonthlyInstalment: "Měsíční splátka",
     fieldDraws: "Harmonogram čerpání",
     helpDraws:
-      "Jak banka úvěr vyplácí. První řádek je částka čerpaná v den startu; každou další tranši přidejte jako řádek. Celý úvěr se od začátku počítá do dluhu; úrok se platí jen z načerpané částky.",
-    drawnAtStart: "Čerpáno při startu",
-    drawnAtStartNoDate: "v den startu",
+      "Jak banka úvěr vyplácí. První řádek je částka čerpaná v den začátku; každou další tranši přidejte jako řádek. Celý úvěr se od začátku počítá do dluhu; úrok se platí jen z načerpané částky.",
+    drawnAtStart: "Čerpáno na začátku",
+    drawnAtStartNoDate: "v den začátku",
     trancheRow: (n) => `Tranše ${n}`,
     addTranche: "Přidat tranši",
     drawdownTotal: (total, n) =>
-      `Celkový úvěr ${total} · ${n} ${csPlural(n, ["tranše", "tranše", "tranší"])} po startu`,
+      `Celkový úvěr ${total} · ${n} ${csPlural(n, ["tranše", "tranše", "tranší"])} po začátku`,
     warnAfterCompletion:
       "Čerpáno po konci období jen úroků; úvěr se při tomto čerpání znovu přepočte",
     warnSameDate: "Stejné datum jako jiná tranše; částky se sečtou",
     fieldCompletionDate: "Pouze úroky do (dokončení)",
-    helpCompletionDate: "do tohoto data platit jen úroky, poté znovu umořovat",
+    helpCompletionDate:
+      "do tohoto data platit jen úroky, poté splácet i jistinu",
     loanType: "Typ úvěru",
     loanTypeStandard: "Standardní",
     loanTypeDevelopment: "Developerský (výstavba)",
@@ -586,11 +588,11 @@ export const cs: Dictionary = {
     loanTypeClearAndSwitch: "Smazat a přepnout",
     loanTypeKeepDevelopment: "Ponechat developerský",
     successorNote:
-      "Nový blok nahradí současný od svého data začátku (refixace nebo refinancování). Aplikace počítá s jedním aktivním úvěrem na nemovitost.",
+      "Nový blok nahradí současný od svého data začátku (nová fixace nebo refinancování). Aplikace počítá s jedním aktivním úvěrem na nemovitost.",
     successorLearnMore: "Více informací",
     holdingCostsTitle: "Náklady na držbu",
     holdingCostsHint: "nechte prázdné pro globální výchozí hodnotu",
-    fieldPropertyTax: "Daň z nemovitosti /rok",
+    fieldPropertyTax: "Daň z nemovitých věcí /rok",
     fieldInsurance: "Pojištění /rok",
     fieldSvjMo: "SVJ /měs",
     fieldOther: "Ostatní /rok",
@@ -667,9 +669,9 @@ export const cs: Dictionary = {
       `${months} před splatností podle smlouvy ${contract}.`,
     maturityCheck: "Zkontrolujte splátku nebo datum splatnosti.",
     fixationEnded: (end, rate) =>
-      `Fixace skončila ${end} a není zadán navazující blok, proto aplikace od té doby počítá s resetovací sazbou ${rate}. Zadejte podmínky refixace jako nový blok hypotéky.`,
+      `Fixace skončila ${end} a není zadán navazující blok, proto aplikace od té doby počítá se sazbou po skončení fixace ${rate}. Zadejte podmínky nové fixace jako nový blok hypotéky.`,
     fixationEndedUntil: (end, until, rate) =>
-      `Fixace skončila ${end} a další blok začíná až ${until}, proto aplikace počítá s resetovací sazbou ${rate} od ${end} do ${until}. Zadejte podmínky pro toto období jako blok hypotéky.`,
+      `Fixace skončila ${end} a další blok začíná až ${until}, proto aplikace počítá se sazbou po skončení fixace ${rate} od ${end} do ${until}. Zadejte podmínky pro toto období jako blok hypotéky.`,
     fieldPrepayments: "Mimořádné splátky",
     helpPrepayments:
       "Mimořádné splacení jistiny k datu. Snížení splátky zachová splatnost; zkrácení splatnosti zachová splátku. Poplatek se platí z vlastních prostředků a dluh nesnižuje.",
@@ -703,7 +705,7 @@ export const cs: Dictionary = {
     sectionFinancing: "Financování",
     sectionHolding: "Náklady na držbu",
     sectionProjection: "Projekce",
-    sectionAmortization: "Umořovací plán",
+    sectionAmortization: "Splátkový kalendář",
     // Acquisition section (ADR 0119 §9)
     sectionAcquisition: "Pořízení",
     acqTitle: "Financování koupě",
@@ -724,9 +726,9 @@ export const cs: Dictionary = {
       "— znamená nezadáno; užití počítá jen zadané náklady a úpravy. Úvěr na koupi je první úvěrový blok, pokud začíná nejpozději 90 dní po koupi, nebo úvěr na výstavbu bez ohledu na začátek. Částky zadáte v dialogu „Upravit nemovitost“.",
     acqRecordedNote: (note) => `Poznámka: ${note}`,
     showAmortization: (n) =>
-      `Zobrazit umořovací plán (${n} ${csPlural(n, ["splátka", "splátky", "splátek"])})`,
-    hideAmortization: "Skrýt umořovací plán",
-    amortizationTitle: "Umořovací plán",
+      `Zobrazit splátkový kalendář (${n} ${csPlural(n, ["splátka", "splátky", "splátek"])})`,
+    hideAmortization: "Skrýt splátkový kalendář",
+    amortizationTitle: "Splátkový kalendář",
     amortizationMonths: (n) =>
       `${n} ${csPlural(n, ["měsíc", "měsíce", "měsíců"])}`,
     amColMonth: "Měsíc",
@@ -761,7 +763,7 @@ export const cs: Dictionary = {
     sellingCost: "Náklady na prodej na konci horizontu",
     sellingCostHelp:
       "Provize makléře a právní poplatky při prodeji na konci horizontu, jako podíl z hodnoty. Počítají se jen do pákového IRR; čisté jmění zůstává hodnota minus dluh.",
-    propertyTax: "Daň z nemovitosti /rok",
+    propertyTax: "Daň z nemovitých věcí /rok",
     insurance: "Pojištění /rok",
     svj: "SVJ / fond oprav /měs",
     other: "Ostatní /rok",
@@ -786,7 +788,7 @@ export const cs: Dictionary = {
     nominalKc: "nominální Kč",
     periodNote: "toky za rok, zůstatky ke konci roku",
     portfolio: "Portfolio",
-    entity: "Subjekt",
+    entity: "Portfolio nebo nemovitost",
   },
 
   scenarios: {
@@ -804,9 +806,9 @@ export const cs: Dictionary = {
     hidePresets: "Skrýt předvolby",
     presetsCollapsedSummary:
       "Šoky sazeb, inflace, propad cen a kombinované šoky jsou skryté.",
-    atStart: "Start",
+    atStart: "Začátek",
     atStartTitle: (date) => `Na začátku projekce (${date})`,
-    rateShockAtRefix: "Šok sazby @ refix",
+    rateShockAtRefix: "Šok sazby na konci fixace",
     inflationShock: "Inflační šok",
     priceCrash: "Propad cen",
     crashWhen: "Kdy",
@@ -820,17 +822,18 @@ export const cs: Dictionary = {
     combinedTitle: (level, parts) => `${level}: ${parts}`,
     addedScenario: (name) => `Přidáno „${name}“`,
     duplicatedScenario: (name) => `Zduplikováno „${name}“`,
+    copyName: (name) => `${name} (kopie)`,
     alreadySaved: (name) => `Už uloženo: „${name}“`,
     addedCompareFull: (name, max) =>
-      `Přidáno „${name}“. Porovnání už ukazuje ${max} scénáře, odškrtněte jeden, aby se zobrazil.`,
+      `Přidáno „${name}“. Porovnání už ukazuje ${max} ${csPlural(max, ["scénář", "scénáře", "scénářů"])}, odškrtněte jeden, aby se zobrazil.`,
     duplicatedCompareFull: (name, max) =>
-      `Zduplikováno „${name}“. Porovnání už ukazuje ${max} scénáře, odškrtněte jeden, aby se zobrazila kopie.`,
+      `Zduplikováno „${name}“. Porovnání už ukazuje ${max} ${csPlural(max, ["scénář", "scénáře", "scénářů"])}, odškrtněte jeden, aby se zobrazila kopie.`,
     confirmDelete: (name: string) =>
       `Smazat scénář „${name}“? Tuto akci nelze vrátit.`,
     deletedScenario: (name) => `Smazáno „${name}“`,
     listTitle: "Scénáře",
     listHint: (max) =>
-      `Zaškrtněte až ${max} scénáře k porovnání. Základ je navíc a nepočítá se.`,
+      `Zaškrtněte až ${max} ${csPlural(max, ["scénář", "scénáře", "scénářů"])} k porovnání. Základ je navíc a nepočítá se.`,
     duplicate: "Duplikovat",
     emptyList:
       "Zatím žádné uložené scénáře — použijte předvolbu nebo „Nový scénář“.",
@@ -839,7 +842,7 @@ export const cs: Dictionary = {
     nothingSelectedBody: "Zaškrtněte Základ a/nebo scénáře výše pro porovnání.",
     keyFiguresTitle: "Klíčové údaje",
     keyFiguresHint: "nominální Kč",
-    keyFiguresHintReal: "reálně (ceny k datu zahájení)",
+    keyFiguresHintReal: "reálně (ceny k základnímu datu)",
     chartNetWorth: "Čisté jmění (kapitál)",
     chartNetCashFlow: "Čistý cash flow podle roku",
     chartLtv: "Poměr dluhu k hodnotě (LTV)",
@@ -866,15 +869,15 @@ export const cs: Dictionary = {
     sumAppreciation: (v) => `zhodnocení ${v}`,
     sumRentIndex: (v) => `indexace nájmu ${v}`,
     sumVacancy: (v) => `neobsazenost ${v}`,
-    sumResetRate: (v) => `sazba po fixaci ${v}`,
+    sumResetRate: (v) => `sazba po skončení fixace ${v}`,
     sumInflation: (v) => `inflace ${v}`,
     sumInflationShock: (v, years) =>
       `inflace ${v} p. b. na ${years} ${csPlural(years, ["rok", "roky", "let"])}`,
     sumRateShock: (v, years) =>
       `sazby ${v} p. b. na ${years} ${csPlural(years, ["rok", "roky", "let"])}`,
     reachHits: (n, m, years) =>
-      `zasáhne ${n} z ${m} ${csPlural(m, ["úvěru", "úvěrů", "úvěrů"])} (refixace ${years})`,
-    reachNone: "v okně šoku se žádný úvěr nerefixuje, takže bez vlivu",
+      `zasáhne ${n} z ${m} ${csPlural(m, ["úvěru", "úvěrů", "úvěrů"])} (konec fixace ${years})`,
+    reachNone: "v okně šoku žádnému úvěru nekončí fixace, takže bez vlivu",
     unreadableRow:
       "Nelze přečíst, proto je vynechán. Smažte ho před exportem: zálohu, která ho obsahuje, nepůjde obnovit.",
     notCompared: (name) =>
@@ -894,7 +897,7 @@ export const cs: Dictionary = {
     fieldPostFixationReset: "Sazba po skončení fixace",
     fieldInflation: "Inflace p.a.",
     fieldInflationShock: "Inflační šok",
-    fieldRateShock: "Šok sazby při refixaci",
+    fieldRateShock: "Šok sazby na konci fixace",
     fieldValueCrash: "Propad hodnoty",
     forYears: "…na roky",
     atYear: "…v roce",
@@ -960,7 +963,7 @@ export const cs: Dictionary = {
     confirmReplace: "Přesto importovat",
     replacedEvent: (issue) => `Předchozí úvěrový blok: ${issue}`,
     noEffectNote:
-      "Začíná před platným úvěrovým blokem, proto ho umořovací plán nepoužije. Může se ale počítat jako úvěr na koupi.",
+      "Začíná před platným úvěrovým blokem, proto ho splátkový kalendář nepoužije. Může se ale počítat jako úvěr na koupi.",
     storedEventKind: {
       prepayments: "mimořádná splátka",
       recasts: "změna splatnosti",
@@ -994,7 +997,7 @@ export const cs: Dictionary = {
     errDuplicateKey: (firstRow) =>
       `Duplicita řádku ${firstRow} — každý záznam smí být v souboru jen jednou`,
     errMalformedRow: (expected, found) =>
-      `Tento řádek má ${found} sloupců; záhlaví jich má ${expected}`,
+      `Tento řádek má ${found} ${csPlural(found, ["sloupec", "sloupce", "sloupců"])}; záhlaví jich má ${expected}`,
     errBadQuotes: "Neuzavřené uvozovky na tomto řádku",
     errDuplicateHeader: (name: string) =>
       `Sloupec ${name} je v záhlaví vícekrát.`,
@@ -1069,7 +1072,7 @@ export const cs: Dictionary = {
       mortgage_blocks: "Hypotéky",
       valuations: "Ocenění",
       leases: "Nájmy",
-      holding_costs: "Náklady držení",
+      holding_costs: "Náklady na držbu",
       assumptions: "Předpoklady",
       scenarios: "Scénáře",
     },
@@ -1246,7 +1249,7 @@ export const cs: Dictionary = {
 
     appTitle: "Co aplikace umí",
     appBody:
-      "Sledujte své nájemní byty na jednom místě: aktuální hodnotu, dluh a vlastní kapitál, nájem, provozní náklady a cash flow. Aplikace promítá nominální i reálné výsledky do zvoleného horizontu (výchozí je 30 let), ukazuje ukazatele jako LTV, DSCR, výnosy a IRR a umožňuje zátěžové testy portfolia pomocí scénářů co-kdyby.",
+      "Sledujte své nájemní byty na jednom místě: aktuální hodnotu, dluh a vlastní kapitál, nájem, náklady na držbu a cash flow. Aplikace promítá nominální i reálné výsledky do zvoleného horizontu (výchozí je 30 let), ukazuje ukazatele jako LTV, DSCR, výnosy a IRR a umožňuje zátěžové testy portfolia pomocí scénářů co-kdyby.",
     formatsNote:
       "Jazyk mění jen texty rozhraní. Částky jsou vždy v českých korunách (Kč) s českým formátem čísel a dat.",
 
@@ -1287,7 +1290,7 @@ export const cs: Dictionary = {
       "Vaše záznamy projdou čistým výpočetním enginem a obrazovky zobrazí výsledek. Žádné číslo se nezadává ručně — každé je odvozené.",
     cardAsOfTitle: "Vše je „k“ určitému datu",
     cardAsOfBody:
-      "Snímek je vaše portfolio ve zvolený den; projekce ho posouvá rok po roce. Snímek k základnímu datu se rovná roku 0 projekce.",
+      "Snímek je vaše portfolio ve zvolený den; projekce ho posouvá rok po roce. Hodnota, dluh a kapitál snímku k základnímu datu se rovnají roku 0 projekce; nájem, náklady a peněžní toky začínají v roce 1.",
     cardEffectiveTitle: "Záznamy mají platnost k datu",
     cardEffectiveBody:
       "Ocenění, nájmy a hypotéky mají vždy časové rozmezí. Pro kterýkoli den engine vybere ten platný — takže končící nájem předá štafetu dalšímu.",
@@ -1303,7 +1306,7 @@ export const cs: Dictionary = {
     mortgagesProse1Pre: "Úvěry jsou ",
     mortgagesProse1Annuities: "anuity",
     mortgagesProse1Mid:
-      " — konstantní měsíční splátka, nejprve rozdělená na úrok: ",
+      " — konstantní měsíční splátka, ze které se nejdřív hradí úrok: ",
     fInterest: "úrok = zůstatek × sazba ÷ 12",
     fPrincipal: "jistina = splátka − úrok",
     fNewBalance: "nový zůstatek = zůstatek − jistina",
@@ -1313,9 +1316,9 @@ export const cs: Dictionary = {
     mortgagesProse2Fixation: "fixační období",
     mortgagesProse2Mid:
       " — roky, kdy je sazba zafixovaná. Když skončí, sazba se ",
-    mortgagesProse2Resets: "resetuje",
+    mortgagesProse2Resets: "změní",
     mortgagesProse2Mid2: " na vaši sazbu po fixaci a splátka se ",
-    mortgagesProse2Reamortizes: "znovu umoří",
+    mortgagesProse2Reamortizes: "přepočítá",
     mortgagesProse2Post:
       ", aby splatila zbývající zůstatek za zbývající dobu, takže se platba k tomu datu může zvýšit nebo snížit. Výhled úvěru na stránce nemovitosti ukazuje u každého úvěrového bloku modelovaný konec fixace a dluh, který přejde na novou sazbu, a také zbývající dobu splácení.",
     mortgagesProse3:
@@ -1350,7 +1353,7 @@ export const cs: Dictionary = {
     developmentProseMid: ". Během výstavby je úvěr ",
     developmentInterestOnly: "pouze úrokový",
     developmentProsePost:
-      " (bez jistiny). Dluh ukazuje načerpanou částku a hodnota dokončenou hodnotu sníženou o dosud nečerpané tranše, takže s každým čerpáním rostou obě a kapitál se nemění. Graf změny kapitálu ukazuje každé čerpání jako hodnotu výstavby a nový dluh ve stejné výši. Úrok se platí jen z načerpané částky; LTV počítá celý úvěr vůči dokončené hodnotě, stejně jako banka. Když přijde tranše nebo se výstavba dokončí, úvěr se znovu umoří na běžný splátkový plán. Ve formuláři hypotéky zvolte Developerský a vyplňte harmonogram čerpání: částku čerpanou v den startu a pak řádek pro každou další tranši.",
+      " (bez jistiny). Dluh ukazuje načerpanou částku a hodnota dokončenou hodnotu sníženou o dosud nečerpané tranše, takže s každým čerpáním rostou obě a kapitál se nemění. Graf změny kapitálu ukazuje každé čerpání jako hodnotu výstavby a nový dluh ve stejné výši. Úrok se platí jen z načerpané částky; LTV počítá celý úvěr vůči dokončené hodnotě, stejně jako banka. Když přijde tranše nebo se výstavba dokončí, splátka se přepočítá podle běžného splátkového kalendáře. Ve formuláři hypotéky zvolte Developerský a vyplňte harmonogram čerpání: částku čerpanou v den začátku a pak řádek pro každou další tranši.",
     limitsTitle: "Omezení a bezpečnost dat",
     limitsProse:
       "Tato čísla jsou plánovací odhady, ne nabídka banky ani zaručený výsledek. Dva dokumenty ve zdrojovém repozitáři vysvětlují, co model zjednodušuje nebo vynechává, a jak data zálohovat a obnovit po neúspěšné aktualizaci.",
@@ -1367,7 +1370,7 @@ export const cs: Dictionary = {
         name: "Dluh",
         formula: "zůstatek k datu",
         meaning:
-          "Zbývající zůstatek úvěru z umořovacího plánu — odráží každou splátku i případný reset sazby. U developerského úvěru se počítá načerpaná částka; dosud nečerpané tranše se zobrazují vedle ní.",
+          "Zbývající zůstatek úvěru ze splátkového kalendáře — odráží každou splátku i případnou změnu sazby po fixaci. U developerského úvěru se počítá načerpaná částka; dosud nečerpané tranše se zobrazují vedle ní.",
       },
       equity: {
         name: "Kapitál",
@@ -1407,7 +1410,7 @@ export const cs: Dictionary = {
         name: "NOI",
         formula: "efektivní příjem − náklady na držbu",
         meaning:
-          "Provozní zisk před hypotékou — hotovost, kterou sám aktivum vynáší.",
+          "Provozní zisk před hypotékou — hotovost, kterou vynáší samo aktivum.",
         eg: "228 k − 82,2 k = 145,8 k.",
       },
       debtService: {
@@ -1473,14 +1476,14 @@ export const cs: Dictionary = {
       },
       costs: {
         name: "Náklady",
-        formula: "rostou s CPI",
+        formula: "fixní část roste s CPI",
         meaning:
-          "Náklady na držbu inflují přes index CPI sestavený z míry inflace.",
+          "Fixní náklady (daň z nemovitých věcí, pojištění, SVJ, ostatní) rostou s CPI podle míry inflace; správa a údržba zůstávají podílem z nájmu, takže sledují nájem.",
       },
       debt: {
         name: "Dluh",
-        formula: "umořovací plán",
-        meaning: "Sleduje plán včetně resetů po fixaci.",
+        formula: "splátkový kalendář",
+        meaning: "Sleduje plán včetně změn sazby na konci fixace.",
       },
       nextReset: {
         name: "Příští změna sazby",
@@ -1551,8 +1554,8 @@ export const cs: Dictionary = {
       },
       rateShock: {
         name: "Šok sazby",
-        formula: "+Δ kolem refixu",
-        meaning: "Vyšší sazba kolem resetu fixace po stanovenou dobu.",
+        formula: "+Δ kolem konce fixace",
+        meaning: "Vyšší sazba kolem konce fixace po stanovenou dobu.",
       },
       valueCrash: {
         name: "Propad hodnoty",
@@ -1587,7 +1590,7 @@ export const cs: Dictionary = {
         def: "Roky, po které je sazba české hypotéky zafixovaná.",
       },
       reset: {
-        term: "Reset / znovu umořit",
+        term: "Konec fixace / přepočet splátky",
         def: "Na konci fixace se sazba změní a splátka se přepočítá.",
       },
       svj: {
@@ -1596,7 +1599,7 @@ export const cs: Dictionary = {
       },
       propertyTax: {
         term: "Daň z nemovitých věcí",
-        def: "Roční daň z nemovitosti.",
+        def: "Roční daň z nemovitých věcí.",
       },
       cagr: { term: "CAGR", def: "Složená roční (vyhlazená) míra růstu." },
       irr: {

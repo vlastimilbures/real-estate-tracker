@@ -634,7 +634,7 @@ export const en = {
     loanTypeClearAndSwitch: "Clear and switch",
     loanTypeKeepDevelopment: "Keep development",
     successorNote:
-      "A new block replaces the current one from its start date (refix or refinance). The app models one active loan per property.",
+      "A new block replaces the current one from its start date (new fixation or refinance). The app models one active loan per property.",
     successorLearnMore: "Learn more",
     // Holding costs
     holdingCostsTitle: "Holding costs",
@@ -725,7 +725,7 @@ export const en = {
       `${months} before the contract maturity ${contract}.`,
     maturityCheck: "Check the instalment or the maturity date.",
     fixationEnded: (end: string, rate: string) =>
-      `Its fixation ended on ${end} and no follow-on block is entered, so the app assumes the reset rate of ${rate} from then on. Add the refix terms as a new mortgage block.`,
+      `Its fixation ended on ${end} and no follow-on block is entered, so the app assumes the reset rate of ${rate} from then on. Add the terms of the new fixation as a new mortgage block.`,
     fixationEndedUntil: (end: string, until: string, rate: string) =>
       `Its fixation ended on ${end} and the next block starts only on ${until}, so the app assumes the reset rate of ${rate} from ${end} until ${until}. Add the terms for those months as a mortgage block.`,
     fieldPrepayments: "Prepayments",
@@ -864,7 +864,7 @@ export const en = {
       "Rate, inflation, price-crash and combined shocks are hidden.",
     atStart: "Start",
     atStartTitle: (date: string) => `At projection start (${date})`,
-    rateShockAtRefix: "Rate shock @ refix",
+    rateShockAtRefix: "Rate shock at fixation end",
     inflationShock: "Inflation shock",
     priceCrash: "Price crash",
     crashWhen: "When",
@@ -881,17 +881,19 @@ export const en = {
     combinedTitle: (level: string, parts: string) => `${level}: ${parts}`,
     addedScenario: (name: string) => `Added “${name}”`,
     duplicatedScenario: (name: string) => `Duplicated “${name}”`,
+    /** The saved name of a duplicate (#169, ADR 0187). */
+    copyName: (name: string) => `${name} (copy)`,
     alreadySaved: (name: string) => `Already saved: “${name}”`,
     addedCompareFull: (name: string, max: number) =>
-      `Added “${name}”. Compare already shows ${max} scenarios, so untick one to add it.`,
+      `Added “${name}”. Compare already shows ${max} ${enPlural(max, ["scenario", "scenarios"])}, so untick one to add it.`,
     duplicatedCompareFull: (name: string, max: number) =>
-      `Duplicated “${name}”. Compare already shows ${max} scenarios, so untick one to add the copy.`,
+      `Duplicated “${name}”. Compare already shows ${max} ${enPlural(max, ["scenario", "scenarios"])}, so untick one to add the copy.`,
     confirmDelete: (name: string) =>
       `Delete scenario “${name}”? This cannot be undone.`,
     deletedScenario: (name: string) => `Deleted “${name}”`,
     listTitle: "Scenarios",
     listHint: (max: number) =>
-      `Tick up to ${max} scenarios to compare. Base is extra and does not count.`,
+      `Tick up to ${max} ${enPlural(max, ["scenario", "scenarios"])} to compare. Base is extra and does not count.`,
     duplicate: "Duplicate",
     emptyList: "No saved scenarios yet — use a preset or “New scenario”.",
     compareTitle: "Compare",
@@ -934,8 +936,8 @@ export const en = {
     sumRateShock: (v: string, years: number) => `rates ${v} pp for ${years}y`,
     // Which loans a rate shock reaches (ADR 0100)
     reachHits: (n: number, m: number, years: string) =>
-      `hits ${n} of ${m} ${enPlural(m, ["loan", "loans"])} (refix ${years})`,
-    reachNone: "no loan refixes inside the shock window, so no effect",
+      `hits ${n} of ${m} ${enPlural(m, ["loan", "loans"])} (fixation end ${years})`,
+    reachNone: "no loan's fixation ends inside the shock window, so no effect",
     // A saved scenario that breaks an engine rule, or cannot be read (ADR 0123)
     unreadableRow:
       "Cannot be read, so it is left out. Delete it before you export: a backup that contains it cannot be restored.",
@@ -957,7 +959,7 @@ export const en = {
     fieldPostFixationReset: "Post-fixation reset rate",
     fieldInflation: "Inflation p.a.",
     fieldInflationShock: "Inflation shock",
-    fieldRateShock: "Rate shock at refix",
+    fieldRateShock: "Rate shock at fixation end",
     fieldValueCrash: "Value crash",
     forYears: "…for years",
     atYear: "…at year",
@@ -1058,7 +1060,7 @@ export const en = {
     errDuplicateKey: (firstRow: number) =>
       `Duplicate of row ${firstRow} — each record may appear only once per file`,
     errMalformedRow: (expected: number, found: number) =>
-      `This line has ${found} columns; the header has ${expected}`,
+      `This line has ${found} ${enPlural(found, ["column", "columns"])}; the header has ${expected}`,
     errBadQuotes: "Unbalanced quotation marks on this line",
     errDuplicateHeader: (name: string) =>
       `Column ${name} appears more than once in the header.`,
@@ -1359,7 +1361,7 @@ export const en = {
       "Your records run through a pure calculation engine, then the screens display the result. No figure is typed in by hand — every one is derived.",
     cardAsOfTitle: "Everything is “as of” a date",
     cardAsOfBody:
-      "A snapshot is your portfolio on a chosen day; a projection rolls it forward by year. The base-date snapshot equals year 0 of the projection.",
+      "A snapshot is your portfolio on a chosen day; a projection rolls it forward by year. The base-date snapshot's value, debt and equity equal year 0 of the projection; rent, costs and cash flows start in year 1.",
     cardEffectiveTitle: "Records are effective-dated",
     cardEffectiveBody:
       "Valuations, leases and mortgages each have a date range. For any day the engine picks the one in force — so an expiring lease hands over to the next.",
@@ -1547,9 +1549,9 @@ export const en = {
       },
       costs: {
         name: "Costs",
-        formula: "grow with CPI",
+        formula: "fixed part grows with CPI",
         meaning:
-          "Holding costs inflate via a CPI index built from the inflation rate.",
+          "Fixed costs (property tax, insurance, SVJ, other) grow with CPI from the inflation rate; management and maintenance stay a share of rent, so they follow rent.",
       },
       debt: {
         name: "Debt",
@@ -1626,8 +1628,8 @@ export const en = {
       },
       rateShock: {
         name: "Rate shock",
-        formula: "+Δ around refix",
-        meaning: "A higher rate around a fixation reset for a set period.",
+        formula: "+Δ around fixation end",
+        meaning: "A higher rate around a fixation end for a set period.",
       },
       valueCrash: {
         name: "Value crash",

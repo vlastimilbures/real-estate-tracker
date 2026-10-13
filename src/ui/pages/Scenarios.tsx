@@ -131,7 +131,9 @@ export function Scenarios() {
 
   async function duplicate(s: Scenario) {
     const id = crypto.randomUUID();
-    const res = await run(() => duplicateScenario(s.id, id));
+    const res = await run(() =>
+      duplicateScenario(s.id, id, t.scenarios.copyName(s.name)),
+    );
     if (!res.ok) return;
     showToast(
       tick(id)

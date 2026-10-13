@@ -43,18 +43,17 @@ const saveScenario = vi.fn(async (s: Scenario) => {
   }));
   return { ok: true as const };
 });
-const duplicateScenario = vi.fn(async (id: string, newId: string) => {
-  usePortfolioStore.setState((st) => {
-    const src = st.scenarios.find((x) => x.id === id)!;
-    return {
-      scenarios: [
-        ...st.scenarios,
-        { ...src, id: newId, name: `${src.name} (copy)` },
-      ],
-    };
-  });
-  return { ok: true as const };
-});
+const duplicateScenario = vi.fn(
+  async (id: string, newId: string, name: string) => {
+    usePortfolioStore.setState((st) => {
+      const src = st.scenarios.find((x) => x.id === id)!;
+      return {
+        scenarios: [...st.scenarios, { ...src, id: newId, name }],
+      };
+    });
+    return { ok: true as const };
+  },
+);
 
 function seed(scenarios: Scenario[]) {
   act(() =>

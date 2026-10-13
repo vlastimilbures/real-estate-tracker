@@ -8,24 +8,11 @@ import { describe, it, expect } from "vitest";
 import { en } from "../en";
 import { cs } from "../cs";
 import { ru } from "../ru";
+import { leaves, type Tree } from "./support/leaves";
 
-type Tree = { [k: string]: unknown };
 const DICTS = { en, cs, ru } as const;
 type Lang = keyof typeof DICTS;
 const LANGS = Object.keys(DICTS) as Lang[];
-
-function leaves(t: Tree, prefix = ""): Map<string, unknown> {
-  const out = new Map<string, unknown>();
-  for (const [k, v] of Object.entries(t)) {
-    if (v !== null && typeof v === "object" && !Array.isArray(v)) {
-      for (const [kk, vv] of leaves(v as Tree, `${prefix}${k}.`))
-        out.set(kk, vv);
-    } else {
-      out.set(`${prefix}${k}`, v);
-    }
-  }
-  return out;
-}
 
 const L = Object.fromEntries(
   LANGS.map((l) => [l, leaves(DICTS[l] as unknown as Tree)]),
@@ -218,6 +205,10 @@ describe("i18n dictionaries — plural forms", () => {
       // Amortization disclosure (ADR 0107).
       "propertyDetail.showAmortization",
       "propertyDetail.amortizationMonths",
+      // Compare holds MAX_COMPARE scenarios (#169).
+      "scenarios.addedCompareFull",
+      "scenarios.duplicatedCompareFull",
+      "scenarios.listHint",
       // Rate shock reach (ADR 0100).
       "scenarios.reachHits",
       "importPage.rowsReady",
@@ -227,6 +218,8 @@ describe("i18n dictionaries — plural forms", () => {
       "importPage.confirmOverwriteMsg",
       // Added loan blocks that stop saved loan events (ADR 0160).
       "importPage.confirmReplaceMsg",
+      // A short CSV line's cell count (#169).
+      "importPage.errMalformedRow",
       // Backup recency (ADR 0110).
       "backup.agoDays",
       "backup.agoWeeks",
@@ -268,7 +261,12 @@ describe("i18n dictionaries — plural forms", () => {
         : [k],
     );
     expect(countInflected("en")).toEqual(counted);
-    expect(countInflected("ru")).toEqual(withIrrFoot);
+    // Russian declines "из N объекта" by the total; Czech and English need no form.
+    expect(countInflected("ru")).toEqual([
+      ...common,
+      "dashboard.subFilter",
+      ...withIrrFoot.slice(common.length),
+    ]);
     expect(countInflected("cs")).toEqual(csShocks);
   });
 

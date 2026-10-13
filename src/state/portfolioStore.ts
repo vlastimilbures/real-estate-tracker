@@ -246,9 +246,13 @@ interface PortfolioState {
   // scenarios (what-if overrides)
   addScenario: (s: Scenario) => Promise<MutationResult>;
   saveScenario: (s: Scenario) => Promise<MutationResult>;
-  /** Copies scenario `id` under `newId`; the caller picks the id so it can select the
-   *  copy (ADR 0093). */
-  duplicateScenario: (id: string, newId: string) => Promise<MutationResult>;
+  /** Copies scenario `id` under `newId` and `name`; the caller picks the id so it can
+   *  select the copy (ADR 0093) and names it in the UI language (ADR 0187). */
+  duplicateScenario: (
+    id: string,
+    newId: string,
+    name: string,
+  ) => Promise<MutationResult>;
   removeScenario: (id: string) => Promise<MutationResult>;
   // sample portfolio (ADR 0094)
   /** "Keep exploring": hide the sample banner for good. */
@@ -661,16 +665,12 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         checkScenario(s.overrides);
         await upsertScenario(sql, scenarioToRow(s, new Date()));
       }),
-    duplicateScenario: (id, newId) =>
+    duplicateScenario: (id, newId, name) =>
       mutate(async (sql) => {
         const src = get().scenarios.find((x) => x.id === id);
         if (!src) throw new Error("Scenario not found");
         checkScenario(src.overrides);
-        const copy: Scenario = {
-          ...src,
-          id: newId,
-          name: `${src.name} (copy)`,
-        };
+        const copy: Scenario = { ...src, id: newId, name };
         await upsertScenario(sql, scenarioToRow(copy, new Date()));
       }),
     removeScenario: (id) => mutate((sql) => deleteScenario(sql, id)),

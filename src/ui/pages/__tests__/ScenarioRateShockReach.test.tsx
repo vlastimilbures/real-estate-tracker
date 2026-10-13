@@ -59,7 +59,7 @@ const { rateShockNote } = await import("../../model/rateShockReach");
 const { Scenarios } = await import("../Scenarios");
 const { ScenarioForm } = await import("../ScenarioForm");
 
-const reach = "hits 3 of 3 loans (refix 2029, 2031)";
+const reach = "hits 3 of 3 loans (fixation end 2029, 2031)";
 
 beforeEach(() => {
   act(() => {
