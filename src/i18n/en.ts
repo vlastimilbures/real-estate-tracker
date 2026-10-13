@@ -396,9 +396,10 @@ export const en = {
     financingInterestSaved:
       "Interest saved by prepayments over the loans' remaining life (nominal)",
     financingInterestSavedByProperty: "By property",
-    financingInterestSavedNa: "n/a: a recast depends on the prepayment",
-    financingUpcoming: "Next 12 months",
-    financingNoEvents: "Nothing modelled in the next 12 months.",
+    financingInterestSavedNa:
+      "n/a: a maturity change depends on the prepayment",
+    financingUpcoming: "Rate, loan and lease dates in the next 12 months",
+    financingNoEvents: "No rate, loan or lease dates in the next 12 months.",
     financingMoreEvents: (n: number) => `+ ${n} more`,
     financingNoLoans: "No mortgage in this selection.",
     financingEventFixationEnd: "Fixation ends",
@@ -691,11 +692,13 @@ export const en = {
       cancelled: "Not drawn — replaced",
     },
     loanSummaryTitle: "Loan outlook",
-    loanSummaryHint: "modelled from your loans, prepayments and recasts",
+    loanSummaryHint:
+      "modelled from your loans, prepayments and maturity changes",
     loanPayoff: "Modelled payoff",
     loanPayoffNone: "Repaid",
-    interestSaved: "Interest saved by prepayments (nominal)",
-    interestSavedNa: "n/a: a recast depends on the prepayment",
+    interestSaved:
+      "Interest saved by prepayments over the loan's remaining life (nominal)",
+    interestSavedNa: "n/a: a maturity change depends on the prepayment",
     // ADR 0117: the remaining term and each block's reset.
     remainingTerm: "Remaining term",
     outlookResetsTitle: "Fixation resets by loan block",
@@ -727,7 +730,7 @@ export const en = {
       `Its fixation ended on ${end} and the next block starts only on ${until}, so the app assumes the reset rate of ${rate} from ${end} until ${until}. Add the terms for those months as a mortgage block.`,
     fieldPrepayments: "Prepayments",
     helpPrepayments:
-      "Extra repayments of principal on a date. Lowering the instalment keeps the term; shortening the term keeps the instalment. The fee is paid in cash and does not reduce the debt.",
+      "Extra repayments of principal on a date. Lowering the instalment keeps the term; shortening the term keeps the instalment. The fee is paid from your own funds and does not reduce the debt.",
     fieldRecasts: "Maturity changes",
     helpRecasts:
       "From a date, the loan runs to a new maturity date or at a new instalment.",
@@ -1235,7 +1238,8 @@ export const en = {
         "Check the marked rows: a date as dd.mm.yyyy and an amount above 0",
     },
     /** A bounded whole-number field (UX-068, ADR 0075). */
-    positiveAmount: "Enter an amount above 0, e.g. 500 000",
+    positiveAmount:
+      "Enter an amount above 0, e.g. 500 000 (a space between thousands)",
     intRange: (min: string, max: string) =>
       `Enter a whole number from ${min} to ${max}`,
     datePlaceholder: "dd.mm.yyyy",
@@ -1387,7 +1391,7 @@ export const en = {
     mortgagesProse2Post:
       " to clear the remaining balance over the remaining term, so the payment can step up or down at that date. The property page's Loan outlook lists each loan block's modelled fixation end, the balance that moves to the new rate, and the loan's remaining term.",
     mortgagesProse3:
-      "Prepayments and maturity changes are entered on each loan block, in its form. A prepayment repays extra principal on its date and either lowers the instalment or shortens the term; its fee is paid in cash and does not reduce the debt. A maturity change moves the loan to a new maturity date or a new instalment. Prepayments are your own cash, kept outside net cash flow and DSCR, but counted in cash to owner and the IRR. The property page shows the modelled payoff and the interest the prepayments save over the loan's remaining life, and warns when one is larger than the balance or falls after payoff.",
+      "Prepayments and maturity changes are entered on each loan block, in its form. A prepayment is applied right after the next payment due on or after its date and either lowers the instalment or shortens the term; its fee is paid from your own funds and does not reduce the debt. A maturity change moves the loan to a new maturity date or a new instalment. Prepayments are paid from your own funds, kept outside net cash flow and DSCR, but counted in cash to owner and the IRR. The property page shows the modelled payoff and the interest the prepayments save over the loan's remaining life, and warns when one is larger than the balance, falls after payoff or cannot shorten the term.",
     projectionTitle: "Projection to the horizon",
     projectionHint: "Rolling the snapshot forward",
     projectionProse1:
