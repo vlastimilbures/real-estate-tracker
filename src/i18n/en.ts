@@ -498,6 +498,7 @@ export const en = {
     colNetCashFlow: "Net cash flow",
     colDscr: "DSCR",
     badgePending: "Pending",
+    notOwnedCell: "not owned yet",
     pendingPurchaseOn: (d: string) => `purchase ${d}`,
     badgeInactive: "Inactive",
     editProperty: "Edit property",

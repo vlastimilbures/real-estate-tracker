@@ -461,6 +461,7 @@ export const cs: Dictionary = {
     colNetCashFlow: "Čistý cash flow",
     colDscr: "DSCR",
     badgePending: "Čeká",
+    notOwnedCell: "zatím není ve vlastnictví",
     pendingPurchaseOn: (d) => `koupě ${d}`,
     badgeInactive: "Neaktivní",
     editProperty: "Upravit nemovitost",

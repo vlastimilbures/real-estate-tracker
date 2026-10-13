@@ -272,14 +272,15 @@ describe("a pending purchase whose loan is already drawn (ADR 0165)", () => {
     const row = screen.getByText("Future buy").closest("tr")!;
     const figures = Array.from(row.querySelectorAll("td")).slice(1, -1);
     // LTV, net cash flow, DSCR, value, debt, equity, NOI: only debt is a figure.
+    const empty = "—" + en.properties.notOwnedCell;
     expect(figures.map((c) => c.textContent)).toEqual([
-      "—",
-      "—",
-      "—",
-      "—",
+      empty,
+      empty,
+      empty,
+      empty,
       fmtCzk(owing, { suffix: false }),
-      "—",
-      "—",
+      empty,
+      empty,
     ]);
   });
 
@@ -325,9 +326,16 @@ describe("a pending purchase (#126 item 1, ADR 0156)", () => {
       within(row).getByText(en.properties.pendingPurchaseOn(purchase)),
     ).toBeTruthy();
     expect(within(row).queryByText(en.dashboard.badgeConservative)).toBeNull();
-    // Every figure column (LTV, net cash flow, DSCR, value, debt, equity, NOI) is "—".
+    // Every figure column (LTV, net cash flow, DSCR, value, debt, equity, NOI) shows "—"
+    // and tells a screen reader why (ADR 0189).
     const figures = Array.from(row.querySelectorAll("td")).slice(1, -1);
-    expect(figures.map((c) => c.textContent)).toEqual(Array(7).fill("—"));
+    expect(figures).toHaveLength(7);
+    for (const c of figures) {
+      expect(c.querySelector('[aria-hidden="true"]')?.textContent).toBe("—");
+      expect(c.querySelector(".sr-only")?.textContent).toBe(
+        en.properties.notOwnedCell,
+      );
+    }
   });
 
   it("an owned row keeps its figures", () => {

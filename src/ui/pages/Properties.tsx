@@ -84,8 +84,17 @@ export function Properties() {
         )
       : [];
   const deleteTarget = perProperty.find((p) => p.propertyId === deletingId);
-  /** A pending purchase has no figures yet, only its purchase date (ADR 0156). */
-  const fig = (owned: boolean, cell: ReactNode) => (owned ? cell : "—");
+  /** A pending purchase has no figures yet, only its purchase date (ADR 0156); a screen
+   *  reader hears why in each cell (ADR 0189). */
+  const notOwned = (
+    // Positioned, so the hidden text stays inside the table's scroll box and cannot
+    // widen the page from a scrolled-off column.
+    <span style={{ position: "relative" }}>
+      <span aria-hidden="true">—</span>
+      <span className="sr-only">{t.properties.notOwnedCell}</span>
+    </span>
+  );
+  const fig = (owned: boolean, cell: ReactNode) => (owned ? cell : notOwned);
 
   async function handleDelete(id: string) {
     const result = await removeProperty(id);

@@ -470,6 +470,7 @@ export const ru: Dictionary = {
     colNetCashFlow: "Чистый денежный поток",
     colDscr: "DSCR",
     badgePending: "Ожидает",
+    notOwnedCell: "ещё не в собственности",
     pendingPurchaseOn: (d) => `покупка ${d}`,
     badgeInactive: "Неактивен",
     editProperty: "Изменить объект",
