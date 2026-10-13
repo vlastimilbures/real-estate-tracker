@@ -418,15 +418,14 @@ function parseFile<T>(
   for (const rec of file.records) {
     const c = new RowCtx(rec.cells, rec.line);
     const row = parseRow(c);
-    const keyValid = !c.errors.some((e) => keyCells.includes(e.field));
-    const k = keyCells
-      .map((f, i) => (i === 0 ? propertyKey(c.raw(f)) : c.raw(f)))
-      .join("\u0000");
-    const first = keyValid ? firstLine.get(k) : undefined;
-    if (first !== undefined) {
-      c.fail(keyField, { code: "duplicateKey", firstRow: first });
-    } else if (keyValid) {
-      firstLine.set(k, rec.line);
+    if (!c.errors.some((e) => keyCells.includes(e.field))) {
+      const [name = "", ...rest] = keyCells;
+      const k = [propertyKey(c.raw(name)), ...rest.map((f) => c.raw(f))].join(
+        "\u0000",
+      );
+      const first = firstLine.get(k);
+      if (first === undefined) firstLine.set(k, rec.line);
+      else c.fail(keyField, { code: "duplicateKey", firstRow: first });
     }
     if (row !== null && c.errors.length === 0)
       rows.push({ ...row, line: rec.line });
