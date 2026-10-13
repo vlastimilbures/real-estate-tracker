@@ -230,7 +230,7 @@ export function PropertyDetail() {
     exportTableXlsx({
       filename: exportFilename(property.name, property.id, "projection", mode),
       sheetName: t.xlsx.sheetNames.projection,
-      columns: projectionColumns(t, baseDate, series),
+      columns: (rows) => projectionColumns(t, baseDate, rows),
       rows: series,
       notes: projectionExportNotes(t, property.name, mode, baseDate),
     });
@@ -239,7 +239,7 @@ export function PropertyDetail() {
     exportTableXlsx({
       filename: exportFilename(property.name, property.id, "amortization"),
       sheetName: t.xlsx.sheetNames.amortization,
-      columns: amortizationColumns(t, out?.schedule ?? []),
+      columns: (rows) => amortizationColumns(t, rows),
       rows: out?.schedule ?? [],
       notes: [property.name],
     });

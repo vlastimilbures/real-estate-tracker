@@ -2,7 +2,8 @@
 //
 // ADR 0116 §11: the mortgage form edits a block's prepayments and recasts in a row
 // editor. Saving replaces the stored events; a stored event an edit made invalid shows
-// on its row and can be removed there (review of PR #91, item 8).
+// on its row and can be removed there (review of PR #91, item 8). Saves go through the
+// store's own check (#174).
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -10,31 +11,44 @@ import { MortgagesPanel } from "../PropertyEntityPanels";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
-import {
-  isoDate,
-  money,
-  validatePortfolio,
-  type MortgageBlock,
-} from "../../../engine";
-import { portfolio } from "../../../engine/__tests__/support/seed";
+import { isoDate, money, type MortgageBlock } from "../../../engine";
+import type { Sql } from "../../../data/sql";
+import { openMemorySql } from "../../../data/__tests__/betterSqlite";
+import { migrate } from "../../../data/migrations";
+import { seedIfEmpty } from "../../../data/seed";
 
 const en = getDict("en");
 const d = en.propertyDetail;
-const seed = portfolio.mortgages.find((m) => m.propertyId === "javorova")!;
 
-/** Saves like the store: the edit is checked against the engine rules first. */
-const save = vi.fn(async (m: MortgageBlock) => {
-  const errors = validatePortfolio({
-    ...portfolio,
-    mortgages: portfolio.mortgages.map((x) => (x.id === m.id ? m : x)),
-  }).filter((e) => e.id === m.id);
-  return errors.length
-    ? { ok: false as const, error: { kind: "input" as const, errors } }
-    : { ok: true as const };
-});
+async function openSeeded(): Promise<Sql> {
+  const sql = openMemorySql();
+  await migrate(sql);
+  await seedIfEmpty(sql);
+  return sql;
+}
 
-beforeEach(() => {
-  save.mockClear();
+// The store's own save on a seeded in-memory DB, so a refusal is the store's real check.
+const storeSave = usePortfolioStore.getState().saveMortgageBlock;
+let save: ReturnType<
+  typeof vi.fn<
+    ReturnType<typeof usePortfolioStore.getState>["saveMortgageBlock"]
+  >
+>;
+let seed: MortgageBlock;
+
+beforeEach(async () => {
+  usePortfolioStore.setState({
+    sql: null,
+    portfolio: null,
+    assumptions: null,
+    status: "idle",
+    error: null,
+    startupError: null,
+  });
+  await act(() => usePortfolioStore.getState().init(openSeeded));
+  const state = usePortfolioStore.getState();
+  seed = state.portfolio!.mortgages.find((m) => m.propertyId === "javorova")!;
+  save = vi.fn(storeSave);
   act(() => {
     useUiStore.setState({
       language: "en",
@@ -180,6 +194,50 @@ describe("prepayment and recast rows (ADR 0116)", () => {
     await userEvent.click(saveButton());
     expect(save).toHaveBeenCalledTimes(2);
     expect(saved().prepayments).toHaveLength(1);
+  });
+
+  it("maps the store's errors past a blank row to the rows they belong to", async () => {
+    await openEdit(seed);
+    const addPrepayment = screen.getByRole("button", {
+      name: d.eventAddPrepayment,
+    });
+    for (let i = 0; i < 3; i++) await userEvent.click(addPrepayment);
+    // Rows: [blank, dated before the loan start, valid].
+    await userEvent.type(
+      within(row(2)).getByLabelText(d.eventDate),
+      "01.03.2020",
+    );
+    await userEvent.type(within(row(2)).getByLabelText(d.eventAmount), "1000");
+    await userEvent.type(
+      within(row(3)).getByLabelText(d.eventDate),
+      "17.01.2031",
+    );
+    await userEvent.type(within(row(3)).getByLabelText(d.eventAmount), "1000");
+    const addRecast = screen.getByRole("button", { name: d.eventAddRecast });
+    await userEvent.click(addRecast);
+    await userEvent.click(addRecast);
+    // Recast rows: [blank, a maturity past the longest term].
+    const recast = () =>
+      screen.getByRole("group", { name: d.eventRecastRow(2) });
+    await userEvent.type(
+      within(recast()).getByLabelText(d.eventDate),
+      "17.01.2032",
+    );
+    await userEvent.type(
+      within(recast()).getByLabelText(d.eventMaturity),
+      "17.01.2121",
+    );
+    await userEvent.click(saveButton());
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(row(1).textContent).not.toContain(en.inputRules.EVENT_BEFORE_START);
+    expect(row(2).textContent).toContain(en.inputRules.EVENT_BEFORE_START);
+    expect(row(3).textContent).not.toContain(en.inputRules.EVENT_BEFORE_START);
+    expect(recast().textContent).toContain(
+      en.inputRules.INVALID_RECAST_MATURITY,
+    );
+    expect(
+      screen.getByRole("group", { name: d.eventRecastRow(1) }).textContent,
+    ).not.toContain(en.inputRules.INVALID_RECAST_MATURITY);
   });
 
   it("switching the loan type keeps the events", async () => {

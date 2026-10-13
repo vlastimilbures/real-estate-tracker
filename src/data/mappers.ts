@@ -321,7 +321,8 @@ const FLAT_KEYS = [
   "postFixationResetRatePa",
   "inflationPa",
 ] as const;
-const V1_KEYS = new Set<string>([
+/** The keys a v1 overrides JSON may hold (a restore test checks its fixture holds all). */
+export const V1_KEYS = new Set<string>([
   "version",
   ...FLAT_KEYS,
   "inflationShock",

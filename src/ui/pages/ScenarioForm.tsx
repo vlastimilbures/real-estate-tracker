@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { Button } from "../components/primitives";
 import { Modal } from "../components/Modal";
-import { Field, TextInput } from "../components/forms";
+import { Field, TextInput } from "../components/fields";
 import { percentDraft } from "../model/formParse";
 import { fmtDate } from "../../lib/format";
 import { isDirty } from "../model/dirty";

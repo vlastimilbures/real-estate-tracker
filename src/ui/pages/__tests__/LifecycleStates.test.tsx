@@ -17,7 +17,7 @@ import type { Portfolio, Scenario } from "../../../engine";
 import { assumptions } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
 import { mixedCashOutside } from "../../../engine/__tests__/support/synthetic";
-import { fmtCzk, fmtCzkM, fmtPct } from "../../../lib/format";
+import { fmtCzk, fmtCzkM, fmtDate, fmtPct } from "../../../lib/format";
 import { D } from "../../../lib/money";
 import { isoDate, portfolioSnapshot } from "../../../engine";
 
@@ -312,7 +312,9 @@ const hasTile = (label: string) =>
   screen.queryAllByText(label).some((e) => e.closest(".tile") !== null);
 
 describe("a pending purchase (#126 item 1, ADR 0156)", () => {
-  const purchase = "15.03.2028";
+  const future = mixed.properties.find((p) => p.id === "future")!;
+  const purchase = fmtDate(future.purchaseDate);
+  const loan = mixed.mortgages.find((m) => m.propertyId === "future")!;
 
   it("Properties shows its purchase date and no figures", () => {
     load(mixed, { route: "properties" });
@@ -346,14 +348,18 @@ describe("a pending purchase (#126 item 1, ADR 0156)", () => {
       .getByText(pd.notOwnedTitle)
       .closest<HTMLElement>(".panel")!;
     expect(panel.textContent).toContain(purchase);
-    expect(panel.textContent).toContain(fmtCzk(D("6000000")));
-    expect(panel.textContent).toContain(fmtCzk(D("4200000")));
+    expect(panel.textContent).toContain(fmtCzk(future.purchasePrice));
+    expect(panel.textContent).toContain(fmtCzk(loan.initialPrincipal));
     expect(hasTile(pd.marketValue)).toBe(false);
     expect(screen.queryByText(en.dashboard.badgeConservative)).toBeNull();
     // The projection charts stay: they show the years before the purchase as zero.
     expect(screen.getByText(pd.chartValueVsDebtVsEquity)).toBeTruthy();
     // The Data check stays, reduced to the own-cash finding (dataCheck.ts).
-    expect(screen.getByText(en.dataCheck.fundingUnknownFuture)).toBeTruthy();
+    const findings = document.querySelectorAll(".data-check li");
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.textContent).toContain(
+      en.dataCheck.fundingUnknownFuture,
+    );
   });
 
   it("an inactive pending row keeps both badges on the name's line, the date under it", () => {
@@ -435,10 +441,18 @@ describe("other lifecycle states keep their tiles (#276 item 1)", () => {
     expect(screen.getByTestId("kpi-networth").textContent).not.toBe(
       fmtCzk(D(0), { suffix: false }),
     );
-    // The foot reads the value as assets and a zero debt.
-    const foot = hero.querySelector(".foot")!.textContent;
-    const assets = foot.match(/^Assets (.+?) · /)![1]!;
-    expect(foot).toBe(en.dashboard.assetsDebtEquity(assets, fmtCzkM(D(0))));
+    // The foot reads the value as assets and a zero debt, at today (the mocked 01.10.2026).
+    const snap = portfolioSnapshot(
+      debtFree,
+      assumptions,
+      isoDate("2026-10-01"),
+    );
+    expect(hero.querySelector(".foot")!.textContent).toBe(
+      en.dashboard.assetsDebtEquity(
+        fmtCzkM(snap.totalReportedValue),
+        fmtCzkM(D(0)),
+      ),
+    );
     const ltv = tile(en.dashboard.portfolioLtv);
     expect(ltv.textContent).toContain(fmtPct(D(0), 1));
     expect(ltv.textContent).toContain(en.dashboard.badgeConservative);

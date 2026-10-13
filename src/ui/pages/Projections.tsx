@@ -81,7 +81,7 @@ export function Projections() {
             mode,
           ),
       sheetName: t.xlsx.sheetNames.projection,
-      columns: projectionColumns(t, assumptions.baseDate, rows),
+      columns: (shown) => projectionColumns(t, assumptions.baseDate, shown),
       rows,
       notes: projectionExportNotes(
         t,

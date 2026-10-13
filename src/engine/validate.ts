@@ -533,12 +533,9 @@ type ReporterFor = (
 ) => Report;
 
 const HOLDING_COST_FIELDS = [
-  "propertyTaxYr",
-  "insuranceYr",
+  ...HOLDING_COST_MONEY,
   "mgmtPctRent",
   "maintPctRent",
-  "svjMonthly",
-  "otherYr",
 ];
 
 /** The Kč parts of a property's funding record (ADR 0119). */

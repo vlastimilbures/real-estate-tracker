@@ -13,7 +13,7 @@ import {
   type PropertyFormState,
   type PropertyFormErrors,
 } from "../model/propertyForm";
-import { Checkbox, Field, TextArea, TextInput } from "./forms";
+import { Checkbox, Field, TextArea, TextInput } from "./fields";
 import { DateInput } from "./DateInput";
 import { Button, ErrorBanner } from "./primitives";
 import { Modal } from "./Modal";
