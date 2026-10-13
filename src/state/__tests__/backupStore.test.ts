@@ -72,7 +72,7 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
   it("a saved export records the time and file and clears the flag", async () => {
     await edit();
     outcome({ kind: "saved", filename: "portfolio-backup-2026-09-12.json" });
-    await usePortfolioStore.getState().exportBackup();
+    await usePortfolioStore.getState().exportBackup("JSON backup");
     expect(backup()).toEqual({
       lastAt: "2026-09-12T08:30:00.000Z",
       lastFile: "portfolio-backup-2026-09-12.json",
@@ -82,14 +82,14 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
 
   it("a downloaded export (browser build) counts too", async () => {
     outcome({ kind: "downloaded", filename: "portfolio-backup.json" });
-    await usePortfolioStore.getState().exportBackup();
+    await usePortfolioStore.getState().exportBackup("JSON backup");
     expect(backup().lastFile).toBe("portfolio-backup.json");
   });
 
   it("a cancelled export records nothing", async () => {
     await edit();
     outcome({ kind: "cancelled" });
-    const r = await usePortfolioStore.getState().exportBackup();
+    const r = await usePortfolioStore.getState().exportBackup("JSON backup");
     expect(r.kind).toBe("cancelled");
     expect(backup()).toEqual({
       lastAt: null,
@@ -101,9 +101,9 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
   it("a failed export records nothing", async () => {
     await edit();
     save.next = () => Promise.reject(new SaveFileError("disk full"));
-    await expect(usePortfolioStore.getState().exportBackup()).rejects.toThrow(
-      BackupExportError,
-    );
+    await expect(
+      usePortfolioStore.getState().exportBackup("JSON backup"),
+    ).rejects.toThrow(BackupExportError);
     expect(backup()).toEqual({
       lastAt: null,
       lastFile: null,
@@ -114,7 +114,7 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
   it("an edit made while the save dialog is open keeps the data marked as changed", async () => {
     let finish!: (o: SaveOutcome) => void;
     save.next = () => new Promise((r) => (finish = r));
-    const exporting = usePortfolioStore.getState().exportBackup();
+    const exporting = usePortfolioStore.getState().exportBackup("JSON backup");
     await vi.waitFor(() => expect(finish).toBeTypeOf("function"));
     await edit();
     finish({ kind: "saved", filename: "before-the-edit.json" });
@@ -130,7 +130,7 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
   it("a restore keeps the local last backup and marks the data as changed", async () => {
     const file = await exportToJson(db, new Date());
     outcome({ kind: "saved", filename: "local.json" });
-    await usePortfolioStore.getState().exportBackup();
+    await usePortfolioStore.getState().exportBackup("JSON backup");
     await usePortfolioStore.getState().restoreBackup(file);
     expect(backup()).toEqual({
       lastAt: "2026-09-12T08:30:00.000Z",

@@ -1145,6 +1145,8 @@ export const en = {
     errTooLarge: (limitMb: number) =>
       `The file is larger than ${limitMb} MB, so it is not a backup of this app.`,
     errNotJson: "The file is not a JSON backup.",
+    /** The save dialog's file-type name (#169, ADR 0187). */
+    fileType: "JSON backup",
     errInvalid: (detail: string) =>
       `The file is not a valid backup of this app. (${detail})`,
     errUnreadable: (detail: string) =>
@@ -1209,6 +1211,8 @@ export const en = {
   },
   xlsx: {
     exportToExcel: "Export to Excel",
+    /** The save dialog's file-type name (#169, ADR 0187). */
+    fileType: "Excel workbook",
     exported: (name: string) => `Exported ${name}`,
     exportFailed: (detail: string) => `Export failed (${detail})`,
     // Excel sheet names (DR-152, UX-080): ≤ 31 characters, none of []:*?/\.

@@ -109,7 +109,10 @@ export function CompareView({
             {/* The whole compare, always as values (ADR 0108). */}
             <ExportXlsxButton
               onExport={() =>
-                exportWorkbookXlsx(compareWorkbook(t, results, mode))
+                exportWorkbookXlsx({
+                  ...compareWorkbook(t, results, mode),
+                  filterName: t.xlsx.fileType,
+                })
               }
             />
           </span>

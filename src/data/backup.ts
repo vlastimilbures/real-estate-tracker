@@ -627,13 +627,15 @@ export class BackupExportError extends Error {
 
 /** What `exportBackup` needs from outside the data layer (ADR 0072, DR-167): the one
  *  clock read of the export, its local calendar day for the file name, and the
- *  file-save function. */
+ *  file-save function with its file-type name. */
 export interface ExportDeps {
   /** The export's moment, written as `exportedAt` (ADR 0149 §6). */
   now: Date;
   /** The local `yyyy-mm-dd` of `now` (lib/day `localIsoDay(now)`). */
   today: string;
   save: (opts: SaveFileOptions) => Promise<SaveOutcome>;
+  /** The save dialog's file-type name, in the UI language (ADR 0187). */
+  filterName: string;
 }
 
 /**
@@ -643,7 +645,7 @@ export interface ExportDeps {
  */
 export async function exportBackup(
   sql: Sql,
-  { now, today, save }: ExportDeps,
+  { now, today, save, filterName }: ExportDeps,
 ): Promise<ExportOutcome> {
   const backup = await exportToJson(sql, now);
   try {
@@ -651,7 +653,7 @@ export async function exportBackup(
       filename: `portfolio-backup-${today}.json`,
       data: JSON.stringify(backup, null, 2),
       mime: "application/json",
-      filter: { name: "JSON backup", extensions: ["json"] },
+      filter: { name: filterName, extensions: ["json"] },
     });
   } catch (e) {
     throw new BackupExportError(e);

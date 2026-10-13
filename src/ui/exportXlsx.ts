@@ -18,10 +18,13 @@ export async function exportTableXlsx<R>(opts: {
   rows: R[];
   /** Lines under the table: what the screen shows around it (ADR 0159). */
   notes?: string[];
+  /** The save dialog's file-type name, in the UI language (ADR 0187). */
+  filterName: string;
 }): Promise<SaveOutcome> {
-  const { filename, sheetName, columns, rows, notes } = opts;
+  const { filename, sheetName, columns, rows, notes, filterName } = opts;
   return exportWorkbookXlsx({
     filename,
+    filterName,
     sheets: [
       xlsxSheet({
         name: sheetName,
@@ -37,11 +40,12 @@ export async function exportTableXlsx<R>(opts: {
 export async function exportWorkbookXlsx(opts: {
   filename: string;
   sheets: XlsxSheetCells[];
+  filterName: string;
 }): Promise<SaveOutcome> {
   return saveFile({
     filename: opts.filename,
     data: await buildWorkbook(opts.sheets),
     mime: XLSX_MIME,
-    filter: { name: "Excel workbook", extensions: ["xlsx"] },
+    filter: { name: opts.filterName, extensions: ["xlsx"] },
   });
 }

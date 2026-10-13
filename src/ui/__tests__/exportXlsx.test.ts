@@ -17,6 +17,7 @@ describe("exportTableXlsx", () => {
       sheetName: "S",
       columns,
       rows: [1, 2],
+      filterName: "Sešit Excelu",
     });
     expect(outcome).toEqual({ kind: "saved", filename: "p.xlsx" });
     // The columns are built from the very rows the sheet holds (#174).
@@ -31,7 +32,7 @@ describe("exportTableXlsx", () => {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
     expect(opts.filter).toEqual({
-      name: "Excel workbook",
+      name: "Sešit Excelu",
       extensions: ["xlsx"],
     });
   });
@@ -48,7 +49,11 @@ describe("exportWorkbookXlsx", () => {
         rows: [1],
       }),
     );
-    const outcome = await exportWorkbookXlsx({ filename: "w.xlsx", sheets });
+    const outcome = await exportWorkbookXlsx({
+      filename: "w.xlsx",
+      sheets,
+      filterName: "Excel workbook",
+    });
     expect(outcome).toEqual({ kind: "saved", filename: "w.xlsx" });
     const [opts] = save.mock.calls[0] as [{ filename: string; data: unknown }];
     expect(opts.filename).toBe("w.xlsx");

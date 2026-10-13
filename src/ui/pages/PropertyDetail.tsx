@@ -233,6 +233,7 @@ export function PropertyDetail() {
       columns: (rows) => projectionColumns(t, baseDate, rows),
       rows: series,
       notes: projectionExportNotes(t, property.name, mode, baseDate),
+      filterName: t.xlsx.fileType,
     });
   // Always nominal and dated per row: the property's name is the only context (ADR 0159).
   const exportAmortization = () =>
@@ -242,6 +243,7 @@ export function PropertyDetail() {
       columns: (rows) => amortizationColumns(t, rows),
       rows: out?.schedule ?? [],
       notes: [property.name],
+      filterName: t.xlsx.fileType,
     });
 
   return (
