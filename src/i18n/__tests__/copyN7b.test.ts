@@ -305,7 +305,7 @@ describe("N7b wording (#169, #152)", () => {
       /^Zbývající zůstatek úvěru ze splátkového kalendáře/,
     );
     expect(cs.guide.developmentProsePost).toContain(
-      "na běžný splátkový kalendář",
+      "podle běžného splátkového kalendáře",
     );
     expect(ru.importPage.noEffectNote).toContain("график платежей");
     expect(ru.guide.snapshotDefs.debt.meaning).toMatch(
@@ -413,4 +413,19 @@ describe("N7b wording (#169, #152)", () => {
       expect(d.scenarios.copyName("Stress")).toBe(name);
     },
   );
+  it("cs: review follow-ups name fields and terms as shown (#152 items 3, 4)", () => {
+    expect(cs.guide.glossary.propertyTax.def).toBe(
+      "Roční daň z nemovitých věcí.",
+    );
+    expect(cs.dataCheck.earlyDateRecord.assumptions).toBe("Základní datum");
+    expect(cs.propertyDetail.helpCompletionDate).toBe(
+      "do tohoto data platit jen úroky, poté splácet i jistinu",
+    );
+    expect(cs.guide.developmentProsePost).toContain(
+      "Když přijde tranše nebo se výstavba dokončí, splátka se přepočítá podle běžného splátkového kalendáře.",
+    );
+    expect(cs.scenarios.sumResetRate("5,0 %")).toBe(
+      "sazba po skončení fixace 5,0 %",
+    );
+  });
 });

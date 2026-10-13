@@ -437,7 +437,7 @@ export const cs: Dictionary = {
       mortgage: "Datum u hypotéky",
       valuation: "Datum ocenění",
       lease: "Datum nájmu",
-      assumptions: "Výchozí datum",
+      assumptions: "Základní datum",
     },
   },
 
@@ -579,7 +579,8 @@ export const cs: Dictionary = {
       "Čerpáno po konci období jen úroků; úvěr se při tomto čerpání znovu přepočte",
     warnSameDate: "Stejné datum jako jiná tranše; částky se sečtou",
     fieldCompletionDate: "Pouze úroky do (dokončení)",
-    helpCompletionDate: "do tohoto data platit jen úroky, poté znovu umořovat",
+    helpCompletionDate:
+      "do tohoto data platit jen úroky, poté splácet i jistinu",
     loanType: "Typ úvěru",
     loanTypeStandard: "Standardní",
     loanTypeDevelopment: "Developerský (výstavba)",
@@ -868,7 +869,7 @@ export const cs: Dictionary = {
     sumAppreciation: (v) => `zhodnocení ${v}`,
     sumRentIndex: (v) => `indexace nájmu ${v}`,
     sumVacancy: (v) => `neobsazenost ${v}`,
-    sumResetRate: (v) => `sazba po fixaci ${v}`,
+    sumResetRate: (v) => `sazba po skončení fixace ${v}`,
     sumInflation: (v) => `inflace ${v}`,
     sumInflationShock: (v, years) =>
       `inflace ${v} p. b. na ${years} ${csPlural(years, ["rok", "roky", "let"])}`,
@@ -1352,7 +1353,7 @@ export const cs: Dictionary = {
     developmentProseMid: ". Během výstavby je úvěr ",
     developmentInterestOnly: "pouze úrokový",
     developmentProsePost:
-      " (bez jistiny). Dluh ukazuje načerpanou částku a hodnota dokončenou hodnotu sníženou o dosud nečerpané tranše, takže s každým čerpáním rostou obě a kapitál se nemění. Graf změny kapitálu ukazuje každé čerpání jako hodnotu výstavby a nový dluh ve stejné výši. Úrok se platí jen z načerpané částky; LTV počítá celý úvěr vůči dokončené hodnotě, stejně jako banka. Když přijde tranše nebo se výstavba dokončí, úvěr se znovu umoří na běžný splátkový kalendář. Ve formuláři hypotéky zvolte Developerský a vyplňte harmonogram čerpání: částku čerpanou v den začátku a pak řádek pro každou další tranši.",
+      " (bez jistiny). Dluh ukazuje načerpanou částku a hodnota dokončenou hodnotu sníženou o dosud nečerpané tranše, takže s každým čerpáním rostou obě a kapitál se nemění. Graf změny kapitálu ukazuje každé čerpání jako hodnotu výstavby a nový dluh ve stejné výši. Úrok se platí jen z načerpané částky; LTV počítá celý úvěr vůči dokončené hodnotě, stejně jako banka. Když přijde tranše nebo se výstavba dokončí, splátka se přepočítá podle běžného splátkového kalendáře. Ve formuláři hypotéky zvolte Developerský a vyplňte harmonogram čerpání: částku čerpanou v den začátku a pak řádek pro každou další tranši.",
     limitsTitle: "Omezení a bezpečnost dat",
     limitsProse:
       "Tato čísla jsou plánovací odhady, ne nabídka banky ani zaručený výsledek. Dva dokumenty ve zdrojovém repozitáři vysvětlují, co model zjednodušuje nebo vynechává, a jak data zálohovat a obnovit po neúspěšné aktualizaci.",
@@ -1598,7 +1599,7 @@ export const cs: Dictionary = {
       },
       propertyTax: {
         term: "Daň z nemovitých věcí",
-        def: "Roční daň z nemovitosti.",
+        def: "Roční daň z nemovitých věcí.",
       },
       cagr: { term: "CAGR", def: "Složená roční (vyhlazená) míra růstu." },
       irr: {
