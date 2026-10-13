@@ -64,8 +64,6 @@ export const MAX_COMPARE = 3;
 
 const COLLAPSE_KEY = "ui.sidebarCollapsed";
 const LANGUAGE_KEY = "ui.language";
-/** Key of the removed display-currency picker (UX-017); cleared on load. */
-const LEGACY_CURRENCY_KEY = "ui.currency";
 
 function readLanguage(): Language {
   try {
@@ -75,14 +73,6 @@ function readLanguage(): Language {
     /* localStorage unavailable — fall through to default */
   }
   return "en";
-}
-
-function clearLegacyCurrency() {
-  try {
-    localStorage.removeItem(LEGACY_CURRENCY_KEY);
-  } catch {
-    /* localStorage unavailable — nothing to clear */
-  }
 }
 
 function readCollapsed(): boolean {
@@ -382,9 +372,6 @@ export const useUiStore = create<UiState>((set, get) => ({
   },
   cancelLeave: () => set({ pendingLeave: null, pendingSource: null }),
 }));
-
-// Amounts are always Kč (UX-017); drop a currency picked in an older version.
-clearLegacyCurrency();
 
 /** Load the saved language's dictionary before the first render (src/main.tsx, DR-009).
  *  If it fails, show English for this session; the saved choice is kept. */

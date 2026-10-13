@@ -112,9 +112,7 @@ describe("percent chart tooltips keep a null LTV", () => {
         title="LTV"
         kind="pct"
         rows={rows}
-        series={[
-          { key: "ltv", name: "LTV", color: "red", defaultActiveDot: true },
-        ]}
+        series={[{ key: "ltv", name: "LTV", color: "red" }]}
       />,
     );
     const p = seen.at(-1)!;

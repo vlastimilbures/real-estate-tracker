@@ -228,14 +228,7 @@ export function TrajectoryCharts({
     { key: "noi", name: d.seriesNoi, color: SERIES.petrol },
     { key: "debtService", name: d.seriesDebtService, color: SERIES.clay },
   ];
-  const ltvSeries = [
-    {
-      key: "ltv",
-      name: d.seriesLtv,
-      color: SERIES.slate,
-      defaultActiveDot: true,
-    },
-  ];
+  const ltvSeries = [{ key: "ltv", name: d.seriesLtv, color: SERIES.slate }];
   return (
     <>
       <div className="section-head">

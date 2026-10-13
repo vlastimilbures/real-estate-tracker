@@ -172,6 +172,9 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- The Dashboard LTV chart marks the hovered year with the same small dot as every other
+  line chart (ADR 0188). The app no longer deletes the `ui.currency` browser-storage key
+  left by the currency picker removed in 1.2; it is unused either way.
 - Czech and Russian wording (ADR 0187, #169, #152): one name per concept. Russian says
   "основной долг" for principal, "Выбрано" for drawn, "страховочная копия" for the
   pre-restore copy, "Номинальные / Реальные", "конец фиксации" and "График платежей";

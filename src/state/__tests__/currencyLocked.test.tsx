@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 //
 // UX-017: the Currency tab is gone and amounts always show in Kč. A currency picked
-// before (stored in localStorage) is ignored and cleared. The Settings-tabs check lives
-// in ui/pages/__tests__/SettingsTabs.test.tsx (DR-170).
+// before (stored in localStorage) is ignored; since ADR 0188 the key is left alone. The
+// Settings-tabs check lives in ui/pages/__tests__/SettingsTabs.test.tsx (DR-170).
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 // A fresh Map-backed storage per test, so a stored value never reaches the next one.
@@ -28,11 +28,11 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("currency is locked to CZK (UX-017)", () => {
-  it("ignores and clears a stored non-CZK choice", async () => {
+  it("ignores a stored non-CZK choice and leaves it alone (ADR 0188)", async () => {
     localStorage.setItem("ui.currency", "EUR");
     await import("../uiStore");
     const { fmtCzk } = await import("../../lib/format");
     expect(fmtCzk(1000)).toMatch(/Kč$/);
-    expect(localStorage.getItem("ui.currency")).toBeNull();
+    expect(localStorage.getItem("ui.currency")).toBe("EUR");
   });
 });

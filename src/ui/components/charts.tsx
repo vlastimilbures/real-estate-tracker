@@ -317,9 +317,6 @@ interface SeriesDef {
   color: string;
   /** SVG strokeDasharray, e.g. "6 3"; solid when absent (ADR 0114). */
   dash?: string | undefined;
-  /** shortcut: the Dashboard LTV line keeps Recharts' default hover dot, as before the
-   *  shared chart body; the N9b ADR (#145) gives it the r=3 dot of the other lines. */
-  defaultActiveDot?: boolean | undefined;
 }
 
 const MARGIN = { top: 6, right: 8, bottom: 0, left: 4 };
@@ -394,7 +391,7 @@ function ChartBody({
             {...(s.dash && { strokeDasharray: s.dash })}
             strokeWidth={2}
             dot={false}
-            {...(!s.defaultActiveDot && { activeDot: { r: 3 } })}
+            activeDot={{ r: 3 }}
           />
         ))}
       </LineChart>
