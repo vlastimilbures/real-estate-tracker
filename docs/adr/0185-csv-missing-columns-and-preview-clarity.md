@@ -37,11 +37,15 @@ The CSV importer maps each cell by its header name. Four gaps came out of the 20
    header is not written on an update; a new record gets no value (NULL). An empty cell in a
    column that is present still clears, except where a blank already keeps (DR-129, ADR 0119
    §8). A missing required column still makes that cell _Required_ on every row.
+   `monthly_instalment` is conditional, not optional: a missing column reads like an empty
+   cell, so the instalment is derived from `loan_term_years` when the file has one, and is
+   _Required_ otherwise (the engine uses the term over the entered instalment, SPEC §4.2).
 3. **A natural key is registered from its key cells alone.** When the key cells of a row are
    valid, its key counts for the duplicate check even if another cell of the row has an
    error, so all errors are reported in one round.
 4. **The preview shows the difference.** When both sides of a change format to the same
-   text, both are shown at full precision: money with two decimals, rates with four.
+   text, both are shown more precisely: money with two decimals, rates with four, and as
+   stored when even that reads the same.
 5. **A file with no data rows says so.** Its badge is a neutral `importPage.noDataRows`, and
    "already up to date" is shown only when the preview has at least one record.
 6. **A problem found at commit is shown as a changed plan.** The import refuses with the new

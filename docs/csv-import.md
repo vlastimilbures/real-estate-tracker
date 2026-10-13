@@ -160,7 +160,9 @@ matched to an existing record by its natural key:
   `initial_works` column keeps the stored amount. A CSV can set or change an amount, never
   erase it: clear an amount in the property form.
 - **A missing column keeps.** An optional column that is not in the header is left as
-  stored, so a file trimmed to a few columns changes only those (ADR 0185).
+  stored, so a file trimmed to a few columns changes only those (ADR 0185). The
+  `monthly_instalment` column is the exception: without it, the instalment is calculated
+  from `loan_term_years`, and a file with neither is an error.
 - **Any other empty cell clears.** An empty cell in an optional column that is in the file
   clears the stored value (for example an empty `address`), except `contract_maturity_date`
   and the three funding columns as above.
