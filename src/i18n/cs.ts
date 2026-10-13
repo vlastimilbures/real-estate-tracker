@@ -97,7 +97,7 @@ export const cs: Dictionary = {
       "Úvěr s čerpáním nebo obdobím splácení jen úroků potřebuje dobu splatnosti",
     NON_POSITIVE_DRAW: "Každé čerpání musí být vyšší než nula",
     DRAW_BEFORE_START:
-      "Čerpání musí mít datum po začátku úvěru; částka čerpaná v den začátku patří do pole Čerpáno při startu (počáteční jistina)",
+      "Čerpání musí mít datum po začátku úvěru; částka čerpaná v den začátku patří do pole Čerpáno na začátku (počáteční jistina)",
     DRAW_AFTER_SCHEDULE_END:
       "Čerpání musí mít datum nejpozději v den předposlední splátky úvěru (začátek plus doba splatnosti bez jednoho měsíce)",
     COMPLETION_BEFORE_START: "Konec splácení jen úroků je před začátkem úvěru",
@@ -105,7 +105,7 @@ export const cs: Dictionary = {
       "Tato nemovitost už má hypotéku začínající ve stejný den",
     END_BEFORE_START: "Datum konce je před datem začátku",
     DUPLICATE_HOLDING_COST:
-      "Nemovitost má více než jeden záznam nákladů držení",
+      "Nemovitost má více než jeden záznam nákladů na držbu",
     ORPHAN_ROW: "Záznam patří k nemovitosti, která neexistuje",
     HORIZON_NOT_POSITIVE: "Horizont projekce musí být alespoň jeden rok",
     INVALID_TERM: "Doba v letech není platná",
@@ -300,7 +300,8 @@ export const cs: Dictionary = {
     monthlyCashFlowOn: (d) => `Měsíční cash flow k ${d}`,
     monthlyEquivalentYear: (year, period) =>
       `Měsíční ekvivalent — rok projekce ${year} (${period})`,
-    monthlyHint: (d) => `roční běžný stav ÷ 12, nájemní smlouvy platné k ${d}`,
+    monthlyHint: (d) =>
+      `roční výše při současných nájmech ÷ 12, nájemní smlouvy platné k ${d}`,
     monthlyHintProjection: "roční projekce ÷ 12",
     inflowLabel: "Příjem · efektivní nájem",
     outflowLabel: "Výdaj · náklady + dluhová služba",
@@ -532,7 +533,7 @@ export const cs: Dictionary = {
     colTerm: "Doba",
     colRate: "Sazba",
     colInstalment: "Splátka",
-    colDevelopment: "Development",
+    colDevelopment: "Výstavba",
     yrs: (n) => `${n} ${csPlural(n, ["rok", "roky", "let"])}`,
     auto: "auto",
     tranches: (n) => `${n} ${csPlural(n, ["tranše", "tranše", "tranší"])}`,
@@ -546,7 +547,7 @@ export const cs: Dictionary = {
     instalmentHint: (years, amount) =>
       `Anuitní splátka na ${years} ≈ ${amount}`,
     instalmentHintDev: (base) =>
-      `${base} — pro částku čerpanou při startu; přepočítá se při každém čerpání a při dokončení. Doba splatnosti je povinná.`,
+      `${base} — pro částku čerpanou na začátku; přepočítá se při každém čerpání a při dokončení. Doba splatnosti je povinná.`,
     devTermNeeded:
       "Developerský úvěr — zadejte dobu splatnosti v letech; u čerpání a období jen úroků je povinná.",
     calc: "Spočítat",
@@ -567,13 +568,13 @@ export const cs: Dictionary = {
     fieldMonthlyInstalment: "Měsíční splátka",
     fieldDraws: "Harmonogram čerpání",
     helpDraws:
-      "Jak banka úvěr vyplácí. První řádek je částka čerpaná v den startu; každou další tranši přidejte jako řádek. Celý úvěr se od začátku počítá do dluhu; úrok se platí jen z načerpané částky.",
-    drawnAtStart: "Čerpáno při startu",
-    drawnAtStartNoDate: "v den startu",
+      "Jak banka úvěr vyplácí. První řádek je částka čerpaná v den začátku; každou další tranši přidejte jako řádek. Celý úvěr se od začátku počítá do dluhu; úrok se platí jen z načerpané částky.",
+    drawnAtStart: "Čerpáno na začátku",
+    drawnAtStartNoDate: "v den začátku",
     trancheRow: (n) => `Tranše ${n}`,
     addTranche: "Přidat tranši",
     drawdownTotal: (total, n) =>
-      `Celkový úvěr ${total} · ${n} ${csPlural(n, ["tranše", "tranše", "tranší"])} po startu`,
+      `Celkový úvěr ${total} · ${n} ${csPlural(n, ["tranše", "tranše", "tranší"])} po začátku`,
     warnAfterCompletion:
       "Čerpáno po konci období jen úroků; úvěr se při tomto čerpání znovu přepočte",
     warnSameDate: "Stejné datum jako jiná tranše; částky se sečtou",
@@ -590,7 +591,7 @@ export const cs: Dictionary = {
     successorLearnMore: "Více informací",
     holdingCostsTitle: "Náklady na držbu",
     holdingCostsHint: "nechte prázdné pro globální výchozí hodnotu",
-    fieldPropertyTax: "Daň z nemovitosti /rok",
+    fieldPropertyTax: "Daň z nemovitých věcí /rok",
     fieldInsurance: "Pojištění /rok",
     fieldSvjMo: "SVJ /měs",
     fieldOther: "Ostatní /rok",
@@ -761,7 +762,7 @@ export const cs: Dictionary = {
     sellingCost: "Náklady na prodej na konci horizontu",
     sellingCostHelp:
       "Provize makléře a právní poplatky při prodeji na konci horizontu, jako podíl z hodnoty. Počítají se jen do pákového IRR; čisté jmění zůstává hodnota minus dluh.",
-    propertyTax: "Daň z nemovitosti /rok",
+    propertyTax: "Daň z nemovitých věcí /rok",
     insurance: "Pojištění /rok",
     svj: "SVJ / fond oprav /měs",
     other: "Ostatní /rok",
@@ -804,7 +805,7 @@ export const cs: Dictionary = {
     hidePresets: "Skrýt předvolby",
     presetsCollapsedSummary:
       "Šoky sazeb, inflace, propad cen a kombinované šoky jsou skryté.",
-    atStart: "Start",
+    atStart: "Začátek",
     atStartTitle: (date) => `Na začátku projekce (${date})`,
     rateShockAtRefix: "Šok sazby @ refix",
     inflationShock: "Inflační šok",
@@ -1069,7 +1070,7 @@ export const cs: Dictionary = {
       mortgage_blocks: "Hypotéky",
       valuations: "Ocenění",
       leases: "Nájmy",
-      holding_costs: "Náklady držení",
+      holding_costs: "Náklady na držbu",
       assumptions: "Předpoklady",
       scenarios: "Scénáře",
     },
@@ -1246,7 +1247,7 @@ export const cs: Dictionary = {
 
     appTitle: "Co aplikace umí",
     appBody:
-      "Sledujte své nájemní byty na jednom místě: aktuální hodnotu, dluh a vlastní kapitál, nájem, provozní náklady a cash flow. Aplikace promítá nominální i reálné výsledky do zvoleného horizontu (výchozí je 30 let), ukazuje ukazatele jako LTV, DSCR, výnosy a IRR a umožňuje zátěžové testy portfolia pomocí scénářů co-kdyby.",
+      "Sledujte své nájemní byty na jednom místě: aktuální hodnotu, dluh a vlastní kapitál, nájem, náklady na držbu a cash flow. Aplikace promítá nominální i reálné výsledky do zvoleného horizontu (výchozí je 30 let), ukazuje ukazatele jako LTV, DSCR, výnosy a IRR a umožňuje zátěžové testy portfolia pomocí scénářů co-kdyby.",
     formatsNote:
       "Jazyk mění jen texty rozhraní. Částky jsou vždy v českých korunách (Kč) s českým formátem čísel a dat.",
 
@@ -1350,7 +1351,7 @@ export const cs: Dictionary = {
     developmentProseMid: ". Během výstavby je úvěr ",
     developmentInterestOnly: "pouze úrokový",
     developmentProsePost:
-      " (bez jistiny). Dluh ukazuje načerpanou částku a hodnota dokončenou hodnotu sníženou o dosud nečerpané tranše, takže s každým čerpáním rostou obě a kapitál se nemění. Graf změny kapitálu ukazuje každé čerpání jako hodnotu výstavby a nový dluh ve stejné výši. Úrok se platí jen z načerpané částky; LTV počítá celý úvěr vůči dokončené hodnotě, stejně jako banka. Když přijde tranše nebo se výstavba dokončí, úvěr se znovu umoří na běžný splátkový plán. Ve formuláři hypotéky zvolte Developerský a vyplňte harmonogram čerpání: částku čerpanou v den startu a pak řádek pro každou další tranši.",
+      " (bez jistiny). Dluh ukazuje načerpanou částku a hodnota dokončenou hodnotu sníženou o dosud nečerpané tranše, takže s každým čerpáním rostou obě a kapitál se nemění. Graf změny kapitálu ukazuje každé čerpání jako hodnotu výstavby a nový dluh ve stejné výši. Úrok se platí jen z načerpané částky; LTV počítá celý úvěr vůči dokončené hodnotě, stejně jako banka. Když přijde tranše nebo se výstavba dokončí, úvěr se znovu umoří na běžný splátkový plán. Ve formuláři hypotéky zvolte Developerský a vyplňte harmonogram čerpání: částku čerpanou v den začátku a pak řádek pro každou další tranši.",
     limitsTitle: "Omezení a bezpečnost dat",
     limitsProse:
       "Tato čísla jsou plánovací odhady, ne nabídka banky ani zaručený výsledek. Dva dokumenty ve zdrojovém repozitáři vysvětlují, co model zjednodušuje nebo vynechává, a jak data zálohovat a obnovit po neúspěšné aktualizaci.",
@@ -1407,7 +1408,7 @@ export const cs: Dictionary = {
         name: "NOI",
         formula: "efektivní příjem − náklady na držbu",
         meaning:
-          "Provozní zisk před hypotékou — hotovost, kterou sám aktivum vynáší.",
+          "Provozní zisk před hypotékou — hotovost, kterou vynáší samo aktivum.",
         eg: "228 k − 82,2 k = 145,8 k.",
       },
       debtService: {

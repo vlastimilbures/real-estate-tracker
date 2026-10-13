@@ -129,4 +129,37 @@ describe("N7b wording (#169, #152)", () => {
     expect(ru.projections.entity).toBe("Портфель или объект");
     expect(cs.projections.entity).toBe("Portfolio nebo nemovitost");
   });
+  it('cs: no English or "start" left (#169 G1-2-08)', () => {
+    expect(cs.propertyDetail.colDevelopment).toBe("Výstavba");
+    expect(cs.scenarios.atStart).toBe("Začátek");
+    expect(cs.propertyDetail.drawnAtStart).toBe("Čerpáno na začátku");
+    expect(cs.propertyDetail.drawnAtStartNoDate).toBe("v den začátku");
+    expect(cs.propertyDetail.drawdownTotal("X", 2)).toMatch(/ po začátku$/);
+    expect(cs.inputRules.DRAW_BEFORE_START).toContain(
+      "patří do pole Čerpáno na začátku",
+    );
+    expect(cs.propertyDetail.instalmentHintDev("X")).toContain(
+      "pro částku čerpanou na začátku;",
+    );
+    expect(cs.propertyDetail.helpDraws).toContain("v den začátku");
+    expect(cs.guide.developmentProsePost).toContain("v den začátku");
+  });
+
+  it("cs: hints, holding costs and the tax name (#169 G1-2-08)", () => {
+    expect(cs.dashboard.monthlyHint("01.10.2026")).toBe(
+      "roční výše při současných nájmech ÷ 12, nájemní smlouvy platné k 01.10.2026",
+    );
+    expect(cs.guide.snapshotDefs.noi.meaning).toMatch(
+      /hotovost, kterou vynáší samo aktivum\.$/,
+    );
+    expect(cs.backup.tables.holding_costs).toBe("Náklady na držbu");
+    expect(cs.inputRules.DUPLICATE_HOLDING_COST).toMatch(
+      /záznam nákladů na držbu$/,
+    );
+    expect(cs.about.appBody).toContain("nájem, náklady na držbu a cash flow");
+    expect(cs.propertyDetail.fieldPropertyTax).toBe(
+      "Daň z nemovitých věcí /rok",
+    );
+    expect(cs.assumptions.propertyTax).toBe("Daň z nemovitých věcí /rok");
+  });
 });
