@@ -1,6 +1,7 @@
 // Generates the ADR index table in docs/adr/README.md from the ADR headers and checks
 // the headers (ADR 0152): heading, Status, Date, links to existing ADRs, and both sides of
-// every Amends / Amended-by and Supersedes / Superseded-by link.
+// every Amends / Amended-by, Supersedes / Superseded-by and Supersedes in part /
+// Superseded in part by link.
 // `pnpm adr:index` writes the index; `pnpm adr:check` (CI) fails on errors or drift.
 import {
   readdirSync,
@@ -27,6 +28,8 @@ const KEYS = new Set([
   "Source",
   "Source IDs",
   "Supersedes",
+  "Supersedes in part",
+  "Superseded in part by",
   "Amends",
   "Amended by",
   "Amended",
@@ -100,6 +103,8 @@ export function parseAdr(file, text) {
     amends: refs("Amends"),
     amendedBy: refs("Amended by"),
     supersedes: refs("Supersedes"),
+    supersedesInPart: refs("Supersedes in part"),
+    supersededInPartBy: refs("Superseded in part by"),
     ids,
     errors,
   };
@@ -151,6 +156,20 @@ export function checkAdrs(adrs) {
       (b) => b.supersedes.includes(a.number),
       `has no Supersedes ${a.number}`,
     );
+    link(
+      a,
+      a.supersedesInPart,
+      "supersedes in part",
+      (b) => b.supersededInPartBy.includes(a.number),
+      `has no Superseded in part by ${a.number}`,
+    );
+    link(
+      a,
+      a.supersededInPartBy,
+      "says Superseded in part by",
+      (b) => b.supersedesInPart.includes(a.number),
+      `has no Supersedes in part ${a.number}`,
+    );
   }
   return [...errors, ...adrs.flatMap((a) => a.errors)];
 }
@@ -161,10 +180,15 @@ export function renderIndex(adrs) {
   const rows = [...adrs]
     .sort((a, b) => a.number.localeCompare(b.number))
     .map((a) => {
-      const status =
-        a.amendedBy.length > 0
-          ? `${a.status} · amended by ${[...a.amendedBy].sort().join(", ")}`
-          : a.status;
+      const list = (xs) => [...xs].sort().join(", ");
+      const status = [
+        a.status,
+        a.supersededInPartBy.length > 0 &&
+          `partly superseded by ${list(a.supersededInPartBy)}`,
+        a.amendedBy.length > 0 && `amended by ${list(a.amendedBy)}`,
+      ]
+        .filter(Boolean)
+        .join(" · ");
       return `| [${a.number}](${a.file}) | ${cell(a.title)} | ${status} | ${a.ids.join(", ")} |`;
     });
   return [

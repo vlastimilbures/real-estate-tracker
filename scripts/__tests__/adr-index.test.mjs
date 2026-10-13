@@ -149,6 +149,29 @@ describe("checkAdrs", () => {
     ).toEqual([]);
   });
 
+  it("passes a paired partial supersession", () => {
+    expect(
+      checkAdrs([
+        ok("0001", ["- Superseded in part by: ADR 0002 (items 1 and 2)"]),
+        ok("0002", ["- Supersedes in part: [0001](0001-x.md) (items 1 and 2)"]),
+      ]),
+    ).toEqual([]);
+  });
+
+  it("names each one-sided partial supersession (#271)", () => {
+    expect(
+      checkAdrs([
+        ok("0001", ["- Superseded in part by: ADR 0003"]),
+        ok("0002", ["- Supersedes in part: ADR 0001, ADR 0009"]),
+        ok("0003"),
+      ]),
+    ).toEqual([
+      "0001 says Superseded in part by 0003, but 0003 has no Supersedes in part 0001",
+      "0002 supersedes in part 0001, but 0001 has no Superseded in part by 0002",
+      "0002 supersedes in part 0009, which does not exist",
+    ]);
+  });
+
   it("names each one-sided link", () => {
     expect(
       checkAdrs([
@@ -200,6 +223,13 @@ describe("renderIndex and replaceIndex", () => {
       "- Date: 2026-09-30",
       "- Source IDs: D-03",
     ]),
+    parse("0068", "branch", "No branch protection", [
+      "- Status: Accepted",
+      "- Superseded in part by: ADR 0151 (items (1) and (2))",
+      "- Amended by: ADR 0081",
+      "- Date: 2026-10-02",
+      "- Source IDs: D-68",
+    ]),
   ];
 
   it("sorts by number, shows status and amendments, escapes pipes", () => {
@@ -208,6 +238,7 @@ describe("renderIndex and replaceIndex", () => {
       "| --- | --- | --- | --- |",
       "| [0003](0003-czech.md) | Czech practice | Accepted · amended by 0081, 0150 | D-03 |",
       "| [0011](0011-private.md) | Private repo \\| real seed | Superseded by 0081 | D-11 |",
+      "| [0068](0068-branch.md) | No branch protection | Accepted · partly superseded by 0151 · amended by 0081 | D-68 |",
     ]);
   });
 
