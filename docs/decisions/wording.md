@@ -51,3 +51,24 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 - Rejected: leaving the unit to the range in brackets only, because the value then reads
   as a bare number ("doba fixace 60 je mimo…").
 - Approved by: owner, 2026-10-11 (#260, all items)
+
+### 2026-10-13 · #251, #242, #156, #173, #330 / Track 14 N7a
+
+- Keys: `propertyDetail.interestSaved`, `forms.positiveAmount`, `dashboard.financingUpcoming`,
+  `dashboard.financingNoEvents`, `guide.mortgagesProse3` (en, cs, ru);
+  `propertyDetail.helpPrepayments`, `propertyDetail.loanSummaryHint`,
+  `propertyDetail.interestSavedNa`, `dashboard.financingInterestSavedNa` (en)
+- Change: the property page's interest-saved label names its window (the loan's remaining
+  life), as the Dashboard's does (#251). A prepayment or maturity-change row's amount error
+  says to put a space between thousands, as the money hint does (#242). The Dashboard's
+  upcoming list says it holds rate, loan and lease dates, so its empty text no longer says
+  nothing is modelled while a draw or a purchase is (#156, the scope of ADR 0103 §7). In
+  English, a prepayment fee is paid from your own funds, not "in cash"; "recast" becomes
+  "maturity change" as in every other string (#173 items 1, 3). The Guide says a prepayment
+  is applied right after the next payment due on or after its date, not on its date (#173
+  item 2, all three languages), and that the property page also warns when a prepayment
+  cannot shorten the term (#330 item 1, ADR 0179).
+- Rejected: keeping the "Next 12 months" heading and listing the four kinds in the empty text
+  only, because the heading still reads as "everything modelled" when rows are shown; the
+  help text and workaround of #164 (B + D), obsolete since the engine change of ADR 0179.
+- Approved by: owner, 2026-10-13 (N7a plan, exact text)
