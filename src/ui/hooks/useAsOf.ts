@@ -16,12 +16,13 @@ import {
  *  loaded. `followPick: false` ignores the picked date (Today). */
 export function useAsOf({ followPick = true } = {}):
   (ResolvedAsOf & { bounds: AsOfBounds }) | null {
-  const picked = useUiStore((s) => s.asOf);
+  // Without followPick the page does not re-render on a pick.
+  const picked = useUiStore((s) => (followPick ? s.asOf : null));
   const assumptions = usePortfolioStore((s) => s.assumptions);
   if (!assumptions) return null;
   const bounds = asOfBounds(assumptions.baseDate, assumptions.horizonYears);
   return {
-    ...resolveAsOf(followPick ? picked : null, todayUtc(), bounds),
+    ...resolveAsOf(picked, todayUtc(), bounds),
     bounds,
   };
 }
