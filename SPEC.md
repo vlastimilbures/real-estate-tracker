@@ -178,7 +178,7 @@ still loads; the Data check lists it.
   has no fixation end: it pays its entered rate on every payment due on or before baseDate
   and the reset rate after it (`rateFixedUntil`; a floating block that starts after
   baseDate pays the reset rate from its first payment). It never counts as an ended
-  fixation, so it gets no refix warning (ADR 0162).
+  fixation, so it gets no fixation-ended warning (ADR 0162).
 - `termMonths` — for plain loans without `loanTermYears`:
   `ceil(NPER(rate/12, -instalment, initialPrincipal))`. The **entered instalment is
   authoritative**; the term follows from it (ADR 0008). With `loanTermYears` set,
@@ -317,7 +317,7 @@ table and its export show `dueDate`.
   shortened, or gone (ADR 0079).
 - **Instalment**: the entered instalment until the reset; at the reset re-amortize
   `instalment = PMT(reset/12, remainingPayments, -B)` and hold it thereafter
-  (constant-maturity refix). The instalment is **not rounded** (ADR 0020).
+  (constant maturity). The instalment is **not rounded** (ADR 0020).
 - `interest = B * rateMonthly` (0 if `B ≤ 0`).
 - `principal = min(B, instalment − interest)` (floored at 0).
 - `newBalance = max(0, B − principal)`.
@@ -326,7 +326,7 @@ table and its export show `dueDate`.
   residual as a final balloon (D-40, in ADR 0021).
 - **Expired fixation without a successor** (fixation ended before baseDate and no later
   block): the opening balance is replayed on the loan's own due dates with the reset applied
-  from the true fixation end, and the UI warns the owner to enter the refix terms as a new
+  from the true fixation end, and the UI warns the owner to enter the new fixation's terms as a new
   block (ADR 0030). The warning also shows, "from … until …", when the next block starts
   on or after the due date of the first payment following the fixation end, so at least
   one payment runs at the reset rate (ADR 0129).
@@ -771,7 +771,7 @@ price crash**, each with a legend and one line of help (ADR 0102).
 - **Stress presets** (one-click; each creates a named scenario,
   `src/ui/pages/ScenariosPanels.tsx`). Temporary shocks last `DEFAULT_SHOCK_YEARS` = 3
   years (`src/ui/model/scenarioForm.ts`), then revert to trend:
-  - **Rate shock @ refix**: +2 / +4 / +6 pp for 3 years (`rateShock`).
+  - **Rate shock at fixation end**: +2 / +4 / +6 pp for 3 years (`rateShock`).
   - **Inflation shock**: +3 / +6 / +9 pp for 3 years (`inflationShock`).
   - **Price crash**: −10 % / −20 % / −35 % of property value at Today / +5 years / +10 years
     (projection year 0, 5 or 10; `valueShock`, permanent). The timing is a "When" toggle
@@ -870,7 +870,7 @@ offline badge, and controls for language and theme.
    completion date and the optional contract maturity date), holding costs (edit forms),
    30-year projection table + mini charts, amortization schedule (dated by each payment's
    due date, ADR 0164), and a health check
-   (`amortizationHealth`, including the maturity and refix warnings). The **AsOfPicker** is
+   (`amortizationHealth`, including the maturity and fixation-ended warnings). The **AsOfPicker** is
    available here too. Two **Excel export** buttons save the projection and amortization
    schedule as `.xlsx` files. A **Deactivate / Activate** action takes the property out of
    (or back into) all projections and KPIs (§4.5), after confirmation when deactivating.

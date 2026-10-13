@@ -184,7 +184,7 @@ them (ADR 0160):
   17.01.2045"_. To keep the change, edit or remove that event in the mortgage form first, then
   import again. Otherwise keep the old value in the CSV.
 - **A new block replaces the previous block's later events.** A row with a new `start_date`
-  adds a block (a refixation or a refinance) that takes over from the previous block on that
+  adds a block (a new fixation or a refinance) that takes over from the previous block on that
   date. The previous block's prepayments and maturity changes dated after it stop applying,
   and so does a maturity change in the month of the handover; a prepayment dated on or before
   the new start is still paid. The preview lists the events that stop under the new row, as

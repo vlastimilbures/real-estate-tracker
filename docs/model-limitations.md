@@ -36,7 +36,8 @@ work still to do is in the [roadmap](roadmap.md).
   treated as already invested, because the acquisition record has no payment dates. So the
   return KPIs measure the flat as if bought complete at the projection start (ADR 0166).
 - **What enters the IRR.** The yearly net cash flows, the down payment for a property bought
-  after the projection start, and the net cash from a refinance. The down payment is the own
+  after the projection start, the net cash from a refinance, and each prepayment with its fee,
+  in its projection year. The down payment is the own
   cash recorded for the purchase (the property form's Acquisition section); without it, the
   purchase price minus the loan that funded it, plus any recorded costs and works
   (ADR 0119). The loan that funded the purchase is the property's first loan, if it starts
@@ -90,7 +91,8 @@ work still to do is in the [roadmap](roadmap.md).
   previous one on its start date (a refinance or a new fixation). The app has no concurrent
   loans on one property. See
   [SPEC §4.2](../SPEC.md#42-derived-per-mortgage-block-values).
-- **Refix at fixation end.** When a fixation ends, the model switches to the block's reset rate
+- **Rate reset at fixation end.** When a fixation ends, the model switches to the reset rate
+  from Assumptions (one rate for all loans)
   and recalculates the instalment over the remaining term. Once you know the real new terms,
   enter them as a new block. If a fixation has already ended and there is no new block, or
   the next block leaves at least one payment at the reset rate, the app warns you
@@ -124,7 +126,7 @@ work still to do is in the [roadmap](roadmap.md).
   the next payment) and sizes the new term at the next payment's rate (ADR 0179). At a fixation end that rate is the
   new one: if today's instalment cannot repay the rest by the maturity at the new rate,
   the maturity stays, the instalment is recalculated to it as with "lower the instalment",
-  and the property page warns. A bank may offer other terms at a refix; enter them as a new
+  and the property page warns. A bank may offer other terms at a fixation end; enter them as a new
   loan block. When a maturity change takes
   effect only because of the prepayment (a lower instalment that the higher balance without
   it could not carry), the comparison measures that change too and can come out negative:
@@ -199,5 +201,5 @@ work still to do is in the [roadmap](roadmap.md).
 - **Czech koruna only.** All amounts are in Kč with Czech number and date formatting
   ([ADR 0058](adr/0058-remove-currency-tab.md)).
 - **Czech mortgage practice.** Annuity mortgages with fixation periods and a rate reset at
-  refix. Where a formula is in doubt, Czech banking practice decides
+  fixation end. Where a formula is in doubt, Czech banking practice decides
   ([ADR 0003](adr/0003-czech-practice-decides.md)).
