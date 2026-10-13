@@ -59,6 +59,7 @@ export {
   cpiIndex,
   portfolioProjection,
   propertyProjection,
+  propertyProjections,
   renewedLease,
 } from "./projections";
 export {

@@ -407,6 +407,34 @@ export function propertyProjection(
   return projectProperty(property, portfolio, assumptions, schedule);
 }
 
+/** Every property's `propertyProjection` by id, inactive ones included, validating the
+ *  portfolio once (DR-128). Pass `schedules` to reuse them (DR-042). */
+export function propertyProjections(
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+  schedules?: Map<string, PropertySchedule>,
+): Map<string, ProjectionYear[]> {
+  assertInputs(portfolio, assumptions); // D-37
+  const built =
+    schedules ??
+    propertySchedules(
+      portfolio.mortgages,
+      portfolio.properties.map((p) => p.id),
+      assumptions,
+    );
+  return new Map(
+    portfolio.properties.map((p) => [
+      p.id,
+      projectProperty(
+        p,
+        portfolio,
+        assumptions,
+        built.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
+      ),
+    ]),
+  );
+}
+
 /** `propertyProjection` on inputs the caller has already validated (DR-128). */
 function projectProperty(
   property: Property,
