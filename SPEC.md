@@ -143,11 +143,12 @@ ADR 0036). The codes: `INVALID_DATE`, `NON_FINITE_NUMBER`, `NEGATIVE_AMOUNT`,
 `SHOCK_OUT_OF_RANGE`, `GROWTH_OUT_OF_RANGE`, `SHOCKED_RATE_OUT_OF_RANGE`,
 `SHOCKED_INFLATION_OUT_OF_RANGE`, `ASOF_BEFORE_BASEDATE`, `NON_POSITIVE_PREPAYMENT`,
 `EVENT_BEFORE_START`, `EVENT_AFTER_SCHEDULE_END`, `INVALID_RECAST`, `INVALID_RECAST_MATURITY`,
-`RECAST_INSTALMENT_BEFORE_COMPLETION`, `LEASE_OVERLAP`. Loan events (ADR 0109): a prepayment
+`RECAST_INSTALMENT_BEFORE_COMPLETION`. Loan events (ADR 0109, ADR 0116): a prepayment
 amount above 0; a prepayment or recast after its block's start and before its schedule end; a
-recast maturity that leaves the next payment, stays within the term cap and, on a development
+recast that sets exactly one of a maturity and an instalment; a recast maturity that leaves the next payment, stays within the term cap and, on a development
 loan, falls after the completion's payment; a recast instalment above 0 and dated after the
-completion. Two leases of one property must not overlap (ADR 0163). Ranges (ADR 0038, ADR 0128):
+completion. `LEASE_OVERLAP` (two leases of one property overlap, ADR 0163) is a write-time
+rule outside `validateInputs`. Ranges (ADR 0038, ADR 0128):
 interest 0–100 %, the post-fixation reset rate included; vacancy, cost shares, value haircut
 and the acquisition cost rate 0–1 (ADR 0119); shock durations whole years ≥ 0; horizon a
 whole number ≥ 1; growth, indexation, inflation and a property's growth overrides may be
@@ -297,8 +298,8 @@ months. Standard Czech **annuity**: constant instalment split into declining int
 and rising principal.
 
 **Calendar** (ADR 0021). Schedule rows sit on the baseDate month grid
-(`EDATE(baseDate, m)`); interest per row = balance × annual rate ÷ 12 (a 30/360-style
-simplification; the loan's payment day is not modelled, see §10). The **rate in effect and
+(`EDATE(baseDate, m)`); interest per row = balance × annual rate ÷ 12 (the 30E/360 day
+count, ADR 0021; the loan's payment day is not modelled, see §10). The **rate in effect and
 the count of elapsed payments are keyed on each loan's own due dates** `EDATE(startDate, k)`:
 the payment due on the fixation-end date is still at the fixed rate; the reset applies from
 the next payment. Each row carries both dates: `date` (the grid date the projection buckets
@@ -621,10 +622,9 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
 - **Interest saved** (`prepaymentInterestSaved`, ADR 0116 §9, ADR 0130) = the interest of the
   property's chain with every prepayment removed minus its interest as entered, from the
   first projection month to payoff. Recasts stay on both sides; past prepayments count
-  through the lower opening balance. It is nominal, uses the base-case assumptions, covers
-  each block's whole remaining life, is not net of fees and is never a KPI. It is null unless
-  a prepayment repaid some principal. The UI hides 0 and shows a negative figure as "n/a" (a
-  maturity change depends on the prepayment).
+  through the lower opening balance. It is nominal, uses the base-case assumptions, is not
+  net of fees and is never a KPI. It is null unless a prepayment repaid some principal. The
+  UI hides 0 and shows a negative figure with the note "n/a: a maturity change depends on the prepayment".
 
 ## 5. Data layer
 
@@ -924,7 +924,7 @@ offline badge, and controls for language and theme.
      safety backup first
      (ADR 0052), then replaces all tables in one transaction and reloads app state. The
      same transaction removes the sample markers, so restored data never shows as the
-     sample (ADR 0127). A **Sample portfolio** panel offers **Clear sample** while the
+     sample (ADR 0127). A **Sample portfolio** panel offers **Clear sample and start my own** while the
      sample is active and **Load sample portfolio** while the portfolio is empty (ADR 0112).
      The tab shows the date of the last successful export (or "No backup exported yet")
      and says to keep a copy off this Mac. A sidebar reminder appears when the data

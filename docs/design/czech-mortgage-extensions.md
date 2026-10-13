@@ -24,7 +24,7 @@ sources (C-15: the direct fetch of Act No. 257/2016 Coll. returned HTTP 403).
 | Calendar              | `paymentOffset`, `lastPaymentDue`, `rateOfPayment` (rate on due date `EDATE(start, p)`, D-21); `src/engine/dates.ts` `edate`, `lastGridMonthOnOrBefore`                  |
 | Grid-bucketed events  | `bucketDraws` (tranches → grid month); `newDebtByMonth` (DR-092)                                                                                                         |
 | Refinance chain       | `blockChain`, `spliceSuccessor` (handover row, `Refinance { month, paidOff, drawn }`), `propertySchedule`                                                                |
-| Row fields            | `AmortizationRow { month, date, ratePa, instalment, interest, principal, drawn, endBalance }`; identity `end = prev − principal + drawn` (DR-092)                        |
+| Row fields            | `AmortizationRow { month, date, ratePa, instalment, interest, principal, drawn, endBalance }`; identity `end = prev − principal + drawn` (DR-092; as of P4c)             |
 | Projection            | `src/engine/yearGrid.ts` `yearSlice` (sums a year's rows); `src/engine/projections.ts` `buildYearRow`; `ProjectionYear.draws`                                            |
 | KPIs / IRR cash flows | `src/engine/kpis.ts` `leveredCashFlows`, `principalRepaidInHorizon`; `src/engine/ownerCash.ts` `acquisitionOutflows`, `refinanceCash` (cash outside the projection rows) |
 | Term and maturity     | `src/engine/amortization.ts` `termMonths` (D-08), `scheduleMonths`, `impliedMaturity` / `maturityMismatch` (D-29), `currentBalance` (closed-form FV)                     |
@@ -53,8 +53,8 @@ interest saved. Where the build differs from the original design:
   the schedule's end is `EVENT_AFTER_SCHEDULE_END`.
 - A prepayment before a development loan's completion is allowed, not rejected: during
   interest-only both effects lower the payment (ADR 0109 §5).
-- The `shortenTerm` example (b) is replaced by ADR 0109 §5's hand-checked case; ADR 0179
-  sizes the shorter term at the next payment's rate.
+- The `shortenTerm` example (b) is replaced by ADR 0179's hand-checked case (it sizes the
+  shorter term at the next payment's rate).
 - Prepayments are owner cash outside net cash flow and DSCR; cumulative cash flow and the IRR
   subtract them with their fees (ADR 0109 §11).
 - Not built: the scenario rule "repay X at the next fixation end" (`prepayAtRefix` on
