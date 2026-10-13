@@ -33,9 +33,8 @@ export type Cell = Decimal | number | string | Date | null;
 
 export interface XlsxColumn<R> {
   header: string;
-  kind: CellKind;
-  /** A per-row kind instead of `kind`, for a table whose rows are metrics. */
-  kindOf?: (row: R) => CellKind;
+  /** Per row for a table whose rows are metrics. */
+  kind: CellKind | ((row: R) => CellKind);
   value: (row: R) => Cell;
 }
 
@@ -57,7 +56,12 @@ export interface XlsxSheetCells {
   notes: string[];
 }
 
-/** Extract a sheet's cells: each column's kind (per row with `kindOf`) and value. */
+/** The kind of `column`'s cell in `row`. */
+export function cellKind<R>(column: XlsxColumn<R>, row: R): CellKind {
+  return typeof column.kind === "function" ? column.kind(row) : column.kind;
+}
+
+/** Extract a sheet's cells: each column's kind (per row when it is a function) and value. */
 export function xlsxSheet<R>(sheet: XlsxSheet<R>): XlsxSheetCells {
   const { name, columns, rows, notes = [] } = sheet;
   return {
@@ -65,7 +69,7 @@ export function xlsxSheet<R>(sheet: XlsxSheet<R>): XlsxSheetCells {
     headers: columns.map((c) => c.header),
     rows: rows.map((row) =>
       columns.map((c) => ({
-        kind: c.kindOf ? c.kindOf(row) : c.kind,
+        kind: cellKind(c, row),
         value: c.value(row),
       })),
     ),

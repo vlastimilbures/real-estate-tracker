@@ -16,14 +16,14 @@ import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
 import { amortizationColumns } from "../propertyDetail";
 import { projectionSeries, projectionColumns } from "../projection";
-import { cellFmt, cellValue, numFmt } from "../xlsxExport";
+import { cellFmt, cellKind, cellValue, numFmt } from "../xlsxExport";
 
 const proj = portfolioProjection(portfolio, assumptions);
 const rows = projectionSeries(proj, "nominal", assumptions);
 const cols = projectionColumns(en, assumptions.baseDate, rows);
 const col = (h: string) => cols.find((c) => c.header === h)!;
 const cell = (h: string, row = rows[0]) =>
-  cellValue(col(h).kind, col(h).value(row));
+  cellValue(cellKind(col(h), row), col(h).value(row));
 
 describe("projectionColumns", () => {
   it("LTV is a fraction rounded as shown (33,1 %) with a percent format", () => {

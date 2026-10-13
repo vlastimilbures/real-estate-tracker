@@ -173,8 +173,7 @@ describe("buildWorkbook — several sheets", () => {
           { header: "Metric", kind: "text", value: (r) => r.label },
           {
             header: "A",
-            kind: "money",
-            kindOf: (r) => r.kind,
+            kind: (r) => r.kind,
             value: (r) => r.v,
           },
         ],

@@ -90,8 +90,7 @@ function keyFiguresSheet(
       { header: t.xlsx.metric, kind: "text", value: (row) => row.label },
       ...results.map((r): XlsxColumn<CompareValueRow> => ({
         header: r.name,
-        kind: "text",
-        kindOf: (row) => row.kind,
+        kind: (row) => row.kind,
         value: (row) => row.value(r),
       })),
     ],
