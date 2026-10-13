@@ -141,6 +141,11 @@ jobs:
       - name: Dead code
         run: pnpm knip
 
+      # The shipped app only: an export only tests use is dead too (#145). A deliberate
+      # test seam carries an `@internal` JSDoc tag saying who uses it.
+      - name: Dead code (production)
+        run: pnpm knip:prod
+
       # Generated index and paired Amends / Supersedes links (ADR 0152).
       - name: ADR index and links
         run: pnpm adr:check

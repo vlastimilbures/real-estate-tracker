@@ -51,6 +51,7 @@
     "format": "prettier --write .",
     "depcruise": "depcruise src --config .dependency-cruiser.cjs --ignore-known --output-type err",
     "knip": "knip",
+    "knip:prod": "knip --production --exclude files",
     "mutation": "stryker run",
     "depcruise:baseline": "depcruise src --config .dependency-cruiser.cjs --output-type baseline --output-to .dependency-cruiser-known-violations.json",
     "depcruise:baseline-check": "node scripts/check-depcruise-baseline.mjs",

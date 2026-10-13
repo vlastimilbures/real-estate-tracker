@@ -322,7 +322,8 @@ export function projectionAndKpis(
   };
 }
 
-/** Portfolio KPIs (SPEC §4.6) from the portfolio projection. */
+/** Portfolio KPIs (SPEC §4.6) from the portfolio projection.
+ *  @internal test seam: the parity tests pin it; the app runs `portfolioOutputs`. */
 export function portfolioKpis(
   portfolio: Portfolio,
   assumptions: Assumptions,
