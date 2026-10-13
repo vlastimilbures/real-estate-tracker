@@ -150,6 +150,9 @@ export function ownedOn(
   return purchaseDate.getTime() <= by.getTime();
 }
 
+/** A Properties row: the property's tiles plus its purchase date (ADR 0156). */
+type PropertyRow = PropertySnapshot & { purchaseDate: Date };
+
 /**
  * The Properties rows (ADR 0150): each property's Property detail tiles at `asOf` under
  * `basis`, in nominal Kč (the page has no lens), so a row and its detail page show the same
@@ -162,21 +165,25 @@ export function propertyRowsForAsOf(
   basis: AsOfBasis,
   asOf: Date,
   assumptions: Assumptions,
-): PropertySnapshot[] {
+): PropertyRow[] {
   const purchase = new Map(properties.map((p) => [p.id, p.purchaseDate]));
-  return perProperty.map((p) =>
-    propertyTilesForAsOf(
-      p,
-      // Nominal rows are the projection itself.
-      projections.get(p.propertyId) ?? [],
-      basis,
-      asOf,
-      "nominal",
-      assumptions,
-      // Every row comes from `properties`, so its purchase date is always there.
-      purchase.get(p.propertyId) ?? asOf,
-    ),
-  );
+  return perProperty.map((p) => {
+    // Every row comes from `properties`, so its purchase date is always there.
+    const purchaseDate = purchase.get(p.propertyId) ?? asOf;
+    return {
+      ...propertyTilesForAsOf(
+        p,
+        // Nominal rows are the projection itself.
+        projections.get(p.propertyId) ?? [],
+        basis,
+        asOf,
+        "nominal",
+        assumptions,
+        purchaseDate,
+      ),
+      purchaseDate,
+    };
+  });
 }
 
 /** Calendar year of the last projection row ("Net worth in 2056"); as-of independent. */

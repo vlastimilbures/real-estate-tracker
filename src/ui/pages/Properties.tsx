@@ -92,21 +92,8 @@ export function Properties() {
         )
       : [];
   const deleteTarget = perProperty.find((p) => p.propertyId === deletingId);
-  const purchaseDates = new Map(
-    engine?.portfolio.properties.map((p) => [p.id, p.purchaseDate]) ?? [],
-  );
   /** A pending purchase has no figures yet, only its purchase date (ADR 0156). */
   const fig = (owned: boolean, cell: ReactNode) => (owned ? cell : "—");
-  const purchaseOn = (id: string) => {
-    const date = purchaseDates.get(id);
-    return (
-      date && (
-        <span className="cell-sub">
-          {t.properties.pendingPurchaseOn(fmtDate(date))}
-        </span>
-      )
-    );
-  };
 
   async function handleDelete(id: string) {
     const result = await removeProperty(id);
@@ -242,7 +229,13 @@ export function Properties() {
                         </span>
                       )}
                       {/* After both badges, so they stay on the name's line. */}
-                      {!p.owned && purchaseOn(p.propertyId)}
+                      {!p.owned && (
+                        <span className="cell-sub">
+                          {t.properties.pendingPurchaseOn(
+                            fmtDate(p.purchaseDate),
+                          )}
+                        </span>
+                      )}
                     </td>
                     <td>
                       {fig(
