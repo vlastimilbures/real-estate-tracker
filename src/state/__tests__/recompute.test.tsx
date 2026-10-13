@@ -7,7 +7,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Profiler } from "react";
 import { act, render, renderHook } from "@testing-library/react";
-import { useEngine, useProjections, usePropertyEngine } from "../useEngine";
+import {
+  useEngine,
+  useProjections,
+  usePropertyEngineResult,
+} from "../useEngine";
 import { usePortfolioStore } from "../portfolioStore";
 import { useUiStore } from "../uiStore";
 import { portfolio, assumptions } from "../../engine/__tests__/support/seed";
@@ -80,7 +84,7 @@ describe("engine recompute", () => {
     const hooks = renderHook(() => ({
       all: useEngine(),
       projections: useProjections(),
-      property: usePropertyEngine("javorova"),
+      property: usePropertyEngineResult("javorova"),
     }));
     const before = hooks.result.current;
     resetSpies();

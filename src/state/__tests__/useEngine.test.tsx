@@ -10,7 +10,7 @@ import {
   useScenarioComparison,
   useProjections,
   usePropertyProjections,
-  usePropertyEngine,
+  usePropertyEngineResult,
 } from "../useEngine";
 import { usePortfolioStore } from "../portfolioStore";
 import {
@@ -22,6 +22,13 @@ import {
 import { near, KC } from "../../engine/__tests__/support/tolerance";
 import { EngineInputError, isoDate, money, rate } from "../../engine";
 import type { Scenario } from "../../engine";
+
+/** The detail page's hook, with a stored-data error thrown instead of returned. */
+function usePropertyEngine(propertyId: string | null, asOf?: Date | null) {
+  const r = usePropertyEngineResult(propertyId, asOf);
+  if (r && "invalid" in r) throw r.invalid;
+  return r;
+}
 
 vi.mock("../../lib/day", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../lib/day")>()),

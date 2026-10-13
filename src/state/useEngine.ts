@@ -317,13 +317,3 @@ function reported<T>(run: () => T): T | InvalidPropertyData {
     throw e;
   }
 }
-
-/** Per-property engine output for the detail screen (throws on invalid stored data). */
-export function usePropertyEngine(
-  propertyId: string | null,
-  asOf?: Date | null,
-): PropertyEngineOutput | null {
-  const r = usePropertyEngineResult(propertyId, asOf);
-  if (r && "invalid" in r) throw r.invalid;
-  return r;
-}

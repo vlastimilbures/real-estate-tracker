@@ -1,6 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import {
-  clearPerfMark,
   hasPerfMark,
   perfMark,
   perfMeasure,
@@ -16,11 +15,10 @@ afterEach(() => {
 });
 
 describe("perf marks", () => {
-  it("records and clears a mark", () => {
+  it("records a mark", () => {
+    expect(hasPerfMark("a")).toBe(false);
     perfMark("a");
     expect(hasPerfMark("a")).toBe(true);
-    clearPerfMark("a");
-    expect(hasPerfMark("a")).toBe(false);
   });
 
   it("measures from a mark to now", () => {
@@ -77,6 +75,5 @@ describe("perf marks", () => {
     expect(hasPerfMark("a")).toBe(false);
     expect(perfMeasure("span", "a")).toBeNull();
     expect(timed("work", () => 1)).toBe(1);
-    expect(() => clearPerfMark("a")).not.toThrow();
   });
 });

@@ -33,7 +33,6 @@ export {
   fixationExpired,
   rateFixedUntil,
   impliedMaturity,
-  instalmentFor,
   isDevLoan,
   suggestedInstalment,
   maturityMismatch,
