@@ -136,6 +136,7 @@ export function LoanEventRows({
       {rows.map((row, i) => {
         const rowName = ROW_NAME[kind](d, i + 1);
         const rowError = errors[`${name}.${i}`];
+        const rowInvalid = Boolean(rowError);
         const rowErrorId = `${helpId}-row${i}`;
         const rowNotes = notes?.rows[i] ?? [];
         const noteId = `${helpId}-note${i}`;
@@ -156,7 +157,11 @@ export function LoanEventRows({
             }
             className={`event-row${rowError ? " invalid" : ""}`}
           >
-            <Field label={d.eventDate} error={err("date", hint.date)}>
+            <Field
+              invalid={rowInvalid}
+              label={d.eventDate}
+              error={err("date", hint.date)}
+            >
               <DateInput
                 value={row.date}
                 onChange={(v) => set(i, { date: v })}
@@ -164,6 +169,7 @@ export function LoanEventRows({
             </Field>
             {!("effect" in row) && !("mode" in row) ? (
               <Field
+                invalid={rowInvalid}
                 label={d.eventAmount}
                 error={err("amount", t.forms.positiveAmount)}
               >
@@ -172,12 +178,13 @@ export function LoanEventRows({
             ) : "effect" in row ? (
               <>
                 <Field
+                  invalid={rowInvalid}
                   label={d.eventAmount}
                   error={err("amount", t.forms.positiveAmount)}
                 >
                   {money(row.amount, (v) => set(i, { amount: v }))}
                 </Field>
-                <Field label={d.eventEffect}>
+                <Field invalid={rowInvalid} label={d.eventEffect}>
                   <SelectInput
                     value={row.effect}
                     onChange={(v) => set(i, { effect: v })}
@@ -190,13 +197,17 @@ export function LoanEventRows({
                     ]}
                   />
                 </Field>
-                <Field label={d.eventFee} error={err("fee", hint.money)}>
+                <Field
+                  invalid={rowInvalid}
+                  label={d.eventFee}
+                  error={err("fee", hint.money)}
+                >
                   {money(row.fee, (v) => set(i, { fee: v }))}
                 </Field>
               </>
             ) : (
               <>
-                <Field label={d.eventMode}>
+                <Field invalid={rowInvalid} label={d.eventMode}>
                   <SelectInput
                     value={row.mode}
                     onChange={(v) => set(i, { mode: v, value: "" })}
@@ -208,6 +219,7 @@ export function LoanEventRows({
                 </Field>
                 {row.mode === "maturity" ? (
                   <Field
+                    invalid={rowInvalid}
                     label={d.eventMaturity}
                     error={err("value", hint.date)}
                   >
@@ -218,6 +230,7 @@ export function LoanEventRows({
                   </Field>
                 ) : (
                   <Field
+                    invalid={rowInvalid}
                     label={d.eventInstalment}
                     error={err("value", t.forms.positiveAmount)}
                   >

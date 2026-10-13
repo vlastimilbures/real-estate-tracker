@@ -8,6 +8,7 @@ export function Field({
   error,
   help,
   required = false,
+  invalid = false,
   children,
 }: {
   /** The control's id, when something else must focus it (an error summary link). */
@@ -17,6 +18,8 @@ export function Field({
   help?: string | undefined;
   /** Marks the label "*" and the control aria-required (UX-040). */
   required?: boolean | undefined;
+  /** Marks the control invalid without an error of its own, e.g. a whole row (ADR 0189). */
+  invalid?: boolean | undefined;
   children: ReactNode;
 }) {
   const autoId = useId();
@@ -33,7 +36,7 @@ export function Field({
       <FieldContext.Provider
         value={{
           id,
-          invalid: Boolean(error),
+          invalid: invalid || Boolean(error),
           required,
           describedBy: note ? noteId : undefined,
         }}
