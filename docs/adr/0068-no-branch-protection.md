@@ -1,8 +1,9 @@
 # 0068. No server-side branch protection
 
 - Status: Accepted
-- Amended by: ADR 0081, ADR 0151 (items (1) and (2) and D-69 G-1, G-2: `main` is protected;
-  the macOS bundle runs on `v*` tags and manual dispatch)
+- Superseded in part by: ADR 0151 (items (1) and (2) and D-69 G-1, G-2: `main` is
+  protected; the macOS bundle runs on `v*` tags and manual dispatch)
+- Amended by: ADR 0081
 - Date: 2026-10-02
 - Source IDs: D-68
 
