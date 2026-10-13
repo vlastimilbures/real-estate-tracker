@@ -230,6 +230,7 @@ Status shows the ADR's own status and the ADRs that amend it.
 | [0184](0184-data-layer-write-guards.md)                        | Data-layer write guards                                                                       | Accepted                                                       | #144                                               |
 | [0185](0185-csv-missing-columns-and-preview-clarity.md)        | CSV missing columns and preview clarity                                                       | Accepted                                                       | #142, #143                                         |
 | [0186](0186-compare-net-worth-excludes-cash.md)                | Scenario compare says net worth excludes cash                                                 | Accepted                                                       | #155                                               |
+| [0187](0187-cs-ru-translation-fixes.md)                        | Czech and Russian translation fixes                                                           | Accepted                                                       | #169, #152                                         |
 
 <!-- adr-index:end -->
 

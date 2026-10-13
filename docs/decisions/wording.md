@@ -74,3 +74,32 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   only, because the heading still reads as "everything modelled" when rows are shown; the
   help text and workaround of #164 (B + D), obsolete since the engine change of ADR 0179.
 - Approved by: owner, 2026-10-13 (N7a plan, exact text)
+
+### 2026-10-13 · #169, #152 / Track 14 N7b
+
+- Keys (plain text; accessible names, form alerts, export text and code are in ADR 0187):
+  `dashboard.kpiSumPrincipalRepaid*`, `dashboard.financingNoLoans`, `dashboard.subFilter`,
+  `dashboard.monthlyHint`, `propertyDetail.helpDraws`, `instalmentHintDev`,
+  `warnAfterCompletion`, `drawnAtStartNoDate`, `drawdownTotal`, `acqHint`, `mortgagesHint`,
+  `helpCompletionDate`, `helpNewBlock`, `fixationEnded`, `fixationGap`, `noEffectNote`;
+  `scenarios.reachHits`, `scenarios.reachNone`; `backup.folderHint`, `restoreBody`,
+  `restoreWarning`, `backup.tables.holding_costs`; `importPage.errMalformedRow`;
+  `about.appBody`; Guide prose and definitions (`cardAsOfBody`, `mortgagesProse1Mid`,
+  `mortgagesProse1Post`, `mortgagesProse2Resets`, `mortgagesProse2Reamortizes`,
+  `projectionProse2`, `developmentProsePost`, `fPrincipal`, `fNewBalance`, value, debt,
+  costs, NOI, debt-service and rate-shock definitions, glossary annuity)
+- Change: Russian uses "основной долг" for principal, "выбрано / выбранная" for drawing,
+  "страховочная копия" for the pre-restore copy, "конец фиксации" and "ставка после
+  фиксации", "график платежей", "Результаты" for outputs, and no calques ("переякоривает",
+  "переамортизируется", "сброс"). Czech uses "konec fixace" and "sazba po skončení fixace",
+  "začátek" for a loan's start, "náklady na držbu", "splátkový kalendář", "samo aktivum" and
+  a plain monthly hint ("roční výše při současných nájmech ÷ 12"). English drops "refix".
+  The CSV row-length error and the Russian filter subtitle decline their count word. The
+  Guide says that only fixed costs (tax, insurance, SVJ, other) grow with CPI while
+  management and maintenance follow rent (all three languages), and that the base-date
+  snapshot equals year 0 for value, debt and equity, with flows starting in year 1.
+- Rejected: "транш" for every draw string (#169 suggestion), because "выборка" is the
+  banking word for drawing a credit line and "транш" stays for each portion; renaming
+  English "rate reset" (owner: English jargon only); reformatting the crash preset labels
+  "−20%" (a saved preset is found by name, ADR 0093).
+- Approved by: owner, 2026-10-13 (N7b plan, batches A–F, exact text)
