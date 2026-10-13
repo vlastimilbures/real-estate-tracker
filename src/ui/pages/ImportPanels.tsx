@@ -76,6 +76,8 @@ function csvErrorText(t: Dictionary, e: CsvErrorCode): string {
       return p.errMalformedRow(e.expected, e.found);
     case "badQuotes":
       return p.errBadQuotes;
+    case "duplicateHeader":
+      return p.errDuplicateHeader(e.name);
     case "notUtf8":
       return p.errNotUtf8;
     case "semicolonDelimiter":
@@ -217,13 +219,16 @@ export function EntityImportPanel<T>({
       hint={hint}
       action={
         fileState ? (
-          fileState.result.errors.length === 0 ? (
-            <Badge band="good">
-              {t.importPage.rowsReady(fileState.result.rows.length)}
-            </Badge>
-          ) : (
+          fileState.result.errors.length > 0 ? (
             <Badge band="bad">
               {t.importPage.errorsBadge(fileState.result.errors.length)}
+            </Badge>
+          ) : fileState.result.rows.length === 0 ? (
+            // A file with no data rows is not a success (ADR 0185 §5).
+            <Badge band="neutral">{t.importPage.noDataRows}</Badge>
+          ) : (
+            <Badge band="good">
+              {t.importPage.rowsReady(fileState.result.rows.length)}
             </Badge>
           )
         ) : undefined

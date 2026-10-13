@@ -14,7 +14,7 @@ import { DataError } from "../../data/errors";
 import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
 import type { WriteError } from "../writeError";
 import { parseProperties, parseRents } from "../../import/csv";
-import { CsvImportError } from "../../import/csvImport";
+import { CsvPlanChangedError } from "../../import/csvImport";
 import { money } from "../../engine";
 import { importNow } from "./support/importNow";
 import { noExtras } from "../../data/__tests__/support/noExtras";
@@ -727,7 +727,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
           "property_name,start_date,end_date,monthly_rent\nNope,2025-01-01,,1000",
         ).rows,
       }),
-    ).rejects.toBeInstanceOf(CsvImportError);
+    ).rejects.toBeInstanceOf(CsvPlanChangedError);
     expect(usePortfolioStore.getState().portfolio!.leases.length).toBe(
       before.leases.length,
     );
@@ -789,7 +789,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
           "property_name,start_date,end_date,monthly_rent\nNope,2025-01-01,,1000",
         ).rows,
       }),
-    ).rejects.toBeInstanceOf(CsvImportError);
+    ).rejects.toBeInstanceOf(CsvPlanChangedError);
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
     const r = await usePortfolioStore.getState().addValuation({
       id: "after-fail",

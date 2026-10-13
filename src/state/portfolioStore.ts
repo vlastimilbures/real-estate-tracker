@@ -253,7 +253,7 @@ interface PortfolioState {
   // sample portfolio (ADR 0094)
   /** "Keep exploring": hide the sample banner for good. */
   dismissSampleBanner: () => Promise<MutationResult>;
-  // whole-database operations. They throw their own typed errors (CsvImportError,
+  // whole-database operations. They throw their own typed errors (CsvPlanChangedError,
   // RestoreError, …) for the caller to show, and leave the banner `error` alone on a
   // failure; one that replaces the data (restore, Clear sample, Load sample) clears it
   // on success, since it described the old data (ADR 0154). They throw only before the

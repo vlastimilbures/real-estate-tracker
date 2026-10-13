@@ -654,9 +654,11 @@ Clearing a funding amount is a property form edit too: a blank CSV cell keeps it
   case (an empty cell means not set).
 - **Header row** ([guide](docs/csv-import.md#file-format)): header names are trimmed, then
   matched exactly and case-sensitively (lower case, as in the table above). Columns may come
-  in any order and extra columns are ignored. A missing required column makes that cell
-  _Required_ on every row. Every row must have as many cells as the header; empty lines are
-  skipped and a leading byte-order mark is dropped.
+  in any order and extra columns are ignored; a name that appears twice rejects the file
+  (ADR 0185). A missing required column makes that cell _Required_ on every row; a missing
+  optional column keeps the stored value on an update and leaves a new record's value empty.
+  Every row must have as many cells as the header; empty lines are skipped and a leading
+  byte-order mark is dropped.
 - `property_name` matches a property after trimming, case-insensitively; the stored
   spelling is kept. Two names in one file differing only by case or spaces are a duplicate
   (fatal). An unknown name is fatal (D-55).

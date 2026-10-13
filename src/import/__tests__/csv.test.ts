@@ -441,17 +441,21 @@ describe("funding amounts (ADR 0119 §8)", () => {
     });
   });
 
-  it("a blank cell or a missing column is unknown (null)", () => {
+  // A blank cell is null; a missing column is undefined, which an update leaves as
+  // stored (ADR 0185 §2). Both keep the stored amount (ADR 0119 §8).
+  it("a blank cell is unknown (null), a missing column is absent (undefined)", () => {
     const blank = parseProperties(`${FH}\nA,,,,,2020-01-01,100,,,,,`);
     const missing = parseProperties(`${H}\nA,,,,,2020-01-01,100,,`);
-    for (const r of [blank, missing]) {
-      expect(r.errors).toEqual([]);
-      expect(r.rows[0]).toMatchObject({
-        own_cash: null,
-        transaction_costs: null,
-        initial_works: null,
-      });
-    }
+    expect(blank.errors).toEqual([]);
+    expect(blank.rows[0]).toMatchObject({
+      own_cash: null,
+      transaction_costs: null,
+      initial_works: null,
+    });
+    expect(missing.errors).toEqual([]);
+    expect(missing.rows[0]?.own_cash).toBeUndefined();
+    expect(missing.rows[0]?.transaction_costs).toBeUndefined();
+    expect(missing.rows[0]?.initial_works).toBeUndefined();
   });
 
   it("refuses a negative amount on its own column and line", () => {
@@ -542,6 +546,29 @@ describe("dates", () => {
 describe("foreign keys and duplicates", () => {
   const known = new Set(["A"]);
 
+  // ADR 0185 §1: a repeated header name rejects the file instead of the last column winning.
+  it("ignores repeated empty header cells (trailing spreadsheet columns)", () => {
+    const r = parseProperties(
+      "name,purchase_date,purchase_price,,\nA,2020-01-01,100,,\n",
+    );
+    expect(r.errors).toEqual([]);
+    expect(r.rows).toHaveLength(1);
+  });
+
+  it("rejects a header that names a column twice", () => {
+    const r = parseProperties(
+      "name,purchase_date,purchase_price, purchase_price\nA,2020-01-01,100,999\n",
+    );
+    expect(r.rows).toEqual([]);
+    expect(r.errors).toEqual([
+      {
+        row: 1,
+        field: "purchase_price",
+        error: { code: "duplicateHeader", name: "purchase_price" },
+      },
+    ]);
+  });
+
   it("flags an unknown property_name in valuations, rents and mortgages", () => {
     const val = parseValuations(
       "property_name,valid_from,valid_to,market_value\nNope,2025-01-01,,1000",
@@ -598,6 +625,39 @@ describe("foreign keys and duplicates", () => {
         field: "valid_from",
         error: { code: "duplicateKey", firstRow: 2 },
       },
+    ]);
+  });
+
+  // ADR 0185 §3: a row's key counts once its key cells are valid, so the duplicate behind
+  // an invalid first row is reported in the same round.
+  it("reports a duplicate behind a row with another invalid cell", () => {
+    const rents = parseRents(
+      "property_name,start_date,end_date,monthly_rent\nA,2025-01-01,,x\nA,2025-01-01,,1000",
+      known,
+    );
+    expect(rents.rows).toEqual([]);
+    expect(rents.errors).toEqual([
+      {
+        row: 2,
+        field: "monthly_rent",
+        error: { code: "invalidNumber", value: "x" },
+      },
+      {
+        row: 3,
+        field: "start_date",
+        error: { code: "duplicateKey", firstRow: 2 },
+      },
+    ]);
+  });
+
+  it("does not register a key whose own cells are invalid", () => {
+    const rents = parseRents(
+      "property_name,start_date,end_date,monthly_rent\nA,2025-02-30,,1\nA,2025-02-30,,2",
+      known,
+    );
+    expect(rents.errors.map((e) => e.error.code)).toEqual([
+      "impossibleDate",
+      "impossibleDate",
     ]);
   });
 });

@@ -101,6 +101,34 @@ describe("changeText", () => {
     );
   });
 
+  // ADR 0185 §4: a change must not read as "7 908 Kč → 7 908 Kč".
+  it("shows both sides at full precision when they format alike", () => {
+    expect(
+      changeText({
+        field: "monthly_instalment",
+        before: "7908",
+        after: "7908.4",
+      }).replace(/\s/g, " "),
+    ).toBe("7 908,00 Kč → 7 908,40 Kč");
+    expect(
+      changeText({
+        field: "interest_rate_pa",
+        before: "0.0169",
+        after: "0.01694",
+      }),
+    ).toBe(`${fmtPct("0.0169", 4)} → ${fmtPct("0.01694", 4)}`);
+  });
+
+  it("falls back to the stored text when even that precision reads the same", () => {
+    expect(
+      changeText({
+        field: "monthly_instalment",
+        before: "7908",
+        after: "7908.004",
+      }),
+    ).toBe("7908 → 7908.004");
+  });
+
   it("formats the funding amounts as money (ADR 0119 §8)", () => {
     for (const field of ["own_cash", "transaction_costs", "initial_works"])
       expect(changeText({ field, before: null, after: "850000" })).toBe(

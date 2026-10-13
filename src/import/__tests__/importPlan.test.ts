@@ -322,3 +322,91 @@ describe("importCsv — commit matches the preview (ADR 0096)", () => {
     expect(dump(sql)).toEqual(before);
   });
 });
+
+// ADR 0185 §2: an optional column that is not in the file is left as stored on an update;
+// a new record gets no value.
+describe("a missing optional column keeps the stored value (ADR 0185 §2)", () => {
+  const FULL =
+    "name,address,type,size_m2,garage,purchase_date,purchase_price,appreciation_override_pa,rent_index_override_pa";
+  const TRIM = "name,purchase_date,purchase_price";
+
+  it("re-importing a trimmed properties file changes nothing", async () => {
+    await importNow(sql, {
+      properties: parseProperties(
+        `${FULL}\nByt F,Main 1,flat,50,true,2020-01-01,5000000,0.05,0.02`,
+      ).rows,
+    });
+    const before = dump(sql).properties;
+    const batch = {
+      properties: parseProperties(`${TRIM}\nByt F,2020-01-01,5000000`).rows,
+    };
+    const p = await previewImport(sql, batch);
+    expect(p.items.map((i) => [i.propertyName, i.kind])).toEqual([
+      ["Byt F", "unchanged"],
+    ]);
+    await importNow(sql, batch);
+    expect(dump(sql).properties).toEqual(before);
+  });
+
+  it("adds a property from a trimmed file with the missing columns empty", async () => {
+    await importNow(sql, {
+      properties: parseProperties(`${TRIM}\nByt G,2022-01-01,7000000`).rows,
+    });
+    const row = sql.db
+      .prepare("SELECT address, garage, size_m2 FROM properties WHERE name = ?")
+      .get("Byt G");
+    expect(row).toEqual({ address: null, garage: null, size_m2: null });
+  });
+
+  it("keeps a loan's term and maturity when an older file lacks those columns", async () => {
+    await importNow(sql, {
+      mortgages: parseMortgages(
+        `${MH}\nByt A,2021-01-17,2250000,10,0.0169,7908,30,2046-01-17`,
+      ).rows,
+    });
+    const OLD =
+      "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment";
+    const batch = {
+      mortgages: parseMortgages(
+        `${OLD}\nByt A,2021-01-17,2250000,10,0.0169,7908`,
+      ).rows,
+    };
+    const p = await previewImport(sql, batch);
+    expect(p.items.map((i) => i.kind)).toEqual(["unchanged"]);
+    await importNow(sql, batch);
+    expect(
+      sql.db
+        .prepare(
+          "SELECT loan_term_years, contract_maturity_date FROM mortgage_blocks",
+        )
+        .get(),
+    ).toEqual({ loan_term_years: 30, contract_maturity_date: "2046-01-17" });
+  });
+
+  it("keeps an end date when the file has no valid_to / end_date column", async () => {
+    await importNow(sql, {
+      valuations: parseValuations(`${VH}\nByt A,2024-01-01,2024-12-31,5100000`)
+        .rows,
+      rents: parseRents(`${RH}\nByt A,2024-01-01,2024-12-31,15000`).rows,
+    });
+    const batch = {
+      valuations: parseValuations(
+        "property_name,valid_from,market_value\nByt A,2024-01-01,5100000",
+      ).rows,
+      rents: parseRents(
+        "property_name,start_date,monthly_rent\nByt A,2024-01-01,15000",
+      ).rows,
+    };
+    const p = await previewImport(sql, batch);
+    expect(p.items.map((i) => i.kind)).toEqual(["unchanged", "unchanged"]);
+  });
+
+  it("still clears an optional column that is in the file but empty", async () => {
+    const p = await previewImport(sql, {
+      properties: props("Byt A,,2020-01-01,5000000"),
+    });
+    expect(p.items[0]?.changes).toEqual([
+      { field: "address", before: "Javorova 12", after: null },
+    ]);
+  });
+});

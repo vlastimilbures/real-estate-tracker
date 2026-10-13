@@ -938,6 +938,7 @@ export const ru: Dictionary = {
     rowsReady: (n) =>
       `${n} ${ruPlural(n, ["строка готова", "строки готовы", "строк готово"])}`,
     errorsBadge: (n) => `${n} ${ruPlural(n, ["ошибка", "ошибки", "ошибок"])}`,
+    noDataRows: "Нет строк с данными",
     colRow: "Строка",
     colField: "Поле",
     colError: "Ошибка",
@@ -1000,6 +1001,8 @@ export const ru: Dictionary = {
     errMalformedRow: (expected, found) =>
       `В этой строке ${found} столбцов, в заголовке ${expected}`,
     errBadQuotes: "Незакрытые кавычки в этой строке",
+    errDuplicateHeader: (name: string) =>
+      `Столбец ${name} встречается в заголовке несколько раз.`,
     errNotUtf8:
       "Файл не в кодировке UTF-8 (вероятно, Windows-1250 из Excel) — сохраните его как «CSV UTF-8»",
     errSemicolon:

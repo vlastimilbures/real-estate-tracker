@@ -6,7 +6,9 @@
   separate additions and updates")
 - Amended by: [0154](0154-one-outcome-path.md) (the import report is also cleared when the
   data is replaced), [0160](0160-csv-import-and-stored-loan-events.md) (the preview notes
-  replaced loan events and blocks without effect; such an add asks for confirmation)
+  replaced loan events and blocks without effect; such an add asks for confirmation),
+  [0185](0185-csv-missing-columns-and-preview-clarity.md) (equal-looking changes at full
+  precision, no-data-rows badge, a commit-time problem shown as a changed plan)
 
 ## Context
 
