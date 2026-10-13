@@ -10,7 +10,12 @@ import {
   toNumber,
 } from "../../lib/format";
 import type { Decimal } from "../../lib/money";
-import type { PortfolioKPIs, ProjectionYear } from "../../engine";
+import type {
+  PortfolioKPIs,
+  ProjectionYear,
+  Property,
+  Scenario,
+} from "../../engine";
 import type { Dictionary } from "../../i18n";
 import type { Mode } from "./lens";
 import { irrReasonText } from "./irr";
@@ -288,6 +293,31 @@ export function compareFootnote(
   return names.length
     ? t.scenarios.rebasedReturnsFootnote(names.join(", "))
     : null;
+}
+
+/** One line per scenario naming the active properties whose own rate its appreciation or
+ *  rent-indexation level does not replace (ADR 0102 §3, ADR 0190). */
+export function ownRateNotes(
+  t: Dictionary,
+  scenarios: Scenario[],
+  properties: Property[],
+): string[] {
+  return scenarios.flatMap((s) => {
+    const { appreciationPa, rentIndexationPa } = s.overrides;
+    const names = properties
+      .filter(
+        (p) =>
+          p.active !== false &&
+          ((appreciationPa !== undefined &&
+            p.appreciationOverridePa !== undefined) ||
+            (rentIndexationPa !== undefined &&
+              p.rentIndexOverridePa !== undefined)),
+      )
+      .map((p) => p.name);
+    return names.length
+      ? [t.scenarios.levelNotApplied(s.name, names.join(", "))]
+      : [];
+  });
 }
 
 /** Key-figures panel hint for the lens. */

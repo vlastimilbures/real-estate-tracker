@@ -4,6 +4,7 @@
 import { useId, useState } from "react";
 import { useScenarioComparison } from "../../state/useEngine";
 import { useUiStore } from "../../state/uiStore";
+import { usePortfolioStore } from "../../state/portfolioStore";
 import {
   Panel,
   EmptyState,
@@ -24,6 +25,7 @@ import {
   compareKpiRows,
   compareSeriesStyle,
   mergeCompareMetric,
+  ownRateNotes,
   type CompareView,
 } from "../model/compare";
 
@@ -38,6 +40,7 @@ export function CompareView({
   const t = useT();
   const mode = useUiStore((s) => s.mode);
   const results = useScenarioComparison(selected);
+  const properties = usePortfolioStore((s) => s.portfolio?.properties);
   const footnoteId = useId();
   const [view, setView] = useState<CompareView>("values");
   // A pick the engine run left out breaks an engine rule (ADR 0123): name it, compare
@@ -83,6 +86,12 @@ export function CompareView({
   const ltvRows = mergeCompareMetric(results, mode, (y) => y.ltv);
   // Owner's loss next to the rebased returns of a crash at Today (ADR 0089).
   const footnote = compareFootnote(t, results);
+  // A scenario level a property's own rate overrides (ADR 0190); compared picks only.
+  const ownRate = ownRateNotes(
+    t,
+    selected.filter((s) => !leftOut.includes(s)),
+    properties ?? [],
+  );
   // Δ vs Base needs Base; without it the table shows values (ADR 0097).
   const base = compareBase(results);
   const shownView: CompareView = base ? view : "values";
@@ -109,7 +118,7 @@ export function CompareView({
             {/* The whole compare, always as values (ADR 0108). */}
             <ExportXlsxButton
               onExport={() =>
-                exportWorkbookXlsx(compareWorkbook(t, results, mode))
+                exportWorkbookXlsx(compareWorkbook(t, results, mode, ownRate))
               }
             />
           </span>
@@ -167,6 +176,11 @@ export function CompareView({
             {footnote}
           </p>
         )}
+        {ownRate.map((line) => (
+          <p className="ct-footnote" key={line}>
+            {line}
+          </p>
+        ))}
       </Panel>
 
       <div className="chart-grid">

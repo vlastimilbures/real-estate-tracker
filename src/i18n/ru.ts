@@ -866,6 +866,8 @@ export const ru: Dictionary = {
     deltaNoBaseValue: "У Базы нет значения",
     rebasedReturnsFootnote: (names: string) =>
       `Доходность для ${names} считается от более низкого начального капитала после обвала цен; ваш убыток показывают Δ чистых активов к Базе и накопленный ДП владельцу.`,
+    levelNotApplied: (scenario, names) =>
+      `${scenario} – уровень не применяется к: ${names} (собственный темп роста)`,
     kpiNetWorthNominal: "Чистые активы (номинальные)",
     kpiNetWorthReal: "Чистые активы (реальные)",
     kpiNetWorthMultiple: "Множитель чистых активов",
