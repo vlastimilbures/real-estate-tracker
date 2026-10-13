@@ -24,6 +24,9 @@ or in the export to say why.
    rent-indexation level and the property has its own rent-indexation rate. Each property
    is named once per scenario, in portfolio order. It is named even when its own rate
    equals the scenario's level.
+   The line does not say which of the two levels a property misses: a scenario that sets
+   both names a property with only its own appreciation rate, although the rent level
+   reaches it (owner, 2026-10-13: keep the short line).
 3. **No line** for Base, for a scenario that sets neither level (shocks or a crash only),
    or when no active property has its own rate. A scenario left out of the comparison
    (ADR 0123) gets no line.
