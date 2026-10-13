@@ -176,9 +176,12 @@ engine without the form, and remove it when the last part lands.
   row says it leaves out cash, and the price-crash footnote points to cumulative cash to
   owner too. The property page's interest saved names its window, a loan-event amount
   error says to put a space between thousands, the Dashboard's upcoming list is headed
-  "Rate, loan and lease dates in the next 12 months", and the English prepayment help and
-  Guide say own funds, maturity change, and that a prepayment applies after the next due
-  payment. No figure changes.
+  "Rate, loan and lease dates in the next 12 months" (it still lists only rate resets,
+  payoffs, completions and lease ends). In English, the prepayment help and Guide say the
+  fee is paid from your own funds, and the loan outlook says "maturity change" instead of
+  "recast". In all three languages the Guide says a prepayment applies right after the next
+  payment due on or after its date, and that the property page warns when a prepayment
+  cannot shorten the term. No figure changes.
 - CSV import (ADR 0185, #142, #143): an optional column missing from a file now keeps the
   stored value on an update, so re-importing a trimmed export changes only the columns it
   holds. A header name that appears twice rejects the file. The preview shows an update

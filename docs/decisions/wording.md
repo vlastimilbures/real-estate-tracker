@@ -61,8 +61,10 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 - Change: the property page's interest-saved label names its window (the loan's remaining
   life), as the Dashboard's does (#251). A prepayment or maturity-change row's amount error
   says to put a space between thousands, as the money hint does (#242). The Dashboard's
-  upcoming list says it holds rate, loan and lease dates, so its empty text no longer says
-  nothing is modelled while a draw or a purchase is (#156, the scope of ADR 0103 §7). In
+  upcoming list says it holds rate, loan and lease dates instead of "nothing modelled" (#156,
+  the scope of ADR 0103 §7: fixation ends, payoffs, completions, lease ends). Tranche
+  draws, prepayments, maturity changes, lease starts and a future purchase are still not
+  listed; the purchase follows with #33. In
   English, a prepayment fee is paid from your own funds, not "in cash"; "recast" becomes
   "maturity change" as in every other string (#173 items 1, 3). The Guide says a prepayment
   is applied right after the next payment due on or after its date, not on its date (#173
