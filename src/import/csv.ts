@@ -399,30 +399,36 @@ type DecimalRule = "amount" | "unitRate" | "any";
 const DECIMAL_COMMA = /^-?\d{1,3}([ \u00A0]\d{3})*,\d+$|^-?\d+,\d+$/;
 
 /** Run `parseRow` over every record; rows with errors are dropped. A row whose natural
- *  key repeats an earlier row's is a fatal duplicate (`keyField` names the column). */
+ *  key repeats an earlier row's is a fatal duplicate, reported on the last key column.
+ *  The key is the property name (`propertyKey`, D-55), plus the key date for a child
+ *  file. It counts once its own cells are valid, even if another cell of the row is not,
+ *  so every duplicate shows in one round (ADR 0185 §3). */
 function parseFile<T>(
   source: CsvSource,
   parseRow: (c: RowCtx) => T | null,
-  key: (row: T) => string,
-  keyField: string,
+  /** The key columns: the property name first, then a child file's key date. */
+  keyCells: readonly string[],
 ): CsvParseResult<T & Located> {
   const file = readCsv(source);
   const rows: (T & Located)[] = [];
   const errors = [...file.errors];
   const firstLine = new Map<string, number>();
+  const keyField = keyCells[keyCells.length - 1] ?? "";
   for (const rec of file.records) {
     const c = new RowCtx(rec.cells, rec.line);
     const row = parseRow(c);
-    if (row !== null && c.errors.length === 0) {
-      const k = key(row);
-      const first = firstLine.get(k);
-      if (first !== undefined) {
-        c.fail(keyField, { code: "duplicateKey", firstRow: first });
-      } else {
-        firstLine.set(k, rec.line);
-        rows.push({ ...row, line: rec.line });
-      }
+    const keyValid = !c.errors.some((e) => keyCells.includes(e.field));
+    const k = keyCells
+      .map((f, i) => (i === 0 ? propertyKey(c.raw(f)) : c.raw(f)))
+      .join("\u0000");
+    const first = keyValid ? firstLine.get(k) : undefined;
+    if (first !== undefined) {
+      c.fail(keyField, { code: "duplicateKey", firstRow: first });
+    } else if (keyValid) {
+      firstLine.set(k, rec.line);
     }
+    if (row !== null && c.errors.length === 0)
+      rows.push({ ...row, line: rec.line });
     errors.push(...c.errors);
   }
   errors.sort((a, b) => a.row - b.row);
@@ -432,9 +438,6 @@ function parseFile<T>(
 /** Known property names, as `propertyKey`s. */
 const keySet = (names: Set<string> | undefined) =>
   names && new Set([...names].map(propertyKey));
-
-const childKey = (name: string, date: string) =>
-  `${propertyKey(name)}\u0000${date}`;
 
 // --- public parse functions ---
 
@@ -478,8 +481,7 @@ export function parseProperties(
         initial_works,
       };
     },
-    (r) => propertyKey(r.name),
-    "name",
+    ["name"],
   );
 }
 
@@ -498,8 +500,7 @@ export function parseValuations(
       if (!property_name || !valid_from || !market_value) return null;
       return { property_name, valid_from, valid_to, market_value };
     },
-    (r) => childKey(r.property_name, r.valid_from),
-    "valid_from",
+    ["property_name", "valid_from"],
   );
 }
 
@@ -518,8 +519,7 @@ export function parseRents(
       if (!property_name || !start_date || !monthly_rent) return null;
       return { property_name, start_date, end_date, monthly_rent };
     },
-    (r) => childKey(r.property_name, r.start_date),
-    "start_date",
+    ["property_name", "start_date"],
   );
 }
 
@@ -589,8 +589,7 @@ export function parseMortgages(
         contract_maturity_date,
       };
     },
-    (r) => childKey(r.property_name, r.start_date),
-    "start_date",
+    ["property_name", "start_date"],
   );
 }
 

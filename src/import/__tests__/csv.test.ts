@@ -619,6 +619,39 @@ describe("foreign keys and duplicates", () => {
       },
     ]);
   });
+
+  // ADR 0185 §3: a row's key counts once its key cells are valid, so the duplicate behind
+  // an invalid first row is reported in the same round.
+  it("reports a duplicate behind a row with another invalid cell", () => {
+    const rents = parseRents(
+      "property_name,start_date,end_date,monthly_rent\nA,2025-01-01,,x\nA,2025-01-01,,1000",
+      known,
+    );
+    expect(rents.rows).toEqual([]);
+    expect(rents.errors).toEqual([
+      {
+        row: 2,
+        field: "monthly_rent",
+        error: { code: "invalidNumber", value: "x" },
+      },
+      {
+        row: 3,
+        field: "start_date",
+        error: { code: "duplicateKey", firstRow: 2 },
+      },
+    ]);
+  });
+
+  it("does not register a key whose own cells are invalid", () => {
+    const rents = parseRents(
+      "property_name,start_date,end_date,monthly_rent\nA,2025-02-30,,1\nA,2025-02-30,,2",
+      known,
+    );
+    expect(rents.errors.map((e) => e.error.code)).toEqual([
+      "impossibleDate",
+      "impossibleDate",
+    ]);
+  });
 });
 
 describe("template generators", () => {
