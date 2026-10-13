@@ -8,24 +8,11 @@ import { describe, it, expect } from "vitest";
 import { en } from "../en";
 import { cs } from "../cs";
 import { ru } from "../ru";
+import { leaves, type Tree } from "./support/leaves";
 
-type Tree = { [k: string]: unknown };
 const DICTS = { en, cs, ru } as const;
 type Lang = keyof typeof DICTS;
 const LANGS = Object.keys(DICTS) as Lang[];
-
-function leaves(t: Tree, prefix = ""): Map<string, unknown> {
-  const out = new Map<string, unknown>();
-  for (const [k, v] of Object.entries(t)) {
-    if (v !== null && typeof v === "object" && !Array.isArray(v)) {
-      for (const [kk, vv] of leaves(v as Tree, `${prefix}${k}.`))
-        out.set(kk, vv);
-    } else {
-      out.set(`${prefix}${k}`, v);
-    }
-  }
-  return out;
-}
 
 const L = Object.fromEntries(
   LANGS.map((l) => [l, leaves(DICTS[l] as unknown as Tree)]),
