@@ -3,7 +3,15 @@
 // #136 (ADR 0154): the app shell's outcome regions. The toast's live region is in the
 // page before any text arrives; a notice stays until dismissed, is translated when it
 // renders, and carries a refused backup's records.
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { OutcomeRegions, ToastRegion } from "../OutcomeRegions";
@@ -139,6 +147,10 @@ describe("announced once (#274)", () => {
   it("a failure alerts and scrolls into view only where it first shows", () => {
     const scroll = vi.fn();
     Element.prototype.scrollIntoView = scroll;
+    // jsdom has no scrollIntoView; leave it as found.
+    onTestFinished(() => {
+      delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    });
     act(() =>
       useUiStore.getState().setFailure("xlsxExport", new Error("disk full")),
     );
@@ -152,7 +164,5 @@ describe("announced once (#274)", () => {
     expect(screen.getByText(en.xlsx.exportFailed("disk full"))).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
     expect(scroll).toHaveBeenCalledTimes(1);
-    // jsdom has no scrollIntoView; leave it as found.
-    delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
   });
 });

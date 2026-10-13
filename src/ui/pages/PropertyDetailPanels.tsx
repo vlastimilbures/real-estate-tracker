@@ -47,11 +47,6 @@ import { useT } from "../hooks/useT";
 
 const newId = () => crypto.randomUUID();
 
-/** When a not-yet-owned property will be bought (ADR 0156, 0189). */
-export interface NotOwned {
-  purchaseDate: Date;
-}
-
 /**
  * Snapshot KPI tiles (value / debt / equity / DSCR) + the two mini charts. A property not
  * owned yet on the date has no snapshot figures: a short purchase panel takes the tiles'
@@ -61,13 +56,13 @@ export function PropertySnapshotTiles({
   s,
   chartRows,
   modeWord,
-  purchase,
+  purchaseDate,
 }: {
   s: PropertySnapshot;
   chartRows: ChartRow[];
   modeWord: string;
   /** Shown instead of the tiles while `s` is not owned. */
-  purchase?: NotOwned | undefined;
+  purchaseDate?: Date | undefined;
 }) {
   const t = useT();
   const pd = t.propertyDetail;
@@ -92,8 +87,8 @@ export function PropertySnapshotTiles({
   ];
   return (
     <>
-      {!s.owned && purchase ? (
-        <NotOwnedPanel {...purchase} />
+      {!s.owned && purchaseDate ? (
+        <NotOwnedPanel purchaseDate={purchaseDate} />
       ) : (
         <SnapshotTiles s={s} />
       )}
@@ -121,7 +116,7 @@ export function PropertySnapshotTiles({
 
 /** A property not owned yet: when it is bought, and a link to its funding, which the
  *  Acquisition section lists (ADR 0156, 0189). */
-function NotOwnedPanel({ purchaseDate }: NotOwned) {
+function NotOwnedPanel({ purchaseDate }: { purchaseDate: Date }) {
   const t = useT();
   const d = t.propertyDetail;
   return (

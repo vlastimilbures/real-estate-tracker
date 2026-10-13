@@ -1254,11 +1254,6 @@ table.data tbody tr:hover td.sticky-col {
   gap: var(--s2) var(--s3);
   align-items: flex-end;
 }
-/* A row with an error: every control takes the invalid field's border (ADR 0189). */
-.event-row.invalid input,
-.event-row.invalid select {
-  border-color: var(--negative);
-}
 .event-row > .field {
   flex: 1 1 140px;
 }

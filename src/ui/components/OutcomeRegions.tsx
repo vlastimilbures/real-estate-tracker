@@ -36,7 +36,8 @@ function failureText(t: Dictionary, action: OutcomeAction, e: unknown): string {
   }
 }
 
-/** The notices and failures already shown on some page. */
+/** The notices and failures already shown on some page. By identity: the store makes a
+ *  new object for every notice and failure, so a repeat is announced again. */
 const shown = new WeakSet<Notice | Failure>();
 
 /** True only on the page where `item` first shows: each page mounts its own shell, and a

@@ -27,7 +27,7 @@ export function Field({
   const noteId = `${id}-note`;
   const note = error ?? help;
   return (
-    <div className={`field${error ? " invalid" : ""}`}>
+    <div className={`field${error || invalid ? " invalid" : ""}`}>
       {/* The "*" is CSS generated content with empty alt text: seen, not read
           (the control is aria-required instead) (UX-040). */}
       <label htmlFor={id} className={required ? "required" : undefined}>
