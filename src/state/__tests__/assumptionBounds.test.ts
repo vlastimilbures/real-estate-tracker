@@ -200,6 +200,19 @@ describe("the scenario list after a write whose reload failed (#215, ADR 0191 §
     });
   });
 
+  it("is checked even when the assumptions save is queued right behind the write", async () => {
+    failReloads();
+    const [added, saved] = await Promise.all([
+      store().addScenario(rateCut("-0.04")),
+      lowerReset(),
+    ]);
+    expect(added).toEqual({ ok: true });
+    expect(saved).toMatchObject({
+      ok: false,
+      error: { kind: "input", scenario: "Rate cut" },
+    });
+  });
+
   it("a saved change replaces the row the check reads", async () => {
     await store().addScenario(rateCut("-0.04"));
     failReloads();
