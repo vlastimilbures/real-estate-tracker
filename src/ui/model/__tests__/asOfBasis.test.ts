@@ -23,6 +23,7 @@ import {
   assumptions as seedAssumptions,
   portfolio,
 } from "../../../engine/__tests__/support/seed";
+import { mixed } from "../../../engine/__tests__/support/mixed";
 import { en } from "../../../i18n/en";
 
 const baseDate = isoDate("2026-06-07");
@@ -63,12 +64,15 @@ const plus5 = addYears(baseDate, 5);
 
 describe("asOfView (ADR 0088)", () => {
   // #265: the basis takes a projection year's calendar year from the base date alone,
-  // as every engine projection row numbers it.
+  // as every engine projection row numbers it (seed, and future, development and
+  // inactive properties).
   it("a projection row's calendar year is the base year plus its year", () => {
-    const rows = [
-      portfolioProjection(portfolio, seedAssumptions),
-      ...propertyProjections(portfolio, seedAssumptions).values(),
-    ].flat();
+    const rows = [portfolio, mixed]
+      .flatMap((p) => [
+        portfolioProjection(p, seedAssumptions),
+        ...propertyProjections(p, seedAssumptions).values(),
+      ])
+      .flat();
     const baseYear = seedAssumptions.baseDate.getUTCFullYear();
     for (const r of rows) expect(r.calendarYear).toBe(baseYear + r.year);
   });

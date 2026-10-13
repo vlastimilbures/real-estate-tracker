@@ -101,6 +101,7 @@ describe("Rate shock reach (ADR 0100)", () => {
   it("a re-render without a data change does not rebuild the reach", () => {
     render(<Scenarios />);
     const calls = vi.mocked(rateShockNote).mock.calls.length;
+    expect(calls).toBeGreaterThan(0);
     act(() => useUiStore.getState().setPresetsOpen(true));
     act(() => useUiStore.getState().setPresetsOpen(false));
     expect(vi.mocked(rateShockNote).mock.calls.length).toBe(calls);
