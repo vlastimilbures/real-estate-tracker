@@ -1,4 +1,4 @@
-# Real Estate Portfolio App — Specification
+# Real Estate Tracker — Specification
 
 Describes the behaviour of the current release; planned work lives in
 [`docs/roadmap.md`](docs/roadmap.md).
@@ -632,7 +632,9 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
   `pre-migration-v<from>-to-v<to>-<stamp>.sqlite` copy to the `backups/` folder next to it.
   A migration that meets data breaking a new rule aborts and leaves the DB unchanged.
 - The sample portfolio is seeded **only on first run**, recorded by a flag in `app_meta`;
-  an empty portfolio later stays empty (ADR 0016).
+  an empty portfolio later stays empty (ADR 0016). It can be cleared in one step, after a
+  safety backup (ADR 0094), and loaded again into an empty portfolio from Settings → Backup
+  (ADR 0112).
 - Errors are typed (`DataError` codes) and logged to a rotating local `app.log`.
 
 ## 6. CSV importer
@@ -821,7 +823,9 @@ offline badge, and controls for language and theme.
 1. **Dashboard** — hero KPI tiles (net worth today / at horizon, LTV, DSCR), nominal/real
    toggle, charts (value vs debt vs equity, equity change, net cash flow, LTV, etc.), KPI
    list, and a property filter. An **AsOfPicker** (Today / +1y / +5y presets, or any typed
-   date within the projection window) sets the snapshot date (§4.3). A compact **Financing &
+   date within the projection window) sets the snapshot date (§4.3). While the sample
+   portfolio is active, a dismissable banner here and on Properties says so and offers
+   **Clear sample and start my own** (ADR 0094). A compact **Financing &
    upcoming** panel (§4.7, ADR 0103) shows the next rate reset, the debt resetting within
    1/3/5 years, total interest and the next 12 months' events, each linking to its property.
    The KPI list ends with **Cash invested** (ADR 0119 §9): the recorded own cash of the
@@ -901,7 +905,8 @@ offline badge, and controls for language and theme.
      safety backup first
      (ADR 0052), then replaces all tables in one transaction and reloads app state. The
      same transaction removes the sample markers, so restored data never shows as the
-     sample (ADR 0127).
+     sample (ADR 0127). A **Sample portfolio** panel offers **Clear sample** while the
+     sample is active and **Load sample portfolio** while the portfolio is empty (ADR 0112).
      The tab shows the date of the last successful export (or "No backup exported yet")
      and says to keep a copy off this Mac. A sidebar reminder appears when the data
      changed since then and there is no backup or it is over 30 days old (ADR 0110).

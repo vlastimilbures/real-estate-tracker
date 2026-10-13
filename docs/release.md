@@ -19,7 +19,8 @@ runtime only, ADR 0063).
 5. **Docs impact** — if formulas, presets, limits, data formats or UI text changed since the
    last release, check that the documents below still describe the app: SPEC, the Guide
    strings (`src/i18n`), README, [`docs/model-limitations.md`](model-limitations.md),
-   [`docs/csv-import.md`](csv-import.md) and the [roadmap](roadmap.md). Update them in this
+   [`docs/data-safety.md`](data-safety.md), [`docs/csv-import.md`](csv-import.md) and the
+   [roadmap](roadmap.md). Update them in this
    release, not later.
 6. **Build, sign, verify** — merge the release commit (steps 2, 4 and 5) to `main` through a
    pull request and wait until CI on `main` passes. Then, on an up-to-date `main`, run

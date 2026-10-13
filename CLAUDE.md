@@ -1,4 +1,4 @@
-# CLAUDE.md — Real Estate Portfolio App
+# CLAUDE.md — Real Estate Tracker
 
 Project conventions and guardrails for Claude Code. Read this first. Sections are numbered so
 code comments can cite them (e.g. "CLAUDE.md §5").
