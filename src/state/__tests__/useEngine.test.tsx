@@ -381,6 +381,23 @@ describe("useProjections / usePropertyEngine", () => {
     );
   });
 
+  // #174 item 6: the schedule, projection and acquisition do not depend on the as-of
+  // date, so a new pick re-reads only the snapshot and the loan exposure.
+  it("a new as-of date reuses the schedule, projection and acquisition", () => {
+    const { result, rerender } = renderHook(
+      ({ asOf }) => usePropertyEngine("javorova", asOf),
+      { initialProps: { asOf: BASE } },
+    );
+    const first = result.current!;
+    rerender({ asOf: isoDate("2030-01-01") });
+    const next = result.current!;
+    expect(next.snapshot).not.toBe(first.snapshot);
+    expect(next.schedule).toBe(first.schedule);
+    expect(next.projection).toBe(first.projection);
+    expect(next.acquisition).toBe(first.acquisition);
+    expect(next.eventOutcomes).toBe(first.eventOutcomes);
+  });
+
   it("returns null for no id or an unknown id", () => {
     expect(renderHook(() => usePropertyEngine(null)).result.current).toBeNull();
     expect(

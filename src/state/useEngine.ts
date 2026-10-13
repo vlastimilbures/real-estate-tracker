@@ -248,42 +248,58 @@ export function usePropertyEngineResult(
   const assumptions = usePortfolioStore((s) => s.assumptions);
   const asOfDate = engineAsOf(asOf, assumptions?.baseDate);
   const asOfKey = asOfDate.getTime();
-  return useMemo(() => {
+  // What does not depend on the as-of date is built once per data change (#174).
+  const fixed = useMemo(() => {
     if (!portfolio || !assumptions || propertyId === null) return null;
     const property = portfolio.properties.find((p) => p.id === propertyId);
     if (!property) return null;
-    try {
+    const blocks = portfolio.mortgages.filter(
+      (b) => b.propertyId === propertyId,
+    );
+    return reported(() => {
       const built =
-        propertySchedules(portfolio.mortgages, [propertyId], assumptions).get(
-          propertyId,
-        ) ?? EMPTY_PROPERTY_SCHEDULE;
-      const schedule = built.rows;
+        propertySchedules(blocks, [propertyId], assumptions).get(propertyId) ??
+        EMPTY_PROPERTY_SCHEDULE;
       return {
-        asOf: asOfDate,
-        snapshot: propertySnapshot(
-          property,
-          portfolio,
-          assumptions,
-          asOfDate,
-          schedule,
-        ),
+        property,
+        blocks,
+        built,
         projection: propertyProjection(property, portfolio, assumptions, built),
-        schedule,
-        eventOutcomes: built.eventOutcomes,
-        financing: propertyLoanExposure(
-          portfolio.mortgages.filter((b) => b.propertyId === propertyId),
-          assumptions,
-          { rows: schedule, eventOutcomes: built.eventOutcomes },
-          asOfDate,
-        ),
         acquisition: acquisitionSummary(property, portfolio, assumptions),
       };
-    } catch (e) {
-      if (e instanceof EngineInputError) return { invalid: e };
-      throw e;
-    }
+    });
+  }, [portfolio, assumptions, propertyId]);
+  return useMemo(() => {
+    if (!fixed || "invalid" in fixed) return fixed;
+    if (!portfolio || !assumptions) return null; // set whenever `fixed` is
+    const { property, blocks, built, projection, acquisition } = fixed;
+    return reported(() => ({
+      asOf: asOfDate,
+      snapshot: propertySnapshot(
+        property,
+        portfolio,
+        assumptions,
+        asOfDate,
+        built.rows,
+      ),
+      projection,
+      schedule: built.rows,
+      eventOutcomes: built.eventOutcomes,
+      financing: propertyLoanExposure(blocks, assumptions, built, asOfDate),
+      acquisition,
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [portfolio, assumptions, propertyId, asOfKey]);
+  }, [fixed, asOfKey]);
+}
+
+/** `run()`, or the engine's input error when the stored data breaks a rule (DR-146). */
+function reported<T>(run: () => T): T | InvalidPropertyData {
+  try {
+    return run();
+  } catch (e) {
+    if (e instanceof EngineInputError) return { invalid: e };
+    throw e;
+  }
 }
 
 /** Per-property engine output for the detail screen (throws on invalid stored data). */
