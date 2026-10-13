@@ -257,6 +257,12 @@ export function PropertyFormModal({
   >({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Address and garage come from a second read in edit mode. Save waits for it and stays
+  // off if it fails, so a save cannot write them NULL (ADR 0184 §3).
+  const [extras, setExtras] = useState<"loading" | "ready" | "failed">(
+    mode === "edit" ? "loading" : "ready",
+  );
+  const canSave = !saving && extras === "ready";
   // Shut on add; open on edit when a record exists, so what is stored is seen (ADR 0119 §9),
   // or when a Data check link asked for it.
   const [fundingOpen, setFundingOpen] = useState(
@@ -293,9 +299,21 @@ export function PropertyFormModal({
         ...fundingDraft(p.funding),
       });
     }
-    void getPropertyExtras(propertyId).then(({ address, garage }) => {
-      load({ address: address ?? "", garage });
-    });
+    // Only the latest read counts: an older one settling late must not undo it.
+    let live = true;
+    getPropertyExtras(propertyId).then(
+      ({ address, garage }) => {
+        if (!live) return;
+        load({ address: address ?? "", garage });
+        setExtras("ready");
+      },
+      () => {
+        if (live) setExtras("failed");
+      },
+    );
+    return () => {
+      live = false;
+    };
   }, [mode, propertyId, portfolio, getPropertyExtras]);
 
   function set(field: keyof PropertyFormState, value: string | boolean | null) {
@@ -316,7 +334,7 @@ export function PropertyFormModal({
   async function handleSave() {
     const existingNames = (portfolio?.properties ?? [])
       .filter((p) => mode === "add" || p.id !== propertyId)
-      .map((p) => p.name.toLowerCase());
+      .map((p) => p.name);
     const result = parsePropertyForm(form, id, existingNames, t);
     showErrors(result.errors);
     if (!result.valid) return;
@@ -361,7 +379,7 @@ export function PropertyFormModal({
       onClose={onClose}
       closeLabel={t.common.close}
       onSubmit={() => {
-        if (!saving) void handleSave();
+        if (canSave) void handleSave();
       }}
       dirty={isDirty(baseline, form)}
       busy={saving}
@@ -370,7 +388,7 @@ export function PropertyFormModal({
           <Button onClick={onClose} disabled={saving}>
             {t.common.cancel}
           </Button>
-          <Button type="submit" variant="primary" disabled={saving}>
+          <Button type="submit" variant="primary" disabled={!canSave}>
             {saving
               ? t.common.saving
               : mode === "add"
@@ -435,6 +453,9 @@ export function PropertyFormModal({
           set={set}
         />
       </div>
+      {extras === "failed" && (
+        <ErrorBanner message={t.propertyForm.errExtrasLoad} />
+      )}
       {saveError && (
         <ErrorBanner message={saveError} onDismiss={() => setSaveError(null)} />
       )}

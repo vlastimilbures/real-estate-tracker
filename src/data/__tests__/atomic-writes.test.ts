@@ -19,6 +19,7 @@ import { propertyToRow, holdingCostToRow } from "../mappers";
 import type { Sql } from "../sql";
 import { isoDate } from "../../engine";
 import { money } from "../../engine";
+import { noExtras } from "./support/noExtras";
 
 async function ready(): Promise<TestSql> {
   const sql = openMemorySql();
@@ -69,7 +70,7 @@ describe("atomic writes", () => {
     await expect(
       insertPropertyWithCosts(
         failOn(sql, /INSERT INTO holding_costs/),
-        propertyToRow(p),
+        propertyToRow(p, noExtras),
         holdingCostToRow({ id: "hc-p-new", propertyId: "p-new" }),
       ),
     ).rejects.toThrow();
@@ -77,7 +78,7 @@ describe("atomic writes", () => {
 
     await insertPropertyWithCosts(
       sql,
-      propertyToRow(p),
+      propertyToRow(p, noExtras),
       holdingCostToRow({ id: "hc-p-new", propertyId: "p-new" }),
     );
     expect(await count(sql, "properties")).toBe(1);

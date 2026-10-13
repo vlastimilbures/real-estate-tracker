@@ -1189,6 +1189,8 @@ export const cs: Dictionary = {
     rentIndexOverride: "Vlastní indexace nájmu",
     overrideHelp: "Nechte prázdné pro globální hodnotu z Předpokladů",
     errNameExists: "Nemovitost s tímto názvem už existuje",
+    errExtrasLoad:
+      "Adresu a garáž se nepodařilo načíst. Zavřete formulář a otevřete ho znovu.",
     acquisitionSection: "Pořízení (nepovinné)",
     acquisitionHelp:
       "Jak byl nákup financován. Prázdná částka je neznámá; 0 je částka. U nemovitosti koupené po začátku projekce jsou vlastní zdroje platbou při koupi.",

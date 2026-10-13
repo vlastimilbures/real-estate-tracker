@@ -133,6 +133,11 @@ describe("row guards", () => {
     ['[{"date":"2024-03-12","amount":"NaN"}]', "has an invalid amount"],
     ['[{"date":"2024-02-30","amount":"1"}]', "has an invalid date"],
     ["not json", "is not valid JSON"],
+    // ADR 0184 §1: a key outside date/amount rejects the row, like prepayments.
+    [
+      '[{"date":"2024-03-12","amount":"1","note":"x"}]',
+      "has an unknown field note",
+    ],
   ])("rejects draws %s", (draws, problem) => {
     const e = dataError(() => rowToMortgageBlock({ ...mortgage, draws }));
     expect(e.details).toEqual([`mortgage_blocks m1: draws ${problem}`]);

@@ -4,6 +4,7 @@
 import { collectValues, moneyDraft, type FieldSpec } from "./formParse";
 import { formRules } from "./formParsers";
 import { INT_RANGES } from "../../lib/intRanges";
+import { propertyKey } from "../../lib/propertyKey";
 import type { AcquisitionFunding, Property } from "../../engine";
 import type { Dictionary } from "../../i18n";
 
@@ -132,9 +133,9 @@ export type PropertyFormResult =
  * Validate an in-progress property form and, when valid, assemble the engine
  * `Property` plus the address/garage extras (persisted for fidelity but not engine
  * inputs). `id` is the property's id: the edited one's, or a new random one the caller
- * made (ADR 0127). `existingNames` is every other property's name (lowercased) — used
- * for the uniqueness check; the form's own current name (in edit mode) must already be
- * excluded by the caller.
+ * made (ADR 0127). `existingNames` is every other property's name — used for the
+ * uniqueness check, matched by `propertyKey` like CSV import (ADR 0184 §4); the form's own
+ * current name (in edit mode) must already be excluded by the caller.
  */
 export function parsePropertyForm(
   form: PropertyFormState,
@@ -150,7 +151,7 @@ export function parsePropertyForm(
   const name = form.name.trim();
   if (!name) {
     errs.name = t.forms.required;
-  } else if (existingNames.includes(name.toLowerCase())) {
+  } else if (existingNames.some((n) => propertyKey(n) === propertyKey(name))) {
     errs.name = t.propertyForm.errNameExists;
   }
 

@@ -1258,6 +1258,8 @@ export const en = {
     rentIndexOverride: "Rent index override",
     overrideHelp: "Leave blank to use the global Assumptions value",
     errNameExists: "A property with this name already exists",
+    errExtrasLoad:
+      "Could not load the address and garage. Close the form and open it again.",
     acquisitionSection: "Acquisition (optional)",
     acquisitionHelp:
       "How the purchase was funded. A blank amount is unknown; 0 is an amount. For a property bought after the projection start, own cash is its down payment.",
