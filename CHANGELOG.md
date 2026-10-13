@@ -381,6 +381,8 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- The app renders once its bundled fonts have loaded (ADR 0192, #269), so chart axes are
+  measured with the final font and the last tick label no longer lands 1 px off.
 - Small state fixes (ADR 0191): a stress preset already saved under another name, or in
   another language, is found by its settings: it is ticked again and the "Already saved"
   toast names it, and a scenario that kept a preset's name but has other settings no longer
