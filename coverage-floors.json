@@ -10,5 +10,5 @@
   "src/ui/pages/**": { "lines": 86, "branches": 82 },
   "src/ui/components/**": { "lines": 93, "branches": 88 },
   "src/ui/hooks/**": { "lines": 96, "branches": 86 },
-  "src/ui/*.{ts,tsx}": { "lines": 89, "branches": 80 }
+  "src/ui/*.{ts,tsx}": { "lines": 92, "branches": 83 }
 }

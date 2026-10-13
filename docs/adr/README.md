@@ -240,6 +240,7 @@ it.
 | [0189](0189-outcome-regions-pending-purchase-a11y.md)          | Outcome banners announce once; a pending purchase reads clearly                               | Accepted                                                       | #274, #278, #282, #174, #273, #277, #281, #100     |
 | [0190](0190-compare-names-own-rate-properties.md)              | Scenario compare names the properties a level does not reach                                  | Accepted                                                       | #166                                               |
 | [0191](0191-state-fixes-preset-match.md)                       | Projections portfolio choice, stale scenario list, presets matched by settings                | Accepted                                                       | #210, #215, #162                                   |
+| [0192](0192-startup-waits-for-fonts.md)                        | Start-up waits for the bundled fonts                                                          | Accepted                                                       | #269                                               |
 
 <!-- adr-index:end -->
 

@@ -53,10 +53,6 @@ the default tolerance 8, at most 14 px. One changed KPI digit (a 21×30 px box) 
 300 changed px, so the defaults catch it (#137). For an exact comparison, set both
 variables to `0`. A bad value stops the diff with exit 2.
 
-Known flake: under load, the last x-axis tick label of the dashboard charts can land 1 px
-off (about 700 px on `02-dashboard-real` at `min`). Re-capture that screen before treating
-it as a change.
-
 PNG hashes cannot prove a no-op (DR-147). The capture emulates "Reduce motion" (charts
 skip their entry animation), turns CSS transitions off (DR-160) and waits until animations
 stop and the charts' SVG is stable before each shot.
