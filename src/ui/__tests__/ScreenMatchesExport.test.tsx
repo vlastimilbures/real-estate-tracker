@@ -63,7 +63,9 @@ function expectScreenMatchesExport<R>(
 ) {
   const body = [...table.tBodies[0]!.rows];
   expect(body).toHaveLength(rows.length);
-  expect(table.tHead!.rows[0]!.cells).toHaveLength(columns.length);
+  expect([...table.tHead!.rows[0]!.cells].map((c) => c.textContent)).toEqual(
+    columns.map((c) => c.header),
+  );
   body.forEach((tr, i) => {
     columns.forEach((c, j) => {
       const text = tr.cells[j]!.textContent;
