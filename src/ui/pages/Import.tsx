@@ -15,10 +15,8 @@ import {
   type ParsedValuationRow,
   type ParsedRentRow,
   type ParsedMortgageRow,
-  CsvImportError,
   CsvPlanChangedError,
   type CsvImportPreview,
-  type CsvImportProblem,
 } from "../../state/csv";
 import { useUiStore } from "../../state/uiStore";
 import { logFailure } from "../../state/diagnostics";
@@ -54,7 +52,6 @@ export function Import() {
   const [mortgages, setMortgages] =
     useState<FileState<ParsedMortgageRow> | null>(null);
   const [importing, setImporting] = useState(false);
-  const [refused, setRefused] = useState<CsvImportProblem[] | null>(null);
   const [preview, setPreview] = useState<CsvImportPreview | null>(null);
   // Why the last preview failed (ADR 0147); translated at render, like the import failure's notice.
   const [previewFailure, setPreviewFailure] = useState<{
@@ -182,7 +179,6 @@ export function Import() {
     setConfirming(false);
     setImporting(true);
     dismissFailure();
-    setRefused(null);
     setPlanChanged(false);
     try {
       const report = await importCsv(batch, preview.fingerprint);
@@ -196,8 +192,7 @@ export function Import() {
     } catch (e) {
       // Import is one transaction: only a failure before the commit lands here, so
       // nothing was written (DR-023). A failed reload after it resolves (ADR 0125).
-      if (e instanceof CsvImportError) setRefused(e.problems);
-      else if (e instanceof CsvPlanChangedError) {
+      if (e instanceof CsvPlanChangedError) {
         setPlanChanged(true);
         setPreview(e.preview);
       } else {
@@ -341,7 +336,6 @@ export function Import() {
               </div>
             </div>
           )}
-          {refused && <RefusedTable problems={refused} />}
         </Panel>
       )}
 

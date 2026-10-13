@@ -133,19 +133,8 @@ export interface CsvImportProblem {
   problem: CsvImportProblemCode;
 }
 
-/** The import was refused before anything was written. */
-export class CsvImportError extends Error {
-  readonly problems: CsvImportProblem[];
-  constructor(problems: CsvImportProblem[]) {
-    super(
-      `CSV import refused: ${problems.length} problem(s). Nothing was imported.`,
-    );
-    this.name = "CsvImportError";
-    this.problems = problems;
-  }
-}
-
-/** The plan changed between preview and commit; nothing was written (ADR 0096). */
+/** The plan changed between preview and commit, or has problems; nothing was written
+ *  (ADR 0096). The page shows the new preview, problems included (ADR 0185 §6). */
 export class CsvPlanChangedError extends Error {
   readonly preview: CsvImportPreview;
   constructor(preview: CsvImportPreview) {
@@ -643,8 +632,9 @@ export async function importCsv(
   expected: string,
 ): Promise<CsvImportReport> {
   const plan = planImport(batch, await readTables(sql), idsFor(batch));
-  if (plan.problems.length > 0) throw new CsvImportError(plan.problems);
-  if (expected !== plan.fingerprint)
+  // The page imports only a preview without problems, so a problem here means the data
+  // changed since: refuse with the new preview (ADR 0185 §6).
+  if (plan.problems.length > 0 || expected !== plan.fingerprint)
     throw new CsvPlanChangedError(previewOf(plan));
 
   await sql.transaction(plan.statements);
