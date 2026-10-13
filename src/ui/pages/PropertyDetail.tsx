@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { asOfBounds } from "../model/asOf";
 import {
   Pencil,
   Power,
@@ -186,7 +185,7 @@ export function PropertyDetail() {
   // as-of reads the projection year the charts plot; real terms are in base-date prices.
   const series = out ? projectionSeries(out.projection, mode, assumptions) : [];
   const basis = out
-    ? asOfView(assumptions.baseDate, out.asOf, series, view.isToday)
+    ? asOfView(assumptions.baseDate, out.asOf, view.isToday)
     : null;
   const s =
     out && basis
@@ -332,10 +331,7 @@ export function PropertyDetail() {
             <AsOfPicker
               value={asOf}
               onChange={setAsOf}
-              bounds={asOfBounds(
-                assumptions.baseDate,
-                assumptions.horizonYears,
-              )}
+              bounds={view.bounds}
               hint={pickerHint}
             />
           </div>

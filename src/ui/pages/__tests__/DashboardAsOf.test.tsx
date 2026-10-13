@@ -35,7 +35,7 @@ const base = assumptions.baseDate;
 
 function renderAt(asOf: IsoDate, isToday: boolean) {
   const snapshot = portfolioSnapshot(portfolio, assumptions, asOf);
-  const basis = asOfView(base, asOf, series, isToday);
+  const basis = asOfView(base, asOf, isToday);
   const s = tilesForAsOf(snapshot, series, basis, "nominal", assumptions);
   const labels = monthlyFlowLabels(en, basis, base, asOf);
   return render(

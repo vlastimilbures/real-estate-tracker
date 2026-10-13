@@ -8,7 +8,8 @@ import { act, renderHook } from "@testing-library/react";
 import {
   useEngine,
   useScenarioComparison,
-  useAllProjections,
+  useProjections,
+  usePropertyProjections,
   usePropertyEngine,
 } from "../useEngine";
 import { usePortfolioStore } from "../portfolioStore";
@@ -173,6 +174,61 @@ describe("useScenarioComparison", () => {
     expect(result.current).not.toBe(first);
   });
 
+  // #147: the memo key must cover every override field, shock sub-fields included. The
+  // Record type makes a new ScenarioOverrides field a compile error here until listed.
+  const full: Scenario["overrides"] = {
+    appreciationPa: rate("0.01"),
+    rentIndexationPa: rate("0.02"),
+    vacancyAllowance: rate("0.05"),
+    postFixationResetRatePa: rate("0.05"),
+    inflationPa: rate("0.03"),
+    inflationShock: { deltaPa: rate("0.02"), durationYears: 2 },
+    rateShock: { deltaPa: rate("0.01"), durationYears: 2 },
+    valueShock: { pct: rate("0.1"), atYear: 1 },
+  };
+  const edits: Record<
+    keyof Scenario["overrides"],
+    Partial<Scenario["overrides"]>[]
+  > = {
+    appreciationPa: [{ appreciationPa: rate("0.015") }],
+    rentIndexationPa: [{ rentIndexationPa: rate("0.025") }],
+    vacancyAllowance: [{ vacancyAllowance: rate("0.06") }],
+    postFixationResetRatePa: [{ postFixationResetRatePa: rate("0.06") }],
+    inflationPa: [{ inflationPa: rate("0.035") }],
+    inflationShock: [
+      { inflationShock: { deltaPa: rate("0.03"), durationYears: 2 } },
+      { inflationShock: { deltaPa: rate("0.02"), durationYears: 3 } },
+    ],
+    rateShock: [
+      { rateShock: { deltaPa: rate("0.02"), durationYears: 2 } },
+      { rateShock: { deltaPa: rate("0.01"), durationYears: 3 } },
+    ],
+    valueShock: [
+      { valueShock: { pct: rate("0.2"), atYear: 1 } },
+      { valueShock: { pct: rate("0.1"), atYear: 2 } },
+    ],
+  };
+  it.each(
+    Object.entries(edits).flatMap(([field, list]) =>
+      list.map((edit, i) => [`${field} #${i + 1}`, edit] as const),
+    ),
+  )("recomputes when %s changes", (_, edit) => {
+    const at = (overrides: Scenario["overrides"]): Scenario => ({
+      id: "s1",
+      name: "All",
+      overrides,
+    });
+    const { result, rerender } = renderHook(
+      ({ s }) => useScenarioComparison([s]),
+      { initialProps: { s: at(full) } },
+    );
+    const first = result.current;
+    rerender({ s: at({ ...full }) });
+    expect(result.current).toBe(first);
+    rerender({ s: at({ ...full, ...edit }) });
+    expect(result.current).not.toBe(first);
+  });
+
   it("a rename returns the new name (UX-051, DR-055)", () => {
     const { result, rerender } = renderHook(
       ({ s }) => useScenarioComparison([s]),
@@ -222,8 +278,8 @@ describe("useScenarioComparison", () => {
   });
 });
 
-describe("useAllProjections / usePropertyEngine", () => {
-  it("lists every active property's projection plus the portfolio", () => {
+describe("useProjections / usePropertyEngine", () => {
+  it("returns the portfolio and every property's projection, inactive included", () => {
     const withInactive = {
       ...portfolio,
       properties: portfolio.properties.map((p) =>
@@ -231,14 +287,19 @@ describe("useAllProjections / usePropertyEngine", () => {
       ),
     };
     act(() => usePortfolioStore.setState({ portfolio: withInactive }));
-    const { result } = renderHook(() => useAllProjections());
-    expect(result.current!.perProperty.map((p) => p.id)).toEqual([
-      "javorova",
-      "dubova",
-    ]);
+    const { result } = renderHook(() => useProjections());
+    expect([...result.current!.byProperty.keys()]).toEqual(
+      portfolio.properties.map((p) => p.id),
+    );
     expect(result.current!.portfolio).toHaveLength(
       assumptions.horizonYears + 1,
     );
+  });
+
+  it("usePropertyProjections returns the same projections without the portfolio sum", () => {
+    const all = renderHook(() => useProjections()).result.current!;
+    const byId = renderHook(() => usePropertyProjections()).result.current!;
+    expect(byId).toEqual(all.byProperty);
   });
 
   it("returns one property's snapshot, projection and schedule", () => {
@@ -325,6 +386,23 @@ describe("useAllProjections / usePropertyEngine", () => {
       KC,
       "debt",
     );
+  });
+
+  // #174 item 6: the schedule, projection and acquisition do not depend on the as-of
+  // date, so a new pick re-reads only the snapshot and the loan exposure.
+  it("a new as-of date reuses the schedule, projection and acquisition", () => {
+    const { result, rerender } = renderHook(
+      ({ asOf }) => usePropertyEngine("javorova", asOf),
+      { initialProps: { asOf: BASE } },
+    );
+    const first = result.current!;
+    rerender({ asOf: isoDate("2030-01-01") });
+    const next = result.current!;
+    expect(next.snapshot).not.toBe(first.snapshot);
+    expect(next.schedule).toBe(first.schedule);
+    expect(next.projection).toBe(first.projection);
+    expect(next.acquisition).toBe(first.acquisition);
+    expect(next.eventOutcomes).toBe(first.eventOutcomes);
   });
 
   it("returns null for no id or an unknown id", () => {

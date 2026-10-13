@@ -21,12 +21,7 @@ import type {
 import { fmtDate } from "../../lib/format";
 import type { Mode } from "./lens";
 import type { Dictionary } from "../../i18n";
-import {
-  periodLabelLocalized,
-  projectionSeries,
-  yearLabel,
-  type SeriesRow,
-} from "./projection";
+import { periodLabelLocalized, yearLabel, type SeriesRow } from "./projection";
 import { at } from "../../lib/arrays";
 
 export interface MonthlyFlow {
@@ -125,7 +120,6 @@ export function propertyTilesForAsOf(
 export function asOfView(
   baseDate: Date,
   asOf: Date,
-  series: SeriesRow[],
   isToday: boolean,
 ): AsOfBasis {
   const n = projectionYearForAsOf(baseDate, asOf);
@@ -133,7 +127,8 @@ export function asOfView(
     return {
       kind: "projection",
       year: n,
-      calendarYear: at(series, n).calendarYear,
+      // As the engine numbers projection rows.
+      calendarYear: baseDate.getUTCFullYear() + n,
     };
   if (isToday) return { kind: "today" };
   return { kind: "snapshot", date: asOf };
@@ -155,6 +150,9 @@ export function ownedOn(
   return purchaseDate.getTime() <= by.getTime();
 }
 
+/** A Properties row: the property's tiles plus its purchase date (ADR 0156). */
+type PropertyRow = PropertySnapshot & { purchaseDate: Date };
+
 /**
  * The Properties rows (ADR 0150): each property's Property detail tiles at `asOf` under
  * `basis`, in nominal Kč (the page has no lens), so a row and its detail page show the same
@@ -167,24 +165,25 @@ export function propertyRowsForAsOf(
   basis: AsOfBasis,
   asOf: Date,
   assumptions: Assumptions,
-): PropertySnapshot[] {
+): PropertyRow[] {
   const purchase = new Map(properties.map((p) => [p.id, p.purchaseDate]));
-  return perProperty.map((p) =>
-    propertyTilesForAsOf(
-      p,
-      projectionSeries(
+  return perProperty.map((p) => {
+    // Every row comes from `properties`, so its purchase date is always there.
+    const purchaseDate = purchase.get(p.propertyId) ?? asOf;
+    return {
+      ...propertyTilesForAsOf(
+        p,
+        // Nominal rows are the projection itself.
         projections.get(p.propertyId) ?? [],
+        basis,
+        asOf,
         "nominal",
         assumptions,
+        purchaseDate,
       ),
-      basis,
-      asOf,
-      "nominal",
-      assumptions,
-      // Every row comes from `properties`, so its purchase date is always there.
-      purchase.get(p.propertyId) ?? asOf,
-    ),
-  );
+      purchaseDate,
+    };
+  });
 }
 
 /** Calendar year of the last projection row ("Net worth in 2056"); as-of independent. */

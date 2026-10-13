@@ -6,7 +6,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { assertInputs } from "../validate";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
-import { portfolioProjection, propertyProjection } from "../projections";
+import {
+  portfolioProjection,
+  propertyProjection,
+  propertyProjections,
+} from "../projections";
 import { portfolioKpis, projectionAndKpis } from "../kpis";
 import { portfolioOutputs } from "../outputs";
 import { EMPTY_PROPERTY_SCHEDULE, propertySchedules } from "../schedule";
@@ -31,6 +35,11 @@ describe("DR-128 — assertInputs runs once per public call", () => {
 
   it("portfolioProjection", () => {
     portfolioProjection(portfolio, assumptions);
+    expect(calls()).toBe(1);
+  });
+
+  it("propertyProjections", () => {
+    propertyProjections(portfolio, assumptions);
     expect(calls()).toBe(1);
   });
 

@@ -12,7 +12,11 @@ import {
   schedulesByProperty,
 } from "../schedule";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
-import { portfolioProjection, propertyProjection } from "../projections";
+import {
+  portfolioProjection,
+  propertyProjection,
+  propertyProjections,
+} from "../projections";
 import { portfolioKpis, projectionAndKpis } from "../kpis";
 import { portfolioOutputs } from "../outputs";
 import { cpiIndex } from "../projections";
@@ -49,6 +53,7 @@ function entryPoints(p: Portfolio, a: Assumptions) {
         a,
         seedFull.get(first.id) ?? EMPTY_PROPERTY_SCHEDULE,
       ),
+    propertyProjections: () => propertyProjections(p, a),
     portfolioKpis: () => portfolioKpis(p, a),
   };
 }

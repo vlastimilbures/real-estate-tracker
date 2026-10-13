@@ -6,13 +6,19 @@ import {
   propertySnapshot,
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedules,
+  propertyProjections,
+  portfolioSnapshot,
   isoDate,
   type IsoDate,
 } from "../../../engine";
 import { assumptions } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
 import { projectionSeries } from "../projection";
-import { asOfView, propertyTilesForAsOf } from "../dashboard";
+import {
+  asOfView,
+  propertyRowsForAsOf,
+  propertyTilesForAsOf,
+} from "../dashboard";
 import type { Mode } from "../lens";
 
 const fullSchedules = propertySchedules(
@@ -32,7 +38,7 @@ function ownedAt(asOf: IsoDate, mode: Mode, isToday = false): boolean {
   return propertyTilesForAsOf(
     propertySnapshot(future, mixed, assumptions, asOf, fullSchedule.rows),
     series,
-    asOfView(assumptions.baseDate, asOf, series, isToday),
+    asOfView(assumptions.baseDate, asOf, isToday),
     asOf,
     mode,
     assumptions,
@@ -55,4 +61,24 @@ describe("propertyTilesForAsOf owned (purchase 15.03.2028, base 07.06.2026)", ()
       expect(ownedAt(isoDate("2030-06-07"), mode)).toBe(true);
     });
   }
+});
+
+// #278: each Properties row carries its purchase date, so the page builds no second map.
+describe("propertyRowsForAsOf", () => {
+  it("each row carries its property's purchase date and ownership", () => {
+    const asOf = isoDate("2026-09-01");
+    const rows = propertyRowsForAsOf(
+      portfolioSnapshot(mixed, assumptions, asOf).perProperty,
+      mixed.properties,
+      propertyProjections(mixed, assumptions),
+      asOfView(assumptions.baseDate, asOf, false),
+      asOf,
+      assumptions,
+    );
+    for (const r of rows) {
+      const p = mixed.properties.find((x) => x.id === r.propertyId)!;
+      expect(r.purchaseDate).toBe(p.purchaseDate);
+    }
+    expect(rows.find((r) => r.propertyId === "future")!.owned).toBe(false);
+  });
 });

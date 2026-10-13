@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAllProjections } from "../../state/useEngine";
+import { useProjections } from "../../state/useEngine";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { AppShell } from "../components/AppShell";
@@ -25,7 +25,7 @@ import { portfolioState } from "../model/portfolioState";
 
 export function Projections() {
   const t = useT();
-  const all = useAllProjections();
+  const all = useProjections();
   const portfolio = usePortfolioStore((s) => s.portfolio);
   const assumptions = usePortfolioStore((s) => s.assumptions);
   const mode = useUiStore((s) => s.mode);
@@ -51,18 +51,20 @@ export function Projections() {
     );
   }
 
+  const active = (portfolio?.properties ?? []).filter(
+    (p) => p.active !== false,
+  );
   const options = [
     { value: "portfolio", label: t.projections.portfolio },
-    ...all.perProperty.map((p) => ({
+    ...active.map((p) => ({
       value: p.id,
       label: shortPropertyName(p.name),
     })),
   ];
   const property =
-    entity === "portfolio"
-      ? undefined
-      : all.perProperty.find((p) => p.id === entity);
-  const selected = property?.projection ?? all.portfolio;
+    entity === "portfolio" ? undefined : active.find((p) => p.id === entity);
+  const selected =
+    (property && all.byProperty.get(property.id)) ?? all.portfolio;
   const rows = projectionSeries(selected, mode, assumptions);
   const entityLabel =
     options.find((o) => o.value === entity)?.label ?? t.projections.portfolio;

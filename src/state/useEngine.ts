@@ -4,6 +4,7 @@
 import { useMemo } from "react";
 import { usePortfolioStore } from "./portfolioStore";
 import { scenarioRuleErrors } from "../import/inputRules";
+import { serializeOverrides } from "../data/mappers";
 import { todayUtc } from "../lib/day";
 import { timed } from "../lib/perf";
 import {
@@ -13,6 +14,7 @@ import {
   propertySnapshot,
   portfolioProjection,
   propertyProjection,
+  propertyProjections,
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedules,
   propertyLoanExposure,
@@ -153,9 +155,11 @@ export function useScenarioComparison(
 ): ScenarioResult[] | null {
   const portfolio = usePortfolioStore((s) => s.portfolio);
   const assumptions = usePortfolioStore((s) => s.assumptions);
-  // Stable dep: re-run only when a selected scenario's id/overrides/shock change.
+  // Stable dep: re-run only when a selected scenario's id or overrides change. The key is
+  // the stored form, which the restore tests keep complete; a per-field test pins that
+  // each field re-runs the compare (#147).
   const key = scenarios
-    .map((s) => `${s.id}:${JSON.stringify(serializeForKey(s))}`)
+    .map((s) => `${s.id}:${serializeOverrides(s.overrides)}`)
     .join("|");
   const computed = useMemo(() => {
     if (!portfolio || !assumptions) return null;
@@ -188,38 +192,15 @@ export function useScenarioComparison(
   }, [computed, names]);
 }
 
-/** Decimals → strings so a scenario's content can key the comparison memo. */
-function serializeForKey(s: Scenario) {
-  const o = s.overrides;
-  return {
-    appreciationPa: o.appreciationPa?.toString(),
-    rentIndexationPa: o.rentIndexationPa?.toString(),
-    vacancyAllowance: o.vacancyAllowance?.toString(),
-    postFixationResetRatePa: o.postFixationResetRatePa?.toString(),
-    inflationPa: o.inflationPa?.toString(),
-    inflationShock: o.inflationShock
-      ? `${o.inflationShock.deltaPa}/${o.inflationShock.durationYears}`
-      : undefined,
-    rateShock: o.rateShock
-      ? `${o.rateShock.deltaPa}/${o.rateShock.durationYears}`
-      : undefined,
-    valueShock: o.valueShock
-      ? `${o.valueShock.pct}@${o.valueShock.atYear}`
-      : undefined,
-  };
-}
-
-export interface NamedProjection {
-  id: string;
-  name: string;
-  projection: ProjectionYear[];
-}
-
-/** Portfolio + every property's year-by-year projection (for the Projections grid). */
-export function useAllProjections(): {
+export interface Projections {
   portfolio: ProjectionYear[];
-  perProperty: NamedProjection[];
-} | null {
+  /** Every property's projection by id, inactive ones included (the page filters). */
+  byProperty: Map<string, ProjectionYear[]>;
+}
+
+/** The portfolio's and every property's year-by-year projection, from one set of loan
+ *  schedules (Projections grid). */
+export function useProjections(): Projections | null {
   const portfolio = usePortfolioStore((s) => s.portfolio);
   const assumptions = usePortfolioStore((s) => s.assumptions);
   return useMemo(() => {
@@ -231,46 +212,23 @@ export function useAllProjections(): {
     );
     return {
       portfolio: portfolioProjection(portfolio, assumptions, schedules),
-      perProperty: portfolio.properties
-        .filter((p) => p.active !== false)
-        .map((p) => ({
-          id: p.id,
-          name: p.name,
-          projection: propertyProjection(
-            p,
-            portfolio,
-            assumptions,
-            schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
-          ),
-        })),
+      byProperty: propertyProjections(portfolio, assumptions, schedules),
     };
   }, [portfolio, assumptions]);
 }
 
-/** Every property's year-by-year projection by id, inactive ones included: the Properties
- *  rows read their Today basis from it, as Property detail does (ADR 0150). */
+/** Every property's projection by id, inactive ones included, without the portfolio
+ *  sum: the Properties rows read their Today basis from it (ADR 0150). */
 export function usePropertyProjections(): Map<string, ProjectionYear[]> | null {
   const portfolio = usePortfolioStore((s) => s.portfolio);
   const assumptions = usePortfolioStore((s) => s.assumptions);
-  return useMemo(() => {
-    if (!portfolio || !assumptions) return null;
-    const schedules = propertySchedules(
-      portfolio.mortgages,
-      portfolio.properties.map((p) => p.id),
-      assumptions,
-    );
-    return new Map(
-      portfolio.properties.map((p) => [
-        p.id,
-        propertyProjection(
-          p,
-          portfolio,
-          assumptions,
-          schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
-        ),
-      ]),
-    );
-  }, [portfolio, assumptions]);
+  return useMemo(
+    () =>
+      portfolio && assumptions
+        ? propertyProjections(portfolio, assumptions)
+        : null,
+    [portfolio, assumptions],
+  );
 }
 
 export interface PropertyEngineOutput {
@@ -305,42 +263,59 @@ export function usePropertyEngineResult(
   const assumptions = usePortfolioStore((s) => s.assumptions);
   const asOfDate = engineAsOf(asOf, assumptions?.baseDate);
   const asOfKey = asOfDate.getTime();
-  return useMemo(() => {
+  // What does not depend on the as-of date is built once per data change (#174).
+  const fixed = useMemo(() => {
     if (!portfolio || !assumptions || propertyId === null) return null;
     const property = portfolio.properties.find((p) => p.id === propertyId);
     if (!property) return null;
-    try {
+    const blocks = portfolio.mortgages.filter(
+      (b) => b.propertyId === propertyId,
+    );
+    return reported(() => {
       const built =
-        propertySchedules(portfolio.mortgages, [propertyId], assumptions).get(
-          propertyId,
-        ) ?? EMPTY_PROPERTY_SCHEDULE;
-      const schedule = built.rows;
+        propertySchedules(blocks, [propertyId], assumptions).get(propertyId) ??
+        EMPTY_PROPERTY_SCHEDULE;
       return {
-        asOf: asOfDate,
-        snapshot: propertySnapshot(
-          property,
-          portfolio,
-          assumptions,
-          asOfDate,
-          schedule,
-        ),
+        portfolio,
+        assumptions,
+        property,
+        blocks,
+        built,
         projection: propertyProjection(property, portfolio, assumptions, built),
-        schedule,
-        eventOutcomes: built.eventOutcomes,
-        financing: propertyLoanExposure(
-          portfolio.mortgages.filter((b) => b.propertyId === propertyId),
-          assumptions,
-          { rows: schedule, eventOutcomes: built.eventOutcomes },
-          asOfDate,
-        ),
         acquisition: acquisitionSummary(property, portfolio, assumptions),
       };
-    } catch (e) {
-      if (e instanceof EngineInputError) return { invalid: e };
-      throw e;
-    }
+    });
+  }, [portfolio, assumptions, propertyId]);
+  return useMemo(() => {
+    if (!fixed || "invalid" in fixed) return fixed;
+    const { portfolio, assumptions, property, blocks, built } = fixed;
+    return reported(() => ({
+      asOf: asOfDate,
+      snapshot: propertySnapshot(
+        property,
+        portfolio,
+        assumptions,
+        asOfDate,
+        built.rows,
+      ),
+      projection: fixed.projection,
+      schedule: built.rows,
+      eventOutcomes: built.eventOutcomes,
+      financing: propertyLoanExposure(blocks, assumptions, built, asOfDate),
+      acquisition: fixed.acquisition,
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [portfolio, assumptions, propertyId, asOfKey]);
+  }, [fixed, asOfKey]);
+}
+
+/** `run()`, or the engine's input error when the stored data breaks a rule (DR-146). */
+function reported<T>(run: () => T): T | InvalidPropertyData {
+  try {
+    return run();
+  } catch (e) {
+    if (e instanceof EngineInputError) return { invalid: e };
+    throw e;
+  }
 }
 
 /** Per-property engine output for the detail screen (throws on invalid stored data). */

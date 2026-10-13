@@ -2,10 +2,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { MetricLabel } from "../components/MetricLabel";
 import { Pencil, Trash2, Plus, Building2, Upload } from "lucide-react";
 import { useEngine, usePropertyProjections } from "../../state/useEngine";
-import { todayUtc } from "../../lib/day";
-import { asOfBounds, resolveAsOf } from "../model/asOf";
+import { useAsOf } from "../hooks/useAsOf";
 import { asOfView, propertyRowsForAsOf } from "../model/dashboard";
-import { projectionSeries } from "../model/projection";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { AppShell } from "../components/AppShell";
@@ -49,14 +47,7 @@ export function Properties() {
   const t = useT();
   // Today by the one resolver, as Property detail shows it at Today (ADR 0150); Properties
   // does not follow the picked as-of date (ADR 0111).
-  const assumptions = usePortfolioStore((s) => s.assumptions);
-  const view = assumptions
-    ? resolveAsOf(
-        null,
-        todayUtc(),
-        asOfBounds(assumptions.baseDate, assumptions.horizonYears),
-      )
-    : null;
+  const view = useAsOf({ followPick: false });
   const engine = useEngine(null, view?.date ?? null);
   const projections = usePropertyProjections();
   const removeProperty = usePortfolioStore((s) => s.removeProperty);
@@ -76,16 +67,10 @@ export function Properties() {
     if (newPropertyRequested) clearNewPropertyRequest();
   }, [newPropertyRequested, clearNewPropertyRequest]);
 
-  // The Today basis of the date, from the portfolio projection (its years are the
-  // properties' years), and each row read by it.
+  // The Today basis of the date, and each row read by it.
   const basis =
     engine && view
-      ? asOfView(
-          engine.assumptions.baseDate,
-          view.date,
-          projectionSeries(engine.projection, "nominal", engine.assumptions),
-          view.isToday,
-        )
+      ? asOfView(engine.assumptions.baseDate, view.date, view.isToday)
       : null;
   const perProperty =
     engine && view && basis && projections
@@ -99,21 +84,8 @@ export function Properties() {
         )
       : [];
   const deleteTarget = perProperty.find((p) => p.propertyId === deletingId);
-  const purchaseDates = new Map(
-    engine?.portfolio.properties.map((p) => [p.id, p.purchaseDate]) ?? [],
-  );
   /** A pending purchase has no figures yet, only its purchase date (ADR 0156). */
   const fig = (owned: boolean, cell: ReactNode) => (owned ? cell : "—");
-  const purchaseOn = (id: string) => {
-    const date = purchaseDates.get(id);
-    return (
-      date && (
-        <span className="cell-sub">
-          {t.properties.pendingPurchaseOn(fmtDate(date))}
-        </span>
-      )
-    );
-  };
 
   async function handleDelete(id: string) {
     const result = await removeProperty(id);
@@ -249,7 +221,13 @@ export function Properties() {
                         </span>
                       )}
                       {/* After both badges, so they stay on the name's line. */}
-                      {!p.owned && purchaseOn(p.propertyId)}
+                      {!p.owned && (
+                        <span className="cell-sub">
+                          {t.properties.pendingPurchaseOn(
+                            fmtDate(p.purchaseDate),
+                          )}
+                        </span>
+                      )}
                     </td>
                     <td>
                       {fig(
