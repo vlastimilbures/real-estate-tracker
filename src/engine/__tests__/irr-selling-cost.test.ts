@@ -11,6 +11,7 @@ import { ONE, ZERO, type Decimal } from "../../lib/money";
 import { rate } from "../brands";
 import type { Assumptions } from "../types";
 import { assumptions, portfolio, PARITY } from "./support/seed";
+import { mixed } from "./support/mixed";
 import { expectKc } from "./support/tolerance";
 
 const at = (pct: string): Assumptions => ({
@@ -79,6 +80,31 @@ describe("selling costs in the levered IRR's terminal value (ADR 0183)", () => {
     // The cost on value_N, discounted, is what separates this root from the cost-free one.
     const cost = end.value.times("0.04").div(ONE.plus(irr).pow(n));
     expect(cost.toNumber()).toBeGreaterThan(1000);
+  });
+
+  it("takes the rate off value_N, not reportedValue_N, with a tranche undrawn (#337)", () => {
+    // mixed's development loan draws its last 1,000,000 Kč in 2027-08, after a 1-year
+    // horizon, so value_N − reportedValue_N is that tranche (ADR 0169).
+    const a: Assumptions = { ...at("0.04"), horizonYears: 1 };
+    const proj = portfolioProjection(mixed, a);
+    const end = proj.at(-1)!;
+    expectKc(end.value.minus(end.reportedValue), 1_000_000);
+    const npv = (r: Decimal, base: Decimal) =>
+      proj.reduce(
+        (s, y, t) =>
+          s.plus(
+            (t === 0
+              ? y.equity.negated()
+              : t === proj.length - 1
+                ? y.cashToOwner.plus(y.equity).minus(base.times("0.04"))
+                : y.cashToOwner
+            ).div(ONE.plus(r).pow(t)),
+          ),
+        ZERO as Decimal,
+      );
+    const irr = portfolioKpis(mixed, a).leveredIrrNominal!;
+    expect(npv(irr, end.value).abs().toNumber()).toBeLessThan(1);
+    expect(npv(irr, end.reportedValue).abs().toNumber()).toBeGreaterThan(1000);
   });
 
   it("every scenario keeps the base rate (not a lever)", () => {

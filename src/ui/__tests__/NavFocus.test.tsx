@@ -55,7 +55,8 @@ describe("focus after navigation (ADR 0146)", () => {
     screen.getByRole("button", { name: en.nav.guide }).focus();
     await user.keyboard("{Enter}");
     await waitFor(() => expect(pageTitle()).toBe(en.guide.title));
-    expect(document.activeElement?.id).toBe("main");
+    // The focus move can land after the title on a slow runner (#335).
+    await waitFor(() => expect(document.activeElement?.id).toBe("main"));
   });
 
   // An outcome pin: Guide's focus effect runs after AppShell's and wins with or without
