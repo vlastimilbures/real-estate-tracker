@@ -117,8 +117,9 @@ export function ProjectionGrid({
                     )}
                   </td>
                 )}
-                {/* ADR 0169: the value less the tranches not drawn yet, the drawn
-                    balance, and those tranches while a development loan draws. */}
+                {/* ADR 0169: the value less the tranches not drawn yet, a purchase's
+                    value in its year (ADR 0194), the drawn balance, and those tranches
+                    while a development loan draws. */}
                 <td>
                   <Money
                     value={r.reportedValue}
