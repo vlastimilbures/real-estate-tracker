@@ -381,6 +381,9 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- A failed Excel export or CSV template save shows the system's reason without an English
+  "Could not save the file" inside the Czech or Russian sentence (ADR 0193, #169). A crash
+  log message cut at 500 characters ends with "…" (#323).
 - The app renders once its bundled fonts have loaded (ADR 0192, #269), so chart axes are
   measured with the final font and the last tick label no longer lands 1 px off.
 - Small state fixes (ADR 0191): a stress preset already saved under another name, or in

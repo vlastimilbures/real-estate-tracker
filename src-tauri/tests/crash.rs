@@ -40,9 +40,19 @@ fn panic_line_caps_a_long_message_and_keeps_where() {
         .strip_prefix("PANIC ")
         .and_then(|rest| rest.split(" at ").next())
         .unwrap();
-    assert_eq!(message.chars().count(), 500, "{line}");
+    // ADR 0193: a cut message ends with "…", so it does not look complete.
+    assert_eq!(message, format!("{}…", "ž".repeat(500)), "{line}");
     assert!(
         line.ends_with(&format!("crash.rs:{}", location.line())),
         "{line}"
+    );
+}
+
+#[test]
+fn panic_line_keeps_a_500_character_message_unmarked() {
+    let exact: &(dyn std::any::Any + Send) = &"ž".repeat(500);
+    assert_eq!(
+        panic_line(exact, None),
+        format!("PANIC {}", "ž".repeat(500))
     );
 }

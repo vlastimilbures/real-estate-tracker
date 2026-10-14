@@ -18,7 +18,7 @@ import { MIGRATIONS, V7_TABLES, stamp } from "./migrations";
 import { DataError, messageOf } from "./errors";
 import { propertyKey } from "../lib/propertyKey";
 import {
-  SaveFileError,
+  saveFailureDetail,
   type SaveFileOptions,
   type SaveOutcome,
 } from "../platform/saveFileTypes";
@@ -607,8 +607,7 @@ export class BackupExportError extends Error {
   /** The underlying failure, for display. */
   readonly detail: string;
   constructor(cause: unknown) {
-    const detail =
-      cause instanceof SaveFileError ? cause.detail : messageOf(cause);
+    const detail = saveFailureDetail(cause);
     super(`Could not save the backup: ${detail}`, { cause });
     this.name = "BackupExportError";
     this.detail = detail;
