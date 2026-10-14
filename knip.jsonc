@@ -12,6 +12,10 @@
     "@fontsource-variable/fraunces",
     "@fontsource-variable/public-sans",
   ],
+  // knip 6.41 reads Playwright's webServer.command; under --production the devDependency
+  // `vite` looks unlisted though the Playwright configs never ship. Plain `knip` hints
+  // "Remove from ignoreBinaries"; keep it, `knip:prod` needs it.
+  "ignoreBinaries": ["vite"],
   "ignoreIssues": {
     // The independent reference model (P2) keeps its full API for cross-checks.
     "src/engine/__tests__/reference/mortgageReference.ts": ["exports"],
