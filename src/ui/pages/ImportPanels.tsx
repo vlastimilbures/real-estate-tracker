@@ -4,8 +4,8 @@
 import { useState, useRef, useCallback } from "react";
 import { Panel, Button, Badge, TableWrap } from "../components/primitives";
 import type { CsvParseResult, CsvImportProblem } from "../../state/csv";
-import { logFailure, messageOf } from "../../state/diagnostics";
-import { saveFile } from "../../state/platform";
+import { logFailure } from "../../state/diagnostics";
+import { saveFailureDetail, saveFile } from "../../state/platform";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { fmtCzk } from "../../lib/format";
@@ -188,7 +188,7 @@ export function EntityImportPanel<T>({
       await saveCsv(templateFile, templateFn());
     } catch (e) {
       logFailure("TEMPLATE", e);
-      setTemplateError(t.importPage.templateFailed(messageOf(e)));
+      setTemplateError(t.importPage.templateFailed(saveFailureDetail(e)));
     }
   }
 

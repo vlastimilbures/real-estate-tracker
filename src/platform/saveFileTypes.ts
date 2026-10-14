@@ -18,6 +18,13 @@ export class SaveFileError extends Error {
   }
 }
 
+/** The OS text of a failed save without the English wrapper, else the error's message:
+ *  the UI puts it inside a translated sentence (ADR 0193). */
+export function saveFailureDetail(e: unknown): string {
+  if (e instanceof SaveFileError) return e.detail;
+  return e instanceof Error ? e.message : String(e);
+}
+
 export interface SaveFileOptions {
   /** Suggested file name. */
   filename: string;

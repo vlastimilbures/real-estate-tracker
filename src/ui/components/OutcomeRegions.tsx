@@ -9,7 +9,7 @@ import {
   type OutcomeAction,
 } from "../../state/uiStore";
 import { RestoreError } from "../../state/backup";
-import { messageOf } from "../../state/diagnostics";
+import { saveFailureDetail } from "../../state/platform";
 import type { Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { Button, ErrorBanner } from "./primitives";
@@ -30,7 +30,7 @@ function failureText(t: Dictionary, action: OutcomeAction, e: unknown): string {
     case "import":
       return backupFailureText(t, e, t.importPage.importFailed).text;
     case "xlsxExport":
-      return t.xlsx.exportFailed(messageOf(e));
+      return t.xlsx.exportFailed(saveFailureDetail(e));
     case "revealFolder":
       return t.boot.revealFailed;
   }
