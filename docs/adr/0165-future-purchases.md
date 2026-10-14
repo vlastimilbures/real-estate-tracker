@@ -10,7 +10,8 @@
   [0156](0156-pending-purchase-display.md) (§3: a pending row shows a debt it already owes;
   §5: the only-pending Dashboard totals include that debt)
 - Amended by: [0166](0166-development-committed-debt.md) (decision 1: a development flat
-  comes in at its completed value, with no construction ramp)
+  comes in at its completed value, with no construction ramp), [0193](0193-kept-banners-purchases-column-save-errors.md) (the
+  projection table and export show the acquired value)
 - Related: [0134](0134-acquisition-cash-gaps.md) (principal repaid before baseDate),
   [0032](0032-value-reanchor.md) (the value curve), DR-092 (`draws`)
 
