@@ -1295,6 +1295,8 @@ export const en = {
     opening: "opening",
     period: "Period",
     value: "Value",
+    // ADR 0194: the value purchases and construction add (as chart.seriesPurchases).
+    purchases: "Purchases & construction",
     debt: "Debt",
     undrawn: "Undrawn",
     equity: "Equity",

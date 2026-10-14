@@ -7,6 +7,8 @@ import type { Decimal } from "../../lib/money";
 import {
   periodLabelLocalized,
   projectionExtras,
+  purchasedValue,
+  purchasesColumn,
   undrawnColumn,
   yearLabel,
   showPeriodColumn,
@@ -28,6 +30,7 @@ export function ProjectionGrid({
   const showPeriod = showPeriodColumn(baseDate);
   const extras = projectionExtras(rows, t.projGrid);
   const undrawn = undrawnColumn(rows, t.projGrid);
+  const purchases = purchasesColumn(rows, t.projGrid);
   return (
     <TableWrap label={t.projGrid.caption}>
       <table className="data">
@@ -43,6 +46,11 @@ export function ProjectionGrid({
               </th>
             )}
             <th scope="col">{t.projGrid.value}</th>
+            {purchases.map(({ key, header }) => (
+              <th key={key} scope="col">
+                {header}
+              </th>
+            ))}
             <th scope="col">{t.projGrid.debt}</th>
             {undrawn.map(({ key, header }) => (
               <th key={key} scope="col">
@@ -110,8 +118,9 @@ export function ProjectionGrid({
                     )}
                   </td>
                 )}
-                {/* ADR 0169: the value less the tranches not drawn yet, the drawn
-                    balance, and those tranches while a development loan draws. */}
+                {/* ADR 0169: the value less the tranches not drawn yet, a purchase's
+                    value and construction (ADR 0194), the drawn balance, and those tranches
+                    while a development loan draws. */}
                 <td>
                   <Money
                     value={r.reportedValue}
@@ -119,6 +128,9 @@ export function ProjectionGrid({
                     suffix={false}
                   />
                 </td>
+                {purchases.map(({ key }) => (
+                  <td key={key}>{flow(purchasedValue(r))}</td>
+                ))}
                 <td>
                   <Money value={r.balance} parens={false} suffix={false} />
                 </td>

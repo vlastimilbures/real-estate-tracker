@@ -15,6 +15,11 @@ engine without the form, and remove it when the last part lands.
 
 ### Added
 
+- The projection grid and its Excel export have a **Purchases & construction** column
+  after Value (ADR 0194, #317): a property bought after the projection start shows its
+  value in its purchase year, and a development flat the tranches drawn to build it, as the
+  Dashboard's equity-change chart stacks them. So a rise in Value that is not growth reads
+  in the grid. The column appears only when the horizon holds a purchase or construction.
 - Scenario compare names the properties a scenario's growth level does not reach (ADR
   0190, #166): when a scenario sets the appreciation or rent-indexation level, a line under
   the key figures lists the active properties that keep their own rate, for example "Low
@@ -381,6 +386,9 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- The stale-data and edit-error banners are read aloud by a screen reader only on the page
+  where they first appear, not again on every page change (ADR 0194, #350). A new error, or
+  the data turning stale again, is announced.
 - A failed Excel export or CSV template save shows the system's reason without an English
   "Could not save the file" inside the Czech or Russian sentence (ADR 0193, #169). A crash
   log message cut at 500 characters ends with "…" (#323).

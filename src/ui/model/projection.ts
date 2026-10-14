@@ -2,7 +2,7 @@
 // per-year rows. Real terms come from the engine (CPI index, D-23); ratios like LTV are
 // lens-invariant. Returns Decimals so the grid formats at full precision; charts convert
 // at their edge.
-import type { Decimal } from "../../lib/money";
+import { Decimal } from "../../lib/money";
 import { cpiIndex, edate, realProjection } from "../../engine";
 import type { Assumptions, ProjectionYear } from "../../engine";
 import type { Mode } from "./lens";
@@ -101,6 +101,28 @@ export function undrawnColumn(rows: SeriesRow[], g: Dictionary["projGrid"]) {
   return nonZeroColumns(rows, [{ key: "undrawnDebt", header: g.undrawn }]);
 }
 
+/** What a year's development draws build (ADR 0170): the tranches drawn for construction,
+ *  less, in a purchase year, the tranches the bought flat has not drawn yet. */
+export function builtValue(r: SeriesRow): Decimal {
+  const released = r.draws.minus(r.committedDraws);
+  return Decimal.min(Decimal.max(released, r.acquiredValue.negated()), r.draws);
+}
+
+/** The value purchases and construction add in a year, apart from growth: the
+ *  equity-change chart's Purchases stack and the grid's Purchases column (ADR 0194). */
+export function purchasedValue(r: SeriesRow): Decimal {
+  return r.acquiredValue.plus(builtValue(r));
+}
+
+/** The Purchases column, shown only when some year has a purchase or construction
+ *  (ADR 0194). It follows Value. */
+export function purchasesColumn(rows: SeriesRow[], g: Dictionary["projGrid"]) {
+  return nonZeroColumns(
+    rows.map((r) => ({ purchases: purchasedValue(r) })),
+    [{ key: "purchases", header: g.purchases }],
+  );
+}
+
 /**
  * Excel column map mirroring ProjectionGrid's columns, order and headers in the UI
  * language (UX-062). Each column's kind rounds and formats its cells as the grid shows
@@ -129,6 +151,11 @@ export function projectionColumns(
   cols.push(
     // ADR 0169: the drawn balance, and the value less the tranches not drawn yet.
     { header: g.value, kind: "money", value: (r) => r.reportedValue },
+    ...purchasesColumn(rows, g).map(({ header }): XlsxColumn<SeriesRow> => ({
+      header,
+      kind: "money",
+      value: flow(purchasedValue),
+    })),
     { header: g.debt, kind: "money", value: (r) => r.balance },
     ...undrawnColumn(rows, g).map(({ header }): XlsxColumn<SeriesRow> => ({
       header,

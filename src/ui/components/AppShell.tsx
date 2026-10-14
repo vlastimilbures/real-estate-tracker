@@ -17,6 +17,7 @@ import {
 import { useUiStore, type Route, type Theme } from "../../state/uiStore";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { SegmentedToggle, ErrorBanner } from "./primitives";
+import { useFirstShow } from "../hooks/useFirstShow";
 import { BrandMark } from "./BrandMark";
 import { BackupHint } from "./BackupHint";
 import { SkipLink } from "./SkipLink";
@@ -183,6 +184,9 @@ export function AppShell({
   const stale = usePortfolioStore((s) => s.stale);
   const reload = usePortfolioStore((s) => s.reload);
   const selectedPropertyId = useUiStore((s) => s.selectedPropertyId);
+  const staleEpisode = usePortfolioStore((s) => s.staleEpisode);
+  const staleLive = useFirstShow(stale ? staleEpisode : null);
+  const errorLive = useFirstShow(error);
 
   // The app has no inner scroll container — the window itself scrolls. Without
   // this, navigating away from a page scrolled deep into a long table (e.g.
@@ -323,12 +327,14 @@ export function AppShell({
             <ErrorBanner
               message={t.common.staleData}
               action={{ label: t.common.reload, onClick: () => void reload() }}
+              live={staleLive}
             />
           )}
           {error && (
             <ErrorBanner
               message={describeWriteError(t, error).message}
               onDismiss={clearError}
+              live={errorLive}
             />
           )}
           <OutcomeRegions />
