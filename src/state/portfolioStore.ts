@@ -191,6 +191,9 @@ interface PortfolioState {
    *  (DR-086). The write itself still counts as done (ADR 0125). Cleared by the next
    *  successful load. */
   stale: boolean;
+  /** A new object each time `stale` turns true, so the stale banner is announced once
+   *  per episode, not on every page (ADR 0194). */
+  staleEpisode: object | null;
   /** Restores, Clear samples and Load samples queued or running. Settings → Backup
    *  waits while one is, across page changes (ADR 0154). */
   replacing: number;
@@ -373,7 +376,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       await get().refresh();
     } catch (e) {
       logFailure("RELOAD", e);
-      set({ stale: true });
+      if (!get().stale) set({ stale: true, staleEpisode: {} });
     }
   }
 
@@ -506,6 +509,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     error: null,
     startupError: null,
     stale: false,
+    staleEpisode: null,
     replacing: 0,
 
     async init(open = defaultOpen) {

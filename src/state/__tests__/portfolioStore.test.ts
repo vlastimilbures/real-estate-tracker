@@ -1051,6 +1051,38 @@ describe("portfolioStore stale flag (UX-050, DR-086)", () => {
         .portfolio!.valuations.some((v) => v.id === "stale-1"),
     ).toBe(true);
   });
+
+  it("starts a new episode only when the data turns stale (ADR 0194)", async () => {
+    await usePortfolioStore.getState().init(openSeeded);
+    const real = usePortfolioStore.getState().sql!;
+    const failing = {
+      execute: real.execute.bind(real),
+      select: () => Promise.reject(new Error("read timeout")),
+      selectSnapshot: () => Promise.reject(new Error("read timeout")),
+      transaction: real.transaction.bind(real),
+      backup: real.backup.bind(real),
+    };
+    const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
+    const write = (id: string) =>
+      usePortfolioStore.getState().addValuation({
+        id,
+        propertyId: pid,
+        validFrom: new Date(Date.UTC(2035, 0, 1)) as IsoDate,
+        marketValue: money("1"),
+      });
+    usePortfolioStore.setState({ sql: failing });
+    await write("ep-1");
+    const first = usePortfolioStore.getState().staleEpisode;
+    expect(first).not.toBeNull();
+    // Still stale: the same episode, announced once.
+    await write("ep-2");
+    expect(usePortfolioStore.getState().staleEpisode).toBe(first);
+    usePortfolioStore.setState({ sql: real });
+    await usePortfolioStore.getState().reload();
+    usePortfolioStore.setState({ sql: failing });
+    await write("ep-3");
+    expect(usePortfolioStore.getState().staleEpisode).not.toBe(first);
+  });
 });
 
 // ADR 0123 (#107, #108): scenario writes.

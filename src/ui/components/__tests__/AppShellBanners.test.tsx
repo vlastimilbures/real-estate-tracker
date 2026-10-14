@@ -34,13 +34,17 @@ const writeError = (message: string): WriteError => ({
 beforeEach(() =>
   act(() => {
     useUiStore.setState({ language: "en", route: "dashboard" });
-    usePortfolioStore.setState({ stale: false, error: null });
+    usePortfolioStore.setState({
+      stale: false,
+      staleEpisode: null,
+      error: null,
+    });
   }),
 );
 
 describe("kept app banners announce once (#350)", () => {
   it("the stale banner is live on its first page only, and again for a new episode", () => {
-    act(() => usePortfolioStore.setState({ stale: true }));
+    act(() => usePortfolioStore.setState({ stale: true, staleEpisode: {} }));
     const first = page("One");
     expect(role(en.common.staleData)).toBe("alert");
     first.unmount();
@@ -50,7 +54,7 @@ describe("kept app banners announce once (#350)", () => {
 
     // A successful reload ends the episode; the next failed one is announced.
     act(() => usePortfolioStore.setState({ stale: false }));
-    act(() => usePortfolioStore.setState({ stale: true }));
+    act(() => usePortfolioStore.setState({ stale: true, staleEpisode: {} }));
     expect(role(en.common.staleData)).toBe("alert");
     second.unmount();
 

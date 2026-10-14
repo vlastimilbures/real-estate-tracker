@@ -155,14 +155,6 @@ const BRAND_TAIL = APP_NAME.slice(BRAND_SPLIT + 1);
 // so a page change mounts a new one (ADR 0146).
 let shownRoute: Route | null = null;
 
-// The current stale episode: a new token each time the data turns stale, so the stale
-// banner is announced once per episode, not on every page (ADR 0194).
-let staleEpisode: object | null = null;
-function staleToken(stale: boolean): object | null {
-  staleEpisode = stale ? (staleEpisode ?? {}) : null;
-  return staleEpisode;
-}
-
 export function AppShell({
   title,
   subtitle,
@@ -192,7 +184,8 @@ export function AppShell({
   const stale = usePortfolioStore((s) => s.stale);
   const reload = usePortfolioStore((s) => s.reload);
   const selectedPropertyId = useUiStore((s) => s.selectedPropertyId);
-  const staleLive = useFirstShow(staleToken(stale));
+  const staleEpisode = usePortfolioStore((s) => s.staleEpisode);
+  const staleLive = useFirstShow(stale ? staleEpisode : null);
   const errorLive = useFirstShow(error);
 
   // The app has no inner scroll container — the window itself scrolls. Without
