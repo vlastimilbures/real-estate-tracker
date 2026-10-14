@@ -19,16 +19,17 @@ pub fn panic_text(payload: &(dyn Any + Send)) -> &str {
 }
 
 /// The log line for a panic: `PANIC <message> at <file>:<line>`, the message cut to 500
-/// characters. Takes the hook info's parts, so it does not name the hook info type
-/// (renamed after the crate's MSRV).
+/// characters and marked with "…" when cut (ADR 0193). Takes the hook info's parts, so it
+/// does not name the hook info type (renamed after the crate's MSRV).
 pub fn panic_line(payload: &(dyn Any + Send), location: Option<&Location<'_>>) -> String {
     let at = location
         .map(|l| format!(" at {}:{}", l.file(), l.line()))
         .unwrap_or_default();
-    let message: String = panic_text(payload)
-        .chars()
-        .take(MAX_MESSAGE_CHARS)
-        .collect();
+    let text = panic_text(payload);
+    let mut message: String = text.chars().take(MAX_MESSAGE_CHARS).collect();
+    if message.len() < text.len() {
+        message.push('…');
+    }
     format!("PANIC {message}{at}")
 }
 
