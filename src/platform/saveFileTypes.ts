@@ -22,6 +22,7 @@ export class SaveFileError extends Error {
  *  the UI puts it inside a translated sentence (ADR 0193). */
 export function saveFailureDetail(e: unknown): string {
   if (e instanceof SaveFileError) return e.detail;
+  // data/errors' messageOf, copied: the platform layer does not import the data layer.
   return e instanceof Error ? e.message : String(e);
 }
 

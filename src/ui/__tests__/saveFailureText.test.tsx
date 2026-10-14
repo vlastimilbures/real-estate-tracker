@@ -7,6 +7,8 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SaveFileError } from "../../platform/saveFileTypes";
 import { OutcomeRegions } from "../components/OutcomeRegions";
+import { ExportXlsxButton } from "../components/primitives";
+import { exportTableXlsx } from "../exportXlsx";
 import { Import } from "../pages/Import";
 import { useUiStore } from "../../state/uiStore";
 import { usePortfolioStore } from "../../state/portfolioStore";
@@ -39,10 +41,27 @@ beforeEach(async () => {
 });
 
 describe("a failed save in Czech (ADR 0193)", () => {
-  it("the Excel export failure shows only the OS text", () => {
-    act(() => useUiStore.getState().setFailure("xlsxExport", diskFull()));
-    render(<OutcomeRegions />);
-    expect(screen.getByText(cs.xlsx.exportFailed(OS))).toBeTruthy();
+  it("the Excel export failure shows only the OS text", async () => {
+    // Through the real button and export, so a wrapper added on the way fails here.
+    render(
+      <>
+        <ExportXlsxButton
+          onExport={() =>
+            exportTableXlsx({
+              filename: "t.xlsx",
+              sheetName: "T",
+              columns: () => [],
+              rows: [],
+            })
+          }
+        />
+        <OutcomeRegions />
+      </>,
+    );
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: cs.xlsx.exportToExcel }));
+    expect(await screen.findByText(cs.xlsx.exportFailed(OS))).toBeTruthy();
   });
 
   it("the CSV template error shows only the OS text", async () => {
