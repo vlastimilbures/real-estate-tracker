@@ -101,6 +101,12 @@ export function undrawnColumn(rows: SeriesRow[], g: Dictionary["projGrid"]) {
   return nonZeroColumns(rows, [{ key: "undrawnDebt", header: g.undrawn }]);
 }
 
+/** The Purchases column: a future purchase's value in its purchase year (ADR 0165), shown
+ *  only when the horizon holds one (ADR 0194). It follows Value. */
+export function purchasesColumn(rows: SeriesRow[], g: Dictionary["projGrid"]) {
+  return nonZeroColumns(rows, [{ key: "acquiredValue", header: g.purchases }]);
+}
+
 /**
  * Excel column map mirroring ProjectionGrid's columns, order and headers in the UI
  * language (UX-062). Each column's kind rounds and formats its cells as the grid shows
@@ -129,6 +135,13 @@ export function projectionColumns(
   cols.push(
     // ADR 0169: the drawn balance, and the value less the tranches not drawn yet.
     { header: g.value, kind: "money", value: (r) => r.reportedValue },
+    ...purchasesColumn(rows, g).map(
+      ({ key, header }): XlsxColumn<SeriesRow> => ({
+        header,
+        kind: "money",
+        value: flow((r) => r[key]),
+      }),
+    ),
     { header: g.debt, kind: "money", value: (r) => r.balance },
     ...undrawnColumn(rows, g).map(({ header }): XlsxColumn<SeriesRow> => ({
       header,

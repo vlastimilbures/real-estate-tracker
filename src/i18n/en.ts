@@ -1295,6 +1295,8 @@ export const en = {
     opening: "opening",
     period: "Period",
     value: "Value",
+    // ADR 0194: a future purchase's value in its purchase year.
+    purchases: "Purchases",
     debt: "Debt",
     undrawn: "Undrawn",
     equity: "Equity",

@@ -7,6 +7,7 @@ import type { Decimal } from "../../lib/money";
 import {
   periodLabelLocalized,
   projectionExtras,
+  purchasesColumn,
   undrawnColumn,
   yearLabel,
   showPeriodColumn,
@@ -28,6 +29,7 @@ export function ProjectionGrid({
   const showPeriod = showPeriodColumn(baseDate);
   const extras = projectionExtras(rows, t.projGrid);
   const undrawn = undrawnColumn(rows, t.projGrid);
+  const purchases = purchasesColumn(rows, t.projGrid);
   return (
     <TableWrap label={t.projGrid.caption}>
       <table className="data">
@@ -43,6 +45,11 @@ export function ProjectionGrid({
               </th>
             )}
             <th scope="col">{t.projGrid.value}</th>
+            {purchases.map(({ key, header }) => (
+              <th key={key} scope="col">
+                {header}
+              </th>
+            ))}
             <th scope="col">{t.projGrid.debt}</th>
             {undrawn.map(({ key, header }) => (
               <th key={key} scope="col">
@@ -119,6 +126,9 @@ export function ProjectionGrid({
                     suffix={false}
                   />
                 </td>
+                {purchases.map(({ key }) => (
+                  <td key={key}>{flow(r[key])}</td>
+                ))}
                 <td>
                   <Money value={r.balance} parens={false} suffix={false} />
                 </td>
