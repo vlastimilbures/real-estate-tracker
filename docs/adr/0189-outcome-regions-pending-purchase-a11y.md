@@ -9,8 +9,6 @@
 - Amends: [0154](0154-one-outcome-path.md) (§1, §2), [0156](0156-pending-purchase-display.md)
   (§3, §4), [0158](0158-layouts-hold-in-czech-and-russian.md) (band badges),
   [0116](0116-prepayments-ui-and-review-fixes.md) (decision 11: row editor)
-- Amended by: [0193](0193-kept-banners-purchases-column-save-errors.md) (§1: the stale-data and edit-error banners also announce
-  once)
 
 ## Context
 
