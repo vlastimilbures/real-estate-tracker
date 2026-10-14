@@ -7,6 +7,7 @@ import type { Decimal } from "../../lib/money";
 import {
   periodLabelLocalized,
   projectionExtras,
+  purchasedValue,
   purchasesColumn,
   undrawnColumn,
   yearLabel,
@@ -118,7 +119,7 @@ export function ProjectionGrid({
                   </td>
                 )}
                 {/* ADR 0169: the value less the tranches not drawn yet, a purchase's
-                    value in its year (ADR 0194), the drawn balance, and those tranches
+                    value and construction (ADR 0194), the drawn balance, and those tranches
                     while a development loan draws. */}
                 <td>
                   <Money
@@ -128,7 +129,7 @@ export function ProjectionGrid({
                   />
                 </td>
                 {purchases.map(({ key }) => (
-                  <td key={key}>{flow(r[key])}</td>
+                  <td key={key}>{flow(purchasedValue(r))}</td>
                 ))}
                 <td>
                   <Money value={r.balance} parens={false} suffix={false} />

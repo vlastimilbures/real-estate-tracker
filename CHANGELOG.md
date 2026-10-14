@@ -15,10 +15,11 @@ engine without the form, and remove it when the last part lands.
 
 ### Added
 
-- The projection grid and its Excel export have a **Purchases** column after Value (ADR
-  0194, #317): a property bought after the projection start shows its value in its purchase
-  year, so the jump in Value reads as a purchase, not growth. The column appears only when
-  the horizon holds such a purchase.
+- The projection grid and its Excel export have a **Purchases & construction** column
+  after Value (ADR 0194, #317): a property bought after the projection start shows its
+  value in its purchase year, and a development flat the tranches drawn to build it, as the
+  Dashboard's equity-change chart stacks them. So a rise in Value that is not growth reads
+  in the grid. The column appears only when the horizon holds a purchase or construction.
 - Scenario compare names the properties a scenario's growth level does not reach (ADR
   0190, #166): when a scenario sets the appreciation or rent-indexation level, a line under
   the key figures lists the active properties that keep their own rate, for example "Low

@@ -1224,7 +1224,7 @@ export const cs: Dictionary = {
     opening: "počátek",
     period: "Období",
     value: "Hodnota",
-    purchases: "Nákupy",
+    purchases: "Nákupy a výstavba",
     debt: "Dluh",
     undrawn: "Nečerpáno",
     equity: "Kapitál",

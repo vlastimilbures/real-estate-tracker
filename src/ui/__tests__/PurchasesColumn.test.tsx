@@ -13,8 +13,47 @@ import { mixed } from "../../engine/__tests__/support/mixed";
 import { projectionColumns, projectionSeries } from "../model/projection";
 import { en } from "../../i18n/en";
 import type { Mode } from "../model/lens";
+import { toEquityChangeRows } from "../model/chartData";
+import { devBlock } from "../../engine/__tests__/support/mixed";
+import { isoDate, money } from "../../engine";
+import type { Decimal } from "../../lib/money";
+import { roundCzk, toNumber } from "../../lib/format";
 
 const g = en.projGrid;
+/** The mixed fixture's development flat, bought after the projection start with both
+ *  tranches still ahead (as in dev-committed-debt.test.ts). */
+const offPlan: Portfolio = {
+  properties: [
+    {
+      id: "dev",
+      name: "Dev unit",
+      purchaseDate: isoDate("2027-03-01"),
+      purchasePrice: money("7000000"),
+    },
+  ],
+  mortgages: [
+    {
+      ...devBlock,
+      startDate: isoDate("2027-03-01"),
+      loanTermYears: 30,
+      draws: [
+        { date: isoDate("2027-11-15"), amount: money("1500000") },
+        { date: isoDate("2028-08-20"), amount: money("1000000") },
+      ],
+      completionDate: isoDate("2028-08-20"),
+    },
+  ],
+  valuations: [
+    {
+      id: "v-dev",
+      propertyId: "dev",
+      validFrom: isoDate("2027-03-01"),
+      marketValue: money("9500000"),
+    },
+  ],
+  leases: mixed.leases.filter((l) => l.propertyId === "dev"),
+  holdingCosts: [],
+};
 const series = (p: Portfolio, mode: Mode) =>
   projectionSeries(portfolioProjection(p, assumptions), mode, assumptions);
 const headers = (p: Portfolio, mode: Mode = "nominal") =>
@@ -47,26 +86,35 @@ describe("Purchases column (#317)", () => {
     }
   });
 
-  for (const mode of ["nominal", "real"] as const) {
-    it(`holds the acquired value in the purchase year only, ${mode}`, () => {
-      const rows = series(mixed, mode);
-      const col = projectionColumns(en, assumptions.baseDate, rows).find(
-        (c) => c.header === g.purchases,
-      )!;
-      expect(col.kind).toBe("money");
-      expect(col.value(rows[0]!)).toBeNull();
-      const bought = rows.filter((r) => !r.acquiredValue.isZero());
-      expect(bought).toHaveLength(1);
-      expect(col.value(bought[0]!)).toBe(bought[0]!.acquiredValue);
-    });
+  // The figure the equity-change chart stacks as purchases and construction, so a Value
+  // rise that is not growth reads the same in the grid, the export and the chart.
+  for (const [name, p] of [
+    ["a purchase with a plain loan, a development flat", mixed],
+    ["an off-plan purchase", offPlan],
+  ] as const) {
+    for (const mode of ["nominal", "real"] as const) {
+      it(`matches the chart's purchases, ${name}, ${mode}`, () => {
+        const rows = series(p, mode);
+        const col = projectionColumns(en, assumptions.baseDate, rows).find(
+          (c) => c.header === g.purchases,
+        )!;
+        expect(col.kind).toBe("money");
+        expect(col.value(rows[0]!)).toBeNull();
+        const chart = toEquityChangeRows(rows);
+        for (const [i, r] of rows.slice(1).entries()) {
+          expect(toNumber(col.value(r) as Decimal)).toBe(chart[i]!.purchases);
+        }
+      });
+    }
   }
 
-  it("is deflated under Real", () => {
-    const nominal = series(mixed, "nominal").find(
-      (r) => !r.acquiredValue.isZero(),
+  it("an off-plan purchase counts its value less the tranches not drawn yet", () => {
+    const rows = series(offPlan, "nominal");
+    const col = projectionColumns(en, assumptions.baseDate, rows).find(
+      (c) => c.header === g.purchases,
     )!;
-    const real = series(mixed, "real")[nominal.year]!;
-    expect(real.acquiredValue.lessThan(nominal.acquiredValue)).toBe(true);
+    // 9.5 M completed value, 2.5 M of the loan still to draw in the purchase year.
+    expect(roundCzk(col.value(rows[1]!) as Decimal).toNumber()).toBe(7_000_000);
   });
 
   it("dashes the opening row on screen", () => {

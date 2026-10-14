@@ -1233,7 +1233,7 @@ export const ru: Dictionary = {
     opening: "начало",
     period: "Период",
     value: "Стоимость",
-    purchases: "Покупки",
+    purchases: "Покупки и строительство",
     debt: "Долг",
     undrawn: "Не выбрано",
     equity: "Капитал",

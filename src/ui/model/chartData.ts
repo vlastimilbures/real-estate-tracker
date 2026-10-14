@@ -2,7 +2,12 @@
 // Engine Decimals → plain numbers happens HERE, the chart boundary.
 import { Decimal } from "../../lib/money";
 import { toNumber } from "../../lib/format";
-import { yearLabel, type SeriesRow } from "./projection";
+import {
+  builtValue,
+  purchasedValue,
+  yearLabel,
+  type SeriesRow,
+} from "./projection";
 import type { Dictionary } from "../../i18n";
 import { at } from "../../lib/arrays";
 
@@ -89,10 +94,7 @@ export function toEquityChangeRows(series: SeriesRow[]): EquityChangeRow[] {
   return series.slice(1).map((r, i) => {
     const prev = at(series, i); // sliced: prev is series[i], current is series[i+1] === r
     const released = r.draws.minus(r.committedDraws);
-    const built = Decimal.min(
-      Decimal.max(released, r.acquiredValue.negated()),
-      r.draws,
-    );
+    const built = builtValue(r);
     return {
       year: r.year,
       calendarYear: r.calendarYear,
@@ -106,7 +108,7 @@ export function toEquityChangeRows(series: SeriesRow[]): EquityChangeRow[] {
           .plus(r.committedDraws)
           .plus(r.refinanced),
       ),
-      purchases: n(r.acquiredValue.plus(built)),
+      purchases: n(purchasedValue(r)),
       paydown: n(r.principal.plus(r.prepaid)),
       drawdown: n(
         r.draws.plus(r.refinanced).minus(released.minus(built)).negated(),

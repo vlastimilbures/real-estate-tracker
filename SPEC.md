@@ -492,8 +492,8 @@ appreciation; rent index `idx` likewise):
 - `acquiredValue_t` = a future purchase's value at its purchase date in its turn-on year,
   else 0 (ADR 0165). The Dashboard's equity-change chart shows it as **Purchases**, apart
   from appreciation (shown only when some year has one). The projection grid and its export
-  show it in a **Purchases** column after Value, under the chosen lens, blank in year 0 and
-  only when some year has one (ADR 0194).
+  show the chart's Purchases figure (with construction, ADR 0170) in a column after Value,
+  under the chosen lens, blank in year 0 and only when some year has one (ADR 0194).
 - `netCashFlow_t = NOI_t − debtService_t`
 - `equity_t = value_t − balance_t`; `LTV_t = balance_t / value_t` (null when
   `value_t = 0 < balance_t`, 0 when both are 0; ADR 0133);
