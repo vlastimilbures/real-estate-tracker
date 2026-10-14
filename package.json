@@ -1,7 +1,7 @@
 {
   "name": "real-estate-tracker",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Local-first macOS desktop app for tracking a rental-apartment portfolio: mortgages, leases, valuations, 30-year nominal and real projections, KPIs and what-if scenarios.",
   "license": "MIT",
   "author": "Vlastimil Bureš",
