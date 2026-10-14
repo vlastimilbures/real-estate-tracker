@@ -1,7 +1,7 @@
 // Where the app reports what an action did (ADR 0154), on whichever page the owner is
 // on: the safety copy a restore or Clear sample wrote and the last failure, each until
 // dismissed, and the toast, whose live region is in the page before its text arrives.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   useUiStore,
   type Failure,
@@ -12,6 +12,7 @@ import { RestoreError } from "../../state/backup";
 import { saveFailureDetail } from "../../state/platform";
 import type { Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
+import { useFirstShow } from "../hooks/useFirstShow";
 import { Button, ErrorBanner } from "./primitives";
 import { IssueTable } from "./RestoreConfirm";
 import { backupFailureText } from "./restoreFailure";
@@ -34,22 +35,6 @@ function failureText(t: Dictionary, action: OutcomeAction, e: unknown): string {
     case "revealFolder":
       return t.boot.revealFailed;
   }
-}
-
-/** The notices and failures already shown on some page. By identity: the store makes a
- *  new object for every notice and failure, so a repeat is announced again. */
-const shown = new WeakSet<Notice | Failure>();
-
-/** True only on the page where `item` first shows: each page mounts its own shell, and a
- *  kept banner is announced once, then stays silent (ADR 0189). */
-function useFirstShow(item: Notice | Failure): boolean {
-  const [mine, setMine] = useState(() => (shown.has(item) ? null : item));
-  // A newer item on this page is shown here first.
-  if (mine !== item && !shown.has(item)) setMine(item);
-  useEffect(() => {
-    shown.add(item);
-  }, [item]);
-  return mine === item;
 }
 
 function FailureView({ failure }: { failure: Failure }) {
