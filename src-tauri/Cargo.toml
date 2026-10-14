@@ -1,6 +1,6 @@
 [package]
 name = "real-estate-tracker"
-version = "1.4.0"
+version = "1.5.0"
 description = "Local-first macOS app for tracking a rental-apartment portfolio with 30-year projections"
 authors = ["Vlastimil Bureš"]
 license = "MIT"

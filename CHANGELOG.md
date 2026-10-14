@@ -13,6 +13,8 @@ None. While this list is not empty, do not tag a release (docs/release.md, check
 feature here when part of it is merged but it must not ship yet, for example schema and
 engine without the form, and remove it when the last part lands.
 
+## [1.5.0] - 2026-10-14
+
 ### Added
 
 - The projection grid and its Excel export have a **Purchases & construction** column
@@ -1078,5 +1080,6 @@ tracker with 30-year nominal/real projections, charts, KPIs, and what-if scenari
 \* _"To the cent" meant within the ±1 Kč parity tolerance (±0.0001 for ratios), not to the
 haléř. Note added 2026-10 (#30)._
 
-[Unreleased]: https://github.com/vlastimilbures/real-estate-tracker/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/vlastimilbures/real-estate-tracker/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/vlastimilbures/real-estate-tracker/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/vlastimilbures/real-estate-tracker/releases/tag/v1.4.0
