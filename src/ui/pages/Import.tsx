@@ -27,7 +27,7 @@ import { toWriteError } from "../../state/writeError";
 import { useToast } from "../hooks/useToast";
 
 import {
-  EntityImportPanel,
+  ImportFilesPanel,
   ImportSummary,
   RefusedTable,
   type FileState,
@@ -213,37 +213,41 @@ export function Import() {
       subtitle={t.importPage.subtitle}
       showLens={false}
     >
-      <EntityImportPanel
-        title={t.importPage.propertiesTitle}
-        hint="properties.csv"
-        templateFn={propertiesTemplate}
-        templateFile="properties.csv"
-        fileState={properties}
-        onFile={handleProperties}
-      />
-      <EntityImportPanel
-        title={t.importPage.valuationsTitle}
-        hint="valuations.csv"
-        templateFn={valuationsTemplate}
-        templateFile="valuations.csv"
-        fileState={valuations}
-        onFile={handleValuations}
-      />
-      <EntityImportPanel
-        title={t.importPage.rentsTitle}
-        hint="rents.csv"
-        templateFn={rentsTemplate}
-        templateFile="rents.csv"
-        fileState={rents}
-        onFile={handleRents}
-      />
-      <EntityImportPanel
-        title={t.importPage.mortgagesTitle}
-        hint="mortgages.csv"
-        templateFn={mortgagesTemplate}
-        templateFile="mortgages.csv"
-        fileState={mortgages}
-        onFile={handleMortgages}
+      <ImportFilesPanel
+        files={[
+          {
+            key: "properties",
+            title: t.importPage.propertiesTitle,
+            file: "properties.csv",
+            templateFn: propertiesTemplate,
+            fileState: properties,
+            onFile: handleProperties,
+          },
+          {
+            key: "valuations",
+            title: t.importPage.valuationsTitle,
+            file: "valuations.csv",
+            templateFn: valuationsTemplate,
+            fileState: valuations,
+            onFile: handleValuations,
+          },
+          {
+            key: "rents",
+            title: t.importPage.rentsTitle,
+            file: "rents.csv",
+            templateFn: rentsTemplate,
+            fileState: rents,
+            onFile: handleRents,
+          },
+          {
+            key: "mortgages",
+            title: t.importPage.mortgagesTitle,
+            file: "mortgages.csv",
+            templateFn: mortgagesTemplate,
+            fileState: mortgages,
+            onFile: handleMortgages,
+          },
+        ]}
       />
 
       {hasAnyFile && (

@@ -66,10 +66,11 @@ describe("a failed save in Czech (ADR 0193)", () => {
 
   it("the CSV template error shows only the OS text", async () => {
     render(<Import />);
-    const [button] = screen.getAllByRole("button", {
-      name: cs.importPage.downloadTemplate,
+    // ADR 0212: the template button names its file type.
+    const button = screen.getByRole("button", {
+      name: cs.importPage.templateFor(cs.importPage.propertiesTitle),
     });
-    await userEvent.setup().click(button!);
+    await userEvent.setup().click(button);
     expect(
       await screen.findByText(cs.importPage.templateFailed(OS)),
     ).toBeTruthy();

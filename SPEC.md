@@ -700,7 +700,8 @@ Clearing a funding amount is a property form edit too: a blank CSV cell keeps it
   `contract_maturity_date` keeps the stored date and an empty or missing `own_cash`,
   `transaction_costs` or `initial_works` column keeps the stored amount (ADR 0119; a new property
   gets them unknown); any other empty optional cell clears the stored value.
-- Each file picker has a "Download template" button producing the header + one example row.
+- Each file type's row has a template button (an icon row action, ADR 0212) producing the
+  header + one example row; a file dropped on a row is read as that row's type.
 - Importing a new property automatically creates a default holding-costs row for it.
 - Holding costs are **not** imported via CSV — set them via the UI on the property detail
   page after import.
@@ -931,9 +932,9 @@ offline badge, and controls for language and theme.
 5. **Scenarios** — create, edit, duplicate, delete named scenarios; one-click stress presets;
    2–3-way compare view showing KPIs and charts side by side.
 
-6. **Import** — four per-entity CSV file pickers (properties, valuations, rents, mortgages),
-   each with a "Download template" button. Parse errors shown per row; import blocked on any
-   error. Upserts on re-import.
+6. **Import** — one panel with a row per CSV file type (properties, valuations, rents,
+   mortgages), each with its file picker, drop target and template button (ADR 0212). Parse
+   errors shown per row; import blocked on any error. Upserts on re-import.
 
 7. **Settings** (tabbed, reached via sidebar or the native macOS menu):
    - **Assumptions** tab — editable global drivers (the dials), including the Projection
