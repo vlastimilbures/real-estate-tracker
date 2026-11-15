@@ -245,9 +245,11 @@
   margin: 0;
   padding: 0 0 var(--s1);
 }
+/* 8 px a side: Property detail's eight Russian tabs fit one row at 1280 px with Linux
+   fonts too (ADR 0215). */
 .section-nav a {
   display: block;
-  padding: var(--s1) var(--s3);
+  padding: var(--s1) var(--s2);
   border-radius: var(--r-sm);
   color: var(--ink-soft);
   font-size: 13px;

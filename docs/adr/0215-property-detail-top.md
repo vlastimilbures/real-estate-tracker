@@ -58,7 +58,10 @@ the Debt tile.
    shaping, applied to the property's snapshot. The amounts stay in full Kč: a property's
    figures are short enough, and no digit leaves the page.
 
-4. **Unchanged:** a property not owned yet shows its "Not owned yet" panel instead of the
+4. **Section tabs** keep one row at 1280 × 800: each tab is padded 8 px a side instead
+   of 12 px (Russian with Linux fonts did not fit). The Guide's section nav (ADR 0213)
+   shares the style.
+5. **Unchanged:** a property not owned yet shows its "Not owned yet" panel instead of the
    tiles (ADR 0156); an inactive property keeps its banner and tiles; the section tabs
    (ADR 0107) and the two charts.
 
