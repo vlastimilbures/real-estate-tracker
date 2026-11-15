@@ -68,7 +68,6 @@ function useSurfaceProps() {
   return label === undefined ? {} : { role: "img", "aria-label": label };
 }
 
-/** A short line in a series' colour and dash: the legend and tooltip key (ADR 0114). */
 /** The fixation-end marker (ADR 0210): a dashed line in the soft ink colour with a
  *  diamond, not colour alone; at least 3:1 on the plot in both themes. */
 const MARKER_COLOR = "var(--ink-soft)";
@@ -90,13 +89,14 @@ function MarkerSwatch() {
         y2={10}
         stroke={MARKER_COLOR}
         strokeWidth={1.5}
-        strokeDasharray="2 2"
+        strokeDasharray={MARKER_DASH}
       />
       <path d="M 8 1 L 11 4 L 8 7 L 5 4 Z" fill={MARKER_COLOR} />
     </svg>
   );
 }
 
+/** A short line in a series' colour and dash: the legend and tooltip key (ADR 0114). */
 function SeriesSwatch({
   color,
   dash,
@@ -159,12 +159,14 @@ export function ChartCard({
   height?: number | undefined;
   /** Years marked on a line chart with their fixation ends (ADR 0210). */
   markers?: readonly ResetMarker[] | undefined;
-  /** The markers' legend entry and tooltip heading. */
+  /** The markers' tooltip heading; the legend names them `charts.rateReset`. */
   markerHeading?: string | undefined;
 }) {
   const t = useT();
   const [asTable, setAsTable] = useState(false);
-  const showLegend = legend ?? (series.length > 1 || markers.length > 0);
+  // Markers are drawn on a line chart only (ADR 0210).
+  const marked = chart === "lines" && markers.length > 0;
+  const showLegend = legend ?? (series.length > 1 || marked);
   const unit =
     kind === "czk"
       ? czkUnitFromRows(
@@ -228,9 +230,9 @@ export function ChartCard({
               <SeriesSwatch color={s.color} dash={s.dash} /> {s.name}
             </span>
           ))}
-          {markers.length > 0 && markerHeading && (
+          {marked && (
             <span>
-              <MarkerSwatch /> {markerHeading}
+              <MarkerSwatch /> {t.charts.rateReset}
             </span>
           )}
         </div>
@@ -367,7 +369,7 @@ export function Tip({
             {resets.heading}
           </div>
           {resets.items.map((r) => (
-            <div className="tt-row tt-reset" key={`${r.name}-${r.date}`}>
+            <div className="tt-row tt-reset" key={r.id}>
               <span>
                 {r.name} · {r.date}
               </span>

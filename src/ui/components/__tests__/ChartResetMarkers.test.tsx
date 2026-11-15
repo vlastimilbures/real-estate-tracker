@@ -53,8 +53,18 @@ const markers: ResetMarker[] = [
   {
     calendarYear: 2028,
     resets: [
-      { name: "Byt Lipova", date: "15.01.2028", balance: D("4772578") },
-      { name: "Byt Dubova", date: "12.03.2028", balance: D("2027757") },
+      {
+        id: "m-lipova",
+        name: "Byt Lipova",
+        date: "15.01.2028",
+        balance: D("4772578"),
+      },
+      {
+        id: "m-dubova",
+        name: "Byt Dubova",
+        date: "12.03.2028",
+        balance: D("2027757"),
+      },
     ],
   },
 ];
@@ -74,9 +84,43 @@ describe("reset markers on a chart (ADR 0210)", () => {
     expect(
       container.querySelectorAll(".recharts-reference-line.reset-marker"),
     ).toHaveLength(1);
+    // The diamond on top of the line.
+    expect(container.querySelector(".reset-marker path")).not.toBeNull();
     expect(container.querySelector(".legend")?.textContent).toContain(
       en.charts.rateReset,
     );
+  });
+
+  it("the legend says Rate reset when the tooltip heading names the nominal debt (§4)", () => {
+    const { container } = render(
+      <ChartCard
+        title="Value"
+        kind="czk"
+        rows={rows}
+        series={series}
+        markers={markers}
+        markerHeading={en.charts.rateResetNominal}
+      />,
+    );
+    const legend = container.querySelector(".legend")?.textContent ?? "";
+    expect(legend).toContain(en.charts.rateReset);
+    expect(legend).not.toContain(en.charts.rateResetNominal);
+  });
+
+  it("only a line chart is marked", () => {
+    const { container } = render(
+      <ChartCard
+        title="Value"
+        kind="czk"
+        chart="stacked"
+        rows={rows}
+        series={series}
+        markers={markers}
+        markerHeading={en.charts.rateReset}
+      />,
+    );
+    expect(container.querySelector(".reset-marker")).toBeNull();
+    expect(screen.queryByText(en.charts.rateReset)).toBeNull();
   });
 
   it("no marker, no legend entry", () => {

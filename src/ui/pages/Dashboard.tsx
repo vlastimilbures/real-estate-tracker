@@ -148,7 +148,6 @@ export function Dashboard() {
   const markers = resetMarkers(
     engine.financing.resets,
     rows,
-    assumptions.baseDate,
     new Map(engine.portfolio.properties.map((p) => [p.id, p.name])),
   );
   const eqChange = toEquityChangeRows(series);

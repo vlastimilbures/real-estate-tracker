@@ -354,7 +354,6 @@ export function PropertyDetail() {
             markers={resetMarkers(
               out.financing?.resets ?? [],
               chartRows,
-              baseDate,
               new Map([[property.id, property.name]]),
             )}
             markerHeading={

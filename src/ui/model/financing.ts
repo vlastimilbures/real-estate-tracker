@@ -23,7 +23,6 @@ import { fmtDate } from "../../lib/format";
 import type { Mode } from "./lens";
 import { lensKpis } from "./lensKpis";
 import { remainingTermText } from "./termText";
-import { projectionYearForAsOf } from "./dashboard";
 
 /** An interest-saved figure as shown (ADR 0130): a positive amount, or "n/a" in place
  *  of a negative one (a recast that applies only with the prepayment). */
@@ -339,26 +338,34 @@ export function financingLabels(
 /** One marked year on a 30-year value chart: its upcoming fixation ends (ADR 0210). */
 export interface ResetMarker {
   calendarYear: number;
-  resets: { name: string; date: string; balance: Decimal }[];
+  resets: { id: string; name: string; date: string; balance: Decimal }[];
 }
 
 /**
  * The years of the chart that hold an upcoming fixation end (ADR 0210 §1): each reset in
- * the projection year its date rounds to (the as-of rule, ADR 0150), several in one year
- * sharing a marker, earliest first. A reset past the chart's last year is not marked.
+ * the projection year whose months hold its fixation-end payment (year t holds grid
+ * months (t−1)·12+1 … t·12, as the table's period), several in one year sharing a
+ * marker, earliest first, then in the order of `names` (the portfolio's property order,
+ * so ids never decide, ADR 0176). A reset past the chart's last year is not marked.
  */
 export function resetMarkers(
   resets: readonly FixationReset[],
   rows: readonly { year: number; calendarYear: number }[],
-  baseDate: Date,
   names: ReadonlyMap<string, string>,
 ): ResetMarker[] {
+  const order = [...names.keys()];
+  const rank = (id: string) =>
+    order.includes(id) ? order.indexOf(id) : order.length;
   const byYear = new Map<number, ResetMarker>();
   const upcoming = resets
     .filter((r) => r.status === "upcoming")
-    .sort((a, b) => a.fixationEnd.getTime() - b.fixationEnd.getTime());
+    .sort(
+      (a, b) =>
+        a.fixationEnd.getTime() - b.fixationEnd.getTime() ||
+        rank(a.propertyId) - rank(b.propertyId),
+    );
   for (const r of upcoming) {
-    const t = projectionYearForAsOf(baseDate, r.fixationEnd);
+    const t = Math.max(1, Math.ceil(r.gridMonth / 12));
     const row = rows.find((x) => x.year === t);
     if (!row) continue;
     const marker = byYear.get(row.calendarYear) ?? {
@@ -366,6 +373,7 @@ export function resetMarkers(
       resets: [],
     };
     marker.resets.push({
+      id: r.blockId,
       name: names.get(r.propertyId) ?? "",
       date: fmtDate(r.fixationEnd),
       balance: r.balance,
