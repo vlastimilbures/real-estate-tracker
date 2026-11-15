@@ -7,7 +7,8 @@
   loan warnings and has no Data check entry),
   [0158](0158-layouts-hold-in-czech-and-russian.md) (the section nav wraps instead of
   scrolling sideways),
-  [0203](0203-one-disclosure.md) (the amortization toggle is in the panel head)
+  [0203](0203-one-disclosure.md) (the amortization toggle is in the panel head),
+  [0213](0213-guide-section-nav.md) (the Guide has the same section navigation)
 
 ## Context
 

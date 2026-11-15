@@ -126,7 +126,15 @@ describe("Guide limits and data-safety pointer (ADR 0092)", () => {
     expect(text).toContain("planning estimates, not lender quotes");
     expect(text).toContain(LIMITS_DOC);
     expect(text).toContain(DATA_SAFETY_DOC);
-    expect(container.querySelectorAll("a")).toHaveLength(0);
+    // Plain text, no link out of the offline app: the only links are the section
+    // nav's in-page ones (ADR 0213).
+    const links = [...container.querySelectorAll("a")];
+    expect(
+      links.filter((a) => !a.getAttribute("href")?.startsWith("#")),
+    ).toEqual([]);
+    expect(
+      links.some((a) => (a.textContent ?? "").includes("github.com")),
+    ).toBe(false);
   });
 
   it("uses the same addresses in every language", () => {

@@ -2281,7 +2281,47 @@ export const SCREENS: Screen[] = [
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "guide");
+      // Opening the Guide lands at its top (ADR 0213 §3).
+      expect(await ux.page.evaluate(() => window.scrollY)).toBe(0);
       await ux.capture("70-guide");
+    },
+  },
+  {
+    id: "70b-guide-section-nav",
+    desc: "Guide: a section link lands its section under the top bar, marked current (ADR 0213)",
+    run: async (ux) => {
+      await boot(ux.page);
+      await nav(ux, "guide");
+      const navEl = ux.page.getByRole("navigation", {
+        name: ux.t.guide.sectionNavLabel,
+      });
+      await expect(navEl.getByRole("link")).toHaveCount(10);
+      const link = navEl.getByRole("link", { name: ux.t.guide.glossaryTitle });
+      await link.click();
+      await expect(link).toHaveAttribute("aria-current", "location");
+      const heading = ux.page.getByRole("heading", {
+        name: ux.t.guide.glossaryTitle,
+        level: 2,
+      });
+      await expect(heading).toBeFocused();
+      // The heading sits just under the sticky top bar, not behind it.
+      const bar = (await ux.page.locator(".topbar").boundingBox())!;
+      const h = (await heading.boundingBox())!;
+      expect(h.y, "heading below the top bar").toBeGreaterThanOrEqual(
+        bar.y + bar.height,
+      );
+      expect(h.y, "heading near the top").toBeLessThan(
+        bar.y + bar.height + 120,
+      );
+      // The nav wraps; the page never scrolls sideways (ADR 0158).
+      expect(
+        await ux.page.evaluate(
+          () =>
+            document.documentElement.scrollWidth <=
+            document.documentElement.clientWidth,
+        ),
+      ).toBe(true);
+      await ux.capture("70b-guide-section-nav", { fullPage: false });
     },
   },
   {

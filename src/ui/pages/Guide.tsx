@@ -3,6 +3,9 @@ import { AppShell } from "../components/AppShell";
 import { useUiStore } from "../../state/uiStore";
 import { Panel } from "../components/primitives";
 import { useT } from "../hooks/useT";
+import { useSectionSpy } from "../hooks/useSectionSpy";
+import { SectionNav } from "../components/SectionNav";
+import { guideSectionId, guideSections } from "../model/guideSections";
 import "../styles/guide.css";
 
 // Static, dependency-free reference page. Pure presentation — no engine imports; the only
@@ -66,6 +69,11 @@ export function Guide() {
     el?.focus();
     clearGuideTerm();
   }, [guideTerm, clearGuideTerm]);
+  // Section links in the top bar, the current one marked while scrolling (ADR 0213).
+  const sections = guideSections(t);
+  const [currentSection, setCurrentSection] = useSectionSpy(
+    sections.map((s) => s.id),
+  );
   const sd = g.snapshotDefs;
   const pd = g.projectionDefs;
   const rd = g.returnsDefs;
@@ -110,126 +118,158 @@ export function Guide() {
   }));
 
   return (
-    <AppShell title={g.title} subtitle={g.subtitle} showLens={false}>
-      <Panel title={g.howItWorksTitle} hint={g.howItWorksHint}>
-        <div className="guide-cards">
-          <div className="guide-card">
-            <h3>{g.cardFlowTitle}</h3>
-            <p>{g.cardFlowBody}</p>
-          </div>
-          <div className="guide-card">
-            <h3>{g.cardAsOfTitle}</h3>
-            <p>{g.cardAsOfBody}</p>
-          </div>
-          <div className="guide-card">
-            <h3>{g.cardEffectiveTitle}</h3>
-            <p>{g.cardEffectiveBody}</p>
-          </div>
-          <div className="guide-card">
-            <h3>{g.cardDataCheckTitle}</h3>
-            <p>{g.cardDataCheckBody}</p>
-          </div>
-        </div>
-        {/* ADR 0105: the same line as About — language never changes Kč or the formats. */}
-        <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
-          {t.about.formatsNote}
-        </p>
-      </Panel>
-
-      <Panel title={g.snapshotTitle} hint={g.snapshotHint}>
-        <Defs rows={SNAPSHOT} egLabel={g.eg} />
-        <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
-          {g.snapshotProse}
-        </p>
-      </Panel>
-
-      <Panel title={g.mortgagesTitle} hint={g.mortgagesHint}>
-        <p className="guide-prose">
-          {g.mortgagesProse1Pre}
-          <strong>{g.mortgagesProse1Annuities}</strong>
-          {g.mortgagesProse1Mid}
-          <F wrap>{g.fInterest}</F> <F wrap>{g.fPrincipal}</F>{" "}
-          <F wrap>{g.fNewBalance}</F>
-          {g.mortgagesProse1Post}
-        </p>
-        <p className="guide-prose">
-          {g.mortgagesProse2Pre}
-          <strong>{g.mortgagesProse2Fixation}</strong>
-          {g.mortgagesProse2Mid}
-          <strong>{g.mortgagesProse2Resets}</strong>
-          {g.mortgagesProse2Mid2}
-          <strong>{g.mortgagesProse2Reamortizes}</strong>
-          {g.mortgagesProse2Post}
-        </p>
-        <p className="guide-prose">{g.mortgagesProse3}</p>
-      </Panel>
-
-      <Panel title={g.projectionTitle} hint={g.projectionHint}>
-        <p className="guide-prose">{g.projectionProse1}</p>
-        <Defs rows={PROJECTION} egLabel={g.eg} />
-        <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
-          {g.projectionProse2}
-        </p>
-      </Panel>
-
-      <Panel title={g.nominalRealTitle} hint={g.nominalRealHint}>
-        <p className="guide-prose">
-          {g.nominalRealProsePre}
-          <F wrap>{g.fCpi}</F> <F wrap>{g.fReal}</F>
-          {g.nominalRealProsePost}
-        </p>
-        <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
-          {g.nominalRealTodayNote}
-        </p>
-      </Panel>
-
-      <Panel title={g.returnsTitle} hint={g.returnsHint}>
-        <Defs rows={RETURNS} egLabel={g.eg} />
-      </Panel>
-
-      <Panel title={g.scenariosTitle} hint={g.scenariosHint}>
-        <p className="guide-prose">{g.scenariosProse}</p>
-        <Defs
-          rows={[cd.inflationShock, cd.rateShock, cd.valueCrash]}
-          egLabel={g.eg}
+    <AppShell
+      title={g.title}
+      subtitle={g.subtitle}
+      showLens={false}
+      subnav={
+        <SectionNav
+          label={g.sectionNavLabel}
+          sections={sections}
+          current={currentSection}
+          onSelect={setCurrentSection}
         />
-      </Panel>
-
-      <Panel title={g.developmentTitle} hint={g.developmentHint}>
-        <p className="guide-prose">
-          {g.developmentProsePre}
-          <strong>{g.developmentTranches}</strong>
-          {g.developmentProseMid}
-          <strong>{g.developmentInterestOnly}</strong>
-          {g.developmentProsePost}
-        </p>
-      </Panel>
-
-      <Panel title={g.glossaryTitle}>
-        <div className="guide-glossary">
-          {GLOSSARY.map((gl) => (
-            <div
-              className="guide-gloss"
-              key={gl.key}
-              id={`glossary-${gl.key}`}
-              tabIndex={-1}
-            >
-              <span className="guide-gloss-term">{gl.term}</span>{" "}
-              <span className="guide-gloss-def">— {gl.def}</span>
+      }
+    >
+      <div className="pd-section" id={guideSectionId("howItWorks")}>
+        <Panel title={g.howItWorksTitle} hint={g.howItWorksHint}>
+          <div className="guide-cards">
+            <div className="guide-card">
+              <h3>{g.cardFlowTitle}</h3>
+              <p>{g.cardFlowBody}</p>
             </div>
-          ))}
-        </div>
-      </Panel>
+            <div className="guide-card">
+              <h3>{g.cardAsOfTitle}</h3>
+              <p>{g.cardAsOfBody}</p>
+            </div>
+            <div className="guide-card">
+              <h3>{g.cardEffectiveTitle}</h3>
+              <p>{g.cardEffectiveBody}</p>
+            </div>
+            <div className="guide-card">
+              <h3>{g.cardDataCheckTitle}</h3>
+              <p>{g.cardDataCheckBody}</p>
+            </div>
+          </div>
+          {/* ADR 0105: the same line as About — language never changes Kč or the formats. */}
+          <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
+            {t.about.formatsNote}
+          </p>
+        </Panel>
+      </div>
 
-      <Panel title={g.limitsTitle}>
-        <p className="guide-prose">{g.limitsProse}</p>
-        <dl className="guide-docs">
-          <dt>{t.about.limitsLabel}</dt>
-          <dd>{t.about.limitsText}</dd>
-          <dt>{t.about.dataSafetyLabel}</dt>
-          <dd>{t.about.dataSafetyText}</dd>
-        </dl>
-      </Panel>
+      <div className="pd-section" id={guideSectionId("snapshot")}>
+        <Panel title={g.snapshotTitle} hint={g.snapshotHint}>
+          <Defs rows={SNAPSHOT} egLabel={g.eg} />
+          <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
+            {g.snapshotProse}
+          </p>
+        </Panel>
+      </div>
+
+      <div className="pd-section" id={guideSectionId("mortgages")}>
+        <Panel title={g.mortgagesTitle} hint={g.mortgagesHint}>
+          <p className="guide-prose">
+            {g.mortgagesProse1Pre}
+            <strong>{g.mortgagesProse1Annuities}</strong>
+            {g.mortgagesProse1Mid}
+            <F wrap>{g.fInterest}</F> <F wrap>{g.fPrincipal}</F>{" "}
+            <F wrap>{g.fNewBalance}</F>
+            {g.mortgagesProse1Post}
+          </p>
+          <p className="guide-prose">
+            {g.mortgagesProse2Pre}
+            <strong>{g.mortgagesProse2Fixation}</strong>
+            {g.mortgagesProse2Mid}
+            <strong>{g.mortgagesProse2Resets}</strong>
+            {g.mortgagesProse2Mid2}
+            <strong>{g.mortgagesProse2Reamortizes}</strong>
+            {g.mortgagesProse2Post}
+          </p>
+          <p className="guide-prose">{g.mortgagesProse3}</p>
+        </Panel>
+      </div>
+
+      <div className="pd-section" id={guideSectionId("projection")}>
+        <Panel title={g.projectionTitle} hint={g.projectionHint}>
+          <p className="guide-prose">{g.projectionProse1}</p>
+          <Defs rows={PROJECTION} egLabel={g.eg} />
+          <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
+            {g.projectionProse2}
+          </p>
+        </Panel>
+      </div>
+
+      <div className="pd-section" id={guideSectionId("nominalReal")}>
+        <Panel title={g.nominalRealTitle} hint={g.nominalRealHint}>
+          <p className="guide-prose">
+            {g.nominalRealProsePre}
+            <F wrap>{g.fCpi}</F> <F wrap>{g.fReal}</F>
+            {g.nominalRealProsePost}
+          </p>
+          <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
+            {g.nominalRealTodayNote}
+          </p>
+        </Panel>
+      </div>
+
+      <div className="pd-section" id={guideSectionId("returns")}>
+        <Panel title={g.returnsTitle} hint={g.returnsHint}>
+          <Defs rows={RETURNS} egLabel={g.eg} />
+        </Panel>
+      </div>
+
+      <div className="pd-section" id={guideSectionId("scenarios")}>
+        <Panel title={g.scenariosTitle} hint={g.scenariosHint}>
+          <p className="guide-prose">{g.scenariosProse}</p>
+          <Defs
+            rows={[cd.inflationShock, cd.rateShock, cd.valueCrash]}
+            egLabel={g.eg}
+          />
+        </Panel>
+      </div>
+
+      <div className="pd-section" id={guideSectionId("development")}>
+        <Panel title={g.developmentTitle} hint={g.developmentHint}>
+          <p className="guide-prose">
+            {g.developmentProsePre}
+            <strong>{g.developmentTranches}</strong>
+            {g.developmentProseMid}
+            <strong>{g.developmentInterestOnly}</strong>
+            {g.developmentProsePost}
+          </p>
+        </Panel>
+      </div>
+
+      <div className="pd-section" id={guideSectionId("glossary")}>
+        <Panel title={g.glossaryTitle}>
+          <div className="guide-glossary">
+            {GLOSSARY.map((gl) => (
+              <div
+                className="guide-gloss"
+                key={gl.key}
+                id={`glossary-${gl.key}`}
+                tabIndex={-1}
+              >
+                <span className="guide-gloss-term">{gl.term}</span>{" "}
+                <span className="guide-gloss-def">— {gl.def}</span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      </div>
+
+      <div className="pd-section" id={guideSectionId("limits")}>
+        <Panel title={g.limitsTitle}>
+          <p className="guide-prose">{g.limitsProse}</p>
+          <dl className="guide-docs">
+            <dt>{t.about.limitsLabel}</dt>
+            <dd>{t.about.limitsText}</dd>
+            <dt>{t.about.dataSafetyLabel}</dt>
+            <dd>{t.about.dataSafetyText}</dd>
+          </dl>
+        </Panel>
+      </div>
     </AppShell>
   );
 }
