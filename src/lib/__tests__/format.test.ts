@@ -15,6 +15,7 @@ import {
   pickCzkAxisUnit,
   fmtCzkAxisValue,
   fmtCzkAxisTick,
+  noBreak,
   fmtNumber,
 } from "../format";
 
@@ -182,6 +183,13 @@ describe("fmtCzkAxisValue", () => {
   it("renders negatives with the real minus sign", () => {
     const unit = pickCzkAxisUnit([-57_334, 200_000]);
     expect(fmtCzkAxisValue(-57_334, unit)).toBe("−57");
+  });
+});
+
+describe("noBreak (ADR 0200)", () => {
+  it("makes every space non-breaking, so an amount keeps its unit", () => {
+    expect(noBreak("9,4 M Kč")).toBe("9,4\u00A0M\u00A0Kč");
+    expect(noBreak("Kč")).toBe("Kč");
   });
 });
 

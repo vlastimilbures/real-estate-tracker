@@ -79,6 +79,7 @@ describe("Cash to owner (ADR 0161)", () => {
     render(
       <KpiListPanel
         s={portfolioSnapshot(prepaid, assumptions)}
+        basis={{ kind: "today" }}
         kpis={kpis}
         mode="nominal"
         horizon={kpis.netWorthNominal}

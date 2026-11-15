@@ -146,9 +146,7 @@ describe("N7b wording (#169, #152)", () => {
   });
 
   it("cs: hints, holding costs and the tax name (#169 G1-2-08)", () => {
-    expect(cs.dashboard.monthlyHint("01.10.2026")).toBe(
-      "roční výše při současných nájmech ÷ 12, nájemní smlouvy platné k 01.10.2026",
-    );
+    // dashboard.monthlyHint left with the monthly panel (ADR 0200).
     expect(cs.guide.snapshotDefs.noi.meaning).toMatch(
       /hotovost, kterou vynáší samo aktivum\.$/,
     );

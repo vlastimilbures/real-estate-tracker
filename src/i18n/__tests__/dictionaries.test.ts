@@ -247,8 +247,8 @@ describe("i18n dictionaries — plural forms", () => {
     // Russian count years.
     const withIrrFoot = [
       ...common,
-      "dashboard.netWorthInYear",
       "dashboard.irrFoot",
+      "dashboard.stripHorizonFoot",
       ...financing,
       ...dataCheck,
       ...rest,
@@ -270,20 +270,20 @@ describe("i18n dictionaries — plural forms", () => {
     expect(countInflected("cs")).toEqual(csShocks);
   });
 
-  it("horizon years inflect in every language (ADR 0084, ADR 0088)", () => {
+  it("horizon years inflect in every language (ADR 0084, ADR 0088, ADR 0200)", () => {
     const f = (l: Lang) => (n: number) =>
-      String((L[l].get("dashboard.netWorthInYear") as Fn)(2056, n));
-    expect(f("en")(1)).toBe("Net worth in 2056 (1-yr horizon)");
+      String((L[l].get("dashboard.stripHorizonFoot") as Fn)("4,85x", n, "x"));
+    expect(f("en")(1)).toBe("4,85x · 1-yr horizon · x");
     expect([1, 2, 5].map(f("cs"))).toEqual([
-      "Čisté jmění v roce 2056 (horizont 1 rok)",
-      "Čisté jmění v roce 2056 (horizont 2 roky)",
-      "Čisté jmění v roce 2056 (horizont 5 let)",
+      "4,85x · horizont 1 rok · x",
+      "4,85x · horizont 2 roky · x",
+      "4,85x · horizont 5 let · x",
     ]);
     expect([1, 2, 5, 21].map(f("ru"))).toEqual([
-      "Чистые активы в 2056 г. (горизонт 1 год)",
-      "Чистые активы в 2056 г. (горизонт 2 года)",
-      "Чистые активы в 2056 г. (горизонт 5 лет)",
-      "Чистые активы в 2056 г. (горизонт 21 год)",
+      "4,85x · горизонт 1 год · x",
+      "4,85x · горизонт 2 года · x",
+      "4,85x · горизонт 5 лет · x",
+      "4,85x · горизонт 21 год · x",
     ]);
     for (const l of LANGS) {
       for (const k of [

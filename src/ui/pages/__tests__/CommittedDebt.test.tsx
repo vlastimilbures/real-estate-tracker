@@ -15,10 +15,10 @@ import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
 import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
-import { fmtCzkM } from "../../../lib/format";
+import { fmtCzkM, noBreak } from "../../../lib/format";
 import { D } from "../../../lib/money";
 import { undrawnPart } from "../../model/debt";
-import { HeroTiles } from "../DashboardPanels";
+import { KpiStrip } from "../DashboardPanels";
 import { PropertySnapshotTiles } from "../PropertyDetailPanels";
 
 beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
@@ -34,6 +34,8 @@ const devOnly: Portfolio = {
   holdingCosts: [],
 };
 const NOTE = en.common.undrawnDebt(fmtCzkM(D("2500000")));
+// The Dashboard strip keeps each amount on one line (ADR 0200).
+const STRIP_NOTE = en.common.undrawnDebt(noBreak(fmtCzkM(D("2500000"))));
 const COMPLETED = en.common.completedValue(fmtCzkM(D("9500000")));
 
 /** The net-worth tile's text, foot included. */
@@ -44,8 +46,9 @@ function heroFoot(): string {
 function hero(p: Portfolio) {
   const kpis = portfolioKpis(p, assumptions);
   render(
-    <HeroTiles
+    <KpiStrip
       s={portfolioSnapshot(p, assumptions)}
+      basis={{ kind: "today" }}
       mode="nominal"
       isToday
       horizon={kpis.netWorthNominal}
@@ -72,9 +75,9 @@ describe("Dashboard hero foot", () => {
     // 9.5 M completed − 2.5 M not drawn yet; 2.0 M drawn.
     // The undrawn note follows the debt it adds to.
     expect(foot).toContain(
-      en.dashboard.assetsDebtEquity(
-        fmtCzkM(D("7000000")),
-        `${fmtCzkM(D("2000000"))} (${NOTE})`,
+      en.dashboard.stripAssetsDebt(
+        noBreak(fmtCzkM(D("7000000"))),
+        `${noBreak(fmtCzkM(D("2000000")))} (${STRIP_NOTE})`,
       ),
     );
   });

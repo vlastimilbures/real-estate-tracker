@@ -14,7 +14,8 @@ import {
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
-import { HeroTiles, KpiListPanel, RiskTiles } from "../DashboardPanels";
+import { KpiStrip, KpiListPanel } from "../DashboardPanels";
+import { renderStrip } from "./kpiStripSupport";
 import { PropertySnapshotTiles } from "../PropertyDetailPanels";
 
 const debtFree: Portfolio = { ...portfolio, mortgages: [] };
@@ -31,7 +32,7 @@ describe("no debt: no DSCR badge (ADR 0126)", () => {
   it("Dashboard DSCR tile shows — and no Shortfall badge", () => {
     const s = portfolioSnapshot(debtFree, assumptions);
     expect(s.dscr).toBeNull();
-    render(<RiskTiles s={s} cashFlowFoot="" />);
+    renderStrip(s);
     const dscr = tile(en.dashboard.portfolioDscr);
     expect(within(dscr).getByText("—")).toBeTruthy();
     expect(dscr.textContent).not.toContain(en.dashboard.badgeShortfall);
@@ -67,8 +68,9 @@ describe("no growth base: the multiple shows — (ADR 0126)", () => {
     expect(kpis.netWorthMultiple).toBeNull();
     render(
       <>
-        <HeroTiles
+        <KpiStrip
           s={s}
+          basis={{ kind: "today" }}
           mode="nominal"
           isToday
           horizon={kpis.netWorthNominal}
@@ -80,6 +82,7 @@ describe("no growth base: the multiple shows — (ADR 0126)", () => {
         />
         <KpiListPanel
           s={s}
+          basis={{ kind: "today" }}
           kpis={kpis}
           mode="nominal"
           horizon={kpis.netWorthNominal}
@@ -91,7 +94,11 @@ describe("no growth base: the multiple shows — (ADR 0126)", () => {
     );
     expect(
       screen.getByText(
-        en.dashboard.multipleFromStartMode("—", en.common.nominalLower),
+        en.dashboard.stripHorizonFoot(
+          "—",
+          assumptions.horizonYears,
+          en.common.nominalLower,
+        ),
       ),
     ).toBeTruthy();
     const key = screen.getByText(en.dashboard.kpiNetWorthMultiple);

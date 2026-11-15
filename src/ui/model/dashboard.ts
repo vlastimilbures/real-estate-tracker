@@ -197,39 +197,13 @@ function yearAndPeriod(
   ];
 }
 
-/** Title + hint of the monthly cash-flow panel. */
-export function monthlyFlowLabels(
-  t: Dictionary,
-  basis: AsOfBasis,
-  baseDate: Date,
-  asOf: Date,
-): { title: string; hint: string } {
+/** The basis the Dashboard strip's figures are for, as a phrase (ADR 0088, 0200 §2):
+ *  current, a projection year (the Projections year label) or a date. */
+export function basisText(t: Dictionary, basis: AsOfBasis): string {
   const d = t.dashboard;
-  if (basis.kind === "projection") {
-    const [year, period] = yearAndPeriod(t, basis, baseDate);
-    return {
-      title: d.monthlyEquivalentYear(year, period),
-      hint: d.monthlyHintProjection,
-    };
-  }
-  return {
-    title:
-      basis.kind === "today"
-        ? d.currentMonthlyCashFlow
-        : d.monthlyCashFlowOn(fmtDate(basis.date)),
-    hint: d.monthlyHint(fmtDate(asOf)),
-  };
-}
-
-/** Foot of the annual net cash flow tile. */
-export function netCashFlowFoot(t: Dictionary, basis: AsOfBasis): string {
-  const d = t.dashboard;
-  if (basis.kind === "today") return d.noiMinusDebtService;
-  if (basis.kind === "snapshot")
-    return d.noiMinusDebtServiceOn(fmtDate(basis.date));
-  return d.noiMinusDebtServiceYear(
-    yearLabel(t, basis.year, basis.calendarYear),
-  );
+  if (basis.kind === "today") return d.basisCurrent;
+  if (basis.kind === "snapshot") return d.basisOn(fmtDate(basis.date));
+  return d.basisProjection(yearLabel(t, basis.year, basis.calendarYear));
 }
 
 /** As-of picker hint: how the date maps to what is shown; none at today. */

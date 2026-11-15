@@ -8,6 +8,7 @@ import {
   applyScenario,
   isoDate,
   money,
+  portfolioKpis,
   portfolioProjection,
   portfolioSnapshot,
   portfolioSnapshotAtYear,
@@ -21,7 +22,8 @@ import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { projectionSeries } from "../../model/projection";
 import { ProjectionGrid } from "../../components/ProjectionGrid";
-import { RiskTiles } from "../DashboardPanels";
+import { KpiListPanel } from "../DashboardPanels";
+import { renderStrip } from "./kpiStripSupport";
 import { PropertySnapshotTiles } from "../PropertyDetailPanels";
 import { Properties } from "../Properties";
 
@@ -69,22 +71,31 @@ function tile(label: string): HTMLElement {
 }
 
 describe("Dashboard risk tiles", () => {
-  it("LTV and net yield read n/a; no LTV badge; the gross-yield foot says n/a", () => {
+  it("LTV reads n/a with no marker; net and gross yield in the KPI list read n/a (ADR 0200)", () => {
     const s = portfolioSnapshotAtYear(
       portfolioSnapshot(portfolio, crashed),
       crashedRows[5]!,
     );
-    render(<RiskTiles s={s} cashFlowFoot="" />);
+    renderStrip(s);
     const ltv = tile(en.dashboard.portfolioLtv);
     expect(within(ltv).getByText(NA)).toBeTruthy();
     expect(ltv.querySelector(".badge")).toBeNull();
     expect(ltv.querySelector(".health-marker")).toBeNull();
     expect(ltv.textContent).not.toContain("0,0 %");
-    const yieldTile = tile(en.dashboard.netYieldCap);
-    expect(within(yieldTile).getByText(NA)).toBeTruthy();
-    expect(
-      within(yieldTile).getByText(en.dashboard.grossYieldFoot(NA)),
-    ).toBeTruthy();
+    render(
+      <KpiListPanel
+        s={s}
+        basis={{ kind: "today" }}
+        kpis={portfolioKpis(portfolio, crashed)}
+        mode="nominal"
+        horizon={money(0)}
+        horizonYears={crashed.horizonYears}
+        irr={{ rate: null, reason: "NO_ROOT" }}
+        cashInvested={null}
+      />,
+    );
+    for (const k of [en.dashboard.netYieldCap, en.dashboard.kpiGrossYield])
+      expect(screen.getByText(k).nextElementSibling?.textContent).toBe(NA);
   });
 });
 
