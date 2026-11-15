@@ -60,20 +60,34 @@ function shown(
   }
 }
 
+/** A row's cell texts in the export's columns. With `period` the export has a Period
+ *  column that the screen folds into the first (Year) cell as its tooltip; the cell's
+ *  screen-reader copy of it is left out of its text (ADR 0211 §1). */
+function rowTexts(tr: HTMLTableRowElement, period: boolean): string[] {
+  const [first, ...rest] = [...tr.cells];
+  return [
+    period ? (first!.firstChild?.textContent ?? "") : first!.textContent,
+    ...(period ? [first!.title] : []),
+    ...rest.map((c) => c.textContent),
+  ];
+}
+
 /** Each body row's cell texts against the exported row read back. */
 function expectScreenMatchesExport<R>(
   table: HTMLTableElement,
   columns: XlsxColumn<R>[],
   rows: R[],
+  period?: string,
 ) {
   const body = [...table.tBodies[0]!.rows];
   expect(body).toHaveLength(rows.length);
-  expect([...table.tHead!.rows[0]!.cells].map((c) => c.textContent)).toEqual(
-    columns.map((c) => c.header),
-  );
+  const heads = [...table.tHead!.rows[0]!.cells].map((c) => c.textContent);
+  if (period) heads.splice(1, 0, period);
+  expect(heads).toEqual(columns.map((c) => c.header));
   body.forEach((tr, i) => {
+    const texts = rowTexts(tr, period !== undefined);
     columns.forEach((c, j) => {
-      const text = tr.cells[j]!.textContent;
+      const text = texts[j]!;
       // The Year cell reads "Year n · yyyy"; the export keeps the calendar year.
       const onScreen = j === 0 ? text.split(" · ").at(-1)! : text;
       const kind = cellKind(c, rows[i]!);
@@ -104,6 +118,8 @@ describe("the projection grid matches its export", () => {
           container.querySelector("table")!,
           projectionColumns(en, assumptions.baseDate, rows),
           rows,
+          // The seed's projection years run July to June.
+          en.projGrid.period,
         );
       });
     }
@@ -117,7 +133,8 @@ describe("the projection grid matches its export", () => {
     );
     const columns = projectionColumns(en, assumptions.baseDate, rows);
     const j = columns.findIndex((c) => c.kind === "multiple");
-    const cell = container.querySelector("tbody tr")!.children[j]!;
+    // The export's Period column is the Year cell's tooltip on screen (ADR 0211 §1).
+    const cell = container.querySelector("tbody tr")!.children[j - 1]!;
     expect(cell.textContent).toBe(fmtDscr(D(150)));
     expect(cell.textContent).toMatch(/^>/);
     expect(cellValue("multiple", columns[j]!.value(rows[0]!))).toBe(150);

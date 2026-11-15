@@ -818,6 +818,7 @@ export const cs: Dictionary = {
     realTermsDated: (d) => `reálné hodnoty (Kč k začátku projekce ${d})`,
     nominalKc: "nominální Kč",
     periodNote: "toky za rok, zůstatky ke konci roku",
+    yearSpan: (from, to) => `projekční roky ${from} – ${to}`,
     portfolio: "Portfolio",
     entity: "Portfolio nebo nemovitost",
   },

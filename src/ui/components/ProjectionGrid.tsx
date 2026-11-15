@@ -5,13 +5,12 @@ import { Money, Pct, TableWrap } from "./primitives";
 import { fmtDscr } from "../../lib/format";
 import type { Decimal } from "../../lib/money";
 import {
-  periodLabelLocalized,
   projectionExtras,
   purchasedValue,
   purchasesColumn,
   undrawnColumn,
+  yearCellPeriod,
   yearLabel,
-  showPeriodColumn,
   type SeriesRow,
 } from "../model/projection";
 import { useT } from "../hooks/useT";
@@ -25,26 +24,19 @@ export function ProjectionGrid({
 }) {
   const t = useT();
   const last = rows.length - 1;
-  // Year 1's fiscal span starts at edate(baseDate, 1); if that month is January
-  // the spans equal calendar years and the Period column just restates "Year".
-  const showPeriod = showPeriodColumn(baseDate);
   const extras = projectionExtras(rows, t.projGrid);
   const undrawn = undrawnColumn(rows, t.projGrid);
   const purchases = purchasesColumn(rows, t.projGrid);
   return (
     <TableWrap label={t.projGrid.caption}>
-      <table className="data">
+      {/* Compact rows, the period in the Year cell (ADR 0211). */}
+      <table className="data compact">
         <caption className="sr-only">{t.projGrid.caption}</caption>
         <thead>
           <tr>
             <th scope="col" className="left sticky-col">
               {t.projGrid.year}
             </th>
-            {showPeriod && (
-              <th scope="col" className="left">
-                {t.projGrid.period}
-              </th>
-            )}
             <th scope="col">{t.projGrid.value}</th>
             {purchases.map(({ key, header }) => (
               <th key={key} scope="col">
@@ -100,24 +92,16 @@ export function ProjectionGrid({
                   signed={signed}
                 />
               );
+            const period = yearCellPeriod(t, baseDate, r.year);
             return (
               <tr
                 key={r.year}
                 className={i === 0 || i === last ? "is-strong" : ""}
               >
-                <td className="left sticky-col">
+                <td className="left sticky-col" title={period ?? undefined}>
                   {yearLabel(t, r.year, r.calendarYear)}
+                  {period && <span className="sr-only">, {period}</span>}
                 </td>
-                {showPeriod && (
-                  <td className="left proj-period">
-                    {periodLabelLocalized(
-                      baseDate,
-                      r.year,
-                      t.monthsShort,
-                      t.projGrid.opening,
-                    )}
-                  </td>
-                )}
                 {/* ADR 0169: the value less the tranches not drawn yet, a purchase's
                     value and construction (ADR 0194), the drawn balance, and those tranches
                     while a development loan draws. */}

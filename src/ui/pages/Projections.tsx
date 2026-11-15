@@ -15,7 +15,7 @@ import {
 import {
   lensLabel,
   projectionExportNotes,
-  projectionsSubtitle,
+  projectionsPageSubtitle,
 } from "../model/tableContext";
 import { exportTableXlsx } from "../exportXlsx";
 import { exportFilename } from "../../lib/slug";
@@ -96,7 +96,7 @@ export function Projections() {
   return (
     <AppShell
       title={t.projections.title}
-      subtitle={projectionsSubtitle(t, mode, assumptions.baseDate)}
+      subtitle={projectionsPageSubtitle(t, mode, assumptions.baseDate)}
       actions={
         <PropertySelect
           mode="single"

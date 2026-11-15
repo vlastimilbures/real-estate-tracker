@@ -260,6 +260,7 @@ it.
 | [0207](0207-holding-costs-read-view.md)                        | Holding costs: a read view with Edit, like the other records                                  | Accepted (delegated, owner review pending)                     | #385, #392                                         |
 | [0208](0208-key-figures-grouped.md)                            | Dashboard key figures: only what the tiles do not show, in three groups                       | Accepted (delegated, owner review pending)                     | #383, #392                                         |
 | [0209](0209-acquisition-empty-state.md)                        | Acquisition funding: a compact line while nothing is recorded                                 | Accepted (delegated, owner review pending)                     | #387, #392                                         |
+| [0211](0211-projection-grid-fits.md)                           | The year-by-year grid fits the default window                                                 | Accepted (delegated, owner review pending)                     | #386, #392                                         |
 
 <!-- adr-index:end -->
 

@@ -788,6 +788,22 @@ table.data.wrap-head tbody td.actions-col {
   padding-top: 7px;
   padding-bottom: 7px;
 }
+/* The year-by-year grid: rows of about 32 px and 8 px between columns, so 12 figure
+   columns fit at 1280 px and 31 rows in about 1,000 px (ADR 0211 §3). */
+table.data.compact {
+  font-size: 12px;
+}
+table.data.compact tbody td {
+  padding: 6px 5px;
+}
+table.data.compact thead th {
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: bottom;
+  white-space: normal;
+  text-wrap: balance;
+  letter-spacing: 0.02em;
+}
 /* A long name gives way sooner here, so Value stays in view in a narrow window. */
 table.data.wrap-head .cell-name {
   max-width: clamp(6.5rem, 12vw, 22rem);
@@ -2286,8 +2302,8 @@ table.chart-table tbody th.sticky-col {
 table.data td:has(> .row-actions) {
   width: 1%;
   white-space: nowrap;
-  padding-left: 6px;
-  padding-right: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 /* Icon-only quiet buttons, 28 px targets 4 px apart; the name shows as a tooltip on
    hover and keyboard focus. */
@@ -2474,14 +2490,10 @@ main.page:focus {
   align-items: center;
   gap: var(--s3);
 }
-/* Dense projection table: N/A flow cells and the period column. */
+/* Dense projection table: N/A flow cells. */
 /* --ink-soft, not --ink-faint: totals rows sit on --paper-2 (ADR 0157). */
 .proj-na {
   color: var(--ink-soft);
-}
-.proj-period {
-  color: var(--ink-soft);
-  white-space: nowrap;
 }
 /* Checkbox field row (e.g. garage Yes). */
 .checkbox-row {

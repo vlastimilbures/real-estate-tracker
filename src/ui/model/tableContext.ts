@@ -4,7 +4,12 @@ import { fmtDate } from "../../lib/format";
 import type { Dictionary } from "../../i18n";
 import type { Mode } from "./lens";
 import type { AsOfBasis } from "./dashboard";
-import { periodLabelLocalized, yearLabel } from "./projection";
+import { edate } from "../../engine";
+import {
+  periodLabelLocalized,
+  showPeriodColumn,
+  yearLabel,
+} from "./projection";
 
 /** Properties: count · as of {date} · amounts in Kč, flows per year. In a projection year
  *  the date names the year and its period, as Property detail labels it (ADR 0150). */
@@ -57,6 +62,37 @@ export function projectionsSubtitle(
     t.projections.subtitle(lensLabel(t, mode, baseDate)),
     t.projections.periodNote,
   ].join(" · ");
+}
+
+/** The months a projection year runs from and to, when they are not calendar years
+ *  (ADR 0211 §2). */
+export function yearSpanNote(t: Dictionary, baseDate: Date): string | null {
+  if (!showPeriodColumn(baseDate)) return null;
+  const month = (n: number) =>
+    t.monthsShort[edate(baseDate, n).getUTCMonth()] ?? "";
+  return t.projections.yearSpan(month(1), month(12));
+}
+
+const withSpan = (t: Dictionary, line: string, baseDate: Date): string =>
+  [line, yearSpanNote(t, baseDate)].filter(Boolean).join(" · ");
+
+/** The Projections page subtitle: the context line, then the years' span (ADR 0211). The
+ *  export keeps `projectionsSubtitle`: its Period column states the span. */
+export function projectionsPageSubtitle(
+  t: Dictionary,
+  mode: Mode,
+  baseDate: Date,
+): string {
+  return withSpan(t, projectionsSubtitle(t, mode, baseDate), baseDate);
+}
+
+/** Property detail's projection panel hint: the lens, then the years' span (ADR 0211). */
+export function projectionPanelHint(
+  t: Dictionary,
+  lens: string,
+  baseDate: Date,
+): string {
+  return withSpan(t, lens, baseDate);
 }
 
 /** The note lines of a projection export: whose table it is, then the screen's context

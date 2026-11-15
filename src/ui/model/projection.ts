@@ -70,6 +70,18 @@ export function showPeriodColumn(baseDate: Date): boolean {
   return edate(baseDate, 1).getUTCMonth() !== 0;
 }
 
+/** A Year cell's span, its tooltip and screen-reader text; none with calendar years
+ *  (ADR 0211 §1). */
+export function yearCellPeriod(
+  t: Pick<Dictionary, "projGrid" | "monthsShort">,
+  baseDate: Date,
+  year: number,
+): string | null {
+  return showPeriodColumn(baseDate)
+    ? periodLabelLocalized(baseDate, year, t.monthsShort, t.projGrid.opening)
+    : null;
+}
+
 /** Map the engine's per-year projection into display rows under the chosen lens. */
 export function projectionSeries(
   projection: ProjectionYear[],
