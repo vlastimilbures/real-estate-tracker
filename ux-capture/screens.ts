@@ -1120,18 +1120,24 @@ export const SCREENS: Screen[] = [
       await holding.scrollIntoViewIfNeeded();
       await ux.capture("20c-property-holding-edit", { fullPage: false });
       await holding.getByRole("button", { name: ux.t.common.cancel }).click();
-      await expect(
-        holding.getByRole("button", { name: d.editHoldingCosts }),
-      ).toBeFocused();
-      // A field cleared and saved reads as the portfolio default, marked.
-      await holding.getByRole("button", { name: d.editHoldingCosts }).click();
-      await holding.getByLabel(d.fieldInsurance, { exact: false }).fill("");
+      const pencil = holding.getByRole("button", { name: d.editHoldingCosts });
+      await expect(pencil).toBeFocused();
+      // Focus comes back to a pencil in view, clear of the sticky top bar (ADR 0207 §3).
+      const bar = await ux.page.locator(".topbar").boundingBox();
+      const box = await pencil.boundingBox();
+      expect(box && bar && box.y >= bar.y + bar.height).toBe(true);
+      // A field cleared and saved reads as the portfolio default, marked: the sample's
+      // own SVJ fee (850 Kč) gives way to the default (1 700 Kč). The sample stores all
+      // six fields, so this is the only marked one.
+      await pencil.click();
+      await holding.getByLabel(d.fieldSvjMo, { exact: false }).fill("");
       await holding.getByRole("button", { name: d.saveHoldingCosts }).click();
-      await expect(
-        holding.getByRole("button", { name: d.editHoldingCosts }),
-      ).toBeFocused();
+      await expect(ux.page.getByText(d.holdingCostsSaved)).toBeVisible();
+      await expect(pencil).toBeFocused();
       await expect(holding.getByText(d.holdingDefault)).toHaveCount(1);
-      await expect(ux.page.getByText(d.holdingCostsSaved)).toBeHidden();
+      await expect(ux.page.getByText(d.holdingCostsSaved)).toBeHidden({
+        timeout: 10_000,
+      });
       await holding.scrollIntoViewIfNeeded();
       await ux.capture("20d-property-holding-default", { fullPage: false });
     },

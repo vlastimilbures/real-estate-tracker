@@ -5,8 +5,9 @@
 - Source: issue #385 (UX/UI review 2026-11, tracking #392); direction approved by the
   owner on 2026-11-15 (the issue's layout); acceptance delegated by the owner for the
   2026-11-15 run (comment on #392)
-- Related: [0199](0199-icon-only-row-actions.md) (the row-action pencil),
-  [0201](0201-button-roles.md) (one primary per region; Cancel ghost, Save primary),
+- Amends: [0199](0199-icon-only-row-actions.md) (a row action in a panel head, with a
+  name of its own)
+- Related: [0201](0201-button-roles.md) (one primary per region; Cancel ghost, Save primary),
   [0118](0118-data-check.md) (the Data check link to Holding costs),
   [0142](0142-row-switch-guard-busy-dialog.md) (the leave guard of a record form)
 
@@ -24,16 +25,20 @@ default or what that default is.
 1. **Read view.** At rest the panel lists the six costs in two columns (a description list):
    the stored value, or for a blank field the portfolio default actually used
    (`Assumptions.defaults`), followed by `propertyDetail.holdingDefault` ("(default)",
-   cs "(výchozí)", ru "(по умолчанию)"). Money in Kč, shares as percentages, formatted
-   as elsewhere. The shaping is `holdingCostsView` (`src/ui/model/holdingCosts.ts`); no
+   cs "(výchozí)", ru "(по умолчанию)"). Money in Kč, shares as percentages, rounded for
+   display as elsewhere (CLAUDE.md §5); the form shows the stored value in full. Where
+   the panel is narrower than two 260 px columns, the list is one column. The shaping is `holdingCostsView` (`src/ui/model/holdingCosts.ts`); no
    new maths.
-2. **Edit.** The row-action pencil of ADR 0199 in the panel head,
+2. **Edit.** The row-action pencil of ADR 0199, here in the panel head and named for the
+   panel, as the panel is a single record,
    `propertyDetail.editHoldingCosts` ("Edit holding costs"), opens the same form as before
    in place, with ghost Cancel and primary Save (`propertyDetail.saveHoldingCosts`), the
    form's "Unsaved changes" state and the leave guard of every record form. The pencil is
    hidden while the form is open.
 3. **Focus.** Edit moves focus to the form's first field; Cancel and a successful Save
-   return the read view and move focus back to the pencil.
+   return the read view, move focus back to the pencil and scroll its section clear of
+   the sticky top bar. A save that lands after focus has moved elsewhere leaves focus
+   there. A refused value or a failed write keeps the form open, as before.
 4. **Unchanged:** the fields, their validation and parsing, the save, its failure message
    in the form and the "Holding costs saved" toast, the panel's hint, and the Data check
    link, which still lands on the panel (`pd-holding`).

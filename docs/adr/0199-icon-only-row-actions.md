@@ -7,6 +7,8 @@
   by the owner for the 2026-11-15 run (comment on #392)
 - Amends: [0085](0085-properties-long-names.md) (icon-only row actions at every width, not
   only below 1100 px)
+- Amended by: [0207](0207-holding-costs-read-view.md) (a row action in a panel head, with
+  a name of its own)
 - Related: [0143](0143-one-confirm-row.md) (the inline delete confirmation, unchanged),
   [0173](0173-record-panel-races-confirm-focus.md) (focus after a confirmed delete)
 

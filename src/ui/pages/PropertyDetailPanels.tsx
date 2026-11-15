@@ -206,15 +206,27 @@ export function HoldingCostsPanel({
   const [editing, setEditing] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   // Focus follows the switch (ADR 0207 §3): into the form's first field on Edit, back to
-  // the pencil on Cancel or Save; nothing on the first render.
+  // the pencil on Cancel or Save; nothing on the first render. Focus that has moved on
+  // elsewhere during a slow save stays where it is; the pencil's section scrolls to the
+  // top, clear of the sticky top bar (its scroll-margin), as focusSection does.
   const switched = useRef(false);
   useEffect(() => {
     if (!switched.current) return;
     switched.current = false;
-    const el = root.current?.querySelector<HTMLElement>(
-      editing ? "form input, form select" : ".panel-head .row-action",
-    );
-    el?.focus();
+    const box = root.current;
+    const active = document.activeElement;
+    if (!box || (active && active !== document.body && !box.contains(active)))
+      return;
+    if (editing) {
+      box.querySelector<HTMLElement>("form input, form select")?.focus();
+      return;
+    }
+    box
+      .querySelector<HTMLElement>(".panel-head .row-action")
+      ?.focus({ preventScroll: true });
+    (box.closest<HTMLElement>(".pd-section") ?? box).scrollIntoView?.({
+      block: "start",
+    });
   }, [editing]);
   const toggle = (next: boolean) => {
     switched.current = true;
