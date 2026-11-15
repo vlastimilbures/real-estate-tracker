@@ -344,6 +344,107 @@ async function expectDashboardHierarchy(ux: Ux) {
   }
 }
 
+/** Financing & upcoming (ADR 0204): no row text clipped, and at 1280 × 800 with the
+ *  sample the panel fits about 280 px with all three fixation ends listed. */
+async function expectFinancingTimeline(
+  ux: Ux,
+  rows?: number,
+  maxHeight?: number,
+) {
+  const f = panel(ux, ux.t.dashboard.financingTitle);
+  const list = f.getByRole("list", {
+    name: ux.t.dashboard.financingTimeline(3),
+  });
+  if (rows !== undefined)
+    await expect(list.getByRole("listitem")).toHaveCount(rows);
+  for (const line of await f.locator(".fx-line, .fx-figure").all())
+    await expectNotClipped(line);
+  const vp = ux.page.viewportSize()!;
+  if (vp.width === 1280 && maxHeight !== undefined) {
+    const h = await f.evaluate((el) => el.getBoundingClientRect().height);
+    expect(h, "Financing & upcoming height").toBeLessThanOrEqual(maxHeight);
+  }
+}
+
+/** Restores the sample as edited by `edit` (Settings → Backup), then the Dashboard. */
+async function restoreEdited(ux: Ux, edit: (tables: BackupTables) => void) {
+  await chooseEditedBackup(ux, edit);
+  await ux.page.getByRole("button", { name: ux.t.backup.restoreNow }).click();
+  await expect(
+    ux.page.getByRole("button", { name: ux.t.backup.chooseFile }),
+  ).toBeVisible();
+  // The export's toast would cover the panel.
+  await expect(ux.page.getByText(ux.t.backup.downloaded)).toBeHidden();
+  await nav(ux, "dashboard");
+}
+
+const rowsOf = (tables: BackupTables, name: string) => {
+  const rows = tables[name];
+  if (!rows) throw new Error(`the backup has no ${name}`);
+  return rows;
+};
+
+/** Twenty properties with a loan each: the sample's three and 17 copies of the first,
+ *  their loans started a few months apart (synthetic names only). */
+function twentyLoans(tables: BackupTables) {
+  const properties = rowsOf(tables, "properties");
+  const [first] = properties;
+  if (!first) throw new Error("the sample has no property");
+  const linked = ["valuations", "leases", "holding_costs", "mortgage_blocks"];
+  const own = linked.map(
+    (t) =>
+      [t, rowsOf(tables, t).filter((r) => r.property_id === first.id)] as const,
+  );
+  for (let i = 1; i <= 17; i++) {
+    const id = `ux-copy-${i}`;
+    properties.push({
+      ...first,
+      id,
+      name: `Byt Ukazkovy ${String(i).padStart(2, "0")}`,
+    });
+    for (const [t, rows] of own)
+      for (const r of rows)
+        rowsOf(tables, t).push({
+          ...r,
+          id: `${String(r.id)}-${i}`,
+          property_id: id,
+          ...(t === "mortgage_blocks"
+            ? {
+                start_date: `${2018 + (i % 8)}-${String(1 + ((i * 5) % 12)).padStart(2, "0")}-15`,
+                prepayments: null,
+                recasts: null,
+              }
+            : {}),
+        });
+  }
+}
+
+/** Byt Lipova's lease ends in the window with no next lease, and Byt Dubova's loan is a
+ *  development loan with a draw and its completion ahead. */
+function devLoanAndLeaseEnd(tables: BackupTables) {
+  const idOf = (name: string) => {
+    const p = rowsOf(tables, "properties").find((x) => x.name === name);
+    if (!p) throw new Error(`the sample has no ${name}`);
+    return p.id;
+  };
+  const lipova = idOf("Byt Lipova");
+  const leases = rowsOf(tables, "leases")
+    .filter((l) => l.property_id === lipova)
+    .sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
+  const [current, next] = leases;
+  if (!current || !next) throw new Error("Byt Lipova has no follow-on lease");
+  tables.leases = rowsOf(tables, "leases").filter((l) => l !== next);
+  current.end_date = "2027-06-30";
+  const dubova = idOf("Byt Dubova");
+  const block = rowsOf(tables, "mortgage_blocks").find(
+    (b) => b.property_id === dubova,
+  );
+  if (!block) throw new Error("Byt Dubova has no loan");
+  block.loan_term_years = 30;
+  block.draws = JSON.stringify([{ date: "2027-03-01", amount: "500000" }]);
+  block.interest_only_until = "2027-09-30";
+}
+
 /** One disclosure (ADR 0203): no <details>, and every expandable button names a region
  *  that is in the DOM. */
 async function expectDisclosures(ux: Ux) {
@@ -506,6 +607,7 @@ export const SCREENS: Screen[] = [
       // After the shot, so a failing layout still leaves its picture.
       await expectKpiStrip(ux);
       await expectDashboardHierarchy(ux);
+      await expectFinancingTimeline(ux, 3, 300);
     },
   },
   {
@@ -1023,6 +1125,51 @@ export const SCREENS: Screen[] = [
       await f.scrollIntoViewIfNeeded();
       await ux.capture("29d-dashboard-interest-saved", { fullPage: false });
       await expectDisclosures(ux);
+    },
+  },
+  {
+    id: "29g-dashboard-financing-20-loans",
+    desc: "Financing timeline with 20 loans: the first 8 rows and Show all (ADR 0204)",
+    run: async (ux) => {
+      await restoreEdited(ux, twentyLoans);
+      const f = panel(ux, ux.t.dashboard.financingTitle);
+      const more = f.getByRole("button", {
+        name: ux.t.dashboard.financingShowAll(20),
+      });
+      await expect(more).toBeVisible();
+      await expectFinancingTimeline(ux, 8);
+      await more.click();
+      await expectFinancingTimeline(ux);
+      await f.scrollIntoViewIfNeeded();
+      await ux.page.mouse.move(0, 0);
+      await ux.capture("29g-dashboard-financing-20-loans", { fullPage: false });
+    },
+  },
+  {
+    id: "29h-dashboard-financing-dev-lease",
+    desc: "Financing timeline: a development completion and a lease ending in the window, and the table view (ADR 0204)",
+    run: async (ux) => {
+      const d = ux.t.dashboard;
+      await restoreEdited(ux, devLoanAndLeaseEnd);
+      const f = panel(ux, d.financingTitle);
+      const list = f.getByRole("list", { name: d.financingTimeline(3) });
+      await expect(
+        list.getByText(d.financingEventDevCompletion, { exact: false }),
+      ).toBeVisible();
+      await expect(
+        list.getByText(d.financingEventLeaseEnd, { exact: false }),
+      ).toBeVisible();
+      await expectFinancingTimeline(ux, 3);
+      await f.scrollIntoViewIfNeeded();
+      await ux.page.mouse.move(0, 0);
+      await ux.capture("29h-dashboard-financing-dev-lease", {
+        fullPage: false,
+      });
+      await f.getByRole("button", { name: ux.t.charts.table }).click();
+      await expect(
+        f.getByRole("table", { name: d.financingTimeline(3) }),
+      ).toBeVisible();
+      await ux.capture("29i-dashboard-financing-table", { fullPage: false });
     },
   },
   {

@@ -1,6 +1,7 @@
 // Pure presentation model for PropertyDetail's loan warnings (UX-054): instalment health,
 // contract maturity and an expired fixation, for every block from the one in force onward.
 // Also the Loan outlook: payoff, remaining term and each block's reset (ADR 0116, 0117).
+import { remainingTermText } from "./termText";
 import {
   amortizationHealth,
   blockEndDate,
@@ -230,17 +231,6 @@ export interface LoanOutlook {
   interestSaved: InterestSavedShown | null;
   resets: LoanOutlookRow[];
   drawdowns: DrawdownView[];
-}
-
-/** Months as "24 yrs 8 months", "25 yrs" or "7 months" (ADR 0117). */
-export function remainingTermText(
-  months: number,
-  d: Dictionary["propertyDetail"],
-): string {
-  const years = Math.floor(months / 12);
-  const rest = months % 12;
-  if (years === 0) return d.monthsCount(rest);
-  return rest === 0 ? d.yrs(years) : `${d.yrs(years)} ${d.monthsCount(rest)}`;
 }
 
 /**

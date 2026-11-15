@@ -372,11 +372,19 @@ export const ru: Dictionary = {
     financingInterestSavedByProperty: "По объектам",
     financingInterestSavedNa:
       "н/д: изменение срока зависит от досрочного платежа",
-    financingUpcoming:
-      "Даты по ставкам, кредитам и аренде в ближайшие 12 месяцев",
-    financingNoEvents:
-      "В ближайшие 12 месяцев нет дат по ставкам, кредитам и аренде.",
-    financingMoreEvents: (n) => `+ ещё ${n}`,
+    financingIn: (s) => `через ${s}`,
+    financingInUnderMonth: "менее чем через месяц",
+    financingNextFlag: "ближайший",
+    financingNoFixationAhead: "Конца фиксации не предвидится",
+    financingShowAll: (n) => `Показать все (${n})`,
+    financingTimeline: (n) =>
+      `Концы фиксации и другие даты в течение ${n} ${ruPlural(n, ["года", "лет", "лет"])}`,
+    financingRowsNominal: "Долг на момент смены — номинальный.",
+    financingColProperty: "Объект",
+    financingColEvent: "Событие",
+    financingColDate: "Дата",
+    financingColIn: "Через",
+    financingColDebt: "Долг на момент смены",
     financingNoLoans: "Среди выбранных объектов нет ипотеки.",
     financingEventFixationEnd: "Конец фиксации",
     financingEventLoanPayoff: "Кредит погашен",

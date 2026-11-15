@@ -9,6 +9,8 @@
   rate up to baseDate)
 - Amended by: [0176](0176-refinance-cash-successor-principal-event-order.md) (point 7:
   same-day events of one kind follow the portfolio order)
+- Amended by: [0204](0204-financing-timeline.md) (points 7 and 8: the panel's figures and
+  fixation timeline; the dates follow the 1, 3 or 5-year window)
 - Date: 2026-10-03
 - Source: issue #31 (pre-release review 2026-10, F5 and §6)
 

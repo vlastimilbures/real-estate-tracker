@@ -364,10 +364,19 @@ export const cs: Dictionary = {
     financingInterestSavedByProperty: "Podle nemovitosti",
     financingInterestSavedNa:
       "n/a: změna splatnosti závisí na mimořádné splátce",
-    financingUpcoming: "Termíny sazeb, úvěrů a nájmů v příštích 12 měsících",
-    financingNoEvents:
-      "V příštích 12 měsících nejsou žádné termíny sazeb, úvěrů ani nájmů.",
-    financingMoreEvents: (n) => `+ dalších ${n}`,
+    financingIn: (s) => `za ${s}`,
+    financingInUnderMonth: "za méně než měsíc",
+    financingNextFlag: "nejbližší",
+    financingNoFixationAhead: "Žádný konec fixace v dohledu",
+    financingShowAll: (n) => `Zobrazit vše (${n})`,
+    financingTimeline: (n) =>
+      `Konce fixací a další termíny do ${n} ${csPlural(n, ["roku", "let", "let"])}`,
+    financingRowsNominal: "Dluh při změně je nominální.",
+    financingColProperty: "Nemovitost",
+    financingColEvent: "Událost",
+    financingColDate: "Datum",
+    financingColIn: "Za",
+    financingColDebt: "Dluh při změně",
     financingNoLoans: "V tomto výběru není žádná hypotéka.",
     financingEventFixationEnd: "Konec fixace",
     financingEventLoanPayoff: "Úvěr splacen",
