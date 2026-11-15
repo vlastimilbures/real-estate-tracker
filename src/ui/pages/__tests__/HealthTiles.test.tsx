@@ -14,7 +14,7 @@ import {
   ltvBand,
   ltvBandWord,
 } from "../../model/health";
-import { RiskTiles } from "../DashboardPanels";
+import { renderStrip } from "./kpiStripSupport";
 import { PropertySnapshotTiles } from "../PropertyDetailPanels";
 
 beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
@@ -36,22 +36,30 @@ function expectFootMarker(tile: HTMLElement, band: string, word: string) {
   expect(foot.textContent!.startsWith(`${word} · `)).toBe(true);
 }
 
-describe("Dashboard risk tiles (ADR 0195)", () => {
+/** The KPI strip's foot holds the marker and the word only (ADR 0200 §1). */
+function expectFootMarkerOnly(tile: HTMLElement, band: string, word: string) {
+  const label = tile.querySelector(".label")!;
+  expect(label.nextElementSibling?.classList.contains("value")).toBe(true);
+  const foot = tile.querySelector(".foot")!;
+  const marker = foot.firstElementChild!;
+  expect(marker.classList.contains("health-marker")).toBe(true);
+  expect(marker.classList.contains(band)).toBe(true);
+  expect(foot.textContent).toBe(word);
+}
+
+describe("Dashboard KPI strip risk tiles (ADR 0195, 0200)", () => {
   const s = portfolioSnapshot(portfolio, assumptions);
 
-  it("LTV: marker and word lead the foot, before 'Debt ÷ value'", () => {
-    render(<RiskTiles s={s} cashFlowFoot="" />);
+  it("LTV: the foot is the marker and word", () => {
+    renderStrip(s);
     const tile = tileOf(screen.getByText(en.dashboard.portfolioLtv));
-    expectFootMarker(tile, ltvBand(s.ltv), ltvBandWord(en, s.ltv)!);
-    expect(tile.querySelector(".foot")!.textContent).toContain(
-      en.dashboard.debtOverValue,
-    );
+    expectFootMarkerOnly(tile, ltvBand(s.ltv), ltvBandWord(en, s.ltv)!);
   });
 
-  it("DSCR: marker and word lead the foot", () => {
-    render(<RiskTiles s={s} cashFlowFoot="" />);
+  it("DSCR: the foot is the marker and word", () => {
+    renderStrip(s);
     const tile = tileOf(screen.getByText(en.dashboard.portfolioDscr));
-    expectFootMarker(tile, dscrBand(s.dscr), dscrBandWord(en, s.dscr)!);
+    expectFootMarkerOnly(tile, dscrBand(s.dscr), dscrBandWord(en, s.dscr)!);
   });
 });
 

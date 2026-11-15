@@ -29,6 +29,7 @@ function renderList(mode: Mode, cashInvested: ReturnType<typeof D> | null) {
   render(
     <KpiListPanel
       s={s}
+      basis={{ kind: "today" }}
       kpis={kpis}
       mode={mode}
       horizon={kpis.netWorthNominal}

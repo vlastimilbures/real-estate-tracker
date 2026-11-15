@@ -27,6 +27,7 @@ describe("Dashboard horizon labels (ADR 0084)", () => {
         />
         <KpiListPanel
           s={s}
+          basis={{ kind: "today" }}
           kpis={kpis}
           mode="nominal"
           horizon={kpis.netWorthNominal}

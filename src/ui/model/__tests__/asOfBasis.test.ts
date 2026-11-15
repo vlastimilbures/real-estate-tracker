@@ -5,8 +5,7 @@ import {
   asOfView,
   asOfHint,
   horizonEndYear,
-  monthlyFlowLabels,
-  netCashFlowFoot,
+  basisText,
   ownedOn,
   projectionYearForAsOf,
 } from "../dashboard";
@@ -138,44 +137,28 @@ describe("as-of labels (ADR 0088)", () => {
   );
   const y5 = yearLabel(en, 5, 2031);
 
-  it("projection year: monthly equivalent with the Projections row label and period", () => {
+  // The KPI strip names its basis once (ADR 0200 §2); the picker hint gives the period.
+  it("projection year: the Projections row label, the period in the picker hint", () => {
     const b = asOfView(baseDate, plus5, false);
-    const { title, hint } = monthlyFlowLabels(en, b, baseDate, plus5);
     expect(y5).toBe("Y5 · 2031");
     expect(period5).toBe("Jul 2030 – Jun 2031");
-    expect(title).toBe(
-      "Monthly equivalent — projection year Y5 · 2031 (Jul 2030 – Jun 2031)",
-    );
-    expect(hint).toBe("annual projection ÷ 12");
-    expect(netCashFlowFoot(en, b)).toBe(
-      "NOI − debt service, projection year Y5 · 2031",
-    );
+    expect(basisText(en, b)).toBe("projection year Y5 · 2031");
     expect(asOfHint(en, b, baseDate)).toBe(
       "Future dates show the nearest projection year (Y5 · 2031, Jul 2030 – Jun 2031)",
     );
-    for (const s of [title, hint, netCashFlowFoot(en, b)])
-      expect(s).not.toMatch(/today|current/i);
+    expect(basisText(en, b)).not.toMatch(/today|current/i);
   });
 
-  it("today: current wording, run-rate hint with the date, no picker hint", () => {
+  it("today: current wording, no picker hint", () => {
     const b = asOfView(baseDate, baseDate, true);
-    expect(monthlyFlowLabels(en, b, baseDate, baseDate)).toEqual({
-      title: "Current monthly cash flow",
-      hint: "annualised run rate ÷ 12, leases in force on 07.06.2026",
-    });
-    expect(netCashFlowFoot(en, b)).toBe("NOI − debt service, current");
+    expect(basisText(en, b)).toBe("current");
     expect(asOfHint(en, b, baseDate)).toBeNull();
   });
 
   it("records in force on a date: dated wording, never today/current", () => {
     const d = edate(baseDate, 3);
     const b = asOfView(baseDate, d, false);
-    const { title, hint } = monthlyFlowLabels(en, b, baseDate, d);
-    expect(title).toBe("Monthly cash flow on 07.09.2026");
-    expect(hint).toBe(
-      "annualised run rate ÷ 12, leases in force on 07.09.2026",
-    );
-    expect(netCashFlowFoot(en, b)).toBe("NOI − debt service, on 07.09.2026");
+    expect(basisText(en, b)).toBe("on 07.09.2026");
     expect(asOfHint(en, b, baseDate)).toBe(
       "Showing records in force on 07.09.2026",
     );
@@ -183,9 +166,7 @@ describe("as-of labels (ADR 0088)", () => {
 
   it("horizon end year is the last projection row, whatever the as-of", () => {
     expect(horizonEndYear(series)).toBe(2056);
-    expect(en.dashboard.netWorthInYear(2056, 30)).toBe(
-      "Net worth in 2056 (30-yr horizon)",
-    );
+    expect(en.dashboard.stripInYear(2056)).toBe("In 2056");
   });
 });
 

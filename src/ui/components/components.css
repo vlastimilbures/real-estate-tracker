@@ -395,6 +395,64 @@
 .tile .foot .num {
   white-space: nowrap;
 }
+/* ============ Dashboard KPI strip (ADR 0200) ============ */
+/* Six compact tiles in a row; three by two when the strip is narrower than 900 px. The
+   net worth and net cash flow tiles carry the longest figures, so they are a little wider;
+   LTV and DSCR, whose feet are one word, a little narrower. */
+.kpi-strip-wrap {
+  container-type: inline-size;
+}
+.kpi-strip {
+  display: grid;
+  /* A column never gets narrower than its one-line label and value (min-content): the
+     label widths differ by language and font, so fixed weights alone could clip one. */
+  grid-template-columns:
+    minmax(min-content, 1.15fr) minmax(min-content, 1fr) minmax(
+      min-content,
+      1fr
+    )
+    minmax(min-content, 0.9fr) minmax(min-content, 0.9fr) minmax(
+      min-content,
+      1.15fr
+    );
+  gap: var(--s3);
+}
+@container (max-width: 959px) {
+  .kpi-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.tile.compact {
+  padding: 10px var(--s3);
+  gap: var(--s1);
+  min-height: 0;
+}
+/* One line: a label that does not fit shows as overflow, which the capture catches. */
+.tile.compact .label {
+  white-space: nowrap;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+}
+.tile .value.md {
+  font-size: 22px;
+  white-space: nowrap;
+}
+.tile .value .unit {
+  margin-left: 2px;
+  font-family: var(--font-text);
+  font-size: 12px;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+}
+/* The foot may take two lines; the tile stays at most 96 px tall. */
+.tile.compact .foot {
+  font-size: 11.5px;
+  line-height: 1.3;
+}
+/* An amount in a foot never breaks before its unit. */
+.tile .foot .num {
+  white-space: nowrap;
+}
 .tile .accent-rule {
   width: 28px;
   height: 3px;
@@ -1591,45 +1649,6 @@ table.chart-table tbody th.sticky-col {
 }
 
 /* ============ Misc ============ */
-.flow-bars {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: var(--s4);
-}
-.flow {
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
-  padding: var(--s4);
-  background: var(--surface);
-}
-.flow .flabel {
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  font-weight: 600;
-}
-.flow .famount {
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-feature-settings: var(--num);
-  margin-top: var(--s2);
-}
-.flow .fbar {
-  height: 4px;
-  border-radius: 2px;
-  margin-top: var(--s3);
-}
-.flow.in .fbar {
-  background: var(--positive);
-}
-.flow.out .fbar {
-  background: var(--negative);
-}
-.flow.net .fbar {
-  background: var(--brass);
-}
-
 /* The live region is always mounted (ADR 0154); fixed, so it never takes a slot in the
    page's flex column, empty or not. */
 .toast-region {

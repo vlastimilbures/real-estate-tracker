@@ -140,12 +140,18 @@ export function fmtCzkAxisValue(value: Numeric, unit: CzkAxisUnit): string {
   return neg ? `${MINUS}${body}` : body;
 }
 
+/** The text with every space non-breaking, so an amount and its unit stay together
+ *  ("9,4 M Kč" never breaks before "Kč"). */
+export function noBreak(text: string): string {
+  return text.replace(/ /g, NBSP);
+}
+
 /** Format a value for a chart Y-axis tick, appending a compact unit suffix (e.g. "120 M").
  *  Non-breaking spaces throughout, so a tick never wraps (ADR 0114). */
 export function fmtCzkAxisTick(value: Numeric, unit: CzkAxisUnit): string {
   const num = fmtCzkAxisValue(value, unit);
   const tick = unit.shortLabel ? `${num} ${unit.shortLabel}` : num;
-  return tick.replace(/ /g, NBSP);
+  return noBreak(tick);
 }
 
 /** `0.0%` — ratio (0.331) → "33,1 %". */

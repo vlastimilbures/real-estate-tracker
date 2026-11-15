@@ -5,6 +5,7 @@ import { X, FileSpreadsheet } from "lucide-react";
 import type { Decimal } from "../../lib/money";
 import {
   fmtCzk,
+  fmtCzkM,
   fmtPct,
   fmtMultiple,
   fmtDscr,
@@ -50,6 +51,20 @@ export function Pct({ value, dp = 1 }: { value: Num | null; dp?: number }) {
   return (
     <span className="num">
       {value === null ? t.common.notApplicable : fmtPct(value, dp)}
+    </span>
+  );
+}
+
+/** An amount in M Kč (a tile's headline), red when negative (CLAUDE.md §5). The exact
+ *  amount is its tooltip and is read out after it, as IrrValue's reason (ADR 0200). */
+export function MoneyM({ value }: { value: Num }) {
+  const exact = fmtCzk(value);
+  const tone =
+    signTone(roundCzk(value)) === "negative" ? "negative" : "neutral";
+  return (
+    <span className={`num tone-${tone}`} title={exact}>
+      {fmtCzkM(value)}
+      <span className="sr-only"> ({exact})</span>
     </span>
   );
 }
@@ -300,6 +315,7 @@ export function KpiTile({
   value,
   foot,
   hero = false,
+  compact = false,
   health,
   delay = 0,
   testId,
@@ -308,6 +324,8 @@ export function KpiTile({
   value: ReactNode;
   foot?: ReactNode | undefined;
   hero?: boolean | undefined;
+  /** The Dashboard KPI strip's tile: smaller padding and value (ADR 0200). */
+  compact?: boolean | undefined;
   /** The band, shown as a marker and its word at the start of the foot (ADR 0195). */
   health?: { band: Band; text: string } | undefined;
   delay?: number | undefined;
@@ -315,11 +333,14 @@ export function KpiTile({
 }) {
   return (
     <div
-      className={`tile reveal${hero ? " hero" : ""}`}
+      className={`tile reveal${hero ? " hero" : ""}${compact ? " compact" : ""}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <span className="label">{label}</span>
-      <div className={`value ${hero ? "xl" : "lg"}`} data-testid={testId}>
+      <div
+        className={`value ${hero ? "xl" : compact ? "md" : "lg"}`}
+        data-testid={testId}
+      >
         {value}
       </div>
       {hero && <div className="accent-rule" />}

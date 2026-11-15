@@ -236,6 +236,43 @@ async function expectBandTileLabelsOneLine(ux: Ux) {
   }
 }
 
+/** The Dashboard KPI strip (ADR 0200): six tiles, one row of at most 96 px when the strip
+ *  is 900 px or wider (1280 × 800), else three by two; every label on one line and no
+ *  label or value cut off. */
+/** The KPI strip (ADR 0200 §4): six tiles, one row when the strip is at least 960 px
+ *  wide (the 1200 × 800 default window is three by two), nothing cut off, and at most
+ *  `maxHeight` tall in one row: 96 px, more only where a foot carries a note. */
+async function expectKpiStrip(ux: Ux, maxHeight = 96) {
+  const m = await ux.page.locator(".kpi-strip").evaluate((strip) => ({
+    width: strip.getBoundingClientRect().width,
+    tiles: Array.from(strip.children, (tile) => {
+      const r = tile.getBoundingClientRect();
+      const fits = (sel: string) => {
+        const el = tile.querySelector<HTMLElement>(sel)!;
+        return el.scrollWidth <= el.clientWidth + 1;
+      };
+      return {
+        text: tile.querySelector(".label")?.textContent ?? "",
+        top: Math.round(r.top),
+        height: r.height,
+        label: fits(":scope > .label"),
+        value: fits(":scope > .value"),
+      };
+    }),
+  }));
+  expect(m.tiles).toHaveLength(6);
+  const rows = new Set(m.tiles.map((t) => t.top)).size;
+  expect(rows, "strip rows").toBe(m.width >= 960 ? 1 : 2);
+  for (const t of m.tiles) {
+    expect(t.label, `label "${t.text}" on one line`).toBe(true);
+    expect(t.value, `value of "${t.text}" not cut off`).toBe(true);
+    if (m.width >= 960)
+      expect(t.height, `"${t.text}" tile height`).toBeLessThanOrEqual(
+        maxHeight,
+      );
+  }
+}
+
 /** One grid for the scenario list: actions line up across rows and the summary stays
  *  readable in every language (ADR 0158). */
 async function expectScenarioGrid(ux: Ux) {
@@ -374,6 +411,8 @@ export const SCREENS: Screen[] = [
       await expectPanelActionsRight(ux.page);
       await expectBandTileLabelsOneLine(ux);
       await ux.capture("01-dashboard");
+      // After the shot, so a failing layout still leaves its picture.
+      await expectKpiStrip(ux);
     },
   },
   {
@@ -383,6 +422,8 @@ export const SCREENS: Screen[] = [
       await boot(ux.page);
       await pickReal(ux);
       await ux.capture("02-dashboard-real");
+      // After the shot, so a failing layout still leaves its picture.
+      await expectKpiStrip(ux);
     },
   },
   {
@@ -392,6 +433,20 @@ export const SCREENS: Screen[] = [
       await boot(ux.page);
       await pickFiveYearsAndCheckHint(ux.page);
       await ux.capture("03-dashboard-asof-5y");
+      // After the shot, so a failing layout still leaves its picture.
+      await expectKpiStrip(ux);
+    },
+  },
+  {
+    id: "03b-dashboard-real-asof-5y",
+    desc: "Dashboard, real lens at +5y: the net worth foot names base-date Kč (ADR 0200 §4)",
+    run: async (ux) => {
+      await boot(ux.page);
+      await pickReal(ux);
+      await pickFiveYearsAndCheckHint(ux.page);
+      await ux.capture("03b-dashboard-real-asof-5y");
+      // The base-date note may take the net worth foot to a third line.
+      await expectKpiStrip(ux, 112);
     },
   },
   {

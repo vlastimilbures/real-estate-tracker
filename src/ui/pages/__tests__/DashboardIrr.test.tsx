@@ -9,7 +9,7 @@ import { portfolioKpis, portfolioSnapshot } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
-import { HeroTiles, KpiListPanel } from "../DashboardPanels";
+import { KpiStrip, KpiListPanel } from "../DashboardPanels";
 import type { LeveredIrr } from "../../model/irr";
 
 const s = portfolioSnapshot(portfolio, assumptions);
@@ -19,8 +19,9 @@ const notUnique: LeveredIrr = { rate: null, reason: "NOT_UNIQUE" };
 function renderPanels(irr: LeveredIrr) {
   return render(
     <>
-      <HeroTiles
+      <KpiStrip
         s={s}
+        basis={{ kind: "today" }}
         mode="nominal"
         isToday
         horizon={kpis.netWorthNominal}
@@ -32,6 +33,7 @@ function renderPanels(irr: LeveredIrr) {
       />
       <KpiListPanel
         s={s}
+        basis={{ kind: "today" }}
         kpis={kpis}
         mode="nominal"
         horizon={kpis.netWorthNominal}

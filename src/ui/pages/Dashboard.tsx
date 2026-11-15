@@ -12,23 +12,14 @@ import { projectionSeries } from "../model/projection";
 import { lensKpis } from "../model/lensKpis";
 import { lensWord } from "../model/tableContext";
 import {
-  monthlyFlow,
   tilesForAsOf,
   asOfView,
   asOfHint,
   horizonEndYear,
-  monthlyFlowLabels,
-  netCashFlowFoot,
   dashboardSubtitle,
   prunedFilter,
 } from "../model/dashboard";
-import {
-  HeroTiles,
-  RiskTiles,
-  MonthlyFlowPanel,
-  TrajectoryCharts,
-  KpiListPanel,
-} from "./DashboardPanels";
+import { KpiStrip, TrajectoryCharts, KpiListPanel } from "./DashboardPanels";
 import { FinancingPanel } from "./DashboardFinancing";
 import { DataCheckPanel } from "./DashboardDataCheck";
 import { cashInvestedTotal } from "../model/acquisition";
@@ -146,11 +137,10 @@ export function Dashboard() {
   const eqChange = toEquityChangeRows(series);
   const { isToday } = view;
   const basis = asOfView(assumptions.baseDate, snapshot.asOf, isToday);
-  // Tiles + the flow band: for the current snapshot this is the effective-dated engine
+  // The KPI strip: for the current snapshot this is the effective-dated engine
   // snapshot under the chosen lens; in a projection year it is that year of `series`
   // (the rows the charts plot), so the cards and the per-year charts agree.
   const s = tilesForAsOf(snapshot, series, basis, mode, assumptions);
-  const flow = monthlyFlow(s);
   const lens = lensKpis(kpis, mode);
   const horizon = lens.netWorth;
   const irr = lens.leveredIrr;
@@ -159,7 +149,6 @@ export function Dashboard() {
   // A filter that keeps every active property filters nothing (ADR 0155).
   const filterActive =
     effectiveIds.length > 0 && effectiveIds.length < allProperties.length;
-  const flowLabels = monthlyFlowLabels(t, basis, assumptions.baseDate, s.asOf);
   const subtitle = dashboardSubtitle(
     t,
     filterActive,
@@ -192,8 +181,9 @@ export function Dashboard() {
         />
       </div>
 
-      <HeroTiles
+      <KpiStrip
         s={s}
+        basis={basis}
         mode={mode}
         isToday={isToday}
         horizon={horizon}
@@ -202,14 +192,6 @@ export function Dashboard() {
         netWorthMultiple={lens.netWorthMultiple}
         modeWord={modeWord}
         irr={irr}
-      />
-
-      <RiskTiles s={s} cashFlowFoot={netCashFlowFoot(t, basis)} />
-
-      <MonthlyFlowPanel
-        flow={flow}
-        title={flowLabels.title}
-        hint={flowLabels.hint}
       />
 
       <FinancingPanel
@@ -243,6 +225,7 @@ export function Dashboard() {
 
       <KpiListPanel
         s={s}
+        basis={basis}
         kpis={kpis}
         mode={mode}
         horizon={horizon}

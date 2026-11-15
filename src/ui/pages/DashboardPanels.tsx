@@ -4,6 +4,7 @@ import {
   KpiTile,
   Panel,
   Money,
+  MoneyM,
   IrrValue,
   Pct,
   Mult,
@@ -19,9 +20,14 @@ import {
   type ChartRow,
   type EquityChangeRow,
 } from "../model/chartData";
-import { fmtCzkM, fmtMultiple, fmtPct } from "../../lib/format";
+import { fmtCzkM, fmtMultiple, noBreak } from "../../lib/format";
 import { dscrBadge, ltvBadge } from "../model/health";
-import type { MonthlyFlow } from "../model/dashboard";
+import {
+  basisText,
+  monthlyFlow,
+  monthlyFlowHint,
+  type AsOfBasis,
+} from "../model/dashboard";
 import type { LeveredIrr } from "../model/irr";
 import { lensKpis } from "../model/lensKpis";
 import { undrawnPart } from "../model/debt";
@@ -30,8 +36,11 @@ import type { Decimal } from "../../lib/money";
 import type { Mode } from "../../state/uiStore";
 import { useT } from "../hooks/useT";
 
-export function HeroTiles({
+/** The Dashboard's KPI strip (ADR 0200): six compact tiles; the basis is named once, in
+ *  the net cash flow foot. */
+export function KpiStrip({
   s,
+  basis,
   mode,
   isToday,
   horizon,
@@ -42,6 +51,8 @@ export function HeroTiles({
   irr,
 }: {
   s: PortfolioSnapshot;
+  /** What the tiles are for: current, a projection year or a date (ADR 0088). */
+  basis: AsOfBasis;
   mode: Mode;
   isToday: boolean;
   horizon: Decimal;
@@ -53,129 +64,83 @@ export function HeroTiles({
   irr: LeveredIrr;
 }) {
   const t = useT();
+  const d = t.dashboard;
   const undrawn = undrawnPart(s.totalUndrawnDebt);
+  const flow = monthlyFlow(s);
   return (
-    <div className="tiles">
-      <KpiTile
-        hero
-        delay={0}
-        label={t.dashboard.netWorth}
-        testId="kpi-networth"
-        // Hero: full CZK digits (no suffix) — visual anchor; siblings use M Kč
-        value={<Money value={s.totalEquity} parens={false} suffix={false} />}
-        foot={
-          <>
-            {/* The undrawn note sits right after the debt it adds to (ADR 0169). */}
-            {t.dashboard.assetsDebtEquity(
-              fmtCzkM(s.totalReportedValue),
-              undrawn
-                ? `${fmtCzkM(s.totalDebt)} (${t.common.undrawnDebt(fmtCzkM(undrawn))})`
-                : fmtCzkM(s.totalDebt),
-            )}
-            {mode === "real" && !isToday ? t.dashboard.realTodayKc : ""}
-          </>
-        }
-      />
-      <KpiTile
-        delay={24}
-        label={t.dashboard.netWorthInYear(horizonEndYear, horizonYears)}
-        value={fmtCzkM(horizon)}
-        foot={t.dashboard.multipleFromStartMode(
-          netWorthMultiple ? fmtMultiple(netWorthMultiple) : "—",
-          modeWord,
-        )}
-      />
-      <KpiTile
-        delay={48}
-        label={t.dashboard.leveredIrr}
-        value={<IrrValue irr={irr} dp={1} />}
-        foot={t.dashboard.irrFoot(horizonYears, modeWord)}
-      />
-    </div>
-  );
-}
-
-export function RiskTiles({
-  s,
-  cashFlowFoot,
-}: {
-  s: PortfolioSnapshot;
-  /** Names the tiles' basis: current, a date, or a projection year (ADR 0088). */
-  cashFlowFoot: string;
-}) {
-  const t = useT();
-  return (
-    <div className="tiles">
-      <KpiTile
-        delay={0}
-        label={t.dashboard.portfolioLtv}
-        value={<Pct value={s.ltv} dp={1} />}
-        health={ltvBadge(t, s.ltv)}
-        foot={t.dashboard.debtOverValue}
-      />
-      <KpiTile
-        delay={24}
-        label={t.dashboard.portfolioDscr}
-        value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
-        health={dscrBadge(t, s.dscr)}
-        foot={t.dashboard.noiOverDebtService}
-      />
-      <KpiTile
-        delay={48}
-        label={t.dashboard.netYieldCap}
-        value={<Pct value={s.netYield} dp={2} />}
-        foot={t.dashboard.grossYieldFoot(
-          s.grossYield === null
-            ? t.common.notApplicable
-            : fmtPct(s.grossYield, 2),
-        )}
-      />
-      <KpiTile
-        delay={72}
-        label={t.dashboard.annualNetCashFlow}
-        value={<Money value={s.netCashFlow} signed />}
-        foot={cashFlowFoot}
-      />
-    </div>
-  );
-}
-
-export function MonthlyFlowPanel({
-  flow,
-  title,
-  hint,
-}: {
-  flow: MonthlyFlow;
-  title: string;
-  hint: string;
-}) {
-  const t = useT();
-  return (
-    <Panel title={title} hint={hint}>
-      <div className="flow-bars">
-        <div className="flow in">
-          <div className="flabel">{t.dashboard.inflowLabel}</div>
-          <div className="famount tone-positive">
-            <Money value={flow.inflow} parens={false} />
-          </div>
-          <div className="fbar" />
-        </div>
-        <div className="flow out">
-          <div className="flabel">{t.dashboard.outflowLabel}</div>
-          <div className="famount tone-negative">
-            <Money value={flow.outflow} parens={false} />
-          </div>
-          <div className="fbar" />
-        </div>
-        <div className="flow net">
-          <div className="flabel">{t.dashboard.netCashFlowBaseline}</div>
-          <div className="famount">
-            <Money value={flow.net} signed />
-          </div>
-          <div className="fbar" />
-        </div>
+    <div className="kpi-strip-wrap">
+      <div className="kpi-strip">
+        <KpiTile
+          compact
+          delay={0}
+          label={d.netWorth}
+          testId="kpi-networth"
+          value={<MoneyM value={s.totalEquity} />}
+          foot={
+            <>
+              {/* The undrawn note sits right after the debt it adds to (ADR 0169);
+                  amounts never break before their unit. */}
+              {d.stripAssetsDebt(
+                noBreak(fmtCzkM(s.totalReportedValue)),
+                undrawn
+                  ? `${noBreak(fmtCzkM(s.totalDebt))} (${t.common.undrawnDebt(noBreak(fmtCzkM(undrawn)))})`
+                  : noBreak(fmtCzkM(s.totalDebt)),
+              )}
+              {mode === "real" && !isToday ? d.realTodayKc : ""}
+            </>
+          }
+        />
+        <KpiTile
+          compact
+          delay={24}
+          label={d.stripInYear(horizonEndYear)}
+          value={fmtCzkM(horizon)}
+          foot={d.stripHorizonFoot(
+            netWorthMultiple ? fmtMultiple(netWorthMultiple) : "—",
+            horizonYears,
+            modeWord,
+          )}
+        />
+        <KpiTile
+          compact
+          delay={48}
+          label={d.leveredIrr}
+          value={<IrrValue irr={irr} dp={1} />}
+          foot={d.irrFoot(horizonYears, modeWord)}
+        />
+        <KpiTile
+          compact
+          delay={72}
+          label={d.portfolioLtv}
+          value={<Pct value={s.ltv} dp={1} />}
+          health={ltvBadge(t, s.ltv)}
+        />
+        <KpiTile
+          compact
+          delay={96}
+          label={d.portfolioDscr}
+          value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
+          health={dscrBadge(t, s.dscr)}
+        />
+        <KpiTile
+          compact
+          delay={120}
+          label={d.stripNetCashFlow}
+          value={
+            <>
+              <Money value={flow.net} signed />
+              <span className="unit">{d.perMonth}</span>
+            </>
+          }
+          foot={
+            <>
+              <Money value={s.netCashFlow} />
+              {d.perYearBasis(basisText(t, basis))}
+            </>
+          }
+        />
       </div>
-    </Panel>
+    </div>
   );
 }
 
@@ -292,6 +257,7 @@ export function TrajectoryCharts({
 
 export function KpiListPanel({
   s,
+  basis,
   kpis,
   mode,
   horizon,
@@ -300,6 +266,8 @@ export function KpiListPanel({
   cashInvested,
 }: {
   s: PortfolioSnapshot;
+  /** What the as-of figures (yields, monthly flows) are for (ADR 0200 §3). */
+  basis: AsOfBasis;
   kpis: PortfolioKPIs;
   mode: Mode;
   horizon: Decimal;
@@ -312,6 +280,7 @@ export function KpiListPanel({
   const real = mode === "real";
   const lens = lensKpis(kpis, mode);
   const cagr = lens.cagr;
+  const flow = monthlyFlow(s);
   return (
     <Panel
       title={t.dashboard.kpiTitle}
@@ -372,6 +341,28 @@ export function KpiListPanel({
             : []),
         ]}
       />
+      {/* The figures that left the tiles (ADR 0200 §3), for the strip's basis. */}
+      <h3 className="panel-subhead">
+        {t.dashboard.kpiAsOfGroup(basisText(t, basis))}
+      </h3>
+      <StatList
+        rows={[
+          { k: t.dashboard.netYieldCap, v: <Pct value={s.netYield} dp={2} /> },
+          {
+            k: t.dashboard.kpiGrossYield,
+            v: <Pct value={s.grossYield} dp={2} />,
+          },
+          {
+            k: t.dashboard.kpiMonthlyInflow,
+            v: <Money value={flow.inflow} parens={false} />,
+          },
+          {
+            k: t.dashboard.kpiMonthlyOutflow,
+            v: <Money value={flow.outflow} parens={false} />,
+          },
+        ]}
+      />
+      <p className="panel-note">{monthlyFlowHint(t, basis, s.asOf)}</p>
     </Panel>
   );
 }

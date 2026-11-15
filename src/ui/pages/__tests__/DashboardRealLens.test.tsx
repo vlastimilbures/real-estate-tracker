@@ -11,7 +11,7 @@ import { en } from "../../../i18n/en";
 import { fmtMultiple } from "../../../lib/format";
 import { lensKpis } from "../../model/lensKpis";
 import type { Mode } from "../../model/lens";
-import { HeroTiles, KpiListPanel } from "../DashboardPanels";
+import { KpiStrip, KpiListPanel } from "../DashboardPanels";
 
 const s = portfolioSnapshot(portfolio, assumptions);
 const kpis = portfolioKpis(portfolio, assumptions);
@@ -21,8 +21,9 @@ function renderPanels(mode: Mode) {
   const real = mode === "real";
   return render(
     <>
-      <HeroTiles
+      <KpiStrip
         s={s}
+        basis={{ kind: "today" }}
         mode={mode}
         isToday
         horizon={real ? kpis.netWorthReal : kpis.netWorthNominal}
@@ -34,6 +35,7 @@ function renderPanels(mode: Mode) {
       />
       <KpiListPanel
         s={s}
+        basis={{ kind: "today" }}
         kpis={kpis}
         mode={mode}
         horizon={real ? kpis.netWorthReal : kpis.netWorthNominal}
@@ -53,7 +55,7 @@ describe("Dashboard KPIs by lens (ADR 0087)", () => {
     const real = fmtMultiple(kpis.netWorthMultipleReal!);
     const nominal = fmtMultiple(kpis.netWorthMultiple!);
     expect(
-      screen.getByText(en.dashboard.multipleFromStartMode(real, "real")),
+      screen.getByText(en.dashboard.stripHorizonFoot(real, N, "real")),
     ).toBeTruthy();
     expect(container.textContent).not.toContain(nominal);
     expect(screen.getByText(en.dashboard.kpiHintReal)).toBeTruthy();
@@ -69,7 +71,7 @@ describe("Dashboard KPIs by lens (ADR 0087)", () => {
     renderPanels("nominal");
     const nominal = fmtMultiple(kpis.netWorthMultiple!);
     expect(
-      screen.getByText(en.dashboard.multipleFromStartMode(nominal, "nominal")),
+      screen.getByText(en.dashboard.stripHorizonFoot(nominal, N, "nominal")),
     ).toBeTruthy();
     expect(screen.getByText(en.dashboard.kpiHintNominal)).toBeTruthy();
     expect(

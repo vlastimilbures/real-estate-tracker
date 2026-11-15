@@ -197,39 +197,27 @@ function yearAndPeriod(
   ];
 }
 
-/** Title + hint of the monthly cash-flow panel. */
-export function monthlyFlowLabels(
-  t: Dictionary,
-  basis: AsOfBasis,
-  baseDate: Date,
-  asOf: Date,
-): { title: string; hint: string } {
+/** The basis the Dashboard strip's figures are for, as a phrase (ADR 0088, 0200 §2):
+ *  current, a projection year (the Projections year label) or a date. */
+export function basisText(t: Dictionary, basis: AsOfBasis): string {
   const d = t.dashboard;
-  if (basis.kind === "projection") {
-    const [year, period] = yearAndPeriod(t, basis, baseDate);
-    return {
-      title: d.monthlyEquivalentYear(year, period),
-      hint: d.monthlyHintProjection,
-    };
-  }
-  return {
-    title:
-      basis.kind === "today"
-        ? d.currentMonthlyCashFlow
-        : d.monthlyCashFlowOn(fmtDate(basis.date)),
-    hint: d.monthlyHint(fmtDate(asOf)),
-  };
+  if (basis.kind === "today") return d.basisCurrent;
+  if (basis.kind === "snapshot") return d.basisOn(fmtDate(basis.date));
+  return d.basisProjection(yearLabel(t, basis.year, basis.calendarYear));
 }
 
-/** Foot of the annual net cash flow tile. */
-export function netCashFlowFoot(t: Dictionary, basis: AsOfBasis): string {
+/** How the KPI list's monthly figures are made (ADR 0088 §3, kept by ADR 0200 §3): a
+ *  projection year's are its annual figures ÷ 12; otherwise the run rate of the leases
+ *  in force on the as-of date ÷ 12. */
+export function monthlyFlowHint(
+  t: Dictionary,
+  basis: AsOfBasis,
+  asOf: Date,
+): string {
   const d = t.dashboard;
-  if (basis.kind === "today") return d.noiMinusDebtService;
-  if (basis.kind === "snapshot")
-    return d.noiMinusDebtServiceOn(fmtDate(basis.date));
-  return d.noiMinusDebtServiceYear(
-    yearLabel(t, basis.year, basis.calendarYear),
-  );
+  return basis.kind === "projection"
+    ? d.monthlyHintProjection
+    : d.monthlyHint(fmtDate(asOf));
 }
 
 /** As-of picker hint: how the date maps to what is shown; none at today. */
