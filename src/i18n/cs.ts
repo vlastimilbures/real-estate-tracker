@@ -241,6 +241,9 @@ export const cs: Dictionary = {
     table: "Tabulka",
     surfaceLabel: (title: string) =>
       `${title} — graf. Hodnoty zobrazí tlačítko Tabulka.`,
+    // ADR 0210: konce fixace vyznačené v grafu hodnoty.
+    rateReset: "Změna sazby",
+    rateResetNominal: "Změna sazby · dluh v nominálních Kč",
   },
 
   shell: {

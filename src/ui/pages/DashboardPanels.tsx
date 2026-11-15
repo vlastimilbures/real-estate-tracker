@@ -30,6 +30,7 @@ import {
 } from "../model/dashboard";
 import type { LeveredIrr } from "../model/irr";
 import { lensKpis } from "../model/lensKpis";
+import type { ResetMarker } from "../model/financing";
 import { undrawnPart } from "../model/debt";
 import type { PortfolioKPIs, PortfolioSnapshot } from "../../engine";
 import type { Decimal } from "../../lib/money";
@@ -205,10 +206,13 @@ const SMALL_HEIGHT = 180;
 export function ProjectionHero({
   mode,
   rows,
+  markers = [],
   horizonYears,
 }: {
   mode: Mode;
   rows: ChartRow[];
+  /** Upcoming fixation ends (ADR 0210). */
+  markers?: readonly ResetMarker[] | undefined;
   horizonYears: number;
 }) {
   const t = useT();
@@ -228,6 +232,10 @@ export function ProjectionHero({
         rows={rows}
         series={valueSeries}
         height={HERO_HEIGHT}
+        markers={markers}
+        markerHeading={
+          mode === "real" ? t.charts.rateResetNominal : t.charts.rateReset
+        }
       />
     </section>
   );

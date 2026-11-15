@@ -1957,6 +1957,12 @@ table.chart-table tbody th.sticky-col {
   border-top: 1px solid var(--hairline);
   font-weight: 600;
 }
+/* The hovered year's fixation ends, under a rule (ADR 0210 §3). */
+.chart-tooltip .tt-resets {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--hairline);
+}
 
 /* ============ Misc ============ */
 /* The live region is always mounted (ADR 0154); fixed, so it never takes a slot in the

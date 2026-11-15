@@ -844,6 +844,10 @@ offline badge, and controls for language and theme.
    next fixation end, time left and debt at reset, and the loan, completion and lease dates
    of the same 1/3/5-year window on their property's row, each linking to its property
    (ADR 0204).
+   The 30-year value chart marks each year holding an upcoming fixation end with a dashed
+   line and a diamond (a "Rate reset" legend entry); the year's tooltip lists property,
+   date and nominal debt at reset (ADR 0210). Property detail's value chart does the same
+   for its loan.
    The KPI list shows only what the tiles do not (ADR 0208), in three groups side by side
    at 1280 px: **Returns** (net-worth CAGR, net and gross yield, Cash invested), **Cash
    flow** (monthly inflow and outflow, cumulative cash to owner, first cash-flow-positive

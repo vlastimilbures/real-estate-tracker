@@ -247,6 +247,9 @@ export const ru: Dictionary = {
     table: "Таблица",
     surfaceLabel: (title: string) =>
       `${title} — график. Значения — по кнопке «Таблица».`,
+    // ADR 0210: концы фиксации на графике стоимости.
+    rateReset: "Смена ставки",
+    rateResetNominal: "Смена ставки · долг в номинальных Kč",
   },
 
   shell: {

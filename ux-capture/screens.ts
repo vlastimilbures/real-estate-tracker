@@ -899,6 +899,44 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "08c-dashboard-chart-reset",
+    desc: "Value chart: fixation ends marked at 2029 and 2031 (dashed line, diamond, legend entry), the 2029 tooltip lists Lipova's reset (ADR 0210)",
+    run: async (ux) => {
+      await boot(ux.page);
+      const hero = ux.page.locator(".chart-hero");
+      await expect(
+        hero.locator(".recharts-reference-line.reset-marker"),
+      ).toHaveCount(2);
+      await expect(hero.locator(".legend")).toContainText(
+        ux.t.charts.rateReset,
+      );
+      // The marker is drawn in --ink-soft, the axis-label colour checked for contrast in
+      // both themes (screen 08), so it keeps at least 3:1 on the plot.
+      const stroke = await hero.evaluate((el) => {
+        const probe = document.createElement("span");
+        probe.style.color = "var(--ink-soft)";
+        document.body.append(probe);
+        const inkSoft = getComputedStyle(probe).color;
+        probe.remove();
+        const line = el.querySelector(".reset-marker line")!;
+        return getComputedStyle(line).stroke === inkSoft;
+      });
+      expect(stroke, "marker in --ink-soft").toBe(true);
+      const surface = ux.page.getByRole("img", {
+        name: ux.t.charts.surfaceLabel(ux.t.dashboard.chartValueVsDebtVsEquity),
+      });
+      await surface.focus();
+      // Year 0 is 2026: three steps reach 2029.
+      for (let i = 0; i < 3; i++) await ux.page.keyboard.press("ArrowRight");
+      const tip = ux.page.locator(".chart-tooltip");
+      await expect(tip.locator(".tt-reset")).toHaveCount(1);
+      await expect(tip.locator(".tt-reset")).toContainText(
+        "Byt Lipova · 15.01.2029",
+      );
+      await ux.capture("08c-dashboard-chart-reset", { fullPage: false });
+    },
+  },
+  {
     id: "09-dashboard-data-check",
     desc: "Data check five years on, reached from the filter bar's link: the summary, then four lines with a chip per property (ADR 0118, ADR 0206)",
     run: async (ux) => {
