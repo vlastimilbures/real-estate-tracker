@@ -74,14 +74,14 @@ describe("hero chart (ADR 0202 §2)", () => {
     expect(within(hero).getByText(d.nominalKc)).toBeTruthy();
     expect(within(hero).getByText(d.chartValueVsDebtVsEquity)).toBeTruthy();
     expect(hero.querySelectorAll(".chart-card")).toHaveLength(1);
-    // Its table view keeps the chart's own title, 300 px tall.
+    // Its table view keeps the chart's own title, 280 px tall.
     await userEvent.click(
       within(hero).getByRole("button", { name: en.charts.table }),
     );
     const table = within(hero).getByRole("region", {
       name: d.chartValueVsDebtVsEquity,
     });
-    expect(table.style.height).toBe("300px");
+    expect(table.style.height).toBe("280px");
   });
 
   it("names the real lens in the real lens", () => {

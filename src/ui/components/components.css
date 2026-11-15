@@ -1572,7 +1572,7 @@ table.data tbody tr:hover td.sticky-col {
   border: 0;
   box-shadow: none;
   background: none;
-  padding-top: var(--s2);
+  padding-top: var(--s1);
 }
 /* Small multiples: three then two per row, two below 860 px (the fifth across), one
    below 640 px; never an empty cell. */

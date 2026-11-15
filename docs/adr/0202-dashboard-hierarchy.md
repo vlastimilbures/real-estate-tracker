@@ -25,8 +25,9 @@
    Data check (its own issue moves it later) → the five other charts → Key performance
    indicators. Sections are 24 px apart on the Dashboard (`.page.dashboard`) instead of
    32 px, and the sample banner and filter bar add no margin of their own there.
-2. **Hero chart:** "Value vs debt vs equity" alone, full width, plot 300 px tall, in a
-   card headed like a panel: an h2 `dashboard.projectionTitle` ("30-year projection") and
+2. **Hero chart:** "Value vs debt vs equity" alone, full width, plot 280 px tall (the
+   issue's "about 300", trimmed so the hero ends inside the first screen with Linux CI's
+   wider fonts too), in a card headed like a panel: an h2 `dashboard.projectionTitle` ("30-year projection") and
    the lens (`dashboard.nominalKc` / `dashboard.realTerms`) as its hint. The chart's own
    title (`dashboard.chartValueVsDebtVsEquity`), unit, legend, tooltip and Table view are
    unchanged, under that head.
@@ -43,20 +44,19 @@
    scrolled there still sees the horizon and whether the values are real. Chart titles
    stay text, as before.
 5. **Removed:** the `section-head` above the charts, its styles and its key
-   `dashboard.trajectory`;
-   `ChartCard` gains a `height` (default 196 px, as before) used by the chart and its
+   `dashboard.trajectory`; `ChartCard` gains a `height` (default 196 px, as before) used by the chart and its
    table.
 
 ## Consequences
 
 - At 1280 × 800, as of Today with the sample portfolio, the hero chart's bottom edge is in
-  the first viewport (about 775 px) and Financing starts at the top of the second (about
-  800 px). In the 1200 × 800 default window the KPI strip is two rows (ADR 0200 §4), so
+  the first viewport (about 750 px) and Financing starts by the top of the second (about
+  780 px). The capture harness checks both, and the empty-cell rule at 1280, 1200, 1100
+  and 900 (a 1100 × 800 viewport is added, run on demand). In the 1200 × 800 default window the KPI strip is two rows (ADR 0200 §4), so
   the hero's axis and legend end just below the first screen (about 855 px); the issue's
   criterion is set at 1280.
 - The page keeps about its length (about 2,800 px, with the sample banner): the hero is
-  taller and the small multiples shorter. What changes is what the first screen shows. The capture harness checks both, and the empty-cell rule at 1280, 1100 and
-  900 (a 1100 × 800 viewport is added, run on demand).
+  taller and the small multiples shorter. What changes is what the first screen shows.
 - Every chart's title, unit, legend, tooltip and table keep their content.
 - Property detail and Scenarios charts are unchanged.
 - No computed number, stored data or behaviour changes.

@@ -196,7 +196,7 @@ function useProjectionSeries(rows: ChartRow[], eqChange: EquityChangeRow[]) {
 }
 
 /** Plot heights on the Dashboard (ADR 0202): the hero chart and the small multiples. */
-const HERO_HEIGHT = 300;
+const HERO_HEIGHT = 280;
 const SMALL_HEIGHT = 180;
 
 /** The projection itself, first after the KPI strip: value vs debt vs equity, full
