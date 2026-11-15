@@ -1115,7 +1115,7 @@ export const SCREENS: Screen[] = [
       await p.getByLabel(new RegExp(d.fieldMarketValue)).fill("9000000");
       await p
         .getByRole("button", {
-          name: `${ux.t.common.addVerb} ${d.addValuation}`,
+          name: d.addValuation,
         })
         .click();
       await expect(
@@ -1139,7 +1139,7 @@ export const SCREENS: Screen[] = [
       await p
         .locator(".form-actions")
         .getByRole("button", {
-          name: `${ux.t.common.addVerb} ${ux.t.propertyDetail.addMortgage}`,
+          name: ux.t.propertyDetail.addMortgage,
         })
         .click();
       await expect(p.locator(".err").first()).toBeVisible();
@@ -1276,7 +1276,7 @@ export const SCREENS: Screen[] = [
       await boot(ux.page);
       await nav(ux, "scenarios");
       await ux.page
-        .getByRole("button", { name: ux.t.scenarios.newScenario })
+        .getByRole("button", { name: ux.t.scenarios.addScenario })
         .click();
       await expect(ux.page.getByRole("dialog")).toBeVisible();
       await ux.capture("41-scenario-form", { fullPage: false });
@@ -1354,7 +1354,7 @@ export const SCREENS: Screen[] = [
       await boot(ux.page);
       await nav(ux, "scenarios");
       await ux.page
-        .getByRole("button", { name: ux.t.scenarios.newScenario })
+        .getByRole("button", { name: ux.t.scenarios.addScenario })
         .click();
       const dialog = ux.page.getByRole("dialog");
       await dialog.getByLabel(ux.t.scenarios.name).fill("Crash");

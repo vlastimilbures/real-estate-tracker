@@ -181,6 +181,21 @@ export function SegmentedToggle<T extends string>({
   );
 }
 
+/**
+ * Button roles (ADR 0201): one rule per role, so the same action looks the same
+ * everywhere.
+ *
+ * - The page's one main action (top bar): primary, with an icon; "Add …" for creating.
+ * - Add in a panel head or a row list: default, size "sm", Plus icon, "Add …" in full.
+ * - Submit in a form or modal: primary, right-most.
+ * - Cancel / Discard in a form or modal: ghost, left of submit.
+ * - Other page or panel actions: default.
+ * - Destructive confirm: ConfirmRow (ADR 0143), or a modal's default Cancel beside its
+ *   danger button.
+ *
+ * At most one primary is visible per region: the top bar, an open form, a modal. Row
+ * actions are `RowAction` (ADR 0199).
+ */
 export function Button({
   children,
   variant = "default",

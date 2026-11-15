@@ -58,9 +58,8 @@ async function add(
     await user.type(screen.getByLabelText(new RegExp(endLabel)), "30.06.2027");
   await user.type(screen.getByLabelText(new RegExp(amountLabel)), "6000000");
   await user.click(
-    screen.getByRole("button", {
-      name: `${en.common.addVerb} ${addLabel}`,
-    }),
+    // The form's submit reads as the panel's Add (ADR 0201 §2).
+    screen.getByRole("button", { name: addLabel }),
   );
 }
 

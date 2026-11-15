@@ -32,7 +32,7 @@ function setup(ask: boolean) {
   render(
     <EntityPanel
       title="Rows"
-      addLabel="row"
+      addLabel="Add row"
       rows={[{ id: "a", value: "100" }]}
       columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
       specs={specs}
@@ -47,7 +47,7 @@ function setup(ask: boolean) {
 }
 
 async function submitNew(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("button", { name: "row" }));
+  await user.click(screen.getByRole("button", { name: "Add row" }));
   await user.type(screen.getByLabelText(/Value/), "200");
   await user.click(screen.getByRole("button", { name: /add row/i }));
 }

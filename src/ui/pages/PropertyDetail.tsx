@@ -291,7 +291,6 @@ export function PropertyDetail() {
             </Button>
           ) : (
             <Button
-              variant="primary"
               icon={Power}
               disabled={toggling}
               onClick={activate}

@@ -40,7 +40,7 @@ function Panel({
   return (
     <EntityPanel
       title={title}
-      addLabel="row"
+      addLabel="Add row"
       rows={rows}
       columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
       specs={specs}
@@ -235,7 +235,7 @@ describe("EntityPanel: a late write closes only its own row", () => {
     const user = userEvent.setup();
     const add = deferred();
     renderPanel(ok, { onAdd: add.write });
-    await user.click(screen.getByRole("button", { name: "row" }));
+    await user.click(screen.getByRole("button", { name: "Add row" }));
     await user.type(valueInputs()[0], "300");
     await user.click(screen.getByRole("button", { name: "Add row" }));
     await user.click(editButtons()[1]);
@@ -278,7 +278,7 @@ describe("EntityPanel: a late write closes only its own row", () => {
     const user = userEvent.setup();
     const add = deferred();
     renderPanel(ok, { onAdd: add.write });
-    await user.click(screen.getByRole("button", { name: "row" }));
+    await user.click(screen.getByRole("button", { name: "Add row" }));
     await user.type(valueInputs()[0], "300");
     await user.click(screen.getByRole("button", { name: "Add row" }));
     await user.click(editButtons()[1]);
@@ -286,7 +286,7 @@ describe("EntityPanel: a late write closes only its own row", () => {
       screen.getByRole("button", { name: en.common.discardChanges }),
     );
     await user.click(screen.getByRole("button", { name: en.common.cancel }));
-    await user.click(screen.getByRole("button", { name: "row" }));
+    await user.click(screen.getByRole("button", { name: "Add row" }));
     await user.type(valueInputs()[0], "400");
     await act(async () => add.finish({ ok: true }));
     expect(valueInputs()).toHaveLength(1);

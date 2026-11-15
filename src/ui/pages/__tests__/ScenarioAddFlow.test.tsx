@@ -232,7 +232,7 @@ describe("a new scenario joins the compare (#49)", () => {
         <ToastRegion />
       </>,
     );
-    await userEvent.click(screen.getByRole("button", { name: sc.newScenario }));
+    await userEvent.click(screen.getByRole("button", { name: sc.addScenario }));
     await userEvent.type(screen.getByLabelText(sc.name), "Mine");
     await userEvent.click(
       screen.getByRole("button", { name: en.common.create }),

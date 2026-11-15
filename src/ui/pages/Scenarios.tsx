@@ -10,7 +10,7 @@ import {
 import { MAX_COMPARE, useUiStore } from "../../state/uiStore";
 import { AppShell } from "../components/AppShell";
 import { Button, EmptyState } from "../components/primitives";
-import { FolderOpen } from "lucide-react";
+import { FolderOpen, Plus } from "lucide-react";
 import type { Scenario, ScenarioOverrides } from "../../engine";
 import { useT } from "../hooks/useT";
 import { rateShockNote } from "../model/rateShockReach";
@@ -150,8 +150,8 @@ export function Scenarios() {
       // With nothing to compare there is no lens to switch (ADR 0155).
       showLens={!state || state.kind === "ready"}
       actions={
-        <Button variant="primary" onClick={() => setEditing("new")}>
-          {t.scenarios.newScenario}
+        <Button variant="primary" icon={Plus} onClick={() => setEditing("new")}>
+          {t.scenarios.addScenario}
         </Button>
       }
     >

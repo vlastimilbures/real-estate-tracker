@@ -385,7 +385,7 @@ export function PropertyFormModal({
       busy={saving}
       footer={
         <>
-          <Button onClick={onClose} disabled={saving}>
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
             {t.common.cancel}
           </Button>
           <Button type="submit" variant="primary" disabled={!canSave}>
