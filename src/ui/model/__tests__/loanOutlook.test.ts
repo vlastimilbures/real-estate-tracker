@@ -1,7 +1,8 @@
 // ADR 0117 (#31b): the property page's Loan outlook lists every loan block's fixation end,
 // balance at reset and status, oldest first, and the loan's remaining term.
 import { describe, it, expect } from "vitest";
-import { loanOutlook, remainingTermText } from "../propertyDetail";
+import { loanOutlook } from "../propertyDetail";
+import { remainingTermText } from "../termText";
 import {
   isoDate,
   money,
