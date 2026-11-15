@@ -404,9 +404,17 @@
 }
 .kpi-strip {
   display: grid;
+  /* A column never gets narrower than its one-line label and value (min-content): the
+     label widths differ by language and font, so fixed weights alone could clip one. */
   grid-template-columns:
-    minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.9fr)
-    minmax(0, 0.9fr) minmax(0, 1.15fr);
+    minmax(min-content, 1.15fr) minmax(min-content, 1fr) minmax(
+      min-content,
+      1fr
+    )
+    minmax(min-content, 0.9fr) minmax(min-content, 0.9fr) minmax(
+      min-content,
+      1.15fr
+    );
   gap: var(--s3);
 }
 @container (max-width: 959px) {
