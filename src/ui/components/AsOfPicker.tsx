@@ -3,6 +3,7 @@
 // Presentational: it emits Date | null (null = Today) and keeps the date inside the
 // projection window (UX-059, D-19). It shows the date the page computes for, by the one
 // resolver (ADR 0150): a stale stored value or a future base date shows the clamped date.
+// Place it directly in a `.filter-bar`: its hint is that bar's last row (ADR 0198).
 import { useState, useId } from "react";
 import { parseDate, dateDraft } from "../model/formParse";
 import { todayUtc } from "../../lib/day";
@@ -68,64 +69,68 @@ export function AsOfPicker({
     value !== null &&
     effective.getTime() === addYears(presetAnchor, 5).getTime();
 
+  // The hint follows the group as the filter bar's own row (ADR 0198), so it may use the
+  // bar's full width and never changes the picker's size.
   return (
-    <div
-      className="asof"
-      role="group"
-      aria-label={t.common.asOfGroup}
-      data-testid="asof-picker"
-    >
-      <span className="asof-label" id={labelId}>
-        {t.common.asOfLabel}
-      </span>
-      <DateInput
-        value={draft}
-        onChange={setDraft}
-        onPick={commit}
-        aria-labelledby={labelId}
-        aria-describedby={hint ? hintId : undefined}
-        onBlur={(e) => commit(e.target.value)}
-        onKeyDown={(e) =>
-          e.key === "Enter" && commit((e.target as HTMLInputElement).value)
-        }
-        data-testid="asof-input"
-        min={bounds.min}
-        max={bounds.max}
-      />
-      <div className="pill-group">
-        <button
-          type="button"
-          className={`pill${isToday ? " on" : ""}`}
-          aria-pressed={isToday}
-          onClick={() => onChange(null)}
-          data-testid="asof-today"
-        >
-          {t.common.today}
-        </button>
-        <button
-          type="button"
-          className={`pill${is1y ? " on" : ""}`}
-          aria-pressed={is1y}
-          onClick={() => pick(addYears(presetAnchor, 1))}
-          data-testid="asof-1y"
-        >
-          {t.common.plusYears(1)}
-        </button>
-        <button
-          type="button"
-          className={`pill${is5y ? " on" : ""}`}
-          aria-pressed={is5y}
-          onClick={() => pick(addYears(presetAnchor, 5))}
-          data-testid="asof-5y"
-        >
-          {t.common.plusYears(5)}
-        </button>
+    <>
+      <div
+        className="asof"
+        role="group"
+        aria-label={t.common.asOfGroup}
+        data-testid="asof-picker"
+      >
+        <span className="asof-label" id={labelId}>
+          {t.common.asOfLabel}
+        </span>
+        <DateInput
+          value={draft}
+          onChange={setDraft}
+          onPick={commit}
+          aria-labelledby={labelId}
+          aria-describedby={hint ? hintId : undefined}
+          onBlur={(e) => commit(e.target.value)}
+          onKeyDown={(e) =>
+            e.key === "Enter" && commit((e.target as HTMLInputElement).value)
+          }
+          data-testid="asof-input"
+          min={bounds.min}
+          max={bounds.max}
+        />
+        <div className="pill-group">
+          <button
+            type="button"
+            className={`pill${isToday ? " on" : ""}`}
+            aria-pressed={isToday}
+            onClick={() => onChange(null)}
+            data-testid="asof-today"
+          >
+            {t.common.today}
+          </button>
+          <button
+            type="button"
+            className={`pill${is1y ? " on" : ""}`}
+            aria-pressed={is1y}
+            onClick={() => pick(addYears(presetAnchor, 1))}
+            data-testid="asof-1y"
+          >
+            {t.common.plusYears(1)}
+          </button>
+          <button
+            type="button"
+            className={`pill${is5y ? " on" : ""}`}
+            aria-pressed={is5y}
+            onClick={() => pick(addYears(presetAnchor, 5))}
+            data-testid="asof-5y"
+          >
+            {t.common.plusYears(5)}
+          </button>
+        </div>
       </div>
       {hint && (
         <span className="asof-hint" id={hintId} data-testid="asof-hint">
           {hint}
         </span>
       )}
-    </div>
+    </>
   );
 }

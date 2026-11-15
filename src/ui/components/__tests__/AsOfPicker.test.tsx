@@ -62,6 +62,26 @@ describe("AsOfPicker (UX-059)", () => {
     ).toBe(el.id);
   });
 
+  // ADR 0198: the hint is the filter bar's own row, so it sits after the picker group,
+  // not inside it, and the picker's size does not depend on it.
+  it("renders the hint after the picker group, not inside it", () => {
+    const { container } = render(
+      <div className="filter-bar">
+        <AsOfPicker
+          value={null}
+          onChange={vi.fn()}
+          bounds={bounds}
+          hint="Future dates show the nearest projection year"
+        />
+      </div>,
+    );
+    const group = screen.getByTestId("asof-picker");
+    const hint = screen.getByTestId("asof-hint");
+    expect(group.contains(hint)).toBe(false);
+    expect(hint.parentElement).toBe(container.querySelector(".filter-bar"));
+    expect(group.nextElementSibling).toBe(hint);
+  });
+
   it("the text follows a value set from outside", () => {
     const { rerender } = render(
       <AsOfPicker value={null} onChange={vi.fn()} bounds={bounds} />,

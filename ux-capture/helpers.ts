@@ -290,3 +290,48 @@ export async function deleteAllProperties(ux: Ux) {
     await expect(ux.page.locator(".confirm-row")).toHaveCount(0);
   }
 }
+
+/**
+ * Clicks the +5y preset and checks the as-of hint's row (ADR 0198): the property chips and
+ * the picker keep their place, the hint is one line at 1280 px or wider (at most two below)
+ * and the page does not scroll sideways.
+ */
+export async function pickFiveYearsAndCheckHint(page: Page) {
+  const bar = page.locator(".filter-bar").first();
+  // Boxes relative to the bar: content above it (the page subtitle) may change height
+  // with the date, which moves the whole bar but is not the hint's doing.
+  const place = () =>
+    bar.evaluate((el) => {
+      const top = el.getBoundingClientRect();
+      return Array.from(el.children)
+        .filter((c) => !c.classList.contains("asof-hint"))
+        .map((c) => {
+          const r = c.getBoundingClientRect();
+          return {
+            x: r.x - top.x,
+            y: r.y - top.y,
+            width: r.width,
+            height: r.height,
+          };
+        });
+    });
+  const before = await place();
+  const preset = page.getByTestId("asof-5y");
+  await preset.click();
+  await expect(preset).toHaveAttribute("aria-pressed", "true");
+  const hint = bar.getByTestId("asof-hint");
+  await expect(hint).toBeVisible();
+  expect(await place(), "chips and picker boxes").toEqual(before);
+  const m = await hint.evaluate((el) => ({
+    height: el.getBoundingClientRect().height,
+    line: parseFloat(getComputedStyle(el).lineHeight),
+    width: window.innerWidth,
+    scroll: document.documentElement.scrollWidth,
+    client: document.documentElement.clientWidth,
+  }));
+  const maxLines = m.width >= 1280 ? 1 : 2;
+  expect(Math.round(m.height / m.line), "hint lines").toBeLessThanOrEqual(
+    maxLines,
+  );
+  expect(m.scroll, "page width").toBeLessThanOrEqual(m.client);
+}
