@@ -56,7 +56,8 @@
    two below, by a container query, which includes the app's default 1200 × 800 window
    (about 904 px, too narrow for the Czech and Russian labels) and 900 × 600. The Net worth
    and net cash flow tiles are a little wider than the rest (their figures are the
-   longest), LTV and DSCR a little narrower (their feet are one word). Amounts in the feet
+   longest), LTV and DSCR a little narrower (their feet are one word), and no column is narrower than its one-line
+   label and value. Amounts in the feet
    never break before their unit (`noBreak`, or a nowrap `.num`). The capture harness gains
    a 1200 × 800 viewport, and CI checks the strip there in Czech and Russian.
 5. **Screen reader order:** each tile reads label, value, foot, as the DOM order. The health
