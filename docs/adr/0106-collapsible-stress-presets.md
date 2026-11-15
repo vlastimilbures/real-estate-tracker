@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #54 (Scenarios critical review after #15)
+- Amended by: [0214](0214-panel-help-text.md) (the explanation is a help line inside the
+  open presets)
 
 ## Context
 

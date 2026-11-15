@@ -3,6 +3,7 @@
 // lives in the engine; these take already-computed props / store actions.
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Ban, Check, Clock, Pencil } from "lucide-react";
+import { HelpText } from "../components/HelpText";
 import { MetricLabel } from "../components/MetricLabel";
 import {
   KpiTile,
@@ -132,7 +133,7 @@ function NotOwnedPanel({ purchaseDate }: { purchaseDate: Date }) {
   const t = useT();
   const d = t.propertyDetail;
   return (
-    <Panel title={d.notOwnedTitle} hint={d.notOwnedHint}>
+    <Panel title={d.notOwnedTitle} help={<HelpText>{d.notOwnedHint}</HelpText>}>
       <StatList
         rows={[{ k: t.propertyForm.purchaseDate, v: fmtDate(purchaseDate) }]}
       />
@@ -245,7 +246,7 @@ export function HoldingCostsPanel({
     <div ref={root}>
       <Panel
         title={d.holdingCostsTitle}
-        hint={d.holdingCostsHint}
+        help={<HelpText>{d.holdingCostsHint}</HelpText>}
         action={
           editing ? undefined : (
             <RowActions>
@@ -462,6 +463,7 @@ function DrawdownSection({ dd }: { dd: DrawdownView }) {
           </span>
         )}
       </p>
+      <HelpText about={dd.title}>{d.drawdownNote}</HelpText>
       <TableWrap label={`${dd.title} — ${d.drawdownTable}`}>
         <table className="data">
           <caption className="sr-only">{`${dd.title} — ${d.drawdownTable}`}</caption>
@@ -501,7 +503,6 @@ function DrawdownSection({ dd }: { dd: DrawdownView }) {
           </tbody>
         </table>
       </TableWrap>
-      <p className="panel-note">{d.drawdownNote}</p>
     </section>
   );
 }
@@ -579,8 +580,9 @@ export function AcquisitionPanel({
   onRecordFunding,
 }: {
   view: AcquisitionView;
-  /** Opens the property form at its Acquisition section (ADR 0209 §2). */
-  onRecordFunding: () => void;
+  /** Opens the property form at its Acquisition section (ADR 0209 §2), with the
+   *  button that opened it. */
+  onRecordFunding: (opener: HTMLElement) => void;
 }) {
   const t = useT();
   const d = t.propertyDetail;
@@ -592,7 +594,10 @@ export function AcquisitionPanel({
       <Panel title={d.acqTitle} hint={d.acqHint}>
         <div className="acq-empty">
           <p>{view.emptyLine}</p>
-          <Button aria-describedby={opensId} onClick={onRecordFunding}>
+          <Button
+            aria-describedby={opensId}
+            onClick={(e) => onRecordFunding(e.currentTarget)}
+          >
             {t.dataCheck.recordFunding}
           </Button>
           <span id={opensId} hidden>
@@ -602,7 +607,11 @@ export function AcquisitionPanel({
       </Panel>
     );
   return (
-    <Panel title={d.acqTitle} hint={d.acqHint}>
+    <Panel
+      title={d.acqTitle}
+      hint={d.acqHint}
+      help={<HelpText about={d.acqTitle}>{d.acqNote}</HelpText>}
+    >
       <StatList
         rows={view.rows.map((r) => ({
           k: r.label,
@@ -616,7 +625,6 @@ export function AcquisitionPanel({
         </div>
       )}
       {view.note && <p className="panel-note funding-note">{view.note}</p>}
-      <p className="panel-note">{d.acqNote}</p>
     </Panel>
   );
 }

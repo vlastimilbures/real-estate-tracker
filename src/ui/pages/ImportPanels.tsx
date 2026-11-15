@@ -3,6 +3,7 @@
 // Split from Import.tsx (DR-057).
 import { useState, useRef, useCallback } from "react";
 import { Panel, Button, Badge, TableWrap } from "../components/primitives";
+import { HelpText } from "../components/HelpText";
 import type { CsvParseResult, CsvImportProblem } from "../../state/csv";
 import { logFailure } from "../../state/diagnostics";
 import { saveFailureDetail, saveFile } from "../../state/platform";
@@ -180,7 +181,10 @@ export interface ImportFileType {
 export function ImportFilesPanel({ files }: { files: ImportFileType[] }) {
   const t = useT();
   return (
-    <Panel title={t.importPage.filesTitle} hint={t.importPage.dropOnRow}>
+    <Panel
+      title={t.importPage.filesTitle}
+      help={<HelpText>{t.importPage.dropOnRow}</HelpText>}
+    >
       {/* An explicit list role: WebKit drops it from a list without bullets. */}
       <ul className="import-rows" role="list">
         {files.map((f) => (

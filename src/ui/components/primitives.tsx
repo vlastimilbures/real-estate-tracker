@@ -243,12 +243,16 @@ export function TableWrap({
 export function Panel({
   title,
   hint,
+  help,
   action,
   flush = false,
   children,
 }: {
   title?: string | undefined;
+  /** Context on the title's line: a unit, lens, count or date (ADR 0214). */
   hint?: string | undefined;
+  /** An explanation leading the body: a `HelpText` (ADR 0214). */
+  help?: ReactNode | undefined;
   action?: ReactNode | undefined;
   flush?: boolean | undefined;
   children: ReactNode;
@@ -265,7 +269,10 @@ export function Panel({
           {action}
         </div>
       )}
-      <div className={`panel-body${flush ? " flush" : ""}`}>{children}</div>
+      <div className={`panel-body${flush ? " flush" : ""}`}>
+        {help && <div className="panel-help">{help}</div>}
+        {children}
+      </div>
     </section>
   );
 }

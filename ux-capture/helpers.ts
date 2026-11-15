@@ -94,6 +94,35 @@ export const test = base.extend<{ ux: Ux }>({
 
     const capture: Ux["capture"] = async (id, opts) => {
       await shot(id, opts);
+      // ADR 0214: a panel header holds context on one line at 1280 × 800 and wider.
+      if ((page.viewportSize()?.width ?? 0) >= 1280) {
+        // One row: the title fits one line, the hint does not push the titles past it,
+        // and the head's actions sit beside the titles, not below them.
+        const wrapped = await page.evaluate(() =>
+          Array.from(document.querySelectorAll("section.panel"))
+            .filter((p) => {
+              const head = p.querySelector(":scope > .panel-head");
+              const titles = head?.querySelector(".panel-head-titles");
+              const h2 = titles?.querySelector("h2");
+              if (!head || !titles || !h2) return false;
+              const tr = titles.getBoundingClientRect();
+              if (tr.height === 0) return false;
+              const hr = h2.getBoundingClientRect();
+              const cs = getComputedStyle(h2);
+              const line =
+                parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.3;
+              if (hr.height > line * 1.5) return true;
+              if (tr.height > hr.height + 4) return true;
+              return Array.from(head.children).some((c) => {
+                if (c === titles) return false;
+                const r = c.getBoundingClientRect();
+                return r.height > 0 && r.top >= tr.bottom - 2;
+              });
+            })
+            .map((p) => p.querySelector(".panel-head h2")?.textContent ?? ""),
+        );
+        expect(wrapped, `${id}: panel headers on one line`).toEqual([]);
+      }
       if (opts?.axe === false) return;
       const res = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       writeJson(path.join("axe", `${id}.json`), {
