@@ -1324,6 +1324,7 @@ export const cs: Dictionary = {
   guide: {
     title: "Průvodce",
     subtitle: "Jak se čísla počítají a co znamenají",
+    sectionNavLabel: "Oddíly průvodce",
     eg: "např.",
     howItWorksTitle: "Jak to funguje",
     howItWorksHint: "Od vašich dat k číslům na obrazovce",

@@ -2280,8 +2280,70 @@ export const SCREENS: Screen[] = [
     desc: "Guide (full page)",
     run: async (ux) => {
       await boot(ux.page);
+      // Opening the Guide from a page scrolled down lands at its top (ADR 0213 §3).
+      await nav(ux, "projections");
+      await ux.page.evaluate(() =>
+        window.scrollTo(0, document.documentElement.scrollHeight),
+      );
+      expect(await ux.page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
       await nav(ux, "guide");
+      await expect.poll(() => ux.page.evaluate(() => window.scrollY)).toBe(0);
       await ux.capture("70-guide");
+    },
+  },
+  {
+    id: "70b-guide-section-nav",
+    desc: "Guide: a section link lands its section under the top bar, marked current (ADR 0213)",
+    run: async (ux) => {
+      await boot(ux.page);
+      await nav(ux, "guide");
+      const navEl = ux.page.getByRole("navigation", {
+        name: ux.t.guide.sectionNavLabel,
+      });
+      await expect(navEl.getByRole("link")).toHaveCount(10);
+      const link = navEl.getByRole("link", { name: ux.t.guide.glossaryTitle });
+      await link.click();
+      await expect(link).toHaveAttribute("aria-current", "location");
+      const heading = ux.page.getByRole("heading", {
+        name: ux.t.guide.glossaryTitle,
+        level: 2,
+      });
+      await expect(heading).toBeFocused();
+      // The heading sits just under the sticky top bar, not behind it.
+      const bar = (await ux.page.locator(".topbar").boundingBox())!;
+      const h = (await heading.boundingBox())!;
+      expect(h.y, "heading below the top bar").toBeGreaterThanOrEqual(
+        bar.y + bar.height,
+      );
+      expect(h.y, "heading near the top").toBeLessThan(
+        bar.y + bar.height + 120,
+      );
+      // The nav wraps; the page never scrolls sideways (ADR 0158).
+      expect(
+        await ux.page.evaluate(
+          () =>
+            document.documentElement.scrollWidth <=
+            document.documentElement.clientWidth,
+        ),
+      ).toBe(true);
+      await ux.capture("70b-guide-section-nav", { fullPage: false });
+      // A metric label still opens the Guide at its term (UX-044), shown below the
+      // taller top bar.
+      await nav(ux, "projections");
+      await ux.page
+        .locator(".metric-term", { hasText: /^NOI$/ })
+        .first()
+        .click();
+      const term = ux.page.locator("#glossary-noi");
+      await expect(term).toBeFocused();
+      const bar2 = (await ux.page.locator(".topbar").boundingBox())!;
+      const tb = (await term.boundingBox())!;
+      expect(tb.y, "term below the top bar").toBeGreaterThanOrEqual(
+        bar2.y + bar2.height,
+      );
+      expect(tb.y + tb.height, "term in the window").toBeLessThanOrEqual(
+        ux.page.viewportSize()!.height,
+      );
     },
   },
   {

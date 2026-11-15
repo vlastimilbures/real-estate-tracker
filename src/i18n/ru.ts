@@ -1331,6 +1331,7 @@ export const ru: Dictionary = {
   guide: {
     title: "Справка",
     subtitle: "Как считаются числа и что они означают",
+    sectionNavLabel: "Разделы справки",
     eg: "напр.",
     howItWorksTitle: "Как это работает",
     howItWorksHint: "От ваших данных к числам на экране",

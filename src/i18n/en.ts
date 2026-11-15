@@ -1399,6 +1399,7 @@ export const en = {
   guide: {
     title: "Guide",
     subtitle: "How the numbers are calculated and what they mean",
+    sectionNavLabel: "Guide sections",
     eg: "e.g.",
     howItWorksTitle: "How it works",
     howItWorksHint: "From your data to the numbers on screen",

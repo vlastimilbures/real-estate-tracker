@@ -126,7 +126,11 @@ describe("Guide limits and data-safety pointer (ADR 0092)", () => {
     expect(text).toContain("planning estimates, not lender quotes");
     expect(text).toContain(LIMITS_DOC);
     expect(text).toContain(DATA_SAFETY_DOC);
-    expect(container.querySelectorAll("a")).toHaveLength(0);
+    // Plain text, no link: the only links are the section nav's in-page ones (ADR 0213).
+    const nav = container.querySelector("nav.section-nav");
+    expect(
+      [...container.querySelectorAll("a")].filter((a) => !nav?.contains(a)),
+    ).toHaveLength(0);
   });
 
   it("uses the same addresses in every language", () => {
