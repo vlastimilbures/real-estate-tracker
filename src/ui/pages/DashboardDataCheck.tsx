@@ -41,7 +41,9 @@ function GroupedList({
   const baseId = useId();
   const Icon = list === "attention" ? AlertTriangle : Info;
   return (
-    <ul className={`dc-lines ${list}`} aria-label={label}>
+    // An explicit list role: WebKit drops it from a list without bullets, and with it
+    // the list's name.
+    <ul role="list" className={`dc-lines ${list}`} aria-label={label}>
       {dataCheckGroups(t, items, resetRate).map((g, n) => {
         const problemId = `${baseId}-${n}`;
         return (
@@ -61,7 +63,10 @@ function GroupedList({
                         type="button"
                         className="dc-chip"
                         aria-labelledby={`${chipId} ${problemId}`}
-                        aria-describedby={`${chipId}-go`}
+                        // A portfolio chip already reads its destination.
+                        aria-describedby={
+                          c.name === null ? undefined : `${chipId}-go`
+                        }
                         title={go}
                         onClick={() => onFix(c.propertyId, c.fix)}
                       >
@@ -72,9 +77,11 @@ function GroupedList({
                         <ChevronRight size={14} aria-hidden="true" />
                       </button>
                       {/* The destination, as the chip's description. */}
-                      <span id={`${chipId}-go`} hidden>
-                        {go}
-                      </span>
+                      {c.name !== null && (
+                        <span id={`${chipId}-go`} hidden>
+                          {go}
+                        </span>
+                      )}
                     </Fragment>
                   );
                 })}
@@ -138,10 +145,14 @@ export function DataCheckPanel({
               : d.attentionNone}
           </span>
           {defaults.length > 0 && (
-            <span className="dc-count">
-              <Info size={16} aria-hidden="true" />
-              {d.useDefaults(defaults.length)}
-            </span>
+            <>
+              {/* Two counts, two phrases for a screen reader too. */}
+              <span className="sr-only"> · </span>
+              <span className="dc-count">
+                <Info size={16} aria-hidden="true" />
+                {d.useDefaults(defaults.length)}
+              </span>
+            </>
           )}
         </p>
         <div id={bodyId}>

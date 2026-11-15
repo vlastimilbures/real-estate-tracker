@@ -428,11 +428,11 @@ export const cs: Dictionary = {
     noValuationGroup:
       "Není zadané žádné ocenění, proto se jako tržní hodnota použije kupní cena navýšená o roční zhodnocení od data koupě.",
     leaseEndedGroup:
-      "Nájem skončil a další nájem není zadán. Snímek po tomto datu nepočítá žádné nájemné; projekce počítá s prodloužením tohoto nájmu.",
+      "Nájem skončil a další nájem není zadán. Snímek po datu konce nájmu nepočítá žádné nájemné; projekce počítá s prodloužením tohoto nájmu.",
     leaseEndingGroup:
       "Nájem končí do 3 měsíců a další nájem není zadán. Projekce počítá s prodloužením stávajícího nájmu.",
     fixationEndedGroup: (rate) =>
-      `Fixace skončila a není zadán navazující blok, proto aplikace od té doby počítá se sazbou po skončení fixace ${rate}. Zadejte podmínky nové fixace jako nový blok hypotéky.`,
+      `Fixace skončila a není zadán navazující blok, proto aplikace od konce fixace počítá se sazbou po skončení fixace ${rate}. Zadejte podmínky nové fixace jako nový blok hypotéky.`,
     recordFunding: "Zadat financování",
     outOfRangeSize: (value, range) =>
       `Plocha ${value} m² je mimo rozsah, který formuláře přijímají (${range} m²).`,

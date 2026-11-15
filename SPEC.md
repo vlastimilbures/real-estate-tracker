@@ -858,7 +858,7 @@ offline badge, and controls for language and theme.
    recorded (Cash invested unknown; for a property bought after the base date the down
    payment is derived, ADR 0119). The panel is the last section of the Dashboard (ADR
    0206): a summary row with the two counts, then the findings grouped by problem, one line
-   stating it once and a chip per affected property (its age or date) that links to the
+   stating it once and a chip per affected property (its age, date or price) that links to the
    property section (or form) that fixes it; the own-cash chip opens the form with its
    Acquisition section open. When something needs attention the filter bar shows "N to
    review", which opens the panel and moves focus to it. The panel opens when something

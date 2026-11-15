@@ -104,6 +104,31 @@ describe("Data check panel (ADR 0118, ADR 0206)", () => {
     expect(onFix).toHaveBeenLastCalledWith("lipova", "editFunding");
   });
 
+  it("every chip's own ids are unique across both lists and resolve in its line (#133)", () => {
+    renderPanel(portfolio, fiveYears);
+    const chips = [...document.querySelectorAll<HTMLElement>(".dc-chip")];
+    const refs = (c: HTMLElement) =>
+      [
+        ...(c.getAttribute("aria-labelledby") ?? "").split(" "),
+        c.getAttribute("aria-describedby") ?? "",
+      ].filter(Boolean);
+    // The chip text and its destination belong to one chip; the problem line is shared.
+    const own = chips.flatMap((c) => refs(c).filter((_, i) => i !== 1));
+    expect(new Set(own).size).toBe(own.length);
+    for (const c of chips)
+      for (const id of refs(c))
+        expect(c.closest("li")?.contains(document.getElementById(id))).toBe(
+          true,
+        );
+  });
+
+  it("the summary reads as two phrases", () => {
+    renderPanel(portfolio, fiveYears);
+    expect(document.querySelector(".dc-summary")?.textContent).toBe(
+      `${d.needAttention(6)} · ${d.useDefaults(6)}`,
+    );
+  });
+
   it("a manual Show / Hide wins for the session; the summary stays", async () => {
     renderPanel(portfolio);
     await userEvent.click(toggle());
@@ -144,6 +169,7 @@ describe("Data check panel (ADR 0118, ADR 0206)", () => {
     };
     renderPanel(own);
     expect(screen.queryByRole("button")).toBeNull();
+    expect(lines()).toHaveLength(0);
     expect(screen.getByText(d.attentionNone)).toBeTruthy();
     expect(screen.queryByText(d.useDefaults(0))).toBeNull();
   });

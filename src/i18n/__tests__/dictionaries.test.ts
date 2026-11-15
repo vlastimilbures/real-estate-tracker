@@ -194,6 +194,31 @@ describe("i18n dictionaries — plural forms", () => {
     ]);
   });
 
+  it("the Data check counts agree in number with their verb (ADR 0206)", () => {
+    const counts = (lang: "cs" | "ru") =>
+      [1, 2, 5, 21].map((n) =>
+        render(L[lang].get("dataCheck.needAttention"), n),
+      );
+    expect(counts("cs")).toEqual([
+      "1 položka vyžaduje pozornost",
+      "2 položky vyžadují pozornost",
+      "5 položek vyžaduje pozornost",
+      "21 položek vyžaduje pozornost",
+    ]);
+    expect(counts("ru")).toEqual([
+      "1 пункт требует внимания",
+      "2 пункта требуют внимания",
+      "5 пунктов требуют внимания",
+      "21 пункт требует внимания",
+    ]);
+    expect(render(L.cs.get("dataCheck.useDefaults"), 2)).toBe(
+      "2 položky používají výchozí hodnoty portfolia",
+    );
+    expect(render(L.ru.get("dataCheck.useDefaults"), 5)).toBe(
+      "5 пунктов используют значения портфеля по умолчанию",
+    );
+  });
+
   it("every language inflects the same count strings (DR-111, UX-034)", () => {
     const rest = [
       "properties.subtitle",

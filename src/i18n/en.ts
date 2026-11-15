@@ -456,11 +456,11 @@ export const en = {
     noValuationGroup:
       "No valuation is recorded, so the purchase price, grown at the appreciation rate since the purchase date, stands in as the market value.",
     leaseEndedGroup:
-      "The lease ended and no next lease is entered. The snapshot counts no rent after that date; the projection assumes the lease is renewed.",
+      "The lease ended and no next lease is entered. The snapshot counts no rent after the end date; the projection assumes the lease is renewed.",
     leaseEndingGroup:
       "The lease ends within 3 months and no next lease is entered. The projection assumes it is renewed.",
     fixationEndedGroup: (rate: string) =>
-      `The fixation ended and no follow-on block is entered, so the app assumes the reset rate of ${rate} from then on. Add the terms of the new fixation as a new mortgage block.`,
+      `The fixation ended and no follow-on block is entered, so the app assumes the reset rate of ${rate} from the fixation end on. Add the terms of the new fixation as a new mortgage block.`,
     recordFunding: "Record funding",
     // Stored values outside the form ranges (ADR 0148).
     outOfRangeSize: (value: string, range: string) =>

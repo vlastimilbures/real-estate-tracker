@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { flushSync } from "react-dom";
 import { useEngine } from "../../state/useEngine";
 import { useUiStore } from "../../state/uiStore";
 import { usePortfolioStore } from "../../state/portfolioStore";
@@ -201,8 +202,11 @@ export function Dashboard() {
               size="sm"
               variant="ghost"
               icon={AlertTriangle}
+              data-testid="to-review"
               onClick={() => {
-                setDataCheckOpen(true);
+                // Open first, so the scroll lands on the open panel (a collapsed one
+                // last on the page cannot scroll to the top).
+                flushSync(() => setDataCheckOpen(true));
                 focusSection(DATA_CHECK_ID);
               }}
             >

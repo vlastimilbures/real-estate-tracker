@@ -43,8 +43,9 @@ counts beside the findings, no grouping.
    - No valuation: `noValuationGroup`; detail the purchase price and date.
    - Lease ended / ending: `leaseEndedGroup` / `leaseEndingGroup`; detail the end date.
    - Fixation ended with no follow-on block: `fixationEndedGroup(rate)`; detail the
-     fixation end. A gap before a later block (`fixationEndedUntil`) keeps its own
-     sentence.
+     fixation end. The sentence's loan start date is left out: a property's loan is named
+     by the property, and the fix opens its Financing. A gap before a later block
+     (`fixationEndedUntil`) keeps its own sentence.
    - Every other finding (growth defaults, holding-cost defaults, own cash, no lease,
      stored values out of range, dates before 1900, overlapping leases) keeps its current
      sentence as the line; equal sentences share a line, each property a chip without
