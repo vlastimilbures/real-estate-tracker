@@ -122,7 +122,9 @@ branch.
 ## Decisions
 
 Decisions are Architecture Decision Records in [`docs/adr/`](docs/adr/README.md). Write one
-(status **Proposed**) and get it accepted by the maintainer before shipping:
+(status **Proposed**) and get it accepted by the maintainer before shipping. When the maintainer
+delegates a run's decisions, recorded on its tracking issue, its ADRs ship as **Accepted
+(delegated, owner review pending)** and the maintainer reviews them afterwards:
 
 - any change to a computed number or other user-visible behaviour — limits, rejections,
   exports, stored data, layout, UI (ADR 0001), together with a failing test written first;

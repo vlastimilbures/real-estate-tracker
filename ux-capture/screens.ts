@@ -17,6 +17,7 @@ import {
   deleteAllProperties,
   expectNotClipped,
   expectPanelActionsRight,
+  pickFiveYearsAndCheckHint,
   type Ux,
 } from "./helpers";
 
@@ -387,9 +388,7 @@ export const SCREENS: Screen[] = [
     desc: "Dashboard, as-of +5y preset",
     run: async (ux) => {
       await boot(ux.page);
-      const preset = ux.page.getByTestId("asof-5y");
-      await preset.click();
-      await expect(preset).toHaveAttribute("aria-pressed", "true");
+      await pickFiveYearsAndCheckHint(ux.page);
       await ux.capture("03-dashboard-asof-5y");
     },
   },
@@ -736,6 +735,16 @@ export const SCREENS: Screen[] = [
       await expectPanelActionsRight(ux.page);
       await expectBandTileLabelsOneLine(ux);
       await ux.capture("20-property-detail");
+    },
+  },
+  {
+    id: "20b-property-detail-asof-5y",
+    desc: "Property detail at +5y: the as-of hint is one row under the picker, which does not move (ADR 0198)",
+    run: async (ux) => {
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      await pickFiveYearsAndCheckHint(ux.page);
+      await ux.capture("20b-property-detail-asof-5y", { fullPage: false });
     },
   },
   {

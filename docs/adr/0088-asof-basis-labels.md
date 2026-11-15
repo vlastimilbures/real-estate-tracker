@@ -3,7 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #13 (pre-release review 2026-10, finding A02)
-- Amended by: [0150](0150-one-asof-resolver.md) (D-21 grid month count, no past-horizon basis, ownership label from the basis)
+- Amended by: [0150](0150-one-asof-resolver.md) (D-21 grid month count, no past-horizon basis, ownership label from the basis), [0198](0198-asof-hint-own-row.md) (§5: the hint is its own row of the filter bar)
 
 ## Context
 

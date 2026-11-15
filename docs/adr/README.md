@@ -24,7 +24,9 @@ Other IDs seen in code comments:
 
 1. Copy the template below to `NNNN-short-slug.md`, using the next number that is free on
    `origin/main` and in open pull requests (`gh pr list`).
-2. Status starts as **Proposed**; the owner accepts or rejects it. Superseding an ADR means a new
+2. Status starts as **Proposed**; the owner accepts or rejects it. When the owner delegates the
+   decisions of a run (recorded on its tracking issue), its ADRs are **Accepted (delegated,
+   owner review pending)** until the owner reviews them and changes them to Accepted. Superseding an ADR means a new
    ADR with `Supersedes: NNNN` plus `Status: Superseded by NNNN` on the old one. Amending one
    means `Amends:` on the new ADR plus `Amended by:` on the old one. Replacing only part of one
    means `Supersedes in part:` on the new ADR plus `Superseded in part by:` on the old one, whose
@@ -43,7 +45,7 @@ Other IDs seen in code comments:
 ```markdown
 # NNNN. Title
 
-- Status: Proposed | Accepted | Rejected | Superseded by NNNN
+- Status: Proposed | Accepted | Accepted (delegated, owner review pending) | Rejected | Superseded by NNNN
 - Date: YYYY-MM-DD
 - Source: (optional) issue numbers (#nn) and finding or debt IDs
 - Supersedes: (optional) [NNNN](NNNN-slug.md)
@@ -136,7 +138,7 @@ it.
 | [0085](0085-properties-long-names.md)                          | Properties list keeps its risk columns in view                                                | Accepted · amended by 0158                                     | #17                                                |
 | [0086](0086-restore-int-bounds.md)                             | Backup restore applies the whole-number bounds                                                | Accepted · amended by 0148                                     | #38, #26                                           |
 | [0087](0087-real-lens-multiple-cumulative-cf.md)               | Real lens: real net-worth multiple and cumulative cash flow                                   | Accepted · amended by 0126                                     | #11                                                |
-| [0088](0088-asof-basis-labels.md)                              | As-of labels name their basis                                                                 | Accepted · amended by 0150                                     | #13                                                |
+| [0088](0088-asof-basis-labels.md)                              | As-of labels name their basis                                                                 | Accepted · amended by 0150, 0198                               | #13                                                |
 | [0089](0089-compare-owner-loss.md)                             | Scenario compare shows the owner's loss                                                       | Accepted · amended by 0186                                     | #14                                                |
 | [0090](0090-scenario-wording.md)                               | Scenarios wording: shock units, projection start, compare limit, lens                         | Accepted · amended by 0178                                     | #15                                                |
 | [0091](0091-guide-about-wording.md)                            | Guide and About wording matches the model                                                     | Accepted · amended by 0183                                     | #16                                                |
@@ -246,6 +248,7 @@ it.
 | [0195](0195-health-marker.md)                                  | Health marker: colour and shape after the figure instead of a pill                            | Accepted                                                       | #373, #392                                         |
 | [0196](0196-sqlite-3-54-patched-sqlx-sqlite.md)                | Bundled SQLite 3.54 through a vendored sqlx-sqlite patch (RUSTSEC-2026-0459)                  | Accepted                                                       |                                                    |
 | [0197](0197-select-trigger-name-includes-value.md)             | A single-select dropdown's accessible name includes the value it shows                        | Accepted                                                       |                                                    |
+| [0198](0198-asof-hint-own-row.md)                              | As-of hint: its own row of the filter bar                                                     | Accepted (delegated, owner review pending)                     | #372, #392                                         |
 
 <!-- adr-index:end -->
 

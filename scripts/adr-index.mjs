@@ -15,7 +15,8 @@ import { format, resolveConfig } from "prettier";
 const DIR = fileURLToPath(new URL("../docs/adr/", import.meta.url));
 const START = "<!-- adr-index:start -->";
 const END = "<!-- adr-index:end -->";
-const STATUS = /^(Proposed|Accepted|Rejected|Superseded by (0\d{3}))$/;
+const STATUS =
+  /^(Proposed|Accepted|Accepted \(delegated, owner review pending\)|Rejected|Superseded by (0\d{3}))$/;
 // ADR numbers stay below 1000, so a 4-digit number starting with 0 is an ADR, not a year.
 const ADR_REF = /\b0\d{3}\b/g;
 // Programme IDs count only on `Source IDs`; free-text lines contribute issue numbers.
@@ -81,7 +82,7 @@ export function parseAdr(file, text) {
   if (status === undefined) errors.push(`${file}: no Status line`);
   else if (!s)
     errors.push(
-      `${file}: Status "${status}" is not Proposed, Accepted, Rejected or Superseded by NNNN`,
+      `${file}: Status "${status}" is not Proposed, Accepted, Accepted (delegated, owner review pending), Rejected or Superseded by NNNN`,
     );
   if (values("Date").length === 0) errors.push(`${file}: no Date line`);
   // `Amends` may cite SPEC sections alone; these keys exist only to link ADRs.
