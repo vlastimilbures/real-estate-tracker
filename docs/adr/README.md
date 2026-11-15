@@ -265,6 +265,7 @@ it.
 | [0212](0212-import-file-rows.md)                               | Import: one list of file types                                                                | Accepted (delegated, owner review pending)                     | #389, #392                                         |
 | [0213](0213-guide-section-nav.md)                              | Guide: section navigation                                                                     | Accepted (delegated, owner review pending)                     | #390, #392                                         |
 | [0214](0214-panel-help-text.md)                                | Panel headers hold context; explanations become help text                                     | Accepted (delegated, owner review pending)                     | #391, #392                                         |
+| [0216](0216-scenario-compare-layout.md)                        | Scenarios: three charts in a row, a flush key-figures table                                   | Accepted (delegated, owner review pending)                     | #388, #392                                         |
 
 <!-- adr-index:end -->
 

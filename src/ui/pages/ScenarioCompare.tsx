@@ -10,12 +10,13 @@ import {
   EmptyState,
   ExportXlsxButton,
   SegmentedToggle,
+  TableWrap,
 } from "../components/primitives";
 import { exportWorkbookXlsx } from "../exportXlsx";
 import { compareWorkbook } from "../model/compareXlsx";
 import { lensLabel } from "../model/tableContext";
 import { GitCompare } from "lucide-react";
-import { ChartCard } from "../components/charts";
+import { ChartCard, SMALL_CHART_HEIGHT } from "../components/charts";
 import type { Scenario } from "../../engine";
 import { useT } from "../hooks/useT";
 import {
@@ -102,6 +103,7 @@ export function CompareView({
       <Panel
         title={t.scenarios.keyFiguresTitle}
         hint={compareHint(t, mode)}
+        flush
         action={
           <span className="compare-actions">
             {base && (
@@ -127,49 +129,50 @@ export function CompareView({
         {notice}
         {/* A real table for assistive technology: caption, scenario column headers,
             metric row headers (UX-081, DR-145). */}
-        <table className="compare-table">
-          <caption className="sr-only">{t.scenarios.keyFiguresTitle}</caption>
-          <thead>
-            <tr>
-              {/* The metric column takes 1.4 shares, each scenario one (a plain
+        <TableWrap label={t.scenarios.keyFiguresTitle}>
+          <table className="data compare-table">
+            <caption className="sr-only">{t.scenarios.keyFiguresTitle}</caption>
+            <thead>
+              <tr>
+                {/* The metric column takes 1.4 shares, each scenario one (a plain
                   percentage: table columns ignore calc() with %). */}
-              <td
-                className="ct-head ct-metric"
-                style={{
-                  width: `${(140 / (1.4 + results.length)).toFixed(2)}%`,
-                }}
-              />
-              {results.map((r, i) => {
-                const reach = reachText?.(r.id);
-                return (
-                  <th
-                    scope="col"
-                    className="ct-head"
-                    key={r.id}
-                    style={{ color: compareSeriesStyle(i).color }}
-                    title={reach}
-                  >
-                    {r.name}
-                    {reach && <span className="sr-only"> ({reach})</span>}
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {compareKpiRows(t, mode, base, shownView).map((row) => (
-              <ComparisonRow
-                key={row.label}
-                label={row.label}
-                cells={results.map((r) => ({
-                  text: row.fmt(r),
-                  note: row.note?.(r),
-                  describedBy: row.mark?.(r) ? footnoteId : undefined,
-                }))}
-              />
-            ))}
-          </tbody>
-        </table>
+                <td
+                  className="sticky-col"
+                  style={{
+                    width: `${(140 / (1.4 + results.length)).toFixed(2)}%`,
+                  }}
+                />
+                {results.map((r, i) => {
+                  const reach = reachText?.(r.id);
+                  return (
+                    <th
+                      scope="col"
+                      key={r.id}
+                      style={{ color: compareSeriesStyle(i).color }}
+                      title={reach}
+                    >
+                      {r.name}
+                      {reach && <span className="sr-only"> ({reach})</span>}
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {compareKpiRows(t, mode, base, shownView).map((row) => (
+                <ComparisonRow
+                  key={row.label}
+                  label={row.label}
+                  cells={results.map((r) => ({
+                    text: row.fmt(r),
+                    note: row.note?.(r),
+                    describedBy: row.mark?.(r) ? footnoteId : undefined,
+                  }))}
+                />
+              ))}
+            </tbody>
+          </table>
+        </TableWrap>
         {footnote && (
           <p className="ct-footnote" id={footnoteId}>
             <span aria-hidden="true">* </span>
@@ -184,31 +187,38 @@ export function CompareView({
         ))}
       </Panel>
 
-      <div className="chart-grid">
-        <ChartCard
-          title={t.scenarios.chartNetWorth}
-          sub={lensSub}
-          kind="czk"
-          rows={netWorthRows}
-          series={series}
-          legend
-        />
-        <ChartCard
-          title={t.scenarios.chartNetCashFlow}
-          sub={lensSub}
-          kind="czk"
-          rows={cashFlowRows}
-          series={series}
-          legend
-        />
-        <ChartCard
-          title={t.scenarios.chartLtv}
-          sub={t.scenarios.subPct}
-          kind="pct"
-          rows={ltvRows}
-          series={series}
-          legend
-        />
+      {/* Three in a row, two and one, or one per row by the charts' own width: never an
+          empty cell (ADR 0216 §1). */}
+      <div className="chart-grid-wrap">
+        <div className="chart-grid trio">
+          <ChartCard
+            title={t.scenarios.chartNetWorth}
+            sub={lensSub}
+            kind="czk"
+            rows={netWorthRows}
+            series={series}
+            legend
+            height={SMALL_CHART_HEIGHT}
+          />
+          <ChartCard
+            title={t.scenarios.chartNetCashFlow}
+            sub={lensSub}
+            kind="czk"
+            rows={cashFlowRows}
+            series={series}
+            legend
+            height={SMALL_CHART_HEIGHT}
+          />
+          <ChartCard
+            title={t.scenarios.chartLtv}
+            sub={t.scenarios.subPct}
+            kind="pct"
+            rows={ltvRows}
+            series={series}
+            legend
+            height={SMALL_CHART_HEIGHT}
+          />
+        </div>
       </div>
     </>
   );
@@ -228,16 +238,11 @@ function ComparisonRow({
 }) {
   return (
     <tr>
-      <th scope="row" className="ct-metric">
+      <th scope="row" className="sticky-col">
         {label}
       </th>
       {cells.map((c, i) => (
-        <td
-          className="ct-cell"
-          key={i}
-          title={c.note}
-          aria-describedby={c.describedBy}
-        >
+        <td key={i} title={c.note} aria-describedby={c.describedBy}>
           {c.text}
           {c.describedBy && (
             <sup className="ct-mark" aria-hidden="true">
