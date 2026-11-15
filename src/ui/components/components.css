@@ -2522,10 +2522,11 @@ main.page:focus {
   margin: 0;
   padding: 0;
 }
-/* 25 px rows keep each name link 24 px from the next (WCAG target size). */
+/* Each name link is a 24 px target itself (WCAG target size), so it passes even when
+   the sticky topbar covers part of the row, where spacing is not measured. */
 .fx-row {
   min-height: 25px;
-  padding: 2px 0;
+  padding: 0;
   border-top: 1px solid var(--hairline);
   font-size: 13px;
 }
@@ -2536,6 +2537,7 @@ main.page:focus {
    is never clipped. */
 .fx-name > .cell-name {
   max-width: 100%;
+  min-height: 24px;
 }
 .fx-track {
   position: relative;
