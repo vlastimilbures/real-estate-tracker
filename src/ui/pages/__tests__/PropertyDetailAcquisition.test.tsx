@@ -4,7 +4,7 @@
 // unknown part reads "—", no acquisition loan reads "None", and a sources & uses gap is a
 // standing warning note, never a blocker.
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PropertyDetail } from "../PropertyDetail";
 import { usePortfolioStore } from "../../../state/portfolioStore";
@@ -124,9 +124,53 @@ describe("Property detail Acquisition section (ADR 0119 §9)", () => {
       name: en.propertyForm.acquisitionSection,
     });
     expect(acq.getAttribute("aria-expanded")).toBe("true");
-    // Focus lands in the section, on its first field (ADR 0118's editFunding target).
-    expect(document.activeElement?.tagName).toBe("INPUT");
-    expect(dialog.contains(document.activeElement)).toBe(true);
+    // Focus lands in the section, on own cash (ADR 0118's editFunding target), not on
+    // the form's first field as a plain Edit does.
+    expect(document.activeElement).toBe(
+      within(dialog).getByLabelText(en.propertyForm.ownCash),
+    );
+  });
+
+  it("after a save the line gives way to the table and focus lands on the section", async () => {
+    const editProperty = vi.fn(async (p: Property) => {
+      // The store reloads before the save resolves, as the real one does.
+      act(() =>
+        usePortfolioStore.setState((st) => ({
+          portfolio: {
+            ...st.portfolio!,
+            properties: st.portfolio!.properties.map((x) =>
+              x.id === p.id ? p : x,
+            ),
+          },
+        })),
+      );
+      return { ok: true as const };
+    });
+    show("javorova");
+    act(() =>
+      usePortfolioStore.setState({
+        editProperty,
+        getPropertyExtras: () =>
+          Promise.resolve({ address: null, garage: null }),
+      }),
+    );
+    await userEvent.click(
+      within(section()!).getByRole("button", {
+        name: en.dataCheck.recordFunding,
+      }),
+    );
+    await userEvent.type(
+      screen.getByLabelText(en.propertyForm.ownCash),
+      "1000000",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.saveChanges }),
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(rows()[pd.acqCashInvested]).toBe(fmtCzk(1_000_000));
+    expect(document.activeElement).toBe(
+      within(section()!).getByRole("heading", { name: pd.acqTitle }),
+    );
   });
 
   it("warns, as a note, when the recorded sources fall short of the uses", () => {

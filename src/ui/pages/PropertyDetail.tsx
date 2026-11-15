@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pencil, Power, PowerOff, Building2 } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { usePortfolioStore } from "../../state/portfolioStore";
@@ -95,6 +95,17 @@ export function PropertyDetail() {
   const out = result && !("invalid" in result) ? result : null;
   // The open property form: plain, or at its Acquisition section (a Data check link).
   const [editing, setEditing] = useState<false | PropertyFormTarget>(false);
+  // Record funding's button leaves with the compact Acquisition line once something is
+  // saved, so the dialog cannot hand focus back to it: land on the section instead
+  // (ADR 0209 §2). Runs after the dialog's own focus return, only when focus was lost.
+  const fromAcquisition = useRef(false);
+  useEffect(() => {
+    if (editing !== false || !fromAcquisition.current) return;
+    fromAcquisition.current = false;
+    const active = document.activeElement;
+    if (!active || active === document.body)
+      focusSection(sectionId("acquisition"));
+  }, [editing]);
   const [confirmingDeactivate, setConfirmingDeactivate] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [activeError, setActiveError] = useState<string | null>(null);
@@ -391,7 +402,10 @@ export function PropertyDetail() {
               property.funding?.note,
               t.propertyDetail,
             )}
-            onRecordFunding={() => setEditing("editFunding")}
+            onRecordFunding={() => {
+              fromAcquisition.current = true;
+              setEditing("editFunding");
+            }}
           />
         </div>
       )}

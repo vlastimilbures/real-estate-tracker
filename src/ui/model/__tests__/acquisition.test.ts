@@ -250,10 +250,12 @@ describe("acquisitionView: the compact line (ADR 0209)", () => {
     );
   });
 
-  it("with no acquisition loan the line names only the price", () => {
+  it("with no acquisition loan the line says so", () => {
     expect(
       acquisitionView({ ...bare, loan: null }, undefined, d).emptyLine,
     ).toBe(d.acqEmpty(fmtCzk(D(5_000_000)), null));
+    // Said outright, so "no acquisition loan" is not mistaken for "not shown".
+    expect(d.acqEmpty("5 000 000 Kč", null)).toContain("no acquisition loan");
   });
 
   it("any recorded cost, works, own cash or note shows the full table", () => {

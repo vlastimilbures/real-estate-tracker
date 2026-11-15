@@ -1455,10 +1455,9 @@ export const SCREENS: Screen[] = [
       // The line and the button, nothing else: no table of "—", no note about "—".
       const box = await p.locator(".acq-empty").boundingBox();
       const btn = await record.boundingBox();
-      // One row from 1200 px; at 900 px the line may take two lines over the button.
-      expect(box!.height, "compact").toBeLessThanOrEqual(
-        ux.page.viewportSize()!.width >= 1200 ? 40 : 96,
-      );
+      // At most two lines beside or over the button, at every width and in every
+      // language (a line naming the acquisition loan is longer).
+      expect(box!.height, "compact").toBeLessThanOrEqual(96);
       expect(btn!.height, "24 px target").toBeGreaterThanOrEqual(24);
       await ux.capture("29i-property-acquisition-empty", { fullPage: false });
       await record.click();
@@ -1468,7 +1467,9 @@ export const SCREENS: Screen[] = [
           name: ux.t.propertyForm.acquisitionSection,
         }),
       ).toHaveAttribute("aria-expanded", "true");
-      await expect(dialog.locator("input:focus")).toHaveCount(1);
+      await expect(
+        dialog.getByLabel(ux.t.propertyForm.ownCash, { exact: true }),
+      ).toBeFocused();
     },
   },
   {

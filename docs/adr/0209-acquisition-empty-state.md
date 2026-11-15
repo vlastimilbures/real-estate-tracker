@@ -21,24 +21,29 @@ that says one thing, "not recorded".
 
 1. **Compact state.** When no transaction costs, initial works, own cash or funding note
    is recorded, the panel body is one line and a button (`acquisitionView` returns
-   `emptyLine`):
-   `propertyDetail.acqEmpty(price, loan)`: "Purchase price 6 375 000 Kč · costs, works
-   and own cash are not recorded." When the acquisition loan is known (it comes from the
-   loan blocks, not from the funding fields), the line names it too: "Purchase price … ·
-   acquisition loan … · costs, works and own cash are not recorded.", so the compact
-   state drops no figure the table showed.
-2. **Record funding.** A regular (not primary) button beside the line, `dataCheck.recordFunding` ("Record funding"),
-   opens the property form with its Acquisition section open (the `editFunding` target of
-   ADR 0118). Its description, `propertyDetail.acqRecordFundingOpens` ("Opens Edit
-   property at its Acquisition section."), says what it opens.
-3. **Full table** as soon as any cost, works, own cash or note is recorded: unchanged,
-   with its sources-vs-uses warning and note.
-4. The hint (`acqHint`) and the panel's place on the page are unchanged. The line wraps
-   over the button at 900 px.
+   `emptyLine`), `propertyDetail.acqEmpty(price, loan)`: "Purchase price 6 375 000 Kč ·
+   no acquisition loan · costs, works and own cash are not recorded." When there is an
+   acquisition loan (it comes from the loan blocks, not from the funding fields), the line
+   names it instead: "… · acquisition loan 5 610 000 Kč · …". So the compact state keeps
+   every fact the table showed: the price (= the uses), the loan or its absence ("None"),
+   and that the rest is not recorded.
+2. **Record funding.** A regular (not primary) button beside the line, labelled
+   `dataCheck.recordFunding` ("Record funding"), the label the Data check's own-cash fix
+   uses, so a change to it changes both. It opens the property form with its Acquisition
+   section open and focus on own cash (the `editFunding` target of ADR 0118). Its
+   description, `propertyDetail.acqRecordFundingOpens` ("Opens Edit property at its
+   Acquisition section."), says what it opens. Cancel returns focus to the button; after a
+   save the button is gone with the line, so focus lands on the section's heading.
+3. **Full table** as soon as any cost, works, own cash or note is recorded (0 Kč counts):
+   unchanged, with its sources-vs-uses warning and note.
+4. The hint (`acqHint`) and the panel's place on the page are unchanged. The line and the
+   button sit side by side; the line wraps, or the button drops under it, when narrow (at
+   most two lines in any language).
 
 ## Consequences
 
-- Every sample property shows one line instead of seven rows and a note.
+- A property with no funding recorded (every sample property, until funding is recorded)
+  shows one line instead of seven rows and a note.
 - No computed number, stored data or export changes; the sources-vs-uses check (ADR 0119)
   is untouched.
 - New dictionary entries in en, cs and ru: `acqEmpty`, `acqRecordFundingOpens`.

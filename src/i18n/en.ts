@@ -811,7 +811,7 @@ export const en = {
     acqRecordedNote: (note: string) => `Note: ${note}`,
     // ADR 0209: the section while nothing but the price is known.
     acqEmpty: (price: string, loan: string | null) =>
-      `Purchase price ${price}${loan ? ` · acquisition loan ${loan}` : ""} · costs, works and own cash are not recorded.`,
+      `Purchase price ${price} · ${loan ? `acquisition loan ${loan}` : "no acquisition loan"} · costs, works and own cash are not recorded.`,
     acqRecordFundingOpens: "Opens Edit property at its Acquisition section.",
     showAmortization: (n: number) =>
       `Show amortization schedule (${n} ${enPlural(n, ["payment", "payments"])})`,

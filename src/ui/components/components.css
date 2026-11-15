@@ -1347,7 +1347,7 @@ table.data tbody tr:hover td.sticky-col {
 }
 
 /* Property detail's Acquisition with nothing but the price known (ADR 0209): the line and
-   Record funding on one row, the button wrapping under the line when narrow. */
+   Record funding side by side, the button wrapping under the line when narrow. */
 .acq-empty {
   display: flex;
   flex-wrap: wrap;

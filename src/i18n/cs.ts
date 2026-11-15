@@ -753,7 +753,7 @@ export const cs: Dictionary = {
     acqRecordedNote: (note) => `Poznámka: ${note}`,
     // ADR 0209: oddíl, dokud je známa jen kupní cena.
     acqEmpty: (price, loan) =>
-      `Kupní cena ${price}${loan ? ` · úvěr na koupi ${loan}` : ""} · náklady, úpravy a vlastní zdroje nejsou zadány.`,
+      `Kupní cena ${price} · ${loan ? `úvěr na koupi ${loan}` : "bez úvěru na koupi"} · náklady, úpravy a vlastní zdroje nejsou zadány.`,
     acqRecordFundingOpens:
       "Otevře dialog „Upravit nemovitost“ v oddílu Pořízení.",
     showAmortization: (n) =>
