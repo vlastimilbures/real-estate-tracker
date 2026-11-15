@@ -236,11 +236,12 @@ async function expectBandTileLabelsOneLine(ux: Ux) {
   }
 }
 
-/** The year-by-year grid (ADR 0211): no Period column, rows of about 32 px (31 in about
- *  1,000 px), and at 1280 px wide at least 12 figure columns fully in view. */
+/** The year-by-year grid (ADR 0211): no Period column, 31 rows in under 1,000 px, and at
+ *  1280 px wide at least 12 figure columns fully in view. */
 async function expectProjectionGrid(ux: Ux) {
   const m = await ux.page
     .locator(".table-wrap:has(table.data.compact)")
+    .first()
     .evaluate((wrap) => {
       const box = wrap.getBoundingClientRect();
       const heads = Array.from(
@@ -254,12 +255,14 @@ async function expectProjectionGrid(ux: Ux) {
           return r.left >= box.left - 0.5 && r.right <= box.right + 0.5;
         }).length,
         rows: rows.length,
+        scrolled: wrap.scrollLeft,
         height: rows.reduce((n, r) => n + r.getBoundingClientRect().height, 0),
       };
     });
   expect(m.heads, "no Period column").not.toContain(ux.t.projGrid.period);
   expect(m.rows).toBe(31);
-  expect(m.height, "31 rows").toBeLessThanOrEqual(1030);
+  expect(m.height, "31 rows").toBeLessThanOrEqual(1000);
+  expect(m.scrolled, "grid not scrolled").toBe(0);
   if ((ux.page.viewportSize()?.width ?? 0) >= 1280)
     expect(m.visible, "figure columns in view").toBeGreaterThanOrEqual(12);
 }

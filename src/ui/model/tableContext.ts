@@ -96,7 +96,8 @@ export function projectionPanelHint(
 }
 
 /** The note lines of a projection export: whose table it is, then the screen's context
- *  line, so the file still says its lens and period once it leaves the app (ADR 0159). */
+ *  line, so the file still says its lens and period once it leaves the app (ADR 0159);
+ *  without the years' span, which the file's Period column states (ADR 0211 §5). */
 export function projectionExportNotes(
   t: Dictionary,
   entityName: string,

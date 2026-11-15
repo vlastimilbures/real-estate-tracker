@@ -8,6 +8,8 @@
 - Amends: [0111](0111-table-context-line.md) (the context line now also goes into the
   projection exports), [0108](0108-scenario-compare-xlsx-export.md) (the Real lens note names
   the base date; the net cash flow sheet and chart have no opening-year value)
+- Amended by: [0211](0211-projection-grid-fits.md) (the screen's context line also names
+  the years' span; the export's note line stays without it)
 - Related: [0010](0010-excel-export-rounded.md) (cells hold what the app shows),
   [0015](0015-excel-library.md) (exceljs)
 
