@@ -5,6 +5,7 @@ import { X, FileSpreadsheet } from "lucide-react";
 import type { Decimal } from "../../lib/money";
 import {
   fmtCzk,
+  fmtCzkM,
   fmtPct,
   fmtMultiple,
   fmtDscr,
@@ -50,6 +51,20 @@ export function Pct({ value, dp = 1 }: { value: Num | null; dp?: number }) {
   return (
     <span className="num">
       {value === null ? t.common.notApplicable : fmtPct(value, dp)}
+    </span>
+  );
+}
+
+/** An amount in M Kč (a tile's headline), red when negative (CLAUDE.md §5). The exact
+ *  amount is its tooltip and is read out after it, as IrrValue's reason (ADR 0200). */
+export function MoneyM({ value }: { value: Num }) {
+  const exact = fmtCzk(value);
+  const tone =
+    signTone(roundCzk(value)) === "negative" ? "negative" : "neutral";
+  return (
+    <span className={`num tone-${tone}`} title={exact}>
+      {fmtCzkM(value)}
+      <span className="sr-only"> ({exact})</span>
     </span>
   );
 }

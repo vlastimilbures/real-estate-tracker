@@ -30,6 +30,11 @@ const exactNetWorth = () =>
     ?.getAttribute("title")
     ?.replace(/ Kč$/, "");
 
+/** The M Kč figure the tile shows (the exact amount is read out after it). */
+const shownNetWorth = () =>
+  screen.getByTestId("kpi-networth").querySelector("[title]")?.firstChild
+    ?.textContent;
+
 vi.mock("../../../lib/day", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/day")>()),
   todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
@@ -258,6 +263,7 @@ describe("only a pending purchase active", () => {
     load(activeOnly("future"), { route: "dashboard" });
     render(<Dashboard />);
     expect(exactNetWorth()).toBe(fmtCzk(D(0), { suffix: false }));
+    expect(shownNetWorth()).toBe(fmtCzkM(D(0)));
     const ltv = tile(en.dashboard.portfolioLtv);
     expect(ltv.textContent).toContain(fmtPct(D(0), 1));
     expect(ltv.textContent).toContain(en.dashboard.badgeConservative);
@@ -302,6 +308,7 @@ describe("a pending purchase whose loan is already drawn (ADR 0165)", () => {
     load(only, { route: "dashboard" });
     render(<Dashboard />);
     expect(exactNetWorth()).toBe(fmtCzk(owing.negated(), { suffix: false }));
+    expect(shownNetWorth()).toBe(fmtCzkM(owing.negated()));
   });
 });
 
@@ -457,6 +464,7 @@ describe("other lifecycle states keep their tiles (#276 item 1)", () => {
     render(<Dashboard />);
     const hero = tile(en.dashboard.netWorth);
     expect(exactNetWorth()).not.toBe(fmtCzk(D(0), { suffix: false }));
+    expect(shownNetWorth()).not.toBe(fmtCzkM(D(0)));
     // The foot reads the value as assets and a zero debt, at today (the mocked 01.10.2026).
     const snap = portfolioSnapshot(
       debtFree,

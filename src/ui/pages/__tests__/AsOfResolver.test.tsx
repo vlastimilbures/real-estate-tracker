@@ -22,7 +22,7 @@ import {
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
-import { fmtCzk } from "../../../lib/format";
+import { fmtCzk, fmtCzkM } from "../../../lib/format";
 import { projectionSeries } from "../../model/projection";
 
 /** The Dashboard's exact net worth: the strip shows M Kč, the exact amount is its
@@ -33,6 +33,11 @@ const exactNetWorth = () =>
     .querySelector("[title]")
     ?.getAttribute("title")
     ?.replace(/ Kč$/, "");
+
+/** The M Kč figure the tile shows (the exact amount is read out after it). */
+const shownNetWorth = () =>
+  screen.getByTestId("kpi-networth").querySelector("[title]")?.firstChild
+    ?.textContent;
 
 const clock = vi.hoisted(() => ({ today: new Date(Date.UTC(2026, 9, 3)) }));
 
@@ -123,6 +128,7 @@ describe("the date shown is the date computed (ADR 0150)", () => {
       fmtCzk(rows[year]!.equity, { parens: false, suffix: false });
     expect(equity(10)).not.toBe(equity(9));
     expect(exactNetWorth()).toBe(equity(10));
+    expect(shownNetWorth()).toBe(fmtCzkM(rows[10]!.equity));
   });
 
   it("future base date at Today on Property detail: the picker shows the base date, Today is not pressed (#265)", () => {

@@ -4,6 +4,7 @@ import {
   KpiTile,
   Panel,
   Money,
+  MoneyM,
   IrrValue,
   Pct,
   Mult,
@@ -19,9 +20,14 @@ import {
   type ChartRow,
   type EquityChangeRow,
 } from "../model/chartData";
-import { fmtCzk, fmtCzkM, fmtMultiple, noBreak } from "../../lib/format";
+import { fmtCzkM, fmtMultiple, noBreak } from "../../lib/format";
 import { dscrBadge, ltvBadge } from "../model/health";
-import { basisText, monthlyFlow, type AsOfBasis } from "../model/dashboard";
+import {
+  basisText,
+  monthlyFlow,
+  monthlyFlowHint,
+  type AsOfBasis,
+} from "../model/dashboard";
 import type { LeveredIrr } from "../model/irr";
 import { lensKpis } from "../model/lensKpis";
 import { undrawnPart } from "../model/debt";
@@ -69,11 +75,7 @@ export function KpiStrip({
           delay={0}
           label={d.netWorth}
           testId="kpi-networth"
-          value={
-            <span className="num" title={fmtCzk(s.totalEquity)}>
-              {fmtCzkM(s.totalEquity)}
-            </span>
-          }
+          value={<MoneyM value={s.totalEquity} />}
           foot={
             <>
               {/* The undrawn note sits right after the debt it adds to (ADR 0169);
@@ -130,10 +132,12 @@ export function KpiStrip({
               <span className="unit">{d.perMonth}</span>
             </>
           }
-          foot={d.stripNetCashFlowFoot(
-            noBreak(fmtCzk(s.netCashFlow, { parens: true })),
-            basisText(t, basis),
-          )}
+          foot={
+            <>
+              <Money value={s.netCashFlow} />
+              {d.perYearBasis(basisText(t, basis))}
+            </>
+          }
         />
       </div>
     </div>
@@ -358,6 +362,7 @@ export function KpiListPanel({
           },
         ]}
       />
+      <p className="panel-note">{monthlyFlowHint(t, basis, s.asOf)}</p>
     </Panel>
   );
 }

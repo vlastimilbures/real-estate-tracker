@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import {
   addYears,
+  money,
   portfolioKpis,
   portfolioProjection,
   portfolioSnapshot,
@@ -62,9 +63,14 @@ function setUp(asOf: IsoDate, isToday: boolean) {
   return { s, basis, props };
 }
 
-function renderStrip(asOf: IsoDate, isToday: boolean) {
-  const { s, basis, props } = setUp(asOf, isToday);
-  const view = render(<KpiStrip {...props} />);
+function renderStrip(
+  asOf: IsoDate,
+  isToday: boolean,
+  patch: Partial<ReturnType<typeof setUp>["s"]> = {},
+) {
+  const { s: base0, basis, props } = setUp(asOf, isToday);
+  const s = { ...base0, ...patch };
+  const view = render(<KpiStrip {...props} s={s} />);
   const tiles = Array.from(
     view.container.querySelectorAll<HTMLElement>(".kpi-strip > .tile"),
   );
@@ -98,19 +104,41 @@ describe("KPI strip (ADR 0200 §1)", () => {
     }
   });
 
-  it("net worth in M Kč, the exact amount as its tooltip; assets and debt in the foot", () => {
+  it("net worth in M Kč; the exact amount is its tooltip and is read out", () => {
     const { s, tiles } = renderStrip(base, true);
     const value = screen.getByTestId("kpi-networth");
-    expect(value.textContent).toBe(fmtCzkM(s.totalEquity));
-    expect(value.querySelector("[title]")?.getAttribute("title")).toBe(
-      fmtCzk(s.totalEquity),
+    const num = value.querySelector<HTMLElement>("[title]")!;
+    expect(num.getAttribute("title")).toBe(fmtCzk(s.totalEquity));
+    // Seen: the M Kč figure; heard as well: the exact amount (as IrrValue's reason).
+    expect(num.firstChild?.textContent).toBe(fmtCzkM(s.totalEquity));
+    expect(num.querySelector(".sr-only")?.textContent).toBe(
+      ` (${fmtCzk(s.totalEquity)})`,
     );
+    expect(num.classList.contains("tone-negative")).toBe(false);
     expect(part(tiles[0]!, "foot").textContent).toBe(
       d.stripAssetsDebt(
         noBreak(fmtCzkM(s.totalReportedValue)),
         noBreak(fmtCzkM(s.totalDebt)),
       ),
     );
+  });
+
+  it("a negative net worth is red (CLAUDE.md §5)", () => {
+    renderStrip(base, true, { totalEquity: money(-500000) });
+    const num = screen
+      .getByTestId("kpi-networth")
+      .querySelector<HTMLElement>("[title]")!;
+    expect(num.firstChild?.textContent).toBe(fmtCzkM(money(-500000)));
+    expect(num.classList.contains("tone-negative")).toBe(true);
+  });
+
+  it("real lens away from today: the foot says the amounts are in base-date Kč", () => {
+    const { props } = setUp(addYears(base, 5), false);
+    const view = render(
+      <KpiStrip {...props} mode="real" modeWord={en.common.realLower} />,
+    );
+    const foot = view.container.querySelector(".kpi-strip > .tile > .foot")!;
+    expect(foot.textContent!.endsWith(d.realTodayKc)).toBe(true);
   });
 
   it("the horizon tile: M Kč, multiple · horizon · lens in the foot", () => {
@@ -141,12 +169,17 @@ describe("KPI strip (ADR 0200 §1)", () => {
     expect(part(tiles[5]!, "value").textContent).toBe(
       fmtCzk(flow.net, { parens: true }) + d.perMonth,
     );
-    expect(part(tiles[5]!, "foot").textContent).toBe(
-      d.stripNetCashFlowFoot(
-        noBreak(fmtCzk(s.netCashFlow, { parens: true })),
-        d.basisCurrent,
-      ),
+    const foot = part(tiles[5]!, "foot");
+    expect(foot.textContent).toBe(
+      fmtCzk(s.netCashFlow, { parens: true }) + d.perYearBasis(d.basisCurrent),
     );
+  });
+
+  it("a negative year in the foot is red, like the month above it", () => {
+    const { tiles } = renderStrip(base, true, { netCashFlow: money(-37080) });
+    const amount = part(tiles[5]!, "foot").querySelector(".num")!;
+    expect(amount.textContent).toBe(fmtCzk(money(-37080), { parens: true }));
+    expect(amount.classList.contains("tone-negative")).toBe(true);
   });
 });
 
@@ -156,10 +189,7 @@ describe("KPI strip basis (ADR 0200 §2)", () => {
     const text = basisText(en, basis);
     expect(text).toBe(d.basisProjection(`Y5 · ${base.getUTCFullYear() + 5}`));
     expect(part(tiles[5]!, "foot").textContent).toBe(
-      d.stripNetCashFlowFoot(
-        noBreak(fmtCzk(s.netCashFlow, { parens: true })),
-        text,
-      ),
+      fmtCzk(s.netCashFlow, { parens: true }) + d.perYearBasis(text),
     );
     const strip = tiles[0]!.parentElement!;
     expect(strip.textContent!.split(text).length - 1).toBe(1);
@@ -200,5 +230,33 @@ describe("KPI list takes the figures that left the tiles (ADR 0200 §3)", () => 
     expect(row(d.kpiGrossYield)).toBe(fmtPct(s.grossYield!, 2));
     expect(row(d.kpiMonthlyInflow)).toBe(fmtCzk(flow.inflow));
     expect(row(d.kpiMonthlyOutflow)).toBe(fmtCzk(flow.outflow));
+    // How the monthly figures are made, as the monthly panel said (ADR 0088 §3).
+    expect(list.nextElementSibling?.textContent).toBe(
+      d.monthlyHint("07.06.2026"),
+    );
+  });
+
+  it("at +5y the group names the projection year and the figures are the year ÷ 12", () => {
+    const asOf = addYears(base, 5);
+    const { s, basis } = setUp(asOf, false);
+    render(
+      <KpiListPanel
+        s={s}
+        basis={basis}
+        kpis={kpis}
+        mode="nominal"
+        horizon={kpis.netWorthNominal}
+        horizonYears={assumptions.horizonYears}
+        irr={{ rate: null, reason: "NO_ROOT" }}
+        cashInvested={null}
+      />,
+    );
+    const group = screen.getByRole("heading", {
+      name: d.kpiAsOfGroup(basisText(en, basis)),
+    });
+    expect(group.textContent).not.toContain(d.basisCurrent);
+    expect(group.nextElementSibling?.nextElementSibling?.textContent).toBe(
+      d.monthlyHintProjection,
+    );
   });
 });

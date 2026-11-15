@@ -315,12 +315,14 @@ export const en = {
       `${mult} · ${n}-yr horizon · ${mode}`,
     stripNetCashFlow: "Net cash flow",
     perMonth: "/mo",
-    stripNetCashFlowFoot: (annual: string, basis: string) =>
-      `${annual}/yr · ${basis}`,
+    perYearBasis: (basis: string) => `/yr · ${basis}`,
     basisCurrent: "current",
     basisProjection: (year: string) => `projection year ${year}`,
     basisOn: (d: string) => `on ${d}`,
     kpiAsOfGroup: (basis: string) => `Yields and monthly cash flow, ${basis}`,
+    monthlyHint: (d: string) =>
+      `annualised run rate ÷ 12, leases in force on ${d}`,
+    monthlyHintProjection: "annual projection ÷ 12",
     kpiGrossYield: "Gross yield",
     kpiMonthlyInflow: "Monthly inflow · effective rent",
     kpiMonthlyOutflow: "Monthly outflow · costs + debt service",

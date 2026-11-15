@@ -206,6 +206,20 @@ export function basisText(t: Dictionary, basis: AsOfBasis): string {
   return d.basisProjection(yearLabel(t, basis.year, basis.calendarYear));
 }
 
+/** How the KPI list's monthly figures are made (ADR 0088 §3, kept by ADR 0200 §3): a
+ *  projection year's are its annual figures ÷ 12; otherwise the run rate of the leases
+ *  in force on the as-of date ÷ 12. */
+export function monthlyFlowHint(
+  t: Dictionary,
+  basis: AsOfBasis,
+  asOf: Date,
+): string {
+  const d = t.dashboard;
+  return basis.kind === "projection"
+    ? d.monthlyHintProjection
+    : d.monthlyHint(fmtDate(asOf));
+}
+
 /** As-of picker hint: how the date maps to what is shown; none at today. */
 export function asOfHint(
   t: Dictionary,

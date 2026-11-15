@@ -288,12 +288,13 @@ jobs:
       # The layout screens in Czech and Russian: their strings are longer, and the screens
       # assert nothing is clipped or covered (ADR 0158).
       - name: Capture layout screens in Czech and Russian
-        run: pnpm ux:capture --shard ${{ matrix.shard }}/4 --grep "01-dashboard|03-dashboard-asof-5y|14-properties-long-name|20-property-detail|20b-property-detail-asof-5y|27-property-section-nav-focus|42-scenarios-compare"
+        run: pnpm ux:capture --shard ${{ matrix.shard }}/4 --grep "01-dashboard|03-dashboard-asof-5y|03b-dashboard-real-asof-5y|14-properties-long-name|20-property-detail|20b-property-detail-asof-5y|27-property-section-nav-focus|42-scenarios-compare"
         env:
           UX_RUN_ID: ci-i18n
           UX_LANG: cs,ru
           UX_THEME: light
-          UX_VIEWPORT: 1280x800,min
+          # 1200 × 800 is the app's default window (tauri.conf.json, ADR 0200 §4).
+          UX_VIEWPORT: 1280x800,1200x800,min
 
       - name: Fail on any axe violation in Czech and Russian
         run: pnpm ux:axe-check ci-i18n

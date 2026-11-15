@@ -409,7 +409,7 @@
     minmax(0, 0.9fr) minmax(0, 1.15fr);
   gap: var(--s3);
 }
-@container (max-width: 899px) {
+@container (max-width: 959px) {
   .kpi-strip {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -440,6 +440,10 @@
 .tile.compact .foot {
   font-size: 11.5px;
   line-height: 1.3;
+}
+/* An amount in a foot never breaks before its unit. */
+.tile .foot .num {
+  white-space: nowrap;
 }
 .tile .accent-rule {
   width: 28px;
