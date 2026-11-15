@@ -182,11 +182,11 @@ describe("Properties long names and narrow windows (ADR 0085)", () => {
     ]);
   });
 
-  it("row actions keep their labels for screen readers when shown as icons", () => {
+  it("row actions keep their names as icon-only buttons (ADR 0199)", () => {
     render(<Properties />);
     for (const label of [en.common.edit, en.common.delete]) {
       const button = screen.getAllByRole("button", { name: label })[0]!;
-      expect(button.querySelector(".btn-label")?.textContent).toBe(label);
+      expect(button.querySelector(".row-action-tip")?.textContent).toBe(label);
     }
   });
 });

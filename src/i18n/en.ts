@@ -502,7 +502,6 @@ export const en = {
     pendingPurchaseOn: (d: string) => `purchase ${d}`,
     badgeInactive: "Inactive",
     editProperty: "Edit property",
-    deleteProperty: "Delete property",
     confirmDelete: (name: string) =>
       `Delete ${name} and all linked mortgages, valuations, leases, and holding costs? This cannot be undone.`,
   },

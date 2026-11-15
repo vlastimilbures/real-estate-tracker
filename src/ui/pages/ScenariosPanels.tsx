@@ -1,9 +1,10 @@
 // Sub-components pulled out of Scenarios.tsx to shrink its render tree. Pure
 // presentation — no logic beyond what Scenarios.tsx already computed.
 import { useId, useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Copy, Pencil, Trash2 } from "lucide-react";
 import { Panel, Button, SegmentedToggle } from "../components/primitives";
 import { ConfirmRow } from "../components/EntityPanelParts";
+import { RowAction, RowActions } from "../components/RowActions";
 import type { MutationResult } from "../../state/portfolioStore";
 import type { Scenario, ScenarioOverrides } from "../../engine";
 import { useT } from "../hooks/useT";
@@ -214,14 +215,13 @@ export function ScenarioListPanel({
   // button and confirmation serve readable and unreadable rows (ADR 0123).
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const deleteButton = (item: Deletable) => (
-    <Button
-      size="sm"
-      variant="danger"
+    <RowAction
+      icon={Trash2}
+      label={t.common.delete}
+      danger
       disabled={busy}
       onClick={() => setConfirmingId(item.id)}
-    >
-      {t.common.delete}
-    </Button>
+    />
   );
   const confirmDelete = (item: Deletable) =>
     confirmingId === item.id && (
@@ -275,18 +275,20 @@ export function ScenarioListPanel({
                 {summarize(s, t, reachText?.(s.id))}
               </span>
               <span className="scenario-actions">
-                <Button size="sm" variant="ghost" onClick={() => onEdit(s)}>
-                  {t.common.edit}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={busy}
-                  onClick={() => onDuplicate(s)}
-                >
-                  {t.scenarios.duplicate}
-                </Button>
-                {deleteButton(s)}
+                <RowActions>
+                  <RowAction
+                    icon={Pencil}
+                    label={t.common.edit}
+                    onClick={() => onEdit(s)}
+                  />
+                  <RowAction
+                    icon={Copy}
+                    label={t.scenarios.duplicate}
+                    disabled={busy}
+                    onClick={() => onDuplicate(s)}
+                  />
+                  {deleteButton(s)}
+                </RowActions>
               </span>
               {confirmDelete(s)}
             </li>
@@ -299,7 +301,9 @@ export function ScenarioListPanel({
               <span className="scenario-summary">
                 {t.scenarios.unreadableRow}
               </span>
-              <span className="scenario-actions">{deleteButton(u)}</span>
+              <span className="scenario-actions">
+                <RowActions>{deleteButton(u)}</RowActions>
+              </span>
               {confirmDelete(u)}
             </li>
           ))}

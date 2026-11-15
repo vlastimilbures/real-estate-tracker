@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button, TableWrap } from "./primitives";
+import { RowAction, RowActions } from "./RowActions";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import type { MutationResult } from "../../state/portfolioStore";
@@ -60,26 +61,21 @@ export function EntityTable<T extends { id: string }>({
                 </td>
               ))}
               <td style={{ whiteSpace: "nowrap" }}>
-                <span className="row-actions">
-                  <Button
-                    size="sm"
-                    variant="ghost"
+                <RowActions>
+                  <RowAction
                     icon={Pencil}
+                    label={tr.common.edit}
                     onClick={() => onEdit(r.id)}
-                  >
-                    {tr.common.edit}
-                  </Button>
+                  />
                   {onDelete && (
-                    <Button
-                      size="sm"
-                      variant="danger"
+                    <RowAction
                       icon={Trash2}
+                      label={tr.common.delete}
+                      danger
                       onClick={() => onConfirmDelete(r.id)}
-                    >
-                      {tr.common.delete}
-                    </Button>
+                    />
                   )}
-                </span>
+                </RowActions>
               </td>
             </tr>
           ))}

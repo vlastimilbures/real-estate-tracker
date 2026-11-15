@@ -29,6 +29,7 @@ import {
 } from "../model/health";
 import { useT } from "../hooks/useT";
 import { ConfirmRow } from "../components/EntityPanelParts";
+import { RowAction, RowActions } from "../components/RowActions";
 import { propertiesSubtitle } from "../model/tableContext";
 
 /** A band badge's figure and word as unbreakable parts; the badge wraps only between
@@ -317,26 +318,19 @@ export function Properties() {
                       className="actions-col"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <span className="row-actions">
-                        <Button
-                          size="sm"
-                          variant="ghost"
+                      <RowActions>
+                        <RowAction
                           icon={Pencil}
+                          label={t.common.edit}
                           onClick={() => setEditingId(p.propertyId)}
-                          title={t.properties.editProperty}
-                        >
-                          <span className="btn-label">{t.common.edit}</span>
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
+                        />
+                        <RowAction
                           icon={Trash2}
+                          label={t.common.delete}
+                          danger
                           onClick={() => setDeletingId(p.propertyId)}
-                          title={t.properties.deleteProperty}
-                        >
-                          <span className="btn-label">{t.common.delete}</span>
-                        </Button>
-                      </span>
+                        />
+                      </RowActions>
                     </td>
                   </tr>
                 ))}

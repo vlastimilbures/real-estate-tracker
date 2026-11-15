@@ -11,6 +11,8 @@ import {
 import { CZK } from "../../lib/currency";
 import { fmtDate } from "../../lib/format";
 import { Button } from "./primitives";
+import { RowAction, RowActions } from "./RowActions";
+import { Trash2 } from "lucide-react";
 import { DateInput } from "./DateInput";
 import { Field, SelectInput, TextInput } from "./fields";
 import { useT } from "../hooks/useT";
@@ -239,17 +241,17 @@ export function LoanEventRows({
                 )}
               </>
             )}
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                focusTo.current = i < rows.length - 1 ? i : "add";
-                onChange(writeRows(rows.filter((_, j) => j !== i)));
-              }}
-            >
-              {d.eventRemove(rowName)}
-            </Button>
+            <RowActions>
+              <RowAction
+                icon={Trash2}
+                label={d.eventRemove(rowName)}
+                danger
+                onClick={() => {
+                  focusTo.current = i < rows.length - 1 ? i : "add";
+                  onChange(writeRows(rows.filter((_, j) => j !== i)));
+                }}
+              />
+            </RowActions>
             {rowError && (
               <p className="err" id={rowErrorId}>
                 {rowError}
