@@ -1,10 +1,19 @@
-// Health-band policy for the LTV and DSCR badges: which value counts as good, a warning
+// Health-band policy for the LTV and DSCR markers and badges: which value counts as good, a warning
 // or bad. Presentation policy, not formatting, so it lives here and not in lib/format
 // (DR-048). Dashboard, Properties and Property detail all read these two functions.
 import { D, type Decimal } from "../../lib/money";
 import type { Dictionary } from "../../i18n";
 
 export type Band = "good" | "warn" | "bad" | "neutral";
+
+/** The health marker's shape per band: colour and shape both differ, so the bands still
+ *  tell apart in greyscale (WCAG 1.4.1, ADR 0195). */
+export const BAND_SHAPE = {
+  good: "circle",
+  warn: "triangle",
+  bad: "diamond",
+  neutral: "ring",
+} as const satisfies Record<Band, string>;
 
 const LTV_GOOD = D("0.5");
 const LTV_WARN = D("0.75");
@@ -51,7 +60,7 @@ export function dscrBandWord(
     : t.dashboard.badgeShortfall;
 }
 
-/** The LTV tile badge: its band and word; no value (null) has no badge (ADR 0133). */
+/** The LTV tile's health marker: its band and word (ADR 0195); no value (null) has no badge (ADR 0133). */
 export function ltvBadge(
   t: Pick<Dictionary, "dashboard">,
   value: Decimal | null,
@@ -60,7 +69,7 @@ export function ltvBadge(
   return text === null ? undefined : { band: ltvBand(value), text };
 }
 
-/** The DSCR tile badge: its band and word; no debt (null) has no badge (ADR 0126). */
+/** The DSCR tile's health marker: its band and word (ADR 0195); no debt (null) has no badge (ADR 0126). */
 export function dscrBadge(
   t: Pick<Dictionary, "dashboard">,
   value: Decimal | null,

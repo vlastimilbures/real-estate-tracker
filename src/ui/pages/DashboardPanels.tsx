@@ -110,14 +110,14 @@ export function RiskTiles({
         delay={0}
         label={t.dashboard.portfolioLtv}
         value={<Pct value={s.ltv} dp={1} />}
-        badge={ltvBadge(t, s.ltv)}
+        health={ltvBadge(t, s.ltv)}
         foot={t.dashboard.debtOverValue}
       />
       <KpiTile
         delay={24}
         label={t.dashboard.portfolioDscr}
         value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
-        badge={dscrBadge(t, s.dscr)}
+        health={dscrBadge(t, s.dscr)}
         foot={t.dashboard.noiOverDebtService}
       />
       <KpiTile

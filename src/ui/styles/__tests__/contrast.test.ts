@@ -125,3 +125,22 @@ describe.each([
     expect(ratio(t("--ink-faint"), surface)).toBeGreaterThanOrEqual(AA);
   });
 });
+
+// ADR 0195 §5 (#373): a health marker is a graphic that carries meaning, so each band's
+// colour keeps 3:1 (WCAG 1.4.11) on the surface and on a hovered table row.
+const GRAPHIC = 3;
+
+describe.each([
+  ["light", light],
+  ["dark", dark],
+] as const)("health marker contrast, %s (ADR 0195)", (_n, theme) => {
+  const t = (name: string) => token(theme, name);
+  const surface = t("--surface");
+  const hovered = over(surface, t("--hover-wash"));
+
+  it.each(["good", "warn", "bad", "neutral"])("%s band", (band) => {
+    const colour = t(ruleColour(`.health-marker.${band}`));
+    expect(ratio(colour, surface)).toBeGreaterThanOrEqual(GRAPHIC);
+    expect(ratio(colour, hovered)).toBeGreaterThanOrEqual(GRAPHIC);
+  });
+});

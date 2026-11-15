@@ -218,6 +218,21 @@ async function openDropdown(ux: Ux, trigger: Locator, focused: string) {
   await expect(list.getByRole("option", { name: focused })).toBeFocused();
 }
 
+/** At 1280 px and wider, a tile with a health marker keeps its label on one line: the
+ *  band word sits in the foot, not beside the label (ADR 0195). */
+async function expectBandTileLabelsOneLine(ux: Ux) {
+  if ((ux.page.viewportSize()?.width ?? 0) < 1280) return;
+  const labels = ux.page.locator(".tile:has(.foot .health-marker) .label");
+  await expect(labels.first()).toBeVisible();
+  for (const label of await labels.all()) {
+    const lines = await label.evaluate((el) => {
+      const size = parseFloat(getComputedStyle(el).fontSize);
+      return el.getBoundingClientRect().height / (size * 1.25);
+    });
+    expect(lines, await label.innerText()).toBeLessThan(1.5);
+  }
+}
+
 /** One grid for the scenario list: actions line up across rows and the summary stays
  *  readable in every language (ADR 0158). */
 async function expectScenarioGrid(ux: Ux) {
@@ -354,6 +369,7 @@ export const SCREENS: Screen[] = [
       await expectNotClipped(head.locator(".segmented"));
       await expectNotClipped(head);
       await expectPanelActionsRight(ux.page);
+      await expectBandTileLabelsOneLine(ux);
       await ux.capture("01-dashboard");
     },
   },
@@ -718,6 +734,7 @@ export const SCREENS: Screen[] = [
           .getByRole("list"),
       );
       await expectPanelActionsRight(ux.page);
+      await expectBandTileLabelsOneLine(ux);
       await ux.capture("20-property-detail");
     },
   },

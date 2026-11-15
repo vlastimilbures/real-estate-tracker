@@ -391,6 +391,10 @@
   color: var(--ink-soft);
   margin-top: auto;
 }
+/* A figure in the foot wraps whole, after the health marker's word (ADR 0195). */
+.tile .foot .num {
+  white-space: nowrap;
+}
 .tile .accent-rule {
   width: 28px;
   height: 3px;
@@ -783,6 +787,37 @@ table.data tbody tr:hover td.sticky-col {
 .badge.neutral {
   color: var(--ink-soft);
   background: var(--paper-2);
+}
+
+/* Health marker (ADR 0195): a shape in the band's colour after the figure; colour and
+   shape differ per band. Each colour keeps 3:1 on --surface and a hovered row
+   (contrast.test.ts). The word keeps the surrounding text colour. */
+.health-marker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+.health-marker svg {
+  flex: none;
+  fill: currentColor;
+}
+.health-marker .health-word {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.health-marker.good {
+  color: var(--positive);
+}
+.health-marker.warn {
+  color: var(--warn);
+}
+.health-marker.bad {
+  color: var(--negative);
+}
+.health-marker.neutral {
+  color: var(--ink-soft);
 }
 
 /* ============ Buttons ============ */

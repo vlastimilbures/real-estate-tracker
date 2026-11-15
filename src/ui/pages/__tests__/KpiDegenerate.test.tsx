@@ -36,6 +36,7 @@ describe("no debt: no DSCR badge (ADR 0126)", () => {
     expect(within(dscr).getByText("—")).toBeTruthy();
     expect(dscr.textContent).not.toContain(en.dashboard.badgeShortfall);
     expect(dscr.querySelector(".badge")).toBeNull();
+    expect(dscr.querySelector(".health-marker")).toBeNull();
   });
 
   it("Property detail DSCR tile shows — and no badge", () => {
@@ -46,6 +47,7 @@ describe("no debt: no DSCR badge (ADR 0126)", () => {
     const dscr = tile(en.propertyDetail.dscr);
     expect(dscr.textContent).not.toContain("Short");
     expect(dscr.querySelector(".badge")).toBeNull();
+    expect(dscr.querySelector(".health-marker")).toBeNull();
   });
 });
 
