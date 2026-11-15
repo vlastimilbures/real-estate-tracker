@@ -51,6 +51,7 @@ import {
   loanWarnings,
 } from "../model/propertyDetail";
 import { acquisitionView } from "../model/acquisition";
+import { resetMarkers } from "../model/financing";
 import { useToast } from "../hooks/useToast";
 import { describeWriteError } from "../model/writeError";
 import { useT } from "../hooks/useT";
@@ -350,6 +351,15 @@ export function PropertyDetail() {
             chartRows={chartRows}
             modeWord={modeWord}
             purchaseDate={property.purchaseDate}
+            markers={resetMarkers(
+              out.financing?.resets ?? [],
+              chartRows,
+              baseDate,
+              new Map([[property.id, property.name]]),
+            )}
+            markerHeading={
+              mode === "real" ? t.charts.rateResetNominal : t.charts.rateReset
+            }
           />
         </div>
       )}

@@ -13,6 +13,7 @@ import {
 import type {
   FinancingEventKind,
   FinancingExposure,
+  FixationReset,
   Portfolio,
   PortfolioKPIs,
 } from "../../engine";
@@ -22,6 +23,7 @@ import { fmtDate } from "../../lib/format";
 import type { Mode } from "./lens";
 import { lensKpis } from "./lensKpis";
 import { remainingTermText } from "./termText";
+import { projectionYearForAsOf } from "./dashboard";
 
 /** An interest-saved figure as shown (ADR 0130): a positive amount, or "n/a" in place
  *  of a negative one (a recast that applies only with the prepayment). */
@@ -332,4 +334,43 @@ export function financingLabels(
       ? d.financingTotalInterestReal(horizonYears)
       : d.financingTotalInterest(horizonYears),
   };
+}
+
+/** One marked year on a 30-year value chart: its upcoming fixation ends (ADR 0210). */
+export interface ResetMarker {
+  calendarYear: number;
+  resets: { name: string; date: string; balance: Decimal }[];
+}
+
+/**
+ * The years of the chart that hold an upcoming fixation end (ADR 0210 §1): each reset in
+ * the projection year its date rounds to (the as-of rule, ADR 0150), several in one year
+ * sharing a marker, earliest first. A reset past the chart's last year is not marked.
+ */
+export function resetMarkers(
+  resets: readonly FixationReset[],
+  rows: readonly { year: number; calendarYear: number }[],
+  baseDate: Date,
+  names: ReadonlyMap<string, string>,
+): ResetMarker[] {
+  const byYear = new Map<number, ResetMarker>();
+  const upcoming = resets
+    .filter((r) => r.status === "upcoming")
+    .sort((a, b) => a.fixationEnd.getTime() - b.fixationEnd.getTime());
+  for (const r of upcoming) {
+    const t = projectionYearForAsOf(baseDate, r.fixationEnd);
+    const row = rows.find((x) => x.year === t);
+    if (!row) continue;
+    const marker = byYear.get(row.calendarYear) ?? {
+      calendarYear: row.calendarYear,
+      resets: [],
+    };
+    marker.resets.push({
+      name: names.get(r.propertyId) ?? "",
+      date: fmtDate(r.fixationEnd),
+      balance: r.balance,
+    });
+    byYear.set(row.calendarYear, marker);
+  }
+  return [...byYear.values()];
 }

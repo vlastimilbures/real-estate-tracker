@@ -31,6 +31,7 @@ import { DATA_CHECK_ID, DataCheckPanel } from "./DashboardDataCheck";
 import { dashboardDataCheck } from "../model/dataCheck";
 import { focusSection } from "../components/focusSection";
 import { cashInvestedTotal } from "../model/acquisition";
+import { resetMarkers } from "../model/financing";
 import { useT } from "../hooks/useT";
 import { useAsOf } from "../hooks/useAsOf";
 import { useRenderTiming } from "../hooks/useRenderTiming";
@@ -143,6 +144,13 @@ export function Dashboard() {
   const { snapshot, kpis, projection, assumptions } = engine;
   const series = projectionSeries(projection, mode, assumptions);
   const rows = toChartRows(series);
+  // Upcoming fixation ends of the filtered properties, on the hero chart (ADR 0210).
+  const markers = resetMarkers(
+    engine.financing.resets,
+    rows,
+    assumptions.baseDate,
+    new Map(engine.portfolio.properties.map((p) => [p.id, p.name])),
+  );
   const eqChange = toEquityChangeRows(series);
   const { isToday } = view;
   const basis = asOfView(assumptions.baseDate, snapshot.asOf, isToday);
@@ -239,6 +247,7 @@ export function Dashboard() {
       <ProjectionHero
         mode={mode}
         rows={rows}
+        markers={markers}
         horizonYears={assumptions.horizonYears}
       />
 

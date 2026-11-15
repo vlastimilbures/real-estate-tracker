@@ -16,6 +16,7 @@ import {
   Button,
 } from "../components/primitives";
 import { ChartCard } from "../components/charts";
+import type { ResetMarker } from "../model/financing";
 import {
   COMMITTED_DASH,
   SERIES,
@@ -61,10 +62,15 @@ export function PropertySnapshotTiles({
   chartRows,
   modeWord,
   purchaseDate,
+  markers = [],
+  markerHeading,
 }: {
   s: PropertySnapshot;
   chartRows: ChartRow[];
   modeWord: string;
+  /** This property's upcoming fixation ends on its value chart (ADR 0210). */
+  markers?: readonly ResetMarker[] | undefined;
+  markerHeading?: string | undefined;
   /** Shown instead of the tiles while `s` is not owned. */
   purchaseDate?: Date | undefined;
 }) {
@@ -104,6 +110,8 @@ export function PropertySnapshotTiles({
           kind="czk"
           rows={chartRows}
           series={valueSeries}
+          markers={markers}
+          markerHeading={markerHeading}
         />
         <ChartCard
           title={t.propertyDetail.chartNetCashFlowByYear}

@@ -32,6 +32,7 @@ import {
   type TipItem,
 } from "../model/chartData";
 import { yearLabel } from "../model/projection";
+import type { ResetMarker } from "../model/financing";
 import { CZK } from "../../lib/currency";
 import { Button, Money, Pct, TableWrap } from "./primitives";
 import { useT } from "../hooks/useT";
@@ -68,6 +69,34 @@ function useSurfaceProps() {
 }
 
 /** A short line in a series' colour and dash: the legend and tooltip key (ADR 0114). */
+/** The fixation-end marker (ADR 0210): a dashed line in the soft ink colour with a
+ *  diamond, not colour alone; at least 3:1 on the plot in both themes. */
+const MARKER_COLOR = "var(--ink-soft)";
+const MARKER_DASH = "3 3";
+
+function MarkerSwatch() {
+  return (
+    <svg
+      className="series-swatch"
+      width={16}
+      height={10}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <line
+        x1={8}
+        y1={0}
+        x2={8}
+        y2={10}
+        stroke={MARKER_COLOR}
+        strokeWidth={1.5}
+        strokeDasharray="2 2"
+      />
+      <path d="M 8 1 L 11 4 L 8 7 L 5 4 Z" fill={MARKER_COLOR} />
+    </svg>
+  );
+}
+
 function SeriesSwatch({
   color,
   dash,
@@ -112,9 +141,11 @@ export function ChartCard({
   chart = "lines",
   rows,
   series,
-  legend = series.length > 1,
+  legend,
   totalLabel,
   height = CHART_HEIGHT,
+  markers = [],
+  markerHeading,
 }: {
   title: string;
   sub?: string | undefined;
@@ -126,9 +157,14 @@ export function ChartCard({
   totalLabel?: string | undefined;
   /** Plot (and table) height in px: the Dashboard's hero and small multiples (ADR 0202). */
   height?: number | undefined;
+  /** Years marked on a line chart with their fixation ends (ADR 0210). */
+  markers?: readonly ResetMarker[] | undefined;
+  /** The markers' legend entry and tooltip heading. */
+  markerHeading?: string | undefined;
 }) {
   const t = useT();
   const [asTable, setAsTable] = useState(false);
+  const showLegend = legend ?? (series.length > 1 || markers.length > 0);
   const unit =
     kind === "czk"
       ? czkUnitFromRows(
@@ -179,17 +215,24 @@ export function ChartCard({
               series={series}
               unit={unit}
               totalLabel={totalLabel}
+              markers={markers}
+              markerHeading={markerHeading ?? ""}
             />
           </ResponsiveContainer>
         </SurfaceLabel.Provider>
       )}
-      {legend && !asTable && (
+      {showLegend && !asTable && (
         <div className="legend">
           {series.map((s) => (
             <span key={s.key}>
               <SeriesSwatch color={s.color} dash={s.dash} /> {s.name}
             </span>
           ))}
+          {markers.length > 0 && markerHeading && (
+            <span>
+              <MarkerSwatch /> {markerHeading}
+            </span>
+          )}
         </div>
       )}
     </div>
@@ -272,6 +315,7 @@ export function Tip({
   point,
   items,
   total,
+  resets,
 }: {
   active?: boolean | undefined;
   year?: number | string | undefined;
@@ -281,6 +325,8 @@ export function Tip({
   items: TipItem[];
   /** Optional summary row rendered below a divider (e.g. net change of stacked series). */
   total?: { label: string; value: number } | undefined;
+  /** The hovered year's fixation ends (ADR 0210 §3). */
+  resets?: { heading: string; items: ResetMarker["resets"] } | undefined;
 }) {
   const t = useT();
   if (!active) return null;
@@ -314,6 +360,22 @@ export function Tip({
           <span>{fmtCzk(total.value, { parens: true })}</span>
         </div>
       )}
+      {resets && resets.items.length > 0 && (
+        <div className="tt-resets">
+          <div className="tt-label">
+            <MarkerSwatch />
+            {resets.heading}
+          </div>
+          {resets.items.map((r) => (
+            <div className="tt-row tt-reset" key={`${r.name}-${r.date}`}>
+              <span>
+                {r.name} · {r.date}
+              </span>
+              <span>{fmtCzk(r.balance)}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -341,6 +403,8 @@ function ChartBody({
   series,
   unit,
   totalLabel,
+  markers,
+  markerHeading,
 }: {
   kind: "czk" | "pct";
   chart: ChartShape;
@@ -349,6 +413,8 @@ function ChartBody({
   /** The card's CZK axis unit; none for a percent chart. */
   unit: CzkAxisUnit | undefined;
   totalLabel: string | undefined;
+  markers: readonly ResetMarker[];
+  markerHeading: string;
 }) {
   // Reduce motion: no entry animation (UX-058).
   const animate = !usePrefersReducedMotion();
@@ -387,9 +453,35 @@ function ChartBody({
               year={label}
               point={payload?.[0]?.payload}
               items={seriesTipItems(payload, series, pct ? "pct" : "czk")}
+              resets={{
+                heading: markerHeading,
+                items:
+                  markers.find((m) => m.calendarYear === label)?.resets ?? [],
+              }}
             />
           )}
         />
+        {/* Fixation ends (ADR 0210): a dashed line topped by a diamond. */}
+        {markers.map((m) => (
+          <ReferenceLine
+            key={m.calendarYear}
+            className="reset-marker"
+            x={m.calendarYear}
+            stroke={MARKER_COLOR}
+            strokeWidth={1.5}
+            strokeDasharray={MARKER_DASH}
+            label={({ viewBox }: { viewBox?: { x?: number; y?: number } }) => {
+              const x = viewBox?.x ?? 0;
+              const y = viewBox?.y ?? 0;
+              return (
+                <path
+                  d={`M ${x} ${y} L ${x + 5} ${y + 5} L ${x} ${y + 10} L ${x - 5} ${y + 5} Z`}
+                  fill={MARKER_COLOR}
+                />
+              );
+            }}
+          />
+        ))}
         {series.map((s) => (
           <Line
             isAnimationActive={animate}

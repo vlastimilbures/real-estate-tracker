@@ -266,6 +266,9 @@ export const en = {
     table: "Table",
     surfaceLabel: (title: string) =>
       `${title} — chart. Use the Table button for the values.`,
+    // ADR 0210: fixation ends marked on the value chart.
+    rateReset: "Rate reset",
+    rateResetNominal: "Rate reset · debt in nominal Kč",
   },
 
   shell: {
