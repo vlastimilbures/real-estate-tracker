@@ -78,6 +78,7 @@ describe("Dashboard risk tiles", () => {
     const ltv = tile(en.dashboard.portfolioLtv);
     expect(within(ltv).getByText(NA)).toBeTruthy();
     expect(ltv.querySelector(".badge")).toBeNull();
+    expect(ltv.querySelector(".health-marker")).toBeNull();
     expect(ltv.textContent).not.toContain("0,0 %");
     const yieldTile = tile(en.dashboard.netYieldCap);
     expect(within(yieldTile).getByText(NA)).toBeTruthy();
@@ -100,6 +101,7 @@ describe("Property detail tiles", () => {
     if (!(debt instanceof HTMLElement)) throw new Error("no Debt tile");
     expect(within(debt).getByText(NA)).toBeTruthy();
     expect(debt.querySelector(".badge")).toBeNull();
+    expect(debt.querySelector(".health-marker")).toBeNull();
   });
 });
 

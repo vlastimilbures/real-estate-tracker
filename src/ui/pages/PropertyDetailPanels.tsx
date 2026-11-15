@@ -162,7 +162,7 @@ function SnapshotTiles({ s }: { s: PropertySnapshot }) {
             )}
           </>
         }
-        badge={ltvBadge(t, s.ltv)}
+        health={ltvBadge(t, s.ltv)}
       />
       <KpiTile
         label={t.propertyDetail.equity}
@@ -171,7 +171,7 @@ function SnapshotTiles({ s }: { s: PropertySnapshot }) {
       <KpiTile
         label={<MetricLabel term="dscr">{t.propertyDetail.dscr}</MetricLabel>}
         value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
-        badge={dscrBadge(t, s.dscr)}
+        health={dscrBadge(t, s.dscr)}
         foot={
           <>
             {t.propertyDetail.netCf} <Money value={s.netCashFlow} signed />
