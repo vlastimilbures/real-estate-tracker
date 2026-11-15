@@ -2836,3 +2836,37 @@ main.page:focus {
     grid-column: 1 / -1;
   }
 }
+
+/* Holding costs' read view (ADR 0207): the six costs in two columns, a blank field's
+   portfolio default marked; one column in a narrow panel. */
+.holding-view {
+  display: grid;
+  /* Two columns, or one when a column would be under 260 px. */
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(max(min(100%, 260px), calc((100% - var(--s6)) / 2)), 1fr)
+  );
+  column-gap: var(--s6);
+  margin: 0;
+}
+.holding-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s3);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 13px;
+}
+.holding-item > dt {
+  color: var(--ink-soft);
+}
+.holding-item > dd {
+  margin: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+.holding-default {
+  font-size: 12px;
+  color: var(--ink-soft);
+}

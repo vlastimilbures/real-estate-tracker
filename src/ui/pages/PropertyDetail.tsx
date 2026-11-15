@@ -399,6 +399,7 @@ export function PropertyDetail() {
         <HoldingCostsPanel
           holding={holding}
           propertyId={propertyId}
+          defaults={assumptions.defaults}
           onSave={store.saveHoldingCost}
           onSaved={() => showToast(t.propertyDetail.holdingCostsSaved)}
         />

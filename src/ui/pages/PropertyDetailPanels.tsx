@@ -1,8 +1,8 @@
 // Presentational panels extracted from PropertyDetail.tsx: the snapshot KPI tiles +
-// mini charts, and the always-editable holding-costs form. Pure rendering — the finance
+// mini charts, and the holding costs' read view and form. Pure rendering — the finance
 // lives in the engine; these take already-computed props / store actions.
-import { useId, type ReactNode } from "react";
-import { Ban, Check, Clock } from "lucide-react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Ban, Check, Clock, Pencil } from "lucide-react";
 import { MetricLabel } from "../components/MetricLabel";
 import {
   KpiTile,
@@ -26,7 +26,9 @@ import { ConfirmRow } from "../components/EntityPanelParts";
 import { focusSection } from "../components/focusSection";
 import { sectionId } from "../model/sectionNav";
 import { moneyDraft, percentDraft } from "../model/formParse";
-import { fmtCzkM, fmtDate, noBreak } from "../../lib/format";
+import { fmtCzk, fmtCzkM, fmtDate, fmtPct, noBreak } from "../../lib/format";
+import { RowAction, RowActions } from "../components/RowActions";
+import { holdingCostsView } from "../model/holdingCosts";
 import { undrawnPart } from "../model/debt";
 import {
   amortizationExtras,
@@ -41,6 +43,7 @@ import type {
   PropertySnapshot,
   HoldingCost,
   AmortizationRow,
+  CostDefaults,
 } from "../../engine";
 import type { MutationResult } from "../../state/portfolioStore";
 import { useT } from "../hooks/useT";
@@ -182,96 +185,156 @@ function SnapshotTiles({ s }: { s: PropertySnapshot }) {
   );
 }
 
-/** Holding costs — single row, always editable; blanks fall back to defaults. */
+/** Holding costs (ADR 0207): a read view of the six costs, a blank field showing the
+ *  portfolio default it falls back to; the pencil opens the form in place. */
 export function HoldingCostsPanel({
   holding,
   propertyId,
+  defaults,
   onSave,
   onSaved,
 }: {
   holding: HoldingCost | undefined;
   propertyId: string;
+  /** The portfolio defaults a blank field uses (Assumptions.defaults). */
+  defaults: CostDefaults;
   onSave: (h: HoldingCost) => Promise<MutationResult>;
   onSaved: () => void;
 }) {
   const t = useT();
+  const d = t.propertyDetail;
+  const [editing, setEditing] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  // Focus follows the switch (ADR 0207 §3): into the form's first field on Edit, back to
+  // the pencil on Cancel or Save; nothing on the first render.
+  const switched = useRef(false);
+  useEffect(() => {
+    if (!switched.current) return;
+    switched.current = false;
+    const el = root.current?.querySelector<HTMLElement>(
+      editing ? "form input, form select" : ".panel-head .row-action",
+    );
+    el?.focus();
+  }, [editing]);
+  const toggle = (next: boolean) => {
+    switched.current = true;
+    setEditing(next);
+  };
   return (
-    <Panel
-      title={t.propertyDetail.holdingCostsTitle}
-      hint={t.propertyDetail.holdingCostsHint}
-    >
-      <RecordForm
-        specs={[
-          {
-            name: "propertyTaxYr",
-            label: t.propertyDetail.fieldPropertyTax,
-            kind: "money",
-            suffix: CZK.symbol,
-            optional: true,
-          },
-          {
-            name: "insuranceYr",
-            label: t.propertyDetail.fieldInsurance,
-            kind: "money",
-            suffix: CZK.symbol,
-            optional: true,
-          },
-          {
-            name: "svjMonthly",
-            label: t.propertyDetail.fieldSvjMo,
-            kind: "money",
-            suffix: CZK.symbol,
-            optional: true,
-          },
-          {
-            name: "otherYr",
-            label: t.propertyDetail.fieldOther,
-            kind: "money",
-            suffix: CZK.symbol,
-            optional: true,
-          },
-          {
-            name: "mgmtPctRent",
-            label: t.propertyDetail.fieldMgmtPct,
-            kind: "pct",
-            suffix: "%",
-            optional: true,
-          },
-          {
-            name: "maintPctRent",
-            label: t.propertyDetail.fieldMaintPct,
-            kind: "pct",
-            suffix: "%",
-            optional: true,
-          },
-        ]}
-        initial={{
-          propertyTaxYr: moneyDraft(holding?.propertyTaxYr),
-          insuranceYr: moneyDraft(holding?.insuranceYr),
-          svjMonthly: moneyDraft(holding?.svjMonthly),
-          otherYr: moneyDraft(holding?.otherYr),
-          mgmtPctRent: percentDraft(holding?.mgmtPctRent),
-          maintPctRent: percentDraft(holding?.maintPctRent),
-        }}
-        submitLabel={t.propertyDetail.saveHoldingCosts}
-        onSubmit={async (v) => {
-          const next: HoldingCost = {
-            id: holding?.id ?? newId(),
-            propertyId,
-            propertyTaxYr: v.propertyTaxYr ?? undefined,
-            insuranceYr: v.insuranceYr ?? undefined,
-            svjMonthly: v.svjMonthly ?? undefined,
-            otherYr: v.otherYr ?? undefined,
-            mgmtPctRent: v.mgmtPctRent ?? undefined,
-            maintPctRent: v.maintPctRent ?? undefined,
-          };
-          const res = await onSave(next);
-          if (!res.ok) return res.error;
-          onSaved();
-          return undefined;
-        }}
-      />
-    </Panel>
+    <div ref={root}>
+      <Panel
+        title={d.holdingCostsTitle}
+        hint={d.holdingCostsHint}
+        action={
+          editing ? undefined : (
+            <RowActions>
+              <RowAction
+                icon={Pencil}
+                label={d.editHoldingCosts}
+                onClick={() => toggle(true)}
+              />
+            </RowActions>
+          )
+        }
+      >
+        {!editing ? (
+          <dl className="holding-view">
+            {holdingCostsView(holding, defaults, t).map((r) => (
+              <div key={r.label} className="holding-item">
+                <dt>{r.label}</dt>
+                <dd>
+                  <span className="num">
+                    {r.kind === "money" ? fmtCzk(r.value) : fmtPct(r.value)}
+                  </span>
+                  {r.isDefault && (
+                    <>
+                      {" "}
+                      <span className="holding-default">
+                        {d.holdingDefault}
+                      </span>
+                    </>
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <RecordForm
+            specs={[
+              {
+                name: "propertyTaxYr",
+                label: t.propertyDetail.fieldPropertyTax,
+                kind: "money",
+                suffix: CZK.symbol,
+                optional: true,
+              },
+              {
+                name: "insuranceYr",
+                label: t.propertyDetail.fieldInsurance,
+                kind: "money",
+                suffix: CZK.symbol,
+                optional: true,
+              },
+              {
+                name: "svjMonthly",
+                label: t.propertyDetail.fieldSvjMo,
+                kind: "money",
+                suffix: CZK.symbol,
+                optional: true,
+              },
+              {
+                name: "otherYr",
+                label: t.propertyDetail.fieldOther,
+                kind: "money",
+                suffix: CZK.symbol,
+                optional: true,
+              },
+              {
+                name: "mgmtPctRent",
+                label: t.propertyDetail.fieldMgmtPct,
+                kind: "pct",
+                suffix: "%",
+                optional: true,
+              },
+              {
+                name: "maintPctRent",
+                label: t.propertyDetail.fieldMaintPct,
+                kind: "pct",
+                suffix: "%",
+                optional: true,
+              },
+            ]}
+            initial={{
+              propertyTaxYr: moneyDraft(holding?.propertyTaxYr),
+              insuranceYr: moneyDraft(holding?.insuranceYr),
+              svjMonthly: moneyDraft(holding?.svjMonthly),
+              otherYr: moneyDraft(holding?.otherYr),
+              mgmtPctRent: percentDraft(holding?.mgmtPctRent),
+              maintPctRent: percentDraft(holding?.maintPctRent),
+            }}
+            submitLabel={d.saveHoldingCosts}
+            onSubmit={async (v) => {
+              const next: HoldingCost = {
+                id: holding?.id ?? newId(),
+                propertyId,
+                propertyTaxYr: v.propertyTaxYr ?? undefined,
+                insuranceYr: v.insuranceYr ?? undefined,
+                svjMonthly: v.svjMonthly ?? undefined,
+                otherYr: v.otherYr ?? undefined,
+                mgmtPctRent: v.mgmtPctRent ?? undefined,
+                maintPctRent: v.maintPctRent ?? undefined,
+              };
+              const res = await onSave(next);
+              if (!res.ok) return res.error;
+              onSaved();
+              toggle(false);
+              return undefined;
+            }}
+            onCancel={() => toggle(false)}
+          />
+        )}
+      </Panel>
+    </div>
   );
 }
 

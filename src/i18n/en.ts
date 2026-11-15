@@ -671,6 +671,9 @@ export const en = {
     fieldMaintPct: "Maintenance (% of contracted rent)",
     saveHoldingCosts: "Save holding costs",
     holdingCostsSaved: "Holding costs saved",
+    // ADR 0207: the read view marks a blank field's portfolio default.
+    holdingDefault: "(default)",
+    editHoldingCosts: "Edit holding costs",
     // Projection + amortization
     projectionTitle: (n: number) => `${n}-year projection`,
     amortizationWarn:

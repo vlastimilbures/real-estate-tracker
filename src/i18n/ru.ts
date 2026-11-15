@@ -631,6 +631,9 @@ export const ru: Dictionary = {
     fieldMaintPct: "Обслуживание (% от договорной аренды)",
     saveHoldingCosts: "Сохранить расходы на содержание",
     holdingCostsSaved: "Расходы на содержание сохранены",
+    // ADR 0207: the read view marks a blank field's portfolio default.
+    holdingDefault: "(по умолчанию)",
+    editHoldingCosts: "Изменить расходы на содержание",
     projectionTitle: (n) => `${n}-летний прогноз`,
     amortizationWarn: "Месячный платёж не погасит этот кредит к концу срока.",
     eventIssue: {

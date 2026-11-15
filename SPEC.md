@@ -877,7 +877,9 @@ offline badge, and controls for language and theme.
    linked mortgages, valuations, leases, and holding costs (after confirmation).
 
 3. **Property detail** — valuations, leases, mortgage blocks (including dev-loan tranche draws,
-   completion date and the optional contract maturity date), holding costs (edit forms),
+   completion date and the optional contract maturity date), holding costs (a read view of
+   the six costs, a blank one showing the portfolio default it uses, and Edit opening the
+   form in place, ADR 0207),
    30-year projection table + mini charts, amortization schedule (dated by each payment's
    due date, ADR 0164), and a health check
    (`amortizationHealth`, including the maturity and fixation-ended warnings). The **AsOfPicker** is

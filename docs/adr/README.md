@@ -257,6 +257,7 @@ it.
 | [0204](0204-financing-timeline.md)                             | Financing & upcoming: headline figures and a fixation timeline                                | Accepted (delegated, owner review pending)                     | #377, #392                                         |
 | [0205](0205-properties-list-fits.md)                           | Properties list: plain figures, a health marker and a totals row                              | Accepted (delegated, owner review pending)                     | #379, #392                                         |
 | [0206](0206-data-check-grouped.md)                             | Dashboard Data check: last, summary first, findings grouped by problem                        | Accepted (delegated, owner review pending)                     | #378, #392                                         |
+| [0207](0207-holding-costs-read-view.md)                        | Holding costs: a read view with Edit, like the other records                                  | Accepted (delegated, owner review pending)                     | #385, #392                                         |
 
 <!-- adr-index:end -->
 
