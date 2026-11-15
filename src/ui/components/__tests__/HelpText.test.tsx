@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Panel } from "../primitives";
-import { HelpText } from "../PanelHelp";
+import { HelpText } from "../HelpText";
 import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 
@@ -28,16 +28,39 @@ describe("Panel help (ADR 0214 §2)", () => {
 
   it("a longer explanation is one click away, by keyboard too", async () => {
     render(
-      <Panel title="Valuations" help={<HelpText collapsed>Long why.</HelpText>}>
+      <Panel
+        title="Valuations"
+        help={<HelpText about="Valuations">Long why.</HelpText>}
+      >
         <p>body</p>
       </Panel>,
     );
-    const toggle = screen.getByRole("button", { name: en.common.aboutThis });
+    const toggle = screen.getByRole("button", {
+      name: `${en.common.aboutThis}: Valuations`,
+    });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     expect(screen.getByText("Long why.").closest("[hidden]")).not.toBeNull();
     toggle.focus();
     await userEvent.keyboard("{Enter}");
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
     expect(screen.getByText("Long why.").closest("[hidden]")).toBeNull();
+  });
+
+  it("two on a page have different names: the topic follows, for screen readers", () => {
+    render(
+      <>
+        <HelpText about="Valuations">A.</HelpText>
+        <HelpText about="Tranche loan">B.</HelpText>
+      </>,
+    );
+    const names = screen.getAllByRole("button").map((b) => b.textContent);
+    expect(names).toEqual([
+      `${en.common.aboutThis}: Valuations`,
+      `${en.common.aboutThis}: Tranche loan`,
+    ]);
+    // The topic is screen-reader text; the visible label stays "About this".
+    expect(
+      screen.getAllByRole("button")[0]!.querySelector(".sr-only")?.textContent,
+    ).toBe(": Valuations");
   });
 });

@@ -1,10 +1,10 @@
 // The editable child-entity panels of Property detail (valuations, leases, mortgage
 // blocks): column layout, form specs, draft/build mapping. Split out of
 // PropertyDetail.tsx (DR-057); each panel reads its own store actions.
-import { HelpText } from "../components/PanelHelp";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { Money, Pct } from "../components/primitives";
 import { EntityPanel } from "../components/EntityPanel";
+import { HelpText } from "../components/HelpText";
 import { moneyDraft, percentDraft, dateDraft } from "../model/formParse";
 import {
   drawsDraft,
@@ -59,7 +59,11 @@ export function ValuationsPanel({
   return (
     <EntityPanel
       title={t.propertyDetail.valuationsTitle}
-      help={<HelpText collapsed>{t.propertyDetail.valuationsHint}</HelpText>}
+      help={
+        <HelpText about={t.propertyDetail.valuationsTitle}>
+          {t.propertyDetail.valuationsHint}
+        </HelpText>
+      }
       addLabel={t.propertyDetail.addValuation}
       describe={(r) =>
         t.propertyDetail.confirmDeleteValuation(fmtDate(r.validFrom))
@@ -232,7 +236,7 @@ export function MortgagesPanel({
   return (
     <EntityPanel
       title={t.propertyDetail.mortgagesTitle}
-      hint={t.propertyDetail.mortgagesHint}
+      help={<HelpText>{t.propertyDetail.mortgagesHint}</HelpText>}
       addLabel={t.propertyDetail.addMortgage}
       describe={(r) =>
         t.propertyDetail.confirmDeleteMortgage(fmtDate(r.startDate))

@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { Copy, Pencil, Trash2 } from "lucide-react";
 import { DisclosureButton } from "../components/Disclosure";
-import { HelpText } from "../components/PanelHelp";
+import { HelpText } from "../components/HelpText";
 import { Panel, Button, SegmentedToggle } from "../components/primitives";
 import { ConfirmRow } from "../components/EntityPanelParts";
 import { RowAction, RowActions } from "../components/RowActions";
@@ -248,7 +248,7 @@ export function ScenarioListPanel({
   return (
     <Panel
       title={t.scenarios.listTitle}
-      hint={t.scenarios.listHint(maxCompare)}
+      help={<HelpText>{t.scenarios.listHint(maxCompare)}</HelpText>}
     >
       <div className="scenario-list-wrap">
         <ul className="scenario-list">

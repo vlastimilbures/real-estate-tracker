@@ -99,14 +99,14 @@ export function PropertyDetail() {
   const [editing, setEditing] = useState<false | PropertyFormTarget>(false);
   // Record funding's button leaves with the compact Acquisition line once something is
   // saved, so the dialog cannot hand focus back to it: land on the section instead
-  // (ADR 0209 §2). Runs after the dialog's own focus return, only when focus was lost.
-  const fromAcquisition = useRef(false);
+  // (ADR 0209 §2), not on whatever the dialog's fallback found in the panel (its "About
+  // this", ADR 0214). Runs after the dialog's own focus return.
+  const acquisitionOpener = useRef<HTMLElement | null>(null);
   useEffect(() => {
-    if (editing !== false || !fromAcquisition.current) return;
-    fromAcquisition.current = false;
-    const active = document.activeElement;
-    if (!active || active === document.body)
-      focusSection(sectionId("acquisition"));
+    const opener = acquisitionOpener.current;
+    if (editing !== false || !opener) return;
+    acquisitionOpener.current = null;
+    if (!opener.isConnected) focusSection(sectionId("acquisition"));
   }, [editing]);
   const [confirmingDeactivate, setConfirmingDeactivate] = useState(false);
   const [toggling, setToggling] = useState(false);
@@ -412,8 +412,8 @@ export function PropertyDetail() {
               property.funding?.note,
               t.propertyDetail,
             )}
-            onRecordFunding={() => {
-              fromAcquisition.current = true;
+            onRecordFunding={(opener) => {
+              acquisitionOpener.current = opener;
               setEditing("editFunding");
             }}
           />

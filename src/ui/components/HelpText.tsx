@@ -5,16 +5,27 @@ import { Disclosure } from "./Disclosure";
 import { useT } from "../hooks/useT";
 
 export function HelpText({
-  collapsed = false,
+  about,
   children,
 }: {
-  collapsed?: boolean | undefined;
+  /** Collapse the text behind "About this"; the topic (the panel or section it
+   *  explains) completes the button's accessible name, so two on a page differ. */
+  about?: string | undefined;
   children: ReactNode;
 }) {
   const t = useT();
   const text = <p className="help-text">{children}</p>;
-  return collapsed ? (
-    <Disclosure label={t.common.aboutThis}>{text}</Disclosure>
+  return about ? (
+    <Disclosure
+      label={
+        <>
+          {t.common.aboutThis}
+          <span className="sr-only">: {about}</span>
+        </>
+      }
+    >
+      {text}
+    </Disclosure>
   ) : (
     text
   );

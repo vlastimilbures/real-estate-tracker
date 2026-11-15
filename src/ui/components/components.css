@@ -578,7 +578,7 @@
 }
 .panel-body.flush > .panel-help {
   margin: 0;
-  padding: var(--s3) var(--s5) 0;
+  padding: var(--s3) var(--s5) var(--s2);
 }
 .help-text {
   margin: 0;

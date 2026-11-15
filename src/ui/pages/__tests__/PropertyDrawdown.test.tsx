@@ -65,8 +65,9 @@ const drawdown = () => screen.getByRole("region", { name: pd.drawdownTitle });
 describe("drawdown in the Loan outlook (ADR 0167)", () => {
   it("explains the drawdown behind About this, not as a second note (ADR 0214)", async () => {
     render(<PropertyDetail />);
+    // Named by its loan, so two drawdowns' toggles differ.
     const about = within(drawdown()).getByRole("button", {
-      name: en.common.aboutThis,
+      name: new RegExp(`^${en.common.aboutThis}: .+`),
     });
     const text = within(drawdown()).getByText(pd.drawdownNote);
     expect(text.closest("[hidden]")).not.toBeNull();

@@ -29,7 +29,9 @@ describe("records panels' explanations (ADR 0214 §4)", () => {
     const panel = panelOf(d.valuationsTitle);
     expect(panel.querySelector(".panel-head .hint")).toBeNull();
     expect(
-      within(panel).getByRole("button", { name: en.common.aboutThis }),
+      within(panel).getByRole("button", {
+        name: `${en.common.aboutThis}: ${d.valuationsTitle}`,
+      }),
     ).toBeTruthy();
     expect(
       within(panel).getByText(d.valuationsHint).closest("[hidden]"),

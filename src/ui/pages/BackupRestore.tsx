@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore, type OutcomeAction } from "../../state/uiStore";
 import { Panel, Button } from "../components/primitives";
+import { HelpText } from "../components/HelpText";
 import { chooseRestoreFile, type PickedBackup } from "../../state/backup";
 import { logFailure, type FailureSite } from "../../state/diagnostics";
 import { revealDataDir } from "../../state/platform";
@@ -151,7 +152,10 @@ export function BackupRestorePanel() {
 
   return (
     <>
-      <Panel title={t.backup.exportTitle} hint={t.backup.exportHint}>
+      <Panel
+        title={t.backup.exportTitle}
+        help={<HelpText>{t.backup.exportHint}</HelpText>}
+      >
         <p className="muted-note">{t.backup.exportBody}</p>
         <LastBackup />
         <Button
