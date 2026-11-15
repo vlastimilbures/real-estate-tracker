@@ -889,7 +889,7 @@ export const en = {
     listHint: (max: number) =>
       `Tick up to ${max} ${enPlural(max, ["scenario", "scenarios"])} to compare. Base is extra and does not count.`,
     duplicate: "Duplicate",
-    emptyList: "No saved scenarios yet — use a preset or “New scenario”.",
+    emptyList: "No saved scenarios yet — use a preset or “Add scenario”.",
     compareTitle: "Compare",
     nothingSelectedTitle: "Nothing selected",
     nothingSelectedBody: "Tick Base and/or scenarios above to compare.",
@@ -944,7 +944,7 @@ export const en = {
       `value −${v}${atYear ? ` @ yr${atYear}` : ""}`,
     // Form
     editTitle: (name: string) => `Edit “${name}”`,
-    newTitle: "New scenario",
+    newTitle: "Add scenario",
     formHint: "blank = inherit Base",
     name: "Name",
     namePlaceholder: "e.g. Recession",

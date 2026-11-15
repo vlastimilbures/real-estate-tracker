@@ -10,6 +10,8 @@ import { PropertyFormModal } from "../PropertyFormModal";
 import { ValuationsPanel } from "../../pages/PropertyEntityPanels";
 import { PropertyDetail } from "../../pages/PropertyDetail";
 import { Scenarios } from "../../pages/Scenarios";
+import { LoanEventRows } from "../LoanEventRows";
+import { SampleBanner } from "../SampleBanner";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
@@ -33,7 +35,8 @@ beforeEach(() =>
   }),
 );
 
-const hasIcon = (b: HTMLElement) => b.querySelector("svg") !== null;
+/** The plus icon, not just any icon. */
+const hasIcon = (b: HTMLElement) => b.querySelector("svg.lucide-plus") !== null;
 const variant = (b: HTMLElement) =>
   ["primary", "ghost", "danger"].find((v) => b.classList.contains(v)) ??
   "default";
@@ -73,10 +76,41 @@ describe("Add buttons (ADR 0201 §2–§4)", () => {
     expect(submit.getAttribute("type")).toBe("submit");
   });
 
-  it("Scenarios: the page's Add is primary with a plus icon", () => {
+  it("Scenarios: the page's Add is primary with a plus icon; its dialog is named the same", async () => {
     render(<Scenarios />);
     const add = screen.getByRole("button", { name: en.scenarios.addScenario });
     expect(variant(add)).toBe("primary");
+    expect(hasIcon(add)).toBe(true);
+    await userEvent.click(add);
+    expect(
+      screen.getByRole("dialog", { name: en.scenarios.addScenario }),
+    ).toBeTruthy();
+  });
+
+  it.each(LANGUAGES.map((l) => l.value))(
+    "the empty scenario list in %s names the Add scenario button",
+    (lang) => {
+      const t = getDict(lang);
+      expect(t.scenarios.emptyList).toContain(t.scenarios.addScenario);
+    },
+  );
+
+  it("a row list's Add (prepayments) is small, default, with the plus icon", () => {
+    render(
+      <LoanEventRows
+        kind="prepayments"
+        name="prepayments"
+        label="Prepayments"
+        value=""
+        errors={{}}
+        onChange={() => undefined}
+      />,
+    );
+    const add = screen.getByRole("button", {
+      name: en.propertyDetail.eventAddPrepayment,
+    });
+    expect(variant(add)).toBe("default");
+    expect(add.classList.contains("sm")).toBe(true);
     expect(hasIcon(add)).toBe(true);
   });
 });
@@ -139,5 +173,18 @@ describe("one primary in the top bar (ADR 0201 §6)", () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+});
+
+describe("one primary per screen region (ADR 0201 §6)", () => {
+  it("the sample banner's Clear sample is a default button, not a second primary", () => {
+    act(() =>
+      usePortfolioStore.setState({
+        sample: { active: true, dismissed: false },
+      }),
+    );
+    render(<SampleBanner />);
+    const clear = screen.getByRole("button", { name: en.sample.clearAction });
+    expect(variant(clear)).toBe("default");
   });
 });

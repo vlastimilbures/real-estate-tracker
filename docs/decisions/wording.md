@@ -112,3 +112,12 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   English "rate reset" (owner: English jargon only); reformatting the crash preset labels
   "−20%" (a saved preset is found by name, ADR 0093).
 - Approved by: owner, 2026-10-13 (N7b plan, batches A–F, exact text)
+
+### 2026-11-15 · #380 / ADR 0201
+
+- Keys: `scenarios.emptyList` (en, cs, ru)
+- Change: the empty scenario list points to the renamed button, "Add scenario" (the
+  button's own name and the dialog title are accessible names, so ADR 0201 has them).
+- Rejected: leaving the old button name in the hint, because no button reads that any
+  more.
+- Approved by: owner's delegation of 2026-11-15 (comment on #392), owner review pending

@@ -829,7 +829,7 @@ export const cs: Dictionary = {
       `Zaškrtněte až ${max} ${csPlural(max, ["scénář", "scénáře", "scénářů"])} k porovnání. Základ je navíc a nepočítá se.`,
     duplicate: "Duplikovat",
     emptyList:
-      "Zatím žádné uložené scénáře — použijte předvolbu nebo „Nový scénář“.",
+      "Zatím žádné uložené scénáře — použijte předvolbu nebo „Přidat scénář“.",
     compareTitle: "Porovnání",
     nothingSelectedTitle: "Nic nevybráno",
     nothingSelectedBody: "Zaškrtněte Základ a/nebo scénáře výše pro porovnání.",
@@ -880,7 +880,7 @@ export const cs: Dictionary = {
     sumValueShock: (v, atYear) =>
       `hodnota −${v}${atYear ? ` @ rok${atYear}` : ""}`,
     editTitle: (name) => `Upravit „${name}“`,
-    newTitle: "Nový scénář",
+    newTitle: "Přidat scénář",
     formHint: "prázdné = zdědit Základ",
     name: "Název",
     namePlaceholder: "např. Recese",
