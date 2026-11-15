@@ -7,7 +7,6 @@ import {
   MoneyM,
   IrrValue,
   Pct,
-  Mult,
   Dscr,
   StatList,
 } from "../components/primitives";
@@ -20,7 +19,8 @@ import {
   type ChartRow,
   type EquityChangeRow,
 } from "../model/chartData";
-import { fmtCzkM, fmtMultiple, noBreak } from "../../lib/format";
+import { fmtCzkM, fmtMultiple, fmtPct, noBreak } from "../../lib/format";
+import type { ReactNode } from "react";
 import { dscrBadge, ltvBadge } from "../model/health";
 import {
   basisText,
@@ -94,7 +94,7 @@ export function KpiStrip({
           compact
           delay={24}
           label={d.stripInYear(horizonEndYear)}
-          value={fmtCzkM(horizon)}
+          value={<MoneyM value={horizon} />}
           foot={d.stripHorizonFoot(
             netWorthMultiple ? fmtMultiple(netWorthMultiple) : "—",
             horizonYears,
@@ -106,6 +106,7 @@ export function KpiStrip({
           delay={48}
           label={d.leveredIrr}
           value={<IrrValue irr={irr} dp={1} />}
+          valueTitle={irr.rate ? fmtPct(irr.rate, 2) : undefined}
           foot={d.irrFoot(horizonYears, modeWord)}
         />
         <KpiTile
@@ -305,14 +306,24 @@ export function MoreCharts({
   );
 }
 
+/** A label whose closing parenthetical ("(Yrs 1–30)") never breaks inside: in a half-width
+ *  column the line would otherwise break after the dash (ADR 0208 §3). */
+function keepTail(label: string): ReactNode {
+  const i = label.lastIndexOf(" (");
+  if (i < 0) return label;
+  return (
+    <>
+      {label.slice(0, i)} <span className="kpi-tail">{label.slice(i + 1)}</span>
+    </>
+  );
+}
+
 export function KpiListPanel({
   s,
   basis,
   kpis,
   mode,
-  horizon,
   horizonYears,
-  irr,
   cashInvested,
 }: {
   s: PortfolioSnapshot;
@@ -320,99 +331,94 @@ export function KpiListPanel({
   basis: AsOfBasis;
   kpis: PortfolioKPIs;
   mode: Mode;
-  horizon: Decimal;
   horizonYears: number;
-  irr: LeveredIrr;
   /** Σ own cash, null unless every property has it (ADR 0119 §9). */
   cashInvested: Decimal | null;
 }) {
   const t = useT();
+  const d = t.dashboard;
   const real = mode === "real";
   const lens = lensKpis(kpis, mode);
   const cagr = lens.cagr;
   const flow = monthlyFlow(s);
+  // Only what the tiles do not show, in three groups (ADR 0208); net worth at the horizon,
+  // the multiple and IRR are the tiles' alone.
+  const groups: { title: string; rows: { k: ReactNode; v: ReactNode }[] }[] = [
+    {
+      title: d.kpiGroupReturns,
+      rows: [
+        { k: d.kpiNetWorthCagr, v: cagr ? <Pct value={cagr} dp={2} /> : "—" },
+        { k: d.netYieldCap, v: <Pct value={s.netYield} dp={2} /> },
+        { k: d.kpiGrossYield, v: <Pct value={s.grossYield} dp={2} /> },
+        // A recorded nominal amount, labelled so in the real lens (ADR 0087, 0119 §9).
+        ...(cashInvested
+          ? [
+              {
+                k: real ? d.kpiCashInvestedNominal : d.kpiCashInvested,
+                v: <Money value={cashInvested} parens={false} />,
+              },
+            ]
+          : []),
+      ],
+    },
+    {
+      title: d.kpiGroupCashFlow,
+      rows: [
+        {
+          k: d.kpiMonthlyInflow,
+          v: <Money value={flow.inflow} parens={false} />,
+        },
+        {
+          k: d.kpiMonthlyOutflow,
+          v: <Money value={flow.outflow} parens={false} />,
+        },
+        {
+          k: keepTail(d.kpiCumulativeCashToOwner(horizonYears)),
+          v: <Money value={lens.cumulativeNetCashFlow} signed />,
+        },
+        {
+          k: d.kpiFirstCfPositiveYear,
+          v: kpis.firstCashFlowPositiveYear ?? "—",
+        },
+      ],
+    },
+    {
+      title: d.kpiGroupDebt,
+      rows: [
+        {
+          k: d.kpiWeightedAvgRate,
+          v: <Pct value={s.weightedAvgRate} dp={2} />,
+        },
+        {
+          // Σ principal repaid stays nominal; labelled so in the real lens (ADR 0087).
+          k: keepTail(
+            real
+              ? d.kpiSumPrincipalRepaidNominal(horizonYears)
+              : d.kpiSumPrincipalRepaid(horizonYears),
+          ),
+          v: <Money value={kpis.totalPrincipalRepaid} parens={false} />,
+        },
+        { k: d.kpiDebtFullyRepaid, v: kpis.debtFreeYear ?? "—" },
+      ],
+    },
+  ];
   return (
-    <Panel
-      title={t.dashboard.kpiTitle}
-      hint={real ? t.dashboard.kpiHintReal : t.dashboard.kpiHintNominal}
-    >
-      <StatList
-        rows={[
-          {
-            k: t.dashboard.kpiNetWorthAtHorizon,
-            v: <Money value={horizon} parens={false} />,
-          },
-          {
-            k: t.dashboard.kpiNetWorthMultiple,
-            v: lens.netWorthMultiple ? (
-              <Mult value={lens.netWorthMultiple} />
-            ) : (
-              "—"
-            ),
-          },
-          {
-            k: t.dashboard.kpiNetWorthCagr,
-            v: cagr ? <Pct value={cagr} dp={2} /> : "—",
-          },
-          {
-            k: t.dashboard.kpiLeveredIrr,
-            v: <IrrValue irr={irr} dp={2} />,
-          },
-          {
-            k: t.dashboard.kpiCumulativeCashToOwner(horizonYears),
-            v: <Money value={lens.cumulativeNetCashFlow} signed />,
-          },
-          {
-            k: t.dashboard.kpiFirstCfPositiveYear,
-            v: kpis.firstCashFlowPositiveYear ?? "—",
-          },
-          { k: t.dashboard.kpiDebtFullyRepaid, v: kpis.debtFreeYear ?? "—" },
-          {
-            // Σ principal repaid stays nominal; labelled so in the real lens (ADR 0087).
-            k: real
-              ? t.dashboard.kpiSumPrincipalRepaidNominal(horizonYears)
-              : t.dashboard.kpiSumPrincipalRepaid(horizonYears),
-            v: <Money value={kpis.totalPrincipalRepaid} parens={false} />,
-          },
-          {
-            k: t.dashboard.kpiWeightedAvgRate,
-            v: <Pct value={s.weightedAvgRate} dp={2} />,
-          },
-          // A recorded nominal amount, labelled so in the real lens (ADR 0087, 0119 §9).
-          ...(cashInvested
-            ? [
-                {
-                  k: real
-                    ? t.dashboard.kpiCashInvestedNominal
-                    : t.dashboard.kpiCashInvested,
-                  v: <Money value={cashInvested} parens={false} />,
-                },
-              ]
-            : []),
-        ]}
-      />
-      {/* The figures that left the tiles (ADR 0200 §3), for the strip's basis. */}
-      <h3 className="panel-subhead">
-        {t.dashboard.kpiAsOfGroup(basisText(t, basis))}
-      </h3>
-      <StatList
-        rows={[
-          { k: t.dashboard.netYieldCap, v: <Pct value={s.netYield} dp={2} /> },
-          {
-            k: t.dashboard.kpiGrossYield,
-            v: <Pct value={s.grossYield} dp={2} />,
-          },
-          {
-            k: t.dashboard.kpiMonthlyInflow,
-            v: <Money value={flow.inflow} parens={false} />,
-          },
-          {
-            k: t.dashboard.kpiMonthlyOutflow,
-            v: <Money value={flow.outflow} parens={false} />,
-          },
-        ]}
-      />
-      <p className="panel-note">{monthlyFlowHint(t, basis, s.asOf)}</p>
+    <Panel title={d.kpiTitle} hint={real ? d.kpiHintReal : d.kpiHintNominal}>
+      <div className="kpi-box">
+        <div className="kpi-groups">
+          {groups.map((g) => (
+            <section key={g.title} className="kpi-group">
+              <h3 className="panel-subhead">{g.title}</h3>
+              <StatList rows={g.rows} />
+            </section>
+          ))}
+        </div>
+      </div>
+      {/* What the yields and monthly figures are for (ADR 0200 §3, ADR 0208 §4). */}
+      <p className="panel-note">
+        {d.kpiAsOfGroup(basisText(t, basis))} ·{" "}
+        {monthlyFlowHint(t, basis, s.asOf)}
+      </p>
     </Panel>
   );
 }

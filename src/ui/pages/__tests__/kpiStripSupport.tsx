@@ -24,3 +24,8 @@ export function renderStrip(s: PortfolioSnapshot) {
     />,
   );
 }
+
+/** Matches a key-figures row label by its whole text: a label's parenthetical sits in its
+ *  own no-wrap span (ADR 0208 §3), so the plain text matcher would not see it. */
+export const rowLabel = (text: string) => (_: string, el: Element | null) =>
+  el?.classList.contains("k") === true && el.textContent === text;

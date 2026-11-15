@@ -329,10 +329,11 @@ export const cs: Dictionary = {
     kpiTitle: "Klíčové ukazatele",
     kpiHintNominal: "nominální hodnoty",
     kpiHintReal: "reálné hodnoty (Kč k základnímu datu)",
-    kpiNetWorthAtHorizon: "Čisté jmění na horizontu",
-    kpiNetWorthMultiple: "Násobek čistého jmění",
+    // ADR 0208: skupiny klíčových ukazatelů.
+    kpiGroupReturns: "Výnosy",
+    kpiGroupCashFlow: "Peněžní tok",
+    kpiGroupDebt: "Dluh",
     kpiNetWorthCagr: "CAGR čistého jmění",
-    kpiLeveredIrr: "Pákové IRR",
     kpiCumulativeCashToOwner: (n) =>
       `Kumulativní hotovost vlastníkovi (roky 1–${n})`,
     kpiFirstCfPositiveYear: "První rok s kladným cash flow",

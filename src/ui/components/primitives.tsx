@@ -7,7 +7,6 @@ import {
   fmtCzk,
   fmtCzkM,
   fmtPct,
-  fmtMultiple,
   fmtDscr,
   roundCzk,
   signTone,
@@ -81,10 +80,6 @@ export function IrrValue({ irr, dp = 1 }: { irr: LeveredIrr; dp?: number }) {
       {note && <span className="sr-only"> ({note})</span>}
     </span>
   );
-}
-
-export function Mult({ value, dp = 2 }: { value: Num; dp?: number }) {
-  return <span className="num">{fmtMultiple(value, dp)}</span>;
 }
 
 /** DSCR, capped for display at ">99,00x" (D-35). */
@@ -334,6 +329,7 @@ export function KpiTile({
   health,
   delay = 0,
   testId,
+  valueTitle,
 }: {
   label: ReactNode;
   value: ReactNode;
@@ -345,6 +341,9 @@ export function KpiTile({
   health?: { band: Band; text: string } | undefined;
   delay?: number | undefined;
   testId?: string | undefined;
+  /** The exact value where the tile rounds: the value's tooltip, and read out after it,
+   *  as MoneyM does (ADR 0208 §1). */
+  valueTitle?: string | undefined;
 }) {
   return (
     <div
@@ -355,8 +354,10 @@ export function KpiTile({
       <div
         className={`value ${hero ? "xl" : compact ? "md" : "lg"}`}
         data-testid={testId}
+        title={valueTitle}
       >
         {value}
+        {valueTitle && <span className="sr-only"> ({valueTitle})</span>}
       </div>
       {hero && <div className="accent-rule" />}
       {(foot || health) && (

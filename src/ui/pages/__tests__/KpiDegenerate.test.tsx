@@ -85,9 +85,7 @@ describe("no growth base: the multiple shows — (ADR 0126)", () => {
           basis={{ kind: "today" }}
           kpis={kpis}
           mode="nominal"
-          horizon={kpis.netWorthNominal}
           horizonYears={N}
-          irr={{ rate: null, reason: "NO_ROOT" }}
           cashInvested={null}
         />
       </>,
@@ -101,7 +99,7 @@ describe("no growth base: the multiple shows — (ADR 0126)", () => {
         ),
       ),
     ).toBeTruthy();
-    const key = screen.getByText(en.dashboard.kpiNetWorthMultiple);
-    expect(key.nextElementSibling?.textContent).toBe("—");
+    // The multiple is the tile's alone (ADR 0208 §1).
+    expect(screen.queryByText("Net-worth multiple")).toBeNull();
   });
 });

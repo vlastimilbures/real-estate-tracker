@@ -273,6 +273,60 @@ async function expectKpiStrip(ux: Ux, maxHeight = 96) {
   }
 }
 
+/**
+ * The key figures (ADR 0208): three groups. At 1280 px and wider, Returns and Cash flow
+ * side by side, Debt straight under Returns, and a row's label and value at most 480 px
+ * apart; one column at 900 px. Every label's text ends at least 8 px before its value.
+ */
+async function expectKeyFigures(ux: Ux) {
+  const p = panel(ux, ux.t.dashboard.kpiTitle);
+  const m = await p.evaluate((el) => {
+    const groups = Array.from(el.querySelectorAll(".kpi-group"), (g) =>
+      g.getBoundingClientRect(),
+    );
+    const rows = Array.from(el.querySelectorAll(".statlist .k"), (k) => {
+      const kr = k.getBoundingClientRect();
+      const v = k.nextElementSibling as Element;
+      const vr = v.getBoundingClientRect();
+      // The text itself, not the cell: the cells always meet.
+      const text = (node: Element) => {
+        const r = document.createRange();
+        r.selectNodeContents(node);
+        return Array.from(r.getClientRects());
+      };
+      const labelRight = Math.max(...text(k).map((r) => r.right));
+      const valueLeft = Math.min(...text(v).map((r) => r.left));
+      return { span: vr.right - kr.left, clear: valueLeft - labelRight };
+    });
+    return {
+      groups: groups.map((g) => ({
+        top: Math.round(g.top),
+        bottom: Math.round(g.bottom),
+        left: Math.round(g.left),
+      })),
+      rows,
+    };
+  });
+  const width = ux.page.viewportSize()!.width;
+  const [returns, cashFlow, debt] = m.groups;
+  expect(m.groups, "three groups").toHaveLength(3);
+  if (width >= 1280) {
+    expect(returns.top, "Returns and Cash flow side by side").toBe(
+      cashFlow.top,
+    );
+    expect(debt.left, "Debt under Returns").toBe(returns.left);
+    expect(debt.top, "Debt straight under Returns").toBeLessThan(
+      returns.bottom + 24,
+    );
+    for (const r of m.rows)
+      expect(r.span, "label to value").toBeLessThanOrEqual(480);
+  } else if (width <= 900) {
+    expect(cashFlow.top, "one column").toBeGreaterThan(returns.top);
+  }
+  for (const r of m.rows)
+    expect(r.clear, "label clear of its value").toBeGreaterThanOrEqual(8);
+}
+
 /** The Dashboard's hierarchy (ADR 0202): at 1280 × 800 the hero chart ends inside the
  *  first viewport and Financing starts within the second; at every width each row of
  *  small multiples is full (no empty cell). */
@@ -672,6 +726,7 @@ export const SCREENS: Screen[] = [
       await expectKpiStrip(ux);
       await expectDashboardHierarchy(ux);
       await expectFinancingTimeline(ux, 3, 300);
+      await expectKeyFigures(ux);
     },
   },
   {
@@ -683,6 +738,7 @@ export const SCREENS: Screen[] = [
       await ux.capture("02-dashboard-real");
       // After the shot, so a failing layout still leaves its picture.
       await expectKpiStrip(ux);
+      await expectKeyFigures(ux);
     },
   },
   {

@@ -12,6 +12,7 @@ import { fmtMultiple } from "../../../lib/format";
 import { lensKpis } from "../../model/lensKpis";
 import type { Mode } from "../../model/lens";
 import { KpiStrip, KpiListPanel } from "../DashboardPanels";
+import { rowLabel } from "./kpiStripSupport";
 
 const s = portfolioSnapshot(portfolio, assumptions);
 const kpis = portfolioKpis(portfolio, assumptions);
@@ -38,9 +39,7 @@ function renderPanels(mode: Mode) {
         basis={{ kind: "today" }}
         kpis={kpis}
         mode={mode}
-        horizon={real ? kpis.netWorthReal : kpis.netWorthNominal}
         horizonYears={N}
-        irr={{ rate: null, reason: "NO_ROOT" }}
         cashInvested={null}
       />
     </>,
@@ -60,10 +59,10 @@ describe("Dashboard KPIs by lens (ADR 0087)", () => {
     expect(container.textContent).not.toContain(nominal);
     expect(screen.getByText(en.dashboard.kpiHintReal)).toBeTruthy();
     expect(
-      screen.getByText(en.dashboard.kpiSumPrincipalRepaidNominal(N)),
+      screen.getByText(rowLabel(en.dashboard.kpiSumPrincipalRepaidNominal(N))),
     ).toBeTruthy();
     expect(
-      screen.queryByText(en.dashboard.kpiSumPrincipalRepaid(N)),
+      screen.queryByText(rowLabel(en.dashboard.kpiSumPrincipalRepaid(N))),
     ).toBeNull();
   });
 
@@ -75,7 +74,7 @@ describe("Dashboard KPIs by lens (ADR 0087)", () => {
     ).toBeTruthy();
     expect(screen.getByText(en.dashboard.kpiHintNominal)).toBeTruthy();
     expect(
-      screen.getByText(en.dashboard.kpiSumPrincipalRepaid(N)),
+      screen.getByText(rowLabel(en.dashboard.kpiSumPrincipalRepaid(N))),
     ).toBeTruthy();
   });
 

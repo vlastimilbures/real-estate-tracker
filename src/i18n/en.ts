@@ -356,10 +356,11 @@ export const en = {
     kpiTitle: "Key performance indicators",
     kpiHintNominal: "nominal terms",
     kpiHintReal: "real terms (base-date Kč)",
-    kpiNetWorthAtHorizon: "Net worth at horizon",
-    kpiNetWorthMultiple: "Net-worth multiple",
+    // ADR 0208: the key figures' groups.
+    kpiGroupReturns: "Returns",
+    kpiGroupCashFlow: "Cash flow",
+    kpiGroupDebt: "Debt",
     kpiNetWorthCagr: "Net-worth CAGR",
-    kpiLeveredIrr: "Levered IRR",
     kpiCumulativeCashToOwner: (n: number) =>
       `Cumulative cash to owner (Yrs 1–${n})`,
     kpiFirstCfPositiveYear: "First cash-flow-positive year",

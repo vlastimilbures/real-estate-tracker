@@ -336,10 +336,11 @@ export const ru: Dictionary = {
     kpiTitle: "Ключевые показатели",
     kpiHintNominal: "номинальные значения",
     kpiHintReal: "реальные значения (Kč на базовую дату)",
-    kpiNetWorthAtHorizon: "Чистые активы на горизонте",
-    kpiNetWorthMultiple: "Множитель чистых активов",
+    // ADR 0208: группы ключевых показателей.
+    kpiGroupReturns: "Доходность",
+    kpiGroupCashFlow: "Денежный поток",
+    kpiGroupDebt: "Долг",
     kpiNetWorthCagr: "CAGR чистых активов",
-    kpiLeveredIrr: "IRR с плечом",
     kpiCumulativeCashToOwner: (n) =>
       `Накопленный денежный поток владельцу (годы 1–${n})`,
     kpiFirstCfPositiveYear: "Первый год с положительным потоком",
