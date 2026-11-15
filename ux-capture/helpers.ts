@@ -303,26 +303,20 @@ export async function pickFiveYearsAndCheckHint(page: Page) {
   const place = () =>
     bar.evaluate((el) => {
       const top = el.getBoundingClientRect();
-      // The chips sit in the bar's left group with the Data check's "to review" link,
-      // which appears with findings (ADR 0206 §2): the chips themselves keep their place.
-      return Array.from(el.children)
-        .flatMap((c) =>
-          c.classList.contains("filter-bar-start")
-            ? Array.from(c.children).filter(
-                (x) => x.getAttribute("data-testid") !== "to-review",
-              )
-            : [c],
-        )
-        .filter((c) => !c.classList.contains("asof-hint"))
-        .map((c) => {
-          const r = c.getBoundingClientRect();
-          return {
-            x: r.x - top.x,
-            y: r.y - top.y,
-            width: r.width,
-            height: r.height,
-          };
-        });
+      return (
+        Array.from(el.children)
+          // The hint's row also holds the Data check's "to review" link (ADR 0206 §2).
+          .filter((c) => !c.classList.contains("asof-foot"))
+          .map((c) => {
+            const r = c.getBoundingClientRect();
+            return {
+              x: r.x - top.x,
+              y: r.y - top.y,
+              width: r.width,
+              height: r.height,
+            };
+          })
+      );
     });
   const before = await place();
   const preset = page.getByTestId("asof-5y");

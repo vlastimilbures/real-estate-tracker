@@ -183,42 +183,42 @@ export function Dashboard() {
     >
       <SampleBanner />
       <div className="filter-bar">
-        <div className="filter-bar-start">
-          {allProperties.length > 1 && (
-            <PropertySelect
-              mode="multi"
-              options={allProperties.map((p) => ({
-                value: p.id,
-                label: p.name,
-              }))}
-              allLabel={t.common.all}
-              selected={effectiveIds}
-              onChange={setDashboardPropertyIds}
-            />
-          )}
-          {/* Warnings stay in view although the Data check is last (ADR 0206 §2). */}
-          {toReview > 0 && (
-            <Button
-              size="sm"
-              variant="ghost"
-              icon={AlertTriangle}
-              data-testid="to-review"
-              onClick={() => {
-                // Open first, so the scroll lands on the open panel (a collapsed one
-                // last on the page cannot scroll to the top).
-                flushSync(() => setDataCheckOpen(true));
-                focusSection(DATA_CHECK_ID);
-              }}
-            >
-              {t.dataCheck.toReview(toReview)}
-            </Button>
-          )}
-        </div>
+        {allProperties.length > 1 && (
+          <PropertySelect
+            mode="multi"
+            options={allProperties.map((p) => ({
+              value: p.id,
+              label: p.name,
+            }))}
+            allLabel={t.common.all}
+            selected={effectiveIds}
+            onChange={setDashboardPropertyIds}
+          />
+        )}
         <AsOfPicker
           value={asOf}
           onChange={setAsOf}
           bounds={view.bounds}
           hint={asOfHint(t, basis, assumptions.baseDate)}
+          lead={
+            // Warnings stay in view although the Data check is last (ADR 0206 §2); on
+            // the hint's row, so the chips and the picker keep their place (ADR 0198).
+            toReview > 0 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={AlertTriangle}
+                onClick={() => {
+                  // Open first, so the scroll lands on the open panel (a collapsed one
+                  // last on the page cannot scroll to the top).
+                  flushSync(() => setDataCheckOpen(true));
+                  focusSection(DATA_CHECK_ID);
+                }}
+              >
+                {t.dataCheck.toReview(toReview)}
+              </Button>
+            )
+          }
         />
       </div>
 

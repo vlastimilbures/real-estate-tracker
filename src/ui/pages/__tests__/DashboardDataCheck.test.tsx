@@ -231,7 +231,12 @@ describe("Data check on the Dashboard page (ADR 0118, ADR 0206)", () => {
     showDashboard([], fiveYears);
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
     const link = screen.getByRole("button", { name: d.toReview(6) });
-    expect(link.closest(".filter-bar")).not.toBeNull();
+    // On the bar's second row, with the as-of hint: the chips and the picker never move
+    // when findings come and go (ADR 0198, ADR 0206 §2).
+    expect(link.closest(".filter-bar > .asof-foot")).not.toBeNull();
+    expect(
+      link.parentElement?.querySelector("[data-testid=asof-hint]"),
+    ).not.toBeNull();
     await userEvent.click(link);
     expect(toggle().getAttribute("aria-expanded")).toBe("true");
     expect(document.activeElement?.textContent).toBe(d.title);

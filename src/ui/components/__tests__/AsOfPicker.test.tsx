@@ -78,8 +78,30 @@ describe("AsOfPicker (UX-059)", () => {
     const group = screen.getByTestId("asof-picker");
     const hint = screen.getByTestId("asof-hint");
     expect(group.contains(hint)).toBe(false);
-    expect(hint.parentElement).toBe(container.querySelector(".filter-bar"));
-    expect(group.nextElementSibling).toBe(hint);
+    // The hint's row is the bar's own item, next to the group (ADR 0198, ADR 0206 §2).
+    const row = hint.parentElement as HTMLElement;
+    expect(row.className).toBe("asof-foot");
+    expect(row.parentElement).toBe(container.querySelector(".filter-bar"));
+    expect(group.nextElementSibling).toBe(row);
+  });
+
+  it("a lead opens the hint's row, before the hint; no row without either", () => {
+    const { container, rerender } = render(
+      <AsOfPicker
+        value={null}
+        onChange={vi.fn()}
+        bounds={bounds}
+        hint="Hint"
+        lead={<button type="button">Lead</button>}
+      />,
+    );
+    const row = container.querySelector(".asof-foot") as HTMLElement;
+    expect(Array.from(row.children, (c) => c.textContent)).toEqual([
+      "Lead",
+      "Hint",
+    ]);
+    rerender(<AsOfPicker value={null} onChange={vi.fn()} bounds={bounds} />);
+    expect(container.querySelector(".asof-foot")).toBeNull();
   });
 
   it("the text follows a value set from outside", () => {

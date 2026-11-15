@@ -24,7 +24,10 @@ counts beside the findings, no grouping.
 
 1. **Position:** the Data check is the last section of the Dashboard, after the KPI list.
 2. **Top link:** when at least one finding needs attention, the filter bar shows
-   `dataCheck.toReview(n)` ("6 to review") with a warning icon. It opens the panel, scrolls
+   `dataCheck.toReview(n)` ("6 to review") with a warning icon, on the bar's second row
+   under the property chips, where the as-of hint sits on the right (ADR 0198). The first
+   row is full in Russian at 1280 px, and the link comes and goes with the date, so it
+   would otherwise push the picker to a new row. It opens the panel, scrolls
    it to the top and moves focus to its heading (`focusSection`, ADR 0107). It is absent
    when nothing needs attention; defaults never show it.
 3. **Summary row**, always visible under the heading, with the as-of date as the panel's

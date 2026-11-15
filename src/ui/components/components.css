@@ -579,15 +579,6 @@
 .dc-anchor {
   scroll-margin-top: calc(var(--topbar-h, 0px) + var(--s3));
 }
-.filter-bar-start {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--s3);
-}
-.filter-bar-start > .btn > svg {
-  color: var(--warn);
-}
 /* The summary row: always shown, the counts with their icons. */
 .dc-summary {
   display: flex;
@@ -1304,13 +1295,24 @@ table.data tbody tr:hover td.sticky-col {
   font-size: 11px;
   color: var(--ink-soft);
 }
-/* The filter bar's own row, right-aligned under the picker, as wide as the bar
-   (ADR 0198). */
-.filter-bar > .asof-hint {
+/* The filter bar's own row under the picker, as wide as the bar (ADR 0198): the hint
+   right-aligned, led on the left by the Dashboard's "N to review" link (ADR 0206 §2), so
+   neither moves the chips or the picker. */
+.filter-bar > .asof-foot {
   flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s1) var(--s3);
   /* 4 px under the picker instead of the bar's 12 px row gap. */
   margin-top: calc(var(--s1) - var(--s3));
+}
+.asof-foot > .asof-hint {
+  margin-left: auto;
   text-align: right;
+}
+.asof-foot > .btn > svg {
+  color: var(--warn);
 }
 
 /* ============ Forms ============ */
