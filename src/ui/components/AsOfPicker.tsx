@@ -4,7 +4,7 @@
 // projection window (UX-059, D-19). It shows the date the page computes for, by the one
 // resolver (ADR 0150): a stale stored value or a future base date shows the clamped date.
 // Place it directly in a `.filter-bar`: its hint is that bar's last row (ADR 0198).
-import { useState, useId } from "react";
+import { useState, useId, type ReactNode } from "react";
 import { parseDate, dateDraft } from "../model/formParse";
 import { todayUtc } from "../../lib/day";
 import { addYears } from "../../engine";
@@ -18,6 +18,7 @@ export function AsOfPicker({
   anchor,
   bounds,
   hint,
+  lead,
 }: {
   value: Date | null;
   onChange: (date: Date | null) => void;
@@ -28,6 +29,8 @@ export function AsOfPicker({
   anchor?: Date;
   /** How the date maps to what the page shows (ADR 0088); none at Today. */
   hint?: string | null;
+  /** Leads the hint's row, e.g. the Dashboard's "N to review" link (ADR 0206 §2). */
+  lead?: ReactNode;
 }) {
   const t = useT();
   const labelId = useId();
@@ -70,7 +73,7 @@ export function AsOfPicker({
     effective.getTime() === addYears(presetAnchor, 5).getTime();
 
   // The hint follows the group as the filter bar's own row (ADR 0198), so it may use the
-  // bar's full width and never changes the picker's size.
+  // bar's full width and never changes the picker's size; a lead shares that row.
   return (
     <>
       <div
@@ -126,10 +129,15 @@ export function AsOfPicker({
           </button>
         </div>
       </div>
-      {hint && (
-        <span className="asof-hint" id={hintId} data-testid="asof-hint">
-          {hint}
-        </span>
+      {(hint || lead) && (
+        <div className="asof-foot">
+          {lead}
+          {hint && (
+            <span className="asof-hint" id={hintId} data-testid="asof-hint">
+              {hint}
+            </span>
+          )}
+        </div>
       )}
     </>
   );

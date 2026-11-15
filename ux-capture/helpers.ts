@@ -303,17 +303,20 @@ export async function pickFiveYearsAndCheckHint(page: Page) {
   const place = () =>
     bar.evaluate((el) => {
       const top = el.getBoundingClientRect();
-      return Array.from(el.children)
-        .filter((c) => !c.classList.contains("asof-hint"))
-        .map((c) => {
-          const r = c.getBoundingClientRect();
-          return {
-            x: r.x - top.x,
-            y: r.y - top.y,
-            width: r.width,
-            height: r.height,
-          };
-        });
+      return (
+        Array.from(el.children)
+          // The hint's row also holds the Data check's "to review" link (ADR 0206 §2).
+          .filter((c) => !c.classList.contains("asof-foot"))
+          .map((c) => {
+            const r = c.getBoundingClientRect();
+            return {
+              x: r.x - top.x,
+              y: r.y - top.y,
+              width: r.width,
+              height: r.height,
+            };
+          })
+      );
     });
   const before = await place();
   const preset = page.getByTestId("asof-5y");

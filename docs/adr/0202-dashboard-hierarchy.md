@@ -5,6 +5,7 @@
 - Source: issue #376 (UX/UI review 2026-11, tracking #392, finding F3); direction approved
   by the owner on 2026-11-15 (the issue's layout); acceptance delegated by the owner for
   the 2026-11-15 run (comment on #392)
+- Amended by: [0206](0206-data-check-grouped.md) (§1: the Data check moves last)
 - Related: [0200](0200-dashboard-kpi-strip.md) (the KPI strip above),
   [0114](0114-a11y-skip-link-charts.md) (charts and their table view, unchanged),
   [0157](0157-accessibility-batch.md) (one h1, sections h2)

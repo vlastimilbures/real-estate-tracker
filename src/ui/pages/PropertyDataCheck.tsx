@@ -37,7 +37,6 @@ export function PropertyDataCheckPanel({
         attention={attention}
         defaults={defaults}
         resetRate={resetRate}
-        showNames={false}
         onFix={(_, fix) => onFix(fix)}
       />
       <p className="panel-note">{d.asOfNote(fmtDate(asOf))}</p>

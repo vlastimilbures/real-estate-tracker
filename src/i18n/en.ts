@@ -445,6 +445,22 @@ export const en = {
       "Own cash paid at purchase is not recorded, so Cash invested is not known.",
     fundingUnknownFuture:
       "Own cash for this purchase is not recorded, so Cash invested is not known and the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
+    // ADR 0206: the Dashboard's grouped Data check.
+    toReview: (n: number) => `${n} to review`,
+    needAttention: (n: number) =>
+      `${n} ${enPlural(n, ["needs attention", "need attention"])}`,
+    useDefaults: (n: number) =>
+      `${n} ${enPlural(n, ["uses", "use"])} portfolio defaults`,
+    valuationStaleGroup:
+      "The valuation in use is more than 12 months old. Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.",
+    noValuationGroup:
+      "No valuation is recorded, so the purchase price, grown at the appreciation rate since the purchase date, stands in as the market value.",
+    leaseEndedGroup:
+      "The lease ended and no next lease is entered. The snapshot counts no rent after the end date; the projection assumes the lease is renewed.",
+    leaseEndingGroup:
+      "The lease ends within 3 months and no next lease is entered. The projection assumes it is renewed.",
+    fixationEndedGroup: (rate: string) =>
+      `The fixation ended and no follow-on block is entered, so the app assumes the reset rate of ${rate} from the fixation end on. Add the terms of the new fixation as a new mortgage block.`,
     recordFunding: "Record funding",
     // Stored values outside the form ranges (ADR 0148).
     outOfRangeSize: (value: string, range: string) =>

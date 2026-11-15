@@ -22,7 +22,7 @@ import type {
   Rate,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
-import { fmtCzk, fmtDate, fmtNumber } from "../../lib/format";
+import { fmtCzk, fmtDate, fmtNumber, fmtPct } from "../../lib/format";
 import { inRange, outOfRangeFields, type IntRange } from "../../lib/intRanges";
 import {
   DATE_FLOOR,
@@ -315,6 +315,107 @@ export function dataCheckItems(
       })),
     );
   return { attention: rows("attention"), defaults: rows("defaults") };
+}
+
+/** The Dashboard's findings (ADR 0118, ADR 0206): the active properties in view, with
+ *  the portfolio's own rows first in "needs attention" (ADR 0148). */
+export function dashboardDataCheck(
+  portfolio: Portfolio,
+  asOf: Date,
+  baseDate: Date,
+  horizonYears: number,
+): { attention: DataCheckItem[]; defaults: DataCheckItem[] } {
+  // Inactive properties are left out, as from the Dashboard's totals.
+  const items = dataCheckItems(
+    portfolio.properties.filter((p) => p.active !== false),
+    portfolio,
+    asOf,
+    baseDate,
+  );
+  return {
+    attention: [
+      ...portfolioDataCheck({ horizonYears, baseDate }),
+      ...items.attention,
+    ],
+    defaults: items.defaults,
+  };
+}
+
+/** One property's place in a grouped line: the chip that links to its fix. A portfolio
+ *  row has no property (`propertyId` and `name` null). */
+export interface DataCheckChip {
+  propertyId: string | null;
+  name: string | null;
+  /** This property's part of the problem (an age, a date), or null when the line says
+   *  it all. */
+  detail: string | null;
+  fix: DataCheckFix;
+}
+
+/** One line of the grouped Data check: the problem and its effect once, then a chip per
+ *  affected property (ADR 0206 §4). */
+export interface DataCheckGroup {
+  kind: DataFinding["kind"];
+  headline: string;
+  chips: DataCheckChip[];
+}
+
+/** A finding as a shared line and its property's detail: the kinds whose sentence holds
+ *  a per-property value get a line of their own and the value on the chip; every other
+ *  finding keeps its sentence, which equal findings share. */
+function findingLine(
+  t: Pick<Dictionary, "dataCheck" | "propertyDetail">,
+  f: DataFinding,
+  resetRate: Rate,
+): { headline: string; detail: string | null } {
+  const d = t.dataCheck;
+  switch (f.kind) {
+    case "valuationStale":
+      return {
+        headline: d.valuationStaleGroup,
+        detail: `${t.propertyDetail.monthsCount(f.months)} · ${fmtDate(f.validFrom)}`,
+      };
+    case "noValuation":
+      return {
+        headline: d.noValuationGroup,
+        detail: `${fmtCzk(f.purchasePrice)} · ${fmtDate(f.purchaseDate)}`,
+      };
+    case "leaseEnded":
+      return { headline: d.leaseEndedGroup, detail: fmtDate(f.endDate) };
+    case "leaseEnding":
+      return { headline: d.leaseEndingGroup, detail: fmtDate(f.endDate) };
+    case "fixationEnded":
+      if (!f.until)
+        return {
+          headline: d.fixationEndedGroup(fmtPct(resetRate)),
+          detail: fmtDate(f.fixationEnd),
+        };
+      break;
+    default:
+      break;
+  }
+  return { headline: findingText(t, f, resetRate), detail: null };
+}
+
+/** The list's findings grouped by problem, in the order each problem first appears, so
+ *  portfolio rows stay first (ADR 0206 §4). */
+export function dataCheckGroups(
+  t: Pick<Dictionary, "dataCheck" | "propertyDetail">,
+  items: readonly DataCheckItem[],
+  resetRate: Rate,
+): DataCheckGroup[] {
+  const groups = new Map<string, DataCheckGroup>();
+  for (const { propertyId, name, finding } of items) {
+    const { headline, detail } = findingLine(t, finding, resetRate);
+    const key = `${finding.kind}\u0000${headline}`;
+    let g = groups.get(key);
+    if (!g) {
+      g = { kind: finding.kind, headline, chips: [] };
+      groups.set(key, g);
+    }
+    g.chips.push({ propertyId, name, detail, fix: findingFix(finding) });
+  }
+  return [...groups.values()];
 }
 
 /** Where a stored date is fixed, by its record. */

@@ -194,6 +194,31 @@ describe("i18n dictionaries — plural forms", () => {
     ]);
   });
 
+  it("the Data check counts agree in number with their verb (ADR 0206)", () => {
+    const counts = (lang: "cs" | "ru") =>
+      [1, 2, 5, 21].map((n) =>
+        render(L[lang].get("dataCheck.needAttention"), n),
+      );
+    expect(counts("cs")).toEqual([
+      "1 položka vyžaduje pozornost",
+      "2 položky vyžadují pozornost",
+      "5 položek vyžaduje pozornost",
+      "21 položek vyžaduje pozornost",
+    ]);
+    expect(counts("ru")).toEqual([
+      "1 пункт требует внимания",
+      "2 пункта требуют внимания",
+      "5 пунктов требуют внимания",
+      "21 пункт требует внимания",
+    ]);
+    expect(render(L.cs.get("dataCheck.useDefaults"), 2)).toBe(
+      "2 položky používají výchozí hodnoty portfolia",
+    );
+    expect(render(L.ru.get("dataCheck.useDefaults"), 5)).toBe(
+      "5 пунктов используют значения портфеля по умолчанию",
+    );
+  });
+
   it("every language inflects the same count strings (DR-111, UX-034)", () => {
     const rest = [
       "properties.subtitle",
@@ -242,8 +267,13 @@ describe("i18n dictionaries — plural forms", () => {
       // The fixation timeline's name counts the window's years (ADR 0204).
       "dashboard.financingTimeline",
     ];
-    // The year word after a stored horizon outside the form range (#260 item 4).
-    const dataCheck = ["dataCheck.outOfRangeHorizon"];
+    // The year word after a stored horizon outside the form range (#260 item 4); the
+    // grouped Data check's counts (ADR 0206).
+    const dataCheck = [
+      "dataCheck.needAttention",
+      "dataCheck.useDefaults",
+      "dataCheck.outOfRangeHorizon",
+    ];
     const counted = [...common, ...financing, ...dataCheck, ...rest];
     // English writes the horizon and the IRR foot as compounds ("25-yr"); Czech and
     // Russian count years.

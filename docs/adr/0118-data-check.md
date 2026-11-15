@@ -9,7 +9,9 @@
   [0155](0155-lifecycle-states-on-the-pages.md) (no Data check on an inactive property's
   page), [0163](0163-leases-never-overlap.md) (stored overlapping leases need attention),
   [0181](0181-purchase-price-fallback-grows.md) (the stale and no-valuation texts say how
-  value is anchored)
+  value is anchored),
+  [0206](0206-data-check-grouped.md) (the Dashboard panel is last, summary first, its
+  findings grouped by problem)
 
 ## Context
 
