@@ -40,7 +40,6 @@
   --topbar-bg: rgba(245, 243, 238, 0.85); /* translucent sticky topbar */
   --hover-wash: rgba(28, 27, 25, 0.04); /* nav/control hover */
   --scrim: rgba(28, 27, 25, 0.45); /* modal backdrop */
-  --tile-grad: #f4f1ea; /* tile/legend gradient stop */
   --chip-bg: #f1ead9; /* sand chip background */
   --on-accent: #f4f1ea; /* ink on a filled accent surface */
 
@@ -121,7 +120,6 @@
   --topbar-bg: rgba(22, 24, 26, 0.85);
   --hover-wash: rgba(255, 255, 255, 0.06);
   --scrim: rgba(0, 0, 0, 0.6);
-  --tile-grad: #23272a;
   --chip-bg: #2a2f33;
   --on-accent: #16181a;
 

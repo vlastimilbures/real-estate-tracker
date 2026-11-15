@@ -372,8 +372,9 @@ async function expectKpiStrip(ux: Ux, maxHeight = 96) {
   }
 }
 
-/** Property detail's top bar (ADR 0215): "Properties ›" and the title on one line, the
- *  actions on one line (also at 900 × 600), beside the title at 1280 px and wider. */
+/** Property detail's top bar (ADR 0215): "Properties ›" and the title on one line and
+ *  the actions on one line (1280 × 800 and 900 × 600); at 1280 px and wider the actions
+ *  beside the title and the section tabs on one row. */
 async function expectPropertyTopBar(ux: Ux) {
   const bar = ux.page.locator("header.topbar");
   await expect(
@@ -383,23 +384,37 @@ async function expectPropertyTopBar(ux: Ux) {
     const title = el.querySelector(".page-title-row")!.getBoundingClientRect();
     const h1 = getComputedStyle(el.querySelector("h1")!);
     const actions = el.querySelector(":scope > .row")!;
+    // Items whose vertical centres lie within 4 px share a line.
     const mids = Array.from(actions.children)
       .map((c) => c.getBoundingClientRect())
       .filter((r) => r.height > 0)
-      .map((r) => Math.round(r.top + r.height / 2));
+      .map((r) => r.top + r.height / 2)
+      .sort((a, b) => a - b);
+    const lines = mids.filter((m, i) => i === 0 || m - mids[i - 1]! > 4);
+    const nav = el.querySelector(
+      ".topbar-subnav [role=list], .topbar-subnav ul",
+    );
+    const tabs = nav
+      ? Array.from(nav.children).map((c) =>
+          Math.round(c.getBoundingClientRect().top),
+        )
+      : [];
     return {
       titleHeight: title.height,
       line: parseFloat(h1.lineHeight) || parseFloat(h1.fontSize) * 1.3,
-      actionRows: new Set(mids).size,
+      actionRows: lines.length,
       beside: actions.getBoundingClientRect().top < title.bottom,
+      tabRows: new Set(tabs).size,
     };
   });
   expect(m.titleHeight, "breadcrumb and title on one line").toBeLessThan(
     m.line * 1.5,
   );
   expect(m.actionRows, "actions on one line").toBe(1);
-  if ((ux.page.viewportSize()?.width ?? 0) >= 1280)
+  if ((ux.page.viewportSize()?.width ?? 0) >= 1280) {
     expect(m.beside, "actions beside the title").toBe(true);
+    expect(m.tabRows, "section tabs on one row").toBe(1);
+  }
 }
 
 /**
@@ -1580,8 +1595,15 @@ export const SCREENS: Screen[] = [
       await ux.page.mouse.move(0, 0);
       // The undrawn note is the Debt tile's foot, on one row of tiles (ADR 0215).
       await expect(
-        ux.page.locator(".kpi-strip .tile").nth(1).locator(".foot"),
-      ).toBeVisible();
+        ux.page
+          .locator(".kpi-strip .tile")
+          .filter({
+            has: ux.page.locator(".label", {
+              hasText: new RegExp(`^${d.debt}$`),
+            }),
+          })
+          .locator(".foot"),
+      ).toContainText(ux.t.common.undrawnDebt("X").split("X")[1]!.trim());
       await expectKpiStrip(ux);
       await ux.capture("29f-property-dev-drawn-debt", { fullPage: false });
     },

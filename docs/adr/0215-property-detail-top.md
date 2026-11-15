@@ -7,7 +7,11 @@
   2026-11-15 run (comment on #392)
 - Amends: [0107](0107-property-section-nav.md) (the top bar's actions),
   [0169](0169-development-drawn-debt-display.md) (where the undrawn note sits on
-  Property detail)
+  Property detail),
+  [0195](0195-health-marker.md) (§3: Property detail's LTV and DSCR tiles show the
+  marker and word only),
+  [0200](0200-dashboard-kpi-strip.md) (Consequences: Property detail now uses the
+  strip's tiles)
 - Related: [0200](0200-dashboard-kpi-strip.md) (the Dashboard strip these tiles now
   follow), [0205](0205-properties-list-fits.md) (the short undrawn wording),
   [0195](0195-health-marker.md) (health marker), [0156](0156-pending-purchase-display.md)
@@ -29,8 +33,15 @@ the Debt tile.
    returns to the Properties list as the button did (the same guarded navigation), and
    is the first focusable element of the top bar, before the actions. The "‹ All
    properties" button and its key `propertyDetail.allProperties` are removed.
-2. **Actions.** "Edit property" stays the primary action; "Deactivate" / "Activate"
-   stays a default button before it. The Nominal / Real toggle is unchanged.
+2. **Actions.** "Edit property" stays the primary action, first; "Deactivate" /
+   "Activate" is a default button after it, as the issue sets out (it was before it).
+   Below a 1100 px window the Deactivate / Activate button shows only its icon: its label
+   stays its accessible name as screen-reader text, and its tooltip still explains it.
+   So the actions stay one line at 900 × 600 in Czech and Russian with Linux fonts. At
+   that size they sit as one row under the title, as every page's actions do (UX-021):
+   beside it they would need "Edit property" as a bare icon too, and the page's main
+   action keeps its words (a decision for owner review, #415). The Nominal / Real toggle
+   is unchanged.
 3. **Tiles.** The Dashboard strip's compact tile (ADR 0200 §4), one row of six, three by
    two when the strip is narrower than 960 px:
 
@@ -54,12 +65,15 @@ the Debt tile.
 ## Consequences
 
 - The top bar has one row of title and actions and one row of tabs at 1280 × 800, and
-  its actions do not wrap at 900 × 600 (checked by the ux capture on screen 20).
+  its actions stay one line at 900 × 600 (under the title); the section tabs are one
+  row at 1280 × 800 (checked by the ux capture on screen 20).
 - The tiles take one row of about 96 px instead of a row of about 120 px with
   wrapped feet.
 - The formula foot "LTV x %" of the Debt tile and "Net CF" of the DSCR tile become tiles
   of their own; the per-month net cash flow is new on this page and is the annual figure
   ÷ 12, as on the Dashboard.
 - No computed number, stored data or export changes.
+- The large tile and its hero form are no longer used anywhere: `KpiTile`'s `hero`, the
+  `.tiles` grid and their styles are removed.
 - Dictionary: `propertyDetail.allProperties` and `propertyDetail.netCf` are removed in
   en, cs and ru; no entry's text changes.

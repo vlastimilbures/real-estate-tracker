@@ -9,7 +9,8 @@
   band, no badge), [0158](0158-layouts-hold-in-czech-and-russian.md) (`bandPillParts`,
   still used by the Properties table until #379)
 - Amended by: [0200](0200-dashboard-kpi-strip.md) (§3: the Dashboard LTV and DSCR tiles
-  show the marker and word only)
+  show the marker and word only),
+  [0215](0215-property-detail-top.md) (§3: so do Property detail's)
 
 ## Context
 

@@ -289,13 +289,22 @@ export function PropertyDetail() {
       }
       actions={
         <>
+          <Button
+            variant="primary"
+            icon={Pencil}
+            onClick={() => setEditing("edit")}
+          >
+            {t.properties.editProperty}
+          </Button>
+          {/* Below a 1100 px window only the icon shows; the label stays the button's
+              name (ADR 0215 §2). */}
           {isActive ? (
             <Button
               icon={PowerOff}
               onClick={() => setConfirmingDeactivate(true)}
               title={t.propertyDetail.deactivateTitle}
             >
-              {t.propertyDetail.deactivate}
+              <span className="narrow-hide">{t.propertyDetail.deactivate}</span>
             </Button>
           ) : (
             <Button
@@ -304,18 +313,13 @@ export function PropertyDetail() {
               onClick={activate}
               title={t.propertyDetail.activateTitle}
             >
-              {toggling
-                ? t.propertyDetail.activating
-                : t.propertyDetail.activate}
+              <span className="narrow-hide">
+                {toggling
+                  ? t.propertyDetail.activating
+                  : t.propertyDetail.activate}
+              </span>
             </Button>
           )}
-          <Button
-            variant="primary"
-            icon={Pencil}
-            onClick={() => setEditing("edit")}
-          >
-            {t.properties.editProperty}
-          </Button>
         </>
       }
     >

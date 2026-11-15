@@ -331,7 +331,6 @@ export function KpiTile({
   label,
   value,
   foot,
-  hero = false,
   compact = false,
   health,
   delay = 0,
@@ -341,7 +340,6 @@ export function KpiTile({
   label: ReactNode;
   value: ReactNode;
   foot?: ReactNode | undefined;
-  hero?: boolean | undefined;
   /** The Dashboard KPI strip's tile: smaller padding and value (ADR 0200). */
   compact?: boolean | undefined;
   /** The band, shown as a marker and its word at the start of the foot (ADR 0195). */
@@ -354,19 +352,18 @@ export function KpiTile({
 }) {
   return (
     <div
-      className={`tile reveal${hero ? " hero" : ""}${compact ? " compact" : ""}`}
+      className={`tile reveal${compact ? " compact" : ""}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <span className="label">{label}</span>
       <div
-        className={`value ${hero ? "xl" : compact ? "md" : "lg"}`}
+        className={`value ${compact ? "md" : "lg"}`}
         data-testid={testId}
         title={valueTitle}
       >
         {value}
         {valueTitle && <span className="sr-only"> ({valueTitle})</span>}
       </div>
-      {hero && <div className="accent-rule" />}
       {(foot || health) && (
         <div className="foot">
           {health && (

@@ -82,6 +82,40 @@ describe("breadcrumb (ADR 0215 §1)", () => {
     fireEvent.click(screen.getByRole("link", { name: en.nav.properties }));
     expect(useUiStore.getState().route).toBe("properties");
   });
+
+  it("with unsaved edits it asks first, as every way off the page does", () => {
+    render(<PropertyDetail />);
+    act(() =>
+      useUiStore.setState({ unsavedChanges: true, pendingLeave: null }),
+    );
+    fireEvent.click(screen.getByRole("link", { name: en.nav.properties }));
+    expect(useUiStore.getState().route).toBe("property");
+    expect(useUiStore.getState().pendingLeave).not.toBeNull();
+    act(() =>
+      useUiStore.setState({ unsavedChanges: false, pendingLeave: null }),
+    );
+  });
+});
+
+describe("actions (ADR 0215 §2)", () => {
+  it("Edit property first, then Deactivate, whose label stays its name", () => {
+    render(<PropertyDetail />);
+    const bar = screen.getByRole("banner");
+    const edit = within(bar).getByRole("button", {
+      name: en.properties.editProperty,
+    });
+    const deactivate = within(bar).getByRole("button", {
+      name: en.propertyDetail.deactivate,
+    });
+    expect(
+      edit.compareDocumentPosition(deactivate) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // Narrow windows hide the label visually only (CSS), never from the name.
+    expect(deactivate.querySelector(".narrow-hide")?.textContent).toBe(
+      en.propertyDetail.deactivate,
+    );
+  });
 });
 
 describe("tiles (ADR 0215 §3)", () => {
@@ -135,6 +169,34 @@ describe("tiles (ADR 0215 §3)", () => {
     expect(tile.querySelector(".foot")?.textContent).toBe(
       `${fmtCzk(s.netCashFlow)}${en.dashboard.perYearBasis(en.dashboard.basisCurrent)}`,
     );
+  });
+});
+
+describe("net cash flow in a projection year, real lens (ADR 0215 §3)", () => {
+  it("names the projection year, and its month is its year ÷ 12", () => {
+    act(() =>
+      useUiStore.setState({
+        mode: "real",
+        asOf: new Date(Date.UTC(2031, 5, 7)),
+      }),
+    );
+    const { container } = render(<PropertyDetail />);
+    const tile = [...container.querySelectorAll(".kpi-strip .tile")].find(
+      (tl) =>
+        tl.querySelector(".label")?.textContent ===
+        en.dashboard.stripNetCashFlow,
+    )!;
+    const foot = tile.querySelector(".foot")!.textContent!;
+    expect(foot).toContain(en.dashboard.basisProjection("").trim());
+    const num = (s: string) => {
+      const neg = s.includes("(");
+      const n = Number(s.replace(/[^0-9]/g, ""));
+      return neg ? -n : n;
+    };
+    const monthly = num(tile.querySelector(".value .num")!.textContent!);
+    const yearly = num(tile.querySelector(".foot .num")!.textContent!);
+    // Rounded to whole Kč for display, so the year is within 12 Kč of 12 months.
+    expect(Math.abs(monthly * 12 - yearly)).toBeLessThanOrEqual(12);
   });
 });
 
