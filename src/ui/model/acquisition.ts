@@ -20,6 +20,9 @@ export interface AcquisitionView {
   /** The sources & uses gap, never a blocker; null while own cash is unknown. */
   warning: string | null;
   note: string | null;
+  /** The one line shown instead of the table while no cost, works, own cash or note is
+   *  recorded (ADR 0209); null once any is. */
+  emptyLine: string | null;
 }
 
 export function acquisitionView(
@@ -33,6 +36,11 @@ export function acquisitionView(
     missing,
   });
   const gap = s.gap;
+  const recorded =
+    s.transactionCosts !== null ||
+    s.initialWorks !== null ||
+    s.ownCash !== null ||
+    !!note?.trim();
   return {
     rows: [
       row(d.acqPrice, s.price),
@@ -50,6 +58,9 @@ export function acquisitionView(
           ? d.acqGapShort(fmtCzk(gap))
           : d.acqGapOver(fmtCzk(gap.abs())),
     note: note?.trim() ? d.acqRecordedNote(note.trim()) : null,
+    emptyLine: recorded
+      ? null
+      : d.acqEmpty(fmtCzk(s.price), s.loan ? fmtCzk(s.loan) : null),
   };
 }
 

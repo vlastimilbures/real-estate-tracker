@@ -13,6 +13,7 @@ import {
   Dscr,
   TableWrap,
   StatList,
+  Button,
 } from "../components/primitives";
 import { ChartCard } from "../components/charts";
 import {
@@ -565,8 +566,33 @@ export function LoanSummary({ outlook }: { outlook: LoanOutlook }) {
 }
 
 /** The purchase's funding: sources and uses and the gap between them (ADR 0119 §9). */
-export function AcquisitionPanel({ view }: { view: AcquisitionView }) {
-  const d = useT().propertyDetail;
+export function AcquisitionPanel({
+  view,
+  onRecordFunding,
+}: {
+  view: AcquisitionView;
+  /** Opens the property form at its Acquisition section (ADR 0209 §2). */
+  onRecordFunding: () => void;
+}) {
+  const t = useT();
+  const d = t.propertyDetail;
+  const opensId = useId();
+  // Nothing but the price known: one line and Record funding, not a table of "—"
+  // (ADR 0209).
+  if (view.emptyLine)
+    return (
+      <Panel title={d.acqTitle} hint={d.acqHint}>
+        <div className="acq-empty">
+          <p>{view.emptyLine}</p>
+          <Button aria-describedby={opensId} onClick={onRecordFunding}>
+            {t.dataCheck.recordFunding}
+          </Button>
+          <span id={opensId} hidden>
+            {d.acqRecordFundingOpens}
+          </span>
+        </div>
+      </Panel>
+    );
   return (
     <Panel title={d.acqTitle} hint={d.acqHint}>
       <StatList

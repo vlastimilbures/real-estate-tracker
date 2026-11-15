@@ -809,6 +809,10 @@ export const en = {
     acqNote:
       "— means not recorded; the uses count only the recorded costs and works. The acquisition loan is the first loan block when it starts no later than 90 days after the purchase, or a development loan whatever its start. Set the amounts in Edit property.",
     acqRecordedNote: (note: string) => `Note: ${note}`,
+    // ADR 0209: the section while nothing but the price is known.
+    acqEmpty: (price: string, loan: string | null) =>
+      `Purchase price ${price} · ${loan ? `acquisition loan ${loan}` : "no acquisition loan"} · costs, works and own cash are not recorded.`,
+    acqRecordFundingOpens: "Opens Edit property at its Acquisition section.",
     showAmortization: (n: number) =>
       `Show amortization schedule (${n} ${enPlural(n, ["payment", "payments"])})`,
     hideAmortization: "Hide amortization schedule",

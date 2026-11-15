@@ -1435,6 +1435,44 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "29i-property-acquisition-empty",
+    desc: "Property detail Acquisition with nothing but the price known: one line and Record funding, which opens the form at Acquisition (ADR 0209)",
+    run: async (ux) => {
+      const d = ux.t.propertyDetail;
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      await ux.page
+        .getByRole("navigation", { name: d.sectionNavLabel })
+        .getByRole("link", { name: d.sectionAcquisition })
+        .click();
+      const p = panel(ux, d.acqTitle);
+      await expect(p.getByRole("heading", { name: d.acqTitle })).toBeFocused();
+      await expect(p.locator(".statlist")).toHaveCount(0);
+      const record = p.getByRole("button", {
+        name: ux.t.dataCheck.recordFunding,
+      });
+      await expect(record).toBeVisible();
+      // The line and the button, nothing else: no table of "—", no note about "—".
+      const box = await p.locator(".acq-empty").boundingBox();
+      const btn = await record.boundingBox();
+      // At most two lines beside or over the button, at every width and in every
+      // language (a line naming the acquisition loan is longer).
+      expect(box!.height, "compact").toBeLessThanOrEqual(96);
+      expect(btn!.height, "24 px target").toBeGreaterThanOrEqual(24);
+      await ux.capture("29i-property-acquisition-empty", { fullPage: false });
+      await record.click();
+      const dialog = ux.page.getByRole("dialog");
+      await expect(
+        dialog.getByRole("button", {
+          name: ux.t.propertyForm.acquisitionSection,
+        }),
+      ).toHaveAttribute("aria-expanded", "true");
+      await expect(
+        dialog.getByLabel(ux.t.propertyForm.ownCash, { exact: true }),
+      ).toBeFocused();
+    },
+  },
+  {
     id: "31-property-data-check",
     desc: "Property detail's Data check five years on, after the Overview; its link moves to Records, Record funding opens the form's Acquisition section (ADR 0118)",
     run: async (ux) => {

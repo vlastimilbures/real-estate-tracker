@@ -1346,6 +1346,22 @@ table.data tbody tr:hover td.sticky-col {
   color: var(--warn);
 }
 
+/* Property detail's Acquisition with nothing but the price known (ADR 0209): the line and
+   Record funding side by side, the button wrapping under the line when narrow. */
+.acq-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2) var(--s4);
+}
+.acq-empty > p {
+  margin: 0;
+  flex: 1 1 24rem;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
 /* ============ Forms ============ */
 .form-grid {
   display: grid;

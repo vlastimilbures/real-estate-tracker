@@ -232,3 +232,40 @@ describe("cashInvestedTotal", () => {
     ).toBeNull();
   });
 });
+
+// ADR 0209 (#387): with nothing but the price known, the section is one line.
+describe("acquisitionView: the compact line (ADR 0209)", () => {
+  const bare = summary({
+    ownCash: null,
+    transactionCosts: null,
+    initialWorks: null,
+    uses: D(5_000_000),
+    sources: null,
+    gap: null,
+  });
+
+  it("nothing recorded: one line with the price and the acquisition loan", () => {
+    expect(acquisitionView(bare, undefined, d).emptyLine).toBe(
+      d.acqEmpty(fmtCzk(D(5_000_000)), fmtCzk(D(4_000_000))),
+    );
+  });
+
+  it("with no acquisition loan the line says so", () => {
+    expect(
+      acquisitionView({ ...bare, loan: null }, undefined, d).emptyLine,
+    ).toBe(d.acqEmpty(fmtCzk(D(5_000_000)), null));
+    // Said outright, so "no acquisition loan" is not mistaken for "not shown".
+    expect(d.acqEmpty("5 000 000 Kč", null)).toContain("no acquisition loan");
+  });
+
+  it("any recorded cost, works, own cash or note shows the full table", () => {
+    for (const s of [
+      { ...bare, transactionCosts: D(0) },
+      { ...bare, initialWorks: D(50_000) },
+      { ...bare, ownCash: D(1_000_000) },
+    ])
+      expect(acquisitionView(s, undefined, d).emptyLine).toBeNull();
+    expect(acquisitionView(bare, "Family loan", d).emptyLine).toBeNull();
+    expect(acquisitionView(bare, "   ", d).emptyLine).not.toBeNull();
+  });
+});
