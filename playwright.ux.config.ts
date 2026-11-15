@@ -16,6 +16,8 @@ const VIEWPORTS: Record<string, { width: number; height: number }> = {
   min: { width: 900, height: 600 },
   // The Tauri window's default size; run on demand (UX_VIEWPORT=1200x800).
   "1200x800": { width: 1200, height: 800 },
+  // Two small multiples per row on the Dashboard (ADR 0202); run on demand.
+  "1100x800": { width: 1100, height: 800 },
 };
 
 function list(env: string | undefined, all: string[], fallback: string) {

@@ -161,6 +161,7 @@ export function AppShell({
   actions,
   showLens = true,
   subnav,
+  pageClass,
   children,
 }: {
   title: string;
@@ -169,6 +170,8 @@ export function AppShell({
   showLens?: boolean | undefined;
   /** A full-width last row in the sticky topbar, e.g. a section nav (ADR 0107). */
   subnav?: ReactNode | undefined;
+  /** A page-specific class on <main>, e.g. the Dashboard's denser spacing (ADR 0202). */
+  pageClass?: string | undefined;
   children: ReactNode;
 }) {
   const t = useT();
@@ -322,7 +325,12 @@ export function AppShell({
           </div>
           {subnav && <div className="topbar-subnav">{subnav}</div>}
         </header>
-        <main className="page" id="main" tabIndex={-1} ref={mainRef}>
+        <main
+          className={pageClass ? `page ${pageClass}` : "page"}
+          id="main"
+          tabIndex={-1}
+          ref={mainRef}
+        >
           {stale && (
             <ErrorBanner
               message={t.common.staleData}

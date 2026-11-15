@@ -11,7 +11,7 @@ import { mixed } from "../../../engine/__tests__/support/mixed";
 import { useUiStore } from "../../../state/uiStore";
 import { projectionSeries } from "../../model/projection";
 import { toChartRows, toEquityChangeRows } from "../../model/chartData";
-import { TrajectoryCharts } from "../DashboardPanels";
+import { MoreCharts, ProjectionHero } from "../DashboardPanels";
 
 beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
@@ -22,12 +22,18 @@ function renderCharts(p: typeof portfolio) {
     assumptions,
   );
   render(
-    <TrajectoryCharts
-      mode="nominal"
-      rows={toChartRows(series)}
-      eqChange={toEquityChangeRows(series)}
-      horizonYears={assumptions.horizonYears}
-    />,
+    <>
+      <ProjectionHero
+        mode="nominal"
+        rows={toChartRows(series)}
+        horizonYears={assumptions.horizonYears}
+      />
+      <MoreCharts
+        rows={toChartRows(series)}
+        eqChange={toEquityChangeRows(series)}
+        horizonYears={assumptions.horizonYears}
+      />
+    </>,
   );
 }
 

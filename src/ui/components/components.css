@@ -1547,6 +1547,71 @@ table.data tbody tr:hover td.sticky-col {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s4);
 }
+/* Dashboard (ADR 0202): sections 24 px apart; the banner and filter bar add no margin of
+   their own. */
+.page.dashboard {
+  gap: var(--s5);
+}
+.page.dashboard > .filter-bar,
+.page.dashboard > .banner {
+  margin-bottom: 0;
+}
+/* The hero chart: one card headed like a panel, the chart under its head. */
+.chart-hero {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-tile);
+  overflow: hidden;
+}
+.chart-hero-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s1) var(--s3);
+  padding: var(--s3) var(--s4) 0;
+}
+.chart-hero-head h2 {
+  font-size: 15px;
+}
+.chart-hero-head .hint {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.chart-hero > .chart-card {
+  border: 0;
+  box-shadow: none;
+  background: none;
+  padding-top: var(--s2);
+}
+/* Small multiples: three then two per row, two below 900 px (the fifth across), one
+   below 640 px; never an empty cell. */
+.chart-grid-wrap {
+  container-type: inline-size;
+}
+.chart-grid.small {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--s4);
+}
+.chart-grid.small > :nth-child(-n + 3) {
+  grid-column: span 2;
+}
+.chart-grid.small > :nth-child(n + 4) {
+  grid-column: span 3;
+}
+@container (max-width: 899px) {
+  .chart-grid.small > :nth-child(n) {
+    grid-column: span 3;
+  }
+  .chart-grid.small > :nth-child(5) {
+    grid-column: span 6;
+  }
+}
+@container (max-width: 639px) {
+  .chart-grid.small > :nth-child(n) {
+    grid-column: span 6;
+  }
+}
 .chart-card {
   background: var(--surface);
   border: 1px solid var(--hairline);
