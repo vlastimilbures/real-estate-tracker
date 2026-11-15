@@ -243,6 +243,7 @@ it.
 | [0192](0192-startup-waits-for-fonts.md)                        | Start-up waits for the bundled fonts                                                          | Accepted                                                       | #269                                               |
 | [0193](0193-save-errors-panic-marker.md)                       | Save errors without English; a cut panic message is marked                                    | Accepted                                                       | #169, #323                                         |
 | [0194](0194-banners-once-purchases-column.md)                  | Kept app banners announce once; a Purchases column in the projections                         | Accepted                                                       | #350, #317                                         |
+| [0196](0196-sqlite-3-54-patched-sqlx-sqlite.md)                | Bundled SQLite 3.54 through a vendored sqlx-sqlite patch (RUSTSEC-2026-0459)                  | Accepted                                                       |                                                    |
 
 <!-- adr-index:end -->
 

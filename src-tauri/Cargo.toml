@@ -30,6 +30,14 @@ tauri-plugin-window-state = "2"
 # sqlx 0.8.6 the plugin already compiles in; declared directly to name its types.
 sqlx = { version = "0.8", default-features = false, features = ["sqlite", "runtime-tokio"] }
 
+# ADR 0196 (RUSTSEC-2026-0459): sqlx-sqlite 0.8.6 pins libsqlite3-sys 0.30.1 (SQLite 3.46).
+# The vendored copy is the crates.io source with one change, the libsqlite3-sys bound widened
+# to `>=0.30.1, <0.40.0` as upstream did in launchbadge/sqlx#4502; Cargo.lock then takes
+# libsqlite3-sys 0.39.1 (SQLite 3.54.1). scripts/check-vendored-sqlx-sqlite.sh guards the
+# diff. Remove both once tauri-plugin-sql ships on a sqlx that allows libsqlite3-sys >=0.39.
+[patch.crates-io]
+sqlx-sqlite = { path = "vendor/sqlx-sqlite" }
+
 # Dev-only: async test runtime for tests/*.rs (H-14 proof, db.rs behaviour).
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

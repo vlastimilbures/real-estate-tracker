@@ -374,6 +374,10 @@ jobs:
       - name: Tests
         run: cargo test --manifest-path src-tauri/Cargo.toml
 
+      # ADR 0196: the vendored sqlx-sqlite is crates.io 0.8.6 plus one Cargo.toml line.
+      - name: Vendored sqlx-sqlite patch
+        run: bash scripts/check-vendored-sqlx-sqlite.sh
+
       # Ignores (lock-only crates) are documented in src-tauri/.cargo/audit.toml.
       - name: Audit Rust dependencies
         working-directory: src-tauri

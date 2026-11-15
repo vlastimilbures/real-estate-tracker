@@ -3,3 +3,5 @@
 src-tauri/gen/
 # pnpm owns the lockfile format; Prettier reformatting it causes churn on every install.
 pnpm-lock.yaml
+# ADR 0196: the vendored crate stays byte-identical to its crates.io source (one line aside).
+src-tauri/vendor/
