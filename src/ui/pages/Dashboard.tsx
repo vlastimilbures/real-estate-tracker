@@ -263,9 +263,7 @@ export function Dashboard() {
         basis={basis}
         kpis={kpis}
         mode={mode}
-        horizon={horizon}
         horizonYears={assumptions.horizonYears}
-        irr={irr}
         cashInvested={cashInvestedTotal(engine.portfolio.properties)}
       />
 

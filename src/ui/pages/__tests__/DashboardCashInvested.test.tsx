@@ -32,9 +32,7 @@ function renderList(mode: Mode, cashInvested: ReturnType<typeof D> | null) {
       basis={{ kind: "today" }}
       kpis={kpis}
       mode={mode}
-      horizon={kpis.netWorthNominal}
       horizonYears={assumptions.horizonYears}
-      irr={{ rate: null, reason: "NO_ROOT" }}
       cashInvested={cashInvested}
     />,
   );

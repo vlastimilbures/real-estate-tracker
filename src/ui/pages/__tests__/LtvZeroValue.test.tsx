@@ -88,9 +88,7 @@ describe("Dashboard risk tiles", () => {
         basis={{ kind: "today" }}
         kpis={portfolioKpis(portfolio, crashed)}
         mode="nominal"
-        horizon={money(0)}
         horizonYears={crashed.horizonYears}
-        irr={{ rate: null, reason: "NO_ROOT" }}
         cashInvested={null}
       />,
     );

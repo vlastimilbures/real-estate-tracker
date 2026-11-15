@@ -8,6 +8,7 @@ import { portfolioKpis, portfolioSnapshot } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { useUiStore } from "../../../state/uiStore";
 import { KpiListPanel, MoreCharts, ProjectionHero } from "../DashboardPanels";
+import { rowLabel } from "./kpiStripSupport";
 
 const a25 = { ...assumptions, horizonYears: 25 };
 const s = portfolioSnapshot(portfolio, a25);
@@ -37,18 +38,18 @@ describe("Dashboard horizon labels (ADR 0084)", () => {
           basis={{ kind: "today" }}
           kpis={kpis}
           mode="nominal"
-          horizon={kpis.netWorthNominal}
           horizonYears={a25.horizonYears}
-          irr={{ rate: null, reason: "NOT_UNIQUE" }}
           cashInvested={null}
         />
       </>,
     );
     expect(screen.getByText("25-year projection")).toBeTruthy();
     expect(
-      screen.getByText("Cumulative cash to owner (Yrs 1–25)"),
+      screen.getByText(rowLabel("Cumulative cash to owner (Yrs 1–25)")),
     ).toBeTruthy();
-    expect(screen.getByText("Σ principal repaid (Yrs 1–25)")).toBeTruthy();
+    expect(
+      screen.getByText(rowLabel("Σ principal repaid (Yrs 1–25)")),
+    ).toBeTruthy();
     expect(container.textContent).not.toMatch(/30-year|1–30/);
   });
 });

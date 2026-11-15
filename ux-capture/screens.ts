@@ -276,6 +276,40 @@ async function expectKpiStrip(ux: Ux, maxHeight = 96) {
 /** The Dashboard's hierarchy (ADR 0202): at 1280 × 800 the hero chart ends inside the
  *  first viewport and Financing starts within the second; at every width each row of
  *  small multiples is full (no empty cell). */
+/**
+ * The key figures (ADR 0208): three groups, side by side at 1280 px with a row's label
+ * and value at most 480 px apart, one column at 900 px; no row's value wraps under its
+ * label.
+ */
+async function expectKeyFigures(ux: Ux) {
+  const p = panel(ux, ux.t.dashboard.kpiTitle);
+  const m = await p.evaluate((el) => {
+    const groups = Array.from(el.querySelectorAll(".kpi-group"), (g) =>
+      g.getBoundingClientRect(),
+    );
+    const rows = Array.from(el.querySelectorAll(".statlist .k"), (k) => {
+      const kr = k.getBoundingClientRect();
+      const vr = (k.nextElementSibling as Element).getBoundingClientRect();
+      return {
+        span: vr.right - kr.left,
+        sameLine: Math.abs(vr.top - kr.top) < 2,
+      };
+    });
+    return { tops: groups.map((g) => Math.round(g.top)), rows };
+  });
+  const wide = ux.page.viewportSize()!.width >= 1280;
+  expect(m.tops, "three groups").toHaveLength(3);
+  if (wide) {
+    expect(m.tops[0], "Returns and Cash flow side by side").toBe(m.tops[1]);
+    for (const r of m.rows)
+      expect(r.span, "label to value").toBeLessThanOrEqual(480);
+  } else if (ux.page.viewportSize()!.width <= 900) {
+    expect(m.tops[1], "one column").toBeGreaterThan(m.tops[0]);
+  }
+  for (const r of m.rows)
+    expect(r.sameLine, "value beside its label").toBe(true);
+}
+
 async function expectDashboardHierarchy(ux: Ux) {
   const vp = ux.page.viewportSize()!;
   const financingTop = await panel(ux, ux.t.dashboard.financingTitle).evaluate(
@@ -672,6 +706,7 @@ export const SCREENS: Screen[] = [
       await expectKpiStrip(ux);
       await expectDashboardHierarchy(ux);
       await expectFinancingTimeline(ux, 3, 300);
+      await expectKeyFigures(ux);
     },
   },
   {
@@ -683,6 +718,7 @@ export const SCREENS: Screen[] = [
       await ux.capture("02-dashboard-real");
       // After the shot, so a failing layout still leaves its picture.
       await expectKpiStrip(ux);
+      await expectKeyFigures(ux);
     },
   },
   {

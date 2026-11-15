@@ -22,6 +22,7 @@ import { projectionSeries } from "../../model/projection";
 import { lensKpis } from "../../model/lensKpis";
 import { ProjectionGrid } from "../../components/ProjectionGrid";
 import { KpiListPanel } from "../DashboardPanels";
+import { rowLabel } from "./kpiStripSupport";
 
 // Probe R8-5: a 1,000,000 Kč prepayment with a 5,000 Kč fee on Byt Lipova.
 const prepaid: Portfolio = {
@@ -82,14 +83,12 @@ describe("Cash to owner (ADR 0161)", () => {
         basis={{ kind: "today" }}
         kpis={kpis}
         mode="nominal"
-        horizon={kpis.netWorthNominal}
         horizonYears={assumptions.horizonYears}
-        irr={{ rate: null, reason: "NOT_UNIQUE" }}
         cashInvested={null}
       />,
     );
     expect(
-      screen.getByText("Cumulative cash to owner (Yrs 1–30)"),
+      screen.getByText(rowLabel("Cumulative cash to owner (Yrs 1–30)")),
     ).toBeTruthy();
     expect(screen.queryByText(/Cumulative net cash flow/)).toBeNull();
   });

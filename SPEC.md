@@ -844,7 +844,12 @@ offline badge, and controls for language and theme.
    next fixation end, time left and debt at reset, and the loan, completion and lease dates
    of the same 1/3/5-year window on their property's row, each linking to its property
    (ADR 0204).
-   The KPI list ends with **Cash invested** (ADR 0119 §9): the recorded own cash of the
+   The KPI list shows only what the tiles do not (ADR 0208), in three groups side by side
+   at 1280 px: **Returns** (net-worth CAGR, net and gross yield, Cash invested), **Cash
+   flow** (monthly inflow and outflow, cumulative cash to owner, first cash-flow-positive
+   year) and **Debt** (weighted-average rate, Σ principal repaid, debt fully repaid); a note
+   names the basis of the yields and monthly figures. The horizon and IRR tiles carry their
+   exact value as a tooltip. **Cash invested** (ADR 0119 §9) is the recorded own cash of the
    active properties in the filter, future buys included, shown only when every one of them
    has it; the real lens labels it nominal.
    A **Data check** panel (ADR 0118) lists, at the snapshot date, the inputs the engine

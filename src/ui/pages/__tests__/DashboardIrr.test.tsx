@@ -36,9 +36,7 @@ function renderPanels(irr: LeveredIrr) {
         basis={{ kind: "today" }}
         kpis={kpis}
         mode="nominal"
-        horizon={kpis.netWorthNominal}
         horizonYears={assumptions.horizonYears}
-        irr={irr}
         cashInvested={null}
       />
     </>,
@@ -48,10 +46,11 @@ function renderPanels(irr: LeveredIrr) {
 beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("Dashboard levered IRR (UX-079)", () => {
-  it("shows n/a with the reason in the tile and the KPI list", () => {
+  // The list no longer repeats the tile (ADR 0208 §1).
+  it("shows n/a with the reason in the tile, not again in the KPI list", () => {
     renderPanels(notUnique);
     const cells = screen.getAllByTitle(en.common.irrNotUnique);
-    expect(cells).toHaveLength(2);
+    expect(cells).toHaveLength(1);
     for (const c of cells) {
       expect(c.textContent).toBe(
         `${en.common.notApplicable} (${en.common.irrNotUnique})`,
@@ -61,8 +60,10 @@ describe("Dashboard levered IRR (UX-079)", () => {
 
   it("shows the rate when there is one", () => {
     renderPanels({ rate: D("0.0615"), reason: null });
+    // The tile rounds; its tooltip has the two decimals the list used to show.
     expect(screen.getByText("6,2 %")).toBeTruthy();
-    expect(screen.getByText("6,15 %")).toBeTruthy();
+    expect(screen.queryByText("6,15 %")).toBeNull();
+    expect(screen.getByTitle("6,15 %")).toBeTruthy();
     expect(screen.queryByTitle(en.common.irrNotUnique)).toBeNull();
   });
 });

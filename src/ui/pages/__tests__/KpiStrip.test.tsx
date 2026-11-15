@@ -204,59 +204,121 @@ describe("KPI strip basis (ADR 0200 §2)", () => {
   });
 });
 
-describe("KPI list takes the figures that left the tiles (ADR 0200 §3)", () => {
-  it("net yield, gross yield, monthly inflow and outflow, under the basis", () => {
-    const { s, basis } = setUp(base, true);
-    render(
-      <KpiListPanel
-        s={s}
-        basis={basis}
-        kpis={kpis}
-        mode="nominal"
-        horizon={kpis.netWorthNominal}
-        horizonYears={assumptions.horizonYears}
-        irr={{ rate: null, reason: "NO_ROOT" }}
-        cashInvested={null}
-      />,
-    );
-    const group = screen.getByRole("heading", {
-      name: d.kpiAsOfGroup(d.basisCurrent),
-    });
-    const list = group.nextElementSibling as HTMLElement;
+// ADR 0208 (#383): the list shows only what the tiles do not, in three groups.
+function renderList(
+  asOf: IsoDate,
+  isToday: boolean,
+  cashInvested = null as ReturnType<typeof money> | null,
+) {
+  const { s, basis } = setUp(asOf, isToday);
+  const view = render(
+    <KpiListPanel
+      s={s}
+      basis={basis}
+      kpis={kpis}
+      mode="nominal"
+      horizonYears={assumptions.horizonYears}
+      cashInvested={cashInvested}
+    />,
+  );
+  const group = (name: string) => {
+    const h = screen.getByRole("heading", { level: 3, name });
+    return h.closest(".kpi-group") as HTMLElement;
+  };
+  const labels = (g: HTMLElement) =>
+    Array.from(g.querySelectorAll(".statlist .k"), (k) => k.textContent);
+  return { s, basis, view, group, labels };
+}
+
+describe("Key figures: only what the tiles do not show, in three groups (ADR 0208)", () => {
+  it("Returns, Cash flow and Debt, each a heading over its rows, in that order", () => {
+    const { group, labels, view } = renderList(base, true);
+    const N = assumptions.horizonYears;
+    expect(
+      Array.from(
+        view.container.querySelectorAll(".kpi-group h3"),
+        (h) => h.textContent,
+      ),
+    ).toEqual([d.kpiGroupReturns, d.kpiGroupCashFlow, d.kpiGroupDebt]);
+    expect(labels(group(d.kpiGroupReturns))).toEqual([
+      d.kpiNetWorthCagr,
+      d.netYieldCap,
+      d.kpiGrossYield,
+    ]);
+    expect(labels(group(d.kpiGroupCashFlow))).toEqual([
+      d.kpiMonthlyInflow,
+      d.kpiMonthlyOutflow,
+      d.kpiCumulativeCashToOwner(N),
+      d.kpiFirstCfPositiveYear,
+    ]);
+    expect(labels(group(d.kpiGroupDebt))).toEqual([
+      d.kpiWeightedAvgRate,
+      d.kpiSumPrincipalRepaid(N),
+      d.kpiDebtFullyRepaid,
+    ]);
+  });
+
+  it("repeats no tile: net worth at the horizon, the multiple and IRR are not listed", () => {
+    const { view } = renderList(base, true);
+    // The labels the list used for them (their dictionary keys are gone).
+    for (const k of [
+      "Net worth at horizon",
+      "Net-worth multiple",
+      "Levered IRR",
+    ])
+      expect(view.container.textContent).not.toContain(k);
+  });
+
+  it("keeps the as-of values; the note names their basis and how the monthly figures are made", () => {
+    const { s, group, view } = renderList(base, true);
     const flow = monthlyFlow(s);
-    const row = (k: string) =>
-      within(list).getByText(k).nextElementSibling?.textContent;
-    expect(row(d.netYieldCap)).toBe(fmtPct(s.netYield!, 2));
-    expect(row(d.kpiGrossYield)).toBe(fmtPct(s.grossYield!, 2));
-    expect(row(d.kpiMonthlyInflow)).toBe(fmtCzk(flow.inflow));
-    expect(row(d.kpiMonthlyOutflow)).toBe(fmtCzk(flow.outflow));
-    // How the monthly figures are made, as the monthly panel said (ADR 0088 §3).
-    expect(list.nextElementSibling?.textContent).toBe(
-      d.monthlyHint("07.06.2026"),
+    const row = (g: HTMLElement, k: string) =>
+      within(g).getByText(k).nextElementSibling?.textContent;
+    expect(row(group(d.kpiGroupReturns), d.netYieldCap)).toBe(
+      fmtPct(s.netYield!, 2),
+    );
+    expect(row(group(d.kpiGroupReturns), d.kpiGrossYield)).toBe(
+      fmtPct(s.grossYield!, 2),
+    );
+    expect(row(group(d.kpiGroupCashFlow), d.kpiMonthlyInflow)).toBe(
+      fmtCzk(flow.inflow),
+    );
+    expect(row(group(d.kpiGroupCashFlow), d.kpiMonthlyOutflow)).toBe(
+      fmtCzk(flow.outflow),
+    );
+    expect(view.container.querySelector(".panel-note")?.textContent).toBe(
+      `${d.kpiAsOfGroup(d.basisCurrent)} · ${d.monthlyHint("07.06.2026")}`,
     );
   });
 
-  it("at +5y the group names the projection year and the figures are the year ÷ 12", () => {
+  it("at +5y the note names the projection year and the figures are the year ÷ 12", () => {
     const asOf = addYears(base, 5);
-    const { s, basis } = setUp(asOf, false);
+    const { basis, view } = renderList(asOf, false);
+    const note = view.container.querySelector(".panel-note")?.textContent;
+    expect(note).toBe(
+      `${d.kpiAsOfGroup(basisText(en, basis))} · ${d.monthlyHintProjection}`,
+    );
+    expect(note).not.toContain(d.basisCurrent);
+  });
+
+  it("cash invested, when known, closes Returns", () => {
+    const { group, labels } = renderList(base, true, money("5200000"));
+    expect(labels(group(d.kpiGroupReturns)).at(-1)).toBe(d.kpiCashInvested);
+  });
+});
+
+describe("The tiles carry the exact value the list no longer shows (ADR 0208 §1)", () => {
+  it("the horizon tile's value has the amount in Kč; IRR its rate to two decimals", () => {
+    const { props } = setUp(base, true);
     render(
-      <KpiListPanel
-        s={s}
-        basis={basis}
-        kpis={kpis}
-        mode="nominal"
-        horizon={kpis.netWorthNominal}
-        horizonYears={assumptions.horizonYears}
-        irr={{ rate: null, reason: "NO_ROOT" }}
-        cashInvested={null}
-      />,
+      <KpiStrip {...props} irr={{ rate: money("0.0615"), reason: null }} />,
     );
-    const group = screen.getByRole("heading", {
-      name: d.kpiAsOfGroup(basisText(en, basis)),
-    });
-    expect(group.textContent).not.toContain(d.basisCurrent);
-    expect(group.nextElementSibling?.nextElementSibling?.textContent).toBe(
-      d.monthlyHintProjection,
-    );
+    expect(
+      screen
+        .getByText(fmtCzkM(props.horizon))
+        .closest("[title]")
+        ?.getAttribute("title"),
+    ).toBe(fmtCzk(props.horizon));
+    expect(screen.getByTitle(fmtPct(money("0.0615"), 2))).toBeTruthy();
   });
 });
