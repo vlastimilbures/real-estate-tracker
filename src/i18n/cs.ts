@@ -622,6 +622,9 @@ export const cs: Dictionary = {
     fieldMaintPct: "Údržba (% ze sjednaného nájmu)",
     saveHoldingCosts: "Uložit náklady na držbu",
     holdingCostsSaved: "Náklady na držbu uloženy",
+    // ADR 0207: the read view marks a blank field's portfolio default.
+    holdingDefault: "(výchozí)",
+    editHoldingCosts: "Upravit náklady na držbu",
     projectionTitle: (n) => `${n}letá projekce`,
     amortizationWarn:
       "Měsíční splátka tento úvěr do konce doby splatnosti nesplatí.",

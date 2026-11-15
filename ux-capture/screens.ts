@@ -1091,7 +1091,55 @@ export const SCREENS: Screen[] = [
       await expectPanelActionsRight(ux.page);
       await expectBandTileLabelsOneLine(ux);
       await expectRowActions(ux.page.locator("main"), 72);
+      // At rest no form is open and at most one primary button shows (ADR 0207).
+      const holding = panel(ux, ux.t.propertyDetail.holdingCostsTitle);
+      await expect(holding.locator("form")).toHaveCount(0);
+      await expect(holding.locator("dl.holding-view > div")).toHaveCount(6);
+      expect(
+        await ux.page.locator(".btn.primary:visible").count(),
+        "primary buttons at rest",
+      ).toBeLessThanOrEqual(1);
       await ux.capture("20-property-detail");
+    },
+  },
+  {
+    id: "20c-property-holding-edit",
+    desc: "Property detail: Edit on Holding costs opens the form in place, focus in its first field (ADR 0207)",
+    run: async (ux) => {
+      const d = ux.t.propertyDetail;
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      const holding = panel(ux, d.holdingCostsTitle);
+      await holding.getByRole("button", { name: d.editHoldingCosts }).click();
+      await expect(
+        holding.getByLabel(d.fieldPropertyTax, { exact: false }),
+      ).toBeFocused();
+      await expect(
+        holding.getByRole("button", { name: d.saveHoldingCosts }),
+      ).toBeVisible();
+      await holding.scrollIntoViewIfNeeded();
+      await ux.capture("20c-property-holding-edit", { fullPage: false });
+      await holding.getByRole("button", { name: ux.t.common.cancel }).click();
+      const pencil = holding.getByRole("button", { name: d.editHoldingCosts });
+      await expect(pencil).toBeFocused();
+      // Focus comes back to a pencil in view, clear of the sticky top bar (ADR 0207 §3).
+      const bar = await ux.page.locator(".topbar").boundingBox();
+      const box = await pencil.boundingBox();
+      expect(box && bar && box.y >= bar.y + bar.height).toBe(true);
+      // A field cleared and saved reads as the portfolio default, marked: the sample's
+      // own SVJ fee (850 Kč) gives way to the default (1 700 Kč). The sample stores all
+      // six fields, so this is the only marked one.
+      await pencil.click();
+      await holding.getByLabel(d.fieldSvjMo, { exact: false }).fill("");
+      await holding.getByRole("button", { name: d.saveHoldingCosts }).click();
+      await expect(ux.page.getByText(d.holdingCostsSaved)).toBeVisible();
+      await expect(pencil).toBeFocused();
+      await expect(holding.getByText(d.holdingDefault)).toHaveCount(1);
+      await expect(ux.page.getByText(d.holdingCostsSaved)).toBeHidden({
+        timeout: 10_000,
+      });
+      await holding.scrollIntoViewIfNeeded();
+      await ux.capture("20d-property-holding-default", { fullPage: false });
     },
   },
   {

@@ -7,7 +7,7 @@
   "src/ui/model/**": { "lines": 97, "branches": 94 },
   "src/state/**": { "lines": 93, "branches": 85 },
   "src/platform/**": { "lines": 70, "branches": 71 },
-  "src/ui/pages/**": { "lines": 89, "branches": 84 },
+  "src/ui/pages/**": { "lines": 89, "branches": 85 },
   "src/ui/components/**": { "lines": 93, "branches": 88 },
   "src/ui/hooks/**": { "lines": 96, "branches": 90 },
   "src/ui/*.{ts,tsx}": { "lines": 92, "branches": 83 }
