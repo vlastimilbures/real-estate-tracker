@@ -341,7 +341,8 @@ export function KpiTile({
   health?: { band: Band; text: string } | undefined;
   delay?: number | undefined;
   testId?: string | undefined;
-  /** The exact value, as the value's tooltip, where the tile rounds (ADR 0208 §1). */
+  /** The exact value where the tile rounds: the value's tooltip, and read out after it,
+   *  as MoneyM does (ADR 0208 §1). */
   valueTitle?: string | undefined;
 }) {
   return (
@@ -356,6 +357,7 @@ export function KpiTile({
         title={valueTitle}
       >
         {value}
+        {valueTitle && <span className="sr-only"> ({valueTitle})</span>}
       </div>
       {hero && <div className="accent-rule" />}
       {(foot || health) && (

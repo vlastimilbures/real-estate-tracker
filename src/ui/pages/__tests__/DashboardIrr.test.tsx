@@ -63,7 +63,9 @@ describe("Dashboard levered IRR (UX-079)", () => {
     // The tile rounds; its tooltip has the two decimals the list used to show.
     expect(screen.getByText("6,2 %")).toBeTruthy();
     expect(screen.queryByText("6,15 %")).toBeNull();
-    expect(screen.getByTitle("6,15 %")).toBeTruthy();
+    // The two decimals: the tile's tooltip, and read out after the value.
+    const tile = screen.getByTitle("6,15 %");
+    expect(tile.querySelector(".sr-only")?.textContent).toBe(" (6,15 %)");
     expect(screen.queryByTitle(en.common.irrNotUnique)).toBeNull();
   });
 });

@@ -19,13 +19,7 @@ import {
   type ChartRow,
   type EquityChangeRow,
 } from "../model/chartData";
-import {
-  fmtCzk,
-  fmtCzkM,
-  fmtMultiple,
-  fmtPct,
-  noBreak,
-} from "../../lib/format";
+import { fmtCzkM, fmtMultiple, fmtPct, noBreak } from "../../lib/format";
 import type { ReactNode } from "react";
 import { dscrBadge, ltvBadge } from "../model/health";
 import {
@@ -100,8 +94,7 @@ export function KpiStrip({
           compact
           delay={24}
           label={d.stripInYear(horizonEndYear)}
-          value={fmtCzkM(horizon)}
-          valueTitle={fmtCzk(horizon)}
+          value={<MoneyM value={horizon} />}
           foot={d.stripHorizonFoot(
             netWorthMultiple ? fmtMultiple(netWorthMultiple) : "—",
             horizonYears,
@@ -411,13 +404,15 @@ export function KpiListPanel({
   ];
   return (
     <Panel title={d.kpiTitle} hint={real ? d.kpiHintReal : d.kpiHintNominal}>
-      <div className="kpi-groups">
-        {groups.map((g) => (
-          <section key={g.title} className="kpi-group">
-            <h3 className="panel-subhead">{g.title}</h3>
-            <StatList rows={g.rows} />
-          </section>
-        ))}
+      <div className="kpi-box">
+        <div className="kpi-groups">
+          {groups.map((g) => (
+            <section key={g.title} className="kpi-group">
+              <h3 className="panel-subhead">{g.title}</h3>
+              <StatList rows={g.rows} />
+            </section>
+          ))}
+        </div>
       </div>
       {/* What the yields and monthly figures are for (ADR 0200 §3, ADR 0208 §4). */}
       <p className="panel-note">

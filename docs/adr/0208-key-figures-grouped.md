@@ -21,9 +21,11 @@ and its value about 900 px away at 1280 × 800.
 ## Decision
 
 1. **No repeats.** Net worth at the horizon, the net-worth multiple and levered IRR leave
-   the list. Their tiles keep them and carry the exact value as the value's tooltip: the
-   horizon tile the amount in Kč, the IRR tile the rate to two decimals (the multiple is
-   already exact in the horizon tile's foot).
+   the list. Their tiles keep them and carry the exact value as the value's tooltip, also
+   read out after the value by a screen reader (as the net worth tile's amount, ADR 0200):
+   the horizon tile the amount in Kč, the IRR tile the rate to two decimals (the multiple
+   is already exact in the horizon tile's foot). A sighted keyboard user sees the rounded
+   value only.
 2. **Three groups**, each a heading (`h3`) under the panel title with a two-column list:
    - **Returns** (`dashboard.kpiGroupReturns`): net-worth CAGR, net yield (cap rate),
      gross yield, cash invested (only when every property has its own cash, ADR 0119 §9);
@@ -33,8 +35,11 @@ and its value about 900 px away at 1280 × 800.
    - **Debt** (`dashboard.kpiGroupDebt`): weighted-average interest rate, Σ principal
      repaid, debt fully repaid.
 3. **Two columns** of groups where the panel is wide enough for two 320 px columns
-   (1280 × 800: Returns and Cash flow side by side, Debt under Returns), one column below,
-   so a row's label and value are at most about 480 px apart.
+   (1280 × 800 and 1200 × 800): Cash flow fills the right column and Debt follows Returns
+   straight under it on the left. One column below (900 × 600). At 1280 × 800 with the
+   sidebar open a row's label and value are at most 480 px apart; in wider windows the
+   columns grow with the panel. A label's closing parenthetical ("(Yrs 1–30)") does not
+   break inside, and a label keeps at least 8 px from its value.
 4. **The as-of figures** (the two yields and the monthly flows) now sit in their groups.
    What they are for moves from a subhead to the panel's note, `dashboard.kpiAsOfGroup`
    (basis) followed by how the monthly figures are made (`monthlyFlowHint`, ADR 0088 §3),

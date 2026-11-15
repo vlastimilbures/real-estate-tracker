@@ -532,19 +532,33 @@
   border-bottom: none;
 }
 
-/* The Dashboard's key figures (ADR 0208): three groups, two columns where each gets at
-   least 320 px (1280 × 800), else one; never three. */
+/* The Dashboard's key figures (ADR 0208): one column, two where each gets at least 320 px
+   (1280 × 800, 1200 × 800). In two, Cash flow fills the right column and Debt follows
+   Returns straight under it on the left, whichever group is taller. */
+.kpi-box {
+  container-type: inline-size;
+}
 .kpi-groups {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(max(min(100%, 320px), calc((100% - var(--s7)) / 2)), 1fr)
-  );
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s4) var(--s7);
   align-items: start;
 }
+@container (min-width: 688px) {
+  .kpi-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kpi-group:nth-child(2) {
+    grid-row: span 2;
+  }
+}
 .kpi-group > .panel-subhead {
   margin-top: 0;
+}
+/* Room between a label and its value; padding, not a column gap, keeps the row's rule
+   whole. */
+.kpi-group .statlist .k {
+  padding-right: var(--s4);
 }
 .kpi-tail {
   white-space: nowrap;

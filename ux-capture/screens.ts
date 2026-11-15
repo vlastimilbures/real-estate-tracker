@@ -273,13 +273,10 @@ async function expectKpiStrip(ux: Ux, maxHeight = 96) {
   }
 }
 
-/** The Dashboard's hierarchy (ADR 0202): at 1280 × 800 the hero chart ends inside the
- *  first viewport and Financing starts within the second; at every width each row of
- *  small multiples is full (no empty cell). */
 /**
- * The key figures (ADR 0208): three groups, side by side at 1280 px with a row's label
- * and value at most 480 px apart, one column at 900 px; no row's value wraps under its
- * label.
+ * The key figures (ADR 0208): three groups. At 1280 px and wider, Returns and Cash flow
+ * side by side, Debt straight under Returns, and a row's label and value at most 480 px
+ * apart; one column at 900 px. Every label's text ends at least 8 px before its value.
  */
 async function expectKeyFigures(ux: Ux) {
   const p = panel(ux, ux.t.dashboard.kpiTitle);
@@ -289,27 +286,50 @@ async function expectKeyFigures(ux: Ux) {
     );
     const rows = Array.from(el.querySelectorAll(".statlist .k"), (k) => {
       const kr = k.getBoundingClientRect();
-      const vr = (k.nextElementSibling as Element).getBoundingClientRect();
-      return {
-        span: vr.right - kr.left,
-        sameLine: Math.abs(vr.top - kr.top) < 2,
+      const v = k.nextElementSibling as Element;
+      const vr = v.getBoundingClientRect();
+      // The text itself, not the cell: the cells always meet.
+      const text = (node: Element) => {
+        const r = document.createRange();
+        r.selectNodeContents(node);
+        return Array.from(r.getClientRects());
       };
+      const labelRight = Math.max(...text(k).map((r) => r.right));
+      const valueLeft = Math.min(...text(v).map((r) => r.left));
+      return { span: vr.right - kr.left, clear: valueLeft - labelRight };
     });
-    return { tops: groups.map((g) => Math.round(g.top)), rows };
+    return {
+      groups: groups.map((g) => ({
+        top: Math.round(g.top),
+        bottom: Math.round(g.bottom),
+        left: Math.round(g.left),
+      })),
+      rows,
+    };
   });
-  const wide = ux.page.viewportSize()!.width >= 1280;
-  expect(m.tops, "three groups").toHaveLength(3);
-  if (wide) {
-    expect(m.tops[0], "Returns and Cash flow side by side").toBe(m.tops[1]);
+  const width = ux.page.viewportSize()!.width;
+  const [returns, cashFlow, debt] = m.groups;
+  expect(m.groups, "three groups").toHaveLength(3);
+  if (width >= 1280) {
+    expect(returns.top, "Returns and Cash flow side by side").toBe(
+      cashFlow.top,
+    );
+    expect(debt.left, "Debt under Returns").toBe(returns.left);
+    expect(debt.top, "Debt straight under Returns").toBeLessThan(
+      returns.bottom + 24,
+    );
     for (const r of m.rows)
       expect(r.span, "label to value").toBeLessThanOrEqual(480);
-  } else if (ux.page.viewportSize()!.width <= 900) {
-    expect(m.tops[1], "one column").toBeGreaterThan(m.tops[0]);
+  } else if (width <= 900) {
+    expect(cashFlow.top, "one column").toBeGreaterThan(returns.top);
   }
   for (const r of m.rows)
-    expect(r.sameLine, "value beside its label").toBe(true);
+    expect(r.clear, "label clear of its value").toBeGreaterThanOrEqual(8);
 }
 
+/** The Dashboard's hierarchy (ADR 0202): at 1280 × 800 the hero chart ends inside the
+ *  first viewport and Financing starts within the second; at every width each row of
+ *  small multiples is full (no empty cell). */
 async function expectDashboardHierarchy(ux: Ux) {
   const vp = ux.page.viewportSize()!;
   const financingTop = await panel(ux, ux.t.dashboard.financingTitle).evaluate(

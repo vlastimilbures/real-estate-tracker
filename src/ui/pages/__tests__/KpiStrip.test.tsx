@@ -8,6 +8,7 @@ import { act, render, screen, within } from "@testing-library/react";
 import {
   addYears,
   money,
+  rate,
   portfolioKpis,
   portfolioProjection,
   portfolioSnapshot,
@@ -143,8 +144,9 @@ describe("KPI strip (ADR 0200 §1)", () => {
 
   it("the horizon tile: M Kč, multiple · horizon · lens in the foot", () => {
     const { tiles } = renderStrip(base, true);
+    // The exact amount is read out after it, as on the net worth tile (ADR 0208 §1).
     expect(part(tiles[1]!, "value").textContent).toBe(
-      fmtCzkM(kpis.netWorthNominal),
+      `${fmtCzkM(kpis.netWorthNominal)} (${fmtCzk(kpis.netWorthNominal)})`,
     );
     expect(part(tiles[1]!, "foot").textContent).toBe(
       d.stripHorizonFoot(
@@ -260,13 +262,20 @@ describe("Key figures: only what the tiles do not show, in three groups (ADR 020
 
   it("repeats no tile: net worth at the horizon, the multiple and IRR are not listed", () => {
     const { view } = renderList(base, true);
-    // The labels the list used for them (their dictionary keys are gone).
+    // The labels the list used for them (their dictionary keys are gone) …
     for (const k of [
       "Net worth at horizon",
       "Net-worth multiple",
       "Levered IRR",
     ])
       expect(view.container.textContent).not.toContain(k);
+    // … and their values: no list value is the horizon's or the multiple's.
+    const values = Array.from(
+      view.container.querySelectorAll(".statlist .v"),
+      (v) => v.textContent,
+    );
+    expect(values).not.toContain(fmtCzk(kpis.netWorthNominal));
+    expect(values).not.toContain(fmtMultiple(kpis.netWorthMultiple!));
   });
 
   it("keeps the as-of values; the note names their basis and how the monthly figures are made", () => {
@@ -311,7 +320,7 @@ describe("The tiles carry the exact value the list no longer shows (ADR 0208 §1
   it("the horizon tile's value has the amount in Kč; IRR its rate to two decimals", () => {
     const { props } = setUp(base, true);
     render(
-      <KpiStrip {...props} irr={{ rate: money("0.0615"), reason: null }} />,
+      <KpiStrip {...props} irr={{ rate: rate("0.0615"), reason: null }} />,
     );
     expect(
       screen
@@ -319,6 +328,6 @@ describe("The tiles carry the exact value the list no longer shows (ADR 0208 §1
         .closest("[title]")
         ?.getAttribute("title"),
     ).toBe(fmtCzk(props.horizon));
-    expect(screen.getByTitle(fmtPct(money("0.0615"), 2))).toBeTruthy();
+    expect(screen.getByTitle(fmtPct(rate("0.0615"), 2))).toBeTruthy();
   });
 });
