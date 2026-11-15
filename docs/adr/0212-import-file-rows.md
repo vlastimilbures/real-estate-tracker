@@ -5,7 +5,8 @@
 - Source: issue #389 (UX/UI review 2026-11, tracking #392); direction approved by the
   owner on 2026-11-15 (the issue's layout); acceptance delegated by the owner for the
   2026-11-15 run (comment on #392)
-- Related: [0096](0096-csv-import-preview.md) (the preview and report, unchanged),
+- Related: [0199](0199-icon-only-row-actions.md) (the template button is a row action),
+  [0096](0096-csv-import-preview.md) (the preview and report, unchanged),
   [0185](0185-csv-missing-columns-and-preview-clarity.md) (a file with no data rows is not a success)
 
 ## Context

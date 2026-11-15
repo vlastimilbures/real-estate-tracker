@@ -6,8 +6,9 @@ page. This describes how the importer behaves today; the contributor-oriented ru
 
 ## Overview
 
-There are four files, one per kind of record. Each has its own picker on the Import page, and
-each picker has a **Download template** button that saves the header and one example row.
+There are four files, one per kind of record. Each has its own row on the Import page: choose a
+file there or drop it on that row (a file is read as its row's kind, whatever its name), and the
+row's template button (the download icon) saves the header and one example row (ADR 0212).
 
 | File             | Holds                                     | One row is           |
 | ---------------- | ----------------------------------------- | -------------------- |

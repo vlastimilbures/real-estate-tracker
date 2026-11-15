@@ -1907,14 +1907,29 @@ export const SCREENS: Screen[] = [
       await boot(ux.page);
       await nav(ux, "import");
       await expectImportRows(ux);
-      // The drag-over state shows on the row a file is over (ADR 0212 §2).
+      // The drag-over state shows on the row a file is over (ADR 0212 §2), and a
+      // keyboard-focused button outlines its row.
       const row = ux.page.locator(".import-row").nth(1);
-      await row.dispatchEvent("dragover", {
+      await row.dispatchEvent("dragenter", {
         dataTransfer: await ux.page.evaluateHandle(() => new DataTransfer()),
       });
       await expect(row).toHaveClass(/drag-over/);
+      // A real Tab, so the focus is keyboard focus (:focus-visible).
+      await ux.page
+        .getByRole("button", {
+          name: ux.t.importPage.templateFor(ux.t.importPage.valuationsTitle),
+        })
+        .focus();
+      await ux.page.keyboard.press("Tab");
+      await expect(
+        ux.page.getByRole("button", {
+          name: ux.t.importPage.chooseFileFor(ux.t.importPage.rentsTitle),
+        }),
+      ).toBeFocused();
+      await ux.capture("50b-import-row-states", { fullPage: false });
       await row.dispatchEvent("dragleave");
       await expect(row).not.toHaveClass(/drag-over/);
+      await ux.page.locator("body").focus();
       await ux.capture("50-import");
     },
   },

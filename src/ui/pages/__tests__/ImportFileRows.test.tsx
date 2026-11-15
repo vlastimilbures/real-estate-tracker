@@ -54,6 +54,7 @@ const valuations = () =>
 describe("Import files: one panel, one row per type (ADR 0212 §1)", () => {
   it("lists the four types in order with their file names, in one panel", () => {
     render(<Import />);
+    expect(screen.getByRole("list").getAttribute("role")).toBe("list");
     const panel = screen
       .getByRole("heading", { name: p.filesTitle })
       .closest("section, .panel") as HTMLElement;
@@ -116,19 +117,31 @@ describe("each row is its own drop target (ADR 0212 §2)", () => {
     await waitFor(() =>
       expect(within(row).getByText(p.rowsReady(1))).toBeTruthy(),
     );
+    expect(row.querySelector(".import-row-file.is-chosen")?.textContent).toBe(
+      "properties.csv",
+    );
     expect(
-      rowOf(p.propertiesTitle).querySelector(".import-row-file")?.textContent,
-    ).toBe("properties.csv");
+      rowOf(p.propertiesTitle).querySelector(".import-row-file.is-chosen"),
+    ).toBeNull();
     expect(
       within(rowOf(p.propertiesTitle)).queryByText(p.rowsReady(1)),
     ).toBeNull();
   });
 
-  it("leaving the row clears the drag-over state", () => {
+  it("moving onto the row's own parts keeps the state; leaving the row clears it", () => {
     render(<Import />);
     const row = rowOf(p.rentsTitle);
+    const button = within(row).getByRole("button", {
+      name: p.chooseFileFor(p.rentsTitle),
+    });
+    fireEvent.dragEnter(row);
     fireEvent.dragOver(row, { dataTransfer: { files: [] } });
+    // Onto the button: enter there (bubbling to the row), then leave the row's own box.
+    fireEvent.dragEnter(button);
     fireEvent.dragLeave(row);
+    expect(row.className).toContain("drag-over");
+    // Off the button and out of the row.
+    fireEvent.dragLeave(button);
     expect(row.className).not.toContain("drag-over");
   });
 });
@@ -156,8 +169,15 @@ describe("a file's errors sit under its row (ADR 0212 §4)", () => {
 });
 
 describe("translated names (ADR 0212 §3)", () => {
-  it("cs and ru name the type in each control", () => {
-    for (const t of [cs, ru]) {
+  it("cs and ru name the type in each control, starting with the visible text", () => {
+    for (const t of [en, cs, ru]) {
+      const visible = (s: string) => s.replace(/…$/, "");
+      expect(t.importPage.chooseFileFor(t.importPage.valuationsTitle)).toMatch(
+        new RegExp(`^${visible(t.importPage.chooseFile)}`),
+      );
+      expect(
+        t.importPage.reuploadFor(t.importPage.valuationsTitle, "v.csv"),
+      ).toMatch(new RegExp(`^${visible(t.importPage.reuploadShort)}`));
       expect(
         t.importPage.chooseFileFor(t.importPage.valuationsTitle),
       ).toContain(t.importPage.valuationsTitle);

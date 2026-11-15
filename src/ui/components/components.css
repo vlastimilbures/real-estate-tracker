@@ -716,9 +716,6 @@
     border-color 120ms ease,
     background-color 120ms ease;
 }
-.import-row:hover {
-  border-color: var(--hairline-strong);
-}
 .import-row.drag-over {
   border-color: var(--accent);
   background-color: var(--surface-raised);
@@ -735,6 +732,9 @@
 }
 .import-row-file.is-chosen {
   color: var(--ink);
+}
+.import-row-status .badge {
+  white-space: nowrap;
 }
 .import-row-actions {
   display: inline-flex;

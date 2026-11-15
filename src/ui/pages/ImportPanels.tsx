@@ -181,7 +181,8 @@ export function ImportFilesPanel({ files }: { files: ImportFileType[] }) {
   const t = useT();
   return (
     <Panel title={t.importPage.filesTitle} hint={t.importPage.dropOnRow}>
-      <ul className="import-rows">
+      {/* An explicit list role: WebKit drops it from a list without bullets. */}
+      <ul className="import-rows" role="list">
         {files.map((f) => (
           <ImportFileRow key={f.key} type={f} />
         ))}
@@ -213,6 +214,7 @@ function ImportFileRow({ type }: { type: ImportFileType }) {
   const { title, file, templateFn, fileState, onFile } = type;
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const depth = useRef(0);
   const [templateError, setTemplateError] = useState<string | null>(null);
 
   async function saveTemplate() {
@@ -242,6 +244,7 @@ function ImportFileRow({ type }: { type: ImportFileType }) {
   // A file dropped here is this row's type, whatever its name (ADR 0212 §2).
   function handleDrop(e: React.DragEvent<HTMLLIElement>) {
     e.preventDefault();
+    depth.current = 0;
     setDragOver(false);
     const f = e.dataTransfer.files?.[0];
     if (f) void acceptFile(f);
@@ -254,7 +257,16 @@ function ImportFileRow({ type }: { type: ImportFileType }) {
         e.preventDefault();
         setDragOver(true);
       }}
-      onDragLeave={() => setDragOver(false)}
+      // Entering the row's own parts fires enter there before leave here: count them,
+      // so moving across the row does not flicker (WebKit gives no relatedTarget).
+      onDragEnter={() => {
+        depth.current += 1;
+        setDragOver(true);
+      }}
+      onDragLeave={() => {
+        depth.current = Math.max(0, depth.current - 1);
+        if (depth.current === 0) setDragOver(false);
+      }}
       onDrop={handleDrop}
     >
       <span className="import-row-type">{title}</span>
