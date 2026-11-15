@@ -1,6 +1,7 @@
 // Presentational panels extracted from PropertyDetail.tsx: the snapshot KPI tiles +
 // mini charts, and the holding costs' read view and form. Pure rendering — the finance
 // lives in the engine; these take already-computed props / store actions.
+import { HelpText } from "../components/PanelHelp";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Ban, Check, Clock, Pencil } from "lucide-react";
 import { MetricLabel } from "../components/MetricLabel";
@@ -462,6 +463,7 @@ function DrawdownSection({ dd }: { dd: DrawdownView }) {
           </span>
         )}
       </p>
+      <HelpText collapsed>{d.drawdownNote}</HelpText>
       <TableWrap label={`${dd.title} — ${d.drawdownTable}`}>
         <table className="data">
           <caption className="sr-only">{`${dd.title} — ${d.drawdownTable}`}</caption>
@@ -501,7 +503,6 @@ function DrawdownSection({ dd }: { dd: DrawdownView }) {
           </tbody>
         </table>
       </TableWrap>
-      <p className="panel-note">{d.drawdownNote}</p>
     </section>
   );
 }

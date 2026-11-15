@@ -5,6 +5,7 @@
 // as-of date moves it.
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { PropertyDetail } from "../PropertyDetail";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
@@ -62,6 +63,18 @@ afterEach(() => {
 const drawdown = () => screen.getByRole("region", { name: pd.drawdownTitle });
 
 describe("drawdown in the Loan outlook (ADR 0167)", () => {
+  it("explains the drawdown behind About this, not as a second note (ADR 0214)", async () => {
+    render(<PropertyDetail />);
+    const about = within(drawdown()).getByRole("button", {
+      name: en.common.aboutThis,
+    });
+    const text = within(drawdown()).getByText(pd.drawdownNote);
+    expect(text.closest("[hidden]")).not.toBeNull();
+    expect(drawdown().querySelector(".panel-note")).toBeNull();
+    await userEvent.click(about);
+    expect(text.closest("[hidden]")).toBeNull();
+  });
+
   it("shows a labelled bar and each draw's status as text", () => {
     render(<PropertyDetail />);
     const bar = within(drawdown()).getByRole("progressbar");

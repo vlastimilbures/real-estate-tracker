@@ -7,6 +7,8 @@ import { APP_NAME } from "./appName";
 
 export const cs: Dictionary = {
   common: {
+    /** The disclosure that holds a panel's longer explanation (ADR 0214). */
+    aboutThis: "O této části",
     /** A KPI with no value, e.g. a levered IRR (UX-079). */
     notApplicable: "n/a",
     undrawnDebt: (amount) => `+${amount} k\u00a0dočerpání`,

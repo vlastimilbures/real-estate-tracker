@@ -264,6 +264,7 @@ it.
 | [0211](0211-projection-grid-fits.md)                           | The year-by-year grid fits a 1280 px window                                                   | Accepted (delegated, owner review pending)                     | #386, #392                                         |
 | [0212](0212-import-file-rows.md)                               | Import: one list of file types                                                                | Accepted (delegated, owner review pending)                     | #389, #392                                         |
 | [0213](0213-guide-section-nav.md)                              | Guide: section navigation                                                                     | Accepted (delegated, owner review pending)                     | #390, #392                                         |
+| [0214](0214-panel-help-text.md)                                | Panel headers hold context; explanations become help text                                     | Accepted (delegated, owner review pending)                     | #391, #392                                         |
 
 <!-- adr-index:end -->
 

@@ -11,6 +11,8 @@ import { APP_NAME } from "./appName";
 
 export const en = {
   common: {
+    /** The disclosure that holds a panel's longer explanation (ADR 0214). */
+    aboutThis: "About this",
     /** A KPI with no value, e.g. a levered IRR (UX-079). */
     notApplicable: "n/a",
     /** The development tranches not drawn yet, beside the drawn debt (ADR 0169). */

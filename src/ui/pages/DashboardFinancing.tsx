@@ -364,12 +364,13 @@ export function FinancingPanel({
           span={span}
           onOpen={onOpenProperty}
           notes={
-            <>
-              <p className="panel-note">{d.financingDisclaimer}</p>
-              {mode === "real" && (
-                <p className="panel-note">{d.financingRowsNominal}</p>
-              )}
-            </>
+            // One note: in the real lens it also says the debt at reset is nominal
+            // (ADR 0214 §3).
+            <p className="panel-note">
+              {mode === "real"
+                ? `${d.financingRowsNominal} ${d.financingDisclaimer}`
+                : d.financingDisclaimer}
+            </p>
           }
         />
       ) : (

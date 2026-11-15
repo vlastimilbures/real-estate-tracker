@@ -94,6 +94,21 @@ export const test = base.extend<{ ux: Ux }>({
 
     const capture: Ux["capture"] = async (id, opts) => {
       await shot(id, opts);
+      // ADR 0214: a panel header holds context on one line at 1280 × 800 and wider.
+      if ((page.viewportSize()?.width ?? 0) >= 1280) {
+        const wrapped = await page.evaluate(() =>
+          Array.from(document.querySelectorAll("section.panel"))
+            .filter((p) => {
+              const titles = p.querySelector(".panel-head-titles");
+              const h2 = p.querySelector(".panel-head h2");
+              if (!titles || !h2) return false;
+              const h = titles.getBoundingClientRect().height;
+              return h > 0 && h > h2.getBoundingClientRect().height + 4;
+            })
+            .map((p) => p.querySelector(".panel-head h2")?.textContent ?? ""),
+        );
+        expect(wrapped, `${id}: panel headers on one line`).toEqual([]);
+      }
       if (opts?.axe === false) return;
       const res = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       writeJson(path.join("axe", `${id}.json`), {

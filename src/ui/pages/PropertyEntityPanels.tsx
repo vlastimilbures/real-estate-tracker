@@ -1,6 +1,7 @@
 // The editable child-entity panels of Property detail (valuations, leases, mortgage
 // blocks): column layout, form specs, draft/build mapping. Split out of
 // PropertyDetail.tsx (DR-057); each panel reads its own store actions.
+import { HelpText } from "../components/PanelHelp";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { Money, Pct } from "../components/primitives";
 import { EntityPanel } from "../components/EntityPanel";
@@ -58,7 +59,7 @@ export function ValuationsPanel({
   return (
     <EntityPanel
       title={t.propertyDetail.valuationsTitle}
-      hint={t.propertyDetail.valuationsHint}
+      help={<HelpText collapsed>{t.propertyDetail.valuationsHint}</HelpText>}
       addLabel={t.propertyDetail.addValuation}
       describe={(r) =>
         t.propertyDetail.confirmDeleteValuation(fmtDate(r.validFrom))
@@ -155,7 +156,7 @@ export function LeasesPanel({
   return (
     <EntityPanel
       title={t.propertyDetail.leasesTitle}
-      hint={t.propertyDetail.leasesHint}
+      help={<HelpText>{t.propertyDetail.leasesHint}</HelpText>}
       addLabel={t.propertyDetail.addLease}
       describe={(r) =>
         t.propertyDetail.confirmDeleteLease(fmtDate(r.startDate))

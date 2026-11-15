@@ -371,7 +371,11 @@ describe("fixation timeline (ADR 0204)", () => {
   });
 
   it("real lens: says the debt in the rows is nominal", () => {
-    renderPanel(portfolio, "real");
-    expect(screen.getByText(d.financingRowsNominal)).toBeTruthy();
+    const { container } = renderPanel(portfolio, "real").view;
+    // ADR 0214 §3: one note, the nominal line leading the disclaimer.
+    const notes = [...container.querySelectorAll(".fx-notes .panel-note")];
+    expect(notes.map((n) => n.textContent)).toEqual([
+      `${d.financingRowsNominal} ${d.financingDisclaimer}`,
+    ]);
   });
 });

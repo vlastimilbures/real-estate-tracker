@@ -571,6 +571,26 @@
   font-weight: 600;
   color: var(--ink-soft);
 }
+/* A panel's explanation leading its body (ADR 0214): muted help text, or an "About
+   this" disclosure. A flush body (a table to the edges) pads it like the head. */
+.panel-help {
+  margin-bottom: var(--s3);
+}
+.panel-body.flush > .panel-help {
+  margin: 0;
+  padding: var(--s3) var(--s5) 0;
+}
+.help-text {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+.disclosure-body > .help-text {
+  margin-top: var(--s1);
+}
+.drawdown .disclosure {
+  margin-bottom: var(--s2);
+}
 .panel-note {
   margin: var(--s2) 0 0;
   font-size: 12.5px;
