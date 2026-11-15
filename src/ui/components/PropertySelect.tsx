@@ -247,6 +247,8 @@ function Dropdown({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listId = useId();
+  const purposeId = useId();
+  const valueId = useId();
   const close = useCallback(() => setOpen(false), []);
   // Escape and a pick that closes the list hand focus back to the trigger. A click or Tab
   // elsewhere does not: focus is already where the user put it (review of #279).
@@ -276,6 +278,12 @@ function Dropdown({
         if (to && !rootRef.current?.contains(to)) close();
       }}
     >
+      {/* ADR 0197 (WCAG 2.5.3): the name is the purpose, then the value on screen. */}
+      {ariaLabel && (
+        <span id={purposeId} className="sr-only">
+          {ariaLabel}
+        </span>
+      )}
       <button
         ref={triggerRef}
         type="button"
@@ -283,7 +291,7 @@ function Dropdown({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
-        aria-label={ariaLabel}
+        aria-labelledby={ariaLabel ? `${purposeId} ${valueId}` : undefined}
         onClick={() => setOpen((v) => !v)}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -293,7 +301,7 @@ function Dropdown({
         }}
         data-testid={triggerTestId}
       >
-        {label}
+        <span id={valueId}>{label}</span>
         <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true">
           <path
             d="M1 1l4 4 4-4"

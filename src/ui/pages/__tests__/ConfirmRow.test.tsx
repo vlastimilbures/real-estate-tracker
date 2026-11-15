@@ -590,7 +590,7 @@ describe("Escape cancels a confirm row (#247)", () => {
     await userEvent.click(
       screen.getAllByRole("button", { name: en.common.delete })[0]!,
     );
-    await userEvent.click(screen.getByRole("button", { name: "Entity" }));
+    await userEvent.click(screen.getByRole("button", { name: "Entity Byt 0" }));
     expect(screen.getByRole("listbox")).toBeTruthy();
     // An Escape that reaches the row while the list is open: the list owns it.
     fireEvent.keyDown(cancelButton(), { key: "Escape" });

@@ -1124,8 +1124,9 @@ export const SCREENS: Screen[] = [
       await nav(ux, "projections");
       await openDropdown(
         ux,
+        // ADR 0197: the trigger's name is its purpose, then the value it shows.
         ux.page.getByRole("button", {
-          name: ux.t.projections.entity,
+          name: `${ux.t.projections.entity} ${ux.t.projections.portfolio}`,
           exact: true,
         }),
         ux.t.projections.portfolio,

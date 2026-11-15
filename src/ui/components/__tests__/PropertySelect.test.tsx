@@ -190,7 +190,7 @@ describe("PropertySelect dropdown, single mode (#128 R5-05)", () => {
     expect(onChange).toHaveBeenCalledWith("p3");
     expect(screen.queryByRole("listbox")).toBeNull();
     expect(document.activeElement).toBe(
-      screen.getByRole("button", { name: "Entity" }),
+      screen.getByRole("button", { name: "Entity Byt 2" }),
     );
   });
 
@@ -202,8 +202,29 @@ describe("PropertySelect dropdown, single mode (#128 R5-05)", () => {
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("listbox")).toBeNull();
     expect(document.activeElement).toBe(
-      screen.getByRole("button", { name: "Entity" }),
+      screen.getByRole("button", { name: "Entity Byt 2" }),
     );
+  });
+
+  // ADR 0197 (WCAG 2.5.3): the name holds the value the trigger shows, after its purpose.
+  it("names the trigger by its purpose and the value it shows", () => {
+    single("p2");
+    const button = trigger();
+    expect(button.textContent).toBe("Byt 2");
+    expect(button.getAttribute("aria-label")).toBeNull();
+    expect(screen.getByRole("button", { name: "Entity Byt 2" })).toBe(button);
+  });
+
+  it("names the trigger by the value alone without an aria label", () => {
+    render(
+      <PropertySelect
+        mode="single"
+        options={OPTIONS}
+        selected="p4"
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Byt 4" })).toBe(trigger());
   });
 
   it("opens from the trigger with ArrowDown", async () => {
