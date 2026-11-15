@@ -81,10 +81,8 @@ function ClearSampleDialog({ onClose }: { onClose: () => void }) {
 
 /** The "Clear sample and start my own" button with its confirmation dialog. */
 export function ClearSampleButton({
-  variant,
   disabled = false,
 }: {
-  variant?: "primary" | undefined;
   /** Another whole-database action is running (ADR 0154). */
   disabled?: boolean | undefined;
 }) {
@@ -92,12 +90,7 @@ export function ClearSampleButton({
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button
-        size="sm"
-        variant={variant}
-        onClick={() => setOpen(true)}
-        disabled={disabled}
-      >
+      <Button size="sm" onClick={() => setOpen(true)} disabled={disabled}>
         {t.sample.clearAction}
       </Button>
       {open && <ClearSampleDialog onClose={() => setOpen(false)} />}

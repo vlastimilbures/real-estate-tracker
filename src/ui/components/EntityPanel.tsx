@@ -176,11 +176,7 @@ export function EntityPanel<
             unsavedKey={formSource}
             specs={specs}
             initial={draftOf(editingRow)}
-            submitLabel={
-              mode.t === "add"
-                ? `${tr.common.addVerb} ${addLabel}`
-                : tr.common.saveChanges
-            }
+            submitLabel={mode.t === "add" ? addLabel : tr.common.saveChanges}
             onCancel={() => setMode({ t: "idle" })}
             computeHint={computeHint}
             fieldActions={fieldActions}

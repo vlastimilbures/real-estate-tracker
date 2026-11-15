@@ -130,7 +130,7 @@ describe("every property deactivated (#127 item 1)", () => {
     expect(screen.queryByText(en.scenarios.keyFiguresTitle)).toBeNull();
     expect(screen.getByText(saved.name)).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: en.scenarios.newScenario }),
+      screen.getByRole("button", { name: en.scenarios.addScenario }),
     ).toBeTruthy();
     // Nothing to switch between nominal and real.
     expect(

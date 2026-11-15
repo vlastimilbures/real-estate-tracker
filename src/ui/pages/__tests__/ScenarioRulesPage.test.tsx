@@ -62,7 +62,7 @@ describe("Scenarios page (ADR 0123)", () => {
   it("keeps a refused new scenario in the form, with the rule on Value crash", async () => {
     render(<Scenarios />);
     await userEvent.click(
-      screen.getAllByRole("button", { name: sc.newScenario })[0]!,
+      screen.getAllByRole("button", { name: sc.addScenario })[0]!,
     );
     await userEvent.type(screen.getByLabelText(sc.name), "Crash");
     await userEvent.type(screen.getByLabelText(sc.fieldValueCrash), "-20");

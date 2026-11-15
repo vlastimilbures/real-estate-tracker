@@ -12,7 +12,7 @@ import { CZK } from "../../lib/currency";
 import { fmtDate } from "../../lib/format";
 import { Button } from "./primitives";
 import { RowAction, RowActions } from "./RowActions";
-import { Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { DateInput } from "./DateInput";
 import { Field, SelectInput, TextInput } from "./fields";
 import { useT } from "../hooks/useT";
@@ -269,6 +269,7 @@ export function LoanEventRows({
         data-add
         type="button"
         size="sm"
+        icon={Plus}
         onClick={() => {
           focusTo.current = rows.length;
           onChange(writeRows([...rows, BLANK_ROW[kind]]));

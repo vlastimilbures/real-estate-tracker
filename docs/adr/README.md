@@ -251,6 +251,7 @@ it.
 | [0198](0198-asof-hint-own-row.md)                              | As-of hint: its own row of the filter bar                                                     | Accepted (delegated, owner review pending)                     | #372, #392                                         |
 | [0199](0199-icon-only-row-actions.md)                          | Row actions: one icon-only style on every list                                                | Accepted (delegated, owner review pending)                     | #374, #392                                         |
 | [0200](0200-dashboard-kpi-strip.md)                            | Dashboard: one compact KPI strip                                                              | Accepted (delegated, owner review pending)                     | #375, #392                                         |
+| [0201](0201-button-roles.md)                                   | Buttons: one rule per role                                                                    | Accepted (delegated, owner review pending)                     | #380, #392                                         |
 
 <!-- adr-index:end -->
 
