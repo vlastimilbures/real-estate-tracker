@@ -36,10 +36,15 @@
    `properties.editProperty` stays (Property detail's Edit property button, Data check).
 3. **Tooltip on hover and on keyboard focus** (`:hover`, `:focus-visible`). It sits to the
    left of the button, on the button's own line, so it stays inside the row: a sticky table
-   header or the edge of a table's scroll region never covers it. It meets WCAG 1.4.13: it
-   can be hovered (a transparent bridge joins it to the button), it stays while hovered or
-   focused, and Escape hides it without moving focus. That Escape stops there; a second
-   Escape reaches the dialog or form as before.
+   header or the edge of a table's scroll region never covers it. It meets WCAG 1.4.13:
+   - _hoverable_: a transparent bridge joins it to the button, so the pointer can move onto
+     it;
+   - _persistent_: it stays while the button is hovered or focused;
+   - _dismissible_: Escape hides it without moving focus, whether it shows for focus or
+     for hover (focus may be elsewhere then). That Escape stops there; a second Escape
+     reaches the dialog or form as before.
+     Because the tooltip may cover the button beside it, a click on the tooltip only hides
+     it and never runs the hovered action; the next click reaches the button underneath.
 4. **Size:** 28 × 28 px targets with 4 px between them (WCAG 2.5.8 asks at least 24 × 24).
    A table's actions cell shrinks to its buttons with 6 px padding each side, so the column
    is at most about 72 px with two actions and 104 px with three.

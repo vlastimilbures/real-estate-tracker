@@ -1,6 +1,6 @@
 // Row actions on every list (ADR 0199): icon-only quiet buttons whose name is also the
 // tooltip shown on hover and on keyboard focus.
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
 /** The group of a row's actions, right-aligned with 4 px between targets. */
@@ -20,8 +20,10 @@ function tipShows(el: HTMLElement): boolean {
 
 /**
  * One icon-only row action. `label` is the accessible name (the button's text) and the
- * tooltip. Escape hides a showing tooltip without moving focus and stops there; once it
- * is hidden, Escape reaches the dialog or form as before (WCAG 1.4.13).
+ * tooltip. Escape hides a showing tooltip, hovered or focused, without moving focus and
+ * stops there; once it is hidden, Escape reaches the dialog or form as before (WCAG
+ * 1.4.13). A click on the tooltip itself only hides it: the tooltip may cover the button
+ * beside it, and that click was meant for what is underneath.
  */
 export function RowAction({
   icon: Icon,
@@ -38,6 +40,19 @@ export function RowAction({
   onClick: () => void;
 }) {
   const [tipOff, setTipOff] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  // While hovered, the tooltip shows whatever has focus: catch Escape before anything
+  // else (a dialog's own Escape listener) and hide it.
+  useEffect(() => {
+    if (!hovered || tipOff) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      setTipOff(true);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [hovered, tipOff]);
   const cls = ["row-action", danger ? "danger" : "", tipOff ? "tip-off" : ""]
     .filter(Boolean)
     .join(" ");
@@ -46,14 +61,32 @@ export function RowAction({
       type="button"
       className={cls}
       disabled={disabled}
-      onClick={onClick}
+      onClick={(e) => {
+        if ((e.target as Element).closest(".row-action-tip")) {
+          setTipOff(true);
+          return;
+        }
+        // The action ran: its tooltip has done its job and stays hidden until the
+        // pointer leaves or focus moves, so the next Escape reaches the confirm row or
+        // dialog the action opened.
+        setTipOff(true);
+        onClick();
+      }}
       onKeyDown={(e) => {
         if (e.key !== "Escape" || tipOff || !tipShows(e.currentTarget)) return;
         e.stopPropagation();
         setTipOff(true);
       }}
-      onBlur={() => setTipOff(false)}
-      onMouseLeave={() => setTipOff(false)}
+      // A dismissed tooltip shows again on the next hover or focus, not while the
+      // pointer still rests on the button.
+      onBlur={() => {
+        if (!hovered) setTipOff(false);
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => {
+        setHovered(false);
+        setTipOff(false);
+      }}
     >
       <Icon size={16} strokeWidth={1.75} aria-hidden="true" />
       <span className="row-action-tip">{label}</span>

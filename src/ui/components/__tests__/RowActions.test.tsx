@@ -77,7 +77,57 @@ describe("RowAction (ADR 0199)", () => {
   it("the name survives the tooltip being hidden", () => {
     renderPair();
     const edit = screen.getByRole("button", { name: "Edit" });
+    edit.focus();
     fireEvent.keyDown(edit, { key: "Escape" });
+    expect(edit.classList.contains("tip-off")).toBe(true);
     expect(screen.getByRole("button", { name: "Edit" })).toBe(edit);
+  });
+
+  it("Escape hides a hovered tooltip although focus is elsewhere, before a dialog sees it", () => {
+    const dialogEscape = vi.fn();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && dialogEscape();
+    document.addEventListener("keydown", onKey);
+    try {
+      renderPair();
+      const del = screen.getByRole("button", { name: "Delete" });
+      fireEvent.mouseEnter(del);
+      fireEvent.keyDown(document.body, { key: "Escape" });
+      expect(del.classList.contains("tip-off")).toBe(true);
+      expect(dialogEscape).not.toHaveBeenCalled();
+      // Hidden now: the next Escape reaches the dialog.
+      fireEvent.keyDown(document.body, { key: "Escape" });
+      expect(dialogEscape).toHaveBeenCalledOnce();
+      fireEvent.mouseLeave(del);
+      expect(del.classList.contains("tip-off")).toBe(false);
+    } finally {
+      document.removeEventListener("keydown", onKey);
+    }
+  });
+
+  it("a click on the tooltip only hides it: it may cover the button beside it", () => {
+    const onDelete = vi.fn();
+    renderPair(vi.fn(), onDelete);
+    const del = screen.getByRole("button", { name: "Delete" });
+    fireEvent.click(del.querySelector(".row-action-tip")!);
+    expect(onDelete).not.toHaveBeenCalled();
+    expect(del.classList.contains("tip-off")).toBe(true);
+    fireEvent.click(del);
+    expect(onDelete).toHaveBeenCalledOnce();
+  });
+
+  it("after its action runs, Escape goes to what the action opened", () => {
+    const confirmEscape = vi.fn();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && confirmEscape();
+    document.addEventListener("keydown", onKey);
+    try {
+      renderPair();
+      const del = screen.getByRole("button", { name: "Delete" });
+      fireEvent.mouseEnter(del);
+      fireEvent.click(del);
+      fireEvent.keyDown(document.body, { key: "Escape" });
+      expect(confirmEscape).toHaveBeenCalledOnce();
+    } finally {
+      document.removeEventListener("keydown", onKey);
+    }
   });
 });

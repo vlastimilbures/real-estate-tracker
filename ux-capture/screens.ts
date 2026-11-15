@@ -580,6 +580,20 @@ export const SCREENS: Screen[] = [
       await ux.capture("10c-properties-row-action-tooltip", {
         fullPage: false,
       });
+      // A tooltip covering Edit never runs Delete (ADR 0199 §3): from Delete, the pointer
+      // slides onto Edit; the first click hides the tooltip, the next one edits.
+      const row = table.locator("tbody tr").first();
+      const del = row.getByRole("button", { name: ux.t.common.delete });
+      const edit = row.getByRole("button", { name: ux.t.common.edit });
+      await del.hover();
+      const box = (await edit.boundingBox())!;
+      await ux.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await ux.page.mouse.down();
+      await ux.page.mouse.up();
+      await expect(ux.page.locator(".confirm-row")).toHaveCount(0);
+      await ux.page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      await expect(ux.page.getByRole("dialog")).toBeVisible();
+      await expect(ux.page.locator(".confirm-row")).toHaveCount(0);
     },
   },
   {
