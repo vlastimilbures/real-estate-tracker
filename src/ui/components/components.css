@@ -1994,6 +1994,8 @@ table.chart-table tbody th.sticky-col {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 /* A series' colour and dash, in the legend and the tooltip (ADR 0114). */
 .series-swatch {
@@ -2510,8 +2512,10 @@ table.data.compare-table tbody th.sticky-col {
   background: var(--surface);
   border-bottom: 1px solid var(--hairline);
 }
+/* The hover wash is translucent: over the surface, so a pinned cell stays opaque. */
 table.data.compare-table tbody tr:hover th {
-  background: var(--hover-wash);
+  background:
+    linear-gradient(var(--hover-wash), var(--hover-wash)), var(--surface);
 }
 .compare-table .ct-mark {
   margin-left: 2px;
@@ -2523,9 +2527,11 @@ table.data.compare-table tbody tr:hover th {
   color: var(--ink-soft);
 }
 /* In the flush key-figures panel (ADR 0216) the notes keep the body's padding. */
-.panel-body.flush > .ct-footnote,
-.panel-body.flush > .form-note {
+.panel-body.flush > .ct-footnote {
   margin: var(--s3) var(--s5) 0;
+}
+.panel-body.flush > .form-note {
+  margin: var(--s3) var(--s5);
 }
 .panel-body.flush > .ct-footnote:last-child {
   margin-bottom: var(--s4);

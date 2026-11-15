@@ -55,8 +55,17 @@ describe("charts (ADR 0216 §1)", () => {
     expect(grid!.children).toHaveLength(3);
   });
 
-  it("at the Dashboard's small-multiple height", () => {
+  it("each at the Dashboard's small-multiple height", () => {
     expect(SMALL_CHART_HEIGHT).toBe(180);
+    const { container } = render(<CompareView selected={selected} />);
+    const plots = [
+      ...container.querySelectorAll<HTMLElement>(
+        ".chart-grid.trio .recharts-responsive-container",
+      ),
+    ];
+    expect(plots).toHaveLength(3);
+    for (const p of plots)
+      expect(p.style.height).toBe(`${SMALL_CHART_HEIGHT}px`);
   });
 });
 

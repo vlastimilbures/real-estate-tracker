@@ -286,12 +286,11 @@ async function expectProjectionGrid(ux: Ux) {
     expect(m.visible, "figure columns in view").toBeGreaterThanOrEqual(12);
 }
 
-/** The Dashboard KPI strip (ADR 0200): six tiles, one row of at most 96 px when the strip
- *  is 900 px or wider (1280 × 800), else three by two; every label on one line and no
- *  label or value cut off. */
 /** Scenario compare (ADR 0216): every row of charts is full (three in one row when the
  *  row is 900 px or wider), and the key-figures table runs to its panel's edges. */
 async function expectCompareLayout(ux: Ux) {
+  await expect(ux.page.locator(".chart-grid.trio")).toBeVisible();
+  await expect(ux.page.locator("table.compare-table")).toBeVisible();
   const m = await ux.page.evaluate(() => {
     const grid = document.querySelector(".chart-grid.trio")!;
     const g = grid.getBoundingClientRect();
@@ -321,6 +320,12 @@ async function expectCompareLayout(ux: Ux) {
       })),
       insetLeft: wrap.left - panel.left,
       insetRight: panel.right - wrap.right,
+      // A figure wider than its column would spill into the next one.
+      overflowing: Array.from(
+        document.querySelectorAll<HTMLElement>("table.compare-table tbody td"),
+      )
+        .filter((td) => td.scrollWidth > td.clientWidth + 1)
+        .map((td) => td.textContent),
     };
   });
   if (m.width >= 900) expect(m.rows, "charts in one row").toHaveLength(1);
@@ -330,6 +335,7 @@ async function expectCompareLayout(ux: Ux) {
   }
   expect(m.insetLeft, "key figures flush left").toBeLessThanOrEqual(2);
   expect(m.insetRight, "key figures flush right").toBeLessThanOrEqual(2);
+  expect(m.overflowing, "key figures fit their columns").toEqual([]);
 }
 
 /** The KPI strip (ADR 0200 §4): six tiles, one row when the strip is at least 960 px
