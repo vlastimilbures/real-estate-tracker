@@ -840,8 +840,10 @@ offline badge, and controls for language and theme.
    **Clear sample and start my own** (ADR 0094). A compact **Financing &
    upcoming** panel (§4.7, ADR 0103) shows the next rate reset, the debt resetting within
    1/3/5 years, total interest, the interest prepayments save (the total of the figures
-   shown, with a per-property disclosure) and the next 12 months' events, each linking to
-   its property.
+   shown, with a per-property disclosure) and a fixation timeline: one row per loan with its
+   next fixation end, time left and debt at reset, and the loan, completion and lease dates
+   of the same 1/3/5-year window on their property's row, each linking to its property
+   (ADR 0204).
    The KPI list ends with **Cash invested** (ADR 0119 §9): the recorded own cash of the
    active properties in the filter, future buys included, shown only when every one of them
    has it; the real lens labels it nominal.

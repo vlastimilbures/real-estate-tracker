@@ -374,7 +374,7 @@ export const ru: Dictionary = {
       "н/д: изменение срока зависит от досрочного платежа",
     financingIn: (s) => `через ${s}`,
     financingInUnderMonth: "менее чем через месяц",
-    financingNextFlag: "ближайшая",
+    financingNextFlag: "ближайший",
     financingNoFixationAhead: "Конца фиксации не предвидится",
     financingShowAll: (n) => `Показать все (${n})`,
     financingTimeline: (n) =>

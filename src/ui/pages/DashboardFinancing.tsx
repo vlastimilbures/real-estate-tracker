@@ -106,7 +106,12 @@ function TimelineItem({
                 <Money value={f.amount} parens={false} />
               </>
             )}
-            {f.next && <span className="fx-next">{d.financingNextFlag}</span>}
+            {f.next && (
+              <>
+                {" "}
+                <span className="fx-next">{d.financingNextFlag}</span>
+              </>
+            )}
           </span>
         ) : (
           row.hasLoan && (
@@ -146,8 +151,9 @@ function FixationTimeline({
   const d = t.dashboard;
   const [asTable, setAsTable] = useState(false);
   const name = d.financingTimeline(Number(span));
-  const list = (rows: TimelineRow[]) => (
-    <ul className="fx-rows" aria-label={name}>
+  // The rows under Show all are named by its button, not as a second timeline.
+  const list = (rows: TimelineRow[], label?: string) => (
+    <ul className="fx-rows" aria-label={label}>
       {rows.map((r) => (
         <TimelineItem key={r.propertyId} row={r} onOpen={onOpen} />
       ))}
@@ -205,7 +211,7 @@ function FixationTimeline({
               {tl.ticks.map((x) => (
                 <span
                   key={x.label}
-                  className="fx-tick"
+                  className={x.at > 0.95 ? "fx-tick end" : "fx-tick"}
                   style={{ left: pct(x.at) }}
                 >
                   {x.label}
@@ -220,7 +226,7 @@ function FixationTimeline({
               ))}
             </span>
           </div>
-          {list(tl.rows.slice(0, TIMELINE_ROWS))}
+          {list(tl.rows.slice(0, TIMELINE_ROWS), name)}
           {rest.length > 0 && (
             <Disclosure label={d.financingShowAll(tl.rows.length)}>
               {list(rest)}

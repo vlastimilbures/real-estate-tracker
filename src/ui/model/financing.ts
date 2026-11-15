@@ -280,9 +280,10 @@ export function financingTimeline(
     if (jan.getTime() > end.getTime()) break;
     ticks.push({ label: String(y), at: at(jan) });
   }
+  // A fixation end after the window draws no diamond, so it adds nothing to the legend.
   const drawn = new Set(
     rows.flatMap((r) => [
-      ...(r.fixation ? [r.fixation.kind] : []),
+      ...(r.fixation && !r.fixation.beyond ? [r.fixation.kind] : []),
       ...r.marks.map((m) => m.kind),
     ]),
   );

@@ -14,6 +14,7 @@ import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
+import { fmtDate } from "../../../lib/format";
 import { financingTimeline, timelineTable } from "../financing";
 
 function run(p: Portfolio, asOf = assumptions.baseDate) {
@@ -58,6 +59,12 @@ describe("financingTimeline rows (ADR 0204 §2)", () => {
       beyond: true,
       next: false,
     });
+  });
+
+  it("says under a month for a fixation end less than a month ahead", () => {
+    const o = run(portfolio, isoDate("2028-12-20"));
+    const t2 = financingTimeline(o.financing, portfolio, "1", en);
+    expect(t2.rows[0].fixation?.timeLeft).toBe(d.financingInUnderMonth);
   });
 
   it("flags only the next reset", () => {
@@ -125,8 +132,13 @@ describe("financingTimeline marks (ADR 0204 §3)", () => {
     const payoff = edate(impliedMaturity(b)!, -6);
     const o = run(portfolio, payoff);
     const tl = financingTimeline(o.financing, portfolio, "3", en);
-    expect(tl.rows.flatMap((r) => r.marks.map((m) => m.kind))).toContain(
-      "loanPayoff",
+    const javorova = tl.rows.find((r) => r.propertyId === "javorova")!;
+    expect(javorova.marks).toContainEqual(
+      expect.objectContaining({
+        kind: "loanPayoff",
+        label: d.financingEventLoanPayoff,
+        date: fmtDate(impliedMaturity(b)!),
+      }),
     );
     const dv = run(mixed, isoDate("2026-12-01"));
     const dev = financingTimeline(dv.financing, mixed, "3", en);
@@ -180,6 +192,12 @@ describe("financingTimeline axis (ADR 0204 §4)", () => {
         (x) => x.label,
       ),
     ).toEqual(["2027"]);
+  });
+
+  it("leaves the diamond out of the legend when every fixation end is after the window", () => {
+    const tl = financingTimeline(out.financing, portfolio, "1", en);
+    expect(tl.rows.every((r) => r.fixation?.beyond)).toBe(true);
+    expect(tl.kinds.map((k) => k.kind)).not.toContain("fixationEnd");
   });
 
   it("shows no fixation kind in the legend without a fixation end", () => {

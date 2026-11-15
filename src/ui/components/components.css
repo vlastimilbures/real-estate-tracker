@@ -2513,6 +2513,10 @@ main.page:focus {
   transform: translateX(-50%);
   white-space: nowrap;
 }
+/* A tick at the window's end keeps its label inside the track. */
+.fx-tick.end {
+  transform: translateX(-100%);
+}
 .fx-rows {
   list-style: none;
   margin: 0;
@@ -2527,9 +2531,11 @@ main.page:focus {
 }
 .fx-name {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+/* The button cuts a long name itself (ellipsis, full name on hover), so its focus ring
+   is never clipped. */
+.fx-name > .cell-name {
+  max-width: 100%;
 }
 .fx-track {
   position: relative;
