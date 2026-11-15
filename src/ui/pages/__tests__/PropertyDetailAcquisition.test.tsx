@@ -4,7 +4,8 @@
 // unknown part reads "—", no acquisition loan reads "None", and a sources & uses gap is a
 // standing warning note, never a blocker.
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { act, render, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { PropertyDetail } from "../PropertyDetail";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
@@ -71,8 +72,9 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("Property detail Acquisition section (ADR 0119 §9)", () => {
   it("follows Financing; an unknown part reads — and no acquisition loan reads None", () => {
-    // Javorova's first block starts years after its purchase: no acquisition loan.
-    show("javorova");
+    // Javorova's first block starts years after its purchase: no acquisition loan. A
+    // recorded note alone brings the full table (ADR 0209 §3).
+    show("javorova", { note: "Bought outright" });
     expect(
       document.getElementById("pd-financing")!.nextElementSibling?.id,
     ).toBe("pd-acquisition");
@@ -89,6 +91,42 @@ describe("Property detail Acquisition section (ADR 0119 §9)", () => {
       [pd.acqSources]: "—",
     });
     expect(within(section()!).queryByRole("note")).toBeNull();
+  });
+
+  it("with nothing but the price known, one line and Record funding (ADR 0209)", () => {
+    show("javorova");
+    expect(
+      within(section()!).getByRole("heading", { name: pd.acqTitle }),
+    ).toBeTruthy();
+    expect(section()!.querySelector(".statlist")).toBeNull();
+    expect(section()!.querySelector(".acq-empty")?.textContent).toContain(
+      pd.acqEmpty(fmtCzk(4_080_000), null),
+    );
+    expect(within(section()!).queryByText(pd.acqNote)).toBeNull();
+    const record = within(section()!).getByRole("button", {
+      name: en.dataCheck.recordFunding,
+    });
+    expect(
+      document.getElementById(record.getAttribute("aria-describedby") ?? "")
+        ?.textContent,
+    ).toBe(pd.acqRecordFundingOpens);
+  });
+
+  it("Record funding opens Edit property at its Acquisition section", async () => {
+    show("javorova");
+    await userEvent.click(
+      within(section()!).getByRole("button", {
+        name: en.dataCheck.recordFunding,
+      }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    const acq = within(dialog).getByRole("button", {
+      name: en.propertyForm.acquisitionSection,
+    });
+    expect(acq.getAttribute("aria-expanded")).toBe("true");
+    // Focus lands in the section, on its first field (ADR 0118's editFunding target).
+    expect(document.activeElement?.tagName).toBe("INPUT");
+    expect(dialog.contains(document.activeElement)).toBe(true);
   });
 
   it("warns, as a note, when the recorded sources fall short of the uses", () => {

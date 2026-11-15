@@ -391,6 +391,7 @@ export function PropertyDetail() {
               property.funding?.note,
               t.propertyDetail,
             )}
+            onRecordFunding={() => setEditing("editFunding")}
           />
         </div>
       )}

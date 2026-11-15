@@ -751,6 +751,11 @@ export const cs: Dictionary = {
     acqNote:
       "— znamená nezadáno; užití počítá jen zadané náklady a úpravy. Úvěr na koupi je první úvěrový blok, pokud začíná nejpozději 90 dní po koupi, nebo úvěr na výstavbu bez ohledu na začátek. Částky zadáte v dialogu „Upravit nemovitost“.",
     acqRecordedNote: (note) => `Poznámka: ${note}`,
+    // ADR 0209: oddíl, dokud je známa jen kupní cena.
+    acqEmpty: (price, loan) =>
+      `Kupní cena ${price}${loan ? ` · úvěr na koupi ${loan}` : ""} · náklady, úpravy a vlastní zdroje nejsou zadány.`,
+    acqRecordFundingOpens:
+      "Otevře dialog „Upravit nemovitost“ v oddílu Pořízení.",
     showAmortization: (n) =>
       `Zobrazit splátkový kalendář (${n} ${csPlural(n, ["splátka", "splátky", "splátek"])})`,
     hideAmortization: "Skrýt splátkový kalendář",

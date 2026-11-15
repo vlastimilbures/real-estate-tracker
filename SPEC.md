@@ -905,7 +905,10 @@ offline badge, and controls for language and theme.
    The **Acquisition** section (ADR 0119 §9) lists the purchase price, transaction costs,
    initial works, uses, cash invested (own cash), the acquisition loan and sources, then the
    funding note; an unknown part reads "—" and no acquisition loan reads "None". A sources
-   & uses gap of 1 Kč or more shows as a warning (short or over), never a blocker.
+   & uses gap of 1 Kč or more shows as a warning (short or over), never a blocker. While no
+   cost, works, own cash or note is recorded, the section is one line instead (the price
+   and the acquisition loan, if any, then "costs, works and own cash are not recorded")
+   with **Record funding**, which opens the form at its Acquisition section (ADR 0209).
    A section nav lists Overview, Data check (the property's own findings, ADR 0118),
    Records, Financing, Acquisition, Holding costs, Projection and Amortization (ADR 0107).
    The mortgage form edits each block's prepayments (date, amount, effect, optional fee) and
