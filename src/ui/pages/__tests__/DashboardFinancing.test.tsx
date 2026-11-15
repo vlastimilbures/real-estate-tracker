@@ -50,8 +50,10 @@ describe("Financing & upcoming panel (ADR 0103)", () => {
     const { out } = renderPanel(portfolio);
     const three = debtResettingWithin(out.financing, 3);
     expect(screen.getByText(en.dashboard.financingTitle)).toBeTruthy();
-    expect(screen.getByText(/15\.01\.2029/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Byt Lipova" })).toBeTruthy();
+    expect(screen.getAllByText(/15\.01\.2029/).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("button", { name: "Byt Lipova" }).length,
+    ).toBeGreaterThan(0);
     expect(screen.getAllByText(money(three.amount)).length).toBeGreaterThan(0);
     expect(
       screen.getByText(en.dashboard.financingResettingWithin(3)),
@@ -88,8 +90,11 @@ describe("Financing & upcoming panel (ADR 0103)", () => {
   it("a property link opens the property", async () => {
     const user = userEvent.setup();
     const { onOpen } = renderPanel(portfolio);
-    await user.click(screen.getByRole("button", { name: "Byt Lipova" }));
-    expect(onOpen).toHaveBeenCalledWith("lipova");
+    for (const link of screen.getAllByRole("button", { name: "Byt Lipova" })) {
+      onOpen.mockClear();
+      await user.click(link);
+      expect(onOpen).toHaveBeenCalledWith("lipova");
+    }
   });
 
   it("real lens: balances say nominal, total interest is real", () => {
@@ -103,12 +108,7 @@ describe("Financing & upcoming panel (ADR 0103)", () => {
     expect(screen.getByText(money(out.kpis.totalInterestReal))).toBeTruthy();
   });
 
-  it("no events: says there are no upcoming dates", () => {
-    renderPanel(portfolio);
-    expect(screen.getByText(en.dashboard.financingNoEvents)).toBeTruthy();
-  });
-
-  it("no loans: no figures or toggle, events still listed", () => {
+  it("no loans: no figures, the note, and a property's other dates still listed", () => {
     const p = {
       ...portfolio,
       mortgages: [],
@@ -116,8 +116,24 @@ describe("Financing & upcoming panel (ADR 0103)", () => {
     };
     renderPanel(p);
     expect(screen.getByText(en.dashboard.financingNoLoans)).toBeTruthy();
+    expect(screen.queryByText(en.dashboard.financingNextReset)).toBeNull();
+    const list = screen.getByRole("list", {
+      name: en.dashboard.financingTimeline(3),
+    });
+    expect(within(list).getByRole("listitem").textContent).toContain(
+      en.dashboard.financingEventLeaseEnd,
+    );
+    // The window sets the span of those dates (ADR 0204 §4).
+    expect(
+      screen.getByRole("group", { name: en.dashboard.financingWindow }),
+    ).toBeTruthy();
+  });
+
+  it("no loans and no dates: the note only, no toggle", () => {
+    renderPanel({ ...portfolio, mortgages: [] });
+    expect(screen.getByText(en.dashboard.financingNoLoans)).toBeTruthy();
     expect(screen.queryByRole("group")).toBeNull();
-    expect(screen.getByText(en.dashboard.financingEventLeaseEnd)).toBeTruthy();
+    expect(screen.queryByRole("list")).toBeNull();
   });
 
   it("at a later as-of it does not say today or current", () => {
@@ -221,5 +237,141 @@ describe("interest saved with a recast that needs the prepayment (ADR 0130)", ()
     ).toBe(2);
     expect(view.container.textContent).not.toContain(money(saved));
     expect(view.container.textContent).not.toContain(money(saved.negated()));
+  });
+});
+
+describe("fixation timeline (ADR 0204)", () => {
+  const d = en.dashboard;
+  const list = (n = 3) =>
+    screen.getByRole("list", { name: d.financingTimeline(n) });
+  const items = (n = 3) => within(list(n)).getAllByRole("listitem");
+
+  it("lists one row per loan, earliest fixation end first, with every date and amount in its text", () => {
+    const { out } = renderPanel(portfolio);
+    const rows = items();
+    expect(rows.map((r) => within(r).getByRole("button").textContent)).toEqual([
+      "Byt Lipova",
+      "Byt Javorova",
+      "Byt Dubova",
+    ]);
+    const balance = (id: string) =>
+      out.financing.loans.find((l) => l.propertyId === id)!.nextFixation!
+        .balance;
+    expect(rows[0].textContent).toContain(d.financingEventFixationEnd);
+    expect(rows[0].textContent).toContain("15.01.2029");
+    expect(rows[0].textContent).toContain(d.financingIn("2 yrs 7 months"));
+    expect(rows[0].textContent).toContain(money(balance("lipova")));
+    expect(rows[0].textContent).toContain(d.financingNextFlag);
+    // After the window: still listed with its date and debt, not flagged.
+    expect(rows[1].textContent).toContain("17.01.2031");
+    expect(rows[1].textContent).toContain(money(balance("javorova")));
+    expect(rows[1].textContent).not.toContain(d.financingNextFlag);
+  });
+
+  it("hides the bars, markers, axis and legend from assistive technology", () => {
+    const { view } = renderPanel(portfolio);
+    for (const sel of [".fx-track", ".fx-axis", ".fx-legend"]) {
+      const els = view.container.querySelectorAll(sel);
+      expect(els.length, sel).toBeGreaterThan(0);
+      for (const el of els)
+        expect(el.closest("[aria-hidden='true']"), sel).not.toBeNull();
+    }
+    // The next reset's bar is inside the window; a later one runs off the edge.
+    const bars = view.container.querySelectorAll<HTMLElement>(".fx-bar");
+    expect(bars[0].classList.contains("beyond")).toBe(false);
+    expect(bars[1].classList.contains("beyond")).toBe(true);
+    expect(bars[1].style.width).toBe("100%");
+  });
+
+  it("the window sets the axis and which dates show", async () => {
+    const user = userEvent.setup();
+    const p = {
+      ...portfolio,
+      leases: portfolio.leases
+        .map((l) =>
+          l.id === "l-lipova-1" ? { ...l, endDate: isoDate("2028-05-31") } : l,
+        )
+        .filter((l) => l.id !== "l-lipova-2"),
+    };
+    const { view } = renderPanel(p);
+    const ticks = () =>
+      Array.from(view.container.querySelectorAll(".fx-tick")).map(
+        (x) => x.textContent,
+      );
+    expect(ticks()).toEqual(["2027", "2028", "2029"]);
+    expect(items()[0].textContent).toContain("31.05.2028");
+    await user.click(screen.getByRole("button", { name: "1 y" }));
+    expect(ticks()).toEqual(["2027"]);
+    expect(items(1)[0].textContent).not.toContain("31.05.2028");
+  });
+
+  it("a Table toggle shows the same dates as a table", async () => {
+    const user = userEvent.setup();
+    renderPanel(portfolio);
+    const toggle = screen.getByRole("button", { name: en.charts.table });
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    await user.click(toggle);
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    const table = screen.getByRole("table", { name: d.financingTimeline(3) });
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((h) => h.textContent),
+    ).toEqual([
+      d.financingColProperty,
+      d.financingColEvent,
+      d.financingColDate,
+      d.financingColIn,
+      d.financingColDebt,
+    ]);
+    expect(within(table).getAllByRole("row")).toHaveLength(4);
+    expect(
+      screen.queryByRole("list", { name: d.financingTimeline(3) }),
+    ).toBeNull();
+  });
+
+  it("shows 8 rows and the rest under Show all", async () => {
+    const props = Array.from({ length: 11 }, (_, i) => ({
+      ...portfolio.properties[0],
+      id: `p${i}`,
+      name: `Byt Ukazkovy ${String(i + 1).padStart(2, "0")}`,
+    }));
+    const base = portfolio.mortgages[0];
+    const p: Portfolio = {
+      ...portfolio,
+      properties: props,
+      mortgages: props.map((x, i) => ({
+        ...base,
+        id: `m${i}`,
+        propertyId: x.id,
+        startDate: isoDate(`${2020 + (i % 6)}-0${1 + (i % 9)}-15`),
+      })),
+      valuations: [],
+      holdingCosts: [],
+      leases: [],
+    };
+    renderPanel(p);
+    const lists = screen.getAllByRole("list", { name: d.financingTimeline(3) });
+    expect(within(lists[0]).getAllByRole("listitem")).toHaveLength(8);
+    const more = screen.getByRole("button", { name: d.financingShowAll(11) });
+    expect(more.getAttribute("aria-expanded")).toBe("false");
+    const region = document.getElementById(
+      more.getAttribute("aria-controls")!,
+    )!;
+    expect(region.hidden).toBe(true);
+    await userEvent.click(more);
+    expect(region.hidden).toBe(false);
+    expect(within(region).getAllByRole("listitem")).toHaveLength(3);
+  });
+
+  it("says when a loan has no fixation end ahead", () => {
+    renderPanel(portfolio, "nominal", isoDate("2029-06-01"));
+    const lipova = items().find((r) => r.textContent?.includes("Byt Lipova"))!;
+    expect(lipova.textContent).toContain(d.financingNoFixationAhead);
+  });
+
+  it("real lens: says the debt in the rows is nominal", () => {
+    renderPanel(portfolio, "real");
+    expect(screen.getByText(d.financingRowsNominal)).toBeTruthy();
   });
 });

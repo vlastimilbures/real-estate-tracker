@@ -2,19 +2,15 @@
 import { describe, it, expect } from "vitest";
 import {
   debtResettingWithin,
-  edate,
-  impliedMaturity,
   isoDate,
   money,
   portfolioOutputs,
   type Portfolio,
 } from "../../../engine";
-import { mixed } from "../../../engine/__tests__/support/mixed";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
-import { fmtDate } from "../../../lib/format";
 import { D } from "../../../lib/money";
 import {
   financingLabels,
@@ -22,13 +18,6 @@ import {
   interestSavedShown,
   type InterestSavedShown,
 } from "../financing";
-
-function impliedMaturityOf(id: string) {
-  const b = portfolio.mortgages.find((x) => x.id === id);
-  const d = b && impliedMaturity(b);
-  if (!d) throw new Error(`no maturity for ${id}`);
-  return d;
-}
 
 function run(p: Portfolio, asOf = assumptions.baseDate) {
   return portfolioOutputs(p, assumptions, asOf);
@@ -44,7 +33,6 @@ describe("financingPanel (ADR 0103)", () => {
       out.kpis,
       "nominal",
       "3",
-      en,
     );
     const lipova = out.financing.resets.find((r) => r.blockId === "m-lipova");
     expect(m.hasLoans).toBe(true);
@@ -64,7 +52,6 @@ describe("financingPanel (ADR 0103)", () => {
         out.kpis,
         "nominal",
         w,
-        en,
       );
       expect(m.resetting).toEqual(
         debtResettingWithin(out.financing, Number(w)),
@@ -79,7 +66,6 @@ describe("financingPanel (ADR 0103)", () => {
       out.kpis,
       "nominal",
       "3",
-      en,
     );
     const real = financingPanel(
       out.financing,
@@ -87,78 +73,11 @@ describe("financingPanel (ADR 0103)", () => {
       out.kpis,
       "real",
       "3",
-      en,
     );
     expect(nominal.totalInterest).toBe(out.kpis.totalInterest);
     expect(real.totalInterest).toBe(out.kpis.totalInterestReal);
     // Balances do not: they stay nominal in both lenses.
     expect(real.nextReset?.balance).toBe(nominal.nextReset?.balance);
-  });
-
-  it("labels events in each language and links them to the property", () => {
-    const p = {
-      ...portfolio,
-      leases: portfolio.leases.filter((l) => l.id !== "l-lipova-2"),
-    };
-    const o = run(p);
-    for (const [t, label] of [
-      [en, en.dashboard.financingEventLeaseEnd],
-      [cs, cs.dashboard.financingEventLeaseEnd],
-      [ru, ru.dashboard.financingEventLeaseEnd],
-    ] as const) {
-      const m = financingPanel(o.financing, p, o.kpis, "nominal", "3", t);
-      expect(m.events).toEqual([
-        {
-          date: "30.08.2026",
-          propertyId: "lipova",
-          propertyName: "Byt Lipova",
-          label,
-          amount: null,
-        },
-      ]);
-    }
-  });
-
-  it("a fixation-end event carries its balance", () => {
-    const o = run(portfolio, isoDate("2028-06-01"));
-    const m = financingPanel(
-      o.financing,
-      portfolio,
-      o.kpis,
-      "nominal",
-      "3",
-      en,
-    );
-    const e = m.events.find(
-      (x) => x.label === en.dashboard.financingEventFixationEnd,
-    );
-    expect(e?.date).toBe(fmtDate(isoDate("2029-01-15")));
-    expect(e?.amount).toBe(m.nextReset?.balance);
-  });
-
-  it("labels a modelled payoff and a development completion", () => {
-    const payoff = edate(impliedMaturityOf("m-javorova"), -6);
-    const o = run(portfolio, payoff);
-    const m = financingPanel(
-      o.financing,
-      portfolio,
-      o.kpis,
-      "nominal",
-      "3",
-      en,
-    );
-    expect(m.events.map((e) => e.label)).toContain(
-      en.dashboard.financingEventLoanPayoff,
-    );
-    const d = run(mixed, isoDate("2026-12-01"));
-    const dev = financingPanel(d.financing, mixed, d.kpis, "nominal", "3", en);
-    expect(dev.events).toContainEqual({
-      date: "20.08.2027",
-      propertyId: "dev",
-      propertyName: "Dev unit",
-      label: en.dashboard.financingEventDevCompletion,
-      amount: null,
-    });
   });
 
   it("falls back to the property id when the name is not in the portfolio", () => {
@@ -168,37 +87,8 @@ describe("financingPanel (ADR 0103)", () => {
       out.kpis,
       "nominal",
       "3",
-      en,
     );
     expect(m.nextReset?.propertyName).toBe("lipova");
-  });
-
-  it("lists at most five events and counts the rest", () => {
-    const props = Array.from({ length: 7 }, (_, i) => ({
-      ...portfolio.properties[0],
-      id: `p${i}`,
-      name: `P${i}`,
-    }));
-    const p: Portfolio = {
-      ...portfolio,
-      properties: props,
-      mortgages: [],
-      valuations: [],
-      holdingCosts: [],
-      leases: props.map((x, i) => ({
-        id: `l${i}`,
-        propertyId: x.id,
-        startDate: isoDate("2026-01-01"),
-        endDate: isoDate(`2026-${String(7 + (i % 5)).padStart(2, "0")}-20`),
-        monthlyRent: portfolio.leases[0].monthlyRent,
-      })),
-    };
-    const o = run(p);
-    const m = financingPanel(o.financing, p, o.kpis, "nominal", "3", en);
-    expect(m.hasLoans).toBe(false);
-    expect(m.nextReset).toBeNull();
-    expect(m.events).toHaveLength(5);
-    expect(m.moreEvents).toBe(2);
   });
 });
 
@@ -272,7 +162,7 @@ describe("financingPanel interest saved (ADR 0116)", () => {
   });
   const panel = (p: Portfolio, mode: "nominal" | "real" = "nominal") => {
     const o = run(p);
-    return { m: financingPanel(o.financing, p, o.kpis, mode, "3", en), o };
+    return { m: financingPanel(o.financing, p, o.kpis, mode, "3"), o };
   };
 
   it("is null when no property has a prepayment", () => {
@@ -289,7 +179,7 @@ describe("financingPanel interest saved (ADR 0116)", () => {
         l.propertyId === "javorova" ? { ...l, interestSaved: D(javorova) } : l,
       ),
     };
-    return { m: financingPanel(fx, p, o.kpis, "nominal", "3", en), o };
+    return { m: financingPanel(fx, p, o.kpis, "nominal", "3"), o };
   };
   const lipovaSaved = (o: ReturnType<typeof run>) =>
     o.financing.loans.find((l) => l.propertyId === "lipova")!.interestSaved!;

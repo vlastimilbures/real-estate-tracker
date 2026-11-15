@@ -239,6 +239,8 @@ describe("i18n dictionaries — plural forms", () => {
       "dashboard.financingResettingWithin",
       "dashboard.financingResettingWithinNominal",
       "dashboard.financingLoans",
+      // The fixation timeline's name counts the window's years (ADR 0204).
+      "dashboard.financingTimeline",
     ];
     // The year word after a stored horizon outside the form range (#260 item 4).
     const dataCheck = ["dataCheck.outOfRangeHorizon"];

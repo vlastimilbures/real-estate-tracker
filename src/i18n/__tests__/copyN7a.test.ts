@@ -38,33 +38,6 @@ describe("N7a wording (#251, #242, #156, #173, #330)", () => {
     [
       "en",
       en,
-      "Rate, loan and lease dates in the next 12 months",
-      "No rate, loan or lease dates in the next 12 months.",
-    ],
-    [
-      "cs",
-      cs,
-      "Termíny sazeb, úvěrů a nájmů v příštích 12 měsících",
-      "V příštích 12 měsících nejsou žádné termíny sazeb, úvěrů ani nájmů.",
-    ],
-    [
-      "ru",
-      ru,
-      "Даты по ставкам, кредитам и аренде в ближайшие 12 месяцев",
-      "В ближайшие 12 месяцев нет дат по ставкам, кредитам и аренде.",
-    ],
-  ])(
-    "%s: the upcoming list names what it holds (ADR 0103 §7)",
-    (_, d, heading, empty) => {
-      expect(d.dashboard.financingUpcoming).toBe(heading);
-      expect(d.dashboard.financingNoEvents).toBe(empty);
-    },
-  );
-
-  it.each([
-    [
-      "en",
-      en,
       "A prepayment is applied right after the next payment due on or after its date",
       "falls after payoff or cannot shorten the term.",
     ],
