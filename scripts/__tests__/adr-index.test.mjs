@@ -49,6 +49,16 @@ describe("parseAdr", () => {
     expect(a.errors).toEqual([]);
   });
 
+  // UX review 2026-11 overnight run: the owner delegated acceptance; the status says so.
+  it("accepts a delegated acceptance that awaits owner review", () => {
+    const a = parse("0198", "x", "X", [
+      "- Status: Accepted (delegated, owner review pending)",
+      "- Date: 2026-11-15",
+    ]);
+    expect(a.status).toBe("Accepted (delegated, owner review pending)");
+    expect(a.errors).toEqual([]);
+  });
+
   it("ignores non-ADR targets, dates and the self-amendment line", () => {
     const a = parse("0133", "ltv", "LTV", [
       "- Status: Accepted",
@@ -140,7 +150,7 @@ describe("parseAdr", () => {
     );
     expect(a.errors).toEqual([
       '0005-x.md: the heading must be "# 0005. Title"',
-      '0005-x.md: Status "Done" is not Proposed, Accepted, Rejected or Superseded by NNNN',
+      '0005-x.md: Status "Done" is not Proposed, Accepted, Accepted (delegated, owner review pending), Rejected or Superseded by NNNN',
       "0005-x.md: no Date line",
     ]);
   });

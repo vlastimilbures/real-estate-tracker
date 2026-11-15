@@ -24,7 +24,9 @@ Other IDs seen in code comments:
 
 1. Copy the template below to `NNNN-short-slug.md`, using the next number that is free on
    `origin/main` and in open pull requests (`gh pr list`).
-2. Status starts as **Proposed**; the owner accepts or rejects it. Superseding an ADR means a new
+2. Status starts as **Proposed**; the owner accepts or rejects it. When the owner delegates the
+   decisions of a run (recorded on its tracking issue), its ADRs are **Accepted (delegated,
+   owner review pending)** until the owner reviews them and changes them to Accepted. Superseding an ADR means a new
    ADR with `Supersedes: NNNN` plus `Status: Superseded by NNNN` on the old one. Amending one
    means `Amends:` on the new ADR plus `Amended by:` on the old one. Replacing only part of one
    means `Supersedes in part:` on the new ADR plus `Superseded in part by:` on the old one, whose
@@ -43,7 +45,7 @@ Other IDs seen in code comments:
 ```markdown
 # NNNN. Title
 
-- Status: Proposed | Accepted | Rejected | Superseded by NNNN
+- Status: Proposed | Accepted | Accepted (delegated, owner review pending) | Rejected | Superseded by NNNN
 - Date: YYYY-MM-DD
 - Source: (optional) issue numbers (#nn) and finding or debt IDs
 - Supersedes: (optional) [NNNN](NNNN-slug.md)
