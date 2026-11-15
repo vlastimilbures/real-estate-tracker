@@ -114,6 +114,7 @@ export function ChartCard({
   series,
   legend = series.length > 1,
   totalLabel,
+  height = CHART_HEIGHT,
 }: {
   title: string;
   sub?: string | undefined;
@@ -123,6 +124,8 @@ export function ChartCard({
   series: readonly SeriesDef[];
   legend?: boolean | undefined;
   totalLabel?: string | undefined;
+  /** Plot (and table) height in px: the Dashboard's hero and small multiples (ADR 0202). */
+  height?: number | undefined;
 }) {
   const t = useT();
   const [asTable, setAsTable] = useState(false);
@@ -159,10 +162,16 @@ export function ChartCard({
         </Button>
       </div>
       {asTable ? (
-        <ChartTable title={title} kind={kind} rows={rows} series={series} />
+        <ChartTable
+          title={title}
+          kind={kind}
+          rows={rows}
+          series={series}
+          height={height}
+        />
       ) : (
         <SurfaceLabel.Provider value={t.charts.surfaceLabel(title)}>
-          <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+          <ResponsiveContainer width="100%" height={height}>
             <ChartBody
               kind={kind}
               chart={chart}
@@ -196,15 +205,17 @@ function ChartTable({
   kind,
   rows,
   series,
+  height,
 }: {
   title: string;
   kind: "czk" | "pct";
   rows: readonly Record<string, unknown>[];
   series: readonly SeriesDef[];
+  height: number;
 }) {
   const t = useT();
   return (
-    <TableWrap label={title} style={{ height: CHART_HEIGHT }}>
+    <TableWrap label={title} style={{ height }}>
       <table className="data chart-table">
         <caption className="sr-only">{title}</caption>
         <thead>

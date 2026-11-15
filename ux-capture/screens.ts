@@ -273,6 +273,77 @@ async function expectKpiStrip(ux: Ux, maxHeight = 96) {
   }
 }
 
+/** The Dashboard's hierarchy (ADR 0202): at 1280 × 800 the hero chart ends inside the
+ *  first viewport and Financing starts within the second; at every width each row of
+ *  small multiples is full (no empty cell). */
+async function expectDashboardHierarchy(ux: Ux) {
+  const vp = ux.page.viewportSize()!;
+  const financingTop = await panel(ux, ux.t.dashboard.financingTitle).evaluate(
+    (el) => el.getBoundingClientRect().top + window.scrollY,
+  );
+  const m = await ux.page.evaluate(() => {
+    const bottom = (el: Element | null) =>
+      el ? el.getBoundingClientRect().bottom + window.scrollY : NaN;
+    const grid = document.querySelector(".chart-grid.small")!;
+    const g = grid.getBoundingClientRect();
+    const rows = new Map<
+      number,
+      { left: number; right: number; cards: number }
+    >();
+    for (const card of Array.from(grid.children)) {
+      const r = card.getBoundingClientRect();
+      const key = Math.round(r.top);
+      const row = rows.get(key) ?? {
+        left: Infinity,
+        right: -Infinity,
+        cards: 0,
+      };
+      rows.set(key, {
+        left: Math.min(row.left, r.left),
+        right: Math.max(row.right, r.right),
+        cards: row.cards + 1,
+      });
+    }
+    return {
+      heroBottom: bottom(document.querySelector(".chart-hero")),
+      gridLeft: g.left,
+      gridRight: g.right,
+      gridWidth: g.width,
+      cards: grid.children.length,
+      rows: Array.from(rows.values()),
+    };
+  });
+  // Three then two from 860 px, two-two-one from 640 px, one per row below (ADR 0202 §3).
+  expect(m.cards, "five small multiples").toBe(5);
+  expect(
+    m.rows.map((r) => r.cards),
+    `cards per row at a ${Math.round(m.gridWidth)} px grid`,
+  ).toEqual(
+    m.gridWidth >= 860
+      ? [3, 2]
+      : m.gridWidth >= 640
+        ? [2, 2, 1]
+        : [1, 1, 1, 1, 1],
+  );
+  for (const r of m.rows) {
+    expect(r.left, "chart row starts at the grid's left").toBeLessThanOrEqual(
+      m.gridLeft + 1,
+    );
+    expect(r.right, "chart row has no empty cell").toBeGreaterThanOrEqual(
+      m.gridRight - 1,
+    );
+  }
+  if (vp.width === 1280 && vp.height === 800) {
+    expect(
+      m.heroBottom,
+      "hero chart inside the first viewport",
+    ).toBeLessThanOrEqual(800);
+    expect(financingTop, "Financing within the second viewport").toBeLessThan(
+      1600,
+    );
+  }
+}
+
 /** One grid for the scenario list: actions line up across rows and the summary stays
  *  readable in every language (ADR 0158). */
 async function expectScenarioGrid(ux: Ux) {
@@ -413,6 +484,7 @@ export const SCREENS: Screen[] = [
       await ux.capture("01-dashboard");
       // After the shot, so a failing layout still leaves its picture.
       await expectKpiStrip(ux);
+      await expectDashboardHierarchy(ux);
     },
   },
   {

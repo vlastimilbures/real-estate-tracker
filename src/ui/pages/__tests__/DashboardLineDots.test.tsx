@@ -17,7 +17,7 @@ import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { useUiStore } from "../../../state/uiStore";
 import { projectionSeries } from "../../model/projection";
 import { toChartRows, toEquityChangeRows } from "../../model/chartData";
-import { TrajectoryCharts } from "../DashboardPanels";
+import { MoreCharts, ProjectionHero } from "../DashboardPanels";
 
 const lines: { dataKey: string; activeDot?: unknown }[] = [];
 
@@ -73,12 +73,19 @@ describe("Dashboard line charts: hover dot (ADR 0188)", () => {
       assumptions,
     );
     render(
-      <TrajectoryCharts
-        mode="nominal"
-        rows={toChartRows(series)}
-        eqChange={toEquityChangeRows(series)}
-        horizonYears={assumptions.horizonYears}
-      />,
+      <>
+        <ProjectionHero
+          mode="nominal"
+          rows={toChartRows(series)}
+          horizonYears={assumptions.horizonYears}
+        />
+        <MoreCharts
+          mode="nominal"
+          rows={toChartRows(series)}
+          eqChange={toEquityChangeRows(series)}
+          horizonYears={assumptions.horizonYears}
+        />
+      </>,
     );
     expect(lines.map((l) => l.dataKey)).toContain("ltv");
     for (const l of lines) expect(l.activeDot, l.dataKey).toEqual({ r: 3 });

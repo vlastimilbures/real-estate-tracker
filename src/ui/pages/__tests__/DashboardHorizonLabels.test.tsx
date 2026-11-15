@@ -7,7 +7,7 @@ import { act, render, screen } from "@testing-library/react";
 import { portfolioKpis, portfolioSnapshot } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { useUiStore } from "../../../state/uiStore";
-import { KpiListPanel, TrajectoryCharts } from "../DashboardPanels";
+import { KpiListPanel, MoreCharts, ProjectionHero } from "../DashboardPanels";
 
 const a25 = { ...assumptions, horizonYears: 25 };
 const s = portfolioSnapshot(portfolio, a25);
@@ -19,12 +19,19 @@ describe("Dashboard horizon labels (ADR 0084)", () => {
   it("label the trajectory and KPI rows with a 25-year horizon", () => {
     const { container } = render(
       <>
-        <TrajectoryCharts
-          mode="nominal"
-          rows={[]}
-          eqChange={[]}
-          horizonYears={a25.horizonYears}
-        />
+        <>
+          <ProjectionHero
+            mode="nominal"
+            rows={[]}
+            horizonYears={a25.horizonYears}
+          />
+          <MoreCharts
+            mode="nominal"
+            rows={[]}
+            eqChange={[]}
+            horizonYears={a25.horizonYears}
+          />
+        </>
         <KpiListPanel
           s={s}
           basis={{ kind: "today" }}
@@ -37,7 +44,7 @@ describe("Dashboard horizon labels (ADR 0084)", () => {
         />
       </>,
     );
-    expect(screen.getByText("25-year trajectory")).toBeTruthy();
+    expect(screen.getByText("25-year projection")).toBeTruthy();
     expect(
       screen.getByText("Cumulative cash to owner (Yrs 1–25)"),
     ).toBeTruthy();

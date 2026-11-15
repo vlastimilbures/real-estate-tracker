@@ -19,7 +19,12 @@ import {
   dashboardSubtitle,
   prunedFilter,
 } from "../model/dashboard";
-import { KpiStrip, TrajectoryCharts, KpiListPanel } from "./DashboardPanels";
+import {
+  KpiStrip,
+  ProjectionHero,
+  MoreCharts,
+  KpiListPanel,
+} from "./DashboardPanels";
 import { FinancingPanel } from "./DashboardFinancing";
 import { DataCheckPanel } from "./DashboardDataCheck";
 import { cashInvestedTotal } from "../model/acquisition";
@@ -159,7 +164,11 @@ export function Dashboard() {
   );
 
   return (
-    <AppShell title={t.dashboard.title} subtitle={subtitle}>
+    <AppShell
+      title={t.dashboard.title}
+      subtitle={subtitle}
+      pageClass="dashboard"
+    >
       <SampleBanner />
       <div className="filter-bar">
         {allProperties.length > 1 ? (
@@ -194,6 +203,13 @@ export function Dashboard() {
         irr={irr}
       />
 
+      {/* The projection first (ADR 0202 §1). */}
+      <ProjectionHero
+        mode={mode}
+        rows={rows}
+        horizonYears={assumptions.horizonYears}
+      />
+
       <FinancingPanel
         fx={engine.financing}
         portfolio={engine.portfolio}
@@ -216,7 +232,7 @@ export function Dashboard() {
         }
       />
 
-      <TrajectoryCharts
+      <MoreCharts
         mode={mode}
         rows={rows}
         eqChange={eqChange}
