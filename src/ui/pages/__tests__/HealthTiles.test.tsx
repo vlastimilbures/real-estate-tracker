@@ -23,19 +23,6 @@ function tileOf(el: HTMLElement): HTMLElement {
   return el.closest(".tile") as HTMLElement;
 }
 
-/** The label row holds the label alone; the foot starts with the marker and word. */
-function expectFootMarker(tile: HTMLElement, band: string, word: string) {
-  const label = tile.querySelector(".label")!;
-  expect(label.nextElementSibling?.classList.contains("value")).toBe(true);
-  expect(tile.querySelector(".badge")).toBeNull();
-  const foot = tile.querySelector(".foot")!;
-  const marker = foot.firstElementChild!;
-  expect(marker.classList.contains("health-marker")).toBe(true);
-  expect(marker.classList.contains(band)).toBe(true);
-  expect(marker.querySelector(".health-word")?.textContent).toBe(word);
-  expect(foot.textContent!.startsWith(`${word} · `)).toBe(true);
-}
-
 /** The KPI strip's foot holds the marker and the word only (ADR 0200 §1). */
 function expectFootMarkerOnly(tile: HTMLElement, band: string, word: string) {
   const label = tile.querySelector(".label")!;
@@ -67,15 +54,18 @@ describe("Property detail tiles (ADR 0195)", () => {
   const p = portfolio.properties[0]!;
   const s = propertySnapshot(p, portfolio, assumptions);
 
-  it("Debt (LTV) and DSCR tiles carry the marker in the foot", () => {
-    render(<PropertySnapshotTiles s={s} chartRows={[]} modeWord="nominal" />);
-    const debt = screen
-      .getAllByText(en.propertyDetail.debt)
-      .map((e) => e.closest(".tile"))
-      .find((e) => e?.textContent?.includes(en.propertyDetail.ltv));
-    if (!(debt instanceof HTMLElement)) throw new Error("no Debt tile");
-    expectFootMarker(debt, ltvBand(s.ltv), ltvBandWord(en, s.ltv)!);
+  it("LTV and DSCR tiles carry the marker and word as their foot (ADR 0215)", () => {
+    render(
+      <PropertySnapshotTiles
+        s={s}
+        chartRows={[]}
+        modeWord="nominal"
+        basis={{ kind: "today" }}
+      />,
+    );
+    const ltv = tileOf(screen.getByText(en.propertyDetail.ltv));
+    expectFootMarkerOnly(ltv, ltvBand(s.ltv), ltvBandWord(en, s.ltv)!);
     const dscr = tileOf(screen.getByText(en.propertyDetail.dscr));
-    expectFootMarker(dscr, dscrBand(s.dscr), dscrBandWord(en, s.dscr)!);
+    expectFootMarkerOnly(dscr, dscrBand(s.dscr), dscrBandWord(en, s.dscr)!);
   });
 });

@@ -29,7 +29,13 @@ export interface MonthlyFlow {
   net: Decimal; // baseline
 }
 
-export function monthlyFlow(s: PortfolioSnapshot): MonthlyFlow {
+/** A portfolio's or a property's flow per month (ADR 0200, 0215). */
+export function monthlyFlow(
+  s: Pick<
+    PortfolioSnapshot,
+    "effectiveGrossIncome" | "holdingCosts" | "annualDebtService"
+  >,
+): MonthlyFlow {
   const inflow = s.effectiveGrossIncome.div(12);
   const outflow = s.holdingCosts.plus(s.annualDebtService).div(12);
   return { inflow, outflow, net: inflow.minus(outflow) };

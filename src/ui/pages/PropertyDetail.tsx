@@ -272,6 +272,10 @@ export function PropertyDetail() {
       ]
         .filter(Boolean)
         .join(" · ")}
+      crumb={{
+        label: t.nav.properties,
+        onSelect: () => navigate("properties"),
+      }}
       subnav={
         <SectionNav
           label={t.propertyDetail.sectionNavLabel}
@@ -285,16 +289,22 @@ export function PropertyDetail() {
       }
       actions={
         <>
-          <Button onClick={() => navigate("properties")}>
-            {t.propertyDetail.allProperties}
+          <Button
+            variant="primary"
+            icon={Pencil}
+            onClick={() => setEditing("edit")}
+          >
+            {t.properties.editProperty}
           </Button>
+          {/* Below a 1100 px window only the icon shows; the label stays the button's
+              name (ADR 0215 §2). */}
           {isActive ? (
             <Button
               icon={PowerOff}
               onClick={() => setConfirmingDeactivate(true)}
               title={t.propertyDetail.deactivateTitle}
             >
-              {t.propertyDetail.deactivate}
+              <span className="narrow-hide">{t.propertyDetail.deactivate}</span>
             </Button>
           ) : (
             <Button
@@ -303,18 +313,13 @@ export function PropertyDetail() {
               onClick={activate}
               title={t.propertyDetail.activateTitle}
             >
-              {toggling
-                ? t.propertyDetail.activating
-                : t.propertyDetail.activate}
+              <span className="narrow-hide">
+                {toggling
+                  ? t.propertyDetail.activating
+                  : t.propertyDetail.activate}
+              </span>
             </Button>
           )}
-          <Button
-            variant="primary"
-            icon={Pencil}
-            onClick={() => setEditing("edit")}
-          >
-            {t.properties.editProperty}
-          </Button>
         </>
       }
     >
@@ -331,7 +336,7 @@ export function PropertyDetail() {
         <InvalidDataNotice t={t} error={invalid} portfolio={store.portfolio} />
       )}
 
-      {s && out && (
+      {s && out && basis && (
         <div className="pd-section" id={sectionId("overview")}>
           <h2 className="sr-only" tabIndex={-1}>
             {t.propertyDetail.sectionOverview}
@@ -350,6 +355,7 @@ export function PropertyDetail() {
             s={s}
             chartRows={chartRows}
             modeWord={modeWord}
+            basis={basis}
             purchaseDate={property.purchaseDate}
             markers={resetMarkers(
               out.financing?.resets ?? [],

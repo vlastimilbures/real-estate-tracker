@@ -12,7 +12,8 @@
   debt)
 - Amended by: [0170](0170-equity-change-drawn-debt.md) (decision 6: the equity-change
   chart follows the draws),
-  [0205](0205-properties-list-fits.md) (the undrawn note is a short line that wraps in its column)
+  [0205](0205-properties-list-fits.md) (the undrawn note is a short line that wraps in its column),
+  [0215](0215-property-detail-top.md) (Property detail: the undrawn note is the Debt tile's foot)
 - Related: [0003](0003-czech-practice-decides.md), [0039](0039-golden-master.md),
   [0001](0001-behaviour-change-gate.md), [0167](0167-drawdown-schedule.md)
 

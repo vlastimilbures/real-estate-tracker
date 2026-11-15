@@ -41,6 +41,7 @@ import {
 } from "../model/propertyDetail";
 import type { AcquisitionView } from "../model/acquisition";
 import { dscrBadge, ltvBadge } from "../model/health";
+import { basisText, monthlyFlow, type AsOfBasis } from "../model/dashboard";
 import { CZK } from "../../lib/currency";
 import type {
   PropertySnapshot,
@@ -62,6 +63,7 @@ export function PropertySnapshotTiles({
   s,
   chartRows,
   modeWord,
+  basis,
   purchaseDate,
   markers = [],
   markerHeading,
@@ -69,6 +71,8 @@ export function PropertySnapshotTiles({
   s: PropertySnapshot;
   chartRows: ChartRow[];
   modeWord: string;
+  /** What the tiles are for: current, a projection year or a date (ADR 0088, 0215). */
+  basis: AsOfBasis;
   /** This property's upcoming fixation ends on its value chart (ADR 0210). */
   markers?: readonly ResetMarker[] | undefined;
   markerHeading?: string | undefined;
@@ -101,7 +105,7 @@ export function PropertySnapshotTiles({
       {!s.owned && purchaseDate ? (
         <NotOwnedPanel purchaseDate={purchaseDate} />
       ) : (
-        <SnapshotTiles s={s} />
+        <SnapshotTiles s={s} basis={basis} />
       )}
 
       <div className="chart-grid">
@@ -148,49 +152,78 @@ function NotOwnedPanel({ purchaseDate }: { purchaseDate: Date }) {
   );
 }
 
-/** The four snapshot KPI tiles of an owned property. */
-function SnapshotTiles({ s }: { s: PropertySnapshot }) {
+/** The snapshot tiles of an owned property: the Dashboard strip's compact tiles
+ *  (ADR 0200 §4, 0215 §3). */
+function SnapshotTiles({
+  s,
+  basis,
+}: {
+  s: PropertySnapshot;
+  basis: AsOfBasis;
+}) {
   const t = useT();
+  const pd = t.propertyDetail;
+  const d = t.dashboard;
   const undrawn = undrawnPart(s.undrawnDebt);
+  const flow = monthlyFlow(s);
   return (
-    <div className="tiles">
-      {/* ADR 0169: the value less the tranches not drawn yet, beside the drawn debt. */}
-      <KpiTile
-        label={t.propertyDetail.marketValue}
-        value={<Money value={s.reportedValue} parens={false} suffix={false} />}
-        foot={undrawn && t.common.completedValue(fmtCzkM(s.value))}
-      />
-      <KpiTile
-        label={t.propertyDetail.debt}
-        value={<Money value={s.debt} parens={false} suffix={false} />}
-        foot={
-          <>
-            <MetricLabel term="ltv">{t.propertyDetail.ltv}</MetricLabel>{" "}
-            <Pct value={s.ltv} />
-            {undrawn && (
-              <>
-                {" · "}
-                {t.common.undrawnDebt(noBreak(fmtCzkM(undrawn)))}
-              </>
-            )}
-          </>
-        }
-        health={ltvBadge(t, s.ltv)}
-      />
-      <KpiTile
-        label={t.propertyDetail.equity}
-        value={<Money value={s.equity} parens={false} suffix={false} />}
-      />
-      <KpiTile
-        label={<MetricLabel term="dscr">{t.propertyDetail.dscr}</MetricLabel>}
-        value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
-        health={dscrBadge(t, s.dscr)}
-        foot={
-          <>
-            {t.propertyDetail.netCf} <Money value={s.netCashFlow} signed />
-          </>
-        }
-      />
+    <div className="kpi-strip-wrap">
+      <div className="kpi-strip">
+        {/* ADR 0169: the value less the tranches not drawn yet, beside the drawn debt. */}
+        <KpiTile
+          compact
+          delay={0}
+          label={pd.marketValue}
+          value={
+            <Money value={s.reportedValue} parens={false} suffix={false} />
+          }
+          foot={undrawn && t.common.completedValue(fmtCzkM(s.value))}
+        />
+        <KpiTile
+          compact
+          delay={24}
+          label={pd.debt}
+          value={<Money value={s.debt} parens={false} suffix={false} />}
+          foot={undrawn && t.common.undrawnDebt(noBreak(fmtCzkM(undrawn)))}
+        />
+        <KpiTile
+          compact
+          delay={48}
+          label={pd.equity}
+          value={<Money value={s.equity} parens={false} suffix={false} />}
+        />
+        <KpiTile
+          compact
+          delay={72}
+          label={<MetricLabel term="ltv">{pd.ltv}</MetricLabel>}
+          value={<Pct value={s.ltv} />}
+          health={ltvBadge(t, s.ltv)}
+        />
+        <KpiTile
+          compact
+          delay={96}
+          label={<MetricLabel term="dscr">{pd.dscr}</MetricLabel>}
+          value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
+          health={dscrBadge(t, s.dscr)}
+        />
+        <KpiTile
+          compact
+          delay={120}
+          label={d.stripNetCashFlow}
+          value={
+            <>
+              <Money value={flow.net} signed />
+              <span className="unit">{d.perMonth}</span>
+            </>
+          }
+          foot={
+            <>
+              <Money value={s.netCashFlow} />
+              {d.perYearBasis(basisText(t, basis))}
+            </>
+          }
+        />
+      </div>
     </div>
   );
 }

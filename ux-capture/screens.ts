@@ -372,6 +372,51 @@ async function expectKpiStrip(ux: Ux, maxHeight = 96) {
   }
 }
 
+/** Property detail's top bar (ADR 0215): "Properties ›" and the title on one line and
+ *  the actions on one line (1280 × 800 and 900 × 600); at 1280 px and wider the actions
+ *  beside the title and the section tabs on one row. */
+async function expectPropertyTopBar(ux: Ux) {
+  const bar = ux.page.locator("header.topbar");
+  await expect(
+    bar.getByRole("link", { name: ux.t.nav.properties, exact: true }),
+  ).toBeVisible();
+  const m = await bar.evaluate((el) => {
+    const title = el.querySelector(".page-title-row")!.getBoundingClientRect();
+    const h1 = getComputedStyle(el.querySelector("h1")!);
+    const actions = el.querySelector(":scope > .row")!;
+    // Items whose vertical centres lie within 4 px share a line.
+    const mids = Array.from(actions.children)
+      .map((c) => c.getBoundingClientRect())
+      .filter((r) => r.height > 0)
+      .map((r) => r.top + r.height / 2)
+      .sort((a, b) => a - b);
+    const lines = mids.filter((m, i) => i === 0 || m - mids[i - 1]! > 4);
+    const nav = el.querySelector(
+      ".topbar-subnav [role=list], .topbar-subnav ul",
+    );
+    const tabs = nav
+      ? Array.from(nav.children).map((c) =>
+          Math.round(c.getBoundingClientRect().top),
+        )
+      : [];
+    return {
+      titleHeight: title.height,
+      line: parseFloat(h1.lineHeight) || parseFloat(h1.fontSize) * 1.3,
+      actionRows: lines.length,
+      beside: actions.getBoundingClientRect().top < title.bottom,
+      tabRows: new Set(tabs).size,
+    };
+  });
+  expect(m.titleHeight, "breadcrumb and title on one line").toBeLessThan(
+    m.line * 1.5,
+  );
+  expect(m.actionRows, "actions on one line").toBe(1);
+  if ((ux.page.viewportSize()?.width ?? 0) >= 1280) {
+    expect(m.beside, "actions beside the title").toBe(true);
+    expect(m.tabRows, "section tabs on one row").toBe(1);
+  }
+}
+
 /**
  * The key figures (ADR 0208): three groups. At 1280 px and wider, Returns and Cash flow
  * side by side, Debt straight under Returns, and a row's label and value at most 480 px
@@ -1283,6 +1328,8 @@ export const SCREENS: Screen[] = [
       );
       await expectPanelActionsRight(ux.page);
       await expectBandTileLabelsOneLine(ux);
+      await expectPropertyTopBar(ux);
+      await expectKpiStrip(ux);
       await expectRowActions(ux.page.locator("main"), 72);
       // At rest no form is open and at most one primary button shows (ADR 0207).
       const holding = panel(ux, ux.t.propertyDetail.holdingCostsTitle);
@@ -1546,6 +1593,18 @@ export const SCREENS: Screen[] = [
       ).toBeVisible();
       await ux.page.evaluate(() => window.scrollTo(0, 0));
       await ux.page.mouse.move(0, 0);
+      // The undrawn note is the Debt tile's foot, on one row of tiles (ADR 0215).
+      await expect(
+        ux.page
+          .locator(".kpi-strip .tile")
+          .filter({
+            has: ux.page.locator(".label", {
+              hasText: new RegExp(`^${d.debt}$`),
+            }),
+          })
+          .locator(".foot"),
+      ).toContainText(ux.t.common.undrawnDebt("X").split("X")[1]!.trim());
+      await expectKpiStrip(ux);
       await ux.capture("29f-property-dev-drawn-debt", { fullPage: false });
     },
   },

@@ -8,7 +8,8 @@
   [0158](0158-layouts-hold-in-czech-and-russian.md) (the section nav wraps instead of
   scrolling sideways),
   [0203](0203-one-disclosure.md) (the amortization toggle is in the panel head),
-  [0213](0213-guide-section-nav.md) (the Guide has the same section navigation)
+  [0213](0213-guide-section-nav.md) (the Guide has the same section navigation),
+  [0215](0215-property-detail-top.md) (the top bar: a "Properties" breadcrumb replaces the All properties button)
 
 ## Context
 
