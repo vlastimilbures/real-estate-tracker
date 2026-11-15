@@ -208,6 +208,15 @@ describe("Property detail amortization disclosure (ADR 0107)", () => {
   it("is collapsed on first open, with export still available", () => {
     render(<PropertyDetail />);
     expect(toggle().textContent).toMatch(/^Show amortization schedule \(\d+/);
+    // In the panel head, before Export to Excel (ADR 0203 §2).
+    const head = amortization().querySelector<HTMLElement>(".panel-head")!;
+    const exp = within(head).getByRole("button", {
+      name: en.xlsx.exportToExcel,
+    });
+    expect(head.contains(toggle())).toBe(true);
+    expect(
+      toggle().compareDocumentPosition(exp) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(within(amortization()).queryByRole("table")).toBeNull();
     expect(
       within(amortization()).getByRole("button", {

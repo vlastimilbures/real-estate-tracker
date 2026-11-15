@@ -292,8 +292,19 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.disclosure-row {
-  padding: var(--s4) var(--s5);
+/* One disclosure (ADR 0203): a head's toggle and its other actions side by side; a body
+   toggle leads the line it opens. */
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-shrink: 0;
+}
+.disclosure {
+  margin-top: var(--s2);
+}
+.disclosure > .btn {
+  margin-left: calc(-1 * var(--s2));
 }
 
 /* The page title is the page's h1 (ADR 0157); it keeps the look it had as a div. */
@@ -2385,12 +2396,6 @@ main.page:focus {
 .import-summary-file .counts {
   color: var(--ink-soft);
   margin-left: var(--s2);
-}
-.import-summary details {
-  margin-top: var(--s2);
-}
-.import-summary summary {
-  cursor: pointer;
 }
 .import-summary ul {
   margin: var(--s2) 0 0;

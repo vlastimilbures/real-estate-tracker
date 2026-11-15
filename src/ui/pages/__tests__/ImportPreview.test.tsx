@@ -132,7 +132,7 @@ describe("Import preview (ADR 0096)", () => {
     await choosePropertiesFile(container);
 
     expect(
-      await screen.findByText(p.willAdd(1), { selector: "summary" }),
+      await screen.findByRole("button", { name: p.willAdd(1) }),
     ).toBeTruthy();
     expect(screen.queryByText(/could not be checked/)).toBeNull();
   });
@@ -146,7 +146,7 @@ describe("Import preview (ADR 0096)", () => {
     await choosePropertiesFile(container);
 
     expect(
-      await screen.findByText(p.willAdd(1), { selector: "summary" }),
+      await screen.findByRole("button", { name: p.willAdd(1) }),
     ).toBeTruthy();
     await userEvent.click(
       await screen.findByRole("button", { name: p.importScope(1, 1, 0) }),
@@ -267,9 +267,7 @@ describe("Import report (ADR 0096)", () => {
     // Back on the page later: the report is still there.
     render(<Import />);
     expect(screen.getByText(p.reportTitle)).toBeTruthy();
-    await userEvent.click(
-      screen.getByText(p.added(1), { selector: "summary" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: p.added(1) }));
     await userEvent.click(screen.getByRole("button", { name: "Byt Javorova" }));
     expect(useUiStore.getState().route).toBe("property");
     expect(useUiStore.getState().selectedPropertyId).toBe("byt-javorova");

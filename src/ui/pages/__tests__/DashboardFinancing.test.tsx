@@ -157,13 +157,19 @@ describe("interest saved (ADR 0116)", () => {
     )!.interestSaved!;
     expect(screen.getByText(en.dashboard.financingInterestSaved)).toBeTruthy();
     expect(screen.getAllByText(money(saved)).length).toBe(2);
-    const details = view.container.querySelector("details")!;
-    const summary = within(details).getByText(
-      en.dashboard.financingInterestSavedByProperty,
-    );
-    await userEvent.click(summary);
+    // One disclosure button (ADR 0203), shut at first; its region names each property.
+    const toggle = within(view.container).getByRole("button", {
+      name: en.dashboard.financingInterestSavedByProperty,
+      expanded: false,
+    });
+    const region = document.getElementById(
+      toggle.getAttribute("aria-controls")!,
+    )!;
+    expect(region.hidden).toBe(true);
+    await userEvent.click(toggle);
+    expect(region.hidden).toBe(false);
     await userEvent.click(
-      within(details).getByRole("button", { name: "Byt Lipova" }),
+      within(region).getByRole("button", { name: "Byt Lipova" }),
     );
     expect(onOpen).toHaveBeenCalledWith("lipova");
   });
