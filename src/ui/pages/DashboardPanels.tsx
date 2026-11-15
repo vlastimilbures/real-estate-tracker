@@ -10,7 +10,7 @@ import {
   Dscr,
   StatList,
 } from "../components/primitives";
-import { ChartCard } from "../components/charts";
+import { ChartCard, SMALL_CHART_HEIGHT } from "../components/charts";
 import {
   SERIES,
   COMMITTED_DASH,
@@ -199,7 +199,6 @@ function useProjectionSeries(rows: ChartRow[], eqChange: EquityChangeRow[]) {
 
 /** Plot heights on the Dashboard (ADR 0202): the hero chart and the small multiples. */
 const HERO_HEIGHT = 280;
-const SMALL_HEIGHT = 180;
 
 /** The projection itself, first after the KPI strip: value vs debt vs equity, full
  *  width, under a panel-style heading with the lens (ADR 0202 §2). */
@@ -275,7 +274,7 @@ export function MoreCharts({
           rows={rows}
           chart="signed"
           series={cashFlowSeries}
-          height={SMALL_HEIGHT}
+          height={SMALL_CHART_HEIGHT}
         />
         <ChartCard
           title={d.chartEquityChange}
@@ -285,21 +284,21 @@ export function MoreCharts({
           chart="stacked"
           series={equitySeries}
           totalLabel={d.seriesNetEquityChange}
-          height={SMALL_HEIGHT}
+          height={SMALL_CHART_HEIGHT}
         />
         <ChartCard
           title={d.chartNoiVsDebtService}
           kind="czk"
           rows={rows}
           series={noiSeries}
-          height={SMALL_HEIGHT}
+          height={SMALL_CHART_HEIGHT}
         />
         <ChartCard
           title={d.chartRentGrossVsEffective}
           kind="czk"
           rows={rows}
           series={rentSeries}
-          height={SMALL_HEIGHT}
+          height={SMALL_CHART_HEIGHT}
         />
         <ChartCard
           title={d.chartLoanToValue}
@@ -307,7 +306,7 @@ export function MoreCharts({
           kind="pct"
           rows={rows}
           series={ltvSeries}
-          height={SMALL_HEIGHT}
+          height={SMALL_CHART_HEIGHT}
         />
       </div>
     </section>

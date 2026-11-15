@@ -242,6 +242,9 @@ export function ChartCard({
 }
 
 const CHART_HEIGHT = 196;
+/** The small multiples' plot height: the Dashboard's (ADR 0202) and Scenario compare's
+ *  (ADR 0216). */
+export const SMALL_CHART_HEIGHT = 180;
 
 /** The chart's rows as a table: one row per year, one column per series (UX-075).
  *  Amounts without "Kč", like the projection grid, so three columns fit the card. */

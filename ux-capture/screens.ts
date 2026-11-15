@@ -289,6 +289,49 @@ async function expectProjectionGrid(ux: Ux) {
 /** The Dashboard KPI strip (ADR 0200): six tiles, one row of at most 96 px when the strip
  *  is 900 px or wider (1280 × 800), else three by two; every label on one line and no
  *  label or value cut off. */
+/** Scenario compare (ADR 0216): every row of charts is full (three in one row when the
+ *  row is 900 px or wider), and the key-figures table runs to its panel's edges. */
+async function expectCompareLayout(ux: Ux) {
+  const m = await ux.page.evaluate(() => {
+    const grid = document.querySelector(".chart-grid.trio")!;
+    const g = grid.getBoundingClientRect();
+    const rows = new Map<number, { left: number; right: number }>();
+    for (const card of Array.from(grid.children)) {
+      const r = card.getBoundingClientRect();
+      const key = Math.round(r.top);
+      const row = rows.get(key) ?? { left: Infinity, right: -Infinity };
+      rows.set(key, {
+        left: Math.min(row.left, r.left),
+        right: Math.max(row.right, r.right),
+      });
+    }
+    const wrap = document
+      .querySelector("table.compare-table")!
+      .closest(".table-wrap")!
+      .getBoundingClientRect();
+    const panel = document
+      .querySelector("table.compare-table")!
+      .closest("section.panel")!
+      .getBoundingClientRect();
+    return {
+      width: g.width,
+      rows: Array.from(rows.values()).map((r) => ({
+        gapLeft: r.left - g.left,
+        gapRight: g.right - r.right,
+      })),
+      insetLeft: wrap.left - panel.left,
+      insetRight: panel.right - wrap.right,
+    };
+  });
+  if (m.width >= 900) expect(m.rows, "charts in one row").toHaveLength(1);
+  for (const r of m.rows) {
+    expect(r.gapLeft, "chart row starts at the grid's edge").toBeLessThan(1);
+    expect(r.gapRight, "chart row ends at the grid's edge").toBeLessThan(1);
+  }
+  expect(m.insetLeft, "key figures flush left").toBeLessThanOrEqual(2);
+  expect(m.insetRight, "key figures flush right").toBeLessThanOrEqual(2);
+}
+
 /** The KPI strip (ADR 0200 §4): six tiles, one row when the strip is at least 960 px
  *  wide (the 1200 × 800 default window is three by two), nothing cut off, and at most
  *  `maxHeight` tall in one row: 96 px, more only where a foot carries a note. */
@@ -1796,6 +1839,7 @@ export const SCREENS: Screen[] = [
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "scenarios");
+      await expectCompareLayout(ux);
       await ux.capture("40-scenarios");
     },
   },
@@ -1830,9 +1874,11 @@ export const SCREENS: Screen[] = [
       await expectRowActions(ux.page.locator(".scenario-list"), 104);
       // Also around the narrow-layout breakpoint, between the captured windows.
       const window = ux.page.viewportSize()!;
-      for (const width of [960, 1000, 1040, 1100, 1160]) {
+      await expectCompareLayout(ux);
+      for (const width of [900, 960, 1000, 1040, 1100, 1160]) {
         await ux.page.setViewportSize({ width, height: window.height });
         await expectScenarioGrid(ux);
+        await expectCompareLayout(ux);
       }
       await ux.page.setViewportSize(window);
       await ux.capture("42-scenarios-compare");
@@ -1855,6 +1901,7 @@ export const SCREENS: Screen[] = [
       await expect(delta).toHaveAttribute("aria-pressed", "true");
       // The toast outlives a page change (ADR 0154); this screen shows the page.
       await expect(ux.page.locator(".toast")).toBeHidden({ timeout: 10_000 });
+      await expectCompareLayout(ux);
       await ux.capture("43-scenarios-compare-delta");
     },
   },
