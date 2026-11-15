@@ -11,7 +11,9 @@ import { getDict } from "../../../i18n";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 
 const en = getDict("en");
-const period = "flows per year, balances at year end";
+// ADR 0211 §2: the sample's projection years run July to June, said once here.
+const period =
+  "flows per year, balances at year end · years run Jul – Jun, named by the year they end";
 
 beforeEach(() =>
   act(() => {

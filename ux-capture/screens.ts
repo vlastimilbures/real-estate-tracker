@@ -236,6 +236,37 @@ async function expectBandTileLabelsOneLine(ux: Ux) {
   }
 }
 
+/** The year-by-year grid (ADR 0211): no Period column, 31 rows in under 1,000 px, and at
+ *  1280 px wide at least 12 figure columns fully in view. */
+async function expectProjectionGrid(ux: Ux) {
+  const m = await ux.page
+    .locator(".table-wrap:has(table.data.compact)")
+    .first()
+    .evaluate((wrap) => {
+      const box = wrap.getBoundingClientRect();
+      const heads = Array.from(
+        wrap.querySelectorAll<HTMLElement>("thead th:not(.sticky-col)"),
+      );
+      const rows = Array.from(wrap.querySelectorAll("tbody tr"));
+      return {
+        heads: heads.map((h) => h.textContent ?? ""),
+        visible: heads.filter((h) => {
+          const r = h.getBoundingClientRect();
+          return r.left >= box.left - 0.5 && r.right <= box.right + 0.5;
+        }).length,
+        rows: rows.length,
+        scrolled: wrap.scrollLeft,
+        height: rows.reduce((n, r) => n + r.getBoundingClientRect().height, 0),
+      };
+    });
+  expect(m.heads, "no Period column").not.toContain(ux.t.projGrid.period);
+  expect(m.rows).toBe(31);
+  expect(m.height, "31 rows").toBeLessThanOrEqual(1000);
+  expect(m.scrolled, "grid not scrolled").toBe(0);
+  if ((ux.page.viewportSize()?.width ?? 0) >= 1280)
+    expect(m.visible, "figure columns in view").toBeGreaterThanOrEqual(12);
+}
+
 /** The Dashboard KPI strip (ADR 0200): six tiles, one row of at most 96 px when the strip
  *  is 900 px or wider (1280 × 800), else three by two; every label on one line and no
  *  label or value cut off. */
@@ -1155,6 +1186,7 @@ export const SCREENS: Screen[] = [
         await ux.page.locator(".btn.primary:visible").count(),
         "primary buttons at rest",
       ).toBeLessThanOrEqual(1);
+      await expectProjectionGrid(ux);
       await ux.capture("20-property-detail");
     },
   },
@@ -1667,6 +1699,7 @@ export const SCREENS: Screen[] = [
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "projections");
+      await expectProjectionGrid(ux);
       await ux.capture("30-projections");
     },
   },
@@ -1696,6 +1729,7 @@ export const SCREENS: Screen[] = [
       await boot(ux.page);
       await nav(ux, "projections");
       await pickReal(ux);
+      await expectProjectionGrid(ux);
       await ux.capture("32-projections-real", { fullPage: false });
     },
   },

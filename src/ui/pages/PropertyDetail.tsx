@@ -39,6 +39,7 @@ import {
   lensLabel,
   lensWord,
   projectionExportNotes,
+  projectionPanelHint,
 } from "../model/tableContext";
 import { exportTableXlsx } from "../exportXlsx";
 import { exportFilename } from "../../lib/slug";
@@ -425,7 +426,7 @@ export function PropertyDetail() {
         <div className="pd-section" id={sectionId("projection")}>
           <Panel
             title={t.propertyDetail.projectionTitle(assumptions.horizonYears)}
-            hint={lens}
+            hint={projectionPanelHint(t, lens, assumptions.baseDate)}
             action={<ExportXlsxButton onExport={exportProjection} />}
             flush
           >

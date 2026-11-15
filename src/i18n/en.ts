@@ -875,6 +875,8 @@ export const en = {
     realTermsDated: (d: string) => `real terms (Kč at projection start ${d})`,
     nominalKc: "nominal Kč",
     periodNote: "flows per year, balances at year end",
+    yearSpan: (from: string, to: string) =>
+      `years run ${from} – ${to}, named by the year they end`,
     portfolio: "Portfolio",
     entity: "Entity",
   },
