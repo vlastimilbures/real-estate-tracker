@@ -236,6 +236,25 @@ async function expectBandTileLabelsOneLine(ux: Ux) {
   }
 }
 
+/** Import (ADR 0212): the four file rows take at most 300 px; with a file chosen, the
+ *  Import panel with its preview starts in the first viewport at 1280 × 800. */
+async function expectImportRows(ux: Ux, chosen = false) {
+  const rows = ux.page.locator(".import-rows");
+  await expect(rows.locator(":scope > li")).toHaveCount(4);
+  const box = (await rows.boundingBox())!;
+  expect(box.height, "four file rows").toBeLessThanOrEqual(300);
+  const vp = ux.page.viewportSize()!;
+  if (chosen && vp.width >= 1280) {
+    const head = ux.page.getByRole("heading", {
+      name: ux.t.importPage.importTitle,
+      exact: true,
+      level: 2,
+    });
+    const top = (await head.boundingBox())!.y;
+    expect(top, "Import panel in the first viewport").toBeLessThan(vp.height);
+  }
+}
+
 /** The year-by-year grid (ADR 0211): no Period column, 31 rows in under 1,000 px, and at
  *  1280 px wide at least 12 figure columns fully in view. */
 async function expectProjectionGrid(ux: Ux) {
@@ -1887,6 +1906,15 @@ export const SCREENS: Screen[] = [
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "import");
+      await expectImportRows(ux);
+      // The drag-over state shows on the row a file is over (ADR 0212 §2).
+      const row = ux.page.locator(".import-row").nth(1);
+      await row.dispatchEvent("dragover", {
+        dataTransfer: await ux.page.evaluateHandle(() => new DataTransfer()),
+      });
+      await expect(row).toHaveClass(/drag-over/);
+      await row.dispatchEvent("dragleave");
+      await expect(row).not.toHaveClass(/drag-over/);
       await ux.capture("50-import");
     },
   },
@@ -1933,6 +1961,7 @@ export const SCREENS: Screen[] = [
         .locator("input[type=file]")
         .first()
         .setInputFiles(fixture("properties-update.csv"));
+      await expectImportRows(ux, true);
       await ux.page
         .getByRole("button", { name: ux.t.importPage.importScope(2, 1, 1) })
         .click();

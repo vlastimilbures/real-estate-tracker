@@ -1,6 +1,6 @@
-// Import page building blocks: one CSV file's panel (choose / drop / template, row
-// errors) and the tables for parse errors and refused rows. Split from Import.tsx
-// (DR-057); behaviour unchanged.
+// Import page building blocks: the file types' panel, one row per type (choose / drop /
+// template, row errors, ADR 0212) and the tables for parse errors and refused rows.
+// Split from Import.tsx (DR-057).
 import { useState, useRef, useCallback } from "react";
 import { Panel, Button, Badge, TableWrap } from "../components/primitives";
 import type { CsvParseResult, CsvImportProblem } from "../../state/csv";
@@ -9,6 +9,8 @@ import { saveFailureDetail, saveFile } from "../../state/platform";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { Disclosure } from "../components/Disclosure";
+import { RowAction, RowActions } from "../components/RowActions";
+import { FileDown } from "lucide-react";
 import { fmtCzk } from "../../lib/format";
 import { DATE_FLOOR, isoDay } from "../../lib/day";
 import type { CsvErrorCode, CsvRowError, ImportItem } from "../../state/csv";
@@ -163,22 +165,52 @@ export function RefusedTable({ problems }: { problems: CsvImportProblem[] }) {
   );
 }
 
-export function EntityImportPanel<T>({
-  title,
-  hint,
-  templateFn,
-  templateFile,
-  fileState,
-  onFile,
-}: {
+/** One CSV file type on the Import page (ADR 0212): its name, file and parser hook. */
+export interface ImportFileType {
+  key: string;
   title: string;
-  hint: string;
+  /** The expected file name, shown until a file is chosen; the template's name. */
+  file: string;
   templateFn: () => string;
-  templateFile: string;
-  fileState: FileState<T> | null;
+  fileState: FileState<unknown> | null;
   onFile: (name: string, bytes: Uint8Array) => void;
-}) {
+}
+
+/** The file types as rows of one panel, each its own drop target (ADR 0212). */
+export function ImportFilesPanel({ files }: { files: ImportFileType[] }) {
   const t = useT();
+  return (
+    <Panel title={t.importPage.filesTitle} hint={t.importPage.dropOnRow}>
+      <ul className="import-rows">
+        {files.map((f) => (
+          <ImportFileRow key={f.key} type={f} />
+        ))}
+      </ul>
+    </Panel>
+  );
+}
+
+/** A file's status badge: rows ready, no data rows (ADR 0185 §5) or its errors. */
+function FileBadge({ state }: { state: FileState<unknown> }) {
+  const t = useT();
+  if (state.result.errors.length > 0)
+    return (
+      <Badge band="bad">
+        {t.importPage.errorsBadge(state.result.errors.length)}
+      </Badge>
+    );
+  if (state.result.rows.length === 0)
+    return <Badge band="neutral">{t.importPage.noDataRows}</Badge>;
+  return (
+    <Badge band="good">
+      {t.importPage.rowsReady(state.result.rows.length)}
+    </Badge>
+  );
+}
+
+function ImportFileRow({ type }: { type: ImportFileType }) {
+  const t = useT();
+  const { title, file, templateFn, fileState, onFile } = type;
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
@@ -186,7 +218,7 @@ export function EntityImportPanel<T>({
   async function saveTemplate() {
     setTemplateError(null);
     try {
-      await saveCsv(templateFile, templateFn());
+      await saveCsv(file, templateFn());
     } catch (e) {
       logFailure("TEMPLATE", e);
       setTemplateError(t.importPage.templateFailed(saveFailureDetail(e)));
@@ -207,7 +239,8 @@ export function EntityImportPanel<T>({
     if (inputRef.current) inputRef.current.value = "";
   }
 
-  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+  // A file dropped here is this row's type, whatever its name (ADR 0212 §2).
+  function handleDrop(e: React.DragEvent<HTMLLIElement>) {
     e.preventDefault();
     setDragOver(false);
     const f = e.dataTransfer.files?.[0];
@@ -215,67 +248,58 @@ export function EntityImportPanel<T>({
   }
 
   return (
-    <Panel
-      title={title}
-      hint={hint}
-      action={
-        fileState ? (
-          fileState.result.errors.length > 0 ? (
-            <Badge band="bad">
-              {t.importPage.errorsBadge(fileState.result.errors.length)}
-            </Badge>
-          ) : fileState.result.rows.length === 0 ? (
-            // A file with no data rows is not a success (ADR 0185 §5).
-            <Badge band="neutral">{t.importPage.noDataRows}</Badge>
-          ) : (
-            <Badge band="good">
-              {t.importPage.rowsReady(fileState.result.rows.length)}
-            </Badge>
-          )
-        ) : undefined
-      }
+    <li
+      className={`import-row${dragOver ? " drag-over" : ""}`}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragOver(true);
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
     >
-      <div
-        className={`dropzone${dragOver ? " drag-over" : ""}`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragOver(true);
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={handleDrop}
-      >
-        <div className="row" style={{ gap: "var(--s3)", flexWrap: "wrap" }}>
-          <Button onClick={() => inputRef.current?.click()}>
-            {fileState
-              ? t.importPage.reupload(fileState.name)
-              : t.importPage.chooseFile}
-          </Button>
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".csv,text/csv"
-            style={{ display: "none" }}
-            onChange={handleFile}
+      <span className="import-row-type">{title}</span>
+      {/* The expected name until a file is chosen, then the chosen file's. */}
+      <span className={`import-row-file${fileState ? " num is-chosen" : ""}`}>
+        {fileState?.name ?? file}
+      </span>
+      <span className="import-row-actions">
+        <Button
+          aria-label={
+            fileState
+              ? t.importPage.reuploadFor(title, fileState.name)
+              : t.importPage.chooseFileFor(title)
+          }
+          onClick={() => inputRef.current?.click()}
+        >
+          {fileState ? t.importPage.reuploadShort : t.importPage.chooseFile}
+        </Button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".csv,text/csv"
+          style={{ display: "none" }}
+          onChange={handleFile}
+        />
+        <RowActions>
+          <RowAction
+            icon={FileDown}
+            label={t.importPage.templateFor(title)}
+            onClick={() => void saveTemplate()}
           />
-          <Button variant="ghost" onClick={() => void saveTemplate()}>
-            {t.importPage.downloadTemplate}
-          </Button>
-          {fileState && (
-            <span
-              className="num"
-              style={{ color: "var(--ink-soft)", alignSelf: "center" }}
-            >
-              {fileState.name}
-            </span>
-          )}
-        </div>
-        <p className="dropzone-hint">{t.importPage.dropHint}</p>
-        {templateError && <p className="error-text">{templateError}</p>}
-      </div>
-      {fileState && fileState.result.errors.length > 0 && (
-        <ErrorTable errors={fileState.result.errors} />
+        </RowActions>
+      </span>
+      <span className="import-row-status">
+        {fileState && <FileBadge state={fileState} />}
+      </span>
+      {templateError && (
+        <p className="error-text import-row-detail">{templateError}</p>
       )}
-    </Panel>
+      {fileState && fileState.result.errors.length > 0 && (
+        <div className="import-row-detail">
+          <ErrorTable errors={fileState.result.errors} />
+        </div>
+      )}
+    </li>
   );
 }
 
