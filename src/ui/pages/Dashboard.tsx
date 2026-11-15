@@ -233,6 +233,7 @@ export function Dashboard() {
       />
 
       <MoreCharts
+        mode={mode}
         rows={rows}
         eqChange={eqChange}
         horizonYears={assumptions.horizonYears}

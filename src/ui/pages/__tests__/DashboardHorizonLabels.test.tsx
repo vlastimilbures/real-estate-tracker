@@ -25,7 +25,12 @@ describe("Dashboard horizon labels (ADR 0084)", () => {
             rows={[]}
             horizonYears={a25.horizonYears}
           />
-          <MoreCharts rows={[]} eqChange={[]} horizonYears={a25.horizonYears} />
+          <MoreCharts
+            mode="nominal"
+            rows={[]}
+            eqChange={[]}
+            horizonYears={a25.horizonYears}
+          />
         </>
         <KpiListPanel
           s={s}

@@ -95,14 +95,16 @@ describe("hero chart (ADR 0202 §2)", () => {
 });
 
 describe("small multiples (ADR 0202 §3–§4)", () => {
-  it("five charts in order, under a heading for screen readers", async () => {
+  it("five charts in order, under a visible heading with the lens", async () => {
     render(<Dashboard />);
     const head = screen.getByRole("heading", {
       level: 2,
       name: d.moreCharts(n),
     });
-    expect(head.classList.contains("sr-only")).toBe(true);
+    expect(head.classList.contains("sr-only")).toBe(false);
     const section = head.closest<HTMLElement>("section")!;
+    // Far below the hero, they name the lens again.
+    expect(within(section).getByText(d.nominalKc)).toBeTruthy();
     const grid = section.querySelector<HTMLElement>(".chart-grid.small")!;
     const titles = Array.from(
       grid.querySelectorAll(":scope > .chart-card .chart-title"),

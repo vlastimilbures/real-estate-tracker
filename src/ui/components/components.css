@@ -334,16 +334,6 @@
   display: grid;
   gap: var(--s4);
 }
-.section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s4);
-  margin-bottom: var(--s1);
-}
-.section-head h2 {
-  font-size: 17px;
-}
 
 /* ============ KPI tiles ============ */
 .tiles {
@@ -1584,14 +1574,17 @@ table.data tbody tr:hover td.sticky-col {
   background: none;
   padding-top: var(--s2);
 }
-/* Small multiples: three then two per row, two below 900 px (the fifth across), one
+/* Small multiples: three then two per row, two below 860 px (the fifth across), one
    below 640 px; never an empty cell. */
 .chart-grid-wrap {
   container-type: inline-size;
 }
 .chart-grid.small {
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--s4);
+}
+/* The small multiples' heading: the hero head's type, outside a card. */
+.charts-head {
+  padding: 0 0 var(--s2);
 }
 .chart-grid.small > :nth-child(-n + 3) {
   grid-column: span 2;
@@ -1599,7 +1592,7 @@ table.data tbody tr:hover td.sticky-col {
 .chart-grid.small > :nth-child(n + 4) {
   grid-column: span 3;
 }
-@container (max-width: 899px) {
+@container (max-width: 859px) {
   .chart-grid.small > :nth-child(n) {
     grid-column: span 3;
   }

@@ -32,22 +32,29 @@
    unchanged, under that head.
 3. **Small multiples:** the other five charts, plot 180 px, in this order: net cash flow
    by year, equity change, NOI vs debt service, then rent gross vs effective and
-   loan-to-value. Three then two per row when their row is at least 900 px wide (1280 and
-   the 1200 default window), two per row with the fifth across the row below that (1100),
-   one per row below 640 px (900 × 600). No row has an empty cell. A container query on
-   the grid decides, as the KPI strip's does.
-4. **Headings:** the small multiples are their own section with an h2 for screen readers
-   only (`dashboard.moreCharts`, "More {n}-year charts"), so they are not read as part of
-   the Data check before them. Chart titles stay text, as before.
-5. **Removed:** the `section-head` above the charts and its key `dashboard.trajectory`;
+   loan-to-value. Three then two per row when their row is at least 860 px wide (1280,
+   and the 1200 default window at about 904 px, with room for a scroll bar), two per row
+   with the fifth across the row below that (1100), one per row below 640 px (900 × 600).
+   No row has an empty cell. A container query on the grid decides, as the KPI strip's
+   does.
+4. **Headings:** the small multiples sit far below the hero, so they are a section of
+   their own with a visible small h2 in the hero head's type (`dashboard.moreCharts`,
+   "More {n}-year projection charts") and the lens again as its hint: a reader who
+   scrolled there still sees the horizon and whether the values are real. Chart titles
+   stay text, as before.
+5. **Removed:** the `section-head` above the charts, its styles and its key
+   `dashboard.trajectory`;
    `ChartCard` gains a `height` (default 196 px, as before) used by the chart and its
    table.
 
 ## Consequences
 
 - At 1280 × 800, as of Today with the sample portfolio, the hero chart's bottom edge is in
-  the first viewport (about 780 px) and Financing starts in the second (about 800 px).
-  The page keeps about its length (about 2,750 px, with the sample banner): the hero is
+  the first viewport (about 775 px) and Financing starts at the top of the second (about
+  800 px). In the 1200 × 800 default window the KPI strip is two rows (ADR 0200 §4), so
+  the hero's axis and legend end just below the first screen (about 855 px); the issue's
+  criterion is set at 1280.
+- The page keeps about its length (about 2,800 px, with the sample banner): the hero is
   taller and the small multiples shorter. What changes is what the first screen shows. The capture harness checks both, and the empty-cell rule at 1280, 1100 and
   900 (a 1100 × 800 viewport is added, run on demand).
 - Every chart's title, unit, legend, tooltip and table keep their content.

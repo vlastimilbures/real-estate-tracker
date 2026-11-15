@@ -29,6 +29,7 @@ function renderCharts(p: typeof portfolio) {
         horizonYears={assumptions.horizonYears}
       />
       <MoreCharts
+        mode="nominal"
         rows={toChartRows(series)}
         eqChange={toEquityChangeRows(series)}
         horizonYears={assumptions.horizonYears}

@@ -80,6 +80,7 @@ describe("Dashboard line charts: hover dot (ADR 0188)", () => {
           horizonYears={assumptions.horizonYears}
         />
         <MoreCharts
+          mode="nominal"
           rows={toChartRows(series)}
           eqChange={toEquityChangeRows(series)}
           horizonYears={assumptions.horizonYears}

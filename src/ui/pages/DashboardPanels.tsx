@@ -144,7 +144,7 @@ export function KpiStrip({
   );
 }
 
-/** The series of the Dashboard's projection charts, in the lens's labels. */
+/** The series of the Dashboard's projection charts (the rows carry the lens). */
 function useProjectionSeries(rows: ChartRow[], eqChange: EquityChangeRow[]) {
   const t = useT();
   const d = t.dashboard;
@@ -233,12 +233,14 @@ export function ProjectionHero({
 }
 
 /** The five other projection charts as small multiples, three then two per row
- *  (ADR 0202 §3); their heading is for screen readers (§4). */
+ *  (ADR 0202 §3), under a small heading with the lens (§4). */
 export function MoreCharts({
+  mode,
   rows,
   eqChange,
   horizonYears,
 }: {
+  mode: Mode;
   rows: ChartRow[];
   eqChange: EquityChangeRow[];
   horizonYears: number;
@@ -249,7 +251,13 @@ export function MoreCharts({
     useProjectionSeries(rows, eqChange);
   return (
     <section className="chart-grid-wrap">
-      <h2 className="sr-only">{d.moreCharts(horizonYears)}</h2>
+      {/* Far below the hero: these charts name their horizon and lens again. */}
+      <div className="chart-hero-head charts-head">
+        <h2>{d.moreCharts(horizonYears)}</h2>
+        <span className="hint">
+          {mode === "real" ? d.realTerms : d.nominalKc}
+        </span>
+      </div>
       <div className="chart-grid small">
         <ChartCard
           title={d.chartNetCashFlowByYear}

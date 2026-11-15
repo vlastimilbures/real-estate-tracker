@@ -286,23 +286,45 @@ async function expectDashboardHierarchy(ux: Ux) {
       el ? el.getBoundingClientRect().bottom + window.scrollY : NaN;
     const grid = document.querySelector(".chart-grid.small")!;
     const g = grid.getBoundingClientRect();
-    const rows = new Map<number, { left: number; right: number }>();
+    const rows = new Map<
+      number,
+      { left: number; right: number; cards: number }
+    >();
     for (const card of Array.from(grid.children)) {
       const r = card.getBoundingClientRect();
       const key = Math.round(r.top);
-      const row = rows.get(key) ?? { left: Infinity, right: -Infinity };
+      const row = rows.get(key) ?? {
+        left: Infinity,
+        right: -Infinity,
+        cards: 0,
+      };
       rows.set(key, {
         left: Math.min(row.left, r.left),
         right: Math.max(row.right, r.right),
+        cards: row.cards + 1,
       });
     }
     return {
       heroBottom: bottom(document.querySelector(".chart-hero")),
       gridLeft: g.left,
       gridRight: g.right,
+      gridWidth: g.width,
+      cards: grid.children.length,
       rows: Array.from(rows.values()),
     };
   });
+  // Three then two from 860 px, two-two-one from 640 px, one per row below (ADR 0202 §3).
+  expect(m.cards, "five small multiples").toBe(5);
+  expect(
+    m.rows.map((r) => r.cards),
+    `cards per row at a ${Math.round(m.gridWidth)} px grid`,
+  ).toEqual(
+    m.gridWidth >= 860
+      ? [3, 2]
+      : m.gridWidth >= 640
+        ? [2, 2, 1]
+        : [1, 1, 1, 1, 1],
+  );
   for (const r of m.rows) {
     expect(r.left, "chart row starts at the grid's left").toBeLessThanOrEqual(
       m.gridLeft + 1,
