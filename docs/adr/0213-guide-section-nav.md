@@ -31,6 +31,11 @@ section.
 
 ## Consequences
 
-- Every Guide section is one click or one Tab-and-Enter from the top bar.
+- Every Guide section is one click away, and reachable by keyboard, from the top bar.
+- The ten links wrap: two rows at 1280 × 800 in English, three in Czech and four in
+  Russian at 900 × 600, where the sticky top bar then takes about a third of the window.
+  A jump still lands its heading below the bar (the section's scroll margin follows the
+  bar's height), and content scrolls under it as on Property detail (ADR 0158).
+- The section wrappers reuse Property detail's `.pd-section` (its scroll margin).
 - No computed number, stored data or export changes.
 - New dictionary entry in en, cs and ru: `guide.sectionNavLabel`.

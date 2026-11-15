@@ -268,7 +268,8 @@
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
-/* Property detail section groups: a jump lands the section under the sticky topbar. */
+/* Section groups of a page with a section nav (Property detail, ADR 0107; the Guide,
+   ADR 0213): a jump lands the section under the sticky topbar. */
 .pd-section {
   display: flex;
   flex-direction: column;

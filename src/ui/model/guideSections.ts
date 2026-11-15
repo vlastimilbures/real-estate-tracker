@@ -15,7 +15,7 @@ const KEYS = [
   ["limits", "limitsTitle"],
 ] as const;
 
-export type GuideSection = (typeof KEYS)[number][0];
+type GuideSection = (typeof KEYS)[number][0];
 
 /** The element id a Guide section's link points at. */
 export const guideSectionId = (s: GuideSection) => `guide-${s}`;

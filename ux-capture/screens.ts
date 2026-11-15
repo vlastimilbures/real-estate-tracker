@@ -2280,9 +2280,14 @@ export const SCREENS: Screen[] = [
     desc: "Guide (full page)",
     run: async (ux) => {
       await boot(ux.page);
+      // Opening the Guide from a page scrolled down lands at its top (ADR 0213 §3).
+      await nav(ux, "projections");
+      await ux.page.evaluate(() =>
+        window.scrollTo(0, document.documentElement.scrollHeight),
+      );
+      expect(await ux.page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
       await nav(ux, "guide");
-      // Opening the Guide lands at its top (ADR 0213 §3).
-      expect(await ux.page.evaluate(() => window.scrollY)).toBe(0);
+      await expect.poll(() => ux.page.evaluate(() => window.scrollY)).toBe(0);
       await ux.capture("70-guide");
     },
   },
@@ -2322,6 +2327,23 @@ export const SCREENS: Screen[] = [
         ),
       ).toBe(true);
       await ux.capture("70b-guide-section-nav", { fullPage: false });
+      // A metric label still opens the Guide at its term (UX-044), shown below the
+      // taller top bar.
+      await nav(ux, "projections");
+      await ux.page
+        .locator(".metric-term", { hasText: /^NOI$/ })
+        .first()
+        .click();
+      const term = ux.page.locator("#glossary-noi");
+      await expect(term).toBeFocused();
+      const bar2 = (await ux.page.locator(".topbar").boundingBox())!;
+      const tb = (await term.boundingBox())!;
+      expect(tb.y, "term below the top bar").toBeGreaterThanOrEqual(
+        bar2.y + bar2.height,
+      );
+      expect(tb.y + tb.height, "term in the window").toBeLessThanOrEqual(
+        ux.page.viewportSize()!.height,
+      );
     },
   },
   {
