@@ -2,7 +2,6 @@
 
 - Status: Accepted
 - Date: 2026-10-08
-- Amended by: [0205](0205-properties-list-fits.md) (the two-line band pill and `bandPillParts` are retired)
 - Source: issue #134 (2026-10 code review, findings G2-3-01, G2-3-03, G2-3-04); owner
   decision D13 (2026-10-08: option A, layouts that do not depend on string length, plus a
   CI check in Czech and Russian; the section nav wraps; CI checks the layout screens);
@@ -14,7 +13,8 @@
   screens in Czech and Russian)
 - Related: [0106](0106-collapsible-stress-presets.md) (the Scenarios page layout),
   [0157](0157-accessibility-batch.md) (axe with best practices, 0 violations)
-- Amended by: [0189](0189-outcome-regions-pending-purchase-a11y.md) (a wrapped band badge has 10 px corners)
+- Amended by: [0189](0189-outcome-regions-pending-purchase-a11y.md) (a wrapped band badge has 10 px corners),
+  [0205](0205-properties-list-fits.md) (the two-line band pill and `bandPillParts` are retired)
 
 ## Context
 

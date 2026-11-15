@@ -703,6 +703,7 @@ table.data tfoot .total-row > * {
   text-align: right;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: var(--num);
 }
 /* Its name and actions cells stay pinned, as in the rows above. */
 table.data tfoot .total-row > .sticky-col {
@@ -717,7 +718,9 @@ table.data tfoot .total-row > .actions-col {
   z-index: 1;
   background: var(--surface);
 }
+/* Its label wraps within the name column (a long "owned active properties" label). */
 table.data tfoot .total-row > th.left {
+  white-space: normal;
   text-align: left;
   font-size: 13px;
   color: var(--ink);

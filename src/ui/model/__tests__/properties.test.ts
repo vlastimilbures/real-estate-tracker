@@ -6,7 +6,9 @@ import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { asOfView, tilesForAsOf } from "../dashboard";
 import { projectionSeries } from "../projection";
-import { bandLegend, propertiesTotal } from "../properties";
+import { bandLegend, hasMarkers, propertiesTotal } from "../properties";
+import { mixed } from "../../../engine/__tests__/support/mixed";
+import { D } from "../../../lib/money";
 
 const at = (asOf: string, isToday: boolean) => {
   const out = portfolioOutputs(portfolio, assumptions, isoDate(asOf));
@@ -84,6 +86,42 @@ describe("propertiesTotal (ADR 0205 §5)", () => {
     ).toBe(en.properties.totalRowActive);
   });
 
+  it("is null when fewer than two properties are active", () => {
+    const { out, basis } = at("2026-10-01", true);
+    const total = (inactive: number[]) =>
+      propertiesTotal(
+        out.snapshot,
+        out.projection,
+        basis,
+        assumptions,
+        portfolio.properties.map((p, i) =>
+          inactive.includes(i) ? { ...p, active: false } : p,
+        ),
+        en,
+      );
+    expect(total([0, 1])).toBeNull();
+    expect(total([0, 1, 2])).toBeNull();
+  });
+
+  it("says a pending purchase's value and flows are not in the total", () => {
+    // mixed at 01.10.2026: "future" is bought in 2028, "dev" is owned, "inactive" is not
+    // in the portfolio.
+    const out = portfolioOutputs(mixed, assumptions, isoDate("2026-10-01"));
+    const basis = asOfView(assumptions.baseDate, out.snapshot.asOf, true);
+    const total = propertiesTotal(
+      out.snapshot,
+      out.projection,
+      basis,
+      assumptions,
+      mixed.properties,
+      en,
+    )!;
+    expect(total.label).toBe(en.properties.totalRowOwned);
+    expect(total.value).toBe(out.snapshot.totalReportedValue);
+    expect(total.debt).toBe(out.snapshot.totalDebt);
+    expect(total.undrawnDebt.isZero()).toBe(false);
+  });
+
   it("is null with fewer than two properties", () => {
     const { out, basis } = at("2026-10-01", true);
     expect(
@@ -119,5 +157,23 @@ describe("bandLegend (ADR 0205 §2)", () => {
         ],
       },
     ]);
+  });
+});
+
+describe("hasMarkers (ADR 0205 §2)", () => {
+  const row = (owned: boolean, ltv: string | null, dscr: string | null) => ({
+    owned,
+    ltv: ltv === null ? null : D(ltv),
+    dscr: dscr === null ? null : D(dscr),
+  });
+  it("is true when an owned row has an LTV or a DSCR", () => {
+    expect(hasMarkers([row(true, "0.3", null)])).toBe(true);
+    expect(hasMarkers([row(true, null, "1.1")])).toBe(true);
+  });
+  it("is false with only pending rows or rows without figures", () => {
+    expect(hasMarkers([row(false, "0.3", "1.5"), row(true, null, null)])).toBe(
+      false,
+    );
+    expect(hasMarkers([])).toBe(false);
   });
 });

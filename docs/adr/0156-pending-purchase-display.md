@@ -2,7 +2,6 @@
 
 - Status: Accepted
 - Date: 2026-10-08
-- Amended by: [0205](0205-properties-list-fits.md) (the Pending badge sits under the name, before the purchase date)
 - Source: issue #126 item 1 (2026-10 code review, finding G2-1-02); owner decision D10
   item 1 (2026-10-08: option A, UI only; the Dashboard with only pending purchases active
   stays as it is); issue #276 item 1 (lifecycle test coverage); Track 11 PR 11.7
@@ -11,7 +10,8 @@
   follows `ownedOn`)
 - Amended by: [0189](0189-outcome-regions-pending-purchase-a11y.md) (§4: the panel shows the date and a link to the Acquisition section; §3: each "—" says "not owned yet" to a screen reader),
   [0165](0165-future-purchases.md) (a pending row shows a debt it already
-  owes, and the only-pending Dashboard totals include it)
+  owes, and the only-pending Dashboard totals include it),
+  [0205](0205-properties-list-fits.md) (the Pending badge sits under the name, before the purchase date)
 - Related: [0155](0155-lifecycle-states-on-the-pages.md) (a pending purchase counts as
   active), [0119](0119-acquisition-funding.md) (the acquisition summary the panel reads)
 

@@ -507,6 +507,7 @@ export const en = {
     badgeInactive: "Inactive",
     totalRow: "Total",
     totalRowActive: "Total, active properties",
+    totalRowOwned: "Total, owned active properties",
     editProperty: "Edit property",
     confirmDelete: (name: string) =>
       `Delete ${name} and all linked mortgages, valuations, leases, and holding costs? This cannot be undone.`,

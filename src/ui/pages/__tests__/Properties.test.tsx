@@ -24,7 +24,7 @@ import {
   propertySnapshot,
   type Portfolio,
 } from "../../../engine";
-import { fmtCzk, fmtCzkM, fmtDscr, fmtPct } from "../../../lib/format";
+import { fmtCzk, fmtCzkM, fmtDscr, fmtPct, noBreak } from "../../../lib/format";
 import { dscrBandWord, ltvBandWord } from "../../model/health";
 import type { Decimal } from "../../../lib/money";
 
@@ -259,7 +259,7 @@ describe("Properties: development flat under construction (ADR 0169)", () => {
     expect(cells).toContain(money(s.reportedValue));
     // The drawn debt, with the tranches still to draw named under it.
     expect(cells).toContain(
-      money(s.debt) + en.common.undrawnDebt(fmtCzkM(s.undrawnDebt)),
+      money(s.debt) + en.common.undrawnDebt(noBreak(fmtCzkM(s.undrawnDebt))),
     );
     expect(cells.join()).not.toContain(money(s.committedDebt));
   });
@@ -341,6 +341,63 @@ describe("Properties list fits (ADR 0205)", () => {
     expect(
       screen.getByRole("rowheader", { name: p.totalRowActive }),
     ).toBeTruthy();
+  });
+
+  it("keeps the total nominal with the real lens on: the page has no lens", () => {
+    act(() => useUiStore.setState({ mode: "real" }));
+    render(<Properties />);
+    const s = portfolioSnapshot(portfolio, assumptions, asOf);
+    const foot = screen
+      .getByRole("rowheader", { name: p.totalRow })
+      .closest("tr")!;
+    const cells = within(foot)
+      .getAllByRole("cell")
+      .map((c) => c.textContent);
+    expect(cells[3]).toBe(money(s.totalReportedValue));
+    expect(cells[4]).toBe(money(s.totalDebt));
+  });
+
+  it("leaves a pending purchase's value out of the total, names the undrawn debt", () => {
+    act(() => usePortfolioStore.setState({ portfolio: mixed }));
+    render(<Properties />);
+    const s = portfolioSnapshot(mixed, assumptions, asOf);
+    const foot = screen
+      .getByRole("rowheader", { name: p.totalRowOwned })
+      .closest("tr")!;
+    const cells = within(foot)
+      .getAllByRole("cell")
+      .map((c) => c.textContent);
+    // The owned, active properties' values: not "future" (bought in 2028), not the
+    // inactive one.
+    const owned = mixed.properties
+      .filter((x) => x.id !== "future" && x.active !== false)
+      .map((x) => propertySnapshot(x, mixed, assumptions, asOf).reportedValue);
+    expect(s.totalReportedValue.equals(owned.reduce((x, y) => x.plus(y)))).toBe(
+      true,
+    );
+    expect(cells[3]).toBe(money(s.totalReportedValue));
+    expect(cells[4]).toBe(
+      money(s.totalDebt) +
+        en.common.undrawnDebt(noBreak(fmtCzkM(s.totalUndrawnDebt))),
+    );
+  });
+
+  it("has no legend when no row shows a marker", () => {
+    const own = <T extends { propertyId: string }>(rows: T[]) =>
+      rows.filter((r) => r.propertyId === "future");
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: {
+          properties: mixed.properties.filter((x) => x.id === "future"),
+          mortgages: own(mixed.mortgages),
+          valuations: own(mixed.valuations),
+          leases: own(mixed.leases),
+          holdingCosts: [],
+        },
+      }),
+    );
+    const { container } = render(<Properties />);
+    expect(container.querySelector(".band-legend")).toBeNull();
   });
 
   it("has no totals row for one property", () => {

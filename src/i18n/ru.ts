@@ -476,6 +476,7 @@ export const ru: Dictionary = {
     badgeInactive: "Неактивен",
     totalRow: "Итого",
     totalRowActive: "Итого по активным объектам",
+    totalRowOwned: "Итого по активным объектам в собственности",
     editProperty: "Изменить объект",
     confirmDelete: (name) =>
       `Удалить ${name} и все связанные ипотеки, оценки, аренды и расходы на содержание? Это нельзя отменить.`,

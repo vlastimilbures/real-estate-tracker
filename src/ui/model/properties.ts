@@ -9,8 +9,8 @@ import type {
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import type { Decimal } from "../../lib/money";
-import { tilesForAsOf, type AsOfBasis } from "./dashboard";
-import type { Band } from "./health";
+import { ownedOn, tilesForAsOf, type AsOfBasis } from "./dashboard";
+import { dscrBand, ltvBand, type Band } from "./health";
 import { projectionSeries } from "./projection";
 
 export interface PropertiesTotal {
@@ -25,9 +25,10 @@ export interface PropertiesTotal {
   dscr: Decimal | null;
 }
 
-/** The totals row, or null when the list has fewer than two properties. An inactive
- *  property is listed but not in the portfolio, so the label says the total is of the
- *  active ones. */
+/** The totals row, or null when fewer than two properties are active (an inactive one is
+ *  listed but not in the portfolio, so there is nothing to total). The label says what
+ *  is counted: a pending purchase's value and flows are not owned yet (its drawn debt
+ *  is, ADR 0165), and an inactive property is left out (ADR 0205 §5). */
 export function propertiesTotal(
   snapshot: PortfolioSnapshot,
   projection: ProjectionYear[],
@@ -36,7 +37,11 @@ export function propertiesTotal(
   properties: readonly Property[],
   t: Pick<Dictionary, "properties">,
 ): PropertiesTotal | null {
-  if (properties.length < 2) return null;
+  const active = properties.filter((p) => p.active !== false);
+  if (active.length < 2) return null;
+  const pending = active.some(
+    (p) => !ownedOn(p.purchaseDate, basis, assumptions.baseDate, snapshot.asOf),
+  );
   const s = tilesForAsOf(
     snapshot,
     projectionSeries(projection, "nominal", assumptions),
@@ -45,9 +50,11 @@ export function propertiesTotal(
     assumptions,
   );
   return {
-    label: properties.some((p) => p.active === false)
-      ? t.properties.totalRowActive
-      : t.properties.totalRow,
+    label: pending
+      ? t.properties.totalRowOwned
+      : active.length < properties.length
+        ? t.properties.totalRowActive
+        : t.properties.totalRow,
     value: s.totalReportedValue,
     debt: s.totalDebt,
     undrawnDebt: s.totalUndrawnDebt,
@@ -81,4 +88,20 @@ export function bandLegend(
       ],
     },
   ];
+}
+
+/** Whether any row shows a health marker, so the legend has something to explain: an
+ *  owned row whose LTV or DSCR has a band (ADR 0205 §2). */
+export function hasMarkers(
+  rows: readonly {
+    owned: boolean;
+    ltv: Decimal | null;
+    dscr: Decimal | null;
+  }[],
+): boolean {
+  return rows.some(
+    (r) =>
+      r.owned &&
+      (ltvBand(r.ltv) !== "neutral" || dscrBand(r.dscr) !== "neutral"),
+  );
 }

@@ -20,10 +20,10 @@ import {
 } from "../components/primitives";
 import { PropertyFormModal } from "../components/PropertyFormModal";
 import { SampleBanner } from "../components/SampleBanner";
-import { fmtCzkM, fmtDate, fmtPct, fmtDscr } from "../../lib/format";
+import { fmtCzkM, fmtDate, noBreak, fmtPct, fmtDscr } from "../../lib/format";
 import { undrawnPart } from "../model/debt";
 import { dscrBand, dscrBandWord, ltvBand, ltvBandWord } from "../model/health";
-import { bandLegend, propertiesTotal } from "../model/properties";
+import { bandLegend, hasMarkers, propertiesTotal } from "../model/properties";
 import { useT } from "../hooks/useT";
 import { ConfirmRow } from "../components/EntityPanelParts";
 import { RowAction, RowActions } from "../components/RowActions";
@@ -65,7 +65,7 @@ function DebtCell({ debt, undrawn }: { debt: Decimal; undrawn: Decimal }) {
       <Money value={debt} parens={false} suffix={false} />
       {undrawnPart(undrawn) && (
         <span className="cell-sub cell-note">
-          {t.common.undrawnDebt(fmtCzkM(undrawn))}
+          {t.common.undrawnDebt(noBreak(fmtCzkM(undrawn)))}
         </span>
       )}
     </>
@@ -372,23 +372,25 @@ export function Properties() {
               )}
             </table>
           </TableWrap>
-          {/* The markers' words; each cell already says its band to assistive
-              technology (ADR 0205 §2). */}
-          <p className="band-legend" aria-hidden="true">
-            {bandLegend(t).map((g) => (
-              <span key={g.label} className="band-legend-group">
-                <span className="band-legend-label">{g.label}</span>
-                {g.items.map((i) => (
-                  <span key={i.word} className="band-legend-item">
-                    {i.bands.map((b) => (
-                      <HealthMarker key={b} band={b} word={i.word} />
-                    ))}{" "}
-                    {i.word}
-                  </span>
-                ))}
-              </span>
-            ))}
-          </p>
+          {/* The markers' words, when a row shows one; each cell already says its band
+              to assistive technology (ADR 0205 §2). */}
+          {hasMarkers(perProperty) && (
+            <p className="band-legend" aria-hidden="true">
+              {bandLegend(t).map((g) => (
+                <span key={g.label} className="band-legend-group">
+                  <span className="band-legend-label">{g.label}</span>
+                  {g.items.map((i) => (
+                    <span key={i.word} className="band-legend-item">
+                      {i.bands.map((b) => (
+                        <HealthMarker key={b} band={b} word={i.word} />
+                      ))}{" "}
+                      {i.word}
+                    </span>
+                  ))}
+                </span>
+              ))}
+            </p>
+          )}
           {deleteTarget && (
             // Outside .table-wrap so the message is never clipped by the scroll (UX-019).
             <ConfirmRow

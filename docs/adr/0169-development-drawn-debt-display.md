@@ -2,7 +2,6 @@
 
 - Status: Accepted
 - Date: 2026-10-10
-- Amended by: [0205](0205-properties-list-fits.md) (the undrawn note is a short line that wraps in its column)
 - Source: owner report (2026-10-10). A development loan drawn in tranches over two years
   shows its whole amount as debt from its start in the charts and the projection grid,
   which is misleading. Owner decision: plan approved on 2026-10-10, with these choices:
@@ -12,7 +11,8 @@
 - Amends: [0166](0166-development-committed-debt.md) (decision 5: the UI shows committed
   debt)
 - Amended by: [0170](0170-equity-change-drawn-debt.md) (decision 6: the equity-change
-  chart follows the draws)
+  chart follows the draws),
+  [0205](0205-properties-list-fits.md) (the undrawn note is a short line that wraps in its column)
 - Related: [0003](0003-czech-practice-decides.md), [0039](0039-golden-master.md),
   [0001](0001-behaviour-change-gate.md), [0167](0167-drawdown-schedule.md)
 

@@ -9,10 +9,10 @@
   sooner), [0156](0156-pending-purchase-display.md) (the Pending badge's place),
   [0158](0158-layouts-hold-in-czech-and-russian.md) (the two-line band pill and
   `bandPillParts` are retired), [0169](0169-development-drawn-debt-display.md) (the
-  undrawn note's text and wrapping)
+  undrawn note's text and wrapping), [0189](0189-outcome-regions-pending-purchase-a11y.md)
+  (its wrapped band badge rule is retired with the pill; the pending cells are unchanged)
 - Related: [0195](0195-health-marker.md) (the marker), [0199](0199-icon-only-row-actions.md)
-  (icon-only row actions), [0189](0189-outcome-regions-pending-purchase-a11y.md) (pending cells, unchanged),
-  [0150](0150-one-asof-resolver.md) (the as-of rule the totals follow)
+  (icon-only row actions), [0150](0150-one-asof-resolver.md) (the as-of rule the totals follow)
 
 ## Context
 
@@ -38,20 +38,24 @@
    column: `common.undrawnDebt` reads "+3,0 M Kč to draw" (cs "+3,0 M Kč k dočerpání", ru
    "+3,0 M Kč к выборке"), on the Dashboard net-worth tile and the Property detail debt
    tile too (wording log). ADR 0169's meaning is unchanged.
-4. **Rows** are one line, about 44 px (7 px above and below, 8 px between columns); a
+4. **Rows** are one line, about 44 px (7 px above and below, 8 px each side of a cell: 16 px between columns); a
    pending purchase's badge and date or an undrawn note add a line under the figure. A
    long name is cut sooner (`clamp(6.5rem, 12vw, 22rem)`, full name on hover and as the
    button's name, ADR 0085), so Value stays in view beside the pinned actions in a
    narrow window.
-5. **Totals row** (`tfoot`) when the list has two or more properties: Net cash flow, LTV,
-   DSCR, Value, Debt (with the portfolio's undrawn note), Equity and NOI, from the engine's
-   portfolio snapshot under the page's as-of basis, as the Dashboard reads its tiles at
-   Today with the "All" filter (`propertiesTotal`, `src/ui/model/properties.ts`, over
-   `tilesForAsOf`). Nothing is summed or divided in the component. The row is labelled
-   `properties.totalRow` ("Total"), or `properties.totalRowActive` ("Total, active
-   properties") when an inactive property is listed, since the portfolio leaves it out. A
-   pending purchase's figures are not owned yet and are not in the total, as on the
-   Dashboard; its drawn debt is (ADR 0165).
+5. **Totals row** (`tfoot`) when the list has two or more active properties: Net cash
+   flow, LTV, DSCR, Value, Debt (with the portfolio's undrawn note), Equity and NOI, from
+   the engine's portfolio snapshot under the page's as-of basis, as the Dashboard reads
+   its tiles at Today with the "All" filter (`propertiesTotal`,
+   `src/ui/model/properties.ts`, over `tilesForAsOf`). Nothing is summed or divided in
+   the component. The figures are nominal Kč: the Properties page has no lens, as its
+   rows; with the real lens on, the Dashboard's tiles differ by the deflator. The label
+   says what is counted (issue #379): `properties.totalRow` ("Total"); with an inactive
+   property listed, `properties.totalRowActive` ("Total, active properties"), since the
+   portfolio leaves it out; with a pending purchase listed, `properties.totalRowOwned`
+   ("Total, owned active properties"), since its value and flows are not owned yet. A
+   pending purchase's drawn debt is in the Debt total, as on the Dashboard (ADR 0165).
+   The legend shows only when some row has a marker.
 6. **A pending purchase's badge** moves from beside the name to the line under it, before
    the purchase date ("Pending · Purchase on 15.03.2028"), and that line wraps inside the
    name column instead of widening it; the Inactive badge stays beside the name. The badge
