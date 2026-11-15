@@ -2485,11 +2485,13 @@ main.page:focus {
   container-type: inline-size;
   margin-top: var(--s1);
 }
-/* One grid for the axis and every row, so the tracks line up: name · track · text. */
+/* One grid for the axis and every row, so the tracks line up: name · track · text. The
+   text column holds a Russian line with its "next" flag on one line, with room for
+   wider fonts than macOS's. */
 .fx-axis,
 .fx-row {
   display: grid;
-  grid-template-columns: 9rem minmax(120px, 1fr) minmax(0, 27rem);
+  grid-template-columns: 9rem minmax(120px, 1fr) minmax(0, 30rem);
   column-gap: var(--s3);
   align-items: center;
 }
