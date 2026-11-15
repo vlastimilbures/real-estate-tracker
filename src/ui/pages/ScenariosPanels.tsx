@@ -1,7 +1,8 @@
 // Sub-components pulled out of Scenarios.tsx to shrink its render tree. Pure
 // presentation — no logic beyond what Scenarios.tsx already computed.
 import { useId, useState } from "react";
-import { ChevronDown, ChevronUp, Copy, Pencil, Trash2 } from "lucide-react";
+import { Copy, Pencil, Trash2 } from "lucide-react";
+import { DisclosureButton } from "../components/Disclosure";
 import { Panel, Button, SegmentedToggle } from "../components/primitives";
 import { ConfirmRow } from "../components/EntityPanelParts";
 import { RowAction, RowActions } from "../components/RowActions";
@@ -52,16 +53,13 @@ export function StressPresetsPanel({
       hint={t.scenarios.presetsHint(DEFAULT_SHOCK_YEARS)}
       action={
         <span className="preset-toggle">
-          <Button
-            size="sm"
-            variant="ghost"
-            icon={open ? ChevronUp : ChevronDown}
-            aria-expanded={open}
-            aria-controls={bodyId}
-            onClick={onToggleOpen}
+          <DisclosureButton
+            open={open}
+            controls={bodyId}
+            onToggle={onToggleOpen}
           >
             {open ? t.scenarios.hidePresets : t.scenarios.showPresets}
-          </Button>
+          </DisclosureButton>
         </span>
       }
     >

@@ -1,12 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  Pencil,
-  Power,
-  PowerOff,
-  Building2,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { Pencil, Power, PowerOff, Building2 } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { usePropertyEngineResult } from "../../state/useEngine";
@@ -20,6 +13,7 @@ import {
   ExportXlsxButton,
 } from "../components/primitives";
 import { PropertyFormModal } from "../components/PropertyFormModal";
+import { DisclosureButton } from "../components/Disclosure";
 import { toChartRows } from "../model/chartData";
 import { ProjectionGrid } from "../components/ProjectionGrid";
 import { AsOfPicker } from "../components/AsOfPicker";
@@ -430,23 +424,24 @@ export function PropertyDetail() {
           <Panel
             title={t.propertyDetail.amortizationTitle}
             hint={t.propertyDetail.amortizationMonths(out.schedule.length)}
-            action={<ExportXlsxButton onExport={exportAmortization} />}
+            action={
+              // The toggle sits in the head, before the export (ADR 0203 §2).
+              <span className="panel-actions">
+                <DisclosureButton
+                  open={amortizationOpen}
+                  controls={AMORTIZATION_BODY}
+                  onToggle={() => setAmortizationOpen(!amortizationOpen)}
+                >
+                  {amortizationOpen
+                    ? t.propertyDetail.hideAmortization
+                    : t.propertyDetail.showAmortization(out.schedule.length)}
+                </DisclosureButton>
+                <ExportXlsxButton onExport={exportAmortization} />
+              </span>
+            }
             flush
           >
-            <div className="disclosure-row">
-              <Button
-                size="sm"
-                icon={amortizationOpen ? ChevronUp : ChevronDown}
-                aria-expanded={amortizationOpen}
-                aria-controls={AMORTIZATION_BODY}
-                onClick={() => setAmortizationOpen(!amortizationOpen)}
-              >
-                {amortizationOpen
-                  ? t.propertyDetail.hideAmortization
-                  : t.propertyDetail.showAmortization(out.schedule.length)}
-              </Button>
-            </div>
-            <div id={AMORTIZATION_BODY}>
+            <div id={AMORTIZATION_BODY} hidden={!amortizationOpen}>
               {amortizationOpen && (
                 <AmortizationTable schedule={out.schedule} />
               )}

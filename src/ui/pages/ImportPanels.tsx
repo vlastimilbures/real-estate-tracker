@@ -8,6 +8,7 @@ import { logFailure } from "../../state/diagnostics";
 import { saveFailureDetail, saveFile } from "../../state/platform";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
+import { Disclosure } from "../components/Disclosure";
 import { fmtCzk } from "../../lib/format";
 import { DATE_FLOOR, isoDay } from "../../lib/day";
 import type { CsvErrorCode, CsvRowError, ImportItem } from "../../state/csv";
@@ -293,6 +294,8 @@ export function ImportSummary({
   const p = t.importPage;
   const addLabel = mode === "preview" ? p.willAdd : p.added;
   const updateLabel = mode === "preview" ? p.willUpdate : p.updated;
+  const addOpen = (g: { added: readonly ImportItem[] }) =>
+    g.added.some((i) => itemNotes(t, i).length > 0);
 
   const name = (i: ImportItem) =>
     onOpenProperty ? (
@@ -320,9 +323,13 @@ export function ImportSummary({
             ].join(" · ")}
           </span>
           {g.added.length > 0 && (
-            // Open when an add has notes to read, in the preview and the report (ADR 0160).
-            <details open={g.added.some((i) => itemNotes(t, i).length > 0)}>
-              <summary>{addLabel(g.added.length)}</summary>
+            // Open when an add has notes to read, in the preview and the report (ADR
+            // 0160); keyed by that default so a new preview's default applies (ADR 0203 §3).
+            <Disclosure
+              key={`add-${addOpen(g)}`}
+              label={addLabel(g.added.length)}
+              defaultOpen={addOpen(g)}
+            >
               <ul>
                 {g.added.map((i) => {
                   const notes = itemNotes(t, i);
@@ -341,11 +348,13 @@ export function ImportSummary({
                   );
                 })}
               </ul>
-            </details>
+            </Disclosure>
           )}
           {g.updated.length > 0 && (
-            <details open={mode === "preview"}>
-              <summary>{updateLabel(g.updated.length)}</summary>
+            <Disclosure
+              label={updateLabel(g.updated.length)}
+              defaultOpen={mode === "preview"}
+            >
               <ul>
                 {g.updated.map((i) => (
                   <li key={i.row}>
@@ -360,7 +369,7 @@ export function ImportSummary({
                   </li>
                 ))}
               </ul>
-            </details>
+            </Disclosure>
           )}
         </div>
       ))}

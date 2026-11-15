@@ -19,6 +19,7 @@ import type { Mode } from "../model/lens";
 import type { FinancingExposure, Portfolio, PortfolioKPIs } from "../../engine";
 import { fmtDate } from "../../lib/format";
 import { useT } from "../hooks/useT";
+import { Disclosure } from "../components/Disclosure";
 
 function PropertyLink({
   id,
@@ -135,8 +136,7 @@ export function FinancingPanel({
         <p className="panel-note">{d.financingNoLoans}</p>
       )}
       {m.interestSaved && (
-        <details>
-          <summary>{d.financingInterestSavedByProperty}</summary>
+        <Disclosure label={d.financingInterestSavedByProperty}>
           <StatList
             rows={m.interestSaved.properties.map((r) => ({
               k: (
@@ -149,7 +149,7 @@ export function FinancingPanel({
               v: savedValue(r.amount),
             }))}
           />
-        </details>
+        </Disclosure>
       )}
       <h3 className="panel-subhead">{d.financingUpcoming}</h3>
       {m.events.length > 0 ? (

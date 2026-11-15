@@ -344,6 +344,27 @@ async function expectDashboardHierarchy(ux: Ux) {
   }
 }
 
+/** One disclosure (ADR 0203): no <details>, and every expandable button names a region
+ *  that is in the DOM. */
+async function expectDisclosures(ux: Ux) {
+  expect(await ux.page.locator("details").count(), "no <details>").toBe(0);
+  const missing = await ux.page.evaluate(() =>
+    Array.from(document.querySelectorAll("button[aria-expanded]"))
+      // Popup triggers (listbox, calendar) and the sidebar toggle are not disclosures.
+      .filter(
+        (b) =>
+          !b.hasAttribute("aria-haspopup") &&
+          !b.classList.contains("collapse-btn"),
+      )
+      .filter((b) => {
+        const id = b.getAttribute("aria-controls");
+        return !id || !document.getElementById(id);
+      })
+      .map((b) => b.textContent),
+  );
+  expect(missing, "disclosures without their region").toEqual([]);
+}
+
 /** One grid for the scenario list: actions line up across rows and the summary stays
  *  readable in every language (ADR 0158). */
 async function expectScenarioGrid(ux: Ux) {
@@ -641,6 +662,7 @@ export const SCREENS: Screen[] = [
       ).toBeVisible();
       await p.scrollIntoViewIfNeeded();
       await ux.capture("09-dashboard-data-check", { fullPage: false });
+      await expectDisclosures(ux);
       // A fix link opens the property and lands its section below the sticky topbar.
       await p
         .getByRole("button", {
@@ -877,6 +899,7 @@ export const SCREENS: Screen[] = [
         .getByLabel(ux.t.propertyForm.fundingNote, { exact: true })
         .scrollIntoViewIfNeeded();
       await ux.capture("15-property-edit-acquisition", { fullPage: false });
+      await expectDisclosures(ux);
     },
   },
   {
@@ -920,6 +943,7 @@ export const SCREENS: Screen[] = [
       await toggle.click();
       await expect(p.getByRole("table")).toBeVisible();
       await ux.capture("26-property-amortization-open");
+      await expectDisclosures(ux);
     },
   },
   {
@@ -998,6 +1022,7 @@ export const SCREENS: Screen[] = [
       ).toBeVisible();
       await f.scrollIntoViewIfNeeded();
       await ux.capture("29d-dashboard-interest-saved", { fullPage: false });
+      await expectDisclosures(ux);
     },
   },
   {
@@ -1378,6 +1403,7 @@ export const SCREENS: Screen[] = [
       }
       await ux.page.setViewportSize(window);
       await ux.capture("42-scenarios-compare");
+      await expectDisclosures(ux);
     },
   },
   {
@@ -1502,6 +1528,7 @@ export const SCREENS: Screen[] = [
         }),
       ).toBeVisible();
       await ux.capture("53-import-preview");
+      await expectDisclosures(ux);
     },
   },
   {

@@ -2,12 +2,12 @@
 // across the properties in view. Open when something needs attention, collapsed otherwise;
 // a manual Show / Hide holds for the app session.
 import { useId } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { DisclosureButton } from "../components/Disclosure";
 import type { Portfolio, Rate } from "../../engine";
 import { fmtDate } from "../../lib/format";
 import { useUiStore } from "../../state/uiStore";
 import { DataCheckList } from "../components/DataCheckList";
-import { Button, Panel } from "../components/primitives";
+import { Panel } from "../components/primitives";
 import { useT } from "../hooks/useT";
 import {
   dataCheckItems,
@@ -62,16 +62,13 @@ export function DataCheckPanel({
       action={
         !empty && (
           <span className="preset-toggle">
-            <Button
-              size="sm"
-              variant="ghost"
-              icon={open ? ChevronUp : ChevronDown}
-              aria-expanded={open}
-              aria-controls={bodyId}
-              onClick={() => setOpen(!open)}
+            <DisclosureButton
+              open={open}
+              controls={bodyId}
+              onToggle={() => setOpen(!open)}
             >
               {open ? d.hide : d.show}
-            </Button>
+            </DisclosureButton>
           </span>
         )
       }

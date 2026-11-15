@@ -1,5 +1,5 @@
 import { useState, useEffect, useId, useRef, type RefObject } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { DisclosureButton } from "./Disclosure";
 import {
   usePortfolioStore,
   type MutationResult,
@@ -187,16 +187,9 @@ function AcquisitionFields({
   return (
     <>
       <div className="form-wide form-disclosure">
-        <Button
-          size="sm"
-          variant="ghost"
-          icon={open ? ChevronUp : ChevronDown}
-          aria-expanded={open}
-          aria-controls={bodyId}
-          onClick={onToggle}
-        >
+        <DisclosureButton open={open} controls={bodyId} onToggle={onToggle}>
           {t.propertyForm.acquisitionSection}
-        </Button>
+        </DisclosureButton>
       </div>
       {/* Hidden, not removed, while shut: the toggle controls it, and it adds no grid row. */}
       <div id={bodyId} ref={bodyRef} className="form-wide" hidden={!open}>
