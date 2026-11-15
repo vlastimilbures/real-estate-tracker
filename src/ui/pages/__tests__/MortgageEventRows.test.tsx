@@ -115,11 +115,12 @@ describe("prepayment and recast rows (ADR 0116)", () => {
       (within(recast).getByLabelText(d.eventInstalment) as HTMLInputElement)
         .value,
     ).toBe("9000");
-    await userEvent.click(
-      within(row(1)).getByRole("button", {
-        name: d.eventRemove(d.eventPrepaymentRow(1)),
-      }),
-    );
+    // An icon-only row action named by its tooltip (ADR 0199).
+    const remove = within(row(1)).getByRole("button", {
+      name: d.eventRemove(d.eventPrepaymentRow(1)),
+    });
+    expect(remove.classList.contains("row-action")).toBe(true);
+    await userEvent.click(remove);
     await userEvent.click(
       within(recast).getByRole("button", {
         name: d.eventRemove(d.eventRecastRow(1)),

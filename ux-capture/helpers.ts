@@ -335,3 +335,70 @@ export async function pickFiveYearsAndCheckHint(page: Page) {
   );
   expect(m.scroll, "page width").toBeLessThanOrEqual(m.client);
 }
+
+/**
+ * Every row's actions (ADR 0199): icon-only targets of at least 24 × 24 px, 4 px apart,
+ * and the actions cell at most `maxCell` px wide (about 72 px for two, 104 px for three).
+ */
+export async function expectRowActions(scope: Locator, maxCell: number) {
+  const groups = await scope.locator(".row-actions").evaluateAll((els) =>
+    els.map((el) => {
+      const cell = el.closest("td, .scenario-actions") ?? el;
+      const buttons = Array.from(el.querySelectorAll(".row-action"), (b) =>
+        b.getBoundingClientRect(),
+      );
+      return {
+        cell: cell.getBoundingClientRect().width,
+        sizes: buttons.map((b) => Math.min(b.width, b.height)),
+        gaps: buttons.slice(1).map((b, i) => b.left - buttons[i]!.right),
+      };
+    }),
+  );
+  expect(groups.length, "rows with actions").toBeGreaterThan(0);
+  for (const g of groups) {
+    expect(g.cell, "actions cell width").toBeLessThanOrEqual(maxCell);
+    for (const s of g.sizes)
+      expect(s, "target size").toBeGreaterThanOrEqual(24);
+    for (const gap of g.gaps)
+      expect(gap, "gap between targets").toBeGreaterThanOrEqual(4);
+  }
+}
+
+/**
+ * Moves keyboard focus onto `button` (Shift+Tab, Tab, so the focus is keyboard focus)
+ * and checks its tooltip (ADR 0199): visible, the button's name, inside `within`.
+ */
+export async function expectRowActionTip(
+  page: Page,
+  button: Locator,
+  within: Locator,
+) {
+  await button.focus();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  await expect(button).toBeFocused();
+  const tip = button.locator(".row-action-tip");
+  const name = await tip.textContent();
+  await expect(button).toHaveAccessibleName(name ?? "");
+  const box = await tip.boundingBox();
+  const area = await within.boundingBox();
+  expect(box && box.width > 1 && box.height > 1, "tooltip shows").toBe(true);
+  expect(box!.x, "tooltip left").toBeGreaterThanOrEqual(area!.x);
+  expect(box!.x + box!.width, "tooltip right").toBeLessThanOrEqual(
+    area!.x + area!.width,
+  );
+  expect(box!.y, "tooltip top").toBeGreaterThanOrEqual(area!.y);
+  expect(box!.y + box!.height, "tooltip bottom").toBeLessThanOrEqual(
+    area!.y + area!.height,
+  );
+  // Nothing (a sticky header, a pinned cell) covers it.
+  const onTop = await tip.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(
+      r.x + r.width / 2,
+      r.y + r.height / 2,
+    );
+    return hit === el || el.contains(hit);
+  });
+  expect(onTop, "tooltip not covered").toBe(true);
+}

@@ -18,6 +18,8 @@ import {
   expectNotClipped,
   expectPanelActionsRight,
   pickFiveYearsAndCheckHint,
+  expectRowActions,
+  expectRowActionTip,
   type Ux,
 } from "./helpers";
 
@@ -559,7 +561,39 @@ export const SCREENS: Screen[] = [
     run: async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
+      await expectRowActions(ux.page.locator("table.data"), 72);
       await ux.capture("10-properties");
+    },
+  },
+  {
+    id: "10c-properties-row-action-tooltip",
+    desc: "Properties: keyboard focus on a row's Delete shows its name as a tooltip, inside the table (ADR 0199)",
+    run: async (ux) => {
+      await boot(ux.page);
+      await nav(ux, "properties");
+      const table = ux.page.locator(".table-wrap").first();
+      await expectRowActionTip(
+        ux.page,
+        table.getByRole("button", { name: ux.t.common.delete }).first(),
+        table,
+      );
+      await ux.capture("10c-properties-row-action-tooltip", {
+        fullPage: false,
+      });
+      // A tooltip covering Edit never runs Delete (ADR 0199 §3): from Delete, the pointer
+      // slides onto Edit; the first click hides the tooltip, the next one edits.
+      const row = table.locator("tbody tr").first();
+      const del = row.getByRole("button", { name: ux.t.common.delete });
+      const edit = row.getByRole("button", { name: ux.t.common.edit });
+      await del.hover();
+      const box = (await edit.boundingBox())!;
+      await ux.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await ux.page.mouse.down();
+      await ux.page.mouse.up();
+      await expect(ux.page.locator(".confirm-row")).toHaveCount(0);
+      await ux.page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      await expect(ux.page.getByRole("dialog")).toBeVisible();
+      await expect(ux.page.locator(".confirm-row")).toHaveCount(0);
     },
   },
   {
@@ -734,6 +768,7 @@ export const SCREENS: Screen[] = [
       );
       await expectPanelActionsRight(ux.page);
       await expectBandTileLabelsOneLine(ux);
+      await expectRowActions(ux.page.locator("main"), 72);
       await ux.capture("20-property-detail");
     },
   },
@@ -1207,6 +1242,7 @@ export const SCREENS: Screen[] = [
       await expect(ux.page.locator(".scenario-row")).toHaveCount(3);
       await expectScenarioGrid(ux);
       await expectPanelActionsRight(ux.page);
+      await expectRowActions(ux.page.locator(".scenario-list"), 104);
       // Also around the narrow-layout breakpoint, between the captured windows.
       const window = ux.page.viewportSize()!;
       for (const width of [960, 1000, 1040, 1100, 1160]) {

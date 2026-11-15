@@ -474,7 +474,6 @@ export const ru: Dictionary = {
     pendingPurchaseOn: (d) => `покупка ${d}`,
     badgeInactive: "Неактивен",
     editProperty: "Изменить объект",
-    deleteProperty: "Удалить объект",
     confirmDelete: (name) =>
       `Удалить ${name} и все связанные ипотеки, оценки, аренды и расходы на содержание? Это нельзя отменить.`,
   },

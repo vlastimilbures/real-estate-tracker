@@ -39,6 +39,23 @@ function renderList(
 
 beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
+describe("scenario row actions (ADR 0199)", () => {
+  it("are icon-only row actions: Edit, Duplicate and a destructive Delete", () => {
+    renderList(vi.fn(ok));
+    const names = [en.common.edit, en.scenarios.duplicate, en.common.delete];
+    for (const name of names) {
+      const button = screen.getByRole("button", { name });
+      expect(button.classList.contains("row-action")).toBe(true);
+      expect(button.querySelector("svg")).not.toBeNull();
+    }
+    expect(
+      screen
+        .getByRole("button", { name: en.common.delete })
+        .classList.contains("danger"),
+    ).toBe(true);
+  });
+});
+
 describe("scenario delete confirmation (UX-020)", () => {
   it("asks before deleting and names the scenario", async () => {
     const onDelete = vi.fn(ok);

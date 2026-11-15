@@ -465,7 +465,6 @@ export const cs: Dictionary = {
     pendingPurchaseOn: (d) => `koupě ${d}`,
     badgeInactive: "Neaktivní",
     editProperty: "Upravit nemovitost",
-    deleteProperty: "Smazat nemovitost",
     confirmDelete: (name) =>
       `Smazat ${name} a všechny propojené hypotéky, ocenění, nájmy a náklady na držbu? Tuto akci nelze vrátit.`,
   },
