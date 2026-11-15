@@ -77,15 +77,16 @@ export function RowAction({
         e.stopPropagation();
         setTipOff(true);
       }}
-      // A dismissed tooltip shows again on the next hover or focus, not while the
-      // pointer still rests on the button.
+      // A dismissed tooltip shows again on the next hover or focus, once the pointer has
+      // left and focus has moved: not while either still rests on the button (a focused
+      // button's tooltip would come back under the pointer that just hid it).
       onBlur={() => {
         if (!hovered) setTipOff(false);
       }}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => {
+      onMouseLeave={(e) => {
         setHovered(false);
-        setTipOff(false);
+        if (document.activeElement !== e.currentTarget) setTipOff(false);
       }}
     >
       <Icon size={16} strokeWidth={1.75} aria-hidden="true" />

@@ -115,6 +115,21 @@ describe("RowAction (ADR 0199)", () => {
     expect(onDelete).toHaveBeenCalledOnce();
   });
 
+  it("a hidden tooltip stays hidden while the button keeps focus after the pointer leaves", () => {
+    renderPair();
+    const del = screen.getByRole("button", { name: "Delete" });
+    del.focus();
+    fireEvent.mouseEnter(del);
+    fireEvent.click(del.querySelector(".row-action-tip")!);
+    expect(del.classList.contains("tip-off")).toBe(true);
+    // The tooltip hid, so the pointer is now over Edit: Delete still has focus, and its
+    // tooltip must not come back under the pointer.
+    fireEvent.mouseLeave(del);
+    expect(del.classList.contains("tip-off")).toBe(true);
+    fireEvent.blur(del);
+    expect(del.classList.contains("tip-off")).toBe(false);
+  });
+
   it("after its action runs, Escape goes to what the action opened", () => {
     const confirmEscape = vi.fn();
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && confirmEscape();
