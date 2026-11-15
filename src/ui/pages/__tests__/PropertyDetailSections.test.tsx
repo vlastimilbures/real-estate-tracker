@@ -218,6 +218,12 @@ describe("Property detail amortization disclosure (ADR 0107)", () => {
       toggle().compareDocumentPosition(exp) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(within(amortization()).queryByRole("table")).toBeNull();
+    // The region it controls is in the DOM, hidden while shut (ADR 0203 §1).
+    const region = document.getElementById(
+      toggle().getAttribute("aria-controls")!,
+    )!;
+    expect(region).not.toBeNull();
+    expect(region.hidden).toBe(true);
     expect(
       within(amortization()).getByRole("button", {
         name: en.xlsx.exportToExcel,

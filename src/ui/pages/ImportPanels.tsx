@@ -324,9 +324,9 @@ export function ImportSummary({
           </span>
           {g.added.length > 0 && (
             // Open when an add has notes to read, in the preview and the report (ADR
-            // 0160); keyed by that default so a change of default applies (ADR 0203 §3).
+            // 0160); keyed by that default so a new preview's default applies (ADR 0203 §3).
             <Disclosure
-              key={`add-${mode}-${addOpen(g)}`}
+              key={`add-${addOpen(g)}`}
               label={addLabel(g.added.length)}
               defaultOpen={addOpen(g)}
             >
@@ -352,7 +352,6 @@ export function ImportSummary({
           )}
           {g.updated.length > 0 && (
             <Disclosure
-              key={`update-${mode}`}
               label={updateLabel(g.updated.length)}
               defaultOpen={mode === "preview"}
             >

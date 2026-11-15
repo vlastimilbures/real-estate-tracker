@@ -7,7 +7,9 @@
   (comment on #392)
 - Amends: [0107](0107-property-section-nav.md) (the amortization toggle moves from the
   panel body to the panel head)
-- Related: [0106](0106-collapsible-stress-presets.md) (presets open state, kept),
+- Related: [0096](0096-csv-import-preview.md) (the Import summary's lists),
+  [0116](0116-prepayments-ui-and-review-fixes.md) (interest saved "By property"),
+  [0106](0106-collapsible-stress-presets.md) (presets open state, kept),
   [0118](0118-data-check.md) (Data check open state, kept),
   [0144](0144-small-user-visible-corrections.md) (interest saved by property),
   [0160](0160-csv-import-and-stored-loan-events.md) (an add with notes opens), [0201](0201-button-roles.md)
@@ -36,16 +38,17 @@
 3. **Remembered state stays remembered:** Data check and the presets for the session
    (uiStore), the amortization schedule as before. The Import lists keep their defaults:
    an add list opens when one of its adds has notes (ADR 0160), the update list opens in
-   the preview; when the default changes (preview to report), the list takes the new
-   default, as `<details open>` did.
+   the preview and is shut in the report (the preview and the report are separate
+   lists); when a new preview changes an add list's default, the list takes it, as
+   `<details open>` did.
 4. **No `<details>` in `src/ui`.** Text of the toggles is unchanged
    (`propertyDetail.showAmortization`, `hideAmortization`,
    `dashboard.financingInterestSavedByProperty`, `importPage.willAdd`, `willUpdate`,
    `added`, `updated`).
-5. **What assistive technology announces:** a `<summary>` was read as a disclosure
-   triangle ("summary, collapsed" in VoiceOver); it is now "button, collapsed" /
-   "expanded", and the region it controls is skipped while hidden, as a closed
-   `<details>`'s content was. The button's name is its text, as the summary's was.
+5. **What assistive technology announces:** a `<summary>` is exposed as a disclosure
+   triangle; the toggle is now exposed as a button with an expanded / collapsed state
+   (not yet checked with VoiceOver), and the region it controls is skipped while hidden,
+   as a closed `<details>`'s content was. The button's name is its text, as the summary's was.
 
 ## Consequences
 

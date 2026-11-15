@@ -10,13 +10,11 @@ export function DisclosureButton({
   open,
   controls,
   onToggle,
-  disabled,
   children,
 }: {
   open: boolean;
   controls: string;
   onToggle: () => void;
-  disabled?: boolean | undefined;
   children: ReactNode;
 }) {
   return (
@@ -26,7 +24,6 @@ export function DisclosureButton({
       icon={open ? ChevronUp : ChevronDown}
       aria-expanded={open}
       aria-controls={controls}
-      disabled={disabled}
       onClick={onToggle}
     >
       {children}

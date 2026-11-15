@@ -294,7 +294,9 @@
 }
 /* One disclosure (ADR 0203): a head's toggle and its other actions side by side; a body
    toggle leads the line it opens. */
-.panel-actions {
+/* Buttons side by side in a panel head (ADR 0203 §2; Scenario compare's actions). */
+.panel-actions,
+.compare-actions {
   display: flex;
   align-items: center;
   gap: var(--s2);
@@ -1985,12 +1987,6 @@ table.chart-table tbody th.sticky-col {
   white-space: nowrap;
 }
 /* Key figures header: the Values / Δ toggle and the Excel export (ADR 0108). */
-.compare-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-  flex-shrink: 0;
-}
 /* "When" label of the price-crash timing toggle (ADR 0101). */
 .preset-when {
   font-size: 12px;
