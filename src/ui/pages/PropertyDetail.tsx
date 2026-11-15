@@ -272,6 +272,10 @@ export function PropertyDetail() {
       ]
         .filter(Boolean)
         .join(" · ")}
+      crumb={{
+        label: t.nav.properties,
+        onSelect: () => navigate("properties"),
+      }}
       subnav={
         <SectionNav
           label={t.propertyDetail.sectionNavLabel}
@@ -285,9 +289,6 @@ export function PropertyDetail() {
       }
       actions={
         <>
-          <Button onClick={() => navigate("properties")}>
-            {t.propertyDetail.allProperties}
-          </Button>
           {isActive ? (
             <Button
               icon={PowerOff}
@@ -331,7 +332,7 @@ export function PropertyDetail() {
         <InvalidDataNotice t={t} error={invalid} portfolio={store.portfolio} />
       )}
 
-      {s && out && (
+      {s && out && basis && (
         <div className="pd-section" id={sectionId("overview")}>
           <h2 className="sr-only" tabIndex={-1}>
             {t.propertyDetail.sectionOverview}
@@ -350,6 +351,7 @@ export function PropertyDetail() {
             s={s}
             chartRows={chartRows}
             modeWord={modeWord}
+            basis={basis}
             purchaseDate={property.purchaseDate}
             markers={resetMarkers(
               out.financing?.resets ?? [],

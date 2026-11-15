@@ -88,24 +88,44 @@ describe("Dashboard hero foot", () => {
   });
 });
 
+/** A Property detail tile by its label (ADR 0215: one strip of six). */
+function stripTile(label: string): HTMLElement {
+  const tile = [
+    ...document.querySelectorAll<HTMLElement>(".kpi-strip .tile"),
+  ].find((e) => e.querySelector(".label")?.textContent === label);
+  if (!tile) throw new Error(`no ${label} tile`);
+  return tile;
+}
+
+// ADR 0215: the undrawn note is the Debt tile's foot.
 describe("Property detail debt tile", () => {
   const dev = devOnly.properties[0]!;
 
   it("shows the drawn 2,000,000 and the undrawn part", () => {
     const s = propertySnapshot(dev, devOnly, assumptions);
-    render(<PropertySnapshotTiles s={s} chartRows={[]} modeWord="nominal" />);
-    const debt = screen
-      .getAllByText(en.propertyDetail.debt)
-      .map((e) => e.closest(".tile"))
-      .find((e) => e?.textContent?.includes(en.propertyDetail.ltv));
-    if (!(debt instanceof HTMLElement)) throw new Error("no Debt tile");
+    render(
+      <PropertySnapshotTiles
+        s={s}
+        chartRows={[]}
+        modeWord="nominal"
+        basis={{ kind: "today" }}
+      />,
+    );
+    const debt = stripTile(en.propertyDetail.debt);
     expect(debt.textContent).toMatch(/2\s000\s000/);
     expect(debt.textContent).toContain(NOTE);
   });
 
   it("shows the value less the undrawn part and names the completed value", () => {
     const s = propertySnapshot(dev, devOnly, assumptions);
-    render(<PropertySnapshotTiles s={s} chartRows={[]} modeWord="nominal" />);
+    render(
+      <PropertySnapshotTiles
+        s={s}
+        chartRows={[]}
+        modeWord="nominal"
+        basis={{ kind: "today" }}
+      />,
+    );
     const value = screen
       .getByText(en.propertyDetail.marketValue)
       .closest(".tile");

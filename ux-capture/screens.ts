@@ -372,6 +372,36 @@ async function expectKpiStrip(ux: Ux, maxHeight = 96) {
   }
 }
 
+/** Property detail's top bar (ADR 0215): "Properties ›" and the title on one line, the
+ *  actions on one line (also at 900 × 600), beside the title at 1280 px and wider. */
+async function expectPropertyTopBar(ux: Ux) {
+  const bar = ux.page.locator("header.topbar");
+  await expect(
+    bar.getByRole("link", { name: ux.t.nav.properties, exact: true }),
+  ).toBeVisible();
+  const m = await bar.evaluate((el) => {
+    const title = el.querySelector(".page-title-row")!.getBoundingClientRect();
+    const h1 = getComputedStyle(el.querySelector("h1")!);
+    const actions = el.querySelector(":scope > .row")!;
+    const mids = Array.from(actions.children)
+      .map((c) => c.getBoundingClientRect())
+      .filter((r) => r.height > 0)
+      .map((r) => Math.round(r.top + r.height / 2));
+    return {
+      titleHeight: title.height,
+      line: parseFloat(h1.lineHeight) || parseFloat(h1.fontSize) * 1.3,
+      actionRows: new Set(mids).size,
+      beside: actions.getBoundingClientRect().top < title.bottom,
+    };
+  });
+  expect(m.titleHeight, "breadcrumb and title on one line").toBeLessThan(
+    m.line * 1.5,
+  );
+  expect(m.actionRows, "actions on one line").toBe(1);
+  if ((ux.page.viewportSize()?.width ?? 0) >= 1280)
+    expect(m.beside, "actions beside the title").toBe(true);
+}
+
 /**
  * The key figures (ADR 0208): three groups. At 1280 px and wider, Returns and Cash flow
  * side by side, Debt straight under Returns, and a row's label and value at most 480 px
@@ -1283,6 +1313,8 @@ export const SCREENS: Screen[] = [
       );
       await expectPanelActionsRight(ux.page);
       await expectBandTileLabelsOneLine(ux);
+      await expectPropertyTopBar(ux);
+      await expectKpiStrip(ux);
       await expectRowActions(ux.page.locator("main"), 72);
       // At rest no form is open and at most one primary button shows (ADR 0207).
       const holding = panel(ux, ux.t.propertyDetail.holdingCostsTitle);
@@ -1546,6 +1578,11 @@ export const SCREENS: Screen[] = [
       ).toBeVisible();
       await ux.page.evaluate(() => window.scrollTo(0, 0));
       await ux.page.mouse.move(0, 0);
+      // The undrawn note is the Debt tile's foot, on one row of tiles (ADR 0215).
+      await expect(
+        ux.page.locator(".kpi-strip .tile").nth(1).locator(".foot"),
+      ).toBeVisible();
+      await expectKpiStrip(ux);
       await ux.capture("29f-property-dev-drawn-debt", { fullPage: false });
     },
   },

@@ -162,6 +162,7 @@ export function AppShell({
   showLens = true,
   subnav,
   pageClass,
+  crumb,
   children,
 }: {
   title: string;
@@ -172,6 +173,9 @@ export function AppShell({
   subnav?: ReactNode | undefined;
   /** A page-specific class on <main>, e.g. the Dashboard's denser spacing (ADR 0202). */
   pageClass?: string | undefined;
+  /** A breadcrumb link before the title, e.g. Property detail's way back to the list
+   *  (ADR 0215 §1); the "›" after it is decorative. */
+  crumb?: { label: string; onSelect: () => void } | undefined;
   children: ReactNode;
 }) {
   const t = useT();
@@ -306,7 +310,26 @@ export function AppShell({
       <div className="content">
         <header className="topbar" ref={topbarRef}>
           <div>
-            <h1 className="page-title">{title}</h1>
+            {crumb ? (
+              <div className="page-title-row">
+                <a
+                  className="crumb"
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    crumb.onSelect();
+                  }}
+                >
+                  {crumb.label}
+                </a>
+                <span className="crumb-sep" aria-hidden="true">
+                  ›
+                </span>
+                <h1 className="page-title">{title}</h1>
+              </div>
+            ) : (
+              <h1 className="page-title">{title}</h1>
+            )}
             {subtitle && <div className="page-sub">{subtitle}</div>}
           </div>
           <div className="row">

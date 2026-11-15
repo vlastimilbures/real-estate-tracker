@@ -97,20 +97,32 @@ describe("Dashboard risk tiles", () => {
   });
 });
 
+/** A Property detail tile by its label (ADR 0215: one strip of six). */
+function stripTile(label: string): HTMLElement {
+  const tile = [
+    ...document.querySelectorAll<HTMLElement>(".kpi-strip .tile"),
+  ].find((e) => e.querySelector(".label")?.textContent === label);
+  if (!tile) throw new Error(`no ${label} tile`);
+  return tile;
+}
+
 describe("Property detail tiles", () => {
   it("LTV reads n/a with no badge", () => {
     const s = propertySnapshot(javorova, javorovaAtZero, assumptions);
     expect(s.ltv).toBeNull();
-    render(<PropertySnapshotTiles s={s} chartRows={[]} modeWord="nominal" />);
-    // "Debt" also names a chart series: take the tile that carries the LTV foot.
-    const debt = screen
-      .getAllByText(en.propertyDetail.debt)
-      .map((e) => e.closest(".tile"))
-      .find((e) => e?.textContent?.includes(en.propertyDetail.ltv));
-    if (!(debt instanceof HTMLElement)) throw new Error("no Debt tile");
-    expect(within(debt).getByText(NA)).toBeTruthy();
-    expect(debt.querySelector(".badge")).toBeNull();
-    expect(debt.querySelector(".health-marker")).toBeNull();
+    render(
+      <PropertySnapshotTiles
+        s={s}
+        chartRows={[]}
+        modeWord="nominal"
+        basis={{ kind: "today" }}
+      />,
+    );
+    // ADR 0215: LTV is a tile of its own.
+    const ltv = stripTile(en.propertyDetail.ltv);
+    expect(within(ltv).getByText(NA)).toBeTruthy();
+    expect(ltv.querySelector(".badge")).toBeNull();
+    expect(ltv.querySelector(".health-marker")).toBeNull();
   });
 });
 
