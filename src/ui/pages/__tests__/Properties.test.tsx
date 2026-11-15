@@ -18,8 +18,14 @@ import {
   withPropertyId,
 } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
-import { isoDate, propertySnapshot, type Portfolio } from "../../../engine";
-import { fmtCzk, fmtCzkM } from "../../../lib/format";
+import {
+  isoDate,
+  portfolioSnapshot,
+  propertySnapshot,
+  type Portfolio,
+} from "../../../engine";
+import { fmtCzk, fmtCzkM, fmtDscr, fmtPct, noBreak } from "../../../lib/format";
+import { dscrBandWord, ltvBandWord } from "../../model/health";
 import type { Decimal } from "../../../lib/money";
 
 vi.mock("../../../lib/day", async (importOriginal) => ({
@@ -253,8 +259,162 @@ describe("Properties: development flat under construction (ADR 0169)", () => {
     expect(cells).toContain(money(s.reportedValue));
     // The drawn debt, with the tranches still to draw named under it.
     expect(cells).toContain(
-      money(s.debt) + en.common.undrawnDebt(fmtCzkM(s.undrawnDebt)),
+      money(s.debt) + en.common.undrawnDebt(noBreak(fmtCzkM(s.undrawnDebt))),
     );
     expect(cells.join()).not.toContain(money(s.committedDebt));
+  });
+});
+
+// ADR 0205 (#379): plain figures with a health marker, a legend, and a totals row equal to
+// the Dashboard tiles at Today with "All".
+describe("Properties list fits (ADR 0205)", () => {
+  const p = en.properties;
+  const money = (v: Decimal) => fmtCzk(v, { suffix: false });
+  const asOf = isoDate("2026-10-01");
+
+  it("shows LTV and DSCR as figures with a health marker, the band word for screen readers", () => {
+    render(<Properties />);
+    const s = propertySnapshot(first, portfolio, assumptions, asOf);
+    const row = screen.getByRole("button", { name: first.name }).closest("tr")!;
+    const [, ltv, , dscr] = within(row).getAllByRole("cell");
+    for (const [cell, figure, word] of [
+      [ltv!, fmtPct(s.ltv!), ltvBandWord(en, s.ltv)!],
+      [dscr!, fmtDscr(s.dscr!), dscrBandWord(en, s.dscr)!],
+    ] as const) {
+      expect(cell.querySelector(".badge")).toBeNull();
+      const marker = cell.querySelector(".health-marker")!;
+      expect(marker).not.toBeNull();
+      expect(marker.getAttribute("title")).toBe(word);
+      expect(cell.textContent).toBe(`${figure} ${word}`);
+    }
+  });
+
+  it("explains the markers in a legend hidden from assistive technology", () => {
+    const { container } = render(<Properties />);
+    const legend = container.querySelector(".band-legend")!;
+    expect(legend.getAttribute("aria-hidden")).toBe("true");
+    for (const w of [
+      en.dashboard.badgeConservative,
+      en.dashboard.badgeModerate,
+      en.dashboard.badgeHigh,
+      en.dashboard.badgeCoversDebt,
+      en.dashboard.badgeShortfall,
+    ])
+      expect(legend.textContent).toContain(w);
+  });
+
+  it("adds a totals row equal to the Dashboard at Today with All", () => {
+    render(<Properties />);
+    const s = portfolioSnapshot(portfolio, assumptions, asOf);
+    const foot = screen
+      .getByRole("rowheader", { name: p.totalRow })
+      .closest("tr")!;
+    expect(foot.closest("tfoot")).not.toBeNull();
+    const cells = within(foot)
+      .getAllByRole("cell")
+      .map((c) => c.textContent);
+    expect(cells).toEqual([
+      `${fmtPct(s.ltv!)} ${ltvBandWord(en, s.ltv)}`,
+      // Flows and equity in accounting parentheses when negative, as in the rows.
+      fmtCzk(s.netCashFlow, { parens: true, suffix: false }),
+      `${fmtDscr(s.dscr!)} ${dscrBandWord(en, s.dscr)}`,
+      money(s.totalReportedValue),
+      money(s.totalDebt),
+      fmtCzk(s.totalEquity, { parens: true, suffix: false }),
+      money(s.noi),
+      "",
+    ]);
+  });
+
+  it("names the total of the active properties when one is inactive", () => {
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: {
+          ...portfolio,
+          properties: portfolio.properties.map((x, i) =>
+            i === 0 ? { ...x, active: false } : x,
+          ),
+        },
+      }),
+    );
+    render(<Properties />);
+    expect(
+      screen.getByRole("rowheader", { name: p.totalRowActive }),
+    ).toBeTruthy();
+  });
+
+  it("keeps the total nominal with the real lens on: the page has no lens", () => {
+    act(() => useUiStore.setState({ mode: "real" }));
+    render(<Properties />);
+    const s = portfolioSnapshot(portfolio, assumptions, asOf);
+    const foot = screen
+      .getByRole("rowheader", { name: p.totalRow })
+      .closest("tr")!;
+    const cells = within(foot)
+      .getAllByRole("cell")
+      .map((c) => c.textContent);
+    expect(cells[3]).toBe(money(s.totalReportedValue));
+    expect(cells[4]).toBe(money(s.totalDebt));
+  });
+
+  it("leaves a pending purchase's value out of the total, names the undrawn debt", () => {
+    act(() => usePortfolioStore.setState({ portfolio: mixed }));
+    render(<Properties />);
+    const s = portfolioSnapshot(mixed, assumptions, asOf);
+    const foot = screen
+      .getByRole("rowheader", { name: p.totalRowOwned })
+      .closest("tr")!;
+    const cells = within(foot)
+      .getAllByRole("cell")
+      .map((c) => c.textContent);
+    // The owned, active properties' values: not "future" (bought in 2028), not the
+    // inactive one.
+    const owned = mixed.properties
+      .filter((x) => x.id !== "future" && x.active !== false)
+      .map((x) => propertySnapshot(x, mixed, assumptions, asOf).reportedValue);
+    expect(s.totalReportedValue.equals(owned.reduce((x, y) => x.plus(y)))).toBe(
+      true,
+    );
+    expect(cells[3]).toBe(money(s.totalReportedValue));
+    expect(cells[4]).toBe(
+      money(s.totalDebt) +
+        en.common.undrawnDebt(noBreak(fmtCzkM(s.totalUndrawnDebt))),
+    );
+  });
+
+  it("has no legend when no row shows a marker", () => {
+    const own = <T extends { propertyId: string }>(rows: T[]) =>
+      rows.filter((r) => r.propertyId === "future");
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: {
+          properties: mixed.properties.filter((x) => x.id === "future"),
+          mortgages: own(mixed.mortgages),
+          valuations: own(mixed.valuations),
+          leases: own(mixed.leases),
+          holdingCosts: [],
+        },
+      }),
+    );
+    const { container } = render(<Properties />);
+    expect(container.querySelector(".band-legend")).toBeNull();
+  });
+
+  it("has no totals row for one property", () => {
+    const own = <T extends { propertyId: string }>(rows: T[]) =>
+      rows.filter((r) => r.propertyId === first.id);
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: {
+          properties: [first],
+          mortgages: own(portfolio.mortgages),
+          valuations: own(portfolio.valuations),
+          leases: own(portfolio.leases),
+          holdingCosts: own(portfolio.holdingCosts),
+        },
+      }),
+    );
+    render(<Properties />);
+    expect(screen.queryByRole("rowheader")).toBeNull();
   });
 });

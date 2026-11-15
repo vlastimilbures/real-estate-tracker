@@ -33,9 +33,8 @@ const devOnly: Portfolio = {
   leases: only(mixed.leases),
   holdingCosts: [],
 };
-const NOTE = en.common.undrawnDebt(fmtCzkM(D("2500000")));
-// The Dashboard strip keeps each amount on one line (ADR 0200).
-const STRIP_NOTE = en.common.undrawnDebt(noBreak(fmtCzkM(D("2500000"))));
+// The amount never breaks before its unit, on every screen (ADR 0200, ADR 0205 §3).
+const NOTE = en.common.undrawnDebt(noBreak(fmtCzkM(D("2500000"))));
 const COMPLETED = en.common.completedValue(fmtCzkM(D("9500000")));
 
 /** The net-worth tile's text, foot included. */
@@ -77,7 +76,7 @@ describe("Dashboard hero foot", () => {
     expect(foot).toContain(
       en.dashboard.stripAssetsDebt(
         noBreak(fmtCzkM(D("7000000"))),
-        `${noBreak(fmtCzkM(D("2000000")))} (${STRIP_NOTE})`,
+        `${noBreak(fmtCzkM(D("2000000")))} (${NOTE})`,
       ),
     );
   });
@@ -85,7 +84,7 @@ describe("Dashboard hero foot", () => {
   it("has no undrawn note when every loan is drawn", () => {
     hero(portfolio);
     const foot = heroFoot();
-    expect(foot).not.toContain("still to draw");
+    expect(foot).not.toContain("to draw");
   });
 });
 

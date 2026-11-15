@@ -77,14 +77,3 @@ export function dscrBadge(
   const text = dscrBandWord(t, value);
   return text === null ? undefined : { band: dscrBand(value), text };
 }
-
-/**
- * The badge text in its unbreakable parts: the number with the separator, then the whole
- * band word. A squeezed table wraps a badge only between them (ADR 0158).
- */
-export function bandPillParts(
-  number: string,
-  word: string | null,
-): [string] | [string, string] {
-  return word ? [`${number} ·`, word] : [number];
-}

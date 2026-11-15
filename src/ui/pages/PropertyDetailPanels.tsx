@@ -26,7 +26,7 @@ import { ConfirmRow } from "../components/EntityPanelParts";
 import { focusSection } from "../components/focusSection";
 import { sectionId } from "../model/sectionNav";
 import { moneyDraft, percentDraft } from "../model/formParse";
-import { fmtCzkM, fmtDate } from "../../lib/format";
+import { fmtCzkM, fmtDate, noBreak } from "../../lib/format";
 import { undrawnPart } from "../model/debt";
 import {
   amortizationExtras,
@@ -157,7 +157,7 @@ function SnapshotTiles({ s }: { s: PropertySnapshot }) {
             {undrawn && (
               <>
                 {" · "}
-                {t.common.undrawnDebt(fmtCzkM(undrawn))}
+                {t.common.undrawnDebt(noBreak(fmtCzkM(undrawn)))}
               </>
             )}
           </>

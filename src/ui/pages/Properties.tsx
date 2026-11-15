@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import type { Decimal } from "../../lib/money";
 import { MetricLabel } from "../components/MetricLabel";
 import { Pencil, Trash2, Plus, Building2, Upload } from "lucide-react";
 import { useEngine, usePropertyProjections } from "../../state/useEngine";
@@ -13,33 +14,60 @@ import {
   Money,
   Badge,
   EmptyState,
+  HealthMarker,
   TableWrap,
   Pct,
 } from "../components/primitives";
 import { PropertyFormModal } from "../components/PropertyFormModal";
 import { SampleBanner } from "../components/SampleBanner";
-import { fmtCzkM, fmtDate, fmtPct, fmtDscr } from "../../lib/format";
+import { fmtCzkM, fmtDate, noBreak, fmtPct, fmtDscr } from "../../lib/format";
 import { undrawnPart } from "../model/debt";
-import {
-  bandPillParts,
-  dscrBand,
-  dscrBandWord,
-  ltvBand,
-  ltvBandWord,
-} from "../model/health";
+import { dscrBand, dscrBandWord, ltvBand, ltvBandWord } from "../model/health";
+import { bandLegend, hasMarkers, propertiesTotal } from "../model/properties";
 import { useT } from "../hooks/useT";
 import { ConfirmRow } from "../components/EntityPanelParts";
 import { RowAction, RowActions } from "../components/RowActions";
 import { propertiesSubtitle } from "../model/tableContext";
 
-/** A band badge's figure and word as unbreakable parts; the badge wraps only between
- *  them (ADR 0158). The text reads "62,0 % · Moderate". */
-function pillParts([figure, word]: [string] | [string, string]): ReactNode {
-  if (word === undefined) return figure;
+/** LTV as a figure and its health marker; the band word is the marker's tooltip and
+ *  screen-reader text (ADR 0205). No value: "n/a" and no marker (ADR 0133). */
+function LtvCell({ ltv }: { ltv: Decimal | null }) {
+  const t = useT();
+  const word = ltvBandWord(t, ltv);
+  if (ltv === null || word === null) return <Pct value={null} />;
   return (
     <>
-      <span className="band-part">{figure}</span>{" "}
-      <span className="band-part">{word}</span>
+      <span className="num">{fmtPct(ltv)}</span>
+      <HealthMarker band={ltvBand(ltv)} word={word} />
+    </>
+  );
+}
+
+/** DSCR as a figure and its health marker; no debt: "—" (ADR 0205). */
+function DscrCell({ dscr }: { dscr: Decimal | null }) {
+  const t = useT();
+  const word = dscrBandWord(t, dscr);
+  if (dscr === null || word === null) return <>—</>;
+  return (
+    <>
+      <span className="num">{fmtDscr(dscr)}</span>
+      <HealthMarker band={dscrBand(dscr)} word={word} />
+    </>
+  );
+}
+
+/** The drawn debt, with the tranches still to draw on a short line under it (ADR 0169,
+ *  ADR 0205): the line wraps inside the column, it never widens it. */
+function DebtCell({ debt, undrawn }: { debt: Decimal; undrawn: Decimal }) {
+  const t = useT();
+  return (
+    <>
+      <Money value={debt} parens={false} suffix={false} />
+      {undrawnPart(undrawn) && (
+        <span className="cell-sub cell-note">
+          {t.common.undrawnDebt(noBreak(fmtCzkM(undrawn)))}
+        </span>
+      )}
     </>
   );
 }
@@ -85,6 +113,17 @@ export function Properties() {
         )
       : [];
   const deleteTarget = perProperty.find((p) => p.propertyId === deletingId);
+  const total =
+    engine && basis
+      ? propertiesTotal(
+          engine.snapshot,
+          engine.projection,
+          basis,
+          engine.assumptions,
+          engine.portfolio.properties,
+          t,
+        )
+      : null;
   /** A pending purchase has no figures yet, only its purchase date (ADR 0156); a screen
    *  reader hears why in each cell (ADR 0189). */
   const notOwned = (
@@ -216,13 +255,6 @@ export function Properties() {
                       >
                         {p.name}
                       </button>
-                      {!p.owned && (
-                        <span style={{ marginLeft: "var(--s2)" }}>
-                          <Badge band="neutral">
-                            {t.properties.badgePending}
-                          </Badge>
-                        </span>
-                      )}
                       {!p.active && (
                         <span style={{ marginLeft: "var(--s2)" }}>
                           <Badge band="neutral">
@@ -230,55 +262,28 @@ export function Properties() {
                           </Badge>
                         </span>
                       )}
-                      {/* After both badges, so they stay on the name's line. */}
+                      {/* A pending purchase: its badge leads the line under the
+                          name, with the purchase date, so the name column stays
+                          narrow (ADR 0156, ADR 0205 §6). */}
                       {!p.owned && (
                         <span className="cell-sub">
+                          <Badge band="neutral">
+                            {t.properties.badgePending}
+                          </Badge>{" "}
                           {t.properties.pendingPurchaseOn(
                             fmtDate(p.purchaseDate),
                           )}
                         </span>
                       )}
                     </td>
-                    <td>
-                      {fig(
-                        p.owned,
-                        p.ltv === null ? (
-                          <Pct value={null} />
-                        ) : (
-                          <Badge band={ltvBand(p.ltv)}>
-                            {pillParts(
-                              bandPillParts(
-                                fmtPct(p.ltv),
-                                ltvBandWord(t, p.ltv),
-                              ),
-                            )}
-                          </Badge>
-                        ),
-                      )}
-                    </td>
+                    <td>{fig(p.owned, <LtvCell ltv={p.ltv} />)}</td>
                     <td>
                       {fig(
                         p.owned,
                         <Money value={p.netCashFlow} suffix={false} signed />,
                       )}
                     </td>
-                    <td>
-                      {fig(
-                        p.owned,
-                        p.dscr ? (
-                          <Badge band={dscrBand(p.dscr)}>
-                            {pillParts(
-                              bandPillParts(
-                                fmtDscr(p.dscr),
-                                dscrBandWord(t, p.dscr),
-                              ),
-                            )}
-                          </Badge>
-                        ) : (
-                          "—"
-                        ),
-                      )}
-                    </td>
+                    <td>{fig(p.owned, <DscrCell dscr={p.dscr} />)}</td>
                     <td>
                       {fig(
                         p.owned,
@@ -295,14 +300,7 @@ export function Properties() {
                           value less the tranches not drawn yet (ADR 0169). */}
                       {fig(
                         p.owned || !p.debt.isZero(),
-                        <>
-                          <Money value={p.debt} parens={false} suffix={false} />
-                          {undrawnPart(p.undrawnDebt) && (
-                            <span className="cell-sub">
-                              {t.common.undrawnDebt(fmtCzkM(p.undrawnDebt))}
-                            </span>
-                          )}
-                        </>,
+                        <DebtCell debt={p.debt} undrawn={p.undrawnDebt} />,
                       )}
                     </td>
                     <td>
@@ -335,8 +333,64 @@ export function Properties() {
                   </tr>
                 ))}
               </tbody>
+              {total && (
+                // The portfolio's figures, as the Dashboard shows them at Today with
+                // "All" (ADR 0205 §5).
+                <tfoot>
+                  <tr className="total-row">
+                    <th scope="row" className="left sticky-col">
+                      {total.label}
+                    </th>
+                    <td>
+                      <LtvCell ltv={total.ltv} />
+                    </td>
+                    <td>
+                      <Money value={total.netCashFlow} suffix={false} signed />
+                    </td>
+                    <td>
+                      <DscrCell dscr={total.dscr} />
+                    </td>
+                    <td>
+                      <Money
+                        value={total.value}
+                        parens={false}
+                        suffix={false}
+                      />
+                    </td>
+                    <td>
+                      <DebtCell debt={total.debt} undrawn={total.undrawnDebt} />
+                    </td>
+                    <td>
+                      <Money value={total.equity} suffix={false} />
+                    </td>
+                    <td>
+                      <Money value={total.noi} parens={false} suffix={false} />
+                    </td>
+                    <td className="actions-col" />
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </TableWrap>
+          {/* The markers' words, when a row shows one; each cell already says its band
+              to assistive technology (ADR 0205 §2). */}
+          {hasMarkers(perProperty) && (
+            <p className="band-legend" aria-hidden="true">
+              {bandLegend(t).map((g) => (
+                <span key={g.label} className="band-legend-group">
+                  <span className="band-legend-label">{g.label}</span>
+                  {g.items.map((i) => (
+                    <span key={i.word} className="band-legend-item">
+                      {i.bands.map((b) => (
+                        <HealthMarker key={b} band={b} word={i.word} />
+                      ))}{" "}
+                      {i.word}
+                    </span>
+                  ))}
+                </span>
+              ))}
+            </p>
+          )}
           {deleteTarget && (
             // Outside .table-wrap so the message is never clipped by the scroll (UX-019).
             <ConfirmRow

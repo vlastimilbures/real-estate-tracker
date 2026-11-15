@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import {
-  bandPillParts,
   dscrBadge,
   dscrBand,
   dscrBandWord,
@@ -51,16 +50,6 @@ describe("band words", () => {
     expect(dscrBandWord(en, D(1.05))).toBe("Covers debt");
     expect(dscrBandWord(en, D(0.9))).toBe("Shortfall");
     expect(dscrBandWord(en, null)).toBeNull();
-  });
-  it("splits the pill into the figure and the whole word, the only wrap point (ADR 0158)", () => {
-    expect(bandPillParts("2,85x", "Covers debt")).toEqual([
-      "2,85x ·",
-      "Covers debt",
-    ]);
-    expect(bandPillParts("—", null)).toEqual(["—"]);
-    expect(bandPillParts("62,0 %", "Moderate").join(" ")).toBe(
-      "62,0 % · Moderate",
-    );
   });
 });
 

@@ -10,7 +10,8 @@
   (§3, §4), [0158](0158-layouts-hold-in-czech-and-russian.md) (band badges),
   [0116](0116-prepayments-ui-and-review-fixes.md) (decision 11: row editor)
 - Amended by: [0194](0194-banners-once-purchases-column.md) (§2: the stale-data and
-  edit-error banners announce once too)
+  edit-error banners announce once too),
+  [0205](0205-properties-list-fits.md) (the wrapped band badge is retired with the pill)
 
 ## Context
 
