@@ -242,8 +242,13 @@ describe("i18n dictionaries — plural forms", () => {
       // The fixation timeline's name counts the window's years (ADR 0204).
       "dashboard.financingTimeline",
     ];
-    // The year word after a stored horizon outside the form range (#260 item 4).
-    const dataCheck = ["dataCheck.outOfRangeHorizon"];
+    // The year word after a stored horizon outside the form range (#260 item 4); the
+    // grouped Data check's counts (ADR 0206).
+    const dataCheck = [
+      "dataCheck.needAttention",
+      "dataCheck.useDefaults",
+      "dataCheck.outOfRangeHorizon",
+    ];
     const counted = [...common, ...financing, ...dataCheck, ...rest];
     // English writes the horizon and the IRR foot as compounds ("25-yr"); Czech and
     // Russian count years.

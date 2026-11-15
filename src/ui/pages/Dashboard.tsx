@@ -6,7 +6,7 @@ import { AppShell } from "../components/AppShell";
 import { PropertySelect } from "../components/PropertySelect";
 import { AsOfPicker } from "../components/AsOfPicker";
 import { Button, EmptyState } from "../components/primitives";
-import { FolderOpen, Plus, Upload } from "lucide-react";
+import { AlertTriangle, FolderOpen, Plus, Upload } from "lucide-react";
 import { toChartRows, toEquityChangeRows } from "../model/chartData";
 import { projectionSeries } from "../model/projection";
 import { lensKpis } from "../model/lensKpis";
@@ -26,7 +26,9 @@ import {
   KpiListPanel,
 } from "./DashboardPanels";
 import { FinancingPanel } from "./DashboardFinancing";
-import { DataCheckPanel } from "./DashboardDataCheck";
+import { DATA_CHECK_ID, DataCheckPanel } from "./DashboardDataCheck";
+import { dashboardDataCheck } from "../model/dataCheck";
+import { focusSection } from "../components/focusSection";
 import { cashInvestedTotal } from "../model/acquisition";
 import { useT } from "../hooks/useT";
 import { useAsOf } from "../hooks/useAsOf";
@@ -96,6 +98,7 @@ export function Dashboard() {
   const navigate = useUiStore((s) => s.navigate);
   const openProperty = useUiStore((s) => s.openProperty);
   const openSettings = useUiStore((s) => s.openSettings);
+  const setDataCheckOpen = useUiStore((s) => s.setDataCheckOpen);
 
   // Every property deactivated: say so, and point at Properties (ADR 0155).
   const state = fullPortfolio ? portfolioState(fullPortfolio) : null;
@@ -163,6 +166,14 @@ export function Dashboard() {
     s.asOf,
   );
 
+  const check = dashboardDataCheck(
+    engine.portfolio,
+    snapshot.asOf,
+    assumptions.baseDate,
+    assumptions.horizonYears,
+  );
+  const toReview = check.attention.length;
+
   return (
     <AppShell
       title={t.dashboard.title}
@@ -171,17 +182,34 @@ export function Dashboard() {
     >
       <SampleBanner />
       <div className="filter-bar">
-        {allProperties.length > 1 ? (
-          <PropertySelect
-            mode="multi"
-            options={allProperties.map((p) => ({ value: p.id, label: p.name }))}
-            allLabel={t.common.all}
-            selected={effectiveIds}
-            onChange={setDashboardPropertyIds}
-          />
-        ) : (
-          <span />
-        )}
+        <div className="filter-bar-start">
+          {allProperties.length > 1 && (
+            <PropertySelect
+              mode="multi"
+              options={allProperties.map((p) => ({
+                value: p.id,
+                label: p.name,
+              }))}
+              allLabel={t.common.all}
+              selected={effectiveIds}
+              onChange={setDashboardPropertyIds}
+            />
+          )}
+          {/* Warnings stay in view although the Data check is last (ADR 0206 §2). */}
+          {toReview > 0 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              icon={AlertTriangle}
+              onClick={() => {
+                setDataCheckOpen(true);
+                focusSection(DATA_CHECK_ID);
+              }}
+            >
+              {t.dataCheck.toReview(toReview)}
+            </Button>
+          )}
+        </div>
         <AsOfPicker
           value={asOf}
           onChange={setAsOf}
@@ -219,19 +247,6 @@ export function Dashboard() {
         onOpenProperty={openProperty}
       />
 
-      <DataCheckPanel
-        portfolio={engine.portfolio}
-        asOf={snapshot.asOf}
-        baseDate={assumptions.baseDate}
-        resetRate={assumptions.postFixationResetRatePa}
-        horizonYears={assumptions.horizonYears}
-        onFix={(id, fix) =>
-          fix === "assumptions" || id === null
-            ? openSettings("assumptions")
-            : openProperty(id, fix)
-        }
-      />
-
       <MoreCharts
         mode={mode}
         rows={rows}
@@ -248,6 +263,18 @@ export function Dashboard() {
         horizonYears={assumptions.horizonYears}
         irr={irr}
         cashInvested={cashInvestedTotal(engine.portfolio.properties)}
+      />
+
+      {/* Last on the page (ADR 0206 §1); the filter bar links to it. */}
+      <DataCheckPanel
+        check={check}
+        asOf={snapshot.asOf}
+        resetRate={assumptions.postFixationResetRatePa}
+        onFix={(id, fix) =>
+          fix === "assumptions" || id === null
+            ? openSettings("assumptions")
+            : openProperty(id, fix)
+        }
       />
     </AppShell>
   );

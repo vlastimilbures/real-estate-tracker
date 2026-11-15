@@ -813,27 +813,32 @@ export const SCREENS: Screen[] = [
   },
   {
     id: "09-dashboard-data-check",
-    desc: "Data check five years on: open with stale valuations and ended fixations, then the defaults (ADR 0118)",
+    desc: "Data check five years on, reached from the filter bar's link: the summary, then four lines with a chip per property (ADR 0118, ADR 0206)",
     run: async (ux) => {
       const d = ux.t.dataCheck;
       await boot(ux.page);
       await ux.page.getByTestId("asof-5y").click();
+      // The panel is last on the page; the filter bar's link brings it into view.
+      await ux.page.getByRole("button", { name: d.toReview(6) }).click();
+      await expect(
+        ux.page.getByRole("heading", { name: d.title, exact: true }),
+      ).toBeFocused();
       const p = panel(ux, d.title);
       await expect(p.getByRole("button", { name: d.hide })).toHaveAttribute(
         "aria-expanded",
         "true",
       );
-      await expect(
-        p.getByRole("heading", { name: d.defaultsTitle }),
-      ).toBeVisible();
-      await p.scrollIntoViewIfNeeded();
+      await expect(p.locator(".dc-line")).toHaveCount(4);
+      await expect(p.locator(".dc-chip")).toHaveCount(12);
+      for (const chip of await p.locator(".dc-chip").all())
+        await expectNotClipped(chip);
       await ux.capture("09-dashboard-data-check", { fullPage: false });
       await expectDisclosures(ux);
-      // A fix link opens the property and lands its section below the sticky topbar.
+      // A chip opens the property and lands its section below the sticky topbar.
       await p
-        .getByRole("button", {
-          name: d.goTo(ux.t.propertyDetail.sectionFinancing),
-        })
+        .locator(
+          `.dc-chip[title="${d.goTo(ux.t.propertyDetail.sectionFinancing)}"]`,
+        )
         .first()
         .click();
       const heading = ux.page.getByRole("heading", {

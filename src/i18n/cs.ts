@@ -417,6 +417,22 @@ export const cs: Dictionary = {
       "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
     fundingUnknownFuture:
       "Vlastní zdroje na tento nákup nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám a projekce platbu při koupi odvodí: cena minus úvěr plus zadané transakční náklady a úpravy.",
+    // ADR 0206: seskupená Kontrola dat na Přehledu.
+    toReview: (n) => `k řešení: ${n}`,
+    needAttention: (n) =>
+      `${n} ${csPlural(n, ["položka vyžaduje", "položky vyžadují", "položek vyžaduje"])} pozornost`,
+    useDefaults: (n) =>
+      `${n} ${csPlural(n, ["položka používá", "položky používají", "položek používá"])} výchozí hodnoty portfolia`,
+    valuationStaleGroup:
+      "Použité ocenění je starší než 12 měsíců. Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.",
+    noValuationGroup:
+      "Není zadané žádné ocenění, proto se jako tržní hodnota použije kupní cena navýšená o roční zhodnocení od data koupě.",
+    leaseEndedGroup:
+      "Nájem skončil a další nájem není zadán. Snímek po tomto datu nepočítá žádné nájemné; projekce počítá s prodloužením tohoto nájmu.",
+    leaseEndingGroup:
+      "Nájem končí do 3 měsíců a další nájem není zadán. Projekce počítá s prodloužením stávajícího nájmu.",
+    fixationEndedGroup: (rate) =>
+      `Fixace skončila a není zadán navazující blok, proto aplikace od té doby počítá se sazbou po skončení fixace ${rate}. Zadejte podmínky nové fixace jako nový blok hypotéky.`,
     recordFunding: "Zadat financování",
     outOfRangeSize: (value, range) =>
       `Plocha ${value} m² je mimo rozsah, který formuláře přijímají (${range} m²).`,

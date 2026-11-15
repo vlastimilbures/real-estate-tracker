@@ -41,15 +41,15 @@ beforeEach(() =>
 const h2s = () =>
   screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
 
-describe("Dashboard order (ADR 0202 §1)", () => {
-  it("projection, Financing, Data check, the other charts, then the KPI list", () => {
+describe("Dashboard order (ADR 0202 §1, ADR 0206 §1)", () => {
+  it("projection, Financing, the other charts, the KPI list, then the Data check", () => {
     render(<Dashboard />);
     const order = [
       d.projectionTitle(n),
       d.financingTitle,
-      en.dataCheck.title,
       d.moreCharts(n),
       d.kpiTitle,
+      en.dataCheck.title,
     ];
     expect(h2s().filter((h) => order.includes(h!))).toEqual(order);
   });

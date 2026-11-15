@@ -856,10 +856,13 @@ offline badge, and controls for language and theme.
    (any date, ADR 0163); under "Using portfolio
    defaults" the portfolio growth, blank holding-cost fields and own cash at purchase not
    recorded (Cash invested unknown; for a property bought after the base date the down
-   payment is derived, ADR 0119). Each row links to the property section (or form) that
-   fixes it; the own-cash row opens the form with its Acquisition section open. The panel
-   opens when something needs attention; a property not yet purchased has no findings
-   except the own-cash one.
+   payment is derived, ADR 0119). The panel is the last section of the Dashboard (ADR
+   0206): a summary row with the two counts, then the findings grouped by problem, one line
+   stating it once and a chip per affected property (its age or date) that links to the
+   property section (or form) that fixes it; the own-cash chip opens the form with its
+   Acquisition section open. When something needs attention the filter bar shows "N to
+   review", which opens the panel and moves focus to it. The panel opens when something
+   needs attention; a property not yet purchased has no findings except the own-cash one.
 
 2. **Properties** — list with per-property summary and LTV/DSCR health bands, sorted by name in
    Czech order with numbers by value (every property list follows it, ADR 0127); "+ Add property"
