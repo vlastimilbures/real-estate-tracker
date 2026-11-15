@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-08
+- Amended by: [0205](0205-properties-list-fits.md) (the two-line band pill and `bandPillParts` are retired)
 - Source: issue #134 (2026-10 code review, findings G2-3-01, G2-3-03, G2-3-04); owner
   decision D13 (2026-10-08: option A, layouts that do not depend on string length, plus a
   CI check in Czech and Russian; the section nav wraps; CI checks the layout screens);

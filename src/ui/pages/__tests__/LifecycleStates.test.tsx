@@ -333,9 +333,16 @@ describe("a pending purchase (#126 item 1, ADR 0156)", () => {
     load(mixed, { route: "properties" });
     render(<Properties />);
     const row = screen.getByText("Future buy").closest("tr")!;
-    expect(within(row).getByText(en.properties.badgePending)).toBeTruthy();
+    // The badge leads the line under the name, with the purchase date, so the name
+    // column stays narrow (ADR 0205 §6).
+    const sub = within(row)
+      .getByText(en.properties.badgePending)
+      .closest(".cell-sub");
+    expect(sub).not.toBeNull();
     expect(
-      within(row).getByText(en.properties.pendingPurchaseOn(purchase)),
+      within(sub as HTMLElement).getByText(
+        en.properties.pendingPurchaseOn(purchase),
+      ),
     ).toBeTruthy();
     expect(within(row).queryByText(en.dashboard.badgeConservative)).toBeNull();
     // Every figure column (LTV, net cash flow, DSCR, value, debt, equity, NOI) shows "—"
@@ -387,7 +394,8 @@ describe("a pending purchase (#126 item 1, ADR 0156)", () => {
     );
   });
 
-  it("an inactive pending row keeps both badges on the name's line, the date under it", () => {
+  // ADR 0205 §6: Inactive stays on the name's line; Pending leads the date's line.
+  it("an inactive pending row keeps Inactive on the name's line, Pending with the date under it", () => {
     const off: Portfolio = {
       ...mixed,
       properties: mixed.properties.map((p) =>
@@ -397,9 +405,11 @@ describe("a pending purchase (#126 item 1, ADR 0156)", () => {
     load(off, { route: "properties" });
     render(<Properties />);
     const cell = screen.getByText("Future buy").closest("td")!;
-    expect(within(cell).getByText(en.properties.badgeInactive)).toBeTruthy();
+    const inactive = within(cell).getByText(en.properties.badgeInactive);
+    expect(inactive.closest(".cell-sub")).toBeNull();
+    expect(cell.lastElementChild?.classList.contains("cell-sub")).toBe(true);
     expect(cell.lastElementChild?.textContent).toBe(
-      en.properties.pendingPurchaseOn(purchase),
+      `${en.properties.badgePending} ${en.properties.pendingPurchaseOn(purchase)}`,
     );
   });
 

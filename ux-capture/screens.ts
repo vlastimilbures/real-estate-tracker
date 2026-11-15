@@ -445,6 +445,70 @@ function devLoanAndLeaseEnd(tables: BackupTables) {
   block.interest_only_until = "2027-09-30";
 }
 
+/** Properties list (ADR 0205): at 1280 px and wider the table has no horizontal scroll
+ *  and its one-line rows are at most about 44 px; in a narrower window LTV, Net cash
+ *  flow, DSCR and Value stay clear of the pinned actions. LTV and DSCR are figures with a
+ *  health marker, not pills. */
+async function expectPropertiesFit(ux: Ux) {
+  const table = ux.page.locator("table.data");
+  expect(
+    await table
+      .locator("tbody .badge.good, tbody .badge.warn, tbody .badge.bad")
+      .count(),
+  ).toBe(0);
+  const vp = ux.page.viewportSize()!;
+  if (vp.width >= 1280) {
+    await expectNotClipped(ux.page.locator(".table-wrap").first());
+    const tall = await table.locator("tbody tr").evaluateAll((rows) =>
+      rows
+        .filter((r) => !r.querySelector(".cell-sub"))
+        .map((r) => r.getBoundingClientRect().height)
+        .filter((h) => h > 46),
+    );
+    expect(tall, "one-line rows taller than 46 px").toEqual([]);
+  } else {
+    const actions = await ux.page.locator("th.actions-col").boundingBox();
+    for (const col of [
+      ux.t.properties.colLtv,
+      ux.t.properties.colNetCashFlow,
+      ux.t.properties.colDscr,
+      ux.t.properties.colValue,
+    ]) {
+      const box = await ux.page
+        .getByRole("columnheader", { name: col, exact: true })
+        .boundingBox();
+      expect(
+        box!.x + box!.width,
+        `${col} clear of the actions`,
+      ).toBeLessThanOrEqual(actions!.x + 1);
+    }
+  }
+}
+
+/** Property detail of the first property: its first loan becomes a development loan with
+ *  a tranche drawn and one ahead (ADR 0167), saved. */
+async function firstLoanToDevelopment(ux: Ux) {
+  const d = ux.t.propertyDetail;
+  await boot(ux.page);
+  await openFirstProperty(ux);
+  const m = panel(ux, d.mortgagesTitle);
+  await m.getByRole("button", { name: ux.t.common.edit }).first().click();
+  await m.getByRole("button", { name: d.loanTypeDevelopment }).click();
+  await m.getByLabel(d.fieldLoanTermYears, { exact: false }).fill("30");
+  const schedule = m.getByRole("group", { name: d.fieldDraws });
+  const tranches: [string, string][] = [
+    ["01.09.2024", "400000"],
+    ["01.03.2027", "500000"],
+  ];
+  for (const [i, [date, amount]] of tranches.entries()) {
+    await schedule.getByRole("button", { name: d.addTranche }).click();
+    const row = schedule.getByRole("group", { name: d.trancheRow(i + 1) });
+    await row.getByLabel(d.eventDate, { exact: true }).fill(date);
+    await row.getByLabel(d.eventAmount).fill(amount);
+  }
+  await m.getByRole("button", { name: ux.t.common.saveChanges }).click();
+}
+
 /** One disclosure (ADR 0203): no <details>, and every expandable button names a region
  *  that is in the DOM. */
 async function expectDisclosures(ux: Ux) {
@@ -813,7 +877,26 @@ export const SCREENS: Screen[] = [
       await boot(ux.page);
       await nav(ux, "properties");
       await expectRowActions(ux.page.locator("table.data"), 72);
+      await expectPropertiesFit(ux);
       await ux.capture("10-properties");
+    },
+  },
+  {
+    id: "10d-properties-undrawn",
+    desc: "Properties: a development loan with a tranche ahead, its short undrawn line under the debt (ADR 0205)",
+    run: async (ux) => {
+      await firstLoanToDevelopment(ux);
+      await expect(
+        panel(ux, ux.t.propertyDetail.loanSummaryTitle).getByRole(
+          "progressbar",
+        ),
+      ).toBeVisible();
+      await nav(ux, "properties");
+      await expect(
+        ux.page.locator("table.data tbody .cell-note").first(),
+      ).toBeVisible();
+      await expectPropertiesFit(ux);
+      await ux.capture("10d-properties-undrawn");
     },
   },
   {
@@ -958,25 +1041,7 @@ export const SCREENS: Screen[] = [
       for (const h of heads) {
         expect(h.lines, `"${h.text}" header lines`).toBeLessThan(2.5);
       }
-      // A band badge wraps at most once: the figure, then the whole word (ADR 0158).
-      const badges = await ux.page
-        .locator("table.data tbody td:not(.sticky-col) .badge")
-        .evaluateAll((els) =>
-          els.map((el) => {
-            const s = getComputedStyle(el);
-            const lineHeight =
-              parseFloat(s.lineHeight) || 1.2 * parseFloat(s.fontSize);
-            const content =
-              el.clientHeight -
-              parseFloat(s.paddingTop) -
-              parseFloat(s.paddingBottom);
-            return { text: el.textContent, lines: content / lineHeight };
-          }),
-        );
-      expect(badges.length).toBeGreaterThan(0);
-      for (const b of badges) {
-        expect(b.lines, `"${b.text}" badge lines`).toBeLessThan(2.5);
-      }
+      await expectPropertiesFit(ux);
       await ux.capture("14-properties-long-name");
     },
   },
@@ -1193,24 +1258,7 @@ export const SCREENS: Screen[] = [
     desc: "Loan outlook drawdown of a development loan: drawn of total and each draw's status (ADR 0167)",
     run: async (ux) => {
       const d = ux.t.propertyDetail;
-      await boot(ux.page);
-      await openFirstProperty(ux);
-      const m = panel(ux, d.mortgagesTitle);
-      await m.getByRole("button", { name: ux.t.common.edit }).first().click();
-      await m.getByRole("button", { name: d.loanTypeDevelopment }).click();
-      await m.getByLabel(d.fieldLoanTermYears, { exact: false }).fill("30");
-      const schedule = m.getByRole("group", { name: d.fieldDraws });
-      const tranches: [string, string][] = [
-        ["01.09.2024", "400000"],
-        ["01.03.2027", "500000"],
-      ];
-      for (const [i, [date, amount]] of tranches.entries()) {
-        await schedule.getByRole("button", { name: d.addTranche }).click();
-        const row = schedule.getByRole("group", { name: d.trancheRow(i + 1) });
-        await row.getByLabel(d.eventDate, { exact: true }).fill(date);
-        await row.getByLabel(d.eventAmount).fill(amount);
-      }
-      await m.getByRole("button", { name: ux.t.common.saveChanges }).click();
+      await firstLoanToDevelopment(ux);
       const p = panel(ux, d.loanSummaryTitle);
       const drawdown = p.getByRole("region", {
         name: d.drawdownTitle,
@@ -2080,6 +2128,7 @@ export const SCREENS: Screen[] = [
       await expect(
         row.getByText(ux.t.properties.pendingPurchaseOn("15.03.2028")),
       ).toBeVisible();
+      await expectPropertiesFit(ux);
       await ux.capture("84-properties-pending");
       await row.getByRole("button", { name: "Byt Lesní" }).click();
       // The panel's heading: the Properties cells carry the same words (ADR 0189).

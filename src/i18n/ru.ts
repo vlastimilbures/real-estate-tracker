@@ -9,7 +9,7 @@ export const ru: Dictionary = {
   common: {
     /** A KPI with no value, e.g. a levered IRR (UX-079). */
     notApplicable: "н/д",
-    undrawnDebt: (amount) => `плюс ${amount} к выборке`,
+    undrawnDebt: (amount) => `+${amount} к выборке`,
     completedValue: (amount) => `стоимость после завершения ${amount}`,
     irrNotUnique:
       "IRR не единственна: денежные потоки окупаются при нескольких ставках",
@@ -474,6 +474,8 @@ export const ru: Dictionary = {
     notOwnedCell: "ещё не в собственности",
     pendingPurchaseOn: (d) => `покупка ${d}`,
     badgeInactive: "Неактивен",
+    totalRow: "Итого",
+    totalRowActive: "Итого по активным объектам",
     editProperty: "Изменить объект",
     confirmDelete: (name) =>
       `Удалить ${name} и все связанные ипотеки, оценки, аренды и расходы на содержание? Это нельзя отменить.`,

@@ -9,7 +9,7 @@ export const cs: Dictionary = {
   common: {
     /** A KPI with no value, e.g. a levered IRR (UX-079). */
     notApplicable: "n/a",
-    undrawnDebt: (amount) => `plus ${amount} k dočerpání`,
+    undrawnDebt: (amount) => `+${amount} k dočerpání`,
     completedValue: (amount) => `hodnota po dokončení ${amount}`,
     irrNotUnique:
       "IRR není jednoznačné: peněžní toky mají nulovou současnou hodnotu při více sazbách",
@@ -466,6 +466,8 @@ export const cs: Dictionary = {
     notOwnedCell: "zatím není ve vlastnictví",
     pendingPurchaseOn: (d) => `koupě ${d}`,
     badgeInactive: "Neaktivní",
+    totalRow: "Celkem",
+    totalRowActive: "Celkem za aktivní nemovitosti",
     editProperty: "Upravit nemovitost",
     confirmDelete: (name) =>
       `Smazat ${name} a všechny propojené hypotéky, ocenění, nájmy a náklady na držbu? Tuto akci nelze vrátit.`,

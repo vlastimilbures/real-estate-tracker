@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-03
+- Amended by: [0205](0205-properties-list-fits.md) (every column fits at 1280; a long name is cut sooner)
 - Source: issue #17 (pre-release review 2026-10, finding A05)
 - Amended by: [0158](0158-layouts-hold-in-czech-and-russian.md) (the promise holds in every
   UI language; headers and band badges may wrap), [0199](0199-icon-only-row-actions.md)

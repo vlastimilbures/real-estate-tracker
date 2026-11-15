@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-10
+- Amended by: [0205](0205-properties-list-fits.md) (the undrawn note is a short line that wraps in its column)
 - Source: owner report (2026-10-10). A development loan drawn in tranches over two years
   shows its whole amount as debt from its start in the charts and the projection grid,
   which is misleading. Owner decision: plan approved on 2026-10-10, with these choices:

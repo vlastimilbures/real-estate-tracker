@@ -121,3 +121,14 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 - Rejected: leaving the old button name in the hint, because no button reads that any
   more.
 - Approved by: owner's delegation of 2026-11-15 (comment on #392), owner review pending
+
+### 2026-11-16 · #379 / ADR 0205
+
+- Keys: `common.undrawnDebt` (en, cs, ru)
+- Change: the undrawn note is shorter, so it wraps inside the Properties Debt column
+  instead of widening it: "+3,0 M Kč to draw" (was "plus 3,0 M Kč still to draw"), cs
+  "+3,0 M Kč k dočerpání", ru "+3,0 M Kč к выборке". It reads the same on the Dashboard
+  net-worth tile and the Property detail debt tile; the meaning of ADR 0169 is unchanged.
+- Rejected: a Properties-only short text beside the long one, because one note for one
+  figure should read the same on every screen.
+- Approved by: owner's delegation of 2026-11-15 (comment on #392), owner review pending

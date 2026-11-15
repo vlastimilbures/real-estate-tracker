@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-08
+- Amended by: [0205](0205-properties-list-fits.md) (the Pending badge sits under the name, before the purchase date)
 - Source: issue #126 item 1 (2026-10 code review, finding G2-1-02); owner decision D10
   item 1 (2026-10-08: option A, UI only; the Dashboard with only pending purchases active
   stays as it is); issue #276 item 1 (lifecycle test coverage); Track 11 PR 11.7

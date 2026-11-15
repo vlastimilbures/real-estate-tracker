@@ -646,8 +646,8 @@ table.data thead th {
 /* Properties list: a long header (Russian Net cash flow) wraps to two balanced lines
    instead of pushing the risk columns under the pinned actions (ADR 0085, ADR 0158).
    The label is as wide as its text up to 12em, so a squeezed table cannot break it onto
-   a third line, and a short label keeps its column narrow. A band badge (LTV, DSCR)
-   wraps its whole word under the figure when the table is squeezed (`bandPillParts`). */
+   a third line, and a short label keeps its column narrow. LTV and DSCR are a figure and
+   a health marker (ADR 0205). */
 table.data.wrap-head thead th {
   vertical-align: bottom;
 }
@@ -658,10 +658,94 @@ table.data.wrap-head .th-label {
   white-space: normal;
   text-wrap: balance;
 }
-table.data.wrap-head tbody td:not(.sticky-col) .badge {
+/* One-line rows of about 44 px around the 28 px row actions, and 8 px between columns,
+   so every column fits at 1280 px and the first four beside the pinned actions at the
+   minimum window (ADR 0205). */
+table.data.wrap-head tbody td:not(.actions-col),
+table.data.wrap-head tfoot > tr > :not(.actions-col) {
+  padding: 7px var(--s2);
+}
+table.data.wrap-head thead th:not(.actions-col) {
+  padding-left: var(--s2);
+  padding-right: var(--s2);
+}
+table.data.wrap-head tbody td.actions-col {
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+/* A long name gives way sooner here, so Value stays in view in a narrow window. */
+table.data.wrap-head .cell-name {
+  max-width: clamp(6.5rem, 12vw, 22rem);
+}
+table.data.wrap-head td .health-marker {
+  margin-left: 6px;
+}
+/* A note under a figure (the undrawn debt, ADR 0205 §3) wraps inside its column instead
+   of widening it: it takes no width of its own. */
+table.data td .cell-note {
+  width: 0;
+  min-width: 100%;
+  white-space: normal;
+  text-align: right;
+}
+/* So does a pending purchase's badge and date under the name (ADR 0205 §6): the name
+   sets the column's width. */
+table.data.wrap-head td.sticky-col .cell-sub {
+  width: 0;
+  min-width: 100%;
+  white-space: normal;
+}
+/* The totals row (ADR 0205 §5). */
+table.data tfoot .total-row > * {
+  border-top: 1px solid var(--hairline-strong);
+  border-bottom: 0;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* Its name and actions cells stay pinned, as in the rows above. */
+table.data tfoot .total-row > .sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface);
+}
+table.data tfoot .total-row > .actions-col {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: var(--surface);
+}
+table.data tfoot .total-row > th.left {
+  text-align: left;
+  font-size: 13px;
+  color: var(--ink);
+}
+/* The health markers' words, under the table; each cell says its band to assistive
+   technology itself. */
+.band-legend {
+  display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  column-gap: 0.3em;
+  gap: var(--s1) var(--s5);
+  margin: 0;
+  padding: var(--s2) var(--s4) var(--s3);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.band-legend-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s1) var(--s3);
+}
+.band-legend-label {
+  font-weight: 600;
+}
+.band-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 table.data thead th.left,
 table.data tbody td.left {
@@ -825,13 +909,6 @@ table.data tbody tr:hover td.sticky-col {
   padding: 2px 8px;
   border-radius: 999px;
   border: 1px solid transparent;
-}
-/* A band badge may wrap its word under the figure (ADR 0158): round ends would crowd
-   two lines, so it keeps one-line pill corners (ADR 0189). */
-.badge:has(.band-part) {
-  border-radius: 10px;
-  /* Half a one-line badge: line + 2 × 2 px padding + 2 × 1 px border. */
-  border-radius: calc(0.5lh + 3px);
 }
 .badge.good {
   color: var(--positive);

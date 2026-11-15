@@ -85,7 +85,7 @@ describe("Dashboard hero foot", () => {
   it("has no undrawn note when every loan is drawn", () => {
     hero(portfolio);
     const foot = heroFoot();
-    expect(foot).not.toContain("still to draw");
+    expect(foot).not.toContain("to draw");
   });
 });
 

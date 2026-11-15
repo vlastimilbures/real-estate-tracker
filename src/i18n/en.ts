@@ -14,7 +14,7 @@ export const en = {
     /** A KPI with no value, e.g. a levered IRR (UX-079). */
     notApplicable: "n/a",
     /** The development tranches not drawn yet, beside the drawn debt (ADR 0169). */
-    undrawnDebt: (amount: string) => `plus ${amount} still to draw`,
+    undrawnDebt: (amount: string) => `+${amount} to draw`,
     /** A development property's completed value, beside its value less the tranches
      *  not drawn yet (ADR 0169). */
     completedValue: (amount: string) => `completed value ${amount}`,
@@ -505,6 +505,8 @@ export const en = {
     notOwnedCell: "not owned yet",
     pendingPurchaseOn: (d: string) => `purchase ${d}`,
     badgeInactive: "Inactive",
+    totalRow: "Total",
+    totalRowActive: "Total, active properties",
     editProperty: "Edit property",
     confirmDelete: (name: string) =>
       `Delete ${name} and all linked mortgages, valuations, leases, and holding costs? This cannot be undone.`,
