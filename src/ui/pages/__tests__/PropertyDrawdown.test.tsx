@@ -3,7 +3,7 @@
 // ADR 0167 §6: a development loan's Loan outlook shows how much is drawn, as a bar with
 // its value as text, and each draw's status as text (never colour alone). The page's
 // as-of date moves it.
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import { PropertyDetail } from "../PropertyDetail";
 import { usePortfolioStore } from "../../../state/portfolioStore";
@@ -29,7 +29,13 @@ vi.stubGlobal(
 
 const pd = en.propertyDetail;
 
+// "Today" is a fixed date: the fixture's second draw falls on 15.11.2026, so the clock
+// would move the read-back across it.
+const NOW = new Date(2026, 9, 9, 12, 0); // 09.10.2026 local
+
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(NOW);
   act(() => {
     usePortfolioStore.setState({
       portfolio: mixed,
@@ -47,6 +53,10 @@ beforeEach(() => {
       pendingLeave: null,
     });
   });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 const drawdown = () => screen.getByRole("region", { name: pd.drawdownTitle });
