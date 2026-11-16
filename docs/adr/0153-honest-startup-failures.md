@@ -14,6 +14,7 @@
   in-app error screen), [0072](0072-layer-map-platform-and-type-edges.md) (the UI reaches platform code through
   `src/state`), [0123](0123-scenario-rules-every-entry-point.md) (unreadable scenarios are listed, not
   fatal)
+- Amended by: [0228](0228-read-back-failure-stops.md) (§3: a restore on the screen whose data cannot be loaded shows the read-back message)
 
 ## Context
 

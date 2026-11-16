@@ -11,6 +11,7 @@
   [0014](0014-rust-transaction-command.md) (one transaction per write)
 - Amended: 2026-10-04 after the independent review of PR #216 (incomplete snapshot, field
   order, R6-03)
+- Amended by: [0228](0228-read-back-failure-stops.md) (§1: the banner's Reload is removed)
 
 ## Context
 

@@ -10,6 +10,7 @@
   the projection grid and its export)
 - Related: [0170](0170-equity-change-drawn-debt.md) (the chart's Purchases stack the
   column repeats)
+- Amended by: [0228](0228-read-back-failure-stops.md) (§1: the stale banner is removed)
 
 ## Context
 
