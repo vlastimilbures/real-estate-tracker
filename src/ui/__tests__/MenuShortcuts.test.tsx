@@ -5,8 +5,9 @@
 // dialog is open they do nothing (the dialog may hold unsaved input), and every item does
 // nothing while the app is not ready (ADR 0228).
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { act, render } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { App } from "../App";
+import { en } from "../../i18n/en";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { assumptions, portfolio } from "../../engine/__tests__/support/seed";
@@ -68,7 +69,9 @@ describe("menu shortcuts (UX-066)", () => {
     emit("menu://new-property");
     expect(useUiStore.getState().route).toBe("properties");
     // The running Properties page takes the request and opens its Add form.
-    expect(document.querySelector('[aria-modal="true"]')).not.toBeNull();
+    expect(
+      screen.queryByRole("dialog", { name: en.propertyForm.addTitle }),
+    ).not.toBeNull();
   });
 
   it("does nothing while a dialog is open", async () => {
