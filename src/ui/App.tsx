@@ -89,25 +89,29 @@ export function App() {
 
   // Native menu items (UX-066): App ▸ About…, View ▸ page (⌘1–⌘5), File ▸ New Property…
   // (⌘N) and Settings… (⌘,, UX-074). Ignored while a dialog is open, so a menu key never
-  // leaves a form behind or stacks About over it (ADR 0157). Guarded by the Tauri check
-  // (mirrors src/data/tauriSql.ts) so browser/E2E never crash on the missing event bridge.
+  // leaves a form behind or stacks About over it (ADR 0157). The page items are also
+  // ignored while the app is not ready (loading or an error screen), so Try again returns
+  // to the page the owner was on (ADR 0228). Guarded by the Tauri check (mirrors
+  // src/data/tauriSql.ts) so browser/E2E never crash on the missing event bridge.
   useEffect(() => {
     if (!isTauri()) return;
     const dialogOpen = () =>
       document.querySelector('[aria-modal="true"]') !== null;
+    const held = () =>
+      dialogOpen() || usePortfolioStore.getState().status !== "ready";
     const offs = [
       onMenuEvent("menu://about", () => {
         if (!dialogOpen()) useUiStore.getState().openAbout();
       }),
       onMenuEvent("menu://navigate", (e) => {
         const route = menuRoute(e.payload);
-        if (route && !dialogOpen()) useUiStore.getState().navigate(route);
+        if (route && !held()) useUiStore.getState().navigate(route);
       }),
       onMenuEvent("menu://new-property", () => {
-        if (!dialogOpen()) useUiStore.getState().requestNewProperty();
+        if (!held()) useUiStore.getState().requestNewProperty();
       }),
       onMenuEvent("menu://settings", () => {
-        if (!dialogOpen()) useUiStore.getState().openSettings();
+        if (!held()) useUiStore.getState().openSettings();
       }),
     ];
     return () => {
