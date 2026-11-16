@@ -263,9 +263,8 @@ export const loanWithEvents: fc.Arbitrary<RandomLoan> = fc
       );
     }
     recasts.sort((a, b) => a.date.localeCompare(b.date));
-    // At least a grid month after the start: a future loan and its successor never
-    // draw in one grid month (the reference does not model two successors there; the
-    // engine's ADR 0138 cases have fixed tests). At most 20
+    // At least two months, less at most 27 days, after the start, so later than
+    // EDATE(start, 1): a successor within a month is refused (ADR 0226 §2). At most 20
     // years after it, so the successor ends inside the reference's 720 rows.
     const s = g.successor;
     const successor: RefLoan | undefined = s && {
