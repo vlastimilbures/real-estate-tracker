@@ -7,7 +7,7 @@ import userEvent from "@testing-library/user-event";
 import { AsOfPicker } from "../AsOfPicker";
 import { PropertySelect } from "../PropertySelect";
 import { DateInput } from "../DateInput";
-import { StressPresetsPanel } from "../../pages/ScenariosPanels";
+import { PresetBar } from "../../pages/ScenariosPanels";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { isoDate } from "../../../engine";
@@ -53,9 +53,7 @@ describe("UX-034 i18n sweep", () => {
   it("stress presets: chip labels and generated names", async () => {
     const onAddPreset = vi.fn();
     render(
-      <StressPresetsPanel
-        open
-        onToggleOpen={() => undefined}
+      <PresetBar
         busy={false}
         baseDate={new Date(Date.UTC(2026, 5, 7))}
         crashAtYear={5}

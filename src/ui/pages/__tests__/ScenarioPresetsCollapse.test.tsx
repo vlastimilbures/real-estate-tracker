@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 //
-// ADR 0106 (#54): the Stress presets panel opens collapsed once a scenario is saved, so the
-// compare starts higher on the page. The default is decided when the page opens; a manual
-// Show / Hide wins for the app session.
+// ADR 0106 (#54), amended by ADR 0220 (#417): the presets are an "Add from preset"
+// disclosure in the Scenarios panel, closed once a scenario is saved, so the compare starts
+// higher on the page. The default is decided when the page opens; a manual open or close
+// wins for the app session.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -41,10 +42,7 @@ function seed(scenarios: Scenario[]) {
   );
 }
 
-const toggle = () =>
-  screen.getByRole("button", {
-    name: new RegExp(`^(${sc.showPresets}|${sc.hidePresets})$`),
-  });
+const toggle = () => screen.getByRole("button", { name: sc.addFromPreset });
 const presetButton = () => screen.queryByRole("button", { name: sc.plusPp(2) });
 
 beforeEach(() => {
@@ -66,17 +64,40 @@ describe("collapsible stress presets (#54)", () => {
     seed([]);
     render(<Scenarios />);
     expect(toggle().getAttribute("aria-expanded")).toBe("true");
-    expect(toggle().textContent).toBe(sc.hidePresets);
     expect(presetButton()).not.toBeNull();
   });
 
-  it("opens collapsed once a scenario is saved, with a one-line summary", () => {
+  it("opens closed once a scenario is saved; the disclosure says what it adds", () => {
     seed([saved("a", "A")]);
     render(<Scenarios />);
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
-    expect(toggle().textContent).toBe(sc.showPresets);
     expect(presetButton()).toBeNull();
-    expect(screen.getByText(sc.presetsCollapsedSummary)).toBeTruthy();
+  });
+
+  it("is in the Scenarios panel's head: one panel above the compare (ADR 0220 §1)", () => {
+    seed([saved("a", "A")]);
+    render(<Scenarios />);
+    const panels = document.querySelectorAll("section.panel");
+    expect(panels).toHaveLength(1);
+    const head = panels[0]!.querySelector(".panel-head")!;
+    expect(head.querySelector("h2")?.textContent).toBe(sc.listTitle);
+    expect(head.contains(toggle())).toBe(true);
+    // The presets open under the list.
+    const region = document.getElementById(
+      toggle().getAttribute("aria-controls")!,
+    )!;
+    const list = panels[0]!.querySelector(".scenario-list")!;
+    expect(
+      list.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("the head counts the compared scenarios; Base does not count", () => {
+    seed([saved("a", "A"), saved("b", "B")]);
+    act(() => useUiStore.setState({ compareIds: ["a"] }));
+    render(<Scenarios />);
+    const head = document.querySelector("section.panel .panel-head")!;
+    expect(head.querySelector(".hint")?.textContent).toBe(sc.comparedOf(1, 3));
   });
 
   it("the toggle controls the panel body", async () => {

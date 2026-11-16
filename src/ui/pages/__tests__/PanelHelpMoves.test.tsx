@@ -5,7 +5,7 @@
 // definitions sit behind the info icon in the head; instructions stay help lines.
 import { describe, it, expect, beforeEach } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
-import { StressPresetsPanel, ScenarioListPanel } from "../ScenariosPanels";
+import { ScenarioListPanel } from "../ScenariosPanels";
 import { MortgagesPanel } from "../PropertyEntityPanels";
 import { AcquisitionPanel } from "../PropertyDetailPanels";
 import type { AcquisitionView } from "../../model/acquisition";
@@ -31,36 +31,46 @@ function infoOf(panel: HTMLElement, topic: string) {
   return document.getElementById(button.getAttribute("aria-controls")!)!;
 }
 
-function presets(open: boolean) {
+function scenariosPanel(open: boolean) {
   return render(
-    <StressPresetsPanel
-      open={open}
-      onToggleOpen={() => undefined}
+    <ScenarioListPanel
+      scenarios={[]}
+      baseOn
+      onToggleBase={() => undefined}
+      selectedIds={[]}
+      maxCompare={3}
+      onToggle={() => undefined}
       busy={false}
-      baseDate={new Date(Date.UTC(2026, 0, 1))}
-      crashAtYear={0}
-      onCrashAtYearChange={() => undefined}
-      onAddPreset={() => undefined}
+      onEdit={() => undefined}
+      onDuplicate={() => undefined}
+      onDelete={() => Promise.resolve({ ok: true as const })}
+      presets={{
+        open,
+        onToggle: () => undefined,
+        bar: <p>bar</p>,
+      }}
     />,
   );
 }
 
-describe("Stress presets (ADR 0217 §4, amends 0214 §4)", () => {
-  it("open: the explanation is behind the info icon, not a body line", () => {
-    presets(true);
-    const panel = panelOf(sc.presetsTitle);
-    expect(panel.querySelector(".panel-head .hint")).toBeNull();
-    expect(panel.querySelector(".panel-help")).toBeNull();
-    expect(infoOf(panel, sc.presetsTitle).textContent).toBe(
+describe("Stress presets (ADR 0220 §1, amends 0217 §4)", () => {
+  it("open: the explanation is the Scenarios panel's info icon, not a body line", () => {
+    scenariosPanel(true);
+    const panel = panelOf(sc.listTitle);
+    expect(infoOf(panel, sc.listTitle).textContent).toBe(
       sc.presetsHint(DEFAULT_SHOCK_YEARS),
     );
+    expect(
+      screen
+        .queryByText(sc.presetsHint(DEFAULT_SHOCK_YEARS))
+        ?.closest(".panel-help"),
+    ).toBeFalsy();
   });
 
-  it("collapsed: the one-line summary; the explanation stays behind the icon", () => {
-    presets(false);
-    const panel = panelOf(sc.presetsTitle);
-    expect(screen.getByText(sc.presetsCollapsedSummary)).toBeTruthy();
-    expect(infoOf(panel, sc.presetsTitle).hidden).toBe(true);
+  it("closed: the explanation stays behind the icon", () => {
+    scenariosPanel(false);
+    const panel = panelOf(sc.listTitle);
+    expect(infoOf(panel, sc.listTitle).hidden).toBe(true);
   });
 });
 
@@ -81,7 +91,10 @@ describe("other header explanations: instructions stay help lines, definitions g
       />,
     );
     const panel = panelOf(sc.listTitle);
-    expect(panel.querySelector(".panel-head .hint")).toBeNull();
+    // The head's hint is context only: the count (ADR 0220 §1).
+    expect(panel.querySelector(".panel-head .hint")?.textContent).toBe(
+      sc.comparedOf(0, 3),
+    );
     expect(panel.querySelector(".panel-help")?.textContent).toBe(
       sc.listHint(3),
     );

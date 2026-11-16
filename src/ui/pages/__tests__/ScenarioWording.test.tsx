@@ -35,8 +35,7 @@ vi.mock("../../../state/useEngine", () => ({
   useScenarioComparison: () => [baseResult],
 }));
 
-const { StressPresetsPanel, ScenarioListPanel } =
-  await import("../ScenariosPanels");
+const { PresetBar, ScenarioListPanel } = await import("../ScenariosPanels");
 const { ShockPairFields } = await import("../ScenarioFormFields");
 const { ScenarioForm } = await import("../ScenarioForm");
 const { Scenarios } = await import("../Scenarios");
@@ -58,15 +57,20 @@ beforeEach(() =>
 
 describe("Scenarios wording (ADR 0090)", () => {
   it("preset hint says the price crash is permanent", () => {
+    // The Scenarios panel's info icon holds it (ADR 0220).
     render(
-      <StressPresetsPanel
-        open
-        onToggleOpen={() => undefined}
+      <ScenarioListPanel
+        scenarios={[]}
+        baseOn
+        onToggleBase={() => undefined}
+        selectedIds={[]}
+        maxCompare={3}
+        onToggle={() => undefined}
         busy={false}
-        baseDate={assumptions.baseDate}
-        crashAtYear={0}
-        onCrashAtYearChange={() => undefined}
-        onAddPreset={() => undefined}
+        onEdit={() => undefined}
+        onDuplicate={() => undefined}
+        onDelete={() => Promise.resolve({ ok: true as const })}
+        presets={{ open: true, onToggle: () => undefined, bar: null }}
       />,
     );
     const hint = en.scenarios.presetsHint(3);
@@ -76,9 +80,7 @@ describe("Scenarios wording (ADR 0090)", () => {
 
   it("crash timing 0 is the projection start, with its date", () => {
     render(
-      <StressPresetsPanel
-        open
-        onToggleOpen={() => undefined}
+      <PresetBar
         busy={false}
         baseDate={assumptions.baseDate}
         crashAtYear={0}

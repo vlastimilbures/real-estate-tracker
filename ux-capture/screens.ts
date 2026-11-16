@@ -757,6 +757,39 @@ async function expectDisclosures(ux: Ux) {
   expect(missing, "disclosures without their region").toEqual([]);
 }
 
+/** Scenarios (ADR 0220): one panel above the compare; its head holds the count, the info
+ *  icon and "Add from preset" on one row at 1280 px, nothing cut off at any width; the
+ *  presets open under the list. */
+async function expectScenariosPanel(ux: Ux, open: boolean, compared: number) {
+  const sc = ux.t.scenarios;
+  const p = panel(ux, sc.listTitle);
+  const head = p.locator(".panel-head");
+  await expect(head.locator(".hint")).toHaveText(sc.comparedOf(compared, 3));
+  const toggle = head.getByRole("button", { name: sc.addFromPreset });
+  await expect(toggle).toHaveAttribute("aria-expanded", String(open));
+  await expectNotClipped(head);
+  const m = await p.evaluate((el) => {
+    const head = el.querySelector(".panel-head")!;
+    const mids = Array.from(head.children).map((c) => {
+      const r = c.getBoundingClientRect();
+      return r.top + r.height / 2;
+    });
+    const list = el.querySelector(".scenario-list")!.getBoundingClientRect();
+    const drawer = el.querySelector(".preset-drawer")!.getBoundingClientRect();
+    return {
+      oneRow: Math.max(...mids) - Math.min(...mids) <= 4,
+      drawerBelow: drawer.height === 0 || drawer.top >= list.bottom,
+      panelsAbove: Array.from(
+        document.querySelectorAll("main section.panel"),
+      ).indexOf(el),
+    };
+  });
+  if ((ux.page.viewportSize()?.width ?? 0) >= 1280)
+    expect(m.oneRow, "panel head on one row").toBe(true);
+  expect(m.drawerBelow, "presets under the list").toBe(true);
+  expect(m.panelsAbove, "the first panel on the page").toBe(0);
+}
+
 /** One grid for the scenario list: actions line up across rows and the summary stays
  *  readable in every language (ADR 0158). */
 async function expectScenarioGrid(ux: Ux) {
@@ -1972,6 +2005,8 @@ export const SCREENS: Screen[] = [
       await boot(ux.page);
       await nav(ux, "scenarios");
       await expectCompareLayout(ux);
+      // Nothing saved: the presets are open (ADR 0106, 0220).
+      await expectScenariosPanel(ux, true, 0);
       await ux.capture("40-scenarios");
     },
   },
@@ -2002,6 +2037,7 @@ export const SCREENS: Screen[] = [
       await expect(ux.page.locator(".toast")).toBeHidden({ timeout: 10_000 });
       await expect(ux.page.locator(".scenario-row")).toHaveCount(3);
       await expectScenarioGrid(ux);
+      await expectScenariosPanel(ux, false, 2);
       await expectPanelActionsRight(ux.page);
       await expectRowActions(ux.page.locator(".scenario-list"), 104);
       // Also around the narrow-layout breakpoint, between the captured windows.

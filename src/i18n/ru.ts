@@ -843,10 +843,8 @@ export const ru: Dictionary = {
     presetsTitle: "Стресс-пресеты",
     presetsHint: (years) =>
       `Один клик сохраняет сценарий. Шоки ставок и инфляции длятся ${years} г., затем спадают; обвал цен постоянный.`,
-    showPresets: "Показать пресеты",
-    hidePresets: "Скрыть пресеты",
-    presetsCollapsedSummary:
-      "Шоки ставок, инфляции, обвал цен и комбинированные шоки скрыты.",
+    addFromPreset: "Добавить из пресета",
+    comparedOf: (n, max) => `в сравнении ${n} из ${max}`,
     atStart: "Начало",
     atStartTitle: (date) => `В начале прогноза (${date})`,
     rateShockAtRefix: "Шок ставки в конце фиксации",
