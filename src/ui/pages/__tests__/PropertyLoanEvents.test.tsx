@@ -48,14 +48,8 @@ beforeEach(() => {
   act(() => {
     usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
     useUiStore.setState({
-      language: "en",
       route: "property",
       selectedPropertyId: "javorova",
-      asOf: null,
-      amortizationOpen: false,
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
     });
   });
 });

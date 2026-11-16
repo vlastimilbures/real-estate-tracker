@@ -44,14 +44,8 @@ beforeEach(() => {
       status: "ready",
     });
     useUiStore.setState({
-      language: "en",
       route: "property",
       selectedPropertyId: "dev",
-      asOf: null,
-      amortizationOpen: false,
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
     });
   });
 });

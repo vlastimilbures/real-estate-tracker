@@ -8,7 +8,6 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Scenarios } from "../Scenarios";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import type { WriteError } from "../../../state/writeError";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
@@ -45,12 +44,10 @@ beforeEach(() => {
   addScenario.mockClear();
   removeScenario.mockClear();
   act(() => {
-    useUiStore.setState({ language: "en", compareIds: [], compareBase: true });
     usePortfolioStore.setState({
       portfolio,
       assumptions,
       status: "ready",
-      scenarios: [],
       unreadableScenarios: [{ id: "bad", name: "Broken" }],
       addScenario,
       removeScenario,

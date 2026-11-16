@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
 //
 // UX-020: deleting a saved scenario asks first, like every other delete.
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ScenarioListPanel } from "../ScenariosPanels";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import type { Scenario } from "../../../engine";
 import type { MutationResult } from "../../../state/portfolioStore";
@@ -36,8 +35,6 @@ function renderList(
     />,
   );
 }
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("scenario row actions (ADR 0199)", () => {
   it("are icon-only row actions: Edit, Duplicate and a destructive Delete", () => {

@@ -50,12 +50,7 @@ beforeEach(() => {
   addScenario.mockClear();
   act(() =>
     useUiStore.setState({
-      language: "en",
       route: "scenarios",
-      compareIds: [],
-      compareBase: true,
-      crashAtYear: 0,
-      presetsOpen: null,
     }),
   );
 });

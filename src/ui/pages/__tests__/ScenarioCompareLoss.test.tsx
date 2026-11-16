@@ -3,8 +3,8 @@
 // ADR 0089 (#14): with Base and a price crash at Today, the Compare key figures show
 // starting equity and Δ net worth vs Base, and mark the crash's rebased returns with a
 // footnote. A scenario with Base's starting equity gets no marker and no footnote.
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import {
   applyScenario,
   cpiIndex,
@@ -14,7 +14,6 @@ import {
   realProjection,
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import type { CompareResult } from "../../model/compare";
 
@@ -44,10 +43,6 @@ vi.mock("../../../state/useEngine", () => ({
 }));
 
 const { CompareView } = await import("../ScenarioCompare");
-
-beforeEach(() =>
-  act(() => useUiStore.setState({ language: "en", mode: "nominal" })),
-);
 
 const cellsOf = (label: string) => {
   const row = screen.getByRole("rowheader", { name: label });

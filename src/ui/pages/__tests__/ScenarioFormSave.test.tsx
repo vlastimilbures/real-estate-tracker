@@ -2,11 +2,10 @@
 //
 // ADR 0123 (#108): the scenario form shows a rule the store refuses on its field, keeps
 // the new scenario's id across a retry and ignores a second submit while saving.
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ScenarioForm } from "../ScenarioForm";
-import { useUiStore } from "../../../state/uiStore";
 import { assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { getDict } from "../../../i18n";
@@ -21,8 +20,6 @@ const crashRefused: WriteError = {
     { code: "SHOCK_OUT_OF_RANGE", entity: "assumptions", field: "valueShock" },
   ],
 };
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 function renderForm(onSubmit: (s: Scenario) => Promise<void | WriteError>) {
   render(

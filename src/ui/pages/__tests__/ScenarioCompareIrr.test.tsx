@@ -2,8 +2,8 @@
 //
 // UX-079 (DR-158, ADR 0079): the Compare key figures show "n/a" and the reason for a
 // scenario whose levered IRR has no value, next to a scenario that has one.
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import {
   cpiIndex,
   portfolioKpis,
@@ -11,7 +11,6 @@ import {
   realProjection,
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import type { CompareResult } from "../../model/compare";
 
@@ -40,10 +39,6 @@ vi.mock("../../../state/useEngine", () => ({
 }));
 
 const { CompareView } = await import("../ScenarioCompare");
-
-beforeEach(() =>
-  act(() => useUiStore.setState({ language: "en", mode: "nominal" })),
-);
 
 describe("Compare levered IRR (UX-079)", () => {
   it("shows the rate for one scenario and n/a with the reason for the other", () => {

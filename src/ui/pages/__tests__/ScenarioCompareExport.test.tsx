@@ -49,7 +49,7 @@ const { CompareView } = await import("../ScenarioCompare");
 beforeEach(() => {
   save.mockReset();
   save.mockResolvedValue({ kind: "saved", filename: "x.xlsx" });
-  act(() => useUiStore.setState({ language: "en", mode: "real" }));
+  act(() => useUiStore.setState({ mode: "real" }));
 });
 
 describe("Compare export to Excel (ADR 0108)", () => {

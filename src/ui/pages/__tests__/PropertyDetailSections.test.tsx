@@ -72,14 +72,8 @@ beforeEach(() => {
   setPortfolio(portfolio);
   act(() => {
     useUiStore.setState({
-      language: "en",
       route: "property",
       selectedPropertyId: owner.id,
-      asOf: null,
-      amortizationOpen: false,
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
     });
   });
 });
@@ -264,9 +258,7 @@ describe("Property detail data check (ADR 0118)", () => {
   };
 
   beforeEach(() => {
-    act(() =>
-      useUiStore.setState({ asOf: assumptions.baseDate, propertyTarget: null }),
-    );
+    act(() => useUiStore.setState({ asOf: assumptions.baseDate }));
   });
 
   it("lists the property's findings; a fix link moves to the section that fixes it", async () => {
