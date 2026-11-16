@@ -31,7 +31,7 @@ vi.mock("../../state/diagnostics", async (importOriginal) => ({
 beforeEach(async () => {
   await loadDictionary("cs");
   act(() => {
-    useUiStore.setState({ language: "cs", route: "import", failure: null });
+    useUiStore.setState({ language: "cs", route: "import" });
     usePortfolioStore.setState({
       portfolio,
       assumptions,

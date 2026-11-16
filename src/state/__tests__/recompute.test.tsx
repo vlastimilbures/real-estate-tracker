@@ -66,15 +66,7 @@ beforeEach(() => {
   act(() => {
     usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
     useUiStore.setState({
-      route: "dashboard",
       theme: "light",
-      language: "en",
-      sidebarCollapsed: false,
-      mode: "nominal",
-      settingsTab: "assumptions",
-      aboutOpen: false,
-      asOf: null,
-      dashboardPropertyIds: [],
     });
   });
 });

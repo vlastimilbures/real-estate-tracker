@@ -53,15 +53,8 @@ beforeEach(async () => {
   );
   act(() => {
     useUiStore.setState({
-      language: "en",
       route: "settings",
       settingsTab: "backup",
-      notice: null,
-      failure: null,
-      toast: null,
-      unsavedSources: [],
-      unsavedChanges: false,
-      pendingLeave: null,
     });
     usePortfolioStore.setState({
       status: "ready",

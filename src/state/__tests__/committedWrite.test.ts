@@ -43,16 +43,6 @@ function gate() {
 let db: TestSql;
 
 beforeEach(async () => {
-  usePortfolioStore.setState({
-    sql: null,
-    portfolio: null,
-    assumptions: null,
-    sample: { active: false, dismissed: false },
-    status: "idle",
-    error: null,
-    startupError: null,
-    stale: false,
-  });
   db = openMemorySql();
   await usePortfolioStore.getState().init(async () => {
     await migrate(db);

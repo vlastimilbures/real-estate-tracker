@@ -26,7 +26,6 @@ const sent = () =>
 beforeEach(() => {
   invoke.mockClear();
   act(() => {
-    useUiStore.setState({ language: "en" });
     // The error screen keeps the render small; the menu bridge is mounted regardless.
     usePortfolioStore.setState({
       status: "error",

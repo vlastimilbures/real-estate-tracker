@@ -45,15 +45,6 @@ const reloadFails = (real: Sql): Sql => ({
 
 beforeEach(async () => {
   logFailure.mockReset();
-  act(() => useUiStore.setState({ language: "en", notice: null }));
-  usePortfolioStore.setState({
-    sql: null,
-    portfolio: null,
-    status: "idle",
-    error: null,
-    startupError: null,
-    stale: false,
-  });
   db = openMemorySql();
   await migrate(db);
   await seedIfEmpty(db);

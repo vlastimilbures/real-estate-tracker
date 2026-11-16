@@ -11,13 +11,6 @@ beforeEach(() => {
   vi.useFakeTimers();
   useUiStore.setState({
     route: "settings",
-    toast: null,
-    notice: null,
-    failure: null,
-    lastImport: null,
-    unsavedChanges: false,
-    unsavedSources: [],
-    pendingLeave: null,
   });
 });
 

@@ -52,13 +52,6 @@ beforeEach(() => {
       error: null,
       init: async () => {},
     } as never);
-    useUiStore.setState({
-      language: "en",
-      asOf: null,
-      dashboardPropertyIds: [],
-      unsavedChanges: false,
-      pendingLeave: null,
-    });
   });
 });
 

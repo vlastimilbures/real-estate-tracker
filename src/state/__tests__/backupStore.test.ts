@@ -23,16 +23,6 @@ vi.mock("@tauri-apps/api/core", () => ({
 let db: TestSql;
 
 beforeEach(async () => {
-  usePortfolioStore.setState({
-    sql: null,
-    portfolio: null,
-    assumptions: null,
-    sample: { active: false, dismissed: false },
-    backup: { lastAt: null, lastFile: null, changedSince: false },
-    status: "idle",
-    error: null,
-    startupError: null,
-  });
   db = openMemorySql();
   await usePortfolioStore.getState().init(async () => {
     await migrate(db);
