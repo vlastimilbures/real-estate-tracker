@@ -4,6 +4,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   GATES,
+  ciDrift,
+  ciSteps,
   command,
   generateDocs,
   renderContributing,
@@ -11,6 +13,7 @@ import {
   replaceBlock,
   runGates,
   select,
+  workflowSteps,
 } from "../gates.mjs";
 
 const read = (file) =>
@@ -18,32 +21,12 @@ const read = (file) =>
 const pkg = JSON.parse(read("package.json"));
 
 /** Every command a gate stands for: its own, what it covers, what ci.yml runs for it. */
-const known = (g) => [command(g), g.run, ...(g.covers ?? []), ...(g.ci ?? [])];
-/** `line` is `cmd`, or `cmd` followed by arguments. */
-const runs = (line, cmd) => line === cmd || line.startsWith(`${cmd} `);
-
-/** The shell lines of every `run:` step in a workflow, block scalars included. */
-function runLines(yaml) {
-  const lines = yaml.split("\n");
-  const out = [];
-  for (let i = 0; i < lines.length; i++) {
-    const m = lines[i].match(/^(\s*)(?:- )?run:\s*(.*)$/);
-    if (!m) continue;
-    const value = m[2].trim();
-    if (value !== "|" && value !== ">" && value !== ">-") {
-      out.push(value.replace(/^'(.*)'$/, "$1"));
-      continue;
-    }
-    const indent = m[1].length;
-    for (i++; i < lines.length; i++) {
-      const line = lines[i];
-      if (line.trim() !== "" && line.search(/\S/) <= indent) break;
-      if (line.trim() !== "") out.push(line.trim());
-    }
-    i--;
-  }
-  return out;
-}
+const known = (g) => [
+  command(g),
+  g.run,
+  ...(g.covers ?? []),
+  ...ciSteps(g).map((s) => s.run),
+];
 
 describe("the gate list", () => {
   it("has unique ids and unique commands", () => {
@@ -229,38 +212,76 @@ describe("the documents that point at the list", () => {
 });
 
 describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () => {
-  const lines = runLines(read(".github/workflows/ci.yml"));
-  // Setup and the docs fast path's subset of the suite (removed by #459): not gates.
-  const SETUP = [
-    "pnpm install --frozen-lockfile",
-    "pnpm exec playwright install --with-deps chromium",
-    "pnpm vitest run src/import/__tests__/csvGuide.test.ts scripts/__tests__/adr-index.test.mjs",
-  ];
+  const ci = read(".github/workflows/ci.yml");
+  /** ci.yml with `from` replaced by `to`, once; `from` must be there. */
+  const weaken = (from, to) => {
+    expect(ci, from).toContain(from);
+    return ci.replace(from, to);
+  };
 
-  it("reads run lines, block scalars included", () => {
-    expect(
-      runLines(
-        "    run: a\n      - run: |\n          b\n          c\n  x: y\n",
-      ),
-    ).toEqual(["a", "b", "c"]);
-    expect(lines).toContain("pnpm typecheck");
-    expect(lines).toContain("pnpm lint:size:baseline-check");
+  it("reads each step's shell lines and env, block scalars and comments included", () => {
+    const yaml = [
+      "jobs:",
+      "  a:",
+      "    steps:",
+      "      # between steps",
+      "      - name: One",
+      "        run: pnpm one",
+      "        env:",
+      "          # a comment",
+      '          TZ: "UTC"',
+      "      - run: |",
+      "          pnpm two",
+      "          pnpm three",
+      "  b:",
+      "    runs-on: x",
+    ].join("\n");
+    expect(workflowSteps(yaml)).toEqual([
+      { lines: ["pnpm one"], env: { TZ: "UTC" } },
+      { lines: ["pnpm two", "pnpm three"], env: {} },
+    ]);
   });
 
-  it("runs every gate that is not nightly", () => {
-    for (const g of GATES.filter((g) => g.where !== "nightly"))
-      for (const c of g.ci ?? [g.run])
-        expect(
-          lines.some((l) => runs(l, c)),
-          `${g.id}: ${c}`,
-        ).toBe(true);
+  it("runs every gate that is not nightly, exactly, with its env", () => {
+    expect(ciDrift(ci)).toEqual([]);
   });
 
-  it("runs no pnpm or cargo command the list does not know", () => {
-    const commands = GATES.flatMap(known);
-    for (const l of lines.filter((l) => /^(pnpm|cargo) /.test(l)))
-      expect(SETUP.includes(l) || commands.some((c) => runs(l, c)), l).toBe(
-        true,
-      );
+  it("knows no nightly gate", () => {
+    const nightly = GATES.filter((g) => g.where === "nightly");
+    const yaml = `jobs:\n  a:\n    steps:\n      - run: pnpm mutation\n`;
+    expect(ciDrift(yaml, { gates: nightly })).toEqual([
+      "a step runs `pnpm mutation`, which is no gate",
+    ]);
+  });
+
+  it.each([
+    [
+      "knip without its exit code",
+      "run: pnpm knip\n",
+      "run: pnpm knip --no-exit-code\n",
+    ],
+    [
+      "coverage thresholds off",
+      "run: pnpm test:coverage\n",
+      "run: pnpm test:coverage --coverage.thresholds.lines=0\n",
+    ],
+    [
+      "clippy lints allowed",
+      "--all-targets -- -D warnings\n",
+      "--all-targets -- -D warnings -A clippy::all\n",
+    ],
+    ["the negative time zone dropped", "          TZ: Pacific/Pago_Pago\n", ""],
+    [
+      "the positive time zone run narrowed to the engine",
+      "run: pnpm vitest run src/lib src/ui src/state\n",
+      "run: pnpm vitest run src/engine\n",
+    ],
+    [
+      "the axe run id changed",
+      "          UX_RUN_ID: ci\n",
+      "          UX_RUN_ID: other\n",
+    ],
+  ])("fails a weakened step: %s", (_, from, to) => {
+    expect(ciDrift(weaken(from, to)).length).toBeGreaterThan(0);
   });
 });

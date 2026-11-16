@@ -20,9 +20,26 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
  * One gate. `where`: `check` runs in `pnpm check` and CI; `release` also in
  * `pnpm check:release` and CI; `ci` in CI only (`why` says why it is not local);
  * `nightly` in the nightly workflow. `covers`: commands this gate already runs, so they
- * are not gates of their own. `ci`: the commands ci.yml runs for it, when not `run`.
- * `env`: variables set for the command. `readme`: shorter text for the README table.
+ * are not gates of their own. `ci`: the steps ci.yml runs for it, each `{ run, env }`
+ * with the exact shell line and the step's variables, when not `{ run, env }` of the gate
+ * itself. `env`: variables set for the command. `readme`: text for the README table.
  */
+// The axe runs as ci.yml sets them up: the run id names the folder axe-check reads.
+const AXE_EN = {
+  UX_RUN_ID: "ci",
+  UX_LANG: "en",
+  UX_THEME: "both",
+  UX_VIEWPORT: "1280x800,min",
+};
+const AXE_I18N = {
+  UX_RUN_ID: "ci-i18n",
+  UX_LANG: "cs,ru",
+  UX_THEME: "light",
+  UX_VIEWPORT: "1280x800,1200x800,min",
+};
+const LAYOUT_SCREENS =
+  "01-dashboard|03-dashboard-asof-5y|03b-dashboard-real-asof-5y|14-properties-long-name|20-property-detail|20b-property-detail-asof-5y|27-property-section-nav-focus|42-scenarios-compare";
+
 export const GATES = [
   {
     id: "format",
@@ -94,6 +111,8 @@ export const GATES = [
     what: "full suite + per-folder coverage floors (includes test:parity)",
     where: "check",
     covers: ["pnpm test", "pnpm test:parity"],
+    // CI runs the parity tests as a step of their own too, so a parity break reads at a glance.
+    ci: [{ run: "pnpm test:coverage" }, { run: "pnpm test:parity" }],
     readme:
       "Vitest tests with per-folder coverage floors, incl. the parity targets (±1 Kč, ±0.0001)",
   },
@@ -138,7 +157,7 @@ export const GATES = [
     run: "(cd src-tauri && cargo audit)",
     what: "Rust dependencies have no advisory (ignores in src-tauri/.cargo/audit.toml)",
     where: "release",
-    ci: ["cargo audit"],
+    ci: [{ run: "cargo audit" }],
     why: "needs the network, and a new advisory fails a change that did not cause it",
     readme: "Rust dependencies have no advisory",
   },
@@ -152,8 +171,13 @@ export const GATES = [
   },
   {
     id: "no-sql-js",
-    run: "grep -rlE 'sql-wasm|initSqlJs' dist/assets",
-    what: "sql.js stays out of the bundle (fails on a match)",
+    // As ci.yml: grep's 1 (no match) passes; 0 (a match) and 2 (no dist/assets) fail.
+    run: "status=0; grep -rlE 'sql-wasm|initSqlJs' dist/assets || status=$?; [ $status = 1 ]",
+    what: "sql.js stays out of the bundle (no match passes; a match or no dist/assets fails)",
+    ci: [
+      { run: "grep -rlE 'sql-wasm|initSqlJs' dist/assets || status=$?" },
+      { run: "[[ $status == 1 ]]" },
+    ],
     where: "ci",
     why: "needs the build; scripts/release-macos.sh checks its own bundle",
     readme: "sql.js (E2E only) stays out of the app bundle",
@@ -179,16 +203,32 @@ export const GATES = [
   {
     id: "axe",
     run: "pnpm ux:capture && pnpm ux:axe-check ci",
-    what: "axe scan of every captured screen (ADR 0078)",
+    env: AXE_EN,
+    what: "axe scan of every captured screen: English, light and dark, two window sizes (ADR 0078)",
     where: "ci",
     ci: [
-      "pnpm ux:capture --shard",
-      "pnpm ux:axe-check ci",
-      "pnpm ux:axe-check ci-i18n",
+      { run: "pnpm ux:capture --shard ${{ matrix.shard }}/4", env: AXE_EN },
+      { run: "pnpm ux:axe-check ci" },
     ],
     why: "slow (four CI shards); run it after UI work",
     readme:
-      "axe scan of every screen: English, light and dark, two window sizes; layout screens in Czech and Russian",
+      "axe scan of every screen: English, light and dark, two window sizes",
+  },
+  {
+    id: "axe-i18n",
+    run: `pnpm ux:capture --grep "${LAYOUT_SCREENS}" && pnpm ux:axe-check ci-i18n`,
+    env: AXE_I18N,
+    what: "the layout screens in Czech and Russian: nothing clipped or covered, axe clean (ADR 0158)",
+    where: "ci",
+    ci: [
+      {
+        run: `pnpm ux:capture --shard \${{ matrix.shard }}/4 --grep "${LAYOUT_SCREENS}"`,
+        env: AXE_I18N,
+      },
+      { run: "pnpm ux:axe-check ci-i18n" },
+    ],
+    why: "slow (four CI shards); run it after UI work",
+    readme: "The layout screens in Czech and Russian, three window sizes",
   },
   {
     id: "vendored-sqlx",
@@ -215,10 +255,10 @@ export const GATES = [
   },
   {
     id: "bench",
-    run: "pnpm bench",
+    run: "pnpm bench --outputJson bench.json && pnpm bench:check bench.json",
     what: "engine performance budgets (`pnpm bench:check`)",
     where: "nightly",
-    readme: "Performance budgets",
+    readme: "Engine performance budgets, checked by `pnpm bench:check`",
   },
   {
     id: "properties",
@@ -227,6 +267,13 @@ export const GATES = [
     what: "every fast-check property test with a new seed",
     where: "nightly",
     readme: "Every fast-check property test with a new seed each night",
+  },
+  {
+    id: "e2e",
+    run: "pnpm test:e2e",
+    what: "Playwright smoke tests (optional, ADR 0006; e2e.yml)",
+    where: "nightly",
+    readme: "Playwright smoke tests (optional, ADR 0006; `e2e.yml`)",
   },
 ];
 
@@ -265,6 +312,117 @@ export function runGates(gates, { exec = shell, log = console.log } = {}) {
   }
   log(`\nall ${gates.length} gates passed`);
   return { ok: true };
+}
+
+// ci.yml lines that set a job up and are no gate. The docs fast path's subset of the suite
+// goes when #459 removes the fast path.
+export const CI_SETUP = [
+  "pnpm install --frozen-lockfile",
+  "pnpm exec playwright install --with-deps chromium",
+  "pnpm vitest run src/import/__tests__/csvGuide.test.ts scripts/__tests__/adr-index.test.mjs",
+];
+
+const indentOf = (line) => line.search(/\S/);
+const unquote = (v) => v.trim().replace(/^(['"])(.*)\1$/, "$2");
+
+/** One step's shell lines and `env`, from its lines (the first one starts with "- "). */
+function parseStep(lines) {
+  const keyIndent = indentOf(lines[0]) + 2;
+  const body = [lines[0].replace("- ", "  "), ...lines.slice(1)];
+  const step = { lines: [], env: {} };
+  for (let i = 0; i < body.length; i++) {
+    const m = body[i].match(/^(\s*)([A-Za-z-]+):\s*(.*)$/);
+    if (!m || m[1].length !== keyIndent) continue;
+    const nested = [];
+    while (
+      i + 1 < body.length &&
+      (body[i + 1].trim() === "" || indentOf(body[i + 1]) > keyIndent)
+    )
+      nested.push(body[++i]);
+    if (m[2] === "run")
+      step.lines =
+        m[3] && !/^[|>]/.test(m[3])
+          ? [unquote(m[3])]
+          : nested.map((l) => l.trim()).filter(Boolean);
+    if (m[2] === "env")
+      for (const l of nested) {
+        const kv = l.match(/^\s*([A-Za-z_][A-Za-z0-9_]*):\s*(.*)$/);
+        if (kv && !l.trim().startsWith("#")) step.env[kv[1]] = unquote(kv[2]);
+      }
+  }
+  return step;
+}
+
+/** Every step of a workflow: `{ lines, env }`, block scalars and step `env` included. */
+export function workflowSteps(yaml) {
+  const lines = yaml.split("\n");
+  const steps = [];
+  let stepIndent = -1;
+  let current = null;
+  const flush = () => current && steps.push(parseStep(current));
+  for (const line of lines) {
+    const m = line.match(/^(\s*)steps:\s*$/);
+    if (m) {
+      flush();
+      current = null;
+      stepIndent = m[1].length + 2;
+      continue;
+    }
+    if (stepIndent < 0) continue;
+    const text = line.trim();
+    const indent = indentOf(line);
+    if (text === "" || text.startsWith("#")) {
+      // A comment at the steps' own indent sits between steps.
+      if (current && (text === "" || indent > stepIndent)) current.push(line);
+      continue;
+    }
+    if (indent < stepIndent) {
+      flush();
+      current = null;
+      stepIndent = -1;
+    } else if (indent === stepIndent && text.startsWith("- ")) {
+      flush();
+      current = [line];
+    } else if (current) current.push(line);
+  }
+  flush();
+  return steps;
+}
+
+/** The ci.yml steps a gate stands for: exact shell lines with their step `env`. */
+export const ciSteps = (g) => g.ci ?? [{ run: g.run, env: g.env }];
+
+const sameEnv = (a = {}, b = {}) =>
+  JSON.stringify(Object.entries(a).sort()) ===
+  JSON.stringify(Object.entries(b).sort());
+
+/**
+ * Where a workflow and the list disagree: a gate with no step that runs its exact line
+ * with exactly its variables, or a pnpm / cargo line that is no gate and no setup.
+ */
+export function ciDrift(yaml, { gates = GATES, setup = CI_SETUP } = {}) {
+  const steps = workflowSteps(yaml);
+  const listed = gates.filter((g) => g.where !== "nightly");
+  const problems = [];
+  for (const g of listed)
+    for (const spec of ciSteps(g)) {
+      const found = steps.filter((s) => s.lines.includes(spec.run));
+      if (found.length === 0)
+        problems.push(`${g.id}: no step runs \`${spec.run}\``);
+      else if (!found.some((s) => sameEnv(s.env, spec.env)))
+        problems.push(
+          `${g.id}: \`${spec.run}\` runs with env ${JSON.stringify(found[0].env)}, expected ${JSON.stringify(spec.env ?? {})}`,
+        );
+    }
+  const known = new Set([
+    ...listed.flatMap((g) => ciSteps(g).map((s) => s.run)),
+    ...setup,
+  ]);
+  for (const s of steps)
+    for (const l of s.lines)
+      if (/^(pnpm|cargo) /.test(l) && !known.has(l))
+        problems.push(`a step runs \`${l}\`, which is no gate`);
+  return problems;
 }
 
 const code = (s) => `\`${s.replaceAll("|", "\\|")}\``;
