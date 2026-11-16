@@ -4,7 +4,7 @@
 - Date: 2026-11-16
 - Source: issue #445 (code review 2026-11, tracking #435), owner decision 2026-11-16;
   bug #436
-- Amends: [0099](0099-close-previous-open-record.md) (the valuation half: no dialog),
+- Amends: [0099](0099-close-previous-open-record.md) (the valuation half),
   [0144](0144-small-user-visible-corrections.md) (decision 1, valuations)
 - Related: [0122](0122-valuation-persists-past-valid-to.md) (a valuation's end date is not
   read), [0163](0163-leases-never-overlap.md) (leases end the predecessor without asking),
@@ -24,7 +24,8 @@ extra write maintain a date that is shown in the Valuations table and changes no
 
 The prompt costs machinery in the generic record panel (`confirmAdd`, `AddPrompt`, a promise
 resolver kept in state and a modal), the rule in a JSX prop, and one open bug: cancelling the
-dialog closes the form with nothing saved (#436). The trigger is routine (every
+dialog keeps the form open but marks it as saved, so leaving the page then drops the typed
+valuation without asking (#436). The trigger is routine (every
 re-valuation). Leases already end the previous open lease without asking (ADR 0163).
 
 ## Decision

@@ -19,7 +19,8 @@ engine without the form, and remove it when the last part lands.
   the new valuation has no "Valid to" and the one before it is open-ended, the earlier one
   now ends the day before the new one starts, as leases already do. A valuation with its own
   "Valid to" changes no other row. No figure changes. This also fixes #436: cancelling the
-  old dialog closed the form and lost what was typed.
+  old dialog kept the form open but marked it as saved, so leaving the page then dropped the
+  typed valuation without asking.
 
 ## [1.5.0] - 2026-10-14
 
