@@ -1,270 +1,32 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { usePortfolioStore } from "../../state/portfolioStore";
-import { useUiStore } from "../../state/uiStore";
-import { isDirty } from "../model/dirty";
+import { useEffect, useId, useRef } from "react";
 import { Panel, Button, EmptyState } from "../components/primitives";
 import { FolderOpen } from "lucide-react";
 import { Field, TextInput } from "../components/fields";
 import { DateInput } from "../components/DateInput";
-import {
-  collectValues,
-  fieldHint,
-  percentDraft,
-  moneyDraft,
-  dateDraft,
-  type CollectRules,
-  type FieldSpec,
-} from "../model/formParse";
-import { FORM_PARSERS } from "../model/formParsers";
-import { INT_RANGES } from "../../lib/intRanges";
-import type { Assumptions } from "../../engine";
-import { CZK } from "../../lib/currency";
-import { type Dictionary } from "../../i18n";
+import type { FieldSpec } from "../model/formParse";
 import { useT } from "../hooks/useT";
-import { formWriteErrors } from "../model/writeError";
-import { useToast } from "../hooks/useToast";
-
-function buildSpecs(t: Dictionary) {
-  const a = t.assumptions;
-  return {
-    drivers: [
-      {
-        name: "baseDate",
-        label: a.baseDate,
-        kind: "date",
-        help: a.baseDateHelp,
-      },
-      {
-        name: "horizonYears",
-        label: a.horizon,
-        kind: "int",
-        suffix: t.common.yearsSuffix,
-        range: INT_RANGES.horizonYears,
-      },
-      {
-        name: "appreciationPa",
-        label: a.appreciation,
-        kind: "pct",
-        suffix: "%",
-      },
-      {
-        name: "rentIndexationPa",
-        label: a.rentIndexation,
-        kind: "pct",
-        suffix: "%",
-      },
-      { name: "inflationPa", label: a.inflation, kind: "pct", suffix: "%" },
-      { name: "vacancyAllowance", label: a.vacancy, kind: "pct", suffix: "%" },
-      {
-        name: "postFixationResetRatePa",
-        label: a.postFixationReset,
-        kind: "pct",
-        suffix: "%",
-      },
-      {
-        name: "sellingCostPct",
-        label: a.sellingCost,
-        kind: "pct",
-        suffix: "%",
-        help: a.sellingCostHelp,
-      },
-    ],
-    defaults: [
-      {
-        name: "propertyTaxYr",
-        label: a.propertyTax,
-        kind: "money",
-        suffix: CZK.symbol,
-      },
-      {
-        name: "insuranceYr",
-        label: a.insurance,
-        kind: "money",
-        suffix: CZK.symbol,
-      },
-      {
-        name: "svjMonthly",
-        label: a.svj,
-        kind: "money",
-        suffix: CZK.symbol,
-      },
-      {
-        name: "otherYr",
-        label: a.other,
-        kind: "money",
-        suffix: CZK.symbol,
-      },
-      { name: "mgmtPctRent", label: a.mgmt, kind: "pct", suffix: "%" },
-      { name: "maintPctRent", label: a.maint, kind: "pct", suffix: "%" },
-    ],
-  } as const;
-}
-
-/** Every field is required; money defaults are 0 or more, as in RecordForm (ADR 0075). */
-function assumptionRules(t: Dictionary): CollectRules {
-  return {
-    parsers: FORM_PARSERS,
-    blank: (spec) => fieldHint(t, spec),
-    invalid: (spec) => fieldHint(t, spec),
-  };
-}
-
-function toDraft(a: Assumptions): Record<string, string> {
-  return {
-    baseDate: dateDraft(a.baseDate),
-    horizonYears: String(a.horizonYears),
-    appreciationPa: percentDraft(a.appreciationPa),
-    rentIndexationPa: percentDraft(a.rentIndexationPa),
-    inflationPa: percentDraft(a.inflationPa),
-    vacancyAllowance: percentDraft(a.vacancyAllowance),
-    postFixationResetRatePa: percentDraft(a.postFixationResetRatePa),
-    sellingCostPct: percentDraft(a.sellingCostPct) || "0", // unset ⇒ 0 (ADR 0183)
-    propertyTaxYr: moneyDraft(a.defaults.propertyTaxYr),
-    insuranceYr: moneyDraft(a.defaults.insuranceYr),
-    svjMonthly: moneyDraft(a.defaults.svjMonthly),
-    otherYr: moneyDraft(a.defaults.otherYr),
-    mgmtPctRent: percentDraft(a.defaults.mgmtPctRent),
-    maintPctRent: percentDraft(a.defaults.maintPctRent),
-  };
-}
+import { useAssumptionsForm } from "../hooks/useAssumptionsForm";
 
 /** Form body without an AppShell — embedded in the Settings page sub-tabs. */
 export function AssumptionsPanel() {
   const t = useT();
-  const { drivers: DRIVERS, defaults: DEFAULTS } = buildSpecs(t);
-  const assumptions = usePortfolioStore((s) => s.assumptions);
-  const saveAssumptions = usePortfolioStore((s) => s.saveAssumptions);
-  const initial = useMemo(
-    () => (assumptions ? toDraft(assumptions) : null),
-    [assumptions],
-  );
-  const [draft, setDraft] = useState<Record<string, string> | null>(initial);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  // A refusal on no field this form shows, listed in the error summary (ADR 0141).
-  const [formError, setFormError] = useState<string | null>(null);
-  const { showToast } = useToast();
-  const setUnsavedChanges = useUiStore((s) => s.setUnsavedChanges);
-  const [saving, setSaving] = useState(false);
-  // A failed save keeps the input and says so until the next edit (ADR 0095).
-  const [failed, setFailed] = useState(false);
-  // Bumped on a failed save so the error summary takes focus once it renders.
-  const [summaryFocus, setSummaryFocus] = useState(0);
+  const form = useAssumptionsForm(true);
   const summaryRef = useRef<HTMLDivElement>(null);
   const formId = useId();
   const fieldId = (name: string) => `${formId}-${name}`;
+  const { summaryFocus } = form;
   useEffect(() => {
     if (summaryFocus > 0) summaryRef.current?.focus();
   }, [summaryFocus]);
 
-  // re-sync when store loads / changes underneath
-  const current = draft ?? initial;
-  // Unsaved edits hold back navigation away from this tab (UX-030).
-  const unsaved = Boolean(initial && current && isDirty(initial, current));
-  useEffect(() => {
-    setUnsavedChanges("assumptions", unsaved);
-  }, [unsaved, setUnsavedChanges]);
-  useEffect(
-    () => () => setUnsavedChanges("assumptions", false),
-    [setUnsavedChanges],
-  );
-  if (!assumptions || !current) {
+  const { current, errors, invalid, formError } = form;
+  if (!current) {
     return (
       <EmptyState title={t.common.noPortfolioTitle} icon={FolderOpen}>
         {t.common.noPortfolioBody}
       </EmptyState>
     );
   }
-
-  const set = (name: string, v: string) => {
-    setDraft({ ...current, [name]: v });
-    setErrors((e) => {
-      const copy = { ...e };
-      delete copy[name];
-      return copy;
-    });
-    setFailed(false);
-    setFormError(null);
-  };
-
-  /** Show a failed save: keep the input, and focus the summary when it lists anything. */
-  const fail = (
-    fieldErrors: Record<string, string>,
-    rest: string | null = null,
-  ) => {
-    setErrors(fieldErrors);
-    setFormError(rest);
-    setFailed(true);
-    if (Object.keys(fieldErrors).length > 0 || rest)
-      setSummaryFocus((n) => n + 1);
-  };
-
-  const onDiscard = () => {
-    setDraft(null);
-    setErrors({});
-    setFormError(null);
-    setFailed(false);
-  };
-
-  const onSave = () => {
-    if (saving) return;
-    const { values: v, errors: errs } = collectValues(
-      [...DRIVERS, ...DEFAULTS],
-      current,
-      assumptionRules(t),
-    );
-    if (Object.keys(errs).length > 0) {
-      fail(errs);
-      return;
-    }
-    setErrors({});
-    setFormError(null);
-
-    const next: Assumptions = {
-      baseDate: v.baseDate,
-      horizonYears: v.horizonYears,
-      appreciationPa: v.appreciationPa,
-      rentIndexationPa: v.rentIndexationPa,
-      inflationPa: v.inflationPa,
-      vacancyAllowance: v.vacancyAllowance,
-      postFixationResetRatePa: v.postFixationResetRatePa,
-      sellingCostPct: v.sellingCostPct,
-      defaults: {
-        propertyTaxYr: v.propertyTaxYr,
-        insuranceYr: v.insuranceYr,
-        svjMonthly: v.svjMonthly,
-        otherYr: v.otherYr,
-        mgmtPctRent: v.mgmtPctRent,
-        maintPctRent: v.maintPctRent,
-      },
-    };
-    // On failure a broken rule marks its field (UX-047), or is listed in the error
-    // summary when it names no field shown here (ADR 0141); any other failure shows in
-    // the AppShell banner. The success toast shows only when the write landed.
-    setSaving(true);
-    void saveAssumptions(next).then((result) => {
-      setSaving(false);
-      if (!result.ok) {
-        const names = [...DRIVERS, ...DEFAULTS].map((s) => s.name);
-        const split = formWriteErrors(t, result.error, names);
-        fail(
-          split.fieldErrors,
-          result.error.kind === "input" ? split.formError : null,
-        );
-        return;
-      }
-      // Saved: show the stored values again, so the form is no longer "unsaved".
-      setDraft(null);
-      setFailed(false);
-      showToast(t.assumptions.saved);
-    });
-  };
-
-  const invalid = [...DRIVERS, ...DEFAULTS].filter((s) => errors[s.name]);
-  const stateText = failed
-    ? t.common.saveFailedKept
-    : unsaved
-      ? t.common.unsavedChanges
-      : t.common.allChangesSaved;
 
   const renderField = (spec: FieldSpec) => (
     <Field
@@ -278,12 +40,12 @@ export function AssumptionsPanel() {
       {spec.kind === "date" ? (
         <DateInput
           value={current[spec.name] ?? ""}
-          onChange={(v) => set(spec.name, v)}
+          onChange={(v) => form.set(spec.name, v)}
         />
       ) : (
         <TextInput
           value={current[spec.name] ?? ""}
-          onChange={(v) => set(spec.name, v)}
+          onChange={(v) => form.set(spec.name, v)}
           suffix={spec.suffix}
           inputMode="decimal"
         />
@@ -297,18 +59,18 @@ export function AssumptionsPanel() {
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
-        onSave();
+        form.save();
       }}
     >
       <p className="hint">{t.assumptions.scenariosHint}</p>
       <Panel title={t.assumptions.driversTitle}>
-        <div className="form-grid">{DRIVERS.map(renderField)}</div>
+        <div className="form-grid">{form.drivers.map(renderField)}</div>
       </Panel>
       <Panel
         title={t.assumptions.defaultsTitle}
         info={t.assumptions.defaultsHint}
       >
-        <div className="form-grid">{DEFAULTS.map(renderField)}</div>
+        <div className="form-grid">{form.defaults.map(renderField)}</div>
       </Panel>
       {(invalid.length > 0 || formError) && (
         <div
@@ -347,19 +109,26 @@ export function AssumptionsPanel() {
       )}
       {/* One Save/Discard row for the whole form, kept in view (ADR 0095). */}
       <div className="form-actions sticky-actions">
-        <span className={`form-state${failed ? " failed" : ""}`} role="status">
-          {stateText}
+        <span
+          className={`form-state${form.failed ? " failed" : ""}`}
+          role="status"
+        >
+          {form.stateText}
         </span>
         <Button
           type="button"
           variant="ghost"
-          onClick={onDiscard}
-          disabled={!unsaved || saving}
+          onClick={form.discard}
+          disabled={!form.unsaved || form.saving}
         >
           {t.common.discardChanges}
         </Button>
-        <Button type="submit" variant="primary" disabled={!unsaved || saving}>
-          {saving ? t.common.saving : t.common.saveChanges}
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={!form.unsaved || form.saving}
+        >
+          {form.saving ? t.common.saving : t.common.saveChanges}
         </Button>
       </div>
     </form>
