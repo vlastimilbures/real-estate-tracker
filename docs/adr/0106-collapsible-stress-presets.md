@@ -5,6 +5,8 @@
 - Source: issue #54 (Scenarios critical review after #15)
 - Amended by: [0214](0214-panel-help-text.md) (the explanation is a help line inside the
   open presets)
+- Amended by: [0220](0220-scenarios-one-panel.md) (the presets become an "Add from
+  preset" disclosure inside the Scenarios panel)
 
 ## Context
 
