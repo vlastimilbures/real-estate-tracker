@@ -66,3 +66,13 @@ describe("Guide section navigation (ADR 0213)", () => {
     ).toBeTruthy();
   });
 });
+
+describe("in a narrow window (ADR 0225 §2)", () => {
+  it("the Guide's links take one row; Property detail's still wrap", () => {
+    render(<Guide />);
+    const nav = screen.getByRole("navigation", {
+      name: en.guide.sectionNavLabel,
+    });
+    expect(nav.classList.contains("one-row")).toBe(true);
+  });
+});

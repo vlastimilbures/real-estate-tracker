@@ -261,6 +261,37 @@
   margin: 0;
   padding: 0 0 var(--s1);
 }
+/* The Guide's ten links in a narrow window: one row that scrolls sideways, a fade on the
+   side with more (ADR 0225 §2). Wider, they wrap like the others (ADR 0158). */
+@media (max-width: 1099px) {
+  .section-nav.one-row ul {
+    position: relative;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    /* Room for the focus ring, which the scroll box would clip. */
+    padding: 3px 3px var(--s1);
+    margin: -3px -3px 0;
+    scrollbar-width: none;
+  }
+  .section-nav.one-row ul::-webkit-scrollbar {
+    display: none;
+  }
+  .section-nav.one-row[data-more-end="true"] ul {
+    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  }
+  .section-nav.one-row[data-more-start="true"] ul {
+    mask-image: linear-gradient(to left, #000 calc(100% - 32px), transparent);
+  }
+  .section-nav.one-row[data-more-start="true"][data-more-end="true"] ul {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 32px,
+      #000 calc(100% - 32px),
+      transparent
+    );
+  }
+}
 /* 8 px a side: Property detail's eight Russian tabs fit one row at 1280 px with Linux
    fonts too (ADR 0215). */
 .section-nav a,

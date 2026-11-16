@@ -59,3 +59,27 @@ export function pickCurrent<T>(
   if (first !== undefined) return first;
   return previous ?? order[0] ?? null;
 }
+
+/**
+ * The scroll position that shows a link in a one-row section nav (ADR 0225 §2), with
+ * `pad` px to spare so the fade does not cover it; null when it is already in view.
+ */
+export function scrollToShow(
+  link: { start: number; width: number },
+  view: { scroll: number; width: number },
+  pad: number,
+): number | null {
+  const end = link.start + link.width;
+  if (link.start < view.scroll) return Math.max(0, link.start - pad);
+  if (end > view.scroll + view.width) return end - view.width + pad;
+  return null;
+}
+
+/** Which sides of a one-row nav have more links out of view (ADR 0225 §2). */
+export function moreSides(
+  scroll: number,
+  width: number,
+  scrollWidth: number,
+): { start: boolean; end: boolean } {
+  return { start: scroll > 1, end: scroll + width < scrollWidth - 1 };
+}

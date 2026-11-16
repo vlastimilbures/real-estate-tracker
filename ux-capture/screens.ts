@@ -2685,7 +2685,26 @@ export const SCREENS: Screen[] = [
       expect(h.y, "heading near the top").toBeLessThan(
         bar.y + bar.height + 120,
       );
-      // The nav wraps; the page never scrolls sideways (ADR 0158).
+      // Narrow, the links take one row and the current one is in view; wide, they wrap
+      // to at most two rows (ADR 0225 §2).
+      const row = await navEl.evaluate((n) => {
+        const list = n.querySelector("ul")!.getBoundingClientRect();
+        const tops = Array.from(n.querySelectorAll("a"), (a) =>
+          Math.round(a.getBoundingClientRect().top),
+        );
+        const cur = n
+          .querySelector('a[aria-current="location"]')!
+          .getBoundingClientRect();
+        return {
+          rows: new Set(tops).size,
+          inView: cur.left >= list.left - 1 && cur.right <= list.right + 1,
+          narrow: window.innerWidth < 1100,
+        };
+      });
+      if (row.narrow) expect(row.rows, "one row when narrow").toBe(1);
+      else expect(row.rows, "two rows at most").toBeLessThanOrEqual(2);
+      expect(row.inView, "the current link in view").toBe(true);
+      // The page never scrolls sideways (ADR 0158).
       expect(
         await ux.page.evaluate(
           () =>
