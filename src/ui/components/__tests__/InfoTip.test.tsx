@@ -107,6 +107,23 @@ describe("InfoTip (ADR 0217 §2)", () => {
     expect(button.getAttribute("aria-expanded")).toBe("false");
   });
 
+  it("the open popover is never a tab stop: Tab from the icon goes on to the next control", async () => {
+    render(
+      <>
+        <InfoTip topic="Valuations">Long why.</InfoTip>
+        <button type="button">Next</button>
+      </>,
+    );
+    const button = screen.getByRole("button", { name: nameOf("Valuations") });
+    await userEvent.tab();
+    expect(button.getAttribute("aria-expanded")).toBe("true");
+    // Chromium makes an overflowing popover a tab stop unless it opts out; it hides
+    // as the icon loses focus, which would drop focus to the page.
+    expect(popoverOf(button).getAttribute("tabindex")).toBe("-1");
+    await userEvent.tab();
+    expect(document.activeElement?.textContent).toBe("Next");
+  });
+
   it("two on a page have different names", () => {
     render(
       <>

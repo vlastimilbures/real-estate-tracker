@@ -137,7 +137,16 @@ export function InfoTip({
       >
         <Info size={15} strokeWidth={1.75} aria-hidden="true" />
       </button>
-      <span ref={pop} id={id} className="info-tip-pop" hidden={!open}>
+      {/* Never a tab stop: its hover bridges overflow it, which makes it a scroller that
+          Chromium would put in the tab order, and it hides as the icon loses focus, so
+          Tab from the icon would drop focus to the page. */}
+      <span
+        ref={pop}
+        id={id}
+        className="info-tip-pop"
+        hidden={!open}
+        tabIndex={-1}
+      >
         {children}
       </span>
     </span>

@@ -468,6 +468,20 @@ export async function expectInfoTip(page: Page, button: Locator) {
     return hit === el || el.contains(hit);
   });
   expect(onTop, "popover not covered").toBe(true);
+  // Tab moves on to the next control, not into the popover or out to the page; Shift+Tab
+  // comes back (and opens it again).
+  await page.keyboard.press("Tab");
+  expect(
+    await page.evaluate(
+      () =>
+        document.activeElement !== document.body &&
+        !document.activeElement?.closest(".info-tip-pop"),
+    ),
+    "Tab from the icon reaches the next control",
+  ).toBe(true);
+  await page.keyboard.press("Shift+Tab");
+  await expect(button).toBeFocused();
+  await expect(button).toHaveAttribute("aria-expanded", "true");
 }
 
 /** Escape hides an open info popover and focus stays on its icon (ADR 0217). */
