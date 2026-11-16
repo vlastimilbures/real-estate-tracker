@@ -6,7 +6,8 @@
 - Amended by: [0144](0144-small-user-visible-corrections.md) (decision 3: no prompt for a
   dated new record), [0163](0163-leases-never-overlap.md) (leases: adding one ends the open
   predecessor without asking), [0184](0184-data-layer-write-guards.md) (decision 2: the close
-  writes only the end date)
+  writes only the end date), [0227](0227-valuation-ends-previous-without-asking.md)
+  (valuations: adding one ends the open predecessor without asking)
 
 ## Context
 
