@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AssumptionsPanel } from "../Assumptions";
+import { SettingsPage } from "../Settings";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
@@ -24,7 +24,11 @@ const save = vi.fn(async (a: Assumptions) => {
 beforeEach(() => {
   save.mockClear();
   act(() => {
-    useUiStore.setState({ language: "en", route: "settings" });
+    useUiStore.setState({
+      language: "en",
+      route: "settings",
+      settingsTab: "assumptions",
+    });
     usePortfolioStore.setState({
       portfolio,
       assumptions,
@@ -47,7 +51,7 @@ async function saveWith(text: string) {
 
 describe("Assumptions — selling costs (ADR 0183)", () => {
   it("shows 0 % when unset, with its help text", () => {
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     expect(field()).toHaveProperty("value", "0");
     expect(field().closest(".field")!.textContent).toContain(
       en.assumptions.sellingCostHelp,
@@ -55,7 +59,7 @@ describe("Assumptions — selling costs (ADR 0183)", () => {
   });
 
   it("sits right after the post-fixation reset rate", () => {
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     const labels = [...document.querySelectorAll(".field label")].map(
       (l) => l.textContent ?? "",
     );
@@ -68,14 +72,14 @@ describe("Assumptions — selling costs (ADR 0183)", () => {
   });
 
   it("saves 3.5 % as 0.035", async () => {
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     await saveWith("3.5");
     expect(save).toHaveBeenCalledTimes(1);
     expect(save.mock.calls[0]![0].sellingCostPct?.toString()).toBe("0.035");
   });
 
   it("refuses 150 % on the field", async () => {
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     await saveWith("150");
     expect(
       await screen.findByText(en.inputRules.RATE_OUT_OF_RANGE),

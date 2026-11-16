@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AssumptionsPanel } from "../Assumptions";
+import { SettingsPage } from "../Settings";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
@@ -21,7 +21,11 @@ const save = vi.fn<(a: Assumptions) => Promise<{ ok: true }>>(async () => ({
 beforeEach(() => {
   save.mockClear();
   act(() => {
-    useUiStore.setState({ language: "en", route: "settings" });
+    useUiStore.setState({
+      language: "en",
+      route: "settings",
+      settingsTab: "assumptions",
+    });
     usePortfolioStore.setState({
       portfolio,
       assumptions,
@@ -42,7 +46,7 @@ async function setField(label: string, text: string) {
 
 describe("Assumptions save", () => {
   it("saves the parsed values", async () => {
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     await setField(en.assumptions.other, "500");
     await setField(en.assumptions.inflation, "3");
     await userEvent.click(
@@ -60,7 +64,7 @@ describe("Assumptions save", () => {
   });
 
   it("rejects a negative money default with the amount hint (ADR 0075)", async () => {
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     await setField(en.assumptions.other, "-500");
     await userEvent.click(
       screen.getByRole("button", { name: en.common.saveChanges }),
@@ -73,7 +77,7 @@ describe("Assumptions save", () => {
   });
 
   it("shows the format hint for a blank field and does not save", async () => {
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     await setField(en.assumptions.inflation, "");
     await userEvent.click(
       screen.getByRole("button", { name: en.common.saveChanges }),
@@ -86,7 +90,7 @@ describe("Assumptions save", () => {
   });
 
   it("bounds the horizon to 1–100 years with the range hint (ADR 0075)", async () => {
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     for (const years of ["0", "101"]) {
       await setField(en.assumptions.horizon, years);
       await userEvent.click(

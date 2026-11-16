@@ -8,7 +8,7 @@ import userEvent from "@testing-library/user-event";
 import { RecordForm } from "../forms";
 import { PropertyFormModal } from "../PropertyFormModal";
 import { ScenarioForm } from "../../pages/ScenarioForm";
-import { AssumptionsPanel } from "../../pages/Assumptions";
+import { SettingsPage } from "../../pages/Settings";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
@@ -25,7 +25,7 @@ beforeAll(async () => {
 
 beforeEach(() =>
   act(() => {
-    useUiStore.setState({ language: "en" });
+    useUiStore.setState({ language: "en", settingsTab: "assumptions" });
     usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
   }),
 );
@@ -122,11 +122,37 @@ describe("Return submits forms (UX-028)", () => {
   it("Assumptions save on Return", async () => {
     const saveAssumptions = vi.fn(async () => ({ ok: true as const }));
     act(() => usePortfolioStore.setState({ saveAssumptions }));
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     // An edit first: Save is disabled while nothing changed (ADR 0095).
     const horizon = screen.getByLabelText(en.assumptions.horizon);
     await userEvent.clear(horizon);
     await userEvent.type(horizon, "25{Enter}");
     expect(saveAssumptions).toHaveBeenCalledTimes(1);
+  });
+
+  it("Assumptions: Return with nothing changed does not save (ADR 0221 §2)", async () => {
+    const saveAssumptions = vi.fn(async () => ({ ok: true as const }));
+    act(() => usePortfolioStore.setState({ saveAssumptions }));
+    render(<SettingsPage />);
+    await userEvent.type(
+      screen.getByLabelText(en.assumptions.horizon),
+      "{Enter}",
+    );
+    expect(saveAssumptions).not.toHaveBeenCalled();
+  });
+
+  it("Assumptions: Return on a button in the form (the date picker) does not save", async () => {
+    const saveAssumptions = vi.fn(async () => ({ ok: true as const }));
+    act(() => usePortfolioStore.setState({ saveAssumptions }));
+    const { container } = render(<SettingsPage />);
+    const horizon = screen.getByLabelText(en.assumptions.horizon);
+    await userEvent.clear(horizon);
+    await userEvent.type(horizon, "25");
+    const button = container.querySelector<HTMLButtonElement>(
+      "form.assumptions-form button",
+    )!;
+    button.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(saveAssumptions).not.toHaveBeenCalled();
   });
 });

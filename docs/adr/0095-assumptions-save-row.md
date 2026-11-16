@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #19 (pre-release review 2026-10, findings A04 and F4)
+- Amended by: [0221](0221-settings-top-bar.md) (Save/Discard in the top bar)
 
 ## Context
 

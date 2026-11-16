@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 //
-// ADR 0095: the Assumptions buttons sit in a sticky row below the fields, the row says
+// ADR 0095, 0221: the Assumptions buttons sit in the Settings top bar, which says
 // whether there are unsaved edits, Discard changes resets the draft, and a failed save
 // keeps the input and lists the fields that need attention as links.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AssumptionsPanel } from "../Assumptions";
+import { SettingsPage } from "../Settings";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
@@ -26,6 +26,7 @@ beforeEach(() => {
     useUiStore.setState({
       language: "en",
       route: "settings",
+      settingsTab: "assumptions",
       unsavedSources: [],
       unsavedChanges: false,
     });
@@ -54,27 +55,41 @@ const discardButton = () =>
   screen.getByRole("button", { name: en.common.discardChanges });
 
 describe("Assumptions save row (ADR 0095)", () => {
-  it("sits after every field, in a sticky row", () => {
-    const { container } = render(<AssumptionsPanel />);
-    const row = container.querySelector(".form-actions.sticky-actions")!;
-    expect(row).toBeTruthy();
-    const fields = container.querySelectorAll(".field");
-    const last = fields[fields.length - 1]!;
+  it("sits in the top bar, with no floating row under the fields (ADR 0221)", () => {
+    const { container } = render(<SettingsPage />);
+    const bar = container.querySelector("header.topbar") as HTMLElement;
+    const row = within(bar);
+    expect(row.getByText(en.common.allChangesSaved)).toBeTruthy();
+    expect(row.getByRole("button", { name: en.common.discardChanges }));
+    const save = row.getByRole("button", { name: en.common.saveChanges });
+    // Save submits the Assumptions form from outside it.
+    const form = container.querySelector("form.assumptions-form")!;
+    expect((save as HTMLButtonElement).form).toBe(form);
+    expect(container.querySelector(".sticky-actions")).toBeNull();
+    expect(form.querySelector("[type=submit]")).toBeNull();
+  });
+
+  it("the Backup tab shows no Save or Discard", () => {
+    act(() => useUiStore.setState({ settingsTab: "backup" }));
+    const { container } = render(<SettingsPage />);
+    const bar = within(container.querySelector("header.topbar") as HTMLElement);
     expect(
-      last.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(within(row as HTMLElement).getByText(en.common.saveChanges));
+      bar.queryByRole("button", { name: en.common.saveChanges }),
+    ).toBeNull();
+    expect(
+      bar.queryByRole("button", { name: en.common.discardChanges }),
+    ).toBeNull();
   });
 
   it("is clean at first: says so and disables both buttons", () => {
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     expect(screen.getByText(en.common.allChangesSaved)).toBeTruthy();
     expect((saveButton() as HTMLButtonElement).disabled).toBe(true);
     expect((discardButton() as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("an edit shows Unsaved changes and enables the buttons", async () => {
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     await setField(en.assumptions.inflation, "3");
     expect(screen.getByText(en.common.unsavedChanges)).toBeTruthy();
     expect((saveButton() as HTMLButtonElement).disabled).toBe(false);
@@ -83,7 +98,7 @@ describe("Assumptions save row (ADR 0095)", () => {
   });
 
   it("Discard changes restores the saved values and clears the unsaved state", async () => {
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     const before = input(en.assumptions.inflation).value;
     await setField(en.assumptions.inflation, "9");
     await userEvent.click(discardButton());
@@ -98,7 +113,7 @@ describe("Assumptions save row (ADR 0095)", () => {
     save.mockImplementation(
       () => new Promise<MutationResult>((r) => (finish = r)),
     );
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     await setField(en.assumptions.inflation, "3");
     await userEvent.click(saveButton());
     const busy = screen.getByRole("button", { name: en.common.saving });
@@ -112,7 +127,7 @@ describe("Assumptions save row (ADR 0095)", () => {
       ok: false,
       error: { kind: "other", message: "disk I/O error" },
     });
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     await setField(en.assumptions.inflation, "3");
     await userEvent.click(saveButton());
     expect(screen.getByText(en.common.saveFailedKept)).toBeTruthy();
@@ -125,7 +140,7 @@ describe("Assumptions save row (ADR 0095)", () => {
 
 describe("Assumptions error summary (ADR 0095)", () => {
   it("lists the invalid fields as links, takes focus, and each link focuses its field", async () => {
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     await setField(en.assumptions.inflation, "");
     await setField(en.assumptions.other, "-5");
     await userEvent.click(saveButton());
@@ -147,7 +162,7 @@ describe("Assumptions error summary (ADR 0095)", () => {
   });
 
   it("goes away once the fields are fixed and saved", async () => {
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     await setField(en.assumptions.inflation, "");
     await userEvent.click(saveButton());
     expect(
@@ -156,6 +171,6 @@ describe("Assumptions error summary (ADR 0095)", () => {
     await setField(en.assumptions.inflation, "3");
     await userEvent.click(saveButton());
     expect(save).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole("group")).toBeNull();
+    expect(document.querySelector(".error-summary")).toBeNull();
   });
 });

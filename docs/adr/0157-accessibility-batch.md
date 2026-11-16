@@ -12,7 +12,8 @@
   [0107](0107-property-section-nav.md) (section headings take focus),
   [0114](0114-a11y-skip-link-charts.md) (the previous accessibility round)
 - Amended by: [0173](0173-record-panel-races-confirm-focus.md) (decision 2: when the opener
-  is gone, focus falls back to the nearest connected element)
+  is gone, focus falls back to the nearest connected element),
+  [0221](0221-settings-top-bar.md) (§6: the Settings tablist is horizontal)
 
 ## Context
 

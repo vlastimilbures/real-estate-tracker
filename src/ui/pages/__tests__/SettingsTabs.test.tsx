@@ -53,16 +53,19 @@ describe("Settings tab pattern (#128 R5-15)", () => {
     const user = userEvent.setup();
     render(<SettingsPage />);
     tab(en.settings.tabs.assumptions).focus();
-    await user.keyboard("{ArrowDown}");
+    await user.keyboard("{ArrowRight}");
     expect(document.activeElement).toBe(tab(en.settings.tabs.backup));
     expect(useUiStore.getState().settingsTab).toBe("assumptions");
-    await user.keyboard("{ArrowDown}");
+    await user.keyboard("{ArrowRight}");
     expect(document.activeElement).toBe(tab(en.settings.tabs.assumptions));
     await user.keyboard("{End}");
     expect(document.activeElement).toBe(tab(en.settings.tabs.backup));
     await user.keyboard("{Home}");
     expect(document.activeElement).toBe(tab(en.settings.tabs.assumptions));
-    await user.keyboard("{ArrowUp}");
+    await user.keyboard("{ArrowLeft}");
+    expect(document.activeElement).toBe(tab(en.settings.tabs.backup));
+    // A horizontal tablist (ADR 0221): Up and Down do not move between tabs.
+    await user.keyboard("{ArrowDown}");
     expect(document.activeElement).toBe(tab(en.settings.tabs.backup));
   });
 
@@ -70,7 +73,7 @@ describe("Settings tab pattern (#128 R5-15)", () => {
     const user = userEvent.setup();
     render(<SettingsPage />);
     tab(en.settings.tabs.assumptions).focus();
-    await user.keyboard("{ArrowDown}{Enter}");
+    await user.keyboard("{ArrowRight}{Enter}");
     expect(useUiStore.getState().settingsTab).toBe("backup");
     expect(tab(en.settings.tabs.backup).tabIndex).toBe(0);
   });
@@ -89,6 +92,14 @@ describe("Settings tab pattern (#128 R5-15)", () => {
     render(<SettingsPage />);
     const list = screen.getByRole("tablist");
     expect(list.tagName).not.toBe("NAV");
-    expect(list.getAttribute("aria-orientation")).toBe("vertical");
+    expect(list.getAttribute("aria-orientation")).toBe("horizontal");
+  });
+
+  it("puts the tabs in the top bar's section row, the panel full width (ADR 0221)", () => {
+    const { container } = render(<SettingsPage />);
+    const list = screen.getByRole("tablist");
+    expect(list.closest(".topbar-subnav")).toBeTruthy();
+    expect(container.querySelector(".settings-layout")).toBeNull();
+    expect(screen.getByRole("tabpanel").closest("header")).toBeNull();
   });
 });

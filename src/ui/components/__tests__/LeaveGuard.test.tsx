@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AssumptionsPanel } from "../../pages/Assumptions";
+import { SettingsPage } from "../../pages/Settings";
 import { LeaveGuard } from "../LeaveGuard";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
@@ -27,7 +27,7 @@ beforeEach(() => {
 function renderPanel() {
   render(
     <>
-      <AssumptionsPanel />
+      <SettingsPage />
       <LeaveGuard />
     </>,
   );
@@ -77,6 +77,12 @@ describe("unsaved Assumptions guard (UX-030)", () => {
     );
     expect(useUiStore.getState().settingsTab).toBe("backup");
     expect(useUiStore.getState().unsavedChanges).toBe(false);
+    // Back on the tab the saved values show: the discarded draft is gone (ADR 0221 §3).
+    act(() => useUiStore.getState().setSettingsTab("assumptions"));
+    expect(
+      (screen.getByLabelText(/^Inflation/) as HTMLInputElement).value,
+    ).not.toBe("3");
+    expect(useUiStore.getState().unsavedChanges).toBe(false);
   });
 
   it("after a successful save the form leaves without asking", async () => {
@@ -90,5 +96,34 @@ describe("unsaved Assumptions guard (UX-030)", () => {
     expect(saveAssumptions).toHaveBeenCalledTimes(1);
     act(() => useUiStore.getState().navigate("dashboard"));
     expect(useUiStore.getState().route).toBe("dashboard");
+  });
+
+  it("a save still running when the guard drops the draft leaves no errors behind (ADR 0221 §3)", async () => {
+    let finish: (r: unknown) => void = () => undefined;
+    const saveAssumptions = vi.fn(
+      () => new Promise((r) => (finish = r)),
+    ) as never;
+    act(() => usePortfolioStore.setState({ saveAssumptions }));
+    renderPanel();
+    await editInflation();
+    await userEvent.click(
+      screen.getByRole("button", { name: /save changes/i }),
+    );
+    act(() => useUiStore.getState().setSettingsTab("backup"));
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /discard/i,
+      }),
+    );
+    await act(async () =>
+      finish({
+        ok: false,
+        error: { kind: "input", message: "inflationPa: out of range" },
+      }),
+    );
+    act(() => useUiStore.getState().setSettingsTab("assumptions"));
+    expect(document.querySelector(".error-summary")).toBeNull();
+    expect(document.querySelector(".field.invalid")).toBeNull();
+    expect(screen.getByText(/all changes saved/i)).toBeTruthy();
   });
 });
