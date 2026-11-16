@@ -10,7 +10,6 @@ import { PropertyFormModal } from "../PropertyFormModal";
 import { ScenarioForm } from "../../pages/ScenarioForm";
 import { SettingsPage } from "../../pages/Settings";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import type { FieldSpec } from "../../model/formParse";
@@ -25,7 +24,6 @@ beforeAll(async () => {
 
 beforeEach(() =>
   act(() => {
-    useUiStore.setState({ language: "en", settingsTab: "assumptions" });
     usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
   }),
 );

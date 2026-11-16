@@ -2,14 +2,11 @@
 //
 // UX-072 (DR-150, ADR 0077): the property dialog marks its required fields through Field
 // `required` (CSS marker + aria-required), like the record forms; no "*" in the strings.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { PropertyFormModal } from "../PropertyFormModal";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { LANGUAGES } from "../../../i18n/types";
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("property dialog required fields (UX-072)", () => {
   const f = getDict("en").propertyForm;

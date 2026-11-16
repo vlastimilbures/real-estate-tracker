@@ -7,7 +7,6 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PropertyFormModal } from "../PropertyFormModal";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import {
   portfolio,
@@ -32,7 +31,6 @@ beforeEach(() => {
   addProperty = vi.fn(() => Promise.resolve({ ok: true as const }));
   editProperty = vi.fn(() => Promise.resolve({ ok: true as const }));
   act(() => {
-    useUiStore.setState({ language: "en" });
     usePortfolioStore.setState({
       portfolio,
       assumptions,

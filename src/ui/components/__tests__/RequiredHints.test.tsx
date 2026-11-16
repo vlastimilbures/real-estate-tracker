@@ -2,11 +2,10 @@
 //
 // UX-040: required fields are marked "*" in every form, and an invalid value says the
 // expected format instead of a bare "Invalid value".
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RecordForm } from "../forms";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { invalidHint } from "../../model/formParse";
@@ -17,8 +16,6 @@ const specs: FieldSpec[] = [
   { name: "amount", label: "Amount", kind: "money" },
   { name: "note", label: "Rate", kind: "pct", optional: true },
 ];
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("required marks (UX-040)", () => {
   it("marks required fields with * and aria-required; optional ones without", () => {

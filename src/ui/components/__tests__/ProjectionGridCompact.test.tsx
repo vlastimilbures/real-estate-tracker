@@ -2,17 +2,14 @@
 //
 // ADR 0211 (#386): the year-by-year grid has no Period column; each Year cell carries its
 // span as tooltip and screen-reader text; the rows are compact.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { isoDate, portfolioProjection } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { ProjectionGrid } from "../ProjectionGrid";
 
 const rows = portfolioProjection(portfolio, assumptions);
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("ProjectionGrid (ADR 0211)", () => {
   it("has no Period column", () => {

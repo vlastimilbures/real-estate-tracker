@@ -3,15 +3,7 @@
 // #136 (ADR 0154): the app shell's outcome regions. The toast's live region is in the
 // page before any text arrives; a notice stays until dismissed, is translated when it
 // renders, and carries a refused backup's records.
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  onTestFinished,
-  vi,
-} from "vitest";
+import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { OutcomeRegions, ToastRegion } from "../OutcomeRegions";
@@ -26,17 +18,6 @@ vi.mock("../../../state/diagnostics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../state/diagnostics")>()),
   logFailure: vi.fn(),
 }));
-
-beforeEach(() => {
-  act(() =>
-    useUiStore.setState({
-      language: "en",
-      toast: null,
-      notice: null,
-      failure: null,
-    }),
-  );
-});
 
 afterEach(() => {
   vi.useRealTimers();

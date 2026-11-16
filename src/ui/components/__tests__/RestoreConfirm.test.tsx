@@ -3,10 +3,9 @@
 // ADR 0148 §1 (#260 item 6): a refused backup lists its out-of-range values too, in the
 // error colour like the rest of its table; the confirm step's warnings use the warning
 // colour.
-import { beforeEach, describe, expect, it } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { IssueTable } from "../RestoreConfirm";
-import { useUiStore } from "../../../state/uiStore";
 import type { RestoreIssue } from "../../../state/backup";
 
 const issues: RestoreIssue[] = [
@@ -30,8 +29,6 @@ const problemColours = () =>
     .getAllByRole("row")
     .slice(1)
     .map((r) => (r.lastElementChild as HTMLElement).style.color);
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("IssueTable colours", () => {
   it("a refused file shows every row, out-of-range ones included, in the error colour", () => {

@@ -2,7 +2,7 @@
 //
 // UX-047: a save the store refuses keeps the form open and shows the reason — on the
 // field the rule names, else above the buttons — in the user's language.
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RecordForm } from "../forms";
@@ -25,8 +25,6 @@ function renderForm(failure: WriteError) {
     />,
   );
 }
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("RecordForm shows a refused save", () => {
   it("on the field the engine rule names", async () => {
