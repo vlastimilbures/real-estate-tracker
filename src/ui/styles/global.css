@@ -108,6 +108,7 @@ button {
     animation: none;
   }
   * {
+    /* stylelint-disable-next-line declaration-no-important -- Reduce motion must beat any element's own smooth scrolling. */
     scroll-behavior: auto !important;
   }
 }
