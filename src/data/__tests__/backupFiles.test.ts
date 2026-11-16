@@ -21,6 +21,7 @@ import {
 import { checkInputRules } from "../../import/inputRules";
 import { localIsoDay } from "../../lib/day";
 import { saveFile } from "../../platform/saveFile";
+import { PINNED_DAY, setClock } from "../../__tests__/support/clock";
 
 /** The files the fake commands wrote, by full path. */
 const files = vi.hoisted(() => new Map<string, string>());
@@ -312,6 +313,7 @@ describe("exportBackup — honest outcome in Tauri (DR-026)", () => {
       await exportWithAppDeps(sql);
     } finally {
       vi.useRealTimers();
+      setClock(PINNED_DAY);
     }
     expect(suggestedName()).toBe("portfolio-backup-2026-10-01.json");
   });

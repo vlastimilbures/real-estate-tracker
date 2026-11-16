@@ -92,6 +92,17 @@ still describe it. Which document owns what is listed in
   `mockReset()` on a shared spy brings back the real pass-through, not a no-op. Render a
   page on a portfolio with `renderWithPortfolio` (`src/__tests__/support/world.tsx`).
   Engine tests import neither (depcruise).
+- **The test clock** (#458): every test outside `src/engine` starts at local noon of
+  `PINNED_DAY` (2026-10-01, `src/__tests__/setup/clock.ts`), so no test depends on the day
+  the suite runs; engine tests keep the real `Date` (the engine never reads it), and the
+  setup restores it for them even when an earlier file's pin lingers (`--no-isolate`). A test
+  whose expectations need a given day names it with `setClock("YYYY-MM-DD")`
+  (`src/__tests__/support/clock.ts`) in its `beforeEach` or in the test; lint rejects a
+  file-level mock of `lib/day`. The pin replaces `Date` only and timers stay real, and the
+  clock stands still: move it with `setClock` between two writes that must differ in time.
+  A test that needs an exact instant or fake timers still uses `vi.setSystemTime` /
+  `vi.useFakeTimers`; `vi.useRealTimers()` brings back the real clock, so a test that
+  calls it mid-test calls `setClock(PINNED_DAY)` right after.
 - **Mutation testing** (ADR 0026): `pnpm mutation` runs Stryker on `src/engine`. CI runs it
   nightly when main changed. Runs are incremental: only mutants in changed code or tests are
   retested against the last result (`reports/mutation/stryker-incremental.json`, cached in

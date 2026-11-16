@@ -18,12 +18,6 @@ import { useUiStore } from "../../../state/uiStore";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 
-const clock = vi.hoisted(() => ({ today: new Date(Date.UTC(2026, 9, 1)) }));
-vi.mock("../../../lib/day", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../../lib/day")>()),
-  todayUtc: () => clock.today,
-}));
-
 class NoObserver {
   observe() {}
   unobserve() {}

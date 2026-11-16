@@ -15,11 +15,9 @@ import { fmtCzk } from "../../../lib/format";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
+import { setClock } from "../../../__tests__/support/clock";
 
-vi.mock("../../../lib/day", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../../lib/day")>()),
-  todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
-}));
+beforeEach(() => setClock("2026-10-01"));
 
 class NoopObserver {
   observe() {}

@@ -20,6 +20,9 @@ import { mixedCashOutside } from "../../../engine/__tests__/support/synthetic";
 import { fmtCzk, fmtCzkM, fmtDate, fmtPct, noBreak } from "../../../lib/format";
 import { D } from "../../../lib/money";
 import { isoDate, portfolioSnapshot } from "../../../engine";
+import { setClock } from "../../../__tests__/support/clock";
+
+beforeEach(() => setClock("2026-10-01"));
 
 /** The Dashboard's exact net worth: the strip shows M Kč, the exact amount is its
  *  tooltip (ADR 0200), here without the currency symbol. */
@@ -34,11 +37,6 @@ const exactNetWorth = () =>
 const shownNetWorth = () =>
   screen.getByTestId("kpi-networth").querySelector("[title]")?.firstChild
     ?.textContent;
-
-vi.mock("../../../lib/day", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../../lib/day")>()),
-  todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
-}));
 
 const en = getDict("en");
 const pd = en.propertyDetail;

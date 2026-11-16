@@ -17,11 +17,9 @@ import { useUiStore } from "../uiStore";
 import { portfolio, assumptions } from "../../engine/__tests__/support/seed";
 import * as engine from "../../engine";
 import { Dashboard } from "../../ui/pages/Dashboard";
+import { setClock } from "../../__tests__/support/clock";
 
-vi.mock("../../lib/day", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../lib/day")>()),
-  todayUtc: () => new Date(Date.UTC(2026, 5, 7)), // == baseDate
-}));
+beforeEach(() => setClock("2026-06-07")); // == baseDate
 
 vi.mock("../../engine", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../engine")>();

@@ -2,7 +2,7 @@
 //
 // ADR 0150 (#265): the one as-of resolve step. Dashboard and Property detail follow the
 // picked date; Properties shows Today (ADR 0111). Each gets the picker's window too.
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { useAsOf } from "../useAsOf";
 import { usePortfolioStore } from "../../../state/portfolioStore";
@@ -10,11 +10,9 @@ import { useUiStore } from "../../../state/uiStore";
 import { asOfBounds } from "../../model/asOf";
 import { addYears, isoDate } from "../../../engine";
 import { assumptions } from "../../../engine/__tests__/support/seed";
+import { setClock } from "../../../__tests__/support/clock";
 
-vi.mock("../../../lib/day", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../../lib/day")>()),
-  todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
-}));
+beforeEach(() => setClock("2026-10-01"));
 
 const today = new Date(Date.UTC(2026, 9, 1));
 const picked = addYears(assumptions.baseDate, 5);

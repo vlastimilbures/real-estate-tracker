@@ -2,7 +2,7 @@
 //
 // ADR 0133 (#129 item 5): with no value, LTV and the yields read "n/a" with no band badge
 // — not 0 % in the "Conservative" band.
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import {
   applyScenario,
@@ -25,11 +25,6 @@ import { KpiListPanel } from "../DashboardPanels";
 import { renderStrip } from "./kpiStripSupport";
 import { PropertySnapshotTiles } from "../PropertyDetailPanels";
 import { Properties } from "../Properties";
-
-vi.mock("../../../lib/day", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../../lib/day")>()),
-  todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
-}));
 
 const NA = en.common.notApplicable;
 

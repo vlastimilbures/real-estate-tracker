@@ -24,6 +24,7 @@ import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
 import { fmtCzk, fmtCzkM } from "../../../lib/format";
 import { projectionSeries } from "../../model/projection";
+import { setClock } from "../../../__tests__/support/clock";
 
 /** The Dashboard's exact net worth: the strip shows M Kč, the exact amount is its
  *  tooltip (ADR 0200), here without the currency symbol. */
@@ -38,13 +39,6 @@ const exactNetWorth = () =>
 const shownNetWorth = () =>
   screen.getByTestId("kpi-networth").querySelector("[title]")?.firstChild
     ?.textContent;
-
-const clock = vi.hoisted(() => ({ today: new Date(Date.UTC(2026, 9, 3)) }));
-
-vi.mock("../../../lib/day", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../../lib/day")>()),
-  todayUtc: () => clock.today,
-}));
 
 class NoObserver {
   observe() {}
@@ -83,7 +77,7 @@ const todayPressed = () =>
 const subtitle = () => document.querySelector(".page-sub")?.textContent ?? "";
 
 beforeEach(() => {
-  clock.today = new Date(Date.UTC(2026, 9, 3));
+  setClock("2026-10-03");
   vi.stubGlobal("IntersectionObserver", NoObserver);
 });
 
@@ -141,7 +135,7 @@ describe("the date shown is the date computed (ADR 0150)", () => {
 
 describe("Properties uses the Today basis of Property detail (ADR 0150)", () => {
   it("base date over six months back: the Lipova row is projection year 1, and the subtitle names it (#113)", () => {
-    clock.today = new Date(Date.UTC(2027, 0, 15));
+    setClock("2027-01-15");
     setUp(portfolio, assumptions);
     // Property detail at Today shows this row (asOfAnchor.test: a property tile is its
     // projection row for the year).
@@ -183,7 +177,7 @@ describe("the ownership label follows the basis (ADR 0150)", () => {
   });
 
   it("Properties: no Pending badge once Today's projection year holds the purchase (#113)", () => {
-    clock.today = new Date(Date.UTC(2028, 0, 1));
+    setClock("2028-01-01");
     setUp(mixed, assumptions);
     render(<Properties />);
     const row = screen
