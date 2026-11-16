@@ -14,7 +14,6 @@ import { SettingsPage } from "../Settings";
 import { ScenarioForm } from "../ScenarioForm";
 import { Scenarios } from "../Scenarios";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { describeWriteError } from "../../model/writeError";
 import type { FieldSpec } from "../../model/formParse";
@@ -62,11 +61,6 @@ const storeSave = usePortfolioStore.getState().saveAssumptions;
 
 beforeEach(() =>
   act(() => {
-    useUiStore.setState({
-      language: "en",
-      compareIds: [],
-      settingsTab: "assumptions",
-    });
     usePortfolioStore.setState({ saveAssumptions: storeSave });
   }),
 );

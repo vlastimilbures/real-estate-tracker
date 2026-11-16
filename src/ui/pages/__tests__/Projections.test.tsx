@@ -19,9 +19,7 @@ beforeEach(() =>
   act(() => {
     usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
     useUiStore.setState({
-      language: "en",
       route: "projections",
-      mode: "nominal",
     });
   }),
 );

@@ -14,11 +14,7 @@ import { ru } from "../../../i18n/ru";
 
 const DICTS = { en, cs, ru };
 
-beforeEach(() =>
-  act(() =>
-    useUiStore.setState({ language: "en", route: "guide", guideTerm: null }),
-  ),
-);
+beforeEach(() => act(() => useUiStore.setState({ route: "guide" })));
 
 function guideText(): string {
   const { container } = render(<Guide />);

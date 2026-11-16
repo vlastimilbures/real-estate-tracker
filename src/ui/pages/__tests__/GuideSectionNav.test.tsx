@@ -11,11 +11,7 @@ import { en } from "../../../i18n/en";
 import { ru } from "../../../i18n/ru";
 import { guideSections } from "../../model/guideSections";
 
-beforeEach(() =>
-  act(() =>
-    useUiStore.setState({ language: "en", route: "guide", guideTerm: null }),
-  ),
-);
+beforeEach(() => act(() => useUiStore.setState({ route: "guide" })));
 
 describe("Guide section navigation (ADR 0213)", () => {
   it("names the nav and links every section, in order", () => {

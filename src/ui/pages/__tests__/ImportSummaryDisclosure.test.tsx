@@ -3,10 +3,9 @@
 // ADR 0203 §3 (#381), ADR 0160: the Import lists keep their default open state. An add
 // list opens when one of its adds has notes; the update list opens in the preview and is
 // shut in the report.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { ImportSummary } from "../ImportPanels";
-import { useUiStore } from "../../../state/uiStore";
 import type { ImportItem } from "../../../state/csv";
 import { en } from "../../../i18n/en";
 
@@ -32,10 +31,6 @@ const update: ImportItem = {
   date: "2021-01-17",
   changes: [{ field: "interest_rate_pa", before: "0.0169", after: "0.0179" }],
 };
-
-beforeEach(() => {
-  act(() => useUiStore.setState({ language: "en" }));
-});
 
 const expanded = (name: string) =>
   screen.getByRole("button", { name }).getAttribute("aria-expanded");

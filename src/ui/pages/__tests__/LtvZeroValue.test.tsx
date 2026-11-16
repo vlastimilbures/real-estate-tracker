@@ -2,7 +2,7 @@
 //
 // ADR 0133 (#129 item 5): with no value, LTV and the yields read "n/a" with no band badge
 // — not 0 % in the "Conservative" band.
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import {
   applyScenario,
@@ -53,8 +53,6 @@ const crashed = applyScenario(assumptions, {
   valueShock: { pct: rate("1"), atYear: 0 },
 });
 const crashedRows = portfolioProjection(portfolio, crashed);
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 /** The index of the table's LTV column, from its header. */
 function ltvColumn(): number {

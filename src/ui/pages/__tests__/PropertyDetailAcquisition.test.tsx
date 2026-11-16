@@ -57,13 +57,7 @@ beforeEach(() => {
   vi.stubGlobal("IntersectionObserver", NoObserver);
   act(() => {
     useUiStore.setState({
-      language: "en",
       route: "property",
-      asOf: null,
-      amortizationOpen: false,
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
     });
   });
 });

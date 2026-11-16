@@ -38,7 +38,7 @@ const previewCsv = vi.fn(async () => ({
 
 beforeEach(() =>
   act(() => {
-    useUiStore.setState({ language: "en", route: "import", failure: null });
+    useUiStore.setState({ route: "import" });
     usePortfolioStore.setState({
       portfolio,
       assumptions,

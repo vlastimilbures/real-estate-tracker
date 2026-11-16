@@ -3,21 +3,18 @@
 // ADR 0214 (#391): the explanations that sat in panel headers are help lines in the
 // body (or one click away), and a panel ends with at most one note. ADR 0217 (#416):
 // definitions sit behind the info icon in the head; instructions stay help lines.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import { ScenarioListPanel } from "../ScenariosPanels";
 import { MortgagesPanel } from "../PropertyEntityPanels";
 import { AcquisitionPanel } from "../PropertyDetailPanels";
 import type { AcquisitionView } from "../../model/acquisition";
-import { useUiStore } from "../../../state/uiStore";
 import { DEFAULT_SHOCK_YEARS } from "../ScenarioForm";
 import { D } from "../../../lib/money";
 import { en } from "../../../i18n/en";
 
 const sc = en.scenarios;
 const pd = en.propertyDetail;
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 const panelOf = (title: string) =>
   screen.getByRole("heading", { name: title }).closest("section")!;

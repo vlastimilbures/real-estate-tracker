@@ -2,8 +2,8 @@
 //
 // ADR 0126 (#129): no debt shows no DSCR badge (not "Shortfall"), and a multiple with no
 // growth base (null) shows "—" on the hero foot and in the KPI list.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import {
   isoDate,
   portfolioKpis,
@@ -12,7 +12,6 @@ import {
   type Portfolio,
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { KpiStrip, KpiListPanel } from "../DashboardPanels";
 import { renderStrip } from "./kpiStripSupport";
@@ -20,8 +19,6 @@ import { PropertySnapshotTiles } from "../PropertyDetailPanels";
 
 const debtFree: Portfolio = { ...portfolio, mortgages: [] };
 const N = assumptions.horizonYears;
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 /** The tile whose label is `label`. */
 function tile(label: string): HTMLElement {

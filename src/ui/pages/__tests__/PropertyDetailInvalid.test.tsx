@@ -32,10 +32,8 @@ beforeEach(() =>
       status: "ready",
     });
     useUiStore.setState({
-      language: "en",
       route: "property",
       selectedPropertyId: owner.id,
-      asOf: null,
     });
   }),
 );

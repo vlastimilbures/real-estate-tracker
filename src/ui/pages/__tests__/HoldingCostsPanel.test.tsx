@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 //
 // ADR 0207 (#385): holding costs get a read view with Edit, like the other records.
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { money, rate, type HoldingCost } from "../../../engine";
@@ -45,17 +45,6 @@ function renderPanel(
 const edit = () => screen.getByRole("button", { name: p.editHoldingCosts });
 const value = (label: string) =>
   screen.getByText(label, { selector: "dt" }).nextElementSibling?.textContent;
-
-beforeEach(() =>
-  act(() =>
-    useUiStore.setState({
-      language: "en",
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
-    }),
-  ),
-);
 
 describe("Holding costs read view (ADR 0207 §1)", () => {
   it("shows no form at rest: the six values, a blank field as its default", () => {

@@ -18,7 +18,7 @@ beforeEach(() => {
   previewCsv.mockReset();
   previewCsv.mockResolvedValue({ items: [], problems: [], fingerprint: "f" });
   act(() => {
-    useUiStore.setState({ language: "en", route: "import", lastImport: null });
+    useUiStore.setState({ route: "import" });
     usePortfolioStore.setState({
       portfolio,
       assumptions,

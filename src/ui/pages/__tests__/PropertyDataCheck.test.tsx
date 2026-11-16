@@ -47,13 +47,8 @@ beforeEach(() => {
       portfolio,
       assumptions,
       status: "ready",
-      scenarios: [],
-      unreadableScenarios: [],
     });
     useUiStore.setState({
-      language: "en",
-      mode: "nominal",
-      asOf: null,
       route: "property",
       selectedPropertyId: p.id,
     });

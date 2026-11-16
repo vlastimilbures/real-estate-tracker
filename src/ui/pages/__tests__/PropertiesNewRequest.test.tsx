@@ -14,9 +14,7 @@ beforeEach(() => {
   act(() => {
     usePortfolioStore.setState({ portfolio, assumptions });
     useUiStore.setState({
-      language: "en",
       route: "properties",
-      newPropertyRequested: false,
     });
   });
 });

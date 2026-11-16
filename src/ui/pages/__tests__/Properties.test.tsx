@@ -39,7 +39,7 @@ const first = portfolio.properties[0]!;
 beforeEach(() =>
   act(() => {
     usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
-    useUiStore.setState({ language: "en", route: "properties" });
+    useUiStore.setState({ route: "properties" });
   }),
 );
 

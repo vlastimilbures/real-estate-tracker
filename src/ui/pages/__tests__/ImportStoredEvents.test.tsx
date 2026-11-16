@@ -62,10 +62,7 @@ beforeEach(() => {
   });
   act(() => {
     useUiStore.setState({
-      language: "en",
       route: "import",
-      lastImport: null,
-      unsavedChanges: false,
     });
     usePortfolioStore.setState({
       portfolio,
