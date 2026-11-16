@@ -99,6 +99,48 @@ do not regenerate the baseline to make it pass — on a pull request,
 `pnpm depcruise:baseline-check` fails when the baseline gained an entry against the base
 branch.
 
+### Function size and complexity
+
+ESLint caps every function in `src` (tests excluded) by length (`max-lines-per-function`,
+blank lines and comments not counted) and `complexity`. The limits live in
+`scripts/size-limits.mjs`:
+
+| Zone                          | Lines | Complexity |
+| ----------------------------- | ----- | ---------- |
+| Components (`src/**/*.tsx`)   | 150   | 15         |
+| Other code (`src/**/*.ts`)    | 80    | 12         |
+| Engine (`src/engine/**/*.ts`) | 60    | 10         |
+
+Functions over a limit when the rules arrived (#456) are baselined in two files:
+
+- `function-size-baseline.json` records each function's measured lines and complexity,
+  keyed by ESLint's name for it (`Function 'Import'`). An unnamed function is keyed by the
+  nearest enclosing named function and what it is bound to
+  (`Arrow function (useUiStore: create)`, `Arrow function (ScenarioForm > [initialDraft]: useState)`),
+  never by line. Functions that still share a key in a file (two `Method 'render'`, two
+  `useEffect` callbacks in one component) form a bag, stored as a list from the largest
+  down. A bag is checked as a whole: no more entries than the baseline, and no value higher
+  than the baseline's at the same rank. So inside one bag a new function can take the place
+  of one that was fixed, but never with a higher value or as an extra entry.
+- `eslint-suppressions.json` (ESLint's own bulk suppressions) keeps `eslint .` green for
+  them, with no inline disables. It counts per file and rule only, and must hold exactly the
+  size-rule counts the baseline implies: an entry for any other rule fails the check.
+
+`pnpm lint` runs `pnpm lint:size` after ESLint. It fails when a function is new over a limit,
+when a listed one grew, and when one shrank or is gone; then run `pnpm lint:size --update`,
+which only lowers or removes baseline entries and rewrites the suppressions from them. Use it
+rather than the `--prune-suppressions` that ESLint suggests. On a pull request,
+`pnpm lint:size:baseline-check` fails when the baseline gained an entry or a number against
+the base branch.
+
+Never add to either file to get a change through: split the function. A decomposition PR runs
+`pnpm lint:size --update` and commits both files. A pure move or rename of a baselined file
+needs one hand edit: move its entries to the new path in `function-size-baseline.json`, then
+run `pnpm lint:size --update`. The base check accepts the move only when the old file is gone
+and the new one did not exist on the base branch, with the same keys and no higher values.
+Renaming a baselined function needs the same hand edit (rename its key), and the base check
+reports it as an added entry: say so in the PR so the reviewer can confirm it is a rename.
+
 ## Engine and parity
 
 - Write engine tests first. Engine changes keep the parity tests green: money within ±1 Kč,
