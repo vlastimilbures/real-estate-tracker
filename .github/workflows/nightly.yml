@@ -6,14 +6,21 @@ name: Nightly (mutation testing, bench budgets, property runs)
 # in the same run (ADR 0066, ADR 0073, ADR 0172). Scheduled runs of these two skip when
 # main has no commit in the last 24 h; a manual run always runs both.
 #
-# The property job runs every fast-check property test at 2000 runs every night, quiet
-# days included: the seed, not the code, is what changes (#232, #167). The seed is the
-# run's UTC creation date (YYYYMMDD), so "Re-run failed jobs" replays it.
+# The property job runs the whole test suite with every fast-check property test at 2000
+# runs every night, quiet days included: the seed, not the code, is what changes (#232,
+# #167, #443). The seed is the run's UTC creation date (YYYYMMDD), so "Re-run failed jobs"
+# replays it.
+#
+# A run with a failed, timed-out or cancelled job opens one issue labelled
+# `nightly-failure`, or comments on the open one, with the run, each job's result and, when
+# the property job failed or timed out, the seed and the reproduce line (#443). Close the
+# issue once the cause is fixed; the next failure opens a new one.
 #
 # Stryker runs incrementally (ADR 0151): the previous run's result file is restored from the
 # Actions cache, so only mutants in changed engine code or tests rerun. The first run on a
-# branch has no cache and tests every mutant (~2.5 h on a 4-vCPU runner), hence the
-# timeout; later runs take minutes. Caches made on main are visible to every branch.
+# branch has no cache and tests every mutant: ~6 h on a 4-vCPU runner (run 43834527278),
+# past the 300-minute job timeout, pending AC3 of #443. Later runs take minutes. Caches made
+# on main are visible to every branch.
 on:
   schedule:
     - cron: "17 2 * * *"
@@ -138,22 +145,17 @@ jobs:
   properties:
     name: Property tests (2000 runs)
     runs-on: ubuntu-latest
-    # 2000 runs take ~50 s locally (slowest test ~30 s). Vitest cannot interrupt a
-    # synchronous fc.assert, so this bounds a long shrink or a hang; the seed is printed
-    # before the tests start, and again as an error annotation when they fail.
+    # The whole suite at 2000 runs takes a few minutes (slowest property test ~30 s).
+    # Vitest cannot interrupt a synchronous fc.assert, so this bounds a long shrink or a
+    # hang; the seed is printed before the tests start, and again as an error annotation
+    # when they fail.
     timeout-minutes: 45
     permissions:
       contents: read
       actions: read # the run's creation date, for the seed
-    env:
-      # Every file whose fast-check runs come from fcRuns (src/engine/__tests__/support).
-      FILES: >-
-        src/engine/__tests__/properties.test.ts
-        src/engine/__tests__/real-kpis.test.ts
-        src/engine/__tests__/financing.test.ts
-        src/engine/__tests__/irr-equivalence.test.ts
-        src/engine/__tests__/loan-event-invariants.test.ts
-        src/engine/__tests__/reference/loanEvents.property.test.ts
+    outputs:
+      seed: ${{ steps.seed.outputs.seed }}
+      repro: ${{ steps.seed.outputs.repro }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -171,6 +173,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Pick the seed
+        id: seed
         env:
           INPUT_SEED: ${{ inputs.fc_seed }}
           GH_TOKEN: ${{ github.token }}
@@ -185,11 +188,15 @@ jobs:
             echo "fc_seed must be 1-9 digits, got '$seed'" >&2
             exit 1
           fi
-          repro="FC_SEED=$seed FC_RUNS=2000 pnpm exec vitest run $FILES"
+          repro="FC_SEED=$seed FC_RUNS=2000 pnpm exec vitest run"
           {
             echo "FC_SEED=$seed"
             echo "REPRO=$repro"
           } >> "$GITHUB_ENV"
+          {
+            echo "seed=$seed"
+            echo "repro=$repro"
+          } >> "$GITHUB_OUTPUT"
           echo "Seed $seed. Reproduce locally: $repro"
           {
             echo "### Property tests"
@@ -199,14 +206,82 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # The whole suite, not a file list: a new property file needs no workflow change.
       - name: Property tests
         env:
           FC_RUNS: "2000"
-        # FILES is unquoted on purpose: one argument per file.
-        run: pnpm exec vitest run $FILES
+        run: pnpm exec vitest run
 
       - name: Print the seed on failure
         # Only once a seed was picked: a failed install has no seed to report.
         if: failure() && env.FC_SEED != ''
         run: |
           echo "::error title=Property tests failed::Seed $FC_SEED. Reproduce locally: $REPRO"
+
+  report:
+    name: Report a failure
+    needs: [changed, mutation, bench, properties]
+    # Any failed job, or one that hit its timeout-minutes (it ends `cancelled`), scheduled
+    # or dispatched on any branch. A manual cancel reports too.
+    if: always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # One report at a time, so two failing runs cannot both open an issue.
+    concurrency:
+      group: nightly-report
+      cancel-in-progress: false
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the nightly-failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          CHANGED: ${{ needs.changed.result }}
+          MUTATION: ${{ needs.mutation.result }}
+          BENCH: ${{ needs.bench.result }}
+          PROPERTIES: ${{ needs.properties.result }}
+          SEED: ${{ needs.properties.outputs.seed }}
+          REPRO: ${{ needs.properties.outputs.repro }}
+        run: |
+          label=nightly-failure
+          gh label create "$label" --color B60205 \
+            --description "A nightly run failed (nightly.yml)" 2>/dev/null || true
+          title="Nightly run failed"
+          if [[ "$REF" != main ]]; then title="$title (branch $REF)"; fi
+          # A job that hits timeout-minutes ends `cancelled`, like a manual cancel.
+          result() { if [[ "$1" == cancelled ]]; then echo "timed out or cancelled"; else echo "$1"; fi; }
+          {
+            echo "$title: $RUN_URL"
+            echo
+            echo "Trigger \`$EVENT\` on \`$REF\` @ \`${SHA:0:8}\`."
+            echo
+            echo "| Job | Result |"
+            echo "| --- | --- |"
+            echo "| Main changed in 24 h? | $(result "$CHANGED") |"
+            echo "| Stryker (src/engine) | $(result "$MUTATION") |"
+            echo "| Engine bench budgets | $(result "$BENCH") |"
+            echo "| Property tests (2000 runs) | $(result "$PROPERTIES") |"
+            if [[ "$PROPERTIES" == failure || "$PROPERTIES" == cancelled ]]; then
+              echo
+              if [[ -n "$SEED" ]]; then
+                echo "Property seed \`$SEED\`. Reproduce locally:"
+                echo
+                echo '```sh'
+                echo "$REPRO"
+                echo '```'
+              else
+                echo "No property seed was picked (the job failed before it)."
+              fi
+            fi
+          } > body.md
+          num=$(gh issue list --label "$label" --state open --limit 1 --json number --jq '.[0].number // empty')
+          if [[ -n "$num" ]]; then
+            gh issue comment "$num" --body-file body.md
+          else
+            gh issue create --title "$title" --label "$label" --body-file body.md
+          fi
