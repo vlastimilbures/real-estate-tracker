@@ -3,12 +3,12 @@
 // UX-038: after a successful import the loaded files are cleared, so the same files
 // cannot be imported twice by a second click.
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Import } from "../Import";
+import { renderWithPortfolio } from "../../../__tests__/support/world";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
-import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { propertiesTemplate } from "../../../import/csv";
 import { en } from "../../../i18n/en";
 
@@ -38,20 +38,13 @@ const previewCsv = vi.fn(async () => ({
 
 beforeEach(() =>
   act(() => {
-    useUiStore.setState({ route: "import" });
-    usePortfolioStore.setState({
-      portfolio,
-      assumptions,
-      status: "ready",
-      importCsv,
-      previewCsv,
-    } as never);
+    usePortfolioStore.setState({ importCsv, previewCsv } as never);
   }),
 );
 
 describe("Import after success (UX-038)", () => {
   it("clears the loaded files and offers no second import", async () => {
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     const input = container.querySelector(
       'input[type="file"]',
     ) as HTMLInputElement;
@@ -82,7 +75,7 @@ describe("Import after success (UX-038)", () => {
 describe("Import failure (ADR 0154)", () => {
   it("is reported in the notice, which follows the owner to any page", async () => {
     importCsv.mockRejectedValueOnce(new Error("database is locked"));
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     const input = container.querySelector(
       'input[type="file"]',
     ) as HTMLInputElement;

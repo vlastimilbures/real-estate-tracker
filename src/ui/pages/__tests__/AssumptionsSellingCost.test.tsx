@@ -4,14 +4,14 @@
 // rate, with help). Unset reads 0 %, a percentage saves as a fraction, and a rate outside
 // 0–100 % is refused on its own field by the engine rule.
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SettingsPage } from "../Settings";
+import { renderWithPortfolio } from "../../../__tests__/support/world";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { validateInputs, type Assumptions } from "../../../engine";
-import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import { portfolio } from "../../../engine/__tests__/support/seed";
 
 const en = getDict("en");
 const save = vi.fn(async (a: Assumptions) => {
@@ -23,17 +23,7 @@ const save = vi.fn(async (a: Assumptions) => {
 
 beforeEach(() => {
   save.mockClear();
-  act(() => {
-    useUiStore.setState({
-      route: "settings",
-    });
-    usePortfolioStore.setState({
-      portfolio,
-      assumptions,
-      status: "ready",
-      saveAssumptions: save,
-    });
-  });
+  act(() => usePortfolioStore.setState({ saveAssumptions: save }));
 });
 
 const field = () =>
@@ -49,7 +39,7 @@ async function saveWith(text: string) {
 
 describe("Assumptions — selling costs (ADR 0183)", () => {
   it("shows 0 % when unset, with its help text", () => {
-    render(<SettingsPage />);
+    renderWithPortfolio(<SettingsPage />, { route: "settings" });
     expect(field()).toHaveProperty("value", "0");
     expect(field().closest(".field")!.textContent).toContain(
       en.assumptions.sellingCostHelp,
@@ -57,7 +47,7 @@ describe("Assumptions — selling costs (ADR 0183)", () => {
   });
 
   it("sits right after the post-fixation reset rate", () => {
-    render(<SettingsPage />);
+    renderWithPortfolio(<SettingsPage />, { route: "settings" });
     const labels = [...document.querySelectorAll(".field label")].map(
       (l) => l.textContent ?? "",
     );
@@ -70,14 +60,14 @@ describe("Assumptions — selling costs (ADR 0183)", () => {
   });
 
   it("saves 3.5 % as 0.035", async () => {
-    render(<SettingsPage />);
+    renderWithPortfolio(<SettingsPage />, { route: "settings" });
     await saveWith("3.5");
     expect(save).toHaveBeenCalledTimes(1);
     expect(save.mock.calls[0]![0].sellingCostPct?.toString()).toBe("0.035");
   });
 
   it("refuses 150 % on the field", async () => {
-    render(<SettingsPage />);
+    renderWithPortfolio(<SettingsPage />, { route: "settings" });
     await saveWith("150");
     expect(
       await screen.findByText(en.inputRules.RATE_OUT_OF_RANGE),

@@ -4,12 +4,13 @@
 // mortgage block: a refusal names the stored event, an added block lists the events it
 // stops and asks first, and a block without effect is noted.
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Import } from "../Import";
+import { renderWithPortfolio } from "../../../__tests__/support/world";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
-import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import { portfolio } from "../../../engine/__tests__/support/seed";
 import { propertiesTemplate } from "../../../import/csv";
 import {
   CsvPlanChangedError,
@@ -61,16 +62,7 @@ beforeEach(() => {
     items: [replacing],
   });
   act(() => {
-    useUiStore.setState({
-      route: "import",
-    });
-    usePortfolioStore.setState({
-      portfolio,
-      assumptions,
-      status: "ready",
-      importCsv,
-      previewCsv,
-    } as never);
+    usePortfolioStore.setState({ importCsv, previewCsv } as never);
   });
 });
 
@@ -104,7 +96,7 @@ describe("Import and stored loan events (ADR 0160)", () => {
       ],
       fingerprint: "plan-x",
     });
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);
     expect(
       await screen.findByText(
@@ -120,7 +112,7 @@ describe("Import and stored loan events (ADR 0160)", () => {
 
   it("an added block lists the events it stops and asks before importing", async () => {
     previewCsv.mockResolvedValue(plan([replacing]));
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);
 
     expect(
@@ -150,7 +142,7 @@ describe("Import and stored loan events (ADR 0160)", () => {
 
   it("Cancel on the replace confirmation imports nothing", async () => {
     previewCsv.mockResolvedValue(plan([replacing]));
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);
     await userEvent.click(
       await screen.findByRole("button", { name: p.importScope(1, 1, 0) }),
@@ -164,7 +156,7 @@ describe("Import and stored loan events (ADR 0160)", () => {
 
   it("a portfolio change closes the replace confirmation (#286)", async () => {
     previewCsv.mockResolvedValue(plan([replacing]));
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);
     await userEvent.click(
       await screen.findByRole("button", { name: p.importScope(1, 1, 0) }),
@@ -181,7 +173,7 @@ describe("Import and stored loan events (ADR 0160)", () => {
     importCsv.mockRejectedValueOnce(
       new CsvPlanChangedError({ ...plan([replacing]), fingerprint: "plan-2" }),
     );
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);
     await userEvent.click(
       await screen.findByRole("button", { name: p.importScope(1, 1, 0) }),
@@ -207,7 +199,7 @@ describe("Import and stored loan events (ADR 0160)", () => {
 
   it("with updates too, the confirm row names both and keeps the overwrite button", async () => {
     previewCsv.mockResolvedValue(plan([replacing, update]));
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);
     await userEvent.click(
       await screen.findByRole("button", { name: p.importScope(2, 1, 1) }),
@@ -224,7 +216,7 @@ describe("Import and stored loan events (ADR 0160)", () => {
     previewCsv.mockResolvedValue(
       plan([{ ...block, date: "2021-01-07", noEffect: true }]),
     );
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);
     expect(await screen.findByText(p.noEffectNote)).toBeTruthy();
 
@@ -243,7 +235,7 @@ describe("Import and stored loan events (ADR 0160)", () => {
         },
       }),
     );
-    render(<Import />);
+    renderWithPortfolio(<Import />, { route: "import" });
     expect(
       screen.getByText(p.replacedEvent(issue.RECAST_REPLACED("17.01.2033"))),
     ).toBeTruthy();

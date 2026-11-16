@@ -6,16 +6,14 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   act,
   fireEvent,
-  render,
   screen,
   waitFor,
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Import } from "../Import";
+import { renderWithPortfolio } from "../../../__tests__/support/world";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
-import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { valuationsTemplate } from "../../../state/csv";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
@@ -28,13 +26,7 @@ beforeEach(() => {
   previewCsv.mockReset();
   previewCsv.mockResolvedValue({ items: [], problems: [], fingerprint: "f" });
   act(() => {
-    useUiStore.setState({ route: "import" });
-    usePortfolioStore.setState({
-      portfolio,
-      assumptions,
-      status: "ready",
-      previewCsv,
-    } as never);
+    usePortfolioStore.setState({ previewCsv } as never);
   });
 });
 
@@ -53,7 +45,7 @@ const valuations = () =>
 
 describe("Import files: one panel, one row per type (ADR 0212 §1)", () => {
   it("lists the four types in order with their file names, in one panel", () => {
-    render(<Import />);
+    renderWithPortfolio(<Import />, { route: "import" });
     expect(screen.getByRole("list").getAttribute("role")).toBe("list");
     const panel = screen
       .getByRole("heading", { name: p.filesTitle })
@@ -73,7 +65,7 @@ describe("Import files: one panel, one row per type (ADR 0212 §1)", () => {
   });
 
   it("each control's name says its type (§3)", () => {
-    render(<Import />);
+    renderWithPortfolio(<Import />, { route: "import" });
     for (const [title] of types) {
       const row = rowOf(title);
       expect(
@@ -86,7 +78,7 @@ describe("Import files: one panel, one row per type (ADR 0212 §1)", () => {
   });
 
   it("a chosen file's name, status and re-upload sit on its row", async () => {
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     const inputs = container.querySelectorAll('input[type="file"]');
     await userEvent.upload(inputs[1] as HTMLInputElement, valuations());
     await waitFor(() => expect(previewCsv).toHaveBeenCalled());
@@ -104,7 +96,7 @@ describe("Import files: one panel, one row per type (ADR 0212 §1)", () => {
 
 describe("each row is its own drop target (ADR 0212 §2)", () => {
   it("a file dropped on a row is that row's type, whatever its name", async () => {
-    render(<Import />);
+    renderWithPortfolio(<Import />, { route: "import" });
     const row = rowOf(p.valuationsTitle);
     fireEvent.dragOver(row, { dataTransfer: { files: [] } });
     expect(row.className).toContain("drag-over");
@@ -129,7 +121,7 @@ describe("each row is its own drop target (ADR 0212 §2)", () => {
   });
 
   it("moving onto the row's own parts keeps the state; leaving the row clears it", () => {
-    render(<Import />);
+    renderWithPortfolio(<Import />, { route: "import" });
     const row = rowOf(p.rentsTitle);
     const button = within(row).getByRole("button", {
       name: p.chooseFileFor(p.rentsTitle),
@@ -148,7 +140,7 @@ describe("each row is its own drop target (ADR 0212 §2)", () => {
 
 describe("a file's errors sit under its row (ADR 0212 §4)", () => {
   it("lists the errors in a table inside the row", async () => {
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     const inputs = container.querySelectorAll('input[type="file"]');
     await userEvent.upload(
       inputs[1] as HTMLInputElement,

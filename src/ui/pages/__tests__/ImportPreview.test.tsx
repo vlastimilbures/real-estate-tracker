@@ -3,12 +3,13 @@
 // ADR 0096 (#34): the Import page previews adds and updates, asks before overwriting,
 // refuses a plan that changed since the preview, and keeps the report with links.
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Import } from "../Import";
+import { renderWithPortfolio } from "../../../__tests__/support/world";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
-import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import { portfolio } from "../../../engine/__tests__/support/seed";
 import { propertiesTemplate } from "../../../import/csv";
 import {
   CsvPlanChangedError,
@@ -53,16 +54,7 @@ beforeEach(() => {
   previewCsv.mockReset();
   importCsv.mockReset();
   act(() => {
-    useUiStore.setState({
-      route: "import",
-    });
-    usePortfolioStore.setState({
-      portfolio,
-      assumptions,
-      status: "ready",
-      importCsv,
-      previewCsv,
-    } as never);
+    usePortfolioStore.setState({ importCsv, previewCsv } as never);
   });
 });
 
@@ -80,7 +72,7 @@ describe("Import preview (ADR 0096)", () => {
   it("a date before 1900 is refused with a message that names the floor (ADR 0149)", async () => {
     const [header] = propertiesTemplate().split("\n");
     const csv = `${header}\nA,,,,,1850-01-01,100,,,,,\n`;
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     const input = container.querySelector(
       'input[type="file"]',
     ) as HTMLInputElement;
@@ -95,7 +87,7 @@ describe("Import preview (ADR 0096)", () => {
 
   it("a failed preview shows why Import is unavailable (#122)", async () => {
     previewCsv.mockRejectedValue(new Error("disk I/O error"));
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
 
     await waitFor(() => expect(previewCsv).toHaveBeenCalled());
@@ -108,7 +100,7 @@ describe("Import preview (ADR 0096)", () => {
 
   it("the failed-preview banner cannot be dismissed (ADR 0175, #258 item 7)", async () => {
     previewCsv.mockRejectedValue(new Error("disk I/O error"));
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
 
     const banner = (await screen.findByText(/could not be checked/)).closest(
@@ -122,7 +114,7 @@ describe("Import preview (ADR 0096)", () => {
   it("the failed-preview error goes once the files are previewed again (ADR 0147)", async () => {
     previewCsv.mockRejectedValueOnce(new Error("disk I/O error"));
     previewCsv.mockResolvedValue(plan([add]));
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
     await screen.findByText(/could not be checked/);
 
@@ -139,7 +131,7 @@ describe("Import preview (ADR 0096)", () => {
     importCsv.mockResolvedValue({
       items: [add],
     });
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
 
     expect(
@@ -159,7 +151,7 @@ describe("Import preview (ADR 0096)", () => {
     importCsv.mockResolvedValue({
       items: [add, update],
     });
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
 
     expect(await screen.findByText("Lipova 5 → Lipova 7")).toBeTruthy();
@@ -178,7 +170,7 @@ describe("Import preview (ADR 0096)", () => {
 
   it("Cancel on the confirm row imports nothing", async () => {
     previewCsv.mockResolvedValue(plan([update]));
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
     await userEvent.click(
       await screen.findByRole("button", { name: p.importScope(1, 0, 1) }),
@@ -192,7 +184,7 @@ describe("Import preview (ADR 0096)", () => {
 
   it("a change to the stored data closes the confirm row and previews again", async () => {
     previewCsv.mockResolvedValue(plan([update]));
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
     await userEvent.click(
       await screen.findByRole("button", { name: p.importScope(1, 0, 1) }),
@@ -219,7 +211,7 @@ describe("Import preview (ADR 0096)", () => {
       ],
       fingerprint: "plan-x",
     });
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
     expect(await screen.findByText(p.errUnknownProperty("Nope"))).toBeTruthy();
     expect(
@@ -236,7 +228,7 @@ describe("Import preview (ADR 0096)", () => {
     importCsv.mockRejectedValue(
       new CsvPlanChangedError(plan([update], "plan-3")),
     );
-    const { container } = render(<Import />);
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
     await userEvent.click(
       await screen.findByRole("button", { name: p.importScope(1, 1, 0) }),
@@ -253,7 +245,7 @@ describe("Import report (ADR 0096)", () => {
     importCsv.mockResolvedValue({
       items: [add],
     });
-    const first = render(<Import />);
+    const first = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(first.container);
     await userEvent.click(
       await screen.findByRole("button", { name: p.importScope(1, 1, 0) }),
@@ -262,7 +254,7 @@ describe("Import report (ADR 0096)", () => {
     first.unmount();
 
     // Back on the page later: the report is still there.
-    render(<Import />);
+    renderWithPortfolio(<Import />, { route: "import" });
     expect(screen.getByText(p.reportTitle)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: p.added(1) }));
     await userEvent.click(screen.getByRole("button", { name: "Byt Javorova" }));
