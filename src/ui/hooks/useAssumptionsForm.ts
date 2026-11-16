@@ -1,6 +1,6 @@
 // The Assumptions form's state (ADR 0095, 0221): the draft, its errors and the save. The
 // Settings page holds it, so the form and the Save/Discard in the top bar read one draft.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { isDirty } from "../model/dirty";
@@ -153,19 +153,29 @@ export function useAssumptionsForm(active: boolean) {
   // Bumped on a failed save so the error summary takes focus once it renders.
   const [summaryFocus, setSummaryFocus] = useState(0);
 
-  const reset = () => {
+  // Bumped by a reset: a save that was running when the draft was dropped (the tab left
+  // through the guard) must not write its outcome into the form shown later.
+  const generation = useRef(0);
+  const clearDraft = () => {
     setDraft(null);
     setErrors({});
     setFormError(null);
     setFailed(false);
+  };
+  const reset = () => {
+    generation.current += 1;
+    clearDraft();
   };
 
   // Leaving the tab drops the draft (adjusting state on a prop change, during render).
   const [wasActive, setWasActive] = useState(active);
   if (wasActive !== active) {
     setWasActive(active);
-    if (!active) reset();
+    if (!active) clearDraft();
   }
+  useEffect(() => {
+    if (!active) generation.current += 1;
+  }, [active]);
 
   // re-sync when store loads / changes underneath
   const current = draft ?? initial;
@@ -239,8 +249,10 @@ export function useAssumptionsForm(active: boolean) {
     // summary when it names no field shown here (ADR 0141); any other failure shows in
     // the AppShell banner. The success toast shows only when the write landed.
     setSaving(true);
+    const started = generation.current;
     void saveAssumptions(next).then((result) => {
       setSaving(false);
+      if (generation.current !== started) return;
       if (!result.ok) {
         const split = formWriteErrors(
           t,

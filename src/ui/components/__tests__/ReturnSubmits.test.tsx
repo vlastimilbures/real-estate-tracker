@@ -129,4 +129,30 @@ describe("Return submits forms (UX-028)", () => {
     await userEvent.type(horizon, "25{Enter}");
     expect(saveAssumptions).toHaveBeenCalledTimes(1);
   });
+
+  it("Assumptions: Return with nothing changed does not save (ADR 0221 §2)", async () => {
+    const saveAssumptions = vi.fn(async () => ({ ok: true as const }));
+    act(() => usePortfolioStore.setState({ saveAssumptions }));
+    render(<SettingsPage />);
+    await userEvent.type(
+      screen.getByLabelText(en.assumptions.horizon),
+      "{Enter}",
+    );
+    expect(saveAssumptions).not.toHaveBeenCalled();
+  });
+
+  it("Assumptions: Return on a button in the form (the date picker) does not save", async () => {
+    const saveAssumptions = vi.fn(async () => ({ ok: true as const }));
+    act(() => usePortfolioStore.setState({ saveAssumptions }));
+    const { container } = render(<SettingsPage />);
+    const horizon = screen.getByLabelText(en.assumptions.horizon);
+    await userEvent.clear(horizon);
+    await userEvent.type(horizon, "25");
+    const button = container.querySelector<HTMLButtonElement>(
+      "form.assumptions-form button",
+    )!;
+    button.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(saveAssumptions).not.toHaveBeenCalled();
+  });
 });

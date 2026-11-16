@@ -297,6 +297,7 @@
   padding: 0 0 var(--s1);
 }
 .tab-strip [role="tab"] {
+  line-height: inherit;
   background: none;
   border-top: none;
   border-left: none;
@@ -1864,10 +1865,18 @@ table.data tbody tr:hover td.sticky-col {
   color: var(--negative);
 }
 
-/* The Assumptions state text, Discard and Save in the Settings top bar (ADR 0221). */
+/* The Assumptions state text, Discard and Save in the Settings top bar (ADR 0221); a
+   long state text (Russian "save failed") wraps the buttons under it, never squeezes. */
 .form-actions.topbar-form-actions {
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   margin: 0;
+}
+/* A field focused from the error summary or by Shift+Tab is never under the sticky top
+   bar (ADR 0095 §5, 0221 §2). */
+.assumptions-form :is(input, select, textarea) {
+  scroll-margin-top: calc(var(--topbar-h, 0px) + var(--s3));
 }
 .topbar-form-actions .form-state {
   margin-right: var(--s1);

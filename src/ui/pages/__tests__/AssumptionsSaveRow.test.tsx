@@ -171,8 +171,6 @@ describe("Assumptions error summary (ADR 0095)", () => {
     await setField(en.assumptions.inflation, "3");
     await userEvent.click(saveButton());
     expect(save).toHaveBeenCalledTimes(1);
-    expect(
-      screen.queryByRole("group", { name: en.common.fieldsNeedAttention(1) }),
-    ).toBeNull();
+    expect(document.querySelector(".error-summary")).toBeNull();
   });
 });

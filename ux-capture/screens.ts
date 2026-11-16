@@ -2344,6 +2344,8 @@ export const SCREENS: Screen[] = [
         .getByRole("button", { name: ux.t.common.saveChanges })
         .click();
       await expect(ux.page.locator(".field.invalid")).toBeVisible();
+      // The failed state text fits the top bar (ADR 0221 §2).
+      await expectSettingsTopBar(ux, "assumptions");
       await ux.capture("61-settings-assumptions-error");
     },
   },
@@ -2365,6 +2367,8 @@ export const SCREENS: Screen[] = [
         .getByRole("button", { name: ux.t.common.saveChanges })
         .click();
       await expect(ux.page.locator(".field.invalid")).toHaveCount(2);
+      // The failed state text fits the top bar (ADR 0221 §2).
+      await expectSettingsTopBar(ux, "assumptions");
       await ux.capture("62-settings-assumptions-bounds");
     },
   },

@@ -32,12 +32,20 @@ on the top bar's right.
 2. **Save in the top bar.** On the Assumptions tab the state text ("Unsaved changes",
    "All changes saved", "Save failed — your input is kept"), **Discard changes** (ghost)
    and **Save changes** (primary) sit in the top bar's actions. Save submits the form
-   through `form=`, so Return in a field still saves. The sticky row at the bottom of the
-   form (`.sticky-actions`) goes. The Backup tab shows no actions.
+   through `form=`; Return in a field saves through the form's own key handler (not
+   implicit submission, which a button outside the form need not get), only while there
+   are unsaved edits, and not on the Return that commits an input-method composition.
+   The sticky row at the bottom of the form (`.sticky-actions`) goes. The Backup tab
+   shows no actions. A long state text wraps the buttons under it.
+   **Never hidden** (replaces ADR 0095 §5): a focused field scrolls clear of the sticky
+   top bar (`scroll-margin-top` from `--topbar-h`).
+   **Focus order:** Save and Discard now come before the fields in Tab order (they are in
+   the top bar); from the last field Return saves, so no Tab back up is needed.
 3. **Unchanged:** the fields, the "Scenarios override these" intro line, the button and
    state rules of ADR 0095 §2–§3, the error summary and its focus (§4, it stays after the
    fields), the success toast, and the unsaved-changes guard. Leaving the tab through the
-   guard drops the draft, as before.
+   guard drops the draft, as before, and a save still running then does not write its
+   outcome into the form shown on return.
 4. The form state moves into a `useAssumptionsForm` hook used by the Settings page, so the
    top bar and the form read the same draft.
 

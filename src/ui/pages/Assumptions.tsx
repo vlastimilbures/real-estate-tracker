@@ -74,9 +74,13 @@ export function AssumptionsPanel({
         // button sits in the top bar (ADR 0221), so this does not rely on implicit
         // submission reaching a button outside the form. Disabled while nothing changed.
         const el = e.target as HTMLElement;
+        // keyCode 229: WebKit's Enter that commits an IME composition (isComposing is
+        // already false by then).
         if (
           e.key !== "Enter" ||
+          e.defaultPrevented ||
           e.nativeEvent.isComposing ||
+          e.nativeEvent.keyCode === 229 ||
           el.tagName !== "INPUT"
         )
           return;
