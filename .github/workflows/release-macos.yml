@@ -30,14 +30,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-
-      - name: Set up Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-          cache: pnpm
+      - name: Set up pnpm, Node and dependencies
+        uses: ./.github/actions/setup
 
       # Fail before building: tag v1.4.1 with package.json still at 1.4.0 would publish a
       # 1.4.0 dmg under the 1.4.1 release.
@@ -53,9 +47,6 @@ jobs:
             echo "::error::tag $GITHUB_REF_NAME is not on main"
             exit 1
           fi
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
 
       - name: Install Rust toolchain
         run: rustup toolchain install && rustup show active-toolchain

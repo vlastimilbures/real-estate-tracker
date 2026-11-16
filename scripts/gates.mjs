@@ -328,7 +328,6 @@ export function runGates(gates, { exec = shell, log = console.log } = {}) {
 // ci.yml lines that set a job up and are no gate. The docs fast path's subset of the suite
 // goes when #459 removes the fast path.
 export const CI_SETUP = [
-  "pnpm install --frozen-lockfile",
   "pnpm exec playwright install --with-deps chromium",
   'bash "$RUNNER_TEMP/ci-changes.sh"',
 ];
