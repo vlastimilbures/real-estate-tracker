@@ -2,13 +2,10 @@
 //
 // RecordForm's optional hooks: typed values to onSubmit (ADR 0074), cross-field
 // `validate`, the live `computeHint` and inline `fieldActions` buttons.
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RecordForm } from "../forms";
-import { useUiStore } from "../../../state/uiStore";
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 function renderForm(onSubmit = vi.fn()) {
   render(

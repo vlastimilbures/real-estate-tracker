@@ -8,7 +8,6 @@ import { act, render, screen } from "@testing-library/react";
 import { CompareView } from "../ScenarioCompare";
 import { ErrorBoundary } from "../../components/ErrorBoundary";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { rate, type Scenario } from "../../../engine";
 import { en } from "../../../i18n/en";
@@ -27,7 +26,6 @@ const vacancy: Scenario = {
 
 beforeEach(() =>
   act(() => {
-    useUiStore.setState({ language: "en", mode: "nominal" });
     usePortfolioStore.setState({ portfolio, assumptions });
   }),
 );

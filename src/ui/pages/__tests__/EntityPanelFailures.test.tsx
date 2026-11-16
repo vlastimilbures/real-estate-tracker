@@ -2,11 +2,10 @@
 //
 // UX-050 (DR-058): a failed delete keeps the confirm row open and says why, next to the
 // buttons; a refused save keeps the form open with the reason in the form.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { EntityPanel } from "../../components/EntityPanel";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import type { FieldSpec } from "../../model/formParse";
 import type { MutationResult } from "../../../state/portfolioStore";
@@ -17,8 +16,6 @@ const gone: MutationResult = {
   ok: false,
   error: { kind: "data", code: "ROW_MISSING", details: ["leases a"] },
 };
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 function renderPanel(result: MutationResult) {
   render(

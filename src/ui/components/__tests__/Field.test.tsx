@@ -2,19 +2,16 @@
 //
 // UX-018: every form control has a programmatic name, and an invalid field is marked
 // aria-invalid with its error (or hint) linked through aria-describedby.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Field, SelectInput, TextArea } from "../fields";
 import { RecordForm } from "../forms";
 import { PropertyFormModal } from "../PropertyFormModal";
 import { ScenarioForm } from "../../pages/ScenarioForm";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { assumptions } from "../../../engine/__tests__/support/seed";
 import type { FieldSpec } from "../../model/formParse";
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 /** Every input/select/textarea under `root` has an accessible name source. */
 function unlabelled(root: HTMLElement): string[] {

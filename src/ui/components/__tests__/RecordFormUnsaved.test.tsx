@@ -2,11 +2,10 @@
 //
 // ADR 0095: a record form says "Unsaved changes" next to its buttons while it holds
 // unsaved edits, and nothing while it is clean.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RecordForm } from "../forms";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import type { FieldSpec } from "../../model/formParse";
 
@@ -14,16 +13,6 @@ const en = getDict("en");
 const specs: FieldSpec[] = [
   { name: "monthlyRent", label: "Monthly rent", kind: "money" },
 ];
-
-beforeEach(() =>
-  act(() =>
-    useUiStore.setState({
-      language: "en",
-      unsavedSources: [],
-      unsavedChanges: false,
-    }),
-  ),
-);
 
 describe("RecordForm unsaved state (ADR 0095)", () => {
   it("shows Unsaved changes in the footer only while edited", async () => {

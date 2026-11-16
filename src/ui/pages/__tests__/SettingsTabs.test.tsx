@@ -33,11 +33,7 @@ describe("Settings tab pattern (#128 R5-15)", () => {
   beforeEach(() =>
     act(() =>
       useUiStore.setState({
-        language: "en",
         route: "settings",
-        settingsTab: "assumptions",
-        unsavedChanges: false,
-        pendingLeave: null,
       }),
     ),
   );

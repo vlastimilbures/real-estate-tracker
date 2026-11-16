@@ -63,14 +63,6 @@ const reach = "hits 3 of 3 loans (fixation end 2029, 2031)";
 
 beforeEach(() => {
   act(() => {
-    useUiStore.setState({
-      language: "en",
-      mode: "nominal",
-      compareIds: [],
-      compareBase: true,
-      crashAtYear: 0,
-      presetsOpen: null,
-    });
     usePortfolioStore.setState({ portfolio, assumptions, scenarios: [rates] });
   });
 });

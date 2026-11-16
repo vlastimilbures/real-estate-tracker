@@ -3,11 +3,10 @@
 // #350 (ADR 0194): the stale-data and edit-error banners are read aloud only on the page
 // where they first show. Each page mounts its own shell; a later page shows the banner
 // without a live role. A new edit error, or the data turning stale again, is announced.
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { AppShell } from "../AppShell";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import type { WriteError } from "../../../state/writeError";
 import { describeWriteError } from "../../model/writeError";
@@ -30,17 +29,6 @@ const writeError = (message: string): WriteError => ({
   kind: "other",
   message,
 });
-
-beforeEach(() =>
-  act(() => {
-    useUiStore.setState({ language: "en", route: "dashboard" });
-    usePortfolioStore.setState({
-      stale: false,
-      staleEpisode: null,
-      error: null,
-    });
-  }),
-);
 
 describe("kept app banners announce once (#350)", () => {
   it("the stale banner is live on its first page only, and again for a new episode", () => {

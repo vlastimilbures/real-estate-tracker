@@ -4,14 +4,14 @@
 // bad field shows its kind's format hint, and money defaults are 0 or more like every
 // other form (ADR 0075, DR-176).
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SettingsPage } from "../Settings";
+import { renderWithPortfolio } from "../../../__tests__/support/world";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import type { Assumptions } from "../../../engine";
-import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import { assumptions } from "../../../engine/__tests__/support/seed";
 
 const en = getDict("en");
 const save = vi.fn<(a: Assumptions) => Promise<{ ok: true }>>(async () => ({
@@ -20,19 +20,7 @@ const save = vi.fn<(a: Assumptions) => Promise<{ ok: true }>>(async () => ({
 
 beforeEach(() => {
   save.mockClear();
-  act(() => {
-    useUiStore.setState({
-      language: "en",
-      route: "settings",
-      settingsTab: "assumptions",
-    });
-    usePortfolioStore.setState({
-      portfolio,
-      assumptions,
-      status: "ready",
-      saveAssumptions: save,
-    });
-  });
+  act(() => usePortfolioStore.setState({ saveAssumptions: save }));
 });
 
 const startsWith = (label: string) =>
@@ -46,7 +34,7 @@ async function setField(label: string, text: string) {
 
 describe("Assumptions save", () => {
   it("saves the parsed values", async () => {
-    render(<SettingsPage />);
+    renderWithPortfolio(<SettingsPage />, { route: "settings" });
     await setField(en.assumptions.other, "500");
     await setField(en.assumptions.inflation, "3");
     await userEvent.click(
@@ -64,7 +52,7 @@ describe("Assumptions save", () => {
   });
 
   it("rejects a negative money default with the amount hint (ADR 0075)", async () => {
-    render(<SettingsPage />);
+    renderWithPortfolio(<SettingsPage />, { route: "settings" });
     await setField(en.assumptions.other, "-500");
     await userEvent.click(
       screen.getByRole("button", { name: en.common.saveChanges }),
@@ -77,7 +65,7 @@ describe("Assumptions save", () => {
   });
 
   it("shows the format hint for a blank field and does not save", async () => {
-    render(<SettingsPage />);
+    renderWithPortfolio(<SettingsPage />, { route: "settings" });
     await setField(en.assumptions.inflation, "");
     await userEvent.click(
       screen.getByRole("button", { name: en.common.saveChanges }),
@@ -90,7 +78,7 @@ describe("Assumptions save", () => {
   });
 
   it("bounds the horizon to 1–100 years with the range hint (ADR 0075)", async () => {
-    render(<SettingsPage />);
+    renderWithPortfolio(<SettingsPage />, { route: "settings" });
     for (const years of ["0", "101"]) {
       await setField(en.assumptions.horizon, years);
       await userEvent.click(

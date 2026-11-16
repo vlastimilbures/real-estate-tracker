@@ -3,8 +3,8 @@
 // ADR 0200 (#375), ADR 0222 (#421): one band of six cells in two captioned groups, as of
 // and at the horizon; the figures that left the tiles are in the KPI list, so none
 // leaves the page, and the basis and the horizon are each named once, in a caption.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import {
   addYears,
   money,
@@ -15,7 +15,6 @@ import {
 } from "../../../engine";
 import type { IsoDate } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { projectionSeries } from "../../model/projection";
 import {
@@ -80,8 +79,6 @@ function renderStrip(
 
 const part = (tile: HTMLElement, cls: string) =>
   tile.querySelector<HTMLElement>(`:scope > .${cls}`)!;
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 /** The band's groups: each a group named by its caption, with its cells' labels. */
 function groupsOf(container: HTMLElement) {

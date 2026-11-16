@@ -23,7 +23,6 @@ import {
   SafetyBackupError,
 } from "../../../data/backup";
 
-vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("../../../state/diagnostics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../state/diagnostics")>()),
   logFailure: vi.fn(),
@@ -77,7 +76,6 @@ beforeEach(() => {
   restoreBackup.mockReset();
   revealDataDir.mockReset();
   act(() => {
-    useUiStore.setState({ language: "en" });
     usePortfolioStore.setState({
       status: "ready",
       portfolio,
@@ -86,12 +84,6 @@ beforeEach(() => {
       restoreBackup,
       replacing: 0,
     } as never);
-    useUiStore.setState({
-      notice: null,
-      failure: null,
-      toast: null,
-      lastImport: null,
-    });
   });
 });
 

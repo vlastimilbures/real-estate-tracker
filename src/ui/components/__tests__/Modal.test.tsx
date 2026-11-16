@@ -2,20 +2,17 @@
 //
 // UX-029: a modal keeps keyboard focus inside while open, returns it to the opener on
 // close, and ignores Esc / backdrop clicks while it holds unsaved input.
-import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import { useState } from "react";
-import { act, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Modal } from "../Modal";
 import { DateInput } from "../DateInput";
 import { ScenarioForm } from "../../pages/ScenarioForm";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { assumptions } from "../../../engine/__tests__/support/seed";
 
 const en = getDict("en");
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 // DateInput loads the calendar on the first open (DR-009). Load its module up front:
 // under coverage the first transform can outlast findBy's 1 s wait.

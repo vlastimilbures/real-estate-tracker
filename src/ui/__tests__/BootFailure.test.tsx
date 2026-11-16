@@ -8,7 +8,6 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { App } from "../App";
 import { usePortfolioStore } from "../../state/portfolioStore";
-import { useUiStore } from "../../state/uiStore";
 import { en } from "../../i18n/en";
 import { getDict } from "../../i18n";
 import type { DataErrorCode, UpgradeStop } from "../../data/errors";
@@ -45,7 +44,6 @@ const button = (name: string) => screen.queryByRole("button", { name });
 beforeEach(() => {
   init.mockClear();
   revealDataDir.mockReset();
-  act(() => useUiStore.setState({ language: "en" }));
 });
 
 describe("startup error screen (UX-057)", () => {

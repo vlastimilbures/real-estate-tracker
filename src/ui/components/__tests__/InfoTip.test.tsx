@@ -2,16 +2,13 @@
 //
 // ADR 0217 (#416): a definition sits behind an info icon beside the panel title; an
 // instruction stays a visible help line.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Panel } from "../primitives";
 import { InfoTip } from "../InfoTip";
 import { placeTip } from "../../model/infoTip";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 const nameOf = (topic: string) => `${en.common.aboutThis}: ${topic}`;
 const popoverOf = (button: HTMLElement) =>

@@ -14,11 +14,7 @@ import type { WriteError } from "../../../state/writeError";
 beforeEach(() =>
   act(() =>
     useUiStore.setState({
-      language: "en",
       route: "property",
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
     }),
   ),
 );

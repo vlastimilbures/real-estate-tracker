@@ -2,11 +2,10 @@
 //
 // ADR 0195 §3 (#373): a tile's band shows as a marker and its word at the start of the
 // foot; the label row holds only the label, so it stays on one line.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { portfolioSnapshot, propertySnapshot } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import {
   dscrBand,
@@ -16,8 +15,6 @@ import {
 } from "../../model/health";
 import { renderStrip } from "./kpiStripSupport";
 import { PropertySnapshotTiles } from "../PropertyDetailPanels";
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 function tileOf(el: HTMLElement): HTMLElement {
   return el.closest(".tile") as HTMLElement;

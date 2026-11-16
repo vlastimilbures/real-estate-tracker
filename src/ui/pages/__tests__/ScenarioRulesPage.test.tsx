@@ -4,14 +4,13 @@
 // form with the rule on its field, and a stored row the app cannot read is listed and
 // deleted through the store.
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Scenarios } from "../Scenarios";
+import { renderWithPortfolio } from "../../../__tests__/support/world";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import type { WriteError } from "../../../state/writeError";
-import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 
 // The compare runs the engine; these tests only need the form and the list.
 vi.mock("../ScenarioCompare", () => ({ CompareView: () => null }));
@@ -45,12 +44,7 @@ beforeEach(() => {
   addScenario.mockClear();
   removeScenario.mockClear();
   act(() => {
-    useUiStore.setState({ language: "en", compareIds: [], compareBase: true });
     usePortfolioStore.setState({
-      portfolio,
-      assumptions,
-      status: "ready",
-      scenarios: [],
       unreadableScenarios: [{ id: "bad", name: "Broken" }],
       addScenario,
       removeScenario,
@@ -60,7 +54,7 @@ beforeEach(() => {
 
 describe("Scenarios page (ADR 0123)", () => {
   it("keeps a refused new scenario in the form, with the rule on Value crash", async () => {
-    render(<Scenarios />);
+    renderWithPortfolio(<Scenarios />);
     await userEvent.click(
       screen.getAllByRole("button", { name: sc.addScenario })[0]!,
     );
@@ -78,7 +72,7 @@ describe("Scenarios page (ADR 0123)", () => {
   });
 
   it("lists an unreadable row and deletes it through the store", async () => {
-    render(<Scenarios />);
+    renderWithPortfolio(<Scenarios />);
     expect(screen.getByText(sc.unreadableRow)).toBeTruthy();
     await userEvent.click(
       screen.getByRole("button", { name: en.common.delete }),

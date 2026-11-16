@@ -30,18 +30,6 @@ async function openSeeded(): Promise<Sql> {
   return sql;
 }
 
-beforeEach(() => {
-  // Reset the singleton so each test gets a clean store + a fresh DB on init().
-  usePortfolioStore.setState({
-    sql: null,
-    portfolio: null,
-    assumptions: null,
-    status: "idle",
-    error: null,
-    startupError: null,
-  });
-});
-
 describe("portfolioStore mutations", () => {
   it("returns an error result (not a throw) when the database is not initialised", async () => {
     const result = await usePortfolioStore

@@ -28,13 +28,6 @@ beforeEach(() => {
   handlers.clear();
   (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
   act(() => {
-    useUiStore.setState({
-      language: "en",
-      route: "dashboard",
-      newPropertyRequested: false,
-      unsavedChanges: false,
-      pendingLeave: null,
-    });
     // The error screen keeps the render small; the menu bridge is mounted regardless.
     usePortfolioStore.setState({
       status: "error",

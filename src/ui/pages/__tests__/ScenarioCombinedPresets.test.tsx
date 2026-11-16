@@ -2,12 +2,11 @@
 //
 // ADR 0104 (#55): the "Combined" preset group saves a scenario that holds every part of
 // its recipe in one click, and its crash follows the "When" timing (ADR 0101).
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { PresetBar } from "../ScenariosPanels";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { rate, type ScenarioOverrides } from "../../../engine";
 
@@ -34,8 +33,6 @@ function Harness({
 const MILD = "Mild: Rates +2pp for 3y · Price crash −10%";
 const SEVERE =
   "Severe: Rates +4pp for 3y · Inflation +3pp for 3y · Price crash −20%";
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("combined stress presets (#55)", () => {
   it("shows a Combined group with Mild and Severe", () => {

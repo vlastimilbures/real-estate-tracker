@@ -9,13 +9,10 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { getDict } from "../../i18n";
 import { menuLabels } from "../model/menu";
+import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 
-const invoke = vi.hoisted(() =>
-  vi.fn<(cmd: string, args?: unknown) => Promise<undefined>>(
-    async () => undefined,
-  ),
-);
-vi.mock("@tauri-apps/api/core", () => ({ invoke }));
+const invoke = vi.mocked(tauriInvoke);
+invoke.mockResolvedValue(undefined);
 vi.mock("@tauri-apps/api/event", () => ({
   listen: vi.fn(async () => () => undefined),
 }));
@@ -26,7 +23,6 @@ const sent = () =>
 beforeEach(() => {
   invoke.mockClear();
   act(() => {
-    useUiStore.setState({ language: "en" });
     // The error screen keeps the render small; the menu bridge is mounted regardless.
     usePortfolioStore.setState({
       status: "error",

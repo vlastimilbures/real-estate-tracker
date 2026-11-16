@@ -36,19 +36,10 @@ function setSample(active: boolean, dismissed = false) {
 
 beforeEach(() =>
   act(() => {
-    useUiStore.setState({
-      language: "en",
-      route: "dashboard",
-      settingsTab: "assumptions",
-      notice: null,
-      unsavedSources: [],
-      unsavedChanges: false,
-    });
     usePortfolioStore.setState({
       status: "ready",
       portfolio,
       assumptions,
-      scenarios: [],
       sample: { active: true, dismissed: false },
       clearSample: vi.fn(),
       dismissSampleBanner: vi.fn(),

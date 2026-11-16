@@ -14,8 +14,6 @@ import { en } from "../../../i18n/en";
 import { money, type Property } from "../../../engine";
 import { fmtCzk } from "../../../lib/format";
 
-vi.mock("../../../data/errorLog", () => ({ logFailure: vi.fn() }));
-
 const pd = en.propertyDetail;
 
 class NoObserver {
@@ -57,13 +55,7 @@ beforeEach(() => {
   vi.stubGlobal("IntersectionObserver", NoObserver);
   act(() => {
     useUiStore.setState({
-      language: "en",
       route: "property",
-      asOf: null,
-      amortizationOpen: false,
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
     });
   });
 });

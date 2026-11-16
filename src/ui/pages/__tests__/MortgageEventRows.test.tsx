@@ -37,24 +37,13 @@ let save: ReturnType<
 let seed: MortgageBlock;
 
 beforeEach(async () => {
-  usePortfolioStore.setState({
-    sql: null,
-    portfolio: null,
-    assumptions: null,
-    status: "idle",
-    error: null,
-    startupError: null,
-  });
   await act(() => usePortfolioStore.getState().init(openSeeded));
   const state = usePortfolioStore.getState();
   seed = state.portfolio!.mortgages.find((m) => m.propertyId === "javorova")!;
   save = vi.fn(storeSave);
   act(() => {
     useUiStore.setState({
-      language: "en",
       route: "property",
-      unsavedSources: [],
-      unsavedChanges: false,
     });
     usePortfolioStore.setState({ saveMortgageBlock: save });
   });

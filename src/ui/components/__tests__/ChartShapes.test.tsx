@@ -12,11 +12,10 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { act, render } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { ChartCard } from "../charts";
 import { SERIES } from "../../model/chartData";
-import { useUiStore } from "../../../state/uiStore";
 
 type TooltipProps = {
   content?: (p: {
@@ -74,7 +73,6 @@ afterAll(() => {
 beforeEach(() => {
   tooltips.length = 0;
   fills.length = 0;
-  act(() => useUiStore.setState({ language: "en" }));
 });
 
 /** The tooltip the chart handed to Recharts, rendered for one hovered year. */

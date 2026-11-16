@@ -33,10 +33,7 @@ beforeEach(() => {
   save.mockClear();
   act(() => {
     useUiStore.setState({
-      language: "en",
       route: "property",
-      unsavedSources: [],
-      unsavedChanges: false,
     });
     usePortfolioStore.setState({
       addMortgageBlock: add,

@@ -12,10 +12,9 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { act, render } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { ChartCard } from "../charts";
-import { useUiStore } from "../../../state/uiStore";
 
 type TooltipProps = {
   filterNull?: boolean;
@@ -68,7 +67,6 @@ afterAll(() => {
 });
 beforeEach(() => {
   seen.length = 0;
-  act(() => useUiStore.setState({ language: "en" }));
 });
 
 const rows = [

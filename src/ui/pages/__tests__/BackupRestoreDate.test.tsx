@@ -9,15 +9,12 @@ import userEvent from "@testing-library/user-event";
 import { invoke } from "@tauri-apps/api/core";
 import { BackupRestorePanel } from "../BackupRestore";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { openMemorySql } from "../../../data/__tests__/betterSqlite";
 import { migrate } from "../../../data/migrations";
 import { seedIfEmpty } from "../../../data/seed";
 import { exportToJson } from "../../../data/backup";
-
-vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 
 const suiteTz = process.env.TZ;
 beforeAll(() => {
@@ -32,7 +29,6 @@ afterAll(() => {
 beforeEach(() => {
   vi.mocked(invoke).mockReset();
   act(() => {
-    useUiStore.setState({ language: "en" });
     usePortfolioStore.setState({
       status: "ready",
       portfolio,

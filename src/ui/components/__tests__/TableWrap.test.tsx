@@ -1,14 +1,11 @@
 // @vitest-environment jsdom
 //
 // UX-024: a scrolling table is a named, keyboard-focusable region.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { TableWrap } from "../primitives";
 import { ProjectionGrid } from "../ProjectionGrid";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("TableWrap (UX-024)", () => {
   it("is a focusable region named by its label", () => {

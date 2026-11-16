@@ -19,8 +19,6 @@ import { en } from "../../../i18n/en";
 import { isoDate, money } from "../../../engine";
 import { fmtCzk, fmtDate } from "../../../lib/format";
 
-vi.mock("../../../data/errorLog", () => ({ logFailure: vi.fn() }));
-
 const loan = portfolio.mortgages[0];
 const owner = portfolio.properties.find((p) => p.id === loan.propertyId)!;
 const pd = en.propertyDetail;
@@ -72,14 +70,8 @@ beforeEach(() => {
   setPortfolio(portfolio);
   act(() => {
     useUiStore.setState({
-      language: "en",
       route: "property",
       selectedPropertyId: owner.id,
-      asOf: null,
-      amortizationOpen: false,
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
     });
   });
 });
@@ -264,9 +256,7 @@ describe("Property detail data check (ADR 0118)", () => {
   };
 
   beforeEach(() => {
-    act(() =>
-      useUiStore.setState({ asOf: assumptions.baseDate, propertyTarget: null }),
-    );
+    act(() => useUiStore.setState({ asOf: assumptions.baseDate }));
   });
 
   it("lists the property's findings; a fix link moves to the section that fixes it", async () => {

@@ -2,23 +2,13 @@
 //
 // ADR 0219 (#419): the left bar's navigation in two groups, the pages on top and the
 // tools above the footer; the footer is unchanged.
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import { AppShell } from "../AppShell";
 import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 
 const n = en.nav;
-
-beforeEach(() =>
-  act(() =>
-    useUiStore.setState({
-      language: "en",
-      route: "dashboard",
-      sidebarCollapsed: false,
-    }),
-  ),
-);
 
 const shell = () =>
   render(

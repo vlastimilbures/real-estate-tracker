@@ -2,14 +2,12 @@
 //
 // ADR 0214 (#391): the Valuations and Leases explanations leave the panel header for the
 // body. ADR 0217 (#416): both are definitions, so both sit behind the info icon.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import { ValuationsPanel, LeasesPanel } from "../PropertyEntityPanels";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 
 const d = en.propertyDetail;
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 const panelOf = (title: string) =>
   screen.getByRole("heading", { name: title }).closest("section")!;

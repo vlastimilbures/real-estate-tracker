@@ -16,10 +16,7 @@ import { money, type IsoDate } from "../../engine";
 import { logFailure } from "../../data/errorLog";
 import { importNow } from "./support/importNow";
 
-vi.mock("../../data/errorLog", () => ({ logFailure: vi.fn() }));
-vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn(() => Promise.resolve()),
-}));
+vi.mocked(invoke).mockResolvedValue(undefined);
 
 /** `real`, but the reload's snapshot read fails: the write commits, the reload after it
  *  fails. A snapshot that reads `schema_migrations` stands for `exportToJson` (the safety
@@ -43,16 +40,6 @@ function gate() {
 let db: TestSql;
 
 beforeEach(async () => {
-  usePortfolioStore.setState({
-    sql: null,
-    portfolio: null,
-    assumptions: null,
-    sample: { active: false, dismissed: false },
-    status: "idle",
-    error: null,
-    startupError: null,
-    stale: false,
-  });
   db = openMemorySql();
   await usePortfolioStore.getState().init(async () => {
     await migrate(db);

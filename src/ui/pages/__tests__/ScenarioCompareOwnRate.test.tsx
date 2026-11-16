@@ -17,7 +17,6 @@ import {
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import type { CompareResult } from "../../model/compare";
 
@@ -58,7 +57,6 @@ beforeEach(() => {
   save.mockReset();
   save.mockResolvedValue({ kind: "saved", filename: "x.xlsx" });
   act(() => {
-    useUiStore.setState({ language: "en", mode: "nominal" });
     usePortfolioStore.setState({
       portfolio: { ...portfolio, properties: [own, ...rest] },
     });

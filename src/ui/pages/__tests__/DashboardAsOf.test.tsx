@@ -2,8 +2,8 @@
 //
 // ADR 0088 (#13): at a future as-of date no Dashboard tile or hint says "today" or
 // "current", and the horizon tile names its end year whatever the as-of date.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import {
   addYears,
   portfolioKpis,
@@ -12,7 +12,6 @@ import {
 } from "../../../engine";
 import type { IsoDate } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { projectionSeries } from "../../model/projection";
 import { asOfView, horizonEndYear, tilesForAsOf } from "../../model/dashboard";
@@ -45,8 +44,6 @@ function renderAt(asOf: IsoDate, isToday: boolean) {
     />,
   );
 }
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("Dashboard as-of labels (ADR 0088, 0200)", () => {
   const endYear = horizonEndYear(series);

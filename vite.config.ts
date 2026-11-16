@@ -50,9 +50,14 @@ export default defineConfig({
     ],
     // The app loads only the active dictionary (DR-009); tests get all three up front.
     // The jsdom file stubs scrollTo and matchMedia once for every jsdom test (#141).
+    // stores.ts resets both stores before every ui/state test and mocks.ts mocks errorLog
+    // and Tauri core for them; audit.ts records assertion counts when TEST_AUDIT=1 (#458).
     setupFiles: [
       "src/i18n/__tests__/preload.ts",
       "src/__tests__/setup/jsdom.ts",
+      "src/__tests__/setup/stores.ts",
+      "src/__tests__/setup/mocks.ts",
+      "src/__tests__/setup/audit.ts",
     ],
     // Engine benchmarks (P9, `pnpm bench`); git-ignored evidence benches stay out.
     benchmark: { include: ["src/**/*.bench.ts"] },

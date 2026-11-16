@@ -2,7 +2,7 @@
 //
 // ADR 0114 (#24, #25): a chart surface has a name, the legend and the tooltip show each
 // series' colour and dash in a swatch, and tooltip labels are text-coloured.
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { ChartCard, Tip } from "../charts";
 import { seriesTipItems } from "../../model/chartData";
@@ -38,7 +38,6 @@ afterAll(() => {
   HTMLElement.prototype.getBoundingClientRect = realRect;
   window.matchMedia = realMatchMedia;
 });
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 const rows = [
   { year: 0, calendarYear: 2026, s0: 5_000_000, s1: 5_000_000 },

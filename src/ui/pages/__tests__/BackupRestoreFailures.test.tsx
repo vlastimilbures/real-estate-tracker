@@ -9,12 +9,10 @@ import { invoke } from "@tauri-apps/api/core";
 import { BackupRestorePanel } from "../BackupRestore";
 import { OutcomeRegions } from "../../components/OutcomeRegions";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { logFailure } from "../../../state/diagnostics";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 
-vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("../../../state/diagnostics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../state/diagnostics")>()),
   logFailure: vi.fn(),
@@ -27,7 +25,6 @@ beforeEach(() => {
   vi.mocked(invoke).mockReset();
   loadSample.mockReset();
   act(() => {
-    useUiStore.setState({ language: "en", notice: null, failure: null });
     usePortfolioStore.setState({
       status: "ready",
       portfolio: { ...portfolio, properties: [] },

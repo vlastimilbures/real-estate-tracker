@@ -25,19 +25,13 @@ const EMPTY = {
 beforeEach(() => {
   act(() => {
     useUiStore.setState({
-      language: "en",
       route: "settings",
       settingsTab: "backup",
-      unsavedSources: [],
-      unsavedChanges: false,
     });
     usePortfolioStore.setState({
       status: "ready",
       portfolio: EMPTY,
       assumptions,
-      scenarios: [],
-      sample: { active: false, dismissed: false },
-      backup: { lastAt: null, lastFile: null, changedSince: false },
       loadSample: vi.fn(),
     });
   });

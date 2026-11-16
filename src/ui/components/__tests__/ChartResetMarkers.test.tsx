@@ -2,10 +2,9 @@
 //
 // ADR 0210 (#382): upcoming fixation ends as markers on a value chart: a dashed line with
 // a diamond per marked year, a legend entry, and the year's resets in its tooltip.
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { ChartCard, Tip } from "../charts";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { D } from "../../../lib/money";
 import { fmtCzk } from "../../../lib/format";
@@ -41,7 +40,6 @@ afterAll(() => {
   HTMLElement.prototype.getBoundingClientRect = realRect;
   window.matchMedia = realMatchMedia;
 });
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 const rows = [2026, 2027, 2028, 2029].map((calendarYear, year) => ({
   year,

@@ -1,16 +1,7 @@
 // Navigation/presentation store: pure synchronous state, no DB. Driven directly via
 // getState() (zustand works outside React), so no DOM is needed.
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MAX_COMPARE, useUiStore } from "../uiStore";
-
-beforeEach(() => {
-  // Reset the singleton to its initial state before each test.
-  useUiStore.setState({
-    route: "dashboard",
-    selectedPropertyId: null,
-    mode: "nominal",
-  });
-});
 
 describe("uiStore", () => {
   it("starts on the dashboard, nominal lens, no property selected", () => {
@@ -43,14 +34,6 @@ describe("uiStore", () => {
 
 // UX-066 (DR-143): File ▸ New Property… (⌘N) opens the Add form on Properties.
 describe("requestNewProperty", () => {
-  beforeEach(() => {
-    useUiStore.setState({
-      newPropertyRequested: false,
-      unsavedChanges: false,
-      pendingLeave: null,
-    });
-  });
-
   it("goes to Properties and asks it to open the Add form", () => {
     useUiStore.getState().requestNewProperty();
     const s = useUiStore.getState();
@@ -76,14 +59,6 @@ describe("requestNewProperty", () => {
 
 // Several forms can hold unsaved edits at once; each registers under its own key.
 describe("setUnsavedChanges", () => {
-  beforeEach(() => {
-    useUiStore.setState({
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
-    });
-  });
-
   it("stays unsaved until every form is clean", () => {
     const s = useUiStore.getState();
     s.setUnsavedChanges("a", true);
@@ -109,16 +84,6 @@ describe("setUnsavedChanges", () => {
 
 // ADR 0142 (#132): a record panel's row switch asks only when its own form is dirty.
 describe("guardedAction", () => {
-  beforeEach(() => {
-    useUiStore.setState({
-      route: "dashboard",
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
-      pendingSource: null,
-    });
-  });
-
   it("runs at once while its form is clean, even if another form is dirty", () => {
     const fn = vi.fn();
     const s = useUiStore.getState();
@@ -170,10 +135,6 @@ describe("guardedAction", () => {
 // ADR 0101 (#50): the Scenarios compare selection, Base toggle and crash timing last
 // for the session, so a detour to another page keeps them.
 describe("scenario compare state", () => {
-  beforeEach(() => {
-    useUiStore.setState({ compareIds: [], compareBase: true, crashAtYear: 0 });
-  });
-
   it("starts with nothing ticked, Base on, crash at the start", () => {
     const s = useUiStore.getInitialState();
     expect(s.compareIds).toEqual([]);
@@ -240,14 +201,6 @@ describe("scenario compare state", () => {
 
 // ADR 0118 (#35): a data check fix link opens a property on the section that fixes it.
 describe("data check state", () => {
-  beforeEach(() => {
-    useUiStore.setState({
-      propertyTarget: null,
-      unsavedChanges: false,
-      pendingLeave: null,
-    });
-  });
-
   it("openProperty() with a target records where the page lands, once", () => {
     useUiStore.getState().openProperty("lipova", "records");
     let s = useUiStore.getState();

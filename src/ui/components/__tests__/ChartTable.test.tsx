@@ -2,10 +2,9 @@
 //
 // UX-075 (DR-144): every chart card can show its data as a table — the keyboard and
 // screen-reader alternative to the mouse-only tooltips.
-import { describe, it, expect, beforeAll, beforeEach } from "vitest";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, it, expect, beforeAll } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { ChartCard } from "../charts";
-import { useUiStore } from "../../../state/uiStore";
 
 beforeAll(() => {
   // Recharts' ResponsiveContainer needs a ResizeObserver; jsdom has none.
@@ -15,7 +14,6 @@ beforeAll(() => {
     disconnect() {}
   } as unknown as typeof ResizeObserver;
 });
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 const rows = [
   {

@@ -3,10 +3,9 @@
 // #317 (ADR 0194): the projection grid and its export show a future purchase's value in
 // its purchase year (`acquiredValue`, ADR 0165), in a Purchases column right after Value.
 // Shown only when some year holds one; blank in the opening row; deflated under Real.
-import { beforeEach, describe, expect, it } from "vitest";
-import { act, render } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { render } from "@testing-library/react";
 import { ProjectionGrid } from "../components/ProjectionGrid";
-import { useUiStore } from "../../state/uiStore";
 import { portfolioProjection, type Portfolio } from "../../engine";
 import { assumptions, portfolio } from "../../engine/__tests__/support/seed";
 import { mixed } from "../../engine/__tests__/support/mixed";
@@ -71,8 +70,6 @@ const gridHeaders = (p: Portfolio) => {
     (th) => th.textContent,
   );
 };
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("Purchases column (#317)", () => {
   it("is absent when no future purchase lands in the horizon", () => {

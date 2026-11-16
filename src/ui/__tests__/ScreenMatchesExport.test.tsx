@@ -3,10 +3,9 @@
 // UX-062 (#174): the projection grid and the amortization table export what they show.
 // Every exported cell, read back with the screen's formatter, equals the cell on screen.
 import { describe, it, expect, beforeEach } from "vitest";
-import { act, cleanup, render } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import { ProjectionGrid } from "../components/ProjectionGrid";
 import { AmortizationTable } from "../pages/PropertyDetailPanels";
-import { useUiStore } from "../../state/uiStore";
 import { getDict } from "../../i18n";
 import {
   portfolioProjection,
@@ -32,7 +31,6 @@ const en = getDict("en");
 
 beforeEach(() => {
   cleanup();
-  act(() => useUiStore.setState({ language: "en" }));
 });
 
 /** An exported cell as the screen formats it; a money cell in either sign style. */

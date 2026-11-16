@@ -3,9 +3,8 @@
 // ADR 0149 §4 (#119 item 3): the as-of picker follows the day. Left open over midnight
 // at Today, its field shows the new day, and a blur does not save yesterday.
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { AsOfPicker } from "../AsOfPicker";
-import { useUiStore } from "../../../state/uiStore";
 import { isoDate } from "../../../engine";
 import { asOfBounds } from "../../model/asOf";
 
@@ -13,7 +12,6 @@ const bounds = asOfBounds(isoDate("2026-06-07"), 30);
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
-  act(() => useUiStore.setState({ language: "en" }));
 });
 afterEach(() => vi.useRealTimers());
 

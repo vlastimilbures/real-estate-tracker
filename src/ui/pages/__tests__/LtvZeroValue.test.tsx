@@ -2,8 +2,8 @@
 //
 // ADR 0133 (#129 item 5): with no value, LTV and the yields read "n/a" with no band badge
 // — not 0 % in the "Conservative" band.
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import {
   applyScenario,
   isoDate,
@@ -17,8 +17,7 @@ import {
   type Portfolio,
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
+import { renderWithPortfolio } from "../../../__tests__/support/world";
 import { en } from "../../../i18n/en";
 import { projectionSeries } from "../../model/projection";
 import { ProjectionGrid } from "../../components/ProjectionGrid";
@@ -53,8 +52,6 @@ const crashed = applyScenario(assumptions, {
   valueShock: { pct: rate("1"), atYear: 0 },
 });
 const crashedRows = portfolioProjection(portfolio, crashed);
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 /** The index of the table's LTV column, from its header. */
 function ltvColumn(): number {
@@ -128,15 +125,10 @@ describe("Property detail tiles", () => {
 
 describe("Properties table", () => {
   it("the LTV cell reads n/a with no band word", () => {
-    act(() =>
-      usePortfolioStore.setState({
-        portfolio: javorovaAtZero,
-        assumptions,
-        status: "ready",
-      }),
-    );
-    act(() => useUiStore.setState({ route: "properties" }));
-    render(<Properties />);
+    renderWithPortfolio(<Properties />, {
+      portfolio: javorovaAtZero,
+      route: "properties",
+    });
     const row = screen
       .getByRole("button", { name: javorova.name })
       .closest("tr") as HTMLElement;

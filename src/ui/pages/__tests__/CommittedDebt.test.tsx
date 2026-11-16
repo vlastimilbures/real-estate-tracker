@@ -3,8 +3,8 @@
 // ADR 0166 (#120), ADR 0169: a development flat under construction shows its drawn debt
 // and its value less the tranches not drawn yet; the debt tiles name the undrawn part and
 // the value tile the completed value. A portfolio with everything drawn shows no such note.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import {
   portfolioKpis,
   portfolioSnapshot,
@@ -13,15 +13,12 @@ import {
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { fmtCzkM, noBreak } from "../../../lib/format";
 import { D } from "../../../lib/money";
 import { undrawnPart } from "../../model/debt";
 import { KpiStrip } from "../DashboardPanels";
 import { PropertySnapshotTiles } from "../PropertyDetailPanels";
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 const only = <T extends { propertyId: string }>(rows: T[]) =>
   rows.filter((r) => r.propertyId === "dev");

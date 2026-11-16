@@ -32,15 +32,6 @@ const storedResetRate = async () =>
   ).map((r) => r.post_fixation_reset_rate_pa);
 
 beforeEach(async () => {
-  usePortfolioStore.setState({
-    sql: null,
-    portfolio: null,
-    assumptions: null,
-    scenarios: [],
-    status: "idle",
-    error: null,
-    startupError: null,
-  });
   await store().init(openSeeded);
 });
 

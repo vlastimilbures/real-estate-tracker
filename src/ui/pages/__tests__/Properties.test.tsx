@@ -2,8 +2,8 @@
 //
 // Properties table: the delete confirmation sits outside the scrolling table so it is
 // never clipped, and the actions column stays pinned (UX-019).
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { act, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Properties } from "../Properties";
 import {
@@ -27,6 +27,7 @@ import {
 import { fmtCzk, fmtCzkM, fmtDscr, fmtPct, noBreak } from "../../../lib/format";
 import { dscrBandWord, ltvBandWord } from "../../model/health";
 import type { Decimal } from "../../../lib/money";
+import { renderWithPortfolio } from "../../../__tests__/support/world";
 
 vi.mock("../../../lib/day", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/day")>()),
@@ -36,16 +37,13 @@ vi.mock("../../../lib/day", async (importOriginal) => ({
 const en = getDict("en");
 const first = portfolio.properties[0]!;
 
-beforeEach(() =>
-  act(() => {
-    usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
-    useUiStore.setState({ language: "en", route: "properties" });
-  }),
-);
+/** The Properties page on `p` (default: the sample). */
+const show = (p: Portfolio = portfolio) =>
+  renderWithPortfolio(<Properties />, { portfolio: p, route: "properties" });
 
 describe("Properties delete confirmation (UX-019)", () => {
   it("shows below the table, outside the scrolling area", async () => {
-    render(<Properties />);
+    show();
     const deletes = screen.getAllByRole("button", { name: en.common.delete });
     await userEvent.click(deletes[0]!);
     const msg = screen.getByText(en.properties.confirmDelete(first.name));
@@ -56,7 +54,7 @@ describe("Properties delete confirmation (UX-019)", () => {
   it("Cancel closes it without deleting", async () => {
     const removeProperty = vi.fn();
     act(() => usePortfolioStore.setState({ removeProperty }));
-    render(<Properties />);
+    show();
     await userEvent.click(
       screen.getAllByRole("button", { name: en.common.delete })[0]!,
     );
@@ -72,7 +70,7 @@ describe("Properties delete confirmation (UX-019)", () => {
   it("Yes, delete removes the named property", async () => {
     const removeProperty = vi.fn(async () => ({ ok: true as const }));
     act(() => usePortfolioStore.setState({ removeProperty }));
-    render(<Properties />);
+    show();
     await userEvent.click(
       screen.getAllByRole("button", { name: en.common.delete })[0]!,
     );
@@ -83,7 +81,7 @@ describe("Properties delete confirmation (UX-019)", () => {
   });
 
   it("pins the actions column", () => {
-    render(<Properties />);
+    show();
     const cell = screen
       .getAllByRole("button", { name: en.common.delete })[0]!
       .closest("td")!;
@@ -100,7 +98,7 @@ describe("Properties: a late delete closes only its own confirm (#248)", () => {
       () => new Promise<MutationResult>((r) => (finish = r)),
     );
     act(() => usePortfolioStore.setState({ removeProperty }));
-    render(<Properties />);
+    show();
     const second = portfolio.properties[1]!;
     await userEvent.click(
       screen.getAllByRole("button", { name: en.common.delete })[0]!,
@@ -127,7 +125,7 @@ describe("Properties: a late delete closes only its own confirm (#248)", () => {
       () => new Promise<MutationResult>((r) => (finish = r)),
     );
     act(() => usePortfolioStore.setState({ removeProperty }));
-    render(<Properties />);
+    show();
     const deletes = () =>
       screen.getAllByRole("button", { name: en.common.delete });
     await userEvent.click(deletes()[0]!);
@@ -145,7 +143,7 @@ describe("Properties: a late delete closes only its own confirm (#248)", () => {
 
 describe("Properties keyboard drill-in (UX-022)", () => {
   it("the property name is a button that opens the property", async () => {
-    render(<Properties />);
+    show();
     const name = screen.getByRole("button", { name: first.name });
     name.focus();
     await userEvent.keyboard("{Enter}");
@@ -154,7 +152,7 @@ describe("Properties keyboard drill-in (UX-022)", () => {
   });
 
   it("Space on the name opens it too", async () => {
-    render(<Properties />);
+    show();
     screen.getByRole("button", { name: first.name }).focus();
     await userEvent.keyboard(" ");
     expect(useUiStore.getState().selectedPropertyId).toBe(first.id);
@@ -163,14 +161,14 @@ describe("Properties keyboard drill-in (UX-022)", () => {
 
 describe("Properties long names and narrow windows (ADR 0085)", () => {
   it("truncates the name but keeps the full name on hover and for screen readers", () => {
-    render(<Properties />);
+    show();
     const name = screen.getByRole("button", { name: first.name });
     expect(name.className).toContain("cell-name");
     expect(name.getAttribute("title")).toBe(first.name);
   });
 
   it("puts the risk and cash-flow columns right after the name", () => {
-    render(<Properties />);
+    show();
     const headers = screen
       .getAllByRole("columnheader")
       .map((th) => th.textContent);
@@ -189,7 +187,7 @@ describe("Properties long names and narrow windows (ADR 0085)", () => {
   });
 
   it("row actions keep their names as icon-only buttons (ADR 0199)", () => {
-    render(<Properties />);
+    show();
     for (const label of [en.common.edit, en.common.delete]) {
       const button = screen.getAllByRole("button", { name: label })[0]!;
       expect(button.querySelector(".row-action-tip")?.textContent).toBe(label);
@@ -199,7 +197,7 @@ describe("Properties long names and narrow windows (ADR 0085)", () => {
 
 describe("Properties context line (ADR 0111, #21)", () => {
   it("names the as-of date, the currency and the flow period", () => {
-    render(<Properties />);
+    show();
     expect(
       screen.getByText(
         `${en.properties.subtitle(portfolio.properties.length)} · as of 01.10.2026 · amounts in Kč, flows per year`,
@@ -212,12 +210,11 @@ describe('A property stored with the id "" (ADR 0127)', () => {
   it("opens the edit form filled in", async () => {
     act(() =>
       usePortfolioStore.setState({
-        portfolio: withPropertyId(first.id, ""),
         getPropertyExtras: () =>
           Promise.resolve({ address: null, garage: null }),
       }),
     );
-    render(<Properties />);
+    show(withPropertyId(first.id, ""));
     const row = screen.getByRole("button", { name: first.name }).closest("tr")!;
     await userEvent.click(
       within(row).getByRole("button", { name: en.common.edit }),
@@ -240,8 +237,7 @@ describe("Properties: development flat under construction (ADR 0169)", () => {
       leases: only(mixed.leases),
       holdingCosts: [],
     };
-    act(() => usePortfolioStore.setState({ portfolio: devOnly }));
-    render(<Properties />);
+    show(devOnly);
     const dev = devOnly.properties[0]!;
     const s = propertySnapshot(
       dev,
@@ -273,7 +269,7 @@ describe("Properties list fits (ADR 0205)", () => {
   const asOf = isoDate("2026-10-01");
 
   it("shows LTV and DSCR as figures with a health marker, the band word for screen readers", () => {
-    render(<Properties />);
+    show();
     const s = propertySnapshot(first, portfolio, assumptions, asOf);
     const row = screen.getByRole("button", { name: first.name }).closest("tr")!;
     const [, ltv, , dscr] = within(row).getAllByRole("cell");
@@ -290,7 +286,7 @@ describe("Properties list fits (ADR 0205)", () => {
   });
 
   it("explains the markers in a legend hidden from assistive technology", () => {
-    const { container } = render(<Properties />);
+    const { container } = show();
     const legend = container.querySelector(".band-legend")!;
     expect(legend.getAttribute("aria-hidden")).toBe("true");
     for (const w of [
@@ -304,7 +300,7 @@ describe("Properties list fits (ADR 0205)", () => {
   });
 
   it("adds a totals row equal to the Dashboard at Today with All", () => {
-    render(<Properties />);
+    show();
     const s = portfolioSnapshot(portfolio, assumptions, asOf);
     const foot = screen
       .getByRole("rowheader", { name: p.totalRow })
@@ -327,17 +323,12 @@ describe("Properties list fits (ADR 0205)", () => {
   });
 
   it("names the total of the active properties when one is inactive", () => {
-    act(() =>
-      usePortfolioStore.setState({
-        portfolio: {
-          ...portfolio,
-          properties: portfolio.properties.map((x, i) =>
-            i === 0 ? { ...x, active: false } : x,
-          ),
-        },
-      }),
-    );
-    render(<Properties />);
+    show({
+      ...portfolio,
+      properties: portfolio.properties.map((x, i) =>
+        i === 0 ? { ...x, active: false } : x,
+      ),
+    });
     expect(
       screen.getByRole("rowheader", { name: p.totalRowActive }),
     ).toBeTruthy();
@@ -345,7 +336,7 @@ describe("Properties list fits (ADR 0205)", () => {
 
   it("keeps the total nominal with the real lens on: the page has no lens", () => {
     act(() => useUiStore.setState({ mode: "real" }));
-    render(<Properties />);
+    show();
     const s = portfolioSnapshot(portfolio, assumptions, asOf);
     const foot = screen
       .getByRole("rowheader", { name: p.totalRow })
@@ -358,8 +349,7 @@ describe("Properties list fits (ADR 0205)", () => {
   });
 
   it("leaves a pending purchase's value out of the total, names the undrawn debt", () => {
-    act(() => usePortfolioStore.setState({ portfolio: mixed }));
-    render(<Properties />);
+    show(mixed);
     const s = portfolioSnapshot(mixed, assumptions, asOf);
     const foot = screen
       .getByRole("rowheader", { name: p.totalRowOwned })
@@ -385,36 +375,26 @@ describe("Properties list fits (ADR 0205)", () => {
   it("has no legend when no row shows a marker", () => {
     const own = <T extends { propertyId: string }>(rows: T[]) =>
       rows.filter((r) => r.propertyId === "future");
-    act(() =>
-      usePortfolioStore.setState({
-        portfolio: {
-          properties: mixed.properties.filter((x) => x.id === "future"),
-          mortgages: own(mixed.mortgages),
-          valuations: own(mixed.valuations),
-          leases: own(mixed.leases),
-          holdingCosts: [],
-        },
-      }),
-    );
-    const { container } = render(<Properties />);
+    const { container } = show({
+      properties: mixed.properties.filter((x) => x.id === "future"),
+      mortgages: own(mixed.mortgages),
+      valuations: own(mixed.valuations),
+      leases: own(mixed.leases),
+      holdingCosts: [],
+    });
     expect(container.querySelector(".band-legend")).toBeNull();
   });
 
   it("has no totals row for one property", () => {
     const own = <T extends { propertyId: string }>(rows: T[]) =>
       rows.filter((r) => r.propertyId === first.id);
-    act(() =>
-      usePortfolioStore.setState({
-        portfolio: {
-          properties: [first],
-          mortgages: own(portfolio.mortgages),
-          valuations: own(portfolio.valuations),
-          leases: own(portfolio.leases),
-          holdingCosts: own(portfolio.holdingCosts),
-        },
-      }),
-    );
-    render(<Properties />);
+    show({
+      properties: [first],
+      mortgages: own(portfolio.mortgages),
+      valuations: own(portfolio.valuations),
+      leases: own(portfolio.leases),
+      holdingCosts: own(portfolio.holdingCosts),
+    });
     expect(screen.queryByRole("rowheader")).toBeNull();
   });
 });

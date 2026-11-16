@@ -11,10 +11,9 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { act, render } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { portfolioProjection } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { projectionSeries } from "../../model/projection";
 import { toChartRows, toEquityChangeRows } from "../../model/chartData";
 import { ProjectionCharts } from "../DashboardPanels";
@@ -62,7 +61,6 @@ afterAll(() => {
 });
 beforeEach(() => {
   lines.length = 0;
-  act(() => useUiStore.setState({ language: "en" }));
 });
 
 describe("Dashboard line charts: hover dot (ADR 0188)", () => {

@@ -55,7 +55,6 @@ beforeEach(() => {
   i18n.pending.clear();
   i18n.loadDictionary.mockClear();
   localStorage.clear();
-  useUiStore.setState({ language: "en" });
 });
 
 afterEach(() => vi.restoreAllMocks());

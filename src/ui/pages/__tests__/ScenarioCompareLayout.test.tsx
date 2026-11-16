@@ -3,8 +3,8 @@
 // ADR 0216 (#388): Scenario compare's three charts share one row (a grid that never
 // leaves a cell empty), at the small-multiple height; the key figures are a flush data
 // table with a pinned metric column.
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
 import {
   applyScenario,
   cpiIndex,
@@ -13,7 +13,6 @@ import {
   realProjection,
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import type { CompareResult } from "../../model/compare";
 import { SMALL_CHART_HEIGHT } from "../../components/charts";
@@ -36,10 +35,6 @@ vi.mock("../../../state/useEngine", () => ({
 }));
 
 const { CompareView } = await import("../ScenarioCompare");
-
-beforeEach(() =>
-  act(() => useUiStore.setState({ language: "en", mode: "nominal" })),
-);
 
 const selected = results.map((r) => ({
   id: r.id,

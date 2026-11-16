@@ -8,7 +8,6 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PropertyFormModal } from "../PropertyFormModal";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { money, type Portfolio, type Property } from "../../../engine";
@@ -38,7 +37,6 @@ beforeEach(() => {
   addProperty = vi.fn(ok);
   editProperty = vi.fn(ok);
   act(() => {
-    useUiStore.setState({ language: "en" });
     usePortfolioStore.setState({
       portfolio,
       assumptions,

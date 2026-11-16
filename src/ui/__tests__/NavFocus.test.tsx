@@ -10,8 +10,6 @@ import userEvent from "@testing-library/user-event";
 import { portfolio, assumptions } from "../../engine/__tests__/support/seed";
 import { en } from "../../i18n/en";
 
-vi.mock("../../data/errorLog", () => ({ logFailure: vi.fn() }));
-
 const pageTitle = () => document.querySelector(".page-title")?.textContent;
 
 let App: typeof import("../App").App;

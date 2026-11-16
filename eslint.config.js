@@ -31,6 +31,25 @@ const testBans = [
   },
 ];
 
+// Modules a setup file mocks once for ui/state tests (#458): no file-level mock of them.
+// Both forms: `vi.mock("…/data/errorLog")` and `vi.mock(import("…/data/errorLog"))`.
+const SHARED_MOCKED =
+  "/(^@tauri-apps\\u002Fapi\\u002Fcore$|\\u002Fdata\\u002FerrorLog$)/";
+const VI_MOCK =
+  "CallExpression[callee.object.name='vi'][callee.property.name=/^(mock|doMock)$/]";
+const sharedMockMessage =
+  "errorLog and Tauri core are mocked for every ui/state test (src/__tests__/setup/mocks.ts, #458): set behaviour on the mock with vi.mocked(…).";
+const sharedMockBans = [
+  {
+    selector: `${VI_MOCK}[arguments.0.value=${SHARED_MOCKED}]`,
+    message: sharedMockMessage,
+  },
+  {
+    selector: `${VI_MOCK}[arguments.0.type='ImportExpression'][arguments.0.source.value=${SHARED_MOCKED}]`,
+    message: sharedMockMessage,
+  },
+];
+
 // Engine purity (CLAUDE.md "The engine is pure"; money as decimal.js). The money-safety
 // bans are a proxy: converting to a JS number is where float maths on currency starts.
 const engineClockBans = [
@@ -152,6 +171,14 @@ export default tseslint.config(
   {
     files: ["**/*.{ts,tsx}"],
     rules: { "no-restricted-syntax": ["error", ...testBans] },
+  },
+  // ui/state tests get the errorLog and Tauri core mocks from a setup file
+  // (src/__tests__/setup/mocks.ts, #458); a test changes their behaviour on the mock.
+  {
+    files: ["src/{ui,state}/**/__tests__/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": ["error", ...testBans, ...sharedMockBans],
+    },
   },
   // Production code: no brand casts and no non-null assertions (ADR 0074); a missing
   // value gets a real guard or the checked `at()` from lib/arrays.

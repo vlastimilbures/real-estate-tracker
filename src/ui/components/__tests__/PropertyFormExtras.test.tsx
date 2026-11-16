@@ -10,7 +10,6 @@ import {
   usePortfolioStore,
   type MutationResult,
 } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import type { PropertyExtras as Extras } from "../../../state/portfolioStore";
@@ -27,7 +26,6 @@ beforeEach(() => {
   reads = [];
   editProperty = vi.fn(() => Promise.resolve({ ok: true } as const));
   act(() => {
-    useUiStore.setState({ language: "en" });
     usePortfolioStore.setState({
       portfolio,
       assumptions,

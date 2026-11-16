@@ -14,8 +14,6 @@ import { portfolio, assumptions } from "../../engine/__tests__/support/seed";
 import { en } from "../../i18n/en";
 import { money } from "../../engine";
 
-vi.mock("../../data/errorLog", () => ({ logFailure: vi.fn() }));
-
 const loan = portfolio.mortgages[0];
 // An instalment below the monthly interest breaks D-17: the engine refuses the inputs.
 const broken = {
@@ -52,13 +50,6 @@ beforeEach(() => {
       error: null,
       init: async () => {},
     } as never);
-    useUiStore.setState({
-      language: "en",
-      asOf: null,
-      dashboardPropertyIds: [],
-      unsavedChanges: false,
-      pendingLeave: null,
-    });
   });
 });
 

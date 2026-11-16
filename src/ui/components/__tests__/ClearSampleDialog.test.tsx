@@ -6,7 +6,6 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ClearSampleButton } from "../ClearSampleDialog";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { logFailure } from "../../../state/diagnostics";
 import { en } from "../../../i18n/en";
 
@@ -21,7 +20,6 @@ beforeEach(() => {
   vi.mocked(logFailure).mockClear();
   clearSample.mockReset();
   act(() => {
-    useUiStore.setState({ language: "en" });
     usePortfolioStore.setState({ clearSample } as never);
   });
 });

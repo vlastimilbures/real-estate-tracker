@@ -2,11 +2,10 @@
 //
 // UX-059 (DR-015, DR-072): the As-of picker keeps the date inside the projection window
 // and its presets step like EDATE.
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AsOfPicker } from "../AsOfPicker";
-import { useUiStore } from "../../../state/uiStore";
 import { isoDate } from "../../../engine";
 import { asOfBounds } from "../../model/asOf";
 
@@ -16,8 +15,6 @@ vi.mock("../../../lib/day", async (importOriginal) => ({
 }));
 
 const bounds = asOfBounds(isoDate("2026-06-07"), 30);
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("AsOfPicker (UX-059)", () => {
   it("a typed date before the base date becomes the base date", async () => {

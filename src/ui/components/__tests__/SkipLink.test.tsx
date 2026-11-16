@@ -1,12 +1,10 @@
 // @vitest-environment jsdom
 //
 // ADR 0114 (#24): the first tab stop skips the sidebar and topbar to the page content.
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { SkipLink } from "../SkipLink";
 import { useUiStore } from "../../../state/uiStore";
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 function page() {
   return render(

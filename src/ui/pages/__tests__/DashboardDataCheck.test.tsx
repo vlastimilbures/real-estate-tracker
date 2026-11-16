@@ -3,7 +3,7 @@
 // ADR 0118 (#35), ADR 0206 (#378), ADR 0223 (#422): the Dashboard "Data check" panel:
 // last on the page, the counts as pills in its head, findings grouped by problem in a
 // block per list, a chip per property.
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { edate, isoDate, money, type Portfolio } from "../../../engine";
@@ -59,10 +59,6 @@ const infoText = () => {
   return document.getElementById(b.getAttribute("aria-controls")!)?.textContent;
 };
 const chip = (name: RegExp) => screen.getByRole("button", { name });
-
-beforeEach(() =>
-  act(() => useUiStore.setState({ language: "en", dataCheckOpen: null })),
-);
 
 describe("Data check panel (ADR 0118, ADR 0206)", () => {
   it("only defaults: collapsed, the counts in the head, the as-of date behind the info icon (ADR 0223 §1)", () => {

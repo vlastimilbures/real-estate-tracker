@@ -4,7 +4,7 @@
 // Opening it moves focus in, the options follow the listbox keyboard pattern (one Tab
 // stop, arrows, Home/End, Space and Enter), and Escape puts focus back on the trigger.
 import { StrictMode } from "react";
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PropertySelect } from "../PropertySelect";
@@ -18,8 +18,6 @@ const OPTIONS = Array.from({ length: 6 }, (_, i) => ({
   value: `p${i}`,
   label: `Byt ${i}`,
 }));
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 function multi(selected: string[] = [], onChange = vi.fn()) {
   render(

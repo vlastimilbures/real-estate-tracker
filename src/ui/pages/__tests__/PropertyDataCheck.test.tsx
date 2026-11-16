@@ -25,7 +25,6 @@ vi.mock("../../../lib/day", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/day")>()),
   todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
 }));
-vi.mock("../../../data/errorLog", () => ({ logFailure: vi.fn() }));
 
 class NoopObserver {
   observe() {}
@@ -47,13 +46,8 @@ beforeEach(() => {
       portfolio,
       assumptions,
       status: "ready",
-      scenarios: [],
-      unreadableScenarios: [],
     });
     useUiStore.setState({
-      language: "en",
-      mode: "nominal",
-      asOf: null,
       route: "property",
       selectedPropertyId: p.id,
     });

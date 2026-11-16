@@ -2,12 +2,11 @@
 //
 // ADR 0101 (#51): the price-crash timing is a labelled setting ("When"), and each level
 // button shows the timing it uses.
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { PresetBar } from "../ScenariosPanels";
-import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { rate, type ScenarioOverrides } from "../../../engine";
 
@@ -32,8 +31,6 @@ function Harness({
 }
 
 const timing = () => screen.getByRole("group", { name: sc.crashWhen });
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("crash timing is a setting (#51)", () => {
   it("is a labelled toggle with Start pressed", () => {

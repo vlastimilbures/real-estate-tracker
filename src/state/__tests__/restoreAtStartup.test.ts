@@ -10,9 +10,7 @@ import { seedIfEmpty } from "../../data/seed";
 import { exportToJson, type BackupFile } from "../../data/backup";
 import type { Sql } from "../../data/sql";
 
-vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn(() => Promise.resolve()),
-}));
+vi.mocked(invoke).mockResolvedValue(undefined);
 
 let db: TestSql;
 let good: BackupFile;
@@ -29,14 +27,6 @@ const reloadFails = (real: Sql): Sql => ({
 
 beforeEach(async () => {
   vi.mocked(invoke).mockClear();
-  usePortfolioStore.setState({
-    sql: null,
-    portfolio: null,
-    status: "idle",
-    error: null,
-    startupError: null,
-    stale: false,
-  });
   db = openMemorySql();
   await migrate(db);
   await seedIfEmpty(db);

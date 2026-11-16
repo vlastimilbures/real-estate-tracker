@@ -8,13 +8,12 @@ import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
 import { SafetyBackupError, SampleNotEmptyError } from "../backup";
 import type { Sql } from "../../data/sql";
+import { invoke } from "@tauri-apps/api/core";
 
-const disk = vi.hoisted(() => ({ fail: false }));
-vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn(() =>
-    disk.fail ? Promise.reject("No space left on device") : Promise.resolve(),
-  ),
-}));
+const disk = { fail: false };
+vi.mocked(invoke).mockImplementation(() =>
+  disk.fail ? Promise.reject("No space left on device") : Promise.resolve(),
+);
 
 function reset(): void {
   usePortfolioStore.setState({

@@ -19,7 +19,6 @@ import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
 import { exportToJson } from "../../data/backup";
 
-vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("../../state/diagnostics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../state/diagnostics")>()),
   logFailure: vi.fn(),
@@ -53,15 +52,8 @@ beforeEach(async () => {
   );
   act(() => {
     useUiStore.setState({
-      language: "en",
       route: "settings",
       settingsTab: "backup",
-      notice: null,
-      failure: null,
-      toast: null,
-      unsavedSources: [],
-      unsavedChanges: false,
-      pendingLeave: null,
     });
     usePortfolioStore.setState({
       status: "ready",

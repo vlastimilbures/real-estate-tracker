@@ -15,7 +15,6 @@ import { en } from "../../../i18n/en";
 import { isoDate, money } from "../../../engine";
 import { fmtCzk, fmtPct } from "../../../lib/format";
 
-vi.mock("../../../data/errorLog", () => ({ logFailure: vi.fn() }));
 vi.stubGlobal(
   "IntersectionObserver",
   class {
@@ -44,14 +43,8 @@ beforeEach(() => {
       status: "ready",
     });
     useUiStore.setState({
-      language: "en",
       route: "property",
       selectedPropertyId: "dev",
-      asOf: null,
-      amortizationOpen: false,
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
     });
   });
 });

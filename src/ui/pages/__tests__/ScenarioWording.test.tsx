@@ -3,7 +3,7 @@
 // ADR 0090 (#15): Scenarios wording matches the model — a price crash is permanent,
 // shock deltas are percentage points, crash timing 0 is the projection start (with its
 // date), the compare hint says Base does not count, and the lens toggle is on the page.
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
@@ -14,7 +14,6 @@ import {
   realProjection,
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { fmtDate } from "../../../lib/format";
 import { en } from "../../../i18n/en";
@@ -41,19 +40,6 @@ const { ScenarioForm } = await import("../ScenarioForm");
 const { Scenarios } = await import("../Scenarios");
 
 const startDate = fmtDate(assumptions.baseDate);
-
-beforeEach(() =>
-  act(() =>
-    useUiStore.setState({
-      language: "en",
-      mode: "nominal",
-      compareIds: [],
-      compareBase: true,
-      crashAtYear: 0,
-      presetsOpen: null,
-    }),
-  ),
-);
 
 describe("Scenarios wording (ADR 0090)", () => {
   it("preset hint says the price crash is permanent", () => {

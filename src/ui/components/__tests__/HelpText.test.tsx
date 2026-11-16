@@ -2,13 +2,10 @@
 //
 // ADR 0214 (#391): an instruction sits in the panel body as a help line; the header
 // keeps context only. ADR 0217: definitions go to an InfoTip instead.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { Panel } from "../primitives";
 import { HelpText } from "../HelpText";
-import { useUiStore } from "../../../state/uiStore";
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("Panel help (ADR 0214 §2)", () => {
   it("a help line leads the body, not the header", () => {
