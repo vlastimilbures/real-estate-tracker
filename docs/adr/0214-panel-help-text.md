@@ -5,6 +5,8 @@
 - Source: issue #391 (UX/UI review 2026-11, tracking #392); direction approved by the
   owner on 2026-11-15 (the issue's decision); acceptance delegated by the owner for the
   2026-11-15 run (comment on #392)
+- Amended by: [0217](0217-info-tip.md) (definitions move to an info icon in the head; the
+  "About this" disclosure is removed)
 - Amends: [0106](0106-collapsible-stress-presets.md) (the presets' explanation shows only
   while the presets are open; collapsed, the one-line summary stands alone)
 - Related: [0203](0203-one-disclosure.md) (the shared disclosure),

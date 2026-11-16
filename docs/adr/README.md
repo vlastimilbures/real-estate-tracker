@@ -264,9 +264,10 @@ it.
 | [0211](0211-projection-grid-fits.md)                           | The year-by-year grid fits a 1280 px window                                                   | Accepted (delegated, owner review pending)                         | #386, #392                                         |
 | [0212](0212-import-file-rows.md)                               | Import: one list of file types                                                                | Accepted (delegated, owner review pending)                         | #389, #392                                         |
 | [0213](0213-guide-section-nav.md)                              | Guide: section navigation                                                                     | Accepted (delegated, owner review pending)                         | #390, #392                                         |
-| [0214](0214-panel-help-text.md)                                | Panel headers hold context; explanations become help text                                     | Accepted (delegated, owner review pending)                         | #391, #392                                         |
+| [0214](0214-panel-help-text.md)                                | Panel headers hold context; explanations become help text                                     | Accepted (delegated, owner review pending) · amended by 0217       | #391, #392                                         |
 | [0215](0215-property-detail-top.md)                            | Property detail: a breadcrumb and the Dashboard's tile strip                                  | Accepted (delegated, owner review pending)                         | #384, #392                                         |
 | [0216](0216-scenario-compare-layout.md)                        | Scenarios: three charts in a row, a flush key-figures table                                   | Accepted (delegated, owner review pending)                         | #388, #392                                         |
+| [0217](0217-info-tip.md)                                       | Definitions behind an info icon; instructions stay visible                                    | Accepted (delegated, owner review pending)                         | #416, #425                                         |
 
 <!-- adr-index:end -->
 
