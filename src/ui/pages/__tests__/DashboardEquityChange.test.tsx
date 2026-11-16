@@ -3,17 +3,14 @@
 // ADR 0165 (#126 item 2): the equity-change chart shows a "Purchases & construction" stack
 // only when a purchase or a development draw (ADR 0170) falls inside the projection, so a
 // portfolio owned at baseDate without one is unchanged.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { portfolioProjection } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
-import { useUiStore } from "../../../state/uiStore";
 import { projectionSeries } from "../../model/projection";
 import { toChartRows, toEquityChangeRows } from "../../model/chartData";
 import { ProjectionCharts } from "../DashboardPanels";
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 function renderCharts(p: typeof portfolio) {
   const series = projectionSeries(

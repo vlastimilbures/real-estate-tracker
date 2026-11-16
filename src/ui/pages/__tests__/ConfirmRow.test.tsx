@@ -61,12 +61,7 @@ beforeEach(() =>
       removeMortgageBlock: vi.fn(ok),
     });
     useUiStore.setState({
-      language: "en",
       route: "properties",
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
-      pendingSource: null,
     });
   }),
 );

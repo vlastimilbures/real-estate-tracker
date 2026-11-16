@@ -24,11 +24,7 @@ beforeEach(() => {
   save.mockResolvedValue({ ok: true });
   act(() => {
     useUiStore.setState({
-      language: "en",
       route: "settings",
-      settingsTab: "assumptions",
-      unsavedSources: [],
-      unsavedChanges: false,
     });
     usePortfolioStore.setState({
       portfolio,

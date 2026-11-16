@@ -3,7 +3,7 @@
 // ADR 0119 §9 (#33 PR3): the Dashboard KPI list shows "Cash invested", the own cash of the
 // active properties in the filter, only when every one of them has it. It is a recorded
 // nominal amount, so the real lens says so (as Σ principal, ADR 0087).
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import {
   money,
@@ -41,8 +41,6 @@ function renderList(mode: Mode, cashInvested: ReturnType<typeof D> | null) {
 /** The value shown next to a KPI row's label, or null without the row. */
 const row = (label: string) =>
   screen.queryByText(label)?.nextElementSibling?.textContent ?? null;
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("KPI list Cash invested row (ADR 0119 §9)", () => {
   it("shows the total under its plain label in the nominal lens", () => {

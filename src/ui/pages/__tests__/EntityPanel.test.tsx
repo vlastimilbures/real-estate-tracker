@@ -4,7 +4,7 @@
 // form, so a switch never saves one row's values onto another. Typed edits are not
 // dropped by a click on another row's Edit or Delete: the leave guard asks first, and
 // only for the panel's own form (ADR 0142, #132 R5-01, R5-19).
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { EntityPanel } from "../../components/EntityPanel";
@@ -81,18 +81,6 @@ const deleteButtons = () =>
 const valueInputs = () =>
   screen.getAllByRole<HTMLInputElement>("textbox", { name: "Value" });
 const guard = () => screen.queryByRole("dialog");
-
-beforeEach(() =>
-  act(() =>
-    useUiStore.setState({
-      language: "en",
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
-      pendingSource: null,
-    }),
-  ),
-);
 
 describe("EntityPanel row-switch", () => {
   it("saves the switched-to row's own values, not the first row's", async () => {

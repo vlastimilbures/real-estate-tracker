@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 //
 // ADR 0103 (#31): the Dashboard "Financing & upcoming" panel.
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   debtResettingWithin,
@@ -12,7 +12,6 @@ import {
   type Portfolio,
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { fmtCzk } from "../../../lib/format";
 import type { Decimal } from "../../../lib/money";
@@ -42,8 +41,6 @@ function renderPanel(
 }
 
 const money = (d: Decimal) => fmtCzk(d);
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("Financing & upcoming panel (ADR 0103)", () => {
   it("shows the next reset, its balance, debt resetting in 3 y and total interest", () => {

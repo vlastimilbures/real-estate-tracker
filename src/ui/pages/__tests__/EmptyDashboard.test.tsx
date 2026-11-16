@@ -13,7 +13,6 @@ import { en } from "../../../i18n/en";
 
 beforeEach(() =>
   act(() => {
-    useUiStore.setState({ language: "en", route: "dashboard" });
     usePortfolioStore.setState({
       status: "ready",
       assumptions,

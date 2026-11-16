@@ -21,19 +21,7 @@ beforeEach(() =>
       status: "ready",
       portfolio,
       assumptions,
-      scenarios: [],
       sample: { active: false, dismissed: true },
-    });
-    useUiStore.setState({
-      language: "en",
-      mode: "nominal",
-      route: "dashboard",
-      dashboardPropertyIds: [],
-      asOf: null,
-      dataCheckOpen: null,
-      unsavedChanges: false,
-      unsavedSources: [],
-      pendingLeave: null,
     });
   }),
 );

@@ -7,7 +7,6 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ValuationsPanel, LeasesPanel } from "../PropertyEntityPanels";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { isoDate, money, type Lease, type Valuation } from "../../../engine";
 
@@ -41,7 +40,6 @@ beforeEach(() =>
   act(() => {
     Object.values(spies).forEach((s) => s.mockClear());
     usePortfolioStore.setState(spies);
-    useUiStore.setState({ language: "en" });
   }),
 );
 

@@ -2,11 +2,10 @@
 //
 // ADR 0087 (#11): every Dashboard KPI row follows the lens or says it is nominal; the hero
 // foot shows the lens-matched multiple "from projection start".
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { portfolioKpis, portfolioSnapshot } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { fmtMultiple } from "../../../lib/format";
 import { lensKpis } from "../../model/lensKpis";
@@ -45,8 +44,6 @@ function renderPanels(mode: Mode) {
     </>,
   );
 }
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("Dashboard KPIs by lens (ADR 0087)", () => {
   it("real: multiple and cumulative CF are real, principal repaid says nominal", () => {

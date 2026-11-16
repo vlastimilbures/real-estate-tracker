@@ -77,7 +77,6 @@ beforeEach(() => {
   restoreBackup.mockReset();
   revealDataDir.mockReset();
   act(() => {
-    useUiStore.setState({ language: "en" });
     usePortfolioStore.setState({
       status: "ready",
       portfolio,
@@ -86,12 +85,6 @@ beforeEach(() => {
       restoreBackup,
       replacing: 0,
     } as never);
-    useUiStore.setState({
-      notice: null,
-      failure: null,
-      toast: null,
-      lastImport: null,
-    });
   });
 });
 

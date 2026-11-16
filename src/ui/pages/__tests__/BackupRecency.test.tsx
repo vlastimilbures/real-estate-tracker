@@ -25,21 +25,12 @@ beforeEach(() => {
   vi.setSystemTime(NOW);
   act(() => {
     useUiStore.setState({
-      language: "en",
-      route: "dashboard",
       settingsTab: "backup",
-      backupHintDismissed: false,
-      sidebarCollapsed: false,
-      unsavedSources: [],
-      unsavedChanges: false,
     });
     usePortfolioStore.setState({
       status: "ready",
       portfolio,
       assumptions,
-      scenarios: [],
-      sample: { active: false, dismissed: false },
-      backup: { lastAt: null, lastFile: null, changedSince: false },
     });
   });
 });

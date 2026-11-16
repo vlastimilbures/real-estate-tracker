@@ -2,12 +2,11 @@
 //
 // UX-079 (DR-158, ADR 0079): the Dashboard's IRR tile and KPI list show "n/a" and the
 // reason when the levered IRR has no value, and the rate when it has one.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { D } from "../../../lib/money";
 import { portfolioKpis, portfolioSnapshot } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { KpiStrip, KpiListPanel } from "../DashboardPanels";
 import type { LeveredIrr } from "../../model/irr";
@@ -42,8 +41,6 @@ function renderPanels(irr: LeveredIrr) {
     </>,
   );
 }
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("Dashboard levered IRR (UX-079)", () => {
   // The list no longer repeats the tile (ADR 0208 §1).

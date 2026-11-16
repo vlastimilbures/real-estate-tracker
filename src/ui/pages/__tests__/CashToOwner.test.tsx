@@ -3,8 +3,8 @@
 // ADR 0161 (#117 R8-04): the Dashboard tile is "Cumulative cash to owner", and the
 // projection grid shows a "Cash to owner" column right after "Net CF" whose years 1..N
 // sum to the tile, in both lenses.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import {
   isoDate,
   money,
@@ -16,7 +16,6 @@ import {
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { ZERO } from "../../../lib/money";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { projectionSeries } from "../../model/projection";
 import { lensKpis } from "../../model/lensKpis";
@@ -45,8 +44,6 @@ const prepaid: Portfolio = {
 };
 const proj = portfolioProjection(prepaid, assumptions);
 const kpis = portfolioKpis(prepaid, assumptions);
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("Cash to owner (ADR 0161)", () => {
   it.each(["nominal", "real"] as const)(

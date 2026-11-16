@@ -22,9 +22,7 @@ beforeEach(() => {
   save.mockClear();
   act(() => {
     useUiStore.setState({
-      language: "en",
       route: "settings",
-      settingsTab: "assumptions",
     });
     usePortfolioStore.setState({
       portfolio,

@@ -2,19 +2,16 @@
 //
 // ADR 0084 (#12): the Dashboard's horizon-dependent labels name the configured projection
 // horizon instead of a hardcoded 30 years.
-import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { portfolioKpis, portfolioSnapshot } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
 import { KpiListPanel, ProjectionCharts } from "../DashboardPanels";
 import { rowLabel } from "./kpiStripSupport";
 
 const a25 = { ...assumptions, horizonYears: 25 };
 const s = portfolioSnapshot(portfolio, a25);
 const kpis = portfolioKpis(portfolio, a25);
-
-beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("Dashboard horizon labels (ADR 0084)", () => {
   it("label the trajectory and KPI rows with a 25-year horizon", () => {
