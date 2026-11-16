@@ -240,16 +240,16 @@ What the checks do and do not prove:
 
 Every check CI runs has a local command; the full list is in [CONTRIBUTING.md](CONTRIBUTING.md#checks).
 
-| Command                        | Checks                                                                   |
-| ------------------------------ | ------------------------------------------------------------------------ |
-| `pnpm typecheck` · `pnpm lint` | TypeScript strict; ESLint with zero warnings, incl. engine-purity rules  |
-| `pnpm test:coverage`           | Vitest tests with per-folder coverage floors                             |
-| `pnpm test:parity`             | Engine and SQLite round trip against the parity targets (±1 Kč, ±0.0001) |
-| `pnpm depcruise` · `pnpm knip` | Layer map and cycles; unused files, exports and dependencies             |
-| `cargo clippy` · `cargo test`  | Rust lints and integration tests                                         |
-| `pnpm ux:axe-check ci`         | axe scan of every screen: English, light and dark, two window sizes      |
-| `pnpm mutation` · `pnpm bench` | Nightly: Stryker mutation score on the engine; performance budgets       |
-| `FC_RUNS=2000` property tests  | Nightly: every fast-check property test with a new seed each night       |
+| Command                        | Checks                                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `pnpm typecheck` · `pnpm lint` | TypeScript strict; ESLint with zero warnings, incl. engine-purity rules; stylesheets (`lint:css`) |
+| `pnpm test:coverage`           | Vitest tests with per-folder coverage floors                                                      |
+| `pnpm test:parity`             | Engine and SQLite round trip against the parity targets (±1 Kč, ±0.0001)                          |
+| `pnpm depcruise` · `pnpm knip` | Layer map and cycles; unused files, exports and dependencies                                      |
+| `cargo clippy` · `cargo test`  | Rust lints and integration tests                                                                  |
+| `pnpm ux:axe-check ci`         | axe scan of every screen: English, light and dark, two window sizes                               |
+| `pnpm mutation` · `pnpm bench` | Nightly: Stryker mutation score on the engine; performance budgets                                |
+| `FC_RUNS=2000` property tests  | Nightly: every fast-check property test with a new seed each night                                |
 
 ## Architecture
 
