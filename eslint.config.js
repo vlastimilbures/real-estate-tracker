@@ -50,6 +50,28 @@ const sharedMockBans = [
   },
 ];
 
+// Every test starts on a pinned day (src/__tests__/setup/clock.ts, #458): no file-level
+// mock of lib/day; a test moves the day with setClock (src/__tests__/support/clock.ts).
+const DAY_MODULE = "/\\u002Flib\\u002Fday(\\.ts)?$/";
+const dayMockMessage =
+  "The test clock is pinned for every test (src/__tests__/setup/clock.ts, #458): call setClock(…) instead of mocking lib/day.";
+const dayMockBans = [
+  {
+    selector: `${VI_MOCK}[arguments.0.value=${DAY_MODULE}]`,
+    message: dayMockMessage,
+  },
+  {
+    selector: `${VI_MOCK}[arguments.0.type='TemplateLiteral'][arguments.0.quasis.0.value.raw=${DAY_MODULE}]`,
+    message: dayMockMessage,
+  },
+  {
+    selector: `${VI_MOCK}[arguments.0.type='ImportExpression'][arguments.0.source.value=${DAY_MODULE}]`,
+    message: dayMockMessage,
+  },
+];
+const TEST_FILES = ["src/**/__tests__/**/*.{ts,tsx}", "src/**/*.test.{ts,tsx}"];
+const SETUP_FILES = ["src/__tests__/setup/**"];
+
 // Engine purity (CLAUDE.md "The engine is pure"; money as decimal.js). The money-safety
 // bans are a proxy: converting to a JS number is where float maths on currency starts.
 const engineClockBans = [
@@ -172,12 +194,24 @@ export default tseslint.config(
     files: ["**/*.{ts,tsx}"],
     rules: { "no-restricted-syntax": ["error", ...testBans] },
   },
+  // Every test gets the pinned clock from a setup file (src/__tests__/setup/clock.ts,
+  // #458); a test sets another day with setClock.
+  {
+    files: TEST_FILES,
+    ignores: SETUP_FILES,
+    rules: { "no-restricted-syntax": ["error", ...testBans, ...dayMockBans] },
+  },
   // ui/state tests get the errorLog and Tauri core mocks from a setup file
   // (src/__tests__/setup/mocks.ts, #458); a test changes their behaviour on the mock.
   {
     files: ["src/{ui,state}/**/__tests__/**/*.{ts,tsx}"],
     rules: {
-      "no-restricted-syntax": ["error", ...testBans, ...sharedMockBans],
+      "no-restricted-syntax": [
+        "error",
+        ...testBans,
+        ...sharedMockBans,
+        ...dayMockBans,
+      ],
     },
   },
   // Production code: no brand casts and no non-null assertions (ADR 0074); a missing
