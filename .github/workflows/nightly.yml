@@ -89,6 +89,24 @@ jobs:
       - name: Mutation testing
         run: pnpm mutation --concurrency 4
 
+      # Stryker's score: detected (killed + timeout) over valid (detected + survived +
+      # no coverage) mutants, as `thresholds.break` reads it.
+      - name: Report the mutation score
+        if: always() && hashFiles('reports/mutation/mutation.json') != ''
+        run: |
+          node -e '
+            const r = require("./reports/mutation/mutation.json");
+            const brk = require("./stryker.config.json").thresholds.break;
+            let d = 0, u = 0;
+            for (const f of Object.values(r.files))
+              for (const m of f.mutants) {
+                if (m.status === "Killed" || m.status === "Timeout") d++;
+                else if (m.status === "Survived" || m.status === "NoCoverage") u++;
+              }
+            const s = ((100 * d) / (d + u)).toFixed(2);
+            console.log(`### Mutation score\n\n${s} % (${d} of ${d + u} mutants detected; break ${brk} %)`);
+          ' | tee -a "$GITHUB_STEP_SUMMARY"
+
       # Saved even when the score breaks the threshold, so the next run does not redo
       # the whole engine; skipped when there is no result file at all.
       - name: Save the incremental mutation result
