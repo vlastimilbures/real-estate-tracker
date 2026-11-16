@@ -958,6 +958,8 @@ export const SCREENS: Screen[] = [
         .getByRole("button", { name: ux.t.shell.collapseSidebar })
         .click();
       await ux.capture("06-sidebar-collapsed", { fullPage: false });
+      // A wider grid with the bar collapsed: two per row from 640 px (ADR 0218 §2).
+      await expectDashboardHierarchy(ux);
     },
   },
   {

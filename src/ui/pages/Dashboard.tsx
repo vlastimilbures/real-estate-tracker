@@ -139,7 +139,7 @@ export function Dashboard() {
   const { snapshot, kpis, projection, assumptions } = engine;
   const series = projectionSeries(projection, mode, assumptions);
   const rows = toChartRows(series);
-  // Upcoming fixation ends of the filtered properties, on the hero chart (ADR 0210).
+  // Upcoming fixation ends of the filtered properties, on the value chart (ADR 0210).
   const markers = resetMarkers(
     engine.financing.resets,
     rows,

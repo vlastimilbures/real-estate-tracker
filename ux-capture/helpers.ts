@@ -334,7 +334,7 @@ export async function pickFiveYearsAndCheckHint(page: Page) {
       const top = el.getBoundingClientRect();
       return (
         Array.from(el.children)
-          // The hint's row also holds the Data check's "to review" link (ADR 0206 §2).
+          // The hint's own row (ADR 0198) is not one of the bar's controls.
           .filter((c) => !c.classList.contains("asof-foot"))
           .map((c) => {
             const r = c.getBoundingClientRect();

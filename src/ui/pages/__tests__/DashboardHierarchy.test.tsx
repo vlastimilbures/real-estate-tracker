@@ -88,8 +88,8 @@ describe("one chart section (ADR 0218 §2)", () => {
   it("every chart has the same plot height (220 px)", async () => {
     render(<Dashboard />);
     const cards = section().querySelectorAll<HTMLElement>(".chart-card");
-    for (const i of [0, 5]) {
-      const card = cards[i]!;
+    expect(cards).toHaveLength(6);
+    for (const card of cards) {
       const title = card.querySelector(".chart-title")!.textContent!;
       await userEvent.click(
         within(card).getByRole("button", { name: en.charts.table }),

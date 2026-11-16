@@ -365,7 +365,8 @@
   cursor: pointer;
 }
 .title-pill:hover {
-  background: var(--paper-2);
+  background: var(--hover-wash);
+  border-color: var(--ink-soft);
 }
 .title-pill:focus-visible {
   outline: 2px solid var(--accent);
@@ -1964,10 +1965,15 @@ table.data tbody tr:hover td.sticky-col {
 .page.dashboard > .banner {
   margin-bottom: 0;
 }
-/* The Dashboard's projection (ADR 0218 §2): one heading, then six charts two per row,
-   one per row below 640 px; never an empty cell. */
+/* A chart grid sized by its own width, not the window's. */
 .chart-grid-wrap {
   container-type: inline-size;
+}
+/* The Dashboard's projection (ADR 0218 §2): one heading, then six charts two per row,
+   one per row below a 640 px container; never an empty cell. The base rule outranks the
+   920 px window rule, so the container alone decides. */
+.chart-grid.pairs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .charts-head {
   display: flex;
