@@ -3,7 +3,7 @@
 // `valueAnchor`) by whole completed months / 12 (D-32), which is what makes the
 // "snapshot at baseDate+N == projection year N" invariant hold by construction.
 import { ONE, powYears, type Decimal, type Numeric } from "../lib/money";
-import { isAfter } from "./dates";
+import { isAfter, isOnOrBefore } from "./dates";
 import type { Assumptions, MortgageBlock, Property } from "./types";
 
 /**
@@ -45,10 +45,15 @@ export function valueAt(v0: Decimal, g: Numeric, years: number): Decimal {
   return v0.times(powYears(ONE.plus(g), years));
 }
 
+/** A loan's initial principal plus its tranches dated on or before `cutoff` (all of them
+ *  without one), summed in their order from the initial principal. */
+export function principalDrawnBy(block: MortgageBlock, cutoff?: Date): Decimal {
+  return (block.draws ?? [])
+    .filter((d) => !cutoff || isOnOrBefore(d.date, cutoff))
+    .reduce<Decimal>((s, d) => s.plus(d.amount), block.initialPrincipal);
+}
+
 /** Total scheduled principal of a loan: the initial principal plus every later draw. */
 export function scheduledPrincipal(block: MortgageBlock): Decimal {
-  return (block.draws ?? []).reduce<Decimal>(
-    (s, d) => s.plus(d.amount),
-    block.initialPrincipal,
-  );
+  return principalDrawnBy(block);
 }
