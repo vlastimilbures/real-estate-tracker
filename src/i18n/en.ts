@@ -1043,6 +1043,9 @@ export const en = {
     rowsReady: (n: number) => `${n} ${enPlural(n, ["row", "rows"])} ready`,
     noDataRows: "No data rows",
     errorsBadge: (n: number) => `${n} ${enPlural(n, ["error", "errors"])}`,
+    // ADR 0225 §1: the error table's region, named with its file type.
+    errorsTableName: (type: string, n: number) =>
+      `${type}: ${n} ${enPlural(n, ["error", "errors"])}`,
     colRow: "Row",
     colField: "Field",
     colError: "Error",

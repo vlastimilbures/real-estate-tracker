@@ -165,6 +165,13 @@ describe("a file's errors sit under its row (ADR 0212 §4)", () => {
       expect(within(row).getByText(p.errorsBadge(1))).toBeTruthy(),
     );
     expect(row.querySelector("table")).not.toBeNull();
+    // The table's region names its file type, so two files' errors read apart
+    // (ADR 0225 §1).
+    expect(
+      within(row).getByRole("region", {
+        name: p.errorsTableName(p.valuationsTitle, 1),
+      }),
+    ).toBeTruthy();
   });
 });
 

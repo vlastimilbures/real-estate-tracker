@@ -93,11 +93,18 @@ function csvErrorText(t: Dictionary, e: CsvErrorCode): string {
   }
 }
 
-function ErrorTable({ errors }: { errors: CsvRowError[] }) {
+/** A file's errors; the region names its file type (ADR 0225 §1). */
+function ErrorTable({
+  title,
+  errors,
+}: {
+  title: string;
+  errors: CsvRowError[];
+}) {
   const t = useT();
   return (
     <TableWrap
-      label={t.importPage.errorsBadge(errors.length)}
+      label={t.importPage.errorsTableName(title, errors.length)}
       style={{ marginTop: "var(--s3)" }}
     >
       <table className="data">
@@ -312,7 +319,7 @@ function ImportFileRow({ type }: { type: ImportFileType }) {
       )}
       {fileState && fileState.result.errors.length > 0 && (
         <div className="import-row-detail">
-          <ErrorTable errors={fileState.result.errors} />
+          <ErrorTable title={title} errors={fileState.result.errors} />
         </div>
       )}
     </li>

@@ -238,6 +238,8 @@ describe("i18n dictionaries — plural forms", () => {
       "scenarios.reachHits",
       "importPage.rowsReady",
       "importPage.errorsBadge",
+      // The error table's region, with its file type (ADR 0225 §1).
+      "importPage.errorsTableName",
       "importPage.importScope",
       "importPage.confirmOverwrite",
       "importPage.confirmOverwriteMsg",
