@@ -384,7 +384,7 @@ class RowCtx {
   }
 
   /** A child row's property must exist in the DB or the properties file; `known`
-   *  holds `propertyKey`s (D-55). */
+   *  holds `propertyKey`s (D-55; NFC, ADR 0237). */
   knownProperty(field: string, known: Set<string> | undefined): string | null {
     const v = this.reqStr(field);
     if (v !== null && known && !known.has(propertyKey(v)))
@@ -401,9 +401,9 @@ const DECIMAL_COMMA = /^-?\d{1,3}([ \u00A0]\d{3})*,\d+$|^-?\d+,\d+$/;
 
 /** Run `parseRow` over every record; rows with errors are dropped. A row whose natural
  *  key repeats an earlier row's is a fatal duplicate, reported on the last key column.
- *  The key is the property name (`propertyKey`, D-55), plus the key date for a child
- *  file. It counts once its own cells are valid, even if another cell of the row is not,
- *  so every duplicate shows in one round (ADR 0185 §3). */
+ *  The key is the property name (`propertyKey`, D-55; NFC, ADR 0237), plus the key date
+ *  for a child file. It counts once its own cells are valid, even if another cell of the
+ *  row is not, so every duplicate shows in one round (ADR 0185 §3). */
 function parseFile<T>(
   source: CsvSource,
   parseRow: (c: RowCtx) => T | null,

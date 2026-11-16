@@ -698,9 +698,10 @@ Clearing a funding amount is a property form edit too: a blank CSV cell keeps it
   optional column keeps the stored value on an update and leaves a new record's value empty.
   Every row must have as many cells as the header; empty lines are skipped and a leading
   byte-order mark is dropped.
-- `property_name` matches a property after trimming, case-insensitively; the stored
-  spelling is kept. Two names in one file differing only by case or spaces are a duplicate
-  (fatal). An unknown name is fatal (D-55).
+- `property_name` matches a property in one Unicode form (NFC), after trimming,
+  case-insensitively; the stored spelling is kept. Two names in one file differing only by
+  case, spaces or Unicode form are a duplicate (fatal). An unknown name is fatal (D-55,
+  ADR 0237).
 - Each row also passes the engine's `validateInputs` rules (§4.1) and the lease overlap
   rule (§4.3, ADR 0163).
 - **All or nothing across the batch** ([guide](docs/csv-import.md#all-or-nothing)): every

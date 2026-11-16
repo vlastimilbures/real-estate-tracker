@@ -219,6 +219,35 @@ describe("importCsv — matching and preserved fields", () => {
     ]);
   });
 
+  // ADR 0237: a row whose name is decomposed (NFD) updates the stored composed (NFC)
+  // property. Escapes keep the two forms apart in the source.
+  it("matches a decomposed (NFD) name to the stored composed (NFC) property (ADR 0237)", async () => {
+    const nfc = "N\u00e1rodn\u00ed 12";
+    const nfd = "Na\u0301rodni\u0301 12";
+    await importNow(sql, {
+      properties: parseProperties(
+        `name,purchase_date,purchase_price\n${nfc},2019-01-01,4000000`,
+      ).rows,
+    });
+    const id = idOf(nfc);
+    await importNow(sql, {
+      properties: parseProperties(
+        `name,purchase_date,purchase_price\n${nfd},2019-01-01,4100000`,
+      ).rows,
+    });
+    expect(
+      sql.db
+        .prepare(
+          "SELECT id, name, purchase_price FROM properties ORDER BY name",
+        )
+        .all(),
+    ).toEqual([
+      { id: idOf("Byt A"), name: "Byt A", purchase_price: "5000000" },
+      { id: idOf("Byt B"), name: "Byt B", purchase_price: "6000000" },
+      { id, name: nfc, purchase_price: "4100000" },
+    ]);
+  });
+
   it("a re-import keeps the active flag, draws, interest-only date and a stored maturity (DR-129)", async () => {
     sql.db.exec(`
       UPDATE properties SET active = 0 WHERE name = 'Byt A';

@@ -619,6 +619,26 @@ describe("foreign keys and duplicates", () => {
     expect(r.errors).toEqual([]);
   });
 
+  // ADR 0237: names are compared in NFC. Escapes keep the two forms apart in the source.
+  it("matches a decomposed (NFD) child row to a known composed (NFC) property (ADR 0237)", () => {
+    const r = parseRents(
+      "property_name,start_date,end_date,monthly_rent\nNa\u0301rodni\u0301,2025-01-01,,1000",
+      new Set(["N\u00e1rodn\u00ed"]),
+    );
+    expect(r.errors).toEqual([]);
+    expect(r.rows).toHaveLength(1);
+  });
+
+  it("a composed and a decomposed spelling in one file are a fatal duplicate (ADR 0237)", () => {
+    const props = parseProperties(
+      `${H}\nN\u00e1rodn\u00ed,,,,,2020-01-01,100,,\nNa\u0301rodni\u0301,,,,,2021-01-01,200,,`,
+    );
+    expect(names(props)).toEqual(["N\u00e1rodn\u00ed"]);
+    expect(props.errors).toEqual([
+      { row: 3, field: "name", error: { code: "duplicateKey", firstRow: 2 } },
+    ]);
+  });
+
   it("a repeated natural key in one file is a fatal duplicate (D-55)", () => {
     const props = parseProperties(
       `${H}\nA,,,,,2020-01-01,100,,\n a ,,,,,2021-01-01,200,,`,
