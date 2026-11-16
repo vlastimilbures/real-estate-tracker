@@ -89,9 +89,9 @@ export function App() {
 
   // Native menu items (UX-066): App ▸ About…, View ▸ page (⌘1–⌘5), File ▸ New Property…
   // (⌘N) and Settings… (⌘,, UX-074). Ignored while a dialog is open, so a menu key never
-  // leaves a form behind or stacks About over it (ADR 0157). The page items are also
-  // ignored while the app is not ready (loading or an error screen), so Try again returns
-  // to the page the owner was on (ADR 0228). Guarded by the Tauri check (mirrors
+  // leaves a form behind or stacks About over it (ADR 0157). They are also ignored while
+  // the app is not ready (loading or an error screen), so Try again returns to the page
+  // the owner was on, with no About left to pop up (ADR 0228). Guarded by the Tauri check (mirrors
   // src/data/tauriSql.ts) so browser/E2E never crash on the missing event bridge.
   useEffect(() => {
     if (!isTauri()) return;
@@ -101,7 +101,7 @@ export function App() {
       dialogOpen() || usePortfolioStore.getState().status !== "ready";
     const offs = [
       onMenuEvent("menu://about", () => {
-        if (!dialogOpen()) useUiStore.getState().openAbout();
+        if (!held()) useUiStore.getState().openAbout();
       }),
       onMenuEvent("menu://navigate", (e) => {
         const route = menuRoute(e.payload);

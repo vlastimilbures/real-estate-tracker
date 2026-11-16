@@ -2,8 +2,8 @@
 //
 // UX-066 (DR-143): the native menu's New Property (⌘N) and View (⌘1–⌘5) items reach the
 // webview as events; App turns them into the same navigation as the sidebar. While a
-// dialog is open they do nothing (the dialog may hold unsaved input), and the page items
-// do nothing while the app is not ready (ADR 0228).
+// dialog is open they do nothing (the dialog may hold unsaved input), and every item does
+// nothing while the app is not ready (ADR 0228).
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, render } from "@testing-library/react";
 import { App } from "../App";
@@ -147,5 +147,21 @@ describe("while the error screen shows (ADR 0228)", () => {
     const s = useUiStore.getState();
     expect(s.route).toBe("dashboard");
     expect(s.newPropertyRequested).toBe(false);
+  });
+
+  it("About does nothing, so it cannot pop up after Try again", async () => {
+    act(() => {
+      useUiStore.setState({ aboutOpen: false });
+      usePortfolioStore.setState({
+        status: "error",
+        readBackFailed: true,
+        error: null,
+        startupError: null,
+      });
+    });
+    render(<App />);
+    await act(async () => {});
+    emit("menu://about");
+    expect(useUiStore.getState().aboutOpen).toBe(false);
   });
 });
