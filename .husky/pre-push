@@ -1,2 +1,8 @@
 # Full typecheck before code leaves the machine; CI repeats it as a required check (ADR 0151).
 pnpm typecheck
+# The whole-repo checks lint-staged cannot run on staged files alone, so they no longer
+# first fail in CI (#459): layer rules, dead code (all and shipped) and the ADR index.
+pnpm depcruise
+pnpm knip
+pnpm knip:prod
+pnpm adr:check
