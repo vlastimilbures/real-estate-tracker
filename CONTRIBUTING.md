@@ -85,6 +85,13 @@ still describe it. Which document owns what is listed in
   test compares its full-run count with no reruns, so any difference fails. Paste the
   summary into the PR.
 
+- **UI and state tests** (#458) start with both stores in their initial state
+  (`src/__tests__/setup/stores.ts`) and with `errorLog` and Tauri core replaced by spies
+  over the real functions (`setup/mocks.ts`); set only what differs, and change a spy's
+  behaviour with `vi.mocked(…)` rather than a file-level mock (lint rejects one).
+  `mockReset()` on a shared spy brings back the real pass-through, not a no-op. Render a
+  page on a portfolio with `renderWithPortfolio` (`src/__tests__/support/world.tsx`).
+  Engine tests import neither (depcruise).
 - **Mutation testing** (ADR 0026): `pnpm mutation` runs Stryker on `src/engine`. CI runs it
   nightly when main changed. Runs are incremental: only mutants in changed code or tests are
   retested against the last result (`reports/mutation/stryker-incremental.json`, cached in
