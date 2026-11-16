@@ -149,7 +149,10 @@ matched to an existing record by its natural key:
   Rename a property in the app instead.
 - **Changing a key date creates a new record.** A lease row with a new `start_date` is added
   as another lease; the old one stays. Edit or delete the old record in the app. If the old
-  lease has no end date, the new row overlaps it: see the next point.
+  lease has no end date, the new row overlaps it: see the next point. A mortgage row whose
+  corrected `start_date` is one month or less from the stored block's is refused (see
+  [Mortgage rows](#mortgage-rows-and-saved-loan-events)): edit the block's start date in the
+  app instead.
 - **Leases of one property cannot overlap** (ADR 0163). A `rents.csv` row whose lease would
   be in force on the same day as another lease of the property, in the file or stored, is a
   row error. Give the earlier lease an `end_date` before the later `start_date` (a row with
@@ -199,12 +202,14 @@ them (ADR 0160):
   added as another block, and the preview notes that the schedule does not use it. As the
   property's earliest block it can still count as the acquisition loan. Delete the block you
   do not want in the app.
-- **Two blocks less than a month apart are refused.** A block must start more than one month
+- **Two blocks one month or less apart are refused.** A block must start more than one month
   after the block it replaces: two refinancings within one month are not modelled (ADR 0226).
-  A row whose `start_date` is on or before the same day of the next month as another block of
-  the property (the month's last day when that day does not exist) is refused, and so is the
-  other block's row when it is in the same file. A corrected typo in `start_date` usually
-  falls in this window: change the block's start date in the app instead.
+  A row is refused when another block of the property starts after it but on or before its
+  `start_date` plus one month, or when it starts after another block but on or before that
+  block's start plus one month (the month's last day when that day does not exist); the other
+  block's row is refused too when it is in the same file. Two rows on the same date are a
+  duplicate instead. A corrected typo in `start_date` usually falls in this window: edit the
+  block's start date in the app instead.
 
 ## Preview and confirmation
 
