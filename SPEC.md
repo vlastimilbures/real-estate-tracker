@@ -137,8 +137,9 @@ override. (The seed sets an explicit `svjMonthly` per property to exercise this.
 ADR 0036). The codes: `INVALID_DATE`, `NON_FINITE_NUMBER`, `NEGATIVE_AMOUNT`,
 `NEGATIVE_PRINCIPAL`, `RATE_OUT_OF_RANGE`, `INSTALMENT_BELOW_INTEREST`,
 `ZERO_RATE_ZERO_INSTALMENT`, `MISSING_TERM_FOR_DEV_LOAN`, `NON_POSITIVE_DRAW`,
-`DRAW_BEFORE_START`, `DRAW_AFTER_SCHEDULE_END`, `COMPLETION_BEFORE_START`,
-`DUPLICATE_BLOCK_START`, `END_BEFORE_START`,
+`DRAW_BEFORE_START`, `DRAW_AFTER_SCHEDULE_END`, `DRAW_IN_LAST_TWO_PAYMENTS`,
+`COMPLETION_BEFORE_START`, `DUPLICATE_BLOCK_START`, `REFINANCE_WITHIN_A_MONTH`,
+`END_BEFORE_START`,
 `DUPLICATE_HOLDING_COST`, `ORPHAN_ROW`, `HORIZON_NOT_POSITIVE`, `INVALID_TERM`,
 `SHOCK_OUT_OF_RANGE`, `GROWTH_OUT_OF_RANGE`, `SHOCKED_RATE_OUT_OF_RANGE`,
 `SHOCKED_INFLATION_OUT_OF_RANGE`, `ASOF_BEFORE_BASEDATE`, `NON_POSITIVE_PREPAYMENT`,
@@ -193,7 +194,10 @@ still loads; the Data check lists it.
 - **One active block per property** (ADR 0027): the active block is the one whose
   `startDate` is the latest `≤ asOf`. A later block is a **successor** that replaces its
   predecessor from its start date (a refinance). Two blocks of one property with the same
-  start date are rejected (`DUPLICATE_BLOCK_START`). A successor that starts before its
+  start date are rejected (`DUPLICATE_BLOCK_START`). A block must start after
+  `EDATE(start of the property's next-earlier block, 1)`: one starting on or before it is
+  rejected, as is that earlier block (`REFINANCE_WITHIN_A_MONTH`, ADR 0226; two refinancings
+  within one month are not modelled). A successor that starts before its
   predecessor's fixation end is allowed with a non-blocking warning (it may be a top-up).
 - `currentBalance(asOf)` for the active block: FV over the loan's own payments due by `asOf`
   (due dates `EDATE(startDate, k)`), floored at 0. Blocks with `startDate > asOf` are
@@ -400,8 +404,11 @@ table and its export show `dueDate`.
   re-amortizes the same way. The trigger fires only on a real draw or completion.
 - A tranche must be dated strictly after the loan start (`DRAW_BEFORE_START`; money drawn on
   the start date belongs in the initial principal, D-42; the mortgage form shows it as the
-  drawdown schedule's first row, "Drawn at start", ADR 0167), and on or before the last-but-one
-  payment `EDATE(start, term·12 − 1)` (`DRAW_AFTER_SCHEDULE_END`, ADR 0129). A tranche
+  drawdown schedule's first row, "Drawn at start", ADR 0167), and on or before the last-but-two
+  payment `EDATE(start, term·12 − 2)` (ADR 0226): a tranche after the last-but-one payment
+  `EDATE(start, term·12 − 1)` is `DRAW_AFTER_SCHEDULE_END` (ADR 0129), one in the last two
+  payment months before it `DRAW_IN_LAST_TWO_PAYMENTS`. So every tranche lands before the final
+  payment on the baseDate grid, month-end clamps included. A tranche
   between the last payment due by baseDate and baseDate joins grid month 1 and is part of
   the baseDate debt (D-41); one dated after baseDate within grid month 1 is new debt in that
   month (D-44). A tranche landing in a future loan's first draw month joins that draw

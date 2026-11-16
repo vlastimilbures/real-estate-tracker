@@ -1524,6 +1524,7 @@ export function undrawnPrincipal(
   const chain = blockChain(blocks, baseDate);
   return chain.reduce<Decimal>((sum, block, i) => {
     if (!isDevLoan(block)) return sum;
+    assertLoanInputs(block); // as the schedule it follows (ADR 0226)
     const next = chain[i + 1];
     const start = drawMonth(block, baseDate);
     const early = i === 0 && (!futureBuy || fundedThePurchase(property, block));

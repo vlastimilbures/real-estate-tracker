@@ -114,11 +114,15 @@ export const en = {
     DRAW_BEFORE_START:
       "A draw must be dated after the loan start; money drawn on the start date belongs in Drawn at start (the initial principal)",
     DRAW_AFTER_SCHEDULE_END:
-      "A draw must be dated on or before the loan's last-but-one payment date (start date plus loan term, less one month)",
+      "A draw must be dated on or before the loan's last-but-two payment date (start date plus loan term, less two months)",
+    DRAW_IN_LAST_TWO_PAYMENTS:
+      "A draw in the loan's last two payment months is not modelled; date it on or before the last-but-two payment date (start date plus loan term, less two months)",
     COMPLETION_BEFORE_START:
       "The interest-only end date is before the loan start",
     DUPLICATE_BLOCK_START:
       "This property already has a mortgage starting on the same date",
+    REFINANCE_WITHIN_A_MONTH:
+      "A mortgage that replaces another must start more than one month after it; two refinancings within one month are not modelled",
     END_BEFORE_START: "The end date is before the start date",
     DUPLICATE_HOLDING_COST:
       "The property has more than one holding-costs record",

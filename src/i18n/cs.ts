@@ -100,10 +100,14 @@ export const cs: Dictionary = {
     DRAW_BEFORE_START:
       "Čerpání musí mít datum po začátku úvěru; částka čerpaná v den začátku patří do pole Čerpáno na začátku (počáteční jistina)",
     DRAW_AFTER_SCHEDULE_END:
-      "Čerpání musí mít datum nejpozději v den předposlední splátky úvěru (začátek plus doba splatnosti bez jednoho měsíce)",
+      "Čerpání musí mít datum nejpozději v den třetí splátky od konce úvěru (začátek plus doba splatnosti bez dvou měsíců)",
+    DRAW_IN_LAST_TWO_PAYMENTS:
+      "Čerpání v posledních dvou měsících splátek úvěru se nemodeluje; zadejte datum nejpozději v den třetí splátky od konce (začátek plus doba splatnosti bez dvou měsíců)",
     COMPLETION_BEFORE_START: "Konec splácení jen úroků je před začátkem úvěru",
     DUPLICATE_BLOCK_START:
       "Tato nemovitost už má hypotéku začínající ve stejný den",
+    REFINANCE_WITHIN_A_MONTH:
+      "Hypotéka, která nahrazuje jinou, musí začínat více než měsíc po ní; dvě refinancování během jednoho měsíce se nemodelují",
     END_BEFORE_START: "Datum konce je před datem začátku",
     DUPLICATE_HOLDING_COST:
       "Nemovitost má více než jeden záznam nákladů na držbu",

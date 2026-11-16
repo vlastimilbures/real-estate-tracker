@@ -119,6 +119,29 @@ describe("a CSV change that breaks a stored event (G1-5-1)", () => {
   });
 });
 
+describe("a CSV change that puts a stored draw in the last two payment months (ADR 0226 §1)", () => {
+  it("names the draw and the rule", async () => {
+    // Term 10 years: payment 118 is due 2030-11-17, payment 119 2030-12-17.
+    storeEvents({ draws: [{ date: "2030-12-01", amount: "100000" }] });
+    const p = await previewImport(sql, {
+      mortgages: mortgages("Byt A,2021-01-17,2250000,10,0.0169,,10,"),
+    });
+    expect(p.problems).toEqual([
+      {
+        file: "mortgages",
+        row: 2,
+        field: "",
+        problem: {
+          code: "storedEvent",
+          list: "draws",
+          date: "2030-12-01",
+          rule: "DRAW_IN_LAST_TWO_PAYMENTS",
+        },
+      },
+    ]);
+  });
+});
+
 describe("a new block replaces the previous block's later events (G1-5-2)", () => {
   it("lists the predecessor's prepayment dated after the new start", async () => {
     storeEvents({ prepayments: [prepayment("2032-01-17")] });
@@ -240,7 +263,7 @@ describe("a block starting before the block in force (G1-5-2, probe 2b)", () => 
   it("is noted as having no effect", async () => {
     storeEvents({ prepayments: [prepayment("2032-01-17")] });
     const p = await previewImport(sql, {
-      mortgages: mortgages("Byt A,2021-01-07,2000000,10,0.0169,,30,"),
+      mortgages: mortgages("Byt A,2020-12-07,2000000,10,0.0169,,30,"),
     });
     expect(p.problems).toEqual([]);
     expect(p.items).toEqual([
@@ -263,7 +286,7 @@ describe("a block starting before the block in force (G1-5-2, probe 2b)", () => 
     const plan = planImport(
       {
         mortgages: mortgages(
-          "Byt A,2021-01-07,2000000,10,0.0169,,30,",
+          "Byt A,2020-12-07,2000000,10,0.0169,,30,",
           SUCCESSOR,
         ),
       },

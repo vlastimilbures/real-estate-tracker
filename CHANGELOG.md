@@ -21,6 +21,15 @@ engine without the form, and remove it when the last part lands.
   "Valid to" changes no other row. No figure changes. This also fixes #436: cancelling the
   old dialog kept the form open but marked it as saved, so leaving the page then dropped the
   typed valuation without asking.
+- Two rare loan shapes are refused instead of modelled (ADR 0226, #448). A development
+  loan's tranche must be dated on or before the loan's last-but-two payment date (start date
+  plus loan term, less two months); a tranche in the last two payment months is refused
+  (before: the last-but-one payment date). A mortgage that replaces another must start more
+  than one month after it; two refinancings within one month are refused on both blocks.
+  Forms, CSV import and backup restore all refuse them. Data already stored in either shape
+  is not changed: Property detail shows it as invalid data, with no figures, until the
+  tranche or block is edited or deleted, and a backup that contains it is refused on
+  restore. No figure changes for any other loan.
 
 ## [1.5.0] - 2026-10-14
 

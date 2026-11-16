@@ -9,7 +9,9 @@ import {
   buildSchedule,
   openingBalance,
   openingDebt,
+  propertySchedule,
   schedulesByProperty,
+  undrawnPrincipal,
 } from "../schedule";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection } from "../projections";
@@ -103,6 +105,17 @@ const CASES: [ValidationCode, string, MortgageBlock][] = [
       startDate: isoDate("2026-03-01"),
       loanTermYears: 30,
       draws: [{ date: isoDate("2056-03-01"), amount: money(1) }],
+    }),
+  ],
+  // ADR 0226 §1: a draw in the last two payment months (after start + term − 2
+  // months, on or before start + term − 1 month) is refused.
+  [
+    "DRAW_IN_LAST_TWO_PAYMENTS",
+    "draws",
+    dev({
+      startDate: isoDate("2026-03-01"),
+      loanTermYears: 30,
+      draws: [{ date: isoDate("2056-02-01"), amount: money(1) }],
     }),
   ],
   [
@@ -262,5 +275,84 @@ describe("D-27 / D-43: two blocks of one property on the same start raise", () =
   it("blocks with different starts do not raise", () => {
     const later = loan({ startDate: isoDate("2031-01-17") });
     expect(() => openingDebt([seedBlock, later], assumptions)).not.toThrow();
+  });
+});
+
+describe("ADR 0226: the refused loan shapes raise with validation bypassed", () => {
+  const seedBlock = portfolio.mortgages.find(
+    (m) => m.propertyId === "javorova",
+  );
+  const javorova = portfolio.properties.find((x) => x.id === "javorova");
+  if (!seedBlock || !javorova) throw new Error("seed row missing");
+
+  it("a successor within a month of its predecessor raises on both", () => {
+    const blocks = [
+      seedBlock,
+      loan({ id: "m-y", startDate: isoDate("2031-01-17") }),
+      loan({ startDate: isoDate("2031-02-10") }),
+    ];
+    const p: Portfolio = {
+      ...portfolio,
+      mortgages: [
+        ...portfolio.mortgages.filter((m) => m.propertyId !== "javorova"),
+        ...blocks,
+      ],
+    };
+    const ids = p.properties.map((x) => x.id);
+    const on = (id: string) => ({
+      code: "REFINANCE_WITHIN_A_MONTH",
+      entity: "mortgage",
+      id,
+      field: "startDate",
+    });
+    for (const fn of [
+      () => propertySchedule(blocks, assumptions),
+      () => schedulesByProperty(p.mortgages, ids, assumptions),
+      () => openingDebt(blocks, assumptions),
+      () => portfolioProjection(p, assumptions),
+      () => portfolioKpis(p, assumptions),
+      () => portfolioSnapshot(p, assumptions),
+      () => propertySnapshot(javorova, p, assumptions),
+    ]) {
+      expect(caught(fn).errors).toEqual([on("m-y"), on("m-x")]);
+    }
+  });
+
+  it("a draw in the last two payment months raises in propertySchedule", () => {
+    const block = dev({
+      startDate: isoDate("2026-01-31"),
+      loanTermYears: 2,
+      draws: [{ date: isoDate("2027-12-31"), amount: money(1) }],
+    });
+    expect(caught(() => propertySchedule([block], assumptions)).errors).toEqual(
+      [
+        {
+          code: "DRAW_IN_LAST_TWO_PAYMENTS",
+          entity: "mortgage",
+          id: "m-x",
+          field: "draws",
+          index: 0,
+        },
+      ],
+    );
+  });
+
+  it("undrawnPrincipal checks a development loan before counting it", () => {
+    const block = dev({
+      startDate: isoDate("2026-01-31"),
+      loanTermYears: 2,
+      draws: [{ date: isoDate("2027-12-31"), amount: money(1) }],
+    });
+    expect(
+      caught(() => undrawnPrincipal(javorova, [block], assumptions, 0)).errors,
+    ).toEqual([
+      {
+        code: "DRAW_IN_LAST_TWO_PAYMENTS",
+        entity: "mortgage",
+        id: "m-x",
+        field: "draws",
+        index: 0,
+      },
+    ]);
   });
 });
