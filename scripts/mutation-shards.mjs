@@ -81,7 +81,9 @@ export function splitRanges(source, anchor, file = "source") {
     );
   const n = hits[0];
   if (n === 1)
-    throw new Error(`${file}: "function ${anchor}" is on line 1; part a is empty`);
+    throw new Error(
+      `${file}: "function ${anchor}" is on line 1; part a is empty`,
+    );
   return { a: `${file}:1-${n - 1}`, b: `${file}:${n}-${lines.length}` };
 }
 
@@ -162,6 +164,9 @@ export function mergeReports(reports, shards = SHARDS) {
       continue;
     }
     base ??= r;
+    // Stryker numbers mutants and tests per run, so an id is unique only with its shard.
+    const id = (x) => `${shard}-${x}`;
+    const ids = (xs) => (xs === undefined ? undefined : xs.map(id));
     for (const [file, f] of Object.entries(r.files)) {
       const into = (files[file] ??= { ...f, mutants: [] });
       for (const m of f.mutants) {
@@ -174,20 +179,26 @@ export function mergeReports(reports, shards = SHARDS) {
           continue;
         }
         seen.set(key, shard);
-        into.mutants.push({ ...m, id: `${shard}-${m.id}` });
+        into.mutants.push({
+          ...m,
+          id: id(m.id),
+          coveredBy: ids(m.coveredBy),
+          killedBy: ids(m.killedBy),
+        });
       }
     }
     for (const [file, t] of Object.entries(r.testFiles ?? {})) {
       const into = (testFiles[file] ??= { ...t, tests: [] });
-      const ids = new Set(into.tests.map((x) => x.id));
       for (const test of t.tests ?? [])
-        if (!ids.has(test.id)) into.tests.push(test);
+        into.tests.push({ ...test, id: id(test.id) });
     }
   }
   for (const [file, parts] of Object.entries(splitFiles(shards)))
     for (const shard of parts)
       if (reports[shard] && !reports[shard].files[file])
-        errors.push(`${file}: shard "${shard}" holds a part but reports no mutants`);
+        errors.push(
+          `${file}: shard "${shard}" holds a part but reports no mutants`,
+        );
   const report = {
     ...(base ?? { schemaVersion: "1.0" }),
     files,
@@ -228,7 +239,9 @@ function fileRows(report) {
     .sort()
     .flatMap((file) => {
       try {
-        return [row(`\`${file}\``, score({ files: { [file]: report.files[file] } }))];
+        return [
+          row(`\`${file}\``, score({ files: { [file]: report.files[file] } })),
+        ];
       } catch {
         return [];
       }
@@ -282,12 +295,21 @@ export function mergeSummary(reports, merged, brk, errors, shards = SHARDS) {
       lines.push(`| ${shard} | ${e.message} | | | | |`);
     }
   }
-  lines.push("", `| File ${HEAD[0]}`, `| --- ${HEAD[1]}`, ...fileRows(merged), "");
+  lines.push(
+    "",
+    `| File ${HEAD[0]}`,
+    `| --- ${HEAD[1]}`,
+    ...fileRows(merged),
+    "",
+  );
   if (combined && combined.survived + combined.noCoverage > 0)
     lines.push("Undetected:", "", ...survivors(merged), "");
   return {
     markdown: lines.join("\n"),
-    ok: errors.length === 0 && combined !== undefined && passes(combined.score, brk),
+    ok:
+      errors.length === 0 &&
+      combined !== undefined &&
+      passes(combined.score, brk),
   };
 }
 

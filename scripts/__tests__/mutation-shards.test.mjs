@@ -157,7 +157,10 @@ describe("splitRanges and mutateFor", () => {
 });
 
 describe("the shard table against the real src/engine", () => {
-  const engine = globSync(ENGINE_GLOB, { cwd: ROOT, exclude: ["**/__tests__/**"] });
+  const engine = globSync(ENGINE_GLOB, {
+    cwd: ROOT,
+    exclude: ["**/__tests__/**"],
+  });
 
   it("names only engine files that exist", () => {
     for (const f of assignedFiles()) expect(engine).toContain(f);
@@ -194,7 +197,9 @@ describe("the shard table against the real src/engine", () => {
 describe("mergeReports", () => {
   const full = () => ({
     "a-1": report({ "s.ts": many(3, "Killed", 1) }),
-    "a-2": report({ "s.ts": [...many(2, "Killed", 10), mutant(12, "Survived")] }),
+    "a-2": report({
+      "s.ts": [...many(2, "Killed", 10), mutant(12, "Survived")],
+    }),
     rest: report({ "t.ts": many(4, "Timeout", 1) }),
   });
 
@@ -232,15 +237,44 @@ describe("mergeReports", () => {
     ]);
   });
 
-  it("unions the test files, each test once", () => {
-    const r = full();
-    r["a-1"].testFiles = { "x.test.ts": { tests: [{ id: "t1" }] } };
-    r["a-2"].testFiles = {
-      "x.test.ts": { tests: [{ id: "t1" }, { id: "t2" }] },
+  // Stryker numbers tests per run: id "0" in one shard is not id "0" in another.
+  it("keeps the same raw test id in two shards as two tests, references following", () => {
+    const r = {
+      "a-1": report({
+        "s.ts": [
+          mutant(1, "Killed", { coveredBy: ["0", "1"], killedBy: ["0"] }),
+        ],
+      }),
+      "a-2": report({
+        "s.ts": [mutant(10, "Killed", { coveredBy: ["0"], killedBy: ["0"] })],
+      }),
+      rest: report({ "t.ts": [mutant(1, "Survived")] }),
     };
-    expect(
-      mergeReports(r, SMALL).report.testFiles["x.test.ts"].tests,
-    ).toEqual([{ id: "t1" }, { id: "t2" }]);
+    r["a-1"].testFiles = {
+      "x.test.ts": {
+        tests: [
+          { id: "0", name: "first" },
+          { id: "1", name: "second" },
+        ],
+      },
+    };
+    r["a-2"].testFiles = {
+      "x.test.ts": { tests: [{ id: "0", name: "third" }] },
+    };
+    const { report: merged, errors } = mergeReports(r, SMALL);
+    expect(errors).toEqual([]);
+    const tests = merged.testFiles["x.test.ts"].tests;
+    expect(tests).toEqual([
+      { id: "a-1-0", name: "first" },
+      { id: "a-1-1", name: "second" },
+      { id: "a-2-0", name: "third" },
+    ]);
+    const byId = new Map(tests.map((t) => [t.id, t.name]));
+    const [m1, m2] = merged.files["s.ts"].mutants;
+    expect(m1.coveredBy.map((t) => byId.get(t))).toEqual(["first", "second"]);
+    expect(m1.killedBy.map((t) => byId.get(t))).toEqual(["first"]);
+    expect(m2.coveredBy.map((t) => byId.get(t))).toEqual(["third"]);
+    expect(m2.killedBy.map((t) => byId.get(t))).toEqual(["third"]);
   });
 });
 
@@ -254,10 +288,14 @@ describe("summaries", () => {
     const { report: merged, errors } = mergeReports(reports, SMALL);
     const { markdown, ok } = mergeSummary(reports, merged, 99, errors, SMALL);
     expect(ok).toBe(true);
-    expect(markdown).toContain("**99.00 %** (99 of 100 valid mutants detected; break 99 %): pass. 1 of 100 mutants static.");
+    expect(markdown).toContain(
+      "**99.00 %** (99 of 100 valid mutants detected; break 99 %): pass. 1 of 100 mutants static.",
+    );
     expect(markdown).toContain("| a-2 | 1 | 0 | 1 | 0 | 0.00 % |");
     expect(markdown).toContain("| `s.ts` | 50 | 49 | 1 | 0 | 98.00 % |");
-    expect(markdown).toContain("- `s.ts:100:1` Survived ConditionalExpression → `true`");
+    expect(markdown).toContain(
+      "- `s.ts:100:1` Survived ConditionalExpression → `true`",
+    );
   });
 
   it("fails below break, and on a merge error even above it", () => {
@@ -279,7 +317,9 @@ describe("summaries", () => {
     const { markdown, ok } = mergeSummary({}, merged, 98, errors, SMALL);
     expect(ok).toBe(false);
     expect(markdown).toContain("| rest | missing | | | | |");
-    expect(markdown).toContain("- combined: no valid mutants: nothing was tested");
+    expect(markdown).toContain(
+      "- combined: no valid mutants: nothing was tested",
+    );
   });
 
   it("caps the survivors at 50", () => {
