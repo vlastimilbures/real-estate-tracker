@@ -307,10 +307,9 @@ Refactors are behaviour-neutral and need no ADR.
 - Open it as a **draft** (`gh pr create --draft`): CI skips draft PRs. Run the checks above
   locally, push review fixes, settle the ADR number and merge `main` while it is a draft, then
   mark it ready (`gh pr ready`) for one full CI run.
-- A push that changes only documentation (`docs/`, `*.md`) takes the docs fast path: CI
-  checks formatting, the ADR index and the tests that read docs (`scripts/ci-changes.sh`).
-  This applies when the whole PR is documentation on a green base, or when the push follows a
-  fully green one, e.g. an ADR renumber after review.
+- Every ready PR gets the full CI run, a documentation-only one too: the gate tests
+  (`scripts/__tests__/gates.test.mjs`) read CONTRIBUTING.md, README.md, CLAUDE.md, the PR
+  template and `docs/release.md`, so a docs change can break them (#459).
 
 ## Protecting real data
 

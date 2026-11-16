@@ -34,7 +34,7 @@ jobs:
           node-version: 24
 
       # The base branch's copy runs, so a PR that edits the script is still checked by the
-      # base copy (as ci.yml's changes job). It imports only node: built-ins, so one file is
+      # base copy. It imports only node: built-ins, so one file is
       # enough. Only a base that lacks the file (the PR that adds it) runs the PR's copy; a
       # missing HEAD^1 fails. The body goes through the environment, never into the shell.
       - name: Check the changelog

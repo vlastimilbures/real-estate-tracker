@@ -325,12 +325,12 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
       "          UX_RUN_ID: other\n",
     ],
     [
-      "Format check deleted from the full checks (the docs job still runs it)",
+      "Format check deleted from the full checks",
       "        run: pnpm lint\n\n      - name: Format check\n        run: pnpm exec prettier --check .\n",
       "        run: pnpm lint\n",
     ],
     [
-      "ADR index deleted from the full checks (the docs job still runs it)",
+      "ADR index deleted from the full checks",
       "      - name: ADR index and links\n        run: pnpm adr:check\n\n      - name: Audit",
       "      - name: Audit",
     ],

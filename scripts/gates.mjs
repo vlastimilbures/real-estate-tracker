@@ -5,8 +5,7 @@
 // (`pnpm gates:docs`), and scripts/__tests__/gates.test.mjs checks them, CLAUDE.md §6, the
 // PR template, the release script and ci.yml against it.
 //
-// The ci.yml check (`ciDrift`) reads each step outside the docs fast path: its exact
-// shell lines, its `env`, `continue-on-error`, its `if:` and its job's shard list. It
+// The ci.yml check (`ciDrift`) reads each step: its exact shell lines, its `env`, `continue-on-error`, its `if:` and its job's shard list. It
 // requires pnpm, cargo, node, bash and npx lines to be gates or setup. It does not see:
 // - a `shell:` override, job- or workflow-level `env`, or a step's `working-directory`;
 // - a job-level `if:` or `continue-on-error` (say `if: false` on the rust job);
@@ -323,15 +322,8 @@ export function runGates(gates, { exec = shell, log = console.log } = {}) {
   return { ok: true };
 }
 
-// ci.yml lines that set a job up and are no gate. The docs fast path's subset of the suite
-// goes when #459 removes the fast path.
-export const CI_SETUP = [
-  "pnpm exec playwright install --with-deps chromium",
-  'bash "$RUNNER_TEMP/ci-changes.sh"',
-];
-// The docs fast path repeats some gate lines; a gate must run in the full jobs, so its
-// lines count as setup, never as the gate (#459 decides its future).
-export const CI_SETUP_JOBS = ["docs"];
+// ci.yml lines that set a job up and are no gate (the install is in .github/actions/setup).
+export const CI_SETUP = ["pnpm exec playwright install --with-deps chromium"];
 // The `if:` a gate step may carry, by gate: only the baseline checks, which need a base
 // branch, run on pull requests alone.
 const PR_ONLY = "github.event_name == 'pull_request'";
@@ -445,7 +437,7 @@ function howItRuns(step, line, ifs) {
 }
 
 /**
- * Where a workflow and the list disagree, outside the setup jobs:
+ * Where a workflow and the list disagree:
  * - a gate with no step that runs its exact line with exactly its variables;
  * - a gate step with continue-on-error, an unknown `if:`, or a shard list that does not
  *   match the `/N` of its `--shard`;
@@ -453,14 +445,9 @@ function howItRuns(step, line, ifs) {
  */
 export function ciDrift(
   yaml,
-  {
-    gates = GATES,
-    setup = CI_SETUP,
-    setupJobs = CI_SETUP_JOBS,
-    ifs = CI_STEP_IFS,
-  } = {},
+  { gates = GATES, setup = CI_SETUP, ifs = CI_STEP_IFS } = {},
 ) {
-  const steps = workflowSteps(yaml).filter((s) => !setupJobs.includes(s.job));
+  const steps = workflowSteps(yaml);
   const listed = gates.filter((g) => g.where !== "nightly");
   const problems = [];
   for (const g of listed)
