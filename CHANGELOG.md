@@ -105,6 +105,9 @@ engine without the form, and remove it when the last part lands.
   - **Import:** one "Import files" panel with a row per file type; a file dropped on a
     row is that row's type, never routed by its name, and its errors are listed under
     its row (ADR 0212, #389).
+- A date before 01.01.1900 is now refused only where it is typed: the forms and CSV import
+  (ADR 0232, #452). Restoring a backup that holds one no longer warns, and the Data check no
+  longer lists it; editing such a record still needs a valid date. No figure changes.
 
 ### Accessibility
 

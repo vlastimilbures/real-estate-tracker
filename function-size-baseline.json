@@ -104,8 +104,8 @@
   },
   "src/ui/model/dataCheck.ts": {
     "complexity": {
-      "Function 'findingFix'": 15,
-      "Function 'findingText'": 24
+      "Function 'findingFix'": 14,
+      "Function 'findingText'": 22
     }
   },
   "src/ui/model/financing.ts": {

@@ -448,19 +448,8 @@ export const cs: Dictionary = {
       `Hypotéka od ${date}: doba splatnosti ${value} ${csPlural(n, ["rok", "roky", "let"])} je mimo rozsah, který formuláře přijímají (${range} let).`,
     outOfRangeHorizon: (value, range, n) =>
       `Horizont projekce ${value} ${csPlural(n, ["rok", "roky", "let"])} je mimo rozsah, který formuláře přijímají (${range} let).`,
-    earlyDate: (record, date, floor) =>
-      `${record} ${date} je před ${floor}, nejstarším datem, které formuláře přijímají. Zkontrolujte překlep v roce.`,
-    earlyDateLoan: (loan, date, floor) =>
-      `Hypotéka od ${loan}: datum ${date} je před ${floor}, nejstarším datem, které formuláře přijímají. Zkontrolujte překlep v roce.`,
     leaseOverlap: (first, second) =>
       `Nájmy od ${first} a od ${second} se překrývají. Nájmy jednoho bytu se překrývat nemohou: nastavte dřívějšímu nájmu datum konce před začátkem pozdějšího.`,
-    earlyDateRecord: {
-      property: "Datum nákupu",
-      mortgage: "Datum u hypotéky",
-      valuation: "Datum ocenění",
-      lease: "Datum nájmu",
-      assumptions: "Základní datum",
-    },
   },
 
   properties: {
@@ -1132,7 +1121,6 @@ export const cs: Dictionary = {
     issueMissingAssumptions:
       "Soubor musí obsahovat právě jeden záznam předpokladů",
     issueOutOfRange: (min, max) => `Musí být celé číslo od ${min} do ${max}`,
-    issueEarlyDate: (floor) => `Musí být datum od ${floor}`,
   },
 
   sample: {

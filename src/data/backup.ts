@@ -64,16 +64,7 @@ export interface RangeProblem {
   range: IntRange;
 }
 
-/** A stored date before 01.01.1900, the floor the forms and CSV import apply (ADR 0149
- *  §5). Restore-only, like OUT_OF_RANGE: restore warns and asks. */
-export interface DateProblem {
-  code: "EARLY_DATE";
-  entity: ValidationEntity;
-  id?: string | undefined;
-  field: string;
-}
-
-/** The engine's input rules plus the form bounds (whole numbers, the date floor) over
+/** The engine's input rules plus the whole-number form bounds over
  *  the restored rows (assumptions absent ⇒ portfolio rules only). Injected by the
  *  caller: the data layer never calls engine functions; `checkInputRules` in
  *  src/import/inputRules.ts is the one the app uses. Scenarios only need to be readable
@@ -82,13 +73,13 @@ export interface DateProblem {
 export type InputRules = (
   portfolio: Portfolio,
   assumptions?: Assumptions,
-) => (EngineValidationError | RangeProblem | DateProblem)[];
+) => (EngineValidationError | RangeProblem)[];
 
-/** The rules a restore only asks about ("Restore anyway"): the form bounds a database
- *  may already break (ADR 0148 §1, ADR 0149 §5). Every other issue refuses the file. */
+/** The rule a restore only asks about ("Restore anyway"): the whole-number form bounds a
+ *  database may already break (ADR 0148 §1). A stored date before 1900 is not checked
+ *  (ADR 0232). Every other issue refuses the file. */
 const WARNING_RULES: ReadonlySet<RestoreIssue["rule"]> = new Set([
   "OUT_OF_RANGE",
-  "EARLY_DATE",
 ]);
 
 /** The newest schema this app writes and reads (the last migration). */
@@ -220,8 +211,7 @@ export interface RestoreIssue {
     | "DUPLICATE_KEY"
     | "MISSING_ASSUMPTIONS"
     | "OUT_OF_RANGE"
-    | "BEYOND_LIMIT"
-    | "EARLY_DATE";
+    | "BEYOND_LIMIT";
   /** The allowed range of an OUT_OF_RANGE or BEYOND_LIMIT field. */
   range?: IntRange;
 }
@@ -489,8 +479,8 @@ export interface PreparedRestore {
   summary: BackupSummary;
   /** Wipe (children first) and re-insert, for one transaction. */
   statements: SqlStatement[];
-  /** Values outside the form bounds (OUT_OF_RANGE, EARLY_DATE): the confirm step asks
-   *  before a restore with any (ADR 0148, ADR 0149). */
+  /** Values outside the form bounds (OUT_OF_RANGE): the confirm step asks before a
+   *  restore with any (ADR 0148). */
   warnings: RestoreIssue[];
 }
 

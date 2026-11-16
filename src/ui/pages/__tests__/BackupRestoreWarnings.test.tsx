@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 //
-// ADR 0148 (#133), ADR 0149: a backup whose only problems are values the forms refuse
-// (outside a range, a date before 1900) is not refused: the confirm step lists them and
-// asks to restore anyway.
+// ADR 0148 (#133): a backup whose only problems are values the forms refuse (outside a
+// range) is not refused: the confirm step lists them and asks to restore anyway. A stored
+// date before 1900 is not one of them (ADR 0232).
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -76,9 +76,9 @@ describe("Restore with out-of-range values (ADR 0148)", () => {
     expect(restoreBackup).toHaveBeenCalledTimes(1);
   });
 
-  it("lists a date before 1900 and asks to restore anyway (ADR 0149)", async () => {
+  it("a date before 1900 gets the ordinary confirm step (ADR 0232)", async () => {
     const text = await legacyBackupText(
-      "UPDATE properties SET purchase_date = '1850-01-01' WHERE id = 'javorova'",
+      "UPDATE properties SET purchase_date = '1899-12-31' WHERE id = 'javorova'",
     );
     vi.mocked(invoke).mockResolvedValue({ name: "old.json", text });
     restoreBackup.mockResolvedValue({ safetyBackup: "safety.json" });
@@ -88,19 +88,13 @@ describe("Restore with out-of-range values (ADR 0148)", () => {
       screen.getByRole("button", { name: en.backup.chooseFile }),
     );
 
-    const anyway = await screen.findByRole("button", {
-      name: "Restore anyway",
-    });
+    const now = await screen.findByRole("button", { name: "Restore now" });
     expect(
-      screen.getByRole("region", { name: "Values the forms do not accept" }),
-    ).toBeTruthy();
-    const table = screen.getByRole("table");
-    expect(within(table).getByText("purchase_date")).toBeTruthy();
-    expect(
-      within(table).getByText("Must be a date from 01.01.1900"),
-    ).toBeTruthy();
+      screen.queryByRole("region", { name: "Values the forms do not accept" }),
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Restore anyway" })).toBeNull();
 
-    await userEvent.click(anyway);
+    await userEvent.click(now);
     expect(restoreBackup).toHaveBeenCalledTimes(1);
   });
 });

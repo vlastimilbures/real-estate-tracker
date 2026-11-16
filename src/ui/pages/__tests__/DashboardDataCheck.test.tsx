@@ -6,7 +6,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { edate, isoDate, money, type Portfolio } from "../../../engine";
+import { edate, money, type Portfolio } from "../../../engine";
 import {
   BASE_DATE,
   assumptions,
@@ -299,46 +299,6 @@ describe("Data check on the Dashboard: the projection horizon (ADR 0148)", () =>
     );
     const ui = useUiStore.getState();
     expect([ui.route, ui.settingsTab]).toEqual(["settings", "assumptions"]);
-  });
-});
-
-// ADR 0149 §5: stored dates before 1900 under "Needs attention", with their fix.
-describe("Data check on the Dashboard: dates before 1900 (ADR 0149)", () => {
-  it("lists a property's early date on its own line; the chip opens its record", async () => {
-    const legacy: Portfolio = {
-      ...portfolio,
-      leases: portfolio.leases.map((l) =>
-        l.propertyId === "dubova"
-          ? { ...l, startDate: isoDate("1025-07-01") }
-          : l,
-      ),
-    };
-    const { onFix } = renderPanel(legacy);
-    const line = screen
-      .getByText(
-        "A lease date 01.07.1025 is before 01.01.1900, the earliest date the forms accept. Check the year for a typo.",
-      )
-      .closest(".dc-row") as HTMLElement;
-    await userEvent.click(
-      within(line).getByRole("button", { name: /^Byt Dubova/ }),
-    );
-    expect(onFix).toHaveBeenCalledWith("dubova", "records");
-  });
-
-  it("lists an early base date as a portfolio line first; its chip opens Assumptions", async () => {
-    const { onFix } = renderPanel(portfolio, BASE_DATE, {
-      baseDate: isoDate("1826-06-07"),
-    });
-    const [first] = lines();
-    expect(first.querySelector(".dc-problem")?.textContent).toBe(
-      "The base date 07.06.1826 is before 01.01.1900, the earliest date the forms accept. Check the year for a typo.",
-    );
-    await userEvent.click(
-      within(first as HTMLElement).getByRole("button", {
-        name: /^Go to Assumptions/,
-      }),
-    );
-    expect(onFix).toHaveBeenCalledWith(null, "assumptions");
   });
 });
 

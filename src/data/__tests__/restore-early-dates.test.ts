@@ -1,18 +1,13 @@
-// ADR 0149 §5 (#119 item 5): new dates start on 01.01.1900, stored ones only warn. The
-// database guard checks shape only, so a database that already holds an earlier date
-// keeps loading; restore asks about it ("Restore anyway") like an out-of-range number
-// (ADR 0148 §1), so the app's own export of that database restores.
+// ADR 0232 (#452): a date before 01.01.1900 is refused only where it is typed (the forms
+// and CSV import). The database guard checks shape only, so a database that already holds
+// an earlier date keeps loading, and its own export restores with no warning: the
+// ordinary confirm step, no "Restore anyway".
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
 import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
 import { loadState } from "../repositories";
-import {
-  confirmRestore,
-  exportToJson,
-  prepareRestore,
-  RestoreError,
-} from "../backup";
+import { confirmRestore, exportToJson, prepareRestore } from "../backup";
 import { checkInputRules } from "../../import/inputRules";
 
 vi.mock("@tauri-apps/api/core", () => ({
@@ -31,30 +26,23 @@ beforeEach(async () => {
   await seedIfEmpty(sql);
   sql.db
     .prepare(
-      "UPDATE properties SET purchase_date = '1850-01-01' WHERE id = 'javorova'",
+      "UPDATE properties SET purchase_date = '1899-12-31' WHERE id = 'javorova'",
     )
     .run();
 });
 
 afterEach(() => sql.db.close());
 
-describe("stored dates before 1900 (ADR 0149 §5)", () => {
+describe("stored dates before 1900 (ADR 0232)", () => {
   it("load: the database still loads", async () => {
     const { portfolio } = await loadState(sql);
     const p = portfolio.properties.find((x) => x.id === "javorova");
-    expect(p?.purchaseDate.toISOString().slice(0, 10)).toBe("1850-01-01");
+    expect(p?.purchaseDate.toISOString().slice(0, 10)).toBe("1899-12-31");
   });
 
-  it("restore: the app's own export restores with an EARLY_DATE warning (#119)", async () => {
+  it("restore: the app's own export restores with no warning (#452)", async () => {
     const backup = await exportToJson(sql, new Date());
-    expect(prepareRestore(backup, checkInputRules).warnings).toEqual([
-      {
-        table: "properties",
-        id: "javorova",
-        column: "purchase_date",
-        rule: "EARLY_DATE",
-      },
-    ]);
+    expect(prepareRestore(backup, checkInputRules).warnings).toEqual([]);
   });
 
   it("restore: confirming replaces the data", async () => {
@@ -62,25 +50,5 @@ describe("stored dates before 1900 (ADR 0149 §5)", () => {
     await confirmRestore(sql, backup, checkInputRules);
     const { portfolio } = await loadState(sql);
     expect(portfolio.properties).toHaveLength(3);
-  });
-
-  it("restore: a refused file lists its early dates too (#119)", async () => {
-    const backup = await exportToJson(sql, new Date());
-    const leases = (backup.tables.leases as Record<string, unknown>[]).map(
-      (r, i) => (i === 0 ? { ...r, monthly_rent: "-1" } : r),
-    );
-    let e: unknown = null;
-    try {
-      prepareRestore(
-        { ...backup, tables: { ...backup.tables, leases } },
-        checkInputRules,
-      );
-    } catch (err) {
-      e = err;
-    }
-    expect(e).toBeInstanceOf(RestoreError);
-    expect((e as RestoreError).issues.map((i) => i.rule)).toContain(
-      "EARLY_DATE",
-    );
   });
 });

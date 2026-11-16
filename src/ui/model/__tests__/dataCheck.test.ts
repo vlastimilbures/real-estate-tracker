@@ -841,112 +841,25 @@ describe("out-of-range stored values (ADR 0148)", () => {
   });
 });
 
-// ADR 0149 §5 (#119): a stored date before 1900 (an earlier CSV import) keeps loading; the
-// Data check lists it under "Needs attention", like an out-of-range value.
-describe("stored dates before 1900 (ADR 0149)", () => {
+// ADR 0232 (#452): a stored date before 1900 (an earlier CSV import) keeps loading and the
+// Data check does not look for it; only the forms and CSV import refuse one.
+describe("stored dates before 1900 (ADR 0232)", () => {
   const legacy: Portfolio = {
     ...portfolio,
     properties: portfolio.properties.map((p) =>
-      p.id === "javorova" ? { ...p, purchaseDate: isoDate("1850-01-01") } : p,
+      p.id === "javorova" ? { ...p, purchaseDate: isoDate("1899-12-31") } : p,
     ),
   };
 
-  it("lists an 1850 purchase date (#119)", () => {
-    expect(kinds(check("javorova", BASE_DATE, legacy).attention)).toContain(
-      "earlyDate",
-    );
+  it("a stored 1899 purchase date adds nothing (#452)", () => {
+    expect(check("javorova", BASE_DATE, legacy)).toEqual(check("javorova"));
   });
 
-  it("names the record and the floor, and fixes each in its own place", () => {
-    const early = isoDate("1850-01-01");
-    const all: Portfolio = {
-      ...legacy,
-      mortgages: legacy.mortgages.map((m) =>
-        m.propertyId === "javorova" ? { ...m, contractMaturityDate: early } : m,
-      ),
-      valuations: legacy.valuations.map((v) =>
-        v.propertyId === "javorova" ? { ...v, validFrom: early } : v,
-      ),
-      leases: legacy.leases.map((l) =>
-        l.propertyId === "javorova" ? { ...l, startDate: early } : l,
-      ),
-    };
-    const found = check("javorova", BASE_DATE, all).attention.filter(
-      (f) => f.kind === "earlyDate",
-    );
-    expect(found.map((f) => f.kind === "earlyDate" && f.field)).toEqual([
-      "purchaseDate",
-      "contractMaturityDate",
-      "validFrom",
-      "startDate",
-    ]);
-    expect(found.map(findingFix)).toEqual([
-      "edit",
-      "financing",
-      "records",
-      "records",
-    ]);
+  it("a stored 1899 base date adds nothing (#452)", () => {
     expect(
-      findingText(en, found[0]!, assumptions.postFixationResetRatePa),
-    ).toBe(
-      "Purchase date 01.01.1850 is before 01.01.1900, the earliest date the forms accept. Check the year for a typo.",
-    );
-  });
-
-  // ADR 0180 §3 (#263 item 4): an early mortgage date names its loan by its start date,
-  // unless it is that start date.
-  it("an early mortgage date names its loan", () => {
-    const early = isoDate("1850-01-01");
-    const text = (patch: (m: MortgageBlock) => MortgageBlock) => {
-      const p: Portfolio = {
-        ...portfolio,
-        mortgages: portfolio.mortgages.map((m) =>
-          m.id === "m-javorova" ? patch(m) : m,
-        ),
-      };
-      return check("javorova", BASE_DATE, p)
-        .attention.filter((f) => f.kind === "earlyDate")
-        .map((f) => findingText(en, f, assumptions.postFixationResetRatePa));
-    };
-    expect(text((m) => ({ ...m, contractMaturityDate: early }))).toEqual([
-      "Mortgage from 17.01.2021: a date 01.01.1850 is before 01.01.1900, the earliest date the forms accept. Check the year for a typo.",
-    ]);
-    expect(text((m) => ({ ...m, startDate: early }))).toEqual([
-      "A mortgage date 01.01.1850 is before 01.01.1900, the earliest date the forms accept. Check the year for a typo.",
-    ]);
-  });
-
-  it("lists it before the purchase date too: it is stored, not dated", () => {
-    const before = isoDate("1849-01-01");
-    expect(kinds(check("javorova", before, legacy).attention)).toEqual([
-      "earlyDate",
-    ]);
-  });
-
-  it("an early base date is a portfolio row", () => {
-    const rows = portfolioDataCheck({
-      horizonYears: 30,
-      baseDate: isoDate("1826-06-07"),
-    });
-    expect(rows).toMatchObject([
-      {
-        propertyId: null,
-        name: null,
-        finding: {
-          kind: "earlyDate",
-          entity: "assumptions",
-          field: "baseDate",
-        },
-      },
-    ]);
-    expect(rows.map((r) => findingFix(r.finding))).toEqual(["assumptions"]);
-    expect(
-      portfolioDataCheck({ horizonYears: 30, baseDate: BASE_DATE }),
+      portfolioDataCheck({ horizonYears: 30, baseDate: isoDate("1899-12-31") }),
     ).toEqual([]);
   });
-
-  it("a date from 1900 on is not listed", () =>
-    expect(kinds(check("javorova").attention)).not.toContain("earlyDate"));
 });
 
 // ADR 0163: leases of one apartment never overlap. A pair stored before the rule (ADR 0099

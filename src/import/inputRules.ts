@@ -1,7 +1,7 @@
-// The engine's input rules as the restore check (P5b), plus the whole-number bounds and
-// the date floor the forms and CSV import apply (ADR 0086, ADR 0149), and the scenario check the store and the compare
-// use (ADR 0123). Lives outside src/data because the data layer never calls engine functions
-// (DB → mappers → engine).
+// The engine's input rules as the restore check (P5b), plus the whole-number bounds the
+// forms and CSV import apply (ADR 0086), and the scenario check the store and the compare
+// use (ADR 0123). A stored date before 1900 is not checked (ADR 0232). Lives outside
+// src/data because the data layer never calls engine functions (DB → mappers → engine).
 import { applyScenario, validateInputs, validatePortfolio } from "../engine";
 import type {
   Assumptions,
@@ -9,8 +9,7 @@ import type {
   Portfolio,
   ScenarioOverrides,
 } from "../engine";
-import type { DateProblem, InputRules, RangeProblem } from "../data/backup";
-import { earlyDateFields } from "../lib/day";
+import type { InputRules, RangeProblem } from "../data/backup";
 import { outOfRangeFields } from "../lib/intRanges";
 
 /** Every bounded whole-number field outside INT_RANGES (unset optional fields pass). */
@@ -26,16 +25,6 @@ function rangeProblems(
       field,
       range,
     }),
-  );
-}
-
-/** Every stored date before the forms' 1900 floor (ADR 0149 §5). */
-function dateProblems(
-  portfolio: Portfolio,
-  assumptions: Assumptions | undefined,
-): DateProblem[] {
-  return earlyDateFields(portfolio, assumptions).map(
-    ({ entity, id, field }) => ({ code: "EARLY_DATE", entity, id, field }),
   );
 }
 
@@ -81,20 +70,19 @@ export function scenarioErrorsAddedBy(
 }
 
 /** Every engine input rule over a restored portfolio (without assumptions, the
- *  portfolio rules only), then the form bounds (whole numbers, the date floor) on
- *  fields no engine rule already reported. */
+ *  portfolio rules only), then the whole-number form bounds on fields no engine rule
+ *  already reported. */
 export const checkInputRules: InputRules = (portfolio, assumptions) => {
   const engine = assumptions
     ? validateInputs(portfolio, assumptions)
     : validatePortfolio(portfolio);
-  const key = (e: EngineValidationError | RangeProblem | DateProblem) =>
+  const key = (e: EngineValidationError | RangeProblem) =>
     `${e.entity}\u0000${e.id ?? ""}\u0000${e.field ?? ""}`;
   const reported = new Set(engine.map(key));
   return [
     ...engine,
-    ...[
-      ...rangeProblems(portfolio, assumptions),
-      ...dateProblems(portfolio, assumptions),
-    ].filter((p) => !reported.has(key(p))),
+    ...rangeProblems(portfolio, assumptions).filter(
+      (p) => !reported.has(key(p)),
+    ),
   ];
 };
