@@ -258,3 +258,67 @@ describe("ADR 0130: a prepayment at the refix saves nothing in the model", () =>
     expect(outlook().textContent).not.toContain(pd.interestSaved);
   });
 });
+
+describe("ADR 0224: the Loan outlook after the charts, as a figure row", () => {
+  const figures = () =>
+    [...outlook().querySelectorAll(".fx-figure")].map((f) => [
+      f.querySelector("dt")?.textContent,
+      f.querySelector(".fx-value")?.textContent,
+    ]);
+
+  it("sits in the Overview, right after the charts, not under Financing", () => {
+    render(<PropertyDetail />);
+    const panel = outlook();
+    expect(panel.closest(".pd-section")?.id).toBe("pd-overview");
+    const charts = document.querySelector("#pd-overview .chart-grid")!;
+    expect(
+      charts.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(document.querySelector("#pd-financing")?.contains(panel)).toBe(
+      false,
+    );
+  });
+
+  it("opens with the figures: next reset, debt at reset, payoff, remaining term", () => {
+    act(() => useUiStore.setState({ asOf: assumptions.baseDate }));
+    render(<PropertyDetail />);
+    const reset = portfolioOutputs(
+      portfolio,
+      assumptions,
+      assumptions.baseDate,
+    ).financing.resets.find((r) => r.blockId === "m-javorova")!;
+    expect(figures()).toEqual([
+      [pd.outlookStatus.nextReset, "17.01.2031"],
+      [pd.colBalanceAtReset, fmtCzk(reset.balance)],
+      [pd.loanPayoff, "17.05.2051"],
+      [pd.remainingTerm, "25 yrs"],
+    ]);
+    // The resets table stays below.
+    expect(
+      within(outlook()).getByRole("table", { name: pd.outlookResetsTitle }),
+    ).toBeTruthy();
+  });
+
+  it("adds interest saved as a figure when a prepayment saves some", () => {
+    withPrepayments([
+      {
+        date: isoDate("2031-01-17"),
+        amount: money(500000),
+        effect: "shortenTerm",
+      },
+    ]);
+    render(<PropertyDetail />);
+    expect(figures().map(([k]) => k)).toContain(pd.interestSaved);
+  });
+
+  it("the note is behind the info icon, not under the panel", () => {
+    render(<PropertyDetail />);
+    const info = within(outlook()).getByRole("button", {
+      name: `${en.common.aboutThis}: ${pd.loanSummaryTitle}`,
+    });
+    expect(
+      document.getElementById(info.getAttribute("aria-controls")!)?.textContent,
+    ).toBe(pd.loanSummaryNote);
+    expect(outlook().querySelector(".panel-note")).toBeNull();
+  });
+});

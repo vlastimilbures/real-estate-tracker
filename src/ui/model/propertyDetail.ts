@@ -224,6 +224,9 @@ export interface DrawdownView {
 }
 
 export interface LoanOutlook {
+  /** The next rate reset for the figure row (ADR 0224): its fixation end and balance;
+   *  null with none ahead. */
+  next: { date: string; balance: Decimal | null } | null;
   payoff: string;
   /** Null once repaid or with no payment left to count. */
   remainingTerm: string | null;
@@ -269,7 +272,9 @@ export function loanOutlook(
         label: d.outlookStatus[status],
       };
     });
+  const next = rows.find((r) => r.status === "nextReset");
   return {
+    next: next ? { date: next.fixationEnd, balance: next.balance } : null,
     payoff: loan.payoffDate ? fmtDate(loan.payoffDate) : d.loanPayoffNone,
     remainingTerm: loan.remainingMonths
       ? remainingTermText(loan.remainingMonths, d)

@@ -2982,6 +2982,11 @@ main.page:focus {
   gap: var(--s3) var(--s6);
   margin: 0;
 }
+/* The Loan outlook: room between the figures and the drawdowns and resets table under
+   them (ADR 0224 §4). */
+.fx-figures + :is(.drawdown, .table-wrap) {
+  margin-top: var(--s5);
+}
 /* Each figure as wide as its label, up to a limit; a long label wraps. */
 .fx-figure {
   flex: 0 1 auto;

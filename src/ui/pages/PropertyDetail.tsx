@@ -233,6 +233,7 @@ export function PropertyDetail() {
       : null;
   const toReview = check?.attention.length ?? 0;
 
+  const overview = Boolean(s && out && basis);
   const lens = lensLabel(t, mode);
   const modeWord = lensWord(t, mode);
   const sectionLabel: Record<PropertySection, string> = {
@@ -384,6 +385,8 @@ export function PropertyDetail() {
               mode === "real" ? t.charts.rateResetNominal : t.charts.rateReset
             }
           />
+          {/* Right after the charts: the loan's next reset and payoff (ADR 0224 §1). */}
+          {outlook && <LoanSummary outlook={outlook} />}
         </div>
       )}
 
@@ -406,7 +409,8 @@ export function PropertyDetail() {
             {loanWarningText(t, w, assumptions.postFixationResetRatePa)}
           </div>
         ))}
-        {outlook && <LoanSummary outlook={outlook} />}
+        {/* Without an Overview the Loan outlook stays here (ADR 0224 §1). */}
+        {outlook && !overview && <LoanSummary outlook={outlook} />}
       </div>
 
       {out && (

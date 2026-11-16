@@ -1734,7 +1734,7 @@ export const SCREENS: Screen[] = [
   },
   {
     id: "29b-property-loan-outlook",
-    desc: "Loan outlook: remaining term and each block's reset (ADR 0117)",
+    desc: "Loan outlook right after the charts: the figure row, then each block's reset; the note behind the info icon (ADR 0117, ADR 0224)",
     run: async (ux) => {
       const d = ux.t.propertyDetail;
       await boot(ux.page);
@@ -1743,9 +1743,36 @@ export const SCREENS: Screen[] = [
       await expect(
         p.getByRole("table", { name: d.outlookResetsTitle }),
       ).toBeVisible();
-      await expect(p.getByText(d.remainingTerm, { exact: true })).toBeVisible();
+      // In the Overview, right after the charts (ADR 0224 §1).
+      const placed = await p.evaluate((el) => {
+        const section = el.closest(".pd-section");
+        const prev = el.previousElementSibling;
+        return {
+          section: section?.id,
+          afterCharts:
+            !!prev?.querySelector(".chart-grid") ||
+            !!prev?.matches(".chart-grid"),
+        };
+      });
+      expect(placed).toEqual({ section: "pd-overview", afterCharts: true });
+      // The figure row: next reset, debt at reset, payoff, remaining term (§2);
+      // every figure in full, none overflowing the row.
+      const figures = p.locator(".fx-figure");
+      await expect(figures.locator("dt")).toHaveText([
+        d.outlookStatus.nextReset,
+        d.colBalanceAtReset,
+        d.loanPayoff,
+        d.remainingTerm,
+      ]);
+      for (const f of await figures.all()) await expectNotClipped(f);
       await p.scrollIntoViewIfNeeded();
       await ux.capture("29b-property-loan-outlook", { fullPage: false });
+      // The note is behind the info icon (§5).
+      const info = p.getByRole("button", {
+        name: `${ux.t.common.aboutThis}: ${d.loanSummaryTitle}`,
+      });
+      await expectInfoTip(ux.page, info);
+      await expect(p.locator(".panel-note")).toHaveCount(0);
     },
   },
   {

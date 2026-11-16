@@ -731,6 +731,8 @@ export const en = {
     interestSavedNa: "n/a: a maturity change depends on the prepayment",
     // ADR 0117: the remaining term and each block's reset.
     remainingTerm: "Remaining term",
+    // ADR 0224: the figure row with no reset ahead.
+    outlookNextResetNone: "None ahead",
     outlookResetsTitle: "Fixation resets by loan block",
     colFixationEnd: "Fixation end",
     colBalanceAtReset: "Debt at reset (nominal)",
