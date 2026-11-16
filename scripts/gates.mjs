@@ -6,10 +6,15 @@
 // PR template, the release script and ci.yml against it.
 //
 // The ci.yml check (`ciDrift`) reads each step outside the docs fast path: its exact
-// shell lines, its `env`, `continue-on-error`, its `if:` and its job's shard matrix. It
-// does not see a `shell:` override, job- or workflow-level `env`, or an edit inside a
-// multi-line script that keeps the gate's own line (an `exit 0` before it, say). #459,
-// which owns the workflows, may revisit that.
+// shell lines, its `env`, `continue-on-error`, its `if:` and its job's shard list. It
+// requires pnpm, cargo, node, bash and npx lines to be gates or setup. It does not see:
+// - a `shell:` override, job- or workflow-level `env`, or a step's `working-directory`;
+// - a job-level `if:` or `continue-on-error` (say `if: false` on the rust job);
+// - a matrix `exclude` / `include`;
+// - `sh` or `npm` lines;
+// - an edit inside a multi-line script that keeps the gate's own line (an `exit 0`
+//   before it, say).
+// #459, which owns the workflows, may revisit all of these.
 //
 //   node scripts/gates.mjs               run the check gates
 //   node scripts/gates.mjs --release     … and the two dependency audits
@@ -330,8 +335,13 @@ export const CI_SETUP = [
 // The docs fast path repeats some gate lines; a gate must run in the full jobs, so its
 // lines count as setup, never as the gate (#459 decides its future).
 export const CI_SETUP_JOBS = ["docs"];
-// The one `if:` a gate step may carry: the baseline checks need a base branch.
-export const CI_STEP_IFS = ["github.event_name == 'pull_request'"];
+// The `if:` a gate step may carry, by gate: only the baseline checks, which need a base
+// branch, run on pull requests alone.
+const PR_ONLY = "github.event_name == 'pull_request'";
+export const CI_STEP_IFS = {
+  "depcruise-baseline": [PR_ONLY],
+  "size-baseline": [PR_ONLY],
+};
 
 const indentOf = (line) => line.search(/\S/);
 const unquote = (v) => v.trim().replace(/^(['"])(.*)\1$/, "$2");
@@ -467,7 +477,7 @@ export function ciDrift(
           `${g.id}: \`${spec.run}\` runs with env ${JSON.stringify(found[0].env)}, expected ${JSON.stringify(spec.env ?? {})}`,
         );
       for (const s of same)
-        for (const p of howItRuns(s, spec.run, ifs))
+        for (const p of howItRuns(s, spec.run, ifs[g.id] ?? []))
           problems.push(`${g.id}: the \`${spec.run}\` step ${p}`);
     }
   const known = new Set([

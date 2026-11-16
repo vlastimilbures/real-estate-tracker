@@ -272,7 +272,11 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
       "      - run: node scripts/other.mjs",
     ].join("\n");
     const gates = [
-      { id: "size", run: "pnpm lint:size:baseline-check", where: "check" },
+      {
+        id: "size-baseline",
+        run: "pnpm lint:size:baseline-check",
+        where: "check",
+      },
       {
         id: "axe",
         run: "x",
@@ -339,6 +343,11 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
       "a gate step behind an unknown if",
       "        run: pnpm depcruise\n",
       "        if: github.event_name == 'push'\n        run: pnpm depcruise\n",
+    ],
+    [
+      "the pull-request-only if on a gate that is no baseline check",
+      "        run: pnpm test:coverage\n",
+      "        if: github.event_name == 'pull_request'\n        run: pnpm test:coverage\n",
     ],
     [
       "fewer axe shards than the run's /4",
