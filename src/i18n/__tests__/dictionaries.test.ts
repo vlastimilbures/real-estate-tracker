@@ -320,7 +320,6 @@ describe("i18n dictionaries — plural forms", () => {
     for (const l of LANGS) {
       for (const k of [
         "dashboard.projectionTitle",
-        "dashboard.moreCharts",
         "dashboard.kpiCumulativeCashToOwner",
         "dashboard.kpiSumPrincipalRepaid",
         "propertyDetail.projectionTitle",

@@ -7,7 +7,7 @@ import { act, render, screen } from "@testing-library/react";
 import { portfolioKpis, portfolioSnapshot } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { useUiStore } from "../../../state/uiStore";
-import { KpiListPanel, MoreCharts, ProjectionHero } from "../DashboardPanels";
+import { KpiListPanel, ProjectionCharts } from "../DashboardPanels";
 import { rowLabel } from "./kpiStripSupport";
 
 const a25 = { ...assumptions, horizonYears: 25 };
@@ -21,12 +21,7 @@ describe("Dashboard horizon labels (ADR 0084)", () => {
     const { container } = render(
       <>
         <>
-          <ProjectionHero
-            mode="nominal"
-            rows={[]}
-            horizonYears={a25.horizonYears}
-          />
-          <MoreCharts
+          <ProjectionCharts
             mode="nominal"
             rows={[]}
             eqChange={[]}

@@ -331,7 +331,6 @@ export const en = {
     kpiMonthlyInflow: "Monthly inflow · effective rent",
     kpiMonthlyOutflow: "Monthly outflow · costs + debt service",
     projectionTitle: (n: number) => `${n}-year projection`,
-    moreCharts: (n: number) => `More ${n}-year projection charts`,
     realTerms: "Real terms (base-date Kč)",
     nominalKc: "Nominal Kč",
     chartValueVsDebtVsEquity: "Value vs debt vs equity",
@@ -452,7 +451,8 @@ export const en = {
     fundingUnknownFuture:
       "Own cash for this purchase is not recorded, so Cash invested is not known and the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
     // ADR 0206: the Dashboard's grouped Data check.
-    toReview: (n: number) => `${n} to review`,
+    /** The page title's pill: its accessible name and tooltip (ADR 0218 §1). */
+    reviewPill: (n: number) => `${n} to review in the Data check`,
     needAttention: (n: number) =>
       `${n} ${enPlural(n, ["needs attention", "need attention"])}`,
     useDefaults: (n: number) =>
