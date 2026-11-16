@@ -17,6 +17,11 @@ import { logFailure } from "../../data/errorLog";
 import { importNow } from "./support/importNow";
 
 vi.mocked(invoke).mockResolvedValue(undefined);
+// An export's save dialog, saved: only the export test reaches it.
+vi.mock("../../platform/saveFile", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  saveFile: vi.fn(async () => ({ kind: "saved", filename: "export.json" })),
+}));
 
 /** `real`, but the reload's snapshot read fails: the write commits, the reload after it
  *  fails. A snapshot that reads `schema_migrations` stands for `exportToJson` (the safety
@@ -262,5 +267,127 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
     expect(store().readBackFailed).toBe(false);
     expect(store().error).toEqual(error);
     expect(logged()).toEqual(["WRITE", "RELOAD"]);
+  });
+
+  /** `real`, but the read-back fails, and from then on every write is counted. */
+  function countedAfterReadBack(real: Sql) {
+    const writes = { execute: 0, transaction: 0 };
+    let failed = false;
+    const sql: Sql = {
+      ...real,
+      execute: (q, p) => {
+        if (failed) writes.execute += 1;
+        return real.execute(q, p);
+      },
+      transaction: (statements, options) => {
+        if (failed) writes.transaction += 1;
+        return real.transaction(statements, options);
+      },
+      selectSnapshot: (statements) => {
+        if (statements.some((s) => s.query.includes("schema_migrations")))
+          return real.selectSnapshot(statements);
+        failed = true;
+        return Promise.reject(new Error("database is locked"));
+      },
+    };
+    return { sql, writes };
+  }
+  const refused = (p: Promise<unknown>) =>
+    expect(p).rejects.toThrow("Database not initialised");
+
+  it.each([
+    {
+      action: "a CSV import",
+      prepare: async () => () =>
+        refused(
+          importNow({
+            properties: parseProperties(
+              "name,purchase_date,purchase_price\nQueued Import,2020-01-01,1000000",
+            ).rows,
+          }),
+        ),
+    },
+    {
+      action: "a restore",
+      prepare: async () => {
+        const file = await exportToJson(db, new Date());
+        await store().clearSample();
+        return () => refused(store().restoreBackup(file));
+      },
+    },
+    {
+      action: "loading the sample",
+      prepare: async () => {
+        await store().clearSample();
+        return () => refused(store().loadSample());
+      },
+    },
+    {
+      // The export itself reads only; recording it is the queued write.
+      action: "recording an export",
+      prepare: async () => async () => {
+        expect((await store().exportBackup()).kind).toBe("saved");
+        expect(logged()).toContain("BACKUP");
+      },
+    },
+  ])("refuses $action queued behind the failed one", async ({ prepare }) => {
+    const run = await prepare();
+    const before = await propertiesOnDisk();
+    const { sql, writes } = countedAfterReadBack(db);
+    usePortfolioStore.setState({ sql });
+
+    // An assumptions save: a write that needs no property (the sample may be cleared).
+    const first = store().saveAssumptions({
+      ...store().assumptions!,
+      horizonYears: 25,
+    });
+    const queued = run();
+
+    expect(await first).toEqual({ ok: true });
+    await queued;
+    expect(await propertiesOnDisk()).toBe(before);
+    expect(writes).toEqual({ execute: 0, transaction: 0 });
+    expect(store().readBackFailed).toBe(true);
+  });
+
+  it("Try again reads only after the job running before it", async () => {
+    // Every job queued behind a failed read-back is refused at once, so none can hold the
+    // queue today; Try again still reads behind the queue, never alongside a job.
+    const log: string[] = [];
+    const { opened, release } = gate();
+    let held = false;
+    usePortfolioStore.setState({
+      sql: {
+        ...db,
+        execute: async (q, p) => {
+          if (!held) {
+            held = true;
+            log.push("held write");
+            await opened;
+          }
+          return db.execute(q, p);
+        },
+        selectSnapshot: (statements) => {
+          log.push("snapshot");
+          return db.selectSnapshot(statements);
+        },
+      },
+    });
+    const write = store().addValuation(valuation("held"));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(log).toEqual(["held write"]);
+    usePortfolioStore.setState({ status: "error", readBackFailed: true });
+
+    const tryAgain = store().init(vi.fn(async () => db));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(log).toEqual(["held write"]);
+    expect(store().readBackFailed).toBe(true);
+
+    release();
+    await Promise.all([write, tryAgain]);
+    // The write's own read-back, then Try again's.
+    expect(log).toEqual(["held write", "snapshot", "snapshot"]);
+    expect(store().readBackFailed).toBe(false);
+    expect(store().status).toBe("ready");
   });
 });
