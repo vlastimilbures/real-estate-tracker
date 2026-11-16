@@ -525,6 +525,18 @@ describe("dates", () => {
     expect(r.rows).toEqual([]);
   });
 
+  // ADR 0232 §5: CSV import keeps refusing a year-0226 typo of 2026.
+  it("refuses 0226-06-01 (ADR 0232)", () => {
+    const r = parseProperties(`${H}\nA,,,,,0226-06-01,100,,`);
+    expect(r.errors).toEqual([
+      {
+        row: 2,
+        field: "purchase_date",
+        error: { code: "earlyDate", value: "0226-06-01" },
+      },
+    ]);
+  });
+
   it("accepts 01.01.1900, the floor itself (ADR 0149)", () => {
     const r = parseProperties(`${H}\nA,,,,,1900-01-01,100,,`);
     expect(r.errors).toEqual([]);

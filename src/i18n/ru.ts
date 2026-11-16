@@ -457,19 +457,8 @@ export const ru: Dictionary = {
       `Ипотека с ${date}: срок кредита ${value} ${ruPlural(n, ["год", "года", "лет"])} вне диапазона, который принимают формы (${range} лет).`,
     outOfRangeHorizon: (value, range, n) =>
       `Горизонт прогноза ${value} ${ruPlural(n, ["год", "года", "лет"])} вне диапазона, который принимают формы (${range} лет).`,
-    earlyDate: (record, date, floor) =>
-      `${record} ${date} раньше ${floor} — самой ранней даты, которую принимают формы. Проверьте год на опечатку.`,
-    earlyDateLoan: (loan, date, floor) =>
-      `Ипотека с ${loan}: дата ${date} раньше ${floor} — самой ранней даты, которую принимают формы. Проверьте год на опечатку.`,
     leaseOverlap: (first, second) =>
       `Аренды с ${first} и с ${second} пересекаются. Аренды одной квартиры не могут пересекаться: укажите для более ранней аренды дату окончания до начала более поздней.`,
-    earlyDateRecord: {
-      property: "Дата покупки",
-      mortgage: "Дата по ипотеке",
-      valuation: "Дата оценки",
-      lease: "Дата аренды",
-      assumptions: "Базовая дата",
-    },
   },
 
   properties: {
@@ -1140,7 +1129,6 @@ export const ru: Dictionary = {
       "Файл должен содержать ровно одну запись допущений",
     issueOutOfRange: (min, max) =>
       `Должно быть целым числом от ${min} до ${max}`,
-    issueEarlyDate: (floor) => `Должна быть дата не ранее ${floor}`,
   },
 
   sample: {

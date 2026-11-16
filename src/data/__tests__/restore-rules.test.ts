@@ -269,7 +269,7 @@ describe("the restore table names the stored column (ADR 0180 §1)", () => {
       ),
     );
     const issues = issuesOf(backup).filter(
-      (i) => i.rule === "EARLY_DATE" || i.rule === "COMPLETION_BEFORE_START",
+      (i) => i.rule === "COMPLETION_BEFORE_START",
     );
     expect(issues.length).toBeGreaterThan(0);
     expect(issues.map((i) => i.column)).toEqual(

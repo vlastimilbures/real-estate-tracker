@@ -487,22 +487,9 @@ export const en = {
       `Mortgage from ${date}: a loan term of ${value} ${enPlural(n, ["year", "years"])} is outside the range the forms accept (${range} years).`,
     outOfRangeHorizon: (value: string, range: string, n: number) =>
       `The projection horizon of ${value} ${enPlural(n, ["year", "years"])} is outside the range the forms accept (${range} years).`,
-    // ADR 0149: a stored date before the forms' floor; `record` from earlyDateRecord.
-    earlyDate: (record: string, date: string, floor: string) =>
-      `${record} ${date} is before ${floor}, the earliest date the forms accept. Check the year for a typo.`,
-    // ADR 0180 §3: an early mortgage date other than the start date, named by the loan.
-    earlyDateLoan: (loan: string, date: string, floor: string) =>
-      `Mortgage from ${loan}: a date ${date} is before ${floor}, the earliest date the forms accept. Check the year for a typo.`,
     // ADR 0163: two stored leases of one apartment overlap (a database from before the rule).
     leaseOverlap: (first: string, second: string) =>
       `The leases from ${first} and from ${second} overlap. Leases on one apartment cannot overlap: set an end date on the earlier lease before the later one starts.`,
-    earlyDateRecord: {
-      property: "Purchase date",
-      mortgage: "A mortgage date",
-      valuation: "A valuation date",
-      lease: "A lease date",
-      assumptions: "The base date",
-    },
   },
 
   properties: {
@@ -1152,8 +1139,8 @@ export const en = {
     restoreWarning:
       "⚠ This will overwrite all current data (properties, mortgages, valuations, leases, assumptions, and scenarios). A safety backup will be saved first.",
     restoreNow: "Restore now",
-    // ADR 0148, ADR 0149: values the forms refuse (outside a range, a date before 1900)
-    // ask instead of refusing.
+    // ADR 0148: values the forms refuse (outside a whole-number range) ask instead of
+    // refusing.
     warnOutOfRange: (n: number) =>
       n === 1
         ? "This backup holds 1 value the forms do not accept. The app computes with it, and the Data check lists it after the restore. Restore anyway?"
@@ -1206,7 +1193,6 @@ export const en = {
       "The file must hold exactly one assumptions record",
     issueOutOfRange: (min: string, max: string) =>
       `Must be a whole number from ${min} to ${max}`,
-    issueEarlyDate: (floor: string) => `Must be a date from ${floor}`,
   },
 
   // First-run sample portfolio (ADR 0094).

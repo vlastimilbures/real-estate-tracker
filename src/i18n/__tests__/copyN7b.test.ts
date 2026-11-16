@@ -415,7 +415,6 @@ describe("N7b wording (#169, #152)", () => {
     expect(cs.guide.glossary.propertyTax.def).toBe(
       "Roční daň z nemovitých věcí.",
     );
-    expect(cs.dataCheck.earlyDateRecord.assumptions).toBe("Základní datum");
     expect(cs.propertyDetail.helpCompletionDate).toBe(
       "do tohoto data platit jen úroky, poté splácet i jistinu",
     );

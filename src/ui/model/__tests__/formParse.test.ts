@@ -295,6 +295,10 @@ describe("fieldHint (ADR 0075, DR-078)", () => {
         "01.01.1900",
       );
   });
+  // ADR 0232 §5: the form keeps refusing a year-0226 typo of 2026.
+  it("refuses 01.06.0226 (ADR 0232)", () => {
+    expect(parseDate("01.06.0226")).toBeNull();
+  });
   it("refuses a date before 1900 and accepts the floor", () => {
     expect(parseDate("31.12.1899")).toBeNull();
     expect(parseDate("01.01.1900")?.toISOString()).toBe(

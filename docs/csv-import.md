@@ -31,8 +31,8 @@ one batch, when you press the **Import** button.
 Types used below:
 
 - **Text**: any text; leading and trailing spaces are removed.
-- **Date**: `YYYY-MM-DD`, and a real calendar date (`2026-02-31` is refused). The app shows
-  dates as `dd.mm.yyyy`, but CSV files use the ISO form.
+- **Date**: `YYYY-MM-DD`, a real calendar date (`2026-02-31` is refused) from 1900-01-01
+  on. The app shows dates as `dd.mm.yyyy`, but CSV files use the ISO form.
 - **Money**: Kč as a plain decimal with a decimal point: `4080000` or `6721.8`. No thousands
   separators, no currency sign, no exponent, never negative.
 - **Fraction**: a rate written as a fraction, not a percentage: `0.039` means 3.9 %.

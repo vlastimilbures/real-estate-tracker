@@ -175,6 +175,9 @@ wrote does not fail on a bound alone. Above ten times the maximum a value stays 
 CHECK constraints have no upper bound, so a database that already holds an out-of-range value
 still loads; the Data check lists it.
 
+**Date floor.** The forms and CSV import refuse a date before 01.01.1900; a stored one loads
+and restores with no warning (ADR 0232).
+
 ### 4.2 Derived per-mortgage-block values
 
 - `fixationEnd = startDate + fixationYears*12 months` (EDATE). A 0-year (floating) block

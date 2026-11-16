@@ -51,16 +51,6 @@ async function pickOutOfRangeBackup(ux: Ux) {
   });
 }
 
-/** Settings → Backup: exports the sample, edits the first property's purchase date to
- *  1850 (an earlier CSV import could store it), and picks it for restore (ADR 0149). */
-async function pickEarlyDateBackup(ux: Ux) {
-  await pickEditedBackup(ux, (tables) => {
-    const [property] = tables.properties ?? [];
-    if (!property) throw new Error("the sample has no property");
-    property.purchase_date = "1850-01-01";
-  });
-}
-
 /**
  * Settings → Backup: exports the sample, edits the file and picks it for restore. The
  * browser has no Tauri file dialog: the `open_backup_file` and `write_app_backup`
@@ -2610,37 +2600,6 @@ export const SCREENS: Screen[] = [
       ).toBeVisible();
       await p.scrollIntoViewIfNeeded();
       await ux.capture("68-data-check-out-of-range", { fullPage: false });
-    },
-  },
-  {
-    id: "69-restore-early-date",
-    desc: "Restore confirm step: a stored date before 1900 listed, Restore anyway (ADR 0149)",
-    run: async (ux) => {
-      await pickEarlyDateBackup(ux);
-      await expect(
-        ux.page.getByRole("region", { name: ux.t.backup.warningsTitle }),
-      ).toBeVisible();
-      await ux.capture("69-restore-early-date");
-    },
-  },
-  {
-    id: "69b-data-check-early-date",
-    desc: "Dashboard Data check after Restore anyway: the property's purchase date before 1900 (ADR 0149)",
-    run: async (ux) => {
-      await pickEarlyDateBackup(ux);
-      await ux.page
-        .getByRole("button", { name: ux.t.backup.restoreAnyway })
-        .click();
-      await expect(
-        ux.page.getByRole("button", { name: ux.t.backup.chooseFile }),
-      ).toBeVisible();
-      await nav(ux, "dashboard");
-      const p = panel(ux, ux.t.dataCheck.title);
-      await expect(
-        p.getByText(/01\.01\.1850/, { exact: false }).first(),
-      ).toBeVisible();
-      await p.scrollIntoViewIfNeeded();
-      await ux.capture("69b-data-check-early-date", { fullPage: false });
     },
   },
   {

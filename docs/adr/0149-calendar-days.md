@@ -6,6 +6,8 @@
   G1-3-06), owner decision D6 (2026-10-06: item 1 A, item 2 B, item 5 A), item 5 refined by
   the owner on 2026-10-07 (new input refuses, stored data warns); Track 10 PR 10.10
 - Amends: [0110](0110-backup-recency-indicator.md) (the backup date on the restore screen)
+- Amended by: [0232](0232-dates-before-1900-entry-only.md) (§5: a stored date before 1900
+  no longer warns on restore or in the Data check)
 - Related: [0148](0148-restore-rules-vs-stored-data.md) (restore rules vs stored data),
   [0118](0118-data-check.md) (data check), DR-068 (local-day file name), DR-072 (injectable
   today), DR-035 and UX-052 (form dates, 1900 floor)
