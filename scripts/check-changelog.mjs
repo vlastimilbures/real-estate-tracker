@@ -1,7 +1,9 @@
 // Changelog check on pull requests (#461). An ADR marks a user-visible change (ADR 0001),
 // and a user-visible change gets a CHANGELOG.md `[Unreleased]` entry (CONTRIBUTING.md):
-//   1. every ADR file the PR adds whose Status starts with "Accepted" is cited as
-//      "ADR NNNN" in the head's `[Unreleased]` (Proposed and Rejected ADRs are exempt);
+//   1. every ADR file the PR adds with a Status starting "Accepted", or whose Status it
+//      changes to "Accepted …", is cited as "ADR NNNN" in the head's `[Unreleased]`
+//      (Proposed and Rejected ADRs are exempt). Renames count as a delete and an add
+//      (`--no-renames`), so a renumbered ADR is cited under its new number;
 //   2. a PR that adds to docs/decisions/wording.md (a copy change, ADR 0152) changes
 //      `[Unreleased]`.
 // A PR with nothing to say opts out with a line `Changelog: none (reason)` in its body,
@@ -25,15 +27,21 @@ export function unreleased(text) {
   return next < 0 ? rest : rest.slice(0, next + 1);
 }
 
-/** ADR files added, from `git diff --name-status -M` lines: `[{ number, file }]`. */
-export function addedAdrs(lines) {
+/** ADR files added (A) or modified (M), from `git diff --name-status --no-renames`
+ * lines: `[{ number, file, change }]`. */
+export function changedAdrs(lines) {
   return lines
     .map((l) => l.split("\t"))
-    .filter(([status]) => status === "A")
-    .map(([, file]) => ({ file, m: file?.match(ADR_FILE) }))
+    .filter(([change]) => change === "A" || change === "M")
+    .map(([change, file]) => ({ change, file, m: file?.match(ADR_FILE) }))
     .filter(({ m }) => m)
-    .map(({ file, m }) => ({ number: m[1], file }));
+    .map(({ change, file, m }) => ({ number: m[1], file, change }));
 }
+
+const accepted = (status) => (status ?? "").startsWith("Accepted");
+
+/** The PR makes this ADR accepted: added as accepted, or its Status changed to it. */
+export const becomesAccepted = (a) => accepted(a.status) && !accepted(a.before);
 
 /** The Status of an ADR file, or "" when it has none. */
 export function adrStatus(text) {
@@ -53,7 +61,8 @@ const cites = (section, number) =>
   new RegExp(`\\bADR\\s+${number}\\b`).test(section);
 
 /**
- * The check's result. `adrs`: added ADRs with their status; `wordingAdded`: the PR adds
+ * The check's result. `adrs`: changed ADRs with their `status` at head and `before` at
+ * base ("" for an added file); `wordingAdded`: the PR adds
  * lines to the wording log; `before` / `after`: CHANGELOG.md at base and head.
  */
 export function verdict({ adrs, wordingAdded, before, after, body }) {
@@ -66,7 +75,7 @@ export function verdict({ adrs, wordingAdded, before, after, body }) {
     );
   const section = unreleased(after);
   for (const a of adrs)
-    if (a.status.startsWith("Accepted") && !cites(section, a.number))
+    if (becomesAccepted(a) && !cites(section, a.number))
       errors.push(
         `${a.file} is accepted, but CHANGELOG.md [Unreleased] does not cite "ADR ${a.number}"`,
       );
@@ -92,15 +101,16 @@ function show(ref, file) {
   }
 }
 
-/** Reads the PR from git: its added ADRs, the wording log, the changelog at both ends. */
+/** Reads the PR from git: its changed ADRs, the wording log, the changelog at both ends. */
 export function gather(base) {
   const from = git(["merge-base", base, "HEAD"]).trim();
-  const lines = git(["diff", "--name-status", "-M", from, "HEAD"])
+  const lines = git(["diff", "--name-status", "--no-renames", from, "HEAD"])
     .split("\n")
     .filter(Boolean);
-  const adrs = addedAdrs(lines).map((a) => ({
+  const adrs = changedAdrs(lines).map((a) => ({
     ...a,
     status: adrStatus(show("HEAD", a.file)),
+    before: a.change === "A" ? "" : adrStatus(show(from, a.file)),
   }));
   const added = git(["diff", "--numstat", from, "HEAD", "--", WORDING]);
   return {
@@ -121,7 +131,12 @@ function main(args) {
   const facts = gather(base);
   const r = verdict({ ...facts, body: process.env.PR_BODY ?? "" });
   for (const a of facts.adrs)
-    console.log(`added ${a.file} (${a.status || "no Status"})`);
+    if (a.change === "A")
+      console.log(`added ${a.file} (${a.status || "no Status"})`);
+    else if (becomesAccepted(a))
+      console.log(
+        `accepted ${a.file} (${a.before || "no Status"} → ${a.status})`,
+      );
   if (r.optedOut) console.log(`Changelog: none (${r.optedOut})`);
   for (const e of r.errors) console.error(e);
   if (r.ok && !r.optedOut)

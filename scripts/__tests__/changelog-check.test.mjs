@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
-  addedAdrs,
+  changedAdrs,
   adrStatus,
   optOut,
   unreleased,
@@ -55,18 +55,21 @@ describe("unreleased", () => {
   });
 });
 
-describe("addedAdrs", () => {
-  it("takes added ADR files only", () => {
+describe("changedAdrs", () => {
+  it("takes added and modified ADR files", () => {
     expect(
-      addedAdrs([
+      changedAdrs([
         "A\tdocs/adr/0230-new-thing.md",
         "M\tdocs/adr/0229-old.md",
-        "R100\tdocs/adr/0228-a.md\tdocs/adr/0231-a.md",
+        "D\tdocs/adr/0228-gone.md",
         "A\tdocs/adr/README.md",
         "A\tdocs/decisions/0232-x.md",
         "A\tsrc/x.ts",
       ]),
-    ).toEqual([{ number: "0230", file: "docs/adr/0230-new-thing.md" }]);
+    ).toEqual([
+      { number: "0230", file: "docs/adr/0230-new-thing.md", change: "A" },
+      { number: "0229", file: "docs/adr/0229-old.md", change: "M" },
+    ]);
   });
 });
 
@@ -134,6 +137,21 @@ describe("verdict", () => {
       (status, i) => ({ ...accepted(`023${i}`), status }),
     );
     expect(verdict({ ...base, adrs, after: changelog([]) }).ok).toBe(true);
+  });
+
+  it("needs a citation when the PR changes a Status to Accepted, not when it was", () => {
+    const now = (before) => ({ ...accepted("0229"), change: "M", before });
+    const after = changelog([]);
+    expect(verdict({ ...base, adrs: [now("Proposed")], after }).ok).toBe(false);
+    expect(verdict({ ...base, adrs: [now("")], after }).ok).toBe(false);
+    expect(verdict({ ...base, adrs: [now("Accepted")], after }).ok).toBe(true);
+    expect(
+      verdict({
+        ...base,
+        adrs: [now("Accepted (delegated, owner review pending)")],
+        after,
+      }).ok,
+    ).toBe(true);
   });
 
   it("needs a changed [Unreleased] when the wording log has a new entry", () => {
@@ -240,6 +258,32 @@ describe("the CLI on a git repository", () => {
     write(dir, "docs/decisions/wording.md", "# Wording\n\n### 2026-11-17\n");
     git(dir, "commit", "-q", "-am", "wording");
     expect(check(dir, "main").stderr).toContain("wording.md has a new entry");
+  });
+
+  it("counts a Status changed to Accepted, and a renamed ADR under its new number", () => {
+    const dir = repo();
+    write(dir, "docs/adr/0230-new-thing.md", adr("Proposed"));
+    git(dir, "add", ".");
+    git(dir, "commit", "-q", "-m", "proposed");
+    git(dir, "checkout", "-q", "-b", "accept");
+    write(dir, "docs/adr/0230-new-thing.md", adr("Accepted"));
+    git(dir, "commit", "-q", "-am", "accept");
+    const r = check(dir, "pr");
+    expect(r.status).toBe(1);
+    expect(r.stdout).toContain(
+      "accepted docs/adr/0230-new-thing.md (Proposed → Accepted)",
+    );
+    expect(r.stderr).toContain('does not cite "ADR 0230"');
+
+    // An accepted ADR renumbered (content unchanged) is a new number to cite.
+    git(dir, "checkout", "-q", "-b", "renumber");
+    git(dir, "mv", "docs/adr/0230-new-thing.md", "docs/adr/0231-new-thing.md");
+    git(dir, "commit", "-q", "-m", "renumber");
+    const moved = check(dir, "accept");
+    expect(moved.stdout).toContain(
+      "added docs/adr/0231-new-thing.md (Accepted)",
+    );
+    expect(moved.stderr).toContain('does not cite "ADR 0231"');
   });
 
   // CI checks out the pull request's merge commit with depth 2: HEAD^1 is the base.
