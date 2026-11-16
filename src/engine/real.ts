@@ -9,6 +9,7 @@ import { lastGridMonthOnOrBefore } from "./dates";
 import { yieldOf } from "./metrics";
 import { buildCpiIndex, inflationInYear } from "./projections";
 import { assertAssumptions } from "./validate";
+import { decimalsOf, fieldsOf } from "./yearFields";
 import type {
   Assumptions,
   PortfolioSnapshot,
@@ -41,39 +42,24 @@ export function cpiAt(assumptions: Assumptions, asOf: Date): Decimal {
   return at(cpi, whole).times(powYears(ONE.plus(infl), rest / 12));
 }
 
-/** Projection rows in real terms: each money field ÷ its year's index (`cpi[year]`).
- *  Ratios (LTV, DSCR) and the rate are lens-invariant. */
+/** Every money field of a projection year: all but the labels and the ratios (#478). */
+const YEAR_MONEY_FIELDS = fieldsOf(
+  "stock",
+  "derivedStock",
+  "flow",
+  "ownerFlow",
+);
+
+/** Projection rows in real terms: each money field ÷ its year's index (`cpi[year]`),
+ *  derived stocks too (divided, not recomputed). Ratios (LTV, DSCR) and the rate are
+ *  lens-invariant. */
 export function realProjection(
   rows: ProjectionYear[],
   cpi: Decimal[],
 ): ProjectionYear[] {
   return rows.map((y) => {
     const k = at(cpi, y.year);
-    const d = (v: Decimal) => v.div(k);
-    return {
-      ...y,
-      value: d(y.value),
-      balance: d(y.balance),
-      committedDebt: d(y.committedDebt),
-      undrawnDebt: d(y.undrawnDebt),
-      reportedValue: d(y.reportedValue),
-      equity: d(y.equity),
-      grossRent: d(y.grossRent),
-      effectiveRent: d(y.effectiveRent),
-      holdingCosts: d(y.holdingCosts),
-      noi: d(y.noi),
-      interest: d(y.interest),
-      principal: d(y.principal),
-      debtService: d(y.debtService),
-      netCashFlow: d(y.netCashFlow),
-      draws: d(y.draws),
-      committedDraws: d(y.committedDraws),
-      acquiredValue: d(y.acquiredValue),
-      refinanced: d(y.refinanced),
-      prepaid: d(y.prepaid),
-      prepaymentFees: d(y.prepaymentFees),
-      cashToOwner: d(y.cashToOwner),
-    };
+    return { ...y, ...decimalsOf(YEAR_MONEY_FIELDS, (f) => y[f].div(k)) };
   });
 }
 
