@@ -33,16 +33,19 @@ jobs:
         with:
           node-version: 24
 
-      # The base branch's copy decides, so a pull request cannot rewrite its own check (as
-      # ci.yml's changes job). It imports only node: built-ins, so one file is enough. A
-      # base without the script yet (the PR that adds it) runs the PR's copy. The body goes
-      # through the environment, never into the shell command.
+      # The base branch's copy runs, so a PR that edits the script is still checked by the
+      # base copy (as ci.yml's changes job). It imports only node: built-ins, so one file is
+      # enough. Only a base that lacks the file (the PR that adds it) runs the PR's copy; a
+      # missing HEAD^1 fails. The body goes through the environment, never into the shell.
       - name: Check the changelog
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
+          git rev-parse --verify -q HEAD^1 >/dev/null || exit 1
           script="$RUNNER_TEMP/check-changelog.mjs"
-          if ! git show HEAD^1:scripts/check-changelog.mjs >"$script"; then
+          if git cat-file -e HEAD^1:scripts/check-changelog.mjs 2>/dev/null; then
+            git show HEAD^1:scripts/check-changelog.mjs >"$script"
+          else
             echo "The base has no scripts/check-changelog.mjs; running this PR's copy."
             script=scripts/check-changelog.mjs
           fi

@@ -289,7 +289,8 @@ Refactors are behaviour-neutral and need no ADR.
   `DR-nnn`, `UX-nnn`).
 - Add user-visible changes to the `[Unreleased]` section of [CHANGELOG.md](CHANGELOG.md).
   The "Changelog (ADR entries)" check on pull requests (`scripts/check-changelog.mjs`,
-  run from the base branch's copy) fails when:
+  run from the base branch's copy, so a PR that edits the script is still checked by the
+  base copy) fails when:
   - the PR adds an accepted ADR, or changes an ADR's Status to Accepted, and
     `[Unreleased]` does not cite it. Each number is cited on its own as `ADR NNNN`
     ("ADR 0201, ADR 0202"); a range ("ADR 0201–0205") or a list after one "ADR"

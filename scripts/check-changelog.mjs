@@ -10,6 +10,8 @@
 // read from the PR_BODY environment variable; a bare opt-out without a reason fails.
 //
 //   node scripts/check-changelog.mjs --base <ref>   (CI: --base HEAD^1 on the merge ref)
+// Over a range of several PRs (e.g. `--base v1.5.0`), ADRs merged with an opt-out are
+// reported.
 import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
