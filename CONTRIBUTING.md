@@ -30,20 +30,51 @@ reached only through the `VITE_E2E` gate).
 
 ## Checks
 
-A change is done when all of these pass (CI runs the same commands on Linux; see the table in
-the [README](README.md#quality)):
+A change is done when `pnpm check` passes. It runs these gates in order and stops at the
+first failure (the list is `scripts/gates.mjs`; `pnpm gates:docs` regenerates this table and
+the [README](README.md#quality)'s). CI runs the same commands on Linux.
 
-```bash
-pnpm typecheck
-pnpm lint                       # zero warnings; ends with pnpm lint:css
-pnpm exec prettier --check .
-pnpm depcruise                  # layer rules, no runtime cycles
-pnpm knip                       # no unused files, exports or dependencies
-pnpm test:coverage              # full suite + per-folder coverage floors
-pnpm coverage:ratchet           # no floor more than 3 points below measured
-cargo fmt --check --manifest-path src-tauri/Cargo.toml
-cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
-```
+<!-- gates:start -->
+
+| `pnpm check` runs                                                                | What it checks                                                                         |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `pnpm exec prettier --check .`                                                   | Prettier formatting                                                                    |
+| `pnpm typecheck`                                                                 | TypeScript strict: the app, the strict config, ux-capture and the Node config          |
+| `pnpm lint`                                                                      | ESLint with zero warnings (engine purity, function sizes #456); stylesheets (lint:css) |
+| `pnpm depcruise`                                                                 | layer rules, no runtime cycles                                                         |
+| `pnpm depcruise:baseline-check`                                                  | the layer-violation baseline never grows against origin/main                           |
+| `pnpm lint:size:baseline-check`                                                  | the function-size baseline never grows against origin/main                             |
+| `pnpm knip`                                                                      | no unused files, exports or dependencies                                               |
+| `pnpm knip:prod`                                                                 | the shipped app only: an export only tests use is dead                                 |
+| `pnpm adr:check`                                                                 | the ADR index is current, Amends / Supersedes links paired                             |
+| `pnpm test:coverage`                                                             | full suite + per-folder coverage floors (includes test:parity)                         |
+| `pnpm coverage:ratchet`                                                          | no floor more than 3 points below measured                                             |
+| `cargo fmt --check --manifest-path src-tauri/Cargo.toml`                         | Rust formatting                                                                        |
+| `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings` | Rust lints, warnings are errors                                                        |
+| `cargo test --manifest-path src-tauri/Cargo.toml`                                | Rust integration tests                                                                 |
+
+`pnpm check:release` adds the dependency audits, which CI runs too:
+
+| Command                                | What it checks                                                              | Why not in `pnpm check`                                                    |
+| -------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `pnpm audit --prod --audit-level=high` | production dependencies have no high advisory                               | needs the network, and a new advisory fails a change that did not cause it |
+| `(cd src-tauri && cargo audit)`        | Rust dependencies have no advisory (ignores in src-tauri/.cargo/audit.toml) | needs the network, and a new advisory fails a change that did not cause it |
+
+CI also runs:
+
+| Command                                                          | What it checks                                                       | Why not in `pnpm check`                                         |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `pnpm exec vite build`                                           | the production frontend build                                        | slow; the release builds the app anyway                         |
+| `grep -rlE 'sql-wasm\|initSqlJs' dist/assets`                    | sql.js stays out of the bundle (fails on a match)                    | needs the build; scripts/release-macos.sh checks its own bundle |
+| `TZ=Pacific/Pago_Pago pnpm test`                                 | the suite in UTC−11                                                  | a second full run of the suite                                  |
+| `TZ=Pacific/Kiritimati pnpm vitest run src/lib src/ui src/state` | the layers that read local time, in UTC+14                           | a second run of those tests                                     |
+| `pnpm ux:capture && pnpm ux:axe-check ci`                        | axe scan of every captured screen (ADR 0078)                         | slow (four CI shards); run it after UI work                     |
+| `bash scripts/check-vendored-sqlx-sqlite.sh`                     | the vendored sqlx-sqlite is crates.io 0.8.6 plus one line (ADR 0196) | downloads the published crate                                   |
+| `cargo build --manifest-path src-tauri/Cargo.toml`               | the Rust shell builds                                                | the release builds the app anyway                               |
+
+<!-- gates:end -->
+
+The release (`scripts/release-macos.sh`) runs `pnpm check:release`.
 
 It is also done only when the **docs impact** is checked: if the change touches formulas,
 presets, limits, data formats or UI text, SPEC, the Guide strings, README, the user docs

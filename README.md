@@ -238,18 +238,41 @@ What the checks do and do not prove:
   dark, at two window sizes ([workflow](.github/workflows/ci.yml)). Automated checks
   complement but do not replace manual keyboard and screen-reader testing.
 
-Every check CI runs has a local command; the full list is in [CONTRIBUTING.md](CONTRIBUTING.md#checks).
+Every check CI runs is listed once, in [CONTRIBUTING.md](CONTRIBUTING.md#checks);
+`pnpm check` runs the local ones in order.
 
-| Command                        | Checks                                                                                            |
-| ------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `pnpm typecheck` · `pnpm lint` | TypeScript strict; ESLint with zero warnings, incl. engine-purity rules; stylesheets (`lint:css`) |
-| `pnpm test:coverage`           | Vitest tests with per-folder coverage floors                                                      |
-| `pnpm test:parity`             | Engine and SQLite round trip against the parity targets (±1 Kč, ±0.0001)                          |
-| `pnpm depcruise` · `pnpm knip` | Layer map and cycles; unused files, exports and dependencies                                      |
-| `cargo clippy` · `cargo test`  | Rust lints and integration tests                                                                  |
-| `pnpm ux:axe-check ci`         | axe scan of every screen: English, light and dark, two window sizes                               |
-| `pnpm mutation` · `pnpm bench` | Nightly: Stryker mutation score on the engine; performance budgets                                |
-| `FC_RUNS=2000` property tests  | Nightly: every fast-check property test with a new seed each night                                |
+<!-- gates:start -->
+
+| Command                                                                          | Checks                                                                                                   | Runs in                  |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `pnpm exec prettier --check .`                                                   | Prettier formatting                                                                                      | `pnpm check`, CI         |
+| `pnpm typecheck`                                                                 | TypeScript strict                                                                                        | `pnpm check`, CI         |
+| `pnpm lint`                                                                      | ESLint with zero warnings, incl. engine-purity rules; function sizes; stylesheets                        | `pnpm check`, CI         |
+| `pnpm depcruise`                                                                 | Layer map and cycles                                                                                     | `pnpm check`, CI         |
+| `pnpm depcruise:baseline-check`                                                  | The layer-violation baseline never grows                                                                 | `pnpm check`, CI         |
+| `pnpm lint:size:baseline-check`                                                  | The function-size baseline never grows                                                                   | `pnpm check`, CI         |
+| `pnpm knip`                                                                      | Unused files, exports and dependencies                                                                   | `pnpm check`, CI         |
+| `pnpm knip:prod`                                                                 | The same for the shipped app: an export only tests use is dead                                           | `pnpm check`, CI         |
+| `pnpm adr:check`                                                                 | ADR index current, links paired                                                                          | `pnpm check`, CI         |
+| `pnpm test:coverage`                                                             | Vitest tests with per-folder coverage floors, incl. the parity targets (±1 Kč, ±0.0001)                  | `pnpm check`, CI         |
+| `pnpm coverage:ratchet`                                                          | No coverage floor more than 3 points below measured                                                      | `pnpm check`, CI         |
+| `cargo fmt --check --manifest-path src-tauri/Cargo.toml`                         | Rust formatting                                                                                          | `pnpm check`, CI         |
+| `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings` | Rust lints, warnings are errors                                                                          | `pnpm check`, CI         |
+| `cargo test --manifest-path src-tauri/Cargo.toml`                                | Rust integration tests                                                                                   | `pnpm check`, CI         |
+| `pnpm audit --prod --audit-level=high`                                           | Production npm dependencies have no high advisory                                                        | `pnpm check:release`, CI |
+| `(cd src-tauri && cargo audit)`                                                  | Rust dependencies have no advisory                                                                       | `pnpm check:release`, CI |
+| `pnpm exec vite build`                                                           | The production frontend build                                                                            | CI                       |
+| `grep -rlE 'sql-wasm\|initSqlJs' dist/assets`                                    | sql.js (E2E only) stays out of the app bundle                                                            | CI                       |
+| `TZ=Pacific/Pago_Pago pnpm test`                                                 | The suite in a negative time zone                                                                        | CI                       |
+| `TZ=Pacific/Kiritimati pnpm vitest run src/lib src/ui src/state`                 | The layers that read local time, in a positive time zone                                                 | CI                       |
+| `pnpm ux:capture && pnpm ux:axe-check ci`                                        | axe scan of every screen: English, light and dark, two window sizes; layout screens in Czech and Russian | CI                       |
+| `bash scripts/check-vendored-sqlx-sqlite.sh`                                     | The vendored sqlx-sqlite differs from crates.io by one line                                              | CI                       |
+| `cargo build --manifest-path src-tauri/Cargo.toml`                               | The Rust shell builds                                                                                    | CI                       |
+| `pnpm mutation`                                                                  | Stryker mutation score on the engine                                                                     | Nightly                  |
+| `pnpm bench`                                                                     | Performance budgets                                                                                      | Nightly                  |
+| `FC_RUNS=2000 pnpm exec vitest run`                                              | Every fast-check property test with a new seed each night                                                | Nightly                  |
+
+<!-- gates:end -->
 
 ## Architecture
 
