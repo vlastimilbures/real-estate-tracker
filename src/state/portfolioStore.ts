@@ -212,7 +212,7 @@ interface PortfolioState {
   // valuations
   addValuation: (v: Valuation) => Promise<MutationResult>;
   /** Add `v` and save `closedPrev` (the open-ended valuation it succeeds, now with an
-   *  end date) in one write (ADR 0099). */
+   *  end date) in one write (ADR 0099, 0227: the panel calls it without asking). */
   addValuationClosingPrevious: (
     v: Valuation,
     closedPrev: Valuation,

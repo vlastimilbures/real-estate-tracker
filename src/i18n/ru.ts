@@ -570,11 +570,6 @@ export const ru: Dictionary = {
     tranches: (n) => `${n} ${ruPlural(n, ["транш", "транша", "траншей"])}`,
     totalLoan: (total) => `Общий кредит ${total}`,
     ioUntil: (d) => `% до ${d}`,
-    closePrevValuationTitle: "Завершить предыдущую оценку?",
-    closePrevValuationBody: (from, end) =>
-      `У оценки от ${from} нет даты окончания. Завершить её ${end}, за день до начала новой?`,
-    closePrevConfirm: "Завершить предыдущую",
-    closePrevKeep: "Оставить как есть",
     instalmentHint: (years, amount) =>
       `Аннуитетный платёж на ${years} ≈ ${amount}`,
     instalmentHintDev: (base) =>

@@ -111,32 +111,24 @@ export function ValuationsPanel({
         validTo: v.validTo ?? undefined,
         marketValue: v.marketValue,
       })}
-      onAdd={add}
+      // ADR 0227: an open-ended new valuation ends the open-ended one before it on the
+      // day before, without asking. A dated one changes no other row (ADR 0144).
+      onAdd={(v) => {
+        const prev = v.validTo
+          ? undefined
+          : openPredecessor(
+              rows,
+              v.propertyId,
+              v.validFrom,
+              (r) => r.validFrom,
+              (r) => r.validTo,
+            );
+        return prev
+          ? addClosing(v, { ...prev, validTo: dayBefore(v.validFrom) })
+          : add(v);
+      }}
       onSave={save}
       onDelete={remove}
-      confirmAdd={(v) => {
-        const prev = openPredecessor(
-          rows,
-          v.propertyId,
-          v.validFrom,
-          (r) => r.validFrom,
-          (r) => r.validTo,
-        );
-        // Only an open-ended new record: a dated one would leave the previous record in
-        // force after its end (ADR 0144).
-        if (!prev || v.validTo) return null;
-        const end = dayBefore(v.validFrom);
-        return {
-          title: t.propertyDetail.closePrevValuationTitle,
-          message: t.propertyDetail.closePrevValuationBody(
-            fmtDate(prev.validFrom),
-            fmtDate(end),
-          ),
-          confirmLabel: t.propertyDetail.closePrevConfirm,
-          keepLabel: t.propertyDetail.closePrevKeep,
-          onConfirm: (n) => addClosing(n, { ...prev, validTo: end }),
-        };
-      }}
     />
   );
 }

@@ -13,6 +13,15 @@ None. While this list is not empty, do not tag a release (docs/release.md, check
 feature here when part of it is merged but it must not ship yet, for example schema and
 engine without the form, and remove it when the last part lands.
 
+### Changed
+
+- Adding a valuation no longer asks whether to end the previous one (ADR 0227, #445). When
+  the new valuation has no "Valid to" and the one before it is open-ended, the earlier one
+  now ends the day before the new one starts, as leases already do. A valuation with its own
+  "Valid to" changes no other row. No figure changes. This also fixes #436: cancelling the
+  old dialog kept the form open but marked it as saved, so leaving the page then dropped the
+  typed valuation without asking.
+
 ## [1.5.0] - 2026-10-14
 
 ### Added

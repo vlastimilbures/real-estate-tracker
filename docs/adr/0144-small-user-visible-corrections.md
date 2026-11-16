@@ -8,7 +8,9 @@
   (prepayments and recasts)
 - Amends: [0099](0099-close-previous-open-record.md) (decision 3: no prompt for a dated new record)
 - Amended by: [0163](0163-leases-never-overlap.md) (decision 1 for leases: adding a lease
-  ends the open predecessor; leases never overlap)
+  ends the open predecessor; leases never overlap),
+  [0227](0227-valuation-ends-previous-without-asking.md) (decision 1 for valuations: adding
+  one ends the open predecessor without asking)
 
 ## Context
 

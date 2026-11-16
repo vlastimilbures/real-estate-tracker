@@ -561,11 +561,6 @@ export const cs: Dictionary = {
     tranches: (n) => `${n} ${csPlural(n, ["tranše", "tranše", "tranší"])}`,
     totalLoan: (total) => `Celkový úvěr ${total}`,
     ioUntil: (d) => `IO→${d}`,
-    closePrevValuationTitle: "Ukončit předchozí ocenění?",
-    closePrevValuationBody: (from, end) =>
-      `Ocenění od ${from} nemá datum konce. Ukončit ho ${end}, den před začátkem nového?`,
-    closePrevConfirm: "Ukončit předchozí",
-    closePrevKeep: "Ponechat",
     instalmentHint: (years, amount) =>
       `Anuitní splátka na ${years} ≈ ${amount}`,
     instalmentHintDev: (base) =>

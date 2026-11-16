@@ -1981,7 +1981,7 @@ export const SCREENS: Screen[] = [
   },
   {
     id: "21c-property-valuation-close-previous",
-    desc: "Adding an open-ended valuation asks to end the previous one (ADR 0099, 0144)",
+    desc: "Adding an open-ended valuation ends the previous one the day before (ADR 0227)",
     run: async (ux) => {
       const d = ux.t.propertyDetail;
       await boot(ux.page);
@@ -1995,9 +1995,10 @@ export const SCREENS: Screen[] = [
           name: d.addValuation,
         })
         .click();
-      await expect(
-        ux.page.getByRole("dialog", { name: d.closePrevValuationTitle }),
-      ).toBeVisible();
+      // No dialog: the form closes and the earlier row ends the day before.
+      await expect(p.getByLabel(d.fieldValidFrom)).toHaveCount(0);
+      await expect(p.getByRole("cell", { name: "31.12.2026" })).toBeVisible();
+      await p.scrollIntoViewIfNeeded();
       await ux.capture("21c-property-valuation-close-previous", {
         fullPage: false,
       });
