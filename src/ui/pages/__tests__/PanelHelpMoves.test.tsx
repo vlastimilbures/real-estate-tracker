@@ -64,7 +64,7 @@ describe("Stress presets (ADR 0217 §4, amends 0214 §4)", () => {
   });
 });
 
-describe("other header explanations become help lines (ADR 0214 §4)", () => {
+describe("other header explanations: instructions stay help lines, definitions go to the icon (ADR 0214, 0217)", () => {
   it("Scenarios list", () => {
     render(
       <ScenarioListPanel

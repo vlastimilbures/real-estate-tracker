@@ -256,7 +256,7 @@ export function Panel({
   /** An explanation leading the body: a `HelpText` (ADR 0214). */
   help?: ReactNode | undefined;
   /** A definition behind an info icon after the title and hint (ADR 0217). */
-  info?: ReactNode | undefined;
+  info?: string | undefined;
   action?: ReactNode | undefined;
   flush?: boolean | undefined;
   children: ReactNode;

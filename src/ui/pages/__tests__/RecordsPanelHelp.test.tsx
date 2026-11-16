@@ -29,7 +29,7 @@ describe("records panels' explanations (ADR 0214 §4)", () => {
     ).not.toBeNull();
   });
 
-  it("Valuations: the explanation is one click away", () => {
+  it("Valuations: the explanation is behind the info icon", () => {
     render(<ValuationsPanel propertyId="p1" rows={[]} />);
     const panel = panelOf(d.valuationsTitle);
     expect(panel.querySelector(".panel-head .hint")).toBeNull();

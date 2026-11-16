@@ -57,7 +57,7 @@ export function EntityPanel<
   /** The panel's explanation, leading its body (ADR 0214). */
   help?: ReactNode;
   /** A definition behind the info icon after the title (ADR 0217). */
-  info?: ReactNode;
+  info?: string;
   rows: T[];
   columns: { head: string; cell: (r: T) => ReactNode; left?: boolean }[];
   specs: S;

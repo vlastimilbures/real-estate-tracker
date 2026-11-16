@@ -25,12 +25,18 @@ act ("Drop a CSV file on its row", "Tick up to 3 scenarios") are a different kin
    act stays a visible help line at the top of the body (`Panel` `help`, `HelpText`).
 2. **`InfoTip`** (`src/ui/components/InfoTip.tsx`): an "i" icon button. Its accessible
    name is `common.aboutThis` plus the topic ("About this: Valuations"), so two on a page
-   differ. Hover, keyboard focus or a click shows the text in a small popover under the
-   button, kept inside the window. It stays open while the pointer is over the button or
-   the popover. A click pins it open. Escape hides it without moving focus (and stops
-   there, as a row action's tooltip does, ADR 0199), and so does a click outside it. The
-   button carries `aria-expanded` and `aria-controls`, and the popover stays in the DOM
-   while hidden. `Panel` and `EntityPanel` take `info?`, shown after the title and hint.
+   differ, and the text is its accessible description (`aria-describedby`), read on focus
+   whether or not it shows. Hover or keyboard focus shows the text in a small popover
+   under the button (above it when there is more room there), kept inside the window
+   and hidden while the button is scrolled under the top bar. It stays while the pointer
+   is over the button or the popover. The button is a toggle: a click pins a hovered tip
+   open, and closes a pinned one or one shown by focus alone. A pin ends when focus
+   leaves the tip. Escape or a click outside hides it, and it shows again once the
+   pointer or focus that showed it leaves and comes back. While the user is on the tip
+   (hovering or focused), Escape stops there, as a row action's tooltip does (ADR 0199).
+   A tip that is only pinned lets the Escape through to the form or dialog. The button
+   carries `aria-expanded` and `aria-controls`, and the popover stays in the DOM while
+   hidden. `Panel` and `EntityPanel` take `info?: string`, shown after the title and hint.
 3. The `about` (disclosure) variant of `HelpText` is removed.
 4. **Moved texts** (wording unchanged, nothing removed):
 
@@ -46,6 +52,9 @@ act ("Drop a CSV file on its row", "Tick up to 3 scenarios") are a different kin
    | `assumptions.defaultsHint`        | help line                 | info icon, defaults panel   |
    | `backup.exportHint`               | help line                 | info icon, Export backup    |
    | `scenarios.presetsHint`           | help line in open presets | info icon, Stress presets   |
+
+   The presets' explanation is now reachable from the icon while the presets are
+   collapsed too, which replaces ADR 0214's amendment of ADR 0106 (shown only while open).
 
    Visible help lines that stay: `importPage.dropOnRow` and `scenarios.listHint`. The
    Loan outlook note and the Data check's as-of note move with their panels' rework
