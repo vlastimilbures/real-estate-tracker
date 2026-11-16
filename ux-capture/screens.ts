@@ -2685,25 +2685,30 @@ export const SCREENS: Screen[] = [
       expect(h.y, "heading near the top").toBeLessThan(
         bar.y + bar.height + 120,
       );
-      // Narrow, the links take one row and the current one is in view; wide, they wrap
-      // to at most two rows (ADR 0225 §2).
-      const row = await navEl.evaluate((n) => {
-        const list = n.querySelector("ul")!.getBoundingClientRect();
-        const tops = Array.from(n.querySelectorAll("a"), (a) =>
-          Math.round(a.getBoundingClientRect().top),
-        );
-        const cur = n
-          .querySelector('a[aria-current="location"]')!
-          .getBoundingClientRect();
-        return {
-          rows: new Set(tops).size,
-          inView: cur.left >= list.left - 1 && cur.right <= list.right + 1,
-          narrow: window.innerWidth < 1100,
-        };
-      });
-      if (row.narrow) expect(row.rows, "one row when narrow").toBe(1);
-      else expect(row.rows, "two rows at most").toBeLessThanOrEqual(2);
-      expect(row.inView, "the current link in view").toBe(true);
+      // Narrow, the links take one row; wide, they wrap to at most two (ADR 0225 §2).
+      const rows = await navEl.evaluate(
+        (n) =>
+          new Set(
+            Array.from(n.querySelectorAll("a"), (a) =>
+              Math.round(a.getBoundingClientRect().top),
+            ),
+          ).size,
+      );
+      const narrow = (ux.page.viewportSize()?.width ?? 1280) < 1100;
+      if (narrow) expect(rows, "one row when narrow").toBe(1);
+      else expect(rows, "two rows at most").toBeLessThanOrEqual(2);
+      /** A link sits in the row, clear of a fade on either side (32 px). */
+      const clear = (sel: string) =>
+        navEl.evaluate((n, s) => {
+          const list = n.querySelector("ul")!.getBoundingClientRect();
+          const a = n.querySelector(s)!.getBoundingClientRect();
+          const fadeStart = (n as HTMLElement).dataset.moreStart === "true";
+          const fadeEnd = (n as HTMLElement).dataset.moreEnd === "true";
+          return (
+            a.left >= list.left + (fadeStart ? 32 : 0) - 1 &&
+            a.right <= list.right - (fadeEnd ? 32 : 0) + 1
+          );
+        }, sel);
       // The page never scrolls sideways (ADR 0158).
       expect(
         await ux.page.evaluate(
@@ -2713,6 +2718,24 @@ export const SCREENS: Screen[] = [
         ),
       ).toBe(true);
       await ux.capture("70b-guide-section-nav", { fullPage: false });
+      if (narrow) {
+        // The current link follows the page, not a click: back to the row's start,
+        // then the page to its end, where the last section becomes current.
+        await navEl.evaluate((n) => (n.querySelector("ul")!.scrollLeft = 0));
+        await ux.page.evaluate(() =>
+          window.scrollTo(0, document.documentElement.scrollHeight),
+        );
+        const last = navEl.getByRole("link").last();
+        await expect(last).toHaveAttribute("aria-current", "location");
+        expect(
+          await clear('a[aria-current="location"]'),
+          "current in view",
+        ).toBe(true);
+        // A link reached by Tab clears the fade too.
+        await navEl.getByRole("link").first().focus();
+        for (let i = 0; i < 4; i++) await ux.page.keyboard.press("Tab");
+        expect(await clear("a:focus"), "a tabbed-to link in view").toBe(true);
+      }
       // A metric label still opens the Guide at its term (UX-044), shown below the
       // taller top bar.
       await nav(ux, "projections");

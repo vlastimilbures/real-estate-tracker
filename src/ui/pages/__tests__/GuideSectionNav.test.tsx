@@ -68,7 +68,7 @@ describe("Guide section navigation (ADR 0213)", () => {
 });
 
 describe("in a narrow window (ADR 0225 §2)", () => {
-  it("the Guide's links take one row; Property detail's still wrap", () => {
+  it("the Guide asks for one row (Property detail's wrap: SectionNavOneRow)", () => {
     render(<Guide />);
     const nav = screen.getByRole("navigation", {
       name: en.guide.sectionNavLabel,

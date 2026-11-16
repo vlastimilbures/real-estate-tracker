@@ -8,7 +8,7 @@ import { SectionNav } from "../SectionNav";
 
 const sections = ["a", "b", "c", "d"].map((id) => ({ id, label: id }));
 
-/** Lays out the row: each link 100 px wide, the row 150 px. */
+/** Lays out the row: each link 100 px wide, the row 150 px of 500. */
 function layOut(list: HTMLElement) {
   Object.defineProperty(list, "clientWidth", {
     value: 150,
@@ -62,9 +62,28 @@ describe("SectionNav in one row (ADR 0225 §2)", () => {
       />,
     );
     expect(nav.classList.contains("one-row")).toBe(true);
-    // Link d spans 300–400: scrolled so it ends 24 px before the row's end.
-    expect(list.scrollLeft).toBe(274);
+    // Link d spans 300–400: scrolled so it ends 40 px before the row's end.
+    expect(list.scrollLeft).toBe(290);
     expect(nav.dataset.moreStart).toBe("true");
     expect(nav.dataset.moreEnd).toBe("false");
+  });
+});
+
+describe("a link reached by Tab (ADR 0225 §2)", () => {
+  it("is scrolled clear of the fade", () => {
+    render(
+      <SectionNav
+        label="S"
+        sections={sections}
+        current="a"
+        onSelect={() => {}}
+        oneRow
+      />,
+    );
+    const list = screen.getByRole("list");
+    layOut(list);
+    screen.getByRole("link", { name: "c" }).focus();
+    // c spans 200–300.
+    expect(list.scrollLeft).toBe(190);
   });
 });

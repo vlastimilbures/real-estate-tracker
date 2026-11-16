@@ -32,7 +32,9 @@ stay.
    unchanged (`importPage.errorsBadge`).
 2. **The Guide's nav in one row when narrow.** In a window under 1,100 px wide the
    Guide's section links sit in one row that scrolls sideways. A fade marks the side with
-   more links, and the current section's link is kept in view. Wider windows still wrap
+   more links. The current section's link is kept in view, clear of the fade, as it
+   changes and as the row resizes (another window width or language); a link reached by
+   Tab is scrolled clear of the fade too. Wider windows still wrap
    (two rows at 1280 px in every language). Property detail keeps wrapping everywhere
    (ADR 0158).
 

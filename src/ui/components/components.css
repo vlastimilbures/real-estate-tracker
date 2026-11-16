@@ -269,8 +269,8 @@
     flex-wrap: nowrap;
     overflow-x: auto;
     /* Room for the focus ring, which the scroll box would clip. */
-    padding: 3px 3px var(--s1);
-    margin: -3px -3px 0;
+    padding: 4px 4px var(--s1);
+    margin: -4px -4px 0;
     scrollbar-width: none;
   }
   .section-nav.one-row ul::-webkit-scrollbar {
