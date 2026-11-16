@@ -269,6 +269,7 @@ it.
 | [0216](0216-scenario-compare-layout.md)                        | Scenarios: three charts in a row, a flush key-figures table                                   | Accepted (delegated, owner review pending)                         | #388, #392                                         |
 | [0217](0217-info-tip.md)                                       | Definitions behind an info icon; instructions stay visible                                    | Accepted (delegated, owner review pending)                         | #416, #425                                         |
 | [0218](0218-dashboard-pill-and-chart-grid.md)                  | Dashboard: the review count beside the title; six charts in one grid                          | Accepted (delegated, owner review pending)                         | #420, #425                                         |
+| [0219](0219-left-bar-groups.md)                                | Left bar: the pages on top, the tools above the footer                                        | Accepted (delegated, owner review pending)                         | #419, #425                                         |
 
 <!-- adr-index:end -->
 
