@@ -5,7 +5,12 @@ import { describe, it, expect } from "vitest";
 import type { Decimal } from "../../lib/money";
 import { portfolioProjection } from "../projections";
 import { YEAR_FIELD_KINDS, fieldsOf, type YearFieldKind } from "../yearFields";
-import type { ProjectionYear } from "../types";
+import { PORTFOLIO_SNAPSHOT_KINDS, PROPERTY_SNAPSHOT_KINDS } from "../real";
+import type {
+  PortfolioSnapshot,
+  ProjectionYear,
+  PropertySnapshot,
+} from "../types";
 import { assumptions } from "./support/seed";
 import { mixed } from "./support/mixed";
 
@@ -15,6 +20,16 @@ type WithNewMoney = ProjectionYear & { newMoney: Decimal };
 YEAR_FIELD_KINDS satisfies Record<keyof ProjectionYear, YearFieldKind>;
 // @ts-expect-error … and a field it does not classify fails to compile.
 YEAR_FIELD_KINDS satisfies Record<keyof WithNewMoney, YearFieldKind>;
+
+// The same for the snapshot tables the real snapshots read.
+type Kinds<T> = Record<keyof T, "label" | "money" | "ratio">;
+type NewMoney = { newMoney: Decimal };
+PROPERTY_SNAPSHOT_KINDS satisfies Kinds<PropertySnapshot>;
+// @ts-expect-error a property snapshot field the table does not classify
+PROPERTY_SNAPSHOT_KINDS satisfies Kinds<PropertySnapshot & NewMoney>;
+PORTFOLIO_SNAPSHOT_KINDS satisfies Kinds<PortfolioSnapshot>;
+// @ts-expect-error a portfolio snapshot field the table does not classify
+PORTFOLIO_SNAPSHOT_KINDS satisfies Kinds<PortfolioSnapshot & NewMoney>;
 
 describe("YEAR_FIELD_KINDS (#478)", () => {
   it("lists exactly the fields of a projection year", () => {
