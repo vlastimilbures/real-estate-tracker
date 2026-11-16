@@ -18,6 +18,7 @@ import { CsvPlanChangedError } from "../../import/csvImport";
 import { money } from "../../engine";
 import { importNow } from "./support/importNow";
 import { noExtras } from "../../data/__tests__/support/noExtras";
+import { setClock } from "../../__tests__/support/clock";
 
 /** The underlying text of an untyped failure (kind "other"); "" for typed ones. */
 const text = (e: WriteError | null) => (e?.kind === "other" ? e.message : "");
@@ -1090,6 +1091,8 @@ describe("portfolioStore scenario writes (ADR 0123)", () => {
     });
     const stamped = await createdAt("s1");
     expect(stamped).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    // The clock stands still (setup/clock.ts): move it, so a re-stamp on save would show.
+    setClock("2026-10-02");
     await usePortfolioStore.getState().saveScenario({ ...s, name: "Renamed" });
     expect(await createdAt("s1")).toBe(stamped);
     expect(usePortfolioStore.getState().scenarios.map((x) => x.name)).toEqual([

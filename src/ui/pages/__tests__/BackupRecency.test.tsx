@@ -13,6 +13,7 @@ import { useUiStore } from "../../../state/uiStore";
 import type { BackupState } from "../../../state/backup";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
+import { PINNED_DAY, setClock } from "../../../__tests__/support/clock";
 
 const NOW = new Date(2026, 9, 3, 12, 0); // 03.10.2026 local
 
@@ -92,6 +93,7 @@ describe("sidebar backup reminder (ADR 0110)", () => {
     act(() => useUiStore.setState({ settingsTab: "assumptions" }));
     render(<Dashboard />);
     vi.useRealTimers();
+    setClock(PINNED_DAY);
     await userEvent.click(
       screen.getByRole("button", { name: en.shell.backupHintNone }),
     );
@@ -115,6 +117,7 @@ describe("sidebar backup reminder (ADR 0110)", () => {
     setBackup({ lastAt: null, lastFile: null, changedSince: true });
     render(<Dashboard />);
     vi.useRealTimers();
+    setClock(PINNED_DAY);
     await userEvent.click(
       screen.getByRole("button", { name: en.shell.dismissBackupHint }),
     );
