@@ -277,17 +277,17 @@
     display: none;
   }
   .section-nav.one-row[data-more-end="true"] ul {
-    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
   }
   .section-nav.one-row[data-more-start="true"] ul {
-    mask-image: linear-gradient(to left, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(to left, black calc(100% - 32px), transparent);
   }
   .section-nav.one-row[data-more-start="true"][data-more-end="true"] ul {
     mask-image: linear-gradient(
       to right,
       transparent,
-      #000 32px,
-      #000 calc(100% - 32px),
+      black 32px,
+      black calc(100% - 32px),
       transparent
     );
   }
@@ -477,12 +477,6 @@
   display: flex;
   gap: var(--s4);
   align-items: center;
-}
-.spread {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--s4);
 }
 .grid {
   display: grid;
@@ -1618,8 +1612,8 @@ table.data tbody tr:hover td.sticky-col {
   min-width: 180px;
   background: var(--surface);
   border: 1px solid var(--hairline);
-  border-radius: var(--r-md, 8px);
-  box-shadow: var(--shadow-pop, var(--shadow-tile));
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-pop);
   padding: var(--s2) 0;
   outline: none;
 }
@@ -2006,11 +2000,6 @@ table.data tbody tr:hover td.sticky-col {
   font-weight: 600;
   font-feature-settings: var(--num);
   color: var(--ink);
-}
-@media (max-width: 560px) {
-  .event-rows.draws .event-row {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
 }
 .form-actions {
   display: flex;
@@ -2535,6 +2524,9 @@ table.chart-table tbody th.sticky-col {
   gap: var(--s4);
 }
 
+/* Matches only from the 900 px minimum window to 920 px: there it puts the form grids and
+   a chart grid in one column. Removing it is a visible change (ADR 0001); the narrow-window
+   layout is reviewed in #494. */
 @media (max-width: 920px) {
   .chart-grid,
   .form-grid {
@@ -2914,12 +2906,9 @@ main.page:focus {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* Destructive-confirmation inline row inside a data table. `width: 0` keeps this
-   spanning cell out of the table's auto-layout column-width computation — without
-   it, the unwrapped message+buttons content was wider than the normal columns and
-   silently forced the whole table to scroll horizontally when the banner opened.
-   The flex wrapper then wraps the message onto its own line (growing the row's
-   height) instead of the table growing wider. */
+/* Destructive-confirmation inline row inside a data table. The flex wrapper wraps the
+   message onto its own line (growing the row's height) instead of the table growing
+   wider. */
 .confirm-row {
   background: var(--surface-raised);
   padding: var(--s4) var(--s5);
@@ -3153,8 +3142,8 @@ main.page:focus {
 /* After the window: the bar runs off the right edge. */
 .fx-bar.beyond {
   border-radius: 3px 0 0 3px;
-  -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
-  mask-image: linear-gradient(to right, #000 85%, transparent);
+  -webkit-mask-image: linear-gradient(to right, black 85%, transparent);
+  mask-image: linear-gradient(to right, black 85%, transparent);
 }
 .fx-mark {
   position: absolute;

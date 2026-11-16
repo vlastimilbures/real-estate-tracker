@@ -90,24 +90,6 @@
   font-feature-settings: var(--num);
 }
 
-@media (max-width: 720px) {
-  .guide-defs {
-    grid-template-columns: 1fr;
-    row-gap: 0;
-  }
-  .guide-def-term {
-    border-top: 1px solid var(--hairline);
-    padding-bottom: var(--s2);
-  }
-  .guide-def-desc {
-    border-top: none;
-    padding-top: 0;
-  }
-  .guide-def:first-child .guide-def-desc {
-    border-top: none;
-  }
-}
-
 /* Glossary — left-aligned two-column term/definition grid */
 .guide-glossary {
   display: grid;
