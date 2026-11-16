@@ -1,0 +1,197 @@
+{
+  "src/data/backup.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/data/mappers.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "src/data/migrations.ts": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/import/csv.ts": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/import/csvImport.ts": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/state/portfolioStore.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/state/uiStore.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/components/AppShell.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/components/BootFailure.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/components/EntityPanel.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/components/LoanEventRows.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/components/PropertyFormModal.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/components/charts.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/components/forms.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/hooks/useAssumptionsForm.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/hooks/useModalA11y.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "src/ui/model/compare.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/model/dataCheck.ts": {
+    "complexity": {
+      "count": 2
+    }
+  },
+  "src/ui/model/financing.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/model/scenarioForm.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "src/ui/model/writeError.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "src/ui/pages/Dashboard.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/pages/Guide.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/pages/Import.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/pages/ImportPanels.tsx": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "src/ui/pages/Properties.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/pages/PropertyDetail.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/pages/PropertyDetailPanels.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/pages/PropertyEntityPanels.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/pages/ScenarioCompare.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/pages/ScenarioForm.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/pages/Scenarios.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/ui/pages/ScenariosPanels.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  }
+}

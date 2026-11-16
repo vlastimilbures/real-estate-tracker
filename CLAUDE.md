@@ -66,6 +66,9 @@ reference models (mortgage, KPI) are the regression baseline (ADR 0081, 0174).
 - Enforced by tooling: `pnpm depcruise` (layer rules, no runtime cycles; the known-violations
   baseline is empty and `pnpm depcruise:baseline-check` fails a PR that grows it) and ESLint
   engine-purity rules. Never add to the baseline to get a change through.
+- Function length and complexity are capped across `src` (components 150/15, other 80/12,
+  engine 60/10); today's offenders sit in `function-size-baseline.json`, which `pnpm lint`
+  checks and which may only shrink (CONTRIBUTING.md "Function size and complexity").
 
 ## 5. Money & numeric rules (hard)
 

@@ -4,6 +4,11 @@ import tseslint from "typescript-eslint";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import prettier from "eslint-config-prettier";
+import {
+  ENGINE_LIMITS,
+  sizeLimitBlocks,
+  sizeRules,
+} from "./scripts/size-limits.mjs";
 
 // Focused or disabled tests never reach main (CLAUDE.md §6). `it.fails` stays allowed —
 // it needs a DR-/J- ID by convention.
@@ -217,6 +222,9 @@ export default tseslint.config(
       ],
     },
   },
+  // Function length and complexity across src (#456); today's offenders are baselined
+  // (function-size-baseline.json, eslint-suppressions.json). Before the engine block.
+  ...sizeLimitBlocks,
   {
     files: ["src/engine/**/*.ts"],
     ignores: ["src/engine/**/__tests__/**"],
@@ -230,11 +238,7 @@ export default tseslint.config(
         engineDateBan,
       ],
       // P4a limits (P04a-engine-refactor.md §6): keep engine functions small.
-      complexity: ["error", 10],
-      "max-lines-per-function": [
-        "error",
-        { max: 60, skipBlankLines: true, skipComments: true },
-      ],
+      ...sizeRules(ENGINE_LIMITS),
     },
   },
   // The brand constructors themselves (ADR 0074): no brand-cast ban here.
