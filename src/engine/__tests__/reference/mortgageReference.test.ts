@@ -257,10 +257,11 @@ describe("reference first draw of a future loan (D-46)", () => {
   });
 });
 
-describe("reference last tranche lands by payment term−1 (ADR 0139)", () => {
-  // Start 31 Jan 2026, 24 months: the last valid draw is on payment 23's due date,
-  // 31 Dec 2027. A baseDate grid on the 28th or 30th dates the row carrying payment 23
-  // before it; the tranche still joins that row, not the final payment (#218).
+describe("reference last tranche on payment term−2 (ADR 0226)", () => {
+  // Start 31 Jan 2026, 24 months: the last valid draw is on payment 22's due date,
+  // 30 Nov 2027. A baseDate grid on the 30th dates the row carrying payment 22 on that
+  // day, so that row takes the tranche; a grid on the 28th dates it two days before, so
+  // the tranche joins payment 23. Either way it lands before the final payment.
   const loan = {
     start: "2026-01-31",
     principal: "100000",
@@ -268,14 +269,15 @@ describe("reference last tranche lands by payment term−1 (ADR 0139)", () => {
     instalment: "0",
     fixationMonths: 60,
     termMonths: 24,
-    draws: [{ date: "2027-12-31", amount: "500000" }],
+    draws: [{ date: "2027-11-30", amount: "500000" }],
   };
-  const cases: [string, number][] = [
-    ["2026-02-28", 1],
-    ["2026-04-30", 3],
+  /** baseDate, payments due by it, the payment whose row carries the tranche. */
+  const cases: [string, number, number][] = [
+    ["2026-02-28", 1, 23],
+    ["2026-04-30", 3, 22],
   ];
-  for (const [base, paid] of cases) {
-    it(`baseDate ${base}: payment 23 carries the tranche`, () => {
+  for (const [base, paid, carrier] of cases) {
+    it(`baseDate ${base}: payment ${carrier} carries the tranche`, () => {
       const r = referenceSchedule(loan, {
         baseDate: base,
         months: 30,
@@ -284,13 +286,14 @@ describe("reference last tranche lands by payment term−1 (ADR 0139)", () => {
         devInstalment: "fromTerm",
         openingDraws: "nextPeriod",
       });
-      const row23 = r[23 - paid - 1];
-      expect(row23.date).toBe(addMonths(base, 23 - paid));
-      near(row23.draw, 500000, 0);
-      // The last payment is one annuity payment, not a one-shot payoff (504,359.06).
+      const row = r[carrier - paid - 1];
+      expect(row.date).toBe(addMonths(base, carrier - paid));
+      near(row.draw, 500000, 0);
+      // The last payment is one annuity payment, not a one-shot payoff.
       const last = r[24 - paid - 1];
+      const prev = r[24 - paid - 2];
       near(last.endBalance, 0, 1e-9);
-      near(last.payment, row23.payment.toNumber(), 0.01);
+      near(last.payment, prev.payment.toNumber(), 0.01);
       expect(last.principal.lessThan(300000)).toBe(true);
       const sum = r.reduce(
         (s, x) => s.plus(x.principal),
