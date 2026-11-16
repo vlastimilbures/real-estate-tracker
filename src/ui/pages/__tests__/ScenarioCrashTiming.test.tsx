@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { StressPresetsPanel } from "../ScenariosPanels";
+import { PresetBar } from "../ScenariosPanels";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { rate, type ScenarioOverrides } from "../../../engine";
@@ -21,9 +21,7 @@ function Harness({
 }) {
   const [atYear, setAtYear] = useState(0);
   return (
-    <StressPresetsPanel
-      open
-      onToggleOpen={() => undefined}
+    <PresetBar
       busy={false}
       baseDate={new Date(Date.UTC(2026, 0, 1))}
       crashAtYear={atYear}

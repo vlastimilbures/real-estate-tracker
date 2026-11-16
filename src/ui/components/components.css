@@ -2388,13 +2388,16 @@ table.chart-table tbody th.sticky-col {
   text-transform: uppercase;
   color: var(--ink-faint);
 }
-/* One-line summary of the collapsed presets panel (ADR 0106). */
-.preset-collapsed {
-  margin: 0;
-  font-size: 12px;
-  color: var(--ink-soft);
+/* The presets above the scenario list, opened by "Add from preset" (ADR 0220). */
+.preset-drawer {
+  margin-bottom: var(--s3);
+  padding-bottom: var(--s3);
+  border-bottom: 1px solid var(--hairline);
 }
-/* Show / Hide presets stays on one line at the minimum window. */
+.preset-drawer > .subhead-row {
+  margin-top: 0;
+}
+/* "Add from preset" stays on one line at the minimum window. */
 .preset-toggle {
   flex-shrink: 0;
 }
@@ -2426,8 +2429,9 @@ table.chart-table tbody th.sticky-col {
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
   align-items: center;
-  row-gap: var(--s2);
-  padding: var(--s2) 0;
+  row-gap: var(--s1);
+  /* Dense, one line per scenario (ADR 0220 §3). */
+  padding: var(--s1) 0;
   border-bottom: 1px solid var(--hairline);
 }
 .scenario-confirm,

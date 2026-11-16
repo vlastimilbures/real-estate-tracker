@@ -5,7 +5,7 @@
 // definitions sit behind the info icon in the head; instructions stay help lines.
 import { describe, it, expect, beforeEach } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
-import { StressPresetsPanel, ScenarioListPanel } from "../ScenariosPanels";
+import { ScenarioListPanel } from "../ScenariosPanels";
 import { MortgagesPanel } from "../PropertyEntityPanels";
 import { AcquisitionPanel } from "../PropertyDetailPanels";
 import type { AcquisitionView } from "../../model/acquisition";
@@ -22,45 +22,62 @@ beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 const panelOf = (title: string) =>
   screen.getByRole("heading", { name: title }).closest("section")!;
 
-/** The info icon of a panel and the text it shows, hidden at rest (ADR 0217). */
-function infoOf(panel: HTMLElement, topic: string) {
+/** The info icon of a panel and the text it shows, hidden at rest (ADR 0217); in the
+ *  head unless `within` names another container. */
+function infoOf(panel: HTMLElement, topic: string, where = ".panel-head") {
   const button = within(panel).getByRole("button", {
     name: `${en.common.aboutThis}: ${topic}`,
+    hidden: true,
   });
-  expect(panel.querySelector(".panel-head")!.contains(button)).toBe(true);
+  expect(button.closest(where)).toBeTruthy();
   return document.getElementById(button.getAttribute("aria-controls")!)!;
 }
 
-function presets(open: boolean) {
+function scenariosPanel(open: boolean) {
   return render(
-    <StressPresetsPanel
-      open={open}
-      onToggleOpen={() => undefined}
+    <ScenarioListPanel
+      scenarios={[]}
+      baseOn
+      onToggleBase={() => undefined}
+      selectedIds={[]}
+      maxCompare={3}
+      onToggle={() => undefined}
       busy={false}
-      baseDate={new Date(Date.UTC(2026, 0, 1))}
-      crashAtYear={0}
-      onCrashAtYearChange={() => undefined}
-      onAddPreset={() => undefined}
+      onEdit={() => undefined}
+      onDuplicate={() => undefined}
+      onDelete={() => Promise.resolve({ ok: true as const })}
+      presets={{
+        open,
+        onToggle: () => undefined,
+        bar: <p>bar</p>,
+      }}
     />,
   );
 }
 
-describe("Stress presets (ADR 0217 §4, amends 0214 §4)", () => {
-  it("open: the explanation is behind the info icon, not a body line", () => {
-    presets(true);
-    const panel = panelOf(sc.presetsTitle);
-    expect(panel.querySelector(".panel-head .hint")).toBeNull();
-    expect(panel.querySelector(".panel-help")).toBeNull();
-    expect(infoOf(panel, sc.presetsTitle).textContent).toBe(
-      sc.presetsHint(DEFAULT_SHOCK_YEARS),
+describe("Stress presets (ADR 0220 §1, amends 0217 §4)", () => {
+  it("open: the explanation is an info icon beside the Stress presets sub-heading, not a body line", () => {
+    scenariosPanel(true);
+    const panel = panelOf(sc.listTitle);
+    const pop = infoOf(panel, sc.presetsTitle, ".subhead-row");
+    expect(pop.textContent).toBe(sc.presetsHint(DEFAULT_SHOCK_YEARS));
+    expect(pop.closest(".subhead-row")?.querySelector("h3")?.textContent).toBe(
+      sc.presetsTitle,
     );
+    // The panel head has no info icon of its own.
+    expect(panel.querySelector(".panel-head .info-tip")).toBeNull();
+    expect(
+      screen
+        .queryByText(sc.presetsHint(DEFAULT_SHOCK_YEARS))
+        ?.closest(".panel-help"),
+    ).toBeFalsy();
   });
 
-  it("collapsed: the one-line summary; the explanation stays behind the icon", () => {
-    presets(false);
-    const panel = panelOf(sc.presetsTitle);
-    expect(screen.getByText(sc.presetsCollapsedSummary)).toBeTruthy();
-    expect(infoOf(panel, sc.presetsTitle).hidden).toBe(true);
+  it("closed: the explanation stays behind the icon, inside the closed presets", () => {
+    scenariosPanel(false);
+    const panel = panelOf(sc.listTitle);
+    const pop = infoOf(panel, sc.presetsTitle, ".preset-drawer[hidden]");
+    expect(pop.hidden).toBe(true);
   });
 });
 
@@ -81,7 +98,10 @@ describe("other header explanations: instructions stay help lines, definitions g
       />,
     );
     const panel = panelOf(sc.listTitle);
-    expect(panel.querySelector(".panel-head .hint")).toBeNull();
+    // The head's hint is context only: the count (ADR 0220 §1).
+    expect(panel.querySelector(".panel-head .hint")?.textContent).toBe(
+      sc.comparedOf(0, 3),
+    );
     expect(panel.querySelector(".panel-help")?.textContent).toBe(
       sc.listHint(3),
     );

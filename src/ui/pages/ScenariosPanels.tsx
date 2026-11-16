@@ -1,9 +1,10 @@
 // Sub-components pulled out of Scenarios.tsx to shrink its render tree. Pure
 // presentation — no logic beyond what Scenarios.tsx already computed.
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { Copy, Pencil, Trash2 } from "lucide-react";
 import { DisclosureButton } from "../components/Disclosure";
 import { HelpText } from "../components/HelpText";
+import { InfoTip } from "../components/InfoTip";
 import { Panel, Button, SegmentedToggle } from "../components/primitives";
 import { ConfirmRow } from "../components/EntityPanelParts";
 import { RowAction, RowActions } from "../components/RowActions";
@@ -27,63 +28,8 @@ import {
 import { fmtDate } from "../../lib/format";
 import { DEFAULT_SHOCK_YEARS } from "./ScenarioForm";
 
-export function StressPresetsPanel({
-  open,
-  onToggleOpen,
-  busy,
-  baseDate,
-  crashAtYear,
-  onCrashAtYearChange,
-  onAddPreset,
-}: {
-  /** Collapsed, the panel shows a one-line summary and no buttons (ADR 0106). */
-  open: boolean;
-  onToggleOpen: () => void;
-  busy: boolean;
-  /** Projection start: crash timing 0 (ADR 0090). */
-  baseDate: Date;
-  crashAtYear: number;
-  onCrashAtYearChange: (atYear: number) => void;
-  onAddPreset: (name: string, overrides: ScenarioOverrides) => void;
-}) {
-  const t = useT();
-  const bodyId = useId();
-  return (
-    <Panel
-      title={t.scenarios.presetsTitle}
-      info={t.scenarios.presetsHint(DEFAULT_SHOCK_YEARS)}
-      action={
-        <span className="preset-toggle">
-          <DisclosureButton
-            open={open}
-            controls={bodyId}
-            onToggle={onToggleOpen}
-          >
-            {open ? t.scenarios.hidePresets : t.scenarios.showPresets}
-          </DisclosureButton>
-        </span>
-      }
-    >
-      <div id={bodyId}>
-        {open ? (
-          <PresetBar
-            busy={busy}
-            baseDate={baseDate}
-            crashAtYear={crashAtYear}
-            onCrashAtYearChange={onCrashAtYearChange}
-            onAddPreset={onAddPreset}
-          />
-        ) : (
-          <p className="preset-collapsed">
-            {t.scenarios.presetsCollapsedSummary}
-          </p>
-        )}
-      </div>
-    </Panel>
-  );
-}
-
-function PresetBar({
+/** The stress presets: one click saves a scenario (ADR 0101, 0106, 0220). */
+export function PresetBar({
   busy,
   baseDate,
   crashAtYear,
@@ -193,6 +139,7 @@ export function ScenarioListPanel({
   onDuplicate,
   onDelete,
   reachText,
+  presets,
 }: {
   scenarios: Scenario[];
   /** Stored rows the app cannot read (ADR 0123): listed with only Delete. */
@@ -208,8 +155,12 @@ export function ScenarioListPanel({
   onDelete: (s: Deletable) => Promise<MutationResult>;
   /** Which loans the scenario's rate shock hits (ADR 0100). */
   reachText?: (id: string) => string | undefined;
+  /** The "Add from preset" disclosure and the preset bar it opens under the list
+   *  (ADR 0220); its open state is the page's (ADR 0106). */
+  presets?: { open: boolean; onToggle: () => void; bar: ReactNode } | undefined;
 }) {
   const t = useT();
+  const presetsId = useId();
   // UX-020: Delete asks inline first, like every other delete in the app. The same
   // button and confirmation serve readable and unreadable rows (ADR 0123).
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
@@ -239,11 +190,40 @@ export function ScenarioListPanel({
         />
       </div>
     );
+  // Only saved scenarios that are ticked: an id not yet pruned is not counted.
+  const compared = scenarios.filter((s) => selectedIds.includes(s.id)).length;
   return (
     <Panel
       title={t.scenarios.listTitle}
+      hint={t.scenarios.comparedOf(compared, maxCompare)}
       help={<HelpText>{t.scenarios.listHint(maxCompare)}</HelpText>}
+      action={
+        presets && (
+          <span className="preset-toggle">
+            <DisclosureButton
+              open={presets.open}
+              controls={presetsId}
+              onToggle={presets.onToggle}
+            >
+              {t.scenarios.addFromPreset}
+            </DisclosureButton>
+          </span>
+        )
+      }
     >
+      {/* Above the list, so a saved preset's new row never moves the buttons under the
+          pointer, and the presets come before the rows in Tab order (ADR 0220 §3). */}
+      {presets && (
+        <div id={presetsId} className="preset-drawer" hidden={!presets.open}>
+          <div className="subhead-row">
+            <h3 className="panel-subhead">{t.scenarios.presetsTitle}</h3>
+            <InfoTip topic={t.scenarios.presetsTitle}>
+              {t.scenarios.presetsHint(DEFAULT_SHOCK_YEARS)}
+            </InfoTip>
+          </div>
+          {presets.bar}
+        </div>
+      )}
       <div className="scenario-list-wrap">
         <ul className="scenario-list">
           <li className="scenario-row">

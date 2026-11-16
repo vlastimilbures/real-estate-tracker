@@ -5,6 +5,8 @@
 - Source: issue #416 (UX/UI review 2026-11, round 2, tracking #425); direction approved
   by the owner on 2026-11-16 (point 7 of the round-2 plan); acceptance delegated by the
   owner for the 2026-11-16 run
+- Amended by: [0220](0220-scenarios-one-panel.md) (§4: the presets' explanation is
+  the Scenarios panel's info icon)
 - Amends: [0214](0214-panel-help-text.md) §2 and §4 (the "About this" disclosure is
   removed; definitions move from the body to an info icon in the head)
 - Related: [0203](0203-one-disclosure.md) (the shared disclosure, unchanged elsewhere),

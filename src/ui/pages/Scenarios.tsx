@@ -17,7 +17,7 @@ import { rateShockNote } from "../model/rateShockReach";
 import { baseScenario, findSaved } from "../model/scenarios";
 import { CompareView } from "./ScenarioCompare";
 import { ScenarioForm } from "./ScenarioForm";
-import { StressPresetsPanel, ScenarioListPanel } from "./ScenariosPanels";
+import { PresetBar, ScenarioListPanel } from "./ScenariosPanels";
 import { useToast } from "../hooks/useToast";
 import { PortfolioStateNotice } from "../components/PortfolioStateNotice";
 import { portfolioState } from "../model/portfolioState";
@@ -45,9 +45,10 @@ export function Scenarios() {
   const pruneCompare = useUiStore((s) => s.pruneCompare);
   const toggleBase = useUiStore((s) => s.toggleCompareBase);
   const setCrashAtYear = useUiStore((s) => s.setCrashAtYear);
-  // The presets panel opens collapsed once a scenario is saved. The default is decided
-  // when the page opens, so saving the first preset does not close it under the
-  // pointer; a manual Show / Hide wins for the session (ADR 0106).
+  // The presets (the Scenarios panel's "Add from preset", ADR 0220) start closed once a
+  // scenario is saved. The default is decided when the page opens, so saving the first
+  // preset does not close them under the pointer; a manual open or close wins for the
+  // session (ADR 0106).
   const [autoPresetsOpen] = useState(() => scenarios.length === 0);
   const presetsOpen = useUiStore((s) => s.presetsOpen) ?? autoPresetsOpen;
   const setPresetsOpen = useUiStore((s) => s.setPresetsOpen);
@@ -173,16 +174,6 @@ export function Scenarios() {
         />
       )}
 
-      <StressPresetsPanel
-        open={presetsOpen}
-        onToggleOpen={() => setPresetsOpen(!presetsOpen)}
-        busy={busy}
-        baseDate={assumptions.baseDate}
-        crashAtYear={crashAtYear}
-        onCrashAtYearChange={setCrashAtYear}
-        onAddPreset={addPreset}
-      />
-
       <ScenarioListPanel
         scenarios={scenarios}
         unreadable={unreadable}
@@ -198,6 +189,19 @@ export function Scenarios() {
           run(() => removeScenario(s.id), t.scenarios.deletedScenario(s.name))
         }
         reachText={reachText}
+        presets={{
+          open: presetsOpen,
+          onToggle: () => setPresetsOpen(!presetsOpen),
+          bar: (
+            <PresetBar
+              busy={busy}
+              baseDate={assumptions.baseDate}
+              crashAtYear={crashAtYear}
+              onCrashAtYearChange={setCrashAtYear}
+              onAddPreset={addPreset}
+            />
+          ),
+        }}
       />
 
       {/* No property, or none active: the saved scenarios stay editable, but there is
