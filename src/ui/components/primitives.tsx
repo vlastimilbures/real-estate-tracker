@@ -475,13 +475,10 @@ export function EmptyState({
 export function ErrorBanner({
   message,
   onDismiss,
-  action,
   live = true,
 }: {
   message: string;
   onDismiss?: (() => void) | undefined;
-  /** Optional inline button, e.g. Reload. */
-  action?: { label: string; onClick: () => void };
   /** False for a kept banner already announced on another page (ADR 0189). */
   live?: boolean;
 }) {
@@ -489,11 +486,6 @@ export function ErrorBanner({
   return (
     <div className="error-banner" role={live ? "alert" : undefined}>
       <span>{message}</span>
-      {action && (
-        <Button size="sm" onClick={action.onClick}>
-          {action.label}
-        </Button>
-      )}
       {onDismiss && (
         <button
           type="button"

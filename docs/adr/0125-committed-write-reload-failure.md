@@ -11,6 +11,7 @@
   DR-086 / UX-050)
 - Amended: 2026-10-04 after the independent review of PR #196 (item 5: the store, not the
   Assumptions page, keeps the saved assumptions)
+- Amended by: [0228](0228-read-back-failure-stops.md) (§1, §3, §5: a save whose read-back fails stops on the error screen; no stale state, no in-memory assumptions)
 
 ## Context
 

@@ -8,6 +8,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { App } from "../App";
 import { usePortfolioStore } from "../../state/portfolioStore";
+import { useUiStore } from "../../state/uiStore";
 import { en } from "../../i18n/en";
 import { getDict } from "../../i18n";
 import type { DataErrorCode, UpgradeStop } from "../../data/errors";
@@ -191,5 +192,53 @@ describe("per-code screen (#115)", () => {
     );
     expect(revealDataDir).toHaveBeenCalledOnce();
     expect(alert().textContent).toContain(en.boot.revealFailed);
+  });
+});
+
+describe("a save whose read-back failed (ADR 0228)", () => {
+  function readBackFailed() {
+    act(() => {
+      usePortfolioStore.setState({
+        status: "error",
+        readBackFailed: true,
+        error: null,
+        startupError: null,
+        init,
+      } as never);
+    });
+  }
+
+  it("says the change was saved, and offers Try again and the data folder", async () => {
+    readBackFailed();
+    render(<App />);
+    expect(alert().textContent).toContain(en.boot.readBackFailed);
+    expect(
+      screen.getByRole("heading", { name: en.app.dbErrorEyebrow }),
+    ).toBeDefined();
+    expect(button(en.boot.showDataFolder)).not.toBeNull();
+    expect(button(en.boot.restoreBackup)).toBeNull();
+    const before = init.mock.calls.length;
+    await userEvent.click(
+      screen.getByRole("button", { name: en.app.tryAgain }),
+    );
+    expect(init.mock.calls.length).toBe(before + 1);
+  });
+
+  it.each([
+    {
+      kind: "restored" as const,
+      text: (file: string) => en.backup.restored(file),
+    },
+    {
+      kind: "sampleCleared" as const,
+      text: (file: string) => en.sample.cleared(file),
+    },
+  ])("after $kind, still names the safety copy (#136)", ({ kind, text }) => {
+    const file = "portfolio-before-x-20261001T120000Z.json";
+    act(() => useUiStore.getState().setNotice({ kind, file }));
+    readBackFailed();
+    render(<App />);
+    expect(alert().textContent).toContain(en.boot.readBackFailed);
+    expect(alert().textContent).toContain(text(file));
   });
 });

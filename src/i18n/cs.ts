@@ -44,9 +44,6 @@ export const cs: Dictionary = {
     yesDelete: "Ano, smazat",
     confirmDeleteRow: "Smazat tento záznam?",
     deleting: "Mazání…",
-    staleData:
-      "Změna se možná ještě nezobrazuje: načtení dat selhalo. Načtěte znovu, abyste viděli uložený stav.",
-    reload: "Načíst znovu",
     saving: "Ukládání…",
     close: "Zavřít",
     dismiss: "Zavřít",
@@ -184,9 +181,10 @@ export const cs: Dictionary = {
       "Ukončete aplikaci a přesuňte portfolio.db, portfolio.db-wal a portfolio.db-shm ze složky dat (nemažte je; některé nemusí existovat). Pak buď znovu otevřete aplikaci, která se spustí s novou databází s ukázkovým portfoliem, a obnovte poslední zálohu JSON v Nastavení → Záloha a obnova; nebo ještě před otevřením dejte do složky dat kopii souboru před migrací ze složky záloh, přejmenovanou na portfolio.db.",
     nextRowInvalid:
       "Obnovit zálohu… nahradí všechna data zálohou JSON; bezpečnostní kopie současných dat se uloží nejdřív. Nebo nahlaste záznam níže.",
+    // A save committed but the data could not be read back (ADR 0228).
+    readBackFailed:
+      "Vaše poslední změna byla uložena, ale data se nepodařilo znovu načíst.",
     restoreBackup: "Obnovit zálohu…",
-    restoredReloadFailed: (file: string) =>
-      `Záloha byla obnovena a vaše předchozí data byla uložena jako ${file} ve složce záloh, ale data se nepodařilo načíst. Zkuste to znovu; pokud to stále selhává, uschovejte soubor protokolu pro diagnostiku.`,
     continue: "Otevřít aplikaci",
     detailsOther: "Podrobnosti",
     showDataFolder: "Zobrazit složku dat",

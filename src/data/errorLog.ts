@@ -30,7 +30,7 @@ export function maskNumbers(text: string): string {
 export type FailureSite =
   | "STARTUP"
   | "WRITE"
-  // The reload after a write (ADR 0125).
+  // The reload after a write, and Try again after a failed one (ADR 0125, ADR 0228).
   | "RELOAD"
   // Exporting a backup.
   | "BACKUP"

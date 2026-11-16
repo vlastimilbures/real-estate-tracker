@@ -247,8 +247,9 @@ The whole batch — every file you chose — is imported in one step:
    Correct these rows and import again"_ with each file, line and column.
 4. Otherwise, when you press Import, the plan is checked once more and every row is written
    in one database transaction. If the write itself fails, it is rolled back and nothing is
-   imported. If the import went through but the screen could not reload, the app still shows
-   the import report; a banner asks you to reload.
+   imported. If the import went through but the data could not be read back, the app stops
+   on the error screen with "Your last change was saved, but the data could not be read
+   back." **Try again** reads the data again; it does not import a second time.
 
 There is no partial import: one bad row in one file stops the whole batch.
 

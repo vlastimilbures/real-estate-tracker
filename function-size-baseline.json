@@ -35,7 +35,7 @@
   },
   "src/state/portfolioStore.ts": {
     "lines": {
-      "Arrow function (usePortfolioStore: create)": 387
+      "Arrow function (usePortfolioStore: create)": 376
     }
   },
   "src/state/uiStore.ts": {
@@ -45,10 +45,10 @@
   },
   "src/ui/components/AppShell.tsx": {
     "complexity": {
-      "Function 'AppShell'": 18
+      "Function 'AppShell'": 16
     },
     "lines": {
-      "Function 'AppShell'": 224
+      "Function 'AppShell'": 213
     }
   },
   "src/ui/components/BootFailure.tsx": {
@@ -56,7 +56,7 @@
       "Function 'BootFailure'": 18
     },
     "lines": {
-      "Function 'BootFailure'": 163
+      "Function 'BootFailure'": 153
     }
   },
   "src/ui/components/EntityPanel.tsx": {

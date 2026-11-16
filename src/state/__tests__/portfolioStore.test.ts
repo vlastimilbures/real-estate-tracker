@@ -102,53 +102,6 @@ describe("portfolioStore mutations", () => {
     );
   });
 
-  it("a write whose reload fails succeeds and marks the screen stale (ADR 0125)", async () => {
-    // The other half of mutate()'s contract: the write reaches disk but the follow-up
-    // refresh() throws. The write has already committed (multi-step writes run in one
-    // transaction, D-14), so it is reported as done: the form closes, and the stale
-    // banner asks for a Reload instead of a retry being refused as a duplicate (#106).
-    await usePortfolioStore.getState().init(openSeeded);
-    const real = usePortfolioStore.getState().sql!;
-
-    const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
-    const before = usePortfolioStore.getState().portfolio!.valuations.length;
-
-    // Writes succeed against the real DB; the very next read (refresh's load) rejects.
-    const writeOkReadFails: Sql = {
-      execute: real.execute.bind(real),
-      select: () => Promise.reject(new Error("read timeout")),
-      selectSnapshot: () => Promise.reject(new Error("read timeout")),
-      transaction: real.transaction.bind(real),
-      backup: real.backup.bind(real),
-    };
-    usePortfolioStore.setState({ sql: writeOkReadFails });
-
-    const result = await usePortfolioStore.getState().addValuation({
-      id: "val-refresh-fail",
-      propertyId: pid,
-      validFrom: new Date(Date.UTC(2029, 0, 1)) as IsoDate,
-      marketValue: money("14000000"),
-    });
-
-    expect(result).toEqual({ ok: true });
-    expect(usePortfolioStore.getState().error).toBeNull();
-    expect(usePortfolioStore.getState().stale).toBe(true);
-    // refresh() never completed, so the in-memory portfolio is stale (the new row is on
-    // disk but not reflected here).
-    expect(usePortfolioStore.getState().status).toBe("ready");
-    expect(usePortfolioStore.getState().portfolio!.valuations.length).toBe(
-      before,
-    );
-
-    // Reconnect a healthy Sql and refresh: the persisted write is now visible, proving
-    // the write really did reach disk.
-    usePortfolioStore.setState({ sql: real });
-    await usePortfolioStore.getState().refresh();
-    expect(usePortfolioStore.getState().portfolio!.valuations.length).toBe(
-      before + 1,
-    );
-  });
-
   it("runs mutations one at a time, in call order (DR-085)", async () => {
     await usePortfolioStore.getState().init(openSeeded);
     const real = usePortfolioStore.getState().sql!;
@@ -1009,71 +962,6 @@ describe("development-loan rules at save time (UX-047, was mortgageFieldErrors)"
   });
 });
 
-describe("portfolioStore stale flag (UX-050, DR-086)", () => {
-  it("is set when the reload after a write fails, and cleared by a good refresh", async () => {
-    await usePortfolioStore.getState().init(openSeeded);
-    expect(usePortfolioStore.getState().stale).toBe(false);
-    const real = usePortfolioStore.getState().sql!;
-    usePortfolioStore.setState({
-      sql: {
-        execute: real.execute.bind(real),
-        select: () => Promise.reject(new Error("read timeout")),
-        selectSnapshot: () => Promise.reject(new Error("read timeout")),
-        transaction: real.transaction.bind(real),
-        backup: real.backup.bind(real),
-      },
-    });
-    const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
-    await usePortfolioStore.getState().addValuation({
-      id: "stale-1",
-      propertyId: pid,
-      validFrom: new Date(Date.UTC(2035, 0, 1)) as IsoDate,
-      marketValue: money("1"),
-    });
-    expect(usePortfolioStore.getState().stale).toBe(true);
-    usePortfolioStore.setState({ sql: real });
-    await usePortfolioStore.getState().reload();
-    expect(usePortfolioStore.getState().stale).toBe(false);
-    expect(
-      usePortfolioStore
-        .getState()
-        .portfolio!.valuations.some((v) => v.id === "stale-1"),
-    ).toBe(true);
-  });
-
-  it("starts a new episode only when the data turns stale (ADR 0194)", async () => {
-    await usePortfolioStore.getState().init(openSeeded);
-    const real = usePortfolioStore.getState().sql!;
-    const failing = {
-      execute: real.execute.bind(real),
-      select: () => Promise.reject(new Error("read timeout")),
-      selectSnapshot: () => Promise.reject(new Error("read timeout")),
-      transaction: real.transaction.bind(real),
-      backup: real.backup.bind(real),
-    };
-    const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
-    const write = (id: string) =>
-      usePortfolioStore.getState().addValuation({
-        id,
-        propertyId: pid,
-        validFrom: new Date(Date.UTC(2035, 0, 1)) as IsoDate,
-        marketValue: money("1"),
-      });
-    usePortfolioStore.setState({ sql: failing });
-    await write("ep-1");
-    const first = usePortfolioStore.getState().staleEpisode;
-    expect(first).not.toBeNull();
-    // Still stale: the same episode, announced once.
-    await write("ep-2");
-    expect(usePortfolioStore.getState().staleEpisode).toBe(first);
-    usePortfolioStore.setState({ sql: real });
-    await usePortfolioStore.getState().reload();
-    usePortfolioStore.setState({ sql: failing });
-    await write("ep-3");
-    expect(usePortfolioStore.getState().staleEpisode).not.toBe(first);
-  });
-});
-
 // ADR 0123 (#107, #108): scenario writes.
 describe("portfolioStore scenario writes (ADR 0123)", () => {
   const createdAt = async (id: string) =>
@@ -1156,12 +1044,12 @@ describe("portfolioStore refuses a scenario that breaks an engine rule (ADR 0123
         "INSERT INTO scenarios (id, name, overrides, created_at) VALUES (?, ?, ?, ?)",
         ["old", "Stres", '{"version":1}', "2026-01-01T00:00:00.000Z"],
       );
-    await usePortfolioStore.getState().reload();
+    await usePortfolioStore.getState().refresh();
     const r = await usePortfolioStore
       .getState()
       .duplicateScenario("old", "copy", "Stres (kopie)");
     expect(r).toEqual({ ok: true });
-    await usePortfolioStore.getState().reload();
+    await usePortfolioStore.getState().refresh();
     const copy = usePortfolioStore
       .getState()
       .scenarios.find((x) => x.id === "copy");
@@ -1181,7 +1069,7 @@ describe("portfolioStore refuses a scenario that breaks an engine rule (ADR 0123
           "2026-01-01T00:00:00.000Z",
         ],
       );
-    await usePortfolioStore.getState().reload();
+    await usePortfolioStore.getState().refresh();
     const r = await usePortfolioStore
       .getState()
       .duplicateScenario("old", "copy", "Old (copy)");

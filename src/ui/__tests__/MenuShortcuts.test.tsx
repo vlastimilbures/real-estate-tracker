@@ -2,12 +2,15 @@
 //
 // UX-066 (DR-143): the native menu's New Property (⌘N) and View (⌘1–⌘5) items reach the
 // webview as events; App turns them into the same navigation as the sidebar. While a
-// dialog is open they do nothing (the dialog may hold unsaved input).
+// dialog is open they do nothing (the dialog may hold unsaved input), and every item does
+// nothing while the app is not ready (ADR 0228).
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { act, render } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { App } from "../App";
+import { en } from "../../i18n/en";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
+import { assumptions, portfolio } from "../../engine/__tests__/support/seed";
 
 type Handler = (e: { payload: unknown }) => void;
 const handlers = vi.hoisted(() => new Map<string, Handler>());
@@ -28,10 +31,12 @@ beforeEach(() => {
   handlers.clear();
   (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
   act(() => {
-    // The error screen keeps the render small; the menu bridge is mounted regardless.
+    // The app is running: the page items act only then (ADR 0228).
     usePortfolioStore.setState({
-      status: "error",
-      error: { kind: "other", message: "x" },
+      status: "ready",
+      portfolio,
+      assumptions,
+      error: null,
       startupError: null,
       init: async () => {},
     } as never);
@@ -62,9 +67,11 @@ describe("menu shortcuts (UX-066)", () => {
     render(<App />);
     await act(async () => {});
     emit("menu://new-property");
-    const s = useUiStore.getState();
-    expect(s.route).toBe("properties");
-    expect(s.newPropertyRequested).toBe(true);
+    expect(useUiStore.getState().route).toBe("properties");
+    // The running Properties page takes the request and opens its Add form.
+    expect(
+      screen.queryByRole("dialog", { name: en.propertyForm.addTitle }),
+    ).not.toBeNull();
   });
 
   it("does nothing while a dialog is open", async () => {
@@ -120,5 +127,44 @@ describe("Settings shortcut (UX-074)", () => {
     document.body.appendChild(dialog);
     emit("menu://settings");
     expect(useUiStore.getState().route).toBe("dashboard");
+  });
+});
+
+// ADR 0228: Try again returns to the page the owner was on, so the menu cannot move it
+// while the error screen shows.
+describe("while the error screen shows (ADR 0228)", () => {
+  it("View, New Property and Settings do nothing", async () => {
+    act(() =>
+      usePortfolioStore.setState({
+        status: "error",
+        readBackFailed: true,
+        error: null,
+        startupError: null,
+      }),
+    );
+    render(<App />);
+    await act(async () => {});
+    emit("menu://navigate", "projections");
+    emit("menu://new-property");
+    emit("menu://settings");
+    const s = useUiStore.getState();
+    expect(s.route).toBe("dashboard");
+    expect(s.newPropertyRequested).toBe(false);
+  });
+
+  it("About does nothing, so it cannot pop up after Try again", async () => {
+    act(() => {
+      useUiStore.setState({ aboutOpen: false });
+      usePortfolioStore.setState({
+        status: "error",
+        readBackFailed: true,
+        error: null,
+        startupError: null,
+      });
+    });
+    render(<App />);
+    await act(async () => {});
+    emit("menu://about");
+    expect(useUiStore.getState().aboutOpen).toBe(false);
   });
 });

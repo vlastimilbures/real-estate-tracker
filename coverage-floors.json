@@ -5,10 +5,10 @@
   "src/lib/**": { "lines": 99, "branches": 96 },
   "src/i18n/**": { "lines": 99, "branches": 95 },
   "src/ui/model/**": { "lines": 97, "branches": 94 },
-  "src/state/**": { "lines": 93, "branches": 85 },
+  "src/state/**": { "lines": 93, "branches": 86 },
   "src/platform/**": { "lines": 70, "branches": 71 },
   "src/ui/pages/**": { "lines": 90, "branches": 86 },
   "src/ui/components/**": { "lines": 94, "branches": 88 },
   "src/ui/hooks/**": { "lines": 97, "branches": 90 },
-  "src/ui/*.{ts,tsx}": { "lines": 92, "branches": 83 }
+  "src/ui/*.{ts,tsx}": { "lines": 92, "branches": 87 }
 }

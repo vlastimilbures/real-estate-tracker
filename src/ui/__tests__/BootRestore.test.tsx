@@ -90,15 +90,16 @@ describe("restore from the startup error screen (ROW_INVALID)", () => {
       screen.getByRole("alert").textContent ?? "",
     )?.[0];
     expect(named).toBeDefined();
-    // Try again: the notice is set before init, which unmounts this screen; a failed
-    // init mounts a new one.
-    act(() =>
-      useUiStore.getState().setNotice({ kind: "restored", file: named! }),
-    );
-    cleanup();
 
+    await userEvent.click(button(en.app.tryAgain));
+    expect(store().status).toBe("error");
+    expect(store().readBackFailed).toBe(true);
+    // In the app a failed init mounts a new screen: it still names the copy.
+    cleanup();
     render(<BootFailure />);
-    expect(screen.getByRole("alert").textContent).toContain(named);
+    const alert = screen.getByRole("alert").textContent;
+    expect(alert).toContain(en.boot.readBackFailed);
+    expect(alert).toContain(named);
     expect(button(en.app.tryAgain)).toBeDefined();
   });
 
@@ -134,13 +135,24 @@ describe("restore from the startup error screen (ROW_INVALID)", () => {
     expect(button(en.boot.restoreBackup)).toBeDefined();
   });
 
-  it("a restore whose data cannot be loaded names the copy and offers Try again", async () => {
+  it("a restore whose data cannot be read back shows the read-back screen and names the copy (ADR 0228)", async () => {
     usePortfolioStore.setState({ sql: reloadFails(db) });
     await restoreFromScreen();
 
     const alert = screen.getByRole("alert");
-    expect(alert.textContent).toMatch(/portfolio-before-restore-.*\.json/);
+    expect(alert.textContent).toContain(en.boot.readBackFailed);
+    const named = /portfolio-before-restore-.*\.json/.exec(
+      alert.textContent ?? "",
+    )?.[0];
+    expect(named).toBeDefined();
+    expect(useUiStore.getState().notice).toEqual({
+      kind: "restored",
+      file: named,
+    });
     expect(screen.queryByRole("button", { name: en.boot.continue })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: en.boot.restoreBackup }),
+    ).toBeNull();
     expect(button(en.app.tryAgain)).toBeDefined();
     expect(store().status).toBe("error");
   });

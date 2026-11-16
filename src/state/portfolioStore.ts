@@ -127,8 +127,8 @@ function assertRows(
 /** The outcome of a mutation. Callers (forms, modals) branch on `ok` — e.g. a modal
  *  closes only on success and keeps itself open, showing `error`, on failure. The
  *  store also stashes `error` so a global banner can surface it without every caller
- *  wiring it up. `ok` means the write landed; when the reload after it failed, the
- *  store's `stale` flag says so (ADR 0125). */
+ *  wiring it up. `ok` means the write landed; when reading the data back after it failed,
+ *  the store stops on the error screen with `readBackFailed` set (ADR 0228). */
 export type MutationResult = { ok: true } | { ok: false; error: WriteError };
 /** Address and garage: stored, but not engine inputs (ADR 0184 §3).
  *  @internal test seam: UI tests reach the type through the state facade (ADR 0072). */
@@ -187,24 +187,18 @@ interface PortfolioState {
   error: WriteError | null;
   /** A typed data-layer failure that stopped startup (P5a), for a translated screen. */
   startupError: StartupError | null;
-  /** The reload after a write failed, so the screen may not show what is on disk
-   *  (DR-086). The write itself still counts as done (ADR 0125). Cleared by the next
-   *  successful load. */
-  stale: boolean;
-  /** A new object each time `stale` turns true, so the stale banner is announced once
-   *  per episode, not on every page (ADR 0194). */
-  staleEpisode: object | null;
+  /** A write committed but reading the data back failed: the app stops on the error
+   *  screen, the write still counts as done, and later writes are refused until Try
+   *  again reads the data (ADR 0228). */
+  readBackFailed: boolean;
   /** Restores, Clear samples and Load samples queued or running. Settings → Backup
    *  waits while one is, across page changes (ADR 0154). */
   replacing: number;
 
   init: (open?: () => Promise<Sql>) => Promise<void>;
   /** Load every table into the store. Does not queue itself: outside a queued job, only
-   *  `init` calls it; everything else uses `reload`. */
+   *  `init` calls it. */
   refresh: () => Promise<void>;
-  /** The banner's Reload: refresh after every pending write, so it never shows data older
-   *  than theirs (ADR 0132). On failure log it and set `stale`; never throws. */
-  reload: () => Promise<void>;
   clearError: () => void;
   /** Show `error` in the banner: for a refusal no form is open to show (ADR 0141). */
   showError: (error: WriteError) => void;
@@ -265,7 +259,7 @@ interface PortfolioState {
   // RestoreError, …) for the caller to show, and leave the banner `error` alone on a
   // failure; one that replaces the data (restore, Clear sample, Load sample) clears it
   // on success, since it described the old data (ADR 0154). They throw only before the
-  // commit: a failed reload after it marks `stale` (ADR 0125).
+  // commit: a failed read-back after it stops on the error screen (ADR 0228).
   /** What a CSV import would add and update (ADR 0096). Reads only; queued behind
    *  pending writes so it sees their result. */
   previewCsv: (batch: CsvImportBatch) => Promise<CsvImportPreview>;
@@ -299,8 +293,8 @@ interface PortfolioState {
 export const usePortfolioStore = create<PortfolioState>((set, get) => {
   /** Tail of the mutation queue: each mutation (write + refresh) starts only after the
    *  previous one settled, so writes reach the DB in call order and a refresh never
-   *  interleaves with another write (DR-085). The CSV preview and the banner's Reload
-   *  wait in it too (ADR 0132). */
+   *  interleaves with another write (DR-085). The CSV preview and Try again after a
+   *  failed read-back wait in it too (ADR 0132, ADR 0228). */
   let queue: Promise<unknown> = Promise.resolve();
   /** Data writes so far: an export keeps the changed flag when one landed while its
    *  save dialog was open, since the file does not hold it (ADR 0110). */
@@ -324,8 +318,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
   /** Run `op` in the mutation queue, then reload; rethrow its failure unchanged
    *  (after reloading in-memory state from the DB). For operations whose callers
    *  show their own typed errors (DR-047: pages no longer touch the raw `sql`). Once
-   *  `op` has resolved it has committed: a failed reload only marks the state stale
-   *  (ADR 0125). */
+   *  `op` has resolved it has committed: a failed reload stops on the error screen and
+   *  `op`'s result still returns (ADR 0228). */
   function exclusive<T>(
     op: (sql: Sql) => Promise<T>,
     changesData = true,
@@ -335,10 +329,10 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       try {
         const result = await op(sql);
         if (changesData) await markChanged(sql);
-        await refreshOrMarkStale();
+        await reloadAfter(true);
         return result;
       } catch (e) {
-        await refreshOrMarkStale();
+        await reloadAfter(false);
         throw e;
       }
     });
@@ -369,20 +363,31 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     }
   }
 
-  /** Refresh; on failure log it and set `stale` (ADR 0125). Never throws. Not queued: the
-   *  reload inside a queued write, where queueing it would wait for itself. */
-  async function refreshOrMarkStale(): Promise<void> {
+  /** Refresh after a write; on failure log it. After a `committed` write the app stops
+   *  on the error screen (ADR 0228); after a failed one it stays, showing the write
+   *  error, since nothing was saved. Never throws. Not queued: the reload inside a
+   *  queued write, where queueing it would wait for itself. */
+  async function reloadAfter(committed: boolean): Promise<void> {
     try {
       await get().refresh();
     } catch (e) {
       logFailure("RELOAD", e);
-      if (!get().stale) set({ stale: true, staleEpisode: {} });
+      if (committed)
+        set({
+          status: "error",
+          readBackFailed: true,
+          error: null,
+          startupError: null,
+        });
     }
   }
 
+  /** The open database, unless a read-back failed: then the screen may be older than
+   *  the database, so a write queued behind it is refused (ADR 0228). */
   function requireSql(): Sql {
     const sql = get().sql;
-    if (!sql) throw new Error("Database not initialised");
+    if (!sql || get().readBackFailed)
+      throw new Error("Database not initialised");
     return sql;
   }
 
@@ -391,14 +396,14 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
    *  returned to the caller as `{ ok: false }`. On failure we still reload so the
    *  in-memory state matches what actually reached disk. Multi-statement writes are
    *  atomic (`Sql.transaction`, D-14), so a failed op leaves the DB unchanged, and a
-   *  resolved op has committed: a failed reload after it returns `{ ok: true }` with
-   *  the state marked stale (ADR 0125). */
+   *  resolved op has committed: a failed reload after it returns `{ ok: true }` and
+   *  stops on the error screen (ADR 0228). A write queued behind that is refused. */
   async function mutateNow(
     op: (sql: Sql) => Promise<void>,
     changesData: boolean,
   ): Promise<MutationResult> {
     const sql = get().sql;
-    if (!sql) {
+    if (!sql || get().readBackFailed) {
       const error = toWriteError(new Error("Database not initialised"));
       set({ error });
       return { ok: false, error };
@@ -407,7 +412,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       perfMark("edit:start");
       await op(sql);
       if (changesData) await markChanged(sql);
-      await refreshOrMarkStale();
+      await reloadAfter(true);
       // Write + reload; the recompute and page render are measured where they run.
       perfMeasure("edit-saved", "edit:start");
       set({ error: null });
@@ -420,7 +425,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         return { ok: false, error: toWriteError(e) };
       logFailure("WRITE", e);
       const error = toWriteError(e);
-      await refreshOrMarkStale();
+      await reloadAfter(false);
       set({ error });
       return { ok: false, error };
     }
@@ -456,37 +461,13 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     }
   }
 
-  /** `mutate` for a scenario write. When it commits but the reload fails, the list shows
-   *  `next` of it, so the ADR 0128 §6 check of the next assumptions save sees the write
-   *  (ADR 0191 §2), as `saveAssumptions` does for the assumptions (ADR 0125). Patched
-   *  inside the queued job, before any later job reads the list. */
-  function mutateScenarios(
-    op: (sql: Sql) => Promise<void>,
-    next: (list: Scenario[]) => Scenario[],
-  ): Promise<MutationResult> {
-    return enqueue(async () => {
-      const result = await mutateNow(op, true);
-      if (result.ok && get().stale) set({ scenarios: next(get().scenarios) });
-      return result;
-    });
-  }
-
-  /** `list` with `s` in place of the row with its id, or added last. */
-  const upsertIn = (list: Scenario[], s: Scenario): Scenario[] =>
-    list.some((x) => x.id === s.id)
-      ? list.map((x) => (x.id === s.id ? s : x))
-      : [...list, s];
-
   /** Add or save `s`. An insert stamps created_at; an update keeps the stored one
    *  (ADR 0123). */
   const writeScenario = (s: Scenario) =>
-    mutateScenarios(
-      async (sql) => {
-        checkScenario(s.overrides);
-        await upsertScenario(sql, scenarioToRow(s, new Date()));
-      },
-      (list) => upsertIn(list, s),
-    );
+    mutate(async (sql) => {
+      checkScenario(s.overrides);
+      await upsertScenario(sql, scenarioToRow(s, new Date()));
+    });
 
   /** Engine rules a scenario's own overrides break on top of the saved assumptions
    *  (ADR 0123): refused before writing, like the assumptions themselves. */
@@ -508,13 +489,24 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     status: "idle",
     error: null,
     startupError: null,
-    stale: false,
-    staleEpisode: null,
+    readBackFailed: false,
     replacing: 0,
 
     async init(open = defaultOpen) {
       if (get().status === "loading" || get().status === "ready") return;
       set({ status: "loading", error: null, startupError: null });
+      // Try again after a failed read-back only reads, behind any queued job: the
+      // database is open and at head, so nothing is migrated or seeded (ADR 0228).
+      if (get().readBackFailed) {
+        try {
+          await enqueue(() => get().refresh());
+          set({ status: "ready", readBackFailed: false });
+        } catch (e) {
+          logFailure("RELOAD", e);
+          set({ status: "error" });
+        }
+        return;
+      }
       try {
         const sql = await open();
         set({ sql });
@@ -542,13 +534,11 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       if (!sql) return;
       // One point-in-time snapshot of every table (DR-134).
       const state = await loadState(sql);
-      set({ ...state, stale: false });
+      set(state);
     },
 
     clearError: () => set({ error: null }),
     showError: (error) => set({ error }),
-
-    reload: () => enqueue(refreshOrMarkStale),
 
     addValuation: (v) =>
       mutate(async (sql) => {
@@ -679,40 +669,23 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       mutate((sql) => setPropertyActive(sql, id, active)),
     removeProperty: (id) => mutate((sql) => deleteProperty(sql, id)),
 
-    saveAssumptions: async (a) => {
-      const result = await mutate(async (sql) => {
+    saveAssumptions: (a) =>
+      mutate(async (sql) => {
         checkAssumptions(a);
         await upsertAssumptions(sql, a);
-      });
-      // The row is `a`: show it even when the reload failed, so the Assumptions form,
-      // which rebuilds every field from the store, cannot save the old values back
-      // (ADR 0125).
-      if (result.ok && get().stale) set({ assumptions: a });
-      return result;
-    },
+      }),
 
     addScenario: (s) => writeScenario(s),
     saveScenario: (s) => writeScenario(s),
     duplicateScenario: (id, newId, name) =>
-      mutateScenarios(
-        async (sql) => {
-          const src = get().scenarios.find((x) => x.id === id);
-          if (!src) throw new Error("Scenario not found");
-          checkScenario(src.overrides);
-          const copy: Scenario = { ...src, id: newId, name };
-          await upsertScenario(sql, scenarioToRow(copy, new Date()));
-        },
-        // The write found the source in this list, which the failed reload left as is.
-        (list) => {
-          const src = list.find((x) => x.id === id);
-          return src ? upsertIn(list, { ...src, id: newId, name }) : list;
-        },
-      ),
-    removeScenario: (id) =>
-      mutateScenarios(
-        (sql) => deleteScenario(sql, id),
-        (list) => list.filter((x) => x.id !== id),
-      ),
+      mutate(async (sql) => {
+        const src = get().scenarios.find((x) => x.id === id);
+        if (!src) throw new Error("Scenario not found");
+        checkScenario(src.overrides);
+        const copy: Scenario = { ...src, id: newId, name };
+        await upsertScenario(sql, scenarioToRow(copy, new Date()));
+      }),
+    removeScenario: (id) => mutate((sql) => deleteScenario(sql, id)),
 
     // Hides a banner: app state, not a data change (ADR 0110).
     dismissSampleBanner: () => mutate(dismissSampleBanner, false),
@@ -741,11 +714,15 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       const { safetyBackup } = await exclusive((sql) =>
         confirmRestore(sql, backup, checkInputRules),
       );
-      return { safetyBackup, ready: get().portfolio !== null && !get().stale };
+      return {
+        safetyBackup,
+        ready: get().portfolio !== null && !get().readBackFailed,
+      };
     },
     continueAfterRestore: () => {
       const s = get();
-      if (s.status !== "error" || s.portfolio === null || s.stale) return;
+      if (s.status !== "error" || s.portfolio === null || s.readBackFailed)
+        return;
       set({ status: "ready", error: null, startupError: null });
     },
     clearSample: () => replaceData((sql) => clearSample(sql)),

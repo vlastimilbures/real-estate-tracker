@@ -122,7 +122,7 @@ describe("a refused form save stays in the form (R4-05)", () => {
           "2026-01-01T00:00:00.000Z",
         ],
       );
-    await act(() => usePortfolioStore.getState().reload());
+    await act(() => usePortfolioStore.getState().refresh());
     render(<Scenarios />);
     await userEvent.click(
       screen.getByRole("button", { name: en.scenarios.duplicate }),

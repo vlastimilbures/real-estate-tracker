@@ -10,6 +10,7 @@
   name)
 - Related: [0125](0125-committed-write-reload-failure.md) (a committed write whose reload fails),
   [0123](0123-scenario-rules-every-entry-point.md) §5 (the compare leaves a broken scenario out)
+- Amended by: [0228](0228-read-back-failure-stops.md) (§2: the in-memory scenario list is removed)
 
 ## Context
 

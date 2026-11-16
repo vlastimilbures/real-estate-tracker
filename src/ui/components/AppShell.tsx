@@ -199,11 +199,7 @@ export function AppShell({
   const assumptions = usePortfolioStore((s) => s.assumptions);
   const error = usePortfolioStore((s) => s.error);
   const clearError = usePortfolioStore((s) => s.clearError);
-  const stale = usePortfolioStore((s) => s.stale);
-  const reload = usePortfolioStore((s) => s.reload);
   const selectedPropertyId = useUiStore((s) => s.selectedPropertyId);
-  const staleEpisode = usePortfolioStore((s) => s.staleEpisode);
-  const staleLive = useFirstShow(stale ? staleEpisode : null);
   const errorLive = useFirstShow(error);
 
   // The app has no inner scroll container — the window itself scrolls. Without
@@ -389,13 +385,6 @@ export function AppShell({
           tabIndex={-1}
           ref={mainRef}
         >
-          {stale && (
-            <ErrorBanner
-              message={t.common.staleData}
-              action={{ label: t.common.reload, onClick: () => void reload() }}
-              live={staleLive}
-            />
-          )}
           {error && (
             <ErrorBanner
               message={describeWriteError(t, error).message}

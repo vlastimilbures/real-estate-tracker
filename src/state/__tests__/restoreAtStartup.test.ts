@@ -65,14 +65,22 @@ describe("restoring from the startup error screen", () => {
     expect(store().portfolio!.properties.length).toBeGreaterThan(0);
   });
 
-  it("a restore whose reload fails stays on the error screen", async () => {
+  it("a restore whose read-back fails stops on the read-back screen (ADR 0228)", async () => {
     usePortfolioStore.setState({ sql: reloadFails(db) });
 
     const { ready } = await store().restoreAtStartup(good);
 
     expect(ready).toBe(false);
+    expect(store().readBackFailed).toBe(true);
+    // The ROW_INVALID failure no longer applies: the restore replaced the data.
+    expect(store().startupError).toBeNull();
     store().continueAfterRestore();
     expect(store().status).toBe("error");
+
+    usePortfolioStore.setState({ sql: db });
+    await store().init();
+    expect(store().status).toBe("ready");
+    expect(store().portfolio!.properties.length).toBeGreaterThan(0);
   });
 
   it("is refused for any other startup failure", async () => {

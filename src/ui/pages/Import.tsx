@@ -191,7 +191,8 @@ export function Import() {
       showToast(t.importPage.importComplete);
     } catch (e) {
       // Import is one transaction: only a failure before the commit lands here, so
-      // nothing was written (DR-023). A failed reload after it resolves (ADR 0125).
+      // nothing was written (DR-023). A failed read-back after it resolves, and the app
+      // stops on the error screen (ADR 0228).
       if (e instanceof CsvPlanChangedError) {
         setPlanChanged(true);
         setPreview(e.preview);

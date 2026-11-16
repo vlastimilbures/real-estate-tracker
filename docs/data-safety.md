@@ -58,16 +58,17 @@ To open the folder, in Finder choose **Go → Go to Folder…** (⇧⌘G) and pa
 - **Safety copy first.** Before it changes anything, the app saves your current data as
   `backups/portfolio-before-restore-<date>.json`. If that copy cannot be saved, the restore
   does not start. If the restore itself fails, it is rolled back and your data is unchanged.
-  If the restore went through but the screen could not reload, the app still confirms it and
-  names the safety copy; a banner asks you to reload.
+  If the restore went through but the data could not be read back, the app stops on the
+  error screen with "Your last change was saved, but the data could not be read back.", names
+  the safety copy and offers **Try again**, which only reads the data again.
 - **Undo a restore.** Restore the safety copy. Click **Choose backup file…**, press ⇧⌘G in the
   file picker, paste
   `~/Library/Application Support/com.bures.realestate-tracker/backups/`, and pick the
   `portfolio-before-restore-…` file with the right date. The time in its name is UTC.
 - **Clear sample works the same way.** **Clear sample and start my own** first saves
   `backups/portfolio-before-clear-sample-<date>.json`; if that copy cannot be saved, nothing is
-  deleted. If the screen cannot reload afterwards, the app still names that copy and a banner
-  asks you to reload. To undo it, restore that file as above. The restored sample shows as
+  deleted. If the data cannot be read back afterwards, the app stops on the same error screen
+  and still names that copy. To undo it, restore that file as above. The restored sample shows as
   ordinary data, without the sample banner.
 
 ## If an upgrade fails
