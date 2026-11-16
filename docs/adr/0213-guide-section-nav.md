@@ -8,6 +8,7 @@
 - Amends: [0107](0107-property-section-nav.md) (its section navigation now also serves
   the Guide)
 - Related: [0158](0158-layouts-hold-in-czech-and-russian.md) (the nav wraps)
+- Amended by: [0225](0225-sweep-round-2.md) (the links take one row in a narrow window)
 
 ## Context
 
