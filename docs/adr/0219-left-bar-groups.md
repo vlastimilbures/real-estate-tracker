@@ -31,7 +31,12 @@ and a tall gap separates the list from the footer.
 
 ## Consequences
 
-- The four reading pages stand apart from the tools, and the bar has no gap in the middle.
+- The four reading pages stand apart from the tools. The free space now separates the
+  pages from the tools instead of the list from the footer.
+- In a window too short for the bar (900 × 600 with a long backup hint), the bar scrolls
+  instead of letting the tools overlap the footer.
+- The groups are visual only. The bar is still one `<nav>` in the same tab order, and
+  naming the groups for screen readers would need new dictionary entries.
 - No dictionary, computed number, stored data or export changes.
 - The ux capture checks the two groups at 1280 × 800 and 900 × 600, in the expanded and
   the collapsed bar: the tools sit under the pages and above the footer, and nothing

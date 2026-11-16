@@ -67,4 +67,22 @@ describe("left bar groups (ADR 0219)", () => {
     for (const b of within(nav).getAllByRole("button"))
       expect(b.getAttribute("title")).toBe(b.getAttribute("aria-label"));
   });
+
+  it("the active state still follows the route, in either group", () => {
+    act(() => useUiStore.setState({ route: "guide" }));
+    const { unmount } = shell();
+    expect(
+      screen
+        .getByRole("button", { name: n.guide })
+        .getAttribute("aria-current"),
+    ).toBe("page");
+    unmount();
+    act(() => useUiStore.setState({ route: "property" }));
+    shell();
+    expect(
+      screen
+        .getByRole("button", { name: n.properties })
+        .getAttribute("aria-current"),
+    ).toBe("page");
+  });
 });

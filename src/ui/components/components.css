@@ -18,6 +18,9 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  /* A bar taller than the window (a short window, a three-line backup hint) scrolls
+     rather than overlapping its groups (ADR 0219). */
+  overflow-y: auto;
 }
 .shell.collapsed .sidebar {
   padding: var(--s5) var(--s2);
@@ -94,12 +97,12 @@
   letter-spacing: 0.04em;
 }
 /* Two groups (ADR 0219): the pages on top; the tools pinned to the bar's bottom, above
-   the footer, behind a hairline. The nav fills the space between head and footer. */
+   the footer, behind a hairline. The nav fills the space between head and footer and
+   never shrinks below its content. */
 .nav {
-  flex: 1 1 auto;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
-  min-height: 0;
 }
 .nav-group {
   display: flex;
@@ -111,9 +114,7 @@
   padding-top: var(--s3);
   border-top: 1px solid var(--hairline);
 }
-.shell.collapsed .nav-group {
-  align-self: stretch;
-}
+
 /* Nav items are <button>s styled as the old `.nav a` links. */
 .nav button {
   display: flex;

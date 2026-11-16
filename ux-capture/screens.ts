@@ -2388,6 +2388,8 @@ export const SCREENS: Screen[] = [
         ux.page.getByRole("button", { name: ux.t.shell.backupHintNone }),
       ).toBeVisible();
       await ux.capture("66-sidebar-backup-hint", { fullPage: false });
+      // The tallest footer: the groups still neither overlap nor get cut off (ADR 0219).
+      await expectNavGroups(ux);
     },
   },
   {
