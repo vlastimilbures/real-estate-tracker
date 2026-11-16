@@ -13,6 +13,28 @@ None. While this list is not empty, do not tag a release (docs/release.md, check
 feature here when part of it is merged but it must not ship yet, for example schema and
 engine without the form, and remove it when the last part lands.
 
+### Added
+
+- The Properties list has a **totals row** when it lists two or more active properties:
+  net cash flow, LTV, DSCR, value, debt, equity and NOI from the portfolio snapshot at the
+  page's as-of date (ADR 0205, #379). Its label says what it counts ("Total, active
+  properties" with an inactive property listed, "Total, owned active properties" with a
+  pending purchase). No figure changes.
+- The 30-year value charts on the Dashboard and on Property detail **mark each upcoming
+  fixation end** with a dashed line and a diamond in its projection year; the year's
+  tooltip lists the resets with the debt at each (ADR 0210, #382). No figure changes.
+- The Dashboard's **Financing & upcoming** panel has headline figures and a **fixation
+  timeline**: one row per loan with a bar to its fixation end, and the modelled payoffs,
+  development completions and lease ends in the window as markers on their property's
+  row. A Table toggle shows the same dates as a table. The 1, 3 or 5-year window now sets
+  the span of every date listed; the separate 12-month list is gone (ADR 0204, #377). No
+  figure changes.
+- The Guide has **section links** under its title, as Property detail does; in a window
+  under 1,100 px they sit in one row that scrolls sideways (ADR 0213, #390; ADR 0225,
+  #424).
+- The Dashboard title shows an amber **review pill** with the number of Data check
+  findings that need attention; it opens the Data check (ADR 0218, #420).
+
 ### Changed
 
 - Adding a valuation no longer asks whether to end the previous one (ADR 0227, #445). When
@@ -36,6 +58,71 @@ engine without the form, and remove it when the last part lands.
   twice. After a restore or Clear sample the screen still names the safety copy. The
   stale-data banner and its Reload button are gone, so the app no longer lets you edit data
   older than what is saved.
+- Every screen's layout was reworked in the 2026-11 UX review (round 1, #392; round 2,
+  #425). No figure changes and no stored data changes; no figure leaves the app.
+  - **Across the app:** LTV and DSCR bands show as a coloured shape (circle, triangle,
+    diamond, ring) after the figure instead of a pill; the word stays for screen readers
+    and as the tooltip (ADR 0195, #373). Edit, duplicate and delete are icon-only
+    buttons with a tooltip on hover and keyboard focus, and delete turns red only on
+    hover or focus (ADR 0199, #374). Buttons follow one rule per role: one primary per
+    region, "Add …" labels in full ("Add valuation", "Add scenario"), Cancel as a ghost
+    button left of Save (ADR 0201, #380). Every show/hide is one chevron button (ADR
+    0203, #381). Panel headers hold only context (a unit, lens, count or date);
+    definitions sit behind an info icon beside the title, and instructions stay as a
+    help line (ADR 0214, #391; ADR 0217, #416). The left bar groups the pages at the top
+    and Import, Settings and Guide above the footer (ADR 0219, #419). The undrawn-debt
+    note is shorter: "+3,0 M Kč to draw" (ADR 0205, wording log).
+  - **Dashboard:** a KPI band of two captioned groups, "As of" (net worth, net cash flow
+    per month, LTV, DSCR) and "Horizon" (net worth at the horizon with its multiple,
+    levered IRR), replaces the hero, risk and monthly-flow tiles (ADR 0200, #375; ADR
+    0222, #421). The as-of hint is its own row of the filter bar (ADR 0198, #372). The
+    six projection charts come right after the band, two per row, value vs debt vs
+    equity first (ADR 0202, #376; ADR 0218, #420). Key performance indicators list only
+    what the band does not show, in three groups: Returns, Cash flow and Debt (ADR 0208,
+    #383). The Data check is the last section, with its counts under the title and the
+    findings grouped by problem, one chip per property, in a "Needs attention" and a
+    "Using portfolio defaults" block (ADR 0206, #378; ADR 0223, #422).
+  - **Properties:** LTV and DSCR are plain figures with the band shape and a legend under
+    the table; rows are one line, and a pending purchase's badge moves under the name
+    (ADR 0205, #379).
+  - **Property detail:** a "Properties ›" breadcrumb replaces "‹ All properties", and
+    the snapshot is the Dashboard's band of six cells (ADR 0215, #384; ADR 0222).
+    Holding costs show as a read view with an Edit button, a blank field naming the
+    default it uses (ADR 0207, #385). Acquisition funding is one line with **Record
+    funding** while nothing is recorded (ADR 0209, #387). The Loan outlook follows the
+    charts and opens with a figure row: next rate reset, debt at reset, modelled payoff,
+    remaining term and interest saved (ADR 0224, #423). Its Data check is the last
+    section, in the same blocks as the Dashboard's (ADR 0223, #422).
+  - **Projections:** the year-by-year grid fits a 1280 px window: no Period column (the
+    span is the Year cell's tooltip, and the subtitle says once how years run) and
+    compact rows (ADR 0211, #386).
+  - **Scenarios:** the compare charts share one row and the key-figures table has the
+    standard table look (ADR 0216, #388). The stress presets are an "Add from preset"
+    disclosure inside the Scenarios panel, whose header counts the scenarios compared
+    (ADR 0220, #417).
+  - **Settings:** the Assumptions and Backup tabs and the Save and Discard buttons sit in
+    the top bar; Return in a field saves (ADR 0221, #418).
+  - **Import:** one "Import files" panel with a row per file type; a file dropped on a
+    row is that row's type, never routed by its name, and its errors are listed under
+    its row (ADR 0212, #389).
+
+### Accessibility
+
+- The Projections entity dropdown is named by its purpose and the value it shows
+  ("Entity Portfolio"), so its name contains its visible text (WCAG 2.5.3; ADR 0197,
+  #395).
+- Row-action tooltips can be hovered, stay while the button is hovered or focused, and
+  Escape hides them (WCAG 1.4.13); the buttons are 28 × 28 px (ADR 0199, #374). Show/hide
+  toggles are buttons with an expanded state instead of `<details>` (ADR 0203, #381).
+- An import file's error table is named by its file type ("Valuations: 4 errors") (ADR
+  0225, #424).
+
+### Security
+
+- The app bundles SQLite 3.54.1, which fixes RUSTSEC-2026-0459 (CVE-2026-119375), through
+  a vendored copy of sqlx-sqlite 0.8.6 with one widened version bound; CI checks the
+  vendored copy against the published crate. The database file format is unchanged
+  (ADR 0196, #395).
 
 ## [1.5.0] - 2026-10-14
 
