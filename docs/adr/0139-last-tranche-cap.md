@@ -1,6 +1,6 @@
 # 0139. A projection tranche lands no later than payment term−1
 
-- Status: Accepted
+- Status: Superseded by 0226
 - Date: 2026-10-06
 - Source: issue #218 (found by the review gate of PR #217, ADR 0129)
 - Amends: [0129](0129-loan-schedule-edge-cases.md) §3 (the month-end corner of the last

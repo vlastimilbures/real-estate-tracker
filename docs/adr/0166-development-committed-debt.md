@@ -67,7 +67,8 @@ monitors. It was not designed for the return KPIs.
 balance` is exactly what the schedule will still draw, and the snapshot and the projection
    agree at every grid date.
    - A tranche past the last grid month it may land in joins that month, as in the
-     schedule (ADR 0139).
+     schedule (ADR 0139). _No longer applies: ADR 0226 refuses such a tranche, and the
+     cap is deleted._
    - Before its own draw month, a property's first loan counts (decisions 7 and 8 give the
      exception: a future buy's later first loan). A development loan that follows another
      block counts from its own draw month (before that, the predecessor's debt is owed).
