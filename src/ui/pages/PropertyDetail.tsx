@@ -490,7 +490,7 @@ export function PropertyDetail() {
         />
       )}
       {/* Last: the findings point at the sections above (ADR 0223 §5). */}
-      {out && isActive && check && (
+      {out && check && (
         <div className="pd-section" id={sectionId("dataCheck")}>
           <PropertyDataCheckPanel
             check={check}

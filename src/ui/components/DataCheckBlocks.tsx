@@ -1,5 +1,5 @@
 // The Data check's shared parts (ADR 0223), on the Dashboard and Property detail: the
-// counts as pills for the panel head, a block per list ("Needs attention", "Using
+// counts as pills for the line under the panel head, a block per list ("Needs attention", "Using
 // portfolio defaults") of hairline rows — icon, problem, the fix on the right — and the
 // all-clear line.
 import { useId, type ReactNode } from "react";
@@ -8,7 +8,7 @@ import { useT } from "../hooks/useT";
 
 export type DataCheckKind = "attention" | "defaults";
 
-/** The counts on the panel head's title line. */
+/** The counts, on their own line under the panel head (ADR 0223 §1). */
 export function DataCheckCounts({
   attention,
   defaults,

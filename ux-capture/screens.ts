@@ -933,7 +933,8 @@ async function expectDataCheckLayout(p: Locator) {
             .querySelector(".dc-row-actions")!
             .getBoundingClientRect();
           return {
-            wide: b.getBoundingClientRect().width >= 680,
+            // The container query measures the content box.
+            wide: b.clientWidth >= 680,
             right: actions.left >= problem.right - 1,
             fits: r.scrollWidth <= r.clientWidth + 1,
           };

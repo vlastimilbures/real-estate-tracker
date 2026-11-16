@@ -815,7 +815,7 @@
 .dc-anchor {
   scroll-margin-top: calc(var(--topbar-h, 0px) + var(--s3));
 }
-/* The counts on the head's title line: amber, a green check, or neutral. */
+/* The counts, on a line under the head: amber, a green check, or neutral. */
 .dc-pills {
   display: inline-flex;
   flex-wrap: wrap;
@@ -2808,9 +2808,8 @@ main.page:focus {
 /* Panel-head title + hint cluster. */
 .panel-head-titles {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--s1) var(--s3);
+  gap: var(--s3);
 }
 /* The Data check's counts: a line of their own under the head (ADR 0223 §1). */
 .panel > .panel-badges {
@@ -2819,9 +2818,9 @@ main.page:focus {
 .panel > .panel-badges + .panel-body {
   padding-top: var(--s3);
 }
-/* The title never wraps for what follows it on its line; that wraps instead. */
-.panel-head-titles > h2 {
-  flex: none;
+/* Collapsed: the counts close the panel, with even space around them. */
+.panel > .panel-badges + .panel-body:has(> [hidden]:only-child) {
+  padding: 0 0 var(--s4);
 }
 /* Dense projection table: N/A flow cells. */
 /* --ink-soft, not --ink-faint: totals rows sit on --paper-2 (ADR 0157). */

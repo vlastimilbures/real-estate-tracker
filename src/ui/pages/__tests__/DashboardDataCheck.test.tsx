@@ -173,6 +173,8 @@ describe("Data check panel (ADR 0118, ADR 0206)", () => {
     await userEvent.click(toggle());
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
     expect(pills()).toContain(d.useDefaults(6));
+    // Shown, not inside the hidden body.
+    expect(head().querySelector(".dc-pill")!.closest("[hidden]")).toBeNull();
   });
 
   it("leaves out inactive properties, as the Dashboard's totals do", () => {
