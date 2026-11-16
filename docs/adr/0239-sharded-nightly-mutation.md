@@ -35,7 +35,7 @@ report is missing or only part of a split file was tested.
    (every other engine file, so a new file needs no change). The table lives in
    `scripts/mutation-shards.mjs`; `stryker.shard.config.mjs` builds one leg's config from
    `stryker.config.json`. A split is a Stryker line range computed from the anchor at run
-   time; a missing or repeated anchor fails the leg. Each leg has a 120-minute timeout and
+   time; a missing or repeated anchor fails the leg. Each leg has a 180-minute timeout and
    its own incremental file and cache (`stryker-incremental-<shard>`), so one leg's cache
    miss reruns only that leg's mutants.
 2. **The break applies to the combined score**, not to each leg. A leg runs with
@@ -58,8 +58,13 @@ report is missing or only part of a split file was tested.
 
 ## Consequences
 
-- A cold run fits: the legs run in parallel, each estimated at 50–65 min cold from the
-  per-file density of the last full green run (37108692081).
+- A cold run fits. The proof run 43924585493 (`mutation_cold`, 2026-11-17) passed with a
+  combined score of 98.22 % (2699 of 2748 valid mutants detected; break 98). Its cold leg
+  times in minutes: schedule-a 32, projections 34, rest 65, validate-a 84, kpis 90,
+  schedule-b 109, validate-b 110. The planned 120-minute timeout would have left the two
+  slowest legs about 10 minutes of headroom, so the timeout is 180 minutes, still under
+  GitHub's 360-minute job limit. If schedule-b or validate-b grows, split it again at
+  another top-level function before the timeout is raised further.
 - `report` needs `mutation-score`, which always runs once the change check passed. A
   missing, partial or below-break combined score fails it, even when every leg's own result
   is green, so that failure also opens or updates the `nightly-failure` issue. A failed,
