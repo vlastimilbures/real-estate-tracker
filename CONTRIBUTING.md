@@ -174,7 +174,7 @@ still describe it. Which document owns what is listed in
   Vite server on port 1440 (`E2E_PORT`), so a running `pnpm tauri dev` does not interfere.
 - **Rust integration tests** (`cargo test`) run in CI, locally and in
   `scripts/release-macos.sh` when run without `--skip-checks`. One timing-dependent H-14 probe
-  is `#[ignore]`d (DR-169); `cargo test -- --ignored` runs it.
+  is `#[ignore]`d (ADR 0068, G-4); `cargo test -- --ignored` runs it.
 
 ### Architecture rules and the baseline
 
@@ -248,7 +248,8 @@ reports it as an added entry: say so in the PR so the reviewer can confirm it is
   the golden-master snapshot (`vitest -u` for that change only, ADR 0039) in the same commit.
 - Never use `.only` / `.skip` / `.todo`, and never weaken an assertion or widen a tolerance to
   pass. Where today's behaviour is known to be wrong, assert today's output with a comment
-  citing the issue or roadmap item; `it.fails` is allowed only with such a reference.
+  citing the debt ID (the issue or roadmap item that tracks it); `it.fails` only with such an
+  ID.
 
 ## Decisions
 
