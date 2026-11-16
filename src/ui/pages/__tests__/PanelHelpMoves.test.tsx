@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 //
 // ADR 0214 (#391): the explanations that sat in panel headers are help lines in the
-// body (or one click away), and a panel ends with at most one note.
+// body (or one click away), and a panel ends with at most one note. ADR 0217 (#416):
+// definitions sit behind the info icon in the head; instructions stay help lines.
 import { describe, it, expect, beforeEach } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import { StressPresetsPanel, ScenarioListPanel } from "../ScenariosPanels";
@@ -21,6 +22,15 @@ beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 const panelOf = (title: string) =>
   screen.getByRole("heading", { name: title }).closest("section")!;
 
+/** The info icon of a panel and the text it shows, hidden at rest (ADR 0217). */
+function infoOf(panel: HTMLElement, topic: string) {
+  const button = within(panel).getByRole("button", {
+    name: `${en.common.aboutThis}: ${topic}`,
+  });
+  expect(panel.querySelector(".panel-head")!.contains(button)).toBe(true);
+  return document.getElementById(button.getAttribute("aria-controls")!)!;
+}
+
 function presets(open: boolean) {
   return render(
     <StressPresetsPanel
@@ -35,28 +45,26 @@ function presets(open: boolean) {
   );
 }
 
-describe("Stress presets (ADR 0214 §4, amends 0106)", () => {
-  it("open: the explanation leads the presets it explains, not the header", () => {
+describe("Stress presets (ADR 0217 §4, amends 0214 §4)", () => {
+  it("open: the explanation is behind the info icon, not a body line", () => {
     presets(true);
     const panel = panelOf(sc.presetsTitle);
     expect(panel.querySelector(".panel-head .hint")).toBeNull();
-    const toggle = within(panel).getByRole("button", { expanded: true });
-    const region = document.getElementById(
-      toggle.getAttribute("aria-controls")!,
-    )!;
-    expect(
-      within(region).getByText(sc.presetsHint(DEFAULT_SHOCK_YEARS)),
-    ).toBeTruthy();
+    expect(panel.querySelector(".panel-help")).toBeNull();
+    expect(infoOf(panel, sc.presetsTitle).textContent).toBe(
+      sc.presetsHint(DEFAULT_SHOCK_YEARS),
+    );
   });
 
-  it("collapsed: the one-line summary only", () => {
+  it("collapsed: the one-line summary; the explanation stays behind the icon", () => {
     presets(false);
-    expect(screen.queryByText(sc.presetsHint(DEFAULT_SHOCK_YEARS))).toBeNull();
+    const panel = panelOf(sc.presetsTitle);
     expect(screen.getByText(sc.presetsCollapsedSummary)).toBeTruthy();
+    expect(infoOf(panel, sc.presetsTitle).hidden).toBe(true);
   });
 });
 
-describe("other header explanations become help lines (ADR 0214 §4)", () => {
+describe("other header explanations: instructions stay help lines, definitions go to the icon (ADR 0214, 0217)", () => {
   it("Scenarios list", () => {
     render(
       <ScenarioListPanel
@@ -79,13 +87,12 @@ describe("other header explanations become help lines (ADR 0214 §4)", () => {
     );
   });
 
-  it("Mortgage blocks", () => {
+  it("Mortgage blocks: a definition, so behind the info icon (ADR 0217)", () => {
     render(<MortgagesPanel propertyId="p1" rows={[]} />);
     const panel = panelOf(pd.mortgagesTitle);
     expect(panel.querySelector(".panel-head .hint")).toBeNull();
-    expect(panel.querySelector(".panel-help")?.textContent).toBe(
-      pd.mortgagesHint,
-    );
+    expect(panel.querySelector(".panel-help")).toBeNull();
+    expect(infoOf(panel, pd.mortgagesTitle).textContent).toBe(pd.mortgagesHint);
   });
 });
 

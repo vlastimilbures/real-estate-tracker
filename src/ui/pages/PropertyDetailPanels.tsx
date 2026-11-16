@@ -3,7 +3,7 @@
 // lives in the engine; these take already-computed props / store actions.
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Ban, Check, Clock, Pencil } from "lucide-react";
-import { HelpText } from "../components/HelpText";
+import { InfoTip } from "../components/InfoTip";
 import { MetricLabel } from "../components/MetricLabel";
 import {
   KpiTile,
@@ -137,7 +137,7 @@ function NotOwnedPanel({ purchaseDate }: { purchaseDate: Date }) {
   const t = useT();
   const d = t.propertyDetail;
   return (
-    <Panel title={d.notOwnedTitle} help={<HelpText>{d.notOwnedHint}</HelpText>}>
+    <Panel title={d.notOwnedTitle} info={d.notOwnedHint}>
       <StatList
         rows={[{ k: t.propertyForm.purchaseDate, v: fmtDate(purchaseDate) }]}
       />
@@ -279,7 +279,7 @@ export function HoldingCostsPanel({
     <div ref={root}>
       <Panel
         title={d.holdingCostsTitle}
-        help={<HelpText>{d.holdingCostsHint}</HelpText>}
+        info={d.holdingCostsHint}
         action={
           editing ? undefined : (
             <RowActions>
@@ -472,9 +472,12 @@ function DrawdownSection({ dd }: { dd: DrawdownView }) {
   const pct = Math.round(dd.share.toNumber() * 100);
   return (
     <section className="drawdown" aria-labelledby={headingId}>
-      <h3 className="panel-subhead" id={headingId}>
-        {dd.title}
-      </h3>
+      <div className="subhead-row">
+        <h3 className="panel-subhead" id={headingId}>
+          {dd.title}
+        </h3>
+        <InfoTip topic={dd.title}>{d.drawdownNote}</InfoTip>
+      </div>
       <div
         className={`drawdown-bar${dd.full ? " full" : ""}`}
         role="progressbar"
@@ -496,7 +499,6 @@ function DrawdownSection({ dd }: { dd: DrawdownView }) {
           </span>
         )}
       </p>
-      <HelpText about={dd.title}>{d.drawdownNote}</HelpText>
       <TableWrap label={`${dd.title} — ${d.drawdownTable}`}>
         <table className="data">
           <caption className="sr-only">{`${dd.title} — ${d.drawdownTable}`}</caption>
@@ -640,11 +642,7 @@ export function AcquisitionPanel({
       </Panel>
     );
   return (
-    <Panel
-      title={d.acqTitle}
-      hint={d.acqHint}
-      help={<HelpText about={d.acqTitle}>{d.acqNote}</HelpText>}
-    >
+    <Panel title={d.acqTitle} hint={d.acqHint} info={d.acqNote}>
       <StatList
         rows={view.rows.map((r) => ({
           k: r.label,

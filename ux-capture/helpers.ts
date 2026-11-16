@@ -434,3 +434,45 @@ export async function expectRowActionTip(
   });
   expect(onTop, "tooltip not covered").toBe(true);
 }
+
+/**
+ * Opens an info icon from the keyboard (ADR 0217) and checks its popover: visible,
+ * holding text, inside the window, not covered; Escape hides it and keeps focus.
+ */
+export async function expectInfoTip(page: Page, button: Locator) {
+  await button.scrollIntoViewIfNeeded();
+  await button.focus();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  await expect(button).toBeFocused();
+  await expect(button).toHaveAttribute("aria-expanded", "true");
+  const id = await button.getAttribute("aria-controls");
+  const pop = page.locator(`[id="${id}"]`);
+  await expect(pop).toBeVisible();
+  expect(
+    (await pop.textContent())?.trim().length,
+    "popover text",
+  ).toBeGreaterThan(0);
+  const box = (await pop.boundingBox())!;
+  const vp = page.viewportSize()!;
+  expect(box.x, "popover left").toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width, "popover right").toBeLessThanOrEqual(vp.width);
+  expect(box.y, "popover top").toBeGreaterThanOrEqual(0);
+  expect(box.y + box.height, "popover bottom").toBeLessThanOrEqual(vp.height);
+  const onTop = await pop.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(
+      r.x + r.width / 2,
+      r.y + r.height / 2,
+    );
+    return hit === el || el.contains(hit);
+  });
+  expect(onTop, "popover not covered").toBe(true);
+}
+
+/** Escape hides an open info popover and focus stays on its icon (ADR 0217). */
+export async function expectInfoTipEscape(page: Page, button: Locator) {
+  await page.keyboard.press("Escape");
+  await expect(button).toHaveAttribute("aria-expanded", "false");
+  await expect(button).toBeFocused();
+}

@@ -15,6 +15,7 @@ import {
 import { BAND_SHAPE, type Band } from "../model/health";
 import { irrReasonText, type LeveredIrr } from "../model/irr";
 import { useT } from "../hooks/useT";
+import { InfoTip } from "./InfoTip";
 import { useToast } from "../hooks/useToast";
 import { useUiStore } from "../../state/uiStore";
 import type { SaveOutcome } from "../../state/platform";
@@ -244,6 +245,7 @@ export function Panel({
   title,
   hint,
   help,
+  info,
   action,
   flush = false,
   children,
@@ -253,6 +255,8 @@ export function Panel({
   hint?: string | undefined;
   /** An explanation leading the body: a `HelpText` (ADR 0214). */
   help?: ReactNode | undefined;
+  /** A definition behind an info icon after the title and hint (ADR 0217). */
+  info?: string | undefined;
   action?: ReactNode | undefined;
   flush?: boolean | undefined;
   children: ReactNode;
@@ -265,6 +269,7 @@ export function Panel({
             {/* Focusable from script only: an in-page link lands here (ADR 0107). */}
             {title && <h2 tabIndex={-1}>{title}</h2>}
             {hint && <span className="hint">{hint}</span>}
+            {info && title && <InfoTip topic={title}>{info}</InfoTip>}
           </div>
           {action}
         </div>

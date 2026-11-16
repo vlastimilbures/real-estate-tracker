@@ -592,8 +592,8 @@
   font-weight: 600;
   color: var(--ink-soft);
 }
-/* A panel's explanation leading its body (ADR 0214): muted help text, or an "About
-   this" disclosure. A flush body (a table to the edges) pads it like the head. */
+/* A panel's instruction leading its body (ADR 0214, 0217): muted help text. A flush
+   body (a table to the edges) pads it like the head. */
 .panel-help {
   margin-bottom: var(--s3);
 }
@@ -606,11 +606,77 @@
   font-size: 12.5px;
   color: var(--ink-soft);
 }
-.disclosure-body > .help-text {
-  margin-top: var(--s1);
+/* A definition behind an info icon beside a title (ADR 0217). The popover is fixed and
+   placed by script under the icon, inside the window, so a panel's overflow never clips
+   it; an invisible strip above it bridges the gap for the pointer. */
+.info-tip {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
 }
-.drawdown .disclosure {
-  margin-bottom: var(--s2);
+.info-tip-button {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-soft);
+  cursor: help;
+}
+.info-tip-button:hover,
+.info-tip-button[aria-expanded="true"] {
+  color: var(--ink);
+  background: var(--paper-2);
+}
+.info-tip-pop {
+  position: fixed;
+  z-index: 40;
+  width: max-content;
+  max-width: min(26rem, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: var(--s3) var(--s4);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--ink);
+  background-color: var(--surface);
+  box-shadow:
+    0 0 0 1px var(--hairline),
+    var(--shadow-tile);
+  border-radius: var(--r-md);
+  white-space: normal;
+  text-align: left;
+}
+.info-tip-pop::before,
+.info-tip-pop::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+}
+.info-tip-pop::before {
+  top: -8px;
+}
+.info-tip-pop::after {
+  bottom: -8px;
+}
+.info-tip-pop[hidden] {
+  display: none;
+}
+/* A sub-heading with its info icon on one line. */
+.subhead-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  margin: var(--s4) 0 var(--s2);
+}
+.subhead-row > .panel-subhead {
+  margin: 0;
 }
 .panel-note {
   margin: var(--s2) 0 0;

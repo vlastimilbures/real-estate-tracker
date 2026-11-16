@@ -51,6 +51,7 @@ export function StressPresetsPanel({
   return (
     <Panel
       title={t.scenarios.presetsTitle}
+      info={t.scenarios.presetsHint(DEFAULT_SHOCK_YEARS)}
       action={
         <span className="preset-toggle">
           <DisclosureButton
@@ -65,20 +66,13 @@ export function StressPresetsPanel({
     >
       <div id={bodyId}>
         {open ? (
-          <>
-            <div className="panel-help">
-              <HelpText>
-                {t.scenarios.presetsHint(DEFAULT_SHOCK_YEARS)}
-              </HelpText>
-            </div>
-            <PresetBar
-              busy={busy}
-              baseDate={baseDate}
-              crashAtYear={crashAtYear}
-              onCrashAtYearChange={onCrashAtYearChange}
-              onAddPreset={onAddPreset}
-            />
-          </>
+          <PresetBar
+            busy={busy}
+            baseDate={baseDate}
+            crashAtYear={crashAtYear}
+            onCrashAtYearChange={onCrashAtYearChange}
+            onAddPreset={onAddPreset}
+          />
         ) : (
           <p className="preset-collapsed">
             {t.scenarios.presetsCollapsedSummary}

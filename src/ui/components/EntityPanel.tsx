@@ -33,6 +33,7 @@ export function EntityPanel<
   title,
   hint,
   help,
+  info,
   rows,
   columns,
   specs,
@@ -55,6 +56,8 @@ export function EntityPanel<
   hint?: string;
   /** The panel's explanation, leading its body (ADR 0214). */
   help?: ReactNode;
+  /** A definition behind the info icon after the title (ADR 0217). */
+  info?: string;
   rows: T[];
   columns: { head: string; cell: (r: T) => ReactNode; left?: boolean }[];
   specs: S;
@@ -115,6 +118,7 @@ export function EntityPanel<
       title={title}
       hint={hint}
       help={help}
+      info={info}
       action={
         mode.t === "idle" ? (
           <Button size="sm" icon={Plus} onClick={() => setMode({ t: "add" })}>
