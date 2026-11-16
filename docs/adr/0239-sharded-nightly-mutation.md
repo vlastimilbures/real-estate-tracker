@@ -20,9 +20,11 @@ mutant. Run 43834527278 did that for 2750 mutants: about 6 h on a 4-vCPU runner,
 and held all 38 survivors; the other ~1950 took 4 h 40 min and held all 164 timeouts. Every
 cold run (a new branch, an expired cache, a change to the test setup) hits the same wall.
 
-The timed-out job ended `cancelled`, and the `report` job, which needed it, was skipped, so
-the failure opened no `nightly-failure` issue, against the workflow comment and
-CONTRIBUTING.md.
+That run used its branch's earlier `report` job (`if: failure()`), which skips a cancelled
+or timed-out job, so it opened no `nightly-failure` issue. main (since c153ee48) already
+reports a failed, cancelled or timed-out job. Sharding adds a new gap: each leg can be green
+on its own while the run as a whole has no valid combined score, for example when a leg's
+report is missing or only part of a split file was tested.
 
 ## Decision
 
@@ -58,8 +60,10 @@ CONTRIBUTING.md.
 
 - A cold run fits: the legs run in parallel, each estimated at 50–65 min cold from the
   per-file density of the last full green run (37108692081).
-- `report` needs `mutation-score`, which always runs once the change check passed, so a
-  timed-out or cancelled leg now opens or updates the `nightly-failure` issue.
+- `report` needs `mutation-score`, which always runs once the change check passed. A
+  missing, partial or below-break combined score fails it, even when every leg's own result
+  is green, so that failure also opens or updates the `nightly-failure` issue. A failed,
+  cancelled or timed-out leg was already reported (c153ee48).
 - A leg's score is not gated on its own: a leg below 98 % passes when the combined score is
   at or above break. The step summary shows every leg and file so a weak area stays visible.
 - When `schedule.ts` or `validate.ts` drops its anchor function, or another file outgrows its
