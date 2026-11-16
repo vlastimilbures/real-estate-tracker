@@ -20,11 +20,9 @@ import { en } from "../../../i18n/en";
 import { dataCheckItems } from "../../model/dataCheck";
 import { PropertyDataCheckPanel } from "../PropertyDataCheck";
 import { PropertyDetail } from "../PropertyDetail";
+import { setClock } from "../../../__tests__/support/clock";
 
-vi.mock("../../../lib/day", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../../lib/day")>()),
-  todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
-}));
+beforeEach(() => setClock("2026-10-01"));
 
 class NoopObserver {
   observe() {}

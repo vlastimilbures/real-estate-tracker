@@ -23,12 +23,6 @@ vi.mock("../../state/diagnostics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../state/diagnostics")>()),
   logFailure: vi.fn(),
 }));
-vi.mock("../../lib/day", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../lib/day")>()),
-  todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
-  localIsoDay: () => "2026-10-01",
-}));
-
 /** Settings and the Dashboard, switched by the route like the app's page switch. */
 function Pages() {
   const route = useUiStore((s) => s.route);

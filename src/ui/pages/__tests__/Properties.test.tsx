@@ -2,7 +2,7 @@
 //
 // Properties table: the delete confirmation sits outside the scrolling table so it is
 // never clipped, and the actions column stays pinned (UX-019).
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Properties } from "../Properties";
@@ -28,11 +28,9 @@ import { fmtCzk, fmtCzkM, fmtDscr, fmtPct, noBreak } from "../../../lib/format";
 import { dscrBandWord, ltvBandWord } from "../../model/health";
 import type { Decimal } from "../../../lib/money";
 import { renderWithPortfolio } from "../../../__tests__/support/world";
+import { setClock } from "../../../__tests__/support/clock";
 
-vi.mock("../../../lib/day", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../../lib/day")>()),
-  todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
-}));
+beforeEach(() => setClock("2026-10-01"));
 
 const en = getDict("en");
 const first = portfolio.properties[0]!;

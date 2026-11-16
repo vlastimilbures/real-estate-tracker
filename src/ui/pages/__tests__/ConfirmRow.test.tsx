@@ -28,11 +28,6 @@ import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { isoDate, money, type Lease, type Valuation } from "../../../engine";
 import type { FieldSpec } from "../../model/formParse";
 
-vi.mock("../../../lib/day", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../../lib/day")>()),
-  todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
-}));
-
 const ok = async (): Promise<MutationResult> => ({ ok: true });
 const gone: MutationResult = {
   ok: false,

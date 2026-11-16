@@ -13,11 +13,6 @@ import { getDict } from "../../../i18n";
 import { isoDate } from "../../../engine";
 import { asOfBounds } from "../../model/asOf";
 
-vi.mock("../../../lib/day", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../../lib/day")>()),
-  todayUtc: () => new Date(Date.UTC(2026, 9, 1)),
-}));
-
 const ru = getDict("ru");
 const cs = getDict("cs");
 

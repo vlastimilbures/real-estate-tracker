@@ -22,6 +22,7 @@ import {
 import { near, KC } from "../../engine/__tests__/support/tolerance";
 import { EngineInputError, isoDate, money, rate } from "../../engine";
 import type { Scenario } from "../../engine";
+import { setClock } from "../../__tests__/support/clock";
 
 /** The detail page's hook, with a stored-data error thrown instead of returned. */
 function usePropertyEngine(propertyId: string | null, asOf?: Date | null) {
@@ -30,14 +31,10 @@ function usePropertyEngine(propertyId: string | null, asOf?: Date | null) {
   return r;
 }
 
-vi.mock("../../lib/day", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../lib/day")>()),
-  todayUtc: () => new Date(Date.UTC(2026, 5, 7)), // == baseDate
-}));
-
 const BASE = assumptions.baseDate;
 
 beforeEach(() => {
+  setClock("2026-06-07"); // == baseDate
   act(() => usePortfolioStore.setState({ portfolio, assumptions }));
 });
 
