@@ -104,16 +104,22 @@ function checkShift(
   // Under b2 the window's events follow payment o, under b1 payment o+1. Their term
   // answer is comparable only when o and o+1 are alike: not when o is the last
   // interest-only payment (a `shortenTerm` there acts like `lowerInstalment`, ADR 0109
-  // §5), nor the last fixed-rate one (`shortenTerm` reads the rate of its payment,
-  // #164), nor when a rate shock prices o+1 but not o (history, ADR 0079 §3), nor when
-  // a tranche re-amortizes o+1 (D-41), nor when another event also follows o or o+1
-  // (the window's prepayment then shares a period with it: the last effect wins, §5).
+  // §5); not when o is the last fixed-rate one (payment o+1 re-amortizes at the reset,
+  // D-21, before the prepayment under b1 and after it under b2, so the instalment kept
+  // differs, ADR 0179 §1); not when o+1 is the last fixed-rate one (NPER runs at the
+  // rate of the payment after the prepayment's, ADR 0179 §1: o+1's fixed rate under b2,
+  // o+2's reset rate under b1; #443); not when a rate shock prices o+1 but not o
+  // (history is unshocked, ADR 0079 §3, so o+1 re-amortizes on one side of the
+  // prepayment only, as at the reset); not when a tranche re-amortizes o+1 (D-41); nor
+  // when another event also follows o or o+1 (the window's prepayment then shares a
+  // period with it: the last effect wins, §5).
   const dueO = iso(edate(block.startDate, o));
   const fix = loan.fixationMonths;
   const shock = extra.rateShock;
   const termComparable =
     !(loan.completion && dueO <= loan.completion) &&
     o !== fix &&
+    o + 1 !== fix &&
     !(shock && o + 1 > fix && o + 1 <= fix + shock.durationYears * 12) &&
     !draws.some((x) => x.date > dueO && x.date <= nextGrid) &&
     ![...(loan.prepayments ?? []), ...(loan.recasts ?? [])].some((e) => {
@@ -444,6 +450,89 @@ describe("#130 R1-07: a baseDate shift inside a payment period", () => {
     expect(lastPaying(run(loan, "2025-09-06").rows)).toBe(101);
     expect(lastPaid(loan, "2025-08-07")).toBe("132: 0.00");
     expect(lastPaid(loan, "2025-09-06")).toBe("131: 4378.14");
+  });
+
+  // #443 (ADR 0179 §1): a `shortenTerm` sizes its term at the rate of the payment after
+  // the one it follows. When payment o+1 is the last fixed-rate one, that is o+1's fixed
+  // rate under b2 (late window, after payment o) and o+2's reset rate under b1 (after
+  // payment o+1), so the two terms differ by far more than the shift bound. Both follow
+  // the ADR. Under the pre-0179 rule (payment p's rate) both read the fixed rate and
+  // ended on the same grid month.
+  /** Grid months a `shortenTerm` sets: `lead` rows before it, then ceil(NPER) at `ratePa`
+   *  of the kept instalment on the balance after the prepayment. */
+  const term = (
+    ratePa: string | Decimal,
+    instalment: Decimal,
+    balance: Decimal,
+    lead: number,
+  ) =>
+    lead +
+    NPER(D(ratePa).div(12), instalment.negated(), balance).ceil().toNumber();
+  /** The term check for a late `shortenTerm` when o+1 is the last fixed payment. */
+  function checkRefixShift(
+    loan: RefLoan,
+    b1: string,
+    b2: string,
+    ends: [number, number],
+    pre0179: number,
+  ) {
+    expect(checkShift(loan, b1, b2)).toBe("late");
+    for (const base of [b1, b2]) checkEnd(loan, base);
+    const fixed = String(loan.ratePa);
+    const reset = A0.postFixationResetRatePa;
+    // b1: the prepayment follows payment o+1 (grid month 1); NPER at o+2's reset rate.
+    const one = run(loan, b1).rows;
+    const kept1 = one[0].instalment;
+    expect(one[0].ratePa.toString()).toBe(fixed);
+    expect(one[1].ratePa.equals(reset)).toBe(true);
+    expect(lastPaying(one)).toBe(ends[0]);
+    expect(term(reset, kept1, one[0].endBalance, 1)).toBe(ends[0]);
+    expect(term(fixed, kept1, one[0].endBalance, 1)).toBe(pre0179);
+    // b2: the prepayment follows payment o (late window); NPER at o+1's fixed rate,
+    // on the opening balance (the late prepayment already taken off).
+    const two = run(loan, b2);
+    expect(two.rows[0].ratePa.toString()).toBe(fixed);
+    expect(lastPaying(two.rows)).toBe(ends[1]);
+    expect(term(fixed, two.rows[0].instalment, two.opening, 0)).toBe(ends[1]);
+    expect(pre0179).not.toBe(ends[0]);
+  }
+  it("#443: a late shortenTerm the day before the last fixed payment's period ends", () => {
+    // Shrunk counterexample of the 2026-11-12 nightly (FC_SEED=20261112): an agreed
+    // 1,692 Kč instalment from payment 1, 72-month fixation; o = 71.
+    const loan443: RefLoan = {
+      start: "2019-10-30",
+      principal: "300000",
+      ratePa: "0.005",
+      instalment: "4231",
+      fixationMonths: 72,
+      prepayments: [
+        { date: "2025-10-29", amount: "29483", effect: "shortenTerm" },
+      ],
+      recasts: [{ date: "2019-11-30", instalment: "1692" }],
+    };
+    // 1 + ceil(110.998) at 4.5 % under b1; ceil(93.426) at 0.5 % under b2; before
+    // ADR 0179, b1 gave 1 + ceil(92.433) at 0.5 %.
+    checkRefixShift(loan443, "2025-09-30", "2025-10-29", [112, 94], 94);
+    expect(lastPaid(loan443, "2025-09-30")).toBe("183: 1691.97");
+    expect(lastPaid(loan443, "2025-10-29")).toBe("165: 1956.58");
+  });
+  it("#443: the same on a plain loan (the 2026-11-03 nightly)", () => {
+    // Shrunk counterexample of FC_SEED=20261103: no recast, 12-month fixation; o = 11.
+    const loan: RefLoan = {
+      start: "2026-06-07",
+      principal: "300000",
+      ratePa: "0.0187",
+      instalment: "3992",
+      fixationMonths: 12,
+      prepayments: [
+        { date: "2027-05-08", amount: "18129", effect: "shortenTerm" },
+      ],
+    };
+    // 1 + ceil(67.999) at 4.5 % under b1; ceil(63.949) at 1.87 % under b2; before
+    // ADR 0179, b1 gave 1 + ceil(62.957) at 1.87 %.
+    checkRefixShift(loan, "2027-05-07", "2027-05-08", [69, 64], 64);
+    expect(lastPaid(loan, "2027-05-07")).toBe("80: 3991.95");
+    expect(lastPaid(loan, "2027-05-08")).toBe("75: 4269.77");
   });
 
   it("R1-04: a payment due just before completion (#135 probe)", () => {

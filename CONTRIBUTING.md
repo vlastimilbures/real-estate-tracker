@@ -105,12 +105,18 @@ still describe it. Which document owns what is listed in
 - **Property tests** (#232, #167): every fast-check test takes its seed and run count from
   `fcRuns` (`src/engine/__tests__/support/fcRuns.ts`), so PR CI runs a fixed seed per file
   (for example `loan-event-invariants.test.ts` 200 runs). A new property file gets its own
-  `fcRuns(<seed>, <runs>)` and a line in `FILES` in `nightly.yml`.
-  The nightly run repeats them all at 2000 runs, every night, with the run's UTC date
-  (`YYYYMMDD`) as the seed, and prints that seed; "Re-run failed jobs" replays it. Reproduce a failure with
-  `FC_SEED=<seed> FC_RUNS=2000 pnpm exec vitest run <file>`. A failure there is an engine
-  or harness bug: fix it, or file it and exclude its shape with the issue ID (`fc.pre`).
-  Never lower the runs to pass.
+  `fcRuns(<seed>, <runs>)`; nothing else to register.
+  The nightly run repeats the whole suite with them all at 2000 runs, every night, with the
+  run's UTC date (`YYYYMMDD`) as the seed, and prints that seed; "Re-run failed jobs" replays
+  it. Reproduce a failure with `FC_SEED=<seed> FC_RUNS=2000 pnpm exec vitest run <file>`. A
+  failure there is an engine or harness bug: fix it, or file it and exclude its shape with
+  the issue ID (`fc.pre`). Never lower the runs to pass.
+- **Nightly failures** (#443): a nightly run with a failed, timed-out or cancelled job opens
+  one issue labelled `nightly-failure`, or comments on the open one, with the run link, each
+  job's result and, when the property job failed or timed out, the seed and the reproduce
+  line. The body always names the ref; a new issue opened by a run on another branch also
+  names it in the title, and later runs, from any branch, comment on the open issue. Close
+  the issue once the cause is fixed.
 - **Accessibility** (ADR 0078): CI's `axe` job runs `pnpm ux:capture` (English, light + dark,
   1280×800 + minimum window) and `pnpm ux:axe-check ci`, which fails on any axe violation.
   Run the same locally after UI work; a new screen or state gets a capture entry.
