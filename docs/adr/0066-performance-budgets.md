@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-01
 - Source IDs: D-66, J-11
+- Amended by: [0233](0233-release-timing-on-request.md) (item 1: the release build measures
+  only when started with `RTRACKER_PERF=1`; the budgets stay)
 
 ## Context
 

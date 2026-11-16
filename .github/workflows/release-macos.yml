@@ -5,7 +5,7 @@ name: Release (macOS)
 # the release if it does not exist yet. The script skips its checks here, and CI does not
 # run on tags: a tag must name the package.json version and a commit on `main` (checked
 # below), and the release checklist tags only a commit whose CI on `main` passed and that
-# the owner built with the full local script (docs/release.md, steps 6 and 8).
+# the owner built with the full local script (docs/release.md, steps 6 and 9).
 on:
   push:
     tags: ["v*"]

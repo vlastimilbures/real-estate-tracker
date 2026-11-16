@@ -6,7 +6,7 @@
   "src/i18n/**": { "lines": 99, "branches": 95 },
   "src/ui/model/**": { "lines": 97, "branches": 94 },
   "src/state/**": { "lines": 93, "branches": 86 },
-  "src/platform/**": { "lines": 70, "branches": 71 },
+  "src/platform/**": { "lines": 76, "branches": 80 },
   "src/ui/pages/**": { "lines": 90, "branches": 86 },
   "src/ui/components/**": { "lines": 94, "branches": 88 },
   "src/ui/hooks/**": { "lines": 97, "branches": 90 },
