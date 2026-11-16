@@ -1,16 +1,21 @@
 // @vitest-environment jsdom
 //
-// ADR 0099: adding a valuation after an open-ended one asks to end that one
-// on the day before the new start; confirming sends it with that end date.
+// ADR 0227 (amends ADR 0099, 0144): adding an open-ended valuation after an open-ended
+// one ends that one on the day before the new start, with no dialog. A dated new
+// valuation, an edit and a refused add change no other row (#436).
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ValuationsPanel, LeasesPanel } from "../PropertyEntityPanels";
-import { usePortfolioStore } from "../../../state/portfolioStore";
+import {
+  usePortfolioStore,
+  type MutationResult,
+} from "../../../state/portfolioStore";
+import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { isoDate, money, type Lease, type Valuation } from "../../../engine";
 
-const ok = async () => ({ ok: true as const });
+const ok = async (): Promise<MutationResult> => ({ ok: true });
 const iso = (d: Date | undefined) => d?.toISOString().slice(0, 10);
 
 const valuations: Valuation[] = [
@@ -33,15 +38,21 @@ const leases: Lease[] = [
 const spies = {
   addValuation: vi.fn(ok),
   addValuationClosingPrevious: vi.fn(ok),
+  saveValuation: vi.fn(ok),
   addLease: vi.fn(ok),
 };
 
 beforeEach(() =>
   act(() => {
-    Object.values(spies).forEach((s) => s.mockClear());
+    Object.values(spies).forEach((s) => s.mockReset().mockImplementation(ok));
     usePortfolioStore.setState(spies);
+    useUiStore.setState({ route: "property" });
   }),
 );
+
+/** The add form is open (its Valid from field shows). */
+const formOpen = () =>
+  screen.queryByLabelText(en.propertyDetail.fieldValidFrom) !== null;
 
 async function add(
   user: ReturnType<typeof userEvent.setup>,
@@ -61,8 +72,8 @@ async function add(
   );
 }
 
-describe("ending the previous open-ended record (ADR 0099)", () => {
-  it("valuation: asks, then ends the previous one the day before", async () => {
+describe("ending the previous open-ended record (ADR 0227, 0163)", () => {
+  it("valuation: ends the previous open-ended one the day before, with no dialog", async () => {
     const user = userEvent.setup();
     render(<ValuationsPanel propertyId="p1" rows={valuations} />);
     await add(
@@ -71,18 +82,15 @@ describe("ending the previous open-ended record (ADR 0099)", () => {
       en.propertyDetail.fieldValidFrom,
       en.propertyDetail.fieldMarketValue,
     );
-    expect(screen.getByRole("dialog").textContent).toContain(
-      en.propertyDetail.closePrevValuationBody("01.01.2025", "30.06.2026"),
-    );
-    await user.click(
-      screen.getByRole("button", { name: en.propertyDetail.closePrevConfirm }),
-    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(spies.addValuationClosingPrevious).toHaveBeenCalledTimes(1);
     const [added, closed] = spies.addValuationClosingPrevious.mock
       .calls[0] as unknown as [Valuation, Valuation];
     expect(iso(added.validFrom)).toBe("2026-07-01");
     expect(closed.id).toBe("v-old");
     expect(iso(closed.validTo)).toBe("2026-06-30");
     expect(spies.addValuation).not.toHaveBeenCalled();
+    expect(formOpen()).toBe(false);
   });
 
   // ADR 0163: leases never overlap, so there is no choice to make. The panel adds the
@@ -102,7 +110,7 @@ describe("ending the previous open-ended record (ADR 0099)", () => {
     expect(iso(added.startDate)).toBe("2026-07-01");
   });
 
-  it("does not ask when the new record starts before the open one", async () => {
+  it("adds plainly when the new record starts before the open one", async () => {
     const user = userEvent.setup();
     render(
       <ValuationsPanel
@@ -120,9 +128,9 @@ describe("ending the previous open-ended record (ADR 0099)", () => {
     expect(spies.addValuation).toHaveBeenCalledTimes(1);
   });
 
-  // ADR 0144: a dated new record does not ask. Ending the previous one would drop it from
-  // after the new end date, so it is added and the previous record is left as it is.
-  it("valuation: does not ask when the new one has an end date (#121)", async () => {
+  // ADR 0144, 0227: a dated new record changes no other row. Ending the previous one would
+  // drop it from after the new end date, so it is added and the previous one is left as is.
+  it("valuation: adds plainly when the new one has an end date (#121)", async () => {
     const user = userEvent.setup();
     render(<ValuationsPanel propertyId="p1" rows={valuations} />);
     await add(
@@ -139,7 +147,7 @@ describe("ending the previous open-ended record (ADR 0099)", () => {
     expect(spies.addValuationClosingPrevious).not.toHaveBeenCalled();
   });
 
-  it("lease: does not ask when the new one has an end date (#121)", async () => {
+  it("lease: adds plainly when the new one has an end date (#121)", async () => {
     const user = userEvent.setup();
     render(<LeasesPanel propertyId="p1" rows={leases} />);
     await add(
@@ -153,5 +161,59 @@ describe("ending the previous open-ended record (ADR 0099)", () => {
     expect(spies.addLease).toHaveBeenCalledTimes(1);
     const [added] = spies.addLease.mock.calls[0] as unknown as [Lease];
     expect(iso(added.endDate)).toBe("2027-06-30");
+  });
+
+  it("editing a valuation changes no other row", async () => {
+    const user = userEvent.setup();
+    const older: Valuation = {
+      id: "v-older",
+      propertyId: "p1",
+      validFrom: isoDate("2024-01-01"),
+      marketValue: money("4000000"),
+    };
+    render(<ValuationsPanel propertyId="p1" rows={[...valuations, older]} />);
+    await user.click(
+      screen.getAllByRole("button", { name: en.common.edit })[0]!,
+    );
+    const value = screen.getByLabelText(
+      new RegExp(en.propertyDetail.fieldMarketValue),
+    );
+    await user.clear(value);
+    await user.type(value, "5500000");
+    await user.click(
+      screen.getByRole("button", { name: en.common.saveChanges }),
+    );
+    expect(spies.saveValuation).toHaveBeenCalledTimes(1);
+    expect(spies.addValuation).not.toHaveBeenCalled();
+    expect(spies.addValuationClosingPrevious).not.toHaveBeenCalled();
+  });
+
+  // #436: the old dialog's Cancel closed the form with nothing saved. A refused add now
+  // keeps the form open, its input typed and its leave guard set.
+  it("a refused add keeps the form open and unsaved", async () => {
+    const refused: MutationResult = {
+      ok: false,
+      error: { kind: "other", message: "disk is full" },
+    };
+    spies.addValuationClosingPrevious.mockImplementation(async () => refused);
+    const user = userEvent.setup();
+    render(<ValuationsPanel propertyId="p1" rows={valuations} />);
+    await add(
+      user,
+      en.propertyDetail.addValuation,
+      en.propertyDetail.fieldValidFrom,
+      en.propertyDetail.fieldMarketValue,
+    );
+    expect(spies.addValuationClosingPrevious).toHaveBeenCalledTimes(1);
+    expect(formOpen()).toBe(true);
+    expect(
+      (
+        screen.getByLabelText(
+          new RegExp(en.propertyDetail.fieldMarketValue),
+        ) as HTMLInputElement
+      ).value.replace(/\D/g, ""),
+    ).toBe("6000000");
+    expect(screen.getByText(en.common.unsavedChanges)).toBeTruthy();
+    expect(useUiStore.getState().unsavedChanges).toBe(true);
   });
 });

@@ -233,6 +233,9 @@ Selectors follow a consistent rule: "record in force at `asOf`" = latest `startD
 governing valuation is the latest one with `validFrom ≤ asOf`, and its `validTo` is not read
 (a value does not expire; the next valuation replaces it, ADR 0122). Before the first
 valuation date, the nearest upcoming record is used (so year 0 lines up with the projection).
+Adding an open-ended valuation ends the open-ended one before it on the day before the new
+start, without asking, and a new valuation with its own `validTo` changes no other row
+(ADR 0227).
 **Leases** have no such fallback (DR-045): snapshot rent is the contractual monthly rent of the lease in force at
 `asOf` × 12, unindexed, and 0 when no lease is in force — before the first lease, in a gap
 between leases (a one-day gap is rent-free) and after the last lease's end date. The

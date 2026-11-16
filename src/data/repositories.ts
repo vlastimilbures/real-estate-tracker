@@ -149,7 +149,7 @@ const closeStatement = (
 });
 
 /** A new valuation plus the end date of the open-ended one it succeeds, in one
- *  transaction (ADR 0099). */
+ *  transaction (ADR 0099, 0227). */
 export const insertValuationClosingPrevious = (
   sql: Sql,
   v: Valuation,
