@@ -45,6 +45,14 @@ module.exports = {
       },
     },
     {
+      name: "engine-tests-no-state-ui",
+      severity: "error",
+      comment:
+        "Engine tests stay below the app (#458): no ui or state, and not the shared ui/state test support in src/__tests__ (store reset, render world).",
+      from: { path: TESTS, pathNot: "^(?!src/engine/)" },
+      to: { path: "^src/(ui|state|__tests__)/" },
+    },
+    {
       name: "reference-model-engine-free",
       severity: "error",
       comment:
