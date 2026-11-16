@@ -11,11 +11,18 @@
   "ignoreDependencies": [
     "@fontsource-variable/fraunces",
     "@fontsource-variable/public-sans",
+    // Named only in stryker.config.json `plugins`, which the Stryker plugin would read; the
+    // plugin is off (see "stryker" below).
+    "@stryker-mutator/vitest-runner",
   ],
   // knip 6.41 reads Playwright's webServer.command; under --production the devDependency
   // `vite` looks unlisted though the Playwright configs never ship. Plain `knip` hints
   // "Remove from ignoreBinaries"; keep it, `knip:prod` needs it.
   "ignoreBinaries": ["vite"],
+  // knip's Stryker plugin loads the config each `stryker run` script names, and
+  // stryker.shard.config.mjs throws without STRYKER_SHARD (ADR 0239), so the plugin is off.
+  // The `mutation:shard` script still makes the shard config an entry.
+  "stryker": false,
   "ignoreIssues": {
     // The independent reference model (P2) keeps its full API for cross-checks.
     "src/engine/__tests__/reference/mortgageReference.ts": ["exports"],

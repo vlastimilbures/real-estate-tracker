@@ -56,6 +56,7 @@
     "knip": "knip",
     "knip:prod": "knip --production --exclude files",
     "mutation": "TZ=Europe/Prague stryker run",
+    "mutation:shard": "TZ=Europe/Prague stryker run stryker.shard.config.mjs",
     "depcruise:baseline": "depcruise src --config .dependency-cruiser.cjs --output-type baseline --output-to .dependency-cruiser-known-violations.json",
     "depcruise:baseline-check": "node scripts/check-depcruise-baseline.mjs",
     "adr:index": "node scripts/adr-index.mjs",
