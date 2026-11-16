@@ -23,8 +23,7 @@ same kind of figures as a row of large values (`.fx-figures`), which reads faste
 ## Decision
 
 1. **Place.** The Loan outlook moves into the Overview section, right after the charts.
-   No new section-nav entry. Mortgages and the loan warnings stay under Financing. A
-   property without an Overview (no snapshot) keeps the Loan outlook under Financing.
+   No new section-nav entry. Mortgages and the loan warnings stay under Financing.
 2. **Figure row.** The panel opens with a figure row, in this order:
    - Next rate reset (`propertyDetail.outlookStatus.nextReset`): the next fixation end,
      or `propertyDetail.outlookNextResetNone` when none is ahead.
@@ -51,3 +50,8 @@ New key: `propertyDetail.outlookNextResetNone` (en "None ahead", the Dashboard's
 - The note is one click away instead of always shown, as with the other panel notes
   since ADR 0217.
 - No number, stored data or export changes.
+- Found on the way, restoring ADR 0217's keyboard behaviour: Tab from an open info icon
+  dropped focus to the page, because the popover clipped its own hover bridges and so
+  became a scroller that Chromium makes a tab stop. A long text now scrolls in an inner
+  body; the popover is no scroller and its hover bridges reach the icon again. The
+  capture check Tabs on from every info icon it opens.

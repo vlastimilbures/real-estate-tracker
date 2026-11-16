@@ -233,7 +233,6 @@ export function PropertyDetail() {
       : null;
   const toReview = check?.attention.length ?? 0;
 
-  const overview = Boolean(s && out && basis);
   const lens = lensLabel(t, mode);
   const modeWord = lensWord(t, mode);
   const sectionLabel: Record<PropertySection, string> = {
@@ -409,8 +408,6 @@ export function PropertyDetail() {
             {loanWarningText(t, w, assumptions.postFixationResetRatePa)}
           </div>
         ))}
-        {/* Without an Overview the Loan outlook stays here (ADR 0224 §1). */}
-        {outlook && !overview && <LoanSummary outlook={outlook} />}
       </div>
 
       {out && (

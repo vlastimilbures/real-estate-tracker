@@ -469,7 +469,8 @@ export async function expectInfoTip(page: Page, button: Locator) {
   });
   expect(onTop, "popover not covered").toBe(true);
   // Tab moves on to the next control, not into the popover or out to the page; Shift+Tab
-  // comes back (and opens it again).
+  // comes back (and opens it again). Needs a control after the icon: on a page where
+  // the icon is the last tab stop, Tab leaves the page and this would fail.
   await page.keyboard.press("Tab");
   expect(
     await page.evaluate(

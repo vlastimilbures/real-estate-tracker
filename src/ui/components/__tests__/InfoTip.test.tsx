@@ -117,9 +117,12 @@ describe("InfoTip (ADR 0217 §2)", () => {
     const button = screen.getByRole("button", { name: nameOf("Valuations") });
     await userEvent.tab();
     expect(button.getAttribute("aria-expanded")).toBe("true");
-    // Chromium makes an overflowing popover a tab stop unless it opts out; it hides
-    // as the icon loses focus, which would drop focus to the page.
-    expect(popoverOf(button).getAttribute("tabindex")).toBe("-1");
+    // The text scrolls in an inner body: the popover itself is no scroller (which
+    // Chromium would make a tab stop) and takes no focus of its own.
+    const pop = popoverOf(button);
+    expect(pop.firstElementChild?.className).toBe("info-tip-pop-body");
+    expect(pop.firstElementChild?.textContent).toBe("Long why.");
+    expect(pop.hasAttribute("tabindex")).toBe(false);
     await userEvent.tab();
     expect(document.activeElement?.textContent).toBe("Next");
   });

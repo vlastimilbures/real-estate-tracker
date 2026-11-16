@@ -563,11 +563,7 @@ export function LoanSummary({ outlook }: { outlook: LoanOutlook }) {
     {
       id: "balance",
       label: d.colBalanceAtReset,
-      value: next?.balance ? (
-        <Money value={next.balance} parens={false} />
-      ) : (
-        "—"
-      ),
+      value: next ? <Money value={next.balance} parens={false} /> : "—",
     },
     { id: "payoff", label: d.loanPayoff, value: outlook.payoff },
   ];

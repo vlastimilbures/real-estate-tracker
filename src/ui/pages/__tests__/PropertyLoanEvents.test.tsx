@@ -311,6 +311,24 @@ describe("ADR 0224: the Loan outlook after the charts, as a figure row", () => {
     expect(figures().map(([k]) => k)).toContain(pd.interestSaved);
   });
 
+  it("with no reset ahead: None ahead, and no debt at reset", () => {
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: {
+          ...portfolio,
+          mortgages: portfolio.mortgages.map((m) =>
+            m.propertyId === "javorova" ? { ...m, fixationYears: 0 } : m,
+          ),
+        },
+      }),
+    );
+    render(<PropertyDetail />);
+    expect(figures().slice(0, 2)).toEqual([
+      [pd.outlookStatus.nextReset, pd.outlookNextResetNone],
+      [pd.colBalanceAtReset, "—"],
+    ]);
+  });
+
   it("the note is behind the info icon, not under the panel", () => {
     render(<PropertyDetail />);
     const info = within(outlook()).getByRole("button", {
