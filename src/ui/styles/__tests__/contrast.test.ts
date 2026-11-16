@@ -1,26 +1,44 @@
 // #128 G2-3-10 (ADR 0157): text colours keep WCAG AA (4.5:1) on the layered table
 // backgrounds axe cannot see in a screenshot run: a hovered row (translucent
 // --hover-wash), a milestone row (--accent-wash), a totals row (--paper-2), and a red
-// badge on its own translucent wash over a hovered row. Colours come from tokens.css and
-// components.css, composited over the opaque surface below them.
-import { readFileSync } from "node:fs";
+// badge on its own translucent wash over a hovered row. Colours come from the stylesheets
+// under src/ui, composited over the opaque surface below them.
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 
-const dir = join(__dirname, "..");
-const tokensCss = readFileSync(join(dir, "tokens.css"), "utf8");
-const componentsCss = readFileSync(
-  join(dir, "..", "components", "components.css"),
-  "utf8",
-);
+// Every stylesheet under src/ui, in a fixed order (#460): splitting or moving a file
+// keeps the rules below in reach.
+function cssFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true })
+    .flatMap((e) => {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) return cssFiles(p);
+      return e.name.endsWith(".css") ? [p] : [];
+    })
+    .sort();
+}
+const files = cssFiles(join(__dirname, "..", ".."));
+const css = files
+  .map((f) => readFileSync(f, "utf8"))
+  .join("\n")
+  .replace(/\/\*[\s\S]*?\*\//g, "");
 
 type Rgba = [number, number, number, number];
 
+/** The body of the one rule whose whole selector is `selector`, at any nesting. */
 function block(selector: string): string {
-  const start = tokensCss.indexOf(`${selector} {`);
-  if (start < 0) throw new Error(`no ${selector} block`);
-  return tokensCss.slice(start, tokensCss.indexOf("\n}", start));
+  const bodies = [...css.matchAll(/([^{};]*)\{([^{}]*)\}/g)]
+    .filter((m) => m[1]!.trim() === selector)
+    .map((m) => m[2]!);
+  if (bodies.length !== 1)
+    throw new Error(`${bodies.length} rules for ${selector}, expected 1`);
+  return bodies[0]!;
 }
+
+it("reads more than one stylesheet", () => {
+  expect(files.length).toBeGreaterThan(1);
+});
 
 function vars(css: string): Map<string, string> {
   const out = new Map<string, string>();
@@ -79,13 +97,10 @@ function ratio(fg: Rgba, bg: Rgba): number {
   return (a! + 0.05) / (b! + 0.05);
 }
 
-/** The token a components.css rule colours its text with. */
+/** The token a rule colours its text with. */
 function ruleColour(selector: string): string {
-  const esc = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   // `color:` as a declaration of its own, not the tail of `background-color:`.
-  const m = new RegExp(
-    `${esc}\\s*\\{(?:[^}]*;)?\\s*color:\\s*var\\((--[\\w-]+)\\)`,
-  ).exec(componentsCss);
+  const m = /(?:^|;)\s*color:\s*var\((--[\w-]+)\)/.exec(block(selector));
   if (!m) throw new Error(`no colour for ${selector}`);
   return m[1]!;
 }

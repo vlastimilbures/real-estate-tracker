@@ -277,25 +277,24 @@
     display: none;
   }
   .section-nav.one-row[data-more-end="true"] ul {
-    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
   }
   .section-nav.one-row[data-more-start="true"] ul {
-    mask-image: linear-gradient(to left, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(to left, black calc(100% - 32px), transparent);
   }
   .section-nav.one-row[data-more-start="true"][data-more-end="true"] ul {
     mask-image: linear-gradient(
       to right,
       transparent,
-      #000 32px,
-      #000 calc(100% - 32px),
+      black 32px,
+      black calc(100% - 32px),
       transparent
     );
   }
 }
 /* 8 px a side: Property detail's eight Russian tabs fit one row at 1280 px with Linux
    fonts too (ADR 0215). */
-.section-nav a,
-.tab-strip [role="tab"] {
+.section-nav a {
   display: block;
   padding: var(--s1) var(--s2);
   border-radius: var(--r-sm);
@@ -328,6 +327,15 @@
   padding: 0 0 var(--s1);
 }
 .tab-strip [role="tab"] {
+  display: block;
+  padding: var(--s1) var(--s2);
+  border-radius: var(--r-sm);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
   line-height: inherit;
   background: none;
   border-top: none;
@@ -469,12 +477,6 @@
   display: flex;
   gap: var(--s4);
   align-items: center;
-}
-.spread {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--s4);
 }
 .grid {
   display: grid;
@@ -632,10 +634,6 @@
   font-size: 11.5px;
   line-height: 1.3;
 }
-/* An amount in a foot never breaks before its unit. */
-.tile .foot .num {
-  white-space: nowrap;
-}
 
 /* ============ Panel / card ============ */
 .panel {
@@ -686,16 +684,16 @@
   grid-template-columns: 1fr auto;
   gap: 0;
 }
-.statlist .k,
+.statlist .k {
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
 .statlist .v {
   padding: var(--s3) 0;
   border-bottom: 1px solid var(--hairline);
   font-size: 13.5px;
-}
-.statlist .k {
-  color: var(--ink-soft);
-}
-.statlist .v {
   text-align: right;
   font-feature-settings: var(--num);
   font-variant-numeric: tabular-nums;
@@ -801,18 +799,20 @@
   white-space: normal;
   text-align: left;
 }
-.info-tip-pop::before,
+.info-tip-pop::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+  top: -8px;
+}
 .info-tip-pop::after {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
   height: 8px;
-}
-.info-tip-pop::before {
-  top: -8px;
-}
-.info-tip-pop::after {
   bottom: -8px;
 }
 .info-tip-pop[hidden] {
@@ -1294,7 +1294,21 @@ table.data thead th.sticky-col {
    inactive when the table does not overflow, so no shadow shows then. */
 @supports (animation-timeline: scroll()) {
   table.data td.sticky-col::after,
-  table.data th.sticky-col::after,
+  table.data th.sticky-col::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    pointer-events: none;
+    opacity: 0;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: scroll(nearest inline);
+    right: -8px;
+    background: linear-gradient(to right, var(--edge-shadow), transparent);
+    animation-name: pinned-shadow-start;
+  }
   table.data td.actions-col::before,
   table.data th.actions-col::before {
     content: "";
@@ -1307,15 +1321,6 @@ table.data thead th.sticky-col {
     animation-timing-function: linear;
     animation-fill-mode: both;
     animation-timeline: scroll(nearest inline);
-  }
-  table.data td.sticky-col::after,
-  table.data th.sticky-col::after {
-    right: -8px;
-    background: linear-gradient(to right, var(--edge-shadow), transparent);
-    animation-name: pinned-shadow-start;
-  }
-  table.data td.actions-col::before,
-  table.data th.actions-col::before {
     left: -8px;
     background: linear-gradient(to left, var(--edge-shadow), transparent);
     animation-name: pinned-shadow-end;
@@ -1607,8 +1612,8 @@ table.data tbody tr:hover td.sticky-col {
   min-width: 180px;
   background: var(--surface);
   border: 1px solid var(--hairline);
-  border-radius: var(--r-md, 8px);
-  box-shadow: var(--shadow-pop, var(--shadow-tile));
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-pop);
   padding: var(--s2) 0;
   outline: none;
 }
@@ -1762,8 +1767,7 @@ table.data tbody tr:hover td.sticky-col {
   flex: 1; /* input grows; the inline action button stays compact */
 }
 .field input:not([type="checkbox"]),
-.field select,
-.field textarea {
+.field select {
   width: 100%;
   font-family: inherit;
   font-size: 13.5px;
@@ -1775,6 +1779,15 @@ table.data tbody tr:hover td.sticky-col {
   color: var(--ink);
 }
 .field textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-feature-settings: var(--num);
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
   resize: vertical;
   line-height: 1.5;
 }
@@ -1926,13 +1939,14 @@ table.data tbody tr:hover td.sticky-col {
   font-weight: 600;
   color: var(--ink-soft);
 }
-.event-rows > .help,
-.event-rows .err {
+.event-rows > .help {
   margin: 0;
   font-size: 11.5px;
   color: var(--ink-faint);
 }
 .event-rows .err {
+  margin: 0;
+  font-size: 11.5px;
   color: var(--negative);
 }
 .event-row {
@@ -1986,11 +2000,6 @@ table.data tbody tr:hover td.sticky-col {
   font-weight: 600;
   font-feature-settings: var(--num);
   color: var(--ink);
-}
-@media (max-width: 560px) {
-  .event-rows.draws .event-row {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
 }
 .form-actions {
   display: flex;
@@ -2409,8 +2418,7 @@ table.chart-table tbody th.sticky-col {
   max-width: 540px;
 }
 
-.loading-screen,
-.error-screen {
+.loading-screen {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2422,6 +2430,12 @@ table.chart-table tbody th.sticky-col {
 /* Grows past the window when a restore's confirm step is open (ADR 0153), and scrolls
    with the page instead of clipping its top. */
 .error-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--s3);
+  color: var(--ink-soft);
   height: auto;
   min-height: 100vh;
   padding: var(--s6) var(--s5);
@@ -2510,6 +2524,9 @@ table.chart-table tbody th.sticky-col {
   gap: var(--s4);
 }
 
+/* Matches only from the 900 px minimum window to 920 px: there it puts the form grids and
+   a chart grid in one column. Removing it is a visible change (ADR 0001); the narrow-window
+   layout is reviewed in #494. */
 @media (max-width: 920px) {
   .chart-grid,
   .form-grid {
@@ -2600,8 +2617,7 @@ table.chart-table tbody th.sticky-col {
   padding: var(--s1) 0;
   border-bottom: 1px solid var(--hairline);
 }
-.scenario-confirm,
-.scenario-empty {
+.scenario-confirm {
   grid-column: 1 / -1;
 }
 @container (max-width: 48rem) {
@@ -2732,6 +2748,7 @@ table.data td:has(> .row-actions) {
   pointer-events: auto;
 }
 .scenario-empty {
+  grid-column: 1 / -1;
   list-style: none;
   padding: var(--s3) 0;
   color: var(--ink-faint);
@@ -2889,12 +2906,9 @@ main.page:focus {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* Destructive-confirmation inline row inside a data table. `width: 0` keeps this
-   spanning cell out of the table's auto-layout column-width computation — without
-   it, the unwrapped message+buttons content was wider than the normal columns and
-   silently forced the whole table to scroll horizontally when the banner opened.
-   The flex wrapper then wraps the message onto its own line (growing the row's
-   height) instead of the table growing wider. */
+/* Destructive-confirmation inline row inside a data table. The flex wrapper wraps the
+   message onto its own line (growing the row's height) instead of the table growing
+   wider. */
 .confirm-row {
   background: var(--surface-raised);
   padding: var(--s4) var(--s5);
@@ -3052,14 +3066,11 @@ main.page:focus {
 /* One grid for the axis and every row, so the tracks line up: name · track · text. The
    text column holds a Russian line with its "next" flag on one line, with room for
    wider fonts than macOS's. */
-.fx-axis,
-.fx-row {
+.fx-axis {
   display: grid;
   grid-template-columns: 9rem minmax(120px, 1fr) minmax(0, 30rem);
   column-gap: var(--s3);
   align-items: center;
-}
-.fx-axis {
   min-height: 18px;
   font-size: 11px;
   color: var(--ink-soft);
@@ -3091,6 +3102,10 @@ main.page:focus {
 /* Each name link is a 24 px target itself (WCAG target size), so it passes even when
    the sticky topbar covers part of the row, where spacing is not measured. */
 .fx-row {
+  display: grid;
+  grid-template-columns: 9rem minmax(120px, 1fr) minmax(0, 30rem);
+  column-gap: var(--s3);
+  align-items: center;
   min-height: 25px;
   padding: 0;
   border-top: 1px solid var(--hairline);
@@ -3127,8 +3142,8 @@ main.page:focus {
 /* After the window: the bar runs off the right edge. */
 .fx-bar.beyond {
   border-radius: 3px 0 0 3px;
-  -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
-  mask-image: linear-gradient(to right, #000 85%, transparent);
+  -webkit-mask-image: linear-gradient(to right, black 85%, transparent);
+  mask-image: linear-gradient(to right, black 85%, transparent);
 }
 .fx-mark {
   position: absolute;

@@ -35,7 +35,7 @@ the [README](README.md#quality)):
 
 ```bash
 pnpm typecheck
-pnpm lint                       # zero warnings
+pnpm lint                       # zero warnings; ends with pnpm lint:css
 pnpm exec prettier --check .
 pnpm depcruise                  # layer rules, no runtime cycles
 pnpm knip                       # no unused files, exports or dependencies
@@ -54,6 +54,17 @@ still describe it. Which document owns what is listed in
 - **Git hooks** (husky + lint-staged): on commit, staged files are formatted, linted and their
   related Vitest tests run; on push, the full typecheck runs. A green CI run is required to
   merge — do not bypass the hooks.
+- **Stylesheets** (#460): `pnpm lint:css` runs stylelint (`stylelint.config.mjs`: no
+  selector defined twice in one context, no duplicate property except a consecutive
+  fallback, no `!important`, no hex colour outside `tokens.css`) and
+  `scripts/css-dead-classes.mjs` (every class in a `src/ui` stylesheet occurs in a `.ts` /
+  `.tsx` file, and every custom property is both defined and used). A class built at run
+  time goes in its `RUNTIME_PREFIXES` (a prefix whose classes are all built) or
+  `RUNTIME_CLASSES` (one built class), with the file that builds it; never add one to
+  silence a dead class. Text in comments does not count as a use. The `--rdp-*`
+  properties are exempt from "used": we only set them, and react-day-picker's own
+  stylesheet reads them. A needed `!important` gets a
+  `stylelint-disable-next-line … -- reason` comment.
 - **Coverage floors** live in `coverage-floors.json` (per folder, lines and branches), set to
   measured minus 1-2 points. Never lower one to pass. CI runs `pnpm coverage:ratchet` after
   `pnpm test:coverage` and fails when a floor sits more than 3 points below measured; raise it

@@ -47,7 +47,8 @@
     "ux:diff": "node ux-capture/diff.ts",
     "ux:axe-check": "node ux-capture/axeCheck.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.strict.json && tsc --noEmit -p ux-capture/tsconfig.json && tsc --noEmit -p tsconfig.node.json",
-    "lint": "eslint . --max-warnings 0 && node scripts/check-size-baseline.mjs",
+    "lint": "eslint . --max-warnings 0 && node scripts/check-size-baseline.mjs && pnpm lint:css",
+    "lint:css": "stylelint \"src/**/*.css\" --max-warnings 0 && node scripts/css-dead-classes.mjs",
     "lint:size": "node scripts/check-size-baseline.mjs",
     "lint:size:baseline-check": "node scripts/check-size-baseline.mjs --base",
     "format": "prettier --write .",
@@ -65,7 +66,8 @@
   "lint-staged": {
     "*.{ts,tsx,js,jsx,css,md,json,jsonc,yaml,yml}": "prettier --write",
     "*.{ts,tsx,js}": "eslint --max-warnings 0 --no-warn-ignored",
-    "src/**/*.{ts,tsx}": "vitest related --run --passWithNoTests"
+    "src/**/*.{ts,tsx}": "vitest related --run --passWithNoTests",
+    "*.css": "stylelint --max-warnings 0"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",
@@ -113,6 +115,7 @@
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
     "sql.js": "^1.16.0",
+    "stylelint": "17.16.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.2",
     "vite": "^8.3.8",

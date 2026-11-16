@@ -10,13 +10,14 @@
 }
 
 html,
-body,
 #root {
   height: 100%;
   margin: 0;
 }
 
 body {
+  height: 100%;
+  margin: 0;
   font-family: var(--font-text);
   font-feature-settings: var(--num);
   color: var(--ink);
@@ -107,6 +108,7 @@ button {
     animation: none;
   }
   * {
+    /* stylelint-disable-next-line declaration-no-important -- Reduce motion must beat any element's own smooth scrolling. */
     scroll-behavior: auto !important;
   }
 }

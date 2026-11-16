@@ -85,7 +85,8 @@ reference models (mortgage, KPI) are the regression baseline (ADR 0081, 0174).
 ## 6. Testing & definition of done
 
 - Write engine tests **before** the engine (TDD).
-- A change is done only when `pnpm test`, `pnpm typecheck`, `pnpm lint` (zero warnings),
+- A change is done only when `pnpm test`, `pnpm typecheck`, `pnpm lint` (zero warnings;
+  includes stylelint and the dead-CSS check),
   `pnpm depcruise` and `pnpm knip` are green, Prettier is clean, and (engine work) new logic has
   tests. CI also enforces per-folder coverage floors (`pnpm test:coverage`).
 - Parity: engine output must match the parity targets within **±1 Kč** (money) and **±0.0001**
