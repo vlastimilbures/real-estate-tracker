@@ -758,8 +758,8 @@ async function expectDisclosures(ux: Ux) {
 }
 
 /** Scenarios (ADR 0220): one panel above the compare; its head holds the count, the info
- *  icon and "Add from preset" on one row at 1280 px, nothing cut off at any width; the
- *  presets open under the list. */
+ *  "Add from preset" on one row at 1280 px, nothing cut off at any width; the presets
+ *  open above the list, with their info icon beside the sub-heading. */
 async function expectScenariosPanel(ux: Ux, open: boolean, compared: number) {
   const sc = ux.t.scenarios;
   const p = panel(ux, sc.listTitle);
@@ -778,7 +778,7 @@ async function expectScenariosPanel(ux: Ux, open: boolean, compared: number) {
     const drawer = el.querySelector(".preset-drawer")!.getBoundingClientRect();
     return {
       oneRow: Math.max(...mids) - Math.min(...mids) <= 4,
-      drawerBelow: drawer.height === 0 || drawer.top >= list.bottom,
+      drawerAbove: drawer.height === 0 || drawer.bottom <= list.top,
       panelsAbove: Array.from(
         document.querySelectorAll("main section.panel"),
       ).indexOf(el),
@@ -786,8 +786,14 @@ async function expectScenariosPanel(ux: Ux, open: boolean, compared: number) {
   });
   if ((ux.page.viewportSize()?.width ?? 0) >= 1280)
     expect(m.oneRow, "panel head on one row").toBe(true);
-  expect(m.drawerBelow, "presets under the list").toBe(true);
+  expect(m.drawerAbove, "presets above the list").toBe(true);
   expect(m.panelsAbove, "the first panel on the page").toBe(0);
+  if (open)
+    await expect(
+      p.locator(".preset-drawer .subhead-row").getByRole("button", {
+        name: `${ux.t.common.aboutThis}: ${sc.presetsTitle}`,
+      }),
+    ).toBeVisible();
 }
 
 /** One grid for the scenario list: actions line up across rows and the summary stays

@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Scenarios } from "../Scenarios";
+import { ScenarioListPanel } from "../ScenariosPanels";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
@@ -82,13 +83,14 @@ describe("collapsible stress presets (#54)", () => {
     const head = panels[0]!.querySelector(".panel-head")!;
     expect(head.querySelector("h2")?.textContent).toBe(sc.listTitle);
     expect(head.contains(toggle())).toBe(true);
-    // The presets open under the list.
+    // The presets open above the list (ADR 0220 §3): a saved preset's new row does not
+    // move them, and they come before the rows in Tab order.
     const region = document.getElementById(
       toggle().getAttribute("aria-controls")!,
     )!;
     const list = panels[0]!.querySelector(".scenario-list")!;
     expect(
-      list.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_FOLLOWING,
+      list.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_PRECEDING,
     ).toBeTruthy();
   });
 
@@ -96,6 +98,25 @@ describe("collapsible stress presets (#54)", () => {
     seed([saved("a", "A"), saved("b", "B")]);
     act(() => useUiStore.setState({ compareIds: ["a"] }));
     render(<Scenarios />);
+    const head = document.querySelector("section.panel .panel-head")!;
+    expect(head.querySelector(".hint")?.textContent).toBe(sc.comparedOf(1, 3));
+  });
+
+  it("counts only saved scenarios: an id not yet pruned is not counted", () => {
+    render(
+      <ScenarioListPanel
+        scenarios={[saved("a", "A")]}
+        baseOn
+        onToggleBase={() => undefined}
+        selectedIds={["a", "ghost"]}
+        maxCompare={3}
+        onToggle={() => undefined}
+        busy={false}
+        onEdit={() => undefined}
+        onDuplicate={() => undefined}
+        onDelete={() => Promise.resolve({ ok: true as const })}
+      />,
+    );
     const head = document.querySelector("section.panel .panel-head")!;
     expect(head.querySelector(".hint")?.textContent).toBe(sc.comparedOf(1, 3));
   });

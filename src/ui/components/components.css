@@ -2388,17 +2388,14 @@ table.chart-table tbody th.sticky-col {
   text-transform: uppercase;
   color: var(--ink-faint);
 }
-/* The presets under the scenario list, opened by "Add from preset" (ADR 0220). */
+/* The presets above the scenario list, opened by "Add from preset" (ADR 0220). */
 .preset-drawer {
-  margin-top: var(--s3);
-  padding-top: var(--s1);
-  border-top: 1px solid var(--hairline);
+  margin-bottom: var(--s3);
+  padding-bottom: var(--s3);
+  border-bottom: 1px solid var(--hairline);
 }
-.preset-drawer[hidden] {
-  display: none;
-}
-.preset-drawer > .panel-subhead {
-  margin-top: var(--s3);
+.preset-drawer > .subhead-row {
+  margin-top: 0;
 }
 /* "Add from preset" stays on one line at the minimum window. */
 .preset-toggle {
@@ -2434,7 +2431,7 @@ table.chart-table tbody th.sticky-col {
   align-items: center;
   row-gap: var(--s1);
   /* Dense, one line per scenario (ADR 0220 §3). */
-  padding: 6px 0;
+  padding: var(--s1) 0;
   border-bottom: 1px solid var(--hairline);
 }
 .scenario-confirm,

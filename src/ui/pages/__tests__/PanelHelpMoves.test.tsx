@@ -22,12 +22,14 @@ beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 const panelOf = (title: string) =>
   screen.getByRole("heading", { name: title }).closest("section")!;
 
-/** The info icon of a panel and the text it shows, hidden at rest (ADR 0217). */
-function infoOf(panel: HTMLElement, topic: string) {
+/** The info icon of a panel and the text it shows, hidden at rest (ADR 0217); in the
+ *  head unless `within` names another container. */
+function infoOf(panel: HTMLElement, topic: string, where = ".panel-head") {
   const button = within(panel).getByRole("button", {
     name: `${en.common.aboutThis}: ${topic}`,
+    hidden: true,
   });
-  expect(panel.querySelector(".panel-head")!.contains(button)).toBe(true);
+  expect(button.closest(where)).toBeTruthy();
   return document.getElementById(button.getAttribute("aria-controls")!)!;
 }
 
@@ -54,12 +56,16 @@ function scenariosPanel(open: boolean) {
 }
 
 describe("Stress presets (ADR 0220 §1, amends 0217 §4)", () => {
-  it("open: the explanation is the Scenarios panel's info icon, not a body line", () => {
+  it("open: the explanation is an info icon beside the Stress presets sub-heading, not a body line", () => {
     scenariosPanel(true);
     const panel = panelOf(sc.listTitle);
-    expect(infoOf(panel, sc.listTitle).textContent).toBe(
-      sc.presetsHint(DEFAULT_SHOCK_YEARS),
+    const pop = infoOf(panel, sc.presetsTitle, ".subhead-row");
+    expect(pop.textContent).toBe(sc.presetsHint(DEFAULT_SHOCK_YEARS));
+    expect(pop.closest(".subhead-row")?.querySelector("h3")?.textContent).toBe(
+      sc.presetsTitle,
     );
+    // The panel head has no info icon of its own.
+    expect(panel.querySelector(".panel-head .info-tip")).toBeNull();
     expect(
       screen
         .queryByText(sc.presetsHint(DEFAULT_SHOCK_YEARS))
@@ -67,10 +73,11 @@ describe("Stress presets (ADR 0220 §1, amends 0217 §4)", () => {
     ).toBeFalsy();
   });
 
-  it("closed: the explanation stays behind the icon", () => {
+  it("closed: the explanation stays behind the icon, inside the closed presets", () => {
     scenariosPanel(false);
     const panel = panelOf(sc.listTitle);
-    expect(infoOf(panel, sc.listTitle).hidden).toBe(true);
+    const pop = infoOf(panel, sc.presetsTitle, ".preset-drawer[hidden]");
+    expect(pop.hidden).toBe(true);
   });
 });
 

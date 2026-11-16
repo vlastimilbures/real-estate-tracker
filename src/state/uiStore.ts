@@ -150,8 +150,8 @@ interface UiState {
   pruneCompare: (existingIds: readonly string[]) => void;
   toggleCompareBase: () => void;
   setCrashAtYear: (atYear: number) => void;
-  /** Stress presets panel: a manual Show / Hide for the session, or null when the user
-   *  has not chosen and the page decides on open (ADR 0106). */
+  /** The Scenarios panel's "Add from preset": a manual open or close for the session,
+   *  or null when the user has not chosen and the page decides on open (ADR 0106, 0220). */
   presetsOpen: boolean | null;
   setPresetsOpen: (open: boolean) => void;
   /** Property detail's amortization schedule is expanded. In-memory for the session,

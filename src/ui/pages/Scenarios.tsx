@@ -45,10 +45,10 @@ export function Scenarios() {
   const pruneCompare = useUiStore((s) => s.pruneCompare);
   const toggleBase = useUiStore((s) => s.toggleCompareBase);
   const setCrashAtYear = useUiStore((s) => s.setCrashAtYear);
-  // The presets (the Scenarios panel's "Add from preset", ADR 0220) open closed once a
-  // scenario is saved. The default is decided
-  // when the page opens, so saving the first preset does not close it under the
-  // pointer; a manual Show / Hide wins for the session (ADR 0106).
+  // The presets (the Scenarios panel's "Add from preset", ADR 0220) start closed once a
+  // scenario is saved. The default is decided when the page opens, so saving the first
+  // preset does not close them under the pointer; a manual open or close wins for the
+  // session (ADR 0106).
   const [autoPresetsOpen] = useState(() => scenarios.length === 0);
   const presetsOpen = useUiStore((s) => s.presetsOpen) ?? autoPresetsOpen;
   const setPresetsOpen = useUiStore((s) => s.setPresetsOpen);

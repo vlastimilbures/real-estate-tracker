@@ -4,6 +4,7 @@ import { useId, useState, type ReactNode } from "react";
 import { Copy, Pencil, Trash2 } from "lucide-react";
 import { DisclosureButton } from "../components/Disclosure";
 import { HelpText } from "../components/HelpText";
+import { InfoTip } from "../components/InfoTip";
 import { Panel, Button, SegmentedToggle } from "../components/primitives";
 import { ConfirmRow } from "../components/EntityPanelParts";
 import { RowAction, RowActions } from "../components/RowActions";
@@ -189,11 +190,12 @@ export function ScenarioListPanel({
         />
       </div>
     );
+  // Only saved scenarios that are ticked: an id not yet pruned is not counted.
+  const compared = scenarios.filter((s) => selectedIds.includes(s.id)).length;
   return (
     <Panel
       title={t.scenarios.listTitle}
-      hint={t.scenarios.comparedOf(selectedIds.length, maxCompare)}
-      info={presets && t.scenarios.presetsHint(DEFAULT_SHOCK_YEARS)}
+      hint={t.scenarios.comparedOf(compared, maxCompare)}
       help={<HelpText>{t.scenarios.listHint(maxCompare)}</HelpText>}
       action={
         presets && (
@@ -209,6 +211,19 @@ export function ScenarioListPanel({
         )
       }
     >
+      {/* Above the list, so a saved preset's new row never moves the buttons under the
+          pointer, and the presets come before the rows in Tab order (ADR 0220 §3). */}
+      {presets && (
+        <div id={presetsId} className="preset-drawer" hidden={!presets.open}>
+          <div className="subhead-row">
+            <h3 className="panel-subhead">{t.scenarios.presetsTitle}</h3>
+            <InfoTip topic={t.scenarios.presetsTitle}>
+              {t.scenarios.presetsHint(DEFAULT_SHOCK_YEARS)}
+            </InfoTip>
+          </div>
+          {presets.bar}
+        </div>
+      )}
       <div className="scenario-list-wrap">
         <ul className="scenario-list">
           <li className="scenario-row">
@@ -276,12 +291,6 @@ export function ScenarioListPanel({
           )}
         </ul>
       </div>
-      {presets && (
-        <div id={presetsId} className="preset-drawer" hidden={!presets.open}>
-          <h3 className="panel-subhead">{t.scenarios.presetsTitle}</h3>
-          {presets.bar}
-        </div>
-      )}
     </Panel>
   );
 }

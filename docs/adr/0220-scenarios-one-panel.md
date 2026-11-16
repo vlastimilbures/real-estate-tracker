@@ -24,14 +24,20 @@ compare starts lower on the page.
 1. **One panel, "Scenarios"** (`scenarios.listTitle`). The head holds:
    - the title;
    - the hint `scenarios.comparedOf(n, max)` ("1 of 3 compared"; Base does not count);
-   - the info icon with `scenarios.presetsHint`;
    - an **"Add from preset"** disclosure (`scenarios.addFromPreset`, ADR 0203). It
-     controls a region under the list that holds the preset bar under the sub-heading
-     `scenarios.presetsTitle`.
+     controls a region above the list that holds the preset bar under the sub-heading
+     `scenarios.presetsTitle`, with the info icon for `scenarios.presetsHint` beside
+     that sub-heading (its name says "Stress presets", so the text has its context).
+
+   The count includes only saved scenarios that are ticked, so an id the page has not
+   pruned yet is never counted. It shows whether or not the compare below can run.
+
 2. The **open state is unchanged** (ADR 0106): open by default while nothing is saved
    when the page opens, and a manual open or close holds for the app session.
 3. **Body:** the instruction `scenarios.listHint` stays a visible help line (ADR 0217),
-   then the list, then the presets region. Rows are denser: one line of tick, name,
+   then the presets region, then the list. The presets sit above the list so that a
+   saved preset's new row never moves the preset buttons under the pointer, and so that
+   they come before the rows' actions in Tab order. Rows are denser: one line of tick, name,
    summary and row actions, with less padding. The summary still moves under the name in
    a narrow panel.
 4. **Removed:** the separate Stress presets panel, its Show/Hide labels
