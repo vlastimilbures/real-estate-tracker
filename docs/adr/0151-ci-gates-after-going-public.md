@@ -7,6 +7,8 @@
 - Supersedes in part: [0068](0068-no-branch-protection.md) (items (1) and (2) and D-69 G-1
   and G-2)
 - Amends: [0013](0013-ci-runners.md) (Consequences: when the macOS bundle runs)
+- Amended by: [0239](0239-sharded-nightly-mutation.md) (§3: the nightly Stryker run is
+  sharded, one cache file per shard, and the break applies to the combined score)
 - Related: [0081](0081-public-release.md) ("a public repository can enable it"),
   [0026](0026-mutation-testing.md) (Stryker nightly)
 

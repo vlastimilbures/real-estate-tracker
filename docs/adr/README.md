@@ -26,7 +26,9 @@ Other IDs seen in code comments:
    `origin/main` and in open pull requests (`gh pr list`).
 2. Status starts as **Proposed**; the owner accepts or rejects it. When the owner delegates the
    decisions of a run (recorded on its tracking issue), its ADRs are **Accepted (delegated,
-   owner review pending)** until the owner reviews them and changes them to Accepted. Superseding an ADR means a new
+   owner review pending)** until the owner reviews them and changes them to Accepted. An ADR
+   decided in an owner-delegated night run names the run's date: **Accepted (owner-delegated,
+   night run YYYY-MM-DD; owner review pending)**, reviewed the same way. Superseding an ADR means a new
    ADR with `Supersedes: NNNN` plus `Status: Superseded by NNNN` on the old one. Amending one
    means `Amends:` on the new ADR plus `Amended by:` on the old one. Replacing only part of one
    means `Supersedes in part:` on the new ADR plus `Superseded in part by:` on the old one, whose
@@ -45,7 +47,7 @@ Other IDs seen in code comments:
 ```markdown
 # NNNN. Title
 
-- Status: Proposed | Accepted | Accepted (delegated, owner review pending) | Rejected | Superseded by NNNN
+- Status: Proposed | Accepted | Accepted (delegated, owner review pending) | Accepted (owner-delegated, night run YYYY-MM-DD; owner review pending) | Rejected | Superseded by NNNN
 - Date: YYYY-MM-DD
 - Source: (optional) issue numbers (#nn) and finding or debt IDs
 - Supersedes: (optional) [NNNN](NNNN-slug.md)
@@ -201,7 +203,7 @@ it.
 | [0148](0148-restore-rules-vs-stored-data.md)                   | Restore rules vs stored data: out-of-range values ask, flags and names are checked            | Accepted · amended by 0180                                               | #133                                               |
 | [0149](0149-calendar-days.md)                                  | Calendar days: the local day on every screen, one day module, a 1900 floor for new dates      | Accepted                                                                 | #119, #263                                         |
 | [0150](0150-one-asof-resolver.md)                              | One as-of resolver: the date shown is the date computed, on every page                        | Accepted · amended by 0156, 0180                                         | #113                                               |
-| [0151](0151-ci-gates-after-going-public.md)                    | CI gates after going public                                                                   | Accepted                                                                 | #111                                               |
+| [0151](0151-ci-gates-after-going-public.md)                    | CI gates after going public                                                                   | Accepted · amended by 0239                                               | #111                                               |
 | [0152](0152-wording-log-and-generated-index.md)                | Copy-only changes go to a wording log; the ADR index is generated                             | Accepted                                                                 | #111, #271                                         |
 | [0153](0153-honest-startup-failures.md)                        | Startup failures say what changed and offer a step that works                                 | Accepted · amended by 0154, 0175                                         | #115                                               |
 | [0154](0154-one-outcome-path.md)                               | One outcome path: notices that follow the owner, one toast                                    | Accepted · amended by 0189                                               | #136                                               |
@@ -277,6 +279,7 @@ it.
 | [0224](0224-loan-outlook-figure-row.md)                        | Loan outlook: after the charts, as a figure row                                               | Accepted (delegated, owner review pending)                               | #423, #425                                         |
 | [0225](0225-sweep-round-2.md)                                  | Round-2 sweep: the Guide's nav in narrow windows, import error tables named                   | Accepted (delegated, owner review pending)                               | #424, #425, #392                                   |
 | [0227](0227-valuation-ends-previous-without-asking.md)         | Adding a valuation ends the previous open-ended one without asking                            | Accepted                                                                 | #445, #435, #436                                   |
+| [0239](0239-sharded-nightly-mutation.md)                       | Sharded nightly mutation testing, gated on the combined score                                 | Accepted (owner-delegated, night run 2026-11-16; owner review pending)   | #443                                               |
 
 <!-- adr-index:end -->
 

@@ -59,6 +59,36 @@ describe("parseAdr", () => {
     expect(a.errors).toEqual([]);
   });
 
+  // Night run 2026-11-16 (#443): the owner delegated a run's decisions; the status names the run.
+  it("accepts an owner-delegated night-run acceptance with its date", () => {
+    const a = parse("0239", "x", "X", [
+      "- Status: Accepted (owner-delegated, night run 2026-11-16; owner review pending)",
+      "- Date: 2026-11-16",
+    ]);
+    expect(a.status).toBe(
+      "Accepted (owner-delegated, night run 2026-11-16; owner review pending)",
+    );
+    expect(a.supersededBy).toBeNull();
+    expect(a.errors).toEqual([]);
+  });
+
+  it("rejects a night-run status without a full date or the review note", () => {
+    for (const status of [
+      "Accepted (owner-delegated, night run; owner review pending)",
+      "Accepted (owner-delegated, night run 2026-11; owner review pending)",
+      "Accepted (owner-delegated, night run 2026-11-16)",
+      "Accepted (night run 2026-11-16; owner review pending)",
+    ]) {
+      const a = parse("0239", "x", "X", [
+        `- Status: ${status}`,
+        "- Date: 2026-11-16",
+      ]);
+      expect(a.errors).toEqual([
+        `0239-x.md: Status "${status}" is not Proposed, Accepted, Accepted (delegated, owner review pending), Accepted (owner-delegated, night run YYYY-MM-DD; owner review pending), Rejected or Superseded by NNNN`,
+      ]);
+    }
+  });
+
   it("ignores non-ADR targets, dates and the self-amendment line", () => {
     const a = parse("0133", "ltv", "LTV", [
       "- Status: Accepted",
@@ -150,7 +180,7 @@ describe("parseAdr", () => {
     );
     expect(a.errors).toEqual([
       '0005-x.md: the heading must be "# 0005. Title"',
-      '0005-x.md: Status "Done" is not Proposed, Accepted, Accepted (delegated, owner review pending), Rejected or Superseded by NNNN',
+      '0005-x.md: Status "Done" is not Proposed, Accepted, Accepted (delegated, owner review pending), Accepted (owner-delegated, night run YYYY-MM-DD; owner review pending), Rejected or Superseded by NNNN',
       "0005-x.md: no Date line",
     ]);
   });
