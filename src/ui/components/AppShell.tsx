@@ -30,15 +30,20 @@ import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import { at } from "../../lib/arrays";
 
-const NAV: {
+interface NavItem {
   route: Route;
   navKey: keyof Dictionary["nav"];
   icon: LucideIcon;
-}[] = [
+}
+
+/** The left bar's two groups (ADR 0219): the pages on top, the tools above the footer. */
+const NAV_PAGES: NavItem[] = [
   { route: "dashboard", navKey: "dashboard", icon: LayoutDashboard },
   { route: "properties", navKey: "properties", icon: Building2 },
   { route: "projections", navKey: "projections", icon: LineChart },
   { route: "scenarios", navKey: "scenarios", icon: GitCompareArrows },
+];
+const NAV_TOOLS: NavItem[] = [
   { route: "import", navKey: "importData", icon: Upload },
   { route: "settings", navKey: "settings", icon: Settings },
   { route: "guide", navKey: "guide", icon: BookOpen },
@@ -276,27 +281,31 @@ export function AppShell({
         </div>
 
         <nav className="nav">
-          {NAV.map((n) => {
-            const active =
-              route === n.route ||
-              (route === "property" && n.route === "properties");
-            const Icon = n.icon;
-            const label = t.nav[n.navKey];
-            return (
-              <button
-                key={n.route}
-                type="button"
-                className={active ? "active" : ""}
-                aria-current={active ? "page" : undefined}
-                title={collapsed ? label : undefined}
-                aria-label={label}
-                onClick={() => navigate(n.route)}
-              >
-                <Icon size={18} strokeWidth={1.75} />
-                <span className="nav-label">{label}</span>
-              </button>
-            );
-          })}
+          {[NAV_PAGES, NAV_TOOLS].map((group, g) => (
+            <div key={g} className={g === 0 ? "nav-group" : "nav-group tools"}>
+              {group.map((n) => {
+                const active =
+                  route === n.route ||
+                  (route === "property" && n.route === "properties");
+                const Icon = n.icon;
+                const label = t.nav[n.navKey];
+                return (
+                  <button
+                    key={n.route}
+                    type="button"
+                    className={active ? "active" : ""}
+                    aria-current={active ? "page" : undefined}
+                    title={collapsed ? label : undefined}
+                    aria-label={label}
+                    onClick={() => navigate(n.route)}
+                  >
+                    <Icon size={18} strokeWidth={1.75} />
+                    <span className="nav-label">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className="sidebar-foot">

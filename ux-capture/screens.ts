@@ -374,6 +374,37 @@ async function expectKpiStrip(ux: Ux, maxHeight = 96) {
   }
 }
 
+/** The left bar (ADR 0219): the pages on top, the tools under them and above the footer,
+ *  nothing overlapping and nothing cut off by the window. */
+async function expectNavGroups(ux: Ux) {
+  const m = await ux.page.locator(".sidebar").evaluate((bar) => {
+    const box = (sel: string) =>
+      bar.querySelector(sel)!.getBoundingClientRect();
+    const pages = box(".nav-group:not(.tools)");
+    const tools = box(".nav-group.tools");
+    const foot = box(".sidebar-foot");
+    return {
+      pagesBottom: pages.bottom,
+      toolsTop: tools.top,
+      toolsBottom: tools.bottom,
+      footTop: foot.top,
+      footBottom: foot.bottom,
+      height: window.innerHeight,
+      overflow: bar.scrollHeight - bar.clientHeight,
+      tools: bar.querySelectorAll(".nav-group.tools button").length,
+    };
+  });
+  expect(m.tools, "three tools").toBe(3);
+  expect(m.toolsTop, "tools under the pages").toBeGreaterThan(m.pagesBottom);
+  expect(m.toolsBottom, "tools above the footer").toBeLessThanOrEqual(
+    m.footTop,
+  );
+  expect(m.footBottom, "footer inside the window").toBeLessThanOrEqual(
+    m.height,
+  );
+  expect(m.overflow, "left bar not cut off").toBeLessThanOrEqual(1);
+}
+
 /** Property detail's top bar (ADR 0215): "Properties ›" and the title on one line and
  *  the actions on one line (1280 × 800 and 900 × 600); at 1280 px and wider the actions
  *  beside the title and the section tabs on one row. */
@@ -867,6 +898,7 @@ export const SCREENS: Screen[] = [
       // After the shot, so a failing layout still leaves its picture.
       await expectKpiStrip(ux);
       await expectDashboardHierarchy(ux);
+      await expectNavGroups(ux);
       await expectFinancingTimeline(ux, 3, 300);
       await expectKeyFigures(ux);
     },
@@ -960,6 +992,7 @@ export const SCREENS: Screen[] = [
       await ux.capture("06-sidebar-collapsed", { fullPage: false });
       // A wider grid with the bar collapsed: two per row from 640 px (ADR 0218 §2).
       await expectDashboardHierarchy(ux);
+      await expectNavGroups(ux);
     },
   },
   {
@@ -2355,6 +2388,8 @@ export const SCREENS: Screen[] = [
         ux.page.getByRole("button", { name: ux.t.shell.backupHintNone }),
       ).toBeVisible();
       await ux.capture("66-sidebar-backup-hint", { fullPage: false });
+      // The tallest footer: the groups still neither overlap nor get cut off (ADR 0219).
+      await expectNavGroups(ux);
     },
   },
   {
