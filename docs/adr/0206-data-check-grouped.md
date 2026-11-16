@@ -5,6 +5,7 @@
 - Source: issue #378 (UX/UI review 2026-11, tracking #392); direction approved by the
   owner on 2026-11-15 (the issue's layout); acceptance delegated by the owner for the
   2026-11-15 run (comment on #392)
+- Amended by: [0218](0218-dashboard-pill-and-chart-grid.md) (§2: the review count moves to a pill beside the title)
 - Amends: [0118](0118-data-check.md) (decision 6: where the Dashboard panel sits and how
   it lists findings), [0202](0202-dashboard-hierarchy.md) (§1: the Data check moves
   last)
