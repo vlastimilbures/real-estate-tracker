@@ -5,6 +5,8 @@
 - Source: issue #31 (#31b)
 - Amends: [0103](0103-financing-exposure.md) §3 and §5 (decisions 5 and 6)
 - Related: [0116](0116-prepayments-ui-and-review-fixes.md)
+- Amended by: [0224](0224-loan-outlook-figure-row.md) (the list becomes a figure row; the
+  note moves behind the info icon)
 
 ## Context
 
