@@ -387,7 +387,7 @@ describe("a pending purchase (#126 item 1, ADR 0156)", () => {
     // The projection charts stay: they show the years before the purchase as zero.
     expect(screen.getByText(pd.chartValueVsDebtVsEquity)).toBeTruthy();
     // The Data check stays, reduced to the own-cash finding (dataCheck.ts).
-    const findings = document.querySelectorAll(".data-check li");
+    const findings = document.querySelectorAll(".dc-row");
     expect(findings).toHaveLength(1);
     expect(findings[0]!.textContent).toContain(
       en.dataCheck.fundingUnknownFuture,

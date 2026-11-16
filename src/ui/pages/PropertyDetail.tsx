@@ -19,6 +19,7 @@ import { ProjectionGrid } from "../components/ProjectionGrid";
 import { AsOfPicker } from "../components/AsOfPicker";
 import { SectionNav } from "../components/SectionNav";
 import { focusSection } from "../components/focusSection";
+import { dataCheckItems } from "../model/dataCheck";
 import { PropertyDataCheckPanel } from "./PropertyDataCheck";
 import {
   PropertySnapshotTiles,
@@ -224,6 +225,13 @@ export function PropertyDetail() {
   const outlook = out?.financing
     ? loanOutlook(out.financing, mortgages, t.propertyDetail)
     : null;
+  // This property's Data check at the page's as-of date (ADR 0118); none for a
+  // deactivated property (ADR 0155). Its attention count is also the title pill.
+  const check =
+    out && isActive
+      ? dataCheckItems([property], store.portfolio, out.asOf, baseDate)
+      : null;
+  const toReview = check?.attention.length ?? 0;
 
   const lens = lensLabel(t, mode);
   const modeWord = lensWord(t, mode);
@@ -258,6 +266,16 @@ export function PropertyDetail() {
   return (
     <AppShell
       title={property.name}
+      attention={
+        // The same pill as the Dashboard's (ADR 0218 §1, 0223 §5).
+        toReview > 0
+          ? {
+              count: toReview,
+              label: t.dataCheck.reviewPill(toReview),
+              onSelect: () => focusSection(sectionId("dataCheck")),
+            }
+          : undefined
+      }
       subtitle={[
         property.type,
         property.sizeM2 ? t.propertyDetail.sizeM2(property.sizeM2) : null,
@@ -369,25 +387,6 @@ export function PropertyDetail() {
         </div>
       )}
 
-      {out && isActive && (
-        <div className="pd-section" id={sectionId("dataCheck")}>
-          <PropertyDataCheckPanel
-            property={property}
-            portfolio={store.portfolio}
-            asOf={out.asOf}
-            baseDate={baseDate}
-            resetRate={assumptions.postFixationResetRatePa}
-            onFix={(fix) =>
-              fix === "assumptions"
-                ? openSettings("assumptions")
-                : isFormTarget(fix)
-                  ? setEditing(fix)
-                  : focusSection(sectionId(fix))
-            }
-          />
-        </div>
-      )}
-
       {/* Editable child entities */}
       <div className="pd-section" id={sectionId("records")}>
         <ValuationsPanel propertyId={propertyId} rows={valuations} />
@@ -489,6 +488,23 @@ export function PropertyDetail() {
           openFunding={editing === "editFunding"}
           onClose={() => setEditing(false)}
         />
+      )}
+      {/* Last: the findings point at the sections above (ADR 0223 §5). */}
+      {out && isActive && check && (
+        <div className="pd-section" id={sectionId("dataCheck")}>
+          <PropertyDataCheckPanel
+            check={check}
+            asOf={out.asOf}
+            resetRate={assumptions.postFixationResetRatePa}
+            onFix={(fix) =>
+              fix === "assumptions"
+                ? openSettings("assumptions")
+                : isFormTarget(fix)
+                  ? setEditing(fix)
+                  : focusSection(sectionId(fix))
+            }
+          />
+        </div>
       )}
     </AppShell>
   );

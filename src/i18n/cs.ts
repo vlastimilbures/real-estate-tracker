@@ -393,8 +393,6 @@ export const cs: Dictionary = {
   // Kontrola dat (ADR 0118).
   dataCheck: {
     title: "Kontrola dat",
-    summary: (attention, defaults) =>
-      `k řešení: ${attention} · výchozí hodnoty portfolia: ${defaults}`,
     attentionTitle: "Vyžaduje pozornost",
     attentionNone: "Nic nevyžaduje pozornost.",
     defaultsTitle: "Výchozí hodnoty portfolia",

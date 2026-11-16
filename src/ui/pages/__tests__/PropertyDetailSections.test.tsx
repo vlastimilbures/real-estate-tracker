@@ -100,13 +100,14 @@ describe("Property detail section nav (ADR 0107)", () => {
     const links = within(nav()).getAllByRole("link");
     expect(links.map((a) => a.textContent)).toEqual([
       pd.sectionOverview,
-      en.dataCheck.title,
       pd.sectionRecords,
       pd.sectionFinancing,
       pd.sectionAcquisition,
       pd.sectionHolding,
       pd.sectionProjection,
       pd.sectionAmortization,
+      // Last (ADR 0223 §5).
+      en.dataCheck.title,
     ]);
     const targets = links.map((a) =>
       document.getElementById(a.getAttribute("href")!.slice(1)),

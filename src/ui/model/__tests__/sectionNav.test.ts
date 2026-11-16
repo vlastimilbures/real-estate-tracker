@@ -1,5 +1,5 @@
 // ADR 0107 (#23): Property detail's section nav lists the sections on the page, in page
-// order, and marks the one in view. ADR 0118 adds the Data check after the Overview;
+// order, and marks the one in view. ADR 0118 adds the Data check, last since ADR 0223;
 // ADR 0119 §9 the Acquisition section after Financing. ADR 0155 drops the Data check for
 // a deactivated property.
 import { describe, it, expect } from "vitest";
@@ -16,13 +16,13 @@ describe("propertySections", () => {
       }),
     ).toEqual([
       "overview",
-      "dataCheck",
       "records",
       "financing",
       "acquisition",
       "holding",
       "projection",
       "amortization",
+      "dataCheck",
     ]);
   });
 
@@ -44,12 +44,12 @@ describe("propertySections", () => {
       }),
     ).toEqual([
       "overview",
-      "dataCheck",
       "records",
       "financing",
       "acquisition",
       "holding",
       "projection",
+      "dataCheck",
     ]);
   });
 

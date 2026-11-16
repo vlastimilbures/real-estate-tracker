@@ -245,6 +245,7 @@ export function Panel({
   title,
   hint,
   help,
+  badges,
   info,
   action,
   flush = false,
@@ -255,6 +256,9 @@ export function Panel({
   hint?: string | undefined;
   /** An explanation leading the body: a `HelpText` (ADR 0214). */
   help?: ReactNode | undefined;
+  /** Status pills on their own line under the head, shown while the body is hidden too
+   *  (the Data check's counts, ADR 0223). */
+  badges?: ReactNode | undefined;
   /** A definition behind an info icon after the title and hint (ADR 0217). */
   info?: string | undefined;
   action?: ReactNode | undefined;
@@ -274,6 +278,7 @@ export function Panel({
           {action}
         </div>
       )}
+      {badges && <div className="panel-badges">{badges}</div>}
       <div className={`panel-body${flush ? " flush" : ""}`}>
         {help && <div className="panel-help">{help}</div>}
         {children}
