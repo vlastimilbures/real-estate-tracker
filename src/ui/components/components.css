@@ -93,10 +93,26 @@
   color: var(--ink-faint);
   letter-spacing: 0.04em;
 }
+/* Two groups (ADR 0219): the pages on top; the tools pinned to the bar's bottom, above
+   the footer, behind a hairline. The nav fills the space between head and footer. */
 .nav {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.nav-group {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+.nav-group.tools {
+  margin-top: auto;
+  padding-top: var(--s3);
+  border-top: 1px solid var(--hairline);
+}
+.shell.collapsed .nav-group {
+  align-self: stretch;
 }
 /* Nav items are <button>s styled as the old `.nav a` links. */
 .nav button {
@@ -137,7 +153,6 @@
   display: none;
 }
 .sidebar-foot {
-  margin-top: auto;
   display: flex;
   flex-direction: column;
   gap: var(--s3);
