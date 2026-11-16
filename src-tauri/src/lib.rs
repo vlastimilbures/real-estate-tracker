@@ -16,9 +16,14 @@ pub mod perf;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     crash::install_panic_hook();
-    let started = perf::Started::now();
+    // ADR 0233: timing is on in a debug build, or when started with RTRACKER_PERF=1.
+    // Read once here; the webview asks `perf_enabled` before its first render.
+    let perf = perf::Perf::new(perf::enabled_from(
+        std::env::var_os("RTRACKER_PERF").as_deref(),
+        cfg!(debug_assertions),
+    ));
     tauri::Builder::default()
-        .manage(started)
+        .manage(perf)
         .plugin(nav::init())
         .plugin(tauri_plugin_sql::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
@@ -59,6 +64,7 @@ pub fn run() {
             db::db_select_snapshot,
             db::db_backup,
             db::log_error,
+            perf::perf_enabled,
             perf::perf_report,
             files::save_file,
             files::open_backup_file,

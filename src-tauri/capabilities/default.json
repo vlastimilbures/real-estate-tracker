@@ -13,6 +13,7 @@
     "allow-db-select-snapshot",
     "allow-db-backup",
     "allow-log-error",
+    "allow-perf-enabled",
     "allow-perf-report",
     "allow-save-file",
     "allow-open-backup-file",

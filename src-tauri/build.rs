@@ -7,6 +7,7 @@ fn main() {
             "db_select_snapshot",
             "db_backup",
             "log_error",
+            "perf_enabled",
             "perf_report",
             "save_file",
             "open_backup_file",
