@@ -146,6 +146,12 @@ const mutantKey = (file, m) => {
   return `${file}@${start.line}:${start.column}-${end.line}:${end.column} ${m.mutatorName} ${m.replacement ?? ""}`;
 };
 
+/** One test across shards: its file, name and, when present, location. */
+const testKey = (file, t) => {
+  const loc = t.location?.start;
+  return JSON.stringify([file, t.name, loc ? [loc.line, loc.column] : null]);
+};
+
 /**
  * Merges the shards' reports (`{ shard: report | undefined }`) into one. `errors` lists a
  * missing shard, a mutant found by two shards (overlapping ranges) and a split file with a
@@ -156,6 +162,7 @@ export function mergeReports(reports, shards = SHARDS) {
   const files = {};
   const testFiles = {};
   const seen = new Map();
+  const canonicalTests = new Map();
   let base;
   for (const shard of Object.keys(shards)) {
     const r = reports[shard];
@@ -164,9 +171,27 @@ export function mergeReports(reports, shards = SHARDS) {
       continue;
     }
     base ??= r;
-    // Stryker numbers mutants and tests per run, so an id is unique only with its shard.
-    const id = (x) => `${shard}-${x}`;
-    const ids = (xs) => (xs === undefined ? undefined : xs.map(id));
+    // Stryker numbers mutants and tests per run, so a raw id means something only within its
+    // shard. A mutant id takes the shard as prefix; a test maps to one id per test file,
+    // name and location, so a test that every shard ran appears once.
+    const testId = new Map();
+    for (const [file, t] of Object.entries(r.testFiles ?? {})) {
+      const into = (testFiles[file] ??= { ...t, tests: [] });
+      for (const test of t.tests ?? []) {
+        const key = testKey(file, test);
+        let canonical = canonicalTests.get(key);
+        if (canonical === undefined) {
+          canonical = String(canonicalTests.size);
+          canonicalTests.set(key, canonical);
+          into.tests.push({ ...test, id: canonical });
+        }
+        testId.set(test.id, canonical);
+      }
+    }
+    const tests = (xs) =>
+      xs === undefined
+        ? undefined
+        : xs.map((x) => testId.get(x) ?? `${shard}-${x}`);
     for (const [file, f] of Object.entries(r.files)) {
       const into = (files[file] ??= { ...f, mutants: [] });
       for (const m of f.mutants) {
@@ -181,16 +206,11 @@ export function mergeReports(reports, shards = SHARDS) {
         seen.set(key, shard);
         into.mutants.push({
           ...m,
-          id: id(m.id),
-          coveredBy: ids(m.coveredBy),
-          killedBy: ids(m.killedBy),
+          id: `${shard}-${m.id}`,
+          coveredBy: tests(m.coveredBy),
+          killedBy: tests(m.killedBy),
         });
       }
-    }
-    for (const [file, t] of Object.entries(r.testFiles ?? {})) {
-      const into = (testFiles[file] ??= { ...t, tests: [] });
-      for (const test of t.tests ?? [])
-        into.tests.push({ ...test, id: id(test.id) });
     }
   }
   for (const [file, parts] of Object.entries(splitFiles(shards)))

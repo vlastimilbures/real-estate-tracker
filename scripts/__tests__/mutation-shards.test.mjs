@@ -265,9 +265,9 @@ describe("mergeReports", () => {
     expect(errors).toEqual([]);
     const tests = merged.testFiles["x.test.ts"].tests;
     expect(tests).toEqual([
-      { id: "a-1-0", name: "first" },
-      { id: "a-1-1", name: "second" },
-      { id: "a-2-0", name: "third" },
+      { id: "0", name: "first" },
+      { id: "1", name: "second" },
+      { id: "2", name: "third" },
     ]);
     const byId = new Map(tests.map((t) => [t.id, t.name]));
     const [m1, m2] = merged.files["s.ts"].mutants;
@@ -275,6 +275,53 @@ describe("mergeReports", () => {
     expect(m1.killedBy.map((t) => byId.get(t))).toEqual(["first"]);
     expect(m2.coveredBy.map((t) => byId.get(t))).toEqual(["third"]);
     expect(m2.killedBy.map((t) => byId.get(t))).toEqual(["third"]);
+  });
+
+  it("gives a test that two shards ran one entry, both shards' mutants resolving to it", () => {
+    const at = (line) => ({ start: { line, column: 3 } });
+    const r = {
+      "a-1": report({
+        "s.ts": [
+          mutant(1, "Killed", { coveredBy: ["4", "7"], killedBy: ["4"] }),
+        ],
+      }),
+      "a-2": report({
+        "s.ts": [
+          mutant(10, "Survived", { coveredBy: ["0", "1"], killedBy: [] }),
+        ],
+      }),
+      rest: report({ "t.ts": [mutant(1, "Survived")] }),
+    };
+    r["a-1"].testFiles = {
+      "x.test.ts": {
+        tests: [
+          { id: "4", name: "shared", location: at(5) },
+          { id: "7", name: "only a-1", location: at(9) },
+        ],
+      },
+    };
+    r["a-2"].testFiles = {
+      "x.test.ts": {
+        tests: [
+          { id: "0", name: "shared", location: at(5) },
+          // Same name, other location: another test (a test.each row, say).
+          { id: "1", name: "shared", location: at(12) },
+        ],
+      },
+    };
+    const { report: merged, errors } = mergeReports(r, SMALL);
+    expect(errors).toEqual([]);
+    const tests = merged.testFiles["x.test.ts"].tests;
+    expect(tests.map((t) => [t.id, t.name, t.location.start.line])).toEqual([
+      ["0", "shared", 5],
+      ["1", "only a-1", 9],
+      ["2", "shared", 12],
+    ]);
+    const [m1, m2] = merged.files["s.ts"].mutants;
+    expect(m1.killedBy).toEqual(["0"]);
+    expect(m1.coveredBy).toEqual(["0", "1"]);
+    expect(m2.coveredBy).toEqual(["0", "2"]);
+    expect(m2.killedBy).toEqual([]);
   });
 });
 
