@@ -9,7 +9,8 @@
   cash flow foot), [0195](0195-health-marker.md) §3 (the Dashboard LTV and DSCR tile foot)
 - Amended by: [0208](0208-key-figures-grouped.md) (§3: the KPI list's groups and note;
   the tiles' exact values),
-  [0215](0215-property-detail-top.md) (Property detail uses the strip's tiles)
+  [0215](0215-property-detail-top.md) (Property detail uses the strip's tiles),
+  [0222](0222-kpi-band.md) (§1, §2, §4: one band in two captioned groups)
 - Related: [0169](0169-development-drawn-debt-display.md) (the undrawn note, kept),
   [0126](0126-degenerate-kpis.md) and [0133](0133-ltv-yield-zero-value.md) (no band, no
   marker; unchanged)
