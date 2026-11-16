@@ -89,6 +89,7 @@ reference models (mortgage, KPI) are the regression baseline (ADR 0081, 0174).
   includes stylelint and the dead-CSS check),
   `pnpm depcruise` and `pnpm knip` are green, Prettier is clean, and (engine work) new logic has
   tests. CI also enforces per-folder coverage floors (`pnpm test:coverage`).
+  `pnpm check` runs these and every other gate CI runs; the list is in CONTRIBUTING.md#checks.
 - Parity: engine output must match the parity targets within **±1 Kč** (money) and **±0.0001**
   (ratios/rates/multiples). Treat any mismatch as an engine bug, not the target. Exact targets +
   seed fixtures live in `.claude/rules/engine-parity.md`.
