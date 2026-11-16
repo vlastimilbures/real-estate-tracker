@@ -14,8 +14,24 @@ export const tauriPerfSink: PerfSink = (name, ms) => {
   invoke("perf_report", { name, ms }).catch(() => undefined);
 };
 
+const TIMEOUT_MS = 1000;
+
+/** Whether the app was started with RTRACKER_PERF=1; false when the question fails or
+ *  has no answer within a second (it holds the first render, as fonts.ts does). */
+async function askEnabled(): Promise<boolean> {
+  const answer = invoke<boolean>("perf_enabled").then(
+    (on) => on === true,
+    () => false,
+  );
+  const timeout = new Promise<false>((resolve) =>
+    setTimeout(() => resolve(false), TIMEOUT_MS),
+  );
+  return Promise.race([answer, timeout]);
+}
+
 /** Turn timing on when this build or the app asks for it. Never rejects: if the app
- *  cannot be asked, timing stays off. */
+ *  cannot be asked, or does not answer within a second, timing stays off (a late answer
+ *  is ignored). */
 export async function installPerf(
   dev: boolean = import.meta.env.DEV,
 ): Promise<void> {
@@ -23,6 +39,5 @@ export async function installPerf(
     if (dev) enablePerf(null);
     return;
   }
-  const on = dev || (await invoke<boolean>("perf_enabled").catch(() => false));
-  if (on) enablePerf(tauriPerfSink);
+  if (dev || (await askEnabled())) enablePerf(tauriPerfSink);
 }

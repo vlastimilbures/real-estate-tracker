@@ -84,6 +84,32 @@ describe("installPerf", () => {
     expect(hasPerfMark("dashboard-rendered")).toBe(true);
   });
 
+  it("gives up after a second, and a late answer turns nothing on", async () => {
+    vi.useFakeTimers();
+    try {
+      let answer: (on: boolean) => void = () => undefined;
+      invoke.mockReturnValueOnce(
+        new Promise<boolean>((resolve) => (answer = resolve)),
+      );
+      let settled = false;
+      const installed = installPerf(false).then(() => (settled = true));
+      await vi.advanceTimersByTimeAsync(999);
+      expect(settled).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      await installed;
+      expect(settled).toBe(true);
+      invoke.mockResolvedValue(undefined);
+      answer(true);
+      await Promise.resolve();
+      await Promise.resolve();
+      perfReport("dashboard-rendered");
+      expect(invoke.mock.calls).toEqual([["perf_enabled"]]);
+      expect(hasPerfMark("dashboard-rendered")).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("records nothing while the answer is pending", async () => {
     let answer: (on: boolean) => void = () => undefined;
     invoke.mockReturnValueOnce(

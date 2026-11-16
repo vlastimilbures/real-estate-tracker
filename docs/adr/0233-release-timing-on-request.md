@@ -34,6 +34,8 @@ The acceptance box "release bundle contains no call to `perf_report`" is replace
 - The frontend asks the new `perf_enabled` command once, before the first render (in the
   `Promise.all` that already waits for the dictionary and the fonts). If the call fails,
   timing stays off.
+- Like the fonts (ADR 0192), the question gives up after 1000 ms so a hung call cannot keep
+  the window blank; no answer in time means off, and a late answer is ignored.
 - In a plain browser (`pnpm dev`, E2E, ux:capture) a development build keeps its marks,
   visible in the browser's performance tools, with no sink; a production browser build
   records nothing.
