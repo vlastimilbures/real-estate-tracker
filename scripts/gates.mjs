@@ -122,8 +122,6 @@ export const GATES = [
     what: "full suite + per-folder coverage floors (includes test:parity)",
     where: "check",
     covers: ["pnpm test", "pnpm test:parity"],
-    // CI runs the parity tests as a step of their own too, so a parity break reads at a glance.
-    ci: [{ run: "pnpm test:coverage" }, { run: "pnpm test:parity" }],
     readme:
       "Vitest tests with per-folder coverage floors, incl. the parity targets (±1 Kč, ±0.0001)",
   },

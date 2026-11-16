@@ -136,11 +136,8 @@ jobs:
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level=high
 
-      # Separately named so a parity break (engine vs its parity targets) is visible at a glance.
-      - name: Parity tests
-        run: pnpm test:parity
-
-      # Full suite + per-folder coverage ratchet (floors in coverage-floors.json).
+      # Full suite, parity tests included, + per-folder coverage ratchet (floors in
+      # coverage-floors.json).
       - name: Test with coverage thresholds
         run: pnpm test:coverage
 
