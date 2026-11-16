@@ -1,7 +1,8 @@
 // Presentational panels extracted from PropertyDetail.tsx: the snapshot KPI tiles +
 // mini charts, and the holding costs' read view and form. Pure rendering — the finance
 // lives in the engine; these take already-computed props / store actions.
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { FigureRow, type Figure } from "../components/FigureRow";
+import { useEffect, useId, useRef, useState } from "react";
 import { Ban, Check, Clock, Pencil } from "lucide-react";
 import { InfoTip } from "../components/InfoTip";
 import { MetricLabel } from "../components/MetricLabel";
@@ -551,24 +552,45 @@ function DrawdownSection({ dd }: { dd: DrawdownView }) {
 export function LoanSummary({ outlook }: { outlook: LoanOutlook }) {
   const t = useT();
   const d = t.propertyDetail;
-  const rows: { k: string; v: ReactNode }[] = [
-    { k: d.loanPayoff, v: outlook.payoff },
+  const { next, interestSaved } = outlook;
+  // The figure row (ADR 0224 §2): every figure the list showed, after the next reset.
+  const figures: Figure[] = [
+    {
+      id: "next",
+      label: d.outlookStatus.nextReset,
+      value: next ? next.date : d.outlookNextResetNone,
+    },
+    {
+      id: "balance",
+      label: d.colBalanceAtReset,
+      value: next ? <Money value={next.balance} parens={false} /> : "—",
+    },
+    { id: "payoff", label: d.loanPayoff, value: outlook.payoff },
   ];
   if (outlook.remainingTerm)
-    rows.push({ k: d.remainingTerm, v: outlook.remainingTerm });
-  if (outlook.interestSaved)
-    rows.push({
-      k: d.interestSaved,
-      v:
-        outlook.interestSaved === "n/a" ? (
+    figures.push({
+      id: "term",
+      label: d.remainingTerm,
+      value: outlook.remainingTerm,
+    });
+  if (interestSaved)
+    figures.push({
+      id: "saved",
+      label: d.interestSaved,
+      value:
+        interestSaved === "n/a" ? (
           d.interestSavedNa
         ) : (
-          <Money value={outlook.interestSaved} parens={false} />
+          <Money value={interestSaved} parens={false} />
         ),
     });
   return (
-    <Panel title={d.loanSummaryTitle} hint={d.loanSummaryHint}>
-      <StatList rows={rows} />
+    <Panel
+      title={d.loanSummaryTitle}
+      hint={d.loanSummaryHint}
+      info={d.loanSummaryNote}
+    >
+      <FigureRow figures={figures} />
       {outlook.drawdowns.map((dd) => (
         <DrawdownSection key={dd.blockId} dd={dd} />
       ))}
@@ -606,7 +628,6 @@ export function LoanSummary({ outlook }: { outlook: LoanOutlook }) {
           </tbody>
         </table>
       </TableWrap>
-      <p className="panel-note">{d.loanSummaryNote}</p>
     </Panel>
   );
 }

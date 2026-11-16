@@ -384,6 +384,8 @@ export function PropertyDetail() {
               mode === "real" ? t.charts.rateResetNominal : t.charts.rateReset
             }
           />
+          {/* Right after the charts: the loan's next reset and payoff (ADR 0224 §1). */}
+          {outlook && <LoanSummary outlook={outlook} />}
         </div>
       )}
 
@@ -406,7 +408,6 @@ export function PropertyDetail() {
             {loanWarningText(t, w, assumptions.postFixationResetRatePa)}
           </div>
         ))}
-        {outlook && <LoanSummary outlook={outlook} />}
       </div>
 
       {out && (

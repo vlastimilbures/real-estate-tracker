@@ -670,6 +670,8 @@ export const cs: Dictionary = {
       "Úrok ušetřený mimořádnými splátkami za zbývající dobu splácení úvěru (nominálně)",
     interestSavedNa: "n/a: změna splatnosti závisí na mimořádné splátce",
     remainingTerm: "Zbývající doba splácení",
+    // ADR 0224: the figure row with no reset ahead.
+    outlookNextResetNone: "Žádná v dohledu",
     outlookResetsTitle: "Konce fixace podle úvěrových bloků",
     colFixationEnd: "Konec fixace",
     colBalanceAtReset: "Dluh při změně sazby (nominálně)",

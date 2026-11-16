@@ -677,6 +677,8 @@ export const ru: Dictionary = {
       "Сэкономлено процентов досрочными платежами за оставшийся срок кредита (номинально)",
     interestSavedNa: "н/д: изменение срока зависит от досрочного платежа",
     remainingTerm: "Оставшийся срок",
+    // ADR 0224: the figure row with no reset ahead.
+    outlookNextResetNone: "Не предвидится",
     outlookResetsTitle: "Окончания фиксации по блокам кредита",
     colFixationEnd: "Конец фиксации",
     colBalanceAtReset: "Долг на момент смены ставки (номинально)",

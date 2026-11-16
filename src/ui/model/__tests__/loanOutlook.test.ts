@@ -271,3 +271,22 @@ describe("ADR 0167: drawdown in the loan outlook", () => {
     expect(dd!.full).toBe(false);
   });
 });
+
+describe("ADR 0224: the figure row's next rate reset", () => {
+  it("is the next reset's fixation end and balance", () => {
+    const o = outlook(javorova());
+    expect(o.next?.date).toBe("17.01.2031");
+    expect(
+      o.next!.balance!.minus(1386249.9).abs().toNumber(),
+    ).toBeLessThanOrEqual(1);
+  });
+
+  it("follows a refinanced chain to the new block", () => {
+    expect(outlook(javorova(mixedWithRefi)).next?.date).toBe("17.01.2036");
+  });
+
+  it("is null with no reset ahead: a floating block, a repaid loan", () => {
+    expect(outlook([block("float", "2024-01-10", 0)]).next).toBeNull();
+    expect(outlook([block("old", "2010-01-10")]).next).toBeNull();
+  });
+});

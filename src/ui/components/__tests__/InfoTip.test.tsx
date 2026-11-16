@@ -107,6 +107,26 @@ describe("InfoTip (ADR 0217 §2)", () => {
     expect(button.getAttribute("aria-expanded")).toBe("false");
   });
 
+  it("the open popover is never a tab stop: Tab from the icon goes on to the next control", async () => {
+    render(
+      <>
+        <InfoTip topic="Valuations">Long why.</InfoTip>
+        <button type="button">Next</button>
+      </>,
+    );
+    const button = screen.getByRole("button", { name: nameOf("Valuations") });
+    await userEvent.tab();
+    expect(button.getAttribute("aria-expanded")).toBe("true");
+    // The text scrolls in an inner body: the popover itself is no scroller (which
+    // Chromium would make a tab stop) and takes no focus of its own.
+    const pop = popoverOf(button);
+    expect(pop.firstElementChild?.className).toBe("info-tip-pop-body");
+    expect(pop.firstElementChild?.textContent).toBe("Long why.");
+    expect(pop.hasAttribute("tabindex")).toBe(false);
+    await userEvent.tab();
+    expect(document.activeElement?.textContent).toBe("Next");
+  });
+
   it("two on a page have different names", () => {
     render(
       <>

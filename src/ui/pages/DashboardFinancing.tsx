@@ -1,6 +1,7 @@
 // The Dashboard "Financing & upcoming" panel (ADR 0103, ADR 0204). Presentation only:
 // the figures come from `financingPanel` and the timeline from `financingTimeline`
 // (src/ui/model/financing.ts).
+import { FigureRow } from "../components/FigureRow";
 import { useState, type ReactNode } from "react";
 import { Table2 } from "lucide-react";
 import {
@@ -297,48 +298,47 @@ export function FinancingPanel({
       }
     >
       {m.hasLoans ? (
-        <dl className="fx-figures">
-          <div className="fx-figure">
-            <dt>{d.financingNextReset}</dt>
-            <dd className="fx-value">
-              {next ? next.date : d.financingNextResetNone}
-            </dd>
-            {next && (
-              <dd className="fx-sub">
+        <FigureRow
+          figures={[
+            {
+              id: "next",
+              label: d.financingNextReset,
+              value: next ? next.date : d.financingNextResetNone,
+              sub: next && (
                 <PropertyLink
                   id={next.propertyId}
                   name={next.propertyName}
                   onOpen={onOpenProperty}
                 />
-              </dd>
-            )}
-          </div>
-          <div className="fx-figure">
-            <dt>{labels.balanceAtReset}</dt>
-            <dd className="fx-value">
-              {next ? <Money value={next.balance} parens={false} /> : "—"}
-            </dd>
-          </div>
-          <div className="fx-figure">
-            <dt>{labels.resettingWithin}</dt>
-            <dd className="fx-value">
-              <Money value={m.resetting.amount} parens={false} />
-            </dd>
-            <dd className="fx-sub">{d.financingLoans(m.resetting.loans)}</dd>
-          </div>
-          <div className="fx-figure">
-            <dt>{labels.totalInterest}</dt>
-            <dd className="fx-value">
-              <Money value={m.totalInterest} parens={false} />
-            </dd>
-          </div>
-          {m.interestSaved && (
-            <div className="fx-figure">
-              <dt>{d.financingInterestSaved}</dt>
-              <dd className="fx-value">{savedValue(m.interestSaved.total)}</dd>
-            </div>
-          )}
-        </dl>
+              ),
+            },
+            {
+              id: "balance",
+              label: labels.balanceAtReset,
+              value: next ? <Money value={next.balance} parens={false} /> : "—",
+            },
+            {
+              id: "resetting",
+              label: labels.resettingWithin,
+              value: <Money value={m.resetting.amount} parens={false} />,
+              sub: d.financingLoans(m.resetting.loans),
+            },
+            {
+              id: "interest",
+              label: labels.totalInterest,
+              value: <Money value={m.totalInterest} parens={false} />,
+            },
+            ...(m.interestSaved
+              ? [
+                  {
+                    id: "saved",
+                    label: d.financingInterestSaved,
+                    value: savedValue(m.interestSaved.total),
+                  },
+                ]
+              : []),
+          ]}
+        />
       ) : (
         <p className="panel-note">{d.financingNoLoans}</p>
       )}
