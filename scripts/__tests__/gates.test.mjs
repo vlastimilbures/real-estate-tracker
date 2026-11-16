@@ -14,6 +14,7 @@ import {
   runGates,
   select,
   workflowSteps,
+  yamlTree,
 } from "../gates.mjs";
 
 const read = (file) =>
@@ -295,6 +296,95 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
     expect(ciDrift(yaml, { gates: nightly })).toEqual([
       "a step in a runs `pnpm mutation`, which is no gate",
     ]);
+  });
+
+  it("reads a workflow's maps, lists, flow lists, block scalars and quotes", () => {
+    const yaml = [
+      "# a comment",
+      "env:",
+      '  A: "1" # quoted',
+      "jobs:",
+      "  x:",
+      "    if: >-",
+      "      !cancelled() &&",
+      "      (b)",
+      "    strategy:",
+      "      matrix:",
+      "        tz: [Pacific/Pago_Pago, 'UTC']",
+      "        leg:",
+      "          - one # first",
+      "          - two",
+      "        include:",
+      "          - leg: three",
+      "            tz: UTC",
+      "    steps:",
+      "      - uses: a@b # v1",
+      "      - run: |",
+      "          pnpm one",
+      "",
+      "          pnpm two",
+    ].join("\n");
+    expect(yamlTree(yaml)).toEqual({
+      env: { A: "1" },
+      jobs: {
+        x: {
+          if: "!cancelled() && (b)",
+          strategy: {
+            matrix: {
+              tz: ["Pacific/Pago_Pago", "UTC"],
+              leg: ["one", "two"],
+              include: [{ leg: "three", tz: "UTC" }],
+            },
+          },
+          steps: [{ uses: "a@b" }, { run: "pnpm one\npnpm two" }],
+        },
+      },
+    });
+  });
+
+  describe("a step env that reads the matrix", () => {
+    const gates = [
+      {
+        id: "tz-negative",
+        run: "pnpm test",
+        env: { TZ: "Pacific/Pago_Pago" },
+        where: "ci",
+      },
+    ];
+    const yaml = (zones) =>
+      [
+        "jobs:",
+        "  tz:",
+        "    strategy:",
+        "      matrix:",
+        `        tz: [${zones}]`,
+        "    steps:",
+        "      - run: pnpm test",
+        "        env:",
+        "          TZ: ${{ matrix.tz }}",
+      ].join("\n");
+
+    it("counts once per matrix value", () => {
+      expect(
+        ciDrift(yaml("Pacific/Kiritimati, Pacific/Pago_Pago"), { gates }),
+      ).toEqual([]);
+    });
+
+    it("fails when no matrix value is the gate's", () => {
+      expect(ciDrift(yaml("UTC"), { gates })).toEqual([
+        'tz-negative: `pnpm test` runs with env {"TZ":"UTC"}, expected {"TZ":"Pacific/Pago_Pago"}',
+      ]);
+    });
+
+    it("fails a matrix key the job does not have", () => {
+      expect(
+        ciDrift(yaml("Pacific/Pago_Pago").replace("matrix.tz", "matrix.zone"), {
+          gates,
+        }),
+      ).toEqual([
+        'tz-negative: `pnpm test` runs with env {"TZ":"${{ matrix.zone }}"}, expected {"TZ":"Pacific/Pago_Pago"}',
+      ]);
+    });
   });
 
   it.each([

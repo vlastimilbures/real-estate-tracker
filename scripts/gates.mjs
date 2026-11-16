@@ -413,6 +413,125 @@ export function workflowSteps(yaml) {
   return steps;
 }
 
+// A small YAML reader for the workflow subset: maps, `- ` lists, `[a, b]` flow lists,
+// `|` / `>` block scalars, quoted scalars and comments. No anchors, no flow maps.
+const KEY = /^\s*([A-Za-z0-9_-]+):(?:\s+(.*))?$/;
+const isListItem = (line) => /^\s*-(\s|$)/.test(line);
+const skipNoise = (lines, i) => {
+  while (i < lines.length && /^\s*(#.*)?$/.test(lines[i])) i++;
+  return i;
+};
+
+/** A plain scalar: unquoted, its trailing comment dropped, a `[a, b]` flow list split. */
+function scalar(text) {
+  const quoted = text.trim().match(/^(['"])(.*?)\1(\s+#.*)?$/);
+  if (quoted) return quoted[2];
+  const t = text.replace(/\s+#.*$/, "").trim();
+  const flow = t.match(/^\[(.*)\]$/);
+  if (flow)
+    return flow[1]
+      .split(",")
+      .map(unquote)
+      .filter((v) => v !== "");
+  return t === "{}" ? {} : unquote(t);
+}
+
+/** The value of a key with nothing after its colon: the block below it, or null. */
+function nested(lines, i, at) {
+  const j = skipNoise(lines, i);
+  const below =
+    j < lines.length &&
+    (indentOf(lines[j]) > at ||
+      (indentOf(lines[j]) === at && isListItem(lines[j])));
+  if (!below) return [null, i];
+  const indent = indentOf(lines[j]);
+  return isListItem(lines[j]) ? list(lines, j, indent) : map(lines, j, indent);
+}
+
+/** The map whose keys sit at indent `at`, from line `i`: `[value, next line]`. */
+function map(lines, i, at) {
+  const out = {};
+  for (i = skipNoise(lines, i); i < lines.length; i = skipNoise(lines, i)) {
+    const indent = indentOf(lines[i]);
+    if (indent < at || (indent === at && isListItem(lines[i]))) break;
+    const m = indent === at && lines[i].match(KEY);
+    i++;
+    if (!m) continue;
+    const [, key, rest = ""] = m;
+    if (/^[|>]/.test(rest)) {
+      const body = [];
+      while (
+        i < lines.length &&
+        (lines[i].trim() === "" || indentOf(lines[i]) > at)
+      )
+        body.push(lines[i++].trim());
+      out[key] = body.filter(Boolean).join(rest[0] === "|" ? "\n" : " ");
+    } else if (rest !== "") out[key] = scalar(rest);
+    else [out[key], i] = nested(lines, i, at);
+  }
+  return [out, i];
+}
+
+/** The list whose `- ` items sit at indent `at`, from line `i`: `[value, next line]`. */
+function list(lines, i, at) {
+  const out = [];
+  for (i = skipNoise(lines, i); i < lines.length; i = skipNoise(lines, i)) {
+    const indent = indentOf(lines[i]);
+    if (indent < at || (indent === at && !isListItem(lines[i]))) break;
+    if (indent > at) {
+      i++;
+      continue;
+    }
+    const item = lines[i].trim().slice(1).trim();
+    if (KEY.test(item)) {
+      // `- key: v` opens a map whose keys sit two columns in.
+      const line = lines[i];
+      lines[i] = line.replace("-", " ");
+      const [value, next] = map(lines, i, at + 2);
+      lines[i] = line;
+      out.push(value);
+      i = next;
+    } else {
+      out.push(item === "" ? null : scalar(item));
+      i++;
+    }
+  }
+  return [out, i];
+}
+
+/** A workflow as nested maps, lists and strings (the subset above). */
+export function yamlTree(yaml) {
+  const lines = yaml.split("\n");
+  return map(lines, skipNoise(lines, 0), 0)[0];
+}
+
+/** Every combination of a matrix's values, `include` / `exclude` aside; `[{}]` for none. */
+function matrixRuns(matrix) {
+  let runs = [{}];
+  if (!matrix || typeof matrix !== "object") return runs;
+  for (const [key, values] of Object.entries(matrix))
+    if (key !== "include" && key !== "exclude" && Array.isArray(values))
+      runs = runs.flatMap((r) => values.map((v) => ({ ...r, [key]: v })));
+  return runs;
+}
+
+const MATRIX_REF = /\$\{\{\s*matrix\.([A-Za-z0-9_-]+)\s*\}\}/g;
+
+/** A step once per matrix combination when its env reads `${{ matrix.* }}`, else once. */
+function perMatrixRun(step, matrix) {
+  if (!Object.values(step.env).some((v) => /\$\{\{\s*matrix\./.test(v)))
+    return [step];
+  return matrixRuns(matrix).map((run) => ({
+    ...step,
+    env: Object.fromEntries(
+      Object.entries(step.env).map(([k, v]) => [
+        k,
+        v.replace(MATRIX_REF, (ref, key) => run[key] ?? ref),
+      ]),
+    ),
+  }));
+}
+
 /** The ci.yml steps a gate stands for: exact shell lines with their step `env`. */
 export const ciSteps = (g) => g.ci ?? [{ run: g.run, env: g.env }];
 
@@ -438,7 +557,8 @@ function howItRuns(step, line, ifs) {
 
 /**
  * Where a workflow and the list disagree:
- * - a gate with no step that runs its exact line with exactly its variables;
+ * - a gate with no step that runs its exact line with exactly its variables (a step env
+ *   value that reads `${{ matrix.x }}` counts once per matrix value);
  * - a gate step with continue-on-error, an unknown `if:`, or a shard list that does not
  *   match the `/N` of its `--shard`;
  * - a pnpm / cargo / node / bash / npx line that is no gate and no setup.
@@ -447,7 +567,10 @@ export function ciDrift(
   yaml,
   { gates = GATES, setup = CI_SETUP, ifs = CI_STEP_IFS } = {},
 ) {
-  const steps = workflowSteps(yaml);
+  const jobs = yamlTree(yaml)?.jobs ?? {};
+  const steps = workflowSteps(yaml).flatMap((s) =>
+    perMatrixRun(s, jobs[s.job]?.strategy?.matrix),
+  );
   const listed = gates.filter((g) => g.where !== "nightly");
   const problems = [];
   for (const g of listed)
