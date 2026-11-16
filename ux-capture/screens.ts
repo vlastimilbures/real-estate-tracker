@@ -911,6 +911,47 @@ async function expectSettingsTopBar(ux: Ux, tab: "assumptions" | "backup") {
   ).toHaveCount(0);
 }
 
+/** The Data check (ADR 0223): the counts as pills on a line under the head, nothing cut
+ *  off; a block per list, side by side when both show on an 880 px container, stacked
+ *  below; in a block of 680 px or more each row's fix sits right of its problem. */
+async function expectDataCheckLayout(p: Locator) {
+  const counts = p.locator(".panel-badges");
+  await expect(counts.locator(".dc-pill").first()).toBeVisible();
+  await expectNotClipped(counts);
+  const m = await p.evaluate((el) => {
+    const wrap = el.querySelector(".dc-blocks-wrap");
+    const blocks = Array.from(el.querySelectorAll<HTMLElement>(".dc-block"));
+    return {
+      wrapWidth: wrap?.getBoundingClientRect().width ?? 0,
+      tops: blocks.map((b) => Math.round(b.getBoundingClientRect().top)),
+      rows: blocks.flatMap((b) =>
+        Array.from(b.querySelectorAll(".dc-row"), (r) => {
+          const problem = r
+            .querySelector(".dc-problem")!
+            .getBoundingClientRect();
+          const actions = r
+            .querySelector(".dc-row-actions")!
+            .getBoundingClientRect();
+          return {
+            // The container query measures the content box.
+            wide: b.clientWidth >= 680,
+            right: actions.left >= problem.right - 1,
+            fits: r.scrollWidth <= r.clientWidth + 1,
+          };
+        }),
+      ),
+    };
+  });
+  if (m.tops.length === 2)
+    expect(new Set(m.tops).size, "blocks side by side").toBe(
+      m.wrapWidth >= 880 ? 1 : 2,
+    );
+  for (const r of m.rows) {
+    expect(r.fits, "row not cut off").toBe(true);
+    if (r.wide) expect(r.right, "the fix right of its problem").toBe(true);
+  }
+}
+
 export const SCREENS: Screen[] = [
   {
     id: "00-loading",
@@ -1205,7 +1246,8 @@ export const SCREENS: Screen[] = [
         "aria-expanded",
         "true",
       );
-      await expect(p.locator(".dc-line")).toHaveCount(4);
+      await expect(p.locator(".dc-row")).toHaveCount(4);
+      await expectDataCheckLayout(p);
       await expect(p.locator(".dc-chip")).toHaveCount(12);
       for (const chip of await p.locator(".dc-chip").all())
         await expectNotClipped(chip);
@@ -1836,7 +1878,7 @@ export const SCREENS: Screen[] = [
   },
   {
     id: "31-property-data-check",
-    desc: "Property detail's Data check five years on, after the Overview; its link moves to Records, Record funding opens the form's Acquisition section (ADR 0118)",
+    desc: "Property detail's Data check five years on, the last section, reached by the title pill; its link moves to Records, Record funding opens the form's Acquisition section (ADR 0118, ADR 0223)",
     run: async (ux) => {
       const d = ux.t.dataCheck;
       await boot(ux.page);
@@ -1846,12 +1888,19 @@ export const SCREENS: Screen[] = [
       await expect(
         p.getByRole("heading", { name: d.attentionTitle }),
       ).toBeVisible();
-      // Land on it through the section nav, so the panel sits under the topbar.
-      await ux.page
-        .getByRole("navigation", { name: ux.t.propertyDetail.sectionNavLabel })
-        .getByRole("link", { name: d.title })
-        .click();
+      // The last section (ADR 0223 §5): the section nav's last link.
+      await expect(
+        ux.page
+          .getByRole("navigation", {
+            name: ux.t.propertyDetail.sectionNavLabel,
+          })
+          .getByRole("link")
+          .last(),
+      ).toHaveText(d.title);
+      // Land on it through the title pill, so the panel sits under the topbar.
+      await ux.page.locator(".topbar .title-pill").click();
       await expect(p.getByRole("heading", { name: d.title })).toBeFocused();
+      await expectDataCheckLayout(p);
       await ux.capture("31-property-data-check", { fullPage: false });
       await p
         .getByRole("button", {

@@ -423,8 +423,6 @@ export const en = {
   // Data check (ADR 0118).
   dataCheck: {
     title: "Data check",
-    summary: (attention: number, defaults: number) =>
-      `${attention} to review · ${defaults} on portfolio defaults`,
     attentionTitle: "Needs attention",
     attentionNone: "Nothing needs attention.",
     defaultsTitle: "Using portfolio defaults",

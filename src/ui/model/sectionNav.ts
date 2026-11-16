@@ -24,13 +24,14 @@ export function propertySections(has: {
 }): PropertySection[] {
   return [
     ...(has.overview ? (["overview"] as const) : []),
-    ...(has.dataCheck ? (["dataCheck"] as const) : []),
     "records",
     "financing",
     ...(has.overview ? (["acquisition"] as const) : []),
     "holding",
     ...(has.projection ? (["projection"] as const) : []),
     ...(has.amortization ? (["amortization"] as const) : []),
+    // Last: its findings point at the sections above (ADR 0223 §5).
+    ...(has.dataCheck ? (["dataCheck"] as const) : []),
   ];
 }
 

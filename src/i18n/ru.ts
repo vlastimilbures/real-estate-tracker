@@ -401,8 +401,6 @@ export const ru: Dictionary = {
   // Проверка данных (ADR 0118).
   dataCheck: {
     title: "Проверка данных",
-    summary: (attention, defaults) =>
-      `требует внимания: ${attention} · значения портфеля по умолчанию: ${defaults}`,
     attentionTitle: "Требует внимания",
     attentionNone: "Ничего не требует внимания.",
     defaultsTitle: "Используются значения портфеля по умолчанию",

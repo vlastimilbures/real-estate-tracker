@@ -1,16 +1,24 @@
-// The Dashboard "Data check" panel (ADR 0118, ADR 0206): stale, missing and defaulted
-// inputs across the properties in view. The last section of the page: a summary row, then
-// the findings grouped by problem, one chip per property linking to its fix. Open when
-// something needs attention, the summary only otherwise; a manual Show / Hide holds for the
-// app session.
+// The Dashboard "Data check" panel (ADR 0118, ADR 0206, ADR 0223): stale, missing and
+// defaulted inputs across the properties in view. The last section of the page: the counts
+// in the head, then a block per list of findings grouped by problem, one chip per property
+// linking to its fix. Open when something needs attention, the counts only otherwise; a
+// manual Show / Hide holds for the app session.
 import { Fragment, useId } from "react";
-import { AlertTriangle, ChevronRight, Info } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { DisclosureButton } from "../components/Disclosure";
 import type { Rate } from "../../engine";
 import { fmtDate } from "../../lib/format";
 import { useUiStore } from "../../state/uiStore";
 import { Panel } from "../components/primitives";
 import { useT } from "../hooks/useT";
+import {
+  DataCheckBlock,
+  DataCheckBlocks,
+  DataCheckClear,
+  DataCheckCounts,
+  DataCheckRow,
+  type DataCheckKind,
+} from "../components/DataCheckBlocks";
 import {
   dataCheckGroups,
   fixLabel,
@@ -23,74 +31,68 @@ export const DATA_CHECK_ID = "dashboard-data-check";
 
 type OnFix = (propertyId: string | null, fix: DataCheckFix) => void;
 
-/** One list's lines: the problem once, then a chip per property (ADR 0206 §4). */
-function GroupedList({
+/** One block's rows: the problem once, then a chip per property (ADR 0206 §4). */
+function GroupedBlock({
   items,
-  list,
-  label,
+  kind,
+  title,
   resetRate,
   onFix,
 }: {
   items: DataCheckItem[];
-  list: "attention" | "defaults";
-  label: string;
+  kind: DataCheckKind;
+  title: string;
   resetRate: Rate;
   onFix: OnFix;
 }) {
   const t = useT();
   const baseId = useId();
-  const Icon = list === "attention" ? AlertTriangle : Info;
   return (
-    // An explicit list role: WebKit drops it from a list without bullets, and with it
-    // the list's name.
-    <ul role="list" className={`dc-lines ${list}`} aria-label={label}>
+    <DataCheckBlock kind={kind} title={title}>
       {dataCheckGroups(t, items, resetRate).map((g, n) => {
         const problemId = `${baseId}-${n}`;
         return (
-          <li key={problemId} className="dc-line">
-            <Icon className="dc-icon" size={16} aria-hidden="true" />
-            <div className="dc-body">
-              <p className="dc-problem" id={problemId}>
-                {g.headline}
-              </p>
-              <div className="dc-chips">
-                {g.chips.map((c, i) => {
-                  const chipId = `${problemId}-${i}`;
-                  const go = fixLabel(t, c.fix);
-                  return (
-                    <Fragment key={chipId}>
-                      <button
-                        type="button"
-                        className="dc-chip"
-                        aria-labelledby={`${chipId} ${problemId}`}
-                        // A portfolio chip already reads its destination.
-                        aria-describedby={
-                          c.name === null ? undefined : `${chipId}-go`
-                        }
-                        title={go}
-                        onClick={() => onFix(c.propertyId, c.fix)}
-                      >
-                        <span id={chipId}>
-                          {c.name ?? go}
-                          {c.detail && ` · ${c.detail}`}
-                        </span>
-                        <ChevronRight size={14} aria-hidden="true" />
-                      </button>
-                      {/* The destination, as the chip's description. */}
-                      {c.name !== null && (
-                        <span id={`${chipId}-go`} hidden>
-                          {go}
-                        </span>
-                      )}
-                    </Fragment>
-                  );
-                })}
-              </div>
-            </div>
-          </li>
+          <DataCheckRow
+            key={problemId}
+            kind={kind}
+            text={g.headline}
+            textId={problemId}
+          >
+            {g.chips.map((c, i) => {
+              const chipId = `${problemId}-${i}`;
+              const go = fixLabel(t, c.fix);
+              return (
+                <Fragment key={chipId}>
+                  <button
+                    type="button"
+                    className="dc-chip"
+                    aria-labelledby={`${chipId} ${problemId}`}
+                    // A portfolio chip already reads its destination.
+                    aria-describedby={
+                      c.name === null ? undefined : `${chipId}-go`
+                    }
+                    title={go}
+                    onClick={() => onFix(c.propertyId, c.fix)}
+                  >
+                    <span id={chipId}>
+                      {c.name ?? go}
+                      {c.detail && ` · ${c.detail}`}
+                    </span>
+                    <ChevronRight size={14} aria-hidden="true" />
+                  </button>
+                  {/* The destination, as the chip's description. */}
+                  {c.name !== null && (
+                    <span id={`${chipId}-go`} hidden>
+                      {go}
+                    </span>
+                  )}
+                </Fragment>
+              );
+            })}
+          </DataCheckRow>
         );
       })}
-    </ul>
+    </DataCheckBlock>
   );
 }
 
@@ -120,7 +122,15 @@ export function DataCheckPanel({
     <div id={DATA_CHECK_ID} className="dc-anchor">
       <Panel
         title={d.title}
-        hint={d.asOfNote(fmtDate(asOf))}
+        badges={
+          !empty && (
+            <DataCheckCounts
+              attention={attention.length}
+              defaults={defaults.length}
+            />
+          )
+        }
+        info={d.asOfNote(fmtDate(asOf))}
         action={
           !empty && (
             <span className="preset-toggle">
@@ -135,48 +145,29 @@ export function DataCheckPanel({
           )
         }
       >
-        <p className="dc-summary">
-          <span className={attention.length > 0 ? "dc-count warn" : "dc-count"}>
-            {attention.length > 0 && (
-              <AlertTriangle size={16} aria-hidden="true" />
-            )}
-            {attention.length > 0
-              ? d.needAttention(attention.length)
-              : d.attentionNone}
-          </span>
-          {defaults.length > 0 && (
-            <>
-              {/* Two counts, two phrases for a screen reader too. */}
-              <span className="sr-only"> · </span>
-              <span className="dc-count">
-                <Info size={16} aria-hidden="true" />
-                {d.useDefaults(defaults.length)}
-              </span>
-            </>
-          )}
-        </p>
-        <div id={bodyId}>
+        {empty && <DataCheckClear />}
+        <div id={bodyId} hidden={!open}>
           {open && (
-            <>
+            <DataCheckBlocks>
               {attention.length > 0 && (
-                <GroupedList
+                <GroupedBlock
                   items={attention}
-                  list="attention"
-                  label={d.attentionTitle}
+                  kind="attention"
+                  title={d.attentionTitle}
                   resetRate={resetRate}
                   onFix={onFix}
                 />
               )}
               {defaults.length > 0 && (
-                <GroupedList
+                <GroupedBlock
                   items={defaults}
-                  list="defaults"
-                  label={d.defaultsTitle}
+                  kind="defaults"
+                  title={d.defaultsTitle}
                   resetRate={resetRate}
                   onFix={onFix}
                 />
               )}
-            </>
+            </DataCheckBlocks>
           )}
         </div>
       </Panel>

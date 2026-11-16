@@ -810,88 +810,140 @@
   font-size: 13px;
   margin-bottom: var(--s4);
 }
-/* Data check rows: the finding and its effect, then the link to its fix in a column of
-   its own (ADR 0118). */
-.data-check > .panel-subhead:first-child {
-  margin-top: 0;
-}
-.data-check-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--s2);
-}
-.data-check-list li {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: var(--s3);
-  font-size: 13px;
-}
-.data-check-list.quiet li {
-  font-size: 12.5px;
-  color: var(--ink-soft);
-}
-
-/* The Dashboard's grouped Data check (ADR 0206). The filter bar's link scrolls the panel
-   to just under the sticky topbar. */
+/* The Data check (ADR 0118, 0206, 0223), on the Dashboard and Property detail. The title
+   pill scrolls the panel to just under the sticky topbar. */
 .dc-anchor {
   scroll-margin-top: calc(var(--topbar-h, 0px) + var(--s3));
 }
-/* The summary row: always shown, the counts with their icons. */
-.dc-summary {
-  display: flex;
+/* The counts, on a line under the head: amber, a green check, or neutral. */
+.dc-pills {
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: var(--s1) var(--s5);
+  gap: var(--s1);
+  align-items: center;
+}
+.dc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.dc-pill > svg {
+  flex: none;
+}
+/* The app's warning look: sand ground, warn ink (4.63:1, ADR 0157). */
+.dc-pill.warn {
+  background: var(--chip-bg);
+  color: var(--warn);
+  font-weight: 600;
+}
+.dc-pill.ok > svg,
+.dc-clear > svg {
+  color: var(--positive);
+}
+/* All clear: one quiet line. */
+.dc-clear {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
   margin: 0;
   font-size: 13px;
   color: var(--ink-soft);
 }
-.dc-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+/* Two blocks side by side on a wide container, stacked on a narrow one. */
+.dc-blocks-wrap {
+  container-type: inline-size;
 }
-.dc-count.warn {
-  color: var(--ink);
+.dc-blocks {
+  display: grid;
+  gap: var(--s4);
+}
+@container (min-width: 880px) {
+  .dc-blocks:has(> .dc-block + .dc-block) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+/* Each block is its rows' container: a row's fix wraps by the block's own width. */
+.dc-block {
+  container-type: inline-size;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  min-width: 0;
+}
+.dc-block-head {
+  margin: 0;
+  padding: var(--s2) var(--s3);
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--font-text);
+  font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
 }
-.dc-count.warn > svg,
-.dc-lines.attention .dc-icon {
+/* Amber-tinted for what needs attention; the defaults block's head stays neutral. */
+.dc-block.attention .dc-block-head {
   color: var(--warn);
+  background: var(--chip-bg);
 }
-.dc-lines {
+.dc-rows {
   list-style: none;
-  margin: var(--s3) 0 0;
-  padding: 0;
-  display: grid;
-  gap: var(--s3);
+  margin: 0;
+  padding: 0 var(--s3);
 }
-.dc-line {
+/* A row: icon, problem, the fix on the right; the fix wraps under the problem when the
+   block is narrow. */
+.dc-row {
   display: grid;
-  grid-template-columns: 16px minmax(0, 1fr);
-  gap: var(--s2);
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  gap: var(--s2) var(--s3);
   align-items: start;
+  padding: var(--s2) 0;
+}
+.dc-row + .dc-row {
+  border-top: 1px solid var(--hairline);
 }
 .dc-icon {
   margin-top: 2px;
 }
-.dc-lines.defaults .dc-icon {
+.dc-block.attention .dc-icon {
+  color: var(--warn);
+}
+.dc-block.defaults .dc-icon {
   color: var(--ink-soft);
 }
 .dc-problem {
   margin: 0;
   font-size: 13px;
 }
-.dc-lines.defaults .dc-problem {
+.dc-block.defaults .dc-problem {
   color: var(--ink-soft);
 }
-.dc-chips {
+.dc-row-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 6px;
-  margin-top: 6px;
+  max-width: 22rem;
+}
+@container (max-width: 679px) {
+  .dc-row {
+    grid-template-columns: 16px minmax(0, 1fr);
+  }
+  .dc-row-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+    max-width: none;
+  }
 }
 /* A chip is the link to the fix: 24 px tall (WCAG target size), the name never cut. */
 .dc-chip {
@@ -2758,6 +2810,17 @@ main.page:focus {
   display: flex;
   align-items: center;
   gap: var(--s3);
+}
+/* The Data check's counts: a line of their own under the head (ADR 0223 §1). */
+.panel > .panel-badges {
+  padding: var(--s4) var(--s5) 0;
+}
+.panel > .panel-badges + .panel-body {
+  padding-top: var(--s3);
+}
+/* Collapsed: the counts close the panel, with even space around them. */
+.panel > .panel-badges + .panel-body:has(> [hidden]:only-child) {
+  padding: 0 0 var(--s4);
 }
 /* Dense projection table: N/A flow cells. */
 /* --ink-soft, not --ink-faint: totals rows sit on --paper-2 (ADR 0157). */

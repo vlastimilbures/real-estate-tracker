@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 //
-// ADR 0118 (#35), ADR 0206 (#378): the Dashboard "Data check" panel: last on the page, a
-// summary row first, findings grouped by problem with a chip per property.
+// ADR 0118 (#35), ADR 0206 (#378), ADR 0223 (#422): the Dashboard "Data check" panel:
+// last on the page, the counts as pills in its head, findings grouped by problem in a
+// block per list, a chip per property.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -43,7 +44,20 @@ function renderPanel(
 // The panel's Show/Hide toggle (the title's pill also names the Data check).
 const toggle = () =>
   screen.getByRole("button", { name: /^(show|hide) data check$/i });
-const lines = () => document.querySelectorAll(".dc-line");
+const lines = () => document.querySelectorAll(".dc-row");
+const head = () =>
+  screen
+    .getByRole("heading", { level: 2, name: d.title })
+    .closest(".panel") as HTMLElement;
+const pills = () =>
+  [...head().querySelectorAll(".dc-pill")].map((x) => x.textContent);
+/** The text behind the panel's info icon (ADR 0217). */
+const infoText = () => {
+  const b = within(head()).getByRole("button", {
+    name: `${en.common.aboutThis}: ${d.title}`,
+  });
+  return document.getElementById(b.getAttribute("aria-controls")!)?.textContent;
+};
 const chip = (name: RegExp) => screen.getByRole("button", { name });
 
 beforeEach(() =>
@@ -51,12 +65,13 @@ beforeEach(() =>
 );
 
 describe("Data check panel (ADR 0118, ADR 0206)", () => {
-  it("only defaults: collapsed to its summary row, with the as-of date", () => {
+  it("only defaults: collapsed, the counts in the head, the as-of date behind the info icon (ADR 0223 §1)", () => {
     renderPanel(portfolio);
     expect(screen.getByText(d.title)).toBeTruthy();
-    expect(screen.getByText(d.attentionNone)).toBeTruthy();
-    expect(screen.getByText(d.useDefaults(6))).toBeTruthy();
-    expect(screen.getByText("Checked as of 07.06.2026.")).toBeTruthy();
+    expect(pills()).toEqual([d.attentionNone, d.useDefaults(6)]);
+    expect(head().querySelector(".dc-pill.ok")).not.toBeNull();
+    expect(infoText()).toBe("Checked as of 07.06.2026.");
+    expect(document.querySelector(".dc-summary")).toBeNull();
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
     expect(lines()).toHaveLength(0);
   });
@@ -64,8 +79,23 @@ describe("Data check panel (ADR 0118, ADR 0206)", () => {
   it("something needs attention: open, four lines instead of twelve sentences", () => {
     renderPanel(portfolio, fiveYears);
     expect(toggle().getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByText(d.needAttention(6))).toBeTruthy();
-    expect(screen.getByText(d.useDefaults(6))).toBeTruthy();
+    expect(pills()).toEqual([d.needAttention(6), d.useDefaults(6)]);
+    expect(head().querySelector(".dc-pill.warn")).not.toBeNull();
+    // A block per list, each a heading over the list it names (ADR 0223 §2).
+    expect(
+      [...document.querySelectorAll(".dc-block")].map((b) => [
+        b.className,
+        b.querySelector("h3")?.textContent,
+      ]),
+    ).toEqual([
+      ["dc-block attention", d.attentionTitle],
+      ["dc-block defaults", d.defaultsTitle],
+    ]);
+    // Each row: its icon, the problem, the chips on the right.
+    for (const row of lines()) {
+      expect(row.querySelector(".dc-icon")).not.toBeNull();
+      expect(row.querySelector(".dc-row-actions .dc-chip")).not.toBeNull();
+    }
     expect(
       [...lines()].map((l) => l.querySelector(".dc-problem")?.textContent),
     ).toEqual([
@@ -124,14 +154,14 @@ describe("Data check panel (ADR 0118, ADR 0206)", () => {
         );
   });
 
-  it("the summary reads as two phrases", () => {
+  it("the head's counts read as two phrases", () => {
     renderPanel(portfolio, fiveYears);
-    expect(document.querySelector(".dc-summary")?.textContent).toBe(
+    expect(head().querySelector(".dc-pills")?.textContent).toBe(
       `${d.needAttention(6)} · ${d.useDefaults(6)}`,
     );
   });
 
-  it("a manual Show / Hide wins for the session; the summary stays", async () => {
+  it("a manual Show / Hide wins for the session; the counts stay", async () => {
     renderPanel(portfolio);
     await userEvent.click(toggle());
     expect(useUiStore.getState().dataCheckOpen).toBe(true);
@@ -142,7 +172,9 @@ describe("Data check panel (ADR 0118, ADR 0206)", () => {
     ).toHaveLength(3);
     await userEvent.click(toggle());
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
-    expect(screen.getByText(d.useDefaults(6))).toBeTruthy();
+    expect(pills()).toContain(d.useDefaults(6));
+    // Shown, not inside the hidden body.
+    expect(head().querySelector(".dc-pill")!.closest("[hidden]")).toBeNull();
   });
 
   it("leaves out inactive properties, as the Dashboard's totals do", () => {
@@ -170,9 +202,14 @@ describe("Data check panel (ADR 0118, ADR 0206)", () => {
       })),
     };
     renderPanel(own);
-    expect(screen.queryByRole("button")).toBeNull();
+    // Only the as-of info icon: no toggle, no chips (ADR 0223 §4).
+    expect(
+      screen.getAllByRole("button").map((b) => b.getAttribute("aria-label")),
+    ).toEqual([`${en.common.aboutThis}: ${d.title}`]);
     expect(lines()).toHaveLength(0);
-    expect(screen.getByText(d.attentionNone)).toBeTruthy();
+    expect(document.querySelector(".dc-clear")?.textContent).toBe(
+      d.attentionNone,
+    );
     expect(screen.queryByText(d.useDefaults(0))).toBeNull();
   });
 });
@@ -207,7 +244,7 @@ describe("Data check on the Dashboard page (ADR 0118, ADR 0206)", () => {
   it("checks the filtered properties at the snapshot date; a chip opens the property there", async () => {
     showDashboard(["lipova"], fiveYears);
     expect(screen.getByText(d.needAttention(2))).toBeTruthy();
-    expect(screen.getByText("Checked as of 07.06.2031.")).toBeTruthy();
+    expect(infoText()).toBe("Checked as of 07.06.2031.");
     expect(
       screen.queryByRole("button", { name: /^Byt Javorova ·/ }),
     ).toBeNull();
@@ -285,7 +322,7 @@ describe("Data check on the Dashboard: dates before 1900 (ADR 0149)", () => {
       .getByText(
         "A lease date 01.07.1025 is before 01.01.1900, the earliest date the forms accept. Check the year for a typo.",
       )
-      .closest(".dc-line") as HTMLElement;
+      .closest(".dc-row") as HTMLElement;
     await userEvent.click(
       within(line).getByRole("button", { name: /^Byt Dubova/ }),
     );
@@ -306,5 +343,26 @@ describe("Data check on the Dashboard: dates before 1900 (ADR 0149)", () => {
       }),
     );
     expect(onFix).toHaveBeenCalledWith(null, "assumptions");
+  });
+});
+
+describe("Data check: all clear (ADR 0223 §4)", () => {
+  it("is the title and one quiet line with a check: no pills, no toggle, no blocks", () => {
+    render(
+      <DataCheckPanel
+        check={{ attention: [], defaults: [] }}
+        asOf={BASE_DATE}
+        resetRate={assumptions.postFixationResetRatePa}
+        onFix={() => undefined}
+      />,
+    );
+    expect(head().querySelector(".dc-pill")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /^(show|hide) data check$/i }),
+    ).toBeNull();
+    expect(document.querySelector(".dc-block")).toBeNull();
+    const line = document.querySelector(".dc-clear")!;
+    expect(line.textContent).toBe(d.attentionNone);
+    expect(line.querySelector("svg")).not.toBeNull();
   });
 });
