@@ -16,6 +16,7 @@
   follow), [0205](0205-properties-list-fits.md) (the short undrawn wording),
   [0195](0195-health-marker.md) (health marker), [0156](0156-pending-purchase-display.md)
   (a property not owned yet)
+- Amended by: [0222](0222-kpi-band.md) (§3: the band look)
 
 ## Context
 

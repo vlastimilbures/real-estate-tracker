@@ -166,7 +166,9 @@ describe("as-of labels (ADR 0088)", () => {
 
   it("horizon end year is the last projection row, whatever the as-of", () => {
     expect(horizonEndYear(series)).toBe(2056);
-    expect(en.dashboard.stripInYear(2056)).toBe("In 2056");
+    expect(en.dashboard.bandHorizonCaption(2056, 30, "nominal")).toBe(
+      "In 2056 · 30-yr horizon · nominal",
+    );
   });
 });
 

@@ -50,20 +50,27 @@ beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
 describe("Dashboard as-of labels (ADR 0088, 0200)", () => {
   const endYear = horizonEndYear(series);
-  const horizonLabel = en.dashboard.stripInYear(endYear);
+  // The horizon group's caption names the last projection year (ADR 0222 §2).
+  const horizonLabel = en.dashboard.bandHorizonCaption(
+    endYear,
+    assumptions.horizonYears,
+    en.common.nominalLower,
+  );
+  // A caption starts with a capital (ADR 0222 §2).
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
   it("+5y: no tile says today or current; the strip names projection year Y5", () => {
     const { container } = renderAt(addYears(base, 5), false);
     expect(container.textContent).not.toMatch(/today|current/i);
     expect(container.textContent).toContain(
-      en.dashboard.basisProjection(`Y5 · ${base.getUTCFullYear() + 5}`),
+      cap(en.dashboard.basisProjection(`Y5 · ${base.getUTCFullYear() + 5}`)),
     );
     expect(screen.getByText(horizonLabel)).toBeTruthy();
   });
 
   it("today: current wording", () => {
     const { container } = renderAt(base, true);
-    expect(container.textContent).toContain(en.dashboard.basisCurrent);
+    expect(container.textContent).toContain(cap(en.dashboard.basisCurrent));
     expect(screen.getByText(horizonLabel)).toBeTruthy();
   });
 

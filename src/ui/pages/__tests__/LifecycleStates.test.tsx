@@ -472,7 +472,10 @@ describe("other lifecycle states keep their tiles (#276 item 1)", () => {
     };
     load(debtFree, { route: "dashboard" });
     render(<Dashboard />);
-    const hero = tile(en.dashboard.netWorth);
+    // The as-of net worth (the horizon group has a Net worth cell too, ADR 0222).
+    const hero = screen
+      .getByTestId("kpi-networth")
+      .closest<HTMLElement>(".tile")!;
     expect(exactNetWorth()).not.toBe(fmtCzk(D(0), { suffix: false }));
     expect(shownNetWorth()).not.toBe(fmtCzkM(D(0)));
     // The foot reads the value as assets and a zero debt, at today (the mocked 01.10.2026).

@@ -1,6 +1,8 @@
 // Sub-components pulled out of Dashboard.tsx to shrink its render tree. Pure
 // presentation — no logic beyond what Dashboard.tsx already computed.
 import {
+  KpiBand,
+  KpiBandGroup,
   KpiTile,
   Panel,
   Money,
@@ -23,6 +25,7 @@ import { fmtCzkM, fmtMultiple, fmtPct, noBreak } from "../../lib/format";
 import type { ReactNode } from "react";
 import { dscrBadge, ltvBadge } from "../model/health";
 import {
+  basisCaption,
   basisText,
   monthlyFlow,
   monthlyFlowHint,
@@ -37,8 +40,8 @@ import type { Decimal } from "../../lib/money";
 import type { Mode } from "../../state/uiStore";
 import { useT } from "../hooks/useT";
 
-/** The Dashboard's KPI strip (ADR 0200): six compact tiles; the basis is named once, in
- *  the net cash flow foot. */
+/** The Dashboard's KPI band (ADR 0200, 0222): as of the chosen date, then at the
+ *  horizon, each group captioned with what it is for. */
 export function KpiStrip({
   s,
   basis,
@@ -69,8 +72,8 @@ export function KpiStrip({
   const undrawn = undrawnPart(s.totalUndrawnDebt);
   const flow = monthlyFlow(s);
   return (
-    <div className="kpi-strip-wrap">
-      <div className="kpi-strip">
+    <KpiBand>
+      <KpiBandGroup caption={basisCaption(t, basis)} cells={4}>
         <KpiTile
           compact
           delay={0}
@@ -94,39 +97,6 @@ export function KpiStrip({
         <KpiTile
           compact
           delay={24}
-          label={d.stripInYear(horizonEndYear)}
-          value={<MoneyM value={horizon} />}
-          foot={d.stripHorizonFoot(
-            netWorthMultiple ? fmtMultiple(netWorthMultiple) : "—",
-            horizonYears,
-            modeWord,
-          )}
-        />
-        <KpiTile
-          compact
-          delay={48}
-          label={d.leveredIrr}
-          value={<IrrValue irr={irr} dp={1} />}
-          valueTitle={irr.rate ? fmtPct(irr.rate, 2) : undefined}
-          foot={d.irrFoot(horizonYears, modeWord)}
-        />
-        <KpiTile
-          compact
-          delay={72}
-          label={d.portfolioLtv}
-          value={<Pct value={s.ltv} dp={1} />}
-          health={ltvBadge(t, s.ltv)}
-        />
-        <KpiTile
-          compact
-          delay={96}
-          label={d.portfolioDscr}
-          value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
-          health={dscrBadge(t, s.dscr)}
-        />
-        <KpiTile
-          compact
-          delay={120}
           label={d.stripNetCashFlow}
           value={
             <>
@@ -137,12 +107,48 @@ export function KpiStrip({
           foot={
             <>
               <Money value={s.netCashFlow} />
-              {d.perYearBasis(basisText(t, basis))}
+              {d.perYear}
             </>
           }
         />
-      </div>
-    </div>
+        <KpiTile
+          compact
+          delay={48}
+          label={d.portfolioLtv}
+          value={<Pct value={s.ltv} dp={1} />}
+          health={ltvBadge(t, s.ltv)}
+        />
+        <KpiTile
+          compact
+          delay={72}
+          label={d.portfolioDscr}
+          value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
+          health={dscrBadge(t, s.dscr)}
+        />
+      </KpiBandGroup>
+      <KpiBandGroup
+        caption={d.bandHorizonCaption(horizonEndYear, horizonYears, modeWord)}
+        cells={2}
+      >
+        <KpiTile
+          compact
+          delay={96}
+          label={d.netWorth}
+          value={<MoneyM value={horizon} />}
+          foot={d.bandMultiple(
+            netWorthMultiple ? fmtMultiple(netWorthMultiple) : "—",
+          )}
+        />
+        <KpiTile
+          compact
+          delay={120}
+          label={d.leveredIrr}
+          value={<IrrValue irr={irr} dp={1} />}
+          valueTitle={irr.rate ? fmtPct(irr.rate, 2) : undefined}
+          foot={d.bandIrrFoot}
+        />
+      </KpiBandGroup>
+    </KpiBand>
   );
 }
 

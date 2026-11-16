@@ -100,7 +100,7 @@ describe("Dashboard risk tiles", () => {
 /** A Property detail tile by its label (ADR 0215: one strip of six). */
 function stripTile(label: string): HTMLElement {
   const tile = [
-    ...document.querySelectorAll<HTMLElement>(".kpi-strip .tile"),
+    ...document.querySelectorAll<HTMLElement>(".kpi-band .tile"),
   ].find((e) => e.querySelector(".label")?.textContent === label);
   if (!tile) throw new Error(`no ${label} tile`);
   return tile;

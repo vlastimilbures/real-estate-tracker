@@ -212,6 +212,12 @@ export function basisText(t: Dictionary, basis: AsOfBasis): string {
   return d.basisProjection(yearLabel(t, basis.year, basis.calendarYear));
 }
 
+/** The KPI band's as-of caption: the basis, starting with a capital (ADR 0222 §2). */
+export function basisCaption(t: Dictionary, basis: AsOfBasis): string {
+  const text = basisText(t, basis);
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 /** How the KPI list's monthly figures are made (ADR 0088 §3, kept by ADR 0200 §3): a
  *  projection year's are its annual figures ÷ 12; otherwise the run rate of the leases
  *  in force on the as-of date ÷ 12. */

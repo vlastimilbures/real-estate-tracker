@@ -343,34 +343,71 @@ async function expectCompareLayout(ux: Ux) {
 /** The KPI strip (ADR 0200 §4): six tiles, one row when the strip is at least 960 px
  *  wide (the 1200 × 800 default window is three by two), nothing cut off, and at most
  *  `maxHeight` tall in one row: 96 px, more only where a foot carries a note. */
+/** The KPI band (ADR 0200, 0222): one surface of captioned groups — the Dashboard's
+ *  4 + 2 cells side by side from 960 px of band width (stacked below, the four in one
+ *  row from 640 px), Property detail's six in one row from 960 px (three by two below);
+ *  every label on one line, no value cut off, a cell at most `maxHeight` tall. */
 async function expectKpiStrip(ux: Ux, maxHeight = 96) {
-  const m = await ux.page.locator(".kpi-strip").evaluate((strip) => ({
-    width: strip.getBoundingClientRect().width,
-    tiles: Array.from(strip.children, (tile) => {
-      const r = tile.getBoundingClientRect();
-      const fits = (sel: string) => {
-        const el = tile.querySelector<HTMLElement>(sel)!;
-        return el.scrollWidth <= el.clientWidth + 1;
-      };
-      return {
-        text: tile.querySelector(".label")?.textContent ?? "",
-        top: Math.round(r.top),
-        height: r.height,
-        label: fits(":scope > .label"),
-        value: fits(":scope > .value"),
-      };
-    }),
-  }));
-  expect(m.tiles).toHaveLength(6);
-  const rows = new Set(m.tiles.map((t) => t.top)).size;
-  expect(rows, "strip rows").toBe(m.width >= 960 ? 1 : 2);
-  for (const t of m.tiles) {
-    expect(t.label, `label "${t.text}" on one line`).toBe(true);
-    expect(t.value, `value of "${t.text}" not cut off`).toBe(true);
-    if (m.width >= 960)
-      expect(t.height, `"${t.text}" tile height`).toBeLessThanOrEqual(
-        maxHeight,
-      );
+  const m = await ux.page.locator(".kpi-band").evaluate((band) => {
+    const groups = Array.from(
+      band.querySelectorAll<HTMLElement>(":scope > [role=group]"),
+    );
+    return {
+      width: band.getBoundingClientRect().width,
+      groupTops: groups.map((g) => Math.round(g.getBoundingClientRect().top)),
+      groups: groups.map((g) => {
+        const caption = g.querySelector(".kpi-band-caption")!;
+        const tiles = Array.from(g.querySelectorAll<HTMLElement>(".tile"));
+        const cells = g.querySelector<HTMLElement>(".kpi-band-cells")!;
+        return {
+          // The cells stay inside their group, never painting over the next one.
+          cellsFit: cells.scrollWidth <= g.clientWidth + 1,
+          named: g.getAttribute("aria-labelledby") === caption.id,
+          caption: caption.textContent ?? "",
+          captionFits: caption.scrollWidth <= caption.clientWidth + 1,
+          rows: new Set(
+            tiles.map((t) => Math.round(t.getBoundingClientRect().top)),
+          ).size,
+          tiles: tiles.map((tile) => {
+            const fits = (sel: string) => {
+              const el = tile.querySelector<HTMLElement>(sel)!;
+              return el.scrollWidth <= el.clientWidth + 1;
+            };
+            return {
+              text: tile.querySelector(".label")?.textContent ?? "",
+              height: tile.getBoundingClientRect().height,
+              label: fits(":scope > .label"),
+              value: fits(":scope > .value"),
+            };
+          }),
+        };
+      }),
+    };
+  });
+  const counts = m.groups.map((g) => g.tiles.length);
+  const wide = m.width >= 960;
+  if (counts.length === 2) {
+    expect(counts, "as-of and horizon cells").toEqual([4, 2]);
+    expect(new Set(m.groupTops).size, "groups side by side").toBe(wide ? 1 : 2);
+    expect(m.groups[0]!.rows, "as-of rows").toBe(m.width >= 640 ? 1 : 2);
+    expect(m.groups[1]!.rows, "horizon rows").toBe(1);
+  } else {
+    expect(counts, "one group of six").toEqual([6]);
+    expect(m.groups[0]!.rows, "rows").toBe(wide ? 1 : 2);
+  }
+  for (const g of m.groups) {
+    expect(g.named, `group "${g.caption}" named by its caption`).toBe(true);
+    expect(g.caption.length, "caption text").toBeGreaterThan(0);
+    expect(g.captionFits, `caption "${g.caption}" on one line`).toBe(true);
+    expect(g.cellsFit, `cells of "${g.caption}" inside their group`).toBe(true);
+    for (const t of g.tiles) {
+      expect(t.label, `label "${t.text}" on one line`).toBe(true);
+      expect(t.value, `value of "${t.text}" not cut off`).toBe(true);
+      if (wide)
+        expect(t.height, `"${t.text}" cell height`).toBeLessThanOrEqual(
+          maxHeight,
+        );
+    }
   }
 }
 
@@ -1724,7 +1761,7 @@ export const SCREENS: Screen[] = [
       // The undrawn note is the Debt tile's foot, on one row of tiles (ADR 0215).
       await expect(
         ux.page
-          .locator(".kpi-strip .tile")
+          .locator(".kpi-band .tile")
           .filter({
             has: ux.page.locator(".label", {
               hasText: new RegExp(`^${d.debt}$`),

@@ -128,20 +128,25 @@ describe("tiles (ADR 0215 §3)", () => {
     en.dashboard.stripNetCashFlow,
   ];
 
-  it("are the strip's six compact tiles, in order", () => {
+  it("are one band of six cells in one group, captioned with the basis (ADR 0222 §4)", () => {
     const { container } = render(<PropertyDetail />);
-    const strip = container.querySelector(".kpi-strip-wrap .kpi-strip")!;
+    const strip = container.querySelector(".kpi-strip-wrap .kpi-band")!;
     expect(strip).not.toBeNull();
     const tiles = [...strip.querySelectorAll(".tile")];
     expect(tiles.every((tl) => tl.classList.contains("compact"))).toBe(true);
     expect(tiles.map((tl) => tl.querySelector(".label")?.textContent)).toEqual(
       labels,
     );
+    const groups = strip.querySelectorAll(":scope > [role=group]");
+    expect(groups).toHaveLength(1);
+    expect(groups[0]!.querySelector(".kpi-band-caption")?.textContent).toBe(
+      "Current",
+    );
   });
 
   it("LTV and DSCR are tiles with their markers; Debt's foot no longer holds LTV", () => {
     const { container } = render(<PropertyDetail />);
-    const tiles = [...container.querySelectorAll(".kpi-strip .tile")];
+    const tiles = [...container.querySelectorAll(".kpi-band .tile")];
     const debt = tiles[1]!;
     expect(debt.querySelector(".foot")).toBeNull();
     for (const i of [3, 4]) {
@@ -149,7 +154,7 @@ describe("tiles (ADR 0215 §3)", () => {
     }
   });
 
-  it("net cash flow is per month, with the year and the basis in the foot", () => {
+  it("net cash flow is per month, with the year in the foot", () => {
     const s = propertySnapshot(p, portfolio, assumptions);
     render(
       <PropertySnapshotTiles
@@ -167,7 +172,7 @@ describe("tiles (ADR 0215 §3)", () => {
       `${fmtCzk(monthlyFlow(s).net)}${en.dashboard.perMonth}`,
     );
     expect(tile.querySelector(".foot")?.textContent).toBe(
-      `${fmtCzk(s.netCashFlow)}${en.dashboard.perYearBasis(en.dashboard.basisCurrent)}`,
+      `${fmtCzk(s.netCashFlow)}${en.dashboard.perYear}`,
     );
   });
 });
@@ -181,13 +186,16 @@ describe("net cash flow in a projection year, real lens (ADR 0215 §3)", () => {
       }),
     );
     const { container } = render(<PropertyDetail />);
-    const tile = [...container.querySelectorAll(".kpi-strip .tile")].find(
+    const tile = [...container.querySelectorAll(".kpi-band .tile")].find(
       (tl) =>
         tl.querySelector(".label")?.textContent ===
         en.dashboard.stripNetCashFlow,
     )!;
-    const foot = tile.querySelector(".foot")!.textContent!;
-    expect(foot).toContain(en.dashboard.basisProjection("").trim());
+    // The basis is the band's caption (ADR 0222 §4).
+    const caption = container.querySelector(".kpi-band-caption")!.textContent!;
+    expect(caption.toLowerCase()).toContain(
+      en.dashboard.basisProjection("").trim(),
+    );
     const num = (s: string) => {
       const neg = s.includes("(");
       const n = Number(s.replace(/[^0-9]/g, ""));

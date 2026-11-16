@@ -53,8 +53,12 @@ describe("Dashboard KPIs by lens (ADR 0087)", () => {
     const { container } = renderPanels("real");
     const real = fmtMultiple(kpis.netWorthMultipleReal!);
     const nominal = fmtMultiple(kpis.netWorthMultiple!);
+    expect(screen.getByText(en.dashboard.bandMultiple(real))).toBeTruthy();
+    // The horizon group is named by its caption, which carries the lens (ADR 0222).
     expect(
-      screen.getByText(en.dashboard.stripHorizonFoot(real, N, "real")),
+      screen.getByRole("group", {
+        name: new RegExp(`· ${N}-yr horizon · real$`),
+      }),
     ).toBeTruthy();
     expect(container.textContent).not.toContain(nominal);
     expect(screen.getByText(en.dashboard.kpiHintReal)).toBeTruthy();
@@ -69,8 +73,11 @@ describe("Dashboard KPIs by lens (ADR 0087)", () => {
   it("nominal: nominal multiple, plain principal label", () => {
     renderPanels("nominal");
     const nominal = fmtMultiple(kpis.netWorthMultiple!);
+    expect(screen.getByText(en.dashboard.bandMultiple(nominal))).toBeTruthy();
     expect(
-      screen.getByText(en.dashboard.stripHorizonFoot(nominal, N, "nominal")),
+      screen.getByRole("group", {
+        name: new RegExp(`· ${N}-yr horizon · nominal$`),
+      }),
     ).toBeTruthy();
     expect(screen.getByText(en.dashboard.kpiHintNominal)).toBeTruthy();
     expect(

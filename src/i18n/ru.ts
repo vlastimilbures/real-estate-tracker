@@ -283,8 +283,6 @@ export const ru: Dictionary = {
     netWorth: "Чистые активы",
     realTodayKc: " · реально (Kč на базовую дату)",
     leveredIrr: "IRR с плечом",
-    irrFoot: (n, mode) =>
-      `${n} ${ruPlural(n, ["год", "года", "лет"])} · после долга · ${mode}`,
     portfolioLtv: "LTV портфеля",
     badgeConservative: "Консервативно",
     badgeModerate: "Средне",
@@ -293,13 +291,14 @@ export const ru: Dictionary = {
     badgeCoversDebt: "Покрывает долг",
     badgeShortfall: "Дефицит",
     netYieldCap: "Чистая доходность (cap rate)",
-    stripInYear: (endYear) => `В ${endYear} г.`,
     stripAssetsDebt: (assets, debt) => `Активы ${assets} · долг ${debt}`,
-    stripHorizonFoot: (mult, n, mode) =>
-      `${mult} · горизонт ${n} ${ruPlural(n, ["год", "года", "лет"])} · ${mode}`,
+    bandHorizonCaption: (endYear, n, mode) =>
+      `В ${endYear} г. · горизонт ${n} ${ruPlural(n, ["год", "года", "лет"])} · ${mode}`,
+    bandMultiple: (mult) => `Множитель ${mult}`,
+    bandIrrFoot: "после долга",
     stripNetCashFlow: "Чистый поток",
     perMonth: "/мес.",
-    perYearBasis: (basis) => `/год · ${basis}`,
+    perYear: "/год",
     basisCurrent: "сейчас",
     basisProjection: (year) => `год прогноза ${year}`,
     basisOn: (d) => `на ${d}`,

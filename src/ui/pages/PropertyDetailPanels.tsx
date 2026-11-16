@@ -6,6 +6,8 @@ import { Ban, Check, Clock, Pencil } from "lucide-react";
 import { InfoTip } from "../components/InfoTip";
 import { MetricLabel } from "../components/MetricLabel";
 import {
+  KpiBand,
+  KpiBandGroup,
   KpiTile,
   Panel,
   Badge,
@@ -41,7 +43,7 @@ import {
 } from "../model/propertyDetail";
 import type { AcquisitionView } from "../model/acquisition";
 import { dscrBadge, ltvBadge } from "../model/health";
-import { basisText, monthlyFlow, type AsOfBasis } from "../model/dashboard";
+import { basisCaption, monthlyFlow, type AsOfBasis } from "../model/dashboard";
 import { CZK } from "../../lib/currency";
 import type {
   PropertySnapshot,
@@ -152,8 +154,8 @@ function NotOwnedPanel({ purchaseDate }: { purchaseDate: Date }) {
   );
 }
 
-/** The snapshot tiles of an owned property: the Dashboard strip's compact tiles
- *  (ADR 0200 §4, 0215 §3). */
+/** The snapshot of an owned property: the Dashboard's KPI band, one group captioned with
+ *  the basis (ADR 0215 §3, 0222 §4). */
 function SnapshotTiles({
   s,
   basis,
@@ -167,8 +169,8 @@ function SnapshotTiles({
   const undrawn = undrawnPart(s.undrawnDebt);
   const flow = monthlyFlow(s);
   return (
-    <div className="kpi-strip-wrap">
-      <div className="kpi-strip">
+    <KpiBand>
+      <KpiBandGroup caption={basisCaption(t, basis)} cells={6}>
         {/* ADR 0169: the value less the tranches not drawn yet, beside the drawn debt. */}
         <KpiTile
           compact
@@ -219,12 +221,12 @@ function SnapshotTiles({
           foot={
             <>
               <Money value={s.netCashFlow} />
-              {d.perYearBasis(basisText(t, basis))}
+              {d.perYear}
             </>
           }
         />
-      </div>
-    </div>
+      </KpiBandGroup>
+    </KpiBand>
   );
 }
 
