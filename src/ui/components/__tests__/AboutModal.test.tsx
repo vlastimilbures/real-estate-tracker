@@ -2,17 +2,12 @@
 //
 // UX-064 (D-64): the offline app opens nothing outside itself, so About shows the source
 // address and the feedback (issues) address as plain, selectable text — no links.
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AboutModal } from "../AboutModal";
 import { Modal } from "../Modal";
-import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
-
-beforeEach(() => {
-  act(() => useUiStore.setState({ language: "en" }));
-});
 
 describe("About (UX-064)", () => {
   it("has no links", () => {

@@ -11,9 +11,7 @@ import { en } from "../../../i18n/en";
 beforeEach(() =>
   act(() =>
     useUiStore.setState({
-      language: "en",
       route: "properties",
-      guideTerm: null,
     }),
   ),
 );

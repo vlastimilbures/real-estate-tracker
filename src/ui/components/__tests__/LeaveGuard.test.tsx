@@ -14,11 +14,7 @@ import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 beforeEach(() => {
   act(() => {
     useUiStore.setState({
-      language: "en",
       route: "settings",
-      settingsTab: "assumptions",
-      unsavedChanges: false,
-      pendingLeave: null,
     });
     usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
   });

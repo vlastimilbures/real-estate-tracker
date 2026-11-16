@@ -24,13 +24,10 @@ vi.mock("../../pages/ScenarioCompare", () => ({ CompareView: () => null }));
 
 beforeEach(() =>
   act(() => {
-    useUiStore.setState({ language: "en", asOf: null });
     usePortfolioStore.setState({
       portfolio,
       assumptions,
       status: "ready",
-      scenarios: [],
-      unreadableScenarios: [],
     });
   }),
 );
