@@ -275,9 +275,9 @@ describe("i18n dictionaries — plural forms", () => {
       "dataCheck.outOfRangeHorizon",
     ];
     const counted = [...common, ...financing, ...dataCheck, ...rest];
-    // English writes the horizon and the IRR foot as compounds ("25-yr"); Czech and
+    // English writes the KPI band's horizon caption as a compound ("25-yr"); Czech and
     // Russian count years.
-    const withIrrFoot = [
+    const withHorizon = [
       ...common,
       "dashboard.bandHorizonCaption",
       ...financing,
@@ -286,7 +286,7 @@ describe("i18n dictionaries — plural forms", () => {
     ];
     // Czech declines the shock summary's year word; English and Russian abbreviate it
     // ("3y", "3 г."), as the wording log of 2026-10-11 records (#146 R4-04).
-    const csShocks = withIrrFoot.flatMap((k) =>
+    const csShocks = withHorizon.flatMap((k) =>
       k === "scenarios.reachHits"
         ? ["scenarios.sumInflationShock", "scenarios.sumRateShock", k]
         : [k],
@@ -296,7 +296,7 @@ describe("i18n dictionaries — plural forms", () => {
     expect(countInflected("ru")).toEqual([
       ...common,
       "dashboard.subFilter",
-      ...withIrrFoot.slice(common.length),
+      ...withHorizon.slice(common.length),
     ]);
     expect(countInflected("cs")).toEqual(csShocks);
   });

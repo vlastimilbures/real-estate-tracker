@@ -358,7 +358,10 @@ async function expectKpiStrip(ux: Ux, maxHeight = 96) {
       groups: groups.map((g) => {
         const caption = g.querySelector(".kpi-band-caption")!;
         const tiles = Array.from(g.querySelectorAll<HTMLElement>(".tile"));
+        const cells = g.querySelector<HTMLElement>(".kpi-band-cells")!;
         return {
+          // The cells stay inside their group, never painting over the next one.
+          cellsFit: cells.scrollWidth <= g.clientWidth + 1,
           named: g.getAttribute("aria-labelledby") === caption.id,
           caption: caption.textContent ?? "",
           captionFits: caption.scrollWidth <= caption.clientWidth + 1,
@@ -395,7 +398,8 @@ async function expectKpiStrip(ux: Ux, maxHeight = 96) {
   for (const g of m.groups) {
     expect(g.named, `group "${g.caption}" named by its caption`).toBe(true);
     expect(g.caption.length, "caption text").toBeGreaterThan(0);
-    expect(g.captionFits, `caption "${g.caption}" not cut off`).toBe(true);
+    expect(g.captionFits, `caption "${g.caption}" on one line`).toBe(true);
+    expect(g.cellsFit, `cells of "${g.caption}" inside their group`).toBe(true);
     for (const t of g.tiles) {
       expect(t.label, `label "${t.text}" on one line`).toBe(true);
       expect(t.value, `value of "${t.text}" not cut off`).toBe(true);

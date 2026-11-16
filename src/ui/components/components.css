@@ -502,8 +502,9 @@
   border-radius: var(--r-md);
   box-shadow: var(--shadow-tile);
 }
+/* No min-width: 0 — a group keeps at least its cells' and caption's min-content, so the
+   as-of cells take room from the horizon group rather than spill over it. */
 .kpi-band-group {
-  min-width: 0;
   padding-top: var(--s2);
 }
 .kpi-band-group.cells-4 {
@@ -518,7 +519,9 @@
 .kpi-band-group + .kpi-band-group {
   border-left: 1px solid var(--hairline);
 }
+/* One line: a caption that does not fit shows as overflow, which the capture catches. */
 .kpi-band-caption {
+  white-space: nowrap;
   margin: 0;
   padding: 0 var(--s3);
   font-size: 12px;

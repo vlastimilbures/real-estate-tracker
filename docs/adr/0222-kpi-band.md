@@ -8,7 +8,8 @@
 - Amends: [0200](0200-dashboard-kpi-strip.md) §1, §2 and §4 (six boxed tiles become one band in two
   groups; the basis and the horizon are named in the group captions),
   [0215](0215-property-detail-top.md) §3 (Property detail's tiles take the band look)
-- Related: [0208](0208-key-figures-grouped.md) (the tiles' exact values, kept),
+- Related: [0088](0088-asof-basis-labels.md) (the basis words and the horizon year, now in
+  the captions), [0208](0208-key-figures-grouped.md) (the tiles' exact values, kept),
   [0169](0169-development-drawn-debt-display.md) (the undrawn note, kept),
   [0195](0195-health-marker.md) (the health marker and word, kept)
 
@@ -37,6 +38,9 @@ than one summary.
 3. **Layout.** At 960 px of band width and more the groups sit side by side (4 + 2 cells),
    with a hairline between them. Below that they stack, the as-of group as four cells in
    a row down to 640 px and two by two below. The horizon group is always two cells.
+   Cells within a group share its width equally (the weighted columns of ADR 0200 §4
+   go); a group never gets narrower than its cells and its one-line caption, so the as-of
+   cells take room from the horizon group rather than overlap it.
 4. **Property detail** shows its six snapshot cells as one band with one group, captioned
    with the basis. Six across from 960 px, three by two below. Net cash flow's foot uses
    `dashboard.perYear`.
