@@ -128,6 +128,8 @@ export function Guide() {
           sections={sections}
           current={currentSection}
           onSelect={setCurrentSection}
+          // Ten links: one row in a narrow window (ADR 0225 §2).
+          oneRow
         />
       }
     >

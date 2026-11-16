@@ -8,6 +8,7 @@
 - Related: [0199](0199-icon-only-row-actions.md) (the template button is a row action),
   [0096](0096-csv-import-preview.md) (the preview and report, unchanged),
   [0185](0185-csv-missing-columns-and-preview-clarity.md) (a file with no data rows is not a success)
+- Amended by: [0225](0225-sweep-round-2.md) (the error table's region is named by its file type)
 
 ## Context
 

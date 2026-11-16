@@ -973,6 +973,8 @@ export const cs: Dictionary = {
     rowsReady: (n) =>
       `${n} ${csPlural(n, ["řádek připraven", "řádky připraveny", "řádků připraveno"])}`,
     errorsBadge: (n) => `${n} ${csPlural(n, ["chyba", "chyby", "chyb"])}`,
+    errorsTableName: (type, n) =>
+      `${type}: ${n} ${csPlural(n, ["chyba", "chyby", "chyb"])}`,
     noDataRows: "Žádné řádky s daty",
     colRow: "Řádek",
     colField: "Pole",

@@ -3,7 +3,13 @@
 // ADR 0119 §9 the Acquisition section after Financing. ADR 0155 drops the Data check for
 // a deactivated property.
 import { describe, it, expect } from "vitest";
-import { pickCurrent, propertySections, sectionId } from "../sectionNav";
+import {
+  pickCurrent,
+  propertySections,
+  sectionId,
+  moreSides,
+  scrollToShow,
+} from "../sectionNav";
 
 describe("propertySections", () => {
   it("lists every section in page order when the engine has output", () => {
@@ -98,5 +104,33 @@ describe("pickCurrent", () => {
   it("ignores ids that are not sections and handles an empty page", () => {
     expect(pickCurrent(order, new Set(["x"]), null, false)).toBe("a");
     expect(pickCurrent([], new Set(), null, true)).toBeNull();
+  });
+});
+
+// ADR 0225 §2: the Guide's links in one sideways-scrolling row in a narrow window.
+describe("scrollToShow", () => {
+  const view = { scroll: 100, width: 300 };
+  it("leaves a link already in view", () => {
+    expect(scrollToShow({ start: 150, width: 80 }, view, 24)).toBeNull();
+  });
+  it("scrolls back to a link off the start, with a margin", () => {
+    expect(scrollToShow({ start: 60, width: 80 }, view, 24)).toBe(36);
+  });
+  it("scrolls on to a link off the end, with a margin", () => {
+    expect(scrollToShow({ start: 380, width: 80 }, view, 24)).toBe(184);
+  });
+  it("never below zero", () => {
+    expect(scrollToShow({ start: 10, width: 80 }, view, 24)).toBe(0);
+  });
+});
+
+describe("moreSides", () => {
+  it("marks the side with more links", () => {
+    expect(moreSides(0, 300, 900)).toEqual({ start: false, end: true });
+    expect(moreSides(200, 300, 900)).toEqual({ start: true, end: true });
+    expect(moreSides(600, 300, 900)).toEqual({ start: true, end: false });
+  });
+  it("a row that fits has none (sub-pixel slack ignored)", () => {
+    expect(moreSides(0, 300, 300.5)).toEqual({ start: false, end: false });
   });
 });
