@@ -286,6 +286,12 @@ Refactors are behaviour-neutral and need no ADR.
 - Reference the decision in a footer: `Refs: ADR 0023` (programme-era commits use `D-nn`,
   `DR-nnn`, `UX-nnn`).
 - Add user-visible changes to the `[Unreleased]` section of [CHANGELOG.md](CHANGELOG.md).
+  The "Changelog (ADR entries)" check on pull requests (`scripts/check-changelog.mjs`)
+  fails when the PR adds an accepted ADR that `[Unreleased]` does not cite as `ADR NNNN`,
+  or adds a `docs/decisions/wording.md` entry without changing `[Unreleased]`. A PR with
+  nothing user-visible to record (say, an ADR about CI) opts out with a line
+  `Changelog: none (reason)` in its body; the reason is required. Locally:
+  `PR_BODY="…" pnpm changelog:check --base origin/main`.
 - Open a PR against `main`; merge only when CI is green.
 - Open it as a **draft** (`gh pr create --draft`): CI skips draft PRs. Run the checks above
   locally, push review fixes, settle the ADR number and merge `main` while it is a draft, then

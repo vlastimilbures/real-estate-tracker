@@ -2,6 +2,9 @@
 
 <!-- One logical change. Link the issue: "Closes #123". -->
 
+<!-- Changelog: an accepted ADR must be cited as "ADR NNNN" in CHANGELOG.md [Unreleased].
+     With nothing user-visible to record, add a line "Changelog: none (reason)" here. -->
+
 ## Checklist
 
 - [ ] `pnpm check` passes (gates: CONTRIBUTING.md#checks)

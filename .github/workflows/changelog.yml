@@ -1,0 +1,40 @@
+name: Changelog
+
+# An accepted ADR added in a pull request must be cited in CHANGELOG.md [Unreleased], and a
+# new wording-log entry needs an [Unreleased] change; "Changelog: none (reason)" in the PR
+# body opts out (scripts/check-changelog.mjs, #461). `edited` re-runs it when the body
+# changes. Like CI, it skips draft PRs and runs once a PR is ready for review.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: changelog-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changelog:
+    name: Changelog (ADR entries)
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+
+    steps:
+      # The merge commit and its two parents: HEAD^1 is the base branch's tip.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+
+      # Node built-ins only: no install.
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      # The body goes through the environment, never into the shell command.
+      - name: Check the changelog
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/check-changelog.mjs --base HEAD^1
