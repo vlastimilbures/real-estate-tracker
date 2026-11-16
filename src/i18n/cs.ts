@@ -276,8 +276,6 @@ export const cs: Dictionary = {
     netWorth: "Čisté jmění",
     realTodayKc: " · reálně (Kč k základnímu datu)",
     leveredIrr: "Pákové IRR",
-    irrFoot: (n, mode) =>
-      `${n} ${csPlural(n, ["rok", "roky", "let"])} · po dluhu · ${mode}`,
     portfolioLtv: "LTV portfolia",
     badgeConservative: "Konzervativní",
     badgeModerate: "Střední",
@@ -286,13 +284,14 @@ export const cs: Dictionary = {
     badgeCoversDebt: "Pokrývá dluh",
     badgeShortfall: "Schodek",
     netYieldCap: "Čistý výnos (cap rate)",
-    stripInYear: (endYear) => `V roce ${endYear}`,
     stripAssetsDebt: (assets, debt) => `Aktiva ${assets} · dluh ${debt}`,
-    stripHorizonFoot: (mult, n, mode) =>
-      `${mult} · horizont ${n} ${csPlural(n, ["rok", "roky", "let"])} · ${mode}`,
+    bandHorizonCaption: (endYear, n, mode) =>
+      `V roce ${endYear} · horizont ${n} ${csPlural(n, ["rok", "roky", "let"])} · ${mode}`,
+    bandMultiple: (mult) => `Násobek ${mult}`,
+    bandIrrFoot: "po dluhu",
     stripNetCashFlow: "Čistý cash flow",
     perMonth: "/měs.",
-    perYearBasis: (basis) => `/rok · ${basis}`,
+    perYear: "/rok",
     basisCurrent: "aktuálně",
     basisProjection: (year) => `rok projekce ${year}`,
     basisOn: (d) => `k ${d}`,

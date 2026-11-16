@@ -1,5 +1,5 @@
 // Reusable presentation primitives. They format and render engine output — no maths.
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { X, FileSpreadsheet } from "lucide-react";
 import type { Decimal } from "../../lib/money";
@@ -329,6 +329,41 @@ export function ExportXlsxButton({
         {btnLabel}
       </Button>
     </>
+  );
+}
+
+/** The KPI band (ADR 0222): one surface holding captioned groups of compact tiles. */
+export function KpiBand({ children }: { children: ReactNode }) {
+  return (
+    <div className="kpi-strip-wrap">
+      <div className="kpi-band">{children}</div>
+    </div>
+  );
+}
+
+/** A group of the KPI band, named by its caption: what its figures are for. */
+export function KpiBandGroup({
+  caption,
+  cells,
+  children,
+}: {
+  caption: string;
+  /** How many tiles it holds, for its grid (ADR 0222 §3). */
+  cells: 2 | 4 | 6;
+  children: ReactNode;
+}) {
+  const id = useId();
+  return (
+    <div
+      className={`kpi-band-group cells-${cells}`}
+      role="group"
+      aria-labelledby={id}
+    >
+      <p id={id} className="kpi-band-caption">
+        {caption}
+      </p>
+      <div className="kpi-band-cells">{children}</div>
+    </div>
   );
 }
 

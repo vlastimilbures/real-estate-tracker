@@ -303,7 +303,6 @@ export const en = {
     netWorth: "Net worth",
     realTodayKc: " · real (base-date Kč)",
     leveredIrr: "Levered IRR",
-    irrFoot: (n: number, mode: string) => `${n}-yr · after debt · ${mode}`,
     portfolioLtv: "Portfolio LTV",
     badgeConservative: "Conservative",
     badgeModerate: "Moderate",
@@ -312,14 +311,16 @@ export const en = {
     badgeCoversDebt: "Covers debt",
     badgeShortfall: "Shortfall",
     netYieldCap: "Net yield (cap rate)",
-    stripInYear: (endYear: number) => `In ${endYear}`,
     stripAssetsDebt: (assets: string, debt: string) =>
       `Assets ${assets} · debt ${debt}`,
-    stripHorizonFoot: (mult: string, n: number, mode: string) =>
-      `${mult} · ${n}-yr horizon · ${mode}`,
+    /** The KPI band's horizon group caption (ADR 0222). */
+    bandHorizonCaption: (endYear: number, n: number, mode: string) =>
+      `In ${endYear} · ${n}-yr horizon · ${mode}`,
+    bandMultiple: (mult: string) => `Multiple ${mult}`,
+    bandIrrFoot: "after debt",
     stripNetCashFlow: "Net cash flow",
     perMonth: "/mo",
-    perYearBasis: (basis: string) => `/yr · ${basis}`,
+    perYear: "/yr",
     basisCurrent: "current",
     basisProjection: (year: string) => `projection year ${year}`,
     basisOn: (d: string) => `on ${d}`,

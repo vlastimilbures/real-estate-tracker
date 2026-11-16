@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 //
-// ADR 0200 (#375): one strip of six compact tiles replaces the two tile rows and the
-// monthly cash-flow panel; the figures that leave the tiles move to the KPI list, so none
-// leaves the page, and the basis is named once for the strip.
+// ADR 0200 (#375), ADR 0222 (#421): one band of six cells in two captioned groups, as of
+// and at the horizon; the figures that left the tiles are in the KPI list, so none
+// leaves the page, and the basis and the horizon are each named once, in a caption.
 import { describe, it, expect, beforeEach } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import {
@@ -73,9 +73,9 @@ function renderStrip(
   const s = { ...base0, ...patch };
   const view = render(<KpiStrip {...props} s={s} />);
   const tiles = Array.from(
-    view.container.querySelectorAll<HTMLElement>(".kpi-strip > .tile"),
+    view.container.querySelectorAll<HTMLElement>(".kpi-band .tile"),
   );
-  return { s, basis, tiles };
+  return { s, basis, tiles, view };
 }
 
 const part = (tile: HTMLElement, cls: string) =>
@@ -83,17 +83,41 @@ const part = (tile: HTMLElement, cls: string) =>
 
 beforeEach(() => act(() => useUiStore.setState({ language: "en" })));
 
-describe("KPI strip (ADR 0200 §1)", () => {
-  it("is one strip of six compact tiles, in order", () => {
-    const { tiles } = renderStrip(base, true);
-    expect(tiles.map((t) => part(t, "label").textContent)).toEqual([
-      d.netWorth,
-      d.stripInYear(endYear),
-      d.leveredIrr,
-      d.portfolioLtv,
-      d.portfolioDscr,
-      d.stripNetCashFlow,
+/** The band's groups: each a group named by its caption, with its cells' labels. */
+function groupsOf(container: HTMLElement) {
+  return Array.from(
+    container.querySelectorAll<HTMLElement>(".kpi-band > [role=group]"),
+    (g) => ({
+      el: g,
+      caption: g.querySelector(".kpi-band-caption")?.textContent,
+      labelledBy: g.getAttribute("aria-labelledby"),
+      labels: Array.from(
+        g.querySelectorAll(".tile > .label"),
+        (l) => l.textContent,
+      ),
+    }),
+  );
+}
+
+describe("KPI band (ADR 0222 §1–§2)", () => {
+  it("is one band of six cells in two captioned groups: as of, then the horizon", () => {
+    const { view, tiles } = renderStrip(base, true);
+    const groups = groupsOf(view.container);
+    expect(groups.map((g) => g.caption)).toEqual([
+      "Current",
+      d.bandHorizonCaption(endYear, assumptions.horizonYears, "nominal"),
     ]);
+    expect(groups.map((g) => g.labels)).toEqual([
+      [d.netWorth, d.stripNetCashFlow, d.portfolioLtv, d.portfolioDscr],
+      [d.netWorth, d.leveredIrr],
+    ]);
+    // Each group is named by its caption.
+    for (const g of groups) {
+      const caption = g.el.querySelector(".kpi-band-caption")!;
+      expect(g.labelledBy).toBe(caption.id);
+    }
+    expect(view.container.querySelectorAll(".kpi-band")).toHaveLength(1);
+    expect(tiles).toHaveLength(6);
     for (const t of tiles) expect(t.classList.contains("compact")).toBe(true);
   });
 
@@ -138,64 +162,60 @@ describe("KPI strip (ADR 0200 §1)", () => {
     const view = render(
       <KpiStrip {...props} mode="real" modeWord={en.common.realLower} />,
     );
-    const foot = view.container.querySelector(".kpi-strip > .tile > .foot")!;
+    const foot = view.container.querySelector(".kpi-band .tile > .foot")!;
     expect(foot.textContent!.endsWith(d.realTodayKc)).toBe(true);
   });
 
-  it("the horizon tile: M Kč, multiple · horizon · lens in the foot", () => {
+  it("the horizon net worth: M Kč, the multiple in the foot; IRR's foot says after debt", () => {
     const { tiles } = renderStrip(base, true);
     // The exact amount is read out after it, as on the net worth tile (ADR 0208 §1).
-    expect(part(tiles[1]!, "value").textContent).toBe(
+    expect(part(tiles[4]!, "value").textContent).toBe(
       `${fmtCzkM(kpis.netWorthNominal)} (${fmtCzk(kpis.netWorthNominal)})`,
     );
-    expect(part(tiles[1]!, "foot").textContent).toBe(
-      d.stripHorizonFoot(
-        fmtMultiple(kpis.netWorthMultiple!),
-        assumptions.horizonYears,
-        en.common.nominalLower,
-      ),
+    expect(part(tiles[4]!, "foot").textContent).toBe(
+      d.bandMultiple(fmtMultiple(kpis.netWorthMultiple!)),
     );
+    expect(part(tiles[5]!, "foot").textContent).toBe(d.bandIrrFoot);
   });
 
   it("LTV: the figure, then only the marker and band word", () => {
     const { s, tiles } = renderStrip(base, true);
-    expect(part(tiles[3]!, "value").textContent).toBe(fmtPct(s.ltv!, 1));
-    const foot = part(tiles[3]!, "foot");
+    expect(part(tiles[2]!, "value").textContent).toBe(fmtPct(s.ltv!, 1));
+    const foot = part(tiles[2]!, "foot");
     expect(foot.querySelector(".health-marker")).not.toBeNull();
     expect(foot.textContent).toBe(ltvBandWord(en, s.ltv));
   });
 
-  it("net cash flow per month, the year and the basis in the foot", () => {
+  it("net cash flow per month, the year in the foot", () => {
     const { s, tiles } = renderStrip(base, true);
     const flow = monthlyFlow(s);
-    expect(part(tiles[5]!, "value").textContent).toBe(
+    expect(part(tiles[1]!, "value").textContent).toBe(
       fmtCzk(flow.net, { parens: true }) + d.perMonth,
     );
-    const foot = part(tiles[5]!, "foot");
+    const foot = part(tiles[1]!, "foot");
     expect(foot.textContent).toBe(
-      fmtCzk(s.netCashFlow, { parens: true }) + d.perYearBasis(d.basisCurrent),
+      fmtCzk(s.netCashFlow, { parens: true }) + d.perYear,
     );
   });
 
   it("a negative year in the foot is red, like the month above it", () => {
     const { tiles } = renderStrip(base, true, { netCashFlow: money(-37080) });
-    const amount = part(tiles[5]!, "foot").querySelector(".num")!;
+    const amount = part(tiles[1]!, "foot").querySelector(".num")!;
     expect(amount.textContent).toBe(fmtCzk(money(-37080), { parens: true }));
     expect(amount.classList.contains("tone-negative")).toBe(true);
   });
 });
 
-describe("KPI strip basis (ADR 0200 §2)", () => {
-  it("names it once, in the net cash flow foot; +5y names the projection year", () => {
-    const { basis, tiles, s } = renderStrip(addYears(base, 5), false);
+describe("KPI band basis (ADR 0222 §2)", () => {
+  it("names it once, in the as-of group's caption; +5y names the projection year", () => {
+    const { basis, view } = renderStrip(addYears(base, 5), false);
     const text = basisText(en, basis);
     expect(text).toBe(d.basisProjection(`Y5 · ${base.getUTCFullYear() + 5}`));
-    expect(part(tiles[5]!, "foot").textContent).toBe(
-      fmtCzk(s.netCashFlow, { parens: true }) + d.perYearBasis(text),
-    );
-    const strip = tiles[0]!.parentElement!;
-    expect(strip.textContent!.split(text).length - 1).toBe(1);
-    expect(strip.textContent).not.toMatch(/today|current/i);
+    const caption = `P${text.slice(1)}`;
+    expect(groupsOf(view.container)[0]!.caption).toBe(caption);
+    const band = view.container.querySelector(".kpi-band")!;
+    expect(band.textContent!.split(caption).length - 1).toBe(1);
+    expect(band.textContent).not.toMatch(/today|current/i);
   });
 
   it("a date that is no projection year is named as that date", () => {

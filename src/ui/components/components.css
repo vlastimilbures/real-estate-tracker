@@ -488,31 +488,87 @@
 .tile .foot .num {
   white-space: nowrap;
 }
-/* ============ Dashboard KPI strip (ADR 0200) ============ */
-/* Six compact tiles in a row; three by two when the strip is narrower than 900 px. The
-   net worth and net cash flow tiles carry the longest figures, so they are a little wider;
-   LTV and DSCR, whose feet are one word, a little narrower. */
+/* ============ KPI band (ADR 0200, 0222) ============ */
+/* One surface, cells divided by hairlines, in captioned groups: the Dashboard's as-of
+   group (four cells) and horizon group (two) side by side from 960 px of band width,
+   stacked below; Property detail's one group of six, three by two below 960 px. */
 .kpi-strip-wrap {
   container-type: inline-size;
 }
-.kpi-strip {
+.kpi-band {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-tile);
+}
+.kpi-band-group {
+  min-width: 0;
+  padding-top: var(--s2);
+}
+.kpi-band-group.cells-4 {
+  flex: 4 1 0;
+}
+.kpi-band-group.cells-2 {
+  flex: 2 1 0;
+}
+.kpi-band-group.cells-6 {
+  flex: 1 1 0;
+}
+.kpi-band-group + .kpi-band-group {
+  border-left: 1px solid var(--hairline);
+}
+.kpi-band-caption {
+  margin: 0;
+  padding: 0 var(--s3);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.kpi-band-cells {
   display: grid;
-  /* A column never gets narrower than its one-line label and value (min-content): the
-     label widths differ by language and font, so fixed weights alone could clip one. */
-  grid-template-columns:
-    minmax(min-content, 1.15fr) minmax(min-content, 1fr) minmax(
-      min-content,
-      1fr
-    )
-    minmax(min-content, 0.9fr) minmax(min-content, 0.9fr) minmax(
-      min-content,
-      1.15fr
-    );
-  gap: var(--s3);
+  /* A cell never gets narrower than its one-line label and value (min-content). */
+  grid-auto-columns: minmax(min-content, 1fr);
+  grid-auto-flow: column;
+}
+.kpi-band .tile {
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+.kpi-band-cells > .tile + .tile {
+  border-left: 1px solid var(--hairline);
 }
 @container (max-width: 959px) {
-  .kpi-strip {
+  .kpi-band {
+    flex-direction: column;
+  }
+  .kpi-band-group + .kpi-band-group {
+    border-left: none;
+    border-top: 1px solid var(--hairline);
+  }
+  .kpi-band-group.cells-6 .kpi-band-cells {
+    grid-auto-flow: row;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .kpi-band-group.cells-6 .tile:nth-child(3n + 1) {
+    border-left: none;
+  }
+  .kpi-band-group.cells-6 .tile:nth-child(n + 4) {
+    border-top: 1px solid var(--hairline);
+  }
+}
+@container (max-width: 639px) {
+  .kpi-band-group.cells-4 .kpi-band-cells {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kpi-band-group.cells-4 .tile:nth-child(odd) {
+    border-left: none;
+  }
+  .kpi-band-group.cells-4 .tile:nth-child(n + 3) {
+    border-top: 1px solid var(--hairline);
   }
 }
 .tile.compact {

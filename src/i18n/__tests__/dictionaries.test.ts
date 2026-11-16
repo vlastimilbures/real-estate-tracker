@@ -279,8 +279,7 @@ describe("i18n dictionaries — plural forms", () => {
     // Russian count years.
     const withIrrFoot = [
       ...common,
-      "dashboard.irrFoot",
-      "dashboard.stripHorizonFoot",
+      "dashboard.bandHorizonCaption",
       ...financing,
       ...dataCheck,
       ...rest,
@@ -302,20 +301,20 @@ describe("i18n dictionaries — plural forms", () => {
     expect(countInflected("cs")).toEqual(csShocks);
   });
 
-  it("horizon years inflect in every language (ADR 0084, ADR 0088, ADR 0200)", () => {
+  it("horizon years inflect in every language (ADR 0084, ADR 0088, ADR 0222)", () => {
     const f = (l: Lang) => (n: number) =>
-      String((L[l].get("dashboard.stripHorizonFoot") as Fn)("4,85x", n, "x"));
-    expect(f("en")(1)).toBe("4,85x · 1-yr horizon · x");
+      String((L[l].get("dashboard.bandHorizonCaption") as Fn)(2056, n, "x"));
+    expect(f("en")(1)).toBe("In 2056 · 1-yr horizon · x");
     expect([1, 2, 5].map(f("cs"))).toEqual([
-      "4,85x · horizont 1 rok · x",
-      "4,85x · horizont 2 roky · x",
-      "4,85x · horizont 5 let · x",
+      "V roce 2056 · horizont 1 rok · x",
+      "V roce 2056 · horizont 2 roky · x",
+      "V roce 2056 · horizont 5 let · x",
     ]);
     expect([1, 2, 5, 21].map(f("ru"))).toEqual([
-      "4,85x · горизонт 1 год · x",
-      "4,85x · горизонт 2 года · x",
-      "4,85x · горизонт 5 лет · x",
-      "4,85x · горизонт 21 год · x",
+      "В 2056 г. · горизонт 1 год · x",
+      "В 2056 г. · горизонт 2 года · x",
+      "В 2056 г. · горизонт 5 лет · x",
+      "В 2056 г. · горизонт 21 год · x",
     ]);
     for (const l of LANGS) {
       for (const k of [

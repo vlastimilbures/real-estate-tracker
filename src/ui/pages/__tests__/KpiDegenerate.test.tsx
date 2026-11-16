@@ -97,15 +97,7 @@ describe("no growth base: the multiple shows — (ADR 0126)", () => {
         />
       </>,
     );
-    expect(
-      screen.getByText(
-        en.dashboard.stripHorizonFoot(
-          "—",
-          assumptions.horizonYears,
-          en.common.nominalLower,
-        ),
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText(en.dashboard.bandMultiple("—"))).toBeTruthy();
     // The multiple is the tile's alone (ADR 0208 §1).
     expect(screen.queryByText("Net-worth multiple")).toBeNull();
   });

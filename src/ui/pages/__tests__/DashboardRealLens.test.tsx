@@ -53,9 +53,7 @@ describe("Dashboard KPIs by lens (ADR 0087)", () => {
     const { container } = renderPanels("real");
     const real = fmtMultiple(kpis.netWorthMultipleReal!);
     const nominal = fmtMultiple(kpis.netWorthMultiple!);
-    expect(
-      screen.getByText(en.dashboard.stripHorizonFoot(real, N, "real")),
-    ).toBeTruthy();
+    expect(screen.getByText(en.dashboard.bandMultiple(real))).toBeTruthy();
     expect(container.textContent).not.toContain(nominal);
     expect(screen.getByText(en.dashboard.kpiHintReal)).toBeTruthy();
     expect(
@@ -69,9 +67,7 @@ describe("Dashboard KPIs by lens (ADR 0087)", () => {
   it("nominal: nominal multiple, plain principal label", () => {
     renderPanels("nominal");
     const nominal = fmtMultiple(kpis.netWorthMultiple!);
-    expect(
-      screen.getByText(en.dashboard.stripHorizonFoot(nominal, N, "nominal")),
-    ).toBeTruthy();
+    expect(screen.getByText(en.dashboard.bandMultiple(nominal))).toBeTruthy();
     expect(screen.getByText(en.dashboard.kpiHintNominal)).toBeTruthy();
     expect(
       screen.getByText(rowLabel(en.dashboard.kpiSumPrincipalRepaid(N))),
