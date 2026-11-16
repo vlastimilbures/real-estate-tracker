@@ -14,7 +14,6 @@ import { isoDate, money, portfolioOutputs, rate } from "../../../engine";
 import { fmtCzk, fmtDate } from "../../../lib/format";
 import type { MortgagePrepayment } from "../../../engine";
 
-vi.mock("../../../data/errorLog", () => ({ logFailure: vi.fn() }));
 vi.stubGlobal(
   "IntersectionObserver",
   class {

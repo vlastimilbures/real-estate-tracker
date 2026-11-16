@@ -8,6 +8,7 @@ import { seedIfEmpty } from "../../data/seed";
 import { exportToJson } from "../../data/backup";
 import { BackupExportError } from "../backup";
 import { SaveFileError, type SaveOutcome } from "../../platform/saveFile";
+import { invoke } from "@tauri-apps/api/core";
 
 const save = vi.hoisted(() => ({
   next: (): Promise<unknown> => Promise.resolve({ kind: "cancelled" }),
@@ -16,9 +17,7 @@ vi.mock("../../platform/saveFile", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   saveFile: vi.fn(() => save.next()),
 }));
-vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn(() => Promise.resolve()),
-}));
+vi.mocked(invoke).mockResolvedValue(undefined);
 
 let db: TestSql;
 

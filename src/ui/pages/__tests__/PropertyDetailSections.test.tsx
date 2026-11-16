@@ -19,8 +19,6 @@ import { en } from "../../../i18n/en";
 import { isoDate, money } from "../../../engine";
 import { fmtCzk, fmtDate } from "../../../lib/format";
 
-vi.mock("../../../data/errorLog", () => ({ logFailure: vi.fn() }));
-
 const loan = portfolio.mortgages[0];
 const owner = portfolio.properties.find((p) => p.id === loan.propertyId)!;
 const pd = en.propertyDetail;

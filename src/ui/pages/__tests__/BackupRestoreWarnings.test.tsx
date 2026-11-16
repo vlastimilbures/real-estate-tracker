@@ -16,8 +16,6 @@ import { migrate } from "../../../data/migrations";
 import { seedIfEmpty } from "../../../data/seed";
 import { exportToJson } from "../../../data/backup";
 
-vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
-
 const restoreBackup = vi.fn();
 
 /** The sample as a backup file after `update`; by default one mortgage's fixation is

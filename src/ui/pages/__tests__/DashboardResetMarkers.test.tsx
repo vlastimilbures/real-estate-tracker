@@ -23,7 +23,6 @@ vi.mock("../../../lib/day", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/day")>()),
   todayUtc: () => clock.today,
 }));
-vi.mock("../../../data/errorLog", () => ({ logFailure: vi.fn() }));
 
 class NoObserver {
   observe() {}

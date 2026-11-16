@@ -16,8 +16,6 @@ import { migrate } from "../../../data/migrations";
 import { seedIfEmpty } from "../../../data/seed";
 import { exportToJson } from "../../../data/backup";
 
-vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
-
 const suiteTz = process.env.TZ;
 beforeAll(() => {
   process.env.TZ = "Europe/Prague";

@@ -18,8 +18,6 @@ import {
   withPropertyId,
 } from "../../../engine/__tests__/support/seed";
 
-vi.mock("../../../data/errorLog", () => ({ logFailure: vi.fn() }));
-
 const loan = portfolio.mortgages[0];
 const owner = portfolio.properties.find((p) => p.id === loan.propertyId)!;
 

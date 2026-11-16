@@ -15,15 +15,14 @@ import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
 import { exportToJson, type BackupFile } from "../../data/backup";
 import type { Sql } from "../../data/sql";
+import { invoke } from "@tauri-apps/api/core";
 
-const picked = vi.hoisted(() => ({ text: "" }));
-vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn((command: string) =>
-    command === "open_backup_file"
-      ? Promise.resolve({ name: "portfolio-backup.json", text: picked.text })
-      : Promise.resolve(),
-  ),
-}));
+const picked = { text: "" };
+vi.mocked(invoke).mockImplementation((command: string) =>
+  command === "open_backup_file"
+    ? Promise.resolve({ name: "portfolio-backup.json", text: picked.text })
+    : Promise.resolve(),
+);
 const logFailure = vi.hoisted(() => vi.fn());
 vi.mock("../../state/diagnostics", async (actual) => ({
   ...(await actual<typeof import("../../state/diagnostics")>()),
