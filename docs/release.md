@@ -48,10 +48,11 @@ runtime only, ADR 0063).
    RTRACKER_PERF=1 "/Applications/Real Estate Tracker.app/Contents/MacOS/real-estate-tracker"
    ```
 
-   Terminal shows one `perf …` line per mark. Check `dashboard-rendered since_start_ms=…`
-   is at most 2000 (cold start), and after an assumption edit that the `edit-saved` and
-   `dashboard-render` `measure_ms=…` values are at most 250. Quit with ⌘Q. Started from the
-   Finder or the Dock, the app measures nothing.
+   Terminal shows one `perf …` line per measure and milestone. Check that
+   `dashboard-rendered since_start_ms=…` is at most 2000 (cold start). Then, after changing
+   one assumption, open the Dashboard; `edit-saved` + `engine-recompute` + `dashboard-render`
+   (`measure_ms=…`) is at most 250. Quit with ⌘Q. Started from the Finder or the Dock, the
+   app measures nothing.
 
 9. **Tag** — `git tag v<version>` on the commit you built in step 6, and push the tag. The
    `Release (macOS)` workflow then builds and verifies the bundle on a macOS runner and
