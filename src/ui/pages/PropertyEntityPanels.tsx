@@ -4,7 +4,6 @@
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { Money, Pct } from "../components/primitives";
 import { EntityPanel } from "../components/EntityPanel";
-import { HelpText } from "../components/HelpText";
 import { moneyDraft, percentDraft, dateDraft } from "../model/formParse";
 import {
   drawsDraft,
@@ -59,11 +58,7 @@ export function ValuationsPanel({
   return (
     <EntityPanel
       title={t.propertyDetail.valuationsTitle}
-      help={
-        <HelpText about={t.propertyDetail.valuationsTitle}>
-          {t.propertyDetail.valuationsHint}
-        </HelpText>
-      }
+      info={t.propertyDetail.valuationsHint}
       addLabel={t.propertyDetail.addValuation}
       describe={(r) =>
         t.propertyDetail.confirmDeleteValuation(fmtDate(r.validFrom))
@@ -160,7 +155,7 @@ export function LeasesPanel({
   return (
     <EntityPanel
       title={t.propertyDetail.leasesTitle}
-      help={<HelpText>{t.propertyDetail.leasesHint}</HelpText>}
+      info={t.propertyDetail.leasesHint}
       addLabel={t.propertyDetail.addLease}
       describe={(r) =>
         t.propertyDetail.confirmDeleteLease(fmtDate(r.startDate))
@@ -236,7 +231,7 @@ export function MortgagesPanel({
   return (
     <EntityPanel
       title={t.propertyDetail.mortgagesTitle}
-      help={<HelpText>{t.propertyDetail.mortgagesHint}</HelpText>}
+      info={t.propertyDetail.mortgagesHint}
       addLabel={t.propertyDetail.addMortgage}
       describe={(r) =>
         t.propertyDetail.confirmDeleteMortgage(fmtDate(r.startDate))

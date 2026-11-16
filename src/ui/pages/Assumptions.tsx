@@ -3,7 +3,6 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { isDirty } from "../model/dirty";
 import { Panel, Button, EmptyState } from "../components/primitives";
-import { HelpText } from "../components/HelpText";
 import { FolderOpen } from "lucide-react";
 import { Field, TextInput } from "../components/fields";
 import { DateInput } from "../components/DateInput";
@@ -307,7 +306,7 @@ export function AssumptionsPanel() {
       </Panel>
       <Panel
         title={t.assumptions.defaultsTitle}
-        help={<HelpText>{t.assumptions.defaultsHint}</HelpText>}
+        info={t.assumptions.defaultsHint}
       >
         <div className="form-grid">{DEFAULTS.map(renderField)}</div>
       </Panel>

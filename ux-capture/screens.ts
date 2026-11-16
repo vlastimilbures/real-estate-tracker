@@ -20,6 +20,8 @@ import {
   pickFiveYearsAndCheckHint,
   expectRowActions,
   expectRowActionTip,
+  expectInfoTip,
+  expectInfoTipEscape,
   type Ux,
 } from "./helpers";
 
@@ -1394,6 +1396,26 @@ export const SCREENS: Screen[] = [
     },
   },
   {
+    id: "21d-property-info-tip",
+    desc: "Property detail: the Valuations definition behind its info icon, opened from the keyboard (ADR 0217)",
+    run: async (ux) => {
+      await boot(ux.page);
+      await openFirstProperty(ux);
+      const d = ux.t.propertyDetail;
+      // No "About this" disclosure is left: definitions are info icons (ADR 0217 §3).
+      await expect(
+        ux.page.locator("button.btn", { hasText: ux.t.common.aboutThis }),
+      ).toHaveCount(0);
+      const button = panel(ux, d.valuationsTitle).getByRole("button", {
+        name: `${ux.t.common.aboutThis}: ${d.valuationsTitle}`,
+      });
+      await expectInfoTip(ux.page, button);
+      await expectDisclosures(ux);
+      await ux.capture("21d-property-info-tip", { fullPage: false });
+      await expectInfoTipEscape(ux.page, button);
+    },
+  },
+  {
     id: "26-property-amortization-open",
     desc: "Property detail with the amortization schedule expanded: every section (ADR 0107)",
     run: async (ux) => {
@@ -1563,6 +1585,12 @@ export const SCREENS: Screen[] = [
       await drawdown.scrollIntoViewIfNeeded();
       await ux.page.mouse.move(0, 0);
       await ux.capture("29e-property-drawdown", { fullPage: false });
+      // The drawdown note sits behind the sub-heading's info icon (ADR 0217).
+      const info = drawdown.getByRole("button", {
+        name: `${ux.t.common.aboutThis}: ${d.drawdownTitle}`,
+      });
+      await expectInfoTip(ux.page, info);
+      await expectInfoTipEscape(ux.page, info);
     },
   },
   {

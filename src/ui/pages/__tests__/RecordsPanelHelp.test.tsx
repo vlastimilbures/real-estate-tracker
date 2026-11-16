@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 //
 // ADR 0214 (#391): the Valuations and Leases explanations leave the panel header for the
-// body: Leases as a help line, Valuations behind "About this".
+// body. ADR 0217 (#416): both are definitions, so both sit behind the info icon.
 import { describe, it, expect, beforeEach } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import { ValuationsPanel, LeasesPanel } from "../PropertyEntityPanels";
@@ -15,13 +15,18 @@ const panelOf = (title: string) =>
   screen.getByRole("heading", { name: title }).closest("section")!;
 
 describe("records panels' explanations (ADR 0214 §4)", () => {
-  it("Leases: a help line atop the body; the header is the title alone", () => {
+  it("Leases: behind the info icon in the head; the body starts with the table", () => {
     render(<LeasesPanel propertyId="p1" rows={[]} />);
     const panel = panelOf(d.leasesTitle);
     expect(panel.querySelector(".panel-head .hint")).toBeNull();
-    const help = panel.querySelector(".panel-body > .panel-help");
-    expect(help?.textContent).toBe(d.leasesHint);
-    expect(help?.querySelector("[hidden]")).toBeNull();
+    expect(panel.querySelector(".panel-help")).toBeNull();
+    const button = within(panel).getByRole("button", {
+      name: `${en.common.aboutThis}: ${d.leasesTitle}`,
+    });
+    expect(panel.querySelector(".panel-head")!.contains(button)).toBe(true);
+    expect(
+      within(panel).getByText(d.leasesHint).closest("[hidden]"),
+    ).not.toBeNull();
   });
 
   it("Valuations: the explanation is one click away", () => {
