@@ -13,6 +13,7 @@ import {
   Sun,
   Moon,
   Monitor,
+  AlertTriangle,
 } from "lucide-react";
 import { useUiStore, type Route, type Theme } from "../../state/uiStore";
 import { usePortfolioStore } from "../../state/portfolioStore";
@@ -163,6 +164,7 @@ export function AppShell({
   subnav,
   pageClass,
   crumb,
+  attention,
   children,
 }: {
   title: string;
@@ -176,6 +178,10 @@ export function AppShell({
   /** A breadcrumb link before the title, e.g. Property detail's way back to the list
    *  (ADR 0215 §1); the "›" after it is decorative. */
   crumb?: { label: string; onSelect: () => void } | undefined;
+  /** Findings to review: an amber pill after the title (ADR 0218 §1). `label` is the
+   *  full sentence, its accessible name and tooltip; the pill shows the number. */
+  attention?:
+    { count: number; label: string; onSelect: () => void } | undefined;
   children: ReactNode;
 }) {
   const t = useT();
@@ -310,22 +316,42 @@ export function AppShell({
       <div className="content">
         <header className="topbar" ref={topbarRef}>
           <div>
-            {crumb ? (
+            {crumb || attention ? (
               <div className="page-title-row">
-                <a
-                  className="crumb"
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    crumb.onSelect();
-                  }}
-                >
-                  {crumb.label}
-                </a>
-                <span className="crumb-sep" aria-hidden="true">
-                  ›
-                </span>
+                {crumb && (
+                  <>
+                    <a
+                      className="crumb"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        crumb.onSelect();
+                      }}
+                    >
+                      {crumb.label}
+                    </a>
+                    <span className="crumb-sep" aria-hidden="true">
+                      ›
+                    </span>
+                  </>
+                )}
                 <h1 className="page-title">{title}</h1>
+                {attention && (
+                  <button
+                    type="button"
+                    className="title-pill warn"
+                    aria-label={attention.label}
+                    title={attention.label}
+                    onClick={attention.onSelect}
+                  >
+                    <AlertTriangle
+                      size={13}
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    />
+                    {attention.count}
+                  </button>
+                )}
               </div>
             ) : (
               <h1 className="page-title">{title}</h1>

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 //
-// ADR 0202 (#376): the projection first. The hero chart (value vs debt vs equity) leads,
-// full width under a panel-style h2; Financing and the Data check follow; the five other
-// charts are small multiples in a section of their own; the KPI list ends the page.
+// ADR 0202 (#376), amended by ADR 0218 (#420): the projection first. Six charts in one
+// grid, two per row, under one heading with the lens; then Financing, the KPI list and
+// the Data check.
 import { describe, it, expect, beforeEach } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -41,13 +41,12 @@ beforeEach(() =>
 const h2s = () =>
   screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
 
-describe("Dashboard order (ADR 0202 §1, ADR 0206 §1)", () => {
-  it("projection, Financing, the other charts, the KPI list, then the Data check", () => {
+describe("Dashboard order (ADR 0218 §3)", () => {
+  it("charts, Financing, the KPI list, then the Data check", () => {
     render(<Dashboard />);
     const order = [
       d.projectionTitle(n),
       d.financingTitle,
-      d.moreCharts(n),
       d.kpiTitle,
       en.dataCheck.title,
     ];
@@ -62,73 +61,54 @@ describe("Dashboard order (ADR 0202 §1, ADR 0206 §1)", () => {
   });
 });
 
-describe("hero chart (ADR 0202 §2)", () => {
-  it("is headed like a panel, with the lens, over the unchanged chart", async () => {
-    render(<Dashboard />);
-    const head = screen.getByRole("heading", {
-      level: 2,
-      name: d.projectionTitle(n),
-    });
-    const hero = head.closest<HTMLElement>(".chart-hero")!;
-    expect(hero).not.toBeNull();
-    expect(within(hero).getByText(d.nominalKc)).toBeTruthy();
-    expect(within(hero).getByText(d.chartValueVsDebtVsEquity)).toBeTruthy();
-    expect(hero.querySelectorAll(".chart-card")).toHaveLength(1);
-    // Its table view keeps the chart's own title, 280 px tall.
-    await userEvent.click(
-      within(hero).getByRole("button", { name: en.charts.table }),
-    );
-    const table = within(hero).getByRole("region", {
-      name: d.chartValueVsDebtVsEquity,
-    });
-    expect(table.style.height).toBe("280px");
-  });
-
-  it("names the real lens in the real lens", () => {
-    act(() => useUiStore.setState({ mode: "real" }));
-    render(<Dashboard />);
-    const hero = screen
+describe("one chart section (ADR 0218 §2)", () => {
+  const section = () =>
+    screen
       .getByRole("heading", { level: 2, name: d.projectionTitle(n) })
-      .closest<HTMLElement>(".chart-hero")!;
-    expect(within(hero).getByText(d.realTerms)).toBeTruthy();
-  });
-});
+      .closest<HTMLElement>("section")!;
 
-describe("small multiples (ADR 0202 §3–§4)", () => {
-  it("five charts in order, under a visible heading with the lens", async () => {
+  it("six charts in one grid, the value chart first, the lens named once", () => {
     render(<Dashboard />);
-    const head = screen.getByRole("heading", {
-      level: 2,
-      name: d.moreCharts(n),
-    });
-    expect(head.classList.contains("sr-only")).toBe(false);
-    const section = head.closest<HTMLElement>("section")!;
-    // Far below the hero, they name the lens again.
-    expect(within(section).getByText(d.nominalKc)).toBeTruthy();
-    const grid = section.querySelector<HTMLElement>(".chart-grid.small")!;
+    const grid = section().querySelector<HTMLElement>(".chart-grid.pairs")!;
     const titles = Array.from(
       grid.querySelectorAll(":scope > .chart-card .chart-title"),
     ).map((e) => e.textContent);
     expect(titles).toEqual([
+      d.chartValueVsDebtVsEquity,
       d.chartNetCashFlowByYear,
       d.chartEquityChange,
       d.chartNoiVsDebtService,
       d.chartRentGrossVsEffective,
       d.chartLoanToValue,
     ]);
-    // Each keeps its Table view, 180 px tall.
-    const ltv = grid.querySelectorAll<HTMLElement>(":scope > .chart-card")[4]!;
-    await userEvent.click(
-      within(ltv).getByRole("button", { name: en.charts.table }),
-    );
-    expect(
-      within(ltv).getByRole("region", { name: d.chartLoanToValue }).style
-        .height,
-    ).toBe("180px");
+    expect(within(section()).getAllByText(d.nominalKc)).toHaveLength(1);
+    expect(document.querySelector(".chart-hero")).toBeNull();
   });
 
-  it("the old trajectory heading is gone", () => {
+  it("every chart has the same plot height (220 px)", async () => {
     render(<Dashboard />);
+    const cards = section().querySelectorAll<HTMLElement>(".chart-card");
+    expect(cards).toHaveLength(6);
+    for (const card of cards) {
+      const title = card.querySelector(".chart-title")!.textContent!;
+      await userEvent.click(
+        within(card).getByRole("button", { name: en.charts.table }),
+      );
+      expect(
+        within(card).getByRole("region", { name: title }).style.height,
+      ).toBe("220px");
+    }
+  });
+
+  it("names the real lens in the real lens", () => {
+    act(() => useUiStore.setState({ mode: "real" }));
+    render(<Dashboard />);
+    expect(within(section()).getByText(d.realTerms)).toBeTruthy();
+  });
+
+  it("there is no second charts heading", () => {
+    render(<Dashboard />);
+    expect(h2s().filter((h) => /chart/i.test(h ?? ""))).toEqual([]);
     expect(document.querySelector(".section-head")).toBeNull();
   });
 });

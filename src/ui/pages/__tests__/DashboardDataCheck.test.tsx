@@ -40,7 +40,9 @@ function renderPanel(
   return { onFix };
 }
 
-const toggle = () => screen.getByRole("button", { name: /data check/i });
+// The panel's Show/Hide toggle (the title's pill also names the Data check).
+const toggle = () =>
+  screen.getByRole("button", { name: /^(show|hide) data check$/i });
 const lines = () => document.querySelectorAll(".dc-line");
 const chip = (name: RegExp) => screen.getByRole("button", { name });
 
@@ -226,18 +228,18 @@ describe("Data check on the Dashboard page (ADR 0118, ADR 0206)", () => {
     expect(panels.at(-1)).toBe(d.title);
   });
 
-  it("the filter bar's link opens the Data check and moves focus to its heading", async () => {
+  it("the title's pill opens the Data check and moves focus to its heading (ADR 0218 §1)", async () => {
     act(() => useUiStore.setState({ dataCheckOpen: false }));
     showDashboard([], fiveYears);
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
-    const link = screen.getByRole("button", { name: d.toReview(6) });
-    // On the bar's second row, with the as-of hint: the chips and the picker never move
-    // when findings come and go (ADR 0198, ADR 0206 §2).
-    expect(link.closest(".filter-bar > .asof-foot")).not.toBeNull();
-    expect(
-      link.parentElement?.querySelector("[data-testid=asof-hint]"),
-    ).not.toBeNull();
-    await userEvent.click(link);
+    const pill = screen.getByRole("button", { name: d.reviewPill(6) });
+    // Beside the page title, not in the filter bar.
+    expect(pill.closest(".topbar")).not.toBeNull();
+    expect(pill.closest(".filter-bar")).toBeNull();
+    expect(pill.getAttribute("title")).toBe(d.reviewPill(6));
+    expect(pill.textContent).toBe("6");
+    expect(document.querySelector(".filter-bar .asof-foot .btn")).toBeNull();
+    await userEvent.click(pill);
     expect(toggle().getAttribute("aria-expanded")).toBe("true");
     expect(document.activeElement?.textContent).toBe(d.title);
     expect(document.activeElement?.tagName).toBe("H2");
@@ -246,6 +248,7 @@ describe("Data check on the Dashboard page (ADR 0118, ADR 0206)", () => {
   it("has no link when nothing needs attention, whatever the defaults", () => {
     showDashboard([], BASE_DATE);
     expect(screen.queryByRole("button", { name: /to review/ })).toBeNull();
+    expect(document.querySelector(".title-pill")).toBeNull();
   });
 });
 

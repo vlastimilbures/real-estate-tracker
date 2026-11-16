@@ -4,6 +4,7 @@
 - Date: 2026-11-15
 - Source: issue #372 (UX/UI review 2026-11, tracking #392, finding F5); acceptance delegated
   by the owner for the 2026-11-15 run (comment on #392)
+- Amended by: [0218](0218-dashboard-pill-and-chart-grid.md) (the hint row has no lead)
 - Amends: [0088](0088-asof-basis-labels.md) §5 (where the hint sits)
 
 ## Context

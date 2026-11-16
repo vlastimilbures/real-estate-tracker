@@ -10,7 +10,7 @@ import {
   Dscr,
   StatList,
 } from "../components/primitives";
-import { ChartCard, SMALL_CHART_HEIGHT } from "../components/charts";
+import { ChartCard } from "../components/charts";
 import {
   SERIES,
   COMMITTED_DASH,
@@ -197,76 +197,56 @@ function useProjectionSeries(rows: ChartRow[], eqChange: EquityChangeRow[]) {
   };
 }
 
-/** Plot heights on the Dashboard (ADR 0202): the hero chart and the small multiples. */
-const HERO_HEIGHT = 280;
+/** One plot height for every Dashboard chart (ADR 0218 §2). */
+const CHART_HEIGHT = 220;
 
-/** The projection itself, first after the KPI strip: value vs debt vs equity, full
- *  width, under a panel-style heading with the lens (ADR 0202 §2). */
-export function ProjectionHero({
+/** The projection: six charts, two per row, under one heading that names the horizon
+ *  and the lens once (ADR 0218 §2). The value chart leads and keeps the fixation-end
+ *  markers (ADR 0210). */
+export function ProjectionCharts({
   mode,
   rows,
+  eqChange,
   markers = [],
   horizonYears,
 }: {
   mode: Mode;
   rows: ChartRow[];
+  eqChange: EquityChangeRow[];
   /** Upcoming fixation ends (ADR 0210). */
   markers?: readonly ResetMarker[] | undefined;
   horizonYears: number;
 }) {
   const t = useT();
   const d = t.dashboard;
-  const { valueSeries } = useProjectionSeries(rows, []);
+  const {
+    valueSeries,
+    equitySeries,
+    cashFlowSeries,
+    rentSeries,
+    noiSeries,
+    ltvSeries,
+  } = useProjectionSeries(rows, eqChange);
   return (
-    <section className="chart-hero">
-      <div className="chart-hero-head">
+    <section className="chart-grid-wrap projection-charts">
+      <div className="charts-head">
         <h2>{d.projectionTitle(horizonYears)}</h2>
         <span className="hint">
           {mode === "real" ? d.realTerms : d.nominalKc}
         </span>
       </div>
-      <ChartCard
-        title={d.chartValueVsDebtVsEquity}
-        kind="czk"
-        rows={rows}
-        series={valueSeries}
-        height={HERO_HEIGHT}
-        markers={markers}
-        markerHeading={
-          mode === "real" ? t.charts.rateResetNominal : t.charts.rateReset
-        }
-      />
-    </section>
-  );
-}
-
-/** The five other projection charts as small multiples, three then two per row
- *  (ADR 0202 §3), under a small heading with the lens (§4). */
-export function MoreCharts({
-  mode,
-  rows,
-  eqChange,
-  horizonYears,
-}: {
-  mode: Mode;
-  rows: ChartRow[];
-  eqChange: EquityChangeRow[];
-  horizonYears: number;
-}) {
-  const t = useT();
-  const d = t.dashboard;
-  const { equitySeries, cashFlowSeries, rentSeries, noiSeries, ltvSeries } =
-    useProjectionSeries(rows, eqChange);
-  return (
-    <section className="chart-grid-wrap">
-      {/* Far below the hero: these charts name their horizon and lens again. */}
-      <div className="chart-hero-head charts-head">
-        <h2>{d.moreCharts(horizonYears)}</h2>
-        <span className="hint">
-          {mode === "real" ? d.realTerms : d.nominalKc}
-        </span>
-      </div>
-      <div className="chart-grid small">
+      <div className="chart-grid pairs">
+        <ChartCard
+          title={d.chartValueVsDebtVsEquity}
+          kind="czk"
+          rows={rows}
+          series={valueSeries}
+          height={CHART_HEIGHT}
+          markers={markers}
+          markerHeading={
+            mode === "real" ? t.charts.rateResetNominal : t.charts.rateReset
+          }
+        />
         <ChartCard
           title={d.chartNetCashFlowByYear}
           sub={d.subNetCashFlow}
@@ -274,7 +254,7 @@ export function MoreCharts({
           rows={rows}
           chart="signed"
           series={cashFlowSeries}
-          height={SMALL_CHART_HEIGHT}
+          height={CHART_HEIGHT}
         />
         <ChartCard
           title={d.chartEquityChange}
@@ -284,21 +264,21 @@ export function MoreCharts({
           chart="stacked"
           series={equitySeries}
           totalLabel={d.seriesNetEquityChange}
-          height={SMALL_CHART_HEIGHT}
+          height={CHART_HEIGHT}
         />
         <ChartCard
           title={d.chartNoiVsDebtService}
           kind="czk"
           rows={rows}
           series={noiSeries}
-          height={SMALL_CHART_HEIGHT}
+          height={CHART_HEIGHT}
         />
         <ChartCard
           title={d.chartRentGrossVsEffective}
           kind="czk"
           rows={rows}
           series={rentSeries}
-          height={SMALL_CHART_HEIGHT}
+          height={CHART_HEIGHT}
         />
         <ChartCard
           title={d.chartLoanToValue}
@@ -306,7 +286,7 @@ export function MoreCharts({
           kind="pct"
           rows={rows}
           series={ltvSeries}
-          height={SMALL_CHART_HEIGHT}
+          height={CHART_HEIGHT}
         />
       </div>
     </section>

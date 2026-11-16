@@ -85,21 +85,17 @@ describe("AsOfPicker (UX-059)", () => {
     expect(group.nextElementSibling).toBe(row);
   });
 
-  it("a lead opens the hint's row, before the hint; no row without either", () => {
+  it("the hint's row holds the hint only; no row without one (ADR 0218 §1)", () => {
     const { container, rerender } = render(
       <AsOfPicker
         value={null}
         onChange={vi.fn()}
         bounds={bounds}
         hint="Hint"
-        lead={<button type="button">Lead</button>}
       />,
     );
     const row = container.querySelector(".asof-foot") as HTMLElement;
-    expect(Array.from(row.children, (c) => c.textContent)).toEqual([
-      "Lead",
-      "Hint",
-    ]);
+    expect(Array.from(row.children, (c) => c.textContent)).toEqual(["Hint"]);
     rerender(<AsOfPicker value={null} onChange={vi.fn()} bounds={bounds} />);
     expect(container.querySelector(".asof-foot")).toBeNull();
   });

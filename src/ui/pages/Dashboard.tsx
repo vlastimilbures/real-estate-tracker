@@ -7,7 +7,7 @@ import { AppShell } from "../components/AppShell";
 import { PropertySelect } from "../components/PropertySelect";
 import { AsOfPicker } from "../components/AsOfPicker";
 import { Button, EmptyState } from "../components/primitives";
-import { AlertTriangle, FolderOpen, Plus, Upload } from "lucide-react";
+import { FolderOpen, Plus, Upload } from "lucide-react";
 import { toChartRows, toEquityChangeRows } from "../model/chartData";
 import { projectionSeries } from "../model/projection";
 import { lensKpis } from "../model/lensKpis";
@@ -20,12 +20,7 @@ import {
   dashboardSubtitle,
   prunedFilter,
 } from "../model/dashboard";
-import {
-  KpiStrip,
-  ProjectionHero,
-  MoreCharts,
-  KpiListPanel,
-} from "./DashboardPanels";
+import { KpiStrip, ProjectionCharts, KpiListPanel } from "./DashboardPanels";
 import { FinancingPanel } from "./DashboardFinancing";
 import { DATA_CHECK_ID, DataCheckPanel } from "./DashboardDataCheck";
 import { dashboardDataCheck } from "../model/dataCheck";
@@ -144,7 +139,7 @@ export function Dashboard() {
   const { snapshot, kpis, projection, assumptions } = engine;
   const series = projectionSeries(projection, mode, assumptions);
   const rows = toChartRows(series);
-  // Upcoming fixation ends of the filtered properties, on the hero chart (ADR 0210).
+  // Upcoming fixation ends of the filtered properties, on the value chart (ADR 0210).
   const markers = resetMarkers(
     engine.financing.resets,
     rows,
@@ -187,6 +182,21 @@ export function Dashboard() {
       title={t.dashboard.title}
       subtitle={subtitle}
       pageClass="dashboard"
+      attention={
+        // Findings stay in view although the Data check is last (ADR 0218 §1).
+        toReview > 0
+          ? {
+              count: toReview,
+              label: t.dataCheck.reviewPill(toReview),
+              onSelect: () => {
+                // Open first, so the scroll lands on the open panel (a collapsed one
+                // last on the page cannot scroll to the top).
+                flushSync(() => setDataCheckOpen(true));
+                focusSection(DATA_CHECK_ID);
+              },
+            }
+          : undefined
+      }
     >
       <SampleBanner />
       <div className="filter-bar">
@@ -207,25 +217,6 @@ export function Dashboard() {
           onChange={setAsOf}
           bounds={view.bounds}
           hint={asOfHint(t, basis, assumptions.baseDate)}
-          lead={
-            // Warnings stay in view although the Data check is last (ADR 0206 §2); on
-            // the hint's row, so the chips and the picker keep their place (ADR 0198).
-            toReview > 0 && (
-              <Button
-                size="sm"
-                variant="ghost"
-                icon={AlertTriangle}
-                onClick={() => {
-                  // Open first, so the scroll lands on the open panel (a collapsed one
-                  // last on the page cannot scroll to the top).
-                  flushSync(() => setDataCheckOpen(true));
-                  focusSection(DATA_CHECK_ID);
-                }}
-              >
-                {t.dataCheck.toReview(toReview)}
-              </Button>
-            )
-          }
         />
       </div>
 
@@ -242,10 +233,11 @@ export function Dashboard() {
         irr={irr}
       />
 
-      {/* The projection first (ADR 0202 §1). */}
-      <ProjectionHero
+      {/* The projection first, then Financing (ADR 0218 §3). */}
+      <ProjectionCharts
         mode={mode}
         rows={rows}
+        eqChange={eqChange}
         markers={markers}
         horizonYears={assumptions.horizonYears}
       />
@@ -257,13 +249,6 @@ export function Dashboard() {
         mode={mode}
         horizonYears={assumptions.horizonYears}
         onOpenProperty={openProperty}
-      />
-
-      <MoreCharts
-        mode={mode}
-        rows={rows}
-        eqChange={eqChange}
-        horizonYears={assumptions.horizonYears}
       />
 
       <KpiListPanel

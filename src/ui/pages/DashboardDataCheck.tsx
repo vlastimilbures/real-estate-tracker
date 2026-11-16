@@ -18,7 +18,7 @@ import {
   type DataCheckItem,
 } from "../model/dataCheck";
 
-/** The element the filter bar's "to review" link scrolls to (ADR 0206 §2). */
+/** The element the page title's review pill scrolls to (ADR 0218 §1). */
 export const DATA_CHECK_ID = "dashboard-data-check";
 
 type OnFix = (propertyId: string | null, fix: DataCheckFix) => void;

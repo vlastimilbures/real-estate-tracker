@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 //
-// ADR 0210 §2 (#382): the Dashboard's hero chart marks the fixation ends of the
+// ADR 0210 §2 (#382): the Dashboard's value chart marks the fixation ends of the
 // properties in its filter.
 import {
   describe,

@@ -473,22 +473,20 @@ async function expectKeyFigures(ux: Ux) {
     expect(r.clear, "label clear of its value").toBeGreaterThanOrEqual(8);
 }
 
-/** The Dashboard's hierarchy (ADR 0202): at 1280 × 800 the hero chart ends inside the
- *  first viewport and Financing starts within the second; at every width each row of
- *  small multiples is full (no empty cell). */
+/** The Dashboard's projection (ADR 0218 §2–§3): six charts, two per row from a 640 px
+ *  grid (else one per row), each row full, Financing after them; at 1280 × 800 the first
+ *  chart row ends inside the first viewport. No warning sits in the filter bar (§1). */
 async function expectDashboardHierarchy(ux: Ux) {
   const vp = ux.page.viewportSize()!;
   const financingTop = await panel(ux, ux.t.dashboard.financingTitle).evaluate(
     (el) => el.getBoundingClientRect().top + window.scrollY,
   );
   const m = await ux.page.evaluate(() => {
-    const bottom = (el: Element | null) =>
-      el ? el.getBoundingClientRect().bottom + window.scrollY : NaN;
-    const grid = document.querySelector(".chart-grid.small")!;
+    const grid = document.querySelector(".projection-charts .chart-grid")!;
     const g = grid.getBoundingClientRect();
     const rows = new Map<
       number,
-      { left: number; right: number; cards: number }
+      { left: number; right: number; cards: number; bottom: number }
     >();
     for (const card of Array.from(grid.children)) {
       const r = card.getBoundingClientRect();
@@ -497,34 +495,31 @@ async function expectDashboardHierarchy(ux: Ux) {
         left: Infinity,
         right: -Infinity,
         cards: 0,
+        bottom: 0,
       };
       rows.set(key, {
         left: Math.min(row.left, r.left),
         right: Math.max(row.right, r.right),
         cards: row.cards + 1,
+        bottom: Math.max(row.bottom, r.bottom + window.scrollY),
       });
     }
     return {
-      heroBottom: bottom(document.querySelector(".chart-hero")),
       gridLeft: g.left,
       gridRight: g.right,
       gridWidth: g.width,
+      gridBottom: g.bottom + window.scrollY,
       cards: grid.children.length,
       rows: Array.from(rows.values()),
+      barButtons: document.querySelectorAll(".filter-bar .asof-foot button")
+        .length,
     };
   });
-  // Three then two from 860 px, two-two-one from 640 px, one per row below (ADR 0202 §3).
-  expect(m.cards, "five small multiples").toBe(5);
+  expect(m.cards, "six charts").toBe(6);
   expect(
     m.rows.map((r) => r.cards),
     `cards per row at a ${Math.round(m.gridWidth)} px grid`,
-  ).toEqual(
-    m.gridWidth >= 860
-      ? [3, 2]
-      : m.gridWidth >= 640
-        ? [2, 2, 1]
-        : [1, 1, 1, 1, 1],
-  );
+  ).toEqual(m.gridWidth >= 640 ? [2, 2, 2] : [1, 1, 1, 1, 1, 1]);
   for (const r of m.rows) {
     expect(r.left, "chart row starts at the grid's left").toBeLessThanOrEqual(
       m.gridLeft + 1,
@@ -533,14 +528,15 @@ async function expectDashboardHierarchy(ux: Ux) {
       m.gridRight - 1,
     );
   }
+  expect(financingTop, "Financing after the charts").toBeGreaterThan(
+    m.gridBottom,
+  );
+  expect(m.barButtons, "no button on the filter bar's hint row").toBe(0);
   if (vp.width === 1280 && vp.height === 800) {
     expect(
-      m.heroBottom,
-      "hero chart inside the first viewport",
+      m.rows[0]!.bottom,
+      "first chart row inside the first viewport",
     ).toBeLessThanOrEqual(800);
-    expect(financingTop, "Financing within the second viewport").toBeLessThan(
-      1600,
-    );
   }
 }
 
@@ -962,6 +958,8 @@ export const SCREENS: Screen[] = [
         .getByRole("button", { name: ux.t.shell.collapseSidebar })
         .click();
       await ux.capture("06-sidebar-collapsed", { fullPage: false });
+      // A wider grid with the bar collapsed: two per row from 640 px (ADR 0218 §2).
+      await expectDashboardHierarchy(ux);
     },
   },
   {
@@ -969,10 +967,12 @@ export const SCREENS: Screen[] = [
     desc: "Dashboard, value and LTV charts shown as tables (UX-075)",
     run: async (ux) => {
       await boot(ux.page);
-      const toggles = ux.page.getByRole("button", {
-        name: ux.t.charts.table,
-        exact: true,
-      });
+      const toggles = ux.page
+        .locator(".projection-charts")
+        .getByRole("button", {
+          name: ux.t.charts.table,
+          exact: true,
+        });
       await toggles.first().click();
       await toggles.last().click();
       await expect(ux.page.locator("table.chart-table")).toHaveCount(2);
@@ -1018,7 +1018,7 @@ export const SCREENS: Screen[] = [
     desc: "Value chart: fixation ends marked at 2029 and 2031 (dashed line, diamond, legend entry), the 2029 tooltip lists Lipova's reset (ADR 0210)",
     run: async (ux) => {
       await boot(ux.page);
-      const hero = ux.page.locator(".chart-hero");
+      const hero = ux.page.locator(".projection-charts .chart-card").first();
       await expect(
         hero.locator(".recharts-reference-line.reset-marker"),
       ).toHaveCount(2);
@@ -1058,8 +1058,14 @@ export const SCREENS: Screen[] = [
       const d = ux.t.dataCheck;
       await boot(ux.page);
       await ux.page.getByTestId("asof-5y").click();
-      // The panel is last on the page; the filter bar's link brings it into view.
-      await ux.page.getByRole("button", { name: d.toReview(6) }).click();
+      // The panel is last on the page; the title's pill brings it into view.
+      // The count sits beside the page title (ADR 0218 §1).
+      const pill = ux.page.locator(".topbar").getByRole("button", {
+        name: d.reviewPill(6),
+      });
+      await expect(pill).toHaveText("6");
+      await expectNotClipped(ux.page.locator(".topbar .page-title-row"));
+      await pill.click();
       await expect(
         ux.page.getByRole("heading", { name: d.title, exact: true }),
       ).toBeFocused();

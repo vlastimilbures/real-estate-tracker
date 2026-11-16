@@ -304,7 +304,6 @@ export const cs: Dictionary = {
     kpiMonthlyInflow: "Měsíční příjem · efektivní nájem",
     kpiMonthlyOutflow: "Měsíční výdaj · náklady + dluhová služba",
     projectionTitle: (n) => `${n}letá projekce`,
-    moreCharts: (n) => `Další grafy ${n}leté projekce`,
     realTerms: "Reálné hodnoty (Kč k základnímu datu)",
     nominalKc: "Nominální Kč",
     chartValueVsDebtVsEquity: "Hodnota vs dluh vs kapitál",
@@ -424,7 +423,7 @@ export const cs: Dictionary = {
     fundingUnknownFuture:
       "Vlastní zdroje na tento nákup nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám a projekce platbu při koupi odvodí: cena minus úvěr plus zadané transakční náklady a úpravy.",
     // ADR 0206: seskupená Kontrola dat na Přehledu.
-    toReview: (n) => `k řešení: ${n}`,
+    reviewPill: (n) => `Kontrola dat – k řešení: ${n}`,
     needAttention: (n) =>
       `${n} ${csPlural(n, ["položka vyžaduje", "položky vyžadují", "položek vyžaduje"])} pozornost`,
     useDefaults: (n) =>

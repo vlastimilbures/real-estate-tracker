@@ -155,7 +155,8 @@ export function ChartCard({
   series: readonly SeriesDef[];
   legend?: boolean | undefined;
   totalLabel?: string | undefined;
-  /** Plot (and table) height in px: the Dashboard's hero and small multiples (ADR 0202). */
+  /** Plot (and table) height in px: the Dashboard's charts (ADR 0218) and Scenario
+   *  compare's (ADR 0216). */
   height?: number | undefined;
   /** Years marked on a line chart with their fixation ends (ADR 0210). */
   markers?: readonly ResetMarker[] | undefined;
@@ -242,8 +243,7 @@ export function ChartCard({
 }
 
 const CHART_HEIGHT = 196;
-/** The small multiples' plot height: the Dashboard's (ADR 0202) and Scenario compare's
- *  (ADR 0216). */
+/** Scenario compare's plot height (ADR 0216). */
 export const SMALL_CHART_HEIGHT = 180;
 
 /** The chart's rows as a table: one row per year, one column per series (UX-075).
