@@ -9,7 +9,8 @@
   scrolling sideways),
   [0203](0203-one-disclosure.md) (the amortization toggle is in the panel head),
   [0213](0213-guide-section-nav.md) (the Guide has the same section navigation),
-  [0215](0215-property-detail-top.md) (the top bar: a "Properties" breadcrumb replaces the All properties button)
+  [0215](0215-property-detail-top.md) (the top bar: a "Properties" breadcrumb replaces the All properties button),
+  [0223](0223-data-check-blocks.md) (the Data check is the last section)
 
 ## Context
 

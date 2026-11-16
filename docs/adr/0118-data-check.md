@@ -11,7 +11,8 @@
   [0181](0181-purchase-price-fallback-grows.md) (the stale and no-valuation texts say how
   value is anchored),
   [0206](0206-data-check-grouped.md) (the Dashboard panel is last, summary first, its
-  findings grouped by problem)
+  findings grouped by problem),
+  [0223](0223-data-check-blocks.md) (Property detail: last section, blocks of rows, the title pill)
 
 ## Context
 
