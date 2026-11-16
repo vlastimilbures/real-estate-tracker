@@ -5,6 +5,12 @@
 // (`pnpm gates:docs`), and scripts/__tests__/gates.test.mjs checks them, CLAUDE.md §6, the
 // PR template, the release script and ci.yml against it.
 //
+// The ci.yml check (`ciDrift`) reads each step outside the docs fast path: its exact
+// shell lines, its `env`, `continue-on-error`, its `if:` and its job's shard matrix. It
+// does not see a `shell:` override, job- or workflow-level `env`, or an edit inside a
+// multi-line script that keeps the gate's own line (an `exit 0` before it, say). #459,
+// which owns the workflows, may revisit that.
+//
 //   node scripts/gates.mjs               run the check gates
 //   node scripts/gates.mjs --release     … and the two dependency audits
 //   node scripts/gates.mjs --list        print the gates it would run
@@ -319,31 +325,36 @@ export function runGates(gates, { exec = shell, log = console.log } = {}) {
 export const CI_SETUP = [
   "pnpm install --frozen-lockfile",
   "pnpm exec playwright install --with-deps chromium",
-  "pnpm vitest run src/import/__tests__/csvGuide.test.ts scripts/__tests__/adr-index.test.mjs",
+  'bash "$RUNNER_TEMP/ci-changes.sh"',
 ];
+// The docs fast path repeats some gate lines; a gate must run in the full jobs, so its
+// lines count as setup, never as the gate (#459 decides its future).
+export const CI_SETUP_JOBS = ["docs"];
+// The one `if:` a gate step may carry: the baseline checks need a base branch.
+export const CI_STEP_IFS = ["github.event_name == 'pull_request'"];
 
 const indentOf = (line) => line.search(/\S/);
 const unquote = (v) => v.trim().replace(/^(['"])(.*)\1$/, "$2");
 
-/** One step's shell lines and `env`, from its lines (the first one starts with "- "). */
+/** One step's shell lines, `env`, `if` and keys, from its lines (the first starts "- "). */
 function parseStep(lines) {
   const keyIndent = indentOf(lines[0]) + 2;
   const body = [lines[0].replace("- ", "  "), ...lines.slice(1)];
-  const step = { lines: [], env: {} };
+  const step = { lines: [], env: {}, keys: [] };
   for (let i = 0; i < body.length; i++) {
     const m = body[i].match(/^(\s*)([A-Za-z-]+):\s*(.*)$/);
     if (!m || m[1].length !== keyIndent) continue;
+    step.keys.push(m[2]);
     const nested = [];
     while (
       i + 1 < body.length &&
       (body[i + 1].trim() === "" || indentOf(body[i + 1]) > keyIndent)
     )
       nested.push(body[++i]);
-    if (m[2] === "run")
-      step.lines =
-        m[3] && !/^[|>]/.test(m[3])
-          ? [unquote(m[3])]
-          : nested.map((l) => l.trim()).filter(Boolean);
+    const block = nested.map((l) => l.trim()).filter(Boolean);
+    const scalar = m[3] && !/^[|>]/.test(m[3]) ? [unquote(m[3])] : block;
+    if (m[2] === "run") step.lines = scalar;
+    if (m[2] === "if") step.if = scalar.join(" ");
     if (m[2] === "env")
       for (const l of nested) {
         const kv = l.match(/^\s*([A-Za-z_][A-Za-z0-9_]*):\s*(.*)$/);
@@ -353,18 +364,33 @@ function parseStep(lines) {
   return step;
 }
 
-/** Every step of a workflow: `{ lines, env }`, block scalars and step `env` included. */
+/**
+ * Every step of a workflow: `{ job, shards, lines, env, if, keys }`, block scalars and
+ * step `env` included. `shards`: the job's `matrix.shard` list, or null.
+ */
 export function workflowSteps(yaml) {
-  const lines = yaml.split("\n");
   const steps = [];
+  let job = null;
+  let shards = null;
   let stepIndent = -1;
   let current = null;
-  const flush = () => current && steps.push(parseStep(current));
-  for (const line of lines) {
+  const flush = () => {
+    if (current) steps.push({ job, shards, ...parseStep(current) });
+    current = null;
+  };
+  for (const line of yaml.split("\n")) {
+    const jobHead = line.match(/^ {2}([A-Za-z0-9_-]+):\s*$/);
+    if (jobHead) {
+      flush();
+      [job, shards, stepIndent] = [jobHead[1], null, -1];
+      continue;
+    }
+    const matrix = line.match(/^\s+shard:\s*\[([^\]]*)\]/);
+    if (matrix && stepIndent < 0)
+      shards = matrix[1].split(",").map((s) => s.trim());
     const m = line.match(/^(\s*)steps:\s*$/);
     if (m) {
       flush();
-      current = null;
       stepIndent = m[1].length + 2;
       continue;
     }
@@ -378,7 +404,6 @@ export function workflowSteps(yaml) {
     }
     if (indent < stepIndent) {
       flush();
-      current = null;
       stepIndent = -1;
     } else if (indent === stepIndent && text.startsWith("- ")) {
       flush();
@@ -396,23 +421,54 @@ const sameEnv = (a = {}, b = {}) =>
   JSON.stringify(Object.entries(a).sort()) ===
   JSON.stringify(Object.entries(b).sort());
 
+/** What is wrong with how a step that runs a gate runs: `[]` when nothing. */
+function howItRuns(step, line, ifs) {
+  const problems = [];
+  if (step.keys.includes("continue-on-error"))
+    problems.push("has continue-on-error");
+  if (step.if !== undefined && !ifs.includes(step.if))
+    problems.push(`runs only if \`${step.if}\``);
+  const n = line.match(/--shard \$\{\{ matrix\.shard \}\}\/(\d+)/)?.[1];
+  const all = Array.from({ length: Number(n) }, (_, i) => String(i + 1));
+  if (n && JSON.stringify(step.shards) !== JSON.stringify(all))
+    problems.push(
+      `runs shards [${step.shards ?? ""}] of ${n}, not [${all.join(", ")}]`,
+    );
+  return problems;
+}
+
 /**
- * Where a workflow and the list disagree: a gate with no step that runs its exact line
- * with exactly its variables, or a pnpm / cargo line that is no gate and no setup.
+ * Where a workflow and the list disagree, outside the setup jobs:
+ * - a gate with no step that runs its exact line with exactly its variables;
+ * - a gate step with continue-on-error, an unknown `if:`, or a shard list that does not
+ *   match the `/N` of its `--shard`;
+ * - a pnpm / cargo / node / bash / npx line that is no gate and no setup.
  */
-export function ciDrift(yaml, { gates = GATES, setup = CI_SETUP } = {}) {
-  const steps = workflowSteps(yaml);
+export function ciDrift(
+  yaml,
+  {
+    gates = GATES,
+    setup = CI_SETUP,
+    setupJobs = CI_SETUP_JOBS,
+    ifs = CI_STEP_IFS,
+  } = {},
+) {
+  const steps = workflowSteps(yaml).filter((s) => !setupJobs.includes(s.job));
   const listed = gates.filter((g) => g.where !== "nightly");
   const problems = [];
   for (const g of listed)
     for (const spec of ciSteps(g)) {
       const found = steps.filter((s) => s.lines.includes(spec.run));
+      const same = found.filter((s) => sameEnv(s.env, spec.env));
       if (found.length === 0)
         problems.push(`${g.id}: no step runs \`${spec.run}\``);
-      else if (!found.some((s) => sameEnv(s.env, spec.env)))
+      else if (same.length === 0)
         problems.push(
           `${g.id}: \`${spec.run}\` runs with env ${JSON.stringify(found[0].env)}, expected ${JSON.stringify(spec.env ?? {})}`,
         );
+      for (const s of same)
+        for (const p of howItRuns(s, spec.run, ifs))
+          problems.push(`${g.id}: the \`${spec.run}\` step ${p}`);
     }
   const known = new Set([
     ...listed.flatMap((g) => ciSteps(g).map((s) => s.run)),
@@ -420,8 +476,8 @@ export function ciDrift(yaml, { gates = GATES, setup = CI_SETUP } = {}) {
   ]);
   for (const s of steps)
     for (const l of s.lines)
-      if (/^(pnpm|cargo) /.test(l) && !known.has(l))
-        problems.push(`a step runs \`${l}\`, which is no gate`);
+      if (/^(pnpm|cargo|node|bash|npx) /.test(l) && !known.has(l))
+        problems.push(`a step in ${s.job} runs \`${l}\`, which is no gate`);
   return problems;
 }
 

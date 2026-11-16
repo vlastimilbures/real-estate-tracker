@@ -237,8 +237,20 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
       "    runs-on: x",
     ].join("\n");
     expect(workflowSteps(yaml)).toEqual([
-      { lines: ["pnpm one"], env: { TZ: "UTC" } },
-      { lines: ["pnpm two", "pnpm three"], env: {} },
+      {
+        job: "a",
+        shards: null,
+        keys: ["name", "run", "env"],
+        lines: ["pnpm one"],
+        env: { TZ: "UTC" },
+      },
+      {
+        job: "a",
+        shards: null,
+        keys: ["run"],
+        lines: ["pnpm two", "pnpm three"],
+        env: {},
+      },
     ]);
   });
 
@@ -246,11 +258,38 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
     expect(ciDrift(ci)).toEqual([]);
   });
 
+  it("names the setup line a full job runs, and passes the known if and shards", () => {
+    const yaml = [
+      "jobs:",
+      "  x:",
+      "    strategy:",
+      "      matrix:",
+      "        shard: [1, 2]",
+      "    steps:",
+      "      - if: github.event_name == 'pull_request'",
+      "        run: pnpm lint:size:baseline-check",
+      "      - run: pnpm ux:capture --shard ${{ matrix.shard }}/2",
+      "      - run: node scripts/other.mjs",
+    ].join("\n");
+    const gates = [
+      { id: "size", run: "pnpm lint:size:baseline-check", where: "check" },
+      {
+        id: "axe",
+        run: "x",
+        where: "ci",
+        ci: [{ run: "pnpm ux:capture --shard ${{ matrix.shard }}/2" }],
+      },
+    ];
+    expect(ciDrift(yaml, { gates })).toEqual([
+      "a step in x runs `node scripts/other.mjs`, which is no gate",
+    ]);
+  });
+
   it("knows no nightly gate", () => {
     const nightly = GATES.filter((g) => g.where === "nightly");
     const yaml = `jobs:\n  a:\n    steps:\n      - run: pnpm mutation\n`;
     expect(ciDrift(yaml, { gates: nightly })).toEqual([
-      "a step runs `pnpm mutation`, which is no gate",
+      "a step in a runs `pnpm mutation`, which is no gate",
     ]);
   });
 
@@ -280,6 +319,31 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
       "the axe run id changed",
       "          UX_RUN_ID: ci\n",
       "          UX_RUN_ID: other\n",
+    ],
+    [
+      "Format check deleted from the full checks (the docs job still runs it)",
+      "        run: pnpm lint\n\n      - name: Format check\n        run: pnpm exec prettier --check .\n",
+      "        run: pnpm lint\n",
+    ],
+    [
+      "ADR index deleted from the full checks (the docs job still runs it)",
+      "      - name: ADR index and links\n        run: pnpm adr:check\n\n      - name: Audit",
+      "      - name: Audit",
+    ],
+    [
+      "a gate step allowed to fail",
+      "        run: pnpm typecheck\n",
+      "        run: pnpm typecheck\n        continue-on-error: true\n",
+    ],
+    [
+      "a gate step behind an unknown if",
+      "        run: pnpm depcruise\n",
+      "        if: github.event_name == 'push'\n        run: pnpm depcruise\n",
+    ],
+    [
+      "fewer axe shards than the run's /4",
+      "shard: [1, 2, 3, 4]",
+      "shard: [1, 2]",
     ],
   ])("fails a weakened step: %s", (_, from, to) => {
     expect(ciDrift(weaken(from, to)).length).toBeGreaterThan(0);
