@@ -52,23 +52,29 @@ const sharedMockBans = [
 
 // Every test starts on a pinned day (src/__tests__/setup/clock.ts, #458): no file-level
 // mock of lib/day; a test moves the day with setClock (src/__tests__/support/clock.ts).
-const DAY_MODULE = "/\\u002Flib\\u002Fday(\\.ts)?$/";
+// `vi.mock("…/lib/day")`, with or without `.ts` / `.js`; inside src/lib a relative path
+// names the module without `lib/` (`./day`, `../day`, `./../day`), so src/lib tests also
+// ban that form. The `/` before `day` keeps `today` / `holiday` out.
+const DAY_MODULE = "/\\u002Flib\\u002Fday(\\.(ts|js))?$/";
+const LIB_DAY_MODULE =
+  "/(\\u002Flib\\u002F|^(\\.\\.?\\u002F)+)day(\\.(ts|js))?$/";
 const dayMockMessage =
   "The test clock is pinned for every test (src/__tests__/setup/clock.ts, #458): call setClock(…) instead of mocking lib/day.";
-const dayMockBans = [
+const dayMockBansFor = (module) => [
   {
-    selector: `${VI_MOCK}[arguments.0.value=${DAY_MODULE}]`,
+    selector: `${VI_MOCK}[arguments.0.value=${module}]`,
     message: dayMockMessage,
   },
   {
-    selector: `${VI_MOCK}[arguments.0.type='TemplateLiteral'][arguments.0.quasis.0.value.raw=${DAY_MODULE}]`,
+    selector: `${VI_MOCK}[arguments.0.type='TemplateLiteral'][arguments.0.quasis.0.value.raw=${module}]`,
     message: dayMockMessage,
   },
   {
-    selector: `${VI_MOCK}[arguments.0.type='ImportExpression'][arguments.0.source.value=${DAY_MODULE}]`,
+    selector: `${VI_MOCK}[arguments.0.type='ImportExpression'][arguments.0.source.value=${module}]`,
     message: dayMockMessage,
   },
 ];
+const dayMockBans = dayMockBansFor(DAY_MODULE);
 const TEST_FILES = ["src/**/__tests__/**/*.{ts,tsx}", "src/**/*.test.{ts,tsx}"];
 const SETUP_FILES = ["src/__tests__/setup/**"];
 
@@ -200,6 +206,17 @@ export default tseslint.config(
     files: TEST_FILES,
     ignores: SETUP_FILES,
     rules: { "no-restricted-syntax": ["error", ...testBans, ...dayMockBans] },
+  },
+  // src/lib tests also reach lib/day by a relative path (`../day`).
+  {
+    files: ["src/lib/**/__tests__/**/*.{ts,tsx}", "src/lib/**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        ...testBans,
+        ...dayMockBansFor(LIB_DAY_MODULE),
+      ],
+    },
   },
   // ui/state tests get the errorLog and Tauri core mocks from a setup file
   // (src/__tests__/setup/mocks.ts, #458); a test changes their behaviour on the mock.

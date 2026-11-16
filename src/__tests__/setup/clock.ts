@@ -7,8 +7,9 @@
 // `vi.useRealTimers()` the test calls `setClock(PINNED_DAY)` to get the pin back.
 // The top-level call pins the test file's module code as well. Engine tests keep the real
 // `Date`: the engine never reads the clock (CLAUDE.md §4), and Stryker runs them as they
-// are.
-import { beforeEach, expect } from "vitest";
+// are. They restore it explicitly, since a reused module context (`--no-isolate`, Stryker)
+// can carry another file's pin into them.
+import { beforeEach, expect, vi } from "vitest";
 import { PINNED_DAY, setClock } from "../support/clock";
 
 const ENGINE = /\/src\/engine\//;
@@ -16,4 +17,9 @@ const ENGINE = /\/src\/engine\//;
 if (!ENGINE.test(expect.getState().testPath ?? "")) {
   setClock(PINNED_DAY);
   beforeEach(() => setClock(PINNED_DAY));
+} else {
+  vi.useRealTimers();
+  beforeEach(() => {
+    vi.useRealTimers();
+  });
 }

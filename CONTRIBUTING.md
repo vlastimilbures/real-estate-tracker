@@ -94,7 +94,8 @@ still describe it. Which document owns what is listed in
   Engine tests import neither (depcruise).
 - **The test clock** (#458): every test outside `src/engine` starts at local noon of
   `PINNED_DAY` (2026-10-01, `src/__tests__/setup/clock.ts`), so no test depends on the day
-  the suite runs; engine tests keep the real `Date` (the engine never reads it). A test
+  the suite runs; engine tests keep the real `Date` (the engine never reads it), and the
+  setup restores it for them even when an earlier file's pin lingers (`--no-isolate`). A test
   whose expectations need a given day names it with `setClock("YYYY-MM-DD")`
   (`src/__tests__/support/clock.ts`) in its `beforeEach` or in the test; lint rejects a
   file-level mock of `lib/day`. The pin replaces `Date` only and timers stay real, and the
