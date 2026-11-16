@@ -50,5 +50,7 @@ describe("stored dates before 1900 (ADR 0232)", () => {
     await confirmRestore(sql, backup, checkInputRules);
     const { portfolio } = await loadState(sql);
     expect(portfolio.properties).toHaveLength(3);
+    const p = portfolio.properties.find((x) => x.id === "javorova");
+    expect(p?.purchaseDate.toISOString().slice(0, 10)).toBe("1899-12-31");
   });
 });
