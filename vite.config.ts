@@ -53,6 +53,7 @@ export default defineConfig({
     setupFiles: [
       "src/i18n/__tests__/preload.ts",
       "src/__tests__/setup/jsdom.ts",
+      "src/__tests__/setup/audit.ts",
     ],
     // Engine benchmarks (P9, `pnpm bench`); git-ignored evidence benches stay out.
     benchmark: { include: ["src/**/*.bench.ts"] },
