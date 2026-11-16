@@ -13,6 +13,7 @@ import {
   replaceBlock,
   runGates,
   select,
+  workflowJobs,
   workflowSteps,
   yamlTree,
 } from "../gates.mjs";
@@ -446,5 +447,154 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
     ],
   ])("fails a weakened step: %s", (_, from, to) => {
     expect(ciDrift(weaken(from, to)).length).toBeGreaterThan(0);
+  });
+
+  it("reads each job's keys, if, env, defaults and matrix, and the workflow's env and defaults", () => {
+    const yaml = [
+      "env:",
+      "  A: x",
+      "defaults:",
+      "  run:",
+      "    working-directory: sub",
+      "jobs:",
+      "  a:",
+      "    if: false",
+      "    continue-on-error: true",
+      "    env:",
+      "      B: y",
+      "    defaults:",
+      "      run:",
+      "        shell: sh",
+      "    strategy:",
+      "      matrix:",
+      "        shard: [1, 2]",
+      "    steps:",
+      "      - run: pnpm one",
+      "  b:",
+      "    steps:",
+      "      - run: pnpm two",
+    ].join("\n");
+    expect(workflowJobs(yaml)).toEqual({
+      env: { A: "x" },
+      defaults: { run: { "working-directory": "sub" } },
+      jobs: {
+        a: {
+          keys: [
+            "if",
+            "continue-on-error",
+            "env",
+            "defaults",
+            "strategy",
+            "steps",
+          ],
+          if: "false",
+          env: { B: "y" },
+          defaults: { run: { shell: "sh" } },
+          matrix: { shard: ["1", "2"] },
+        },
+        b: { keys: ["steps"], env: {}, defaults: {}, matrix: null },
+      },
+    });
+  });
+
+  const DRAFT_IF =
+    "    if: github.event_name == 'push' || !github.event.pull_request.draft\n";
+  it.each([
+    [
+      "the rust job switched off",
+      `    name: Rust (fmt · clippy · test · audit · build)\n${DRAFT_IF}`,
+      "    name: Rust (fmt · clippy · test · audit · build)\n    if: false\n",
+      "job rust runs only if `false`",
+    ],
+    [
+      "the Frontend check skipped, not failed, when a job fails",
+      "    needs: [frontend-checks, frontend-time-zones]\n    if: >-\n      !cancelled() &&\n",
+      "    needs: [frontend-checks, frontend-time-zones]\n    if: >-\n      success() &&\n",
+      "job frontend runs only if `success() && (",
+    ],
+    [
+      "a job allowed to fail",
+      "    name: Frontend checks and coverage\n",
+      "    name: Frontend checks and coverage\n    continue-on-error: true\n",
+      "job frontend-checks has continue-on-error",
+    ],
+    [
+      "a job-level env that reaches every gate step",
+      "    name: Frontend checks and coverage\n",
+      '    name: Frontend checks and coverage\n    env:\n      FC_RUNS: "1"\n',
+      'test: `pnpm test:coverage` runs with env {"FC_RUNS":"1"}, expected {}',
+    ],
+    [
+      "a workflow-level env that reaches every gate step",
+      "\njobs:\n",
+      '\nenv:\n  FC_RUNS: "1"\n\njobs:\n',
+      'knip: `pnpm knip` runs with env {"FC_RUNS":"1"}, expected {}',
+    ],
+    [
+      "a workflow default working-directory",
+      "\njobs:\n",
+      "\ndefaults:\n  run:\n    working-directory: e2e\n\njobs:\n",
+      "lint: the `pnpm lint` step runs in `e2e`, not the repository root",
+    ],
+    [
+      "a job default shell",
+      "    name: Frontend checks and coverage\n",
+      "    name: Frontend checks and coverage\n    defaults:\n      run:\n        shell: sh\n",
+      "typecheck: the `pnpm typecheck` step runs in shell `sh`",
+    ],
+    [
+      "a gate step's shell",
+      "        run: pnpm typecheck\n",
+      "        run: pnpm typecheck\n        shell: sh\n",
+      "typecheck: the `pnpm typecheck` step runs in shell `sh`",
+    ],
+    [
+      "a gate step in another directory",
+      "        run: pnpm lint\n",
+      "        run: pnpm lint\n        working-directory: e2e\n",
+      "lint: the `pnpm lint` step runs in `e2e`, not the repository root",
+    ],
+    [
+      "cargo audit run outside src-tauri",
+      "        working-directory: src-tauri\n        run: cargo audit\n",
+      "        run: cargo audit\n",
+      "cargo-audit: the `cargo audit` step runs in the repository root, not `src-tauri`",
+    ],
+    [
+      "an axe shard excluded",
+      "        shard: [1, 2, 3, 4]\n",
+      "        shard: [1, 2, 3, 4]\n        exclude:\n          - shard: 4\n",
+      "job axe-shard has a matrix exclude, which this check cannot read",
+    ],
+    [
+      "a matrix include",
+      "        shard: [1, 2, 3, 4]\n",
+      "        shard: [1, 2, 3, 4]\n        include:\n          - shard: 1\n            UX_LANG: cs\n",
+      "job axe-shard has a matrix include, which this check cannot read",
+    ],
+    [
+      "an sh line",
+      "        run: pnpm knip\n",
+      "        run: pnpm knip\n\n      - run: sh scripts/skip.sh\n",
+      "a step in frontend-checks runs `sh scripts/skip.sh`, which is no gate",
+    ],
+    [
+      "an npm line",
+      "        run: pnpm knip\n",
+      "        run: pnpm knip\n\n      - run: npm test -- --passWithNoTests\n",
+      "a step in frontend-checks runs `npm test -- --passWithNoTests`, which is no gate",
+    ],
+    [
+      "a yarn line",
+      "        run: pnpm knip\n",
+      "        run: pnpm knip\n\n      - run: yarn knip --no-exit-code\n",
+      "a step in frontend-checks runs `yarn knip --no-exit-code`, which is no gate",
+    ],
+  ])("fails a weakened job or workflow: %s", (_, from, to, problem) => {
+    const problems = ciDrift(weaken(from, to));
+    expect(
+      problems.some((p) => p.includes(problem)),
+      problems.join("\n"),
+    ).toBe(true);
   });
 });
