@@ -132,11 +132,13 @@ jobs:
       - name: Architecture rules
         run: pnpm depcruise
 
+      # Both baselines may only shrink: layer violations and function sizes (#456).
       - name: Baseline never grows
         if: github.event_name == 'pull_request'
         run: |
           git fetch --no-tags --depth=1 origin "$GITHUB_BASE_REF"
           pnpm depcruise:baseline-check
+          pnpm lint:size:baseline-check
 
       - name: Dead code
         run: pnpm knip
