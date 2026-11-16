@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AssumptionsPanel } from "../../pages/Assumptions";
+import { SettingsPage } from "../../pages/Settings";
 import { LeaveGuard } from "../LeaveGuard";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
@@ -27,7 +27,7 @@ beforeEach(() => {
 function renderPanel() {
   render(
     <>
-      <AssumptionsPanel />
+      <SettingsPage />
       <LeaveGuard />
     </>,
   );
@@ -76,6 +76,12 @@ describe("unsaved Assumptions guard (UX-030)", () => {
       }),
     );
     expect(useUiStore.getState().settingsTab).toBe("backup");
+    expect(useUiStore.getState().unsavedChanges).toBe(false);
+    // Back on the tab the saved values show: the discarded draft is gone (ADR 0221 §3).
+    act(() => useUiStore.getState().setSettingsTab("assumptions"));
+    expect(
+      (screen.getByLabelText(/^Inflation/) as HTMLInputElement).value,
+    ).not.toBe("3");
     expect(useUiStore.getState().unsavedChanges).toBe(false);
   });
 

@@ -8,7 +8,7 @@ import userEvent from "@testing-library/user-event";
 import { RecordForm } from "../forms";
 import { PropertyFormModal } from "../PropertyFormModal";
 import { ScenarioForm } from "../../pages/ScenarioForm";
-import { AssumptionsPanel } from "../../pages/Assumptions";
+import { SettingsPage } from "../../pages/Settings";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
@@ -25,7 +25,7 @@ beforeAll(async () => {
 
 beforeEach(() =>
   act(() => {
-    useUiStore.setState({ language: "en" });
+    useUiStore.setState({ language: "en", settingsTab: "assumptions" });
     usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
   }),
 );
@@ -122,7 +122,7 @@ describe("Return submits forms (UX-028)", () => {
   it("Assumptions save on Return", async () => {
     const saveAssumptions = vi.fn(async () => ({ ok: true as const }));
     act(() => usePortfolioStore.setState({ saveAssumptions }));
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     // An edit first: Save is disabled while nothing changed (ADR 0095).
     const horizon = screen.getByLabelText(en.assumptions.horizon);
     await userEvent.clear(horizon);

@@ -852,6 +852,28 @@ async function pickReal(ux: Ux) {
   await expect(real).toHaveAttribute("aria-pressed", "true");
 }
 
+/** Settings (ADR 0221): the tabs in the top bar's section row; on Assumptions the state
+ *  text, Discard and Save in the top bar's actions, nothing cut off; no floating row. */
+async function expectSettingsTopBar(ux: Ux, tab: "assumptions" | "backup") {
+  const bar = ux.page.locator("header.topbar");
+  const tabs = bar.locator(".topbar-subnav").getByRole("tablist");
+  await expect(tabs.getByRole("tab")).toHaveCount(2);
+  await expect(
+    tabs.getByRole("tab", { name: ux.t.settings.tabs[tab] }),
+  ).toHaveAttribute("aria-selected", "true");
+  await expectNotClipped(tabs);
+  const save = bar.getByRole("button", { name: ux.t.common.saveChanges });
+  if (tab === "assumptions") {
+    await expect(save).toBeVisible();
+    await expectNotClipped(bar.locator(".topbar-form-actions"));
+  } else {
+    await expect(save).toHaveCount(0);
+  }
+  await expect(
+    ux.page.locator(".sticky-actions, .settings-layout"),
+  ).toHaveCount(0);
+}
+
 export const SCREENS: Screen[] = [
   {
     id: "00-loading",
@@ -2304,6 +2326,7 @@ export const SCREENS: Screen[] = [
     run: async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "assumptions");
+      await expectSettingsTopBar(ux, "assumptions");
       await ux.capture("60-settings-assumptions");
     },
   },
@@ -2347,7 +2370,7 @@ export const SCREENS: Screen[] = [
   },
   {
     id: "63-settings-assumptions-unsaved",
-    desc: "Assumptions with an unsaved edit: the sticky Save row in the window (ADR 0095)",
+    desc: "Assumptions with an unsaved edit: Save and the state text in the top bar (ADR 0095, 0221)",
     run: async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "assumptions");
@@ -2355,7 +2378,10 @@ export const SCREENS: Screen[] = [
         .locator(".field", { hasText: ux.t.assumptions.inflation })
         .locator("input")
         .fill("3");
-      await expect(ux.page.getByText(ux.t.common.unsavedChanges)).toBeVisible();
+      await expect(
+        ux.page.locator("header.topbar").getByText(ux.t.common.unsavedChanges),
+      ).toBeVisible();
+      await expectSettingsTopBar(ux, "assumptions");
       await ux.capture("63-settings-assumptions-unsaved", { fullPage: false });
     },
   },
@@ -2365,6 +2391,7 @@ export const SCREENS: Screen[] = [
     run: async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "backup");
+      await expectSettingsTopBar(ux, "backup");
       await ux.capture("64-settings-backup");
     },
   },

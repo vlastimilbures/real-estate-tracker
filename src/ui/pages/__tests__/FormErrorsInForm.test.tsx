@@ -10,7 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { AppShell } from "../../components/AppShell";
 import { EntityPanel } from "../../components/EntityPanel";
 import { RecordForm } from "../../components/forms";
-import { AssumptionsPanel } from "../Assumptions";
+import { SettingsPage } from "../Settings";
 import { ScenarioForm } from "../ScenarioForm";
 import { Scenarios } from "../Scenarios";
 import { usePortfolioStore } from "../../../state/portfolioStore";
@@ -62,7 +62,11 @@ const storeSave = usePortfolioStore.getState().saveAssumptions;
 
 beforeEach(() =>
   act(() => {
-    useUiStore.setState({ language: "en", compareIds: [] });
+    useUiStore.setState({
+      language: "en",
+      compareIds: [],
+      settingsTab: "assumptions",
+    });
     usePortfolioStore.setState({ saveAssumptions: storeSave });
   }),
 );
@@ -160,7 +164,7 @@ describe("Assumptions shows a non-field input error in its summary", () => {
         saveAssumptions: async () => ({ ok: false, error }),
       }),
     );
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     const input = screen.getByLabelText(startsWith(en.assumptions.inflation));
     await userEvent.clear(input);
     await userEvent.type(input, "3");
@@ -228,7 +232,7 @@ describe("editing a field clears its error (R5-07)", () => {
     act(() =>
       usePortfolioStore.setState({ portfolio, assumptions, status: "ready" }),
     );
-    render(<AssumptionsPanel />);
+    render(<SettingsPage />);
     const input = screen.getByLabelText(startsWith(en.assumptions.inflation));
     await userEvent.clear(input);
     await userEvent.click(

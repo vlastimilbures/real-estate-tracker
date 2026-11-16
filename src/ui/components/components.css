@@ -263,7 +263,8 @@
 }
 /* 8 px a side: Property detail's eight Russian tabs fit one row at 1280 px with Linux
    fonts too (ADR 0215). */
-.section-nav a {
+.section-nav a,
+.tab-strip [role="tab"] {
   display: block;
   padding: var(--s1) var(--s2);
   border-radius: var(--r-sm);
@@ -274,17 +275,34 @@
   text-decoration: none;
   border-bottom: 2px solid transparent;
 }
-.section-nav a:hover {
+.section-nav a:hover,
+.tab-strip [role="tab"]:hover {
   background: var(--hover-wash);
   color: var(--ink);
 }
 /* Current: colour plus an underline and weight, not colour alone. */
-.section-nav a[aria-current="location"] {
+.section-nav a[aria-current="location"],
+.tab-strip [role="tab"][aria-selected="true"] {
   color: var(--accent);
   font-weight: 600;
   border-bottom-color: var(--accent);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
+}
+/* Tabs in the top bar's section row, styled as the section nav (Settings, ADR 0221). */
+.tab-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+  padding: 0 0 var(--s1);
+}
+.tab-strip [role="tab"] {
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  font-family: inherit;
+  cursor: pointer;
 }
 /* Section groups of a page with a section nav (Property detail, ADR 0107; the Guide,
    ADR 0213): a jump lands the section under the sticky topbar. */
@@ -1846,21 +1864,14 @@ table.data tbody tr:hover td.sticky-col {
   color: var(--negative);
 }
 
-/* ADR 0095: the Assumptions buttons stay in view at the bottom of the scrolling page. */
-.form-actions.sticky-actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 5;
+/* The Assumptions state text, Discard and Save in the Settings top bar (ADR 0221). */
+.form-actions.topbar-form-actions {
   align-items: center;
-  margin: var(--s4) 0 0;
-  padding: var(--s3) 0;
-  background: var(--paper);
-  border-top: 1px solid var(--hairline);
+  margin: 0;
 }
-
-/* A focused field scrolls into view above the sticky row. */
-.assumptions-form :is(input, select, textarea) {
-  scroll-margin-bottom: 96px;
+.topbar-form-actions .form-state {
+  margin-right: var(--s1);
+  white-space: nowrap;
 }
 
 .error-summary {
@@ -2739,48 +2750,6 @@ main.page:focus {
 }
 
 /* ── Settings page ─────────────────────────────────────────────────────── */
-.settings-layout {
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: var(--s6);
-  align-items: start;
-}
-.settings-subnav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  position: sticky;
-  top: var(--s4);
-}
-.settings-subnav button {
-  display: flex;
-  align-items: center;
-  gap: var(--s3);
-  padding: var(--s2) var(--s3);
-  border-radius: var(--r-sm);
-  color: var(--ink-soft);
-  font-weight: 500;
-  font-size: 13.5px;
-  cursor: pointer;
-  border: none;
-  background: none;
-  text-align: left;
-  width: 100%;
-  transition:
-    background 0.15s,
-    color 0.15s;
-}
-.settings-subnav button svg {
-  flex: none;
-}
-.settings-subnav button:hover {
-  background: var(--hover-wash);
-  color: var(--ink);
-}
-.settings-subnav button.active {
-  background: var(--accent-wash);
-  color: var(--accent);
-}
 .settings-content {
   min-width: 0;
   display: flex;

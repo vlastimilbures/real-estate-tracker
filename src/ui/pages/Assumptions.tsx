@@ -5,15 +5,22 @@ import { Field, TextInput } from "../components/fields";
 import { DateInput } from "../components/DateInput";
 import type { FieldSpec } from "../model/formParse";
 import { useT } from "../hooks/useT";
-import { useAssumptionsForm } from "../hooks/useAssumptionsForm";
+import type { AssumptionsForm } from "../hooks/useAssumptionsForm";
 
-/** Form body without an AppShell — embedded in the Settings page sub-tabs. */
-export function AssumptionsPanel() {
+/** The Assumptions fields and error summary, on the Settings page's Assumptions tab. Its
+ *  Save and Discard sit in the top bar (`AssumptionsActions`, ADR 0221). */
+export function AssumptionsPanel({
+  form,
+  formId,
+}: {
+  form: AssumptionsForm;
+  /** The `<form>` id, which the top bar's Save submits through `form=`. */
+  formId: string;
+}) {
   const t = useT();
-  const form = useAssumptionsForm(true);
   const summaryRef = useRef<HTMLDivElement>(null);
-  const formId = useId();
-  const fieldId = (name: string) => `${formId}-${name}`;
+  const fieldsId = useId();
+  const fieldId = (name: string) => `${fieldsId}-${name}`;
   const { summaryFocus } = form;
   useEffect(() => {
     if (summaryFocus > 0) summaryRef.current?.focus();
@@ -55,11 +62,26 @@ export function AssumptionsPanel() {
 
   return (
     <form
+      id={formId}
       className="form-contents assumptions-form"
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
         form.save();
+      }}
+      onKeyDown={(e) => {
+        // Return in a field saves, as with a Save inside the form (UX-028). The Save
+        // button sits in the top bar (ADR 0221), so this does not rely on implicit
+        // submission reaching a button outside the form. Disabled while nothing changed.
+        const el = e.target as HTMLElement;
+        if (
+          e.key !== "Enter" ||
+          e.nativeEvent.isComposing ||
+          el.tagName !== "INPUT"
+        )
+          return;
+        e.preventDefault();
+        if (form.unsaved && !form.saving) form.save();
       }}
     >
       <p className="hint">{t.assumptions.scenariosHint}</p>
@@ -76,11 +98,11 @@ export function AssumptionsPanel() {
         <div
           className="error-summary"
           role="group"
-          aria-labelledby={`${formId}-summary`}
+          aria-labelledby={`${fieldsId}-summary`}
           tabIndex={-1}
           ref={summaryRef}
         >
-          <p id={`${formId}-summary`} className="error-text">
+          <p id={`${fieldsId}-summary`} className="error-text">
             {invalid.length > 0
               ? t.common.fieldsNeedAttention(invalid.length)
               : formError}
@@ -107,30 +129,45 @@ export function AssumptionsPanel() {
           )}
         </div>
       )}
-      {/* One Save/Discard row for the whole form, kept in view (ADR 0095). */}
-      <div className="form-actions sticky-actions">
-        <span
-          className={`form-state${form.failed ? " failed" : ""}`}
-          role="status"
-        >
-          {form.stateText}
-        </span>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={form.discard}
-          disabled={!form.unsaved || form.saving}
-        >
-          {t.common.discardChanges}
-        </Button>
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={!form.unsaved || form.saving}
-        >
-          {form.saving ? t.common.saving : t.common.saveChanges}
-        </Button>
-      </div>
     </form>
+  );
+}
+
+/** The Assumptions state text, Discard and Save, in the Settings top bar (ADR 0095 §2–§3,
+ *  ADR 0221 §2). Save submits the form from outside it. */
+export function AssumptionsActions({
+  form,
+  formId,
+}: {
+  form: AssumptionsForm;
+  formId: string;
+}) {
+  const t = useT();
+  if (!form.current) return null;
+  return (
+    <div className="form-actions topbar-form-actions">
+      <span
+        className={`form-state${form.failed ? " failed" : ""}`}
+        role="status"
+      >
+        {form.stateText}
+      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={form.discard}
+        disabled={!form.unsaved || form.saving}
+      >
+        {t.common.discardChanges}
+      </Button>
+      <Button
+        type="submit"
+        form={formId}
+        variant="primary"
+        disabled={!form.unsaved || form.saving}
+      >
+        {form.saving ? t.common.saving : t.common.saveChanges}
+      </Button>
+    </div>
   );
 }
