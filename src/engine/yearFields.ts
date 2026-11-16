@@ -9,7 +9,7 @@ import type { ProjectionYear } from "./types";
  * - `label`: the year and its period, never divided or summed;
  * - `ratio`: lens-invariant, recomputed (LTV, DSCR) or not summed (the rate);
  * - `stock`: a year-end amount, summed across properties;
- * - `derivedStock`: a stock computed from the summed ones (`stocks`), never summed;
+ * - `derivedStock`: a stock computed from the summed ones (`stocksOf`), never summed;
  * - `flow`: an amount of the year, summed across properties;
  * - `ownerFlow`: cash to owner, set after the sum (`withCashToOwner`), never summed.
  */

@@ -25,8 +25,8 @@ import {
   leaseInForce,
   forProperty,
   holdingCostBasis,
-  ltvOf,
 } from "./metrics";
+import { costsAndNoi, dscrOf, stocksOf } from "./figures";
 import type {
   Assumptions,
   Lease,
@@ -222,30 +222,6 @@ function computeTurnOnGates(
   };
 }
 
-/**
- * A year's stocks. Committed debt = the drawn balance + the development tranches not
- * drawn yet (ADR 0166); equity and LTV use it. The screens show the drawn balance beside
- * the value less those tranches (`reportedValue`, ADR 0169). The portfolio passes its own
- * Σ committed debt: Σbalance + Σundrawn could round differently in the last digits and
- * move the golden hashes (ADR 0039).
- */
-function stocks(
-  value: Decimal,
-  balance: Decimal,
-  undrawnDebt: Decimal,
-  committedDebt = balance.plus(undrawnDebt),
-) {
-  return {
-    value,
-    balance,
-    committedDebt,
-    undrawnDebt,
-    reportedValue: value.minus(undrawnDebt),
-    equity: value.minus(committedDebt),
-    ltv: ltvOf(committedDebt, value),
-  };
-}
-
 /** Year 0 — opening position (stocks only). Empty if not owned yet. */
 function buildYear0(
   b: PropertyBasis,
@@ -262,7 +238,7 @@ function buildYear0(
   const balance0 = debtAtGridMonth(b.schedule, blocks, assumptions, 0);
   return {
     ...zeroYear(0, baseYear, assumptions.baseDate),
-    ...stocks(crash(b.v0, 0), balance0, undrawn0),
+    ...stocksOf(crash(b.v0, 0), balance0, undrawn0),
   };
 }
 
@@ -327,16 +303,11 @@ function computeRentAndCosts(
         .times(months),
     );
   }
-  const effectiveRent = grossRent.times(ONE.minus(vacancy));
-  const holdingCosts = b.fixed0
-    .times(at(cpi, t))
-    .times(ownedMonths)
-    .div(12)
-    // Management on the rent collected, maintenance on the rent contracted (ADR 0182).
-    .plus(b.mgmtPct.times(effectiveRent))
-    .plus(b.maintPct.times(grossRent));
-  const noi = effectiveRent.minus(holdingCosts);
-  return { grossRent, effectiveRent, holdingCosts, noi };
+  const fixed = b.fixed0.times(at(cpi, t)).times(ownedMonths).div(12);
+  return {
+    grossRent,
+    ...costsAndNoi(fixed, grossRent, vacancy, b.mgmtPct, b.maintPct),
+  };
 }
 
 function buildYearRow(
@@ -358,7 +329,7 @@ function buildYearRow(
     year: t,
     calendarYear: baseDate.getUTCFullYear() + t,
     ...yearPeriod(baseDate, t),
-    ...stocks(value, slice.balance, parts.undrawn),
+    ...stocksOf(value, slice.balance, parts.undrawn),
     grossRent: rc.grossRent,
     effectiveRent: rc.effectiveRent,
     holdingCosts: rc.holdingCosts,
@@ -374,7 +345,7 @@ function buildYearRow(
     refinanced: slice.refinanced,
     prepaid: slice.prepaid,
     prepaymentFees: slice.prepaymentFees,
-    dscr: slice.debtService.isZero() ? null : rc.noi.div(slice.debtService),
+    dscr: dscrOf(rc.noi, slice.debtService),
     ratePa: slice.rate,
   };
 }
@@ -632,11 +603,9 @@ function sumYears(perProp: YearRow[][], assumptions: Assumptions): YearRow[] {
       year: t,
       calendarYear: baseYear + t,
       ...yearPeriod(assumptions.baseDate, t),
-      ...stocks(st.value, st.balance, st.undrawnDebt, st.committedDebt),
+      ...stocksOf(st.value, st.balance, st.undrawnDebt, st.committedDebt),
       ...flows,
-      dscr: flows.debtService.isZero()
-        ? null
-        : flows.noi.div(flows.debtService),
+      dscr: dscrOf(flows.noi, flows.debtService),
       ratePa: null,
     });
   }

@@ -6,7 +6,7 @@
 import { ONE, powYears, type Decimal } from "../lib/money";
 import { at } from "./arrays";
 import { lastGridMonthOnOrBefore } from "./dates";
-import { yieldOf } from "./metrics";
+import { yieldOf } from "./figures";
 import { buildCpiIndex, inflationInYear } from "./projections";
 import { assertAssumptions } from "./validate";
 import { decimalsOf, fieldsOf } from "./yearFields";
