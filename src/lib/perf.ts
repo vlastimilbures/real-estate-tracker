@@ -1,21 +1,35 @@
 // Performance marks and measures (P9): User Timing entries, plus an optional sink that
 // receives every measure and reported mark (the desktop app prints them to stderr,
-// src-tauri/src/perf.rs). Every helper is a no-op where the User Timing API is missing,
-// so callers never need to guard.
+// src-tauri/src/perf.rs). Timing is off until `enablePerf` is called (ADR 0233: the
+// release build measures only when started with RTRACKER_PERF=1; platform/perfReport.ts
+// decides once, before the first render). While off, and where the User Timing API is
+// missing, every helper is a no-op, so callers never need to guard.
+
+/** Receives each measure (`ms`) and each `perfReport` mark (`ms` null). */
+export type PerfSink = (name: string, ms: number | null) => void;
+
+let enabled = false;
+let sink: PerfSink | null = null;
+
 const timing = (): Performance | null =>
+  enabled &&
   typeof performance !== "undefined" &&
   typeof performance.mark === "function" &&
   typeof performance.measure === "function"
     ? performance
     : null;
 
-/** Receives each measure (`ms`) and each `perfReport` mark (`ms` null). */
-export type PerfSink = (name: string, ms: number | null) => void;
-
-let sink: PerfSink | null = null;
-
-export function setPerfSink(next: PerfSink | null): void {
+/** Turn timing on, handing measures and reported marks to `next` (null: marks only). */
+export function enablePerf(next: PerfSink | null): void {
+  enabled = true;
   sink = next;
+}
+
+/** Turn timing off again and drop the sink.
+ *  @internal test seam: test teardown; the app decides once, at start. */
+export function disablePerf(): void {
+  enabled = false;
+  sink = null;
 }
 
 /** Mark `name`, replacing an earlier mark of that name (only the latest is kept, so
@@ -32,7 +46,8 @@ export function hasPerfMark(name: string): boolean {
 }
 
 /** Measure from the `start` mark to now, replacing an earlier measure of that name;
- *  returns the duration in ms, or null when there is no API or no `start` mark. */
+ *  returns the duration in ms, or null when timing is off, there is no API or no
+ *  `start` mark. */
 export function perfMeasure(name: string, start: string): number | null {
   const p = timing();
   if (!p || !hasPerfMark(start)) return null;

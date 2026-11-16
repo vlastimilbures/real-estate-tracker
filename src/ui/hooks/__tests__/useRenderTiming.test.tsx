@@ -1,12 +1,16 @@
 // @vitest-environment jsdom
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
+import { disablePerf, enablePerf } from "../../../lib/perf";
 import { useRenderTiming } from "../useRenderTiming";
 
 const entries = (name: string, type: "mark" | "measure") =>
   performance.getEntriesByName(name, type).length;
 
+beforeEach(() => enablePerf(null));
+
 afterEach(() => {
+  disablePerf();
   performance.clearMarks();
   performance.clearMeasures();
 });
@@ -28,5 +32,13 @@ describe("useRenderTiming", () => {
     hook.rerender({ out: { v: 2 } });
     expect(entries("page-b-render", "measure")).toBe(1);
     expect(entries("page-b-rendered", "mark")).toBe(0);
+  });
+
+  it("records nothing while timing is off (ADR 0233)", () => {
+    disablePerf();
+    renderHook(() => useRenderTiming("page-c", { v: 1 }));
+    expect(entries("page-c:render", "mark")).toBe(0);
+    expect(entries("page-c-render", "measure")).toBe(0);
+    expect(entries("page-c-rendered", "mark")).toBe(0);
   });
 });

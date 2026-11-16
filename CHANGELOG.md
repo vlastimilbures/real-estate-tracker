@@ -37,6 +37,9 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- The release build no longer measures start-up and edit timings unless started from
+  Terminal with `RTRACKER_PERF=1` (ADR 0233, #453); docs/release.md gives the command.
+  Development builds measure as before. No figure changes.
 - Adding a valuation no longer asks whether to end the previous one (ADR 0227, #445). When
   the new valuation has no "Valid to" and the one before it is open-ended, the earlier one
   now ends the day before the new one starts, as leases already do. A valuation with its own

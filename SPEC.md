@@ -816,8 +816,9 @@ price crash**, each with a legend and one line of help (ADR 0102).
   export writes the rounded values the app displays (ADR 0010).
 - **Determinism:** engine is pure; base date is an input. Same inputs ⇒ same outputs.
 - **Performance** (ADR 0066): budgets are benchmarked locally (`pnpm bench`) and measured in
-  the release build (cold start to dashboard, edit to dashboard); 20 properties × 360 months
-  × 30 years recompute well under a second; recompute on input change (memoized via
+  the release build when it is started with `RTRACKER_PERF=1` (cold start to dashboard,
+  edit to dashboard; ADR 0233, otherwise the release build measures nothing); 20 properties
+  × 360 months × 30 years recompute well under a second; recompute on input change (memoized via
   `useEngine`).
 - **Correctness:** engine checked against independent, engine-free reference models of the
   mortgage maths and of the sample portfolio's projection and KPIs, pinned by parity tests

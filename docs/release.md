@@ -25,7 +25,7 @@ runtime only, ADR 0063).
 6. **Build, sign, verify** — merge the release commit (steps 2, 4 and 5) to `main` through a
    pull request and wait until CI on `main` passes. Then, on an up-to-date `main`, run
    `scripts/release-macos.sh`. It refuses uncommitted changes, so the build is the commit you
-   tag in step 8. It runs
+   tag in step 9. It runs
    `pnpm check:release` (the `pnpm check` gates in [CONTRIBUTING.md](../CONTRIBUTING.md#checks)
    plus the two dependency audits), then
    `pnpm tauri build --target aarch64-apple-darwin`, and verifies the result:
@@ -41,7 +41,19 @@ runtime only, ADR 0063).
 7. **Install and smoke-test** — open the dmg, drag the app to Applications, open it. Check:
    the data is there; it works with Wi-Fi off; no light flash on start in dark mode; an export
    saves; the window reopens where you left it.
-8. **Tag** — `git tag v<version>` on the commit you built in step 6, and push the tag. The
+8. **Check the timing budgets** (ADR 0066, ADR 0233) — quit the app, then start it from
+   Terminal with timing on:
+
+   ```sh
+   RTRACKER_PERF=1 "/Applications/Real Estate Tracker.app/Contents/MacOS/real-estate-tracker"
+   ```
+
+   Terminal shows one `perf …` line per mark. Check `dashboard-rendered since_start_ms=…`
+   is at most 2000 (cold start), and after an assumption edit that the `edit-saved` and
+   `dashboard-render` `measure_ms=…` values are at most 250. Quit with ⌘Q. Started from the
+   Finder or the Dock, the app measures nothing.
+
+9. **Tag** — `git tag v<version>` on the commit you built in step 6, and push the tag. The
    `Release (macOS)` workflow then builds and verifies the bundle on a macOS runner and
    attaches the dmg to the tag's GitHub release (creating the release if needed). It skips
    the checks, trusting the green CI on `main` from step 6. It fails if the tag is not `v` +
