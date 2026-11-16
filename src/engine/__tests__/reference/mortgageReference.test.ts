@@ -257,6 +257,57 @@ describe("reference first draw of a future loan (D-46)", () => {
   });
 });
 
+describe("reference last tranche on payment term−2 (ADR 0226)", () => {
+  // Start 31 Jan 2026, 24 months: the last valid draw is on payment 22's due date,
+  // 30 Nov 2027. A baseDate grid on the 30th dates the row carrying payment 22 on that
+  // day, so that row takes the tranche; a grid on the 28th dates it two days before, so
+  // the tranche joins payment 23. Either way it lands before the final payment.
+  const loan = {
+    start: "2026-01-31",
+    principal: "100000",
+    ratePa: "0.05",
+    instalment: "0",
+    fixationMonths: 60,
+    termMonths: 24,
+    draws: [{ date: "2027-11-30", amount: "500000" }],
+  };
+  /** baseDate, payments due by it, the payment whose row carries the tranche. */
+  const cases: [string, number, number][] = [
+    ["2026-02-28", 1, 23],
+    ["2026-04-30", 3, 22],
+  ];
+  for (const [base, paid, carrier] of cases) {
+    it(`baseDate ${base}: payment ${carrier} carries the tranche`, () => {
+      const r = referenceSchedule(loan, {
+        baseDate: base,
+        months: 30,
+        resetRatePa: RESET,
+        calendar: "gridDueDate",
+        devInstalment: "fromTerm",
+        openingDraws: "nextPeriod",
+      });
+      const row = r[carrier - paid - 1];
+      expect(row.date).toBe(addMonths(base, carrier - paid));
+      near(row.draw, 500000, 0);
+      // The last payment is one annuity payment, not a one-shot payoff.
+      const last = r[24 - paid - 1];
+      const prev = r[24 - paid - 2];
+      near(last.endBalance, 0, 1e-9);
+      near(last.payment, prev.payment.toNumber(), 0.01);
+      expect(last.principal.lessThan(300000)).toBe(true);
+      const sum = r.reduce(
+        (s, x) => s.plus(x.principal),
+        r[0].principal.times(0),
+      );
+      near(
+        sum,
+        r[0].endBalance.plus(r[0].principal).plus(500000).toNumber(),
+        1e-6,
+      );
+    });
+  }
+});
+
 describe("reference refinance chain (D-47)", () => {
   // 0 % loans so every figure is hand-checkable. A: 4 payments due by baseDate
   // (17 Feb–17 May) ⇒ 116,000; grid month m carries payment 4 + m, due on the 17th.
