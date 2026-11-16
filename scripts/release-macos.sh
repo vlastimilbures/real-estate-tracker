@@ -2,8 +2,8 @@
 # Build, ad-hoc sign and verify the macOS release (P8, D-09, D-63: Apple Silicon only,
 # macOS 13+). Usage: scripts/release-macos.sh [--skip-checks]
 # Refuses a dirty tree, so the build is exactly the commit that gets tagged. Without
-# --skip-checks it runs the CI gates first. Never launches the app and never touches the
-# database. See docs/release.md.
+# --skip-checks it runs `pnpm check:release` first (CONTRIBUTING.md#checks). Never
+# launches the app and never touches the database. See docs/release.md.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -29,18 +29,7 @@ step "Clean tree (the build must match the commit you tag)"
 
 if [[ "${1:-}" != "--skip-checks" ]]; then
   step "Checks"
-  pnpm typecheck
-  pnpm lint
-  pnpm exec prettier --check .
-  pnpm depcruise
-  pnpm knip
-  pnpm adr:check
-  pnpm audit --prod --audit-level=high
-  pnpm test:coverage
-  cargo fmt --check --manifest-path src-tauri/Cargo.toml
-  cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
-  cargo test --manifest-path src-tauri/Cargo.toml
-  (cd src-tauri && cargo audit)
+  pnpm check:release
 fi
 
 step "Build ($TARGET, ad-hoc signed per tauri.conf.json)"

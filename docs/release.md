@@ -25,10 +25,9 @@ runtime only, ADR 0063).
 6. **Build, sign, verify** — merge the release commit (steps 2, 4 and 5) to `main` through a
    pull request and wait until CI on `main` passes. Then, on an up-to-date `main`, run
    `scripts/release-macos.sh`. It refuses uncommitted changes, so the build is the commit you
-   tag in step 8. It runs the CI
-   gates (typecheck, lint, Prettier, depcruise, knip, the ADR index check, the production
-   dependency audit, the JS tests with the coverage floors, `cargo fmt --check`,
-   `cargo clippy -D warnings`, the Rust tests and `cargo audit`), then
+   tag in step 8. It runs
+   `pnpm check:release` (the `pnpm check` gates in [CONTRIBUTING.md](../CONTRIBUTING.md#checks)
+   plus the two dependency audits), then
    `pnpm tauri build --target aarch64-apple-darwin`, and verifies the result:
    - no sql.js in the frontend bundle (it is for E2E only);
    - `codesign --verify --deep --strict --verbose=2` passes;
