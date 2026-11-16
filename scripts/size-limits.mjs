@@ -3,6 +3,8 @@
 // function-size-baseline.json (CONTRIBUTING.md "Function size and complexity").
 // Lines skip blanks and comments; tests are out of scope.
 
+export const SIZE_RULES = ["max-lines-per-function", "complexity"];
+
 const TESTS = ["src/**/__tests__/**", "src/**/*.test.{ts,tsx}"];
 
 // Components: JSX is long by nature.

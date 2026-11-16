@@ -1,0 +1,198 @@
+{
+  "src/data/backup.ts": {
+    "lines": {
+      "Function 'prepareRestore'": 87
+    }
+  },
+  "src/data/mappers.ts": {
+    "complexity": {
+      "Function 'parseOverrides'": 22
+    }
+  },
+  "src/data/migrations.ts": {
+    "complexity": {
+      "Async function 'migrate'": 16
+    },
+    "lines": {
+      "Async function 'migrate'": 98
+    }
+  },
+  "src/import/csv.ts": {
+    "complexity": {
+      "Function 'readCsv'": 18
+    },
+    "lines": {
+      "Function 'readCsv'": 94
+    }
+  },
+  "src/import/csvImport.ts": {
+    "complexity": {
+      "Function 'planImport'": 29
+    },
+    "lines": {
+      "Function 'planImport'": 184
+    }
+  },
+  "src/state/portfolioStore.ts": {
+    "lines": {
+      "Arrow function (usePortfolioStore: create)": 387
+    }
+  },
+  "src/state/uiStore.ts": {
+    "lines": {
+      "Arrow function (useUiStore: create)": 138
+    }
+  },
+  "src/ui/components/AppShell.tsx": {
+    "complexity": {
+      "Function 'AppShell'": 18
+    },
+    "lines": {
+      "Function 'AppShell'": 224
+    }
+  },
+  "src/ui/components/BootFailure.tsx": {
+    "complexity": {
+      "Function 'BootFailure'": 18
+    },
+    "lines": {
+      "Function 'BootFailure'": 163
+    }
+  },
+  "src/ui/components/EntityPanel.tsx": {
+    "lines": {
+      "Function 'EntityPanel'": 201
+    }
+  },
+  "src/ui/components/LoanEventRows.tsx": {
+    "lines": {
+      "Function 'LoanEventRows'": 239
+    }
+  },
+  "src/ui/components/PropertyFormModal.tsx": {
+    "lines": {
+      "Function 'PropertyFormModal'": 209
+    }
+  },
+  "src/ui/components/charts.tsx": {
+    "complexity": {
+      "Function 'ChartCard'": 18
+    },
+    "lines": {
+      "Function 'ChartBody'": 168
+    }
+  },
+  "src/ui/components/forms.tsx": {
+    "lines": {
+      "Function 'RecordForm'": 229
+    }
+  },
+  "src/ui/hooks/useAssumptionsForm.ts": {
+    "lines": {
+      "Function 'useAssumptionsForm'": 141
+    }
+  },
+  "src/ui/hooks/useModalA11y.ts": {
+    "complexity": {
+      "Function 'wrapTab'": 14
+    }
+  },
+  "src/ui/model/compare.ts": {
+    "lines": {
+      "Function 'kpiRowSpecs'": 132
+    }
+  },
+  "src/ui/model/dataCheck.ts": {
+    "complexity": {
+      "Function 'findingFix'": 15,
+      "Function 'findingText'": 24
+    }
+  },
+  "src/ui/model/financing.ts": {
+    "lines": {
+      "Function 'financingTimeline'": 101
+    }
+  },
+  "src/ui/model/scenarioForm.ts": {
+    "complexity": {
+      "Function 'parseScenarioDraft'": 18
+    }
+  },
+  "src/ui/model/writeError.ts": {
+    "complexity": {
+      "Function 'constraintText'": 15
+    }
+  },
+  "src/ui/pages/Dashboard.tsx": {
+    "lines": {
+      "Function 'Dashboard'": 184
+    }
+  },
+  "src/ui/pages/Guide.tsx": {
+    "lines": {
+      "Function 'Guide'": 205
+    }
+  },
+  "src/ui/pages/Import.tsx": {
+    "complexity": {
+      "Function 'Import'": 36
+    },
+    "lines": {
+      "Function 'Import'": 292
+    }
+  },
+  "src/ui/pages/ImportPanels.tsx": {
+    "complexity": {
+      "Function 'csvErrorText'": 23
+    }
+  },
+  "src/ui/pages/Properties.tsx": {
+    "complexity": {
+      "Function 'Properties'": 22
+    },
+    "lines": {
+      "Function 'Properties'": 322
+    }
+  },
+  "src/ui/pages/PropertyDetail.tsx": {
+    "complexity": {
+      "Function 'PropertyDetail'": 60
+    },
+    "lines": {
+      "Function 'PropertyDetail'": 394
+    }
+  },
+  "src/ui/pages/PropertyDetailPanels.tsx": {
+    "lines": {
+      "Function 'HoldingCostsPanel'": 157
+    }
+  },
+  "src/ui/pages/PropertyEntityPanels.tsx": {
+    "lines": {
+      "Function 'MortgagesPanel'": 185
+    }
+  },
+  "src/ui/pages/ScenarioCompare.tsx": {
+    "lines": {
+      "Function 'CompareView'": 181
+    }
+  },
+  "src/ui/pages/ScenarioForm.tsx": {
+    "complexity": {
+      "Arrow function (ScenarioForm > [initialDraft]: useState)": 20
+    },
+    "lines": {
+      "Function 'ScenarioForm'": 184
+    }
+  },
+  "src/ui/pages/Scenarios.tsx": {
+    "lines": {
+      "Function 'Scenarios'": 164
+    }
+  },
+  "src/ui/pages/ScenariosPanels.tsx": {
+    "lines": {
+      "Function 'ScenarioListPanel'": 160
+    }
+  }
+}
