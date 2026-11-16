@@ -546,26 +546,13 @@ describe("committedDraws explains the committed-debt move (ADR 0166)", () => {
   });
 });
 
-// Review of PR #300: the undrawn principal is exactly what the schedule still draws,
-// including a tranche the schedule moves to its last draw month (ADR 0139).
+// Review of PR #300: the undrawn principal is exactly what the schedule still draws.
 describe("undrawn principal = the schedule's later draws", () => {
   const owner: Property = {
     id: "dev",
     name: "Dev unit",
     purchaseDate: isoDate("2020-01-01"),
     purchasePrice: money("8000000"),
-  };
-  const leap: MortgageBlock = {
-    id: "m-leap",
-    propertyId: "dev",
-    startDate: isoDate("2026-03-31"),
-    initialPrincipal: money("1000000"),
-    fixationYears: 2,
-    interestRatePa: rate("0.05"),
-    monthlyInstalment: money("45000"),
-    loanTermYears: 2,
-    // Payment 23's due date: valid, but the schedule draws it in grid month 12.
-    draws: [{ date: isoDate("2028-02-29"), amount: money("500000") }],
   };
   const cases: [string, MortgageBlock, string][] = [
     ["running dev loan", devBlock, "2026-06-07"],
@@ -575,7 +562,6 @@ describe("undrawn principal = the schedule's later draws", () => {
       { ...devBlock, startDate: isoDate("2026-08-01") },
       "2026-06-07",
     ],
-    ["tranche capped at the last draw month", leap, "2027-02-28"],
   ];
   it.each(cases)("%s", (_, block, base) => {
     const a = { ...assumptions, baseDate: isoDate(base) };

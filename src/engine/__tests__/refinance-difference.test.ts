@@ -3,7 +3,7 @@
 // holds only real new debt (a loan's draw, a tranche). The row identity becomes
 // endBalance = previous − principal − prepaid + drawn + refinanced.
 import { describe, it, expect } from "vitest";
-import { D, ZERO, type Decimal } from "../../lib/money";
+import { D, type Decimal } from "../../lib/money";
 import { money, rate } from "../brands";
 import { isoDate } from "../dates";
 import { portfolioProjection } from "../projections";
@@ -106,20 +106,6 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
     expect(r.drawn.toFixed(2)).toBe("1386000.00");
   });
 
-  it("a predecessor drawn in the handover month is drawn, the rest refinanced", () => {
-    // Both future loans start between the grid dates 07.01.2027 and 07.02.2027, so
-    // both draw in grid month 8: the first pays off its own draw.
-    const owner = refi("2027-01-10", "1000000", { id: "m-new" });
-    const next = refi("2027-01-20", "1050000");
-    const s = propertySchedule([owner, next], assumptions);
-    const [r] = s.refinances;
-    const row = s.rows[r!.month - 1]!;
-    expect(r!.month).toBe(8);
-    expect(row.drawn.toFixed(2)).toBe("1000000.00");
-    expect(row.refinanced.toFixed(2)).toBe("50000.00");
-    expect(identityGap(s.rows, ZERO)).toBeLessThanOrEqual(1e-9);
-  });
-
   it("a predecessor's tranche in a grid-month-1 handover is drawn", () => {
     // The owner pays on the 15th; its 500,000 Kč tranche (10.06) lands in grid month 1,
     // and so does a successor starting 12.06, before that payment is due: the balance
@@ -169,25 +155,6 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
     expect(row.refinanced.toFixed(2)).toBe("100000.00");
     expect(
       identityGap(s.rows, openingDebt(blocks, assumptions)),
-    ).toBeLessThanOrEqual(1e-9);
-  });
-
-  it("two successors drawn in grid month 1: the row still reconciles", () => {
-    // ADR 0138 (#221): both start before Javorova's payment #1 (17.06.2026) and draw in
-    // grid month 1; the second splice carries in Javorova's opening balance, not the
-    // first successor's merged row.
-    const blocks = [
-      ...javorova,
-      refi("2026-06-10", "1700000", { id: "m-b" }),
-      refi("2026-06-20", "1800000", { id: "m-c" }),
-    ];
-    const s = propertySchedule(blocks, assumptions);
-    const row = s.rows[0]!;
-    expect(s.refinances.map((r) => r.month)).toEqual([1, 1]);
-    expect(row.drawn.toString()).toBe("0");
-    expect(row.refinanced.toFixed(2)).toBe("157092.69");
-    expect(
-      identityGap(s.rows, openingDebt(javorova, assumptions)),
     ).toBeLessThanOrEqual(1e-9);
   });
 

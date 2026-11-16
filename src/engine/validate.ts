@@ -6,7 +6,7 @@
 // corrupt data and D-38 ranges via `assertInputs` / `assertAssumptions` (P4b).
 // Entry-point rejection is P5b/P7; messages belong to P7.
 import { ONE, ZERO, type Decimal } from "../lib/money";
-import { isAfter, isOnOrBefore } from "./dates";
+import { edate, isAfter, isOnOrBefore } from "./dates";
 import {
   derivedTermProblem,
   dueDate,
@@ -40,8 +40,10 @@ export type ValidationCode =
   | "NON_POSITIVE_DRAW"
   | "DRAW_BEFORE_START"
   | "DRAW_AFTER_SCHEDULE_END"
+  | "DRAW_IN_LAST_TWO_PAYMENTS"
   | "COMPLETION_BEFORE_START"
   | "DUPLICATE_BLOCK_START"
+  | "REFINANCE_WITHIN_A_MONTH"
   | "END_BEFORE_START"
   | "DUPLICATE_HOLDING_COST"
   | "ORPHAN_ROW"
@@ -235,18 +237,32 @@ function checkDerivedTerm(b: MortgageBlock, report: Report): void {
   if (problem) report(problem.code, problem.field);
 }
 
-/** The last-but-one payment date (start + term − 1 month), or undefined without a
- *  valid term (then MISSING_TERM_FOR_DEV_LOAN or INVALID_TERM reports instead). */
-function lastDrawDate(b: MortgageBlock): Date | undefined {
+/** The due date of payment `term − back` (term = the loan term in payments), or
+ *  undefined without a valid term (then MISSING_TERM_FOR_DEV_LOAN or INVALID_TERM
+ *  reports instead). */
+function paymentFromEnd(b: MortgageBlock, back: number): Date | undefined {
   return b.loanTermYears != null && Number.isInteger(b.loanTermYears)
-    ? dueDate(b, b.loanTermYears * 12 - 1)
+    ? dueDate(b, b.loanTermYears * 12 - back)
     : undefined;
+}
+
+/** The last-but-one payment date (start + term − 1 month). */
+const lastDrawDate = (b: MortgageBlock) => paymentFromEnd(b, 1);
+
+/** The last-but-two payment date (start + term − 2 months): the last date a tranche
+ *  may have (ADR 0226 §1). */
+const lastButTwoDate = (b: MortgageBlock) => paymentFromEnd(b, 2);
+
+/** The last-but-one and last-but-two payment dates a draw is checked against. */
+interface DrawLimits {
+  lastDraw: Date | undefined;
+  lastButTwo: Date | undefined;
 }
 
 function checkDrawDate(
   date: Date,
   b: MortgageBlock,
-  lastDraw: Date | undefined,
+  { lastDraw, lastButTwo }: DrawLimits,
   i: number,
   report: Report,
 ): void {
@@ -258,12 +274,15 @@ function checkDrawDate(
   // (DR-074, ADR 0129 §3).
   else if (lastDraw && isAfter(date, lastDraw))
     report("DRAW_AFTER_SCHEDULE_END", "draws", i);
+  // A draw in the last two payment months is not modelled (ADR 0226 §1).
+  else if (lastButTwo && isAfter(date, lastButTwo))
+    report("DRAW_IN_LAST_TWO_PAYMENTS", "draws", i);
 }
 
 function checkDevFeatures(b: MortgageBlock, report: Report): void {
-  const lastDraw = lastDrawDate(b);
+  const limits = { lastDraw: lastDrawDate(b), lastButTwo: lastButTwoDate(b) };
   (b.draws ?? []).forEach((d, i) => {
-    checkDrawDate(d.date, b, lastDraw, i, report);
+    checkDrawDate(d.date, b, limits, i, report);
     if (badNumber(d.amount)) report("NON_FINITE_NUMBER", "draws", i);
     else if (!d.amount.greaterThan(ZERO))
       report("NON_POSITIVE_DRAW", "draws", i);
@@ -453,6 +472,7 @@ const LOAN_ERROR_CODES: ReadonlySet<ValidationCode> = new Set([
   "NON_POSITIVE_DRAW",
   "DRAW_BEFORE_START",
   "DRAW_AFTER_SCHEDULE_END",
+  "DRAW_IN_LAST_TWO_PAYMENTS",
   "COMPLETION_BEFORE_START",
   "INVALID_TERM",
   "RATE_OUT_OF_RANGE",
@@ -583,16 +603,63 @@ function duplicateStarts(blocks: MortgageBlock[]): Set<MortgageBlock> {
   return dupes;
 }
 
-/** Raise DUPLICATE_BLOCK_START for overlapping blocks of one property (D-27, D-43). */
+/** Each property's blocks with a valid start date, in input order. */
+function blocksByProperty(blocks: MortgageBlock[]): MortgageBlock[][] {
+  const byProperty = new Map<string, MortgageBlock[]>();
+  for (const b of blocks) {
+    if (badDate(b.startDate)) continue; // INVALID_DATE reports it
+    byProperty.set(b.propertyId, [...(byProperty.get(b.propertyId) ?? []), b]);
+  }
+  return [...byProperty.values()];
+}
+
+/**
+ * Blocks that start on or before EDATE(the property's next-earlier start, 1), and the
+ * blocks on that earlier start: two refinancings within one month are not modelled
+ * (ADR 0226 §2). Blocks on one start are DUPLICATE_BLOCK_START only. Checking every
+ * earlier start names the same blocks: a start between the two is within the month too.
+ */
+function refinancesWithinAMonth(blocks: MortgageBlock[]): Set<MortgageBlock> {
+  const flagged = new Set<MortgageBlock>();
+  for (const own of blocksByProperty(blocks)) {
+    for (const a of own) {
+      const month = edate(a.startDate, 1);
+      for (const b of own) {
+        if (
+          isAfter(b.startDate, a.startDate) &&
+          isOnOrBefore(b.startDate, month)
+        )
+          flagged.add(a).add(b);
+      }
+    }
+  }
+  return flagged;
+}
+
+/** A start-date problem on a block. */
+const startError = (
+  code: ValidationCode,
+  b: MortgageBlock,
+): EngineValidationError => ({
+  code,
+  entity: "mortgage",
+  id: b.id,
+  field: "startDate",
+});
+
+/** Raise DUPLICATE_BLOCK_START for overlapping blocks of one property (D-27, D-43),
+ *  then REFINANCE_WITHIN_A_MONTH for blocks starting within a month of the one they
+ *  replace (ADR 0226 §2). */
 export function assertBlockStarts(blocks: MortgageBlock[]): void {
-  const errors: EngineValidationError[] = [...duplicateStarts(blocks)].map(
-    (b) => ({
-      code: "DUPLICATE_BLOCK_START",
-      entity: "mortgage",
-      id: b.id,
-      field: "startDate",
-    }),
-  );
+  const quick = refinancesWithinAMonth(blocks);
+  const errors = [
+    ...[...duplicateStarts(blocks)].map((b) =>
+      startError("DUPLICATE_BLOCK_START", b),
+    ),
+    ...blocks
+      .filter((b) => quick.has(b))
+      .map((b) => startError("REFINANCE_WITHIN_A_MONTH", b)),
+  ];
   if (errors.length > 0) throw new EngineInputError(errors);
 }
 
@@ -614,10 +681,12 @@ export function assertAsOf(asOf: Date, baseDate: Date): void {
 
 function checkMortgages(p: Portfolio, on: ReporterFor): void {
   const dupes = duplicateStarts(p.mortgages);
+  const quick = refinancesWithinAMonth(p.mortgages);
   for (const b of p.mortgages) {
     const report = on("mortgage", b.id, b.propertyId);
     checkMortgage(b, report);
     if (dupes.has(b)) report("DUPLICATE_BLOCK_START", "startDate");
+    if (quick.has(b)) report("REFINANCE_WITHIN_A_MONTH", "startDate");
   }
 }
 

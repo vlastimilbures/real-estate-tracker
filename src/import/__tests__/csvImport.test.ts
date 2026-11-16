@@ -155,6 +155,46 @@ describe("importCsv — all or nothing", () => {
     ]);
     expect(dump(sql)).toEqual(before);
   });
+
+  it("a mortgage within a month of the one it replaces names both lines (ADR 0226 §2)", async () => {
+    const before = dump(sql);
+    const e = await refused(
+      importNow(sql, {
+        mortgages: parseMortgages(
+          `${MH}\nByt B,2021-01-01,2000000,5,0.05,15000,,\nByt B,2021-02-01,2100000,5,0.04,15000,,`,
+        ).rows,
+      }),
+    );
+    expect(e.problems).toEqual(
+      [2, 3].map((row) => ({
+        file: "mortgages",
+        row,
+        field: "start_date",
+        problem: { code: "inputRule", rule: "REFINANCE_WITHIN_A_MONTH" },
+      })),
+    );
+    expect(dump(sql)).toEqual(before);
+  });
+
+  it("a mortgage within a month of a stored one is refused on its line (ADR 0226 §2)", async () => {
+    const before = dump(sql);
+    const e = await refused(
+      importNow(sql, {
+        mortgages: parseMortgages(
+          `${MH}\nByt A,2021-02-17,2000000,5,0.05,15000,,`,
+        ).rows,
+      }),
+    );
+    expect(e.problems).toEqual([
+      {
+        file: "mortgages",
+        row: 2,
+        field: "start_date",
+        problem: { code: "inputRule", rule: "REFINANCE_WITHIN_A_MONTH" },
+      },
+    ]);
+    expect(dump(sql)).toEqual(before);
+  });
 });
 
 describe("importCsv — matching and preserved fields", () => {

@@ -115,8 +115,14 @@ describe("validateInputs", () => {
       d({ draws: [{ date: isoDate("2070-01-01"), amount: money(1) }] }),
       "DRAW_AFTER_SCHEDULE_END",
     );
+    // ADR 0226 §1: the last-but-one payment date itself is now in the last two
+    // payment months; the last-but-two (start + term − 2 months) is the last draw date.
+    expectCode(
+      d({ draws: [{ date: isoDate("2056-02-01"), amount: money(1) }] }),
+      "DRAW_IN_LAST_TWO_PAYMENTS",
+    );
     expect(
-      codes(d({ draws: [{ date: isoDate("2056-02-01"), amount: money(1) }] })),
+      codes(d({ draws: [{ date: isoDate("2056-01-01"), amount: money(1) }] })),
     ).toEqual([]);
     expectCode(
       d({ completionDate: isoDate("2020-01-01") }),
@@ -140,6 +146,88 @@ describe("validateInputs", () => {
       ["DRAW_AFTER_SCHEDULE_END", 1],
       ["NON_POSITIVE_DRAW", 1],
     ]);
+  });
+
+  it("the last draw date is the last-but-two payment, clamps included (ADR 0226 §1)", () => {
+    // 2026-01-31 over 2 years: payment 22 is due 2027-11-30, payment 23 2027-12-31.
+    const drawCodes = (date: string) =>
+      validateInputs(
+        withLoan({
+          ...devBlock,
+          propertyId: "javorova",
+          startDate: isoDate("2026-01-31"),
+          loanTermYears: 2,
+          draws: [{ date: isoDate(date), amount: money(1) }],
+        }),
+        assumptions,
+      )
+        .filter((e) => e.field === "draws")
+        .map((e) => [e.code, e.index]);
+    expect(drawCodes("2027-11-30")).toEqual([]);
+    expect(drawCodes("2027-12-01")).toEqual([["DRAW_IN_LAST_TWO_PAYMENTS", 0]]);
+    expect(drawCodes("2027-12-31")).toEqual([["DRAW_IN_LAST_TWO_PAYMENTS", 0]]);
+    expect(drawCodes("2028-01-01")).toEqual([["DRAW_AFTER_SCHEDULE_END", 0]]);
+  });
+
+  it("a block starting within a month of the one it replaces is refused on both (ADR 0226 §2)", () => {
+    const refused = (...starts: string[]) =>
+      validatePortfolio({
+        ...portfolio,
+        mortgages: starts.map((s, i) =>
+          loan({ id: `m-${i}`, startDate: isoDate(s) }),
+        ),
+      })
+        .filter((e) => e.entity === "mortgage")
+        .map((e) => [e.code, e.id, e.field]);
+    const within = (id: string) => [
+      "REFINANCE_WITHIN_A_MONTH",
+      id,
+      "startDate",
+    ];
+    // EDATE(2026-01-31, 1) = 2026-02-28: a clamped month end is still within.
+    expect(refused("2026-01-31", "2026-02-28")).toEqual([
+      within("m-0"),
+      within("m-1"),
+    ]);
+    expect(refused("2026-01-31", "2026-03-01")).toEqual([]);
+    // Different calendar months, but they can share a baseDate grid month.
+    expect(refused("2026-01-20", "2026-02-05")).toEqual([
+      within("m-0"),
+      within("m-1"),
+    ]);
+    expect(refused("2026-01-20", "2026-02-20")).toEqual([
+      within("m-0"),
+      within("m-1"),
+    ]);
+    expect(refused("2026-01-20", "2026-02-21")).toEqual([]);
+    // The order the blocks are listed in does not matter.
+    expect(refused("2026-02-05", "2026-01-20")).toEqual([
+      within("m-0"),
+      within("m-1"),
+    ]);
+    // Two blocks on one start overlap: DUPLICATE_BLOCK_START only.
+    expect(refused("2026-01-20", "2026-01-20")).toEqual([
+      ["DUPLICATE_BLOCK_START", "m-1", "startDate"],
+    ]);
+    // In a chain of three, the two blocks within a month are named; the first is not.
+    expect(refused("2021-01-17", "2031-01-17", "2031-02-10")).toEqual([
+      within("m-1"),
+      within("m-2"),
+    ]);
+    // Each property is checked on its own blocks.
+    expect(
+      validatePortfolio({
+        ...portfolio,
+        mortgages: [
+          loan({ id: "a", startDate: isoDate("2026-01-20") }),
+          loan({
+            id: "b",
+            propertyId: "lipova",
+            startDate: isoDate("2026-02-05"),
+          }),
+        ],
+      }),
+    ).toEqual([]);
   });
 
   it("duplicate block starts and orphans", () => {

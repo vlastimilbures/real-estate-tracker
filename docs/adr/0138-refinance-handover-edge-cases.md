@@ -4,6 +4,8 @@
 - Date: 2026-10-05
 - Source: issues #229 (random loans, #130 R1-08), #221 (review of PR #219), #223 (DR-168
   mutant work)
+- Amended by: [0226](0226-refuse-late-tranche-quick-refinance.md) (§2, §3:
+  two successors in one grid month are refused and their handling is deleted)
 - Related: [0079](0079-engine-edge-cases.md) §2 (DR-126, handover tranches),
   [0109](0109-loan-prepayments-and-recasts.md) (prepayments at a handover),
   [0130](0130-interest-saved-refinance.md) (`drawn` apart from `refinanced`), D-47

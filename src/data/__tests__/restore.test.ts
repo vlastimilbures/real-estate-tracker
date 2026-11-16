@@ -263,6 +263,50 @@ describe("restore checks every row before touching the DB (DR-019)", () => {
     ]);
     expect(dump(sql)).toEqual(before);
   });
+
+  it("a draw in the loan's last two payment months (ADR 0226 §1)", async () => {
+    const before = dump(sql);
+    // From 2021-01-17 over 30 years: payment 358 is due 2050-11-17, 359 2050-12-17.
+    const bad = await edited("mortgage_blocks", (rows) => {
+      rows[0].start_date = "2021-01-17";
+      rows[0].loan_term_years = 30;
+      rows[0].draws = JSON.stringify([
+        { date: "2050-12-01", amount: "100000" },
+      ]);
+      return rows;
+    });
+    const e = await rejection(restoreFromJson(sql, bad, checkInputRules));
+    expect(e.code).toBe("BACKUP_ROWS_INVALID");
+    expect(e.issues).toEqual([
+      {
+        table: "mortgage_blocks",
+        id: bad.tables.mortgage_blocks[0].id,
+        column: "draws",
+        rule: "DRAW_IN_LAST_TWO_PAYMENTS",
+      },
+    ]);
+    expect(dump(sql)).toEqual(before);
+  });
+
+  it("a mortgage within a month of the one it replaces (ADR 0226 §2)", async () => {
+    const before = dump(sql);
+    const bad = await edited("mortgage_blocks", (rows) => {
+      const first = rows[0];
+      rows[0] = { ...first, start_date: "2021-01-17" };
+      return [...rows, { ...first, id: "m-next", start_date: "2021-02-17" }];
+    });
+    const e = await rejection(restoreFromJson(sql, bad, checkInputRules));
+    expect(e.code).toBe("BACKUP_ROWS_INVALID");
+    expect(e.issues).toEqual(
+      [bad.tables.mortgage_blocks[0].id, "m-next"].map((id) => ({
+        table: "mortgage_blocks",
+        id,
+        column: "start_date",
+        rule: "REFINANCE_WITHIN_A_MONTH",
+      })),
+    );
+    expect(dump(sql)).toEqual(before);
+  });
 });
 
 // #118 (R3-11): restore copies every stored value back exactly. The fixture fills every

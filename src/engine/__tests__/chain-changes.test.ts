@@ -98,7 +98,7 @@ describe("loanChainChanges — stopped events (ADR 0160)", () => {
 describe("loanChainChanges — unused blocks (ADR 0160)", () => {
   it("names a block that starts before the block in force", () => {
     const p = stored({});
-    const early = successor("early", "2021-01-07");
+    const early = successor("early", "2020-12-07");
     expect(loanChainChanges([p], [p, early], assumptions)).toEqual({
       stopped: [],
       unused: ["early"],
@@ -107,7 +107,7 @@ describe("loanChainChanges — unused blocks (ADR 0160)", () => {
 
   it("every block is used when all start after baseDate", () => {
     const a = successor("a", "2027-01-17");
-    const b = successor("b", "2026-12-17");
+    const b = successor("b", "2026-11-17");
     expect(loanChainChanges([a], [a, b], assumptions).unused).toEqual([]);
   });
 });

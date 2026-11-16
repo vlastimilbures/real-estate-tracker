@@ -266,17 +266,6 @@ function undrawnRow(
 // Tranche bucketing
 // ---------------------------------------------------------------------------
 
-/** First step k in [1,maxStep] whose cadence date (anchor + k months) is on/after
- *  `date`, capped at maxStep. Validation rejects a draw after the loan's last-but-one
- *  payment date (DR-074, ADR 0129 §3). On the baseDate grid a month-end clamp can date
- *  the grid month carrying that payment before its due date, so the development
- *  projection caps at that grid month: a valid draw never lands on the final payment
- *  (ADR 0139). */
-function firstStepOnOrAfter(anchor: Date, date: Date, maxStep: number): number {
-  const cap = Math.max(1, maxStep);
-  return Math.min(firstGridMonthOnOrAfter(anchor, date, cap - 1), cap);
-}
-
 /** Group dated items by the step `stepOf` gives their date, in input order, over the
  *  items the `include` predicate accepts. */
 function bucketByStep<T extends { date: IsoDate }>(
@@ -293,16 +282,17 @@ function bucketByStep<T extends { date: IsoDate }>(
   return buckets;
 }
 
-/** Bucket draw amounts by the cadence step (anchor + k months) they land in,
- *  summing collisions, over the draws the `include` predicate accepts. */
+/** Bucket draw amounts by the first cadence step (anchor + k months) on or after their
+ *  date, summing collisions, over the draws the `include` predicate accepts. A valid
+ *  draw is dated on or before payment term−2, so it lands before the final payment,
+ *  month-end clamps included (ADR 0226 §1). */
 function bucketDraws(
   draws: MortgageDraw[],
   anchor: Date,
-  maxStep: number,
   include: (d: Date) => boolean,
 ): Map<number, Decimal> {
   const sums = new Map<number, Decimal>();
-  const stepOf = (d: Date) => firstStepOnOrAfter(anchor, d, maxStep);
+  const stepOf = (d: Date) => firstGridMonthOnOrAfter(anchor, d);
   for (const [k, items] of bucketByStep(draws, include, stepOf)) {
     sums.set(
       k,
@@ -849,11 +839,8 @@ function simulateToBaseDate(
     events: loanEvents(block, assumptions, (d) => isOnOrBefore(d, baseDate)),
     // Only tranches up to the last payment due: a later one (still on/before
     // baseDate) belongs to the next payment period, grid month 1 (D-41, DR-016).
-    drawsByStep: bucketDraws(
-      block.draws ?? [],
-      block.startDate,
-      Math.max(1, steps),
-      (d) => isOnOrBefore(d, lastPaymentDue(block, baseDate)),
+    drawsByStep: bucketDraws(block.draws ?? [], block.startDate, (d) =>
+      isOnOrBefore(d, lastPaymentDue(block, baseDate)),
     ),
     steps,
   };
@@ -1179,22 +1166,6 @@ function runGrid<S>(
   return { rows, outcomes };
 }
 
-/**
- * The last grid month a development tranche can land in: grid month m carries payment
- * `startToBase + m`, and a valid tranche joins payment term−1 at the latest (ADR 0129
- * §3), even where a month-end clamp dates that grid month before the draw (ADR 0139).
- */
-function devLastDrawMonth(
-  block: DevelopmentLoan,
-  assumptions: Assumptions,
-): number {
-  const startToBase = paymentOffset(block, assumptions.baseDate);
-  return Math.min(
-    builtMonths(block, assumptions, startToBase),
-    termMonths(block) - 1 - startToBase,
-  );
-}
-
 function buildDevSchedule(
   block: DevelopmentLoan,
   assumptions: Assumptions,
@@ -1202,7 +1173,6 @@ function buildDevSchedule(
   const { baseDate } = assumptions;
   const startToBase = paymentOffset(block, baseDate);
   const totalMonths = builtMonths(block, assumptions, startToBase);
-  const lastDrawMonth = devLastDrawMonth(block, assumptions);
   // Draws after the last payment due by baseDate emit in this baseDate-anchored loop
   // (a future loan: after baseDate); earlier ones were folded into the opening
   // balance by simulateToBaseDate. A tranche between that payment and baseDate lands
@@ -1218,14 +1188,11 @@ function buildDevSchedule(
     block,
     assumptions,
     startToBase,
-    drawsByMonth: bucketDraws(block.draws ?? [], baseDate, lastDrawMonth, (d) =>
+    drawsByMonth: bucketDraws(block.draws ?? [], baseDate, (d) =>
       isAfter(d, drawnAfter),
     ),
-    newDebtByMonth: bucketDraws(
-      block.draws ?? [],
-      baseDate,
-      lastDrawMonth,
-      (d) => isAfter(d, baseDate),
+    newDebtByMonth: bucketDraws(block.draws ?? [], baseDate, (d) =>
+      isAfter(d, baseDate),
     ),
     events: loanEvents(block, assumptions, (d) => isAfter(d, baseDate)),
     openingCounted: opening.counted,
@@ -1504,8 +1471,7 @@ export function openingDebt(
  * loan has not drawn it, plus the tranches still ahead. It follows the schedule's
  * grid, so committed debt = balance + this never drifts from the schedule: an item
  * lands in the first grid month on/after its date, and one dated on/before baseDate
- * is opening debt (D-44); a tranche past the last month it may land in joins that month
- * (ADR 0139). Before its own draw month a property's first loan counts: on a flat owned at
+ * is opening debt (D-44). Before its own draw month a property's first loan counts: on a flat owned at
  * baseDate it pays the developer, and a future buy's acquisition loan is already netted
  * by the down payment (ADR 0119 §3; a development loan always is, ADR 0168). A future
  * buy's later first plain loan pays its initial principal to the owner as cash (ADR 0119
@@ -1524,15 +1490,15 @@ export function undrawnPrincipal(
   const chain = blockChain(blocks, baseDate);
   return chain.reduce<Decimal>((sum, block, i) => {
     if (!isDevLoan(block)) return sum;
+    assertLoanInputs(block); // as the schedule it follows (ADR 0226)
     const next = chain[i + 1];
     const start = drawMonth(block, baseDate);
     const early = i === 0 && (!futureBuy || fundedThePurchase(property, block));
     if (month < start && !early) return sum;
     if (next && month >= drawMonth(next, baseDate)) return sum;
-    const last = devLastDrawMonth(block, assumptions);
     const ahead = (d: MortgageDraw) =>
       isAfter(d.date, baseDate) &&
-      firstStepOnOrAfter(baseDate, d.date, last) > month &&
+      firstGridMonthOnOrAfter(baseDate, d.date) > month &&
       !(next && isAfter(d.date, next.startDate));
     return (block.draws ?? [])
       .filter(ahead)
@@ -1632,8 +1598,8 @@ export function blockChain(
  * Splice `next` into the chain's rows from its draw month `d` (D-47). The owner's
  * payment in month d is still paid when due on/before the successor's start, and the
  * draw row carries it; otherwise the owner pays off its balance before month d plus
- * the tranches it drew in month d (ADR 0138). An owner drawn in month d itself (two
- * successors in one grid month) pays off its draw.
+ * the tranches it drew in month d (ADR 0138 §1). The owner never draws in month d
+ * itself: two blocks starting within a month are refused (ADR 0226 §2).
  * A prepayment dated on/before the successor's start that the owner's dropped rows
  * carried is paid at the handover, before the successor pays off the rest (ADR 0109).
  * The merged row's `drawn` is real new debt only; `refinanced` is the successor's
@@ -1662,16 +1628,13 @@ function spliceSuccessor(
     own !== undefined &&
     own.interest.plus(own.principal).greaterThan(ZERO) &&
     isOnOrBefore(due, next.startDate);
-  const ownerDrawn = drawMonth(owner, baseDate) === d;
   const { before, carriedIn } = handoverBalances(head, own, d);
   // A dropped row's tranches are dated on/before the successor's start (`cutAt`): the
   // successor pays them off too, as `before` already holds them in grid month 1.
   const owed =
-    own && (kept || ownerDrawn)
-      ? own.endBalance
-      : before.plus(d > 1 && own ? own.drawn : ZERO);
+    own && kept ? own.endBalance : before.plus(d > 1 && own ? own.drawn : ZERO);
   const late = handoverPrepayments(current.outcomes, owner, d, kept, owed);
-  const row = handoverRow(drawRow, own, { kept, ownerDrawn });
+  const row = handoverRow(drawRow, own, kept);
   const prepaid = row.prepaid.plus(late.applied);
   // The rest of the handover's net new debt (D-47, DR-092) is the refinance difference.
   const drawn = handoverDrawn(drawRow, next, own);
@@ -1744,27 +1707,20 @@ function handoverPrepayments(
 
 /**
  * The row a handover starts from: the owner's kept row ending on the successor's draw,
- * else the successor's draw row. An owner drawn in month d keeps the prepayments and
- * fees its merged row already paid there: its own and its handover's (ADR 0138).
+ * else the successor's draw row.
  */
 function handoverRow(
   drawRow: AmortizationRow,
   own: AmortizationRow | undefined,
-  { kept, ownerDrawn }: { kept: boolean; ownerDrawn: boolean },
+  kept: boolean,
 ): AmortizationRow {
-  if (own && kept) return { ...own, endBalance: drawRow.endBalance };
-  if (!own || !ownerDrawn) return drawRow;
-  return {
-    ...drawRow,
-    prepaid: drawRow.prepaid.plus(own.prepaid),
-    prepaymentFee: drawRow.prepaymentFee.plus(own.prepaymentFee),
-  };
+  return own && kept ? { ...own, endBalance: drawRow.endBalance } : drawRow;
 }
 
 /**
  * A handover row's real new debt (ADR 0130): a tranche the successor draws with its
- * principal, plus what the owner's month-d row drew, which the balance the successor
- * pays off always holds (ADR 0138).
+ * principal, plus the tranches the owner's month-d row drew, which the balance the
+ * successor pays off always holds (ADR 0138 §1).
  */
 function handoverDrawn(
   drawRow: AmortizationRow,
@@ -1779,8 +1735,9 @@ function handoverDrawn(
  * pays off unless the owner's month-d row is kept) and the balance carried into the
  * merged row: the handover's net new debt (DR-092) is what the successor draws, less
  * the predecessor balance it pays off, plus anything the kept row itself drew. In grid
- * month 1 that is the row's opening balance, before a merged row's earlier handover
- * (ADR 0138).
+ * month 1 that is the row's opening balance before its tranches: the owner's row there
+ * is never itself a handover, as two blocks starting within a month are refused
+ * (ADR 0226 §2).
  */
 function handoverBalances(
   head: AmortizationRow[],
@@ -1795,7 +1752,7 @@ function handoverBalances(
   const before = own.endBalance.plus(own.principal).plus(own.prepaid);
   return {
     before,
-    carriedIn: before.minus(own.drawn).minus(own.refinanced),
+    carriedIn: before.minus(own.drawn),
   };
 }
 
