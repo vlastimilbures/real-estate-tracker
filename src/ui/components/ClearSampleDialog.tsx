@@ -30,7 +30,8 @@ function ClearSampleDialog({ onClose }: { onClose: () => void }) {
       showSampleCleared(safetyBackup);
     } catch (e) {
       // One transaction after a verified backup: only a failure before the commit lands
-      // here, so the data is unchanged. A failed reload after it resolves (ADR 0125).
+      // here, so the data is unchanged. A failed read-back after it resolves, and the app
+      // stops on the error screen (ADR 0228).
       logFailure("SAMPLE", e);
       setError(
         e instanceof SafetyBackupError

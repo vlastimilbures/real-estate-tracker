@@ -1,7 +1,8 @@
-// ADR 0125 (#106): once a whole-database action has committed, a failed reload never turns
-// it into a failure. It resolves as usual (naming the safety backup) and leaves the screen
-// marked stale, so the page never says "rolled back — unchanged" about replaced data.
-// ADR 0132 (#138, #199): whole-database reads and the banner Reload follow the write queue.
+// ADR 0125 (#106), amended by ADR 0228 (#446): once a write has committed, a failed
+// read-back never turns it into a failure. It resolves as usual (naming the safety
+// backup), and the app stops on the error screen until Try again reads the data, so the
+// page never says "rolled back — unchanged" about replaced data and never edits data older
+// than the database. ADR 0132 (#138, #199): whole-database reads follow the write queue.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { usePortfolioStore } from "../portfolioStore";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
@@ -11,7 +12,6 @@ import { invoke } from "@tauri-apps/api/core";
 import { exportToJson, type BackupFile } from "../../data/backup";
 import { parseProperties } from "../../import/csv";
 import type { Sql } from "../../data/sql";
-import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
 import { money, type IsoDate } from "../../engine";
 import { logFailure } from "../../data/errorLog";
 import { importNow } from "./support/importNow";
@@ -56,129 +56,9 @@ const valuation = (id: string) => ({
   validFrom: new Date(Date.UTC(2033, 0, 1)) as IsoDate,
   marketValue: money("1"),
 });
-const onScreen = (id: string) =>
-  store().portfolio!.valuations.some((v) => v.id === id);
 const propertiesOnDisk = async () =>
   (await db.select<{ n: number }>("SELECT COUNT(*) AS n FROM properties"))[0]!
     .n;
-
-describe("a committed whole-database action whose reload fails (ADR 0125)", () => {
-  it("a restore resolves with the safety backup and marks the screen stale", async () => {
-    const file = await exportToJson(db, new Date());
-    await store().clearSample();
-    usePortfolioStore.setState({ sql: reloadFails(db) });
-
-    const { safetyBackup } = await store().restoreBackup(file);
-
-    expect(safetyBackup).toMatch(/^portfolio-before-restore-.*\.json$/);
-    expect(store().stale).toBe(true);
-    expect(store().error).toBeNull();
-    // The file replaced the data; the screen still shows what was there before.
-    expect(await propertiesOnDisk()).toBe(3);
-    expect(store().portfolio!.properties).toHaveLength(0);
-
-    usePortfolioStore.setState({ sql: db });
-    await store().reload();
-    expect(store().stale).toBe(false);
-    expect(store().portfolio!.properties).toHaveLength(3);
-  });
-
-  it("clearing the sample resolves with the safety backup and marks the screen stale", async () => {
-    usePortfolioStore.setState({ sql: reloadFails(db) });
-
-    const { safetyBackup } = await store().clearSample();
-
-    expect(safetyBackup).toMatch(/^portfolio-before-clear-sample-.*\.json$/);
-    expect(store().stale).toBe(true);
-    expect(await propertiesOnDisk()).toBe(0);
-  });
-
-  it.each([
-    {
-      action: "loading the sample",
-      run: async () => {
-        await store().clearSample();
-        usePortfolioStore.setState({ sql: reloadFails(db) });
-        await store().loadSample();
-        expect(await propertiesOnDisk()).toBe(3);
-      },
-    },
-    {
-      action: "a CSV import",
-      run: async () => {
-        usePortfolioStore.setState({ sql: reloadFails(db) });
-        const report = await importNow({
-          properties: parseProperties(
-            "name,purchase_date,purchase_price\nStore Import,2020-01-01,1000000",
-          ).rows,
-        });
-        expect(report.items.map((i) => i.kind)).toEqual(["add"]);
-        expect(await propertiesOnDisk()).toBe(4);
-      },
-    },
-  ])("$action resolves and marks the screen stale", async ({ run }) => {
-    await run();
-    expect(store().stale).toBe(true);
-    expect(store().error).toBeNull();
-  });
-});
-
-describe("saved assumptions whose reload fails (ADR 0125)", () => {
-  it("are what the store shows, so the form cannot write the old ones back", async () => {
-    const next = { ...store().assumptions!, horizonYears: 25 };
-    usePortfolioStore.setState({ sql: reloadFails(db) });
-
-    expect(await store().saveAssumptions(next)).toEqual({ ok: true });
-
-    expect(store().stale).toBe(true);
-    expect(store().assumptions).toEqual(next);
-  });
-
-  it("log the failed reload as RELOAD, not as a failed write (#122)", async () => {
-    vi.mocked(logFailure).mockClear();
-    usePortfolioStore.setState({ sql: reloadFails(db) });
-
-    await store().saveAssumptions({
-      ...store().assumptions!,
-      horizonYears: 25,
-    });
-
-    expect(vi.mocked(logFailure).mock.calls.map(([where]) => where)).toEqual([
-      "RELOAD",
-    ]);
-  });
-});
-
-describe("a failed write whose reload also fails (ADR 0125)", () => {
-  /** Nothing commits, and the reload after the failure fails too. */
-  const writeAndReloadFail = (): Sql => ({
-    ...reloadFails(db),
-    transaction: () => Promise.reject(new Error("disk is full")),
-  });
-
-  it("a whole-database action rejects with its own error and marks the screen stale", async () => {
-    usePortfolioStore.setState({ sql: writeAndReloadFail() });
-
-    await expect(store().clearSample()).rejects.toThrow("disk is full");
-
-    expect(store().stale).toBe(true);
-    expect(await propertiesOnDisk()).toBe(3);
-  });
-
-  it("a form write returns its own error and marks the screen stale", async () => {
-    const before = store().assumptions!;
-    usePortfolioStore.setState({ sql: writeAndReloadFail() });
-
-    const error = { kind: "other", message: "disk is full" };
-    expect(
-      await store().saveAssumptions({ ...before, horizonYears: 25 }),
-    ).toEqual({ ok: false, error });
-
-    expect(store().error).toEqual(error);
-    expect(store().stale).toBe(true);
-    expect(store().assumptions).toBe(before);
-  });
-});
 
 describe("a safety backup waits for a write queued before it (ADR 0132)", () => {
   /** `real`, but the first `execute` (the queued valuation) waits for `release`. */
@@ -227,62 +107,160 @@ describe("a safety backup waits for a write queued before it (ADR 0132)", () => 
   });
 });
 
-describe("the banner Reload waits for pending writes (ADR 0132)", () => {
-  it("a Reload read before a write cannot put the old data back after it", async () => {
-    // The Reload's snapshot is read at once (old data) but answers only on `release`.
-    const { opened, release } = gate();
-    let held = false;
-    const sql: Sql = {
-      ...db,
-      selectSnapshot: async (statements) => {
-        const rows = await db.selectSnapshot(statements);
-        if (!held) {
-          held = true;
-          await opened;
-        }
-        return rows;
-      },
-    };
-    usePortfolioStore.setState({ sql, stale: true });
+describe("a committed write whose read-back fails stops on the error screen (ADR 0228)", () => {
+  const valuationsOnDisk = async (id: string) =>
+    (
+      await db.select<{ n: number }>(
+        "SELECT COUNT(*) AS n FROM valuations WHERE id = ?",
+        [id],
+      )
+    )[0]!.n;
+  const logged = () => vi.mocked(logFailure).mock.calls.map(([where]) => where);
+  const onTheScreen = () => {
+    expect(store().status).toBe("error");
+    expect(store().readBackFailed).toBe(true);
+    expect(store().error).toBeNull();
+    expect(store().startupError).toBeNull();
+  };
 
-    const reload = store().reload();
-    const write = store().addValuation(valuation("saved"));
-    await new Promise((r) => setTimeout(r, 0));
-    release();
-    // Never await the write before `release`: it is queued behind the Reload.
-    const [, result] = await Promise.all([reload, write]);
+  beforeEach(() => vi.mocked(logFailure).mockClear());
 
-    expect(result).toEqual({ ok: true });
-    expect(onScreen("saved")).toBe(true);
-    expect(store().stale).toBe(false);
+  it("stays saved, is in the database once and logs RELOAD (#122)", async () => {
+    usePortfolioStore.setState({ sql: reloadFails(db) });
+
+    expect(await store().addValuation(valuation("saved"))).toEqual({
+      ok: true,
+    });
+
+    onTheScreen();
+    expect(await valuationsOnDisk("saved")).toBe(1);
+    expect(logged()).toEqual(["RELOAD"]);
   });
 
-  it("a Reload clicked during a write reads only after it", async () => {
-    const log: string[] = [];
-    const { opened, release } = gate();
-    const sql: Sql = {
-      ...db,
-      execute: async (q, p) => {
-        log.push(p?.[0] === CHANGED_SINCE_BACKUP ? "changed" : "valuation");
-        await opened;
-        return db.execute(q, p);
+  it.each([
+    {
+      action: "a restore",
+      run: async () => {
+        const file = await exportToJson(db, new Date());
+        await store().clearSample();
+        usePortfolioStore.setState({ sql: reloadFails(db) });
+        const { safetyBackup } = await store().restoreBackup(file);
+        expect(safetyBackup).toMatch(/^portfolio-before-restore-.*\.json$/);
+        expect(await propertiesOnDisk()).toBe(3);
       },
-      selectSnapshot: (statements) => {
-        log.push("snapshot");
-        return db.selectSnapshot(statements);
+    },
+    {
+      action: "clearing the sample",
+      run: async () => {
+        usePortfolioStore.setState({ sql: reloadFails(db) });
+        const { safetyBackup } = await store().clearSample();
+        expect(safetyBackup).toMatch(
+          /^portfolio-before-clear-sample-.*\.json$/,
+        );
+        expect(await propertiesOnDisk()).toBe(0);
       },
-    };
-    usePortfolioStore.setState({ sql, stale: true });
+    },
+    {
+      action: "loading the sample",
+      run: async () => {
+        await store().clearSample();
+        usePortfolioStore.setState({ sql: reloadFails(db) });
+        await store().loadSample();
+        expect(await propertiesOnDisk()).toBe(3);
+      },
+    },
+    {
+      action: "a CSV import",
+      run: async () => {
+        usePortfolioStore.setState({ sql: reloadFails(db) });
+        const report = await importNow({
+          properties: parseProperties(
+            "name,purchase_date,purchase_price\nStore Import,2020-01-01,1000000",
+          ).rows,
+        });
+        expect(report.items.map((i) => i.kind)).toEqual(["add"]);
+        expect(await propertiesOnDisk()).toBe(4);
+      },
+    },
+  ])("$action resolves and stops on the screen", async ({ run }) => {
+    await run();
+    onTheScreen();
+  });
 
-    const write = store().addValuation(valuation("saved"));
-    const reload = store().reload();
-    await new Promise((r) => setTimeout(r, 0));
-    expect(log).toEqual(["valuation"]);
+  it("Try again only reads: no open, no write, and the row shows once", async () => {
+    usePortfolioStore.setState({ sql: reloadFails(db) });
+    await store().addValuation(valuation("saved"));
+    const writes = { execute: 0, transaction: 0 };
+    usePortfolioStore.setState({
+      sql: {
+        ...db,
+        execute: (q, p) => {
+          writes.execute += 1;
+          return db.execute(q, p);
+        },
+        transaction: (statements, options) => {
+          writes.transaction += 1;
+          return db.transaction(statements, options);
+        },
+      },
+    });
+    const open = vi.fn(async () => db);
 
-    release();
-    await Promise.all([write, reload]);
-    // The write's own reload, then the banner's.
-    expect(log).toEqual(["valuation", "changed", "snapshot", "snapshot"]);
-    expect(onScreen("saved")).toBe(true);
+    await store().init(open);
+
+    expect(open).not.toHaveBeenCalled();
+    expect(store().status).toBe("ready");
+    expect(store().readBackFailed).toBe(false);
+    expect(
+      store().portfolio!.valuations.filter((v) => v.id === "saved"),
+    ).toHaveLength(1);
+    expect(writes).toEqual({ execute: 0, transaction: 0 });
+  });
+
+  it("a Try again that fails again stays on the screen", async () => {
+    usePortfolioStore.setState({ sql: reloadFails(db) });
+    await store().addValuation(valuation("saved"));
+    vi.mocked(logFailure).mockClear();
+    const open = vi.fn(async () => db);
+
+    await store().init(open);
+
+    expect(open).not.toHaveBeenCalled();
+    onTheScreen();
+    expect(logged()).toEqual(["RELOAD"]);
+  });
+
+  it("refuses a write queued behind the failed one", async () => {
+    usePortfolioStore.setState({ sql: reloadFails(db) });
+
+    const first = store().addValuation(valuation("first"));
+    const queued = store().addValuation(valuation("queued"));
+
+    expect(await first).toEqual({ ok: true });
+    expect((await queued).ok).toBe(false);
+    expect(await valuationsOnDisk("queued")).toBe(0);
+    expect(store().readBackFailed).toBe(true);
+  });
+
+  it("a failed write whose read-back also fails stays in the app with the write error", async () => {
+    usePortfolioStore.setState({
+      sql: {
+        ...reloadFails(db),
+        transaction: () => Promise.reject(new Error("disk is full")),
+      },
+    });
+
+    const error = { kind: "other", message: "disk is full" };
+    expect(
+      await store().saveAssumptions({
+        ...store().assumptions!,
+        horizonYears: 25,
+      }),
+    ).toEqual({ ok: false, error });
+
+    expect(store().status).toBe("ready");
+    expect(store().readBackFailed).toBe(false);
+    expect(store().error).toEqual(error);
+    expect(logged()).toEqual(["WRITE", "RELOAD"]);
   });
 });

@@ -30,6 +30,12 @@ engine without the form, and remove it when the last part lands.
   is not changed: Property detail shows it as invalid data, with no figures, until the
   tranche or block is edited or deleted, and a backup that contains it is refused on
   restore. No figure changes for any other loan.
+- A save that went through but whose data could not be read back now stops on the error
+  screen (ADR 0228, #446): "Your last change was saved, but the data could not be read back."
+  Try again reads the data again and returns to the same page; nothing is undone or written
+  twice. After a restore or Clear sample the screen still names the safety copy. The
+  stale-data banner and its Reload button are gone, so the app no longer lets you edit data
+  older than what is saved.
 
 ## [1.5.0] - 2026-10-14
 

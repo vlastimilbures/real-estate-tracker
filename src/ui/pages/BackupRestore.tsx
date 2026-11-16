@@ -142,7 +142,8 @@ export function BackupRestorePanel() {
       setNotice({ kind: "restored", file: safetyBackup });
     } catch (e) {
       // One transaction: only a failure before the commit lands here, so the current
-      // data is unchanged (DR-019). A failed reload after it resolves (ADR 0125).
+      // data is unchanged (DR-019). A failed read-back after it resolves, and the app
+      // stops on the error screen (ADR 0228).
       fail(e, "RESTORE", "restore");
     } finally {
       setRestoring(false);

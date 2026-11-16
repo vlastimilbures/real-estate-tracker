@@ -54,10 +54,6 @@ export const en = {
     yesDelete: "Yes, delete",
     confirmDeleteRow: "Delete this record?",
     deleting: "Deleting…",
-    // A reload after a save failed (UX-050, DR-086)
-    staleData:
-      "The change may not be shown yet: reloading the data failed. Reload to see what is saved.",
-    reload: "Reload",
     saving: "Saving…",
     close: "Close",
     dismiss: "Dismiss",
@@ -203,9 +199,10 @@ export const en = {
       "Quit the app and move portfolio.db, portfolio.db-wal and portfolio.db-shm out of the data folder (do not delete them; some may not exist). Then either reopen the app, which starts with a new database holding the sample portfolio, and restore your latest JSON backup in Settings → Backup & Restore; or, before you reopen it, put a copy of a pre-migration file from the backups folder in the data folder, renamed portfolio.db.",
     nextRowInvalid:
       "Restore a backup… replaces all data with a JSON backup; a safety copy of the current data is saved first. Or report the record below.",
+    // A save committed but the data could not be read back (ADR 0228).
+    readBackFailed:
+      "Your last change was saved, but the data could not be read back.",
     restoreBackup: "Restore a backup…",
-    restoredReloadFailed: (file: string) =>
-      `The backup was restored and your previous data was saved as ${file} in the backups folder, but the data could not be loaded. Try again; if it keeps failing, keep the log file for diagnosis.`,
     continue: "Open the app",
     detailsOther: "Details",
     showDataFolder: "Show data folder",

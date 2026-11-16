@@ -1,14 +1,15 @@
 // The startup error screen (UX-057, DR-086; #115, ADR 0153). Says what happened, honestly
 // (a stopped upgrade may have changed the database), and offers only what can help:
 // Try again for a failure that may not repeat, Restore a backup… where the database is
-// at head and only reading it failed, and the data folder for every one.
+// at head and only reading it failed, and the data folder for every one. A save whose
+// read-back failed stops here too, saying the change was saved (ADR 0228).
 import { useState } from "react";
 import {
   usePortfolioStore,
   type StartupError,
 } from "../../state/portfolioStore";
 import { revealDataDir } from "../../state/platform";
-import { useUiStore } from "../../state/uiStore";
+import { useUiStore, type Notice } from "../../state/uiStore";
 import { logFailure } from "../../state/diagnostics";
 import { APP_NAME, type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
@@ -43,10 +44,19 @@ function startupText(t: Dictionary, e: StartupError): string[] {
   return next ? [t.dataErrors[e.code], next] : [t.dataErrors[e.code]];
 }
 
+/** The safety copy a restore or Clear sample wrote, still named here (ADR 0154). */
+function noticeText(t: Dictionary, notice: Notice): string {
+  return notice.kind === "restored"
+    ? t.backup.restored(notice.file)
+    : t.sample.cleared(notice.file);
+}
+
 export function BootFailure() {
   const t = useT();
   const startupError = usePortfolioStore((s) => s.startupError);
   const error = usePortfolioStore((s) => s.error);
+  const readBackFailed = usePortfolioStore((s) => s.readBackFailed);
+  const notice = useUiStore((s) => s.notice);
   const init = usePortfolioStore((s) => s.init);
   const restoreAtStartup = usePortfolioStore((s) => s.restoreAtStartup);
   const continueAfterRestore = usePortfolioStore((s) => s.continueAfterRestore);
@@ -58,17 +68,8 @@ export function BootFailure() {
   const [failure, setFailure] = useState<ReturnType<
     typeof backupFailure
   > | null>(null);
-  // A restore done here before a Try again that failed: the screen is new, but the
-  // safety copy is still named (ADR 0154).
-  const [restored, setRestored] = useState<{
-    file: string;
-    ready: boolean;
-  } | null>(() => {
-    const carried = useUiStore.getState().notice;
-    return carried?.kind === "restored"
-      ? { file: carried.file, ready: false }
-      : null;
-  });
+  // The safety copy of a restore done here whose data loaded, named until Continue.
+  const [restored, setRestored] = useState<string | null>(null);
   const view = bootView(startupError?.code ?? null);
 
   async function showFolder() {
@@ -98,7 +99,13 @@ export function BootFailure() {
     try {
       const { safetyBackup, ready } = await restoreAtStartup(pending.backup);
       setPending(null);
-      setRestored({ file: safetyBackup, ready });
+      if (ready) setRestored(safetyBackup);
+      else {
+        // The data could not be read back: the read-back screen names the copy, also
+        // after a Try again that fails again (ADR 0154 §5, ADR 0228).
+        dataReplaced();
+        setNotice({ kind: "restored", file: safetyBackup });
+      }
     } catch (e) {
       // One transaction: a failure before the commit leaves the data as it was.
       setFailure(backupFailure(t, e, "RESTORE", t.backup.restoreFailed));
@@ -118,37 +125,24 @@ export function BootFailure() {
     <Button onClick={() => void showFolder()}>{t.boot.showDataFolder}</Button>
   );
 
-  // After a restore the failure above no longer applies: name the safety copy, then go
-  // on into the app (or, when the restored data cannot be loaded either, try again).
-  // Both screens are the page's main landmark with an h1 (ADR 0157); the restored
-  // screen has no title line, so its h1 is for screen readers only.
+  // After a restore whose data loaded the failure above no longer applies: name the
+  // safety copy, then go on into the app. Both screens are the page's main landmark
+  // with an h1 (ADR 0157); the restored screen has no title line, so its h1 is for
+  // screen readers only.
   if (restored)
     return (
       <main>
         <h1 className="sr-only">{APP_NAME}</h1>
         <div className="error-screen" role="alert">
-          <p>
-            {restored.ready
-              ? t.backup.restored(restored.file)
-              : t.boot.restoredReloadFailed(restored.file)}
-          </p>
+          <p>{t.backup.restored(restored)}</p>
           {revealFailed && <p className="error-text">{t.boot.revealFailed}</p>}
           <div className="row" style={{ gap: "var(--s3)" }}>
-            {restored.ready ? (
-              <Button
-                variant="primary"
-                onClick={() => leave(restored.file, continueAfterRestore)}
-              >
-                {t.boot.continue}
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                onClick={() => leave(restored.file, () => void init())}
-              >
-                {t.app.tryAgain}
-              </Button>
-            )}
+            <Button
+              variant="primary"
+              onClick={() => leave(restored, continueAfterRestore)}
+            >
+              {t.boot.continue}
+            </Button>
             {folderButton}
           </div>
         </div>
@@ -159,7 +153,12 @@ export function BootFailure() {
     <main>
       <div className="error-screen" role="alert">
         <h1 className="eyebrow">{t.app.dbErrorEyebrow}</h1>
-        {startupError ? (
+        {readBackFailed ? (
+          <>
+            <p>{t.boot.readBackFailed}</p>
+            {notice && <p>{noticeText(t, notice)}</p>}
+          </>
+        ) : startupError ? (
           <>
             {startupText(t, startupError).map((line) => (
               <p key={line}>{line}</p>

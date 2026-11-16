@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 //
-// #350 (ADR 0194): the stale-data and edit-error banners are read aloud only on the page
-// where they first show. Each page mounts its own shell; a later page shows the banner
-// without a live role. A new edit error, or the data turning stale again, is announced.
+// #350 (ADR 0194): the edit-error banner is read aloud only on the page where it first
+// shows. Each page mounts its own shell; a later page shows the banner without a live
+// role. A new edit error is announced. (The stale-data banner is gone: ADR 0228.)
 import { describe, expect, it } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { AppShell } from "../AppShell";
@@ -31,25 +31,6 @@ const writeError = (message: string): WriteError => ({
 });
 
 describe("kept app banners announce once (#350)", () => {
-  it("the stale banner is live on its first page only, and again for a new episode", () => {
-    act(() => usePortfolioStore.setState({ stale: true, staleEpisode: {} }));
-    const first = page("One");
-    expect(role(en.common.staleData)).toBe("alert");
-    first.unmount();
-
-    const second = page("Two");
-    expect(role(en.common.staleData)).toBeNull();
-
-    // A successful reload ends the episode; the next failed one is announced.
-    act(() => usePortfolioStore.setState({ stale: false }));
-    act(() => usePortfolioStore.setState({ stale: true, staleEpisode: {} }));
-    expect(role(en.common.staleData)).toBe("alert");
-    second.unmount();
-
-    page("Three");
-    expect(role(en.common.staleData)).toBeNull();
-  });
-
   it("the edit-error banner is live on its first page only, and again for a new error", () => {
     const message = describeWriteError(en, writeError("disk full")).message;
     act(() => usePortfolioStore.setState({ error: writeError("disk full") }));
