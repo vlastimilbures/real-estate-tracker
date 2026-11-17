@@ -165,6 +165,10 @@ engine without the form, and remove it when the last part lands.
   toggles are buttons with an expanded state instead of `<details>` (ADR 0203, #381).
 - An import file's error table is named by its file type ("Valuations: 4 errors") (ADR
   0225, #424).
+- After a failed save, focus goes back to the form's Save button, so a keyboard user keeps
+  their place; it used to fall to the top of the page. This applies to the record forms
+  (valuations, leases, mortgages, holding costs), the scenario form and the property form.
+  Focus the user moved during the save stays where it is (ADR 0246, #538).
 
 ### Security
 
