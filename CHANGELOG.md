@@ -155,6 +155,12 @@ engine without the form, and remove it when the last part lands.
   A value already stored outside its range does not block other edits. No form, message
   or figure changes.
 
+### Fixed
+
+- A restored loan with an invalid start date and a rate recast no longer freezes the app:
+  the loan reports its invalid start date, and the recast's own checks wait until the
+  start is fixed (ADR 0247, #543). No figure changes.
+
 ### Accessibility
 
 - The Projections entity dropdown is named by its purpose and the value it shows

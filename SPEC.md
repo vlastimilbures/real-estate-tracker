@@ -146,7 +146,10 @@ ADR 0036). The codes: `INVALID_DATE`, `NON_FINITE_NUMBER`, `NEGATIVE_AMOUNT`,
 amount above 0; a prepayment or recast after its block's start and before its schedule end; a
 recast that sets exactly one of a maturity and an instalment; a recast maturity that leaves the next payment, stays within the term cap and, on a development
 loan, falls after the completion's payment; a recast instalment above 0 and dated after the
-completion. `LEASE_OVERLAP` (two leases of one property overlap, ADR 0163) is a write-time
+completion. A block whose start date is invalid reports `INVALID_DATE` on it and skips the
+checks that count from the start (event and draw dates against the start or the schedule
+end, the recast maturity); the payment-grid walk raises a `RangeError` on an invalid date
+instead of looping (ADR 0247). `LEASE_OVERLAP` (two leases of one property overlap, ADR 0163) is a write-time
 rule outside `validateInputs`. Ranges (ADR 0038, ADR 0128):
 interest 0–100 %, the post-fixation reset rate included; vacancy, cost shares and value
 haircut 0–1; shock durations whole years ≥ 0; horizon a whole number ≥ 1; growth,
