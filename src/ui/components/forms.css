@@ -403,9 +403,9 @@
   gap: var(--s4);
 }
 
-/* Matches only from the 900 px minimum window to 920 px: there it puts the form grids and
-   a chart grid in one column. Removing it is a visible change (ADR 0001); the narrow-window
-   layout is reviewed in #494. */
+/* Matches only from the 900 px minimum window to 920 px: there it puts the form grids in
+   one column; the chart grid's half of the rule is in charts.css. Removing it is a visible
+   change that needs an ADR (ADR 0001), parked by #494. */
 @media (max-width: 920px) {
   .form-grid {
     grid-template-columns: 1fr;
