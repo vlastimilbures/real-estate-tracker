@@ -92,6 +92,11 @@ engine without the form, and remove it when the last part lands.
   twice. After a restore or Clear sample the screen still names the safety copy. The
   stale-data banner and its Reload button are gone, so the app no longer lets you edit data
   older than what is saved.
+- A saved scenario the app cannot read now stops start-up like an unreadable record in any
+  other table (ADR 0231, #451): the error screen names the scenario under "Records
+  involved" and offers **Restore a backup…** and **Show data folder**, not Try again.
+  Before, the app left the scenario out and listed it on the Scenarios page with a Delete
+  button; that list is gone. No figure changes; no stored data changes.
 - Every screen's layout was reworked in the 2026-11 UX review (round 1, #392; round 2,
   #425). No figure changes and no stored data changes; no figure leaves the app.
   - **Across the app:** LTV and DSCR bands show as a coloured shape (circle, triangle,
