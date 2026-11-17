@@ -5,9 +5,9 @@
 // `assertBlockStarts` (P4b), D-19 as-of before baseDate via `assertAsOf` (P4b), D-37
 // corrupt data and D-38 ranges via `assertInputs` / `assertAssumptions` (P4b).
 // Entry-point rejection is P5b/P7; messages belong to P7.
-import { ZERO, type Decimal } from "../lib/money";
-import { atOrBelowGrowthFloor, outsideUnitRate } from "../lib/rules";
-import { edate, isAfter, isOnOrBefore } from "./dates";
+import { ZERO, type Decimal } from "../../lib/money";
+import { atOrBelowGrowthFloor, outsideUnitRate } from "../../lib/rules";
+import { edate, isAfter, isOnOrBefore } from "../dates";
 import {
   derivedTermProblem,
   dueDate,
@@ -16,10 +16,10 @@ import {
   paymentOnOrAfter,
   paymentsDueBy,
   termMonths,
-} from "./amortization";
-import { EngineInputError } from "./errors";
-import { COST_KEYS, COST_MONEY_KEYS, COST_RATE_KEYS } from "./figures";
-import { overlappingLeases } from "./succession";
+} from "../amortization";
+import { EngineInputError } from "../errors";
+import { COST_KEYS, COST_MONEY_KEYS, COST_RATE_KEYS } from "../figures";
+import { overlappingLeases } from "../succession";
 import type {
   AcquisitionFunding,
   Assumptions,
@@ -30,7 +30,7 @@ import type {
   Portfolio,
   Property,
   ShockBand,
-} from "./types";
+} from "../types";
 
 export type ValidationCode =
   | "INVALID_DATE"
