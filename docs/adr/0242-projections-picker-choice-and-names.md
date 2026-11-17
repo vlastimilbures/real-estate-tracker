@@ -47,8 +47,9 @@ and the panel title used that shortened name. The same flat read "Dubova" here a
 - A property named "Byt …" shows its full name in the Projections picker and panel title;
   the pill row is a little wider. The panel title now matches the exported file's name.
 - No computed number, stored data, export or dictionary entry changes.
-- The ux-capture Projections screens change only in the names shown (30-projections,
-  32-projections-real, 30b-projections-entity-open) and the README projections screenshot.
+- The ux-capture Projections screens change in the names shown (30-projections,
+  32-projections-real, 30b-projections-entity-open) and the README projections screenshot;
+  in 30-projections the wider pill row also wraps the subtitle at a different point.
 
 ## Owner review
 
