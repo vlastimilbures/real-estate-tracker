@@ -9,11 +9,12 @@
 // with the job's and the workflow's, a `${{ matrix.x }}` value read once per matrix value;
 // its `continue-on-error`, `if:`, `shell:` and `working-directory` (with the job's and
 // the workflow's `defaults.run`); and its job's shard list. It reads each job's `if:`
-// and `continue-on-error`, and fails a matrix `include` / `exclude`, which it does not
+// (by role: work job or aggregate) and `continue-on-error`, each aggregate's result check
+// for every job it needs, and fails a matrix `include` / `exclude`, which it does not
 // expand. It requires pnpm, cargo, node, bash, npx, sh, npm and yarn lines to be gates or
 // setup. It does not see an edit inside a multi-line script that keeps the gate's own line
-// (an `exit 0` before it, say), nor an aggregate job that stops waiting for a job
-// (`needs`).
+// (an `exit 0` before it, say), nor an aggregate that stops waiting for a job: the
+// `needs` list itself is not compared with the jobs.
 //
 //   node scripts/gates.mjs               run the check gates
 //   node scripts/gates.mjs --release     … and the two dependency audits
@@ -332,12 +333,19 @@ export const CI_STEP_IFS = {
   "depcruise-baseline": [PR_ONLY],
   "size-baseline": [PR_ONLY],
 };
-// The `if:` a job may carry: the draft guard (a draft PR runs nothing), and on the
-// aggregates the same behind `!cancelled()`, so a failed job fails the required check
-// instead of skipping it (a skipped required check counts as passed).
+// The `if:` a job carries, by role. A work job: the draft guard (a draft PR runs
+// nothing), or none. An aggregate (a job with `needs`): exactly the same behind
+// `!cancelled()`, so a failed job fails the required check instead of skipping it (a
+// skipped required check counts as passed).
 const DRAFT_GUARD =
   "github.event_name == 'push' || !github.event.pull_request.draft";
-export const CI_JOB_IFS = [DRAFT_GUARD, `!cancelled() && (${DRAFT_GUARD})`];
+export const CI_JOB_IFS = {
+  work: DRAFT_GUARD,
+  aggregate: `!cancelled() && (${DRAFT_GUARD})`,
+};
+/** The line an aggregate runs for each job it needs. */
+export const resultCheck = (job) =>
+  `[[ "\${{ needs.${job}.result }}" == success ]]`;
 
 const indentOf = (line) => line.search(/\S/);
 const unquote = (v) => v.trim().replace(/^(['"])(.*)\1$/, "$2");
@@ -521,7 +529,8 @@ const asMap = (v) => (v && typeof v === "object" && !Array.isArray(v) ? v : {});
 
 /**
  * A workflow's job-level settings: `{ env, defaults, jobs }`, `env` and `defaults` the
- * workflow's own; per job `{ keys, if, env, defaults, matrix }`, `matrix` or null.
+ * workflow's own; per job `{ keys, if, needs, env, defaults, matrix }`, `needs` a list,
+ * `matrix` or null.
  */
 export function workflowJobs(yaml) {
   const tree = asMap(yamlTree(yaml));
@@ -532,6 +541,7 @@ export function workflowJobs(yaml) {
       {
         keys: Object.keys(job),
         if: job.if,
+        needs: [job.needs ?? []].flat(),
         env: asMap(job.env),
         defaults: asMap(job.defaults),
         matrix: asMap(job.strategy).matrix ?? null,
@@ -597,14 +607,38 @@ function asRun(step, workflow) {
   };
 }
 
+/**
+ * What is wrong with an aggregate's own steps: each job it needs must have its
+ * `resultCheck` line, in a step with no `if:` and no continue-on-error.
+ */
+function aggregateProblems(id, job, steps) {
+  const own = steps.filter(
+    (s) =>
+      s.job === id &&
+      s.if === undefined &&
+      !s.keys.includes("continue-on-error"),
+  );
+  return job.needs
+    .filter((n) => !own.some((s) => s.lines.includes(resultCheck(n))))
+    .map((n) => `job ${id} does not check \`${resultCheck(n)}\``);
+}
+
 /** What is wrong with the jobs themselves: `[]` when nothing. */
-function jobProblems(workflow, jobIfs) {
+function jobProblems(workflow, steps, jobIfs) {
   const problems = [];
   for (const [id, job] of Object.entries(workflow.jobs)) {
+    const aggregate = job.needs.length > 0;
     if (job.keys.includes("continue-on-error"))
       problems.push(`job ${id} has continue-on-error`);
-    if (job.if !== undefined && !jobIfs.includes(job.if))
-      problems.push(`job ${id} runs only if \`${job.if}\``);
+    if (
+      aggregate
+        ? job.if !== jobIfs.aggregate
+        : ![undefined, jobIfs.work].includes(job.if)
+    )
+      problems.push(
+        `job ${id} runs only if \`${job.if ?? "success()"}\`, not \`${aggregate ? jobIfs.aggregate : jobIfs.work}\``,
+      );
+    if (aggregate) problems.push(...aggregateProblems(id, job, steps));
     for (const key of ["include", "exclude"])
       if (asMap(job.matrix)[key] !== undefined)
         problems.push(
@@ -645,8 +679,10 @@ function howItRuns(step, spec, ifs) {
  *   `working-directory` other than its `dir`, or a shard list that does not match the
  *   `/N` of its `--shard`; `env`, `shell` and `working-directory` as the job and the
  *   workflow set them too;
- * - a job with continue-on-error, an `if:` outside `jobIfs`, or a matrix `include` /
- *   `exclude`;
+ * - a job with continue-on-error, an `if:` other than its role's in `jobIfs`, or a
+ *   matrix `include` / `exclude`;
+ * - an aggregate (a job with `needs`) that does not check `needs.<job>.result` is
+ *   `success` for every job it needs;
  * - a pnpm / cargo / node / bash / npx / sh / npm / yarn line that is no gate and no setup.
  */
 export function ciDrift(
@@ -659,11 +695,12 @@ export function ciDrift(
   } = {},
 ) {
   const workflow = workflowJobs(yaml);
-  const steps = workflowSteps(yaml).flatMap((s) =>
+  const raw = workflowSteps(yaml);
+  const steps = raw.flatMap((s) =>
     perMatrixRun(asRun(s, workflow), workflow.jobs[s.job]?.matrix),
   );
   const listed = gates.filter((g) => g.where !== "nightly");
-  const problems = jobProblems(workflow, jobIfs);
+  const problems = jobProblems(workflow, raw, jobIfs);
   for (const g of listed)
     for (const spec of ciSteps(g)) {
       const found = steps.filter((s) => s.lines.includes(spec.run));

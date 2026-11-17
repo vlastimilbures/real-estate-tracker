@@ -449,7 +449,7 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
     expect(ciDrift(weaken(from, to)).length).toBeGreaterThan(0);
   });
 
-  it("reads each job's keys, if, env, defaults and matrix, and the workflow's env and defaults", () => {
+  it("reads each job's keys, if, needs, env, defaults and matrix, and the workflow's env and defaults", () => {
     const yaml = [
       "env:",
       "  A: x",
@@ -471,6 +471,7 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
       "    steps:",
       "      - run: pnpm one",
       "  b:",
+      "    needs: a",
       "    steps:",
       "      - run: pnpm two",
     ].join("\n");
@@ -488,11 +489,18 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
             "steps",
           ],
           if: "false",
+          needs: [],
           env: { B: "y" },
           defaults: { run: { shell: "sh" } },
           matrix: { shard: ["1", "2"] },
         },
-        b: { keys: ["steps"], env: {}, defaults: {}, matrix: null },
+        b: {
+          keys: ["needs", "steps"],
+          needs: ["a"],
+          env: {},
+          defaults: {},
+          matrix: null,
+        },
       },
     });
   });
@@ -589,6 +597,42 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
       "        run: pnpm knip\n",
       "        run: pnpm knip\n\n      - run: yarn knip --no-exit-code\n",
       "a step in frontend-checks runs `yarn knip --no-exit-code`, which is no gate",
+    ],
+    [
+      "the frontend aggregate loses !cancelled()",
+      `    needs: [frontend-checks, frontend-time-zones]\n    if: >-\n      !cancelled() &&\n      (github.event_name == 'push' || !github.event.pull_request.draft)\n`,
+      `    needs: [frontend-checks, frontend-time-zones]\n${DRAFT_IF}`,
+      "job frontend runs only if `github.event_name == 'push' || !github.event.pull_request.draft`, not `!cancelled() && (",
+    ],
+    [
+      "the axe aggregate loses !cancelled()",
+      "    needs: axe-shard\n    if: >-\n      !cancelled() &&\n",
+      "    needs: axe-shard\n    if: >-\n",
+      "job axe runs only if `(github.event_name",
+    ],
+    [
+      "the frontend aggregate loses its if",
+      `    needs: [frontend-checks, frontend-time-zones]\n    if: >-\n      !cancelled() &&\n      (github.event_name == 'push' || !github.event.pull_request.draft)\n`,
+      "    needs: [frontend-checks, frontend-time-zones]\n",
+      "job frontend runs only if `success()`, not `!cancelled() && (",
+    ],
+    [
+      "the frontend aggregate stops checking one job's result",
+      '          [[ "${{ needs.frontend-time-zones.result }}" == success ]]\n',
+      "",
+      'job frontend does not check `[[ "${{ needs.frontend-time-zones.result }}" == success ]]`',
+    ],
+    [
+      "the axe aggregate accepts a failed shard",
+      `'[[ "\${{ needs.axe-shard.result }}" == success ]]'`,
+      `'[[ "\${{ needs.axe-shard.result }}" != cancelled ]]'`,
+      'job axe does not check `[[ "${{ needs.axe-shard.result }}" == success ]]`',
+    ],
+    [
+      "the aggregate's result step allowed to fail",
+      "      - name: Every axe shard passed\n",
+      "      - name: Every axe shard passed\n        continue-on-error: true\n",
+      'job axe does not check `[[ "${{ needs.axe-shard.result }}" == success ]]`',
     ],
   ])("fails a weakened job or workflow: %s", (_, from, to, problem) => {
     const problems = ciDrift(weaken(from, to));
