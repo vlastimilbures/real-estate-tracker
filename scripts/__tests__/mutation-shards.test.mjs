@@ -159,7 +159,15 @@ describe("splitRanges and mutateFor", () => {
       "src/engine/loan/queries.ts",
       "src/engine/metrics.ts",
       "src/engine/projections.ts",
-      "src/engine/validate.ts",
+      "src/engine/validate/assumptions.ts",
+      "src/engine/validate/blockStarts.ts",
+      "src/engine/validate/check.ts",
+      "src/engine/validate/codes.ts",
+      "src/engine/validate/entry.ts",
+      "src/engine/validate/index.ts",
+      "src/engine/validate/loan.ts",
+      "src/engine/validate/loanEvents.ts",
+      "src/engine/validate/rows.ts",
     ]);
   });
 });
