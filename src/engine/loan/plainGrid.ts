@@ -17,10 +17,9 @@ import {
   loanEvents,
   type Outcome,
 } from "./events";
-import { payAndSettle, paymentRow } from "./pay";
+import { payAndSettle, paymentRow, repaidOutcomes } from "./pay";
 import { type Opening, plainOpening } from "./opening";
 import {
-  repaidOutcomes,
   type BlockSchedule,
   builtMonths,
   trimRepaid,

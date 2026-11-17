@@ -26,8 +26,22 @@
 // the fixed rate (DR-101), and a clamped month-end due date counts as paid (DR-070).
 // Tranche landing stays on the grid.
 import { ZERO, type Decimal } from "../../lib/money";
-import type { AmortizationRow } from "../types";
-import { type MonthStep, amortizeMonth, reamortizes } from "./kernel";
+import { edate } from "../dates";
+import { dueDate } from "../amortization";
+import type {
+  AmortizationRow,
+  Assumptions,
+  IsoDate,
+  MortgageBlock,
+} from "../types";
+import {
+  type MonthStep,
+  amortizeMonth,
+  reamortizes,
+  undrawnRow,
+  zeroRow,
+} from "./kernel";
+import { rateOfPayment, interestOnlyAt } from "./calendar";
 import {
   type TermState,
   paidTerms,
@@ -35,6 +49,7 @@ import {
   termsForTranche,
   type LoanEvents,
   eventsAt,
+  type Outcome,
   type Settled,
   settleEvents,
 } from "./events";
@@ -103,5 +118,165 @@ export function paymentRow(
     prepaid: settled.prepaid,
     prepaymentFee: settled.fee,
     endBalance: settled.balance,
+  };
+}
+
+/** Events meeting a repaid loan: nothing to prepay, no maturity to change. */
+export function repaidOutcomes(
+  ev: LoanEvents,
+  p: number,
+  m: number,
+  state: { currentInstalment: Decimal; prevRate: Decimal; terms: TermState },
+): Outcome[] {
+  return settleEvents(
+    ev,
+    {
+      p,
+      month: m,
+      balance: ZERO,
+      instalment: state.currentInstalment,
+      interestOnly: false,
+      terms: state.terms,
+    },
+    eventsAt(ev, p),
+  ).outcomes;
+}
+
+/** The running loan a month step meets: what a payment meets, and whether it is drawn. */
+export interface LoanState extends PayState {
+  drawn: boolean;
+}
+
+/** Everything a month step needs besides the running state. */
+export interface Run {
+  block: MortgageBlock;
+  assumptions: Assumptions;
+  /** The prepayments and recasts the run settles (ADR 0109). */
+  events: LoanEvents;
+  /** Grid month m carries payment `offset + m` (D-21). */
+  offset: number;
+  /** The tranches each month draws before its split. */
+  drawsByMonth: Map<number, Decimal>;
+  /** The tranches dated after baseDate, by grid month: the new debt a row draws
+   *  (DR-092). A tranche on/before baseDate that lands in grid month 1 is opening
+   *  debt (D-41, D-44). */
+  newDebtByMonth: Map<number, Decimal>;
+  /** The part of grid month 1's tranches a late-window event already counted in the
+   *  terms it set: no second contract-term restore or agreed-instalment deferral for
+   *  it (ADR 0129 §1). */
+  openingCounted: Decimal;
+  /** The instalment of the first draw, sized on the drawn amount over the full term;
+   *  null keeps the instalment in force (a plain loan keeps the entered one). */
+  sizeFirst: ((balance: Decimal) => Decimal) | null;
+  /** The catch-up to baseDate: no payoff guard, and the interest is the instalment in
+   *  force during interest-only. */
+  replay: boolean;
+}
+
+/** One month of a run: its row, the state it leaves, what its events did. */
+export interface MonthResult {
+  row: AmortizationRow;
+  state: LoanState;
+  outcomes: Outcome[];
+}
+
+/** True while the loan owes something this month (`draw` lands before the split).
+ *  (`greaterThan`, because `Decimal(0).isPositive()` is true.) */
+export function owes(state: PayState, draw: Decimal): boolean {
+  return state.balance.plus(draw).greaterThan(ZERO);
+}
+
+/** One month of a run: undrawn → first draw → interest-only → amortizing → repaid.
+ *  A later tranche landing this month grows the balance before this month's split
+ *  (unlike the first draw, which carries no payment). A tranche landing in the first
+ *  draw's month joins that draw (D-46, DR-122). */
+export function stepMonth(state: LoanState, m: number, run: Run): MonthResult {
+  const { block, assumptions } = run;
+  const date = edate(assumptions.baseDate, m);
+  if (!state.drawn) return drawStep(state, m, date, run);
+  const p = run.offset + m;
+  const draw = run.drawsByMonth.get(m) ?? ZERO;
+  const ratePa = rateOfPayment(p, block, assumptions);
+  const due = dueDate(block, p);
+  const io = interestOnlyAt(block, due); // ADR 0129 §2
+  // Payoff guard: once repaid (and no tranche lands) nothing is due, rather than the
+  // held instalment on a zero balance (DR-044). The catch-up replays without it.
+  if (!run.replay && !owes(state, draw)) {
+    return {
+      row: zeroRow(m, date, ratePa),
+      state: { ...state, prevRate: ratePa, prevInterestOnly: io },
+      outcomes: repaidOutcomes(run.events, p, m, state),
+    };
+  }
+  return paidStep(state, { m, p, date, dueDate: due, draw, ratePa, io }, run);
+}
+
+/** A month before the first draw: nothing owed, or the first draw landing (it carries
+ *  no payment; with `sizeFirst` and a tranche joining it, the instalment is sized on
+ *  the drawn amount over the full term). */
+function drawStep(
+  state: LoanState,
+  m: number,
+  date: IsoDate,
+  run: Run,
+): MonthResult {
+  const { block, assumptions } = run;
+  const { row, drawsNow } = undrawnRow(block, m, date);
+  if (!drawsNow) return { row, state, outcomes: [] };
+  const tranche = run.drawsByMonth.get(m) ?? ZERO;
+  const balance = row.endBalance.plus(tranche);
+  return {
+    row: { ...row, drawn: balance, endBalance: balance },
+    state: {
+      ...state,
+      balance,
+      currentInstalment:
+        tranche.greaterThan(ZERO) && run.sizeFirst
+          ? run.sizeFirst(balance)
+          : state.currentInstalment,
+      drawn: true,
+      prevRate: rateOfPayment(run.offset + m, block, assumptions),
+      // Payment 0, on the loan start (ADR 0129 §2).
+      prevInterestOnly: interestOnlyAt(block, dueDate(block, run.offset + m)),
+    },
+    outcomes: [],
+  };
+}
+
+/** One month of a run: what payment `p` meets. */
+interface RunMonth {
+  m: number;
+  p: number;
+  date: IsoDate;
+  /** Payment p's due date, EDATE(start, p) (ADR 0164). */
+  dueDate: IsoDate;
+  draw: Decimal;
+  ratePa: Decimal;
+  io: boolean;
+}
+
+/** A drawn loan's payment `p`, then its prepayments and recasts. */
+function paidStep(state: LoanState, mo: RunMonth, run: Run): MonthResult {
+  const { m, date, draw, ratePa, io } = mo;
+  const fresh = m === 1 ? draw.minus(run.openingCounted) : draw;
+  const { step, settled } = payAndSettle(run.events, state, {
+    ...mo,
+    month: m,
+    fresh,
+  });
+  const drawn = run.newDebtByMonth.get(m) ?? ZERO;
+  const head = { month: m, date, dueDate: mo.dueDate, ratePa, drawn };
+  return {
+    row: paymentRow(head, step, settled),
+    state: {
+      balance: settled.balance,
+      currentInstalment:
+        io && !run.replay ? state.currentInstalment : step.instalment,
+      drawn: true,
+      prevRate: ratePa,
+      prevInterestOnly: io,
+      terms: settled.terms,
+    },
+    outcomes: settled.outcomes,
   };
 }

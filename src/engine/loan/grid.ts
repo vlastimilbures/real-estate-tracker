@@ -1,36 +1,9 @@
 // The baseDate grid both schedule loops run on (ADR 0109).
-import { ZERO, type Decimal } from "../../lib/money";
+import { ZERO } from "../../lib/money";
 import { eventTermMonths, scheduleMonths, termMonths } from "../amortization";
 import { at } from "../arrays";
 import type { AmortizationRow, Assumptions, MortgageBlock } from "../types";
-import {
-  type TermState,
-  type LoanEvents,
-  eventsAt,
-  type Outcome,
-  settleEvents,
-} from "./events";
-
-/** Events meeting a repaid loan: nothing to prepay, no maturity to change. */
-export function repaidOutcomes(
-  ev: LoanEvents,
-  p: number,
-  m: number,
-  state: { currentInstalment: Decimal; prevRate: Decimal; terms: TermState },
-): Outcome[] {
-  return settleEvents(
-    ev,
-    {
-      p,
-      month: m,
-      balance: ZERO,
-      instalment: state.currentInstalment,
-      interestOnly: false,
-      terms: state.terms,
-    },
-    eventsAt(ev, p),
-  ).outcomes;
-}
+import type { LoanEvents, Outcome } from "./events";
 
 /** A block's rows and what its prepayments and recasts did (ADR 0109). */
 export interface BlockSchedule {
