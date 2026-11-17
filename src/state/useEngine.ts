@@ -3,7 +3,6 @@
 // to every screen. Components consume this — they never call the engine inline.
 import { useMemo } from "react";
 import { usePortfolioStore } from "./portfolioStore";
-import { scenarioRuleErrors } from "../import/inputRules";
 import { serializeOverrides } from "../data/mappers";
 import { todayUtc } from "../lib/day";
 import { timed } from "../lib/perf";
@@ -22,6 +21,7 @@ import {
   cpiIndex,
   EngineInputError,
   realProjection,
+  scenarioRuleErrors,
   utc,
 } from "../engine";
 import type {
