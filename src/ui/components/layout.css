@@ -52,7 +52,7 @@ a:focus-visible,
   background: var(--accent);
   color: var(--on-accent);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-13);
   font-weight: 600;
   cursor: pointer;
   transform: translateY(calc(-100% - var(--s4)));

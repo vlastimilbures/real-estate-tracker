@@ -10,7 +10,7 @@
   gap: 5px;
 }
 .field > label {
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: 600;
   color: var(--ink-soft);
 }
@@ -36,7 +36,7 @@
 .field select {
   width: 100%;
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: var(--fs-13-5);
   font-feature-settings: var(--num);
   padding: var(--s2) var(--s3);
   border: 1px solid var(--hairline-strong);
@@ -47,7 +47,7 @@
 .field textarea {
   width: 100%;
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: var(--fs-13-5);
   font-feature-settings: var(--num);
   padding: var(--s2) var(--s3);
   border: 1px solid var(--hairline-strong);
@@ -123,7 +123,7 @@
   --rdp-day-width: 34px;
   --rdp-day-height: 34px;
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--fs-12-5);
   color: var(--ink);
 }
 .date-popover .rdp-caption_label,
@@ -155,7 +155,7 @@
 .field .suffix {
   position: absolute;
   right: var(--s3);
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: var(--ink-faint);
   pointer-events: none;
 }
@@ -170,11 +170,11 @@
   border-color: var(--negative);
 }
 .field .err {
-  font-size: 11.5px;
+  font-size: var(--fs-11-5);
   color: var(--negative);
 }
 .field .help {
-  font-size: 11.5px;
+  font-size: var(--fs-11-5);
   color: var(--ink-faint);
 }
 
@@ -203,18 +203,18 @@
 }
 .event-rows > legend {
   padding: 0 var(--s1);
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: 600;
   color: var(--ink-soft);
 }
 .event-rows > .help {
   margin: 0;
-  font-size: 11.5px;
+  font-size: var(--fs-11-5);
   color: var(--ink-faint);
 }
 .event-rows .err {
   margin: 0;
-  font-size: 11.5px;
+  font-size: var(--fs-11-5);
   color: var(--negative);
 }
 .event-row {
@@ -247,24 +247,24 @@
 }
 .event-row.lead .lead-date .value {
   padding: var(--s2) 0;
-  font-size: 13.5px;
+  font-size: var(--fs-13-5);
   font-feature-settings: var(--num);
   color: var(--ink-soft);
 }
 .event-row.lead .lead-date .label {
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: 600;
   color: var(--ink-soft);
 }
 .event-row > .note {
   flex-basis: 100%;
   margin: 0;
-  font-size: 11.5px;
+  font-size: var(--fs-11-5);
   color: var(--warn);
 }
 .event-rows > .total {
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--fs-12-5);
   font-weight: 600;
   font-feature-settings: var(--num);
   color: var(--ink);
@@ -280,7 +280,7 @@
 .form-actions .form-state {
   margin-right: auto;
   align-self: center;
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: var(--ink-soft);
 }
 
@@ -312,7 +312,7 @@
   border: 1px solid var(--negative);
   border-radius: var(--r-sm);
   background: var(--negative-wash);
-  font-size: 13px;
+  font-size: var(--fs-13);
 }
 
 .error-summary:focus-visible {
@@ -355,7 +355,7 @@
 }
 
 .loan-type-label {
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: 500;
   color: var(--ink-soft);
 }
@@ -382,12 +382,12 @@
   padding: var(--s3) var(--s4);
   border-radius: var(--r-sm);
   background: var(--accent-wash);
-  font-size: 13px;
+  font-size: var(--fs-13);
 }
 
 .record-form .form-hint {
   margin: var(--s2) 0 0;
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: var(--ink-soft);
 }
 

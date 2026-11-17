@@ -20,7 +20,7 @@
   border: 1px solid var(--hairline);
   background: transparent;
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -43,7 +43,7 @@
   align-items: center;
   gap: var(--s2);
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-13);
   color: var(--ink-soft);
 }
 /* Two blocks side by side on a wide container, stacked on a narrow one. */
@@ -72,7 +72,7 @@
   padding: var(--s2) var(--s3);
   border-bottom: 1px solid var(--hairline);
   font-family: var(--font-text);
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -112,7 +112,7 @@
 }
 .dc-problem {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-13);
 }
 .dc-block.defaults .dc-problem {
   color: var(--ink-soft);
@@ -147,7 +147,7 @@
   background: var(--surface);
   color: var(--ink);
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--fs-12-5);
   cursor: pointer;
 }
 .dc-chip:hover {
