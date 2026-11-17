@@ -216,6 +216,7 @@
 }
 
 /* ============ Content column and top bar: section nav, tabs, page title ============ */
+/* Also: section groups, focus targets set from script, panel-head actions. */
 .content {
   min-width: 0;
   display: flex;
