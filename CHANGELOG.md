@@ -37,6 +37,9 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- When saving an edited property fails, the property form keeps what you typed and still
+  counts as unsaved, so Esc does not close it; before, the stored values came back into
+  the fields (ADR 0241, #438). No figure changes.
 - When you replace a chosen CSV file, or your data changes, the Import panel hides the old
   preview and keeps Import disabled until the new preview is shown, so pressing Import in
   that moment no longer ends in a misleading "plan changed" message (ADR 0240, #437). No

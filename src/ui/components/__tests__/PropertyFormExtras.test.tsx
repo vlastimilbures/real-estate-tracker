@@ -88,8 +88,17 @@ describe("edit form waits for address and garage (ADR 0184 §3)", () => {
     render(
       <PropertyFormModal mode="edit" propertyId={id} onClose={() => {}} />,
     );
-    // A reload while the form is open starts a second read.
+    // A reload while the form is open starts no read (ADR 0241 §1).
     act(() => usePortfolioStore.setState({ portfolio: { ...portfolio } }));
+    expect(reads).toHaveLength(1);
+    // A new read function starts a second read.
+    const stub = usePortfolioStore.getState().getPropertyExtras;
+    act(() =>
+      usePortfolioStore.setState({
+        getPropertyExtras: (propertyId) => stub(propertyId),
+      }),
+    );
+    expect(reads).toHaveLength(2);
     const [first, second] = reads;
     await act(async () => second!.resolve({ address: "A", garage: null }));
     await act(async () => first!.reject(new Error("late")));
