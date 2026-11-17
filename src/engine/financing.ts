@@ -10,6 +10,7 @@ import {
   drawMonth,
   isDevLoan,
   mortgageBlock,
+  selectBlock,
 } from "./amortization";
 import { DEBT_FREE_EPSILON } from "./constants";
 import {
@@ -21,12 +22,16 @@ import {
 } from "./dates";
 import { leaseInForce } from "./metrics";
 import {
-  blockChain,
+  afterSuccessor,
+  chainLinks,
+  type ChainLink,
   hasPayment,
   lastPaymentMonth,
   paymentOffset,
   propertySchedule,
   type PropertySchedule,
+  replacedByMonth,
+  replacedOnOrBefore,
 } from "./schedule";
 import type {
   AmortizationRow,
@@ -134,14 +139,13 @@ function inWindow(date: Date, asOf: Date, months: number): boolean {
 function resetStatus(
   fixationEnd: Date,
   m: number,
-  next: MortgageBlock | undefined,
+  link: ChainLink,
   rows: AmortizationRow[],
   ctx: { asOf: Date; baseDate: Date },
 ): FixationReset["status"] {
   if (
-    next &&
-    (isOnOrBefore(next.startDate, fixationEnd) ||
-      drawMonth(next, ctx.baseDate) <= m)
+    replacedOnOrBefore(link, fixationEnd) ||
+    replacedByMonth(link, m, ctx.baseDate)
   )
     return "replaced";
   if (m <= 0) return "passed";
@@ -154,16 +158,17 @@ function resetStatus(
 
 /** Each chain block's fixation end (none for a 0-year, floating block). */
 function chainResets(
-  chain: MortgageBlock[],
+  links: ChainLink[],
   rows: AmortizationRow[],
   ctx: { asOf: Date; baseDate: Date },
 ): FixationReset[] {
   const resets: FixationReset[] = [];
-  for (const [i, block] of chain.entries()) {
+  for (const link of links) {
+    const { block } = link;
     if (block.fixationYears === 0) continue;
     const fixationEnd = blockEndDate(block);
     const m = block.fixationYears * 12 - paymentOffset(block, ctx.baseDate);
-    const status = resetStatus(fixationEnd, m, chain[i + 1], rows, ctx);
+    const status = resetStatus(fixationEnd, m, link, rows, ctx);
     resets.push({
       propertyId: block.propertyId,
       blockId: block.id,
@@ -249,7 +254,7 @@ export function prepaymentInterestSaved(
 /**
  * A development block's draws as of `asOf` (ADR 0167). A draw dated on or before as-of is
  * drawn: the calendar date the owner sees, not the schedule's grid month. A tranche dated
- * after the next block's start is never drawn, as in `undrawnPrincipal` (ADR 0166).
+ * after the next block's start is never drawn (`afterSuccessor`, ADR 0166).
  */
 function blockDrawdown(
   block: MortgageBlock,
@@ -265,7 +270,7 @@ function blockDrawdown(
     amount,
     start,
     status:
-      !start && next && isAfter(date, next.startDate)
+      !start && afterSuccessor(next, date)
         ? "cancelled"
         : isOnOrBefore(date, asOf)
           ? "drawn"
@@ -294,17 +299,17 @@ function propertyExposure(
   ctx: { asOf: IsoDate; assumptions: Assumptions; baseDate: Date },
 ): PropertyLoan | null {
   const { rows } = schedule;
-  const chain = blockChain(blocks, ctx.baseDate);
+  const links = chainLinks(blocks, ctx.baseDate);
+  const chain = links.map((l) => l.block);
   const first = chain[0];
   if (!first) return null;
-  const resets = chainResets(chain, rows, ctx);
-  const inForce = chain.filter((b) => isOnOrBefore(b.startDate, ctx.asOf));
+  const resets = chainResets(links, rows, ctx);
   const last = lastPaymentMonth(rows);
   const payers = payersOf(chain, ctx.baseDate);
   return {
     loan: {
       propertyId: first.propertyId,
-      blockId: (inForce.at(-1) ?? first).id,
+      blockId: (selectBlock(chain, ctx.asOf) ?? first).id,
       nextFixation: resets.find((r) => r.status === "upcoming") ?? null,
       payoffDate: rows[last - 1]?.dueDate ?? null, // ADR 0164
       remainingMonths:
@@ -314,13 +319,11 @@ function propertyExposure(
     resets,
     chain: chain.map((b) => b.id),
     // A block with tranches, until a successor is in force at as-of (ADR 0167).
-    drawdowns: chain.flatMap((b, i) => {
-      const next = chain[i + 1];
-      const replaced = next && isOnOrBefore(next.startDate, ctx.asOf);
-      return b.draws?.length && !replaced
-        ? [blockDrawdown(b, next, ctx.asOf)]
-        : [];
-    }),
+    drawdowns: links.flatMap((link) =>
+      link.block.draws?.length && !replacedOnOrBefore(link, ctx.asOf)
+        ? [blockDrawdown(link.block, link.next, ctx.asOf)]
+        : [],
+    ),
   };
 }
 
@@ -393,11 +396,10 @@ function completions(
     const blocks = portfolio.mortgages.filter(
       (b) => b.propertyId === loan.propertyId,
     );
-    const chain = blockChain(blocks, fx.asOf);
-    for (const [i, b] of chain.entries()) {
+    for (const link of chainLinks(blocks, fx.asOf)) {
+      const b = link.block;
       const done = isDevLoan(b) ? b.completionDate : undefined;
-      const next = chain[i + 1];
-      if (!done || (next && isOnOrBefore(next.startDate, done))) continue;
+      if (!done || replacedOnOrBefore(link, done)) continue;
       events.push({
         date: done,
         kind: "devCompletion",

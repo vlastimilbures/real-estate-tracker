@@ -121,6 +121,12 @@ export function afterSuccessor(
   return next !== undefined && !isOnOrBefore(date, next.startDate);
 }
 
+/** True when the link's successor has started on or before `date`, so it has replaced
+ *  the block by then (D-27, D-43). False without a successor. */
+export function replacedOnOrBefore(link: ChainLink, date: Date): boolean {
+  return link.next !== undefined && isOnOrBefore(link.next.startDate, date);
+}
+
 /** True when the link's successor has drawn by grid month `m`: the schedule follows the
  *  successor from its draw month (D-27, D-47). False without a successor. */
 export function replacedByMonth(

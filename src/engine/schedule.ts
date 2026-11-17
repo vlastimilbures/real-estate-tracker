@@ -14,11 +14,15 @@ export {
   buildSchedule,
   effectiveMaturity,
   blockChain,
+  chainLinks,
+  afterSuccessor,
+  replacedOnOrBefore,
+  replacedByMonth,
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedule,
   propertySchedules,
   scheduleRows,
   schedulesByProperty,
 } from "./loan/chain";
-export type { PropertySchedule } from "./loan/chain";
+export type { ChainLink, PropertySchedule } from "./loan/chain";
 export { undrawnPrincipal } from "./loan/committedDebt";
