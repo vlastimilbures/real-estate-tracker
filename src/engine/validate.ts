@@ -87,6 +87,47 @@ export interface EngineValidationError {
 
 type Report = (code: ValidationCode, field?: string, index?: number) => void;
 
+/** Where a reporter puts the errors it builds. */
+type Add = (e: EngineValidationError) => void;
+
+/** The entities that are rows with an id: all but the assumptions. */
+type RowEntity = Exclude<ValidationEntity, "assumptions">;
+
+/** A row's error: `field` always present, `index` only for a list item (ADR 0116). */
+function rowError(
+  entity: RowEntity,
+  id: string,
+  code: ValidationCode,
+  field: string | undefined,
+  index?: number,
+): EngineValidationError {
+  return {
+    code,
+    entity,
+    id,
+    field,
+    ...(index === undefined ? {} : { index }),
+  };
+}
+
+/** An assumptions error: no row id. */
+function assumptionError(
+  code: ValidationCode,
+  field: string | undefined,
+): EngineValidationError {
+  return { code, entity: "assumptions", field };
+}
+
+/** The reporter of one row: every problem becomes `rowError` on it (#479). */
+function rowReporter(entity: RowEntity, id: string, add: Add): Report {
+  return (code, field, index) => add(rowError(entity, id, code, field, index));
+}
+
+/** The reporter of the assumptions: every problem becomes `assumptionError`. */
+function assumptionReporter(add: Add): Report {
+  return (code, field) => add(assumptionError(code, field));
+}
+
 const badDate = (d: Date | undefined) =>
   d !== undefined && Number.isNaN(d.getTime());
 const badNumber = (d: Decimal | undefined) => d !== undefined && !d.isFinite();
@@ -546,22 +587,6 @@ const ENTRY_ERROR_CODES = codesRaisedBy("data", "range");
 /** The invalid-loan codes the engine raises on (D-17, D-36). */
 const LOAN_ERROR_CODES = codesRaisedBy("loan");
 
-/** A block's error, naming the event item when there is one (ADR 0116). */
-function loanError(
-  block: MortgageBlock,
-  code: ValidationCode,
-  field: string | undefined,
-  index: number | undefined,
-): EngineValidationError {
-  return {
-    code,
-    entity: "mortgage",
-    id: block.id,
-    field,
-    ...(index === undefined ? {} : { index }),
-  };
-}
-
 /**
  * Raise an EngineInputError when a loan the engine is about to compute has a D-17
  * problem, instead of letting it become a NaN term, an endless schedule or vanished
@@ -571,7 +596,7 @@ export function assertLoanInputs(block: MortgageBlock): void {
   const errors: EngineValidationError[] = [];
   checkMortgage(block, (code, field, index) => {
     if (LOAN_ERROR_CODES.has(code)) {
-      errors.push(loanError(block, code, field, index));
+      errors.push(rowError("mortgage", block.id, code, field, index));
     }
   });
   if (errors.length > 0) throw new EngineInputError(errors);
@@ -586,7 +611,7 @@ export function assertLoanRows(blocks: MortgageBlock[]): void {
   for (const b of blocks) {
     checkMortgage(b, (code, field, index) => {
       if (DATA_ERROR_CODES.has(code)) {
-        errors.push(loanError(b, code, field, index));
+        errors.push(rowError("mortgage", b.id, code, field, index));
       }
     });
   }
@@ -610,7 +635,7 @@ function checkDated(
 }
 
 type ReporterFor = (
-  entity: ValidationEntity,
+  entity: RowEntity,
   id: string,
   propertyId?: string,
 ) => Report;
@@ -708,15 +733,8 @@ function refinancesWithinAMonth(blocks: MortgageBlock[]): Set<MortgageBlock> {
 }
 
 /** A start-date problem on a block. */
-const startError = (
-  code: ValidationCode,
-  b: MortgageBlock,
-): EngineValidationError => ({
-  code,
-  entity: "mortgage",
-  id: b.id,
-  field: "startDate",
-});
+const startError = (code: ValidationCode, b: MortgageBlock) =>
+  rowError("mortgage", b.id, code, "startDate");
 
 /** Raise DUPLICATE_BLOCK_START for overlapping blocks of one property (D-27, D-43),
  *  then REFINANCE_WITHIN_A_MONTH for blocks starting within a month of the one they
@@ -740,7 +758,7 @@ function asOfProblem(
   baseDate: Date,
 ): EngineValidationError | undefined {
   return isAfter(baseDate, asOf)
-    ? { code: "ASOF_BEFORE_BASEDATE", entity: "assumptions", field: "asOf" }
+    ? assumptionError("ASOF_BEFORE_BASEDATE", "asOf")
     : undefined;
 }
 
@@ -800,14 +818,8 @@ function checkPortfolio(
 ): void {
   const ids = new Set(p.properties.map((x) => x.id));
   const on: ReporterFor = (entity, id, propertyId) => {
-    const report: Report = (code, field, index) =>
-      add({
-        code,
-        entity,
-        id,
-        field,
-        ...(index === undefined ? {} : { index }),
-      });
+    const report = rowReporter(entity, id, add);
+    // Reported as the reporter is made, so a row's ORPHAN_ROW comes first.
     if (propertyId !== undefined && !ids.has(propertyId))
       report("ORPHAN_ROW", "propertyId");
     return report;
@@ -842,12 +854,9 @@ export function leaseOverlapErrors(
   const named = new Set<string>();
   for (const pair of overlappingLeases(portfolio.leases))
     for (const l of pair) named.add(l.id);
-  return [...named].map((id) => ({
-    code: "LEASE_OVERLAP",
-    entity: "lease",
-    id,
-    field: "startDate",
-  }));
+  return [...named].map((id) =>
+    rowError("lease", id, "LEASE_OVERLAP", "startDate"),
+  );
 }
 
 /**
@@ -862,9 +871,7 @@ export function validateInputs(
 ): EngineValidationError[] {
   const errors: EngineValidationError[] = [];
   const add = (e: EngineValidationError) => errors.push(e);
-  checkAssumptions(assumptions, (code, field) =>
-    add({ code, entity: "assumptions", field }),
-  );
+  checkAssumptions(assumptions, assumptionReporter(add));
   const asOfError = asOf && asOfProblem(asOf, assumptions.baseDate);
   if (asOfError) add(asOfError);
   checkPortfolio(portfolio, add);
@@ -879,8 +886,9 @@ function raiseEntryErrors(errors: EngineValidationError[]): void {
 /** Raise the D-37 / D-38 problems of the assumptions (entry points without a portfolio). */
 export function assertAssumptions(assumptions: Assumptions): void {
   const errors: EngineValidationError[] = [];
-  checkAssumptions(assumptions, (code, field) =>
-    errors.push({ code, entity: "assumptions", field }),
+  checkAssumptions(
+    assumptions,
+    assumptionReporter((e) => errors.push(e)),
   );
   raiseEntryErrors(errors);
 }
