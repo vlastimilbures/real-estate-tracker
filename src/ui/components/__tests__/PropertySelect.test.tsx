@@ -234,3 +234,25 @@ describe("PropertySelect dropdown, single mode (#128 R5-05)", () => {
     expect(document.activeElement).toBe(option("Byt 2"));
   });
 });
+
+describe("PropertySelect pills, single mode (ADR 0242 §3, #439)", () => {
+  it("single pills carry the full name as their title", () => {
+    const options = [
+      { value: "portfolio", label: "Portfolio" },
+      { value: "p1", label: "Byt Javorova s dlouhym nazvem u parku" },
+    ];
+    render(
+      <PropertySelect
+        mode="single"
+        options={options}
+        selected="portfolio"
+        onChange={vi.fn()}
+        ariaLabel="Entity"
+      />,
+    );
+    for (const o of options) {
+      const pill = screen.getByRole("button", { name: o.label });
+      expect(pill.getAttribute("title")).toBe(o.label);
+    }
+  });
+});

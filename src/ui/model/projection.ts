@@ -200,8 +200,3 @@ export function projectionColumns(
   );
   return cols;
 }
-
-/** Short property label for the Projections picker: drops the leading "Byt " (flat). */
-export function shortPropertyName(name: string): string {
-  return name.replace(/^Byt /, "");
-}

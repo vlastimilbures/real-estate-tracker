@@ -6,6 +6,7 @@ import { describe, it, expect } from "vitest";
 import { act, fireEvent, screen, within } from "@testing-library/react";
 import { Projections } from "../Projections";
 import { useUiStore } from "../../../state/uiStore";
+import { usePortfolioStore } from "../../../state/portfolioStore";
 import { getDict } from "../../../i18n";
 import { portfolio } from "../../../engine/__tests__/support/seed";
 import { renderWithPortfolio } from "../../../__tests__/support/world";
@@ -87,5 +88,64 @@ describe("a property whose id is portfolio (#210, ADR 0191 §1)", () => {
     expect(container.querySelector("table")!.textContent).not.toBe(
       portfolioTable,
     );
+  });
+});
+
+describe("the Projections picker (ADR 0242, #439)", () => {
+  const withLipova = (active: boolean) => ({
+    ...portfolio,
+    properties: portfolio.properties.map((p) =>
+      p.id === "lipova" ? { ...p, active } : p,
+    ),
+  });
+  const group = () =>
+    screen.getByRole("group", { name: en.projections.entity });
+  const pills = () => within(group()).getAllByRole("button");
+  const pressed = () => pills().map((b) => b.getAttribute("aria-pressed"));
+  const heading = () => screen.getByRole("heading", { level: 2 }).textContent;
+  const setLipova = (active: boolean) =>
+    act(() => usePortfolioStore.setState({ portfolio: withLipova(active) }));
+
+  it("shows each property's name as stored", () => {
+    renderWithPortfolio(<Projections />, { route: "projections" });
+    expect(
+      within(group()).getByRole("button", { name: "Byt Dubova" }),
+    ).toBeTruthy();
+    expect(within(group()).queryByRole("button", { name: "Dubova" })).toBe(
+      null,
+    );
+  });
+
+  it("titles the panel with the chosen property's full name", () => {
+    renderWithPortfolio(<Projections />, { route: "projections" });
+    fireEvent.click(pills()[3]!);
+    expect(heading()).toBe("Byt Dubova");
+  });
+
+  it("returns the picker to the portfolio when the chosen property is deactivated", () => {
+    const { container, unmount } = renderWithPortfolio(<Projections />, {
+      route: "projections",
+    });
+    fireEvent.click(pills()[2]!);
+    expect(pressed()).toEqual(["false", "false", "true", "false"]);
+    setLipova(false);
+    expect(pressed()).toEqual(["true", "false", "false"]);
+    expect(heading()).toBe(en.projections.portfolio);
+    const shown = container.querySelector("table")!.textContent;
+    unmount();
+    const fresh = renderWithPortfolio(<Projections />, {
+      route: "projections",
+      portfolio: withLipova(false),
+    });
+    expect(fresh.container.querySelector("table")!.textContent).toBe(shown);
+  });
+
+  it("keeps the portfolio chosen when that property is made active again", () => {
+    renderWithPortfolio(<Projections />, { route: "projections" });
+    fireEvent.click(pills()[2]!);
+    setLipova(false);
+    setLipova(true);
+    expect(pressed()).toEqual(["true", "false", "false", "false"]);
+    expect(heading()).toBe(en.projections.portfolio);
   });
 });

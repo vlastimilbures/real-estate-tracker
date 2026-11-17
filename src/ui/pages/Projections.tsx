@@ -7,11 +7,7 @@ import { Panel, EmptyState, ExportXlsxButton } from "../components/primitives";
 import { FolderOpen } from "lucide-react";
 import { PropertySelect } from "../components/PropertySelect";
 import { ProjectionGrid } from "../components/ProjectionGrid";
-import {
-  projectionSeries,
-  projectionColumns,
-  shortPropertyName,
-} from "../model/projection";
+import { projectionSeries, projectionColumns } from "../model/projection";
 import {
   lensLabel,
   projectionExportNotes,
@@ -32,7 +28,14 @@ export function Projections() {
   const portfolio = usePortfolioStore((s) => s.portfolio);
   const assumptions = usePortfolioStore((s) => s.assumptions);
   const mode = useUiStore((s) => s.mode);
-  const [entity, setEntity] = useState<string>("portfolio");
+  // The chosen property's id, or null for the whole portfolio (ADR 0242 §1).
+  const [propertyId, setPropertyId] = useState<string | null>(null);
+  const active = (portfolio?.properties ?? []).filter(
+    (p) => p.active !== false,
+  );
+  const property = active.find((p) => p.id === propertyId);
+  // A choice no longer listed becomes the portfolio and stays so if it returns (ADR 0242 §1).
+  if (propertyId !== null && !property) setPropertyId(null);
 
   if (!all || !assumptions) {
     return (
@@ -54,22 +57,14 @@ export function Projections() {
     );
   }
 
-  const active = (portfolio?.properties ?? []).filter(
-    (p) => p.active !== false,
-  );
   const options = [
     { value: "portfolio", label: t.projections.portfolio },
-    ...active.map((p) => ({
-      value: PROPERTY + p.id,
-      label: shortPropertyName(p.name),
-    })),
+    ...active.map((p) => ({ value: PROPERTY + p.id, label: p.name })),
   ];
-  const property = active.find((p) => PROPERTY + p.id === entity);
   const selected =
     (property && all.byProperty.get(property.id)) ?? all.portfolio;
   const rows = projectionSeries(selected, mode, assumptions);
-  const entityLabel =
-    options.find((o) => o.value === entity)?.label ?? t.projections.portfolio;
+  const entityLabel = property?.name ?? t.projections.portfolio;
   const lens = lensLabel(t, mode);
   // The file names the property by its full name, as Property detail does (ADR 0159).
   const exportProjection = () =>
@@ -101,8 +96,12 @@ export function Projections() {
         <PropertySelect
           mode="single"
           options={options}
-          selected={entity}
-          onChange={setEntity}
+          selected={property ? PROPERTY + property.id : "portfolio"}
+          onChange={(value) =>
+            setPropertyId(
+              value.startsWith(PROPERTY) ? value.slice(PROPERTY.length) : null,
+            )
+          }
           ariaLabel={t.projections.entity}
         />
       }

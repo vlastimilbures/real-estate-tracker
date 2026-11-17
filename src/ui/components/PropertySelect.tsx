@@ -120,6 +120,8 @@ function SinglePills({
             className={`pill${on ? " on" : ""}`}
             aria-pressed={on}
             onClick={() => onChange(o.value)}
+            // A long name is cut with an ellipsis; hover shows it in full (ADR 0242 §3).
+            title={o.label}
           >
             {o.label}
           </button>
