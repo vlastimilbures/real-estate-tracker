@@ -222,3 +222,34 @@ describe("dictionary (ADR 0215 Consequences)", () => {
     }
   });
 });
+
+// ADR 0236 §2: a size with one decimal place shows with Czech formatting.
+describe("size in the subtitle (ADR 0236 §2)", () => {
+  const withSize = (sizeM2: number) =>
+    act(() =>
+      usePortfolioStore.setState({
+        portfolio: {
+          ...portfolio,
+          properties: portfolio.properties.map((q) =>
+            q.id === p.id ? { ...q, sizeM2 } : q,
+          ),
+        },
+      }),
+    );
+  afterEach(() => act(() => useUiStore.setState({ language: "en" })));
+
+  it("reads 54,5 m² in Czech", () => {
+    act(() => useUiStore.setState({ language: "cs" }));
+    withSize(54.5);
+    render(<PropertyDetail />);
+    expect(screen.getByRole("banner").textContent).toContain("54,5 m²");
+  });
+
+  it("a whole size is unchanged", () => {
+    withSize(58);
+    render(<PropertyDetail />);
+    const text = screen.getByRole("banner").textContent ?? "";
+    expect(text).toContain("58 m²");
+    expect(text).not.toContain("58,0");
+  });
+});

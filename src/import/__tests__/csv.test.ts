@@ -368,17 +368,56 @@ describe("number formats", () => {
     expect(r.rows[0].appreciation_override_pa).toBe("-0.01");
   });
 
+  // The probe column moved from size_m2, which takes one decimal place since ADR 0236.
   it("integers are plain unsigned digits (DR-027)", () => {
     for (const v of ["52.6", "-3", "1e2", "0x10", "Infinity"]) {
-      const r = parseProperties(`${H}\nA,,,${v},,2020-01-01,100,,`);
+      const r = parseMortgages(`${MH}\nA,2025-01-01,100000,${v},0.03,2000,30`);
       expect(r.errors, v).toEqual([
         {
           row: 2,
-          field: "size_m2",
+          field: "fixation_years",
           error: { code: "invalidInteger", value: v },
         },
       ]);
     }
+  });
+
+  // ADR 0236 §1: a size is a plain decimal with at most one decimal place.
+  describe("size with one decimal place (ADR 0236)", () => {
+    const property = (size: string) =>
+      parseProperties(`${H}\nA,,,${size},,2020-01-01,100,,`);
+    const fail = (error: object) => [{ row: 2, field: "size_m2", error }];
+    const range = { min: 1, max: 10_000 };
+
+    it("keeps 54.5 as 54.5", () => {
+      const r = property("54.5");
+      expect(r.errors).toEqual([]);
+      expect(r.rows[0]!.size_m2).toBe(54.5);
+    });
+    it("refuses 54.55 with sizeDecimals, naming the range", () => {
+      // Decimals count as written, like the form: 54.50 has two.
+      for (const v of ["54.55", "54.50"])
+        expect(property(v).errors, v).toEqual(
+          fail({ code: "sizeDecimals", value: v, ...range }),
+        );
+    });
+    it("refuses a fraction outside the range with sizeDecimals", () => {
+      for (const v of ["0.5", "10000.1"])
+        expect(property(v).errors, v).toEqual(
+          fail({ code: "sizeDecimals", value: v, ...range }),
+        );
+    });
+    it("a decimal comma gets the decimalComma error", () => {
+      expect(property('"54,5"').errors).toEqual(
+        fail({ code: "decimalComma", value: "54,5" }),
+      );
+    });
+    it("other notations are not numbers (DR-036)", () => {
+      for (const v of ["1e2", "0x10", "Infinity", "5.", ".5"])
+        expect(property(v).errors, v).toEqual(
+          fail({ code: "invalidNumber", value: v }),
+        );
+    });
   });
 
   it("a loan term must be at least one year (DR-027)", () => {

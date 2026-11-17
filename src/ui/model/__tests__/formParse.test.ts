@@ -6,6 +6,7 @@ import {
   parseDecimal,
   parsePercentToRatio,
   parseIntField,
+  parseSizeField,
   parseDate,
   moneyDraft,
   percentDraft,
@@ -17,7 +18,7 @@ import {
   type ParsedValues,
   type CollectRules,
 } from "../formParse";
-import { FORM_PARSERS } from "../formParsers";
+import { FORM_PARSERS, formRules } from "../formParsers";
 import { INT_RANGES } from "../../../lib/intRanges";
 import { D } from "../../../lib/money";
 import { getDict } from "../../../i18n";
@@ -324,5 +325,48 @@ describe("fieldHint (ADR 0075, DR-078)", () => {
         fieldHint(en, { kind: "int", range: INT_RANGES.sizeM2 }),
       );
     }
+  });
+});
+
+// ADR 0236 §1: a size accepts at most one decimal place, with a comma or a dot.
+describe("parseSizeField (ADR 0236)", () => {
+  const en = getDict("en");
+  it("accepts a whole number or one decimal place, comma or dot", () => {
+    expect(parseSizeField("58")).toBe(58);
+    expect(parseSizeField("58.5")).toBe(58.5);
+    expect(parseSizeField("54,5")).toBe(54.5);
+    expect(parseSizeField(" 1 054,5 ")).toBe(1054.5);
+    expect(FORM_PARSERS.size("54,5")).toBe(54.5);
+  });
+  it("refuses two or more decimals, signs and non-numbers", () => {
+    for (const raw of ["54.55", "54,55", "-1", "5.", ".5", "1e2", "x", ""])
+      expect(parseSizeField(raw), raw).toBeNull();
+    expect(parseSizeField("9".repeat(10))).toBeNull();
+  });
+  it("names the size rule and its range", () => {
+    expect(fieldHint(en, { kind: "size", range: INT_RANGES.sizeM2 })).toBe(
+      "Enter a number from 1 to 10 000 with at most one decimal place",
+    );
+    expect(fieldHint(en, { kind: "size" })).toBe(en.forms.invalidHint.size);
+    for (const lang of ["cs", "ru"] as const) {
+      const t = getDict(lang);
+      const hint = fieldHint(t, { kind: "size", range: INT_RANGES.sizeM2 });
+      expect(hint).toMatch(/1\b.*10 000/);
+      expect(hint).not.toBe(
+        fieldHint(t, { kind: "int", range: INT_RANGES.sizeM2 }),
+      );
+    }
+  });
+  it("refuses 54.55 with the size range and accepts 54.5", () => {
+    const spec = [
+      { name: "size", label: "Size", kind: "size", range: INT_RANGES.sizeM2 },
+    ] as const;
+    const at = (size: string) => collectValues(spec, { size }, formRules(en));
+    const refused = { size: en.forms.sizeRange("1", "10 000") };
+    expect(at("54.5").values.size).toBe(54.5);
+    expect(at("54,5").values.size).toBe(54.5);
+    expect(at("54.55").errors).toEqual(refused);
+    expect(at("0.5").errors).toEqual(refused);
+    expect(at("10000.1").errors).toEqual(refused);
   });
 });

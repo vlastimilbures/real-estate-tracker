@@ -37,6 +37,11 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- A property's size may have **one decimal place**, e.g. 54,5 m², in the property form
+  (comma or dot), CSV import and restore (ADR 0236, #455). Two or more decimals are refused
+  with a message naming the limit, and Property detail shows the size with Czech formatting
+  ("54,5 m²"). The Data check no longer lists a size with one decimal place. No migration;
+  no figure changes.
 - The release build no longer measures start-up and edit timings unless started from
   Terminal with `RTRACKER_PERF=1` (ADR 0233, #453); docs/release.md gives the command.
   Development builds measure as before. No figure changes.

@@ -449,8 +449,8 @@ export const ru: Dictionary = {
     recordFunding: "Указать финансирование",
     outOfRangeSize: (value, range) =>
       `Площадь ${value} м² вне диапазона, который принимают формы (${range} м²).`,
-    notWholeSize: (value, range) =>
-      `Площадь ${value} м² — не целое число; формы принимают только целые числа (${range} м²).`,
+    sizeDecimals: (value, range) =>
+      `У площади ${value} м² больше одного знака после запятой; формы принимают не больше одного (${range} м²).`,
     outOfRangeFixation: (date, value, range, n) =>
       `Ипотека с ${date}: срок фиксации ${value} ${ruPlural(n, ["год", "года", "лет"])} вне диапазона, который принимают формы (${range} лет).`,
     outOfRangeTerm: (date, value, range, n) =>
@@ -1024,6 +1024,8 @@ export const ru: Dictionary = {
       `«${v}» — срок кредита должен быть не меньше одного года`,
     errOutOfRange: (v, min, max) =>
       `«${v}» должно быть целым числом от ${min} до ${max}`,
+    errSizeDecimals: (v, min, max) =>
+      `«${v}» должно быть числом от ${min} до ${max} не более чем с одним знаком после запятой`,
     errDuplicateKey: (firstRow) =>
       `Повтор строки ${firstRow} — каждая запись может встречаться в файле только один раз`,
     errMalformedRow: (expected, found) =>
@@ -1129,6 +1131,8 @@ export const ru: Dictionary = {
       "Файл должен содержать ровно одну запись допущений",
     issueOutOfRange: (min, max) =>
       `Должно быть целым числом от ${min} до ${max}`,
+    issueOutOfRangeSize: (min, max) =>
+      `Должно быть числом от ${min} до ${max} не более чем с одним знаком после запятой`,
   },
 
   sample: {
@@ -1195,6 +1199,7 @@ export const ru: Dictionary = {
         "Введите сумму 0 или больше, например 1 250 000 (тысячи разделяйте пробелом)",
       pct: "Введите процент, например 4,5",
       int: "Введите целое число, например 25",
+      size: "Введите число не более чем с одним знаком после запятой, например 54,5",
       prepayments:
         "Проверьте отмеченные строки: дата в формате dd.mm.yyyy, сумма больше 0 и комиссия 0 или больше",
       recasts:
@@ -1207,6 +1212,8 @@ export const ru: Dictionary = {
       "Введите сумму больше 0, например 500 000 (тысячи разделяйте пробелом)",
     intRange: (min: string, max: string) =>
       `Введите целое число от ${min} до ${max}`,
+    sizeRange: (min: string, max: string) =>
+      `Введите число от ${min} до ${max} не более чем с одним знаком после запятой`,
     datePlaceholder: "dd.mm.yyyy",
     defaultPlaceholder: "по умолчанию",
   },

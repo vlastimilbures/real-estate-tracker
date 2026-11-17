@@ -31,6 +31,8 @@ export type CsvErrorCode =
   | { code: "invalidInteger"; value: string }
   | { code: "notPositive"; value: string }
   | { code: "outOfRange"; value: string; min: number; max: number }
+  /** A size with two or more decimals, or a fraction outside its range (ADR 0236 §1). */
+  | { code: "sizeDecimals"; value: string; min: number; max: number }
   | { code: "invalidBoolean"; value: string }
   | { code: "unknownProperty"; value: string }
   | { code: "instalmentRequired" }
@@ -374,6 +376,27 @@ class RowCtx {
     return n;
   }
 
+  /** A size: a plain decimal from the range with at most one decimal place (ADR 0236). */
+  optSize(field: string, range: IntRange): Cell<number> {
+    if (this.absent(field)) return undefined;
+    const v = this.raw(field);
+    if (v === "") return null;
+    if (!PLAIN_DECIMAL.test(v)) {
+      const code = DECIMAL_COMMA.test(v) ? "decimalComma" : "invalidNumber";
+      return this.fail(field, { code, value: v });
+    }
+    const n = Number(v);
+    // Decimals as written, like the form: 54.50 is two (ADR 0236 §1).
+    const decimals = v.split(".")[1]?.length ?? 0;
+    // A whole number outside the range keeps the bounded fields' outOfRange (ADR 0076);
+    // any other refusal names the size rule, one decimal place within the range.
+    if (decimals === 0 && !inRange(n, range))
+      return this.fail(field, { code: "outOfRange", value: v, ...range });
+    if (decimals > 1 || !inRange(n, range))
+      return this.fail(field, { code: "sizeDecimals", value: v, ...range });
+    return n;
+  }
+
   optBool(field: string): Cell<boolean> {
     if (this.absent(field)) return undefined;
     const v = this.raw(field).toLowerCase();
@@ -452,7 +475,7 @@ export function parseProperties(
       const purchase_price = c.reqDecimal("purchase_price", "amount");
       const address = c.optStr("address");
       const type = c.optStr("type");
-      const size_m2 = c.optInt("size_m2", INT_RANGES.sizeM2);
+      const size_m2 = c.optSize("size_m2", INT_RANGES.sizeM2);
       const garage = c.optBool("garage");
       const appreciation_override_pa = c.optDecimal(
         "appreciation_override_pa",

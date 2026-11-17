@@ -125,7 +125,8 @@ describe("one message set across forms (ADR 0140 §1)", () => {
         ...BLANK_PROPERTY_FORM,
         purchase_date: "2021-03-01",
         purchase_price: "450,000",
-        size_m2: "58.5",
+        // ADR 0236 §1: one decimal place is accepted, two are refused.
+        size_m2: "58.55",
       },
       "p",
       [],
@@ -135,7 +136,7 @@ describe("one message set across forms (ADR 0140 §1)", () => {
       name: en.forms.required,
       purchase_date: en.forms.invalidHint.date,
       purchase_price: en.forms.invalidHint.money,
-      size_m2: en.forms.intRange("1", "10 000"),
+      size_m2: en.forms.sizeRange("1", "10 000"),
     });
   });
 
