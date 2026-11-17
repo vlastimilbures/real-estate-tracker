@@ -30,10 +30,22 @@ the same check (`validatePortfolio`, `assertInputs`, `assertLoanInputs`,
 `assertLoanRows`, `propertySchedules`, `portfolioOutputs`), so each of them hangs, and so
 would the app.
 
-The same walk loops on any invalid date. The other engine callers get only validated
-dates, except the as-of date: `portfolioOutputs`, `portfolioSnapshot` and `cpiAt` with an
-invalid as-of date also never return (`assertAsOf` compares dates, and a NaN comparison
-is false). The as-of resolver never produces one (ADR 0150).
+The same walk loops on any invalid date. The engine's own entry points validate the
+loans before they build a schedule, but two callers reach the walk with dates nobody
+validated:
+
+- **The as-of date.** `portfolioOutputs`, `portfolioSnapshot` and `cpiAt` with an
+  invalid as-of date also never return (`assertAsOf` compares dates, and a NaN comparison
+  is false). The as-of resolver never produces one (ADR 0150).
+- **The Scenarios page's rate-shock note.** `rateShockNote` (`src/ui/model/rateShockReach.ts`)
+  calls the exported `effectiveMaturity` on each stored block. It builds the block's
+  schedule without validating it, so a block with a valid start and a recast to an
+  invalid maturity also never returned. A block with an invalid start dropped out of the
+  chain, and the page showed a note computed from the other loans.
+
+The walk also loops on two valid dates at the edge of the Date range: past 13 Sep 275760 a
+grid step is an Invalid Date, which never passes the date. Only an absurd stored date can
+get there.
 
 ## Decision
 
@@ -57,21 +69,34 @@ is false). The as-of resolver never produces one (ADR 0150).
    nothing is lost. Once the start is valid, the event and draw checks run again.
 5. **The payment-grid walk refuses an invalid date.** `lastGridMonthOnOrBefore` raises
    `RangeError("lastGridMonthOnOrBefore: an invalid date")` when either date is invalid,
-   instead of looping. For two valid dates `monthsBetween` is a finite whole number, so the
-   guard never fires and no result changes. An invalid as-of date is a caller bug, as an
-   as-of past the horizon is (ADR 0150): it raises instead of freezing the app.
-6. **Tests are written failing first** (`validate-invalid-start.test.ts`): each case runs in
-   a child process killed after 1.5 s, so a case that does not return fails fast instead of
-   hanging the suite.
+   or when a step of its walk up leaves the Date range, instead of looping. For two valid
+   dates `monthsBetween` is a finite whole number, and a step inside the range is a valid
+   date, so neither guard fires on a walk that ends and no result changes. An invalid
+   as-of date is a caller bug, as an as-of past the horizon is (ADR 0150): it raises
+   instead of freezing the app.
+6. **The rate-shock note checks the data first.** `rateShockNote` returns no note when
+   `validateInputs` reports any problem with the portfolio or the assumptions, before it
+   builds a schedule. Its doc already promised no note on invalid data: the projection
+   reports the problem, and the page shows its invalid-data notice (no copy change). On
+   valid data the note is unchanged.
+7. **Tests are written failing first** (`validate-invalid-start.test.ts`,
+   `rateShockNote-invalid.test.ts`). Each case runs in a child process killed after 10 s
+   (`support/bounded.ts`), so a case that does not return fails instead of hanging the
+   suite.
 
 ## Owner review
 
-If the owner prefers the maturity check to report something on such a block, the
-fallback is to report nothing more: the start-date error already blocks the computation.
+The rejected alternative was an extra error on the recast: the maturity check would
+report `INVALID_RECAST_MATURITY` when the start cannot place the maturity. The
+start-date error already blocks the computation, and the maturity is checked once the
+start is fixed, so the extra error would only repeat it. If the owner wants it anyway,
+the check reports that code instead of returning; the code and its text exist already.
 
 ## Consequences
 
 - A restored loan with an invalid start date and a recast to a maturity reports
   `INVALID_DATE` on its start date instead of freezing the app.
+- On invalid stored data the Scenarios page shows no rate-shock note: no freeze, no
+  generic error screen, and no note computed from the other loans.
 - No figure, export, stored data, dictionary entry, message or layout changes; valid input
   validates and computes exactly as before; parity and the golden master do not move.
