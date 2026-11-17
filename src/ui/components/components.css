@@ -1575,6 +1575,11 @@ table.data tbody tr:hover td.sticky-col {
 .segmented .pill {
   border: none;
   padding: 4px 14px;
+  /* A long property name is cut with an ellipsis; its title shows it (ADR 0242 §3). */
+  max-width: clamp(6rem, 14vw, 14rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .segmented .pill.on {
   border-color: transparent;

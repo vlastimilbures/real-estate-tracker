@@ -236,8 +236,7 @@ describe("PropertySelect dropdown, single mode (#128 R5-05)", () => {
 });
 
 describe("PropertySelect pills, single mode (ADR 0242 §3, #439)", () => {
-  // debt #439: a long name is cut with an ellipsis; the title shows it in full.
-  it.fails("single pills carry the full name as their title", () => {
+  it("single pills carry the full name as their title", () => {
     const options = [
       { value: "portfolio", label: "Portfolio" },
       { value: "p1", label: "Byt Javorova s dlouhym nazvem u parku" },
