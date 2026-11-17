@@ -1,5 +1,5 @@
 // Current snapshot — per property and portfolio (SPEC §4.3).
-import { ZERO, ONE, type Decimal } from "../lib/money";
+import { ZERO, type Decimal } from "../lib/money";
 import {
   isOnOrBefore,
   isAfter,
@@ -17,8 +17,18 @@ import {
 } from "./schedule";
 import { assertAsOf, assertInputs } from "./validate";
 import { basisDate, growthRate, openingGrowthRate, valueAt } from "./growth";
+import {
+  COST_KEYS,
+  costsAndNoi,
+  dscrOf,
+  ltvOf,
+  stocksOf,
+  yieldOf,
+} from "./figures";
+import { decimalsOf } from "./yearFields";
 import type {
   Assumptions,
+  CostDefaults,
   Portfolio,
   Property,
   Valuation,
@@ -56,17 +66,9 @@ export function selectValuation(
 export function effectiveCosts(
   cost: HoldingCost | undefined,
   assumptions: Assumptions,
-) {
+): Record<keyof CostDefaults, Decimal> {
   const d = assumptions.defaults;
-  const pick = (a: Decimal | undefined, fallback: Decimal) => a ?? fallback;
-  return {
-    propertyTaxYr: pick(cost?.propertyTaxYr, d.propertyTaxYr),
-    insuranceYr: pick(cost?.insuranceYr, d.insuranceYr),
-    mgmtPctRent: pick(cost?.mgmtPctRent, d.mgmtPctRent),
-    maintPctRent: pick(cost?.maintPctRent, d.maintPctRent),
-    svjMonthly: pick(cost?.svjMonthly, d.svjMonthly),
-    otherYr: pick(cost?.otherYr, d.otherYr),
-  };
+  return decimalsOf(COST_KEYS, (k) => cost?.[k] ?? d[k]);
 }
 
 /** Fixed (inflation-able) annual holding cost: tax + insurance + svj*12 + other. */
@@ -108,16 +110,10 @@ export function forProperty<T extends { propertyId: string }>(
   return rows.filter((r) => r.propertyId === propertyId);
 }
 
-/** LTV = debt ÷ value; null when debt is owed on no value, 0 when neither (ADR 0133). */
-export function ltvOf(debt: Decimal, value: Decimal): Decimal | null {
-  if (!value.isZero()) return debt.div(value);
-  return debt.isZero() ? ZERO : null;
-}
-
-/** A yield = income ÷ value; null when there is no value (ADR 0133). */
-export function yieldOf(income: Decimal, value: Decimal): Decimal | null {
-  return value.isZero() ? null : income.div(value);
-}
+// LTV and yields live with the other shared formulas (./figures, #478).
+export { yieldOf };
+/** @internal re-exported for the tests that read it here (ltv-zero-value.test.ts) */
+export { ltvOf };
 
 /**
  * The value that growth starts from at `asOf`, and the date it starts. The valuation
@@ -216,20 +212,24 @@ function snapshotIncome(
   const lease = leaseInForce(forProperty(portfolio.leases, property.id), asOf);
   const monthlyRent = lease ? lease.monthlyRent : ZERO;
   const grossAnnualRent = monthlyRent.times(12);
-  const effectiveGrossIncome = grossAnnualRent.times(
-    ONE.minus(assumptions.vacancyAllowance),
-  );
   const { fixed, mgmtPct, maintPct } = holdingCostBasis(
     property,
     portfolio,
     assumptions,
   );
-  // Management on the rent collected, maintenance on the rent contracted (ADR 0182).
-  const holdingCosts = fixed
-    .plus(mgmtPct.times(effectiveGrossIncome))
-    .plus(maintPct.times(grossAnnualRent));
-  const noi = effectiveGrossIncome.minus(holdingCosts);
-  return { grossAnnualRent, effectiveGrossIncome, holdingCosts, noi };
+  const { effectiveRent, holdingCosts, noi } = costsAndNoi(
+    fixed,
+    grossAnnualRent,
+    assumptions.vacancyAllowance,
+    mgmtPct,
+    maintPct,
+  );
+  return {
+    grossAnnualRent,
+    effectiveGrossIncome: effectiveRent,
+    holdingCosts,
+    noi,
+  };
 }
 
 /**
@@ -307,7 +307,7 @@ function snapshotProperty(
         lastGridMonthOnOrBefore(assumptions.baseDate, asOf),
       )
     : ZERO;
-  const committedDebt = debt.plus(undrawnDebt);
+  const st = stocksOf(value, debt, undrawnDebt);
 
   const snapshot: PropertySnapshot = {
     propertyId: property.id,
@@ -316,19 +316,32 @@ function snapshotProperty(
     active: property.active !== false,
     value,
     debt,
-    committedDebt,
+    committedDebt: st.committedDebt,
     undrawnDebt,
-    reportedValue: value.minus(undrawnDebt),
-    equity: value.minus(committedDebt),
-    ltv: ltvOf(committedDebt, value),
+    reportedValue: st.reportedValue,
+    equity: st.equity,
+    ltv: st.ltv,
     ...income,
     annualDebtService,
     netCashFlow: income.noi.minus(annualDebtService),
     grossYield: yieldOf(income.grossAnnualRent, value),
     netYield: yieldOf(income.noi, value),
-    dscr: annualDebtService.isZero() ? null : income.noi.div(annualDebtService),
+    dscr: dscrOf(income.noi, annualDebtService),
   };
   return { snapshot, rate };
+}
+
+/** The portfolio snapshot's names for the totals' stocks (`stocksOf`). */
+function portfolioStocks(st: ReturnType<typeof stocksOf>) {
+  return {
+    totalValue: st.value,
+    totalDebt: st.balance,
+    totalCommittedDebt: st.committedDebt,
+    totalUndrawnDebt: st.undrawnDebt,
+    totalReportedValue: st.reportedValue,
+    totalEquity: st.equity,
+    ltv: st.ltv,
+  };
 }
 
 /**
@@ -382,13 +395,9 @@ export function portfolioSnapshot(
   return {
     asOf,
     perProperty,
-    totalValue,
-    totalDebt,
-    totalCommittedDebt,
-    totalUndrawnDebt,
-    totalReportedValue: totalValue.minus(totalUndrawnDebt),
-    totalEquity: totalValue.minus(totalCommittedDebt),
-    ltv: ltvOf(totalCommittedDebt, totalValue),
+    ...portfolioStocks(
+      stocksOf(totalValue, totalDebt, totalUndrawnDebt, totalCommittedDebt),
+    ),
     grossAnnualRent,
     effectiveGrossIncome,
     holdingCosts,
@@ -397,7 +406,7 @@ export function portfolioSnapshot(
     netCashFlow: noi.minus(annualDebtService),
     grossYield: yieldOf(grossAnnualRent, totalValue),
     netYield: yieldOf(noi, totalValue),
-    dscr: annualDebtService.isZero() ? null : noi.div(annualDebtService),
+    dscr: dscrOf(noi, annualDebtService),
     weightedAvgRate: totalDebt.isZero()
       ? ZERO
       : weightedNumerator.div(totalDebt),

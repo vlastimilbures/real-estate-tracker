@@ -6,6 +6,7 @@ import { firstAfter, isAfter, isOnOrBefore } from "./dates";
 import { forProperty } from "./metrics";
 import { fundedThePurchase, isDevLoan, selectBlock } from "./amortization";
 import { openingBalance } from "./schedule";
+import { principalDrawnBy } from "./growth";
 import type { Assumptions, MortgageBlock, Portfolio, Property } from "./types";
 
 /** What funded a purchase and what it paid for. Null = unknown (never 0). */
@@ -85,15 +86,9 @@ export function repaidBeforeBase(
   ) {
     return ZERO;
   }
-  return drawnBy(first, baseDate).minus(openingBalance(first, assumptions));
-}
-
-/** A loan's initial principal plus its tranches dated on or before `cutoff` (all of them
- *  without one). */
-function drawnBy(block: MortgageBlock, cutoff?: Date): Decimal {
-  return (block.draws ?? [])
-    .filter((d) => !cutoff || isOnOrBefore(d.date, cutoff))
-    .reduce<Decimal>((s, d) => s.plus(d.amount), block.initialPrincipal);
+  return principalDrawnBy(first, baseDate).minus(
+    openingBalance(first, assumptions),
+  );
 }
 
 /** A loan's initial principal plus its tranches dated on or before the start of the
@@ -104,7 +99,7 @@ function principalUntilReplaced(
   blocks: MortgageBlock[],
 ): Decimal {
   const next = firstAfter(blocks, block.startDate, (b) => b.startDate);
-  return drawnBy(block, next?.startDate);
+  return principalDrawnBy(block, next?.startDate);
 }
 
 /** The recorded parts of a funding record, null where unknown. */
