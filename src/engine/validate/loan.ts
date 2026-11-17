@@ -159,5 +159,7 @@ export function assertLoanInputs(block: MortgageBlock): void {
  * is chosen (a block with an invalid start date would otherwise just drop out).
  */
 export function assertLoanRows(blocks: MortgageBlock[]): void {
-  raise(blocks.flatMap((b) => blockErrors(b, DATA_ERROR_CODES)));
+  const errors: EngineValidationError[] = [];
+  for (const b of blocks) errors.push(...blockErrors(b, DATA_ERROR_CODES));
+  raise(errors);
 }

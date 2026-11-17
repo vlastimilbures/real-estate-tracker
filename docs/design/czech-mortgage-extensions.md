@@ -28,7 +28,7 @@ sources (C-15: the direct fetch of Act No. 257/2016 Coll. returned HTTP 403).
 | Projection            | `src/engine/yearGrid.ts` `yearSlice` (sums a year's rows); `src/engine/projections.ts` `buildYearRow`; `ProjectionYear.draws`                                                                                                                                                                                          |
 | KPIs / IRR cash flows | `src/engine/kpis.ts` `leveredCashFlows`, `principalRepaidInHorizon`; `src/engine/ownerCash.ts` `acquisitionOutflows`, `refinanceCash` (cash outside the projection rows)                                                                                                                                               |
 | Term and maturity     | `src/engine/amortization.ts` `termMonths` (D-08), `scheduleMonths`, `impliedMaturity` / `maturityMismatch` (D-29), `currentBalance` (closed-form FV)                                                                                                                                                                   |
-| Validation            | `src/engine/validate.ts` `ValidationCode`, `checkMortgage`, `LOAN_ERROR_CODES` (raise), `validateInputs` (report)                                                                                                                                                                                                      |
+| Validation            | `src/engine/validate/` `ValidationCode`, `checkMortgage`, `LOAN_ERROR_CODES` (raise), `validateInputs` (report)                                                                                                                                                                                                        |
 | Scenarios             | `src/engine/scenarios.ts` `applyScenario`: overrides Assumptions only, never portfolio data (CLAUDE.md)                                                                                                                                                                                                                |
 | Persistence           | `mortgage_blocks` table (`src/data/migrations.ts`), `src/data/mappers.ts` (the `draws` JSON column is the precedent), `src/data/backup.ts` `BACKUP_COLUMNS`                                                                                                                                                            |
 | UI                    | Mortgage form `src/ui/model/mortgageForm.ts`, `formParse.ts` (`drawsDraft`); `src/ui/pages/PropertyDetail.tsx`; `PropertyDetailPanels.tsx` `AmortizationTable`                                                                                                                                                         |
@@ -81,7 +81,7 @@ and optionally `earlyRepaymentFee?: { pctPerYearLeft: Rate; cap: Rate }`.
 **Engine hooks.** No new schedule mechanics: the prepayment is applied exactly as in feature 1.
 New pure helpers in `amortization.ts`: `anniversaryWindows(block, from, to)` (dates from
 `startDate`, the contract anniversary) and `allowanceCheck(block, prepayment, balance, a)`
-returning `{ inWindow, overLimit, fee }`. `validate.ts`: report-only codes
+returning `{ inWindow, overLimit, fee }`. `validate/`: report-only codes
 `PREPAYMENT_OUTSIDE_WINDOW`, `PREPAYMENT_OVER_ALLOWANCE` (warnings, not raises: the owner may pay
 the fee). If fees are modelled, they are a cash outflow in `kpis.ts` next to the prepayment.
 
