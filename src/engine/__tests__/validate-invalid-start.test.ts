@@ -172,7 +172,7 @@ describe("the payment-grid walk on an invalid date (ADR 0247)", () => {
     "cpiAtAsOf",
   ];
   for (const name of cases)
-    it.fails(`#543: ${name} raises instead of looping`, TIMEOUT, () => {
+    it(`#543: ${name} raises instead of looping`, TIMEOUT, () => {
       expect(bounded("gridOutcome", name)).toBe(INVALID);
       expect(gridOutcome(name)).toBe(INVALID);
     });

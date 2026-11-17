@@ -99,11 +99,16 @@ export function firstGridMonthOnOrAfter(
  * EDATE(anchor, k) ≤ date (0 when there is none). With a loan's start as the anchor
  * this is the number of payments due by `date` (D-21): unlike `monthsBetween`, a
  * clamped month-end due date counts (start 31 Jan → due 28 Feb, DR-070).
+ * An invalid date raises a RangeError: no due date ever passes it, so the walk would
+ * never end (ADR 0247, #543). Two valid dates always give a whole month count.
  */
 export function lastGridMonthOnOrBefore(anchor: Date, date: Date): number {
+  const months = monthsBetween(anchor, date);
+  if (Number.isNaN(months))
+    throw new RangeError("lastGridMonthOnOrBefore: an invalid date");
   // EDATE(anchor, k) is non-decreasing in k and within a month-end clamp of
   // monthsBetween, so a ±1 correction from it is exact.
-  let k = Math.max(0, monthsBetween(anchor, date));
+  let k = Math.max(0, months);
   while (!isAfter(edate(anchor, k + 1), date)) k++;
   while (k > 0 && isAfter(edate(anchor, k), date)) k--;
   return k;
