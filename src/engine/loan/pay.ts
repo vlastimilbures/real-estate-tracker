@@ -183,7 +183,9 @@ export interface MonthResult {
 /** True while the loan owes something this month (`draw` lands before the split).
  *  (`greaterThan`, because `Decimal(0).isPositive()` is true.) */
 export function owes(state: PayState, draw: Decimal): boolean {
-  return state.balance.plus(draw).greaterThan(ZERO);
+  // Most months draw nothing: skip the sum (balance + 0 is the balance).
+  const owed = draw.isZero() ? state.balance : state.balance.plus(draw);
+  return owed.greaterThan(ZERO);
 }
 
 /** One month of a run: undrawn → first draw → interest-only → amortizing → repaid.
@@ -260,9 +262,12 @@ function paidStep(state: LoanState, mo: RunMonth, run: Run): MonthResult {
   const { m, date, draw, ratePa, io } = mo;
   const fresh = m === 1 ? draw.minus(run.openingCounted) : draw;
   const { step, settled } = payAndSettle(run.events, state, {
-    ...mo,
+    p: mo.p,
     month: m,
+    draw,
     fresh,
+    ratePa,
+    io,
   });
   const drawn = run.newDebtByMonth.get(m) ?? ZERO;
   const head = { month: m, date, dueDate: mo.dueDate, ratePa, drawn };
