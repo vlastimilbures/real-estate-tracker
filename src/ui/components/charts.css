@@ -1,0 +1,182 @@
+/* ============ Charts ============ */
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s4);
+}
+/* Dashboard (ADR 0202): sections 24 px apart; the banner and filter bar add no margin of
+   their own. */
+.page.dashboard {
+  gap: var(--s5);
+}
+.page.dashboard > .filter-bar,
+.page.dashboard > .banner {
+  margin-bottom: 0;
+}
+/* A chart grid sized by its own width, not the window's. */
+.chart-grid-wrap {
+  container-type: inline-size;
+}
+/* The Dashboard's projection (ADR 0218 §2): one heading, then six charts two per row,
+   one per row below a 640 px container; never an empty cell. The base rule outranks the
+   920 px window rule, so the container alone decides. */
+.chart-grid.pairs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.charts-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s1) var(--s3);
+  padding: 0 0 var(--s2);
+}
+.charts-head h2 {
+  font-size: 15px;
+}
+.charts-head .hint {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+@container (max-width: 639px) {
+  .chart-grid.pairs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Scenario compare's three charts (ADR 0216): one row when the row is 900 px or wider,
+   else two and the third across the row, one per row below 640 px; never an empty cell. */
+.chart-grid.trio {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@container (max-width: 899px) {
+  .chart-grid.trio {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .chart-grid.trio > :nth-child(3) {
+    grid-column: span 2;
+  }
+}
+@container (max-width: 639px) {
+  .chart-grid.trio {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .chart-grid.trio > :nth-child(3) {
+    grid-column: auto;
+  }
+}
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-tile);
+  padding: var(--s4) var(--s4) var(--s2);
+}
+.chart-card .chart-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.chart-card .chart-sub {
+  font-size: 11px;
+  color: var(--ink-faint);
+  margin-bottom: var(--s3);
+}
+
+/* Title + subtitle on the left, the Table toggle (UX-075) on the right. */
+.chart-card .chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--s3);
+}
+.chart-card .chart-head .btn {
+  flex: none;
+}
+.chart-card .btn[aria-pressed="true"] {
+  background: var(--paper-2);
+  border-color: var(--hairline);
+}
+/* Row headers of a chart table read like the first td column of the other tables. */
+table.chart-table tbody th {
+  text-align: left;
+  font-weight: 400;
+  padding: 10px var(--s3);
+  border-bottom: 1px solid var(--hairline);
+  white-space: nowrap;
+}
+table.chart-table tbody th.sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface);
+}
+.legend {
+  display: flex;
+  gap: var(--s4);
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  margin-top: var(--s2);
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* A series' colour and dash, in the legend and the tooltip (ADR 0114). */
+.series-swatch {
+  flex: none;
+}
+/* 11 px --ink-soft: 5.32:1 light, 6.29:1 dark on --surface (ADR 0114). Recharts 3 draws
+   the tick labels in their own layer, outside .recharts-cartesian-axis-tick, so the rule
+   targets the label's own class (the old descendant rule matched nothing). */
+.recharts-cartesian-axis-tick-value {
+  fill: var(--ink-soft);
+  font-size: 11px;
+}
+.chart-tooltip {
+  background: var(--surface);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-pop);
+  padding: var(--s2) var(--s3);
+  font-size: 12px;
+}
+.chart-tooltip .tt-year {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.chart-tooltip .tt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s4);
+  font-feature-settings: var(--num);
+}
+.chart-tooltip .tt-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chart-tooltip .tt-total {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--hairline);
+  font-weight: 600;
+}
+/* The hovered year's fixation ends, under a rule (ADR 0210 §3). */
+.chart-tooltip .tt-resets {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--hairline);
+}
+
+/* Matches only from the 900 px minimum window to 920 px: there it puts the form grids and
+   a chart grid in one column. Removing it is a visible change (ADR 0001); the narrow-window
+   layout is reviewed in #494. */
+@media (max-width: 920px) {
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+}

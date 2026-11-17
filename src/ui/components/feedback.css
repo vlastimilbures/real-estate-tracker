@@ -1,0 +1,221 @@
+/* ============ Empty state ============ */
+.empty {
+  text-align: center;
+  padding: var(--s7) var(--s5);
+  color: var(--ink-soft);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  align-items: center;
+}
+.empty :is(h2, h3) {
+  font-family: var(--font-display);
+  font-size: 18px;
+}
+.empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+
+/* ============ Misc ============ */
+/* The live region is always mounted (ADR 0154); fixed, so it never takes a slot in the
+   page's flex column, empty or not. */
+.toast-region {
+  position: fixed;
+  bottom: var(--s5);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+}
+.toast {
+  background: var(--ink);
+  color: var(--paper);
+  padding: var(--s3) var(--s5);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-pop);
+  font-size: 13px;
+}
+
+/* ============ Inline warning banner ============ */
+.banner.warn {
+  padding: var(--s3) var(--s4);
+  margin-bottom: var(--s4);
+  border-radius: var(--r-sm);
+  background: var(--chip-bg);
+  color: var(--warn);
+  border: 1px solid var(--warn);
+  font-size: 13px;
+}
+
+/* ============ Information banner (sample portfolio, ADR 0094) ============ */
+.banner.info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3) var(--s4);
+  padding: var(--s3) var(--s4);
+  margin-bottom: var(--s4);
+  border-radius: var(--r-sm);
+  background: var(--accent-wash);
+  color: var(--ink);
+  border: 1px solid var(--hairline-strong);
+  font-size: 13px;
+}
+
+.getting-started {
+  max-width: 420px;
+  margin: var(--s5) auto 0;
+  text-align: left;
+}
+
+/* h2 since ADR 0157 (one level under the page h1); they keep the h3 size they had. */
+.getting-started h2,
+.error-boundary h2 {
+  font-size: 1.17em;
+}
+
+.getting-started ol {
+  margin: var(--s2) 0 0;
+  padding-left: var(--s5);
+}
+
+.getting-started li + li {
+  margin-top: var(--s1);
+}
+
+/* ============ Error banner / boundary ============ */
+.error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r-sm);
+  background: var(--negative-wash);
+  color: var(--negative);
+  border: 1px solid var(--negative);
+  font-size: 13px;
+}
+.error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s3);
+  text-align: center;
+  padding: var(--s7) var(--s5);
+  color: var(--ink-soft);
+}
+.error-boundary code {
+  background: var(--paper-2);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  max-width: 540px;
+}
+
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  flex-direction: column;
+  gap: var(--s3);
+  color: var(--ink-soft);
+}
+/* Grows past the window when a restore's confirm step is open (ADR 0153), and scrolls
+   with the page instead of clipping its top. */
+.error-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--s3);
+  color: var(--ink-soft);
+  height: auto;
+  min-height: 100vh;
+  padding: var(--s6) var(--s5);
+  box-sizing: border-box;
+}
+.error-screen code {
+  background: var(--paper-2);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  max-width: 540px;
+}
+.error-screen p {
+  max-width: 540px;
+  margin: 0;
+  text-align: center;
+  color: var(--ink);
+}
+.error-screen-details {
+  max-width: 640px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.error-screen-details ul {
+  margin: var(--s2) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+/* ============ Modal ============ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--s5);
+}
+.modal-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-pop);
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s4) var(--s5);
+  border-bottom: 1px solid var(--hairline);
+}
+.modal-head h2 {
+  font-size: 16px;
+}
+.modal-body {
+  padding: var(--s5);
+  flex: 1;
+  overflow-y: auto;
+}
+.modal-foot {
+  padding: var(--s4) var(--s5);
+  border-top: 1px solid var(--hairline);
+  margin-top: 0;
+}
+
+/* Subdued inline error text (CSV import, backup/restore, delete prompts). */
+.error-text {
+  color: var(--negative);
+  font-size: 13px;
+}

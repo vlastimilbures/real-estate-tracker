@@ -1,6 +1,13 @@
 import { lazy, Suspense, useEffect } from "react";
 import "./styles/global.css";
-import "./components/components.css";
+import "./components/shell.css";
+import "./components/panel.css";
+import "./components/table.css";
+import "./components/controls.css";
+import "./components/forms.css";
+import "./components/feedback.css";
+import "./components/charts.css";
+import "./components/layout.css";
 import "./styles/info-tip.css";
 import "./styles/data-check.css";
 import "./styles/import.css";

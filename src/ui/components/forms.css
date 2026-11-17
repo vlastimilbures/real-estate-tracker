@@ -1,0 +1,438 @@
+/* ============ Forms ============ */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s4) var(--s5);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.field > label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+/* UX-040: required mark; the empty alt text keeps it out of the accessible name. */
+.field > label.required::after {
+  content: " *";
+  content: " *" / "";
+}
+.field .input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.field .field-row {
+  display: flex;
+  gap: var(--s2);
+  align-items: center;
+}
+.field .field-row .input-wrap {
+  flex: 1; /* input grows; the inline action button stays compact */
+}
+.field input:not([type="checkbox"]),
+.field select {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-feature-settings: var(--num);
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+}
+.field textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-feature-settings: var(--num);
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  resize: vertical;
+  line-height: 1.5;
+}
+.field textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  border-color: var(--accent);
+}
+.field.invalid textarea {
+  border-color: var(--negative);
+}
+.field input.has-suffix {
+  padding-right: 38px;
+}
+.field input.has-trailing-btn {
+  padding-right: 38px;
+}
+
+/* ---- Date field: text input + calendar popover (DateInput) ---- */
+.date-input {
+  position: relative;
+}
+.date-input .input-wrap {
+  width: 100%;
+}
+.date-trigger {
+  position: absolute;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+.date-trigger:hover {
+  color: var(--accent);
+  background: var(--accent-wash);
+}
+.date-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.date-popover {
+  /* Portaled to <body> and positioned via inline left/top so it escapes the form's
+     overflow-clipping ancestors (modal card, panel). z-index clears the modal (100). */
+  position: fixed;
+  z-index: 1000;
+  padding: var(--s2);
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-pop);
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+}
+/* Map react-day-picker's theme variables onto the app tokens (light + dark). */
+.date-popover .rdp-root {
+  --rdp-accent-color: var(--accent);
+  --rdp-accent-background-color: var(--accent-wash);
+  --rdp-today-color: var(--accent);
+  --rdp-day-width: 34px;
+  --rdp-day-height: 34px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.date-popover .rdp-caption_label,
+.date-popover .rdp-month_caption {
+  font-weight: 600;
+  color: var(--ink);
+}
+.date-popover .rdp-weekday {
+  /* Full opacity + ink-soft: the library's 0.75 opacity dropped it below 4.5:1 (UX-025). */
+  color: var(--ink-soft);
+  opacity: 1;
+  font-weight: 600;
+}
+.date-popover .rdp-day_button:hover {
+  background: var(--accent-wash);
+}
+.date-popover .rdp-selected .rdp-day_button {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.date-popover .rdp-chevron {
+  fill: var(--ink-soft);
+}
+.date-popover .rdp-button_previous:hover .rdp-chevron,
+.date-popover .rdp-button_next:hover .rdp-chevron {
+  fill: var(--accent);
+}
+.field .suffix {
+  position: absolute;
+  right: var(--s3);
+  font-size: 12px;
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+.field input:not([type="checkbox"]):focus,
+.field select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  border-color: var(--accent);
+}
+.field.invalid input:not([type="checkbox"]),
+.field.invalid select {
+  border-color: var(--negative);
+}
+.field .err {
+  font-size: 11.5px;
+  color: var(--negative);
+}
+.field .help {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+/* Prepayment and recast rows (ADR 0116): full width, one wrapped row per event. */
+.form-wide {
+  grid-column: 1 / -1;
+}
+/* The funding note keeps the line breaks typed in the form (ADR 0119 §9). */
+.funding-note {
+  white-space: pre-line;
+}
+/* The property form's optional Acquisition toggle (ADR 0119 §9). */
+.form-disclosure {
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--s3);
+}
+.event-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: 0;
+  padding: var(--s3);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+}
+.event-rows > legend {
+  padding: 0 var(--s1);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.event-rows > .help {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+.event-rows .err {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--negative);
+}
+.event-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s3);
+  align-items: flex-end;
+}
+.event-row > .field {
+  flex: 1 1 140px;
+}
+.event-row > .err {
+  flex-basis: 100%;
+}
+.event-rows > button {
+  align-self: flex-start;
+}
+/* ADR 0167: the drawdown schedule lines its columns up under the fixed start row. */
+.event-rows.draws .event-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 10rem;
+}
+.event-rows.draws .event-row > .err,
+.event-rows.draws .event-row > .note {
+  grid-column: 1 / -1;
+}
+.event-row.lead {
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--hairline);
+}
+.event-row.lead .lead-date .value {
+  padding: var(--s2) 0;
+  font-size: 13.5px;
+  font-feature-settings: var(--num);
+  color: var(--ink-soft);
+}
+.event-row.lead .lead-date .label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.event-row > .note {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--warn);
+}
+.event-rows > .total {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-feature-settings: var(--num);
+  color: var(--ink);
+}
+.form-actions {
+  display: flex;
+  gap: var(--s2);
+  justify-content: flex-end;
+  margin-top: var(--s4);
+}
+
+/* Save-row state text, e.g. "Unsaved changes" (ADR 0095): left of the buttons. */
+.form-actions .form-state {
+  margin-right: auto;
+  align-self: center;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.form-actions .form-state.failed {
+  color: var(--negative);
+}
+
+/* The Assumptions state text, Discard and Save in the Settings top bar (ADR 0221); a
+   long state text (Russian "save failed") wraps the buttons under it, never squeezes. */
+.form-actions.topbar-form-actions {
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin: 0;
+}
+/* A field focused from the error summary or by Shift+Tab is never under the sticky top
+   bar (ADR 0095 §5, 0221 §2). */
+.assumptions-form :is(input, select, textarea) {
+  scroll-margin-top: calc(var(--topbar-h, 0px) + var(--s3));
+}
+.topbar-form-actions .form-state {
+  margin-right: var(--s1);
+  white-space: nowrap;
+}
+
+.error-summary {
+  margin-top: var(--s4);
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--negative);
+  border-radius: var(--r-sm);
+  background: var(--negative-wash);
+  font-size: 13px;
+}
+
+.error-summary:focus-visible {
+  outline: 2px solid var(--negative);
+  outline-offset: 2px;
+}
+
+.error-summary ul {
+  margin: var(--s2) 0 0;
+  padding-left: var(--s5);
+}
+
+/* A text button that reads as an underlined link (the error summary's field links, the
+   form-note "learn more"). WCAG 2.5.8: at least 24px tall. */
+.link-btn {
+  min-height: 24px;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.error-summary .link-btn {
+  color: var(--negative);
+}
+
+/* ADR 0098: mortgage form Standard | Development switch and successor note. */
+.loan-type {
+  margin-bottom: var(--s4);
+}
+
+.loan-type-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.loan-type-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.loan-type-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+  margin-top: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r-sm);
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+}
+
+.loan-type-confirm .confirm-msg {
+  color: var(--negative);
+  flex: 1 1 240px;
+}
+
+.form-note {
+  margin: 0 0 var(--s3);
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r-sm);
+  background: var(--accent-wash);
+  font-size: 13px;
+}
+
+.record-form .form-hint {
+  margin: var(--s2) 0 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* A <form> that only groups fields for Return-to-submit; layout ignores it (UX-028). */
+.form-contents {
+  display: contents;
+}
+
+/* ============ Record form ============ */
+.record-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+/* Matches only from the 900 px minimum window to 920 px: there it puts the form grids and
+   a chart grid in one column. Removing it is a visible change (ADR 0001); the narrow-window
+   layout is reviewed in #494. */
+@media (max-width: 920px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Checkbox field row (e.g. garage Yes). */
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding-top: 2px;
+}
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  cursor: pointer;
+}
+/* The text-field `.field input` rules skip checkboxes: in WebKit their width/padding/
+   border collapsed the native box, leaving only the "Yes" text. */
+.checkbox-label input[type="checkbox"] {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.checkbox-label input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

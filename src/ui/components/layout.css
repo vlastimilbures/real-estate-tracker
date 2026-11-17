@@ -1,0 +1,60 @@
+/* Screen-reader-only utility — visually hidden but accessible to AT */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============ Layout helpers ============ */
+.row {
+  display: flex;
+  gap: var(--s4);
+  align-items: center;
+}
+.grid {
+  display: grid;
+  gap: var(--s4);
+}
+
+/* ============ Visible keyboard focus (a11y) ============ */
+/* Buttons/links/nav/chips render a clear ring only for keyboard focus (not mouse
+   clicks). Form inputs keep their own inset ring defined above. */
+button:focus-visible,
+a:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* "Skip to content" (ADR 0114): off-screen until focused, then above the topbar. Fixed,
+   so it never takes a cell of the .shell grid. */
+.skip-link {
+  position: fixed;
+  top: var(--s2);
+  left: var(--s2);
+  z-index: 100;
+  padding: var(--s2) var(--s3);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transform: translateY(calc(-100% - var(--s4)));
+}
+.skip-link:focus {
+  transform: none;
+}
+/* Main takes focus only from the skip link; the page itself needs no ring. */
+main.page:focus {
+  outline: none;
+}
