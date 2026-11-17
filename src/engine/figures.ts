@@ -2,8 +2,29 @@
 // share, written once so snapshot(baseDate + N y) and projection year N cannot drift
 // apart (#478). Each keeps the order of decimal operations both used before. Gross rent
 // stays with each caller: the snapshot reads the lease in force × 12, the projection
-// the rent plan of the year. This module imports no other engine module.
+// the rent plan of the year. This module imports no other engine module but types.
 import { ONE, ZERO, type Decimal } from "../lib/money";
+import type { CostDefaults, HoldingCost } from "./types";
+
+type CostKeys = readonly (keyof CostDefaults & keyof HoldingCost)[];
+
+/** The Kč fields of the holding costs (a holding-cost row, the assumption defaults). */
+export const COST_MONEY_KEYS = [
+  "propertyTaxYr",
+  "insuranceYr",
+  "svjMonthly",
+  "otherYr",
+] as const satisfies CostKeys;
+
+/** The shares of rent of the holding costs: management and maintenance (ADR 0182). */
+export const COST_RATE_KEYS = [
+  "mgmtPctRent",
+  "maintPctRent",
+] as const satisfies CostKeys;
+
+/** Every holding-cost field, money then rates. `effectiveCosts` returns a full
+ *  `CostDefaults` record from it, so a cost field left out fails `tsc` (#478). */
+export const COST_KEYS = [...COST_MONEY_KEYS, ...COST_RATE_KEYS] as const;
 
 /** LTV = debt ÷ value; null when debt is owed on no value, 0 when neither (ADR 0133). */
 export function ltvOf(debt: Decimal, value: Decimal): Decimal | null {

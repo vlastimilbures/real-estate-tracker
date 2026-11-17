@@ -17,9 +17,18 @@ import {
 } from "./schedule";
 import { assertAsOf, assertInputs } from "./validate";
 import { basisDate, growthRate, openingGrowthRate, valueAt } from "./growth";
-import { costsAndNoi, dscrOf, ltvOf, stocksOf, yieldOf } from "./figures";
+import {
+  COST_KEYS,
+  costsAndNoi,
+  dscrOf,
+  ltvOf,
+  stocksOf,
+  yieldOf,
+} from "./figures";
+import { decimalsOf } from "./yearFields";
 import type {
   Assumptions,
+  CostDefaults,
   Portfolio,
   Property,
   Valuation,
@@ -57,17 +66,9 @@ export function selectValuation(
 export function effectiveCosts(
   cost: HoldingCost | undefined,
   assumptions: Assumptions,
-) {
+): Record<keyof CostDefaults, Decimal> {
   const d = assumptions.defaults;
-  const pick = (a: Decimal | undefined, fallback: Decimal) => a ?? fallback;
-  return {
-    propertyTaxYr: pick(cost?.propertyTaxYr, d.propertyTaxYr),
-    insuranceYr: pick(cost?.insuranceYr, d.insuranceYr),
-    mgmtPctRent: pick(cost?.mgmtPctRent, d.mgmtPctRent),
-    maintPctRent: pick(cost?.maintPctRent, d.maintPctRent),
-    svjMonthly: pick(cost?.svjMonthly, d.svjMonthly),
-    otherYr: pick(cost?.otherYr, d.otherYr),
-  };
+  return decimalsOf(COST_KEYS, (k) => cost?.[k] ?? d[k]);
 }
 
 /** Fixed (inflation-able) annual holding cost: tax + insurance + svj*12 + other. */

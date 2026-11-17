@@ -17,6 +17,7 @@ import {
   termMonths,
 } from "./amortization";
 import { EngineInputError } from "./errors";
+import { COST_KEYS, COST_MONEY_KEYS, COST_RATE_KEYS } from "./figures";
 import { overlappingLeases } from "./succession";
 import type {
   Assumptions,
@@ -128,28 +129,20 @@ function checkShock(
   if (badDuration(band)) report("SHOCK_OUT_OF_RANGE", field);
 }
 
-/** The Kč fields of a holding-cost row and of the assumption cost defaults. */
-const HOLDING_COST_MONEY = [
-  "propertyTaxYr",
-  "insuranceYr",
-  "svjMonthly",
-  "otherYr",
-] as const;
-
 /** D-38 shares and ADR 0075 (DR-176) non-negative costs on the assumption defaults
- *  (`prefix` "defaults."), and the same bounds on a holding-cost row (D-54, DR-127). */
+ *  (`prefix` "defaults."), and the same bounds on a holding-cost row (D-54, DR-127).
+ *  The Kč fields are reported first, then the shares. */
 function checkCostRanges(
   c: CostDefaults | HoldingCost,
   prefix: string,
   report: Report,
 ): void {
-  for (const f of HOLDING_COST_MONEY) {
+  for (const f of COST_MONEY_KEYS) {
     if (isNegativeAmount(c[f])) report("NEGATIVE_AMOUNT", `${prefix}${f}`);
   }
-  if (outsideUnit(c.mgmtPctRent))
-    report("RATE_OUT_OF_RANGE", `${prefix}mgmtPctRent`);
-  if (outsideUnit(c.maintPctRent))
-    report("RATE_OUT_OF_RANGE", `${prefix}maintPctRent`);
+  for (const f of COST_RATE_KEYS) {
+    if (outsideUnit(c[f])) report("RATE_OUT_OF_RANGE", `${prefix}${f}`);
+  }
 }
 
 function checkAssumptions(a: Assumptions, report: Report): void {
@@ -552,11 +545,8 @@ type ReporterFor = (
   propertyId?: string,
 ) => Report;
 
-const HOLDING_COST_FIELDS = [
-  ...HOLDING_COST_MONEY,
-  "mgmtPctRent",
-  "maintPctRent",
-];
+/** A holding-cost row's numbers: the Kč fields, then the shares. */
+const HOLDING_COST_FIELDS = [...COST_KEYS];
 
 /** The Kč parts of a property's funding record (ADR 0119). */
 const FUNDING_MONEY = ["ownCash", "transactionCosts", "initialWorks"] as const;
