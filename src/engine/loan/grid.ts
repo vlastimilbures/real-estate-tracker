@@ -10,7 +10,6 @@ import {
   scheduleMonths,
   termMonths,
 } from "../amortization";
-import { at } from "../arrays";
 import type { AmortizationRow, Assumptions, MortgageBlock } from "../types";
 import {
   paymentOffset,
@@ -19,13 +18,8 @@ import {
   interestOnlyAt,
   bucketDraws,
 } from "./calendar";
-import {
-  initialTerms,
-  type LoanEvents,
-  loanEvents,
-  type Outcome,
-} from "./events";
-import { type LoanState, type Run, stepMonth } from "./pay";
+import { initialTerms, loanEvents, type Outcome } from "./events";
+import { type LoanState, type Run, owes, stepMonth } from "./pay";
 import { plainOpening, simulateToBaseDate } from "./opening";
 
 /** A block's rows and what its prepayments and recasts did (ADR 0109). */
@@ -34,77 +28,49 @@ export interface BlockSchedule {
   outcomes: Outcome[];
 }
 
-/**
- * Rows to build: the contract schedule (`scheduleMonths`), or longer when a recast
- * can run the loan past it (ADR 0109). Grid month m carries payment `offset + m`.
- */
-function builtMonths(
-  block: MortgageBlock,
-  assumptions: Assumptions,
-  offset: number,
-): number {
+/** How far a block's grid runs: `contract` rows always (`scheduleMonths`); up to
+ *  `built`, longer when a recast can run the loan past the contract (ADR 0109); and
+ *  every month to `busy`, the last a tranche or an event touches (payment p settles in
+ *  grid month p − offset). Grid month m carries payment `offset + m`. */
+interface Extent {
+  contract: number;
+  built: number;
+  busy: number;
+}
+
+function extent(run: Run): Extent {
+  const { block, assumptions, events, offset } = run;
   const contract = scheduleMonths(block, assumptions);
-  if (!block.recasts?.length) return contract;
-  const reach = eventTermMonths(block, termMonths(block)) - offset;
-  return Math.max(contract, reach);
-}
-
-/** A row that owes and pays nothing. */
-const idleRow = (r: AmortizationRow): boolean =>
-  !r.endBalance.greaterThan(ZERO) &&
-  r.interest.plus(r.principal).plus(r.prepaid).isZero();
-
-/** Drop the zero rows a longer build left past both the contract schedule and the
- *  loan's last payment (ADR 0109). */
-function trimRepaid(
-  rows: AmortizationRow[],
-  contractMonths: number,
-): AmortizationRow[] {
-  let n = rows.length;
-  while (n > contractMonths && idleRow(at(rows, n - 1))) n--;
-  return n === rows.length ? rows : rows.slice(0, n);
-}
-
-/**
- * The grid month from which an idle row means the loan stays idle: past the contract
- * schedule and every grid month a tranche (`drawMonths`) or an event (payment p
- * settles in grid month p − offset) touches. The build stops there instead of running
- * to a recast's 50-year reach; `trimRepaid` would drop the rest anyway.
- */
-function quietFrom(
-  contractMonths: number,
-  events: LoanEvents,
-  offset: number,
-  drawMonths: Iterable<number>,
-): number {
+  const built = block.recasts?.length
+    ? Math.max(contract, eventTermMonths(block, termMonths(block)) - offset)
+    : contract;
   const paymentsAt = [
     ...events.prepaymentsAt.keys(),
     ...events.recastsAt.keys(),
   ];
-  return Math.max(
-    contractMonths,
+  const busy = Math.max(
+    contract,
     ...paymentsAt.map((p) => p - offset),
-    ...drawMonths,
+    ...run.drawsByMonth.keys(),
   );
+  return { contract, built, busy };
 }
 
-/** Run the month step over the built grid, collecting rows and event outcomes, until
- *  `months` or the first idle row from month `quiet`. */
-function runGrid(
-  state: LoanState,
-  months: number,
-  quiet: number,
-  run: Run,
-): BlockSchedule {
+/** Run the month step over the grid, collecting rows and event outcomes. Past `busy`
+ *  the build stops once the loan owes nothing, instead of running to a recast's
+ *  50-year reach; past the contract a month that owes nothing has no row (ADR 0109). */
+function runGrid(state: LoanState, run: Run): BlockSchedule {
+  const { contract, built, busy } = extent(run);
+  const owed = (s: LoanState, m: number) =>
+    owes(s, run.drawsByMonth.get(m) ?? ZERO);
   const rows: AmortizationRow[] = [];
   const outcomes: Outcome[] = [];
   let s = state;
-  for (let m = 1; m <= months; m++) {
+  for (let m = 1; m <= built && (m <= busy || owed(s, m)); m++) {
     const next = stepMonth(s, m, run);
-    rows.push(next.row);
+    if (m <= contract || owed(s, m)) rows.push(next.row);
     outcomes.push(...next.outcomes);
     s = next.state;
-    if (m >= quiet && idleRow(next.row)) break;
   }
   return { rows, outcomes };
 }
@@ -196,21 +162,9 @@ export function buildBlockSchedule(
       : null,
     replay: false,
   };
-  const contract = scheduleMonths(block, assumptions);
-  const quiet = quietFrom(
-    contract,
-    run.events,
-    offset,
-    run.drawsByMonth.keys(),
-  );
-  const grid = runGrid(
-    opening.state,
-    builtMonths(block, assumptions, offset),
-    quiet,
-    run,
-  );
+  const grid = runGrid(opening.state, run);
   return {
-    rows: trimRepaid(grid.rows, contract),
+    rows: grid.rows,
     outcomes: [...opening.outcomes, ...grid.outcomes],
   };
 }
