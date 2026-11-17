@@ -19,12 +19,13 @@ function expectNoNote(name: RateShockInvalidCase) {
 }
 
 describe("rateShockNote on invalid data (ADR 0247)", () => {
-  it.fails("#543: a recast to an invalid maturity gives no note", TIMEOUT, () =>
+  it("#543: a recast to an invalid maturity gives no note", TIMEOUT, () =>
     expectNoNote("recastInvalidMaturity"),
   );
 
-  // Today the invalid block drops out of the chain and the other loans get a note.
-  it.fails("#543: an invalid loan start gives no note", TIMEOUT, () =>
+  // Before ADR 0247 the invalid block dropped out of the chain and the other loans got
+  // a note.
+  it("#543: an invalid loan start gives no note", TIMEOUT, () =>
     expectNoNote("invalidStart"),
   );
 
