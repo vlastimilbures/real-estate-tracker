@@ -4,7 +4,9 @@
 - Date: 2026-10-03
 - Source: issue #38 (found while validating the pre-release review 2026-10, #26)
 - Amends: [0075](0075-input-rejection-gaps.md)
-- Amended by: [0148](0148-restore-rules-vs-stored-data.md) (§4: restore rules versus stored data)
+- Amended by: [0148](0148-restore-rules-vs-stored-data.md) (§4: restore rules versus stored data);
+  [0245](0245-store-refuses-added-out-of-range.md) (§1: the store applies the bounds to
+  what a write adds; §3: `OUT_OF_RANGE` is no longer restore-only)
 
 ## Context
 
