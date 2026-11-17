@@ -54,6 +54,7 @@ import type {
 } from "../../engine";
 import type { MutationResult } from "../../state/portfolioStore";
 import { useT } from "../hooks/useT";
+import "../styles/loan-outlook.css";
 
 const newId = () => crypto.randomUUID();
 

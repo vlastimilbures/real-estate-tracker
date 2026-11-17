@@ -1,0 +1,374 @@
+/* ============ KPI tiles ============ */
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  padding: var(--s5);
+  box-shadow: var(--shadow-tile);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-height: 116px;
+}
+.tile .label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.tile .value {
+  font-family: var(--font-display);
+  font-weight: 450;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-feature-settings: var(--num);
+}
+.tile .value.lg {
+  font-size: 29px;
+}
+.tile .foot {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: auto;
+}
+/* A figure in the foot wraps whole, after the health marker's word (ADR 0195). */
+.tile .foot .num {
+  white-space: nowrap;
+}
+/* ============ KPI band (ADR 0200, 0222) ============ */
+/* One surface, cells divided by hairlines, in captioned groups: the Dashboard's as-of
+   group (four cells) and horizon group (two) side by side from 960 px of band width,
+   stacked below; Property detail's one group of six, three by two below 960 px. */
+.kpi-strip-wrap {
+  container-type: inline-size;
+}
+.kpi-band {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-tile);
+}
+/* No min-width: 0 — a group keeps at least its cells' and caption's min-content, so the
+   as-of cells take room from the horizon group rather than spill over it. */
+.kpi-band-group {
+  padding-top: var(--s2);
+}
+.kpi-band-group.cells-4 {
+  flex: 4 1 0;
+}
+.kpi-band-group.cells-2 {
+  flex: 2 1 0;
+}
+.kpi-band-group.cells-6 {
+  flex: 1 1 0;
+}
+.kpi-band-group + .kpi-band-group {
+  border-left: 1px solid var(--hairline);
+}
+/* One line: a caption that does not fit shows as overflow, which the capture catches. */
+.kpi-band-caption {
+  white-space: nowrap;
+  margin: 0;
+  padding: 0 var(--s3);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.kpi-band-cells {
+  display: grid;
+  /* A cell never gets narrower than its one-line label and value (min-content). */
+  grid-auto-columns: minmax(min-content, 1fr);
+  grid-auto-flow: column;
+}
+.kpi-band .tile {
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+.kpi-band-cells > .tile + .tile {
+  border-left: 1px solid var(--hairline);
+}
+@container (max-width: 959px) {
+  .kpi-band {
+    flex-direction: column;
+  }
+  .kpi-band-group + .kpi-band-group {
+    border-left: none;
+    border-top: 1px solid var(--hairline);
+  }
+  .kpi-band-group.cells-6 .kpi-band-cells {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .kpi-band-group.cells-6 .tile:nth-child(3n + 1) {
+    border-left: none;
+  }
+  .kpi-band-group.cells-6 .tile:nth-child(n + 4) {
+    border-top: 1px solid var(--hairline);
+  }
+}
+@container (max-width: 639px) {
+  .kpi-band-group.cells-4 .kpi-band-cells {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kpi-band-group.cells-4 .tile:nth-child(odd) {
+    border-left: none;
+  }
+  .kpi-band-group.cells-4 .tile:nth-child(n + 3) {
+    border-top: 1px solid var(--hairline);
+  }
+}
+.tile.compact {
+  padding: 10px var(--s3);
+  gap: var(--s1);
+  min-height: 0;
+}
+/* One line: a label that does not fit shows as overflow, which the capture catches. */
+.tile.compact .label {
+  white-space: nowrap;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+}
+.tile .value.md {
+  font-size: 22px;
+  white-space: nowrap;
+}
+.tile .value .unit {
+  margin-left: 2px;
+  font-family: var(--font-text);
+  font-size: 12px;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+}
+/* The foot may take two lines; the tile stays at most 96 px tall. */
+.tile.compact .foot {
+  font-size: 11.5px;
+  line-height: 1.3;
+}
+
+/* ============ Panel: card, head, body ============ */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-tile);
+  overflow: hidden;
+}
+/* A head wraps its action (a segmented toggle) to a second row rather than squeezing
+   it when the title and hint are long (ADR 0158). */
+.panel > .panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s4) var(--s5);
+  border-bottom: 1px solid var(--hairline);
+}
+/* The titles fill the row and shrink first (their hint wraps), down to 16em; only then
+   does the action wrap, still at the right edge. */
+.panel > .panel-head > .panel-head-titles {
+  flex: 1 1 16em;
+  min-width: 0;
+}
+.panel > .panel-head > :not(.panel-head-titles) {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.panel > .panel-head h2 {
+  font-size: 15px;
+}
+.panel > .panel-head .hint {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.panel > .panel-body {
+  padding: var(--s5);
+}
+.panel > .panel-body.flush {
+  padding: 0;
+}
+
+/* ============ Stat list and the Dashboard's key figures ============ */
+.statlist {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0;
+}
+.statlist .k {
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+.statlist .v {
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 13.5px;
+  text-align: right;
+  font-feature-settings: var(--num);
+  font-variant-numeric: tabular-nums;
+}
+/* The last row: every cell is a div, so :last-of-type matched only the value. */
+.statlist .k:nth-last-child(2),
+.statlist .v:last-child {
+  border-bottom: none;
+}
+
+/* The Dashboard's key figures (ADR 0208): one column, two where each gets at least 320 px
+   (1280 × 800, 1200 × 800). In two, Cash flow fills the right column and Debt follows
+   Returns straight under it on the left, whichever group is taller. */
+.kpi-box {
+  container-type: inline-size;
+}
+.kpi-groups {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s4) var(--s7);
+  align-items: start;
+}
+@container (min-width: 688px) {
+  .kpi-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kpi-group:nth-child(2) {
+    grid-row: span 2;
+  }
+}
+.kpi-group > .panel-subhead {
+  margin-top: 0;
+}
+/* Room between a label and its value; padding, not a column gap, keeps the row's rule
+   whole. */
+.kpi-group .statlist .k {
+  padding-right: var(--s4);
+}
+.kpi-tail {
+  white-space: nowrap;
+}
+
+/* ============ Panel parts: subheads, notes, preset toggle, head titles, counts ============ */
+/* A small heading and a quiet note inside a panel (Financing & upcoming, ADR 0103). */
+.panel-subhead {
+  margin: var(--s4) 0 var(--s2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+/* A panel's instruction leading its body (ADR 0214, 0217): muted help text. A flush
+   body (a table to the edges) pads it like the head. */
+.panel-help {
+  margin-bottom: var(--s3);
+}
+.panel-body.flush > .panel-help {
+  margin: 0;
+  padding: var(--s3) var(--s5) var(--s2);
+}
+.help-text {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+/* A sub-heading with its info icon on one line. */
+.subhead-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  margin: var(--s4) 0 var(--s2);
+}
+.subhead-row > .panel-subhead {
+  margin: 0;
+}
+.panel-note {
+  margin: var(--s2) 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+/* A panel's explanatory paragraph above its action (Backup & restore). */
+.muted-note {
+  color: var(--ink-soft);
+  font-size: 13px;
+  margin-bottom: var(--s4);
+}
+
+/* Property detail's Acquisition with nothing but the price known (ADR 0209): the line and
+   Record funding side by side, the button wrapping under the line when narrow. */
+.acq-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2) var(--s4);
+}
+.acq-empty > p {
+  margin: 0;
+  flex: 1 1 24rem;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+/* "Add from preset" stays on one line at the minimum window. */
+.preset-toggle {
+  flex-shrink: 0;
+}
+.preset-toggle .btn {
+  white-space: nowrap;
+}
+
+/* Panel-head title + hint cluster. */
+.panel-head-titles {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+/* The Data check's counts: a line of their own under the head (ADR 0223 §1). */
+.panel > .panel-badges {
+  padding: var(--s4) var(--s5) 0;
+}
+.panel > .panel-badges + .panel-body {
+  padding-top: var(--s3);
+}
+/* Collapsed: the counts close the panel, with even space around them. */
+.panel > .panel-badges + .panel-body:has(> [hidden]:only-child) {
+  padding: 0 0 var(--s4);
+}
+
+/* ============ Holding costs' read view ============ */
+/* Holding costs' read view (ADR 0207): the six costs in two columns, a blank field's
+   portfolio default marked; one column in a narrow panel. */
+.holding-view {
+  display: grid;
+  /* Two columns, or one when a column would be under 260 px. */
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(max(min(100%, 260px), calc((100% - var(--s6)) / 2)), 1fr)
+  );
+  column-gap: var(--s6);
+  margin: 0;
+}
+.holding-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s3);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 13px;
+}
+.holding-item > dt {
+  color: var(--ink-soft);
+}
+.holding-item > dd {
+  margin: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+.holding-default {
+  font-size: 12px;
+  color: var(--ink-soft);
+}

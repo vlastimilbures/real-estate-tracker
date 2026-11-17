@@ -55,7 +55,7 @@ function czkUnitFromRows(
 }
 
 // CSS-var strings resolve inside SVG, so the grid colour tracks the active theme. Tick
-// colour and size live in components.css.
+// colour and size live in charts.css.
 const GRID = "var(--hairline)";
 
 /** The chart surface's accessible name, set by the enclosing ChartCard (ADR 0114). */

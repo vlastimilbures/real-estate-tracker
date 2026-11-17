@@ -30,6 +30,7 @@ import type { Mode } from "../model/lens";
 import type { FinancingExposure, Portfolio, PortfolioKPIs } from "../../engine";
 import { fmtDate } from "../../lib/format";
 import { useT } from "../hooks/useT";
+import "../styles/loan-outlook.css";
 
 function PropertyLink({
   id,
