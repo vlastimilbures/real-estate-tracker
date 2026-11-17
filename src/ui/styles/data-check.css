@@ -1,0 +1,159 @@
+/* The Data check (ADR 0118, 0206, 0223), on the Dashboard and Property detail. The title
+   pill scrolls the panel to just under the sticky topbar. */
+.dc-anchor {
+  scroll-margin-top: calc(var(--topbar-h, 0px) + var(--s3));
+}
+/* The counts, on a line under the head: amber, a green check, or neutral. */
+.dc-pills {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+  align-items: center;
+}
+.dc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.dc-pill > svg {
+  flex: none;
+}
+/* The app's warning look: sand ground, warn ink (4.63:1, ADR 0157). */
+.dc-pill.warn {
+  background: var(--chip-bg);
+  color: var(--warn);
+  font-weight: 600;
+}
+.dc-pill.ok > svg,
+.dc-clear > svg {
+  color: var(--positive);
+}
+/* All clear: one quiet line. */
+.dc-clear {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+/* Two blocks side by side on a wide container, stacked on a narrow one. */
+.dc-blocks-wrap {
+  container-type: inline-size;
+}
+.dc-blocks {
+  display: grid;
+  gap: var(--s4);
+}
+@container (min-width: 880px) {
+  .dc-blocks:has(> .dc-block + .dc-block) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+/* Each block is its rows' container: a row's fix wraps by the block's own width. */
+.dc-block {
+  container-type: inline-size;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  min-width: 0;
+}
+.dc-block-head {
+  margin: 0;
+  padding: var(--s2) var(--s3);
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+}
+/* Amber-tinted for what needs attention; the defaults block's head stays neutral. */
+.dc-block.attention .dc-block-head {
+  color: var(--warn);
+  background: var(--chip-bg);
+}
+.dc-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--s3);
+}
+/* A row: icon, problem, the fix on the right; the fix wraps under the problem when the
+   block is narrow. */
+.dc-row {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  gap: var(--s2) var(--s3);
+  align-items: start;
+  padding: var(--s2) 0;
+}
+.dc-row + .dc-row {
+  border-top: 1px solid var(--hairline);
+}
+.dc-icon {
+  margin-top: 2px;
+}
+.dc-block.attention .dc-icon {
+  color: var(--warn);
+}
+.dc-block.defaults .dc-icon {
+  color: var(--ink-soft);
+}
+.dc-problem {
+  margin: 0;
+  font-size: 13px;
+}
+.dc-block.defaults .dc-problem {
+  color: var(--ink-soft);
+}
+.dc-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: 22rem;
+}
+@container (max-width: 679px) {
+  .dc-row {
+    grid-template-columns: 16px minmax(0, 1fr);
+  }
+  .dc-row-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+    max-width: none;
+  }
+}
+/* A chip is the link to the fix: 24 px tall (WCAG target size), the name never cut. */
+.dc-chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 2px 6px 2px 10px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.dc-chip:hover {
+  border-color: var(--accent-soft);
+  background: var(--accent-wash);
+}
+.dc-chip > svg {
+  flex: none;
+  color: var(--ink-soft);
+}

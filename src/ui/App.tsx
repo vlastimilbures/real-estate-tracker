@@ -1,6 +1,11 @@
 import { lazy, Suspense, useEffect } from "react";
 import "./styles/global.css";
 import "./components/components.css";
+import "./styles/info-tip.css";
+import "./styles/data-check.css";
+import "./styles/import.css";
+import "./styles/scenarios.css";
+import "./styles/loan-outlook.css";
 import { usePortfolioStore } from "../state/portfolioStore";
 import { useUiStore } from "../state/uiStore";
 import { Dashboard } from "./pages/Dashboard";
