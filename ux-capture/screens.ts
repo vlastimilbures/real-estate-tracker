@@ -15,15 +15,37 @@ import {
   settingsTab,
   boot,
   deleteAllProperties,
-  expectNotClipped,
-  expectPanelActionsRight,
   pickFiveYearsAndCheckHint,
-  expectRowActions,
-  expectRowActionTip,
-  expectInfoTip,
-  expectInfoTipEscape,
   type Ux,
 } from "./helpers";
+import {
+  expectDisclosures,
+  expectInfoTip,
+  expectInfoTipEscape,
+  expectNavGroups,
+  expectNotClipped,
+  expectPanelActionsRight,
+  expectRowActions,
+  expectRowActionTip,
+} from "./layout/common";
+import {
+  expectBandTileLabelsOneLine,
+  expectDashboardHierarchy,
+  expectFinancingTimeline,
+  expectKeyFigures,
+  expectKpiStrip,
+} from "./layout/dashboard";
+import {
+  expectCompareLayout,
+  expectDataCheckLayout,
+  expectImportRows,
+  expectProjectionGrid,
+  expectPropertiesFit,
+  expectPropertyTopBar,
+  expectScenarioGrid,
+  expectScenariosPanel,
+  expectSettingsTopBar,
+} from "./layout/pages";
 
 export interface Screen {
   id: string;
@@ -213,413 +235,6 @@ async function openDropdown(ux: Ux, trigger: Locator, focused: string) {
   await expect(list.getByRole("option", { name: focused })).toBeFocused();
 }
 
-/** At 1280 px and wider, a tile with a health marker keeps its label on one line: the
- *  band word sits in the foot, not beside the label (ADR 0195). */
-async function expectBandTileLabelsOneLine(ux: Ux) {
-  if ((ux.page.viewportSize()?.width ?? 0) < 1280) return;
-  const labels = ux.page.locator(".tile:has(.foot .health-marker) .label");
-  await expect(labels.first()).toBeVisible();
-  for (const label of await labels.all()) {
-    const lines = await label.evaluate((el) => {
-      const size = parseFloat(getComputedStyle(el).fontSize);
-      return el.getBoundingClientRect().height / (size * 1.25);
-    });
-    expect(lines, await label.innerText()).toBeLessThan(1.5);
-  }
-}
-
-/** Import (ADR 0212): the four file rows take at most 300 px; with a file chosen, the
- *  Import panel with its preview starts in the first viewport at 1280 × 800. */
-async function expectImportRows(ux: Ux, chosen = false) {
-  const rows = ux.page.locator(".import-rows");
-  await expect(rows.locator(":scope > li")).toHaveCount(4);
-  const box = (await rows.boundingBox())!;
-  expect(box.height, "four file rows").toBeLessThanOrEqual(300);
-  const vp = ux.page.viewportSize()!;
-  if (chosen && vp.width >= 1280) {
-    const head = ux.page.getByRole("heading", {
-      name: ux.t.importPage.importTitle,
-      exact: true,
-      level: 2,
-    });
-    const top = (await head.boundingBox())!.y;
-    expect(top, "Import panel in the first viewport").toBeLessThan(vp.height);
-  }
-}
-
-/** The year-by-year grid (ADR 0211): no Period column, 31 rows in under 1,000 px, and at
- *  1280 px wide at least 12 figure columns fully in view. */
-async function expectProjectionGrid(ux: Ux) {
-  const m = await ux.page
-    .locator(".table-wrap:has(table.data.compact)")
-    .first()
-    .evaluate((wrap) => {
-      const box = wrap.getBoundingClientRect();
-      const heads = Array.from(
-        wrap.querySelectorAll<HTMLElement>("thead th:not(.sticky-col)"),
-      );
-      const rows = Array.from(wrap.querySelectorAll("tbody tr"));
-      return {
-        heads: heads.map((h) => h.textContent ?? ""),
-        visible: heads.filter((h) => {
-          const r = h.getBoundingClientRect();
-          return r.left >= box.left - 0.5 && r.right <= box.right + 0.5;
-        }).length,
-        rows: rows.length,
-        scrolled: wrap.scrollLeft,
-        height: rows.reduce((n, r) => n + r.getBoundingClientRect().height, 0),
-      };
-    });
-  expect(m.heads, "no Period column").not.toContain(ux.t.projGrid.period);
-  expect(m.rows).toBe(31);
-  expect(m.height, "31 rows").toBeLessThanOrEqual(1000);
-  expect(m.scrolled, "grid not scrolled").toBe(0);
-  if ((ux.page.viewportSize()?.width ?? 0) >= 1280)
-    expect(m.visible, "figure columns in view").toBeGreaterThanOrEqual(12);
-}
-
-/** Scenario compare (ADR 0216): every row of charts is full (three in one row when the
- *  row is 900 px or wider), and the key-figures table runs to its panel's edges. */
-async function expectCompareLayout(ux: Ux) {
-  await expect(ux.page.locator(".chart-grid.trio")).toBeVisible();
-  await expect(ux.page.locator("table.compare-table")).toBeVisible();
-  const m = await ux.page.evaluate(() => {
-    const grid = document.querySelector(".chart-grid.trio")!;
-    const g = grid.getBoundingClientRect();
-    const rows = new Map<number, { left: number; right: number }>();
-    for (const card of Array.from(grid.children)) {
-      const r = card.getBoundingClientRect();
-      const key = Math.round(r.top);
-      const row = rows.get(key) ?? { left: Infinity, right: -Infinity };
-      rows.set(key, {
-        left: Math.min(row.left, r.left),
-        right: Math.max(row.right, r.right),
-      });
-    }
-    const wrap = document
-      .querySelector("table.compare-table")!
-      .closest(".table-wrap")!
-      .getBoundingClientRect();
-    const panel = document
-      .querySelector("table.compare-table")!
-      .closest("section.panel")!
-      .getBoundingClientRect();
-    return {
-      width: g.width,
-      rows: Array.from(rows.values()).map((r) => ({
-        gapLeft: r.left - g.left,
-        gapRight: g.right - r.right,
-      })),
-      insetLeft: wrap.left - panel.left,
-      insetRight: panel.right - wrap.right,
-      // A figure wider than its column would spill into the next one.
-      overflowing: Array.from(
-        document.querySelectorAll<HTMLElement>("table.compare-table tbody td"),
-      )
-        .filter((td) => td.scrollWidth > td.clientWidth + 1)
-        .map((td) => td.textContent),
-    };
-  });
-  if (m.width >= 900) expect(m.rows, "charts in one row").toHaveLength(1);
-  for (const r of m.rows) {
-    expect(r.gapLeft, "chart row starts at the grid's edge").toBeLessThan(1);
-    expect(r.gapRight, "chart row ends at the grid's edge").toBeLessThan(1);
-  }
-  expect(m.insetLeft, "key figures flush left").toBeLessThanOrEqual(2);
-  expect(m.insetRight, "key figures flush right").toBeLessThanOrEqual(2);
-  expect(m.overflowing, "key figures fit their columns").toEqual([]);
-}
-
-/** The KPI strip (ADR 0200 §4): six tiles, one row when the strip is at least 960 px
- *  wide (the 1200 × 800 default window is three by two), nothing cut off, and at most
- *  `maxHeight` tall in one row: 96 px, more only where a foot carries a note. */
-/** The KPI band (ADR 0200, 0222): one surface of captioned groups — the Dashboard's
- *  4 + 2 cells side by side from 960 px of band width (stacked below, the four in one
- *  row from 640 px), Property detail's six in one row from 960 px (three by two below);
- *  every label on one line, no value cut off, a cell at most `maxHeight` tall. */
-async function expectKpiStrip(ux: Ux, maxHeight = 96) {
-  const m = await ux.page.locator(".kpi-band").evaluate((band) => {
-    const groups = Array.from(
-      band.querySelectorAll<HTMLElement>(":scope > [role=group]"),
-    );
-    return {
-      width: band.getBoundingClientRect().width,
-      groupTops: groups.map((g) => Math.round(g.getBoundingClientRect().top)),
-      groups: groups.map((g) => {
-        const caption = g.querySelector(".kpi-band-caption")!;
-        const tiles = Array.from(g.querySelectorAll<HTMLElement>(".tile"));
-        const cells = g.querySelector<HTMLElement>(".kpi-band-cells")!;
-        return {
-          // The cells stay inside their group, never painting over the next one.
-          cellsFit: cells.scrollWidth <= g.clientWidth + 1,
-          named: g.getAttribute("aria-labelledby") === caption.id,
-          caption: caption.textContent ?? "",
-          captionFits: caption.scrollWidth <= caption.clientWidth + 1,
-          rows: new Set(
-            tiles.map((t) => Math.round(t.getBoundingClientRect().top)),
-          ).size,
-          tiles: tiles.map((tile) => {
-            const fits = (sel: string) => {
-              const el = tile.querySelector<HTMLElement>(sel)!;
-              return el.scrollWidth <= el.clientWidth + 1;
-            };
-            return {
-              text: tile.querySelector(".label")?.textContent ?? "",
-              height: tile.getBoundingClientRect().height,
-              label: fits(":scope > .label"),
-              value: fits(":scope > .value"),
-            };
-          }),
-        };
-      }),
-    };
-  });
-  const counts = m.groups.map((g) => g.tiles.length);
-  const wide = m.width >= 960;
-  if (counts.length === 2) {
-    expect(counts, "as-of and horizon cells").toEqual([4, 2]);
-    expect(new Set(m.groupTops).size, "groups side by side").toBe(wide ? 1 : 2);
-    expect(m.groups[0]!.rows, "as-of rows").toBe(m.width >= 640 ? 1 : 2);
-    expect(m.groups[1]!.rows, "horizon rows").toBe(1);
-  } else {
-    expect(counts, "one group of six").toEqual([6]);
-    expect(m.groups[0]!.rows, "rows").toBe(wide ? 1 : 2);
-  }
-  for (const g of m.groups) {
-    expect(g.named, `group "${g.caption}" named by its caption`).toBe(true);
-    expect(g.caption.length, "caption text").toBeGreaterThan(0);
-    expect(g.captionFits, `caption "${g.caption}" on one line`).toBe(true);
-    expect(g.cellsFit, `cells of "${g.caption}" inside their group`).toBe(true);
-    for (const t of g.tiles) {
-      expect(t.label, `label "${t.text}" on one line`).toBe(true);
-      expect(t.value, `value of "${t.text}" not cut off`).toBe(true);
-      if (wide)
-        expect(t.height, `"${t.text}" cell height`).toBeLessThanOrEqual(
-          maxHeight,
-        );
-    }
-  }
-}
-
-/** The left bar (ADR 0219): the pages on top, the tools under them and above the footer,
- *  nothing overlapping and nothing cut off by the window. */
-async function expectNavGroups(ux: Ux) {
-  const m = await ux.page.locator(".sidebar").evaluate((bar) => {
-    const box = (sel: string) =>
-      bar.querySelector(sel)!.getBoundingClientRect();
-    const pages = box(".nav-group:not(.tools)");
-    const tools = box(".nav-group.tools");
-    const foot = box(".sidebar-foot");
-    return {
-      pagesBottom: pages.bottom,
-      toolsTop: tools.top,
-      toolsBottom: tools.bottom,
-      footTop: foot.top,
-      footBottom: foot.bottom,
-      height: window.innerHeight,
-      overflow: bar.scrollHeight - bar.clientHeight,
-      tools: bar.querySelectorAll(".nav-group.tools button").length,
-    };
-  });
-  expect(m.tools, "three tools").toBe(3);
-  expect(m.toolsTop, "tools under the pages").toBeGreaterThan(m.pagesBottom);
-  expect(m.toolsBottom, "tools above the footer").toBeLessThanOrEqual(
-    m.footTop,
-  );
-  expect(m.footBottom, "footer inside the window").toBeLessThanOrEqual(
-    m.height,
-  );
-  expect(m.overflow, "left bar not cut off").toBeLessThanOrEqual(1);
-}
-
-/** Property detail's top bar (ADR 0215): "Properties ›" and the title on one line and
- *  the actions on one line (1280 × 800 and 900 × 600); at 1280 px and wider the actions
- *  beside the title and the section tabs on one row. */
-async function expectPropertyTopBar(ux: Ux) {
-  const bar = ux.page.locator("header.topbar");
-  await expect(
-    bar.getByRole("link", { name: ux.t.nav.properties, exact: true }),
-  ).toBeVisible();
-  const m = await bar.evaluate((el) => {
-    const title = el.querySelector(".page-title-row")!.getBoundingClientRect();
-    const h1 = getComputedStyle(el.querySelector("h1")!);
-    const actions = el.querySelector(":scope > .row")!;
-    // Items whose vertical centres lie within 4 px share a line.
-    const mids = Array.from(actions.children)
-      .map((c) => c.getBoundingClientRect())
-      .filter((r) => r.height > 0)
-      .map((r) => r.top + r.height / 2)
-      .sort((a, b) => a - b);
-    const lines = mids.filter((m, i) => i === 0 || m - mids[i - 1]! > 4);
-    const nav = el.querySelector(
-      ".topbar-subnav [role=list], .topbar-subnav ul",
-    );
-    const tabs = nav
-      ? Array.from(nav.children).map((c) =>
-          Math.round(c.getBoundingClientRect().top),
-        )
-      : [];
-    return {
-      titleHeight: title.height,
-      line: parseFloat(h1.lineHeight) || parseFloat(h1.fontSize) * 1.3,
-      actionRows: lines.length,
-      beside: actions.getBoundingClientRect().top < title.bottom,
-      tabRows: new Set(tabs).size,
-    };
-  });
-  expect(m.titleHeight, "breadcrumb and title on one line").toBeLessThan(
-    m.line * 1.5,
-  );
-  expect(m.actionRows, "actions on one line").toBe(1);
-  if ((ux.page.viewportSize()?.width ?? 0) >= 1280) {
-    expect(m.beside, "actions beside the title").toBe(true);
-    expect(m.tabRows, "section tabs on one row").toBe(1);
-  }
-}
-
-/**
- * The key figures (ADR 0208): three groups. At 1280 px and wider, Returns and Cash flow
- * side by side, Debt straight under Returns, and a row's label and value at most 480 px
- * apart; one column at 900 px. Every label's text ends at least 8 px before its value.
- */
-async function expectKeyFigures(ux: Ux) {
-  const p = panel(ux, ux.t.dashboard.kpiTitle);
-  const m = await p.evaluate((el) => {
-    const groups = Array.from(el.querySelectorAll(".kpi-group"), (g) =>
-      g.getBoundingClientRect(),
-    );
-    const rows = Array.from(el.querySelectorAll(".statlist .k"), (k) => {
-      const kr = k.getBoundingClientRect();
-      const v = k.nextElementSibling as Element;
-      const vr = v.getBoundingClientRect();
-      // The text itself, not the cell: the cells always meet.
-      const text = (node: Element) => {
-        const r = document.createRange();
-        r.selectNodeContents(node);
-        return Array.from(r.getClientRects());
-      };
-      const labelRight = Math.max(...text(k).map((r) => r.right));
-      const valueLeft = Math.min(...text(v).map((r) => r.left));
-      return { span: vr.right - kr.left, clear: valueLeft - labelRight };
-    });
-    return {
-      groups: groups.map((g) => ({
-        top: Math.round(g.top),
-        bottom: Math.round(g.bottom),
-        left: Math.round(g.left),
-      })),
-      rows,
-    };
-  });
-  const width = ux.page.viewportSize()!.width;
-  const [returns, cashFlow, debt] = m.groups;
-  expect(m.groups, "three groups").toHaveLength(3);
-  if (width >= 1280) {
-    expect(returns.top, "Returns and Cash flow side by side").toBe(
-      cashFlow.top,
-    );
-    expect(debt.left, "Debt under Returns").toBe(returns.left);
-    expect(debt.top, "Debt straight under Returns").toBeLessThan(
-      returns.bottom + 24,
-    );
-    for (const r of m.rows)
-      expect(r.span, "label to value").toBeLessThanOrEqual(480);
-  } else if (width <= 900) {
-    expect(cashFlow.top, "one column").toBeGreaterThan(returns.top);
-  }
-  for (const r of m.rows)
-    expect(r.clear, "label clear of its value").toBeGreaterThanOrEqual(8);
-}
-
-/** The Dashboard's projection (ADR 0218 §2–§3): six charts, two per row from a 640 px
- *  grid (else one per row), each row full, Financing after them; at 1280 × 800 the first
- *  chart row ends inside the first viewport. No warning sits in the filter bar (§1). */
-async function expectDashboardHierarchy(ux: Ux) {
-  const vp = ux.page.viewportSize()!;
-  const financingTop = await panel(ux, ux.t.dashboard.financingTitle).evaluate(
-    (el) => el.getBoundingClientRect().top + window.scrollY,
-  );
-  const m = await ux.page.evaluate(() => {
-    const grid = document.querySelector(".projection-charts .chart-grid")!;
-    const g = grid.getBoundingClientRect();
-    const rows = new Map<
-      number,
-      { left: number; right: number; cards: number; bottom: number }
-    >();
-    for (const card of Array.from(grid.children)) {
-      const r = card.getBoundingClientRect();
-      const key = Math.round(r.top);
-      const row = rows.get(key) ?? {
-        left: Infinity,
-        right: -Infinity,
-        cards: 0,
-        bottom: 0,
-      };
-      rows.set(key, {
-        left: Math.min(row.left, r.left),
-        right: Math.max(row.right, r.right),
-        cards: row.cards + 1,
-        bottom: Math.max(row.bottom, r.bottom + window.scrollY),
-      });
-    }
-    return {
-      gridLeft: g.left,
-      gridRight: g.right,
-      gridWidth: g.width,
-      gridBottom: g.bottom + window.scrollY,
-      cards: grid.children.length,
-      rows: Array.from(rows.values()),
-      barButtons: document.querySelectorAll(".filter-bar .asof-foot button")
-        .length,
-    };
-  });
-  expect(m.cards, "six charts").toBe(6);
-  expect(
-    m.rows.map((r) => r.cards),
-    `cards per row at a ${Math.round(m.gridWidth)} px grid`,
-  ).toEqual(m.gridWidth >= 640 ? [2, 2, 2] : [1, 1, 1, 1, 1, 1]);
-  for (const r of m.rows) {
-    expect(r.left, "chart row starts at the grid's left").toBeLessThanOrEqual(
-      m.gridLeft + 1,
-    );
-    expect(r.right, "chart row has no empty cell").toBeGreaterThanOrEqual(
-      m.gridRight - 1,
-    );
-  }
-  expect(financingTop, "Financing after the charts").toBeGreaterThan(
-    m.gridBottom,
-  );
-  expect(m.barButtons, "no button on the filter bar's hint row").toBe(0);
-  if (vp.width === 1280 && vp.height === 800) {
-    expect(
-      m.rows[0]!.bottom,
-      "first chart row inside the first viewport",
-    ).toBeLessThanOrEqual(800);
-  }
-}
-
-/** Financing & upcoming (ADR 0204): no row text clipped, and at 1280 × 800 with the
- *  sample the panel fits about 280 px with all three fixation ends listed. */
-async function expectFinancingTimeline(
-  ux: Ux,
-  rows?: number,
-  maxHeight?: number,
-) {
-  const f = panel(ux, ux.t.dashboard.financingTitle);
-  const list = f.getByRole("list", {
-    name: ux.t.dashboard.financingTimeline(3),
-  });
-  if (rows !== undefined)
-    await expect(list.getByRole("listitem")).toHaveCount(rows);
-  for (const line of await f.locator(".fx-line, .fx-figure").all())
-    await expectNotClipped(line);
-  const vp = ux.page.viewportSize()!;
-  if (vp.width === 1280 && maxHeight !== undefined) {
-    const h = await f.evaluate((el) => el.getBoundingClientRect().height);
-    expect(h, "Financing & upcoming height").toBeLessThanOrEqual(maxHeight);
-  }
-}
-
 /** Restores the sample as edited by `edit` (Settings → Backup), then the Dashboard. */
 async function restoreEdited(ux: Ux, edit: (tables: BackupTables) => void) {
   await chooseEditedBackup(ux, edit);
@@ -699,46 +314,6 @@ function devLoanAndLeaseEnd(tables: BackupTables) {
   block.interest_only_until = "2027-09-30";
 }
 
-/** Properties list (ADR 0205): at 1280 px and wider the table has no horizontal scroll
- *  and its one-line rows are at most about 44 px; in a narrower window LTV, Net cash
- *  flow, DSCR and Value stay clear of the pinned actions. LTV and DSCR are figures with a
- *  health marker, not pills. */
-async function expectPropertiesFit(ux: Ux) {
-  const table = ux.page.locator("table.data");
-  expect(
-    await table
-      .locator("tbody .badge.good, tbody .badge.warn, tbody .badge.bad")
-      .count(),
-  ).toBe(0);
-  const vp = ux.page.viewportSize()!;
-  if (vp.width >= 1280) {
-    await expectNotClipped(ux.page.locator(".table-wrap").first());
-    const tall = await table.locator("tbody tr").evaluateAll((rows) =>
-      rows
-        .filter((r) => !r.querySelector(".cell-sub"))
-        .map((r) => r.getBoundingClientRect().height)
-        .filter((h) => h > 46),
-    );
-    expect(tall, "one-line rows taller than 46 px").toEqual([]);
-  } else {
-    const actions = await ux.page.locator("th.actions-col").boundingBox();
-    for (const col of [
-      ux.t.properties.colLtv,
-      ux.t.properties.colNetCashFlow,
-      ux.t.properties.colDscr,
-      ux.t.properties.colValue,
-    ]) {
-      const box = await ux.page
-        .getByRole("columnheader", { name: col, exact: true })
-        .boundingBox();
-      expect(
-        box!.x + box!.width,
-        `${col} clear of the actions`,
-      ).toBeLessThanOrEqual(actions!.x + 1);
-    }
-  }
-}
-
 /** Property detail of the first property: its first loan becomes a development loan with
  *  a tranche drawn and one ahead (ADR 0167), saved. */
 async function firstLoanToDevelopment(ux: Ux) {
@@ -761,80 +336,6 @@ async function firstLoanToDevelopment(ux: Ux) {
     await row.getByLabel(d.eventAmount).fill(amount);
   }
   await m.getByRole("button", { name: ux.t.common.saveChanges }).click();
-}
-
-/** One disclosure (ADR 0203): no <details>, and every expandable button names a region
- *  that is in the DOM. */
-async function expectDisclosures(ux: Ux) {
-  expect(await ux.page.locator("details").count(), "no <details>").toBe(0);
-  const missing = await ux.page.evaluate(() =>
-    Array.from(document.querySelectorAll("button[aria-expanded]"))
-      // Popup triggers (listbox, calendar) and the sidebar toggle are not disclosures.
-      .filter(
-        (b) =>
-          !b.hasAttribute("aria-haspopup") &&
-          !b.classList.contains("collapse-btn"),
-      )
-      .filter((b) => {
-        const id = b.getAttribute("aria-controls");
-        return !id || !document.getElementById(id);
-      })
-      .map((b) => b.textContent),
-  );
-  expect(missing, "disclosures without their region").toEqual([]);
-}
-
-/** Scenarios (ADR 0220): one panel above the compare; its head holds the count, the info
- *  "Add from preset" on one row at 1280 px, nothing cut off at any width; the presets
- *  open above the list, with their info icon beside the sub-heading. */
-async function expectScenariosPanel(ux: Ux, open: boolean, compared: number) {
-  const sc = ux.t.scenarios;
-  const p = panel(ux, sc.listTitle);
-  const head = p.locator(".panel-head");
-  await expect(head.locator(".hint")).toHaveText(sc.comparedOf(compared, 3));
-  const toggle = head.getByRole("button", { name: sc.addFromPreset });
-  await expect(toggle).toHaveAttribute("aria-expanded", String(open));
-  await expectNotClipped(head);
-  const m = await p.evaluate((el) => {
-    const head = el.querySelector(".panel-head")!;
-    const mids = Array.from(head.children).map((c) => {
-      const r = c.getBoundingClientRect();
-      return r.top + r.height / 2;
-    });
-    const list = el.querySelector(".scenario-list")!.getBoundingClientRect();
-    const drawer = el.querySelector(".preset-drawer")!.getBoundingClientRect();
-    return {
-      oneRow: Math.max(...mids) - Math.min(...mids) <= 4,
-      drawerAbove: drawer.height === 0 || drawer.bottom <= list.top,
-      panelsAbove: Array.from(
-        document.querySelectorAll("main section.panel"),
-      ).indexOf(el),
-    };
-  });
-  if ((ux.page.viewportSize()?.width ?? 0) >= 1280)
-    expect(m.oneRow, "panel head on one row").toBe(true);
-  expect(m.drawerAbove, "presets above the list").toBe(true);
-  expect(m.panelsAbove, "the first panel on the page").toBe(0);
-  if (open)
-    await expect(
-      p.locator(".preset-drawer .subhead-row").getByRole("button", {
-        name: `${ux.t.common.aboutThis}: ${sc.presetsTitle}`,
-      }),
-    ).toBeVisible();
-}
-
-/** One grid for the scenario list: actions line up across rows and the summary stays
- *  readable in every language (ADR 0158). */
-async function expectScenarioGrid(ux: Ux) {
-  const xs: number[] = [];
-  for (const row of await ux.page.locator(".scenario-row").all()) {
-    xs.push((await row.locator(".scenario-actions").boundingBox())!.x);
-    const summary = await row.locator(".scenario-summary").boundingBox();
-    expect(summary!.width, "scenario summary width").toBeGreaterThanOrEqual(
-      200,
-    );
-  }
-  for (const x of xs) expect(Math.abs(x - xs[0]!)).toBeLessThanOrEqual(1);
 }
 
 /** Owned properties added until Properties lists six: past five, the property selectors
@@ -877,69 +378,6 @@ async function pickReal(ux: Ux) {
     .getByRole("button", { name: ux.t.common.real, exact: true });
   await real.click();
   await expect(real).toHaveAttribute("aria-pressed", "true");
-}
-
-/** Settings (ADR 0221): the tabs in the top bar's section row; on Assumptions the state
- *  text, Discard and Save in the top bar's actions, nothing cut off; no floating row. */
-async function expectSettingsTopBar(ux: Ux, tab: "assumptions" | "backup") {
-  const bar = ux.page.locator("header.topbar");
-  const tabs = bar.locator(".topbar-subnav").getByRole("tablist");
-  await expect(tabs.getByRole("tab")).toHaveCount(2);
-  await expect(
-    tabs.getByRole("tab", { name: ux.t.settings.tabs[tab] }),
-  ).toHaveAttribute("aria-selected", "true");
-  await expectNotClipped(tabs);
-  const save = bar.getByRole("button", { name: ux.t.common.saveChanges });
-  if (tab === "assumptions") {
-    await expect(save).toBeVisible();
-    await expectNotClipped(bar.locator(".topbar-form-actions"));
-  } else {
-    await expect(save).toHaveCount(0);
-  }
-  await expect(
-    ux.page.locator(".sticky-actions, .settings-layout"),
-  ).toHaveCount(0);
-}
-
-/** The Data check (ADR 0223): the counts as pills on a line under the head, nothing cut
- *  off; a block per list, side by side when both show on an 880 px container, stacked
- *  below; in a block of 680 px or more each row's fix sits right of its problem. */
-async function expectDataCheckLayout(p: Locator) {
-  const counts = p.locator(".panel-badges");
-  await expect(counts.locator(".dc-pill").first()).toBeVisible();
-  await expectNotClipped(counts);
-  const m = await p.evaluate((el) => {
-    const wrap = el.querySelector(".dc-blocks-wrap");
-    const blocks = Array.from(el.querySelectorAll<HTMLElement>(".dc-block"));
-    return {
-      wrapWidth: wrap?.getBoundingClientRect().width ?? 0,
-      tops: blocks.map((b) => Math.round(b.getBoundingClientRect().top)),
-      rows: blocks.flatMap((b) =>
-        Array.from(b.querySelectorAll(".dc-row"), (r) => {
-          const problem = r
-            .querySelector(".dc-problem")!
-            .getBoundingClientRect();
-          const actions = r
-            .querySelector(".dc-row-actions")!
-            .getBoundingClientRect();
-          return {
-            // The container query measures the content box.
-            wide: b.clientWidth >= 680,
-            right: actions.left >= problem.right - 1,
-            fits: r.scrollWidth <= r.clientWidth + 1,
-          };
-        }),
-      ),
-    };
-  });
-  if (m.tops.length === 2)
-    expect(new Set(m.tops).size, "blocks side by side").toBe(
-      m.wrapWidth >= 880 ? 1 : 2,
-    );
-  for (const r of m.rows) {
-    expect(r.fits, "row not cut off").toBe(true);
-    if (r.wide) expect(r.right, "the fix right of its problem").toBe(true);
-  }
 }
 
 export const SCREENS: Screen[] = [
