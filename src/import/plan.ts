@@ -161,8 +161,9 @@ const keyDate = (r: ChildRow) =>
   "valid_from" in r ? r.valid_from : r.start_date;
 
 /** One child table's rows by id, and their ids by property and key date. A Map keeps a
- *  replaced row in its place and appends a new one, so the rows keep the stored order.
- *  `find` returns the first row in that order with the key, as it stands now. */
+ *  replaced row in its place and appends a new one, so the rows keep the order readTables
+ *  returns (ORDER BY id). `find` returns the first row in that order with the key, as it
+ *  stands now. */
 function childIndex<R extends ChildRow>(stored: R[]) {
   const rows = new Map(stored.map((r) => [r.id, r]));
   const ids = new Map<string, Map<string, string>>();
@@ -382,7 +383,7 @@ class PlanBuilder {
   private readonly tables: ImportTables;
   private readonly newPropertyId: (key: string) => string;
   // The stored rows, indexed once. A Map keeps a replaced row in its place and appends
-  // a new one, so the merged tables keep the stored order.
+  // a new one, so the merged tables keep the order readTables returns (ORDER BY id).
   private readonly properties: Map<string, PropertyRow>;
   private readonly holdingCosts: HoldingCostRow[];
   private readonly children: {
