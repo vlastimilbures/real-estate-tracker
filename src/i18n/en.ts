@@ -471,9 +471,9 @@ export const en = {
     // Stored values outside the form ranges (ADR 0148).
     outOfRangeSize: (value: string, range: string) =>
       `Size ${value} m² is outside the range the forms accept (${range} m²).`,
-    // ADR 0180 §2: a stored size inside the range that is not a whole number.
-    notWholeSize: (value: string, range: string) =>
-      `Size ${value} m² is not a whole number; the forms accept whole numbers only (${range} m²).`,
+    // ADR 0236 §3: a stored size inside the range with two or more decimals.
+    sizeDecimals: (value: string, range: string) =>
+      `Size ${value} m² has more than one decimal place; the forms accept at most one (${range} m²).`,
     // `n` = the value as a number, for the year word; en always reads "years" for the
     // reachable values (51 and up) but takes `n` so the signature fits cs and ru.
     outOfRangeFixation: (
@@ -553,7 +553,8 @@ export const en = {
       "This property is excluded from portfolio dashboards and projections.",
     inactivePreviewNote:
       "The figures below show it as if it were still active.",
-    sizeM2: (n: number) => `${n} m²`,
+    // The size as fmtNumber shows it, e.g. "54,5" (ADR 0236 §2).
+    sizeM2: (n: string) => `${n} m²`,
     marketValue: "Market value",
     debt: "Debt",
     equity: "Equity",
@@ -1087,6 +1088,9 @@ export const en = {
       `"${v}" — the loan term must be at least one year`,
     errOutOfRange: (v: string, min: string, max: string) =>
       `"${v}" must be a whole number from ${min} to ${max}`,
+    // ADR 0236 §1: a size outside the range or with two or more decimals.
+    errSizeRange: (v: string, min: string, max: string) =>
+      `"${v}" must be a number from ${min} to ${max} with at most one decimal place`,
     errDuplicateKey: (firstRow: number) =>
       `Duplicate of row ${firstRow} — each record may appear only once per file`,
     errMalformedRow: (expected: number, found: number) =>
@@ -1193,6 +1197,9 @@ export const en = {
       "The file must hold exactly one assumptions record",
     issueOutOfRange: (min: string, max: string) =>
       `Must be a whole number from ${min} to ${max}`,
+    // ADR 0236 §1: the size takes one decimal place.
+    issueOutOfRangeSize: (min: string, max: string) =>
+      `Must be a number from ${min} to ${max} with at most one decimal place`,
   },
 
   // First-run sample portfolio (ADR 0094).
@@ -1261,6 +1268,7 @@ export const en = {
         "Enter an amount of 0 or more, e.g. 1 250 000 (a space between thousands)",
       pct: "Enter a percentage, e.g. 4,5",
       int: "Enter a whole number, e.g. 25",
+      size: "Enter a number with at most one decimal place, e.g. 54,5",
       prepayments:
         "Check the marked rows: a date as dd.mm.yyyy, an amount above 0 and a fee of 0 or more",
       recasts:
@@ -1273,6 +1281,9 @@ export const en = {
       "Enter an amount above 0, e.g. 500 000 (a space between thousands)",
     intRange: (min: string, max: string) =>
       `Enter a whole number from ${min} to ${max}`,
+    /** The size field (ADR 0236 §1). */
+    sizeRange: (min: string, max: string) =>
+      `Enter a number from ${min} to ${max} with at most one decimal place`,
     datePlaceholder: "dd.mm.yyyy",
     defaultPlaceholder: "default",
   },

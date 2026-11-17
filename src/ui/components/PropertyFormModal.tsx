@@ -73,7 +73,8 @@ const IDENTITY_FIELD_SPECS: TextFieldSpec[] = [
     help: (t) => t.propertyForm.typeHelp,
     inputMode: "text",
   },
-  { key: "size_m2", label: (t) => t.propertyForm.size, inputMode: "numeric" },
+  // One decimal place (ADR 0236 §1).
+  { key: "size_m2", label: (t) => t.propertyForm.size, inputMode: "decimal" },
 ];
 
 const FINANCIAL_FIELD_SPECS: TextFieldSpec[] = [

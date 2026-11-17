@@ -440,8 +440,8 @@ export const cs: Dictionary = {
     recordFunding: "Zadat financování",
     outOfRangeSize: (value, range) =>
       `Plocha ${value} m² je mimo rozsah, který formuláře přijímají (${range} m²).`,
-    notWholeSize: (value, range) =>
-      `Plocha ${value} m² není celé číslo; formuláře přijímají jen celá čísla (${range} m²).`,
+    sizeDecimals: (value, range) =>
+      `Plocha ${value} m² má víc než jedno desetinné místo; formuláře přijímají nejvýš jedno (${range} m²).`,
     outOfRangeFixation: (date, value, range, n) =>
       `Hypotéka od ${date}: doba fixace ${value} ${csPlural(n, ["rok", "roky", "let"])} je mimo rozsah, který formuláře přijímají (${range} let).`,
     outOfRangeTerm: (date, value, range, n) =>
@@ -1019,6 +1019,8 @@ export const cs: Dictionary = {
       `„${v}“ — doba splatnosti musí být alespoň jeden rok`,
     errOutOfRange: (v, min, max) =>
       `„${v}“ musí být celé číslo od ${min} do ${max}`,
+    errSizeRange: (v, min, max) =>
+      `„${v}“ musí být číslo od ${min} do ${max} s nejvýš jedním desetinným místem`,
     errDuplicateKey: (firstRow) =>
       `Duplicita řádku ${firstRow} — každý záznam smí být v souboru jen jednou`,
     errMalformedRow: (expected, found) =>
@@ -1121,6 +1123,8 @@ export const cs: Dictionary = {
     issueMissingAssumptions:
       "Soubor musí obsahovat právě jeden záznam předpokladů",
     issueOutOfRange: (min, max) => `Musí být celé číslo od ${min} do ${max}`,
+    issueOutOfRangeSize: (min, max) =>
+      `Musí být číslo od ${min} do ${max} s nejvýš jedním desetinným místem`,
   },
 
   sample: {
@@ -1187,6 +1191,7 @@ export const cs: Dictionary = {
         "Zadejte částku 0 nebo vyšší, např. 1 250 000 (tisíce oddělte mezerou)",
       pct: "Zadejte procenta, např. 4,5",
       int: "Zadejte celé číslo, např. 25",
+      size: "Zadejte číslo s nejvýš jedním desetinným místem, např. 54,5",
       prepayments:
         "Zkontrolujte označené řádky: datum jako dd.mm.yyyy, částka nad 0 a poplatek 0 nebo více",
       recasts:
@@ -1199,6 +1204,8 @@ export const cs: Dictionary = {
       "Zadejte částku vyšší než 0, např. 500 000 (tisíce oddělte mezerou)",
     intRange: (min: string, max: string) =>
       `Zadejte celé číslo od ${min} do ${max}`,
+    sizeRange: (min: string, max: string) =>
+      `Zadejte číslo od ${min} do ${max} s nejvýš jedním desetinným místem`,
     datePlaceholder: "dd.mm.yyyy",
     defaultPlaceholder: "výchozí",
   },

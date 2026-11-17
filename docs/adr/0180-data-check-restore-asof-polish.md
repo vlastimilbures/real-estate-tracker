@@ -10,6 +10,8 @@
 - Related: [0149](0149-calendar-days.md) §5 (early dates),
   [0152](0152-wording-log-and-generated-index.md) (wording log),
   [0118](0118-data-check.md) (data check)
+- Amended by: [0236](0236-size-one-decimal.md) (§2 for the size: one decimal place is
+  accepted; only two or more are a finding)
 
 ## Context
 

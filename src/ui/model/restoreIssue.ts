@@ -17,7 +17,13 @@ export function restoreIssueText(t: Dictionary, i: RestoreIssue): string {
       // A restore issue always carries its range; "—" guards a hand-built one.
       const n = (v: number | undefined) =>
         v === undefined ? "—" : fmtCzk(v, { suffix: false });
-      return t.backup.issueOutOfRange(n(i.range?.min), n(i.range?.max));
+      // The size takes one decimal place, the other bounded fields whole numbers
+      // (ADR 0236 §1).
+      const text =
+        i.column === "size_m2"
+          ? t.backup.issueOutOfRangeSize
+          : t.backup.issueOutOfRange;
+      return text(n(i.range?.min), n(i.range?.max));
     }
     default:
       return t.inputRules[i.rule];

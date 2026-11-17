@@ -34,7 +34,7 @@ import {
   LeasesPanel,
   MortgagesPanel,
 } from "./PropertyEntityPanels";
-import { fmtDate } from "../../lib/format";
+import { fmtDate, fmtNumber } from "../../lib/format";
 import { projectionSeries, projectionColumns } from "../model/projection";
 import {
   lensLabel,
@@ -56,6 +56,7 @@ import { resetMarkers } from "../model/financing";
 import { useToast } from "../hooks/useToast";
 import { describeWriteError } from "../model/writeError";
 import { useT } from "../hooks/useT";
+import type { Dictionary } from "../../i18n";
 import { useAsOf } from "../hooks/useAsOf";
 import { useSectionSpy } from "../hooks/useSectionSpy";
 import {
@@ -67,6 +68,10 @@ import {
 } from "../model/sectionNav";
 
 const AMORTIZATION_BODY = "pd-amortization-table";
+
+/** The subtitle's size with Czech formatting, e.g. "54,5 m²" (ADR 0236 §2). */
+const sizeText = (t: Dictionary, sizeM2: number | undefined) =>
+  sizeM2 ? t.propertyDetail.sizeM2(fmtNumber(sizeM2)) : null;
 
 export function PropertyDetail() {
   const t = useT();
@@ -278,7 +283,7 @@ export function PropertyDetail() {
       }
       subtitle={[
         property.type,
-        property.sizeM2 ? t.propertyDetail.sizeM2(property.sizeM2) : null,
+        sizeText(t, property.sizeM2),
         // The tiles' own `owned`, so the subtitle and the tiles agree (ADR 0156).
         !s
           ? null

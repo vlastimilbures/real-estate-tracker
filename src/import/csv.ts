@@ -8,7 +8,12 @@ import Papa from "papaparse";
 import { D } from "../lib/money";
 import { calendarDay, suggestedInstalment } from "../engine";
 import { DATE_FLOOR_YEAR } from "../lib/day";
-import { inRange, INT_RANGES, type IntRange } from "../lib/intRanges";
+import {
+  inRange,
+  INT_RANGES,
+  oneDecimalText,
+  type IntRange,
+} from "../lib/intRanges";
 import { PLAIN_DECIMAL } from "../lib/decimalText";
 import { propertyKey } from "../lib/propertyKey";
 
@@ -31,6 +36,8 @@ export type CsvErrorCode =
   | { code: "invalidInteger"; value: string }
   | { code: "notPositive"; value: string }
   | { code: "outOfRange"; value: string; min: number; max: number }
+  /** A size outside its range or with two or more decimals (ADR 0236 §1). */
+  | { code: "sizeRange"; value: string; min: number; max: number }
   | { code: "invalidBoolean"; value: string }
   | { code: "unknownProperty"; value: string }
   | { code: "instalmentRequired" }
@@ -374,6 +381,23 @@ class RowCtx {
     return n;
   }
 
+  /** A size: a plain decimal from the range with at most one decimal place (ADR 0236). */
+  optSize(field: string, range: IntRange): Cell<number> {
+    if (this.absent(field)) return undefined;
+    const v = this.raw(field);
+    if (v === "") return null;
+    if (!PLAIN_DECIMAL.test(v)) {
+      const code = DECIMAL_COMMA.test(v) ? "decimalComma" : "invalidNumber";
+      return this.fail(field, { code, value: v });
+    }
+    const n = Number(v);
+    // One message for every refusal of a number: the range with one decimal place, as
+    // the form and restore say (ADR 0236 §1). Decimals count by value, like the form.
+    if (!oneDecimalText(v) || !inRange(n, range))
+      return this.fail(field, { code: "sizeRange", value: v, ...range });
+    return n;
+  }
+
   optBool(field: string): Cell<boolean> {
     if (this.absent(field)) return undefined;
     const v = this.raw(field).toLowerCase();
@@ -452,7 +476,7 @@ export function parseProperties(
       const purchase_price = c.reqDecimal("purchase_price", "amount");
       const address = c.optStr("address");
       const type = c.optStr("type");
-      const size_m2 = c.optInt("size_m2", INT_RANGES.sizeM2);
+      const size_m2 = c.optSize("size_m2", INT_RANGES.sizeM2);
       const garage = c.optBool("garage");
       const appreciation_override_pa = c.optDecimal(
         "appreciation_override_pa",

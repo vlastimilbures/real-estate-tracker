@@ -373,10 +373,20 @@ describe("the restore table names the stored column (ADR 0180 §1)", () => {
 });
 
 describe("a non-integer whole-number value asks at restore (ADR 0180 §2)", () => {
-  it("a fractional size inside the range warns OUT_OF_RANGE (#260)", async () => {
-    const backup = await edited("properties", (rows) =>
-      rows.map((r) => (r.id === "javorova" ? { ...r, size_m2: 50.5 } : r)),
+  const sized = (size_m2: number) =>
+    edited("properties", (rows) =>
+      rows.map((r) => (r.id === "javorova" ? { ...r, size_m2 } : r)),
     );
+
+  // ADR 0236 §1: a size with one decimal place is accepted at restore.
+  it("a size with one decimal place restores without a warning", async () => {
+    const prepared = prepareRestore(await sized(50.5), checkInputRules);
+    expect(prepared.warnings).toEqual([]);
+  });
+
+  // ADR 0236 §1: two decimals still ask, as ADR 0180 §2 did for any fraction (#260).
+  it("a size with two decimals inside the range warns OUT_OF_RANGE", async () => {
+    const backup = await sized(50.55);
     expect(prepareRestore(backup, checkInputRules).warnings).toEqual([
       {
         table: "properties",

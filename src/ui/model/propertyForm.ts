@@ -81,7 +81,7 @@ function propertySpecs(t: Dictionary) {
     {
       name: "size_m2",
       label: p.size,
-      kind: "int",
+      kind: "size", // one decimal place (ADR 0236)
       optional: true,
       range: INT_RANGES.sizeM2, // ADR 0075 (DR-078)
     },

@@ -368,17 +368,74 @@ describe("number formats", () => {
     expect(r.rows[0].appreciation_override_pa).toBe("-0.01");
   });
 
+  // The probe column moved from size_m2, which takes one decimal place since ADR 0236.
   it("integers are plain unsigned digits (DR-027)", () => {
     for (const v of ["52.6", "-3", "1e2", "0x10", "Infinity"]) {
-      const r = parseProperties(`${H}\nA,,,${v},,2020-01-01,100,,`);
+      const r = parseMortgages(`${MH}\nA,2025-01-01,100000,${v},0.03,2000,30`);
       expect(r.errors, v).toEqual([
         {
           row: 2,
-          field: "size_m2",
+          field: "fixation_years",
           error: { code: "invalidInteger", value: v },
         },
       ]);
     }
+  });
+
+  // ADR 0236 §1: a size is a plain decimal with at most one decimal place.
+  describe("size with one decimal place (ADR 0236)", () => {
+    const property = (size: string) =>
+      parseProperties(`${H}\nA,,,${size},,2020-01-01,100,,`);
+    const fail = (error: object) => [{ row: 2, field: "size_m2", error }];
+    const range = { min: 1, max: 10_000 };
+
+    it("keeps 54.5 as 54.5", () => {
+      const r = property("54.5");
+      expect(r.errors).toEqual([]);
+      expect(r.rows[0]!.size_m2).toBe(54.5);
+    });
+    // Decimals count by value: a spreadsheet's two-decimal column exports 54.50.
+    it("accepts trailing zeros and keeps the value", () => {
+      for (const [v, n] of [
+        ["54.50", 54.5],
+        ["54.500", 54.5],
+        ["54.00", 54],
+        ["10000.0", 10_000],
+      ] as const) {
+        const r = property(v);
+        expect(r.errors, v).toEqual([]);
+        expect(r.rows[0]!.size_m2, v).toBe(n);
+      }
+    });
+    it("refuses 54.55 with sizeRange, naming the range", () => {
+      for (const v of ["54.55", "54.550", "54.05"])
+        expect(property(v).errors, v).toEqual(
+          fail({ code: "sizeRange", value: v, ...range }),
+        );
+    });
+    it("refuses a size outside the range with sizeRange", () => {
+      for (const v of ["0.5", "10000.1", "0", "10001", "10000.10"])
+        expect(property(v).errors, v).toEqual(
+          fail({ code: "sizeRange", value: v, ...range }),
+        );
+    });
+    it("refuses a negative size with sizeRange", () => {
+      for (const v of ["-5", "-0.5"])
+        expect(property(v).errors, v).toEqual(
+          fail({ code: "sizeRange", value: v, ...range }),
+        );
+    });
+    it("a decimal comma gets the decimalComma error", () => {
+      expect(property('"54,5"').errors).toEqual(
+        fail({ code: "decimalComma", value: "54,5" }),
+      );
+    });
+    it("other notations are not numbers (DR-036)", () => {
+      for (const v of ["1e2", "0x10", "Infinity", "5.", ".5"])
+        expect(property(v).errors, v).toEqual(
+          fail({ code: "invalidNumber", value: v }),
+        );
+    });
   });
 
   it("a loan term must be at least one year (DR-027)", () => {
@@ -419,12 +476,18 @@ describe("number formats", () => {
       out("loan_term_years", "51", 1, 50),
     );
 
+    // ADR 0236 §1: a size outside the range gets the size's own message.
+    const outSize = (value: string) => [
+      {
+        row: 2,
+        field: "size_m2",
+        error: { code: "sizeRange", value, min: 1, max: 10_000 },
+      },
+    ];
     for (const size of ["1", "10000", ""])
       expect(property(size).errors, size).toEqual([]);
-    expect(property("0").errors).toEqual(out("size_m2", "0", 1, 10_000));
-    expect(property("10001").errors).toEqual(
-      out("size_m2", "10001", 1, 10_000),
-    );
+    expect(property("0").errors).toEqual(outSize("0"));
+    expect(property("10001").errors).toEqual(outSize("10001"));
   });
 });
 
