@@ -12,6 +12,7 @@ import { useUiStore } from "../../../state/uiStore";
 import { portfolio } from "../../../engine/__tests__/support/seed";
 import { propertiesTemplate } from "../../../import/csv";
 import {
+  CsvImportProblemsError,
   CsvPlanChangedError,
   type CsvImportPreview,
   type ImportItem,
@@ -284,6 +285,50 @@ describe("Import preview (ADR 0096)", () => {
       ).disabled,
     ).toBe(true);
   });
+
+  // Fails until #447 lands: there is no CsvImportProblemsError yet, and the import
+  // still sends the previewed fingerprint.
+  it.fails(
+    "a problem found at the click shows the problems and offers no import (ADR 0229)",
+    async () => {
+      previewCsv.mockResolvedValue(plan([add]));
+      const problems: CsvImportPreview["problems"] = [
+        {
+          file: "rents",
+          row: 2,
+          field: "property_name",
+          problem: { code: "unknownProperty", value: "Nope" },
+        },
+      ];
+      importCsv.mockRejectedValue(
+        new CsvImportProblemsError({ items: [], problems }),
+      );
+      const { container } = renderWithPortfolio(<Import />, {
+        route: "import",
+      });
+      await choosePropertiesFile(container);
+      await userEvent.click(
+        await screen.findByRole("button", { name: p.importScope(1, 1, 0) }),
+      );
+
+      expect(
+        await screen.findByText(p.errUnknownProperty("Nope")),
+      ).toBeTruthy();
+      // The import is sent the chosen rows only: it builds its own plan.
+      expect(importCsv.mock.calls).toEqual([
+        [expect.objectContaining({ properties: expect.any(Array) })],
+      ]);
+      expect(
+        (
+          screen.getByRole("button", {
+            name: p.importSelected,
+          }) as HTMLButtonElement
+        ).disabled,
+      ).toBe(true);
+      expect(screen.queryByText(p.reportTitle)).toBeNull();
+      expect(useUiStore.getState().failure).toBeNull();
+    },
+  );
 
   it("a plan that changed since the preview says so and shows the new plan", async () => {
     previewCsv.mockResolvedValue(plan([add]));

@@ -13,6 +13,7 @@ import {
   parseValuations,
 } from "../csv";
 import {
+  CsvImportProblemsError,
   CsvPlanChangedError,
   importCsv,
   planImport,
@@ -321,6 +322,71 @@ describe("importCsv — commit matches the preview (ADR 0096)", () => {
     );
     expect(dump(sql)).toEqual(before);
   });
+});
+
+// ADR 0229: the import builds its plan at the click and writes it; only a plan with
+// problems is refused, and then nothing is written.
+describe("importCsv — writes the plan built at the click (ADR 0229)", () => {
+  // Fails until #447 lands: importCsv still compares with a previewed fingerprint.
+  it.fails("an import writes exactly what the preview listed", async () => {
+    const rows = {
+      properties: props("Byt C,,2022-01-01,7000000\nByt A,,2020-01-01,5000000"),
+      valuations: parseValuations(`${VH}\nByt C,2026-01-01,,7500000`).rows,
+    };
+    const preview = await previewImport(sql, rows);
+    // The same rows in a new batch object, imported with no preview handed over.
+    const report = await importCsv(sql, { ...rows });
+
+    // New ids are made at the click (§3), so only they may differ from the preview.
+    const listed = (items: typeof preview.items) =>
+      items.map((i) => ({ ...i, propertyId: "" }));
+    expect(listed(report.items)).toEqual(listed(preview.items));
+    expect(report.items.map((i) => i.kind)).toEqual(["add", "update", "add"]);
+    // The new property's rows share the id it was written with.
+    const c = idOf("Byt C");
+    expect(
+      report.items
+        .filter((i) => i.propertyName === "Byt C")
+        .map((i) => i.propertyId),
+    ).toEqual([c, c]);
+    expect(
+      sql.db
+        .prepare("SELECT property_id FROM valuations WHERE valid_from = ?")
+        .get("2026-01-01"),
+    ).toEqual({ property_id: c });
+  });
+
+  // Fails until #447 lands: there is no CsvImportProblemsError yet.
+  it.fails(
+    "a commit-time problem writes nothing and returns the problems",
+    async () => {
+      const batch = {
+        valuations: parseValuations(`${VH}\nByt A,2026-01-01,,7500000`).rows,
+      };
+      expect((await previewImport(sql, batch)).problems).toEqual([]);
+      // An outside edit lands between the shown preview and the click.
+      sql.db
+        .prepare("UPDATE properties SET name = ? WHERE id = ?")
+        .run("Byt Z", idOf("Byt A"));
+      const before = dump(sql);
+
+      const e = await importCsv(sql, batch).then(
+        () => null,
+        (err: unknown) => err,
+      );
+
+      expect(e).toBeInstanceOf(CsvImportProblemsError);
+      expect((e as CsvImportProblemsError).preview.problems).toEqual([
+        {
+          file: "valuations",
+          row: 2,
+          field: "property_name",
+          problem: { code: "unknownProperty", value: "Byt A" },
+        },
+      ]);
+      expect(dump(sql)).toEqual(before);
+    },
+  );
 });
 
 // ADR 0185 §2: an optional column that is not in the file is left as stored on an update;
