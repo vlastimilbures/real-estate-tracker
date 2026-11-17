@@ -4,6 +4,8 @@ import type { Dictionary } from "../../i18n";
 import type { ValidationCode } from "../../engine";
 import type { ConstraintFailure } from "../../data/errors";
 import type { WriteError } from "../../state/writeError";
+import type { RangeProblem } from "../../lib/rules";
+import { fieldHint } from "./formParse";
 
 export interface WriteErrorText {
   message: string;
@@ -148,6 +150,22 @@ const SHIFTED_LEVEL: Record<string, string> = {
   inflationShock: "inflationPa",
 };
 
+/** Out-of-range values the store refused (ADR 0245): the form's own range message
+ *  (`forms.intRange`, `forms.sizeRange`) on the form's own field, which every form names
+ *  like the bounded field (horizonYears, fixationYears, loanTermYears, sizeM2). */
+function rangeTexts(
+  t: Dictionary,
+  ranges: readonly RangeProblem[] | undefined,
+): WriteErrorText[] {
+  return (ranges ?? []).map((r) => ({
+    message: fieldHint(t, {
+      kind: r.field === "sizeM2" ? "size" : "int",
+      range: r.range,
+    }),
+    field: r.field,
+  }));
+}
+
 /** One text per problem (an input error can break several rules at once), without
  *  repeats. */
 export function writeErrorTexts(
@@ -178,7 +196,7 @@ export function writeErrorTexts(
       ...(field && err.index !== undefined && { index: err.index }),
     });
   }
-  return out;
+  return [...out, ...rangeTexts(t, e.ranges)];
 }
 
 /**

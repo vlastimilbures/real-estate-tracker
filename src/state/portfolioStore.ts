@@ -53,6 +53,7 @@ import type {
   CsvImportReport,
 } from "../import/csvImport";
 import { checkInputRules } from "./restoreRules";
+import { assertHorizonRange, assertPortfolioRanges } from "./writeRanges";
 import {
   loadState,
   upsertScenario,
@@ -107,8 +108,10 @@ function withRow<T extends { id: string }>(rows: T[], row: T): T[] {
  *  (D-17, D-27, D-37, D-42, D-54), and the write-time lease overlap rule (ADR 0163), so
  *  a form shows the rule before anything is written (UX-047). Problems in other rows
  *  are not this edit's to report: a stored overlap does not block other edits.
- *  `overlapIds` (default `ids`) narrows the overlap rule to the rows that can add one. */
+ *  `overlapIds` (default `ids`) narrows the overlap rule to the rows that can add one.
+ *  Then the out-of-range values the edit adds to the `stored` portfolio (ADR 0245). */
 function assertRows(
+  stored: Portfolio,
   candidate: Portfolio,
   ids: string[],
   overlapIds: string[] = ids,
@@ -120,6 +123,19 @@ function assertRows(
     ...leaseOverlapErrors(candidate).filter(of(overlapIds)),
   ];
   if (errors.length > 0) throw new EngineInputError(errors);
+  assertPortfolioRanges(stored, candidate);
+}
+
+/** Engine rules of the assumptions themselves (horizon, rates, shocks, D-38), then an
+ *  out-of-range horizon the edit adds to the `stored` assumptions (ADR 0245). */
+function assertAssumptionRules(
+  p: Portfolio,
+  stored: Assumptions | null,
+  a: Assumptions,
+): void {
+  const errors = validateInputs(p, a).filter((e) => e.entity === "assumptions");
+  if (errors.length > 0) throw new EngineInputError(errors);
+  assertHorizonRange(stored, a);
 }
 
 /** The outcome of a mutation. Callers (forms, modals) branch on `ok` — e.g. a modal
@@ -433,21 +449,18 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     overlapIds?: string[],
   ): void {
     const p = get().portfolio;
-    if (p) assertRows(edit(p), ids, overlapIds);
+    if (p) assertRows(p, edit(p), ids, overlapIds);
   }
 
-  /** Engine rules of the assumptions themselves (horizon, rates, shocks, D-38), then
-   *  the saved scenarios the edit would newly break (ADR 0128 §6). */
+  /** The assumptions' own rules and range (assertAssumptionRules), then the saved
+   *  scenarios the edit would newly break (ADR 0128 §6). */
   function checkAssumptions(a: Assumptions): void {
     const p = get().portfolio;
+    const old = get().assumptions;
     if (!p) return;
-    const errors = validateInputs(p, a).filter(
-      (e) => e.entity === "assumptions",
-    );
-    if (errors.length > 0) throw new EngineInputError(errors);
+    assertAssumptionRules(p, old, a);
     // ADR 0128 §6: a shock meets the level it shifts, so an edit can break a saved
     // scenario. Refuse only one the edit newly breaks, and name the first.
-    const old = get().assumptions;
     if (!old) return;
     for (const s of get().scenarios) {
       const added = scenarioErrorsAddedBy(old, a, s.overrides);

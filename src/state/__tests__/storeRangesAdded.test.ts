@@ -75,48 +75,47 @@ async function storeRaw(
 }
 
 describe("the store refuses an out-of-range value a write adds (ADR 0245)", () => {
-  it.fails("refuses a fixation of 51 years", async () => {
+  it("refuses a fixation of 51 years", async () => {
     expect(
       await store().saveMortgageBlock({ ...block(), fixationYears: 51 }),
     ).toMatchObject(refused("fixationYears", 51));
     expect(block().fixationYears).toBe(10);
+    // An input error: the form shows it, not the banner (ADR 0141).
+    expect(store().error).toBeNull();
   });
 
-  it.fails("refuses a loan term of 51 years", async () => {
+  it("refuses a loan term of 51 years", async () => {
     expect(
       await store().saveMortgageBlock({ ...block(), loanTermYears: 51 }),
     ).toMatchObject(refused("loanTermYears", 51));
     expect(block().loanTermYears).toBeUndefined();
   });
 
-  it.fails(
-    "refuses a horizon of 101 years, and 1001 beyond the limit",
-    async () => {
-      const a = store().assumptions!;
-      expect(
-        await store().saveAssumptions({ ...a, horizonYears: 101 }),
-      ).toMatchObject(refused("horizonYears", 101));
-      expect(
-        await store().saveAssumptions({ ...a, horizonYears: 1001 }),
-      ).toMatchObject(refused("horizonYears", 1001, "BEYOND_LIMIT"));
-      expect(store().assumptions!.horizonYears).toBe(30);
-    },
-  );
+  it("refuses a horizon of 101 years, and 1001 beyond the limit", async () => {
+    const a = store().assumptions!;
+    expect(
+      await store().saveAssumptions({ ...a, horizonYears: 101 }),
+    ).toMatchObject(refused("horizonYears", 101));
+    expect(
+      await store().saveAssumptions({ ...a, horizonYears: 1001 }),
+    ).toMatchObject(refused("horizonYears", 1001, "BEYOND_LIMIT"));
+    expect(store().assumptions!.horizonYears).toBe(30);
+  });
 
-  it.fails("refuses a new property of 0.5, 54.55 or 10 000.5 m²", async () => {
+  it("refuses a new property of 0.5, 54.55 or 10 000.5 m²", async () => {
     for (const size of [0.5, 54.55, 10000.5])
       expect(await addSized(size)).toMatchObject(refused("sizeM2", size));
     expect(store().portfolio!.properties).toHaveLength(3);
   });
 
-  it.fails("refuses an edit to 20 000 m²", async () => {
+  it("refuses an edit to 20 000 m²", async () => {
     expect(
       await store().editProperty({ ...property(), sizeM2: 20000 }, noExtras),
     ).toMatchObject(refused("sizeM2", 20000));
     expect(property().sizeM2).toBe(71);
   });
 
-  it.fails("refuses changing a stored fixation of 60 to 70", async () => {
+  it("refuses changing a stored fixation of 60 to 70", async () => {
     await storeRaw("mortgage_blocks", "fixation_years", 60, "m-javorova");
     expect(
       await store().saveMortgageBlock({ ...block(), fixationYears: 70 }),
@@ -124,7 +123,7 @@ describe("the store refuses an out-of-range value a write adds (ADR 0245)", () =
     expect(block().fixationYears).toBe(60);
   });
 
-  it.fails("refuses changing a stored horizon of 150 to 120", async () => {
+  it("refuses changing a stored horizon of 150 to 120", async () => {
     await storeRaw("assumptions", "horizon_years", 150);
     const a = store().assumptions!;
     expect(
