@@ -202,6 +202,36 @@ type ChildRow = MortgageBlockRow | ValuationRow | LeaseRow;
 const keyDate = (r: ChildRow) =>
   "valid_from" in r ? r.valid_from : r.start_date;
 
+/** One child table's rows by id, and their ids by property and key date. A Map keeps a
+ *  replaced row in its place and appends a new one, so the rows keep the stored order.
+ *  `find` returns the first row in that order with the key, as it stands now. */
+function childIndex<R extends ChildRow>(stored: R[]) {
+  const rows = new Map(stored.map((r) => [r.id, r]));
+  const ids = new Map<string, Map<string, string>>();
+  const add = (r: R) => {
+    let byDate = ids.get(r.property_id);
+    if (!byDate) ids.set(r.property_id, (byDate = new Map()));
+    if (!byDate.has(keyDate(r))) byDate.set(keyDate(r), r.id);
+  };
+  for (const r of rows.values()) add(r);
+  return {
+    rows,
+    find(propertyId: string, date: string): R | undefined {
+      const id = ids.get(propertyId)?.get(date);
+      const r = id === undefined ? undefined : rows.get(id);
+      // A Map matches NaN to NaN; the key match is strict.
+      return r && r.property_id === propertyId && keyDate(r) === date
+        ? r
+        : undefined;
+    },
+    set(r: R) {
+      rows.set(r.id, r);
+      add(r);
+    },
+  };
+}
+type ChildIndex = ReturnType<typeof childIndex<ChildRow>>;
+
 /** The columns an update writes: a column missing from the file (`undefined`) is left
  *  as stored (ADR 0185 §2). */
 function present<T extends object>(o: T): Present<T> {
@@ -353,9 +383,9 @@ export function planImport(
   const properties = byId(tables.properties);
   const holdingCosts = [...tables.holding_costs];
   const children = {
-    mortgage_blocks: byId(tables.mortgage_blocks),
-    valuations: byId(tables.valuations),
-    leases: byId(tables.leases),
+    mortgage_blocks: childIndex(tables.mortgage_blocks),
+    valuations: childIndex(tables.valuations),
+    leases: childIndex(tables.leases),
   };
 
   const names = nameIndex(properties.values());
@@ -451,10 +481,8 @@ export function planImport(
       });
       continue;
     }
-    const rows: Map<string, ChildRow> = children[table];
-    const existing = [...rows.values()].find(
-      (r) => r.property_id === propId && keyDate(r) === c.date,
-    );
+    const child: ChildIndex = children[table];
+    const existing = child.find(propId, c.date);
     const changes = existing ? changesOf(existing, c.fields) : [];
     const at = { file: c.file, row: c.line };
     const item: ImportItem = {
@@ -476,21 +504,21 @@ export function planImport(
       // (DR-137).
       const base = `${propId}-csv-${tag}-${c.date}`;
       let id = base;
-      for (let n = 2; rows.has(id); n++) id = `${base}-${n}`;
+      for (let n = 2; child.rows.has(id); n++) id = `${base}-${n}`;
       row = c.newRow(id, propId);
       statements.push(insertStatement(table, row));
       if (entity === "mortgage") addedBlocks.set(id, item);
     }
-    rows.set(row.id, row);
+    child.set(row);
     origin.set(`${entity}:${row.id}`, at);
   }
 
   if (problems.length === 0) {
     const db = {
       properties: [...properties.values()],
-      mortgage_blocks: [...children.mortgage_blocks.values()],
-      valuations: [...children.valuations.values()],
-      leases: [...children.leases.values()],
+      mortgage_blocks: [...children.mortgage_blocks.rows.values()],
+      valuations: [...children.valuations.rows.values()],
+      leases: [...children.leases.rows.values()],
       holding_costs: holdingCosts,
     };
     // The engine's input rules and the lease overlap rule (ADR 0163) over the merged
