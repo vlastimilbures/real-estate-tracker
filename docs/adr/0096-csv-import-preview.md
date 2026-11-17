@@ -10,7 +10,8 @@
   [0185](0185-csv-missing-columns-and-preview-clarity.md) (equal-looking changes at full
   precision, no-data-rows badge, a commit-time problem shown as a changed plan),
   [0240](0240-import-preview-cleared-on-change.md) (every change clears the preview, so
-  Import waits for the new one)
+  Import waits for the new one), [0229](0229-import-writes-plan-at-click.md) (§5: the
+  import writes the plan built at the click, with no comparison)
 
 ## Context
 

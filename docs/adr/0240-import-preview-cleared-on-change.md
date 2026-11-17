@@ -7,7 +7,7 @@
 - Amends: [0096](0096-csv-import-preview.md) §3 (when the preview is shown)
 - Related: [0185](0185-csv-missing-columns-and-preview-clarity.md) §6 (a commit-time problem
   is shown as a changed plan), [0212](0212-import-file-rows.md) (the Import panel with its
-  preview); ADR 0229 (issue #447, the plan-changed comparison is dropped once this lands)
+  preview); [0229](0229-import-writes-plan-at-click.md) (issue #447, the plan-changed comparison is dropped once this lands)
 
 ## Context
 
