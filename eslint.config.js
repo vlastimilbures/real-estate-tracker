@@ -31,6 +31,13 @@ const testBans = [
   },
 ];
 
+// Flat config replaces a rule's options per key, so each block that sets
+// `no-restricted-syntax` sets the whole list: this puts the test bans first in every one
+// (scripts/__tests__/eslint-config.test.mjs checks that none leaves them out).
+const restrictedSyntax = (...groups) => ({
+  "no-restricted-syntax": ["error", ...testBans, ...groups.flat()],
+});
+
 // Modules a setup file mocks once for ui/state tests (#458): no file-level mock of them.
 // Both forms: `vi.mock("…/data/errorLog")` and `vi.mock(import("…/data/errorLog"))`.
 const SHARED_MOCKED =
@@ -200,38 +207,25 @@ export default tseslint.config(
   },
   {
     files: ["**/*.{ts,tsx}"],
-    rules: { "no-restricted-syntax": ["error", ...testBans] },
+    rules: restrictedSyntax(),
   },
   // Every test gets the pinned clock from a setup file (src/__tests__/setup/clock.ts,
   // #458); a test sets another day with setClock.
   {
     files: TEST_FILES,
     ignores: SETUP_FILES,
-    rules: { "no-restricted-syntax": ["error", ...testBans, ...dayMockBans] },
+    rules: restrictedSyntax(dayMockBans),
   },
   // src/lib tests also reach lib/day by a relative path (`../day`).
   {
     files: ["src/lib/**/__tests__/**/*.{ts,tsx}", "src/lib/**/*.test.{ts,tsx}"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...testBans,
-        ...dayMockBansFor(LIB_DAY_MODULE),
-      ],
-    },
+    rules: restrictedSyntax(dayMockBansFor(LIB_DAY_MODULE)),
   },
   // ui/state tests get the errorLog and Tauri core mocks from a setup file
   // (src/__tests__/setup/mocks.ts, #458); a test changes their behaviour on the mock.
   {
     files: ["src/{ui,state}/**/__tests__/**/*.{ts,tsx}"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...testBans,
-        ...sharedMockBans,
-        ...dayMockBans,
-      ],
-    },
+    rules: restrictedSyntax(sharedMockBans, dayMockBans),
   },
   // Production code: no brand casts and no non-null assertions (ADR 0074); a missing
   // value gets a real guard or the checked `at()` from lib/arrays.
@@ -239,7 +233,7 @@ export default tseslint.config(
     files: ["src/**/*.{ts,tsx}"],
     ignores: ["src/**/__tests__/**", "src/**/*.test.{ts,tsx}"],
     rules: {
-      "no-restricted-syntax": ["error", ...testBans, ...brandCastBans],
+      ...restrictedSyntax(brandCastBans),
       "@typescript-eslint/no-non-null-assertion": "error",
       // Shipped code runs in the WebView: no Node globals. tsconfig cannot hide them,
       // since @types/papaparse pulls in @types/node (#154).
@@ -309,14 +303,12 @@ export default tseslint.config(
     files: ["src/engine/**/*.ts"],
     ignores: ["src/engine/**/__tests__/**"],
     rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...testBans,
-        ...brandCastBans,
-        ...engineClockBans,
-        ...engineNumberBans,
+      ...restrictedSyntax(
+        brandCastBans,
+        engineClockBans,
+        engineNumberBans,
         engineDateBan,
-      ],
+      ),
       // P4a limits (P04a-engine-refactor.md §6): keep engine functions small.
       ...sizeRules(ENGINE_LIMITS),
     },
@@ -324,26 +316,11 @@ export default tseslint.config(
   // The brand constructors themselves (ADR 0074): no brand-cast ban here.
   {
     files: ["src/engine/brands.ts"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...testBans,
-        ...engineClockBans,
-        ...engineNumberBans,
-        engineDateBan,
-      ],
-    },
+    rules: restrictedSyntax(engineClockBans, engineNumberBans, engineDateBan),
   },
   {
     files: ["src/engine/dates.ts"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...testBans,
-        ...engineClockBans,
-        ...engineNumberBans,
-      ],
-    },
+    rules: restrictedSyntax(engineClockBans, engineNumberBans),
   },
   // One-way data flow: DB → data/mappers → engine. The data layer maps rows to engine
   // INPUTS; it imports engine TYPES (and boundary-safe date helpers) only, never engine
