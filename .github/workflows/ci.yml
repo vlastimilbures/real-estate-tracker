@@ -188,8 +188,9 @@ jobs:
 
       # The whole run: screenshots, axe JSON, summary.md and the Playwright traces of
       # failed captures, which live in the hidden ux-screens/ci/.playwright folder (#137).
+      # Also on a green run with a capture that passed only on its retry (flaky.json, #496).
       - name: Upload capture evidence
-        if: failure()
+        if: failure() || hashFiles('ux-screens/*/flaky.json') != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ux-capture-ci-${{ matrix.shard }}
