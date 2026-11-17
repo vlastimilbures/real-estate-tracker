@@ -231,6 +231,59 @@ describe("a stored out-of-range value locks nothing out (ADR 0245 §2)", () => {
     expect(property().sizeM2).toBe(20000);
   });
 
+  it("a stored size of 54.55 m² blocks no write on that property, nor deleting it", async () => {
+    await storeRaw("properties", "size_m2", 54.55, "javorova");
+    expect(await store().setPropertyActive("javorova", false)).toEqual(ok);
+    expect(await store().setPropertyActive("javorova", true)).toEqual(ok);
+    const hc = store().portfolio!.holdingCosts.find(
+      (h) => h.propertyId === "javorova",
+    )!;
+    expect(
+      await store().saveHoldingCost({ ...hc, svjMonthly: money("900") }),
+    ).toEqual(ok);
+    expect(
+      await store().addLease({
+        id: "l-new",
+        propertyId: "javorova",
+        startDate: isoDate("2031-01-01"),
+        monthlyRent: money("20000"),
+      }),
+    ).toEqual(ok);
+    expect(
+      await store().editProperty(
+        { ...property(), name: "Javorová 2" },
+        noExtras,
+      ),
+    ).toEqual(ok);
+    expect(property().sizeM2).toBe(54.55);
+    expect(await store().removeProperty("javorova")).toEqual(ok);
+    expect(store().portfolio!.properties).toHaveLength(2);
+  });
+
+  it("with two blocks stored at 60, a change names only the changed block", async () => {
+    await storeRaw("mortgage_blocks", "fixation_years", 60, "m-javorova");
+    await storeRaw("mortgage_blocks", "fixation_years", 60, "m-lipova");
+    expect(
+      await store().saveMortgageBlock({
+        ...block("m-lipova"),
+        fixationYears: 70,
+      }),
+    ).toMatchObject(refused("fixationYears", 70));
+    const r = await store().saveMortgageBlock({
+      ...block("m-lipova"),
+      fixationYears: 70,
+    });
+    expect(r.ok ? [] : (r.error as { ranges?: unknown[] }).ranges).toHaveLength(
+      1,
+    );
+    expect(
+      await store().saveMortgageBlock({
+        ...block(),
+        interestRatePa: rate("0.02"),
+      }),
+    ).toEqual(ok);
+  });
+
   it("a stored horizon of 150 does not block an inflation edit", async () => {
     await storeRaw("assumptions", "horizon_years", 150);
     expect(
