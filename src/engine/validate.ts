@@ -21,12 +21,14 @@ import { EngineInputError } from "./errors";
 import { COST_KEYS, COST_MONEY_KEYS, COST_RATE_KEYS } from "./figures";
 import { overlappingLeases } from "./succession";
 import type {
+  AcquisitionFunding,
   Assumptions,
   CostDefaults,
   HoldingCost,
   LoanRecast,
   MortgageBlock,
   Portfolio,
+  Property,
   ShockBand,
 } from "./types";
 
@@ -100,20 +102,60 @@ const belowGrowthFloor = (d: Decimal | undefined) =>
 const isNegativeAmount = (d: Decimal | undefined) =>
   d !== undefined && d.isFinite() && d.isNegative();
 
-/** Finite-number / valid-date checks over an object's fields. */
-function checkFields(
-  row: object,
-  dates: string[],
-  numbers: string[],
+/** Below zero, unguarded: for a required amount, so −Infinity reports here as well as
+ *  NON_FINITE_NUMBER (kept as it is, #479). */
+const isNegative = (d: Decimal) => d.isNegative();
+const notPositive = (d: Decimal) => !d.greaterThan(ZERO);
+
+/** Finite-number / valid-date checks over an object's fields: the dates, then the
+ *  numbers. */
+function checkFields<D extends string, N extends string>(
+  row: { readonly [F in D]?: Date | undefined } & {
+    readonly [F in N]?: Decimal | undefined;
+  },
+  dates: readonly D[],
+  numbers: readonly N[],
   report: Report,
 ): void {
-  const r = row as Record<string, unknown>;
   for (const f of dates) {
-    if (badDate(r[f] as Date | undefined)) report("INVALID_DATE", f);
+    if (badDate(row[f])) report("INVALID_DATE", f);
   }
   for (const f of numbers) {
-    if (badNumber(r[f] as Decimal | undefined)) report("NON_FINITE_NUMBER", f);
+    if (badNumber(row[f])) report("NON_FINITE_NUMBER", f);
   }
+}
+
+/** One sign or range rule of a row: `test` true ⇒ `code` on `field`. A rule on an
+ *  optional field needs a test that takes undefined. */
+type SignRule<R, K extends keyof R> = readonly [
+  field: K,
+  test: (d: R[K]) => boolean,
+  code: ValidationCode,
+];
+
+/** Sign and range rules over a row, in table order: each rule is one pass over its
+ *  field, so a row with several bad fields reports rule by rule (#479). `prefix` goes
+ *  before each field name. */
+function checkSigns<R, K extends keyof R & string>(
+  row: R,
+  rules: readonly SignRule<R, K>[],
+  report: Report,
+  prefix = "",
+): void {
+  for (const [f, test, code] of rules) {
+    if (test(row[f])) report(code, `${prefix}${f}`);
+  }
+}
+
+/** An amount: NON_FINITE_NUMBER, else `code` when `bad`. */
+function checkAmount<T extends Decimal | undefined>(
+  amount: T,
+  bad: (amount: T) => boolean,
+  code: ValidationCode,
+  issue: (code: ValidationCode) => void,
+): void {
+  if (badNumber(amount)) issue("NON_FINITE_NUMBER");
+  else if (bad(amount)) issue(code);
 }
 
 /** A shock band's duration: whole years ≥ 0 (D-38). */
@@ -138,13 +180,19 @@ function checkCostRanges(
   prefix: string,
   report: Report,
 ): void {
-  for (const f of COST_MONEY_KEYS) {
-    if (isNegativeAmount(c[f])) report("NEGATIVE_AMOUNT", `${prefix}${f}`);
-  }
-  for (const f of COST_RATE_KEYS) {
-    if (outsideUnit(c[f])) report("RATE_OUT_OF_RANGE", `${prefix}${f}`);
-  }
+  checkSigns(c, COST_SIGNS, report, prefix);
 }
+
+/** The holding costs' rules: the Kč fields, then the shares. */
+const COST_SIGNS: readonly SignRule<
+  CostDefaults | HoldingCost,
+  (typeof COST_KEYS)[number]
+>[] = [
+  ...COST_MONEY_KEYS.map(
+    (f) => [f, isNegativeAmount, "NEGATIVE_AMOUNT"] as const,
+  ),
+  ...COST_RATE_KEYS.map((f) => [f, outsideUnit, "RATE_OUT_OF_RANGE"] as const),
+];
 
 function checkAssumptions(a: Assumptions, report: Report): void {
   const rates = [
@@ -154,9 +202,11 @@ function checkAssumptions(a: Assumptions, report: Report): void {
     "postFixationResetRatePa",
     "inflationPa",
     "sellingCostPct",
-  ];
+  ] as const;
   checkFields(a, ["baseDate"], rates, report);
-  checkFields(a.defaults, [], Object.keys(a.defaults), report);
+  // Every own key in its own order, a key the type does not name too.
+  const defaults = Object.keys(a.defaults) as (keyof CostDefaults)[];
+  checkFields(a.defaults, [], defaults, report);
   if (!Number.isInteger(a.horizonYears) || a.horizonYears <= 0) {
     report("HORIZON_NOT_POSITIVE", "horizonYears");
   }
@@ -183,18 +233,25 @@ const GROWTH_FIELDS = [
 
 /** D-38 and ADR 0128 §1–2 ranges of the assumption levels. */
 function checkLevelRanges(a: Assumptions, report: Report): void {
-  if (outsideUnit(a.vacancyAllowance))
-    report("RATE_OUT_OF_RANGE", "vacancyAllowance");
-  // ADR 0183: a fraction of the projected value at the horizon.
-  if (outsideUnit(a.sellingCostPct))
-    report("RATE_OUT_OF_RANGE", "sellingCostPct");
-  // ADR 0128 §1: the reset rate is an interest rate (ADR 0038).
-  if (outsideUnit(a.postFixationResetRatePa))
-    report("RATE_OUT_OF_RANGE", "postFixationResetRatePa");
-  for (const f of GROWTH_FIELDS) {
-    if (belowGrowthFloor(a[f])) report("GROWTH_OUT_OF_RANGE", f);
-  }
+  checkSigns(a, LEVEL_SIGNS, report);
 }
+
+const LEVEL_SIGNS: readonly SignRule<
+  Assumptions,
+  | "vacancyAllowance"
+  | "sellingCostPct"
+  | "postFixationResetRatePa"
+  | (typeof GROWTH_FIELDS)[number]
+>[] = [
+  ["vacancyAllowance", outsideUnit, "RATE_OUT_OF_RANGE"],
+  // ADR 0183: a fraction of the projected value at the horizon.
+  ["sellingCostPct", outsideUnit, "RATE_OUT_OF_RANGE"],
+  // ADR 0128 §1: the reset rate is an interest rate (ADR 0038).
+  ["postFixationResetRatePa", outsideUnit, "RATE_OUT_OF_RANGE"],
+  ...GROWTH_FIELDS.map(
+    (f) => [f, belowGrowthFloor, "GROWTH_OUT_OF_RANGE"] as const,
+  ),
+];
 
 /**
  * ADR 0128 §3: `level` + the shock's delta must stay in the level's own range. Checked
@@ -273,9 +330,9 @@ function checkDevFeatures(b: MortgageBlock, report: Report): void {
   const limits = { lastDraw: lastDrawDate(b), lastButTwo: lastButTwoDate(b) };
   (b.draws ?? []).forEach((d, i) => {
     checkDrawDate(d.date, b, limits, i, report);
-    if (badNumber(d.amount)) report("NON_FINITE_NUMBER", "draws", i);
-    else if (!d.amount.greaterThan(ZERO))
-      report("NON_POSITIVE_DRAW", "draws", i);
+    checkAmount(d.amount, notPositive, "NON_POSITIVE_DRAW", (code) =>
+      report(code, "draws", i),
+    );
   });
   if (b.completionDate && isAfter(b.startDate, b.completionDate)) {
     report("COMPLETION_BEFORE_START", "completionDate");
@@ -320,10 +377,8 @@ function checkPrepayments(
   (b.prepayments ?? []).forEach((p, i) => {
     const issue = (code: ValidationCode) => report(code, "prepayments", i);
     checkEventDate(p.date, b, end, issue);
-    if (badNumber(p.amount)) issue("NON_FINITE_NUMBER");
-    else if (!p.amount.greaterThan(ZERO)) issue("NON_POSITIVE_PREPAYMENT");
-    if (badNumber(p.fee)) issue("NON_FINITE_NUMBER");
-    else if (p.fee?.isNegative()) issue("NEGATIVE_AMOUNT");
+    checkAmount(p.amount, notPositive, "NON_POSITIVE_PREPAYMENT", issue);
+    checkAmount(p.fee, isNegativeAmount, "NEGATIVE_AMOUNT", issue);
   });
 }
 
@@ -353,8 +408,7 @@ function checkRecastInstalment(
   issue: (code: ValidationCode) => void,
 ): void {
   if (r.instalment === undefined) return;
-  if (badNumber(r.instalment)) issue("NON_FINITE_NUMBER");
-  else if (!r.instalment.greaterThan(ZERO)) issue("INVALID_RECAST");
+  checkAmount(r.instalment, notPositive, "INVALID_RECAST", issue);
   // Before completion the payment is interest only: no instalment to set.
   if (b.completionDate && isOnOrBefore(r.date, b.completionDate))
     issue("RECAST_INSTALMENT_BEFORE_COMPLETION");
@@ -407,6 +461,16 @@ function checkTerms(b: MortgageBlock, report: Report): void {
     report("INVALID_TERM", "loanTermYears");
 }
 
+/** The block's own amounts and rate, in this order. */
+const LOAN_SIGNS: readonly SignRule<
+  MortgageBlock,
+  "initialPrincipal" | "monthlyInstalment" | "interestRatePa"
+>[] = [
+  ["initialPrincipal", isNegative, "NEGATIVE_PRINCIPAL"],
+  ["monthlyInstalment", isNegative, "NEGATIVE_AMOUNT"],
+  ["interestRatePa", outsideUnit, "RATE_OUT_OF_RANGE"],
+];
+
 function checkMortgage(b: MortgageBlock, report: Report): void {
   checkFields(
     b,
@@ -414,12 +478,7 @@ function checkMortgage(b: MortgageBlock, report: Report): void {
     ["initialPrincipal", "interestRatePa", "monthlyInstalment"],
     report,
   );
-  if (b.initialPrincipal.isNegative())
-    report("NEGATIVE_PRINCIPAL", "initialPrincipal");
-  if (b.monthlyInstalment.isNegative())
-    report("NEGATIVE_AMOUNT", "monthlyInstalment");
-  if (outsideUnit(b.interestRatePa))
-    report("RATE_OUT_OF_RANGE", "interestRatePa");
+  checkSigns(b, LOAN_SIGNS, report);
   checkTerms(b, report);
   checkDevFeatures(b, report);
   if (b.initialPrincipal.isFinite() && b.interestRatePa.isFinite())
@@ -545,8 +604,9 @@ function checkDated(
   if (badDate(start)) report("INVALID_DATE", fields[0]);
   if (badDate(end)) report("INVALID_DATE", fields[1]);
   if (end && isAfter(start, end)) report("END_BEFORE_START", fields[1]);
-  if (badNumber(amount)) report("NON_FINITE_NUMBER", fields[2]);
-  else if (amount.isNegative()) report("NEGATIVE_AMOUNT", fields[2]);
+  checkAmount(amount, isNegative, "NEGATIVE_AMOUNT", (code) =>
+    report(code, fields[2]),
+  );
 }
 
 type ReporterFor = (
@@ -561,6 +621,25 @@ const HOLDING_COST_FIELDS = [...COST_KEYS];
 /** The Kč parts of a property's funding record (ADR 0119). */
 const FUNDING_MONEY = ["ownCash", "transactionCosts", "initialWorks"] as const;
 
+const FUNDING_SIGNS: readonly SignRule<
+  AcquisitionFunding,
+  (typeof FUNDING_MONEY)[number]
+>[] = FUNDING_MONEY.map(
+  (f) => [f, isNegativeAmount, "NEGATIVE_AMOUNT"] as const,
+);
+
+const PRICE_SIGNS: readonly SignRule<Property, "purchasePrice">[] = [
+  ["purchasePrice", isNegative, "NEGATIVE_AMOUNT"],
+];
+
+const GROWTH_OVERRIDES: readonly SignRule<
+  Property,
+  "appreciationOverridePa" | "rentIndexOverridePa"
+>[] = [
+  ["appreciationOverridePa", belowGrowthFloor, "GROWTH_OUT_OF_RANGE"],
+  ["rentIndexOverridePa", belowGrowthFloor, "GROWTH_OUT_OF_RANGE"],
+];
+
 function checkProperties(p: Portfolio, on: ReporterFor): void {
   for (const x of p.properties) {
     const report = on("property", x.id);
@@ -570,21 +649,13 @@ function checkProperties(p: Portfolio, on: ReporterFor): void {
       ["purchasePrice", "appreciationOverridePa", "rentIndexOverridePa"],
       report,
     );
-    if (x.purchasePrice.isNegative())
-      report("NEGATIVE_AMOUNT", "purchasePrice");
+    checkSigns(x, PRICE_SIGNS, report);
     // ADR 0128 §2: a property's own growth keeps the assumption floor.
-    for (const f of [
-      "appreciationOverridePa",
-      "rentIndexOverridePa",
-    ] as const) {
-      if (belowGrowthFloor(x[f])) report("GROWTH_OUT_OF_RANGE", f);
-    }
+    checkSigns(x, GROWTH_OVERRIDES, report);
     // ADR 0119 §7: flat field names, so a restore maps them to their columns.
     const funding = x.funding ?? {};
-    checkFields(funding, [], [...FUNDING_MONEY], report);
-    for (const f of FUNDING_MONEY) {
-      if (isNegativeAmount(funding[f])) report("NEGATIVE_AMOUNT", f);
-    }
+    checkFields(funding, [], FUNDING_MONEY, report);
+    checkSigns(funding, FUNDING_SIGNS, report);
   }
 }
 
