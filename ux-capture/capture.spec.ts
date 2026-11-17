@@ -1,7 +1,7 @@
 // One test per manifest entry; Playwright projects supply the lang × theme × viewport
 // variants (playwright.ux.config.ts). Filter with `pnpm ux:capture --grep <id>`.
 import { test, expect } from "./helpers";
-import { SCREENS, ROUTE_COVERAGE } from "./screens";
+import { SCREENS, ROUTE_COVERAGE } from "./screens/index";
 
 test("manifest covers every route", () => {
   const ids = new Set(SCREENS.map((s) => s.id));
