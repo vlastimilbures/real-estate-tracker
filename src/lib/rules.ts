@@ -79,22 +79,27 @@ export const HARD_LIMIT_FACTOR = 10;
 export type BoundedField = keyof typeof INT_RANGES;
 
 /** One stored value outside INT_RANGES, or finer than its field accepts: not a whole
- *  number (ADR 0180 §2), or for the size more than one decimal place (ADR 0236). */
-export interface OutOfRangeField {
+ *  number (ADR 0180 §2), or for the size more than one decimal place (ADR 0236). The one
+ *  shape restore and the Data check read (#464).
+ *  Restore-only as a refusal: the engine itself is open-ended, so a restore warns and asks
+ *  instead of refusing (ADR 0148). */
+export interface RangeProblem {
+  /** BEYOND_LIMIT: above HARD_LIMIT_FACTOR × the form maximum, so restore refuses
+   *  (ADR 0148). */
+  code: "OUT_OF_RANGE" | "BEYOND_LIMIT";
   entity: "assumptions" | "property" | "mortgage";
   id: string | undefined;
   field: BoundedField;
+  /** The stored value: the Data check names it; restore never shows it (ADR 0086). */
   value: number;
   range: IntRange;
-  /** Above HARD_LIMIT_FACTOR × the form maximum. */
-  beyondLimit: boolean;
 }
 
 /** Every bounded field outside INT_RANGES or finer than the forms accept, as the forms
  *  refuse both (ADR 0180 §2; the size takes one decimal place, ADR 0236; unset optional
  *  fields pass).
  *  Structural types: lib never imports the engine, whose Portfolio and Assumptions fit. */
-export function outOfRangeFields(
+export function rangeProblems(
   portfolio: {
     properties: readonly { id: string; sizeM2?: number | undefined }[];
     mortgages: readonly {
@@ -104,10 +109,10 @@ export function outOfRangeFields(
     }[];
   },
   assumptions?: { horizonYears: number },
-): OutOfRangeField[] {
-  const out: OutOfRangeField[] = [];
+): RangeProblem[] {
+  const out: RangeProblem[] = [];
   const check = (
-    entity: OutOfRangeField["entity"],
+    entity: RangeProblem["entity"],
     id: string | undefined,
     field: BoundedField,
     value: number | undefined,
@@ -116,12 +121,15 @@ export function outOfRangeFields(
     const precise = field === "sizeM2" ? oneDecimal : Number.isInteger;
     if (value !== undefined && (!precise(value) || !inRange(value, range)))
       out.push({
+        code:
+          value > range.max * HARD_LIMIT_FACTOR
+            ? "BEYOND_LIMIT"
+            : "OUT_OF_RANGE",
         entity,
         id,
         field,
         value,
         range,
-        beyondLimit: value > range.max * HARD_LIMIT_FACTOR,
       });
   };
   if (assumptions)

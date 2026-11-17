@@ -10,24 +10,8 @@ import type {
   Portfolio,
   ScenarioOverrides,
 } from "../engine";
-import type { InputRules, RangeProblem } from "../data/backup";
-import { outOfRangeFields } from "../lib/rules";
-
-/** Every bounded whole-number field outside INT_RANGES (unset optional fields pass). */
-function rangeProblems(
-  portfolio: Portfolio,
-  assumptions: Assumptions | undefined,
-): RangeProblem[] {
-  return outOfRangeFields(portfolio, assumptions).map(
-    ({ entity, id, field, range, beyondLimit }) => ({
-      code: beyondLimit ? "BEYOND_LIMIT" : "OUT_OF_RANGE",
-      entity,
-      id,
-      field,
-      range,
-    }),
-  );
-}
+import type { InputRules } from "../data/backup";
+import { rangeProblems, type RangeProblem } from "../lib/rules";
 
 const NO_ROWS: Portfolio = {
   properties: [],
@@ -82,8 +66,23 @@ export const checkInputRules: InputRules = (portfolio, assumptions) => {
   const reported = new Set(engine.map(key));
   return [
     ...engine,
-    ...rangeProblems(portfolio, assumptions).filter(
-      (p) => !reported.has(key(p)),
-    ),
+    ...rangeProblems(portfolio, assumptions)
+      .filter((p) => !reported.has(key(p)))
+      .map(withoutValue),
   ];
 };
+
+/** A range problem as restore reports it: never the stored value (ADR 0086). */
+const withoutValue = ({
+  code,
+  entity,
+  id,
+  field,
+  range,
+}: RangeProblem): Omit<RangeProblem, "value"> => ({
+  code,
+  entity,
+  id,
+  field,
+  range,
+});

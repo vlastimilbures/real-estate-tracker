@@ -49,31 +49,19 @@ import type {
   ValidationCode,
   ValidationEntity,
 } from "../engine";
-import type { IntRange } from "../lib/rules";
-
-/** A whole-number field outside the bounds the forms and CSV import apply (ADR 0086), or
- *  not a whole number (ADR 0180 §2).
- *  Restore-only: the engine itself is open-ended, so a restore warns and asks instead of
- *  refusing (ADR 0148). */
-export interface RangeProblem {
-  /** BEYOND_LIMIT: above ten times the form maximum, so restore refuses (ADR 0148). */
-  code: "OUT_OF_RANGE" | "BEYOND_LIMIT";
-  entity: ValidationEntity;
-  id?: string | undefined;
-  field: string;
-  range: IntRange;
-}
+import type { IntRange, RangeProblem } from "../lib/rules";
 
 /** The engine's input rules plus the whole-number form bounds over
  *  the restored rows (assumptions absent ⇒ portfolio rules only). Injected by the
  *  caller: the data layer never calls engine functions; `checkInputRules` in
  *  src/import/inputRules.ts is the one the app uses. Scenarios only need to be readable
  *  (ADR 0123): one that breaks a rule restores and is handled like a saved one, so every
- *  backup the app writes restores. */
+ *  backup the app writes restores. A range problem comes without the stored value, which
+ *  restore never shows (ADR 0086). */
 export type InputRules = (
   portfolio: Portfolio,
   assumptions?: Assumptions,
-) => (EngineValidationError | RangeProblem)[];
+) => (EngineValidationError | Omit<RangeProblem, "value">)[];
 
 /** The rule a restore only asks about ("Restore anyway"): the whole-number form bounds a
  *  database may already break (ADR 0148 §1). A stored date before the date floor is not
