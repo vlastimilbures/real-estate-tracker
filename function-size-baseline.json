@@ -135,7 +135,7 @@
   },
   "src/ui/pages/Import.tsx": {
     "complexity": {
-      "Function 'Import'": 36
+      "Function 'Import'": 34
     },
     "lines": {
       "Function 'Import'": 292

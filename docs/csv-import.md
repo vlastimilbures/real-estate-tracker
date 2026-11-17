@@ -229,6 +229,8 @@ update)**. If the import updates existing records, pressing it asks you to confi
 **Overwrite 1 existing record**. An added mortgage block that stops saved loan events also
 asks first (see above); any other import that only adds records starts at once. When every
 row is unchanged there is nothing to import, and the button stays disabled.
+When you replace a file, or your data changes, the old preview goes away and Import stays
+disabled until the new preview is shown.
 
 If your data changes between the preview and the import (for example you edited a property
 in the meantime), nothing is written: the page says so and shows the new preview to review.
