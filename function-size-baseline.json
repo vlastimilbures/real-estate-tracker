@@ -30,7 +30,7 @@
       "Function 'planImport'": 29
     },
     "lines": {
-      "Function 'planImport'": 184
+      "Function 'planImport'": 182
     }
   },
   "src/state/portfolioStore.ts": {
@@ -156,7 +156,7 @@
   },
   "src/ui/pages/PropertyDetail.tsx": {
     "complexity": {
-      "Function 'PropertyDetail'": 60
+      "Function 'PropertyDetail'": 59
     },
     "lines": {
       "Function 'PropertyDetail'": 394

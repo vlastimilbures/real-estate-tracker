@@ -17,6 +17,7 @@ import {
   type DebtServicePaid,
 } from "./ownerCash";
 import { assertAssumptions, assertInputs } from "./validate";
+import { decimalsOf, fieldsOf } from "./yearFields";
 import { basisDate, growthRate, valueAt } from "./growth";
 import {
   valueAnchor,
@@ -24,8 +25,8 @@ import {
   leaseInForce,
   forProperty,
   holdingCostBasis,
-  ltvOf,
 } from "./metrics";
+import { costsAndNoi, dscrOf, stocksOf } from "./figures";
 import type {
   Assumptions,
   Lease,
@@ -221,30 +222,6 @@ function computeTurnOnGates(
   };
 }
 
-/**
- * A year's stocks. Committed debt = the drawn balance + the development tranches not
- * drawn yet (ADR 0166); equity and LTV use it. The screens show the drawn balance beside
- * the value less those tranches (`reportedValue`, ADR 0169). The portfolio passes its own
- * Σ committed debt: Σbalance + Σundrawn could round differently in the last digits and
- * move the golden hashes (ADR 0039).
- */
-function stocks(
-  value: Decimal,
-  balance: Decimal,
-  undrawnDebt: Decimal,
-  committedDebt = balance.plus(undrawnDebt),
-) {
-  return {
-    value,
-    balance,
-    committedDebt,
-    undrawnDebt,
-    reportedValue: value.minus(undrawnDebt),
-    equity: value.minus(committedDebt),
-    ltv: ltvOf(committedDebt, value),
-  };
-}
-
 /** Year 0 — opening position (stocks only). Empty if not owned yet. */
 function buildYear0(
   b: PropertyBasis,
@@ -260,26 +237,8 @@ function buildYear0(
   // baseDate is new debt in its year, not opening debt (D-33).
   const balance0 = debtAtGridMonth(b.schedule, blocks, assumptions, 0);
   return {
-    year: 0,
-    calendarYear: baseYear,
-    ...yearPeriod(assumptions.baseDate, 0),
-    ...stocks(crash(b.v0, 0), balance0, undrawn0),
-    grossRent: ZERO,
-    effectiveRent: ZERO,
-    holdingCosts: ZERO,
-    noi: ZERO,
-    interest: ZERO,
-    principal: ZERO,
-    debtService: ZERO,
-    netCashFlow: ZERO,
-    draws: ZERO,
-    committedDraws: ZERO,
-    acquiredValue: ZERO,
-    refinanced: ZERO,
-    prepaid: ZERO,
-    prepaymentFees: ZERO,
-    dscr: null,
-    ratePa: null,
+    ...zeroYear(0, baseYear, assumptions.baseDate),
+    ...stocksOf(crash(b.v0, 0), balance0, undrawn0),
   };
 }
 
@@ -344,16 +303,11 @@ function computeRentAndCosts(
         .times(months),
     );
   }
-  const effectiveRent = grossRent.times(ONE.minus(vacancy));
-  const holdingCosts = b.fixed0
-    .times(at(cpi, t))
-    .times(ownedMonths)
-    .div(12)
-    // Management on the rent collected, maintenance on the rent contracted (ADR 0182).
-    .plus(b.mgmtPct.times(effectiveRent))
-    .plus(b.maintPct.times(grossRent));
-  const noi = effectiveRent.minus(holdingCosts);
-  return { grossRent, effectiveRent, holdingCosts, noi };
+  const fixed = b.fixed0.times(at(cpi, t)).times(ownedMonths).div(12);
+  return {
+    grossRent,
+    ...costsAndNoi(fixed, grossRent, vacancy, b.mgmtPct, b.maintPct),
+  };
 }
 
 function buildYearRow(
@@ -375,7 +329,7 @@ function buildYearRow(
     year: t,
     calendarYear: baseDate.getUTCFullYear() + t,
     ...yearPeriod(baseDate, t),
-    ...stocks(value, slice.balance, parts.undrawn),
+    ...stocksOf(value, slice.balance, parts.undrawn),
     grossRent: rc.grossRent,
     effectiveRent: rc.effectiveRent,
     holdingCosts: rc.holdingCosts,
@@ -391,7 +345,7 @@ function buildYearRow(
     refinanced: slice.refinanced,
     prepaid: slice.prepaid,
     prepaymentFees: slice.prepaymentFees,
-    dscr: slice.debtService.isZero() ? null : rc.noi.div(slice.debtService),
+    dscr: dscrOf(rc.noi, slice.debtService),
     ratePa: slice.rate,
   };
 }
@@ -522,6 +476,14 @@ function propertyYears(
 /** A projection year before its `cashToOwner` is known (ADR 0161). */
 type YearRow = Omit<ProjectionYear, "cashToOwner">;
 
+/** A row's stocks (summed and derived), its summed stocks and its flows, in the
+ *  order of `YEAR_FIELD_KINDS` (#478). */
+const STOCK_FIELDS = fieldsOf("stock", "derivedStock");
+const SUMMED_STOCK_FIELDS = fieldsOf("stock");
+const FLOW_FIELDS = fieldsOf("flow");
+type SummedField =
+  (typeof SUMMED_STOCK_FIELDS)[number] | (typeof FLOW_FIELDS)[number];
+
 /**
  * ADR 0161: each year's cash to owner = net cash flow − the cash outside it
  * (`cashOutsideNetCf` of the same properties); year 0 is the opening position, 0.
@@ -563,27 +525,9 @@ function zeroYear(year: number, calendarYear: number, baseDate: Date): YearRow {
     year,
     calendarYear,
     ...yearPeriod(baseDate, year),
-    value: ZERO,
-    balance: ZERO,
-    committedDebt: ZERO,
-    undrawnDebt: ZERO,
-    reportedValue: ZERO,
-    equity: ZERO,
+    ...decimalsOf(STOCK_FIELDS),
     ltv: ZERO,
-    grossRent: ZERO,
-    effectiveRent: ZERO,
-    holdingCosts: ZERO,
-    noi: ZERO,
-    interest: ZERO,
-    principal: ZERO,
-    debtService: ZERO,
-    netCashFlow: ZERO,
-    draws: ZERO,
-    committedDraws: ZERO,
-    acquiredValue: ZERO,
-    refinanced: ZERO,
-    prepaid: ZERO,
-    prepaymentFees: ZERO,
+    ...decimalsOf(FLOW_FIELDS),
     dscr: null,
     ratePa: null,
   };
@@ -650,35 +594,18 @@ function sumYears(perProp: YearRow[][], assumptions: Assumptions): YearRow[] {
   const baseYear = assumptions.baseDate.getUTCFullYear();
   const out: YearRow[] = [];
   for (let t = 0; t <= assumptions.horizonYears; t++) {
-    const acc = (sel: (y: YearRow) => Decimal) =>
-      perProp.reduce((s, yrs) => s.plus(sel(at(yrs, t))), ZERO);
-    const noi = acc((y) => y.noi);
-    const debtService = acc((y) => y.debtService);
+    // Each field summed in portfolio order from 0; net cash flow is Σ net cash flow.
+    const acc = (f: SummedField) =>
+      perProp.reduce((s, yrs) => s.plus(at(yrs, t)[f]), ZERO);
+    const st = decimalsOf(SUMMED_STOCK_FIELDS, acc);
+    const flows = decimalsOf(FLOW_FIELDS, acc);
     out.push({
       year: t,
       calendarYear: baseYear + t,
       ...yearPeriod(assumptions.baseDate, t),
-      ...stocks(
-        acc((y) => y.value),
-        acc((y) => y.balance),
-        acc((y) => y.undrawnDebt),
-        acc((y) => y.committedDebt),
-      ),
-      grossRent: acc((y) => y.grossRent),
-      effectiveRent: acc((y) => y.effectiveRent),
-      holdingCosts: acc((y) => y.holdingCosts),
-      noi,
-      interest: acc((y) => y.interest),
-      principal: acc((y) => y.principal),
-      debtService,
-      netCashFlow: acc((y) => y.netCashFlow),
-      draws: acc((y) => y.draws),
-      committedDraws: acc((y) => y.committedDraws),
-      acquiredValue: acc((y) => y.acquiredValue),
-      refinanced: acc((y) => y.refinanced),
-      prepaid: acc((y) => y.prepaid),
-      prepaymentFees: acc((y) => y.prepaymentFees),
-      dscr: debtService.isZero() ? null : noi.div(debtService),
+      ...stocksOf(st.value, st.balance, st.undrawnDebt, st.committedDebt),
+      ...flows,
+      dscr: dscrOf(flows.noi, flows.debtService),
       ratePa: null,
     });
   }

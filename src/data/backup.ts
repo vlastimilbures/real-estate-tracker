@@ -16,7 +16,7 @@ import {
 } from "./repositories";
 import { MIGRATIONS, V7_TABLES, stamp } from "./migrations";
 import { DataError, messageOf } from "./errors";
-import { propertyKey } from "../lib/propertyKey";
+import { spellingKey } from "../lib/propertyKey";
 import {
   saveFailureDetail,
   type SaveFileOptions,
@@ -445,11 +445,13 @@ const columnOf = (field: string) =>
     ? "interest_only_until"
     : toColumn(field.replace(/^defaults\./, "default_"));
 
-/** A key cell as restore compares it: a property name as every other entry point
- *  matches it, trimmed and case-insensitive (D-55, ADR 0148). */
+/** A key cell as restore compares it: a property name by `spellingKey`, trimmed and
+ *  case-insensitive (D-55, ADR 0148 §5), deliberately without the NFC step of
+ *  `propertyKey`. A backup the app accepted before must keep restoring, so two stored
+ *  names that differ only in Unicode form are not refused here (ADR 0237 Consequences). */
 const keyCell = (table: BackupTable, column: string, v: unknown) =>
   table === "properties" && column === "name" && typeof v === "string"
-    ? propertyKey(v)
+    ? spellingKey(v)
     : v;
 
 /** Rows repeating an earlier row's id or natural key (the v7 UNIQUE keys). */

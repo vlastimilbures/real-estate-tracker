@@ -6,6 +6,7 @@ import {
   parseIntField,
   parseMoney,
   parsePercentToRatio,
+  parseSizeField,
   type CollectRules,
   type KindParsers,
 } from "./formParse";
@@ -27,6 +28,7 @@ export const FORM_PARSERS: KindParsers = {
   },
   pct: parsePercentToRatio,
   int: parseIntField,
+  size: parseSizeField,
   draws: parseDrawRows,
   prepayments: parsePrepaymentRows,
   recasts: parseRecastRows,

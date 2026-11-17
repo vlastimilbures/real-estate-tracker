@@ -83,6 +83,19 @@ describe("parsePropertyForm", () => {
     expect(result.errors.name).toBe(en.propertyForm.errNameExists);
   });
 
+  // ADR 0237: names are compared in NFC. Escapes keep the two forms apart in the source.
+  it("rejects a decomposed (NFD) name that matches a stored composed (NFC) one", () => {
+    const result = parsePropertyForm(
+      { ...valid, name: "Na\u0301rodni\u0301 12" },
+      "p-new",
+      ["N\u00e1rodn\u00ed 12"],
+      en,
+    );
+    expect(result.valid).toBe(false);
+    if (result.valid) throw new Error("expected invalid");
+    expect(result.errors.name).toBe(en.propertyForm.errNameExists);
+  });
+
   it("accepts an edit that keeps its name once the caller leaves it out of existingNames", () => {
     const result = parsePropertyForm(valid, "vinohrady-2kk", [], en);
     expect(result.valid).toBe(true);
@@ -118,16 +131,19 @@ describe("parsePropertyForm", () => {
     expect(result.errors.purchase_price).toBe(en.forms.invalidHint.money);
   });
 
-  it("rejects a non-whole size and an invalid percentage override, leaving optional fields blank as valid", () => {
+  // ADR 0236 §1: one decimal place is accepted, two are refused naming the limit.
+  it("rejects a size with two decimals and an invalid percentage override, leaving optional fields blank as valid", () => {
     const result = parsePropertyForm(
-      { ...valid, size_m2: "58.5", appreciation_override_pa: "abc" },
+      { ...valid, size_m2: "54.55", appreciation_override_pa: "abc" },
       "p-new",
       [],
       en,
     );
     expect(result.valid).toBe(false);
     if (result.valid) throw new Error("expected invalid");
-    expect(result.errors.size_m2).toBe("Enter a whole number from 1 to 10 000");
+    expect(result.errors.size_m2).toBe(
+      "Enter a number from 1 to 10 000 with at most one decimal place",
+    );
     expect(result.errors.appreciation_override_pa).toBe(
       en.forms.invalidHint.pct,
     );
@@ -140,8 +156,17 @@ describe("parsePropertyForm", () => {
     expect(result.property.rentIndexOverridePa).toBeUndefined();
   });
 
-  it("bounds the size to 1–10 000 m² (ADR 0075, DR-078)", () => {
-    const hint = "Enter a whole number from 1 to 10 000";
+  it("accepts a size with one decimal place, comma or dot (ADR 0236 §1)", () => {
+    // Trailing zeros count by value: "58,50" is one decimal place.
+    for (const size_m2 of ["58.5", "58,5", "58.50", "58,50"]) {
+      const result = parsePropertyForm({ ...valid, size_m2 }, "p-new", [], en);
+      expect(result.valid && result.property.sizeM2, size_m2).toBe(58.5);
+    }
+  });
+
+  it("bounds the size to 1–10 000 m² (ADR 0075, DR-078; wording ADR 0236 §1)", () => {
+    const hint =
+      "Enter a number from 1 to 10 000 with at most one decimal place";
     for (const size_m2 of ["0", "10001", "9".repeat(400)]) {
       const result = parsePropertyForm({ ...valid, size_m2 }, "p-new", [], en);
       expect(result.valid).toBe(false);

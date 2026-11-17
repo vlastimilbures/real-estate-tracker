@@ -81,7 +81,7 @@ function propertySpecs(t: Dictionary) {
     {
       name: "size_m2",
       label: p.size,
-      kind: "int",
+      kind: "size", // one decimal place (ADR 0236)
       optional: true,
       range: INT_RANGES.sizeM2, // ADR 0075 (DR-078)
     },
@@ -134,8 +134,9 @@ export type PropertyFormResult =
  * `Property` plus the address/garage extras (persisted for fidelity but not engine
  * inputs). `id` is the property's id: the edited one's, or a new random one the caller
  * made (ADR 0127). `existingNames` is every other property's name — used for the
- * uniqueness check, matched by `propertyKey` like CSV import (ADR 0184 §4); the form's own
- * current name (in edit mode) must already be excluded by the caller.
+ * uniqueness check, matched by `propertyKey` like CSV import (ADR 0184 §4), so a name
+ * differing only in Unicode form is a duplicate (ADR 0237); the form's own current name
+ * (in edit mode) must already be excluded by the caller.
  */
 export function parsePropertyForm(
   form: PropertyFormState,

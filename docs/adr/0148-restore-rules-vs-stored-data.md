@@ -7,7 +7,8 @@
 - Amends: [0086](0086-restore-int-bounds.md) §4
 - Amended by: [0180](0180-data-check-restore-asof-polish.md) (§1–§2: a non-integer is a value
   the forms do not accept; where the Data check lists a value · §4: the reader stays as loose
-  as written)
+  as written); [0237](0237-property-names-nfc.md) (§5: restore keeps comparing names without
+  the NFC step `propertyKey` now has)
 - Related: [0052](0052-restore-safety-backup.md) (safety backup), [0094](0094-sample-portfolio-clear.md)
   (Clear sample), [0118](0118-data-check.md) (data check), D-55 (name matching), DR-036 (CSV
   decimals)

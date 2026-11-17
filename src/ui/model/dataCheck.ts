@@ -75,8 +75,9 @@ export type DataFinding =
   /** No own cash recorded (ADR 0119): Cash invested is unknown; for a property bought
    *  after the base date (`future`) the projection derives its down payment. */
   | { kind: "fundingUnknown"; future: boolean }
-  /** A stored whole number outside the range the forms accept (ADR 0148), or not a whole
-   *  number (ADR 0180 §2): a legacy database keeps it, and a restore asks about it.
+  /** A stored bounded value outside the range the forms accept (ADR 0148), or finer than
+   *  they accept — not a whole number (ADR 0180 §2), or a size with two or more decimals
+   *  (ADR 0236 §3): a legacy database keeps it, and a restore asks about it.
    *  `loanStart` names the mortgage. */
   | {
       kind: "outOfRange";
@@ -443,9 +444,10 @@ export function findingText(
       switch (f.field) {
         case "sizeM2":
           // Only the size can hold a fraction: the engine refuses one in the others
-          // (validate.ts, whole years), so they never reach the Data check.
+          // (validate.ts, whole years), so they never reach the Data check. Inside the
+          // range it is listed only with two or more decimals (ADR 0236 §3).
           return inRange(f.value, f.range)
-            ? d.notWholeSize(value, range)
+            ? d.sizeDecimals(value, range)
             : d.outOfRangeSize(value, range);
         case "fixationYears":
           return d.outOfRangeFixation(loan, value, range, f.value);
