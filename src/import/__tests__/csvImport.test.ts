@@ -248,6 +248,42 @@ describe("importCsv — matching and preserved fields", () => {
     ]);
   });
 
+  // ADR 0237 Consequences: after a restore that holds two names differing only in Unicode
+  // form, a row spelled like one of them updates that one, never its twin.
+  it("a row spelled like one of two encoding twins updates that twin (ADR 0237)", async () => {
+    const nfc = "N\u00e1rodn\u00ed 12";
+    const nfd = "Na\u0301rodni\u0301 12";
+    const first = "00000000-0000-4000-8000-000000000001";
+    const last = "ffffffff-ffff-4fff-bfff-ffffffffffff";
+    const insert = sql.db.prepare(
+      "INSERT INTO properties (id, name, purchase_date, purchase_price) VALUES (?, ?, '2019-01-01', '4000000')",
+    );
+    insert.run(first, nfc);
+    insert.run(last, nfd);
+    await importNow(sql, {
+      properties: parseProperties(
+        `name,purchase_date,purchase_price\n${nfc},2019-01-01,4100000`,
+      ).rows,
+      valuations: parseValuations(
+        `property_name,valid_from,valid_to,market_value\n${nfc},2026-01-01,,9000000`,
+        new Set([nfc, nfd]),
+      ).rows,
+    });
+    expect(
+      sql.db
+        .prepare(
+          "SELECT id, purchase_price FROM properties WHERE id IN (?, ?) ORDER BY id",
+        )
+        .all(first, last),
+    ).toEqual([
+      { id: first, purchase_price: "4100000" },
+      { id: last, purchase_price: "4000000" },
+    ]);
+    expect(sql.db.prepare("SELECT property_id FROM valuations").all()).toEqual([
+      { property_id: first },
+    ]);
+  });
+
   it("a re-import keeps the active flag, draws, interest-only date and a stored maturity (DR-129)", async () => {
     sql.db.exec(`
       UPDATE properties SET active = 0 WHERE name = 'Byt A';
