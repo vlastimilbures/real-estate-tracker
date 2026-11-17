@@ -48,21 +48,17 @@ const save = () =>
   });
 
 describe("PropertyFormModal focus after a failed save (ADR 0246)", () => {
-  // #538: nothing put focus back after a failed write.
-  it.fails(
-    "puts focus back on Save changes after the fixup dropped it to <body>",
-    async () => {
-      await openForm();
-      await userEvent.click(save());
-      expect(save()).toHaveProperty("disabled", true);
-      // The focus fixup for the disabled button, fired now rather than on jsdom's timer.
-      act(() => save().blur());
-      expect(document.activeElement).toBe(document.body);
-      await act(async () => finish(failure));
-      expect(screen.getByRole("alert").textContent).toContain("Disk full");
-      expect(document.activeElement).toBe(save());
-    },
-  );
+  it("puts focus back on Save changes after the fixup dropped it to <body>", async () => {
+    await openForm();
+    await userEvent.click(save());
+    expect(save()).toHaveProperty("disabled", true);
+    // The focus fixup for the disabled button, fired now rather than on jsdom's timer.
+    act(() => save().blur());
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => finish(failure));
+    expect(screen.getByRole("alert").textContent).toContain("Disk full");
+    expect(document.activeElement).toBe(save());
+  });
 
   it("leaves focus where the user moved it during the save", async () => {
     await openForm();

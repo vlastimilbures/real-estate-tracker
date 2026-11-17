@@ -13,6 +13,7 @@ import { draftRowOf, listKind } from "../model/loanEventRows";
 import { Button } from "./primitives";
 import { DateInput } from "./DateInput";
 import { Field, TextInput } from "./fields";
+import { useSaveBusy } from "../hooks/useSaveBusy";
 import { useT } from "../hooks/useT";
 import { formWriteErrors } from "../model/writeError";
 import { toWriteError, type WriteError } from "../../state/writeError";
@@ -102,7 +103,7 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
   const [draft, setDraft] = useState<Record<string, string>>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useSaveBusy(errors, formError);
   // Leave guard (UX-073): while the draft differs from the values the form opened with
   // (or last saved), navigation asks first. Each form registers under its own key.
   const ownKey = useId();

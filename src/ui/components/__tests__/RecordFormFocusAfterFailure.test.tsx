@@ -34,21 +34,17 @@ function renderForm() {
 const save = () => screen.getByRole("button", { name: /^(Save|Saving…)$/ });
 
 describe("RecordForm focus after a failed save (ADR 0246)", () => {
-  // #538: nothing put focus back after a failed write.
-  it.fails(
-    "puts focus back on Save after the fixup dropped it to <body>",
-    async () => {
-      const { finish } = renderForm();
-      await userEvent.click(save());
-      expect(save()).toHaveProperty("disabled", true);
-      // The focus fixup for the disabled button, fired now rather than on jsdom's timer.
-      act(() => save().blur());
-      expect(document.activeElement).toBe(document.body);
-      await act(async () => finish(failure));
-      expect(screen.getByRole("alert").textContent).toContain("Disk full");
-      expect(document.activeElement).toBe(save());
-    },
-  );
+  it("puts focus back on Save after the fixup dropped it to <body>", async () => {
+    const { finish } = renderForm();
+    await userEvent.click(save());
+    expect(save()).toHaveProperty("disabled", true);
+    // The focus fixup for the disabled button, fired now rather than on jsdom's timer.
+    act(() => save().blur());
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => finish(failure));
+    expect(screen.getByRole("alert").textContent).toContain("Disk full");
+    expect(document.activeElement).toBe(save());
+  });
 
   it("leaves focus where the user moved it during the save", async () => {
     const { finish } = renderForm();

@@ -35,21 +35,17 @@ const create = () =>
   });
 
 describe("ScenarioForm focus after a failed save (ADR 0246)", () => {
-  // #538: nothing put focus back after a failed write.
-  it.fails(
-    "puts focus back on Create after the fixup dropped it to <body>",
-    async () => {
-      const { finish } = await renderForm();
-      await userEvent.click(create());
-      expect(create()).toHaveProperty("disabled", true);
-      // The focus fixup for the disabled button, fired now rather than on jsdom's timer.
-      act(() => create().blur());
-      expect(document.activeElement).toBe(document.body);
-      await act(async () => finish(failure));
-      expect(screen.getByRole("alert").textContent).toContain("Disk full");
-      expect(document.activeElement).toBe(create());
-    },
-  );
+  it("puts focus back on Create after the fixup dropped it to <body>", async () => {
+    const { finish } = await renderForm();
+    await userEvent.click(create());
+    expect(create()).toHaveProperty("disabled", true);
+    // The focus fixup for the disabled button, fired now rather than on jsdom's timer.
+    act(() => create().blur());
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => finish(failure));
+    expect(screen.getByRole("alert").textContent).toContain("Disk full");
+    expect(document.activeElement).toBe(create());
+  });
 
   it("leaves focus where the user moved it during the save", async () => {
     const { finish } = await renderForm();
