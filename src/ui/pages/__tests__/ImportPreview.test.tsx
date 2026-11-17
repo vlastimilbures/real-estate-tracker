@@ -198,6 +198,68 @@ describe("Import preview (ADR 0096)", () => {
     expect(importCsv).not.toHaveBeenCalled();
   });
 
+  it("a replaced file hides the old preview until the new one is shown (ADR 0240, #437)", async () => {
+    let resolveNext: (value: CsvImportPreview) => void = () => {};
+    previewCsv.mockResolvedValueOnce(plan([add]));
+    previewCsv.mockReturnValueOnce(
+      new Promise<CsvImportPreview>((resolve) => {
+        resolveNext = resolve;
+      }),
+    );
+    const { container } = renderWithPortfolio(<Import />, {
+      route: "import",
+    });
+    await choosePropertiesFile(container);
+    await screen.findByRole("button", { name: p.importScope(1, 1, 0) });
+
+    await choosePropertiesFile(container);
+    await waitFor(() => expect(previewCsv).toHaveBeenCalledTimes(2));
+
+    expect(screen.queryByRole("button", { name: p.willAdd(1) })).toBeNull();
+    const button = screen.getByRole("button", {
+      name: p.importSelected,
+    }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    await userEvent.click(button);
+    expect(importCsv).not.toHaveBeenCalled();
+
+    act(() => resolveNext(plan([add, update], "plan-2")));
+    const next = (await screen.findByRole("button", {
+      name: p.importScope(2, 1, 1),
+    })) as HTMLButtonElement;
+    expect(next.disabled).toBe(false);
+  });
+
+  it("a change to the stored data hides the old preview until the new one is shown (ADR 0240, #437)", async () => {
+    let resolveNext: (value: CsvImportPreview) => void = () => {};
+    previewCsv.mockResolvedValueOnce(plan([add]));
+    previewCsv.mockReturnValueOnce(
+      new Promise<CsvImportPreview>((resolve) => {
+        resolveNext = resolve;
+      }),
+    );
+    const { container } = renderWithPortfolio(<Import />, { route: "import" });
+    await choosePropertiesFile(container);
+    await screen.findByRole("button", { name: p.importScope(1, 1, 0) });
+
+    act(() => usePortfolioStore.setState({ portfolio: { ...portfolio } }));
+    await waitFor(() => expect(previewCsv).toHaveBeenCalledTimes(2));
+
+    expect(screen.queryByRole("button", { name: p.willAdd(1) })).toBeNull();
+    const button = screen.getByRole("button", {
+      name: p.importSelected,
+    }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    await userEvent.click(button);
+    expect(importCsv).not.toHaveBeenCalled();
+
+    act(() => resolveNext(plan([add, update], "plan-2")));
+    const next = (await screen.findByRole("button", {
+      name: p.importScope(2, 1, 1),
+    })) as HTMLButtonElement;
+    expect(next.disabled).toBe(false);
+  });
+
   it("a plan with problems shows them and offers no import", async () => {
     previewCsv.mockResolvedValue({
       items: [],

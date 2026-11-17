@@ -129,8 +129,9 @@ export function Import() {
 
   // ADR 0096: once every chosen file is valid, preview what the import would do; again
   // whenever the files or the stored data change. A change first closes the confirm row
-  // and drops a preview that no longer applies (during render, not in the effect).
-  // `batch` changes whenever a file does, so it also covers hasAnyFile and allValid.
+  // and drops the preview, so Import waits for the new one (ADR 0240; during render, not
+  // in the effect). `batch` changes whenever a file does, so it also covers hasAnyFile and
+  // allValid.
   const [seen, setSeen] = useState({ batch, portfolio, previewCsv });
   if (
     batch !== seen.batch ||
@@ -140,7 +141,7 @@ export function Import() {
     setSeen({ batch, portfolio, previewCsv });
     setConfirming(false);
     setPreviewFailure(null);
-    if (!hasAnyFile || !allValid) setPreview(null);
+    setPreview(null);
   }
   useEffect(() => {
     if (!hasAnyFile || !allValid) return;

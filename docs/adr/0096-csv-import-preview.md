@@ -8,7 +8,9 @@
   data is replaced), [0160](0160-csv-import-and-stored-loan-events.md) (the preview notes
   replaced loan events and blocks without effect; such an add asks for confirmation),
   [0185](0185-csv-missing-columns-and-preview-clarity.md) (equal-looking changes at full
-  precision, no-data-rows badge, a commit-time problem shown as a changed plan)
+  precision, no-data-rows badge, a commit-time problem shown as a changed plan),
+  [0240](0240-import-preview-cleared-on-change.md) (every change clears the preview, so
+  Import waits for the new one)
 
 ## Context
 

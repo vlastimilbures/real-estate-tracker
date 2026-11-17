@@ -37,6 +37,10 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- When you replace a chosen CSV file, or your data changes, the Import panel hides the old
+  preview and keeps Import disabled until the new preview is shown, so pressing Import in
+  that moment no longer ends in a misleading "plan changed" message (ADR 0240, #437). No
+  figure changes.
 - The engine no longer has an acquisition cost percentage (ADR 0234, #454). It could never
   be set in the app, so a property bought after the projection start still adds the
   transaction costs on its funding record, or none when none are entered. No figure changes.
