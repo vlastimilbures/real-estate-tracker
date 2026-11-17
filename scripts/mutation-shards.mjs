@@ -44,7 +44,10 @@ export const SHARDS = {
       part: "b",
     },
     "src/engine/loan/grid.ts",
-    "src/engine/schedule.ts",
+    "src/engine/loan/plainGrid.ts",
+    "src/engine/loan/queries.ts",
+    "src/engine/loan/chain.ts",
+    "src/engine/loan/committedDebt.ts",
   ],
   "validate-a": [
     { file: "src/engine/validate.ts", anchor: "checkMortgage", part: "a" },
