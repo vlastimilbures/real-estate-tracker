@@ -21,6 +21,7 @@ import { PresetBar, ScenarioListPanel } from "./ScenariosPanels";
 import { useToast } from "../hooks/useToast";
 import { PortfolioStateNotice } from "../components/PortfolioStateNotice";
 import { portfolioState } from "../model/portfolioState";
+import "../styles/scenarios.css";
 
 export function Scenarios() {
   const t = useT();

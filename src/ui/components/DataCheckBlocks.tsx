@@ -5,6 +5,7 @@
 import { useId, type ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { useT } from "../hooks/useT";
+import "../styles/data-check.css";
 
 export type DataCheckKind = "attention" | "defaults";
 

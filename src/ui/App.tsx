@@ -8,11 +8,9 @@ import "./components/forms.css";
 import "./components/feedback.css";
 import "./components/charts.css";
 import "./components/layout.css";
+// Here, not in InfoTip.tsx: the build puts InfoTip in the shared AppShell chunk, whose
+// stylesheet loads before this one, so equal-specificity rules above would win (#494).
 import "./styles/info-tip.css";
-import "./styles/data-check.css";
-import "./styles/import.css";
-import "./styles/scenarios.css";
-import "./styles/loan-outlook.css";
 import { usePortfolioStore } from "../state/portfolioStore";
 import { useUiStore } from "../state/uiStore";
 import { Dashboard } from "./pages/Dashboard";

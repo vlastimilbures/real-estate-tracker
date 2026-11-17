@@ -22,6 +22,7 @@ import {
   itemNotes,
   storedEventText,
 } from "../model/importPreview";
+import "../styles/import.css";
 
 export interface FileState<T> {
   name: string;
