@@ -13,7 +13,7 @@ export function SampleBanner() {
   return (
     <div className="banner info" role="note">
       <span>{t.sample.banner}</span>
-      <div className="row" style={{ gap: "var(--s2)" }}>
+      <div className="row row-s2">
         <ClearSampleButton />
         <Button size="sm" variant="ghost" onClick={() => void dismiss()}>
           {t.sample.keepExploring}

@@ -283,7 +283,7 @@ export function Import() {
               )}
             </div>
           )}
-          <div className="row" style={{ gap: "var(--s3)" }}>
+          <div className="row row-s3">
             <Button
               variant="primary"
               disabled={!canImport || confirming}

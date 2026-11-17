@@ -117,7 +117,7 @@ export function RestoreConfirm({
       <p className="error-text" style={{ marginBottom: "var(--s4)" }}>
         {t.backup.restoreWarning}
       </p>
-      <div className="row" style={{ gap: "var(--s3)" }}>
+      <div className="row row-s3">
         <Button onClick={onCancel} disabled={restoring}>
           {t.common.cancel}
         </Button>
