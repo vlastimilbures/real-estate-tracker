@@ -13,7 +13,6 @@ export {
   /** @internal test seam: one loan's schedule; the app runs `propertySchedules`. */
   buildSchedule,
   effectiveMaturity,
-  blockChain,
   chainLinks,
   afterSuccessor,
   replacedOnOrBefore,

@@ -88,7 +88,13 @@ export function blockChain(
   blocks: MortgageBlock[],
   baseDate: Date,
 ): MortgageBlock[] {
-  return chainLinks(blocks, baseDate).map((l) => l.block);
+  const chain: MortgageBlock[] = [];
+  let block = selectBlock(blocks, baseDate);
+  while (block) {
+    chain.push(block);
+    block = firstAfter(blocks, block.startDate, (b) => b.startDate);
+  }
+  return chain;
 }
 
 /** One block of a refinance chain with the successor that replaces it, if any. */
@@ -97,16 +103,11 @@ export interface ChainLink {
   next: MortgageBlock | undefined;
 }
 
-/** The chain of `blockChain`, each block with its successor: the one place a block's
- *  successor is read (#476). */
+/** The chain of `blockChain` at `date`, each block with its successor: the one place a
+ *  block's successor is read (#476). */
 export function chainLinks(blocks: MortgageBlock[], date: Date): ChainLink[] {
-  const chain: MortgageBlock[] = [];
-  let block = selectBlock(blocks, date);
-  while (block) {
-    chain.push(block);
-    block = firstAfter(blocks, block.startDate, (b) => b.startDate);
-  }
-  return chain.map((b, i) => ({ block: b, next: chain[i + 1] }));
+  const chain = blockChain(blocks, date);
+  return chain.map((block, i) => ({ block, next: chain[i + 1] }));
 }
 
 /**

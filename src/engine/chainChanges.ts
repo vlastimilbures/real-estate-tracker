@@ -1,8 +1,16 @@
 // What a change to one property's mortgage blocks does to its loan chain (ADR 0160):
 // the stored prepayments and maturity changes it stops, and the blocks the schedule
 // does not use. Read from `propertySchedule` before and after, so it agrees with the
-// REPLACED outcomes the property page warns about (ADR 0109 §9).
-import { blockChain, propertySchedule } from "./schedule";
+// REPLACED outcomes the property page warns about (ADR 0109 §9). The two schedules stay:
+// the chain's cut (`afterSuccessor`) does not tell every stop, as a recast dated on or
+// before a successor's start that would settle in the handover month is replaced at the
+// handover (chain.ts `handoverPrepayments`) though the cut keeps it.
+import {
+  afterSuccessor,
+  chainLinks,
+  type ChainLink,
+  propertySchedule,
+} from "./schedule";
 import type {
   Assumptions,
   IsoDate,
@@ -32,6 +40,16 @@ const replaced = (o: LoanEventOutcome) =>
 const key = (o: LoanEventOutcome) =>
   `${o.blockId}|${o.kind}|${o.date.getTime()}`;
 
+/** The block taking over from `blockId`: still in the chain, its next block; left the
+ *  chain, the new block in force. */
+function takerOf(
+  links: ChainLink[],
+  blockId: string,
+): MortgageBlock | undefined {
+  const link = links.find((l) => l.block.id === blockId);
+  return link ? link.next : links[0]?.block;
+}
+
 /**
  * Compare one property's blocks `before` and `after` a change. An event stops when it
  * applied before and is REPLACED after, or when its block left the chain (a new block
@@ -43,9 +61,9 @@ export function loanChainChanges(
   after: MortgageBlock[],
   assumptions: Assumptions,
 ): LoanChainChanges {
-  const chain = blockChain(after, assumptions.baseDate);
+  const links = chainLinks(after, assumptions.baseDate);
   const unused = after
-    .filter((b) => !chain.some((c) => c.id === b.id))
+    .filter((b) => !links.some((l) => l.block.id === b.id))
     .map((b) => b.id);
 
   const now = new Map<string, LoanEventOutcome[]>();
@@ -56,13 +74,9 @@ export function loanChainChanges(
   for (const o of propertySchedule(before, assumptions).eventOutcomes) {
     if (replaced(o)) continue;
     const later = now.get(key(o))?.shift();
-    const i = chain.findIndex((b) => b.id === o.blockId);
-    // Still in the chain: its next block; left the chain: the new block in force.
-    const by = i >= 0 ? chain[i + 1] : chain[0];
+    const by = takerOf(links, o.blockId);
     if (!by) continue;
-    const stops = later
-      ? replaced(later)
-      : o.date.getTime() > by.startDate.getTime();
+    const stops = later ? replaced(later) : afterSuccessor(by, o.date);
     if (stops)
       stopped.push({
         by: by.id,
