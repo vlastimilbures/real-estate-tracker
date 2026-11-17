@@ -2,7 +2,7 @@
 //
 // ADR 0207 (#385): holding costs get a read view with Edit, like the other records.
 import { describe, it, expect, vi } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { money, rate, type HoldingCost } from "../../../engine";
 import { assumptions } from "../../../engine/__tests__/support/seed";
@@ -128,8 +128,10 @@ describe("Holding costs Edit (ADR 0207 §2, §3)", () => {
       }),
     );
     expect(onSaved).toHaveBeenCalled();
+    // The switch back lands after the awaited write, outside the click's act(): its render
+    // and then the focus effect run on React's scheduler, which can trail user-event (#538).
+    await waitFor(() => expect(document.activeElement).toBe(edit()));
     expect(screen.queryByRole("textbox")).toBeNull();
-    expect(document.activeElement).toBe(edit());
   });
 
   it("a failed write keeps the form open with the message and focus in place", async () => {
