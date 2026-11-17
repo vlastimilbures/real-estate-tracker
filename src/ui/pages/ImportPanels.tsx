@@ -90,6 +90,13 @@ function csvErrorText(t: Dictionary, e: CsvErrorCode): string {
       return p.errFileTooLarge(e.limitBytes / (1024 * 1024));
     case "tooManyRows":
       return p.errTooManyRows(e.limit);
+    default: {
+      // The size's error (ADR 0236 §1), the one code left: the assignment stops compiling
+      // if another code reaches here, so the switch stays exhaustive.
+      const size: Extract<CsvErrorCode, { code: "sizeRange" }> = e;
+      const n = (v: number) => fmtCzk(v, { suffix: false });
+      return p.errSizeRange(size.value, n(size.min), n(size.max));
+    }
   }
 }
 

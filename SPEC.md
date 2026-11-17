@@ -167,7 +167,8 @@ level and names the scenario (ADR 0128). Restore only needs a scenario to be rea
 **Whole-number bounds.** On top of the engine rules, every user-data entry point — the
 forms, the CSV importer and backup restore — bounds the whole-number fields it takes
 (ADR 0075, ADR 0076, ADR 0086; `src/lib/intRanges.ts`): projection horizon 1–100, fixation
-0–50 years, loan term 1–50 years, property size 1–10 000 m². Restore reports a value outside
+0–50 years, loan term 1–50 years, property size 1–10 000 m². The size is the one bounded field
+that is not whole: it takes at most one decimal place, e.g. 54.5 (ADR 0236). Restore reports a value outside
 its range as `OUT_OF_RANGE` with the allowed range (a restore-only rule). It is a warning, not
 a refusal: the confirm step lists it and asks "Restore anyway" (ADR 0148), so a backup the app
 wrote does not fail on a bound alone. Above ten times the maximum a value stays a refusal
@@ -688,8 +689,8 @@ Clearing a funding amount is a property form edit too: a blank CSV cell keeps it
 - At most 2 MB and 5,000 data rows per file, checked before parsing (ADR 0053).
 - Dates `YYYY-MM-DD` and real calendar dates; money plain decimal (no thousands separator,
   no exponent, not negative); rates as decimals in 0–1 (0.0169 = 1.69 %); integers whole and
-  unsigned, within the form bounds — `fixation_years` 0–50, `loan_term_years` 1–50,
-  `size_m2` 1–10 000 (ADR 0076); garage `true`/`false`, `yes`/`no` or `1`/`0`, in any
+  unsigned, within the form bounds — `fixation_years` 0–50, `loan_term_years` 1–50 (ADR 0076);
+  `size_m2` 1–10 000 with at most one decimal place after a `.` (ADR 0076, ADR 0236); garage `true`/`false`, `yes`/`no` or `1`/`0`, in any
   case (an empty cell means not set).
 - **Header row** ([guide](docs/csv-import.md#file-format)): header names are trimmed, then
   matched exactly and case-sensitively (lower case, as in the table above). Columns may come
@@ -698,9 +699,10 @@ Clearing a funding amount is a property form edit too: a blank CSV cell keeps it
   optional column keeps the stored value on an update and leaves a new record's value empty.
   Every row must have as many cells as the header; empty lines are skipped and a leading
   byte-order mark is dropped.
-- `property_name` matches a property after trimming, case-insensitively; the stored
-  spelling is kept. Two names in one file differing only by case or spaces are a duplicate
-  (fatal). An unknown name is fatal (D-55).
+- `property_name` matches a property in one Unicode form (NFC), after trimming,
+  case-insensitively; the stored spelling is kept. Two names in one file differing only by
+  case, spaces or Unicode form are a duplicate (fatal). An unknown name is fatal (D-55,
+  ADR 0237).
 - Each row also passes the engine's `validateInputs` rules (§4.1) and the lease overlap
   rule (§4.3, ADR 0163).
 - **All or nothing across the batch** ([guide](docs/csv-import.md#all-or-nothing)): every

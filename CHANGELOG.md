@@ -37,9 +37,20 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- A property's size may have **one decimal place**, e.g. 54,5 m², in the property form
+  (comma or dot), CSV import and restore (ADR 0236, #455). Trailing zeros do not count, so
+  54.50 is accepted as 54.5; two or more decimals are refused with a message naming the
+  limit, and a CSV size outside the range now gets the same message. Property detail shows
+  the size with Czech formatting ("54,5 m²", and "1 234 m²" with a thousands space). The
+  Data check no longer lists a size with one decimal place. No migration; no figure changes.
 - The release build no longer measures start-up and edit timings unless started from
   Terminal with `RTRACKER_PERF=1` (ADR 0233, #453); docs/release.md gives the command.
   Development builds measure as before. No figure changes.
+- Property names are compared in one Unicode form (NFC) when a CSV row is matched to a
+  property and when a duplicate name is refused, so a name written with separate accent
+  marks matches the same name stored with composed letters (ADR 0237, #455). Editing a
+  property whose name differs from another's only in encoding is refused at save. Restore
+  and stored names are unchanged. No figure changes.
 - Adding a valuation no longer asks whether to end the previous one (ADR 0227, #445). When
   the new valuation has no "Valid to" and the one before it is open-ended, the earlier one
   now ends the day before the new one starts, as leases already do. A valuation with its own

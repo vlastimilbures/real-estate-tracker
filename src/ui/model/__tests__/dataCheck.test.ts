@@ -802,8 +802,8 @@ describe("out-of-range stored values (ADR 0148)", () => {
     expect(kinds(check("javorova").attention)).not.toContain("outOfRange");
   });
 
-  // ADR 0180 §2 (#260 item 1): a stored size keeps its decimals, and a fraction inside the
-  // range is listed too — the forms accept whole m² only.
+  // ADR 0180 §2 (#260 item 1): a stored size keeps its decimals. ADR 0236 §3: inside the
+  // range, only a size with two or more decimals is listed — the forms accept one.
   const sized = (sizeM2: number): Portfolio => ({
     ...portfolio,
     properties: portfolio.properties.map((p) =>
@@ -829,14 +829,19 @@ describe("out-of-range stored values (ADR 0148)", () => {
     ]);
   });
 
-  it("lists a fractional size inside the range, fixed in the property form (#260)", () => {
-    const found = check("javorova", BASE_DATE, sized(50.5)).attention.filter(
+  it("does not list a size with one decimal place (ADR 0236 §3)", () => {
+    expect(sizeText(50.5)).toEqual([]);
+    expect(sizeText(9999.9)).toEqual([]);
+  });
+
+  it("lists a size with two decimals inside the range, fixed in the property form (#260, ADR 0236 §3)", () => {
+    const found = check("javorova", BASE_DATE, sized(50.55)).attention.filter(
       (f) => f.kind === "outOfRange",
     );
-    expect(found).toMatchObject([{ field: "sizeM2", value: 50.5 }]);
+    expect(found).toMatchObject([{ field: "sizeM2", value: 50.55 }]);
     expect(found.map(findingFix)).toEqual(["edit"]);
-    expect(sizeText(50.5)).toEqual([
-      "Size 50,5 m² is not a whole number; the forms accept whole numbers only (1–10 000 m²).",
+    expect(sizeText(50.55)).toEqual([
+      "Size 50,55 m² has more than one decimal place; the forms accept at most one (1–10 000 m²).",
     ]);
   });
 });

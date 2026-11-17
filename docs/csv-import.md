@@ -37,26 +37,28 @@ Types used below:
   separators, no currency sign, no exponent, never negative.
 - **Fraction**: a rate written as a fraction, not a percentage: `0.039` means 3.9 %.
 - **Whole number**: digits only, within the stated range.
+- **Size**: m² as a plain decimal with at most one decimal place after a decimal point:
+  `54`, `54.5` or `54.50` (trailing zeros do not count), within the stated range (ADR 0236).
 - **Yes/no**: `true` or `false` (`1`/`0` and `yes`/`no` are accepted too, in any case).
 
 An optional column may be left empty.
 
 ### properties.csv
 
-| Column                     | Required | Type         | Notes                                                                                                       |
-| -------------------------- | -------- | ------------ | ----------------------------------------------------------------------------------------------------------- |
-| `name`                     | yes      | Text         | Identifies the property (see [Matching](#matching-and-updates))                                             |
-| `address`                  | no       | Text         |                                                                                                             |
-| `type`                     | no       | Text         | Free text, e.g. `3 bedroom`                                                                                 |
-| `size_m2`                  | no       | Whole number | 1–10 000 m²                                                                                                 |
-| `garage`                   | no       | Yes/no       |                                                                                                             |
-| `purchase_date`            | yes      | Date         |                                                                                                             |
-| `purchase_price`           | yes      | Money        |                                                                                                             |
-| `appreciation_override_pa` | no       | Fraction     | Yearly value growth for this property; may be negative, above −1 (−100 %). Empty ⇒ the Assumptions value    |
-| `rent_index_override_pa`   | no       | Fraction     | Yearly rent indexation for this property; may be negative, above −1 (−100 %). Empty ⇒ the Assumptions value |
-| `own_cash`                 | no       | Money        | All your own money paid in at the purchase. `0` = fully financed. Empty ⇒ unknown                           |
-| `transaction_costs`        | no       | Money        | Broker, legal, cadastre, valuation and similar fees. Empty ⇒ unknown                                        |
-| `initial_works`            | no       | Money        | Renovation or furnishing paid at or right after the purchase. Empty ⇒ unknown                               |
+| Column                     | Required | Type     | Notes                                                                                                       |
+| -------------------------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| `name`                     | yes      | Text     | Identifies the property (see [Matching](#matching-and-updates))                                             |
+| `address`                  | no       | Text     |                                                                                                             |
+| `type`                     | no       | Text     | Free text, e.g. `3 bedroom`                                                                                 |
+| `size_m2`                  | no       | Size     | 1–10 000 m²                                                                                                 |
+| `garage`                   | no       | Yes/no   |                                                                                                             |
+| `purchase_date`            | yes      | Date     |                                                                                                             |
+| `purchase_price`           | yes      | Money    |                                                                                                             |
+| `appreciation_override_pa` | no       | Fraction | Yearly value growth for this property; may be negative, above −1 (−100 %). Empty ⇒ the Assumptions value    |
+| `rent_index_override_pa`   | no       | Fraction | Yearly rent indexation for this property; may be negative, above −1 (−100 %). Empty ⇒ the Assumptions value |
+| `own_cash`                 | no       | Money    | All your own money paid in at the purchase. `0` = fully financed. Empty ⇒ unknown                           |
+| `transaction_costs`        | no       | Money    | Broker, legal, cadastre, valuation and similar fees. Empty ⇒ unknown                                        |
+| `initial_works`            | no       | Money    | Renovation or furnishing paid at or right after the purchase. Empty ⇒ unknown                               |
 
 The last three columns record how the purchase was funded. Own cash covers your share of the
 price, the costs and the works together; the costs and works only break down what it paid
@@ -142,8 +144,8 @@ matched to an existing record by its natural key:
 | `rents.csv`      | `property_name` + `start_date` |
 | `mortgages.csv`  | `property_name` + `start_date` |
 
-- **Names match ignoring case and surrounding spaces.** `byt javorova ` matches
-  `Byt Javorova`. The stored spelling is kept; an import never changes a property's name.
+- **Names match ignoring case, surrounding spaces and how accents are encoded.**
+  `byt javorova ` matches `Byt Javorova`. The stored spelling is kept; an import never changes a property's name.
 - **Renaming a property in the CSV creates a new property.** There is no rename by import:
   `Byt Javorova 2` is a different key, so it is added as a new property next to the old one.
   Rename a property in the app instead.

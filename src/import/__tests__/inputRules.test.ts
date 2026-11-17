@@ -110,7 +110,15 @@ describe("every entry point applies INT_RANGES", () => {
   const form = (field: Field, n: number) =>
     Object.keys(
       collectValues(
-        [{ name: field, label: field, kind: "int", range: INT_RANGES[field] }],
+        [
+          {
+            name: field,
+            label: field,
+            // The property form's size kind (ADR 0236).
+            kind: field === "sizeM2" ? "size" : "int",
+            range: INT_RANGES[field],
+          },
+        ],
         { [field]: String(n) },
         { parsers: FORM_PARSERS, blank: () => "blank", invalid: () => "bad" },
       ).errors,
@@ -129,6 +137,25 @@ describe("every entry point applies INT_RANGES", () => {
         if (viaCsv) expect(viaCsv(n), `csv ${n}`).toBe(accepted);
       }
     });
+
+  // ADR 0236 §1: a size takes one decimal place at every entry point, never two; the
+  // other bounded fields stay whole numbers.
+  it("sizeM2 accepts one decimal place and refuses two", () => {
+    for (const [n, accepted] of [
+      [54.5, true],
+      [1.5, true],
+      [9999.9, true],
+      [54.55, false],
+      [0.5, false],
+      [10_000.1, false],
+    ] as const) {
+      expect(form("sizeM2", n), `form ${n}`).toBe(accepted);
+      expect(restore("sizeM2", n), `restore ${n}`).toBe(accepted);
+      expect(csv.sizeM2!(n), `csv ${n}`).toBe(accepted);
+    }
+    for (const field of ["horizonYears", "fixationYears"] as const)
+      expect(restore(field, 5.5), field).toBe(false);
+  });
 });
 
 // ADR 0123 (#107, #108): a scenario is checked by the engine's assumption rules on top

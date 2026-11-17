@@ -6,9 +6,10 @@
 import { ONE, powYears, type Decimal } from "../lib/money";
 import { at } from "./arrays";
 import { lastGridMonthOnOrBefore } from "./dates";
-import { yieldOf } from "./metrics";
+import { yieldOf } from "./figures";
 import { buildCpiIndex, inflationInYear } from "./projections";
 import { assertAssumptions } from "./validate";
+import { decimalsOf, fieldsOf } from "./yearFields";
 import type {
   Assumptions,
   PortfolioSnapshot,
@@ -41,41 +42,91 @@ export function cpiAt(assumptions: Assumptions, asOf: Date): Decimal {
   return at(cpi, whole).times(powYears(ONE.plus(infl), rest / 12));
 }
 
-/** Projection rows in real terms: each money field ÷ its year's index (`cpi[year]`).
- *  Ratios (LTV, DSCR) and the rate are lens-invariant. */
+/** Every money field of a projection year: all but the labels and the ratios (#478). */
+const YEAR_MONEY_FIELDS = fieldsOf(
+  "stock",
+  "derivedStock",
+  "flow",
+  "ownerFlow",
+);
+
+/** Projection rows in real terms: each money field ÷ its year's index (`cpi[year]`),
+ *  derived stocks too (divided, not recomputed). Ratios (LTV, DSCR) and the rate are
+ *  lens-invariant. */
 export function realProjection(
   rows: ProjectionYear[],
   cpi: Decimal[],
 ): ProjectionYear[] {
   return rows.map((y) => {
     const k = at(cpi, y.year);
-    const d = (v: Decimal) => v.div(k);
-    return {
-      ...y,
-      value: d(y.value),
-      balance: d(y.balance),
-      committedDebt: d(y.committedDebt),
-      undrawnDebt: d(y.undrawnDebt),
-      reportedValue: d(y.reportedValue),
-      equity: d(y.equity),
-      grossRent: d(y.grossRent),
-      effectiveRent: d(y.effectiveRent),
-      holdingCosts: d(y.holdingCosts),
-      noi: d(y.noi),
-      interest: d(y.interest),
-      principal: d(y.principal),
-      debtService: d(y.debtService),
-      netCashFlow: d(y.netCashFlow),
-      draws: d(y.draws),
-      committedDraws: d(y.committedDraws),
-      acquiredValue: d(y.acquiredValue),
-      refinanced: d(y.refinanced),
-      prepaid: d(y.prepaid),
-      prepaymentFees: d(y.prepaymentFees),
-      cashToOwner: d(y.cashToOwner),
-    };
+    return { ...y, ...decimalsOf(YEAR_MONEY_FIELDS, (f) => y[f].div(k)) };
   });
 }
+
+/** A snapshot field: an identifier or a list (`label`), an amount (`money`, divided in
+ *  real terms) or a lens-invariant ratio (`ratio`). */
+type SnapshotFieldKind = "label" | "money" | "ratio";
+
+/** Every field of `PropertySnapshot` with its kind (#478).
+ *  @internal exported for the compile-time fixture */
+export const PROPERTY_SNAPSHOT_KINDS = {
+  propertyId: "label",
+  name: "label",
+  owned: "label",
+  active: "label",
+  value: "money",
+  debt: "money",
+  committedDebt: "money",
+  undrawnDebt: "money",
+  reportedValue: "money",
+  equity: "money",
+  ltv: "ratio",
+  grossAnnualRent: "money",
+  effectiveGrossIncome: "money",
+  holdingCosts: "money",
+  noi: "money",
+  annualDebtService: "money",
+  netCashFlow: "money",
+  grossYield: "ratio",
+  netYield: "ratio",
+  dscr: "ratio",
+} as const satisfies Record<keyof PropertySnapshot, SnapshotFieldKind>;
+
+/** Every field of `PortfolioSnapshot` with its kind (#478). The per-property list is
+ *  kept as it is.
+ *  @internal exported for the compile-time fixture */
+export const PORTFOLIO_SNAPSHOT_KINDS = {
+  asOf: "label",
+  perProperty: "label",
+  totalValue: "money",
+  totalDebt: "money",
+  totalCommittedDebt: "money",
+  totalUndrawnDebt: "money",
+  totalReportedValue: "money",
+  totalEquity: "money",
+  ltv: "ratio",
+  grossAnnualRent: "money",
+  effectiveGrossIncome: "money",
+  holdingCosts: "money",
+  noi: "money",
+  annualDebtService: "money",
+  netCashFlow: "money",
+  grossYield: "ratio",
+  netYield: "ratio",
+  dscr: "ratio",
+  weightedAvgRate: "ratio",
+} as const satisfies Record<keyof PortfolioSnapshot, SnapshotFieldKind>;
+
+/** The money fields of a snapshot table, in its order. */
+function moneyOf<T extends Record<string, SnapshotFieldKind>>(table: T) {
+  type Money = { [F in keyof T]: T[F] extends "money" ? F : never }[keyof T];
+  return (Object.keys(table) as (keyof T & string)[]).filter(
+    (f): f is Money & string => table[f] === "money",
+  );
+}
+
+const PROPERTY_MONEY = moneyOf(PROPERTY_SNAPSHOT_KINDS);
+const PORTFOLIO_MONEY = moneyOf(PORTFOLIO_SNAPSHOT_KINDS);
 
 /** Portfolio snapshot money fields ÷ `k`; ratios, `asOf` and the per-property list are
  *  kept. `k = 1` returns the snapshot itself. */
@@ -84,22 +135,7 @@ export function realPortfolioSnapshot(
   k: Decimal,
 ): PortfolioSnapshot {
   if (k.equals(ONE)) return s;
-  const d = (v: Decimal) => v.div(k);
-  return {
-    ...s,
-    totalValue: d(s.totalValue),
-    totalDebt: d(s.totalDebt),
-    totalCommittedDebt: d(s.totalCommittedDebt),
-    totalUndrawnDebt: d(s.totalUndrawnDebt),
-    totalReportedValue: d(s.totalReportedValue),
-    totalEquity: d(s.totalEquity),
-    grossAnnualRent: d(s.grossAnnualRent),
-    effectiveGrossIncome: d(s.effectiveGrossIncome),
-    holdingCosts: d(s.holdingCosts),
-    noi: d(s.noi),
-    annualDebtService: d(s.annualDebtService),
-    netCashFlow: d(s.netCashFlow),
-  };
+  return { ...s, ...decimalsOf(PORTFOLIO_MONEY, (f) => s[f].div(k)) };
 }
 
 /** Per-property counterpart of `realPortfolioSnapshot`. */
@@ -108,42 +144,83 @@ export function realPropertySnapshot(
   k: Decimal,
 ): PropertySnapshot {
   if (k.equals(ONE)) return s;
-  const d = (v: Decimal) => v.div(k);
-  return {
-    ...s,
-    value: d(s.value),
-    debt: d(s.debt),
-    committedDebt: d(s.committedDebt),
-    undrawnDebt: d(s.undrawnDebt),
-    reportedValue: d(s.reportedValue),
-    equity: d(s.equity),
-    grossAnnualRent: d(s.grossAnnualRent),
-    effectiveGrossIncome: d(s.effectiveGrossIncome),
-    holdingCosts: d(s.holdingCosts),
-    noi: d(s.noi),
-    annualDebtService: d(s.annualDebtService),
-    netCashFlow: d(s.netCashFlow),
-  };
+  return { ...s, ...decimalsOf(PROPERTY_MONEY, (f) => s[f].div(k)) };
 }
+
+/** The fields a snapshot keeps from itself or computes (the yields), not read off a
+ *  projection year. */
+type NotFromYear = "grossYield" | "netYield";
+
+/** Snapshot field → the projection-year field it is read from: every money and ratio
+ *  field but the yields (#478). */
+const PROPERTY_FROM_YEAR = {
+  value: "value",
+  debt: "balance",
+  committedDebt: "committedDebt",
+  undrawnDebt: "undrawnDebt",
+  reportedValue: "reportedValue",
+  equity: "equity",
+  ltv: "ltv",
+  grossAnnualRent: "grossRent",
+  effectiveGrossIncome: "effectiveRent",
+  holdingCosts: "holdingCosts",
+  noi: "noi",
+  annualDebtService: "debtService",
+  netCashFlow: "netCashFlow",
+  dscr: "dscr",
+} as const satisfies Record<
+  Exclude<
+    keyof typeof PROPERTY_SNAPSHOT_KINDS,
+    KeysOf<typeof PROPERTY_SNAPSHOT_KINDS, "label"> | NotFromYear
+  >,
+  keyof ProjectionYear
+>;
+
+/** Portfolio counterpart of `PROPERTY_FROM_YEAR`; the weighted rate stays from the
+ *  snapshot (the projection has no weighted-rate breakdown). */
+const PORTFOLIO_FROM_YEAR = {
+  totalValue: "value",
+  totalDebt: "balance",
+  totalCommittedDebt: "committedDebt",
+  totalUndrawnDebt: "undrawnDebt",
+  totalReportedValue: "reportedValue",
+  totalEquity: "equity",
+  ltv: "ltv",
+  grossAnnualRent: "grossRent",
+  effectiveGrossIncome: "effectiveRent",
+  holdingCosts: "holdingCosts",
+  noi: "noi",
+  annualDebtService: "debtService",
+  netCashFlow: "netCashFlow",
+  dscr: "dscr",
+} as const satisfies Record<
+  Exclude<
+    keyof typeof PORTFOLIO_SNAPSHOT_KINDS,
+    | KeysOf<typeof PORTFOLIO_SNAPSHOT_KINDS, "label">
+    | NotFromYear
+    | "weightedAvgRate"
+  >,
+  keyof ProjectionYear
+>;
+
+type KeysOf<T, K> = { [F in keyof T]: T[F] extends K ? F : never }[keyof T];
 
 /** The projection-year figures a snapshot reads (a `ProjectionYear` or a lensed copy). */
 export type YearFigures = Pick<
   ProjectionYear,
-  | "value"
-  | "balance"
-  | "committedDebt"
-  | "undrawnDebt"
-  | "reportedValue"
-  | "equity"
-  | "ltv"
-  | "grossRent"
-  | "effectiveRent"
-  | "holdingCosts"
-  | "noi"
-  | "debtService"
-  | "netCashFlow"
-  | "dscr"
+  | (typeof PROPERTY_FROM_YEAR)[keyof typeof PROPERTY_FROM_YEAR]
+  | (typeof PORTFOLIO_FROM_YEAR)[keyof typeof PORTFOLIO_FROM_YEAR]
 >;
+
+/** Each snapshot field of `map` set to its year field of `r`, by reference. */
+function readYear<M extends Record<string, keyof YearFigures>>(
+  map: M,
+  r: YearFigures,
+): { [S in keyof M]: YearFigures[M[S]] } {
+  return Object.fromEntries(
+    Object.entries(map).map(([field, from]) => [field, r[from]]),
+  ) as { [S in keyof M]: YearFigures[M[S]] };
+}
 
 /**
  * The portfolio snapshot read off projection year `r`: stocks at the year end, the
@@ -156,22 +233,9 @@ export function portfolioSnapshotAtYear(
 ): PortfolioSnapshot {
   return {
     ...s,
-    totalValue: r.value,
-    totalDebt: r.balance,
-    totalCommittedDebt: r.committedDebt,
-    totalUndrawnDebt: r.undrawnDebt,
-    totalReportedValue: r.reportedValue,
-    totalEquity: r.equity,
-    ltv: r.ltv,
-    grossAnnualRent: r.grossRent,
-    effectiveGrossIncome: r.effectiveRent,
-    holdingCosts: r.holdingCosts,
-    noi: r.noi,
-    annualDebtService: r.debtService,
-    netCashFlow: r.netCashFlow,
+    ...readYear(PORTFOLIO_FROM_YEAR, r),
     grossYield: yieldOf(r.grossRent, r.value),
     netYield: yieldOf(r.noi, r.value),
-    dscr: r.dscr,
   };
 }
 
@@ -182,21 +246,8 @@ export function propertySnapshotAtYear(
 ): PropertySnapshot {
   return {
     ...s,
-    value: r.value,
-    debt: r.balance,
-    committedDebt: r.committedDebt,
-    undrawnDebt: r.undrawnDebt,
-    reportedValue: r.reportedValue,
-    equity: r.equity,
-    ltv: r.ltv,
-    grossAnnualRent: r.grossRent,
-    effectiveGrossIncome: r.effectiveRent,
-    holdingCosts: r.holdingCosts,
-    noi: r.noi,
-    annualDebtService: r.debtService,
-    netCashFlow: r.netCashFlow,
+    ...readYear(PROPERTY_FROM_YEAR, r),
     grossYield: yieldOf(r.grossRent, r.value),
     netYield: yieldOf(r.noi, r.value),
-    dscr: r.dscr,
   };
 }

@@ -2,7 +2,7 @@
 // component file so fast-refresh stays happy and the parsing is unit-testable.
 import { D, type Decimal } from "../../lib/money";
 import { fmtCzk, fmtDate } from "../../lib/format";
-import { inRange, type IntRange } from "../../lib/intRanges";
+import { inRange, oneDecimalText, type IntRange } from "../../lib/intRanges";
 import { DATE_FLOOR_YEAR } from "../../lib/day";
 import {
   calendarDay,
@@ -54,6 +54,16 @@ export function parseIntField(raw: string): number | null {
   return Number(cleaned);
 }
 
+/** A size: unsigned, at most 9 whole digits and one decimal place after a comma or a dot
+ *  (ADR 0236 §1), counted by value: "54,50" is 54.5. Two or more decimals are refused,
+ *  not rounded. */
+export function parseSizeField(raw: string): number | null {
+  const cleaned = raw.replace(/\s/g, "").replace(",", ".");
+  if (!/^\d{1,9}(\.\d+)?$/.test(cleaned) || !oneDecimalText(cleaned))
+    return null;
+  return Number(cleaned);
+}
+
 /** dd.mm.yyyy → UTC Date (or null). */
 export function parseDate(raw: string): IsoDate | null {
   const m = raw.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
@@ -84,7 +94,14 @@ export function dateDraft(date: Date | undefined): string {
 // ---- field specs + kind parsing -------------------------------------------
 
 export type FieldKind =
-  "date" | "money" | "pct" | "int" | "draws" | "prepayments" | "recasts";
+  | "date"
+  | "money"
+  | "pct"
+  | "int"
+  | "size"
+  | "draws"
+  | "prepayments"
+  | "recasts";
 
 export interface FieldSpec {
   name: string;
@@ -93,7 +110,7 @@ export interface FieldSpec {
   optional?: boolean;
   suffix?: string;
   help?: string;
-  /** Bounds of an `int` field; a parsed value outside them is invalid. */
+  /** Bounds of an `int` or `size` field; a parsed value outside them is invalid. */
   range?: IntRange;
   /** A row list's fixed first row (ADR 0167): another spec's money field shown as the
    *  list's first row, dated by a date field it mirrors read-only. Hide that spec from
@@ -126,12 +143,21 @@ export function intRangeHint(
   return t.forms.intRange(n(r.min), n(r.max));
 }
 
+/** "Enter a number from 1 to 10 000 with at most one decimal place" (ADR 0236 §1). */
+function sizeRangeHint(t: Pick<Dictionary, "forms">, r: IntRange): string {
+  const n = (v: number) => fmtCzk(v, { suffix: false });
+  return t.forms.sizeRange(n(r.min), n(r.max));
+}
+
 /** A field's invalid-value message: its range when bounded, else its kind's format. */
 export function fieldHint(
   t: Pick<Dictionary, "forms">,
   spec: Pick<FieldSpec, "kind" | "range">,
 ): string {
-  return spec.range ? intRangeHint(t, spec.range) : invalidHint(t, spec.kind);
+  if (!spec.range) return invalidHint(t, spec.kind);
+  return spec.kind === "size"
+    ? sizeRangeHint(t, spec.range)
+    : intRangeHint(t, spec.range);
 }
 
 /** The value each field kind parses to. */
@@ -140,6 +166,7 @@ export interface KindValue {
   money: Money;
   pct: Rate;
   int: number;
+  size: number;
   draws: MortgageDraw[];
   /** Row-editor lists (ADR 0116): a JSON draft, see loanEventRows.ts. */
   prepayments: MortgagePrepayment[];
