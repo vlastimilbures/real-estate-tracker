@@ -35,13 +35,21 @@ export const SCREENS: Screen[] = [
 ];
 
 // A renamed or removed layout screen would silently drop out of the Czech / Russian run
-// (`--grep @layout-i18n`): fail the whole capture run at load instead.
+// (`--grep @layout-i18n`), and an id listed twice would make the list longer than that
+// run: fail the whole capture run at load instead.
 const missing = LAYOUT_SCREENS.filter(
   (id) => !SCREENS.some((s) => s.id === id),
 );
 if (missing.length > 0)
   throw new Error(
     `layoutScreens.ts names screens that do not exist: ${missing.join(", ")}`,
+  );
+const listedTwice = LAYOUT_SCREENS.filter(
+  (id, i) => LAYOUT_SCREENS.indexOf(id) !== i,
+);
+if (listedTwice.length > 0)
+  throw new Error(
+    `layoutScreens.ts lists screens twice: ${listedTwice.join(", ")}`,
   );
 
 /** Every route must have at least one capture; a new Route fails typecheck here. */

@@ -23,16 +23,6 @@ test("screen ids are unique", () => {
   expect(twice, "screen ids used twice").toEqual([]);
 });
 
-// Runs with the layout screens, so a layout run that tagged fewer screens than the list
-// fails here, not by silently capturing less.
-test("layout screens are all tagged", { tag: LAYOUT_TAG }, () => {
-  const tagged = SCREENS.filter((s) => tagsOf(s.id).includes(LAYOUT_TAG));
-  expect(
-    tagged.map((s) => s.id),
-    `${LAYOUT_TAG} screens`,
-  ).toHaveLength(LAYOUT_SCREENS.length);
-});
-
 for (const screen of SCREENS) {
   test(
     `${screen.id} — ${screen.desc}`,

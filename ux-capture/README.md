@@ -111,10 +111,9 @@ is added to `src/state/uiStore.ts`, typecheck fails at `ROUTE_COVERAGE`
 
 CI also captures the screens listed in `layoutScreens.ts` in Czech and Russian
 (`pnpm ux:capture --grep @layout-i18n`, light, 1280×800, 1200×800 and `min`). Their tests
-carry the `@layout-i18n` tag. A listed id without a screen stops the run when the manifest
-loads, and the tagged guard checks that every listed screen is tagged, so renaming a layout
-screen fails the step instead of dropping the screen from it. To add one, add its id to
-the list.
+carry the `@layout-i18n` tag. A listed id without a screen, or listed twice, stops the run
+when the manifest loads, so renaming a layout screen fails the step instead of dropping the
+screen from it. To add one, add its id to the list.
 
 ## Retries and flaky captures
 

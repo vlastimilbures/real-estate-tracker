@@ -43,7 +43,7 @@ describe("classify", () => {
         title:
           "26-property-amortization-open — Property detail with the schedule",
         outcome: "flaky",
-        errors: ["\u001b[31m\n  Error: screenshot differs\u001b[39m\nmore"],
+        errors: ["\u001b[31m\n  Error: element is clipped\u001b[39m\nmore"],
       }),
     ]);
     expect(c.regressions).toEqual([]);
@@ -51,7 +51,7 @@ describe("classify", () => {
       {
         project: "en-light-min",
         id: "26-property-amortization-open",
-        error: "Error: screenshot differs",
+        error: "Error: element is clipped",
       },
     ]);
   });

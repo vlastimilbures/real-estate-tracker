@@ -18,7 +18,7 @@ export interface Screen {
   run: (ux: Ux) => Promise<void>;
 }
 
-export function forScreen(ux: Ux, id: string): ScreenUx {
+function forScreen(ux: Ux, id: string): ScreenUx {
   function capture(opts?: CaptureOpts): Promise<void>;
   function capture(state: string, opts?: CaptureOpts): Promise<void>;
   function capture(a?: string | CaptureOpts, b?: CaptureOpts) {
