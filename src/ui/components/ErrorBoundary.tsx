@@ -6,7 +6,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Button } from "./primitives";
 import { useUiStore } from "../../state/uiStore";
-import { getDict } from "../../i18n";
+import { useT } from "../hooks/useT";
 import { logFailure } from "../../state/diagnostics";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { EngineInputError } from "../../engine";
@@ -75,18 +75,15 @@ export function BoundaryFallback({
   error: Error;
   reset: () => void;
 }): ReactNode {
-  // Non-reactive read: the fallback doesn't use the useT hook, and the language won't
-  // change while a crash is on screen. The active language's dictionary is loaded
-  // before the first render (DR-009).
-  const t = getDict(useUiStore.getState().language);
+  const t = useT();
+  const portfolio = usePortfolioStore((s) => s.portfolio);
   if (error instanceof EngineInputError) {
     // Stored data breaks an engine rule (UX-049): say which record and which rule, and
     // offer the property where it can be corrected.
     return (
       <InvalidDataNotice
-        t={t}
         error={error}
-        portfolio={usePortfolioStore.getState().portfolio}
+        portfolio={portfolio}
         onOpenProperty={(id) => {
           useUiStore.getState().openProperty(id);
           reset();
