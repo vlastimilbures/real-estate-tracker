@@ -52,16 +52,19 @@ To open the folder, in Finder choose **Go → Go to Folder…** (⇧⌘G) and pa
   detail for that property. An inactive property's values are listed once you reactivate
   it. Restored data is always treated as yours: after a restore the app shows no sample
   banner, even on a new Mac whose first launch filled in the sample.
-- **A scenario the app cannot read.** It is left out and listed on the Scenarios page with
-  a Delete button. Delete it before you export: a backup that contains it cannot be
-  restored.
+- **A scenario the app cannot read.** The app does not start with one: it stops on the
+  startup screen like any unreadable record (see [If an upgrade fails](#if-an-upgrade-fails)),
+  so a backup exported in Settings never contains one, and a backup that does is refused.
+  The exception is the safety copy that **Restore a backup…** on the startup screen saves
+  first: it holds the unreadable record, so it cannot be restored.
 - **Safety copy first.** Before it changes anything, the app saves your current data as
   `backups/portfolio-before-restore-<date>.json`. If that copy cannot be saved, the restore
   does not start. If the restore itself fails, it is rolled back and your data is unchanged.
   If the restore went through but the data could not be read back, the app stops on the
   error screen with "Your last change was saved, but the data could not be read back.", names
   the safety copy and offers **Try again**, which only reads the data again.
-- **Undo a restore.** Restore the safety copy. Click **Choose backup file…**, press ⇧⌘G in the
+- **Undo a restore.** Restore the safety copy (not possible for a restore started from the
+  startup screen because of an unreadable record: that copy holds the record). Click **Choose backup file…**, press ⇧⌘G in the
   file picker, paste
   `~/Library/Application Support/com.bures.realestate-tracker/backups/`, and pick the
   `portfolio-before-restore-…` file with the right date. The time in its name is UTC.
@@ -97,17 +100,22 @@ leave the database partly upgraded. The screen tells you which case you are in:
   version.
 - **"The database file failed its integrity check"**: the database file is damaged. Restore your
   latest JSON backup (next section), or put back a pre-migration copy.
-- **"A saved record contains a value the app cannot read"**: click **Restore a backup…** on
-  the screen. It works like Restore in Settings: it first saves your current data as
-  `backups/portfolio-before-restore-<date>.json`, then replaces it with the backup. The screen
-  names that safety copy; click **Open the app** to continue.
+- **"A saved record contains a value the app cannot read"** or **"A saved scenario cannot
+  be read"**: click **Restore a backup…** on the screen. It works like Restore in Settings: it
+  first saves your current data as `backups/portfolio-before-restore-<date>.json`, then
+  replaces it with the backup. The screen names that safety copy; click **Open the app** to
+  continue. Without a backup, the record must be removed by hand or reported (below); your
+  data on disk is not changed. A future change to how scenarios are stored ships with a
+  database upgrade, so an older app version stops with "saved by a newer version" instead
+  (ADR 0231).
 
 The details are in the app log: `~/Library/Logs/com.bures.realestate-tracker/app.log`.
 
 ## Restore a JSON backup when the app cannot start
 
-Only an unreadable record offers **Restore a backup…** on the startup screen. For any other
-failure, start the app with an empty database, then restore in Settings:
+Only an unreadable record, scenarios included, offers **Restore a backup…** on the startup
+screen. For any other failure, start the app with an empty database, then restore in
+Settings:
 
 1. **Quit the app** (⌘Q).
 2. Click **Show data folder** on the screen, or open

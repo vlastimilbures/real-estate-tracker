@@ -80,7 +80,6 @@ function load(
       assumptions,
       status: "ready",
       scenarios: [saved],
-      unreadableScenarios: [],
     });
     useUiStore.setState({
       language: "en",

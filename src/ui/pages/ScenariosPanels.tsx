@@ -123,12 +123,8 @@ export function PresetBar({
   );
 }
 
-/** A scenario as the list deletes it: a readable one, or a row the app cannot read. */
-type Deletable = { id: string; name: string };
-
 export function ScenarioListPanel({
   scenarios,
-  unreadable = [],
   baseOn,
   onToggleBase,
   selectedIds,
@@ -142,8 +138,6 @@ export function ScenarioListPanel({
   presets,
 }: {
   scenarios: Scenario[];
-  /** Stored rows the app cannot read (ADR 0123): listed with only Delete. */
-  unreadable?: readonly Deletable[];
   baseOn: boolean;
   onToggleBase: () => void;
   selectedIds: string[];
@@ -152,7 +146,7 @@ export function ScenarioListPanel({
   busy: boolean;
   onEdit: (s: Scenario) => void;
   onDuplicate: (s: Scenario) => void;
-  onDelete: (s: Deletable) => Promise<MutationResult>;
+  onDelete: (s: Scenario) => Promise<MutationResult>;
   /** Which loans the scenario's rate shock hits (ADR 0100). */
   reachText?: (id: string) => string | undefined;
   /** The "Add from preset" disclosure and the preset bar it opens under the list
@@ -161,10 +155,9 @@ export function ScenarioListPanel({
 }) {
   const t = useT();
   const presetsId = useId();
-  // UX-020: Delete asks inline first, like every other delete in the app. The same
-  // button and confirmation serve readable and unreadable rows (ADR 0123).
+  // UX-020: Delete asks inline first, like every other delete in the app.
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  const deleteButton = (item: Deletable) => (
+  const deleteButton = (item: Scenario) => (
     <RowAction
       icon={Trash2}
       label={t.common.delete}
@@ -173,7 +166,7 @@ export function ScenarioListPanel({
       onClick={() => setConfirmingId(item.id)}
     />
   );
-  const confirmDelete = (item: Deletable) =>
+  const confirmDelete = (item: Scenario) =>
     confirmingId === item.id && (
       <div className="scenario-confirm">
         <ConfirmRow
@@ -272,21 +265,7 @@ export function ScenarioListPanel({
               {confirmDelete(s)}
             </li>
           ))}
-          {unreadable.map((u) => (
-            <li className="scenario-row" key={u.id}>
-              <span className="scenario-pick">
-                <span className="scenario-name">{u.name}</span>
-              </span>
-              <span className="scenario-summary">
-                {t.scenarios.unreadableRow}
-              </span>
-              <span className="scenario-actions">
-                <RowActions>{deleteButton(u)}</RowActions>
-              </span>
-              {confirmDelete(u)}
-            </li>
-          ))}
-          {scenarios.length === 0 && unreadable.length === 0 && (
+          {scenarios.length === 0 && (
             <li className="scenario-empty">{t.scenarios.emptyList}</li>
           )}
         </ul>

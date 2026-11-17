@@ -9,6 +9,8 @@
   that scenario rows are readable, not their rules)
 - Amended by: [0128](0128-assumption-bounds.md) §6 (§1: the cross-field shock rules depend
   on the base; §3: levels and shock deltas show on their fields)
+- Amended by: [0231](0231-unreadable-scenario-invalid.md) (§7: an unreadable scenario row
+  stops start-up like any invalid row; the Scenarios page no longer lists it)
 
 ## Context
 

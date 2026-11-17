@@ -762,10 +762,10 @@ price crash**, each with a legend and one line of help (ADR 0102).
   saved scenario's shocked level, naming the scenario on the level field; a scenario that
   broke the rule before the edit does not block it. A scenario that still breaks a rule (saved
   before this check, or restored) is left out of the compare and named in a notice above
-  it. Restore only needs a scenario row to be readable, so every backup the app writes
-  restores. A stored scenario row the app cannot read is left out at startup and listed
-  with only a Delete; the rest of the app loads. The app never reads `created_at`; it only
-  orders the list (DR-181).
+  it. Restore only needs a scenario row to be readable, so every backup exported in Settings
+  restores (not the startup screen's safety copy of an unreadable row). A stored scenario row the app cannot read stops startup like an unreadable row
+  in any other table: the startup screen names it and offers Restore a backup… (ADR 0231).
+  The app never reads `created_at`; it only orders the list (DR-181).
 - **Compare view**: pick 2–3 scenarios; show their KPIs and key charts side by side
   (net worth, net cash flow, LTV) on one screen, honouring the Nominal/Real lens. The
   Scenarios page currently hides the lens toggle (`showLens={false}` in

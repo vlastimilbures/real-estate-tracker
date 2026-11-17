@@ -29,6 +29,7 @@ import type {
 import { migrate } from "../data/migrations";
 import {
   DataError,
+  READ_FAILURES,
   type DataErrorCode,
   type UpgradeStop,
 } from "../data/errors";
@@ -78,7 +79,6 @@ import {
   recordBackup,
   type BackupState,
   type SampleState,
-  type UnreadableScenario,
 } from "../data/repositories";
 import {
   valuationToRow,
@@ -174,8 +174,6 @@ interface PortfolioState {
   portfolio: Portfolio | null;
   assumptions: Assumptions | null;
   scenarios: Scenario[];
-  /** Stored scenario rows the app cannot read, listed for deletion (ADR 0123). */
-  unreadableScenarios: UnreadableScenario[];
   /** The first-run sample: still in place, and its banner dismissed (ADR 0094). */
   sample: SampleState;
   /** The last recorded export and whether the data changed since (ADR 0110). */
@@ -266,9 +264,10 @@ interface PortfolioState {
   importCsv: (batch: CsvImportBatch) => Promise<CsvImportReport>;
   /** Replace the data with a checked backup (after a safety backup), then reload. */
   restoreBackup: (backup: BackupFile) => Promise<{ safetyBackup: string }>;
-  /** Restore from the startup error screen, only after ROW_INVALID: the database is
-   *  open and at head there (ADR 0153). `ready` says the data loaded afterwards; the
-   *  screen stays until `continueAfterRestore`, so the safety copy can be named. */
+  /** Restore from the startup error screen, only after a read failure (ROW_INVALID or
+   *  SCENARIO_INVALID, ADR 0231): the database is open and at head there (ADR 0153).
+   *  `ready` says the data loaded afterwards; the screen stays until
+   *  `continueAfterRestore`, so the safety copy can be named. */
   restoreAtStartup: (
     backup: BackupFile,
   ) => Promise<{ safetyBackup: string; ready: boolean }>;
@@ -478,7 +477,6 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     portfolio: null,
     assumptions: null,
     scenarios: [],
-    unreadableScenarios: [],
     sample: { active: false, dismissed: false },
     backup: { lastAt: null, lastFile: null, changedSince: false },
     status: "idle",
@@ -699,13 +697,14 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     restoreBackup: (backup) =>
       replaceData((sql) => confirmRestore(sql, backup, checkInputRules)),
     restoreAtStartup: async (backup) => {
-      // Only where the database migrated to head and only reading it failed; any
-      // other startup failure leaves a database a restore must not write to.
-      if (
-        get().status !== "error" ||
-        get().startupError?.code !== "ROW_INVALID"
-      )
-        throw new Error("A restore at startup needs a ROW_INVALID failure");
+      // Only where the database migrated to head and only reading it failed
+      // (READ_FAILURES, ADR 0231); any other startup failure leaves a database a
+      // restore must not write to.
+      const code = get().startupError?.code;
+      if (get().status !== "error" || !code || !READ_FAILURES.has(code))
+        throw new Error(
+          "A restore at startup needs a ROW_INVALID or SCENARIO_INVALID failure",
+        );
       const { safetyBackup } = await exclusive((sql) =>
         confirmRestore(sql, backup, checkInputRules),
       );

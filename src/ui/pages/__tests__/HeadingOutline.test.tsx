@@ -64,7 +64,6 @@ function load(
       error: null,
       startupError: null,
       scenarios: [],
-      unreadableScenarios: [],
     });
     useUiStore.setState({
       language: "en",

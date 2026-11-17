@@ -10,7 +10,7 @@ import {
 } from "../../state/portfolioStore";
 import { revealDataDir } from "../../state/platform";
 import { useUiStore, type Notice } from "../../state/uiStore";
-import { logFailure } from "../../state/diagnostics";
+import { logFailure, READ_FAILURES } from "../../state/diagnostics";
 import { APP_NAME, type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { Button } from "./primitives";
@@ -38,7 +38,7 @@ function startupText(t: Dictionary, e: StartupError): string[] {
   const next =
     e.code === "DB_INTEGRITY"
       ? t.boot.nextIntegrity
-      : e.code === "ROW_INVALID"
+      : READ_FAILURES.has(e.code)
         ? t.boot.nextRowInvalid
         : null;
   return next ? [t.dataErrors[e.code], next] : [t.dataErrors[e.code]];
@@ -70,7 +70,7 @@ export function BootFailure() {
   > | null>(null);
   // The safety copy of a restore done here whose data loaded, named until Continue.
   const [restored, setRestored] = useState<string | null>(null);
-  const view = bootView(startupError?.code ?? null);
+  const view = bootView(startupError?.code ?? null, READ_FAILURES);
 
   async function showFolder() {
     setRevealFailed(false);

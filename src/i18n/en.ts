@@ -962,9 +962,7 @@ export const en = {
     reachHits: (n: number, m: number, years: string) =>
       `hits ${n} of ${m} ${enPlural(m, ["loan", "loans"])} (fixation end ${years})`,
     reachNone: "no loan's fixation ends inside the shock window, so no effect",
-    // A saved scenario that breaks an engine rule, or cannot be read (ADR 0123)
-    unreadableRow:
-      "Cannot be read, so it is left out. Delete it before you export: a backup that contains it cannot be restored.",
+    // A saved scenario that breaks an engine rule (ADR 0123)
     notCompared: (name: string) =>
       `Left out of the comparison: “${name}” has a value outside its allowed range. Edit or delete it in the list.`,
     sumValueShock: (v: string, atYear: number) =>

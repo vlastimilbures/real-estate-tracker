@@ -41,7 +41,6 @@ describe("loadState", () => {
     expect(state.assumptions.horizonYears).toBe(SEED_ASSUMPTIONS.horizonYears);
     expect(state.scenarios.map((s) => s.id)).toEqual(["s-1"]);
     expect(state).toMatchObject({
-      unreadableScenarios: [],
       sample: { active: true, dismissed: false },
       backup: { lastAt: null, lastFile: null, changedSince: false },
     });
@@ -75,9 +74,9 @@ describe("loadState", () => {
     expect(state.scenarios.map((s) => s.id)).toEqual(["s-1"]);
   });
 
-  // ADR 0123 §7 (#107): a scenario is a what-if, so one the app cannot read is left out
-  // and listed instead of failing the whole load.
-  it("leaves out a scenario row it cannot read and lists it", async () => {
+  // ADR 0231 (#451): a scenario row the app cannot read fails the load like a row in any
+  // other table.
+  it("fails on a scenario row it cannot read", async () => {
     const db = await seeded();
     await db.execute(
       "INSERT INTO scenarios (id, name, overrides, created_at) VALUES (?, ?, ?, ?)",
@@ -88,9 +87,10 @@ describe("loadState", () => {
         "2026-01-01T00:00:00.000Z",
       ],
     );
-    const state = await loadState(db);
-    expect(state.scenarios.map((s) => s.id)).toEqual(["s-1"]);
-    expect(state.unreadableScenarios).toEqual([{ id: "bad", name: "Broken" }]);
+    await expect(loadState(db)).rejects.toMatchObject({
+      code: "SCENARIO_INVALID",
+      details: [expect.stringMatching(/^scenario "Broken": overrides /)],
+    });
   });
 
   it("still fails without the assumptions row", async () => {

@@ -188,10 +188,5 @@
     "max-lines-per-function": {
       "count": 1
     }
-  },
-  "src/ui/pages/ScenariosPanels.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
   }
 }
