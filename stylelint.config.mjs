@@ -18,6 +18,14 @@ export default {
     "declaration-no-important": true,
     // Colours are tokens (tokens.css); everywhere else uses var(--…) or a keyword.
     "color-no-hex": true,
+    // Stacking and type sizes are tokens too (#495): z-index reads a --z-* token and
+    // font-size a --fs-* one; the font shorthand, which would reset the size, only
+    // inherits.
+    "declaration-property-value-allowed-list": {
+      "z-index": ["/^var\\(--z-[\\w-]+\\)$/"],
+      "font-size": ["/^var\\(--fs-[\\w-]+\\)$/"],
+      font: ["inherit"],
+    },
   },
   overrides: [
     {

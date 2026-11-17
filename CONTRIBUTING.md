@@ -90,7 +90,8 @@ still describe it. Which document owns what is listed in
   bypass the hooks.
 - **Stylesheets** (#460): `pnpm lint:css` runs stylelint (`stylelint.config.mjs`: no
   selector defined twice in one context, no duplicate property except a consecutive
-  fallback, no `!important`, no hex colour outside `tokens.css`) and
+  fallback, no `!important`, no hex colour outside `tokens.css`, `z-index` only from a
+  `--z-*` token, `font-size` only from an `--fs-*` token, `font` only `inherit`) and
   `scripts/css-dead-classes.mjs` (every class in a `src/ui` stylesheet occurs in a `.ts` /
   `.tsx` file, and every custom property is both defined and used). A class built at run
   time goes in its `RUNTIME_PREFIXES` (a prefix whose classes are all built) or
