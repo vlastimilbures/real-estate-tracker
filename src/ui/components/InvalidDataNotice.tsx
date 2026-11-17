@@ -1,6 +1,6 @@
-import type { Dictionary } from "../../i18n";
 import type { EngineInputError, Portfolio } from "../../engine";
 import { invalidDataLines } from "../model/invalidData";
+import { useT } from "../hooks/useT";
 import { Button } from "./primitives";
 
 /**
@@ -9,16 +9,15 @@ import { Button } from "./primitives";
  * corrected (the app-wide fallback); Property detail shows the records itself (UX-056).
  */
 export function InvalidDataNotice({
-  t,
   error,
   portfolio,
   onOpenProperty,
 }: {
-  t: Dictionary;
   error: EngineInputError;
   portfolio: Portfolio | null;
   onOpenProperty?: (propertyId: string) => void;
 }) {
+  const t = useT();
   const lines = invalidDataLines(t, error.errors, portfolio);
   const target = lines.find((l) => l.propertyId !== undefined)?.propertyId;
   return (

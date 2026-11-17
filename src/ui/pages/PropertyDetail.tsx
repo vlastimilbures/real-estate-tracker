@@ -356,7 +356,7 @@ export function PropertyDetail() {
       />
 
       {invalid && (
-        <InvalidDataNotice t={t} error={invalid} portfolio={store.portfolio} />
+        <InvalidDataNotice error={invalid} portfolio={store.portfolio} />
       )}
 
       {s && out && basis && (
