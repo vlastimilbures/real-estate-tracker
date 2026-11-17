@@ -37,7 +37,8 @@ function invalid(ref: RowRef, column: string, problem: string): never {
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 /** The earliest year a stored date may have. The guard checks shape only, so this is not
- *  the forms' 1900 floor: a database holding an earlier date keeps loading (ADR 0149 §5). */
+ *  the forms' date floor (lib/rules.ts): a database holding an earlier date keeps
+ *  loading (ADR 0149 §5). */
 const STORED_MIN_YEAR = 100;
 
 /** True for a real calendar date in ISO yyyy-mm-dd form (no 2026-02-31 roll-over) from

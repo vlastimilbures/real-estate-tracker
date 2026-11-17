@@ -23,7 +23,7 @@ import type {
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import { fmtCzk, fmtDate, fmtNumber, fmtPct } from "../../lib/format";
-import { inRange, outOfRangeFields, type IntRange } from "../../lib/intRanges";
+import { inRange, outOfRangeFields, type IntRange } from "../../lib/rules";
 import {
   loanWarnings,
   loanWarningText,

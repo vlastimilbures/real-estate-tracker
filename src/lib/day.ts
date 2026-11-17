@@ -2,6 +2,7 @@
 // every day as a Date at UTC midnight; "now", a picked calendar cell and a backup time
 // stamp are local moments. Each crossing between the two goes through this module, so a
 // time-zone fix is made once (DR-068, DR-072).
+import { DATE_FLOOR_YEAR } from "./rules";
 
 // The full-year builders. Date.UTC and `new Date(y, m, d)` map years 0–99 to 1900–1999.
 // These are lib's twin of the engine's `utc()` (lib never imports the engine), one
@@ -59,10 +60,6 @@ export function localIsoDay(now: Date = new Date()): string {
   return isoDay(localDay(now));
 }
 
-/** New dates start on 01.01.1900 (ADR 0149 §5, DR-035, UX-052): the forms and CSV import
- *  refuse an earlier one, which is almost certainly a typo. A stored one is not checked
- *  (ADR 0232). */
-export const DATE_FLOOR_YEAR = 1900;
-
-/** The floor as a UTC-midnight day, for messages that name it. */
+/** The date floor (`DATE_FLOOR_YEAR` in ./rules) as a UTC-midnight day, for messages that
+ *  name it. */
 export const DATE_FLOOR: Date = utcMidnight(DATE_FLOOR_YEAR, 0, 1);

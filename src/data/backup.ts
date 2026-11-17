@@ -49,7 +49,7 @@ import type {
   ValidationCode,
   ValidationEntity,
 } from "../engine";
-import type { IntRange } from "../lib/intRanges";
+import type { IntRange } from "../lib/rules";
 
 /** A whole-number field outside the bounds the forms and CSV import apply (ADR 0086), or
  *  not a whole number (ADR 0180 §2).
@@ -76,8 +76,8 @@ export type InputRules = (
 ) => (EngineValidationError | RangeProblem)[];
 
 /** The rule a restore only asks about ("Restore anyway"): the whole-number form bounds a
- *  database may already break (ADR 0148 §1). A stored date before 1900 is not checked
- *  (ADR 0232). Every other issue refuses the file. */
+ *  database may already break (ADR 0148 §1). A stored date before the date floor is not
+ *  checked (ADR 0232). Every other issue refuses the file. */
 const WARNING_RULES: ReadonlySet<RestoreIssue["rule"]> = new Set([
   "OUT_OF_RANGE",
 ]);

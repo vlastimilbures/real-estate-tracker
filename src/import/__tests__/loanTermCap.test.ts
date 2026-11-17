@@ -1,7 +1,7 @@
 // ADR 0109: a recast may run a loan to its start + 50 years, the longest loan term
 // a form or CSV accepts. The engine may not import lib/intRanges, so this pins the two.
 import { describe, it, expect } from "vitest";
-import { INT_RANGES } from "../../lib/intRanges";
+import { INT_RANGES } from "../../lib/rules";
 import { MAX_LOAN_TERM_MONTHS } from "../../engine";
 
 describe("ADR 0109: the recast cap", () => {

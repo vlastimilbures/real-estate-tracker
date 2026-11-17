@@ -1,7 +1,8 @@
 // The engine's input rules as the restore check (P5b), plus the whole-number bounds the
 // forms and CSV import apply (ADR 0086), and the scenario check the store and the compare
-// use (ADR 0123). A stored date before 1900 is not checked (ADR 0232). Lives outside
-// src/data because the data layer never calls engine functions (DB → mappers → engine).
+// use (ADR 0123). A stored date before the date floor is not checked (ADR 0232). Lives
+// outside src/data because the data layer never calls engine functions (DB → mappers →
+// engine).
 import { applyScenario, validateInputs, validatePortfolio } from "../engine";
 import type {
   Assumptions,
@@ -10,7 +11,7 @@ import type {
   ScenarioOverrides,
 } from "../engine";
 import type { InputRules, RangeProblem } from "../data/backup";
-import { outOfRangeFields } from "../lib/intRanges";
+import { outOfRangeFields } from "../lib/rules";
 
 /** Every bounded whole-number field outside INT_RANGES (unset optional fields pass). */
 function rangeProblems(

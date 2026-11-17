@@ -164,7 +164,7 @@ level and names the scenario (ADR 0128). Restore only needs a scenario to be rea
 
 **Whole-number bounds.** On top of the engine rules, every user-data entry point — the
 forms, the CSV importer and backup restore — bounds the whole-number fields it takes
-(ADR 0075, ADR 0076, ADR 0086; `src/lib/intRanges.ts`): projection horizon 1–100, fixation
+(ADR 0075, ADR 0076, ADR 0086; `src/lib/rules.ts`): projection horizon 1–100, fixation
 0–50 years, loan term 1–50 years, property size 1–10 000 m². The size is the one bounded field
 that is not whole: it takes at most one decimal place, e.g. 54.5 (ADR 0236). Restore reports a value outside
 its range as `OUT_OF_RANGE` with the allowed range (a restore-only rule). It is a warning, not

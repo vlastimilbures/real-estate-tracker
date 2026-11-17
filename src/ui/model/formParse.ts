@@ -2,8 +2,13 @@
 // component file so fast-refresh stays happy and the parsing is unit-testable.
 import { D, type Decimal } from "../../lib/money";
 import { fmtCzk, fmtDate } from "../../lib/format";
-import { inRange, oneDecimalText, type IntRange } from "../../lib/intRanges";
-import { DATE_FLOOR_YEAR } from "../../lib/day";
+import {
+  DATE_FLOOR_YEAR,
+  inRange,
+  oneDecimalText,
+  WHOLE_DIGITS,
+  type IntRange,
+} from "../../lib/rules";
 import {
   calendarDay,
   money,
@@ -50,7 +55,7 @@ export function parsePercentToRatio(raw: string): Rate | null {
  *  is rejected instead of becoming Infinity. */
 export function parseIntField(raw: string): number | null {
   const cleaned = raw.replace(/\s/g, "");
-  if (!/^\d{1,9}$/.test(cleaned)) return null;
+  if (!WHOLE_DIGITS.test(cleaned)) return null;
   return Number(cleaned);
 }
 
@@ -70,8 +75,8 @@ export function parseDate(raw: string): IsoDate | null {
   if (!m) return null;
   const [, dd, mm, yyyy] = m;
   const year = Number(yyyy);
-  // New dates start on 01.01.1900; earlier is almost certainly a typo (ADR 0149 §5,
-  // DR-035, UX-052).
+  // New dates start on the date floor (lib/rules.ts); earlier is almost certainly a
+  // typo (ADR 0149 §5, DR-035, UX-052).
   if (year < DATE_FLOOR_YEAR) return null;
   return calendarDay(year, Number(mm), Number(dd)); // UTC midnight, no roll-over
 }

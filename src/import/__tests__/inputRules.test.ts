@@ -7,7 +7,7 @@ import {
   scenarioRuleErrors,
 } from "../inputRules";
 import { parseMortgages, parseProperties } from "../csv";
-import { INT_RANGES, type IntRange } from "../../lib/intRanges";
+import { INT_RANGES, type IntRange } from "../../lib/rules";
 import { collectValues } from "../../ui/model/formParse";
 import { FORM_PARSERS } from "../../ui/model/formParsers";
 import { isoDate, rate, validateInputs } from "../../engine";

@@ -1,6 +1,8 @@
-// Bounded field ranges (ADR 0075, DR-078), shared by the forms (src/ui/model) and CSV
-// import (src/import, ADR 0076) so both refuse the same values. Every bounded field is a
-// whole number except the size, which takes one decimal place (ADR 0236).
+// The input rules every entry point shares, each named once (#464): the bounded field
+// ranges (ADR 0075, DR-078) the forms (src/ui/model), CSV import (src/import, ADR 0076)
+// and restore apply, so all refuse the same values, and the date floor. Every bounded
+// field is a whole number except the size, which takes one decimal place (ADR 0236).
+// A layer whose limit differs gets its own named rule here, never a silent shared one.
 
 /** Inclusive bounds of a bounded field. */
 export interface IntRange {
@@ -15,6 +17,27 @@ export const INT_RANGES = {
   loanTermYears: { min: 1, max: 50 },
   sizeM2: { min: 1, max: 10_000 },
 } as const satisfies Record<string, IntRange>;
+
+/** A shock's years and the crash year reach at most the longest horizon (ADR 0140 §4):
+ *  the scenario form's bounds. */
+export const SHOCK_YEARS = {
+  min: 1,
+  max: INT_RANGES.horizonYears.max,
+} as const satisfies IntRange;
+export const CRASH_YEAR = {
+  min: 0,
+  max: INT_RANGES.horizonYears.max,
+} as const satisfies IntRange;
+
+/** A whole, unsigned number of at most 9 plain digits, as the forms and CSV import take
+ *  it (ADR 0075, DR-027, DR-078): a longer entry is refused instead of becoming
+ *  Infinity, and 12.7, -3, 1e2 and 0x10 are refused. */
+export const WHOLE_DIGITS = /^\d{1,9}$/;
+
+/** New dates start on 01.01.1900 (ADR 0149 §5, DR-035, UX-052): the forms and CSV import
+ *  refuse an earlier one, which is almost certainly a typo. A stored one is not checked
+ *  (ADR 0232). */
+export const DATE_FLOOR_YEAR = 1900;
 
 export const inRange = (n: number, r: IntRange): boolean =>
   n >= r.min && n <= r.max;
