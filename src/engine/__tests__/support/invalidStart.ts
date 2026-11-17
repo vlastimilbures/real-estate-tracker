@@ -2,7 +2,7 @@
 // a mortgage block whose start date is invalid, with each event and draw shape on it, and
 // an invalid as-of date. Shared by validate-invalid-start.test.ts and the child process it
 // runs each case in first, so a case that never returns cannot hang the suite.
-import { isoDate, lastGridMonthOnOrBefore } from "../../dates";
+import { isoDate, lastGridMonthOnOrBefore, utc } from "../../dates";
 import { money } from "../../brands";
 import { EngineInputError } from "../../errors";
 import { portfolioOutputs } from "../../outputs";
@@ -124,6 +124,9 @@ const GRID = {
   portfolioOutputsAsOf: () => portfolioOutputs(portfolio, assumptions, BAD),
   portfolioSnapshotAsOf: () => portfolioSnapshot(portfolio, assumptions, BAD),
   cpiAtAsOf: () => cpiAt(assumptions, BAD),
+  // A valid date at the edge of the Date range: the next grid step overflows.
+  lastGridEdgeOfRange: () =>
+    lastGridMonthOnOrBefore(isoDate("2000-01-31"), utc(275760, 9, 13)),
 };
 
 export type GridCase = keyof typeof GRID;

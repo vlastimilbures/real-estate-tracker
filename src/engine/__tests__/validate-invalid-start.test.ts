@@ -1,7 +1,6 @@
 // An invalid date never sends a payment-grid walk into an endless loop (ADR 0247, #543).
 // A synchronous endless loop cannot be timed out inside a test, so each case runs first in
-// a child process killed after CHILD_MS; only a case that returned there runs in-process.
-import { spawnSync } from "node:child_process";
+// a child process (support/bounded.ts); only a case that returned there runs in-process.
 import { describe, expect, it } from "vitest";
 import {
   DATA_ERROR_CODES,
@@ -10,6 +9,7 @@ import {
   type ValidationCode,
 } from "../validate/codes";
 import { onLoan } from "./support/loan";
+import { BOUNDED_TIMEOUT as TIMEOUT, bounded } from "./support/bounded";
 import {
   gridOutcome,
   invalidStartOutcomes,
@@ -18,42 +18,6 @@ import {
 } from "./support/invalidStart";
 
 const SUPPORT = new URL("./support/invalidStart.ts", import.meta.url).href;
-const CHILD_MS = 1500;
-const TIMEOUT = { timeout: 2000 };
-
-// The child loads the engine's TypeScript as Node strips it; the hook adds the ".ts" (or
-// "/index.ts") the engine's imports leave out.
-const CHILD = `
-import { registerHooks } from "node:module";
-registerHooks({
-  resolve(spec, ctx, next) {
-    try { return next(spec, ctx); } catch (e) {
-      if (!spec.startsWith(".")) throw e;
-      for (const ext of [".ts", "/index.ts"]) {
-        try { return next(spec + ext, ctx); } catch {}
-      }
-      throw e;
-    }
-  },
-});
-const [url, fn, name] = process.argv.slice(1);
-const m = await import(url);
-process.stdout.write(JSON.stringify(m[fn](name)));
-`;
-
-/** `fn(name)` from the support module, run in a child process that is killed when it
- *  does not return within CHILD_MS. */
-function bounded(fn: string, name: string): unknown {
-  const r = spawnSync(
-    process.execPath,
-    ["--input-type=module", "--no-warnings", "-e", CHILD, SUPPORT, fn, name],
-    { encoding: "utf8", timeout: CHILD_MS },
-  );
-  if (r.error || r.signal)
-    throw new Error(`${fn}(${name}) did not return within ${CHILD_MS} ms`);
-  if (r.status !== 0) throw new Error(r.stderr);
-  return JSON.parse(r.stdout);
-}
 
 const start = onLoan("INVALID_DATE", "startDate");
 
@@ -75,7 +39,7 @@ function expectCase(name: InvalidStartCase, errors: EngineValidationError[]) {
     assertLoanRows: raised(errors, DATA_ERROR_CODES),
     portfolioOutputs: raised(errors, DATA_ERROR_CODES),
   };
-  expect(bounded("invalidStartOutcomes", name)).toEqual(expected);
+  expect(bounded(SUPPORT, "invalidStartOutcomes", name)).toEqual(expected);
   expect(invalidStartOutcomes(name)).toEqual(expected);
 }
 
@@ -173,7 +137,17 @@ describe("the payment-grid walk on an invalid date (ADR 0247)", () => {
   ];
   for (const name of cases)
     it(`#543: ${name} raises instead of looping`, TIMEOUT, () => {
-      expect(bounded("gridOutcome", name)).toBe(INVALID);
+      expect(bounded(SUPPORT, "gridOutcome", name)).toBe(INVALID);
       expect(gridOutcome(name)).toBe(INVALID);
     });
+});
+
+describe("the payment-grid walk at the edge of the date range (ADR 0247)", () => {
+  // EDATE past 13 Sep 275760 is an Invalid Date, which no grid step ever passes.
+  it.fails("lastGridEdgeOfRange raises instead of looping", TIMEOUT, () => {
+    expect(bounded(SUPPORT, "gridOutcome", "lastGridEdgeOfRange")).toBe(
+      INVALID,
+    );
+    expect(gridOutcome("lastGridEdgeOfRange")).toBe(INVALID);
+  });
 });
