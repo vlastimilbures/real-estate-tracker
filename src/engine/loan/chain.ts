@@ -103,8 +103,8 @@ export interface ChainLink {
   next: MortgageBlock | undefined;
 }
 
-/** The chain of `blockChain` at `date`, each block with its successor: the one place a
- *  block's successor is read (#476). */
+/** The chain of `blockChain` at `date`, each block with its successor: the one place the
+ *  chain's block/successor pairs are built (#476). */
 export function chainLinks(blocks: MortgageBlock[], date: Date): ChainLink[] {
   const chain = blockChain(blocks, date);
   return chain.map((block, i) => ({ block, next: chain[i + 1] }));
@@ -113,7 +113,8 @@ export function chainLinks(blocks: MortgageBlock[], date: Date): ChainLink[] {
 /**
  * True when an item dated `date` falls after the successor's start, so the block never
  * draws or applies it: the successor replaces the block from that date (D-47, DR-126,
- * ADR 0109). False without a successor.
+ * ADR 0109). False without a successor. An invalid date counts as after the successor;
+ * callers rely on `assertLoanRows` (via `propertySchedules`) having refused one upstream.
  */
 export function afterSuccessor(
   next: MortgageBlock | undefined,
