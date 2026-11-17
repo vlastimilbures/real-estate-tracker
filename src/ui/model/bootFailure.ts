@@ -12,8 +12,8 @@ export interface BootView {
   restore: boolean;
 }
 
-/** Failures that repeat on every start, so Try again cannot help; so does every read
- *  failure. */
+/** Failures that repeat on every start, so Try again cannot help. A read failure
+ *  (`readFailures`) repeats too and is handled separately: it offers restore instead. */
 const LASTING = new Set<DataErrorCode>([
   "DB_INTEGRITY",
   "DB_NEWER",

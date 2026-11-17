@@ -40,7 +40,8 @@ give a Try again loop with no way out on the screen.
    `READ_FAILURES = {ROW_INVALID, SCENARIO_INVALID}` in `src/data/errors.ts`, decides it in
    three places:
    - `bootView` (`src/ui/model/bootFailure.ts`): Restore a backup… is offered and Try again
-     is not, and the details are "Records involved";
+     is not (the details under `dataErrors.detailsHeading` were already listed for
+     `SCENARIO_INVALID` and are unchanged);
    - the startup screen adds `boot.nextRowInvalid`;
    - `restoreAtStartup` accepts either code and refuses every other one.
 
@@ -60,8 +61,11 @@ give a Try again loop with no way out on the screen.
   backup… has nothing to pick, and the properties, loans and leases stay unreachable in the
   app until then. Nothing on disk is lost. Any future change to the scenario overrides format
   ships with a schema migration, so an older app stops on `DB_NEWER` instead.
-- A backup the app exports can no longer contain an unreadable scenario row, because the app
-  does not start with one; so every backup the app writes restores.
+- A backup exported in Settings can no longer contain an unreadable scenario row, because the
+  app does not start with one. The one exception is the safety copy that Restore a backup… on
+  the startup screen saves first: it is taken from the stored rows, so it holds the bad row
+  and restore refuses it (as for `ROW_INVALID`, ADR 0153 §3). That restore cannot be undone
+  from the safety copy.
 - Removed dictionary key (en/cs/ru): `scenarios.unreadableRow`. No key is added; the
   existing `dataErrors.SCENARIO_INVALID` and `boot.nextRowInvalid` texts show on the screen.
 - No ux-capture screen shows the removed list, so no screen changes.

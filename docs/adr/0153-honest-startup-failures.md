@@ -12,8 +12,8 @@
 - Related: [0014](0014-rust-transaction-command.md) (migrations run through the Rust
   transaction command), [0064](0064-file-io-in-rust.md) §P8(2) (an open failure keeps the
   in-app error screen), [0072](0072-layer-map-platform-and-type-edges.md) (the UI reaches platform code through
-  `src/state`), [0123](0123-scenario-rules-every-entry-point.md) (unreadable scenarios are listed, not
-  fatal)
+  `src/state`), [0123](0123-scenario-rules-every-entry-point.md) (unreadable scenarios were listed, not
+  fatal, until ADR 0231)
 - Amended by: [0228](0228-read-back-failure-stops.md) (§3: a restore on the screen whose data cannot be loaded shows the read-back message)
 - Amended by: [0231](0231-unreadable-scenario-invalid.md) (§2, §3: `SCENARIO_INVALID` reaches
   the screen and is handled like `ROW_INVALID`: Restore a backup…, no Try again)
@@ -32,7 +32,7 @@ lives in Settings, which the screen never reaches. Every code listed its details
 errors.
 
 Since ADR 0123, an unreadable scenario no longer stops the load, so `SCENARIO_INVALID` does
-not reach this screen. The store already keeps the open `sql` when loading fails after
+not reach this screen (until ADR 0231, which brings it back here like `ROW_INVALID`). The store already keeps the open `sql` when loading fails after
 `open()`.
 
 ## Decision
