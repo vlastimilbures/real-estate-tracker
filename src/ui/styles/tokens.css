@@ -85,6 +85,18 @@
   --sidebar-w: 232px;
   --sidebar-w-collapsed: 64px;
   --content-max: 1200px;
+
+  /* stacking, lowest first. The modal and the skip link share 100: DOM order decides. */
+  --z-pin: 1; /* pinned table cells */
+  --z-pin-head: 3; /* pinned header cells, above pinned body cells */
+  --z-sticky: 10; /* sticky topbar */
+  --z-tip: 20; /* row-action tooltip */
+  --z-pop: 40; /* info-tip popover */
+  --z-toast: 50;
+  --z-modal: 100;
+  --z-skip-link: 100;
+  --z-menu: 200; /* property select menu */
+  --z-date-pop: 1000; /* date popover, above the modal */
 }
 
 /* ── Dark theme ──────────────────────────────────────────────────────────────

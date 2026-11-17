@@ -129,13 +129,13 @@ table.data tfoot .total-row > * {
 table.data tfoot .total-row > .sticky-col {
   position: sticky;
   left: 0;
-  z-index: 1;
+  z-index: var(--z-pin);
   background: var(--surface);
 }
 table.data tfoot .total-row > .actions-col {
   position: sticky;
   right: 0;
-  z-index: 1;
+  z-index: var(--z-pin);
   background: var(--surface);
 }
 /* Its label wraps within the name column (a long "owned active properties" label). */
@@ -186,13 +186,13 @@ table.data tbody td.left {
 table.data tbody td.sticky-col {
   position: sticky;
   left: 0;
-  z-index: 1;
+  z-index: var(--z-pin);
   background: var(--surface);
 }
 table.data thead th.sticky-col {
   position: sticky;
   left: 0;
-  z-index: 3;
+  z-index: var(--z-pin-head);
 }
 /* A table cell's drill-in target: reads as the cell text, focusable like a button. */
 .link-button {
@@ -287,14 +287,14 @@ table.data thead th.sticky-col {
 table.data tbody td.actions-col {
   position: sticky;
   right: 0;
-  z-index: 1;
+  z-index: var(--z-pin);
   white-space: nowrap;
   background: var(--surface);
 }
 table.data thead th.actions-col {
   position: sticky;
   right: 0;
-  z-index: 3;
+  z-index: var(--z-pin-head);
 }
 table.data tbody td {
   text-align: right;
@@ -404,7 +404,7 @@ table.data td:has(> .row-actions) {
   right: 100%;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 20;
+  z-index: var(--z-tip);
   padding: 3px var(--s2);
   border-right: 4px solid transparent;
   background: var(--ink) padding-box;

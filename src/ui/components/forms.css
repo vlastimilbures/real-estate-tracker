@@ -104,9 +104,9 @@
 }
 .date-popover {
   /* Portaled to <body> and positioned via inline left/top so it escapes the form's
-     overflow-clipping ancestors (modal card, panel). z-index clears the modal (100). */
+     overflow-clipping ancestors (modal card, panel). --z-date-pop sits above --z-modal. */
   position: fixed;
-  z-index: 1000;
+  z-index: var(--z-date-pop);
   padding: var(--s2);
   background: var(--surface-raised);
   border: 1px solid var(--hairline-strong);

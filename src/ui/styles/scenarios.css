@@ -143,7 +143,7 @@ table.data.compare-table thead td.sticky-col {
   position: sticky;
   top: 0;
   left: 0;
-  z-index: 3;
+  z-index: var(--z-pin-head);
   min-width: 160px;
   background: var(--surface);
   border-bottom: 1px solid var(--hairline-strong);
@@ -151,7 +151,7 @@ table.data.compare-table thead td.sticky-col {
 table.data.compare-table tbody th.sticky-col {
   position: sticky;
   left: 0;
-  z-index: 1;
+  z-index: var(--z-pin);
   padding: 10px var(--s3);
   text-align: left;
   font-weight: 400;

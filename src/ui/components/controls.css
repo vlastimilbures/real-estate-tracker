@@ -221,7 +221,7 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  z-index: 200;
+  z-index: var(--z-menu);
   min-width: 180px;
   background: var(--surface);
   border: 1px solid var(--hairline);

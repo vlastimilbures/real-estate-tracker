@@ -45,7 +45,7 @@ a:focus-visible,
   position: fixed;
   top: var(--s2);
   left: var(--s2);
-  z-index: 100;
+  z-index: var(--z-skip-link);
   padding: var(--s2) var(--s3);
   border: 0;
   border-radius: var(--r-sm);

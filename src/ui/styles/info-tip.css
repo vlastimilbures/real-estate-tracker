@@ -26,7 +26,7 @@
 }
 .info-tip-pop {
   position: fixed;
-  z-index: 40;
+  z-index: var(--z-pop);
   width: max-content;
   max-width: min(26rem, calc(100vw - 32px));
   padding: var(--s3) var(--s4);
