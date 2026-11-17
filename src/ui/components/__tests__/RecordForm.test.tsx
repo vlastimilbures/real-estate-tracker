@@ -103,7 +103,6 @@ describe("a refused save on a field the form is not showing (#440, ADR 0243)", (
     },
   ];
   function renderHidden(failure: WriteError) {
-    act(() => useUiStore.setState({ language: "en" }));
     render(
       <RecordForm
         specs={hiddenSpecs}
@@ -148,7 +147,6 @@ describe("a refused save on a field the form is not showing (#440, ADR 0243)", (
   });
 
   it("an error on a list's first-row field stays on that row (ADR 0167)", async () => {
-    act(() => useUiStore.setState({ language: "en" }));
     render(
       <RecordForm
         specs={[
