@@ -48,29 +48,40 @@ async function openAndType() {
 }
 
 describe("a failed save keeps the typed values (ADR 0241)", () => {
-  // #438: fails until the form takes the stored values once (ADR 0241 §1–2).
-  it.fails(
-    "keeps them, shows the error and stays unsaved after a write that reloads",
-    async () => {
-      // The store reloads after a failed write: a new portfolio object (#438).
-      editProperty.mockImplementation(() => {
-        usePortfolioStore.setState({ portfolio: { ...portfolio } });
-        return Promise.resolve({
-          ok: false,
-          error: { kind: "other", message: "disk busy" },
-        });
+  it("keeps them, shows the error and stays unsaved after a write that reloads", async () => {
+    // The store reloads after a failed write: a new portfolio object (#438).
+    editProperty.mockImplementation(() => {
+      usePortfolioStore.setState({ portfolio: { ...portfolio } });
+      return Promise.resolve({
+        ok: false,
+        error: { kind: "other", message: "disk busy" },
       });
-      await openAndType();
-      await userEvent.click(
-        screen.getByRole("button", { name: en.common.saveChanges }),
-      );
-      expect(editProperty).toHaveBeenCalledTimes(1);
-      expect(screen.getByRole("alert")).toBeTruthy();
-      expect(name()).toHaveProperty("value", "Byt Typed");
-      expect(address()).toHaveProperty("value", "Typed St 9");
-      // Still unsaved, so Esc does not close the dialog (UX-029).
-      await userEvent.keyboard("{Escape}");
-      expect(onClose).not.toHaveBeenCalled();
-    },
-  );
+    });
+    await openAndType();
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.saveChanges }),
+    );
+    expect(editProperty).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(name()).toHaveProperty("value", "Byt Typed");
+    expect(address()).toHaveProperty("value", "Typed St 9");
+    // Still unsaved, so Esc does not close the dialog (UX-029).
+    await userEvent.keyboard("{Escape}");
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("shows a thrown save and keeps the typed name", async () => {
+    editProperty.mockRejectedValue(new Error("disk gone"));
+    await openAndType();
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.saveChanges }),
+    );
+    expect(editProperty).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(name()).toHaveProperty("value", "Byt Typed");
+    expect(
+      screen.getByRole("button", { name: en.common.saveChanges }),
+    ).toHaveProperty("disabled", false);
+    expect(onClose).not.toHaveBeenCalled();
+  });
 });

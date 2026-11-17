@@ -18,6 +18,8 @@ import { DateInput } from "./DateInput";
 import { Button, ErrorBanner } from "./primitives";
 import { Modal } from "./Modal";
 import { CZK } from "../../lib/currency";
+import type { Portfolio } from "../../engine";
+import { toWriteError, type WriteError } from "../../state/writeError";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { formWriteErrors } from "../model/writeError";
@@ -166,6 +168,32 @@ function PropertyTextField({
   );
 }
 
+/** The stored property's fields, taken once when the edit form opens (ADR 0241 §1): a
+ *  store reload while it is open, e.g. after a failed write, must not undo the input.
+ *  Address and garage come from a separate read. */
+function editDraft(
+  portfolio: Portfolio | null,
+  mode: Props["mode"],
+  propertyId: string | undefined,
+): PropertyFormState {
+  const p =
+    mode === "edit"
+      ? portfolio?.properties.find((x) => x.id === propertyId)
+      : undefined;
+  if (!p) return BLANK_PROPERTY_FORM;
+  return {
+    ...BLANK_PROPERTY_FORM,
+    name: p.name,
+    type: p.type ?? "",
+    size_m2: p.sizeM2 != null ? String(p.sizeM2) : "",
+    purchase_date: dateDraft(p.purchaseDate),
+    purchase_price: moneyDraft(p.purchasePrice),
+    appreciation_override_pa: percentDraft(p.appreciationOverridePa),
+    rent_index_override_pa: percentDraft(p.rentIndexOverridePa),
+    ...fundingDraft(p.funding),
+  };
+}
+
 /** The optional funding record, behind a toggle; values entered stay while it is shut. */
 function AcquisitionFields({
   t,
@@ -241,11 +269,13 @@ export function PropertyFormModal({
   // (ADR 0127); an edit keeps the property's id.
   const [newId] = useState(() => crypto.randomUUID());
   const id = propertyId ?? newId;
-  const [form, setForm] = useState<PropertyFormState>(BLANK_PROPERTY_FORM);
+  const [form, setForm] = useState<PropertyFormState>(() =>
+    editDraft(portfolio, mode, propertyId),
+  );
   // What the form opened with (blank, or the loaded property): input differing from it
-  // is unsaved, so Esc / backdrop clicks are ignored (UX-029).
-  const [baseline, setBaseline] =
-    useState<PropertyFormState>(BLANK_PROPERTY_FORM);
+  // is unsaved, so Esc / backdrop clicks are ignored (UX-029). Taken once, like `form`,
+  // so a failed save leaves the form unsaved (ADR 0241 §2).
+  const [baseline, setBaseline] = useState<PropertyFormState>(form);
   const [errors, setErrors] = useState<
     Partial<Record<keyof PropertyFormState, string>>
   >({});
@@ -273,26 +303,14 @@ export function PropertyFormModal({
     if (openFunding) fundingRef.current?.querySelector("input")?.focus();
   }, [openFunding]);
 
-  // For edit mode: load engine fields from portfolio + address/garage from DB
+  // Edit mode reads address and garage from the database. A store reload does not
+  // start it again (ADR 0241 §1).
   useEffect(() => {
     if (mode !== "edit" || propertyId === undefined) return;
-    const p = portfolio?.properties.find((x) => x.id === propertyId);
     const load = (patch: Partial<PropertyFormState>) => {
       setForm((f) => ({ ...f, ...patch }));
       setBaseline((f) => ({ ...f, ...patch }));
     };
-    if (p) {
-      load({
-        name: p.name,
-        type: p.type ?? "",
-        size_m2: p.sizeM2 != null ? String(p.sizeM2) : "",
-        purchase_date: dateDraft(p.purchaseDate),
-        purchase_price: moneyDraft(p.purchasePrice),
-        appreciation_override_pa: percentDraft(p.appreciationOverridePa),
-        rent_index_override_pa: percentDraft(p.rentIndexOverridePa),
-        ...fundingDraft(p.funding),
-      });
-    }
     // Only the latest read counts: an older one settling late must not undo it.
     let live = true;
     getPropertyExtras(propertyId).then(
@@ -308,7 +326,7 @@ export function PropertyFormModal({
     return () => {
       live = false;
     };
-  }, [mode, propertyId, portfolio, getPropertyExtras]);
+  }, [mode, propertyId, getPropertyExtras]);
 
   function set(field: keyof PropertyFormState, value: string | boolean | null) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -335,9 +353,9 @@ export function PropertyFormModal({
     const { property, address, garage } = result;
     setSaving(true);
     setSaveError(null);
-    let saveResult: MutationResult;
+    let failure: WriteError;
     try {
-      saveResult =
+      const saveResult: MutationResult =
         mode === "add"
           ? await addProperty(
               property,
@@ -345,16 +363,20 @@ export function PropertyFormModal({
               { address, garage },
             )
           : await editProperty(property, { address, garage });
+      // Keep the modal open on failure so the user can retry; close only on success.
+      if (saveResult.ok) return onClose();
+      failure = saveResult.error;
+    } catch (e) {
+      // A thrown save is shown like a returned failure (ADR 0241 §3).
+      failure = toWriteError(e);
     } finally {
       setSaving(false);
     }
-    // Keep the modal open on failure so the user can retry; close only on success.
-    if (saveResult.ok) return onClose();
     // A rule tied to a field shows on that field; anything else above the buttons.
     // Failures name engine fields (purchaseDate); this form's keys are snake_case.
     const keys = Object.keys(form) as (keyof PropertyFormState)[];
     const byField = new Map(keys.map((k) => [snakeToCamel(k), k]));
-    const split = formWriteErrors(t, saveResult.error, [...byField.keys()]);
+    const split = formWriteErrors(t, failure, [...byField.keys()]);
     const fieldErrors: PropertyFormErrors = {};
     for (const [field, message] of Object.entries(split.fieldErrors)) {
       const key = byField.get(field); // split only names the fields passed in

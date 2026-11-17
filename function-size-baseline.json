@@ -71,7 +71,7 @@
   },
   "src/ui/components/PropertyFormModal.tsx": {
     "lines": {
-      "Function 'PropertyFormModal'": 209
+      "Function 'PropertyFormModal'": 200
     }
   },
   "src/ui/components/charts.tsx": {

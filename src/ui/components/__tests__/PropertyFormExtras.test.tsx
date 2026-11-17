@@ -84,31 +84,27 @@ describe("edit form waits for address and garage (ADR 0184 §3)", () => {
     expect(editProperty).not.toHaveBeenCalled();
   });
 
-  // #438: fails until the form reads address and garage once (ADR 0241 §1).
-  it.fails(
-    "ignores a stale read that fails after a newer one loaded",
-    async () => {
-      render(
-        <PropertyFormModal mode="edit" propertyId={id} onClose={() => {}} />,
-      );
-      // A reload while the form is open starts no read (ADR 0241 §1).
-      act(() => usePortfolioStore.setState({ portfolio: { ...portfolio } }));
-      expect(reads).toHaveLength(1);
-      // A new read function starts a second read.
-      const stub = usePortfolioStore.getState().getPropertyExtras;
-      act(() =>
-        usePortfolioStore.setState({
-          getPropertyExtras: (propertyId) => stub(propertyId),
-        }),
-      );
-      expect(reads).toHaveLength(2);
-      const [first, second] = reads;
-      await act(async () => second!.resolve({ address: "A", garage: null }));
-      await act(async () => first!.reject(new Error("late")));
-      expect(screen.queryByText(en.propertyForm.errExtrasLoad)).toBeNull();
-      expect(save()).toHaveProperty("disabled", false);
-    },
-  );
+  it("ignores a stale read that fails after a newer one loaded", async () => {
+    render(
+      <PropertyFormModal mode="edit" propertyId={id} onClose={() => {}} />,
+    );
+    // A reload while the form is open starts no read (ADR 0241 §1).
+    act(() => usePortfolioStore.setState({ portfolio: { ...portfolio } }));
+    expect(reads).toHaveLength(1);
+    // A new read function starts a second read.
+    const stub = usePortfolioStore.getState().getPropertyExtras;
+    act(() =>
+      usePortfolioStore.setState({
+        getPropertyExtras: (propertyId) => stub(propertyId),
+      }),
+    );
+    expect(reads).toHaveLength(2);
+    const [first, second] = reads;
+    await act(async () => second!.resolve({ address: "A", garage: null }));
+    await act(async () => first!.reject(new Error("late")));
+    expect(screen.queryByText(en.propertyForm.errExtrasLoad)).toBeNull();
+    expect(save()).toHaveProperty("disabled", false);
+  });
 
   it("does not wait in the add form", () => {
     render(<PropertyFormModal mode="add" onClose={() => {}} />);
