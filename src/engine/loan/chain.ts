@@ -97,6 +97,48 @@ export function blockChain(
   return chain;
 }
 
+/** One block of a refinance chain with the successor that replaces it, if any. */
+export interface ChainLink {
+  block: MortgageBlock;
+  next: MortgageBlock | undefined;
+}
+
+/** The chain of `blockChain` at `date`, each block with its successor: the one place the
+ *  chain's block/successor pairs are built (#476). */
+export function chainLinks(blocks: MortgageBlock[], date: Date): ChainLink[] {
+  const chain = blockChain(blocks, date);
+  return chain.map((block, i) => ({ block, next: chain[i + 1] }));
+}
+
+/**
+ * True when an item dated `date` falls after the successor's start, so the block never
+ * draws or applies it: the successor replaces the block from that date (D-47, DR-126,
+ * ADR 0109). False without a successor. An invalid date counts as after the successor;
+ * callers rely on `assertLoanRows` (via `propertySchedules`) having refused one upstream.
+ */
+export function afterSuccessor(
+  next: MortgageBlock | undefined,
+  date: Date,
+): boolean {
+  return next !== undefined && !isOnOrBefore(date, next.startDate);
+}
+
+/** True when the link's successor has started on or before `date`, so it has replaced
+ *  the block by then (D-27, D-43). False without a successor. */
+export function replacedOnOrBefore(link: ChainLink, date: Date): boolean {
+  return link.next !== undefined && isOnOrBefore(link.next.startDate, date);
+}
+
+/** True when the link's successor has drawn by grid month `m`: the schedule follows the
+ *  successor from its draw month (D-27, D-47). False without a successor. */
+export function replacedByMonth(
+  link: ChainLink,
+  m: number,
+  baseDate: Date,
+): boolean {
+  return link.next !== undefined && drawMonth(link.next, baseDate) <= m;
+}
+
 /**
  * Splice `next` into the chain's rows from its draw month `d` (D-47). The owner's
  * payment in month d is still paid when due on/before the successor's start, and the
@@ -283,7 +325,7 @@ function cutAt(
   block: MortgageBlock,
   next: MortgageBlock,
 ): { block: MortgageBlock; dropped: Outcome[] } {
-  const keep = (e: { date: Date }) => isOnOrBefore(e.date, next.startDate);
+  const keep = (e: { date: Date }) => !afterSuccessor(next, e.date);
   const dropped = [
     ...(block.prepayments ?? [])
       .filter((p) => !keep(p))
@@ -313,14 +355,13 @@ function cutAt(
  * month that the kept draw row would otherwise carry (D-47, DR-126). Its prepayments
  * and recasts dated after that start go too, and are reported (ADR 0109).
  */
-function untilSuccessor(chain: MortgageBlock[]): {
+function untilSuccessor(links: ChainLink[]): {
   chain: MortgageBlock[];
   dropped: Outcome[];
 } {
-  const cut = chain.map((block, i) => {
-    const next = chain[i + 1];
-    return next ? cutAt(block, next) : { block, dropped: [] };
-  });
+  const cut = links.map(({ block, next }) =>
+    next ? cutAt(block, next) : { block, dropped: [] },
+  );
   return {
     chain: cut.map((c) => c.block),
     dropped: cut.flatMap((c) => c.dropped),
@@ -355,7 +396,7 @@ export function propertySchedule(
   assertLoanRows(blocks); // D-37
   assertBlockStarts(blocks);
   const { chain, dropped } = untilSuccessor(
-    blockChain(blocks, assumptions.baseDate),
+    chainLinks(blocks, assumptions.baseDate),
   );
   const [first, ...successors] = chain;
   if (!first) return { rows: [], refinances: [], eventOutcomes: [] };
