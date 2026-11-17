@@ -19,7 +19,7 @@ sources (C-15: the direct fetch of Act No. 257/2016 Coll. returned HTTP 403).
 
 | Concern               | Where (after P4a/P4b/P4c)                                                                                                                                                |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Month-step kernel     | `src/engine/schedule.ts` `amortizeMonth` (split, re-amortize, payoff at maturity), `reamortizes` (trigger), `recomputeInstalment`                                        |
+| Month-step kernel     | `src/engine/loan/kernel.ts` `amortizeMonth` (split, re-amortize, payoff at maturity), `reamortizes` (trigger), `recomputeInstalment`                                     |
 | Grid loops            | `buildPlainSchedule`, `buildDevSchedule` / `devMonthStep`; catch-up to baseDate `simulateToBaseDate`; plain opening `plainOpening` (closed form or replay)               |
 | Calendar              | `paymentOffset`, `lastPaymentDue`, `rateOfPayment` (rate on due date `EDATE(start, p)`, D-21); `src/engine/dates.ts` `edate`, `lastGridMonthOnOrBefore`                  |
 | Grid-bucketed events  | `bucketDraws` (tranches → grid month); `newDebtByMonth` (DR-092)                                                                                                         |
