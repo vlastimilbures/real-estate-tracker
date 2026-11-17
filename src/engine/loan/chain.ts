@@ -88,13 +88,37 @@ export function blockChain(
   blocks: MortgageBlock[],
   baseDate: Date,
 ): MortgageBlock[] {
+  return chainLinks(blocks, baseDate).map((l) => l.block);
+}
+
+/** One block of a refinance chain with the successor that replaces it, if any. */
+export interface ChainLink {
+  block: MortgageBlock;
+  next: MortgageBlock | undefined;
+}
+
+/** The chain of `blockChain`, each block with its successor: the one place a block's
+ *  successor is read (#476). */
+export function chainLinks(blocks: MortgageBlock[], date: Date): ChainLink[] {
   const chain: MortgageBlock[] = [];
-  let block = selectBlock(blocks, baseDate);
+  let block = selectBlock(blocks, date);
   while (block) {
     chain.push(block);
     block = firstAfter(blocks, block.startDate, (b) => b.startDate);
   }
-  return chain;
+  return chain.map((b, i) => ({ block: b, next: chain[i + 1] }));
+}
+
+/**
+ * True when an item dated `date` falls after the successor's start, so the block never
+ * draws or applies it: the successor replaces the block from that date (D-47, DR-126,
+ * ADR 0109). False without a successor.
+ */
+export function afterSuccessor(
+  next: MortgageBlock | undefined,
+  date: Date,
+): boolean {
+  return next !== undefined && !isOnOrBefore(date, next.startDate);
 }
 
 /**
@@ -283,7 +307,7 @@ function cutAt(
   block: MortgageBlock,
   next: MortgageBlock,
 ): { block: MortgageBlock; dropped: Outcome[] } {
-  const keep = (e: { date: Date }) => isOnOrBefore(e.date, next.startDate);
+  const keep = (e: { date: Date }) => !afterSuccessor(next, e.date);
   const dropped = [
     ...(block.prepayments ?? [])
       .filter((p) => !keep(p))
@@ -313,14 +337,13 @@ function cutAt(
  * month that the kept draw row would otherwise carry (D-47, DR-126). Its prepayments
  * and recasts dated after that start go too, and are reported (ADR 0109).
  */
-function untilSuccessor(chain: MortgageBlock[]): {
+function untilSuccessor(links: ChainLink[]): {
   chain: MortgageBlock[];
   dropped: Outcome[];
 } {
-  const cut = chain.map((block, i) => {
-    const next = chain[i + 1];
-    return next ? cutAt(block, next) : { block, dropped: [] };
-  });
+  const cut = links.map(({ block, next }) =>
+    next ? cutAt(block, next) : { block, dropped: [] },
+  );
   return {
     chain: cut.map((c) => c.block),
     dropped: cut.flatMap((c) => c.dropped),
@@ -355,7 +378,7 @@ export function propertySchedule(
   assertLoanRows(blocks); // D-37
   assertBlockStarts(blocks);
   const { chain, dropped } = untilSuccessor(
-    blockChain(blocks, assumptions.baseDate),
+    chainLinks(blocks, assumptions.baseDate),
   );
   const [first, ...successors] = chain;
   if (!first) return { rows: [], refinances: [], eventOutcomes: [] };
