@@ -51,7 +51,7 @@ import type {
   CsvImportPreview,
   CsvImportReport,
 } from "../import/csvImport";
-import { checkInputRules } from "../import/inputRules";
+import { checkInputRules } from "./restoreRules";
 import {
   loadState,
   upsertScenario,

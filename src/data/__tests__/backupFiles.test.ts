@@ -18,7 +18,7 @@ import {
   writeSafetyBackup,
   type BackupFile,
 } from "../backup";
-import { checkInputRules } from "../../import/inputRules";
+import { checkInputRules } from "../../state/restoreRules";
 import { localIsoDay } from "../../lib/day";
 import { saveFile } from "../../platform/saveFile";
 import { PINNED_DAY, setClock } from "../../__tests__/support/clock";

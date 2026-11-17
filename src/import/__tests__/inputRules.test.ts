@@ -1,7 +1,7 @@
 // The restore rule set (P5b) applies the whole-number bounds of the forms and CSV import
 // on top of the engine rules (ADR 0086, #38). The engine itself stays open-ended.
 import { describe, it, expect } from "vitest";
-import { checkInputRules } from "../inputRules";
+import { checkInputRules } from "../../state/restoreRules";
 import { parseMortgages, parseProperties } from "../csv";
 import { INT_RANGES, type IntRange } from "../../lib/rules";
 import { collectValues } from "../../ui/model/formParse";

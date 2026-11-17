@@ -11,7 +11,7 @@ import { migrate } from "../migrations";
 import { upsertAssumptions } from "../repositories";
 import { assumptionsToRow, rowToAssumptions } from "../mappers";
 import { exportToJson, RestoreError } from "../backup";
-import { checkInputRules } from "../../import/inputRules";
+import { checkInputRules } from "../../state/restoreRules";
 import { rate } from "../../engine";
 import { SEED_ASSUMPTIONS as seedAssumptions } from "../seed";
 import { loadAssumptions, restoreFromJson } from "./support/reads";

@@ -54,7 +54,7 @@ import type { IntRange, RangeProblem } from "../lib/rules";
 /** The engine's input rules plus the whole-number form bounds over
  *  the restored rows (assumptions absent ⇒ portfolio rules only). Injected by the
  *  caller: the data layer never calls engine functions; `checkInputRules` in
- *  src/import/inputRules.ts is the one the app uses. Scenarios only need to be readable
+ *  src/state/restoreRules.ts is the one the app uses. Scenarios only need to be readable
  *  (ADR 0123): one that breaks a rule restores and is handled like a saved one, so every
  *  backup the app writes restores. A range problem comes without the stored value, which
  *  restore never shows (ADR 0086). */

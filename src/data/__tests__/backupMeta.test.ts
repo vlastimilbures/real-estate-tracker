@@ -11,7 +11,7 @@ import {
   recordBackup,
 } from "../repositories";
 import { exportToJson, type BackupFile } from "../backup";
-import { checkInputRules } from "../../import/inputRules";
+import { checkInputRules } from "../../state/restoreRules";
 import { restoreFromJson } from "./support/reads";
 
 let sql: TestSql;

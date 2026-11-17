@@ -15,7 +15,7 @@ import {
   validateBackup,
   type BackupFile,
 } from "../backup";
-import { checkInputRules } from "../../import/inputRules";
+import { checkInputRules } from "../../state/restoreRules";
 import { V1_KEYS } from "../mappers";
 import type { Sql } from "../sql";
 import { restoreFromJson } from "./support/reads";

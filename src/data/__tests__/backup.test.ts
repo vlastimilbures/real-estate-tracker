@@ -11,7 +11,7 @@ import {
   SCHEMA_HEAD,
   BACKUP_COLUMNS,
 } from "../backup";
-import { checkInputRules } from "../../import/inputRules";
+import { checkInputRules } from "../../state/restoreRules";
 import type { Sql } from "../sql";
 import { portfolioSnapshot } from "../../engine";
 import { expectKc } from "../../engine/__tests__/support/tolerance";

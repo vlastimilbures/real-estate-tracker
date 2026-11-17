@@ -13,7 +13,7 @@ import {
   type BackupFile,
   type RestoreIssue,
 } from "../backup";
-import { checkInputRules } from "../../import/inputRules";
+import { checkInputRules } from "../../state/restoreRules";
 import { restoreIssueText } from "../../ui/model/restoreIssue";
 import { en } from "../../i18n/en";
 
