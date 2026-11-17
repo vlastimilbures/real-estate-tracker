@@ -2,7 +2,7 @@
 // lists the engine kept by hand before, so deriving them moved no code into or out of
 // a gate.
 import { describe, expect, it } from "vitest";
-import { codesRaisedBy, type ValidationCode } from "../validate";
+import { codesRaisedBy, type ValidationCode } from "../validate/codes";
 
 const DATA: ValidationCode[] = [
   "INVALID_DATE",

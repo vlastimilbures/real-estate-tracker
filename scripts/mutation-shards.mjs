@@ -49,18 +49,17 @@ export const SHARDS = {
     "src/engine/loan/committedDebt.ts",
   ],
   "validate-a": [
-    {
-      file: "src/engine/validate/index.ts",
-      anchor: "checkMortgage",
-      part: "a",
-    },
+    "src/engine/validate/codes.ts",
+    "src/engine/validate/check.ts",
+    "src/engine/validate/assumptions.ts",
+    "src/engine/validate/loanEvents.ts",
   ],
   "validate-b": [
-    {
-      file: "src/engine/validate/index.ts",
-      anchor: "checkMortgage",
-      part: "b",
-    },
+    "src/engine/validate/loan.ts",
+    "src/engine/validate/blockStarts.ts",
+    "src/engine/validate/rows.ts",
+    "src/engine/validate/entry.ts",
+    "src/engine/validate/index.ts",
   ],
   projections: ["src/engine/projections.ts", "src/engine/financing.ts"],
   kpis: ["src/engine/kpis.ts", "src/engine/dates.ts", "src/engine/metrics.ts"],
