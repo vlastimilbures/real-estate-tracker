@@ -172,7 +172,10 @@ a refusal: the confirm step lists it and asks "Restore anyway" (ADR 0148), so a 
 wrote does not fail on a bound alone. Above ten times the maximum a value stays a refusal
 (`BEYOND_LIMIT`, ADR 0148). The engine (`HORIZON_NOT_POSITIVE`, `INVALID_TERM`) and the database
 CHECK constraints have no upper bound, so a database that already holds an out-of-range value
-still loads; the Data check lists it.
+still loads; the Data check lists it. The store's pre-write check applies the same ranges after
+the engine rules: it refuses a write that adds an out-of-range value or changes a stored one to
+another, with the form's own range text on the field; a stored one blocks no other write, and
+a fix saves (ADR 0245).
 
 **Date floor.** The forms and CSV import refuse a date before 01.01.1900; a stored one loads
 and restores with no warning (ADR 0232).
