@@ -1,7 +1,5 @@
 verifyDepsBeforeRun: false
-onlyBuiltDependencies:
-  - esbuild
-  - better-sqlite3
+# The only dependencies whose install scripts run (pnpm 11's build allow-list).
 allowBuilds:
   better-sqlite3: true
   esbuild: true
