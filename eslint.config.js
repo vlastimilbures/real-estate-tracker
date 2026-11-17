@@ -9,6 +9,7 @@ import {
   sizeLimitBlocks,
   sizeRules,
 } from "./scripts/size-limits.mjs";
+import { eslintGroup } from "./scripts/engine-layers.cjs";
 
 // Focused or disabled tests never reach main (CLAUDE.md §6). `it.fails` stays allowed —
 // it needs a DR-/J- ID by convention.
@@ -151,26 +152,10 @@ const decimalPath = {
   message:
     "Import Decimal helpers from src/lib/money.ts, not decimal.js directly (DR-075).",
 };
+// The layer list is shared with dependency-cruiser (scripts/engine-layers.cjs says what
+// each tool covers that the other does not).
 const engineLayerPattern = {
-  group: [
-    "**/data",
-    "**/data/**",
-    "**/state",
-    "**/state/**",
-    "**/ui",
-    "**/ui/**",
-    "**/import",
-    "**/import/**",
-    "**/i18n",
-    "**/i18n/**",
-    "**/lib/**",
-    "!**/lib/money",
-    // The shared input rules (ADR 0244); rules.ts imports only lib/money.
-    "!**/lib/rules",
-    "react",
-    "react-dom",
-    "@tauri-apps/*",
-  ],
+  group: eslintGroup(),
   message:
     "The engine is pure (CLAUDE.md §4, PLAN §4.1): no imports from data/state/ui/import/i18n/react/tauri; from lib only money and rules (ADR 0244).",
 };
@@ -255,9 +240,10 @@ export default tseslint.config(
       ],
     },
   },
-  // Layering boundaries (CLAUDE.md §4) enforced by lint, not just review/convention.
-  // The engine is PURE: it may import only other engine modules + lib/money. It must never
-  // reach out to data/state/ui/react/tauri. dependency-cruiser enforces the full map in CI.
+  // Layering boundaries (CLAUDE.md §4) in the editor. The engine is PURE: other engine
+  // modules and lib/money + lib/rules only. This block also covers the engine tests and
+  // bans a direct decimal.js import; dependency-cruiser holds the full layer map and bans
+  // every npm package but decimal.js (scripts/engine-layers.cjs).
   {
     files: ["src/engine/**/*.{ts,tsx}"],
     rules: {
