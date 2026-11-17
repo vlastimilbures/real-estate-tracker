@@ -93,9 +93,9 @@ function csvErrorText(t: Dictionary, e: CsvErrorCode): string {
     default: {
       // The size's error (ADR 0236 §1), the one code left: the assignment stops compiling
       // if another code reaches here, so the switch stays exhaustive.
-      const size: Extract<CsvErrorCode, { code: "sizeDecimals" }> = e;
+      const size: Extract<CsvErrorCode, { code: "sizeRange" }> = e;
       const n = (v: number) => fmtCzk(v, { suffix: false });
-      return p.errSizeDecimals(size.value, n(size.min), n(size.max));
+      return p.errSizeRange(size.value, n(size.min), n(size.max));
     }
   }
 }

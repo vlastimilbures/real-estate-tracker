@@ -1024,7 +1024,7 @@ export const ru: Dictionary = {
       `«${v}» — срок кредита должен быть не меньше одного года`,
     errOutOfRange: (v, min, max) =>
       `«${v}» должно быть целым числом от ${min} до ${max}`,
-    errSizeDecimals: (v, min, max) =>
+    errSizeRange: (v, min, max) =>
       `«${v}» должно быть числом от ${min} до ${max} не более чем с одним знаком после запятой`,
     errDuplicateKey: (firstRow) =>
       `Повтор строки ${firstRow} — каждая запись может встречаться в файле только один раз`,

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 //
-// ADR 0236 §1: a CSV size with two or more decimals is refused with a message naming
-// the limit.
+// ADR 0236 §1: a CSV size with two or more decimals, or outside the range, is refused
+// with a message naming the limit.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -20,7 +20,15 @@ beforeEach(() => {
   });
 });
 
-describe("a CSV size with two decimals (ADR 0236 §1)", () => {
+/** A table cell whose text is `text`, spaces of any kind alike. */
+const cell = (text: string) =>
+  screen.getByText((_, el) =>
+    el?.tagName === "TD"
+      ? (el.textContent ?? "").replace(/\s/g, " ") === text.replace(/\s/g, " ")
+      : false,
+  );
+
+describe("a CSV size the form would refuse (ADR 0236 §1)", () => {
   it("lists the size error naming the range and one decimal place", async () => {
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     const input = container.querySelector(
@@ -29,21 +37,20 @@ describe("a CSV size with two decimals (ADR 0236 §1)", () => {
     await userEvent.upload(
       input,
       new File(
-        ["name,size_m2,purchase_date,purchase_price\nA,54.55,2020-01-01,100\n"],
+        [
+          "name,size_m2,purchase_date,purchase_price\n" +
+            "A,54.55,2020-01-01,100\n" +
+            "B,0,2020-01-01,100\n",
+        ],
         "properties.csv",
         { type: "text/csv" },
       ),
     );
-    const text = en.importPage.errSizeDecimals("54.55", "1", "10 000");
+    const p = en.importPage;
     await waitFor(() =>
-      expect(
-        screen.getByText((_, el) =>
-          el?.tagName === "TD"
-            ? (el.textContent ?? "").replace(/\s/g, " ") ===
-              text.replace(/\s/g, " ")
-            : false,
-        ),
-      ).toBeTruthy(),
+      expect(cell(p.errSizeRange("54.55", "1", "10 000"))).toBeTruthy(),
     );
+    // A whole size outside the range reads the same rule, not "a whole number".
+    expect(cell(p.errSizeRange("0", "1", "10 000"))).toBeTruthy();
   });
 });

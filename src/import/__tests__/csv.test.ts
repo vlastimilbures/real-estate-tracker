@@ -394,17 +394,35 @@ describe("number formats", () => {
       expect(r.errors).toEqual([]);
       expect(r.rows[0]!.size_m2).toBe(54.5);
     });
-    it("refuses 54.55 with sizeDecimals, naming the range", () => {
-      // Decimals count as written, like the form: 54.50 has two.
-      for (const v of ["54.55", "54.50"])
+    // Decimals count by value: a spreadsheet's two-decimal column exports 54.50.
+    it("accepts trailing zeros and keeps the value", () => {
+      for (const [v, n] of [
+        ["54.50", 54.5],
+        ["54.500", 54.5],
+        ["54.00", 54],
+        ["10000.0", 10_000],
+      ] as const) {
+        const r = property(v);
+        expect(r.errors, v).toEqual([]);
+        expect(r.rows[0]!.size_m2, v).toBe(n);
+      }
+    });
+    it("refuses 54.55 with sizeRange, naming the range", () => {
+      for (const v of ["54.55", "54.550", "54.05"])
         expect(property(v).errors, v).toEqual(
-          fail({ code: "sizeDecimals", value: v, ...range }),
+          fail({ code: "sizeRange", value: v, ...range }),
         );
     });
-    it("refuses a fraction outside the range with sizeDecimals", () => {
-      for (const v of ["0.5", "10000.1"])
+    it("refuses a size outside the range with sizeRange", () => {
+      for (const v of ["0.5", "10000.1", "0", "10001", "10000.10"])
         expect(property(v).errors, v).toEqual(
-          fail({ code: "sizeDecimals", value: v, ...range }),
+          fail({ code: "sizeRange", value: v, ...range }),
+        );
+    });
+    it("refuses a negative size with sizeRange", () => {
+      for (const v of ["-5", "-0.5"])
+        expect(property(v).errors, v).toEqual(
+          fail({ code: "sizeRange", value: v, ...range }),
         );
     });
     it("a decimal comma gets the decimalComma error", () => {
@@ -458,12 +476,18 @@ describe("number formats", () => {
       out("loan_term_years", "51", 1, 50),
     );
 
+    // ADR 0236 §1: a size outside the range gets the size's own message.
+    const outSize = (value: string) => [
+      {
+        row: 2,
+        field: "size_m2",
+        error: { code: "sizeRange", value, min: 1, max: 10_000 },
+      },
+    ];
     for (const size of ["1", "10000", ""])
       expect(property(size).errors, size).toEqual([]);
-    expect(property("0").errors).toEqual(out("size_m2", "0", 1, 10_000));
-    expect(property("10001").errors).toEqual(
-      out("size_m2", "10001", 1, 10_000),
-    );
+    expect(property("0").errors).toEqual(outSize("0"));
+    expect(property("10001").errors).toEqual(outSize("10001"));
   });
 });
 

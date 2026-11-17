@@ -1019,7 +1019,7 @@ export const cs: Dictionary = {
       `„${v}“ — doba splatnosti musí být alespoň jeden rok`,
     errOutOfRange: (v, min, max) =>
       `„${v}“ musí být celé číslo od ${min} do ${max}`,
-    errSizeDecimals: (v, min, max) =>
+    errSizeRange: (v, min, max) =>
       `„${v}“ musí být číslo od ${min} do ${max} s nejvýš jedním desetinným místem`,
     errDuplicateKey: (firstRow) =>
       `Duplicita řádku ${firstRow} — každý záznam smí být v souboru jen jednou`,

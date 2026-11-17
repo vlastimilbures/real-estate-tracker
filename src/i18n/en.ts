@@ -1088,8 +1088,8 @@ export const en = {
       `"${v}" — the loan term must be at least one year`,
     errOutOfRange: (v: string, min: string, max: string) =>
       `"${v}" must be a whole number from ${min} to ${max}`,
-    // ADR 0236 §1: a size with two or more decimals, or a fraction outside the range.
-    errSizeDecimals: (v: string, min: string, max: string) =>
+    // ADR 0236 §1: a size outside the range or with two or more decimals.
+    errSizeRange: (v: string, min: string, max: string) =>
       `"${v}" must be a number from ${min} to ${max} with at most one decimal place`,
     errDuplicateKey: (firstRow: number) =>
       `Duplicate of row ${firstRow} — each record may appear only once per file`,

@@ -157,7 +157,8 @@ describe("parsePropertyForm", () => {
   });
 
   it("accepts a size with one decimal place, comma or dot (ADR 0236 §1)", () => {
-    for (const size_m2 of ["58.5", "58,5"]) {
+    // Trailing zeros count by value: "58,50" is one decimal place.
+    for (const size_m2 of ["58.5", "58,5", "58.50", "58,50"]) {
       const result = parsePropertyForm({ ...valid, size_m2 }, "p-new", [], en);
       expect(result.valid && result.property.sizeM2, size_m2).toBe(58.5);
     }

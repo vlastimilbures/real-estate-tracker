@@ -22,6 +22,14 @@ export const inRange = (n: number, r: IntRange): boolean =>
 /** At most one decimal place: the size's precision (ADR 0236 §1). */
 export const oneDecimal = (v: number): boolean => Number(v.toFixed(1)) === v;
 
+/** The same rule on entered text with a `.` decimal point, counted by value: trailing
+ *  zeros do not count, so the 54.50 a two-decimal spreadsheet column exports is one
+ *  decimal place (ADR 0236). */
+export function oneDecimalText(text: string): boolean {
+  const fraction = text.split(".")[1] ?? "";
+  return fraction.replace(/0+$/, "").length <= 1;
+}
+
 /** Above this many times a field's form maximum a stored value is not plausible data but
  *  a broken file: restore refuses it, where up to it restore only asks (ADR 0148). It also
  *  keeps a hand-edited horizon or term from making every projection loop for ever. */

@@ -338,6 +338,13 @@ describe("parseSizeField (ADR 0236)", () => {
     expect(parseSizeField(" 1 054,5 ")).toBe(1054.5);
     expect(FORM_PARSERS.size("54,5")).toBe(54.5);
   });
+  it("counts decimals by value: trailing zeros are dropped", () => {
+    expect(parseSizeField("54.50")).toBe(54.5);
+    expect(parseSizeField("54,50")).toBe(54.5);
+    expect(parseSizeField("54,00")).toBe(54);
+    expect(parseSizeField("54.550")).toBeNull();
+    expect(parseSizeField("54,05")).toBeNull();
+  });
   it("refuses two or more decimals, signs and non-numbers", () => {
     for (const raw of ["54.55", "54,55", "-1", "5.", ".5", "1e2", "x", ""])
       expect(parseSizeField(raw), raw).toBeNull();

@@ -2,7 +2,7 @@
 // component file so fast-refresh stays happy and the parsing is unit-testable.
 import { D, type Decimal } from "../../lib/money";
 import { fmtCzk, fmtDate } from "../../lib/format";
-import { inRange, type IntRange } from "../../lib/intRanges";
+import { inRange, oneDecimalText, type IntRange } from "../../lib/intRanges";
 import { DATE_FLOOR_YEAR } from "../../lib/day";
 import {
   calendarDay,
@@ -55,11 +55,13 @@ export function parseIntField(raw: string): number | null {
 }
 
 /** A size: unsigned, at most 9 whole digits and one decimal place after a comma or a dot
- *  (ADR 0236 §1). Two or more decimals are refused, not rounded. */
+ *  (ADR 0236 §1), counted by value: "54,50" is 54.5. Two or more decimals are refused,
+ *  not rounded. */
 export function parseSizeField(raw: string): number | null {
-  const cleaned = raw.replace(/\s/g, "");
-  if (!/^\d{1,9}([.,]\d)?$/.test(cleaned)) return null;
-  return Number(cleaned.replace(",", "."));
+  const cleaned = raw.replace(/\s/g, "").replace(",", ".");
+  if (!/^\d{1,9}(\.\d+)?$/.test(cleaned) || !oneDecimalText(cleaned))
+    return null;
+  return Number(cleaned);
 }
 
 /** dd.mm.yyyy → UTC Date (or null). */

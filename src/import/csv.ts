@@ -8,7 +8,12 @@ import Papa from "papaparse";
 import { D } from "../lib/money";
 import { calendarDay, suggestedInstalment } from "../engine";
 import { DATE_FLOOR_YEAR } from "../lib/day";
-import { inRange, INT_RANGES, type IntRange } from "../lib/intRanges";
+import {
+  inRange,
+  INT_RANGES,
+  oneDecimalText,
+  type IntRange,
+} from "../lib/intRanges";
 import { PLAIN_DECIMAL } from "../lib/decimalText";
 import { propertyKey } from "../lib/propertyKey";
 
@@ -31,8 +36,8 @@ export type CsvErrorCode =
   | { code: "invalidInteger"; value: string }
   | { code: "notPositive"; value: string }
   | { code: "outOfRange"; value: string; min: number; max: number }
-  /** A size with two or more decimals, or a fraction outside its range (ADR 0236 §1). */
-  | { code: "sizeDecimals"; value: string; min: number; max: number }
+  /** A size outside its range or with two or more decimals (ADR 0236 §1). */
+  | { code: "sizeRange"; value: string; min: number; max: number }
   | { code: "invalidBoolean"; value: string }
   | { code: "unknownProperty"; value: string }
   | { code: "instalmentRequired" }
@@ -386,14 +391,10 @@ class RowCtx {
       return this.fail(field, { code, value: v });
     }
     const n = Number(v);
-    // Decimals as written, like the form: 54.50 is two (ADR 0236 §1).
-    const decimals = v.split(".")[1]?.length ?? 0;
-    // A whole number outside the range keeps the bounded fields' outOfRange (ADR 0076);
-    // any other refusal names the size rule, one decimal place within the range.
-    if (decimals === 0 && !inRange(n, range))
-      return this.fail(field, { code: "outOfRange", value: v, ...range });
-    if (decimals > 1 || !inRange(n, range))
-      return this.fail(field, { code: "sizeDecimals", value: v, ...range });
+    // One message for every refusal of a number: the range with one decimal place, as
+    // the form and restore say (ADR 0236 §1). Decimals count by value, like the form.
+    if (!oneDecimalText(v) || !inRange(n, range))
+      return this.fail(field, { code: "sizeRange", value: v, ...range });
     return n;
   }
 

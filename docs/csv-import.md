@@ -38,7 +38,7 @@ Types used below:
 - **Fraction**: a rate written as a fraction, not a percentage: `0.039` means 3.9 %.
 - **Whole number**: digits only, within the stated range.
 - **Size**: m² as a plain decimal with at most one decimal place after a decimal point:
-  `54` or `54.5`, within the stated range (ADR 0236).
+  `54`, `54.5` or `54.50` (trailing zeros do not count), within the stated range (ADR 0236).
 - **Yes/no**: `true` or `false` (`1`/`0` and `yes`/`no` are accepted too, in any case).
 
 An optional column may be left empty.
