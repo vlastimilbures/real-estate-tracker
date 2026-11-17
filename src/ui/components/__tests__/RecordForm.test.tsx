@@ -87,3 +87,118 @@ describe("RecordForm with a throwing onSubmit (DR-090)", () => {
     ).toBe(false);
   });
 });
+
+// ADR 0243: a refused save names a field the form is not showing for this draft. Its
+// message goes above the buttons, except a row list's first-row field (ADR 0167), which
+// shows on that row.
+describe("a refused save on a field the form is not showing (#440, ADR 0243)", () => {
+  const en = getDict("en");
+  const hiddenSpecs: FieldSpec[] = [
+    { name: "monthlyInstalment", label: "Monthly instalment", kind: "money" },
+    {
+      name: "completionDate",
+      label: "Completion date",
+      kind: "date",
+      optional: true,
+    },
+  ];
+  function renderHidden(failure: WriteError) {
+    act(() => useUiStore.setState({ language: "en" }));
+    render(
+      <RecordForm
+        specs={hiddenSpecs}
+        initial={{ monthlyInstalment: "100", completionDate: "" }}
+        submitLabel="Save"
+        hiddenFields={() => ["completionDate"]}
+        onSubmit={async () => failure}
+      />,
+    );
+  }
+
+  // debt #440: the message stays on the hidden field, so nothing shows.
+  it.fails(
+    "a constraint on a hidden field shows above the buttons (#440)",
+    async () => {
+      renderHidden({
+        kind: "constraint",
+        constraint: {
+          kind: "check",
+          check: "mortgage_interest_only_until_iso",
+        },
+      });
+      await userEvent.click(screen.getByRole("button", { name: "Save" }));
+      expect(screen.getByRole("alert").textContent).toContain(
+        en.inputRules.INVALID_DATE,
+      );
+    },
+  );
+
+  // debt #440: the message stays on the hidden field, so nothing shows.
+  it.fails(
+    "an input-rule error on a hidden field shows above the buttons (#440)",
+    async () => {
+      renderHidden({
+        kind: "input",
+        errors: [
+          {
+            code: "INVALID_DATE",
+            entity: "mortgage",
+            id: "m",
+            field: "completionDate",
+          },
+        ],
+      });
+      await userEvent.click(screen.getByRole("button", { name: "Save" }));
+      expect(screen.getByRole("alert").textContent).toContain(
+        en.inputRules.INVALID_DATE,
+      );
+    },
+  );
+
+  it("an error on a list's first-row field stays on that row (ADR 0167)", async () => {
+    act(() => useUiStore.setState({ language: "en" }));
+    render(
+      <RecordForm
+        specs={[
+          { name: "startDate", label: "Start date", kind: "date" },
+          {
+            name: "draws",
+            label: "Draws",
+            kind: "draws",
+            optional: true,
+            lead: {
+              field: "initialPrincipal",
+              dateField: "startDate",
+              label: "Drawn at start",
+              dateFallback: "–",
+            },
+          },
+          {
+            name: "initialPrincipal",
+            label: "Initial principal",
+            kind: "money",
+          },
+        ]}
+        initial={{
+          startDate: "01.03.2027",
+          draws: "",
+          initialPrincipal: "100",
+        }}
+        submitLabel="Save"
+        hiddenFields={() => ["initialPrincipal"]}
+        onSubmit={async () => ({
+          kind: "constraint",
+          constraint: {
+            kind: "check",
+            check: "mortgage_principal_not_negative",
+          },
+        })}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(screen.getByRole("group", { name: "Draws" }).textContent).toContain(
+      en.inputRules.NEGATIVE_AMOUNT,
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
