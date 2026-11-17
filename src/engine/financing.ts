@@ -7,19 +7,12 @@
 import { ZERO, type Decimal } from "../lib/money";
 import {
   blockEndDate,
-  drawMonth,
   isDevLoan,
   mortgageBlock,
   selectBlock,
 } from "./amortization";
 import { DEBT_FREE_EPSILON } from "./constants";
-import {
-  edate,
-  firstAfter,
-  isAfter,
-  isOnOrBefore,
-  lastGridMonthOnOrBefore,
-} from "./dates";
+import { edate, firstAfter, isAfter, isOnOrBefore } from "./dates";
 import { leaseInForce } from "./metrics";
 import {
   afterSuccessor,
@@ -181,43 +174,13 @@ function chainResets(
   return resets;
 }
 
-/** A chain block as a payer: its first schedule month and payment offset, read once. */
-interface Payer {
-  start: Date;
-  draw: number;
-  offset: number;
-}
-
-const payersOf = (chain: MortgageBlock[], baseDate: Date): Payer[] =>
-  chain.map((b) => ({
-    start: b.startDate,
-    draw: drawMonth(b, baseDate),
-    offset: paymentOffset(b, baseDate),
-  }));
-
-/** Index of the block paying grid month `m`: the last one drawn before `m`, else the first. */
-function payerAt(payers: Payer[], m: number): number {
-  let k = 0;
-  for (const [j, p] of payers.entries()) if (p.draw < m) k = j;
-  return k;
-}
-
 /**
- * Schedule payments due after `asOf`, each on its paying block's own day (ADR 0117).
- * A block's payment of grid month m is due on or before as-of when offset + m is at most
- * the block's last month anniversary on or before as-of, so no row needs its own date.
+ * Schedule payments due after `asOf`, each on its paying block's own day (ADR 0117): a
+ * paying row's due date is its paying block's (ADR 0164), so the rows' own dates tell.
  */
-function paymentsDueAfter(
-  rows: AmortizationRow[],
-  payers: Payer[],
-  asOf: Date,
-): number {
-  const paidThrough = payers.map(
-    (p) => lastGridMonthOnOrBefore(p.start, asOf) - p.offset,
-  );
+function paymentsDueAfter(rows: AmortizationRow[], asOf: Date): number {
   return rows.filter(
-    (r, i) =>
-      i + 1 > (paidThrough[payerAt(payers, i + 1)] ?? 0) && hasPayment(r),
+    (r) => hasPayment(r) && r.dueDate !== null && isAfter(r.dueDate, asOf),
   ).length;
 }
 
@@ -305,15 +268,13 @@ function propertyExposure(
   if (!first) return null;
   const resets = chainResets(links, rows, ctx);
   const last = lastPaymentMonth(rows);
-  const payers = payersOf(chain, ctx.baseDate);
   return {
     loan: {
       propertyId: first.propertyId,
       blockId: (selectBlock(chain, ctx.asOf) ?? first).id,
       nextFixation: resets.find((r) => r.status === "upcoming") ?? null,
       payoffDate: rows[last - 1]?.dueDate ?? null, // ADR 0164
-      remainingMonths:
-        last > 0 ? paymentsDueAfter(rows, payers, ctx.asOf) : null,
+      remainingMonths: last > 0 ? paymentsDueAfter(rows, ctx.asOf) : null,
       interestSaved: prepaymentInterestSaved(blocks, ctx.assumptions, schedule),
     },
     resets,
