@@ -1,6 +1,6 @@
 // ADR 0096 (#34): the import plan classifies each row as add, update or unchanged; the
-// preview and the commit share it, and a commit whose plan changed since the preview
-// writes nothing. Synthetic fixtures only.
+// preview and the commit share it, and the commit writes the plan it builds at the
+// click (ADR 0229). Synthetic fixtures only.
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
@@ -14,7 +14,6 @@ import {
 } from "../csv";
 import {
   CsvImportProblemsError,
-  CsvPlanChangedError,
   importCsv,
   planImport,
   previewImport,
@@ -244,20 +243,6 @@ describe("planImport is pure", () => {
 });
 
 describe("importCsv — commit matches the preview (ADR 0096)", () => {
-  it("the import uses the new property id the preview showed", async () => {
-    const batch = {
-      properties: props("Byt C,,2022-01-01,7000000\nByt A,,2020-01-01,5000000"),
-      valuations: parseValuations(`${VH}\nByt C,2026-01-01,,7500000`).rows,
-    };
-    const preview = await previewImport(sql, batch);
-    const report = await importCsv(sql, batch, preview.fingerprint);
-    expect(report.items.map((i) => i.kind)).toEqual(["add", "update", "add"]);
-    // The new property's id is random, and the import used the one the preview showed.
-    expect(idOf("Byt C")).toBe(
-      preview.items.find((i) => i.propertyName === "Byt C")?.propertyId,
-    );
-  });
-
   it("a committed batch previews again as all unchanged (round trip)", async () => {
     // Adds and updates in every file: each UPDATE / INSERT must store the form the
     // plan compares, or the second preview reports a change that is not there.
@@ -287,7 +272,7 @@ describe("importCsv — commit matches the preview (ADR 0096)", () => {
       ["rents", "add"],
       ["rents", "add"],
     ]);
-    await importCsv(sql, batch, first.fingerprint);
+    await importCsv(sql, batch);
 
     const again = await previewImport(sql, batch);
     expect(again.problems).toEqual([]);
@@ -295,40 +280,12 @@ describe("importCsv — commit matches the preview (ADR 0096)", () => {
       first.items.map((i) => [i.file, i.row, "unchanged", []]),
     );
   });
-
-  it("a plan that changed since the preview writes nothing", async () => {
-    const batch = { properties: props("Byt A,Javorova 12,2020-01-01,5000000") };
-    const preview = await previewImport(sql, batch);
-    expect(preview.items[0]?.kind).toBe("unchanged");
-    // Another edit lands between preview and commit.
-    sql.db
-      .prepare("UPDATE properties SET purchase_price = ? WHERE id = ?")
-      .run("4900000", idOf("Byt A"));
-    const before = dump(sql);
-
-    const e = await importCsv(sql, batch, preview.fingerprint).then(
-      () => null,
-      (err: unknown) => err,
-    );
-
-    expect(e).toBeInstanceOf(CsvPlanChangedError);
-    expect((e as CsvPlanChangedError).preview.items[0]).toEqual(
-      expect.objectContaining({
-        kind: "update",
-        changes: [
-          { field: "purchase_price", before: "4900000", after: "5000000" },
-        ],
-      }),
-    );
-    expect(dump(sql)).toEqual(before);
-  });
 });
 
 // ADR 0229: the import builds its plan at the click and writes it; only a plan with
 // problems is refused, and then nothing is written.
 describe("importCsv — writes the plan built at the click (ADR 0229)", () => {
-  // Fails until #447 lands: importCsv still compares with a previewed fingerprint.
-  it.fails("an import writes exactly what the preview listed", async () => {
+  it("an import writes exactly what the preview listed", async () => {
     const rows = {
       properties: props("Byt C,,2022-01-01,7000000\nByt A,,2020-01-01,5000000"),
       valuations: parseValuations(`${VH}\nByt C,2026-01-01,,7500000`).rows,
@@ -356,37 +313,33 @@ describe("importCsv — writes the plan built at the click (ADR 0229)", () => {
     ).toEqual({ property_id: c });
   });
 
-  // Fails until #447 lands: there is no CsvImportProblemsError yet.
-  it.fails(
-    "a commit-time problem writes nothing and returns the problems",
-    async () => {
-      const batch = {
-        valuations: parseValuations(`${VH}\nByt A,2026-01-01,,7500000`).rows,
-      };
-      expect((await previewImport(sql, batch)).problems).toEqual([]);
-      // An outside edit lands between the shown preview and the click.
-      sql.db
-        .prepare("UPDATE properties SET name = ? WHERE id = ?")
-        .run("Byt Z", idOf("Byt A"));
-      const before = dump(sql);
+  it("a commit-time problem writes nothing and returns the problems", async () => {
+    const batch = {
+      valuations: parseValuations(`${VH}\nByt A,2026-01-01,,7500000`).rows,
+    };
+    expect((await previewImport(sql, batch)).problems).toEqual([]);
+    // An outside edit lands between the shown preview and the click.
+    sql.db
+      .prepare("UPDATE properties SET name = ? WHERE id = ?")
+      .run("Byt Z", idOf("Byt A"));
+    const before = dump(sql);
 
-      const e = await importCsv(sql, batch).then(
-        () => null,
-        (err: unknown) => err,
-      );
+    const e = await importCsv(sql, batch).then(
+      () => null,
+      (err: unknown) => err,
+    );
 
-      expect(e).toBeInstanceOf(CsvImportProblemsError);
-      expect((e as CsvImportProblemsError).preview.problems).toEqual([
-        {
-          file: "valuations",
-          row: 2,
-          field: "property_name",
-          problem: { code: "unknownProperty", value: "Byt A" },
-        },
-      ]);
-      expect(dump(sql)).toEqual(before);
-    },
-  );
+    expect(e).toBeInstanceOf(CsvImportProblemsError);
+    expect((e as CsvImportProblemsError).preview.problems).toEqual([
+      {
+        file: "valuations",
+        row: 2,
+        field: "property_name",
+        problem: { code: "unknownProperty", value: "Byt A" },
+      },
+    ]);
+    expect(dump(sql)).toEqual(before);
+  });
 });
 
 // ADR 0185 §2: an optional column that is not in the file is left as stored on an update;

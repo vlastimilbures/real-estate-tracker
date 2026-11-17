@@ -996,8 +996,6 @@ export const cs: Dictionary = {
     },
     errStoredEvent: (event, date, rule) =>
       `${rule} — uložená položka „${event}“ k ${date}. Zadává se ve formuláři hypotéky u nemovitosti, ne v CSV: nejdřív ji tam změňte nebo odstraňte, nebo v tomto souboru ponechte původní hodnotu.`,
-    planChanged:
-      "Data se od zobrazení náhledu změnila, proto se nic neimportovalo. Zkontrolujte aktualizovaný náhled a importujte znovu.",
     errRequired: "Povinné",
     errInvalidDate: (v) => `Neplatné datum „${v}“ — použijte YYYY-MM-DD`,
     errInvalidNumber: (v) => `Neplatné číslo „${v}“`,

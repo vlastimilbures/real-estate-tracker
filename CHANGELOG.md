@@ -44,6 +44,10 @@ engine without the form, and remove it when the last part lands.
   preview and keeps Import disabled until the new preview is shown, so pressing Import in
   that moment no longer ends in a misleading "plan changed" message (ADR 0240, #437). No
   figure changes.
+- Import writes the plan it builds when you press it, without comparing it with the
+  preview, and the "data changed since this preview" message is gone (ADR 0229, #447). If
+  that plan has a problem, nothing is written and the problems are listed as in the
+  preview. No figure changes; no stored data changes.
 - The engine no longer has an acquisition cost percentage (ADR 0234, #454). It could never
   be set in the app, so a property bought after the projection start still adds the
   transaction costs on its funding record, or none when none are entered. No figure changes.

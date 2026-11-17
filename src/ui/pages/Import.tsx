@@ -15,7 +15,7 @@ import {
   type ParsedValuationRow,
   type ParsedRentRow,
   type ParsedMortgageRow,
-  CsvPlanChangedError,
+  CsvImportProblemsError,
   type CsvImportPreview,
 } from "../../state/csv";
 import { useUiStore } from "../../state/uiStore";
@@ -58,7 +58,6 @@ export function Import() {
     error: unknown;
   } | null>(null);
   const [confirming, setConfirming] = useState(false);
-  const [planChanged, setPlanChanged] = useState(false);
   const { showToast } = useToast();
 
   // FK-aware parsers: check child rows against known property names. Read from the
@@ -180,9 +179,8 @@ export function Import() {
     setConfirming(false);
     setImporting(true);
     dismissFailure();
-    setPlanChanged(false);
     try {
-      const report = await importCsv(batch, preview.fingerprint);
+      const report = await importCsv(batch);
       setLastImport(report);
       // Imported: clear the files so a second click cannot import them again (UX-038).
       setProperties(null);
@@ -194,8 +192,9 @@ export function Import() {
       // Import is one transaction: only a failure before the commit lands here, so
       // nothing was written (DR-023). A failed read-back after it resolves, and the app
       // stops on the error screen (ADR 0228).
-      if (e instanceof CsvPlanChangedError) {
-        setPlanChanged(true);
+      if (e instanceof CsvImportProblemsError) {
+        // The plan built at the click has problems: show them as the preview does,
+        // which also disables Import (ADR 0229 §2).
         setPreview(e.preview);
       } else {
         logFailure("IMPORT", e);
@@ -282,14 +281,6 @@ export function Import() {
                   {t.importPage.nothingToImport}
                 </p>
               )}
-            </div>
-          )}
-          {planChanged && (
-            <div style={{ marginBottom: "var(--s3)" }}>
-              <ErrorBanner
-                message={t.importPage.planChanged}
-                onDismiss={() => setPlanChanged(false)}
-              />
             </div>
           )}
           <div className="row" style={{ gap: "var(--s3)" }}>

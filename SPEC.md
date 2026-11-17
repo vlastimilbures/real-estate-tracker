@@ -707,8 +707,8 @@ Clearing a funding amount is a property form edit too: a blank CSV cell keeps it
   file chosen for one import is parsed, its property names resolved and the merged portfolio
   validated before anything is written. If any row in any file has an error, nothing is
   imported; errors name file, row and column. Fix and re-upload. The write is one
-  transaction (ADR 0014), and a commit whose plan differs from the previewed one writes
-  nothing (ADR 0096).
+  transaction (ADR 0014) of the plan built at the click; if that plan has problems, nothing
+  is written and they are shown as the preview shows them (ADR 0229).
 - **Upsert by natural key** ([guide](docs/csv-import.md#matching-and-updates)):
   re-importing updates rather than duplicating. Properties by name; children by
   `(property_name, start_date/valid_from)`. On an update, an empty

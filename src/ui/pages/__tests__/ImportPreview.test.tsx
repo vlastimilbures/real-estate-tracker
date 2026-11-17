@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 //
 // ADR 0096 (#34): the Import page previews adds and updates, asks before overwriting,
-// refuses a plan that changed since the preview, and keeps the report with links.
+// shows a problem found at the click (ADR 0229), and keeps the report with links.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -13,7 +13,6 @@ import { portfolio } from "../../../engine/__tests__/support/seed";
 import { propertiesTemplate } from "../../../import/csv";
 import {
   CsvImportProblemsError,
-  CsvPlanChangedError,
   type CsvImportPreview,
   type ImportItem,
 } from "../../../import/csvImport";
@@ -39,13 +38,9 @@ const update: ImportItem = {
   changes: [{ field: "address", before: "Lipova 5", after: "Lipova 7" }],
 };
 
-const plan = (
-  items: ImportItem[],
-  fingerprint = "plan-1",
-): CsvImportPreview => ({
+const plan = (items: ImportItem[]): CsvImportPreview => ({
   items,
   problems: [],
-  fingerprint,
 });
 
 const previewCsv = vi.fn();
@@ -127,7 +122,7 @@ describe("Import preview (ADR 0096)", () => {
     expect(screen.queryByText(/could not be checked/)).toBeNull();
   });
 
-  it("imports a pure-add plan on the first press, with the previewed plan", async () => {
+  it("imports a pure-add plan on the first press, with the chosen rows", async () => {
     previewCsv.mockResolvedValue(plan([add]));
     importCsv.mockResolvedValue({
       items: [add],
@@ -143,12 +138,15 @@ describe("Import preview (ADR 0096)", () => {
     );
 
     await waitFor(() => expect(importCsv).toHaveBeenCalledTimes(1));
-    expect(importCsv.mock.calls[0]?.[1]).toBe("plan-1");
+    // The import is sent the chosen rows only and builds its own plan (ADR 0229).
+    expect(importCsv.mock.calls[0]).toEqual([
+      expect.objectContaining({ properties: expect.any(Array) }),
+    ]);
     expect(screen.queryByText(p.confirmOverwriteMsg(1))).toBeNull();
   });
 
   it("shows each update's changes and asks before overwriting", async () => {
-    previewCsv.mockResolvedValue(plan([add, update], "plan-2"));
+    previewCsv.mockResolvedValue(plan([add, update]));
     importCsv.mockResolvedValue({
       items: [add, update],
     });
@@ -166,7 +164,10 @@ describe("Import preview (ADR 0096)", () => {
       screen.getByRole("button", { name: p.confirmOverwrite(1) }),
     );
     await waitFor(() => expect(importCsv).toHaveBeenCalledTimes(1));
-    expect(importCsv.mock.calls[0]?.[1]).toBe("plan-2");
+    // The import is sent the chosen rows only and builds its own plan (ADR 0229).
+    expect(importCsv.mock.calls[0]).toEqual([
+      expect.objectContaining({ properties: expect.any(Array) }),
+    ]);
   });
 
   it("Cancel on the confirm row imports nothing", async () => {
@@ -224,7 +225,7 @@ describe("Import preview (ADR 0096)", () => {
     await userEvent.click(button);
     expect(importCsv).not.toHaveBeenCalled();
 
-    act(() => resolveNext(plan([add, update], "plan-2")));
+    act(() => resolveNext(plan([add, update])));
     const next = (await screen.findByRole("button", {
       name: p.importScope(2, 1, 1),
     })) as HTMLButtonElement;
@@ -254,7 +255,7 @@ describe("Import preview (ADR 0096)", () => {
     await userEvent.click(button);
     expect(importCsv).not.toHaveBeenCalled();
 
-    act(() => resolveNext(plan([add, update], "plan-2")));
+    act(() => resolveNext(plan([add, update])));
     const next = (await screen.findByRole("button", {
       name: p.importScope(2, 1, 1),
     })) as HTMLButtonElement;
@@ -272,7 +273,6 @@ describe("Import preview (ADR 0096)", () => {
           problem: { code: "unknownProperty", value: "Nope" },
         },
       ],
-      fingerprint: "plan-x",
     });
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
@@ -286,63 +286,41 @@ describe("Import preview (ADR 0096)", () => {
     ).toBe(true);
   });
 
-  // Fails until #447 lands: there is no CsvImportProblemsError yet, and the import
-  // still sends the previewed fingerprint.
-  it.fails(
-    "a problem found at the click shows the problems and offers no import (ADR 0229)",
-    async () => {
-      previewCsv.mockResolvedValue(plan([add]));
-      const problems: CsvImportPreview["problems"] = [
-        {
-          file: "rents",
-          row: 2,
-          field: "property_name",
-          problem: { code: "unknownProperty", value: "Nope" },
-        },
-      ];
-      importCsv.mockRejectedValue(
-        new CsvImportProblemsError({ items: [], problems }),
-      );
-      const { container } = renderWithPortfolio(<Import />, {
-        route: "import",
-      });
-      await choosePropertiesFile(container);
-      await userEvent.click(
-        await screen.findByRole("button", { name: p.importScope(1, 1, 0) }),
-      );
-
-      expect(
-        await screen.findByText(p.errUnknownProperty("Nope")),
-      ).toBeTruthy();
-      // The import is sent the chosen rows only: it builds its own plan.
-      expect(importCsv.mock.calls).toEqual([
-        [expect.objectContaining({ properties: expect.any(Array) })],
-      ]);
-      expect(
-        (
-          screen.getByRole("button", {
-            name: p.importSelected,
-          }) as HTMLButtonElement
-        ).disabled,
-      ).toBe(true);
-      expect(screen.queryByText(p.reportTitle)).toBeNull();
-      expect(useUiStore.getState().failure).toBeNull();
-    },
-  );
-
-  it("a plan that changed since the preview says so and shows the new plan", async () => {
+  it("a problem found at the click shows the problems and offers no import (ADR 0229)", async () => {
     previewCsv.mockResolvedValue(plan([add]));
+    const problems: CsvImportPreview["problems"] = [
+      {
+        file: "rents",
+        row: 2,
+        field: "property_name",
+        problem: { code: "unknownProperty", value: "Nope" },
+      },
+    ];
     importCsv.mockRejectedValue(
-      new CsvPlanChangedError(plan([update], "plan-3")),
+      new CsvImportProblemsError({ items: [], problems }),
     );
-    const { container } = renderWithPortfolio(<Import />, { route: "import" });
+    const { container } = renderWithPortfolio(<Import />, {
+      route: "import",
+    });
     await choosePropertiesFile(container);
     await userEvent.click(
       await screen.findByRole("button", { name: p.importScope(1, 1, 0) }),
     );
-    expect(await screen.findByText(p.planChanged)).toBeTruthy();
-    expect(screen.getByText("Lipova 5 → Lipova 7")).toBeTruthy();
+
+    expect(await screen.findByText(p.errUnknownProperty("Nope"))).toBeTruthy();
+    // The import is sent the chosen rows only: it builds its own plan.
+    expect(importCsv.mock.calls).toEqual([
+      [expect.objectContaining({ properties: expect.any(Array) })],
+    ]);
+    expect(
+      (
+        screen.getByRole("button", {
+          name: p.importSelected,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
     expect(screen.queryByText(p.reportTitle)).toBeNull();
+    expect(useUiStore.getState().failure).toBeNull();
   });
 });
 

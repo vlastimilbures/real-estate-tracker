@@ -14,7 +14,7 @@ import { DataError } from "../../data/errors";
 import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
 import type { WriteError } from "../writeError";
 import { parseProperties, parseRents } from "../../import/csv";
-import { CsvPlanChangedError } from "../../import/csvImport";
+import { CsvImportProblemsError } from "../../import/csvImport";
 import { money } from "../../engine";
 import { importNow } from "./support/importNow";
 import { noExtras } from "../../data/__tests__/support/noExtras";
@@ -645,21 +645,6 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
     expect(usePortfolioStore.getState().error).toBeNull();
   });
 
-  it("a previewed batch that adds a property imports with the previewed id (ADR 0096, ADR 0127)", async () => {
-    await usePortfolioStore.getState().init(openSeeded);
-    const batch = {
-      properties: parseProperties(
-        "name,purchase_date,purchase_price\nКвартира,2020-01-01,1000000",
-      ).rows,
-    };
-    const preview = await usePortfolioStore.getState().previewCsv(batch);
-    await usePortfolioStore.getState().importCsv(batch, preview.fingerprint);
-    const added = usePortfolioStore
-      .getState()
-      .portfolio!.properties.find((p) => p.name === "Квартира");
-    expect(added?.id).toBe(preview.items[0]?.propertyId);
-  });
-
   it("importCsv rethrows a refused file unchanged and writes nothing", async () => {
     await usePortfolioStore.getState().init(openSeeded);
     const before = usePortfolioStore.getState().portfolio!;
@@ -669,7 +654,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
           "property_name,start_date,end_date,monthly_rent\nNope,2025-01-01,,1000",
         ).rows,
       }),
-    ).rejects.toBeInstanceOf(CsvPlanChangedError);
+    ).rejects.toBeInstanceOf(CsvImportProblemsError);
     expect(usePortfolioStore.getState().portfolio!.leases.length).toBe(
       before.leases.length,
     );
@@ -702,9 +687,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
         "name,purchase_date,purchase_price\nQueued Import,2020-01-01,1",
       ).rows,
     };
-    const { fingerprint } = await usePortfolioStore
-      .getState()
-      .previewCsv(batch);
+    await usePortfolioStore.getState().previewCsv(batch);
     usePortfolioStore.setState({ sql: slow });
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
     const a = usePortfolioStore.getState().addValuation({
@@ -713,7 +696,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
       validFrom: new Date(Date.UTC(2033, 0, 1)) as IsoDate,
       marketValue: money("1"),
     });
-    const b = usePortfolioStore.getState().importCsv(batch, fingerprint);
+    const b = usePortfolioStore.getState().importCsv(batch);
     await new Promise((r) => setTimeout(r, 0));
     expect(log).toEqual(["valuation"]);
     release();
@@ -731,7 +714,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
           "property_name,start_date,end_date,monthly_rent\nNope,2025-01-01,,1000",
         ).rows,
       }),
-    ).rejects.toBeInstanceOf(CsvPlanChangedError);
+    ).rejects.toBeInstanceOf(CsvImportProblemsError);
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
     const r = await usePortfolioStore.getState().addValuation({
       id: "after-fail",

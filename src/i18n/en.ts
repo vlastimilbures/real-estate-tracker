@@ -1064,8 +1064,6 @@ export const en = {
     },
     errStoredEvent: (event: string, date: string, rule: string) =>
       `${rule} — the saved ${event} of ${date}. It is set in the property's mortgage form, not in the CSV: change or remove it there first, or keep the old value in this file.`,
-    planChanged:
-      "Your data changed since this preview, so nothing was imported. Review the updated preview and import again.",
     // Error-code → message map (csv.ts emits codes; UI renders these)
     errRequired: "Required",
     errInvalidDate: (v: string) => `Invalid date "${v}" — use YYYY-MM-DD`,

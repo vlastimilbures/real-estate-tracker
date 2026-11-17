@@ -33,7 +33,6 @@ const importCsv = vi.fn(async () => ({
 const previewCsv = vi.fn(async () => ({
   items: [added],
   problems: [],
-  fingerprint: "plan-1",
 }));
 
 beforeEach(() =>
