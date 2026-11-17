@@ -146,7 +146,7 @@ table.chart-table tbody th.sticky-col {
 }
 .chart-tooltip .tt-year {
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: var(--s1);
 }
 .chart-tooltip .tt-row {
   display: flex;
@@ -160,15 +160,15 @@ table.chart-table tbody th.sticky-col {
   gap: 6px;
 }
 .chart-tooltip .tt-total {
-  margin-top: 4px;
-  padding-top: 4px;
+  margin-top: var(--s1);
+  padding-top: var(--s1);
   border-top: 1px solid var(--hairline);
   font-weight: 600;
 }
 /* The hovered year's fixation ends, under a rule (ADR 0210 §3). */
 .chart-tooltip .tt-resets {
-  margin-top: 4px;
-  padding-top: 4px;
+  margin-top: var(--s1);
+  padding-top: var(--s1);
   border-top: 1px solid var(--hairline);
 }
 

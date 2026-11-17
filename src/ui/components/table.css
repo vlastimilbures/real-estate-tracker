@@ -168,7 +168,7 @@ table.data tfoot .total-row > th.left {
 .band-legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--s1);
 }
 table.data thead th.left,
 table.data tbody td.left {

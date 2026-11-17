@@ -14,8 +14,8 @@
 .dc-pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
+  gap: var(--s1);
+  padding: 2px var(--s2);
   border-radius: 999px;
   border: 1px solid var(--hairline);
   background: transparent;
@@ -139,7 +139,7 @@
   appearance: none;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--s1);
   min-height: 24px;
   padding: 2px 6px 2px 10px;
   border: 1px solid var(--hairline-strong);
