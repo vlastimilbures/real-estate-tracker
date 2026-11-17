@@ -106,8 +106,8 @@ const summary = (p: Portfolio) =>
   );
 
 describe("ADR 0119 §5: the down payment of a future buy", () => {
-  // Without a record (3,800,000): levered-irr-acquisition.test.ts pins it on the same
-  // fixture.
+  // Without a record (3,800,000): the ADR 0234 test below; levered-irr-acquisition.test.ts
+  // pins the same figure with entered costs of 0.
   it("entered transaction costs are added", () => {
     const p = withBuy([loan()], { transactionCosts: money(150_000) });
     expectKc(outflow(p), 3_950_000, "entered costs");

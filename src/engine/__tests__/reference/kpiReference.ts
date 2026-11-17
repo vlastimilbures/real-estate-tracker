@@ -9,8 +9,8 @@
 // does not model is never silently ignored. It checks its own inputs: owned at baseDate,
 // one valuation in force at baseDate, non-overlapping leases, at most one plain loan drawn
 // by baseDate whose prepayments and recasts all fall after baseDate. Inputs it has no
-// field for (inactive properties, growth overrides, funding records, scenario shocks,
-// acquisition costs) arrive as `unsupported` from the adapter, which must flag them.
+// field for (inactive properties, growth overrides, funding records, scenario shocks)
+// arrive as `unsupported` from the adapter, which must flag them.
 //
 // Formulas (SPEC.md):
 //   • grid month m is dated addMonths(baseDate, m); year t covers months 12(t−1)+1 … 12t

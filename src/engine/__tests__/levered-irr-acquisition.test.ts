@@ -1,9 +1,9 @@
 // A property bought after baseDate must charge the investor a down-payment outflow in
 // its turn-on year, so levered IRR / cumulative cash flow aren't flattered by free
 // terminal equity. The isolation tests vary only the buy's entered
-// `funding.transactionCosts` (a strictly-monotonic input to the injected outflow) so the direction can't pass for an
-// unrelated reason; parity (cashOutsideNetCf all-zero on the all-owned seed) is covered by
-// projection.test.ts and re-asserted here.
+// `funding.transactionCosts` (a strictly-monotonic input to the injected outflow) so the
+// direction can't pass for an unrelated reason; parity (cashOutsideNetCf all-zero on the
+// all-owned seed) is covered by projection.test.ts and re-asserted here.
 import { describe, it, expect } from "vitest";
 import { portfolioKpis } from "../kpis";
 import { portfolioProjection } from "../projections";
