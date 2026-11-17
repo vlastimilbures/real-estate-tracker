@@ -69,8 +69,8 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,css,md,json,jsonc,yaml,yml}": "prettier --write",
-    "*.{ts,tsx,js}": "eslint --max-warnings 0 --no-warn-ignored",
+    "*.{ts,tsx,js,jsx,mjs,cjs,css,md,json,jsonc,yaml,yml,html}": "prettier --write",
+    "*.{ts,tsx,js,mjs,cjs}": "eslint --max-warnings 0 --no-warn-ignored",
     "src/**/*.{ts,tsx}": "vitest related --run --passWithNoTests",
     "*.css": "stylelint --max-warnings 0"
   },

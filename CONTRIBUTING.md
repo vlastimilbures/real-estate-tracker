@@ -83,9 +83,11 @@ presets, limits, data formats or UI text, SPEC, the Guide strings, README, the u
 still describe it. Which document owns what is listed in
 [docs/release.md](docs/release.md#who-owns-what).
 
-- **Git hooks** (husky + lint-staged): on commit, staged files are formatted, linted and their
-  related Vitest tests run; on push, the full typecheck runs. A green CI run is required to
-  merge — do not bypass the hooks.
+- **Git hooks** (husky + lint-staged): on commit, staged files are formatted (`.mjs`, `.cjs`
+  and `.html` included), linted (`.mjs` and `.cjs` included, not `.html`) and their related
+  Vitest tests run; on push, the full typecheck, `pnpm depcruise`, `pnpm knip`,
+  `pnpm knip:prod` and `pnpm adr:check` run. A green CI run is required to merge — do not
+  bypass the hooks.
 - **Stylesheets** (#460): `pnpm lint:css` runs stylelint (`stylelint.config.mjs`: no
   selector defined twice in one context, no duplicate property except a consecutive
   fallback, no `!important`, no hex colour outside `tokens.css`) and
@@ -307,10 +309,9 @@ Refactors are behaviour-neutral and need no ADR.
 - Open it as a **draft** (`gh pr create --draft`): CI skips draft PRs. Run the checks above
   locally, push review fixes, settle the ADR number and merge `main` while it is a draft, then
   mark it ready (`gh pr ready`) for one full CI run.
-- A push that changes only documentation (`docs/`, `*.md`) takes the docs fast path: CI
-  checks formatting, the ADR index and the tests that read docs (`scripts/ci-changes.sh`).
-  This applies when the whole PR is documentation on a green base, or when the push follows a
-  fully green one, e.g. an ADR renumber after review.
+- Every ready PR gets the full CI run, a documentation-only one too: the gate tests
+  (`scripts/__tests__/gates.test.mjs`) read CONTRIBUTING.md, README.md, CLAUDE.md, the PR
+  template and `docs/release.md`, so a docs change can break them (#459).
 
 ## Protecting real data
 

@@ -13,7 +13,9 @@ import {
   replaceBlock,
   runGates,
   select,
+  workflowJobs,
   workflowSteps,
+  yamlTree,
 } from "../gates.mjs";
 
 const read = (file) =>
@@ -297,6 +299,95 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
     ]);
   });
 
+  it("reads a workflow's maps, lists, flow lists, block scalars and quotes", () => {
+    const yaml = [
+      "# a comment",
+      "env:",
+      '  A: "1" # quoted',
+      "jobs:",
+      "  x:",
+      "    if: >-",
+      "      !cancelled() &&",
+      "      (b)",
+      "    strategy:",
+      "      matrix:",
+      "        tz: [Pacific/Pago_Pago, 'UTC']",
+      "        leg:",
+      "          - one # first",
+      "          - two",
+      "        include:",
+      "          - leg: three",
+      "            tz: UTC",
+      "    steps:",
+      "      - uses: a@b # v1",
+      "      - run: |",
+      "          pnpm one",
+      "",
+      "          pnpm two",
+    ].join("\n");
+    expect(yamlTree(yaml)).toEqual({
+      env: { A: "1" },
+      jobs: {
+        x: {
+          if: "!cancelled() && (b)",
+          strategy: {
+            matrix: {
+              tz: ["Pacific/Pago_Pago", "UTC"],
+              leg: ["one", "two"],
+              include: [{ leg: "three", tz: "UTC" }],
+            },
+          },
+          steps: [{ uses: "a@b" }, { run: "pnpm one\npnpm two" }],
+        },
+      },
+    });
+  });
+
+  describe("a step env that reads the matrix", () => {
+    const gates = [
+      {
+        id: "tz-negative",
+        run: "pnpm test",
+        env: { TZ: "Pacific/Pago_Pago" },
+        where: "ci",
+      },
+    ];
+    const yaml = (zones) =>
+      [
+        "jobs:",
+        "  tz:",
+        "    strategy:",
+        "      matrix:",
+        `        tz: [${zones}]`,
+        "    steps:",
+        "      - run: pnpm test",
+        "        env:",
+        "          TZ: ${{ matrix.tz }}",
+      ].join("\n");
+
+    it("counts once per matrix value", () => {
+      expect(
+        ciDrift(yaml("Pacific/Kiritimati, Pacific/Pago_Pago"), { gates }),
+      ).toEqual([]);
+    });
+
+    it("fails when no matrix value is the gate's", () => {
+      expect(ciDrift(yaml("UTC"), { gates })).toEqual([
+        'tz-negative: `pnpm test` runs with env {"TZ":"UTC"}, expected {"TZ":"Pacific/Pago_Pago"}',
+      ]);
+    });
+
+    it("fails a matrix key the job does not have", () => {
+      expect(
+        ciDrift(yaml("Pacific/Pago_Pago").replace("matrix.tz", "matrix.zone"), {
+          gates,
+        }),
+      ).toEqual([
+        'tz-negative: `pnpm test` runs with env {"TZ":"${{ matrix.zone }}"}, expected {"TZ":"Pacific/Pago_Pago"}',
+      ]);
+    });
+  });
+
   it.each([
     [
       "knip without its exit code",
@@ -325,12 +416,12 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
       "          UX_RUN_ID: other\n",
     ],
     [
-      "Format check deleted from the full checks (the docs job still runs it)",
+      "Format check deleted from the full checks",
       "        run: pnpm lint\n\n      - name: Format check\n        run: pnpm exec prettier --check .\n",
       "        run: pnpm lint\n",
     ],
     [
-      "ADR index deleted from the full checks (the docs job still runs it)",
+      "ADR index deleted from the full checks",
       "      - name: ADR index and links\n        run: pnpm adr:check\n\n      - name: Audit",
       "      - name: Audit",
     ],
@@ -356,5 +447,198 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
     ],
   ])("fails a weakened step: %s", (_, from, to) => {
     expect(ciDrift(weaken(from, to)).length).toBeGreaterThan(0);
+  });
+
+  it("reads each job's keys, if, needs, env, defaults and matrix, and the workflow's env and defaults", () => {
+    const yaml = [
+      "env:",
+      "  A: x",
+      "defaults:",
+      "  run:",
+      "    working-directory: sub",
+      "jobs:",
+      "  a:",
+      "    if: false",
+      "    continue-on-error: true",
+      "    env:",
+      "      B: y",
+      "    defaults:",
+      "      run:",
+      "        shell: sh",
+      "    strategy:",
+      "      matrix:",
+      "        shard: [1, 2]",
+      "    steps:",
+      "      - run: pnpm one",
+      "  b:",
+      "    needs: a",
+      "    steps:",
+      "      - run: pnpm two",
+    ].join("\n");
+    expect(workflowJobs(yaml)).toEqual({
+      env: { A: "x" },
+      defaults: { run: { "working-directory": "sub" } },
+      jobs: {
+        a: {
+          keys: [
+            "if",
+            "continue-on-error",
+            "env",
+            "defaults",
+            "strategy",
+            "steps",
+          ],
+          if: "false",
+          needs: [],
+          env: { B: "y" },
+          defaults: { run: { shell: "sh" } },
+          matrix: { shard: ["1", "2"] },
+        },
+        b: {
+          keys: ["needs", "steps"],
+          needs: ["a"],
+          env: {},
+          defaults: {},
+          matrix: null,
+        },
+      },
+    });
+  });
+
+  const DRAFT_IF =
+    "    if: github.event_name == 'push' || !github.event.pull_request.draft\n";
+  it.each([
+    [
+      "the rust job switched off",
+      `    name: Rust (fmt · clippy · test · audit · build)\n${DRAFT_IF}`,
+      "    name: Rust (fmt · clippy · test · audit · build)\n    if: false\n",
+      "job rust runs only if `false`",
+    ],
+    [
+      "the Frontend check skipped, not failed, when a job fails",
+      "    needs: [frontend-checks, frontend-time-zones]\n    if: >-\n      !cancelled() &&\n",
+      "    needs: [frontend-checks, frontend-time-zones]\n    if: >-\n      success() &&\n",
+      "job frontend runs only if `success() && (",
+    ],
+    [
+      "a job allowed to fail",
+      "    name: Frontend checks and coverage\n",
+      "    name: Frontend checks and coverage\n    continue-on-error: true\n",
+      "job frontend-checks has continue-on-error",
+    ],
+    [
+      "a job-level env that reaches every gate step",
+      "    name: Frontend checks and coverage\n",
+      '    name: Frontend checks and coverage\n    env:\n      FC_RUNS: "1"\n',
+      'test: `pnpm test:coverage` runs with env {"FC_RUNS":"1"}, expected {}',
+    ],
+    [
+      "a workflow-level env that reaches every gate step",
+      "\njobs:\n",
+      '\nenv:\n  FC_RUNS: "1"\n\njobs:\n',
+      'knip: `pnpm knip` runs with env {"FC_RUNS":"1"}, expected {}',
+    ],
+    [
+      "a workflow default working-directory",
+      "\njobs:\n",
+      "\ndefaults:\n  run:\n    working-directory: e2e\n\njobs:\n",
+      "lint: the `pnpm lint` step runs in `e2e`, not the repository root",
+    ],
+    [
+      "a job default shell",
+      "    name: Frontend checks and coverage\n",
+      "    name: Frontend checks and coverage\n    defaults:\n      run:\n        shell: sh\n",
+      "typecheck: the `pnpm typecheck` step runs in shell `sh`",
+    ],
+    [
+      "a gate step's shell",
+      "        run: pnpm typecheck\n",
+      "        run: pnpm typecheck\n        shell: sh\n",
+      "typecheck: the `pnpm typecheck` step runs in shell `sh`",
+    ],
+    [
+      "a gate step in another directory",
+      "        run: pnpm lint\n",
+      "        run: pnpm lint\n        working-directory: e2e\n",
+      "lint: the `pnpm lint` step runs in `e2e`, not the repository root",
+    ],
+    [
+      "cargo audit run outside src-tauri",
+      "        working-directory: src-tauri\n        run: cargo audit\n",
+      "        run: cargo audit\n",
+      "cargo-audit: the `cargo audit` step runs in the repository root, not `src-tauri`",
+    ],
+    [
+      "an axe shard excluded",
+      "        shard: [1, 2, 3, 4]\n",
+      "        shard: [1, 2, 3, 4]\n        exclude:\n          - shard: 4\n",
+      "job axe-shard has a matrix exclude, which this check cannot read",
+    ],
+    [
+      "a matrix include",
+      "        shard: [1, 2, 3, 4]\n",
+      "        shard: [1, 2, 3, 4]\n        include:\n          - shard: 1\n            UX_LANG: cs\n",
+      "job axe-shard has a matrix include, which this check cannot read",
+    ],
+    [
+      "an sh line",
+      "        run: pnpm knip\n",
+      "        run: pnpm knip\n\n      - run: sh scripts/skip.sh\n",
+      "a step in frontend-checks runs `sh scripts/skip.sh`, which is no gate",
+    ],
+    [
+      "an npm line",
+      "        run: pnpm knip\n",
+      "        run: pnpm knip\n\n      - run: npm test -- --passWithNoTests\n",
+      "a step in frontend-checks runs `npm test -- --passWithNoTests`, which is no gate",
+    ],
+    [
+      "a yarn line",
+      "        run: pnpm knip\n",
+      "        run: pnpm knip\n\n      - run: yarn knip --no-exit-code\n",
+      "a step in frontend-checks runs `yarn knip --no-exit-code`, which is no gate",
+    ],
+    [
+      "the frontend aggregate loses !cancelled()",
+      `    needs: [frontend-checks, frontend-time-zones]\n    if: >-\n      !cancelled() &&\n      (github.event_name == 'push' || !github.event.pull_request.draft)\n`,
+      `    needs: [frontend-checks, frontend-time-zones]\n${DRAFT_IF}`,
+      "job frontend runs only if `github.event_name == 'push' || !github.event.pull_request.draft`, not `!cancelled() && (",
+    ],
+    [
+      "the axe aggregate loses !cancelled()",
+      "    needs: axe-shard\n    if: >-\n      !cancelled() &&\n",
+      "    needs: axe-shard\n    if: >-\n",
+      "job axe runs only if `(github.event_name",
+    ],
+    [
+      "the frontend aggregate loses its if",
+      `    needs: [frontend-checks, frontend-time-zones]\n    if: >-\n      !cancelled() &&\n      (github.event_name == 'push' || !github.event.pull_request.draft)\n`,
+      "    needs: [frontend-checks, frontend-time-zones]\n",
+      "job frontend runs only if `success()`, not `!cancelled() && (",
+    ],
+    [
+      "the frontend aggregate stops checking one job's result",
+      '          [[ "${{ needs.frontend-time-zones.result }}" == success ]]\n',
+      "",
+      'job frontend does not check `[[ "${{ needs.frontend-time-zones.result }}" == success ]]`',
+    ],
+    [
+      "the axe aggregate accepts a failed shard",
+      `'[[ "\${{ needs.axe-shard.result }}" == success ]]'`,
+      `'[[ "\${{ needs.axe-shard.result }}" != cancelled ]]'`,
+      'job axe does not check `[[ "${{ needs.axe-shard.result }}" == success ]]`',
+    ],
+    [
+      "the aggregate's result step allowed to fail",
+      "      - name: Every axe shard passed\n",
+      "      - name: Every axe shard passed\n        continue-on-error: true\n",
+      'job axe does not check `[[ "${{ needs.axe-shard.result }}" == success ]]`',
+    ],
+  ])("fails a weakened job or workflow: %s", (_, from, to, problem) => {
+    const problems = ciDrift(weaken(from, to));
+    expect(
+      problems.some((p) => p.includes(problem)),
+      problems.join("\n"),
+    ).toBe(true);
   });
 });

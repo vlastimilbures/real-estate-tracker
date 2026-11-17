@@ -5,16 +5,16 @@
 // (`pnpm gates:docs`), and scripts/__tests__/gates.test.mjs checks them, CLAUDE.md §6, the
 // PR template, the release script and ci.yml against it.
 //
-// The ci.yml check (`ciDrift`) reads each step outside the docs fast path: its exact
-// shell lines, its `env`, `continue-on-error`, its `if:` and its job's shard list. It
-// requires pnpm, cargo, node, bash and npx lines to be gates or setup. It does not see:
-// - a `shell:` override, job- or workflow-level `env`, or a step's `working-directory`;
-// - a job-level `if:` or `continue-on-error` (say `if: false` on the rust job);
-// - a matrix `exclude` / `include`;
-// - `sh` or `npm` lines;
-// - an edit inside a multi-line script that keeps the gate's own line (an `exit 0`
-//   before it, say).
-// #459, which owns the workflows, may revisit all of these.
+// The ci.yml check (`ciDrift`) reads each step: its exact shell lines; its `env` merged
+// with the job's and the workflow's, a `${{ matrix.x }}` value read once per matrix value;
+// its `continue-on-error`, `if:`, `shell:` and `working-directory` (with the job's and
+// the workflow's `defaults.run`); and its job's shard list. It reads each job's `if:`
+// (by role: work job or aggregate) and `continue-on-error`, each aggregate's result check
+// for every job it needs, and fails a matrix `include` / `exclude`, which it does not
+// expand. It requires pnpm, cargo, node, bash, npx, sh, npm and yarn lines to be gates or
+// setup. It does not see an edit inside a multi-line script that keeps the gate's own line
+// (an `exit 0` before it, say), nor an aggregate that stops waiting for a job: the
+// `needs` list itself is not compared with the jobs.
 //
 //   node scripts/gates.mjs               run the check gates
 //   node scripts/gates.mjs --release     … and the two dependency audits
@@ -33,7 +33,8 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
  * `nightly` in the nightly workflow. `covers`: commands this gate already runs, so they
  * are not gates of their own. `ci`: the steps ci.yml runs for it, each `{ run, env }`
  * with the exact shell line and the step's variables, when not `{ run, env }` of the gate
- * itself. `env`: variables set for the command. `readme`: text for the README table.
+ * itself, and `dir` its `working-directory` when not the repository root. `env`:
+ * variables set for the command. `readme`: text for the README table.
  */
 // The axe runs as ci.yml sets them up: the run id names the folder axe-check reads.
 const AXE_EN = {
@@ -122,8 +123,6 @@ export const GATES = [
     what: "full suite + per-folder coverage floors (includes test:parity)",
     where: "check",
     covers: ["pnpm test", "pnpm test:parity"],
-    // CI runs the parity tests as a step of their own too, so a parity break reads at a glance.
-    ci: [{ run: "pnpm test:coverage" }, { run: "pnpm test:parity" }],
     readme:
       "Vitest tests with per-folder coverage floors, incl. the parity targets (±1 Kč, ±0.0001)",
   },
@@ -168,7 +167,7 @@ export const GATES = [
     run: "(cd src-tauri && cargo audit)",
     what: "Rust dependencies have no advisory (ignores in src-tauri/.cargo/audit.toml)",
     where: "release",
-    ci: [{ run: "cargo audit" }],
+    ci: [{ run: "cargo audit", dir: "src-tauri" }],
     why: "needs the network, and a new advisory fails a change that did not cause it",
     readme: "Rust dependencies have no advisory",
   },
@@ -325,16 +324,8 @@ export function runGates(gates, { exec = shell, log = console.log } = {}) {
   return { ok: true };
 }
 
-// ci.yml lines that set a job up and are no gate. The docs fast path's subset of the suite
-// goes when #459 removes the fast path.
-export const CI_SETUP = [
-  "pnpm install --frozen-lockfile",
-  "pnpm exec playwright install --with-deps chromium",
-  'bash "$RUNNER_TEMP/ci-changes.sh"',
-];
-// The docs fast path repeats some gate lines; a gate must run in the full jobs, so its
-// lines count as setup, never as the gate (#459 decides its future).
-export const CI_SETUP_JOBS = ["docs"];
+// ci.yml lines that set a job up and are no gate (the install is in .github/actions/setup).
+export const CI_SETUP = ["pnpm exec playwright install --with-deps chromium"];
 // The `if:` a gate step may carry, by gate: only the baseline checks, which need a base
 // branch, run on pull requests alone.
 const PR_ONLY = "github.event_name == 'pull_request'";
@@ -342,11 +333,27 @@ export const CI_STEP_IFS = {
   "depcruise-baseline": [PR_ONLY],
   "size-baseline": [PR_ONLY],
 };
+// The `if:` a job carries, by role. A work job: the draft guard (a draft PR runs
+// nothing), or none. An aggregate (a job with `needs`): exactly the same behind
+// `!cancelled()`, so a failed job fails the required check instead of skipping it (a
+// skipped required check counts as passed).
+const DRAFT_GUARD =
+  "github.event_name == 'push' || !github.event.pull_request.draft";
+export const CI_JOB_IFS = {
+  work: DRAFT_GUARD,
+  aggregate: `!cancelled() && (${DRAFT_GUARD})`,
+};
+/** The line an aggregate runs for each job it needs. */
+export const resultCheck = (job) =>
+  `[[ "\${{ needs.${job}.result }}" == success ]]`;
 
 const indentOf = (line) => line.search(/\S/);
 const unquote = (v) => v.trim().replace(/^(['"])(.*)\1$/, "$2");
 
-/** One step's shell lines, `env`, `if` and keys, from its lines (the first starts "- "). */
+/**
+ * One step's shell lines, `env`, `if` and keys, from its lines (the first starts "- "),
+ * and its `shell` and `working-directory` (`dir`) when it sets them.
+ */
 function parseStep(lines) {
   const keyIndent = indentOf(lines[0]) + 2;
   const body = [lines[0].replace("- ", "  "), ...lines.slice(1)];
@@ -365,6 +372,8 @@ function parseStep(lines) {
     const scalar = m[3] && !/^[|>]/.test(m[3]) ? [unquote(m[3])] : block;
     if (m[2] === "run") step.lines = scalar;
     if (m[2] === "if") step.if = scalar.join(" ");
+    if (m[2] === "shell") step.shell = scalar.join(" ");
+    if (m[2] === "working-directory") step.dir = scalar.join(" ");
     if (m[2] === "env")
       for (const l of nested) {
         const kv = l.match(/^\s*([A-Za-z_][A-Za-z0-9_]*):\s*(.*)$/);
@@ -424,16 +433,231 @@ export function workflowSteps(yaml) {
   return steps;
 }
 
-/** The ci.yml steps a gate stands for: exact shell lines with their step `env`. */
+// A small YAML reader for the workflow subset: maps, `- ` lists, `[a, b]` flow lists,
+// `|` / `>` block scalars, quoted scalars and comments. No anchors, no flow maps.
+const KEY = /^\s*([A-Za-z0-9_-]+):(?:\s+(.*))?$/;
+const isListItem = (line) => /^\s*-(\s|$)/.test(line);
+const skipNoise = (lines, i) => {
+  while (i < lines.length && /^\s*(#.*)?$/.test(lines[i])) i++;
+  return i;
+};
+
+/** A plain scalar: unquoted, its trailing comment dropped, a `[a, b]` flow list split. */
+function scalar(text) {
+  const quoted = text.trim().match(/^(['"])(.*?)\1(\s+#.*)?$/);
+  if (quoted) return quoted[2];
+  const t = text.replace(/\s+#.*$/, "").trim();
+  const flow = t.match(/^\[(.*)\]$/);
+  if (flow)
+    return flow[1]
+      .split(",")
+      .map(unquote)
+      .filter((v) => v !== "");
+  return t === "{}" ? {} : unquote(t);
+}
+
+/** The value of a key with nothing after its colon: the block below it, or null. */
+function nested(lines, i, at) {
+  const j = skipNoise(lines, i);
+  const below =
+    j < lines.length &&
+    (indentOf(lines[j]) > at ||
+      (indentOf(lines[j]) === at && isListItem(lines[j])));
+  if (!below) return [null, i];
+  const indent = indentOf(lines[j]);
+  return isListItem(lines[j]) ? list(lines, j, indent) : map(lines, j, indent);
+}
+
+/** The map whose keys sit at indent `at`, from line `i`: `[value, next line]`. */
+function map(lines, i, at) {
+  const out = {};
+  for (i = skipNoise(lines, i); i < lines.length; i = skipNoise(lines, i)) {
+    const indent = indentOf(lines[i]);
+    if (indent < at || (indent === at && isListItem(lines[i]))) break;
+    const m = indent === at && lines[i].match(KEY);
+    i++;
+    if (!m) continue;
+    const [, key, rest = ""] = m;
+    if (/^[|>]/.test(rest)) {
+      const body = [];
+      while (
+        i < lines.length &&
+        (lines[i].trim() === "" || indentOf(lines[i]) > at)
+      )
+        body.push(lines[i++].trim());
+      out[key] = body.filter(Boolean).join(rest[0] === "|" ? "\n" : " ");
+    } else if (rest !== "") out[key] = scalar(rest);
+    else [out[key], i] = nested(lines, i, at);
+  }
+  return [out, i];
+}
+
+/** The list whose `- ` items sit at indent `at`, from line `i`: `[value, next line]`. */
+function list(lines, i, at) {
+  const out = [];
+  for (i = skipNoise(lines, i); i < lines.length; i = skipNoise(lines, i)) {
+    const indent = indentOf(lines[i]);
+    if (indent < at || (indent === at && !isListItem(lines[i]))) break;
+    if (indent > at) {
+      i++;
+      continue;
+    }
+    const item = lines[i].trim().slice(1).trim();
+    if (KEY.test(item)) {
+      // `- key: v` opens a map whose keys sit two columns in.
+      const line = lines[i];
+      lines[i] = line.replace("-", " ");
+      const [value, next] = map(lines, i, at + 2);
+      lines[i] = line;
+      out.push(value);
+      i = next;
+    } else {
+      out.push(item === "" ? null : scalar(item));
+      i++;
+    }
+  }
+  return [out, i];
+}
+
+/** A workflow as nested maps, lists and strings (the subset above). */
+export function yamlTree(yaml) {
+  const lines = yaml.split("\n");
+  return map(lines, skipNoise(lines, 0), 0)[0];
+}
+
+const asMap = (v) => (v && typeof v === "object" && !Array.isArray(v) ? v : {});
+
+/**
+ * A workflow's job-level settings: `{ env, defaults, jobs }`, `env` and `defaults` the
+ * workflow's own; per job `{ keys, if, needs, env, defaults, matrix }`, `needs` a list,
+ * `matrix` or null.
+ */
+export function workflowJobs(yaml) {
+  const tree = asMap(yamlTree(yaml));
+  const jobs = Object.entries(asMap(tree.jobs)).map(([id, raw]) => {
+    const job = asMap(raw);
+    return [
+      id,
+      {
+        keys: Object.keys(job),
+        if: job.if,
+        needs: [job.needs ?? []].flat(),
+        env: asMap(job.env),
+        defaults: asMap(job.defaults),
+        matrix: asMap(job.strategy).matrix ?? null,
+      },
+    ];
+  });
+  return {
+    env: asMap(tree.env),
+    defaults: asMap(tree.defaults),
+    jobs: Object.fromEntries(jobs),
+  };
+}
+
+/** Every combination of a matrix's values, `include` / `exclude` aside; `[{}]` for none. */
+function matrixRuns(matrix) {
+  let runs = [{}];
+  if (!matrix || typeof matrix !== "object") return runs;
+  for (const [key, values] of Object.entries(matrix))
+    if (key !== "include" && key !== "exclude" && Array.isArray(values))
+      runs = runs.flatMap((r) => values.map((v) => ({ ...r, [key]: v })));
+  return runs;
+}
+
+const MATRIX_REF = /\$\{\{\s*matrix\.([A-Za-z0-9_-]+)\s*\}\}/g;
+
+/** A step once per matrix combination when its env reads `${{ matrix.* }}`, else once. */
+function perMatrixRun(step, matrix) {
+  if (!Object.values(step.env).some((v) => /\$\{\{\s*matrix\./.test(v)))
+    return [step];
+  return matrixRuns(matrix).map((run) => ({
+    ...step,
+    env: Object.fromEntries(
+      Object.entries(step.env).map(([k, v]) => [
+        k,
+        String(v).replace(MATRIX_REF, (ref, key) => run[key] ?? ref),
+      ]),
+    ),
+  }));
+}
+
+/**
+ * The ci.yml steps a gate stands for: exact shell lines with their step `env` and, when
+ * not the repository root, their `dir`.
+ */
 export const ciSteps = (g) => g.ci ?? [{ run: g.run, env: g.env }];
 
 const sameEnv = (a = {}, b = {}) =>
   JSON.stringify(Object.entries(a).sort()) ===
   JSON.stringify(Object.entries(b).sort());
 
-/** What is wrong with how a step that runs a gate runs: `[]` when nothing. */
-function howItRuns(step, line, ifs) {
+/** A step as it runs: `env`, `shell` and `dir` with the job's and the workflow's. */
+function asRun(step, workflow) {
+  const job = workflow.jobs[step.job] ?? { env: {}, defaults: {} };
+  const run = (key) =>
+    asMap(job.defaults.run)[key] ?? asMap(workflow.defaults.run)[key];
+  const shell = step.shell ?? run("shell");
+  const dir = step.dir ?? run("working-directory");
+  return {
+    ...step,
+    env: { ...workflow.env, ...job.env, ...step.env },
+    ...(shell === undefined ? {} : { shell }),
+    ...(dir === undefined ? {} : { dir }),
+  };
+}
+
+/**
+ * What is wrong with an aggregate's own steps: each job it needs must have its
+ * `resultCheck` line, in a step with no `if:` and no continue-on-error.
+ */
+function aggregateProblems(id, job, steps) {
+  const own = steps.filter(
+    (s) =>
+      s.job === id &&
+      s.if === undefined &&
+      !s.keys.includes("continue-on-error"),
+  );
+  return job.needs
+    .filter((n) => !own.some((s) => s.lines.includes(resultCheck(n))))
+    .map((n) => `job ${id} does not check \`${resultCheck(n)}\``);
+}
+
+/** What is wrong with the jobs themselves: `[]` when nothing. */
+function jobProblems(workflow, steps, jobIfs) {
   const problems = [];
+  for (const [id, job] of Object.entries(workflow.jobs)) {
+    const aggregate = job.needs.length > 0;
+    if (job.keys.includes("continue-on-error"))
+      problems.push(`job ${id} has continue-on-error`);
+    if (
+      aggregate
+        ? job.if !== jobIfs.aggregate
+        : ![undefined, jobIfs.work].includes(job.if)
+    )
+      problems.push(
+        `job ${id} runs only if \`${job.if ?? "success()"}\`, not \`${aggregate ? jobIfs.aggregate : jobIfs.work}\``,
+      );
+    if (aggregate) problems.push(...aggregateProblems(id, job, steps));
+    for (const key of ["include", "exclude"])
+      if (asMap(job.matrix)[key] !== undefined)
+        problems.push(
+          `job ${id} has a matrix ${key}, which this check cannot read`,
+        );
+  }
+  return problems;
+}
+
+/** What is wrong with how a step that runs a gate runs: `[]` when nothing. */
+function howItRuns(step, spec, ifs) {
+  const line = spec.run;
+  const problems = [];
+  if (step.shell !== undefined)
+    problems.push(`runs in shell \`${step.shell}\``);
+  if (step.dir !== spec.dir)
+    problems.push(
+      `runs in ${step.dir === undefined ? "the repository root" : `\`${step.dir}\``}, not ${spec.dir === undefined ? "the repository root" : `\`${spec.dir}\``}`,
+    );
   if (step.keys.includes("continue-on-error"))
     problems.push("has continue-on-error");
   if (step.if !== undefined && !ifs.includes(step.if))
@@ -448,24 +672,35 @@ function howItRuns(step, line, ifs) {
 }
 
 /**
- * Where a workflow and the list disagree, outside the setup jobs:
- * - a gate with no step that runs its exact line with exactly its variables;
- * - a gate step with continue-on-error, an unknown `if:`, or a shard list that does not
- *   match the `/N` of its `--shard`;
- * - a pnpm / cargo / node / bash / npx line that is no gate and no setup.
+ * Where a workflow and the list disagree:
+ * - a gate with no step that runs its exact line with exactly its variables (a step env
+ *   value that reads `${{ matrix.x }}` counts once per matrix value);
+ * - a gate step with continue-on-error, an unknown `if:`, a `shell:`, a
+ *   `working-directory` other than its `dir`, or a shard list that does not match the
+ *   `/N` of its `--shard`; `env`, `shell` and `working-directory` as the job and the
+ *   workflow set them too;
+ * - a job with continue-on-error, an `if:` other than its role's in `jobIfs`, or a
+ *   matrix `include` / `exclude`;
+ * - an aggregate (a job with `needs`) that does not check `needs.<job>.result` is
+ *   `success` for every job it needs;
+ * - a pnpm / cargo / node / bash / npx / sh / npm / yarn line that is no gate and no setup.
  */
 export function ciDrift(
   yaml,
   {
     gates = GATES,
     setup = CI_SETUP,
-    setupJobs = CI_SETUP_JOBS,
     ifs = CI_STEP_IFS,
+    jobIfs = CI_JOB_IFS,
   } = {},
 ) {
-  const steps = workflowSteps(yaml).filter((s) => !setupJobs.includes(s.job));
+  const workflow = workflowJobs(yaml);
+  const raw = workflowSteps(yaml);
+  const steps = raw.flatMap((s) =>
+    perMatrixRun(asRun(s, workflow), workflow.jobs[s.job]?.matrix),
+  );
   const listed = gates.filter((g) => g.where !== "nightly");
-  const problems = [];
+  const problems = jobProblems(workflow, raw, jobIfs);
   for (const g of listed)
     for (const spec of ciSteps(g)) {
       const found = steps.filter((s) => s.lines.includes(spec.run));
@@ -477,7 +712,7 @@ export function ciDrift(
           `${g.id}: \`${spec.run}\` runs with env ${JSON.stringify(found[0].env)}, expected ${JSON.stringify(spec.env ?? {})}`,
         );
       for (const s of same)
-        for (const p of howItRuns(s, spec.run, ifs[g.id] ?? []))
+        for (const p of howItRuns(s, spec, ifs[g.id] ?? []))
           problems.push(`${g.id}: the \`${spec.run}\` step ${p}`);
     }
   const known = new Set([
@@ -486,9 +721,10 @@ export function ciDrift(
   ]);
   for (const s of steps)
     for (const l of s.lines)
-      if (/^(pnpm|cargo|node|bash|npx) /.test(l) && !known.has(l))
+      if (/^(pnpm|cargo|node|bash|npx|sh|npm|yarn) /.test(l) && !known.has(l))
         problems.push(`a step in ${s.job} runs \`${l}\`, which is no gate`);
-  return problems;
+  // A matrix job's step counts once per matrix value: one message each.
+  return [...new Set(problems)];
 }
 
 const code = (s) => `\`${s.replaceAll("|", "\\|")}\``;
