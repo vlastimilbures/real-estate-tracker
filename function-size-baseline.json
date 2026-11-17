@@ -30,7 +30,7 @@
       "Function 'planImport'": 29
     },
     "lines": {
-      "Function 'planImport'": 182
+      "Function 'planImport'": 181
     }
   },
   "src/state/portfolioStore.ts": {
@@ -135,10 +135,10 @@
   },
   "src/ui/pages/Import.tsx": {
     "complexity": {
-      "Function 'Import'": 34
+      "Function 'Import'": 33
     },
     "lines": {
-      "Function 'Import'": 292
+      "Function 'Import'": 281
     }
   },
   "src/ui/pages/ImportPanels.tsx": {

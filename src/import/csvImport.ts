@@ -6,8 +6,8 @@
 // statement commits, or none does.
 //
 // ADR 0096: `planImport` classifies each row as add / update / unchanged. The preview
-// and the commit share it, and a commit whose plan differs from the previewed one
-// writes nothing.
+// and the commit share it; the commit writes the plan it builds at the click, and
+// writes nothing when that plan has problems (ADR 0229).
 import type { Sql, SqlStatement } from "../data/sql";
 import { insertStatement, updateStatement } from "../data/repositories";
 import {
@@ -108,8 +108,6 @@ export interface CsvImportReport {
 export interface CsvImportPreview {
   items: ImportItem[];
   problems: CsvImportProblem[];
-  /** Identifies the plan; the commit refuses when its own plan differs (ADR 0096). */
-  fingerprint: string;
 }
 
 export type CsvImportProblemCode =
@@ -133,13 +131,13 @@ export interface CsvImportProblem {
   problem: CsvImportProblemCode;
 }
 
-/** The plan changed between preview and commit, or has problems; nothing was written
- *  (ADR 0096). The page shows the new preview, problems included (ADR 0185 §6). */
-export class CsvPlanChangedError extends Error {
+/** The plan built at the click has problems; nothing was written. The page shows them
+ *  as the preview does (ADR 0229 §2, ADR 0185 §6). */
+export class CsvImportProblemsError extends Error {
   readonly preview: CsvImportPreview;
   constructor(preview: CsvImportPreview) {
-    super("CSV import refused: the data changed since the preview.");
-    this.name = "CsvPlanChangedError";
+    super("CSV import refused: the plan has problems.");
+    this.name = "CsvImportProblemsError";
     this.preview = preview;
   }
 }
@@ -606,19 +604,13 @@ export function planImport(
         rowToAssumptions(tables.assumptions),
       );
   }
-  const fingerprint = JSON.stringify({ items, statements });
-  return { statements, problems, items, fingerprint };
+  return { statements, problems, items };
 }
 
-/** The new property ids of each batch (ADR 0127): a batch's preview and its import must
- *  plan the same ids, or their fingerprints differ (ADR 0096). The Import page keeps one
- *  batch object for both. */
-const batchIds = new WeakMap<CsvImportBatch, Map<string, string>>();
-
-function idsFor(batch: CsvImportBatch): (key: string) => string {
-  let ids = batchIds.get(batch);
-  if (!ids) batchIds.set(batch, (ids = new Map()));
-  const known = ids;
+/** New property ids for one plan (ADR 0127): one random id per new name, so every row
+ *  that names that property gets it. Each plan makes its own (ADR 0229 §3). */
+function newIds(): (key: string) => string {
+  const known = new Map<string, string>();
   return (key) => {
     let id = known.get(key);
     if (id === undefined) known.set(key, (id = crypto.randomUUID()));
@@ -629,7 +621,6 @@ function idsFor(batch: CsvImportBatch): (key: string) => string {
 const previewOf = (plan: ImportPlan): CsvImportPreview => ({
   items: plan.items,
   problems: plan.problems,
-  fingerprint: plan.fingerprint,
 });
 
 /** The plan for `batch` against the stored data. Reads only; never writes. */
@@ -637,24 +628,22 @@ export async function previewImport(
   sql: Sql,
   batch: CsvImportBatch,
 ): Promise<CsvImportPreview> {
-  return previewOf(planImport(batch, await readTables(sql), idsFor(batch)));
+  return previewOf(planImport(batch, await readTables(sql), newIds()));
 }
 
-/** Write `batch` in one transaction. `expected` is the previewed plan's fingerprint:
- *  refuse with `CsvPlanChangedError` when the plan is no longer the same (ADR 0096). */
+/** Write the plan for `batch`, built now against the stored data, in one transaction
+ *  (ADR 0229 §1). A plan with problems writes nothing: refuse with
+ *  `CsvImportProblemsError` (ADR 0229 §2). */
 export async function importCsv(
   sql: Sql,
   batch: CsvImportBatch,
-  expected: string,
 ): Promise<CsvImportReport> {
-  const plan = planImport(batch, await readTables(sql), idsFor(batch));
+  const plan = planImport(batch, await readTables(sql), newIds());
   // The page imports only a preview without problems, so a problem here means the data
-  // changed since: refuse with the new preview (ADR 0185 §6).
-  if (plan.problems.length > 0 || expected !== plan.fingerprint)
-    throw new CsvPlanChangedError(previewOf(plan));
+  // changed since: refuse and show the problems as the preview does (ADR 0185 §6).
+  if (plan.problems.length > 0)
+    throw new CsvImportProblemsError(previewOf(plan));
 
   await sql.transaction(plan.statements);
-  // Written: importing the same batch again makes new ids for any property it adds.
-  batchIds.delete(batch);
   return { items: plan.items };
 }

@@ -12,11 +12,7 @@ import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { portfolio } from "../../../engine/__tests__/support/seed";
 import { propertiesTemplate } from "../../../import/csv";
-import {
-  CsvPlanChangedError,
-  type CsvImportPreview,
-  type ImportItem,
-} from "../../../state/csv";
+import { type CsvImportPreview, type ImportItem } from "../../../state/csv";
 import { en } from "../../../i18n/en";
 
 const p = en.importPage;
@@ -49,7 +45,6 @@ const update: ImportItem = {
 const plan = (items: ImportItem[]): CsvImportPreview => ({
   items,
   problems: [],
-  fingerprint: "plan-1",
 });
 
 const previewCsv = vi.fn();
@@ -94,7 +89,6 @@ describe("Import and stored loan events (ADR 0160)", () => {
           },
         },
       ],
-      fingerprint: "plan-x",
     });
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);
@@ -137,7 +131,10 @@ describe("Import and stored loan events (ADR 0160)", () => {
       screen.getByRole("button", { name: p.confirmReplace }),
     );
     await waitFor(() => expect(importCsv).toHaveBeenCalledTimes(1));
-    expect(importCsv.mock.calls[0]?.[1]).toBe("plan-1");
+    // The import is sent the chosen rows only and builds its own plan (ADR 0229).
+    expect(importCsv.mock.calls[0]).toEqual([
+      expect.objectContaining({ properties: expect.any(Array) }),
+    ]);
   });
 
   it("Cancel on the replace confirmation imports nothing", async () => {
@@ -166,35 +163,6 @@ describe("Import and stored loan events (ADR 0160)", () => {
     act(() => usePortfolioStore.setState({ portfolio: { ...portfolio } }));
     expect(screen.queryByText(p.confirmReplaceMsg(1))).toBeNull();
     expect(importCsv).not.toHaveBeenCalled();
-  });
-
-  it("a plan changed at commit asks again before replacing (#286)", async () => {
-    previewCsv.mockResolvedValue(plan([replacing]));
-    importCsv.mockRejectedValueOnce(
-      new CsvPlanChangedError({ ...plan([replacing]), fingerprint: "plan-2" }),
-    );
-    const { container } = renderWithPortfolio(<Import />, { route: "import" });
-    await chooseFile(container);
-    await userEvent.click(
-      await screen.findByRole("button", { name: p.importScope(1, 1, 0) }),
-    );
-    await userEvent.click(
-      screen.getByRole("button", { name: p.confirmReplace }),
-    );
-    expect(await screen.findByText(p.planChanged)).toBeTruthy();
-    expect(screen.queryByText(p.confirmReplaceMsg(1))).toBeNull();
-
-    await userEvent.click(
-      screen.getByRole("button", { name: p.importScope(1, 1, 0) }),
-    );
-    expect(screen.getByText(p.confirmReplaceMsg(1))).toBeTruthy();
-    expect(importCsv).toHaveBeenCalledTimes(1);
-
-    await userEvent.click(
-      screen.getByRole("button", { name: p.confirmReplace }),
-    );
-    await waitFor(() => expect(importCsv).toHaveBeenCalledTimes(2));
-    expect(importCsv.mock.calls[1]?.[1]).toBe("plan-2");
   });
 
   it("with updates too, the confirm row names both and keeps the overwrite button", async () => {

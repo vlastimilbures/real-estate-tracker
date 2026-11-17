@@ -232,8 +232,10 @@ row is unchanged there is nothing to import, and the button stays disabled.
 When you replace a file, or your data changes, the old preview goes away and Import is
 disabled until the new preview is shown.
 
-If your data changes between the preview and the import (for example you edited a property
-in the meantime), nothing is written: the page says so and shows the new preview to review.
+Import checks the files against your data again when you press it, and writes what it
+finds then. In the rare case that your data changed in that moment so a row no longer
+fits (for example its property was renamed), nothing is written and the problems are
+listed as in the preview.
 
 After the import, the **Import report** lists the records added and updated, each linking to
 its property. It stays on the Import page until your next import or until you quit the app.

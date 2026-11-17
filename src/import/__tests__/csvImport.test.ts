@@ -15,7 +15,7 @@ import {
   parseRents,
   parseValuations,
 } from "../csv";
-import { CsvPlanChangedError, type CsvImportPreview } from "../csvImport";
+import { CsvImportProblemsError, type CsvImportPreview } from "../csvImport";
 import { importNow } from "./support/importNow";
 import {
   loadAssumptions,
@@ -65,14 +65,14 @@ function dump(s: TestSql) {
   return out;
 }
 
-/** A commit with problems is refused with the new preview (ADR 0185 §6). */
+/** A commit with problems is refused with its problems (ADR 0185 §6, ADR 0229 §2). */
 async function refused(p: Promise<unknown>): Promise<CsvImportPreview> {
   const e = await p.then(
     () => null,
     (err: unknown) => err,
   );
-  expect(e).toBeInstanceOf(CsvPlanChangedError);
-  return (e as CsvPlanChangedError).preview;
+  expect(e).toBeInstanceOf(CsvImportProblemsError);
+  return (e as CsvImportProblemsError).preview;
 }
 
 beforeEach(async () => {

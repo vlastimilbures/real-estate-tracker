@@ -24,7 +24,7 @@ const previewCsv = vi.fn();
 
 beforeEach(() => {
   previewCsv.mockReset();
-  previewCsv.mockResolvedValue({ items: [], problems: [], fingerprint: "f" });
+  previewCsv.mockResolvedValue({ items: [], problems: [] });
   act(() => {
     usePortfolioStore.setState({ previewCsv } as never);
   });

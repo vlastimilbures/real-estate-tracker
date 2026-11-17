@@ -10,6 +10,8 @@
 - Related: [0001](0001-behaviour-change-gate.md) (behaviour-change gate),
   [0119](0119-acquisition-funding.md) §8 (a blank funding cell keeps the amount; unchanged),
   DR-129 (a blank `contract_maturity_date` keeps the stored date; unchanged)
+- Amended by: [0229](0229-import-writes-plan-at-click.md) (§6: a commit-time problem is
+  shown as the preview shows it, with no "data changed" message)
 
 ## Context
 

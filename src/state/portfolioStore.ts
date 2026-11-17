@@ -255,7 +255,7 @@ interface PortfolioState {
   // sample portfolio (ADR 0094)
   /** "Keep exploring": hide the sample banner for good. */
   dismissSampleBanner: () => Promise<MutationResult>;
-  // whole-database operations. They throw their own typed errors (CsvPlanChangedError,
+  // whole-database operations. They throw their own typed errors (CsvImportProblemsError,
   // RestoreError, …) for the caller to show, and leave the banner `error` alone on a
   // failure; one that replaces the data (restore, Clear sample, Load sample) clears it
   // on success, since it described the old data (ADR 0154). They throw only before the
@@ -263,12 +263,9 @@ interface PortfolioState {
   /** What a CSV import would add and update (ADR 0096). Reads only; queued behind
    *  pending writes so it sees their result. */
   previewCsv: (batch: CsvImportBatch) => Promise<CsvImportPreview>;
-  /** CSV import in one transaction, then reload. `expected` is the previewed plan's
-   *  fingerprint: it refuses with CsvPlanChangedError if the plan changed. */
-  importCsv: (
-    batch: CsvImportBatch,
-    expected: string,
-  ) => Promise<CsvImportReport>;
+  /** CSV import of the plan built now, in one transaction, then reload. A plan with
+   *  problems writes nothing: it refuses with CsvImportProblemsError (ADR 0229). */
+  importCsv: (batch: CsvImportBatch) => Promise<CsvImportReport>;
   /** Replace the data with a checked backup (after a safety backup), then reload. */
   restoreBackup: (backup: BackupFile) => Promise<{ safetyBackup: string }>;
   /** Restore from the startup error screen, only after ROW_INVALID: the database is
@@ -696,10 +693,10 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         const { previewImport } = await import("../import/csvImport");
         return previewImport(requireSql(), batch);
       }),
-    importCsv: (batch, expected) =>
+    importCsv: (batch) =>
       exclusive(async (sql) => {
         const { importCsv } = await import("../import/csvImport");
-        return importCsv(sql, batch, expected);
+        return importCsv(sql, batch);
       }),
     restoreBackup: (backup) =>
       replaceData((sql) => confirmRestore(sql, backup, checkInputRules)),

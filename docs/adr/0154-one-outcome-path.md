@@ -16,6 +16,8 @@
   [0147](0147-failure-messages-and-log.md) (failure sites and texts)
 - Amended by: [0189](0189-outcome-regions-pending-purchase-a11y.md) (§1: the notice and failure are announced once and a failure scrolls into view; §2: the toast region is mounted once, in the app frame)
 - Amended by: [0228](0228-read-back-failure-stops.md) (§5: the read-back screen names the safety copy)
+- Amended by: [0229](0229-import-writes-plan-at-click.md) (Consequences: `CsvPlanChangedError`
+  is removed)
 
 ## Context
 

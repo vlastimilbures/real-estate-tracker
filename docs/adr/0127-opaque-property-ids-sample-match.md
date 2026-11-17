@@ -12,7 +12,9 @@
   [0112](0112-load-sample-on-demand.md) (load sample on demand)
 - Amended: 2026-10-04 after the independent review of PR #204 (§5: ADR 0094 §2 still
   holds; Consequences: only the `"portfolio"` value can clash)
-- Amended by: [0191](0191-state-fixes-preset-match.md) (Consequences: the Projections portfolio choice no longer clashes with an id)
+- Amended by: [0191](0191-state-fixes-preset-match.md) (Consequences: the Projections portfolio choice no longer clashes with an id),
+  [0229](0229-import-writes-plan-at-click.md) (§1: new property ids are made when the
+  import is written, not shared with the preview)
 
 ## Context
 
