@@ -144,7 +144,7 @@ describe("the payment-grid walk on an invalid date (ADR 0247)", () => {
 
 describe("the payment-grid walk at the edge of the date range (ADR 0247)", () => {
   // EDATE past 13 Sep 275760 is an Invalid Date, which no grid step ever passes.
-  it.fails("lastGridEdgeOfRange raises instead of looping", TIMEOUT, () => {
+  it("lastGridEdgeOfRange raises instead of looping", TIMEOUT, () => {
     expect(bounded(SUPPORT, "gridOutcome", "lastGridEdgeOfRange")).toBe(
       INVALID,
     );
