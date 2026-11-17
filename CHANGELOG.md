@@ -38,10 +38,11 @@ engine without the form, and remove it when the last part lands.
 ### Changed
 
 - A property's size may have **one decimal place**, e.g. 54,5 m², in the property form
-  (comma or dot), CSV import and restore (ADR 0236, #455). Two or more decimals are refused
-  with a message naming the limit, and Property detail shows the size with Czech formatting
-  ("54,5 m²"). The Data check no longer lists a size with one decimal place. No migration;
-  no figure changes.
+  (comma or dot), CSV import and restore (ADR 0236, #455). Trailing zeros do not count, so
+  54.50 is accepted as 54.5; two or more decimals are refused with a message naming the
+  limit, and a CSV size outside the range now gets the same message. Property detail shows
+  the size with Czech formatting ("54,5 m²", and "1 234 m²" with a thousands space). The
+  Data check no longer lists a size with one decimal place. No migration; no figure changes.
 - The release build no longer measures start-up and edit timings unless started from
   Terminal with `RTRACKER_PERF=1` (ADR 0233, #453); docs/release.md gives the command.
   Development builds measure as before. No figure changes.

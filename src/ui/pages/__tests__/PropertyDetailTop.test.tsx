@@ -245,11 +245,18 @@ describe("size in the subtitle (ADR 0236 §2)", () => {
     expect(screen.getByRole("banner").textContent).toContain("54,5 m²");
   });
 
-  it("a whole size is unchanged", () => {
+  it("a whole size shows no decimals", () => {
     withSize(58);
     render(<PropertyDetail />);
     const text = screen.getByRole("banner").textContent ?? "";
     expect(text).toContain("58 m²");
     expect(text).not.toContain("58,0");
+  });
+
+  it("groups thousands, as fmtNumber does", () => {
+    withSize(1234);
+    render(<PropertyDetail />);
+    const text = screen.getByRole("banner").textContent ?? "";
+    expect(text.replace(/\s/g, " ")).toContain("1 234 m²");
   });
 });

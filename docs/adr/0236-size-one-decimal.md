@@ -38,21 +38,25 @@ No calculation reads the size: it is shown in the property's subtitle only.
   `checkInputRules`) and the Data check use it, so a stored 54.5 neither warns nor is listed;
   54.55 still warns `OUT_OF_RANGE` at restore and is listed in the Data check.
 - The property form has a new field kind `size` (`parseSizeField`): digits with an optional
-  one-digit fraction after a comma or a dot, spaces ignored. The field's input mode is
-  `decimal`.
+  fraction after a comma or a dot, spaces ignored. The field's input mode is `decimal`.
+- Decimals are counted by value in the form and CSV import: trailing zeros do not count, so
+  54.50 (what a spreadsheet column formatted with two decimals exports) is accepted and
+  stored as 54.5, while 54.55 is refused (delegated decision, 2026-11-17, in the owner's
+  favour under "at most one decimal place").
 - CSV import reads `size_m2` with `optSize`: a plain decimal (a decimal comma keeps the
-  `decimalComma` error). A whole number outside the range keeps `outOfRange`; two or more
-  decimals as written (54.50 counts as two, as in the form), or a fraction outside the
-  range, get the new code `sizeDecimals`.
+  `decimalComma` error). Every refusal of a number, whether outside the range (including
+  a whole or negative number) or with two or more decimals, gets the new code `sizeRange`,
+  so CSV names the same rule as the form and restore.
 - No migration. The DB round trip is pinned by `src/data/__tests__/size-fraction.test.ts`.
 - New or changed user-visible text (en, cs, ru; ADR 0152 §2):
   - new `forms.sizeRange` (the form's size message, with the range);
   - new `forms.invalidHint.size` (the size kind's format hint);
-  - new `importPage.errSizeDecimals` (the CSV `sizeDecimals` error);
+  - new `importPage.errSizeRange` (the CSV `sizeRange` error);
   - new `backup.issueOutOfRangeSize` (the restore table's text for a size);
   - `dataCheck.notWholeSize` (ADR 0180 §2) is removed and replaced by
     `dataCheck.sizeDecimals` (a size with two or more decimals);
-  - `propertyDetail.sizeM2` now takes the size formatted with `fmtNumber`, so a whole size
-    reads as before and 54.5 reads "54,5 m²".
+  - `propertyDetail.sizeM2` now takes the size formatted with `fmtNumber`: 54.5 reads
+    "54,5 m²", a whole size shows no decimals, and thousands are grouped, so 1234 m², which
+    used to read "1234 m²", now reads "1 234 m²".
 - Because this ADR records the new texts, no wording-log entry is needed (ADR 0152 §1).
 - `src/engine`, figures, parity targets and the golden master do not change.
