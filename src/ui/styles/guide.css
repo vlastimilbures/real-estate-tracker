@@ -122,6 +122,10 @@
 .guide-prose:last-child {
   margin-bottom: 0;
 }
+/* Extra room above a paragraph that follows cards, terms or another paragraph. */
+.guide-prose.spaced {
+  margin-top: var(--s4);
+}
 .guide-prose strong {
   color: var(--ink);
   font-weight: 600;

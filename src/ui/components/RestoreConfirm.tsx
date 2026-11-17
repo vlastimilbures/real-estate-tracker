@@ -27,7 +27,7 @@ export function IssueTable({
   return (
     <TableWrap
       label={warning ? b.warningsTitle : b.errorTitle}
-      style={{ marginTop: "var(--s3)" }}
+      className="mt-s3"
     >
       <table className="data">
         <thead>
@@ -70,7 +70,7 @@ function Summary({ summary }: { summary: BackupSummary }) {
   // The local calendar day, like the file name and "Last backup" (ADR 0149).
   const exported = new Date(summary.exportedAt);
   return (
-    <div style={{ marginBottom: "var(--s4)" }}>
+    <div className="mb-s4">
       {!Number.isNaN(exported.getTime()) && (
         <p>{b.backupDate(fmtDate(localDay(exported)))}</p>
       )}
@@ -109,7 +109,7 @@ export function RestoreConfirm({
       </p>
       <Summary summary={pending.summary} />
       {pending.warnings.length > 0 && (
-        <div style={{ marginBottom: "var(--s4)" }}>
+        <div className="mb-s4">
           <p>{t.backup.warnOutOfRange(pending.warnings.length)}</p>
           <IssueTable issues={pending.warnings} warning />
         </div>

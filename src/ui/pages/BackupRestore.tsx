@@ -33,15 +33,13 @@ function LastBackup() {
   const backup = usePortfolioStore((s) => s.backup);
   const { day, ago } = backupRecency(backup, new Date());
   return (
-    <div style={{ marginBottom: "var(--s4)" }}>
+    <div className="mb-s4">
       <p>
         {day && ago
           ? t.backup.lastBackup(fmtDate(day), agoText(t, ago))
           : t.backup.noBackupYet}
       </p>
-      <p style={{ color: "var(--ink-soft)", fontSize: 13 }}>
-        {t.backup.offDevice}
-      </p>
+      <p className="text-soft fs-13">{t.backup.offDevice}</p>
     </div>
   );
 }

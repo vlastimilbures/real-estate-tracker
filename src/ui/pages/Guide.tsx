@@ -154,18 +154,14 @@ export function Guide() {
             </div>
           </div>
           {/* ADR 0105: the same line as About — language never changes Kč or the formats. */}
-          <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
-            {t.about.formatsNote}
-          </p>
+          <p className="guide-prose spaced">{t.about.formatsNote}</p>
         </Panel>
       </div>
 
       <div className="pd-section" id={guideSectionId("snapshot")}>
         <Panel title={g.snapshotTitle} hint={g.snapshotHint}>
           <Defs rows={SNAPSHOT} egLabel={g.eg} />
-          <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
-            {g.snapshotProse}
-          </p>
+          <p className="guide-prose spaced">{g.snapshotProse}</p>
         </Panel>
       </div>
 
@@ -196,9 +192,7 @@ export function Guide() {
         <Panel title={g.projectionTitle} hint={g.projectionHint}>
           <p className="guide-prose">{g.projectionProse1}</p>
           <Defs rows={PROJECTION} egLabel={g.eg} />
-          <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
-            {g.projectionProse2}
-          </p>
+          <p className="guide-prose spaced">{g.projectionProse2}</p>
         </Panel>
       </div>
 
@@ -209,9 +203,7 @@ export function Guide() {
             <F wrap>{g.fCpi}</F> <F wrap>{g.fReal}</F>
             {g.nominalRealProsePost}
           </p>
-          <p className="guide-prose" style={{ marginTop: "var(--s4)" }}>
-            {g.nominalRealTodayNote}
-          </p>
+          <p className="guide-prose spaced">{g.nominalRealTodayNote}</p>
         </Panel>
       </div>
 

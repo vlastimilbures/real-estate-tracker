@@ -77,7 +77,7 @@ function LanguageControl({ collapsed }: { collapsed: boolean }) {
         aria-label={`${t.shell.language}: ${current.label}. → ${next.label}`}
         onClick={() => setLanguage(next.value)}
       >
-        <span style={{ fontSize: 11, fontWeight: 600 }}>{current.label}</span>
+        <span className="icon-btn-label">{current.label}</span>
       </button>
     );
   }

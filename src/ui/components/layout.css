@@ -35,6 +35,31 @@
   gap: var(--s4);
 }
 
+/* ============ Spacing, colour and size utilities ============ */
+/* One class each, so a feature sheet in styles/ (loaded later) wins a tie: check the
+   element's other rules before using one there. */
+.mt-s3 {
+  margin-top: var(--s3);
+}
+.mb-s3 {
+  margin-bottom: var(--s3);
+}
+.mb-s4 {
+  margin-bottom: var(--s4);
+}
+.ml-s2 {
+  margin-left: var(--s2);
+}
+.text-soft {
+  color: var(--ink-soft);
+}
+.text-faint {
+  color: var(--ink-faint);
+}
+.fs-13 {
+  font-size: var(--fs-13);
+}
+
 /* ============ Keyboard focus: focus ring, skip link, main ============ */
 /* Buttons/links/nav/chips render a clear ring only for keyboard focus (not mouse
    clicks). Form inputs keep their own inset ring (forms.css). */

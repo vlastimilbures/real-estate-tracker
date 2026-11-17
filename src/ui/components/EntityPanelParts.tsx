@@ -44,11 +44,7 @@ export function EntityTable<T extends { id: string }>({
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td
-                className="left"
-                colSpan={columns.length + 1}
-                style={{ color: "var(--ink-faint)" }}
-              >
+              <td className="left text-faint" colSpan={columns.length + 1}>
                 {tr.common.noneYet}
               </td>
             </tr>
@@ -60,7 +56,7 @@ export function EntityTable<T extends { id: string }>({
                   {c.cell(r)}
                 </td>
               ))}
-              <td style={{ whiteSpace: "nowrap" }}>
+              <td>
                 <RowActions>
                   <RowAction
                     icon={Pencil}

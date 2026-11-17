@@ -122,7 +122,7 @@
   },
   "src/ui/pages/Guide.tsx": {
     "lines": {
-      "Function 'Guide'": 205
+      "Function 'Guide'": 197
     }
   },
   "src/ui/pages/Import.tsx": {
@@ -130,7 +130,7 @@
       "Function 'Import'": 33
     },
     "lines": {
-      "Function 'Import'": 281
+      "Function 'Import'": 277
     }
   },
   "src/ui/pages/ImportPanels.tsx": {

@@ -80,6 +80,11 @@
   background: var(--hover-wash);
   color: var(--ink);
 }
+/* A short text label in place of an icon (the collapsed language switch). */
+.icon-btn-label {
+  font-size: var(--fs-11);
+  font-weight: 600;
+}
 .brand .mark {
   font-family: var(--font-display);
   font-size: var(--fs-19);

@@ -256,7 +256,7 @@ export function Properties() {
                         {p.name}
                       </button>
                       {!p.active && (
-                        <span style={{ marginLeft: "var(--s2)" }}>
+                        <span className="ml-s2">
                           <Badge band="neutral">
                             {t.properties.badgeInactive}
                           </Badge>

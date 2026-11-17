@@ -63,16 +63,10 @@ function ClearSampleDialog({ onClose }: { onClose: () => void }) {
       }
     >
       <p>{t.sample.dialogDeletes}</p>
-      <p style={{ marginTop: "var(--s3)" }}>{t.sample.dialogKeeps}</p>
-      <p style={{ marginTop: "var(--s3)", color: "var(--ink-soft)" }}>
-        {t.sample.dialogBackup}
-      </p>
+      <p className="mt-s3">{t.sample.dialogKeeps}</p>
+      <p className="mt-s3 text-soft">{t.sample.dialogBackup}</p>
       {error && (
-        <p
-          className="error-text"
-          role="alert"
-          style={{ marginTop: "var(--s3)" }}
-        >
+        <p className="error-text mt-s3" role="alert">
           {error}
         </p>
       )}
