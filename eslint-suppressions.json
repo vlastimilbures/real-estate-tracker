@@ -25,14 +25,6 @@
       "count": 1
     }
   },
-  "src/import/csvImport.ts": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/state/portfolioStore.ts": {
     "max-lines-per-function": {
       "count": 1
