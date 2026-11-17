@@ -49,8 +49,9 @@ const AXE_I18N = {
   UX_THEME: "light",
   UX_VIEWPORT: "1280x800,1200x800,min",
 };
-const LAYOUT_SCREENS =
-  "01-dashboard|03-dashboard-asof-5y|03b-dashboard-real-asof-5y|14-properties-long-name|20-property-detail|20b-property-detail-asof-5y|27-property-section-nav-focus|42-scenarios-compare";
+// The layout screens' tag: ux-capture/layoutScreens.ts lists them and fails the run when
+// one is missing (#496).
+export const LAYOUT_TAG = "@layout-i18n";
 
 export const GATES = [
   {
@@ -226,13 +227,13 @@ export const GATES = [
   },
   {
     id: "axe-i18n",
-    run: `pnpm ux:capture --grep "${LAYOUT_SCREENS}" && pnpm ux:axe-check ci-i18n`,
+    run: `pnpm ux:capture --grep ${LAYOUT_TAG} && pnpm ux:axe-check ci-i18n`,
     env: AXE_I18N,
     what: "the layout screens in Czech and Russian: nothing clipped or covered, axe clean (ADR 0158)",
     where: "ci",
     ci: [
       {
-        run: `pnpm ux:capture --shard \${{ matrix.shard }}/4 --grep "${LAYOUT_SCREENS}"`,
+        run: `pnpm ux:capture --shard \${{ matrix.shard }}/4 --grep ${LAYOUT_TAG}`,
         env: AXE_I18N,
       },
       { run: "pnpm ux:axe-check ci-i18n" },

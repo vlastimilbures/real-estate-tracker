@@ -5,6 +5,7 @@
 // 1x properties, 2x property detail, …); the order of this list is the flow order and
 // need not match the file order.
 import type { Route } from "../../src/state/uiStore";
+import { LAYOUT_SCREENS } from "../layoutScreens";
 import type { Screen } from "./define";
 import { bootScreens } from "./boot";
 import { dashboardScreens } from "./dashboard";
@@ -32,6 +33,16 @@ export const SCREENS: Screen[] = [
   ...guideEmptyScreens,
   ...keyboardScreens,
 ];
+
+// A renamed or removed layout screen would silently drop out of the Czech / Russian run
+// (`--grep @layout-i18n`): fail the whole capture run at load instead.
+const missing = LAYOUT_SCREENS.filter(
+  (id) => !SCREENS.some((s) => s.id === id),
+);
+if (missing.length > 0)
+  throw new Error(
+    `layoutScreens.ts names screens that do not exist: ${missing.join(", ")}`,
+  );
 
 /** Every route must have at least one capture; a new Route fails typecheck here. */
 export const ROUTE_COVERAGE = {

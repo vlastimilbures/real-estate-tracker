@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   GATES,
+  LAYOUT_TAG,
   ciDrift,
   ciSteps,
   command,
@@ -258,6 +259,16 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
 
   it("runs every gate that is not nightly, exactly, with its env", () => {
     expect(ciDrift(ci)).toEqual([]);
+  });
+
+  it("selects the Czech / Russian layout screens by the harness's tag (#496)", async () => {
+    const { LAYOUT_TAG: harnessTag } =
+      await import("../../ux-capture/layoutScreens.ts");
+    expect(LAYOUT_TAG).toBe(harnessTag);
+    const i18n = GATES.find((g) => g.id === "axe-i18n");
+    expect(i18n.run).toContain(`--grep ${harnessTag} `);
+    expect(ciSteps(i18n)[0].run).toMatch(new RegExp(`--grep ${harnessTag}$`));
+    expect(ci).toContain(`--grep ${harnessTag}\n`);
   });
 
   it("names the setup line a full job runs, and passes the known if and shards", () => {
