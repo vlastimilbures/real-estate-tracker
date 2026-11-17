@@ -142,8 +142,8 @@ matched to an existing record by its natural key:
 | `rents.csv`      | `property_name` + `start_date` |
 | `mortgages.csv`  | `property_name` + `start_date` |
 
-- **Names match ignoring case and surrounding spaces.** `byt javorova ` matches
-  `Byt Javorova`. The stored spelling is kept; an import never changes a property's name.
+- **Names match ignoring case, surrounding spaces and how accents are encoded.**
+  `byt javorova ` matches `Byt Javorova`. The stored spelling is kept; an import never changes a property's name.
 - **Renaming a property in the CSV creates a new property.** There is no rename by import:
   `Byt Javorova 2` is a different key, so it is added as a new property next to the old one.
   Rename a property in the app instead.

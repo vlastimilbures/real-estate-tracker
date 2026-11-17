@@ -83,6 +83,19 @@ describe("parsePropertyForm", () => {
     expect(result.errors.name).toBe(en.propertyForm.errNameExists);
   });
 
+  // ADR 0237: names are compared in NFC. Escapes keep the two forms apart in the source.
+  it("rejects a decomposed (NFD) name that matches a stored composed (NFC) one", () => {
+    const result = parsePropertyForm(
+      { ...valid, name: "Na\u0301rodni\u0301 12" },
+      "p-new",
+      ["N\u00e1rodn\u00ed 12"],
+      en,
+    );
+    expect(result.valid).toBe(false);
+    if (result.valid) throw new Error("expected invalid");
+    expect(result.errors.name).toBe(en.propertyForm.errNameExists);
+  });
+
   it("accepts an edit that keeps its name once the caller leaves it out of existingNames", () => {
     const result = parsePropertyForm(valid, "vinohrady-2kk", [], en);
     expect(result.valid).toBe(true);

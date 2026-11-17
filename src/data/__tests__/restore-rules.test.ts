@@ -250,6 +250,22 @@ describe("property names repeat case-insensitively at restore (ADR 0148 §5)", (
   });
 });
 
+describe("restore keeps today's name comparison (ADR 0237 Consequences)", () => {
+  it("two names that differ only in Unicode form restore with no new issue", async () => {
+    // Escapes keep the composed (NFC) and decomposed (NFD) forms apart in the source.
+    const named = (a: string, b: string) =>
+      edited("properties", (rows) =>
+        rows.map((r, n) =>
+          n === 0 ? { ...r, name: a } : n === 1 ? { ...r, name: b } : r,
+        ),
+      );
+    const distinct = await named("N\u00e1rodn\u00ed", "Other");
+    const encodings = await named("N\u00e1rodn\u00ed", "Na\u0301rodni\u0301");
+    expect(issuesOf(encodings)).toEqual(issuesOf(distinct));
+    expect(() => prepareRestore(encodings, checkInputRules)).not.toThrow();
+  });
+});
+
 /** Every issue of a backup, refused or restored with warnings. */
 function issuesOf(backup: BackupFile) {
   try {

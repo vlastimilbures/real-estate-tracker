@@ -44,7 +44,7 @@ import {
 } from "./csv";
 import { PLAIN_DECIMAL } from "../lib/decimalText";
 import { D } from "../lib/money";
-import { propertyKey } from "../lib/propertyKey";
+import { propertyKey, spellingKey } from "../lib/propertyKey";
 
 export interface CsvImportBatch {
   properties?: ParsedPropertyRow[] | undefined;
@@ -380,6 +380,24 @@ export interface ImportPlan extends CsvImportPreview {
   statements: SqlStatement[];
 }
 
+/** The properties by name. A name matches the property spelled the same way first, then
+ *  by Unicode form (ADR 0237): two stored names that differ only in form (a restore may
+ *  hold them) each keep the rows spelled like them. */
+function nameIndex(stored: Iterable<PropertyRow>) {
+  const bySpelling = new Map<string, PropertyRow>();
+  const byKey = new Map<string, PropertyRow>();
+  const add = (p: PropertyRow) => {
+    bySpelling.set(spellingKey(p.name), p);
+    byKey.set(propertyKey(p.name), p);
+  };
+  for (const p of stored) add(p);
+  return {
+    add,
+    find: (name: string) =>
+      bySpelling.get(spellingKey(name)) ?? byKey.get(propertyKey(name)),
+  };
+}
+
 /** Match every row against `tables` (D-55), build the write statements and check the
  *  merged result against the engine's input rules. A new property's id comes from
  *  `newPropertyId(key)`, keyed by its matching name (ADR 0127). Pure: `tables` is not
@@ -407,15 +425,13 @@ export function planImport(
     leases: byId(tables.leases),
   };
 
-  const byKey = new Map(
-    [...properties.values()].map((p) => [propertyKey(p.name), p]),
-  );
+  const names = nameIndex(properties.values());
   const withCosts = new Set(holdingCosts.map((h) => h.property_id));
 
   // Properties first (FK parent). An existing property keeps its id, stored spelling
   // and active flag; CSV doesn't model activation (D-55).
   for (const p of batch.properties ?? []) {
-    const existing = byKey.get(propertyKey(p.name));
+    const existing = names.find(p.name);
     const fields = present({
       address: p.address,
       type: p.type,
@@ -457,7 +473,7 @@ export function planImport(
         : insertStatement("properties", row),
     );
     properties.set(row.id, row);
-    byKey.set(propertyKey(p.name), row);
+    names.add(row);
     origin.set(`property:${row.id}`, { file: "properties", row: p.line });
     const changes = existing ? changesOf(existing, fields) : [];
     items.push({
@@ -492,7 +508,7 @@ export function planImport(
   // Update the row with the same natural key, or insert a new one.
   for (const c of childInputs(batch)) {
     const { table, entity, tag } = CHILD_FILES[c.file];
-    const propId = byKey.get(propertyKey(c.propertyName))?.id;
+    const propId = names.find(c.propertyName)?.id;
     if (propId === undefined) {
       problems.push({
         file: c.file,
