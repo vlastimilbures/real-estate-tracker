@@ -6,18 +6,20 @@ import {
   chmodSync,
   mkdirSync,
   mkdtempSync,
+  rmSync,
   readFileSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const SCRIPT = join(ROOT, "scripts/check-vendored-sqlx-sqlite.sh");
 const REAL = readFileSync(join(ROOT, "src-tauri/Cargo.lock"), "utf8");
 const DIR = mkdtempSync(join(tmpdir(), "sqlx-lock-"));
+afterAll(() => rmSync(DIR, { recursive: true, force: true }));
 const REGISTRY =
   'source = "registry+https://github.com/rust-lang/crates.io-index"';
 const VENDORED = '[[package]]\nname = "sqlx-sqlite"\nversion = "0.8.6"\n';

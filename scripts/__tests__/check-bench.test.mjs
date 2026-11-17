@@ -1,14 +1,15 @@
 // `pnpm bench:check` (ADR 0073, ADR 0172) on synthetic bench reports: the budgets, the
 // exact limit, the factor, a missing bench, the same-run ratio and bad arguments.
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const DIR = mkdtempSync(join(tmpdir(), "check-bench-"));
+afterAll(() => rmSync(DIR, { recursive: true, force: true }));
 
 const RECOMPUTE = "recompute (useEngine)";
 const COMPARE = "scenario compare (3 scenarios)";
