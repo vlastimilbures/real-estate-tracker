@@ -37,9 +37,16 @@ import { type Outcome, prepaymentIssue } from "./loan/events";
 import type { BlockSchedule } from "./loan/grid";
 import { buildDevSchedule } from "./loan/devGrid";
 import { buildPlainSchedule } from "./loan/plainGrid";
+import { lastPaymentMonth } from "./loan/queries";
 
 export { paymentOffset } from "./loan/calendar";
 export { openingBalance, openingDebt } from "./loan/opening";
+export {
+  balanceAtMonth,
+  instalmentAtMonth,
+  hasPayment,
+  lastPaymentMonth,
+} from "./loan/queries";
 
 // ---------------------------------------------------------------------------
 // Public schedule API
@@ -70,26 +77,6 @@ export function buildSchedule(
   assumptions: Assumptions,
 ): AmortizationRow[] {
   return blockSchedule(block, assumptions).rows;
-}
-
-/**
- * Outstanding balance at a baseDate-anchored schedule month (0 = opening balance).
- * Clamped to the schedule's range: a month past the end pins to the final (typically
- * zero) balance. Fixation-aware because the schedule models the post-fixation reset.
- */
-export function balanceAtMonth(
-  schedule: AmortizationRow[],
-  month: number,
-): Decimal {
-  if (schedule.length === 0) return ZERO;
-  const m = Math.max(0, Math.min(month, schedule.length));
-  if (m <= 0) {
-    // Opening balance = first row's start balance = endBalance + principal +
-    // prepaid (ADR 0109).
-    const first = at(schedule, 0);
-    return first.endBalance.plus(first.principal).plus(first.prepaid);
-  }
-  return at(schedule, m - 1).endBalance;
 }
 
 /**
@@ -137,36 +124,6 @@ export function undrawnPrincipal(
 }
 
 /**
- * Instalment & rate in force at a baseDate-anchored schedule month — reads the
- * row at that month so a future as-of date past the fixation reset reflects the
- * re-amortized instalment and reset rate. Month ≤ 0 (baseDate) uses the first row.
- * An amortizing month with a prepayment reports the next row's instalment when that
- * row draws nothing at the same rate: the balance at that month has already had the
- * prepayment taken off (ADR 0116).
- */
-export function instalmentAtMonth(
-  schedule: AmortizationRow[],
-  month: number,
-): { instalment: Decimal; ratePa: Decimal } {
-  if (schedule.length === 0) return { instalment: ZERO, ratePa: ZERO };
-  const idx = Math.max(0, Math.min(month, schedule.length) - 1);
-  const row = at(schedule, Math.max(0, idx));
-  const next = schedule[idx + 1];
-  const after =
-    month >= 1 &&
-    row.prepaid.greaterThan(ZERO) &&
-    row.principal.greaterThan(ZERO) &&
-    next !== undefined &&
-    next.drawn.isZero() &&
-    next.refinanced.isZero() &&
-    next.ratePa.equals(row.ratePa);
-  return {
-    instalment: after ? next.instalment : row.instalment,
-    ratePa: row.ratePa,
-  };
-}
-
-/**
  * Due date of a block's last payment in its own base schedule, after its prepayments
  * and recasts: the maturity in force (ADR 0116). Events dated after `next`'s start are
  * dropped, as in the chain. An instalment above the annuity can end it before the
@@ -183,20 +140,6 @@ export function effectiveMaturity(
     b,
     paymentOffset(b, assumptions.baseDate) + lastPaymentMonth(rows),
   );
-}
-
-/** True when the row pays something. A prepayment counts: it can be the only cash of a
- *  month (ADR 0109). */
-export const hasPayment = (r: AmortizationRow): boolean =>
-  r.interest.plus(r.principal).plus(r.prepaid).greaterThan(ZERO);
-
-/** Grid month of the schedule's last payment, 0 if it has none. */
-export function lastPaymentMonth(rows: AmortizationRow[]): number {
-  for (let i = rows.length - 1; i >= 0; i--) {
-    const r = rows[i];
-    if (r && hasPayment(r)) return i + 1;
-  }
-  return 0;
 }
 
 // ---------------------------------------------------------------------------
