@@ -30,7 +30,11 @@ export const SHARDS = {
     "src/engine/loan/calendar.ts",
     "src/engine/loan/events.ts",
     "src/engine/loan/pay.ts",
-    "src/engine/loan/opening.ts",
+    {
+      file: "src/engine/loan/opening.ts",
+      anchor: "plainOpening",
+      part: "a",
+    },
     {
       file: "src/engine/loan/devGrid.ts",
       anchor: "undrawnMonthStep",
@@ -38,6 +42,11 @@ export const SHARDS = {
     },
   ],
   "schedule-b": [
+    {
+      file: "src/engine/loan/opening.ts",
+      anchor: "plainOpening",
+      part: "b",
+    },
     {
       file: "src/engine/loan/devGrid.ts",
       anchor: "undrawnMonthStep",
