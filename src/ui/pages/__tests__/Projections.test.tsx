@@ -106,8 +106,7 @@ describe("the Projections picker (ADR 0242, #439)", () => {
   const setLipova = (active: boolean) =>
     act(() => usePortfolioStore.setState({ portfolio: withLipova(active) }));
 
-  // debt #439: the picker dropped a leading "Byt " from each name.
-  it.fails("shows each property's name as stored", () => {
+  it("shows each property's name as stored", () => {
     renderWithPortfolio(<Projections />, { route: "projections" });
     expect(
       within(group()).getByRole("button", { name: "Byt Dubova" }),
@@ -117,45 +116,36 @@ describe("the Projections picker (ADR 0242, #439)", () => {
     );
   });
 
-  // debt #439: the panel title used the shortened name.
-  it.fails("titles the panel with the chosen property's full name", () => {
+  it("titles the panel with the chosen property's full name", () => {
     renderWithPortfolio(<Projections />, { route: "projections" });
     fireEvent.click(pills()[3]!);
     expect(heading()).toBe("Byt Dubova");
   });
 
-  // debt #439: the picker kept the deactivated property's value.
-  it.fails(
-    "returns the picker to the portfolio when the chosen property is deactivated",
-    () => {
-      const { container, unmount } = renderWithPortfolio(<Projections />, {
-        route: "projections",
-      });
-      fireEvent.click(pills()[2]!);
-      expect(pressed()).toEqual(["false", "false", "true", "false"]);
-      setLipova(false);
-      expect(pressed()).toEqual(["true", "false", "false"]);
-      expect(heading()).toBe(en.projections.portfolio);
-      const shown = container.querySelector("table")!.textContent;
-      unmount();
-      const fresh = renderWithPortfolio(<Projections />, {
-        route: "projections",
-        portfolio: withLipova(false),
-      });
-      expect(fresh.container.querySelector("table")!.textContent).toBe(shown);
-    },
-  );
+  it("returns the picker to the portfolio when the chosen property is deactivated", () => {
+    const { container, unmount } = renderWithPortfolio(<Projections />, {
+      route: "projections",
+    });
+    fireEvent.click(pills()[2]!);
+    expect(pressed()).toEqual(["false", "false", "true", "false"]);
+    setLipova(false);
+    expect(pressed()).toEqual(["true", "false", "false"]);
+    expect(heading()).toBe(en.projections.portfolio);
+    const shown = container.querySelector("table")!.textContent;
+    unmount();
+    const fresh = renderWithPortfolio(<Projections />, {
+      route: "projections",
+      portfolio: withLipova(false),
+    });
+    expect(fresh.container.querySelector("table")!.textContent).toBe(shown);
+  });
 
-  // debt #439: a reactivated property came back as the choice.
-  it.fails(
-    "keeps the portfolio chosen when that property is made active again",
-    () => {
-      renderWithPortfolio(<Projections />, { route: "projections" });
-      fireEvent.click(pills()[2]!);
-      setLipova(false);
-      setLipova(true);
-      expect(pressed()).toEqual(["true", "false", "false", "false"]);
-      expect(heading()).toBe(en.projections.portfolio);
-    },
-  );
+  it("keeps the portfolio chosen when that property is made active again", () => {
+    renderWithPortfolio(<Projections />, { route: "projections" });
+    fireEvent.click(pills()[2]!);
+    setLipova(false);
+    setLipova(true);
+    expect(pressed()).toEqual(["true", "false", "false", "false"]);
+    expect(heading()).toBe(en.projections.portfolio);
+  });
 });

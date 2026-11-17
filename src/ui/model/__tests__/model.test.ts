@@ -13,7 +13,7 @@ import {
   portfolioKpis,
   realPortfolioSnapshot,
 } from "../../../engine";
-import { projectionSeries, shortPropertyName } from "../projection";
+import { projectionSeries } from "../projection";
 import { monthlyFlow } from "../dashboard";
 import { lensKpis } from "../lensKpis";
 import { ONE, D } from "../../../lib/money";
@@ -114,13 +114,5 @@ describe("realPortfolioSnapshot", () => {
     expect(sv.ltv?.toString()).toBe(snap.ltv?.toString());
     expect(sv.netYield?.toString()).toBe(snap.netYield?.toString());
     expect(sv.asOf).toBe(snap.asOf);
-  });
-});
-
-describe("shortPropertyName", () => {
-  it("drops only a leading 'Byt '", () => {
-    expect(shortPropertyName("Byt Javorová")).toBe("Javorová");
-    expect(shortPropertyName("Dům Byt X")).toBe("Dům Byt X");
-    expect(shortPropertyName("Bytová jednotka")).toBe("Bytová jednotka");
   });
 });
