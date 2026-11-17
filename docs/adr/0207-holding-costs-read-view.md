@@ -7,6 +7,8 @@
   2026-11-15 run (comment on #392)
 - Amends: [0199](0199-icon-only-row-actions.md) (a row action in a panel head, with a
   name of its own)
+- Amended by: [0246](0246-focus-after-failed-save.md) (§3: a failed write also puts
+  focus back on Save)
 - Related: [0201](0201-button-roles.md) (one primary per region; Cancel ghost, Save primary),
   [0118](0118-data-check.md) (the Data check link to Holding costs),
   [0142](0142-row-switch-guard-busy-dialog.md) (the leave guard of a record form)

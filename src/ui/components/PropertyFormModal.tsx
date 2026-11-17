@@ -21,6 +21,7 @@ import { CZK } from "../../lib/currency";
 import type { Portfolio } from "../../engine";
 import { toWriteError, type WriteError } from "../../state/writeError";
 import { type Dictionary } from "../../i18n";
+import { useSaveBusy } from "../hooks/useSaveBusy";
 import { useT } from "../hooks/useT";
 import { formWriteErrors } from "../model/writeError";
 import { isDirty } from "../model/dirty";
@@ -279,8 +280,8 @@ export function PropertyFormModal({
   const [errors, setErrors] = useState<
     Partial<Record<keyof PropertyFormState, string>>
   >({});
-  const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useSaveBusy(errors, saveError);
   // Address and garage come from a second read in edit mode. Save waits for it and stays
   // off if it fails, so a save cannot write them NULL (ADR 0184 §3).
   const [extras, setExtras] = useState<"loading" | "ready" | "failed">(

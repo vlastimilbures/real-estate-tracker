@@ -23,6 +23,7 @@ import {
 } from "./ScenarioFormFields";
 import type { Assumptions, Scenario } from "../../engine";
 import { toWriteError, type WriteError } from "../../state/writeError";
+import { useSaveBusy } from "../hooks/useSaveBusy";
 import { useT } from "../hooks/useT";
 
 export { DEFAULT_SHOCK_YEARS };
@@ -62,7 +63,7 @@ export function ScenarioForm({
   const [draft, setDraft] = useState(initialDraft);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useSaveBusy(errors, formError);
   // One id per form, so a retry after a failed save cannot add a second scenario.
   const [id] = useState(() => scenario?.id ?? crypto.randomUUID());
 
