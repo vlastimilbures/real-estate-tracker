@@ -142,6 +142,9 @@ engine without the form, and remove it when the last part lands.
 - A date before 01.01.1900 is now refused only where it is typed: the forms and CSV import
   (ADR 0232, #452). Restoring a backup that holds one no longer warns, and the Data check no
   longer lists it; editing such a record still needs a valid date. No figure changes.
+- Internal: the input limits (the bounded ranges, the date floor, the unit-rate range and
+  the growth floor) are named in one module the engine also reads (ADR 0244, #464). No
+  behaviour change.
 
 ### Accessibility
 
