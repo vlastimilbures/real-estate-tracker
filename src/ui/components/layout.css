@@ -4,6 +4,28 @@
    feature sheets in styles/ load later), so at equal specificity a utility beats a
    component class; keyboard focus sits here for the same reason. */
 
+/* Breakpoints (#495): every width query in src/ui. var() cannot appear in a media or
+   container query, so this table is the one list of them; keep it in step.
+   An unnamed @container query measures the nearest container-type ancestor (named here).
+
+   Window (@media), the app's minimum window is 900 px wide:
+     max 920px   charts.css:178        .chart-grid: one column
+     max 920px   forms.css:409         .form-grid: one column
+     max 1099px  shell.css:273         .section-nav.one-row: one row, scrolls
+     max 1099px  shell.css:458         .topbar .narrow-hide labels: hidden, icon only
+   Container (@container):
+     max 639px   charts.css:40         .chart-grid-wrap      .chart-grid.pairs: one column
+     max 899px   charts.css:50         .chart-grid-wrap      .chart-grid.trio: 2 + 1 across
+     max 639px   charts.css:58         .chart-grid-wrap      .chart-grid.trio: one column
+     max 959px   panel.css:94          .kpi-strip-wrap       groups stack; six cells 3 × 2
+     max 639px   panel.css:113         .kpi-strip-wrap       four cells 2 × 2
+     min 688px   panel.css:234         .kpi-box              key figures in two columns
+     max 719px   loan-outlook.css:253  .fx-timeline          row text wraps under its bar
+     min 880px   data-check.css:57     .dc-blocks-wrap       two blocks side by side
+     max 679px   data-check.css:127    .dc-block             a row's actions wrap under it
+     max 48rem   scenarios.css:80      .scenario-list-wrap   summary moves under the name
+   Not a width: prefers-reduced-motion in global.css:106. */
+
 /* Screen-reader-only utility — visually hidden but accessible to AT */
 .sr-only {
   position: absolute;
