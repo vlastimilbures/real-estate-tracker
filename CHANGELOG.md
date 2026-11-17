@@ -37,6 +37,8 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- When a loan save is refused for a field the form is not showing, the reason now shows
+  above the buttons instead of nothing (ADR 0243, #440). No figure changes.
 - When saving an edited property fails, the property form keeps what you typed and still
   counts as unsaved, so Esc does not close it; before, the stored values came back into
   the fields (ADR 0241, #438). No figure changes.
