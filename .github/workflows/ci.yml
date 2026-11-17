@@ -77,7 +77,8 @@ jobs:
       - name: Test with coverage thresholds
         run: pnpm test:coverage
 
-      # A floor more than 3 points below measured must be raised (#141).
+      # A floor more than MAX_SLACK points below measured must be raised
+      # (scripts/check-coverage-ratchet.mjs, #141).
       - name: Coverage floors keep up
         run: pnpm coverage:ratchet
 

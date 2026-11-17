@@ -2,6 +2,7 @@
 // the documents and workflow that must agree with it.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { MAX_SLACK } from "../check-coverage-ratchet.mjs";
 import {
   GATES,
   LAYOUT_TAG,
@@ -89,6 +90,12 @@ describe("the gate list", () => {
     expect(pkg.scripts["gates:docs"]).toBe(
       "node scripts/gates.mjs --write-docs",
     );
+  });
+
+  it("states the coverage ratchet's slack from check-coverage-ratchet.mjs", () => {
+    const gate = GATES.find((g) => g.id === "coverage-ratchet");
+    expect(gate.what).toContain(`more than ${MAX_SLACK} points below`);
+    expect(gate.readme).toContain(`more than ${MAX_SLACK} points below`);
   });
 });
 

@@ -99,10 +99,11 @@ still describe it. Which document owns what is listed in
   properties are exempt from "used": we only set them, and react-day-picker's own
   stylesheet reads them. A needed `!important` gets a
   `stylelint-disable-next-line … -- reason` comment.
-- **Coverage floors** live in `coverage-floors.json` (per folder, lines and branches), set to
-  measured minus 1-2 points. Never lower one to pass. CI runs `pnpm coverage:ratchet` after
-  `pnpm test:coverage` and fails when a floor sits more than 3 points below measured; raise it
-  to measured minus 1-2 points then.
+- **Coverage floors** live in `coverage-floors.json` (per folder, lines and branches). Never
+  lower one to pass. CI runs `pnpm coverage:ratchet` after `pnpm test:coverage` and fails when
+  a floor sits more than the slack (`MAX_SLACK` in `scripts/check-coverage-ratchet.mjs`, 3
+  points) below measured. Raise it then, to measured minus 1-2 points of headroom, so the
+  next small dip in coverage does not fail the floor.
 - **Test refactors** (#458) prove that no test was dropped or weakened. Run the suite in
   each checkout (base and head), then compare from the head:
 
