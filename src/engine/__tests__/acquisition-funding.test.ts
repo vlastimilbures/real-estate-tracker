@@ -91,11 +91,6 @@ function withBuy(
   };
 }
 
-const withCost = (pct: string): Assumptions => ({
-  ...assumptions,
-  acquisitionCostPct: rate(pct),
-});
-
 /** The cash outside net cash flow: with no refinance and no prepayment, only the buy. */
 function outflow(p: Portfolio, a: Assumptions = assumptions) {
   const sum = portfolioProjection(p, a)
@@ -104,19 +99,18 @@ function outflow(p: Portfolio, a: Assumptions = assumptions) {
   return sum.minus(portfolioKpis(p, a).cumulativeNetCashFlow);
 }
 
-const summary = (p: Portfolio, a: Assumptions = assumptions) =>
+const summary = (p: Portfolio) =>
   acquisitionSummary(
     p.properties.find((x) => x.id === "buy")!,
     p,
-    a,
   );
 
 describe("ADR 0119 §5: the down payment of a future buy", () => {
-  // Without a record (3,800,000) and with the cost rate alone (4,148,000):
-  // levered-irr-acquisition.test.ts pins both on the same fixture.
-  it("entered transaction costs win over the cost rate", () => {
+  // Without a record (3,800,000): the ADR 0234 test below; levered-irr-acquisition.test.ts
+  // pins the same figure with entered costs of 0.
+  it("entered transaction costs are added", () => {
     const p = withBuy([loan()], { transactionCosts: money(150_000) });
-    expectKc(outflow(p, withCost("0.06")), 3_950_000, "entered costs");
+    expectKc(outflow(p), 3_950_000, "entered costs");
   });
 
   it("entered initial works are added", () => {
@@ -137,18 +131,27 @@ describe("ADR 0119 §5: the down payment of a future buy", () => {
     );
   });
 
-  it("recorded own cash is the outflow, whatever costs, works and rate say", () => {
+  it("recorded own cash is the outflow, whatever costs and works say", () => {
     const p = withBuy([loan()], {
       ownCash: money(1_500_000),
       transactionCosts: money(150_000),
       initialWorks: money(300_000),
     });
-    expectKc(outflow(p, withCost("0.06")), 1_500_000, "own cash");
+    expectKc(outflow(p), 1_500_000, "own cash");
   });
 
   it("own cash 0 is a fact (fully financed), not unknown", () => {
     const p = withBuy([loan()], { ownCash: money(0) });
-    expectKc(outflow(p, withCost("0.06")), 0, "own cash 0");
+    expectKc(outflow(p), 0, "own cash 0");
+  });
+
+  it("ADR 0234: no engine-only cost rate; a buy without entered costs adds none", () => {
+    const stray: Assumptions = {
+      ...assumptions,
+      // @ts-expect-error ADR 0234 removed the field; a stray value must move nothing.
+      acquisitionCostPct: rate("0.06"),
+    };
+    expectKc(outflow(withBuy(), stray), 3_800_000, "5.8 M − 2 M, no costs");
   });
 
   it("#103: a development loan's tranches are the bank's money, not the owner's", () => {

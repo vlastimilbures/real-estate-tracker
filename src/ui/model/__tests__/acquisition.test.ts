@@ -11,7 +11,7 @@ import {
 } from "../../../engine";
 import { D } from "../../../lib/money";
 import { fmtCzk } from "../../../lib/format";
-import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import { portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 
 const d = en.propertyDetail;
@@ -152,7 +152,6 @@ describe("acquisitionView", () => {
         },
       },
       portfolio,
-      assumptions,
     );
     expect(values(s)).toEqual([
       "7225000",

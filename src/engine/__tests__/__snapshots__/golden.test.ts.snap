@@ -722,44 +722,6 @@ exports[`P4a golden master (full precision) > mixed fixture with a funding recor
 }
 `;
 
-exports[`P4a golden master (full precision) > mixed fixture with acquisition costs 1`] = `
-{
-  "cpi": "0a3b06089fb7430925b924438fe15e7dba95801078e5d1e6a1f80d5ef7d568e4",
-  "kpis": {
-    "cagrNominal": "0.060986168761071681929831588394509596795",
-    "cagrReal": "0.035108457327874811638860086238545948093",
-    "cumulativeNetCashFlow": "14961054.2639881111073209116650904864244",
-    "debtFreeYear": 2056,
-    "firstCashFlowPositiveYear": 2036,
-    "leveredIrrNominal": "0.0632698361390154064357038699029089912075",
-    "leveredIrrReal": "0.03733642550147844487579140704269775596916",
-    "netWorthMultiple": "5.905975914617742582638340770465929348884",
-    "netWorthNominal": "143010814.0668065722076036079333399803885",
-    "netWorthReal": "68179359.50812580922048359424316863375379",
-    "totalPrincipalRepaid": "18215405.13298676723372195185823393939163",
-  },
-  "projection": "a477a117a87c3aa5591861870db9332ca862e3c017a647f4210fd68a74f40313",
-  "propertyProjections": [
-    "62b812867ab4d835cc185d73525cdc7a737c805e11ae0ed36206c2c2cff21b37",
-    "dfa36dd314e47e38d3e083484a277d19ab0c264d76ef238f3d14fcb82c8d00d2",
-    "94ed41c99a1bc0b42ef51aaf9b38352bd49adb8db71c5bbbd8ccbd7bc886d18e",
-    "cac5817c834643f7273dade56b40e2927cb990a3da1f4b5dc947fc13baa2ac57",
-    "4cd4ccdd1685cb66260649bced7433649245544b9ba85e8cb47f9540878d1013",
-    "d4b900ffa2ede0f0e78408ce9df1c014121187e82f276b28507fdee4ecdf9d41",
-  ],
-  "schedules": "3c10916436cbe0f0f944e69ff98649cc5ab4189402f92bd776dc10dc3df16d0b",
-  "snapshotsWithSchedules": [
-    "634f07eeee01ab05870bb8e0371183c2c23df6ffbb48cf9d3d01d98fce217d26",
-    "8a05f687ec7f90d7218049691e7eab3d493c24ed09a3f78eb43cd92730c50c2d",
-    "8ad4973d080b336ab68bf4c1075167e10f7bc8c99e247e9d3c1734816baf0526",
-    "e02ba9c414cf0902b2c94ac7e96e2698b17b2ff82ee137781d9207fccd5b63a0",
-    "860d5e4392ad504edeb65cfaccdc2a4956a7a781deaa520f20349efeeef720aa",
-    "99f8eba0fb9870eeabad6f30d033decf306709cc23314bdc1f0d7cc751609b29",
-    "ASOF_BEFORE_BASEDATE",
-  ],
-}
-`;
-
 exports[`P4a golden master (full precision) > scenario inflationShock on seed and mixed 1`] = `
 {
   "mixed": {

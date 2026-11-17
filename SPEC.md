@@ -76,8 +76,6 @@ Assumptions {
   postFixationResetRatePa: Rate    // default 0.045
   horizonYears: int                // default 30
   inflationPa: Rate                // default 0.025  (CPI; drives real terms)
-  acquisitionCostPct?: Rate        // 0–1 of the price; costs of a future buy with none
-                                   // recorded (engine-only, ADR 0119)
   sellingCostPct?: Rate            // 0–1 of the horizon value; selling costs taken off the
                                    // levered IRR's terminal value only (ADR 0183; stored,
                                    // default 0)
@@ -150,10 +148,10 @@ recast that sets exactly one of a maturity and an instalment; a recast maturity 
 loan, falls after the completion's payment; a recast instalment above 0 and dated after the
 completion. `LEASE_OVERLAP` (two leases of one property overlap, ADR 0163) is a write-time
 rule outside `validateInputs`. Ranges (ADR 0038, ADR 0128):
-interest 0–100 %, the post-fixation reset rate included; vacancy, cost shares, value haircut
-and the acquisition cost rate 0–1 (ADR 0119); shock durations whole years ≥ 0; horizon a
-whole number ≥ 1; growth, indexation, inflation and a property's growth overrides may be
-negative but must be above −100 % (`GROWTH_OUT_OF_RANGE`); the reset rate plus a rate shock
+interest 0–100 %, the post-fixation reset rate included; vacancy, cost shares and value
+haircut 0–1; shock durations whole years ≥ 0; horizon a whole number ≥ 1; growth,
+indexation, inflation and a property's growth overrides may be negative but must be
+above −100 % (`GROWTH_OUT_OF_RANGE`); the reset rate plus a rate shock
 stays within 0–100 % (`SHOCKED_RATE_OUT_OF_RANGE` on `rateShock`) and inflation plus an
 inflation shock above −100 % (`SHOCKED_INFLATION_OUT_OF_RANGE` on `inflationShock`), checked
 only when the level itself is valid; a value crash percentage must be finite. The funding
@@ -445,9 +443,9 @@ purposes (ADR 0119):
 
 - the recorded **own cash**, when the funding record has it;
 - otherwise purchase price − acquisition loan + costs + works. Costs are the recorded
-  transaction costs, else `acquisitionCostPct · price`, else 0; works are the recorded
-  initial works, else 0. The price is used, not the valuation: a valuation above the price
-  shows as equity the owner did not pay for.
+  transaction costs, else 0 (ADR 0234); works are the recorded initial works, else 0. The
+  price is used, not the valuation: a valuation above the price shows as equity the owner
+  did not pay for.
 
 The **acquisition loan** is the property's earliest block when it starts no later than 90
 days after the purchase date (an earlier start counts: an off-plan loan drawn before

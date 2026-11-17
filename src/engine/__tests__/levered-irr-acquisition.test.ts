@@ -1,15 +1,15 @@
 // A property bought after baseDate must charge the investor a down-payment outflow in
 // its turn-on year, so levered IRR / cumulative cash flow aren't flattered by free
-// terminal equity. The isolation tests vary only the `acquisitionCostPct` knob (a
-// strictly-monotonic input to the injected outflow) so the direction can't pass for an
-// unrelated reason; parity (cashOutsideNetCf all-zero on the all-owned seed) is covered by
-// projection.test.ts and re-asserted here.
+// terminal equity. The isolation tests vary only the buy's entered
+// `funding.transactionCosts` (a strictly-monotonic input to the injected outflow) so the
+// direction can't pass for an unrelated reason; parity (cashOutsideNetCf all-zero on the
+// all-owned seed) is covered by projection.test.ts and re-asserted here.
 import { describe, it, expect } from "vitest";
 import { portfolioKpis } from "../kpis";
 import { portfolioProjection } from "../projections";
 import { isoDate } from "../dates";
 import { assumptions, portfolio, PARITY } from "./support/seed";
-import type { Assumptions, Portfolio, Property } from "../types";
+import type { Portfolio, Property } from "../types";
 import { rate } from "../brands";
 import { money } from "../brands";
 import { ZERO } from "../../lib/money";
@@ -61,15 +61,20 @@ const withFuture: Portfolio = {
   holdingCosts: portfolio.holdingCosts,
 };
 
-const withCost = (pct: string): Assumptions => ({
-  ...assumptions,
-  acquisitionCostPct: rate(pct),
+/** The future buy with entered transaction costs (ADR 0119 §5, ADR 0234). */
+const withCosts = (kc: number): Portfolio => ({
+  ...withFuture,
+  properties: withFuture.properties.map((p) =>
+    p.id === "slovanske"
+      ? { ...p, funding: { transactionCosts: money(kc) } }
+      : p,
+  ),
 });
 
 describe("levered IRR — future-acquisition outflow", () => {
   it("a higher acquisition cost strictly lowers levered IRR (the outflow lands)", () => {
-    const base = portfolioKpis(withFuture, withCost("0"));
-    const taxed = portfolioKpis(withFuture, withCost("0.06"));
+    const base = portfolioKpis(withCosts(0), assumptions);
+    const taxed = portfolioKpis(withCosts(348_000), assumptions);
     expect(base.leveredIrrNominal).not.toBeNull();
     expect(taxed.leveredIrrNominal).not.toBeNull();
     // a bigger down-payment outflow at tStart ⇒ lower return
@@ -80,8 +85,8 @@ describe("levered IRR — future-acquisition outflow", () => {
   });
 
   it("a higher acquisition cost strictly lowers cumulative net cash flow", () => {
-    const base = portfolioKpis(withFuture, withCost("0"));
-    const taxed = portfolioKpis(withFuture, withCost("0.06"));
+    const base = portfolioKpis(withCosts(0), assumptions);
+    const taxed = portfolioKpis(withCosts(348_000), assumptions);
     expect(
       taxed.cumulativeNetCashFlow.lessThan(base.cumulativeNetCashFlow),
     ).toBe(true);
@@ -89,21 +94,21 @@ describe("levered IRR — future-acquisition outflow", () => {
 
   it("charges the down payment once: cumulative CF = Σ net CF − outflow", () => {
     // The seed has no refinance and no prepayment, so the only cash outside net cash
-    // flow is the future buy's outflow (#103, R2-10): price − principal, plus
-    // acquisitionCostPct × price (ADR 0119 §5; the 6.2 M valuation does not count).
-    const sumNetCf = (a: Assumptions) =>
-      portfolioProjection(withFuture, a)
+    // flow is the future buy's outflow (#103, R2-10): price − principal, plus the
+    // entered transaction costs (ADR 0119 §5; the 6.2 M valuation does not count).
+    const sumNetCf = (p: Portfolio) =>
+      portfolioProjection(p, assumptions)
         .slice(1)
         .reduce((s, y) => s.plus(y.netCashFlow), ZERO);
-    for (const [pct, outflow] of [
-      ["0", 3_800_000],
-      ["0.06", 4_148_000],
+    for (const [costs, outflow] of [
+      [0, 3_800_000],
+      [348_000, 4_148_000],
     ] as const) {
-      const a = withCost(pct);
+      const p = withCosts(costs);
       expectKc(
-        sumNetCf(a).minus(portfolioKpis(withFuture, a).cumulativeNetCashFlow),
+        sumNetCf(p).minus(portfolioKpis(p, assumptions).cumulativeNetCashFlow),
         outflow,
-        `outflow at cost ${pct}`,
+        `outflow at costs ${costs}`,
       );
     }
   });
@@ -117,16 +122,6 @@ describe("levered IRR — future-acquisition outflow", () => {
     expect(k.cumulativeNetCashFlow.toNumber()).toBeCloseTo(
       PARITY.kpis.cumulativeNetCashFlow,
       0,
-    );
-    // an explicit acquisitionCostPct cannot change the seed (no property turns on at t>0)
-    const k2 = portfolioKpis(portfolio, withCost("0.1"));
-    expect(k2.leveredIrrNominal!.toNumber()).toBeCloseTo(
-      k.leveredIrrNominal!.toNumber(),
-      9,
-    );
-    expect(k2.cumulativeNetCashFlow.toNumber()).toBeCloseTo(
-      k.cumulativeNetCashFlow.toNumber(),
-      6,
     );
   });
 

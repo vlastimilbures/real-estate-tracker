@@ -112,18 +112,16 @@ function recorded(property: Property) {
   };
 }
 
-/** ADR 0119 §5/§6: price − loan + costs + works, where costs are the entered ones,
- *  else the engine-only rate on the price, else 0, and works the entered ones, else 0. */
+/** ADR 0119 §5, ADR 0234: price − loan + costs + works, where costs and works are the
+ *  entered ones, else 0. */
 function derivedDownPayment(
   price: Decimal,
   loan: Decimal,
   parts: ReturnType<typeof recorded>,
-  costPct: Decimal,
 ): Decimal {
-  const costs = parts.transactionCosts ?? price.times(costPct);
   return price
     .minus(loan)
-    .plus(costs)
+    .plus(parts.transactionCosts ?? ZERO)
     .plus(parts.initialWorks ?? ZERO);
 }
 
@@ -148,7 +146,6 @@ function sourcesAndUses(
 export function acquisitionSummary(
   property: Property,
   portfolio: Portfolio,
-  assumptions: Assumptions,
 ): AcquisitionSummary {
   const price = property.purchasePrice;
   // ADR 0119 §3: the earliest block, when it funded the purchase. A later block is a
@@ -166,13 +163,6 @@ export function acquisitionSummary(
     loan,
     ...parts,
     ...sourcesAndUses(price, loanOrZero, parts),
-    outflow:
-      parts.ownCash ??
-      derivedDownPayment(
-        price,
-        loanOrZero,
-        parts,
-        assumptions.acquisitionCostPct ?? ZERO,
-      ),
+    outflow: parts.ownCash ?? derivedDownPayment(price, loanOrZero, parts),
   };
 }

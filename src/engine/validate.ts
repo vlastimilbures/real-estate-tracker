@@ -152,7 +152,6 @@ function checkAssumptions(a: Assumptions, report: Report): void {
     "vacancyAllowance",
     "postFixationResetRatePa",
     "inflationPa",
-    "acquisitionCostPct",
     "sellingCostPct",
   ];
   checkFields(a, ["baseDate"], rates, report);
@@ -185,9 +184,6 @@ const GROWTH_FIELDS = [
 function checkLevelRanges(a: Assumptions, report: Report): void {
   if (outsideUnit(a.vacancyAllowance))
     report("RATE_OUT_OF_RANGE", "vacancyAllowance");
-  // ADR 0119 §6: a fraction of the purchase price.
-  if (outsideUnit(a.acquisitionCostPct))
-    report("RATE_OUT_OF_RANGE", "acquisitionCostPct");
   // ADR 0183: a fraction of the projected value at the horizon.
   if (outsideUnit(a.sellingCostPct))
     report("RATE_OUT_OF_RANGE", "sellingCostPct");

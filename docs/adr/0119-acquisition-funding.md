@@ -17,6 +17,8 @@
 - Amended by: [0168](0168-development-loan-is-the-acquisition-loan.md) (decisions 3 and
   5: a first development loan is the acquisition loan whatever its start, and is never
   cash in)
+- Amended by: [0234](0234-no-acquisition-cost-pct.md) (decisions 5 and 6: the engine-only
+  `acquisitionCostPct` is removed; a future buy's costs are the entered ones, else 0)
 
 ## Context
 

@@ -21,7 +21,7 @@ const PURCHASE = isoDate("2029-01-15"); // baseDate 2026-06-07 → tStart 3
 const EARLY = isoDate("2026-01-10"); // before baseDate: running in grid month 1
 const PRICE = 6_000_000;
 const PRINCIPAL = 4_000_000;
-const DOWN_PAYMENT = PRICE - PRINCIPAL; // no cost rate, no record (ADR 0119 §5)
+const DOWN_PAYMENT = PRICE - PRINCIPAL; // no entered costs, no record (ADR 0119 §5, ADR 0234)
 const INSTALMENT = 25_000;
 /** ADR 0134 (#193): the principal the loan repaid before baseDate, charged with the down
  *  payment. By hand: the 4 instalments due 10.02.–10.05.2026 at 5 % / 12 split
