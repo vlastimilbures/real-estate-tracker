@@ -4,7 +4,8 @@ Screenshots of every screen and state, plus an axe WCAG 2.2 AA scan of each one.
 for UX reviews and for before/after evidence of UI changes. CI runs it too (job `axe`:
 English, light + dark, 1280×800 + `min`; plus the layout screens in Czech and Russian, light,
 1280×800 + `min`, ADR 0158) and fails on any axe violation or layout assertion (F-08,
-ADR 0078).
+ADR 0078). On CI a failed screen is retried once; see [Retries and flaky
+captures](#retries-and-flaky-captures).
 
 ```bash
 pnpm ux:capture                                  # en, light, 1280×800
@@ -29,6 +30,7 @@ ux-screens/<date>-<sha>[-dirty]/
     <nn>-<screen>.png                # full page unless the entry says otherwise
     axe/<nn>-<screen>.json           # violations with targets and failure summaries
     90-keyboard-focus-order.json     # Tab sequence from page load
+  flaky.json                         # only when a screen passed on its retry
 ```
 
 Set `UX_RUN_ID=<name>` to write several variant runs into one folder (one shared
@@ -72,13 +74,55 @@ pnpm ux:axe-check <run>        # lists every violation; exit 1 if any (what CI r
 | `UX_VIEWPORT` | `1280x800`, `min`, any `WxH`, comma list   | `1280x800`             |
 | `UX_DATE`     | ISO timestamp for the frozen browser clock | `2026-10-01T10:00:00Z` |
 | `UX_RUN_ID`   | output folder name                         | `<date>-<sha>`         |
+| `UX_OUT`      | absolute output folder (wins over the id)  | `ux-screens/<run id>`  |
+| `UX_RETRIES`  | retries of a failed screen                 | `1` on CI, else `0`    |
 
 The clock is frozen, so "Today" and the as-of presets stay the same between runs and the
 before/after screenshots can be compared.
 
+## Layout
+
+```text
+capture.spec.ts        one test per screen, the route, unique-id and layout-tag guards
+helpers.ts             the `ux` fixture (capture, shot, axe), boot, nav, panel, settings tab
+flows.ts               app-driving helpers: edited backups, startup faults, loan events, forms
+layout/                the layout assertions (common, dashboard, pages)
+layoutScreens.ts       the screens CI also captures in Czech and Russian (`@layout-i18n`)
+flakeReport.ts         reporter: regressions vs flaky captures
+screens/define.ts      defineScreen(id, desc, run)
+screens/<area>.ts      the screens of one area, in flow order
+screens/index.ts       SCREENS (the areas in flow order) and ROUTE_COVERAGE
+```
+
+No `.ts` file here may pass 600 lines (`__tests__/fileSize.test.ts`); split an area that
+outgrows it into two contiguous files and add both to `screens/index.ts` in flow order.
+
 ## Adding a screen
 
-Add an entry to `SCREENS` in `screens.ts`. The `run` function drives the app through the
-UI and calls `ux.capture("<id>")`. Take button names from the dictionaries (`ux.t.…`) so the
-entry works in every language. When a new `Route` is added to `src/state/uiStore.ts`,
-typecheck fails at `ROUTE_COVERAGE` until a screen covers it.
+Add a `defineScreen("<id>", "<what it shows>", async (ux) => { … })` entry to its area's
+file under `screens/`, in flow order. The `run` function drives the app through the UI and
+calls `ux.capture()`, which saves the PNG and axe scan under the screen's id; an extra
+state of the same screen passes its own id (`ux.capture("<id>-open")`). Take button names
+from the dictionaries (`ux.t.…`) so the entry works in every language. When a new `Route`
+is added to `src/state/uiStore.ts`, typecheck fails at `ROUTE_COVERAGE`
+(`screens/index.ts`) until a screen covers it.
+
+## Czech and Russian layout screens
+
+CI also captures the screens listed in `layoutScreens.ts` in Czech and Russian
+(`pnpm ux:capture --grep @layout-i18n`, light, 1280×800, 1200×800 and `min`). Their tests
+carry the `@layout-i18n` tag. A listed id without a screen, or listed twice, stops the run
+when the manifest loads, so renaming a layout screen fails the step instead of dropping the
+screen from it. To add one, add its id to the list.
+
+## Retries and flaky captures
+
+`UX_RETRIES` sets how often a failed screen is retried: once on CI, never locally. The
+reporter (`flakeReport.ts`) then sorts the failures:
+
+- **Regression**: the screen failed every attempt. The run fails.
+- **Flaky**: the screen failed, then passed on its retry. The run stays green; CI shows a
+  `Flaky capture` warning per screen, a table in the job summary, and writes `flaky.json`
+  to the run folder, which makes CI upload the evidence as on a failure.
+
+A flaky screen is still a bug in the screen or the app: fix it rather than leave it.

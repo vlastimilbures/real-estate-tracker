@@ -86,8 +86,11 @@ export default defineConfig({
   outputDir: path.join(process.env.UX_OUT, ".playwright"),
   fullyParallel: true,
   forbidOnly: true,
-  retries: 0,
-  reporter: "list",
+  // One retry on CI, none locally (UX_RETRIES overrides): a screen that fails twice is a
+  // regression and fails the run; one that passes on the retry is reported as flaky
+  // (annotation, job summary, <UX_OUT>/flaky.json) by flakeReport.ts (#496).
+  retries: Number(process.env.UX_RETRIES ?? (process.env.CI ? 1 : 0)),
+  reporter: [["list"], ["./ux-capture/flakeReport.ts"]],
   globalTeardown: "./ux-capture/summary.ts",
   timeout: 90_000,
   use: {
