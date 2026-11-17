@@ -11,6 +11,8 @@
   preview failure banner has no dismiss; decision 7: the panic line is capped), [0153](0153-honest-startup-failures.md) (decision 4: `reveal_data_dir` is also
   reached from Settings → Backup)
 - Amended by: [0193](0193-save-errors-panic-marker.md) (a panic message cut at 500 characters ends with "…")
+- Amended by: [0229](0229-import-writes-plan-at-click.md) (§5: the `importPage.planChanged`
+  banner is removed)
 - Related: [0014](0014-rust-transaction-command.md) (multi-step writes go through the Rust
   transaction command), [0064](0064-file-io-in-rust.md) (file IO in Rust),
   [0080](0080-close-out.md) decision 6 (0600/0700), [0154](0154-one-outcome-path.md) (one

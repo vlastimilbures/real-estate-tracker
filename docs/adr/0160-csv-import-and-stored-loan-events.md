@@ -6,6 +6,9 @@
   owner decision D7 (2026-10-08: option A, all four items); Track 11 PR 11.11
 - Amends: [0096](0096-csv-import-preview.md) (the preview also notes replaced loan events and
   blocks without effect; an add that replaces loan events asks for confirmation)
+- Amended by: [0229](0229-import-writes-plan-at-click.md) (Consequences: the plan-change
+  guard is gone, so a stored event edited outside the app between the preview and the click
+  is no longer caught)
 - Related: [0109](0109-loan-prepayments-and-recasts.md) (§9 a successor cuts its predecessor's
   later events; §12 a re-import keeps them), [0116](0116-prepayments-ui-and-review-fixes.md)
 

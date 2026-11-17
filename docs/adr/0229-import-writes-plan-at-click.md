@@ -7,7 +7,12 @@
 - Amends: [0096](0096-csv-import-preview.md) §5 (the plan-change guard),
   [0185](0185-csv-missing-columns-and-preview-clarity.md) §6 (a commit-time problem is shown
   as a changed plan), [0127](0127-opaque-property-ids-sample-match.md) §1 (the preview and
-  the import plan the same ids; delegated point S1)
+  the import plan the same ids; delegated point S1),
+  [0160](0160-csv-import-and-stored-loan-events.md) (Consequences: the plan-change guard no
+  longer catches a stored event edited before the click),
+  [0175](0175-verified-file-writes-error-codes-backup-folder.md) §5 (the plan-changed banner
+  is removed), [0154](0154-one-outcome-path.md) (Consequences: `CsvPlanChangedError` is
+  removed)
 - Related: [0240](0240-import-preview-cleared-on-change.md) (Import is disabled while a new
   preview is pending; required by this decision)
 
@@ -53,6 +58,13 @@ and texts kept for a case that the page now prevents.
   it gone, such a refusal shows the problems table without an announcement. A refusal at
   commit needs an outside change between the shown preview and the click, which is very
   rare in a single-user offline app.
+- **Trade-off:** only problems are refused at the click. Updates and the loan events an
+  added mortgage block stops (ADR 0160) are things the owner confirms in the preview, not
+  problems, so if the database changed outside the app between the shown preview and the
+  click, the import writes the plan built at the click, which may update more records or
+  stop other stored events than the preview listed. The report lists what was written. This
+  needs a second program writing the database while the Import page is open, which the app
+  does not support.
 - No computed number, parity target, golden master or export changes. No ux-capture screen
   reaches the banner, so the capture does not change.
 
