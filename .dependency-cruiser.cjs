@@ -1,10 +1,14 @@
 // Architecture rules as code: the layer map in docs/adr/0072, amended by 0171 (first
-// written in P10 from ADR 0072, CLAUDE.md §3–§4). ESLint mirrors the engine rules
-// for editor feedback; this file is the full map and runs in CI (`pnpm depcruise`).
+// written in P10 from ADR 0072, CLAUDE.md §3–§4). This file is the full map and runs in CI
+// (`pnpm depcruise`). The engine's layer list is shared with ESLint's engine import hint
+// (scripts/engine-layers.cjs): ESLint also lints the engine tests and bans a direct
+// decimal.js import; this file bans every npm package but decimal.js.
 //
 // .dependency-cruiser-known-violations.json is empty since P12 (ADR 0072). A new violation
 // fails CI; `pnpm depcruise:baseline-check` fails a PR whose baseline grows. Never grow it
 // to get a PR green.
+
+const { depcruiseTo } = require("./scripts/engine-layers.cjs");
 
 const TESTS = "(^|/)__tests__/|\\.(test|spec|bench)\\.tsx?$";
 const APP_LAYERS = "^src/(engine|data|state|ui|import|i18n|platform)/";
@@ -29,10 +33,7 @@ module.exports = {
       comment:
         "The engine is pure (CLAUDE.md): only engine modules and the named pure lib files (allow-list: lib/money.ts, and lib/rules.ts, the shared input rules, which imports only lib/money: ADR 0244).",
       from: { path: "^src/engine/", pathNot: TESTS },
-      to: {
-        path: "^src/(data|state|ui|import|i18n)/|^src/lib/",
-        pathNot: "^src/lib/(money|rules)\\.ts$",
-      },
+      to: depcruiseTo(),
     },
     {
       name: "lib-rules-pure",

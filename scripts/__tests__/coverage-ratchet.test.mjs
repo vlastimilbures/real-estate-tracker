@@ -1,7 +1,7 @@
 // `pnpm coverage:ratchet` (#141) on a synthetic coverage summary.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { measure, ratchet } from "../check-coverage-ratchet.mjs";
+import { MAX_SLACK, measure, ratchet } from "../check-coverage-ratchet.mjs";
 
 const ROOT = "/repo";
 const m = (lc, lt, bc, bt) => ({
@@ -34,6 +34,10 @@ describe("coverage ratchet", () => {
     expect(
       measure({ "/repo/src/x.ts": m(0, 0, 0, 0) }, "src/**", ROOT),
     ).toEqual({ lines: 100, branches: 100 });
+  });
+
+  it("allows a slack of 3 points (CONTRIBUTING.md, the gate list)", () => {
+    expect(MAX_SLACK).toBe(3);
   });
 
   it("passes a floor up to 3 points below measured and fails beyond", () => {

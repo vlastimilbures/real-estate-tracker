@@ -9,6 +9,7 @@ import {
   sizeLimitBlocks,
   sizeRules,
 } from "./scripts/size-limits.mjs";
+import { eslintGroup } from "./scripts/engine-layers.cjs";
 
 // Focused or disabled tests never reach main (CLAUDE.md §6). `it.fails` stays allowed —
 // it needs a DR-/J- ID by convention.
@@ -30,6 +31,13 @@ const testBans = [
     message: "No disabled or focused tests (CLAUDE.md §6).",
   },
 ];
+
+// Flat config replaces a rule's options per key, so each block that sets
+// `no-restricted-syntax` sets the whole list: this puts the test bans first in every one
+// (scripts/__tests__/eslint-config.test.mjs checks that none leaves them out).
+const restrictedSyntax = (...groups) => ({
+  "no-restricted-syntax": ["error", ...testBans, ...groups.flat()],
+});
 
 // Modules a setup file mocks once for ui/state tests (#458): no file-level mock of them.
 // Both forms: `vi.mock("…/data/errorLog")` and `vi.mock(import("…/data/errorLog"))`.
@@ -144,24 +152,10 @@ const decimalPath = {
   message:
     "Import Decimal helpers from src/lib/money.ts, not decimal.js directly (DR-075).",
 };
+// The layer list is shared with dependency-cruiser (scripts/engine-layers.cjs says what
+// each tool covers that the other does not).
 const engineLayerPattern = {
-  group: [
-    "**/data",
-    "**/data/**",
-    "**/state",
-    "**/state/**",
-    "**/ui",
-    "**/ui/**",
-    "**/import/**",
-    "**/i18n/**",
-    "**/lib/**",
-    "!**/lib/money",
-    // The shared input rules (ADR 0244); rules.ts imports only lib/money.
-    "!**/lib/rules",
-    "react",
-    "react-dom",
-    "@tauri-apps/*",
-  ],
+  group: eslintGroup(),
   message:
     "The engine is pure (CLAUDE.md §4, PLAN §4.1): no imports from data/state/ui/import/i18n/react/tauri; from lib only money and rules (ADR 0244).",
 };
@@ -200,38 +194,25 @@ export default tseslint.config(
   },
   {
     files: ["**/*.{ts,tsx}"],
-    rules: { "no-restricted-syntax": ["error", ...testBans] },
+    rules: restrictedSyntax(),
   },
   // Every test gets the pinned clock from a setup file (src/__tests__/setup/clock.ts,
   // #458); a test sets another day with setClock.
   {
     files: TEST_FILES,
     ignores: SETUP_FILES,
-    rules: { "no-restricted-syntax": ["error", ...testBans, ...dayMockBans] },
+    rules: restrictedSyntax(dayMockBans),
   },
   // src/lib tests also reach lib/day by a relative path (`../day`).
   {
     files: ["src/lib/**/__tests__/**/*.{ts,tsx}", "src/lib/**/*.test.{ts,tsx}"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...testBans,
-        ...dayMockBansFor(LIB_DAY_MODULE),
-      ],
-    },
+    rules: restrictedSyntax(dayMockBansFor(LIB_DAY_MODULE)),
   },
   // ui/state tests get the errorLog and Tauri core mocks from a setup file
   // (src/__tests__/setup/mocks.ts, #458); a test changes their behaviour on the mock.
   {
     files: ["src/{ui,state}/**/__tests__/**/*.{ts,tsx}"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...testBans,
-        ...sharedMockBans,
-        ...dayMockBans,
-      ],
-    },
+    rules: restrictedSyntax(sharedMockBans, dayMockBans),
   },
   // Production code: no brand casts and no non-null assertions (ADR 0074); a missing
   // value gets a real guard or the checked `at()` from lib/arrays.
@@ -239,7 +220,7 @@ export default tseslint.config(
     files: ["src/**/*.{ts,tsx}"],
     ignores: ["src/**/__tests__/**", "src/**/*.test.{ts,tsx}"],
     rules: {
-      "no-restricted-syntax": ["error", ...testBans, ...brandCastBans],
+      ...restrictedSyntax(brandCastBans),
       "@typescript-eslint/no-non-null-assertion": "error",
       // Shipped code runs in the WebView: no Node globals. tsconfig cannot hide them,
       // since @types/papaparse pulls in @types/node (#154).
@@ -259,9 +240,10 @@ export default tseslint.config(
       ],
     },
   },
-  // Layering boundaries (CLAUDE.md §4) enforced by lint, not just review/convention.
-  // The engine is PURE: it may import only other engine modules + lib/money. It must never
-  // reach out to data/state/ui/react/tauri. dependency-cruiser enforces the full map in CI.
+  // Layering boundaries (CLAUDE.md §4) in the editor. The engine is PURE: other engine
+  // modules and lib/money + lib/rules only. This block also covers the engine tests and
+  // bans a direct decimal.js import; dependency-cruiser holds the full layer map and bans
+  // every npm package but decimal.js (scripts/engine-layers.cjs).
   {
     files: ["src/engine/**/*.{ts,tsx}"],
     rules: {
@@ -309,14 +291,12 @@ export default tseslint.config(
     files: ["src/engine/**/*.ts"],
     ignores: ["src/engine/**/__tests__/**"],
     rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...testBans,
-        ...brandCastBans,
-        ...engineClockBans,
-        ...engineNumberBans,
+      ...restrictedSyntax(
+        brandCastBans,
+        engineClockBans,
+        engineNumberBans,
         engineDateBan,
-      ],
+      ),
       // P4a limits (P04a-engine-refactor.md §6): keep engine functions small.
       ...sizeRules(ENGINE_LIMITS),
     },
@@ -324,26 +304,11 @@ export default tseslint.config(
   // The brand constructors themselves (ADR 0074): no brand-cast ban here.
   {
     files: ["src/engine/brands.ts"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...testBans,
-        ...engineClockBans,
-        ...engineNumberBans,
-        engineDateBan,
-      ],
-    },
+    rules: restrictedSyntax(engineClockBans, engineNumberBans, engineDateBan),
   },
   {
     files: ["src/engine/dates.ts"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        ...testBans,
-        ...engineClockBans,
-        ...engineNumberBans,
-      ],
-    },
+    rules: restrictedSyntax(engineClockBans, engineNumberBans),
   },
   // One-way data flow: DB → data/mappers → engine. The data layer maps rows to engine
   // INPUTS; it imports engine TYPES (and boundary-safe date helpers) only, never engine

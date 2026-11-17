@@ -70,7 +70,7 @@ CI also runs:
 | `TZ=Pacific/Kiritimati pnpm vitest run src/lib src/ui src/state`                                                                                    | the layers that read local time, in UTC+14                                                | a second run of those tests                                     |
 | `UX_RUN_ID=ci UX_LANG=en UX_THEME=both UX_VIEWPORT=1280x800,min pnpm ux:capture && pnpm ux:axe-check ci`                                            | axe scan of every captured screen: English, light and dark, two window sizes (ADR 0078)   | slow (four CI shards); run it after UI work                     |
 | `UX_RUN_ID=ci-i18n UX_LANG=cs,ru UX_THEME=light UX_VIEWPORT=1280x800,1200x800,min pnpm ux:capture --grep @layout-i18n && pnpm ux:axe-check ci-i18n` | the layout screens in Czech and Russian: nothing clipped or covered, axe clean (ADR 0158) | slow (four CI shards); run it after UI work                     |
-| `bash scripts/check-vendored-sqlx-sqlite.sh`                                                                                                        | the vendored sqlx-sqlite is crates.io 0.8.6 plus one line (ADR 0196)                      | downloads the published crate                                   |
+| `bash scripts/check-vendored-sqlx-sqlite.sh`                                                                                                        | Cargo.lock uses the vendored sqlx-sqlite, crates.io 0.8.6 plus one line (ADR 0196)        | downloads the published crate                                   |
 | `cargo build --manifest-path src-tauri/Cargo.toml`                                                                                                  | the Rust shell builds                                                                     | the release builds the app anyway                               |
 
 <!-- gates:end -->
@@ -99,10 +99,11 @@ still describe it. Which document owns what is listed in
   properties are exempt from "used": we only set them, and react-day-picker's own
   stylesheet reads them. A needed `!important` gets a
   `stylelint-disable-next-line … -- reason` comment.
-- **Coverage floors** live in `coverage-floors.json` (per folder, lines and branches), set to
-  measured minus 1-2 points. Never lower one to pass. CI runs `pnpm coverage:ratchet` after
-  `pnpm test:coverage` and fails when a floor sits more than 3 points below measured; raise it
-  to measured minus 1-2 points then.
+- **Coverage floors** live in `coverage-floors.json` (per folder, lines and branches). Never
+  lower one to pass. CI runs `pnpm coverage:ratchet` after `pnpm test:coverage` and fails when
+  a floor sits more than the slack (`MAX_SLACK` in `scripts/check-coverage-ratchet.mjs`, 3
+  points) below measured. Raise it then, to measured minus 1-2 points of headroom, so the
+  next small dip in coverage does not fail the floor.
 - **Test refactors** (#458) prove that no test was dropped or weakened. Run the suite in
   each checkout (base and head), then compare from the head:
 

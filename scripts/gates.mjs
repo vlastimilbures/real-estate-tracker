@@ -24,6 +24,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { format, resolveConfig } from "prettier";
+import { MAX_SLACK } from "./check-coverage-ratchet.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 
@@ -130,9 +131,9 @@ export const GATES = [
   {
     id: "coverage-ratchet",
     run: "pnpm coverage:ratchet",
-    what: "no floor more than 3 points below measured",
+    what: `no floor more than ${MAX_SLACK} points below measured`,
     where: "check",
-    readme: "No coverage floor more than 3 points below measured",
+    readme: `No coverage floor more than ${MAX_SLACK} points below measured`,
   },
   {
     id: "cargo-fmt",
@@ -244,10 +245,11 @@ export const GATES = [
   {
     id: "vendored-sqlx",
     run: "bash scripts/check-vendored-sqlx-sqlite.sh",
-    what: "the vendored sqlx-sqlite is crates.io 0.8.6 plus one line (ADR 0196)",
+    what: "Cargo.lock uses the vendored sqlx-sqlite, crates.io 0.8.6 plus one line (ADR 0196)",
     where: "ci",
     why: "downloads the published crate",
-    readme: "The vendored sqlx-sqlite differs from crates.io by one line",
+    readme:
+      "Cargo.lock uses the vendored sqlx-sqlite, which differs from crates.io by one line",
   },
   {
     id: "cargo-build",
