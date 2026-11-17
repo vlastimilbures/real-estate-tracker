@@ -444,7 +444,7 @@ export function findingText(
       switch (f.field) {
         case "sizeM2":
           // Only the size can hold a fraction: the engine refuses one in the others
-          // (validate.ts, whole years), so they never reach the Data check. Inside the
+          // (engine/validate/, whole years), so they never reach the Data check. Inside the
           // range it is listed only with two or more decimals (ADR 0236 §3).
           return inRange(f.value, f.range)
             ? d.sizeDecimals(value, range)
