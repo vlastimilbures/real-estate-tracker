@@ -23,7 +23,7 @@
   color: var(--accent);
 }
 
-/* ============ Misc ============ */
+/* ============ Toast ============ */
 /* The live region is always mounted (ADR 0154); fixed, so it never takes a slot in the
    page's flex column, empty or not. */
 .toast-region {
@@ -53,7 +53,7 @@
   font-size: 13px;
 }
 
-/* ============ Information banner (sample portfolio, ADR 0094) ============ */
+/* ============ Information banner and getting-started steps (ADR 0094) ============ */
 .banner.info {
   display: flex;
   flex-wrap: wrap;
@@ -90,7 +90,7 @@
   margin-top: var(--s1);
 }
 
-/* ============ Error banner / boundary ============ */
+/* ============ Error banner, error boundary, loading and error screens ============ */
 .error-banner {
   display: flex;
   align-items: center;
@@ -214,6 +214,7 @@
   margin-top: 0;
 }
 
+/* ============ Inline error text ============ */
 /* Subdued inline error text (CSV import, backup/restore, delete prompts). */
 .error-text {
   color: var(--negative);

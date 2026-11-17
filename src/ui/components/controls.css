@@ -1,4 +1,4 @@
-/* ============ Badge / tone ============ */
+/* ============ Badge and health marker ============ */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -329,6 +329,7 @@
   text-align: right;
 }
 
+/* ============ Metric term ============ */
 /* UX-044: a metric abbreviation that explains itself and links to the Guide. */
 .metric-term {
   font: inherit;

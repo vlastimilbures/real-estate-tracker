@@ -1,3 +1,4 @@
+/* ============ Info tip ============ */
 /* A definition behind an info icon beside a title (ADR 0217). The popover is fixed and
    placed by script under the icon, inside the window, so a panel's overflow never clips
    it; an invisible strip above it bridges the gap for the pointer. */

@@ -1,4 +1,4 @@
-/* ============ App shell ============ */
+/* ============ App shell: sidebar, nav, footer, backup hint ============ */
 .shell {
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
@@ -215,6 +215,7 @@
   align-items: center;
 }
 
+/* ============ Content column and top bar: section nav, tabs, page title ============ */
 .content {
   min-width: 0;
   display: flex;
@@ -462,6 +463,8 @@
   font-size: 12px;
   color: var(--ink-soft);
 }
+
+/* ============ Page body and the Settings page column ============ */
 .page {
   padding: var(--s6);
   max-width: var(--content-max);

@@ -1,4 +1,4 @@
-/* ============ Import files (ADR 0212) ============ */
+/* ============ Import: file rows (ADR 0212), preview and report (ADR 0096) ============ */
 /* One row per file type: type, file name, choose + template, status; each row is its
    own drop target, outlined while a file is over it or one of its buttons has keyboard
    focus. */

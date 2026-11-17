@@ -45,6 +45,7 @@
   color: var(--ink-faint);
 }
 
+/* ============ Loan outlook: figures and fixation timeline (ADR 0204) ============ */
 /* Financing & upcoming (ADR 0204): headline figures, then the fixation timeline. */
 .fx-figures {
   display: flex;

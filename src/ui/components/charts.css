@@ -1,4 +1,4 @@
-/* ============ Charts ============ */
+/* ============ Charts: grids, Dashboard sections, cards, legend, tooltip ============ */
 .chart-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

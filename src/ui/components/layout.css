@@ -1,3 +1,8 @@
+/* Utilities: a utility class sets one property from a token (`.x { gap: var(--s3) }`);
+   anything else is a component class and lives in its component's file. Kept from before
+   this rule: .row, .grid and .sr-only. Loaded after every component file, so at equal
+   specificity a utility wins; keyboard focus sits here for the same reason. */
+
 /* Screen-reader-only utility — visually hidden but accessible to AT */
 .sr-only {
   position: absolute;
@@ -11,7 +16,7 @@
   border: 0;
 }
 
-/* ============ Layout helpers ============ */
+/* ============ Layout helpers: .row, .grid ============ */
 .row {
   display: flex;
   gap: var(--s4);
@@ -22,7 +27,7 @@
   gap: var(--s4);
 }
 
-/* ============ Visible keyboard focus (a11y) ============ */
+/* ============ Keyboard focus: focus ring, skip link, main ============ */
 /* Buttons/links/nav/chips render a clear ring only for keyboard focus (not mouse
    clicks). Form inputs keep their own inset ring defined above. */
 button:focus-visible,

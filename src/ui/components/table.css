@@ -1,4 +1,4 @@
-/* ============ Tables ============ */
+/* ============ Data table: columns, compact grid, totals row, band legend ============ */
 .table-wrap {
   overflow: auto;
   max-width: 100%;
@@ -174,6 +174,8 @@ table.data thead th.left,
 table.data tbody td.left {
   text-align: left;
 }
+
+/* ============ Pinned columns, cell links and row states ============ */
 /* Sticky first (label) column — keeps YEAR/PROPERTY identifiable while the
    rest of a wide table scrolls horizontally. Applied to a single named
    column only (.sticky-col), not every left-aligned column, since some
@@ -414,6 +416,7 @@ table.data td:has(> .row-actions) {
   pointer-events: auto;
 }
 
+/* ============ N/A cells and the inline confirm row ============ */
 /* Dense projection table: N/A flow cells. */
 /* --ink-soft, not --ink-faint: totals rows sit on --paper-2 (ADR 0157). */
 .proj-na {
