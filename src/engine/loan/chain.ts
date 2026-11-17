@@ -4,7 +4,6 @@ import { firstAfter, isOnOrBefore } from "../dates";
 import {
   drawMonth,
   dueDate,
-  isDevLoan,
   mortgageBlock,
   selectBlock,
 } from "../amortization";
@@ -25,9 +24,7 @@ import type {
 } from "../types";
 import { paymentOffset } from "./calendar";
 import { type Outcome, prepaymentIssue } from "./events";
-import type { BlockSchedule } from "./grid";
-import { buildDevSchedule } from "./devGrid";
-import { buildPlainSchedule } from "./plainGrid";
+import { type BlockSchedule, buildBlockSchedule } from "./grid";
 import { lastPaymentMonth } from "./queries";
 
 // ---------------------------------------------------------------------------
@@ -40,17 +37,15 @@ function blockSchedule(
   assumptions: Assumptions,
 ): BlockSchedule {
   assertLoanInputs(block);
-  return isDevLoan(block)
-    ? buildDevSchedule(block, assumptions)
-    : buildPlainSchedule(block, assumptions);
+  return buildBlockSchedule(block, assumptions);
 }
 
 /**
  * Month-by-month schedule for one block, from baseDate for at least `horizonYears*12`
  * months (longer when the loan needs its full term). A future block is undrawn (zero
  * rows) until the first grid month on/after `startDate`, where it draws
- * `initialPrincipal` and then amortizes. Development loans (tranches or interest-only)
- * take the development path; plain loans reproduce the parity targets byte-for-byte.
+ * `initialPrincipal` and then amortizes. Plain loans reproduce the parity targets
+ * byte-for-byte.
  * An invalid loan raises an EngineInputError (D-17).
  * @internal test seam: one loan's schedule; the app runs `propertySchedules`.
  */
