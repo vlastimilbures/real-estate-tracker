@@ -42,8 +42,9 @@ engine without the form, and remove it when the last part lands.
   Development builds measure as before. No figure changes.
 - Property names are compared in one Unicode form (NFC) when a CSV row is matched to a
   property and when a duplicate name is refused, so a name written with separate accent
-  marks matches the same name stored with composed letters (ADR 0237, #455). Restore and
-  stored names are unchanged. No figure changes.
+  marks matches the same name stored with composed letters (ADR 0237, #455). Editing a
+  property whose name differs from another's only in encoding is refused at save. Restore
+  and stored names are unchanged. No figure changes.
 - Adding a valuation no longer asks whether to end the previous one (ADR 0227, #445). When
   the new valuation has no "Valid to" and the one before it is open-ended, the earlier one
   now ends the day before the new one starts, as leases already do. A valuation with its own

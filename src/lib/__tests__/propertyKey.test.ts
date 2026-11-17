@@ -3,8 +3,8 @@
 import { describe, it, expect } from "vitest";
 import { propertyKey } from "../propertyKey";
 
-const NFC = "Národní 12";
-const NFD = "Národní 12";
+const NFC = "N\u00e1rodn\u00ed 12";
+const NFD = "Na\u0301rodni\u0301 12";
 
 describe("propertyKey", () => {
   it("gives a decomposed (NFD) name the key of its composed (NFC) spelling", () => {
@@ -12,7 +12,7 @@ describe("propertyKey", () => {
     expect(propertyKey(NFD)).toBe(propertyKey(NFC));
   });
 
-  it("still matches trimmed and case-insensitively (D-55)", () => {
-    expect(propertyKey("  NÁRODNÍ 12 ")).toBe(propertyKey(NFD));
+  it("matches an upper-case, padded NFC spelling to the NFD one", () => {
+    expect(propertyKey("  N\u00c1RODN\u00cd 12 ")).toBe(propertyKey(NFD));
   });
 });
