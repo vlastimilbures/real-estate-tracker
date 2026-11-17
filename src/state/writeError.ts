@@ -8,15 +8,18 @@ import {
   type DataErrorCode,
 } from "../data/errors";
 import { EngineInputError, type EngineValidationError } from "../engine";
+import type { RangeProblem } from "../lib/rules";
 
 export type WriteError =
   /** Engine input rules the edit breaks, checked before writing (UX-047). `scenario`
    *  names the saved scenario an assumptions edit would break (ADR 0128 §6); the errors
-   *  are then the scenario's. */
+   *  are then the scenario's. `ranges`: the out-of-range values the edit adds, then with
+   *  no engine error (ADR 0245). */
   | {
       kind: "input";
       errors: readonly EngineValidationError[];
       scenario?: string | undefined;
+      ranges?: readonly RangeProblem[] | undefined;
     }
   /** A schema constraint refused the write (UNIQUE, CHECK, FOREIGN KEY, NOT NULL). */
   | { kind: "constraint"; constraint: ConstraintFailure }
@@ -37,7 +40,22 @@ export class ScenarioRuleError extends EngineInputError {
   }
 }
 
+/** A write refused because it adds a value outside the bounded ranges (ADR 0245): an
+ *  input error like the engine's (ADR 0141), with no engine error, since OUT_OF_RANGE
+ *  is not an engine rule (ADR 0086 §3). */
+export class RangeRuleError extends EngineInputError {
+  readonly ranges: readonly RangeProblem[];
+
+  constructor(ranges: readonly RangeProblem[]) {
+    super([]);
+    this.name = "RangeRuleError";
+    this.ranges = ranges;
+  }
+}
+
 export function toWriteError(e: unknown): WriteError {
+  if (e instanceof RangeRuleError)
+    return { kind: "input", errors: [], ranges: e.ranges };
   if (e instanceof ScenarioRuleError)
     return { kind: "input", errors: e.errors, scenario: e.scenario };
   if (e instanceof EngineInputError) return { kind: "input", errors: e.errors };

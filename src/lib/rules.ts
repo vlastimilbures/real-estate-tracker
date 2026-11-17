@@ -80,9 +80,9 @@ export type BoundedField = keyof typeof INT_RANGES;
 
 /** One stored value outside INT_RANGES, or finer than its field accepts: not a whole
  *  number (ADR 0180 §2), or for the size more than one decimal place (ADR 0236). The one
- *  shape restore and the Data check read (#464).
- *  Restore-only as a refusal: the engine itself is open-ended, so a restore warns and asks
- *  instead of refusing (ADR 0148). */
+ *  shape restore, the store and the Data check read (#464).
+ *  Not an engine rule: the engine itself is open-ended. A restore warns and asks instead
+ *  of refusing (ADR 0148); the store refuses only a value a write adds (ADR 0245). */
 export interface RangeProblem {
   /** BEYOND_LIMIT: above HARD_LIMIT_FACTOR × the form maximum, so restore refuses
    *  (ADR 0148). */

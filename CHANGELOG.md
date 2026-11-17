@@ -150,6 +150,10 @@ engine without the form, and remove it when the last part lands.
 - Internal: the input limits (the bounded ranges, the date floor, the unit-rate range and
   the growth floor) are named in one module the engine also reads (ADR 0244, #464). No
   behaviour change.
+- Internal: saving now also refuses, in the data layer, a horizon, fixation, loan term
+  or size outside its range that the save adds, as the forms already do (ADR 0245, #464).
+  A value already stored outside its range does not block other edits. No form, message
+  or figure changes.
 
 ### Accessibility
 
