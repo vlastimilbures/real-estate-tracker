@@ -587,19 +587,42 @@ const ENTRY_ERROR_CODES = codesRaisedBy("data", "range");
 /** The invalid-loan codes the engine raises on (D-17, D-36). */
 const LOAN_ERROR_CODES = codesRaisedBy("loan");
 
+/** A problem as a check reports it: the code, the field, the list index. */
+type Issue = Parameters<Report>;
+
+/** Every problem of one block, in check order: the one way into checkMortgage. */
+function blockIssues(b: MortgageBlock): Issue[] {
+  const issues: Issue[] = [];
+  checkMortgage(b, (...issue) => {
+    issues.push(issue);
+  });
+  return issues;
+}
+
+/** The block's problems with one of `codes`, as errors on the block. */
+function blockErrors(
+  b: MortgageBlock,
+  codes: ReadonlySet<ValidationCode>,
+): EngineValidationError[] {
+  return blockIssues(b)
+    .filter(([code]) => codes.has(code))
+    .map(([code, field, index]) =>
+      rowError("mortgage", b.id, code, field, index),
+    );
+}
+
+/** Raise an EngineInputError listing `errors`, if there are any. */
+function raise(errors: EngineValidationError[]): void {
+  if (errors.length > 0) throw new EngineInputError(errors);
+}
+
 /**
  * Raise an EngineInputError when a loan the engine is about to compute has a D-17
  * problem, instead of letting it become a NaN term, an endless schedule or vanished
  * debt (DR-014, DR-018, DR-043). Every D-17 problem of the block is listed.
  */
 export function assertLoanInputs(block: MortgageBlock): void {
-  const errors: EngineValidationError[] = [];
-  checkMortgage(block, (code, field, index) => {
-    if (LOAN_ERROR_CODES.has(code)) {
-      errors.push(rowError("mortgage", block.id, code, field, index));
-    }
-  });
-  if (errors.length > 0) throw new EngineInputError(errors);
+  raise(blockErrors(block, LOAN_ERROR_CODES));
 }
 
 /**
@@ -607,15 +630,7 @@ export function assertLoanInputs(block: MortgageBlock): void {
  * is chosen (a block with an invalid start date would otherwise just drop out).
  */
 export function assertLoanRows(blocks: MortgageBlock[]): void {
-  const errors: EngineValidationError[] = [];
-  for (const b of blocks) {
-    checkMortgage(b, (code, field, index) => {
-      if (DATA_ERROR_CODES.has(code)) {
-        errors.push(rowError("mortgage", b.id, code, field, index));
-      }
-    });
-  }
-  if (errors.length > 0) throw new EngineInputError(errors);
+  raise(blocks.flatMap((b) => blockErrors(b, DATA_ERROR_CODES)));
 }
 
 /** Effective-dated rows: valid dates, finite non-negative amount, end ≥ start. */
@@ -773,7 +788,7 @@ function checkMortgages(p: Portfolio, on: ReporterFor): void {
   const quick = refinancesWithinAMonth(p.mortgages);
   for (const b of p.mortgages) {
     const report = on("mortgage", b.id, b.propertyId);
-    checkMortgage(b, report);
+    for (const issue of blockIssues(b)) report(...issue);
     if (dupes.has(b)) report("DUPLICATE_BLOCK_START", "startDate");
     if (quick.has(b)) report("REFINANCE_WITHIN_A_MONTH", "startDate");
   }
