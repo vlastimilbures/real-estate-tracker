@@ -35,7 +35,7 @@
   },
   "src/state/portfolioStore.ts": {
     "lines": {
-      "Arrow function (usePortfolioStore: create)": 376
+      "Arrow function (usePortfolioStore: create)": 375
     }
   },
   "src/state/uiStore.ts": {
@@ -187,12 +187,7 @@
   },
   "src/ui/pages/Scenarios.tsx": {
     "lines": {
-      "Function 'Scenarios'": 164
-    }
-  },
-  "src/ui/pages/ScenariosPanels.tsx": {
-    "lines": {
-      "Function 'ScenarioListPanel'": 160
+      "Function 'Scenarios'": 162
     }
   }
 }

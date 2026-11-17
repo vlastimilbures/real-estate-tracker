@@ -21,6 +21,13 @@ export type DataErrorCode =
   /** A saved scenario's overrides JSON is unreadable (DR-037). */
   | "SCENARIO_INVALID";
 
+/** A stored row the app cannot read, in any table, scenarios included (ADR 0231). The
+ *  database opened and migrated to head and only reading it failed: start-up stops, Try
+ *  again cannot help, and a backup can be restored from the startup screen (ADR 0153). */
+export const READ_FAILURES: ReadonlySet<DataErrorCode> = new Set<DataErrorCode>(
+  ["ROW_INVALID", "SCENARIO_INVALID"],
+);
+
 /** How far a stopped upgrade got (ADR 0153). Each step commits on its own, so the
  *  database is at `reached`, which is `from` only when nothing changed. */
 export interface UpgradeStop {

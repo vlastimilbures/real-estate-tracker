@@ -8,16 +8,16 @@ export interface BootView {
   /** The details are records (rows, names); otherwise versions, checks or driver text. */
   records: boolean;
   /** Offer Restore a backup…: only where the database opened and migrated to head, and
-   *  only reading it failed. SCENARIO_INVALID no longer stops startup (ADR 0123). */
+   *  only reading it failed (`READ_FAILURES`, ADR 0231). */
   restore: boolean;
 }
 
-/** Failures that repeat on every start, so Try again cannot help. */
+/** Failures that repeat on every start, so Try again cannot help; so does every read
+ *  failure. */
 const LASTING = new Set<DataErrorCode>([
   "DB_INTEGRITY",
   "DB_NEWER",
   "MIGRATION_CONFLICT",
-  "ROW_INVALID",
 ]);
 
 const RECORDS = new Set<DataErrorCode>([
@@ -27,12 +27,17 @@ const RECORDS = new Set<DataErrorCode>([
   "SCENARIO_INVALID",
 ]);
 
-/** `null` is a failure without a typed code (the driver, the disk). */
-export function bootView(code: DataErrorCode | null): BootView {
+/** `null` is a failure without a typed code (the driver, the disk). `readFailures` is
+ *  `READ_FAILURES` from the data layer, passed in to keep this model pure (ADR 0072). */
+export function bootView(
+  code: DataErrorCode | null,
+  readFailures: ReadonlySet<DataErrorCode>,
+): BootView {
+  const read = code !== null && readFailures.has(code);
   return {
-    retry: code === null || !LASTING.has(code),
+    retry: code === null || (!LASTING.has(code) && !read),
     records: code !== null && RECORDS.has(code),
-    restore: code === "ROW_INVALID",
+    restore: read,
   };
 }
 

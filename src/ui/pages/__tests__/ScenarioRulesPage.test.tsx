@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 //
 // ADR 0123 (#107, #108), the Scenarios page wiring: a save the store refuses stays in the
-// form with the rule on its field, and a stored row the app cannot read is listed and
-// deleted through the store.
+// form with the rule on its field.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -33,22 +32,10 @@ const addScenario = vi.fn(
     error: refused,
   }),
 );
-const removeScenario = vi.fn(async (id: string) => {
-  usePortfolioStore.setState((st) => ({
-    unreadableScenarios: st.unreadableScenarios.filter((u) => u.id !== id),
-  }));
-  return { ok: true as const };
-});
-
 beforeEach(() => {
   addScenario.mockClear();
-  removeScenario.mockClear();
   act(() => {
-    usePortfolioStore.setState({
-      unreadableScenarios: [{ id: "bad", name: "Broken" }],
-      addScenario,
-      removeScenario,
-    });
+    usePortfolioStore.setState({ addScenario });
   });
 });
 
@@ -69,18 +56,5 @@ describe("Scenarios page (ADR 0123)", () => {
     expect(
       screen.getByLabelText(sc.fieldValueCrash).getAttribute("aria-invalid"),
     ).toBe("true");
-  });
-
-  it("lists an unreadable row and deletes it through the store", async () => {
-    renderWithPortfolio(<Scenarios />);
-    expect(screen.getByText(sc.unreadableRow)).toBeTruthy();
-    await userEvent.click(
-      screen.getByRole("button", { name: en.common.delete }),
-    );
-    await userEvent.click(
-      screen.getByRole("button", { name: en.common.yesDelete }),
-    );
-    expect(removeScenario).toHaveBeenCalledWith("bad");
-    expect(screen.queryByText(sc.unreadableRow)).toBeNull();
   });
 });

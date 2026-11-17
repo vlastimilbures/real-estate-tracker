@@ -234,16 +234,17 @@ describe("scenario overrides JSON (versioned)", () => {
     expect(e.message).toMatch(/Corrupt scenario overrides JSON for "Stress"/);
   });
 
-  it("a stored scenario with a numeric value is listed as unreadable, not loaded without it", async () => {
+  it("a stored scenario with a numeric value fails the load (ADR 0231)", async () => {
     const sql = openMemorySql();
     await migrate(sql);
     await upsertAssumptions(sql, SEED_ASSUMPTIONS);
     await sql.execute(
       `INSERT INTO scenarios VALUES ('s1', 'Stress', '{"appreciationPa":0.05}', '2026-01-05')`,
     );
-    const state = await loadState(sql);
-    expect(state.scenarios).toEqual([]);
-    expect(state.unreadableScenarios).toEqual([{ id: "s1", name: "Stress" }]);
+    await expect(loadState(sql)).rejects.toMatchObject({
+      code: "SCENARIO_INVALID",
+      details: [expect.stringMatching(/^scenario "Stress": overrides /)],
+    });
   });
 });
 

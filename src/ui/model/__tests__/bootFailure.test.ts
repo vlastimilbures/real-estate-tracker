@@ -1,6 +1,7 @@
 // #115 (ADR 0153): what the startup error screen offers for each failure.
 import { describe, it, expect } from "vitest";
 import { bootView, fileName, isPartial } from "../bootFailure";
+import { READ_FAILURES } from "../../../data/errors";
 
 describe("bootView", () => {
   it.each([
@@ -14,10 +15,11 @@ describe("bootView", () => {
     ["MIGRATION_FAILED", { retry: true, records: false, restore: false }],
     ["ROW_INVALID", { retry: false, records: true, restore: true }],
     ["ROW_MISSING", { retry: true, records: true, restore: false }],
-    ["SCENARIO_INVALID", { retry: true, records: true, restore: false }],
+    // ADR 0231: an unreadable scenario row is handled like ROW_INVALID.
+    ["SCENARIO_INVALID", { retry: false, records: true, restore: true }],
     [null, { retry: true, records: false, restore: false }],
   ] as const)("%s", (code, view) => {
-    expect(bootView(code)).toEqual(view);
+    expect(bootView(code, READ_FAILURES)).toEqual(view);
   });
 });
 

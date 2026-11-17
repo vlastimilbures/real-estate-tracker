@@ -45,49 +45,35 @@ beforeEach(async () => {
 });
 
 describe("an unreadable scenario row at startup (#451, ADR 0231)", () => {
-  // #451: today the load leaves the row out and the app starts (ADR 0123 §7).
-  it.fails(
-    "stops startup on SCENARIO_INVALID, with the database kept open",
-    () => {
-      expect(store().status).toBe("error");
-      expect(store().startupError?.code).toBe("SCENARIO_INVALID");
-      expect(store().sql).toBe(db);
-    },
-  );
+  it("stops startup on SCENARIO_INVALID, with the database kept open", () => {
+    expect(store().status).toBe("error");
+    expect(store().startupError?.code).toBe("SCENARIO_INVALID");
+    expect(store().sql).toBe(db);
+  });
 
-  // #451: today the app starts, so the screen has nothing to offer.
-  it.fails(
-    "offers Restore a backup… and names the scenario, not Try again",
-    () => {
-      render(<BootFailure />);
-      const alert = screen.getByRole("alert").textContent;
-      expect(alert).toContain(en.dataErrors.SCENARIO_INVALID);
-      expect(alert).toContain(en.boot.nextRowInvalid);
-      expect(alert).toContain(en.dataErrors.detailsHeading);
-      expect(alert).toContain('scenario "Broken"');
-      expect(button(en.boot.restoreBackup)).toBeDefined();
-      expect(
-        screen.queryByRole("button", { name: en.app.tryAgain }),
-      ).toBeNull();
-    },
-  );
+  it("offers Restore a backup… and names the scenario, not Try again", () => {
+    render(<BootFailure />);
+    const alert = screen.getByRole("alert").textContent;
+    expect(alert).toContain(en.dataErrors.SCENARIO_INVALID);
+    expect(alert).toContain(en.boot.nextRowInvalid);
+    expect(alert).toContain(en.dataErrors.detailsHeading);
+    expect(alert).toContain('scenario "Broken"');
+    expect(button(en.boot.restoreBackup)).toBeDefined();
+    expect(screen.queryByRole("button", { name: en.app.tryAgain })).toBeNull();
+  });
 
-  // #451: today restore at startup refuses anything but ROW_INVALID.
-  it.fails(
-    "restoring a good backup from the screen opens the app",
-    async () => {
-      render(<BootFailure />);
-      await userEvent.click(button(en.boot.restoreBackup));
-      await userEvent.click(button(en.backup.restoreNow));
-      expect(screen.getByRole("alert").textContent).toMatch(
-        /portfolio-before-restore-.*\.json/,
-      );
+  it("restoring a good backup from the screen opens the app", async () => {
+    render(<BootFailure />);
+    await userEvent.click(button(en.boot.restoreBackup));
+    await userEvent.click(button(en.backup.restoreNow));
+    expect(screen.getByRole("alert").textContent).toMatch(
+      /portfolio-before-restore-.*\.json/,
+    );
 
-      await userEvent.click(button(en.boot.continue));
-      expect(store().status).toBe("ready");
-      expect(store().startupError).toBeNull();
-      expect(store().portfolio!.properties.length).toBeGreaterThan(0);
-      expect(store().scenarios.map((s) => s.id)).not.toContain("bad");
-    },
-  );
+    await userEvent.click(button(en.boot.continue));
+    expect(store().status).toBe("ready");
+    expect(store().startupError).toBeNull();
+    expect(store().portfolio!.properties.length).toBeGreaterThan(0);
+    expect(store().scenarios.map((s) => s.id)).not.toContain("bad");
+  });
 });
