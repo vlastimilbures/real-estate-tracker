@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 /**
  * A form save's busy flag, which also keeps a keyboard user's place (ADR 0246).
@@ -33,7 +33,7 @@ export function useSaveBusy(
   }, []);
 
   // After the commit that ended the save: the button is enabled again by then.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (busy || !ended.current) return;
     ended.current = false;
     const el = trigger.current;

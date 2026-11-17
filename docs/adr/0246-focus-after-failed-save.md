@@ -42,7 +42,7 @@ HTML standard requires it.
    failure shown in the form (on a field or in the line above the buttons), the control
    that started the save gets focus back once it is enabled again. That control is the
    submit button (`propertyDetail.saveHoldingCosts`, `common.save`, `common.create`,
-   `common.saveChanges`, or a record form's own label), the only one that disables and so
+   `common.saveChanges`, `propertyForm.addTitle`, or a record form's own label), the only one that disables and so
    drops focus. A save started by Return in a field leaves focus in that field, as today.
 2. **Focus the user moved is left alone.** Focus is put back only when it is on `<body>`
    or still on that button. If the user moved it elsewhere while the save ran, it stays
@@ -58,10 +58,12 @@ HTML standard requires it.
    §1–§2 when the save ends with a failure shown.
 
 Not changed here, listed for the owner on the PR: the destructive confirms (the confirm
-row, ADR 0143, and Clear sample, ADR 0094), the Excel export button, the scenario presets
-and Duplicate, and the Assumptions Save in the Settings top bar. Each also disables while
-its action runs, but needs its own answer (for a confirm, whether focus goes back to the
-destructive button or to Cancel).
+row, ADR 0143, and Clear sample, ADR 0094), the Excel export button, the scenario presets,
+Duplicate and Delete, the Assumptions Save in the Settings top bar, Activate on Property
+detail, Import and its overwrite confirm, and Export backup, Restore, Load sample and the
+Restore confirm on Backup & restore. Each also disables while its action runs, but needs
+its own answer (for a confirm, whether focus goes back to the destructive button or to
+Cancel).
 
 ## Consequences
 
