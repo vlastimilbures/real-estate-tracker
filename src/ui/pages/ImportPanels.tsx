@@ -113,7 +113,7 @@ function ErrorTable({
   return (
     <TableWrap
       label={t.importPage.errorsTableName(title, errors.length)}
-      style={{ marginTop: "var(--s3)" }}
+      className="mt-s3"
     >
       <table className="data">
         <thead>
@@ -128,9 +128,7 @@ function ErrorTable({
             <tr key={i}>
               <td>{e.row === 0 ? t.importPage.wholeFile : e.row}</td>
               <td className="left">{e.field ? <code>{e.field}</code> : "—"}</td>
-              <td className="left" style={{ color: "var(--negative)" }}>
-                {csvErrorText(t, e.error)}
-              </td>
+              <td className="left tone-negative">{csvErrorText(t, e.error)}</td>
             </tr>
           ))}
         </tbody>
@@ -144,7 +142,7 @@ export function RefusedTable({ problems }: { problems: CsvImportProblem[] }) {
   const t = useT();
   const p = t.importPage;
   return (
-    <TableWrap label={p.importRefused} style={{ marginTop: "var(--s3)" }}>
+    <TableWrap label={p.importRefused} className="mt-s3">
       <p className="error-text">{p.importRefused}</p>
       <table className="data">
         <thead>
@@ -163,10 +161,7 @@ export function RefusedTable({ problems }: { problems: CsvImportProblem[] }) {
               </td>
               <td>{e.row}</td>
               <td className="left">{e.field ? <code>{e.field}</code> : "—"}</td>
-              <td
-                className="left cell-message"
-                style={{ color: "var(--negative)" }}
-              >
+              <td className="left cell-message tone-negative">
                 {e.problem.code === "unknownProperty"
                   ? p.errUnknownProperty(e.problem.value)
                   : e.problem.code === "storedEvent"

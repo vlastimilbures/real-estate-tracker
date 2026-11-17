@@ -67,7 +67,7 @@ export function LoanTypeSwitch({
       {confirming && (
         <div className="loan-type-confirm" role="alert">
           <span className="confirm-msg">{d.loanTypeClearWarning}</span>
-          <div className="row" style={{ gap: "var(--s2)" }}>
+          <div className="row row-s2">
             <Button size="sm" onClick={() => setConfirming(false)}>
               {d.loanTypeKeepDevelopment}
             </Button>

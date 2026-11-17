@@ -3,10 +3,10 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: var(--fs-11);
   font-weight: 600;
   letter-spacing: 0.02em;
-  padding: 2px 8px;
+  padding: 2px var(--s2);
   border-radius: 999px;
   border: 1px solid transparent;
 }
@@ -64,7 +64,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--s2);
-  font-size: 13px;
+  font-size: var(--fs-13);
   font-weight: 600;
   padding: var(--s2) var(--s4);
   border-radius: var(--r-sm);
@@ -111,7 +111,7 @@
 }
 .btn.sm {
   padding: 3px var(--s3);
-  font-size: 12px;
+  font-size: var(--fs-12);
 }
 /* Leading icons sit flush with the label; never shrink under tight table cells. */
 .btn svg {
@@ -124,7 +124,7 @@
   border: 1px solid var(--hairline);
   background: var(--paper-2);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: 600;
   color: var(--ink-soft);
   padding: 5px 14px;
@@ -164,10 +164,10 @@
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: 600;
   color: var(--ink-soft);
-  padding: 4px 14px;
+  padding: var(--s1) 14px;
   border-radius: 999px;
   transition:
     background 0.15s,
@@ -182,7 +182,7 @@
 /* PropertySelect single-mode uses .pill inside .segmented */
 .segmented .pill {
   border: none;
-  padding: 4px 14px;
+  padding: var(--s1) 14px;
   /* A long property name is cut with an ellipsis; its title shows it (ADR 0242 §3). */
   max-width: clamp(6rem, 14vw, 14rem);
   overflow: hidden;
@@ -221,7 +221,7 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  z-index: 200;
+  z-index: var(--z-menu);
   min-width: 180px;
   background: var(--surface);
   border: 1px solid var(--hairline);
@@ -234,8 +234,8 @@
   display: block;
   width: calc(100% - var(--s4));
   margin: var(--s2) var(--s2) var(--s2);
-  padding: 4px var(--s2);
-  font-size: 12px;
+  padding: var(--s1) var(--s2);
+  font-size: var(--fs-12);
   border: 1px solid var(--hairline);
   border-radius: 4px;
   background: var(--paper-2);
@@ -247,7 +247,7 @@
   align-items: center;
   gap: var(--s2);
   padding: 6px var(--s3);
-  font-size: 13px;
+  font-size: var(--fs-13);
   font-weight: 500;
   color: var(--ink-soft);
   cursor: pointer;
@@ -281,14 +281,14 @@
   gap: var(--s2);
 }
 .asof-label {
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: 600;
   color: var(--ink-soft);
 }
 .asof .date-input input {
   width: 132px;
   padding: 5px 32px 5px 10px;
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: 600;
   font-family: inherit;
   color: var(--ink);
@@ -310,7 +310,7 @@
 }
 /* How the as-of date maps to what the page shows (ADR 0088). */
 .asof-hint {
-  font-size: 11px;
+  font-size: var(--fs-11);
   color: var(--ink-soft);
 }
 /* The filter bar's own row under the picker, as wide as the bar (ADR 0198): the hint

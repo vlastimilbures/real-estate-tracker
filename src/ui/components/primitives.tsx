@@ -221,16 +221,19 @@ export function Button({
  *  Tab to and scroll with the arrow keys (UX-024). */
 export function TableWrap({
   label,
+  className,
   style,
   children,
 }: {
   label: string;
+  /** Extra classes after `table-wrap`, such as a margin utility. */
+  className?: string | undefined;
   style?: React.CSSProperties | undefined;
   children: ReactNode;
 }) {
   return (
     <div
-      className="table-wrap"
+      className={className ? `table-wrap ${className}` : "table-wrap"}
       role="region"
       aria-label={label}
       tabIndex={0}

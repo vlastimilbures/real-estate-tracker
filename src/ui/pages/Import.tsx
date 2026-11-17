@@ -254,14 +254,12 @@ export function Import() {
       {hasAnyFile && (
         <Panel title={t.importPage.importTitle}>
           {!allValid && (
-            <p className="error-text" style={{ marginBottom: "var(--s3)" }}>
-              {t.importPage.fixErrors}
-            </p>
+            <p className="error-text mb-s3">{t.importPage.fixErrors}</p>
           )}
           {/* No dismiss: Import stays unavailable until a new preview, so the reason
               stays on screen (ADR 0175). */}
           {previewFailure && (
-            <div style={{ marginBottom: "var(--s3)" }}>
+            <div className="mb-s3">
               <ErrorBanner
                 message={t.importPage.previewFailed(
                   describeWriteError(t, toWriteError(previewFailure.error))
@@ -274,16 +272,14 @@ export function Import() {
             <RefusedTable problems={preview.problems} />
           )}
           {planOk && (
-            <div style={{ marginBottom: "var(--s3)" }}>
+            <div className="mb-s3">
               <ImportSummary items={preview.items} mode="preview" />
               {toWrite === 0 && preview.items.length > 0 && (
-                <p style={{ marginTop: "var(--s3)" }}>
-                  {t.importPage.nothingToImport}
-                </p>
+                <p className="mt-s3">{t.importPage.nothingToImport}</p>
               )}
             </div>
           )}
-          <div className="row" style={{ gap: "var(--s3)" }}>
+          <div className="row row-s3">
             <Button
               variant="primary"
               disabled={!canImport || confirming}

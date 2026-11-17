@@ -47,6 +47,23 @@
   --font-text: "Public Sans Variable", "Public Sans", system-ui, sans-serif;
   --num: "tnum" 1, "lnum" 1; /* tabular, lining figures */
 
+  /* font sizes, named by value until a type scale is chosen (#495 part 4) */
+  --fs-11: 11px;
+  --fs-11-5: 11.5px;
+  --fs-12: 12px;
+  --fs-12-5: 12.5px;
+  --fs-13: 13px;
+  --fs-13-5: 13.5px;
+  --fs-14: 14px;
+  --fs-15: 15px;
+  --fs-16: 16px;
+  --fs-18: 18px;
+  --fs-19: 19px;
+  --fs-20: 20px;
+  --fs-22: 22px;
+  --fs-29: 29px;
+  --fs-h3: 1.17em; /* the UA default for <h3> */
+
   /* spacing scale (4px base) */
   --s1: 4px;
   --s2: 8px;
@@ -68,6 +85,18 @@
   --sidebar-w: 232px;
   --sidebar-w-collapsed: 64px;
   --content-max: 1200px;
+
+  /* stacking, lowest first. The modal and the skip link share 100: DOM order decides. */
+  --z-pin: 1; /* pinned table cells */
+  --z-pin-head: 3; /* pinned header cells, above pinned body cells */
+  --z-sticky: 10; /* sticky topbar */
+  --z-tip: 20; /* row-action tooltip */
+  --z-pop: 40; /* info-tip popover */
+  --z-toast: 50;
+  --z-modal: 100;
+  --z-skip-link: 100;
+  --z-menu: 200; /* property select menu */
+  --z-date-pop: 1000; /* date popover, above the modal */
 }
 
 /* ── Dark theme ──────────────────────────────────────────────────────────────

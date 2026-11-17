@@ -9,13 +9,13 @@
 }
 .form-group > legend {
   padding: 0 var(--s2) 0 0;
-  font-size: 13px;
+  font-size: var(--fs-13);
   font-weight: 600;
   color: var(--ink);
 }
 .form-group-help {
   margin: 0 0 var(--s3);
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: var(--ink-soft);
 }
 .preset-bar {
@@ -29,7 +29,7 @@
   gap: 6px;
 }
 .preset-label {
-  font-size: 11px;
+  font-size: var(--fs-11);
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -47,7 +47,7 @@
 
 /* "When" label of the price-crash timing toggle (ADR 0101). */
 .preset-when {
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: var(--ink-soft);
 }
 /* One grid for the whole list, shared by every row (subgrid), so the action buttons line
@@ -108,7 +108,7 @@
   color: var(--ink);
 }
 .scenario-summary {
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: var(--ink-soft);
 }
 .scenario-actions {
@@ -122,7 +122,7 @@
   list-style: none;
   padding: var(--s3) 0;
   color: var(--ink-faint);
-  font-size: 13px;
+  font-size: var(--fs-13);
 }
 /* Scenario headers are coloured like their chart line; brass as text needs the darker
    text tone to reach 4.5:1 (UX-025). Charts outside the table keep --series-2. */
@@ -143,7 +143,7 @@ table.data.compare-table thead td.sticky-col {
   position: sticky;
   top: 0;
   left: 0;
-  z-index: 3;
+  z-index: var(--z-pin-head);
   min-width: 160px;
   background: var(--surface);
   border-bottom: 1px solid var(--hairline-strong);
@@ -151,7 +151,7 @@ table.data.compare-table thead td.sticky-col {
 table.data.compare-table tbody th.sticky-col {
   position: sticky;
   left: 0;
-  z-index: 1;
+  z-index: var(--z-pin);
   padding: 10px var(--s3);
   text-align: left;
   font-weight: 400;
@@ -170,7 +170,7 @@ table.data.compare-table tbody tr:hover th {
 }
 .ct-footnote {
   margin: var(--s3) 0 0;
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: var(--ink-soft);
 }
 /* In the flush key-figures panel (ADR 0216) the notes keep the body's padding. */

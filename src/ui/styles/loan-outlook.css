@@ -22,7 +22,7 @@
   align-items: center;
   gap: var(--s1);
   margin: var(--s2) 0 var(--s3);
-  font-size: 13px;
+  font-size: var(--fs-13);
   font-weight: 600;
   font-feature-settings: var(--num);
 }
@@ -66,20 +66,20 @@
   line-height: 1.3;
 }
 .fx-figure dt {
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: var(--ink-soft);
 }
 .fx-figure dd {
   margin: 0;
 }
 .fx-figure .fx-value {
-  font-size: 16px;
+  font-size: var(--fs-16);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .fx-figure .fx-sub {
-  font-size: 12.5px;
+  font-size: var(--fs-12-5);
 }
 .fx-timeline {
   container-type: inline-size;
@@ -94,7 +94,7 @@
   column-gap: var(--s3);
   align-items: center;
   min-height: 18px;
-  font-size: 11px;
+  font-size: var(--fs-11);
   color: var(--ink-soft);
 }
 .fx-axis > .fx-track {
@@ -131,7 +131,7 @@
   min-height: 25px;
   padding: 0;
   border-top: 1px solid var(--hairline);
-  font-size: 13px;
+  font-size: var(--fs-13);
 }
 .fx-name {
   min-width: 0;
@@ -222,7 +222,7 @@
   border-radius: var(--r-sm);
   background: var(--accent-wash);
   color: var(--accent);
-  font-size: 11.5px;
+  font-size: var(--fs-11-5);
   font-weight: 600;
 }
 .fx-foot {
@@ -246,7 +246,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0 var(--s3);
-  font-size: 11.5px;
+  font-size: var(--fs-11-5);
   color: var(--ink-soft);
 }
 /* Narrow panel: the row text wraps under its bar (ADR 0204 §9). */

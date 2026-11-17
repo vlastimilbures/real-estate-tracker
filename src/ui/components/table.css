@@ -30,7 +30,7 @@
 table.data {
   border-collapse: collapse;
   width: 100%;
-  font-size: 13px;
+  font-size: var(--fs-13);
 }
 table.data thead th {
   position: sticky;
@@ -38,7 +38,7 @@ table.data thead th {
   background: var(--surface);
   text-align: right;
   font-weight: 600;
-  font-size: 11px;
+  font-size: var(--fs-11);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -80,7 +80,7 @@ table.data.wrap-head tbody td.actions-col {
    wrapping at word breaks, so 12 figure columns fit at 1280 px and 31 rows in under
    1,000 px (ADR 0211 §3). */
 table.data.compact {
-  font-size: 12px;
+  font-size: var(--fs-12);
 }
 table.data.compact tbody td {
   padding: 6px 5px;
@@ -129,20 +129,20 @@ table.data tfoot .total-row > * {
 table.data tfoot .total-row > .sticky-col {
   position: sticky;
   left: 0;
-  z-index: 1;
+  z-index: var(--z-pin);
   background: var(--surface);
 }
 table.data tfoot .total-row > .actions-col {
   position: sticky;
   right: 0;
-  z-index: 1;
+  z-index: var(--z-pin);
   background: var(--surface);
 }
 /* Its label wraps within the name column (a long "owned active properties" label). */
 table.data tfoot .total-row > th.left {
   white-space: normal;
   text-align: left;
-  font-size: 13px;
+  font-size: var(--fs-13);
   color: var(--ink);
 }
 /* The health markers' words, under the table; each cell says its band to assistive
@@ -153,7 +153,7 @@ table.data tfoot .total-row > th.left {
   gap: var(--s1) var(--s5);
   margin: 0;
   padding: var(--s2) var(--s4) var(--s3);
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: var(--ink-soft);
 }
 .band-legend-group {
@@ -168,7 +168,7 @@ table.data tfoot .total-row > th.left {
 .band-legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--s1);
 }
 table.data thead th.left,
 table.data tbody td.left {
@@ -186,13 +186,13 @@ table.data tbody td.left {
 table.data tbody td.sticky-col {
   position: sticky;
   left: 0;
-  z-index: 1;
+  z-index: var(--z-pin);
   background: var(--surface);
 }
 table.data thead th.sticky-col {
   position: sticky;
   left: 0;
-  z-index: 3;
+  z-index: var(--z-pin-head);
 }
 /* A table cell's drill-in target: reads as the cell text, focusable like a button. */
 .link-button {
@@ -223,7 +223,7 @@ table.data thead th.sticky-col {
    not width, so the figure columns keep their room (ADR 0085). */
 .cell-sub {
   display: block;
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: 400;
   color: var(--ink-soft);
 }
@@ -287,14 +287,14 @@ table.data thead th.sticky-col {
 table.data tbody td.actions-col {
   position: sticky;
   right: 0;
-  z-index: 1;
+  z-index: var(--z-pin);
   white-space: nowrap;
   background: var(--surface);
 }
 table.data thead th.actions-col {
   position: sticky;
   right: 0;
-  z-index: 3;
+  z-index: var(--z-pin-head);
 }
 table.data tbody td {
   text-align: right;
@@ -404,13 +404,13 @@ table.data td:has(> .row-actions) {
   right: 100%;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 20;
+  z-index: var(--z-tip);
   padding: 3px var(--s2);
   border-right: 4px solid transparent;
   background: var(--ink) padding-box;
   color: var(--surface);
   border-radius: var(--r-sm);
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: 600;
   line-height: 1.4;
   pointer-events: auto;

@@ -27,7 +27,7 @@ body {
   background-size: 3px 3px;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  font-size: 14px;
+  font-size: var(--fs-14);
   line-height: 1.45;
 }
 
@@ -81,7 +81,7 @@ button {
 /* utility */
 .eyebrow {
   font-family: var(--font-text);
-  font-size: 11px;
+  font-size: var(--fs-11);
   font-weight: 600;
   letter-spacing: 0.09em;
   text-transform: uppercase;

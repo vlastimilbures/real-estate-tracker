@@ -64,7 +64,7 @@ export function PresetBar({
     <div className="preset-bar">
       <div className="preset-group">
         <span className="preset-label">{t.scenarios.rateShockAtRefix}</span>
-        <div className="row" style={{ gap: "var(--s2)" }}>
+        <div className="row row-s2">
           {RATE_LEVELS_PP.map((pp) =>
             button(String(pp), t.scenarios.plusPp(pp), ratePreset(pp, t)),
           )}
@@ -73,7 +73,7 @@ export function PresetBar({
 
       <div className="preset-group">
         <span className="preset-label">{t.scenarios.inflationShock}</span>
-        <div className="row" style={{ gap: "var(--s2)" }}>
+        <div className="row row-s2">
           {INFLATION_LEVELS_PP.map((pp) =>
             button(String(pp), t.scenarios.plusPp(pp), inflationPreset(pp, t)),
           )}
@@ -84,7 +84,7 @@ export function PresetBar({
         <span className="preset-label">{t.scenarios.priceCrash}</span>
         {/* The timing is a setting the level buttons use (ADR 0101); it saves
               nothing, so it stays usable while a save runs. */}
-        <div className="row" style={{ gap: "var(--s2)" }}>
+        <div className="row row-s2">
           <span className="preset-when">{t.scenarios.crashWhen}</span>
           <SegmentedToggle
             ariaLabel={t.scenarios.crashWhen}
@@ -97,7 +97,7 @@ export function PresetBar({
             onChange={(v) => onCrashAtYearChange(Number(v))}
           />
         </div>
-        <div className="row" style={{ gap: "var(--s2)" }}>
+        <div className="row row-s2">
           {CRASH_LEVELS.map((l) => {
             const p = crashPreset(l, crashAtYear, t);
             return button(l.label, `${l.label}${suffix}`, p, crashTitle(p));
@@ -107,7 +107,7 @@ export function PresetBar({
 
       <div className="preset-group">
         <span className="preset-label">{t.scenarios.combined}</span>
-        <div className="row" style={{ gap: "var(--s2)" }}>
+        <div className="row row-s2">
           {COMBINED_RECIPES.map((r) => {
             const p = combinedPreset(r, crashAtYear, t);
             return button(

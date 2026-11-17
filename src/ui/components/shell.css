@@ -80,9 +80,14 @@
   background: var(--hover-wash);
   color: var(--ink);
 }
+/* A short text label in place of an icon (the collapsed language switch). */
+.icon-btn-label {
+  font-size: var(--fs-11);
+  font-weight: 600;
+}
 .brand .mark {
   font-family: var(--font-display);
-  font-size: 19px;
+  font-size: var(--fs-19);
   font-weight: 500;
   letter-spacing: -0.015em;
   line-height: 1.15;
@@ -92,7 +97,7 @@
   color: var(--brass-text);
 }
 .brand .sub {
-  font-size: 11px;
+  font-size: var(--fs-11);
   color: var(--ink-faint);
   letter-spacing: 0.04em;
 }
@@ -124,7 +129,7 @@
   border-radius: var(--r-sm);
   color: var(--ink-soft);
   font-weight: 500;
-  font-size: 13.5px;
+  font-size: var(--fs-13-5);
   cursor: pointer;
   border: none;
   background: none;
@@ -160,7 +165,7 @@
   padding: 0 var(--s2);
 }
 .sidebar-foot .foot-meta {
-  font-size: 11px;
+  font-size: var(--fs-11);
   color: var(--ink-soft);
   line-height: 1.5;
 }
@@ -187,7 +192,7 @@
   background: none;
   color: var(--ink-soft);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--fs-12);
   line-height: 1.4;
   text-align: left;
   cursor: pointer;
@@ -233,7 +238,7 @@
   backdrop-filter: blur(6px);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: var(--z-sticky);
   /* At narrow widths the actions drop under the title instead of clipping (UX-021). */
   flex-wrap: wrap;
   row-gap: var(--s3);
@@ -301,7 +306,7 @@
   padding: var(--s1) var(--s2);
   border-radius: var(--r-sm);
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: var(--fs-13);
   font-weight: 500;
   white-space: nowrap;
   text-decoration: none;
@@ -333,7 +338,7 @@
   padding: var(--s1) var(--s2);
   border-radius: var(--r-sm);
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: var(--fs-13);
   font-weight: 500;
   white-space: nowrap;
   text-decoration: none;
@@ -394,7 +399,7 @@
   font-weight: inherit;
   letter-spacing: normal;
   color: inherit;
-  font-size: 20px;
+  font-size: var(--fs-20);
 }
 /* Property detail's way back (ADR 0215 §1): "Properties ›" on the title's line. */
 .page-title-row {
@@ -404,7 +409,7 @@
   min-width: 0;
 }
 .topbar .crumb {
-  font-size: 13px;
+  font-size: var(--fs-13);
   color: var(--ink-soft);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -427,7 +432,7 @@
   align-self: center;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--s1);
   min-height: 24px;
   padding: 0 var(--s2);
   border: 1px solid var(--warn);
@@ -435,7 +440,7 @@
   background: var(--chip-bg);
   color: var(--warn);
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--fs-12-5);
   font-weight: 600;
   font-feature-settings: var(--num);
   cursor: pointer;
@@ -461,7 +466,7 @@
   }
 }
 .topbar .page-sub {
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: var(--ink-soft);
 }
 

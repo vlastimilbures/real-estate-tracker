@@ -26,11 +26,11 @@
 }
 .info-tip-pop {
   position: fixed;
-  z-index: 40;
+  z-index: var(--z-pop);
   width: max-content;
   max-width: min(26rem, calc(100vw - 32px));
   padding: var(--s3) var(--s4);
-  font-size: 12.5px;
+  font-size: var(--fs-12-5);
   font-weight: 400;
   line-height: 1.45;
   color: var(--ink);

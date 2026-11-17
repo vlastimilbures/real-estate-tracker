@@ -136,7 +136,7 @@ export function BootFailure() {
         <div className="error-screen" role="alert">
           <p>{t.backup.restored(restored)}</p>
           {revealFailed && <p className="error-text">{t.boot.revealFailed}</p>}
-          <div className="row" style={{ gap: "var(--s3)" }}>
+          <div className="row row-s3">
             <Button
               variant="primary"
               onClick={() => leave(restored, continueAfterRestore)}
@@ -202,7 +202,7 @@ export function BootFailure() {
             onConfirm={() => void confirmRestore()}
           />
         ) : (
-          <div className="row" style={{ gap: "var(--s3)" }}>
+          <div className="row row-s3">
             {view.retry && (
               <Button variant="primary" onClick={() => void init()}>
                 {t.app.tryAgain}
