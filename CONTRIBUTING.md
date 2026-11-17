@@ -172,7 +172,12 @@ still describe it. Which document owns what is listed in
   the issue once the cause is fixed.
 - **Accessibility** (ADR 0078): CI's `axe` job runs `pnpm ux:capture` (English, light + dark,
   1280×800 + minimum window) and `pnpm ux:axe-check ci`, which fails on any axe violation.
-  Run the same locally after UI work; a new screen or state gets a capture entry.
+  It also captures the layout screens (`ux-capture/layoutScreens.ts`, tag `@layout-i18n`)
+  in Czech and Russian, which fail when a string is clipped or covered (ADR 0158). On CI a
+  failed capture is retried once: one that fails twice fails the job; one that passes on the
+  retry is flaky, shown as a warning and in the job summary (#496). Run the same locally
+  after UI work; a new screen or state gets a `defineScreen` entry in its area's file under
+  `ux-capture/screens/`.
 - **E2E** (`pnpm test:e2e`, Playwright) is optional (ADR 0006): keep the existing tests green;
   CI runs them nightly and on manual dispatch, never as a merge check. They start their own
   Vite server on port 1440 (`E2E_PORT`), so a running `pnpm tauri dev` does not interfere.
