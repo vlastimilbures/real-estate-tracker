@@ -74,7 +74,8 @@ export function annotations(c: Classified): string[] {
 
 /** The job-summary section: a Regressions and a Flaky table, or one line when clean. */
 export function toMarkdown(c: Classified, run: string): string {
-  const cell = (s: string) => s.replace(/\|/g, "\\|");
+  // Backslashes first, so an escaped pipe in the message cannot end its cell.
+  const cell = (s: string) => s.replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
   const table = (title: string, rows: Row[]) =>
     rows.length === 0
       ? []

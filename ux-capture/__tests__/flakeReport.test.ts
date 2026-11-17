@@ -71,6 +71,16 @@ describe("classify", () => {
   });
 });
 
+describe("toMarkdown escaping", () => {
+  it("escapes backslashes before pipes, so a message cannot end its cell", () => {
+    const md = toMarkdown(
+      classify([entry({ outcome: "flaky", errors: ["Error: a \\| b"] })]),
+      "ci",
+    );
+    expect(md).toContain("| Error: a \\\\\\| b |");
+  });
+});
+
 describe("annotations", () => {
   it("warns once per flake and escapes the message", () => {
     const c = classify([
