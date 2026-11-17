@@ -3,7 +3,6 @@ import { ZERO, type Decimal } from "../../lib/money";
 import { isAfter, isOnOrBefore } from "../dates";
 import {
   currentBalance,
-  dueDate,
   isDevLoan,
   paymentsDueBy,
   rateAt,
@@ -24,13 +23,12 @@ import {
 import {
   type TermState,
   initialTerms,
-  type LoanEvents,
   loanEvents,
   eventsAt,
   type Outcome,
   settleEvents,
 } from "./events";
-import { type PayState, payAndSettle } from "./pay";
+import { type LoanState, type Run, stepMonth } from "./pay";
 
 /** True when an event is dated on/before baseDate: the opening balance replays it. */
 function hasPastEvents(block: MortgageBlock, baseDate: Date): boolean {
@@ -51,43 +49,6 @@ export interface Opening {
   outcomes: Outcome[];
 }
 
-type CatchUpState = Opening & PayState;
-
-interface CatchUpContext {
-  events: LoanEvents;
-  drawsByStep: Map<number, Decimal>;
-  steps: number;
-}
-
-/** One payment of the catch-up, on the loan's own cadence, then its events. */
-function catchUpStep(
-  s: CatchUpState,
-  k: number,
-  ctx: CatchUpContext,
-): CatchUpState {
-  const { block, assumptions } = ctx.events;
-  const date = dueDate(block, k);
-  const draw = ctx.drawsByStep.get(k) ?? ZERO;
-  const ratePa = rateAt(date, block, assumptions);
-  const io = interestOnlyAt(block, date);
-  const { step, settled } = payAndSettle(ctx.events, s, {
-    p: k,
-    month: k - ctx.steps,
-    draw,
-    fresh: draw,
-    ratePa,
-    io,
-  });
-  return {
-    balance: settled.balance,
-    currentInstalment: step.instalment,
-    terms: settled.terms,
-    outcomes: [...s.outcomes, ...settled.outcomes],
-    prevRate: ratePa,
-    prevInterestOnly: io,
-  };
-}
-
 /**
  * Opening state of a loan already running at baseDate. The closed-form
  * `currentBalance` (a single FV at the original rate) can't see tranches,
@@ -105,30 +66,46 @@ export function simulateToBaseDate(
 ): Opening & { counted: Decimal } {
   const { baseDate } = assumptions;
   const steps = paymentsDueBy(block, baseDate);
-  const ctx: CatchUpContext = {
+  // Only tranches up to the last payment due: a later one (still on/before
+  // baseDate) belongs to the next payment period, grid month 1 (D-41, DR-016).
+  const drawsByStep = bucketDraws(block.draws ?? [], block.startDate, (d) =>
+    isOnOrBefore(d, lastPaymentDue(block, baseDate)),
+  );
+  // Payment k on the loan's own cadence is grid month k − steps (months 1 − steps
+  // to 0), so `offset + m` is k. The rows are not kept.
+  const run: Run = {
+    block,
+    assumptions,
     events: loanEvents(block, assumptions, (d) => isOnOrBefore(d, baseDate)),
-    // Only tranches up to the last payment due: a later one (still on/before
-    // baseDate) belongs to the next payment period, grid month 1 (D-41, DR-016).
-    drawsByStep: bucketDraws(block.draws ?? [], block.startDate, (d) =>
-      isOnOrBefore(d, lastPaymentDue(block, baseDate)),
+    offset: steps,
+    drawsByMonth: new Map(
+      [...drawsByStep].map(([k, amount]) => [k - steps, amount]),
     ),
-    steps,
+    newDebtByMonth: new Map<number, Decimal>(),
+    openingCounted: ZERO,
+    sizeFirst: null,
+    replay: true,
   };
-  let s: CatchUpState = {
+  let s: LoanState = {
     balance: block.initialPrincipal,
     currentInstalment: scheduledInstalment(block),
-    terms: initialTerms(block),
-    outcomes: [],
+    drawn: true,
     prevRate: rateAt(block.startDate, block, assumptions),
     prevInterestOnly: interestOnlyAt(block, block.startDate),
+    terms: initialTerms(block),
   };
-  for (let k = 1; k <= steps; k++) s = catchUpStep(s, k, ctx);
+  const outcomes: Outcome[] = [];
+  for (let m = 1 - steps; m <= 0; m++) {
+    const next = stepMonth(s, m, run);
+    outcomes.push(...next.outcomes);
+    s = next.state;
+  }
   // Events after the last payment due and on/before baseDate are history too: they
   // follow that payment (or the start, when none is due yet), and see the late
   // tranches dated on or before them (ADR 0129 §1).
   const tranches = lateTranches(block, baseDate);
   const late = settleEvents(
-    ctx.events,
+    run.events,
     {
       p: steps,
       month: 0,
@@ -137,14 +114,14 @@ export function simulateToBaseDate(
       interestOnly: s.prevInterestOnly,
       terms: s.terms,
     },
-    eventsAt(ctx.events, steps + 1),
+    eventsAt(run.events, steps + 1),
     (date) => sumDraws(tranches.filter((d) => isOnOrBefore(d.date, date))),
   );
   return {
     balance: late.balance,
     currentInstalment: s.currentInstalment,
     terms: late.terms,
-    outcomes: [...s.outcomes, ...late.outcomes],
+    outcomes: [...outcomes, ...late.outcomes],
     counted: late.counted,
   };
 }

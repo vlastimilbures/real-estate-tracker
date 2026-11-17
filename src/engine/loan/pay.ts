@@ -1,30 +1,33 @@
 // Monthly amortization schedules with the Czech fixation reset (SPEC §4.4).
 //
-// One payment kernel (`payAndSettle`: pay payment p — tranche terms, re-amortization
-// trigger, `amortizeMonth` — then settle its prepayments and recasts) drives all three
-// loops: the plain-loan grid, the development-loan grid, and the catch-up from
-// startDate to baseDate. The catch-up opens every development loan running at
-// baseDate, and a plain loan once the rate of its last payment due differs from the
-// contract rate (fixation ended, D-30) or an event is dated by baseDate (ADR 0109).
-// The loops differ only where the behaviour differs, and each difference is named
-// below rather than silently unified:
-//   • payoff guard — both grids emit zero rows once the balance is repaid (DR-044);
-//   • re-amortization trigger — plain: a rate change; development: a tranche landing,
-//     the end of interest-only, or a rate change (D-24). Any loan also re-amortizes
-//     when an event owes it: a lowerInstalment prepayment, a maturity recast or a
-//     capped instalment recast (ADR 0109), or a tranche on the payment of an agreed
-//     instalment (ADR 0120). Between these the instalment holds, or the agreed one is
-//     paid; a development loan opens with the annuity of its principal over the
-//     required term (D-31, `scheduledInstalment`);
+// One month step (`stepMonth`: the first draw, the payoff guard, or payment p —
+// tranche terms, re-amortization trigger, `amortizeMonth` — then its prepayments and
+// recasts) drives every loan: the baseDate grid of a plain or a development loan, and
+// the catch-up from startDate to baseDate. The catch-up opens every development loan
+// running at baseDate, and a plain loan once the rate of its last payment due differs
+// from the contract rate (fixation ended, D-30) or an event is dated by baseDate
+// (ADR 0109). The loans differ only as data in the `Run`, each difference named:
+//   • payoff guard — the grid emits zero rows once the balance is repaid (DR-044); the
+//     catch-up (`replay`) has none;
+//   • re-amortization trigger — a tranche landing, the end of interest-only, or a rate
+//     change (D-24); a plain loan has no tranches (empty draw maps) and no
+//     interest-only months (no completion), so for it a rate change only. Any loan
+//     also re-amortizes when an event owes it: a lowerInstalment prepayment, a maturity
+//     recast or a capped instalment recast (ADR 0109), or a tranche on the payment of
+//     an agreed instalment (ADR 0120). Between these the instalment holds, or the
+//     agreed one is paid; a development loan opens with the annuity of its principal
+//     over the required term (D-31, `scheduledInstalment`), and its first draw sizes
+//     it on the drawn amount (`sizeFirst`; a plain loan keeps the entered one);
 //   • instalment during interest-only — the catch-up adopts the interest as the
 //     instalment in force; the grid keeps the pre-interest-only instalment.
 //
 // Calendar (D-21, J-03 a′): rows sit on the baseDate grid EDATE(baseDate, m), but each
-// row carries payment number p = paymentsDueAtBase + m (running loan) or m − drawMonth
-// (future loan), and its rate and interest-only are read on that payment's due date
-// EDATE(start, p) (ADR 0129 §2). So the payment due on the fixation end is still at
-// the fixed rate (DR-101), and a clamped month-end due date counts as paid (DR-070).
-// Tranche landing stays on the grid.
+// row carries payment number p = offset + m: paymentsDueAtBase + m (running loan),
+// m − drawMonth (future loan), or the catch-up's months 1 − steps to 0. Its rate and
+// interest-only are read on that payment's due date EDATE(start, p) (ADR 0129 §2). So
+// the payment due on the fixation end is still at the fixed rate (DR-101), and a
+// clamped month-end due date counts as paid (DR-070). Tranche landing stays on the
+// grid.
 import { ZERO, type Decimal } from "../../lib/money";
 import { edate } from "../dates";
 import { dueDate } from "../amortization";
@@ -54,7 +57,7 @@ import {
   settleEvents,
 } from "./events";
 
-/** The running loan a payment meets; every loop carries it (plain: never interest-only). */
+/** The running loan a payment meets (plain: never interest-only). */
 export interface PayState {
   balance: Decimal;
   currentInstalment: Decimal;
@@ -75,9 +78,8 @@ interface PaymentMonth {
   io: boolean;
 }
 
-/** Payment `p`, then its prepayments and recasts (ADR 0109): the step all three loops
- *  share. Each caller keeps only what it does with the result. */
-export function payAndSettle(
+/** Payment `p`, then its prepayments and recasts (ADR 0109). */
+function payAndSettle(
   ev: LoanEvents,
   s: PayState,
   mo: PaymentMonth,
