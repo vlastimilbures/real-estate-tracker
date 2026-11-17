@@ -87,6 +87,19 @@ describe("test bans in eslint.config.js", () => {
     );
   });
 
+  it.each(["../import", "../i18n", "../i18n/en", "../ui"])(
+    "keep the engine off the app layers: %s",
+    async (source) => {
+      const [result] = await eslint.lintText(
+        `import { x } from "${source}";\nexport const y = x;\n`,
+        { filePath: "src/engine/x.ts" },
+      );
+      expect(
+        result.messages.filter((m) => m.ruleId === "no-restricted-imports"),
+      ).toHaveLength(1);
+    },
+  );
+
   it("keep each block's own bans: a lib/day mock in a state test", async () => {
     const [result] = await eslint.lintText(
       'import { vi } from "vitest";\nvi.mock("../../lib/day");\n',
