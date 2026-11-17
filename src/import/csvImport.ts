@@ -414,59 +414,67 @@ function nameIndex(stored: Iterable<PropertyRow>) {
   };
 }
 
-/** Match every row against `tables` (D-55), build the write statements and check the
- *  merged result against the engine's input rules. A new property's id comes from
- *  `newPropertyId(key)`, keyed by its matching name (ADR 0127). Pure: `tables` is not
- *  modified. */
-export function planImport(
-  batch: CsvImportBatch,
-  tables: ImportTables,
-  newPropertyId: (key: string) => string,
-): ImportPlan {
-  const statements: SqlStatement[] = [];
-  const problems: CsvImportProblem[] = [];
-  const items: ImportItem[] = [];
+/** The plan, built one CSV row at a time against the stored rows (D-55). */
+class PlanBuilder {
+  private readonly statements: SqlStatement[] = [];
+  private readonly problems: CsvImportProblem[] = [];
+  private readonly items: ImportItem[] = [];
   /** Which file line produced each written row, as `${entity}:${id}`. */
-  const origin = new Map<string, { file: CsvFile; row: number }>();
-
+  private readonly origin = new Map<string, { file: CsvFile; row: number }>();
+  private readonly tables: ImportTables;
+  private readonly newPropertyId: (key: string) => string;
   // The stored rows, indexed once. A Map keeps a replaced row in its place and appends
   // a new one, so the merged tables keep the stored order.
-  const byId = <R extends { id: string }>(rows: R[]) =>
-    new Map(rows.map((r) => [r.id, r]));
-  const properties = byId(tables.properties);
-  const holdingCosts = [...tables.holding_costs];
-  const children = {
-    mortgage_blocks: childIndex(tables.mortgage_blocks),
-    valuations: childIndex(tables.valuations),
-    leases: childIndex(tables.leases),
+  private readonly properties: Map<string, PropertyRow>;
+  private readonly holdingCosts: HoldingCostRow[];
+  private readonly children: {
+    mortgage_blocks: ReturnType<typeof childIndex<MortgageBlockRow>>;
+    valuations: ReturnType<typeof childIndex<ValuationRow>>;
+    leases: ReturnType<typeof childIndex<LeaseRow>>;
   };
+  private readonly names: ReturnType<typeof nameIndex>;
+  private readonly withCosts: Set<string>;
+  /** The mortgage blocks this import adds, by row id (ADR 0160). */
+  private readonly addedBlocks = new Map<string, ImportItem>();
 
-  const names = nameIndex(properties.values());
-  const withCosts = new Set(holdingCosts.map((h) => h.property_id));
+  constructor(tables: ImportTables, newPropertyId: (key: string) => string) {
+    this.tables = tables;
+    this.newPropertyId = newPropertyId;
+    this.properties = new Map(tables.properties.map((r) => [r.id, r]));
+    this.holdingCosts = [...tables.holding_costs];
+    this.children = {
+      mortgage_blocks: childIndex(tables.mortgage_blocks),
+      valuations: childIndex(tables.valuations),
+      leases: childIndex(tables.leases),
+    };
+    this.names = nameIndex(this.properties.values());
+    this.withCosts = new Set(this.holdingCosts.map((h) => h.property_id));
+  }
+
   /** The property a name matches, as it stands now: a later row may replace it. */
-  const propertyNamed = (name: string) => {
-    const id = names.find(name)?.id;
-    return id === undefined ? undefined : properties.get(id);
-  };
+  private propertyNamed(name: string): PropertyRow | undefined {
+    const id = this.names.find(name)?.id;
+    return id === undefined ? undefined : this.properties.get(id);
+  }
 
-  // Properties first (FK parent). An existing property keeps its id, stored spelling
-  // and active flag; CSV doesn't model activation (D-55).
-  for (const p of propertyInputs(batch)) {
-    const existing = names.find(p.name);
+  /** Add or update a property. An existing property keeps its id, stored spelling and
+   *  active flag; CSV doesn't model activation (D-55). */
+  addProperty(p: PropertyInput): void {
+    const existing = this.names.find(p.name);
     const { fields } = p;
     const row: PropertyRow = existing
       ? { ...existing, ...fields }
-      : p.newRow(newPropertyId(propertyKey(p.name)));
-    statements.push(
+      : p.newRow(this.newPropertyId(propertyKey(p.name)));
+    this.statements.push(
       existing
         ? updateStatement("properties", row.id, fields)
         : insertStatement("properties", row),
     );
-    properties.set(row.id, row);
-    names.add(row);
-    origin.set(`property:${row.id}`, { file: "properties", row: p.line });
+    this.properties.set(row.id, row);
+    this.names.add(row);
+    this.origin.set(`property:${row.id}`, { file: "properties", row: p.line });
     const changes = existing ? changesOf(existing, fields) : [];
-    items.push({
+    this.items.push({
       file: "properties",
       row: p.line,
       kind: kindOf(existing, changes),
@@ -476,7 +484,7 @@ export function planImport(
       changes,
     });
     // Every property gets a holding-costs row so the edit form works.
-    if (!withCosts.has(row.id)) {
+    if (!this.withCosts.has(row.id)) {
       const costs: HoldingCostRow = {
         id: `hc-${row.id}`,
         property_id: row.id,
@@ -487,29 +495,27 @@ export function planImport(
         svj_monthly: null,
         other_yr: null,
       };
-      statements.push(insertStatement("holding_costs", costs));
-      holdingCosts.push(costs);
-      withCosts.add(row.id);
+      this.statements.push(insertStatement("holding_costs", costs));
+      this.holdingCosts.push(costs);
+      this.withCosts.add(row.id);
     }
   }
 
-  /** The mortgage blocks this import adds, by row id (ADR 0160). */
-  const addedBlocks = new Map<string, ImportItem>();
-  // Update the row with the same natural key, or insert a new one.
-  for (const c of childInputs(batch)) {
+  /** Update the child row with the same natural key, or insert a new one. */
+  addChild(c: ChildInput): void {
     const { table, entity, tag } = CHILD_FILES[c.file];
-    const property = propertyNamed(c.propertyName);
+    const property = this.propertyNamed(c.propertyName);
     if (property === undefined) {
-      problems.push({
+      this.problems.push({
         file: c.file,
         row: c.line,
         field: "property_name",
         problem: { code: "unknownProperty", value: c.propertyName },
       });
-      continue;
+      return;
     }
     const propId = property.id;
-    const child: ChildIndex = children[table];
+    const child: ChildIndex = this.children[table];
     const existing = child.find(propId, c.date);
     const changes = existing ? changesOf(existing, c.fields) : [];
     const at = { file: c.file, row: c.line };
@@ -521,11 +527,11 @@ export function planImport(
       date: c.date,
       changes,
     };
-    items.push(item);
+    this.items.push(item);
     let row: ChildRow;
     if (existing) {
       row = { ...existing, ...c.fields };
-      statements.push(updateStatement(table, row.id, c.fields));
+      this.statements.push(updateStatement(table, row.id, c.fields));
     } else {
       // A stored row whose date was edited after an earlier import keeps the id
       // generated from its old date; suffix a fresh id instead of clashing on the key
@@ -534,20 +540,24 @@ export function planImport(
       let id = base;
       for (let n = 2; child.rows.has(id); n++) id = `${base}-${n}`;
       row = c.newRow(id, propId);
-      statements.push(insertStatement(table, row));
-      if (entity === "mortgage") addedBlocks.set(id, item);
+      this.statements.push(insertStatement(table, row));
+      if (entity === "mortgage") this.addedBlocks.set(id, item);
     }
     child.set(row);
-    origin.set(`${entity}:${row.id}`, at);
+    this.origin.set(`${entity}:${row.id}`, at);
   }
 
-  if (problems.length === 0) {
+  /** With no problem so far, check the merged result against the engine's input rules
+   *  and, when it passes, note what each added block does to its loan chain. */
+  checkMerged(): void {
+    if (this.problems.length > 0) return;
+    const { children } = this;
     const db = {
-      properties: [...properties.values()],
+      properties: [...this.properties.values()],
       mortgage_blocks: [...children.mortgage_blocks.rows.values()],
       valuations: [...children.valuations.rows.values()],
       leases: [...children.leases.rows.values()],
-      holding_costs: holdingCosts,
+      holding_costs: this.holdingCosts,
     };
     // The engine's input rules and the lease overlap rule (ADR 0163) over the merged
     // portfolio; only rows this import wrote can be at fault (stored rows passed the
@@ -564,11 +574,11 @@ export function planImport(
       ...validatePortfolio(merged),
       ...leaseOverlapErrors(merged),
     ]) {
-      const at = origin.get(`${e.entity}:${e.id}`);
+      const at = this.origin.get(`${e.entity}:${e.id}`);
       if (!at) continue;
       // A stored event is not a CSV column: name the event, not a field (ADR 0160).
       const date = storedEventDate(merged.mortgages, e);
-      problems.push(
+      this.problems.push(
         date === undefined
           ? {
               ...at,
@@ -587,15 +597,41 @@ export function planImport(
             },
       );
     }
-    if (problems.length === 0 && addedBlocks.size > 0 && tables.assumptions)
+    const { tables } = this;
+    if (
+      this.problems.length === 0 &&
+      this.addedBlocks.size > 0 &&
+      tables.assumptions
+    )
       noteChainEffects(
-        addedBlocks,
+        this.addedBlocks,
         tables.mortgage_blocks.map(rowToMortgageBlock),
         merged.mortgages,
         rowToAssumptions(tables.assumptions),
       );
   }
-  return { statements, problems, items };
+
+  result(): ImportPlan {
+    const { statements, problems, items } = this;
+    return { statements, problems, items };
+  }
+}
+
+/** Match every row against `tables` (D-55), build the write statements and check the
+ *  merged result against the engine's input rules. A new property's id comes from
+ *  `newPropertyId(key)`, keyed by its matching name (ADR 0127). Pure: `tables` is not
+ *  modified. */
+export function planImport(
+  batch: CsvImportBatch,
+  tables: ImportTables,
+  newPropertyId: (key: string) => string,
+): ImportPlan {
+  const plan = new PlanBuilder(tables, newPropertyId);
+  // Properties first (FK parent).
+  for (const p of propertyInputs(batch)) plan.addProperty(p);
+  for (const c of childInputs(batch)) plan.addChild(c);
+  plan.checkMerged();
+  return plan.result();
 }
 
 /** New property ids for one plan (ADR 0127): one random id per new name, so every row

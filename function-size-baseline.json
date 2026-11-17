@@ -25,14 +25,6 @@
       "Function 'readCsv'": 94
     }
   },
-  "src/import/csvImport.ts": {
-    "complexity": {
-      "Function 'planImport'": 20
-    },
-    "lines": {
-      "Function 'planImport'": 157
-    }
-  },
   "src/state/portfolioStore.ts": {
     "lines": {
       "Arrow function (usePortfolioStore: create)": 372
