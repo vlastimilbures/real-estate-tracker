@@ -80,13 +80,11 @@ function expectCase(name: InvalidStartCase, errors: EngineValidationError[]) {
 }
 
 describe("a loan with an invalid start date (ADR 0247)", () => {
-  it.fails(
-    "#543: a recast to a maturity reports only the start date",
-    TIMEOUT,
-    () => expectCase("recastMaturity", [start]),
+  it("#543: a recast to a maturity reports only the start date", TIMEOUT, () =>
+    expectCase("recastMaturity", [start]),
   );
 
-  it.fails(
+  it(
     "#543: with a loan term, a recast maturity past the cap is not checked",
     TIMEOUT,
     () => expectCase("recastMaturityLoanTerm", [start]),
@@ -132,10 +130,14 @@ describe("a loan with an invalid start date (ADR 0247)", () => {
       ]),
   );
 
-  it.fails(
-    "#543: a development loan's recast maturity is not checked",
+  it(
+    "#543: a development loan's recast maturity is not checked, its instalment's date is",
     TIMEOUT,
-    () => expectCase("devLoanRecast", [start]),
+    () =>
+      expectCase("devLoanRecast", [
+        start,
+        onLoan("RECAST_INSTALMENT_BEFORE_COMPLETION", "recasts", 1),
+      ]),
   );
 
   it("the fixation is still checked", TIMEOUT, () =>
@@ -150,7 +152,7 @@ describe("a loan with an invalid start date (ADR 0247)", () => {
     expectCase("contractMaturity", [start]),
   );
 
-  it.fails(
+  it(
     "#543: every event shape at once reports only the start date",
     TIMEOUT,
     () => expectCase("everyEvent", [start]),

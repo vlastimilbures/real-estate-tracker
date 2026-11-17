@@ -35,7 +35,8 @@ function contractTerm(b: MortgageBlock): number | undefined {
 }
 
 /** A prepayment or recast date: after the start, before the last payment the loan
- *  can reach (ADR 0109). */
+ *  can reach (ADR 0109). Without a valid start only the date itself is checked: the
+ *  block reports its start (ADR 0247). */
 function checkEventDate(
   date: Date,
   b: MortgageBlock,
@@ -43,6 +44,7 @@ function checkEventDate(
   report: (code: ValidationCode) => void,
 ): boolean {
   if (badDate(date)) report("INVALID_DATE");
+  else if (badDate(b.startDate)) return true;
   else if (isOnOrBefore(date, b.startDate)) report("EVENT_BEFORE_START");
   else if (end && isOnOrBefore(end, date)) report("EVENT_AFTER_SCHEDULE_END");
   else return true;
@@ -63,7 +65,9 @@ function checkPrepayments(
 }
 
 /** A recast maturity must leave at least the next payment, stay within the cap and,
- *  on a development loan, fall after the completion's payment (ADR 0116). */
+ *  on a development loan, fall after the completion's payment (ADR 0116). Counting the
+ *  payments needs a valid start: without one only the maturity date is checked
+ *  (ADR 0247, #543). */
 function checkRecastMaturity(
   b: MortgageBlock,
   r: LoanRecast,
@@ -72,6 +76,7 @@ function checkRecastMaturity(
 ): void {
   if (r.maturity === undefined || term === undefined) return;
   if (badDate(r.maturity)) return issue("INVALID_DATE");
+  if (badDate(b.startDate)) return;
   const last = paymentsDueBy(b, r.maturity);
   const next = paymentOnOrAfter(b, r.date) + 1;
   // On a development loan the maturity must follow the payment the completion (the
