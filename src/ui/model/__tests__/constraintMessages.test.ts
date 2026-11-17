@@ -1,6 +1,6 @@
-// #464: every CHECK constraint in the migrated schema reads as a translated sentence, never
-// the generic fallback. Read from the database itself, so a CHECK added by any migration,
-// however it is written, is covered.
+// #464: every named CHECK constraint in the migrated schema reads as a translated sentence,
+// never the generic fallback. Read from the database itself, so a named CHECK added by any
+// migration is covered (the unnamed `CHECK (id = 1)` singletons no edit can reach are not).
 import { describe, it, expect, afterEach } from "vitest";
 import { describeWriteError } from "../writeError";
 import { getDict } from "../../../i18n";
