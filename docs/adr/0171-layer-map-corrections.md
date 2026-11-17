@@ -6,6 +6,8 @@
   (2026-10-10, Track 13 PR 13.2: fix the rule drift, keep the baseline machinery)
 - Amends: [0072](0072-layer-map-platform-and-type-edges.md) (layer-map rows Data, Import,
   UI model and i18n; the Consequences sentence on the state facades)
+- Amended by: [0244](0244-engine-reads-lib-rules.md) (the layer map gains the Engine row's
+  `src/lib/rules.ts`; this ADR's rows are unchanged)
 
 ## Context
 

@@ -3,7 +3,7 @@
 // ./mortgageForm.ts.
 import { collectValues, moneyDraft, type FieldSpec } from "./formParse";
 import { formRules } from "./formParsers";
-import { INT_RANGES } from "../../lib/intRanges";
+import { INT_RANGES } from "../../lib/rules";
 import { propertyKey } from "../../lib/propertyKey";
 import type { AcquisitionFunding, Property } from "../../engine";
 import type { Dictionary } from "../../i18n";

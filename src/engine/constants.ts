@@ -1,6 +1,7 @@
 // Named numeric thresholds used by the engine (DR-076). Values are unchanged from the
 // literals they replace; changing one moves outputs and needs an approved decision.
 import { D } from "../lib/money";
+import { INT_RANGES } from "../lib/rules";
 
 /** IRR bisection bracket: annual rates from −90 % to +100 %. */
 export const IRR_BRACKET_LOW = D(-0.9);
@@ -25,9 +26,10 @@ export const IRR_MAX_ITERATIONS = 200;
 export const DEBT_FREE_EPSILON = D("0.005");
 
 /** Longest loan, in payments from its start, a recast may run to (ADR 0109): the
- *  50-year loan term a form or CSV accepts at most (`INT_RANGES.loanTermYears`),
- *  unless the contract term is longer. */
-export const MAX_LOAN_TERM_MONTHS = 600;
+ *  longest loan term a form or CSV accepts (`INT_RANGES.loanTermYears`, 50 years: 600
+ *  payments), unless the contract term is longer. The one maximum the engine reads
+ *  (ADR 0244). */
+export const MAX_LOAN_TERM_MONTHS = INT_RANGES.loanTermYears.max * 12;
 
 /** Residual balance at term end (Kč) up to which an instalment "fully amortizes". */
 export const FULLY_AMORTIZES_TOLERANCE = D("1");

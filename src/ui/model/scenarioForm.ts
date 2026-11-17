@@ -2,7 +2,7 @@
 // so it's unit-testable without mounting the component (mirrors ./mortgageForm.ts).
 import { collectValues, type FieldSpec } from "./formParse";
 import { formRules } from "./formParsers";
-import { INT_RANGES } from "../../lib/intRanges";
+import { CRASH_YEAR, SHOCK_YEARS } from "../../lib/rules";
 import { formWriteErrors } from "./writeError";
 import type {
   EngineValidationError,
@@ -15,10 +15,6 @@ import type { WriteError } from "../../state/writeError";
 
 // A temporary shock reverts to trend after this many years (shared with the preset bar).
 export const DEFAULT_SHOCK_YEARS = 3;
-
-// A shock's years and the crash year reach at most the longest horizon (ADR 0140 §4).
-const SHOCK_YEARS = { min: 1, max: INT_RANGES.horizonYears.max };
-const CRASH_YEAR = { min: 0, max: INT_RANGES.horizonYears.max };
 
 // The five permanent level overrides (Decimal-valued keys of ScenarioOverrides).
 export type LevelKey =

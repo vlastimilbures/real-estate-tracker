@@ -23,7 +23,7 @@ import type {
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import { fmtCzk, fmtDate, fmtNumber, fmtPct } from "../../lib/format";
-import { inRange, outOfRangeFields, type IntRange } from "../../lib/intRanges";
+import { inRange, rangeProblems, type IntRange } from "../../lib/rules";
 import {
   loanWarnings,
   loanWarningText,
@@ -183,7 +183,7 @@ function rangeFindings(
   property: Property,
   mortgages: MortgageBlock[],
 ): DataFinding[] {
-  return outOfRangeFields({ properties: [property], mortgages }).map(
+  return rangeProblems({ properties: [property], mortgages }).map(
     ({ id, field, value, range }) => {
       const loanStart = mortgages.find((m) => m.id === id)?.startDate;
       return {
@@ -214,7 +214,7 @@ export function portfolioDataCheck(assumptions: {
   baseDate: Date;
 }): DataCheckItem[] {
   const findings: DataFinding[] = [
-    ...outOfRangeFields({ properties: [], mortgages: [] }, assumptions).map(
+    ...rangeProblems({ properties: [], mortgages: [] }, assumptions).map(
       ({ field, value, range }): DataFinding => ({
         kind: "outOfRange",
         field,

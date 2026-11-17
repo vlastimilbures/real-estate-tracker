@@ -3,7 +3,7 @@
 // rules the store's restore action uses). Exporting and restoring go through
 // usePortfolioStore.
 import { chooseRestoreFile as chooseWithRules } from "../data/backup";
-import { checkInputRules } from "../import/inputRules";
+import { checkInputRules } from "./restoreRules";
 
 export {
   BACKUP_MAX_BYTES,

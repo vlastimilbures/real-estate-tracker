@@ -20,7 +20,7 @@ import {
   type CollectRules,
 } from "../formParse";
 import { FORM_PARSERS, formRules } from "../formParsers";
-import { INT_RANGES } from "../../../lib/intRanges";
+import { INT_RANGES } from "../../../lib/rules";
 import { D } from "../../../lib/money";
 import { getDict } from "../../../i18n";
 import {

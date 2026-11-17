@@ -13,7 +13,7 @@ import {
   type CollectRules,
 } from "../model/formParse";
 import { FORM_PARSERS } from "../model/formParsers";
-import { INT_RANGES } from "../../lib/intRanges";
+import { INT_RANGES } from "../../lib/rules";
 import type { Assumptions } from "../../engine";
 import { CZK } from "../../lib/currency";
 import { type Dictionary } from "../../i18n";

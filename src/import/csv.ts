@@ -7,13 +7,15 @@
 import Papa from "papaparse";
 import { D } from "../lib/money";
 import { calendarDay, suggestedInstalment } from "../engine";
-import { DATE_FLOOR_YEAR } from "../lib/day";
 import {
+  DATE_FLOOR_YEAR,
   inRange,
   INT_RANGES,
   oneDecimalText,
+  outsideUnitRate,
+  WHOLE_DIGITS,
   type IntRange,
-} from "../lib/intRanges";
+} from "../lib/rules";
 import { PLAIN_DECIMAL } from "../lib/decimalText";
 import { propertyKey } from "../lib/propertyKey";
 
@@ -27,7 +29,7 @@ export type CsvErrorCode =
   | { code: "required" }
   | { code: "invalidDate"; value: string }
   | { code: "impossibleDate"; value: string }
-  /** Before 01.01.1900, the floor for new dates (ADR 0149 §5). */
+  /** Before the floor for new dates (DATE_FLOOR_YEAR in lib/rules.ts, ADR 0149 §5). */
   | { code: "earlyDate"; value: string }
   | { code: "invalidNumber"; value: string }
   | { code: "decimalComma"; value: string }
@@ -310,7 +312,7 @@ class RowCtx {
     // A real calendar date — 2026-02-31 is refused, not rolled over (DR-035).
     if (!calendarDay(y, m, d))
       return this.fail(field, { code: "impossibleDate", value: v });
-    // New dates start on 01.01.1900, as in the form (ADR 0149 §5).
+    // New dates start on the date floor (lib/rules.ts), as in the form (ADR 0149 §5).
     if (y < DATE_FLOOR_YEAR)
       return this.fail(field, { code: "earlyDate", value: v });
     return v;
@@ -340,7 +342,7 @@ class RowCtx {
     // The same bounds the v7 CHECKs and the engine already apply (D-37, D-38).
     if (rule === "amount" && d.isNegative())
       return this.fail(field, { code: "negativeAmount", value: v });
-    if (rule === "unitRate" && (d.isNegative() || d.greaterThan(1)))
+    if (rule === "unitRate" && outsideUnitRate(d))
       return this.fail(field, { code: "rateOutOfRange", value: v });
     return d.toString();
   }
@@ -370,7 +372,7 @@ class RowCtx {
     belowMin?: "notPositive",
   ): number | null {
     // Whole, unsigned, plain digits (DR-027): 12.7, -3, 1e2 and 0x10 are refused.
-    if (!/^\d{1,9}$/.test(v))
+    if (!WHOLE_DIGITS.test(v))
       return this.fail(field, { code: "invalidInteger", value: v });
     const n = Number(v);
     if (belowMin && n < range.min)

@@ -182,8 +182,8 @@ still describe it. Which document owns what is listed in
 
 ### Architecture rules and the baseline
 
-`.dependency-cruiser.cjs` encodes the layer map (ADR 0072, amended by ADR 0171): the engine may import only
-`decimal.js` and `src/lib/money.ts`; Tauri calls live in `src/platform`; the UI reaches data,
+`.dependency-cruiser.cjs` encodes the layer map (ADR 0072, amended by ADR 0171 and ADR 0244): the engine may import
+only `decimal.js`, `src/lib/money.ts` and `src/lib/rules.ts` (which imports only lib/money); Tauri calls live in `src/platform`; the UI reaches data,
 import and platform only through `src/state` (the facade modules there); no runtime import
 cycles. State and UI may import _types_ from any layer.
 

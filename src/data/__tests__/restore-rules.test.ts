@@ -16,7 +16,7 @@ import {
   RestoreError,
   type BackupFile,
 } from "../backup";
-import { checkInputRules } from "../../import/inputRules";
+import { checkInputRules } from "../../state/restoreRules";
 import { validateInputs } from "../../engine";
 
 /** Safety backups the fake `write_app_backup` command wrote, by file name. */

@@ -10,7 +10,7 @@ import {
   prepaymentsDraft,
   recastsDraft,
 } from "../model/loanEventRows";
-import { INT_RANGES } from "../../lib/intRanges";
+import { INT_RANGES } from "../../lib/rules";
 import { fmtDate, fmtCzk } from "../../lib/format";
 import { CZK } from "../../lib/currency";
 import {

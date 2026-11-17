@@ -27,12 +27,20 @@ module.exports = {
       name: "engine-pure-layers",
       severity: "error",
       comment:
-        "The engine is pure (CLAUDE.md): only engine modules and the named pure lib files (allow-list: lib/money.ts).",
+        "The engine is pure (CLAUDE.md): only engine modules and the named pure lib files (allow-list: lib/money.ts, and lib/rules.ts, the shared input rules, which imports only lib/money: ADR 0244).",
       from: { path: "^src/engine/", pathNot: TESTS },
       to: {
         path: "^src/(data|state|ui|import|i18n)/|^src/lib/",
-        pathNot: "^src/lib/money\\.ts$",
+        pathNot: "^src/lib/(money|rules)\\.ts$",
       },
+    },
+    {
+      name: "lib-rules-pure",
+      severity: "error",
+      comment:
+        "lib/rules.ts is an engine dependency (ADR 0244): it imports only lib/money, so the engine reaches no clock, display or other code through it.",
+      from: { path: "^src/lib/rules\\.ts$" },
+      to: { pathNot: "^src/lib/money\\.ts$|node_modules/decimal\\.js/" },
     },
     {
       name: "engine-pure-packages",

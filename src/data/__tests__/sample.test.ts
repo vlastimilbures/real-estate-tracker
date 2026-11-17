@@ -14,7 +14,7 @@ import {
   seedIfEmpty,
 } from "../seed";
 import { confirmRestore, exportToJson, SafetyBackupError } from "../backup";
-import { checkInputRules } from "../../import/inputRules";
+import { checkInputRules } from "../../state/restoreRules";
 import {
   insertLease,
   insertPropertyWithCosts,

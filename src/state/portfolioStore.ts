@@ -9,6 +9,8 @@ import {
   EngineInputError,
   leaseOverlapErrors,
   openPredecessor,
+  scenarioErrorsAddedBy,
+  scenarioRuleErrors,
   validateInputs,
   validatePortfolio,
 } from "../engine";
@@ -49,11 +51,7 @@ import type {
   CsvImportPreview,
   CsvImportReport,
 } from "../import/csvImport";
-import {
-  checkInputRules,
-  scenarioErrorsAddedBy,
-  scenarioRuleErrors,
-} from "../import/inputRules";
+import { checkInputRules } from "./restoreRules";
 import {
   loadState,
   upsertScenario,

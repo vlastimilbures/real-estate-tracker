@@ -5,7 +5,8 @@
 // `assertBlockStarts` (P4b), D-19 as-of before baseDate via `assertAsOf` (P4b), D-37
 // corrupt data and D-38 ranges via `assertInputs` / `assertAssumptions` (P4b).
 // Entry-point rejection is P5b/P7; messages belong to P7.
-import { ONE, ZERO, type Decimal } from "../lib/money";
+import { ZERO, type Decimal } from "../lib/money";
+import { atOrBelowGrowthFloor, outsideUnitRate } from "../lib/rules";
 import { edate, isAfter, isOnOrBefore } from "./dates";
 import {
   derivedTermProblem,
@@ -89,11 +90,11 @@ const badDate = (d: Date | undefined) =>
 const badNumber = (d: Decimal | undefined) => d !== undefined && !d.isFinite();
 /** A fraction that must lie in [0, 1] (vacancy, cost shares, a value haircut). */
 const outsideUnit = (d: Decimal | undefined) =>
-  d !== undefined && d.isFinite() && (d.isNegative() || d.greaterThan(ONE));
+  d !== undefined && d.isFinite() && outsideUnitRate(d);
 
 /** A growth rate at or below −100 % (ADR 0128): a yearly factor of zero or less. */
 const belowGrowthFloor = (d: Decimal | undefined) =>
-  d !== undefined && d.isFinite() && d.lessThanOrEqualTo(ONE.negated());
+  d !== undefined && d.isFinite() && atOrBelowGrowthFloor(d);
 
 /** A finite amount below zero (a non-finite one is NON_FINITE_NUMBER instead). */
 const isNegativeAmount = (d: Decimal | undefined) =>

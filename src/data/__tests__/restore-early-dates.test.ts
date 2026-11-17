@@ -8,7 +8,7 @@ import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
 import { loadState } from "../repositories";
 import { confirmRestore, exportToJson, prepareRestore } from "../backup";
-import { checkInputRules } from "../../import/inputRules";
+import { checkInputRules } from "../../state/restoreRules";
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn((command: string) =>

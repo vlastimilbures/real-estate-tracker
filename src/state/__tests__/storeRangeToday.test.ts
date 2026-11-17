@@ -1,0 +1,92 @@
+// #464: what the store accepts today at and past the form bounds. The store applies the
+// engine rules only, which are open-ended above, so values the forms refuse save.
+import { beforeEach, describe, expect, it } from "vitest";
+import { usePortfolioStore } from "../portfolioStore";
+import { openMemorySql } from "../../data/__tests__/betterSqlite";
+import { migrate } from "../../data/migrations";
+import { seedIfEmpty } from "../../data/seed";
+import { isoDate, money, rate } from "../../engine";
+import type { Sql } from "../../data/sql";
+
+async function openSeeded(): Promise<Sql> {
+  const sql = openMemorySql();
+  await migrate(sql);
+  await seedIfEmpty(sql);
+  return sql;
+}
+
+const store = () => usePortfolioStore.getState();
+const block = () => store().portfolio!.mortgages[0]!;
+
+beforeEach(async () => {
+  await store().init(openSeeded);
+});
+
+describe("the store at and past the form bounds", () => {
+  // Today's behaviour; a later ADR may change it (#464 part 4).
+  it("saves a horizon of 150 years", async () => {
+    const a = store().assumptions!;
+    expect(await store().saveAssumptions({ ...a, horizonYears: 150 })).toEqual({
+      ok: true,
+    });
+    expect(store().assumptions!.horizonYears).toBe(150);
+  });
+
+  // Today's behaviour; a later ADR may change it (#464 part 4).
+  it("saves a fixation of 60 and a loan term of 60 years", async () => {
+    expect(
+      await store().saveMortgageBlock({
+        ...block(),
+        fixationYears: 60,
+        loanTermYears: 60,
+      }),
+    ).toEqual({ ok: true });
+  });
+
+  it("refuses a loan term of 0.5 years", async () => {
+    expect(
+      await store().saveMortgageBlock({ ...block(), loanTermYears: 0.5 }),
+    ).toMatchObject({
+      ok: false,
+      error: {
+        kind: "input",
+        errors: [{ code: "INVALID_TERM", field: "loanTermYears" }],
+      },
+    });
+  });
+
+  // Today's behaviour; a later ADR may change it (#464 part 4).
+  it("adds a property of 20 000 m²", async () => {
+    expect(
+      await store().addProperty(
+        {
+          id: "p-big",
+          name: "Big",
+          purchaseDate: isoDate("2030-01-01"),
+          purchasePrice: money("5000000"),
+          sizeM2: 20000,
+        },
+        { id: "hc-big", propertyId: "p-big" },
+        { address: null, garage: null },
+      ),
+    ).toEqual({ ok: true });
+  });
+
+  it("saves a shock lasting 0 or 500 years and refuses −1", async () => {
+    const scenario = (durationYears: number) => ({
+      id: "s1",
+      name: "Shock",
+      overrides: { rateShock: { deltaPa: rate("0.01"), durationYears } },
+    });
+    // Today's behaviour; a later ADR may change it (#464 part 4).
+    expect(await store().addScenario(scenario(0))).toEqual({ ok: true });
+    expect(await store().saveScenario(scenario(500))).toEqual({ ok: true });
+    expect(await store().saveScenario(scenario(-1))).toMatchObject({
+      ok: false,
+      error: {
+        kind: "input",
+        errors: [{ code: "SHOCK_OUT_OF_RANGE", field: "rateShock" }],
+      },
+    });
+  });
+});
