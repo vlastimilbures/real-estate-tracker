@@ -37,6 +37,9 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- The engine no longer has an acquisition cost percentage (ADR 0234, #454). It could never
+  be set in the app, so a property bought after the projection start still adds the
+  transaction costs on its funding record, or none when none are entered. No figure changes.
 - A property's size may have **one decimal place**, e.g. 54,5 m², in the property form
   (comma or dot), CSV import and restore (ADR 0236, #455). Trailing zeros do not count, so
   54.50 is accepted as 54.5; two or more decimals are refused with a message naming the

@@ -398,24 +398,6 @@ const RANGE_CASES: [string, Partial<Assumptions>, EngineValidationError][] = [
     },
   ],
   [
-    "acquisition cost rate above 1 (ADR 0119)",
-    { acquisitionCostPct: rate("1.5") },
-    {
-      code: "RATE_OUT_OF_RANGE",
-      entity: "assumptions",
-      field: "acquisitionCostPct",
-    },
-  ],
-  [
-    "negative acquisition cost rate (ADR 0119)",
-    { acquisitionCostPct: rate("-0.5") },
-    {
-      code: "RATE_OUT_OF_RANGE",
-      entity: "assumptions",
-      field: "acquisitionCostPct",
-    },
-  ],
-  [
     "negative default management share",
     { defaults: { ...assumptions.defaults, mgmtPctRent: rate("-0.1") } },
     {
@@ -473,7 +455,6 @@ describe("D-38 range codes raise at every entry point", () => {
       inflationShock: { deltaPa: rate("-0.02"), durationYears: 5 },
       rateShock: { deltaPa: rate("-0.01"), durationYears: 0 },
       valueShock: { pct: rate("1"), atYear: 0 },
-      acquisitionCostPct: rate("1"),
     };
     for (const run of Object.values(entryPoints(portfolio, a))) {
       expect(run).not.toThrow();

@@ -282,7 +282,7 @@ export function usePropertyEngineResult(
         blocks,
         built,
         projection: propertyProjection(property, portfolio, assumptions, built),
-        acquisition: acquisitionSummary(property, portfolio, assumptions),
+        acquisition: acquisitionSummary(property, portfolio),
       };
     });
   }, [portfolio, assumptions, propertyId]);

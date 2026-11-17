@@ -81,7 +81,6 @@ function fromEngine(
     };
   });
   const unsupported = [
-    a.acquisitionCostPct && "acquisition costs",
     a.inflationShock && "an inflation shock",
     a.rateShock && "a rate shock",
     a.valueShock && "a value shock",
@@ -553,11 +552,6 @@ describe("KPI reference model (engine-free, ADR 0174)", () => {
       "a value shock",
       portfolio,
       { ...assumptions, valueShock: { pct: rate("0.1"), atYear: 3 } },
-    ],
-    [
-      "acquisition costs",
-      portfolio,
-      { ...assumptions, acquisitionCostPct: rate("0.04") },
     ],
   ];
   it.each(unsupported)("throws on %s", (what, p, a = assumptions) => {

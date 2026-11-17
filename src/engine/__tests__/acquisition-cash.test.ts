@@ -201,7 +201,7 @@ describe("ADR 0176 (#289): a future buy's later first loan never brings year-0 c
     const p = withOwned([loan({ startDate: isoDate("2025-05-10") })], FUTURE);
     const prop = ownedOf(p);
     expect(laterFirstLoan(prop, p, assumptions)).toBeUndefined();
-    expect(acquisitionSummary(prop, p, assumptions).loan).not.toBeNull();
+    expect(acquisitionSummary(prop, p).loan).not.toBeNull();
     expectKc(
       acquisitionOutflows([prop], p, assumptions)[0] ?? ZERO,
       0,
@@ -222,7 +222,7 @@ describe("ADR 0176 (#289): a future buy's later first loan never brings year-0 c
     const p = withOwned([dev], FUTURE);
     const prop = ownedOf(p);
     expect(laterFirstLoan(prop, p, assumptions)).toBeUndefined();
-    expect(acquisitionSummary(prop, p, assumptions).loan).not.toBeNull();
+    expect(acquisitionSummary(prop, p).loan).not.toBeNull();
     expectKc(
       acquisitionOutflows([prop], p, assumptions)[0] ?? ZERO,
       0,
@@ -242,7 +242,7 @@ describe("ADR 0176 (#289): a future buy's later first loan never brings year-0 c
     expectKc(out[0] ?? ZERO, 0, "year 0");
     expectKc(
       out[2] ?? ZERO,
-      acquisitionSummary(prop, p, assumptions).outflow.toNumber(),
+      acquisitionSummary(prop, p).outflow.toNumber(),
       "down payment",
     );
     expectKc(out[3] ?? ZERO, -PRINCIPAL, "3 M in");

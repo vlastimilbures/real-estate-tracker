@@ -76,8 +76,6 @@ Assumptions {
   postFixationResetRatePa: Rate    // default 0.045
   horizonYears: int                // default 30
   inflationPa: Rate                // default 0.025  (CPI; drives real terms)
-  acquisitionCostPct?: Rate        // 0–1 of the price; costs of a future buy with none
-                                   // recorded (engine-only, ADR 0119)
   sellingCostPct?: Rate            // 0–1 of the horizon value; selling costs taken off the
                                    // levered IRR's terminal value only (ADR 0183; stored,
                                    // default 0)
@@ -445,8 +443,7 @@ purposes (ADR 0119):
 
 - the recorded **own cash**, when the funding record has it;
 - otherwise purchase price − acquisition loan + costs + works. Costs are the recorded
-  transaction costs, else `acquisitionCostPct · price`, else 0; works are the recorded
-  initial works, else 0. The price is used, not the valuation: a valuation above the price
+  transaction costs, else 0 (ADR 0234); works are the recorded initial works, else 0. The price is used, not the valuation: a valuation above the price
   shows as equity the owner did not pay for.
 
 The **acquisition loan** is the property's earliest block when it starts no later than 90

@@ -42,12 +42,6 @@ export interface Assumptions {
   postFixationResetRatePa: Rate;
   horizonYears: number;
   inflationPa: Rate;
-  /** Transaction costs of acquiring a property, as a fraction of its purchase price in
-   *  [0, 1] (broker, legal and cadastre fees; the Czech acquisition tax ended in 2020).
-   *  The fallback for a property bought *after* baseDate whose funding record has no
-   *  transaction costs (ADR 0119 §6). Optional; undefined ⇒ 0 ⇒ engine output is
-   *  byte-identical to the parity targets. Engine-only (no DB/UI wiring). */
-  acquisitionCostPct?: Rate | undefined;
   /** Selling costs of a sale at the horizon, as a fraction of the projected market value
    *  in [0, 1] (agent, legal and escrow fees). Taken off the levered IRR's terminal value
    *  only; net worth stays value minus debt (ADR 0183). Undefined ⇒ 0. */

@@ -44,7 +44,7 @@ export function acquisitionOutflows(
     if (tStart > N) continue;
     if (tStart > 0) {
       out[tStart] = at(out, tStart)
-        .plus(acquisitionSummary(p, portfolio, assumptions).outflow)
+        .plus(acquisitionSummary(p, portfolio).outflow)
         .plus(repaidBeforeBase(p, portfolio, assumptions));
     }
     const late = laterFirstLoan(p, portfolio, assumptions);
