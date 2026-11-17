@@ -288,6 +288,7 @@ it.
 | [0237](0237-property-names-nfc.md)                             | Property names are compared in one Unicode form                                               | Accepted                                                                 | #455, #435                                         |
 | [0239](0239-sharded-nightly-mutation.md)                       | Sharded nightly mutation testing, gated on the combined score                                 | Accepted (owner-delegated, night run 2026-11-16; owner review pending)   | #443                                               |
 | [0240](0240-import-preview-cleared-on-change.md)               | Import: the preview is cleared on every change                                                | Accepted (owner-delegated, night run 2026-11-16; owner review pending)   | #437, #435                                         |
+| [0241](0241-property-form-keeps-input.md)                      | Property form: the typed values stay after a failed save                                      | Accepted (owner-delegated, night run 2026-11-16; owner review pending)   | #438, #435                                         |
 
 <!-- adr-index:end -->
 
