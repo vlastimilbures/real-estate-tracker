@@ -15,6 +15,8 @@
   `src/state`), [0123](0123-scenario-rules-every-entry-point.md) (unreadable scenarios are listed, not
   fatal)
 - Amended by: [0228](0228-read-back-failure-stops.md) (§3: a restore on the screen whose data cannot be loaded shows the read-back message)
+- Amended by: [0231](0231-unreadable-scenario-invalid.md) (§2, §3: `SCENARIO_INVALID` reaches
+  the screen and is handled like `ROW_INVALID`: Restore a backup…, no Try again)
 
 ## Context
 
