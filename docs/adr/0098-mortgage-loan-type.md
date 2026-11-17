@@ -5,7 +5,9 @@
 - Source: issue #20 (pre-release review 2026-10, finding A08); builds on ADR 0024, ADR 0027
   and ADR 0031
 - Amended by: [0167](0167-drawdown-schedule.md) (decision 5 and the deferred row editor:
-  the draws are a drawdown schedule whose first row is the initial principal)
+  the draws are a drawdown schedule whose first row is the initial principal),
+  [0243](0243-hidden-field-save-error.md) (a refused save's message on a hidden field shows
+  above the buttons)
 
 ## Context
 

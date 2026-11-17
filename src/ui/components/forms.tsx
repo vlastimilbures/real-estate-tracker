@@ -3,6 +3,7 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
 import {
   collectValues,
+  shownFields,
   type FieldSpec,
   type LeadRow,
   type ParsedValues,
@@ -57,7 +58,7 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
   /** May be async; while the returned promise is pending the submit/cancel buttons
    *  disable and the submit label shows "Saving…", so a mutation can't be double-fired.
    *  Resolve to a WriteError to keep the form open with the failure shown: on the
-   *  field it names, else above the buttons (UX-047). */
+   *  field it names if shown, else above the buttons (UX-047, ADR 0243). */
   onSubmit: (
     values: ParsedValues<S>,
   ) => void | WriteError | Promise<void | WriteError>;
@@ -86,7 +87,7 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
       ) => ReactNode)
     | undefined;
   /** Names of the specs not shown for this draft. They still parse on submit, so a
-   *  hidden field should be blank. */
+   *  hidden field should be blank; a save error on one shows above the buttons. */
   hiddenFields?:
     ((draft: Record<string, string>) => readonly string[]) | undefined;
   /** Soft warnings and a footer for a row list, from the draft (ADR 0167). */
@@ -163,7 +164,7 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
         const split = formWriteErrors(
           t,
           failure,
-          specs.map((s) => s.name),
+          shownFields(specs, hiddenFields?.(draft) ?? []),
           (field, index) =>
             listKind(specs.find((s) => s.name === field)?.kind)
               ? draftRowOf(draft[field] ?? "", index)
