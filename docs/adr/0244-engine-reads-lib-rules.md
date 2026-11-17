@@ -33,7 +33,8 @@ shared rule.
 2. **The engine may import `src/lib/rules.ts`** as well as `src/lib/money.ts`.
    `rules.ts` imports only `./money`, never `day` or `format`, so the engine still reaches
    no clock and no display code. `engine-pure-layers` in `.dependency-cruiser.cjs` and the
-   engine block in `eslint.config.js` enforce this.
+   engine block in `eslint.config.js` let the engine import it; the `lib-rules-pure` rule
+   keeps `rules.ts` to `./money`.
 3. **What the engine reads from it:** the unit-rate and growth-floor predicates, and the
    recast cap (`MAX_LOAN_TERM_MONTHS = INT_RANGES.loanTermYears.max × 12`, still 600). The
    engine reads no other maximum: its rules stay open-ended above, as today.
@@ -55,5 +56,5 @@ import read them from the engine (which import may already use, ADR 0171).
 - A limit is changed in one place; the engine and CSV import cannot drift on the unit-rate
   range, and the recast cap follows the longest loan term without a pinning test.
 - `rules.ts` is now an engine dependency: an import added to it from `day`, `format` or any
-  other module fails `pnpm depcruise` and ESLint.
+  other module fails `pnpm depcruise` (`lib-rules-pure`).
 - No computed number, limit, message, stored data, export or layout changes.

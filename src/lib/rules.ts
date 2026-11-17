@@ -3,6 +3,9 @@
 // and restore apply, so all refuse the same values, and the date floor. Every bounded
 // field is a whole number except the size, which takes one decimal place (ADR 0236).
 // A layer whose limit differs gets its own named rule here, never a silent shared one.
+// The engine reads this module (ADR 0244), so it imports nothing but ./money: no clock,
+// no display code.
+import { ONE, type Decimal } from "./money";
 
 /** Inclusive bounds of a bounded field. */
 export interface IntRange {
@@ -41,6 +44,20 @@ export const DATE_FLOOR_YEAR = 1900;
 
 export const inRange = (n: number, r: IntRange): boolean =>
   n >= r.min && n <= r.max;
+
+/** A unit rate is a fraction from 0 to 1 (D-38, ADR 0128 §1): vacancy, cost shares, an
+ *  interest rate, a value haircut. Negative zero is outside, as `Decimal.isNegative`
+ *  says (the engine and CSV import have always refused it). Finite values only: a
+ *  non-finite one is each layer's own rule. */
+export const outsideUnitRate = (d: Decimal): boolean =>
+  d.isNegative() || d.greaterThan(ONE);
+
+/** The growth floor, −100 % (ADR 0128 §2): a yearly factor of zero or less. */
+const GROWTH_FLOOR = ONE.negated();
+
+/** A growth rate at or below the floor. Finite values only, as `outsideUnitRate`. */
+export const atOrBelowGrowthFloor = (d: Decimal): boolean =>
+  d.lessThanOrEqualTo(GROWTH_FLOOR);
 
 /** At most one decimal place: the size's precision (ADR 0236 §1). */
 export const oneDecimal = (v: number): boolean => Number(v.toFixed(1)) === v;

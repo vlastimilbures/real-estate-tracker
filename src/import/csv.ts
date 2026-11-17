@@ -12,6 +12,7 @@ import {
   inRange,
   INT_RANGES,
   oneDecimalText,
+  outsideUnitRate,
   WHOLE_DIGITS,
   type IntRange,
 } from "../lib/rules";
@@ -341,7 +342,7 @@ class RowCtx {
     // The same bounds the v7 CHECKs and the engine already apply (D-37, D-38).
     if (rule === "amount" && d.isNegative())
       return this.fail(field, { code: "negativeAmount", value: v });
-    if (rule === "unitRate" && (d.isNegative() || d.greaterThan(1)))
+    if (rule === "unitRate" && outsideUnitRate(d))
       return this.fail(field, { code: "rateOutOfRange", value: v });
     return d.toString();
   }

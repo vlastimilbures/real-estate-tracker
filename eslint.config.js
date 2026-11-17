@@ -156,12 +156,14 @@ const engineLayerPattern = {
     "**/i18n/**",
     "**/lib/**",
     "!**/lib/money",
+    // The shared input rules (ADR 0244); rules.ts imports only lib/money.
+    "!**/lib/rules",
     "react",
     "react-dom",
     "@tauri-apps/*",
   ],
   message:
-    "The engine is pure (CLAUDE.md §4, PLAN §4.1): no imports from data/state/ui/import/i18n/react/tauri; from lib only money.",
+    "The engine is pure (CLAUDE.md §4, PLAN §4.1): no imports from data/state/ui/import/i18n/react/tauri; from lib only money and rules (ADR 0244).",
 };
 const engineBarrelPattern = {
   regex: "(^|/)engine/(?!__tests__/)",
