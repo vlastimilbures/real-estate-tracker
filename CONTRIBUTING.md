@@ -83,10 +83,11 @@ presets, limits, data formats or UI text, SPEC, the Guide strings, README, the u
 still describe it. Which document owns what is listed in
 [docs/release.md](docs/release.md#who-owns-what).
 
-- **Git hooks** (husky + lint-staged): on commit, staged files (`.mjs`, `.cjs` and `.html`
-  included) are formatted, linted and their related Vitest tests run; on push, the full
-  typecheck, `pnpm depcruise`, `pnpm knip`, `pnpm knip:prod` and `pnpm adr:check` run. A green
-  CI run is required to merge — do not bypass the hooks.
+- **Git hooks** (husky + lint-staged): on commit, staged files are formatted (`.mjs`, `.cjs`
+  and `.html` included), linted (`.mjs` and `.cjs` included, not `.html`) and their related
+  Vitest tests run; on push, the full typecheck, `pnpm depcruise`, `pnpm knip`,
+  `pnpm knip:prod` and `pnpm adr:check` run. A green CI run is required to merge — do not
+  bypass the hooks.
 - **Stylesheets** (#460): `pnpm lint:css` runs stylelint (`stylelint.config.mjs`: no
   selector defined twice in one context, no duplicate property except a consecutive
   fallback, no `!important`, no hex colour outside `tokens.css`) and
