@@ -142,9 +142,10 @@ still describe it. Which document owns what is listed in
   result (`reports/mutation/stryker-incremental.json`); `pnpm mutation --force` retests every
   mutant. `thresholds.break` in `stryker.config.json` is the floored baseline score; raise it,
   never lower it. CI runs it nightly when main changed, in seven shards
-  (`scripts/mutation-shards.mjs`): `schedule-a`/`schedule-b` and `validate-a`/`validate-b`
-  split `schedule.ts` and `validate.ts` at a named top-level function, `projections`,
-  `kpis` and `rest` (every other engine file) take whole files. Each shard has its own
+  (`scripts/mutation-shards.mjs`): `schedule-a`/`schedule-b` share the `loan/*` files
+  and split `loan/devGrid.ts` at a named top-level function, `validate-a`/`validate-b`
+  split `validate.ts` the same way, and `projections`, `kpis` and `rest` (every other
+  engine file) take whole files. Each shard has its own
   cached result file and no break of its own; the `mutation-score` job merges the shards'
   reports and fails when the combined score is below break or a shard's report is missing.
   Reproduce one shard with `STRYKER_SHARD=<name> pnpm mutation:shard`; a manual nightly run

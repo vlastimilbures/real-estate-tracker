@@ -26,10 +26,25 @@ const ENGINE_TESTS = "src/engine/**/__tests__/**";
  */
 export const SHARDS = {
   "schedule-a": [
-    { file: "src/engine/schedule.ts", anchor: "undrawnMonthStep", part: "a" },
+    "src/engine/loan/kernel.ts",
+    "src/engine/loan/calendar.ts",
+    "src/engine/loan/events.ts",
+    "src/engine/loan/pay.ts",
+    "src/engine/loan/opening.ts",
+    {
+      file: "src/engine/loan/devGrid.ts",
+      anchor: "undrawnMonthStep",
+      part: "a",
+    },
   ],
   "schedule-b": [
-    { file: "src/engine/schedule.ts", anchor: "undrawnMonthStep", part: "b" },
+    {
+      file: "src/engine/loan/devGrid.ts",
+      anchor: "undrawnMonthStep",
+      part: "b",
+    },
+    "src/engine/loan/grid.ts",
+    "src/engine/schedule.ts",
   ],
   "validate-a": [
     { file: "src/engine/validate.ts", anchor: "checkMortgage", part: "a" },
