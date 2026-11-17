@@ -29,14 +29,17 @@ an outside edit.
    with its plain label (`importPage.importSelected`), so a press cannot commit a plan the
    page is not showing.
 3. **Unchanged:** while a new file is still being read the old file and its preview stay on
-   screen (the two still agree); no announcement is added or repeated; focus stays where the
-   user left it; the commit-time check and the "plan changed" message (ADR 0096 §5,
-   ADR 0185 §6) stay until ADR 0229 removes them.
+   screen (the two still agree); no announcement is added or repeated; focus on the file rows
+   and the Import button is unchanged; the fingerprint comparison and the "plan changed"
+   message (ADR 0096 §5) stay until ADR 0229 removes them; ADR 0229 keeps the commit-time
+   problem refusal (ADR 0185 §6).
 
 ## Consequences
 
 - After a file is replaced, the Import panel shows no summary for the moment the new preview
   takes (one queued read, a few milliseconds), then the new one.
 - The "plan changed" message is reached only by a change the page did not make.
+- The summary is rebuilt, so a list the user opened or closed returns to its default, and
+  focus inside the summary is lost.
 - No computed number, stored data, export or dictionary entry changes. The ux-capture screens
   are taken after their final preview and do not change.
