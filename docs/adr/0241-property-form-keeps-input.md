@@ -20,7 +20,9 @@ refused by the database (not by an input rule, which is checked before the write
 not reload), the stored values came back into the fields while the error was shown: what
 was typed was gone, the form no longer counted as unsaved, and Esc closed it without a
 prompt. The form's save also had no `catch`, so a save that threw showed nothing, where the
-other forms show the failure.
+other forms show the failure. Today the store turns every write failure into a returned
+result rather than throwing, so a thrown save cannot happen; the `catch` is kept to match
+the record and scenario forms and the shared submit helper planned in issue #489.
 
 ## Decision
 
