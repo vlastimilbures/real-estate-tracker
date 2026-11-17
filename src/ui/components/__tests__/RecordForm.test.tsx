@@ -115,45 +115,37 @@ describe("a refused save on a field the form is not showing (#440, ADR 0243)", (
     );
   }
 
-  // debt #440: the message stays on the hidden field, so nothing shows.
-  it.fails(
-    "a constraint on a hidden field shows above the buttons (#440)",
-    async () => {
-      renderHidden({
-        kind: "constraint",
-        constraint: {
-          kind: "check",
-          check: "mortgage_interest_only_until_iso",
-        },
-      });
-      await userEvent.click(screen.getByRole("button", { name: "Save" }));
-      expect(screen.getByRole("alert").textContent).toContain(
-        en.inputRules.INVALID_DATE,
-      );
-    },
-  );
+  it("a constraint on a hidden field shows above the buttons (#440)", async () => {
+    renderHidden({
+      kind: "constraint",
+      constraint: {
+        kind: "check",
+        check: "mortgage_interest_only_until_iso",
+      },
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(screen.getByRole("alert").textContent).toContain(
+      en.inputRules.INVALID_DATE,
+    );
+  });
 
-  // debt #440: the message stays on the hidden field, so nothing shows.
-  it.fails(
-    "an input-rule error on a hidden field shows above the buttons (#440)",
-    async () => {
-      renderHidden({
-        kind: "input",
-        errors: [
-          {
-            code: "INVALID_DATE",
-            entity: "mortgage",
-            id: "m",
-            field: "completionDate",
-          },
-        ],
-      });
-      await userEvent.click(screen.getByRole("button", { name: "Save" }));
-      expect(screen.getByRole("alert").textContent).toContain(
-        en.inputRules.INVALID_DATE,
-      );
-    },
-  );
+  it("an input-rule error on a hidden field shows above the buttons (#440)", async () => {
+    renderHidden({
+      kind: "input",
+      errors: [
+        {
+          code: "INVALID_DATE",
+          entity: "mortgage",
+          id: "m",
+          field: "completionDate",
+        },
+      ],
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(screen.getByRole("alert").textContent).toContain(
+      en.inputRules.INVALID_DATE,
+    );
+  });
 
   it("an error on a list's first-row field stays on that row (ADR 0167)", async () => {
     act(() => useUiStore.setState({ language: "en" }));

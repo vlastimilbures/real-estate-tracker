@@ -126,6 +126,20 @@ export interface LeadRow {
   dateFallback: string;
 }
 
+/** The fields a form shows for this draft: the specs not hidden, and the field a shown
+ *  row list shows as its first row (ADR 0167). A save error on any other field goes
+ *  above the buttons (ADR 0243). */
+export function shownFields(
+  specs: readonly FieldSpec[],
+  hidden: readonly string[],
+): string[] {
+  const shown = specs.filter((s) => !hidden.includes(s.name));
+  return [
+    ...shown.map((s) => s.name),
+    ...shown.flatMap((s) => (s.lead ? [s.lead.field] : [])),
+  ];
+}
+
 /** The message for a value that does not parse: the expected format of its kind (UX-040). */
 export function invalidHint(
   t: Pick<Dictionary, "forms">,

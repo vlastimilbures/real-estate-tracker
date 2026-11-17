@@ -14,6 +14,7 @@ import {
   parseMoney,
   collectValues,
   fieldHint,
+  shownFields,
   type FieldSpec,
   type ParsedValues,
   type CollectRules,
@@ -375,5 +376,43 @@ describe("parseSizeField (ADR 0236)", () => {
     expect(at("54.55").errors).toEqual(refused);
     expect(at("0.5").errors).toEqual(refused);
     expect(at("10000.1").errors).toEqual(refused);
+  });
+});
+
+describe("shownFields (ADR 0243)", () => {
+  const lead = {
+    field: "initialPrincipal",
+    dateField: "startDate",
+    label: "Drawn at start",
+    dateFallback: "–",
+  };
+  const specs: FieldSpec[] = [
+    { name: "startDate", label: "Start", kind: "date" },
+    { name: "draws", label: "Draws", kind: "draws", optional: true, lead },
+    { name: "initialPrincipal", label: "Principal", kind: "money" },
+    { name: "completionDate", label: "Completion", kind: "date" },
+  ];
+
+  it("leaves out the hidden specs (a Standard loan)", () => {
+    expect(shownFields(specs, ["draws", "completionDate"])).toEqual([
+      "startDate",
+      "initialPrincipal",
+    ]);
+  });
+
+  it("keeps a shown list's first-row field though it is hidden from the grid", () => {
+    expect(shownFields(specs, ["initialPrincipal"])).toEqual([
+      "startDate",
+      "draws",
+      "completionDate",
+      "initialPrincipal",
+    ]);
+  });
+
+  it("does not add back a hidden list's first-row field", () => {
+    expect(shownFields(specs, ["draws", "initialPrincipal"])).toEqual([
+      "startDate",
+      "completionDate",
+    ]);
   });
 });
