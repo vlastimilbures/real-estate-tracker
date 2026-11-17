@@ -121,6 +121,16 @@ export function afterSuccessor(
   return next !== undefined && !isOnOrBefore(date, next.startDate);
 }
 
+/** True when the link's successor has drawn by grid month `m`: the schedule follows the
+ *  successor from its draw month (D-27, D-47). False without a successor. */
+export function replacedByMonth(
+  link: ChainLink,
+  m: number,
+  baseDate: Date,
+): boolean {
+  return link.next !== undefined && drawMonth(link.next, baseDate) <= m;
+}
+
 /**
  * Splice `next` into the chain's rows from its draw month `d` (D-47). The owner's
  * payment in month d is still paid when due on/before the successor's start, and the

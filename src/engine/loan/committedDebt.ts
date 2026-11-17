@@ -9,7 +9,7 @@ import type {
   MortgageDraw,
   Property,
 } from "../types";
-import { blockChain } from "./chain";
+import { afterSuccessor, chainLinks, replacedByMonth } from "./chain";
 
 /**
  * Development-loan principal not drawn yet at the end of grid month `month` (0 =
@@ -33,19 +33,20 @@ export function undrawnPrincipal(
 ): Decimal {
   const { baseDate } = assumptions;
   const futureBuy = isAfter(property.purchaseDate, baseDate);
-  const chain = blockChain(blocks, baseDate);
-  return chain.reduce<Decimal>((sum, block, i) => {
+  return chainLinks(blocks, baseDate).reduce<Decimal>((sum, link, i) => {
+    // The uncut block: a development loan whose tranches all fall after its
+    // successor's start is still one, so its initial principal counts until drawn.
+    const { block, next } = link;
     if (!isDevLoan(block)) return sum;
     assertLoanInputs(block); // as the schedule it follows (ADR 0226)
-    const next = chain[i + 1];
     const start = drawMonth(block, baseDate);
     const early = i === 0 && (!futureBuy || fundedThePurchase(property, block));
     if (month < start && !early) return sum;
-    if (next && month >= drawMonth(next, baseDate)) return sum;
+    if (replacedByMonth(link, month, baseDate)) return sum;
     const ahead = (d: MortgageDraw) =>
       isAfter(d.date, baseDate) &&
       firstGridMonthOnOrAfter(baseDate, d.date) > month &&
-      !(next && isAfter(d.date, next.startDate));
+      !afterSuccessor(next, d.date);
     return (block.draws ?? [])
       .filter(ahead)
       .reduce<Decimal>(
