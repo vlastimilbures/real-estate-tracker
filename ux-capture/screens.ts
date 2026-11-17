@@ -1,8 +1,9 @@
 // Screen manifest for the UX capture run. One entry = one user-visible state; `run`
-// drives the app there through the UI and calls `ux.capture(id)` (PNG + axe scan).
-// To add a screen: add an entry here with a free id. The id's leading number groups
-// screens by area (0x dashboard, 1x properties, 2x property detail, …); the order of
-// this list is the flow order and need not match the file order.
+// drives the app there through the UI and calls `ux.capture()` (PNG + axe scan under the
+// screen's id; an extra state passes its own id). To add a screen: add a `defineScreen`
+// entry with a free id. The id's leading number groups screens by area (0x dashboard,
+// 1x properties, 2x property detail, …); the order of this list is the flow order and
+// need not match the file order.
 import type { Route } from "../src/state/uiStore";
 import {
   expect,
@@ -14,7 +15,6 @@ import {
   boot,
   deleteAllProperties,
   pickFiveYearsAndCheckHint,
-  type Ux,
 } from "./helpers";
 import {
   addPropertiesToSix,
@@ -61,19 +61,13 @@ import {
   expectScenariosPanel,
   expectSettingsTopBar,
 } from "./layout/pages";
-
-export interface Screen {
-  id: string;
-  /** What the capture shows (the test title in the capture run). */
-  desc: string;
-  run: (ux: Ux) => Promise<void>;
-}
+import { defineScreen, type Screen } from "./screens/define";
 
 export const SCREENS: Screen[] = [
-  {
-    id: "00-loading",
-    desc: "Startup loading screen (sql.js init delayed)",
-    run: async (ux) => {
+  defineScreen(
+    "00-loading",
+    "Startup loading screen (sql.js init delayed)",
+    async (ux) => {
       // Hold the wasm download so the loading screen stays up long enough to capture.
       await ux.page.route("**/*.wasm*", async (r) => {
         await new Promise((res) => setTimeout(res, 4000));
@@ -81,37 +75,37 @@ export const SCREENS: Screen[] = [
       });
       await ux.page.goto("/");
       await expect(ux.page.locator(".loading-screen")).toBeVisible();
-      await ux.capture("00-loading");
+      await ux.capture();
     },
-  },
-  {
-    id: "00b-boot-row-invalid",
-    desc: "Startup error: an unreadable record (Restore a backup…, records involved)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "00b-boot-row-invalid",
+    "Startup error: an unreadable record (Restore a backup…, records involved)",
+    async (ux) => {
       await bootFailing(ux, "ROW_INVALID");
-      await ux.capture("00b-boot-row-invalid");
+      await ux.capture();
     },
-  },
-  {
-    id: "00c-boot-db-newer",
-    desc: "Startup error: a database from a newer app (details, no Try again)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "00c-boot-db-newer",
+    "Startup error: a database from a newer app (details, no Try again)",
+    async (ux) => {
       await bootFailing(ux, "DB_NEWER");
-      await ux.capture("00c-boot-db-newer");
+      await ux.capture();
     },
-  },
-  {
-    id: "00d-boot-restore-confirm",
-    desc: "Startup error: Restore a backup… at its confirm step",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "00d-boot-restore-confirm",
+    "Startup error: Restore a backup… at its confirm step",
+    async (ux) => {
       await bootRestoreConfirm(ux);
-      await ux.capture("00d-boot-restore-confirm");
+      await ux.capture();
     },
-  },
-  {
-    id: "00e-boot-restored",
-    desc: "Startup error: restored, the safety copy named, Open the app",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "00e-boot-restored",
+    "Startup error: restored, the safety copy named, Open the app",
+    async (ux) => {
       await bootRestoreConfirm(ux);
       await ux.page
         .getByRole("button", { name: ux.t.backup.restoreNow })
@@ -119,13 +113,13 @@ export const SCREENS: Screen[] = [
       await expect(
         ux.page.getByRole("button", { name: ux.t.boot.continue }),
       ).toBeVisible();
-      await ux.capture("00e-boot-restored");
+      await ux.capture();
     },
-  },
-  {
-    id: "00f-boot-restored-app",
-    desc: "After Continue: the app keeps naming the safety copy until dismissed (ADR 0154)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "00f-boot-restored-app",
+    "After Continue: the app keeps naming the safety copy until dismissed (ADR 0154)",
+    async (ux) => {
       await bootRestoreConfirm(ux);
       await ux.page
         .getByRole("button", { name: ux.t.backup.restoreNow })
@@ -134,13 +128,13 @@ export const SCREENS: Screen[] = [
       await expect(
         ux.page.getByText(/portfolio-before-restore-.*\.json/),
       ).toBeVisible();
-      await ux.capture("00f-boot-restored-app", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "01-dashboard",
-    desc: "Dashboard, nominal, as of today",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "01-dashboard",
+    "Dashboard, nominal, as of today",
+    async (ux) => {
       await boot(ux.page);
       // The reset-window toggle shows every option, inside its panel head (ADR 0158).
       const head = panel(ux, ux.t.dashboard.financingTitle).locator(
@@ -150,7 +144,7 @@ export const SCREENS: Screen[] = [
       await expectNotClipped(head);
       await expectPanelActionsRight(ux.page);
       await expectBandTileLabelsOneLine(ux);
-      await ux.capture("01-dashboard");
+      await ux.capture();
       // After the shot, so a failing layout still leaves its picture.
       await expectKpiStrip(ux);
       await expectDashboardHierarchy(ux);
@@ -158,56 +152,52 @@ export const SCREENS: Screen[] = [
       await expectFinancingTimeline(ux, 3, 300);
       await expectKeyFigures(ux);
     },
-  },
-  {
-    id: "02-dashboard-real",
-    desc: "Dashboard, real lens",
-    run: async (ux) => {
-      await boot(ux.page);
-      await pickReal(ux);
-      await ux.capture("02-dashboard-real");
-      // After the shot, so a failing layout still leaves its picture.
-      await expectKpiStrip(ux);
-      await expectKeyFigures(ux);
-    },
-  },
-  {
-    id: "03-dashboard-asof-5y",
-    desc: "Dashboard, as-of +5y preset",
-    run: async (ux) => {
+  ),
+  defineScreen("02-dashboard-real", "Dashboard, real lens", async (ux) => {
+    await boot(ux.page);
+    await pickReal(ux);
+    await ux.capture();
+    // After the shot, so a failing layout still leaves its picture.
+    await expectKpiStrip(ux);
+    await expectKeyFigures(ux);
+  }),
+  defineScreen(
+    "03-dashboard-asof-5y",
+    "Dashboard, as-of +5y preset",
+    async (ux) => {
       await boot(ux.page);
       await pickFiveYearsAndCheckHint(ux.page);
-      await ux.capture("03-dashboard-asof-5y");
+      await ux.capture();
       // After the shot, so a failing layout still leaves its picture.
       await expectKpiStrip(ux);
     },
-  },
-  {
-    id: "03b-dashboard-real-asof-5y",
-    desc: "Dashboard, real lens at +5y: the net worth foot names base-date Kč (ADR 0200 §4)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "03b-dashboard-real-asof-5y",
+    "Dashboard, real lens at +5y: the net worth foot names base-date Kč (ADR 0200 §4)",
+    async (ux) => {
       await boot(ux.page);
       await pickReal(ux);
       await pickFiveYearsAndCheckHint(ux.page);
-      await ux.capture("03b-dashboard-real-asof-5y");
+      await ux.capture();
       // The base-date note may take the net worth foot to a third line.
       await expectKpiStrip(ux, 112);
     },
-  },
-  {
-    id: "04-dashboard-calendar",
-    desc: "As-of calendar popover open",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "04-dashboard-calendar",
+    "As-of calendar popover open",
+    async (ux) => {
       await boot(ux.page);
       await ux.page.locator(".asof .date-trigger").click();
       await expect(ux.page.locator(".date-popover")).toBeVisible();
-      await ux.capture("04-dashboard-calendar", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "05-dashboard-filter",
-    desc: "Dashboard filtered to one property",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "05-dashboard-filter",
+    "Dashboard filtered to one property",
+    async (ux) => {
       await boot(ux.page);
       // The pill variant: "All" first, then one pill per property.
       const all = ux.page.getByTestId("dashboard-filter-all");
@@ -219,13 +209,13 @@ export const SCREENS: Screen[] = [
       await first.click();
       await expect(first).toHaveAttribute("aria-pressed", "true");
       await expect(all).toHaveAttribute("aria-pressed", "false");
-      await ux.capture("05-dashboard-filter");
+      await ux.capture();
     },
-  },
-  {
-    id: "05b-dashboard-filter-open",
-    desc: "Six properties: the Dashboard filter is a dropdown, open, focus on All (ADR 0157)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "05b-dashboard-filter-open",
+    "Six properties: the Dashboard filter is a dropdown, open, focus on All (ADR 0157)",
+    async (ux) => {
       await boot(ux.page);
       await addPropertiesToSix(ux);
       await nav(ux, "dashboard");
@@ -234,27 +224,27 @@ export const SCREENS: Screen[] = [
         ux.page.getByTestId("dashboard-filter-trigger"),
         ux.t.common.all,
       );
-      await ux.capture("05b-dashboard-filter-open", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "06-sidebar-collapsed",
-    desc: "Sidebar collapsed to icon rail",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "06-sidebar-collapsed",
+    "Sidebar collapsed to icon rail",
+    async (ux) => {
       await boot(ux.page);
       await ux.page
         .getByRole("button", { name: ux.t.shell.collapseSidebar })
         .click();
-      await ux.capture("06-sidebar-collapsed", { fullPage: false });
+      await ux.capture({ fullPage: false });
       // A wider grid with the bar collapsed: two per row from 640 px (ADR 0218 §2).
       await expectDashboardHierarchy(ux);
       await expectNavGroups(ux);
     },
-  },
-  {
-    id: "07-dashboard-chart-table",
-    desc: "Dashboard, value and LTV charts shown as tables (UX-075)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "07-dashboard-chart-table",
+    "Dashboard, value and LTV charts shown as tables (UX-075)",
+    async (ux) => {
       await boot(ux.page);
       const toggles = ux.page
         .locator(".projection-charts")
@@ -265,13 +255,13 @@ export const SCREENS: Screen[] = [
       await toggles.first().click();
       await toggles.last().click();
       await expect(ux.page.locator("table.chart-table")).toHaveCount(2);
-      await ux.capture("07-dashboard-chart-table");
+      await ux.capture();
     },
-  },
-  {
-    id: "08-dashboard-chart-tooltip",
-    desc: "Value chart focused from the keyboard: named surface, tooltip with series swatches, axe on the open tooltip (ADR 0114)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "08-dashboard-chart-tooltip",
+    "Value chart focused from the keyboard: named surface, tooltip with series swatches, axe on the open tooltip (ADR 0114)",
+    async (ux) => {
       await boot(ux.page);
       const surface = ux.page.getByRole("img", {
         name: ux.t.charts.surfaceLabel(ux.t.dashboard.chartValueVsDebtVsEquity),
@@ -299,13 +289,13 @@ export const SCREENS: Screen[] = [
         return [...new Set(styles)];
       });
       expect(ticks).toEqual(["11px ink-soft"]);
-      await ux.capture("08-dashboard-chart-tooltip", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "08c-dashboard-chart-reset",
-    desc: "Value chart: fixation ends marked at 2029 and 2031 (dashed line, diamond, legend entry), the 2029 tooltip lists Lipova's reset (ADR 0210)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "08c-dashboard-chart-reset",
+    "Value chart: fixation ends marked at 2029 and 2031 (dashed line, diamond, legend entry), the 2029 tooltip lists Lipova's reset (ADR 0210)",
+    async (ux) => {
       await boot(ux.page);
       const hero = ux.page.locator(".projection-charts .chart-card").first();
       await expect(
@@ -337,13 +327,13 @@ export const SCREENS: Screen[] = [
       await expect(tip.locator(".tt-reset")).toContainText(
         "Byt Lipova · 15.01.2029",
       );
-      await ux.capture("08c-dashboard-chart-reset", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "09-dashboard-data-check",
-    desc: "Data check five years on, reached from the filter bar's link: the summary, then four lines with a chip per property (ADR 0118, ADR 0206)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "09-dashboard-data-check",
+    "Data check five years on, reached from the filter bar's link: the summary, then four lines with a chip per property (ADR 0118, ADR 0206)",
+    async (ux) => {
       const d = ux.t.dataCheck;
       await boot(ux.page);
       await ux.page.getByTestId("asof-5y").click();
@@ -368,7 +358,7 @@ export const SCREENS: Screen[] = [
       await expect(p.locator(".dc-chip")).toHaveCount(12);
       for (const chip of await p.locator(".dc-chip").all())
         await expectNotClipped(chip);
-      await ux.capture("09-dashboard-data-check", { fullPage: false });
+      await ux.capture({ fullPage: false });
       await expectDisclosures(ux);
       // A chip opens the property and lands its section below the sticky topbar.
       await p
@@ -386,11 +376,11 @@ export const SCREENS: Screen[] = [
       const head = await heading.boundingBox();
       expect(head!.y).toBeGreaterThanOrEqual(bar!.y + bar!.height);
     },
-  },
-  {
-    id: "09b-dashboard-cash-invested",
-    desc: "Dashboard KPI list with Cash invested once every property has own cash (ADR 0119 §9)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "09b-dashboard-cash-invested",
+    "Dashboard KPI list with Cash invested once every property has own cash (ADR 0119 §9)",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
       const rows = ux.page.locator("table.data tbody tr");
@@ -408,24 +398,20 @@ export const SCREENS: Screen[] = [
         p.getByText(ux.t.dashboard.kpiCashInvested, { exact: true }),
       ).toBeVisible();
       await p.scrollIntoViewIfNeeded();
-      await ux.capture("09b-dashboard-cash-invested", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "10-properties",
-    desc: "Properties list",
-    run: async (ux) => {
-      await boot(ux.page);
-      await nav(ux, "properties");
-      await expectRowActions(ux.page.locator("table.data"), 72);
-      await expectPropertiesFit(ux);
-      await ux.capture("10-properties");
-    },
-  },
-  {
-    id: "10d-properties-undrawn",
-    desc: "Properties: a development loan with a tranche ahead, its short undrawn line under the debt (ADR 0205)",
-    run: async (ux) => {
+  ),
+  defineScreen("10-properties", "Properties list", async (ux) => {
+    await boot(ux.page);
+    await nav(ux, "properties");
+    await expectRowActions(ux.page.locator("table.data"), 72);
+    await expectPropertiesFit(ux);
+    await ux.capture();
+  }),
+  defineScreen(
+    "10d-properties-undrawn",
+    "Properties: a development loan with a tranche ahead, its short undrawn line under the debt (ADR 0205)",
+    async (ux) => {
       await firstLoanToDevelopment(ux);
       await expect(
         panel(ux, ux.t.propertyDetail.loanSummaryTitle).getByRole(
@@ -437,13 +423,13 @@ export const SCREENS: Screen[] = [
         ux.page.locator("table.data tbody .cell-note").first(),
       ).toBeVisible();
       await expectPropertiesFit(ux);
-      await ux.capture("10d-properties-undrawn");
+      await ux.capture();
     },
-  },
-  {
-    id: "10c-properties-row-action-tooltip",
-    desc: "Properties: keyboard focus on a row's Delete shows its name as a tooltip, inside the table (ADR 0199)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "10c-properties-row-action-tooltip",
+    "Properties: keyboard focus on a row's Delete shows its name as a tooltip, inside the table (ADR 0199)",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
       const table = ux.page.locator(".table-wrap").first();
@@ -452,7 +438,7 @@ export const SCREENS: Screen[] = [
         table.getByRole("button", { name: ux.t.common.delete }).first(),
         table,
       );
-      await ux.capture("10c-properties-row-action-tooltip", {
+      await ux.capture({
         fullPage: false,
       });
       // A tooltip covering Edit never runs Delete (ADR 0199 §3): from Delete, the pointer
@@ -470,34 +456,34 @@ export const SCREENS: Screen[] = [
       await expect(ux.page.getByRole("dialog")).toBeVisible();
       await expect(ux.page.locator(".confirm-row")).toHaveCount(0);
     },
-  },
-  {
-    id: "10b-properties-today-projection",
-    desc: "Properties at Today seven months after the projection start: rows and context line name projection year Y1 (ADR 0150)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "10b-properties-today-projection",
+    "Properties at Today seven months after the projection start: rows and context line name projection year Y1 (ADR 0150)",
+    async (ux) => {
       await ux.page.clock.setFixedTime(new Date("2027-01-15T10:00:00Z"));
       await boot(ux.page);
       await nav(ux, "properties");
-      await ux.capture("10b-properties-today-projection");
+      await ux.capture();
     },
-  },
-  {
-    id: "11-property-add-modal",
-    desc: "Add-property modal, empty",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "11-property-add-modal",
+    "Add-property modal, empty",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
       await ux.page
         .getByRole("button", { name: ux.t.properties.addProperty })
         .click();
       await expect(ux.page.getByRole("dialog")).toBeVisible();
-      await ux.capture("11-property-add-modal", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "12-property-add-errors",
-    desc: "Add-property modal after submitting blank",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "12-property-add-errors",
+    "Add-property modal after submitting blank",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
       await ux.page
@@ -509,13 +495,13 @@ export const SCREENS: Screen[] = [
         .getByRole("button", { name: ux.t.propertyForm.addTitle })
         .click();
       await expect(dialog.locator(".err").first()).toBeVisible();
-      await ux.capture("12-property-add-errors", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "13-property-delete-confirm",
-    desc: "Delete-property inline confirmation",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "13-property-delete-confirm",
+    "Delete-property inline confirmation",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
       await ux.page
@@ -524,13 +510,13 @@ export const SCREENS: Screen[] = [
         .getByRole("button", { name: ux.t.common.delete })
         .click();
       await expect(ux.page.locator(".confirm-row")).toBeVisible();
-      await ux.capture("13-property-delete-confirm");
+      await ux.capture();
     },
-  },
-  {
-    id: "14-properties-long-name",
-    desc: "Properties list with a very long property name",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "14-properties-long-name",
+    "Properties list with a very long property name",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
       await ux.page
@@ -583,13 +569,13 @@ export const SCREENS: Screen[] = [
         expect(h.lines, `"${h.text}" header lines`).toBeLessThan(2.5);
       }
       await expectPropertiesFit(ux);
-      await ux.capture("14-properties-long-name");
+      await ux.capture();
     },
-  },
-  {
-    id: "15-property-edit-acquisition",
-    desc: "Edit-property dialog with the Acquisition section open and filled (ADR 0119 §9)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "15-property-edit-acquisition",
+    "Edit-property dialog with the Acquisition section open and filled (ADR 0119 §9)",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
       await ux.page
@@ -606,14 +592,14 @@ export const SCREENS: Screen[] = [
       await dialog
         .getByLabel(ux.t.propertyForm.fundingNote, { exact: true })
         .scrollIntoViewIfNeeded();
-      await ux.capture("15-property-edit-acquisition", { fullPage: false });
+      await ux.capture({ fullPage: false });
       await expectDisclosures(ux);
     },
-  },
-  {
-    id: "20-property-detail",
-    desc: "Property detail (first property): section nav, amortization collapsed (ADR 0107)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "20-property-detail",
+    "Property detail (first property): section nav, amortization collapsed (ADR 0107)",
+    async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
       // Every section link is in view; the nav wraps rather than scrolls (ADR 0158).
@@ -638,13 +624,13 @@ export const SCREENS: Screen[] = [
         "primary buttons at rest",
       ).toBeLessThanOrEqual(1);
       await expectProjectionGrid(ux);
-      await ux.capture("20-property-detail");
+      await ux.capture();
     },
-  },
-  {
-    id: "20c-property-holding-edit",
-    desc: "Property detail: Edit on Holding costs opens the form in place, focus in its first field (ADR 0207)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "20c-property-holding-edit",
+    "Property detail: Edit on Holding costs opens the form in place, focus in its first field (ADR 0207)",
+    async (ux) => {
       const d = ux.t.propertyDetail;
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -657,7 +643,7 @@ export const SCREENS: Screen[] = [
         holding.getByRole("button", { name: d.saveHoldingCosts }),
       ).toBeVisible();
       await holding.scrollIntoViewIfNeeded();
-      await ux.capture("20c-property-holding-edit", { fullPage: false });
+      await ux.capture({ fullPage: false });
       await holding.getByRole("button", { name: ux.t.common.cancel }).click();
       const pencil = holding.getByRole("button", { name: d.editHoldingCosts });
       await expect(pencil).toBeFocused();
@@ -680,21 +666,21 @@ export const SCREENS: Screen[] = [
       await holding.scrollIntoViewIfNeeded();
       await ux.capture("20d-property-holding-default", { fullPage: false });
     },
-  },
-  {
-    id: "20b-property-detail-asof-5y",
-    desc: "Property detail at +5y: the as-of hint is one row under the picker, which does not move (ADR 0198)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "20b-property-detail-asof-5y",
+    "Property detail at +5y: the as-of hint is one row under the picker, which does not move (ADR 0198)",
+    async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
       await pickFiveYearsAndCheckHint(ux.page);
-      await ux.capture("20b-property-detail-asof-5y", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "21d-property-info-tip",
-    desc: "Property detail: the Valuations definition behind its info icon, opened from the keyboard (ADR 0217)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "21d-property-info-tip",
+    "Property detail: the Valuations definition behind its info icon, opened from the keyboard (ADR 0217)",
+    async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
       const d = ux.t.propertyDetail;
@@ -707,28 +693,28 @@ export const SCREENS: Screen[] = [
       });
       await expectInfoTip(ux.page, button);
       await expectDisclosures(ux);
-      await ux.capture("21d-property-info-tip", { fullPage: false });
+      await ux.capture({ fullPage: false });
       await expectInfoTipEscape(ux.page, button);
     },
-  },
-  {
-    id: "26-property-amortization-open",
-    desc: "Property detail with the amortization schedule expanded: every section (ADR 0107)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "26-property-amortization-open",
+    "Property detail with the amortization schedule expanded: every section (ADR 0107)",
+    async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
       const p = panel(ux, ux.t.propertyDetail.amortizationTitle);
       const toggle = p.getByRole("button", { expanded: false });
       await toggle.click();
       await expect(p.getByRole("table")).toBeVisible();
-      await ux.capture("26-property-amortization-open");
+      await ux.capture();
       await expectDisclosures(ux);
     },
-  },
-  {
-    id: "27-property-section-nav-focus",
-    desc: "Section nav from the keyboard: Financing's heading focused below the topbar (ADR 0107)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "27-property-section-nav-focus",
+    "Section nav from the keyboard: Financing's heading focused below the topbar (ADR 0107)",
+    async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
       const link = ux.page
@@ -746,24 +732,24 @@ export const SCREENS: Screen[] = [
       const bar = await ux.page.locator(".topbar").boundingBox();
       const head = await heading.boundingBox();
       expect(head!.y).toBeGreaterThanOrEqual(bar!.y + bar!.height);
-      await ux.capture("27-property-section-nav-focus", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "28-property-mortgage-events",
-    desc: "Mortgage form with prepayment and maturity-change rows (ADR 0116)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "28-property-mortgage-events",
+    "Mortgage form with prepayment and maturity-change rows (ADR 0116)",
+    async (ux) => {
       const p = await enterLoanEvents(ux);
       await p
         .getByRole("group", { name: ux.t.propertyDetail.fieldPrepayments })
         .scrollIntoViewIfNeeded();
-      await ux.capture("28-property-mortgage-events");
+      await ux.capture();
     },
-  },
-  {
-    id: "29-property-prepayment-outputs",
-    desc: "After saving events: loan outlook, event warning, Prepaid and fee columns (ADR 0116)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "29-property-prepayment-outputs",
+    "After saving events: loan outlook, event warning, Prepaid and fee columns (ADR 0116)",
+    async (ux) => {
       const d = ux.t.propertyDetail;
       const p = await enterLoanEvents(ux);
       await p
@@ -782,13 +768,13 @@ export const SCREENS: Screen[] = [
       await expect(
         am.getByRole("columnheader", { name: d.amColPrepaid }),
       ).toBeVisible();
-      await ux.capture("29-property-prepayment-outputs");
+      await ux.capture();
     },
-  },
-  {
-    id: "29d-dashboard-interest-saved",
-    desc: "Dashboard financing panel names the interest-saved window (ADR 0144)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "29d-dashboard-interest-saved",
+    "Dashboard financing panel names the interest-saved window (ADR 0144)",
+    async (ux) => {
       const p = await enterLoanEvents(ux);
       await p
         .locator(".form-actions")
@@ -800,14 +786,14 @@ export const SCREENS: Screen[] = [
         f.getByText(ux.t.dashboard.financingInterestSaved, { exact: true }),
       ).toBeVisible();
       await f.scrollIntoViewIfNeeded();
-      await ux.capture("29d-dashboard-interest-saved", { fullPage: false });
+      await ux.capture({ fullPage: false });
       await expectDisclosures(ux);
     },
-  },
-  {
-    id: "29g-dashboard-financing-20-loans",
-    desc: "Financing timeline with 20 loans: the first 8 rows and Show all (ADR 0204)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "29g-dashboard-financing-20-loans",
+    "Financing timeline with 20 loans: the first 8 rows and Show all (ADR 0204)",
+    async (ux) => {
       await restoreEdited(ux, twentyLoans);
       const f = panel(ux, ux.t.dashboard.financingTitle);
       const more = f.getByRole("button", {
@@ -819,13 +805,13 @@ export const SCREENS: Screen[] = [
       await expectFinancingTimeline(ux);
       await f.scrollIntoViewIfNeeded();
       await ux.page.mouse.move(0, 0);
-      await ux.capture("29g-dashboard-financing-20-loans", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "29h-dashboard-financing-dev-lease",
-    desc: "Financing timeline: a development completion and a lease ending in the window, and the table view (ADR 0204)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "29h-dashboard-financing-dev-lease",
+    "Financing timeline: a development completion and a lease ending in the window, and the table view (ADR 0204)",
+    async (ux) => {
       const d = ux.t.dashboard;
       await restoreEdited(ux, devLoanAndLeaseEnd);
       const f = panel(ux, d.financingTitle);
@@ -839,7 +825,7 @@ export const SCREENS: Screen[] = [
       await expectFinancingTimeline(ux, 3);
       await f.scrollIntoViewIfNeeded();
       await ux.page.mouse.move(0, 0);
-      await ux.capture("29h-dashboard-financing-dev-lease", {
+      await ux.capture({
         fullPage: false,
       });
       await f.getByRole("button", { name: ux.t.charts.table }).click();
@@ -848,11 +834,11 @@ export const SCREENS: Screen[] = [
       ).toBeVisible();
       await ux.capture("29i-dashboard-financing-table", { fullPage: false });
     },
-  },
-  {
-    id: "29b-property-loan-outlook",
-    desc: "Loan outlook right after the charts: the figure row, then each block's reset; the note behind the info icon (ADR 0117, ADR 0224)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "29b-property-loan-outlook",
+    "Loan outlook right after the charts: the figure row, then each block's reset; the note behind the info icon (ADR 0117, ADR 0224)",
+    async (ux) => {
       const d = ux.t.propertyDetail;
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -883,7 +869,7 @@ export const SCREENS: Screen[] = [
       ]);
       for (const f of await figures.all()) await expectNotClipped(f);
       await p.scrollIntoViewIfNeeded();
-      await ux.capture("29b-property-loan-outlook", { fullPage: false });
+      await ux.capture({ fullPage: false });
       // The note is behind the info icon (§5).
       const info = p.getByRole("button", {
         name: `${ux.t.common.aboutThis}: ${d.loanSummaryTitle}`,
@@ -891,11 +877,11 @@ export const SCREENS: Screen[] = [
       await expectInfoTip(ux.page, info);
       await expect(p.locator(".panel-note")).toHaveCount(0);
     },
-  },
-  {
-    id: "29e-property-drawdown",
-    desc: "Loan outlook drawdown of a development loan: drawn of total and each draw's status (ADR 0167)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "29e-property-drawdown",
+    "Loan outlook drawdown of a development loan: drawn of total and each draw's status (ADR 0167)",
+    async (ux) => {
       const d = ux.t.propertyDetail;
       await firstLoanToDevelopment(ux);
       const p = panel(ux, d.loanSummaryTitle);
@@ -907,7 +893,7 @@ export const SCREENS: Screen[] = [
       await expect(drawdown.getByText(d.drawStatus.ahead)).toBeVisible();
       await drawdown.scrollIntoViewIfNeeded();
       await ux.page.mouse.move(0, 0);
-      await ux.capture("29e-property-drawdown", { fullPage: false });
+      await ux.capture({ fullPage: false });
       // The drawdown note sits behind the sub-heading's info icon (ADR 0217).
       const info = drawdown.getByRole("button", {
         name: `${ux.t.common.aboutThis}: ${d.drawdownTitle}`,
@@ -915,11 +901,11 @@ export const SCREENS: Screen[] = [
       await expectInfoTip(ux.page, info);
       await expectInfoTipEscape(ux.page, info);
     },
-  },
-  {
-    id: "29f-property-dev-drawn-debt",
-    desc: "Development loan with tranches ahead: drawn debt and value less the undrawn tranches in the tiles and the chart, with the dashed committed line (ADR 0169)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "29f-property-dev-drawn-debt",
+    "Development loan with tranches ahead: drawn debt and value less the undrawn tranches in the tiles and the chart, with the dashed committed line (ADR 0169)",
+    async (ux) => {
       const d = ux.t.propertyDetail;
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -956,13 +942,13 @@ export const SCREENS: Screen[] = [
           .locator(".foot"),
       ).toContainText(ux.t.common.undrawnDebt("X").split("X")[1]!.trim());
       await expectKpiStrip(ux);
-      await ux.capture("29f-property-dev-drawn-debt", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "29c-property-acquisition",
-    desc: "Property detail Acquisition section: sources and uses with the gap warning (ADR 0119 §9)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "29c-property-acquisition",
+    "Property detail Acquisition section: sources and uses with the gap warning (ADR 0119 §9)",
+    async (ux) => {
       const d = ux.t.propertyDetail;
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -979,13 +965,13 @@ export const SCREENS: Screen[] = [
       const p = panel(ux, d.acqTitle);
       await expect(p.getByRole("heading", { name: d.acqTitle })).toBeFocused();
       await expect(p.getByRole("note")).toBeVisible();
-      await ux.capture("29c-property-acquisition", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "29i-property-acquisition-empty",
-    desc: "Property detail Acquisition with nothing but the price known: one line and Record funding, which opens the form at Acquisition (ADR 0209)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "29i-property-acquisition-empty",
+    "Property detail Acquisition with nothing but the price known: one line and Record funding, which opens the form at Acquisition (ADR 0209)",
+    async (ux) => {
       const d = ux.t.propertyDetail;
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -1007,7 +993,7 @@ export const SCREENS: Screen[] = [
       // language (a line naming the acquisition loan is longer).
       expect(box!.height, "compact").toBeLessThanOrEqual(96);
       expect(btn!.height, "24 px target").toBeGreaterThanOrEqual(24);
-      await ux.capture("29i-property-acquisition-empty", { fullPage: false });
+      await ux.capture({ fullPage: false });
       await record.click();
       const dialog = ux.page.getByRole("dialog");
       await expect(
@@ -1019,11 +1005,11 @@ export const SCREENS: Screen[] = [
         dialog.getByLabel(ux.t.propertyForm.ownCash, { exact: true }),
       ).toBeFocused();
     },
-  },
-  {
-    id: "31-property-data-check",
-    desc: "Property detail's Data check five years on, the last section, reached by the title pill; its link moves to Records, Record funding opens the form's Acquisition section (ADR 0118, ADR 0223)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "31-property-data-check",
+    "Property detail's Data check five years on, the last section, reached by the title pill; its link moves to Records, Record funding opens the form's Acquisition section (ADR 0118, ADR 0223)",
+    async (ux) => {
       const d = ux.t.dataCheck;
       await boot(ux.page);
       await ux.page.getByTestId("asof-5y").click();
@@ -1045,7 +1031,7 @@ export const SCREENS: Screen[] = [
       await ux.page.locator(".topbar .title-pill").click();
       await expect(p.getByRole("heading", { name: d.title })).toBeFocused();
       await expectDataCheckLayout(p);
-      await ux.capture("31-property-data-check", { fullPage: false });
+      await ux.capture({ fullPage: false });
       await p
         .getByRole("button", {
           name: d.goTo(ux.t.propertyDetail.sectionRecords),
@@ -1068,23 +1054,23 @@ export const SCREENS: Screen[] = [
         ux.page.getByRole("dialog").getByLabel(ux.t.propertyForm.ownCash),
       ).toBeFocused();
     },
-  },
-  {
-    id: "21-property-valuation-edit",
-    desc: "Valuation row in edit mode",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "21-property-valuation-edit",
+    "Valuation row in edit mode",
+    async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
       const p = panel(ux, ux.t.propertyDetail.valuationsTitle);
       await p.getByRole("button", { name: ux.t.common.edit }).first().click();
       await p.scrollIntoViewIfNeeded();
-      await ux.capture("21-property-valuation-edit");
+      await ux.capture();
     },
-  },
-  {
-    id: "21b-property-valuation-delete-confirm",
-    desc: "Valuation delete confirm, naming the row (ADR 0143)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "21b-property-valuation-delete-confirm",
+    "Valuation delete confirm, naming the row (ADR 0143)",
+    async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
       const p = panel(ux, ux.t.propertyDetail.valuationsTitle);
@@ -1093,13 +1079,13 @@ export const SCREENS: Screen[] = [
         p.getByRole("button", { name: ux.t.common.cancel }),
       ).toBeFocused();
       await p.scrollIntoViewIfNeeded();
-      await ux.capture("21b-property-valuation-delete-confirm");
+      await ux.capture();
     },
-  },
-  {
-    id: "21c-property-valuation-close-previous",
-    desc: "Adding an open-ended valuation ends the previous one the day before (ADR 0227)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "21c-property-valuation-close-previous",
+    "Adding an open-ended valuation ends the previous one the day before (ADR 0227)",
+    async (ux) => {
       const d = ux.t.propertyDetail;
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -1116,15 +1102,15 @@ export const SCREENS: Screen[] = [
       await expect(p.getByLabel(d.fieldValidFrom)).toHaveCount(0);
       await expect(p.getByRole("cell", { name: "31.12.2026" })).toBeVisible();
       await p.scrollIntoViewIfNeeded();
-      await ux.capture("21c-property-valuation-close-previous", {
+      await ux.capture({
         fullPage: false,
       });
     },
-  },
-  {
-    id: "22-property-mortgage-add-errors",
-    desc: "Add mortgage block, submitted blank",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "22-property-mortgage-add-errors",
+    "Add mortgage block, submitted blank",
+    async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
       const p = panel(ux, ux.t.propertyDetail.mortgagesTitle);
@@ -1138,13 +1124,13 @@ export const SCREENS: Screen[] = [
         })
         .click();
       await expect(p.locator(".err").first()).toBeVisible();
-      await ux.capture("22-property-mortgage-add-errors");
+      await ux.capture();
     },
-  },
-  {
-    id: "25-property-mortgage-development",
-    desc: "Add mortgage block as Development: the successor note (ADR 0098) and a drawdown schedule with a start draw, two tranches and a warning (ADR 0167)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "25-property-mortgage-development",
+    "Add mortgage block as Development: the successor note (ADR 0098) and a drawdown schedule with a start draw, two tranches and a warning (ADR 0167)",
+    async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
       const d = ux.t.propertyDetail;
@@ -1176,13 +1162,13 @@ export const SCREENS: Screen[] = [
       // The pointer stays where the toggle was; once the form grows it can rest on a
       // chart and open its tooltip. Park it so the scan covers the form, not a hover.
       await ux.page.mouse.move(0, 0);
-      await ux.capture("25-property-mortgage-development");
+      await ux.capture();
     },
-  },
-  {
-    id: "24-property-record-leave-guard",
-    desc: "Edited valuation form, then a sidebar click: the leave guard asks (UX-073)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "24-property-record-leave-guard",
+    "Edited valuation form, then a sidebar click: the leave guard asks (UX-073)",
+    async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
       const p = panel(ux, ux.t.propertyDetail.valuationsTitle);
@@ -1196,13 +1182,13 @@ export const SCREENS: Screen[] = [
       await expect(
         ux.page.getByRole("dialog", { name: ux.t.common.unsavedTitle }),
       ).toBeVisible();
-      await ux.capture("24-property-record-leave-guard", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "23-property-deactivate-confirm",
-    desc: "Deactivate-property confirmation banner",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "23-property-deactivate-confirm",
+    "Deactivate-property confirmation banner",
+    async (ux) => {
       await boot(ux.page);
       await openFirstProperty(ux);
       await ux.page
@@ -1214,23 +1200,23 @@ export const SCREENS: Screen[] = [
           name: ux.t.propertyDetail.yesDeactivate,
         }),
       ).toBeVisible();
-      await ux.capture("23-property-deactivate-confirm", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "30-projections",
-    desc: "Projections grid, portfolio, nominal",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "30-projections",
+    "Projections grid, portfolio, nominal",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "projections");
       await expectProjectionGrid(ux);
-      await ux.capture("30-projections");
+      await ux.capture();
     },
-  },
-  {
-    id: "30b-projections-entity-open",
-    desc: "Six properties: the Projections entity picker is a dropdown, open (ADR 0157)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "30b-projections-entity-open",
+    "Six properties: the Projections entity picker is a dropdown, open (ADR 0157)",
+    async (ux) => {
       await boot(ux.page);
       await addPropertiesToSix(ux);
       await nav(ux, "projections");
@@ -1243,49 +1229,41 @@ export const SCREENS: Screen[] = [
         }),
         ux.t.projections.portfolio,
       );
-      await ux.capture("30b-projections-entity-open", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "32-projections-real",
-    desc: "Projections grid, real lens",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "32-projections-real",
+    "Projections grid, real lens",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "projections");
       await pickReal(ux);
       await expectProjectionGrid(ux);
-      await ux.capture("32-projections-real", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "40-scenarios",
-    desc: "Scenarios, no saved scenarios",
-    run: async (ux) => {
-      await boot(ux.page);
-      await nav(ux, "scenarios");
-      await expectCompareLayout(ux);
-      // Nothing saved: the presets are open (ADR 0106, 0220).
-      await expectScenariosPanel(ux, true, 0);
-      await ux.capture("40-scenarios");
-    },
-  },
-  {
-    id: "41-scenario-form",
-    desc: "New-scenario modal",
-    run: async (ux) => {
-      await boot(ux.page);
-      await nav(ux, "scenarios");
-      await ux.page
-        .getByRole("button", { name: ux.t.scenarios.addScenario })
-        .click();
-      await expect(ux.page.getByRole("dialog")).toBeVisible();
-      await ux.capture("41-scenario-form", { fullPage: false });
-    },
-  },
-  {
-    id: "42-scenarios-compare",
-    desc: "Two stress presets added and compared with Base",
-    run: async (ux) => {
+  ),
+  defineScreen("40-scenarios", "Scenarios, no saved scenarios", async (ux) => {
+    await boot(ux.page);
+    await nav(ux, "scenarios");
+    await expectCompareLayout(ux);
+    // Nothing saved: the presets are open (ADR 0106, 0220).
+    await expectScenariosPanel(ux, true, 0);
+    await ux.capture();
+  }),
+  defineScreen("41-scenario-form", "New-scenario modal", async (ux) => {
+    await boot(ux.page);
+    await nav(ux, "scenarios");
+    await ux.page
+      .getByRole("button", { name: ux.t.scenarios.addScenario })
+      .click();
+    await expect(ux.page.getByRole("dialog")).toBeVisible();
+    await ux.capture({ fullPage: false });
+  }),
+  defineScreen(
+    "42-scenarios-compare",
+    "Two stress presets added and compared with Base",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "scenarios");
       await addTwoPresetsAndCompare(ux);
@@ -1308,14 +1286,14 @@ export const SCREENS: Screen[] = [
         await expectCompareLayout(ux);
       }
       await ux.page.setViewportSize(window);
-      await ux.capture("42-scenarios-compare");
+      await ux.capture();
       await expectDisclosures(ux);
     },
-  },
-  {
-    id: "43-scenarios-compare-delta",
-    desc: "Compare key figures as Δ vs Base (ADR 0097)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "43-scenarios-compare-delta",
+    "Compare key figures as Δ vs Base (ADR 0097)",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "scenarios");
       await addTwoPresetsAndCompare(ux);
@@ -1329,13 +1307,13 @@ export const SCREENS: Screen[] = [
       // The toast outlives a page change (ADR 0154); this screen shows the page.
       await expect(ux.page.locator(".toast")).toBeHidden({ timeout: 10_000 });
       await expectCompareLayout(ux);
-      await ux.capture("43-scenarios-compare-delta");
+      await ux.capture();
     },
-  },
-  {
-    id: "45-scenario-delete-confirm",
-    desc: "Scenario delete confirm, focus on Cancel (ADR 0143)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "45-scenario-delete-confirm",
+    "Scenario delete confirm, focus on Cancel (ADR 0143)",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "scenarios");
       await ux.page
@@ -1349,13 +1327,13 @@ export const SCREENS: Screen[] = [
       await expect(
         ux.page.getByRole("button", { name: ux.t.common.cancel }),
       ).toBeFocused();
-      await ux.capture("45-scenario-delete-confirm");
+      await ux.capture();
     },
-  },
-  {
-    id: "44-scenario-form-errors",
-    desc: "New-scenario modal refusing a crash typed as −20 % (ADR 0123)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "44-scenario-form-errors",
+    "New-scenario modal refusing a crash typed as −20 % (ADR 0123)",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "scenarios");
       await ux.page
@@ -1371,59 +1349,55 @@ export const SCREENS: Screen[] = [
       const err = dialog.locator(".err").first();
       await expect(err).toBeVisible();
       await err.scrollIntoViewIfNeeded();
-      await ux.capture("44-scenario-form-errors", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "50-import",
-    desc: "Import page, nothing chosen",
-    run: async (ux) => {
-      await boot(ux.page);
-      await nav(ux, "import");
-      await expectImportRows(ux);
-      // The drag-over state shows on the row a file is over (ADR 0212 §2), and a
-      // keyboard-focused button outlines its row.
-      const row = ux.page.locator(".import-row").nth(1);
-      await row.dispatchEvent("dragenter", {
-        dataTransfer: await ux.page.evaluateHandle(() => new DataTransfer()),
-      });
-      await expect(row).toHaveClass(/drag-over/);
-      // A real Tab, so the focus is keyboard focus (:focus-visible).
-      await ux.page
-        .getByRole("button", {
-          name: ux.t.importPage.templateFor(ux.t.importPage.valuationsTitle),
-        })
-        .focus();
-      await ux.page.keyboard.press("Tab");
-      await expect(
-        ux.page.getByRole("button", {
-          name: ux.t.importPage.chooseFileFor(ux.t.importPage.rentsTitle),
-        }),
-      ).toBeFocused();
-      await ux.capture("50b-import-row-states", { fullPage: false });
-      await row.dispatchEvent("dragleave");
-      await expect(row).not.toHaveClass(/drag-over/);
-      await ux.page.locator("body").focus();
-      await ux.capture("50-import");
-    },
-  },
-  {
-    id: "51-import-errors",
-    desc: "Import: valid properties.csv + valuations.csv with row errors",
-    run: async (ux) => {
+  ),
+  defineScreen("50-import", "Import page, nothing chosen", async (ux) => {
+    await boot(ux.page);
+    await nav(ux, "import");
+    await expectImportRows(ux);
+    // The drag-over state shows on the row a file is over (ADR 0212 §2), and a
+    // keyboard-focused button outlines its row.
+    const row = ux.page.locator(".import-row").nth(1);
+    await row.dispatchEvent("dragenter", {
+      dataTransfer: await ux.page.evaluateHandle(() => new DataTransfer()),
+    });
+    await expect(row).toHaveClass(/drag-over/);
+    // A real Tab, so the focus is keyboard focus (:focus-visible).
+    await ux.page
+      .getByRole("button", {
+        name: ux.t.importPage.templateFor(ux.t.importPage.valuationsTitle),
+      })
+      .focus();
+    await ux.page.keyboard.press("Tab");
+    await expect(
+      ux.page.getByRole("button", {
+        name: ux.t.importPage.chooseFileFor(ux.t.importPage.rentsTitle),
+      }),
+    ).toBeFocused();
+    await ux.capture("50b-import-row-states", { fullPage: false });
+    await row.dispatchEvent("dragleave");
+    await expect(row).not.toHaveClass(/drag-over/);
+    await ux.page.locator("body").focus();
+    await ux.capture();
+  }),
+  defineScreen(
+    "51-import-errors",
+    "Import: valid properties.csv + valuations.csv with row errors",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "import");
       const inputs = ux.page.locator("input[type=file]");
       await inputs.nth(0).setInputFiles(fixture("properties-ok.csv"));
       await inputs.nth(1).setInputFiles(fixture("valuations-errors.csv"));
       await expect(ux.page.locator(".badge.bad")).toBeVisible();
-      await ux.capture("51-import-errors");
+      await ux.capture();
     },
-  },
-  {
-    id: "52-import-done",
-    desc: "Import report after a successful import",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "52-import-done",
+    "Import report after a successful import",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "import");
       await ux.page
@@ -1437,13 +1411,13 @@ export const SCREENS: Screen[] = [
       await expect(
         ux.page.getByRole("heading", { name: ux.t.importPage.reportTitle }),
       ).toBeVisible();
-      await ux.capture("52-import-done");
+      await ux.capture();
     },
-  },
-  {
-    id: "53-import-preview",
-    desc: "Import preview: one add, one update, overwrite confirmation open",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "53-import-preview",
+    "Import preview: one add, one update, overwrite confirmation open",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "import");
       await ux.page
@@ -1459,14 +1433,14 @@ export const SCREENS: Screen[] = [
           name: ux.t.importPage.confirmOverwrite(1),
         }),
       ).toBeVisible();
-      await ux.capture("53-import-preview");
+      await ux.capture();
       await expectDisclosures(ux);
     },
-  },
-  {
-    id: "54-import-preview-failed",
-    desc: "Import: the preview read failed, so an error says why Import is unavailable (ADR 0147)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "54-import-preview-failed",
+    "Import: the preview read failed, so an error says why Import is unavailable (ADR 0147)",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "import");
       // The browser database does not fail on its own: fail the preview the way a broken
@@ -1485,13 +1459,13 @@ export const SCREENS: Screen[] = [
         .first()
         .setInputFiles(fixture("properties-ok.csv"));
       await expect(ux.page.getByText(/disk I\/O error/)).toBeVisible();
-      await ux.capture("54-import-preview-failed");
+      await ux.capture();
     },
-  },
-  {
-    id: "55-import-loan-events",
-    desc: "Import preview: a new block lists the saved events it stops and asks first; an earlier start has no effect (ADR 0160)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "55-import-loan-events",
+    "Import preview: a new block lists the saved events it stops and asks first; an earlier start has no effect (ADR 0160)",
+    async (ux) => {
       const p = await enterLoanEvents(ux);
       await p
         .locator(".form-actions")
@@ -1516,13 +1490,13 @@ export const SCREENS: Screen[] = [
       await expect(
         ux.page.getByRole("button", { name: ux.t.importPage.confirmReplace }),
       ).toBeVisible();
-      await ux.capture("55-import-loan-events");
+      await ux.capture();
     },
-  },
-  {
-    id: "56-import-stored-event",
-    desc: "Import refused: a shorter term breaks a saved prepayment, named with its date (ADR 0160)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "56-import-stored-event",
+    "Import refused: a shorter term breaks a saved prepayment, named with its date (ADR 0160)",
+    async (ux) => {
       // One prepayment only: a maturity change would move the loan's end with it.
       await boot(ux.page);
       await openFirstProperty(ux);
@@ -1548,23 +1522,23 @@ export const SCREENS: Screen[] = [
       await expect(
         ux.page.locator("td.cell-message", { hasText: "17.01.2031" }),
       ).toBeVisible();
-      await ux.capture("56-import-stored-event");
+      await ux.capture();
     },
-  },
-  {
-    id: "60-settings-assumptions",
-    desc: "Settings → Assumptions",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "60-settings-assumptions",
+    "Settings → Assumptions",
+    async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "assumptions");
       await expectSettingsTopBar(ux, "assumptions");
-      await ux.capture("60-settings-assumptions");
+      await ux.capture();
     },
-  },
-  {
-    id: "61-settings-assumptions-error",
-    desc: "Assumptions with an invalid value after Save",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "61-settings-assumptions-error",
+    "Assumptions with an invalid value after Save",
+    async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "assumptions");
       await ux.page
@@ -1577,13 +1551,13 @@ export const SCREENS: Screen[] = [
       await expect(ux.page.locator(".field.invalid")).toBeVisible();
       // The failed state text fits the top bar (ADR 0221 §2).
       await expectSettingsTopBar(ux, "assumptions");
-      await ux.capture("61-settings-assumptions-error");
+      await ux.capture();
     },
-  },
-  {
-    id: "62-settings-assumptions-bounds",
-    desc: "Assumptions with an out-of-range horizon and a negative cost after Save (ADR 0075)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "62-settings-assumptions-bounds",
+    "Assumptions with an out-of-range horizon and a negative cost after Save (ADR 0075)",
+    async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "assumptions");
       // By the label's start: "Horizon" is also a word of the selling-cost field's
@@ -1600,13 +1574,13 @@ export const SCREENS: Screen[] = [
       await expect(ux.page.locator(".field.invalid")).toHaveCount(2);
       // The failed state text fits the top bar (ADR 0221 §2).
       await expectSettingsTopBar(ux, "assumptions");
-      await ux.capture("62-settings-assumptions-bounds");
+      await ux.capture();
     },
-  },
-  {
-    id: "63-settings-assumptions-unsaved",
-    desc: "Assumptions with an unsaved edit: Save and the state text in the top bar (ADR 0095, 0221)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "63-settings-assumptions-unsaved",
+    "Assumptions with an unsaved edit: Save and the state text in the top bar (ADR 0095, 0221)",
+    async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "assumptions");
       await ux.page
@@ -1617,23 +1591,23 @@ export const SCREENS: Screen[] = [
         ux.page.locator("header.topbar").getByText(ux.t.common.unsavedChanges),
       ).toBeVisible();
       await expectSettingsTopBar(ux, "assumptions");
-      await ux.capture("63-settings-assumptions-unsaved", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "64-settings-backup",
-    desc: "Settings → Backup / Restore",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "64-settings-backup",
+    "Settings → Backup / Restore",
+    async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "backup");
       await expectSettingsTopBar(ux, "backup");
-      await ux.capture("64-settings-backup");
+      await ux.capture();
     },
-  },
-  {
-    id: "64b-settings-backup-refused",
-    desc: "Settings → Backup: a refused backup in the notice, with its records (ADR 0154)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "64b-settings-backup-refused",
+    "Settings → Backup: a refused backup in the notice, with its records (ADR 0154)",
+    async (ux) => {
       await chooseEditedBackup(ux, (tables) => {
         const [lease] = tables.leases ?? [];
         if (!lease) throw new Error("the sample has no lease");
@@ -1641,26 +1615,26 @@ export const SCREENS: Screen[] = [
       });
       await expect(ux.page.getByText(ux.t.backup.errRowsInvalid)).toBeVisible();
       await expect(ux.page.getByText(ux.t.backup.downloaded)).toBeHidden();
-      await ux.capture("64b-settings-backup-refused", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "64c-settings-backup-toast",
-    desc: "Settings → Backup: the export's toast in the shell's live region (ADR 0154)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "64c-settings-backup-toast",
+    "Settings → Backup: the export's toast in the shell's live region (ADR 0154)",
+    async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "backup");
       await ux.page
         .getByRole("button", { name: ux.t.backup.exportButton })
         .click();
       await expect(ux.page.locator(".toast")).toBeVisible();
-      await ux.capture("64c-settings-backup-toast", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "65-about",
-    desc: "About modal (opened from the native menu in the app; here via the UI store)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "65-about",
+    "About modal (opened from the native menu in the app; here via the UI store)",
+    async (ux) => {
       await boot(ux.page);
       // The browser has no native menu: open it the way the menu://about bridge does.
       // Vite serves the store module by URL, so this is the app's own instance.
@@ -1672,13 +1646,13 @@ export const SCREENS: Screen[] = [
         useUiStore.getState().openAbout();
       });
       await expect(ux.page.getByRole("dialog")).toBeVisible();
-      await ux.capture("65-about", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "66-sidebar-backup-hint",
-    desc: "Sidebar backup reminder after an edit with no backup yet (ADR 0110)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "66-sidebar-backup-hint",
+    "Sidebar backup reminder after an edit with no backup yet (ADR 0110)",
+    async (ux) => {
       await boot(ux.page);
       await settingsTab(ux, "assumptions");
       await ux.page
@@ -1691,26 +1665,26 @@ export const SCREENS: Screen[] = [
       await expect(
         ux.page.getByRole("button", { name: ux.t.shell.backupHintNone }),
       ).toBeVisible();
-      await ux.capture("66-sidebar-backup-hint", { fullPage: false });
+      await ux.capture({ fullPage: false });
       // The tallest footer: the groups still neither overlap nor get cut off (ADR 0219).
       await expectNavGroups(ux);
     },
-  },
-  {
-    id: "67-restore-out-of-range",
-    desc: "Restore confirm step: values outside the form ranges listed, Restore anyway (ADR 0148)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "67-restore-out-of-range",
+    "Restore confirm step: values outside the form ranges listed, Restore anyway (ADR 0148)",
+    async (ux) => {
       await pickOutOfRangeBackup(ux);
       await expect(
         ux.page.getByRole("region", { name: ux.t.backup.warningsTitle }),
       ).toBeVisible();
-      await ux.capture("67-restore-out-of-range");
+      await ux.capture();
     },
-  },
-  {
-    id: "68-data-check-out-of-range",
-    desc: "Dashboard Data check after Restore anyway: the horizon row and the mortgage's fixation (ADR 0148)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "68-data-check-out-of-range",
+    "Dashboard Data check after Restore anyway: the horizon row and the mortgage's fixation (ADR 0148)",
+    async (ux) => {
       await pickOutOfRangeBackup(ux);
       await ux.page
         .getByRole("button", { name: ux.t.backup.restoreAnyway })
@@ -1726,29 +1700,25 @@ export const SCREENS: Screen[] = [
         }),
       ).toBeVisible();
       await p.scrollIntoViewIfNeeded();
-      await ux.capture("68-data-check-out-of-range", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
-  {
-    id: "70-guide",
-    desc: "Guide (full page)",
-    run: async (ux) => {
-      await boot(ux.page);
-      // Opening the Guide from a page scrolled down lands at its top (ADR 0213 §3).
-      await nav(ux, "projections");
-      await ux.page.evaluate(() =>
-        window.scrollTo(0, document.documentElement.scrollHeight),
-      );
-      expect(await ux.page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
-      await nav(ux, "guide");
-      await expect.poll(() => ux.page.evaluate(() => window.scrollY)).toBe(0);
-      await ux.capture("70-guide");
-    },
-  },
-  {
-    id: "70b-guide-section-nav",
-    desc: "Guide: a section link lands its section under the top bar, marked current (ADR 0213)",
-    run: async (ux) => {
+  ),
+  defineScreen("70-guide", "Guide (full page)", async (ux) => {
+    await boot(ux.page);
+    // Opening the Guide from a page scrolled down lands at its top (ADR 0213 §3).
+    await nav(ux, "projections");
+    await ux.page.evaluate(() =>
+      window.scrollTo(0, document.documentElement.scrollHeight),
+    );
+    expect(await ux.page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    await nav(ux, "guide");
+    await expect.poll(() => ux.page.evaluate(() => window.scrollY)).toBe(0);
+    await ux.capture();
+  }),
+  defineScreen(
+    "70b-guide-section-nav",
+    "Guide: a section link lands its section under the top bar, marked current (ADR 0213)",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "guide");
       const navEl = ux.page.getByRole("navigation", {
@@ -1804,7 +1774,7 @@ export const SCREENS: Screen[] = [
             document.documentElement.clientWidth,
         ),
       ).toBe(true);
-      await ux.capture("70b-guide-section-nav", { fullPage: false });
+      await ux.capture({ fullPage: false });
       if (narrow) {
         // The current link follows the page, not a click: back to the row's start,
         // then the page to its end, where the last section becomes current.
@@ -1841,35 +1811,35 @@ export const SCREENS: Screen[] = [
         ux.page.viewportSize()!.height,
       );
     },
-  },
-  {
-    id: "80-empty-portfolio",
-    desc: "Dashboard after deleting every property",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "80-empty-portfolio",
+    "Dashboard after deleting every property",
+    async (ux) => {
       await boot(ux.page);
       await deleteAllProperties(ux);
       await ux.capture("80-empty-properties");
       await nav(ux, "dashboard");
-      await ux.capture("80-empty-portfolio");
+      await ux.capture();
     },
-  },
-  {
-    id: "81-clear-sample-dialog",
-    desc: "Clear sample confirmation, opened from the sample banner (ADR 0094)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "81-clear-sample-dialog",
+    "Clear sample confirmation, opened from the sample banner (ADR 0094)",
+    async (ux) => {
       // Opened only: the browser build has no app backups folder for the safety backup.
       await boot(ux.page);
       await ux.page
         .getByRole("button", { name: ux.t.sample.clearAction })
         .click();
       await expect(ux.page.getByRole("dialog")).toBeVisible();
-      await ux.capture("81-clear-sample-dialog");
+      await ux.capture();
     },
-  },
-  {
-    id: "82-load-sample",
-    desc: "Load sample portfolio on an empty portfolio, then its banner (ADR 0112)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "82-load-sample",
+    "Load sample portfolio on an empty portfolio, then its banner (ADR 0112)",
+    async (ux) => {
       await boot(ux.page);
       await deleteAllProperties(ux);
       await settingsTab(ux, "backup");
@@ -1877,7 +1847,7 @@ export const SCREENS: Screen[] = [
         name: ux.t.sample.loadAction,
       });
       await expect(load).toBeVisible();
-      await ux.capture("82-load-sample");
+      await ux.capture();
       await load.click();
       await expect(ux.page.getByText(ux.t.sample.loaded)).toBeVisible();
       await ux.capture("82-load-sample-loaded");
@@ -1887,11 +1857,11 @@ export const SCREENS: Screen[] = [
       await expect(ux.page.locator(".toast")).toBeHidden({ timeout: 10_000 });
       await ux.capture("82-load-sample-banner");
     },
-  },
-  {
-    id: "83-all-deactivated",
-    desc: "An inactive property's page, then every property deactivated (ADR 0155)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "83-all-deactivated",
+    "An inactive property's page, then every property deactivated (ADR 0155)",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
       const count = await ux.page.locator("table.data tbody tr").count();
@@ -1921,11 +1891,11 @@ export const SCREENS: Screen[] = [
       await expect(notice).toBeVisible();
       await ux.capture("83-all-deactivated-scenarios");
     },
-  },
-  {
-    id: "84-pending-property",
-    desc: "A future purchase: its Properties row and its page (ADR 0156)",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "84-pending-property",
+    "A future purchase: its Properties row and its page (ADR 0156)",
+    async (ux) => {
       await boot(ux.page);
       await nav(ux, "properties");
       await ux.page
@@ -1960,11 +1930,11 @@ export const SCREENS: Screen[] = [
       ).toBeVisible();
       await ux.capture("84-property-pending");
     },
-  },
-  {
-    id: "90-keyboard-focus",
-    desc: "Keyboard-only: Tab order from page load, with focus screenshots",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "90-keyboard-focus",
+    "Keyboard-only: Tab order from page load, with focus screenshots",
+    async (ux) => {
       await boot(ux.page);
       const order: string[] = [];
       for (let i = 1; i <= 40; i++) {
@@ -2036,11 +2006,11 @@ export const SCREENS: Screen[] = [
       ux.writeJson("90-keyboard-property-row.json", { rowFocusable });
       expect(rowFocusable).toBe(true);
     },
-  },
-  {
-    id: "91-nav-focus",
-    desc: "Keyboard: Enter on Properties in the sidebar moves focus to the new page's main region",
-    run: async (ux) => {
+  ),
+  defineScreen(
+    "91-nav-focus",
+    "Keyboard: Enter on Properties in the sidebar moves focus to the new page's main region",
+    async (ux) => {
       await boot(ux.page);
       await ux.page
         .locator(".nav")
@@ -2063,9 +2033,9 @@ export const SCREENS: Screen[] = [
       });
       expect(afterTab.inMain).toBe(true);
       ux.writeJson("91-nav-focus.json", { afterNav, afterTab });
-      await ux.capture("91-nav-focus", { fullPage: false });
+      await ux.capture({ fullPage: false });
     },
-  },
+  ),
 ];
 
 /** Every route must have at least one capture; a new Route fails typecheck here. */
