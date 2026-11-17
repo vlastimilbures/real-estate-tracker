@@ -249,6 +249,59 @@ type Present<T> = {
   >;
 };
 
+/** One property CSV row, reduced to what the plan needs. */
+interface PropertyInput {
+  line: number;
+  name: string;
+  /** The CSV columns an update writes. */
+  fields: Partial<PropertyRow>;
+  /** The full row an add inserts. */
+  newRow: (id: string) => PropertyRow;
+}
+
+function propertyInputs(batch: CsvImportBatch): PropertyInput[] {
+  return (batch.properties ?? []).map((p): PropertyInput => {
+    const fields = present({
+      address: p.address,
+      type: p.type,
+      size_m2: p.size_m2,
+      garage: p.garage == null ? p.garage : p.garage ? 1 : 0,
+      purchase_date: p.purchase_date,
+      purchase_price: p.purchase_price,
+      appreciation_override_pa: p.appreciation_override_pa,
+      rent_index_override_pa: p.rent_index_override_pa,
+      // ADR 0119 §8: a blank funding cell keeps the stored amount; a CSV sets or
+      // changes a recorded figure, never erases it.
+      own_cash: p.own_cash ?? undefined,
+      transaction_costs: p.transaction_costs ?? undefined,
+      initial_works: p.initial_works ?? undefined,
+    });
+    return {
+      line: p.line,
+      name: p.name,
+      fields,
+      newRow: (id): PropertyRow => ({
+        id,
+        name: p.name,
+        // A column the file does not hold, or a blank cell, leaves the value unknown.
+        address: null,
+        type: null,
+        size_m2: null,
+        garage: null,
+        appreciation_override_pa: null,
+        rent_index_override_pa: null,
+        own_cash: null,
+        transaction_costs: null,
+        initial_works: null,
+        ...fields,
+        active: 1,
+        // ADR 0119 §8: the note is not a CSV column.
+        funding_note: null,
+      }),
+    };
+  });
+}
+
 /** One child CSV row, reduced to what the plan needs. */
 interface ChildInput {
   file: keyof typeof CHILD_FILES;
@@ -390,46 +443,20 @@ export function planImport(
 
   const names = nameIndex(properties.values());
   const withCosts = new Set(holdingCosts.map((h) => h.property_id));
+  /** The property a name matches, as it stands now: a later row may replace it. */
+  const propertyNamed = (name: string) => {
+    const id = names.find(name)?.id;
+    return id === undefined ? undefined : properties.get(id);
+  };
 
   // Properties first (FK parent). An existing property keeps its id, stored spelling
   // and active flag; CSV doesn't model activation (D-55).
-  for (const p of batch.properties ?? []) {
+  for (const p of propertyInputs(batch)) {
     const existing = names.find(p.name);
-    const fields = present({
-      address: p.address,
-      type: p.type,
-      size_m2: p.size_m2,
-      garage: p.garage == null ? p.garage : p.garage ? 1 : 0,
-      purchase_date: p.purchase_date,
-      purchase_price: p.purchase_price,
-      appreciation_override_pa: p.appreciation_override_pa,
-      rent_index_override_pa: p.rent_index_override_pa,
-      // ADR 0119 §8: a blank funding cell keeps the stored amount; a CSV sets or
-      // changes a recorded figure, never erases it.
-      own_cash: p.own_cash ?? undefined,
-      transaction_costs: p.transaction_costs ?? undefined,
-      initial_works: p.initial_works ?? undefined,
-    });
+    const { fields } = p;
     const row: PropertyRow = existing
       ? { ...existing, ...fields }
-      : {
-          id: newPropertyId(propertyKey(p.name)),
-          name: p.name,
-          // A column the file does not hold, or a blank cell, leaves the value unknown.
-          address: null,
-          type: null,
-          size_m2: null,
-          garage: null,
-          appreciation_override_pa: null,
-          rent_index_override_pa: null,
-          own_cash: null,
-          transaction_costs: null,
-          initial_works: null,
-          ...fields,
-          active: 1,
-          // ADR 0119 §8: the note is not a CSV column.
-          funding_note: null,
-        };
+      : p.newRow(newPropertyId(propertyKey(p.name)));
     statements.push(
       existing
         ? updateStatement("properties", row.id, fields)
@@ -471,8 +498,8 @@ export function planImport(
   // Update the row with the same natural key, or insert a new one.
   for (const c of childInputs(batch)) {
     const { table, entity, tag } = CHILD_FILES[c.file];
-    const propId = names.find(c.propertyName)?.id;
-    if (propId === undefined) {
+    const property = propertyNamed(c.propertyName);
+    if (property === undefined) {
       problems.push({
         file: c.file,
         row: c.line,
@@ -481,6 +508,7 @@ export function planImport(
       });
       continue;
     }
+    const propId = property.id;
     const child: ChildIndex = children[table];
     const existing = child.find(propId, c.date);
     const changes = existing ? changesOf(existing, c.fields) : [];
@@ -489,7 +517,7 @@ export function planImport(
       ...at,
       kind: kindOf(existing, changes),
       propertyId: propId,
-      propertyName: properties.get(propId)?.name ?? "",
+      propertyName: property.name,
       date: c.date,
       changes,
     };

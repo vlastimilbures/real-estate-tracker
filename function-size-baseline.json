@@ -27,10 +27,10 @@
   },
   "src/import/csvImport.ts": {
     "complexity": {
-      "Function 'planImport'": 29
+      "Function 'planImport'": 20
     },
     "lines": {
-      "Function 'planImport'": 179
+      "Function 'planImport'": 157
     }
   },
   "src/state/portfolioStore.ts": {
