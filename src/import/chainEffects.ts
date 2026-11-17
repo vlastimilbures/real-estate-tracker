@@ -1,6 +1,6 @@
 // What an added mortgage block does to its property's loan chain (ADR 0160): the notes
 // the import plan adds to its items.
-import type { ImportItem } from "./csvImport";
+import type { ImportItem } from "./plan";
 import {
   loanChainChanges,
   type Assumptions,

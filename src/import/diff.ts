@@ -1,5 +1,5 @@
 // What a CSV row changes on the stored row it matches (ADR 0096): the import plan's diff.
-import type { FieldChange, ImportKind } from "./csvImport";
+import type { FieldChange, ImportKind } from "./plan";
 import { PLAIN_DECIMAL } from "../lib/decimalText";
 import { D } from "../lib/money";
 
