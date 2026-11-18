@@ -6,6 +6,7 @@ import { isoDate } from "../dates";
 import { COST_KEYS } from "../figures";
 import { derivedTermProblem } from "../amortization";
 import { validateInputs } from "../validate";
+import { checkSigns, isNegativeAmount, type Report } from "../validate/check";
 import {
   VALIDATION_FIELDS,
   type EngineValidationError,
@@ -39,6 +40,28 @@ describe("the field types (ADR 0251 §4)", () => {
       field: "monthlyRnet",
     };
     expect(misspelt.entity).toBe("lease");
+  });
+
+  it("a sign rule names only a field its reporter's entity has", () => {
+    const seen: string[] = [];
+    const onAssumptions: Report<FieldOf<"assumptions">> = (_, f) => {
+      seen.push(f ?? "");
+    };
+    const onProperty: Report<FieldOf<"property">> = (_, f) => {
+      seen.push(f ?? "");
+    };
+    const row = portfolio.properties[0]!;
+    const price = ["purchasePrice", () => true, "NEGATIVE_AMOUNT"] as const;
+    const odd = { foo: money(-1) };
+    const foo = ["foo", () => true, "NEGATIVE_AMOUNT"] as const;
+    // @ts-expect-error: purchasePrice is a property's field, not an assumption's
+    checkSigns(row, [price], onAssumptions);
+    // @ts-expect-error: foo is no entity's field
+    checkSigns(odd, [foo], onProperty);
+    checkSigns(row, [price], onProperty);
+    checkSigns(odd, [["foo", isNegativeAmount, "NEGATIVE_AMOUNT"]], () => {});
+    // The probes run as written: the types are what refuse them.
+    expect(seen).toEqual(["purchasePrice", "foo", "purchasePrice"]);
   });
 
   it("the cost fields are the holding-cost keys, bare and behind defaults.", () => {

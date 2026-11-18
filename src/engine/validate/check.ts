@@ -15,7 +15,7 @@ import type {
 } from "./codes";
 
 /** A check's reporter: a problem on one of the fields `F` (ADR 0251 §4). */
-export type Report<F extends ValidationField = ValidationField> = (
+export type Report<F extends string = ValidationField> = (
   code: ValidationCode,
   field?: F,
   index?: number,
@@ -123,18 +123,14 @@ export function checkSigns<
 >(
   row: R,
   rules: readonly SignRule<R, K>[],
-  report: Report<Prefixed<P, K>>,
+  report: Report<NoInfer<`${P}${K}`>>,
   prefix = "" as P,
 ): void {
   for (const [f, test, code] of rules) {
     // A template expression types as string: this one is `${P}${K}`.
-    if (test(row[f])) report(code, `${prefix}${f}` as Prefixed<P, K>);
+    if (test(row[f])) report(code, `${prefix}${f}` as `${P}${K}`);
   }
 }
-
-/** Field `K` behind `prefix` P, as a field an error can name. */
-type Prefixed<P extends string, K extends string> = `${P}${K}` &
-  ValidationField;
 
 /** An amount: NON_FINITE_NUMBER, else `code` when `bad`. */
 export function checkAmount<T extends Decimal | undefined>(
