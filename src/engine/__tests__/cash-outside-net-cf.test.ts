@@ -56,6 +56,8 @@ describe("#117: the KPIs net of the cash outside net cash flow", () => {
   // ADR 0166 moved the IRRs: the dev flat's year-0 equity is its completed value less
   // the whole loan, so its later tranche draws no longer add equity.
   // ADR 0182 moved all four: management is charged on collected rent.
+  // ADR 0235 moved the two cash flows in their last digits (below 1e-31 Kč): the
+  // opening balances are replayed.
   it("pins the cumulative cash flow and the levered IRR", () => {
     const k = portfolioKpis(fixture, assumptions);
     expect({
@@ -66,8 +68,8 @@ describe("#117: the KPIs net of the cash outside net cash flow", () => {
       leveredIrrNominalReason: k.leveredIrrNominalReason,
       leveredIrrRealReason: k.leveredIrrRealReason,
     }).toEqual({
-      cumulativeNetCashFlow: "15538766.37088015182032109541948761338829",
-      cumulativeNetCashFlowReal: "7131643.644661978628410957644025823200929",
+      cumulativeNetCashFlow: "15538766.37088015182032109541948761338822",
+      cumulativeNetCashFlowReal: "7131643.644661978628410957644025823200891",
       leveredIrrNominal: "0.0630239005143005038070413981188266916435",
       leveredIrrReal: "0.03709648830663463707144056336062476475493",
       leveredIrrNominalReason: null,

@@ -78,8 +78,8 @@ function runGrid(state: LoanState, run: Run): BlockSchedule {
 /**
  * The state a block's grid opens from. A future loan is undrawn, at the instalment
  * it opens with (`scheduledInstalment`, D-31). A running loan opens at its baseDate
- * balance: the catch-up for a development loan, `plainOpening` for a plain one (the
- * closed form, or the replay, D-30), at the rate and interest-only of the last
+ * balance: the catch-up for a development loan, `plainOpening` for a plain one (its
+ * payments replayed, ADR 0235), at the rate and interest-only of the last
  * payment made, not baseDate: a completion between the two must still trigger the
  * re-amortization at grid month 1 (D-24, ADR 0116).
  */
@@ -104,7 +104,7 @@ function openingState(
   }
   const sim = isDevLoan(block)
     ? simulateToBaseDate(block, assumptions)
-    : { ...plainOpening(block, assumptions, offset), counted: ZERO };
+    : { ...plainOpening(block, assumptions), counted: ZERO };
   return {
     state: {
       balance: sim.balance,

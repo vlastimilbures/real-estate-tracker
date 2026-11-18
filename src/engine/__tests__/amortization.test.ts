@@ -7,7 +7,6 @@ import {
   amortizationHealth,
   fixationExpired,
   blockEndDate,
-  currentBalance,
   rateAt,
   rateFixedUntil,
 } from "../amortization";
@@ -113,9 +112,11 @@ describe("0-year floating block (ADR 0162)", () => {
     expect(rateAt(due(64), floating, assumptions).toString()).toBe("0.0169");
   });
 
+  // ADR 0235: the opening is replayed (no closed form); at the entered rate it is
+  // the opening of the same loan still in a 10-year fixation, digit for digit.
   it("the opening balance is the closed form at the entered rate", () => {
     expect(openingBalance(floating, assumptions).toString()).toBe(
-      currentBalance(floating, BASE_DATE).toString(),
+      openingBalance(loan({}), assumptions).toString(),
     );
   });
 
@@ -135,7 +136,7 @@ describe("0-year floating block (ADR 0162)", () => {
 
   it("a shock never reprices the payments due by baseDate", () => {
     expect(openingBalance(floating, shocked(1)).toString()).toBe(
-      currentBalance(floating, BASE_DATE).toString(),
+      openingBalance(loan({}), assumptions).toString(),
     );
   });
 
