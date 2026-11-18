@@ -81,6 +81,13 @@ The independent mortgage reference model takes the two cases differently:
    past prepayment keeps its own opening unchanged: the comparison loan without the
    prepayments is a case A or B loan with no past event, which is now replayed.
 
+## Owner re-confirmation 2026-11-18 (#551 review M1)
+
+After the review corrected the evidence for case A (the reference model refuses such a
+loan rather than agreeing with it), the owner re-confirmed option A for case A on
+2026-11-18. The realistic case A loan is an interest-only arrangement entered as a plain
+loan, and for it the replay is exact: the balance stays at the principal until maturity.
+
 ## Measured
 
 Full-precision dump of every engine output, origin/main (a771048c) against the change,
