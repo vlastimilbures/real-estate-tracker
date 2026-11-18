@@ -12,6 +12,8 @@
   cannot be loaded), [0154](0154-one-outcome-path.md) §5 (the startup screen names the
   safety copy)
 - Related: [0147](0147-failure-messages-and-log.md)
+- Amended by: [0255](0255-name-refused-queued-writes.md) (night-run decision "Writes queued
+  behind the failed one are refused": the screen names them)
 - Implementation: dictionary key `boot.readBackFailed` (en/cs/ru)
 
 ## Context
