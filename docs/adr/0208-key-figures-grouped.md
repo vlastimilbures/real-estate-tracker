@@ -1,6 +1,6 @@
 # 0208. Dashboard key figures: only what the tiles do not show, in three groups
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-16
 - Source: issue #383 (UX/UI review 2026-11, tracking #392); direction approved by the
   owner on 2026-11-15 (the issue's grouping); acceptance delegated by the owner for the

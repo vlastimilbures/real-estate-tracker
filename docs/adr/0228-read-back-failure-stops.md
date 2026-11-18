@@ -36,7 +36,7 @@ a form can save the old values it still shows.
 
 Runs before #465 (store split).
 
-### Decisions taken in the night run 2026-11-16 (owner review pending)
+### Decisions taken in the night run 2026-11-16 (owner reviewed 2026-11-18)
 
 - **A failed write whose read-back also fails** commits nothing, so the app stays where it
   is and shows the write error; the reload failure is only logged (`RELOAD`). The screen's

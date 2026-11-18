@@ -1,6 +1,6 @@
 # 0200. Dashboard: one compact KPI strip
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-15
 - Source: issue #375 (UX/UI review 2026-11, tracking #392, finding F2); owner decision 1 of
   2026-11-15 (KPI strip first); acceptance delegated by the owner for the 2026-11-15 run

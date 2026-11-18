@@ -1,6 +1,6 @@
 # 0201. Buttons: one rule per role
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-15
 - Source: issue #380 (UX/UI review 2026-11, tracking #392, finding F10); direction approved
   by the owner on 2026-11-15 (the issue's table); acceptance delegated by the owner for the

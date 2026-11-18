@@ -1,6 +1,6 @@
 # 0239. Sharded nightly mutation testing, gated on the combined score
 
-- Status: Accepted (owner-delegated, night run 2026-11-16; owner review pending)
+- Status: Accepted
 - Date: 2026-11-16
 - Source: issue #443 (AC3: a cold Stryker run exceeds the job timeout); the owner's decision
   on #443 to shard the run with one incremental cache per shard; CI and tooling decisions

@@ -1,6 +1,6 @@
 # 0243. Record form: a save error on a field it is not showing goes above the buttons
 
-- Status: Accepted (owner-delegated, night run 2026-11-16; owner review pending)
+- Status: Accepted
 - Date: 2026-11-17
 - Source: issue #440 (code review 2026-11, finding R08-08, tracking #435); the plan posted on
   #440; non-critical decisions delegated by the owner for the 2026-11-16 night run

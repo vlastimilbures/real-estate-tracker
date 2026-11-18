@@ -1,6 +1,6 @@
 # 0198. As-of hint: its own row of the filter bar
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-15
 - Source: issue #372 (UX/UI review 2026-11, tracking #392, finding F5); acceptance delegated
   by the owner for the 2026-11-15 run (comment on #392)

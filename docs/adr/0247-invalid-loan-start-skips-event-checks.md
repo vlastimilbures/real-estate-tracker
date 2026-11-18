@@ -1,6 +1,6 @@
 # 0247. A loan with an invalid start date skips the event checks that need its start
 
-- Status: Accepted (owner-delegated, night run 2026-11-16; owner review pending)
+- Status: Accepted
 - Date: 2026-11-18
 - Source: issue #543 (found by the differential dump for #479; code review 2026-11,
   tracking #435); non-critical decisions delegated by the owner for the 2026-11-16 night

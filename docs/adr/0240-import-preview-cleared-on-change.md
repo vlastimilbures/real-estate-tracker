@@ -1,6 +1,6 @@
 # 0240. Import: the preview is cleared on every change
 
-- Status: Accepted (owner-delegated, night run 2026-11-16; owner review pending)
+- Status: Accepted
 - Date: 2026-11-17
 - Source: issue #437 (code review 2026-11, finding R07-02, tracking #435); the plan posted
   on #437; non-critical decisions delegated by the owner for the 2026-11-16 night run

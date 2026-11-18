@@ -1,6 +1,6 @@
 # 0245. The store refuses a write that adds an out-of-range value
 
-- Status: Accepted (owner-delegated, night run 2026-11-16; owner review pending)
+- Status: Accepted
 - Date: 2026-11-18
 - Source: issue #464 (code review 2026-11, tracking #435: the input rules in one place),
   part 4; the plan posted on #464; non-critical decisions delegated by the owner for the
