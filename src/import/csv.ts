@@ -158,13 +158,31 @@ function decodeUtf8(bytes: Uint8Array): string | null {
   }
 }
 
-function readCsv(source: CsvSource): RawFile {
+/** One error about a whole line (or, with `row` 0, the file); it leaves no records. */
+const lineError = (
+  row: number,
+  field: string,
+  error: CsvErrorCode,
+): RawFile => ({
+  records: [],
+  errors: [{ row, field, error }],
+});
+
+interface Decoded {
+  /** The text with one newline convention and no leading BOM. */
+  text: string;
+  /** The bytes were not valid UTF-8 (D-49): undecodable bytes are U+FFFD in `text`. */
+  notUtf8: boolean;
+}
+
+/** The source's text, or `undefined` when it is over the size limit (D-53). A string is
+ *  measured as its UTF-8 bytes. */
+function decodeSource(source: CsvSource): Decoded | undefined {
   const size =
     typeof source === "string"
       ? new TextEncoder().encode(source).length
       : source.length;
-  if (size > CSV_MAX_BYTES)
-    return fileError({ code: "fileTooLarge", limitBytes: CSV_MAX_BYTES });
+  if (size > CSV_MAX_BYTES) return undefined;
 
   let text: string;
   let notUtf8 = false;
@@ -177,9 +195,19 @@ function readCsv(source: CsvSource): RawFile {
     text = strict ?? new TextDecoder("utf-8").decode(source);
   }
   // One newline convention, so file lines can be counted from Papa's cursor.
-  text = text.replace(/\r\n?/g, "\n");
+  return { text: text.replace(/\r\n?/g, "\n"), notUtf8 };
+}
 
-  const lines: { cells: string[]; line: number; badQuotes: boolean }[] = [];
+interface ScannedLine {
+  cells: string[];
+  /** Physical file line of the record's first line (a quoted cell may span lines). */
+  line: number;
+  badQuotes: boolean;
+}
+
+/** The text's records, skipping blank and whitespace-only lines. */
+function scanLines(text: string): ScannedLine[] {
+  const lines: ScannedLine[] = [];
   let newlinesSeen = 0;
   let scanned = 0;
   const newlinesUpTo = (end: number) => {
@@ -201,43 +229,41 @@ function readCsv(source: CsvSource): RawFile {
       });
     },
   });
-  const [head, ...body] = lines;
-  if (head === undefined) return { records: [], errors: [] };
+  return lines;
+}
 
-  const header = head.cells.map((h) => h.trim());
-
-  if (notUtf8) {
-    for (const l of lines) {
-      const i = l.cells.findIndex((c) => c.includes("\uFFFD"));
-      if (i >= 0) {
-        const field = header[i] ?? "";
-        return {
-          records: [],
-          errors: [{ row: l.line, field, error: { code: "notUtf8" } }],
-        };
-      }
-    }
-    return fileError({ code: "notUtf8" });
+/** The first cell holding U+FFFD, named by its header column. */
+function notUtf8Error(lines: ScannedLine[], header: string[]): RawFile {
+  for (const l of lines) {
+    const i = l.cells.findIndex((c) => c.includes("\uFFFD"));
+    if (i >= 0) return lineError(l.line, header[i] ?? "", { code: "notUtf8" });
   }
+  return fileError({ code: "notUtf8" });
+}
+
+/** A fatal error about the whole file, found from its header, or `undefined`. In order:
+ *  not UTF-8, a semicolon delimiter, a repeated column name, too many rows. */
+function checkHeader(
+  lines: ScannedLine[],
+  headLine: number,
+  header: string[],
+  notUtf8: boolean,
+): RawFile | undefined {
+  if (notUtf8) return notUtf8Error(lines, header);
   if (header.length === 1 && header[0]?.includes(";"))
-    return fileError({ code: "semicolonDelimiter" }, head.line);
+    return fileError({ code: "semicolonDelimiter" }, headLine);
   // A repeated name would let the right-hand column win silently (ADR 0185 §1). Empty
   // names (a spreadsheet's trailing blank columns) are extra columns, ignored as before.
   const twice = header.find((h, i) => h !== "" && header.indexOf(h) !== i);
   if (twice !== undefined)
-    return {
-      records: [],
-      errors: [
-        {
-          row: head.line,
-          field: twice,
-          error: { code: "duplicateHeader", name: twice },
-        },
-      ],
-    };
-  if (body.length > CSV_MAX_ROWS)
+    return lineError(headLine, twice, { code: "duplicateHeader", name: twice });
+  if (lines.length - 1 > CSV_MAX_ROWS)
     return fileError({ code: "tooManyRows", limit: CSV_MAX_ROWS });
+  return undefined;
+}
 
+/** Each data line as a record keyed by the header, or a badQuotes/malformedRow error. */
+function buildRecords(body: ScannedLine[], header: string[]): RawFile {
   const records: RawRecord[] = [];
   const errors: CsvRowError[] = [];
   for (const l of body) {
@@ -261,6 +287,22 @@ function readCsv(source: CsvSource): RawFile {
     }
   }
   return { records, errors };
+}
+
+/** The file's records, checked in order: size, empty, not UTF-8, semicolon delimiter,
+ *  repeated column, too many rows, then each line's quotes and width. */
+function readCsv(source: CsvSource): RawFile {
+  const decoded = decodeSource(source);
+  if (decoded === undefined)
+    return fileError({ code: "fileTooLarge", limitBytes: CSV_MAX_BYTES });
+  const lines = scanLines(decoded.text);
+  const [head, ...body] = lines;
+  if (head === undefined) return { records: [], errors: [] };
+  const header = head.cells.map((h) => h.trim());
+  return (
+    checkHeader(lines, head.line, header, decoded.notUtf8) ??
+    buildRecords(body, header)
+  );
 }
 
 // --- low-level cell parsers ---

@@ -17,14 +17,6 @@
       "Async function 'migrate'": 98
     }
   },
-  "src/import/csv.ts": {
-    "complexity": {
-      "Function 'readCsv'": 18
-    },
-    "lines": {
-      "Function 'readCsv'": 94
-    }
-  },
   "src/state/portfolioStore.ts": {
     "lines": {
       "Arrow function (usePortfolioStore: create)": 372
