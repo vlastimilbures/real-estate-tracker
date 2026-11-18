@@ -46,10 +46,21 @@ can pass one.
    alone would let the block entry points that rely on the assert (`effectiveMaturity`,
    `openingBalance`, `undrawnPrincipal`) take a −Infinity principal as they take
    +Infinity. So `NON_FINITE_NUMBER` on a loan's own amounts, `initialPrincipal` and
-   `monthlyInstalment`, is also a "loan" problem (`LOAN_AMOUNT_FIELDS`,
+   `monthlyInstalment`, is also a "loan" problem (`raisedByLoanGate`,
    `validate/codes.ts`): `assertLoanInputs` throws `[NON_FINITE_NUMBER]` instead, still
    one error and still a refusal. The code sets of the gates (`RAISED_BY`) do not change:
    `NON_FINITE_NUMBER` on any other field is not a loan problem.
+
+   **Scope (delegated, accepted 2026-11-18):** the gate takes both amounts and every
+   non-finite value, so it also refuses a +Infinity or NaN principal or instalment, which
+   the base let through. Of the 232 `assertLoanInputs` outputs that change, 170 returned
+   at the base and now throw, 33 replace `NEGATIVE_PRINCIPAL` (with any other loan code
+   kept) and 29 add `NON_FINITE_NUMBER` before the loan codes the base already threw. At
+   the base the block entry points then returned a value (272
+   outputs in the dump), returned NaN (68), threw a `TypeError` (14) or threw another loan
+   code (202, for example `INSTALMENT_BELOW_INTEREST` from the NPER term); each of these
+   is now a `NON_FINITE_NUMBER` refusal (D2 below).
+
 3. **A shock stops at `NON_FINITE_NUMBER`.** The shock bands and the value crash go
    through `checkAmount`: a non-finite delta or percentage reports `NON_FINITE_NUMBER`
    only; a finite one with a bad duration or year, or a percentage outside 0–1, reports
@@ -60,7 +71,10 @@ can pass one.
    `field?: ValidationField`. The reporters are generic in the entity, so a check can only
    name a field of the row it checks. On the UI side the scenario form rewrites a field to
    its own form keys; `writeErrorTexts` and `formWriteErrors` take a `FormWriteError`
-   whose errors may name any string. Type-only: no output changes.
+   whose errors may name any string. Type-only: no output changes. Two existing test
+   helpers change their annotations to match (`support/loan.ts`: `onLoan`'s field takes
+   the error's field type; `writeError.test.ts`: the event helper's field `as const`); no
+   assertion, test name or count changes.
 5. **`scenarioRules.ts` moves to `validate/`** and is exported from its barrel; the
    engine's public exports are unchanged. The mutation shard table lists it in
    `validate-b`.
@@ -77,6 +91,11 @@ errors on every row with several problems. The owner kept the pass-major order.
 - **P3.** `NON_FINITE_NUMBER` on an assumption default names the bare key (for example
   `mgmtPctRent`), not `defaults.mgmtPctRent` as its range check does, so a restore names
   the wrong column. `VALIDATION_FIELDS` lists both forms. Changing it needs its own ADR.
+- **A non-finite rate or draw (follow-up).** A non-finite `interestRatePa` or draw
+  amount (and, through them, a non-finite fee or term) still passes `assertLoanInputs`,
+  and `openingBalance` (or once `undrawnPrincipal`) returns NaN for it: 66 dump cases, all
+  present at the base, none new. Only a direct engine call can pass such a value; it is
+  out of scope here.
 
 ## Proof
 
@@ -96,7 +115,7 @@ with the base (815ee623), the only differences are the allowed ones:
 - D3: `SHOCK_OUT_OF_RANGE` no longer follows `NON_FINITE_NUMBER` on the same shock;
 - D4: the error messages that list one code fewer.
 
-The counts are in "Results" below. The §5 commit shows no difference; §4 is type-only.
+The counts are in "Results" below. The §4 and §5 commits show no difference.
 
 ## Results
 
@@ -108,14 +127,16 @@ validator and, for an edited loan, the block entry points. No case hung in any d
 | §1 finite guard    | 257               | 530 | 232         | 556               | 0   | 168 | 0     |
 | §3 shocks          | 103               | 0   | 0           | 0                 | 341 | 104 | 0     |
 | §5 `scenarioRules` | 0                 | 0   | 0           | 0                 | 0   | 0   | 0     |
+| §4 typed `field`   | 0                 | 0   | 0           | 0                 | 0   | 0   | 0     |
 
 The D columns count outputs (one error dropped, one assert or entry-point result), not
 cases. The D2 entry-point outputs are the block entry points refusing a loan with a
 non-finite principal or instalment with `NON_FINITE_NUMBER`: at the base 272 returned a
 value and 68 a NaN, 202 threw another loan code (`INSTALMENT_BELOW_INTEREST`,
 `NEGATIVE_PRINCIPAL`, …) and 14 a `TypeError`. A non-finite interest rate or draw amount still gives
-`openingBalance` a NaN, as at the base (66 cases, none new): those fields are outside
-this decision.
+`openingBalance` a NaN, as at the base (66 cases, none new): see "Not changed". The
+branch was rebased onto 9648016f between §5 and §4; the dump before and after the
+rebase is identical.
 
 ## Consequences
 
