@@ -86,13 +86,15 @@ export interface CrashLevel {
 // render (UX-034).
 export const RATE_LEVELS_PP = [2, 4, 6];
 export const INFLATION_LEVELS_PP = [3, 6, 9];
-const CRASH_10: CrashLevel = { label: "−10%", pct: "0.1" };
-const CRASH_20: CrashLevel = { label: "−20%", pct: "0.2" };
-export const CRASH_LEVELS = [
-  CRASH_10,
-  CRASH_20,
-  { label: "−35%", pct: "0.35" },
-];
+/** A crash level of `pct`, labelled with the fall in the app's percent format
+ *  ("−10,0 %", #441, ADR 0250). */
+const crashLevel = (pct: string): CrashLevel => ({
+  label: fmtPct(D(pct).neg()),
+  pct,
+});
+const CRASH_10 = crashLevel("0.1");
+const CRASH_20 = crashLevel("0.2");
+export const CRASH_LEVELS = [CRASH_10, CRASH_20, crashLevel("0.35")];
 /** The crash "When" choices, in projection years (ADR 0101). */
 export const CRASH_TIMINGS = [0, 5, 10];
 

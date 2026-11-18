@@ -167,3 +167,19 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 - Rejected: building the strings from the constants inside the dictionaries, because the
   dictionaries import no limits and the other entries with numbers take arguments.
 - Approved by: owner, 2026-11-18 (#435 comment 6965976270)
+
+### 2026-11-18 · #441 item 4
+
+- Keys: none; the crash preset labels are built in `src/ui/model/scenarios.ts`
+  (`crashLevel`), and `scenarios.crashTitle` and `scenarios.combinedTitle` take them
+  (en, cs, ru)
+- Change: a crash preset's label is its fall formatted by `fmtPct`, "−10,0 %", "−20,0 %",
+  "−35,0 %" (was the stored text "−10%"), on the preset buttons and in the name a preset
+  saves, the combined presets included. This corrects the entry of 2026-10-13 (Track 14
+  N7b), which kept the old labels because a saved preset was found by name: since ADR
+  0191 a preset matches a saved scenario by its settings, so a scenario saved under the
+  old name is still found. The labels are part of the buttons' accessible names, so ADR
+  0250 records them too.
+- Rejected: keeping a hand-written label beside the value, because it repeats the value
+  and does not follow the app's percent format.
+- Approved by: owner, 2026-11-18 (#435 comment 6965976270)

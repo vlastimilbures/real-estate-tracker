@@ -30,9 +30,9 @@ function Harness({
   );
 }
 
-const MILD = "Mild: Rates +2pp for 3y · Price crash −10%";
+const MILD = "Mild: Rates +2pp for 3y · Price crash −10,0 %";
 const SEVERE =
-  "Severe: Rates +4pp for 3y · Inflation +3pp for 3y · Price crash −20%";
+  "Severe: Rates +4pp for 3y · Inflation +3pp for 3y · Price crash −20,0 %";
 
 describe("combined stress presets (#55)", () => {
   it("shows a Combined group with Mild and Severe", () => {
