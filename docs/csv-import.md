@@ -211,7 +211,9 @@ them (ADR 0160):
   block's start plus one month (the month's last day when that day does not exist); the other
   block's row is refused too when it is in the same file. Two rows on the same date are a
   duplicate instead. A corrected typo in `start_date` usually falls in this window: edit the
-  block's start date in the app instead.
+  block's start date in the app instead. A database that already holds such a pair (an import
+  before ADR 0226) shows the property as invalid data, and the notice names both start dates
+  and links to Financing, where you delete the leftover block or edit its date (ADR 0258).
 
 ## Preview and confirmation
 

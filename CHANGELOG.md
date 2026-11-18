@@ -43,6 +43,11 @@ engine without the form, and remove it when the last part lands.
   CSV import is refused when a merged row adds a fixation, loan term or size outside its
   range, on that file, row and column; a stored value that carries through still imports
   (ADR 0257, #464). No form shows anything new. No figure changes.
+- When two stored mortgage blocks of one property start one month or less apart (usually
+  one left over from a corrected start date imported before ADR 0226), the invalid-data
+  notice names both start dates and says how to fix it. "Open property" on the Dashboard
+  opens the property at Financing, and on Property detail the notice has a "Go to
+  Financing" button (ADR 0258, #448). The pair is still refused. No figure changes.
 - A CSV row that names an unknown property is reported once, in the Import page's
   "Nothing was imported" list, instead of also as an error in its file's table; a row
   whose property's own `properties.csv` row has an error no longer gets a second error

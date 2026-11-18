@@ -207,6 +207,8 @@ export const cs: Dictionary = {
     openProperty: "Otevřít nemovitost",
     assumptionsRecord: "Předpoklady",
     unknownRecord: "Záznam",
+    leftoverBlock: (property, first, second) =>
+      `${property}: hypotéky od ${first} a od ${second} začínají nejvýše měsíc po sobě. Jedna z nich obvykle zbyla po opraveném datu začátku: v sekci Financování smažte blok, který nechcete, nebo upravte jeho datum začátku.`,
   },
 
   monthsShort: [

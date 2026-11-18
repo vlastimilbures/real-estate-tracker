@@ -79,13 +79,14 @@ export function BoundaryFallback({
   const portfolio = usePortfolioStore((s) => s.portfolio);
   if (error instanceof EngineInputError) {
     // Stored data breaks an engine rule (UX-049): say which record and which rule, and
-    // offer the property where it can be corrected.
+    // offer the property where it can be corrected (at Financing for a leftover
+    // mortgage block, ADR 0258).
     return (
       <InvalidDataNotice
         error={error}
         portfolio={portfolio}
-        onOpenProperty={(id) => {
-          useUiStore.getState().openProperty(id);
+        onOpenProperty={(id, section) => {
+          useUiStore.getState().openProperty(id, section);
           reset();
         }}
       />

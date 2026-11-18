@@ -238,6 +238,11 @@ export const en = {
     openProperty: "Open property",
     assumptionsRecord: "Assumptions",
     unknownRecord: "A record",
+    // ADR 0258: two stored blocks one month or less apart, usually one left over from a
+    // corrected start date (a database from before ADR 0226). Names the section as
+    // propertyDetail.sectionFinancing does.
+    leftoverBlock: (property: string, first: string, second: string) =>
+      `${property}: the mortgages from ${first} and from ${second} start one month or less apart. One of them is usually left over from a corrected start date: in Financing, delete the block you do not want or edit its start date.`,
   },
 
   // Short month names for the on-screen projection Period column. (Excel export +
