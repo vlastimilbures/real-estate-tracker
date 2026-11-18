@@ -10,7 +10,6 @@ import { calendarDay, suggestedInstalment } from "../engine";
 import {
   DATE_FLOOR_YEAR,
   inRange,
-  INT_RANGES,
   oneDecimalText,
   outsideUnitRate,
   WHOLE_DIGITS,
@@ -18,6 +17,13 @@ import {
 } from "../lib/rules";
 import { PLAIN_DECIMAL } from "../lib/decimalText";
 import { propertyKey } from "../lib/propertyKey";
+import {
+  MORTGAGE_COLUMNS,
+  PROPERTY_COLUMNS,
+  RENT_COLUMNS,
+  VALUATION_COLUMNS,
+  type ColumnSpec,
+} from "./columns";
 
 /** D-53: per-file limits, checked before any row is validated. */
 export const CSV_MAX_BYTES = 2 * 1024 * 1024;
@@ -137,10 +143,19 @@ interface RawFile {
   errors: CsvRowError[];
 }
 
-const fileError = (error: CsvErrorCode, row = 0): RawFile => ({
+/** One error about a whole line (or, with `row` 0, the file); it leaves no records. */
+const lineError = (
+  row: number,
+  field: string,
+  error: CsvErrorCode,
+): RawFile => ({
   records: [],
-  errors: [{ row, field: "", error }],
+  errors: [{ row, field, error }],
 });
+
+/** An error about the whole file, or (with `row`) a whole line, naming no column. */
+const fileError = (error: CsvErrorCode, row = 0): RawFile =>
+  lineError(row, "", error);
 
 /** UTF-8 text of the bytes, or `null` when they are not valid UTF-8 (D-49). The
  *  decoder drops a leading BOM. */
@@ -152,13 +167,21 @@ function decodeUtf8(bytes: Uint8Array): string | null {
   }
 }
 
-function readCsv(source: CsvSource): RawFile {
+interface Decoded {
+  /** The text with one newline convention and no leading BOM. */
+  text: string;
+  /** The bytes were not valid UTF-8 (D-49): undecodable bytes are U+FFFD in `text`. */
+  notUtf8: boolean;
+}
+
+/** The source's text, or `undefined` when it is over the size limit (D-53). A string is
+ *  measured as its UTF-8 bytes. */
+function decodeSource(source: CsvSource): Decoded | undefined {
   const size =
     typeof source === "string"
       ? new TextEncoder().encode(source).length
       : source.length;
-  if (size > CSV_MAX_BYTES)
-    return fileError({ code: "fileTooLarge", limitBytes: CSV_MAX_BYTES });
+  if (size > CSV_MAX_BYTES) return undefined;
 
   let text: string;
   let notUtf8 = false;
@@ -171,9 +194,19 @@ function readCsv(source: CsvSource): RawFile {
     text = strict ?? new TextDecoder("utf-8").decode(source);
   }
   // One newline convention, so file lines can be counted from Papa's cursor.
-  text = text.replace(/\r\n?/g, "\n");
+  return { text: text.replace(/\r\n?/g, "\n"), notUtf8 };
+}
 
-  const lines: { cells: string[]; line: number; badQuotes: boolean }[] = [];
+interface ScannedLine {
+  cells: string[];
+  /** Physical file line of the record's first line (a quoted cell may span lines). */
+  line: number;
+  badQuotes: boolean;
+}
+
+/** The text's records, skipping blank and whitespace-only lines. */
+function scanLines(text: string): ScannedLine[] {
+  const lines: ScannedLine[] = [];
   let newlinesSeen = 0;
   let scanned = 0;
   const newlinesUpTo = (end: number) => {
@@ -195,43 +228,41 @@ function readCsv(source: CsvSource): RawFile {
       });
     },
   });
-  const [head, ...body] = lines;
-  if (head === undefined) return { records: [], errors: [] };
+  return lines;
+}
 
-  const header = head.cells.map((h) => h.trim());
-
-  if (notUtf8) {
-    for (const l of lines) {
-      const i = l.cells.findIndex((c) => c.includes("\uFFFD"));
-      if (i >= 0) {
-        const field = header[i] ?? "";
-        return {
-          records: [],
-          errors: [{ row: l.line, field, error: { code: "notUtf8" } }],
-        };
-      }
-    }
-    return fileError({ code: "notUtf8" });
+/** The first cell holding U+FFFD, named by its header column. */
+function notUtf8Error(lines: ScannedLine[], header: string[]): RawFile {
+  for (const l of lines) {
+    const i = l.cells.findIndex((c) => c.includes("\uFFFD"));
+    if (i >= 0) return lineError(l.line, header[i] ?? "", { code: "notUtf8" });
   }
+  return fileError({ code: "notUtf8" });
+}
+
+/** A fatal error about the whole file, found from its header, or `undefined`. In order:
+ *  not UTF-8, a semicolon delimiter, a repeated column name, too many rows. */
+function checkHeader(
+  lines: ScannedLine[],
+  headLine: number,
+  header: string[],
+  notUtf8: boolean,
+): RawFile | undefined {
+  if (notUtf8) return notUtf8Error(lines, header);
   if (header.length === 1 && header[0]?.includes(";"))
-    return fileError({ code: "semicolonDelimiter" }, head.line);
+    return fileError({ code: "semicolonDelimiter" }, headLine);
   // A repeated name would let the right-hand column win silently (ADR 0185 §1). Empty
   // names (a spreadsheet's trailing blank columns) are extra columns, ignored as before.
   const twice = header.find((h, i) => h !== "" && header.indexOf(h) !== i);
   if (twice !== undefined)
-    return {
-      records: [],
-      errors: [
-        {
-          row: head.line,
-          field: twice,
-          error: { code: "duplicateHeader", name: twice },
-        },
-      ],
-    };
-  if (body.length > CSV_MAX_ROWS)
+    return lineError(headLine, twice, { code: "duplicateHeader", name: twice });
+  if (lines.length - 1 > CSV_MAX_ROWS)
     return fileError({ code: "tooManyRows", limit: CSV_MAX_ROWS });
+  return undefined;
+}
 
+/** Each data line as a record keyed by the header, or a badQuotes/malformedRow error. */
+function buildRecords(body: ScannedLine[], header: string[]): RawFile {
   const records: RawRecord[] = [];
   const errors: CsvRowError[] = [];
   for (const l of body) {
@@ -257,6 +288,22 @@ function readCsv(source: CsvSource): RawFile {
   return { records, errors };
 }
 
+/** The file's records, checked in order: size, empty, not UTF-8, semicolon delimiter,
+ *  repeated column, too many rows, then each line's quotes and width. */
+function readCsv(source: CsvSource): RawFile {
+  const decoded = decodeSource(source);
+  if (decoded === undefined)
+    return fileError({ code: "fileTooLarge", limitBytes: CSV_MAX_BYTES });
+  const lines = scanLines(decoded.text);
+  const [head, ...body] = lines;
+  if (head === undefined) return { records: [], errors: [] };
+  const header = head.cells.map((h) => h.trim());
+  return (
+    checkHeader(lines, head.line, header, decoded.notUtf8) ??
+    buildRecords(body, header)
+  );
+}
+
 // --- low-level cell parsers ---
 
 /** Collects one row's errors against its file line. */
@@ -271,38 +318,49 @@ class RowCtx {
     return (this.cells[field] ?? "").trim();
   }
 
-  /** The column is not in the file's header (ADR 0185 §2). */
-  private absent(field: string): boolean {
-    return !(field in this.cells);
-  }
-
   fail(field: string, error: CsvErrorCode): null {
     this.errors.push({ row: this.line, field, error });
     return null;
   }
 
-  optStr(field: string): Cell<string> {
-    if (this.absent(field)) return undefined;
+  /** One cell, read as its spec says. An optional column not in the file's header is
+   *  `undefined` (ADR 0185 §2); an empty optional cell is `null`. */
+  read(spec: ColumnSpec, known: Set<string> | undefined): unknown {
+    const field = spec.name;
+    if (!spec.required && !(field in this.cells)) return undefined;
     const v = this.raw(field);
-    return v === "" ? null : v;
+    if (v === "")
+      return spec.required ? this.fail(field, { code: "required" }) : null;
+    return this.value(spec, v, known);
   }
 
-  reqStr(field: string): string | null {
-    const v = this.raw(field);
-    return v === "" ? this.fail(field, { code: "required" }) : v;
-  }
-
-  reqDate(field: string): string | null {
-    const v = this.raw(field);
-    return v === ""
-      ? this.fail(field, { code: "required" })
-      : this.date(field, v);
-  }
-
-  optDate(field: string): Cell<string> {
-    if (this.absent(field)) return undefined;
-    const v = this.raw(field);
-    return v === "" ? null : this.date(field, v);
+  /** A non-empty cell by its kind. */
+  private value(
+    spec: ColumnSpec,
+    v: string,
+    known: Set<string> | undefined,
+  ): unknown {
+    const field = spec.name;
+    switch (spec.kind) {
+      case "text":
+        return v;
+      case "knownProperty":
+        return this.knownProperty(field, v, known);
+      case "date":
+        return this.date(field, v);
+      case "amount":
+        return this.decimal(field, v, "amount");
+      case "unitRate":
+        return this.decimal(field, v, "unitRate");
+      case "signedRate":
+        return this.decimal(field, v, "any");
+      case "int":
+        return this.int(field, v, spec.range, spec.belowMin);
+      case "size":
+        return this.size(field, v, spec.range);
+      case "bool":
+        return this.bool(field, v);
+    }
   }
 
   private date(field: string, v: string): string | null {
@@ -316,19 +374,6 @@ class RowCtx {
     if (y < DATE_FLOOR_YEAR)
       return this.fail(field, { code: "earlyDate", value: v });
     return v;
-  }
-
-  reqDecimal(field: string, rule: DecimalRule): string | null {
-    const v = this.raw(field);
-    return v === ""
-      ? this.fail(field, { code: "required" })
-      : this.decimal(field, v, rule);
-  }
-
-  optDecimal(field: string, rule: DecimalRule): Cell<string> {
-    if (this.absent(field)) return undefined;
-    const v = this.raw(field);
-    return v === "" ? null : this.decimal(field, v, rule);
   }
 
   private decimal(field: string, v: string, rule: DecimalRule): string | null {
@@ -347,24 +392,7 @@ class RowCtx {
     return d.toString();
   }
 
-  reqInt(field: string, range: IntRange): number | null {
-    const v = this.raw(field);
-    return v === ""
-      ? this.fail(field, { code: "required" })
-      : this.int(field, v, range);
-  }
-
   /** `belowMin`: a dedicated code for a value under the range (the loan term's 0). */
-  optInt(
-    field: string,
-    range: IntRange,
-    belowMin?: "notPositive",
-  ): Cell<number> {
-    if (this.absent(field)) return undefined;
-    const v = this.raw(field);
-    return v === "" ? null : this.int(field, v, range, belowMin);
-  }
-
   private int(
     field: string,
     v: string,
@@ -384,10 +412,7 @@ class RowCtx {
   }
 
   /** A size: a plain decimal from the range with at most one decimal place (ADR 0236). */
-  optSize(field: string, range: IntRange): Cell<number> {
-    if (this.absent(field)) return undefined;
-    const v = this.raw(field);
-    if (v === "") return null;
+  private size(field: string, v: string, range: IntRange): number | null {
     if (!PLAIN_DECIMAL.test(v)) {
       const code = DECIMAL_COMMA.test(v) ? "decimalComma" : "invalidNumber";
       return this.fail(field, { code, value: v });
@@ -400,10 +425,8 @@ class RowCtx {
     return n;
   }
 
-  optBool(field: string): Cell<boolean> {
-    if (this.absent(field)) return undefined;
-    const v = this.raw(field).toLowerCase();
-    if (v === "") return null;
+  private bool(field: string, cell: string): boolean | null {
+    const v = cell.toLowerCase();
     if (v === "true" || v === "1" || v === "yes") return true;
     if (v === "false" || v === "0" || v === "no") return false;
     return this.fail(field, { code: "invalidBoolean", value: v });
@@ -411,9 +434,12 @@ class RowCtx {
 
   /** A child row's property must exist in the DB or the properties file; `known`
    *  holds `propertyKey`s (D-55; NFC, ADR 0237). */
-  knownProperty(field: string, known: Set<string> | undefined): string | null {
-    const v = this.reqStr(field);
-    if (v !== null && known && !known.has(propertyKey(v)))
+  private knownProperty(
+    field: string,
+    v: string,
+    known: Set<string> | undefined,
+  ): string | null {
+    if (known && !known.has(propertyKey(v)))
       return this.fail(field, { code: "unknownProperty", value: v });
     return v;
   }
@@ -425,25 +451,85 @@ type DecimalRule = "amount" | "unitRate" | "any";
 /** Czech-Excel style `1 234,5` / `0,0169` (D-49). */
 const DECIMAL_COMMA = /^-?\d{1,3}([ \u00A0]\d{3})*,\d+$|^-?\d+,\d+$/;
 
-/** Run `parseRow` over every record; rows with errors are dropped. A row whose natural
- *  key repeats an earlier row's is a fatal duplicate, reported on the last key column.
- *  The key is the property name (`propertyKey`, D-55; NFC, ADR 0237), plus the key date
- *  for a child file. It counts once its own cells are valid, even if another cell of the
- *  row is not, so every duplicate shows in one round (ADR 0185 §3). */
-function parseFile<T>(
+type Values = ReadonlyMap<string, unknown>;
+
+/** The mortgage instalment of an empty cell: with a loan term, derived from principal +
+ *  rate + term (PMT); a provided instalment is validated and used as-is, and blank with
+ *  no term is still an error. */
+function deriveInstalment(c: RowCtx, field: string, v: Values): string | null {
+  const term = v.get("loan_term_years");
+  const principal = v.get("initial_principal");
+  const rate = v.get("interest_rate_pa");
+  if (
+    typeof term === "number" &&
+    typeof principal === "string" &&
+    typeof rate === "string"
+  )
+    // The engine's suggestion: ceiled so it always fully amortizes (banks round up).
+    return suggestedInstalment(D(principal), D(rate), term).toString();
+  return c.fail(field, { code: "instalmentRequired" });
+}
+
+/** The order the cells of a row are read in, which is the order of its errors: the
+ *  `first` columns, then the others in template order, then the derived ones. */
+const evaluationOrder = (columns: readonly ColumnSpec[]): ColumnSpec[] => [
+  ...columns.filter((s) => s.first),
+  ...columns.filter((s) => !s.first && !s.derive),
+  ...columns.filter((s) => s.derive),
+];
+
+function readRow(
+  c: RowCtx,
+  order: readonly ColumnSpec[],
+  known: Set<string> | undefined,
+): Values {
+  const values = new Map<string, unknown>();
+  for (const spec of order)
+    values.set(
+      spec.name,
+      spec.derive && c.raw(spec.name) === ""
+        ? deriveInstalment(c, spec.name, values)
+        : c.read(spec, known),
+    );
+  return values;
+}
+
+/** A row's columns: its keys without `line`. */
+type RowColumns<R> = Exclude<keyof R, "line">;
+
+/** Compile-time check: the spec names of a file are exactly its row's columns. */
+type NamesMatch<R, C extends readonly ColumnSpec[]> = [RowColumns<R>] extends [
+  C[number]["name"],
+]
+  ? [C[number]["name"]] extends [RowColumns<R>]
+    ? unknown
+    : never
+  : never;
+
+/** Read every record by the column specs; rows with errors are dropped. A row keeps the
+ *  template's key order, an absent column as an own key holding `undefined`, and `line`
+ *  last. A row whose natural key repeats an earlier row's is a fatal duplicate, reported
+ *  on the last key column. The key is the property name (`propertyKey`, D-55; NFC,
+ *  ADR 0237), plus the key date for a child file. It counts once its own cells are
+ *  valid, even if another cell of the row is not, so every duplicate shows in one round
+ *  (ADR 0185 §3). */
+function parseFile<R extends Located, C extends readonly ColumnSpec[]>(
   source: CsvSource,
-  parseRow: (c: RowCtx) => T | null,
+  columns: C & NamesMatch<R, C>,
   /** The key columns: the property name first, then a child file's key date. */
-  keyCells: readonly string[],
-): CsvParseResult<T & Located> {
+  keyCells: readonly C[number]["name"][],
+  /** For `knownProperty` columns: the known names as `propertyKey`s. */
+  known?: Set<string>,
+): CsvParseResult<R> {
   const file = readCsv(source);
-  const rows: (T & Located)[] = [];
+  const rows: R[] = [];
   const errors = [...file.errors];
+  const order = evaluationOrder(columns);
   const firstLine = new Map<string, number>();
   const keyField = keyCells[keyCells.length - 1] ?? "";
   for (const rec of file.records) {
     const c = new RowCtx(rec.cells, rec.line);
-    const row = parseRow(c);
+    const values = readRow(c, order, known);
     if (!c.errors.some((e) => keyCells.includes(e.field))) {
       const [name = "", ...rest] = keyCells;
       const k = [propertyKey(c.raw(name)), ...rest.map((f) => c.raw(f))].join(
@@ -453,8 +539,12 @@ function parseFile<T>(
       if (first === undefined) firstLine.set(k, rec.line);
       else c.fail(keyField, { code: "duplicateKey", firstRow: first });
     }
-    if (row !== null && c.errors.length === 0)
-      rows.push({ ...row, line: rec.line });
+    if (c.errors.length === 0) {
+      const row: Record<string, unknown> = {};
+      for (const spec of columns) row[spec.name] = values.get(spec.name);
+      row.line = rec.line;
+      rows.push(row as R);
+    }
     errors.push(...c.errors);
   }
   errors.sort((a, b) => a.row - b.row);
@@ -470,43 +560,9 @@ const keySet = (names: Set<string> | undefined) =>
 export function parseProperties(
   csv: CsvSource,
 ): CsvParseResult<ParsedPropertyRow> {
-  return parseFile(
+  return parseFile<ParsedPropertyRow, typeof PROPERTY_COLUMNS>(
     csv,
-    (c) => {
-      const name = c.reqStr("name");
-      const purchase_date = c.reqDate("purchase_date");
-      const purchase_price = c.reqDecimal("purchase_price", "amount");
-      const address = c.optStr("address");
-      const type = c.optStr("type");
-      const size_m2 = c.optSize("size_m2", INT_RANGES.sizeM2);
-      const garage = c.optBool("garage");
-      const appreciation_override_pa = c.optDecimal(
-        "appreciation_override_pa",
-        "any",
-      );
-      const rent_index_override_pa = c.optDecimal(
-        "rent_index_override_pa",
-        "any",
-      );
-      const own_cash = c.optDecimal("own_cash", "amount");
-      const transaction_costs = c.optDecimal("transaction_costs", "amount");
-      const initial_works = c.optDecimal("initial_works", "amount");
-      if (!name || !purchase_date || !purchase_price) return null;
-      return {
-        name,
-        address,
-        type,
-        size_m2,
-        garage,
-        purchase_date,
-        purchase_price,
-        appreciation_override_pa,
-        rent_index_override_pa,
-        own_cash,
-        transaction_costs,
-        initial_works,
-      };
-    },
+    PROPERTY_COLUMNS,
     ["name"],
   );
 }
@@ -515,18 +571,11 @@ export function parseValuations(
   csv: CsvSource,
   knownNames?: Set<string>,
 ): CsvParseResult<ParsedValuationRow> {
-  const known = keySet(knownNames);
-  return parseFile(
+  return parseFile<ParsedValuationRow, typeof VALUATION_COLUMNS>(
     csv,
-    (c) => {
-      const property_name = c.knownProperty("property_name", known);
-      const valid_from = c.reqDate("valid_from");
-      const valid_to = c.optDate("valid_to");
-      const market_value = c.reqDecimal("market_value", "amount");
-      if (!property_name || !valid_from || !market_value) return null;
-      return { property_name, valid_from, valid_to, market_value };
-    },
+    VALUATION_COLUMNS,
     ["property_name", "valid_from"],
+    keySet(knownNames),
   );
 }
 
@@ -534,18 +583,11 @@ export function parseRents(
   csv: CsvSource,
   knownNames?: Set<string>,
 ): CsvParseResult<ParsedRentRow> {
-  const known = keySet(knownNames);
-  return parseFile(
+  return parseFile<ParsedRentRow, typeof RENT_COLUMNS>(
     csv,
-    (c) => {
-      const property_name = c.knownProperty("property_name", known);
-      const start_date = c.reqDate("start_date");
-      const end_date = c.optDate("end_date");
-      const monthly_rent = c.reqDecimal("monthly_rent", "amount");
-      if (!property_name || !start_date || !monthly_rent) return null;
-      return { property_name, start_date, end_date, monthly_rent };
-    },
+    RENT_COLUMNS,
     ["property_name", "start_date"],
+    keySet(knownNames),
   );
 }
 
@@ -553,96 +595,38 @@ export function parseMortgages(
   csv: CsvSource,
   knownNames?: Set<string>,
 ): CsvParseResult<ParsedMortgageRow> {
-  const known = keySet(knownNames);
-  return parseFile(
+  return parseFile<ParsedMortgageRow, typeof MORTGAGE_COLUMNS>(
     csv,
-    (c) => {
-      const property_name = c.knownProperty("property_name", known);
-      const start_date = c.reqDate("start_date");
-      const initial_principal = c.reqDecimal("initial_principal", "amount");
-      const fixation_years = c.reqInt(
-        "fixation_years",
-        INT_RANGES.fixationYears,
-      );
-      const interest_rate_pa = c.reqDecimal("interest_rate_pa", "unitRate");
-      const loan_term_years = c.optInt(
-        "loan_term_years",
-        INT_RANGES.loanTermYears,
-        "notPositive",
-      );
-      const contract_maturity_date = c.optDate("contract_maturity_date");
-      // Instalment is optional when a loan term is given: derive it from principal +
-      // rate + term (PMT). A provided instalment is validated and used as-is; blank
-      // with no term is still an error.
-      let monthly_instalment: string | null;
-      if (c.raw("monthly_instalment") !== "") {
-        monthly_instalment = c.reqDecimal("monthly_instalment", "amount");
-      } else if (
-        loan_term_years != null &&
-        initial_principal &&
-        interest_rate_pa
-      ) {
-        // The engine's suggestion: ceiled so it always fully amortizes (banks round up).
-        monthly_instalment = suggestedInstalment(
-          D(initial_principal),
-          D(interest_rate_pa),
-          loan_term_years,
-        ).toString();
-      } else {
-        monthly_instalment = c.fail("monthly_instalment", {
-          code: "instalmentRequired",
-        });
-      }
-      if (
-        !property_name ||
-        !start_date ||
-        !initial_principal ||
-        fixation_years === null ||
-        !interest_rate_pa ||
-        !monthly_instalment
-      )
-        return null;
-      return {
-        property_name,
-        start_date,
-        initial_principal,
-        fixation_years,
-        interest_rate_pa,
-        monthly_instalment,
-        loan_term_years,
-        contract_maturity_date,
-      };
-    },
+    MORTGAGE_COLUMNS,
     ["property_name", "start_date"],
+    keySet(knownNames),
   );
 }
 
 // --- CSV template generators ---
 
+/** A template: the spec's header and one literal example row. */
+const template = (columns: readonly ColumnSpec[], example: string): string =>
+  [columns.map((c) => c.name).join(","), example].join("\n");
+
 export function propertiesTemplate(): string {
-  return [
-    "name,address,type,size_m2,garage,purchase_date,purchase_price,appreciation_override_pa,rent_index_override_pa,own_cash,transaction_costs,initial_works",
+  return template(
+    PROPERTY_COLUMNS,
     "Byt Javorova,Javorova 12 Praha,3 bedroom,71,true,2015-06-01,4080000,,,,,",
-  ].join("\n");
+  );
 }
 
 export function valuationsTemplate(): string {
-  return [
-    "property_name,valid_from,valid_to,market_value",
-    "Byt Javorova,2026-06-01,,10200000",
-  ].join("\n");
+  return template(VALUATION_COLUMNS, "Byt Javorova,2026-06-01,,10200000");
 }
 
 export function rentsTemplate(): string {
-  return [
-    "property_name,start_date,end_date,monthly_rent",
-    "Byt Javorova,2025-09-01,,27200",
-  ].join("\n");
+  return template(RENT_COLUMNS, "Byt Javorova,2025-09-01,,27200");
 }
 
 export function mortgagesTemplate(): string {
-  return [
-    "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment,loan_term_years,contract_maturity_date",
+  return template(
+    MORTGAGE_COLUMNS,
     "Byt Javorova,2021-01-17,1912500,10,0.0169,6721.8,,",
-  ].join("\n");
+  );
 }
