@@ -37,6 +37,12 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- A loan's balance at the projection start is always worked out by replaying its payments
+  month by month; the shortcut formula is gone (ADR 0235, #449). No figure changes for an
+  ordinary loan. A loan entered with an explicit term and an instalment too small for it
+  now shows the debt its payments leave: an instalment at or below the month's interest
+  keeps the debt at the amount borrowed instead of adding the unpaid interest, and a loan
+  viewed after its maturity shows no debt instead of a balance repaid in the first month.
 - When a loan save is refused for a field the form is not showing, the reason now shows
   above the buttons instead of nothing (ADR 0243, #440). No figure changes.
 - When saving an edited property fails, the property form keeps what you typed and still
