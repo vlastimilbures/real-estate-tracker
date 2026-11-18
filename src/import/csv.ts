@@ -143,10 +143,19 @@ interface RawFile {
   errors: CsvRowError[];
 }
 
-const fileError = (error: CsvErrorCode, row = 0): RawFile => ({
+/** One error about a whole line (or, with `row` 0, the file); it leaves no records. */
+const lineError = (
+  row: number,
+  field: string,
+  error: CsvErrorCode,
+): RawFile => ({
   records: [],
-  errors: [{ row, field: "", error }],
+  errors: [{ row, field, error }],
 });
+
+/** An error about the whole file, or (with `row`) a whole line, naming no column. */
+const fileError = (error: CsvErrorCode, row = 0): RawFile =>
+  lineError(row, "", error);
 
 /** UTF-8 text of the bytes, or `null` when they are not valid UTF-8 (D-49). The
  *  decoder drops a leading BOM. */
@@ -157,16 +166,6 @@ function decodeUtf8(bytes: Uint8Array): string | null {
     return null;
   }
 }
-
-/** One error about a whole line (or, with `row` 0, the file); it leaves no records. */
-const lineError = (
-  row: number,
-  field: string,
-  error: CsvErrorCode,
-): RawFile => ({
-  records: [],
-  errors: [{ row, field, error }],
-});
 
 interface Decoded {
   /** The text with one newline convention and no leading BOM. */
