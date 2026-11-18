@@ -135,7 +135,7 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   figure should read the same on every screen.
 - Approved by: owner's delegation of 2026-11-15 (comment on #392), owner review pending
 
-### 2026-11-18 · #441 item 1
+### 2026-11-18 · #441 item 1 / PR #554
 
 - Keys: `inputRules.RATE_OUT_OF_RANGE` (en, cs, ru)
 - Change: the range message of a rate field reads "from 0 to 100 %" instead of "a fraction
@@ -150,7 +150,7 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   rate, not a limit that can move.
 - Approved by: owner, 2026-11-18 (#435 comment 6965976270)
 
-### 2026-11-18 · #441 item 2
+### 2026-11-18 · #441 item 2 / PR #554
 
 - Keys: `inputRules.INVALID_RECAST_MATURITY`, `dataCheck.valuationStaleGroup`,
   `dataCheck.leaseEndingGroup`, `common.irrNoRoot` (en, cs, ru)
@@ -168,7 +168,7 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   dictionaries import no limits and the other entries with numbers take arguments.
 - Approved by: owner, 2026-11-18 (#435 comment 6965976270)
 
-### 2026-11-18 · #441 item 4
+### 2026-11-18 · #441 item 4 / PR #554
 
 - Keys: none; the crash preset labels are built in `src/ui/model/scenarios.ts`
   (`crashLevel`), and `scenarios.crashTitle` and `scenarios.combinedTitle` take them
