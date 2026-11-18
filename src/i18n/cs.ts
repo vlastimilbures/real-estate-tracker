@@ -15,7 +15,7 @@ export const cs: Dictionary = {
     completedValue: (amount) => `hodnota po dokončení ${amount}`,
     irrNotUnique:
       "IRR není jednoznačné: peněžní toky mají nulovou současnou hodnotu při více sazbách",
-    irrNoRoot: "IRR neleží mezi −90 % a +1000 %",
+    irrNoRoot: (low, high) => `IRR neleží mezi ${low} a ${high}`,
     /** Unit shown inside year-count fields (UX-034). */
     yearsSuffix: "let",
     asOfGroup: "K datu",
@@ -125,8 +125,8 @@ export const cs: Dictionary = {
       "Mimořádná splátka nebo změna splatnosti musí mít datum před poslední splátkou úvěru",
     INVALID_RECAST:
       "Změna splatnosti potřebuje buď nové datum splatnosti, nebo novou splátku vyšší než nula, ne obojí",
-    INVALID_RECAST_MATURITY:
-      "Nová splatnost musí být po příští splátce a u úvěru na výstavbu po dokončení, a nejvýše 50 let od začátku úvěru (nebo smluvní doba, je-li delší)",
+    INVALID_RECAST_MATURITY: (years, n) =>
+      `Nová splatnost musí být po příští splátce a u úvěru na výstavbu po dokončení, a nejvýše ${years} ${csPlural(n, ["rok", "roky", "let"])} od začátku úvěru (nebo smluvní doba, je-li delší)`,
     RECAST_INSTALMENT_BEFORE_COMPLETION:
       "Novou splátku lze nastavit až po skončení splácení jen úroků; zadejte místo toho nové datum splatnosti",
     LEASE_OVERLAP:
@@ -427,14 +427,14 @@ export const cs: Dictionary = {
       `${n} ${csPlural(n, ["položka vyžaduje", "položky vyžadují", "položek vyžaduje"])} pozornost`,
     useDefaults: (n) =>
       `${n} ${csPlural(n, ["položka používá", "položky používají", "položek používá"])} výchozí hodnoty portfolia`,
-    valuationStaleGroup:
-      "Použité ocenění je starší než 12 měsíců. Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.",
+    valuationStaleGroup: (months, n) =>
+      `Použité ocenění je starší než ${months} ${csPlural(n, ["měsíc", "měsíce", "měsíců"])}. Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.`,
     noValuationGroup:
       "Není zadané žádné ocenění, proto se jako tržní hodnota použije kupní cena navýšená o roční zhodnocení od data koupě.",
     leaseEndedGroup:
       "Nájem skončil a další nájem není zadán. Snímek po datu konce nájmu nepočítá žádné nájemné; projekce počítá s prodloužením tohoto nájmu.",
-    leaseEndingGroup:
-      "Nájem končí do 3 měsíců a další nájem není zadán. Projekce počítá s prodloužením stávajícího nájmu.",
+    leaseEndingGroup: (months, n) =>
+      `Nájem končí do ${months} ${csPlural(n, ["měsíce", "měsíců", "měsíců"])} a další nájem není zadán. Projekce počítá s prodloužením stávajícího nájmu.`,
     fixationEndedGroup: (rate) =>
       `Fixace skončila a není zadán navazující blok, proto aplikace od konce fixace počítá se sazbou po skončení fixace ${rate}. Zadejte podmínky nové fixace jako nový blok hypotéky.`,
     recordFunding: "Zadat financování",

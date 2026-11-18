@@ -10,6 +10,7 @@ import type {
 } from "../../state/csv";
 import { isoDate } from "../../engine";
 import { fmtCzk, fmtDate, fmtPct } from "../../lib/format";
+import { inputRuleText } from "./inputRule";
 
 export interface FileGroup {
   file: CsvFile;
@@ -93,7 +94,7 @@ export function storedEventText(
   return p.errStoredEvent(
     p.storedEventKind[problem.list],
     showDate(problem.date),
-    t.inputRules[problem.rule],
+    inputRuleText(t, problem.rule),
   );
 }
 

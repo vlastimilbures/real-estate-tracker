@@ -326,7 +326,10 @@ function findingLine(
   switch (f.kind) {
     case "valuationStale":
       return {
-        headline: d.valuationStaleGroup,
+        headline: d.valuationStaleGroup(
+          fmtNumber(VALUATION_STALE_MONTHS),
+          VALUATION_STALE_MONTHS,
+        ),
         detail: `${t.propertyDetail.monthsCount(f.months)} · ${fmtDate(f.validFrom)}`,
       };
     case "noValuation":
@@ -337,7 +340,13 @@ function findingLine(
     case "leaseEnded":
       return { headline: d.leaseEndedGroup, detail: fmtDate(f.endDate) };
     case "leaseEnding":
-      return { headline: d.leaseEndingGroup, detail: fmtDate(f.endDate) };
+      return {
+        headline: d.leaseEndingGroup(
+          fmtNumber(LEASE_ENDING_MONTHS),
+          LEASE_ENDING_MONTHS,
+        ),
+        detail: fmtDate(f.endDate),
+      };
     case "fixationEnded":
       if (!f.until)
         return {

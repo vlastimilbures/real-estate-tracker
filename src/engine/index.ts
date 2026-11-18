@@ -43,6 +43,9 @@ export {
 export {
   /** @internal test seam (CSV import tests) */
   MAX_LOAN_TERM_MONTHS,
+  /** The IRR search range the "no IRR" note names (#441). */
+  IRR_BRACKET_LOW,
+  IRR_BRACKET_MAX,
 } from "./constants";
 export { basisDate, scheduledPrincipal } from "./growth";
 export {

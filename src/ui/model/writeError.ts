@@ -6,6 +6,7 @@ import type { ConstraintFailure } from "../../data/errors";
 import type { WriteError } from "../../state/writeError";
 import type { RangeProblem } from "../../lib/rules";
 import { fieldHint } from "./formParse";
+import { inputRuleText } from "./inputRule";
 
 export interface WriteErrorText {
   message: string;
@@ -128,7 +129,7 @@ function constraintText(t: Dictionary, c: ConstraintFailure): WriteErrorText {
           ? w.invalidFlag
           : known.rule === "json"
             ? w.invalidJson
-            : t.inputRules[known.rule];
+            : inputRuleText(t, known.rule);
       return { message, field: known.field };
     }
     case "foreignKey":
@@ -177,7 +178,7 @@ export function writeErrorTexts(
   const out: WriteErrorText[] = [];
   const { scenario } = e;
   for (const err of e.errors) {
-    const rule = t.inputRules[err.code];
+    const rule = inputRuleText(t, err.code);
     const message =
       scenario === undefined
         ? rule

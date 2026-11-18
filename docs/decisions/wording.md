@@ -149,3 +149,21 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 - Rejected: passing 0 and 100 as arguments, because the unit range is the meaning of a
   rate, not a limit that can move.
 - Approved by: owner, 2026-11-18 (#435 comment 6965976270)
+
+### 2026-11-18 · #441 item 2
+
+- Keys: `inputRules.INVALID_RECAST_MATURITY`, `dataCheck.valuationStaleGroup`,
+  `dataCheck.leaseEndingGroup`, `common.irrNoRoot` (en, cs, ru)
+- Change: these texts take the limit they name as an argument instead of repeating it:
+  the recast cap from `INT_RANGES.loanTermYears.max`, the Data check thresholds from
+  `VALUATION_STALE_MONTHS` and `LEASE_ENDING_MONTHS` (`src/ui/model/dataCheck.ts`), and the
+  IRR search range from the engine's `IRR_BRACKET_LOW` and `IRR_BRACKET_MAX`. Numbers are
+  formatted by `fmtNumber` and `fmtPct`, and the count word follows the number's plural
+  form in each language. At today's limits the words are unchanged; the IRR note reads
+  "+1 000 %" with the thousands space of `fmtPct` (was "+1000 %"). Input rules are read
+  through `inputRuleText` (`src/ui/model/inputRule.ts`). The Data check headlines are part
+  of the chips' accessible names, the IRR note is screen-reader text and a compare-export
+  note, and the input rules show in live regions, so ADR 0250 records them too.
+- Rejected: building the strings from the constants inside the dictionaries, because the
+  dictionaries import no limits and the other entries with numbers take arguments.
+- Approved by: owner, 2026-11-18 (#435 comment 6965976270)
