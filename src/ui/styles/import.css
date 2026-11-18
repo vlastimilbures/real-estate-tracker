@@ -64,7 +64,7 @@
 .import-summary-file {
   padding-bottom: var(--s3);
   border-bottom: 1px solid var(--hairline);
-  font-size: var(--fs-13-5);
+  font-size: var(--fs-14);
 }
 .import-summary-file .counts {
   color: var(--ink-soft);

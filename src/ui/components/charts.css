@@ -114,7 +114,7 @@ table.chart-table tbody th.sticky-col {
   display: flex;
   gap: var(--s4);
   flex-wrap: wrap;
-  font-size: var(--fs-11-5);
+  font-size: var(--fs-12);
   color: var(--ink-soft);
   margin-top: var(--s2);
 }

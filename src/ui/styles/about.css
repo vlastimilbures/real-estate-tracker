@@ -28,13 +28,13 @@
   color: var(--ink);
 }
 .about-version {
-  font-size: var(--fs-12-5);
+  font-size: var(--fs-13);
   color: var(--ink-faint);
   font-feature-settings: var(--num);
 }
 .about-tagline {
   margin: var(--s2) 0 0;
-  font-size: var(--fs-13-5);
+  font-size: var(--fs-14);
   line-height: 1.5;
   color: var(--ink-soft);
   max-width: 60ch;
@@ -55,7 +55,7 @@
 /* Prose blocks within sections */
 .about-prose {
   color: var(--ink-soft);
-  font-size: var(--fs-13-5);
+  font-size: var(--fs-14);
   line-height: 1.55;
   max-width: 72ch;
   margin: 0 0 var(--s3);
@@ -91,14 +91,14 @@
   margin: 0;
 }
 .about-meta dt {
-  font-size: var(--fs-12-5);
+  font-size: var(--fs-13);
   color: var(--ink-faint);
 }
 .about-meta dd {
   margin: 0;
   /* Long document addresses wrap inside the dialog (ADR 0092). */
   overflow-wrap: anywhere;
-  font-size: var(--fs-13-5);
+  font-size: var(--fs-14);
   color: var(--ink);
 }
 
@@ -108,7 +108,7 @@
   gap: var(--s2);
   justify-content: center;
   padding: var(--s4) 0 var(--s2);
-  font-size: var(--fs-12-5);
+  font-size: var(--fs-13);
   color: var(--ink-faint);
 }
 .about-foot-sep {

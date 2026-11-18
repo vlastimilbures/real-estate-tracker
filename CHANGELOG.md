@@ -53,6 +53,11 @@ engine without the form, and remove it when the last part lands.
   whose property's own `properties.csv` row has an error no longer gets a second error
   for it. A misspelt name now shows once the files' own errors are fixed (ADR 0254,
   #482). Nothing more is imported than before. No figure changes.
+- Font sizes are whole pixels: text that was 11.5, 12.5 or 13.5 px is now 12, 13 or 14 px
+  (ADR 0256, #495). This covers chart legends, field help and errors, the date calendar,
+  panel notes, inputs, the sidebar nav, stat lists, info tips, the About dialog and the
+  Guide. The foot line under a KPI tile's figure is 11 px instead, so the tile keeps its
+  height. No figure changes.
 - A loan's balance at the projection start is always worked out by replaying its payments
   month by month; the shortcut formula is gone (ADR 0235, #449). No figure changes for an
   ordinary loan. A loan entered with an explicit term and an instalment too small for it
