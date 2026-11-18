@@ -43,7 +43,9 @@ describe("ADR 0235 case A: an explicit term, an instalment at or below the inter
   });
 
   it("an instalment equal to the interest opens at the principal too", () => {
-    const equal = block({ monthlyInstalment: money("8333.333333333333") });
+    // The month's interest exactly as the engine computes it, to 40 digits.
+    const interest = D("2000000").times(D("0.05").div(12));
+    const equal = block({ monthlyInstalment: money(interest.toString()) });
     expect(openingBalance(equal, A0).toString()).toBe("2000000");
   });
 });
