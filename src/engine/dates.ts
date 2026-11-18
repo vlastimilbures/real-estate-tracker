@@ -99,14 +99,31 @@ export function firstGridMonthOnOrAfter(
  * EDATE(anchor, k) ≤ date (0 when there is none). With a loan's start as the anchor
  * this is the number of payments due by `date` (D-21): unlike `monthsBetween`, a
  * clamped month-end due date counts (start 31 Jan → due 28 Feb, DR-070).
+ * An invalid date raises a RangeError: no due date ever passes it, so the walk would
+ * never end (ADR 0247, #543). So does a step past the end of the Date range (year
+ * 275760), which is an Invalid Date too. Two valid dates always give a whole month
+ * count, and a step that stays in the range is a valid date, so neither guard fires on
+ * a walk that ends.
  */
 export function lastGridMonthOnOrBefore(anchor: Date, date: Date): number {
+  const months = monthsBetween(anchor, date);
+  if (Number.isNaN(months)) throw invalidGridDate();
   // EDATE(anchor, k) is non-decreasing in k and within a month-end clamp of
   // monthsBetween, so a ±1 correction from it is exact.
-  let k = Math.max(0, monthsBetween(anchor, date));
-  while (!isAfter(edate(anchor, k + 1), date)) k++;
+  let k = Math.max(0, months);
+  while (!isAfter(gridStep(anchor, k + 1), date)) k++;
   while (k > 0 && isAfter(edate(anchor, k), date)) k--;
   return k;
+}
+
+const invalidGridDate = () =>
+  new RangeError("lastGridMonthOnOrBefore: an invalid date");
+
+/** EDATE(anchor, k) for the walk up: an Invalid Date (past the Date range) raises. */
+function gridStep(anchor: Date, k: number): IsoDate {
+  const step = edate(anchor, k);
+  if (Number.isNaN(step.getTime())) throw invalidGridDate();
+  return step;
 }
 
 /**

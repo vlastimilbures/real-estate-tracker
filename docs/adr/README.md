@@ -296,6 +296,7 @@ it.
 | [0244](0244-engine-reads-lib-rules.md)                         | The engine may read lib/rules.ts                                                              | Accepted (owner-delegated, night run 2026-11-16; owner review pending)   | #464, #435                                         |
 | [0245](0245-store-refuses-added-out-of-range.md)               | The store refuses a write that adds an out-of-range value                                     | Accepted (owner-delegated, night run 2026-11-16; owner review pending)   | #464, #435                                         |
 | [0246](0246-focus-after-failed-save.md)                        | A failed save puts focus back on the form's submit button                                     | Accepted (owner-delegated, night run 2026-11-16; owner review pending)   | #538                                               |
+| [0247](0247-invalid-loan-start-skips-event-checks.md)          | A loan with an invalid start date skips the event checks that need its start                  | Accepted (owner-delegated, night run 2026-11-16; owner review pending)   | #543, #479, #435                                   |
 
 <!-- adr-index:end -->
 

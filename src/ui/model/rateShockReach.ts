@@ -10,6 +10,7 @@ import {
   EngineInputError,
   monthsBetween,
   selectBlock,
+  validateInputs,
 } from "../../engine";
 import type {
   Assumptions,
@@ -91,7 +92,9 @@ export function reachSummary(
 }
 
 /** The reach note of a rate-shock scenario; undefined without a shock or loans, or
- *  when the data is invalid (the projection reports that itself). */
+ *  when the data is invalid (the projection reports that itself). Invalid data is
+ *  checked first: the reach builds block schedules, which walk the payment grid from
+ *  dates only validation vouches for (ADR 0247). */
 export function rateShockNote(
   scenario: Scenario,
   portfolio: Portfolio | null,
@@ -100,6 +103,7 @@ export function rateShockNote(
 ): string | undefined {
   const shock = scenario.overrides.rateShock;
   if (!shock || !portfolio || !assumptions) return undefined;
+  if (validateInputs(portfolio, assumptions).length > 0) return undefined;
   try {
     return reachSummary(rateShockReach(portfolio, assumptions, shock), t);
   } catch (e) {

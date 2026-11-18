@@ -155,6 +155,16 @@ engine without the form, and remove it when the last part lands.
   A value already stored outside its range does not block other edits. No form, message
   or figure changes.
 
+### Fixed
+
+- A restored loan with an invalid start date and a recast to a new maturity no longer
+  freezes the app: the loan reports its invalid start date, and the recast's maturity is
+  checked once the start is fixed (ADR 0247, #543). No figure changes.
+- On restored data the app refuses, the Scenarios page shows its invalid-data notice
+  without a rate-shock note. A loan with a recast to an invalid maturity no longer freezes
+  the page, and a loan with an invalid start no longer leaves a note computed from the
+  other loans (ADR 0247, #543).
+
 ### Accessibility
 
 - The Projections entity dropdown is named by its purpose and the value it shows
