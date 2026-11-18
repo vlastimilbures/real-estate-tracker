@@ -318,7 +318,13 @@ function toPortfolio([
 }
 
 function toAssumptions(rows: unknown[]): Assumptions {
-  if (rows.length === 0) throw new Error("assumptions row not found (id = 1)");
+  // A lost row is not re-created from the sample values: startup stops (ADR 0252).
+  if (rows.length === 0)
+    throw new DataError(
+      "ROW_INVALID",
+      "A saved record cannot be read: assumptions row not found (id = 1).",
+      ["assumptions 1: row not found"],
+    );
   return rowToAssumptions(rows[0] as AssumptionsRow);
 }
 
