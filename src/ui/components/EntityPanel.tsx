@@ -143,12 +143,7 @@ export function EntityPanel<
       )}
 
       {(mode.t === "add" || mode.t === "edit") && (
-        <div
-          style={{
-            padding: "var(--s5)",
-            borderTop: "1px solid var(--hairline)",
-          }}
-        >
+        <div className="entity-form">
           <RecordForm
             // Remount the form when the edit target changes so its draft re-seeds
             // from the new row; otherwise React keeps the previous row's `useState`

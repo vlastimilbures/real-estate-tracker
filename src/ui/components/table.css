@@ -416,6 +416,23 @@ table.data td:has(> .row-actions) {
   pointer-events: auto;
 }
 
+/* The Properties list: a row opens its property on click, and the name cell is bold. */
+.row-link {
+  cursor: pointer;
+}
+.cell-strong {
+  font-weight: 600;
+}
+/* A pending purchase's empty cell is positioned, so its screen-reader text stays inside
+   the table's scroll box and cannot widen the page from a scrolled-off column. */
+.cell-not-owned {
+  position: relative;
+}
+/* The monthly amortization table scrolls inside a fixed height. */
+.table-wrap.amortization-wrap {
+  max-height: 320px;
+}
+
 /* ============ N/A cells and the inline confirm row ============ */
 /* Dense projection table: N/A flow cells. */
 /* --ink-soft, not --ink-faint: totals rows sit on --paper-2 (ADR 0157). */
@@ -444,4 +461,9 @@ table.data td:has(> .row-actions) {
 /* Alone in a flush panel (the deactivate confirm): the panel border is the edge. */
 .panel-body.flush > .confirm-row:first-child {
   border-top: none;
+}
+/* An entity panel's add/edit form, under its table in the flush panel body. */
+.entity-form {
+  padding: var(--s5);
+  border-top: 1px solid var(--hairline);
 }

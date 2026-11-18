@@ -43,11 +43,6 @@
       "Function 'BootFailure'": 153
     }
   },
-  "src/ui/components/EntityPanel.tsx": {
-    "lines": {
-      "Function 'EntityPanel'": 154
-    }
-  },
   "src/ui/components/LoanEventRows.tsx": {
     "lines": {
       "Function 'LoanEventRows'": 239

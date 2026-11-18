@@ -311,6 +311,12 @@
   font-size: var(--fs-13-5);
   color: var(--ink-soft);
 }
+/* An inactive property's badge and notes, on one line in its panel. */
+.inactive-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+}
 
 /* A panel head's disclosure toggle (Scenarios' "Add from preset", the Dashboard's Data
    check) stays on one line at the minimum window. */
