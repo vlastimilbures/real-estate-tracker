@@ -19,3 +19,4 @@ export {
   assertInputs,
   validateInputs,
 } from "./entry";
+export { scenarioErrorsAddedBy, scenarioRuleErrors } from "./scenarioRules";

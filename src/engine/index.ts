@@ -100,9 +100,10 @@ export type {
   PropertyLoan,
 } from "./financing";
 export { applyScenario } from "./scenarios";
-export { scenarioErrorsAddedBy, scenarioRuleErrors } from "./scenarioRules";
 export {
   leaseOverlapErrors,
+  scenarioErrorsAddedBy,
+  scenarioRuleErrors,
   validateInputs,
   validatePortfolio,
 } from "./validate";

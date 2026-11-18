@@ -168,6 +168,7 @@ describe("splitRanges and mutateFor", () => {
       "src/engine/validate/loan.ts",
       "src/engine/validate/loanEvents.ts",
       "src/engine/validate/rows.ts",
+      "src/engine/validate/scenarioRules.ts",
     ]);
   });
 });

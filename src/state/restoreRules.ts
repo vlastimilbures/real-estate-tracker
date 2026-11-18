@@ -1,8 +1,8 @@
 // The engine's input rules as the restore check (P5b), plus the whole-number bounds the
 // forms and CSV import apply (ADR 0086). The scenario check the store and the compare use
-// (ADR 0123) is the engine's (src/engine/scenarioRules.ts). A stored date before the date
-// floor is not checked (ADR 0232). Lives in src/state, which injects it into restore,
-// because the data layer never calls engine functions (DB → mappers → engine).
+// (ADR 0123) is the engine's (src/engine/validate/scenarioRules.ts). A stored date before
+// the date floor is not checked (ADR 0232). Lives in src/state, which injects it into
+// restore, because the data layer never calls engine functions (DB → mappers → engine).
 import { validateInputs, validatePortfolio } from "../engine";
 import type { EngineValidationError } from "../engine";
 import type { InputRules } from "../data/backup";
