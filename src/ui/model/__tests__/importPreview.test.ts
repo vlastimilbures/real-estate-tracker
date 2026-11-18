@@ -6,6 +6,7 @@ import {
   itemLabel,
 } from "../importPreview";
 import { getDict } from "../../../i18n";
+import { en } from "../../../i18n/en";
 import { fmtCzk, fmtPct } from "../../../lib/format";
 import type { ImportItem } from "../../../import/csvImport";
 
@@ -77,26 +78,26 @@ describe("itemLabel", () => {
 describe("changeText", () => {
   it("formats money, rates, dates, flags and empty values for display", () => {
     expect(
-      changeText({
+      changeText(en, {
         field: "purchase_price",
         before: "5000000",
         after: "5100000",
       }),
     ).toBe(`${fmtCzk("5000000")} → ${fmtCzk("5100000")}`);
     expect(
-      changeText({
+      changeText(en, {
         field: "interest_rate_pa",
         before: "0.0169",
         after: "0.0199",
       }),
     ).toBe(`${fmtPct("0.0169", 2)} → ${fmtPct("0.0199", 2)}`);
     expect(
-      changeText({ field: "end_date", before: null, after: "2026-08-31" }),
+      changeText(en, { field: "end_date", before: null, after: "2026-08-31" }),
     ).toBe("— → 31.08.2026");
-    expect(changeText({ field: "garage", before: "0", after: "1" })).toBe(
-      "false → true",
+    expect(changeText(en, { field: "garage", before: "0", after: "1" })).toBe(
+      "No → Yes",
     );
-    expect(changeText({ field: "address", before: "A", after: null })).toBe(
+    expect(changeText(en, { field: "address", before: "A", after: null })).toBe(
       "A → —",
     );
   });
@@ -104,14 +105,14 @@ describe("changeText", () => {
   // ADR 0185 §4: a change must not read as "7 908 Kč → 7 908 Kč".
   it("shows both sides at full precision when they format alike", () => {
     expect(
-      changeText({
+      changeText(en, {
         field: "monthly_instalment",
         before: "7908",
         after: "7908.4",
       }).replace(/\s/g, " "),
     ).toBe("7 908,00 Kč → 7 908,40 Kč");
     expect(
-      changeText({
+      changeText(en, {
         field: "interest_rate_pa",
         before: "0.0169",
         after: "0.01694",
@@ -121,7 +122,7 @@ describe("changeText", () => {
 
   it("falls back to the stored text when even that precision reads the same", () => {
     expect(
-      changeText({
+      changeText(en, {
         field: "monthly_instalment",
         before: "7908",
         after: "7908.004",
@@ -131,7 +132,7 @@ describe("changeText", () => {
 
   it("formats the funding amounts as money (ADR 0119 §8)", () => {
     for (const field of ["own_cash", "transaction_costs", "initial_works"])
-      expect(changeText({ field, before: null, after: "850000" })).toBe(
+      expect(changeText(en, { field, before: null, after: "850000" })).toBe(
         `— → ${fmtCzk("850000")}`,
       );
   });

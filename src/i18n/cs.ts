@@ -26,6 +26,8 @@ export const cs: Dictionary = {
     searchPlaceholder: "Hledat…",
     /** Short word for thousands on chart axes (UX-034). */
     thousandsShort: "tis.",
+    yes: "Ano",
+    no: "Ne",
     cancel: "Zrušit",
     save: "Uložit",
     create: "Vytvořit",

@@ -45,6 +45,9 @@ export const en = {
     searchPlaceholder: "Search…",
     /** Short word for thousands on chart axes (UX-034). */
     thousandsShort: "k",
+    /** A yes/no value shown as text, e.g. the CSV preview's garage flag (ADR 0250). */
+    yes: "Yes",
+    no: "No",
     cancel: "Cancel",
     save: "Save",
     create: "Create",

@@ -413,7 +413,7 @@ export function ImportSummary({
                     <ul className="changes">
                       {i.changes.map((c) => (
                         <li key={c.field}>
-                          <code>{c.field}</code> {changeText(c)}
+                          <code>{c.field}</code> {changeText(t, c)}
                         </li>
                       ))}
                     </ul>

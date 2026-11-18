@@ -26,6 +26,8 @@ export const ru: Dictionary = {
     searchPlaceholder: "Поиск…",
     /** Short word for thousands on chart axes (UX-034). */
     thousandsShort: "тыс.",
+    yes: "Да",
+    no: "Нет",
     cancel: "Отмена",
     save: "Сохранить",
     create: "Создать",

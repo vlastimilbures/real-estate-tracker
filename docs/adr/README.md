@@ -299,6 +299,7 @@ it.
 | [0246](0246-focus-after-failed-save.md)                        | A failed save puts focus back on the form's submit button                                     | Accepted                                                             | #538                                               |
 | [0247](0247-invalid-loan-start-skips-event-checks.md)          | A loan with an invalid start date skips the event checks that need its start                  | Accepted                                                             | #543, #479, #435                                   |
 | [0249](0249-weekly-mutation-required-checks.md)                | Weekly mutation testing; required checks renamed and Changelog required                       | Accepted                                                             | #435, #496, #499                                   |
+| [0250](0250-wording-limits-flags-crash-labels.md)              | Translated garage flag; limit and crash-label texts in names and alerts                       | Accepted                                                             | #441, #435                                         |
 
 <!-- adr-index:end -->
 
