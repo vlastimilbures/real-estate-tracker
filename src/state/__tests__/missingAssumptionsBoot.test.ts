@@ -61,6 +61,14 @@ describe("startup without the assumptions row", () => {
 
     expect(safetyBackup).toMatch(/^portfolio-before-restore-.*\.json$/);
     expect(ready).toBe(true);
+    // The safety copy holds the database as it was: without assumptions.
+    const safety = vi
+      .mocked(invoke)
+      .mock.calls.find(([cmd]) => cmd === "write_app_backup");
+    const copy = JSON.parse(
+      (safety?.[1] as { json: string }).json,
+    ) as BackupFile;
+    expect(copy.tables.assumptions).toEqual([]);
     store().continueAfterRestore();
     expect(store().status).toBe("ready");
     expect(store().startupError).toBeNull();
