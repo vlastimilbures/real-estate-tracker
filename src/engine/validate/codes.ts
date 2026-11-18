@@ -54,7 +54,9 @@ type CostField =
 /**
  * @internal Each entity's fields an error can name (ADR 0251 §4), exported for tests.
  * The assumptions name a default both bare (NON_FINITE_NUMBER) and as `defaults.<key>`
- * (its range): parked as P3.
+ * (its range): parked as P3. An extra default key the type does not name is reported
+ * as given (`Object.keys(a.defaults)`), outside this list: unreachable from the app, and
+ * its fix belongs with P3.
  */
 export const VALIDATION_FIELDS = {
   assumptions: [

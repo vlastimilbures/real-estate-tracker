@@ -3,7 +3,7 @@
 - Status: Accepted
 - Date: 2026-11-18
 - Source: owner decision 2026-11-18 (#435 comment 6965976270) on the items #479 parked
-  (1, 3, 4 and 5); the loan-gate choice in §1 delegated by the owner; plan comment on #479
+  (1, 3, 4 and 5); the loan-gate choice in §2 delegated by the owner; plan comment on #479
   ("Plan: the #479 follow-ups")
 - Related: [0017](0017-reject-invalid-loan-inputs.md) and
   [0036](0036-validation-error-list.md) (validation returns a list; `assertLoanInputs`
