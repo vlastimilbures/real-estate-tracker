@@ -312,11 +312,12 @@
   color: var(--ink-soft);
 }
 
-/* "Add from preset" stays on one line at the minimum window. */
-.preset-toggle {
+/* A panel head's disclosure toggle (Scenarios' "Add from preset", the Dashboard's Data
+   check) stays on one line at the minimum window. */
+.head-toggle {
   flex-shrink: 0;
 }
-.preset-toggle .btn {
+.head-toggle .btn {
   white-space: nowrap;
 }
 
