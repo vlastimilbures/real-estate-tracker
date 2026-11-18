@@ -73,7 +73,7 @@ product's positioning changes.
 
 ## Code health
 
-- **Mutation score.** The engine scores ~98.7 % under Stryker (nightly breaks below 98 %).
+- **Mutation score.** The engine scores ~98.7 % under Stryker (the weekly run breaks below 98 %).
   The surviving mutants are equivalent (no observable difference), defaults no caller can
   reach, or the text of engine error messages, which the UI never shows. (DR-168)
 - **Bundle size.** Startup JavaScript is ~234 kB gzip plus the active UI dictionary

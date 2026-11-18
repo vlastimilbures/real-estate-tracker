@@ -173,6 +173,11 @@ export default tseslint.config(
     extends: [js.configs.recommended],
     languageOptions: { globals: globals.node },
   },
+  // The script tests (scripts/__tests__/*.test.mjs) get the same test bans (#499).
+  {
+    files: ["**/*.{js,mjs,cjs}"],
+    rules: restrictedSyntax(),
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

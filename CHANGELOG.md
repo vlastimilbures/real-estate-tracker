@@ -154,6 +154,9 @@ engine without the form, and remove it when the last part lands.
   or size outside its range that the save adds, as the forms already do (ADR 0245, #464).
   A value already stored outside its range does not block other edits. No form, message
   or figure changes.
+- Internal: CI runs mutation testing weekly (Sunday) and on demand instead of nightly; the
+  required axe check is renamed "UI captures and axe", and the Changelog check is required
+  (ADR 0249, #496, #499). No app change.
 
 ### Fixed
 

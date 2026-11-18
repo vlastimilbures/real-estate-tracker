@@ -31,11 +31,12 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
 /**
  * One gate. `where`: `check` runs in `pnpm check` and CI; `release` also in
  * `pnpm check:release` and CI; `ci` in CI only (`why` says why it is not local);
- * `nightly` in the nightly workflow. `covers`: commands this gate already runs, so they
- * are not gates of their own. `ci`: the steps ci.yml runs for it, each `{ run, env }`
- * with the exact shell line and the step's variables, when not `{ run, env }` of the gate
- * itself, and `dir` its `working-directory` when not the repository root. `env`:
- * variables set for the command. `readme`: text for the README table.
+ * `nightly` in the nightly workflow, `weekly` in its weekly schedule. `covers`: commands
+ * this gate already runs, so they are not gates of their own. `ci`: the steps ci.yml runs
+ * for it, each `{ run, env }` with the exact shell line and the step's variables, when not
+ * `{ run, env }` of the gate itself, and `dir` its `working-directory` when not the
+ * repository root. `env`: variables set for the command. `readme`: text for the README
+ * table.
  */
 // The axe runs as ci.yml sets them up: the run id names the folder axe-check reads.
 const AXE_EN = {
@@ -263,7 +264,7 @@ export const GATES = [
     id: "mutation",
     run: "pnpm mutation",
     what: "Stryker mutation score on the engine",
-    where: "nightly",
+    where: "weekly",
     readme: "Stryker mutation score on the engine",
   },
   {
@@ -328,7 +329,12 @@ export function runGates(gates, { exec = shell, log = console.log } = {}) {
 }
 
 // ci.yml lines that set a job up and are no gate (the install is in .github/actions/setup).
-export const CI_SETUP = ["pnpm exec playwright install --with-deps chromium"];
+// The Playwright browser comes from the cache when it can (#496): a miss downloads it with
+// its system libraries, a hit installs only the libraries.
+export const CI_SETUP = [
+  "pnpm exec playwright install --with-deps chromium",
+  "pnpm exec playwright install-deps chromium",
+];
 // The `if:` a gate step may carry, by gate: only the baseline checks, which need a base
 // branch, run on pull requests alone.
 const PR_ONLY = "github.event_name == 'pull_request'";
@@ -702,7 +708,9 @@ export function ciDrift(
   const steps = raw.flatMap((s) =>
     perMatrixRun(asRun(s, workflow), workflow.jobs[s.job]?.matrix),
   );
-  const listed = gates.filter((g) => g.where !== "nightly");
+  const listed = gates.filter(
+    (g) => g.where !== "nightly" && g.where !== "weekly",
+  );
   const problems = jobProblems(workflow, raw, jobIfs);
   for (const g of listed)
     for (const spec of ciSteps(g)) {
@@ -759,6 +767,7 @@ const RUNS = {
   release: "`pnpm check:release`, CI",
   ci: "CI",
   nightly: "Nightly",
+  weekly: "Weekly",
 };
 
 /** The README.md table: every gate, with where it runs. */

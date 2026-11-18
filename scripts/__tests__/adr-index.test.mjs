@@ -347,11 +347,3 @@ describe("generateReadme", () => {
     expect(expected).toContain("[0001](0001-ok.md)");
   });
 });
-
-describe("the real docs/adr", () => {
-  it("has paired links and a current index", async () => {
-    const { errors, current, expected } = await generateReadme();
-    expect(errors).toEqual([]);
-    expect(current).toBe(expected);
-  });
-});

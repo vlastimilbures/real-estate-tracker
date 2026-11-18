@@ -829,8 +829,8 @@ price crash**, each with a legend and one line of help (ADR 0102).
 - **Correctness:** engine checked against independent, engine-free reference models of the
   mortgage maths and of the sample portfolio's projection and KPIs, pinned by parity tests
   against the targets in `.claude/rules/engine-parity.md` and a golden master that detects
-  any change (ADR 0039, 0174), plus invariant and property-based tests and nightly mutation
-  testing (ADR 0026).
+  any change (ADR 0039, 0174), plus invariant and property-based tests and weekly mutation
+  testing (ADR 0026, ADR 0249).
 - **Privacy & security:** offline; no network calls, enforced by a strict Content Security
   Policy, least-privilege Tauri capabilities and a navigation guard. File dialogs and writes
   run in Rust; the webview never handles file paths (ADR 0064). Data, backup and log

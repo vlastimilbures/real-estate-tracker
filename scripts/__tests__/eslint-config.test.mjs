@@ -64,6 +64,9 @@ describe("test bans in eslint.config.js", () => {
     "src/data/x.ts",
     "e2e/x.spec.ts",
     "ux-capture/x.ts",
+    "scripts/__tests__/x.test.mjs",
+    "scripts/x.cjs",
+    "x.config.js",
   ];
   const FOCUSED = [
     'it.only("a", () => {});',

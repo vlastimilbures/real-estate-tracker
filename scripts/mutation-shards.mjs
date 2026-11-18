@@ -1,4 +1,4 @@
-// Sharded nightly Stryker (ADR 0239, #443): the shard table, the merge of the shards'
+// Sharded weekly Stryker (ADR 0239, ADR 0249): the shard table, the merge of the shards'
 // mutation.json reports and the combined score, which is gated on thresholds.break.
 // `stryker.shard.config.mjs` reads `mutateFor`; CI's mutation-score job runs
 // `node scripts/mutation-shards.mjs merge <dir>` (exits 1 below break or on a bad merge);

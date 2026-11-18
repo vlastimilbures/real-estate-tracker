@@ -1,4 +1,4 @@
-// One shard of the nightly Stryker run (ADR 0239, #443): stryker.config.json with `mutate`
+// One shard of the weekly Stryker run (ADR 0239, 0249): stryker.config.json with `mutate`
 // from the shard table in scripts/mutation-shards.mjs, its own incremental file, and no
 // break threshold: the mutation-score job gates the combined score of all shards instead.
 // Run one locally: `STRYKER_SHARD=<name> pnpm mutation:shard`.
