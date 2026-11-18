@@ -196,6 +196,14 @@ engine without the form, and remove it when the last part lands.
   their place; it used to fall to the top of the page. This applies to the record forms
   (valuations, leases, mortgages, holding costs), the scenario form and the property form.
   Focus the user moved during the save stays where it is (ADR 0246, #538).
+- After any other action that disables its button while it runs, focus no longer falls
+  to the top of the page. A failed delete, deactivate, Clear sample or Restore puts focus
+  on Cancel. Excel export, the scenario presets and Duplicate, Import, Activate, Export
+  backup and Load sample give focus back to their button. Where that button is gone, focus
+  goes to the nearest stable place: the Import report heading after an import, Choose file
+  after a restore, the sample panel heading after a sample load. A failed Assumptions save
+  that shows only in the banner puts focus back on Save. Focus the user moved stays where
+  it is (ADR 0248, #549).
 
 ### Security
 
