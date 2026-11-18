@@ -44,7 +44,10 @@ to prevent it instead of handling it.
 2. **"A write is running" is a store counter, `writesRunning`.** `useWriteRunning()`
    reads `writesRunning > 0`.
    - It rises synchronously when `mutate`, `exclusive` or `replaceData` is called, so a
-     write waiting in the queue counts too. A replace counts once.
+     write waiting in the queue counts too. A replace counts once. Every write through
+     them counts, including recording an export (`recordBackup`), dismissing the sample
+     banner and a restore from the startup error screen; each runs only on the owner's
+     click, never at rest.
    - It falls in a `.finally` on the queued job, so it reads 0 again before the caller's
      `await` resumes. A button whose own action just ended is enabled again in the same
      commit that ends the caller's busy flag, so ADR 0248 can give it focus back
@@ -59,17 +62,37 @@ to prevent it instead of handling it.
 3. **The ADR 0173 §1 guards are removed.** A successful save or add closes the record
    panel's form, and a successful delete closes the record panel's or the Properties
    page's confirm, without checking what is open: nothing else can have opened while the
-   write ran. The tests that pinned the guards against a second click during the write
-   are removed with them (they drive a mocked write, which never disables the buttons).
+   write ran. The eight tests that open a second row while a write runs are removed with
+   them, since that can no longer happen (they drive a stubbed write, which never
+   disables the buttons):
+   - `EntityPanel.test.tsx`, "EntityPanel: a late write closes only its own row": the six
+     tests of a save, add or delete landing after another form or confirm opened;
+   - `Properties.test.tsx`: "keeps the confirm for another property opened while the
+     first delete ran";
+   - `ConfirmRow.test.tsx`: "a delete that lands after another row's confirm opened leaves
+     focus there".
+
+   The two tests of a deleted row's confirm opened again meanwhile (`EntityPanel.test.tsx`,
+   `Properties.test.tsx`) still pass with a plain close and stay unchanged. The lost-focus
+   check that the `ConfirmRow.test.tsx` test covered keeps a test of its own in
+   `ConfirmRowLostFocusGuard.test.tsx`: focus moved outside the panel while the delete ran
+   stays there.
+
 4. **Kept unchanged:** the confirm row's focus handling after a successful or failed
    confirm (ADR 0173 §2, ADR 0248 §1), including its lost-focus check; the leave guard
    (ADR 0142); Cancel and Escape doing nothing while the confirm's write runs; the Scenarios
-   page's own busy flag on the presets, Duplicate and Delete, as before.
+   page's own busy flag on the presets, Duplicate and Delete, as before. Duplicate and
+   Delete are `WriteRowAction`s too, so either condition disables them; ADR 0248's
+   Duplicate focus tests stub the store write and rely on the busy flag.
 5. **Focus.** A row action pressed for a write it starts (Duplicate) loses focus to
    `<body>` while it is disabled, and gets it back once the write ends (ADR 0248 §2). A row
    action that only opens something (Edit, Delete) is disabled only while another write
    runs; a keyboard user resting on it then loses focus to `<body>`, as with any other
    button disabled under focus.
+
+Delegated by the owner (2026-11-18) and recorded here: the eight tests removed, the two
+still-passing ones kept, the new lost-focus test, the Scenarios busy flag kept beside the
+counter, and every write through the three entry points counted.
 
 Parked, for the owner if wanted:
 

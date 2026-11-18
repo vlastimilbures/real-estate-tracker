@@ -170,6 +170,11 @@ engine without the form, and remove it when the last part lands.
   whose principal or instalment is not finite (ADR 0251, #479). Engine API only: the
   forms, the CSV import and restore refuse such values first, so nothing the app can
   enter or store reaches it. No figure, form or message changes.
+- While a save or delete runs, the row actions are disabled: Edit and Delete in the record
+  tables and on the Properties list, scenario Edit, Duplicate and Delete, and the holding
+  costs pencil. A second row can no longer be opened while the first write finishes, so the
+  checks that kept a late write from closing it are gone (ADR 0253, #444). No text or
+  figure changes.
 
 ### Fixed
 
