@@ -192,6 +192,9 @@ export const ru: Dictionary = {
     // A save committed but the data could not be read back (ADR 0228).
     readBackFailed:
       "Последнее изменение сохранено, но данные не удалось прочитать заново.",
+    // Writes queued behind it were refused; the screen lists them (ADR 0255).
+    notSaved:
+      "Не сохранено — эти изменения ждали очереди в тот момент. Когда приложение откроется, внесите их снова:",
     restoreBackup: "Восстановить из копии…",
     continue: "Открыть приложение",
     detailsOther: "Подробности",

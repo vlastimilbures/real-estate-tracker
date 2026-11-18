@@ -198,3 +198,16 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   dictionary text, some are screen-reader text or export cells that need an ADR, and the
   decision covers the range label only.
 - Approved by: owner, 2026-11-18 (#435 comment 6965976270, item "#529")
+
+### 2026-11-18 · #446 / ADR 0255
+
+- Keys: `boot.notSaved` (en, cs, ru), new
+- Change: after a save whose read-back failed, the error screen says which writes queued
+  behind it were refused and not saved, and asks to enter them again once the app opens.
+  The line introduces a list of names taken from existing entries (`backup.tables.*`,
+  `common.importCsv`, `backup.restoreTitle`, `sample.confirm`, `sample.loadAction`). The
+  text is inside the screen's `role="alert"`, a live region, so ADR 0255 records it too.
+- Rejected: rewording `boot.readBackFailed`, which keeps its text, because it is still
+  true for the change that committed and the list names the ones that were not.
+- Approved by: owner OK 2026-11-18 (the decision in #435 comment 6965976270; the text in
+  #564 comment 6975468652)

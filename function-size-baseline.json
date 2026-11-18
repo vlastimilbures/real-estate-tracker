@@ -19,7 +19,7 @@
   },
   "src/state/portfolioStore.ts": {
     "lines": {
-      "Arrow function (usePortfolioStore: create)": 366
+      "Arrow function (usePortfolioStore: create)": 276
     }
   },
   "src/state/uiStore.ts": {
@@ -37,10 +37,7 @@
   },
   "src/ui/components/BootFailure.tsx": {
     "complexity": {
-      "Function 'BootFailure'": 18
-    },
-    "lines": {
-      "Function 'BootFailure'": 153
+      "Function 'BootFailure'": 17
     }
   },
   "src/ui/components/LoanEventRows.tsx": {

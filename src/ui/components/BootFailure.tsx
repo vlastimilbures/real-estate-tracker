@@ -18,7 +18,12 @@ import { describeWriteError } from "../model/writeError";
 import { chooseRestoreFile, type PickedBackup } from "../../state/backup";
 import { IssueTable, RestoreConfirm } from "./RestoreConfirm";
 import { backupFailure } from "./restoreFailure";
-import { bootView, fileName, isPartial } from "../model/bootFailure";
+import {
+  bootView,
+  fileName,
+  isPartial,
+  refusedWriteLabels,
+} from "../model/bootFailure";
 
 /** The message, then what the upgrade left behind or the next step, if any. */
 function startupText(t: Dictionary, e: StartupError): string[] {
@@ -49,6 +54,29 @@ function noticeText(t: Dictionary, notice: Notice): string {
   return notice.kind === "restored"
     ? t.backup.restored(notice.file)
     : t.sample.cleared(notice.file);
+}
+
+/** A save committed but its read-back failed: say the change was saved, name the
+ *  writes queued behind it that were refused (ADR 0255), and still name the safety copy
+ *  (ADR 0228, ADR 0154 §5). */
+function ReadBackText({ t, notice }: { t: Dictionary; notice: Notice | null }) {
+  const refused = usePortfolioStore((s) => s.refusedWrites);
+  return (
+    <>
+      <p>{t.boot.readBackFailed}</p>
+      {refused.length > 0 && (
+        <div className="error-screen-details">
+          <span>{t.boot.notSaved}</span>
+          <ul>
+            {refusedWriteLabels(t, refused).map((name) => (
+              <li key={name}>{name}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {notice && <p>{noticeText(t, notice)}</p>}
+    </>
+  );
 }
 
 export function BootFailure() {
@@ -154,10 +182,7 @@ export function BootFailure() {
       <div className="error-screen" role="alert">
         <h1 className="eyebrow">{t.app.dbErrorEyebrow}</h1>
         {readBackFailed ? (
-          <>
-            <p>{t.boot.readBackFailed}</p>
-            {notice && <p>{noticeText(t, notice)}</p>}
-          </>
+          <ReadBackText t={t} notice={notice} />
         ) : startupError ? (
           <>
             {startupText(t, startupError).map((line) => (

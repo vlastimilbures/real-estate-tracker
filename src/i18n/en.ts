@@ -217,6 +217,9 @@ export const en = {
     // A save committed but the data could not be read back (ADR 0228).
     readBackFailed:
       "Your last change was saved, but the data could not be read back.",
+    // Writes queued behind it were refused; the screen lists them (ADR 0255).
+    notSaved:
+      "Not saved — these were waiting when it happened. Enter them again once the app opens:",
     restoreBackup: "Restore a backup…",
     continue: "Open the app",
     detailsOther: "Details",

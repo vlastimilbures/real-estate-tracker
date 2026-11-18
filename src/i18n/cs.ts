@@ -186,6 +186,9 @@ export const cs: Dictionary = {
     // A save committed but the data could not be read back (ADR 0228).
     readBackFailed:
       "Vaše poslední změna byla uložena, ale data se nepodařilo znovu načíst.",
+    // Writes queued behind it were refused; the screen lists them (ADR 0255).
+    notSaved:
+      "Neuloženo — tyto změny ve chvíli chyby čekaly. Až se aplikace otevře, zadejte je znovu:",
     restoreBackup: "Obnovit zálohu…",
     continue: "Otevřít aplikaci",
     detailsOther: "Podrobnosti",

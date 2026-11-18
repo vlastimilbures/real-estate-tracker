@@ -104,6 +104,9 @@ engine without the form, and remove it when the last part lands.
   twice. After a restore or Clear sample the screen still names the safety copy. The
   stale-data banner and its Reload button are gone, so the app no longer lets you edit data
   older than what is saved.
+- On that error screen, changes that were waiting behind the saved one and were not saved
+  are now named, for example "Leases", so you know what to enter again once the app opens
+  (ADR 0255, #446). Before, they were dropped without a word.
 - A saved scenario the app cannot read now stops start-up like an unreadable record in any
   other table (ADR 0231, #451): the error screen names the scenario under "Records
   involved" and offers **Restore a backup…** and **Show data folder**, not Try again.
