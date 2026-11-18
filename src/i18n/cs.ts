@@ -86,7 +86,7 @@ export const cs: Dictionary = {
     NON_FINITE_NUMBER: "Není konečné číslo",
     NEGATIVE_AMOUNT: "Nesmí být záporné",
     NEGATIVE_PRINCIPAL: "Jistina úvěru nesmí být záporná",
-    RATE_OUT_OF_RANGE: "Musí být podíl od nuly do jedné",
+    RATE_OUT_OF_RANGE: "Musí být od 0 do 100 %",
     INSTALMENT_BELOW_INTEREST:
       "Měsíční splátka nepokryje měsíční úrok, úvěr by se nikdy nesplatil",
     ZERO_RATE_ZERO_INSTALMENT:

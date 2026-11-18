@@ -89,7 +89,7 @@ export const ru: Dictionary = {
     NON_FINITE_NUMBER: "Не конечное число",
     NEGATIVE_AMOUNT: "Не может быть отрицательным",
     NEGATIVE_PRINCIPAL: "Основной долг не может быть отрицательным",
-    RATE_OUT_OF_RANGE: "Должно быть долей от нуля до единицы",
+    RATE_OUT_OF_RANGE: "Должно быть от 0 до 100 %",
     INSTALMENT_BELOW_INTEREST:
       "Ежемесячный платёж не покрывает ежемесячные проценты, кредит никогда не будет погашен",
     ZERO_RATE_ZERO_INSTALMENT:

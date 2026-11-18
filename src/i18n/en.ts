@@ -99,7 +99,7 @@ export const en = {
     NON_FINITE_NUMBER: "Not a finite number",
     NEGATIVE_AMOUNT: "Must not be negative",
     NEGATIVE_PRINCIPAL: "The loan principal must not be negative",
-    RATE_OUT_OF_RANGE: "Must be a fraction from zero to one",
+    RATE_OUT_OF_RANGE: "Must be from 0 to 100 %",
     INSTALMENT_BELOW_INTEREST:
       "The monthly instalment does not cover the monthly interest, so the loan would never be repaid",
     ZERO_RATE_ZERO_INSTALMENT:

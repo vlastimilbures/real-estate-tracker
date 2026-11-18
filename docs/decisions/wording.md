@@ -134,3 +134,18 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 - Rejected: a Properties-only short text beside the long one, because one note for one
   figure should read the same on every screen.
 - Approved by: owner's delegation of 2026-11-15 (comment on #392), owner review pending
+
+### 2026-11-18 · #441 item 1
+
+- Keys: `inputRules.RATE_OUT_OF_RANGE` (en, cs, ru)
+- Change: the range message of a rate field reads "from 0 to 100 %" instead of "a fraction
+  from zero to one". Every field it shows under takes a percentage: the mortgage rate,
+  vacancy, management and maintenance as a share of rent, selling cost and the reset rate,
+  in the forms, the scenario form, the invalid-data notice and a refused restore (which
+  never shows the stored value). A CSV rate cell, written as a fraction, is refused by the
+  CSV parser first with its own message (`importPage.errRateOutOfRange`, unchanged), so no
+  field needs the old text and the message is not split. The notice and a form-level error
+  show it in a live region, so ADR 0250 records it too.
+- Rejected: passing 0 and 100 as arguments, because the unit range is the meaning of a
+  rate, not a limit that can move.
+- Approved by: owner, 2026-11-18 (#435 comment 6965976270)
