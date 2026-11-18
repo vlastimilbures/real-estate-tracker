@@ -1,6 +1,6 @@
 // #464: what the store does at and past the form bounds. After the engine rules it
-// refuses a value outside the bounded ranges that a write adds (ADR 0245); scenario shock
-// years are not range-checked.
+// refuses a value outside the bounded ranges that a write adds (ADR 0245), and a scenario
+// shock or crash year outside the scenario form's bounds (ADR 0257).
 import { beforeEach, describe, expect, it } from "vitest";
 import { usePortfolioStore } from "../portfolioStore";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
@@ -94,15 +94,29 @@ describe("the store at and past the form bounds", () => {
     });
   });
 
-  it("saves a shock lasting 0 or 500 years and refuses −1", async () => {
+  it("refuses a shock lasting 0, 500 or −1 years (ADR 0257)", async () => {
     const scenario = (durationYears: number) => ({
       id: "s1",
       name: "Shock",
       overrides: { rateShock: { deltaPa: rate("0.01"), durationYears } },
     });
-    // Today's behaviour; a later ADR may change it (#464 part 4).
-    expect(await store().addScenario(scenario(0))).toEqual({ ok: true });
-    expect(await store().saveScenario(scenario(500))).toEqual({ ok: true });
+    // ADR 0257: 0 and 500 are outside SHOCK_YEARS; −1 is the engine's own rule.
+    expect(await store().addScenario(scenario(0))).toMatchObject({
+      ok: false,
+      error: {
+        kind: "input",
+        errors: [],
+        ranges: [{ field: "rateShockYears", value: 0 }],
+      },
+    });
+    expect(await store().saveScenario(scenario(500))).toMatchObject({
+      ok: false,
+      error: {
+        kind: "input",
+        errors: [],
+        ranges: [{ field: "rateShockYears", value: 500 }],
+      },
+    });
     expect(await store().saveScenario(scenario(-1))).toMatchObject({
       ok: false,
       error: {

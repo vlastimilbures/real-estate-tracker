@@ -23,7 +23,6 @@ import type {
   MortgageBlock,
   HoldingCost,
   Scenario,
-  ScenarioOverrides,
   EngineValidationError,
 } from "../engine";
 import { migrate } from "../data/migrations";
@@ -53,7 +52,11 @@ import type {
   CsvImportReport,
 } from "../import/csvImport";
 import { checkInputRules } from "./restoreRules";
-import { assertHorizonRange, assertPortfolioRanges } from "./writeRanges";
+import {
+  assertHorizonRange,
+  assertPortfolioRanges,
+  assertScenarioRanges,
+} from "./writeRanges";
 import {
   loadState,
   upsertScenario,
@@ -156,15 +159,20 @@ function checkAssumptions(s: PortfolioState, a: Assumptions): void {
   }
 }
 
-/** Engine rules a scenario's own overrides break on top of the saved assumptions `a`
- *  (ADR 0123): refused before writing, like the assumptions themselves. */
+/** Engine rules a scenario's own overrides break on top of the saved assumptions
+ *  (ADR 0123): refused before writing, like the assumptions themselves. Then the shock
+ *  and crash years `sc` adds to `source` (ADR 0257 §1): by default the scenario stored
+ *  under its id, none for an add; a duplicate passes its source. `s` is the store's
+ *  state. */
 function checkScenario(
-  a: Assumptions | null,
-  overrides: ScenarioOverrides,
+  s: PortfolioState,
+  sc: Scenario,
+  source = s.scenarios.find((x) => x.id === sc.id),
 ): void {
-  if (!a) return;
-  const errors = scenarioRuleErrors(a, overrides);
+  const a = s.assumptions;
+  const errors = a ? scenarioRuleErrors(a, sc.overrides) : [];
   if (errors.length > 0) throw new EngineInputError(errors);
+  assertScenarioRanges(source?.overrides, sc.overrides);
 }
 
 /** The outcome of a mutation. Callers (forms, modals) branch on `ok` — e.g. a modal
@@ -533,7 +541,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
    *  (ADR 0123). */
   const writeScenario = (s: Scenario) =>
     mutate("scenarios", async (sql) => {
-      checkScenario(get().assumptions, s.overrides);
+      checkScenario(get(), s);
       await upsertScenario(sql, scenarioToRow(s, new Date()));
     });
 
@@ -744,8 +752,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       mutate("scenarios", async (sql) => {
         const src = get().scenarios.find((x) => x.id === id);
         if (!src) throw new Error("Scenario not found");
-        checkScenario(get().assumptions, src.overrides);
         const copy: Scenario = { ...src, id: newId, name };
+        checkScenario(get(), copy, src);
         await upsertScenario(sql, scenarioToRow(copy, new Date()));
       }),
     removeScenario: (id) =>

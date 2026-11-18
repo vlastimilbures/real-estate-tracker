@@ -3,8 +3,7 @@
 import type { Dictionary } from "../../i18n";
 import type { EngineValidationError, ValidationCode } from "../../engine";
 import type { ConstraintFailure } from "../../data/errors";
-import type { WriteError } from "../../state/writeError";
-import type { RangeProblem } from "../../lib/rules";
+import type { WriteError, WriteRangeProblem } from "../../state/writeError";
 import { fieldHint } from "./formParse";
 import { inputRuleText } from "./inputRule";
 
@@ -166,10 +165,11 @@ const SHIFTED_LEVEL: Record<string, string> = {
 
 /** Out-of-range values the store refused (ADR 0245): the form's own range message
  *  (`forms.intRange`, `forms.sizeRange`) on the form's own field, which every form names
- *  like the bounded field (horizonYears, fixationYears, loanTermYears, sizeM2). */
+ *  like the bounded field (horizonYears, fixationYears, loanTermYears, sizeM2) and the
+ *  scenario form like its years fields (ADR 0257 §1). */
 function rangeTexts(
   t: Dictionary,
-  ranges: readonly RangeProblem[] | undefined,
+  ranges: readonly WriteRangeProblem[] | undefined,
 ): WriteErrorText[] {
   return (ranges ?? []).map((r) => ({
     message: fieldHint(t, {

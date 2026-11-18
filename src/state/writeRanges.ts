@@ -1,8 +1,17 @@
 // The bounded ranges at the store (ADR 0245): a write is refused when it adds a value
 // outside them, or changes a stored one to another. A value already stored out of range
-// (ADR 0148: "Restore anyway") blocks no other write, and a fix saves.
-import { rangeProblems, type RangeProblem } from "../lib/rules";
-import type { Assumptions, Portfolio } from "../engine";
+// (ADR 0148: "Restore anyway") blocks no other write, and a fix saves. A scenario's shock
+// and crash years follow the same rule (ADR 0257 §1).
+import {
+  CRASH_YEAR,
+  SHOCK_YEARS,
+  inRange,
+  rangeProblems,
+  type IntRange,
+  type RangeProblem,
+  type ScenarioRangeProblem,
+} from "../lib/rules";
+import type { Assumptions, Portfolio, ScenarioOverrides } from "../engine";
 import { RangeRuleError } from "./writeError";
 
 const keyOf = (p: RangeProblem) => `${p.entity}|${p.id ?? ""}|${p.field}`;
@@ -47,4 +56,44 @@ export function assertHorizonRange(
     stored ? rangeProblems(NO_ROWS, stored) : [],
     rangeProblems(NO_ROWS, next),
   );
+}
+
+/** The shock and crash years of `o` outside SHOCK_YEARS / CRASH_YEAR, or not whole. */
+function scenarioRangeProblems(
+  o: ScenarioOverrides | undefined,
+): ScenarioRangeProblem[] {
+  const years: [ScenarioRangeProblem["field"], number | undefined, IntRange][] =
+    [
+      ["inflationShockYears", o?.inflationShock?.durationYears, SHOCK_YEARS],
+      ["rateShockYears", o?.rateShock?.durationYears, SHOCK_YEARS],
+      ["valueShockYear", o?.valueShock?.atYear, CRASH_YEAR],
+    ];
+  return years.flatMap(([field, value, range]) =>
+    value === undefined || (Number.isInteger(value) && inRange(value, range))
+      ? []
+      : [
+          {
+            code: "OUT_OF_RANGE" as const,
+            entity: "scenario" as const,
+            field,
+            value,
+            range,
+          },
+        ],
+  );
+}
+
+/** Throw the out-of-range years `next` adds to `stored` (the scenario saved under its id,
+ *  or a duplicate's source; none for an add): new ones, and stored ones it changes. */
+export function assertScenarioRanges(
+  stored: ScenarioOverrides | undefined,
+  next: ScenarioOverrides,
+): void {
+  const before = new Map(
+    scenarioRangeProblems(stored).map((p) => [p.field, p.value]),
+  );
+  const added = scenarioRangeProblems(next).filter(
+    (p) => !before.has(p.field) || !Object.is(before.get(p.field), p.value),
+  );
+  if (added.length > 0) throw new RangeRuleError(added);
 }

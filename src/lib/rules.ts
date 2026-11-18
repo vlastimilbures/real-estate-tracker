@@ -95,6 +95,18 @@ export interface RangeProblem {
   range: IntRange;
 }
 
+/** A scenario's shock or crash year outside the scenario form's bounds (ADR 0257 §1):
+ *  the store refuses one a write adds. Its own type: the Data check and restore read
+ *  RangeProblem only. `field` is the scenario form's, as RangeProblem's is the other
+ *  forms' (ADR 0245 §5). */
+export interface ScenarioRangeProblem {
+  code: "OUT_OF_RANGE";
+  entity: "scenario";
+  field: "inflationShockYears" | "rateShockYears" | "valueShockYear";
+  value: number;
+  range: IntRange;
+}
+
 /** Every bounded field outside INT_RANGES or finer than the forms accept, as the forms
  *  refuse both (ADR 0180 §2; the size takes one decimal place, ADR 0236; unset optional
  *  fields pass).
