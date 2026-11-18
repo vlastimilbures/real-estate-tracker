@@ -14,7 +14,8 @@ export type DataErrorCode =
   | "MIGRATION_BACKUP_FAILED"
   /** A migration's own statements failed (rolled back). */
   | "MIGRATION_FAILED"
-  /** A stored row has a value its column cannot hold (DR-037). */
+  /** A stored row has a value its column cannot hold (DR-037), or a required row is
+   *  missing: the assumptions row id = 1 (ADR 0252). */
   | "ROW_INVALID"
   /** An update/delete by id matched no row (DR-082). */
   | "ROW_MISSING"
