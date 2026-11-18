@@ -180,7 +180,7 @@
   display: inline-block;
   top: 1px;
   transform: none;
-  margin-right: 2px;
+  margin-right: var(--s-2px);
 }
 .fx-fixationEnd {
   background: var(--ink);
@@ -218,7 +218,7 @@
 }
 .fx-next {
   margin-left: var(--s2);
-  padding: 0 6px;
+  padding: 0 var(--s-6px);
   border-radius: var(--r-sm);
   background: var(--accent-wash);
   color: var(--accent);

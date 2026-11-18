@@ -8,7 +8,7 @@
   color: var(--accent);
   background: var(--accent-wash);
   border-radius: var(--r-sm);
-  padding: 1px 7px;
+  padding: 1px var(--s-7px);
   font-size: var(--fs-12-5);
   line-height: 1.5;
   font-feature-settings: var(--num);
@@ -77,14 +77,14 @@
 }
 .guide-caveat {
   display: block;
-  margin-top: 2px;
+  margin-top: var(--s-2px);
   font-size: var(--fs-12-5);
   font-style: italic;
   color: var(--ink-soft);
 }
 .guide-eg {
   display: block;
-  margin-top: 2px;
+  margin-top: var(--s-2px);
   font-size: var(--fs-12-5);
   color: var(--ink-faint);
   font-feature-settings: var(--num);

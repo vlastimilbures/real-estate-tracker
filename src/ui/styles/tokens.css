@@ -72,6 +72,13 @@
   --s5: 24px;
   --s6: 32px;
   --s7: 48px;
+  /* off-scale spacing, named by value until a snap is decided (#495 part 4) */
+  --s-2px: 2px;
+  --s-5px: 5px;
+  --s-6px: 6px;
+  --s-7px: 7px;
+  --s-10px: 10px;
+  --s-14px: 14px;
 
   /* radii & shadow */
   --r-sm: 6px;

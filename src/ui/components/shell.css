@@ -47,7 +47,7 @@
 .brand-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--s-2px);
 }
 .brand-logo {
   flex: none;
@@ -112,7 +112,7 @@
 .nav-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--s-2px);
 }
 .nav-group.tools {
   margin-top: auto;
@@ -199,7 +199,7 @@
 }
 .backup-hint-link svg {
   flex: none;
-  margin-top: 2px;
+  margin-top: var(--s-2px);
   color: var(--warn);
 }
 .backup-hint-link:hover {
@@ -215,7 +215,7 @@
 }
 /* Icon variant of the segmented control (footer theme switch). */
 .segmented.icons button {
-  padding: 5px 10px;
+  padding: var(--s-5px) var(--s-10px);
   display: inline-flex;
   align-items: center;
 }

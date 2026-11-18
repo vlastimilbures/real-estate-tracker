@@ -15,7 +15,7 @@
 .about-hero-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--s-2px);
 }
 /* A paragraph styled as a display line: the dialog's title is its heading. */
 .about-name {

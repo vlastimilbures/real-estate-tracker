@@ -66,15 +66,15 @@ table.data.wrap-head .th-label {
    minimum window (ADR 0205). */
 table.data.wrap-head tbody td:not(.actions-col),
 table.data.wrap-head tfoot > tr > :not(.actions-col) {
-  padding: 7px var(--s2);
+  padding: var(--s-7px) var(--s2);
 }
 table.data.wrap-head thead th:not(.actions-col) {
   padding-left: var(--s2);
   padding-right: var(--s2);
 }
 table.data.wrap-head tbody td.actions-col {
-  padding-top: 7px;
-  padding-bottom: 7px;
+  padding-top: var(--s-7px);
+  padding-bottom: var(--s-7px);
 }
 /* The year-by-year grid: rows of about 31 px, 12 px figures 10 px apart and headers
    wrapping at word breaks, so 12 figure columns fit at 1280 px and 31 rows in under
@@ -83,11 +83,11 @@ table.data.compact {
   font-size: var(--fs-12);
 }
 table.data.compact tbody td {
-  padding: 6px 5px;
+  padding: var(--s-6px) var(--s-5px);
 }
 table.data.compact thead th {
-  padding-left: 5px;
-  padding-right: 5px;
+  padding-left: var(--s-5px);
+  padding-right: var(--s-5px);
   vertical-align: bottom;
   white-space: normal;
   text-wrap: balance;
@@ -98,7 +98,7 @@ table.data.wrap-head .cell-name {
   max-width: clamp(6.5rem, 12vw, 22rem);
 }
 table.data.wrap-head td .health-marker {
-  margin-left: 6px;
+  margin-left: var(--s-6px);
 }
 /* A note under a figure (the undrawn debt, ADR 0205 §3) wraps inside its column instead
    of widening it: it takes no width of its own. */
@@ -298,7 +298,7 @@ table.data thead th.actions-col {
 }
 table.data tbody td {
   text-align: right;
-  padding: 10px var(--s3);
+  padding: var(--s-10px) var(--s3);
   border-bottom: 1px solid var(--hairline);
   font-feature-settings: var(--num);
   font-variant-numeric: tabular-nums;
@@ -333,8 +333,8 @@ table.data tbody tr:hover td.sticky-col {
 table.data td:has(> .row-actions) {
   width: 1%;
   white-space: nowrap;
-  padding-left: 6px;
-  padding-right: 6px;
+  padding-left: var(--s-6px);
+  padding-right: var(--s-6px);
 }
 /* Icon-only quiet buttons, 28 px targets 4 px apart; the name shows as a tooltip on
    hover and keyboard focus. */
