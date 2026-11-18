@@ -1,6 +1,6 @@
 # 0246. A failed save puts focus back on the form's submit button
 
-- Status: Accepted (owner-delegated, night run 2026-11-16; owner review pending)
+- Status: Accepted
 - Date: 2026-11-18
 - Source: issue #538 (a flaky HoldingCostsPanel test traced to a focus bug); the root cause
   and plan posted on #538; non-critical accessibility decisions delegated by the owner for

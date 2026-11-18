@@ -1,6 +1,6 @@
 # 0244. The engine may read lib/rules.ts
 
-- Status: Accepted (owner-delegated, night run 2026-11-16; owner review pending)
+- Status: Accepted
 - Date: 2026-11-17
 - Source: issue #464 (code review 2026-11, tracking #435: the input rules in one place),
   part 1; the plan posted on #464; non-critical decisions delegated by the owner for the

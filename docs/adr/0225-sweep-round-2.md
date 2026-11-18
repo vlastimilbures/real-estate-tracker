@@ -1,6 +1,6 @@
 # 0225. Round-2 sweep: the Guide's nav in narrow windows, import error tables named
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-16
 - Source: issue #424 (UX/UI review 2026-11, round 2, tracking #425); the round-1
   follow-ups listed on #392 (the Guide's top bar in Russian at 900 px; the import error

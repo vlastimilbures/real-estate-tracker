@@ -1,6 +1,6 @@
 # 0199. Row actions: one icon-only style on every list
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-15
 - Source: issue #374 (UX/UI review 2026-11, tracking #392, finding F10); owner decision 4
   of 2026-11-15 (row actions icon-only with a tooltip on every list); acceptance delegated

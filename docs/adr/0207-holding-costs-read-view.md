@@ -1,6 +1,6 @@
 # 0207. Holding costs: a read view with Edit, like the other records
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-16
 - Source: issue #385 (UX/UI review 2026-11, tracking #392); direction approved by the
   owner on 2026-11-15 (the issue's layout); acceptance delegated by the owner for the

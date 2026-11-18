@@ -1,6 +1,6 @@
 # 0221. Settings: tabs and Save in the top bar
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-16
 - Source: issue #418 (UX/UI review 2026-11, round 2, tracking #425); direction approved
   by the owner on 2026-11-16 (point 9 of the round-2 plan, including the owner's answer

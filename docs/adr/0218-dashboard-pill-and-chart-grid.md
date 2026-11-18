@@ -1,6 +1,6 @@
 # 0218. Dashboard: the review count beside the title; six charts in one grid
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-16
 - Source: issue #420 (UX/UI review 2026-11, round 2, tracking #425); direction approved
   by the owner on 2026-11-16 (points 1 and 2 of the round-2 plan, including the owner's

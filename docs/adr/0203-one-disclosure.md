@@ -1,6 +1,6 @@
 # 0203. One disclosure: a quiet chevron button
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-15
 - Source: issue #381 (UX/UI review 2026-11, tracking #392, finding F10); direction approved
   by the owner on 2026-11-15; acceptance delegated by the owner for the 2026-11-15 run

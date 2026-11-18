@@ -1,6 +1,6 @@
 # 0242. Projections picker: the choice follows the list, and names are shown as stored
 
-- Status: Accepted (owner-delegated, night run 2026-11-16; owner review pending)
+- Status: Accepted
 - Date: 2026-11-17
 - Source: issue #439 (code review 2026-11, findings R06-17 and R10-18, tracking #435); the
   plan posted on #439; non-critical decisions delegated by the owner for the 2026-11-16 night

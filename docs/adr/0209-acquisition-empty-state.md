@@ -1,6 +1,6 @@
 # 0209. Acquisition funding: a compact line while nothing is recorded
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-16
 - Source: issue #387 (UX/UI review 2026-11, tracking #392); direction approved by the
   owner on 2026-11-15 (the issue's layout); acceptance delegated by the owner for the

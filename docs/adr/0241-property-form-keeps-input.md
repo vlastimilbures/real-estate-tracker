@@ -1,6 +1,6 @@
 # 0241. Property form: the typed values stay after a failed save
 
-- Status: Accepted (owner-delegated, night run 2026-11-16; owner review pending)
+- Status: Accepted
 - Date: 2026-11-17
 - Source: issue #438 (code review 2026-11, findings R08-05 and R08-09, tracking #435); the
   plan posted on #438; non-critical decisions delegated by the owner for the 2026-11-16 night

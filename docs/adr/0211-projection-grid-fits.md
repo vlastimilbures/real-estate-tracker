@@ -1,6 +1,6 @@
 # 0211. The year-by-year grid fits a 1280 px window
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-16
 - Source: issue #386 (UX/UI review 2026-11, tracking #392); direction approved by the
   owner on 2026-11-15 (the issue's decision); acceptance delegated by the owner for the

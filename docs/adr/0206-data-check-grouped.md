@@ -1,6 +1,6 @@
 # 0206. Dashboard Data check: last, summary first, findings grouped by problem
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-16
 - Source: issue #378 (UX/UI review 2026-11, tracking #392); direction approved by the
   owner on 2026-11-15 (the issue's layout); acceptance delegated by the owner for the
