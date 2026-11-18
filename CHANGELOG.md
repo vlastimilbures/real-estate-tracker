@@ -167,6 +167,13 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- Wording (#441): a rate field's range message reads "Must be from 0 to 100 %" instead
+  of asking for a fraction; the CSV preview shows a changed garage flag as Yes / No in the
+  app's language instead of English "true" / "false"; the crash presets read "−10,0 %",
+  "−20,0 %" and "−35,0 %" like every other percentage, on the buttons and in the name a
+  new preset saves. The recast, Data check and IRR texts take their limits from the code,
+  so they cannot drift from it; the "no IRR" note reads "+1 000 %" (ADR 0250). No figure
+  changes.
 - A restored loan with an invalid start date and a recast to a new maturity no longer
   freezes the app: the loan reports its invalid start date, and the recast's maturity is
   checked once the start is fixed (ADR 0247, #543). No figure changes.
