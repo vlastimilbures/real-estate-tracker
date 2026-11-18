@@ -37,6 +37,12 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- A scenario save is refused when it adds a shock lasting under 1 or over 100 years, or a
+  crash before year 0 or after year 100, as the scenario form already does; a scenario
+  stored with one still loads, saves and duplicates while that year is left as it is. A
+  CSV import is refused when a merged row adds a fixation, loan term or size outside its
+  range, on that file, row and column; a stored value that carries through still imports
+  (ADR 0257, #464). No form shows anything new. No figure changes.
 - A CSV row that names an unknown property is reported once, in the Import page's
   "Nothing was imported" list, instead of also as an error in its file's table; a row
   whose property's own `properties.csv` row has an error no longer gets a second error
