@@ -95,6 +95,18 @@ export interface RangeProblem {
   range: IntRange;
 }
 
+/** A scenario's shock or crash year outside the scenario form's bounds (ADR 0257 §1):
+ *  the store refuses one a write adds. Its own type: the Data check and restore read
+ *  RangeProblem only. `field` is the scenario form's, as RangeProblem's is the other
+ *  forms' (ADR 0245 §5). */
+export interface ScenarioRangeProblem {
+  code: "OUT_OF_RANGE";
+  entity: "scenario";
+  field: "inflationShockYears" | "rateShockYears" | "valueShockYear";
+  value: number;
+  range: IntRange;
+}
+
 /** Every bounded field outside INT_RANGES or finer than the forms accept, as the forms
  *  refuse both (ADR 0180 §2; the size takes one decimal place, ADR 0236; unset optional
  *  fields pass).
@@ -141,4 +153,20 @@ export function rangeProblems(
     check("mortgage", m.id, "loanTermYears", m.loanTermYears);
   }
   return out;
+}
+
+const keyOf = (p: RangeProblem) => `${p.entity}|${p.id ?? ""}|${p.field}`;
+
+/** The problems of `after` that `before` does not have with the same value: new ones,
+ *  and stored ones the write changes. The store (ADR 0245) and the CSV import plan
+ *  (ADR 0257 §2) refuse these. */
+export function rangeProblemsAddedBy(
+  before: readonly RangeProblem[],
+  after: readonly RangeProblem[],
+): RangeProblem[] {
+  const stored = new Map(before.map((p) => [keyOf(p), p.value]));
+  return after.filter((p) => {
+    const key = keyOf(p);
+    return !stored.has(key) || !Object.is(stored.get(key), p.value);
+  });
 }

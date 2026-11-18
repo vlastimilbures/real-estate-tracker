@@ -7,6 +7,8 @@
   2026-11-16 night run
 - Amends: [0086](0086-restore-int-bounds.md) (§1: the store applies the bounds too; §3:
   `OUT_OF_RANGE` is no longer restore-only, and still not an engine rule)
+- Amended by: [0257](0257-shock-years-merged-rows-range-checked.md) (§2 and §6: scenario
+  writes are range-checked for the shock and crash years)
 - Related: [0075](0075-input-rejection-gaps.md) §5 and
   [0076](0076-csv-int-bounds-and-app-name.md) §1 (the bounded ranges in the forms and CSV
   import), [0148](0148-restore-rules-vs-stored-data.md) §1 (restore brings an out-of-range

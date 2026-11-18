@@ -163,7 +163,10 @@ export function RefusedTable({ problems }: { problems: CsvImportProblem[] }) {
                   ? p.errUnknownProperty(e.problem.value)
                   : e.problem.code === "storedEvent"
                     ? storedEventText(t, e.problem)
-                    : inputRuleText(t, e.problem.rule)}
+                    : e.problem.code === "inputRule"
+                      ? inputRuleText(t, e.problem.rule)
+                      : // A merged value out of range (ADR 0257 §2): the parse step's text.
+                        csvErrorText(t, e.problem)}
               </td>
             </tr>
           ))}

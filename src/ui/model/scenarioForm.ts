@@ -189,8 +189,9 @@ function shockField(x: EngineValidationError): string | undefined {
 
 /** A refused save, split for the form (ADR 0123, ADR 0128): the store checks a scenario
  *  with the engine's assumption rules, which name the override. A rule on a level, the
- *  value crash or a shocked level shows on that field in the engine's words; anything
- *  else shows above the buttons. */
+ *  value crash or a shocked level shows on that field in the engine's words, and an
+ *  out-of-range year on its years field in the form's range message (ADR 0257 §1);
+ *  anything else shows above the buttons. */
 export function scenarioWriteErrors(
   t: Dictionary,
   e: WriteError,
@@ -204,5 +205,9 @@ export function scenarioWriteErrors(
     "valueShockPct",
     "rateShockDelta",
     "inflationShockDelta",
+    // A year the store refuses as out of range (ADR 0257 §1).
+    "inflationShockYears",
+    "rateShockYears",
+    "valueShockYear",
   ]);
 }

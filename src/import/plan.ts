@@ -28,6 +28,7 @@ import {
   type ValidationEntity,
 } from "../engine";
 import { isoDay } from "../lib/day";
+import { rangeProblems, rangeProblemsAddedBy } from "../lib/rules";
 import {
   type ParsedMortgageRow,
   type ParsedPropertyRow,
@@ -108,6 +109,14 @@ export type CsvImportProblemCode =
       /** The event's ISO date. */
       date: string;
       rule: ValidationCode;
+    }
+  /** The merged row adds a value outside the bounded ranges (ADR 0257 §2): the parse
+   *  step's own range codes, so the same text. */
+  | {
+      code: "outOfRange" | "sizeRange";
+      value: string;
+      min: number;
+      max: number;
     };
 
 export interface CsvImportProblem {
@@ -127,6 +136,28 @@ export interface ImportTables {
   holding_costs: HoldingCostRow[];
   /** The stored assumptions; without them the plan adds no loan-chain notes. */
   assumptions?: AssumptionsRow | undefined;
+}
+
+/** The bounded-range problems the `merged` rows add to the `stored` ones, or change
+ *  (ADR 0257 §2), on the CSV row that wrote each. A stored out-of-range value that
+ *  carries through is not this import's to report. */
+function mergedRangeProblems(
+  stored: ImportTables,
+  merged: Parameters<typeof rangeProblems>[0],
+  origin: ReadonlyMap<string, { file: CsvFile; row: number }>,
+): CsvImportProblem[] {
+  const before = rangeProblems({
+    properties: stored.properties.map(rowToProperty),
+    mortgages: stored.mortgage_blocks.map(rowToMortgageBlock),
+  });
+  return rangeProblemsAddedBy(before, rangeProblems(merged)).flatMap((p) => {
+    const at = origin.get(`${p.entity}:${p.id}`);
+    if (!at) return [];
+    const { min, max } = p.range;
+    const code = p.field === "sizeM2" ? "sizeRange" : "outOfRange";
+    const problem = { code, value: String(p.value), min, max } as const;
+    return [{ ...at, field: toColumn(p.field), problem }];
+  });
 }
 
 /** The ISO date of the stored loan event an input-rule error names, if it names one. */
@@ -506,8 +537,9 @@ class PlanBuilder {
     this.origin.set(`${entity}:${row.id}`, at);
   }
 
-  /** With no problem so far, check the merged result against the engine's input rules
-   *  and, when it passes, note what each added block does to its loan chain. */
+  /** With no problem so far, check the merged result against the engine's input rules,
+   *  then the bounded ranges (ADR 0257 §2), and, when it passes, note what each added
+   *  block does to its loan chain. */
   checkMerged(): void {
     if (this.problems.length > 0) return;
     const { children } = this;
@@ -557,6 +589,8 @@ class PlanBuilder {
       );
     }
     const { tables } = this;
+    if (this.problems.length === 0)
+      this.problems.push(...mergedRangeProblems(tables, merged, this.origin));
     if (
       this.problems.length === 0 &&
       this.addedBlocks.size > 0 &&
