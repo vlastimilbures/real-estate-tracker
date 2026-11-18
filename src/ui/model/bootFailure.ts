@@ -1,6 +1,9 @@
 // What the startup error screen offers for each failure (#115, ADR 0153). Try again only
 // where a retry can succeed; details are "records involved" only when they are records.
+// After a failed read-back, the writes it refused are named (ADR 0255).
 import type { DataErrorCode, UpgradeStop } from "../../data/errors";
+import type { Dictionary } from "../../i18n";
+import type { RefusedWrite } from "../../state/writeTargets";
 
 export interface BootView {
   /** Show Try again and the retry hint: the failure may not happen again. */
@@ -49,4 +52,21 @@ export function isPartial(upgrade: UpgradeStop | undefined): boolean {
 /** The last part of a path, for naming a file in the backups folder. */
 export function fileName(path: string): string {
   return path.split("/").pop() ?? path;
+}
+
+/** The names of the writes refused after a failed read-back, in order, from existing
+ *  dictionary entries: a table as the restore confirm lists it, an action by its button
+ *  or title (ADR 0255). */
+export function refusedWriteLabels(
+  t: Dictionary,
+  refused: readonly RefusedWrite[],
+): string[] {
+  const names: Record<RefusedWrite, string> = {
+    ...t.backup.tables,
+    importCsv: t.common.importCsv,
+    restore: t.backup.restoreTitle,
+    clearSample: t.sample.confirm,
+    loadSample: t.sample.loadAction,
+  };
+  return refused.map((r) => names[r]);
 }

@@ -95,6 +95,7 @@ import { perfMark, perfMeasure } from "../lib/perf";
 import { localIsoDay } from "../lib/day";
 import { saveFile } from "../platform/saveFile";
 import { createWriteQueue } from "./writeQueue";
+import type { RefusedWrite, WriteTarget } from "./writeTargets";
 
 type Status = "idle" | "loading" | "ready" | "error";
 
@@ -231,6 +232,10 @@ interface PortfolioState {
    *  screen, the write still counts as done, and later writes are refused until Try
    *  again reads the data (ADR 0228). */
   readBackFailed: boolean;
+  /** Writes refused while `readBackFailed`, once each in the order refused and without
+   *  bookkeeping, for the error screen to name; a successful Try again empties it
+   *  (ADR 0255). */
+  refusedWrites: RefusedWrite[];
   /** Restores, Clear samples and Load samples queued or running. Settings → Backup
    *  waits while one is, across page changes (ADR 0154). */
   replacing: number;
@@ -360,6 +365,19 @@ async function reloadAfter(
   }
 }
 
+/** Keep `target` for the error screen: refused because a read-back failed, named, and
+ *  not kept yet (ADR 0255). */
+function keepRefused({ set, get }: StoreAccess, target: WriteTarget): void {
+  const { readBackFailed, refusedWrites } = get();
+  if (
+    !readBackFailed ||
+    target === "bookkeeping" ||
+    refusedWrites.includes(target)
+  )
+    return;
+  set({ refusedWrites: [...refusedWrites, target] });
+}
+
 /** Persist via `op`, then reload portfolio + assumptions so the engine recomputes.
  *  Never throws into the void: a failure is captured, surfaced via `error`, and
  *  returned to the caller as `{ ok: false }`. On failure we still reload so the
@@ -370,12 +388,14 @@ async function reloadAfter(
 async function mutateNow(
   store: StoreAccess,
   markChanged: (sql: Sql) => Promise<void>,
+  target: WriteTarget,
   op: (sql: Sql) => Promise<void>,
   changesData: boolean,
 ): Promise<MutationResult> {
   const { set, get } = store;
   const sql = get().sql;
   if (!sql || get().readBackFailed) {
+    keepRefused(store, target);
     const error = toWriteError(new Error("Database not initialised"));
     set({ error });
     return { ok: false, error };
@@ -414,10 +434,11 @@ function createWriteRunner(set: SetState, get: () => PortfolioState) {
   let writes = 0;
 
   const mutate = (
+    target: WriteTarget,
     op: (sql: Sql) => Promise<void>,
     changesData = true,
   ): Promise<MutationResult> =>
-    write(() => mutateNow(store, markChanged, op, changesData));
+    write(() => mutateNow(store, markChanged, target, op, changesData));
 
   /** Run `op` in the mutation queue, then reload; rethrow its failure unchanged
    *  (after reloading in-memory state from the DB). For operations whose callers
@@ -425,11 +446,12 @@ function createWriteRunner(set: SetState, get: () => PortfolioState) {
    *  `op` has resolved it has committed: a failed reload stops on the error screen and
    *  `op`'s result still returns (ADR 0228). */
   function exclusive<T>(
+    target: WriteTarget,
     op: (sql: Sql) => Promise<T>,
     changesData = true,
   ): Promise<T> {
     return write(async () => {
-      const sql = requireSql();
+      const sql = requireSql(target);
       try {
         const result = await op(sql);
         if (changesData) await markChanged(sql);
@@ -445,10 +467,13 @@ function createWriteRunner(set: SetState, get: () => PortfolioState) {
   /** `exclusive` for an operation that replaces the data, counted in `replacing` from
    *  the call until it settles. On success the banner `error` from an earlier edit no
    *  longer applies (ADR 0154). */
-  async function replaceData<T>(op: (sql: Sql) => Promise<T>): Promise<T> {
+  async function replaceData<T>(
+    target: WriteTarget,
+    op: (sql: Sql) => Promise<T>,
+  ): Promise<T> {
     set({ replacing: get().replacing + 1 });
     try {
-      const result = await exclusive(op);
+      const result = await exclusive(target, op);
       set({ error: null });
       return result;
     } finally {
@@ -468,11 +493,14 @@ function createWriteRunner(set: SetState, get: () => PortfolioState) {
   }
 
   /** The open database, unless a read-back failed: then the screen may be older than
-   *  the database, so a write queued behind it is refused (ADR 0228). */
-  function requireSql(): Sql {
+   *  the database, so a write queued behind it is refused (ADR 0228) and its `target`
+   *  kept for the screen (ADR 0255). A read passes none. */
+  function requireSql(target?: WriteTarget): Sql {
     const sql = get().sql;
-    if (!sql || get().readBackFailed)
+    if (!sql || get().readBackFailed) {
+      if (target) keepRefused(store, target);
       throw new Error("Database not initialised");
+    }
     return sql;
   }
 
@@ -504,7 +532,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
   /** Add or save `s`. An insert stamps created_at; an update keeps the stored one
    *  (ADR 0123). */
   const writeScenario = (s: Scenario) =>
-    mutate(async (sql) => {
+    mutate("scenarios", async (sql) => {
       checkScenario(get().assumptions, s.overrides);
       await upsertScenario(sql, scenarioToRow(s, new Date()));
     });
@@ -520,6 +548,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     error: null,
     startupError: null,
     readBackFailed: false,
+    refusedWrites: [],
     replacing: 0,
     writesRunning: 0,
 
@@ -531,7 +560,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       if (get().readBackFailed) {
         try {
           await enqueue(() => get().refresh());
-          set({ status: "ready", readBackFailed: false });
+          set({ status: "ready", readBackFailed: false, refusedWrites: [] });
         } catch (e) {
           logFailure("RELOAD", e);
           set({ status: "error" });
@@ -572,7 +601,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     showError: (error) => set({ error }),
 
     addValuation: (v) =>
-      mutate(async (sql) => {
+      mutate("valuations", async (sql) => {
         checkEdit(
           (p) => ({ ...p, valuations: withRow(p.valuations, v) }),
           [v.id],
@@ -580,7 +609,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         await insertValuation(sql, valuationToRow(v));
       }),
     addValuationClosingPrevious: (v, closedPrev) =>
-      mutate(async (sql) => {
+      mutate("valuations", async (sql) => {
         checkEdit(
           (p) => ({
             ...p,
@@ -591,17 +620,18 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         await insertValuationClosingPrevious(sql, v, closedPrev);
       }),
     saveValuation: (v) =>
-      mutate(async (sql) => {
+      mutate("valuations", async (sql) => {
         checkEdit(
           (p) => ({ ...p, valuations: withRow(p.valuations, v) }),
           [v.id],
         );
         await updateValuation(sql, v);
       }),
-    removeValuation: (id) => mutate((sql) => deleteValuation(sql, id)),
+    removeValuation: (id) =>
+      mutate("valuations", (sql) => deleteValuation(sql, id)),
 
     addLease: (l) =>
-      mutate(async (sql) => {
+      mutate("leases", async (sql) => {
         const prev = openPredecessor(
           get().portfolio?.leases ?? [],
           l.propertyId,
@@ -625,14 +655,14 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         await insertLeaseClosingPrevious(sql, l, closedPrev);
       }),
     saveLease: (l) =>
-      mutate(async (sql) => {
+      mutate("leases", async (sql) => {
         checkEdit((p) => ({ ...p, leases: withRow(p.leases, l) }), [l.id]);
         await updateLease(sql, l);
       }),
-    removeLease: (id) => mutate((sql) => deleteLease(sql, id)),
+    removeLease: (id) => mutate("leases", (sql) => deleteLease(sql, id)),
 
     addMortgageBlock: (m) =>
-      mutate(async (sql) => {
+      mutate("mortgage_blocks", async (sql) => {
         checkEdit(
           (p) => ({ ...p, mortgages: withRow(p.mortgages, m) }),
           [m.id],
@@ -640,17 +670,18 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         await insertMortgageBlock(sql, mortgageBlockToRow(m));
       }),
     saveMortgageBlock: (m) =>
-      mutate(async (sql) => {
+      mutate("mortgage_blocks", async (sql) => {
         checkEdit(
           (p) => ({ ...p, mortgages: withRow(p.mortgages, m) }),
           [m.id],
         );
         await updateMortgageBlock(sql, m);
       }),
-    removeMortgageBlock: (id) => mutate((sql) => deleteMortgageBlock(sql, id)),
+    removeMortgageBlock: (id) =>
+      mutate("mortgage_blocks", (sql) => deleteMortgageBlock(sql, id)),
 
     saveHoldingCost: (h) =>
-      mutate(async (sql) => {
+      mutate("holding_costs", async (sql) => {
         checkEdit(
           (p) => ({ ...p, holdingCosts: withRow(p.holdingCosts, h) }),
           [h.id],
@@ -659,7 +690,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       }),
 
     addProperty: (p, cost, extra) =>
-      mutate(async (sql) => {
+      mutate("properties", async (sql) => {
         checkEdit(
           (pf) => ({
             ...pf,
@@ -675,7 +706,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         );
       }),
     editProperty: (edited, extra) =>
-      mutate(async (sql) => {
+      mutate("properties", async (sql) => {
         const stored = get().portfolio?.properties.find(
           (x) => x.id === edited.id,
         );
@@ -697,11 +728,12 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       return sql ? getPropertyExtras(sql, id) : { address: null, garage: null };
     },
     setPropertyActive: (id, active) =>
-      mutate((sql) => setPropertyActive(sql, id, active)),
-    removeProperty: (id) => mutate((sql) => deleteProperty(sql, id)),
+      mutate("properties", (sql) => setPropertyActive(sql, id, active)),
+    removeProperty: (id) =>
+      mutate("properties", (sql) => deleteProperty(sql, id)),
 
     saveAssumptions: (a) =>
-      mutate(async (sql) => {
+      mutate("assumptions", async (sql) => {
         checkAssumptions(get(), a);
         await upsertAssumptions(sql, a);
       }),
@@ -709,17 +741,19 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     addScenario: (s) => writeScenario(s),
     saveScenario: (s) => writeScenario(s),
     duplicateScenario: (id, newId, name) =>
-      mutate(async (sql) => {
+      mutate("scenarios", async (sql) => {
         const src = get().scenarios.find((x) => x.id === id);
         if (!src) throw new Error("Scenario not found");
         checkScenario(get().assumptions, src.overrides);
         const copy: Scenario = { ...src, id: newId, name };
         await upsertScenario(sql, scenarioToRow(copy, new Date()));
       }),
-    removeScenario: (id) => mutate((sql) => deleteScenario(sql, id)),
+    removeScenario: (id) =>
+      mutate("scenarios", (sql) => deleteScenario(sql, id)),
 
     // Hides a banner: app state, not a data change (ADR 0110).
-    dismissSampleBanner: () => mutate(dismissSampleBanner, false),
+    dismissSampleBanner: () =>
+      mutate("bookkeeping", dismissSampleBanner, false),
 
     // Loaded on first use: keeps the CSV parser out of the startup bundle (P9).
     previewCsv: (batch) =>
@@ -728,12 +762,14 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         return previewImport(requireSql(), batch);
       }),
     importCsv: (batch) =>
-      exclusive(async (sql) => {
+      exclusive("importCsv", async (sql) => {
         const { importCsv } = await import("../import/csvImport");
         return importCsv(sql, batch);
       }),
     restoreBackup: (backup) =>
-      replaceData((sql) => confirmRestore(sql, backup, checkInputRules)),
+      replaceData("restore", (sql) =>
+        confirmRestore(sql, backup, checkInputRules),
+      ),
     restoreAtStartup: async (backup) => {
       // Only where the database migrated to head and only reading it failed
       // (READ_FAILURES, ADR 0231); any other startup failure leaves a database a
@@ -743,7 +779,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         throw new Error(
           "A restore at startup needs a ROW_INVALID or SCENARIO_INVALID failure",
         );
-      const { safetyBackup } = await exclusive((sql) =>
+      const { safetyBackup } = await exclusive("restore", (sql) =>
         confirmRestore(sql, backup, checkInputRules),
       );
       return {
@@ -757,8 +793,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         return;
       set({ status: "ready", error: null, startupError: null });
     },
-    clearSample: () => replaceData((sql) => clearSample(sql)),
-    loadSample: () => replaceData(loadSample),
+    clearSample: () => replaceData("clearSample", (sql) => clearSample(sql)),
+    loadSample: () => replaceData("loadSample", loadSample),
     exportBackup: async () => {
       const writesBefore = writesSoFar();
       // One clock read names the file and stamps `exportedAt` (ADR 0149 §6).
@@ -773,6 +809,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         // "Last backup" is the time the file was saved, after the dialog (ADR 0110).
         const at = new Date().toISOString();
         await exclusive(
+          "bookkeeping",
           (sql) =>
             recordBackup(
               sql,
