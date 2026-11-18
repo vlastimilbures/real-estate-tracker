@@ -60,6 +60,7 @@ export const SHARDS = {
     "src/engine/validate/rows.ts",
     "src/engine/validate/entry.ts",
     "src/engine/validate/index.ts",
+    "src/engine/validate/scenarioRules.ts",
   ],
   projections: ["src/engine/projections.ts", "src/engine/financing.ts"],
   kpis: ["src/engine/kpis.ts", "src/engine/dates.ts", "src/engine/metrics.ts"],

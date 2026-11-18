@@ -1,8 +1,9 @@
 // The engine rules a scenario's own overrides break (ADR 0123): the store checks a
 // scenario with them before writing it, and the compare before running it. Pure.
-import { applyScenario, type ScenarioOverrides } from "./scenarios";
-import type { Assumptions, Portfolio } from "./types";
-import { validateInputs, type EngineValidationError } from "./validate";
+import { applyScenario, type ScenarioOverrides } from "../scenarios";
+import type { Assumptions, Portfolio } from "../types";
+import { validateInputs } from "./entry";
+import type { EngineValidationError } from "./codes";
 
 const NO_ROWS: Portfolio = {
   properties: [],

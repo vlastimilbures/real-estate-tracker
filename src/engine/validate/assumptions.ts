@@ -5,6 +5,7 @@ import type { Assumptions, CostDefaults, ShockBand } from "../types";
 import {
   badNumber,
   belowGrowthFloor,
+  checkAmount,
   checkCostRanges,
   checkFields,
   checkSigns,
@@ -12,22 +13,34 @@ import {
   type Report,
   type SignRule,
 } from "./check";
+import type { FieldOf } from "./codes";
+
+/** The assumptions' reporter: a problem on an assumption field. */
+type AssumptionReport = Report<FieldOf<"assumptions">>;
 
 /** A shock band's duration: whole years ≥ 0 (D-38). */
 const badDuration = (band: ShockBand) =>
   !Number.isInteger(band.durationYears) || band.durationYears < 0;
 
+/** A shock band: a finite delta, then a whole-year duration (ADR 0251 §3). */
 function checkShock(
   band: ShockBand | undefined,
-  field: string,
-  report: Report,
+  field: "inflationShock" | "rateShock",
+  report: AssumptionReport,
 ): void {
   if (!band) return;
-  if (badNumber(band.deltaPa)) report("NON_FINITE_NUMBER", field);
-  if (badDuration(band)) report("SHOCK_OUT_OF_RANGE", field);
+  checkAmount(
+    band.deltaPa,
+    () => badDuration(band),
+    "SHOCK_OUT_OF_RANGE",
+    (c) => report(c, field),
+  );
 }
 
-export function checkAssumptions(a: Assumptions, report: Report): void {
+export function checkAssumptions(
+  a: Assumptions,
+  report: AssumptionReport,
+): void {
   const rates = [
     "appreciationPa",
     "rentIndexationPa",
@@ -65,7 +78,7 @@ const GROWTH_FIELDS = [
 ] as const;
 
 /** D-38 and ADR 0128 §1–2 ranges of the assumption levels. */
-function checkLevelRanges(a: Assumptions, report: Report): void {
+function checkLevelRanges(a: Assumptions, report: AssumptionReport): void {
   checkSigns(a, LEVEL_SIGNS, report);
 }
 
@@ -102,11 +115,17 @@ function checkShiftedLevel(
   if (outOfRange(level.plus(band.deltaPa))) report();
 }
 
-/** A value crash: a finite haircut within 0–1 at a whole year ≥ 0 (D-38, ADR 0128 §4). */
-function checkValueShock(vs: Assumptions["valueShock"], report: Report): void {
+/** A value crash: a finite haircut within 0–1 at a whole year ≥ 0 (D-38, ADR 0128 §4,
+ *  ADR 0251 §3). */
+function checkValueShock(
+  vs: Assumptions["valueShock"],
+  report: AssumptionReport,
+): void {
   if (!vs) return;
-  if (badNumber(vs.pct)) report("NON_FINITE_NUMBER", "valueShock");
-  if (outsideUnit(vs.pct) || !Number.isInteger(vs.atYear) || vs.atYear < 0) {
-    report("SHOCK_OUT_OF_RANGE", "valueShock");
-  }
+  checkAmount(
+    vs.pct,
+    (p) => outsideUnit(p) || !Number.isInteger(vs.atYear) || vs.atYear < 0,
+    "SHOCK_OUT_OF_RANGE",
+    (c) => report(c, "valueShock"),
+  );
 }

@@ -5,7 +5,7 @@ import { isAfter } from "../dates";
 import { COST_KEYS } from "../figures";
 import { overlappingLeases } from "../succession";
 import type { AcquisitionFunding, Portfolio, Property } from "../types";
-import type { EngineValidationError } from "./codes";
+import type { EngineValidationError, FieldOf, ValidationField } from "./codes";
 import {
   badDate,
   belowGrowthFloor,
@@ -13,7 +13,6 @@ import {
   checkCostRanges,
   checkFields,
   checkSigns,
-  isNegative,
   isNegativeAmount,
   rowError,
   rowReporter,
@@ -25,26 +24,26 @@ import { duplicateStarts, refinancesWithinAMonth } from "./blockStarts";
 import { blockIssues } from "./loan";
 
 /** Effective-dated rows: valid dates, finite non-negative amount, end ≥ start. */
-function checkDated(
+function checkDated<F extends ValidationField>(
   start: Date,
   end: Date | undefined,
   amount: Decimal,
-  fields: [string, string, string],
-  report: Report,
+  fields: readonly [start: F, end: F, amount: F],
+  report: Report<F>,
 ): void {
   if (badDate(start)) report("INVALID_DATE", fields[0]);
   if (badDate(end)) report("INVALID_DATE", fields[1]);
   if (end && isAfter(start, end)) report("END_BEFORE_START", fields[1]);
-  checkAmount(amount, isNegative, "NEGATIVE_AMOUNT", (code) =>
+  checkAmount(amount, isNegativeAmount, "NEGATIVE_AMOUNT", (code) =>
     report(code, fields[2]),
   );
 }
 
-type ReporterFor = (
-  entity: RowEntity,
+type ReporterFor = <E extends RowEntity>(
+  entity: E,
   id: string,
   propertyId?: string,
-) => Report;
+) => Report<FieldOf<E>>;
 
 /** A holding-cost row's numbers: the Kč fields, then the shares. */
 const HOLDING_COST_FIELDS = [...COST_KEYS];
@@ -60,7 +59,7 @@ const FUNDING_SIGNS: readonly SignRule<
 );
 
 const PRICE_SIGNS: readonly SignRule<Property, "purchasePrice">[] = [
-  ["purchasePrice", isNegative, "NEGATIVE_AMOUNT"],
+  ["purchasePrice", isNegativeAmount, "NEGATIVE_AMOUNT"],
 ];
 
 const GROWTH_OVERRIDES: readonly SignRule<
@@ -133,6 +132,14 @@ function checkHoldingCosts(p: Portfolio, on: ReporterFor): void {
   }
 }
 
+/** ORPHAN_ROW on a row whose property does not exist. */
+const orphanError = (entity: RowEntity, id: string): EngineValidationError => ({
+  code: "ORPHAN_ROW",
+  entity,
+  id,
+  field: "propertyId",
+});
+
 /** Every per-row check, plus orphans and duplicates across rows. */
 export function checkPortfolio(
   p: Portfolio,
@@ -140,11 +147,11 @@ export function checkPortfolio(
 ): void {
   const ids = new Set(p.properties.map((x) => x.id));
   const on: ReporterFor = (entity, id, propertyId) => {
-    const report = rowReporter(entity, id, add);
-    // Reported as the reporter is made, so a row's ORPHAN_ROW comes first.
+    // Reported as the reporter is made, so a row's ORPHAN_ROW comes first. Only a row
+    // that names its property passes `propertyId`: the property itself never does.
     if (propertyId !== undefined && !ids.has(propertyId))
-      report("ORPHAN_ROW", "propertyId");
-    return report;
+      add(orphanError(entity, id));
+    return rowReporter(entity, id, add);
   };
   checkProperties(p, on);
   checkMortgages(p, on);

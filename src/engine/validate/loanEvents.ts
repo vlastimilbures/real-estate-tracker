@@ -10,7 +10,7 @@ import {
 } from "../amortization";
 import { isOnOrBefore } from "../dates";
 import type { LoanRecast, MortgageBlock } from "../types";
-import type { ValidationCode } from "./codes";
+import type { FieldOf, ValidationCode } from "./codes";
 import {
   badDate,
   checkAmount,
@@ -18,6 +18,9 @@ import {
   notPositive,
   type Report,
 } from "./check";
+
+/** A block's reporter: a problem on a mortgage field. */
+type LoanReport = Report<FieldOf<"mortgage">>;
 
 /** The contract term in payments, or undefined when it is invalid (another code
  *  reports that) or cannot be derived from non-finite inputs. */
@@ -54,7 +57,7 @@ function checkEventDate(
 function checkPrepayments(
   b: MortgageBlock,
   end: Date | undefined,
-  report: Report,
+  report: LoanReport,
 ): void {
   (b.prepayments ?? []).forEach((p, i) => {
     const issue = (code: ValidationCode) => report(code, "prepayments", i);
@@ -103,7 +106,7 @@ function checkRecasts(
   b: MortgageBlock,
   term: number | undefined,
   end: Date | undefined,
-  report: Report,
+  report: LoanReport,
 ): void {
   (b.recasts ?? []).forEach((r, i) => {
     const issue = (code: ValidationCode) => report(code, "recasts", i);
@@ -116,7 +119,7 @@ function checkRecasts(
 }
 
 /** Prepayments and recasts (ADR 0109). */
-export function checkLoanEvents(b: MortgageBlock, report: Report): void {
+export function checkLoanEvents(b: MortgageBlock, report: LoanReport): void {
   if (!b.prepayments?.length && !b.recasts?.length) return;
   const term = contractTerm(b);
   const end =

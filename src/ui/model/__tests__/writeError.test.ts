@@ -184,7 +184,7 @@ describe("formWriteErrors with list rows", () => {
     code: "EVENT_BEFORE_START" as const,
     entity: "mortgage" as const,
     id: "m1",
-    field: "prepayments",
+    field: "prepayments" as const,
     ...(index === undefined ? {} : { index }),
   });
   const input: WriteError = {
