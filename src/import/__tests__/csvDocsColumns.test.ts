@@ -67,6 +67,9 @@ const requiredText = (c: ColumnSpec) =>
 const rangeText = ({ min, max }: { min: number; max: number }) =>
   [min, max].map((n) => String(n).replace(/\B(?=(\d{3})+$)/g, " ")).join("–");
 
+/** A Notes cell's leading range, `min–max` with space-grouped thousands. */
+const LEADING_RANGE = /^\d{1,3}(?: \d{3})*–\d{1,3}(?: \d{3})*(?![\d ]\d)/;
+
 const FILES: [string, readonly ColumnSpec[]][] = [
   ["properties.csv", PROPERTY_COLUMNS],
   ["valuations.csv", VALUATION_COLUMNS],
@@ -95,7 +98,10 @@ describe("docs/csv-import.md column tables", () => {
     columns.forEach((c, i) => {
       if (c.kind !== "int" && c.kind !== "size") return;
       expect(Object.values(INT_RANGES)).toContain(c.range);
-      expect(rows[i]?.notes.startsWith(rangeText(c.range))).toBe(true);
+      // The whole leading range, so `1–5` cannot pass for a documented `1–50`.
+      expect(LEADING_RANGE.exec(rows[i]?.notes ?? "")?.[0]).toBe(
+        rangeText(c.range),
+      );
     });
   });
 
