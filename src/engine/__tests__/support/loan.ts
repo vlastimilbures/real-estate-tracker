@@ -31,7 +31,7 @@ export const withLoan = (b: Partial<MortgageBlockFields>): Portfolio => ({
 /** A problem reported on `loan`, with its list index when it has one. */
 export const onLoan = (
   code: EngineValidationError["code"],
-  field: string,
+  field: NonNullable<EngineValidationError["field"]>,
   index?: number,
 ): EngineValidationError => ({
   code,
