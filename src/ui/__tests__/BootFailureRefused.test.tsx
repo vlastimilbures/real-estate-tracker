@@ -59,6 +59,7 @@ describe("the read-back screen names the refused writes (ADR 0255)", () => {
     readBackFailed(["valuations"]);
     render(<App />);
     const text = alert().textContent ?? "";
+    expect(listed()).toEqual([en.backup.tables.valuations]);
     expect(text.indexOf(en.backup.tables.valuations)).toBeLessThan(
       text.indexOf(en.backup.restored(file)),
     );
