@@ -158,7 +158,8 @@ export function rangeProblems(
 const keyOf = (p: RangeProblem) => `${p.entity}|${p.id ?? ""}|${p.field}`;
 
 /** The problems of `after` that `before` does not have with the same value: new ones,
- *  and stored ones the write changes. The store refuses these (ADR 0245). */
+ *  and stored ones the write changes. The store (ADR 0245) and the CSV import plan
+ *  (ADR 0257 §2) refuse these. */
 export function rangeProblemsAddedBy(
   before: readonly RangeProblem[],
   after: readonly RangeProblem[],
