@@ -133,7 +133,7 @@ export function DataCheckPanel({
         info={d.asOfNote(fmtDate(asOf))}
         action={
           !empty && (
-            <span className="preset-toggle">
+            <span className="head-toggle">
               <DisclosureButton
                 open={open}
                 controls={bodyId}

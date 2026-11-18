@@ -192,7 +192,7 @@ export function ScenarioListPanel({
       help={<HelpText>{t.scenarios.listHint(maxCompare)}</HelpText>}
       action={
         presets && (
-          <span className="preset-toggle">
+          <span className="head-toggle">
             <DisclosureButton
               open={presets.open}
               controls={presetsId}
