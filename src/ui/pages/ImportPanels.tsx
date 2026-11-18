@@ -27,8 +27,6 @@ import "../styles/import.css";
 
 export interface FileState<T> {
   name: string;
-  /** The file's raw bytes: the parser checks the encoding itself (D-49). */
-  bytes: Uint8Array;
   result: CsvParseResult<T>;
 }
 
@@ -55,8 +53,6 @@ function csvErrorText(t: Dictionary, e: CsvErrorCode): string {
       return p.errInvalidInteger(e.value);
     case "invalidBoolean":
       return p.errInvalidBoolean(e.value);
-    case "unknownProperty":
-      return p.errUnknownProperty(e.value);
     case "instalmentRequired":
       return p.errInstalmentRequired;
     case "impossibleDate":

@@ -20,5 +20,3 @@ export const MORTGAGES_CSV = `property_name,start_date,initial_principal,fixatio
 Byt Javorova,2021-01-17,1912500,10,0.0169,6721.8
 Byt Lipova,2022-01-15,5610000,7,0.0359,25567.15
 Byt Dubova,2024-03-12,3034500,7,0.0449,21576.4`;
-
-export const ALL_NAMES = new Set(["Byt Javorova", "Byt Lipova", "Byt Dubova"]);

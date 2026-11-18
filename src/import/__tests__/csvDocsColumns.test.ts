@@ -50,7 +50,6 @@ function table(file: string): DocRow[] {
 /** How the guide names each kind (its "Types used below" list). */
 const TYPE_NAME: Record<ColumnKind, string> = {
   text: "Text",
-  knownProperty: "Text",
   date: "Date",
   amount: "Money",
   unitRate: "Fraction",

@@ -47,7 +47,6 @@ export type CsvErrorCode =
   /** A size outside its range or with two or more decimals (ADR 0236 §1). */
   | { code: "sizeRange"; value: string; min: number; max: number }
   | { code: "invalidBoolean"; value: string }
-  | { code: "unknownProperty"; value: string }
   | { code: "instalmentRequired" }
   | { code: "duplicateKey"; firstRow: number }
   | { code: "malformedRow"; expected: number; found: number }
@@ -325,27 +324,21 @@ class RowCtx {
 
   /** One cell, read as its spec says. An optional column not in the file's header is
    *  `undefined` (ADR 0185 §2); an empty optional cell is `null`. */
-  read(spec: ColumnSpec, known: Set<string> | undefined): unknown {
+  read(spec: ColumnSpec): unknown {
     const field = spec.name;
     if (!spec.required && !(field in this.cells)) return undefined;
     const v = this.raw(field);
     if (v === "")
       return spec.required ? this.fail(field, { code: "required" }) : null;
-    return this.value(spec, v, known);
+    return this.value(spec, v);
   }
 
   /** A non-empty cell by its kind. */
-  private value(
-    spec: ColumnSpec,
-    v: string,
-    known: Set<string> | undefined,
-  ): unknown {
+  private value(spec: ColumnSpec, v: string): unknown {
     const field = spec.name;
     switch (spec.kind) {
       case "text":
         return v;
-      case "knownProperty":
-        return this.knownProperty(field, v, known);
       case "date":
         return this.date(field, v);
       case "amount":
@@ -431,18 +424,6 @@ class RowCtx {
     if (v === "false" || v === "0" || v === "no") return false;
     return this.fail(field, { code: "invalidBoolean", value: v });
   }
-
-  /** A child row's property must exist in the DB or the properties file; `known`
-   *  holds `propertyKey`s (D-55; NFC, ADR 0237). */
-  private knownProperty(
-    field: string,
-    v: string,
-    known: Set<string> | undefined,
-  ): string | null {
-    if (known && !known.has(propertyKey(v)))
-      return this.fail(field, { code: "unknownProperty", value: v });
-    return v;
-  }
 }
 
 /** `amount`: money, never negative · `unitRate`: a fraction in 0–1 · `any`: signed. */
@@ -478,18 +459,14 @@ const evaluationOrder = (columns: readonly ColumnSpec[]): ColumnSpec[] => [
   ...columns.filter((s) => s.derive),
 ];
 
-function readRow(
-  c: RowCtx,
-  order: readonly ColumnSpec[],
-  known: Set<string> | undefined,
-): Values {
+function readRow(c: RowCtx, order: readonly ColumnSpec[]): Values {
   const values = new Map<string, unknown>();
   for (const spec of order)
     values.set(
       spec.name,
       spec.derive && c.raw(spec.name) === ""
         ? deriveInstalment(c, spec.name, values)
-        : c.read(spec, known),
+        : c.read(spec),
     );
   return values;
 }
@@ -518,8 +495,6 @@ function parseFile<R extends Located, C extends readonly ColumnSpec[]>(
   columns: C & NamesMatch<R, C>,
   /** The key columns: the property name first, then a child file's key date. */
   keyCells: readonly C[number]["name"][],
-  /** For `knownProperty` columns: the known names as `propertyKey`s. */
-  known?: Set<string>,
 ): CsvParseResult<R> {
   const file = readCsv(source);
   const rows: R[] = [];
@@ -529,7 +504,7 @@ function parseFile<R extends Located, C extends readonly ColumnSpec[]>(
   const keyField = keyCells[keyCells.length - 1] ?? "";
   for (const rec of file.records) {
     const c = new RowCtx(rec.cells, rec.line);
-    const values = readRow(c, order, known);
+    const values = readRow(c, order);
     if (!c.errors.some((e) => keyCells.includes(e.field))) {
       const [name = "", ...rest] = keyCells;
       const k = [propertyKey(c.raw(name)), ...rest.map((f) => c.raw(f))].join(
@@ -551,10 +526,6 @@ function parseFile<R extends Located, C extends readonly ColumnSpec[]>(
   return { rows, errors };
 }
 
-/** Known property names, as `propertyKey`s. */
-const keySet = (names: Set<string> | undefined) =>
-  names && new Set([...names].map(propertyKey));
-
 // --- public parse functions ---
 
 export function parseProperties(
@@ -569,37 +540,28 @@ export function parseProperties(
 
 export function parseValuations(
   csv: CsvSource,
-  knownNames?: Set<string>,
 ): CsvParseResult<ParsedValuationRow> {
   return parseFile<ParsedValuationRow, typeof VALUATION_COLUMNS>(
     csv,
     VALUATION_COLUMNS,
     ["property_name", "valid_from"],
-    keySet(knownNames),
   );
 }
 
-export function parseRents(
-  csv: CsvSource,
-  knownNames?: Set<string>,
-): CsvParseResult<ParsedRentRow> {
-  return parseFile<ParsedRentRow, typeof RENT_COLUMNS>(
-    csv,
-    RENT_COLUMNS,
-    ["property_name", "start_date"],
-    keySet(knownNames),
-  );
+export function parseRents(csv: CsvSource): CsvParseResult<ParsedRentRow> {
+  return parseFile<ParsedRentRow, typeof RENT_COLUMNS>(csv, RENT_COLUMNS, [
+    "property_name",
+    "start_date",
+  ]);
 }
 
 export function parseMortgages(
   csv: CsvSource,
-  knownNames?: Set<string>,
 ): CsvParseResult<ParsedMortgageRow> {
   return parseFile<ParsedMortgageRow, typeof MORTGAGE_COLUMNS>(
     csv,
     MORTGAGE_COLUMNS,
     ["property_name", "start_date"],
-    keySet(knownNames),
   );
 }
 

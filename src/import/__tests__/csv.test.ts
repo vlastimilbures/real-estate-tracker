@@ -16,7 +16,6 @@ import {
   mortgagesTemplate,
 } from "../csv";
 import {
-  ALL_NAMES,
   MORTGAGES_CSV,
   PROPERTIES_CSV,
   RENTS_CSV,
@@ -45,7 +44,7 @@ describe("the sample portfolio files", () => {
   });
 
   it("parses 3 valid rows", () => {
-    const { rows, errors } = parseValuations(VALUATIONS_CSV, ALL_NAMES);
+    const { rows, errors } = parseValuations(VALUATIONS_CSV);
     expect(errors, JSON.stringify(errors)).toHaveLength(0);
     expect(rows).toHaveLength(3);
     expect(rows[0].market_value).toBe("10200000");
@@ -53,7 +52,7 @@ describe("the sample portfolio files", () => {
   });
 
   it("parses 4 rows including one with end_date", () => {
-    const { rows, errors } = parseRents(RENTS_CSV, ALL_NAMES);
+    const { rows, errors } = parseRents(RENTS_CSV);
     expect(errors, JSON.stringify(errors)).toHaveLength(0);
     expect(rows).toHaveLength(4);
     expect(rows[2].end_date).toBe("2026-08-30");
@@ -61,7 +60,7 @@ describe("the sample portfolio files", () => {
   });
 
   it("parses 3 valid rows with correct types", () => {
-    const { rows, errors } = parseMortgages(MORTGAGES_CSV, ALL_NAMES);
+    const { rows, errors } = parseMortgages(MORTGAGES_CSV);
     expect(errors, JSON.stringify(errors)).toHaveLength(0);
     expect(rows).toHaveLength(3);
     expect(rows[0].fixation_years).toBe(10);
@@ -106,7 +105,7 @@ describe("mortgage instalment", () => {
     const csv =
       "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment,loan_term_years\n" +
       "Byt Javorova,2021-01-17,1912500,10,0.0169,,25";
-    const { rows, errors } = parseMortgages(csv, ALL_NAMES);
+    const { rows, errors } = parseMortgages(csv);
     expect(errors, JSON.stringify(errors)).toHaveLength(0);
     expect(rows).toHaveLength(1);
     // PMT(0.0169/12, 300, −1,912,500) ≈ 7,821 Kč/mo (whole-Kč rounded).
@@ -119,7 +118,7 @@ describe("mortgage instalment", () => {
     const csv =
       "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment\n" +
       "Byt Javorova,2021-01-17,1912500,10,0.0169,";
-    const { rows, errors } = parseMortgages(csv, ALL_NAMES);
+    const { rows, errors } = parseMortgages(csv);
     expect(rows).toHaveLength(0);
     expect(errors.some((e) => e.field === "monthly_instalment")).toBe(true);
   });
@@ -128,7 +127,7 @@ describe("mortgage instalment", () => {
     const csv =
       "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment,loan_term_years\n" +
       "Byt Javorova,2021-01-17,1912500,10,0.0169,6721.8,25";
-    const { rows, errors } = parseMortgages(csv, ALL_NAMES);
+    const { rows, errors } = parseMortgages(csv);
     expect(errors, JSON.stringify(errors)).toHaveLength(0);
     expect(rows[0].monthly_instalment).toBe("6721.8");
   });
@@ -619,8 +618,6 @@ describe("dates", () => {
 });
 
 describe("foreign keys and duplicates", () => {
-  const known = new Set(["A"]);
-
   // ADR 0185 §1: a repeated header name rejects the file instead of the last column winning.
   it("ignores repeated empty header cells (trailing spreadsheet columns)", () => {
     const r = parseProperties(
@@ -644,54 +641,6 @@ describe("foreign keys and duplicates", () => {
     ]);
   });
 
-  it("flags an unknown property_name in valuations, rents and mortgages", () => {
-    const val = parseValuations(
-      "property_name,valid_from,valid_to,market_value\nNope,2025-01-01,,1000",
-      known,
-    );
-    const rent = parseRents(
-      "property_name,start_date,end_date,monthly_rent\nNope,2025-01-01,,1000",
-      known,
-    );
-    const mort = parseMortgages(
-      `${MH}\nNope,2025-01-01,100000,5,0.03,1000,`,
-      known,
-    );
-    for (const r of [val, rent, mort]) {
-      expect(r.rows).toEqual([]);
-      expect(r.errors).toEqual([
-        {
-          row: 2,
-          field: "property_name",
-          error: { code: "unknownProperty", value: "Nope" },
-        },
-      ]);
-    }
-  });
-
-  it("skips FK check when knownNames not provided", () => {
-    const { errors } = parseValuations(VALUATIONS_CSV);
-    expect(errors, "no FK check without knownNames").toHaveLength(0);
-  });
-
-  it("matches property names trimmed and case-insensitively (D-55)", () => {
-    const r = parseRents(
-      "property_name,start_date,end_date,monthly_rent\n a ,2025-01-01,,1000",
-      known,
-    );
-    expect(r.errors).toEqual([]);
-  });
-
-  // ADR 0237: names are compared in NFC. Escapes keep the two forms apart in the source.
-  it("matches a decomposed (NFD) child row to a known composed (NFC) property (ADR 0237)", () => {
-    const r = parseRents(
-      "property_name,start_date,end_date,monthly_rent\nNa\u0301rodni\u0301,2025-01-01,,1000",
-      new Set(["N\u00e1rodn\u00ed"]),
-    );
-    expect(r.errors).toEqual([]);
-    expect(r.rows).toHaveLength(1);
-  });
-
   it("a composed and a decomposed spelling in one file are a fatal duplicate (ADR 0237)", () => {
     const props = parseProperties(
       `${H}\nN\u00e1rodn\u00ed,,,,,2020-01-01,100,,\nNa\u0301rodni\u0301,,,,,2021-01-01,200,,`,
@@ -712,7 +661,6 @@ describe("foreign keys and duplicates", () => {
     ]);
     const vals = parseValuations(
       "property_name,valid_from,valid_to,market_value\nA,2025-01-01,,1\na,2025-01-01,,2",
-      known,
     );
     expect(vals.errors).toEqual([
       {
@@ -728,7 +676,6 @@ describe("foreign keys and duplicates", () => {
   it("reports a duplicate behind a row with another invalid cell", () => {
     const rents = parseRents(
       "property_name,start_date,end_date,monthly_rent\nA,2025-01-01,,x\nA,2025-01-01,,1000",
-      known,
     );
     expect(rents.rows).toEqual([]);
     expect(rents.errors).toEqual([
@@ -748,7 +695,6 @@ describe("foreign keys and duplicates", () => {
   it("does not register a key whose own cells are invalid", () => {
     const rents = parseRents(
       "property_name,start_date,end_date,monthly_rent\nA,2025-02-30,,1\nA,2025-02-30,,2",
-      known,
     );
     expect(rents.errors.map((e) => e.error.code)).toEqual([
       "impossibleDate",

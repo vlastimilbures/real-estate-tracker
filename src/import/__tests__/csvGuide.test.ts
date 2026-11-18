@@ -40,18 +40,10 @@ describe("docs/csv-import.md examples", () => {
 
   it("every example parses without errors and imports into a fresh DB", async () => {
     const properties = parseProperties(block("name,"));
-    const names = new Set(properties.rows.map((r) => r.name));
-    const valuations = parseValuations(
-      block("property_name,valid_from,"),
-      names,
-    );
-    const rents = parseRents(
-      block("property_name,start_date,end_date,"),
-      names,
-    );
+    const valuations = parseValuations(block("property_name,valid_from,"));
+    const rents = parseRents(block("property_name,start_date,end_date,"));
     const mortgages = parseMortgages(
       block("property_name,start_date,initial_principal,"),
-      names,
     );
     for (const r of [properties, valuations, rents, mortgages])
       expect(r.errors).toEqual([]);

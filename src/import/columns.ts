@@ -4,7 +4,6 @@ import { INT_RANGES, type IntRange } from "../lib/rules";
 
 /** How a cell is read:
  *  - `text`: trimmed text;
- *  - `knownProperty`: the name of a property in the DB or the batch (D-55);
  *  - `date`: `YYYY-MM-DD`, a real calendar day from the date floor on;
  *  - `amount`: money, a plain decimal, never negative;
  *  - `unitRate`: a fraction from 0 to 1;
@@ -14,7 +13,6 @@ import { INT_RANGES, type IntRange } from "../lib/rules";
  *  - `bool`: true/false, 1/0 or yes/no, in any case. */
 export type ColumnKind =
   | "text"
-  | "knownProperty"
   | "date"
   | "amount"
   | "unitRate"
@@ -70,21 +68,21 @@ export const PROPERTY_COLUMNS = [
 ] as const satisfies readonly ColumnSpec[];
 
 export const VALUATION_COLUMNS = [
-  { name: "property_name", kind: "knownProperty", required: true },
+  { name: "property_name", kind: "text", required: true },
   { name: "valid_from", kind: "date", required: true },
   { name: "valid_to", kind: "date", required: false },
   { name: "market_value", kind: "amount", required: true },
 ] as const satisfies readonly ColumnSpec[];
 
 export const RENT_COLUMNS = [
-  { name: "property_name", kind: "knownProperty", required: true },
+  { name: "property_name", kind: "text", required: true },
   { name: "start_date", kind: "date", required: true },
   { name: "end_date", kind: "date", required: false },
   { name: "monthly_rent", kind: "amount", required: true },
 ] as const satisfies readonly ColumnSpec[];
 
 export const MORTGAGE_COLUMNS = [
-  { name: "property_name", kind: "knownProperty", required: true },
+  { name: "property_name", kind: "text", required: true },
   { name: "start_date", kind: "date", required: true },
   { name: "initial_principal", kind: "amount", required: true },
   {
