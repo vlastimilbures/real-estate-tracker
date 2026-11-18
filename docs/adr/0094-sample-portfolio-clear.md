@@ -8,7 +8,8 @@
   [0154](0154-one-outcome-path.md) (the "sample cleared" notice shows on every page and is
   cleared when the data is replaced),
   [0155](0155-lifecycle-states-on-the-pages.md) (§6: the empty-portfolio screen is for no
-  property; every property deactivated has its own notice)
+  property; every property deactivated has its own notice),
+  [0248](0248-focus-after-busy-actions.md) (a failed Clear sample puts focus on Cancel)
 
 ## Context
 

@@ -6,7 +6,8 @@
 - Related: [0142](0142-row-switch-guard-busy-dialog.md) (row-switch guard),
   [0077](0077-ux-a11y-round-b-forms.md) (forms a11y round)
 - Amended by: [0173](0173-record-panel-races-confirm-focus.md) (the caller closes only the
-  row it confirmed; focus after a successful confirm; Escape cancels)
+  row it confirmed; focus after a successful confirm; Escape cancels),
+  [0248](0248-focus-after-busy-actions.md) (§4: a failed confirm puts focus on Cancel)
 
 ## Context
 
