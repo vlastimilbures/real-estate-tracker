@@ -74,7 +74,7 @@
   font-size: var(--fs-13);
   font-weight: 600;
   color: var(--ink);
-  margin-bottom: 2px;
+  margin-bottom: var(--s-2px);
 }
 .chart-card .chart-sub {
   font-size: var(--fs-11);
@@ -100,7 +100,7 @@
 table.chart-table tbody th {
   text-align: left;
   font-weight: 400;
-  padding: 10px var(--s3);
+  padding: var(--s-10px) var(--s3);
   border-bottom: 1px solid var(--hairline);
   white-space: nowrap;
 }
@@ -121,7 +121,7 @@ table.chart-table tbody th.sticky-col {
 .legend span {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-6px);
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -157,7 +157,7 @@ table.chart-table tbody th.sticky-col {
 .chart-tooltip .tt-label {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-6px);
 }
 .chart-tooltip .tt-total {
   margin-top: var(--s1);

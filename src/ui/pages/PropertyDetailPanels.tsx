@@ -437,13 +437,7 @@ export function ActivationBanner({
   if (!isActive) {
     return (
       <Panel>
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "var(--s2)",
-          }}
-        >
+        <span className="inactive-note">
           <Badge band="neutral">{t.propertyDetail.inactiveBadge}</Badge>
           <span>{t.propertyDetail.inactiveNote}</span>
           {/* The page still runs its own figures: a preview before reactivating (ADR 0155). */}
@@ -695,7 +689,7 @@ export function AmortizationTable({
   return (
     <TableWrap
       label={t.propertyDetail.amortizationTitle}
-      style={{ maxHeight: 320 }}
+      className="amortization-wrap"
     >
       <table className="data">
         <caption className="sr-only">

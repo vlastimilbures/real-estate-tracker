@@ -2,12 +2,12 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--s-5px);
   font-size: var(--fs-11);
   font-weight: 600;
   letter-spacing: 0.02em;
-  padding: 2px var(--s2);
-  border-radius: 999px;
+  padding: var(--s-2px) var(--s2);
+  border-radius: var(--r-pill);
   border: 1px solid transparent;
 }
 .badge.good {
@@ -33,7 +33,7 @@
 .health-marker {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--s-5px);
   white-space: nowrap;
   vertical-align: baseline;
 }
@@ -127,8 +127,8 @@
   font-size: var(--fs-12);
   font-weight: 600;
   color: var(--ink-soft);
-  padding: 5px 14px;
-  border-radius: 999px;
+  padding: var(--s-5px) var(--s-14px);
+  border-radius: var(--r-pill);
   transition:
     background 0.15s,
     color 0.15s,
@@ -154,8 +154,8 @@
   display: inline-flex;
   background: var(--paper-2);
   border: 1px solid var(--hairline);
-  border-radius: 999px;
-  padding: 2px;
+  border-radius: var(--r-pill);
+  padding: var(--s-2px);
   flex-wrap: nowrap;
   overflow: hidden;
 }
@@ -167,8 +167,8 @@
   font-size: var(--fs-12);
   font-weight: 600;
   color: var(--ink-soft);
-  padding: var(--s1) 14px;
-  border-radius: 999px;
+  padding: var(--s1) var(--s-14px);
+  border-radius: var(--r-pill);
   transition:
     background 0.15s,
     color 0.15s;
@@ -182,7 +182,7 @@
 /* PropertySelect single-mode uses .pill inside .segmented */
 .segmented .pill {
   border: none;
-  padding: var(--s1) 14px;
+  padding: var(--s1) var(--s-14px);
   /* A long property name is cut with an ellipsis; its title shows it (ADR 0242 §3). */
   max-width: clamp(6rem, 14vw, 14rem);
   overflow: hidden;
@@ -246,7 +246,7 @@
   display: flex;
   align-items: center;
   gap: var(--s2);
-  padding: 6px var(--s3);
+  padding: var(--s-6px) var(--s3);
   font-size: var(--fs-13);
   font-weight: 500;
   color: var(--ink-soft);
@@ -287,14 +287,14 @@
 }
 .asof .date-input input {
   width: 132px;
-  padding: 5px 32px 5px 10px;
+  padding: var(--s-5px) 32px var(--s-5px) var(--s-10px);
   font-size: var(--fs-12);
   font-weight: 600;
   font-family: inherit;
   color: var(--ink);
   background: var(--paper-2);
   border: 1px solid var(--hairline);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
 }
 .asof .date-input input:focus {
   outline: none;

@@ -26,7 +26,7 @@
 .preset-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s-6px);
 }
 .preset-label {
   font-size: var(--fs-11);
@@ -152,7 +152,7 @@ table.data.compare-table tbody th.sticky-col {
   position: sticky;
   left: 0;
   z-index: var(--z-pin);
-  padding: 10px var(--s3);
+  padding: var(--s-10px) var(--s3);
   text-align: left;
   font-weight: 400;
   color: var(--ink-soft);
@@ -165,7 +165,7 @@ table.data.compare-table tbody tr:hover th {
     linear-gradient(var(--hover-wash), var(--hover-wash)), var(--surface);
 }
 .compare-table .ct-mark {
-  margin-left: 2px;
+  margin-left: var(--s-2px);
   color: var(--ink-soft);
 }
 .ct-footnote {

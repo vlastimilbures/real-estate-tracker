@@ -127,9 +127,9 @@ export function Properties() {
   /** A pending purchase has no figures yet, only its purchase date (ADR 0156); a screen
    *  reader hears why in each cell (ADR 0189). */
   const notOwned = (
-    // Positioned, so the hidden text stays inside the table's scroll box and cannot
+    // Positioned (.cell-not-owned), so the hidden text stays inside the table's scroll box and cannot
     // widen the page from a scrolled-off column.
-    <span style={{ position: "relative" }}>
+    <span className="cell-not-owned">
       <span aria-hidden="true">—</span>
       <span className="sr-only">{t.properties.notOwnedCell}</span>
     </span>
@@ -233,13 +233,13 @@ export function Properties() {
                 {perProperty.map((p) => (
                   <tr
                     key={p.propertyId}
-                    style={{ cursor: "pointer" }}
+                    className="row-link"
                     onClick={() => {
                       if (deletingId === p.propertyId) return;
                       openProperty(p.propertyId);
                     }}
                   >
-                    <td className="left sticky-col" style={{ fontWeight: 600 }}>
+                    <td className="left sticky-col cell-strong">
                       {/* A real button so the keyboard can drill in too; the row
                           click stays as the mouse shortcut (UX-022). */}
                       <button
