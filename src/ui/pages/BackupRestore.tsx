@@ -13,6 +13,24 @@ import { ClearSampleButton } from "../components/ClearSampleDialog";
 import { backupRecency, type BackupAgo } from "../model/backupRecency";
 import { RestoreConfirm } from "../components/RestoreConfirm";
 import { logBackupFailure } from "../components/restoreFailure";
+import {
+  pressed,
+  useBusyFocus,
+  type BusyFocusTarget,
+} from "../hooks/useBusyFocus";
+
+const CHOOSE_FILE = "backup-choose-file";
+const SAMPLE_HEADING = "backup-sample-title";
+
+/** After a successful restore, which closes its confirm: Choose file (ADR 0248 §3). A
+ *  failed one leaves the confirm, which puts focus on its Cancel (§1). */
+const afterRestore: BusyFocusTarget = () =>
+  document.getElementById(CHOOSE_FILE);
+
+/** Load sample after a failure; the sample panel's heading once the sample replaced the
+ *  button's panel (ADR 0248 §2–§3). */
+const afterLoadSample: BusyFocusTarget = (el) =>
+  el.isConnected ? el : document.getElementById(SAMPLE_HEADING);
 
 function agoText(t: Dictionary, ago: BackupAgo): string {
   switch (ago.unit) {
@@ -53,9 +71,9 @@ export function BackupRestorePanel() {
   const loadSample = usePortfolioStore((s) => s.loadSample);
   const empty = usePortfolioStore((s) => s.portfolio?.properties.length === 0);
 
-  const [exporting, setExporting] = useState(false);
-  const [loadingSample, setLoadingSample] = useState(false);
-  const [restoring, setRestoring] = useState(false);
+  const [exporting, setExporting] = useBusyFocus(pressed);
+  const [loadingSample, setLoadingSample] = useBusyFocus(afterLoadSample);
+  const [restoring, setRestoring] = useBusyFocus(afterRestore);
   const [pendingBackup, setPendingBackup] = useState<PickedBackup | null>(null);
   const { showToast } = useToast();
   const folderHintId = useId();
@@ -178,7 +196,11 @@ export function BackupRestorePanel() {
       <Panel title={t.backup.restoreTitle} hint={t.backup.restoreHint}>
         <p className="muted-note">{t.backup.restoreBody}</p>
         {!pendingBackup ? (
-          <Button onClick={handleChooseRestore} disabled={replacing}>
+          <Button
+            id={CHOOSE_FILE}
+            onClick={handleChooseRestore}
+            disabled={replacing}
+          >
             {t.backup.chooseFile}
           </Button>
         ) : (
@@ -192,7 +214,11 @@ export function BackupRestorePanel() {
       </Panel>
 
       {sampleActive && (
-        <Panel title={t.sample.panelTitle} hint={t.sample.loadHint}>
+        <Panel
+          title={t.sample.panelTitle}
+          hint={t.sample.loadHint}
+          headingId={SAMPLE_HEADING}
+        >
           <p className="muted-note">{t.sample.panelBody}</p>
           <ClearSampleButton disabled={replacing} />
         </Panel>

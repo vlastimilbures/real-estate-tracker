@@ -60,6 +60,11 @@ import type { Dictionary } from "../../i18n";
 import { useAsOf } from "../hooks/useAsOf";
 import { useSectionSpy } from "../hooks/useSectionSpy";
 import {
+  pageTitle,
+  useBusyFocus,
+  type BusyFocusTarget,
+} from "../hooks/useBusyFocus";
+import {
   isFormTarget,
   propertySections,
   sectionId,
@@ -68,6 +73,11 @@ import {
 } from "../model/sectionNav";
 
 const AMORTIZATION_BODY = "pd-amortization-table";
+
+/** Activate gets focus back after any outcome; a success leaves the same button, now
+ *  Deactivate (ADR 0248 §2–§3). The page title if it has gone. */
+const pressedOrTitle: BusyFocusTarget = (el) =>
+  el.isConnected ? el : pageTitle();
 
 /** The subtitle's size with Czech formatting, e.g. "54,5 m²" (ADR 0236 §2). */
 const sizeText = (t: Dictionary, sizeM2: number | undefined) =>
@@ -115,7 +125,7 @@ export function PropertyDetail() {
     if (!opener.isConnected) focusSection(sectionId("acquisition"));
   }, [editing]);
   const [confirmingDeactivate, setConfirmingDeactivate] = useState(false);
-  const [toggling, setToggling] = useState(false);
+  const [toggling, setToggling] = useBusyFocus(pressedOrTitle);
   const [activeError, setActiveError] = useState<string | null>(null);
   const { showToast } = useToast();
   const property = store.portfolio?.properties.find((p) => p.id === propertyId);

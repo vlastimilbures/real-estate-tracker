@@ -50,20 +50,17 @@ async function renderEdited() {
 }
 
 describe("Assumptions Save focus after a failure (ADR 0248 §4)", () => {
-  it.fails(
-    "a failure shown only in the banner puts focus back on Save (#549)",
-    async () => {
-      await renderEdited();
-      await userEvent.click(save());
-      expect(save()).toHaveProperty("disabled", true);
-      // The focus fixup for the disabled button, fired now rather than on jsdom's timer.
-      act(() => save().blur());
-      expect(document.activeElement).toBe(document.body);
-      await act(async () => write.resolve(failure));
-      expect(screen.getByText(en.common.saveFailedKept)).toBeTruthy();
-      expect(document.activeElement).toBe(save());
-    },
-  );
+  it("a failure shown only in the banner puts focus back on Save (#549)", async () => {
+    await renderEdited();
+    await userEvent.click(save());
+    expect(save()).toHaveProperty("disabled", true);
+    // The focus fixup for the disabled button, fired now rather than on jsdom's timer.
+    act(() => save().blur());
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => write.resolve(failure));
+    expect(screen.getByText(en.common.saveFailedKept)).toBeTruthy();
+    expect(document.activeElement).toBe(save());
+  });
 
   it("leaves focus where the user moved it during the save", async () => {
     await renderEdited();

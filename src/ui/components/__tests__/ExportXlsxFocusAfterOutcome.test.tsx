@@ -40,18 +40,15 @@ const outcomes: [string, (w: Deferred<SaveOutcome>) => void][] = [
 
 describe("Excel export focus after any outcome (ADR 0248 §2)", () => {
   for (const [outcome, settle] of outcomes)
-    it.fails(
-      `puts focus back on the button when the export is ${outcome} (#549)`,
-      async () => {
-        const write = await startExport();
-        // The focus fixup for the disabled button, fired now rather than on jsdom's timer.
-        act(() => button().blur());
-        expect(document.activeElement).toBe(document.body);
-        await act(async () => settle(write));
-        expect(button()).toHaveProperty("disabled", false);
-        expect(document.activeElement).toBe(button());
-      },
-    );
+    it(`puts focus back on the button when the export is ${outcome} (#549)`, async () => {
+      const write = await startExport();
+      // The focus fixup for the disabled button, fired now rather than on jsdom's timer.
+      act(() => button().blur());
+      expect(document.activeElement).toBe(document.body);
+      await act(async () => settle(write));
+      expect(button()).toHaveProperty("disabled", false);
+      expect(document.activeElement).toBe(button());
+    });
 
   it("leaves focus where the user moved it during the export", async () => {
     const write = await startExport();

@@ -1,5 +1,5 @@
 // Reusable presentation primitives. They format and render engine output — no maths.
-import { useId, useState, type ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { X, FileSpreadsheet } from "lucide-react";
 import type { Decimal } from "../../lib/money";
@@ -18,6 +18,7 @@ import { useT } from "../hooks/useT";
 import { InfoTip } from "./InfoTip";
 import { useToast } from "../hooks/useToast";
 import { useUiStore } from "../../state/uiStore";
+import { pressed, useBusyFocus } from "../hooks/useBusyFocus";
 import type { SaveOutcome } from "../../state/platform";
 import { logFailure } from "../../state/diagnostics";
 
@@ -252,6 +253,7 @@ export function Panel({
   info,
   action,
   flush = false,
+  headingId,
   children,
 }: {
   title?: string | undefined;
@@ -266,6 +268,8 @@ export function Panel({
   info?: string | undefined;
   action?: ReactNode | undefined;
   flush?: boolean | undefined;
+  /** An id for the title, so focus can be sent to it (ADR 0248 §3). */
+  headingId?: string | undefined;
   children: ReactNode;
 }) {
   return (
@@ -274,7 +278,11 @@ export function Panel({
         <div className="panel-head">
           <div className="panel-head-titles">
             {/* Focusable from script only: an in-page link lands here (ADR 0107). */}
-            {title && <h2 tabIndex={-1}>{title}</h2>}
+            {title && (
+              <h2 id={headingId} tabIndex={-1}>
+                {title}
+              </h2>
+            )}
             {hint && <span className="hint">{hint}</span>}
             {info && title && <InfoTip topic={title}>{info}</InfoTip>}
           </div>
@@ -306,7 +314,8 @@ export function ExportXlsxButton({
 }) {
   const t = useT();
   const btnLabel = label ?? t.xlsx.exportToExcel;
-  const [busy, setBusy] = useState(false);
+  // Focus goes back to the button after any outcome (ADR 0248 §2).
+  const [busy, setBusy] = useBusyFocus(pressed);
   const { showToast } = useToast();
   const setFailure = useUiStore((s) => s.setFailure);
 

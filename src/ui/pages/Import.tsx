@@ -25,6 +25,7 @@ import { describeWriteError } from "../model/writeError";
 import { importCounts } from "../model/importPreview";
 import { toWriteError } from "../../state/writeError";
 import { useToast } from "../hooks/useToast";
+import { useBusyFocus, type BusyFocusTarget } from "../hooks/useBusyFocus";
 
 import {
   ImportFilesPanel,
@@ -32,6 +33,17 @@ import {
   RefusedTable,
   type FileState,
 } from "./ImportPanels";
+
+const REPORT_HEADING = "import-report-title";
+
+/** Where focus goes once an import ends (ADR 0248 §2–§3). A success clears the files and
+ *  with them the Import panel: the report heading. Otherwise Import, also after the
+ *  overwrite confirm that left; the panel heading when a refused plan disabled Import. */
+const afterImport: BusyFocusTarget = (_trigger, panel) => {
+  if (!panel?.isConnected) return document.getElementById(REPORT_HEADING);
+  const run = panel.querySelector<HTMLButtonElement>(".row > .btn.primary");
+  return run && !run.disabled ? run : panel.querySelector("h2");
+};
 
 export function Import() {
   const t = useT();
@@ -51,7 +63,7 @@ export function Import() {
   const [rents, setRents] = useState<FileState<ParsedRentRow> | null>(null);
   const [mortgages, setMortgages] =
     useState<FileState<ParsedMortgageRow> | null>(null);
-  const [importing, setImporting] = useState(false);
+  const [importing, setImporting] = useBusyFocus(afterImport);
   const [preview, setPreview] = useState<CsvImportPreview | null>(null);
   // Why the last preview failed (ADR 0147); translated at render, like the import failure's notice.
   const [previewFailure, setPreviewFailure] = useState<{
@@ -333,7 +345,7 @@ export function Import() {
       )}
 
       {lastImport && (
-        <Panel title={t.importPage.reportTitle}>
+        <Panel title={t.importPage.reportTitle} headingId={REPORT_HEADING}>
           <ImportSummary
             items={lastImport.items}
             mode="report"

@@ -69,3 +69,18 @@ export function useBusyFocus(
   );
   return [busy, setBusy];
 }
+
+/** The control that started the action. */
+export const pressed: BusyFocusTarget = (trigger) => trigger;
+
+/** The page title (the AppShell h1), focusable from script only while it has focus. */
+export function pageTitle(): HTMLElement | null {
+  const h1 = document.querySelector<HTMLElement>(".topbar .page-title");
+  if (h1 && !h1.hasAttribute("tabindex")) {
+    h1.tabIndex = -1;
+    h1.addEventListener("blur", () => h1.removeAttribute("tabindex"), {
+      once: true,
+    });
+  }
+  return h1;
+}

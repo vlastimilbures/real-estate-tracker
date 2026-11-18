@@ -40,20 +40,17 @@ const yes = () =>
 const cancel = () => screen.getByRole("button", { name: en.common.cancel });
 
 describe("ConfirmRow focus after a failed write (ADR 0248 §1)", () => {
-  it.fails(
-    "puts focus on Cancel after the fixup dropped it to <body> (#549)",
-    async () => {
-      const write = renderRow();
-      await userEvent.click(yes());
-      expect(yes()).toHaveProperty("disabled", true);
-      // The focus fixup for the disabled button, fired now rather than on jsdom's timer.
-      act(() => yes().blur());
-      expect(document.activeElement).toBe(document.body);
-      await act(async () => write.resolve(failure));
-      expect(screen.getByRole("alert").textContent).toContain("Disk full");
-      expect(document.activeElement).toBe(cancel());
-    },
-  );
+  it("puts focus on Cancel after the fixup dropped it to <body> (#549)", async () => {
+    const write = renderRow();
+    await userEvent.click(yes());
+    expect(yes()).toHaveProperty("disabled", true);
+    // The focus fixup for the disabled button, fired now rather than on jsdom's timer.
+    act(() => yes().blur());
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => write.resolve(failure));
+    expect(screen.getByRole("alert").textContent).toContain("Disk full");
+    expect(document.activeElement).toBe(cancel());
+  });
 
   it("leaves focus where the user moved it during the write", async () => {
     const write = renderRow();

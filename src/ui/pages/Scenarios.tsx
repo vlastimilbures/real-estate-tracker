@@ -21,7 +21,13 @@ import { PresetBar, ScenarioListPanel } from "./ScenariosPanels";
 import { useToast } from "../hooks/useToast";
 import { PortfolioStateNotice } from "../components/PortfolioStateNotice";
 import { portfolioState } from "../model/portfolioState";
+import { useBusyFocus, type BusyFocusTarget } from "../hooks/useBusyFocus";
 import "../styles/scenarios.css";
+
+/** A preset or Duplicate gets focus back after any outcome (ADR 0248 §2); a delete's
+ *  confirm row places focus itself (ADR 0173, ADR 0248 §1). */
+const pressedUnlessConfirm: BusyFocusTarget = (el) =>
+  el.closest(".confirm-row") ? null : el;
 
 export function Scenarios() {
   const t = useT();
@@ -56,7 +62,7 @@ export function Scenarios() {
   // One in-flight mutation at a time: disables the action buttons and surfaces a
   // success toast. A failure shows in the banner; the store leaves an input refusal
   // to the caller, so run() shows it there itself (ADR 0141).
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useBusyFocus(pressedUnlessConfirm);
   const { showToast } = useToast();
 
   // Which loans each saved scenario's rate shock hits (ADR 0100). Each note builds a

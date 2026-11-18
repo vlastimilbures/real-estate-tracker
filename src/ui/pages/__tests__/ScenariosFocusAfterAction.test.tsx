@@ -69,17 +69,14 @@ describe("scenario actions: focus after the outcome (ADR 0248 §2)", () => {
       ["saved", ok],
       ["failed", failure],
     ] as const)
-      it.fails(
-        `${name} gets focus back once it ${outcome} (#549)`,
-        async () => {
-          await press(button);
-          act(() => button().blur());
-          expect(document.activeElement).toBe(document.body);
-          await act(async () => write.resolve(result));
-          expect(button()).toHaveProperty("disabled", false);
-          expect(document.activeElement).toBe(button());
-        },
-      );
+      it(`${name} gets focus back once it ${outcome} (#549)`, async () => {
+        await press(button);
+        act(() => button().blur());
+        expect(document.activeElement).toBe(document.body);
+        await act(async () => write.resolve(result));
+        expect(button()).toHaveProperty("disabled", false);
+        expect(document.activeElement).toBe(button());
+      });
 
   it("leaves focus where the user moved it while a preset saved", async () => {
     await press(preset);
@@ -92,7 +89,7 @@ describe("scenario actions: focus after the outcome (ADR 0248 §2)", () => {
 });
 
 describe("scenario Delete: focus after a failure (ADR 0248 §1)", () => {
-  it.fails("puts focus on the confirm's Cancel (#549)", async () => {
+  it("puts focus on the confirm's Cancel (#549)", async () => {
     render(<Scenarios />);
     await userEvent.click(
       screen.getByRole("button", { name: en.common.delete }),

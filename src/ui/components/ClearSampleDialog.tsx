@@ -8,16 +8,21 @@ import { describeWriteError } from "../model/writeError";
 import { useT } from "../hooks/useT";
 import { Button } from "./primitives";
 import { Modal } from "./Modal";
+import { useBusyFocus } from "../hooks/useBusyFocus";
 
 /** "Clear sample" confirmation (ADR 0094): says what is deleted and kept, then clears
  *  the sample after a safety backup and opens the Dashboard, which names the backup. */
 function ClearSampleDialog({ onClose }: { onClose: () => void }) {
   const t = useT();
   const titleId = useId();
+  const cancelId = useId();
   const clearSample = usePortfolioStore((s) => s.clearSample);
   const showSampleCleared = useUiStore((s) => s.showSampleCleared);
   const dataReplaced = useUiStore((s) => s.dataReplaced);
-  const [clearing, setClearing] = useState(false);
+  // A failed clear puts focus on Cancel (ADR 0248 §1); a success closes the dialog.
+  const [clearing, setClearing] = useBusyFocus(() =>
+    document.getElementById(cancelId),
+  );
   const [error, setError] = useState<string | null>(null);
 
   async function handleConfirm() {
@@ -53,7 +58,7 @@ function ClearSampleDialog({ onClose }: { onClose: () => void }) {
       busy={clearing}
       footer={
         <>
-          <Button onClick={onClose} disabled={clearing}>
+          <Button id={cancelId} onClick={onClose} disabled={clearing}>
             {t.common.cancel}
           </Button>
           <Button variant="danger" onClick={handleConfirm} disabled={clearing}>

@@ -101,16 +101,13 @@ describe("Export backup: focus after any outcome (ADR 0248 §2)", () => {
     ["refused", (d) => d.reject(new Error("disk full"))],
   ];
   for (const [outcome, settle] of outcomes)
-    it.fails(
-      `puts focus back on Export when the export is ${outcome} (#549)`,
-      async () => {
-        renderPanel();
-        await press(exportButton);
-        await act(async () => settle(exported));
-        expect(exportButton()).toHaveProperty("disabled", false);
-        expect(document.activeElement).toBe(exportButton());
-      },
-    );
+    it(`puts focus back on Export when the export is ${outcome} (#549)`, async () => {
+      renderPanel();
+      await press(exportButton);
+      await act(async () => settle(exported));
+      expect(exportButton()).toHaveProperty("disabled", false);
+      expect(document.activeElement).toBe(exportButton());
+    });
 
   it("leaves focus where the user moved it during the export", async () => {
     renderPanel();
@@ -124,26 +121,20 @@ describe("Export backup: focus after any outcome (ADR 0248 §2)", () => {
 });
 
 describe("Restore: focus after the outcome (ADR 0248 §1, §3)", () => {
-  it.fails(
-    "a failed restore puts focus on the confirm's Cancel (#549)",
-    async () => {
-      await pickBackup();
-      await press(restoreButton);
-      await act(async () => restored.reject(new Error("disk full")));
-      expect(restoreButton()).toHaveProperty("disabled", false);
-      expect(document.activeElement).toBe(button(en.common.cancel));
-    },
-  );
+  it("a failed restore puts focus on the confirm's Cancel (#549)", async () => {
+    await pickBackup();
+    await press(restoreButton);
+    await act(async () => restored.reject(new Error("disk full")));
+    expect(restoreButton()).toHaveProperty("disabled", false);
+    expect(document.activeElement).toBe(button(en.common.cancel));
+  });
 
-  it.fails(
-    "a successful restore puts focus on Choose file (#549)",
-    async () => {
-      await pickBackup();
-      await press(restoreButton);
-      await act(async () => restored.resolve({ safetyBackup: "safety.json" }));
-      expect(document.activeElement).toBe(button(en.backup.chooseFile));
-    },
-  );
+  it("a successful restore puts focus on Choose file (#549)", async () => {
+    await pickBackup();
+    await press(restoreButton);
+    await act(async () => restored.resolve({ safetyBackup: "safety.json" }));
+    expect(document.activeElement).toBe(button(en.backup.chooseFile));
+  });
 });
 
 describe("Load sample: focus after the outcome (ADR 0248 §2–§3)", () => {
@@ -155,7 +146,7 @@ describe("Load sample: focus after the outcome (ADR 0248 §2–§3)", () => {
     ),
   );
 
-  it.fails("a failure puts focus back on Load sample (#549)", async () => {
+  it("a failure puts focus back on Load sample (#549)", async () => {
     renderPanel();
     await press(loadButton);
     await act(async () => loaded.reject(new Error("disk full")));
@@ -163,21 +154,18 @@ describe("Load sample: focus after the outcome (ADR 0248 §2–§3)", () => {
     expect(document.activeElement).toBe(loadButton());
   });
 
-  it.fails(
-    "a success puts focus on the sample panel heading (#549)",
-    async () => {
-      renderPanel();
-      await press(loadButton);
-      await act(async () => {
-        usePortfolioStore.setState({
-          portfolio,
-          sample: { active: true, dismissed: false },
-        });
-        loaded.resolve();
+  it("a success puts focus on the sample panel heading (#549)", async () => {
+    renderPanel();
+    await press(loadButton);
+    await act(async () => {
+      usePortfolioStore.setState({
+        portfolio,
+        sample: { active: true, dismissed: false },
       });
-      expect(document.activeElement).toBe(
-        screen.getByRole("heading", { level: 2, name: en.sample.panelTitle }),
-      );
-    },
-  );
+      loaded.resolve();
+    });
+    expect(document.activeElement).toBe(
+      screen.getByRole("heading", { level: 2, name: en.sample.panelTitle }),
+    );
+  });
 });

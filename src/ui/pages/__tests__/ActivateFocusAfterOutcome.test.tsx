@@ -72,7 +72,7 @@ async function startActivate() {
 }
 
 describe("Activate: focus after the outcome (ADR 0248 §2–§3)", () => {
-  it.fails("a failure puts focus back on Activate (#549)", async () => {
+  it("a failure puts focus back on Activate (#549)", async () => {
     await startActivate();
     act(() => activate().blur());
     expect(document.activeElement).toBe(document.body);
@@ -81,20 +81,17 @@ describe("Activate: focus after the outcome (ADR 0248 §2–§3)", () => {
     expect(document.activeElement).toBe(activate());
   });
 
-  it.fails(
-    "a success puts focus on the same button, now Deactivate (#549)",
-    async () => {
-      await startActivate();
-      act(() => activate().blur());
-      await act(async () => {
-        usePortfolioStore.setState({ portfolio });
-        write.resolve({ ok: true });
-      });
-      expect(document.activeElement).toBe(
-        bar().getByRole("button", { name: en.propertyDetail.deactivate }),
-      );
-    },
-  );
+  it("a success puts focus on the same button, now Deactivate (#549)", async () => {
+    await startActivate();
+    act(() => activate().blur());
+    await act(async () => {
+      usePortfolioStore.setState({ portfolio });
+      write.resolve({ ok: true });
+    });
+    expect(document.activeElement).toBe(
+      bar().getByRole("button", { name: en.propertyDetail.deactivate }),
+    );
+  });
 
   it("leaves focus where the user moved it during the write", async () => {
     await startActivate();

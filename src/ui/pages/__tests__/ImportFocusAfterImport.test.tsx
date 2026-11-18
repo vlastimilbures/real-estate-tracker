@@ -117,50 +117,38 @@ async function startImport(withUpdate = false) {
 }
 
 describe("Import: focus after the outcome (ADR 0248 §2–§3)", () => {
-  it.fails("a failed import puts focus back on Import (#549)", async () => {
+  it("a failed import puts focus back on Import (#549)", async () => {
     await startImport();
     await act(async () => run.reject(new Error("database is locked")));
     expect(importButton()).toHaveProperty("disabled", false);
     expect(document.activeElement).toBe(importButton());
   });
 
-  it.fails(
-    "a successful import focuses the report heading (#549)",
-    async () => {
-      await startImport();
-      await act(async () => run.resolve({ items: [add] }));
-      expect(document.activeElement).toBe(heading(p.reportTitle));
-    },
-  );
+  it("a successful import focuses the report heading (#549)", async () => {
+    await startImport();
+    await act(async () => run.resolve({ items: [add] }));
+    expect(document.activeElement).toBe(heading(p.reportTitle));
+  });
 
-  it.fails(
-    "a plan refused at the click focuses the Import panel heading (#549)",
-    async () => {
-      await startImport();
-      await act(async () => run.reject(refused));
-      expect(importButton()).toHaveProperty("disabled", true);
-      expect(document.activeElement).toBe(heading(p.importTitle));
-    },
-  );
+  it("a plan refused at the click focuses the Import panel heading (#549)", async () => {
+    await startImport();
+    await act(async () => run.reject(refused));
+    expect(importButton()).toHaveProperty("disabled", true);
+    expect(document.activeElement).toBe(heading(p.importTitle));
+  });
 
-  it.fails(
-    "a failed import from the overwrite confirm focuses Import (#549)",
-    async () => {
-      await startImport(true);
-      await act(async () => run.reject(new Error("database is locked")));
-      expect(importButton()).toHaveProperty("disabled", false);
-      expect(document.activeElement).toBe(importButton());
-    },
-  );
+  it("a failed import from the overwrite confirm focuses Import (#549)", async () => {
+    await startImport(true);
+    await act(async () => run.reject(new Error("database is locked")));
+    expect(importButton()).toHaveProperty("disabled", false);
+    expect(document.activeElement).toBe(importButton());
+  });
 
-  it.fails(
-    "a successful import from the overwrite confirm focuses the report heading (#549)",
-    async () => {
-      await startImport(true);
-      await act(async () => run.resolve({ items: [add, update] }));
-      expect(document.activeElement).toBe(heading(p.reportTitle));
-    },
-  );
+  it("a successful import from the overwrite confirm focuses the report heading (#549)", async () => {
+    await startImport(true);
+    await act(async () => run.resolve({ items: [add, update] }));
+    expect(document.activeElement).toBe(heading(p.reportTitle));
+  });
 
   it("leaves focus where the user moved it during the import", async () => {
     await startImport();

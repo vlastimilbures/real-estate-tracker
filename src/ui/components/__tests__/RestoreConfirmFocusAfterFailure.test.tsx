@@ -57,17 +57,14 @@ async function startRestore() {
 }
 
 describe("Restore confirm focus after a failure (ADR 0248 §1)", () => {
-  it.fails(
-    "puts focus on Cancel after the fixup dropped it to <body> (#549)",
-    async () => {
-      const restore = await startRestore();
-      act(() => restoreButton().blur());
-      expect(document.activeElement).toBe(document.body);
-      await act(async () => restore.reject(new Error("disk full")));
-      expect(restoreButton()).toHaveProperty("disabled", false);
-      expect(document.activeElement).toBe(cancel());
-    },
-  );
+  it("puts focus on Cancel after the fixup dropped it to <body> (#549)", async () => {
+    const restore = await startRestore();
+    act(() => restoreButton().blur());
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => restore.reject(new Error("disk full")));
+    expect(restoreButton()).toHaveProperty("disabled", false);
+    expect(document.activeElement).toBe(cancel());
+  });
 
   it("leaves focus where the user moved it during the restore", async () => {
     const restore = await startRestore();
