@@ -7,7 +7,7 @@ import { HelpText } from "../components/HelpText";
 import { InfoTip } from "../components/InfoTip";
 import { Panel, Button, SegmentedToggle } from "../components/primitives";
 import { ConfirmRow } from "../components/EntityPanelParts";
-import { RowAction, RowActions } from "../components/RowActions";
+import { RowActions, WriteRowAction } from "../components/RowActions";
 import type { MutationResult } from "../../state/portfolioStore";
 import type { Scenario, ScenarioOverrides } from "../../engine";
 import { useT } from "../hooks/useT";
@@ -158,7 +158,7 @@ export function ScenarioListPanel({
   // UX-020: Delete asks inline first, like every other delete in the app.
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const deleteButton = (item: Scenario) => (
-    <RowAction
+    <WriteRowAction
       icon={Trash2}
       label={t.common.delete}
       danger
@@ -248,12 +248,12 @@ export function ScenarioListPanel({
               </span>
               <span className="scenario-actions">
                 <RowActions>
-                  <RowAction
+                  <WriteRowAction
                     icon={Pencil}
                     label={t.common.edit}
                     onClick={() => onEdit(s)}
                   />
-                  <RowAction
+                  <WriteRowAction
                     icon={Copy}
                     label={t.scenarios.duplicate}
                     disabled={busy}

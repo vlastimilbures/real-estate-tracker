@@ -2,6 +2,7 @@
 // tooltip shown on hover and on keyboard focus.
 import { useEffect, useState, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
+import { useWriteRunning } from "../../state/portfolioStore";
 
 /** The group of a row's actions, right-aligned with 4 px between targets. */
 export function RowActions({ children }: { children: ReactNode }) {
@@ -93,4 +94,11 @@ export function RowAction({
       <span className="row-action-tip">{label}</span>
     </button>
   );
+}
+
+/** A row action that writes or opens a write (Edit, Delete, Duplicate): disabled while
+ *  any write is queued or running, as well as when `disabled` (ADR 0253). */
+export function WriteRowAction(props: Parameters<typeof RowAction>[0]) {
+  const writing = useWriteRunning();
+  return <RowAction {...props} disabled={props.disabled || writing} />;
 }

@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button, TableWrap } from "./primitives";
-import { RowAction, RowActions } from "./RowActions";
+import { RowActions, WriteRowAction } from "./RowActions";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import type { MutationResult } from "../../state/portfolioStore";
@@ -63,13 +63,13 @@ export function EntityTable<T extends { id: string }>({
               ))}
               <td>
                 <RowActions>
-                  <RowAction
+                  <WriteRowAction
                     icon={Pencil}
                     label={tr.common.edit}
                     onClick={() => onEdit(r.id)}
                   />
                   {onDelete && (
-                    <RowAction
+                    <WriteRowAction
                       icon={Trash2}
                       label={tr.common.delete}
                       danger

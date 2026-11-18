@@ -27,7 +27,7 @@
   },
   "src/state/portfolioStore.ts": {
     "lines": {
-      "Arrow function (usePortfolioStore: create)": 372
+      "Arrow function (usePortfolioStore: create)": 366
     }
   },
   "src/state/uiStore.ts": {
@@ -53,7 +53,7 @@
   },
   "src/ui/components/EntityPanel.tsx": {
     "lines": {
-      "Function 'EntityPanel'": 159
+      "Function 'EntityPanel'": 154
     }
   },
   "src/ui/components/LoanEventRows.tsx": {

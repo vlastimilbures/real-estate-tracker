@@ -470,20 +470,6 @@ describe("focus after a successful confirm (#247)", () => {
       screen.getByRole("heading", { level: 1 }),
     );
   });
-
-  it("a delete that lands after another row's confirm opened leaves focus there", async () => {
-    const write = deferred();
-    render(<RecordPanel onDelete={() => write.promise} />);
-    await userEvent.click(
-      screen.getAllByRole("button", { name: en.common.delete })[0]!,
-    );
-    await userEvent.click(yes());
-    await userEvent.click(
-      screen.getAllByRole("button", { name: en.common.delete })[1]!,
-    );
-    await act(async () => write.finish({ ok: true }));
-    expect(document.activeElement).toBe(cancelButton());
-  });
 });
 
 // #247 part 2 (ADR 0173): Escape in a confirm row takes the Cancel path, but not while the
