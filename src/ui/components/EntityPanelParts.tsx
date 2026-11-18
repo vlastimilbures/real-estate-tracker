@@ -8,7 +8,11 @@ import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import type { MutationResult } from "../../state/portfolioStore";
 import { layerOpen } from "../hooks/useModalA11y";
-import { useBusyFocus } from "../hooks/useBusyFocus";
+import {
+  focusableFromScript,
+  pageTitle,
+  useBusyFocus,
+} from "../hooks/useBusyFocus";
 
 export function EntityTable<T extends { id: string }>({
   label,
@@ -97,17 +101,8 @@ function focusPanelAfter(
   const active = document.activeElement;
   const lost = !active || active === document.body || !!row?.contains(active);
   if (!lost) return;
-  const target = panel?.isConnected
-    ? panel
-    : document.querySelector<HTMLElement>(".topbar .page-title");
-  if (!target) return;
-  if (!target.hasAttribute("tabindex")) {
-    target.tabIndex = -1;
-    target.addEventListener("blur", () => target.removeAttribute("tabindex"), {
-      once: true,
-    });
-  }
-  target.focus();
+  const target = panel?.isConnected ? focusableFromScript(panel) : pageTitle();
+  target?.focus();
 }
 
 /** A confirm row's Cancel, its last button: the safe choice (ADR 0143). */

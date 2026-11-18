@@ -73,14 +73,20 @@ export function useBusyFocus(
 /** The control that started the action. */
 export const pressed: BusyFocusTarget = (trigger) => trigger;
 
-/** The page title (the AppShell h1), focusable from script only while it has focus. */
-export function pageTitle(): HTMLElement | null {
-  const h1 = document.querySelector<HTMLElement>(".topbar .page-title");
-  if (h1 && !h1.hasAttribute("tabindex")) {
-    h1.tabIndex = -1;
-    h1.addEventListener("blur", () => h1.removeAttribute("tabindex"), {
+/** `el`, focusable from script: a `tabIndex=-1` it gets for the focus is removed again
+ *  on blur, so it never joins the Tab order. A tabindex it already has is kept. */
+export function focusableFromScript(el: HTMLElement): HTMLElement {
+  if (!el.hasAttribute("tabindex")) {
+    el.tabIndex = -1;
+    el.addEventListener("blur", () => el.removeAttribute("tabindex"), {
       once: true,
     });
   }
-  return h1;
+  return el;
+}
+
+/** The page title (the AppShell h1), focusable from script only while it has focus. */
+export function pageTitle(): HTMLElement | null {
+  const h1 = document.querySelector<HTMLElement>(".topbar .page-title");
+  return h1 && focusableFromScript(h1);
 }

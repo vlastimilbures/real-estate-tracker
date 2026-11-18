@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { AppShell } from "../components/AppShell";
-import { Panel, Button, ErrorBanner } from "../components/primitives";
+import { Panel, ErrorBanner } from "../components/primitives";
 import {
   parseProperties,
   parseValuations,
@@ -28,6 +28,7 @@ import { useToast } from "../hooks/useToast";
 import { useBusyFocus, type BusyFocusTarget } from "../hooks/useBusyFocus";
 
 import {
+  ImportActions,
   ImportFilesPanel,
   ImportSummary,
   RefusedTable,
@@ -291,56 +292,15 @@ export function Import() {
               )}
             </div>
           )}
-          <div className="row row-s3">
-            <Button
-              variant="primary"
-              disabled={!canImport || confirming}
-              onClick={() => void runImport(false)}
-            >
-              {importing
-                ? t.importPage.importing
-                : planOk && toWrite > 0
-                  ? t.importPage.importScope(
-                      toWrite,
-                      counts.added,
-                      counts.updated,
-                    )
-                  : t.importPage.importSelected}
-            </Button>
-          </div>
-          {confirming && (
-            <div className="confirm-row">
-              <div className="confirm-row-content">
-                {counts.updated > 0 && (
-                  <span className="confirm-msg">
-                    {t.importPage.confirmOverwriteMsg(counts.updated)}
-                  </span>
-                )}
-                {counts.replacing > 0 && (
-                  <span className="confirm-msg">
-                    {t.importPage.confirmReplaceMsg(counts.replacing)}
-                  </span>
-                )}
-                <Button
-                  size="sm"
-                  variant="danger"
-                  disabled={importing}
-                  onClick={() => void runImport(true)}
-                >
-                  {counts.updated > 0
-                    ? t.importPage.confirmOverwrite(counts.updated)
-                    : t.importPage.confirmReplace}
-                </Button>
-                <Button
-                  size="sm"
-                  disabled={importing}
-                  onClick={() => setConfirming(false)}
-                >
-                  {t.common.cancel}
-                </Button>
-              </div>
-            </div>
-          )}
+          <ImportActions
+            scope={planOk && toWrite > 0 ? toWrite : null}
+            counts={counts}
+            importing={importing}
+            disabled={!canImport || confirming}
+            confirming={confirming}
+            onRun={(confirmed) => void runImport(confirmed)}
+            onCancel={() => setConfirming(false)}
+          />
         </Panel>
       )}
 
