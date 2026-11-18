@@ -167,6 +167,11 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- A database that has lost its assumptions row is no longer repaired with the sample's
+  assumptions at launch, which replaced your own without telling you. The app now stops at
+  startup on the existing error screen, naming the missing record, and offers Restore a
+  backup… (ADR 0252, #444). The row is created on the very first run only. No figure
+  changes.
 - Wording (#441): a rate field's range message reads "Must be from 0 to 100 %" instead
   of asking for a fraction; the CSV preview shows a changed garage flag as Yes / No in the
   app's language instead of English "true" / "false"; the crash presets read "−10,0 %",

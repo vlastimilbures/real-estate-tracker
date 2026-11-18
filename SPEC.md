@@ -668,6 +668,9 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
   an empty portfolio later stays empty (ADR 0016). It can be cleared in one step, after a
   safety backup (ADR 0094), and loaded again into an empty portfolio from Settings → Backup
   (ADR 0112).
+- The assumptions row is written on that first run only. A database that later lacks it is
+  not repaired from the sample values: startup stops with `ROW_INVALID` on the error screen,
+  which offers Restore a backup… (ADR 0252).
 - Errors are typed (`DataError` codes) and logged to a rotating local `app.log`.
 - A write that commits but whose read-back fails stops on the startup error screen ("Your
   last change was saved, but the data could not be read back."); nothing is undone, later
