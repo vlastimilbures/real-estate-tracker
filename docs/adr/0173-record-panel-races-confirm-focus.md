@@ -9,6 +9,8 @@
   after a successful confirm; Escape cancels — both were out of scope there),
   [0157](0157-accessibility-batch.md) (decision 2: when the opener is gone, focus falls back
   to the nearest connected element)
+- Amended by: [0253](0253-row-actions-disabled-while-writing.md) (§1 replaced: row actions
+  are disabled while a write runs; §5: the race tests for §1 are removed)
 - Related: [0142](0142-row-switch-guard-busy-dialog.md) (row-switch guard),
   [0107](0107-property-section-nav.md) (section headings take focus)
 
