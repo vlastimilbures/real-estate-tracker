@@ -213,6 +213,8 @@ export const ru: Dictionary = {
     openProperty: "Открыть объект",
     assumptionsRecord: "Допущения",
     unknownRecord: "Запись",
+    leftoverBlock: (property, first, second) =>
+      `${property}: ипотеки с ${first} и с ${second} начинаются с разницей не более месяца. Обычно одна из них осталась после исправления даты начала: в разделе «Финансирование» удалите ненужный блок или измените дату его начала.`,
   },
 
   monthsShort: [
