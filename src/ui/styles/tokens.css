@@ -76,6 +76,8 @@
   /* radii & shadow */
   --r-sm: 6px;
   --r-md: 10px;
+  --r-pill: 999px; /* fully rounded ends, whatever the height */
+  --r-round: 50%; /* a circle on a square box */
   --shadow-tile:
     0 1px 2px rgba(28, 27, 25, 0.04), 0 6px 20px rgba(28, 27, 25, 0.05);
   --shadow-pop: 0 8px 30px rgba(28, 27, 25, 0.12);

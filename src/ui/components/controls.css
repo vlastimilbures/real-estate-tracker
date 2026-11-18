@@ -7,7 +7,7 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   padding: 2px var(--s2);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   border: 1px solid transparent;
 }
 .badge.good {
@@ -128,7 +128,7 @@
   font-weight: 600;
   color: var(--ink-soft);
   padding: 5px 14px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   transition:
     background 0.15s,
     color 0.15s,
@@ -154,7 +154,7 @@
   display: inline-flex;
   background: var(--paper-2);
   border: 1px solid var(--hairline);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 2px;
   flex-wrap: nowrap;
   overflow: hidden;
@@ -168,7 +168,7 @@
   font-weight: 600;
   color: var(--ink-soft);
   padding: var(--s1) 14px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   transition:
     background 0.15s,
     color 0.15s;
@@ -294,7 +294,7 @@
   color: var(--ink);
   background: var(--paper-2);
   border: 1px solid var(--hairline);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
 }
 .asof .date-input input:focus {
   outline: none;

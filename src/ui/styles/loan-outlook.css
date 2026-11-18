@@ -195,14 +195,14 @@
   background: var(--accent);
 }
 .fx-loanPayoff {
-  border-radius: 50%;
+  border-radius: var(--r-round);
   background: var(--positive);
 }
 .fx-devCompletion {
   background: var(--brass);
 }
 .fx-leaseEnd {
-  border-radius: 50%;
+  border-radius: var(--r-round);
   border: 2px solid var(--warn);
   background: var(--surface);
 }
