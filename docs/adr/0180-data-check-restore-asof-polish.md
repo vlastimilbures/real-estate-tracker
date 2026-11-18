@@ -11,7 +11,9 @@
   [0152](0152-wording-log-and-generated-index.md) (wording log),
   [0118](0118-data-check.md) (data check)
 - Amended by: [0236](0236-size-one-decimal.md) (§2 for the size: one decimal place is
-  accepted; only two or more are a finding)
+  accepted; only two or more are a finding),
+  [0232](0232-dates-before-1900-entry-only.md) (§3: stored dates before 1900 are no longer
+  looked for, so the early-date finding is removed)
 
 ## Context
 
