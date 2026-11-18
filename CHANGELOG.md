@@ -175,6 +175,10 @@ engine without the form, and remove it when the last part lands.
   costs pencil. A second row can no longer be opened while the first write finishes, so the
   checks that kept a late write from closing it are gone (ADR 0253, #444). No text or
   figure changes.
+- Internal: the Dashboard's fixation timeline refuses an invalid as-of date, or a window
+  past the end of the Date range, with a `RangeError` instead of looping forever on its
+  year ticks, as the payment-grid walk does (ADR 0247, #543). The as-of resolver never
+  produces such a date (ADR 0150). No figure, layout or message changes.
 
 ### Fixed
 

@@ -203,6 +203,10 @@ export function financingTimeline(
 ): FinancingTimeline {
   const asOf = fx.asOf;
   const end = addYears(asOf, Number(span));
+  // An invalid as-of, or a window past the Date range, is a caller bug (ADR 0150, 0247):
+  // refused, as its NaN end would never end the ticks below.
+  if (Number.isNaN(end.getTime()))
+    throw new RangeError("financingTimeline: an invalid date");
   const width = end.getTime() - asOf.getTime();
   const at = (date: Date) =>
     Math.min(1, Math.max(0, (date.getTime() - asOf.getTime()) / width));
@@ -276,10 +280,10 @@ export function financingTimeline(
   const first = rows[0]?.fixation;
   if (first) first.next = true;
   const ticks: FinancingTimeline["ticks"] = [];
-  for (let y = asOf.getUTCFullYear() + 1; ; y++) {
-    const jan = utc(y, 1, 1);
-    if (jan.getTime() > end.getTime()) break;
-    ticks.push({ label: String(y), at: at(jan) });
+  // 1 January of year y is in the window exactly when y ≤ the end's year; counting to
+  // that year never steps past the Date range (ADR 0247).
+  for (let y = asOf.getUTCFullYear() + 1; y <= end.getUTCFullYear(); y++) {
+    ticks.push({ label: String(y), at: at(utc(y, 1, 1)) });
   }
   // A fixation end after the window draws no diamond, so it adds nothing to the legend.
   const drawn = new Set(
