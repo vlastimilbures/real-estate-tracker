@@ -87,34 +87,10 @@ describe("Properties delete confirmation (UX-019)", () => {
   });
 });
 
-// #248 (ADR 0173): a delete that lands late closes the confirm only when it still names
-// the deleted property.
+// #248 (ADR 0173): a delete that lands closes the confirm, even one opened again
+// meanwhile. In the app the row actions are disabled while it runs (ADR 0253); this
+// page's delete is a stub, so they stay enabled here.
 describe("Properties: a late delete closes only its own confirm (#248)", () => {
-  it("keeps the confirm for another property opened while the first delete ran", async () => {
-    let finish: (r: MutationResult) => void = () => undefined;
-    const removeProperty = vi.fn(
-      () => new Promise<MutationResult>((r) => (finish = r)),
-    );
-    act(() => usePortfolioStore.setState({ removeProperty }));
-    show();
-    const second = portfolio.properties[1]!;
-    await userEvent.click(
-      screen.getAllByRole("button", { name: en.common.delete })[0]!,
-    );
-    await userEvent.click(
-      screen.getByRole("button", { name: en.common.yesDelete }),
-    );
-    await userEvent.click(
-      screen.getAllByRole("button", { name: en.common.delete })[1]!,
-    );
-    expect(
-      screen.getByText(en.properties.confirmDelete(second.name)),
-    ).toBeTruthy();
-    await act(async () => finish({ ok: true }));
-    expect(
-      screen.getByText(en.properties.confirmDelete(second.name)),
-    ).toBeTruthy();
-  });
   // Once the delete lands the property is gone, so its confirm opened again meanwhile
   // (X, then Y, then X) names nothing and closes with it.
   it("closes the deleted property's confirm opened again meanwhile", async () => {

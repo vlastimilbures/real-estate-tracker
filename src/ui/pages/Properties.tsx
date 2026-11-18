@@ -138,9 +138,9 @@ export function Properties() {
 
   async function handleDelete(id: string) {
     const result = await removeProperty(id);
-    // On failure the confirm row stays open and says why (UX-050). On success only this
-    // property's confirm closes: one opened meanwhile stays (#248).
-    if (result.ok) setDeletingId((d) => (d === id ? null : d));
+    // On failure the confirm row stays open and says why (UX-050). Row actions are
+    // disabled while the delete runs, so this is still its confirm (ADR 0253).
+    if (result.ok) setDeletingId(null);
     return result;
   }
 

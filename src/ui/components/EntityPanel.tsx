@@ -132,15 +132,10 @@ export function EntityPanel<
           confirmLabel={tr.common.yesDelete}
           busyLabel={tr.common.deleting}
           onConfirm={async () => {
-            const { id } = mode;
-            const result = await onDelete(id);
-            // Close only this row's confirm: another row opened meanwhile stays (#248).
-            // By row, not by open: once the delete lands the row is gone, so its confirm
-            // opened again meanwhile names nothing and closes too (ADR 0173).
-            if (result.ok)
-              setMode((m) =>
-                m.t === "confirm-delete" && m.id === id ? { t: "idle" } : m,
-              );
+            const result = await onDelete(mode.id);
+            // Row actions are disabled while the delete runs, so nothing else opened
+            // meanwhile (ADR 0253).
+            if (result.ok) setMode({ t: "idle" });
             return result;
           }}
           onCancel={() => setMode({ t: "idle" })}
@@ -174,7 +169,6 @@ export function EntityPanel<
             hiddenFields={hiddenFields}
             listNotes={listNotes}
             onSubmit={async (values) => {
-              const saved = mode;
               const id = mode.t === "edit" ? mode.id : newId();
               const entity = build(values, id);
               const result =
@@ -182,10 +176,9 @@ export function EntityPanel<
               // Keep the form open (preserving input) on failure, with the failure
               // shown in the form. Close only when the write actually landed.
               if (!result.ok) return result.error;
-              // Close only the form that saved: every open is a new `mode` object, so a
-              // form opened meanwhile stays, even the same row's or the add form opened
-              // again (#245, ADR 0173).
-              setMode((m) => (m === saved ? { t: "idle" } : m));
+              // Row actions are disabled while the save runs, so this is still the form
+              // that saved (ADR 0253).
+              setMode({ t: "idle" });
               return undefined;
             }}
           />

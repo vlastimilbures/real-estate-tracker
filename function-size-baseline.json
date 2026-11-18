@@ -53,7 +53,7 @@
   },
   "src/ui/components/EntityPanel.tsx": {
     "lines": {
-      "Function 'EntityPanel'": 159
+      "Function 'EntityPanel'": 154
     }
   },
   "src/ui/components/LoanEventRows.tsx": {
