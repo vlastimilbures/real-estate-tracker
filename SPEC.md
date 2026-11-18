@@ -612,7 +612,8 @@ netCF_N + equity_N − value_N · sellingCostPct]` — acquisition outflows, ref
   gives no IRR with reason **`NOT_UNIQUE`**. When no bracket holds a root the reason is
   **`NO_ROOT`**. In either case the IRR is null and the UI shows "n/a" with
   the reason: "No unique IRR: the cash flows break even at more than one rate" or "No IRR
-  between −90 % and +1000 %" (`src/ui/model/irr.ts`).
+  between −90 % and +1 000 %", the range taken from `IRR_BRACKET_LOW` / `IRR_BRACKET_MAX`
+  and formatted by `fmtPct` (`src/ui/model/irr.ts`, ADR 0250).
 - `totalPrincipalRepaid` (sanity invariant): Σ principal repaid over the horizon, prepaid
   principal included, read from the schedules of the active properties (so it includes the
   years before a future purchase, ADR 0124); for the seed it equals the starting debt
@@ -805,12 +806,13 @@ price crash**, each with a legend and one line of help (ADR 0102).
   - **Inflation shock**: +3 / +6 / +9 pp for 3 years (`inflationShock`).
   - **Price crash**: −10 % / −20 % / −35 % of property value at Today / +5 years / +10 years
     (projection year 0, 5 or 10; `valueShock`, permanent). The timing is a "When" toggle
-    (Start · +5y · +10y); each level button shows the timing it uses ("−20% @ +5y") and
-    the preset name keeps that form (ADR 0101).
+    (Start · +5y · +10y); each level button shows the timing it uses ("−20,0 % @ +5y") and
+    the preset name keeps that form (ADR 0101). The level label is the fall formatted by
+    `fmtPct` (ADR 0250).
   - **Combined**: **Mild** = rates +2 pp for 3 years + price crash −10 %; **Severe** =
     rates +4 pp + inflation +3 pp, both for 3 years, + price crash −20 %. One click saves
     all parts in one scenario; the crash uses the "When" timing ("Mild @ +5y"), and the
-    name lists the parts ("Mild: Rates +2pp for 3y · Price crash −10%") (ADR 0104).
+    name lists the parts ("Mild: Rates +2pp for 3y · Price crash −10,0 %") (ADR 0104, ADR 0250).
   - A preset whose settings equal a saved scenario's, under any name, saves no second
     row: that scenario is ticked for compare and the toast names it (ADR 0093, ADR 0191).
   - The panel has a **Show / Hide presets** button. When the page opens it is collapsed if

@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #55 (Scenarios critical review after #15)
+- Amended by: [0250](0250-wording-limits-flags-crash-labels.md) (§4: the crash part of a
+  saved name carries the `fmtPct` label)
 
 ## Context
 
