@@ -564,30 +564,28 @@ export function parseMortgages(
 
 // --- CSV template generators ---
 
+/** A template: the spec's header and one literal example row. */
+const template = (columns: readonly ColumnSpec[], example: string): string =>
+  [columns.map((c) => c.name).join(","), example].join("\n");
+
 export function propertiesTemplate(): string {
-  return [
-    "name,address,type,size_m2,garage,purchase_date,purchase_price,appreciation_override_pa,rent_index_override_pa,own_cash,transaction_costs,initial_works",
+  return template(
+    PROPERTY_COLUMNS,
     "Byt Javorova,Javorova 12 Praha,3 bedroom,71,true,2015-06-01,4080000,,,,,",
-  ].join("\n");
+  );
 }
 
 export function valuationsTemplate(): string {
-  return [
-    "property_name,valid_from,valid_to,market_value",
-    "Byt Javorova,2026-06-01,,10200000",
-  ].join("\n");
+  return template(VALUATION_COLUMNS, "Byt Javorova,2026-06-01,,10200000");
 }
 
 export function rentsTemplate(): string {
-  return [
-    "property_name,start_date,end_date,monthly_rent",
-    "Byt Javorova,2025-09-01,,27200",
-  ].join("\n");
+  return template(RENT_COLUMNS, "Byt Javorova,2025-09-01,,27200");
 }
 
 export function mortgagesTemplate(): string {
-  return [
-    "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment,loan_term_years,contract_maturity_date",
+  return template(
+    MORTGAGE_COLUMNS,
     "Byt Javorova,2021-01-17,1912500,10,0.0169,6721.8,,",
-  ].join("\n");
+  );
 }
