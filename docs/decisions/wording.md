@@ -222,3 +222,18 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   "do them again" for the action items, and renaming `backup.tables.leases`), which the
   owner did not take up.
 - Approved by: owner, 2026-11-18 (in session)
+
+### 2026-11-18 · #448 / ADR 0258
+
+- Keys: `errorBoundary.leftoverBlock` (en, cs, ru), new
+- Change: when stored mortgage blocks of one property start one month or less apart
+  (`inputRules.REFINANCE_WITHIN_A_MONTH`), the invalid-data notice adds a line naming the
+  property and both start dates, says one block is usually left over from a corrected start
+  date, and asks to delete it or edit its start date in Financing
+  (`propertyDetail.sectionFinancing`). It follows the `dataCheck.leaseOverlap` phrasing. The
+  text is inside the notice's `role="alert"`, a live region, so ADR 0258 records it too.
+- Rejected: rewording `inputRules.REFINANCE_WITHIN_A_MONTH`, which forms, CSV import and
+  restore share and which names no dates; and a Data check finding, which never renders
+  while the engine refuses the property.
+- Approved by: the hint, owner 2026-11-18 (#435 comment 6965976270); the text, owner OK
+  2026-11-18 (#448 comment 6979206969)

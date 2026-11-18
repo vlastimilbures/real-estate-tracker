@@ -13,6 +13,8 @@
 - Related: [0120](0120-tranche-on-recast-payment.md), [0137](0137-agreed-instalment-pays-interest.md)
   (combinations that stay modelled), [0166](0166-development-committed-debt.md) (committed
   debt follows the schedule's grid; its ADR 0139 bullet no longer applies)
+- Amended by: [0258](0258-leftover-block-hint.md) (stored data: the invalid-data notice
+  names a leftover block's two start dates and links to Financing)
 
 ## Context
 
