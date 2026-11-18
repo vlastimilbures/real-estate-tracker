@@ -107,7 +107,9 @@ export function leftoverBlockHints(
           fmtDate(a.startDate),
           fmtDate(b.startDate),
         );
-        hints.push({ text, propertyId });
+        // A same-date duplicate pairs with the leftover twice: one line for both.
+        if (!hints.some((h) => h.text === text))
+          hints.push({ text, propertyId });
       }
     });
   }
