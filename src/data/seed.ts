@@ -208,17 +208,11 @@ async function markSeeded(sql: Sql): Promise<void> {
 
 /** Seed the sample portfolio on the first run only (D-16): once the `sample_seeded`
  *  flag is in `app_meta`, an empty portfolio stays empty. Assumes `migrate` has run.
- *  Always ensures the assumptions row exists — guards against partial restores
- *  that deleted assumptions but left properties intact. */
+ *  The assumptions row is written on that true first run only (no flag, no property),
+ *  and only where none exists;
+ *  a database that later lost it is not repaired from the sample values, and loading it
+ *  stops at startup with ROW_INVALID (ADR 0252). */
 export async function seedIfEmpty(sql: Sql): Promise<boolean> {
-  // Assumptions must always be present; re-insert seed defaults if missing.
-  const assumptionRows = await sql.select<{ id: number }>(
-    "SELECT id FROM assumptions WHERE id = 1",
-  );
-  if (assumptionRows.length === 0) {
-    await upsertAssumptions(sql, SEED_ASSUMPTIONS);
-  }
-
   const flag = await sql.select<{ key: string }>(
     "SELECT key FROM app_meta WHERE key = ?",
     [SEEDED_FLAG],
@@ -228,6 +222,13 @@ export async function seedIfEmpty(sql: Sql): Promise<boolean> {
     await markSeeded(sql);
     return false;
   }
+  // First-run assumptions (ADR 0252 §1), only where none exist: an existing row is never
+  // replaced, and a first seed that failed after this runs again on the next launch.
+  const assumptionRows = await sql.select<{ id: number }>(
+    "SELECT id FROM assumptions WHERE id = 1",
+  );
+  if (assumptionRows.length === 0)
+    await upsertAssumptions(sql, SEED_ASSUMPTIONS);
   // First-run seed: insert the sample portfolio seed (.claude/rules/engine-parity.md), in one transaction so a
   // failure leaves nothing behind and the next launch simply seeds again.
   await sql.transaction([

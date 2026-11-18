@@ -105,7 +105,9 @@ leave the database partly upgraded. The screen tells you which case you are in:
   first saves your current data as `backups/portfolio-before-restore-<date>.json`, then
   replaces it with the backup. The screen names that safety copy; click **Open the app** to
   continue. Without a backup, the record must be removed by hand or reported (below); your
-  data on disk is not changed. A future change to how scenarios are stored ships with a
+  data on disk is not changed. When the record is `assumptions 1: row not found`, restore a
+  backup made before the row went missing: the safety copy taken before that restore has no
+  assumptions either, so it cannot itself be restored (ADR 0252). A future change to how scenarios are stored ships with a
   database upgrade, so an older app version stops with "saved by a newer version" instead
   (ADR 0231).
 
