@@ -7,27 +7,13 @@ import {
   SHOCK_YEARS,
   inRange,
   rangeProblems,
+  rangeProblemsAddedBy,
   type IntRange,
   type RangeProblem,
   type ScenarioRangeProblem,
 } from "../lib/rules";
 import type { Assumptions, Portfolio, ScenarioOverrides } from "../engine";
 import { RangeRuleError } from "./writeError";
-
-const keyOf = (p: RangeProblem) => `${p.entity}|${p.id ?? ""}|${p.field}`;
-
-/** The problems of `after` that `before` does not have with the same value: new ones,
- *  and stored ones the write changes. */
-export function rangeProblemsAddedBy(
-  before: readonly RangeProblem[],
-  after: readonly RangeProblem[],
-): RangeProblem[] {
-  const stored = new Map(before.map((p) => [keyOf(p), p.value]));
-  return after.filter((p) => {
-    const key = keyOf(p);
-    return !stored.has(key) || !Object.is(stored.get(key), p.value);
-  });
-}
 
 function refuseAdded(
   before: readonly RangeProblem[],

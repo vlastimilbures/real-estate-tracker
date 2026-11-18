@@ -154,3 +154,18 @@ export function rangeProblems(
   }
   return out;
 }
+
+const keyOf = (p: RangeProblem) => `${p.entity}|${p.id ?? ""}|${p.field}`;
+
+/** The problems of `after` that `before` does not have with the same value: new ones,
+ *  and stored ones the write changes. The store refuses these (ADR 0245). */
+export function rangeProblemsAddedBy(
+  before: readonly RangeProblem[],
+  after: readonly RangeProblem[],
+): RangeProblem[] {
+  const stored = new Map(before.map((p) => [keyOf(p), p.value]));
+  return after.filter((p) => {
+    const key = keyOf(p);
+    return !stored.has(key) || !Object.is(stored.get(key), p.value);
+  });
+}
