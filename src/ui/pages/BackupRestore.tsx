@@ -14,6 +14,7 @@ import { backupRecency, type BackupAgo } from "../model/backupRecency";
 import { RestoreConfirm } from "../components/RestoreConfirm";
 import { logBackupFailure } from "../components/restoreFailure";
 import {
+  KEEP,
   pressed,
   useBusyFocus,
   type BusyFocusTarget,
@@ -23,9 +24,9 @@ const CHOOSE_FILE = "backup-choose-file";
 const SAMPLE_HEADING = "backup-sample-title";
 
 /** After a successful restore, which closes its confirm: Choose file (ADR 0248 §3). A
- *  failed one leaves the confirm, which puts focus on its Cancel (§1). */
+ *  failed one leaves the confirm, which puts focus on its Cancel itself (§1). */
 const afterRestore: BusyFocusTarget = () =>
-  document.getElementById(CHOOSE_FILE);
+  document.getElementById(CHOOSE_FILE) ?? KEEP;
 
 /** Load sample after a failure; the sample panel's heading once the sample replaced the
  *  button's panel (ADR 0248 §2–§3). */

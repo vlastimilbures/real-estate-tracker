@@ -1,11 +1,15 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
-/** Where focus goes once a busy action ends: given the control that had focus when it
- *  started and the panel or dialog around it, an element, or null to leave focus alone. */
+/** A target's answer for "leave focus where it is" (a success with its own focus rule). */
+export const KEEP: unique symbol = Symbol("keep focus");
+
+/** Where focus goes once a busy action ends, given the control that had focus when it
+ *  started and the panel or dialog around it: an element, or `KEEP`. An element that has
+ *  left the page, or none (null), falls back to the page title (ADR 0248 §3). */
 export type BusyFocusTarget = (
   trigger: HTMLElement,
   region: HTMLElement | null,
-) => HTMLElement | null | undefined;
+) => HTMLElement | null | typeof KEEP;
 
 /**
  * Keep a keyboard user's place across a busy action (ADR 0248 §5–§6, ADR 0246).
@@ -15,7 +19,8 @@ export type BusyFocusTarget = (
  * control and the `section.panel` or `[role=dialog]` around it. In the commit where
  * `busy` turns false, `target` names where focus goes; it is focused only when focus is
  * on `<body>` or still on the recorded control (focus the user moved stays there), and
- * only when it is on the page and enabled.
+ * only when it is enabled. A record that no busy commit followed (a click the form's
+ * own checks refused) is dropped, so it cannot steer a later action.
  */
 export function useFocusAfterBusy(
   busy: boolean,
@@ -40,15 +45,19 @@ export function useFocusAfterBusy(
 
   // After the commit that ended the action: its controls are enabled again by then.
   useLayoutEffect(() => {
-    const ended = wasBusy.current && !busy;
+    const was = wasBusy.current;
     wasBusy.current = busy;
     const r = record.current;
-    if (!ended || !r) return;
+    if (busy || !r) return;
+    // The action ended, or it never started: either way the record is spent.
     record.current = null;
+    if (!was) return;
     const active = document.activeElement;
     if (active && active !== document.body && active !== r.trigger) return;
     const el = target(r.trigger, r.region);
-    if (el?.isConnected && !el.matches(":disabled")) el.focus();
+    if (el === KEEP) return;
+    const to = el?.isConnected ? el : pageTitle();
+    if (to && !to.matches(":disabled")) to.focus();
   });
 
   return remember;

@@ -1,4 +1,4 @@
-import { useBusyFocus } from "./useBusyFocus";
+import { KEEP, useBusyFocus } from "./useBusyFocus";
 
 /**
  * A form save's busy flag, which also keeps a keyboard user's place (ADR 0246).
@@ -16,5 +16,5 @@ export function useSaveBusy(
 ): [boolean, (busy: boolean) => void] {
   const failed =
     formError !== null || Object.values(fieldErrors).some((e) => e);
-  return useBusyFocus((el) => (failed ? el : null));
+  return useBusyFocus((el) => (failed ? el : KEEP));
 }

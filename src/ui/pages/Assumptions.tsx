@@ -6,7 +6,7 @@ import { DateInput } from "../components/DateInput";
 import type { FieldSpec } from "../model/formParse";
 import { useT } from "../hooks/useT";
 import type { AssumptionsForm } from "../hooks/useAssumptionsForm";
-import { useFocusAfterBusy } from "../hooks/useBusyFocus";
+import { KEEP, useFocusAfterBusy } from "../hooks/useBusyFocus";
 
 /** The Assumptions fields and error summary, on the Settings page's Assumptions tab. Its
  *  Save and Discard sit in the top bar (`AssumptionsActions`, ADR 0221). */
@@ -151,7 +151,7 @@ export function AssumptionsActions({
   // A failed save shown only in the banner puts focus back on Save; one that lists
   // errors focuses the summary (ADR 0248 §4, ADR 0095 §4).
   const remember = useFocusAfterBusy(form.saving, (el) =>
-    form.failed && form.invalid.length === 0 && !form.formError ? el : null,
+    form.failed && form.invalid.length === 0 && !form.formError ? el : KEEP,
   );
   if (!form.current) return null;
   return (

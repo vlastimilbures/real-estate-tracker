@@ -81,23 +81,20 @@ describe("Assumptions Save focus after a failure (ADR 0248 §4)", () => {
     expect(document.activeElement).toBe(inflation());
   });
 
-  it.fails(
-    "a click that validation refused leaves no record for a later save (#549 review)",
-    async () => {
-      await renderEdited();
-      // Refused before any write: Save never turns busy.
-      await userEvent.clear(inflation());
-      await userEvent.click(save());
-      expect(screen.getByText(en.common.saveFailedKept)).toBeTruthy();
-      // A later save started by Return in the field, which then fails with focus on <body>.
-      await userEvent.type(inflation(), "3");
-      await userEvent.keyboard("{Enter}");
-      expect(save()).toHaveProperty("disabled", true);
-      act(() => inflation().blur());
-      expect(document.activeElement).toBe(document.body);
-      await act(async () => write.resolve(failure));
-      expect(screen.getByText(en.common.saveFailedKept)).toBeTruthy();
-      expect(document.activeElement).toBe(document.body);
-    },
-  );
+  it("a click that validation refused leaves no record for a later save (#549 review)", async () => {
+    await renderEdited();
+    // Refused before any write: Save never turns busy.
+    await userEvent.clear(inflation());
+    await userEvent.click(save());
+    expect(screen.getByText(en.common.saveFailedKept)).toBeTruthy();
+    // A later save started by Return in the field, which then fails with focus on <body>.
+    await userEvent.type(inflation(), "3");
+    await userEvent.keyboard("{Enter}");
+    expect(save()).toHaveProperty("disabled", true);
+    act(() => inflation().blur());
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => write.resolve(failure));
+    expect(screen.getByText(en.common.saveFailedKept)).toBeTruthy();
+    expect(document.activeElement).toBe(document.body);
+  });
 });

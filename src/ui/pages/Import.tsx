@@ -28,6 +28,7 @@ import { useToast } from "../hooks/useToast";
 import { useBusyFocus, type BusyFocusTarget } from "../hooks/useBusyFocus";
 
 import {
+  IMPORT_BUTTON,
   ImportActions,
   ImportFilesPanel,
   ImportSummary,
@@ -42,8 +43,8 @@ const REPORT_HEADING = "import-report-title";
  *  overwrite confirm that left; the panel heading when a refused plan disabled Import. */
 const afterImport: BusyFocusTarget = (_trigger, panel) => {
   if (!panel?.isConnected) return document.getElementById(REPORT_HEADING);
-  const run = panel.querySelector<HTMLButtonElement>(".row > .btn.primary");
-  return run && !run.disabled ? run : panel.querySelector("h2");
+  const run = document.getElementById(IMPORT_BUTTON);
+  return run && !run.matches(":disabled") ? run : panel.querySelector("h2");
 };
 
 export function Import() {

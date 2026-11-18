@@ -6,6 +6,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import {
+  KEEP,
   pageTitle,
   pressed,
   useBusyFocus,
@@ -91,14 +92,14 @@ describe("useBusyFocus (ADR 0248 §5–§6)", () => {
     expect(document.activeElement).toBe(document.body);
   });
 
-  it("does not focus a target that has left the page", () => {
+  it("focuses nothing when the target has left the page and there is no page title", () => {
     const gone = document.createElement("button");
     render(<Harness target={() => gone} />);
     startDropEnd();
     expect(document.activeElement).toBe(document.body);
   });
 
-  it("does nothing when the target names nothing", () => {
+  it("focuses nothing when the target is gone and there is no page title", () => {
     render(<Harness target={() => null} />);
     startDropEnd();
     expect(document.activeElement).toBe(document.body);
@@ -119,23 +120,23 @@ describe("useBusyFocus: the last resort (ADR 0248 §3)", () => {
   }
   const title = () => screen.getByRole("heading", { name: "Settings" });
 
-  it.fails(
-    "focuses the page title when the target has left the page (#549 review)",
-    () => {
-      renderTitled(() => document.createElement("button"));
-      startDropEnd();
-      expect(document.activeElement).toBe(title());
-    },
-  );
+  it("focuses the page title when the target has left the page (#549 review)", () => {
+    renderTitled(() => document.createElement("button"));
+    startDropEnd();
+    expect(document.activeElement).toBe(title());
+  });
 
-  it.fails(
-    "focuses the page title when the target is gone (#549 review)",
-    () => {
-      renderTitled(() => null);
-      startDropEnd();
-      expect(document.activeElement).toBe(title());
-    },
-  );
+  it("focuses the page title when the target is gone (#549 review)", () => {
+    renderTitled(() => null);
+    startDropEnd();
+    expect(document.activeElement).toBe(title());
+  });
+
+  it("leaves focus alone when the target says KEEP", () => {
+    renderTitled(() => KEEP);
+    startDropEnd();
+    expect(document.activeElement).toBe(document.body);
+  });
 });
 
 describe("pageTitle (ADR 0248 §3)", () => {

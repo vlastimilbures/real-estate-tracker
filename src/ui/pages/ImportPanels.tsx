@@ -428,6 +428,9 @@ export function ImportSummary({
   );
 }
 
+/** The Import button's id: focus returns to it after an import (ADR 0248 §3). */
+export const IMPORT_BUTTON = "import-run";
+
 /** Import and its overwrite/replace confirm (ADR 0096, ADR 0160). `scope` is the number
  *  of records a valid plan writes, or null without one. */
 export function ImportActions({
@@ -453,6 +456,7 @@ export function ImportActions({
     <>
       <div className="row row-s3">
         <Button
+          id={IMPORT_BUTTON}
           variant="primary"
           disabled={disabled}
           onClick={() => onRun(false)}

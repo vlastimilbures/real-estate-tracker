@@ -1,6 +1,6 @@
 // The confirm step of a restore: what the chosen backup holds, its out-of-range values,
 // and Cancel / Restore. Shared by Settings → Backup and the startup error screen (#115).
-import { Fragment, useRef } from "react";
+import { Fragment, useId } from "react";
 import { Button, TableWrap } from "./primitives";
 import {
   SCHEMA_HEAD,
@@ -103,15 +103,14 @@ export function RestoreConfirm({
   onConfirm: () => void;
 }) {
   const t = useT();
-  const box = useRef<HTMLDivElement>(null);
-  // A failed restore puts focus on Cancel, the first button (ADR 0248 §1); a successful
-  // one closes the confirm and the caller places focus.
-  const remember = useFocusAfterBusy(
-    restoring,
-    () => box.current?.querySelector("button") ?? null,
+  const cancelId = useId();
+  // A failed restore puts focus on Cancel (ADR 0248 §1); a successful one closes the
+  // confirm and the caller places focus.
+  const remember = useFocusAfterBusy(restoring, () =>
+    document.getElementById(cancelId),
   );
   return (
-    <div ref={box}>
+    <div>
       <p style={{ marginBottom: "var(--s4)" }}>
         {t.backup.restoreFrom(pending.file)}
       </p>
@@ -126,7 +125,7 @@ export function RestoreConfirm({
         {t.backup.restoreWarning}
       </p>
       <div className="row row-s3">
-        <Button onClick={onCancel} disabled={restoring}>
+        <Button id={cancelId} onClick={onCancel} disabled={restoring}>
           {t.common.cancel}
         </Button>
         <Button
