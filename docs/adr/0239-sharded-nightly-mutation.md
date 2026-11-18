@@ -7,6 +7,8 @@
   delegated by the owner for the 2026-11-16 night run
 - Amends: [0151](0151-ci-gates-after-going-public.md) §3 (one cache file; the break enforced
   by Stryker in the one job)
+- Amended by: [0249](0249-weekly-mutation-required-checks.md) (§4: mutation runs weekly
+  and on demand, skipped when main had no commit in 7 days)
 - Related: [0026](0026-mutation-testing.md) (Stryker nightly),
   [0068](0068-no-branch-protection.md) item (3) (skip when main is unchanged; the break
   only ratchets up), [0073](0073-scenario-compare-budget.md) (the bench job beside it)

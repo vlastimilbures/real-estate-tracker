@@ -9,6 +9,8 @@
 - Amends: [0013](0013-ci-runners.md) (Consequences: when the macOS bundle runs)
 - Amended by: [0239](0239-sharded-nightly-mutation.md) (§3: the nightly Stryker run is
   sharded, one cache file per shard, and the break applies to the combined score)
+- Amended by: [0249](0249-weekly-mutation-required-checks.md) (§1: the axe check is
+  renamed "UI captures and axe", and "Changelog (ADR entries)" is required)
 - Related: [0081](0081-public-release.md) ("a public repository can enable it"),
   [0026](0026-mutation-testing.md) (Stryker nightly)
 
