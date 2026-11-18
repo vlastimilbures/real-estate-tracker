@@ -689,6 +689,28 @@ export function referenceBalanceAt(
   return rows[n - 1].endBalance;
 }
 
+/**
+ * Closed-form balance after the payments due on/before `asOf` at the loan's original
+ * rate and entered instalment, floored at 0: B_n = P(1+r)^n − A((1+r)^n − 1)/r, or
+ * P − nA at 0 %. The engine opened a plain loan on the parity path with this formula
+ * until ADR 0235, which replays the payments instead; it holds only while every
+ * payment so far was at the original rate and the instalment repays the loan by its
+ * term.
+ */
+export function closedFormBalance(loan: RefLoan, asOf: Iso): Dec {
+  const n = paymentsMadeBy(loan.start, asOf);
+  const p = d(loan.principal);
+  if (n <= 0) return p;
+  const r = d(loan.ratePa).div(12);
+  const a = d(loan.instalment);
+  const bal = r.isZero()
+    ? p.minus(a.times(n))
+    : p
+        .times(ONE.plus(r).pow(n))
+        .minus(a.times(ONE.plus(r).pow(n).minus(ONE)).div(r));
+  return bal.isNegative() ? ZERO : bal;
+}
+
 // ---------------------------------------------------------------------------
 // Refinance chains (D-27, D-43, D-47)
 // ---------------------------------------------------------------------------

@@ -9,7 +9,6 @@ import { rate } from "../brands";
 import { edate, isoDate } from "../dates";
 import {
   amortizationHealth,
-  currentBalance,
   drawMonth,
   scheduleMonths,
   termMonths,
@@ -42,6 +41,7 @@ import { devBlock, mixed } from "./support/mixed";
 import { mixedCashOutside, mixedWithRefi } from "./support/synthetic";
 import { withEvents } from "./support/events";
 import { money } from "../brands";
+import { currentBalance } from "./support/closedForm";
 
 // Fields added after the golden master was recorded: D-22's (pinned in
 // year-periods.test.ts), DR-092's `drawn` / `draws` (pinned in draws.test.ts against

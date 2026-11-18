@@ -207,9 +207,14 @@ and restores with no warning (ADR 0232).
   rejected, as is that earlier block (`REFINANCE_WITHIN_A_MONTH`, ADR 0226; two refinancings
   within one month are not modelled). A successor that starts before its
   predecessor's fixation end is allowed with a non-blocking warning (it may be a top-up).
-- `currentBalance(asOf)` for the active block: FV over the loan's own payments due by `asOf`
-  (due dates `EDATE(startDate, k)`), floored at 0. Blocks with `startDate > asOf` are
-  _future_; `balance ≤ 0` ⇒ _closed_.
+- **Opening balance** of the active block at baseDate: its payments due by baseDate (due
+  dates `EDATE(startDate, k)`) **replayed** month by month with the rules below, for every
+  running loan, plain or development (ADR 0235). For an ordinary plain loan this equals the
+  closed form (FV at the original rate and instalment, kept in the reference model as
+  `closedFormBalance`). A plain loan whose instalment cannot repay it by its explicit term
+  follows its payments as scheduled: at or below the month's interest it opens at the
+  principal; viewed on or after maturity it opens at 0 (the payment at maturity cleared
+  it). Blocks with `startDate > asOf` are _future_; `balance ≤ 0` ⇒ _closed_.
 
 ### 4.3 Snapshot (the as-of lens)
 

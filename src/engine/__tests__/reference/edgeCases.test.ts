@@ -5,7 +5,8 @@
 // calendar, J-03 a′ (D-21): baseDate grid rows, rate keyed on each payment's due date.
 
 import { describe, it, expect } from "vitest";
-import { currentBalance, termMonths } from "../../amortization";
+import { termMonths } from "../../amortization";
+import { currentBalance } from "../support/closedForm";
 import { EngineInputError } from "../../errors";
 import {
   buildSchedule,

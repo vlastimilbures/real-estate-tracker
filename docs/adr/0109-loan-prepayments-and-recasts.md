@@ -9,7 +9,7 @@
   its interest), ADR 0129 (§3 and §8: what a late-window event sees), ADR 0161 (§11: the cumulative
   cash flow is named cash to owner and shown as its own row), ADR 0179 (§5: `shortenTerm`
   sizes the term at the next payment's rate; after an owed re-amortization it keeps that
-  annuity)
+  annuity), ADR 0235 (§8: a plain loan with no past event is replayed too)
 
 ## Context
 
@@ -87,7 +87,8 @@ interest saved and the clamp warnings come in #32b, and both ship in the same re
    the maturity goes back to the contract term (ADR 0116). A recast maturity otherwise persists.
 8. **Before the projection start.** Events dated on or before baseDate are history. They are
    replayed into the opening balance and are not in the projection cash flows. With no such
-   event, the plain loan's closed-form opening is unchanged (parity).
+   event, the plain loan's opening was the closed form (parity); since ADR 0235 every
+   plain loan's opening is replayed, with or without a past event.
 9. **Over the balance or after payoff.** The engine clamps an event and reports it without
    raising, because the balance depends on assumptions and on scenario rate shocks:
    - A prepayment equal to the balance pays off the loan; later rows are zero.

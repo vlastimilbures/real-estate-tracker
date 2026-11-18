@@ -2,7 +2,6 @@
 import { ZERO, type Decimal } from "../../lib/money";
 import { isAfter, isOnOrBefore } from "../dates";
 import {
-  currentBalance,
   isDevLoan,
   paymentsDueBy,
   rateAt,
@@ -12,9 +11,7 @@ import {
 import { assertBlockStarts, assertLoanInputs } from "../validate";
 import type { Assumptions, MortgageBlock, PlainLoan } from "../types";
 import {
-  paymentOffset,
   lastPaymentDue,
-  rateOfPayment,
   interestOnlyAt,
   bucketDraws,
   lateTranches,
@@ -30,13 +27,6 @@ import {
 } from "./events";
 import { type LoanState, type Run, stepMonth } from "./pay";
 
-/** True when an event is dated on/before baseDate: the opening balance replays it. */
-function hasPastEvents(block: MortgageBlock, baseDate: Date): boolean {
-  return [...(block.prepayments ?? []), ...(block.recasts ?? [])].some((e) =>
-    isOnOrBefore(e.date, baseDate),
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Catch-up from startDate to baseDate
 // ---------------------------------------------------------------------------
@@ -50,15 +40,13 @@ export interface Opening {
 }
 
 /**
- * Opening state of a loan already running at baseDate. The closed-form
- * `currentBalance` (a single FV at the original rate) can't see tranches,
- * interest-only months, a fixation that already ended or a prepayment, so we
- * simulate month-by-month on the loan's OWN cadence (`dueDate(block, k)`) for the
- * payments due by baseDate — counted like `currentBalance` (D-21). Development loans
- * always take this path; plain loans once their fixation has ended (D-30) or when an
- * event is dated on/before baseDate (ADR 0109). Returns the balance, the instalment
- * and the maturity in force at baseDate, which the baseDate-anchored schedule opens
- * from.
+ * Opening state of a loan already running at baseDate: we simulate month-by-month on
+ * the loan's OWN cadence (`dueDate(block, k)`) for the payments due by baseDate
+ * (`paymentsDueBy`, D-21), so tranches, interest-only months, a fixation that already
+ * ended (D-30) and events dated on/before baseDate (ADR 0109) are all seen. Every
+ * running loan takes this path, plain ones too (ADR 0235). Returns the balance, the
+ * instalment and the maturity in force at baseDate, which the baseDate-anchored
+ * schedule opens from.
  */
 export function simulateToBaseDate(
   block: MortgageBlock,
@@ -127,30 +115,19 @@ export function simulateToBaseDate(
 }
 
 /**
- * Opening state of a plain loan at baseDate: the closed-form balance at the original
- * rate while every payment due so far was at that rate and no prepayment or recast is
- * dated by baseDate (the parity path), else the payments are replayed with the reset
- * from the true fixation end (D-30, DR-100) and the events (ADR 0109).
+ * Opening state of a plain loan at baseDate: its payments due so far replayed month
+ * by month (ADR 0235), with the reset from the true fixation end (D-30, DR-100) and
+ * the events (ADR 0109). A plain loan has no tranches, so nothing is counted.
  */
 export function plainOpening(
   block: PlainLoan,
   assumptions: Assumptions,
-  offset: number,
-): Opening & { prevRate: Decimal } {
-  const lastRate = rateOfPayment(offset, block, assumptions);
-  if (
-    lastRate.equals(block.interestRatePa) &&
-    !hasPastEvents(block, assumptions.baseDate)
-  ) {
-    return {
-      balance: currentBalance(block, assumptions.baseDate),
-      currentInstalment: block.monthlyInstalment,
-      terms: initialTerms(block),
-      outcomes: [],
-      prevRate: block.interestRatePa,
-    };
-  }
-  return { ...simulateToBaseDate(block, assumptions), prevRate: lastRate };
+): Opening {
+  const { balance, currentInstalment, terms, outcomes } = simulateToBaseDate(
+    block,
+    assumptions,
+  );
+  return { balance, currentInstalment, terms, outcomes };
 }
 
 /**
@@ -167,10 +144,7 @@ export function openingBalance(
   const { baseDate } = assumptions;
   if (isAfter(block.startDate, baseDate)) return ZERO;
   assertLoanInputs(block);
-  if (!isDevLoan(block)) {
-    const offset = paymentOffset(block, baseDate);
-    return plainOpening(block, assumptions, offset).balance;
-  }
+  if (!isDevLoan(block)) return plainOpening(block, assumptions).balance;
   return simulateToBaseDate(block, assumptions).balance.plus(
     sumDraws(lateTranches(block, baseDate)),
   );
