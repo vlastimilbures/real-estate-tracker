@@ -79,8 +79,12 @@ app; the HTML standard requires it.
 6. **One core hook.** `useFocusAfterBusy(busy, target)` in `src/ui/hooks/useBusyFocus.ts`
    remembers the focused control (and the panel or dialog around it) when the action
    starts, and when the busy flag ends asks the site's `target` where focus goes, then
-   applies §5. `useBusyFocus(target)` is the busy flag with the hook, and ADR 0246's
-   `useSaveBusy` is built on it. The panel heading takes an `id` so a site can name it.
+   applies §5. A target answers `KEEP` where a success has its own focus rule; an
+   element that has left the page, or none, falls back to the page title (§3's last row)
+   in the hook itself. A remembered control that no busy run followed (a click the form's
+   own checks refused) is dropped. `useBusyFocus(target)` is the busy flag with the hook,
+   and ADR 0246's `useSaveBusy` is built on it. The panel heading takes an `id` so a site
+   can name it.
 7. **No dictionary, copy, number or data changes.** Nothing new is announced: each outcome
    keeps its toast, alert or notice.
 
