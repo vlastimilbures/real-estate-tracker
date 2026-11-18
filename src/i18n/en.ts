@@ -880,7 +880,7 @@ export const en = {
     nominalKc: "nominal Kč",
     periodNote: "flows per year, balances at year end",
     yearSpan: (from: string, to: string) =>
-      `years run ${from} – ${to}, named by the year they end`,
+      `years run ${from}\u00A0–\u00A0${to}, named by the year they end`,
     portfolio: "Portfolio",
     entity: "Entity",
   },

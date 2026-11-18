@@ -814,7 +814,8 @@ export const ru: Dictionary = {
     realTermsDated: (d) => `реальные значения (Kč на начало прогноза ${d})`,
     nominalKc: "номинальные Kč",
     periodNote: "потоки за год, остатки на конец года",
-    yearSpan: (from, to) => `годы прогноза ${from} – ${to}, по году окончания`,
+    yearSpan: (from, to) =>
+      `годы прогноза ${from}\u00A0–\u00A0${to}, по году окончания`,
     portfolio: "Портфель",
     entity: "Портфель или объект",
   },
