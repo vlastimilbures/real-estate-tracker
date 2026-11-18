@@ -190,6 +190,9 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- The Russian line on the read-back error screen that introduces the changes not saved now
+  agrees with its plural subject (ADR 0255, #564 review). The English and Czech texts are
+  unchanged.
 - The projection years' month range ("Jul – Jun") in the Projections subtitle and the
   property page's projection hint no longer wraps at the spaces around the dash (#529
   review, wording log 2026-11-18). No figure changes.

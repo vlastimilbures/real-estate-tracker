@@ -211,3 +211,14 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   true for the change that committed and the list names the ones that were not.
 - Approved by: owner OK 2026-11-18 (the decision in #435 comment 6965976270; the text in
   #564 comment 6975468652)
+
+### 2026-11-18 · #564 review / ADR 0255
+
+- Keys: `boot.notSaved` (ru)
+- Change: the Russian line opens with the plural short form, so the participle agrees
+  with its subject «эти изменения» (#564 review, finding F4). The rest of the line, and
+  the en and cs texts, are unchanged.
+- Rejected: the review's other suggestions (rewording the rest of the Russian line,
+  "do them again" for the action items, and renaming `backup.tables.leases`), which the
+  owner did not take up.
+- Approved by: owner, 2026-11-18 (in session)
