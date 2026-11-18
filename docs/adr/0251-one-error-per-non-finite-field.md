@@ -96,11 +96,26 @@ with the base (815ee623), the only differences are the allowed ones:
 - D3: `SHOCK_OUT_OF_RANGE` no longer follows `NON_FINITE_NUMBER` on the same shock;
 - D4: the error messages that list one code fewer.
 
-The counts are in "Results" below. The §4 and §5 commits show no difference.
+The counts are in "Results" below. The §5 commit shows no difference; §4 is type-only.
 
 ## Results
 
-The counts are recorded when the code commits land.
+11,618 cases (1,618 grid and order probes, 10,000 fast-check), each through every
+validator and, for an edited loan, the block entry points. No case hung in any dump.
+
+| Commit             | Cases that differ | D1  | D2 (assert) | D2 (entry points) | D3  | D4  | Other |
+| ------------------ | ----------------- | --- | ----------- | ----------------- | --- | --- | ----- |
+| §1 finite guard    | 257               | 530 | 232         | 556               | 0   | 168 | 0     |
+| §3 shocks          | 103               | 0   | 0           | 0                 | 341 | 104 | 0     |
+| §5 `scenarioRules` | 0                 | 0   | 0           | 0                 | 0   | 0   | 0     |
+
+The D columns count outputs (one error dropped, one assert or entry-point result), not
+cases. The D2 entry-point outputs are the block entry points refusing a loan with a
+non-finite principal or instalment with `NON_FINITE_NUMBER`: at the base 272 returned a
+value and 68 a NaN, 202 threw another loan code (`INSTALMENT_BELOW_INTEREST`,
+`NEGATIVE_PRINCIPAL`, …) and 14 a `TypeError`. A non-finite interest rate or draw amount still gives
+`openingBalance` a NaN, as at the base (66 cases, none new): those fields are outside
+this decision.
 
 ## Consequences
 

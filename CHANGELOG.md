@@ -164,6 +164,12 @@ engine without the form, and remove it when the last part lands.
 - Internal: CI runs mutation testing weekly (Sunday) and on demand instead of nightly; the
   required axe check is renamed "UI captures and axe", and the Changelog check is required
   (ADR 0249, #496, #499). No app change.
+- Internal: engine validation reports one error per non-finite field. A −Infinity
+  principal, instalment or purchase price no longer also reports its sign rule, a
+  non-finite shock no longer also reports its range, and the loan check refuses a loan
+  whose principal or instalment is not finite (ADR 0251, #479). Engine API only: the
+  forms, the CSV import and restore refuse such values first, so nothing the app can
+  enter or store reaches it. No figure, form or message changes.
 
 ### Fixed
 
