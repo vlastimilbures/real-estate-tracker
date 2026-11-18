@@ -2,7 +2,7 @@
 // written through on every edit. This is the one-way data flow's source: DB → store →
 // (useEngine) → UI. No finance maths here — edits persist, then in-memory state refreshes
 // so the memoized engine recomputes (CLAUDE.md §4).
-import { create } from "zustand";
+import { create, type StoreApi } from "zustand";
 import type { Sql } from "../data/sql";
 import {
   dayBefore,
@@ -137,6 +137,33 @@ function assertAssumptionRules(
   const errors = validateInputs(p, a).filter((e) => e.entity === "assumptions");
   if (errors.length > 0) throw new EngineInputError(errors);
   assertHorizonRange(stored, a);
+}
+
+/** The assumptions' own rules and range (assertAssumptionRules), then the saved
+ *  scenarios the edit would newly break (ADR 0128 §6). `s` is the store's state. */
+function checkAssumptions(s: PortfolioState, a: Assumptions): void {
+  const p = s.portfolio;
+  const old = s.assumptions;
+  if (!p) return;
+  assertAssumptionRules(p, old, a);
+  // ADR 0128 §6: a shock meets the level it shifts, so an edit can break a saved
+  // scenario. Refuse only one the edit newly breaks, and name the first.
+  if (!old) return;
+  for (const sc of s.scenarios) {
+    const added = scenarioErrorsAddedBy(old, a, sc.overrides);
+    if (added.length > 0) throw new ScenarioRuleError(sc.name, added);
+  }
+}
+
+/** Engine rules a scenario's own overrides break on top of the saved assumptions `a`
+ *  (ADR 0123): refused before writing, like the assumptions themselves. */
+function checkScenario(
+  a: Assumptions | null,
+  overrides: ScenarioOverrides,
+): void {
+  if (!a) return;
+  const errors = scenarioRuleErrors(a, overrides);
+  if (errors.length > 0) throw new EngineInputError(errors);
 }
 
 /** The outcome of a mutation. Callers (forms, modals) branch on `ok` — e.g. a modal
@@ -304,7 +331,83 @@ interface PortfolioState {
   exportBackup: () => Promise<ExportOutcome>;
 }
 
-export const usePortfolioStore = create<PortfolioState>((set, get) => {
+type SetState = StoreApi<PortfolioState>["setState"];
+/** The store's own `set` and `get`, for the write runner's steps. */
+interface StoreAccess {
+  set: SetState;
+  get: () => PortfolioState;
+}
+
+/** Refresh after a write; on failure log it. After a `committed` write the app stops
+ *  on the error screen (ADR 0228); after a failed one it stays, showing the write
+ *  error, since nothing was saved. Never throws. Not queued: the reload inside a
+ *  queued write, where queueing it would wait for itself. */
+async function reloadAfter(
+  { set, get }: StoreAccess,
+  committed: boolean,
+): Promise<void> {
+  try {
+    await get().refresh();
+  } catch (e) {
+    logFailure("RELOAD", e);
+    if (committed)
+      set({
+        status: "error",
+        readBackFailed: true,
+        error: null,
+        startupError: null,
+      });
+  }
+}
+
+/** Persist via `op`, then reload portfolio + assumptions so the engine recomputes.
+ *  Never throws into the void: a failure is captured, surfaced via `error`, and
+ *  returned to the caller as `{ ok: false }`. On failure we still reload so the
+ *  in-memory state matches what actually reached disk. Multi-statement writes are
+ *  atomic (`Sql.transaction`, D-14), so a failed op leaves the DB unchanged, and a
+ *  resolved op has committed: a failed reload after it returns `{ ok: true }` and
+ *  stops on the error screen (ADR 0228). A write queued behind that is refused. */
+async function mutateNow(
+  store: StoreAccess,
+  markChanged: (sql: Sql) => Promise<void>,
+  op: (sql: Sql) => Promise<void>,
+  changesData: boolean,
+): Promise<MutationResult> {
+  const { set, get } = store;
+  const sql = get().sql;
+  if (!sql || get().readBackFailed) {
+    const error = toWriteError(new Error("Database not initialised"));
+    set({ error });
+    return { ok: false, error };
+  }
+  try {
+    perfMark("edit:start");
+    await op(sql);
+    if (changesData) await markChanged(sql);
+    await reloadAfter(store, true);
+    // Write + reload; the recompute and page render are measured where they run.
+    perfMeasure("edit-saved", "edit:start");
+    set({ error: null });
+    return { ok: true };
+  } catch (e) {
+    // A broken input rule is the user's to fix in the form, not a failure to log;
+    // it is thrown before anything is written, so there is nothing to reload. Only
+    // returned: the form shows it, and a non-form caller uses showError (ADR 0141).
+    if (e instanceof EngineInputError)
+      return { ok: false, error: toWriteError(e) };
+    logFailure("WRITE", e);
+    const error = toWriteError(e);
+    await reloadAfter(store, false);
+    set({ error });
+    return { ok: false, error };
+  }
+}
+
+/** The store's write path (DR-085, ADR 0228, ADR 0253): every write runs in the one
+ *  queue, then reloads. `enqueue` is for reads that wait in it; `writesSoFar` counts the
+ *  data writes so far. */
+function createWriteRunner(set: SetState, get: () => PortfolioState) {
+  const store: StoreAccess = { set, get };
   const { enqueue, write } = createWriteQueue((n) => set({ writesRunning: n }));
   /** Data writes so far: an export keeps the changed flag when one landed while its
    *  save dialog was open, since the file does not hold it (ADR 0110). */
@@ -313,7 +416,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
   const mutate = (
     op: (sql: Sql) => Promise<void>,
     changesData = true,
-  ): Promise<MutationResult> => write(() => mutateNow(op, changesData));
+  ): Promise<MutationResult> =>
+    write(() => mutateNow(store, markChanged, op, changesData));
 
   /** Run `op` in the mutation queue, then reload; rethrow its failure unchanged
    *  (after reloading in-memory state from the DB). For operations whose callers
@@ -329,10 +433,10 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       try {
         const result = await op(sql);
         if (changesData) await markChanged(sql);
-        await reloadAfter(true);
+        await reloadAfter(store, true);
         return result;
       } catch (e) {
-        await reloadAfter(false);
+        await reloadAfter(store, false);
         throw e;
       }
     });
@@ -363,25 +467,6 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     }
   }
 
-  /** Refresh after a write; on failure log it. After a `committed` write the app stops
-   *  on the error screen (ADR 0228); after a failed one it stays, showing the write
-   *  error, since nothing was saved. Never throws. Not queued: the reload inside a
-   *  queued write, where queueing it would wait for itself. */
-  async function reloadAfter(committed: boolean): Promise<void> {
-    try {
-      await get().refresh();
-    } catch (e) {
-      logFailure("RELOAD", e);
-      if (committed)
-        set({
-          status: "error",
-          readBackFailed: true,
-          error: null,
-          startupError: null,
-        });
-    }
-  }
-
   /** The open database, unless a read-back failed: then the screen may be older than
    *  the database, so a write queued behind it is refused (ADR 0228). */
   function requireSql(): Sql {
@@ -391,45 +476,19 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     return sql;
   }
 
-  /** Persist via `op`, then reload portfolio + assumptions so the engine recomputes.
-   *  Never throws into the void: a failure is captured, surfaced via `error`, and
-   *  returned to the caller as `{ ok: false }`. On failure we still reload so the
-   *  in-memory state matches what actually reached disk. Multi-statement writes are
-   *  atomic (`Sql.transaction`, D-14), so a failed op leaves the DB unchanged, and a
-   *  resolved op has committed: a failed reload after it returns `{ ok: true }` and
-   *  stops on the error screen (ADR 0228). A write queued behind that is refused. */
-  async function mutateNow(
-    op: (sql: Sql) => Promise<void>,
-    changesData: boolean,
-  ): Promise<MutationResult> {
-    const sql = get().sql;
-    if (!sql || get().readBackFailed) {
-      const error = toWriteError(new Error("Database not initialised"));
-      set({ error });
-      return { ok: false, error };
-    }
-    try {
-      perfMark("edit:start");
-      await op(sql);
-      if (changesData) await markChanged(sql);
-      await reloadAfter(true);
-      // Write + reload; the recompute and page render are measured where they run.
-      perfMeasure("edit-saved", "edit:start");
-      set({ error: null });
-      return { ok: true };
-    } catch (e) {
-      // A broken input rule is the user's to fix in the form, not a failure to log;
-      // it is thrown before anything is written, so there is nothing to reload. Only
-      // returned: the form shows it, and a non-form caller uses showError (ADR 0141).
-      if (e instanceof EngineInputError)
-        return { ok: false, error: toWriteError(e) };
-      logFailure("WRITE", e);
-      const error = toWriteError(e);
-      await reloadAfter(false);
-      set({ error });
-      return { ok: false, error };
-    }
-  }
+  return {
+    enqueue,
+    mutate,
+    exclusive,
+    replaceData,
+    requireSql,
+    writesSoFar: () => writes,
+  };
+}
+
+export const usePortfolioStore = create<PortfolioState>((set, get) => {
+  const { enqueue, mutate, exclusive, replaceData, requireSql, writesSoFar } =
+    createWriteRunner(set, get);
 
   /** Check the loaded portfolio with `edit` applied for the rows `ids` (`overlapIds`:
    *  see assertRows). Runs inside the queued op, so it sees every earlier write. */
@@ -442,38 +501,13 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     if (p) assertRows(p, edit(p), ids, overlapIds);
   }
 
-  /** The assumptions' own rules and range (assertAssumptionRules), then the saved
-   *  scenarios the edit would newly break (ADR 0128 §6). */
-  function checkAssumptions(a: Assumptions): void {
-    const p = get().portfolio;
-    const old = get().assumptions;
-    if (!p) return;
-    assertAssumptionRules(p, old, a);
-    // ADR 0128 §6: a shock meets the level it shifts, so an edit can break a saved
-    // scenario. Refuse only one the edit newly breaks, and name the first.
-    if (!old) return;
-    for (const s of get().scenarios) {
-      const added = scenarioErrorsAddedBy(old, a, s.overrides);
-      if (added.length > 0) throw new ScenarioRuleError(s.name, added);
-    }
-  }
-
   /** Add or save `s`. An insert stamps created_at; an update keeps the stored one
    *  (ADR 0123). */
   const writeScenario = (s: Scenario) =>
     mutate(async (sql) => {
-      checkScenario(s.overrides);
+      checkScenario(get().assumptions, s.overrides);
       await upsertScenario(sql, scenarioToRow(s, new Date()));
     });
-
-  /** Engine rules a scenario's own overrides break on top of the saved assumptions
-   *  (ADR 0123): refused before writing, like the assumptions themselves. */
-  function checkScenario(overrides: ScenarioOverrides): void {
-    const a = get().assumptions;
-    if (!a) return;
-    const errors = scenarioRuleErrors(a, overrides);
-    if (errors.length > 0) throw new EngineInputError(errors);
-  }
 
   return {
     sql: null,
@@ -668,7 +702,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
 
     saveAssumptions: (a) =>
       mutate(async (sql) => {
-        checkAssumptions(a);
+        checkAssumptions(get(), a);
         await upsertAssumptions(sql, a);
       }),
 
@@ -678,7 +712,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
       mutate(async (sql) => {
         const src = get().scenarios.find((x) => x.id === id);
         if (!src) throw new Error("Scenario not found");
-        checkScenario(src.overrides);
+        checkScenario(get().assumptions, src.overrides);
         const copy: Scenario = { ...src, id: newId, name };
         await upsertScenario(sql, scenarioToRow(copy, new Date()));
       }),
@@ -726,7 +760,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     clearSample: () => replaceData((sql) => clearSample(sql)),
     loadSample: () => replaceData(loadSample),
     exportBackup: async () => {
-      const writesBefore = writes;
+      const writesBefore = writesSoFar();
       // One clock read names the file and stamps `exportedAt` (ADR 0149 §6).
       const now = new Date();
       const outcome = await exportBackup(requireSql(), {
@@ -740,7 +774,12 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
         const at = new Date().toISOString();
         await exclusive(
           (sql) =>
-            recordBackup(sql, at, outcome.filename, writes === writesBefore),
+            recordBackup(
+              sql,
+              at,
+              outcome.filename,
+              writesSoFar() === writesBefore,
+            ),
           false,
         ).catch((e: unknown) => logFailure("BACKUP", e));
       }

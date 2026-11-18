@@ -38,9 +38,6 @@
   "src/ui/components/BootFailure.tsx": {
     "complexity": {
       "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
     }
   },
   "src/ui/components/LoanEventRows.tsx": {

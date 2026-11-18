@@ -51,6 +51,17 @@ function noticeText(t: Dictionary, notice: Notice): string {
     : t.sample.cleared(notice.file);
 }
 
+/** A save committed but its read-back failed: say the change was saved, and still name
+ *  the safety copy (ADR 0228, ADR 0154 §5). */
+function ReadBackText({ t, notice }: { t: Dictionary; notice: Notice | null }) {
+  return (
+    <>
+      <p>{t.boot.readBackFailed}</p>
+      {notice && <p>{noticeText(t, notice)}</p>}
+    </>
+  );
+}
+
 export function BootFailure() {
   const t = useT();
   const startupError = usePortfolioStore((s) => s.startupError);
@@ -154,10 +165,7 @@ export function BootFailure() {
       <div className="error-screen" role="alert">
         <h1 className="eyebrow">{t.app.dbErrorEyebrow}</h1>
         {readBackFailed ? (
-          <>
-            <p>{t.boot.readBackFailed}</p>
-            {notice && <p>{noticeText(t, notice)}</p>}
-          </>
+          <ReadBackText t={t} notice={notice} />
         ) : startupError ? (
           <>
             {startupText(t, startupError).map((line) => (
