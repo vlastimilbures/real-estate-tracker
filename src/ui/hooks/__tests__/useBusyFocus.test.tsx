@@ -105,6 +105,39 @@ describe("useBusyFocus (ADR 0248 §5–§6)", () => {
   });
 });
 
+describe("useBusyFocus: the last resort (ADR 0248 §3)", () => {
+  /** The harness under the AppShell's page title. */
+  function renderTitled(target: BusyFocusTarget) {
+    render(
+      <>
+        <header className="topbar">
+          <h1 className="page-title">Settings</h1>
+        </header>
+        <Harness target={target} />
+      </>,
+    );
+  }
+  const title = () => screen.getByRole("heading", { name: "Settings" });
+
+  it.fails(
+    "focuses the page title when the target has left the page (#549 review)",
+    () => {
+      renderTitled(() => document.createElement("button"));
+      startDropEnd();
+      expect(document.activeElement).toBe(title());
+    },
+  );
+
+  it.fails(
+    "focuses the page title when the target is gone (#549 review)",
+    () => {
+      renderTitled(() => null);
+      startDropEnd();
+      expect(document.activeElement).toBe(title());
+    },
+  );
+});
+
 describe("pageTitle (ADR 0248 §3)", () => {
   it("is null without a page title", () => {
     render(<p>No title</p>);
