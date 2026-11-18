@@ -105,6 +105,12 @@ describe("the loan assert refuses a non-finite loan amount (ADR 0251 §2)", () =
       ).toStrictEqual([onLoan("NON_FINITE_NUMBER", "monthlyInstalment")]);
   });
 
+  it("a finite negative instalment stays a data problem only", () => {
+    expect(asserted({ loanTermYears: 30, monthlyInstalment: money(-1) })).toBe(
+      "returned",
+    );
+  });
+
   it("a non-finite rate stays a data problem only", () => {
     expect(asserted({ interestRatePa: rate(NaN) })).toBe("returned");
   });
