@@ -301,6 +301,7 @@ it.
 | [0248](0248-focus-after-busy-actions.md)                       | After a busy action, focus returns to its button; a failed confirm focuses Cancel             | Accepted                                                             | #549, #435                                         |
 | [0249](0249-weekly-mutation-required-checks.md)                | Weekly mutation testing; required checks renamed and Changelog required                       | Accepted                                                             | #435, #496, #499                                   |
 | [0250](0250-wording-limits-flags-crash-labels.md)              | Translated garage flag; limit and crash-label texts in names and alerts                       | Accepted                                                             | #441, #435                                         |
+| [0251](0251-one-error-per-non-finite-field.md)                 | Validation: one error per non-finite field                                                    | Accepted                                                             | #435, #479                                         |
 | [0252](0252-missing-assumptions-startup-error.md)              | A missing assumptions row stops startup                                                       | Accepted                                                             | #444, #435                                         |
 
 <!-- adr-index:end -->
