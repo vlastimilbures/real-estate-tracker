@@ -8,6 +8,8 @@
   [0028](0028-rate-shock-window.md) (a floating block's shock window starts at baseDate),
   [0030](0030-expired-fixation.md) (a floating block is never an expired fixation),
   [0100](0100-rate-shock-reach.md) (which floating loans a rate shock reaches)
+- Amended by: [0235](0235-opening-balance-replayed.md) (§2: the opening is replayed at the
+  entered rate, not the closed form)
 - Related: D-21 (the payment due on the fixation end is still fixed),
   [0129](0129-loan-schedule-edge-cases.md) (§4 refix gap warning)
 
@@ -36,7 +38,8 @@ No test pinned this behaviour, and no parity or golden fixture has a 0-year bloc
    and the later of the start date and baseDate for a 0-year block. A floating block that
    starts after baseDate therefore runs at the reset rate from its first payment, as before.
 2. The opening balance of a started floating block is the closed-form balance at its entered
-   rate (the same path as a fixed block still in its fixation).
+   rate (the same path as a fixed block still in its fixation). Since ADR 0235 that path
+   replays the payments at the entered rate instead of the closed form.
 3. A scenario **rate shock** on a floating block starts at baseDate (the first payment after
    it) and lasts `durationYears` from there; for a future floating block it starts at the
    block's start. The Scenarios list of loans a shock reaches (ADR 0100) follows the same
