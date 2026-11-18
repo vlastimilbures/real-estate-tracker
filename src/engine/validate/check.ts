@@ -6,14 +6,18 @@ import { EngineInputError } from "../errors";
 import { COST_KEYS, COST_MONEY_KEYS, COST_RATE_KEYS } from "../figures";
 import type { CostDefaults, HoldingCost } from "../types";
 import type {
+  CostFieldAs,
   EngineValidationError,
+  FieldOf,
   ValidationCode,
   ValidationEntity,
+  ValidationField,
 } from "./codes";
 
-export type Report = (
+/** A check's reporter: a problem on one of the fields `F` (ADR 0251 §4). */
+export type Report<F extends ValidationField = ValidationField> = (
   code: ValidationCode,
-  field?: string,
+  field?: F,
   index?: number,
 ) => void;
 
@@ -24,11 +28,11 @@ export type Add = (e: EngineValidationError) => void;
 export type RowEntity = Exclude<ValidationEntity, "assumptions">;
 
 /** A row's error: `field` always present, `index` only for a list item (ADR 0116). */
-export function rowError(
-  entity: RowEntity,
+export function rowError<E extends RowEntity>(
+  entity: E,
   id: string,
   code: ValidationCode,
-  field: string | undefined,
+  field: FieldOf<E> | undefined,
   index?: number,
 ): EngineValidationError {
   return {
@@ -43,18 +47,22 @@ export function rowError(
 /** An assumptions error: no row id. */
 export function assumptionError(
   code: ValidationCode,
-  field: string | undefined,
+  field: FieldOf<"assumptions"> | undefined,
 ): EngineValidationError {
   return { code, entity: "assumptions", field };
 }
 
 /** The reporter of one row: every problem becomes `rowError` on it (#479). */
-export function rowReporter(entity: RowEntity, id: string, add: Add): Report {
+export function rowReporter<E extends RowEntity>(
+  entity: E,
+  id: string,
+  add: Add,
+): Report<FieldOf<E>> {
   return (code, field, index) => add(rowError(entity, id, code, field, index));
 }
 
 /** The reporter of the assumptions: every problem becomes `assumptionError`. */
-export function assumptionReporter(add: Add): Report {
+export function assumptionReporter(add: Add): Report<FieldOf<"assumptions">> {
   return (code, field) => add(assumptionError(code, field));
 }
 
@@ -78,13 +86,16 @@ export const notPositive = (d: Decimal) => !d.greaterThan(ZERO);
 
 /** Finite-number / valid-date checks over an object's fields: the dates, then the
  *  numbers. */
-export function checkFields<D extends string, N extends string>(
+export function checkFields<
+  D extends ValidationField,
+  N extends ValidationField,
+>(
   row: { readonly [F in D]?: Date | undefined } & {
     readonly [F in N]?: Decimal | undefined;
   },
   dates: readonly D[],
   numbers: readonly N[],
-  report: Report,
+  report: Report<D | N>,
 ): void {
   for (const f of dates) {
     if (badDate(row[f])) report("INVALID_DATE", f);
@@ -105,16 +116,25 @@ export type SignRule<R, K extends keyof R> = readonly [
 /** Sign and range rules over a row, in table order: each rule is one pass over its
  *  field, so a row with several bad fields reports rule by rule (#479). `prefix` goes
  *  before each field name. */
-export function checkSigns<R, K extends keyof R & string>(
+export function checkSigns<
+  R,
+  K extends keyof R & string,
+  P extends string = "",
+>(
   row: R,
   rules: readonly SignRule<R, K>[],
-  report: Report,
-  prefix = "",
+  report: Report<Prefixed<P, K>>,
+  prefix = "" as P,
 ): void {
   for (const [f, test, code] of rules) {
-    if (test(row[f])) report(code, `${prefix}${f}`);
+    // A template expression types as string: this one is `${P}${K}`.
+    if (test(row[f])) report(code, `${prefix}${f}` as Prefixed<P, K>);
   }
 }
+
+/** Field `K` behind `prefix` P, as a field an error can name. */
+type Prefixed<P extends string, K extends string> = `${P}${K}` &
+  ValidationField;
 
 /** An amount: NON_FINITE_NUMBER, else `code` when `bad`. */
 export function checkAmount<T extends Decimal | undefined>(
@@ -130,19 +150,23 @@ export function checkAmount<T extends Decimal | undefined>(
 /** D-38 shares and ADR 0075 (DR-176) non-negative costs on the assumption defaults
  *  (`prefix` "defaults."), and the same bounds on a holding-cost row (D-54, DR-127).
  *  The Kč fields are reported first, then the shares. */
-export function checkCostRanges(
+export function checkCostRanges<P extends "" | "defaults.">(
   c: CostDefaults | HoldingCost,
-  prefix: string,
-  report: Report,
+  prefix: P,
+  report: Report<CostFieldAs<P>>,
 ): void {
-  checkSigns(c, COST_SIGNS, report, prefix);
+  checkSigns<CostDefaults | HoldingCost, CostKey, P>(
+    c,
+    COST_SIGNS,
+    report,
+    prefix,
+  );
 }
 
 /** The holding costs' rules: the Kč fields, then the shares. */
-const COST_SIGNS: readonly SignRule<
-  CostDefaults | HoldingCost,
-  (typeof COST_KEYS)[number]
->[] = [
+type CostKey = (typeof COST_KEYS)[number];
+
+const COST_SIGNS: readonly SignRule<CostDefaults | HoldingCost, CostKey>[] = [
   ...COST_MONEY_KEYS.map(
     (f) => [f, isNegativeAmount, "NEGATIVE_AMOUNT"] as const,
   ),

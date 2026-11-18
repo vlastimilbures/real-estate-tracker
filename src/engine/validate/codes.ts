@@ -42,13 +42,100 @@ export type ValidationEntity =
   | "lease"
   | "holdingCost";
 
+/** The holding-cost fields: a holding-cost row's own, and the assumption defaults'. */
+type CostField =
+  | "propertyTaxYr"
+  | "insuranceYr"
+  | "mgmtPctRent"
+  | "maintPctRent"
+  | "svjMonthly"
+  | "otherYr";
+
+/**
+ * @internal Each entity's fields an error can name (ADR 0251 §4), exported for tests.
+ * The assumptions name a default both bare (NON_FINITE_NUMBER) and as `defaults.<key>`
+ * (its range): parked as P3.
+ */
+export const VALIDATION_FIELDS = {
+  assumptions: [
+    "baseDate",
+    "appreciationPa",
+    "rentIndexationPa",
+    "vacancyAllowance",
+    "postFixationResetRatePa",
+    "inflationPa",
+    "sellingCostPct",
+    "horizonYears",
+    "propertyTaxYr",
+    "insuranceYr",
+    "mgmtPctRent",
+    "maintPctRent",
+    "svjMonthly",
+    "otherYr",
+    "defaults.propertyTaxYr",
+    "defaults.insuranceYr",
+    "defaults.mgmtPctRent",
+    "defaults.maintPctRent",
+    "defaults.svjMonthly",
+    "defaults.otherYr",
+    "inflationShock",
+    "rateShock",
+    "valueShock",
+    "asOf",
+  ],
+  property: [
+    "purchaseDate",
+    "purchasePrice",
+    "appreciationOverridePa",
+    "rentIndexOverridePa",
+    "ownCash",
+    "transactionCosts",
+    "initialWorks",
+  ],
+  mortgage: [
+    "propertyId",
+    "startDate",
+    "completionDate",
+    "contractMaturityDate",
+    "initialPrincipal",
+    "interestRatePa",
+    "monthlyInstalment",
+    "fixationYears",
+    "loanTermYears",
+    "draws",
+    "prepayments",
+    "recasts",
+  ],
+  valuation: ["propertyId", "validFrom", "validTo", "marketValue"],
+  lease: ["propertyId", "startDate", "endDate", "monthlyRent"],
+  holdingCost: [
+    "propertyId",
+    "propertyTaxYr",
+    "insuranceYr",
+    "mgmtPctRent",
+    "maintPctRent",
+    "svjMonthly",
+    "otherYr",
+  ],
+} as const satisfies Record<ValidationEntity, readonly string[]>;
+
+/** The fields an error on entity `E` can name. */
+export type FieldOf<E extends ValidationEntity> =
+  (typeof VALIDATION_FIELDS)[E][number];
+
+/** Any entity's field: what `EngineValidationError.field` names. */
+export type ValidationField = FieldOf<ValidationEntity>;
+
+/** The cost fields as a row names them, or the defaults with their prefix. */
+export type CostFieldAs<P extends "" | "defaults."> = `${P}${CostField}`;
+
 export interface EngineValidationError {
   code: ValidationCode;
   entity: ValidationEntity;
   /** Row id; undefined for assumptions. */
   id?: string | undefined;
-  /** Offending field, when the problem is in one field. */
-  field?: string | undefined;
+  /** Offending field, when the problem is in one field (ADR 0251 §4). */
+  field?: ValidationField | undefined;
   /** The item's position in a list field (prepayments, recasts) as given (ADR 0116). */
   index?: number | undefined;
 }

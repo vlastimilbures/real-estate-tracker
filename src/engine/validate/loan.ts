@@ -7,6 +7,7 @@ import {
   DATA_ERROR_CODES,
   raisedByLoanGate,
   type EngineValidationError,
+  type FieldOf,
   type ValidationCode,
 } from "./codes";
 import {
@@ -24,8 +25,11 @@ import {
 } from "./check";
 import { checkLoanEvents } from "./loanEvents";
 
+/** A block's reporter: a problem on a mortgage field. */
+export type LoanReport = Report<FieldOf<"mortgage">>;
+
 /** Term problems of a loan whose term comes from its instalment (NPER). */
-function checkDerivedTerm(b: MortgageBlock, report: Report): void {
+function checkDerivedTerm(b: MortgageBlock, report: LoanReport): void {
   const problem = derivedTermProblem(b);
   if (problem) report(problem.code, problem.field);
 }
@@ -57,7 +61,7 @@ function checkDrawDate(
   b: MortgageBlock,
   { lastDraw, lastButTwo }: DrawLimits,
   i: number,
-  report: Report,
+  report: LoanReport,
 ): void {
   if (badDate(date)) report("INVALID_DATE", "draws", i);
   // A draw on the start date itself belongs in the initial principal (D-42).
@@ -72,7 +76,7 @@ function checkDrawDate(
     report("DRAW_IN_LAST_TWO_PAYMENTS", "draws", i);
 }
 
-function checkDevFeatures(b: MortgageBlock, report: Report): void {
+function checkDevFeatures(b: MortgageBlock, report: LoanReport): void {
   const limits = { lastDraw: lastDrawDate(b), lastButTwo: lastButTwoDate(b) };
   (b.draws ?? []).forEach((d, i) => {
     checkDrawDate(d.date, b, limits, i, report);
@@ -86,7 +90,7 @@ function checkDevFeatures(b: MortgageBlock, report: Report): void {
 }
 
 /** Fixation and loan term are whole years (the loan term ADR 0135). */
-function checkTerms(b: MortgageBlock, report: Report): void {
+function checkTerms(b: MortgageBlock, report: LoanReport): void {
   if (!Number.isInteger(b.fixationYears) || b.fixationYears < 0)
     report("INVALID_TERM", "fixationYears");
   if (
@@ -106,7 +110,7 @@ const LOAN_SIGNS: readonly SignRule<
   ["interestRatePa", outsideUnit, "RATE_OUT_OF_RANGE"],
 ];
 
-function checkMortgage(b: MortgageBlock, report: Report): void {
+function checkMortgage(b: MortgageBlock, report: LoanReport): void {
   checkFields(
     b,
     ["startDate", "completionDate", "contractMaturityDate"],
@@ -122,7 +126,7 @@ function checkMortgage(b: MortgageBlock, report: Report): void {
 }
 
 /** A problem as a check reports it: the code, the field, the list index. */
-type Issue = Parameters<Report>;
+type Issue = Parameters<LoanReport>;
 
 /** Every problem of one block, in check order: the one way into checkMortgage. */
 export function blockIssues(b: MortgageBlock): Issue[] {

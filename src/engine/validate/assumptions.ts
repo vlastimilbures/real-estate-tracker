@@ -13,6 +13,10 @@ import {
   type Report,
   type SignRule,
 } from "./check";
+import type { FieldOf } from "./codes";
+
+/** The assumptions' reporter: a problem on an assumption field. */
+type AssumptionReport = Report<FieldOf<"assumptions">>;
 
 /** A shock band's duration: whole years ≥ 0 (D-38). */
 const badDuration = (band: ShockBand) =>
@@ -22,7 +26,7 @@ const badDuration = (band: ShockBand) =>
 function checkShock(
   band: ShockBand | undefined,
   field: "inflationShock" | "rateShock",
-  report: Report,
+  report: AssumptionReport,
 ): void {
   if (!band) return;
   checkAmount(
@@ -33,7 +37,10 @@ function checkShock(
   );
 }
 
-export function checkAssumptions(a: Assumptions, report: Report): void {
+export function checkAssumptions(
+  a: Assumptions,
+  report: AssumptionReport,
+): void {
   const rates = [
     "appreciationPa",
     "rentIndexationPa",
@@ -71,7 +78,7 @@ const GROWTH_FIELDS = [
 ] as const;
 
 /** D-38 and ADR 0128 §1–2 ranges of the assumption levels. */
-function checkLevelRanges(a: Assumptions, report: Report): void {
+function checkLevelRanges(a: Assumptions, report: AssumptionReport): void {
   checkSigns(a, LEVEL_SIGNS, report);
 }
 
@@ -110,7 +117,10 @@ function checkShiftedLevel(
 
 /** A value crash: a finite haircut within 0–1 at a whole year ≥ 0 (D-38, ADR 0128 §4,
  *  ADR 0251 §3). */
-function checkValueShock(vs: Assumptions["valueShock"], report: Report): void {
+function checkValueShock(
+  vs: Assumptions["valueShock"],
+  report: AssumptionReport,
+): void {
   if (!vs) return;
   checkAmount(
     vs.pct,

@@ -3,7 +3,7 @@
 import { collectValues, type FieldSpec } from "./formParse";
 import { formRules } from "./formParsers";
 import { CRASH_YEAR, SHOCK_YEARS } from "../../lib/rules";
-import { formWriteErrors } from "./writeError";
+import { formWriteErrors, type FormWriteError } from "./writeError";
 import type {
   EngineValidationError,
   Rate,
@@ -195,7 +195,7 @@ export function scenarioWriteErrors(
   t: Dictionary,
   e: WriteError,
 ): { fieldErrors: Record<string, string>; formError: string | null } {
-  const onForm: WriteError =
+  const onForm: FormWriteError =
     e.kind === "input"
       ? { ...e, errors: e.errors.map((x) => ({ ...x, field: shockField(x) })) }
       : e;

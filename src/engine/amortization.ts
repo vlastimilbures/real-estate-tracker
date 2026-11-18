@@ -102,9 +102,12 @@ export function rateAt(
  * needs an explicit term; at 0 % the instalment must be positive; otherwise it must
  * exceed the first month's interest (DR-014). Expects finite principal and rate.
  */
-export function derivedTermProblem(
-  block: MortgageBlock,
-): { code: ValidationCode; field: string } | undefined {
+export function derivedTermProblem(block: MortgageBlock):
+  | {
+      code: ValidationCode;
+      field: "loanTermYears" | "monthlyInstalment";
+    }
+  | undefined {
   if (block.loanTermYears != null) return undefined;
   if (isDevLoan(block)) {
     return { code: "MISSING_TERM_FOR_DEV_LOAN", field: "loanTermYears" };

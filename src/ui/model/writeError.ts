@@ -1,12 +1,25 @@
 // Translated text for a failed write (DR-133): which message to show and, when one form
 // field is at fault, which field to show it on. Pure; the store hands over a WriteError.
 import type { Dictionary } from "../../i18n";
-import type { ValidationCode } from "../../engine";
+import type { EngineValidationError, ValidationCode } from "../../engine";
 import type { ConstraintFailure } from "../../data/errors";
 import type { WriteError } from "../../state/writeError";
 import type { RangeProblem } from "../../lib/rules";
 import { fieldHint } from "./formParse";
 import { inputRuleText } from "./inputRule";
+
+/** An input error whose field may be a form's own key, not only an engine field: the
+ *  scenario form names a shock rule by its form field (ADR 0251 §4). */
+type FormFieldError = Omit<EngineValidationError, "field"> & {
+  field?: string | undefined;
+};
+
+/** A failed write as a form shows it: every WriteError is one. */
+export type FormWriteError =
+  | Exclude<WriteError, { kind: "input" }>
+  | (Omit<Extract<WriteError, { kind: "input" }>, "errors"> & {
+      errors: readonly FormFieldError[];
+    });
 
 export interface WriteErrorText {
   message: string;
@@ -171,7 +184,7 @@ function rangeTexts(
  *  repeats. */
 export function writeErrorTexts(
   t: Dictionary,
-  e: WriteError,
+  e: FormWriteError,
 ): WriteErrorText[] {
   if (e.kind !== "input") return [describeWriteError(t, e)];
   const seen = new Set<string>();
@@ -207,7 +220,7 @@ export function writeErrorTexts(
  */
 export function formWriteErrors(
   t: Dictionary,
-  e: WriteError,
+  e: FormWriteError,
   fields: readonly string[],
   rowOf?: (field: string, index: number) => number | null,
 ): { fieldErrors: Record<string, string>; formError: string | null } {
