@@ -11,8 +11,8 @@
   three entry points), [0154](0154-one-outcome-path.md) §5 (the screen names the safety
   copy), [0157](0157-accessibility-batch.md) (the screen's landmark and heading),
   [0248](0248-focus-after-busy-actions.md) (focus after a busy action, unchanged)
-- Implementation: dictionary key `boot.notSaved` (en/cs/ru), pending the owner's OK on
-  the exact text (`docs/decisions/wording.md`, 2026-11-18 · #446)
+- Implementation: dictionary key `boot.notSaved` (en/cs/ru); text approved by the owner
+  2026-11-18 (#564 comment 6975468652; `docs/decisions/wording.md`, 2026-11-18 · #446)
 
 ## Context
 
@@ -52,14 +52,14 @@ it silent.
    and the names as a list in the existing `error-screen-details` markup. Both are inside
    the screen's `role="alert"`, so they are live-region text: hence this ADR and the
    `wording.md` entry. With nothing refused the screen is unchanged.
-5. **New copy, one key `boot.notSaved`** (en/cs/ru). Its exact text waits for the owner's
-   OK (`wording.md`); the PR is not merged before.
+5. **New copy, one key `boot.notSaved`** (en/cs/ru), its text approved by the owner on
+   2026-11-18 (`wording.md`).
 
 Defaults chosen in the plan; the owner may change them:
 
 - Bookkeeping writes are not named (§2).
-- `boot.readBackFailed` keeps "Your last change was saved"; the list makes clear which
-  changes were not.
+- `boot.readBackFailed` keeps its text; the list makes clear which changes were not
+  saved.
 - The restore or Load sample failure banner shown after _Try again_ (the refused action's
   own error) stays.
 - The alert is not re-mounted when the list arrives a render after the screen: a write

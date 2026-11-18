@@ -207,7 +207,7 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   The line introduces a list of names taken from existing entries (`backup.tables.*`,
   `common.importCsv`, `backup.restoreTitle`, `sample.confirm`, `sample.loadAction`). The
   text is inside the screen's `role="alert"`, a live region, so ADR 0255 records it too.
-- Rejected: rewording `boot.readBackFailed` ("Your last change was saved"), because it is
-  still true for the change that committed and the list names the ones that were not.
-- Approved by: pending owner copy OK (owner decision 2026-11-18, #435 comment 6965976270,
-  covers naming the refused write; the exact text is not yet approved)
+- Rejected: rewording `boot.readBackFailed`, which keeps its text, because it is still
+  true for the change that committed and the list names the ones that were not.
+- Approved by: owner OK 2026-11-18 (the decision in #435 comment 6965976270; the text in
+  #564 comment 6975468652)
