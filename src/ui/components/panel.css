@@ -146,7 +146,7 @@
 }
 /* The foot may take two lines; the tile stays at most 96 px tall. */
 .tile.compact .foot {
-  font-size: var(--fs-12);
+  font-size: var(--fs-11);
   line-height: 1.3;
 }
 

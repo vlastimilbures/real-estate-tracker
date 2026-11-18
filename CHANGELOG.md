@@ -56,7 +56,8 @@ engine without the form, and remove it when the last part lands.
 - Font sizes are whole pixels: text that was 11.5, 12.5 or 13.5 px is now 12, 13 or 14 px
   (ADR 0256, #495). This covers chart legends, field help and errors, the date calendar,
   panel notes, inputs, the sidebar nav, stat lists, info tips, the About dialog and the
-  Guide. No figure changes.
+  Guide. The foot line under a KPI tile's figure is 11 px instead, so the tile keeps its
+  height. No figure changes.
 - A loan's balance at the projection start is always worked out by replaying its payments
   month by month; the shortcut formula is gone (ADR 0235, #449). No figure changes for an
   ordinary loan. A loan entered with an explicit term and an instalment too small for it
