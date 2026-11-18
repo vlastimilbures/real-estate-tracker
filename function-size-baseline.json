@@ -27,7 +27,7 @@
   },
   "src/state/portfolioStore.ts": {
     "lines": {
-      "Arrow function (usePortfolioStore: create)": 367
+      "Arrow function (usePortfolioStore: create)": 366
     }
   },
   "src/state/uiStore.ts": {

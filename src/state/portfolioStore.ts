@@ -207,6 +207,9 @@ interface PortfolioState {
   /** Restores, Clear samples and Load samples queued or running. Settings → Backup
    *  waits while one is, across page changes (ADR 0154). */
   replacing: number;
+  /** Writes queued or running (`mutate`, `exclusive`, `replaceData`): row write actions
+   *  are disabled while any is (ADR 0253). Reads do not count. */
+  writesRunning: number;
 
   init: (open?: () => Promise<Sql>) => Promise<void>;
   /** Load every table into the store. Does not queue itself: outside a queued job, only
@@ -302,17 +305,15 @@ interface PortfolioState {
 }
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => {
-  const { enqueue } = createWriteQueue();
+  const { enqueue, write } = createWriteQueue((n) => set({ writesRunning: n }));
   /** Data writes so far: an export keeps the changed flag when one landed while its
    *  save dialog was open, since the file does not hold it (ADR 0110). */
   let writes = 0;
 
-  function mutate(
+  const mutate = (
     op: (sql: Sql) => Promise<void>,
     changesData = true,
-  ): Promise<MutationResult> {
-    return enqueue(() => mutateNow(op, changesData));
-  }
+  ): Promise<MutationResult> => write(() => mutateNow(op, changesData));
 
   /** Run `op` in the mutation queue, then reload; rethrow its failure unchanged
    *  (after reloading in-memory state from the DB). For operations whose callers
@@ -323,7 +324,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     op: (sql: Sql) => Promise<T>,
     changesData = true,
   ): Promise<T> {
-    return enqueue(async () => {
+    return write(async () => {
       const sql = requireSql();
       try {
         const result = await op(sql);
@@ -486,6 +487,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     startupError: null,
     readBackFailed: false,
     replacing: 0,
+    writesRunning: 0,
 
     async init(open = defaultOpen) {
       if (get().status === "loading" || get().status === "ready") return;
@@ -746,3 +748,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     },
   };
 });
+
+/** A write is queued or running: row write actions are disabled (ADR 0253). */
+export const useWriteRunning = (): boolean =>
+  usePortfolioStore((s) => s.writesRunning > 0);

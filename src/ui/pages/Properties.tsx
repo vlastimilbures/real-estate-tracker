@@ -26,7 +26,7 @@ import { dscrBand, dscrBandWord, ltvBand, ltvBandWord } from "../model/health";
 import { bandLegend, hasMarkers, propertiesTotal } from "../model/properties";
 import { useT } from "../hooks/useT";
 import { ConfirmRow } from "../components/EntityPanelParts";
-import { RowAction, RowActions } from "../components/RowActions";
+import { RowActions, WriteRowAction } from "../components/RowActions";
 import { propertiesSubtitle } from "../model/tableContext";
 
 /** LTV as a figure and its health marker; the band word is the marker's tooltip and
@@ -317,12 +317,12 @@ export function Properties() {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <RowActions>
-                        <RowAction
+                        <WriteRowAction
                           icon={Pencil}
                           label={t.common.edit}
                           onClick={() => setEditingId(p.propertyId)}
                         />
-                        <RowAction
+                        <WriteRowAction
                           icon={Trash2}
                           label={t.common.delete}
                           danger

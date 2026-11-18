@@ -33,7 +33,7 @@ import { focusSection } from "../components/focusSection";
 import { sectionId } from "../model/sectionNav";
 import { moneyDraft, percentDraft } from "../model/formParse";
 import { fmtCzk, fmtCzkM, fmtDate, fmtPct, noBreak } from "../../lib/format";
-import { RowAction, RowActions } from "../components/RowActions";
+import { RowActions, WriteRowAction } from "../components/RowActions";
 import { holdingCostsView } from "../model/holdingCosts";
 import { undrawnPart } from "../model/debt";
 import {
@@ -287,7 +287,7 @@ export function HoldingCostsPanel({
         action={
           editing ? undefined : (
             <RowActions>
-              <RowAction
+              <WriteRowAction
                 icon={Pencil}
                 label={d.editHoldingCosts}
                 onClick={() => toggle(true)}
