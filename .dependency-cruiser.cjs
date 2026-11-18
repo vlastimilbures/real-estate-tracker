@@ -36,6 +36,14 @@ module.exports = {
       to: depcruiseTo(),
     },
     {
+      name: "engine-no-platform",
+      severity: "error",
+      comment:
+        "The engine is pure (CLAUDE.md §4): it never reaches the Tauri command wrappers in src/platform, its tests included (#499).",
+      from: { path: "^src/engine/" },
+      to: { path: "^src/platform/" },
+    },
+    {
       name: "lib-rules-pure",
       severity: "error",
       comment:
