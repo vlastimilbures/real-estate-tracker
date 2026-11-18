@@ -1,4 +1,4 @@
-// The sharded nightly Stryker run (ADR 0239, #443): shard ranges, the merge and the score
+// The sharded weekly Stryker run (ADR 0239, 0249): shard ranges, the merge and the score
 // gate, on synthetic reports, plus the shard table against the real src/engine.
 import { globSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";

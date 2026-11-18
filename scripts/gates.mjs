@@ -31,11 +31,12 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
 /**
  * One gate. `where`: `check` runs in `pnpm check` and CI; `release` also in
  * `pnpm check:release` and CI; `ci` in CI only (`why` says why it is not local);
- * `nightly` in the nightly workflow. `covers`: commands this gate already runs, so they
- * are not gates of their own. `ci`: the steps ci.yml runs for it, each `{ run, env }`
- * with the exact shell line and the step's variables, when not `{ run, env }` of the gate
- * itself, and `dir` its `working-directory` when not the repository root. `env`:
- * variables set for the command. `readme`: text for the README table.
+ * `nightly` in the nightly workflow, `weekly` in its weekly schedule. `covers`: commands
+ * this gate already runs, so they are not gates of their own. `ci`: the steps ci.yml runs
+ * for it, each `{ run, env }` with the exact shell line and the step's variables, when not
+ * `{ run, env }` of the gate itself, and `dir` its `working-directory` when not the
+ * repository root. `env`: variables set for the command. `readme`: text for the README
+ * table.
  */
 // The axe runs as ci.yml sets them up: the run id names the folder axe-check reads.
 const AXE_EN = {
@@ -263,7 +264,7 @@ export const GATES = [
     id: "mutation",
     run: "pnpm mutation",
     what: "Stryker mutation score on the engine",
-    where: "nightly",
+    where: "weekly",
     readme: "Stryker mutation score on the engine",
   },
   {
@@ -707,7 +708,9 @@ export function ciDrift(
   const steps = raw.flatMap((s) =>
     perMatrixRun(asRun(s, workflow), workflow.jobs[s.job]?.matrix),
   );
-  const listed = gates.filter((g) => g.where !== "nightly");
+  const listed = gates.filter(
+    (g) => g.where !== "nightly" && g.where !== "weekly",
+  );
   const problems = jobProblems(workflow, raw, jobIfs);
   for (const g of listed)
     for (const spec of ciSteps(g)) {
@@ -764,6 +767,7 @@ const RUNS = {
   release: "`pnpm check:release`, CI",
   ci: "CI",
   nightly: "Nightly",
+  weekly: "Weekly",
 };
 
 /** The README.md table: every gate, with where it runs. */

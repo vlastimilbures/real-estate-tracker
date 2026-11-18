@@ -53,7 +53,9 @@ describe("the gate list", () => {
 
   it("puts every gate in one place and says why a CI gate is not local", () => {
     for (const g of GATES) {
-      expect(["check", "release", "ci", "nightly"]).toContain(g.where);
+      expect(["check", "release", "ci", "nightly", "weekly"]).toContain(
+        g.where,
+      );
       expect(g.what.length).toBeGreaterThan(0);
       if (g.where === "ci" || g.where === "release") expect(g.why).toBeTruthy();
     }
@@ -146,6 +148,7 @@ describe("the generated documents", () => {
     },
     { id: "z", run: "pnpm z", what: "z works", where: "release", why: "net" },
     { id: "n", run: "pnpm n", env: { N: "1" }, what: "n", where: "nightly" },
+    { id: "w", run: "pnpm w", what: "w", where: "weekly" },
   ];
 
   it("CONTRIBUTING lists the local gates, then the release and CI extras", () => {
@@ -155,6 +158,7 @@ describe("the generated documents", () => {
     expect(md).toContain("| `grep -E 'a\\|b' f` | y works | slow |");
     expect(md.indexOf("pnpm z")).toBeLessThan(md.indexOf("grep"));
     expect(md).not.toContain("pnpm n");
+    expect(md).not.toContain("pnpm w");
   });
 
   it("README lists every gate with where it runs", () => {
@@ -163,6 +167,7 @@ describe("the generated documents", () => {
     expect(md).toContain("| `grep -E 'a\\|b' f` | Y | CI |");
     expect(md).toContain("| `pnpm z` | z works | `pnpm check:release`, CI |");
     expect(md).toContain("| `N=1 pnpm n` | n | Nightly |");
+    expect(md).toContain("| `pnpm w` | w | Weekly |");
   });
 
   it("replaces the text between the markers only", () => {
@@ -329,8 +334,10 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
     ]);
   });
 
-  it("knows no nightly gate", () => {
-    const nightly = GATES.filter((g) => g.where === "nightly");
+  it("knows no nightly or weekly gate", () => {
+    const nightly = GATES.filter((g) =>
+      ["nightly", "weekly"].includes(g.where),
+    );
     const yaml = `jobs:\n  a:\n    steps:\n      - run: pnpm mutation\n`;
     expect(ciDrift(yaml, { gates: nightly })).toEqual([
       "a step in a runs `pnpm mutation`, which is no gate",

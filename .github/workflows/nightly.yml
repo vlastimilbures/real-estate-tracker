@@ -1,12 +1,17 @@
-name: Nightly (mutation testing, bench budgets, property runs)
+name: Nightly (bench budgets, property runs; weekly mutation testing)
 
+# Two schedules (ADR 0249): the daily one (02:17 UTC) runs the bench and the property job;
+# the weekly one (Sunday 03:47 UTC, its own minute) runs mutation testing only. A manual
+# run runs every job.
+#
 # Stryker on src/engine (J-09 → D-26, D-68), sharded (ADR 0239): seven matrix legs each
 # mutate part of the engine (scripts/mutation-shards.mjs) and report their own score; the
 # mutation-score job merges them and fails when the combined score drops below
 # thresholds.break in stryker.config.json, or a leg's report is missing. The bench job fails
 # when a budgeted engine bench's p99 exceeds 2 × its budget, or the recast build outgrows the
-# plain build in the same run (ADR 0066, ADR 0073, ADR 0172). Scheduled runs of these skip
-# when main has no commit in the last 24 h; a manual run always runs them.
+# plain build in the same run (ADR 0066, ADR 0073, ADR 0172). A scheduled bench skips when
+# main has no commit in the last 24 h, a scheduled mutation run when it has none in the
+# last 7 days (ADR 0249); a manual run always runs them.
 #
 # The property job runs the whole test suite with every fast-check property test at 2000
 # runs every night, quiet days included: the seed, not the code, is what changes (#232,
@@ -24,9 +29,14 @@ name: Nightly (mutation testing, bench budgets, property runs)
 # 43834527278) takes 32-110 min per leg once sharded (run 43924585493), under the
 # 180-minute leg timeout. A manual run with
 # `mutation_cold` skips the restore. Caches made on main are visible to every branch.
+# GitHub evicts a cache not used for 7 days, so a weekly run can find none and run cold.
+#
+# The weekly cron is compared with github.event.schedule in the changed step and the
+# property job: change all three together (scripts/__tests__/nightly-schedule.test.mjs).
 on:
   schedule:
     - cron: "17 2 * * *"
+    - cron: "47 3 * * 0"
   workflow_dispatch:
     inputs:
       fc_seed:
@@ -43,11 +53,14 @@ permissions:
   contents: read
 
 jobs:
+  # `run`: the bench (daily, main changed in 24 h). `mutation`: Stryker (weekly, main
+  # changed in 7 days). A manual run sets both.
   changed:
-    name: Main changed in 24 h?
+    name: Main changed?
     runs-on: ubuntu-latest
     outputs:
       run: ${{ steps.check.outputs.run }}
+      mutation: ${{ steps.check.outputs.mutation }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -55,20 +68,32 @@ jobs:
           fetch-depth: 50
 
       - id: check
+        env:
+          EVENT: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          elif [[ -n "$(git log --since='24 hours ago' --format=%H -1)" ]]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
+          changed() { [[ -n "$(git log --since="$1 ago" --format=%H -1)" ]]; }
+          run=false
+          mutation=false
+          if [[ "$EVENT" == "workflow_dispatch" ]]; then
+            run=true
+            mutation=true
+          elif [[ "$SCHEDULE" == "47 3 * * 0" ]]; then
+            if changed "7 days"; then mutation=true; else echo "No commit on main in 7 days: skipping mutation."; fi
+          elif changed "24 hours"; then
+            run=true
           else
-            echo "No commit on main in 24 h: skipping."
-            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "No commit on main in 24 h: skipping the bench."
           fi
+          {
+            echo "run=$run"
+            echo "mutation=$mutation"
+          } >> "$GITHUB_OUTPUT"
 
   mutation:
     name: Stryker (${{ matrix.shard }})
     needs: changed
-    if: needs.changed.outputs.run == 'true'
+    if: needs.changed.outputs.mutation == 'true'
     runs-on: ubuntu-latest
     # Cold legs took 32-110 min (run 43924585493, ADR 0239); this is the hard stop, with
     # headroom for the slowest legs and still under GitHub's 360-minute job limit.
@@ -134,7 +159,7 @@ jobs:
     needs: [changed, mutation]
     # Runs after every leg, failed, timed out or cancelled too: a missing leg report fails
     # it, so `report` sees the failure (ADR 0239).
-    if: always() && needs.changed.outputs.run == 'true'
+    if: always() && needs.changed.outputs.mutation == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -196,6 +221,8 @@ jobs:
 
   properties:
     name: Property tests (2000 runs)
+    # Daily and on a manual run; the weekly schedule runs mutation only.
+    if: github.event.schedule != '47 3 * * 0'
     runs-on: ubuntu-latest
     # The whole suite at 2000 runs takes a few minutes (slowest property test ~30 s).
     # Vitest cannot interrupt a synchronous fc.assert, so this bounds a long shrink or a
@@ -306,7 +333,7 @@ jobs:
             echo
             echo "| Job | Result |"
             echo "| --- | --- |"
-            echo "| Main changed in 24 h? | $(result "$CHANGED") |"
+            echo "| Main changed? | $(result "$CHANGED") |"
             echo "| Stryker (all legs) | $(result "$MUTATION") |"
             echo "| Mutation score (combined) | $(result "$MUTATION_SCORE") |"
             echo "| Engine bench budgets | $(result "$BENCH") |"

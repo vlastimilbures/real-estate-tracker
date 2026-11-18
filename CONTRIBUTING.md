@@ -139,19 +139,20 @@ still describe it. Which document owns what is listed in
   A test that needs an exact instant or fake timers still uses `vi.setSystemTime` /
   `vi.useFakeTimers`; `vi.useRealTimers()` brings back the real clock, so a test that
   calls it mid-test calls `setClock(PINNED_DAY)` right after.
-- **Mutation testing** (ADR 0026, ADR 0239): `pnpm mutation` runs Stryker on `src/engine`.
+- **Mutation testing** (ADR 0026, ADR 0239, ADR 0249): `pnpm mutation` runs Stryker on `src/engine`.
   Runs are incremental: only mutants in changed code or tests are retested against the last
   result (`reports/mutation/stryker-incremental.json`); `pnpm mutation --force` retests every
   mutant. `thresholds.break` in `stryker.config.json` is the floored baseline score; raise it,
-  never lower it. CI runs it nightly when main changed, in seven shards
+  never lower it. CI runs it weekly (Sunday 03:47 UTC) when main changed in the last 7 days,
+  and on a manual run of `nightly.yml`, in seven shards
   (`scripts/mutation-shards.mjs`): `schedule-a`/`schedule-b` share the `loan/*` files
   and split `loan/opening.ts` and `loan/pay.ts` at a named top-level function each,
   `validate-a`/`validate-b` take the `validate/` files in two halves, and `projections`,
   `kpis` and `rest` (every other engine file) take whole files. Each shard has its own
   cached result file and no break of its own; the `mutation-score` job merges the shards'
   reports and fails when the combined score is below break or a shard's report is missing.
-  Reproduce one shard with `STRYKER_SHARD=<name> pnpm mutation:shard`; a manual nightly run
-  with `mutation_cold` skips the cache.
+  Reproduce one shard with `STRYKER_SHARD=<name> pnpm mutation:shard`; a manual run with
+  `mutation_cold` skips the cache.
 - **Performance budgets** (ADR 0066, ADR 0073, ADR 0172): `pnpm bench` times the engine; 20
   properties p99 ≤ 150 ms for one recompute, ≤ 450 ms for a 3-scenario compare and ≤ 80 ms for
   a schedule build with a recast or a prepayment on every loan. The nightly run fails when a p99
