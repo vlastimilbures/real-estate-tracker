@@ -107,4 +107,24 @@ describe("scenario Delete: focus after a failure (ADR 0248 §1)", () => {
       screen.getByRole("button", { name: en.common.cancel }),
     );
   });
+
+  it("a successful delete leaves focus to the confirm row: the list panel (ADR 0173)", async () => {
+    render(<Scenarios />);
+    await userEvent.click(
+      screen.getByRole("button", { name: en.common.delete }),
+    );
+    const yes = () =>
+      screen.getByRole("button", {
+        name: new RegExp(`^(${en.common.yesDelete}|${en.common.deleting})$`),
+      });
+    await userEvent.click(yes());
+    expect(yes()).toHaveProperty("disabled", true);
+    act(() => yes().blur());
+    await act(async () => write.resolve(ok));
+    // Level 2: the page's h1 has the same name.
+    const list = screen
+      .getByRole("heading", { level: 2, name: sc.listTitle })
+      .closest("section");
+    expect(document.activeElement).toBe(list);
+  });
 });
