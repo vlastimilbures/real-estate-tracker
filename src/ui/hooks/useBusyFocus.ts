@@ -1,6 +1,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
-/** A target's answer for "leave focus where it is" (a success with its own focus rule). */
+/** A target's answer for "leave focus where it is", where the outcome has its own focus
+ *  rule. */
 export const KEEP: unique symbol = Symbol("keep focus");
 
 /** Where focus goes once a busy action ends, given the control that had focus when it
