@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-07
 - Source: issue #131 (review findings R5-04, R4-10, G2-5-04, R5-03), option A; Track 10 PR 10.7
+- Amended by: [0254](0254-unknown-property-reported-once.md) (§2: the Import page no longer
+  checks child files for known property names, so it reads none)
 - Related: [0075](0075-input-rejection-gaps.md) (stored data that breaks a rule shows the
   UX-049 invalid-data notice)
 
