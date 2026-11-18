@@ -38,16 +38,23 @@ Two methods for one balance meant two code paths to keep in step. The night run 
     a balloon in month 1; in the replay the payment at maturity clears the balance (D-40,
     ADR 0021), so the loan opens at 0.
 
-In both cases the independent mortgage reference model agrees with the replay
-(`mortgageReference.ts:406-410`: principal floored at 0, the payment at maturity clears
-the balance), so the closed form was the outlier.
+The independent mortgage reference model takes the two cases differently:
+
+- For **B** the reference model gives 0, as the replay does.
+- A loan of **A** is refused by the reference model as invalid input
+  (`mortgageReference.ts:246-253`: an instalment at or below the first month's interest
+  never amortizes). Its step rule (`:406-410`: principal floored at 0, the payment at
+  maturity clears the balance) gives the replay's figure: the review of #551 lifted the
+  guard in a scratch copy and matched 1,103 of 1,103 case A openings exactly, and
+  `reference/openingCaseA.reference.test.ts` pins it on the reference's development-loan
+  path, which runs the same step rule without the plain-loan guard.
 
 ## Decision
 
 1. **Every plain loan is replayed.** The balance of every plain loan on the projection
    start date is computed by replaying its past instalments month by month, the method
    already used for loans with past rate changes or events. The closed-form shortcut is
-   removed from the opening path, including its floor at zero.
+   deleted from the engine, including its floor at zero.
 2. **The closed form moves to the reference model.** `closedFormBalance` in
    `src/engine/__tests__/reference/mortgageReference.ts` holds the formula; a test pins
    replay = closed form within 1e-6 Kč on the seed loans and on random ordinary plain loans
@@ -58,15 +65,21 @@ the balance), so the closed form was the outlier.
    in the same commit (ADR 0039).
 4. **Ordinary loans show no change** on any screen, export or chart.
 5. **A plain loan whose instalment cannot repay it by its explicit term** (owner decision
-   2026-11-18, #449, option A): its opening balance follows the payments as scheduled, as
-   the reference model does (`mortgageReference.ts:406-410`). Such loans can show a
-   different debt:
-   - **A.** An instalment at or below the month's interest opens at the principal: no
-     payment repaid any principal, and none added interest to the balance.
+   2026-11-18, #449, option A): its opening balance follows the payments as scheduled, by
+   the reference model's step rule (`mortgageReference.ts:406-410`). For B the reference
+   model gives 0; a loan of A it refuses as invalid input (`:246-253`), and with that
+   guard lifted its step rule gives the replay's figure. Such loans can show a different
+   debt:
+   - **A.** An instalment at or below the month's interest opens before its maturity at
+     the principal (no payment repaid any principal, and none added interest to the
+     balance), and on or after its maturity at 0 (as B).
    - **B.** A loan viewed on or after its maturity opens at 0: the payment at maturity
      cleared it, so there is no month-1 balloon.
 
-   Debt, debt service, equity, net worth and the IRR of such a loan change accordingly.
+   Debt, debt service, equity, net worth and the IRR of such a loan change accordingly,
+   and so does the interest its prepayments save (`prepaymentInterestSaved`), even when a
+   past prepayment keeps its own opening unchanged: the comparison loan without the
+   prepayments is a case A or B loan with no past event, which is now replayed.
 
 ## Measured
 
@@ -89,14 +102,18 @@ loans (each in three scenarios and at five baseDates), and 32,000 random plain l
 
 - One opening method for every running loan: `plainOpening` is the replay without the
   tranche count; its unused `prevRate` is dropped (#532 review).
-- `currentBalance` stays in `amortization.ts`, marked `@internal`, for the tests that pin
-  it (the frozen golden v1 edge-loan balances among them); no engine path calls it.
+- `currentBalance` is deleted from `amortization.ts` and moves unchanged to the test-only
+  `src/engine/__tests__/support/closedForm.ts`, for the tests that pin it (the frozen
+  golden v1 edge-loan balances, `asof-snapshot.test.ts`, `reference/edgeCases.test.ts`);
+  the v1 snapshot stays byte-identical.
 - Two full-precision characterisation pins move in their last digits and are re-recorded:
   the cash-outside cumulative cash flows (`cash-outside-net-cf.test.ts`); the floating
   block's opening (ADR 0162) is pinned against the same loan still in its fixation
   instead of the closed form (`amortization.test.ts`).
 - Recompute p99 rises (the replay walks every past payment) and stays under its 150 ms
   budget.
-- A user with a loan of case A or B sees the debt the reference model agrees with. A real
+- A user with a loan of case B sees the debt the reference model gives (0); one with a
+  loan of case A sees the figure of the reference model's step rule, a loan the reference
+  model itself refuses as invalid input. A real
   Czech annuity loan always has an instalment that repays it by maturity, so this takes a
   typo or an interest-only arrangement entered as a plain loan.
