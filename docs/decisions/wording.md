@@ -183,3 +183,18 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 - Rejected: keeping a hand-written label beside the value, because it repeats the value
   and does not follow the app's percent format.
 - Approved by: owner, 2026-11-18 (#435 comment 6965976270)
+
+### 2026-11-18 · PR #529 review / #435
+
+- Keys: `projections.yearSpan` (en, cs, ru)
+- Change: the spaces around the en dash in the projection years' month range are no-break
+  spaces (U+00A0, as `src/lib/format.ts` uses), so the Projections page subtitle and the
+  property page's projection hint no longer wrap inside the range ("Jul" / "– Jun" at
+  1280 px, PR #529 review). The words are unchanged. The text is not an accessible name or
+  a live region: it is the page subtitle and a panel hint.
+- Rejected: also changing the year spans built in `periodLabelLocalized`
+  (`src/ui/model/projection.ts`: the Year cell's tooltip and screen-reader text, the
+  export's Period column, the Dashboard and Properties as-of lines), because they are not
+  dictionary text, some are screen-reader text or export cells that need an ADR, and the
+  decision covers the range label only.
+- Approved by: owner, 2026-11-18 (#435 comment 6965976270, item "#529")

@@ -20,19 +20,19 @@ const calendar = isoDate("2025-12-15");
 describe("yearSpanNote (ADR 0211 §2)", () => {
   it("names the months a projection year runs from and to", () => {
     expect(yearSpanNote(en, base)).toBe(
-      "years run Jul – Jun, named by the year they end",
+      "years run Jul\u00A0–\u00A0Jun, named by the year they end",
     );
     expect(yearSpanNote(en, isoDate("2026-01-15"))).toBe(
-      "years run Feb – Jan, named by the year they end",
+      "years run Feb\u00A0–\u00A0Jan, named by the year they end",
     );
   });
 
   it("is translated", () => {
     expect(yearSpanNote(cs, base)).toBe(
-      `projekční roky ${cs.monthsShort[6]} – ${cs.monthsShort[5]}, označené rokem, kdy končí`,
+      `projekční roky ${cs.monthsShort[6]}\u00A0–\u00A0${cs.monthsShort[5]}, označené rokem, kdy končí`,
     );
     expect(yearSpanNote(ru, base)).toBe(
-      `годы прогноза ${ru.monthsShort[6]} – ${ru.monthsShort[5]}, по году окончания`,
+      `годы прогноза ${ru.monthsShort[6]}\u00A0–\u00A0${ru.monthsShort[5]}, по году окончания`,
     );
   });
 
@@ -44,10 +44,10 @@ describe("yearSpanNote (ADR 0211 §2)", () => {
 describe("projectionsPageSubtitle and projectionPanelHint (ADR 0211 §2)", () => {
   it("end with the span note", () => {
     expect(projectionsPageSubtitle(en, "nominal", base)).toBe(
-      "Year-by-year · nominal Kč · flows per year, balances at year end · years run Jul – Jun, named by the year they end",
+      "Year-by-year · nominal Kč · flows per year, balances at year end · years run Jul\u00A0–\u00A0Jun, named by the year they end",
     );
     expect(projectionPanelHint(en, "nominal Kč", base)).toBe(
-      "nominal Kč · years run Jul – Jun, named by the year they end",
+      "nominal Kč · years run Jul\u00A0–\u00A0Jun, named by the year they end",
     );
   });
 

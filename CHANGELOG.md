@@ -173,6 +173,9 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- The projection years' month range ("Jul – Jun") in the Projections subtitle and the
+  property page's projection hint no longer wraps at the spaces around the dash (#529
+  review, wording log 2026-11-18). No figure changes.
 - A database that has lost its assumptions row is no longer repaired with the sample's
   assumptions at launch, which replaced your own without telling you. The app now stops at
   startup on the existing error screen, naming the missing record, and offers Restore a

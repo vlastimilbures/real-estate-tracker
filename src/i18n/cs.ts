@@ -808,7 +808,7 @@ export const cs: Dictionary = {
     nominalKc: "nominální Kč",
     periodNote: "toky za rok, zůstatky ke konci roku",
     yearSpan: (from, to) =>
-      `projekční roky ${from} – ${to}, označené rokem, kdy končí`,
+      `projekční roky ${from}\u00A0–\u00A0${to}, označené rokem, kdy končí`,
     portfolio: "Portfolio",
     entity: "Portfolio nebo nemovitost",
   },
