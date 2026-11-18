@@ -6,7 +6,6 @@ import { parseMortgages, parseProperties } from "../csv";
 const PH = "name,size_m2,purchase_date,purchase_price";
 const MH =
   "property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment,loan_term_years";
-const KNOWN = new Set(["A"]);
 
 /** One property row's errors (the cells after the name). */
 const property = (size: string, date = "2020-01-01", price = "100") =>
@@ -16,7 +15,6 @@ const property = (size: string, date = "2020-01-01", price = "100") =>
 const mortgage = (fixation: string, term: string, rate = "0.05") =>
   parseMortgages(
     `${MH}\nA,2020-01-01,1000000,${fixation},${rate},6000,${term}\n`,
-    KNOWN,
   ).errors;
 
 const err = (row: number, field: string, error: object) => [

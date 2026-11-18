@@ -74,56 +74,22 @@ export function Import() {
   const [confirming, setConfirming] = useState(false);
   const { showToast } = useToast();
 
-  // FK-aware parsers: check child rows against known property names. Read from the
-  // stored portfolio, not the engine, so Import opens even when stored data breaks an
-  // engine rule (ADR 0146).
-  const storedNames = (portfolio?.properties ?? []).map((p) => p.name);
-  function knownNames(): Set<string> {
-    const fromDb = new Set<string>(storedNames);
-    const fromCsv = properties?.result.rows.map((r) => r.name) ?? [];
-    return new Set([...fromDb, ...fromCsv]);
-  }
-
+  // Each file is parsed once, on its own. Whether a child row's property exists is the
+  // import plan's check, at the preview and at the click (ADR 0254).
   function handleProperties(name: string, bytes: Uint8Array) {
-    const result = parseProperties(bytes);
-    setProperties({ name, bytes, result });
-    // Re-validate children FK with updated known names
-    const newNames = new Set([
-      ...storedNames,
-      ...result.rows.map((r) => r.name),
-    ]);
-    if (valuations)
-      setValuations({
-        ...valuations,
-        result: parseValuations(valuations.bytes, newNames),
-      });
-    if (rents)
-      setRents({ ...rents, result: parseRents(rents.bytes, newNames) });
-    if (mortgages)
-      setMortgages({
-        ...mortgages,
-        result: parseMortgages(mortgages.bytes, newNames),
-      });
+    setProperties({ name, result: parseProperties(bytes) });
   }
 
   function handleValuations(name: string, bytes: Uint8Array) {
-    setValuations({
-      name,
-      bytes,
-      result: parseValuations(bytes, knownNames()),
-    });
+    setValuations({ name, result: parseValuations(bytes) });
   }
 
   function handleRents(name: string, bytes: Uint8Array) {
-    setRents({ name, bytes, result: parseRents(bytes, knownNames()) });
+    setRents({ name, result: parseRents(bytes) });
   }
 
   function handleMortgages(name: string, bytes: Uint8Array) {
-    setMortgages({
-      name,
-      bytes,
-      result: parseMortgages(bytes, knownNames()),
-    });
+    setMortgages({ name, result: parseMortgages(bytes) });
   }
 
   const hasAnyFile = !!(properties || valuations || rents || mortgages);

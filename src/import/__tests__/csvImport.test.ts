@@ -266,7 +266,6 @@ describe("importCsv — matching and preserved fields", () => {
       ).rows,
       valuations: parseValuations(
         `property_name,valid_from,valid_to,market_value\n${nfc},2026-01-01,,9000000`,
-        new Set([nfc, nfd]),
       ).rows,
     });
     expect(
@@ -468,10 +467,7 @@ describe("importCsv — generated ids never collide (DR-137)", () => {
   it("re-importing a date whose generated id is taken gets a fresh id", async () => {
     const VH = "property_name,valid_from,valid_to,market_value";
     await importNow(sql, {
-      valuations: parseValuations(
-        `${VH}\nByt A,2026-06-01,,12000000`,
-        new Set(["Byt A"]),
-      ).rows,
+      valuations: parseValuations(`${VH}\nByt A,2026-06-01,,12000000`).rows,
     });
     sql.db
       .prepare(
@@ -479,10 +475,7 @@ describe("importCsv — generated ids never collide (DR-137)", () => {
       )
       .run();
     const report = await importNow(sql, {
-      valuations: parseValuations(
-        `${VH}\nByt A,2026-06-01,,12500000`,
-        new Set(["Byt A"]),
-      ).rows,
+      valuations: parseValuations(`${VH}\nByt A,2026-06-01,,12500000`).rows,
     });
     expect(report.items.map((i) => i.kind)).toEqual(["add"]);
     const rows = sql.db

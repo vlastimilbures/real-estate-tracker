@@ -114,15 +114,15 @@
   },
   "src/ui/pages/Import.tsx": {
     "complexity": {
-      "Function 'Import'": 28
+      "Function 'Import'": 26
     },
     "lines": {
-      "Function 'Import'": 236
+      "Function 'Import'": 205
     }
   },
   "src/ui/pages/ImportPanels.tsx": {
     "complexity": {
-      "Function 'csvErrorText'": 23
+      "Function 'csvErrorText'": 22
     }
   },
   "src/ui/pages/Properties.tsx": {
