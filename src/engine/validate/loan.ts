@@ -5,7 +5,7 @@ import { isAfter, isOnOrBefore } from "../dates";
 import type { MortgageBlock } from "../types";
 import {
   DATA_ERROR_CODES,
-  LOAN_ERROR_CODES,
+  raisedByLoanGate,
   type EngineValidationError,
   type ValidationCode,
 } from "./codes";
@@ -14,7 +14,7 @@ import {
   checkAmount,
   checkFields,
   checkSigns,
-  isNegative,
+  isNegativeAmount,
   notPositive,
   outsideUnit,
   raise,
@@ -101,8 +101,8 @@ const LOAN_SIGNS: readonly SignRule<
   MortgageBlock,
   "initialPrincipal" | "monthlyInstalment" | "interestRatePa"
 >[] = [
-  ["initialPrincipal", isNegative, "NEGATIVE_PRINCIPAL"],
-  ["monthlyInstalment", isNegative, "NEGATIVE_AMOUNT"],
+  ["initialPrincipal", isNegativeAmount, "NEGATIVE_PRINCIPAL"],
+  ["monthlyInstalment", isNegativeAmount, "NEGATIVE_AMOUNT"],
   ["interestRatePa", outsideUnit, "RATE_OUT_OF_RANGE"],
 ];
 
@@ -133,13 +133,13 @@ export function blockIssues(b: MortgageBlock): Issue[] {
   return issues;
 }
 
-/** The block's problems with one of `codes`, as errors on the block. */
+/** The block's problems a gate raises, as errors on the block. */
 function blockErrors(
   b: MortgageBlock,
-  codes: ReadonlySet<ValidationCode>,
+  raised: (code: ValidationCode, field: string | undefined) => boolean,
 ): EngineValidationError[] {
   return blockIssues(b)
-    .filter(([code]) => codes.has(code))
+    .filter(([code, field]) => raised(code, field))
     .map(([code, field, index]) =>
       rowError("mortgage", b.id, code, field, index),
     );
@@ -148,10 +148,11 @@ function blockErrors(
 /**
  * Raise an EngineInputError when a loan the engine is about to compute has a D-17
  * problem, instead of letting it become a NaN term, an endless schedule or vanished
- * debt (DR-014, DR-018, DR-043). Every D-17 problem of the block is listed.
+ * debt (DR-014, DR-018, DR-043). Every D-17 problem of the block is listed, and a
+ * non-finite principal or instalment (ADR 0251 §2).
  */
 export function assertLoanInputs(block: MortgageBlock): void {
-  raise(blockErrors(block, LOAN_ERROR_CODES));
+  raise(blockErrors(block, raisedByLoanGate));
 }
 
 /**
@@ -160,6 +161,7 @@ export function assertLoanInputs(block: MortgageBlock): void {
  */
 export function assertLoanRows(blocks: MortgageBlock[]): void {
   const errors: EngineValidationError[] = [];
-  for (const b of blocks) errors.push(...blockErrors(b, DATA_ERROR_CODES));
+  for (const b of blocks)
+    errors.push(...blockErrors(b, (code) => DATA_ERROR_CODES.has(code)));
   raise(errors);
 }

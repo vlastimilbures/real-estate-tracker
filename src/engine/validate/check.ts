@@ -74,9 +74,6 @@ export const belowGrowthFloor = (d: Decimal | undefined) =>
 export const isNegativeAmount = (d: Decimal | undefined) =>
   d !== undefined && d.isFinite() && d.isNegative();
 
-/** Below zero, unguarded: for a required amount, so −Infinity reports here as well as
- *  NON_FINITE_NUMBER (kept as it is, #479). */
-export const isNegative = (d: Decimal) => d.isNegative();
 export const notPositive = (d: Decimal) => !d.greaterThan(ZERO);
 
 /** Finite-number / valid-date checks over an object's fields: the dates, then the

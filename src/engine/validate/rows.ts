@@ -13,7 +13,6 @@ import {
   checkCostRanges,
   checkFields,
   checkSigns,
-  isNegative,
   isNegativeAmount,
   rowError,
   rowReporter,
@@ -35,7 +34,7 @@ function checkDated(
   if (badDate(start)) report("INVALID_DATE", fields[0]);
   if (badDate(end)) report("INVALID_DATE", fields[1]);
   if (end && isAfter(start, end)) report("END_BEFORE_START", fields[1]);
-  checkAmount(amount, isNegative, "NEGATIVE_AMOUNT", (code) =>
+  checkAmount(amount, isNegativeAmount, "NEGATIVE_AMOUNT", (code) =>
     report(code, fields[2]),
   );
 }
@@ -60,7 +59,7 @@ const FUNDING_SIGNS: readonly SignRule<
 );
 
 const PRICE_SIGNS: readonly SignRule<Property, "purchasePrice">[] = [
-  ["purchasePrice", isNegative, "NEGATIVE_AMOUNT"],
+  ["purchasePrice", isNegativeAmount, "NEGATIVE_AMOUNT"],
 ];
 
 const GROWTH_OVERRIDES: readonly SignRule<

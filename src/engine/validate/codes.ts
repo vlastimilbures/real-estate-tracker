@@ -112,3 +112,22 @@ export const ENTRY_ERROR_CODES = codesRaisedBy("data", "range");
 
 /** The invalid-loan codes the engine raises on (D-17, D-36). */
 export const LOAN_ERROR_CODES = codesRaisedBy("loan");
+
+/** A loan's own amounts: NON_FINITE_NUMBER on one of them is also a "loan" problem, so
+ *  `assertLoanInputs` refuses the loan instead of computing it (ADR 0251 §2). */
+const LOAN_AMOUNT_FIELDS: ReadonlySet<string | undefined> = new Set([
+  "initialPrincipal",
+  "monthlyInstalment",
+]);
+
+/** True when the "loan" gate raises `code` on `field`: a loan code, or a non-finite
+ *  loan amount (ADR 0251 §2). */
+export function raisedByLoanGate(
+  code: ValidationCode,
+  field: string | undefined,
+): boolean {
+  return (
+    LOAN_ERROR_CODES.has(code) ||
+    (code === "NON_FINITE_NUMBER" && LOAN_AMOUNT_FIELDS.has(field))
+  );
+}
