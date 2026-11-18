@@ -4,9 +4,10 @@
 - Date: 2026-11-16
 - Source: issue #452 (code review 2026-11, tracking #435; finding ED-08), owner decision
   2026-11-16, option A
-- Amends: [0149](0149-calendar-days.md) §5 (stored dates before 1900 no longer warn)
+- Amends: [0149](0149-calendar-days.md) §5 (stored dates before 1900 no longer warn),
+  [0180](0180-data-check-restore-asof-polish.md) §3 (the early-date finding it refined is
+  removed)
 - Related: [0148](0148-restore-rules-vs-stored-data.md) (restore rules vs stored data),
-  [0180](0180-data-check-restore-asof-polish.md) §3 (an early mortgage date names its loan),
   [0118](0118-data-check.md) (data check)
 
 ## Context
