@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-06
 - Source: issue #125 (R4-05, R5-07), Track 10 PR 10.2
+- Amended by: [0248](0248-focus-after-busy-actions.md) (§3: a failed Assumptions save with
+  nothing listed puts focus back on Save)
 - Related: [0095](0095-assumptions-save-row.md) (Assumptions error summary),
   [0123](0123-scenario-rules-every-entry-point.md) (a scenario refusal stays in the form),
   [0128](0128-assumption-bounds.md) §6 (an assumptions edit that breaks a saved scenario),

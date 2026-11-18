@@ -8,6 +8,11 @@ import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import type { MutationResult } from "../../state/portfolioStore";
 import { layerOpen } from "../hooks/useModalA11y";
+import {
+  focusableFromScript,
+  pageTitle,
+  useBusyFocus,
+} from "../hooks/useBusyFocus";
 
 export function EntityTable<T extends { id: string }>({
   label,
@@ -96,18 +101,13 @@ function focusPanelAfter(
   const active = document.activeElement;
   const lost = !active || active === document.body || !!row?.contains(active);
   if (!lost) return;
-  const target = panel?.isConnected
-    ? panel
-    : document.querySelector<HTMLElement>(".topbar .page-title");
-  if (!target) return;
-  if (!target.hasAttribute("tabindex")) {
-    target.tabIndex = -1;
-    target.addEventListener("blur", () => target.removeAttribute("tabindex"), {
-      once: true,
-    });
-  }
-  target.focus();
+  const target = panel?.isConnected ? focusableFromScript(panel) : pageTitle();
+  target?.focus();
 }
+
+/** A confirm row's Cancel, its last button: the safe choice (ADR 0143). */
+const cancelButton = (row: HTMLElement | null) =>
+  [...(row?.querySelectorAll("button") ?? [])].at(-1) ?? null;
 
 /** The one inline confirm for a destructive action (ADR 0143). It runs `onConfirm` and
  *  stays open with the reason when the write fails (UX-050); the caller closes it on
@@ -129,9 +129,11 @@ export function ConfirmRow({
   onCancel: () => void;
 }) {
   const tr = useT();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const rowRef = useRef<HTMLDivElement>(null);
+  // A failed write puts focus on Cancel (ADR 0248 §1). A successful one keeps the row
+  // busy until the caller closes it, so focus follows the row instead (ADR 0173).
+  const [busy, setBusy] = useBusyFocus(() => cancelButton(rowRef.current));
+  const [error, setError] = useState<string | null>(null);
   const opener = useRef<HTMLElement | null>(null);
   const messageId = useId();
   // The panel that holds the row, found while the row is on the page (a cleanup runs
@@ -147,9 +149,8 @@ export function ConfirmRow({
     // focus back on the trigger, so that is what is remembered here.
     if (document.activeElement instanceof HTMLElement)
       opener.current = document.activeElement;
-    // Cancel, the last button: the safe choice, so a held Enter on the trigger cannot
-    // reach the destructive one (ADR 0143).
-    [...(rowRef.current?.querySelectorAll("button") ?? [])].at(-1)?.focus();
+    // Cancel, so a held Enter on the trigger cannot reach the destructive one (ADR 0143).
+    cancelButton(rowRef.current)?.focus();
   }, []);
   useEffect(() => {
     mounted.current = true;

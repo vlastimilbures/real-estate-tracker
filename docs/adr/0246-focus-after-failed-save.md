@@ -7,6 +7,8 @@
   the 2026-11-16 night run
 - Amends: [0207](0207-holding-costs-read-view.md) §3 (a failed write keeps the form open,
   and now also keeps focus on Save)
+- Amended by: [0248](0248-focus-after-busy-actions.md) (§5: the one hook serves every
+  busy button; `useSaveBusy` is built on it)
 - Related: [0141](0141-form-errors-stay-in-form.md) §6 (the failure line above the buttons,
   `role="alert"`), [0123](0123-scenario-rules-every-entry-point.md) (a refused scenario
   save stays in the form), [0241](0241-property-form-keeps-input.md) (the property form

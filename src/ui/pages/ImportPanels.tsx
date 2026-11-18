@@ -427,3 +427,76 @@ export function ImportSummary({
     </div>
   );
 }
+
+/** The Import button's id: focus returns to it after an import (ADR 0248 §3). */
+export const IMPORT_BUTTON = "import-run";
+
+/** Import and its overwrite/replace confirm (ADR 0096, ADR 0160). `scope` is the number
+ *  of records a valid plan writes, or null without one. */
+export function ImportActions({
+  scope,
+  counts,
+  importing,
+  disabled,
+  confirming,
+  onRun,
+  onCancel,
+}: {
+  scope: number | null;
+  counts: { added: number; updated: number; replacing: number };
+  importing: boolean;
+  disabled: boolean;
+  confirming: boolean;
+  /** Start the import; `confirmed` once the overwrite confirm was answered. */
+  onRun: (confirmed: boolean) => void;
+  onCancel: () => void;
+}) {
+  const t = useT();
+  return (
+    <>
+      <div className="row row-s3">
+        <Button
+          id={IMPORT_BUTTON}
+          variant="primary"
+          disabled={disabled}
+          onClick={() => onRun(false)}
+        >
+          {importing
+            ? t.importPage.importing
+            : scope !== null
+              ? t.importPage.importScope(scope, counts.added, counts.updated)
+              : t.importPage.importSelected}
+        </Button>
+      </div>
+      {confirming && (
+        <div className="confirm-row">
+          <div className="confirm-row-content">
+            {counts.updated > 0 && (
+              <span className="confirm-msg">
+                {t.importPage.confirmOverwriteMsg(counts.updated)}
+              </span>
+            )}
+            {counts.replacing > 0 && (
+              <span className="confirm-msg">
+                {t.importPage.confirmReplaceMsg(counts.replacing)}
+              </span>
+            )}
+            <Button
+              size="sm"
+              variant="danger"
+              disabled={importing}
+              onClick={() => onRun(true)}
+            >
+              {counts.updated > 0
+                ? t.importPage.confirmOverwrite(counts.updated)
+                : t.importPage.confirmReplace}
+            </Button>
+            <Button size="sm" disabled={importing} onClick={onCancel}>
+              {t.common.cancel}
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

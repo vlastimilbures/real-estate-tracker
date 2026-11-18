@@ -1,6 +1,6 @@
 // The confirm step of a restore: what the chosen backup holds, its out-of-range values,
 // and Cancel / Restore. Shared by Settings → Backup and the startup error screen (#115).
-import { Fragment } from "react";
+import { Fragment, useId } from "react";
 import { Button, TableWrap } from "./primitives";
 import {
   SCHEMA_HEAD,
@@ -12,6 +12,7 @@ import { useT } from "../hooks/useT";
 import { restoreIssueText } from "../model/restoreIssue";
 import { fmtDate } from "../../lib/format";
 import { localDay } from "../../lib/day";
+import { useFocusAfterBusy } from "../hooks/useBusyFocus";
 
 /** The records of a refused backup, or (`warning`) the out-of-range values a restore asks
  *  about (ADR 0148). */
@@ -102,6 +103,12 @@ export function RestoreConfirm({
   onConfirm: () => void;
 }) {
   const t = useT();
+  const cancelId = useId();
+  // A failed restore puts focus on Cancel (ADR 0248 §1); a successful one closes the
+  // confirm and the caller places focus.
+  const remember = useFocusAfterBusy(restoring, () =>
+    document.getElementById(cancelId),
+  );
   return (
     <div>
       <p style={{ marginBottom: "var(--s4)" }}>
@@ -118,10 +125,17 @@ export function RestoreConfirm({
         {t.backup.restoreWarning}
       </p>
       <div className="row row-s3">
-        <Button onClick={onCancel} disabled={restoring}>
+        <Button id={cancelId} onClick={onCancel} disabled={restoring}>
           {t.common.cancel}
         </Button>
-        <Button variant="danger" onClick={onConfirm} disabled={restoring}>
+        <Button
+          variant="danger"
+          onClick={() => {
+            remember();
+            onConfirm();
+          }}
+          disabled={restoring}
+        >
           {restoring
             ? t.backup.restoring
             : pending.warnings.length > 0

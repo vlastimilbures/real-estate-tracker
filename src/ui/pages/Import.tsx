@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { AppShell } from "../components/AppShell";
-import { Panel, Button, ErrorBanner } from "../components/primitives";
+import { Panel, ErrorBanner } from "../components/primitives";
 import {
   parseProperties,
   parseValuations,
@@ -25,13 +25,27 @@ import { describeWriteError } from "../model/writeError";
 import { importCounts } from "../model/importPreview";
 import { toWriteError } from "../../state/writeError";
 import { useToast } from "../hooks/useToast";
+import { useBusyFocus, type BusyFocusTarget } from "../hooks/useBusyFocus";
 
 import {
+  IMPORT_BUTTON,
+  ImportActions,
   ImportFilesPanel,
   ImportSummary,
   RefusedTable,
   type FileState,
 } from "./ImportPanels";
+
+const REPORT_HEADING = "import-report-title";
+
+/** Where focus goes once an import ends (ADR 0248 §2–§3). A success clears the files and
+ *  with them the Import panel: the report heading. Otherwise Import, also after the
+ *  overwrite confirm that left; the panel heading when a refused plan disabled Import. */
+const afterImport: BusyFocusTarget = (_trigger, panel) => {
+  if (!panel?.isConnected) return document.getElementById(REPORT_HEADING);
+  const run = document.getElementById(IMPORT_BUTTON);
+  return run && !run.matches(":disabled") ? run : panel.querySelector("h2");
+};
 
 export function Import() {
   const t = useT();
@@ -51,7 +65,7 @@ export function Import() {
   const [rents, setRents] = useState<FileState<ParsedRentRow> | null>(null);
   const [mortgages, setMortgages] =
     useState<FileState<ParsedMortgageRow> | null>(null);
-  const [importing, setImporting] = useState(false);
+  const [importing, setImporting] = useBusyFocus(afterImport);
   const [preview, setPreview] = useState<CsvImportPreview | null>(null);
   // Why the last preview failed (ADR 0147); translated at render, like the import failure's notice.
   const [previewFailure, setPreviewFailure] = useState<{
@@ -279,61 +293,20 @@ export function Import() {
               )}
             </div>
           )}
-          <div className="row row-s3">
-            <Button
-              variant="primary"
-              disabled={!canImport || confirming}
-              onClick={() => void runImport(false)}
-            >
-              {importing
-                ? t.importPage.importing
-                : planOk && toWrite > 0
-                  ? t.importPage.importScope(
-                      toWrite,
-                      counts.added,
-                      counts.updated,
-                    )
-                  : t.importPage.importSelected}
-            </Button>
-          </div>
-          {confirming && (
-            <div className="confirm-row">
-              <div className="confirm-row-content">
-                {counts.updated > 0 && (
-                  <span className="confirm-msg">
-                    {t.importPage.confirmOverwriteMsg(counts.updated)}
-                  </span>
-                )}
-                {counts.replacing > 0 && (
-                  <span className="confirm-msg">
-                    {t.importPage.confirmReplaceMsg(counts.replacing)}
-                  </span>
-                )}
-                <Button
-                  size="sm"
-                  variant="danger"
-                  disabled={importing}
-                  onClick={() => void runImport(true)}
-                >
-                  {counts.updated > 0
-                    ? t.importPage.confirmOverwrite(counts.updated)
-                    : t.importPage.confirmReplace}
-                </Button>
-                <Button
-                  size="sm"
-                  disabled={importing}
-                  onClick={() => setConfirming(false)}
-                >
-                  {t.common.cancel}
-                </Button>
-              </div>
-            </div>
-          )}
+          <ImportActions
+            scope={planOk && toWrite > 0 ? toWrite : null}
+            counts={counts}
+            importing={importing}
+            disabled={!canImport || confirming}
+            confirming={confirming}
+            onRun={(confirmed) => void runImport(confirmed)}
+            onCancel={() => setConfirming(false)}
+          />
         </Panel>
       )}
 
       {lastImport && (
-        <Panel title={t.importPage.reportTitle}>
+        <Panel title={t.importPage.reportTitle} headingId={REPORT_HEADING}>
           <ImportSummary
             items={lastImport.items}
             mode="report"

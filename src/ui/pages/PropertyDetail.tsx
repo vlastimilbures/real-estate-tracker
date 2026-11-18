@@ -59,6 +59,7 @@ import { useT } from "../hooks/useT";
 import type { Dictionary } from "../../i18n";
 import { useAsOf } from "../hooks/useAsOf";
 import { useSectionSpy } from "../hooks/useSectionSpy";
+import { pressed, useBusyFocus } from "../hooks/useBusyFocus";
 import {
   isFormTarget,
   propertySections,
@@ -115,7 +116,9 @@ export function PropertyDetail() {
     if (!opener.isConnected) focusSection(sectionId("acquisition"));
   }, [editing]);
   const [confirmingDeactivate, setConfirmingDeactivate] = useState(false);
-  const [toggling, setToggling] = useState(false);
+  // Activate gets focus back after any outcome; a success leaves the same button, now
+  // Deactivate (ADR 0248 §2–§3).
+  const [toggling, setToggling] = useBusyFocus(pressed);
   const [activeError, setActiveError] = useState<string | null>(null);
   const { showToast } = useToast();
   const property = store.portfolio?.properties.find((p) => p.id === propertyId);

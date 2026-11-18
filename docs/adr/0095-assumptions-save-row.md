@@ -3,7 +3,9 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issue #19 (pre-release review 2026-10, findings A04 and F4)
-- Amended by: [0221](0221-settings-top-bar.md) (Save/Discard in the top bar)
+- Amended by: [0221](0221-settings-top-bar.md) (Save/Discard in the top bar),
+  [0248](0248-focus-after-busy-actions.md) (§4: a failed save with nothing listed puts
+  focus back on Save)
 
 ## Context
 
