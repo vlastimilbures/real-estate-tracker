@@ -37,6 +37,11 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- A CSV row that names an unknown property is reported once, in the Import page's
+  "Nothing was imported" list, instead of also as an error in its file's table; a row
+  whose property's own `properties.csv` row has an error no longer gets a second error
+  for it. A misspelt name now shows once the files' own errors are fixed (ADR 0254,
+  #482). Nothing more is imported than before. No figure changes.
 - A loan's balance at the projection start is always worked out by replaying its payments
   month by month; the shortcut formula is gone (ADR 0235, #449). No figure changes for an
   ordinary loan. A loan entered with an explicit term and an instalment too small for it
