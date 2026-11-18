@@ -7,7 +7,7 @@ import { powYears } from "../../lib/money";
 import { edate, isoDate } from "../dates";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
-import { currentBalance } from "../amortization";
+import { currentBalance } from "./support/closedForm";
 import {
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedules,

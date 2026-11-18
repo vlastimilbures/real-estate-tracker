@@ -304,25 +304,6 @@ export function amortizationHealth(block: MortgageBlock): AmortizationHealth {
 }
 
 /**
- * Outstanding balance of a block as of `asOf` after every payment due by then
- * (D-21), using the *original* rate & instalment, so it holds only before any refix.
- * Floored at 0. Not on the opening path since ADR 0235 (the schedule replays the
- * payments); kept for the tests that pin it, the frozen golden v1 among them.
- * @internal
- */
-export function currentBalance(block: MortgageBlock, asOf: Date): Decimal {
-  const n = paymentsDueBy(block, asOf);
-  if (n <= 0) return block.initialPrincipal;
-  const bal = FV(
-    block.interestRatePa.div(12),
-    n,
-    block.monthlyInstalment.negated(),
-    block.initialPrincipal,
-  ).negated();
-  return bal.isNegative() ? ZERO : bal;
-}
-
-/**
  * True when the block uses development-loan features — gradual tranche draws or an
  * interest-only-until-completion period. Plain single-draw loans return false and
  * take `buildSchedule`'s legacy path verbatim (the parity gate).
