@@ -10,7 +10,8 @@
   [0157](0157-accessibility-batch.md) (decision 2: when the opener is gone, focus falls back
   to the nearest connected element)
 - Amended by: [0253](0253-row-actions-disabled-while-writing.md) (§1 replaced: row actions
-  are disabled while a write runs; §5: the race tests for §1 are removed)
+  are disabled while a write runs; its race tests and §2's "opened meanwhile" focus test
+  removed)
 - Related: [0142](0142-row-switch-guard-busy-dialog.md) (row-switch guard),
   [0107](0107-property-section-nav.md) (section headings take focus)
 
@@ -47,7 +48,9 @@ stays usable meanwhile (ADR 0142 keeps the other rows reachable). Four gaps foll
    gone (the last property deleted, the page shows its empty state), focus moves to the
    page title, the app shell's `h1`. Either takes focus from script only: `tabIndex=-1` is
    set just before the focus and removed again on blur. Focus moves only when it was lost
-   (on `<body>` or still in the row), so a row or form opened meanwhile keeps it. The focus
+   (on `<body>` or still in the row), so a row or form opened meanwhile keeps it (that
+   case can no longer happen since ADR 0253: row actions are disabled while a write runs;
+   focus the user moved elsewhere still keeps it). The focus
    ring shows for keyboard focus only (`:focus-visible`), like the panel headings. The
    section is unnamed by design: a named `section` is a region landmark, and a record
    panel's table is already a region named by the panel's title, which axe's

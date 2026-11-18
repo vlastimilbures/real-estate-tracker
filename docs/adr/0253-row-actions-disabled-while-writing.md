@@ -4,9 +4,9 @@
 - Date: 2026-11-18
 - Source: issue #444 (code review 2026-11, "Small ones to decide here", item 2); owner
   decision 2026-11-18 (#435 comment 6965976270); tracking #435
-- Amends: [0173](0173-record-panel-races-confirm-focus.md) §1 (replaced: no late write
-  can close a row opened meanwhile, because no row can open meanwhile) and §5 (the race
-  tests for §1 are removed)
+- Amends: [0173](0173-record-panel-races-confirm-focus.md) §1 replaced (no late write
+  can close a row opened meanwhile, because no row can open meanwhile); its race tests and
+  §2's "opened meanwhile" focus test removed
 - Related: [0142](0142-row-switch-guard-busy-dialog.md) (the row-switch guard, unchanged),
   [0248](0248-focus-after-busy-actions.md) (focus after a busy action, unchanged),
   [0199](0199-icon-only-row-actions.md) (icon-only row actions and their disabled style),
@@ -85,10 +85,13 @@ to prevent it instead of handling it.
    Delete are `WriteRowAction`s too, so either condition disables them; ADR 0248's
    Duplicate focus tests stub the store write and rely on the busy flag.
 5. **Focus.** A row action pressed for a write it starts (Duplicate) loses focus to
-   `<body>` while it is disabled, and gets it back once the write ends (ADR 0248 §2). A row
-   action that only opens something (Edit, Delete) is disabled only while another write
-   runs; a keyboard user resting on it then loses focus to `<body>`, as with any other
-   button disabled under focus.
+   `<body>` while it is disabled, and gets it back once the write ends (ADR 0248 §2). An
+   Edit that opens a dialog form (scenario Edit, Properties Edit) stays on the page behind
+   the dialog, so it is disabled during that form's save too; the dialog's focus return
+   still finds it enabled, because the count falls before the save's caller resumes, the
+   same ordering Duplicate relies on. A row action resting under keyboard focus while
+   another write runs loses focus to `<body>`, as with any other button disabled under
+   focus.
 
 Delegated by the owner (2026-11-18) and recorded here: the eight tests removed, the two
 still-passing ones kept, the new lost-focus test, the Scenarios busy flag kept beside the
