@@ -157,8 +157,29 @@ jobs:
       - name: Set up pnpm, Node and dependencies
         uses: ./.github/actions/setup
 
+      # The browser is cached by Playwright version (#496): a hit skips the download and
+      # installs only the system libraries, which live outside the cache.
+      - name: Read the Playwright version
+        id: playwright
+        # `playwright --version` prints "Version 1.2.3".
+        run: |
+          version=$(pnpm exec playwright --version)
+          echo "version=${version#Version }" >> "$GITHUB_OUTPUT"
+
+      - name: Cache the Playwright browser
+        id: playwright-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
       - name: Install Playwright browser
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
 
       # English, light + dark, default and minimum window (owner, ADR 0078).
       - name: Capture screens with axe scans

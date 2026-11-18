@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { MAX_SLACK } from "../check-coverage-ratchet.mjs";
 import {
+  CI_SETUP,
   GATES,
   LAYOUT_TAG,
   ciDrift,
@@ -267,6 +268,25 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
   it("runs every gate that is not nightly, exactly, with its env", () => {
     expect(ciDrift(ci)).toEqual([]);
   });
+
+  // A miss installs the browser with its libraries, a hit the libraries alone (#496).
+  it.each([".github/workflows/ci.yml", ".github/workflows/e2e.yml"])(
+    "%s installs the Playwright browser from a cache keyed on its version",
+    (file) => {
+      const steps = workflowSteps(read(file));
+      const line = (l) => steps.find((s) => s.lines.includes(l));
+      const [install, deps] = CI_SETUP;
+      expect(line(install).if).toBe(
+        "steps.playwright-cache.outputs.cache-hit != 'true'",
+      );
+      expect(line(deps).if).toBe(
+        "steps.playwright-cache.outputs.cache-hit == 'true'",
+      );
+      expect(read(file)).toContain(
+        "key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}",
+      );
+    },
+  );
 
   it("selects the Czech / Russian layout screens by the harness's tag (#496)", async () => {
     const { LAYOUT_TAG: harnessTag } =

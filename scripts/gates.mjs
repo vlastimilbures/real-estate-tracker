@@ -328,7 +328,12 @@ export function runGates(gates, { exec = shell, log = console.log } = {}) {
 }
 
 // ci.yml lines that set a job up and are no gate (the install is in .github/actions/setup).
-export const CI_SETUP = ["pnpm exec playwright install --with-deps chromium"];
+// The Playwright browser comes from the cache when it can (#496): a miss downloads it with
+// its system libraries, a hit installs only the libraries.
+export const CI_SETUP = [
+  "pnpm exec playwright install --with-deps chromium",
+  "pnpm exec playwright install-deps chromium",
+];
 // The `if:` a gate step may carry, by gate: only the baseline checks, which need a base
 // branch, run on pull requests alone.
 const PR_ONLY = "github.event_name == 'pull_request'";
