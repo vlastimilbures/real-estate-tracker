@@ -134,3 +134,52 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 - Rejected: a Properties-only short text beside the long one, because one note for one
   figure should read the same on every screen.
 - Approved by: owner's delegation of 2026-11-15 (comment on #392), owner review pending
+
+### 2026-11-18 · #441 item 1 / PR #554
+
+- Keys: `inputRules.RATE_OUT_OF_RANGE` (en, cs, ru)
+- Change: the range message of a rate field reads "from 0 to 100 %" instead of "a fraction
+  from zero to one". Every field it shows under takes a percentage: the mortgage rate,
+  vacancy, management and maintenance as a share of rent, selling cost and the reset rate,
+  in the forms, the scenario form, the invalid-data notice and a refused restore (which
+  never shows the stored value). A CSV rate cell, written as a fraction, is refused by the
+  CSV parser first with its own message (`importPage.errRateOutOfRange`, unchanged), so no
+  field needs the old text and the message is not split. The notice and a form-level error
+  show it in a live region, so ADR 0250 records it too.
+- Rejected: passing 0 and 100 as arguments, because the unit range is the meaning of a
+  rate, not a limit that can move.
+- Approved by: owner, 2026-11-18 (#435 comment 6965976270)
+
+### 2026-11-18 · #441 item 2 / PR #554
+
+- Keys: `inputRules.INVALID_RECAST_MATURITY`, `dataCheck.valuationStaleGroup`,
+  `dataCheck.leaseEndingGroup`, `common.irrNoRoot` (en, cs, ru)
+- Change: these texts take the limit they name as an argument instead of repeating it:
+  the recast cap from `INT_RANGES.loanTermYears.max`, the Data check thresholds from
+  `VALUATION_STALE_MONTHS` and `LEASE_ENDING_MONTHS` (`src/ui/model/dataCheck.ts`), and the
+  IRR search range from the engine's `IRR_BRACKET_LOW` and `IRR_BRACKET_MAX`. Numbers are
+  formatted by `fmtNumber` and `fmtPct`, and the count word follows the number's plural
+  form in each language. At today's limits the words are unchanged; the IRR note reads
+  "+1 000 %" with the thousands space of `fmtPct` (was "+1000 %"). Input rules are read
+  through `inputRuleText` (`src/ui/model/inputRule.ts`). The Data check headlines are part
+  of the chips' accessible names, the IRR note is screen-reader text and a compare-export
+  note, and the input rules show in live regions, so ADR 0250 records them too.
+- Rejected: building the strings from the constants inside the dictionaries, because the
+  dictionaries import no limits and the other entries with numbers take arguments.
+- Approved by: owner, 2026-11-18 (#435 comment 6965976270)
+
+### 2026-11-18 · #441 item 4 / PR #554
+
+- Keys: none; the crash preset labels are built in `src/ui/model/scenarios.ts`
+  (`crashLevel`), and `scenarios.crashTitle` and `scenarios.combinedTitle` take them
+  (en, cs, ru)
+- Change: a crash preset's label is its fall formatted by `fmtPct`, "−10,0 %", "−20,0 %",
+  "−35,0 %" (was the stored text "−10%"), on the preset buttons and in the name a preset
+  saves, the combined presets included. This corrects the entry of 2026-10-13 (Track 14
+  N7b), which kept the old labels because a saved preset was found by name: since ADR
+  0191 a preset matches a saved scenario by its settings, so a scenario saved under the
+  old name is still found. The labels are part of the buttons' accessible names, so ADR
+  0250 records them too.
+- Rejected: keeping a hand-written label beside the value, because it repeats the value
+  and does not follow the app's percent format.
+- Approved by: owner, 2026-11-18 (#435 comment 6965976270)

@@ -9,6 +9,14 @@ import type { LoanEventIssue, ValidationCode } from "../engine";
 import { enPlural } from "./plural";
 import { APP_NAME } from "./appName";
 
+/** The input-rule texts, one per ValidationCode; a rule that names a limit takes it as
+ *  an argument (#441), so callers read them through `inputRuleText`. */
+type InputRuleTexts = {
+  [K in ValidationCode]: K extends "INVALID_RECAST_MATURITY"
+    ? (years: string, n: number) => string
+    : string;
+};
+
 export const en = {
   common: {
     /** The disclosure that holds a panel's longer explanation (ADR 0214). */
@@ -22,7 +30,9 @@ export const en = {
     completedValue: (amount: string) => `completed value ${amount}`,
     irrNotUnique:
       "No unique IRR: the cash flows break even at more than one rate",
-    irrNoRoot: "No IRR between −90 % and +1000 %",
+    /** The engine's IRR search range, formatted (#441). */
+    irrNoRoot: (low: string, high: string) =>
+      `No IRR between ${low} and ${high}`,
     /** Unit shown inside year-count fields (UX-034). */
     yearsSuffix: "yrs",
     asOfGroup: "As of date",
@@ -35,6 +45,9 @@ export const en = {
     searchPlaceholder: "Search…",
     /** Short word for thousands on chart axes (UX-034). */
     thousandsShort: "k",
+    /** A yes/no value shown as text, e.g. the CSV preview's garage flag (ADR 0250). */
+    yes: "Yes",
+    no: "No",
     cancel: "Cancel",
     save: "Save",
     create: "Create",
@@ -99,7 +112,7 @@ export const en = {
     NON_FINITE_NUMBER: "Not a finite number",
     NEGATIVE_AMOUNT: "Must not be negative",
     NEGATIVE_PRINCIPAL: "The loan principal must not be negative",
-    RATE_OUT_OF_RANGE: "Must be a fraction from zero to one",
+    RATE_OUT_OF_RANGE: "Must be from 0 to 100 %",
     INSTALMENT_BELOW_INTEREST:
       "The monthly instalment does not cover the monthly interest, so the loan would never be repaid",
     ZERO_RATE_ZERO_INSTALMENT:
@@ -139,13 +152,15 @@ export const en = {
       "A prepayment or maturity change must be dated before the loan's last payment",
     INVALID_RECAST:
       "A maturity change needs either a new maturity date or a new instalment above zero, not both",
-    INVALID_RECAST_MATURITY:
-      "The new maturity must be after the next payment and after a development loan's completion, and at most 50 years after the loan start (or the contract term, if longer)",
+    /** `years` = the longest loan term the forms accept, formatted; `n` = it as a count
+     *  (#441). Read through `inputRuleText` (src/ui/model/inputRule.ts). */
+    INVALID_RECAST_MATURITY: (years: string, n: number) =>
+      `The new maturity must be after the next payment and after a development loan's completion, and at most ${years} ${enPlural(n, ["year", "years"])} after the loan start (or the contract term, if longer)`,
     RECAST_INSTALMENT_BEFORE_COMPLETION:
       "A new instalment can only be set after the interest-only period ends; set a new maturity date instead",
     LEASE_OVERLAP:
       "This lease overlaps another lease of the same property. Leases cannot overlap: end the earlier lease before the later one starts",
-  } satisfies Record<ValidationCode, string>,
+  } satisfies InputRuleTexts,
 
   // A write the database refused (P7a, DR-133). Shown in place of SQLite's raw text.
   writeErrors: {
@@ -457,14 +472,16 @@ export const en = {
       `${n} ${enPlural(n, ["needs attention", "need attention"])}`,
     useDefaults: (n: number) =>
       `${n} ${enPlural(n, ["uses", "use"])} portfolio defaults`,
-    valuationStaleGroup:
-      "The valuation in use is more than 12 months old. Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.",
+    /** `months` = the stale threshold, formatted; `n` = it as a count (#441). */
+    valuationStaleGroup: (months: string, n: number) =>
+      `The valuation in use is more than ${months} ${enPlural(n, ["month", "months"])} old. Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.`,
     noValuationGroup:
       "No valuation is recorded, so the purchase price, grown at the appreciation rate since the purchase date, stands in as the market value.",
     leaseEndedGroup:
       "The lease ended and no next lease is entered. The snapshot counts no rent after the end date; the projection assumes the lease is renewed.",
-    leaseEndingGroup:
-      "The lease ends within 3 months and no next lease is entered. The projection assumes it is renewed.",
+    /** `months` = the window, formatted; `n` = it as a count (#441). */
+    leaseEndingGroup: (months: string, n: number) =>
+      `The lease ends within ${months} ${enPlural(n, ["month", "months"])} and no next lease is entered. The projection assumes it is renewed.`,
     fixationEndedGroup: (rate: string) =>
       `The fixation ended and no follow-on block is entered, so the app assumes the reset rate of ${rate} from the fixation end on. Add the terms of the new fixation as a new mortgage block.`,
     recordFunding: "Record funding",

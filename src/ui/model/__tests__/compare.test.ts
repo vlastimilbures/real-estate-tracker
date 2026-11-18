@@ -362,7 +362,7 @@ describe("Δ vs Base view (ADR 0097)", () => {
     };
     const irr = row(sc.kpiLeveredIrrNominal);
     expect(irr.fmt(noIrr)).toBe("—");
-    expect(irr.note?.(noIrr)).toBe(en.common.irrNoRoot);
+    expect(irr.note?.(noIrr)).toBe(en.common.irrNoRoot("−90 %", "+1 000 %"));
     expect(irr.note?.(crash)).toBeUndefined();
     expect(row(sc.kpiDebtFreeYear).fmt(noIrr)).toBe("—");
 

@@ -4,6 +4,8 @@
 - Date: 2026-10-13
 - Source: issues #169 and #152 (items 2–6), 2026-10 review; owner approved the exact
   wording on 2026-10-13; Track 14 PR N7b
+- Amended by: [0250](0250-wording-limits-flags-crash-labels.md) (§9: the crash labels are
+  built with `fmtPct` instead of staying as typed)
 - Related: [0152](0152-wording-log-and-generated-index.md) (accessible names, live regions,
   exports and code need an ADR), [0093](0093-scenario-add-flow.md) (presets matched by name),
   [0003](0003-czech-practice-decides.md) (banking terms)

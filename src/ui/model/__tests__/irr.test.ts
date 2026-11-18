@@ -6,7 +6,9 @@ import { irrReasonText } from "../irr";
 describe("irrReasonText", () => {
   it("explains each reason, and nothing when there is a rate", () => {
     expect(irrReasonText(en, "NOT_UNIQUE")).toBe(en.common.irrNotUnique);
-    expect(irrReasonText(en, "NO_ROOT")).toBe(en.common.irrNoRoot);
+    expect(irrReasonText(en, "NO_ROOT")).toBe(
+      en.common.irrNoRoot("−90 %", "+1 000 %"),
+    );
     expect(irrReasonText(en, null)).toBeUndefined();
   });
 });

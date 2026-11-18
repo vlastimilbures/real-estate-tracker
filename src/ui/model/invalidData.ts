@@ -3,6 +3,7 @@
 // property to open. Pure.
 import type { Dictionary } from "../../i18n";
 import type { EngineValidationError, Portfolio } from "../../engine";
+import { inputRuleText } from "./inputRule";
 
 export interface InvalidDataLine {
   text: string;
@@ -43,7 +44,7 @@ export function invalidDataLines(
         ? t.errorBoundary.assumptionsRecord
         : (portfolio?.properties.find((x) => x.id === propertyId)?.name ??
           t.errorBoundary.unknownRecord);
-    const text = `${name}: ${t.inputRules[e.code]}`;
+    const text = `${name}: ${inputRuleText(t, e.code)}`;
     if (seen.has(text)) continue;
     seen.add(text);
     lines.push(propertyId !== undefined ? { text, propertyId } : { text });

@@ -95,7 +95,7 @@ describe("Data check panel (ADR 0118, ADR 0206)", () => {
     expect(
       [...lines()].map((l) => l.querySelector(".dc-problem")?.textContent),
     ).toEqual([
-      d.valuationStaleGroup,
+      d.valuationStaleGroup("12", 12),
       d.fixationEndedGroup(fmtPct(assumptions.postFixationResetRatePa)),
       d.growthBoth,
       d.fundingUnknown,

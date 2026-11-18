@@ -3,6 +3,7 @@
 import type { Dictionary } from "../../i18n";
 import type { RestoreIssue } from "../../state/backup";
 import { fmtCzk } from "../../lib/format";
+import { inputRuleText } from "./inputRule";
 
 export function restoreIssueText(t: Dictionary, i: RestoreIssue): string {
   switch (i.rule) {
@@ -26,6 +27,6 @@ export function restoreIssueText(t: Dictionary, i: RestoreIssue): string {
       return text(n(i.range?.min), n(i.range?.max));
     }
     default:
-      return t.inputRules[i.rule];
+      return inputRuleText(t, i.rule);
   }
 }

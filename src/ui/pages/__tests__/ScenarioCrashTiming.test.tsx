@@ -38,7 +38,7 @@ describe("crash timing is a setting (#51)", () => {
     const start = within(timing()).getByRole("button", { name: sc.atStart });
     expect(start.getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByText(sc.crashWhen)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "−20%" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "−20,0 %" })).toBeTruthy();
   });
 
   it("level buttons name the timing and add the timed preset", async () => {
@@ -47,9 +47,9 @@ describe("crash timing is a setting (#51)", () => {
     await userEvent.click(
       within(timing()).getByRole("button", { name: en.common.plusYears(5) }),
     );
-    const level = screen.getByRole("button", { name: "−20% @ +5y" });
+    const level = screen.getByRole("button", { name: "−20,0 % @ +5y" });
     await userEvent.click(level);
-    expect(onAddPreset).toHaveBeenCalledWith("Price crash −20% @ +5y", {
+    expect(onAddPreset).toHaveBeenCalledWith("Price crash −20,0 % @ +5y", {
       valueShock: { pct: rate("0.2"), atYear: 5 },
     });
   });

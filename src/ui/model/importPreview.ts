@@ -10,6 +10,7 @@ import type {
 } from "../../state/csv";
 import { isoDate } from "../../engine";
 import { fmtCzk, fmtDate, fmtPct } from "../../lib/format";
+import { inputRuleText } from "./inputRule";
 
 export interface FileGroup {
   file: CsvFile;
@@ -93,7 +94,7 @@ export function storedEventText(
   return p.errStoredEvent(
     p.storedEventKind[problem.list],
     showDate(problem.date),
-    t.inputRules[problem.rule],
+    inputRuleText(t, problem.rule),
   );
 }
 
@@ -126,13 +127,13 @@ const DATES = new Set([
   "contract_maturity_date",
 ]);
 
-/** A stored cell as the app shows it; empty ⇒ "—". */
-function showValue(field: string, v: string | null): string {
+/** A stored cell as the app shows it; empty ⇒ "—"; a flag as yes / no (ADR 0250). */
+function showValue(t: Dictionary, field: string, v: string | null): string {
   if (v === null) return "—";
   if (MONEY.has(field)) return fmtCzk(v);
   if (RATES.has(field)) return fmtPct(v, 2);
   if (DATES.has(field)) return showDate(v);
-  if (field === "garage") return v === "1" ? "true" : "false";
+  if (field === "garage") return v === "1" ? t.common.yes : t.common.no;
   return v;
 }
 
@@ -146,11 +147,12 @@ function showExact(field: string, v: string | null): string {
 
 /** `before → after`, each value formatted for its column. When both sides would read the
  *  same, both at full precision, and as stored when even that reads the same (ADR 0185 §4). */
-export function changeText(change: FieldChange): string {
+export function changeText(t: Dictionary, change: FieldChange): string {
   const { field, before, after } = change;
+  const shown = (f: string, v: string | null) => showValue(t, f, v);
   const show =
-    [showValue, showExact, (_: string, v: string | null) => v ?? "—"].find(
+    [shown, showExact, (_: string, v: string | null) => v ?? "—"].find(
       (f) => f(field, before) !== f(field, after),
-    ) ?? showValue;
+    ) ?? shown;
   return `${show(field, before)} → ${show(field, after)}`;
 }

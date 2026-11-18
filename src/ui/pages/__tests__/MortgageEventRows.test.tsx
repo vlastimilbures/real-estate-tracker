@@ -231,11 +231,11 @@ describe("prepayment and recast rows (ADR 0116)", () => {
     expect(row(2).textContent).toContain(en.inputRules.EVENT_BEFORE_START);
     expect(row(3).textContent).not.toContain(en.inputRules.EVENT_BEFORE_START);
     expect(recast().textContent).toContain(
-      en.inputRules.INVALID_RECAST_MATURITY,
+      en.inputRules.INVALID_RECAST_MATURITY("50", 50),
     );
     expect(
       screen.getByRole("group", { name: d.eventRecastRow(1) }).textContent,
-    ).not.toContain(en.inputRules.INVALID_RECAST_MATURITY);
+    ).not.toContain(en.inputRules.INVALID_RECAST_MATURITY("50", 50));
   });
 
   it("switching the loan type keeps the events", async () => {

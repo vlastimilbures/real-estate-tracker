@@ -64,9 +64,11 @@ describe("UX-034 i18n sweep", () => {
     );
     // The level button names its timing (ADR 0101).
     const at5 = ru.scenarios.crashAt(ru.common.plusYears(5));
-    await userEvent.click(screen.getByRole("button", { name: `−20%${at5}` }));
+    await userEvent.click(
+      screen.getByRole("button", { name: `−20,0 %${at5}` }),
+    );
     expect(onAddPreset.mock.calls[1]![0]).toBe(
-      ru.scenarios.crashTitle("−20%", at5),
+      ru.scenarios.crashTitle("−20,0 %", at5),
     );
     expect(
       screen.getByRole("button", { name: ru.common.plusYears(10) }),

@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Source: issues #50 and #51 (Scenarios critical review after #15)
+- Amended by: [0250](0250-wording-limits-flags-crash-labels.md) (§4–5: the crash labels
+  are built with `fmtPct`, so preset names change; presets now match by settings)
 
 ## Context
 

@@ -55,22 +55,22 @@ describe("stress presets", () => {
   it("price crashes take the When timing in the name and the overrides", () => {
     expect(CRASH_LEVELS.map((l) => named(crashPreset(l, 0, en)))).toEqual([
       {
-        name: en.scenarios.crashTitle("−10%", ""),
+        name: en.scenarios.crashTitle("−10,0 %", ""),
         overrides: { valueShock: { pct: "0.1", atYear: 0 } },
       },
       {
-        name: en.scenarios.crashTitle("−20%", ""),
+        name: en.scenarios.crashTitle("−20,0 %", ""),
         overrides: { valueShock: { pct: "0.2", atYear: 0 } },
       },
       {
-        name: en.scenarios.crashTitle("−35%", ""),
+        name: en.scenarios.crashTitle("−35,0 %", ""),
         overrides: { valueShock: { pct: "0.35", atYear: 0 } },
       },
     ]);
-    const later = crashPreset({ label: "−20%", pct: "0.2" }, 5, en);
+    const later = crashPreset({ label: "−20,0 %", pct: "0.2" }, 5, en);
     expect(later.name).toBe(
       en.scenarios.crashTitle(
-        "−20%",
+        "−20,0 %",
         en.scenarios.crashAt(en.common.plusYears(5)),
       ),
     );
@@ -86,7 +86,7 @@ describe("stress presets", () => {
         en.scenarios.mild,
         [
           en.scenarios.rateForYears(en.scenarios.plusPp(2), 3),
-          en.scenarios.crashTitle("−10%", at10),
+          en.scenarios.crashTitle("−10,0 %", at10),
         ].join(" · "),
       ),
       overrides: {
@@ -100,7 +100,7 @@ describe("stress presets", () => {
         [
           en.scenarios.rateForYears(en.scenarios.plusPp(4), 3),
           en.scenarios.inflForYears(en.scenarios.plusPp(3), 3),
-          en.scenarios.crashTitle("−20%", at10),
+          en.scenarios.crashTitle("−20,0 %", at10),
         ].join(" · "),
       ),
       overrides: {
@@ -119,7 +119,7 @@ describe("stress presets", () => {
     expect(json(inflationPreset(9, en))).toBe(
       '{"inflationShock":{"deltaPa":"0.09","durationYears":3}}',
     );
-    expect(json(crashPreset({ label: "−35%", pct: "0.35" }, 5, en))).toBe(
+    expect(json(crashPreset({ label: "−35,0 %", pct: "0.35" }, 5, en))).toBe(
       '{"valueShock":{"pct":"0.35","atYear":5}}',
     );
     const severe = COMBINED_RECIPES[1];

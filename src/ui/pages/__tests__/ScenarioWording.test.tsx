@@ -77,7 +77,7 @@ describe("Scenarios wording (ADR 0090)", () => {
     const start = screen.getByRole("button", { name: en.scenarios.atStart });
     expect(start.getAttribute("aria-pressed")).toBe("true");
     // The start date moved from the timing button to the level tooltip (ADR 0101).
-    const level = screen.getByRole("button", { name: "−20%" });
+    const level = screen.getByRole("button", { name: "−20,0 %" });
     expect(level.getAttribute("title")).toContain(
       en.scenarios.atStartTitle(startDate),
     );

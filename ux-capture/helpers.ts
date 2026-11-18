@@ -249,7 +249,7 @@ export async function addTwoPresetsAndCompare(ux: Ux) {
   await ux.page
     .getByRole("button", { name: ux.t.scenarios.plusPp(2), exact: true })
     .click();
-  await ux.page.getByRole("button", { name: "−20%", exact: true }).click();
+  await ux.page.getByRole("button", { name: "−20,0 %", exact: true }).click();
   const picks = ux.page.locator(".scenario-row input[type=checkbox]");
   await expect(picks).toHaveCount(3);
   await picks.nth(1).check();

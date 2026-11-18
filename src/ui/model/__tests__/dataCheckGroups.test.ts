@@ -49,7 +49,7 @@ describe("dataCheckGroups (ADR 0206 §4)", () => {
     const { attention, defaults } = check(portfolio, fiveYears);
     const a = dataCheckGroups(en, attention, resetRate);
     expect(a.map((g) => g.headline)).toEqual([
-      d.valuationStaleGroup,
+      d.valuationStaleGroup("12", 12),
       d.fixationEndedGroup(fmtPct(resetRate)),
     ]);
     const months = en.propertyDetail.monthsCount(60);
@@ -163,7 +163,7 @@ describe("dataCheckGroups (ADR 0206 §4)", () => {
         "records",
       ],
       [d.leaseEndedGroup, "30.04.2026", "records"],
-      [d.leaseEndingGroup, "31.08.2026", "records"],
+      [d.leaseEndingGroup("3", 3), "31.08.2026", "records"],
     ]);
   });
 
@@ -172,7 +172,7 @@ describe("dataCheckGroups (ADR 0206 §4)", () => {
       const { attention } = check(portfolio, fiveYears);
       const g = dataCheckGroups(t, attention, resetRate);
       expect(g.map((x) => x.headline)).toEqual([
-        t.dataCheck.valuationStaleGroup,
+        t.dataCheck.valuationStaleGroup("12", 12),
         t.dataCheck.fixationEndedGroup(fmtPct(resetRate)),
       ]);
       expect(g[0].chips[0].detail).toBe(

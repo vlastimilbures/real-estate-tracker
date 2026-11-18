@@ -22,6 +22,7 @@ import {
   itemNotes,
   storedEventText,
 } from "../model/importPreview";
+import { inputRuleText } from "../model/inputRule";
 import "../styles/import.css";
 
 export interface FileState<T> {
@@ -166,7 +167,7 @@ export function RefusedTable({ problems }: { problems: CsvImportProblem[] }) {
                   ? p.errUnknownProperty(e.problem.value)
                   : e.problem.code === "storedEvent"
                     ? storedEventText(t, e.problem)
-                    : t.inputRules[e.problem.rule]}
+                    : inputRuleText(t, e.problem.rule)}
               </td>
             </tr>
           ))}
@@ -412,7 +413,7 @@ export function ImportSummary({
                     <ul className="changes">
                       {i.changes.map((c) => (
                         <li key={c.field}>
-                          <code>{c.field}</code> {changeText(c)}
+                          <code>{c.field}</code> {changeText(t, c)}
                         </li>
                       ))}
                     </ul>

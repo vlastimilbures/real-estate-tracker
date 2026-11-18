@@ -259,6 +259,8 @@ describe("i18n dictionaries — plural forms", () => {
     const common = [
       "common.fieldsNeedAttention",
       "common.allInactiveTitle",
+      // The recast maturity cap, passed in (#441).
+      "inputRules.INVALID_RECAST_MATURITY",
       "shell.backupHintOld",
     ];
     // Financing & upcoming panel (ADR 0103).
@@ -274,6 +276,9 @@ describe("i18n dictionaries — plural forms", () => {
     const dataCheck = [
       "dataCheck.needAttention",
       "dataCheck.useDefaults",
+      // The stale and lease-ending thresholds, passed in (#441).
+      "dataCheck.valuationStaleGroup",
+      "dataCheck.leaseEndingGroup",
       "dataCheck.outOfRangeHorizon",
     ];
     const counted = [...common, ...financing, ...dataCheck, ...rest];
