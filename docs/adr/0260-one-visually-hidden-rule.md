@@ -7,8 +7,8 @@
   near-duplicate classes one group at a time, starting with visually hidden (#435 comment
   6965976270); tracking #435
 - Related: [0199](0199-icon-only-row-actions.md) (the row-action tooltip that names an
-  icon-only button), [0215](0215-property-detail-top.md) §2 (the Deactivate / Activate
-  label hidden below a 1100 px window), [0157](0157-accessibility-batch.md) (visually hidden
+  icon-only button), [0215](0215-property-detail-top.md) §2 (the `propertyDetail.deactivate` /
+  `propertyDetail.activate` label hidden below a 1100 px window), [0157](0157-accessibility-batch.md) (visually hidden
   `common.actions` in the action-column headers)
 
 ## Context
@@ -17,7 +17,7 @@ Three rules hid text visually while keeping it for screen readers:
 
 - **A.** `.sr-only` in `src/ui/components/layout.css`, nine declarations:
   `position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
-clip: rect(0 0 0 0); white-space: nowrap; border: 0`. 22 elements used it.
+clip: rect(0 0 0 0); white-space: nowrap; border: 0`. 22 places in the source used it.
 - **B.** `.row-action-tip` at rest in `src/ui/components/table.css`, the same nine
   declarations copied (ADR 0199). Its hover / focus-visible rule reveals it.
 - **C.** `.topbar .narrow-hide` inside `@media (max-width: 1099px)` in
@@ -44,10 +44,12 @@ the differences.
    `clip-path: inset(50%)`, and `padding: 0` and `border: 0` are now explicit. At 1100 px
    and wider nothing changes.
 4. **A test keeps it so.** `src/ui/styles/__tests__/visuallyHidden.test.ts` fails when a
-   rule other than `.sr-only` and `.topbar .narrow-hide` has the hidden shape (`width: 1px`,
-   `height: 1px`, `overflow: hidden`), when the two blocks differ, when `.sr-only` loses one
-   of its nine declarations, or when the tooltip's reveal stops resetting one of the hiding
-   properties.
+   rule other than `.sr-only` and `.topbar .narrow-hide` has the hidden shape (`width: 1px` and
+   `height: 1px` with `overflow: hidden` or `clip`, or with a `clip` or `clip-path`
+   declaration), when the two blocks differ, when `.sr-only` loses one of its nine
+   declarations, or when the tooltip's reveal stops resetting a hiding property to its
+   shown value (`width` and `height` auto, `margin: 0`, `overflow: visible`, `clip: auto`,
+   a non-zero `padding`).
 
 ## Why
 
@@ -97,9 +99,14 @@ both thresholds at 0, four more shots differ, all under the default thresholds: 
 label's button), 10c light by 9 px of 2 levels, and 52 light by 63 px (13 over the default
 tolerance) in one text line near the bottom left, where no hidden element is.
 
-The owner's before/after pairs (10c at 1280×800 light and dark; 20 at min light and dark
-and at 1280×800 light; 23 and 83-property-inactive at min) are in the pull request; they are not kept in the
-repository.
+By owner decision of 2026-11-24, this evidence is kept as text and no images are
+attached. Seven before/after pairs were compared: `10c-properties-row-action-tooltip` at
+1280×800 light and dark, `20-property-detail` at min light and dark and at 1280×800 light,
+and `23-property-deactivate-confirm` and `83-property-inactive` at min light. They are
+byte-identical PNGs except 10c light, which differs by 9 px at 2 colour levels, below the
+ux:diff tolerance (8 levels). Across the run, ux:diff compared 404 shots with 3 over the
+threshold (the #536 flakes above), and the probe found the differences listed above and no
+others among 6,748 elements.
 
 ## Consequences
 
