@@ -62,8 +62,9 @@ between runs on 26-property-amortization-open and 29-property-prepayment-outputs
 Measured on 2026-11-24 (en, light, 1280x800, 101 screens, two runs of one commit): 0 px
 differ at the default tolerance; at tolerance 0, only 90-keyboard-focus-tab20 (96 px). The
 other flakes listed in #536 (64b-settings-backup-refused and 82-load-sample-loaded at
-`min`, 90-keyboard-focus-tab20) are not fixed: for those, a differing image still counts
-only if it also differs main-vs-main or a re-capture matches main.
+`min`, 90-keyboard-focus-tab20) are not fixed: a differing image of one of those is
+acceptable (not a regression) only if it also differs main-vs-main or a re-capture matches
+main.
 
 PNG hashes cannot prove a no-op (DR-147). The capture emulates "Reduce motion" (charts
 skip their entry animation), turns CSS transitions off (DR-160), parks the mouse pointer
@@ -75,18 +76,23 @@ parking point (#536).
 
 ## Proving a UI change
 
-A PR's before/after proof compares its branch with a cached capture of main, so main is
-captured once per commit for everyone, not once per PR:
+A PR's before/after proof compares its branch with a cached capture of the commit it
+branched from, so each main commit is captured once for everyone, not once per PR:
 
 ```bash
 git fetch origin
-BASE=$(pnpm -s ux:baseline)                  # cached capture of origin/main; prints its folder
-UX_AXE=0 UX_RUN_ID=my-branch pnpm ux:capture # the branch, once, without the axe scan
-pnpm ux:diff "$BASE" my-branch               # every changed screen is listed
-UX_AXE=0 UX_RUN_ID=my-branch pnpm ux:capture --grep "64b-settings|82-load"
-                                             # re-capture only the screens that differed
-                                             # (overwrites them in the run), then diff again
+BASE=$(pnpm -s ux:baseline "$(git merge-base HEAD origin/main)")  # the branch's base
+UX_AXE=0 UX_RUN_ID=my-branch pnpm ux:capture  # the branch, once, without the axe scan
+pnpm ux:diff "$BASE" my-branch                # every changed screen is listed
+UX_AXE=0 UX_RUN_ID=my-branch pnpm ux:capture --grep "<id>|<id>"
+                                              # re-capture only the screens that differed
+                                              # (overwrites them in the run), then diff again
 ```
+
+Diff against the branch's base, not a newer origin/main, or main's own changes show up as
+yours (or rebase onto origin/main first and use `pnpm -s ux:baseline`). The branch capture
+must use the same `UX_LANG`, `UX_THEME` and `UX_VIEWPORT` as the baseline: set them once
+for both commands, or a screen missing from one side is listed as `MISSING`/`NEW`.
 
 `pnpm ux:baseline [ref]` (default `origin/main`) resolves the ref to its full sha and keeps
 one run per sha and matrix (`UX_LANG`, `UX_THEME`, `UX_VIEWPORT`, in any spelling) in
@@ -94,9 +100,11 @@ one run per sha and matrix (`UX_LANG`, `UX_THEME`, `UX_VIEWPORT`, in any spellin
 `<sha>/<lang>_<theme>_<viewport>` with a `complete.json` marker written last. On a miss it
 checks the commit out into a temporary worktree, installs it (offline first), captures it
 with `UX_AXE=0` on a free port, moves the run into place and removes the worktree; a lock
-file makes a second caller wait for the first one's run instead of capturing again.
-`UX_WORKERS=<n>` caps the capture's Playwright workers. `pnpm ux:baseline --prune` deletes
-entries whose sha origin/main no longer reaches, or older than 14 days.
+folder (`<key>.lock/pid`) makes a second caller wait for the first one's run instead of
+capturing again. `UX_WORKERS=<n>` caps the capture's Playwright workers.
+`pnpm ux:baseline --prune` deletes finished runs whose sha origin/main no longer reaches or
+that are older than 14 days (never origin/main's own), unfinished `.tmp-<pid>` runs and
+dead locks. It only looks inside full-sha folders and deletes nothing it did not create.
 
 `UX_AXE=0` skips the axe scan, about a quarter of each screen's time. Such a run says so in
 `summary.md`, leaves an `axe-skipped.json` in each variant folder, and `pnpm ux:axe-check`
