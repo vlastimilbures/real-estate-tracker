@@ -3,40 +3,17 @@
 // (useEngine) → UI. No finance maths here — edits persist, then in-memory state refreshes
 // so the memoized engine recomputes (CLAUDE.md §4).
 import { create } from "zustand";
-import type { Portfolio, Scenario } from "../engine";
 import { defaultOpen } from "../data/open";
 import { DataError, READ_FAILURES } from "../data/errors";
 import { toWriteError } from "./writeError";
 import { logFailure } from "../data/errorLog";
-import { clearSample, dismissSampleBanner, loadSample } from "../data/seed";
+import { clearSample, loadSample } from "../data/seed";
 import { confirmRestore, exportBackup } from "../data/backup";
 import { checkInputRules } from "./restoreRules";
-import {
-  loadState,
-  upsertScenario,
-  deleteScenario,
-  insertPropertyWithCosts,
-  deleteProperty,
-  upsertAssumptions,
-  updateProperty,
-  setPropertyActive,
-  getPropertyExtras,
-  recordBackup,
-} from "../data/repositories";
-import {
-  holdingCostToRow,
-  propertyToRow,
-  scenarioToRow,
-} from "../data/mappers";
+import { loadState, recordBackup } from "../data/repositories";
 import { localIsoDay } from "../lib/day";
 import { saveFile } from "../platform/saveFile";
 import { createWriteRunner } from "./portfolio/writeRunner";
-import {
-  checkAssumptions,
-  checkEdit as checkStoredEdit,
-  checkScenario,
-  withRow,
-} from "./portfolio/rules";
 import type { PortfolioState, StoreCtx } from "./portfolio/types";
 import {
   blockActions,
@@ -44,6 +21,8 @@ import {
   leaseActions,
   valuationActions,
 } from "./portfolio/entityActions";
+import { propertyActions } from "./portfolio/propertyActions";
+import { scenarioActions } from "./portfolio/scenarioActions";
 export type {
   MutationResult,
   PropertyExtras,
@@ -52,25 +31,8 @@ export type {
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => {
   const runner = createWriteRunner(set, get);
-  const { enqueue, mutate, exclusive, replaceData, requireSql, writesSoFar } =
-    runner;
+  const { enqueue, exclusive, replaceData, requireSql, writesSoFar } = runner;
   const ctx: StoreCtx = { set, get, ...runner };
-
-  /** checkEdit on the loaded portfolio: inside the queued op, it sees every earlier
-   *  write. */
-  const checkEdit = (
-    edit: (p: Portfolio) => Portfolio,
-    ids: string[],
-    overlapIds?: string[],
-  ) => checkStoredEdit(get().portfolio, edit, ids, overlapIds);
-
-  /** Add or save `s`. An insert stamps created_at; an update keeps the stored one
-   *  (ADR 0123). */
-  const writeScenario = (s: Scenario) =>
-    mutate("scenarios", async (sql) => {
-      checkScenario(get(), s);
-      await upsertScenario(sql, scenarioToRow(s, new Date()));
-    });
 
   return {
     sql: null,
@@ -140,71 +102,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     ...blockActions(ctx),
     ...holdingCostActions(ctx),
 
-    addProperty: (p, cost, extra) =>
-      mutate("properties", async (sql) => {
-        checkEdit(
-          (pf) => ({
-            ...pf,
-            properties: withRow(pf.properties, p),
-            holdingCosts: withRow(pf.holdingCosts, cost),
-          }),
-          [p.id, cost.id],
-        );
-        await insertPropertyWithCosts(
-          sql,
-          propertyToRow(p, extra),
-          holdingCostToRow(cost),
-        );
-      }),
-    editProperty: (edited, extra) =>
-      mutate("properties", async (sql) => {
-        const stored = get().portfolio?.properties.find(
-          (x) => x.id === edited.id,
-        );
-        // The form carries no flag: keep the stored. It always sends a funding record
-        // (`{}` clears); one an edit leaves out is kept (ADR 0119 §8).
-        const p = {
-          ...edited,
-          active: edited.active ?? stored?.active,
-          funding: edited.funding ?? stored?.funding,
-        };
-        checkEdit(
-          (pf) => ({ ...pf, properties: withRow(pf.properties, p) }),
-          [p.id],
-        );
-        await updateProperty(sql, propertyToRow(p, extra));
-      }),
-    getPropertyExtras: async (id) => {
-      const sql = get().sql;
-      return sql ? getPropertyExtras(sql, id) : { address: null, garage: null };
-    },
-    setPropertyActive: (id, active) =>
-      mutate("properties", (sql) => setPropertyActive(sql, id, active)),
-    removeProperty: (id) =>
-      mutate("properties", (sql) => deleteProperty(sql, id)),
-
-    saveAssumptions: (a) =>
-      mutate("assumptions", async (sql) => {
-        checkAssumptions(get(), a);
-        await upsertAssumptions(sql, a);
-      }),
-
-    addScenario: (s) => writeScenario(s),
-    saveScenario: (s) => writeScenario(s),
-    duplicateScenario: (id, newId, name) =>
-      mutate("scenarios", async (sql) => {
-        const src = get().scenarios.find((x) => x.id === id);
-        if (!src) throw new Error("Scenario not found");
-        const copy: Scenario = { ...src, id: newId, name };
-        checkScenario(get(), copy, src);
-        await upsertScenario(sql, scenarioToRow(copy, new Date()));
-      }),
-    removeScenario: (id) =>
-      mutate("scenarios", (sql) => deleteScenario(sql, id)),
-
-    // Hides a banner: app state, not a data change (ADR 0110).
-    dismissSampleBanner: () =>
-      mutate("bookkeeping", dismissSampleBanner, false),
+    ...propertyActions(ctx),
+    ...scenarioActions(ctx),
 
     // Loaded on first use: keeps the CSV parser out of the startup bundle (P9).
     previewCsv: (batch) =>
