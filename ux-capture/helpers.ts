@@ -236,6 +236,21 @@ export async function settle(page: Page) {
   }
 }
 
+/**
+ * Click a button without scrolling the page or moving the pointer. Use it for a click
+ * right before a shot when the target sits below the fold (#536): `locator.click()`
+ * scrolls the window, which can leave a sticky element (the sidebar at the page's end,
+ * a table's pinned column) at a fractional offset. Parking the pointer after that
+ * redraws it some time later, so the shot caught its text 1 px off, in part or not at
+ * all, from run to run. A dispatched click skips Playwright's actionability checks, so
+ * this one checks that the target is visible and enabled first.
+ */
+export async function clickInPlace(target: Locator) {
+  await expect(target).toBeVisible();
+  await expect(target).toBeEnabled();
+  await target.dispatchEvent("click");
+}
+
 /** Open the app and wait until the sample seed has loaded. */
 export async function boot(page: Page) {
   await page.goto("/");

@@ -58,14 +58,19 @@ the default tolerance 8, at most 14 px. One changed KPI digit (a 21×30 px box) 
 300 changed px, so the defaults catch it (#137). For an exact comparison, set both
 variables to `0`. A bad value stops the diff with exit 2.
 
-Since the pointer is parked before each shot (below), the chart tooltip no longer moves
-between runs on 26-property-amortization-open and 29-property-prepayment-outputs.
-Measured on 2026-11-24 (en, light, 1280x800, 101 screens, two runs of one commit): 0 px
-differ at the default tolerance; at tolerance 0, only 90-keyboard-focus-tab20 (96 px). The
-other flakes listed in #536 (64b-settings-backup-refused and 82-load-sample-loaded at
-`min`, 90-keyboard-focus-tab20) are not fixed: a differing image of one of those is
-acceptable (not a regression) only if it also differs main-vs-main or a re-capture matches
-main.
+No screen is known to flake at the default tolerance (#536), so a screen that differs
+from the base is a change to explain. Measured on 2026-11-24 (en, light, 1280x800, 101
+screens, two runs of one commit): 0 px differ at the default tolerance; at tolerance 0,
+90-keyboard-focus-tab20 differs by up to 96 px of 1 or 2 levels in the Nominal/Real
+toggle under the blurred topbar, which the default tolerance ignores.
+
+A click that scrolls the window right before a shot can flake the shot: a sticky element
+(the sidebar, a table's pinned column) rests at a fractional offset at the scrolled
+position, and once the pointer is parked Chromium redraws it a while later, so the shot
+catches its text or borders 1 px off, in part or not at all. The DOM layout is the same in
+every variant (#536: 22-property-mortgage-add-errors; 64b-settings-backup-refused and
+82-load-sample-loaded at `min`). Such a scene clicks with `clickInPlace()` (helpers.ts),
+which neither scrolls nor moves the pointer.
 
 PNG hashes cannot prove a no-op (DR-147). The capture emulates "Reduce motion" (charts
 skip their entry animation), turns CSS transitions off (DR-160), parks the mouse pointer

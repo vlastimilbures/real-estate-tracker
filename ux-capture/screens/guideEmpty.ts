@@ -1,6 +1,7 @@
 // Guide, the empty portfolio, the sample and inactive or pending properties.
 import {
   boot,
+  clickInPlace,
   deleteAllProperties,
   expect,
   nav,
@@ -155,7 +156,9 @@ export const guideEmptyScreens: Screen[] = [
       });
       await expect(load).toBeVisible();
       await ux.capture();
-      await load.click();
+      // At `min` the button sits at the page's end: a scrolling click would flake the
+      // shot below (#536).
+      await clickInPlace(load);
       await expect(ux.page.getByText(ux.t.sample.loaded)).toBeVisible();
       await ux.capture("82-load-sample-loaded");
       await nav(ux, "dashboard");

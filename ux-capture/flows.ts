@@ -6,6 +6,7 @@ import type { Locator } from "@playwright/test";
 import {
   expect,
   boot,
+  clickInPlace,
   nav,
   openFirstProperty,
   panel,
@@ -63,7 +64,10 @@ export async function chooseEditedBackup(
             : Promise.reject(new Error(`no ${cmd} in the browser`)),
     };
   }, JSON.stringify(backup));
-  await ux.page.getByRole("button", { name: ux.t.backup.chooseFile }).click();
+  // A scrolling click would flake the shot after it at `min` (#536).
+  await clickInPlace(
+    ux.page.getByRole("button", { name: ux.t.backup.chooseFile }),
+  );
 }
 
 /** `chooseEditedBackup` up to the confirm step that asks to restore anyway. */
