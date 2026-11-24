@@ -90,12 +90,13 @@ function exportActions({
   exclusive,
   requireSql,
   writesSoFar,
+  now: clock,
 }: StoreCtx): Pick<WholeDbActions, "exportBackup"> {
   return {
     exportBackup: async () => {
       const writesBefore = writesSoFar();
       // One clock read names the file and stamps `exportedAt` (ADR 0149 §6).
-      const now = new Date();
+      const now = clock();
       const outcome = await exportBackup(requireSql(), {
         now,
         today: localIsoDay(now),
@@ -104,7 +105,7 @@ function exportActions({
       if (outcome.kind !== "cancelled") {
         // The file is saved; failing to record it must not turn that into an error.
         // "Last backup" is the time the file was saved, after the dialog (ADR 0110).
-        const at = new Date().toISOString();
+        const at = clock().toISOString();
         await exclusive(
           "bookkeeping",
           (sql) =>

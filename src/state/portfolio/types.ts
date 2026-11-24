@@ -173,6 +173,8 @@ export interface StoreAccess {
   get: () => PortfolioState;
 }
 
-/** What an action module gets from its store: the store's own `set` and `get`, and its one
- *  write runner. */
-export interface StoreCtx extends StoreAccess, WriteRunner {}
+/** What an action module gets from its store: the store's own `set` and `get`, its one
+ *  write runner, and the clock. */
+export interface StoreCtx extends StoreAccess, WriteRunner {
+  now: () => Date;
+}
