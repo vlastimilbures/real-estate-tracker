@@ -1,5 +1,11 @@
 // Property records: Data check, valuations, mortgages, the leave guard and deactivation.
-import { boot, expect, openFirstProperty, panel } from "../helpers";
+import {
+  boot,
+  clickInPlace,
+  expect,
+  openFirstProperty,
+  panel,
+} from "../helpers";
 import { expectDataCheckLayout } from "../layout/pages";
 import { defineScreen, type Screen } from "./define";
 
@@ -115,12 +121,12 @@ export const propertyRecordsScreens: Screen[] = [
       await p
         .getByRole("button", { name: ux.t.propertyDetail.addMortgage })
         .click();
-      await p
-        .locator(".form-actions")
-        .getByRole("button", {
+      // The submit sits below the fold: a scrolling click would flake the shot (#536).
+      await clickInPlace(
+        p.locator(".form-actions").getByRole("button", {
           name: ux.t.propertyDetail.addMortgage,
-        })
-        .click();
+        }),
+      );
       await expect(p.locator(".err").first()).toBeVisible();
       await ux.capture();
     },

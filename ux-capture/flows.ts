@@ -6,6 +6,7 @@ import type { Locator } from "@playwright/test";
 import {
   expect,
   boot,
+  clickInPlace,
   nav,
   openFirstProperty,
   panel,
@@ -42,6 +43,7 @@ export async function pickOutOfRangeBackup(ux: Ux) {
 export async function chooseEditedBackup(
   ux: Ux,
   edit: (tables: BackupTables) => void,
+  opts?: { inPlace?: boolean },
 ) {
   await boot(ux.page);
   await settingsTab(ux, "backup");
@@ -63,7 +65,11 @@ export async function chooseEditedBackup(
             : Promise.reject(new Error(`no ${cmd} in the browser`)),
     };
   }, JSON.stringify(backup));
-  await ux.page.getByRole("button", { name: ux.t.backup.chooseFile }).click();
+  const choose = ux.page.getByRole("button", { name: ux.t.backup.chooseFile });
+  // `inPlace` for a scene that shoots right after this click: a scrolling click would
+  // flake that shot at `min` (#536).
+  if (opts?.inPlace) await clickInPlace(choose);
+  else await choose.click();
 }
 
 /** `chooseEditedBackup` up to the confirm step that asks to restore anyway. */

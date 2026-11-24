@@ -89,11 +89,16 @@ export const settingsScreens: Screen[] = [
     "64b-settings-backup-refused",
     "Settings → Backup: a refused backup in the notice, with its records (ADR 0154)",
     async (ux) => {
-      await chooseEditedBackup(ux, (tables) => {
-        const [lease] = tables.leases ?? [];
-        if (!lease) throw new Error("the sample has no lease");
-        lease.monthly_rent = "abc";
-      });
+      await chooseEditedBackup(
+        ux,
+        (tables) => {
+          const [lease] = tables.leases ?? [];
+          if (!lease) throw new Error("the sample has no lease");
+          lease.monthly_rent = "abc";
+        },
+        // The shot follows the click directly: no scroll before it (#536).
+        { inPlace: true },
+      );
       await expect(ux.page.getByText(ux.t.backup.errRowsInvalid)).toBeVisible();
       await expect(ux.page.getByText(ux.t.backup.downloaded)).toBeHidden();
       await ux.capture({ fullPage: false });

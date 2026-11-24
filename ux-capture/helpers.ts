@@ -236,6 +236,51 @@ export async function settle(page: Page) {
   }
 }
 
+/**
+ * Click a button without scrolling the page or moving the pointer. Use it for a click
+ * right before a shot when the target sits below the fold (#536): `locator.click()`
+ * scrolls the window, which can leave a sticky element (the sidebar at the page's end,
+ * a table's pinned column) at a fractional offset. Parking the pointer after that
+ * redraws it some time later, so the shot caught its text 1 px off, in part or not at
+ * all, from run to run. A dispatched click skips Playwright's actionability checks, so
+ * this one checks that the target is visible and enabled, and that nothing covers it (a
+ * stuck backdrop, a toast, a sticky bar): in one task it scrolls the target to the
+ * centre, hit-tests its centre point and restores the scroll, so no frame is ever
+ * painted at the scrolled position.
+ */
+export async function clickInPlace(target: Locator) {
+  await expect(target).toBeVisible();
+  await expect(target).toBeEnabled();
+  const hit = await target.evaluate((el) => {
+    // scrollIntoView may scroll inner containers too: restore every ancestor's offset.
+    const saved: [Element, number, number][] = [];
+    for (let a = el.parentElement; a; a = a.parentElement)
+      saved.push([a, a.scrollLeft, a.scrollTop]);
+    const x = window.scrollX;
+    const y = window.scrollY;
+    el.scrollIntoView({
+      block: "center",
+      inline: "center",
+      behavior: "instant",
+    });
+    const r = el.getBoundingClientRect();
+    const top = document.elementFromPoint(
+      r.x + r.width / 2,
+      r.y + r.height / 2,
+    );
+    for (const [a, left, t] of saved) {
+      a.scrollLeft = left;
+      a.scrollTop = t;
+    }
+    window.scrollTo({ left: x, top: y, behavior: "instant" });
+    return top && el.contains(top)
+      ? ""
+      : (top?.outerHTML.slice(0, 120) ?? "nothing");
+  });
+  expect(hit, "clickInPlace: the target is covered").toBe("");
+  await target.dispatchEvent("click");
+}
+
 /** Open the app and wait until the sample seed has loaded. */
 export async function boot(page: Page) {
   await page.goto("/");
