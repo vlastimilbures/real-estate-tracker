@@ -50,8 +50,9 @@ owner can do wrong, and the rest needs a failing disk or a damaged database.
 
 - A failed edit shows one copy and is announced once, where it was started. Cancel leaves
   nothing behind.
-- Residual case: a confirm row that the owner closes by leaving the page while its write
-  fails shows the failure nowhere. The write changed nothing (each write is one
-  transaction), so the row is still there to delete again.
+- Residual case: a confirm row, or Activate, that the owner leaves by going to another
+  page while its write fails shows the failure nowhere: the page that would show it is
+  gone. The write changed nothing (each write is one transaction), so the row is still
+  there to delete again, and the property still inactive to activate again.
 - No new dictionary key, no change to texts, numbers or stored data, and no change to the
   ux-capture screens: none captures a failed edit's banner.

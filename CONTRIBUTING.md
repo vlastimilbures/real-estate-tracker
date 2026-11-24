@@ -300,8 +300,10 @@ Each outcome is shown once, in one place (ADR 0141, ADR 0154, ADR 0261):
 1. **On the field.** An input-rule refusal that names a field the form shows marks that
    field.
 2. **Where it was started.** Any other failure of an edit shows in the control that started
-   it: the form's line above its buttons (the Assumptions error summary), the confirm row,
-   or next to Activate. The store puts nothing in the page banner.
+   it: the form's line above its buttons, the confirm row, or next to Activate. In
+   Assumptions, only an input-rule error that names no field shown there goes to its
+   error summary; its other failures follow rule 3. The store puts nothing in the page
+   banner.
 3. **The banner when there is no such place.** An action with no place of its own (Keep
    exploring, a preset, Duplicate, an Assumptions save failing on no input rule) puts its
    failure in the AppShell banner with `showError`.
