@@ -2,8 +2,7 @@
 // written through on every edit. This is the one-way data flow's source: DB → store →
 // (useEngine) → UI. No finance maths here — edits persist, then in-memory state refreshes
 // so the memoized engine recomputes (CLAUDE.md §4).
-import { create, type StoreApi } from "zustand";
-import type { Sql } from "../data/sql";
+import { create } from "zustand";
 import {
   dayBefore,
   EngineInputError,
@@ -17,35 +16,15 @@ import {
 import type {
   Portfolio,
   Assumptions,
-  Property,
-  Valuation,
-  Lease,
-  MortgageBlock,
-  HoldingCost,
   Scenario,
   EngineValidationError,
 } from "../engine";
 import { defaultOpen } from "../data/open";
-import {
-  DataError,
-  READ_FAILURES,
-  type DataErrorCode,
-  type UpgradeStop,
-} from "../data/errors";
-import { ScenarioRuleError, toWriteError, type WriteError } from "./writeError";
+import { DataError, READ_FAILURES } from "../data/errors";
+import { ScenarioRuleError, toWriteError } from "./writeError";
 import { logFailure } from "../data/errorLog";
 import { clearSample, dismissSampleBanner, loadSample } from "../data/seed";
-import {
-  confirmRestore,
-  exportBackup,
-  type BackupFile,
-  type ExportOutcome,
-} from "../data/backup";
-import type {
-  CsvImportBatch,
-  CsvImportPreview,
-  CsvImportReport,
-} from "../import/csvImport";
+import { confirmRestore, exportBackup } from "../data/backup";
 import { checkInputRules } from "./restoreRules";
 import {
   assertHorizonRange,
@@ -74,10 +53,7 @@ import {
   updateProperty,
   setPropertyActive,
   getPropertyExtras,
-  markDataChanged,
   recordBackup,
-  type BackupState,
-  type SampleState,
 } from "../data/repositories";
 import {
   valuationToRow,
@@ -86,15 +62,16 @@ import {
   holdingCostToRow,
   propertyToRow,
   scenarioToRow,
-  type PropertyExtras,
 } from "../data/mappers";
-import { perfMark, perfMeasure } from "../lib/perf";
 import { localIsoDay } from "../lib/day";
 import { saveFile } from "../platform/saveFile";
-import { createWriteQueue } from "./writeQueue";
-import type { RefusedWrite, WriteTarget } from "./writeTargets";
-
-type Status = "idle" | "loading" | "ready" | "error";
+import { createWriteRunner } from "./portfolio/writeRunner";
+import type { PortfolioState } from "./portfolio/types";
+export type {
+  MutationResult,
+  PropertyExtras,
+  StartupError,
+} from "./portfolio/types";
 
 /** `rows` with `row` in place of the row with its id, moved last: the engine reports a
  *  clash between two rows (DUPLICATE_BLOCK_START) on the later-listed one, so the
@@ -167,324 +144,6 @@ function checkScenario(
   const errors = a ? scenarioRuleErrors(a, sc.overrides) : [];
   if (errors.length > 0) throw new EngineInputError(errors);
   assertScenarioRanges(source?.overrides, sc.overrides);
-}
-
-/** The outcome of a mutation. Callers (forms, modals) branch on `ok` — e.g. a modal
- *  closes only on success and keeps itself open, showing `error`, on failure. The
- *  store also stashes `error` so a global banner can surface it without every caller
- *  wiring it up. `ok` means the write landed; when reading the data back after it failed,
- *  the store stops on the error screen with `readBackFailed` set (ADR 0228). */
-export type MutationResult = { ok: true } | { ok: false; error: WriteError };
-/** Address and garage: stored, but not engine inputs (ADR 0184 §3).
- *  @internal test seam: UI tests reach the type through the state facade (ADR 0072). */
-export type { PropertyExtras };
-
-/** A typed failure that stopped startup; `upgrade` says how far a stopped upgrade got
- *  (ADR 0153). */
-export interface StartupError {
-  code: DataErrorCode;
-  details: string[];
-  upgrade?: UpgradeStop;
-}
-
-interface PortfolioState {
-  sql: Sql | null;
-  portfolio: Portfolio | null;
-  assumptions: Assumptions | null;
-  scenarios: Scenario[];
-  /** The first-run sample: still in place, and its banner dismissed (ADR 0094). */
-  sample: SampleState;
-  /** The last recorded export and whether the data changed since (ADR 0110). */
-  backup: BackupState;
-  status: Status;
-  /** The last failed write (or the startup failure), translated by the UI. */
-  error: WriteError | null;
-  /** A typed data-layer failure that stopped startup (P5a), for a translated screen. */
-  startupError: StartupError | null;
-  /** A write committed but reading the data back failed: the app stops on the error
-   *  screen, the write still counts as done, and later writes are refused until Try
-   *  again reads the data (ADR 0228). */
-  readBackFailed: boolean;
-  /** Writes refused while `readBackFailed`, once each in the order refused and without
-   *  bookkeeping, for the error screen to name; a successful Try again empties it
-   *  (ADR 0255). */
-  refusedWrites: RefusedWrite[];
-  /** Restores, Clear samples and Load samples queued or running. Settings → Backup
-   *  waits while one is, across page changes (ADR 0154). */
-  replacing: number;
-  /** Writes queued or running (`mutate`, `exclusive`, `replaceData`): row write actions
-   *  are disabled while any is (ADR 0253). Reads do not count. */
-  writesRunning: number;
-
-  init: (open?: () => Promise<Sql>) => Promise<void>;
-  /** Load every table into the store. Does not queue itself: outside a queued job, only
-   *  `init` calls it. */
-  refresh: () => Promise<void>;
-  clearError: () => void;
-  /** Show `error` in the banner: for a refusal no form is open to show (ADR 0141). */
-  showError: (error: WriteError) => void;
-
-  // valuations
-  addValuation: (v: Valuation) => Promise<MutationResult>;
-  /** Add `v` and save `closedPrev` (the open-ended valuation it succeeds, now with an
-   *  end date) in one write (ADR 0099, 0227: the panel calls it without asking). */
-  addValuationClosingPrevious: (
-    v: Valuation,
-    closedPrev: Valuation,
-  ) => Promise<MutationResult>;
-  saveValuation: (v: Valuation) => Promise<MutationResult>;
-  removeValuation: (id: string) => Promise<MutationResult>;
-  // leases
-  /** Add `l`. Leases never overlap (ADR 0163): the open-ended lease before it ends the
-   *  day before `l` starts, in the same write. */
-  addLease: (l: Lease) => Promise<MutationResult>;
-  saveLease: (l: Lease) => Promise<MutationResult>;
-  removeLease: (id: string) => Promise<MutationResult>;
-  // mortgage blocks
-  addMortgageBlock: (m: MortgageBlock) => Promise<MutationResult>;
-  saveMortgageBlock: (m: MortgageBlock) => Promise<MutationResult>;
-  removeMortgageBlock: (id: string) => Promise<MutationResult>;
-  // holding costs (one row per property)
-  saveHoldingCost: (h: HoldingCost) => Promise<MutationResult>;
-  // properties
-  addProperty: (
-    p: Property,
-    cost: HoldingCost,
-    extra: PropertyExtras,
-  ) => Promise<MutationResult>;
-  /** An omitted `p.active` keeps the stored flag, so an edit never re-activates. An
-   *  omitted `p.funding` keeps the stored record; `{}` clears it (ADR 0119 §8). */
-  editProperty: (p: Property, extra: PropertyExtras) => Promise<MutationResult>;
-  /** Address/garage aren't engine inputs so `portfolio.properties` drops them; this
-   *  reads them straight from the DB to prefill the edit form. */
-  getPropertyExtras: (id: string) => Promise<PropertyExtras>;
-  setPropertyActive: (id: string, active: boolean) => Promise<MutationResult>;
-  removeProperty: (id: string) => Promise<MutationResult>;
-  // assumptions
-  saveAssumptions: (a: Assumptions) => Promise<MutationResult>;
-  // scenarios (what-if overrides)
-  addScenario: (s: Scenario) => Promise<MutationResult>;
-  saveScenario: (s: Scenario) => Promise<MutationResult>;
-  /** Copies scenario `id` under `newId` and `name`; the caller picks the id so it can
-   *  select the copy (ADR 0093) and names it in the UI language (ADR 0187). */
-  duplicateScenario: (
-    id: string,
-    newId: string,
-    name: string,
-  ) => Promise<MutationResult>;
-  removeScenario: (id: string) => Promise<MutationResult>;
-  // sample portfolio (ADR 0094)
-  /** "Keep exploring": hide the sample banner for good. */
-  dismissSampleBanner: () => Promise<MutationResult>;
-  // whole-database operations. They throw their own typed errors (CsvImportProblemsError,
-  // RestoreError, …) for the caller to show, and leave the banner `error` alone on a
-  // failure; one that replaces the data (restore, Clear sample, Load sample) clears it
-  // on success, since it described the old data (ADR 0154). They throw only before the
-  // commit: a failed read-back after it stops on the error screen (ADR 0228).
-  /** What a CSV import would add and update (ADR 0096). Reads only; queued behind
-   *  pending writes so it sees their result. */
-  previewCsv: (batch: CsvImportBatch) => Promise<CsvImportPreview>;
-  /** CSV import of the plan built now, in one transaction, then reload. A plan with
-   *  problems writes nothing: it refuses with CsvImportProblemsError (ADR 0229). */
-  importCsv: (batch: CsvImportBatch) => Promise<CsvImportReport>;
-  /** Replace the data with a checked backup (after a safety backup), then reload. */
-  restoreBackup: (backup: BackupFile) => Promise<{ safetyBackup: string }>;
-  /** Restore from the startup error screen, only after a read failure (ROW_INVALID or
-   *  SCENARIO_INVALID, ADR 0231): the database is open and at head there (ADR 0153).
-   *  `ready` says the data loaded afterwards; the screen stays until
-   *  `continueAfterRestore`, so the safety copy can be named. */
-  restoreAtStartup: (
-    backup: BackupFile,
-  ) => Promise<{ safetyBackup: string; ready: boolean }>;
-  /** Leave the startup error screen after a restore whose data loaded. */
-  continueAfterRestore: () => void;
-  /** Delete the sample properties (after a safety backup), then reload. */
-  clearSample: () => Promise<{ safetyBackup: string }>;
-  /** Load the sample into an empty portfolio, then reload (ADR 0112). Throws
-   *  SampleNotEmptyError when any property exists. */
-  loadSample: () => Promise<void>;
-  /** Write a backup file through the save dialog. Read-only, so not queued: an open
-   *  dialog must not hold up edits. It reads one snapshot, so the file holds one database
-   *  state (ADR 0132). A saved file is then recorded (ADR 0110). */
-  exportBackup: () => Promise<ExportOutcome>;
-}
-
-type SetState = StoreApi<PortfolioState>["setState"];
-/** The store's own `set` and `get`, for the write runner's steps. */
-interface StoreAccess {
-  set: SetState;
-  get: () => PortfolioState;
-}
-
-/** Refresh after a write; on failure log it. After a `committed` write the app stops
- *  on the error screen (ADR 0228); after a failed one it stays, showing the write
- *  error, since nothing was saved. Never throws. Not queued: the reload inside a
- *  queued write, where queueing it would wait for itself. */
-async function reloadAfter(
-  { set, get }: StoreAccess,
-  committed: boolean,
-): Promise<void> {
-  try {
-    await get().refresh();
-  } catch (e) {
-    logFailure("RELOAD", e);
-    if (committed)
-      set({
-        status: "error",
-        readBackFailed: true,
-        error: null,
-        startupError: null,
-      });
-  }
-}
-
-/** Keep `target` for the error screen: refused because a read-back failed, named, and
- *  not kept yet (ADR 0255). */
-function keepRefused({ set, get }: StoreAccess, target: WriteTarget): void {
-  const { readBackFailed, refusedWrites } = get();
-  if (
-    !readBackFailed ||
-    target === "bookkeeping" ||
-    refusedWrites.includes(target)
-  )
-    return;
-  set({ refusedWrites: [...refusedWrites, target] });
-}
-
-/** Persist via `op`, then reload portfolio + assumptions so the engine recomputes.
- *  Never throws into the void: a failure is captured, surfaced via `error`, and
- *  returned to the caller as `{ ok: false }`. On failure we still reload so the
- *  in-memory state matches what actually reached disk. Multi-statement writes are
- *  atomic (`Sql.transaction`, D-14), so a failed op leaves the DB unchanged, and a
- *  resolved op has committed: a failed reload after it returns `{ ok: true }` and
- *  stops on the error screen (ADR 0228). A write queued behind that is refused. */
-async function mutateNow(
-  store: StoreAccess,
-  markChanged: (sql: Sql) => Promise<void>,
-  target: WriteTarget,
-  op: (sql: Sql) => Promise<void>,
-  changesData: boolean,
-): Promise<MutationResult> {
-  const { set, get } = store;
-  const sql = get().sql;
-  if (!sql || get().readBackFailed) {
-    keepRefused(store, target);
-    const error = toWriteError(new Error("Database not initialised"));
-    set({ error });
-    return { ok: false, error };
-  }
-  try {
-    perfMark("edit:start");
-    await op(sql);
-    if (changesData) await markChanged(sql);
-    await reloadAfter(store, true);
-    // Write + reload; the recompute and page render are measured where they run.
-    perfMeasure("edit-saved", "edit:start");
-    set({ error: null });
-    return { ok: true };
-  } catch (e) {
-    // A broken input rule is the user's to fix in the form, not a failure to log;
-    // it is thrown before anything is written, so there is nothing to reload. Only
-    // returned: the form shows it, and a non-form caller uses showError (ADR 0141).
-    if (e instanceof EngineInputError)
-      return { ok: false, error: toWriteError(e) };
-    logFailure("WRITE", e);
-    const error = toWriteError(e);
-    await reloadAfter(store, false);
-    set({ error });
-    return { ok: false, error };
-  }
-}
-
-/** The store's write path (DR-085, ADR 0228, ADR 0253): every write runs in the one
- *  queue, then reloads. `enqueue` is for reads that wait in it; `writesSoFar` counts the
- *  data writes so far. */
-function createWriteRunner(set: SetState, get: () => PortfolioState) {
-  const store: StoreAccess = { set, get };
-  const { enqueue, write } = createWriteQueue((n) => set({ writesRunning: n }));
-  /** Data writes so far: an export keeps the changed flag when one landed while its
-   *  save dialog was open, since the file does not hold it (ADR 0110). */
-  let writes = 0;
-
-  const mutate = (
-    target: WriteTarget,
-    op: (sql: Sql) => Promise<void>,
-    changesData = true,
-  ): Promise<MutationResult> =>
-    write(() => mutateNow(store, markChanged, target, op, changesData));
-
-  /** Run `op` in the mutation queue, then reload; rethrow its failure unchanged
-   *  (after reloading in-memory state from the DB). For operations whose callers
-   *  show their own typed errors (DR-047: pages no longer touch the raw `sql`). Once
-   *  `op` has resolved it has committed: a failed reload stops on the error screen and
-   *  `op`'s result still returns (ADR 0228). */
-  function exclusive<T>(
-    target: WriteTarget,
-    op: (sql: Sql) => Promise<T>,
-    changesData = true,
-  ): Promise<T> {
-    return write(async () => {
-      const sql = requireSql(target);
-      try {
-        const result = await op(sql);
-        if (changesData) await markChanged(sql);
-        await reloadAfter(store, true);
-        return result;
-      } catch (e) {
-        await reloadAfter(store, false);
-        throw e;
-      }
-    });
-  }
-
-  /** `exclusive` for an operation that replaces the data, counted in `replacing` from
-   *  the call until it settles. On success the banner `error` from an earlier edit no
-   *  longer applies (ADR 0154). */
-  async function replaceData<T>(
-    target: WriteTarget,
-    op: (sql: Sql) => Promise<T>,
-  ): Promise<T> {
-    set({ replacing: get().replacing + 1 });
-    try {
-      const result = await exclusive(target, op);
-      set({ error: null });
-      return result;
-    } finally {
-      set({ replacing: get().replacing - 1 });
-    }
-  }
-
-  /** Data was written: the last backup no longer has it (ADR 0110). Best effort — a
-   *  failure is logged and never fails the write that already succeeded. */
-  async function markChanged(sql: Sql): Promise<void> {
-    writes += 1;
-    try {
-      await markDataChanged(sql);
-    } catch (e) {
-      logFailure("WRITE", e);
-    }
-  }
-
-  /** The open database, unless a read-back failed: then the screen may be older than
-   *  the database, so a write queued behind it is refused (ADR 0228) and its `target`
-   *  kept for the screen (ADR 0255). A read passes none. */
-  function requireSql(target?: WriteTarget): Sql {
-    const sql = get().sql;
-    if (!sql || get().readBackFailed) {
-      if (target) keepRefused(store, target);
-      throw new Error("Database not initialised");
-    }
-    return sql;
-  }
-
-  return {
-    enqueue,
-    mutate,
-    exclusive,
-    replaceData,
-    requireSql,
-    writesSoFar: () => writes,
-  };
 }
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => {
