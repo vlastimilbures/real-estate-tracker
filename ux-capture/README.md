@@ -29,6 +29,7 @@ ux-screens/<date>-<sha>[-dirty]/
   <lang>-<theme>-<viewport>/
     <nn>-<screen>.png                # full page unless the entry says otherwise
     axe/<nn>-<screen>.json           # violations with targets and failure summaries
+    axe-expected/<nn>-<screen>       # one per capture that owes a scan (ux:axe-check)
     axe-skipped.json                 # instead of axe/, in a run with UX_AXE=0
     90-keyboard-focus-order.json     # Tab sequence from page load
   flaky.json                         # only when a screen passed on its retry
@@ -101,14 +102,20 @@ one run per sha and matrix (`UX_LANG`, `UX_THEME`, `UX_VIEWPORT`, in any spellin
 checks the commit out into a temporary worktree, installs it (offline first), captures it
 with `UX_AXE=0` on a free port, moves the run into place and removes the worktree; a lock
 folder (`<key>.lock/pid`) makes a second caller wait for the first one's run instead of
-capturing again. `UX_WORKERS=<n>` caps the capture's Playwright workers.
-`pnpm ux:baseline --prune` deletes finished runs whose sha origin/main no longer reaches or
-that are older than 14 days (never origin/main's own), unfinished `.tmp-<pid>` runs and
-dead locks. It only looks inside full-sha folders and deletes nothing it did not create.
+capturing again. A lock is stale when its process is gone, or when it is older than 2 hours;
+Ctrl-C or SIGTERM removes the lock, the unfinished run and the worktree. `UX_WORKERS=<n>`
+caps the capture's Playwright workers. `pnpm ux:baseline --prune` deletes finished runs
+(with a valid `complete.json`) whose sha origin/main no longer reaches or that are older
+than 14 days (never origin/main's own), unfinished `.tmp-<pid>` runs and dead locks. It
+only looks inside full-sha folders, never follows a symbolic link, and deletes nothing it
+did not create.
 
 `UX_AXE=0` skips the axe scan, about a quarter of each screen's time. Such a run says so in
 `summary.md`, leaves an `axe-skipped.json` in each variant folder, and `pnpm ux:axe-check`
-fails on it (exit 2) rather than passing with nothing checked. CI never sets it: the `axe`
+fails on it (exit 2) rather than passing with nothing checked. Each `ux.capture()` that
+owes a scan also leaves `axe-expected/<id>`, and the check fails while any of those has no
+`axe/<id>.json`, so a scanning `--grep` re-capture into such a run cannot pass for the
+whole run. CI never sets it: the `axe`
 job still scans every screen, so a proof captured without the scan still gets one on its
 PR.
 
