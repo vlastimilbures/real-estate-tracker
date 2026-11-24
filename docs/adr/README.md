@@ -310,6 +310,7 @@ it.
 | [0257](0257-shock-years-merged-rows-range-checked.md)          | Shock years and merged CSV rows are range-checked at the write                                | Accepted · amended by 0259                                           | #464, #435                                         |
 | [0258](0258-leftover-block-hint.md)                            | The invalid-data notice points to a leftover mortgage block                                   | Accepted                                                             | #448, #435                                         |
 | [0259](0259-one-range-message.md)                              | One range message for forms, CSV import and restore                                           | Accepted                                                             | #464, #435                                         |
+| [0260](0260-one-visually-hidden-rule.md)                       | One visually-hidden rule                                                                      | Accepted                                                             | #495, #435                                         |
 
 <!-- adr-index:end -->
 
