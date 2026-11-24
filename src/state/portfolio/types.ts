@@ -13,6 +13,7 @@ import type {
 } from "../../engine";
 import type { DataErrorCode, UpgradeStop } from "../../data/errors";
 import type { WriteError } from "../writeError";
+import type { Result } from "../result";
 import type { BackupFile, ExportOutcome } from "../../data/backup";
 import type {
   CsvImportBatch,
@@ -31,7 +32,7 @@ export type Status = "idle" | "loading" | "ready" | "error";
  *  store also stashes `error` so a global banner can surface it without every caller
  *  wiring it up. `ok` means the write landed; when reading the data back after it failed,
  *  the store stops on the error screen with `readBackFailed` set (ADR 0228). */
-export type MutationResult = { ok: true } | { ok: false; error: WriteError };
+export type MutationResult = Result<void, WriteError>;
 /** Address and garage: stored, but not engine inputs (ADR 0184 §3). */
 export type { PropertyExtras };
 
