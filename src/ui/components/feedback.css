@@ -178,6 +178,9 @@
 .restore-confirm .restore-holds {
   margin-top: var(--s2);
 }
+.restore-confirm .restore-older {
+  color: var(--ink-soft);
+}
 
 /* ============ Modal ============ */
 .modal-overlay {

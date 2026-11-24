@@ -76,7 +76,7 @@ function Summary({ summary }: { summary: BackupSummary }) {
         <p>{b.backupDate(fmtDate(localDay(exported)))}</p>
       )}
       {summary.schemaVersion < SCHEMA_HEAD && (
-        <p style={{ color: "var(--ink-soft)" }}>{b.olderVersion}</p>
+        <p className="restore-older">{b.olderVersion}</p>
       )}
       <p className="restore-holds">{b.holds}</p>
       <div className="statlist">
