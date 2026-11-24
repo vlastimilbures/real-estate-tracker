@@ -297,7 +297,7 @@ describe("chooseRestoreFile — the picked backup (DR-138)", () => {
 });
 
 describe("exportBackup — honest outcome in Tauri (DR-026)", () => {
-  // As the store action wires it (src/state/portfolioStore.ts).
+  // As the store action wires it (src/state/portfolio/wholeDb.ts).
   const exportWithAppDeps = (s: TestSql, now = new Date()) =>
     exportBackup(s, { now, today: localIsoDay(now), save: saveFile });
 
