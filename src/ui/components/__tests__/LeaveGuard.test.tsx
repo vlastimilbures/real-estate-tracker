@@ -16,7 +16,11 @@ beforeEach(() => {
     useUiStore.setState({
       route: "settings",
     });
-    usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
+    usePortfolioStore.setState({
+      portfolio,
+      assumptions,
+      status: { kind: "ready" },
+    });
   });
 });
 

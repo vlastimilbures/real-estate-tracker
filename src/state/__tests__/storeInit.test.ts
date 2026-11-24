@@ -8,6 +8,11 @@ import { seedIfEmpty } from "../../data/seed";
 import type { Sql } from "../../data/sql";
 import { DataError } from "../../data/errors";
 import { openSeeded, text } from "./support/openSeeded";
+import {
+  errorOf,
+  startupErrorOf,
+  statusOf,
+} from "../../__tests__/support/status";
 
 describe("portfolioStore init & refresh", () => {
   it("a typed data-layer failure at startup is kept for the translated error screen", async () => {
@@ -20,13 +25,13 @@ describe("portfolioStore init & refresh", () => {
         ),
       );
     const s = usePortfolioStore.getState();
-    expect(s.status).toBe("error");
-    expect(s.error).toEqual({
+    expect(statusOf(s)).toBe("error");
+    expect(errorOf(s)).toEqual({
       kind: "data",
       code: "MIGRATION_CONFLICT",
       details,
     });
-    expect(s.startupError).toEqual({ code: "MIGRATION_CONFLICT", details });
+    expect(startupErrorOf(s)).toEqual({ code: "MIGRATION_CONFLICT", details });
   });
 
   it("a stopped upgrade keeps how far it got for the screen (#115)", async () => {
@@ -43,7 +48,7 @@ describe("portfolioStore init & refresh", () => {
         }),
       ),
     );
-    expect(usePortfolioStore.getState().startupError).toEqual({
+    expect(startupErrorOf(usePortfolioStore.getState())).toEqual({
       code: "MIGRATION_CONFLICT",
       details: ["x"],
       upgrade,
@@ -54,8 +59,8 @@ describe("portfolioStore init & refresh", () => {
     await usePortfolioStore
       .getState()
       .init(() => Promise.reject(new Error("boom")));
-    expect(usePortfolioStore.getState().startupError).toBeNull();
-    expect(usePortfolioStore.getState().error).toEqual({
+    expect(startupErrorOf(usePortfolioStore.getState())).toBeNull();
+    expect(errorOf(usePortfolioStore.getState())).toEqual({
       kind: "other",
       message: "boom",
     });
@@ -64,7 +69,7 @@ describe("portfolioStore init & refresh", () => {
   it("init() loads the portfolio + assumptions and goes ready", async () => {
     await usePortfolioStore.getState().init(openSeeded);
     const s = usePortfolioStore.getState();
-    expect(s.status).toBe("ready");
+    expect(statusOf(s)).toBe("ready");
     expect(s.portfolio!.properties.length).toBe(3);
     expect(s.assumptions).not.toBeNull();
   });
@@ -86,8 +91,8 @@ describe("portfolioStore init & refresh", () => {
       .getState()
       .init(() => Promise.reject(new Error("boom")));
     const s = usePortfolioStore.getState();
-    expect(s.status).toBe("error");
-    expect(text(s.error)).toMatch(/boom/);
+    expect(statusOf(s)).toBe("error");
+    expect(text(errorOf(s))).toMatch(/boom/);
   });
 
   it("refresh() reflects a row written directly to the DB", async () => {
@@ -128,11 +133,11 @@ describe("portfolioStore — emptied portfolio stays empty on relaunch (DR-024)"
     usePortfolioStore.setState({
       portfolio: null,
       assumptions: null,
-      status: "idle",
+      status: { kind: "idle" },
       error: null,
     });
     await usePortfolioStore.getState().init(launch);
-    expect(usePortfolioStore.getState().status).toBe("ready");
+    expect(statusOf(usePortfolioStore.getState())).toBe("ready");
     expect(usePortfolioStore.getState().portfolio!.properties).toHaveLength(0);
   });
 });

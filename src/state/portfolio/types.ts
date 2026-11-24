@@ -25,13 +25,24 @@ import type { PropertyExtras } from "../../data/mappers";
 import type { RefusedWrite } from "../writeTargets";
 import type { WriteRunner } from "./writeRunner";
 
-export type Status = "idle" | "loading" | "ready" | "error";
+/** Where start-up stands, as one value (#467). `loading` with `refused` is Try again after
+ *  a failed read-back: writes stay refused until it has read the data (ADR 0228).
+ *  `startupFailed`: `error` for the screen, and `startup` when it was a typed data-layer
+ *  failure (P5a). `readBackFailed`: a write committed but reading the data back failed;
+ *  `refused` names the writes refused since, once each in the order refused and without
+ *  bookkeeping (ADR 0255). */
+export type Status =
+  | { kind: "idle" }
+  | { kind: "loading"; refused?: RefusedWrite[] }
+  | { kind: "ready" }
+  | { kind: "startupFailed"; error: WriteError; startup: StartupError | null }
+  | { kind: "readBackFailed"; refused: RefusedWrite[] };
 
 /** The outcome of a mutation. Callers (forms, modals) branch on `ok` — e.g. a modal
  *  closes only on success and keeps itself open, showing `error`, on failure. The
  *  store also stashes `error` so a global banner can surface it without every caller
  *  wiring it up. `ok` means the write landed; when reading the data back after it failed,
- *  the store stops on the error screen with `readBackFailed` set (ADR 0228). */
+ *  the store stops on the error screen with status `readBackFailed` (ADR 0228). */
 export type MutationResult = Result<void, WriteError>;
 /** Address and garage: stored, but not engine inputs (ADR 0184 §3). */
 export type { PropertyExtras };
@@ -52,19 +63,12 @@ export interface PortfolioState {
   sample: SampleState;
   /** The last recorded export and whether the data changed since (ADR 0110). */
   backup: BackupState;
-  status: Status;
-  /** The last failed write (or the startup failure), translated by the UI. */
-  error: WriteError | null;
-  /** A typed data-layer failure that stopped startup (P5a), for a translated screen. */
-  startupError: StartupError | null;
-  /** A write committed but reading the data back failed: the app stops on the error
+  /** Start-up, and a failed read-back after a committed write: the app stops on the error
    *  screen, the write still counts as done, and later writes are refused until Try
    *  again reads the data (ADR 0228). */
-  readBackFailed: boolean;
-  /** Writes refused while `readBackFailed`, once each in the order refused and without
-   *  bookkeeping, for the error screen to name; a successful Try again empties it
-   *  (ADR 0255). */
-  refusedWrites: RefusedWrite[];
+  status: Status;
+  /** The banner: the last failed write, translated by the UI. */
+  error: WriteError | null;
   /** Restores, Clear samples and Load samples queued or running. Settings → Backup
    *  waits while one is, across page changes (ADR 0154). */
   replacing: number;

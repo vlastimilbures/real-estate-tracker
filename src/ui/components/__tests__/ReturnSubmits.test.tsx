@@ -24,7 +24,11 @@ beforeAll(async () => {
 
 beforeEach(() =>
   act(() => {
-    usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
+    usePortfolioStore.setState({
+      portfolio,
+      assumptions,
+      status: { kind: "ready" },
+    });
   }),
 );
 

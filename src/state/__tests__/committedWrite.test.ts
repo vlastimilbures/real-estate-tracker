@@ -15,6 +15,11 @@ import type { Sql } from "../../data/sql";
 import { money, type IsoDate } from "../../engine";
 import { logFailure } from "../../data/errorLog";
 import { importNow } from "./support/importNow";
+import {
+  readBackFailedOf,
+  startupErrorOf,
+  statusOf,
+} from "../../__tests__/support/status";
 
 vi.mocked(invoke).mockResolvedValue(undefined);
 // An export's save dialog, saved: only the export test reaches it.
@@ -122,10 +127,10 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
     )[0]!.n;
   const logged = () => vi.mocked(logFailure).mock.calls.map(([where]) => where);
   const onTheScreen = () => {
-    expect(store().status).toBe("error");
-    expect(store().readBackFailed).toBe(true);
+    expect(statusOf(store())).toBe("error");
+    expect(readBackFailedOf(store())).toBe(true);
     expect(store().error).toBeNull();
-    expect(store().startupError).toBeNull();
+    expect(startupErrorOf(store())).toBeNull();
   };
 
   beforeEach(() => vi.mocked(logFailure).mockClear());
@@ -212,8 +217,8 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
     await store().init(open);
 
     expect(open).not.toHaveBeenCalled();
-    expect(store().status).toBe("ready");
-    expect(store().readBackFailed).toBe(false);
+    expect(statusOf(store())).toBe("ready");
+    expect(readBackFailedOf(store())).toBe(false);
     expect(
       store().portfolio!.valuations.filter((v) => v.id === "saved"),
     ).toHaveLength(1);
@@ -242,7 +247,7 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
     expect(await first).toEqual({ ok: true });
     expect((await queued).ok).toBe(false);
     expect(await valuationsOnDisk("queued")).toBe(0);
-    expect(store().readBackFailed).toBe(true);
+    expect(readBackFailedOf(store())).toBe(true);
   });
 
   it("a failed write whose read-back also fails stays in the app with the write error", async () => {
@@ -259,8 +264,8 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
       }),
     ).toEqual({ ok: false, error });
 
-    expect(store().status).toBe("ready");
-    expect(store().readBackFailed).toBe(false);
+    expect(statusOf(store())).toBe("ready");
+    expect(readBackFailedOf(store())).toBe(false);
     expect(store().error).toEqual(error);
     expect(logged()).toEqual(["WRITE", "RELOAD"]);
   });
@@ -343,7 +348,7 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
     await queued;
     expect(await propertiesOnDisk()).toBe(before);
     expect(writes).toEqual({ execute: 0, transaction: 0 });
-    expect(store().readBackFailed).toBe(true);
+    expect(readBackFailedOf(store())).toBe(true);
   });
 
   it("Try again reads only after the job running before it", async () => {
@@ -370,18 +375,20 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
     const write = store().addValuation(valuation("held"));
     await new Promise((r) => setTimeout(r, 0));
     expect(log).toEqual(["held write"]);
-    usePortfolioStore.setState({ status: "error", readBackFailed: true });
+    usePortfolioStore.setState({
+      status: { kind: "readBackFailed", refused: [] },
+    });
 
     const tryAgain = store().init(vi.fn(async () => db));
     await new Promise((r) => setTimeout(r, 0));
     expect(log).toEqual(["held write"]);
-    expect(store().readBackFailed).toBe(true);
+    expect(readBackFailedOf(store())).toBe(true);
 
     release();
     await Promise.all([write, tryAgain]);
     // The write's own read-back, then Try again's.
     expect(log).toEqual(["held write", "snapshot", "snapshot"]);
-    expect(store().readBackFailed).toBe(false);
-    expect(store().status).toBe("ready");
+    expect(readBackFailedOf(store())).toBe(false);
+    expect(statusOf(store())).toBe("ready");
   });
 });

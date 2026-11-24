@@ -29,11 +29,11 @@ function fail(
 ) {
   act(() => {
     usePortfolioStore.setState({
-      status: "error",
-      error: { kind: "other", message: "disk I/O error" },
-      startupError: code
-        ? { code, details, ...(upgrade && { upgrade }) }
-        : null,
+      status: {
+        kind: "startupFailed",
+        error: { kind: "other", message: "disk I/O error" },
+        startup: code ? { code, details, ...(upgrade && { upgrade }) } : null,
+      },
       init,
     } as never);
   });
@@ -199,10 +199,8 @@ describe("a save whose read-back failed (ADR 0228)", () => {
   function readBackFailed() {
     act(() => {
       usePortfolioStore.setState({
-        status: "error",
-        readBackFailed: true,
+        status: { kind: "readBackFailed", refused: [] },
         error: null,
-        startupError: null,
         init,
       } as never);
     });

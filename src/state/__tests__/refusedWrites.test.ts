@@ -12,6 +12,11 @@ import { exportToJson } from "../../data/backup";
 import { parseProperties } from "../../import/csv";
 import type { Sql } from "../../data/sql";
 import { money, type IsoDate } from "../../engine";
+import {
+  readBackFailedOf,
+  refusedWritesOf,
+  statusOf,
+} from "../../__tests__/support/status";
 
 vi.mocked(invoke).mockResolvedValue(undefined);
 
@@ -53,18 +58,18 @@ async function behindAFailedReadBack(queued: () => Promise<unknown>[]) {
   const behind = queued();
   expect(await first).toEqual({ ok: true });
   const settled = await Promise.allSettled(behind);
-  expect(store().readBackFailed).toBe(true);
+  expect(readBackFailedOf(store())).toBe(true);
   return settled;
 }
 
 describe("refused writes are kept for the screen (ADR 0255)", () => {
   it("starts empty", () => {
-    expect(store().refusedWrites).toEqual([]);
+    expect(refusedWritesOf(store())).toEqual([]);
   });
 
   it("keeps a lease saved right behind the valuation", async () => {
     await behindAFailedReadBack(() => [store().saveLease(lease())]);
-    expect(store().refusedWrites).toEqual(["leases"]);
+    expect(refusedWritesOf(store())).toEqual(["leases"]);
   });
 
   it("keeps each table once, in the order refused", async () => {
@@ -77,7 +82,7 @@ describe("refused writes are kept for the screen (ADR 0255)", () => {
       store().removeScenario("none"),
       store().setPropertyActive(store().portfolio!.properties[0]!.id, false),
     ]);
-    expect(store().refusedWrites).toEqual([
+    expect(refusedWritesOf(store())).toEqual([
       "leases",
       "valuations",
       "assumptions",
@@ -92,7 +97,10 @@ describe("refused writes are kept for the screen (ADR 0255)", () => {
       store().saveMortgageBlock(p.mortgages[0]!),
       store().saveHoldingCost(p.holdingCosts[0]!),
     ]);
-    expect(store().refusedWrites).toEqual(["mortgage_blocks", "holding_costs"]);
+    expect(refusedWritesOf(store())).toEqual([
+      "mortgage_blocks",
+      "holding_costs",
+    ]);
   });
 
   it("names the whole-database actions, which still throw", async () => {
@@ -113,7 +121,7 @@ describe("refused writes are kept for the screen (ADR 0255)", () => {
       "rejected",
       "rejected",
     ]);
-    expect(store().refusedWrites).toEqual([
+    expect(refusedWritesOf(store())).toEqual([
       "importCsv",
       "restore",
       "clearSample",
@@ -126,27 +134,27 @@ describe("refused writes are kept for the screen (ADR 0255)", () => {
       store().dismissSampleBanner(),
     ]);
     expect(dismissed).toMatchObject({ value: { ok: false } });
-    expect(store().refusedWrites).toEqual([]);
+    expect(refusedWritesOf(store())).toEqual([]);
   });
 
   it("a successful Try again empties the list", async () => {
     await behindAFailedReadBack(() => [store().saveLease(lease())]);
     portfolioDb.set(db);
     await store().init();
-    expect(store().status).toBe("ready");
-    expect(store().refusedWrites).toEqual([]);
+    expect(statusOf(store())).toBe("ready");
+    expect(refusedWritesOf(store())).toEqual([]);
   });
 
   it("a Try again that fails again keeps the list", async () => {
     await behindAFailedReadBack(() => [store().saveLease(lease())]);
     await store().init();
-    expect(store().status).toBe("error");
-    expect(store().refusedWrites).toEqual(["leases"]);
+    expect(statusOf(store())).toBe("error");
+    expect(refusedWritesOf(store())).toEqual(["leases"]);
   });
 
   it("a write refused because no database is open is not kept", async () => {
     portfolioDb.set(null);
     expect((await store().saveLease(lease())).ok).toBe(false);
-    expect(store().refusedWrites).toEqual([]);
+    expect(refusedWritesOf(store())).toEqual([]);
   });
 });

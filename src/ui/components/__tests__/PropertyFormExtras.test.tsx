@@ -29,7 +29,7 @@ beforeEach(() => {
     usePortfolioStore.setState({
       portfolio,
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
       editProperty,
       getPropertyExtras: () =>
         new Promise<Extras>((resolve, reject) => {

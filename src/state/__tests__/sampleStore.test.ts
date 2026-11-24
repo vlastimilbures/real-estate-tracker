@@ -21,9 +21,8 @@ function reset(): void {
     portfolio: null,
     assumptions: null,
     sample: { active: false, dismissed: false },
-    status: "idle",
+    status: { kind: "idle" },
     error: null,
-    startupError: null,
   });
 }
 

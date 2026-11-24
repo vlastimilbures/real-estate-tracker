@@ -9,6 +9,7 @@ import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
 import { exportToJson, RestoreError, type BackupFile } from "../../data/backup";
+import { startupErrorOf, statusOf } from "../../__tests__/support/status";
 
 vi.mocked(invoke).mockResolvedValue(undefined);
 
@@ -41,9 +42,9 @@ beforeEach(async () => {
 
 describe("startup without the assumptions row", () => {
   it("stops on ROW_INVALID naming the record, with the database kept open", async () => {
-    expect(store().status).toBe("error");
-    expect(store().startupError?.code).toBe("ROW_INVALID");
-    expect(store().startupError?.details).toEqual([
+    expect(statusOf(store())).toBe("error");
+    expect(startupErrorOf(store())?.code).toBe("ROW_INVALID");
+    expect(startupErrorOf(store())?.details).toEqual([
       "assumptions 1: row not found",
     ]);
     expect(portfolioDb.get()).toBe(db);
@@ -52,7 +53,7 @@ describe("startup without the assumptions row", () => {
   });
 
   it("offers Restore a backup… and no Try again", () => {
-    const view = bootView(store().startupError?.code ?? null, READ_FAILURES);
+    const view = bootView(startupErrorOf(store())?.code ?? null, READ_FAILURES);
     expect(view).toEqual({ retry: false, records: true, restore: true });
   });
 
@@ -70,8 +71,8 @@ describe("startup without the assumptions row", () => {
     ) as BackupFile;
     expect(copy.tables.assumptions).toEqual([]);
     store().continueAfterRestore();
-    expect(store().status).toBe("ready");
-    expect(store().startupError).toBeNull();
+    expect(statusOf(store())).toBe("ready");
+    expect(startupErrorOf(store())).toBeNull();
     expect(store().assumptions).not.toBeNull();
   });
 
@@ -92,7 +93,7 @@ describe("startup without the assumptions row", () => {
     expect(
       vi.mocked(invoke).mock.calls.some(([cmd]) => cmd === "write_app_backup"),
     ).toBe(false);
-    expect(store().status).toBe("error");
-    expect(store().startupError?.code).toBe("ROW_INVALID");
+    expect(statusOf(store())).toBe("error");
+    expect(startupErrorOf(store())?.code).toBe("ROW_INVALID");
   });
 });

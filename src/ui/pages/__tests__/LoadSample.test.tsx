@@ -29,7 +29,7 @@ beforeEach(() => {
       settingsTab: "backup",
     });
     usePortfolioStore.setState({
-      status: "ready",
+      status: { kind: "ready" },
       portfolio: EMPTY,
       assumptions,
       loadSample: vi.fn(),

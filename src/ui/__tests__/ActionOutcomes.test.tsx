@@ -50,7 +50,7 @@ beforeEach(async () => {
       settingsTab: "backup",
     });
     usePortfolioStore.setState({
-      status: "ready",
+      status: { kind: "ready" },
       portfolio,
       assumptions,
       scenarios: [],

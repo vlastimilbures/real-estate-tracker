@@ -9,6 +9,11 @@ import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
 import { exportToJson, type BackupFile } from "../../data/backup";
 import type { Sql } from "../../data/sql";
+import {
+  readBackFailedOf,
+  startupErrorOf,
+  statusOf,
+} from "../../__tests__/support/status";
 
 vi.mocked(invoke).mockResolvedValue(undefined);
 
@@ -41,8 +46,8 @@ beforeEach(async () => {
 
 describe("restoring from the startup error screen", () => {
   it("startup stopped on ROW_INVALID, with the database kept open", () => {
-    expect(store().status).toBe("error");
-    expect(store().startupError?.code).toBe("ROW_INVALID");
+    expect(statusOf(store())).toBe("error");
+    expect(startupErrorOf(store())?.code).toBe("ROW_INVALID");
     expect(portfolioDb.get()).toBe(db);
   });
 
@@ -56,11 +61,11 @@ describe("restoring from the startup error screen", () => {
       .mock.calls.find(([cmd]) => cmd === "write_app_backup");
     expect((safety?.[1] as { json: string }).json).toContain('"abc"');
     // The screen stays until the user has read where the safety copy is.
-    expect(store().status).toBe("error");
+    expect(statusOf(store())).toBe("error");
 
     store().continueAfterRestore();
-    expect(store().status).toBe("ready");
-    expect(store().startupError).toBeNull();
+    expect(statusOf(store())).toBe("ready");
+    expect(startupErrorOf(store())).toBeNull();
     expect(store().error).toBeNull();
     expect(store().portfolio!.properties.length).toBeGreaterThan(0);
   });
@@ -71,28 +76,32 @@ describe("restoring from the startup error screen", () => {
     const { ready } = await store().restoreAtStartup(good);
 
     expect(ready).toBe(false);
-    expect(store().readBackFailed).toBe(true);
+    expect(readBackFailedOf(store())).toBe(true);
     // The ROW_INVALID failure no longer applies: the restore replaced the data.
-    expect(store().startupError).toBeNull();
+    expect(startupErrorOf(store())).toBeNull();
     store().continueAfterRestore();
-    expect(store().status).toBe("error");
+    expect(statusOf(store())).toBe("error");
 
     portfolioDb.set(db);
     await store().init();
-    expect(store().status).toBe("ready");
+    expect(statusOf(store())).toBe("ready");
     expect(store().portfolio!.properties.length).toBeGreaterThan(0);
   });
 
   it("is refused for any other startup failure", async () => {
     usePortfolioStore.setState({
-      startupError: { code: "DB_INTEGRITY", details: [] },
+      status: {
+        kind: "startupFailed",
+        error: { kind: "data", code: "DB_INTEGRITY", details: [] },
+        startup: { code: "DB_INTEGRITY", details: [] },
+      },
     });
     await expect(store().restoreAtStartup(good)).rejects.toThrow(/ROW_INVALID/);
     expect(vi.mocked(invoke)).not.toHaveBeenCalled();
   });
 
   it("is refused once the app is running, even with a stale ROW_INVALID", async () => {
-    usePortfolioStore.setState({ status: "ready" });
+    usePortfolioStore.setState({ status: { kind: "ready" } });
     await expect(store().restoreAtStartup(good)).rejects.toThrow(/ROW_INVALID/);
     expect(vi.mocked(invoke)).not.toHaveBeenCalled();
   });

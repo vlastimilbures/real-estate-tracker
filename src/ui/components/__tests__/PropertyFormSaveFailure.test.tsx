@@ -27,7 +27,7 @@ beforeEach(() => {
     usePortfolioStore.setState({
       portfolio,
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
       editProperty,
       getPropertyExtras: () =>
         Promise.resolve({ address: "Stored St 1", garage: null }),

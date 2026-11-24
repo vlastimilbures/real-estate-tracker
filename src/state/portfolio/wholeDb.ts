@@ -62,8 +62,12 @@ function replaceActions({
       // Only where the database migrated to head and only reading it failed
       // (READ_FAILURES, ADR 0231); any other startup failure leaves a database a
       // restore must not write to.
-      const code = get().startupError?.code;
-      if (get().status !== "error" || !code || !READ_FAILURES.has(code))
+      const status = get().status;
+      if (
+        status.kind !== "startupFailed" ||
+        !status.startup ||
+        !READ_FAILURES.has(status.startup.code)
+      )
         throw new Error(
           "A restore at startup needs a ROW_INVALID or SCENARIO_INVALID failure",
         );
@@ -72,14 +76,14 @@ function replaceActions({
       );
       return {
         safetyBackup,
-        ready: get().portfolio !== null && !get().readBackFailed,
+        ready:
+          get().status.kind === "startupFailed" && get().portfolio !== null,
       };
     },
     continueAfterRestore: () => {
       const s = get();
-      if (s.status !== "error" || s.portfolio === null || s.readBackFailed)
-        return;
-      set({ status: "ready", error: null, startupError: null });
+      if (s.status.kind !== "startupFailed" || s.portfolio === null) return;
+      set({ status: { kind: "ready" }, error: null });
     },
     clearSample: () => replaceData("clearSample", (sql) => clearSample(sql)),
     loadSample: () => replaceData("loadSample", loadSample),

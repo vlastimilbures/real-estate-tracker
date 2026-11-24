@@ -58,7 +58,7 @@ function setUp(
     usePortfolioStore.setState({
       portfolio: p,
       assumptions: a,
-      status: "ready",
+      status: { kind: "ready" },
     });
     useUiStore.setState({
       language: "en",

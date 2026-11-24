@@ -31,7 +31,7 @@ function setSample(active: boolean, dismissed = false) {
 beforeEach(() =>
   act(() => {
     usePortfolioStore.setState({
-      status: "ready",
+      status: { kind: "ready" },
       portfolio,
       assumptions,
       sample: { active: true, dismissed: false },

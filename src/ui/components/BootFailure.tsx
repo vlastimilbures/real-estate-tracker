@@ -6,8 +6,10 @@
 import { useState } from "react";
 import {
   usePortfolioStore,
+  type Status,
   type StartupError,
 } from "../../state/portfolioStore";
+import type { RefusedWrite } from "../../state/writeTargets";
 import { revealDataDir } from "../../state/platform";
 import { useUiStore, type Notice } from "../../state/uiStore";
 import { logFailure, READ_FAILURES } from "../../state/diagnostics";
@@ -59,8 +61,15 @@ function noticeText(t: Dictionary, notice: Notice): string {
 /** A save committed but its read-back failed: say the change was saved, name the
  *  writes queued behind it that were refused (ADR 0255), and still name the safety copy
  *  (ADR 0228, ADR 0154 §5). */
-function ReadBackText({ t, notice }: { t: Dictionary; notice: Notice | null }) {
-  const refused = usePortfolioStore((s) => s.refusedWrites);
+function ReadBackText({
+  t,
+  notice,
+  refused,
+}: {
+  t: Dictionary;
+  notice: Notice | null;
+  refused: RefusedWrite[];
+}) {
   return (
     <>
       <p>{t.boot.readBackFailed}</p>
@@ -113,11 +122,32 @@ function StartupText({
   );
 }
 
+/** What stopped the app: a failed read-back, a typed startup failure, or the error. */
+function StopText({
+  t,
+  status,
+  notice,
+  records,
+}: {
+  t: Dictionary;
+  status: Status;
+  notice: Notice | null;
+  records: boolean;
+}) {
+  if (status.kind === "readBackFailed")
+    return <ReadBackText t={t} notice={notice} refused={status.refused} />;
+  if (status.kind !== "startupFailed") return null;
+  return status.startup ? (
+    <StartupText t={t} error={status.startup} records={records} />
+  ) : (
+    <code>{describeWriteError(t, status.error).message}</code>
+  );
+}
+
 export function BootFailure() {
   const t = useT();
-  const startupError = usePortfolioStore((s) => s.startupError);
-  const error = usePortfolioStore((s) => s.error);
-  const readBackFailed = usePortfolioStore((s) => s.readBackFailed);
+  const status = usePortfolioStore((s) => s.status);
+  const startupError = status.kind === "startupFailed" ? status.startup : null;
   const notice = useUiStore((s) => s.notice);
   const init = usePortfolioStore((s) => s.init);
   const restoreAtStartup = usePortfolioStore((s) => s.restoreAtStartup);
@@ -219,13 +249,12 @@ export function BootFailure() {
     <main>
       <div className="error-screen" role="alert">
         <h1 className="eyebrow">{t.app.dbErrorEyebrow}</h1>
-        {readBackFailed ? (
-          <ReadBackText t={t} notice={notice} />
-        ) : startupError ? (
-          <StartupText t={t} error={startupError} records={view.records} />
-        ) : (
-          error && <code>{describeWriteError(t, error).message}</code>
-        )}
+        <StopText
+          t={t}
+          status={status}
+          notice={notice}
+          records={view.records}
+        />
         {view.retry && <p>{t.app.bootRetryHint}</p>}
         <small>{t.dataErrors.logHint}</small>
         {revealFailed && <p className="error-text">{t.boot.revealFailed}</p>}

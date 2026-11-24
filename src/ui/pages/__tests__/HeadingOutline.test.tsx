@@ -60,9 +60,8 @@ function load(
     usePortfolioStore.setState({
       portfolio: p,
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
       error: null,
-      startupError: null,
       scenarios: [],
     });
     useUiStore.setState({
@@ -187,9 +186,11 @@ describe("the startup screens (#128, axe best-practice)", () => {
     act(() => {
       useUiStore.setState({ language: "en" });
       usePortfolioStore.setState({
-        status: "error",
-        error: { kind: "other", message: "x" },
-        startupError: null,
+        status: {
+          kind: "startupFailed",
+          error: { kind: "other", message: "x" },
+          startup: null,
+        },
       } as never);
     });
     render(<BootFailure />);

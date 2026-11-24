@@ -11,6 +11,10 @@ import { invoke } from "@tauri-apps/api/core";
 import { exportToJson, type BackupFile } from "../../data/backup";
 import { saveFile } from "../../platform/saveFile";
 import type { WriteTarget } from "../writeTargets";
+import {
+  readBackFailedOf,
+  refusedWritesOf,
+} from "../../__tests__/support/status";
 
 vi.mocked(invoke).mockResolvedValue(undefined);
 vi.mock("../../platform/saveFile", async (importOriginal) => ({
@@ -33,7 +37,9 @@ beforeEach(async () => {
 
 const store = () => usePortfolioStore.getState();
 const readBackFails = () =>
-  usePortfolioStore.setState({ status: "error", readBackFailed: true });
+  usePortfolioStore.setState({
+    status: { kind: "readBackFailed", refused: [] },
+  });
 /** Any record: a refused write never reads its arguments. */
 const any = {} as never;
 
@@ -197,7 +203,7 @@ describe("each write method's target (ADR 0255)", () => {
     ],
   )("$method keeps $kept", async ({ run, kept }) => {
     await Promise.allSettled([run()]);
-    expect(store().readBackFailed).toBe(true);
-    expect(store().refusedWrites).toEqual(kept);
+    expect(readBackFailedOf(store())).toBe(true);
+    expect(refusedWritesOf(store())).toEqual(kept);
   });
 });

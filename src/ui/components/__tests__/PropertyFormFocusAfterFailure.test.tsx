@@ -28,7 +28,7 @@ beforeEach(() => {
     usePortfolioStore.setState({
       portfolio,
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
       editProperty: () =>
         new Promise<MutationResult>((resolve) => (finish = resolve)),
       getPropertyExtras: () =>

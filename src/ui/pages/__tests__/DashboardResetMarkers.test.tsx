@@ -51,7 +51,11 @@ beforeEach(() => {
 
 function renderWith(ids: string[]) {
   act(() => {
-    usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
+    usePortfolioStore.setState({
+      portfolio,
+      assumptions,
+      status: { kind: "ready" },
+    });
     useUiStore.setState({
       language: "en",
       route: "dashboard",

@@ -26,7 +26,7 @@ beforeEach(() => {
   loadSample.mockReset();
   act(() => {
     usePortfolioStore.setState({
-      status: "ready",
+      status: { kind: "ready" },
       portfolio: { ...portfolio, properties: [] },
       assumptions,
       sample: { active: false, dismissed: false },

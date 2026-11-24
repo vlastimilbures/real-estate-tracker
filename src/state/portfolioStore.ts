@@ -6,7 +6,7 @@
 // opener and the clock.
 import { defaultOpen } from "../data/open";
 import { createPortfolioStore } from "./portfolio/store";
-export type { MutationResult, StartupError } from "./portfolio/types";
+export type { MutationResult, StartupError, Status } from "./portfolio/types";
 /** Address and garage: stored, but not engine inputs (ADR 0184 §3).
  *  @internal test seam: UI tests reach the type through the state facade (ADR 0072). */
 export type { PropertyExtras } from "./portfolio/types";

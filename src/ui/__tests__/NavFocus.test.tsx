@@ -25,7 +25,7 @@ beforeEach(async () => {
     usePortfolioStore.setState({
       portfolio,
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
       error: null,
       init: async () => {},
     } as never);

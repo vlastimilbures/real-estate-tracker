@@ -7,6 +7,7 @@ import { logFailure } from "../../data/errorLog";
 import { markDataChanged } from "../../data/repositories";
 import { perfMark, perfMeasure } from "../../lib/perf";
 import { createWriteQueue } from "./writeQueue";
+import { refusedOf, writesRefused } from "./status";
 import type { WriteTarget } from "../writeTargets";
 import type {
   DbHandle,
@@ -30,10 +31,8 @@ async function reloadAfter(
     logFailure("RELOAD", e);
     if (committed)
       set({
-        status: "error",
-        readBackFailed: true,
+        status: { kind: "readBackFailed", refused: refusedOf(get().status) },
         error: null,
-        startupError: null,
       });
   }
 }
@@ -41,14 +40,14 @@ async function reloadAfter(
 /** Keep `target` for the error screen: refused because a read-back failed, named, and
  *  not kept yet (ADR 0255). */
 function keepRefused({ set, get }: StoreAccess, target: WriteTarget): void {
-  const { readBackFailed, refusedWrites } = get();
+  const { status } = get();
   if (
-    !readBackFailed ||
+    !writesRefused(status) ||
     target === "bookkeeping" ||
-    refusedWrites.includes(target)
+    status.refused.includes(target)
   )
     return;
-  set({ refusedWrites: [...refusedWrites, target] });
+  set({ status: { ...status, refused: [...status.refused, target] } });
 }
 
 /** Persist via `op`, then reload portfolio + assumptions so the engine recomputes.
@@ -67,7 +66,7 @@ async function mutateNow(
 ): Promise<MutationResult> {
   const { set, get, db } = store;
   const sql = db.get();
-  if (!sql || get().readBackFailed) {
+  if (!sql || writesRefused(get().status)) {
     keepRefused(store, target);
     const error = toWriteError(new Error("Database not initialised"));
     set({ error });
@@ -177,7 +176,7 @@ export function createWriteRunner(
    *  kept for the screen (ADR 0255). A read passes none. */
   function requireSql(target?: WriteTarget): Sql {
     const sql = db.get();
-    if (!sql || get().readBackFailed) {
+    if (!sql || writesRefused(get().status)) {
       if (target) keepRefused(store, target);
       throw new Error("Database not initialised");
     }

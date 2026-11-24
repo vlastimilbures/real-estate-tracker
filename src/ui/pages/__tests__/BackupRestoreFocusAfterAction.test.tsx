@@ -36,7 +36,7 @@ beforeEach(() => {
   loaded = deferred();
   act(() => {
     usePortfolioStore.setState({
-      status: "ready",
+      status: { kind: "ready" },
       portfolio,
       assumptions,
       sample: { active: false, dismissed: false },

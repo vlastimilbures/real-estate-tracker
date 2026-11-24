@@ -38,14 +38,18 @@ function withPrepayments(prepayments: MortgagePrepayment[]) {
         ),
       },
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
     }),
   );
 }
 
 beforeEach(() => {
   act(() => {
-    usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
+    usePortfolioStore.setState({
+      portfolio,
+      assumptions,
+      status: { kind: "ready" },
+    });
     useUiStore.setState({
       route: "property",
       selectedPropertyId: "javorova",
@@ -155,7 +159,7 @@ describe("ADR 0130: interest saved on Property detail", () => {
           ),
         },
         assumptions,
-        status: "ready",
+        status: { kind: "ready" },
       }),
     );
     render(<PropertyDetail />);
@@ -197,7 +201,7 @@ describe("ADR 0130: interest saved on Property detail", () => {
           ],
         },
         assumptions,
-        status: "ready",
+        status: { kind: "ready" },
       }),
     );
     render(<PropertyDetail />);
@@ -244,7 +248,7 @@ describe("ADR 0130: a prepayment at the refix saves nothing in the model", () =>
       usePortfolioStore.setState({
         portfolio: p,
         assumptions,
-        status: "ready",
+        status: { kind: "ready" },
       }),
     );
     render(<PropertyDetail />);

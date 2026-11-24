@@ -35,7 +35,7 @@ function show(id: string, funding?: Property["funding"], p = portfolio) {
         ),
       },
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
     });
     useUiStore.setState({ selectedPropertyId: id });
   });

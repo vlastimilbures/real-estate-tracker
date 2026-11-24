@@ -16,6 +16,11 @@ import { seedIfEmpty } from "../../data/seed";
 import { exportToJson, type BackupFile } from "../../data/backup";
 import type { Sql } from "../../data/sql";
 import { invoke } from "@tauri-apps/api/core";
+import {
+  readBackFailedOf,
+  startupErrorOf,
+  statusOf,
+} from "../../__tests__/support/status";
 
 const picked = { text: "" };
 vi.mocked(invoke).mockImplementation((command: string) =>
@@ -76,10 +81,10 @@ describe("restore from the startup error screen (ROW_INVALID)", () => {
 
     const alert = screen.getByRole("alert");
     expect(alert.textContent).toMatch(/portfolio-before-restore-.*\.json/);
-    expect(store().status).toBe("error");
+    expect(statusOf(store())).toBe("error");
 
     await userEvent.click(button(en.boot.continue));
-    expect(store().status).toBe("ready");
+    expect(statusOf(store())).toBe("ready");
     expect(store().portfolio!.properties.length).toBeGreaterThan(0);
   });
 
@@ -92,8 +97,8 @@ describe("restore from the startup error screen (ROW_INVALID)", () => {
     expect(named).toBeDefined();
 
     await userEvent.click(button(en.app.tryAgain));
-    expect(store().status).toBe("error");
-    expect(store().readBackFailed).toBe(true);
+    expect(statusOf(store())).toBe("error");
+    expect(readBackFailedOf(store())).toBe(true);
     // In the app a failed init mounts a new screen: it still names the copy.
     cleanup();
     render(<BootFailure />);
@@ -122,7 +127,7 @@ describe("restore from the startup error screen (ROW_INVALID)", () => {
     await userEvent.click(button(en.boot.restoreBackup));
     await userEvent.click(button(en.common.cancel));
     expect(button(en.boot.restoreBackup)).toBeDefined();
-    expect(store().startupError?.code).toBe("ROW_INVALID");
+    expect(startupErrorOf(store())?.code).toBe("ROW_INVALID");
   });
 
   it("a refused file shows why, and the screen stays", async () => {
@@ -154,7 +159,7 @@ describe("restore from the startup error screen (ROW_INVALID)", () => {
       screen.queryByRole("button", { name: en.boot.restoreBackup }),
     ).toBeNull();
     expect(button(en.app.tryAgain)).toBeDefined();
-    expect(store().status).toBe("error");
+    expect(statusOf(store())).toBe("error");
   });
 
   it("a failed restore is logged under RESTORE (#258 item 6)", async () => {

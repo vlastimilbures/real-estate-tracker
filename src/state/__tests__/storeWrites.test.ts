@@ -9,6 +9,7 @@ import type { Sql } from "../../data/sql";
 import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
 import { money } from "../../engine";
 import { openSeeded, text } from "./support/openSeeded";
+import { statusOf } from "../../__tests__/support/status";
 
 describe("portfolioStore mutations", () => {
   it("returns an error result (not a throw) when the database is not initialised", async () => {
@@ -25,7 +26,7 @@ describe("portfolioStore mutations", () => {
 
   it("a successful mutation clears error and refreshes state", async () => {
     await usePortfolioStore.getState().init(openSeeded);
-    expect(usePortfolioStore.getState().status).toBe("ready");
+    expect(statusOf(usePortfolioStore.getState())).toBe("ready");
 
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
     const before = usePortfolioStore.getState().portfolio!.valuations.length;
@@ -75,7 +76,7 @@ describe("portfolioStore mutations", () => {
     expect(text(usePortfolioStore.getState().error)).toMatch(/disk is full/i);
     // status stays "ready" (mutation failures are not full-screen init errors) and the
     // optimistic row never sticks because refresh() reconciles to disk.
-    expect(usePortfolioStore.getState().status).toBe("ready");
+    expect(statusOf(usePortfolioStore.getState())).toBe("ready");
     expect(usePortfolioStore.getState().portfolio!.valuations.length).toBe(
       before,
     );

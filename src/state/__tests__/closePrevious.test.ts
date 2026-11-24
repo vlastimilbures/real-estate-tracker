@@ -42,9 +42,8 @@ async function reset(open: () => Promise<Sql> = openSeeded) {
   usePortfolioStore.setState({
     portfolio: null,
     assumptions: null,
-    status: "idle",
+    status: { kind: "idle" },
     error: null,
-    startupError: null,
   });
   await store().init(open);
 }

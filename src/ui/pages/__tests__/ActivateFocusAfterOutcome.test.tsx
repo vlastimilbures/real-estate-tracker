@@ -44,7 +44,7 @@ beforeEach(() => {
     usePortfolioStore.setState({
       portfolio: inactive,
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
       setPropertyActive: () => write.promise,
     });
     useUiStore.setState({ route: "property", selectedPropertyId: p.id });

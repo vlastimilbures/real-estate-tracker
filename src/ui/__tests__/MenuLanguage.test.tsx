@@ -25,9 +25,11 @@ beforeEach(() => {
   act(() => {
     // The error screen keeps the render small; the menu bridge is mounted regardless.
     usePortfolioStore.setState({
-      status: "error",
-      error: { kind: "other", message: "x" },
-      startupError: null,
+      status: {
+        kind: "startupFailed",
+        error: { kind: "other", message: "x" },
+        startup: null,
+      },
       init: async () => {},
     } as never);
   });

@@ -78,7 +78,7 @@ function load(
     usePortfolioStore.setState({
       portfolio: p,
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
       scenarios: [saved],
     });
     useUiStore.setState({
