@@ -1,14 +1,24 @@
 // The shared baseline cache (`pnpm ux:baseline`): matrix keys, cache paths, the
 // completion marker, pruning, and where ux:diff / ux:axe-check find a run (a name
 // under ux-screens/ or an absolute baseline path).
+import {
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  symlinkSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   cachePath,
   cacheRoot,
   lockStale,
   makeMarker,
   planPrune,
+  readCacheTree,
   shouldPrune,
   validMarker,
   type CacheItem,
@@ -155,6 +165,11 @@ describe("lockStale", () => {
     expect(lockStale(null, false, 5_000)).toBe(false);
     expect(lockStale(null, false, 31_000)).toBe(true);
   });
+
+  it("treats any lock older than 2 h as stale, even with a live pid", () => {
+    expect(lockStale(123, true, 2 * 3_600_000 + 1)).toBe(true);
+    expect(lockStale(123, true, 10_000, 5_000)).toBe(true);
+  });
 });
 
 describe("planPrune", () => {
@@ -162,25 +177,32 @@ describe("planPrune", () => {
   const MAIN = "b1dd29799800b0f8162ba275ade024e53c71113c";
   const OLD = "b5b85728fd8f4562016a2730b79a453d23a70753";
   const GONE = "0123456789abcdef0123456789abcdef01234567";
+  const ODD = "fedcba9876543210fedcba9876543210fedcba98";
   const fresh = "2026-11-24T09:00:00Z";
   const stale = "2026-10-01T00:00:00Z";
-  const run = (name: string, date: string | null): CacheItem => ({
+  const run = (sha: string, name: string, date: string | null): CacheItem => ({
     name,
     isDir: true,
-    marker: date ? { date } : null,
-    mtime: now,
+    marker: date
+      ? {
+          sha,
+          key: name,
+          matrix: { langs: [], themes: [], viewports: [] },
+          screens: 3,
+          date,
+        }
+      : null,
   });
   const lock = (name: string, staleLock: boolean): CacheItem => ({
     name,
     isDir: true,
     marker: null,
-    mtime: now,
     staleLock,
   });
   const plan = (tree: Record<string, CacheItem[]>) =>
     planPrune({
       tree,
-      reachable: (sha) => sha !== GONE,
+      reachable: (sha) => (sha === ODD ? null : sha !== GONE),
       mainSha: MAIN,
       now,
     }).sort();
@@ -188,8 +210,8 @@ describe("planPrune", () => {
   it("touches no folder that is not a full sha", () => {
     expect(
       plan({
-        notasha: [run("precious", null), run("old", stale)],
-        "origin-main": [run("en_light_1280x800", stale)],
+        notasha: [run("notasha", "precious", stale)],
+        "origin-main": [run("origin-main", "en_light_1280x800", stale)],
       }),
     ).toEqual([]);
   });
@@ -198,22 +220,52 @@ describe("planPrune", () => {
     expect(
       plan({
         [GONE]: [
-          run("en_light_1280x800", fresh),
-          run("notes", null),
-          { name: "readme.txt", isDir: false, marker: null, mtime: now },
+          run(GONE, "en_light_1280x800", fresh),
+          run(GONE, "notes", null),
+          { name: "readme.txt", isDir: false, marker: null },
         ],
       }),
     ).toEqual([`${GONE}/en_light_1280x800`]);
   });
 
+  it("needs a valid marker of this sha and key, not any JSON", () => {
+    expect(
+      plan({
+        [GONE]: [
+          { name: "a", isDir: true, marker: { date: stale } },
+          {
+            name: "b",
+            isDir: true,
+            marker: { ...run(OLD, "b", stale).marker! },
+          },
+          {
+            name: "c",
+            isDir: true,
+            marker: { ...run(GONE, "x", stale).marker! },
+          },
+          { name: "d", isDir: true, marker: "complete" },
+        ],
+      }),
+    ).toEqual([]);
+  });
+
   it("never prunes origin/main's own entry, however old", () => {
-    expect(plan({ [MAIN]: [run("en_light_1280x800", stale)] })).toEqual([]);
+    expect(plan({ [MAIN]: [run(MAIN, "en_light_1280x800", stale)] })).toEqual(
+      [],
+    );
+  });
+
+  it("keeps a sha git could not judge", () => {
+    expect(plan({ [ODD]: [run(ODD, "en_light_1280x800", stale)] })).toEqual([]);
   });
 
   it("prunes an old entry of an ancestor, keeps a fresh one", () => {
     expect(
       plan({
-        [OLD]: [run("en_light_1280x800", stale), run("en_dark_min", fresh)],
+        [OLD]: [
+          run(OLD, "en_light_1280x800", stale),
+          run(OLD, "en_dark_min", fresh),
+        ],
       }),
     ).toEqual([`${OLD}/en_light_1280x800`]);
   });
@@ -223,25 +275,81 @@ describe("planPrune", () => {
       plan({
         [GONE]: [
           lock("en_light_1280x800.lock", false),
-          run("en_light_1280x800", fresh),
-          run("en_light_1280x800.tmp-4242", null),
+          run(GONE, "en_light_1280x800", fresh),
+          run(GONE, "en_light_1280x800.tmp-4242", null),
         ],
       }),
     ).toEqual([]);
   });
 
-  it("removes a dead lock together with its .tmp run", () => {
+  it("removes a dead lock with its .tmp run, and a set-aside lock", () => {
     expect(
       plan({
         [OLD]: [
           lock("en_light_1280x800.lock", true),
-          run("en_light_1280x800.tmp-4242", null),
-          run("en_light_1280x800", fresh),
+          run(OLD, "en_light_1280x800.tmp-4242", null),
+          run(OLD, "en_light_1280x800", fresh),
+          run(OLD, "en_dark_min.lock.stale-77", null),
         ],
       }),
     ).toEqual([
+      `${OLD}/en_dark_min.lock.stale-77`,
       `${OLD}/en_light_1280x800.lock`,
       `${OLD}/en_light_1280x800.tmp-4242`,
+    ]);
+  });
+});
+
+describe("readCacheTree", () => {
+  const SHA_A = "a".repeat(40);
+  const SHA_B = "b".repeat(40);
+  let root = "";
+  let outside = "";
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true });
+    rmSync(outside, { recursive: true, force: true });
+  });
+  const realFs = {
+    readdir: (dir: string) => readdirSync(dir),
+    lstat: (path: string) => lstatSync(path),
+    readMarker: (dir: string) => (dir.endsWith("run") ? { date: "x" } : null),
+    staleLock: () => true,
+  };
+
+  it("skips a symlinked sha folder and a symlinked item", () => {
+    root = mkdtempSync(join(tmpdir(), "ux-cache-"));
+    outside = mkdtempSync(join(tmpdir(), "ux-outside-"));
+    mkdirSync(join(outside, "precious"));
+    mkdirSync(join(root, SHA_A));
+    mkdirSync(join(root, SHA_A, "run"));
+    symlinkSync(join(outside, "precious"), join(root, SHA_A, "linked"));
+    symlinkSync(outside, join(root, SHA_B));
+    const tree = readCacheTree(root, realFs);
+    expect(Object.keys(tree)).toEqual([SHA_A]);
+    expect(tree[SHA_A]!.map((i) => i.name)).toEqual(["run"]);
+    expect(tree[SHA_A]![0]!.marker).toEqual({ date: "x" });
+  });
+
+  it("skips a dangling link and an item that vanished", () => {
+    root = mkdtempSync(join(tmpdir(), "ux-cache-"));
+    outside = mkdtempSync(join(tmpdir(), "ux-outside-"));
+    mkdirSync(join(root, SHA_A));
+    mkdirSync(join(root, SHA_A, "run"));
+    symlinkSync(join(outside, "nothing"), join(root, SHA_A, "dangling"));
+    const tree = readCacheTree(root, {
+      ...realFs,
+      readdir: (dir) =>
+        dir.endsWith(SHA_A) ? [...readdirSync(dir), "gone"] : readdirSync(dir),
+    });
+    expect(tree[SHA_A]!.map((i) => i.name)).toEqual(["run"]);
+  });
+
+  it("reads lock staleness, not markers, for a lock", () => {
+    root = mkdtempSync(join(tmpdir(), "ux-cache-"));
+    outside = mkdtempSync(join(tmpdir(), "ux-outside-"));
+    mkdirSync(join(root, SHA_A, "k.lock"), { recursive: true });
+    expect(readCacheTree(root, realFs)[SHA_A]).toEqual([
+      { name: "k.lock", isDir: true, marker: null, staleLock: true },
     ]);
   });
 });
