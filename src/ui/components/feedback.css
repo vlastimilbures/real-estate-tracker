@@ -169,6 +169,18 @@
   flex-direction: column;
   gap: var(--s1);
 }
+/* The restore confirm (RestoreConfirm.tsx), in Settings → Backup and on the error screen
+   above. Two classes, so they beat `.error-screen p` (0,1,1) there, as the inline styles
+   they replace did; each sets only its own longhand. */
+.restore-confirm .restore-gap {
+  margin-bottom: var(--s4);
+}
+.restore-confirm .restore-holds {
+  margin-top: var(--s2);
+}
+.restore-confirm .restore-older {
+  color: var(--ink-soft);
+}
 
 /* ============ Modal ============ */
 .modal-overlay {

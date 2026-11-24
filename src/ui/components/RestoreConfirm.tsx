@@ -76,9 +76,9 @@ function Summary({ summary }: { summary: BackupSummary }) {
         <p>{b.backupDate(fmtDate(localDay(exported)))}</p>
       )}
       {summary.schemaVersion < SCHEMA_HEAD && (
-        <p style={{ color: "var(--ink-soft)" }}>{b.olderVersion}</p>
+        <p className="restore-older">{b.olderVersion}</p>
       )}
-      <p style={{ marginTop: "var(--s2)" }}>{b.holds}</p>
+      <p className="restore-holds">{b.holds}</p>
       <div className="statlist">
         {Object.entries(summary.counts).map(([table, n]) => (
           <Fragment key={table}>
@@ -110,10 +110,8 @@ export function RestoreConfirm({
     document.getElementById(cancelId),
   );
   return (
-    <div>
-      <p style={{ marginBottom: "var(--s4)" }}>
-        {t.backup.restoreFrom(pending.file)}
-      </p>
+    <div className="restore-confirm">
+      <p className="restore-gap">{t.backup.restoreFrom(pending.file)}</p>
       <Summary summary={pending.summary} />
       {pending.warnings.length > 0 && (
         <div className="mb-s4">
@@ -121,9 +119,7 @@ export function RestoreConfirm({
           <IssueTable issues={pending.warnings} warning />
         </div>
       )}
-      <p className="error-text" style={{ marginBottom: "var(--s4)" }}>
-        {t.backup.restoreWarning}
-      </p>
+      <p className="error-text restore-gap">{t.backup.restoreWarning}</p>
       <div className="row row-s3">
         <Button id={cancelId} onClick={onCancel} disabled={restoring}>
           {t.common.cancel}

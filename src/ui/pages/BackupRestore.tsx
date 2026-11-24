@@ -182,11 +182,7 @@ export function BackupRestorePanel() {
         >
           {exporting ? t.backup.exporting : t.backup.exportButton}
         </Button>
-        <p
-          id={folderHintId}
-          className="muted-note"
-          style={{ margin: "var(--s4) 0 var(--s2)" }}
-        >
+        <p id={folderHintId} className="muted-note mt-s4 mb-s2">
           {t.backup.folderHint}
         </p>
         <Button
