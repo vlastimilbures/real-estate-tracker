@@ -1020,10 +1020,6 @@ export const cs: Dictionary = {
       `Sazba „${v}“ musí být podíl od nuly do jedné — 3,9 % zapište jako 0.039`,
     errNotPositive: (v) =>
       `„${v}“ — doba splatnosti musí být alespoň jeden rok`,
-    errOutOfRange: (v, min, max) =>
-      `„${v}“ musí být celé číslo od ${min} do ${max}`,
-    errSizeRange: (v, min, max) =>
-      `„${v}“ musí být číslo od ${min} do ${max} s nejvýš jedním desetinným místem`,
     errDuplicateKey: (firstRow) =>
       `Duplicita řádku ${firstRow} — každý záznam smí být v souboru jen jednou`,
     errMalformedRow: (expected, found) =>
@@ -1125,9 +1121,6 @@ export const cs: Dictionary = {
     issueDuplicate: "Opakuje dřívější záznam",
     issueMissingAssumptions:
       "Soubor musí obsahovat právě jeden záznam předpokladů",
-    issueOutOfRange: (min, max) => `Musí být celé číslo od ${min} do ${max}`,
-    issueOutOfRangeSize: (min, max) =>
-      `Musí být číslo od ${min} do ${max} s nejvýš jedním desetinným místem`,
   },
 
   sample: {
@@ -1206,9 +1199,9 @@ export const cs: Dictionary = {
     positiveAmount:
       "Zadejte částku vyšší než 0, např. 500 000 (tisíce oddělte mezerou)",
     intRange: (min: string, max: string) =>
-      `Zadejte celé číslo od ${min} do ${max}`,
+      `Musí být celé číslo od ${min} do ${max}`,
     sizeRange: (min: string, max: string) =>
-      `Zadejte číslo od ${min} do ${max} s nejvýš jedním desetinným místem`,
+      `Musí být číslo od ${min} do ${max} s nejvýš jedním desetinným místem`,
     datePlaceholder: "dd.mm.yyyy",
     defaultPlaceholder: "výchozí",
   },

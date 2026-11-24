@@ -1107,11 +1107,6 @@ export const en = {
       `Rate "${v}" must be a fraction from zero to one — write 3.9 % as 0.039`,
     errNotPositive: (v: string) =>
       `"${v}" — the loan term must be at least one year`,
-    errOutOfRange: (v: string, min: string, max: string) =>
-      `"${v}" must be a whole number from ${min} to ${max}`,
-    // ADR 0236 §1: a size outside the range or with two or more decimals.
-    errSizeRange: (v: string, min: string, max: string) =>
-      `"${v}" must be a number from ${min} to ${max} with at most one decimal place`,
     errDuplicateKey: (firstRow: number) =>
       `Duplicate of row ${firstRow} — each record may appear only once per file`,
     errMalformedRow: (expected: number, found: number) =>
@@ -1216,11 +1211,6 @@ export const en = {
     issueDuplicate: "Repeats an earlier record",
     issueMissingAssumptions:
       "The file must hold exactly one assumptions record",
-    issueOutOfRange: (min: string, max: string) =>
-      `Must be a whole number from ${min} to ${max}`,
-    // ADR 0236 §1: the size takes one decimal place.
-    issueOutOfRangeSize: (min: string, max: string) =>
-      `Must be a number from ${min} to ${max} with at most one decimal place`,
   },
 
   // First-run sample portfolio (ADR 0094).
@@ -1300,11 +1290,12 @@ export const en = {
     /** A bounded whole-number field (UX-068, ADR 0075). */
     positiveAmount:
       "Enter an amount above 0, e.g. 500 000 (a space between thousands)",
+    /** The one range message: forms, CSV import and restore (ADR 0259). */
     intRange: (min: string, max: string) =>
-      `Enter a whole number from ${min} to ${max}`,
-    /** The size field (ADR 0236 §1). */
+      `Must be a whole number from ${min} to ${max}`,
+    /** The size field (ADR 0236 §1), everywhere as intRange (ADR 0259). */
     sizeRange: (min: string, max: string) =>
-      `Enter a number from ${min} to ${max} with at most one decimal place`,
+      `Must be a number from ${min} to ${max} with at most one decimal place`,
     datePlaceholder: "dd.mm.yyyy",
     defaultPlaceholder: "default",
   },
