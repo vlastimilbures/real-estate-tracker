@@ -120,7 +120,8 @@ export const propertyDetailScreens: Screen[] = [
       });
       await expectInfoTip(ux.page, button);
       await expectDisclosures(ux);
-      await ux.capture({ fullPage: false });
+      // The info popover is the point of the shot: keep the pointer (#536).
+      await ux.capture({ fullPage: false, keepPointer: true });
       await expectInfoTipEscape(ux.page, button);
     },
   ),

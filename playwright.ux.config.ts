@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 import { execSync } from "node:child_process";
 import path from "node:path";
+import { matrixOf, VIEWPORTS } from "./ux-capture/matrix";
 
 // UX screenshot capture: `pnpm ux:capture` (CI runs its axe scan, F-08). Boots the Vite
 // frontend with VITE_E2E=1, so the app runs on the in-memory sql.js seed (synthetic
@@ -8,22 +9,6 @@ import path from "node:path";
 // so it never attaches to a running `pnpm tauri dev`. See ux-capture/README.md.
 
 const PORT = Number(process.env.UX_PORT ?? 1430);
-
-const VIEWPORTS: Record<string, { width: number; height: number }> = {
-  // Tauri window default (tauri.conf.json) is 1200×800; 1280×800 is the audit baseline.
-  "1280x800": { width: 1280, height: 800 },
-  // tauri.conf.json minWidth × minHeight.
-  min: { width: 900, height: 600 },
-  // The Tauri window's default size; run on demand (UX_VIEWPORT=1200x800).
-  "1200x800": { width: 1200, height: 800 },
-  // Two small multiples per row on the Dashboard (ADR 0202); run on demand.
-  "1100x800": { width: 1100, height: 800 },
-};
-
-function list(env: string | undefined, all: string[], fallback: string) {
-  const v = env ?? fallback;
-  return v === "all" ? all : v.split(",").map((s) => s.trim());
-}
 
 function viewportOf(name: string): { width: number; height: number } {
   const known = VIEWPORTS[name];
@@ -50,17 +35,7 @@ if (!process.env.UX_OUT) {
   process.env.UX_OUT = path.resolve("ux-screens", id);
 }
 
-const langs = list(process.env.UX_LANG, ["en", "cs", "ru"], "en");
-const themes = list(
-  process.env.UX_THEME?.replace("both", "light,dark"),
-  ["light", "dark"],
-  "light",
-);
-const viewports = list(
-  process.env.UX_VIEWPORT,
-  Object.keys(VIEWPORTS),
-  "1280x800",
-);
+const { langs, themes, viewports } = matrixOf(process.env);
 
 const projects = langs.flatMap((lang) =>
   themes.flatMap((theme) =>

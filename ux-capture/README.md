@@ -29,6 +29,8 @@ ux-screens/<date>-<sha>[-dirty]/
   <lang>-<theme>-<viewport>/
     <nn>-<screen>.png                # full page unless the entry says otherwise
     axe/<nn>-<screen>.json           # violations with targets and failure summaries
+    axe-expected/<nn>-<screen>       # one per capture that owes a scan (ux:axe-check)
+    axe-skipped.json                 # instead of axe/, in a run with UX_AXE=0
     90-keyboard-focus-order.json     # Tab sequence from page load
   flaky.json                         # only when a screen passed on its retry
 ```
@@ -40,6 +42,7 @@ Set `UX_RUN_ID=<name>` to write several variant runs into one folder (one shared
 
 ```bash
 pnpm ux:diff <runA> <runB>     # e.g. p07c-before p07c-after (folders under ux-screens/)
+pnpm ux:diff /abs/path <runB>  # either side may be an absolute folder (a cached baseline)
 ```
 
 A pixel counts as changed when its red, green or blue moves by more than
@@ -55,9 +58,66 @@ the default tolerance 8, at most 14 px. One changed KPI digit (a 21×30 px box) 
 300 changed px, so the defaults catch it (#137). For an exact comparison, set both
 variables to `0`. A bad value stops the diff with exit 2.
 
+Since the pointer is parked before each shot (below), the chart tooltip no longer moves
+between runs on 26-property-amortization-open and 29-property-prepayment-outputs.
+Measured on 2026-11-24 (en, light, 1280x800, 101 screens, two runs of one commit): 0 px
+differ at the default tolerance; at tolerance 0, only 90-keyboard-focus-tab20 (96 px). The
+other flakes listed in #536 (64b-settings-backup-refused and 82-load-sample-loaded at
+`min`, 90-keyboard-focus-tab20) are not fixed: a differing image of one of those is
+acceptable (not a regression) only if it also differs main-vs-main or a re-capture matches
+main.
+
 PNG hashes cannot prove a no-op (DR-147). The capture emulates "Reduce motion" (charts
-skip their entry animation), turns CSS transitions off (DR-160) and waits until animations
-stop and the charts' SVG is stable before each shot.
+skip their entry animation), turns CSS transitions off (DR-160), parks the mouse pointer
+at the window's top-left corner (the sidebar's padding, where nothing reacts to a hover)
+and waits until animations stop and the charts' SVG is stable before each shot. A scene
+that hovers or focuses on purpose for a tooltip passes `keepPointer: true` to
+`ux.capture()` / `ux.shot()`; the shot fails if anything interactive ever sits under the
+parking point (#536).
+
+## Proving a UI change
+
+A PR's before/after proof compares its branch with a cached capture of the commit it
+branched from, so each main commit is captured once for everyone, not once per PR:
+
+```bash
+git fetch origin
+BASE=$(pnpm -s ux:baseline "$(git merge-base HEAD origin/main)")  # the branch's base
+UX_AXE=0 UX_RUN_ID=my-branch pnpm ux:capture  # the branch, once, without the axe scan
+pnpm ux:diff "$BASE" my-branch                # every changed screen is listed
+UX_AXE=0 UX_RUN_ID=my-branch pnpm ux:capture --grep "<id>|<id>"
+                                              # re-capture only the screens that differed
+                                              # (overwrites them in the run), then diff again
+```
+
+Diff against the branch's base, not a newer origin/main, or main's own changes show up as
+yours (or rebase onto origin/main first and use `pnpm -s ux:baseline`). The branch capture
+must use the same `UX_LANG`, `UX_THEME` and `UX_VIEWPORT` as the baseline: set them once
+for both commands, or a screen missing from one side is listed as `MISSING`/`NEW`.
+
+`pnpm ux:baseline [ref]` (default `origin/main`) resolves the ref to its full sha and keeps
+one run per sha and matrix (`UX_LANG`, `UX_THEME`, `UX_VIEWPORT`, in any spelling) in
+`$UX_BASELINE_CACHE` (default `~/Library/Caches/rtracker-ux`), as
+`<sha>/<lang>_<theme>_<viewport>` with a `complete.json` marker written last. On a miss it
+checks the commit out into a temporary worktree, installs it (offline first), captures it
+with `UX_AXE=0` on a free port, moves the run into place and removes the worktree; a lock
+folder (`<key>.lock/pid`) makes a second caller wait for the first one's run instead of
+capturing again. A lock is stale when its process is gone, or when it is older than 2 hours;
+Ctrl-C or SIGTERM removes the lock, the unfinished run and the worktree. `UX_WORKERS=<n>`
+caps the capture's Playwright workers. `pnpm ux:baseline --prune` deletes finished runs
+(with a valid `complete.json`) whose sha origin/main no longer reaches or that are older
+than 14 days (never origin/main's own), unfinished `.tmp-<pid>` runs and dead locks. It
+only looks inside full-sha folders, never follows a symbolic link, and deletes nothing it
+did not create.
+
+`UX_AXE=0` skips the axe scan, about a quarter of each screen's time. Such a run says so in
+`summary.md`, leaves an `axe-skipped.json` in each variant folder, and `pnpm ux:axe-check`
+fails on it (exit 2) rather than passing with nothing checked. Each `ux.capture()` that
+owes a scan also leaves `axe-expected/<id>`, and the check fails while any of those has no
+`axe/<id>.json`, so a scanning `--grep` re-capture into such a run cannot pass for the
+whole run. CI never sets it: the `axe`
+job still scans every screen, so a proof captured without the scan still gets one on its
+PR.
 
 ## Axe gate
 
@@ -76,6 +136,8 @@ pnpm ux:axe-check <run>        # lists every violation; exit 1 if any (what CI r
 | `UX_RUN_ID`   | output folder name                         | `<date>-<sha>`         |
 | `UX_OUT`      | absolute output folder (wins over the id)  | `ux-screens/<run id>`  |
 | `UX_RETRIES`  | retries of a failed screen                 | `1` on CI, else `0`    |
+| `UX_AXE`      | `0` skips the axe scan, `1` runs it        | `1`                    |
+| `UX_PORT`     | the run's Vite port                        | `1430`                 |
 
 The clock is frozen, so "Today" and the as-of presets stay the same between runs and the
 before/after screenshots can be compared.
@@ -85,6 +147,9 @@ before/after screenshots can be compared.
 ```text
 capture.spec.ts        one test per screen, the route, unique-id and layout-tag guards
 helpers.ts             the `ux` fixture (capture, shot, axe), boot, nav, panel, settings tab
+matrix.ts              the lang × theme × viewport matrix and its cache key
+baseline.ts            `pnpm ux:baseline`: the shared capture of main (baselineCache.ts: paths, marker)
+runPath.ts             where ux:diff and ux:axe-check find a run (name or absolute path)
 flows.ts               app-driving helpers: edited backups, startup faults, loan events, forms
 layout/                the layout assertions (common, dashboard, pages)
 layoutScreens.ts       the screens CI also captures in Czech and Russian (`@layout-i18n`)

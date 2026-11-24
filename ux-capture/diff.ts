@@ -5,10 +5,12 @@
 // (#137). Screens in only one run are listed as MISSING (run A only) or NEW (run B only)
 // and fail too. A bad setting or an empty run stops it with exit 2. Node built-ins only.
 //
-//   pnpm ux:diff <runA> <runB>        # folders under ux-screens/
+//   pnpm ux:diff <runA> <runB>        # folders under ux-screens/, or absolute paths
+//                                     # (e.g. a cached baseline from `pnpm ux:baseline`)
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { decode, diffShare } from "./png.ts";
+import { runDir } from "./runPath.ts";
 
 const [runA, runB] = process.argv.slice(2);
 if (!runA || !runB) {
@@ -32,8 +34,8 @@ if (process.env.UX_DIFF_MAX !== undefined) {
 }
 const tolerance = setting("UX_DIFF_TOLERANCE", 8);
 const maxPx = setting("UX_DIFF_MAX_PX", 50);
-const dirA = join("ux-screens", runA);
-const dirB = join("ux-screens", runB);
+const dirA = runDir(runA);
+const dirB = runDir(runB);
 for (const dir of [dirA, dirB]) {
   if (!existsSync(dir)) {
     console.error(`no capture at ${dir}`);

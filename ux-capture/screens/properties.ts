@@ -47,9 +47,8 @@ export const propertiesScreens: Screen[] = [
         table.getByRole("button", { name: ux.t.common.delete }).first(),
         table,
       );
-      await ux.capture({
-        fullPage: false,
-      });
+      // The tooltip is the point of the shot: keep the pointer (#536).
+      await ux.capture({ fullPage: false, keepPointer: true });
       // A tooltip covering Edit never runs Delete (ADR 0199 §3): from Delete, the pointer
       // slides onto Edit; the first click hides the tooltip, the next one edits.
       const row = table.locator("tbody tr").first();
