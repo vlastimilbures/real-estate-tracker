@@ -6,7 +6,7 @@ import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
 import { exportToJson } from "../../data/backup";
-import { BackupExportError } from "../backup";
+import { BackupExportError } from "../../data/backup";
 import { SaveFileError, type SaveOutcome } from "../../platform/saveFile";
 import { invoke } from "@tauri-apps/api/core";
 

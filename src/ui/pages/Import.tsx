@@ -24,6 +24,7 @@ import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import { importCounts } from "../model/importPreview";
 import { toWriteError } from "../../state/writeError";
+import { toActionError } from "../../state/actionError";
 import { useToast } from "../hooks/useToast";
 import { useBusyFocus, type BusyFocusTarget } from "../hooks/useBusyFocus";
 
@@ -181,7 +182,7 @@ export function Import() {
         // A constraint the CSV checks missed (a generated-id clash was one, now fixed: DR-137)
         // gets the translated wording, not SQLite's text. In the notice, so it reaches the
         // owner on any page (ADR 0154).
-        setFailure("import", e);
+        setFailure("import", toActionError(e));
       }
     } finally {
       setImporting(false);

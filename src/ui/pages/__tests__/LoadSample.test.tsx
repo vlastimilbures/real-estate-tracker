@@ -10,7 +10,7 @@ import { ToastRegion } from "../../components/OutcomeRegions";
 import { SettingsPage as Settings } from "../Settings";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
-import { SampleNotEmptyError } from "../../../state/backup";
+import { SampleNotEmptyError } from "../../../data/seed";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 

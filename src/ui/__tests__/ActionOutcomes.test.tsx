@@ -11,7 +11,7 @@ import { Dashboard } from "../pages/Dashboard";
 import { SettingsPage } from "../pages/Settings";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
-import { RestoreError } from "../../state/backup";
+import { RestoreError } from "../../data/backup";
 import { portfolio, assumptions } from "../../engine/__tests__/support/seed";
 import { en } from "../../i18n/en";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";

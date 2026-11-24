@@ -4,6 +4,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TOAST_MS, useUiStore } from "../uiStore";
 import type { CsvImportReport } from "../csv";
+import { toActionError } from "../actionError";
 
 const ui = () => useUiStore.getState();
 
@@ -77,7 +78,7 @@ describe("notice (ADR 0154)", () => {
     const report = { items: [] } as unknown as CsvImportReport;
     ui().setLastImport(report);
     ui().showSampleCleared("before-clear.json");
-    ui().setFailure("import", new Error("x"));
+    ui().setFailure("import", toActionError(new Error("x")));
     ui().dataReplaced();
     expect(ui().notice).toBeNull();
     expect(ui().failure).toBeNull();
@@ -86,7 +87,7 @@ describe("notice (ADR 0154)", () => {
 
   it("starting another action dismisses only the failure (#136 review)", () => {
     ui().setNotice({ kind: "restored", file: "safety.json" });
-    ui().setFailure("backupExport", new Error("x"));
+    ui().setFailure("backupExport", toActionError(new Error("x")));
     ui().dismissFailure();
     expect(ui().failure).toBeNull();
     expect(ui().notice).toEqual({ kind: "restored", file: "safety.json" });

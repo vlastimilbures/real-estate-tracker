@@ -21,6 +21,7 @@ import { useUiStore } from "../../state/uiStore";
 import { pressed, useBusyFocus } from "../hooks/useBusyFocus";
 import type { SaveOutcome } from "../../state/platform";
 import { logFailure } from "../../state/diagnostics";
+import { toActionError } from "../../state/actionError";
 
 type Num = Decimal | number;
 
@@ -327,7 +328,7 @@ export function ExportXlsxButton({
         showToast(t.xlsx.exported(outcome.filename));
     } catch (e) {
       logFailure("EXPORT", e);
-      setFailure("xlsxExport", e);
+      setFailure("xlsxExport", toActionError(e));
     } finally {
       setBusy(false);
     }

@@ -6,7 +6,8 @@ import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
-import { SafetyBackupError, SampleNotEmptyError } from "../backup";
+import { SafetyBackupError } from "../../data/backup";
+import { SampleNotEmptyError } from "../../data/seed";
 import type { Sql } from "../../data/sql";
 import { invoke } from "@tauri-apps/api/core";
 

@@ -5,6 +5,7 @@ import { Panel, Button } from "../components/primitives";
 import { chooseRestoreFile, type PickedBackup } from "../../state/backup";
 import { logFailure, type FailureSite } from "../../state/diagnostics";
 import { revealDataDir } from "../../state/platform";
+import { toActionError } from "../../state/actionError";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { fmtDate } from "../../lib/format";
@@ -91,7 +92,7 @@ export function BackupRestorePanel() {
    *  backup keeps its records there, anything else is logged under `site` (ADR 0154). */
   function fail(e: unknown, site: FailureSite, action: OutcomeAction) {
     logBackupFailure(site, e);
-    setFailure(action, e);
+    setFailure(action, toActionError(e));
   }
 
   async function handleExport() {
@@ -133,7 +134,7 @@ export function BackupRestorePanel() {
       await revealDataDir();
     } catch (e) {
       logFailure("REVEAL", e);
-      setFailure("revealFolder", e);
+      setFailure("revealFolder", toActionError(e));
     }
   }
 
