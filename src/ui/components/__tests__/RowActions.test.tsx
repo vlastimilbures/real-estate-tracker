@@ -26,6 +26,8 @@ describe("RowAction (ADR 0199)", () => {
     expect(edit.classList.contains("row-action")).toBe(true);
     expect(edit.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
     expect(edit.querySelector(".row-action-tip")?.textContent).toBe("Edit");
+    // At rest the tooltip hides with the one visually-hidden rule, .sr-only (#495).
+    expect(edit.querySelector(".row-action-tip.sr-only")).not.toBeNull();
     expect(edit.hasAttribute("title")).toBe(false);
   });
 

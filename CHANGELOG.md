@@ -37,6 +37,9 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- Visually hidden text (screen-reader labels, the row-action tooltips at rest and the
+  Property detail Deactivate / Activate label in a narrow window) uses one rule (ADR 0260,
+  #495). No visible change.
 - A scenario save is refused when it adds a shock lasting under 1 or over 100 years, or a
   crash before year 0 or after year 100, as the scenario form already does; a scenario
   stored with one still loads, saves and duplicates while that year is left as it is. A

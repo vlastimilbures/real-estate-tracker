@@ -91,7 +91,7 @@ export function RowAction({
       }}
     >
       <Icon size={16} strokeWidth={1.75} aria-hidden="true" />
-      <span className="row-action-tip">{label}</span>
+      <span className="sr-only row-action-tip">{label}</span>
     </button>
   );
 }
