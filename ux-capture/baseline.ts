@@ -14,18 +14,15 @@
 // stdout; progress goes to stderr. Node built-ins only.
 import { execFileSync, spawnSync } from "node:child_process";
 import {
-  closeSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
-  openSync,
   readdirSync,
   readFileSync,
   renameSync,
   rmSync,
   statSync,
   writeFileSync,
-  writeSync,
 } from "node:fs";
 import { createServer } from "node:net";
 import { homedir, tmpdir } from "node:os";
@@ -34,13 +31,16 @@ import {
   MARKER,
   cachePath,
   cacheRoot,
+  lockStale,
   makeMarker,
   matrixFor,
-  shouldPrune,
+  planPrune,
   validMarker,
+  type CacheItem,
 } from "./baselineCache.ts";
 
 const log = (msg: string) => console.error(`ux:baseline: ${msg}`);
+const SHA_RE = /^[0-9a-f]{40}$/;
 
 function git(...args: string[]): string {
   return execFileSync("git", args, { encoding: "utf8" }).trim();
@@ -89,21 +89,46 @@ function alive(pid: number): boolean {
   }
 }
 
-/** Takes the entry's lock, or returns false while a live process holds it. */
-function tryLock(lock: string): boolean {
+/**
+ * Whether a lock folder is stale. A lock without a readable pid counts as live for
+ * LOCK_GRACE_MS (its taker may not have written the pid yet); a lock that vanished
+ * while being read is reported as stale so the caller simply retries.
+ */
+function isStaleLock(lock: string): boolean {
+  let age: number;
   try {
-    const fd = openSync(lock, "wx");
-    writeSync(fd, String(process.pid));
-    closeSync(fd);
+    age = Date.now() - statSync(lock).mtimeMs;
+  } catch {
     return true;
-  } catch (e) {
-    if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
   }
-  const holder = Number(readFileSync(lock, "utf8").trim());
-  if (Number.isInteger(holder) && holder > 0 && alive(holder)) return false;
-  log(`removing the stale lock of process ${holder}`);
-  rmSync(lock, { force: true });
-  return tryLock(lock);
+  let pid: number | null = null;
+  try {
+    const n = Number(readFileSync(join(lock, "pid"), "utf8").trim());
+    if (Number.isInteger(n) && n > 0) pid = n;
+  } catch {
+    // no pid yet, or the lock is going away
+  }
+  return lockStale(pid, pid !== null && alive(pid), age);
+}
+
+/**
+ * Takes the entry's lock (an atomic mkdir, then the pid inside), or returns false while
+ * a live process holds it. A stale lock is removed and the take retried.
+ */
+function tryLock(lock: string): boolean {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      mkdirSync(lock);
+      writeFileSync(join(lock, "pid"), String(process.pid));
+      return true;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+    }
+    if (!isStaleLock(lock)) return false;
+    log(`removing the stale lock ${lock}`);
+    rmSync(lock, { recursive: true, force: true });
+  }
+  return false;
 }
 
 function run(cmd: string, args: string[], cwd: string, env = process.env) {
@@ -181,7 +206,7 @@ async function baseline(ref: string) {
         if (!validMarker(readMarker(dest), sha, key))
           await build(sha, dest, process.env);
       } finally {
-        rmSync(lock, { force: true });
+        rmSync(lock, { recursive: true, force: true });
       }
       break;
     }
@@ -195,31 +220,37 @@ async function baseline(ref: string) {
 function prune() {
   const root = cacheRoot(process.env, homedir());
   if (!existsSync(root)) return;
-  const now = new Date();
+  // What to delete is decided by planPrune (pure); here only the disk is read.
+  const tree: Record<string, CacheItem[]> = {};
   for (const sha of readdirSync(root)) {
     const shaDir = join(root, sha);
-    if (!statSync(shaDir).isDirectory()) continue;
-    const reachable =
-      /^[0-9a-f]{40}$/.test(sha) &&
+    if (!SHA_RE.test(sha) || !statSync(shaDir).isDirectory()) continue;
+    tree[sha] = readdirSync(shaDir).map((name) => {
+      const path = join(shaDir, name);
+      const st = statSync(path);
+      return {
+        name,
+        isDir: st.isDirectory(),
+        marker: readMarker(path) as { date?: string } | null,
+        mtime: st.mtime,
+        staleLock: name.endsWith(".lock") && isStaleLock(path),
+      };
+    });
+  }
+  const doomed = planPrune({
+    tree,
+    reachable: (sha) =>
       spawnSync("git", ["merge-base", "--is-ancestor", sha, "origin/main"])
-        .status === 0;
-    for (const entry of readdirSync(shaDir)) {
-      const dir = join(shaDir, entry);
-      if (entry.endsWith(".lock") || !statSync(dir).isDirectory()) continue;
-      const key = entry.replace(/\.tmp-\d+$/, "");
-      if (existsSync(join(shaDir, `${key}.lock`))) continue; // being built right now
-      if (key !== entry) {
-        log(`removing the unfinished run ${dir}`);
-        rmSync(dir, { recursive: true, force: true });
-        continue;
-      }
-      const marker = readMarker(dir) as { date?: string } | null;
-      const date = marker?.date ? new Date(marker.date) : statSync(dir).mtime;
-      if (shouldPrune(reachable, date, now)) {
-        log(`pruning ${dir}`);
-        rmSync(dir, { recursive: true, force: true });
-      }
-    }
+        .status === 0,
+    mainSha: git("rev-parse", "--verify", "origin/main^{commit}"),
+    now: new Date(),
+  });
+  for (const rel of doomed) {
+    log(`pruning ${join(root, rel)}`);
+    rmSync(join(root, rel), { recursive: true, force: true });
+  }
+  for (const sha of Object.keys(tree)) {
+    const shaDir = join(root, sha);
     if (readdirSync(shaDir).length === 0) rmSync(shaDir, { recursive: true });
   }
 }

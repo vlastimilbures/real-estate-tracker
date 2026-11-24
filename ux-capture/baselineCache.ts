@@ -75,3 +75,76 @@ export function shouldPrune(
   const age = (now.getTime() - date.getTime()) / 86_400_000;
   return !reachable || !(age <= maxAgeDays);
 }
+
+/** A lock older than this with no readable pid is a crashed taker's (it writes the pid
+ *  right after creating the lock). */
+export const LOCK_GRACE_MS = 30_000;
+
+/**
+ * Whether a lock is stale: its holder's pid is known and dead, or no pid could be read
+ * and the lock is older than the grace period (a fresh one may be mid-creation).
+ */
+export function lockStale(
+  pid: number | null,
+  holderAlive: boolean,
+  ageMs: number,
+): boolean {
+  if (pid !== null && Number.isInteger(pid) && pid > 0) return !holderAlive;
+  return ageMs > LOCK_GRACE_MS;
+}
+
+/** One second-level item of the cache, as read from disk for `planPrune`. */
+export interface CacheItem {
+  name: string;
+  isDir: boolean;
+  /** The parsed complete.json, or null when there is none. */
+  marker: { date?: string } | null;
+  mtime: Date;
+  /** For a `<key>.lock`: whether it is stale (see `lockStale`). */
+  staleLock?: boolean;
+}
+
+export interface PruneInput {
+  /** First-level folder name → its items. */
+  tree: Record<string, CacheItem[]>;
+  /** Whether origin/main reaches a sha. */
+  reachable: (sha: string) => boolean;
+  /** origin/main's own sha: its entries are never pruned. */
+  mainSha: string;
+  now: Date;
+}
+
+const TMP = /^(.+)\.tmp-\d+$/;
+
+/**
+ * The cache paths (`<sha>/<item>`) `--prune` deletes. Only full-sha folders are looked at.
+ * In each: a stale lock goes; a `.tmp-<pid>` run goes unless a live lock guards its key;
+ * a finished run (with complete.json) goes when origin/main no longer reaches its sha or
+ * it is older than 14 days, except origin/main's own. Nothing else is ever touched.
+ */
+export function planPrune(input: PruneInput): string[] {
+  const out: string[] = [];
+  for (const [sha, items] of Object.entries(input.tree)) {
+    if (!SHA.test(sha)) continue;
+    const busy = new Set<string>();
+    for (const it of items) {
+      if (!it.name.endsWith(".lock")) continue;
+      if (it.staleLock) out.push(`${sha}/${it.name}`);
+      else busy.add(it.name.slice(0, -".lock".length));
+    }
+    const reachable = input.reachable(sha);
+    for (const it of items) {
+      if (!it.isDir || it.name.endsWith(".lock")) continue;
+      const tmp = TMP.exec(it.name);
+      if (tmp) {
+        if (!busy.has(tmp[1]!)) out.push(`${sha}/${it.name}`);
+        continue;
+      }
+      if (!it.marker || busy.has(it.name) || sha === input.mainSha) continue;
+      const date = it.marker.date ? new Date(it.marker.date) : it.mtime;
+      if (shouldPrune(reachable, date, input.now))
+        out.push(`${sha}/${it.name}`);
+    }
+  }
+  return out;
+}

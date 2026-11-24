@@ -6,9 +6,12 @@ import { describe, expect, it } from "vitest";
 import {
   cachePath,
   cacheRoot,
+  lockStale,
   makeMarker,
+  planPrune,
   shouldPrune,
   validMarker,
+  type CacheItem,
 } from "../baselineCache.ts";
 import { matrixKey, matrixOf } from "../matrix.ts";
 import { runDir } from "../runPath.ts";
@@ -139,5 +142,106 @@ describe("runDir", () => {
       "/cache/abc/en_light_1280x800",
     );
     expect(runDir("/cache//abc/./x/")).toBe("/cache/abc/x/");
+  });
+});
+
+describe("lockStale", () => {
+  it("follows a known pid's process", () => {
+    expect(lockStale(123, true, 3_600_000)).toBe(false);
+    expect(lockStale(123, false, 0)).toBe(true);
+  });
+
+  it("treats a lock with no pid as live for 30 s", () => {
+    expect(lockStale(null, false, 5_000)).toBe(false);
+    expect(lockStale(null, false, 31_000)).toBe(true);
+  });
+});
+
+describe("planPrune", () => {
+  const now = new Date("2026-11-24T10:00:00Z");
+  const MAIN = "b1dd29799800b0f8162ba275ade024e53c71113c";
+  const OLD = "b5b85728fd8f4562016a2730b79a453d23a70753";
+  const GONE = "0123456789abcdef0123456789abcdef01234567";
+  const fresh = "2026-11-24T09:00:00Z";
+  const stale = "2026-10-01T00:00:00Z";
+  const run = (name: string, date: string | null): CacheItem => ({
+    name,
+    isDir: true,
+    marker: date ? { date } : null,
+    mtime: now,
+  });
+  const lock = (name: string, staleLock: boolean): CacheItem => ({
+    name,
+    isDir: true,
+    marker: null,
+    mtime: now,
+    staleLock,
+  });
+  const plan = (tree: Record<string, CacheItem[]>) =>
+    planPrune({
+      tree,
+      reachable: (sha) => sha !== GONE,
+      mainSha: MAIN,
+      now,
+    }).sort();
+
+  it("touches no folder that is not a full sha", () => {
+    expect(
+      plan({
+        notasha: [run("precious", null), run("old", stale)],
+        "origin-main": [run("en_light_1280x800", stale)],
+      }),
+    ).toEqual([]);
+  });
+
+  it("deletes only finished runs and unfinished .tmp runs", () => {
+    expect(
+      plan({
+        [GONE]: [
+          run("en_light_1280x800", fresh),
+          run("notes", null),
+          { name: "readme.txt", isDir: false, marker: null, mtime: now },
+        ],
+      }),
+    ).toEqual([`${GONE}/en_light_1280x800`]);
+  });
+
+  it("never prunes origin/main's own entry, however old", () => {
+    expect(plan({ [MAIN]: [run("en_light_1280x800", stale)] })).toEqual([]);
+  });
+
+  it("prunes an old entry of an ancestor, keeps a fresh one", () => {
+    expect(
+      plan({
+        [OLD]: [run("en_light_1280x800", stale), run("en_dark_min", fresh)],
+      }),
+    ).toEqual([`${OLD}/en_light_1280x800`]);
+  });
+
+  it("keeps a run and its .tmp under a live lock", () => {
+    expect(
+      plan({
+        [GONE]: [
+          lock("en_light_1280x800.lock", false),
+          run("en_light_1280x800", fresh),
+          run("en_light_1280x800.tmp-4242", null),
+        ],
+      }),
+    ).toEqual([]);
+  });
+
+  it("removes a dead lock together with its .tmp run", () => {
+    expect(
+      plan({
+        [OLD]: [
+          lock("en_light_1280x800.lock", true),
+          run("en_light_1280x800.tmp-4242", null),
+          run("en_light_1280x800", fresh),
+        ],
+      }),
+    ).toEqual([
+      `${OLD}/en_light_1280x800.lock`,
+      `${OLD}/en_light_1280x800.tmp-4242`,
+    ]);
   });
 });
