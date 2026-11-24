@@ -9,7 +9,8 @@ import type { WriteError } from "../../writeError";
 export const text = (e: WriteError | null) =>
   e?.kind === "other" ? e.message : "";
 
-/** A fresh, migrated + seeded in-memory DB — the same recipe as the app's defaultOpen. */
+/** A fresh, migrated + seeded in-memory DB — the same recipe as the app's defaultOpen
+ *  (src/data/open.ts). */
 export async function openSeeded(): Promise<Sql> {
   const sql = openMemorySql();
   await migrate(sql);

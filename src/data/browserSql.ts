@@ -4,7 +4,7 @@
 // tests run on better-sqlite3 (betterSqlite.ts). It exists so the React frontend can boot
 // in a plain browser for the Playwright smoke test (the desktop WKWebView has no
 // Playwright/CDP attach point). It is reached only via the VITE_E2E gate in
-// portfolioStore's defaultOpen. Data is ephemeral — fine for a seed-and-drive smoke test.
+// open.ts's defaultOpen. Data is ephemeral — fine for a seed-and-drive smoke test.
 import initSqlJs, { type Database } from "sql.js";
 // Vite serves the wasm asset and gives us its URL; sql.js loads it via locateFile.
 import sqlWasmUrl from "sql.js/dist/sql-wasm.wasm?url";

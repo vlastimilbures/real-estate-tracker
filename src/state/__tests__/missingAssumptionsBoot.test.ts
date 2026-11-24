@@ -16,7 +16,7 @@ let db: TestSql;
 let good: BackupFile;
 const store = () => usePortfolioStore.getState();
 
-/** The app's launch recipe (portfolioStore `defaultOpen`), on the test database. */
+/** The app's launch recipe (`defaultOpen`, src/data/open.ts), on the test database. */
 const open = async () => {
   await migrate(db);
   await seedIfEmpty(db);

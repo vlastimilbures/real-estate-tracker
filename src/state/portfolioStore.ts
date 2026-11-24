@@ -25,7 +25,7 @@ import type {
   Scenario,
   EngineValidationError,
 } from "../engine";
-import { migrate } from "../data/migrations";
+import { defaultOpen } from "../data/open";
 import {
   DataError,
   READ_FAILURES,
@@ -34,12 +34,7 @@ import {
 } from "../data/errors";
 import { ScenarioRuleError, toWriteError, type WriteError } from "./writeError";
 import { logFailure } from "../data/errorLog";
-import {
-  clearSample,
-  dismissSampleBanner,
-  loadSample,
-  seedIfEmpty,
-} from "../data/seed";
+import { clearSample, dismissSampleBanner, loadSample } from "../data/seed";
 import {
   confirmRestore,
   exportBackup,
@@ -93,7 +88,6 @@ import {
   scenarioToRow,
   type PropertyExtras,
 } from "../data/mappers";
-import { isTauri } from "../lib/tauri";
 import { perfMark, perfMeasure } from "../lib/perf";
 import { localIsoDay } from "../lib/day";
 import { saveFile } from "../platform/saveFile";
@@ -184,35 +178,6 @@ export type MutationResult = { ok: true } | { ok: false; error: WriteError };
 /** Address and garage: stored, but not engine inputs (ADR 0184 §3).
  *  @internal test seam: UI tests reach the type through the state facade (ADR 0072). */
 export type { PropertyExtras };
-
-/** Open + migrate + seed the database. Normally the on-disk Tauri SQLite; lazy so
- *  non-Tauri code paths (e.g. tests) can inject their own opener instead. When running
- *  outside Tauri with the VITE_E2E flag set, it falls back to an in-memory sql.js DB so
- *  the app can boot in a plain browser for the Playwright smoke test (never shipped). */
-async function defaultOpen(): Promise<Sql> {
-  const inTauri = isTauri();
-  // `import.meta.env.DEV` is a build-time literal — `false` in production builds — so this
-  // whole branch (and the sql.js + wasm chunk it imports) is dead-code-eliminated from the
-  // shipped bundle. The browser fallback exists only for the Playwright E2E (run via the
-  // dev server with VITE_E2E=1); production always uses the Tauri SQLite adapter.
-  if (import.meta.env.DEV && !inTauri && import.meta.env.VITE_E2E === "1") {
-    const { openBrowserSql } = await import("../data/browserSql");
-    // ux:capture forces a startup failure to capture its screen (ADR 0153).
-    const faults = await import("../data/e2eFaults");
-    const fault = faults.e2eFault();
-    const sql = await openBrowserSql();
-    await faults.beforeMigrate(sql, fault);
-    await migrate(sql);
-    await seedIfEmpty(sql);
-    await faults.afterSeed(sql, fault);
-    return sql;
-  }
-  const { openTauriSql } = await import("../data/tauriSql");
-  const sql = await openTauriSql();
-  await migrate(sql);
-  await seedIfEmpty(sql);
-  return sql;
-}
 
 /** A typed failure that stopped startup; `upgrade` says how far a stopped upgrade got
  *  (ADR 0153). */

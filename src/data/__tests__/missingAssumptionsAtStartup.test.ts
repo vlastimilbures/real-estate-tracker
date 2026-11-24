@@ -10,7 +10,7 @@ import { rate } from "../../engine";
 let sql: TestSql;
 afterEach(() => sql.db.close());
 
-/** The app's launch recipe (portfolioStore `defaultOpen`). */
+/** The app's launch recipe (`defaultOpen`, src/data/open.ts). */
 async function launch(): Promise<boolean> {
   await migrate(sql);
   return seedIfEmpty(sql);
