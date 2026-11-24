@@ -11,13 +11,14 @@ import { Dashboard } from "../pages/Dashboard";
 import { SettingsPage } from "../pages/Settings";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
-import { RestoreError } from "../../state/backup";
+import { RestoreError } from "../../data/backup";
 import { portfolio, assumptions } from "../../engine/__tests__/support/seed";
 import { en } from "../../i18n/en";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
 import { exportToJson } from "../../data/backup";
+import { failure, success } from "../../__tests__/support/result";
 
 vi.mock("../../state/diagnostics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../state/diagnostics")>()),
@@ -38,11 +39,10 @@ beforeEach(async () => {
   const text = JSON.stringify(await exportToJson(sql, new Date()));
   sql.db.close();
   vi.mocked(invoke).mockResolvedValue({ name: "backup.json", text });
-  const restoreBackup = vi.fn(
-    () =>
-      new Promise((resolve, reject) => {
-        settle = { resolve, reject };
-      }),
+  const restoreBackup = vi.fn(() =>
+    new Promise((resolve, reject) => {
+      settle = { resolve, reject };
+    }).then(success, failure),
   );
   act(() => {
     useUiStore.setState({
@@ -50,7 +50,7 @@ beforeEach(async () => {
       settingsTab: "backup",
     });
     usePortfolioStore.setState({
-      status: "ready",
+      status: { kind: "ready" },
       portfolio,
       assumptions,
       scenarios: [],

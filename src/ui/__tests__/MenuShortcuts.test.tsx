@@ -33,11 +33,10 @@ beforeEach(() => {
   act(() => {
     // The app is running: the page items act only then (ADR 0228).
     usePortfolioStore.setState({
-      status: "ready",
+      status: { kind: "ready" },
       portfolio,
       assumptions,
       error: null,
-      startupError: null,
       init: async () => {},
     } as never);
   });
@@ -136,10 +135,8 @@ describe("while the error screen shows (ADR 0228)", () => {
   it("View, New Property and Settings do nothing", async () => {
     act(() =>
       usePortfolioStore.setState({
-        status: "error",
-        readBackFailed: true,
+        status: { kind: "readBackFailed", refused: [] },
         error: null,
-        startupError: null,
       }),
     );
     render(<App />);
@@ -156,10 +153,8 @@ describe("while the error screen shows (ADR 0228)", () => {
     act(() => {
       useUiStore.setState({ aboutOpen: false });
       usePortfolioStore.setState({
-        status: "error",
-        readBackFailed: true,
+        status: { kind: "readBackFailed", refused: [] },
         error: null,
-        startupError: null,
       });
     });
     render(<App />);

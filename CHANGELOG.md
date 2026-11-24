@@ -37,6 +37,10 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- A failed edit (a full disk, a damaged database) is shown once, where it was started: in
+  the form, the confirm row or next to Activate, and no longer also in the page banner,
+  where it stayed after Cancel. Keep exploring, a preset, Duplicate and an Assumptions save
+  still show theirs in the banner (ADR 0261, #467). No new texts.
 - Visually hidden text (screen-reader labels, the row-action tooltips at rest and the
   Property detail Deactivate / Activate label in a narrow window) uses one rule (ADR 0260,
   #495). No visible change.

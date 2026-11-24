@@ -22,9 +22,8 @@ describe("portfolioStore typed write errors (UX-046, DR-133)", () => {
         constraint: { kind: "unique", table: "properties", columns: ["name"] },
       },
     });
-    expect(usePortfolioStore.getState().error).toEqual(
-      result.ok ? null : result.error,
-    );
+    // ADR 0261: returned only; the caller shows it, not the banner.
+    expect(usePortfolioStore.getState().error).toBeNull();
   });
 
   it("deleting a record that is gone returns ROW_MISSING", async () => {

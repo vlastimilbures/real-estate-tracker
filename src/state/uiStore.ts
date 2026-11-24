@@ -11,6 +11,7 @@ import type {
 } from "../ui/model/sectionNav";
 import { THEME_KEY, readPersistedTheme, type Theme } from "./themePreference";
 import type { CsvImportReport } from "./csv";
+import type { ActionError } from "./actionError";
 import { tickForCompare } from "./compareSelection";
 
 export type Route =
@@ -56,7 +57,7 @@ export type Notice =
  *  text: it is translated when it renders. */
 export interface Failure {
   action: OutcomeAction;
-  error: unknown;
+  error: ActionError;
 }
 
 /** Saved scenarios the compare shows at most; Base is always available alongside. */
@@ -127,7 +128,7 @@ interface UiState {
   dismissNotice: () => void;
   /** The last failed action, until dismissed or the next action starts. In-memory. */
   failure: Failure | null;
-  setFailure: (action: OutcomeAction, error: unknown) => void;
+  setFailure: (action: OutcomeAction, error: ActionError) => void;
   dismissFailure: () => void;
   /** The data was replaced (restore, Clear sample, Load sample): drop the notice, the
    *  failure and the import report, which describe the old data (ADR 0154). */

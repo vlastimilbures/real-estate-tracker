@@ -30,11 +30,8 @@ const init = vi.fn(async () => {});
 function readBackFailed(refusedWrites: string[]) {
   act(() => {
     usePortfolioStore.setState({
-      status: "error",
-      readBackFailed: true,
+      status: { kind: "readBackFailed", refused: refusedWrites },
       error: null,
-      startupError: null,
-      refusedWrites,
       init,
     } as never);
   });

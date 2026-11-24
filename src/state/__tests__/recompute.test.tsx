@@ -62,7 +62,11 @@ const toggles: [string, () => void][] = [
 
 beforeEach(() => {
   act(() => {
-    usePortfolioStore.setState({ portfolio, assumptions, status: "ready" });
+    usePortfolioStore.setState({
+      portfolio,
+      assumptions,
+      status: { kind: "ready" },
+    });
     useUiStore.setState({
       theme: "light",
     });

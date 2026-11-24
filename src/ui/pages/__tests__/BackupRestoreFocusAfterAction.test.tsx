@@ -19,6 +19,7 @@ import { seedIfEmpty } from "../../../data/seed";
 import { exportToJson } from "../../../data/backup";
 import { deferred, type Deferred } from "../../../__tests__/support/deferred";
 import { en } from "../../../i18n/en";
+import { failure, success } from "../../../__tests__/support/result";
 
 vi.mock("../../../state/diagnostics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../state/diagnostics")>()),
@@ -36,14 +37,14 @@ beforeEach(() => {
   loaded = deferred();
   act(() => {
     usePortfolioStore.setState({
-      status: "ready",
+      status: { kind: "ready" },
       portfolio,
       assumptions,
       sample: { active: false, dismissed: false },
       replacing: 0,
-      exportBackup: () => exported.promise,
-      restoreBackup: () => restored.promise,
-      loadSample: () => loaded.promise,
+      exportBackup: () => exported.promise.then(success, failure),
+      restoreBackup: () => restored.promise.then(success, failure),
+      loadSample: () => loaded.promise.then(success, failure),
     } as never);
   });
 });

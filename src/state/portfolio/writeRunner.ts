@@ -7,6 +7,7 @@ import { logFailure } from "../../data/errorLog";
 import { markDataChanged } from "../../data/repositories";
 import { perfMark, perfMeasure } from "../../lib/perf";
 import { createWriteQueue } from "./writeQueue";
+import { refusedOf, writesRefused } from "./status";
 import type { WriteTarget } from "../writeTargets";
 import type {
   DbHandle,
@@ -30,10 +31,8 @@ async function reloadAfter(
     logFailure("RELOAD", e);
     if (committed)
       set({
-        status: "error",
-        readBackFailed: true,
+        status: { kind: "readBackFailed", refused: refusedOf(get().status) },
         error: null,
-        startupError: null,
       });
   }
 }
@@ -41,19 +40,20 @@ async function reloadAfter(
 /** Keep `target` for the error screen: refused because a read-back failed, named, and
  *  not kept yet (ADR 0255). */
 function keepRefused({ set, get }: StoreAccess, target: WriteTarget): void {
-  const { readBackFailed, refusedWrites } = get();
+  const { status } = get();
   if (
-    !readBackFailed ||
+    !writesRefused(status) ||
     target === "bookkeeping" ||
-    refusedWrites.includes(target)
+    status.refused.includes(target)
   )
     return;
-  set({ refusedWrites: [...refusedWrites, target] });
+  set({ status: { ...status, refused: [...status.refused, target] } });
 }
 
 /** Persist via `op`, then reload portfolio + assumptions so the engine recomputes.
- *  Never throws into the void: a failure is captured, surfaced via `error`, and
- *  returned to the caller as `{ ok: false }`. On failure we still reload so the
+ *  Never throws: a failure is returned to the caller as `{ ok: false }`, which shows
+ *  it where the edit was started; a caller with no place of its own puts it in the
+ *  banner with showError (ADR 0261). A success clears the banner. On failure we still reload so the
  *  in-memory state matches what actually reached disk. Multi-statement writes are
  *  atomic (`Sql.transaction`, D-14), so a failed op leaves the DB unchanged, and a
  *  resolved op has committed: a failed reload after it returns `{ ok: true }` and
@@ -67,11 +67,12 @@ async function mutateNow(
 ): Promise<MutationResult> {
   const { set, get, db } = store;
   const sql = db.get();
-  if (!sql || get().readBackFailed) {
+  if (!sql || writesRefused(get().status)) {
     keepRefused(store, target);
-    const error = toWriteError(new Error("Database not initialised"));
-    set({ error });
-    return { ok: false, error };
+    return {
+      ok: false,
+      error: toWriteError(new Error("Database not initialised")),
+    };
   }
   try {
     perfMark("edit:start");
@@ -84,15 +85,12 @@ async function mutateNow(
     return { ok: true };
   } catch (e) {
     // A broken input rule is the user's to fix in the form, not a failure to log;
-    // it is thrown before anything is written, so there is nothing to reload. Only
-    // returned: the form shows it, and a non-form caller uses showError (ADR 0141).
+    // it is thrown before anything is written, so there is nothing to reload.
     if (e instanceof EngineInputError)
       return { ok: false, error: toWriteError(e) };
     logFailure("WRITE", e);
-    const error = toWriteError(e);
     await reloadAfter(store, false);
-    set({ error });
-    return { ok: false, error };
+    return { ok: false, error: toWriteError(e) };
   }
 }
 
@@ -177,7 +175,7 @@ export function createWriteRunner(
    *  kept for the screen (ADR 0255). A read passes none. */
   function requireSql(target?: WriteTarget): Sql {
     const sql = db.get();
-    if (!sql || get().readBackFailed) {
+    if (!sql || writesRefused(get().status)) {
       if (target) keepRefused(store, target);
       throw new Error("Database not initialised");
     }

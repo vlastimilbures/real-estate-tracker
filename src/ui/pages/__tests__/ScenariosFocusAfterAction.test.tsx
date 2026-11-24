@@ -35,7 +35,7 @@ beforeEach(() => {
     usePortfolioStore.setState({
       portfolio,
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
       scenarios: [saved],
       addScenario: () => write.promise,
       duplicateScenario: () => write.promise,

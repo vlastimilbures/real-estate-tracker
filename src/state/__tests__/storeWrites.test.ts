@@ -1,5 +1,6 @@
-// Failure-path tests for the portfolio store: a failed DB write must surface (set
-// `error`, return `{ ok: false }`) rather than throw into the void, and must leave the
+// Failure-path tests for the portfolio store: a failed DB write must surface (return
+// `{ ok: false }` to the caller, which shows it; ADR 0261 leaves the banner `error` to
+// the caller) rather than throw into the void, and must leave the
 // in-memory state reconciled with what's actually on disk. The store is driven directly
 // via getState() (zustand works outside React), so no DOM is needed.
 import { describe, expect, it } from "vitest";
@@ -9,6 +10,7 @@ import type { Sql } from "../../data/sql";
 import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
 import { money } from "../../engine";
 import { openSeeded, text } from "./support/openSeeded";
+import { statusOf } from "../../__tests__/support/status";
 
 describe("portfolioStore mutations", () => {
   it("returns an error result (not a throw) when the database is not initialised", async () => {
@@ -18,14 +20,13 @@ describe("portfolioStore mutations", () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected failure");
     expect(text(result.error)).toMatch(/not initialised/i);
-    expect(text(usePortfolioStore.getState().error)).toMatch(
-      /not initialised/i,
-    );
+    // ADR 0261: the store puts no failure in the banner; the caller shows it.
+    expect(usePortfolioStore.getState().error).toBeNull();
   });
 
   it("a successful mutation clears error and refreshes state", async () => {
     await usePortfolioStore.getState().init(openSeeded);
-    expect(usePortfolioStore.getState().status).toBe("ready");
+    expect(statusOf(usePortfolioStore.getState())).toBe("ready");
 
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
     const before = usePortfolioStore.getState().portfolio!.valuations.length;
@@ -72,10 +73,11 @@ describe("portfolioStore mutations", () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected failure");
     expect(text(result.error)).toMatch(/disk is full/i);
-    expect(text(usePortfolioStore.getState().error)).toMatch(/disk is full/i);
+    // ADR 0261: the store puts no failure in the banner; the caller shows it.
+    expect(usePortfolioStore.getState().error).toBeNull();
     // status stays "ready" (mutation failures are not full-screen init errors) and the
     // optimistic row never sticks because refresh() reconciles to disk.
-    expect(usePortfolioStore.getState().status).toBe("ready");
+    expect(statusOf(usePortfolioStore.getState())).toBe("ready");
     expect(usePortfolioStore.getState().portfolio!.valuations.length).toBe(
       before,
     );
@@ -132,7 +134,9 @@ describe("portfolioStore mutations", () => {
   });
 
   it("clearError() resets a surfaced error", async () => {
-    await usePortfolioStore.getState().removeLease("missing");
+    // ADR 0261: a caller with no place of its own surfaces the failure with showError.
+    const result = await usePortfolioStore.getState().removeLease("missing");
+    if (!result.ok) usePortfolioStore.getState().showError(result.error);
     expect(usePortfolioStore.getState().error).not.toBeNull();
     usePortfolioStore.getState().clearError();
     expect(usePortfolioStore.getState().error).toBeNull();

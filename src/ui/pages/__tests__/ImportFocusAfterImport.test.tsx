@@ -20,6 +20,7 @@ import {
 } from "../../../import/csvImport";
 import { deferred, type Deferred } from "../../../__tests__/support/deferred";
 import { en } from "../../../i18n/en";
+import { failure, success } from "../../../__tests__/support/result";
 
 vi.mock("../../../state/diagnostics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../state/diagnostics")>()),
@@ -64,11 +65,12 @@ beforeEach(() => {
   items = [add];
   act(() => {
     usePortfolioStore.setState({
-      importCsv: () => run.promise,
-      previewCsv: async (): Promise<CsvImportPreview> => ({
-        items,
-        problems: [],
-      }),
+      importCsv: () => run.promise.then(success, failure),
+      previewCsv: async () =>
+        success<CsvImportPreview>({
+          items,
+          problems: [],
+        }),
     } as never);
   });
 });

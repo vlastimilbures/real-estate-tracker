@@ -6,8 +6,10 @@
 import { useState } from "react";
 import {
   usePortfolioStore,
+  type Status,
   type StartupError,
 } from "../../state/portfolioStore";
+import type { RefusedWrite } from "../../state/writeTargets";
 import { revealDataDir } from "../../state/platform";
 import { useUiStore, type Notice } from "../../state/uiStore";
 import { logFailure, READ_FAILURES } from "../../state/diagnostics";
@@ -17,7 +19,7 @@ import { Button } from "./primitives";
 import { describeWriteError } from "../model/writeError";
 import { chooseRestoreFile, type PickedBackup } from "../../state/backup";
 import { IssueTable, RestoreConfirm } from "./RestoreConfirm";
-import { backupFailure } from "./restoreFailure";
+import { backupFailure, backupFailureText } from "./restoreFailure";
 import {
   bootView,
   fileName,
@@ -59,8 +61,15 @@ function noticeText(t: Dictionary, notice: Notice): string {
 /** A save committed but its read-back failed: say the change was saved, name the
  *  writes queued behind it that were refused (ADR 0255), and still name the safety copy
  *  (ADR 0228, ADR 0154 §5). */
-function ReadBackText({ t, notice }: { t: Dictionary; notice: Notice | null }) {
-  const refused = usePortfolioStore((s) => s.refusedWrites);
+function ReadBackText({
+  t,
+  notice,
+  refused,
+}: {
+  t: Dictionary;
+  notice: Notice | null;
+  refused: RefusedWrite[];
+}) {
   return (
     <>
       <p>{t.boot.readBackFailed}</p>
@@ -79,11 +88,66 @@ function ReadBackText({ t, notice }: { t: Dictionary; notice: Notice | null }) {
   );
 }
 
+/** A typed startup failure: its lines, then its details, headed as records when they
+ *  are. */
+function StartupText({
+  t,
+  error,
+  records,
+}: {
+  t: Dictionary;
+  error: StartupError;
+  records: boolean;
+}) {
+  return (
+    <>
+      {startupText(t, error).map((line) => (
+        <p key={line}>{line}</p>
+      ))}
+      {error.details.length > 0 && (
+        <div className="error-screen-details">
+          <span>
+            {records ? t.dataErrors.detailsHeading : t.boot.detailsOther}
+          </span>
+          <ul>
+            {error.details.map((d) => (
+              <li key={d}>
+                <code>{d}</code>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
+  );
+}
+
+/** What stopped the app: a failed read-back, a typed startup failure, or the error. */
+function StopText({
+  t,
+  status,
+  notice,
+  records,
+}: {
+  t: Dictionary;
+  status: Status;
+  notice: Notice | null;
+  records: boolean;
+}) {
+  if (status.kind === "readBackFailed")
+    return <ReadBackText t={t} notice={notice} refused={status.refused} />;
+  if (status.kind !== "startupFailed") return null;
+  return status.startup ? (
+    <StartupText t={t} error={status.startup} records={records} />
+  ) : (
+    <code>{describeWriteError(t, status.error).message}</code>
+  );
+}
+
 export function BootFailure() {
   const t = useT();
-  const startupError = usePortfolioStore((s) => s.startupError);
-  const error = usePortfolioStore((s) => s.error);
-  const readBackFailed = usePortfolioStore((s) => s.readBackFailed);
+  const status = usePortfolioStore((s) => s.status);
+  const startupError = status.kind === "startupFailed" ? status.startup : null;
   const notice = useUiStore((s) => s.notice);
   const init = usePortfolioStore((s) => s.init);
   const restoreAtStartup = usePortfolioStore((s) => s.restoreAtStartup);
@@ -116,7 +180,9 @@ export function BootFailure() {
       const picked = await chooseRestoreFile();
       if (picked) setPending(picked);
     } catch (e) {
-      setFailure(backupFailure(t, e, "RESTORE", t.backup.errInvalid));
+      setFailure(
+        backupFailure(t, e, "RESTORE", { other: t.backup.errInvalid }),
+      );
     }
   }
 
@@ -125,7 +191,18 @@ export function BootFailure() {
     setRestoring(true);
     setFailure(null);
     try {
-      const { safetyBackup, ready } = await restoreAtStartup(pending.backup);
+      const restored = await restoreAtStartup(pending.backup);
+      if (!restored.ok) {
+        // One transaction: a failure before the commit leaves the data as it was; the
+        // store logged it.
+        setFailure(
+          backupFailureText(t, restored.error, {
+            other: t.backup.restoreFailed,
+          }),
+        );
+        return;
+      }
+      const { safetyBackup, ready } = restored.value;
       setPending(null);
       if (ready) setRestored(safetyBackup);
       else {
@@ -134,9 +211,6 @@ export function BootFailure() {
         dataReplaced();
         setNotice({ kind: "restored", file: safetyBackup });
       }
-    } catch (e) {
-      // One transaction: a failure before the commit leaves the data as it was.
-      setFailure(backupFailure(t, e, "RESTORE", t.backup.restoreFailed));
     } finally {
       setRestoring(false);
     }
@@ -181,33 +255,12 @@ export function BootFailure() {
     <main>
       <div className="error-screen" role="alert">
         <h1 className="eyebrow">{t.app.dbErrorEyebrow}</h1>
-        {readBackFailed ? (
-          <ReadBackText t={t} notice={notice} />
-        ) : startupError ? (
-          <>
-            {startupText(t, startupError).map((line) => (
-              <p key={line}>{line}</p>
-            ))}
-            {startupError.details.length > 0 && (
-              <div className="error-screen-details">
-                <span>
-                  {view.records
-                    ? t.dataErrors.detailsHeading
-                    : t.boot.detailsOther}
-                </span>
-                <ul>
-                  {startupError.details.map((d) => (
-                    <li key={d}>
-                      <code>{d}</code>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </>
-        ) : (
-          error && <code>{describeWriteError(t, error).message}</code>
-        )}
+        <StopText
+          t={t}
+          status={status}
+          notice={notice}
+          records={view.records}
+        />
         {view.retry && <p>{t.app.bootRetryHint}</p>}
         <small>{t.dataErrors.logHint}</small>
         {revealFailed && <p className="error-text">{t.boot.revealFailed}</p>}

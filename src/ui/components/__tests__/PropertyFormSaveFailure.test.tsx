@@ -13,6 +13,7 @@ import {
 } from "../../../state/portfolioStore";
 import { getDict } from "../../../i18n";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import { success } from "../../../__tests__/support/result";
 
 const en = getDict("en");
 const id = portfolio.properties[0]!.id;
@@ -27,10 +28,10 @@ beforeEach(() => {
     usePortfolioStore.setState({
       portfolio,
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
       editProperty,
       getPropertyExtras: () =>
-        Promise.resolve({ address: "Stored St 1", garage: null }),
+        Promise.resolve(success({ address: "Stored St 1", garage: null })),
     });
   });
 });
@@ -71,7 +72,10 @@ describe("a failed save keeps the typed values (ADR 0241)", () => {
   });
 
   it("shows a thrown save and keeps the typed name", async () => {
-    editProperty.mockRejectedValue(new Error("disk gone"));
+    editProperty.mockResolvedValue({
+      ok: false,
+      error: { kind: "other", message: "disk gone" },
+    });
     await openAndType();
     await userEvent.click(
       screen.getByRole("button", { name: en.common.saveChanges }),

@@ -14,6 +14,7 @@ import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
 import { exportToJson } from "../../data/backup";
 import { invoke } from "@tauri-apps/api/core";
+import { startupErrorOf, statusOf } from "../../__tests__/support/status";
 
 const picked = { text: "" };
 vi.mocked(invoke).mockImplementation((command: string) =>
@@ -46,8 +47,8 @@ beforeEach(async () => {
 
 describe("an unreadable scenario row at startup (#451, ADR 0231)", () => {
   it("stops startup on SCENARIO_INVALID, with the database kept open", () => {
-    expect(store().status).toBe("error");
-    expect(store().startupError?.code).toBe("SCENARIO_INVALID");
+    expect(statusOf(store())).toBe("error");
+    expect(startupErrorOf(store())?.code).toBe("SCENARIO_INVALID");
     expect(portfolioDb.get()).toBe(db);
   });
 
@@ -71,8 +72,8 @@ describe("an unreadable scenario row at startup (#451, ADR 0231)", () => {
     );
 
     await userEvent.click(button(en.boot.continue));
-    expect(store().status).toBe("ready");
-    expect(store().startupError).toBeNull();
+    expect(statusOf(store())).toBe("ready");
+    expect(startupErrorOf(store())).toBeNull();
     expect(store().portfolio!.properties.length).toBeGreaterThan(0);
     expect(store().scenarios.map((s) => s.id)).not.toContain("bad");
   });

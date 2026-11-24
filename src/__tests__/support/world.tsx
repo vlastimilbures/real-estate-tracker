@@ -30,7 +30,7 @@ export function renderWithPortfolio(
     usePortfolioStore.setState({
       portfolio: world.portfolio ?? portfolio,
       assumptions: world.assumptions ?? assumptions,
-      status: "ready",
+      status: { kind: "ready" },
     });
     const view: Pick<World, "language" | "route" | "asOf"> = {};
     if (world.language !== undefined) view.language = world.language;

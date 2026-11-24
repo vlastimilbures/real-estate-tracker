@@ -12,6 +12,7 @@ import { exportToJson } from "../../data/backup";
 import { parseProperties } from "../../import/csv";
 import type { Sql } from "../../data/sql";
 import { money, type IsoDate } from "../../engine";
+import { unwrap } from "../../__tests__/support/result";
 
 vi.mocked(invoke).mockResolvedValue(undefined);
 
@@ -91,7 +92,7 @@ describe("writesRunning (ADR 0253)", () => {
 
   it("drops after a write that throws (exclusive, replaceData)", async () => {
     // The sample is loaded: Load sample refuses a non-empty portfolio.
-    await expect(store().loadSample()).rejects.toThrow();
+    await expect(store().loadSample()).resolves.toMatchObject({ ok: false });
     expect(running()).toBe(0);
   });
 
@@ -99,7 +100,7 @@ describe("writesRunning (ADR 0253)", () => {
     // Read synchronously at the resume: a count dropped later would still show here.
     const result = await store().addValuation(valuation("v1"));
     const afterWrite = running();
-    await store().clearSample();
+    unwrap(await store().clearSample());
     const afterReplace = running();
     expect(result.ok).toBe(true);
     expect([afterWrite, afterReplace]).toEqual([0, 0]);
@@ -123,7 +124,7 @@ describe("writesRunning (ADR 0253)", () => {
         "name,purchase_date,purchase_price\nImported,2020-01-01,1",
       ).rows,
     };
-    await store().previewCsv(batch);
+    unwrap(await store().previewCsv(batch));
     const write = store().importCsv(batch);
     expect(running()).toBe(1);
     await write;

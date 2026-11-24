@@ -60,7 +60,11 @@ function inView(id: string) {
 
 function setPortfolio(p: typeof portfolio) {
   act(() => {
-    usePortfolioStore.setState({ portfolio: p, assumptions, status: "ready" });
+    usePortfolioStore.setState({
+      portfolio: p,
+      assumptions,
+      status: { kind: "ready" },
+    });
   });
 }
 
@@ -314,7 +318,10 @@ describe("Property detail data check (ADR 0118)", () => {
 
   it("waits for the portfolio before landing", () => {
     act(() => {
-      usePortfolioStore.setState({ portfolio: null, status: "loading" });
+      usePortfolioStore.setState({
+        portfolio: null,
+        status: { kind: "loading" },
+      });
       useUiStore.setState({ propertyTarget: "holding" });
     });
     render(<PropertyDetail />);

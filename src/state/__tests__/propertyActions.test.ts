@@ -5,6 +5,7 @@ import type { IsoDate } from "../../engine";
 import { money } from "../../engine";
 import { noExtras } from "../../data/__tests__/support/noExtras";
 import { openSeeded } from "./support/openSeeded";
+import { unwrap } from "../../__tests__/support/result";
 
 // Every mutation, invoked once on the happy path — a smoke test that each action's
 // mapper + repository call round-trips through the DB and the refreshed in-memory state
@@ -65,7 +66,7 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
     );
     expect(add.ok).toBe(true);
     expect(
-      await usePortfolioStore.getState().getPropertyExtras("p-new"),
+      unwrap(await usePortfolioStore.getState().getPropertyExtras("p-new")),
     ).toEqual({ address: "Main St 1", garage: true });
   });
 

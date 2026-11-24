@@ -9,7 +9,8 @@ import userEvent from "@testing-library/user-event";
 import { OutcomeRegions, ToastRegion } from "../OutcomeRegions";
 import { ExportXlsxButton } from "../primitives";
 import { useUiStore } from "../../../state/uiStore";
-import { RestoreError } from "../../../state/backup";
+import { RestoreError } from "../../../data/backup";
+import { toActionError } from "../../../state/actionError";
 import { loadDictionary } from "../../../i18n";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
@@ -58,16 +59,18 @@ describe("notice (#136)", () => {
     act(() =>
       useUiStore.getState().setFailure(
         "restore",
-        new RestoreError("BACKUP_ROWS_INVALID", "rows", {
-          issues: [
-            {
-              table: "leases",
-              id: "l-1",
-              column: "monthly_rent",
-              rule: "UNREADABLE_VALUE",
-            },
-          ],
-        }),
+        toActionError(
+          new RestoreError("BACKUP_ROWS_INVALID", "rows", {
+            issues: [
+              {
+                table: "leases",
+                id: "l-1",
+                column: "monthly_rent",
+                rule: "UNREADABLE_VALUE",
+              },
+            ],
+          }),
+        ),
       ),
     );
     render(<OutcomeRegions />);
@@ -96,7 +99,9 @@ describe("notice (#136)", () => {
   it("a failure does not hide the safety copy's name (#136 review)", () => {
     act(() => {
       useUiStore.getState().setNotice({ kind: "restored", file: "s.json" });
-      useUiStore.getState().setFailure("xlsxExport", new Error("disk full"));
+      useUiStore
+        .getState()
+        .setFailure("xlsxExport", toActionError(new Error("disk full")));
     });
     render(<OutcomeRegions />);
     expect(screen.getByText(en.backup.restored("s.json"))).toBeTruthy();
@@ -133,7 +138,9 @@ describe("announced once (#274)", () => {
       delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
     });
     act(() =>
-      useUiStore.getState().setFailure("xlsxExport", new Error("disk full")),
+      useUiStore
+        .getState()
+        .setFailure("xlsxExport", toActionError(new Error("disk full"))),
     );
     const first = render(<OutcomeRegions />);
     expect(screen.getByRole("alert")).toBeTruthy();

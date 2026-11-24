@@ -19,7 +19,7 @@ import { Button, ErrorBanner } from "./primitives";
 import { Modal } from "./Modal";
 import { CZK } from "../../lib/currency";
 import type { Portfolio } from "../../engine";
-import { toWriteError, type WriteError } from "../../state/writeError";
+import type { WriteError } from "../../state/writeError";
 import { type Dictionary } from "../../i18n";
 import { useSaveBusy } from "../hooks/useSaveBusy";
 import { useT } from "../hooks/useT";
@@ -314,16 +314,12 @@ export function PropertyFormModal({
     };
     // Only the latest read counts: an older one settling late must not undo it.
     let live = true;
-    getPropertyExtras(propertyId).then(
-      ({ address, garage }) => {
-        if (!live) return;
-        load({ address: address ?? "", garage });
-        setExtras("ready");
-      },
-      () => {
-        if (live) setExtras("failed");
-      },
-    );
+    void getPropertyExtras(propertyId).then((read) => {
+      if (!live) return;
+      if (!read.ok) return setExtras("failed");
+      load({ address: read.value.address ?? "", garage: read.value.garage });
+      setExtras("ready");
+    });
     return () => {
       live = false;
     };
@@ -367,9 +363,6 @@ export function PropertyFormModal({
       // Keep the modal open on failure so the user can retry; close only on success.
       if (saveResult.ok) return onClose();
       failure = saveResult.error;
-    } catch (e) {
-      // A thrown save is shown like a returned failure (ADR 0241 §3).
-      failure = toWriteError(e);
     } finally {
       setSaving(false);
     }

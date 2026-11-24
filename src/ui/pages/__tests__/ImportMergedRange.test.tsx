@@ -10,28 +10,31 @@ import { Import } from "../Import";
 import { renderWithPortfolio } from "../../../__tests__/support/world";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { en } from "../../../i18n/en";
+import { success } from "../../../__tests__/support/result";
 
 const previewCsv = vi.fn();
 
 beforeEach(() => {
   previewCsv.mockReset();
-  previewCsv.mockResolvedValue({
-    items: [],
-    problems: [
-      {
-        file: "mortgages",
-        row: 2,
-        field: "fixation_years",
-        problem: { code: "outOfRange", value: "60", min: 0, max: 50 },
-      },
-      {
-        file: "mortgages",
-        row: 3,
-        field: "size_m2",
-        problem: { code: "sizeRange", value: "20000", min: 1, max: 10000 },
-      },
-    ],
-  });
+  previewCsv.mockResolvedValue(
+    success({
+      items: [],
+      problems: [
+        {
+          file: "mortgages",
+          row: 2,
+          field: "fixation_years",
+          problem: { code: "outOfRange", value: "60", min: 0, max: 50 },
+        },
+        {
+          file: "mortgages",
+          row: 3,
+          field: "size_m2",
+          problem: { code: "sizeRange", value: "20000", min: 1, max: 10000 },
+        },
+      ],
+    }),
+  );
   act(() => {
     usePortfolioStore.setState({ previewCsv } as never);
   });

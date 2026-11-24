@@ -11,6 +11,7 @@ import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { propertiesTemplate } from "../../../import/csv";
 import { en } from "../../../i18n/en";
+import { failure, success } from "../../../__tests__/support/result";
 
 vi.mock("../../../state/diagnostics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../state/diagnostics")>()),
@@ -26,14 +27,16 @@ const added = {
   date: null,
   changes: [],
 };
-const importCsv = vi.fn(async () => ({
-  items: [added],
-}));
+const importCsv = vi.fn(async (): Promise<unknown> =>
+  success({ items: [added] }),
+);
 // ADR 0096: the page previews the plan before it offers the import.
-const previewCsv = vi.fn(async () => ({
-  items: [added],
-  problems: [],
-}));
+const previewCsv = vi.fn(async () =>
+  success({
+    items: [added],
+    problems: [],
+  }),
+);
 
 beforeEach(() =>
   act(() => {
@@ -73,7 +76,7 @@ describe("Import after success (UX-038)", () => {
 
 describe("Import failure (ADR 0154)", () => {
   it("is reported in the notice, which follows the owner to any page", async () => {
-    importCsv.mockRejectedValueOnce(new Error("database is locked"));
+    importCsv.mockResolvedValueOnce(failure(new Error("database is locked")));
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     const input = container.querySelector(
       'input[type="file"]',

@@ -64,8 +64,8 @@ export function Scenarios() {
   const setPresetsOpen = useUiStore((s) => s.setPresetsOpen);
   const [editing, setEditing] = useState<Scenario | "new" | null>(null);
   // One in-flight mutation at a time: disables the action buttons and surfaces a
-  // success toast. A failure shows in the banner; the store leaves an input refusal
-  // to the caller, so run() shows it there itself (ADR 0141).
+  // success toast. A failure shows where the action was started: a preset and
+  // Duplicate have no place of their own, so they put theirs in the banner (ADR 0261).
   const [busy, setBusy] = useBusyFocus(pressedUnlessConfirm);
   const { showToast } = useToast();
 
@@ -101,7 +101,6 @@ export function Scenarios() {
       setBusy(false);
     }
     if (res.ok && successMsg) showToast(successMsg);
-    if (!res.ok && res.error.kind === "input") showError(res.error);
     return res;
   }
 
@@ -133,7 +132,7 @@ export function Scenarios() {
     }
     const id = crypto.randomUUID();
     const res = await run(() => addScenario({ id, name, overrides }));
-    if (!res.ok) return;
+    if (!res.ok) return showError(res.error);
     showToast(
       tick(id)
         ? t.scenarios.addedScenario(name)
@@ -146,7 +145,7 @@ export function Scenarios() {
     const res = await run(() =>
       duplicateScenario(s.id, id, t.scenarios.copyName(s.name)),
     );
-    if (!res.ok) return;
+    if (!res.ok) return showError(res.error);
     showToast(
       tick(id)
         ? t.scenarios.duplicatedScenario(s.name)

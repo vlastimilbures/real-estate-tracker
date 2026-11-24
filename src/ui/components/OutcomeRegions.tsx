@@ -8,8 +8,7 @@ import {
   type Notice,
   type OutcomeAction,
 } from "../../state/uiStore";
-import { RestoreError } from "../../state/backup";
-import { saveFailureDetail } from "../../state/platform";
+import type { ActionError } from "../../state/actionError";
 import type { Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { useFirstShow } from "../hooks/useFirstShow";
@@ -18,23 +17,34 @@ import { IssueTable } from "./RestoreConfirm";
 import { backupFailureText } from "./restoreFailure";
 
 /** A failed action as text, translated now (the failure was logged when caught). */
-function failureText(t: Dictionary, action: OutcomeAction, e: unknown): string {
+function failureText(
+  t: Dictionary,
+  action: OutcomeAction,
+  e: ActionError,
+): string {
   switch (action) {
     case "restore":
-      return backupFailureText(t, e, t.backup.restoreFailed).text;
+      return backupFailureText(t, e, { other: t.backup.restoreFailed }).text;
     case "pickBackup":
-      return backupFailureText(t, e, t.backup.errInvalid).text;
+      return backupFailureText(t, e, { other: t.backup.errInvalid }).text;
     case "backupExport":
-      return backupFailureText(t, e, t.backup.exportFailed).text;
+      return backupFailureText(t, e, { other: t.backup.exportFailed }).text;
     case "loadSample":
-      return backupFailureText(t, e, t.sample.loadFailed).text;
+      return backupFailureText(t, e, { other: t.sample.loadFailed }).text;
     case "import":
-      return backupFailureText(t, e, t.importPage.importFailed).text;
+      return backupFailureText(t, e, { other: t.importPage.importFailed }).text;
     case "xlsxExport":
-      return t.xlsx.exportFailed(saveFailureDetail(e));
+      return t.xlsx.exportFailed(saveDetail(e));
     case "revealFolder":
       return t.boot.revealFailed;
   }
+}
+
+/** A failed export's text (ADR 0193): the export button stores it as `saveFailed`; an
+ *  untyped failure set elsewhere gives its message. */
+function saveDetail(e: ActionError): string {
+  if (e.kind === "saveFailed") return e.detail;
+  return e.kind === "other" ? e.message : "";
 }
 
 function FailureView({ failure }: { failure: Failure }) {
@@ -54,7 +64,7 @@ function FailureView({ failure }: { failure: Failure }) {
         onDismiss={dismiss}
         live={live}
       />
-      {error instanceof RestoreError && error.issues.length > 0 && (
+      {error.kind === "restoreRefused" && error.issues.length > 0 && (
         <IssueTable issues={error.issues} />
       )}
     </div>

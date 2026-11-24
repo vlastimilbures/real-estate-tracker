@@ -9,6 +9,8 @@ import {
 } from "../../data/repositories";
 import { holdingCostToRow, propertyToRow } from "../../data/mappers";
 import { checkEdit, withRow } from "./rules";
+import { success } from "../result";
+import { toWriteError } from "../writeError";
 import type { PortfolioState, StoreCtx } from "./types";
 
 export function propertyActions({
@@ -60,9 +62,18 @@ export function propertyActions({
         );
         await updateProperty(sql, propertyToRow(p, extra));
       }),
+    // A failed read is the form's to show, not logged (ADR 0241).
     getPropertyExtras: async (id) => {
       const sql = db.get();
-      return sql ? getPropertyExtras(sql, id) : { address: null, garage: null };
+      try {
+        return success(
+          sql
+            ? await getPropertyExtras(sql, id)
+            : { address: null, garage: null },
+        );
+      } catch (e) {
+        return { ok: false, error: toWriteError(e) };
+      }
     },
     setPropertyActive: (id, active) =>
       mutate("properties", (sql) => setPropertyActive(sql, id, active)),

@@ -64,7 +64,7 @@ function seed(scenarios: Scenario[]) {
     usePortfolioStore.setState({
       portfolio,
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
       scenarios,
       addScenario,
       saveScenario,

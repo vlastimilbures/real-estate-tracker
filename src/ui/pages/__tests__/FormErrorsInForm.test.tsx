@@ -49,9 +49,8 @@ async function initStore() {
     portfolio: null,
     assumptions: null,
     scenarios: [],
-    status: "idle",
+    status: { kind: "idle" },
     error: null,
-    startupError: null,
   });
   await act(() => usePortfolioStore.getState().init(openSeeded));
 }
@@ -154,7 +153,7 @@ describe("Assumptions shows a non-field input error in its summary", () => {
       usePortfolioStore.setState({
         portfolio,
         assumptions,
-        status: "ready",
+        status: { kind: "ready" },
         saveAssumptions: async () => ({ ok: false, error }),
       }),
     );
@@ -224,7 +223,11 @@ describe("editing a field clears its error (R5-07)", () => {
 
   it("in Assumptions (#125)", async () => {
     act(() =>
-      usePortfolioStore.setState({ portfolio, assumptions, status: "ready" }),
+      usePortfolioStore.setState({
+        portfolio,
+        assumptions,
+        status: { kind: "ready" },
+      }),
     );
     render(<SettingsPage />);
     const input = screen.getByLabelText(startsWith(en.assumptions.inflation));

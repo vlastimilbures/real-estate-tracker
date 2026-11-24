@@ -29,6 +29,7 @@ import { dscrBandWord, ltvBandWord } from "../../model/health";
 import type { Decimal } from "../../../lib/money";
 import { renderWithPortfolio } from "../../../__tests__/support/world";
 import { setClock } from "../../../__tests__/support/clock";
+import { success } from "../../../__tests__/support/result";
 
 beforeEach(() => setClock("2026-10-01"));
 
@@ -185,7 +186,7 @@ describe('A property stored with the id "" (ADR 0127)', () => {
     act(() =>
       usePortfolioStore.setState({
         getPropertyExtras: () =>
-          Promise.resolve({ address: null, garage: null }),
+          Promise.resolve(success({ address: null, garage: null })),
       }),
     );
     show(withPropertyId(first.id, ""));

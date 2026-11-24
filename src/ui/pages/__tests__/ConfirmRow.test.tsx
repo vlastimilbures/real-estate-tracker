@@ -267,7 +267,11 @@ describe("a failed scenario delete keeps the row open (ADR 0143)", () => {
 describe("ConfirmRow focus on every caller (#249)", () => {
   it("Properties delete: onto Cancel, and back to the row's Delete on Cancel", async () => {
     act(() =>
-      usePortfolioStore.setState({ portfolio, assumptions, status: "ready" }),
+      usePortfolioStore.setState({
+        portfolio,
+        assumptions,
+        status: { kind: "ready" },
+      }),
     );
     render(<Properties />);
     const trigger = screen.getAllByRole("button", {
@@ -418,7 +422,7 @@ describe("focus after a successful confirm (#247)", () => {
       usePortfolioStore.setState({
         portfolio,
         assumptions,
-        status: "ready",
+        status: { kind: "ready" },
         removeProperty: vi.fn(ok),
       }),
     );
@@ -453,7 +457,7 @@ describe("focus after a successful confirm (#247)", () => {
           ),
         },
         assumptions,
-        status: "ready",
+        status: { kind: "ready" },
         removeProperty: vi.fn(async () => {
           usePortfolioStore.setState({ portfolio: empty });
           return { ok: true as const };

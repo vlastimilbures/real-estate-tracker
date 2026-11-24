@@ -18,13 +18,14 @@ import { valuationsTemplate } from "../../../state/csv";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
+import { success } from "../../../__tests__/support/result";
 
 const p = en.importPage;
 const previewCsv = vi.fn();
 
 beforeEach(() => {
   previewCsv.mockReset();
-  previewCsv.mockResolvedValue({ items: [], problems: [] });
+  previewCsv.mockResolvedValue(success({ items: [], problems: [] }));
   act(() => {
     usePortfolioStore.setState({ previewCsv } as never);
   });

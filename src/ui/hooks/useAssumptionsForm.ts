@@ -1,7 +1,10 @@
 // The Assumptions form's state (ADR 0095, 0221): the draft, its errors and the save. The
 // Settings page holds it, so the form and the Save/Discard in the top bar read one draft.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { usePortfolioStore } from "../../state/portfolioStore";
+import {
+  usePortfolioStore,
+  type MutationResult,
+} from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { isDirty } from "../model/dirty";
 import {
@@ -127,6 +130,17 @@ function toDraft(a: Assumptions): Record<string, string> {
 
 export type AssumptionsForm = ReturnType<typeof useAssumptionsForm>;
 
+/** A failed save that is not an input rule has no place in this form, so it goes to the
+ *  banner (ADR 0261, #467 Q2), even when the draft was dropped while it ran. */
+async function bannerUnlessInput(
+  save: Promise<MutationResult>,
+): Promise<MutationResult> {
+  const result = await save;
+  if (!result.ok && result.error.kind !== "input")
+    usePortfolioStore.getState().showError(result.error);
+  return result;
+}
+
 /**
  * @param active whether the Assumptions tab shows; leaving it (the unsaved-changes guard
  *   lets that happen only when the user discards) drops the draft, as unmounting did.
@@ -247,10 +261,11 @@ export function useAssumptionsForm(active: boolean) {
     };
     // On failure a broken rule marks its field (UX-047), or is listed in the error
     // summary when it names no field shown here (ADR 0141); any other failure shows in
-    // the AppShell banner. The success toast shows only when the write landed.
+    // the AppShell banner, put there by bannerUnlessInput (ADR 0261). The success toast
+    // shows only when the write landed.
     setSaving(true);
     const started = generation.current;
-    void saveAssumptions(next).then((result) => {
+    void bannerUnlessInput(saveAssumptions(next)).then((result) => {
       setSaving(false);
       if (generation.current !== started) return;
       if (!result.ok) {

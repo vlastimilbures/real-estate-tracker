@@ -217,7 +217,7 @@ function showDashboard(
 ) {
   act(() => {
     usePortfolioStore.setState({
-      status: "ready",
+      status: { kind: "ready" },
       portfolio,
       assumptions: a,
       scenarios: [],

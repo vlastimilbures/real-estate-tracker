@@ -7,6 +7,7 @@ import { logFailure } from "../../data/errorLog";
 import { loadState } from "../../data/repositories";
 import { toWriteError } from "../writeError";
 import { createWriteRunner } from "./writeRunner";
+import { refusedOf, writesRefused } from "./status";
 import {
   blockActions,
   holdingCostActions,
@@ -32,37 +33,50 @@ function lifecycleActions(
 ): Pick<PortfolioState, "init" | "refresh" | "clearError" | "showError"> {
   return {
     async init(open = deps.open) {
-      if (get().status === "loading" || get().status === "ready") return;
-      set({ status: "loading", error: null, startupError: null });
+      const { status } = get();
+      if (status.kind === "loading" || status.kind === "ready") return;
       // Try again after a failed read-back only reads, behind any queued job: the
       // database is open and at head, so nothing is migrated or seeded (ADR 0228).
-      if (get().readBackFailed) {
+      // Writes stay refused until it has read the data.
+      if (writesRefused(status)) {
+        set({
+          status: { kind: "loading", refused: status.refused },
+          error: null,
+        });
         try {
           await enqueue(() => get().refresh());
-          set({ status: "ready", readBackFailed: false, refusedWrites: [] });
+          set({ status: { kind: "ready" } });
         } catch (e) {
           logFailure("RELOAD", e);
-          set({ status: "error" });
+          set({
+            status: {
+              kind: "readBackFailed",
+              refused: refusedOf(get().status),
+            },
+          });
         }
         return;
       }
+      set({ status: { kind: "loading" }, error: null });
       try {
         db.set(await open());
         await get().refresh();
-        set({ status: "ready" });
+        set({ status: { kind: "ready" } });
       } catch (e) {
         logFailure("STARTUP", e);
         set({
-          status: "error",
-          error: toWriteError(e),
-          startupError:
-            e instanceof DataError
-              ? {
-                  code: e.code,
-                  details: e.details,
-                  ...(e.upgrade && { upgrade: e.upgrade }),
-                }
-              : null,
+          status: {
+            kind: "startupFailed",
+            error: toWriteError(e),
+            startup:
+              e instanceof DataError
+                ? {
+                    code: e.code,
+                    details: e.details,
+                    ...(e.upgrade && { upgrade: e.upgrade }),
+                  }
+                : null,
+          },
         });
       }
     },
@@ -105,11 +119,8 @@ export function createPortfolioStore(deps: StoreDeps) {
       scenarios: [],
       sample: { active: false, dismissed: false },
       backup: { lastAt: null, lastFile: null, changedSince: false },
-      status: "idle",
+      status: { kind: "idle" },
       error: null,
-      startupError: null,
-      readBackFailed: false,
-      refusedWrites: [],
       replacing: 0,
       writesRunning: 0,
 

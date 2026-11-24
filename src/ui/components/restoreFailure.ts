@@ -1,21 +1,15 @@
 // A failed backup, restore or sample action as translated text. Shared by Settings →
 // Backup and the startup error screen (#115).
-import {
-  BACKUP_MAX_BYTES,
-  BackupExportError,
-  BackupReadError,
-  RestoreError,
-  SafetyBackupError,
-  SampleNotEmptyError,
-  type RestoreIssue,
-} from "../../state/backup";
+import { BACKUP_MAX_BYTES, type RestoreIssue } from "../../state/backup";
 import { logFailure, type FailureSite } from "../../state/diagnostics";
-import { toWriteError } from "../../state/writeError";
+import { toActionError, type ActionError } from "../../state/actionError";
 import type { Dictionary } from "../../i18n";
 import { describeWriteError } from "../model/writeError";
 
+type RestoreRefused = Extract<ActionError, { kind: "restoreRefused" }>;
+
 /** A refused backup as a translated message; `issues` are listed separately. */
-function restoreErrorText(t: Dictionary, e: RestoreError): string {
+function restoreErrorText(t: Dictionary, e: RestoreRefused): string {
   const b = t.backup;
   switch (e.code) {
     case "BACKUP_TOO_LARGE":
@@ -34,30 +28,45 @@ function restoreErrorText(t: Dictionary, e: RestoreError): string {
 /** A refused backup or a non-empty portfolio is the user's to fix, not a failure to
  *  log; anything else is logged under `site`. Call once, where the failure is caught. */
 export function logBackupFailure(site: FailureSite, e: unknown): void {
-  if (e instanceof RestoreError || e instanceof SampleNotEmptyError) return;
+  const { kind } = toActionError(e);
+  if (kind === "restoreRefused" || kind === "sampleNotEmpty") return;
   logFailure(site, e);
+}
+
+/** The texts a caller picks: `other` for a failure no typed text covers, `safety` for a
+ *  failed safety backup (default `t.backup.safetyBackupFailed`). */
+export interface FailureTexts {
+  other: (detail: string) => string;
+  safety?: ((detail: string) => string) | undefined;
 }
 
 /** The text for a failure, translated: a refused backup with its records listed
  *  separately. Pure, so it can run at render. */
 export function backupFailureText(
   t: Dictionary,
-  e: unknown,
-  other: (detail: string) => string,
+  e: ActionError,
+  { other, safety = t.backup.safetyBackupFailed }: FailureTexts,
 ): { text: string; issues: RestoreIssue[] } {
-  if (e instanceof RestoreError)
-    return { text: restoreErrorText(t, e), issues: e.issues };
-  if (e instanceof SampleNotEmptyError)
-    return { text: t.sample.errNotEmpty, issues: [] };
-  const text =
-    e instanceof SafetyBackupError
-      ? t.backup.safetyBackupFailed(e.detail)
-      : e instanceof BackupExportError
-        ? t.backup.exportFailed(e.detail)
-        : e instanceof BackupReadError
-          ? t.backup.errUnreadable(e.detail)
-          : other(describeWriteError(t, toWriteError(e)).message);
-  return { text, issues: [] };
+  switch (e.kind) {
+    case "restoreRefused":
+      return { text: restoreErrorText(t, e), issues: e.issues };
+    case "sampleNotEmpty":
+      return { text: t.sample.errNotEmpty, issues: [] };
+    case "safetyBackup":
+      return { text: safety(e.detail), issues: [] };
+    case "backupExport":
+      return { text: t.backup.exportFailed(e.detail), issues: [] };
+    case "backupUnreadable":
+      return { text: t.backup.errUnreadable(e.detail), issues: [] };
+    // Neither reaches these callers: a file save fails inside a backup export, and the
+    // Import page shows a refused plan's problems itself (ADR 0229 §2).
+    case "saveFailed":
+      return { text: other(e.detail), issues: [] };
+    case "planRefused":
+      return { text: other(""), issues: [] };
+    default:
+      return { text: other(describeWriteError(t, e).message), issues: [] };
+  }
 }
 
 /** The text for a failure: a refused backup with its records, anything else translated
@@ -66,8 +75,8 @@ export function backupFailure(
   t: Dictionary,
   e: unknown,
   site: FailureSite,
-  other: (detail: string) => string,
+  texts: FailureTexts,
 ): { text: string; issues: RestoreIssue[] } {
   logBackupFailure(site, e);
-  return backupFailureText(t, e, other);
+  return backupFailureText(t, toActionError(e), texts);
 }

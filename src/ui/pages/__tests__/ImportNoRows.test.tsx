@@ -9,13 +9,14 @@ import { Import } from "../Import";
 import { renderWithPortfolio } from "../../../__tests__/support/world";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { en } from "../../../i18n/en";
+import { success } from "../../../__tests__/support/result";
 
 const p = en.importPage;
 const previewCsv = vi.fn();
 
 beforeEach(() => {
   previewCsv.mockReset();
-  previewCsv.mockResolvedValue({ items: [], problems: [] });
+  previewCsv.mockResolvedValue(success({ items: [], problems: [] }));
   act(() => {
     usePortfolioStore.setState({ previewCsv } as never);
   });

@@ -17,6 +17,7 @@ import { importNow } from "./support/importNow";
 import { isoDate, money, rate } from "../../engine";
 import type { Property } from "../../engine";
 import type { Sql } from "../../data/sql";
+import { unwrap } from "../../__tests__/support/result";
 
 vi.mocked(invoke).mockResolvedValue(undefined);
 
@@ -304,10 +305,12 @@ describe("a stored out-of-range value locks nothing out (ADR 0245 §2)", () => {
     const rows = (file.tables.mortgage_blocks as Record<string, unknown>[]).map(
       (r) => (r.id === "m-javorova" ? { ...r, fixation_years: 60 } : r),
     );
-    await store().restoreBackup({
-      ...file,
-      tables: { ...file.tables, mortgage_blocks: rows },
-    });
+    unwrap(
+      await store().restoreBackup({
+        ...file,
+        tables: { ...file.tables, mortgage_blocks: rows },
+      }),
+    );
     expect(block().fixationYears).toBe(60);
     expect(
       await store().addLease({
@@ -321,11 +324,13 @@ describe("a stored out-of-range value locks nothing out (ADR 0245 §2)", () => {
 
   it("CSV import adds a property while a fixation of 60 is stored", async () => {
     await storeRaw("mortgage_blocks", "fixation_years", 60, "m-javorova");
-    const report = await importNow({
-      properties: parseProperties(
-        "name,purchase_date,purchase_price\nCSV Import,2020-01-01,1000000",
-      ).rows,
-    });
+    const report = unwrap(
+      await importNow({
+        properties: parseProperties(
+          "name,purchase_date,purchase_price\nCSV Import,2020-01-01,1000000",
+        ).rows,
+      }),
+    );
     expect(report.items.map((i) => i.kind)).toEqual(["add"]);
   });
 

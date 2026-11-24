@@ -69,7 +69,7 @@ describe("Cash invested on the Dashboard page (ADR 0119 §9)", () => {
   function show(p: Portfolio, filter: string[] = []) {
     act(() => {
       usePortfolioStore.setState({
-        status: "ready",
+        status: { kind: "ready" },
         portfolio: p,
         assumptions,
         scenarios: [],

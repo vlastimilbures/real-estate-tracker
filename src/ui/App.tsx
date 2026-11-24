@@ -86,7 +86,7 @@ function Page() {
 
 export function App() {
   const t = useT();
-  const status = usePortfolioStore((s) => s.status);
+  const status = usePortfolioStore((s) => s.status.kind);
   const init = usePortfolioStore((s) => s.init);
   const theme = useUiStore((s) => s.theme);
   const aboutOpen = useUiStore((s) => s.aboutOpen);
@@ -108,7 +108,7 @@ export function App() {
     const dialogOpen = () =>
       document.querySelector('[aria-modal="true"]') !== null;
     const held = () =>
-      dialogOpen() || usePortfolioStore.getState().status !== "ready";
+      dialogOpen() || usePortfolioStore.getState().status.kind !== "ready";
     const offs = [
       onMenuEvent("menu://about", () => {
         if (!held()) useUiStore.getState().openAbout();
@@ -152,7 +152,8 @@ export function App() {
     );
   }
 
-  if (status === "error") return <BootFailure />;
+  if (status === "startupFailed" || status === "readBackFailed")
+    return <BootFailure />;
 
   // Top-level backstop for a crash outside the page (a dialog, the leave guard); page
   // errors stop at PageBoundary. A route change, e.g. from the native menu, clears it

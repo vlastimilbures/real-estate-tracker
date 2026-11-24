@@ -13,6 +13,7 @@ import {
 import { getDict } from "../../../i18n";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import type { PropertyExtras as Extras } from "../../../state/portfolioStore";
+import { success, writeFailure } from "../../../__tests__/support/result";
 
 const en = getDict("en");
 const id = portfolio.properties[0]!.id;
@@ -29,13 +30,13 @@ beforeEach(() => {
     usePortfolioStore.setState({
       portfolio,
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
       editProperty,
       getPropertyExtras: () =>
         new Promise<Extras>((resolve, reject) => {
           settle = { resolve, reject };
           reads.push(settle);
-        }),
+        }).then(success, writeFailure),
     });
   });
 });

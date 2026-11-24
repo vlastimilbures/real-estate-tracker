@@ -43,7 +43,7 @@ beforeEach(() => {
     usePortfolioStore.setState({
       portfolio,
       assumptions,
-      status: "ready",
+      status: { kind: "ready" },
     });
     useUiStore.setState({
       route: "property",

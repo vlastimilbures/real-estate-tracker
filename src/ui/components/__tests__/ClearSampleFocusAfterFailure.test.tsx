@@ -10,6 +10,7 @@ import { ClearSampleButton } from "../ClearSampleDialog";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { deferred, type Deferred } from "../../../__tests__/support/deferred";
 import { en } from "../../../i18n/en";
+import { failure, success } from "../../../__tests__/support/result";
 
 vi.mock("../../../state/diagnostics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../state/diagnostics")>()),
@@ -21,7 +22,9 @@ let clear: Deferred<{ safetyBackup: string }>;
 beforeEach(() => {
   clear = deferred();
   act(() => {
-    usePortfolioStore.setState({ clearSample: () => clear.promise } as never);
+    usePortfolioStore.setState({
+      clearSample: () => clear.promise.then(success, failure),
+    } as never);
   });
 });
 
