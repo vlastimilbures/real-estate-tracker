@@ -280,10 +280,10 @@ describe("fieldHint (ADR 0075, DR-078)", () => {
   const en = getDict("en");
   it("names the range of a bounded whole-number field, grouped like amounts", () => {
     expect(fieldHint(en, { kind: "int", range: INT_RANGES.horizonYears })).toBe(
-      "Enter a whole number from 1 to 100",
+      "Must be a whole number from 1 to 100",
     );
     expect(fieldHint(en, { kind: "int", range: INT_RANGES.sizeM2 })).toBe(
-      "Enter a whole number from 1 to 10 000",
+      "Must be a whole number from 1 to 10 000",
     );
   });
   it("falls back to the kind's format hint", () => {
@@ -353,7 +353,7 @@ describe("parseSizeField (ADR 0236)", () => {
   });
   it("names the size rule and its range", () => {
     expect(fieldHint(en, { kind: "size", range: INT_RANGES.sizeM2 })).toBe(
-      "Enter a number from 1 to 10 000 with at most one decimal place",
+      "Must be a number from 1 to 10 000 with at most one decimal place",
     );
     expect(fieldHint(en, { kind: "size" })).toBe(en.forms.invalidHint.size);
     for (const lang of ["cs", "ru"] as const) {

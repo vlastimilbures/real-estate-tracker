@@ -48,6 +48,11 @@ engine without the form, and remove it when the last part lands.
   notice names both start dates and says how to fix it. "Open property" on the Dashboard
   opens the property at Financing, and on Property detail the notice has a "Go to
   Financing" button (ADR 0258, #448). The pair is still refused. No figure changes.
+- A value outside its range reads the same message everywhere: "Must be a whole number from
+  0 to 50", or for the size "Must be a number from 1 to 10 000 with at most one decimal
+  place", on the forms, in CSV import and in restore (ADR 0259, #464). The forms said
+  "Enter…", and CSV import no longer repeats the value in quotes; restore reads as before.
+  What is refused does not change. No figure changes.
 - A CSV row that names an unknown property is reported once, in the Import page's
   "Nothing was imported" list, instead of also as an error in its file's table; a row
   whose property's own `properties.csv` row has an error no longer gets a second error

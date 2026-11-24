@@ -206,9 +206,9 @@ describe("the scenario form shows the refusal on its own field (ADR 0257)", () =
     if (r.ok) throw new Error("expected a refusal");
     expect(scenarioWriteErrors(en, r.error)).toEqual({
       fieldErrors: {
-        inflationShockYears: "Enter a whole number from 1 to 100",
-        rateShockYears: "Enter a whole number from 1 to 100",
-        valueShockYear: "Enter a whole number from 0 to 100",
+        inflationShockYears: "Must be a whole number from 1 to 100",
+        rateShockYears: "Must be a whole number from 1 to 100",
+        valueShockYear: "Must be a whole number from 0 to 100",
       },
       formError: null,
     });

@@ -19,11 +19,9 @@ export function restoreIssueText(t: Dictionary, i: RestoreIssue): string {
       const n = (v: number | undefined) =>
         v === undefined ? "—" : fmtCzk(v, { suffix: false });
       // The size takes one decimal place, the other bounded fields whole numbers
-      // (ADR 0236 §1).
+      // (ADR 0236 §1), in the forms' range message (ADR 0259).
       const text =
-        i.column === "size_m2"
-          ? t.backup.issueOutOfRangeSize
-          : t.backup.issueOutOfRange;
+        i.column === "size_m2" ? t.forms.sizeRange : t.forms.intRange;
       return text(n(i.range?.min), n(i.range?.max));
     }
     default:

@@ -347,12 +347,32 @@ describe("i18n dictionaries — plural forms", () => {
   });
 });
 
-describe("i18n dictionaries — CSV messages", () => {
+describe("i18n dictionaries — the one range message (ADR 0259)", () => {
   it("names an out-of-range whole number with its bounds (UX-069, ADR 0076)", () => {
-    const msg = (l: Lang) => DICTS[l].importPage.errOutOfRange("51", "0", "50");
-    expect(msg("en")).toBe('"51" must be a whole number from 0 to 50');
-    expect(msg("cs")).toBe("„51“ musí být celé číslo od 0 do 50");
-    expect(msg("ru")).toBe("«51» должно быть целым числом от 0 до 50");
+    const msg = (l: Lang) => DICTS[l].forms.intRange("0", "50");
+    expect(msg("en")).toBe("Must be a whole number from 0 to 50");
+    expect(msg("cs")).toBe("Musí být celé číslo od 0 do 50");
+    expect(msg("ru")).toBe("Должно быть целым числом от 0 до 50");
+  });
+
+  it("names the size range and its one decimal place (ADR 0236 §1)", () => {
+    const msg = (l: Lang) => DICTS[l].forms.sizeRange("1", "10 000");
+    expect(msg("en")).toBe(
+      "Must be a number from 1 to 10 000 with at most one decimal place",
+    );
+    expect(msg("cs")).toBe(
+      "Musí být číslo od 1 do 10 000 s nejvýš jedním desetinným místem",
+    );
+    expect(msg("ru")).toBe(
+      "Должно быть числом от 1 до 10 000 не более чем с одним знаком после запятой",
+    );
+  });
+
+  it.each(LANGS)("%s has no CSV or restore range keys of its own", (l) => {
+    for (const key of ["errOutOfRange", "errSizeRange"])
+      expect(Object.keys(DICTS[l].importPage)).not.toContain(key);
+    for (const key of ["issueOutOfRange", "issueOutOfRangeSize"])
+      expect(Object.keys(DICTS[l].backup)).not.toContain(key);
   });
 });
 

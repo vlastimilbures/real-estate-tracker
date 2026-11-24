@@ -70,7 +70,8 @@ function csvErrorText(t: Dictionary, e: CsvErrorCode): string {
       return p.errNotPositive(e.value);
     case "outOfRange": {
       const n = (v: number) => fmtCzk(v, { suffix: false });
-      return p.errOutOfRange(e.value, n(e.min), n(e.max));
+      // The forms' range message (ADR 0259); the table already names the cell.
+      return t.forms.intRange(n(e.min), n(e.max));
     }
     case "duplicateKey":
       return p.errDuplicateKey(e.firstRow);
@@ -93,7 +94,7 @@ function csvErrorText(t: Dictionary, e: CsvErrorCode): string {
       // if another code reaches here, so the switch stays exhaustive.
       const size: Extract<CsvErrorCode, { code: "sizeRange" }> = e;
       const n = (v: number) => fmtCzk(v, { suffix: false });
-      return p.errSizeRange(size.value, n(size.min), n(size.max));
+      return t.forms.sizeRange(n(size.min), n(size.max));
     }
   }
 }

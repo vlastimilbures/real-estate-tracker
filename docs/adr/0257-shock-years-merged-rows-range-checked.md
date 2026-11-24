@@ -15,6 +15,7 @@
   missing optional column keeps the stored value), [0148](0148-restore-rules-vs-stored-data.md)
   §1 (restore brings an out-of-range value in after "Restore anyway"),
   [0086](0086-restore-int-bounds.md) §2 (the engine and the database stay open-ended)
+- Amended by: [0259](0259-one-range-message.md) (one range message)
 
 ## Context
 

@@ -54,9 +54,17 @@ function czkUnitFromRows(
   return pickCzkAxisUnit(values, thousands);
 }
 
-// CSS-var strings resolve inside SVG, so the grid colour tracks the active theme. Tick
-// colour and size live in charts.css.
+// CSS-var strings resolve inside SVG, so the grid and tick colours track the active
+// theme. Recharts 3.11+ writes a tick's fill as an inline style (its #666 default when
+// none is given), which outranks any stylesheet rule, so the tick colour is a prop; the
+// tick size stays in charts.css (ADR 0114).
 const GRID = "var(--hairline)";
+/** Shared axis props: the tick colour, no tick or axis lines. */
+const AXIS = {
+  tick: { fill: "var(--ink-soft)" },
+  tickLine: false,
+  axisLine: false,
+} as const;
 
 /** The chart surface's accessible name, set by the enclosing ChartCard (ADR 0114). */
 const SurfaceLabel = createContext<string | undefined>(undefined);
@@ -429,18 +437,11 @@ function ChartBody({
   const tick = unit ? (v: number) => fmtCzkAxisTick(v, unit) : pctAxis;
   const frame = [
     <CartesianGrid key="grid" stroke={GRID} vertical={false} />,
-    <XAxis
-      key="x"
-      dataKey="calendarYear"
-      tickLine={false}
-      axisLine={false}
-      minTickGap={28}
-    />,
+    <XAxis key="x" dataKey="calendarYear" {...AXIS} minTickGap={28} />,
     <YAxis
       key="y"
+      {...AXIS}
       tickFormatter={tick}
-      tickLine={false}
-      axisLine={false}
       width="auto"
       {...(pct && { domain: [0, "auto"] })}
     />,
