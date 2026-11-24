@@ -5,6 +5,8 @@
 - Source: issue #125 (R4-05, R5-07), Track 10 PR 10.2
 - Amended by: [0248](0248-focus-after-busy-actions.md) (§3: a failed Assumptions save with
   nothing listed puts focus back on Save)
+  and [0261](0261-failed-edit-shown-once.md) (§1, §2: the store puts no failure in the
+  banner; a caller with no place of its own does)
 - Related: [0095](0095-assumptions-save-row.md) (Assumptions error summary),
   [0123](0123-scenario-rules-every-entry-point.md) (a scenario refusal stays in the form),
   [0128](0128-assumption-bounds.md) §6 (an assumptions edit that breaks a saved scenario),
