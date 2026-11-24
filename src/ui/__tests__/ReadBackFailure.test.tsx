@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { App } from "../App";
-import { usePortfolioStore } from "../../state/portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { en } from "../../i18n/en";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
@@ -40,7 +40,7 @@ describe("a save whose read-back fails (ADR 0228)", () => {
     render(<App />);
     await waitFor(() => expect(pageTitle()).toBe(en.nav.properties));
 
-    usePortfolioStore.setState({ sql: reloadFails(db) });
+    portfolioDb.set(reloadFails(db));
     await act(() =>
       store().addValuation({
         id: "saved",
@@ -55,7 +55,7 @@ describe("a save whose read-back fails (ADR 0228)", () => {
     );
     expect(pageTitle()).toBeUndefined();
 
-    usePortfolioStore.setState({ sql: db });
+    portfolioDb.set(db);
     await userEvent.click(
       screen.getByRole("button", { name: en.app.tryAgain }),
     );

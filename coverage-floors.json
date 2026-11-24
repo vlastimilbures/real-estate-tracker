@@ -1,11 +1,11 @@
 {
   "src/engine/**": { "lines": 98, "branches": 97 },
-  "src/data/**": { "lines": 92, "branches": 85 },
+  "src/data/**": { "lines": 93, "branches": 87 },
   "src/import/**": { "lines": 98, "branches": 93 },
   "src/lib/**": { "lines": 99, "branches": 96 },
   "src/i18n/**": { "lines": 99, "branches": 95 },
   "src/ui/model/**": { "lines": 97, "branches": 94 },
-  "src/state/**": { "lines": 93, "branches": 86 },
+  "src/state/**": { "lines": 97, "branches": 90 },
   "src/platform/**": { "lines": 76, "branches": 80 },
   "src/ui/pages/**": { "lines": 92, "branches": 88 },
   "src/ui/components/**": { "lines": 94, "branches": 88 },

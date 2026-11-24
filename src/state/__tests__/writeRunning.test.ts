@@ -4,7 +4,7 @@
 // the button enabled by then). Reads do not count.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
-import { usePortfolioStore } from "../portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
@@ -47,7 +47,7 @@ function held() {
       return db.execute(q, p);
     },
   };
-  usePortfolioStore.setState({ sql });
+  portfolioDb.set(sql);
   return release;
 }
 
@@ -80,8 +80,9 @@ describe("writesRunning (ADR 0253)", () => {
   });
 
   it("drops after a failed write", async () => {
-    usePortfolioStore.setState({
-      sql: { ...db, execute: () => Promise.reject(new Error("disk I/O")) },
+    portfolioDb.set({
+      ...db,
+      execute: () => Promise.reject(new Error("disk I/O")),
     });
     const result = await store().addValuation(valuation("v1"));
     expect(result.ok).toBe(false);

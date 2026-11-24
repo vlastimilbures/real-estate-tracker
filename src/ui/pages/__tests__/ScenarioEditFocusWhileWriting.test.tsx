@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Scenarios } from "../Scenarios";
-import { usePortfolioStore } from "../../../state/portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import {
   openMemorySql,
@@ -44,13 +44,11 @@ beforeEach(async () => {
 function holdWrites() {
   let open!: () => void;
   const opened = new Promise<void>((r) => (open = r));
-  usePortfolioStore.setState({
-    sql: {
-      ...db,
-      selectSnapshot: async (statements) => {
-        await opened;
-        return db.selectSnapshot(statements);
-      },
+  portfolioDb.set({
+    ...db,
+    selectSnapshot: async (statements) => {
+      await opened;
+      return db.selectSnapshot(statements);
     },
   });
   return () =>

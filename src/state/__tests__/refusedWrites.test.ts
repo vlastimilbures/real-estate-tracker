@@ -3,7 +3,7 @@
 // can name it: once each, in the order refused, bookkeeping left out. A successful Try
 // again empties the list.
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { usePortfolioStore } from "../portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
@@ -48,7 +48,7 @@ const lease = () => store().portfolio!.leases[0]!;
 
 /** Save a valuation whose read-back fails, with `queued` called right behind it. */
 async function behindAFailedReadBack(queued: () => Promise<unknown>[]) {
-  usePortfolioStore.setState({ sql: reloadFails(db) });
+  portfolioDb.set(reloadFails(db));
   const first = store().addValuation(valuation("first"));
   const behind = queued();
   expect(await first).toEqual({ ok: true });
@@ -131,7 +131,7 @@ describe("refused writes are kept for the screen (ADR 0255)", () => {
 
   it("a successful Try again empties the list", async () => {
     await behindAFailedReadBack(() => [store().saveLease(lease())]);
-    usePortfolioStore.setState({ sql: db });
+    portfolioDb.set(db);
     await store().init();
     expect(store().status).toBe("ready");
     expect(store().refusedWrites).toEqual([]);
@@ -145,7 +145,7 @@ describe("refused writes are kept for the screen (ADR 0255)", () => {
   });
 
   it("a write refused because no database is open is not kept", async () => {
-    usePortfolioStore.setState({ sql: null });
+    portfolioDb.set(null);
     expect((await store().saveLease(lease())).ok).toBe(false);
     expect(store().refusedWrites).toEqual([]);
   });

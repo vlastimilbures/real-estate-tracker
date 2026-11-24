@@ -17,11 +17,6 @@
       "count": 1
     }
   },
-  "src/state/portfolioStore.ts": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/state/uiStore.ts": {
     "max-lines-per-function": {
       "count": 1

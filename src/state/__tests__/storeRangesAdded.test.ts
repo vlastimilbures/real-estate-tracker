@@ -3,7 +3,11 @@
 // (ADR 0148: "Restore anyway") blocks no other write, and a fix saves.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
-import { usePortfolioStore, type MutationResult } from "../portfolioStore";
+import {
+  usePortfolioStore,
+  type MutationResult,
+  portfolioDb,
+} from "../portfolioStore";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
@@ -68,9 +72,9 @@ async function storeRaw(
   id?: string,
 ): Promise<void> {
   const where = id === undefined ? "" : ` WHERE id = '${id}'`;
-  await store().sql!.execute(
-    `UPDATE ${table} SET ${column} = ${value}${where}`,
-  );
+  await portfolioDb
+    .get()!
+    .execute(`UPDATE ${table} SET ${column} = ${value}${where}`);
   await store().refresh();
 }
 
@@ -296,7 +300,7 @@ describe("a stored out-of-range value locks nothing out (ADR 0245 §2)", () => {
   });
 
   it("after Restore anyway with a fixation of 60, a lease saves", async () => {
-    const file = await exportToJson(store().sql!, new Date());
+    const file = await exportToJson(portfolioDb.get()!, new Date());
     const rows = (file.tables.mortgage_blocks as Record<string, unknown>[]).map(
       (r) => (r.id === "m-javorova" ? { ...r, fixation_years: 60 } : r),
     );

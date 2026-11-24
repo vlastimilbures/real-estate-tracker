@@ -4,7 +4,7 @@
 // page never says "rolled back — unchanged" about replaced data and never edits data older
 // than the database. ADR 0132 (#138, #199): whole-database reads follow the write queue.
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { usePortfolioStore } from "../portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
@@ -94,7 +94,7 @@ describe("a safety backup waits for a write queued before it (ADR 0132)", () => 
   ])("$action backs up the queued write", async ({ run }) => {
     const file = await exportToJson(db, new Date());
     const { sql, release } = heldFirstWrite(db);
-    usePortfolioStore.setState({ sql });
+    portfolioDb.set(sql);
     vi.mocked(invoke).mockClear();
 
     const write = store().addValuation(valuation("queued"));
@@ -131,7 +131,7 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
   beforeEach(() => vi.mocked(logFailure).mockClear());
 
   it("stays saved, is in the database once and logs RELOAD (#122)", async () => {
-    usePortfolioStore.setState({ sql: reloadFails(db) });
+    portfolioDb.set(reloadFails(db));
 
     expect(await store().addValuation(valuation("saved"))).toEqual({
       ok: true,
@@ -148,7 +148,7 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
       run: async () => {
         const file = await exportToJson(db, new Date());
         await store().clearSample();
-        usePortfolioStore.setState({ sql: reloadFails(db) });
+        portfolioDb.set(reloadFails(db));
         const { safetyBackup } = await store().restoreBackup(file);
         expect(safetyBackup).toMatch(/^portfolio-before-restore-.*\.json$/);
         expect(await propertiesOnDisk()).toBe(3);
@@ -157,7 +157,7 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
     {
       action: "clearing the sample",
       run: async () => {
-        usePortfolioStore.setState({ sql: reloadFails(db) });
+        portfolioDb.set(reloadFails(db));
         const { safetyBackup } = await store().clearSample();
         expect(safetyBackup).toMatch(
           /^portfolio-before-clear-sample-.*\.json$/,
@@ -169,7 +169,7 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
       action: "loading the sample",
       run: async () => {
         await store().clearSample();
-        usePortfolioStore.setState({ sql: reloadFails(db) });
+        portfolioDb.set(reloadFails(db));
         await store().loadSample();
         expect(await propertiesOnDisk()).toBe(3);
       },
@@ -177,7 +177,7 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
     {
       action: "a CSV import",
       run: async () => {
-        usePortfolioStore.setState({ sql: reloadFails(db) });
+        portfolioDb.set(reloadFails(db));
         const report = await importNow({
           properties: parseProperties(
             "name,purchase_date,purchase_price\nStore Import,2020-01-01,1000000",
@@ -193,20 +193,18 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
   });
 
   it("Try again only reads: no open, no write, and the row shows once", async () => {
-    usePortfolioStore.setState({ sql: reloadFails(db) });
+    portfolioDb.set(reloadFails(db));
     await store().addValuation(valuation("saved"));
     const writes = { execute: 0, transaction: 0 };
-    usePortfolioStore.setState({
-      sql: {
-        ...db,
-        execute: (q, p) => {
-          writes.execute += 1;
-          return db.execute(q, p);
-        },
-        transaction: (statements, options) => {
-          writes.transaction += 1;
-          return db.transaction(statements, options);
-        },
+    portfolioDb.set({
+      ...db,
+      execute: (q, p) => {
+        writes.execute += 1;
+        return db.execute(q, p);
+      },
+      transaction: (statements, options) => {
+        writes.transaction += 1;
+        return db.transaction(statements, options);
       },
     });
     const open = vi.fn(async () => db);
@@ -223,7 +221,7 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
   });
 
   it("a Try again that fails again stays on the screen", async () => {
-    usePortfolioStore.setState({ sql: reloadFails(db) });
+    portfolioDb.set(reloadFails(db));
     await store().addValuation(valuation("saved"));
     vi.mocked(logFailure).mockClear();
     const open = vi.fn(async () => db);
@@ -236,7 +234,7 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
   });
 
   it("refuses a write queued behind the failed one", async () => {
-    usePortfolioStore.setState({ sql: reloadFails(db) });
+    portfolioDb.set(reloadFails(db));
 
     const first = store().addValuation(valuation("first"));
     const queued = store().addValuation(valuation("queued"));
@@ -248,11 +246,9 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
   });
 
   it("a failed write whose read-back also fails stays in the app with the write error", async () => {
-    usePortfolioStore.setState({
-      sql: {
-        ...reloadFails(db),
-        transaction: () => Promise.reject(new Error("disk is full")),
-      },
+    portfolioDb.set({
+      ...reloadFails(db),
+      transaction: () => Promise.reject(new Error("disk is full")),
     });
 
     const error = { kind: "other", message: "disk is full" };
@@ -334,7 +330,7 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
     const run = await prepare();
     const before = await propertiesOnDisk();
     const { sql, writes } = countedAfterReadBack(db);
-    usePortfolioStore.setState({ sql });
+    portfolioDb.set(sql);
 
     // An assumptions save: a write that needs no property (the sample may be cleared).
     const first = store().saveAssumptions({
@@ -356,21 +352,19 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
     const log: string[] = [];
     const { opened, release } = gate();
     let held = false;
-    usePortfolioStore.setState({
-      sql: {
-        ...db,
-        execute: async (q, p) => {
-          if (!held) {
-            held = true;
-            log.push("held write");
-            await opened;
-          }
-          return db.execute(q, p);
-        },
-        selectSnapshot: (statements) => {
-          log.push("snapshot");
-          return db.selectSnapshot(statements);
-        },
+    portfolioDb.set({
+      ...db,
+      execute: async (q, p) => {
+        if (!held) {
+          held = true;
+          log.push("held write");
+          await opened;
+        }
+        return db.execute(q, p);
+      },
+      selectSnapshot: (statements) => {
+        log.push("snapshot");
+        return db.selectSnapshot(statements);
       },
     });
     const write = store().addValuation(valuation("held"));

@@ -3,7 +3,11 @@
 // stored out-of-range year (restore, "Restore anyway") still loads and blocks no other
 // write; a duplicate is compared with its source.
 import { beforeEach, describe, expect, it } from "vitest";
-import { usePortfolioStore, type MutationResult } from "../portfolioStore";
+import {
+  usePortfolioStore,
+  type MutationResult,
+  portfolioDb,
+} from "../portfolioStore";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
@@ -56,7 +60,7 @@ const refused = (field: string, value: number) => ({
 
 /** Store `s` past the store's rules, as a restored file can (ADR 0148). */
 async function storeRaw(s: Scenario): Promise<void> {
-  await upsertScenario(store().sql!, scenarioToRow(s, new Date()));
+  await upsertScenario(portfolioDb.get()!, scenarioToRow(s, new Date()));
   await store().refresh();
 }
 

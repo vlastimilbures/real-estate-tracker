@@ -1,6 +1,7 @@
 // Mortgage form instalment hints (pure). The loan rules themselves (development loan
 // needs a term, draws after the start) are the engine's, checked by the store before a
-// save: portfolioStore.test.ts "checks engine input rules before writing (UX-047)".
+// save: src/state/__tests__/storeInputRules.test.ts "checks engine input rules before
+// writing (UX-047)".
 import { describe, it, expect } from "vitest";
 import {
   suggestedInstalmentHint,

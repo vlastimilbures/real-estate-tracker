@@ -3,7 +3,7 @@
 // the safety copy is taken from the raw rows, bad value included.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
-import { usePortfolioStore } from "../portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
@@ -43,7 +43,7 @@ describe("restoring from the startup error screen", () => {
   it("startup stopped on ROW_INVALID, with the database kept open", () => {
     expect(store().status).toBe("error");
     expect(store().startupError?.code).toBe("ROW_INVALID");
-    expect(store().sql).toBe(db);
+    expect(portfolioDb.get()).toBe(db);
   });
 
   it("restores, saves the raw rows first, and continues into the app", async () => {
@@ -66,7 +66,7 @@ describe("restoring from the startup error screen", () => {
   });
 
   it("a restore whose read-back fails stops on the read-back screen (ADR 0228)", async () => {
-    usePortfolioStore.setState({ sql: reloadFails(db) });
+    portfolioDb.set(reloadFails(db));
 
     const { ready } = await store().restoreAtStartup(good);
 
@@ -77,7 +77,7 @@ describe("restoring from the startup error screen", () => {
     store().continueAfterRestore();
     expect(store().status).toBe("error");
 
-    usePortfolioStore.setState({ sql: db });
+    portfolioDb.set(db);
     await store().init();
     expect(store().status).toBe("ready");
     expect(store().portfolio!.properties.length).toBeGreaterThan(0);

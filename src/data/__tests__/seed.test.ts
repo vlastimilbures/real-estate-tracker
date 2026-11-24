@@ -16,7 +16,7 @@ async function propertyCount(): Promise<number> {
   return (await sql.select("SELECT id FROM properties")).length;
 }
 
-/** The app's launch recipe (portfolioStore `defaultOpen`). */
+/** The app's launch recipe (`defaultOpen`, src/data/open.ts). */
 async function launch(): Promise<boolean> {
   await migrate(sql);
   return seedIfEmpty(sql);
