@@ -32,8 +32,7 @@ export type Status = "idle" | "loading" | "ready" | "error";
  *  wiring it up. `ok` means the write landed; when reading the data back after it failed,
  *  the store stops on the error screen with `readBackFailed` set (ADR 0228). */
 export type MutationResult = { ok: true } | { ok: false; error: WriteError };
-/** Address and garage: stored, but not engine inputs (ADR 0184 §3).
- *  @internal test seam: UI tests reach the type through the state facade (ADR 0072). */
+/** Address and garage: stored, but not engine inputs (ADR 0184 §3). */
 export type { PropertyExtras };
 
 /** A typed failure that stopped startup; `upgrade` says how far a stopped upgrade got
