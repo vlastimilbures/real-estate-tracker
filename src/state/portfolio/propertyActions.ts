@@ -14,6 +14,7 @@ import type { PortfolioState, StoreCtx } from "./types";
 export function propertyActions({
   mutate,
   get,
+  db,
 }: StoreCtx): Pick<
   PortfolioState,
   | "addProperty"
@@ -60,7 +61,7 @@ export function propertyActions({
         await updateProperty(sql, propertyToRow(p, extra));
       }),
     getPropertyExtras: async (id) => {
-      const sql = get().sql;
+      const sql = db.get();
       return sql ? getPropertyExtras(sql, id) : { address: null, garage: null };
     },
     setPropertyActive: (id, active) =>

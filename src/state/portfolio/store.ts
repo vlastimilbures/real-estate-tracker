@@ -16,7 +16,7 @@ import {
 import { propertyActions } from "./propertyActions";
 import { scenarioActions } from "./scenarioActions";
 import { wholeDbActions } from "./wholeDb";
-import type { PortfolioState, StoreCtx } from "./types";
+import type { DbHandle, PortfolioState, StoreCtx } from "./types";
 
 /** What a store needs from outside: the database opener `init` uses by default, and the
  *  clock that stamps scenarios and backups. */
@@ -27,7 +27,7 @@ export interface StoreDeps {
 
 /** Startup and reading the data back, and the banner error. */
 function lifecycleActions(
-  { set, get, enqueue }: StoreCtx,
+  { set, get, db, enqueue }: StoreCtx,
   deps: StoreDeps,
 ): Pick<PortfolioState, "init" | "refresh" | "clearError" | "showError"> {
   return {
@@ -47,8 +47,7 @@ function lifecycleActions(
         return;
       }
       try {
-        const sql = await open();
-        set({ sql });
+        db.set(await open());
         await get().refresh();
         set({ status: "ready" });
       } catch (e) {
@@ -69,7 +68,7 @@ function lifecycleActions(
     },
 
     async refresh() {
-      const sql = get().sql;
+      const sql = db.get();
       if (!sql) return;
       // One point-in-time snapshot of every table (DR-134).
       const state = await loadState(sql);
@@ -81,18 +80,26 @@ function lifecycleActions(
   };
 }
 
-/** A portfolio store: one write runner, shared by every action module. */
+/** A portfolio store: one write runner, shared by every action module. `db` is the
+ *  store's open database, outside its state (#465). */
 export function createPortfolioStore(deps: StoreDeps) {
-  return create<PortfolioState>((set, get) => {
+  let sql: Sql | null = null;
+  const db: DbHandle = {
+    get: () => sql,
+    set: (next) => {
+      sql = next;
+    },
+  };
+  const store = create<PortfolioState>((set, get) => {
     const ctx: StoreCtx = {
       set,
       get,
-      ...createWriteRunner(set, get),
+      db,
+      ...createWriteRunner(set, get, db),
       now: deps.now,
     };
 
     return {
-      sql: null,
       portfolio: null,
       assumptions: null,
       scenarios: [],
@@ -119,4 +126,5 @@ export function createPortfolioStore(deps: StoreDeps) {
       ...wholeDbActions(ctx),
     };
   });
+  return { store, db };
 }

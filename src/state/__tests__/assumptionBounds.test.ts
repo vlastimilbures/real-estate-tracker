@@ -3,7 +3,7 @@
 // refused when its shock breaks one, and an assumptions save is refused when it newly
 // breaks a saved scenario, naming it.
 import { beforeEach, describe, expect, it } from "vitest";
-import { usePortfolioStore } from "../portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
@@ -26,9 +26,11 @@ const shock = (deltaPa: string) => ({
 
 const storedResetRate = async () =>
   (
-    await store().sql!.select<{ post_fixation_reset_rate_pa: string }>(
-      "SELECT post_fixation_reset_rate_pa FROM assumptions",
-    )
+    await portfolioDb
+      .get()!
+      .select<{ post_fixation_reset_rate_pa: string }>(
+        "SELECT post_fixation_reset_rate_pa FROM assumptions",
+      )
   ).map((r) => r.post_fixation_reset_rate_pa);
 
 beforeEach(async () => {
@@ -134,15 +136,17 @@ describe("assumption bounds at save time (ADR 0128)", () => {
 
   it("a scenario that already broke the rule does not block the edit", async () => {
     // Saved before this rule (or restored): its shock takes 4.5 % below 0 already.
-    await store().sql!.execute(
-      "INSERT INTO scenarios (id, name, overrides, created_at) VALUES (?, ?, ?, ?)",
-      [
-        "old",
-        "Old",
-        '{"version":1,"rateShock":{"deltaPa":"-0.05","durationYears":3}}',
-        "2026-01-01T00:00:00.000Z",
-      ],
-    );
+    await portfolioDb
+      .get()!
+      .execute(
+        "INSERT INTO scenarios (id, name, overrides, created_at) VALUES (?, ?, ?, ?)",
+        [
+          "old",
+          "Old",
+          '{"version":1,"rateShock":{"deltaPa":"-0.05","durationYears":3}}',
+          "2026-01-01T00:00:00.000Z",
+        ],
+      );
     await store().refresh();
     const a = store().assumptions!;
     expect(

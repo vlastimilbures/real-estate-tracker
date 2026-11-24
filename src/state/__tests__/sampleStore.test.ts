@@ -2,7 +2,7 @@
 // relaunch, and clears the sample as a whole-database action that reloads afterwards.
 // ADR 0112: loading it again on demand is a data write that reloads too.
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { usePortfolioStore } from "../portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
@@ -16,8 +16,8 @@ vi.mocked(invoke).mockImplementation(() =>
 );
 
 function reset(): void {
+  portfolioDb.set(null);
   usePortfolioStore.setState({
-    sql: null,
     portfolio: null,
     assumptions: null,
     sample: { active: false, dismissed: false },

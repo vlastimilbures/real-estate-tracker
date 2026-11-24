@@ -1,7 +1,7 @@
 // The portfolio store's startup (init) and reload (refresh), and a relaunch over an
 // emptied portfolio (DR-024).
 import { describe, expect, it } from "vitest";
-import { usePortfolioStore } from "../portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
@@ -71,14 +71,14 @@ describe("portfolioStore init & refresh", () => {
 
   it("init() is a no-op once ready (does not reopen the DB)", async () => {
     await usePortfolioStore.getState().init(openSeeded);
-    const sql = usePortfolioStore.getState().sql;
+    const sql = portfolioDb.get();
     let reopened = false;
     await usePortfolioStore.getState().init(async () => {
       reopened = true;
       return openSeeded();
     });
     expect(reopened).toBe(false);
-    expect(usePortfolioStore.getState().sql).toBe(sql);
+    expect(portfolioDb.get()).toBe(sql);
   });
 
   it("init() surfaces an opener failure as status='error'", async () => {
@@ -92,7 +92,7 @@ describe("portfolioStore init & refresh", () => {
 
   it("refresh() reflects a row written directly to the DB", async () => {
     await usePortfolioStore.getState().init(openSeeded);
-    const sql = usePortfolioStore.getState().sql!;
+    const sql = portfolioDb.get()!;
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
     const before = usePortfolioStore.getState().portfolio!.valuations.length;
 
@@ -124,8 +124,8 @@ describe("portfolioStore — emptied portfolio stays empty on relaunch (DR-024)"
     expect(usePortfolioStore.getState().portfolio!.properties).toHaveLength(0);
 
     // Relaunch: a fresh store over the same DB, via the app's open recipe.
+    portfolioDb.set(null);
     usePortfolioStore.setState({
-      sql: null,
       portfolio: null,
       assumptions: null,
       status: "idle",

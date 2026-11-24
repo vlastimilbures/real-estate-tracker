@@ -1,6 +1,6 @@
 // The store's whole-database actions (DR-047).
 import { describe, expect, it } from "vitest";
-import { usePortfolioStore } from "../portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import type { IsoDate } from "../../engine";
 import type { Sql } from "../../data/sql";
 import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
@@ -44,7 +44,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
 
   it("importCsv waits for a pending mutation (one queue, DR-085)", async () => {
     await usePortfolioStore.getState().init(openSeeded);
-    const real = usePortfolioStore.getState().sql!;
+    const real = portfolioDb.get()!;
     const log: string[] = [];
     let release!: () => void;
     const gate = new Promise<void>((r) => (release = r));
@@ -69,7 +69,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
       ).rows,
     };
     await usePortfolioStore.getState().previewCsv(batch);
-    usePortfolioStore.setState({ sql: slow });
+    portfolioDb.set(slow);
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
     const a = usePortfolioStore.getState().addValuation({
       id: "queued",

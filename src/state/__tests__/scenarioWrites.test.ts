@@ -1,6 +1,6 @@
 // Assumption and scenario writes (ADR 0123).
 import { beforeEach, describe, expect, it } from "vitest";
-import { usePortfolioStore } from "../portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import { rate } from "../../engine";
 import { setClock } from "../../__tests__/support/clock";
 import { openSeeded } from "./support/openSeeded";
@@ -27,7 +27,7 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
 describe("portfolioStore scenario writes (ADR 0123)", () => {
   const createdAt = async (id: string) =>
     (
-      await usePortfolioStore.getState().sql!.select<{
+      await portfolioDb.get()!.select<{
         created_at: string;
       }>("SELECT created_at FROM scenarios WHERE id = ?", [id])
     )[0]?.created_at;
@@ -55,9 +55,9 @@ describe("portfolioStore scenario writes (ADR 0123)", () => {
 describe("portfolioStore refuses a scenario that breaks an engine rule (ADR 0123)", () => {
   const storedIds = async () =>
     (
-      await usePortfolioStore
-        .getState()
-        .sql!.select<{ id: string }>("SELECT id FROM scenarios ORDER BY id")
+      await portfolioDb
+        .get()!
+        .select<{ id: string }>("SELECT id FROM scenarios ORDER BY id")
     ).map((r) => r.id);
 
   it.each([
@@ -92,16 +92,16 @@ describe("portfolioStore refuses a scenario that breaks an engine rule (ADR 0123
         await store().saveScenario({ id: "s1", name: "Fine", overrides }),
       ).toMatchObject(refused);
       expect(
-        await store().sql!.select("SELECT overrides FROM scenarios"),
+        await portfolioDb.get()!.select("SELECT overrides FROM scenarios"),
       ).toEqual([{ overrides: '{"version":1}' }]);
     },
   );
 
   it("stores a duplicate under the name the caller gives (#169)", async () => {
     await usePortfolioStore.getState().init(openSeeded);
-    await usePortfolioStore
-      .getState()
-      .sql!.execute(
+    await portfolioDb
+      .get()!
+      .execute(
         "INSERT INTO scenarios (id, name, overrides, created_at) VALUES (?, ?, ?, ?)",
         ["old", "Stres", '{"version":1}', "2026-01-01T00:00:00.000Z"],
       );
@@ -119,9 +119,9 @@ describe("portfolioStore refuses a scenario that breaks an engine rule (ADR 0123
 
   it("refuses to duplicate a stored scenario that breaks a rule", async () => {
     await usePortfolioStore.getState().init(openSeeded);
-    await usePortfolioStore
-      .getState()
-      .sql!.execute(
+    await portfolioDb
+      .get()!
+      .execute(
         "INSERT INTO scenarios (id, name, overrides, created_at) VALUES (?, ?, ?, ?)",
         [
           "old",

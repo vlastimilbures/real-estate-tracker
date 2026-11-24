@@ -6,7 +6,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import { App } from "../App";
-import { usePortfolioStore } from "../../state/portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { en } from "../../i18n/en";
 import { cs } from "../../i18n/cs";
@@ -101,7 +101,7 @@ describe("a lease saved right behind a valuation whose read-back fails (ADR 0255
   it("is named on the screen", async () => {
     render(<App />);
     const lease = store().portfolio!.leases[0]!;
-    usePortfolioStore.setState({ sql: reloadFails(db) });
+    portfolioDb.set(reloadFails(db));
     await act(async () => {
       const first = store().addValuation({
         id: "saved",

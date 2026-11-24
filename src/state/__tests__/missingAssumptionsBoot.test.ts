@@ -2,7 +2,7 @@
 // on the existing error screen (ADR 0153, ADR 0231), and Restore a backup… is the way out.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
-import { usePortfolioStore } from "../portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import { READ_FAILURES } from "../diagnostics";
 import { bootView } from "../../ui/model/bootFailure";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
@@ -46,7 +46,7 @@ describe("startup without the assumptions row", () => {
     expect(store().startupError?.details).toEqual([
       "assumptions 1: row not found",
     ]);
-    expect(store().sql).toBe(db);
+    expect(portfolioDb.get()).toBe(db);
     // The launch did not put the sample values back.
     expect(await db.select("SELECT id FROM assumptions")).toEqual([]);
   });

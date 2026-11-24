@@ -9,6 +9,7 @@ import { perfMark, perfMeasure } from "../../lib/perf";
 import { createWriteQueue } from "./writeQueue";
 import type { WriteTarget } from "../writeTargets";
 import type {
+  DbHandle,
   MutationResult,
   PortfolioState,
   SetState,
@@ -64,8 +65,8 @@ async function mutateNow(
   op: (sql: Sql) => Promise<void>,
   changesData: boolean,
 ): Promise<MutationResult> {
-  const { set, get } = store;
-  const sql = get().sql;
+  const { set, get, db } = store;
+  const sql = db.get();
   if (!sql || get().readBackFailed) {
     keepRefused(store, target);
     const error = toWriteError(new Error("Database not initialised"));
@@ -101,8 +102,12 @@ export type WriteRunner = ReturnType<typeof createWriteRunner>;
 /** The store's write path (DR-085, ADR 0228, ADR 0253): every write runs in the one
  *  queue, then reloads. `enqueue` is for reads that wait in it; `writesSoFar` counts the
  *  data writes so far. */
-export function createWriteRunner(set: SetState, get: () => PortfolioState) {
-  const store: StoreAccess = { set, get };
+export function createWriteRunner(
+  set: SetState,
+  get: () => PortfolioState,
+  db: DbHandle,
+) {
+  const store: StoreAccess = { set, get, db };
   const { enqueue, write } = createWriteQueue((n) => set({ writesRunning: n }));
   /** Data writes so far: an export keeps the changed flag when one landed while its
    *  save dialog was open, since the file does not hold it (ADR 0110). */
@@ -171,7 +176,7 @@ export function createWriteRunner(set: SetState, get: () => PortfolioState) {
    *  the database, so a write queued behind it is refused (ADR 0228) and its `target`
    *  kept for the screen (ADR 0255). A read passes none. */
   function requireSql(target?: WriteTarget): Sql {
-    const sql = get().sql;
+    const sql = db.get();
     if (!sql || get().readBackFailed) {
       if (target) keepRefused(store, target);
       throw new Error("Database not initialised");

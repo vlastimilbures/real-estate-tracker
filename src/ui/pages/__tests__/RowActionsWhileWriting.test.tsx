@@ -11,7 +11,7 @@ import { ValuationsPanel } from "../PropertyEntityPanels";
 import { Properties } from "../Properties";
 import { Scenarios } from "../Scenarios";
 import { HoldingCostsPanel } from "../PropertyDetailPanels";
-import { usePortfolioStore } from "../../../state/portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import {
   openMemorySql,
@@ -45,13 +45,11 @@ const store = () => usePortfolioStore.getState();
 function holdWrites() {
   let open!: () => void;
   const opened = new Promise<void>((r) => (open = r));
-  usePortfolioStore.setState({
-    sql: {
-      ...db,
-      selectSnapshot: async (statements) => {
-        await opened;
-        return db.selectSnapshot(statements);
-      },
+  portfolioDb.set({
+    ...db,
+    selectSnapshot: async (statements) => {
+      await opened;
+      return db.selectSnapshot(statements);
     },
   });
   return () =>

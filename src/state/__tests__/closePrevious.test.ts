@@ -3,7 +3,11 @@
 // ADR 0163: leases of one apartment never overlap. Adding a lease ends the open lease
 // before it the day before, and a write that would overlap another lease is refused.
 import { beforeEach, describe, expect, it } from "vitest";
-import { usePortfolioStore, type MutationResult } from "../portfolioStore";
+import {
+  usePortfolioStore,
+  type MutationResult,
+  portfolioDb,
+} from "../portfolioStore";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
@@ -34,8 +38,8 @@ const START = isoDate("2030-01-01");
 /** A fresh database from `open` (default: the seed). `init` alone is a no-op once the
  *  store is ready. */
 async function reset(open: () => Promise<Sql> = openSeeded) {
+  portfolioDb.set(null);
   usePortfolioStore.setState({
-    sql: null,
     portfolio: null,
     assumptions: null,
     status: "idle",

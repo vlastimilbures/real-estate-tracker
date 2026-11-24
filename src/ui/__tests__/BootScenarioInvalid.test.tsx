@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BootFailure } from "../components/BootFailure";
-import { usePortfolioStore } from "../../state/portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../../state/portfolioStore";
 import { en } from "../../i18n/en";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
@@ -48,7 +48,7 @@ describe("an unreadable scenario row at startup (#451, ADR 0231)", () => {
   it("stops startup on SCENARIO_INVALID, with the database kept open", () => {
     expect(store().status).toBe("error");
     expect(store().startupError?.code).toBe("SCENARIO_INVALID");
-    expect(store().sql).toBe(db);
+    expect(portfolioDb.get()).toBe(db);
   });
 
   it("offers Restore a backup… and names the scenario, not Try again", () => {

@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BootFailure } from "../components/BootFailure";
-import { usePortfolioStore } from "../../state/portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { en } from "../../i18n/en";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
@@ -84,7 +84,7 @@ describe("restore from the startup error screen (ROW_INVALID)", () => {
   });
 
   it("a Try again that fails again still names the safety copy (#136 review)", async () => {
-    usePortfolioStore.setState({ sql: reloadFails(db) });
+    portfolioDb.set(reloadFails(db));
     await restoreFromScreen();
     const named = /portfolio-before-restore-.*\.json/.exec(
       screen.getByRole("alert").textContent ?? "",
@@ -136,7 +136,7 @@ describe("restore from the startup error screen (ROW_INVALID)", () => {
   });
 
   it("a restore whose data cannot be read back shows the read-back screen and names the copy (ADR 0228)", async () => {
-    usePortfolioStore.setState({ sql: reloadFails(db) });
+    portfolioDb.set(reloadFails(db));
     await restoreFromScreen();
 
     const alert = screen.getByRole("alert");
@@ -158,11 +158,9 @@ describe("restore from the startup error screen (ROW_INVALID)", () => {
   });
 
   it("a failed restore is logged under RESTORE (#258 item 6)", async () => {
-    usePortfolioStore.setState({
-      sql: {
-        ...db,
-        transaction: () => Promise.reject(new Error("disk full")),
-      },
+    portfolioDb.set({
+      ...db,
+      transaction: () => Promise.reject(new Error("disk full")),
     });
     await restoreFromScreen();
 

@@ -12,10 +12,17 @@ export type {
   StartupError,
 } from "./portfolio/types";
 
-export const usePortfolioStore = createPortfolioStore({
+const { store, db } = createPortfolioStore({
   open: defaultOpen,
   now: () => new Date(),
 });
+
+export const usePortfolioStore = store;
+
+/** The store's open database (`get`) and a test's replacement for it (`set`).
+ *  @internal test seam: the app reaches the database only through the store's actions
+ *  (#465). */
+export const portfolioDb = db;
 
 /** A write is queued or running: row write actions are disabled (ADR 0253). */
 export const useWriteRunning = (): boolean =>

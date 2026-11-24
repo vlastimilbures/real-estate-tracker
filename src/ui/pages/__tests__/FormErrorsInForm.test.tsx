@@ -13,7 +13,7 @@ import { RecordForm } from "../../components/forms";
 import { SettingsPage } from "../Settings";
 import { ScenarioForm } from "../ScenarioForm";
 import { Scenarios } from "../Scenarios";
-import { usePortfolioStore } from "../../../state/portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../../../state/portfolioStore";
 import { getDict } from "../../../i18n";
 import { describeWriteError } from "../../model/writeError";
 import type { FieldSpec } from "../../model/formParse";
@@ -44,8 +44,8 @@ async function openSeeded(): Promise<Sql> {
 
 /** The real store on a fresh seeded in-memory DB. */
 async function initStore() {
+  portfolioDb.set(null);
   usePortfolioStore.setState({
-    sql: null,
     portfolio: null,
     assumptions: null,
     scenarios: [],
@@ -111,9 +111,9 @@ describe("a refused form save stays in the form (R4-05)", () => {
   it("a refused duplicate, with no form open, still shows the banner", async () => {
     await initStore();
     // Saved before ADR 0128: its shock takes the 4.5 % reset rate below 0.
-    await usePortfolioStore
-      .getState()
-      .sql!.execute(
+    await portfolioDb
+      .get()!
+      .execute(
         "INSERT INTO scenarios (id, name, overrides, created_at) VALUES (?, ?, ?, ?)",
         [
           "old",

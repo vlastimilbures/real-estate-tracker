@@ -3,7 +3,7 @@
 // in-memory state reconciled with what's actually on disk. The store is driven directly
 // via getState() (zustand works outside React), so no DOM is needed.
 import { describe, expect, it } from "vitest";
-import { usePortfolioStore } from "../portfolioStore";
+import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import type { IsoDate } from "../../engine";
 import type { Sql } from "../../data/sql";
 import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
@@ -46,7 +46,7 @@ describe("portfolioStore mutations", () => {
 
   it("surfaces a failed write and reconciles state instead of throwing", async () => {
     await usePortfolioStore.getState().init(openSeeded);
-    const real = usePortfolioStore.getState().sql!;
+    const real = portfolioDb.get()!;
 
     // A fake Sql whose writes reject but whose reads still work, so refresh() can
     // reconcile in-memory state back to what's actually persisted.
@@ -57,7 +57,7 @@ describe("portfolioStore mutations", () => {
       transaction: () => Promise.reject(new Error("disk is full")),
       backup: real.backup.bind(real),
     };
-    usePortfolioStore.setState({ sql: failing });
+    portfolioDb.set(failing);
 
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
     const before = usePortfolioStore.getState().portfolio!.valuations.length;
@@ -83,7 +83,7 @@ describe("portfolioStore mutations", () => {
 
   it("runs mutations one at a time, in call order (DR-085)", async () => {
     await usePortfolioStore.getState().init(openSeeded);
-    const real = usePortfolioStore.getState().sql!;
+    const real = portfolioDb.get()!;
     const log: string[] = [];
     let release!: () => void;
     const gate = new Promise<void>((r) => (release = r));
@@ -101,7 +101,7 @@ describe("portfolioStore mutations", () => {
         return r;
       },
     };
-    usePortfolioStore.setState({ sql: slow });
+    portfolioDb.set(slow);
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
     const add = (id: string, y: number) =>
       usePortfolioStore.getState().addValuation({

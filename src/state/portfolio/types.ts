@@ -45,7 +45,6 @@ export interface StartupError {
 }
 
 export interface PortfolioState {
-  sql: Sql | null;
   portfolio: Portfolio | null;
   assumptions: Assumptions | null;
   scenarios: Scenario[];
@@ -167,10 +166,17 @@ export interface PortfolioState {
 }
 
 export type SetState = StoreApi<PortfolioState>["setState"];
-/** The store's own `set` and `get`, for the write runner's steps. */
+/** A store's open database: kept out of its state (#465), so no component reads it. */
+export interface DbHandle {
+  get: () => Sql | null;
+  set: (sql: Sql | null) => void;
+}
+
+/** The store's own `set`, `get` and database, for the write runner's steps. */
 export interface StoreAccess {
   set: SetState;
   get: () => PortfolioState;
+  db: DbHandle;
 }
 
 /** What an action module gets from its store: the store's own `set` and `get`, its one
