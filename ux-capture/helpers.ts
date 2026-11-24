@@ -7,7 +7,7 @@ import {
   type Locator,
 } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { en, type Dictionary } from "../src/i18n/en";
 import { cs } from "../src/i18n/cs";
@@ -58,8 +58,11 @@ export const test = base.extend<{ ux: Ux }>({
     const meta = testInfo.project.metadata as { lang: Lang; theme: string };
     const t = DICTS[meta.lang];
     const dir = path.join(process.env.UX_OUT!, testInfo.project.name);
-    if (AXE) mkdirSync(path.join(dir, "axe"), { recursive: true });
-    else {
+    if (AXE) {
+      mkdirSync(path.join(dir, "axe"), { recursive: true });
+      // A scanning run into a folder an earlier UX_AXE=0 run used drops its marker.
+      rmSync(path.join(dir, AXE_SKIPPED), { force: true });
+    } else {
       // The summary and `pnpm ux:axe-check` read this: a run without scans never passes
       // the axe gate.
       mkdirSync(dir, { recursive: true });
