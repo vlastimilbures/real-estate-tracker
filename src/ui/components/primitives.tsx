@@ -19,9 +19,8 @@ import { InfoTip } from "./InfoTip";
 import { useToast } from "../hooks/useToast";
 import { useUiStore } from "../../state/uiStore";
 import { pressed, useBusyFocus } from "../hooks/useBusyFocus";
-import type { SaveOutcome } from "../../state/platform";
 import { logFailure } from "../../state/diagnostics";
-import { toActionError } from "../../state/actionError";
+import { saveFailureDetail, type SaveOutcome } from "../../state/platform";
 
 type Num = Decimal | number;
 
@@ -328,7 +327,11 @@ export function ExportXlsxButton({
         showToast(t.xlsx.exported(outcome.filename));
     } catch (e) {
       logFailure("EXPORT", e);
-      setFailure("xlsxExport", toActionError(e));
+      // A failed save's OS text, else the error's own message (ADR 0193).
+      setFailure("xlsxExport", {
+        kind: "saveFailed",
+        detail: saveFailureDetail(e),
+      });
     } finally {
       setBusy(false);
     }

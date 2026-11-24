@@ -40,8 +40,8 @@ function failureText(
   }
 }
 
-/** A failed save's own text, without the English wrapper (ADR 0193); an export's other
- *  failures are untyped, so their message. */
+/** A failed export's text (ADR 0193): the export button stores it as `saveFailed`; an
+ *  untyped failure set elsewhere gives its message. */
 function saveDetail(e: ActionError): string {
   if (e.kind === "saveFailed") return e.detail;
   return e.kind === "other" ? e.message : "";
