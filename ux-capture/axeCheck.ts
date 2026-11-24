@@ -6,7 +6,13 @@
 // A run captured with UX_AXE=0 has no scans to judge: it fails (exit 2), never passes.
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { axeSkipped, readAxeScans } from "./axeFiles.ts";
+import {
+  axeSkipped,
+  expectedScans,
+  missingScans,
+  readAxeScans,
+  scannedIds,
+} from "./axeFiles.ts";
 import { runDir } from "./runPath.ts";
 
 const run = process.argv[2];
@@ -29,6 +35,21 @@ if (skipped.length > 0) {
     `AXE SKIPPED: ${root} was captured with UX_AXE=0 (${skipped.join(", ")}), so it ` +
       `holds no accessibility results to check. Capture without UX_AXE=0 into a new ` +
       `folder and check that one.`,
+  );
+  process.exit(2);
+}
+
+// Every capture that owes a scan must have one: a scanning `--grep` re-capture into a
+// UX_AXE=0 run clears its marker but scans only the screens it re-took.
+const missing = variants.flatMap((v) =>
+  missingScans(expectedScans(join(root, v)), scannedIds(join(root, v))).map(
+    (id) => `${v}/${id}`,
+  ),
+);
+if (missing.length > 0) {
+  console.error(
+    `MISSING AXE SCANS: ${missing.length} capture(s) in ${root} have no scan, ` +
+      `e.g. ${missing.slice(0, 5).join(", ")}. Capture the whole run with the scan on.`,
   );
   process.exit(2);
 }

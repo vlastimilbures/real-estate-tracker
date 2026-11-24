@@ -39,6 +39,31 @@ export function axeEnabled(env: Record<string, string | undefined>): boolean {
   throw new Error(`UX_AXE must be 0 or 1, got "${v}"`);
 }
 
+/** Folder of empty files, one per `capture()` that owes an axe scan (named by its id). */
+export const AXE_EXPECTED = "axe-expected";
+
+/** The ids of a variant folder's captures that owe a scan; none for an older run. */
+export function expectedScans(variantDir: string): string[] {
+  const dir = join(variantDir, AXE_EXPECTED);
+  return existsSync(dir) ? readdirSync(dir).sort() : [];
+}
+
+/** The ids of a variant folder's scans (`axe/<id>.json`). */
+export function scannedIds(variantDir: string): string[] {
+  const dir = join(variantDir, "axe");
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((f) => f.endsWith(".json"))
+    .map((f) => f.slice(0, -".json".length))
+    .sort();
+}
+
+/** The captures that owe a scan but have none. */
+export function missingScans(expected: string[], scanned: string[]): string[] {
+  const have = new Set(scanned);
+  return expected.filter((id) => !have.has(id));
+}
+
 /** Whether a run skipped the axe scan in this variant folder. */
 export function axeSkipped(variantDir: string): boolean {
   return existsSync(join(variantDir, AXE_SKIPPED));

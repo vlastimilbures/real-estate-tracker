@@ -14,7 +14,7 @@ import { cs } from "../src/i18n/cs";
 import { ru } from "../src/i18n/ru";
 import type { Route } from "../src/state/uiStore";
 import { UX_DATE } from "./clock";
-import { AXE_SKIPPED, axeEnabled } from "./axeFiles";
+import { AXE_EXPECTED, AXE_SKIPPED, axeEnabled } from "./axeFiles";
 
 export type Lang = "en" | "cs" | "ru";
 const DICTS: Record<Lang, Dictionary> = { en, cs, ru };
@@ -58,6 +58,7 @@ export const test = base.extend<{ ux: Ux }>({
     const meta = testInfo.project.metadata as { lang: Lang; theme: string };
     const t = DICTS[meta.lang];
     const dir = path.join(process.env.UX_OUT!, testInfo.project.name);
+    mkdirSync(path.join(dir, AXE_EXPECTED), { recursive: true });
     if (AXE) {
       mkdirSync(path.join(dir, "axe"), { recursive: true });
       // A scanning run into a folder an earlier UX_AXE=0 run used drops its marker.
@@ -144,7 +145,11 @@ export const test = base.extend<{ ux: Ux }>({
         );
         expect(wrapped, `${id}: panel headers on one line`).toEqual([]);
       }
-      if (opts?.axe === false || !AXE) return;
+      if (opts?.axe === false) return;
+      // This capture owes a scan: `pnpm ux:axe-check` fails while its axe/<id>.json is
+      // missing, e.g. a scanning `--grep` re-capture into a UX_AXE=0 run (#576).
+      writeFileSync(path.join(dir, AXE_EXPECTED, id), "");
+      if (!AXE) return;
       const res = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       writeJson(path.join("axe", `${id}.json`), {
         screen: id,

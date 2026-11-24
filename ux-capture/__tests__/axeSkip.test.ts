@@ -7,11 +7,17 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  AXE_EXPECTED,
   AXE_SKIPPED,
   axeEnabled,
   axeSkipped,
+  missingScans,
   variantLine,
 } from "../axeFiles.ts";
+
+const AXE_CHECK = fileURLToPath(new URL("../axeCheck.ts", import.meta.url));
+const axeCheck = (run: string) =>
+  spawnSync(process.execPath, [AXE_CHECK, run], { encoding: "utf8" });
 
 describe("axeEnabled", () => {
   it("is on unless UX_AXE=0", () => {
@@ -43,14 +49,53 @@ describe("axe-skipped marker", () => {
     mkdirSync(variant);
     writeFileSync(join(variant, "01-dashboard.png"), "");
     writeFileSync(join(variant, AXE_SKIPPED), "{}");
-    const r = spawnSync(
-      process.execPath,
-      [fileURLToPath(new URL("../axeCheck.ts", import.meta.url)), root],
-      { encoding: "utf8" },
-    );
+    const r = axeCheck(root);
     expect(r.status).toBe(2);
     expect(r.stderr).toContain("AXE SKIPPED");
     expect(r.stderr).toContain("en-light-1280x800");
+  });
+});
+
+describe("captures that owe a scan", () => {
+  let root = "";
+  afterEach(() => rmSync(root, { recursive: true, force: true }));
+
+  /** A variant whose captures `owed` owe a scan and `scanned` have one. */
+  function run(owed: string[], scanned: string[]) {
+    root = mkdtempSync(join(tmpdir(), "ux-axe-"));
+    const variant = join(root, "en-light-1280x800");
+    mkdirSync(join(variant, AXE_EXPECTED), { recursive: true });
+    mkdirSync(join(variant, "axe"));
+    for (const id of owed) writeFileSync(join(variant, AXE_EXPECTED, id), "");
+    for (const id of scanned)
+      writeFileSync(
+        join(variant, "axe", `${id}.json`),
+        JSON.stringify({ screen: id, violations: [] }),
+      );
+    // A shot()-only PNG owes nothing.
+    writeFileSync(join(variant, "90-keyboard-focus-tab1.png"), "");
+  }
+
+  it("lists the captures without a scan", () => {
+    expect(missingScans(["01", "02", "03"], ["02"])).toEqual(["01", "03"]);
+    expect(missingScans([], ["02"])).toEqual([]);
+  });
+
+  it("fails ux:axe-check on a partial scanning re-capture (exit 2)", () => {
+    run(["01-dashboard", "29-property-prepayment-outputs"], ["01-dashboard"]);
+    const r = axeCheck(root);
+    expect(r.status).toBe(2);
+    expect(r.stderr).toContain("MISSING AXE SCANS");
+    expect(r.stderr).toContain(
+      "en-light-1280x800/29-property-prepayment-outputs",
+    );
+  });
+
+  it("passes when every capture has its scan", () => {
+    run(["01-dashboard"], ["01-dashboard"]);
+    const r = axeCheck(root);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("1 axe scans, 0 violation(s).");
   });
 });
 
