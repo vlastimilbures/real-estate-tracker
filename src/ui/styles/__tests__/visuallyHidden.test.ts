@@ -43,12 +43,14 @@ const SR_ONLY = [
   "border: 0",
 ];
 
-/** Rules with the hidden shape: a 1 × 1 px box that hides its overflow. */
+/** Rules with the hidden shape: a 1 × 1 px box that hides its overflow, or clips itself. */
 const hidden = rules.filter(
   (r) =>
     r.decls.includes("width: 1px") &&
     r.decls.includes("height: 1px") &&
-    r.decls.includes("overflow: hidden"),
+    (r.decls.includes("overflow: hidden") ||
+      r.decls.includes("overflow: clip") ||
+      r.decls.some((d) => /^clip(-path)?: /.test(d))),
 );
 
 function only(file: string, selector: string): Rule {
@@ -80,16 +82,15 @@ describe("one visually-hidden block (ADR 0260)", () => {
       "table.css",
       ".row-action:not(.tip-off):hover > .row-action-tip, .row-action:not(.tip-off):focus-visible > .row-action-tip",
     );
-    const props = reveal.decls.map((d) => d.split(":")[0]);
-    for (const p of [
-      "width",
-      "height",
-      "margin",
-      "overflow",
-      "clip",
-      "padding",
-    ]) {
-      expect(props).toContain(p);
-    }
+    const value = (p: string) =>
+      reveal.decls.find((d) => d.startsWith(`${p}: `))?.slice(p.length + 2);
+    expect(value("width")).toBe("auto");
+    expect(value("height")).toBe("auto");
+    expect(value("margin")).toBe("0");
+    expect(value("overflow")).toBe("visible");
+    expect(value("clip")).toBe("auto");
+    const padding = value("padding");
+    expect(padding).toBeDefined();
+    expect(padding).not.toBe("0");
   });
 });
