@@ -26,7 +26,10 @@ apply to human and AI-assisted changes alike.
 For UI work without touching the real database, `pnpm ux:capture` renders every screen in
 a plain browser against an in-memory, synthetic seed (sql.js, frozen clock) and runs an axe
 scan; the Playwright smoke tests use the same in-memory adapter (`src/data/browserSql.ts`,
-reached only through the `VITE_E2E` gate).
+reached only through the `VITE_E2E` gate). A UI PR's before/after proof diffs one branch
+capture against a shared, cached capture of main (`pnpm ux:baseline`, then `UX_AXE=0
+pnpm ux:capture` and `pnpm ux:diff`; see [Proving a UI
+change](ux-capture/README.md#proving-a-ui-change)).
 
 ## Checks
 

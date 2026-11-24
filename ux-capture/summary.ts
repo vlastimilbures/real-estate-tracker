@@ -1,7 +1,8 @@
-// Global teardown: fold the per-screen axe JSON into `<run>/summary.md`.
+// Global teardown: fold the per-screen axe JSON into `<run>/summary.md`; a variant
+// captured with UX_AXE=0 says so instead of showing an empty table.
 import { existsSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { readAxeScans } from "./axeFiles.ts";
+import { axeSkipped, readAxeScans, variantLine } from "./axeFiles.ts";
 import { UX_DATE } from "./clock.ts";
 
 const IMPACTS = ["critical", "serious", "moderate", "minor"] as const;
@@ -20,6 +21,13 @@ export default function summary() {
     .filter((d) => d.isDirectory() && !d.name.startsWith("."))
     .map((d) => d.name)
     .sort();
+  const skippedIn = variants.filter((v) => axeSkipped(path.join(out, v)));
+  if (skippedIn.length > 0)
+    lines.push(
+      `> **Axe scan skipped (UX_AXE=0)** in ${skippedIn.join(", ")}: these screenshots ` +
+        `are for comparison only.`,
+      "",
+    );
 
   for (const variant of variants) {
     const dir = path.join(out, variant);
@@ -27,13 +35,15 @@ export default function summary() {
       .filter((f) => f.endsWith(".png"))
       .sort();
     const scans = readAxeScans(dir);
+    const skipped = axeSkipped(dir);
 
     lines.push(
       `## ${variant}`,
       "",
-      `${pngs.length} screenshots, ${scans.length} axe scans.`,
+      variantLine(pngs.length, scans.length, skipped),
       "",
     );
+    if (skipped && scans.length === 0) continue;
     lines.push("| Screen | critical | serious | moderate | minor | Rules |");
     lines.push("| ------ | -------- | ------- | -------- | ----- | ----- |");
     const rules = new Map<

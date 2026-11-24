@@ -7,13 +7,14 @@ import {
   type Locator,
 } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { en, type Dictionary } from "../src/i18n/en";
 import { cs } from "../src/i18n/cs";
 import { ru } from "../src/i18n/ru";
 import type { Route } from "../src/state/uiStore";
 import { UX_DATE } from "./clock";
+import { AXE_EXPECTED, AXE_SKIPPED, axeEnabled } from "./axeFiles";
 
 export type Lang = "en" | "cs" | "ru";
 const DICTS: Record<Lang, Dictionary> = { en, cs, ru };
@@ -29,19 +30,26 @@ const AXE_TAGS = [
   "best-practice",
 ];
 
+/** `UX_AXE=0` skips the scan for a faster local proof; CI keeps it on (F-08). */
+const AXE = axeEnabled(process.env);
+
+/** Options of a shot. `keepPointer` leaves the mouse where the scene put it, for a scene
+ *  that hovers on purpose; otherwise the pointer is parked first (#536). */
+export interface ShotOpts {
+  fullPage?: boolean;
+  keepPointer?: boolean;
+}
+
 export interface Ux {
   page: Page;
   t: Dictionary;
   lang: Lang;
   /** Folder for this variant's output (`<run>/<lang>-<theme>-<viewport>`). */
   dir: string;
-  /** Full-page PNG + axe scan under `<id>`. */
-  capture: (
-    id: string,
-    opts?: { axe?: boolean; fullPage?: boolean },
-  ) => Promise<void>;
+  /** Full-page PNG + axe scan under `<id>` (the scan is off with `UX_AXE=0`). */
+  capture: (id: string, opts?: ShotOpts & { axe?: boolean }) => Promise<void>;
   /** PNG only (no scan), e.g. intermediate keyboard-focus steps. */
-  shot: (id: string, opts?: { fullPage?: boolean }) => Promise<void>;
+  shot: (id: string, opts?: ShotOpts) => Promise<void>;
   writeJson: (rel: string, data: unknown) => void;
 }
 
@@ -50,7 +58,20 @@ export const test = base.extend<{ ux: Ux }>({
     const meta = testInfo.project.metadata as { lang: Lang; theme: string };
     const t = DICTS[meta.lang];
     const dir = path.join(process.env.UX_OUT!, testInfo.project.name);
-    mkdirSync(path.join(dir, "axe"), { recursive: true });
+    mkdirSync(path.join(dir, AXE_EXPECTED), { recursive: true });
+    if (AXE) {
+      mkdirSync(path.join(dir, "axe"), { recursive: true });
+      // A scanning run into a folder an earlier UX_AXE=0 run used drops its marker.
+      rmSync(path.join(dir, AXE_SKIPPED), { force: true });
+    } else {
+      // The summary and `pnpm ux:axe-check` read this: a run without scans never passes
+      // the axe gate.
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(
+        path.join(dir, AXE_SKIPPED),
+        '{ "axe": "skipped (UX_AXE=0)" }\n',
+      );
+    }
 
     // UI prefs are read from localStorage at startup (src/state/uiStore.ts).
     await page.addInitScript(
@@ -83,6 +104,7 @@ export const test = base.extend<{ ux: Ux }>({
       const fullPage = opts?.fullPage ?? true;
       // A full-page shot taken while scrolled paints the sticky topbar mid-image.
       if (fullPage) await page.evaluate(() => window.scrollTo(0, 0));
+      if (!opts?.keepPointer) await parkPointer(page);
       await settle(page);
       await page.screenshot({
         path: path.join(dir, `${id}.png`),
@@ -124,6 +146,10 @@ export const test = base.extend<{ ux: Ux }>({
         expect(wrapped, `${id}: panel headers on one line`).toEqual([]);
       }
       if (opts?.axe === false) return;
+      // This capture owes a scan: `pnpm ux:axe-check` fails while its axe/<id>.json is
+      // missing, e.g. a scanning `--grep` re-capture into a UX_AXE=0 run (#576).
+      writeFileSync(path.join(dir, AXE_EXPECTED, id), "");
+      if (!AXE) return;
       const res = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       writeJson(path.join("axe", `${id}.json`), {
         screen: id,
@@ -151,6 +177,30 @@ export const test = base.extend<{ ux: Ux }>({
 });
 
 export { expect };
+
+/** Where the pointer rests during a shot: the sidebar's top-left padding, clear of every
+ *  control and chart. */
+const PARK = { x: 0, y: 0 };
+
+/**
+ * Move the mouse off whatever the scene last clicked or hovered, so a leftover hover (a
+ * chart tooltip on a bar that differs from run to run, a button's hover colour) never
+ * lands in a shot (#536). Fails when something interactive sits under the parking point,
+ * because then parking itself would hover it.
+ */
+async function parkPointer(page: Page) {
+  await page.mouse.move(PARK.x, PARK.y);
+  const hit = await page.evaluate(({ x, y }) => {
+    const el = document.elementFromPoint(x, y);
+    const live = el?.closest(
+      "a[href], button, input, select, textarea, summary, label, [role=button], " +
+        "[role=link], [role=tab], [role=menuitem], [title], .recharts-wrapper, " +
+        "[tabindex]:not([tabindex='-1'])",
+    );
+    return live ? live.outerHTML.slice(0, 120) : null;
+  }, PARK);
+  if (hit) throw new Error(`pointer parked on an interactive element: ${hit}`);
+}
 
 /** Wait for fonts and for Recharts' entry animation (JS-driven, not CSS) to finish. */
 export async function settle(page: Page) {
