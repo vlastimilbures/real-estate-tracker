@@ -7,6 +7,11 @@
 import { timed } from "../lib/perf";
 import {
   acquisitionSummary,
+  applyScenario,
+  comparableScenarios,
+  cpiIndex,
+  projectionAndKpis,
+  realProjection,
   portfolioOutputs,
   portfolioProjection,
   propertyLoanExposure,
@@ -33,6 +38,8 @@ import type {
   PropertyLoan,
   PropertySchedule,
   PropertySnapshot,
+  Scenario,
+  ScenarioOverrides,
 } from "../engine";
 
 export interface EngineOutput {
@@ -72,6 +79,15 @@ export interface InvalidPropertyData {
   invalid: EngineInputError;
 }
 
+export interface ScenarioResult {
+  id: string;
+  name: string;
+  projection: ProjectionYear[];
+  /** The projection in real terms, deflated by this scenario's CPI (D-23, UX-055). */
+  realProjection: ProjectionYear[];
+  kpis: PortfolioKPIs;
+}
+
 export type PropertyResult = PropertyEngineOutput | InvalidPropertyData | null;
 
 /** Every engine view of one portfolio and assumptions, each built on first read. */
@@ -83,6 +99,8 @@ export interface EngineModel {
   propertyProjections(): Map<string, ProjectionYear[]>;
   /** One property's output at `asOf`, its input error, or null for an unknown id. */
   property(id: string, asOf: IsoDate): PropertyResult;
+  /** One result per scenario that breaks no engine rule, in order (ADR 0123). */
+  compare(scenarios: Scenario[]): ScenarioResult[];
 }
 
 /** As-of, filter and compare entries a model keeps; the oldest is dropped first. */
@@ -155,6 +173,71 @@ function scheduleStore(portfolio: Portfolio, assumptions: Assumptions) {
       ids.map((id) => [id, built.get(id) ?? EMPTY_PROPERTY_SCHEDULE]),
     );
   };
+}
+
+/** Each override field's content: an equal new overrides object is the same run. Keyed by
+ *  every field of the type, so a new override field does not compile until it is listed;
+ *  a per-field test pins that each field re-runs the compare (#147). */
+const OVERRIDE_FIELDS: Record<
+  keyof ScenarioOverrides,
+  (o: ScenarioOverrides) => unknown
+> = {
+  appreciationPa: (o) => o.appreciationPa?.toString(),
+  rentIndexationPa: (o) => o.rentIndexationPa?.toString(),
+  vacancyAllowance: (o) => o.vacancyAllowance?.toString(),
+  postFixationResetRatePa: (o) => o.postFixationResetRatePa?.toString(),
+  inflationPa: (o) => o.inflationPa?.toString(),
+  inflationShock: (o) =>
+    o.inflationShock && [
+      o.inflationShock.deltaPa.toString(),
+      o.inflationShock.durationYears,
+    ],
+  rateShock: (o) =>
+    o.rateShock && [o.rateShock.deltaPa.toString(), o.rateShock.durationYears],
+  valueShock: (o) =>
+    o.valueShock && [o.valueShock.pct.toString(), o.valueShock.atYear],
+};
+
+const overridesKey = (o: ScenarioOverrides): string =>
+  JSON.stringify(
+    Object.values(OVERRIDE_FIELDS).map((field) => field(o) ?? null),
+  );
+
+type ScenarioRun = Omit<ScenarioResult, "id" | "name">;
+
+/** One scenario's pass: its overrides folded onto the assumptions (`applyScenario`). */
+function scenarioRun(
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+  overrides: ScenarioOverrides,
+): ScenarioRun {
+  const assn = applyScenario(assumptions, overrides);
+  const { projection, kpis } = projectionAndKpis(portfolio, assn);
+  return {
+    projection,
+    realProjection: realProjection(projection, cpiIndex(assn)),
+    kpis,
+  };
+}
+
+/** The compare: a scenario that breaks a rule is left out (ADR 0123); each run is kept
+ *  by its overrides' content, and names are attached by id after the runs (DR-055). */
+function compareOf(
+  portfolio: Portfolio,
+  assumptions: Assumptions,
+  runs: (key: string, compute: () => ScenarioRun) => ScenarioRun,
+  scenarios: Scenario[],
+): ScenarioResult[] {
+  const nameOf = new Map(scenarios.map((s) => [s.id, s.name]));
+  return timed("scenario-compare", () =>
+    comparableScenarios(assumptions, scenarios).map((s) => ({
+      id: s.id,
+      ...runs(overridesKey(s.overrides), () =>
+        scenarioRun(portfolio, assumptions, s.overrides),
+      ),
+      name: nameOf.get(s.id) ?? "",
+    })),
+  );
 }
 
 /** What a property's output reads that does not depend on the as-of date (#174). */
@@ -261,6 +344,8 @@ function createEngineModel(
   const outputs = keyedMemo<EngineOutput>();
   const fixed = new Map<string, ReturnType<typeof propertyFixed>>();
   const atDate = keyedMemo<PropertyResult>();
+  const runs = keyedMemo<ScenarioRun>();
+  const compared = keyedMemo<ScenarioResult[]>();
   const byProperty = lazy(() =>
     propertyProjections(portfolio, assumptions, schedules(allIds())),
   );
@@ -292,6 +377,13 @@ function createEngineModel(
         propertyAt(portfolio, assumptions, f, asOf),
       );
     },
+    compare: (scenarios) =>
+      compared(
+        JSON.stringify(
+          scenarios.map((s) => [s.id, s.name, overridesKey(s.overrides)]),
+        ),
+        () => compareOf(portfolio, assumptions, runs, scenarios),
+      ),
   };
 }
 

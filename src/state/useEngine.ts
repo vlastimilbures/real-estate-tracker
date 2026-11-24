@@ -3,32 +3,18 @@
 // new model runs the pure engine and pushes fresh output to every screen, while views of
 // unchanged data are built once and shared across hooks and page visits. Components
 // consume this — they never call the engine inline.
-import { useMemo } from "react";
 import { usePortfolioStore } from "./portfolioStore";
-import { serializeOverrides } from "../data/mappers";
 import { todayUtc } from "../lib/day";
-import { timed } from "../lib/perf";
 import {
   getEngineModel,
   type EngineModel,
   type EngineOutput,
   type Projections,
   type PropertyResult,
+  type ScenarioResult,
 } from "./engineModel";
-import {
-  projectionAndKpis,
-  applyScenario,
-  cpiIndex,
-  realProjection,
-  comparableScenarios,
-  utc,
-} from "../engine";
-import type {
-  Scenario,
-  PortfolioKPIs,
-  ProjectionYear,
-  IsoDate,
-} from "../engine";
+import { utc } from "../engine";
+import type { Scenario, ProjectionYear, IsoDate } from "../engine";
 
 /**
  * The as-of date the engine sees: the picked date or today, never before baseDate
@@ -73,15 +59,6 @@ export function useEngine(
   );
 }
 
-export interface ScenarioResult {
-  id: string;
-  name: string;
-  projection: ProjectionYear[];
-  /** The projection in real terms, deflated by this scenario's CPI (D-23, UX-055). */
-  realProjection: ProjectionYear[];
-  kpis: PortfolioKPIs;
-}
-
 /**
  * Run the engine once per scenario over the shared portfolio + base assumptions:
  * `applyScenario` folds the overrides (including the time-aware shock descriptors) onto
@@ -90,44 +67,13 @@ export interface ScenarioResult {
  * A scenario whose own overrides break an engine rule is left out instead of throwing
  * during render (ADR 0123); the caller names it from the ids missing in the result.
  * Returns one result per remaining scenario, in order, or null until the store has
- * loaded.
+ * loaded. Each run is kept by its overrides' content, so an equal new selection, a
+ * rename or a revisit runs nothing again (#147, DR-055, #469).
  */
 export function useScenarioComparison(
   scenarios: Scenario[],
 ): ScenarioResult[] | null {
-  const portfolio = usePortfolioStore((s) => s.portfolio);
-  const assumptions = usePortfolioStore((s) => s.assumptions);
-  // Stable dep: re-run only when a selected scenario's id or overrides change. The key is
-  // the stored form, which the restore tests keep complete; a per-field test pins that
-  // each field re-runs the compare (#147).
-  const key = scenarios
-    .map((s) => `${s.id}:${serializeOverrides(s.overrides)}`)
-    .join("|");
-  const computed = useMemo(() => {
-    if (!portfolio || !assumptions) return null;
-    return timed("scenario-compare", () =>
-      comparableScenarios(assumptions, scenarios).map((s) => {
-        const assn = applyScenario(assumptions, s.overrides);
-        const { projection, kpis } = projectionAndKpis(portfolio, assn);
-        return {
-          id: s.id,
-          projection,
-          realProjection: realProjection(projection, cpiIndex(assn)),
-          kpis,
-        };
-      }),
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [portfolio, assumptions, key]);
-  // Names are attached outside the engine memo: a rename shows at once without
-  // re-running the engine (DR-055). By id, since a left-out scenario shifts positions.
-  const names = scenarios.map((s) => s.name).join("\u0000");
-  return useMemo(() => {
-    if (!computed) return null;
-    const nameOf = new Map(scenarios.map((s) => [s.id, s.name]));
-    return computed.map((r) => ({ ...r, name: nameOf.get(r.id) ?? "" }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [computed, names]);
+  return useEngineModel()?.compare(scenarios) ?? null;
 }
 
 /** The portfolio's and every property's year-by-year projection, from one set of loan
