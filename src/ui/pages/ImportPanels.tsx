@@ -304,7 +304,7 @@ function ImportFileRow({ type }: { type: ImportFileType }) {
           ref={inputRef}
           type="file"
           accept=".csv,text/csv"
-          style={{ display: "none" }}
+          hidden
           onChange={handleFile}
         />
         <RowActions>
