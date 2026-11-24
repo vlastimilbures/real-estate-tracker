@@ -456,13 +456,17 @@
 /* A top-bar button's label that gives way to its icon in a narrow window, staying its
    accessible name (Property detail's Deactivate, ADR 0215 §2). */
 @media (max-width: 1099px) {
+  /* Same block as .sr-only (layout.css), kept equal by visuallyHidden.test.ts (ADR 0260). */
   .topbar .narrow-hide {
     position: absolute;
     width: 1px;
     height: 1px;
+    padding: 0;
+    margin: -1px;
     overflow: hidden;
-    clip-path: inset(50%);
+    clip: rect(0 0 0 0);
     white-space: nowrap;
+    border: 0;
   }
 }
 .topbar .page-sub {

@@ -379,19 +379,9 @@ table.data td:has(> .row-actions) {
   opacity: 0.5;
   cursor: not-allowed;
 }
-/* The tooltip is the button's text: hidden but read at rest (the accessible name). */
-.row-action-tip {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
-/* Left of the button, on the button's own line: it stays inside the row, so neither a
+/* The tooltip is the button's text: hidden but read at rest (the accessible name). At
+   rest .sr-only hides it; this rule must reset every property .sr-only sets.
+   Left of the button, on the button's own line: it stays inside the row, so neither a
    sticky table header nor a scroll region's edge covers it. The transparent right
    border bridges the gap, so the pointer can move onto it. */
 .row-action:not(.tip-off):hover > .row-action-tip,
