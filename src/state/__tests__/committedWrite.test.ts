@@ -269,7 +269,8 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
 
     expect(statusOf(store())).toBe("ready");
     expect(readBackFailedOf(store())).toBe(false);
-    expect(store().error).toEqual(error);
+    // ADR 0261: the write error is returned to the caller, not put in the banner.
+    expect(store().error).toBeNull();
     expect(logged()).toEqual(["WRITE", "RELOAD"]);
   });
 

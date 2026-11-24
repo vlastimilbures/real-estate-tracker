@@ -51,8 +51,9 @@ function keepRefused({ set, get }: StoreAccess, target: WriteTarget): void {
 }
 
 /** Persist via `op`, then reload portfolio + assumptions so the engine recomputes.
- *  Never throws into the void: a failure is captured, surfaced via `error`, and
- *  returned to the caller as `{ ok: false }`. On failure we still reload so the
+ *  Never throws: a failure is returned to the caller as `{ ok: false }`, which shows
+ *  it where the edit was started; a caller with no place of its own puts it in the
+ *  banner with showError (ADR 0261). A success clears the banner. On failure we still reload so the
  *  in-memory state matches what actually reached disk. Multi-statement writes are
  *  atomic (`Sql.transaction`, D-14), so a failed op leaves the DB unchanged, and a
  *  resolved op has committed: a failed reload after it returns `{ ok: true }` and
@@ -68,9 +69,10 @@ async function mutateNow(
   const sql = db.get();
   if (!sql || writesRefused(get().status)) {
     keepRefused(store, target);
-    const error = toWriteError(new Error("Database not initialised"));
-    set({ error });
-    return { ok: false, error };
+    return {
+      ok: false,
+      error: toWriteError(new Error("Database not initialised")),
+    };
   }
   try {
     perfMark("edit:start");
@@ -83,15 +85,12 @@ async function mutateNow(
     return { ok: true };
   } catch (e) {
     // A broken input rule is the user's to fix in the form, not a failure to log;
-    // it is thrown before anything is written, so there is nothing to reload. Only
-    // returned: the form shows it, and a non-form caller uses showError (ADR 0141).
+    // it is thrown before anything is written, so there is nothing to reload.
     if (e instanceof EngineInputError)
       return { ok: false, error: toWriteError(e) };
     logFailure("WRITE", e);
-    const error = toWriteError(e);
     await reloadAfter(store, false);
-    set({ error });
-    return { ok: false, error };
+    return { ok: false, error: toWriteError(e) };
   }
 }
 

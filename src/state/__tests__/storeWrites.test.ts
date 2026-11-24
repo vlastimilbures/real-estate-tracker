@@ -1,5 +1,6 @@
-// Failure-path tests for the portfolio store: a failed DB write must surface (set
-// `error`, return `{ ok: false }`) rather than throw into the void, and must leave the
+// Failure-path tests for the portfolio store: a failed DB write must surface (return
+// `{ ok: false }` to the caller, which shows it; ADR 0261 leaves the banner `error` to
+// the caller) rather than throw into the void, and must leave the
 // in-memory state reconciled with what's actually on disk. The store is driven directly
 // via getState() (zustand works outside React), so no DOM is needed.
 import { describe, expect, it } from "vitest";
@@ -19,9 +20,8 @@ describe("portfolioStore mutations", () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected failure");
     expect(text(result.error)).toMatch(/not initialised/i);
-    expect(text(usePortfolioStore.getState().error)).toMatch(
-      /not initialised/i,
-    );
+    // ADR 0261: the store puts no failure in the banner; the caller shows it.
+    expect(usePortfolioStore.getState().error).toBeNull();
   });
 
   it("a successful mutation clears error and refreshes state", async () => {
@@ -73,7 +73,8 @@ describe("portfolioStore mutations", () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected failure");
     expect(text(result.error)).toMatch(/disk is full/i);
-    expect(text(usePortfolioStore.getState().error)).toMatch(/disk is full/i);
+    // ADR 0261: the store puts no failure in the banner; the caller shows it.
+    expect(usePortfolioStore.getState().error).toBeNull();
     // status stays "ready" (mutation failures are not full-screen init errors) and the
     // optimistic row never sticks because refresh() reconciles to disk.
     expect(statusOf(usePortfolioStore.getState())).toBe("ready");
@@ -133,7 +134,9 @@ describe("portfolioStore mutations", () => {
   });
 
   it("clearError() resets a surfaced error", async () => {
-    await usePortfolioStore.getState().removeLease("missing");
+    // ADR 0261: a caller with no place of its own surfaces the failure with showError.
+    const result = await usePortfolioStore.getState().removeLease("missing");
+    if (!result.ok) usePortfolioStore.getState().showError(result.error);
     expect(usePortfolioStore.getState().error).not.toBeNull();
     usePortfolioStore.getState().clearError();
     expect(usePortfolioStore.getState().error).toBeNull();
