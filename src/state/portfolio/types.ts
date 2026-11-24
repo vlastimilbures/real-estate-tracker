@@ -40,10 +40,11 @@ export type Status =
   | { kind: "readBackFailed"; refused: RefusedWrite[] };
 
 /** The outcome of a mutation. Callers (forms, modals) branch on `ok` — e.g. a modal
- *  closes only on success and keeps itself open, showing `error`, on failure. The
- *  store also stashes `error` so a global banner can surface it without every caller
- *  wiring it up. `ok` means the write landed; when reading the data back after it failed,
- *  the store stops on the error screen with status `readBackFailed` (ADR 0228). */
+ *  closes only on success and keeps itself open, showing `error`, on failure. The store
+ *  never puts a failure in the banner: the caller shows it where the edit was started,
+ *  or, with no place of its own, calls `showError` (ADR 0261). `ok` means the write
+ *  landed; when reading the data back after it failed, the store stops on the error
+ *  screen with status `readBackFailed` (ADR 0228). */
 export type MutationResult = Result<void, WriteError>;
 /** Address and garage: stored, but not engine inputs (ADR 0184 §3). */
 export type { PropertyExtras };
@@ -68,7 +69,8 @@ export interface PortfolioState {
    *  screen, the write still counts as done, and later writes are refused until Try
    *  again reads the data (ADR 0228). */
   status: Status;
-  /** The banner: the last failed write, translated by the UI. */
+  /** The banner: a failure a caller with no place of its own put there with `showError`
+   *  (ADR 0261), translated by the UI. A successful write clears it. */
   error: WriteError | null;
   /** Restores, Clear samples and Load samples queued or running. Settings → Backup
    *  waits while one is, across page changes (ADR 0154). */
@@ -82,7 +84,8 @@ export interface PortfolioState {
    *  `init` calls it. */
   refresh: () => Promise<void>;
   clearError: () => void;
-  /** Show `error` in the banner: for a refusal no form is open to show (ADR 0141). */
+  /** Show `error` in the banner: for a failure with no place of its own to show it
+   *  (ADR 0141, ADR 0261). */
   showError: (error: WriteError) => void;
 
   // valuations

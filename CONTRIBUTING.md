@@ -290,6 +290,30 @@ Amends / Amended-by link.
 
 Refactors are behaviour-neutral and need no ADR.
 
+## Where a result is shown
+
+Each outcome is shown once, in one place (ADR 0141, ADR 0154, ADR 0261):
+
+1. **On the field.** An input-rule refusal that names a field the form shows marks that
+   field.
+2. **Where it was started.** Any other failure of an edit shows in the control that started
+   it: the form's line above its buttons (the Assumptions error summary), the confirm row,
+   or next to Activate. The store puts nothing in the page banner.
+3. **The banner when there is no such place.** An action with no place of its own (Keep
+   exploring, a preset, Duplicate, an Assumptions save failing on no input rule) puts its
+   failure in the AppShell banner with `showError`.
+4. **The failure area for whole-database actions.** Import, restore, Load sample, Clear
+   sample and backup export show their failure in the failure area under the banner
+   (`OutcomeRegions`). Exceptions: the Clear sample dialog shows its own failure in the
+   dialog, the CSV preview and a refused plan show in the import page, and a failure at
+   start-up shows on the start-up screen.
+5. **Success as a toast, notice or report.** An edit whose result is already on screen
+   needs nothing; one that is not says so in a toast (an Assumptions save, a scenario
+   added from a preset or deleted). A restore leaves a notice, an import its report.
+6. **Store actions never throw.** Every store action that returns a promise resolves with a
+   result (`Result<T, E>`, `MutationResult`); the caller branches on `ok` and needs no
+   `catch` (`src/state/__tests__/noActionRejects.test.ts`).
+
 ## Commits and pull requests
 
 - [Conventional Commits](https://www.conventionalcommits.org/): `feat`, `fix`, `refactor`,
