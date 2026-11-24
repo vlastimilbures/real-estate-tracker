@@ -153,7 +153,7 @@ export function invalidHint(
   return t.forms.invalidHint[kind];
 }
 
-/** "Enter a whole number from 1 to 10 000" (UX-068). */
+/** "Must be a whole number from 1 to 10 000" (UX-068, ADR 0259). */
 export function intRangeHint(
   t: Pick<Dictionary, "forms">,
   r: IntRange,
@@ -162,7 +162,7 @@ export function intRangeHint(
   return t.forms.intRange(n(r.min), n(r.max));
 }
 
-/** "Enter a number from 1 to 10 000 with at most one decimal place" (ADR 0236 §1). */
+/** "Must be a number from 1 to 10 000 with at most one decimal place" (ADR 0236 §1). */
 function sizeRangeHint(t: Pick<Dictionary, "forms">, r: IntRange): string {
   const n = (v: number) => fmtCzk(v, { suffix: false });
   return t.forms.sizeRange(n(r.min), n(r.max));

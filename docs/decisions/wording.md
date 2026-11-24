@@ -237,3 +237,18 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   while the engine refuses the property.
 - Approved by: the hint, owner 2026-11-18 (#435 comment 6965976270); the text, owner OK
   2026-11-18 (#448 comment 6979206969)
+
+### 2026-11-24 · #464 / ADR 0259
+
+- Keys: `forms.intRange`, `forms.sizeRange` (en, cs, ru); `importPage.errOutOfRange`,
+  `importPage.errSizeRange`, `backup.issueOutOfRange`, `backup.issueOutOfRangeSize`
+  (en, cs, ru), deleted
+- Change: the two form keys take the text of `backup.issueOutOfRange` and
+  `backup.issueOutOfRangeSize` (the restore wording) and become the one range message: form fields, store refusals, CSV import and restore
+  all use them. The CSV text no longer quotes the value. The form keys can show in a
+  `role="alert"` line (a range refused on a field the form does not show), so ADR 0259
+  records it too.
+- Rejected: keeping the quoted value in the CSV text, which would need a third key; the
+  error table already names the file, row and column.
+- Approved by: the text, owner OK 2026-11-18 (#464 comment 6978842455); ADR 0259, owner
+  review 2026-11-24 (recorded on #464)

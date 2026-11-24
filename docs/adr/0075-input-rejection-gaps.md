@@ -5,7 +5,7 @@
 - Source IDs: DR-176, DR-131, DR-115, DR-078 (P14 plan)
 - Extends: [0037](0037-data-integrity-codes.md), [0038](0038-range-codes.md)
 - Amended by: ADR 0086, [0236](0236-size-one-decimal.md) (the size takes one decimal
-  place)
+  place), [0259](0259-one-range-message.md) (one range message)
 
 ## Context
 

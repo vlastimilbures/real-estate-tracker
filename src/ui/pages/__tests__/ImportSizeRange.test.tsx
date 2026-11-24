@@ -20,9 +20,9 @@ beforeEach(() => {
   });
 });
 
-/** A table cell whose text is `text`, spaces of any kind alike. */
-const cell = (text: string) =>
-  screen.getByText((_, el) =>
+/** The table cells whose text is `text`, spaces of any kind alike. */
+const cells = (text: string) =>
+  screen.getAllByText((_, el) =>
     el?.tagName === "TD"
       ? (el.textContent ?? "").replace(/\s/g, " ") === text.replace(/\s/g, " ")
       : false,
@@ -46,11 +46,10 @@ describe("a CSV size the form would refuse (ADR 0236 §1)", () => {
         { type: "text/csv" },
       ),
     );
-    const p = en.importPage;
+    // Both rows read the one range message (ADR 0259): 54.55 and the whole size 0,
+    // which reads the size's rule, not "a whole number".
     await waitFor(() =>
-      expect(cell(p.errSizeRange("54.55", "1", "10 000"))).toBeTruthy(),
+      expect(cells(en.forms.sizeRange("1", "10 000"))).toHaveLength(2),
     );
-    // A whole size outside the range reads the same rule, not "a whole number".
-    expect(cell(p.errSizeRange("0", "1", "10 000"))).toBeTruthy();
   });
 });

@@ -68,9 +68,7 @@ describe("Restore with out-of-range values (ADR 0148)", () => {
     ).toBeTruthy();
     const table = screen.getByRole("table");
     expect(within(table).getByText("fixation_years")).toBeTruthy();
-    expect(
-      within(table).getByText(en.backup.issueOutOfRange("0", "50")),
-    ).toBeTruthy();
+    expect(within(table).getByText(en.forms.intRange("0", "50"))).toBeTruthy();
 
     await userEvent.click(anyway);
     expect(restoreBackup).toHaveBeenCalledTimes(1);

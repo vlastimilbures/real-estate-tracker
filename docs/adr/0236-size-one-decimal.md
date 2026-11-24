@@ -9,6 +9,7 @@
 - Related: [0076](0076-csv-int-bounds-and-app-name.md) (CSV applies the form bounds),
   [0086](0086-restore-int-bounds.md) (restore applies them),
   [0152](0152-wording-log-and-generated-index.md) (keys, not strings)
+- Amended by: [0259](0259-one-range-message.md) (one range message)
 
 ## Context
 

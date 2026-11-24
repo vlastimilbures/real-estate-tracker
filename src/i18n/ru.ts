@@ -1026,10 +1026,6 @@ export const ru: Dictionary = {
       `Ставка «${v}» должна быть долей от нуля до единицы — 3,9 % пишите как 0.039`,
     errNotPositive: (v) =>
       `«${v}» — срок кредита должен быть не меньше одного года`,
-    errOutOfRange: (v, min, max) =>
-      `«${v}» должно быть целым числом от ${min} до ${max}`,
-    errSizeRange: (v, min, max) =>
-      `«${v}» должно быть числом от ${min} до ${max} не более чем с одним знаком после запятой`,
     errDuplicateKey: (firstRow) =>
       `Повтор строки ${firstRow} — каждая запись может встречаться в файле только один раз`,
     errMalformedRow: (expected, found) =>
@@ -1133,10 +1129,6 @@ export const ru: Dictionary = {
     issueDuplicate: "Повторяет более раннюю запись",
     issueMissingAssumptions:
       "Файл должен содержать ровно одну запись допущений",
-    issueOutOfRange: (min, max) =>
-      `Должно быть целым числом от ${min} до ${max}`,
-    issueOutOfRangeSize: (min, max) =>
-      `Должно быть числом от ${min} до ${max} не более чем с одним знаком после запятой`,
   },
 
   sample: {
@@ -1215,9 +1207,9 @@ export const ru: Dictionary = {
     positiveAmount:
       "Введите сумму больше 0, например 500 000 (тысячи разделяйте пробелом)",
     intRange: (min: string, max: string) =>
-      `Введите целое число от ${min} до ${max}`,
+      `Должно быть целым числом от ${min} до ${max}`,
     sizeRange: (min: string, max: string) =>
-      `Введите число от ${min} до ${max} не более чем с одним знаком после запятой`,
+      `Должно быть числом от ${min} до ${max} не более чем с одним знаком после запятой`,
     datePlaceholder: "dd.mm.yyyy",
     defaultPlaceholder: "по умолчанию",
   },

@@ -4,6 +4,7 @@
 - Date: 2026-10-02
 - Source IDs: DR-177, DR-175 (P15 plan)
 - Extends: [0075](0075-input-rejection-gaps.md)
+- Amended by: [0259](0259-one-range-message.md) (one range message)
 
 ## Context
 
