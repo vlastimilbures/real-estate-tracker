@@ -188,7 +188,8 @@ export const dashboardScreens: Screen[] = [
         return [...new Set(styles)];
       });
       expect(ticks).toEqual(["11px ink-soft"]);
-      await ux.capture({ fullPage: false });
+      // The tooltip is the point of the shot: keep the pointer (#536).
+      await ux.capture({ fullPage: false, keepPointer: true });
     },
   ),
   defineScreen(
@@ -226,7 +227,8 @@ export const dashboardScreens: Screen[] = [
       await expect(tip.locator(".tt-reset")).toContainText(
         "Byt Lipova · 15.01.2029",
       );
-      await ux.capture({ fullPage: false });
+      // The tooltip is the point of the shot: keep the pointer (#536).
+      await ux.capture({ fullPage: false, keepPointer: true });
     },
   ),
   defineScreen(

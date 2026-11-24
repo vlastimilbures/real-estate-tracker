@@ -33,9 +33,11 @@ const AXE_TAGS = [
 /** `UX_AXE=0` skips the scan for a faster local proof; CI keeps it on (F-08). */
 const AXE = axeEnabled(process.env);
 
-/** Options of a shot. */
+/** Options of a shot. `keepPointer` leaves the mouse where the scene put it, for a scene
+ *  that hovers on purpose; otherwise the pointer is parked first (#536). */
 export interface ShotOpts {
   fullPage?: boolean;
+  keepPointer?: boolean;
 }
 
 export interface Ux {
@@ -98,6 +100,7 @@ export const test = base.extend<{ ux: Ux }>({
       const fullPage = opts?.fullPage ?? true;
       // A full-page shot taken while scrolled paints the sticky topbar mid-image.
       if (fullPage) await page.evaluate(() => window.scrollTo(0, 0));
+      if (!opts?.keepPointer) await parkPointer(page);
       await settle(page);
       await page.screenshot({
         path: path.join(dir, `${id}.png`),
@@ -166,6 +169,30 @@ export const test = base.extend<{ ux: Ux }>({
 });
 
 export { expect };
+
+/** Where the pointer rests during a shot: the sidebar's top-left padding, clear of every
+ *  control and chart. */
+const PARK = { x: 0, y: 0 };
+
+/**
+ * Move the mouse off whatever the scene last clicked or hovered, so a leftover hover (a
+ * chart tooltip on a bar that differs from run to run, a button's hover colour) never
+ * lands in a shot (#536). Fails when something interactive sits under the parking point,
+ * because then parking itself would hover it.
+ */
+async function parkPointer(page: Page) {
+  await page.mouse.move(PARK.x, PARK.y);
+  const hit = await page.evaluate(({ x, y }) => {
+    const el = document.elementFromPoint(x, y);
+    const live = el?.closest(
+      "a[href], button, input, select, textarea, summary, label, [role=button], " +
+        "[role=link], [role=tab], [role=menuitem], [title], .recharts-wrapper, " +
+        "[tabindex]:not([tabindex='-1'])",
+    );
+    return live ? live.outerHTML.slice(0, 120) : null;
+  }, PARK);
+  if (hit) throw new Error(`pointer parked on an interactive element: ${hit}`);
+}
 
 /** Wait for fonts and for Recharts' entry animation (JS-driven, not CSS) to finish. */
 export async function settle(page: Page) {
