@@ -4,15 +4,10 @@
 // so the memoized engine recomputes (CLAUDE.md §4).
 import { create } from "zustand";
 import { defaultOpen } from "../data/open";
-import { DataError, READ_FAILURES } from "../data/errors";
+import { DataError } from "../data/errors";
 import { toWriteError } from "./writeError";
 import { logFailure } from "../data/errorLog";
-import { clearSample, loadSample } from "../data/seed";
-import { confirmRestore, exportBackup } from "../data/backup";
-import { checkInputRules } from "./restoreRules";
-import { loadState, recordBackup } from "../data/repositories";
-import { localIsoDay } from "../lib/day";
-import { saveFile } from "../platform/saveFile";
+import { loadState } from "../data/repositories";
 import { createWriteRunner } from "./portfolio/writeRunner";
 import type { PortfolioState, StoreCtx } from "./portfolio/types";
 import {
@@ -23,6 +18,7 @@ import {
 } from "./portfolio/entityActions";
 import { propertyActions } from "./portfolio/propertyActions";
 import { scenarioActions } from "./portfolio/scenarioActions";
+import { wholeDbActions } from "./portfolio/wholeDb";
 export type {
   MutationResult,
   PropertyExtras,
@@ -31,7 +27,7 @@ export type {
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => {
   const runner = createWriteRunner(set, get);
-  const { enqueue, exclusive, replaceData, requireSql, writesSoFar } = runner;
+  const { enqueue } = runner;
   const ctx: StoreCtx = { set, get, ...runner };
 
   return {
@@ -105,73 +101,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     ...propertyActions(ctx),
     ...scenarioActions(ctx),
 
-    // Loaded on first use: keeps the CSV parser out of the startup bundle (P9).
-    previewCsv: (batch) =>
-      enqueue(async () => {
-        const { previewImport } = await import("../import/csvImport");
-        return previewImport(requireSql(), batch);
-      }),
-    importCsv: (batch) =>
-      exclusive("importCsv", async (sql) => {
-        const { importCsv } = await import("../import/csvImport");
-        return importCsv(sql, batch);
-      }),
-    restoreBackup: (backup) =>
-      replaceData("restore", (sql) =>
-        confirmRestore(sql, backup, checkInputRules),
-      ),
-    restoreAtStartup: async (backup) => {
-      // Only where the database migrated to head and only reading it failed
-      // (READ_FAILURES, ADR 0231); any other startup failure leaves a database a
-      // restore must not write to.
-      const code = get().startupError?.code;
-      if (get().status !== "error" || !code || !READ_FAILURES.has(code))
-        throw new Error(
-          "A restore at startup needs a ROW_INVALID or SCENARIO_INVALID failure",
-        );
-      const { safetyBackup } = await exclusive("restore", (sql) =>
-        confirmRestore(sql, backup, checkInputRules),
-      );
-      return {
-        safetyBackup,
-        ready: get().portfolio !== null && !get().readBackFailed,
-      };
-    },
-    continueAfterRestore: () => {
-      const s = get();
-      if (s.status !== "error" || s.portfolio === null || s.readBackFailed)
-        return;
-      set({ status: "ready", error: null, startupError: null });
-    },
-    clearSample: () => replaceData("clearSample", (sql) => clearSample(sql)),
-    loadSample: () => replaceData("loadSample", loadSample),
-    exportBackup: async () => {
-      const writesBefore = writesSoFar();
-      // One clock read names the file and stamps `exportedAt` (ADR 0149 §6).
-      const now = new Date();
-      const outcome = await exportBackup(requireSql(), {
-        now,
-        today: localIsoDay(now),
-        save: saveFile,
-      });
-      if (outcome.kind !== "cancelled") {
-        // The file is saved; failing to record it must not turn that into an error.
-        // "Last backup" is the time the file was saved, after the dialog (ADR 0110).
-        const at = new Date().toISOString();
-        await exclusive(
-          "bookkeeping",
-          (sql) =>
-            recordBackup(
-              sql,
-              at,
-              outcome.filename,
-              writesSoFar() === writesBefore,
-            ),
-          false,
-        ).catch((e: unknown) => logFailure("BACKUP", e));
-      }
-      return outcome;
-    },
+    ...wholeDbActions(ctx),
   };
 });
 

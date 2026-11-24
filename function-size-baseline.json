@@ -17,11 +17,6 @@
       "Async function 'migrate'": 98
     }
   },
-  "src/state/portfolioStore.ts": {
-    "lines": {
-      "Arrow function (usePortfolioStore: create)": 128
-    }
-  },
   "src/state/uiStore.ts": {
     "lines": {
       "Arrow function (useUiStore: create)": 138
