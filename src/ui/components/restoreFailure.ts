@@ -38,12 +38,19 @@ export function logBackupFailure(site: FailureSite, e: unknown): void {
   logFailure(site, e);
 }
 
+/** The texts a caller picks: `other` for a failure no typed text covers, `safety` for a
+ *  failed safety backup (default `t.backup.safetyBackupFailed`). */
+export interface FailureTexts {
+  other: (detail: string) => string;
+  safety?: ((detail: string) => string) | undefined;
+}
+
 /** The text for a failure, translated: a refused backup with its records listed
  *  separately. Pure, so it can run at render. */
 export function backupFailureText(
   t: Dictionary,
   e: unknown,
-  other: (detail: string) => string,
+  { other, safety = t.backup.safetyBackupFailed }: FailureTexts,
 ): { text: string; issues: RestoreIssue[] } {
   if (e instanceof RestoreError)
     return { text: restoreErrorText(t, e), issues: e.issues };
@@ -51,7 +58,7 @@ export function backupFailureText(
     return { text: t.sample.errNotEmpty, issues: [] };
   const text =
     e instanceof SafetyBackupError
-      ? t.backup.safetyBackupFailed(e.detail)
+      ? safety(e.detail)
       : e instanceof BackupExportError
         ? t.backup.exportFailed(e.detail)
         : e instanceof BackupReadError
@@ -66,8 +73,8 @@ export function backupFailure(
   t: Dictionary,
   e: unknown,
   site: FailureSite,
-  other: (detail: string) => string,
+  texts: FailureTexts,
 ): { text: string; issues: RestoreIssue[] } {
   logBackupFailure(site, e);
-  return backupFailureText(t, e, other);
+  return backupFailureText(t, e, texts);
 }

@@ -79,6 +79,40 @@ function ReadBackText({ t, notice }: { t: Dictionary; notice: Notice | null }) {
   );
 }
 
+/** A typed startup failure: its lines, then its details, headed as records when they
+ *  are. */
+function StartupText({
+  t,
+  error,
+  records,
+}: {
+  t: Dictionary;
+  error: StartupError;
+  records: boolean;
+}) {
+  return (
+    <>
+      {startupText(t, error).map((line) => (
+        <p key={line}>{line}</p>
+      ))}
+      {error.details.length > 0 && (
+        <div className="error-screen-details">
+          <span>
+            {records ? t.dataErrors.detailsHeading : t.boot.detailsOther}
+          </span>
+          <ul>
+            {error.details.map((d) => (
+              <li key={d}>
+                <code>{d}</code>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function BootFailure() {
   const t = useT();
   const startupError = usePortfolioStore((s) => s.startupError);
@@ -116,7 +150,9 @@ export function BootFailure() {
       const picked = await chooseRestoreFile();
       if (picked) setPending(picked);
     } catch (e) {
-      setFailure(backupFailure(t, e, "RESTORE", t.backup.errInvalid));
+      setFailure(
+        backupFailure(t, e, "RESTORE", { other: t.backup.errInvalid }),
+      );
     }
   }
 
@@ -136,7 +172,9 @@ export function BootFailure() {
       }
     } catch (e) {
       // One transaction: a failure before the commit leaves the data as it was.
-      setFailure(backupFailure(t, e, "RESTORE", t.backup.restoreFailed));
+      setFailure(
+        backupFailure(t, e, "RESTORE", { other: t.backup.restoreFailed }),
+      );
     } finally {
       setRestoring(false);
     }
@@ -184,27 +222,7 @@ export function BootFailure() {
         {readBackFailed ? (
           <ReadBackText t={t} notice={notice} />
         ) : startupError ? (
-          <>
-            {startupText(t, startupError).map((line) => (
-              <p key={line}>{line}</p>
-            ))}
-            {startupError.details.length > 0 && (
-              <div className="error-screen-details">
-                <span>
-                  {view.records
-                    ? t.dataErrors.detailsHeading
-                    : t.boot.detailsOther}
-                </span>
-                <ul>
-                  {startupError.details.map((d) => (
-                    <li key={d}>
-                      <code>{d}</code>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </>
+          <StartupText t={t} error={startupError} records={view.records} />
         ) : (
           error && <code>{describeWriteError(t, error).message}</code>
         )}

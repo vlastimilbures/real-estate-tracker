@@ -21,15 +21,15 @@ import { backupFailureText } from "./restoreFailure";
 function failureText(t: Dictionary, action: OutcomeAction, e: unknown): string {
   switch (action) {
     case "restore":
-      return backupFailureText(t, e, t.backup.restoreFailed).text;
+      return backupFailureText(t, e, { other: t.backup.restoreFailed }).text;
     case "pickBackup":
-      return backupFailureText(t, e, t.backup.errInvalid).text;
+      return backupFailureText(t, e, { other: t.backup.errInvalid }).text;
     case "backupExport":
-      return backupFailureText(t, e, t.backup.exportFailed).text;
+      return backupFailureText(t, e, { other: t.backup.exportFailed }).text;
     case "loadSample":
-      return backupFailureText(t, e, t.sample.loadFailed).text;
+      return backupFailureText(t, e, { other: t.sample.loadFailed }).text;
     case "import":
-      return backupFailureText(t, e, t.importPage.importFailed).text;
+      return backupFailureText(t, e, { other: t.importPage.importFailed }).text;
     case "xlsxExport":
       return t.xlsx.exportFailed(saveFailureDetail(e));
     case "revealFolder":

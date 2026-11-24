@@ -30,11 +30,6 @@
       "Function 'AppShell'": 213
     }
   },
-  "src/ui/components/BootFailure.tsx": {
-    "complexity": {
-      "Function 'BootFailure'": 17
-    }
-  },
   "src/ui/components/LoanEventRows.tsx": {
     "lines": {
       "Function 'LoanEventRows'": 239

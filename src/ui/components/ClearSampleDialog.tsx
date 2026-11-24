@@ -1,10 +1,7 @@
 import { useId, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
-import { SafetyBackupError } from "../../state/backup";
-import { logFailure } from "../../state/diagnostics";
-import { toWriteError } from "../../state/writeError";
-import { describeWriteError } from "../model/writeError";
+import { backupFailure } from "./restoreFailure";
 import { useT } from "../hooks/useT";
 import { Button } from "./primitives";
 import { Modal } from "./Modal";
@@ -37,13 +34,11 @@ function ClearSampleDialog({ onClose }: { onClose: () => void }) {
       // One transaction after a verified backup: only a failure before the commit lands
       // here, so the data is unchanged. A failed read-back after it resolves, and the app
       // stops on the error screen (ADR 0228).
-      logFailure("SAMPLE", e);
       setError(
-        e instanceof SafetyBackupError
-          ? t.sample.safetyBackupFailed(e.detail)
-          : t.sample.clearFailed(
-              describeWriteError(t, toWriteError(e)).message,
-            ),
+        backupFailure(t, e, "SAMPLE", {
+          safety: t.sample.safetyBackupFailed,
+          other: t.sample.clearFailed,
+        }).text,
       );
       setClearing(false);
     }
