@@ -59,7 +59,12 @@ function czkUnitFromRows(
 // none is given), which outranks any stylesheet rule, so the tick colour is a prop; the
 // tick size stays in charts.css (ADR 0114).
 const GRID = "var(--hairline)";
-const TICK = { fill: "var(--ink-soft)" };
+/** Shared axis props: the tick colour, no tick or axis lines. */
+const AXIS = {
+  tick: { fill: "var(--ink-soft)" },
+  tickLine: false,
+  axisLine: false,
+} as const;
 
 /** The chart surface's accessible name, set by the enclosing ChartCard (ADR 0114). */
 const SurfaceLabel = createContext<string | undefined>(undefined);
@@ -432,20 +437,11 @@ function ChartBody({
   const tick = unit ? (v: number) => fmtCzkAxisTick(v, unit) : pctAxis;
   const frame = [
     <CartesianGrid key="grid" stroke={GRID} vertical={false} />,
-    <XAxis
-      key="x"
-      dataKey="calendarYear"
-      tick={TICK}
-      tickLine={false}
-      axisLine={false}
-      minTickGap={28}
-    />,
+    <XAxis key="x" dataKey="calendarYear" {...AXIS} minTickGap={28} />,
     <YAxis
       key="y"
-      tick={TICK}
+      {...AXIS}
       tickFormatter={tick}
-      tickLine={false}
-      axisLine={false}
       width="auto"
       {...(pct && { domain: [0, "auto"] })}
     />,
