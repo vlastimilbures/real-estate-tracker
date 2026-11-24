@@ -9,7 +9,8 @@ import userEvent from "@testing-library/user-event";
 import { invoke } from "@tauri-apps/api/core";
 import { BackupRestorePanel } from "../BackupRestore";
 import { OutcomeRegions, ToastRegion } from "../../components/OutcomeRegions";
-import { usePortfolioStore } from "../../../state/portfolioStore";
+import { portfolioDb, usePortfolioStore } from "../../../state/portfolioStore";
+import type { Sql } from "../../../data/sql";
 import { useUiStore } from "../../../state/uiStore";
 import { logFailure } from "../../../state/diagnostics";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
@@ -17,11 +18,8 @@ import { en } from "../../../i18n/en";
 import { openMemorySql } from "../../../data/__tests__/betterSqlite";
 import { migrate } from "../../../data/migrations";
 import { seedIfEmpty } from "../../../data/seed";
-import {
-  BACKUP_MAX_BYTES,
-  exportToJson,
-  SafetyBackupError,
-} from "../../../data/backup";
+import { BACKUP_MAX_BYTES, exportToJson } from "../../../data/backup";
+import { success } from "../../../__tests__/support/result";
 
 vi.mock("../../../state/diagnostics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../state/diagnostics")>()),
@@ -91,10 +89,24 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+/** The store's own restore, on the seed as `wrap` returns it: the store logs a failure
+ *  where it catches it (ADR 0147, #467). */
+async function realRestore(wrap: (sql: Sql) => Sql = (sql) => sql) {
+  const sql = openMemorySql();
+  await migrate(sql);
+  await seedIfEmpty(sql);
+  portfolioDb.set(wrap(sql));
+  act(() =>
+    usePortfolioStore.setState({
+      restoreBackup: usePortfolioStore.getInitialState().restoreBackup,
+    }),
+  );
+}
+
 describe("Restore a backup (#118)", () => {
   it("asks first, then restores and names the safety backup", async () => {
     const text = await backupText();
-    restoreBackup.mockResolvedValue({ safetyBackup: "safety.json" });
+    restoreBackup.mockResolvedValue(success({ safetyBackup: "safety.json" }));
     await pick(text);
 
     expect(
@@ -169,8 +181,13 @@ describe("Restore a backup (#118)", () => {
     expect(restoreBackup).not.toHaveBeenCalled();
   });
   it("a safety backup that cannot be saved stops the restore and says so", async () => {
-    restoreBackup.mockRejectedValue(new SafetyBackupError("disk full"));
+    await realRestore();
     await pick(await backupText());
+    vi.mocked(invoke).mockImplementation((command: string) =>
+      command === "write_app_backup"
+        ? Promise.reject(new Error("disk full"))
+        : Promise.resolve(),
+    );
 
     await userEvent.click(
       await screen.findByRole("button", { name: en.backup.restoreNow }),
@@ -183,7 +200,10 @@ describe("Restore a backup (#118)", () => {
   });
 
   it("a failed restore says the data is unchanged and logs it", async () => {
-    restoreBackup.mockRejectedValue(new Error("database is locked"));
+    await realRestore((sql) => ({
+      ...sql,
+      transaction: () => Promise.reject(new Error("database is locked")),
+    }));
     await pick(await backupText());
 
     await userEvent.click(
@@ -201,7 +221,7 @@ describe("Restore a backup (#118)", () => {
   it("the safety backup name stays until dismissed (#136)", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    restoreBackup.mockResolvedValue({ safetyBackup: "safety.json" });
+    restoreBackup.mockResolvedValue(success({ safetyBackup: "safety.json" }));
     vi.mocked(invoke).mockResolvedValue({
       name: "backup.json",
       text: await backupText(),
@@ -223,7 +243,7 @@ describe("Restore a backup (#118)", () => {
   });
 
   it("a restore clears the last import report (#136)", async () => {
-    restoreBackup.mockResolvedValue({ safetyBackup: "safety.json" });
+    restoreBackup.mockResolvedValue(success({ safetyBackup: "safety.json" }));
     act(() => useUiStore.setState({ lastImport: { items: [] } as never }));
     await pick(await backupText());
     await userEvent.click(
@@ -235,11 +255,10 @@ describe("Restore a backup (#118)", () => {
 
   it("the other buttons wait while a restore runs (#136)", async () => {
     let finish: (v: { safetyBackup: string }) => void = () => {};
-    restoreBackup.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          finish = resolve;
-        }),
+    restoreBackup.mockImplementation(() =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }).then(success),
     );
     act(() =>
       usePortfolioStore.setState({

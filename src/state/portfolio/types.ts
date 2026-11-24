@@ -14,6 +14,7 @@ import type {
 import type { DataErrorCode, UpgradeStop } from "../../data/errors";
 import type { WriteError } from "../writeError";
 import type { Result } from "../result";
+import type { ActionError } from "../actionError";
 import type { BackupFile, ExportOutcome } from "../../data/backup";
 import type {
   CsvImportBatch,
@@ -136,37 +137,45 @@ export interface PortfolioState {
   // sample portfolio (ADR 0094)
   /** "Keep exploring": hide the sample banner for good. */
   dismissSampleBanner: () => Promise<MutationResult>;
-  // whole-database operations. They throw their own typed errors (CsvImportProblemsError,
-  // RestoreError, …) for the caller to show, and leave the banner `error` alone on a
-  // failure; one that replaces the data (restore, Clear sample, Load sample) clears it
-  // on success, since it described the old data (ADR 0154). They throw only before the
-  // commit: a failed read-back after it stops on the error screen (ADR 0228).
+  // whole-database operations. They never throw: a failure resolves as a typed
+  // ActionError for the caller to show, logged once where the store caught it (ADR 0147)
+  // unless it is the user's to fix (a refused backup or CSV plan, a non-empty
+  // portfolio). They leave the banner `error` alone on a failure; one that replaces the
+  // data (restore, Clear sample, Load sample) clears it on success, since it described
+  // the old data (ADR 0154). They fail only before the commit: a failed read-back after
+  // it stops on the error screen (ADR 0228).
   /** What a CSV import would add and update (ADR 0096). Reads only; queued behind
    *  pending writes so it sees their result. */
-  previewCsv: (batch: CsvImportBatch) => Promise<CsvImportPreview>;
+  previewCsv: (
+    batch: CsvImportBatch,
+  ) => Promise<Result<CsvImportPreview, WriteError>>;
   /** CSV import of the plan built now, in one transaction, then reload. A plan with
-   *  problems writes nothing: it refuses with CsvImportProblemsError (ADR 0229). */
-  importCsv: (batch: CsvImportBatch) => Promise<CsvImportReport>;
+   *  problems writes nothing: it fails with `planRefused` (ADR 0229). */
+  importCsv: (
+    batch: CsvImportBatch,
+  ) => Promise<Result<CsvImportReport, ActionError>>;
   /** Replace the data with a checked backup (after a safety backup), then reload. */
-  restoreBackup: (backup: BackupFile) => Promise<{ safetyBackup: string }>;
+  restoreBackup: (
+    backup: BackupFile,
+  ) => Promise<Result<{ safetyBackup: string }, ActionError>>;
   /** Restore from the startup error screen, only after a read failure (ROW_INVALID or
    *  SCENARIO_INVALID, ADR 0231): the database is open and at head there (ADR 0153).
    *  `ready` says the data loaded afterwards; the screen stays until
    *  `continueAfterRestore`, so the safety copy can be named. */
   restoreAtStartup: (
     backup: BackupFile,
-  ) => Promise<{ safetyBackup: string; ready: boolean }>;
+  ) => Promise<Result<{ safetyBackup: string; ready: boolean }, ActionError>>;
   /** Leave the startup error screen after a restore whose data loaded. */
   continueAfterRestore: () => void;
   /** Delete the sample properties (after a safety backup), then reload. */
-  clearSample: () => Promise<{ safetyBackup: string }>;
-  /** Load the sample into an empty portfolio, then reload (ADR 0112). Throws
-   *  SampleNotEmptyError when any property exists. */
-  loadSample: () => Promise<void>;
+  clearSample: () => Promise<Result<{ safetyBackup: string }, ActionError>>;
+  /** Load the sample into an empty portfolio, then reload (ADR 0112). Fails with
+   *  `sampleNotEmpty` when any property exists. */
+  loadSample: () => Promise<Result<void, ActionError>>;
   /** Write a backup file through the save dialog. Read-only, so not queued: an open
    *  dialog must not hold up edits. It reads one snapshot, so the file holds one database
    *  state (ADR 0132). A saved file is then recorded (ADR 0110). */
-  exportBackup: () => Promise<ExportOutcome>;
+  exportBackup: () => Promise<Result<ExportOutcome, ActionError>>;
 }
 
 export type SetState = StoreApi<PortfolioState>["setState"];

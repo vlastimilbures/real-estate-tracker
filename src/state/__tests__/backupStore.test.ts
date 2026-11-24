@@ -6,9 +6,9 @@ import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
 import { exportToJson } from "../../data/backup";
-import { BackupExportError } from "../../data/backup";
 import { SaveFileError, type SaveOutcome } from "../../platform/saveFile";
 import { invoke } from "@tauri-apps/api/core";
+import { unwrap } from "../../__tests__/support/result";
 
 const save = vi.hoisted(() => ({
   next: (): Promise<unknown> => Promise.resolve({ kind: "cancelled" }),
@@ -61,7 +61,7 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
   it("a saved export records the time and file and clears the flag", async () => {
     await edit();
     outcome({ kind: "saved", filename: "portfolio-backup-2026-09-12.json" });
-    await usePortfolioStore.getState().exportBackup();
+    unwrap(await usePortfolioStore.getState().exportBackup());
     expect(backup()).toEqual({
       lastAt: "2026-09-12T08:30:00.000Z",
       lastFile: "portfolio-backup-2026-09-12.json",
@@ -71,7 +71,7 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
 
   it("a downloaded export (browser build) counts too", async () => {
     outcome({ kind: "downloaded", filename: "portfolio-backup.json" });
-    await usePortfolioStore.getState().exportBackup();
+    unwrap(await usePortfolioStore.getState().exportBackup());
     expect(backup().lastFile).toBe("portfolio-backup.json");
   });
 
@@ -79,7 +79,7 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
     await edit();
     outcome({ kind: "cancelled" });
     const r = await usePortfolioStore.getState().exportBackup();
-    expect(r.kind).toBe("cancelled");
+    expect(r.ok && r.value.kind).toBe("cancelled");
     expect(backup()).toEqual({
       lastAt: null,
       lastFile: null,
@@ -90,9 +90,9 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
   it("a failed export records nothing", async () => {
     await edit();
     save.next = () => Promise.reject(new SaveFileError("disk full"));
-    await expect(usePortfolioStore.getState().exportBackup()).rejects.toThrow(
-      BackupExportError,
-    );
+    await expect(
+      usePortfolioStore.getState().exportBackup(),
+    ).resolves.toMatchObject({ ok: false, error: { kind: "backupExport" } });
     expect(backup()).toEqual({
       lastAt: null,
       lastFile: null,
@@ -119,8 +119,8 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
   it("a restore keeps the local last backup and marks the data as changed", async () => {
     const file = await exportToJson(db, new Date());
     outcome({ kind: "saved", filename: "local.json" });
-    await usePortfolioStore.getState().exportBackup();
-    await usePortfolioStore.getState().restoreBackup(file);
+    unwrap(await usePortfolioStore.getState().exportBackup());
+    unwrap(await usePortfolioStore.getState().restoreBackup(file));
     expect(backup()).toEqual({
       lastAt: "2026-09-12T08:30:00.000Z",
       lastFile: "local.json",
@@ -131,7 +131,7 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
   it("a restore clears the banner left by an earlier failed edit (#136)", async () => {
     const file = await exportToJson(db, new Date());
     usePortfolioStore.setState({ error: { kind: "other", message: "old" } });
-    await usePortfolioStore.getState().restoreBackup(file);
+    unwrap(await usePortfolioStore.getState().restoreBackup(file));
     expect(usePortfolioStore.getState().error).toBeNull();
   });
 
@@ -144,7 +144,7 @@ describe("portfolioStore backup recency (ADR 0110)", () => {
 
     await expect(
       usePortfolioStore.getState().restoreBackup({} as never),
-    ).rejects.toThrow();
+    ).resolves.toMatchObject({ ok: false });
     expect(usePortfolioStore.getState().replacing).toBe(0);
   });
 });

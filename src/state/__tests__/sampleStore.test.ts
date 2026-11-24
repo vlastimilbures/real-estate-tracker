@@ -6,10 +6,9 @@ import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
-import { SafetyBackupError } from "../../data/backup";
-import { SampleNotEmptyError } from "../../data/seed";
 import type { Sql } from "../../data/sql";
 import { invoke } from "@tauri-apps/api/core";
+import { unwrap } from "../../__tests__/support/result";
 
 const disk = { fail: false };
 vi.mocked(invoke).mockImplementation(() =>
@@ -75,7 +74,9 @@ describe("portfolioStore sample (ADR 0094)", () => {
     });
     // A banner from an earlier failed edit describes data that is gone (#136).
     usePortfolioStore.setState({ error: { kind: "other", message: "old" } });
-    const { safetyBackup } = await usePortfolioStore.getState().clearSample();
+    const { safetyBackup } = unwrap(
+      await usePortfolioStore.getState().clearSample(),
+    );
     expect(safetyBackup).toMatch(
       /^portfolio-before-clear-sample-\d{8}T\d{6}Z\.json$/,
     );
@@ -95,7 +96,7 @@ describe("portfolioStore sample (ADR 0094)", () => {
     disk.fail = true;
     await expect(
       usePortfolioStore.getState().clearSample(),
-    ).rejects.toBeInstanceOf(SafetyBackupError);
+    ).resolves.toMatchObject({ ok: false, error: { kind: "safetyBackup" } });
     expect(usePortfolioStore.getState().portfolio!.properties).toHaveLength(3);
     expect(usePortfolioStore.getState().sample.active).toBe(true);
   });
@@ -107,12 +108,12 @@ describe("portfolioStore sample (ADR 0094)", () => {
       await seedIfEmpty(db);
       return db;
     });
-    await usePortfolioStore.getState().clearSample();
+    unwrap(await usePortfolioStore.getState().clearSample());
     // Pretend a backup was exported after the clear.
     await db.execute("DELETE FROM app_meta WHERE key = 'changed_since_backup'");
 
     usePortfolioStore.setState({ error: { kind: "other", message: "old" } });
-    await usePortfolioStore.getState().loadSample();
+    unwrap(await usePortfolioStore.getState().loadSample());
 
     const s = usePortfolioStore.getState();
     expect(s.portfolio!.properties).toHaveLength(3);
@@ -130,7 +131,7 @@ describe("portfolioStore sample (ADR 0094)", () => {
     });
     await expect(
       usePortfolioStore.getState().loadSample(),
-    ).rejects.toBeInstanceOf(SampleNotEmptyError);
+    ).resolves.toMatchObject({ ok: false, error: { kind: "sampleNotEmpty" } });
     expect(usePortfolioStore.getState().portfolio!.properties).toHaveLength(3);
   });
 });

@@ -5,20 +5,22 @@ import type { IsoDate } from "../../engine";
 import type { Sql } from "../../data/sql";
 import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
 import { parseProperties, parseRents } from "../../import/csv";
-import { CsvImportProblemsError } from "../../import/csvImport";
 import { money } from "../../engine";
 import { importNow } from "./support/importNow";
 import { openSeeded } from "./support/openSeeded";
+import { unwrap } from "../../__tests__/support/result";
 
 describe("portfolioStore whole-database actions (DR-047)", () => {
   it("importCsv writes, reloads, and leaves the banner alone", async () => {
     await usePortfolioStore.getState().init(openSeeded);
     const before = usePortfolioStore.getState().portfolio!.properties.length;
-    const report = await importNow({
-      properties: parseProperties(
-        "name,purchase_date,purchase_price\nStore Import,2020-01-01,1000000",
-      ).rows,
-    });
+    const report = unwrap(
+      await importNow({
+        properties: parseProperties(
+          "name,purchase_date,purchase_price\nStore Import,2020-01-01,1000000",
+        ).rows,
+      }),
+    );
     expect(report.items.map((i) => i.kind)).toEqual(["add"]);
     expect(usePortfolioStore.getState().portfolio!.properties.length).toBe(
       before + 1,
@@ -35,7 +37,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
           "property_name,start_date,end_date,monthly_rent\nNope,2025-01-01,,1000",
         ).rows,
       }),
-    ).rejects.toBeInstanceOf(CsvImportProblemsError);
+    ).resolves.toMatchObject({ ok: false, error: { kind: "planRefused" } });
     expect(usePortfolioStore.getState().portfolio!.leases.length).toBe(
       before.leases.length,
     );
@@ -68,7 +70,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
         "name,purchase_date,purchase_price\nQueued Import,2020-01-01,1",
       ).rows,
     };
-    await usePortfolioStore.getState().previewCsv(batch);
+    unwrap(await usePortfolioStore.getState().previewCsv(batch));
     portfolioDb.set(slow);
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
     const a = usePortfolioStore.getState().addValuation({
@@ -95,7 +97,7 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
           "property_name,start_date,end_date,monthly_rent\nNope,2025-01-01,,1000",
         ).rows,
       }),
-    ).rejects.toBeInstanceOf(CsvImportProblemsError);
+    ).resolves.toMatchObject({ ok: false, error: { kind: "planRefused" } });
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
     const r = await usePortfolioStore.getState().addValuation({
       id: "after-fail",

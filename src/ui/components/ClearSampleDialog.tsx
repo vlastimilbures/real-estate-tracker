@@ -1,7 +1,7 @@
 import { useId, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
-import { backupFailure } from "./restoreFailure";
+import { backupFailureText } from "./restoreFailure";
 import { useT } from "../hooks/useT";
 import { Button } from "./primitives";
 import { Modal } from "./Modal";
@@ -25,23 +25,23 @@ function ClearSampleDialog({ onClose }: { onClose: () => void }) {
   async function handleConfirm() {
     setClearing(true);
     setError(null);
-    try {
-      const { safetyBackup } = await clearSample();
+    const cleared = await clearSample();
+    if (cleared.ok) {
       onClose();
       dataReplaced();
-      showSampleCleared(safetyBackup);
-    } catch (e) {
-      // One transaction after a verified backup: only a failure before the commit lands
-      // here, so the data is unchanged. A failed read-back after it resolves, and the app
-      // stops on the error screen (ADR 0228).
-      setError(
-        backupFailure(t, e, "SAMPLE", {
-          safety: t.sample.safetyBackupFailed,
-          other: t.sample.clearFailed,
-        }).text,
-      );
-      setClearing(false);
+      showSampleCleared(cleared.value.safetyBackup);
+      return;
     }
+    // One transaction after a verified backup: only a failure before the commit lands
+    // here, so the data is unchanged; the store logged it. A failed read-back after it
+    // succeeds, and the app stops on the error screen (ADR 0228).
+    setError(
+      backupFailureText(t, cleared.error, {
+        safety: t.sample.safetyBackupFailed,
+        other: t.sample.clearFailed,
+      }).text,
+    );
+    setClearing(false);
   }
 
   return (

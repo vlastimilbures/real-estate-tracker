@@ -5,29 +5,34 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ClearSampleButton } from "../ClearSampleDialog";
-import { usePortfolioStore } from "../../../state/portfolioStore";
+import { invoke } from "@tauri-apps/api/core";
+import { portfolioDb, usePortfolioStore } from "../../../state/portfolioStore";
 import { logFailure } from "../../../state/diagnostics";
 import { en } from "../../../i18n/en";
+import { openSeeded } from "../../../state/__tests__/support/openSeeded";
 
 vi.mock("../../../state/diagnostics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../state/diagnostics")>()),
   logFailure: vi.fn(),
 }));
 
-const clearSample = vi.fn();
+/** The real store on the seed, whose writes fail with `e` after the safety backup:
+ *  the store logs the failure where it catches it (ADR 0147, #467). */
+async function writesFail(e: Error) {
+  vi.mocked(invoke).mockResolvedValue(undefined);
+  const sql = await openSeeded();
+  await act(() => usePortfolioStore.getState().init(async () => sql));
+  portfolioDb.set({ ...sql, transaction: () => Promise.reject(e) });
+}
 
 beforeEach(() => {
   vi.mocked(logFailure).mockClear();
-  clearSample.mockReset();
-  act(() => {
-    usePortfolioStore.setState({ clearSample } as never);
-  });
 });
 
 describe("Clear sample failure (ADR 0147)", () => {
   it("is logged as SAMPLE (#122)", async () => {
     const e = new Error("disk full");
-    clearSample.mockRejectedValue(e);
+    await writesFail(e);
     render(<ClearSampleButton />);
 
     await userEvent.click(

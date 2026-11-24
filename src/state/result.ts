@@ -4,3 +4,8 @@
 export type Result<T, E> =
   | ({ ok: true } & ([T] extends [void] ? unknown : { value: T }))
   | { ok: false; error: E };
+
+/** A success carrying `value`; for `void`, the value is `undefined`. */
+export function success<T>(value: T): Result<T, never> {
+  return { ok: true, value } as Result<T, never>;
+}

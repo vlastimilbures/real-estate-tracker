@@ -17,6 +17,7 @@ import {
   type ImportItem,
 } from "../../../import/csvImport";
 import { en } from "../../../i18n/en";
+import { failure, success } from "../../../__tests__/support/result";
 
 const p = en.importPage;
 
@@ -82,7 +83,7 @@ describe("Import preview (ADR 0096)", () => {
   });
 
   it("a failed preview shows why Import is unavailable (#122)", async () => {
-    previewCsv.mockRejectedValue(new Error("disk I/O error"));
+    previewCsv.mockResolvedValue(failure(new Error("disk I/O error")));
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
 
@@ -95,7 +96,7 @@ describe("Import preview (ADR 0096)", () => {
   });
 
   it("the failed-preview banner cannot be dismissed (ADR 0175, #258 item 7)", async () => {
-    previewCsv.mockRejectedValue(new Error("disk I/O error"));
+    previewCsv.mockResolvedValue(failure(new Error("disk I/O error")));
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
 
@@ -108,8 +109,8 @@ describe("Import preview (ADR 0096)", () => {
   });
 
   it("the failed-preview error goes once the files are previewed again (ADR 0147)", async () => {
-    previewCsv.mockRejectedValueOnce(new Error("disk I/O error"));
-    previewCsv.mockResolvedValue(plan([add]));
+    previewCsv.mockResolvedValueOnce(failure(new Error("disk I/O error")));
+    previewCsv.mockResolvedValue(success(plan([add])));
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
     await screen.findByText(/could not be checked/);
@@ -123,10 +124,12 @@ describe("Import preview (ADR 0096)", () => {
   });
 
   it("imports a pure-add plan on the first press, with the chosen rows", async () => {
-    previewCsv.mockResolvedValue(plan([add]));
-    importCsv.mockResolvedValue({
-      items: [add],
-    });
+    previewCsv.mockResolvedValue(success(plan([add])));
+    importCsv.mockResolvedValue(
+      success({
+        items: [add],
+      }),
+    );
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
 
@@ -146,10 +149,12 @@ describe("Import preview (ADR 0096)", () => {
   });
 
   it("shows each update's changes and asks before overwriting", async () => {
-    previewCsv.mockResolvedValue(plan([add, update]));
-    importCsv.mockResolvedValue({
-      items: [add, update],
-    });
+    previewCsv.mockResolvedValue(success(plan([add, update])));
+    importCsv.mockResolvedValue(
+      success({
+        items: [add, update],
+      }),
+    );
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
 
@@ -171,7 +176,7 @@ describe("Import preview (ADR 0096)", () => {
   });
 
   it("Cancel on the confirm row imports nothing", async () => {
-    previewCsv.mockResolvedValue(plan([update]));
+    previewCsv.mockResolvedValue(success(plan([update])));
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
     await userEvent.click(
@@ -185,7 +190,7 @@ describe("Import preview (ADR 0096)", () => {
   });
 
   it("a change to the stored data closes the confirm row and previews again", async () => {
-    previewCsv.mockResolvedValue(plan([update]));
+    previewCsv.mockResolvedValue(success(plan([update])));
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
     await userEvent.click(
@@ -202,11 +207,11 @@ describe("Import preview (ADR 0096)", () => {
 
   it("a replaced file hides the old preview until the new one is shown (ADR 0240, #437)", async () => {
     let resolveNext: (value: CsvImportPreview) => void = () => {};
-    previewCsv.mockResolvedValueOnce(plan([add]));
+    previewCsv.mockResolvedValueOnce(success(plan([add])));
     previewCsv.mockReturnValueOnce(
       new Promise<CsvImportPreview>((resolve) => {
         resolveNext = resolve;
-      }),
+      }).then(success),
     );
     const { container } = renderWithPortfolio(<Import />, {
       route: "import",
@@ -234,11 +239,11 @@ describe("Import preview (ADR 0096)", () => {
 
   it("a change to the stored data hides the old preview until the new one is shown (ADR 0240, #437)", async () => {
     let resolveNext: (value: CsvImportPreview) => void = () => {};
-    previewCsv.mockResolvedValueOnce(plan([add]));
+    previewCsv.mockResolvedValueOnce(success(plan([add])));
     previewCsv.mockReturnValueOnce(
       new Promise<CsvImportPreview>((resolve) => {
         resolveNext = resolve;
-      }),
+      }).then(success),
     );
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
@@ -263,17 +268,19 @@ describe("Import preview (ADR 0096)", () => {
   });
 
   it("a plan with problems shows them and offers no import", async () => {
-    previewCsv.mockResolvedValue({
-      items: [],
-      problems: [
-        {
-          file: "rents",
-          row: 2,
-          field: "property_name",
-          problem: { code: "unknownProperty", value: "Nope" },
-        },
-      ],
-    });
+    previewCsv.mockResolvedValue(
+      success({
+        items: [],
+        problems: [
+          {
+            file: "rents",
+            row: 2,
+            field: "property_name",
+            problem: { code: "unknownProperty", value: "Nope" },
+          },
+        ],
+      }),
+    );
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(container);
     expect(await screen.findByText(p.errUnknownProperty("Nope"))).toBeTruthy();
@@ -287,7 +294,7 @@ describe("Import preview (ADR 0096)", () => {
   });
 
   it("a problem found at the click shows the problems and offers no import (ADR 0229)", async () => {
-    previewCsv.mockResolvedValue(plan([add]));
+    previewCsv.mockResolvedValue(success(plan([add])));
     const problems: CsvImportPreview["problems"] = [
       {
         file: "rents",
@@ -296,8 +303,8 @@ describe("Import preview (ADR 0096)", () => {
         problem: { code: "unknownProperty", value: "Nope" },
       },
     ];
-    importCsv.mockRejectedValue(
-      new CsvImportProblemsError({ items: [], problems }),
+    importCsv.mockResolvedValue(
+      failure(new CsvImportProblemsError({ items: [], problems })),
     );
     const { container } = renderWithPortfolio(<Import />, {
       route: "import",
@@ -326,10 +333,12 @@ describe("Import preview (ADR 0096)", () => {
 
 describe("Import report (ADR 0096)", () => {
   it("survives leaving the page and links to each property", async () => {
-    previewCsv.mockResolvedValue(plan([add]));
-    importCsv.mockResolvedValue({
-      items: [add],
-    });
+    previewCsv.mockResolvedValue(success(plan([add])));
+    importCsv.mockResolvedValue(
+      success({
+        items: [add],
+      }),
+    );
     const first = renderWithPortfolio(<Import />, { route: "import" });
     await choosePropertiesFile(first.container);
     await userEvent.click(

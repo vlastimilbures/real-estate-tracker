@@ -14,6 +14,7 @@ import {
   startupErrorOf,
   statusOf,
 } from "../../__tests__/support/status";
+import { unwrap } from "../../__tests__/support/result";
 
 vi.mocked(invoke).mockResolvedValue(undefined);
 
@@ -52,7 +53,9 @@ describe("restoring from the startup error screen", () => {
   });
 
   it("restores, saves the raw rows first, and continues into the app", async () => {
-    const { safetyBackup, ready } = await store().restoreAtStartup(good);
+    const { safetyBackup, ready } = unwrap(
+      await store().restoreAtStartup(good),
+    );
 
     expect(safetyBackup).toMatch(/^portfolio-before-restore-.*\.json$/);
     expect(ready).toBe(true);
@@ -73,7 +76,7 @@ describe("restoring from the startup error screen", () => {
   it("a restore whose read-back fails stops on the read-back screen (ADR 0228)", async () => {
     portfolioDb.set(reloadFails(db));
 
-    const { ready } = await store().restoreAtStartup(good);
+    const { ready } = unwrap(await store().restoreAtStartup(good));
 
     expect(ready).toBe(false);
     expect(readBackFailedOf(store())).toBe(true);
@@ -96,13 +99,19 @@ describe("restoring from the startup error screen", () => {
         startup: { code: "DB_INTEGRITY", details: [] },
       },
     });
-    await expect(store().restoreAtStartup(good)).rejects.toThrow(/ROW_INVALID/);
+    await expect(store().restoreAtStartup(good)).resolves.toMatchObject({
+      ok: false,
+      error: { kind: "other", message: expect.stringMatching(/ROW_INVALID/) },
+    });
     expect(vi.mocked(invoke)).not.toHaveBeenCalled();
   });
 
   it("is refused once the app is running, even with a stale ROW_INVALID", async () => {
     usePortfolioStore.setState({ status: { kind: "ready" } });
-    await expect(store().restoreAtStartup(good)).rejects.toThrow(/ROW_INVALID/);
+    await expect(store().restoreAtStartup(good)).resolves.toMatchObject({
+      ok: false,
+      error: { kind: "other", message: expect.stringMatching(/ROW_INVALID/) },
+    });
     expect(vi.mocked(invoke)).not.toHaveBeenCalled();
   });
 });

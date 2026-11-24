@@ -8,8 +8,9 @@ import { bootView } from "../../ui/model/bootFailure";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
-import { exportToJson, RestoreError, type BackupFile } from "../../data/backup";
+import { exportToJson, type BackupFile } from "../../data/backup";
 import { startupErrorOf, statusOf } from "../../__tests__/support/status";
+import { unwrap } from "../../__tests__/support/result";
 
 vi.mocked(invoke).mockResolvedValue(undefined);
 
@@ -58,7 +59,9 @@ describe("startup without the assumptions row", () => {
   });
 
   it("a valid backup restores and continues into the app", async () => {
-    const { safetyBackup, ready } = await store().restoreAtStartup(good);
+    const { safetyBackup, ready } = unwrap(
+      await store().restoreAtStartup(good),
+    );
 
     expect(safetyBackup).toMatch(/^portfolio-before-restore-.*\.json$/);
     expect(ready).toBe(true);
@@ -84,9 +87,15 @@ describe("startup without the assumptions row", () => {
     };
 
     const refused = store().restoreAtStartup(bad);
-    await expect(refused).rejects.toBeInstanceOf(RestoreError);
-    await expect(refused).rejects.toMatchObject({
-      issues: [{ table: "assumptions", rule: "MISSING_ASSUMPTIONS" }],
+    await expect(refused).resolves.toMatchObject({
+      ok: false,
+      error: { kind: "restoreRefused" },
+    });
+    await expect(refused).resolves.toMatchObject({
+      ok: false,
+      error: {
+        issues: [{ table: "assumptions", rule: "MISSING_ASSUMPTIONS" }],
+      },
     });
 
     expect(await snapshot()).toEqual(before);

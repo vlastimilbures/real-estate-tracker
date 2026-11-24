@@ -15,16 +15,13 @@ import {
   type ParsedValuationRow,
   type ParsedRentRow,
   type ParsedMortgageRow,
-  CsvImportProblemsError,
   type CsvImportPreview,
 } from "../../state/csv";
 import { useUiStore } from "../../state/uiStore";
-import { logFailure } from "../../state/diagnostics";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import { importCounts } from "../model/importPreview";
-import { toWriteError } from "../../state/writeError";
-import { toActionError } from "../../state/actionError";
+import type { WriteError } from "../../state/writeError";
 import { useToast } from "../hooks/useToast";
 import { useBusyFocus, type BusyFocusTarget } from "../hooks/useBusyFocus";
 
@@ -70,7 +67,7 @@ export function Import() {
   const [preview, setPreview] = useState<CsvImportPreview | null>(null);
   // Why the last preview failed (ADR 0147); translated at render, like the import failure's notice.
   const [previewFailure, setPreviewFailure] = useState<{
-    error: unknown;
+    error: WriteError;
   } | null>(null);
   const [confirming, setConfirming] = useState(false);
   const { showToast } = useToast();
@@ -126,18 +123,15 @@ export function Import() {
   useEffect(() => {
     if (!hasAnyFile || !allValid) return;
     let current = true;
-    previewCsv(batch).then(
-      (p) => {
-        if (current) setPreview(p);
-      },
-      (e: unknown) => {
-        logFailure("IMPORT", e);
-        if (current) {
-          setPreview(null);
-          setPreviewFailure({ error: e });
-        }
-      },
-    );
+    // The store logs a failure (ADR 0147).
+    void previewCsv(batch).then((previewed) => {
+      if (!current) return;
+      if (previewed.ok) setPreview(previewed.value);
+      else {
+        setPreview(null);
+        setPreviewFailure({ error: previewed.error });
+      }
+    });
     return () => {
       current = false;
     };
@@ -161,28 +155,28 @@ export function Import() {
     setImporting(true);
     dismissFailure();
     try {
-      const report = await importCsv(batch);
-      setLastImport(report);
-      // Imported: clear the files so a second click cannot import them again (UX-038).
-      setProperties(null);
-      setValuations(null);
-      setRents(null);
-      setMortgages(null);
-      showToast(t.importPage.importComplete);
-    } catch (e) {
+      const imported = await importCsv(batch);
+      if (imported.ok) {
+        setLastImport(imported.value);
+        // Imported: clear the files so a second click cannot import them again (UX-038).
+        setProperties(null);
+        setValuations(null);
+        setRents(null);
+        setMortgages(null);
+        showToast(t.importPage.importComplete);
+      }
       // Import is one transaction: only a failure before the commit lands here, so
-      // nothing was written (DR-023). A failed read-back after it resolves, and the app
+      // nothing was written (DR-023). A failed read-back after it succeeds, and the app
       // stops on the error screen (ADR 0228).
-      if (e instanceof CsvImportProblemsError) {
+      else if (imported.error.kind === "planRefused") {
         // The plan built at the click has problems: show them as the preview does,
         // which also disables Import (ADR 0229 §2).
-        setPreview(e.preview);
+        setPreview(imported.error.preview);
       } else {
-        logFailure("IMPORT", e);
-        // A constraint the CSV checks missed (a generated-id clash was one, now fixed: DR-137)
-        // gets the translated wording, not SQLite's text. In the notice, so it reaches the
-        // owner on any page (ADR 0154).
-        setFailure("import", toActionError(e));
+        // Logged by the store. A constraint the CSV checks missed (a generated-id clash
+        // was one, now fixed: DR-137) gets the translated wording, not SQLite's text. In
+        // the notice, so it reaches the owner on any page (ADR 0154).
+        setFailure("import", imported.error);
       }
     } finally {
       setImporting(false);
@@ -243,8 +237,7 @@ export function Import() {
             <div className="mb-s3">
               <ErrorBanner
                 message={t.importPage.previewFailed(
-                  describeWriteError(t, toWriteError(previewFailure.error))
-                    .message,
+                  describeWriteError(t, previewFailure.error).message,
                 )}
               />
             </div>

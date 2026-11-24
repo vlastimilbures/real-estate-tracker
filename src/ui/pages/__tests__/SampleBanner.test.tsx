@@ -15,6 +15,7 @@ import { useUiStore } from "../../../state/uiStore";
 import { SafetyBackupError } from "../../../data/backup";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
+import { failure, success } from "../../../__tests__/support/result";
 
 const empty = {
   properties: [],
@@ -98,7 +99,7 @@ describe("Clear sample dialog (ADR 0094)", () => {
   it("clears, names the safety backup and opens the Dashboard", async () => {
     const clearSample = vi
       .fn()
-      .mockResolvedValue({ safetyBackup: "before.json" });
+      .mockResolvedValue(success({ safetyBackup: "before.json" }));
     act(() => {
       usePortfolioStore.setState({ clearSample });
       useUiStore.setState({ route: "properties" });
@@ -143,7 +144,7 @@ describe("Clear sample dialog (ADR 0094)", () => {
         portfolio,
         sample: { active: true, dismissed: false },
       });
-      return Promise.resolve();
+      return Promise.resolve(success(undefined));
     });
     act(() => {
       usePortfolioStore.setState({
@@ -172,7 +173,7 @@ describe("Clear sample dialog (ADR 0094)", () => {
   it("shows a failed safety backup and keeps the dialog open", async () => {
     const clearSample = vi
       .fn()
-      .mockRejectedValue(new SafetyBackupError("disk full"));
+      .mockResolvedValue(failure(new SafetyBackupError("disk full")));
     act(() => usePortfolioStore.setState({ clearSample }));
     render(<Dashboard />);
     await userEvent.click(
@@ -191,8 +192,8 @@ describe("Clear sample dialog (ADR 0094)", () => {
     let fail: (e: Error) => void = () => {};
     const clearSample = vi.fn(
       () =>
-        new Promise<never>((_resolve, reject) => {
-          fail = reject;
+        new Promise<ReturnType<typeof failure>>((resolve) => {
+          fail = (e) => resolve(failure(e));
         }),
     );
     act(() => usePortfolioStore.setState({ clearSample }));

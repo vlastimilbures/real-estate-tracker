@@ -8,10 +8,12 @@ import userEvent from "@testing-library/user-event";
 import { invoke } from "@tauri-apps/api/core";
 import { BackupRestorePanel } from "../BackupRestore";
 import { OutcomeRegions } from "../../components/OutcomeRegions";
-import { usePortfolioStore } from "../../../state/portfolioStore";
+import { portfolioDb, usePortfolioStore } from "../../../state/portfolioStore";
 import { logFailure } from "../../../state/diagnostics";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
+import { openMemorySql } from "../../../data/__tests__/betterSqlite";
+import { migrate } from "../../../data/migrations";
 
 vi.mock("../../../state/diagnostics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../state/diagnostics")>()),
@@ -38,7 +40,16 @@ beforeEach(() => {
 describe("Backup & Restore failures (ADR 0147)", () => {
   it("a failed sample load is logged as SAMPLE (#122)", async () => {
     const e = new Error("disk full");
-    loadSample.mockRejectedValue(e);
+    // The real store on an empty database, whose write fails with `e`: the store logs
+    // the failure where it catches it (ADR 0147, #467).
+    const sql = openMemorySql();
+    await migrate(sql);
+    portfolioDb.set({ ...sql, transaction: () => Promise.reject(e) });
+    act(() =>
+      usePortfolioStore.setState({
+        loadSample: usePortfolioStore.getInitialState().loadSample,
+      }),
+    );
     render(
       <>
         <BackupRestorePanel />

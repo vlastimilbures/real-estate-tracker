@@ -89,7 +89,8 @@ export function BackupRestorePanel() {
   const replacing = restoring || loadingSample || queued;
 
   /** Report a failure in the notice, which follows the owner to any page; a refused
-   *  backup keeps its records there, anything else is logged under `site` (ADR 0154). */
+   *  backup keeps its records there, anything else is logged under `site` (ADR 0154).
+   *  The store's actions log their own failures. */
   function fail(e: unknown, site: FailureSite, action: OutcomeAction) {
     logBackupFailure(site, e);
     setFailure(action, toActionError(e));
@@ -99,13 +100,13 @@ export function BackupRestorePanel() {
     setExporting(true);
     dismissFailure();
     try {
-      const outcome = await exportBackup();
+      const exported = await exportBackup();
+      const outcome = exported.ok ? exported.value : null;
       // A cancelled save dialog is the user's own choice: no toast (UX-001).
-      if (outcome.kind === "saved")
+      if (!exported.ok) setFailure("backupExport", exported.error);
+      else if (outcome?.kind === "saved")
         showToast(t.backup.savedTo(outcome.filename));
-      else if (outcome.kind === "downloaded") showToast(t.backup.downloaded);
-    } catch (e) {
-      fail(e, "BACKUP", "backupExport");
+      else if (outcome?.kind === "downloaded") showToast(t.backup.downloaded);
     } finally {
       setExporting(false);
     }
@@ -116,11 +117,11 @@ export function BackupRestorePanel() {
     setLoadingSample(true);
     dismissFailure();
     try {
-      await loadSample();
-      dataReplaced();
-      showToast(t.sample.loaded);
-    } catch (e) {
-      fail(e, "SAMPLE", "loadSample");
+      const loaded = await loadSample();
+      if (loaded.ok) {
+        dataReplaced();
+        showToast(t.sample.loaded);
+      } else setFailure("loadSample", loaded.error);
     } finally {
       setLoadingSample(false);
     }
@@ -153,16 +154,17 @@ export function BackupRestorePanel() {
     setRestoring(true);
     dismissFailure();
     try {
-      const { safetyBackup } = await restoreBackup(pendingBackup.backup);
-      setPendingBackup(null);
-      // The only pointer to the undo copy: a notice until dismissed (ADR 0154).
-      dataReplaced();
-      setNotice({ kind: "restored", file: safetyBackup });
-    } catch (e) {
+      const restored = await restoreBackup(pendingBackup.backup);
+      if (restored.ok) {
+        setPendingBackup(null);
+        // The only pointer to the undo copy: a notice until dismissed (ADR 0154).
+        dataReplaced();
+        setNotice({ kind: "restored", file: restored.value.safetyBackup });
+      }
       // One transaction: only a failure before the commit lands here, so the current
-      // data is unchanged (DR-019). A failed read-back after it resolves, and the app
+      // data is unchanged (DR-019). A failed read-back after it succeeds, and the app
       // stops on the error screen (ADR 0228).
-      fail(e, "RESTORE", "restore");
+      else setFailure("restore", restored.error);
     } finally {
       setRestoring(false);
     }

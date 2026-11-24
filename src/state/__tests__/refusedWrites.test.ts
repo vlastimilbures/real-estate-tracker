@@ -115,11 +115,11 @@ describe("refused writes are kept for the screen (ADR 0255)", () => {
       store().clearSample(),
       store().loadSample(),
     ]);
-    expect(settled.map((s) => s.status)).toEqual([
-      "rejected",
-      "rejected",
-      "rejected",
-      "rejected",
+    expect(settled).toMatchObject([
+      { value: { ok: false } },
+      { value: { ok: false } },
+      { value: { ok: false } },
+      { value: { ok: false } },
     ]);
     expect(refusedWritesOf(store())).toEqual([
       "importCsv",

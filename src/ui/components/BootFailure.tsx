@@ -19,7 +19,7 @@ import { Button } from "./primitives";
 import { describeWriteError } from "../model/writeError";
 import { chooseRestoreFile, type PickedBackup } from "../../state/backup";
 import { IssueTable, RestoreConfirm } from "./RestoreConfirm";
-import { backupFailure } from "./restoreFailure";
+import { backupFailure, backupFailureText } from "./restoreFailure";
 import {
   bootView,
   fileName,
@@ -191,7 +191,18 @@ export function BootFailure() {
     setRestoring(true);
     setFailure(null);
     try {
-      const { safetyBackup, ready } = await restoreAtStartup(pending.backup);
+      const restored = await restoreAtStartup(pending.backup);
+      if (!restored.ok) {
+        // One transaction: a failure before the commit leaves the data as it was; the
+        // store logged it.
+        setFailure(
+          backupFailureText(t, restored.error, {
+            other: t.backup.restoreFailed,
+          }),
+        );
+        return;
+      }
+      const { safetyBackup, ready } = restored.value;
       setPending(null);
       if (ready) setRestored(safetyBackup);
       else {
@@ -200,11 +211,6 @@ export function BootFailure() {
         dataReplaced();
         setNotice({ kind: "restored", file: safetyBackup });
       }
-    } catch (e) {
-      // One transaction: a failure before the commit leaves the data as it was.
-      setFailure(
-        backupFailure(t, e, "RESTORE", { other: t.backup.restoreFailed }),
-      );
     } finally {
       setRestoring(false);
     }

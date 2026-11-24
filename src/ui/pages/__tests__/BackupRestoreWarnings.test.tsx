@@ -15,6 +15,7 @@ import { openMemorySql } from "../../../data/__tests__/betterSqlite";
 import { migrate } from "../../../data/migrations";
 import { seedIfEmpty } from "../../../data/seed";
 import { exportToJson } from "../../../data/backup";
+import { success } from "../../../__tests__/support/result";
 
 const restoreBackup = vi.fn();
 
@@ -50,7 +51,7 @@ describe("Restore with out-of-range values (ADR 0148)", () => {
   it("lists the values and asks to restore anyway (#133)", async () => {
     const text = await legacyBackupText();
     vi.mocked(invoke).mockResolvedValue({ name: "old.json", text });
-    restoreBackup.mockResolvedValue({ safetyBackup: "safety.json" });
+    restoreBackup.mockResolvedValue(success({ safetyBackup: "safety.json" }));
     render(<BackupRestorePanel />);
 
     await userEvent.click(
@@ -79,7 +80,7 @@ describe("Restore with out-of-range values (ADR 0148)", () => {
       "UPDATE properties SET purchase_date = '1899-12-31' WHERE id = 'javorova'",
     );
     vi.mocked(invoke).mockResolvedValue({ name: "old.json", text });
-    restoreBackup.mockResolvedValue({ safetyBackup: "safety.json" });
+    restoreBackup.mockResolvedValue(success({ safetyBackup: "safety.json" }));
     render(<BackupRestorePanel />);
 
     await userEvent.click(

@@ -13,6 +13,7 @@ import { useUiStore } from "../../../state/uiStore";
 import { SampleNotEmptyError } from "../../../data/seed";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
+import { failure, success } from "../../../__tests__/support/result";
 
 const EMPTY = {
   properties: [],
@@ -70,7 +71,7 @@ describe("Settings → Backup: load sample (ADR 0112)", () => {
         portfolio,
         sample: { active: true, dismissed: false },
       });
-      return Promise.resolve();
+      return Promise.resolve(success(undefined));
     });
     act(() => usePortfolioStore.setState({ loadSample }));
     render(
@@ -91,7 +92,9 @@ describe("Settings → Backup: load sample (ADR 0112)", () => {
   });
 
   it("shows the refusal when the portfolio is no longer empty", async () => {
-    const loadSample = vi.fn(() => Promise.reject(new SampleNotEmptyError()));
+    const loadSample = vi.fn(() =>
+      Promise.resolve(failure(new SampleNotEmptyError())),
+    );
     act(() => usePortfolioStore.setState({ loadSample }));
     render(
       <>

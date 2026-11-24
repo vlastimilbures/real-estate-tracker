@@ -14,6 +14,7 @@ import { portfolio } from "../../../engine/__tests__/support/seed";
 import { propertiesTemplate } from "../../../import/csv";
 import { type CsvImportPreview, type ImportItem } from "../../../state/csv";
 import { en } from "../../../i18n/en";
+import { success } from "../../../__tests__/support/result";
 
 const p = en.importPage;
 const issue = en.propertyDetail.eventIssue;
@@ -53,9 +54,11 @@ const importCsv = vi.fn();
 beforeEach(() => {
   previewCsv.mockReset();
   importCsv.mockReset();
-  importCsv.mockResolvedValue({
-    items: [replacing],
-  });
+  importCsv.mockResolvedValue(
+    success({
+      items: [replacing],
+    }),
+  );
   act(() => {
     usePortfolioStore.setState({ importCsv, previewCsv } as never);
   });
@@ -74,22 +77,24 @@ async function chooseFile(container: HTMLElement) {
 
 describe("Import and stored loan events (ADR 0160)", () => {
   it("a refusal names the stored event and its date, not a CSV column", async () => {
-    previewCsv.mockResolvedValue({
-      items: [],
-      problems: [
-        {
-          file: "mortgages",
-          row: 2,
-          field: "",
-          problem: {
-            code: "storedEvent",
-            list: "prepayments",
-            date: "2045-01-17",
-            rule: "EVENT_AFTER_SCHEDULE_END",
+    previewCsv.mockResolvedValue(
+      success({
+        items: [],
+        problems: [
+          {
+            file: "mortgages",
+            row: 2,
+            field: "",
+            problem: {
+              code: "storedEvent",
+              list: "prepayments",
+              date: "2045-01-17",
+              rule: "EVENT_AFTER_SCHEDULE_END",
+            },
           },
-        },
-      ],
-    });
+        ],
+      }),
+    );
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);
     expect(
@@ -105,7 +110,7 @@ describe("Import and stored loan events (ADR 0160)", () => {
   });
 
   it("an added block lists the events it stops and asks before importing", async () => {
-    previewCsv.mockResolvedValue(plan([replacing]));
+    previewCsv.mockResolvedValue(success(plan([replacing])));
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);
 
@@ -138,7 +143,7 @@ describe("Import and stored loan events (ADR 0160)", () => {
   });
 
   it("Cancel on the replace confirmation imports nothing", async () => {
-    previewCsv.mockResolvedValue(plan([replacing]));
+    previewCsv.mockResolvedValue(success(plan([replacing])));
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);
     await userEvent.click(
@@ -152,7 +157,7 @@ describe("Import and stored loan events (ADR 0160)", () => {
   });
 
   it("a portfolio change closes the replace confirmation (#286)", async () => {
-    previewCsv.mockResolvedValue(plan([replacing]));
+    previewCsv.mockResolvedValue(success(plan([replacing])));
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);
     await userEvent.click(
@@ -166,7 +171,7 @@ describe("Import and stored loan events (ADR 0160)", () => {
   });
 
   it("with updates too, the confirm row names both and keeps the overwrite button", async () => {
-    previewCsv.mockResolvedValue(plan([replacing, update]));
+    previewCsv.mockResolvedValue(success(plan([replacing, update])));
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);
     await userEvent.click(
@@ -182,7 +187,7 @@ describe("Import and stored loan events (ADR 0160)", () => {
 
   it("a block without effect is noted and imports on the first press", async () => {
     previewCsv.mockResolvedValue(
-      plan([{ ...block, date: "2021-01-07", noEffect: true }]),
+      success(plan([{ ...block, date: "2021-01-07", noEffect: true }])),
     );
     const { container } = renderWithPortfolio(<Import />, { route: "import" });
     await chooseFile(container);

@@ -18,7 +18,6 @@ export {
   type ParsedMortgageRow,
 } from "../import/csv";
 export {
-  CsvImportProblemsError,
   type CsvFile,
   type CsvImportPreview,
   type CsvImportProblem,

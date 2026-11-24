@@ -20,6 +20,7 @@ import {
   startupErrorOf,
   statusOf,
 } from "../../__tests__/support/status";
+import { unwrap } from "../../__tests__/support/result";
 
 vi.mocked(invoke).mockResolvedValue(undefined);
 // An export's save dialog, saved: only the export test reaches it.
@@ -152,9 +153,9 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
       action: "a restore",
       run: async () => {
         const file = await exportToJson(db, new Date());
-        await store().clearSample();
+        unwrap(await store().clearSample());
         portfolioDb.set(reloadFails(db));
-        const { safetyBackup } = await store().restoreBackup(file);
+        const { safetyBackup } = unwrap(await store().restoreBackup(file));
         expect(safetyBackup).toMatch(/^portfolio-before-restore-.*\.json$/);
         expect(await propertiesOnDisk()).toBe(3);
       },
@@ -163,7 +164,7 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
       action: "clearing the sample",
       run: async () => {
         portfolioDb.set(reloadFails(db));
-        const { safetyBackup } = await store().clearSample();
+        const { safetyBackup } = unwrap(await store().clearSample());
         expect(safetyBackup).toMatch(
           /^portfolio-before-clear-sample-.*\.json$/,
         );
@@ -173,9 +174,9 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
     {
       action: "loading the sample",
       run: async () => {
-        await store().clearSample();
+        unwrap(await store().clearSample());
         portfolioDb.set(reloadFails(db));
-        await store().loadSample();
+        unwrap(await store().loadSample());
         expect(await propertiesOnDisk()).toBe(3);
       },
     },
@@ -183,11 +184,13 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
       action: "a CSV import",
       run: async () => {
         portfolioDb.set(reloadFails(db));
-        const report = await importNow({
-          properties: parseProperties(
-            "name,purchase_date,purchase_price\nStore Import,2020-01-01,1000000",
-          ).rows,
-        });
+        const report = unwrap(
+          await importNow({
+            properties: parseProperties(
+              "name,purchase_date,purchase_price\nStore Import,2020-01-01,1000000",
+            ).rows,
+          }),
+        );
         expect(report.items.map((i) => i.kind)).toEqual(["add"]);
         expect(await propertiesOnDisk()).toBe(4);
       },
@@ -294,7 +297,10 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
     return { sql, writes };
   }
   const refused = (p: Promise<unknown>) =>
-    expect(p).rejects.toThrow("Database not initialised");
+    expect(p).resolves.toMatchObject({
+      ok: false,
+      error: { kind: "other", message: "Database not initialised" },
+    });
 
   it.each([
     {
@@ -312,14 +318,14 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
       action: "a restore",
       prepare: async () => {
         const file = await exportToJson(db, new Date());
-        await store().clearSample();
+        unwrap(await store().clearSample());
         return () => refused(store().restoreBackup(file));
       },
     },
     {
       action: "loading the sample",
       prepare: async () => {
-        await store().clearSample();
+        unwrap(await store().clearSample());
         return () => refused(store().loadSample());
       },
     },
@@ -327,7 +333,7 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
       // The export itself reads only; recording it is the queued write.
       action: "recording an export",
       prepare: async () => async () => {
-        expect((await store().exportBackup()).kind).toBe("saved");
+        expect(unwrap(await store().exportBackup()).kind).toBe("saved");
         expect(logged()).toContain("BACKUP");
       },
     },

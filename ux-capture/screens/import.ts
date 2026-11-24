@@ -105,7 +105,11 @@ export const importScreens: Screen[] = [
           /* @vite-ignore */ store
         )) as typeof import("../../src/state/portfolioStore");
         usePortfolioStore.setState({
-          previewCsv: () => Promise.reject(new Error("disk I/O error")),
+          previewCsv: () =>
+            Promise.resolve({
+              ok: false,
+              error: { kind: "other", message: "disk I/O error" },
+            }),
         });
       });
       await ux.page
