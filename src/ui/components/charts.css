@@ -131,9 +131,9 @@ table.chart-table tbody th.sticky-col {
 }
 /* 11 px --ink-soft: 5.32:1 light, 6.29:1 dark on --surface (ADR 0114). Recharts 3 draws
    the tick labels in their own layer, outside .recharts-cartesian-axis-tick, so the rule
-   targets the label's own class (the old descendant rule matched nothing). */
+   targets the label's own class (the old descendant rule matched nothing). The colour is
+   the axes' `tick` prop in charts.tsx: Recharts 3.11 sets it as an inline style. */
 .recharts-cartesian-axis-tick-value {
-  fill: var(--ink-soft);
   font-size: var(--fs-11);
 }
 .chart-tooltip {
