@@ -61,8 +61,10 @@ variables to `0`. A bad value stops the diff with exit 2.
 No screen is known to flake at the default tolerance (#536), so a screen that differs
 from the base is a change to explain. Measured on 2026-11-24 (en, light, 1280x800, 101
 screens, two runs of one commit): 0 px differ at the default tolerance; at tolerance 0,
-90-keyboard-focus-tab20 differs by up to 96 px of 1 or 2 levels in the Nominal/Real
-toggle under the blurred topbar, which the default tolerance ignores.
+the 90-keyboard-focus tab shots differ by 1 or 2 levels (tab20 up to 111 px, in the
+Nominal/Real toggle under the blurred topbar; tab12 41 px; tab8 2 px), which the default
+tolerance ignores. Measured at en/light/1280x800; at `min`, only the #536 screens were run
+twice.
 
 A click that scrolls the window right before a shot can flake the shot: a sticky element
 (the sidebar, a table's pinned column) rests at a fractional offset at the scrolled
