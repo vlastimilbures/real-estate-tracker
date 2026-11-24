@@ -53,7 +53,7 @@ describe("Financing form bounds (rendered)", () => {
     await save();
     expect(saveMortgageBlock).not.toHaveBeenCalled();
     expect(fieldText(en.propertyDetail.fieldFixationYears)).toContain(
-      "Enter a whole number from 0 to 50",
+      "Must be a whole number from 0 to 50",
     );
   });
 
@@ -64,7 +64,7 @@ describe("Financing form bounds (rendered)", () => {
     await save();
     expect(saveMortgageBlock).not.toHaveBeenCalled();
     expect(fieldText(en.propertyDetail.fieldLoanTermYears)).toContain(
-      "Enter a whole number from 1 to 50",
+      "Must be a whole number from 1 to 50",
     );
   });
 });
@@ -76,7 +76,7 @@ describe("Settings horizon bound (rendered)", () => {
     await save();
     expect(saveAssumptions).not.toHaveBeenCalled();
     expect(fieldText(en.assumptions.horizon)).toContain(
-      "Enter a whole number from 1 to 100",
+      "Must be a whole number from 1 to 100",
     );
   });
 });

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 //
 // ADR 0257 §2: a merged row the import plan refuses for an out-of-range value shows in the
-// "Import refused" table with the CSV range text the parse step uses
-// (importPage.errOutOfRange, importPage.errSizeRange), on its file, row and column.
+// "Import refused" table with the range text the parse step uses (forms.intRange,
+// forms.sizeRange, the one range message of ADR 0259), on its file, row and column.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -58,11 +58,11 @@ describe("a merged row out of range (ADR 0257)", () => {
       name: en.importPage.importRefused,
     });
     expect(
-      within(refused).getByText('"60" must be a whole number from 0 to 50'),
+      within(refused).getByText("Must be a whole number from 0 to 50"),
     ).toBeTruthy();
     expect(
       within(refused).getByText(
-        '"20000" must be a number from 1 to 10 000 with at most one decimal place',
+        "Must be a number from 1 to 10 000 with at most one decimal place",
       ),
     ).toBeTruthy();
   });

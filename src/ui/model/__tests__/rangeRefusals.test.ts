@@ -25,7 +25,7 @@ function intField(min: number, max: number, raw: string) {
 
 describe("whole-number fields at their bounds (forms)", () => {
   it("horizon 1–100", () => {
-    const msg = "Enter a whole number from 1 to 100";
+    const msg = "Must be a whole number from 1 to 100";
     expect(intField(1, 100, "0").errors).toEqual({ n: msg });
     expect(intField(1, 100, "1")).toEqual({ values: { n: 1 }, errors: {} });
     expect(intField(1, 100, "100")).toEqual({
@@ -36,7 +36,7 @@ describe("whole-number fields at their bounds (forms)", () => {
   });
 
   it("fixation 0–50", () => {
-    const msg = "Enter a whole number from 0 to 50";
+    const msg = "Must be a whole number from 0 to 50";
     expect(intField(0, 50, "-1").errors).toEqual({ n: msg });
     expect(intField(0, 50, "0")).toEqual({ values: { n: 0 }, errors: {} });
     expect(intField(0, 50, "50")).toEqual({ values: { n: 50 }, errors: {} });
@@ -44,7 +44,7 @@ describe("whole-number fields at their bounds (forms)", () => {
   });
 
   it("loan term 1–50", () => {
-    const msg = "Enter a whole number from 1 to 50";
+    const msg = "Must be a whole number from 1 to 50";
     expect(intField(1, 50, "0").errors).toEqual({ n: msg });
     expect(intField(1, 50, "1")).toEqual({ values: { n: 1 }, errors: {} });
     expect(intField(1, 50, "50")).toEqual({ values: { n: 50 }, errors: {} });
@@ -66,7 +66,7 @@ describe("the property size (form)", () => {
       [],
       en,
     );
-  const msg = `Enter a number from 1 to 10${GROUP}000 with at most one decimal place`;
+  const msg = `Must be a number from 1 to 10${GROUP}000 with at most one decimal place`;
 
   it("refuses 0, 54.55 and 10000.1 with the size range", () => {
     for (const raw of ["0", "54.55", "10000.1"])
@@ -102,7 +102,7 @@ describe("the scenario shock years and crash year (form)", () => {
         { ...blank, inflationShockDelta: "1", inflationShockYears: years },
         en,
       );
-    const msg = "Enter a whole number from 1 to 100";
+    const msg = "Must be a whole number from 1 to 100";
     expect(draft("0").errors).toEqual({ inflationShockYears: msg });
     expect(draft("101").errors).toEqual({ inflationShockYears: msg });
     expect(draft("1").overrides.inflationShock?.durationYears).toBe(1);
@@ -115,7 +115,7 @@ describe("the scenario shock years and crash year (form)", () => {
         { ...blank, valueShockPct: "10", valueShockYear: year },
         en,
       );
-    const msg = "Enter a whole number from 0 to 100";
+    const msg = "Must be a whole number from 0 to 100";
     expect(draft("-1").errors).toEqual({ valueShockYear: msg });
     expect(draft("101").errors).toEqual({ valueShockYear: msg });
     expect(draft("0").overrides.valueShock?.atYear).toBe(0);

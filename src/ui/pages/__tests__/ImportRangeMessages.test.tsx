@@ -47,7 +47,7 @@ describe("Import range messages (English)", () => {
     await waitFor(() =>
       expect(
         cell(
-          '"10000.1" must be a number from 1 to 10 000 with at most one decimal place',
+          "Must be a number from 1 to 10 000 with at most one decimal place",
         ),
       ).toBeTruthy(),
     );
@@ -67,7 +67,7 @@ describe("Import range messages (English)", () => {
         "Byt Lipova,2020-01-01,1000000,5,0.05,6000,0\n",
     );
     await waitFor(() =>
-      expect(cell('"51" must be a whole number from 0 to 50')).toBeTruthy(),
+      expect(cell("Must be a whole number from 0 to 50")).toBeTruthy(),
     );
     expect(cell('"0" — the loan term must be at least one year')).toBeTruthy();
   });
