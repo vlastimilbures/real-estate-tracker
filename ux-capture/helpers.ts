@@ -14,6 +14,7 @@ import { cs } from "../src/i18n/cs";
 import { ru } from "../src/i18n/ru";
 import type { Route } from "../src/state/uiStore";
 import { UX_DATE } from "./clock";
+import { AXE_SKIPPED, axeEnabled } from "./axeFiles";
 
 export type Lang = "en" | "cs" | "ru";
 const DICTS: Record<Lang, Dictionary> = { en, cs, ru };
@@ -29,19 +30,24 @@ const AXE_TAGS = [
   "best-practice",
 ];
 
+/** `UX_AXE=0` skips the scan for a faster local proof; CI keeps it on (F-08). */
+const AXE = axeEnabled(process.env);
+
+/** Options of a shot. */
+export interface ShotOpts {
+  fullPage?: boolean;
+}
+
 export interface Ux {
   page: Page;
   t: Dictionary;
   lang: Lang;
   /** Folder for this variant's output (`<run>/<lang>-<theme>-<viewport>`). */
   dir: string;
-  /** Full-page PNG + axe scan under `<id>`. */
-  capture: (
-    id: string,
-    opts?: { axe?: boolean; fullPage?: boolean },
-  ) => Promise<void>;
+  /** Full-page PNG + axe scan under `<id>` (the scan is off with `UX_AXE=0`). */
+  capture: (id: string, opts?: ShotOpts & { axe?: boolean }) => Promise<void>;
   /** PNG only (no scan), e.g. intermediate keyboard-focus steps. */
-  shot: (id: string, opts?: { fullPage?: boolean }) => Promise<void>;
+  shot: (id: string, opts?: ShotOpts) => Promise<void>;
   writeJson: (rel: string, data: unknown) => void;
 }
 
@@ -50,7 +56,16 @@ export const test = base.extend<{ ux: Ux }>({
     const meta = testInfo.project.metadata as { lang: Lang; theme: string };
     const t = DICTS[meta.lang];
     const dir = path.join(process.env.UX_OUT!, testInfo.project.name);
-    mkdirSync(path.join(dir, "axe"), { recursive: true });
+    if (AXE) mkdirSync(path.join(dir, "axe"), { recursive: true });
+    else {
+      // The summary and `pnpm ux:axe-check` read this: a run without scans never passes
+      // the axe gate.
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(
+        path.join(dir, AXE_SKIPPED),
+        '{ "axe": "skipped (UX_AXE=0)" }\n',
+      );
+    }
 
     // UI prefs are read from localStorage at startup (src/state/uiStore.ts).
     await page.addInitScript(
@@ -123,7 +138,7 @@ export const test = base.extend<{ ux: Ux }>({
         );
         expect(wrapped, `${id}: panel headers on one line`).toEqual([]);
       }
-      if (opts?.axe === false) return;
+      if (opts?.axe === false || !AXE) return;
       const res = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       writeJson(path.join("axe", `${id}.json`), {
         screen: id,
