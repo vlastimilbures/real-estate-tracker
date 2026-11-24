@@ -21,7 +21,7 @@ import {
   cpiIndex,
   EngineInputError,
   realProjection,
-  scenarioRuleErrors,
+  comparableScenarios,
   utc,
 } from "../engine";
 import type {
@@ -164,20 +164,16 @@ export function useScenarioComparison(
   const computed = useMemo(() => {
     if (!portfolio || !assumptions) return null;
     return timed("scenario-compare", () =>
-      scenarios
-        .filter(
-          (s) => scenarioRuleErrors(assumptions, s.overrides).length === 0,
-        )
-        .map((s) => {
-          const assn = applyScenario(assumptions, s.overrides);
-          const { projection, kpis } = projectionAndKpis(portfolio, assn);
-          return {
-            id: s.id,
-            projection,
-            realProjection: realProjection(projection, cpiIndex(assn)),
-            kpis,
-          };
-        }),
+      comparableScenarios(assumptions, scenarios).map((s) => {
+        const assn = applyScenario(assumptions, s.overrides);
+        const { projection, kpis } = projectionAndKpis(portfolio, assn);
+        return {
+          id: s.id,
+          projection,
+          realProjection: realProjection(projection, cpiIndex(assn)),
+          kpis,
+        };
+      }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [portfolio, assumptions, key]);

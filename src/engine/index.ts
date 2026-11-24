@@ -101,6 +101,7 @@ export type {
 } from "./financing";
 export { applyScenario } from "./scenarios";
 export {
+  comparableScenarios,
   leaseOverlapErrors,
   scenarioErrorsAddedBy,
   scenarioRuleErrors,

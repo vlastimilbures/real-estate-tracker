@@ -1,6 +1,10 @@
 // The engine rules a scenario's own overrides break (ADR 0123): the store checks a
 // scenario with them before writing it, and the compare before running it. Pure.
-import { applyScenario, type ScenarioOverrides } from "../scenarios";
+import {
+  applyScenario,
+  type Scenario,
+  type ScenarioOverrides,
+} from "../scenarios";
 import type { Assumptions, Portfolio } from "../types";
 import { validateInputs } from "./entry";
 import type { EngineValidationError } from "./codes";
@@ -28,6 +32,17 @@ export function scenarioRuleErrors(
       e.entity === "assumptions" &&
       e.field !== undefined &&
       set[e.field] !== undefined,
+  );
+}
+
+/** The scenarios a compare runs: those whose own overrides break no engine rule, in
+ *  order (ADR 0123). The caller names the ones left out. */
+export function comparableScenarios(
+  base: Assumptions,
+  scenarios: Scenario[],
+): Scenario[] {
+  return scenarios.filter(
+    (s) => scenarioRuleErrors(base, s.overrides).length === 0,
   );
 }
 
