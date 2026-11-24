@@ -95,6 +95,9 @@ async function mutateNow(
   }
 }
 
+/** The write runner's steps, one per store. */
+export type WriteRunner = ReturnType<typeof createWriteRunner>;
+
 /** The store's write path (DR-085, ADR 0228, ADR 0253): every write runs in the one
  *  queue, then reloads. `enqueue` is for reads that wait in it; `writesSoFar` counts the
  *  data writes so far. */

@@ -22,6 +22,7 @@ import type {
 import type { BackupState, SampleState } from "../../data/repositories";
 import type { PropertyExtras } from "../../data/mappers";
 import type { RefusedWrite } from "../writeTargets";
+import type { WriteRunner } from "./writeRunner";
 
 export type Status = "idle" | "loading" | "ready" | "error";
 
@@ -171,3 +172,7 @@ export interface StoreAccess {
   set: SetState;
   get: () => PortfolioState;
 }
+
+/** What an action module gets from its store: the store's own `set` and `get`, and its one
+ *  write runner. */
+export interface StoreCtx extends StoreAccess, WriteRunner {}

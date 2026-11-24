@@ -3,7 +3,6 @@
 // (useEngine) → UI. No finance maths here — edits persist, then in-memory state refreshes
 // so the memoized engine recomputes (CLAUDE.md §4).
 import { create } from "zustand";
-import { dayBefore, openPredecessor } from "../engine";
 import type { Portfolio, Scenario } from "../engine";
 import { defaultOpen } from "../data/open";
 import { DataError, READ_FAILURES } from "../data/errors";
@@ -16,18 +15,6 @@ import {
   loadState,
   upsertScenario,
   deleteScenario,
-  insertValuation,
-  insertValuationClosingPrevious,
-  updateValuation,
-  deleteValuation,
-  insertLease,
-  insertLeaseClosingPrevious,
-  updateLease,
-  deleteLease,
-  insertMortgageBlock,
-  updateMortgageBlock,
-  deleteMortgageBlock,
-  updateHoldingCost,
   insertPropertyWithCosts,
   deleteProperty,
   upsertAssumptions,
@@ -37,9 +24,6 @@ import {
   recordBackup,
 } from "../data/repositories";
 import {
-  valuationToRow,
-  leaseToRow,
-  mortgageBlockToRow,
   holdingCostToRow,
   propertyToRow,
   scenarioToRow,
@@ -53,7 +37,13 @@ import {
   checkScenario,
   withRow,
 } from "./portfolio/rules";
-import type { PortfolioState } from "./portfolio/types";
+import type { PortfolioState, StoreCtx } from "./portfolio/types";
+import {
+  blockActions,
+  holdingCostActions,
+  leaseActions,
+  valuationActions,
+} from "./portfolio/entityActions";
 export type {
   MutationResult,
   PropertyExtras,
@@ -61,8 +51,10 @@ export type {
 } from "./portfolio/types";
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => {
+  const runner = createWriteRunner(set, get);
   const { enqueue, mutate, exclusive, replaceData, requireSql, writesSoFar } =
-    createWriteRunner(set, get);
+    runner;
+  const ctx: StoreCtx = { set, get, ...runner };
 
   /** checkEdit on the loaded portfolio: inside the queued op, it sees every earlier
    *  write. */
@@ -143,94 +135,10 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => {
     clearError: () => set({ error: null }),
     showError: (error) => set({ error }),
 
-    addValuation: (v) =>
-      mutate("valuations", async (sql) => {
-        checkEdit(
-          (p) => ({ ...p, valuations: withRow(p.valuations, v) }),
-          [v.id],
-        );
-        await insertValuation(sql, valuationToRow(v));
-      }),
-    addValuationClosingPrevious: (v, closedPrev) =>
-      mutate("valuations", async (sql) => {
-        checkEdit(
-          (p) => ({
-            ...p,
-            valuations: withRow(withRow(p.valuations, closedPrev), v),
-          }),
-          [v.id, closedPrev.id],
-        );
-        await insertValuationClosingPrevious(sql, v, closedPrev);
-      }),
-    saveValuation: (v) =>
-      mutate("valuations", async (sql) => {
-        checkEdit(
-          (p) => ({ ...p, valuations: withRow(p.valuations, v) }),
-          [v.id],
-        );
-        await updateValuation(sql, v);
-      }),
-    removeValuation: (id) =>
-      mutate("valuations", (sql) => deleteValuation(sql, id)),
-
-    addLease: (l) =>
-      mutate("leases", async (sql) => {
-        const prev = openPredecessor(
-          get().portfolio?.leases ?? [],
-          l.propertyId,
-          l.startDate,
-          (x) => x.startDate,
-          (x) => x.endDate,
-        );
-        if (!prev) {
-          checkEdit((p) => ({ ...p, leases: withRow(p.leases, l) }), [l.id]);
-          await insertLease(sql, leaseToRow(l));
-          return;
-        }
-        const closedPrev = { ...prev, endDate: dayBefore(l.startDate) };
-        // Ending the predecessor only shortens it: an overlap it already had with another
-        // stored lease is not this add's to report (ADR 0163 §4).
-        checkEdit(
-          (p) => ({ ...p, leases: withRow(withRow(p.leases, closedPrev), l) }),
-          [l.id, closedPrev.id],
-          [l.id],
-        );
-        await insertLeaseClosingPrevious(sql, l, closedPrev);
-      }),
-    saveLease: (l) =>
-      mutate("leases", async (sql) => {
-        checkEdit((p) => ({ ...p, leases: withRow(p.leases, l) }), [l.id]);
-        await updateLease(sql, l);
-      }),
-    removeLease: (id) => mutate("leases", (sql) => deleteLease(sql, id)),
-
-    addMortgageBlock: (m) =>
-      mutate("mortgage_blocks", async (sql) => {
-        checkEdit(
-          (p) => ({ ...p, mortgages: withRow(p.mortgages, m) }),
-          [m.id],
-        );
-        await insertMortgageBlock(sql, mortgageBlockToRow(m));
-      }),
-    saveMortgageBlock: (m) =>
-      mutate("mortgage_blocks", async (sql) => {
-        checkEdit(
-          (p) => ({ ...p, mortgages: withRow(p.mortgages, m) }),
-          [m.id],
-        );
-        await updateMortgageBlock(sql, m);
-      }),
-    removeMortgageBlock: (id) =>
-      mutate("mortgage_blocks", (sql) => deleteMortgageBlock(sql, id)),
-
-    saveHoldingCost: (h) =>
-      mutate("holding_costs", async (sql) => {
-        checkEdit(
-          (p) => ({ ...p, holdingCosts: withRow(p.holdingCosts, h) }),
-          [h.id],
-        );
-        await updateHoldingCost(sql, h);
-      }),
+    ...valuationActions(ctx),
+    ...leaseActions(ctx),
+    ...blockActions(ctx),
+    ...holdingCostActions(ctx),
 
     addProperty: (p, cost, extra) =>
       mutate("properties", async (sql) => {
