@@ -59,6 +59,12 @@
 .mt-s3 {
   margin-top: var(--s3);
 }
+.mt-s4 {
+  margin-top: var(--s4);
+}
+.mb-s2 {
+  margin-bottom: var(--s2);
+}
 .mb-s3 {
   margin-bottom: var(--s3);
 }
