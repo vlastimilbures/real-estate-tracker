@@ -243,8 +243,8 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 - Keys: `forms.intRange`, `forms.sizeRange` (en, cs, ru); `importPage.errOutOfRange`,
   `importPage.errSizeRange`, `backup.issueOutOfRange`, `backup.issueOutOfRangeSize`
   (en, cs, ru), deleted
-- Change: the two form keys take the restore wording ("Must be…" in place of "Enter…")
-  and become the one range message: form fields, store refusals, CSV import and restore
+- Change: the two form keys take the text of `backup.issueOutOfRange` and
+  `backup.issueOutOfRangeSize` (the restore wording) and become the one range message: form fields, store refusals, CSV import and restore
   all use them. The CSV text no longer quotes the value. The form keys can show in a
   `role="alert"` line (a range refused on a field the form does not show), so ADR 0259
   records it too.

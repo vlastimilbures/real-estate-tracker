@@ -19,13 +19,14 @@
 ## Context
 
 The bounded fields (horizon, fixation, loan term, size, and the scenario's shock and crash
-years) are refused with the same range in three places, each in its own phrasing:
+years) are refused with the same range in three places, each with its own keys and
+phrasing (the CSV keys also quote the refused value):
 
-| Where   | Keys                                                   | en today                                     |
-| ------- | ------------------------------------------------------ | -------------------------------------------- |
-| Forms   | `forms.intRange`, `forms.sizeRange`                    | "Enter a whole number from 1 to 100"         |
-| CSV     | `importPage.errOutOfRange`, `importPage.errSizeRange`  | "\"51\" must be a whole number from 0 to 50" |
-| Restore | `backup.issueOutOfRange`, `backup.issueOutOfRangeSize` | "Must be a whole number from 0 to 50"        |
+| Where   | Keys                                                   |
+| ------- | ------------------------------------------------------ |
+| Forms   | `forms.intRange`, `forms.sizeRange`                    |
+| CSV     | `importPage.errOutOfRange`, `importPage.errSizeRange`  |
+| Restore | `backup.issueOutOfRange`, `backup.issueOutOfRangeSize` |
 
 The owner chose one message (#435). This is copy, but it is not copy-only under ADR 0152:
 `forms.intRange` and `forms.sizeRange` are also live-region text. A store refusal of a
@@ -45,12 +46,9 @@ CSV import (a file with an out-of-range cell), never in restore (its text does n
 1. **One message per kind, in the restore wording, already translated.** The bounded
    whole-number fields use `forms.intRange`, the size uses `forms.sizeRange`, everywhere:
    form fields, store refusals, CSV import (parsed and merged rows) and restore issues.
-   - en: "Must be a whole number from {min} to {max}" / "Must be a number from {min} to
-     {max} with at most one decimal place"
-   - cs: "Musí být celé číslo od {min} do {max}" / "Musí být číslo od {min} do {max} s
-     nejvýš jedním desetinným místem"
-   - ru: "Должно быть целым числом от {min} до {max}" / "Должно быть числом от {min} до
-     {max} не более чем с одним знаком после запятой"
+   In en, cs and ru, `forms.intRange` and `forms.sizeRange` take the text that
+   `backup.issueOutOfRange` and `backup.issueOutOfRangeSize` had on main @ 1c24fa54;
+   `src/i18n/__tests__/dictionaries.test.ts:350-368` pins it.
 2. **The four other keys are deleted:** `importPage.errOutOfRange`,
    `importPage.errSizeRange`, `backup.issueOutOfRange`, `backup.issueOutOfRangeSize`.
    `csvErrorText` (`src/ui/pages/ImportPanels.tsx`) and `restoreIssueText`
@@ -64,7 +62,7 @@ CSV import (a file with an out-of-range cell), never in restore (its text does n
 
 ## Consequences
 
-- Visible: form field and store-refusal texts change from "Enter…" to "Must be…"; CSV range
+- Visible: form field and store-refusal texts take the restore wording; CSV range
   errors lose the quoted value; restore texts are unchanged.
 - Dictionary: 2 keys reworded (en/cs/ru), 4 keys deleted. Entry in
   `docs/decisions/wording.md`.
