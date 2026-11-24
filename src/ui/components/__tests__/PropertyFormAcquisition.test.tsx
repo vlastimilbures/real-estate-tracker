@@ -12,6 +12,7 @@ import { getDict } from "../../../i18n";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { money, type Portfolio, type Property } from "../../../engine";
 import type { MutationResult } from "../../../state/portfolioStore";
+import { success } from "../../../__tests__/support/result";
 
 const en = getDict("en");
 const f = en.propertyForm;
@@ -43,7 +44,8 @@ beforeEach(() => {
       status: { kind: "ready" },
       addProperty,
       editProperty,
-      getPropertyExtras: () => Promise.resolve({ address: null, garage: null }),
+      getPropertyExtras: () =>
+        Promise.resolve(success({ address: null, garage: null })),
     });
   });
 });

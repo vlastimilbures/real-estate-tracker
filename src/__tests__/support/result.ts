@@ -3,6 +3,7 @@
 import type { Result } from "../../state/result";
 import { toActionError, type ActionError } from "../../state/actionError";
 import { CsvImportProblemsError } from "../../import/csvImport";
+import { toWriteError } from "../../state/writeError";
 export { success } from "../../state/result";
 
 export function unwrap<T>(result: Result<T, unknown>): T {
@@ -19,4 +20,10 @@ export const failure = (e: unknown) => ({
     e instanceof CsvImportProblemsError
       ? ({ kind: "planRefused", preview: e.preview } satisfies ActionError)
       : toActionError(e),
+});
+
+/** A mocked read's failure, as a write error. */
+export const writeFailure = (e: unknown) => ({
+  ok: false as const,
+  error: toWriteError(e),
 });

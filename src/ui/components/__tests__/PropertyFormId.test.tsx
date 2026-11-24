@@ -15,6 +15,7 @@ import {
 } from "../../../engine/__tests__/support/seed";
 import type { HoldingCost, Property } from "../../../engine";
 import type { MutationResult } from "../../../state/portfolioStore";
+import { success } from "../../../__tests__/support/result";
 
 const f = getDict("en").propertyForm;
 const UUID =
@@ -37,7 +38,8 @@ beforeEach(() => {
       status: { kind: "ready" },
       addProperty,
       editProperty,
-      getPropertyExtras: () => Promise.resolve({ address: null, garage: null }),
+      getPropertyExtras: () =>
+        Promise.resolve(success({ address: null, garage: null })),
     });
   });
 });

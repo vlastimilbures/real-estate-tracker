@@ -13,6 +13,7 @@ import {
 } from "../../../state/portfolioStore";
 import { getDict } from "../../../i18n";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
+import { success } from "../../../__tests__/support/result";
 
 const en = getDict("en");
 const id = portfolio.properties[0]!.id;
@@ -32,7 +33,7 @@ beforeEach(() => {
       editProperty: () =>
         new Promise<MutationResult>((resolve) => (finish = resolve)),
       getPropertyExtras: () =>
-        Promise.resolve({ address: "Stored St 1", garage: null }),
+        Promise.resolve(success({ address: "Stored St 1", garage: null })),
     });
   });
 });

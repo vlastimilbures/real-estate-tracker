@@ -117,8 +117,10 @@ export interface PortfolioState {
    *  omitted `p.funding` keeps the stored record; `{}` clears it (ADR 0119 §8). */
   editProperty: (p: Property, extra: PropertyExtras) => Promise<MutationResult>;
   /** Address/garage aren't engine inputs so `portfolio.properties` drops them; this
-   *  reads them straight from the DB to prefill the edit form. */
-  getPropertyExtras: (id: string) => Promise<PropertyExtras>;
+   *  reads them straight from the DB to prefill the edit form. Never throws. */
+  getPropertyExtras: (
+    id: string,
+  ) => Promise<Result<PropertyExtras, WriteError>>;
   setPropertyActive: (id: string, active: boolean) => Promise<MutationResult>;
   removeProperty: (id: string) => Promise<MutationResult>;
   // assumptions

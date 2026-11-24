@@ -13,6 +13,7 @@ import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { money, type Property } from "../../../engine";
 import { fmtCzk } from "../../../lib/format";
+import { success } from "../../../__tests__/support/result";
 
 const pd = en.propertyDetail;
 
@@ -143,7 +144,7 @@ describe("Property detail Acquisition section (ADR 0119 §9)", () => {
       usePortfolioStore.setState({
         editProperty,
         getPropertyExtras: () =>
-          Promise.resolve({ address: null, garage: null }),
+          Promise.resolve(success({ address: null, garage: null })),
       }),
     );
     await userEvent.click(
