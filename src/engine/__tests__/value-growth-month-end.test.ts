@@ -2,7 +2,8 @@
 // (`lastGridMonthOnOrBefore`) on both the snapshot and the projection, so a 29 Feb
 // baseDate (clamped to 28 Feb a year later) still grows a full year.
 import { describe, it, expect } from "vitest";
-import { growthYears, propertySnapshot } from "../metrics";
+import { propertySnapshot } from "../metrics";
+import { growthYears } from "../selectors";
 import { propertyProjection } from "../projections";
 import { propertySchedules } from "../schedule";
 import { edate, isoDate } from "../dates";

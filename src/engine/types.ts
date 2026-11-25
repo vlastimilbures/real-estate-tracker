@@ -34,7 +34,9 @@ export interface ValueShock {
   atYear: number; // projection year (0 = today); growth resumes from the lower base
 }
 
-export interface Assumptions {
+/** The assumptions the owner stores (the one `assumptions` row). Every field is present
+ *  except `sellingCostPct`, which stays optional (undefined ⇒ 0). */
+export interface StoredAssumptions {
   baseDate: IsoDate;
   appreciationPa: Rate;
   rentIndexationPa: Rate;
@@ -47,9 +49,14 @@ export interface Assumptions {
    *  only; net worth stays value minus debt (ADR 0183). Undefined ⇒ 0. */
   sellingCostPct?: Rate | undefined;
   defaults: CostDefaults;
-  // --- Scenario-only shock descriptors (SPEC §7 what-ifs). Portfolio/seed
-  // Assumptions NEVER set these; they are populated solely by `applyScenario`.
-  // All undefined ⇒ engine output is byte-identical to the parity targets. ---
+}
+
+/**
+ * What a scenario adds to the stored assumptions (SPEC §7 what-ifs). Stored assumptions
+ * never carry these; only `applyScenario` sets them. All undefined ⇒ engine output is
+ * byte-identical to the parity targets.
+ */
+export interface ScenarioContext {
   /** Inflation elevated by `deltaPa` for the first `durationYears`, then reverts to
    *  `inflationPa`. Affects holding-cost growth, the real-terms deflator, and real IRR. */
   inflationShock?: ShockBand | undefined;
@@ -66,6 +73,9 @@ export interface Assumptions {
    *  which the base run validates. */
   openingAppreciationPa?: Rate | undefined;
 }
+
+/** The engine's assumptions: the stored ones, plus the scenario context of a what-if. */
+export interface Assumptions extends StoredAssumptions, ScenarioContext {}
 
 export interface Property {
   id: string;
@@ -401,6 +411,16 @@ export interface ProjectionYear {
   // principal > 0); null when no month in the year has one, in year 0, before the
   // property turns on, and always on the portfolio row (rates are not summed).
   ratePa: Decimal | null;
+}
+
+/** A property's projection year (`propertyProjection`): `ratePa` is the rate of its
+ *  year's last month with a payment, or null. */
+export type PropertyYear = ProjectionYear;
+
+/** A portfolio projection year (`portfolioProjection`): the property years summed. Rates
+ *  are not summed, so `ratePa` is always null. */
+export interface PortfolioYear extends ProjectionYear {
+  ratePa: null;
 }
 
 /** Why a levered IRR has no value (DR-158): no root in the search range, or the NPV

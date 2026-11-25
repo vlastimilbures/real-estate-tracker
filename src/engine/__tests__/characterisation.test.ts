@@ -9,7 +9,8 @@
 import { describe, it, expect } from "vitest";
 import { D, ZERO } from "../../lib/money";
 import { isoDate } from "../dates";
-import { leaseInForce, portfolioSnapshot, propertySnapshot } from "../metrics";
+import { portfolioSnapshot, propertySnapshot } from "../metrics";
+import { leaseInForce } from "../selectors";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { portfolioKpis, irrResult } from "../kpis";
 import { propertySchedules, scheduleRows } from "../schedule";

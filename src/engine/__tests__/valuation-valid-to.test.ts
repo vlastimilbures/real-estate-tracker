@@ -6,7 +6,8 @@
 import { describe, it, expect } from "vitest";
 import { money } from "../brands";
 import { isoDate } from "../dates";
-import { propertySnapshot, selectValuation } from "../metrics";
+import { propertySnapshot } from "../metrics";
+import { selectValuation } from "../selectors";
 import { portfolioProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
 import type { Portfolio, Property, Valuation } from "../types";

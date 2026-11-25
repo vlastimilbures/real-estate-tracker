@@ -26,12 +26,13 @@ import {
 import { decimalsOf, fieldsOf } from "./yearFields";
 import { basisDate, growthRate, valueAt } from "./growth";
 import {
-  valueAnchor,
-  growthYears,
-  leaseInForce,
+  activeProperties,
   forProperty,
+  growthYears,
   holdingCostBasis,
-} from "./metrics";
+  leaseInForce,
+  valueAnchor,
+} from "./selectors";
 import { costsAndNoi, dscrOf, stocksOf } from "./figures";
 import type {
   Assumptions,
@@ -39,7 +40,8 @@ import type {
   Portfolio,
   Property,
   Valuation,
-  ProjectionYear,
+  PortfolioYear,
+  PropertyYear,
   AmortizationRow,
   MortgageBlock,
 } from "./types";
@@ -419,7 +421,7 @@ export function propertyProjection(
   portfolio: Portfolio,
   assumptions: Assumptions,
   schedule: PropertySchedule,
-): ProjectionYear[] {
+): PropertyYear[] {
   const v = assertInputs(portfolio, assumptions); // D-37
   return projectProperty(property, v, schedule);
 }
@@ -430,7 +432,7 @@ export function propertyProjections(
   portfolio: Portfolio,
   assumptions: Assumptions,
   schedules?: Map<string, PropertySchedule>,
-): Map<string, ProjectionYear[]> {
+): Map<string, PropertyYear[]> {
   const v = assertInputs(portfolio, assumptions); // D-37
   const built =
     schedules ??
@@ -452,7 +454,7 @@ function projectProperty(
   property: Property,
   v: ValidInputs,
   built: PropertySchedule,
-): ProjectionYear[] {
+): PropertyYear[] {
   const years = propertyYears(property, v, built.rows);
   const own: EngineRun = {
     inputs: v,
@@ -482,7 +484,9 @@ function propertyYears(
 }
 
 /** A projection year before its `cashToOwner` is known (ADR 0161). */
-type YearRow = Omit<ProjectionYear, "cashToOwner">;
+type YearRow = Omit<PropertyYear, "cashToOwner">;
+/** A portfolio projection year before its `cashToOwner` is known. */
+type PortfolioYearRow = Omit<PortfolioYear, "cashToOwner">;
 
 /** A row's stocks (summed and derived), its summed stocks and its flows, in the
  *  order of `YEAR_FIELD_KINDS` (#478). */
@@ -496,10 +500,10 @@ type SummedField =
  * ADR 0161: each year's cash to owner = net cash flow − the cash outside it
  * (`cashOutsideNetCf` of the same properties); year 0 is the opening position, 0.
  */
-function withCashToOwner(
-  years: YearRow[],
+function withCashToOwner<R extends YearRow>(
+  years: R[],
   outside: Decimal[],
-): ProjectionYear[] {
+): (R & { cashToOwner: Decimal })[] {
   return years.map((y, t) => ({
     ...y,
     cashToOwner: t === 0 ? ZERO : y.netCashFlow.minus(at(outside, t)),
@@ -550,7 +554,7 @@ export function portfolioProjection(
   portfolio: Portfolio,
   assumptions: Assumptions,
   schedules?: Map<string, PropertySchedule>,
-): ProjectionYear[] {
+): PortfolioYear[] {
   const v = assertInputs(portfolio, assumptions); // D-37
   const built =
     schedules ??
@@ -569,12 +573,12 @@ export function portfolioProjection(
  * (#291).
  */
 export function projectPortfolioParts(run: EngineRun): {
-  years: ProjectionYear[];
+  years: PortfolioYear[];
   prePurchase: DebtServicePaid[];
 } {
   const { inputs: v, schedules } = run;
   const { portfolio, assumptions } = v;
-  const active = portfolio.properties.filter((p) => p.active !== false);
+  const active = activeProperties(portfolio.properties);
   // The property years without their own cash to owner: the portfolio's is computed
   // once below, not summed from them.
   const perProp = active.map((p) =>
@@ -592,9 +596,12 @@ export function projectPortfolioParts(run: EngineRun): {
 }
 
 /** The portfolio's year rows: each field summed across the property years. */
-function sumYears(perProp: YearRow[][], assumptions: Assumptions): YearRow[] {
+function sumYears(
+  perProp: YearRow[][],
+  assumptions: Assumptions,
+): PortfolioYearRow[] {
   const baseYear = assumptions.baseDate.getUTCFullYear();
-  const out: YearRow[] = [];
+  const out: PortfolioYearRow[] = [];
   for (let t = 0; t <= assumptions.horizonYears; t++) {
     // Each field summed in portfolio order from 0; net cash flow is Σ net cash flow.
     const acc = (f: SummedField) =>

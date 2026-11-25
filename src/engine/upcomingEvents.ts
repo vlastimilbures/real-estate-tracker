@@ -4,7 +4,7 @@ import { firstAfter } from "./dates";
 import { inWindow, type FinancingExposure } from "./financing";
 import { isDevLoan } from "./loanBlock";
 import { chainLinks, replacedOnOrBefore } from "./schedule";
-import { leaseInForce } from "./metrics";
+import { activeProperties, leaseInForce } from "./selectors";
 import type { IsoDate, Lease, Portfolio } from "./types";
 import type { Decimal } from "../lib/money";
 
@@ -68,7 +68,7 @@ export function leaseEndWithoutFollowOn(
 /** The in-force lease's end for each active property, when no later lease is entered. */
 function leaseEnds(portfolio: Portfolio, asOf: Date): FinancingEvent[] {
   const events: FinancingEvent[] = [];
-  const active = portfolio.properties.filter((p) => p.active !== false);
+  const active = activeProperties(portfolio.properties);
   for (const id of new Set(active.map((p) => p.id))) {
     const leases = portfolio.leases.filter((l) => l.propertyId === id);
     const date = leaseEndWithoutFollowOn(leases, asOf);

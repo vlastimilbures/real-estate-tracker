@@ -4,7 +4,7 @@
 // for the set fields and the default for the unset ones — independently. Guards the
 // Excel "blank cell silently zeros a cost" bug class (CLAUDE.md §7).
 import { describe, it, expect } from "vitest";
-import { effectiveCosts } from "../metrics";
+import { effectiveCosts } from "../selectors";
 import { assumptions } from "./support/seed";
 import type { HoldingCost } from "../types";
 import { money } from "../brands";

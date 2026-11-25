@@ -3,7 +3,7 @@
 // payment a property bought after baseDate is charged in its turn-on year.
 import { ZERO, type Decimal } from "../lib/money";
 import { firstAfter, isAfter, isOnOrBefore } from "./dates";
-import { forProperty } from "./metrics";
+import { forProperty } from "./selectors";
 import { fundedThePurchase } from "./acquisitionLoan";
 import { isDevLoan } from "./loanBlock";
 import { selectBlock } from "./loan/blockChain";
