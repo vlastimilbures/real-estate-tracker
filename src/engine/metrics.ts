@@ -12,7 +12,8 @@ import {
   instalmentAtMonth,
   openingDebt,
   propertySchedule,
-  schedulesByProperty,
+  propertySchedules,
+  scheduleRows,
   undrawnPrincipal,
 } from "./schedule";
 import { assertAsOf, assertInputs } from "./validate";
@@ -360,10 +361,12 @@ export function portfolioSnapshot(
   assertAsOf(asOf, assumptions.baseDate);
   const built =
     schedules ??
-    schedulesByProperty(
-      portfolio.mortgages,
-      portfolio.properties.map((p) => p.id),
-      assumptions,
+    scheduleRows(
+      propertySchedules(
+        portfolio.mortgages,
+        portfolio.properties.map((p) => p.id),
+        assumptions,
+      ),
     );
   const rated = portfolio.properties.map((p) =>
     snapshotProperty(p, portfolio, assumptions, asOf, built.get(p.id) ?? []),

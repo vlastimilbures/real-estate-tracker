@@ -3,7 +3,7 @@ import { applyScenario } from "../scenarios";
 import { portfolioProjection, cpiIndex } from "../projections";
 import { portfolioKpis } from "../kpis";
 import { rateAt, blockEndDate } from "../loanRate";
-import { schedulesByProperty } from "../schedule";
+import { schedulesByProperty } from "./support/schedules";
 import { powInt, ONE, D, type Decimal } from "../../lib/money";
 import { edate } from "../dates";
 import { assumptions, portfolio } from "./support/seed";

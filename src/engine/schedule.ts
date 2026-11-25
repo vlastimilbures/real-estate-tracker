@@ -17,7 +17,6 @@ export {
   propertySchedule,
   propertySchedules,
   scheduleRows,
-  schedulesByProperty,
 } from "./loan/chain";
 export type { PropertySchedule } from "./loan/chain";
 export {

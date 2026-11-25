@@ -12,11 +12,8 @@ import { isoDate } from "../dates";
 import { leaseInForce, portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { portfolioKpis, irrResult } from "../kpis";
-import {
-  propertySchedules,
-  scheduleRows,
-  schedulesByProperty,
-} from "../schedule";
+import { propertySchedules, scheduleRows } from "../schedule";
+import { schedulesByProperty } from "./support/schedules";
 import { applyScenario, type ScenarioOverrides } from "../scenarios";
 import type { Lease, Portfolio } from "../types";
 import { assumptions, portfolio, PARITY } from "./support/seed";

@@ -5,7 +5,8 @@
 import { describe, it, expect } from "vitest";
 import { rate } from "../brands";
 import { edate, isoDate } from "../dates";
-import { propertySchedules, schedulesByProperty } from "../schedule";
+import { propertySchedules } from "../schedule";
+import { schedulesByProperty } from "./support/schedules";
 import { portfolioSnapshot } from "../metrics";
 import { portfolioProjection } from "../projections";
 import { portfolioKpis, projectionAndKpis } from "../kpis";

@@ -8,11 +8,8 @@ import { describe, it, expect } from "vitest";
 import { termMonths } from "../../loanTerm";
 import { currentBalance } from "../support/closedForm";
 import { EngineInputError } from "../../errors";
-import {
-  buildSchedule,
-  balanceAtMonth,
-  schedulesByProperty,
-} from "../../schedule";
+import { buildSchedule, balanceAtMonth } from "../../schedule";
+import { schedulesByProperty } from "../support/schedules";
 import { portfolioSnapshot } from "../../metrics";
 import { portfolioProjection } from "../../projections";
 import { isoDate } from "../../dates";

@@ -374,12 +374,3 @@ export function scheduleRows(
 ): Map<string, AmortizationRow[]> {
   return new Map([...schedules].map(([pid, s]) => [pid, s.rows]));
 }
-
-/** Build schedules for every property keyed by propertyId (empty if no debt). */
-export function schedulesByProperty(
-  mortgages: MortgageBlock[],
-  propertyIds: string[],
-  assumptions: Assumptions,
-): Map<string, AmortizationRow[]> {
-  return scheduleRows(propertySchedules(mortgages, propertyIds, assumptions));
-}
