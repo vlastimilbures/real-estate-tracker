@@ -174,6 +174,8 @@ export const TABLES = {
   },
 } as const satisfies Record<string, TableSpec>;
 
+type TableName = keyof typeof TABLES;
+
 /** The column names of each table, in table order. */
 export const columnNames = (
   tables: Readonly<Record<string, TableSpec>>,
@@ -196,3 +198,17 @@ export const restoreDefaults = (
       ),
     ),
   );
+
+type Cell<K extends ColumnKind> = K extends "int" | "flag" ? number : string;
+
+/** A stored row of `table`: TEXT kinds as string, INTEGER kinds as number, a nullable
+ *  column also null. */
+export type RowOf<T extends TableName> = {
+  -readonly [
+    C in (typeof TABLES)[T]["columns"][number] as C["name"]
+  ]: C extends {
+    nullable: true;
+  }
+    ? Cell<C["kind"]> | null
+    : Cell<C["kind"]>;
+};

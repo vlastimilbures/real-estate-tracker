@@ -6,7 +6,7 @@ import type { Decimal } from "../lib/money";
 import { money, mortgageBlock, rate } from "../engine";
 import { DataError } from "./errors";
 import * as g from "./guards";
-import { SELLING_COST_DEFAULT } from "./schema";
+import { SELLING_COST_DEFAULT, type RowOf } from "./schema";
 import type {
   AcquisitionFunding,
   Assumptions,
@@ -28,94 +28,18 @@ import type {
 export const toColumn = (field: string) =>
   field.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 
-// --- DB row shapes (all money/rates TEXT, dates TEXT ISO) ----------------------
+// --- DB row shapes (all money/rates TEXT, dates TEXT ISO), from src/data/schema.ts ---
 
-export interface PropertyRow {
-  id: string;
-  name: string;
-  address: string | null;
-  type: string | null;
-  size_m2: number | null;
-  garage: number | null;
-  purchase_date: string;
-  purchase_price: string;
-  appreciation_override_pa: string | null;
-  rent_index_override_pa: string | null;
+/** `active` is NOT NULL since v4; a NULL still reads as active (legacy row). */
+export type PropertyRow = Omit<RowOf<"properties">, "active"> & {
   active: number | null;
-  own_cash: string | null;
-  transaction_costs: string | null;
-  initial_works: string | null;
-  funding_note: string | null;
-}
-
-export interface MortgageBlockRow {
-  id: string;
-  property_id: string;
-  start_date: string;
-  initial_principal: string;
-  fixation_years: number;
-  interest_rate_pa: string;
-  monthly_instalment: string;
-  loan_term_years: number | null;
-  draws: string | null; // JSON [{date, amount}] or NULL
-  interest_only_until: string | null; // ISO date or NULL
-  contract_maturity_date: string | null; // ISO date or NULL (D-29)
-  prepayments: string | null; // JSON [{date, amount, effect, fee?}] or NULL (ADR 0109)
-  recasts: string | null; // JSON [{date, maturity} | {date, instalment}] or NULL
-}
-
-export interface ValuationRow {
-  id: string;
-  property_id: string;
-  valid_from: string;
-  valid_to: string | null;
-  market_value: string;
-}
-
-export interface LeaseRow {
-  id: string;
-  property_id: string;
-  start_date: string;
-  end_date: string | null;
-  monthly_rent: string;
-}
-
-export interface HoldingCostRow {
-  id: string;
-  property_id: string;
-  property_tax_yr: string | null;
-  insurance_yr: string | null;
-  mgmt_pct_rent: string | null;
-  maint_pct_rent: string | null;
-  svj_monthly: string | null;
-  other_yr: string | null;
-}
-
-export interface ScenarioRow {
-  id: string;
-  name: string;
-  overrides: string; // JSON: optional level deltas + nested shock descriptors
-  created_at: string;
-}
-
-export interface AssumptionsRow {
-  id: number;
-  base_date: string;
-  appreciation_pa: string;
-  rent_indexation_pa: string;
-  vacancy_allowance: string;
-  post_fixation_reset_rate_pa: string;
-  horizon_years: number;
-  inflation_pa: string;
-  default_property_tax_yr: string;
-  default_insurance_yr: string;
-  default_mgmt_pct_rent: string;
-  default_maint_pct_rent: string;
-  default_svj_monthly: string;
-  default_other_yr: string;
-  /** v11 (ADR 0183). */
-  selling_cost_pct: string;
-}
+};
+export type MortgageBlockRow = RowOf<"mortgage_blocks">;
+export type ValuationRow = RowOf<"valuations">;
+export type LeaseRow = RowOf<"leases">;
+export type HoldingCostRow = RowOf<"holding_costs">;
+export type ScenarioRow = RowOf<"scenarios">;
+export type AssumptionsRow = RowOf<"assumptions">;
 
 // --- small helpers -------------------------------------------------------------
 // Reads go through the DR-037 guards (guards.ts): shape-checked, typed DataError on
