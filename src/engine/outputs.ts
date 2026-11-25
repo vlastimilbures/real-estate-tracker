@@ -11,8 +11,7 @@ import {
 } from "./schedule";
 import { snapshotPortfolio } from "./metrics";
 import { assertAsOf, assertInputs } from "./validate";
-import { projectPortfolioParts } from "./projections";
-import { kpisFrom } from "./kpis";
+import { runPortfolio } from "./kpis";
 import { financingExposure, type FinancingExposure } from "./financing";
 import type {
   AmortizationRow,
@@ -59,12 +58,12 @@ export function portfolioOutputs(
   const v = assertInputs(portfolio, assumptions); // D-37
   assertAsOf(asOf, assumptions.baseDate); // D-19
   const snapshot = snapshotPortfolio(v, asOf, rows);
-  const { years: projection, prePurchase } = projectPortfolioParts(v, built);
+  const { projection, kpis } = runPortfolio(v, built);
   return {
     schedules: rows,
     snapshot,
     projection,
-    kpis: kpisFrom(v, projection, built, prePurchase),
+    kpis,
     financing: financingExposure(portfolio, assumptions, built, asOf),
   };
 }
