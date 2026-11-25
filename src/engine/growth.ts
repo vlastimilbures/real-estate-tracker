@@ -45,15 +45,19 @@ export function valueAt(v0: Decimal, g: Numeric, years: number): Decimal {
   return v0.times(powYears(ONE.plus(g), years));
 }
 
+/** What a principal sum reads of a loan: the start draw and the tranches, so a draft
+ *  loan being edited can be summed too (#481). */
+type Principal = Pick<MortgageBlock, "initialPrincipal" | "draws">;
+
 /** A loan's initial principal plus its tranches dated on or before `cutoff` (all of them
  *  without one), summed in their order from the initial principal. */
-export function principalDrawnBy(block: MortgageBlock, cutoff?: Date): Decimal {
+export function principalDrawnBy(block: Principal, cutoff?: Date): Decimal {
   return (block.draws ?? [])
     .filter((d) => !cutoff || isOnOrBefore(d.date, cutoff))
     .reduce<Decimal>((s, d) => s.plus(d.amount), block.initialPrincipal);
 }
 
 /** Total scheduled principal of a loan: the initial principal plus every later draw. */
-export function scheduledPrincipal(block: MortgageBlock): Decimal {
+export function scheduledPrincipal(block: Principal): Decimal {
   return principalDrawnBy(block);
 }
