@@ -50,9 +50,10 @@ export function DateInput({
   const [open, setOpen] = useState(false);
   // The calendar loads on the first open (DR-009): react-day-picker stays out of the
   // startup bundle. The popover opens once the chunk is in, so it never shows a
-  // placeholder; the chunk is a local file, so the wait is a few milliseconds (ADR 0066),
-  // and the module cache answers a later field's first open at once. Held per field, so
-  // there is no module state (#491); a load that fails leaves the popover shut.
+  // placeholder; the chunk is a local file, so the wait is a few milliseconds (ADR 0066).
+  // Held per field, so there is no module state (#491): each newly mounted field's first
+  // open waits one resolved import (a promise tick, the chunk already being loaded) before
+  // the popover shows. A load that fails leaves the popover shut.
   const [LoadedCalendar, setLoadedCalendar] = useState<
     typeof DateCalendar | null
   >(null);
