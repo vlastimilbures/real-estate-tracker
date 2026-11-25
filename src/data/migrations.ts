@@ -15,6 +15,7 @@
 import type { Sql, SqlStatement } from "./sql";
 import { DataError, messageOf, type UpgradeStop } from "./errors";
 import { parseOverrides, serializeOverrides } from "./mappers";
+import { SELLING_COST_DEFAULT } from "./schema";
 
 export interface Migration {
   version: number;
@@ -535,10 +536,13 @@ export const MIGRATIONS: Migration[] = [
     // like every assumptions column; DEFAULT '0' fills the one existing row, so the
     // owner's numbers do not change. A rate as TEXT with the 0–1 check of the v7 rates.
     sql: `
-      ALTER TABLE assumptions ADD COLUMN selling_cost_pct TEXT NOT NULL DEFAULT '0' CONSTRAINT assumptions_selling_cost_0_to_1 CHECK (${unitRate("selling_cost_pct")});
+      ALTER TABLE assumptions ADD COLUMN selling_cost_pct TEXT NOT NULL DEFAULT '${SELLING_COST_DEFAULT}' CONSTRAINT assumptions_selling_cost_0_to_1 CHECK (${unitRate("selling_cost_pct")});
     `,
   },
 ];
+
+/** The newest schema this app writes and reads (the last migration). */
+export const SCHEMA_HEAD = Math.max(...MIGRATIONS.map((m) => m.version));
 
 function scenarioRows(
   sql: Sql,
@@ -618,7 +622,7 @@ export async function migrate(
   );
   const done = new Set(applied.map((r) => Number(r.version)));
   const from = done.size === 0 ? 0 : Math.max(...done);
-  const head = Math.max(...MIGRATIONS.map((m) => m.version));
+  const head = SCHEMA_HEAD;
   if (from > head) {
     throw new DataError(
       "DB_NEWER",

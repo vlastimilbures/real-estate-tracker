@@ -6,6 +6,7 @@ import type { Decimal } from "../lib/money";
 import { money, mortgageBlock, rate } from "../engine";
 import { DataError } from "./errors";
 import * as g from "./guards";
+import { SELLING_COST_DEFAULT } from "./schema";
 import type {
   AcquisitionFunding,
   Assumptions,
@@ -664,6 +665,6 @@ export function assumptionsToRow(a: Assumptions): AssumptionsRow {
     default_maint_pct_rent: a.defaults.maintPctRent.toString(),
     default_svj_monthly: a.defaults.svjMonthly.toString(),
     default_other_yr: a.defaults.otherYr.toString(),
-    selling_cost_pct: (a.sellingCostPct ?? "0").toString(),
+    selling_cost_pct: (a.sellingCostPct ?? SELLING_COST_DEFAULT).toString(),
   };
 }

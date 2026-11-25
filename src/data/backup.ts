@@ -14,7 +14,8 @@ import {
   PORTFOLIO_TABLES,
   insertStatement,
 } from "./repositories";
-import { MIGRATIONS, V7_TABLES, stamp } from "./migrations";
+import { SCHEMA_HEAD, stamp } from "./migrations";
+import { TABLES, columnNames, restoreDefaults } from "./schema";
 import { DataError, messageOf } from "./errors";
 import { spellingKey } from "../lib/propertyKey";
 import {
@@ -71,7 +72,7 @@ const WARNING_RULES: ReadonlySet<RestoreIssue["rule"]> = new Set([
 ]);
 
 /** The newest schema this app writes and reads (the last migration). */
-export const SCHEMA_HEAD = Math.max(...MIGRATIONS.map((m) => m.version));
+export { SCHEMA_HEAD };
 
 /** D-53: a backup file larger than this is refused before it is parsed. */
 export const BACKUP_MAX_BYTES = 20 * 1024 * 1024;
@@ -92,81 +93,21 @@ const BACKUP_TABLES = [
 
 type BackupTable = (typeof BACKUP_TABLES)[number];
 
-/** The columns a restore may write, per table (current schema). Restore refuses any
- *  other key: backup keys become SQL identifiers, so they must never come from the file
- *  unchecked (DR-017). A drift test pins this to the migrated schema. */
-export const BACKUP_COLUMNS: Record<BackupTable, readonly string[]> = {
-  properties: [
-    "id",
-    "name",
-    "address",
-    "type",
-    "size_m2",
-    "garage",
-    "purchase_date",
-    "purchase_price",
-    "appreciation_override_pa",
-    "rent_index_override_pa",
-    "active",
-    "own_cash",
-    "transaction_costs",
-    "initial_works",
-    "funding_note",
-  ],
-  mortgage_blocks: [
-    "id",
-    "property_id",
-    "start_date",
-    "initial_principal",
-    "fixation_years",
-    "interest_rate_pa",
-    "monthly_instalment",
-    "loan_term_years",
-    "draws",
-    "interest_only_until",
-    "contract_maturity_date",
-    "prepayments",
-    "recasts",
-  ],
-  valuations: ["id", "property_id", "valid_from", "valid_to", "market_value"],
-  leases: ["id", "property_id", "start_date", "end_date", "monthly_rent"],
-  holding_costs: [
-    "id",
-    "property_id",
-    "property_tax_yr",
-    "insurance_yr",
-    "mgmt_pct_rent",
-    "maint_pct_rent",
-    "svj_monthly",
-    "other_yr",
-  ],
-  assumptions: [
-    "id",
-    "base_date",
-    "appreciation_pa",
-    "rent_indexation_pa",
-    "vacancy_allowance",
-    "post_fixation_reset_rate_pa",
-    "horizon_years",
-    "inflation_pa",
-    "default_property_tax_yr",
-    "default_insurance_yr",
-    "default_mgmt_pct_rent",
-    "default_maint_pct_rent",
-    "default_svj_monthly",
-    "default_other_yr",
-    "selling_cost_pct",
-  ],
-  scenarios: ["id", "name", "overrides", "created_at"],
-};
+/** The columns a restore may write, per table (current schema, src/data/schema.ts).
+ *  Restore refuses any other key: backup keys become SQL identifiers, so they must never
+ *  come from the file unchecked (DR-017). A drift test pins the schema description to the
+ *  migrated database. */
+export const BACKUP_COLUMNS = columnNames(TABLES) as Record<
+  BackupTable,
+  readonly string[]
+>;
 
-/** Value for a column an older backup lacks: every column added by a later migration
- *  is nullable, except `properties.active` (v4, default 1) and
- *  `assumptions.selling_cost_pct` (v11, default '0', ADR 0183). */
-const ADDED_COLUMN_DEFAULTS: Partial<Record<string, unknown>> = {
-  "properties.active": 1,
-  "assumptions.selling_cost_pct": "0",
-};
+/** Value for a column an older backup lacks: the column's `restoreDefault` in the schema
+ *  description. Every column added by a later migration is nullable, except
+ *  `properties.active` (v4, default 1) and `assumptions.selling_cost_pct` (v11, default
+ *  '0', ADR 0183). */
+const ADDED_COLUMN_DEFAULTS: Partial<Record<string, unknown>> =
+  restoreDefaults(TABLES);
 
 /** The values each property flag column may hold (the v7 CHECKs, ADR 0148). */
 const PROPERTY_FLAGS: [column: string, allowed: readonly unknown[]][] = [
@@ -442,12 +383,12 @@ const keyCell = (table: BackupTable, column: string, v: unknown) =>
     ? spellingKey(v)
     : v;
 
-/** Rows repeating an earlier row's id or natural key (the v7 UNIQUE keys). */
+/** Rows repeating an earlier row's id or natural key (the schema's UNIQUE keys, all from
+ *  v7: no later migration added one). */
 function duplicateKeys(tables: Tables): RestoreIssue[] {
   const issues: RestoreIssue[] = [];
   for (const table of BACKUP_TABLES) {
-    const spec = V7_TABLES.find((s) => s.table === table);
-    for (const key of [["id"], ...(spec?.unique ?? [])]) {
+    for (const key of [["id"], ...TABLES[table].unique]) {
       const seen = new Set<string>();
       for (const r of tables[table]) {
         const k = JSON.stringify(key.map((c) => keyCell(table, c, r[c])));
