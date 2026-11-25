@@ -98,6 +98,11 @@ On the Mac that built it, the app opens normally (no quarantine attribute).
 | Window size/position                    | `~/Library/Application Support/com.bures.realestate-tracker/.window-state.json` |
 | Error log (rotating, 5 × 1 MB)          | `~/Library/Logs/com.bures.realestate-tracker/app.log`                           |
 
+Which databases a release upgrades: every database at version 8 or later, that is, last
+opened with 1.4.0 or later (ADR 0230). An older one is refused unchanged with a message to
+open it once with 1.5.0 first, so keep the 1.5.0 dmg on its GitHub release. The step list is
+`src/data/migrations.ts`: the version 8 baseline, then one step per later version.
+
 The database runs in WAL mode: committed data can sit in `portfolio.db-wal` until a checkpoint.
 To back it up, use **Settings → Backup & Restore → Export backup** (a consistent JSON copy) or
 quit the app first and copy `portfolio.db` together with its `-wal` and `-shm` files. Copying

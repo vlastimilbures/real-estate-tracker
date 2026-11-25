@@ -39,6 +39,13 @@ To open the folder, in Finder choose **Go → Go to Folder…** (⇧⌘G) and pa
 3. Open it. If the new version changes how data is stored, it first writes a verified copy of
    the old database to `backups/pre-migration-v<old>-to-v<new>-<date>.sqlite`, then upgrades.
 
+**Which databases upgrade.** A database last opened with version 1.4.0 or later (database
+version 8 or later) upgrades as described above. An older one is not upgraded (ADR 0230):
+the app stops with "This database was last opened with a version older than 1.4.0. Open it
+once with version 1.5.0, then update." and writes nothing to it. Install 1.5.0, open the
+database once (it upgrades it), quit, then install the current version. A JSON backup from
+any version restores in any later version (next section).
+
 ## Restore a backup
 
 - **What it does.** **Settings → Backup & Restore → Choose backup file…** reads a JSON backup
@@ -85,12 +92,12 @@ An upgrade runs one step per database version, and each step is saved on its own
 first step, the app saves a pre-migration copy in `backups/`. So an upgrade that stops can
 leave the database partly upgraded. The screen tells you which case you are in:
 
-- **Nothing was changed**: "The database upgrade failed and was rolled back", "…stopped
-  before changing anything" or "…did not start because the safety backup could not be
-  written". The previous version of the app still opens the database. Reinstall that version
+- **Nothing was changed**: "The database upgrade failed and was rolled back" or "…did not
+  start because the safety backup could not be written". The previous version of the app
+  still opens the database. Reinstall that version
   and report the problem (below). For the safety-backup message, free some disk space first,
   then click **Try again**.
-- **Partly upgraded**: "The database upgrade stopped at version N … the database is now at
+- **Partly upgraded**: "The database upgrade failed at version N … the database is now at
   version M". The steps before version N were saved, so the previous app version no longer
   opens this database. The screen names the pre-migration copy (`pre-migration-…sqlite`). To
   go back to the previous app version, put that copy back (see
@@ -98,6 +105,9 @@ leave the database partly upgraded. The screen tells you which case you are in:
   way. A brand-new database has no copy, and none is needed: it held no data yet.
 - **"This database was saved by a newer version of the app"**: open it with that newer
   version.
+- **"This database was last opened with a version older than 1.4.0"**: nothing was changed.
+  Open it once with version 1.5.0, then update (see
+  [Which databases upgrade](#before-upgrading)).
 - **"The database file failed its integrity check"**: the database file is damaged. Restore your
   latest JSON backup (next section), or put back a pre-migration copy.
 - **"A saved record contains a value the app cannot read"** or **"A saved scenario cannot
