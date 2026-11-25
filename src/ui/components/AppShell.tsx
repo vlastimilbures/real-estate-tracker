@@ -19,6 +19,7 @@ import { useUiStore, type Route, type Theme } from "../../state/uiStore";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { SegmentedToggle, ErrorBanner } from "./primitives";
 import { useFirstShow } from "../hooks/useFirstShow";
+import { focusLost } from "../focus";
 import { BrandMark } from "./BrandMark";
 import { BackupHint } from "./BackupHint";
 import { SkipLink } from "./SkipLink";
@@ -218,9 +219,7 @@ export function AppShell({
   useEffect(() => {
     const changed = shownRoute !== null && shownRoute !== route;
     shownRoute = route;
-    const active = document.activeElement;
-    const lost = active === null || active === document.body;
-    if (changed && lost) mainRef.current?.focus({ preventScroll: true });
+    if (changed && focusLost()) mainRef.current?.focus({ preventScroll: true });
   }, [route]);
 
   // The topbar's height as --topbar-h on the page, so an in-page jump lands a section

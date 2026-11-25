@@ -1,20 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
-
-const FOCUSABLE =
-  "input, select, textarea, button, [href], [tabindex]:not([tabindex='-1'])";
-
-function focusables(root: HTMLElement): HTMLElement[] {
-  return [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
-    (el) => !el.hasAttribute("disabled") && el.tabIndex >= 0,
-  );
-}
-
-/** Not hidden from the user: outside any inert, aria-hidden or hidden subtree, and
- *  rendered where the browser can tell. */
-function reachable(el: HTMLElement): boolean {
-  if (el.closest("[inert], [aria-hidden='true'], [hidden]")) return false;
-  return typeof el.checkVisibility !== "function" || el.checkVisibility();
-}
+import { focusables, focusLost, reachable } from "../focus";
 
 /**
  * Modal accessibility wiring: Escape-to-close plus moving focus into the dialog on
@@ -78,7 +63,7 @@ export function useModalA11y(
       if (!root) return;
       const active = document.activeElement;
       // Focus inside a portaled child (the date popover) is left alone.
-      if (active && active !== document.body && !root.contains(active)) return;
+      if (!focusLost(root)) return;
       const list = focusables(root);
       const first = list[0];
       const last = list.at(-1);
@@ -103,10 +88,7 @@ export function useModalA11y(
       stack.splice(stack.indexOf(self), 1);
       // Return focus only when it is lost: fallen back to <body> with the dialog's nodes,
       // or still inside the dialog (StrictMode's rehearsal cleanup, before a real close).
-      const active = document.activeElement;
-      const lost =
-        !active || active === document.body || !!el?.contains(active);
-      if (!restoreFocus || !lost || !opener) return;
+      if (!restoreFocus || !focusLost(el) || !opener) return;
       if (opener.isConnected) opener.focus();
       else {
         // Gone with its popover (a dropdown option): the first reachable focusable element

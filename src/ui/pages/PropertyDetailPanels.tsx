@@ -29,7 +29,7 @@ import {
 } from "../model/chartData";
 import { RecordForm } from "../components/forms";
 import { ConfirmRow } from "../components/EntityPanelParts";
-import { focusSection } from "../components/focusSection";
+import { focusLost, focusSection } from "../focus";
 import { sectionId } from "../model/sectionNav";
 import { moneyDraft, percentDraft } from "../model/formParse";
 import { fmtCzk, fmtCzkM, fmtDate, fmtPct, noBreak } from "../../lib/format";
@@ -261,9 +261,7 @@ export function HoldingCostsPanel({
     if (!switched.current) return;
     switched.current = false;
     const box = root.current;
-    const active = document.activeElement;
-    if (!box || (active && active !== document.body && !box.contains(active)))
-      return;
+    if (!box || !focusLost(box)) return;
     if (editing) {
       box.querySelector<HTMLElement>("form input, form select")?.focus();
       return;

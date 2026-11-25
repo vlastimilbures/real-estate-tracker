@@ -1,4 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { focusLost } from "../focus";
 
 /** A target's answer for "leave focus where it is", where the outcome has its own focus
  *  rule. */
@@ -53,8 +54,7 @@ export function useFocusAfterBusy(
     // The action ended, or it never started: either way the record is spent.
     record.current = null;
     if (!was) return;
-    const active = document.activeElement;
-    if (active && active !== document.body && active !== r.trigger) return;
+    if (!focusLost() && document.activeElement !== r.trigger) return;
     const el = target(r.trigger, r.region);
     if (el === KEEP) return;
     const to = el?.isConnected ? el : pageTitle();

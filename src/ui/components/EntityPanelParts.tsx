@@ -8,6 +8,7 @@ import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import type { MutationResult } from "../../state/portfolioStore";
 import { layerOpen } from "../hooks/useModalA11y";
+import { focusLost } from "../focus";
 import {
   focusableFromScript,
   pageTitle,
@@ -98,9 +99,7 @@ function focusPanelAfter(
   panel: HTMLElement | null,
   row: HTMLElement | null,
 ): void {
-  const active = document.activeElement;
-  const lost = !active || active === document.body || !!row?.contains(active);
-  if (!lost) return;
+  if (!focusLost(row)) return;
   const target = panel?.isConnected ? focusableFromScript(panel) : pageTitle();
   target?.focus();
 }

@@ -27,7 +27,7 @@
       "Function 'AppShell'": 16
     },
     "lines": {
-      "Function 'AppShell'": 213
+      "Function 'AppShell'": 211
     }
   },
   "src/ui/components/LoanEventRows.tsx": {
@@ -56,11 +56,6 @@
   "src/ui/hooks/useAssumptionsForm.ts": {
     "lines": {
       "Function 'useAssumptionsForm'": 129
-    }
-  },
-  "src/ui/hooks/useModalA11y.ts": {
-    "complexity": {
-      "Function 'wrapTab'": 14
     }
   },
   "src/ui/model/compare.ts": {
@@ -130,7 +125,7 @@
   },
   "src/ui/pages/PropertyDetailPanels.tsx": {
     "lines": {
-      "Function 'HoldingCostsPanel'": 157
+      "Function 'HoldingCostsPanel'": 155
     }
   },
   "src/ui/pages/PropertyEntityPanels.tsx": {

@@ -5,7 +5,7 @@ import {
   type FocusEvent,
   type MouseEvent,
 } from "react";
-import { focusSection } from "./focusSection";
+import { focusSection } from "../focus";
 import { moreSides, scrollToShow } from "../model/sectionNav";
 
 /** Room left beside a link scrolled into view: past the 32 px fade and the focus ring. */

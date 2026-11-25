@@ -18,7 +18,7 @@ import { toChartRows } from "../model/chartData";
 import { ProjectionGrid } from "../components/ProjectionGrid";
 import { AsOfPicker } from "../components/AsOfPicker";
 import { SectionNav } from "../components/SectionNav";
-import { focusSection } from "../components/focusSection";
+import { focusSection } from "../focus";
 import { dataCheckItems } from "../model/dataCheck";
 import { PropertyDataCheckPanel } from "./PropertyDataCheck";
 import {
