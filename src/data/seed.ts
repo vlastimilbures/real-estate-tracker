@@ -21,7 +21,7 @@ import {
   SAMPLE_DISMISSED,
   SAMPLE_PROPERTIES,
 } from "./repositories";
-import { writeSafetyBackup } from "./backup";
+import { writeSafetyBackup } from "./backup/backupFiles";
 import { money } from "../engine";
 
 const BASE_DATE = isoDate("2026-06-07");
