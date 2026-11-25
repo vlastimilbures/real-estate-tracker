@@ -210,9 +210,9 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
         writes.execute += 1;
         return db.execute(q, p);
       },
-      transaction: (statements, options) => {
+      transaction: (statements) => {
         writes.transaction += 1;
-        return db.transaction(statements, options);
+        return db.transaction(statements);
       },
     });
     const open = vi.fn(async () => db);
@@ -284,9 +284,9 @@ describe("a committed write whose read-back fails stops on the error screen (ADR
         if (failed) writes.execute += 1;
         return real.execute(q, p);
       },
-      transaction: (statements, options) => {
+      transaction: (statements) => {
         if (failed) writes.transaction += 1;
-        return real.transaction(statements, options);
+        return real.transaction(statements);
       },
       selectSnapshot: (statements) => {
         if (statements.some((s) => s.query.includes("schema_migrations")))

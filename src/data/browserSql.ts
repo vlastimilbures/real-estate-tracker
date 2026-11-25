@@ -27,8 +27,7 @@ export async function openBrowserSql(): Promise<Sql> {
       stmt.free();
       return Promise.resolve(rows);
     },
-    // One synchronous in-memory connection, so BEGIN…COMMIT is atomic here. The FK-off
-    // rebuild option is for migrations; the browser DB is always created fresh.
+    // One synchronous in-memory connection, so BEGIN…COMMIT is atomic here.
     transaction(statements: SqlStatement[]): Promise<void> {
       db.run("BEGIN");
       try {

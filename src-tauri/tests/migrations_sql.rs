@@ -79,7 +79,7 @@ async fn apply(pool: &Pool<Sqlite>, migration: &Value) {
         query: sql.to_string(),
         params: vec![],
     };
-    if let Err(e) = run_atomic(pool, &[statement], false).await {
+    if let Err(e) = run_atomic(pool, &[statement]).await {
         panic!("migration v{version} ({name}) failed on the bundled SQLite: {e}");
     }
 }

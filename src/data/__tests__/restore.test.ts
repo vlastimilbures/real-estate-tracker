@@ -411,11 +411,11 @@ describe("restore is one transaction", () => {
         statements.push(q);
         return sql.execute(q, p);
       },
-      transaction: (stmts, o) =>
-        sql.transaction(
-          [...stmts, { query: "INSERT INTO no_such_table VALUES (1)" }],
-          o,
-        ),
+      transaction: (stmts) =>
+        sql.transaction([
+          ...stmts,
+          { query: "INSERT INTO no_such_table VALUES (1)" },
+        ]),
     };
     const b = await exportToJson(sql, new Date());
     await expect(restoreFromJson(failing, b, checkInputRules)).rejects.toThrow(

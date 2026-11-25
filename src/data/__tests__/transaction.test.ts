@@ -49,47 +49,6 @@ describe("test double: Sql.transaction", () => {
       ]),
     ).rejects.toThrow(/FOREIGN KEY/);
   });
-
-  it("rebuilds a parent table with FKs off without losing children", async () => {
-    const sql = await schema();
-    await sql.execute("INSERT INTO p (id, name) VALUES ('a', 'A')");
-    await sql.execute("INSERT INTO c (id, p_id) VALUES ('c1', 'a')");
-    await sql.transaction(
-      [
-        {
-          query:
-            "CREATE TABLE p_new (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE)",
-        },
-        { query: "INSERT INTO p_new SELECT id, name FROM p" },
-        { query: "DROP TABLE p" },
-        { query: "ALTER TABLE p_new RENAME TO p" },
-      ],
-      { foreignKeysOff: true },
-    );
-    expect(await count(sql, "c")).toBe(1);
-    expect(sql.db.pragma("foreign_keys", { simple: true })).toBe(1);
-  });
-
-  it("rolls back a rebuild that leaves a dangling reference", async () => {
-    const sql = await schema();
-    await sql.execute("INSERT INTO p (id, name) VALUES ('a', 'A')");
-    await sql.execute("INSERT INTO c (id, p_id) VALUES ('c1', 'a')");
-    await expect(
-      sql.transaction(
-        [
-          {
-            query:
-              "CREATE TABLE p_new (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE)",
-          },
-          { query: "DROP TABLE p" },
-          { query: "ALTER TABLE p_new RENAME TO p" },
-        ],
-        { foreignKeysOff: true },
-      ),
-    ).rejects.toThrow(/^FOREIGN_KEY_CHECK_FAILED/);
-    expect(await count(sql, "p")).toBe(1);
-    expect(sql.db.pragma("foreign_keys", { simple: true })).toBe(1);
-  });
 });
 
 describe("test double: Sql.backup", () => {

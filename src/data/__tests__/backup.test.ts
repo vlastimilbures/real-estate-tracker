@@ -300,9 +300,9 @@ function recording(inner: TestSql): { sql: Sql; queries: string[] } {
         for (const s of statements) queries.push(s.query);
         return inner.selectSnapshot(statements);
       },
-      transaction(statements, options) {
+      transaction(statements) {
         for (const s of statements) queries.push(s.query);
-        return inner.transaction(statements, options);
+        return inner.transaction(statements);
       },
       backup(label) {
         return inner.backup(label);

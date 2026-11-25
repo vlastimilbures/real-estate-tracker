@@ -206,14 +206,11 @@ describe("migration safety: abort paths leave the database unchanged", () => {
     const before = snapshot(sql);
     const real = sql.transaction.bind(sql);
     // Fail the last statement of the migration (its schema_migrations row).
-    sql.transaction = (statements, options) =>
-      real(
-        [
-          ...statements.slice(0, -1),
-          { query: "INSERT INTO no_such_table VALUES (1)" },
-        ],
-        options,
-      );
+    sql.transaction = (statements) =>
+      real([
+        ...statements.slice(0, -1),
+        { query: "INSERT INTO no_such_table VALUES (1)" },
+      ]);
 
     const e = await rejection(migrate(sql, { now: NOW }));
 
@@ -282,10 +279,10 @@ describe("a stopped upgrade reports how far it got", () => {
   function failTransaction(sql: TestSql, n: number): void {
     const real = sql.transaction.bind(sql);
     let calls = 0;
-    sql.transaction = (statements, options) =>
+    sql.transaction = (statements) =>
       ++calls === n
         ? Promise.reject(new Error("disk I/O error"))
-        : real(statements, options);
+        : real(statements);
   }
 
   async function v8WithData(): Promise<TestSql> {

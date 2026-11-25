@@ -117,11 +117,11 @@ describe("importCsv — all or nothing", () => {
     const before = dump(sql);
     const failing: Sql = {
       ...sql,
-      transaction: (statements, options) =>
-        sql.transaction(
-          [...statements, { query: "INSERT INTO no_such_table VALUES (1)" }],
-          options,
-        ),
+      transaction: (statements) =>
+        sql.transaction([
+          ...statements,
+          { query: "INSERT INTO no_such_table VALUES (1)" },
+        ]),
     };
     await expect(
       importNow(failing, {

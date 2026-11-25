@@ -4,12 +4,7 @@
 // through the app's own Rust commands (src-tauri/src/db.rs, D-14), which borrow the plugin's pool.
 import Database from "@tauri-apps/plugin-sql";
 import { invoke } from "@tauri-apps/api/core";
-import type {
-  ExecuteResult,
-  Sql,
-  SqlStatement,
-  TransactionOptions,
-} from "./sql";
+import type { ExecuteResult, Sql, SqlStatement } from "./sql";
 import { isTauri } from "../lib/tauri";
 
 /** Transaction control. Each `execute` may run on another pooled connection, so these sent
@@ -49,17 +44,13 @@ export async function openTauriSql(
     async select<T>(query: string, params: unknown[] = []): Promise<T[]> {
       return db.select<T[]>(query, params);
     },
-    async transaction(
-      statements: SqlStatement[],
-      options: TransactionOptions = {},
-    ): Promise<void> {
+    async transaction(statements: SqlStatement[]): Promise<void> {
       await invoke("db_transaction", {
         db: connection,
         statements: statements.map((s) => ({
           query: s.query,
           params: s.params ?? [],
         })),
-        foreignKeysOff: options.foreignKeysOff ?? false,
       });
     },
     async selectSnapshot(

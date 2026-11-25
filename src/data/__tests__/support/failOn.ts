@@ -13,10 +13,9 @@ export function failOn(inner: TestSql, pattern: RegExp): Sql {
         : inner.execute(q, p),
     select: (q, p) => inner.select(q, p),
     selectSnapshot: (statements) => inner.selectSnapshot(statements),
-    transaction: (statements, options) =>
+    transaction: (statements) =>
       inner.transaction(
         statements.map((s) => (pattern.test(s.query) ? boom : s)),
-        options,
       ),
     backup: (label) => inner.backup(label),
   };
