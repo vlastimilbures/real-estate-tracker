@@ -1,107 +1,88 @@
 import { useEffect, useRef, useState } from "react";
-import { Pencil, Power, PowerOff, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { usePropertyEngineResult } from "../../state/useEngine";
-import { InvalidDataNotice } from "../components/InvalidDataNotice";
 import { useUiStore } from "../../state/uiStore";
 import { AppShell } from "../components/AppShell";
-import {
-  Panel,
-  Button,
-  EmptyState,
-  ExportXlsxButton,
-} from "../components/primitives";
-import { PropertyFormModal } from "../components/PropertyFormModal";
-import { DisclosureButton } from "../components/Disclosure";
-import { toChartRows } from "../model/chartData";
-import { ProjectionGrid } from "../components/ProjectionGrid";
-import { AsOfPicker } from "../components/AsOfPicker";
+import { Button, EmptyState } from "../components/primitives";
 import { SectionNav } from "../components/SectionNav";
 import { focusSection } from "../focus";
-import { dataCheckItems } from "../model/dataCheck";
-import { PropertyDataCheckPanel } from "./PropertyDataCheck";
-import {
-  PropertySnapshotTiles,
-  HoldingCostsPanel,
-  ActivationBanner,
-  AmortizationTable,
-  LoanSummary,
-  AcquisitionPanel,
-} from "./PropertyDetailPanels";
-import {
-  ValuationsPanel,
-  LeasesPanel,
-  MortgagesPanel,
-} from "./PropertyEntityPanels";
-import { fmtDate, fmtNumber } from "../../lib/format";
-import { projectionSeries, projectionColumns } from "../model/projection";
-import {
-  lensLabel,
-  lensWord,
-  projectionExportNotes,
-  projectionPanelHint,
-} from "../model/tableContext";
-import { exportTableXlsx } from "../exportXlsx";
-import { exportFilename } from "../../lib/slug";
-import { asOfView, asOfHint, propertyTilesForAsOf } from "../model/dashboard";
-import {
-  amortizationColumns,
-  loanOutlook,
-  loanWarningText,
-  loanWarnings,
-} from "../model/propertyDetail";
-import { acquisitionView } from "../model/acquisition";
-import { resetMarkers } from "../model/financing";
 import { useToast } from "../hooks/useToast";
-import { describeWriteError } from "../model/writeError";
 import { useT } from "../hooks/useT";
-import type { Dictionary } from "../../i18n";
 import { useAsOf } from "../hooks/useAsOf";
 import { useSectionSpy } from "../hooks/useSectionSpy";
-import { pressed, useBusyFocus } from "../hooks/useBusyFocus";
+import { usePropertyActivation } from "../hooks/usePropertyActivation";
+import { usePropertyRecords } from "../hooks/usePropertyRecords";
+import {
+  detailSections,
+  propertyDetailView,
+  sectionLinks,
+  splitResult,
+} from "../model/propertyDetailView";
+import type { Assumptions, Portfolio, Property } from "../../engine";
 import {
   isFormTarget,
-  propertySections,
   sectionId,
   type PropertyFormTarget,
-  type PropertySection,
 } from "../model/sectionNav";
+import { PropertyDetailBody } from "./propertyDetail/PropertyDetailBody";
+import { PropertyHeaderActions } from "./propertyDetail/PropertyHeaderActions";
 
-const AMORTIZATION_BODY = "pd-amortization-table";
+/** The view state this page reads. */
+function usePageUi() {
+  return useUiStore(
+    useShallow((s) => ({
+      propertyId: s.selectedPropertyId,
+      navigate: s.navigate,
+      openSettings: s.openSettings,
+      mode: s.mode,
+      asOf: s.asOf,
+      setAsOf: s.setAsOf,
+      propertyTarget: s.propertyTarget,
+      clearPropertyTarget: s.clearPropertyTarget,
+      amortizationOpen: s.amortizationOpen,
+      setAmortizationOpen: s.setAmortizationOpen,
+    })),
+  );
+}
 
-/** The subtitle's size with Czech formatting, e.g. "54,5 m²" (ADR 0236 §2). */
-const sizeText = (t: Dictionary, sizeM2: number | undefined) =>
-  sizeM2 ? t.propertyDetail.sizeM2(fmtNumber(sizeM2)) : null;
+/** What the page needs to show a property, narrowed; null shows the fallback. The engine
+ *  result is null for an unknown id, so a stale or deleted selection lands there too
+ *  (DR-065). */
+function shownPage<V>(
+  propertyId: string | null,
+  property: Property | undefined,
+  hasResult: boolean,
+  {
+    portfolio,
+    assumptions,
+  }: { portfolio: Portfolio | null; assumptions: Assumptions | null },
+  view: V | null,
+) {
+  if (propertyId === null || !portfolio || !hasResult) return null;
+  if (!property || !assumptions || !view) return null;
+  return { property, portfolio, assumptions, view };
+}
 
 export function PropertyDetail() {
   const t = useT();
-  const propertyId = useUiStore((s) => s.selectedPropertyId);
-  const navigate = useUiStore((s) => s.navigate);
-  const openSettings = useUiStore((s) => s.openSettings);
-  const mode = useUiStore((s) => s.mode);
-  const asOf = useUiStore((s) => s.asOf);
-  const setAsOf = useUiStore((s) => s.setAsOf);
-  const propertyTarget = useUiStore((s) => s.propertyTarget);
-  const clearPropertyTarget = useUiStore((s) => s.clearPropertyTarget);
-  const amortizationOpen = useUiStore((s) => s.amortizationOpen);
-  const setAmortizationOpen = useUiStore((s) => s.setAmortizationOpen);
   // Only the fields this page reads, so an unrelated store change (error banner,
   // scenarios, status) does not re-render it (DR-056).
+  const ui = usePageUi();
+  const { propertyId, propertyTarget, clearPropertyTarget } = ui;
   const store = usePortfolioStore(
     useShallow((s) => ({
       portfolio: s.portfolio,
       assumptions: s.assumptions,
-      setPropertyActive: s.setPropertyActive,
       saveHoldingCost: s.saveHoldingCost,
     })),
   );
   // The date the tiles, picker and subtitle are for, clamped to the window (ADR 0150).
-  const view = useAsOf();
-  const result = usePropertyEngineResult(propertyId, view?.date ?? null);
+  const resolved = useAsOf();
+  const result = usePropertyEngineResult(propertyId, resolved?.date ?? null);
   // Stored data that breaks an engine rule: show the records to fix, no figures (DR-146).
-  const invalid = result && "invalid" in result ? result.invalid : null;
-  const out = result && !("invalid" in result) ? result : null;
+  const { out, invalid } = splitResult(result);
   // The open property form: plain, or at its Acquisition section (a Data check link).
   const [editing, setEditing] = useState<false | PropertyFormTarget>(false);
   // Record funding's button leaves with the compact Acquisition line once something is
@@ -115,29 +96,20 @@ export function PropertyDetail() {
     acquisitionOpener.current = null;
     if (!opener.isConnected) focusSection(sectionId("acquisition"));
   }, [editing]);
-  const [confirmingDeactivate, setConfirmingDeactivate] = useState(false);
-  // Activate gets focus back after any outcome; a success leaves the same button, now
-  // Deactivate (ADR 0248 §2–§3).
-  const [toggling, setToggling] = useBusyFocus(pressed);
-  const [activeError, setActiveError] = useState<string | null>(null);
+  const activation = usePropertyActivation(propertyId ?? "");
   const { showToast } = useToast();
-  const property = store.portfolio?.properties.find((p) => p.id === propertyId);
-  const isActive = property?.active !== false;
-  // The page's sections in order (ADR 0107); computed before the early return so the
-  // spy hook runs on every render. A deactivated property has no Data check (ADR 0155).
-  const sections = propertySections({
-    overview: out !== null,
-    dataCheck: out !== null && isActive,
-    projection: out !== null,
-    amortization: out !== null && out.schedule.length > 0,
-  });
+  const records = usePropertyRecords(propertyId);
+  const found = store.portfolio?.properties.find((p) => p.id === propertyId);
+  const isActive = found?.active !== false;
+  // Computed before the early return so the spy hook runs on every render.
+  const sections = detailSections(out, isActive);
   const [currentSection, setCurrentSection] = useSectionSpy(
     sections.map(sectionId),
   );
   // A Dashboard data check link lands on its section, or opens the property form, once
   // the page shows the property (ADR 0118). The form opens during render, as Properties'
   // ⌘N request does; the effect moves focus and clears the request.
-  const shown = property !== undefined;
+  const shown = found !== undefined;
   if (isFormTarget(propertyTarget) && shown && !editing)
     setEditing(propertyTarget);
   useEffect(() => {
@@ -146,24 +118,21 @@ export function PropertyDetail() {
     clearPropertyTarget();
   }, [propertyTarget, shown, clearPropertyTarget]);
 
-  // The engine result is null for an unknown id, so a stale or deleted selection lands
-  // here too; the guard also narrows every field the page reads (DR-065).
-  const assumptions = store.assumptions;
-  if (
-    propertyId === null ||
-    !store.portfolio ||
-    (!out && !invalid) ||
-    !property ||
-    !assumptions ||
-    !view
-  ) {
+  const page = shownPage(
+    propertyId,
+    found,
+    out !== null || invalid !== null,
+    store,
+    resolved,
+  );
+  if (!page) {
     return (
       <AppShell title={t.propertyDetail.fallbackTitle} showLens={false}>
         <EmptyState
           title={t.propertyDetail.noneSelectedTitle}
           icon={Building2}
           action={
-            <Button onClick={() => navigate("properties")}>
+            <Button onClick={() => ui.navigate("properties")}>
               {t.propertyDetail.backToProperties}
             </Button>
           }
@@ -172,349 +141,83 @@ export function PropertyDetail() {
     );
   }
 
-  const valuations = store.portfolio.valuations.filter(
-    (v) => v.propertyId === propertyId,
-  );
-  const leases = store.portfolio.leases.filter(
-    (l) => l.propertyId === propertyId,
-  );
-  const mortgages = store.portfolio.mortgages.filter(
-    (m) => m.propertyId === propertyId,
-  );
-  const holding = store.portfolio.holdingCosts.find(
-    (h) => h.propertyId === propertyId,
-  );
-  const id = property.id;
-
-  async function activate() {
-    setToggling(true);
-    setActiveError(null);
-    const result = await store.setPropertyActive(id, true);
-    setToggling(false);
-    if (!result.ok) setActiveError(describeWriteError(t, result.error).message);
-  }
-
-  async function deactivate() {
-    const result = await store.setPropertyActive(id, false);
-    // On failure the confirm stays open and says why (UX-050).
-    if (result.ok) setConfirmingDeactivate(false);
-    return result;
-  }
-
-  // Tiles under the chosen lens, by the Dashboard's as-of rule (DR-054, D-62): a future
-  // as-of reads the projection year the charts plot; real terms are in base-date prices.
-  const series = out ? projectionSeries(out.projection, mode, assumptions) : [];
-  const basis = out
-    ? asOfView(assumptions.baseDate, out.asOf, view.isToday)
-    : null;
-  const s =
-    out && basis
-      ? propertyTilesForAsOf(
-          out.snapshot,
-          series,
-          basis,
-          out.asOf,
-          mode,
-          assumptions,
-          property.purchaseDate,
-        )
-      : null;
-  const chartRows = toChartRows(series);
-  // Picker hint by the same as-of basis as the tiles (ADR 0088).
-  const pickerHint = basis ? asOfHint(t, basis, assumptions.baseDate) : null;
-
-  const baseDate = assumptions.baseDate;
-  // Loan checks for every block from the one in force onward (UX-054).
-  // Skipped while the stored data breaks an engine rule (the checks would throw too),
-  // and for a deactivated property: no data-entry nudge for a loan it no longer has
-  // (ADR 0155).
-  const warnings =
-    out && isActive ? loanWarnings(mortgages, baseDate, out.eventOutcomes) : [];
-  const outlook = out?.financing
-    ? loanOutlook(out.financing, mortgages, t.propertyDetail)
-    : null;
-  // This property's Data check at the page's as-of date (ADR 0118); none for a
-  // deactivated property (ADR 0155). Its attention count is also the title pill.
-  const check =
-    out && isActive
-      ? dataCheckItems([property], store.portfolio, out.asOf, baseDate)
-      : null;
-  const toReview = check?.attention.length ?? 0;
-
-  const lens = lensLabel(t, mode);
-  const modeWord = lensWord(t, mode);
-  const sectionLabel: Record<PropertySection, string> = {
-    overview: t.propertyDetail.sectionOverview,
-    dataCheck: t.dataCheck.title,
-    records: t.propertyDetail.sectionRecords,
-    financing: t.propertyDetail.sectionFinancing,
-    acquisition: t.propertyDetail.sectionAcquisition,
-    holding: t.propertyDetail.sectionHolding,
-    projection: t.propertyDetail.sectionProjection,
-    amortization: t.propertyDetail.sectionAmortization,
-  };
-  const exportProjection = () =>
-    exportTableXlsx({
-      filename: exportFilename(property.name, property.id, "projection", mode),
-      sheetName: t.xlsx.sheetNames.projection,
-      columns: (rows) => projectionColumns(t, baseDate, rows),
-      rows: series,
-      notes: projectionExportNotes(t, property.name, mode, baseDate),
-    });
-  // Always nominal and dated per row: the property's name is the only context (ADR 0159).
-  const exportAmortization = () =>
-    exportTableXlsx({
-      filename: exportFilename(property.name, property.id, "amortization"),
-      sheetName: t.xlsx.sheetNames.amortization,
-      columns: (rows) => amortizationColumns(t, rows),
-      rows: out?.schedule ?? [],
-      notes: [property.name],
-    });
+  const { property, portfolio, assumptions, view } = page;
+  const v = propertyDetailView({
+    out,
+    property,
+    portfolio,
+    assumptions,
+    mortgages: records.mortgages,
+    mode: ui.mode,
+    view,
+    t,
+  });
 
   return (
     <AppShell
       title={property.name}
       attention={
         // The same pill as the Dashboard's (ADR 0218 §1, 0223 §5).
-        toReview > 0
+        v.toReview > 0
           ? {
-              count: toReview,
-              label: t.dataCheck.reviewPill(toReview),
+              count: v.toReview,
+              label: t.dataCheck.reviewPill(v.toReview),
               onSelect: () => focusSection(sectionId("dataCheck")),
             }
           : undefined
       }
-      subtitle={[
-        property.type,
-        sizeText(t, property.sizeM2),
-        // The tiles' own `owned`, so the subtitle and the tiles agree (ADR 0156).
-        !s
-          ? null
-          : s.owned
-            ? t.propertyDetail.purchased(fmtDate(property.purchaseDate))
-            : t.propertyDetail.pendingPurchase(fmtDate(property.purchaseDate)),
-        view.isToday ? null : t.propertyDetail.asOf(fmtDate(view.date)),
-        isActive ? null : t.propertyDetail.deactivated,
-      ]
-        .filter(Boolean)
-        .join(" · ")}
+      subtitle={v.subtitle}
       crumb={{
         label: t.nav.properties,
-        onSelect: () => navigate("properties"),
+        onSelect: () => ui.navigate("properties"),
       }}
       subnav={
         <SectionNav
           label={t.propertyDetail.sectionNavLabel}
-          sections={sections.map((sec) => ({
-            id: sectionId(sec),
-            label: sectionLabel[sec],
-          }))}
+          sections={sectionLinks(t, sections)}
           current={currentSection}
           onSelect={setCurrentSection}
         />
       }
       actions={
-        <>
-          <Button
-            variant="primary"
-            icon={Pencil}
-            onClick={() => setEditing("edit")}
-          >
-            {t.properties.editProperty}
-          </Button>
-          {/* Below a 1100 px window only the icon shows; the label stays the button's
-              name (ADR 0215 §2). */}
-          {isActive ? (
-            <Button
-              icon={PowerOff}
-              onClick={() => setConfirmingDeactivate(true)}
-              title={t.propertyDetail.deactivateTitle}
-            >
-              <span className="narrow-hide">{t.propertyDetail.deactivate}</span>
-            </Button>
-          ) : (
-            <Button
-              icon={Power}
-              disabled={toggling}
-              onClick={activate}
-              title={t.propertyDetail.activateTitle}
-            >
-              <span className="narrow-hide">
-                {toggling
-                  ? t.propertyDetail.activating
-                  : t.propertyDetail.activate}
-              </span>
-            </Button>
-          )}
-        </>
+        <PropertyHeaderActions
+          isActive={isActive}
+          toggling={activation.toggling}
+          onEdit={() => setEditing("edit")}
+          onDeactivate={() => activation.setConfirmingDeactivate(true)}
+          onActivate={activation.activate}
+        />
       }
     >
-      <ActivationBanner
-        propertyName={property.name}
-        isActive={isActive}
-        confirmingDeactivate={confirmingDeactivate}
-        onConfirmDeactivate={deactivate}
-        onCancelDeactivate={() => setConfirmingDeactivate(false)}
-        error={activeError}
+      <PropertyDetailBody
+        v={v}
+        property={property}
+        invalid={invalid}
+        portfolio={portfolio}
+        assumptions={assumptions}
+        records={records}
+        activation={activation}
+        asOf={{ value: ui.asOf, onChange: ui.setAsOf, bounds: view.bounds }}
+        amortization={{
+          open: ui.amortizationOpen,
+          onToggle: () => ui.setAmortizationOpen(!ui.amortizationOpen),
+        }}
+        editing={editing}
+        onCloseForm={() => setEditing(false)}
+        onRecordFunding={(opener) => {
+          acquisitionOpener.current = opener;
+          setEditing("editFunding");
+        }}
+        onSaveHolding={store.saveHoldingCost}
+        onHoldingSaved={() => showToast(t.propertyDetail.holdingCostsSaved)}
+        onFix={(fix) =>
+          fix === "assumptions"
+            ? ui.openSettings("assumptions")
+            : isFormTarget(fix)
+              ? setEditing(fix)
+              : focusSection(sectionId(fix))
+        }
       />
-
-      {invalid && (
-        <InvalidDataNotice error={invalid} portfolio={store.portfolio} />
-      )}
-
-      {s && out && basis && (
-        <div className="pd-section" id={sectionId("overview")}>
-          <h2 className="sr-only" tabIndex={-1}>
-            {t.propertyDetail.sectionOverview}
-          </h2>
-          <div className="filter-bar">
-            <span />
-            <AsOfPicker
-              value={asOf}
-              onChange={setAsOf}
-              bounds={view.bounds}
-              hint={pickerHint}
-            />
-          </div>
-
-          <PropertySnapshotTiles
-            s={s}
-            chartRows={chartRows}
-            modeWord={modeWord}
-            basis={basis}
-            purchaseDate={property.purchaseDate}
-            markers={resetMarkers(
-              out.financing?.resets ?? [],
-              chartRows,
-              new Map([[property.id, property.name]]),
-            )}
-            markerHeading={
-              mode === "real" ? t.charts.rateResetNominal : t.charts.rateReset
-            }
-          />
-          {/* Right after the charts: the loan's next reset and payoff (ADR 0224 §1). */}
-          {outlook && <LoanSummary outlook={outlook} />}
-        </div>
-      )}
-
-      {/* Editable child entities */}
-      <div className="pd-section" id={sectionId("records")}>
-        <ValuationsPanel propertyId={propertyId} rows={valuations} />
-        <LeasesPanel propertyId={propertyId} rows={leases} />
-      </div>
-
-      {/* The loan warnings sit with the blocks they describe (ADR 0107). They are
-          standing state, not news: a status, not an alert on every visit (ADR 0157). */}
-      <div className="pd-section" id={sectionId("financing")}>
-        <MortgagesPanel propertyId={propertyId} rows={mortgages} />
-        {warnings.map((w, i) => (
-          <div
-            className="banner warn"
-            role="status"
-            key={`${w.kind}-${w.block.id}-${i}`}
-          >
-            {loanWarningText(t, w, assumptions.postFixationResetRatePa)}
-          </div>
-        ))}
-      </div>
-
-      {out && (
-        <div className="pd-section" id={sectionId("acquisition")}>
-          <AcquisitionPanel
-            view={acquisitionView(
-              out.acquisition,
-              property.funding?.note,
-              t.propertyDetail,
-            )}
-            onRecordFunding={(opener) => {
-              acquisitionOpener.current = opener;
-              setEditing("editFunding");
-            }}
-          />
-        </div>
-      )}
-
-      <div className="pd-section" id={sectionId("holding")}>
-        <HoldingCostsPanel
-          holding={holding}
-          propertyId={propertyId}
-          defaults={assumptions.defaults}
-          onSave={store.saveHoldingCost}
-          onSaved={() => showToast(t.propertyDetail.holdingCostsSaved)}
-        />
-      </div>
-
-      {/* Projection + amortization */}
-      {out && (
-        <div className="pd-section" id={sectionId("projection")}>
-          <Panel
-            title={t.propertyDetail.projectionTitle(assumptions.horizonYears)}
-            hint={projectionPanelHint(t, lens, assumptions.baseDate)}
-            action={<ExportXlsxButton onExport={exportProjection} />}
-            flush
-          >
-            <ProjectionGrid rows={series} baseDate={assumptions.baseDate} />
-          </Panel>
-        </div>
-      )}
-
-      {/* Collapsed by default; the header and its export stay (ADR 0107). */}
-      {out && out.schedule.length > 0 && (
-        <div className="pd-section" id={sectionId("amortization")}>
-          <Panel
-            title={t.propertyDetail.amortizationTitle}
-            hint={t.propertyDetail.amortizationMonths(out.schedule.length)}
-            action={
-              // The toggle sits in the head, before the export (ADR 0203 §2).
-              <span className="panel-actions">
-                <DisclosureButton
-                  open={amortizationOpen}
-                  controls={AMORTIZATION_BODY}
-                  onToggle={() => setAmortizationOpen(!amortizationOpen)}
-                >
-                  {amortizationOpen
-                    ? t.propertyDetail.hideAmortization
-                    : t.propertyDetail.showAmortization(out.schedule.length)}
-                </DisclosureButton>
-                <ExportXlsxButton onExport={exportAmortization} />
-              </span>
-            }
-            flush
-          >
-            <div id={AMORTIZATION_BODY} hidden={!amortizationOpen}>
-              {amortizationOpen && (
-                <AmortizationTable schedule={out.schedule} />
-              )}
-            </div>
-          </Panel>
-        </div>
-      )}
-
-      {editing && (
-        <PropertyFormModal
-          mode="edit"
-          propertyId={propertyId}
-          openFunding={editing === "editFunding"}
-          onClose={() => setEditing(false)}
-        />
-      )}
-      {/* Last: the findings point at the sections above (ADR 0223 §5). */}
-      {out && check && (
-        <div className="pd-section" id={sectionId("dataCheck")}>
-          <PropertyDataCheckPanel
-            check={check}
-            asOf={out.asOf}
-            resetRate={assumptions.postFixationResetRatePa}
-            onFix={(fix) =>
-              fix === "assumptions"
-                ? openSettings("assumptions")
-                : isFormTarget(fix)
-                  ? setEditing(fix)
-                  : focusSection(sectionId(fix))
-            }
-          />
-        </div>
-      )}
     </AppShell>
   );
 }

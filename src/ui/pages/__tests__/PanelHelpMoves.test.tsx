@@ -7,7 +7,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { ScenarioListPanel } from "../ScenariosPanels";
 import { MortgagesPanel } from "../PropertyEntityPanels";
-import { AcquisitionPanel } from "../PropertyDetailPanels";
+import { AcquisitionPanel } from "../propertyDetail/AcquisitionPanel";
 import type { AcquisitionView } from "../../model/acquisition";
 import { DEFAULT_SHOCK_YEARS } from "../ScenarioForm";
 import { D } from "../../../lib/money";

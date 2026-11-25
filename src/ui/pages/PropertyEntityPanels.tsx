@@ -5,30 +5,17 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { Money, Pct } from "../components/primitives";
 import { EntityPanel, type PanelTable } from "../components/EntityPanel";
 import { moneyDraft, dateDraft } from "../model/formParse";
-import { fmtDate, fmtCzk } from "../../lib/format";
+import { fmtDate } from "../../lib/format";
 import { CZK } from "../../lib/currency";
 import { mortgageFromForm, mortgageSpecs } from "../model/mortgageForm";
+import {
+  developmentSummary,
+  valuationClosedBy,
+} from "../model/propertyRecords";
 import { MortgageForm } from "./mortgage/MortgageForm";
-import { dayBefore, openPredecessor, scheduledPrincipal } from "../../engine";
 import type { Valuation, Lease, MortgageBlock } from "../../engine";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
-
-/** Compact development-loan summary for the mortgage table. */
-function devSummary(r: MortgageBlock, t: Dictionary): string {
-  const parts: string[] = [];
-  if (r.draws?.length) {
-    // Total loan = start draw + every later tranche (ADR 0167). Surfacing it lets the
-    // user sanity-check the loan isn't double-counting the first draw.
-    const total = scheduledPrincipal(r);
-    parts.push(
-      `${t.propertyDetail.tranches(r.draws.length)} · ${t.propertyDetail.totalLoan(fmtCzk(total))}`,
-    );
-  }
-  if (r.completionDate)
-    parts.push(t.propertyDetail.ioUntil(fmtDate(r.completionDate)));
-  return parts.length ? parts.join(" · ") : "—";
-}
 
 export function ValuationsPanel({
   propertyId,
@@ -103,21 +90,11 @@ export function ValuationsPanel({
           validTo: v.validTo ?? undefined,
           marketValue: v.marketValue,
         }),
-        // ADR 0227: an open-ended new valuation ends the open-ended one before it on
-        // the day before, without asking. A dated one changes no other row (ADR 0144).
+        // ADR 0227: an open-ended new valuation ends the open-ended one before it,
+        // without asking (ADR 0144: a dated one changes no other row).
         onAdd: (v) => {
-          const prev = v.validTo
-            ? undefined
-            : openPredecessor(
-                rows,
-                v.propertyId,
-                v.validFrom,
-                (r) => r.validFrom,
-                (r) => r.validTo,
-              );
-          return prev
-            ? addClosing(v, { ...prev, validTo: dayBefore(v.validFrom) })
-            : add(v);
+          const closed = valuationClosedBy(rows, v);
+          return closed ? addClosing(v, closed) : add(v);
         },
         onSave: save,
       }}
@@ -240,7 +217,7 @@ function mortgageColumns(t: Dictionary): PanelTable<MortgageBlock>["columns"] {
     {
       head: t.propertyDetail.colDevelopment,
       left: true,
-      cell: (r) => devSummary(r, t),
+      cell: (r) => developmentSummary(t, r),
     },
   ];
 }

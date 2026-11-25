@@ -23,7 +23,7 @@ import { projectionSeries } from "../../model/projection";
 import { ProjectionGrid } from "../../components/ProjectionGrid";
 import { KpiListPanel } from "../DashboardPanels";
 import { renderStrip } from "./kpiStripSupport";
-import { PropertySnapshotTiles } from "../PropertyDetailPanels";
+import { PropertySnapshotTiles } from "../propertyDetail/PropertySnapshotTiles";
 import { Properties } from "../Properties";
 
 const NA = en.common.notApplicable;

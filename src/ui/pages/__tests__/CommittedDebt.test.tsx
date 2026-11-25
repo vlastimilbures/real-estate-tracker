@@ -18,7 +18,7 @@ import { fmtCzkM, noBreak } from "../../../lib/format";
 import { D } from "../../../lib/money";
 import { undrawnPart } from "../../model/debt";
 import { KpiStrip } from "../DashboardPanels";
-import { PropertySnapshotTiles } from "../PropertyDetailPanels";
+import { PropertySnapshotTiles } from "../propertyDetail/PropertySnapshotTiles";
 
 const only = <T extends { propertyId: string }>(rows: T[]) =>
   rows.filter((r) => r.propertyId === "dev");

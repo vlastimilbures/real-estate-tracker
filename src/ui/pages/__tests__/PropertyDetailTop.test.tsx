@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { PropertyDetail } from "../PropertyDetail";
-import { PropertySnapshotTiles } from "../PropertyDetailPanels";
+import { PropertySnapshotTiles } from "../propertyDetail/PropertySnapshotTiles";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { portfolioSnapshot, propertySnapshot } from "../../../engine";

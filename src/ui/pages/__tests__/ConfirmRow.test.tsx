@@ -13,7 +13,7 @@ import {
   ValuationsPanel,
 } from "../PropertyEntityPanels";
 import { ScenarioListPanel } from "../ScenariosPanels";
-import { ActivationBanner } from "../PropertyDetailPanels";
+import { ActivationBanner } from "../propertyDetail/ActivationBanner";
 import { Properties } from "../Properties";
 import { EntityPanel } from "../../components/EntityPanel";
 import { LeaveGuard } from "../../components/LeaveGuard";

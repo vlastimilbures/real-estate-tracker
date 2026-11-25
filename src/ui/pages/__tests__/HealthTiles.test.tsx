@@ -14,7 +14,7 @@ import {
   ltvBandWord,
 } from "../../model/health";
 import { renderStrip } from "./kpiStripSupport";
-import { PropertySnapshotTiles } from "../PropertyDetailPanels";
+import { PropertySnapshotTiles } from "../propertyDetail/PropertySnapshotTiles";
 
 function tileOf(el: HTMLElement): HTMLElement {
   return el.closest(".tile") as HTMLElement;

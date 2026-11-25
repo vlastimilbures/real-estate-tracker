@@ -12,7 +12,7 @@ import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
 import { fmtCzk, fmtPct } from "../../../lib/format";
 import type { MutationResult } from "../../../state/portfolioStore";
-import { HoldingCostsPanel } from "../PropertyDetailPanels";
+import { HoldingCostsPanel } from "../propertyDetail/HoldingCostsPanel";
 
 const p = en.propertyDetail;
 const defaults = assumptions.defaults;
