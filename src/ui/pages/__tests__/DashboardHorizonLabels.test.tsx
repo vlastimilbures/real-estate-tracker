@@ -7,6 +7,7 @@ import { render, screen } from "@testing-library/react";
 import { portfolioKpis, portfolioSnapshot } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { KpiListPanel, ProjectionCharts } from "../DashboardPanels";
+import { kpiListView } from "./dashboardViewSupport";
 import { rowLabel } from "./kpiStripSupport";
 
 const a25 = { ...assumptions, horizonYears: 25 };
@@ -19,19 +20,23 @@ describe("Dashboard horizon labels (ADR 0084)", () => {
       <>
         <>
           <ProjectionCharts
-            mode="nominal"
-            rows={[]}
-            eqChange={[]}
-            horizonYears={a25.horizonYears}
+            view={{
+              mode: "nominal",
+              rows: [],
+              eqChange: [],
+              horizonYears: a25.horizonYears,
+            }}
           />
         </>
         <KpiListPanel
-          s={s}
-          basis={{ kind: "today" }}
-          kpis={kpis}
-          mode="nominal"
-          horizonYears={a25.horizonYears}
-          cashInvested={null}
+          view={kpiListView({
+            s,
+            basis: { kind: "today" },
+            kpis,
+            mode: "nominal",
+            horizonYears: a25.horizonYears,
+            cashInvested: null,
+          })}
         />
       </>,
     );

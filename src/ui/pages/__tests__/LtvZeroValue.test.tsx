@@ -22,6 +22,7 @@ import { en } from "../../../i18n/en";
 import { projectionSeries } from "../../model/projection";
 import { ProjectionGrid } from "../../components/ProjectionGrid";
 import { KpiListPanel } from "../DashboardPanels";
+import { kpiListView } from "./dashboardViewSupport";
 import { renderStrip } from "./kpiStripSupport";
 import { PropertySnapshotTiles } from "../propertyDetail/PropertySnapshotTiles";
 import { Properties } from "../Properties";
@@ -76,12 +77,14 @@ describe("Dashboard risk tiles", () => {
     expect(ltv.textContent).not.toContain("0,0 %");
     render(
       <KpiListPanel
-        s={s}
-        basis={{ kind: "today" }}
-        kpis={portfolioKpis(portfolio, crashed)}
-        mode="nominal"
-        horizonYears={crashed.horizonYears}
-        cashInvested={null}
+        view={kpiListView({
+          s,
+          basis: { kind: "today" },
+          kpis: portfolioKpis(portfolio, crashed),
+          mode: "nominal",
+          horizonYears: crashed.horizonYears,
+          cashInvested: null,
+        })}
       />,
     );
     for (const k of [en.dashboard.netYieldCap, en.dashboard.kpiGrossYield])

@@ -7,14 +7,13 @@ import { Panel, EmptyState, ExportXlsxButton } from "../components/primitives";
 import { FolderOpen } from "lucide-react";
 import { PropertySelect } from "../components/PropertySelect";
 import { ProjectionGrid } from "../components/ProjectionGrid";
-import { projectionSeries, projectionColumns } from "../model/projection";
+import { projectionSeries } from "../model/projection";
 import {
   lensLabel,
-  projectionExportNotes,
+  projectionExport,
   projectionsPageSubtitle,
 } from "../model/tableContext";
 import { exportTableXlsx } from "../exportXlsx";
-import { exportFilename } from "../../lib/slug";
 import { useT } from "../hooks/useT";
 import { PortfolioStateNotice } from "../components/PortfolioStateNotice";
 import { portfolioState } from "../model/portfolioState";
@@ -68,25 +67,15 @@ export function Projections() {
   const lens = lensLabel(t, mode);
   // The file names the property by its full name, as Property detail does (ADR 0159).
   const exportProjection = () =>
-    exportTableXlsx({
-      filename: property
-        ? exportFilename(property.name, property.id, "projection", mode)
-        : exportFilename(
-            t.projections.portfolio,
-            "portfolio",
-            "projection",
-            mode,
-          ),
-      sheetName: t.xlsx.sheetNames.projection,
-      columns: (shown) => projectionColumns(t, assumptions.baseDate, shown),
-      rows,
-      notes: projectionExportNotes(
+    exportTableXlsx(
+      projectionExport(
         t,
-        property?.name ?? t.projections.portfolio,
+        property ?? { name: t.projections.portfolio, id: "portfolio" },
+        rows,
         mode,
         assumptions.baseDate,
       ),
-    });
+    );
 
   return (
     <AppShell

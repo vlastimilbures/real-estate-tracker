@@ -18,6 +18,15 @@ import {
 } from "../../lib/format";
 import { CZK } from "../../lib/currency";
 
+/** What `exportTableXlsx` takes: one sheet. */
+export interface TableExport<R> {
+  filename: string;
+  sheetName: string;
+  columns: (rows: R[]) => XlsxColumn<R>[];
+  rows: R[];
+  notes: string[];
+}
+
 /** How a column's value is shown — and therefore rounded and formatted. */
 export type CellKind =
   | "money" // whole currency units, `#,##0 "Kč"`

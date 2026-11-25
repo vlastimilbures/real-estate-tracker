@@ -21,6 +21,7 @@ import { projectionSeries } from "../../model/projection";
 import { lensKpis } from "../../model/lensKpis";
 import { ProjectionGrid } from "../../components/ProjectionGrid";
 import { KpiListPanel } from "../DashboardPanels";
+import { kpiListView } from "./dashboardViewSupport";
 import { rowLabel } from "./kpiStripSupport";
 
 // Probe R8-5: a 1,000,000 Kč prepayment with a 5,000 Kč fee on Byt Lipova.
@@ -76,12 +77,14 @@ describe("Cash to owner (ADR 0161)", () => {
   it("the Dashboard tile is named cumulative cash to owner", () => {
     render(
       <KpiListPanel
-        s={portfolioSnapshot(prepaid, assumptions)}
-        basis={{ kind: "today" }}
-        kpis={kpis}
-        mode="nominal"
-        horizonYears={assumptions.horizonYears}
-        cashInvested={null}
+        view={kpiListView({
+          s: portfolioSnapshot(prepaid, assumptions),
+          basis: { kind: "today" },
+          kpis,
+          mode: "nominal",
+          horizonYears: assumptions.horizonYears,
+          cashInvested: null,
+        })}
       />,
     );
     expect(

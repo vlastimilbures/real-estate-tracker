@@ -14,6 +14,7 @@ import {
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { KpiStrip, KpiListPanel } from "../DashboardPanels";
+import { kpiListView, stripView } from "./dashboardViewSupport";
 import { renderStrip } from "./kpiStripSupport";
 import { PropertySnapshotTiles } from "../propertyDetail/PropertySnapshotTiles";
 
@@ -73,24 +74,28 @@ describe("no growth base: the multiple shows — (ADR 0126)", () => {
     render(
       <>
         <KpiStrip
-          s={s}
-          basis={{ kind: "today" }}
-          mode="nominal"
-          isToday
-          horizon={kpis.netWorthNominal}
-          horizonYears={N}
-          horizonEndYear={2056}
-          netWorthMultiple={kpis.netWorthMultiple}
-          modeWord={en.common.nominalLower}
-          irr={{ rate: null, reason: "NO_ROOT" }}
+          view={stripView({
+            s,
+            basis: { kind: "today" },
+            mode: "nominal",
+            isToday: true,
+            horizon: kpis.netWorthNominal,
+            horizonYears: N,
+            horizonEndYear: 2056,
+            netWorthMultiple: kpis.netWorthMultiple,
+            modeWord: en.common.nominalLower,
+            irr: { rate: null, reason: "NO_ROOT" },
+          })}
         />
         <KpiListPanel
-          s={s}
-          basis={{ kind: "today" }}
-          kpis={kpis}
-          mode="nominal"
-          horizonYears={N}
-          cashInvested={null}
+          view={kpiListView({
+            s,
+            basis: { kind: "today" },
+            kpis,
+            mode: "nominal",
+            horizonYears: N,
+            cashInvested: null,
+          })}
         />
       </>,
     );

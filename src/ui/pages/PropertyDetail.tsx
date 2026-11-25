@@ -14,6 +14,7 @@ import { useAsOf } from "../hooks/useAsOf";
 import { useSectionSpy } from "../hooks/useSectionSpy";
 import { usePropertyActivation } from "../hooks/usePropertyActivation";
 import { propertyRecords } from "../model/propertyRecords";
+import { reviewPill } from "../model/dataCheck";
 import {
   detailSections,
   propertyDetailView,
@@ -158,13 +159,7 @@ export function PropertyDetail() {
       title={property.name}
       attention={
         // The same pill as the Dashboard's (ADR 0218 §1, 0223 §5).
-        v.toReview > 0
-          ? {
-              count: v.toReview,
-              label: t.dataCheck.reviewPill(v.toReview),
-              onSelect: () => focusSection(sectionId("dataCheck")),
-            }
-          : undefined
+        reviewPill(t, v.toReview, () => focusSection(sectionId("dataCheck")))
       }
       subtitle={v.subtitle}
       crumb={{

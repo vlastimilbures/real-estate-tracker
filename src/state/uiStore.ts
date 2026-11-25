@@ -27,8 +27,6 @@ export type Route =
 /** Which sub-tab the Settings page opens on. */
 export type SettingsTab = "assumptions" | "backup";
 
-export type { Mode } from "../ui/model/lens";
-
 /** Where Property detail lands once: a section, or the open property form (ADR 0118). */
 export type PropertyTarget = PropertySection | PropertyFormTarget;
 export type { Theme } from "./themePreference";

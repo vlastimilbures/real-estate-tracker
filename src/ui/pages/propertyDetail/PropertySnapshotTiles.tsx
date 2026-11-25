@@ -1,11 +1,7 @@
 import { ChartCard } from "../../components/charts";
 import type { ResetMarker } from "../../model/financing";
-import {
-  COMMITTED_DASH,
-  SERIES,
-  hasUndrawn,
-  type ChartRow,
-} from "../../model/chartData";
+import { SERIES, type ChartRow } from "../../model/chartData";
+import { valueSeries } from "../../model/chartSeries";
 import type { AsOfBasis } from "../../model/dashboard";
 import type { PropertySnapshot } from "../../../engine";
 import { useT } from "../../hooks/useT";
@@ -39,22 +35,15 @@ export function PropertySnapshotTiles({
 }) {
   const t = useT();
   const pd = t.propertyDetail;
-  const valueSeries = [
-    { key: "value", name: pd.seriesValue, color: SERIES.petrol },
-    { key: "balance", name: pd.seriesDebt, color: SERIES.clay },
-    // ADR 0169: dashed while a development loan has tranches ahead.
-    ...(hasUndrawn(chartRows)
-      ? [
-          {
-            key: "committedDebt",
-            name: pd.seriesCommittedDebt,
-            color: SERIES.clay,
-            dash: COMMITTED_DASH,
-          },
-        ]
-      : []),
-    { key: "equity", name: pd.seriesEquity, color: SERIES.brass },
-  ];
+  const series = valueSeries(
+    {
+      value: pd.seriesValue,
+      debt: pd.seriesDebt,
+      committedDebt: pd.seriesCommittedDebt,
+      equity: pd.seriesEquity,
+    },
+    chartRows,
+  );
   const cashFlowSeries = [
     { key: "netCashFlow", name: pd.seriesNetCashFlow, color: SERIES.positive },
   ];
@@ -72,7 +61,7 @@ export function PropertySnapshotTiles({
           sub={t.propertyDetail.subMKcMode(modeWord)}
           kind="czk"
           rows={chartRows}
-          series={valueSeries}
+          series={series}
           markers={markers}
           markerHeading={markerHeading}
         />

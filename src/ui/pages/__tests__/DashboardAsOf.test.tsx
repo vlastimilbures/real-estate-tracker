@@ -16,6 +16,7 @@ import { en } from "../../../i18n/en";
 import { projectionSeries } from "../../model/projection";
 import { asOfView, horizonEndYear, tilesForAsOf } from "../../model/dashboard";
 import { KpiStrip } from "../DashboardPanels";
+import { stripView } from "./dashboardViewSupport";
 
 const kpis = portfolioKpis(portfolio, assumptions);
 const series = projectionSeries(
@@ -31,16 +32,18 @@ function renderAt(asOf: IsoDate, isToday: boolean) {
   const s = tilesForAsOf(snapshot, series, basis, "nominal", assumptions);
   return render(
     <KpiStrip
-      s={s}
-      basis={basis}
-      mode="nominal"
-      isToday={isToday}
-      horizon={kpis.netWorthNominal}
-      horizonYears={assumptions.horizonYears}
-      horizonEndYear={horizonEndYear(series)}
-      netWorthMultiple={kpis.netWorthMultiple}
-      modeWord={en.common.nominalLower}
-      irr={{ rate: null, reason: "NO_ROOT" }}
+      view={stripView({
+        s,
+        basis,
+        mode: "nominal",
+        isToday,
+        horizon: kpis.netWorthNominal,
+        horizonYears: assumptions.horizonYears,
+        horizonEndYear: horizonEndYear(series),
+        netWorthMultiple: kpis.netWorthMultiple,
+        modeWord: en.common.nominalLower,
+        irr: { rate: null, reason: "NO_ROOT" },
+      })}
     />,
   );
 }

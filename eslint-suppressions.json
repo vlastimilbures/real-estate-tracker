@@ -50,11 +50,6 @@
       "count": 1
     }
   },
-  "src/ui/pages/Dashboard.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/ui/pages/Guide.tsx": {
     "max-lines-per-function": {
       "count": 1

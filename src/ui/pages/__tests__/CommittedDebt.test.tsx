@@ -18,6 +18,7 @@ import { fmtCzkM, noBreak } from "../../../lib/format";
 import { D } from "../../../lib/money";
 import { undrawnPart } from "../../model/debt";
 import { KpiStrip } from "../DashboardPanels";
+import { stripView } from "./dashboardViewSupport";
 import { PropertySnapshotTiles } from "../propertyDetail/PropertySnapshotTiles";
 
 const only = <T extends { propertyId: string }>(rows: T[]) =>
@@ -43,16 +44,18 @@ function hero(p: Portfolio) {
   const kpis = portfolioKpis(p, assumptions);
   render(
     <KpiStrip
-      s={portfolioSnapshot(p, assumptions)}
-      basis={{ kind: "today" }}
-      mode="nominal"
-      isToday
-      horizon={kpis.netWorthNominal}
-      horizonYears={assumptions.horizonYears}
-      horizonEndYear={2056}
-      netWorthMultiple={kpis.netWorthMultiple}
-      modeWord={en.common.nominalLower}
-      irr={{ rate: null, reason: "NO_ROOT" }}
+      view={stripView({
+        s: portfolioSnapshot(p, assumptions),
+        basis: { kind: "today" },
+        mode: "nominal",
+        isToday: true,
+        horizon: kpis.netWorthNominal,
+        horizonYears: assumptions.horizonYears,
+        horizonEndYear: 2056,
+        netWorthMultiple: kpis.netWorthMultiple,
+        modeWord: en.common.nominalLower,
+        irr: { rate: null, reason: "NO_ROOT" },
+      })}
     />,
   );
 }

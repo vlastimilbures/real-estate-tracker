@@ -4,17 +4,11 @@ import {
   KpiBandGroup,
   KpiTile,
   Money,
-  Pct,
-  Dscr,
 } from "../../components/primitives";
+import { DscrTile, LtvTile, NetCashFlowTile } from "../../components/kpiTiles";
 import { fmtCzkM, noBreak } from "../../../lib/format";
 import { undrawnPart } from "../../model/debt";
-import { dscrBadge, ltvBadge } from "../../model/health";
-import {
-  basisCaption,
-  monthlyFlow,
-  type AsOfBasis,
-} from "../../model/dashboard";
+import { basisCaption, type AsOfBasis } from "../../model/dashboard";
 import type { PropertySnapshot } from "../../../engine";
 import { useT } from "../../hooks/useT";
 
@@ -29,9 +23,7 @@ export function SnapshotTiles({
 }) {
   const t = useT();
   const pd = t.propertyDetail;
-  const d = t.dashboard;
   const undrawn = undrawnPart(s.undrawnDebt);
-  const flow = monthlyFlow(s);
   return (
     <KpiBand>
       <KpiBandGroup caption={basisCaption(t, basis)} cells={6}>
@@ -58,37 +50,17 @@ export function SnapshotTiles({
           label={pd.equity}
           value={<Money value={s.equity} parens={false} suffix={false} />}
         />
-        <KpiTile
-          compact
-          delay={72}
+        <LtvTile
+          ltv={s.ltv}
           label={<MetricLabel term="ltv">{pd.ltv}</MetricLabel>}
-          value={<Pct value={s.ltv} />}
-          health={ltvBadge(t, s.ltv)}
+          delay={72}
         />
-        <KpiTile
-          compact
-          delay={96}
+        <DscrTile
+          dscr={s.dscr}
           label={<MetricLabel term="dscr">{pd.dscr}</MetricLabel>}
-          value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
-          health={dscrBadge(t, s.dscr)}
+          delay={96}
         />
-        <KpiTile
-          compact
-          delay={120}
-          label={d.stripNetCashFlow}
-          value={
-            <>
-              <Money value={flow.net} signed />
-              <span className="unit">{d.perMonth}</span>
-            </>
-          }
-          foot={
-            <>
-              <Money value={s.netCashFlow} />
-              {d.perYear}
-            </>
-          }
-        />
+        <NetCashFlowTile s={s} delay={120} />
       </KpiBandGroup>
     </KpiBand>
   );

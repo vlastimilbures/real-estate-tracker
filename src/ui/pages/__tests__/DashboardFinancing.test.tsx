@@ -17,6 +17,7 @@ import { fmtCzk } from "../../../lib/format";
 import type { Decimal } from "../../../lib/money";
 import type { Mode } from "../../model/lens";
 import { FinancingPanel } from "../DashboardFinancing";
+import { useUiStore } from "../../../state/uiStore";
 
 const N = assumptions.horizonYears;
 
@@ -26,7 +27,9 @@ function renderPanel(
   asOf = assumptions.baseDate,
 ) {
   const out = portfolioOutputs(p, assumptions, asOf);
+  // A property's name opens it through the ui store.
   const onOpen = vi.fn();
+  useUiStore.setState({ openProperty: onOpen });
   const view = render(
     <FinancingPanel
       fx={out.financing}
@@ -34,7 +37,6 @@ function renderPanel(
       kpis={out.kpis}
       mode={mode}
       horizonYears={N}
-      onOpenProperty={onOpen}
     />,
   );
   return { out, onOpen, view };

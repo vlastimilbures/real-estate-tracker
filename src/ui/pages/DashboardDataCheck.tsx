@@ -7,16 +7,13 @@ import { Fragment, useId } from "react";
 import { ChevronRight } from "lucide-react";
 import { DisclosureButton } from "../components/Disclosure";
 import type { Rate } from "../../engine";
-import { fmtDate } from "../../lib/format";
 import { useUiStore } from "../../state/uiStore";
-import { Panel } from "../components/primitives";
 import { useT } from "../hooks/useT";
 import {
   DataCheckBlock,
   DataCheckBlocks,
-  DataCheckClear,
-  DataCheckCounts,
   DataCheckRow,
+  DataCheckShell,
   type DataCheckKind,
 } from "../components/DataCheckBlocks";
 import {
@@ -120,17 +117,9 @@ export function DataCheckPanel({
   const open = !empty && (choice ?? attention.length > 0);
   return (
     <div id={DATA_CHECK_ID} className="dc-anchor">
-      <Panel
-        title={d.title}
-        badges={
-          !empty && (
-            <DataCheckCounts
-              attention={attention.length}
-              defaults={defaults.length}
-            />
-          )
-        }
-        info={d.asOfNote(fmtDate(asOf))}
+      <DataCheckShell
+        check={check}
+        asOf={asOf}
         action={
           !empty && (
             <span className="head-toggle">
@@ -145,7 +134,6 @@ export function DataCheckPanel({
           )
         }
       >
-        {empty && <DataCheckClear />}
         <div id={bodyId} hidden={!open}>
           {open && (
             <DataCheckBlocks>
@@ -170,7 +158,7 @@ export function DataCheckPanel({
             </DataCheckBlocks>
           )}
         </div>
-      </Panel>
+      </DataCheckShell>
     </div>
   );
 }

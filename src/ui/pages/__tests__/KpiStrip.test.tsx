@@ -33,6 +33,7 @@ import {
 } from "../../../lib/format";
 import { ltvBandWord } from "../../model/health";
 import { KpiListPanel, KpiStrip } from "../DashboardPanels";
+import { kpiListView, stripView } from "./dashboardViewSupport";
 
 const kpis = portfolioKpis(portfolio, assumptions);
 const series = projectionSeries(
@@ -70,7 +71,7 @@ function renderStrip(
 ) {
   const { s: base0, basis, props } = setUp(asOf, isToday);
   const s = { ...base0, ...patch };
-  const view = render(<KpiStrip {...props} s={s} />);
+  const view = render(<KpiStrip view={stripView({ ...props, s })} />);
   const tiles = Array.from(
     view.container.querySelectorAll<HTMLElement>(".kpi-band .tile"),
   );
@@ -157,7 +158,13 @@ describe("KPI band (ADR 0222 §1–§2)", () => {
   it("real lens away from today: the foot says the amounts are in base-date Kč", () => {
     const { props } = setUp(addYears(base, 5), false);
     const view = render(
-      <KpiStrip {...props} mode="real" modeWord={en.common.realLower} />,
+      <KpiStrip
+        view={stripView({
+          ...props,
+          mode: "real",
+          modeWord: en.common.realLower,
+        })}
+      />,
     );
     const foot = view.container.querySelector(".kpi-band .tile > .foot")!;
     expect(foot.textContent!.endsWith(d.realTodayKc)).toBe(true);
@@ -232,12 +239,14 @@ function renderList(
   const { s, basis } = setUp(asOf, isToday);
   const view = render(
     <KpiListPanel
-      s={s}
-      basis={basis}
-      kpis={kpis}
-      mode="nominal"
-      horizonYears={assumptions.horizonYears}
-      cashInvested={cashInvested}
+      view={kpiListView({
+        s,
+        basis,
+        kpis,
+        mode: "nominal",
+        horizonYears: assumptions.horizonYears,
+        cashInvested,
+      })}
     />,
   );
   const group = (name: string) => {
@@ -337,7 +346,12 @@ describe("The tiles carry the exact value the list no longer shows (ADR 0208 §1
   it("the horizon tile's value has the amount in Kč; IRR its rate to two decimals", () => {
     const { props } = setUp(base, true);
     render(
-      <KpiStrip {...props} irr={{ rate: rate("0.0615"), reason: null }} />,
+      <KpiStrip
+        view={stripView({
+          ...props,
+          irr: { rate: rate("0.0615"), reason: null },
+        })}
+      />,
     );
     expect(
       screen

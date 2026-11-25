@@ -1,6 +1,6 @@
 // The Dashboard "Financing & upcoming" panel (ADR 0103, ADR 0204). Presentation only:
-// the figures come from `financingPanel` and the timeline from `financingTimeline`
-// (src/ui/model/financing.ts).
+// the figures, timeline, labels and note come from `financingView`
+// (src/ui/model/financing.ts); a property's name opens it (`PropertyLink`).
 import { FigureRow } from "../components/FigureRow";
 import { useState, type ReactNode } from "react";
 import { Table2 } from "lucide-react";
@@ -17,9 +17,7 @@ import {
   DEFAULT_RESET_WINDOW,
   RESET_WINDOWS,
   TIMELINE_ROWS,
-  financingLabels,
-  financingPanel,
-  financingTimeline,
+  financingView,
   timelineTable,
   type FinancingTimeline,
   type InterestSavedShown,
@@ -30,50 +28,20 @@ import type { Mode } from "../model/lens";
 import type { FinancingExposure, Portfolio, PortfolioKPIs } from "../../engine";
 import { fmtDate } from "../../lib/format";
 import { useT } from "../hooks/useT";
+import { PropertyLink } from "../components/PropertyLink";
 import "../styles/loan-outlook.css";
-
-function PropertyLink({
-  id,
-  name,
-  onOpen,
-}: {
-  id: string;
-  name: string;
-  onOpen: (id: string) => void;
-}) {
-  return (
-    <button
-      type="button"
-      className="link-button cell-name"
-      title={name}
-      onClick={() => onOpen(id)}
-    >
-      {name}
-    </button>
-  );
-}
 
 const pct = (at: number) => `${at * 100}%`;
 
 /** One loan (or property) of the timeline: name, decorative track, and the text that
  *  carries every date and amount (ADR 0204 §2, §7). */
-function TimelineItem({
-  row,
-  onOpen,
-}: {
-  row: TimelineRow;
-  onOpen: (id: string) => void;
-}) {
+function TimelineItem({ row }: { row: TimelineRow }) {
   const d = useT().dashboard;
   const f = row.fixation;
   return (
     <li className={f?.next ? "fx-row is-next" : "fx-row"}>
       <span className="fx-name">
-        <PropertyLink
-          id={row.propertyId}
-          name={row.propertyName}
-          onOpen={onOpen}
-        />
+        <PropertyLink id={row.propertyId} name={row.propertyName} />
       </span>
       <span className="fx-track" aria-hidden="true">
         {f && (
@@ -140,12 +108,10 @@ function TimelineItem({
 function FixationTimeline({
   tl,
   span,
-  onOpen,
   notes,
 }: {
   tl: FinancingTimeline;
   span: ResetWindow;
-  onOpen: (id: string) => void;
   /** The panel's notes, on the line of the Table toggle. */
   notes: ReactNode;
 }) {
@@ -157,7 +123,7 @@ function FixationTimeline({
   const list = (rows: TimelineRow[], label?: string) => (
     <ul className="fx-rows" aria-label={label}>
       {rows.map((r) => (
-        <TimelineItem key={r.propertyId} row={r} onOpen={onOpen} />
+        <TimelineItem key={r.propertyId} row={r} />
       ))}
     </ul>
   );
@@ -189,11 +155,7 @@ function FixationTimeline({
               {timelineTable(tl).map((r, i) => (
                 <tr key={i}>
                   <td className="left">
-                    <PropertyLink
-                      id={r.propertyId}
-                      name={r.propertyName}
-                      onOpen={onOpen}
-                    />
+                    <PropertyLink id={r.propertyId} name={r.propertyName} />
                   </td>
                   <td className="left">{r.event}</td>
                   <td className="left">{r.date}</td>
@@ -252,27 +214,22 @@ function FixationTimeline({
   );
 }
 
-export function FinancingPanel({
-  fx,
-  portfolio,
-  kpis,
-  mode,
-  horizonYears,
-  onOpenProperty,
-}: {
+export function FinancingPanel(props: {
   fx: FinancingExposure;
   portfolio: Portfolio;
   kpis: PortfolioKPIs;
   mode: Mode;
   horizonYears: number;
-  onOpenProperty: (id: string) => void;
 }) {
   const t = useT();
   const d = t.dashboard;
   const [span, setSpan] = useState<ResetWindow>(DEFAULT_RESET_WINDOW);
-  const m = financingPanel(fx, portfolio, kpis, mode, span);
-  const tl = financingTimeline(fx, portfolio, span, t);
-  const labels = financingLabels(t, mode, span, horizonYears);
+  const {
+    panel: m,
+    timeline: tl,
+    labels,
+    ...v
+  } = financingView(props, span, t);
   const next = m.nextReset;
   const savedValue = (x: InterestSavedShown) =>
     x === "n/a" ? (
@@ -283,9 +240,9 @@ export function FinancingPanel({
   return (
     <Panel
       title={d.financingTitle}
-      hint={d.financingHint(fmtDate(fx.asOf))}
+      hint={d.financingHint(fmtDate(props.fx.asOf))}
       action={
-        m.hasLoans || tl.rows.length > 0 ? (
+        v.showWindow ? (
           <SegmentedToggle
             options={RESET_WINDOWS.map((w) => ({
               value: w,
@@ -306,11 +263,7 @@ export function FinancingPanel({
               label: d.financingNextReset,
               value: next ? next.date : d.financingNextResetNone,
               sub: next && (
-                <PropertyLink
-                  id={next.propertyId}
-                  name={next.propertyName}
-                  onOpen={onOpenProperty}
-                />
+                <PropertyLink id={next.propertyId} name={next.propertyName} />
               ),
             },
             {
@@ -347,13 +300,7 @@ export function FinancingPanel({
         <Disclosure label={d.financingInterestSavedByProperty}>
           <StatList
             rows={m.interestSaved.properties.map((r) => ({
-              k: (
-                <PropertyLink
-                  id={r.propertyId}
-                  name={r.propertyName}
-                  onOpen={onOpenProperty}
-                />
-              ),
+              k: <PropertyLink id={r.propertyId} name={r.propertyName} />,
               v: savedValue(r.amount),
             }))}
           />
@@ -363,19 +310,10 @@ export function FinancingPanel({
         <FixationTimeline
           tl={tl}
           span={span}
-          onOpen={onOpenProperty}
-          notes={
-            // One note: in the real lens it also says the debt at reset is nominal
-            // (ADR 0214 §3).
-            <p className="panel-note">
-              {mode === "real"
-                ? `${d.financingRowsNominal} ${d.financingDisclaimer}`
-                : d.financingDisclaimer}
-            </p>
-          }
+          notes={<p className="panel-note">{v.note}</p>}
         />
       ) : (
-        <p className="panel-note">{d.financingDisclaimer}</p>
+        <p className="panel-note">{v.note}</p>
       )}
     </Panel>
   );

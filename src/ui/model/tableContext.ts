@@ -7,9 +7,13 @@ import type { AsOfBasis } from "./dashboard";
 import { edate } from "../../engine";
 import {
   periodLabelLocalized,
+  projectionColumns,
   showPeriodColumn,
   yearLabel,
+  type SeriesRow,
 } from "./projection";
+import { exportFilename } from "../../lib/slug";
+import type { TableExport } from "./xlsxExport";
 
 /** Properties: count · as of {date} · amounts in Kč, flows per year. In a projection year
  *  the date names the year and its period, as Property detail labels it (ADR 0150). */
@@ -105,4 +109,22 @@ export function projectionExportNotes(
   baseDate: Date,
 ): string[] {
   return [entityName, projectionsSubtitle(t, mode, baseDate)];
+}
+
+/** A projection's export (ADR 0159): the file names the entity by its full name, under
+ *  the lens; Projections' portfolio is the entity `{ name: Portfolio, id: "portfolio" }`. */
+export function projectionExport(
+  t: Dictionary,
+  entity: { name: string; id: string },
+  rows: SeriesRow[],
+  mode: Mode,
+  baseDate: Date,
+): TableExport<SeriesRow> {
+  return {
+    filename: exportFilename(entity.name, entity.id, "projection", mode),
+    sheetName: t.xlsx.sheetNames.projection,
+    columns: (shown: SeriesRow[]) => projectionColumns(t, baseDate, shown),
+    rows,
+    notes: projectionExportNotes(t, entity.name, mode, baseDate),
+  };
 }

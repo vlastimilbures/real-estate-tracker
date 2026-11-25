@@ -4,16 +4,14 @@
 // The last section of the page.
 import { useId } from "react";
 import type { Rate } from "../../engine";
-import { fmtDate } from "../../lib/format";
 import {
   DataCheckBlock,
   DataCheckBlocks,
-  DataCheckClear,
-  DataCheckCounts,
   DataCheckRow,
+  DataCheckShell,
   type DataCheckKind,
 } from "../components/DataCheckBlocks";
-import { Button, Panel } from "../components/primitives";
+import { Button } from "../components/primitives";
 import { useT } from "../hooks/useT";
 import {
   findingFix,
@@ -74,27 +72,14 @@ export function PropertyDataCheckPanel({
     </DataCheckBlock>
   );
   return (
-    <Panel
-      title={d.title}
-      badges={
-        !empty && (
-          <DataCheckCounts
-            attention={attention.length}
-            defaults={defaults.length}
-          />
-        )
-      }
-      info={d.asOfNote(fmtDate(asOf))}
-    >
-      {empty ? (
-        <DataCheckClear />
-      ) : (
+    <DataCheckShell check={check} asOf={asOf}>
+      {!empty && (
         <DataCheckBlocks>
           {attention.length > 0 &&
             block(attention, "attention", d.attentionTitle)}
           {defaults.length > 0 && block(defaults, "defaults", d.defaultsTitle)}
         </DataCheckBlocks>
       )}
-    </Panel>
+    </DataCheckShell>
   );
 }

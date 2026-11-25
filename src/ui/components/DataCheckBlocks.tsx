@@ -1,13 +1,53 @@
 // The Data check's shared parts (ADR 0223), on the Dashboard and Property detail: the
-// counts as pills for the line under the panel head, a block per list ("Needs attention", "Using
-// portfolio defaults") of hairline rows — icon, problem, the fix on the right — and the
-// all-clear line.
+// panel shell, the counts as pills for the line under the panel head, a block per list
+// ("Needs attention", "Using portfolio defaults") of hairline rows — icon, problem, the fix
+// on the right — and the all-clear line.
 import { useId, type ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { fmtDate } from "../../lib/format";
 import { useT } from "../hooks/useT";
+import { Panel } from "./primitives";
 import "../styles/data-check.css";
 
 export type DataCheckKind = "attention" | "defaults";
+
+/** The panel both pages share (#485): the title, the counts, the as-of date behind the
+ *  info icon and the all-clear line when there is nothing to report. The body and the
+ *  head's action are the page's. */
+export function DataCheckShell({
+  check,
+  asOf,
+  action,
+  children,
+}: {
+  check: { attention: readonly unknown[]; defaults: readonly unknown[] };
+  /** The date the findings are for. */
+  asOf: Date;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  const d = useT().dataCheck;
+  const { attention, defaults } = check;
+  const empty = attention.length + defaults.length === 0;
+  return (
+    <Panel
+      title={d.title}
+      badges={
+        !empty && (
+          <DataCheckCounts
+            attention={attention.length}
+            defaults={defaults.length}
+          />
+        )
+      }
+      info={d.asOfNote(fmtDate(asOf))}
+      action={action}
+    >
+      {empty && <DataCheckClear />}
+      {children}
+    </Panel>
+  );
+}
 
 /** The counts, on their own line under the panel head (ADR 0223 §1). */
 export function DataCheckCounts({
