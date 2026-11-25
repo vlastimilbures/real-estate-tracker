@@ -303,7 +303,9 @@ Each outcome is shown once, in one place (ADR 0141, ADR 0154, ADR 0261):
    it: the form's line above its buttons, the confirm row, or next to Activate. In
    Assumptions, only an input-rule error that names no field shown there goes to its
    error summary; its other failures follow rule 3. The store puts nothing in the page
-   banner.
+   banner. In a form, a field's message goes with an edit to that field, and the form's
+   own line with the next edit to any field or the next Save (ADR 0262). Every form takes
+   its submit state from `useFormSubmit` and registers unsaved input with `useLeaveGuard`.
 3. **The banner when there is no such place.** An action with no place of its own (Keep
    exploring, a preset, Duplicate, an Assumptions save failing on no input rule) puts its
    failure in the AppShell banner with `showError`.

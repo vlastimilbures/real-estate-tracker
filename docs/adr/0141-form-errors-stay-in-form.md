@@ -7,6 +7,8 @@
   nothing listed puts focus back on Save)
   and [0261](0261-failed-edit-shown-once.md) (§1, §2: the store puts no failure in the
   banner; a caller with no place of its own does)
+  and [0262](0262-form-message-clears-on-edit-dialogs-guarded.md) (the form-level message
+  clears on the next edit in every form)
 - Related: [0095](0095-assumptions-save-row.md) (Assumptions error summary),
   [0123](0123-scenario-rules-every-entry-point.md) (a scenario refusal stays in the form),
   [0128](0128-assumption-bounds.md) §6 (an assumptions edit that breaks a saved scenario),

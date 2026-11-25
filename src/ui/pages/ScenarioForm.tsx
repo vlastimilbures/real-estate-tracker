@@ -2,7 +2,7 @@
 // temporary rate/inflation shocks and a permanent value crash. Extracted from
 // Scenarios.tsx; produces a Scenario via onSubmit and never touches portfolio data.
 // A refused save stays open with the broken rule on its field (ADR 0123).
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Button } from "../components/primitives";
 import { Modal } from "../components/Modal";
 import { Field, TextInput } from "../components/fields";
@@ -22,8 +22,9 @@ import {
   ShockPairFields,
 } from "./ScenarioFormFields";
 import type { Assumptions, Scenario } from "../../engine";
-import { toWriteError, type WriteError } from "../../state/writeError";
-import { useSaveBusy } from "../hooks/useSaveBusy";
+import type { WriteError } from "../../state/writeError";
+import { useFormSubmit } from "../hooks/useFormSubmit";
+import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useT } from "../hooks/useT";
 
 export { DEFAULT_SHOCK_YEARS };
@@ -61,44 +62,28 @@ export function ScenarioForm({
     valueShockYear: o?.valueShock ? String(o.valueShock.atYear) : "",
   }));
   const [draft, setDraft] = useState(initialDraft);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [formError, setFormError] = useState<string | null>(null);
-  const [busy, setBusy] = useSaveBusy(errors, formError);
   // One id per form, so a retry after a failed save cannot add a second scenario.
   const [id] = useState(() => scenario?.id ?? crypto.randomUUID());
+  // The line above the buttons goes with the next edit or Save (ADR 0262 §1). A throwing
+  // onSubmit is shown like a returned failure.
+  const { busy, errors, formError, submit, clearFields } = useFormSubmit({
+    run: onSubmit,
+    mapErrors: (failure) => scenarioWriteErrors(t, failure),
+  });
+  // Unsaved input is also known to the leave guard (ADR 0262 §2).
+  useLeaveGuard(useId(), isDirty(initialDraft, draft));
 
   /** Edit one field; its error goes with the edit (ADR 0141). */
   function set<K extends keyof ScenarioDraftFields>(k: K, v: string) {
     setDraft((d) => ({ ...d, [k]: v }));
-    setErrors((e) => {
-      const copy = { ...e };
-      delete copy[k];
-      return copy;
-    });
+    clearFields([k]);
   }
 
-  async function submit() {
-    if (busy) return;
+  function check() {
     const { errors: errs, name, overrides } = parseScenarioDraft(draft, t);
-    setErrors(errs);
-    setFormError(null);
-    if (Object.keys(errs).length > 0) return;
-    setBusy(true);
-    try {
-      let failure: void | WriteError;
-      try {
-        failure = await onSubmit({ id, name, overrides });
-      } catch (e) {
-        failure = toWriteError(e);
-      }
-      if (failure) {
-        const split = scenarioWriteErrors(t, failure);
-        setErrors(split.fieldErrors);
-        setFormError(split.formError);
-      }
-    } finally {
-      setBusy(false);
-    }
+    return Object.keys(errs).length > 0
+      ? { ok: false as const, errors: errs }
+      : { ok: true as const, values: { id, name, overrides } };
   }
 
   return (
@@ -109,7 +94,7 @@ export function ScenarioForm({
       }
       onClose={onCancel}
       closeLabel={t.common.close}
-      onSubmit={() => void submit()}
+      onSubmit={() => void submit(check)}
       dirty={isDirty(initialDraft, draft)}
       busy={busy}
       footer={

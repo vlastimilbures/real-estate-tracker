@@ -1,11 +1,10 @@
 // The Assumptions form's state (ADR 0095, 0221): the draft, its errors and the save. The
 // Settings page holds it, so the form and the Save/Discard in the top bar read one draft.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   usePortfolioStore,
   type MutationResult,
 } from "../../state/portfolioStore";
-import { useUiStore } from "../../state/uiStore";
 import { isDirty } from "../model/dirty";
 import {
   collectValues,
@@ -23,6 +22,8 @@ import { type Dictionary } from "../../i18n";
 import { useT } from "./useT";
 import { formWriteErrors } from "../model/writeError";
 import { useToast } from "./useToast";
+import { useFormSubmit } from "./useFormSubmit";
+import { useLeaveGuard } from "./useLeaveGuard";
 
 function buildSpecs(t: Dictionary) {
   const a = t.assumptions;
@@ -156,28 +157,65 @@ export function useAssumptionsForm(active: boolean) {
     [assumptions],
   );
   const [draft, setDraft] = useState<Record<string, string> | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  // A refusal on no field this form shows, listed in the error summary (ADR 0141).
-  const [formError, setFormError] = useState<string | null>(null);
   const { showToast } = useToast();
-  const setUnsavedChanges = useUiStore((s) => s.setUnsavedChanges);
-  const [saving, setSaving] = useState(false);
   // A failed save keeps the input and says so until the next edit (ADR 0095).
   const [failed, setFailed] = useState(false);
   // Bumped on a failed save so the error summary takes focus once it renders.
   const [summaryFocus, setSummaryFocus] = useState(0);
 
-  // Bumped by a reset: a save that was running when the draft was dropped (the tab left
-  // through the guard) must not write its outcome into the form shown later.
-  const generation = useRef(0);
+  // On failure a broken rule marks its field (UX-047), or is listed in the error summary
+  // when it names no field shown here (ADR 0141), until the next edit; any other failure
+  // shows in the AppShell banner, put there by bannerUnlessInput (ADR 0261). The page
+  // owns focus after a save (ADR 0248 §4). The success toast shows only when the write
+  // landed.
+  const {
+    busy: saving,
+    errors,
+    formError,
+    submit,
+    clearFields,
+    clearAll,
+    detach,
+  } = useFormSubmit({
+    run: async (next: Assumptions) => {
+      const result = await bannerUnlessInput(saveAssumptions(next));
+      return result.ok ? undefined : result.error;
+    },
+    mapErrors: (failure) => {
+      const split = formWriteErrors(
+        t,
+        failure,
+        specs.map((s) => s.name),
+      );
+      return {
+        fieldErrors: split.fieldErrors,
+        formError: failure.kind === "input" ? split.formError : null,
+      };
+    },
+    // Saved: show the stored values again, so the form is no longer "unsaved".
+    onSaved: () => {
+      setDraft(null);
+      setFailed(false);
+      showToast(t.assumptions.saved);
+    },
+    // Keep the input, and focus the summary when it lists anything.
+    onFailed: ({ fieldErrors, formError: rest }) => {
+      setFailed(true);
+      if (Object.keys(fieldErrors).length > 0 || rest)
+        setSummaryFocus((n) => n + 1);
+    },
+    refocusOnFailure: false,
+  });
+
+  // A save that was running when the draft was dropped (the tab left through the guard)
+  // must not write its outcome into the form shown later: reset detaches it.
   const clearDraft = () => {
     setDraft(null);
-    setErrors({});
-    setFormError(null);
+    clearAll();
     setFailed(false);
   };
   const reset = () => {
-    generation.current += 1;
+    detach();
     clearDraft();
   };
 
@@ -188,59 +226,30 @@ export function useAssumptionsForm(active: boolean) {
     if (!active) clearDraft();
   }
   useEffect(() => {
-    if (!active) generation.current += 1;
-  }, [active]);
+    if (!active) detach();
+  }, [active, detach]);
 
   // re-sync when store loads / changes underneath
   const current = draft ?? initial;
   // Unsaved edits hold back navigation away from this tab (UX-030).
   const unsaved = Boolean(initial && current && isDirty(initial, current));
-  useEffect(() => {
-    setUnsavedChanges("assumptions", unsaved);
-  }, [unsaved, setUnsavedChanges]);
-  useEffect(
-    () => () => setUnsavedChanges("assumptions", false),
-    [setUnsavedChanges],
-  );
+  useLeaveGuard("assumptions", unsaved);
 
   const set = (name: string, v: string) => {
     if (!current) return;
     setDraft({ ...current, [name]: v });
-    setErrors((e) => {
-      const copy = { ...e };
-      delete copy[name];
-      return copy;
-    });
+    clearFields([name]);
     setFailed(false);
-    setFormError(null);
   };
 
-  /** Show a failed save: keep the input, and focus the summary when it lists anything. */
-  const fail = (
-    fieldErrors: Record<string, string>,
-    rest: string | null = null,
-  ) => {
-    setErrors(fieldErrors);
-    setFormError(rest);
-    setFailed(true);
-    if (Object.keys(fieldErrors).length > 0 || rest)
-      setSummaryFocus((n) => n + 1);
-  };
-
-  const save = () => {
-    if (saving || !current) return;
+  const check = (draftShown: Record<string, string>) => {
     const { values: v, errors: errs } = collectValues(
       specs,
-      current,
+      draftShown,
       assumptionRules(t),
     );
-    if (Object.keys(errs).length > 0) {
-      fail(errs);
-      return;
-    }
-    setErrors({});
-    setFormError(null);
-
+    if (Object.keys(errs).length > 0)
+      return { ok: false as const, errors: errs };
     const next: Assumptions = {
       baseDate: v.baseDate,
       horizonYears: v.horizonYears,
@@ -259,32 +268,12 @@ export function useAssumptionsForm(active: boolean) {
         maintPctRent: v.maintPctRent,
       },
     };
-    // On failure a broken rule marks its field (UX-047), or is listed in the error
-    // summary when it names no field shown here (ADR 0141); any other failure shows in
-    // the AppShell banner, put there by bannerUnlessInput (ADR 0261). The success toast
-    // shows only when the write landed.
-    setSaving(true);
-    const started = generation.current;
-    void bannerUnlessInput(saveAssumptions(next)).then((result) => {
-      setSaving(false);
-      if (generation.current !== started) return;
-      if (!result.ok) {
-        const split = formWriteErrors(
-          t,
-          result.error,
-          specs.map((s) => s.name),
-        );
-        fail(
-          split.fieldErrors,
-          result.error.kind === "input" ? split.formError : null,
-        );
-        return;
-      }
-      // Saved: show the stored values again, so the form is no longer "unsaved".
-      setDraft(null);
-      setFailed(false);
-      showToast(t.assumptions.saved);
-    });
+    return { ok: true as const, values: next };
+  };
+
+  const save = () => {
+    if (!current) return;
+    void submit(() => check(current));
   };
 
   return {

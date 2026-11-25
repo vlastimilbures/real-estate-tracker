@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-06
 - Source: issue #132 (R5-01, R5-19, R5-21), Track 10 PR 10.3, owner decision D2 = A
+- Amended by: [0262](0262-form-message-clears-on-edit-dialogs-guarded.md) (a dirty property
+  or scenario dialog is known to the leave guard)
 - Related: [0077](0077-ux-a11y-round-b-forms.md) (leave guard UX-030/UX-073, modal dirty
   guard UX-029), [0141](0141-form-errors-stay-in-form.md) (form errors stay in the form)
 

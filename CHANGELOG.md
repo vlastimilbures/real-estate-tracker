@@ -37,6 +37,12 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- After a failed save, the message above a form's buttons goes with the next edit or Save
+  in every form: the record forms, the property form and the scenario form, as the
+  Assumptions form already did. A property or scenario dialog with unsaved input now
+  counts as unsaved edits for the leave guard, as the other forms do; no current
+  navigation path reaches an open dialog, so nothing asks today (ADR 0262, #489). No new
+  texts.
 - A failed edit (a full disk, a damaged database) is shown once, where it was started: in
   the form, the confirm row or next to Activate, and no longer also in the page banner,
   where it stayed after Cancel. Keep exploring, a preset, Duplicate and an Assumptions save
