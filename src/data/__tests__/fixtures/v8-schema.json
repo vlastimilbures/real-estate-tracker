@@ -1,0 +1,130 @@
+{
+  "sqliteMaster": [
+    {
+      "type": "table",
+      "name": "schema_migrations",
+      "tbl_name": "schema_migrations",
+      "sql": "CREATE TABLE schema_migrations (\n      version    INTEGER PRIMARY KEY,\n      name       TEXT NOT NULL,\n      applied_at TEXT NOT NULL\n    )"
+    },
+    {
+      "type": "table",
+      "name": "app_meta",
+      "tbl_name": "app_meta",
+      "sql": "CREATE TABLE app_meta (\n        key   TEXT PRIMARY KEY,\n        value TEXT NOT NULL\n      )"
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_app_meta_1",
+      "tbl_name": "app_meta",
+      "sql": null
+    },
+    {
+      "type": "table",
+      "name": "properties",
+      "tbl_name": "properties",
+      "sql": "CREATE TABLE \"properties\" (\n        id TEXT PRIMARY KEY,\n        name TEXT NOT NULL,\n        address TEXT,\n        type TEXT,\n        size_m2 INTEGER,\n        garage INTEGER,\n        purchase_date TEXT NOT NULL,\n        purchase_price TEXT NOT NULL,\n        appreciation_override_pa TEXT,\n        rent_index_override_pa TEXT,\n        active INTEGER NOT NULL DEFAULT 1,\n        CONSTRAINT property_purchase_date_iso CHECK (purchase_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT property_purchase_price_not_negative CHECK (purchase_price NOT GLOB '-*'),\n        CONSTRAINT property_active_flag CHECK (active IN (0, 1)),\n        CONSTRAINT property_garage_flag CHECK (garage IN (0, 1)),\n        UNIQUE (name)\n      )"
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_properties_1",
+      "tbl_name": "properties",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_properties_2",
+      "tbl_name": "properties",
+      "sql": null
+    },
+    {
+      "type": "table",
+      "name": "mortgage_blocks",
+      "tbl_name": "mortgage_blocks",
+      "sql": "CREATE TABLE \"mortgage_blocks\" (\n        id TEXT PRIMARY KEY,\n        property_id TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,\n        start_date TEXT NOT NULL,\n        initial_principal TEXT NOT NULL,\n        fixation_years INTEGER NOT NULL,\n        interest_rate_pa TEXT NOT NULL,\n        monthly_instalment TEXT NOT NULL,\n        loan_term_years INTEGER,\n        draws TEXT,\n        interest_only_until TEXT,\n        contract_maturity_date TEXT,\n        CONSTRAINT mortgage_start_date_iso CHECK (start_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT mortgage_principal_not_negative CHECK (initial_principal NOT GLOB '-*'),\n        CONSTRAINT mortgage_instalment_not_negative CHECK (monthly_instalment NOT GLOB '-*'),\n        CONSTRAINT mortgage_rate_0_to_1 CHECK (CAST(interest_rate_pa AS REAL) BETWEEN 0 AND 1),\n        CONSTRAINT mortgage_fixation_whole_years CHECK (typeof(fixation_years) = 'integer' AND fixation_years >= 0),\n        CONSTRAINT mortgage_term_positive CHECK (loan_term_years > 0),\n        CONSTRAINT mortgage_interest_only_until_iso CHECK (interest_only_until GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT mortgage_contract_maturity_iso CHECK (contract_maturity_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT mortgage_draws_json CHECK (json_valid(draws)),\n        UNIQUE (property_id, start_date)\n      )"
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_mortgage_blocks_1",
+      "tbl_name": "mortgage_blocks",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_mortgage_blocks_2",
+      "tbl_name": "mortgage_blocks",
+      "sql": null
+    },
+    {
+      "type": "table",
+      "name": "valuations",
+      "tbl_name": "valuations",
+      "sql": "CREATE TABLE \"valuations\" (\n        id TEXT PRIMARY KEY,\n        property_id TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,\n        valid_from TEXT NOT NULL,\n        valid_to TEXT,\n        market_value TEXT NOT NULL,\n        CONSTRAINT valuation_valid_from_iso CHECK (valid_from GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT valuation_valid_to_iso CHECK (valid_to GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT valuation_end_not_before_start CHECK (valid_to >= valid_from),\n        CONSTRAINT valuation_value_not_negative CHECK (market_value NOT GLOB '-*'),\n        UNIQUE (property_id, valid_from)\n      )"
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_valuations_1",
+      "tbl_name": "valuations",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_valuations_2",
+      "tbl_name": "valuations",
+      "sql": null
+    },
+    {
+      "type": "table",
+      "name": "leases",
+      "tbl_name": "leases",
+      "sql": "CREATE TABLE \"leases\" (\n        id TEXT PRIMARY KEY,\n        property_id TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,\n        start_date TEXT NOT NULL,\n        end_date TEXT,\n        monthly_rent TEXT NOT NULL,\n        CONSTRAINT lease_start_date_iso CHECK (start_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT lease_end_date_iso CHECK (end_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT lease_end_not_before_start CHECK (end_date >= start_date),\n        CONSTRAINT lease_rent_not_negative CHECK (monthly_rent NOT GLOB '-*'),\n        UNIQUE (property_id, start_date)\n      )"
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_leases_1",
+      "tbl_name": "leases",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_leases_2",
+      "tbl_name": "leases",
+      "sql": null
+    },
+    {
+      "type": "table",
+      "name": "holding_costs",
+      "tbl_name": "holding_costs",
+      "sql": "CREATE TABLE \"holding_costs\" (\n        id TEXT PRIMARY KEY,\n        property_id TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,\n        property_tax_yr TEXT,\n        insurance_yr TEXT,\n        mgmt_pct_rent TEXT,\n        maint_pct_rent TEXT,\n        svj_monthly TEXT,\n        other_yr TEXT,\n        UNIQUE (property_id)\n      )"
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_holding_costs_1",
+      "tbl_name": "holding_costs",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_holding_costs_2",
+      "tbl_name": "holding_costs",
+      "sql": null
+    },
+    {
+      "type": "table",
+      "name": "assumptions",
+      "tbl_name": "assumptions",
+      "sql": "CREATE TABLE \"assumptions\" (\n        id INTEGER PRIMARY KEY CHECK (id = 1),\n        base_date TEXT NOT NULL,\n        appreciation_pa TEXT NOT NULL,\n        rent_indexation_pa TEXT NOT NULL,\n        vacancy_allowance TEXT NOT NULL,\n        post_fixation_reset_rate_pa TEXT NOT NULL,\n        horizon_years INTEGER NOT NULL,\n        inflation_pa TEXT NOT NULL,\n        default_property_tax_yr TEXT NOT NULL,\n        default_insurance_yr TEXT NOT NULL,\n        default_mgmt_pct_rent TEXT NOT NULL,\n        default_maint_pct_rent TEXT NOT NULL,\n        default_svj_monthly TEXT NOT NULL,\n        default_other_yr TEXT NOT NULL,\n        CONSTRAINT assumptions_base_date_iso CHECK (base_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),\n        CONSTRAINT assumptions_horizon_positive CHECK (typeof(horizon_years) = 'integer' AND horizon_years > 0),\n        CONSTRAINT assumptions_vacancy_0_to_1 CHECK (CAST(vacancy_allowance AS REAL) BETWEEN 0 AND 1),\n        CONSTRAINT assumptions_mgmt_0_to_1 CHECK (CAST(default_mgmt_pct_rent AS REAL) BETWEEN 0 AND 1),\n        CONSTRAINT assumptions_maint_0_to_1 CHECK (CAST(default_maint_pct_rent AS REAL) BETWEEN 0 AND 1)\n      )"
+    },
+    {
+      "type": "table",
+      "name": "scenarios",
+      "tbl_name": "scenarios",
+      "sql": "CREATE TABLE \"scenarios\" (\n        id TEXT PRIMARY KEY,\n        name TEXT NOT NULL,\n        overrides TEXT NOT NULL,\n        created_at TEXT NOT NULL,\n        CONSTRAINT scenario_overrides_json CHECK (json_valid(overrides))\n      )"
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_scenarios_1",
+      "tbl_name": "scenarios",
+      "sql": null
+    }
+  ]
+}

@@ -24,6 +24,18 @@ const FRESH = JSON.parse(
   schemaMigrations: { version: number; name: string }[];
 };
 
+/**
+ * The sqlite_master of a real version 8 database, in rowid order: built by main's own
+ * steps 1-8, not by BASELINE, so BASELINE is checked against something independent. Made
+ * once in a throwaway copy of b0fa0bae (`git archive b0fa0bae | tar -x`, `pnpm install`)
+ * with a one-off Vitest file there: `MIGRATIONS.splice(8)`, `migrate(openMemorySql())`,
+ * then `SELECT type, name, tbl_name, sql FROM sqlite_master ORDER BY rowid` written as
+ * `{ sqliteMaster }` and formatted with Prettier. Never regenerate it from this branch.
+ */
+const V8 = JSON.parse(
+  readFileSync(join(__dirname, "fixtures", "v8-schema.json"), "utf8"),
+) as { sqliteMaster: Record<string, unknown>[] };
+
 const NOW = () => new Date(Date.UTC(2026, 9, 1, 7, 35, 12));
 
 const TABLES = [
@@ -92,6 +104,28 @@ afterEach(() => {
 });
 
 describe("the schema starts at version 8 (ADR 0230)", () => {
+  it("BASELINE builds exactly the sqlite_master of a real version 8 database", async () => {
+    const sql = openMemorySql();
+    // Stop a new install after its first step (the baseline) by failing the second.
+    const real = sql.transaction.bind(sql);
+    let calls = 0;
+    sql.transaction = (statements) =>
+      ++calls === 2
+        ? Promise.reject(new Error("stop after the baseline"))
+        : real(statements);
+    const e = await rejection(migrate(sql, { now: NOW }));
+
+    expect(e.upgrade).toMatchObject({ from: 0, reached: 8, stoppedAt: 9 });
+    expect(
+      sql.db
+        .prepare(
+          "SELECT type, name, tbl_name, sql FROM sqlite_master ORDER BY rowid",
+        )
+        .all(),
+    ).toEqual(V8.sqliteMaster);
+    sql.db.close();
+  });
+
   it("a fresh install ends at the same schema and steps as before the baseline", async () => {
     const sql = openMemorySql();
     const result = await migrate(sql, { now: NOW });
