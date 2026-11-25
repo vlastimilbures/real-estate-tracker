@@ -3,7 +3,7 @@
 // lens-invariant. Returns Decimals so the grid formats at full precision; charts convert
 // at their edge.
 import { Decimal } from "../../lib/money";
-import { cpiIndex, edate, realProjection } from "../../engine";
+import { cpiIndex, edate, purchasedValue, realProjection } from "../../engine";
 import type { Assumptions, ProjectionYear } from "../../engine";
 import type { Mode } from "./lens";
 import type { XlsxColumn } from "./xlsxExport";
@@ -111,19 +111,6 @@ export function projectionExtras(rows: SeriesRow[], g: Dictionary["projGrid"]) {
  *  (ADR 0169). It follows Debt. */
 export function undrawnColumn(rows: SeriesRow[], g: Dictionary["projGrid"]) {
   return nonZeroColumns(rows, [{ key: "undrawnDebt", header: g.undrawn }]);
-}
-
-/** What a year's development draws build (ADR 0170): the tranches drawn for construction,
- *  less, in a purchase year, the tranches the bought flat has not drawn yet. */
-export function builtValue(r: SeriesRow): Decimal {
-  const released = r.draws.minus(r.committedDraws);
-  return Decimal.min(Decimal.max(released, r.acquiredValue.negated()), r.draws);
-}
-
-/** The value purchases and construction add in a year, apart from growth: the
- *  equity-change chart's Purchases stack and the grid's Purchases column (ADR 0194). */
-export function purchasedValue(r: SeriesRow): Decimal {
-  return r.acquiredValue.plus(builtValue(r));
 }
 
 /** The Purchases column, shown only when some year has a purchase or construction

@@ -2,9 +2,10 @@
 // share, written once so snapshot(baseDate + N y) and projection year N cannot drift
 // apart (#478). Each keeps the order of decimal operations both used before. Gross rent
 // stays with each caller: the snapshot reads the lease in force × 12, the projection
-// the rent plan of the year. This module imports no other engine module but types.
+// the rent plan of the year. The monthly flow the screens show of either is here too
+// (#481). This module imports no other engine module but types.
 import { ONE, ZERO, type Decimal } from "../lib/money";
-import type { CostDefaults, HoldingCost } from "./types";
+import type { CostDefaults, HoldingCost, PortfolioSnapshot } from "./types";
 
 type CostKeys = readonly (keyof CostDefaults & keyof HoldingCost)[];
 
@@ -83,4 +84,24 @@ export function costsAndNoi(
     .plus(maintPct.times(grossRent));
   const noi = effectiveRent.minus(holdingCosts);
   return { effectiveRent, holdingCosts, noi };
+}
+
+/** A portfolio's or a property's flow per month (ADR 0200, 0215): the annual figures
+ *  ÷ 12. */
+export interface MonthlyFlow {
+  inflow: Decimal; // effective rent / 12
+  outflow: Decimal; // (holding costs + debt service) / 12
+  net: Decimal; // inflow − outflow (== net cash flow / 12)
+}
+
+/** The monthly inflow, outflow and net of an annual snapshot (portfolio or property). */
+export function monthlyFlow(
+  s: Pick<
+    PortfolioSnapshot,
+    "effectiveGrossIncome" | "holdingCosts" | "annualDebtService"
+  >,
+): MonthlyFlow {
+  const inflow = s.effectiveGrossIncome.div(12);
+  const outflow = s.holdingCosts.plus(s.annualDebtService).div(12);
+  return { inflow, outflow, net: inflow.minus(outflow) };
 }

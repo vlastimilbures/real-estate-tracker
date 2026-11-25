@@ -11,6 +11,7 @@ import {
   parseMoney,
   type FormLists,
 } from "./formParse";
+import { scheduledPrincipal } from "../../engine";
 import type {
   Money,
   LoanRecast,
@@ -256,8 +257,8 @@ export const parseDrawRows = (rows: readonly DrawRow[]) =>
 
 /**
  * The total loan the form shows under the drawdown schedule: the start draw plus every
- * tranche row that parses (ADR 0167). Display only; the saved block's total is the
- * engine's `scheduledPrincipal`. Null until the start draw is an amount of 0 or more.
+ * tranche row that parses (ADR 0167), summed by the engine's `scheduledPrincipal` as the
+ * saved block's total is. Null until the start draw is an amount of 0 or more.
  */
 export function drawdownTotal(
   startDraft: string,
@@ -265,13 +266,12 @@ export function drawdownTotal(
 ): { total: Decimal; tranches: number } | null {
   const start = parseMoney(startDraft);
   if (!start || start.isNegative()) return null;
-  const amounts = rows
+  const draws = rows
     .map((row) => (isBlank(row) ? null : DRAWS.event(row)))
-    .filter((x): x is MortgageDraw => x !== null)
-    .map((x) => x.amount);
+    .filter((x): x is MortgageDraw => x !== null);
   return {
-    total: amounts.reduce<Decimal>((sum, a) => sum.plus(a), start),
-    tranches: amounts.length,
+    total: scheduledPrincipal({ initialPrincipal: start, draws }),
+    tranches: draws.length,
   };
 }
 
