@@ -12,8 +12,8 @@ import {
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedules,
   scheduleRows,
-  schedulesByProperty,
 } from "../schedule";
+import { schedulesByProperty } from "./support/schedules";
 import { assumptions, portfolio } from "./support/seed";
 import type { MortgageBlock, Portfolio } from "../types";
 import { devBlock } from "./support/mixed";

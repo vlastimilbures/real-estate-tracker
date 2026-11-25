@@ -7,7 +7,7 @@ import { money, rate } from "../../brands";
 import { irrResult } from "../../kpis";
 import { mortgageBlock } from "../../loanBlock";
 import { edate } from "../../dates";
-import { schedulesByProperty } from "../../schedule";
+import { schedulesByProperty } from "../support/schedules";
 import {
   applyScenario,
   cpiIndex,

@@ -9,8 +9,8 @@ import {
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedules,
   scheduleRows,
-  schedulesByProperty,
 } from "../schedule";
+import { schedulesByProperty } from "./support/schedules";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import {
   portfolioProjection,

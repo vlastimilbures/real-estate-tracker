@@ -6,7 +6,7 @@
 import { describe, it, expect } from "vitest";
 import { edate } from "../dates";
 import { portfolioSnapshot } from "../metrics";
-import { schedulesByProperty } from "../schedule";
+import { schedulesByProperty } from "./support/schedules";
 import { assumptions, portfolio, BASE_DATE } from "./support/seed";
 
 const schedules = schedulesByProperty(

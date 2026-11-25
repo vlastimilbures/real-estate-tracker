@@ -5,7 +5,8 @@
 import { describe, it, expect } from "vitest";
 import { portfolioSnapshot } from "../metrics";
 import { cpiAt, realPortfolioSnapshot } from "../real";
-import { instalmentAtMonth, schedulesByProperty } from "../schedule";
+import { instalmentAtMonth } from "../schedule";
+import { schedulesByProperty } from "./support/schedules";
 import { isoDate } from "../dates";
 import { ZERO, type Decimal } from "../../lib/money";
 import { assumptions } from "./support/seed";

@@ -10,10 +10,10 @@ import {
   afterSuccessor,
   chainLinks,
   effectiveMaturity,
-  paymentOffset,
   replacedByMonth,
   type ChainLink,
 } from "./schedule";
+import { paymentOffset } from "./loan/calendar";
 import type { Assumptions, IsoDate, Portfolio, ShockBand } from "./types";
 import { yearsToMonths } from "./units";
 

@@ -11,9 +11,9 @@ import {
   openingBalance,
   openingDebt,
   propertySchedule,
-  schedulesByProperty,
   undrawnPrincipal,
 } from "../schedule";
+import { schedulesByProperty } from "./support/schedules";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection } from "../projections";
 import { portfolioKpis } from "../kpis";

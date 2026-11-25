@@ -58,6 +58,9 @@ export function buildSchedule(
  * and recasts: the maturity in force (ADR 0116). Events dated after `next`'s start are
  * dropped, as in the chain. An instalment above the annuity can end it before the
  * entered term.
+ * It builds the block's own schedule on purpose (#477): the chain's rows cannot give
+ * this date, since a successor replaces them from the month it draws in, and its one
+ * caller, `blocksReachedByShock`, builds no chain schedule to share.
  */
 export function effectiveMaturity(
   block: MortgageBlock,
@@ -373,13 +376,4 @@ export function scheduleRows(
   schedules: Map<string, PropertySchedule>,
 ): Map<string, AmortizationRow[]> {
   return new Map([...schedules].map(([pid, s]) => [pid, s.rows]));
-}
-
-/** Build schedules for every property keyed by propertyId (empty if no debt). */
-export function schedulesByProperty(
-  mortgages: MortgageBlock[],
-  propertyIds: string[],
-  assumptions: Assumptions,
-): Map<string, AmortizationRow[]> {
-  return scheduleRows(propertySchedules(mortgages, propertyIds, assumptions));
 }
