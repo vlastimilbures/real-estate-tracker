@@ -43,10 +43,7 @@ describe.each(Object.keys(SHOWN) as (keyof typeof SHOWN)[])(
     const t = DICTS[lang];
 
     it("is the one entry dashboard.financingRowsNominalDisclaimer", () => {
-      const entry: unknown = Reflect.get(
-        t.dashboard,
-        "financingRowsNominalDisclaimer",
-      );
+      const entry: unknown = t.dashboard.financingRowsNominalDisclaimer;
       expect(typeof entry).toBe("string");
       expect(realNote(mixed, t)).toBe(entry);
     });
