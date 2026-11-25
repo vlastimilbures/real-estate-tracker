@@ -115,6 +115,8 @@ describe("per-code screen (#115)", () => {
     );
     expect(alert().textContent).not.toContain(en.app.bootRetryHint);
     expect(button(en.app.tryAgain)).toBeNull();
+    // Owner decision 2026-11-25: no restore, the old file is never touched.
+    expect(button(en.boot.restoreBackup)).toBeNull();
     expect(button(en.boot.showDataFolder)).not.toBeNull();
   });
 
