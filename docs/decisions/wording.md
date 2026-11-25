@@ -253,7 +253,7 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 - Approved by: the text, owner OK 2026-11-18 (#464 comment 6978842455); ADR 0259, owner
   review 2026-11-24 (recorded on #464)
 
-### 2026-11-25 · #485 follow-up
+### 2026-11-25 · #485 follow-up / PR #603
 
 - Keys: `dashboard.financingRowsNominalDisclaimer` (en, cs, ru), new;
   `dashboard.financingRowsNominal` (en, cs, ru), deleted
