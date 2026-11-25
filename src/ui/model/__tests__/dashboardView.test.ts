@@ -212,7 +212,7 @@ describe("financingView (ADR 0214 §3)", () => {
     expect(n.showWindow).toBe(true);
     const r = financingView(input(mixed, "real"), DEFAULT_RESET_WINDOW, en);
     expect(r.timeline.rows.length).toBeGreaterThan(0);
-    expect(r.note).toBe(`${d.financingRowsNominal} ${d.financingDisclaimer}`);
+    expect(r.note).toBe(d.financingRowsNominalDisclaimer);
     expect(r.labels.balanceAtReset).toBe(d.financingBalanceAtResetNominal);
   });
 

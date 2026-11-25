@@ -382,7 +382,8 @@ export const cs: Dictionary = {
     financingShowAll: (n) => `Zobrazit vše (${n})`,
     financingTimeline: (n) =>
       `Konce fixací a další termíny do ${n} ${csPlural(n, ["roku", "let", "let"])}`,
-    financingRowsNominal: "Dluh při změně je nominální.",
+    financingRowsNominalDisclaimer:
+      "Dluh při změně je nominální. Data vycházejí z modelu podle zadaných úvěrů a nájmů. Nejsou to termíny banky; přesná data si ověřte u banky.",
     financingColProperty: "Nemovitost",
     financingColEvent: "Událost",
     financingColDate: "Datum",

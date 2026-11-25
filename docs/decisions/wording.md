@@ -252,3 +252,17 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   error table already names the file, row and column.
 - Approved by: the text, owner OK 2026-11-18 (#464 comment 6978842455); ADR 0259, owner
   review 2026-11-24 (recorded on #464)
+
+### 2026-11-25 · #485 follow-up / PR #603
+
+- Keys: `dashboard.financingRowsNominalDisclaimer` (en, cs, ru), new;
+  `dashboard.financingRowsNominal` (en, cs, ru), deleted
+- Change: the Dashboard Financing note in the real lens, shown when the timeline has rows,
+  is one entry instead of `dashboard.financingRowsNominal` and `dashboard.financingDisclaimer`
+  joined in code with a space (`financingView`), so Czech and Russian can phrase the whole
+  note. Its text is today's joined text in each language, so nothing shown changes.
+  `dashboard.financingRowsNominal` had no other use and is deleted;
+  `dashboard.financingDisclaimer` stays the note in the nominal lens and without rows.
+- Rejected: keeping the join, which fixes the order of the two sentences and the space
+  between them in every language.
+- Approved by: owner OK 2026-11-25 (recorded in the #435 log)

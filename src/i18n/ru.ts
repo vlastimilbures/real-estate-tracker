@@ -390,7 +390,8 @@ export const ru: Dictionary = {
     financingShowAll: (n) => `Показать все (${n})`,
     financingTimeline: (n) =>
       `Концы фиксации и другие даты в течение ${n} ${ruPlural(n, ["года", "лет", "лет"])}`,
-    financingRowsNominal: "Долг на момент смены — номинальный.",
+    financingRowsNominalDisclaimer:
+      "Долг на момент смены — номинальный. Даты рассчитаны по внесённым кредитам и договорам аренды. Это не сроки банка; точные даты уточните в банке.",
     financingColProperty: "Объект",
     financingColEvent: "Событие",
     financingColDate: "Дата",

@@ -428,7 +428,8 @@ export const en = {
     financingShowAll: (n: number) => `Show all (${n})`,
     financingTimeline: (n: number) =>
       `Fixation ends and other dates within ${n} ${enPlural(n, ["year", "years"])}`,
-    financingRowsNominal: "Debt at reset is nominal.",
+    financingRowsNominalDisclaimer:
+      "Debt at reset is nominal. Dates are modelled from the loans and leases you entered. They are not deadlines from your lender; check exact dates with your bank.",
     financingColProperty: "Property",
     financingColEvent: "Event",
     financingColDate: "Date",

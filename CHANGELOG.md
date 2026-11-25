@@ -228,6 +228,9 @@ engine without the form, and remove it when the last part lands.
   past the end of the Date range, with a `RangeError` instead of looping forever on its
   year ticks, as the payment-grid walk does (ADR 0247, #543). The as-of resolver never
   produces such a date (ADR 0150). No figure, layout or message changes.
+- Internal: the Dashboard Financing note in the real lens is one dictionary entry instead of
+  two sentences joined in code, so each language can phrase the whole note (#485 follow-up,
+  wording log 2026-11-25). The text shown is unchanged in every language.
 
 ### Fixed
 
