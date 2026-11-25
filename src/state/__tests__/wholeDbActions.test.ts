@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import type { IsoDate } from "../../engine";
 import type { Sql } from "../../data/sql";
-import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
+import { CHANGED_SINCE_BACKUP } from "../../data/appMeta";
 import { parseProperties, parseRents } from "../../import/csv";
 import { money } from "../../engine";
 import { importNow } from "./support/importNow";

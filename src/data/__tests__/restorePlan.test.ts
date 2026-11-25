@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { prepareRestore, type InputRules } from "../backup/restorePlan";
 import { validateBackup } from "../backup/validate";
 import { SCHEMA_HEAD, type BackupFile } from "../backup/format";
-import { DELETE_SAMPLE_MARKERS } from "../repositories";
+import { DELETE_SAMPLE_MARKERS } from "../appMeta";
 import { assumptionsToRow } from "../mappers";
 import { isoDate, money, rate, type Assumptions } from "../../engine";
 

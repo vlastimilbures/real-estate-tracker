@@ -1,24 +1,19 @@
-// Typed repositories over the `Sql` seam. Writes take DB row objects (produced by the
-// mappers); reads return engine inputs. The engine never imports this file.
+// Typed repositories over the `Sql` seam: the record writes and the reads besides the full
+// load (loadState.ts). The app's own flags live in appMeta.ts. Writes take DB row objects
+// (produced by the mappers); reads return engine inputs. The engine never imports this
+// file.
 import type { ExecuteResult, Sql, SqlStatement } from "./sql";
 import { DataError } from "./errors";
+import { loadState } from "./loadState";
+import { LAST_BACKUP_AT, markDataChanged, recordBackup } from "./appMeta";
 import type {
-  Portfolio,
   Assumptions,
-  Scenario,
   Valuation,
   Lease,
   MortgageBlock,
   HoldingCost,
 } from "../engine";
 import {
-  rowToProperty,
-  rowToMortgageBlock,
-  rowToValuation,
-  rowToLease,
-  rowToHoldingCost,
-  rowToAssumptions,
-  rowToScenario,
   assumptionsToRow,
   valuationToRow,
   leaseToRow,
@@ -30,7 +25,6 @@ import {
   type ValuationRow,
   type LeaseRow,
   type HoldingCostRow,
-  type AssumptionsRow,
   type ScenarioRow,
 } from "./mappers";
 
@@ -283,181 +277,10 @@ export async function countProperties(sql: Sql): Promise<number> {
   return Number(rows[0]?.n ?? 0);
 }
 
-// The reads behind a full load, in the order `loadState` maps them.
-const PORTFOLIO_QUERIES = [
-  "SELECT * FROM properties ORDER BY id",
-  "SELECT * FROM mortgage_blocks ORDER BY start_date, id",
-  "SELECT * FROM valuations ORDER BY valid_from, id",
-  "SELECT * FROM leases ORDER BY start_date, id",
-  "SELECT * FROM holding_costs ORDER BY id",
-] as const;
-const ASSUMPTIONS_QUERY = "SELECT * FROM assumptions WHERE id = 1";
-// Creation order (DR-181): older yyyy-mm-dd rows sort before same-day timestamps, by id.
-const SCENARIOS_QUERY = "SELECT * FROM scenarios ORDER BY created_at, id";
-
-// Properties are listed by name in Czech order, numbers by value (ADR 0127: ids are random).
-// The sort is stable, so the query's id order breaks ties.
-const byName = new Intl.Collator("cs", { numeric: true }).compare;
-
-function toPortfolio([
-  properties,
-  mortgages,
-  valuations,
-  leases,
-  holdingCosts,
-]: unknown[][]): Portfolio {
-  return {
-    properties: (properties as PropertyRow[])
-      .map(rowToProperty)
-      .sort((a, b) => byName(a.name, b.name)),
-    mortgages: (mortgages as MortgageBlockRow[]).map(rowToMortgageBlock),
-    valuations: (valuations as ValuationRow[]).map(rowToValuation),
-    leases: (leases as LeaseRow[]).map(rowToLease),
-    holdingCosts: (holdingCosts as HoldingCostRow[]).map(rowToHoldingCost),
-  };
-}
-
-function toAssumptions(rows: unknown[]): Assumptions {
-  // A lost row is not re-created from the sample values: startup stops (ADR 0252).
-  if (rows.length === 0)
-    throw new DataError(
-      "ROW_INVALID",
-      "A saved record cannot be read: assumptions row not found (id = 1).",
-      ["assumptions 1: row not found"],
-    );
-  return rowToAssumptions(rows[0] as AssumptionsRow);
-}
-
-/** The first-run sample portfolio (ADR 0094): its properties as seeded and the `app_meta`
- *  keys that mark it as active and its banner as dismissed. A property is part of the
- *  sample only while both its id and its name are the seeded ones (ADR 0127). */
-export const SAMPLE_PROPERTIES = [
-  { id: "javorova", name: "Byt Javorova" },
-  { id: "lipova", name: "Byt Lipova" },
-  { id: "dubova", name: "Byt Dubova" },
-] as const;
-export const SAMPLE_ACTIVE = "sample_active";
-export const SAMPLE_DISMISSED = "sample_banner_dismissed";
-const SAMPLE_META_QUERY = `SELECT key FROM app_meta WHERE key IN ('${SAMPLE_ACTIVE}', '${SAMPLE_DISMISSED}')`;
-/** Removes both sample markers: Clear sample (ADR 0094) and every restore (ADR 0127). */
-export const DELETE_SAMPLE_MARKERS: SqlStatement = {
-  query: "DELETE FROM app_meta WHERE key IN (?, ?)",
-  params: [SAMPLE_ACTIVE, SAMPLE_DISMISSED],
-};
-
-const isSampleProperty = (p: { id: string; name: string }) =>
-  SAMPLE_PROPERTIES.some((s) => s.id === p.id && s.name === p.name);
-
-/** Whether the sample is still in place (marker set and at least one sample property
- *  left) and whether its banner was dismissed (ADR 0094). */
-export interface SampleState {
-  active: boolean;
-  dismissed: boolean;
-}
-
-function toSample(keys: unknown[], portfolio: Portfolio): SampleState {
-  const set = new Set((keys as { key: string }[]).map((r) => r.key));
-  return {
-    active:
-      set.has(SAMPLE_ACTIVE) && portfolio.properties.some(isSampleProperty),
-    dismissed: set.has(SAMPLE_DISMISSED),
-  };
-}
-
-/** Backup recency (ADR 0110): the last recorded export and whether the data changed
- *  since. App state in `app_meta`, so never part of a backup or a restore. */
-export const LAST_BACKUP_AT = "last_backup_at";
-export const LAST_BACKUP_FILE = "last_backup_file";
-export const CHANGED_SINCE_BACKUP = "changed_since_backup";
-const BACKUP_META_QUERY = `SELECT key, value FROM app_meta WHERE key IN ('${LAST_BACKUP_AT}', '${LAST_BACKUP_FILE}', '${CHANGED_SINCE_BACKUP}')`;
-
-export interface BackupState {
-  /** ISO UTC timestamp of the last successful export, or null. */
-  lastAt: string | null;
-  /** Its file name (no path), or null. */
-  lastFile: string | null;
-  changedSince: boolean;
-}
-
-function toBackupState(rows: unknown[]): BackupState {
-  const meta = new Map(
-    (rows as { key: string; value: string }[]).map((r) => [r.key, r.value]),
-  );
-  return {
-    lastAt: meta.get(LAST_BACKUP_AT) ?? null,
-    lastFile: meta.get(LAST_BACKUP_FILE) ?? null,
-    changedSince: meta.has(CHANGED_SINCE_BACKUP),
-  };
-}
-
-/** Record a successful export (ADR 0110): `at` comes from the caller, never the clock.
- *  `clearChanged: false` keeps the changed flag, for a write that landed after the
- *  exported snapshot was read. */
-export async function recordBackup(
-  sql: Sql,
-  at: string,
-  file: string,
-  clearChanged = true,
-): Promise<void> {
-  const upsert =
-    "INSERT INTO app_meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value";
-  await sql.transaction([
-    { query: upsert, params: [LAST_BACKUP_AT, at] },
-    { query: upsert, params: [LAST_BACKUP_FILE, file] },
-    ...(clearChanged
-      ? [
-          {
-            query: "DELETE FROM app_meta WHERE key = ?",
-            params: [CHANGED_SINCE_BACKUP],
-          },
-        ]
-      : []),
-  ]);
-}
-
-/** Sets the `app_meta` flag `key` (value '1'); a flag already set stays. */
-export const flagStatement = (key: string): SqlStatement => ({
-  query: "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
-  params: [key],
-});
-
-/** Mark the data as changed since the last backup (ADR 0110). */
-export async function markDataChanged(sql: Sql): Promise<void> {
-  const { query, params } = flagStatement(CHANGED_SINCE_BACKUP);
-  await sql.execute(query, params);
-}
-
-/** Everything the app shows, as one point-in-time snapshot (DR-134). */
-export interface LoadedState {
-  portfolio: Portfolio;
-  assumptions: Assumptions;
-  scenarios: Scenario[];
-  sample: SampleState;
-  backup: BackupState;
-}
-
-/** The portfolio, assumptions, scenarios and the sample and backup state, read in one
- *  snapshot so a write landing mid-load cannot mix states (DR-134). */
-export async function loadState(sql: Sql): Promise<LoadedState> {
-  const results = await sql.selectSnapshot(
-    [
-      ...PORTFOLIO_QUERIES,
-      ASSUMPTIONS_QUERY,
-      SCENARIOS_QUERY,
-      SAMPLE_META_QUERY,
-      BACKUP_META_QUERY,
-    ].map((query) => ({ query })),
-  );
-  const n = PORTFOLIO_QUERIES.length;
-  const portfolio = toPortfolio(results.slice(0, n));
-  return {
-    portfolio,
-    assumptions: toAssumptions(results[n] ?? []),
-    // A scenario row the app cannot read stops the load like any other (ADR 0231).
-    scenarios: ((results[n + 1] ?? []) as unknown as ScenarioRow[]).map(
-      rowToScenario,
-    ),
-    sample: toSample(results[n + 2] ?? [], portfolio),
-    backup: toBackupState(results[n + 3] ?? []),
-  };
-}
+/**
+ * The full load and the backup-recency writers, kept on this path for the backup, restore
+ * and migration tests, which import them from here unchanged (#471). The app imports
+ * loadState.ts and appMeta.ts.
+ * @internal
+ */
+export { loadState, LAST_BACKUP_AT, markDataChanged, recordBackup };

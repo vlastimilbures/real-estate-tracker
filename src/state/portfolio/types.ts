@@ -21,7 +21,7 @@ import type {
   CsvImportPreview,
   CsvImportReport,
 } from "../../import/csvImport";
-import type { BackupState, SampleState } from "../../data/repositories";
+import type { BackupState, SampleState } from "../../data/appMeta";
 import type { PropertyExtras } from "../../data/mappers";
 import type { RefusedWrite } from "../writeTargets";
 import type { WriteRunner } from "./writeRunner";

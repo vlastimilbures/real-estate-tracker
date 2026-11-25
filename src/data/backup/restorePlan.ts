@@ -4,7 +4,8 @@
 // data stays (DR-019). A value outside the form bounds only asks (ADR 0148): the database
 // may hold it already. Pure: no IO and no Tauri; backupFiles.ts runs the plan.
 import type { SqlStatement } from "../sql";
-import { DELETE_SAMPLE_MARKERS, insertStatement } from "../repositories";
+import { insertStatement } from "../repositories";
+import { DELETE_SAMPLE_MARKERS } from "../appMeta";
 import { TABLES, restoreDefaults } from "../schema";
 import { DataError } from "../errors";
 import { spellingKey } from "../../lib/propertyKey";

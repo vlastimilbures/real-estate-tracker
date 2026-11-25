@@ -19,9 +19,9 @@ import {
   insertLease,
   insertPropertyWithCosts,
   loadState,
-  SAMPLE_PROPERTIES,
   upsertAssumptions,
 } from "../repositories";
+import { SAMPLE_PROPERTIES } from "../appMeta";
 import { holdingCostToRow, leaseToRow, propertyToRow } from "../mappers";
 import type { Sql } from "../sql";
 import { isoDate, rate } from "../../engine";
