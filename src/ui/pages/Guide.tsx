@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { AppShell } from "../components/AppShell";
+import { PageFrame } from "../components/PageFrame";
 import { useUiStore } from "../../state/uiStore";
 import { Panel } from "../components/primitives";
 import { useT } from "../hooks/useT";
@@ -118,7 +118,7 @@ export function Guide() {
   }));
 
   return (
-    <AppShell
+    <PageFrame
       title={g.title}
       subtitle={g.subtitle}
       showLens={false}
@@ -264,6 +264,6 @@ export function Guide() {
           </dl>
         </Panel>
       </div>
-    </AppShell>
+    </PageFrame>
   );
 }

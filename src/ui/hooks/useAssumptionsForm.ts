@@ -165,7 +165,7 @@ export function useAssumptionsForm(active: boolean) {
 
   // On failure a broken rule marks its field (UX-047), or is listed in the error summary
   // when it names no field shown here (ADR 0141), until the next edit; any other failure
-  // shows in the AppShell banner, put there by bannerUnlessInput (ADR 0261). The page
+  // shows in the PageFrame banner, put there by bannerUnlessInput (ADR 0261). The page
   // owns focus after a save (ADR 0248 §4). The success toast shows only when the write
   // landed.
   const {

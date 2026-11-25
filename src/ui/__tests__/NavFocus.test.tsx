@@ -2,7 +2,7 @@
 //
 // ADR 0146 (#131): every page renders its own shell, so a page change removes the nav
 // button that was pressed. Focus then moves to the new page's main region, not <body>.
-// Focus is not moved at startup, and focus a page sets on purpose wins. AppShell keeps
+// Focus is not moved at startup, and focus a page sets on purpose wins. PageFrame keeps
 // the last shown route in module state, so each test loads fresh modules (#256).
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
@@ -57,7 +57,7 @@ describe("focus after navigation (ADR 0146)", () => {
     await waitFor(() => expect(document.activeElement?.id).toBe("main"));
   });
 
-  // An outcome pin: Guide's focus effect runs after AppShell's and wins with or without
+  // An outcome pin: Guide's focus effect runs after PageFrame's and wins with or without
   // the "focus lost" guard; the dialog pin below is the one that exercises the guard.
   it("keeps the focus a page sets: a glossary term from a metric link", async () => {
     render(<App />);

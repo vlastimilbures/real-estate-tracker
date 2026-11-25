@@ -5,7 +5,8 @@
 // role. A new edit error is announced. (The stale-data banner is gone: ADR 0228.)
 import { describe, expect, it } from "vitest";
 import { act, render, screen } from "@testing-library/react";
-import { AppShell } from "../AppShell";
+import { AppLayout } from "../AppLayout";
+import { PageFrame } from "../PageFrame";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { getDict } from "../../../i18n";
 import type { WriteError } from "../../../state/writeError";
@@ -16,9 +17,11 @@ const en = getDict("en");
 /** A page change: the old page's shell goes, the new page mounts its own. */
 function page(title: string) {
   return render(
-    <AppShell title={title}>
-      <p>{title}</p>
-    </AppShell>,
+    <AppLayout>
+      <PageFrame title={title}>
+        <p>{title}</p>
+      </PageFrame>
+    </AppLayout>,
   );
 }
 

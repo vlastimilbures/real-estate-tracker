@@ -4,7 +4,8 @@
 // tools above the footer; the footer is unchanged.
 import { describe, it, expect } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
-import { AppShell } from "../AppShell";
+import { AppLayout } from "../AppLayout";
+import { PageFrame } from "../PageFrame";
 import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 
@@ -12,9 +13,11 @@ const n = en.nav;
 
 const shell = () =>
   render(
-    <AppShell title="Dashboard">
-      <p>page</p>
-    </AppShell>,
+    <AppLayout>
+      <PageFrame title="Dashboard">
+        <p>page</p>
+      </PageFrame>
+    </AppLayout>,
   );
 
 const groupNames = (g: Element) =>

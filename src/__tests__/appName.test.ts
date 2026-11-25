@@ -13,7 +13,7 @@ import { APP_NAME } from "../i18n";
 import { en } from "../i18n/en";
 import { cs } from "../i18n/cs";
 import { ru } from "../i18n/ru";
-import { AppShell } from "../ui/components/AppShell";
+import { AppLayout } from "../ui/components/AppLayout";
 import { BrandMark } from "../ui/components/BrandMark";
 import { useUiStore } from "../state/uiStore";
 
@@ -69,9 +69,7 @@ describe("brand surfaces (ADR 0105)", () => {
   });
 
   it("shows the name in the sidebar brand", () => {
-    const { container } = render(
-      createElement(AppShell, { title: "x", children: null }),
-    );
+    const { container } = render(createElement(AppLayout, { children: null }));
     const mark = container.querySelector(".brand .mark");
     expect(mark?.querySelector("br")).toBeTruthy();
     // The line break reads as a space; the head's no-break spaces as plain spaces.

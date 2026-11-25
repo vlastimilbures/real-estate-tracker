@@ -4,14 +4,6 @@
       "Arrow function (useUiStore: create)": 138
     }
   },
-  "src/ui/components/AppShell.tsx": {
-    "complexity": {
-      "Function 'AppShell'": 16
-    },
-    "lines": {
-      "Function 'AppShell'": 198
-    }
-  },
   "src/ui/components/charts.tsx": {
     "complexity": {
       "Function 'ChartCard'": 18

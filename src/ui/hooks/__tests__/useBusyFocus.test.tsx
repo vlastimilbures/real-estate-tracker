@@ -2,7 +2,7 @@
 //
 // ADR 0248 §5–§6 (#549): the core hook moves focus only once a busy action ends, only
 // from <body> or the control that started it, and only to an element that is on the page
-// and enabled. `pageTitle` makes the AppShell h1 focusable from script for that one focus.
+// and enabled. `pageTitle` makes the PageFrame h1 focusable from script for that one focus.
 import { describe, expect, it, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import {
@@ -107,7 +107,7 @@ describe("useBusyFocus (ADR 0248 §5–§6)", () => {
 });
 
 describe("useBusyFocus: the last resort (ADR 0248 §3)", () => {
-  /** The harness under the AppShell's page title. */
+  /** The harness under the PageFrame's page title. */
   function renderTitled(target: BusyFocusTarget) {
     render(
       <>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useProjections } from "../../state/useEngine";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
-import { AppShell } from "../components/AppShell";
+import { PageFrame } from "../components/PageFrame";
 import { Panel, EmptyState, ExportXlsxButton } from "../components/primitives";
 import { FolderOpen } from "lucide-react";
 import { PropertySelect } from "../components/PropertySelect";
@@ -38,11 +38,11 @@ export function Projections() {
 
   if (!all || !assumptions) {
     return (
-      <AppShell title={t.projections.title}>
+      <PageFrame title={t.projections.title}>
         <EmptyState title={t.common.noPortfolioTitle} icon={FolderOpen}>
           {t.common.noPortfolioBody}
         </EmptyState>
-      </AppShell>
+      </PageFrame>
     );
   }
 
@@ -50,9 +50,9 @@ export function Projections() {
   const state = portfolio ? portfolioState(portfolio) : null;
   if (state && state.kind !== "ready") {
     return (
-      <AppShell title={t.projections.title} showLens={false}>
+      <PageFrame title={t.projections.title} showLens={false}>
         <PortfolioStateNotice state={state} />
-      </AppShell>
+      </PageFrame>
     );
   }
 
@@ -78,7 +78,7 @@ export function Projections() {
     );
 
   return (
-    <AppShell
+    <PageFrame
       title={t.projections.title}
       subtitle={projectionsPageSubtitle(t, mode, assumptions.baseDate)}
       actions={
@@ -103,6 +103,6 @@ export function Projections() {
       >
         <ProjectionGrid rows={rows} baseDate={assumptions.baseDate} />
       </Panel>
-    </AppShell>
+    </PageFrame>
   );
 }

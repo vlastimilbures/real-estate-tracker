@@ -4,7 +4,7 @@ import { useShallow } from "zustand/react/shallow";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { usePropertyEngineResult } from "../../state/useEngine";
 import { useUiStore } from "../../state/uiStore";
-import { AppShell } from "../components/AppShell";
+import { PageFrame } from "../components/PageFrame";
 import { Button, EmptyState } from "../components/primitives";
 import { SectionNav } from "../components/SectionNav";
 import { focusSection } from "../focus";
@@ -128,7 +128,7 @@ export function PropertyDetail() {
   );
   if (!page) {
     return (
-      <AppShell title={t.propertyDetail.fallbackTitle} showLens={false}>
+      <PageFrame title={t.propertyDetail.fallbackTitle} showLens={false}>
         <EmptyState
           title={t.propertyDetail.noneSelectedTitle}
           icon={Building2}
@@ -138,7 +138,7 @@ export function PropertyDetail() {
             </Button>
           }
         />
-      </AppShell>
+      </PageFrame>
     );
   }
 
@@ -155,7 +155,7 @@ export function PropertyDetail() {
   });
 
   return (
-    <AppShell
+    <PageFrame
       title={property.name}
       attention={
         // The same pill as the Dashboard's (ADR 0218 §1, 0223 §5).
@@ -213,6 +213,6 @@ export function PropertyDetail() {
               : focusSection(sectionId(fix))
         }
       />
-    </AppShell>
+    </PageFrame>
   );
 }

@@ -1,7 +1,7 @@
 import { flushSync } from "react-dom";
 import { useEngine } from "../../state/useEngine";
 import { useUiStore } from "../../state/uiStore";
-import { AppShell } from "../components/AppShell";
+import { PageFrame } from "../components/PageFrame";
 import { PropertySelect } from "../components/PropertySelect";
 import { AsOfPicker } from "../components/AsOfPicker";
 import { Button, EmptyState } from "../components/primitives";
@@ -70,16 +70,16 @@ export function Dashboard() {
   const state = filter.portfolio ? portfolioState(filter.portfolio) : null;
   if (state?.kind === "allInactive") {
     return (
-      <AppShell title={t.dashboard.title} showLens={false}>
+      <PageFrame title={t.dashboard.title} showLens={false}>
         <SampleBanner />
         <PortfolioStateNotice state={state} />
-      </AppShell>
+      </PageFrame>
     );
   }
 
   if (!engine || !view || filter.properties.length === 0) {
     return (
-      <AppShell title={t.dashboard.title} showLens={false}>
+      <PageFrame title={t.dashboard.title} showLens={false}>
         <EmptyState
           title={t.common.noPortfolioTitle}
           icon={FolderOpen}
@@ -101,7 +101,7 @@ export function Dashboard() {
           {t.common.noPortfolioBody}
         </EmptyState>
         <GettingStarted />
-      </AppShell>
+      </PageFrame>
     );
   }
 
@@ -109,7 +109,7 @@ export function Dashboard() {
   const { assumptions } = engine;
 
   return (
-    <AppShell
+    <PageFrame
       title={t.dashboard.title}
       subtitle={v.subtitle}
       pageClass="dashboard"
@@ -171,6 +171,6 @@ export function Dashboard() {
             : openProperty(id, fix)
         }
       />
-    </AppShell>
+    </PageFrame>
   );
 }

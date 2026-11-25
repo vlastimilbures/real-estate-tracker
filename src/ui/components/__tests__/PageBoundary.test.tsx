@@ -6,7 +6,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { PageBoundary } from "../PageBoundary";
-import { AppShell } from "../AppShell";
+import { AppLayout } from "../AppLayout";
+import { PageFrame } from "../PageFrame";
 import { useUiStore } from "../../../state/uiStore";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { EngineInputError } from "../../../engine";
@@ -69,9 +70,11 @@ describe("error screens follow a language switch (#442)", () => {
 
   it("app shell boundary: the invalid-data notice", () => {
     render(
-      <AppShell title="Dashboard">
-        <Boom />
-      </AppShell>,
+      <AppLayout>
+        <PageFrame title="Dashboard">
+          <Boom />
+        </PageFrame>
+      </AppLayout>,
     );
     const text = switchToEnglish();
     expect(text).toContain(getDict("en").errorBoundary.invalidDataTitle);
@@ -80,9 +83,11 @@ describe("error screens follow a language switch (#442)", () => {
 
   it("app shell boundary: the generic fallback", () => {
     render(
-      <AppShell title="Dashboard">
-        <Other />
-      </AppShell>,
+      <AppLayout>
+        <PageFrame title="Dashboard">
+          <Other />
+        </PageFrame>
+      </AppLayout>,
     );
     const text = switchToEnglish();
     expect(text).toContain(getDict("en").errorBoundary.title);

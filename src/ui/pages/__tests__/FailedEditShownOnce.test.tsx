@@ -7,7 +7,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AppShell } from "../../components/AppShell";
+import { AppLayout } from "../../components/AppLayout";
+import { PageFrame } from "../../components/PageFrame";
 import { EntityPanel } from "../../components/EntityPanel";
 import { PropertyFormModal } from "../../components/PropertyFormModal";
 import { PropertyDetail } from "../PropertyDetail";
@@ -40,7 +41,7 @@ const bannerText = describeWriteError(en, {
   message: "disk is full",
 }).message;
 
-/** The page banner (AppShell), not a form's or a row's own error line. */
+/** The page banner (PageFrame), not a form's or a row's own error line. */
 const pageBanner = () => document.querySelector("#main > .error-banner");
 
 /** The real store on a seeded in-memory DB, run through `before`; then every write fails
@@ -82,26 +83,29 @@ describe("a failed edit shows in place only (ADR 0261 §2)", () => {
       { name: "value", label: "Value", kind: "money" },
     ];
     render(
-      <AppShell title="Valuations">
-        <EntityPanel
-          chrome={{
-            title: "Valuations",
-            addLabel: "valuation",
-          }}
-          table={{
-            rows: [{ id: v.id, value: "1" }],
-            columns: [{ head: "Value", left: true, cell: (r) => r.value }],
-            onDelete: (id) => usePortfolioStore.getState().removeValuation(id),
-          }}
-          form={{
-            specs,
-            draftOf: (r) => ({ value: r ? r.value : "" }),
-            build: (values, id) => ({ id, value: String(values.value) }),
-            onAdd: async () => ({ ok: true }),
-            onSave: () => usePortfolioStore.getState().saveValuation(v),
-          }}
-        />
-      </AppShell>,
+      <AppLayout>
+        <PageFrame title="Valuations">
+          <EntityPanel
+            chrome={{
+              title: "Valuations",
+              addLabel: "valuation",
+            }}
+            table={{
+              rows: [{ id: v.id, value: "1" }],
+              columns: [{ head: "Value", left: true, cell: (r) => r.value }],
+              onDelete: (id) =>
+                usePortfolioStore.getState().removeValuation(id),
+            }}
+            form={{
+              specs,
+              draftOf: (r) => ({ value: r ? r.value : "" }),
+              build: (values, id) => ({ id, value: String(values.value) }),
+              onAdd: async () => ({ ok: true }),
+              onSave: () => usePortfolioStore.getState().saveValuation(v),
+            }}
+          />
+        </PageFrame>
+      </AppLayout>,
     );
   }
 
@@ -133,9 +137,11 @@ describe("a failed edit shows in place only (ADR 0261 §2)", () => {
     await writesFail();
     const id = usePortfolioStore.getState().portfolio!.properties[0]!.id;
     render(
-      <AppShell title="Properties">
-        <PropertyFormModal mode="edit" propertyId={id} onClose={() => {}} />
-      </AppShell>,
+      <AppLayout>
+        <PageFrame title="Properties">
+          <PropertyFormModal mode="edit" propertyId={id} onClose={() => {}} />
+        </PageFrame>
+      </AppLayout>,
     );
     const name = await screen.findByLabelText(en.propertyForm.name);
     await userEvent.type(name, " 2");

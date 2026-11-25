@@ -8,7 +8,7 @@ import {
   type MutationResult,
 } from "../../state/portfolioStore";
 import { MAX_COMPARE, useUiStore } from "../../state/uiStore";
-import { AppShell } from "../components/AppShell";
+import { PageFrame } from "../components/PageFrame";
 import { Button, EmptyState } from "../components/primitives";
 import { FolderOpen, Plus } from "lucide-react";
 import type { Scenario, ScenarioOverrides } from "../../engine";
@@ -107,11 +107,11 @@ export function Scenarios() {
 
   if (!assumptions) {
     return (
-      <AppShell title={t.scenarios.title} showLens={false}>
+      <PageFrame title={t.scenarios.title} showLens={false}>
         <EmptyState title={t.common.noPortfolioTitle} icon={FolderOpen}>
           {t.common.noPortfolioBody}
         </EmptyState>
-      </AppShell>
+      </PageFrame>
     );
   }
 
@@ -155,7 +155,7 @@ export function Scenarios() {
   }
 
   return (
-    <AppShell
+    <PageFrame
       title={t.scenarios.title}
       subtitle={t.scenarios.subtitle}
       // With nothing to compare there is no lens to switch (ADR 0155).
@@ -220,6 +220,6 @@ export function Scenarios() {
       ) : (
         <CompareView selected={selected} reachText={reachText} />
       )}
-    </AppShell>
+    </PageFrame>
   );
 }

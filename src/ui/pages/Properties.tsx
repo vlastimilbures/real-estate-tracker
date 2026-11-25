@@ -7,7 +7,7 @@ import { useAsOf } from "../hooks/useAsOf";
 import { asOfView, propertyRowsForAsOf } from "../model/dashboard";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
-import { AppShell } from "../components/AppShell";
+import { PageFrame } from "../components/PageFrame";
 import {
   Panel,
   Button,
@@ -146,7 +146,7 @@ export function Properties() {
   }
 
   return (
-    <AppShell
+    <PageFrame
       title={t.properties.title}
       subtitle={
         engine && basis && perProperty.length > 0
@@ -408,6 +408,6 @@ export function Properties() {
           onClose={() => setEditingId(null)}
         />
       )}
-    </AppShell>
+    </PageFrame>
   );
 }

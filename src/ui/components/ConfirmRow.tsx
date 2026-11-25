@@ -18,7 +18,7 @@ import {
 
 /**
  * After a confirmed action closed its row (ADR 0173): focus the panel that held the row,
- * or the page's title (the AppShell h1) when that panel has left the page. Only when focus
+ * or the page's title (the PageFrame h1) when that panel has left the page. Only when focus
  * is lost (on `<body>`, or still inside `row`), so a row or form opened meanwhile keeps it.
  * The target takes focus from script only: `tabIndex=-1` is set for the focus and removed
  * again on blur. The section stays unnamed: a named section is a region landmark, and a

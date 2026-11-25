@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
-import { AppShell } from "../components/AppShell";
+import { PageFrame } from "../components/PageFrame";
 import { Panel, ErrorBanner } from "../components/primitives";
 import {
   parseProperties,
@@ -184,7 +184,7 @@ export function Import() {
   }
 
   return (
-    <AppShell
+    <PageFrame
       title={t.importPage.title}
       subtitle={t.importPage.subtitle}
       showLens={false}
@@ -274,6 +274,6 @@ export function Import() {
           />
         </Panel>
       )}
-    </AppShell>
+    </PageFrame>
   );
 }

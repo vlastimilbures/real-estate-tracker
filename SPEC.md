@@ -862,7 +862,7 @@ price crash**, each with a legend and one line of help (ADR 0102).
 
 ## 9. Screens (UI)
 
-The app uses a left sidebar (`AppShell.tsx`). Top-level nav items: **Dashboard, Properties,
+The app uses a left sidebar (`AppLayout.tsx`). Top-level nav items: **Dashboard, Properties,
 Projections, Scenarios, Import, Settings, Guide**. The Nominal/Real lens toggle lives in the
 topbar of pages that expose projections. The sidebar footer shows the engine base date, an
 offline badge, and controls for language and theme.

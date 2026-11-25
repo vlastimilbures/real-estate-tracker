@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, useEffect } from "react";
 import "./styles/global.css";
 import "./components/shell.css";
 import "./components/panel.css";
@@ -8,7 +8,7 @@ import "./components/forms.css";
 import "./components/feedback.css";
 import "./components/charts.css";
 import "./components/layout.css";
-// Here, not in InfoTip.tsx: the build puts InfoTip in the shared AppShell chunk, whose
+// Here, not in InfoTip.tsx: the build puts InfoTip in the chunk the pages share, whose
 // stylesheet loads before this one, so equal-specificity rules above would win (#494).
 import "./styles/info-tip.css";
 import { usePortfolioStore } from "../state/portfolioStore";
@@ -47,13 +47,12 @@ const Guide = lazy(() =>
   import("./pages/Guide").then((m) => ({ default: m.Guide })),
 );
 
-// A page that fails to render keeps the sidebar (ADR 0146).
+// The page inside the app's chrome; a page that fails to render keeps the sidebar
+// (ADR 0146).
 function CurrentPage() {
   return (
     <PageBoundary>
-      <Suspense fallback={null}>
-        <Page />
-      </Suspense>
+      <Page />
     </PageBoundary>
   );
 }

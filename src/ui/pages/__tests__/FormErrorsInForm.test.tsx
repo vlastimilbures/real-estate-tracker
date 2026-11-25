@@ -7,7 +7,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AppShell } from "../../components/AppShell";
+import { AppLayout } from "../../components/AppLayout";
+import { PageFrame } from "../../components/PageFrame";
 import { EntityPanel } from "../../components/EntityPanel";
 import { RecordForm, RecordFormView } from "../../components/forms";
 import { useRecordForm } from "../../hooks/useRecordForm";
@@ -73,32 +74,36 @@ describe("a refused form save stays in the form (R4-05)", () => {
       { name: "value", label: "Value", kind: "money" },
     ];
     render(
-      <AppShell title="Loans">
-        <EntityPanel
-          chrome={{
-            title: "Loans",
-            addLabel: "loan",
-          }}
-          table={{
-            rows: [{ id: block.id, value: "1" }],
-            columns: [{ head: "Value", left: true, cell: (r) => r.value }],
-            onDelete: async () => ({ ok: true }),
-          }}
-          form={{
-            specs,
-            draftOf: (r) => ({ value: r ? r.value : "" }),
-            build: (v, id) => ({ id, value: String(v.value) }),
-            onAdd: async () => ({ ok: true }),
-            // A development loan without a term: the store refuses it (an input rule).
-            onSave: () =>
-              usePortfolioStore.getState().saveMortgageBlock({
-                ...block,
-                draws: [{ date: isoDate("2026-09-01"), amount: money("100") }],
-                completionDate: isoDate("2028-10-10"),
-              } as unknown as MortgageBlock),
-          }}
-        />
-      </AppShell>,
+      <AppLayout>
+        <PageFrame title="Loans">
+          <EntityPanel
+            chrome={{
+              title: "Loans",
+              addLabel: "loan",
+            }}
+            table={{
+              rows: [{ id: block.id, value: "1" }],
+              columns: [{ head: "Value", left: true, cell: (r) => r.value }],
+              onDelete: async () => ({ ok: true }),
+            }}
+            form={{
+              specs,
+              draftOf: (r) => ({ value: r ? r.value : "" }),
+              build: (v, id) => ({ id, value: String(v.value) }),
+              onAdd: async () => ({ ok: true }),
+              // A development loan without a term: the store refuses it (an input rule).
+              onSave: () =>
+                usePortfolioStore.getState().saveMortgageBlock({
+                  ...block,
+                  draws: [
+                    { date: isoDate("2026-09-01"), amount: money("100") },
+                  ],
+                  completionDate: isoDate("2028-10-10"),
+                } as unknown as MortgageBlock),
+            }}
+          />
+        </PageFrame>
+      </AppLayout>,
     );
     await userEvent.click(screen.getByRole("button", { name: en.common.edit }));
     await userEvent.click(

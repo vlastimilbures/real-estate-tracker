@@ -95,7 +95,7 @@ export function focusableFromScript(el: HTMLElement): HTMLElement {
   return el;
 }
 
-/** The page title (the AppShell h1), focusable from script only while it has focus. */
+/** The page title (the PageFrame h1), focusable from script only while it has focus. */
 export function pageTitle(): HTMLElement | null {
   const h1 = document.querySelector<HTMLElement>(".topbar .page-title");
   return h1 && focusableFromScript(h1);
