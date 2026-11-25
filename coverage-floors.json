@@ -1,6 +1,6 @@
 {
   "src/engine/**": { "lines": 98, "branches": 97 },
-  "src/data/**": { "lines": 93, "branches": 87 },
+  "src/data/**": { "lines": 93, "branches": 89 },
   "src/import/**": { "lines": 98, "branches": 93 },
   "src/lib/**": { "lines": 99, "branches": 96 },
   "src/i18n/**": { "lines": 99, "branches": 95 },
