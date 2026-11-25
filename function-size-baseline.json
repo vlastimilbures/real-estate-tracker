@@ -50,12 +50,12 @@
   },
   "src/ui/components/forms.tsx": {
     "lines": {
-      "Function 'RecordForm'": 200
+      "Function 'RecordForm'": 199
     }
   },
   "src/ui/hooks/useAssumptionsForm.ts": {
     "lines": {
-      "Function 'useAssumptionsForm'": 130
+      "Function 'useAssumptionsForm'": 129
     }
   },
   "src/ui/hooks/useModalA11y.ts": {
