@@ -1,8 +1,9 @@
 // Unified property selector: pill chips for small portfolios, dropdown past threshold.
 // Presentational only — no store, no maths.
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import { useModalA11y } from "../hooks/useModalA11y";
+import { useDismiss } from "../hooks/useDismiss";
 import { useT } from "../hooks/useT";
 
 const PILL_THRESHOLD = 5;
@@ -28,19 +29,6 @@ type SingleProps = {
 };
 
 type Props = MultiProps | SingleProps;
-
-function useClickOutside(
-  ref: React.RefObject<HTMLElement | null>,
-  cb: () => void,
-) {
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) cb();
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [ref, cb]);
-}
 
 // ─── Multi-select ────────────────────────────────────────────────────────────
 
@@ -258,7 +246,8 @@ function Dropdown({
     setOpen(false);
     triggerRef.current?.focus();
   }, []);
-  useClickOutside(rootRef, close);
+  // A press elsewhere closes the list and leaves focus where the user put it.
+  useDismiss(close, { open, inside: [rootRef], outside: "mousedown" });
   const picked = closeOnPick
     ? rows.map((r) => ({
         ...r,
@@ -274,7 +263,7 @@ function Dropdown({
       className="property-select"
       ref={rootRef}
       data-testid={rootTestId}
-      // Tabbing out of the list closes it (a click elsewhere is useClickOutside's).
+      // Tabbing out of the list closes it (a click elsewhere is useDismiss's).
       onBlur={(e) => {
         const to = e.relatedTarget as Node | null;
         if (to && !rootRef.current?.contains(to)) close();

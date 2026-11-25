@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 //
-// DateInput loads the calendar on the first open (DR-009). This test has its own file, so
-// DateInput's module-level calendar cache is always empty here, whatever the test order.
+// DateInput loads the calendar on the first open (DR-009). Each field holds the loaded
+// calendar in its own state (#491), so a newly mounted field opens only after the import
+// resolves, even when the chunk is already loaded.
 import { describe, it, expect, beforeAll } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { DateInput } from "../DateInput";

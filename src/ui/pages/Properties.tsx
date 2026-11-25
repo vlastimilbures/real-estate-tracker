@@ -25,7 +25,7 @@ import { undrawnPart } from "../model/debt";
 import { dscrBand, dscrBandWord, ltvBand, ltvBandWord } from "../model/health";
 import { bandLegend, hasMarkers, propertiesTotal } from "../model/properties";
 import { useT } from "../hooks/useT";
-import { ConfirmRow } from "../components/EntityPanelParts";
+import { ConfirmRow } from "../components/ConfirmRow";
 import { RowActions, WriteRowAction } from "../components/RowActions";
 import { propertiesSubtitle } from "../model/tableContext";
 

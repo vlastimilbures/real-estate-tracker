@@ -1,5 +1,5 @@
 // Reusable presentation primitives. They format and render engine output — no maths.
-import { useId, type ReactNode } from "react";
+import { useCallback, useId, useRef, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { X, FileSpreadsheet } from "lucide-react";
 import type { Decimal } from "../../lib/money";
@@ -16,6 +16,7 @@ import { BAND_SHAPE, type Band } from "../model/health";
 import { irrReasonText, type LeveredIrr } from "../model/irr";
 import { useT } from "../hooks/useT";
 import { InfoTip } from "./InfoTip";
+import { PanelSection } from "./panelFocus";
 import { useToast } from "../hooks/useToast";
 import { useUiStore } from "../../state/uiStore";
 import { pressed, useBusyFocus } from "../hooks/useBusyFocus";
@@ -272,29 +273,34 @@ export function Panel({
   headingId?: string | undefined;
   children: ReactNode;
 }) {
+  // Its section, for a control inside that sends focus here once it closes (ADR 0173).
+  const section = useRef<HTMLElement>(null);
+  const sectionOf = useCallback(() => section.current, []);
   return (
-    <section className="panel">
-      {(title || action) && (
-        <div className="panel-head">
-          <div className="panel-head-titles">
-            {/* Focusable from script only: an in-page link lands here (ADR 0107). */}
-            {title && (
-              <h2 id={headingId} tabIndex={-1}>
-                {title}
-              </h2>
-            )}
-            {hint && <span className="hint">{hint}</span>}
-            {info && title && <InfoTip topic={title}>{info}</InfoTip>}
+    <PanelSection.Provider value={sectionOf}>
+      <section className="panel" ref={section}>
+        {(title || action) && (
+          <div className="panel-head">
+            <div className="panel-head-titles">
+              {/* Focusable from script only: an in-page link lands here (ADR 0107). */}
+              {title && (
+                <h2 id={headingId} tabIndex={-1}>
+                  {title}
+                </h2>
+              )}
+              {hint && <span className="hint">{hint}</span>}
+              {info && title && <InfoTip topic={title}>{info}</InfoTip>}
+            </div>
+            {action}
           </div>
-          {action}
+        )}
+        {badges && <div className="panel-badges">{badges}</div>}
+        <div className={`panel-body${flush ? " flush" : ""}`}>
+          {help && <div className="panel-help">{help}</div>}
+          {children}
         </div>
-      )}
-      {badges && <div className="panel-badges">{badges}</div>}
-      <div className={`panel-body${flush ? " flush" : ""}`}>
-        {help && <div className="panel-help">{help}</div>}
-        {children}
-      </div>
-    </section>
+      </section>
+    </PanelSection.Provider>
   );
 }
 

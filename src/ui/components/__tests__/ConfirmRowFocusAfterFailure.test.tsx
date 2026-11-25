@@ -6,7 +6,7 @@
 import { describe, it, expect } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ConfirmRow } from "../EntityPanelParts";
+import { ConfirmRow } from "../ConfirmRow";
 import type { MutationResult } from "../../../state/portfolioStore";
 import { deferred } from "../../../__tests__/support/deferred";
 import { en } from "../../../i18n/en";

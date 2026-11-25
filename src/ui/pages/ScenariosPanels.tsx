@@ -6,7 +6,7 @@ import { DisclosureButton } from "../components/Disclosure";
 import { HelpText } from "../components/HelpText";
 import { InfoTip } from "../components/InfoTip";
 import { Panel, Button, SegmentedToggle } from "../components/primitives";
-import { ConfirmRow } from "../components/EntityPanelParts";
+import { ConfirmRow } from "../components/ConfirmRow";
 import { RowActions, WriteRowAction } from "../components/RowActions";
 import type { MutationResult } from "../../state/portfolioStore";
 import type { Scenario, ScenarioOverrides } from "../../engine";

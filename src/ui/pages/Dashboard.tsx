@@ -24,7 +24,7 @@ import { KpiStrip, ProjectionCharts, KpiListPanel } from "./DashboardPanels";
 import { FinancingPanel } from "./DashboardFinancing";
 import { DATA_CHECK_ID, DataCheckPanel } from "./DashboardDataCheck";
 import { dashboardDataCheck } from "../model/dataCheck";
-import { focusSection } from "../components/focusSection";
+import { focusSection } from "../focus";
 import { cashInvestedTotal } from "../model/acquisition";
 import { resetMarkers } from "../model/financing";
 import { useT } from "../hooks/useT";
