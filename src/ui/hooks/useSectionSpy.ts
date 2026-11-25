@@ -1,25 +1,6 @@
 import { useEffect, useState } from "react";
 import { pickCurrent } from "../model/sectionNav";
-
-/** Height of the sticky topbar: the band a section must reach starts below it. */
-function topbarHeight() {
-  return Math.round(
-    document.querySelector(".topbar")?.getBoundingClientRect().height ?? 0,
-  );
-}
-
-/** The topbar's height, kept current: the section nav can wrap it a row taller (ADR 0158). */
-function useTopbarHeight() {
-  const [height, setHeight] = useState(topbarHeight);
-  useEffect(() => {
-    const bar = document.querySelector(".topbar");
-    if (!bar || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => setHeight(topbarHeight()));
-    observer.observe(bar);
-    return () => observer.disconnect();
-  }, []);
-  return height;
-}
+import { useTopbarHeight } from "./useTopbar";
 
 /**
  * The element id, of `ids` (in page order), whose section is in view (ADR 0107): the

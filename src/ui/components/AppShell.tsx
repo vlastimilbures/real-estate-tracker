@@ -19,6 +19,7 @@ import { useUiStore, type Route, type Theme } from "../../state/uiStore";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { SegmentedToggle, ErrorBanner } from "./primitives";
 import { useFirstShow } from "../hooks/useFirstShow";
+import { usePublishTopbarHeight } from "../hooks/useTopbar";
 import { focusLost } from "../focus";
 import { swapShownRoute } from "../../state/shellMemory";
 import { BrandMark } from "./BrandMark";
@@ -221,25 +222,9 @@ export function AppShell({
     if (changed && focusLost()) mainRef.current?.focus({ preventScroll: true });
   }, [route]);
 
-  // The topbar's height as --topbar-h on the page, so an in-page jump lands a section
-  // below the sticky topbar (scroll-margin-top), whatever rows the topbar wraps to. Set
-  // once before observing: the observer reports only after the next layout, and a jump
-  // made right after navigation (a data check fix link, ADR 0118) needs it now.
+  // The top bar's height as --topbar-h (scroll-margin-top under the sticky bar).
   const topbarRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    const bar = topbarRef.current;
-    if (!bar || typeof ResizeObserver === "undefined") return;
-    const root = document.documentElement;
-    const measure = () =>
-      root.style.setProperty("--topbar-h", `${bar.offsetHeight}px`);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(bar);
-    return () => {
-      observer.disconnect();
-      root.style.removeProperty("--topbar-h");
-    };
-  }, []);
+  usePublishTopbarHeight(topbarRef);
 
   return (
     <div className={collapsed ? "shell collapsed" : "shell"}>
