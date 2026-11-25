@@ -2,7 +2,6 @@
 // guard), and the Save that parses it and shows a refusal or a failed save. The draft is
 // the text fields plus, for a form with `lists` (the mortgage form), its row lists. The
 // markup is RecordFormView's (../components/forms).
-import { useId, useState } from "react";
 import {
   collectValues,
   formRules,
@@ -13,13 +12,17 @@ import {
   type ParsedValues,
 } from "../model/formParse";
 import { fieldsIn, formWriteErrors } from "../model/writeError";
-import { isDirty } from "../model/dirty";
 import type { WriteError } from "../../state/writeError";
-import { useFormSubmit } from "./useFormSubmit";
-import { useLeaveGuard } from "./useLeaveGuard";
+import { useDraftForm } from "./useDraftForm";
 import { useT } from "./useT";
 
 type Draft = Record<string, string>;
+
+/** The draft: the text fields and the row lists. */
+interface FormDraft<L> {
+  fields: Draft;
+  lists: L;
+}
 
 export interface RecordFormOptions<S extends readonly FormSpec[], L = NoLists> {
   specs: S;
@@ -80,48 +83,47 @@ export function useRecordForm<const S extends readonly FormSpec[], L = NoLists>(
   const { specs, initial, onSubmit, hiddenFields, unsavedKey } = options;
   const model = (options.lists?.model ?? NO_LISTS) as FormLists<L>;
   const t = useT();
-  const [draft, setDraft] = useState(() => ({
-    fields: initial,
-    lists: options.lists?.initial ?? ({} as L),
-  }));
-  // Leave guard (UX-073): while the draft differs from the values the form opened with
-  // (or last saved), navigation asks first. Each form registers under its own key.
-  const ownKey = useId();
-  const [baseline, setBaseline] = useState(draft);
-  const textOf = (d: typeof draft) => ({
-    ...Object.fromEntries(specs.map((s) => [s.name, d.fields[s.name] ?? ""])),
-    ...model.texts(d.lists),
-  });
-  const unsaved = isDirty(textOf(baseline), textOf(draft));
-  useLeaveGuard(unsavedKey ?? ownKey, unsaved);
-  const hidden = hiddenFields?.(draft.fields, draft.lists) ?? [];
-
-  // A failure goes on the field it names if shown, else above the buttons, until the
-  // next edit or Save (ADR 0262 §1).
-  const { busy, errors, formError, submit, clearFields } = useFormSubmit({
+  const hiddenOf = (d: FormDraft<L>) => hiddenFields?.(d.fields, d.lists) ?? [];
+  const form = useDraftForm({
+    initial: (): FormDraft<L> => ({
+      fields: initial,
+      lists: options.lists?.initial ?? ({} as L),
+    }),
+    // Only the specs count as unsaved input (a draft key that is not one, such as the
+    // loan type, does not, ADR 0098); a list counts as its text.
+    unsavedOf: (d) => ({
+      ...Object.fromEntries(specs.map((s) => [s.name, d.fields[s.name] ?? ""])),
+      ...model.texts(d.lists),
+    }),
+    unsavedKey,
     run: onSubmit,
-    mapErrors: (failure) =>
+    // The shown fields by name, a list item on its draft row.
+    mapErrors: (failure, d) =>
       formWriteErrors(
         t,
         failure,
-        // The shown fields by name, a list item on its draft row.
-        fieldsIn(shownFields(specs, hidden), (field, index) =>
-          model.rowOf(draft.lists, field, index),
+        fieldsIn(shownFields(specs, hiddenOf(d)), (field, index) =>
+          model.rowOf(d.lists, field, index),
         ),
       ),
-    onSaved: () => setBaseline(draft),
+    rebaseOnSave: true,
   });
+  const { draft } = form;
 
   function patch(p: Draft, lists: Partial<L> = {}) {
-    setDraft((d) => ({
-      fields: { ...d.fields, ...p },
-      lists: { ...d.lists, ...lists },
-    }));
-    clearFields([...Object.keys(p), ...Object.keys(lists)]);
+    form.edit(
+      (d) => ({
+        fields: { ...d.fields, ...p },
+        lists: { ...d.lists, ...lists },
+      }),
+      [...Object.keys(p), ...Object.keys(lists)],
+    );
   }
   function editList<K extends keyof L & string>(name: K, rows: L[K]) {
-    setDraft((d) => ({ ...d, lists: { ...d.lists, [name]: rows } }));
-    clearFields((k) => k === name || k.startsWith(`${name}.`));
+    form.edit(
+      (d) => ({ ...d, lists: { ...d.lists, [name]: rows } }),
+      (k) => k === name || k.startsWith(`${name}.`),
+    );
   }
   /** Parse the draft: the text fields by their specs, the lists by their model (a row
    *  list's spec is not text, so it never reaches collectValues). */
@@ -141,14 +143,14 @@ export function useRecordForm<const S extends readonly FormSpec[], L = NoLists>(
   return {
     draft: draft.fields,
     lists: draft.lists,
-    hidden,
-    errors,
-    formError,
-    busy,
-    unsaved,
+    hidden: hiddenOf(draft),
+    errors: form.errors,
+    formError: form.formError,
+    busy: form.busy,
+    unsaved: form.unsaved,
     patch,
     editList,
     // A throwing onSubmit (sync or async) is shown like a returned failure (DR-090).
-    submit: () => submit(check),
+    submit: () => form.submit(check),
   };
 }

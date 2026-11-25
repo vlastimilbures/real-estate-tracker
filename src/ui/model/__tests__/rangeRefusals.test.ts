@@ -57,14 +57,14 @@ describe("whole-number fields at their bounds (forms)", () => {
 });
 
 describe("the property size (form)", () => {
-  const form = (size_m2: string) =>
+  const form = (sizeM2: string) =>
     parsePropertyForm(
       {
         ...BLANK_PROPERTY_FORM,
         name: "A",
-        purchase_date: "01.01.2020",
-        purchase_price: "100",
-        size_m2,
+        purchaseDate: "01.01.2020",
+        purchasePrice: "100",
+        sizeM2,
       },
       "p1",
       [],
@@ -74,7 +74,7 @@ describe("the property size (form)", () => {
 
   it("refuses 0, 54.55 and 10000.1 with the size range", () => {
     for (const raw of ["0", "54.55", "10000.1"])
-      expect(form(raw).errors, raw).toEqual({ size_m2: msg });
+      expect(form(raw).errors, raw).toEqual({ sizeM2: msg });
   });
 
   it("accepts 1, 54.5 and 10000", () => {

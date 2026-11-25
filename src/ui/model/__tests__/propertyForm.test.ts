@@ -17,12 +17,12 @@ const valid: PropertyFormState = {
   name: "Vinohrady 2+kk",
   address: "Korunní 100",
   type: "flat",
-  size_m2: "58",
+  sizeM2: "58",
   garage: true,
-  purchase_date: "01.03.2021",
-  purchase_price: "5200000",
-  appreciation_override_pa: "",
-  rent_index_override_pa: "",
+  purchaseDate: "01.03.2021",
+  purchasePrice: "5200000",
+  appreciationOverridePa: "",
+  rentIndexOverridePa: "",
 };
 
 describe("parsePropertyForm", () => {
@@ -45,8 +45,8 @@ describe("parsePropertyForm", () => {
       {
         ...valid,
         name: "Renamed",
-        appreciation_override_pa: percentDraft(appreciation),
-        rent_index_override_pa: percentDraft(rentIndex),
+        appreciationOverridePa: percentDraft(appreciation),
+        rentIndexOverridePa: percentDraft(rentIndex),
       },
       "vinohrady",
       [],
@@ -64,8 +64,8 @@ describe("parsePropertyForm", () => {
     expect(result.valid).toBe(false);
     if (result.valid) throw new Error("expected invalid");
     expect(result.errors.name).toBe(en.forms.required);
-    expect(result.errors.purchase_date).toBe(en.forms.required);
-    expect(result.errors.purchase_price).toBe(en.forms.required);
+    expect(result.errors.purchaseDate).toBe(en.forms.required);
+    expect(result.errors.purchasePrice).toBe(en.forms.required);
   });
 
   it("rejects a name that collides with another property (case-insensitive)", () => {
@@ -109,44 +109,42 @@ describe("parsePropertyForm", () => {
 
   it("rejects an unparseable purchase date", () => {
     const result = parsePropertyForm(
-      { ...valid, purchase_date: "not-a-date" },
+      { ...valid, purchaseDate: "not-a-date" },
       "p-new",
       [],
       en,
     );
     expect(result.valid).toBe(false);
     if (result.valid) throw new Error("expected invalid");
-    expect(result.errors.purchase_date).toBe(en.forms.invalidHint.date);
+    expect(result.errors.purchaseDate).toBe(en.forms.invalidHint.date);
   });
 
   it("rejects an unparseable purchase price", () => {
     const result = parsePropertyForm(
-      { ...valid, purchase_price: "not-a-number" },
+      { ...valid, purchasePrice: "not-a-number" },
       "p-new",
       [],
       en,
     );
     expect(result.valid).toBe(false);
     if (result.valid) throw new Error("expected invalid");
-    expect(result.errors.purchase_price).toBe(en.forms.invalidHint.money);
+    expect(result.errors.purchasePrice).toBe(en.forms.invalidHint.money);
   });
 
   // ADR 0236 §1: one decimal place is accepted, two are refused naming the limit.
   it("rejects a size with two decimals and an invalid percentage override, leaving optional fields blank as valid", () => {
     const result = parsePropertyForm(
-      { ...valid, size_m2: "54.55", appreciation_override_pa: "abc" },
+      { ...valid, sizeM2: "54.55", appreciationOverridePa: "abc" },
       "p-new",
       [],
       en,
     );
     expect(result.valid).toBe(false);
     if (result.valid) throw new Error("expected invalid");
-    expect(result.errors.size_m2).toBe(
+    expect(result.errors.sizeM2).toBe(
       "Must be a number from 1 to 10 000 with at most one decimal place",
     );
-    expect(result.errors.appreciation_override_pa).toBe(
-      en.forms.invalidHint.pct,
-    );
+    expect(result.errors.appreciationOverridePa).toBe(en.forms.invalidHint.pct);
   });
 
   it("treats optional overrides as valid when blank", () => {
@@ -158,22 +156,22 @@ describe("parsePropertyForm", () => {
 
   it("accepts a size with one decimal place, comma or dot (ADR 0236 §1)", () => {
     // Trailing zeros count by value: "58,50" is one decimal place.
-    for (const size_m2 of ["58.5", "58,5", "58.50", "58,50"]) {
-      const result = parsePropertyForm({ ...valid, size_m2 }, "p-new", [], en);
-      expect(result.valid && result.property.sizeM2, size_m2).toBe(58.5);
+    for (const sizeM2 of ["58.5", "58,5", "58.50", "58,50"]) {
+      const result = parsePropertyForm({ ...valid, sizeM2 }, "p-new", [], en);
+      expect(result.valid && result.property.sizeM2, sizeM2).toBe(58.5);
     }
   });
 
   it("bounds the size to 1–10 000 m² (ADR 0075, DR-078; wording ADR 0236 §1)", () => {
     const hint =
       "Must be a number from 1 to 10 000 with at most one decimal place";
-    for (const size_m2 of ["0", "10001", "9".repeat(400)]) {
-      const result = parsePropertyForm({ ...valid, size_m2 }, "p-new", [], en);
+    for (const sizeM2 of ["0", "10001", "9".repeat(400)]) {
+      const result = parsePropertyForm({ ...valid, sizeM2 }, "p-new", [], en);
       expect(result.valid).toBe(false);
-      expect(result.errors.size_m2).toBe(hint);
+      expect(result.errors.sizeM2).toBe(hint);
     }
     const max = parsePropertyForm(
-      { ...valid, size_m2: "10000" },
+      { ...valid, sizeM2: "10000" },
       "p-new",
       [],
       en,
@@ -202,10 +200,10 @@ describe("parsePropertyForm — acquisition funding", () => {
     expect(
       text(
         funding({
-          own_cash: "1 500 000",
-          transaction_costs: "95000,50",
-          initial_works: "0",
-          funding_note: "  Deposit from savings  ",
+          ownCash: "1 500 000",
+          transactionCosts: "95000,50",
+          initialWorks: "0",
+          fundingNote: "  Deposit from savings  ",
         }),
       ),
     ).toEqual({
@@ -219,12 +217,12 @@ describe("parsePropertyForm — acquisition funding", () => {
   it("sends an empty record when every field is blank, which clears the stored one", () => {
     expect(funding({})).toStrictEqual({});
     expect(
-      funding({ own_cash: "  ", transaction_costs: "", funding_note: " " }),
+      funding({ ownCash: "  ", transactionCosts: "", fundingNote: " " }),
     ).toStrictEqual({});
   });
 
   it("leaves a blank amount unknown, never 0, and a blank note out", () => {
-    const f = funding({ own_cash: "800000", funding_note: "   " });
+    const f = funding({ ownCash: "800000", fundingNote: "   " });
     expect(Object.keys(f)).toEqual(["ownCash"]);
     expect(f.ownCash?.toString()).toBe("800000");
   });
@@ -233,9 +231,9 @@ describe("parsePropertyForm — acquisition funding", () => {
     const result = parsePropertyForm(
       {
         ...valid,
-        own_cash: "abc",
-        transaction_costs: "1.2.3",
-        initial_works: "x",
+        ownCash: "abc",
+        transactionCosts: "1.2.3",
+        initialWorks: "x",
       },
       "p-new",
       [],
@@ -243,20 +241,20 @@ describe("parsePropertyForm — acquisition funding", () => {
     );
     expect(result.valid).toBe(false);
     expect(result.errors).toEqual({
-      own_cash: en.forms.invalidHint.money,
-      transaction_costs: en.forms.invalidHint.money,
-      initial_works: en.forms.invalidHint.money,
+      ownCash: en.forms.invalidHint.money,
+      transactionCosts: en.forms.invalidHint.money,
+      initialWorks: en.forms.invalidHint.money,
     });
   });
 
   it("refuses a negative amount in the form, as every money field (ADR 0140)", () => {
     const result = parsePropertyForm(
-      { ...valid, own_cash: "-5" },
+      { ...valid, ownCash: "-5" },
       "vinohrady",
       [],
       en,
     );
-    expect(result.errors).toEqual({ own_cash: en.forms.invalidHint.money });
+    expect(result.errors).toEqual({ ownCash: en.forms.invalidHint.money });
   });
 });
 
@@ -269,10 +267,10 @@ describe("fundingDraft", () => {
         note: "Deposit",
       }),
     ).toEqual({
-      own_cash: "1500000",
-      transaction_costs: "",
-      initial_works: "0",
-      funding_note: "Deposit",
+      ownCash: "1500000",
+      transactionCosts: "",
+      initialWorks: "0",
+      fundingNote: "Deposit",
     });
   });
 
@@ -297,18 +295,18 @@ describe("fundingDraft", () => {
 
   it("drafts no record as blank fields", () => {
     expect(fundingDraft(undefined)).toEqual({
-      own_cash: "",
-      transaction_costs: "",
-      initial_works: "",
-      funding_note: "",
+      ownCash: "",
+      transactionCosts: "",
+      initialWorks: "",
+      fundingNote: "",
     });
   });
 });
 
 describe("hasFundingError", () => {
   it("is true only for an error on a funding field", () => {
-    expect(hasFundingError({ initial_works: "x" })).toBe(true);
-    expect(hasFundingError({ name: "x", purchase_price: "y" })).toBe(false);
+    expect(hasFundingError({ initialWorks: "x" })).toBe(true);
+    expect(hasFundingError({ name: "x", purchasePrice: "y" })).toBe(false);
     expect(hasFundingError({})).toBe(false);
   });
 });

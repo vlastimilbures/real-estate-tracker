@@ -1,8 +1,9 @@
 // One disclosure for every show/hide (ADR 0203): a quiet chevron button with
 // aria-expanded and aria-controls naming a region that is always in the DOM.
-import { useId, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "./primitives";
+import { useDisclosure, type OpenState } from "../hooks/useDisclosure";
 
 /** The toggle: ghost, small, chevron down when shut and up when open. `controls` is the
  *  id of the region it shows and hides, which stays in the DOM (`hidden` while shut). */
@@ -31,26 +32,20 @@ export function DisclosureButton({
   );
 }
 
-/** A section whose open state is its own (not remembered): the button leads the line it
- *  opens. `defaultOpen` is read when it mounts; key it by the default to follow a change. */
+/** A section shown and hidden by its button, which leads the line it opens. Its open
+ *  state is its own (not remembered) unless the caller passes `open`. */
 export function Disclosure({
   label,
-  defaultOpen = false,
   children,
-}: {
+  ...state
+}: OpenState & {
   label: ReactNode;
-  defaultOpen?: boolean | undefined;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
-  const id = useId();
+  const { open, id, toggle } = useDisclosure(state);
   return (
     <div className="disclosure">
-      <DisclosureButton
-        open={open}
-        controls={id}
-        onToggle={() => setOpen((o) => !o)}
-      >
+      <DisclosureButton open={open} controls={id} onToggle={toggle}>
         {label}
       </DisclosureButton>
       <div id={id} className="disclosure-body" hidden={!open}>

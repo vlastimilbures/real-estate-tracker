@@ -1,43 +1,31 @@
-import { useState, useEffect, useId, useRef, type RefObject } from "react";
+import { useState, useEffect, useRef, type RefObject } from "react";
 import { DisclosureButton } from "./Disclosure";
+import { useDisclosure } from "../hooks/useDisclosure";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { dateDraft, moneyDraft, percentDraft } from "../model/formParse";
 import {
   parsePropertyForm,
+  propertyFields,
   fundingDraft,
   hasFundingError,
   BLANK_PROPERTY_FORM,
+  PROPERTY_FORM_KEYS,
   type PropertyFormState,
-  type PropertyFormErrors,
 } from "../model/propertyForm";
 import { Checkbox, Field, TextArea, TextInput } from "./fields";
 import { DateInput } from "./DateInput";
 import { Button, ErrorBanner } from "./primitives";
 import { Modal } from "./Modal";
-import { CZK } from "../../lib/currency";
 import type { Portfolio, Property } from "../../engine";
-import type { WriteError } from "../../state/writeError";
 import { type Dictionary } from "../../i18n";
-import { useFormSubmit, type FormFailure } from "../hooks/useFormSubmit";
-import { useLeaveGuard } from "../hooks/useLeaveGuard";
+import { useDraftForm } from "../hooks/useDraftForm";
 import { useT } from "../hooks/useT";
 import { formWriteErrors, type ErrorField } from "../model/writeError";
-import { isDirty } from "../model/dirty";
 
-const snakeToCamel = (k: string) =>
-  k.replace(/_([a-z0-9])/g, (_, c: string) => c.toUpperCase());
-
-/** Where a failed save shows: a rule tied to a field on that field, anything else above
- *  the buttons. Failures name engine fields (purchaseDate); this form's keys are
- *  snake_case. */
-const BY_FIELD = new Map(
-  Object.keys(BLANK_PROPERTY_FORM).map((k) => [snakeToCamel(k), k]),
-);
-const propertyErrorField: ErrorField = (field) => BY_FIELD.get(field) ?? null;
-
-function propertyWriteErrors(t: Dictionary, failure: WriteError): FormFailure {
-  return formWriteErrors(t, failure, propertyErrorField);
-}
+/** Where a failed save shows: a rule tied to one of the form's fields (named like the
+ *  engine field) on that field, anything else above the buttons (ADR 0261). */
+const propertyErrorField: ErrorField = (field) =>
+  PROPERTY_FORM_KEYS.includes(field) ? field : null;
 
 /** What a save writes, once the form's checks pass. */
 interface SaveValues {
@@ -54,135 +42,71 @@ interface Props {
   onClose: () => void;
 }
 
-type TextFieldKey = Extract<
-  keyof PropertyFormState,
-  | "name"
-  | "address"
-  | "type"
-  | "size_m2"
-  | "purchase_price"
-  | "appreciation_override_pa"
-  | "rent_index_override_pa"
-  | "own_cash"
-  | "transaction_costs"
-  | "initial_works"
->;
+type FieldSpec = ReturnType<typeof propertyFields>[number];
+type Errors = Readonly<Record<string, string>>;
+type SetField = (
+  field: keyof PropertyFormState,
+  value: string | boolean | null,
+) => void;
 
-interface TextFieldSpec {
-  key: TextFieldKey;
-  label: (t: Dictionary) => string;
-  help?: (t: Dictionary) => string;
-  suffix?: string;
-  inputMode: "text" | "numeric" | "decimal";
-  placeholder?: (t: Dictionary) => string;
-  /** Marked through Field (CSS marker + aria-required, UX-072). */
-  required?: boolean;
-}
-
-const IDENTITY_FIELD_SPECS: TextFieldSpec[] = [
-  {
-    key: "name",
-    label: (t) => t.propertyForm.name,
-    inputMode: "text",
-    required: true,
-  },
-  { key: "address", label: (t) => t.propertyForm.address, inputMode: "text" },
-  {
-    key: "type",
-    label: (t) => t.propertyForm.type,
-    help: (t) => t.propertyForm.typeHelp,
-    inputMode: "text",
-  },
-  // One decimal place (ADR 0236 §1).
-  { key: "size_m2", label: (t) => t.propertyForm.size, inputMode: "decimal" },
-];
-
-const FINANCIAL_FIELD_SPECS: TextFieldSpec[] = [
-  {
-    key: "purchase_price",
-    label: (t) => t.propertyForm.purchasePrice,
-    suffix: CZK.symbol,
-    inputMode: "decimal",
-    required: true,
-  },
-  {
-    key: "appreciation_override_pa",
-    label: (t) => t.propertyForm.appreciationOverride,
-    help: (t) => t.propertyForm.overrideHelp,
-    suffix: "%",
-    inputMode: "decimal",
-    placeholder: (t) => t.forms.defaultPlaceholder,
-  },
-  {
-    key: "rent_index_override_pa",
-    label: (t) => t.propertyForm.rentIndexOverride,
-    help: (t) => t.propertyForm.overrideHelp,
-    suffix: "%",
-    inputMode: "decimal",
-    placeholder: (t) => t.forms.defaultPlaceholder,
-  },
-];
-
-/** The funding record's amounts (ADR 0119 §9): blank is unknown, not 0. */
-const fundingSpec = (
-  key: TextFieldKey,
-  label: (t: Dictionary) => string,
-  help: (t: Dictionary) => string,
-): TextFieldSpec => ({
-  key,
-  label,
-  help,
-  suffix: CZK.symbol,
-  inputMode: "decimal",
-  placeholder: (t) => t.propertyForm.unknownPlaceholder,
-});
-
-const FUNDING_FIELD_SPECS: TextFieldSpec[] = [
-  fundingSpec(
-    "own_cash",
-    (t) => t.propertyForm.ownCash,
-    (t) => t.propertyForm.ownCashHelp,
-  ),
-  fundingSpec(
-    "transaction_costs",
-    (t) => t.propertyForm.transactionCosts,
-    (t) => t.propertyForm.transactionCostsHelp,
-  ),
-  fundingSpec(
-    "initial_works",
-    (t) => t.propertyForm.initialWorks,
-    (t) => t.propertyForm.initialWorksHelp,
-  ),
-];
-
+/** One of the dialog's text fields, or its date field. */
 function PropertyTextField({
   spec,
-  t,
   value,
   error,
   onChange,
 }: {
-  spec: TextFieldSpec;
-  t: Dictionary;
+  spec: FieldSpec;
   value: string;
   error: string | undefined;
   onChange: (v: string) => void;
 }) {
   return (
     <Field
-      label={spec.label(t)}
-      required={spec.required}
+      label={spec.label}
+      required={"required" in spec ? spec.required : undefined}
       error={error}
-      help={spec.help?.(t)}
+      help={"help" in spec ? spec.help : undefined}
     >
-      <TextInput
-        value={value}
-        onChange={onChange}
-        suffix={spec.suffix}
-        inputMode={spec.inputMode}
-        placeholder={spec.placeholder?.(t)}
-      />
+      {"kind" in spec && spec.kind === "date" ? (
+        <DateInput value={value} onChange={onChange} />
+      ) : (
+        <TextInput
+          value={value}
+          onChange={onChange}
+          suffix={"suffix" in spec ? spec.suffix : undefined}
+          inputMode={spec.inputMode}
+          placeholder={"placeholder" in spec ? spec.placeholder : undefined}
+        />
+      )}
     </Field>
+  );
+}
+
+/** The fields of one part of the dialog, in their order. */
+function FieldsOf({
+  specs,
+  form,
+  errors,
+  set,
+}: {
+  specs: readonly FieldSpec[];
+  form: PropertyFormState;
+  errors: Errors;
+  set: SetField;
+}) {
+  return (
+    <>
+      {specs.map((spec) => (
+        <PropertyTextField
+          key={spec.name}
+          spec={spec}
+          value={form[spec.name]}
+          error={errors[spec.name]}
+          onChange={(v) => set(spec.name, v)}
+        />
+      ))}
+    </>
   );
 }
 
@@ -203,11 +127,11 @@ function editDraft(
     ...BLANK_PROPERTY_FORM,
     name: p.name,
     type: p.type ?? "",
-    size_m2: p.sizeM2 != null ? String(p.sizeM2) : "",
-    purchase_date: dateDraft(p.purchaseDate),
-    purchase_price: moneyDraft(p.purchasePrice),
-    appreciation_override_pa: percentDraft(p.appreciationOverridePa),
-    rent_index_override_pa: percentDraft(p.rentIndexOverridePa),
+    sizeM2: p.sizeM2 != null ? String(p.sizeM2) : "",
+    purchaseDate: dateDraft(p.purchaseDate),
+    purchasePrice: moneyDraft(p.purchasePrice),
+    appreciationOverridePa: percentDraft(p.appreciationOverridePa),
+    rentIndexOverridePa: percentDraft(p.rentIndexOverridePa),
     ...fundingDraft(p.funding),
   };
 }
@@ -215,52 +139,54 @@ function editDraft(
 /** The optional funding record, behind a toggle; values entered stay while it is shut. */
 function AcquisitionFields({
   t,
+  specs,
   open,
-  onToggle,
+  onOpenChange,
   form,
   errors,
   set,
   bodyRef,
 }: {
   t: Dictionary;
+  specs: readonly FieldSpec[];
   open: boolean;
-  onToggle: () => void;
+  onOpenChange: (open: boolean) => void;
   bodyRef: RefObject<HTMLDivElement>;
   form: PropertyFormState;
-  errors: PropertyFormErrors;
-  set: (field: keyof PropertyFormState, value: string) => void;
+  errors: Errors;
+  set: SetField;
 }) {
-  const bodyId = useId();
+  const disclosure = useDisclosure({ open, onOpenChange });
   return (
     <>
       <div className="form-wide form-disclosure">
-        <DisclosureButton open={open} controls={bodyId} onToggle={onToggle}>
+        <DisclosureButton
+          open={open}
+          controls={disclosure.id}
+          onToggle={disclosure.toggle}
+        >
           {t.propertyForm.acquisitionSection}
         </DisclosureButton>
       </div>
       {/* Hidden, not removed, while shut: the toggle controls it, and it adds no grid row. */}
-      <div id={bodyId} ref={bodyRef} className="form-wide" hidden={!open}>
+      <div
+        id={disclosure.id}
+        ref={bodyRef}
+        className="form-wide"
+        hidden={!open}
+      >
         {open && (
           <div className="form-grid">
             <p className="form-wide panel-note">
               {t.propertyForm.acquisitionHelp}
             </p>
-            {FUNDING_FIELD_SPECS.map((spec) => (
-              <PropertyTextField
-                key={spec.key}
-                spec={spec}
-                t={t}
-                value={form[spec.key]}
-                error={errors[spec.key]}
-                onChange={(v) => set(spec.key, v)}
-              />
-            ))}
+            <FieldsOf specs={specs} form={form} errors={errors} set={set} />
             <div className="form-wide">
               <Field label={t.propertyForm.fundingNote}>
                 <TextArea
                   rows={2}
-                  value={form.funding_note}
-                  onChange={(e) => set("funding_note", e.target.value)}
+                  value={form.fundingNote}
+                  onChange={(e) => set("fundingNote", e.target.value)}
                 />
               </Field>
             </div>
@@ -271,6 +197,85 @@ function AcquisitionFields({
   );
 }
 
+/** The dialog's fields in their order: identity, garage, purchase, then Acquisition. */
+function PropertyFields({
+  t,
+  form,
+  errors,
+  set,
+  fundingOpen,
+  setFundingOpen,
+  fundingRef,
+}: {
+  t: Dictionary;
+  form: PropertyFormState;
+  errors: Errors;
+  set: SetField;
+  fundingOpen: boolean;
+  setFundingOpen: (open: boolean) => void;
+  fundingRef: RefObject<HTMLDivElement>;
+}) {
+  const specs = propertyFields(t);
+  const part = (section: FieldSpec["section"]) =>
+    specs.filter((s) => s.section === section);
+  const fields = { form, errors, set };
+  return (
+    <div className="form-grid">
+      <FieldsOf specs={part("identity")} {...fields} />
+      <Field label={t.propertyForm.garage} error={errors.garage}>
+        <div className="checkbox-row">
+          <label className="checkbox-label">
+            <Checkbox
+              checked={form.garage === true}
+              onChange={(e) => set("garage", e.target.checked ? true : null)}
+            />
+            {t.propertyForm.garageYes}
+          </label>
+        </div>
+      </Field>
+      <FieldsOf specs={part("purchase")} {...fields} />
+      <AcquisitionFields
+        t={t}
+        specs={part("funding")}
+        open={fundingOpen}
+        onOpenChange={setFundingOpen}
+        bodyRef={fundingRef}
+        {...fields}
+      />
+    </div>
+  );
+}
+
+/** Address and garage, read from the database in edit mode. Save waits for the read and
+ *  stays off if it fails, so a save cannot write them NULL (ADR 0184 §3); a store reload
+ *  does not start it again (ADR 0241 §1). */
+function usePropertyExtras(
+  mode: Props["mode"],
+  propertyId: string | undefined,
+  load: (next: (f: PropertyFormState) => PropertyFormState) => void,
+) {
+  const getPropertyExtras = usePortfolioStore((s) => s.getPropertyExtras);
+  const [extras, setExtras] = useState<"loading" | "ready" | "failed">(
+    mode === "edit" ? "loading" : "ready",
+  );
+  useEffect(() => {
+    if (mode !== "edit" || propertyId === undefined) return;
+    // Only the latest read counts: an older one settling late must not undo it.
+    let live = true;
+    void getPropertyExtras(propertyId).then((read) => {
+      if (!live) return;
+      if (!read.ok) return setExtras("failed");
+      const { address, garage } = read.value;
+      load((f) => ({ ...f, address: address ?? "", garage }));
+      setExtras("ready");
+    });
+    return () => {
+      live = false;
+    };
+  }, [mode, propertyId, getPropertyExtras, load]);
+  return extras;
+}
+
 export function PropertyFormModal({
   mode,
   propertyId,
@@ -279,7 +284,6 @@ export function PropertyFormModal({
 }: Props) {
   const t = useT();
   const portfolio = usePortfolioStore((s) => s.portfolio);
-  const getPropertyExtras = usePortfolioStore((s) => s.getPropertyExtras);
   const addProperty = usePortfolioStore((s) => s.addProperty);
   const editProperty = usePortfolioStore((s) => s.editProperty);
 
@@ -287,18 +291,6 @@ export function PropertyFormModal({
   // (ADR 0127); an edit keeps the property's id.
   const [newId] = useState(() => crypto.randomUUID());
   const id = propertyId ?? newId;
-  const [form, setForm] = useState<PropertyFormState>(() =>
-    editDraft(portfolio, mode, propertyId),
-  );
-  // What the form opened with (blank, or the loaded property): input differing from it
-  // is unsaved, so Esc / backdrop clicks are ignored (UX-029). Taken once, like `form`,
-  // so a failed save leaves the form unsaved (ADR 0241 §2).
-  const [baseline, setBaseline] = useState<PropertyFormState>(form);
-  // Address and garage come from a second read in edit mode. Save waits for it and stays
-  // off if it fails, so a save cannot write them NULL (ADR 0184 §3).
-  const [extras, setExtras] = useState<"loading" | "ready" | "failed">(
-    mode === "edit" ? "loading" : "ready",
-  );
   // Shut on add; open on edit when a record exists, so what is stored is seen (ADR 0119 §9),
   // or when a Data check link asked for it.
   const [fundingOpen, setFundingOpen] = useState(
@@ -308,17 +300,13 @@ export function PropertyFormModal({
         portfolio?.properties.find((x) => x.id === propertyId)?.funding !==
           undefined),
   );
-  // Unsaved input is also known to the leave guard (ADR 0262 §2).
-  useLeaveGuard(useId(), isDirty(baseline, form));
-  // The message above the buttons goes with the next edit, Save or its ✕ (ADR 0262 §1).
-  const {
-    busy: saving,
-    errors,
-    formError: saveError,
-    submit,
-    clearFields,
-    dismissFormError,
-  } = useFormSubmit({
+  // What the form opened with (blank, or the loaded property) is its baseline: input
+  // differing from it is unsaved, so Esc / backdrop clicks are ignored (UX-029) and the
+  // leave guard asks (ADR 0262 §2). Taken once, so a failed save leaves the form unsaved
+  // (ADR 0241 §2). The message above the buttons goes with the next edit, Save or its ✕
+  // (ADR 0262 §1).
+  const form = useDraftForm({
+    initial: () => editDraft(portfolio, mode, propertyId),
     run: async ({ property, address, garage }: SaveValues) => {
       const result =
         mode === "add"
@@ -330,7 +318,7 @@ export function PropertyFormModal({
           : await editProperty(property, { address, garage });
       return result.ok ? undefined : result.error;
     },
-    mapErrors: (failure) => propertyWriteErrors(t, failure),
+    mapErrors: (failure) => formWriteErrors(t, failure, propertyErrorField),
     // Keep the modal open on failure so the user can retry; close only on success.
     onSaved: onClose,
     // A funding field in error opens the Acquisition section, so the error is seen.
@@ -338,45 +326,23 @@ export function PropertyFormModal({
       if (hasFundingError(fieldErrors)) setFundingOpen(true);
     },
   });
-  const canSave = !saving && extras === "ready";
   // A Data check link lands on own cash. This parent effect runs after the Modal's,
   // which focuses the first field.
   const fundingRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (openFunding) fundingRef.current?.querySelector("input")?.focus();
   }, [openFunding]);
+  const extras = usePropertyExtras(mode, propertyId, form.load);
+  const canSave = !form.busy && extras === "ready";
 
-  // Edit mode reads address and garage from the database. A store reload does not
-  // start it again (ADR 0241 §1).
-  useEffect(() => {
-    if (mode !== "edit" || propertyId === undefined) return;
-    const load = (patch: Partial<PropertyFormState>) => {
-      setForm((f) => ({ ...f, ...patch }));
-      setBaseline((f) => ({ ...f, ...patch }));
-    };
-    // Only the latest read counts: an older one settling late must not undo it.
-    let live = true;
-    void getPropertyExtras(propertyId).then((read) => {
-      if (!live) return;
-      if (!read.ok) return setExtras("failed");
-      load({ address: read.value.address ?? "", garage: read.value.garage });
-      setExtras("ready");
-    });
-    return () => {
-      live = false;
-    };
-  }, [mode, propertyId, getPropertyExtras]);
-
-  function set(field: keyof PropertyFormState, value: string | boolean | null) {
-    setForm((f) => ({ ...f, [field]: value }));
-    clearFields([field]);
-  }
+  const set: SetField = (field, value) =>
+    form.edit((f) => ({ ...f, [field]: value }), [field]);
 
   function check() {
     const existingNames = (portfolio?.properties ?? [])
       .filter((p) => mode === "add" || p.id !== propertyId)
       .map((p) => p.name);
-    const result = parsePropertyForm(form, id, existingNames, t);
+    const result = parsePropertyForm(form.draft, id, existingNames, t);
     if (!result.valid) return { ok: false as const, errors: result.errors };
     const { property, address, garage } = result;
     return { ok: true as const, values: { property, address, garage } };
@@ -391,17 +357,17 @@ export function PropertyFormModal({
       onClose={onClose}
       closeLabel={t.common.close}
       onSubmit={() => {
-        if (extras === "ready") void submit(check);
+        if (extras === "ready") void form.submit(check);
       }}
-      dirty={isDirty(baseline, form)}
-      busy={saving}
+      dirty={form.unsaved}
+      busy={form.busy}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose} disabled={saving}>
+          <Button variant="ghost" onClick={onClose} disabled={form.busy}>
             {t.common.cancel}
           </Button>
           <Button type="submit" variant="primary" disabled={!canSave}>
-            {saving
+            {form.busy
               ? t.common.saving
               : mode === "add"
                 ? t.propertyForm.addTitle
@@ -410,66 +376,23 @@ export function PropertyFormModal({
         </>
       }
     >
-      <div className="form-grid">
-        {IDENTITY_FIELD_SPECS.map((spec) => (
-          <PropertyTextField
-            key={spec.key}
-            spec={spec}
-            t={t}
-            value={form[spec.key]}
-            error={errors[spec.key]}
-            onChange={(v) => set(spec.key, v)}
-          />
-        ))}
-        <Field
-          label={t.propertyForm.garage}
-          error={errors.garage as string | undefined}
-        >
-          <div className="checkbox-row">
-            <label className="checkbox-label">
-              <Checkbox
-                checked={form.garage === true}
-                onChange={(e) => set("garage", e.target.checked ? true : null)}
-              />
-              {t.propertyForm.garageYes}
-            </label>
-          </div>
-        </Field>
-        <Field
-          label={t.propertyForm.purchaseDate}
-          required
-          error={errors.purchase_date}
-        >
-          <DateInput
-            value={form.purchase_date}
-            onChange={(v) => set("purchase_date", v)}
-          />
-        </Field>
-        {FINANCIAL_FIELD_SPECS.map((spec) => (
-          <PropertyTextField
-            key={spec.key}
-            spec={spec}
-            t={t}
-            value={form[spec.key]}
-            error={errors[spec.key]}
-            onChange={(v) => set(spec.key, v)}
-          />
-        ))}
-        <AcquisitionFields
-          t={t}
-          open={fundingOpen}
-          onToggle={() => setFundingOpen((o) => !o)}
-          bodyRef={fundingRef}
-          form={form}
-          errors={errors}
-          set={set}
-        />
-      </div>
+      <PropertyFields
+        t={t}
+        form={form.draft}
+        errors={form.errors}
+        set={set}
+        fundingOpen={fundingOpen}
+        setFundingOpen={setFundingOpen}
+        fundingRef={fundingRef}
+      />
       {extras === "failed" && (
         <ErrorBanner message={t.propertyForm.errExtrasLoad} />
       )}
-      {saveError && (
-        <ErrorBanner message={saveError} onDismiss={dismissFormError} />
+      {form.formError && (
+        <ErrorBanner
+          message={form.formError}
+          onDismiss={form.dismissFormError}
+        />
       )}
     </Modal>
   );

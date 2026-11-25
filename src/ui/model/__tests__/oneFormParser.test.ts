@@ -83,8 +83,8 @@ describe("money refuses a thousands-shaped amount (ADR 0140 §3)", () => {
 const validProperty = {
   ...BLANK_PROPERTY_FORM,
   name: "Vinohrady",
-  purchase_date: "01.03.2021",
-  purchase_price: "5200000",
+  purchaseDate: "01.03.2021",
+  purchasePrice: "5200000",
 };
 
 const blankScenario: ScenarioDraftFields = {
@@ -106,12 +106,12 @@ describe("one message set across forms (ADR 0140 §1)", () => {
   it("gives a bad percentage the same message in the property, scenario and record forms", () => {
     const pct = en.forms.invalidHint.pct;
     const property = parsePropertyForm(
-      { ...validProperty, appreciation_override_pa: "4,5%" },
+      { ...validProperty, appreciationOverridePa: "4,5%" },
       "p",
       [],
       en,
     );
-    expect(property.errors.appreciation_override_pa).toBe(pct);
+    expect(property.errors.appreciationOverridePa).toBe(pct);
     const scenario = parseScenarioDraft(
       { ...blankScenario, appreciationPa: "4,5%" },
       en,
@@ -129,10 +129,10 @@ describe("one message set across forms (ADR 0140 §1)", () => {
     const { errors } = parsePropertyForm(
       {
         ...BLANK_PROPERTY_FORM,
-        purchase_date: "2021-03-01",
-        purchase_price: "450,000",
+        purchaseDate: "2021-03-01",
+        purchasePrice: "450,000",
         // ADR 0236 §1: one decimal place is accepted, two are refused.
-        size_m2: "58.55",
+        sizeM2: "58.55",
       },
       "p",
       [],
@@ -140,9 +140,9 @@ describe("one message set across forms (ADR 0140 §1)", () => {
     );
     expect(errors).toEqual({
       name: en.forms.required,
-      purchase_date: en.forms.invalidHint.date,
-      purchase_price: en.forms.invalidHint.money,
-      size_m2: en.forms.sizeRange("1", "10 000"),
+      purchaseDate: en.forms.invalidHint.date,
+      purchasePrice: en.forms.invalidHint.money,
+      sizeM2: en.forms.sizeRange("1", "10 000"),
     });
   });
 
@@ -191,10 +191,10 @@ describe("one message set across forms (ADR 0140 §1)", () => {
 describe("the property form refuses a negative amount (ADR 0140 §2)", () => {
   it("refuses a negative price or funding amount", () => {
     for (const key of [
-      "purchase_price",
-      "own_cash",
-      "transaction_costs",
-      "initial_works",
+      "purchasePrice",
+      "ownCash",
+      "transactionCosts",
+      "initialWorks",
     ] as const) {
       const result = parsePropertyForm(
         { ...validProperty, [key]: "-5" },

@@ -17,11 +17,6 @@
       "Function 'AppShell'": 211
     }
   },
-  "src/ui/components/PropertyFormModal.tsx": {
-    "lines": {
-      "Function 'PropertyFormModal'": 180
-    }
-  },
   "src/ui/components/charts.tsx": {
     "complexity": {
       "Function 'ChartCard'": 18
