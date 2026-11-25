@@ -35,11 +35,6 @@
       "Function 'ChartBody'": 161
     }
   },
-  "src/ui/components/forms.tsx": {
-    "lines": {
-      "Function 'RecordForm'": 199
-    }
-  },
   "src/ui/hooks/useAssumptionsForm.ts": {
     "lines": {
       "Function 'useAssumptionsForm'": 129
@@ -113,11 +108,6 @@
   "src/ui/pages/PropertyDetailPanels.tsx": {
     "lines": {
       "Function 'HoldingCostsPanel'": 155
-    }
-  },
-  "src/ui/pages/PropertyEntityPanels.tsx": {
-    "lines": {
-      "Function 'MortgagesPanel'": 185
     }
   },
   "src/ui/pages/ScenarioCompare.tsx": {

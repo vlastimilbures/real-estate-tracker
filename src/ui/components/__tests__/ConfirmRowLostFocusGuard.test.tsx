@@ -21,16 +21,22 @@ function Page({ onDelete }: { onDelete: () => Promise<MutationResult> }) {
     <>
       <button type="button">Elsewhere</button>
       <EntityPanel
-        title="Rows"
-        addLabel="row"
-        rows={[{ id: "a", value: "100" }]}
-        columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
-        specs={specs}
-        draftOf={(r) => ({ value: r ? r.value : "" })}
-        build={(v, id): Row => ({ id, value: String(v.value) })}
-        onAdd={ok}
-        onSave={ok}
-        onDelete={onDelete}
+        chrome={{
+          title: "Rows",
+          addLabel: "row",
+        }}
+        table={{
+          rows: [{ id: "a", value: "100" }],
+          columns: [{ head: "Value", left: true, cell: (r) => r.value }],
+          onDelete,
+        }}
+        form={{
+          specs,
+          draftOf: (r) => ({ value: r ? r.value : "" }),
+          build: (v, id): Row => ({ id, value: String(v.value) }),
+          onAdd: ok,
+          onSave: ok,
+        }}
       />
     </>
   );

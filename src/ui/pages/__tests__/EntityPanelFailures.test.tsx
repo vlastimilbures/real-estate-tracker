@@ -20,20 +20,26 @@ const gone: MutationResult = {
 function renderPanel(result: MutationResult) {
   render(
     <EntityPanel
-      title="Rows"
-      addLabel="row"
-      rows={[{ id: "a", value: "100" }]}
-      columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
-      specs={specs}
-      draftOf={(r) => ({ value: r ? r.value : "" })}
-      build={(v, id): Row => ({
-        id,
-        value: String(v.value),
-      })}
-      onAdd={async () => result}
-      onSave={async () => result}
-      onDelete={async () => result}
-      describe={(r) => `Delete the row of ${r.value}?`}
+      chrome={{
+        title: "Rows",
+        addLabel: "row",
+      }}
+      table={{
+        rows: [{ id: "a", value: "100" }],
+        columns: [{ head: "Value", left: true, cell: (r) => r.value }],
+        onDelete: async () => result,
+        describe: (r) => `Delete the row of ${r.value}?`,
+      }}
+      form={{
+        specs,
+        draftOf: (r) => ({ value: r ? r.value : "" }),
+        build: (v, id): Row => ({
+          id,
+          value: String(v.value),
+        }),
+        onAdd: async () => result,
+        onSave: async () => result,
+      }}
     />,
   );
 }

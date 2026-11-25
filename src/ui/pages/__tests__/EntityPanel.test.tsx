@@ -39,19 +39,25 @@ function Panel({
   ];
   return (
     <EntityPanel
-      title={title}
-      addLabel="Add row"
-      rows={rows}
-      columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
-      specs={specs}
-      draftOf={(r) => ({ value: r ? r.value : "" })}
-      build={(v, id): Row => ({
-        id,
-        value: String(v.value),
-      })}
-      onAdd={onAdd}
-      onSave={onSave}
-      onDelete={onDelete}
+      chrome={{
+        title,
+        addLabel: "Add row",
+      }}
+      table={{
+        rows,
+        columns: [{ head: "Value", left: true, cell: (r) => r.value }],
+        onDelete,
+      }}
+      form={{
+        specs,
+        draftOf: (r) => ({ value: r ? r.value : "" }),
+        build: (v, id): Row => ({
+          id,
+          value: String(v.value),
+        }),
+        onAdd,
+        onSave,
+      }}
     />
   );
 }
