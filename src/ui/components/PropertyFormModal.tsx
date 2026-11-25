@@ -19,6 +19,7 @@ import type { Portfolio, Property } from "../../engine";
 import type { WriteError } from "../../state/writeError";
 import { type Dictionary } from "../../i18n";
 import { useFormSubmit, type FormFailure } from "../hooks/useFormSubmit";
+import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useT } from "../hooks/useT";
 import { formWriteErrors } from "../model/writeError";
 import { isDirty } from "../model/dirty";
@@ -311,8 +312,9 @@ export function PropertyFormModal({
         portfolio?.properties.find((x) => x.id === propertyId)?.funding !==
           undefined),
   );
-  // The message above the buttons stays until a save starts or its ✕ (ADR 0262, proposed,
-  // would drop it on an edit).
+  // Unsaved input is also known to the leave guard (ADR 0262 §2).
+  useLeaveGuard(useId(), isDirty(baseline, form));
+  // The message above the buttons goes with the next edit, Save or its ✕ (ADR 0262 §1).
   const {
     busy: saving,
     errors,
@@ -339,7 +341,6 @@ export function PropertyFormModal({
     onFailed: ({ fieldErrors }) => {
       if (hasFundingError(fieldErrors)) setFundingOpen(true);
     },
-    formErrorUntil: "save",
   });
   const canSave = !saving && extras === "ready";
   // A Data check link lands on own cash. This parent effect runs after the Modal's,

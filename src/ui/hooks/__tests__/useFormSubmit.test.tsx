@@ -2,15 +2,11 @@
 //
 // #489: one submit state for every form. The hook runs the form's own check, shows a
 // refused check or a failed save, ignores a submit while one runs (read from a ref, so
-// two submits in one tick still write once), and keeps each form's rule for when the
-// form-level message goes (`formErrorUntil`; ADR 0262, proposed, would make it "edit").
+// two submits in one tick still write once), and drops the form-level message on the
+// next edit and on each Save (ADR 0262 §1).
 import { describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
-import {
-  useFormSubmit,
-  type FormErrorUntil,
-  type FormSubmitOptions,
-} from "../useFormSubmit";
+import { useFormSubmit, type FormSubmitOptions } from "../useFormSubmit";
 import type { WriteError } from "../../../state/writeError";
 
 const failure: WriteError = { kind: "other", message: "disk full" };
@@ -21,14 +17,11 @@ const split = (e: WriteError) => ({
 const valid = () => ({ ok: true as const, values: 5 });
 const refused = () => ({ ok: false as const, errors: { price: "required" } });
 
-function setup(
-  over: Partial<FormSubmitOptions<number>> = {},
-  formErrorUntil: FormErrorUntil = "submit",
-) {
+function setup(over: Partial<FormSubmitOptions<number>> = {}) {
   const run = vi.fn<(v: number) => Promise<void | WriteError>>(() =>
     Promise.resolve(),
   );
-  const opts = { run, mapErrors: split, formErrorUntil, ...over };
+  const opts = { run, mapErrors: split, ...over };
   const hook = renderHook(() => useFormSubmit<number>(opts));
   return { run, hook, result: hook.result };
 }
@@ -174,36 +167,28 @@ describe("useFormSubmit (#489)", () => {
   });
 });
 
-describe("useFormSubmit: when the form line goes (today's rule per form, ADR 0262 proposed)", () => {
-  it('"edit": an edit clears it', async () => {
-    const { result } = setup({ run: () => Promise.resolve(failure) }, "edit");
+describe("useFormSubmit: when the form line goes (ADR 0262 §1)", () => {
+  it("an edit to any field clears it", async () => {
+    const { result } = setup({ run: () => Promise.resolve(failure) });
     await failOnce(result);
     act(() => result.current.clearFields(["other"]));
     expect(result.current.formError).toBeNull();
+    expect(result.current.errors).toEqual({ price: "bad" });
   });
 
-  it('"submit": an edit keeps it; a refused check clears it', async () => {
-    const { result } = setup({ run: () => Promise.resolve(failure) }, "submit");
+  it("a Save its check refuses clears it", async () => {
+    const { result } = setup({ run: () => Promise.resolve(failure) });
     await failOnce(result);
-    act(() => result.current.clearFields(["other"]));
-    expect(result.current.formError).toBe("disk full");
     await act(() => result.current.submit(refused));
     expect(result.current.formError).toBeNull();
   });
 
-  it('"save": an edit and a refused check keep it; a save that starts clears it', async () => {
+  it("a Save that starts clears it", async () => {
     let call = 0;
-    const { result } = setup(
-      {
-        run: () => Promise.resolve(call++ === 0 ? failure : undefined),
-      },
-      "save",
-    );
+    const { result } = setup({
+      run: () => Promise.resolve(call++ === 0 ? failure : undefined),
+    });
     await failOnce(result);
-    act(() => result.current.clearFields(["other"]));
-    expect(result.current.formError).toBe("disk full");
-    await act(() => result.current.submit(refused));
-    expect(result.current.formError).toBe("disk full");
     await act(() => result.current.submit(valid));
     expect(result.current.formError).toBeNull();
   });

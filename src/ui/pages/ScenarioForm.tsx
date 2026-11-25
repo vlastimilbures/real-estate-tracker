@@ -2,7 +2,7 @@
 // temporary rate/inflation shocks and a permanent value crash. Extracted from
 // Scenarios.tsx; produces a Scenario via onSubmit and never touches portfolio data.
 // A refused save stays open with the broken rule on its field (ADR 0123).
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Button } from "../components/primitives";
 import { Modal } from "../components/Modal";
 import { Field, TextInput } from "../components/fields";
@@ -24,6 +24,7 @@ import {
 import type { Assumptions, Scenario } from "../../engine";
 import type { WriteError } from "../../state/writeError";
 import { useFormSubmit } from "../hooks/useFormSubmit";
+import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useT } from "../hooks/useT";
 
 export { DEFAULT_SHOCK_YEARS };
@@ -63,13 +64,14 @@ export function ScenarioForm({
   const [draft, setDraft] = useState(initialDraft);
   // One id per form, so a retry after a failed save cannot add a second scenario.
   const [id] = useState(() => scenario?.id ?? crypto.randomUUID());
-  // The line above the buttons stays until the next Save (ADR 0262, proposed, would
-  // drop it on an edit). A throwing onSubmit is shown like a returned failure.
+  // The line above the buttons goes with the next edit or Save (ADR 0262 §1). A throwing
+  // onSubmit is shown like a returned failure.
   const { busy, errors, formError, submit, clearFields } = useFormSubmit({
     run: onSubmit,
     mapErrors: (failure) => scenarioWriteErrors(t, failure),
-    formErrorUntil: "submit",
   });
+  // Unsaved input is also known to the leave guard (ADR 0262 §2).
+  useLeaveGuard(useId(), isDirty(initialDraft, draft));
 
   /** Edit one field; its error goes with the edit (ADR 0141). */
   function set<K extends keyof ScenarioDraftFields>(k: K, v: string) {

@@ -204,7 +204,6 @@ export function useAssumptionsForm(active: boolean) {
       if (Object.keys(fieldErrors).length > 0 || rest)
         setSummaryFocus((n) => n + 1);
     },
-    formErrorUntil: "edit",
     refocusOnFailure: false,
   });
 

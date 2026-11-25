@@ -111,9 +111,8 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
   const unsaved = isDirty(fieldsOf(baseline), fieldsOf(draft));
   useLeaveGuard(formKey, unsaved);
 
-  // A failure goes on the field it names if shown, else above the buttons; the line
-  // above the buttons stays until the next Save (ADR 0262, proposed, would drop it on
-  // an edit).
+  // A failure goes on the field it names if shown, else above the buttons, until the
+  // next edit or Save (ADR 0262 §1).
   const { busy, errors, formError, submit, clearFields } = useFormSubmit({
     run: onSubmit,
     mapErrors: (failure) =>
@@ -127,7 +126,6 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
             : null,
       ),
     onSaved: () => setBaseline(draft),
-    formErrorUntil: "submit",
   });
 
   /** Edit fields; their errors go with the edit (ADR 0141, as the property form). */
