@@ -2,7 +2,7 @@
 import { ZERO, type Decimal } from "../../lib/money";
 import { isOnOrBefore } from "../dates";
 import { drawMonth, dueDate } from "../loanTerm";
-import { mortgageBlock } from "../loanBlock";
+import { cutAfter } from "../loanBlock";
 import { afterSuccessor, type ChainLink, chainLinks } from "./blockChain";
 import { at } from "../arrays";
 import {
@@ -262,28 +262,16 @@ function cutAt(
   block: MortgageBlock,
   next: MortgageBlock,
 ): { block: MortgageBlock; dropped: Outcome[] } {
-  const keep = (e: { date: Date }) => !afterSuccessor(next, e.date);
+  const replaced = (e: { date: Date }) => afterSuccessor(next, e.date);
   const dropped = [
     ...(block.prepayments ?? [])
-      .filter((p) => !keep(p))
+      .filter(replaced)
       .map((p) => replacedOutcome(block, "prepayment", p)),
     ...(block.recasts ?? [])
-      .filter((r) => !keep(r))
+      .filter(replaced)
       .map((r) => replacedOutcome(block, "recast", r)),
   ];
-  const draws = block.draws?.filter(keep);
-  const unchanged =
-    dropped.length === 0 && draws?.length === block.draws?.length;
-  if (unchanged) return { block, dropped };
-  return {
-    block: mortgageBlock({
-      ...block,
-      draws,
-      prepayments: block.prepayments?.filter(keep),
-      recasts: block.recasts?.filter(keep),
-    }),
-    dropped,
-  };
+  return { block: cutAfter(block, next.startDate), dropped };
 }
 
 /**

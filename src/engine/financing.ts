@@ -7,7 +7,7 @@
 // Dates are modelled from the entered data, not lender deadlines (the wording is UI).
 import { ZERO, type Decimal } from "../lib/money";
 import { blockEndDate } from "./loanRate";
-import { mortgageBlock } from "./loanBlock";
+import { withoutPrepayments } from "./loanBlock";
 import { selectBlock } from "./loan/blockChain";
 import { DEBT_FREE_EPSILON } from "./constants";
 import { edate, isAfter, isOnOrBefore } from "./dates";
@@ -184,9 +184,7 @@ export function prepaymentInterestSaved(
     (o) => o.kind === "prepayment" && o.applied.greaterThan(ZERO),
   );
   if (!applied) return null;
-  const without = blocks.map((b) =>
-    b.prepayments?.length ? mortgageBlock({ ...b, prepayments: undefined }) : b,
-  );
+  const without = blocks.map(withoutPrepayments);
   return interestOf(propertySchedule(without, assumptions).rows).minus(
     interestOf(schedule.rows),
   );
