@@ -13,6 +13,7 @@ import {
   unreleased,
   verdict,
 } from "../check-changelog.mjs";
+import { cleanGitEnv } from "./support/cleanGitEnv.mjs";
 
 const changelog = (entries) =>
   [
@@ -189,20 +190,15 @@ describe("the CLI on a git repository", () => {
   const script = fileURLToPath(
     new URL("../check-changelog.mjs", import.meta.url),
   );
+  // cleanGitEnv: git and the CLI find the temp repository from cwd, never the caller's
+  // GIT_DIR (#589, git-env-isolation.test.mjs).
   const git = (cwd, ...args) =>
-    execFileSync(
-      "git",
-      [
-        "-c",
-        "user.name=Test",
-        "-c",
-        "user.email=test@example.invalid",
-        "-c",
-        "commit.gpgsign=false",
-        ...args,
-      ],
-      { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-    );
+    execFileSync("git", ["-c", "commit.gpgsign=false", ...args], {
+      cwd,
+      encoding: "utf8",
+      env: cleanGitEnv(),
+      stdio: ["ignore", "pipe", "pipe"],
+    });
   const write = (dir, file, text) => {
     mkdirSync(join(dir, file, ".."), { recursive: true });
     writeFileSync(join(dir, file), text);
@@ -211,7 +207,7 @@ describe("the CLI on a git repository", () => {
     spawnSync(process.execPath, [script, "--base", base], {
       cwd,
       encoding: "utf8",
-      env: { ...process.env, PR_BODY: body },
+      env: { ...cleanGitEnv(), PR_BODY: body },
     });
   const adr = (status) =>
     `# 0230. New thing\n\n- Status: ${status}\n- Date: 2026-11-17\n`;
