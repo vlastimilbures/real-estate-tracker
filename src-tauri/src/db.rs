@@ -55,7 +55,6 @@ fn build(s: &Statement) -> Result<Query<'_>, AppError> {
 async fn run_in_transaction(
     conn: &mut SqliteConnection,
     statements: &[Statement],
-    check_foreign_keys: bool,
 ) -> Result<(), AppError> {
     let mut tx = conn.begin().await?;
     let mut outcome: Result<(), AppError> = Ok(());
@@ -72,16 +71,6 @@ async fn run_in_transaction(
             break;
         }
     }
-    if outcome.is_ok() && check_foreign_keys {
-        match sqlx::query("PRAGMA foreign_key_check")
-            .fetch_all(&mut *tx)
-            .await
-        {
-            Ok(rows) if rows.is_empty() => {}
-            Ok(rows) => outcome = Err(AppError::ForeignKeyCheck(rows.len())),
-            Err(e) => outcome = Err(e.into()),
-        }
-    }
     match outcome {
         Ok(()) => tx.commit().await.map_err(AppError::from),
         Err(e) => {
@@ -93,26 +82,9 @@ async fn run_in_transaction(
 }
 
 /// Run `statements` on one pooled connection inside one transaction.
-///
-/// `foreign_keys_off` is for SQLite's table-rebuild procedure (dropping a parent table
-/// with `foreign_keys=ON` would cascade-delete its children): FK enforcement is switched
-/// off on this connection only, `PRAGMA foreign_key_check` must come back empty before
-/// commit, and enforcement is switched back on afterwards. If it cannot be switched back
-/// on, the connection is closed instead of being returned to the pool.
-pub async fn run_atomic(
-    pool: &Pool<Sqlite>,
-    statements: &[Statement],
-    foreign_keys_off: bool,
-) -> Result<(), AppError> {
+pub async fn run_atomic(pool: &Pool<Sqlite>, statements: &[Statement]) -> Result<(), AppError> {
     let mut conn = pool.acquire().await?;
-    if foreign_keys_off {
-        conn.execute("PRAGMA foreign_keys = OFF").await?;
-    }
-    let outcome = run_in_transaction(&mut conn, statements, foreign_keys_off).await;
-    if foreign_keys_off && conn.execute("PRAGMA foreign_keys = ON").await.is_err() {
-        conn.close_on_drop();
-    }
-    outcome
+    run_in_transaction(&mut conn, statements).await
 }
 
 /// One result row: column name → JSON value, decoded as tauri-plugin-sql's `select` does.
@@ -255,10 +227,9 @@ pub async fn db_transaction(
     instances: State<'_, DbInstances>,
     db: String,
     statements: Vec<Statement>,
-    foreign_keys_off: Option<bool>,
 ) -> Result<(), AppError> {
     let pool = pool_for(&instances, &db).await?;
-    run_atomic(&pool, &statements, foreign_keys_off.unwrap_or(false)).await
+    run_atomic(&pool, &statements).await
 }
 
 /// Run read-only `statements` as one point-in-time snapshot (see `select_snapshot`).

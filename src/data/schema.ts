@@ -16,7 +16,8 @@ export interface ColumnSpec {
   readonly name: string;
   readonly kind: ColumnKind;
   readonly nullable: boolean;
-  /** The migration that added the column (1: the initial schema). */
+  /** The migration that added the column (1: the initial schema). Every column up to 8
+   *  is in the version 8 baseline (ADR 0230). */
   readonly addedIn: number;
   /** The value a restore gives the column when an older backup lacks it; also the
    *  column's SQL DEFAULT. None ⇒ NULL. */

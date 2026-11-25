@@ -8,8 +8,8 @@ export type DataErrorCode =
   | "DB_INTEGRITY"
   /** The database was written by a newer app version (DR-022). */
   | "DB_NEWER"
-  /** Existing rows would break a pending migration's new constraints. */
-  | "MIGRATION_CONFLICT"
+  /** The database is below the version 8 baseline (ADR 0230): refused unchanged. */
+  | "DB_TOO_OLD"
   /** The pre-migration backup could not be written or verified. */
   | "MIGRATION_BACKUP_FAILED"
   /** A migration's own statements failed (rolled back). */
@@ -43,7 +43,7 @@ export class DataError extends Error {
   readonly code: DataErrorCode;
   /** One human-readable line per offending record, without financial values. */
   readonly details: string[];
-  /** Set on MIGRATION_CONFLICT and MIGRATION_FAILED (ADR 0153). */
+  /** Set on MIGRATION_FAILED (ADR 0153). */
   readonly upgrade?: UpgradeStop;
   constructor(
     code: DataErrorCode,

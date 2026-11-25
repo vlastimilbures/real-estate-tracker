@@ -16,40 +16,40 @@ import {
 
 describe("portfolioStore init & refresh", () => {
   it("a typed data-layer failure at startup is kept for the translated error screen", async () => {
-    const details = ['properties "A", "A": duplicate name'];
+    const details = ["disk I/O error"];
     await usePortfolioStore
       .getState()
       .init(() =>
         Promise.reject(
-          new DataError("MIGRATION_CONFLICT", "upgrade stopped", details),
+          new DataError("MIGRATION_FAILED", "upgrade stopped", details),
         ),
       );
     const s = usePortfolioStore.getState();
     expect(statusOf(s)).toBe("error");
     expect(errorOf(s)).toEqual({
       kind: "data",
-      code: "MIGRATION_CONFLICT",
+      code: "MIGRATION_FAILED",
       details,
     });
-    expect(startupErrorOf(s)).toEqual({ code: "MIGRATION_CONFLICT", details });
+    expect(startupErrorOf(s)).toEqual({ code: "MIGRATION_FAILED", details });
   });
 
   it("a stopped upgrade keeps how far it got for the screen (#115)", async () => {
     const upgrade = {
-      from: 6,
-      reached: 7,
-      stoppedAt: 8,
-      backupPath: "/a/backups/pre-migration-v6-to-v10.sqlite",
+      from: 8,
+      reached: 9,
+      stoppedAt: 10,
+      backupPath: "/a/backups/pre-migration-v8-to-v11.sqlite",
     };
     await usePortfolioStore.getState().init(() =>
       Promise.reject(
-        new DataError("MIGRATION_CONFLICT", "upgrade stopped", ["x"], {
+        new DataError("MIGRATION_FAILED", "upgrade stopped", ["x"], {
           upgrade,
         }),
       ),
     );
     expect(startupErrorOf(usePortfolioStore.getState())).toEqual({
-      code: "MIGRATION_CONFLICT",
+      code: "MIGRATION_FAILED",
       details: ["x"],
       upgrade,
     });

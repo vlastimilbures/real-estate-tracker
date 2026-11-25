@@ -2,7 +2,7 @@
 //!
 //! Each failure is a typed variant, but it crosses the IPC boundary as the same plain
 //! string the commands returned before: `Serialize` writes the `Display` text, and the
-//! webview matches on it (`BACKUP_*` codes, `FOREIGN_KEY_CHECK_FAILED`, and SQLite's own
+//! webview matches on it (`BACKUP_*` codes and SQLite's own
 //! constraint messages, passed through verbatim for `constraintOf`). Changing a `Display`
 //! arm is therefore a user-visible change.
 
@@ -22,8 +22,6 @@ pub enum AppError {
     UnsupportedParam(String),
     /// A column type the plugin-compatible decoder does not handle.
     UnsupportedDatatype(String),
-    /// `PRAGMA foreign_key_check` returned this many rows.
-    ForeignKeyCheck(usize),
     /// No SQLite pool is loaded under this name.
     DbNotLoaded(String),
     /// A backup label outside `[A-Za-z0-9-]`.
@@ -61,7 +59,6 @@ impl fmt::Display for AppError {
             Self::Sql(m) | Self::Io(m) | Self::Other(m) => f.write_str(m),
             Self::UnsupportedParam(v) => write!(f, "unsupported parameter type: {v}"),
             Self::UnsupportedDatatype(t) => write!(f, "unsupported datatype: {t}"),
-            Self::ForeignKeyCheck(n) => write!(f, "FOREIGN_KEY_CHECK_FAILED: {n} row(s)"),
             Self::DbNotLoaded(db) => write!(f, "database not loaded: {db}"),
             Self::InvalidLabel(l) => write!(f, "invalid backup label: {l}"),
             Self::InvalidBackupName(n) => write!(f, "invalid backup file name: {n}"),
@@ -131,7 +128,6 @@ mod tests {
                 UnsupportedDatatype("DATE".into()),
                 "unsupported datatype: DATE",
             ),
-            (ForeignKeyCheck(2), "FOREIGN_KEY_CHECK_FAILED: 2 row(s)"),
             (
                 DbNotLoaded("sqlite:x.db".into()),
                 "database not loaded: sqlite:x.db",
@@ -169,8 +165,8 @@ mod tests {
 
     #[test]
     fn serialises_as_its_display_string() {
-        let json = serde_json::to_string(&ForeignKeyCheck(1)).unwrap();
-        assert_eq!(json, r#""FOREIGN_KEY_CHECK_FAILED: 1 row(s)""#);
+        let json = serde_json::to_string(&BackupFailed("disk full".into())).unwrap();
+        assert_eq!(json, r#""BACKUP_FAILED: disk full""#);
     }
 
     #[test]

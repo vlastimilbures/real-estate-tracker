@@ -107,34 +107,17 @@ describe("per-code screen (#115)", () => {
     expect(button(en.app.tryAgain)).toBeNull();
   });
 
-  it("MIGRATION_CONFLICT at the first step: nothing changed, records involved", () => {
-    fail("MIGRATION_CONFLICT", ['properties "A", "A": duplicate name'], {
-      from: 6,
-      reached: 6,
-      stoppedAt: 7,
-      backupPath: null,
-    });
+  it("DB_TOO_OLD: the message and the data folder, no Try again (ADR 0230)", () => {
+    fail("DB_TOO_OLD");
     render(<App />);
-    expect(alert().textContent).toContain(en.dataErrors.MIGRATION_CONFLICT);
-    expect(alert().textContent).toContain(en.dataErrors.detailsHeading);
-    expect(button(en.app.tryAgain)).toBeNull();
-  });
-
-  it("MIGRATION_CONFLICT after a committed step: the version reached and the copy", () => {
-    fail("MIGRATION_CONFLICT", ['scenario "S": overrides …'], {
-      from: 6,
-      reached: 7,
-      stoppedAt: 8,
-      backupPath: "/a/backups/pre-migration-v6-to-v10-20261001T073512Z.sqlite",
-    });
-    render(<App />);
-    const text = alert().textContent;
-    expect(text).toContain(en.boot.partialConflict(7, 8));
-    expect(text).toContain(
-      en.boot.copyAt("pre-migration-v6-to-v10-20261001T073512Z.sqlite"),
+    expect(alert().textContent).toContain(
+      "This database was last opened with a version older than 1.4.0. Open it once with version 1.5.0, then update.",
     );
-    expect(text).not.toContain(en.dataErrors.MIGRATION_CONFLICT);
-    expect(text).not.toMatch(/nothing was changed/i);
+    expect(alert().textContent).not.toContain(en.app.bootRetryHint);
+    expect(button(en.app.tryAgain)).toBeNull();
+    // Owner decision 2026-11-25: no restore, the old file is never touched.
+    expect(button(en.boot.restoreBackup)).toBeNull();
+    expect(button(en.boot.showDataFolder)).not.toBeNull();
   });
 
   it("MIGRATION_FAILED while setting up a new database: no previous version, no copy", () => {

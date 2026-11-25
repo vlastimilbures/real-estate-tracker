@@ -37,6 +37,13 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- **The database schema starts at version 8** (ADR 0230, #450). A database last opened with
+  1.4.0 or later upgrades as before. An older one is no longer upgraded: the app stops on
+  the start-up screen with "This database was last opened with a version older than
+  1.4.0. Open it once with version 1.5.0, then update." and offers **Show data folder**;
+  nothing is written to the file. A new install creates the same schema as before, in one
+  step. JSON backups from any version still restore. The upgrade check "some saved records
+  conflict with the new data rules" is gone with the old steps. No figure changes.
 - After a failed save, the message above a form's buttons goes with the next edit or Save
   in every form: the record forms, the property form and the scenario form, as the
   Assumptions form already did. A property or scenario dialog with unsaved input now

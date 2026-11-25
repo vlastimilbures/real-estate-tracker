@@ -7,7 +7,9 @@ describe("bootView", () => {
   it.each([
     ["DB_INTEGRITY", { retry: false, records: false, restore: false }],
     ["DB_NEWER", { retry: false, records: false, restore: false }],
-    ["MIGRATION_CONFLICT", { retry: false, records: true, restore: false }],
+    // ADR 0230: refused on every start; no restore, the old file is never touched (owner
+    // decision 2026-11-25).
+    ["DB_TOO_OLD", { retry: false, records: false, restore: false }],
     [
       "MIGRATION_BACKUP_FAILED",
       { retry: true, records: false, restore: false },

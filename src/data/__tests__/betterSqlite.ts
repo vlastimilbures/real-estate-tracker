@@ -4,19 +4,14 @@
 //
 // The driver is synchronous; we wrap each call in a resolved Promise to satisfy the
 // async `Sql` interface. Positional `?` parameters map 1:1 to better-sqlite3.
-// `transaction` and `backup` mirror src-tauri/src/db.rs (D-14): same FK-off rebuild
-// rule, same verification of the copy, same error-code prefixes.
+// `transaction` and `backup` mirror src-tauri/src/db.rs (D-14): one transaction, same
+// verification of the copy, same error-code prefixes.
 import DatabaseConstructor from "better-sqlite3";
 import type { Database } from "better-sqlite3";
 import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type {
-  ExecuteResult,
-  Sql,
-  SqlStatement,
-  TransactionOptions,
-} from "../sql";
+import type { ExecuteResult, Sql, SqlStatement } from "../sql";
 
 export interface TestSql extends Sql {
   /** The underlying handle, for closing in afterAll. */
@@ -78,12 +73,7 @@ export function openMemorySql(filename = ":memory:"): TestSql {
         return Promise.reject(e instanceof Error ? e : new Error(String(e)));
       }
     },
-    transaction(
-      statements: SqlStatement[],
-      options: TransactionOptions = {},
-    ): Promise<void> {
-      const fkOff = options.foreignKeysOff ?? false;
-      if (fkOff) db.pragma("foreign_keys = OFF");
+    transaction(statements: SqlStatement[]): Promise<void> {
       try {
         db.transaction(() => {
           for (const s of statements) {
@@ -92,20 +82,10 @@ export function openMemorySql(filename = ":memory:"): TestSql {
               db.prepare(s.query).run(...(s.params as never[]));
             else db.exec(s.query);
           }
-          if (fkOff) {
-            const broken = db.pragma("foreign_key_check") as unknown[];
-            if (broken.length > 0) {
-              throw new Error(
-                `FOREIGN_KEY_CHECK_FAILED: ${broken.length} row(s)`,
-              );
-            }
-          }
         })();
         return Promise.resolve();
       } catch (e) {
         return Promise.reject(e instanceof Error ? e : new Error(String(e)));
-      } finally {
-        if (fkOff) db.pragma("foreign_keys = ON");
       }
     },
     backup(label: string): Promise<string> {

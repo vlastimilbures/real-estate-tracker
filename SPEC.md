@@ -663,7 +663,9 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
 - Every multi-step write runs inside one transaction owned by a Rust command (ADR 0014).
 - Migrations are versioned; before upgrading an existing database the app writes a verified
   `pre-migration-v<from>-to-v<to>-<stamp>.sqlite` copy to the `backups/` folder next to it.
-  A migration that meets data breaking a new rule aborts and leaves the DB unchanged.
+  Each step commits on its own; a failed step is rolled back. The schema starts at version
+  8 (ADR 0230): a new database gets the version 8 tables in one step, then the later steps;
+  a database below version 8 is refused at startup (`DB_TOO_OLD`) and not modified.
 - The sample portfolio is seeded **only on first run**, recorded by a flag in `app_meta`;
   an empty portfolio later stays empty (ADR 0016). It can be cleared in one step, after a
   safety backup (ADR 0094), and loaded again into an empty portfolio from Settings → Backup

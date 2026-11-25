@@ -154,8 +154,8 @@ export const cs: Dictionary = {
       "Soubor databáze neprošel kontrolou integrity. Nic nebylo změněno.",
     DB_NEWER:
       "Tuto databázi uložila novější verze aplikace. Nic nebylo změněno. Otevřete ji v té verzi.",
-    MIGRATION_CONFLICT:
-      "Aktualizace databáze se zastavila dříve, než cokoli změnila: některé uložené záznamy jsou v rozporu s novými pravidly. Opravte je v předchozí verzi aplikace a pak otevřete tuto verzi znovu.",
+    DB_TOO_OLD:
+      "Tuto databázi naposledy otevřela verze aplikace starší než 1.4.0. Otevřete ji jednou ve verzi 1.5.0 a pak aplikaci aktualizujte.",
     MIGRATION_BACKUP_FAILED:
       "Aktualizace databáze nezačala, protože bezpečnostní zálohu se nepodařilo zapsat nebo ověřit. Nic nebylo změněno. Zkontrolujte volné místo na disku a otevřete aplikaci znovu.",
     MIGRATION_FAILED:
@@ -171,8 +171,6 @@ export const cs: Dictionary = {
 
   // The startup error screen (#115, ADR 0153).
   boot: {
-    partialConflict: (reached: number, stoppedAt: number) =>
-      `Aktualizace databáze se zastavila u verze ${stoppedAt}: některé uložené záznamy jsou v rozporu s novými pravidly. Předchozí kroky proběhly, takže databáze je teď ve verzi ${reached} a předchozí verze aplikace ji už neotevře.`,
     partialFailed: (reached: number, stoppedAt: number) =>
       `Aktualizace databáze selhala u verze ${stoppedAt} a tento krok byl vrácen zpět. Předchozí kroky proběhly, takže databáze je teď ve verzi ${reached} a předchozí verze aplikace ji už neotevře.`,
     copyAt: (file: string) =>

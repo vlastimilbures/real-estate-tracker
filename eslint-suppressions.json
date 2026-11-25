@@ -9,14 +9,6 @@
       "count": 1
     }
   },
-  "src/data/migrations.ts": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/state/uiStore.ts": {
     "max-lines-per-function": {
       "count": 1
