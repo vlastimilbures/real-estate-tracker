@@ -5,6 +5,7 @@ import type { Sql } from "../sql";
 import { PORTFOLIO_TABLES } from "../repositories";
 import { SCHEMA_HEAD } from "../migrations";
 import { TABLES, columnNames } from "../schema";
+import { snapshot } from "../snapshot";
 
 /** The newest schema this app writes and reads (the last migration). */
 export { SCHEMA_HEAD };
@@ -46,12 +47,8 @@ export async function exportToJson(sql: Sql, now: Date): Promise<BackupFile> {
     ...BACKUP_TABLES.map((table) => ({ query: `SELECT * FROM ${table}` })),
     { query: "SELECT MAX(version) AS v FROM schema_migrations" },
   ];
-  const results = await sql.selectSnapshot(statements);
   // A missing row list would become an empty table: a file that restores with data lost.
-  if (results.length !== statements.length)
-    throw new Error(
-      `the snapshot returned ${results.length} of ${statements.length} result sets`,
-    );
+  const results = await snapshot(sql, statements);
   const tables: Record<string, Record<string, unknown>[]> = {};
   BACKUP_TABLES.forEach((table, i) => (tables[table] = results[i] ?? []));
   const version = results[BACKUP_TABLES.length]?.[0]?.v as number | null;

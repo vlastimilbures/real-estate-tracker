@@ -98,9 +98,7 @@ export async function loadState(sql: Sql): Promise<LoadedState> {
     portfolio,
     assumptions: toAssumptions(results[n] ?? []),
     // A scenario row the app cannot read stops the load like any other (ADR 0231).
-    scenarios: ((results[n + 1] ?? []) as unknown as ScenarioRow[]).map(
-      rowToScenario,
-    ),
+    scenarios: ((results[n + 1] ?? []) as ScenarioRow[]).map(rowToScenario),
     sample: toSample(results[n + 2] ?? [], portfolio),
     backup: toBackupState(results[n + 3] ?? []),
   };
