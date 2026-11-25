@@ -12,7 +12,7 @@ import {
 } from "./irrConstants";
 import { at } from "./arrays";
 import { propertySchedules, type PropertySchedule } from "./schedule";
-import { assertInputs } from "./validate";
+import { assertInputs, type ValidInputs } from "./validate";
 import { buildCpiIndex, projectPortfolioParts } from "./projections";
 import { scheduleOf, type DebtServicePaid } from "./ownerCash";
 import type {
@@ -305,21 +305,31 @@ export function projectionAndKpis(
   portfolio: Portfolio,
   assumptions: Assumptions,
 ): { projection: ProjectionYear[]; kpis: PortfolioKPIs } {
-  assertInputs(portfolio, assumptions); // D-37
+  const v = assertInputs(portfolio, assumptions); // D-37
   const built = propertySchedules(
     portfolio.mortgages,
     portfolio.properties.map((p) => p.id),
     assumptions,
   );
-  // Validated above (DR-128).
+  return runPortfolio(v, built);
+}
+
+/**
+ * The portfolio projection and its KPIs on validated inputs and their schedules: the one
+ * run sequence behind `projectionAndKpis` and `portfolioOutputs`, so each schedule is
+ * built once and the projection is not rebuilt for the KPIs (DR-042, #291).
+ */
+export function runPortfolio(
+  v: ValidInputs,
+  schedules: Map<string, PropertySchedule>,
+): { projection: ProjectionYear[]; kpis: PortfolioKPIs } {
   const { years: projection, prePurchase } = projectPortfolioParts(
-    portfolio,
-    assumptions,
-    built,
+    v,
+    schedules,
   );
   return {
     projection,
-    kpis: kpisFrom(portfolio, assumptions, projection, built, prePurchase),
+    kpis: kpisFrom(v, projection, schedules, prePurchase),
   };
 }
 
@@ -334,16 +344,15 @@ export function portfolioKpis(
 
 /**
  * `portfolioKpis` from a projection, the property schedules and the pre-purchase debt
- * service already built from the same (validated) inputs, so they are not built again
- * (DR-042, #291).
+ * service already built from the same validated inputs (see `runPortfolio`).
  */
-export function kpisFrom(
-  portfolio: Portfolio,
-  assumptions: Assumptions,
+function kpisFrom(
+  v: ValidInputs,
   proj: ProjectionYear[],
   schedules: Map<string, PropertySchedule>,
   prePurchase: DebtServicePaid[],
 ): PortfolioKPIs {
+  const { portfolio, assumptions } = v;
   const N = assumptions.horizonYears;
   // Time-varying CPI (honours a temporary inflation shock); cpi[N] is the horizon
   // deflator and cpi[t] deflates each cash flow. Collapses to (1+inflationPa)^t when

@@ -16,7 +16,12 @@ import {
   prePurchaseDebtService,
   type DebtServicePaid,
 } from "./ownerCash";
-import { assertAssumptions, assertInputs } from "./validate";
+import {
+  assertAssumptions,
+  assertInputs,
+  type ValidAssumptions,
+  type ValidInputs,
+} from "./validate";
 import { decimalsOf, fieldsOf } from "./yearFields";
 import { basisDate, growthRate, valueAt } from "./growth";
 import {
@@ -45,9 +50,10 @@ import { yearsToMonths } from "./units";
  * `cpi[0] = 1`. A temporary inflation shock thus compounds into the index for its first
  * `durationYears`, after which the trend rate resumes. With no `inflationShock` this
  * equals `powInt(1+inflationPa, t)` exactly, so holding-cost growth and the real-terms
- * deflator reproduce the parity targets. Length `horizonYears + 1`.
+ * deflator reproduce the parity targets. Length `horizonYears + 1`. Takes validated
+ * assumptions only; `cpiIndex` validates them first.
  */
-export function buildCpiIndex(assumptions: Assumptions): Decimal[] {
+export function buildCpiIndex(assumptions: ValidAssumptions): Decimal[] {
   const cpi: Decimal[] = [ONE];
   for (let t = 1; t <= assumptions.horizonYears; t++) {
     cpi.push(at(cpi, t - 1).times(ONE.plus(inflationInYear(assumptions, t))));
@@ -58,8 +64,7 @@ export function buildCpiIndex(assumptions: Assumptions): Decimal[] {
 /** `buildCpiIndex` for callers outside the engine: raises the D-37 / D-38 problems of
  *  the assumptions first (ADR 0075, DR-115). */
 export function cpiIndex(assumptions: Assumptions): Decimal[] {
-  assertAssumptions(assumptions);
-  return buildCpiIndex(assumptions);
+  return buildCpiIndex(assertAssumptions(assumptions));
 }
 
 /** Inflation rate of projection year `t` (≥ 1): the trend plus any shock in force. */
@@ -358,8 +363,8 @@ export function propertyProjection(
   assumptions: Assumptions,
   schedule: PropertySchedule,
 ): ProjectionYear[] {
-  assertInputs(portfolio, assumptions); // D-37
-  return projectProperty(property, portfolio, assumptions, schedule);
+  const v = assertInputs(portfolio, assumptions); // D-37
+  return projectProperty(property, v, schedule);
 }
 
 /** Every property's `propertyProjection` by id, inactive ones included, validating the
@@ -369,7 +374,7 @@ export function propertyProjections(
   assumptions: Assumptions,
   schedules?: Map<string, PropertySchedule>,
 ): Map<string, ProjectionYear[]> {
-  assertInputs(portfolio, assumptions); // D-37
+  const v = assertInputs(portfolio, assumptions); // D-37
   const built =
     schedules ??
     propertySchedules(
@@ -380,38 +385,32 @@ export function propertyProjections(
   return new Map(
     portfolio.properties.map((p) => [
       p.id,
-      projectProperty(
-        p,
-        portfolio,
-        assumptions,
-        built.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE,
-      ),
+      projectProperty(p, v, built.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE),
     ]),
   );
 }
 
-/** `propertyProjection` on inputs the caller has already validated (DR-128). */
+/** `propertyProjection` on validated inputs (DR-128). */
 function projectProperty(
   property: Property,
-  portfolio: Portfolio,
-  assumptions: Assumptions,
+  v: ValidInputs,
   built: PropertySchedule,
 ): ProjectionYear[] {
-  const years = propertyYears(property, portfolio, assumptions, built.rows);
+  const years = propertyYears(property, v, built.rows);
   const own = new Map([[property.id, built]]);
   return withCashToOwner(
     years,
-    cashOutsideNetCf([property], portfolio, assumptions, own, years),
+    cashOutsideNetCf([property], v.portfolio, v.assumptions, own, years),
   );
 }
 
 /** A property's projection years before their cash to owner (ADR 0161). */
 function propertyYears(
   property: Property,
-  portfolio: Portfolio,
-  assumptions: Assumptions,
+  v: ValidInputs,
   schedule: AmortizationRow[],
 ): YearRow[] {
+  const { portfolio, assumptions } = v;
   const b = propertyBasis(property, portfolio, assumptions, schedule);
   const baseYear = assumptions.baseDate.getUTCFullYear();
   const vacancy = assumptions.vacancyAllowance;
@@ -546,34 +545,32 @@ export function portfolioProjection(
   assumptions: Assumptions,
   schedules?: Map<string, PropertySchedule>,
 ): ProjectionYear[] {
-  assertInputs(portfolio, assumptions); // D-37
-  return projectPortfolioParts(portfolio, assumptions, schedules).years;
+  const v = assertInputs(portfolio, assumptions); // D-37
+  const built =
+    schedules ??
+    propertySchedules(
+      portfolio.mortgages,
+      portfolio.properties.map((p) => p.id),
+      assumptions,
+    );
+  return projectPortfolioParts(v, built).years;
 }
 
 /**
- * `portfolioProjection` on inputs the caller has already validated (DR-128): the
- * portfolio is checked once per public call, not again per property. Also returns the
- * debt service paid before a future buy turns on (ADR 0124), so the KPIs reuse it (#291).
+ * `portfolioProjection` on validated inputs and their schedules (DR-128): the portfolio
+ * is checked once per public call, not again per property. Also returns the debt service
+ * paid before a future buy turns on (ADR 0124), so the KPIs reuse it (#291).
  */
 export function projectPortfolioParts(
-  portfolio: Portfolio,
-  assumptions: Assumptions,
-  schedules = propertySchedules(
-    portfolio.mortgages,
-    portfolio.properties.map((p) => p.id),
-    assumptions,
-  ),
+  v: ValidInputs,
+  schedules: Map<string, PropertySchedule>,
 ): { years: ProjectionYear[]; prePurchase: DebtServicePaid[] } {
+  const { portfolio, assumptions } = v;
   const active = portfolio.properties.filter((p) => p.active !== false);
   // The property years without their own cash to owner: the portfolio's is computed
   // once below, not summed from them.
   const perProp = active.map((p) =>
-    propertyYears(
-      p,
-      portfolio,
-      assumptions,
-      (schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE).rows,
-    ),
+    propertyYears(p, v, (schedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE).rows),
   );
   const out = sumYears(perProp, assumptions);
   const prePurchase = prePurchaseDebtService(active, assumptions, schedules);

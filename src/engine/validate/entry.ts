@@ -8,6 +8,20 @@ import { assumptionError, assumptionReporter } from "./check";
 import { checkAssumptions } from "./assumptions";
 import { checkPortfolio } from "./rows";
 
+declare const validBrand: unique symbol;
+
+/** Assumptions `assertAssumptions` (or `assertInputs`) raised nothing on. A compile-time
+ *  tag only: the same object, so branding never changes a computed number (ADR 0074). */
+export type ValidAssumptions = Assumptions & { readonly [validBrand]: true };
+
+/** Inputs `assertInputs` raised nothing on. The engine's internal halves take only this,
+ *  so a public entry point cannot reach them without validating first. */
+export interface ValidInputs {
+  readonly portfolio: Portfolio;
+  readonly assumptions: ValidAssumptions;
+  readonly [validBrand]: true;
+}
+
 /** ASOF_BEFORE_BASEDATE when `asOf` precedes the projection window start (D-19). */
 function asOfProblem(
   asOf: Date,
@@ -48,23 +62,30 @@ function raiseEntryErrors(errors: EngineValidationError[]): void {
   if (raised.length > 0) throw new EngineInputError(raised);
 }
 
-/** Raise the D-37 / D-38 problems of the assumptions (entry points without a portfolio). */
-export function assertAssumptions(assumptions: Assumptions): void {
+/** Raise the D-37 / D-38 problems of the assumptions (entry points without a portfolio);
+ *  otherwise return them branded valid. */
+export function assertAssumptions(assumptions: Assumptions): ValidAssumptions {
   const errors: EngineValidationError[] = [];
   checkAssumptions(
     assumptions,
     assumptionReporter((e) => errors.push(e)),
   );
   raiseEntryErrors(errors);
+  // eslint-disable-next-line no-restricted-syntax -- the sanctioned ValidAssumptions constructor
+  return assumptions as ValidAssumptions;
 }
 
 /**
  * Raise an EngineInputError listing every D-37 / D-38 problem in the inputs (validateInputs
- * order), instead of computing NaN, a rolled-over date or a silent first-row pick.
+ * order), instead of computing NaN, a rolled-over date or a silent first-row pick;
+ * otherwise return them as `ValidInputs` (the assumptions checked as `assertAssumptions`
+ * checks them, the portfolio as well).
  */
 export function assertInputs(
   portfolio: Portfolio,
   assumptions: Assumptions,
-): void {
+): ValidInputs {
   raiseEntryErrors(validateInputs(portfolio, assumptions));
+  // eslint-disable-next-line no-restricted-syntax -- the sanctioned ValidInputs constructor
+  return { portfolio, assumptions } as ValidInputs;
 }
