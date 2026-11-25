@@ -1,11 +1,11 @@
 // The changelog check on pull requests (#461): the rules on synthetic input, then the CLI
 // on a throw-away git repository, including a shallow clone of a merge commit as CI has.
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import {
   changedAdrs,
   adrStatus,
@@ -190,6 +190,15 @@ describe("the CLI on a git repository", () => {
   const script = fileURLToPath(
     new URL("../check-changelog.mjs", import.meta.url),
   );
+  const temps = [];
+  const tempDir = (prefix) => {
+    const dir = mkdtempSync(join(tmpdir(), prefix));
+    temps.push(dir);
+    return dir;
+  };
+  afterAll(() => {
+    for (const dir of temps) rmSync(dir, { recursive: true, force: true });
+  });
   // cleanGitEnv: git and the CLI find the temp repository from cwd, never the caller's
   // GIT_DIR (#589, git-env-isolation.test.mjs).
   const git = (cwd, ...args) =>
@@ -213,7 +222,7 @@ describe("the CLI on a git repository", () => {
     `# 0230. New thing\n\n- Status: ${status}\n- Date: 2026-11-17\n`;
 
   function repo() {
-    const dir = mkdtempSync(join(tmpdir(), "changelog-check-"));
+    const dir = tempDir("changelog-check-");
     git(dir, "init", "-q", "-b", "main");
     write(dir, "CHANGELOG.md", changelog([]));
     write(dir, "docs/decisions/wording.md", "# Wording\n");
@@ -294,7 +303,7 @@ describe("the CLI on a git repository", () => {
     git(dir, "commit", "-q", "-m", "main");
     git(dir, "merge", "-q", "--no-ff", "-m", "merge", "pr");
 
-    const clone = mkdtempSync(join(tmpdir(), "changelog-clone-"));
+    const clone = tempDir("changelog-clone-");
     git(clone, "clone", "-q", "--depth", "2", `file://${dir}`, ".");
     const r = check(clone, "HEAD^1");
     expect(r.stdout).toContain("added docs/adr/0230-new-thing.md");

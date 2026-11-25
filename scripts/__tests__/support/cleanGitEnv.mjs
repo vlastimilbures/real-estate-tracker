@@ -1,8 +1,8 @@
 // The environment for git in a script test's throw-away repository (#589). Git sets GIT_DIR
-// (and GIT_WORK_TREE) inside `git rebase --exec` and GIT_DIR / GIT_INDEX_FILE inside some
-// hooks; a test that inherits them runs its `git init` / `commit` / `checkout -b` on the
-// caller's repository instead of its temp folder. On 2026-11-25 that set `core.bare=true`
-// and created a branch `pr` in the real repository.
+// inside `git rebase --exec` run in a linked worktree and inside some hooks (a commit hook
+// can also get GIT_INDEX_FILE); a test that inherits them runs its `git init` / `commit` /
+// `checkout -b` on the caller's repository instead of its temp folder. On 2026-11-25 that
+// set `core.bare=true` and created a branch `pr` in the real repository.
 
 // The variables that point git at a repository: `git rev-parse --local-env-vars`, the list
 // git itself clears before it enters a submodule. GIT_CONFIG_COUNT comes with
