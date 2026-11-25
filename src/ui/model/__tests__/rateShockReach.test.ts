@@ -304,7 +304,3 @@ describe("rateShockNote", () => {
     ).toBeUndefined();
   });
 });
-
-// The helper must agree with the engine: no loan hit ⇔ the shock changes no year's net
-// cash flow. Net worth is not the check: the sample is hit, but every loan is repaid
-// before the horizon, so its net worth does not change.

@@ -47,6 +47,7 @@ export function rateShockReach(
     };
   });
 }
+
 /** "hits N of M loans (refix …)", "no effect", or undefined without loans. */
 export function reachSummary(
   reach: LoanReach[],
