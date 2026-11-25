@@ -233,6 +233,7 @@ function snapshotIncome(
  * One property's snapshot at `asOf`. Pass its `schedule` (the rows from `propertySchedules`
  * on the same inputs) to reuse it; an omitted one is built here (DR-042, DR-118).
  */
+// eslint-disable-next-line max-params -- public API with app and test callers (#480)
 export function propertySnapshot(
   property: Property,
   portfolio: Portfolio,
