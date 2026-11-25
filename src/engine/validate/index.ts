@@ -19,6 +19,7 @@ export {
   assertInputs,
   validateInputs,
 } from "./entry";
+export type { ValidAssumptions, ValidInputs } from "./entry";
 export {
   comparableScenarios,
   scenarioErrorsAddedBy,

@@ -9,7 +9,8 @@ import {
   scheduleRows,
   type PropertySchedule,
 } from "./schedule";
-import { portfolioSnapshot } from "./metrics";
+import { snapshotPortfolio } from "./metrics";
+import { assertAsOf, assertInputs } from "./validate";
 import { projectPortfolioParts } from "./projections";
 import { kpisFrom } from "./kpis";
 import { financingExposure, type FinancingExposure } from "./financing";
@@ -53,17 +54,17 @@ export function portfolioOutputs(
       assumptions,
     );
   const rows = scheduleRows(built);
-  const snapshot = portfolioSnapshot(portfolio, assumptions, asOf, rows); // D-37
-  const { years: projection, prePurchase } = projectPortfolioParts(
-    portfolio,
-    assumptions,
-    built,
-  );
+  // Validated after the schedules are built, as `portfolioSnapshot` on them would: the
+  // order decides which error is raised first.
+  const v = assertInputs(portfolio, assumptions); // D-37
+  assertAsOf(asOf, assumptions.baseDate); // D-19
+  const snapshot = snapshotPortfolio(v, asOf, rows);
+  const { years: projection, prePurchase } = projectPortfolioParts(v, built);
   return {
     schedules: rows,
     snapshot,
     projection,
-    kpis: kpisFrom(portfolio, assumptions, projection, built, prePurchase),
+    kpis: kpisFrom(v, projection, built, prePurchase),
     financing: financingExposure(portfolio, assumptions, built, asOf),
   };
 }
