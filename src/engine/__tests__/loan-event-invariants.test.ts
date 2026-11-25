@@ -19,7 +19,7 @@ import { describe, it, expect } from "vitest";
 import fc from "fast-check";
 import { D, NPER, type Decimal } from "../../lib/money";
 import { addDays, edate, isoDate } from "../dates";
-import { paymentOnOrAfter, paymentsDueBy } from "../amortization";
+import { paymentOnOrAfter, paymentsDueBy } from "../loanTerm";
 import { MAX_LOAN_TERM_MONTHS } from "../constants";
 import { openingBalance, paymentOffset, propertySchedule } from "../schedule";
 import type { AmortizationRow, Assumptions, LoanEventOutcome } from "../types";

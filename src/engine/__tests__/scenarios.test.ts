@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { applyScenario } from "../scenarios";
 import { portfolioProjection, cpiIndex } from "../projections";
 import { portfolioKpis } from "../kpis";
-import { rateAt, blockEndDate } from "../amortization";
+import { rateAt, blockEndDate } from "../loanRate";
 import { schedulesByProperty } from "../schedule";
 import { powInt, ONE, D, type Decimal } from "../../lib/money";
 import { edate } from "../dates";

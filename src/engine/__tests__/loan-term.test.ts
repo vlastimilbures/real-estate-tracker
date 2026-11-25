@@ -2,12 +2,8 @@
 // amortization-health check (which must NOT walk the schedule — the refix
 // re-amortization always zeroes the balance and masks a bad instalment).
 import { describe, it, expect } from "vitest";
-import {
-  amortizationHealth,
-  termMonths,
-  scheduleMonths,
-  drawMonth,
-} from "../amortization";
+import { amortizationHealth } from "../loanChecks";
+import { termMonths, scheduleMonths, drawMonth } from "../loanTerm";
 import { buildSchedule } from "../schedule";
 import { isoDate } from "../dates";
 import { PMT } from "../../lib/money";

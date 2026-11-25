@@ -2,7 +2,7 @@
 // ADR 0235, moved here unchanged. The frozen golden v1 edge-loan balances, the as-of
 // snapshot tests and the reference edge cases pin it.
 import { FV, ZERO, type Decimal } from "../../../lib/money";
-import { paymentsDueBy } from "../../amortization";
+import { paymentsDueBy } from "../../loanTerm";
 import type { MortgageBlock } from "../../types";
 
 /**

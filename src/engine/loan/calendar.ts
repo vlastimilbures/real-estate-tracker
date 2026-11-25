@@ -1,7 +1,8 @@
 // The payment calendar of the loan schedule and its tranche bucketing (D-21).
 import { ZERO, type Decimal } from "../../lib/money";
 import { firstGridMonthOnOrAfter, isAfter, isOnOrBefore } from "../dates";
-import { drawMonth, dueDate, paymentsDueBy, rateAt } from "../amortization";
+import { drawMonth, dueDate, paymentsDueBy } from "../loanTerm";
+import { rateAt } from "../loanRate";
 import type {
   Assumptions,
   IsoDate,

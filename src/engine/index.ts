@@ -27,18 +27,16 @@ export {
 export { openPredecessor, overlappingLeases } from "./succession";
 
 // Loans
+export { isDevLoan, mortgageBlock } from "./loanBlock";
+export { blockEndDate, fixationExpired } from "./loanRate";
+export { suggestedInstalment } from "./loanInstalment";
 export {
   amortizationHealth,
-  blockEndDate,
-  fixationExpired,
   /** @internal test seam (UI model tests) */
   impliedMaturity,
-  isDevLoan,
-  suggestedInstalment,
   maturityMismatch,
-  mortgageBlock,
-  selectBlock,
-} from "./amortization";
+} from "./loanChecks";
+export { selectBlock } from "./loan/blockChain";
 export {
   /** @internal test seam (CSV import tests) */
   MAX_LOAN_TERM_MONTHS,

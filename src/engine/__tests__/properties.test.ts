@@ -4,7 +4,7 @@
 // (D-17); invalid assumptions still assert TODAY's behaviour with a DR reference.
 import { describe, it, expect } from "vitest";
 import fc from "fast-check";
-import { termMonths } from "../amortization";
+import { termMonths } from "../loanTerm";
 import { EngineInputError } from "../errors";
 import { buildSchedule, propertySchedules } from "../schedule";
 import { propertySnapshot, leaseInForce, selectValuation } from "../metrics";

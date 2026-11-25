@@ -1,13 +1,11 @@
 // A loan's opening state at baseDate: the catch-up from startDate (D-30, ADR 0109).
 import { ZERO, type Decimal } from "../../lib/money";
 import { isAfter, isOnOrBefore } from "../dates";
-import {
-  isDevLoan,
-  paymentsDueBy,
-  rateAt,
-  scheduledInstalment,
-  selectBlock,
-} from "../amortization";
+import { isDevLoan } from "../loanBlock";
+import { paymentsDueBy } from "../loanTerm";
+import { rateAt } from "../loanRate";
+import { scheduledInstalment } from "../loanInstalment";
+import { selectBlock } from "./blockChain";
 import { assertBlockStarts, assertLoanInputs } from "../validate";
 import type { Assumptions, MortgageBlock, PlainLoan } from "../types";
 import {

@@ -4,7 +4,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import { money, rate } from "../brands";
 import { isoDate } from "../dates";
 import { COST_KEYS } from "../figures";
-import { derivedTermProblem } from "../amortization";
+import { derivedTermProblem } from "../loanTerm";
 import { validateInputs } from "../validate";
 import { checkSigns, isNegativeAmount, type Report } from "../validate/check";
 import {

@@ -14,7 +14,8 @@ import {
 } from "../financing";
 import { propertySchedules, type PropertySchedule } from "../schedule";
 import { portfolioOutputs } from "../outputs";
-import { impliedMaturity, mortgageBlock } from "../amortization";
+import { impliedMaturity } from "../loanChecks";
+import { mortgageBlock } from "../loanBlock";
 import { edate, isoDate } from "../dates";
 import { money, rate } from "../brands";
 import { ZERO } from "../../lib/money";

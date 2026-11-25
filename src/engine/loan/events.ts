@@ -6,7 +6,7 @@ import {
   paymentOnOrAfter,
   paymentsDueBy,
   termMonths,
-} from "../amortization";
+} from "../loanTerm";
 import type {
   Assumptions,
   LoanEventIssue,

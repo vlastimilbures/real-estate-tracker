@@ -27,7 +27,7 @@ sources (C-15: the direct fetch of Act No. 257/2016 Coll. returned HTTP 403).
 | Row fields            | `AmortizationRow { month, date, ratePa, instalment, interest, principal, drawn, endBalance }`; identity `end = prev − principal + drawn` (DR-092; as of P4c)                                                                                                                                                           |
 | Projection            | `src/engine/yearGrid.ts` `yearSlice` (sums a year's rows); `src/engine/projections.ts` `buildYearRow`; `ProjectionYear.draws`                                                                                                                                                                                          |
 | KPIs / IRR cash flows | `src/engine/kpis.ts` `leveredCashFlows`, `principalRepaidInHorizon`; `src/engine/ownerCash.ts` `acquisitionOutflows`, `refinanceCash` (cash outside the projection rows)                                                                                                                                               |
-| Term and maturity     | `src/engine/amortization.ts` `termMonths` (D-08), `scheduleMonths`, `impliedMaturity` / `maturityMismatch` (D-29), `currentBalance` (closed-form FV; deleted from the engine by ADR 0235, now test-only in `src/engine/__tests__/support/closedForm.ts`)                                                               |
+| Term and maturity     | `src/engine/loanTerm.ts` `termMonths` (D-08), `scheduleMonths`; `src/engine/loanChecks.ts` `impliedMaturity` / `maturityMismatch` (D-29); `currentBalance` (closed-form FV; deleted from the engine by ADR 0235, now test-only in `src/engine/__tests__/support/closedForm.ts`)                                        |
 | Validation            | `src/engine/validate/` `ValidationCode`, `checkMortgage`, `LOAN_ERROR_CODES` (raise), `validateInputs` (report)                                                                                                                                                                                                        |
 | Scenarios             | `src/engine/scenarios.ts` `applyScenario`: overrides Assumptions only, never portfolio data (CLAUDE.md)                                                                                                                                                                                                                |
 | Persistence           | `mortgage_blocks` table (`src/data/migrations/`), `src/data/mappers.ts` (the `draws` JSON column is the precedent), `src/data/backup.ts` `BACKUP_COLUMNS`                                                                                                                                                              |
@@ -79,7 +79,7 @@ not in code: `prepaymentAllowance?: { pct: Rate; base: "total" | "remaining"; wi
 and optionally `earlyRepaymentFee?: { pctPerYearLeft: Rate; cap: Rate }`.
 
 **Engine hooks.** No new schedule mechanics: the prepayment is applied exactly as in feature 1.
-New pure helpers in `amortization.ts`: `anniversaryWindows(block, from, to)` (dates from
+New pure helpers in `loanTerm.ts`: `anniversaryWindows(block, from, to)` (dates from
 `startDate`, the contract anniversary) and `allowanceCheck(block, prepayment, balance, a)`
 returning `{ inWindow, overLimit, fee }`. `validate/`: report-only codes
 `PREPAYMENT_OUTSIDE_WINDOW`, `PREPAYMENT_OVER_ALLOWANCE` (warnings, not raises: the owner may pay
@@ -112,7 +112,7 @@ column (P5b). Validation: `INVALID_PAYMENT_DAY` (raise) outside 1–31.
 **Engine hooks.** Today every due date is `EDATE(startDate, p)` (D-21, J-03 a′). A payment day
 changes only that cadence anchor:
 
-- New helper `dueDate(block, p)` in `dates.ts`/`amortization.ts`: day `paymentDay` (clamped to month
+- New helper `dueDate(block, p)` in `dates.ts`/`loanTerm.ts`: day `paymentDay` (clamped to month
   end) in the month of `EDATE(startDate, p)`, or the first due date after the start when the
   payment day falls before the start day.
 - Replace the cadence anchor in `rateOfPayment`, `paymentOffset` / `lastPaymentDue`

@@ -5,7 +5,7 @@ import { bench, describe } from "vitest";
 import { D } from "../../../lib/money";
 import { money, rate } from "../../brands";
 import { irrResult } from "../../kpis";
-import { mortgageBlock } from "../../amortization";
+import { mortgageBlock } from "../../loanBlock";
 import { edate } from "../../dates";
 import { schedulesByProperty } from "../../schedule";
 import {

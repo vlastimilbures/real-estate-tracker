@@ -5,12 +5,9 @@
 //   • a loan is a property's block chain (D-27), its payoff the schedule's last payment.
 // Dates are modelled from the entered data, not lender deadlines (the wording is UI).
 import { ZERO, type Decimal } from "../lib/money";
-import {
-  blockEndDate,
-  isDevLoan,
-  mortgageBlock,
-  selectBlock,
-} from "./amortization";
+import { blockEndDate } from "./loanRate";
+import { isDevLoan, mortgageBlock } from "./loanBlock";
+import { selectBlock } from "./loan/blockChain";
 import { DEBT_FREE_EPSILON } from "./constants";
 import { edate, firstAfter, isAfter, isOnOrBefore } from "./dates";
 import { leaseInForce } from "./metrics";

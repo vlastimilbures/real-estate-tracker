@@ -3,7 +3,7 @@
 import { describe, it, expect } from "vitest";
 import { money, rate } from "../brands";
 import { edate, isoDate } from "../dates";
-import { termMonths } from "../amortization";
+import { termMonths } from "../loanTerm";
 import { effectiveMaturity } from "../schedule";
 import type { MortgageBlock } from "../types";
 import { assumptions, portfolio } from "./support/seed";

@@ -6,7 +6,7 @@ import { describe, it, expect } from "vitest";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
-import { isDevLoan } from "../amortization";
+import { isDevLoan } from "../loanBlock";
 import {
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedule,

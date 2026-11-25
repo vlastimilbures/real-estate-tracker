@@ -3,7 +3,8 @@
 // reads each block's fixation end as `rateAt` does (`rateFixedUntil`); each block's
 // maturity in force comes from its schedule (ADR 0116). No rate maths: a block is hit
 // when its first payment past the fixation end and baseDate is shocked and counted.
-import { dueDate, rateFixedUntil } from "./amortization";
+import { dueDate } from "./loanTerm";
+import { rateFixedUntil } from "./loanRate";
 import { edate, isAfter } from "./dates";
 import {
   afterSuccessor,

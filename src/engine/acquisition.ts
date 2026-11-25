@@ -4,7 +4,9 @@
 import { ZERO, type Decimal } from "../lib/money";
 import { firstAfter, isAfter, isOnOrBefore } from "./dates";
 import { forProperty } from "./metrics";
-import { fundedThePurchase, isDevLoan, selectBlock } from "./amortization";
+import { fundedThePurchase } from "./acquisitionLoan";
+import { isDevLoan } from "./loanBlock";
+import { selectBlock } from "./loan/blockChain";
 import { openingBalance } from "./schedule";
 import { principalDrawnBy } from "./growth";
 import type { Assumptions, MortgageBlock, Portfolio, Property } from "./types";
