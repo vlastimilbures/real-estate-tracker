@@ -58,6 +58,20 @@ describe("annuityPayment", () => {
   });
 });
 
+describe("annuityPayment of a zero principal", () => {
+  // Excel's form, PMT(r, n, −0), gave −0 (−(+0)); this gives +0. Equal as numbers and not
+  // observable: a zero principal is accepted by validateInputs, but fmtCzk shows both as
+  // "0 Kč", CSV writes toString, and the mortgage form asks for a principal above 0.
+  it("is +0, at a rate and at 0 %", () => {
+    for (const r of [D("0.05").div(12), D(0)]) {
+      const pay = annuityPayment(r, 360, D(0));
+      expect(pay.isZero()).toBe(true);
+      expect(pay.isNegative()).toBe(false);
+      expect(PMT(r, 360, D(0).negated()).isNegative()).toBe(true);
+    }
+  });
+});
+
 describe("balanceAfter", () => {
   it(
     "is Excel's FV with the instalment paid out, negated, digit for digit",
