@@ -13,7 +13,7 @@ import { isDevLoan } from "./loanBlock";
 import type { Assumptions, IsoDate, MortgageBlock } from "./types";
 import type { ValidationCode } from "./validate";
 import { EngineInputError } from "./errors";
-import { MAX_LOAN_TERM_MONTHS } from "./constants";
+import { MAX_LOAN_TERM_MONTHS } from "./loanConstants";
 import { monthlyRate, yearsToMonths } from "./units";
 
 /**

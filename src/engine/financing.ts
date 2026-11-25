@@ -9,7 +9,7 @@ import { ZERO, type Decimal } from "../lib/money";
 import { blockEndDate } from "./loanRate";
 import { withoutPrepayments } from "./loanBlock";
 import { selectBlock } from "./loan/blockChain";
-import { DEBT_FREE_EPSILON } from "./constants";
+import { DEBT_FREE_EPSILON } from "./loanConstants";
 import { edate, isAfter, isOnOrBefore } from "./dates";
 import {
   afterSuccessor,

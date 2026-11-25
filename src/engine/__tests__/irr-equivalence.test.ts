@@ -13,7 +13,7 @@ import {
   IRR_MAX_ITERATIONS,
   IRR_NPV_TOLERANCE,
   IRR_SCAN_GRID,
-} from "../constants";
+} from "../irrConstants";
 import { irrResult } from "../kpis";
 import { fcRuns } from "./support/fcRuns";
 

@@ -1,15 +1,15 @@
 // Portfolio KPIs incl. levered IRR (SPEC §4.6), computed from the portfolio
 // projection. Every value is a pure function of (portfolio, assumptions).
 import { ZERO, ONE, type Decimal } from "../lib/money";
+import { DEBT_FREE_EPSILON } from "./loanConstants";
 import {
-  DEBT_FREE_EPSILON,
   IRR_BRACKET_EXTENSIONS,
   IRR_BRACKET_HIGH,
   IRR_BRACKET_LOW,
   IRR_MAX_ITERATIONS,
   IRR_NPV_TOLERANCE,
   IRR_SCAN_GRID,
-} from "./constants";
+} from "./irrConstants";
 import { at } from "./arrays";
 import { propertySchedules, type PropertySchedule } from "./schedule";
 import { assertInputs } from "./validate";

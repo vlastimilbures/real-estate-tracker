@@ -21,7 +21,7 @@ import { D, type Decimal } from "../../lib/money";
 import { NPER } from "./support/excelFinance";
 import { addDays, edate, isoDate } from "../dates";
 import { paymentOnOrAfter, paymentsDueBy } from "../loanTerm";
-import { MAX_LOAN_TERM_MONTHS } from "../constants";
+import { MAX_LOAN_TERM_MONTHS } from "../loanConstants";
 import { openingBalance, paymentOffset, propertySchedule } from "../schedule";
 import type { AmortizationRow, Assumptions, LoanEventOutcome } from "../types";
 import type { RefLoan } from "./reference/mortgageReference";

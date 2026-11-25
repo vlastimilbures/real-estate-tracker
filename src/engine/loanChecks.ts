@@ -5,7 +5,7 @@ import { annuityPayment, balanceAfter } from "./finance";
 import { edate, isAfter } from "./dates";
 import { isDevLoan } from "./loanBlock";
 import { dueDate, termMonths } from "./loanTerm";
-import { FULLY_AMORTIZES_TOLERANCE } from "./constants";
+import { FULLY_AMORTIZES_TOLERANCE } from "./loanConstants";
 import type { IsoDate, MortgageBlock } from "./types";
 import { monthlyRate } from "./units";
 
