@@ -4,7 +4,6 @@ import { describe, it, expect, afterEach } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
 import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
-import { schemaAt } from "./support/schemaAt";
 import { exportToJson } from "../backup";
 import { checkInputRules } from "../../state/restoreRules";
 import { restoreFromJson } from "./support/reads";
@@ -58,30 +57,6 @@ describe("seedIfEmpty — first run only (DR-024)", () => {
         },
       },
       checkInputRules,
-    );
-
-    expect(await launch()).toBe(false);
-    expect(await propertyCount()).toBe(0);
-  });
-
-  it("treats an existing pre-flag database (schema v4) as already seeded", async () => {
-    // Synthetic v4 DB: launched before (assumptions row present), portfolio emptied.
-    sql = await schemaAt(4);
-    const fresh = openMemorySql();
-    await migrate(fresh);
-    await seedIfEmpty(fresh);
-    const [assumptions] = await fresh.select<Record<string, unknown>>(
-      "SELECT * FROM assumptions",
-    );
-    fresh.db.close();
-    // Only the columns v4 has (later migrations add more).
-    const v4 = await sql.select<{ name: string }>(
-      "SELECT name FROM pragma_table_info('assumptions')",
-    );
-    const cols = v4.map((c) => c.name);
-    await sql.execute(
-      `INSERT INTO assumptions (${cols.join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`,
-      cols.map((c) => assumptions[c]),
     );
 
     expect(await launch()).toBe(false);

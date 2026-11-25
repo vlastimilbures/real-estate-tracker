@@ -20,6 +20,7 @@ export interface BootView {
 const LASTING = new Set<DataErrorCode>([
   "DB_INTEGRITY",
   "DB_NEWER",
+  "DB_TOO_OLD",
   "MIGRATION_CONFLICT",
 ]);
 

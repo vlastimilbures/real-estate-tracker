@@ -3,7 +3,7 @@
 import { describe, it, expect } from "vitest";
 import { describeWriteError, formWriteErrors } from "../writeError";
 import { getDict } from "../../../i18n";
-import { MIGRATIONS, V7_TABLES } from "../../../data/migrations";
+import { BASELINE, MIGRATIONS } from "../../../data/migrations";
 import type { WriteError } from "../../../state/writeError";
 
 const en = getDict("en");
@@ -70,7 +70,9 @@ describe("describeWriteError", () => {
   });
 
   it("translates every v7 CHECK constraint (tripwire for new ones)", () => {
-    const names = V7_TABLES.flatMap((t) => t.checks.map((c) => c.name));
+    const names = [...BASELINE.sql.matchAll(/CONSTRAINT (\w+) CHECK/g)].map(
+      (x) => x[1] ?? "",
+    );
     expect(names.length).toBeGreaterThan(20);
     for (const name of names) {
       expect(describeWriteError(en, check(name)).message, name).not.toBe(

@@ -107,6 +107,17 @@ describe("per-code screen (#115)", () => {
     expect(button(en.app.tryAgain)).toBeNull();
   });
 
+  it("DB_TOO_OLD: the message and the data folder, no Try again (ADR 0230)", () => {
+    fail("DB_TOO_OLD");
+    render(<App />);
+    expect(alert().textContent).toContain(
+      "This database was last opened with a version older than 1.4.0. Open it once with version 1.5.0, then update.",
+    );
+    expect(alert().textContent).not.toContain(en.app.bootRetryHint);
+    expect(button(en.app.tryAgain)).toBeNull();
+    expect(button(en.boot.showDataFolder)).not.toBeNull();
+  });
+
   it("MIGRATION_CONFLICT at the first step: nothing changed, records involved", () => {
     fail("MIGRATION_CONFLICT", ['properties "A", "A": duplicate name'], {
       from: 6,

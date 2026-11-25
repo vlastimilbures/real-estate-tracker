@@ -8,6 +8,8 @@ export type DataErrorCode =
   | "DB_INTEGRITY"
   /** The database was written by a newer app version (DR-022). */
   | "DB_NEWER"
+  /** The database is below the version 8 baseline (ADR 0230): refused unchanged. */
+  | "DB_TOO_OLD"
   /** Existing rows would break a pending migration's new constraints. */
   | "MIGRATION_CONFLICT"
   /** The pre-migration backup could not be written or verified. */

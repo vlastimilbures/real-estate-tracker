@@ -2,8 +2,8 @@
 //! the app ships. Every Vitest migration test runs on better-sqlite3's newer SQLite, so
 //! SQL that only a newer engine accepts would otherwise pass CI and fail on first launch.
 //! The fixture is generated from `src/data/migrations.ts` and kept in step by
-//! `src/data/__tests__/migrationsFixture.test.ts`. Only the DDL is covered here: a
-//! migration's `precheck` and `build` run in TypeScript. Never touches the real database.
+//! `src/data/__tests__/migrationsFixture.test.ts`: the version 8 baseline first (ADR 0230),
+//! then every later step. Never touches the real database.
 
 use app_lib::db::{run_atomic, Statement};
 use serde_json::Value;
@@ -43,10 +43,9 @@ async fn count(pool: &Pool<Sqlite>, table: &str) -> i64 {
         .get(0)
 }
 
-/// Synthetic rows that the v1 schema accepts (the same values as `fill()` in
-/// `src/data/__tests__/migrations.test.ts`), so every later migration, the v7 table
-/// rebuild included, runs over real data.
-const V1_ROWS: &str = "
+/// Synthetic rows that the version 8 baseline accepts (the values of `fill()` in
+/// `src/data/__tests__/migrations.test.ts`), so every later migration runs over real data.
+const BASELINE_ROWS: &str = "
     INSERT INTO properties (id, name, address, type, size_m2, garage, purchase_date, purchase_price, appreciation_override_pa) VALUES ('p1', 'Flat One', 'Street 1', '2+kk', 55, 1, '2023-02-01', '7500000.50', '0.03');
     INSERT INTO properties (id, name, purchase_date, purchase_price) VALUES ('p2', 'Flat Two', '2024-05-10', '4200000');
     INSERT INTO mortgage_blocks (id, property_id, start_date, initial_principal, fixation_years, interest_rate_pa, monthly_instalment) VALUES ('m1', 'p1', '2023-02-01', '5000000', 5, '0.0449', '21576.4');
@@ -68,13 +67,11 @@ const ROW_COUNTS: [(&str, i64); 7] = [
 ];
 
 /// Applies one migration as the app does: its SQL as one multi-statement text inside a
-/// transaction (DR-084), with foreign keys off for a table rebuild. Empty SQL is
-/// skipped, as `migrationText` skips it.
+/// transaction (DR-084). Empty SQL is skipped, as `migrationText` skips it.
 async fn apply(pool: &Pool<Sqlite>, migration: &Value) {
     let version = migration["version"].as_i64().unwrap();
     let name = migration["name"].as_str().unwrap();
     let sql = migration["sql"].as_str().unwrap();
-    let fk_off = migration["foreignKeysOff"].as_bool().unwrap();
     if sql.trim().is_empty() {
         return;
     }
@@ -82,7 +79,7 @@ async fn apply(pool: &Pool<Sqlite>, migration: &Value) {
         query: sql.to_string(),
         params: vec![],
     };
-    if let Err(e) = run_atomic(pool, &[statement], fk_off).await {
+    if let Err(e) = run_atomic(pool, &[statement], false).await {
         panic!("migration v{version} ({name}) failed on the bundled SQLite: {e}");
     }
 }
@@ -100,7 +97,7 @@ async fn every_migration_runs_on_the_bundled_sqlite_and_keeps_the_rows() {
     println!("bundled SQLite {version}");
 
     apply(&pool, &migrations[0]).await;
-    pool.execute(V1_ROWS).await.unwrap();
+    pool.execute(BASELINE_ROWS).await.unwrap();
     for migration in &migrations[1..] {
         apply(&pool, migration).await;
     }
@@ -191,7 +188,7 @@ async fn the_selling_cost_column_defaults_to_zero_and_checks_its_range() {
     let migrations = fixture["migrations"].as_array().unwrap();
     let (path, pool) = open("selling-cost").await;
     apply(&pool, &migrations[0]).await;
-    pool.execute(V1_ROWS).await.unwrap();
+    pool.execute(BASELINE_ROWS).await.unwrap();
     for migration in &migrations[1..] {
         apply(&pool, migration).await;
     }

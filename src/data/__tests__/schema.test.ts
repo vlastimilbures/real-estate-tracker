@@ -4,7 +4,7 @@
 // alone fails until the description has it.
 import { describe, it, expect } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
-import { migrate } from "../migrations";
+import { BASELINE, migrate } from "../migrations";
 import {
   TABLES,
   columnNames,
@@ -238,10 +238,11 @@ describe("schema description (#470)", () => {
   });
 
   it("each column's addedIn is the migration that added it", async () => {
+    // Columns of versions 1–8 are all in the version 8 baseline (ADR 0230).
     for (const [table, spec] of Object.entries(TABLES))
       for (const c of spec.columns) {
         const at = async (v: number) => {
-          const db = await schemaAt(v);
+          const db = await schemaAt(Math.max(v, BASELINE.version));
           const cols = await db.select<{ name: string }>(
             "SELECT name FROM pragma_table_info(?)",
             [table],
@@ -252,7 +253,7 @@ describe("schema description (#470)", () => {
         expect(await at(c.addedIn), `${table}.${c.name} at v${c.addedIn}`).toBe(
           true,
         );
-        if (c.addedIn > 1)
+        if (c.addedIn > BASELINE.version)
           expect(
             await at(c.addedIn - 1),
             `${table}.${c.name} before v${c.addedIn}`,

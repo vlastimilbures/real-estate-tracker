@@ -9,14 +9,6 @@
       "Function 'parseOverrides'": 22
     }
   },
-  "src/data/migrations.ts": {
-    "complexity": {
-      "Async function 'migrate'": 16
-    },
-    "lines": {
-      "Async function 'migrate'": 98
-    }
-  },
   "src/state/uiStore.ts": {
     "lines": {
       "Arrow function (useUiStore: create)": 138

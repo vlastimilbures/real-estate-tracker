@@ -1,7 +1,8 @@
 // Backup round-trip test: export → restore produces identical data + identical engine output.
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
-import { migrate, MIGRATIONS } from "../migrations";
+import { migrate } from "../migrations";
+import { TABLES, type TableSpec } from "../schema";
 import { seedIfEmpty } from "../seed";
 import {
   exportToJson,
@@ -319,10 +320,14 @@ async function rowCounts(db: Sql): Promise<Record<string, number>> {
   return out;
 }
 
-/** Per backup table, the columns of the head schema that the v1 schema lacks. */
+/** Per backup table, the columns of the head schema that the v1 schema lacked (from the
+ *  schema description's `addedIn`: the v1 DDL is gone since ADR 0230). */
 async function columnsAddedAfterV1(): Promise<Record<string, string[]>> {
-  const v1 = openMemorySql();
-  v1.db.exec(MIGRATIONS[0]!.sql);
+  const tables: Readonly<Record<string, TableSpec>> = TABLES;
+  const v1Columns = (table: string): string[] =>
+    (tables[table]?.columns ?? [])
+      .filter((c) => c.addedIn === 1)
+      .map((c) => c.name);
   const head = openMemorySql();
   await migrate(head);
   const names = async (db: Sql, table: string) =>
@@ -334,11 +339,10 @@ async function columnsAddedAfterV1(): Promise<Record<string, string[]>> {
     ).map((c) => c.name);
   const out: Record<string, string[]> = {};
   for (const table of Object.keys(BACKUP_COLUMNS)) {
-    const old = await names(v1, table);
+    const old = v1Columns(table);
     expect(old.length, `${table} exists at v1`).toBeGreaterThan(0);
     out[table] = (await names(head, table)).filter((c) => !old.includes(c));
   }
-  v1.db.close();
   head.db.close();
   return out;
 }

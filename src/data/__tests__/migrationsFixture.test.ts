@@ -1,7 +1,8 @@
 // #118 (R3-10): the app runs its migrations on the SQLite that sqlx bundles (3.46), while
 // every Vitest test uses better-sqlite3's newer copy. `src-tauri/tests/migrations_sql.rs`
 // applies the real migration SQL on the bundled engine; this test keeps its fixture in
-// step with MIGRATIONS. After changing a migration, regenerate it with
+// step with BASELINE and MIGRATIONS (ADR 0230: the baseline is the first entry). After
+// changing a migration, regenerate it with
 //   UPDATE_FIXTURES=1 pnpm vitest run src/data/__tests__/migrationsFixture.test.ts
 // and format it (`pnpm exec prettier --write src-tauri/tests/fixtures/migrations.json`;
 // the comparison is on parsed JSON, so formatting never fails it).
@@ -9,7 +10,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import { openMemorySql } from "./betterSqlite";
-import { migrate, MIGRATIONS } from "../migrations";
+import { BASELINE, migrate, MIGRATIONS } from "../migrations";
 import { BACKUP_COLUMNS } from "../backup";
 
 const FIXTURE = join(
@@ -23,8 +24,8 @@ const FIXTURE = join(
   "migrations.json",
 );
 
-/** What the Rust test needs: each migration's SQL (its `precheck` and `build` are JS
- *  only) and the head schema's columns per table, as better-sqlite3 reports them. */
+/** What the Rust test needs: the baseline's and each later step's SQL, and the head
+ *  schema's columns per table, as better-sqlite3 reports them. */
 async function expected(): Promise<unknown> {
   const db = openMemorySql();
   await migrate(db);
@@ -38,12 +39,14 @@ async function expected(): Promise<unknown> {
   }
   db.db.close();
   return {
-    migrations: MIGRATIONS.map((m) => ({
-      version: m.version,
-      name: m.name,
-      sql: m.sql,
-      foreignKeysOff: m.foreignKeysOff ?? false,
-    })),
+    migrations: [
+      { version: BASELINE.version, name: "baseline", sql: BASELINE.sql },
+      ...MIGRATIONS.map((m) => ({
+        version: m.version,
+        name: m.name,
+        sql: m.sql,
+      })),
+    ],
     headColumns,
   };
 }

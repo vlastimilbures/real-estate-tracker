@@ -185,6 +185,9 @@ export const en = {
       "The database file failed its integrity check. Nothing was changed.",
     DB_NEWER:
       "This database was saved by a newer version of the app. Nothing was changed. Open it with that version.",
+    // ADR 0230: below the version 8 baseline.
+    DB_TOO_OLD:
+      "This database was last opened with a version older than 1.4.0. Open it once with version 1.5.0, then update.",
     MIGRATION_CONFLICT:
       "The database upgrade stopped before changing anything: some saved records conflict with the new data rules. Correct them in the previous app version, then open this version again.",
     MIGRATION_BACKUP_FAILED:
