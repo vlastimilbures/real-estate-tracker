@@ -16,7 +16,7 @@ import {
   scheduleRows,
   undrawnPrincipal,
 } from "./schedule";
-import { assertAsOf, assertInputs } from "./validate";
+import { assertAsOf, assertInputs, type ValidInputs } from "./validate";
 import { basisDate, growthRate, openingGrowthRate, valueAt } from "./growth";
 import {
   COST_KEYS,
@@ -245,14 +245,13 @@ export function propertySnapshot(
   asOf: IsoDate = assumptions.baseDate,
   schedule?: AmortizationRow[],
 ): PropertySnapshot {
-  assertInputs(portfolio, assumptions); // D-37
+  const v = assertInputs(portfolio, assumptions); // D-37
   assertAsOf(asOf, assumptions.baseDate); // D-19: no snapshot before the projection start
   const rows =
     schedule ??
     propertySchedule(forProperty(portfolio.mortgages, property.id), assumptions)
       .rows;
-  return snapshotProperty(property, portfolio, assumptions, asOf, rows)
-    .snapshot;
+  return snapshotProperty(property, v, asOf, rows).snapshot;
 }
 
 /** A property snapshot and the rate in force at its `asOf` (0 without debt). */
@@ -272,16 +271,16 @@ function weightedRateNumerator(rated: RatedSnapshot[]): Decimal {
 }
 
 /**
- * `propertySnapshot` on inputs and an as-of date the caller has already validated
- * (DR-128), with the rate `portfolioSnapshot` weights by the debt (ADR 0177).
+ * `propertySnapshot` on validated inputs and an as-of date the caller has already
+ * checked (DR-128), with the rate `portfolioSnapshot` weights by the debt (ADR 0177).
  */
 function snapshotProperty(
   property: Property,
-  portfolio: Portfolio,
-  assumptions: Assumptions,
+  v: ValidInputs,
   asOf: IsoDate,
   schedule: AmortizationRow[],
 ): RatedSnapshot {
+  const { portfolio, assumptions } = v;
   const blocks = forProperty(portfolio.mortgages, property.id);
   // A development property is valued at its completed value (ADR 0166).
   const value = valueAsOf(
@@ -349,6 +348,7 @@ function portfolioStocks(st: ReturnType<typeof stocksOf>) {
 /**
  * Portfolio snapshot at `asOf`. Pass `schedules` (the rows from `propertySchedules` on the
  * same inputs) to reuse them; omitted ones are built here (DR-042, DR-118).
+ * @internal test seam: tests pin it; the app runs `portfolioOutputs`.
  */
 export function portfolioSnapshot(
   portfolio: Portfolio,
@@ -356,7 +356,7 @@ export function portfolioSnapshot(
   asOf: IsoDate = assumptions.baseDate,
   schedules?: Map<string, AmortizationRow[]>,
 ): PortfolioSnapshot {
-  assertInputs(portfolio, assumptions); // D-37
+  const v = assertInputs(portfolio, assumptions); // D-37
   // D-19, checked once so an empty portfolio raises too (ADR 0075, DR-131).
   assertAsOf(asOf, assumptions.baseDate);
   const built =
@@ -368,8 +368,20 @@ export function portfolioSnapshot(
         assumptions,
       ),
     );
-  const rated = portfolio.properties.map((p) =>
-    snapshotProperty(p, portfolio, assumptions, asOf, built.get(p.id) ?? []),
+  return snapshotPortfolio(v, asOf, built);
+}
+
+/**
+ * `portfolioSnapshot` on validated inputs, an as-of date the caller has already checked
+ * (`assertAsOf`) and the rows of every property's schedule (DR-128).
+ */
+export function snapshotPortfolio(
+  v: ValidInputs,
+  asOf: IsoDate,
+  schedules: Map<string, AmortizationRow[]>,
+): PortfolioSnapshot {
+  const rated = v.portfolio.properties.map((p) =>
+    snapshotProperty(p, v, asOf, schedules.get(p.id) ?? []),
   );
   const perProperty = rated.map((r) => r.snapshot);
   // Not-yet-owned and deactivated properties are listed but excluded from current totals,

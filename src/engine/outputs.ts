@@ -1,17 +1,17 @@
-// The one-pass engine run for the UI's recompute path (P9, DR-042). The separate public
+// The one-pass engine run the app's recompute path uses (DR-042). The separate public
 // calls each rebuild every loan schedule (and the KPIs rebuild the projection); this
 // builds the schedules once and shares them. The results are exactly those of the
-// separate calls, made in the same order, so the same error is thrown first. The
-// projection + KPIs pass (`projectionAndKpis`) lives in kpis.ts, next to `portfolioKpis`,
-// which reads it.
+// separate calls, and its steps run in the same order as before, so the same error is
+// raised first. The projection + KPIs sequence (`runPortfolio`) lives in kpis.ts, shared
+// with `projectionAndKpis`.
 import {
   propertySchedules,
   scheduleRows,
   type PropertySchedule,
 } from "./schedule";
-import { portfolioSnapshot } from "./metrics";
-import { projectPortfolioParts } from "./projections";
-import { kpisFrom } from "./kpis";
+import { snapshotPortfolio } from "./metrics";
+import { assertAsOf, assertInputs } from "./validate";
+import { runPortfolio } from "./kpis";
 import { financingExposure, type FinancingExposure } from "./financing";
 import type {
   AmortizationRow,
@@ -53,17 +53,17 @@ export function portfolioOutputs(
       assumptions,
     );
   const rows = scheduleRows(built);
-  const snapshot = portfolioSnapshot(portfolio, assumptions, asOf, rows); // D-37
-  const { years: projection, prePurchase } = projectPortfolioParts(
-    portfolio,
-    assumptions,
-    built,
-  );
+  // Validated after the schedules are built, as `portfolioSnapshot` on them would: the
+  // order decides which error is raised first.
+  const v = assertInputs(portfolio, assumptions); // D-37
+  assertAsOf(asOf, assumptions.baseDate); // D-19
+  const snapshot = snapshotPortfolio(v, asOf, rows);
+  const { projection, kpis } = runPortfolio(v, built);
   return {
     schedules: rows,
     snapshot,
     projection,
-    kpis: kpisFrom(portfolio, assumptions, projection, built, prePurchase),
+    kpis,
     financing: financingExposure(portfolio, assumptions, built, asOf),
   };
 }

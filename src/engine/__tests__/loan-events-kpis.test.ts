@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 import { money } from "../brands";
 import { isoDate } from "../dates";
 import { ZERO, type Decimal } from "../../lib/money";
-import { portfolioProjection, buildCpiIndex } from "../projections";
+import { portfolioProjection, cpiIndex as buildCpiIndex } from "../projections";
 import { realProjection } from "../real";
 import { portfolioKpis } from "../kpis";
 import { financingExposure } from "../financing";

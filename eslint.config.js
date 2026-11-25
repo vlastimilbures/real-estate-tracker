@@ -130,9 +130,10 @@ const engineDateBan = {
 };
 
 // Brands get values only through their constructors (ADR 0074): engine/brands.ts (Money,
-// Rate), engine/dates.ts (IsoDate) and `mortgageBlock` in engine/loanBlock.ts.
+// Rate), engine/dates.ts (IsoDate), `mortgageBlock` in engine/loanBlock.ts and the
+// asserts in engine/validate/entry.ts (ValidInputs, ValidAssumptions).
 const BRAND_TYPES =
-  "/^(Money|Rate|IsoDate|MortgageBlock|PlainLoan|DevelopmentLoan)$/";
+  "/^(Money|Rate|IsoDate|MortgageBlock|PlainLoan|DevelopmentLoan|ValidInputs|ValidAssumptions)$/";
 const brandCastBans = [
   {
     selector: `TSAsExpression > TSTypeReference.typeAnnotation[typeName.name=${BRAND_TYPES}]`,

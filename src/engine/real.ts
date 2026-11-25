@@ -27,7 +27,7 @@ import { monthsToYears, yearsToMonths } from "./units";
  * every date inside the window, so a later one is a caller bug (ADR 0150).
  */
 export function cpiAt(assumptions: Assumptions, asOf: Date): Decimal {
-  assertAssumptions(assumptions);
+  const valid = assertAssumptions(assumptions);
   // Months on the D-21 month-end grid, as value growth counts them (DR-182, ADR 0080).
   const months = lastGridMonthOnOrBefore(assumptions.baseDate, asOf);
   if (months <= 0) return ONE;
@@ -35,7 +35,7 @@ export function cpiAt(assumptions: Assumptions, asOf: Date): Decimal {
     throw new RangeError(
       `cpiAt: as-of ${asOf.toISOString().slice(0, 10)} is past the horizon.`,
     );
-  const cpi = buildCpiIndex(assumptions);
+  const cpi = buildCpiIndex(valid);
   const whole = Math.floor(monthsToYears(months));
   const rest = months - yearsToMonths(whole);
   if (rest === 0) return at(cpi, whole);
