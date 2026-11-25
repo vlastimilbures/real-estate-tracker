@@ -16,7 +16,6 @@ const ASSUMPTIONS: Assumptions = {
   postFixationResetRatePa: rate("0.05"),
   horizonYears: 30,
   inflationPa: rate("0.02"),
-  sellingCostPct: rate("0"), // the stored default (ADR 0183)
   defaults: {
     propertyTaxYr: money("1000"),
     insuranceYr: money("2000"),

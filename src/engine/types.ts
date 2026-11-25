@@ -45,9 +45,8 @@ export interface StoredAssumptions {
   inflationPa: Rate;
   /** Selling costs of a sale at the horizon, as a fraction of the projected market value
    *  in [0, 1] (agent, legal and escrow fees). Taken off the levered IRR's terminal value
-   *  only; net worth stays value minus debt (ADR 0183). Always present: the stored
-   *  column is NOT NULL DEFAULT '0', which a restore fills in too. */
-  sellingCostPct: Rate;
+   *  only; net worth stays value minus debt (ADR 0183). Undefined ⇒ 0. */
+  sellingCostPct?: Rate | undefined;
   defaults: CostDefaults;
 }
 

@@ -2,6 +2,7 @@
 // boundary. Money and rates become TEXT decimal strings, dates TEXT ISO yyyy-mm-dd
 // (CLAUDE.md §5); the extra fields kept for DB fidelity are passed alongside.
 import type { Decimal } from "../lib/money";
+import { SELLING_COST_DEFAULT } from "./schema";
 import {
   drawsToJson,
   isoTextReq,
@@ -128,6 +129,6 @@ export function assumptionsToRow(a: StoredAssumptions): AssumptionsRow {
     default_maint_pct_rent: a.defaults.maintPctRent.toString(),
     default_svj_monthly: a.defaults.svjMonthly.toString(),
     default_other_yr: a.defaults.otherYr.toString(),
-    selling_cost_pct: a.sellingCostPct.toString(),
+    selling_cost_pct: (a.sellingCostPct ?? SELLING_COST_DEFAULT).toString(),
   };
 }

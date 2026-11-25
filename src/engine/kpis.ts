@@ -365,7 +365,7 @@ function kpisFrom(
   const nominalVector = leveredCashFlows(
     proj,
     flows,
-    assumptions.sellingCostPct,
+    assumptions.sellingCostPct ?? ZERO,
   );
   const realVector = nominalVector.map((cf, t) => cf.div(at(cpi, t)));
 
