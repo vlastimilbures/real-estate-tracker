@@ -5,19 +5,10 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { Money, Pct } from "../components/primitives";
 import { EntityPanel, type PanelTable } from "../components/EntityPanel";
 import { moneyDraft, dateDraft } from "../model/formParse";
-import { INT_RANGES } from "../../lib/rules";
 import { fmtDate, fmtCzk } from "../../lib/format";
 import { CZK } from "../../lib/currency";
-import {
-  suggestedInstalmentHint,
-  instalmentFill,
-  mortgageFromForm,
-  DEV_FIELDS,
-  drawdownNotes,
-  loanTypeOf,
-  mortgageDraft,
-} from "../model/mortgageForm";
-import { LoanTypeSwitch } from "../components/LoanTypeSwitch";
+import { mortgageFromForm, mortgageSpecs } from "../model/mortgageForm";
+import { MortgageForm } from "./mortgage/MortgageForm";
 import { dayBefore, openPredecessor, scheduledPrincipal } from "../../engine";
 import type { Valuation, Lease, MortgageBlock } from "../../engine";
 import { type Dictionary } from "../../i18n";
@@ -277,105 +268,7 @@ export function MortgagesPanel({
       }}
       table={{ rows, describe: describeMortgage, onDelete: remove, columns }}
       form={{
-        specs: [
-          {
-            name: "startDate",
-            label: t.propertyDetail.fieldStartDate,
-            kind: "date",
-          },
-          {
-            // Development only: the start draw (the initial principal) is its first row
-            // (ADR 0167).
-            name: "draws",
-            label: t.propertyDetail.fieldDraws,
-            kind: "draws",
-            optional: true,
-            help: t.propertyDetail.helpDraws,
-            lead: {
-              field: "initialPrincipal",
-              dateField: "startDate",
-              label: t.propertyDetail.drawnAtStart,
-              dateFallback: t.propertyDetail.drawnAtStartNoDate,
-            },
-          },
-          {
-            name: "initialPrincipal",
-            label: t.propertyDetail.fieldInitialPrincipal,
-            kind: "money",
-            suffix: CZK.symbol,
-          },
-          {
-            name: "fixationYears",
-            label: t.propertyDetail.fieldFixationYears,
-            kind: "int",
-            suffix: t.common.yearsSuffix,
-            range: INT_RANGES.fixationYears,
-          },
-          {
-            name: "loanTermYears",
-            label: t.propertyDetail.fieldLoanTermYears,
-            kind: "int",
-            suffix: t.common.yearsSuffix,
-            range: INT_RANGES.loanTermYears,
-            optional: true,
-            help: t.propertyDetail.helpLoanTermYears,
-          },
-          {
-            name: "interestRatePa",
-            label: t.propertyDetail.fieldInterestRate,
-            kind: "pct",
-            suffix: "%",
-          },
-          {
-            name: "monthlyInstalment",
-            label: t.propertyDetail.fieldMonthlyInstalment,
-            kind: "money",
-            suffix: CZK.symbol,
-          },
-          {
-            name: "completionDate",
-            label: t.propertyDetail.fieldCompletionDate,
-            kind: "date",
-            optional: true,
-            help: t.propertyDetail.helpCompletionDate,
-          },
-          {
-            name: "contractMaturityDate",
-            label: t.propertyDetail.fieldContractMaturity,
-            kind: "date",
-            optional: true,
-            help: t.propertyDetail.helpContractMaturity,
-          },
-          {
-            name: "prepayments",
-            label: t.propertyDetail.fieldPrepayments,
-            kind: "prepayments",
-            optional: true,
-            help: t.propertyDetail.helpPrepayments,
-          },
-          {
-            name: "recasts",
-            label: t.propertyDetail.fieldRecasts,
-            kind: "recasts",
-            optional: true,
-            help: t.propertyDetail.helpRecasts,
-          },
-        ],
-        draftOf: mortgageDraft,
-        header: (draft, patch, adding) => (
-          <LoanTypeSwitch
-            draft={draft}
-            patch={patch}
-            successorNote={adding && rows.length > 0}
-          />
-        ),
-        hiddenFields: (draft) =>
-          // A development loan shows the initial principal in its drawdown schedule.
-          (draft.loanType ?? loanTypeOf(draft)) === "development"
-            ? ["initialPrincipal"]
-            : DEV_FIELDS,
-        listNotes: (name, draft) =>
-          name === "draws" ? drawdownNotes(t, draft) : null,
+        specs: mortgageSpecs(t),
         build: (v, id) =>
           mortgageFromForm(
             v,
@@ -385,10 +278,9 @@ export function MortgagesPanel({
           ),
         onAdd: add,
         onSave: save,
-        computeHint: (draft) => suggestedInstalmentHint(t, draft),
-        fieldActions: {
-          monthlyInstalment: (draft) => instalmentFill(t, draft),
-        },
+        render: (p) => (
+          <MortgageForm {...p} successorNote={p.adding && rows.length > 0} />
+        ),
       }}
     />
   );

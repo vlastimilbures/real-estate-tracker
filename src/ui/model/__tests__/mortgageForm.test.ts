@@ -9,7 +9,6 @@ import {
   mortgageFromForm,
   loanTypeOf,
 } from "../mortgageForm";
-import { writeRows } from "../loanEventRows";
 import { isoDate, money, rate } from "../../../engine";
 import { getDict } from "../../../i18n";
 
@@ -53,11 +52,10 @@ describe("suggestedInstalmentHint / instalmentFill", () => {
   });
 
   it("development drafts get the term-required wording", () => {
-    const dev = {
-      ...plain,
-      draws: writeRows([{ date: "01.09.2027", amount: "500000" }]),
-    };
-    expect(suggestedInstalmentHint(en, dev)).toMatch(
+    const draws = [
+      { kind: "draws" as const, date: "01.09.2027", amount: "500000" },
+    ];
+    expect(suggestedInstalmentHint(en, plain, draws)).toMatch(
       /— for the amount drawn at start; re-amortizes at each draw and at completion\. Loan term is required\.$/,
     );
     expect(suggestedInstalmentHint(en, { completionDate: "01.01.2028" })).toBe(
@@ -69,11 +67,11 @@ describe("suggestedInstalmentHint / instalmentFill", () => {
 describe("loan type from the draft (ADR 0098, ADR 0167)", () => {
   it("only a tranche row worth saving or a completion date makes it Development", () => {
     expect(loanTypeOf({ draws: "" })).toBe("standard");
-    expect(loanTypeOf({ draws: writeRows([{ date: "", amount: "" }]) })).toBe(
+    expect(loanTypeOf({}, [{ kind: "draws", date: "", amount: "" }])).toBe(
       "standard",
     );
     expect(
-      loanTypeOf({ draws: writeRows([{ date: "01.09.2027", amount: "" }]) }),
+      loanTypeOf({}, [{ kind: "draws", date: "01.09.2027", amount: "" }]),
     ).toBe("development");
     expect(loanTypeOf({ completionDate: "31.03.2028" })).toBe("development");
   });

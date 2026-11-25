@@ -1,41 +1,38 @@
 import { useState } from "react";
-import { useUiStore } from "../../state/uiStore";
-import { useT } from "../hooks/useT";
-import { Button, SegmentedToggle } from "./primitives";
-import { loanTypeOf, type LoanType } from "../model/mortgageForm";
+import { useUiStore } from "../../../state/uiStore";
+import { useT } from "../../hooks/useT";
+import { Button, SegmentedToggle } from "../../components/primitives";
+import type { LoanType } from "../../model/mortgageForm";
 
 /** Standard | Development switch for the mortgage form, plus the successor-block note
  *  on Add when the property already has a block (ADR 0098). The chosen type lives in
- *  the draft under `loanType`. */
+ *  the draft under `loanType`; `onSet` stores it, and for Standard clears what it drops. */
 export function LoanTypeSwitch({
-  draft,
-  patch,
+  type,
+  dataType,
+  onSet,
   successorNote,
 }: {
-  draft: Record<string, string>;
-  patch: (p: Record<string, string>) => void;
+  /** The chosen type. */
+  type: LoanType;
+  /** The type the draft's data shows (a tranche row worth saving, a completion date). */
+  dataType: LoanType;
+  onSet: (next: LoanType) => void;
   successorNote: boolean;
 }) {
   const t = useT();
   const d = t.propertyDetail;
   const openGuide = useUiStore((s) => s.openGuide);
   const [confirming, setConfirming] = useState(false);
-  const type = (draft.loanType ?? loanTypeOf(draft)) as LoanType;
 
   function choose(next: LoanType) {
     if (next === type) return;
-    if (next === "standard" && loanTypeOf(draft) === "development") {
+    if (next === "standard" && dataType === "development") {
       setConfirming(true);
       return;
     }
     setConfirming(false);
-    // Back to Standard with nothing worth keeping: drop any blank tranche row too, so a
-    // hidden row does not leave the form unsaved.
-    patch(
-      next === "standard"
-        ? { loanType: next, draws: "", completionDate: "" }
-        : { loanType: next },
-    );
+    onSet(next);
   }
 
   return (
@@ -76,7 +73,7 @@ export function LoanTypeSwitch({
               variant="danger"
               onClick={() => {
                 setConfirming(false);
-                patch({ loanType: "standard", draws: "", completionDate: "" });
+                onSet("standard");
               }}
             >
               {d.loanTypeClearAndSwitch}

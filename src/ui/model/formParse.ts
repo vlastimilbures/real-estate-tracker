@@ -131,6 +131,22 @@ export interface LeadRow {
   dateFallback: string;
 }
 
+/** Row lists a form keeps beside its text fields (the mortgage's events, ADR 0116). Their
+ *  specs stay in the form's specs, for grid order, label, help and error routing; their
+ *  values are the lists'. */
+export interface FormLists<L> {
+  names: readonly string[];
+  /** Each list's text for the unsaved check, keyed by name. */
+  texts(lists: L): Record<string, string>;
+  /** The lists' values keyed by name, or an error per list that does not parse. */
+  parse(
+    lists: L,
+    t: Pick<Dictionary, "forms">,
+  ): { values: Record<string, unknown>; errors: Record<string, string> };
+  /** The row of an engine error's `index` in list `field`, or null. */
+  rowOf(lists: L, field: string, index: number): number | null;
+}
+
 /** The fields a form shows for this draft: the specs not hidden, and the field a shown
  *  row list shows as its first row (ADR 0167). A save error on any other field goes
  *  above the buttons (ADR 0243). */

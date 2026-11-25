@@ -9,7 +9,8 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AppShell } from "../../components/AppShell";
 import { EntityPanel } from "../../components/EntityPanel";
-import { RecordForm } from "../../components/forms";
+import { RecordForm, RecordFormView } from "../../components/forms";
+import { useRecordForm } from "../../hooks/useRecordForm";
 import { SettingsPage } from "../Settings";
 import { ScenarioForm } from "../ScenarioForm";
 import { Scenarios } from "../Scenarios";
@@ -208,17 +209,23 @@ describe("editing a field clears its error (R5-07)", () => {
   });
 
   it("in RecordForm, by a field action's fill (#125)", async () => {
-    render(
-      <RecordForm
-        specs={[{ name: "amount", label: "Amount", kind: "money" }]}
-        initial={{ amount: "" }}
-        submitLabel="Save"
-        fieldActions={{
-          amount: () => ({ label: "Fill", patch: { amount: "5" } }),
-        }}
-        onSubmit={async () => undefined}
-      />,
-    );
+    const specs = [{ name: "amount", label: "Amount", kind: "money" }] as const;
+    function FillForm() {
+      const form = useRecordForm({
+        specs,
+        initial: { amount: "" },
+        onSubmit: async () => undefined,
+      });
+      return (
+        <RecordFormView
+          form={form}
+          specs={specs}
+          submitLabel="Save"
+          actions={{ amount: { label: "Fill", patch: { amount: "5" } } }}
+        />
+      );
+    }
+    render(<FillForm />);
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     const input = screen.getByLabelText("Amount");
     expect(input.getAttribute("aria-invalid")).toBe("true");

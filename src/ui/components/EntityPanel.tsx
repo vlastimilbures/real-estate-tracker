@@ -2,13 +2,13 @@ import { useId, useState, type ReactNode } from "react";
 import { Plus } from "lucide-react";
 import type { MutationResult } from "../../state/portfolioStore";
 import { Panel, Button } from "./primitives";
-import { RecordForm, type FieldActions } from "./forms";
-import type { ListNotes } from "./LoanEventRows";
+import { RecordForm } from "./forms";
 import { EntityTable } from "./EntityPanelParts";
 import { ConfirmRow } from "./ConfirmRow";
 import type { FieldSpec, ParsedValues } from "../model/formParse";
 import { useT } from "../hooks/useT";
 import { useUiStore } from "../../state/uiStore";
+import type { WriteError } from "../../state/writeError";
 
 const newId = () => crypto.randomUUID();
 
@@ -34,23 +34,27 @@ export interface PanelTable<T> {
   describe?: (row: T) => string;
 }
 
-/** The add/edit form: its specs, the draft of a row and the row built from the values. */
+/** What a panel's add or edit form gets: the row (null when adding) and the save. */
+export interface EntityFormProps<T, S extends readonly FieldSpec[]> {
+  specs: S;
+  row: T | null;
+  adding: boolean;
+  submitLabel: string;
+  unsavedKey: string;
+  onCancel: () => void;
+  onSubmit: (values: ParsedValues<S>) => Promise<WriteError | undefined>;
+}
+
+/** The add/edit form: its specs, the draft of a row and the row built from the values.
+ *  A form of its own (`render`, the mortgage form) takes the place of RecordForm. */
 export interface PanelForm<T, S extends readonly FieldSpec[]> {
   specs: S;
-  draftOf: (r: T | null) => Draft;
+  /** RecordForm's draft of a row (null when adding); blank without it. */
+  draftOf?: (r: T | null) => Draft;
   build: (values: ParsedValues<S>, id: string) => T;
   onAdd: (r: T) => Promise<MutationResult>;
   onSave: (r: T) => Promise<MutationResult>;
-  computeHint?: (draft: Draft) => string | null;
-  fieldActions?: FieldActions<S>;
-  /** Above the form's fields; `adding` is true for a new row (ADR 0098). */
-  header?: (
-    draft: Draft,
-    patch: (p: Draft) => void,
-    adding: boolean,
-  ) => ReactNode;
-  hiddenFields?: (draft: Draft) => readonly string[];
-  listNotes?: (name: string, draft: Draft) => ListNotes | null;
+  render?: (props: EntityFormProps<T, S>) => ReactNode;
 }
 
 type Mode =
@@ -175,36 +179,40 @@ function EntityForm<T extends { id: string }, S extends readonly FieldSpec[]>({
   onClose: () => void;
 }) {
   const tr = useT();
-  const { header } = form;
   const adding = editId === null;
-  const editingRow =
+  const row =
     editId === null ? null : (rows.find((r) => r.id === editId) ?? null);
+  const props: EntityFormProps<T, S> = {
+    specs: form.specs,
+    row,
+    adding,
+    submitLabel: adding ? addLabel : tr.common.saveChanges,
+    unsavedKey,
+    onCancel: onClose,
+    onSubmit: async (values) => {
+      const id = editId ?? newId();
+      const entity = form.build(values, id);
+      const result = adding
+        ? await form.onAdd(entity)
+        : await form.onSave(entity);
+      // Keep the form open (preserving input) on failure, with the failure
+      // shown in the form. Close only when the write actually landed.
+      if (!result.ok) return result.error;
+      // Row actions are disabled while the save runs, so this is still the form
+      // that saved (ADR 0253).
+      onClose();
+      return undefined;
+    },
+  };
+  if (form.render) return form.render(props);
   return (
     <RecordForm
       unsavedKey={unsavedKey}
       specs={form.specs}
-      initial={form.draftOf(editingRow)}
-      submitLabel={adding ? addLabel : tr.common.saveChanges}
+      initial={form.draftOf?.(row) ?? {}}
+      submitLabel={props.submitLabel}
       onCancel={onClose}
-      computeHint={form.computeHint}
-      fieldActions={form.fieldActions}
-      header={header && ((draft, patch) => header(draft, patch, adding))}
-      hiddenFields={form.hiddenFields}
-      listNotes={form.listNotes}
-      onSubmit={async (values) => {
-        const id = editId ?? newId();
-        const entity = form.build(values, id);
-        const result = adding
-          ? await form.onAdd(entity)
-          : await form.onSave(entity);
-        // Keep the form open (preserving input) on failure, with the failure
-        // shown in the form. Close only when the write actually landed.
-        if (!result.ok) return result.error;
-        // Row actions are disabled while the save runs, so this is still the form
-        // that saved (ADR 0253).
-        onClose();
-        return undefined;
-      }}
+      onSubmit={props.onSubmit}
     />
   );
 }

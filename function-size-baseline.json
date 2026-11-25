@@ -17,11 +17,6 @@
       "Function 'AppShell'": 211
     }
   },
-  "src/ui/components/LoanEventRows.tsx": {
-    "lines": {
-      "Function 'LoanEventRows'": 239
-    }
-  },
   "src/ui/components/PropertyFormModal.tsx": {
     "lines": {
       "Function 'PropertyFormModal'": 180

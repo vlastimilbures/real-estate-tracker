@@ -10,7 +10,7 @@ import { PropertyFormModal } from "../PropertyFormModal";
 import { ValuationsPanel } from "../../pages/PropertyEntityPanels";
 import { PropertyDetail } from "../../pages/PropertyDetail";
 import { Scenarios } from "../../pages/Scenarios";
-import { LoanEventRows } from "../LoanEventRows";
+import { LoanEventRows } from "../../pages/mortgage/LoanEventRows";
 import { SampleBanner } from "../SampleBanner";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
@@ -97,7 +97,7 @@ describe("Add buttons (ADR 0201 §2–§4)", () => {
         kind="prepayments"
         name="prepayments"
         label="Prepayments"
-        value=""
+        rows={[]}
         errors={{}}
         onChange={() => undefined}
       />,
