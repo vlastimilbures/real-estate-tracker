@@ -53,6 +53,7 @@ export {
   effectiveMaturity,
   propertySchedules,
 } from "./schedule";
+export type { PropertySchedule } from "./schedule";
 
 // Snapshot, projection, KPIs, scenarios, validation
 export {
@@ -101,6 +102,7 @@ export type {
 } from "./financing";
 export { applyScenario } from "./scenarios";
 export {
+  comparableScenarios,
   leaseOverlapErrors,
   scenarioErrorsAddedBy,
   scenarioRuleErrors,
