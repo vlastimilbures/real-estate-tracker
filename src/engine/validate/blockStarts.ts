@@ -58,7 +58,7 @@ export function refinancesWithinAMonth(
 
 /** A start-date problem on a block. */
 const startError = (code: ValidationCode, b: MortgageBlock) =>
-  rowError("mortgage", b.id, code, "startDate");
+  rowError({ entity: "mortgage", id: b.id }, code, "startDate");
 
 /** Raise DUPLICATE_BLOCK_START for overlapping blocks of one property (D-27, D-43),
  *  then REFINANCE_WITHIN_A_MONTH for blocks starting within a month of the one they

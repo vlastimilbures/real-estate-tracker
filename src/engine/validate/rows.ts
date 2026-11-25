@@ -25,9 +25,11 @@ import { blockIssues } from "./loan";
 
 /** Effective-dated rows: valid dates, finite non-negative amount, end ≥ start. */
 function checkDated<F extends ValidationField>(
-  start: Date,
-  end: Date | undefined,
-  amount: Decimal,
+  {
+    start,
+    end,
+    amount,
+  }: { start: Date; end: Date | undefined; amount: Decimal },
   fields: readonly [start: F, end: F, amount: F],
   report: Report<F>,
 ): void {
@@ -103,18 +105,14 @@ function checkMortgages(p: Portfolio, on: ReporterFor): void {
 function checkValuationsAndLeases(p: Portfolio, on: ReporterFor): void {
   for (const v of p.valuations) {
     checkDated(
-      v.validFrom,
-      v.validTo,
-      v.marketValue,
+      { start: v.validFrom, end: v.validTo, amount: v.marketValue },
       ["validFrom", "validTo", "marketValue"],
       on("valuation", v.id, v.propertyId),
     );
   }
   for (const l of p.leases) {
     checkDated(
-      l.startDate,
-      l.endDate,
-      l.monthlyRent,
+      { start: l.startDate, end: l.endDate, amount: l.monthlyRent },
       ["startDate", "endDate", "monthlyRent"],
       on("lease", l.id, l.propertyId),
     );
@@ -184,6 +182,6 @@ export function leaseOverlapErrors(
   for (const pair of overlappingLeases(portfolio.leases))
     for (const l of pair) named.add(l.id);
   return [...named].map((id) =>
-    rowError("lease", id, "LEASE_OVERLAP", "startDate"),
+    rowError({ entity: "lease", id }, "LEASE_OVERLAP", "startDate"),
   );
 }

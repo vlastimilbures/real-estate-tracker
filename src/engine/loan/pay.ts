@@ -86,7 +86,7 @@ function payAndSettle(
 ): { step: MonthStep; settled: Settled } {
   const { p, draw, fresh, ratePa, io } = mo;
   const terms = termsForTranche(s.terms, fresh, p, ev.contractTerm);
-  const trigger = reamortizes(draw, s.prevInterestOnly, io, ratePa, s.prevRate);
+  const trigger = reamortizes(draw, s, io, ratePa);
   const pay = paymentTerms(terms, trigger, p, s.currentInstalment);
   const step = amortizeMonth(s.balance.plus(draw), ratePa, io, pay);
   const settled = settleEvents(

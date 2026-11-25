@@ -214,17 +214,12 @@ function snapshotIncome(
   const lease = leaseInForce(forProperty(portfolio.leases, property.id), asOf);
   const monthlyRent = lease ? lease.monthlyRent : ZERO;
   const grossAnnualRent = monthlyRent.times(12);
-  const { fixed, mgmtPct, maintPct } = holdingCostBasis(
-    property,
-    portfolio,
-    assumptions,
-  );
+  const costs = holdingCostBasis(property, portfolio, assumptions);
   const { effectiveRent, holdingCosts, noi } = costsAndNoi(
-    fixed,
+    costs.fixed,
     grossAnnualRent,
     assumptions.vacancyAllowance,
-    mgmtPct,
-    maintPct,
+    costs,
   );
   return {
     grossAnnualRent,

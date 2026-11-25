@@ -342,13 +342,7 @@ function computeRentAndCosts(run: PropertyRun, t: number): RentAndCosts {
   const fixed = b.fixed0.times(at(run.cpi, t)).times(ownedMonths).div(12);
   return {
     grossRent,
-    ...costsAndNoi(
-      fixed,
-      grossRent,
-      run.assumptions.vacancyAllowance,
-      b.mgmtPct,
-      b.maintPct,
-    ),
+    ...costsAndNoi(fixed, grossRent, run.assumptions.vacancyAllowance, b),
   };
 }
 

@@ -118,7 +118,7 @@ function spliceSuccessor(
   // successor pays them off too, as `before` already holds them in grid month 1.
   const owed =
     own && kept ? own.endBalance : before.plus(d > 1 && own ? own.drawn : ZERO);
-  const late = handoverPrepayments(current.outcomes, owner, d, kept, owed);
+  const late = handoverPrepayments(current.outcomes, owner, { d, kept, owed });
   const row = handoverRow(drawRow, own, kept);
   const prepaid = row.prepaid.plus(late.applied);
   // The rest of the handover's net new debt (D-47, DR-092) is the refinance difference.
@@ -158,9 +158,7 @@ function spliceSuccessor(
 function handoverPrepayments(
   outcomes: Outcome[],
   owner: MortgageBlock,
-  d: number,
-  kept: boolean,
-  owed: Decimal,
+  { d, kept, owed }: { d: number; kept: boolean; owed: Decimal },
 ): { applied: Decimal; fee: Decimal; outcomes: Outcome[] } {
   const dropped = (o: Outcome) =>
     o.blockId === owner.id &&
