@@ -1,9 +1,6 @@
 import { useState, useEffect, useId, useRef, type RefObject } from "react";
 import { DisclosureButton } from "./Disclosure";
-import {
-  usePortfolioStore,
-  type MutationResult,
-} from "../../state/portfolioStore";
+import { usePortfolioStore } from "../../state/portfolioStore";
 import { dateDraft, moneyDraft, percentDraft } from "../model/formParse";
 import {
   parsePropertyForm,
@@ -18,16 +15,39 @@ import { DateInput } from "./DateInput";
 import { Button, ErrorBanner } from "./primitives";
 import { Modal } from "./Modal";
 import { CZK } from "../../lib/currency";
-import type { Portfolio } from "../../engine";
+import type { Portfolio, Property } from "../../engine";
 import type { WriteError } from "../../state/writeError";
 import { type Dictionary } from "../../i18n";
-import { useSaveBusy } from "../hooks/useSaveBusy";
+import { useFormSubmit, type FormFailure } from "../hooks/useFormSubmit";
 import { useT } from "../hooks/useT";
 import { formWriteErrors } from "../model/writeError";
 import { isDirty } from "../model/dirty";
 
 const snakeToCamel = (k: string) =>
   k.replace(/_([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+
+/** A failed save for this form: a rule tied to a field shows on that field; anything
+ *  else above the buttons. Failures name engine fields (purchaseDate); this form's keys
+ *  are snake_case. */
+function propertyWriteErrors(t: Dictionary, failure: WriteError): FormFailure {
+  const byField = new Map(
+    Object.keys(BLANK_PROPERTY_FORM).map((k) => [snakeToCamel(k), k]),
+  );
+  const split = formWriteErrors(t, failure, [...byField.keys()]);
+  const fieldErrors: Record<string, string> = {};
+  for (const [field, message] of Object.entries(split.fieldErrors)) {
+    const key = byField.get(field); // split only names the fields passed in
+    if (key) fieldErrors[key] = message;
+  }
+  return { fieldErrors, formError: split.formError };
+}
+
+/** What a save writes, once the form's checks pass. */
+interface SaveValues {
+  property: Property;
+  address: string | null;
+  garage: boolean | null;
+}
 
 interface Props {
   mode: "add" | "edit";
@@ -277,17 +297,11 @@ export function PropertyFormModal({
   // is unsaved, so Esc / backdrop clicks are ignored (UX-029). Taken once, like `form`,
   // so a failed save leaves the form unsaved (ADR 0241 §2).
   const [baseline, setBaseline] = useState<PropertyFormState>(form);
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof PropertyFormState, string>>
-  >({});
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saving, setSaving] = useSaveBusy(errors, saveError);
   // Address and garage come from a second read in edit mode. Save waits for it and stays
   // off if it fails, so a save cannot write them NULL (ADR 0184 §3).
   const [extras, setExtras] = useState<"loading" | "ready" | "failed">(
     mode === "edit" ? "loading" : "ready",
   );
-  const canSave = !saving && extras === "ready";
   // Shut on add; open on edit when a record exists, so what is stored is seen (ADR 0119 §9),
   // or when a Data check link asked for it.
   const [fundingOpen, setFundingOpen] = useState(
@@ -297,6 +311,37 @@ export function PropertyFormModal({
         portfolio?.properties.find((x) => x.id === propertyId)?.funding !==
           undefined),
   );
+  // The message above the buttons stays until a save starts or its ✕ (ADR 0262, proposed,
+  // would drop it on an edit).
+  const {
+    busy: saving,
+    errors,
+    formError: saveError,
+    submit,
+    clearFields,
+    dismissFormError,
+  } = useFormSubmit({
+    run: async ({ property, address, garage }: SaveValues) => {
+      const result =
+        mode === "add"
+          ? await addProperty(
+              property,
+              { id: `hc-${property.id}`, propertyId: property.id },
+              { address, garage },
+            )
+          : await editProperty(property, { address, garage });
+      return result.ok ? undefined : result.error;
+    },
+    mapErrors: (failure) => propertyWriteErrors(t, failure),
+    // Keep the modal open on failure so the user can retry; close only on success.
+    onSaved: onClose,
+    // A funding field in error opens the Acquisition section, so the error is seen.
+    onFailed: ({ fieldErrors }) => {
+      if (hasFundingError(fieldErrors)) setFundingOpen(true);
+    },
+    formErrorUntil: "save",
+  });
+  const canSave = !saving && extras === "ready";
   // A Data check link lands on own cash. This parent effect runs after the Modal's,
   // which focuses the first field.
   const fundingRef = useRef<HTMLDivElement>(null);
@@ -327,57 +372,17 @@ export function PropertyFormModal({
 
   function set(field: keyof PropertyFormState, value: string | boolean | null) {
     setForm((f) => ({ ...f, [field]: value }));
-    setErrors((e) => {
-      const copy = { ...e };
-      delete copy[field];
-      return copy;
-    });
+    clearFields([field]);
   }
 
-  // A funding field in error opens the Acquisition section, so the error is seen.
-  function showErrors(next: PropertyFormErrors) {
-    setErrors(next);
-    if (hasFundingError(next)) setFundingOpen(true);
-  }
-
-  async function handleSave() {
+  function check() {
     const existingNames = (portfolio?.properties ?? [])
       .filter((p) => mode === "add" || p.id !== propertyId)
       .map((p) => p.name);
     const result = parsePropertyForm(form, id, existingNames, t);
-    showErrors(result.errors);
-    if (!result.valid) return;
+    if (!result.valid) return { ok: false as const, errors: result.errors };
     const { property, address, garage } = result;
-    setSaving(true);
-    setSaveError(null);
-    let failure: WriteError;
-    try {
-      const saveResult: MutationResult =
-        mode === "add"
-          ? await addProperty(
-              property,
-              { id: `hc-${property.id}`, propertyId: property.id },
-              { address, garage },
-            )
-          : await editProperty(property, { address, garage });
-      // Keep the modal open on failure so the user can retry; close only on success.
-      if (saveResult.ok) return onClose();
-      failure = saveResult.error;
-    } finally {
-      setSaving(false);
-    }
-    // A rule tied to a field shows on that field; anything else above the buttons.
-    // Failures name engine fields (purchaseDate); this form's keys are snake_case.
-    const keys = Object.keys(form) as (keyof PropertyFormState)[];
-    const byField = new Map(keys.map((k) => [snakeToCamel(k), k]));
-    const split = formWriteErrors(t, failure, [...byField.keys()]);
-    const fieldErrors: PropertyFormErrors = {};
-    for (const [field, message] of Object.entries(split.fieldErrors)) {
-      const key = byField.get(field); // split only names the fields passed in
-      if (key) fieldErrors[key] = message;
-    }
-    showErrors(fieldErrors);
-    setSaveError(split.formError);
+    return { ok: true as const, values: { property, address, garage } };
   }
 
   return (
@@ -389,7 +394,7 @@ export function PropertyFormModal({
       onClose={onClose}
       closeLabel={t.common.close}
       onSubmit={() => {
-        if (canSave) void handleSave();
+        if (extras === "ready") void submit(check);
       }}
       dirty={isDirty(baseline, form)}
       busy={saving}
@@ -467,7 +472,7 @@ export function PropertyFormModal({
         <ErrorBanner message={t.propertyForm.errExtrasLoad} />
       )}
       {saveError && (
-        <ErrorBanner message={saveError} onDismiss={() => setSaveError(null)} />
+        <ErrorBanner message={saveError} onDismiss={dismissFormError} />
       )}
     </Modal>
   );

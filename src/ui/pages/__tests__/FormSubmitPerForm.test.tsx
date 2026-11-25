@@ -146,6 +146,13 @@ describe("PropertyFormModal", () => {
     expect(screen.getByRole("alert").textContent).toContain("disk full");
   });
 
+  it("two submits in one tick write once", async () => {
+    addProperty.mockImplementation(never);
+    await fill();
+    submitTwice(dialogForm());
+    expect(addProperty).toHaveBeenCalledTimes(1);
+  });
+
   it("an edit keeps the form-level message (today; ADR 0262 proposed)", async () => {
     await fill();
     await add();
