@@ -15,7 +15,7 @@ import { DateInput } from "../components/DateInput";
 import { InfoTip } from "../components/InfoTip";
 import { PropertySelect } from "../components/PropertySelect";
 import { RowAction } from "../components/RowActions";
-import { layerOpen } from "../hooks/useModalA11y";
+import { anyOpen as layerOpen } from "../layers";
 import { en } from "../../i18n/en";
 
 beforeAll(async () => {

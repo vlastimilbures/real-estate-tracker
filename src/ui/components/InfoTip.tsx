@@ -2,16 +2,10 @@
 // shows it in a small popover under the icon, a click pins it; Escape or a click outside
 // hides it. The text is also the button's description, so a screen reader reads it on
 // focus whether or not it shows.
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useId, useLayoutEffect, useRef, useState } from "react";
 import { Info } from "lucide-react";
 import { useT } from "../hooks/useT";
+import { useDismiss } from "../hooks/useDismiss";
 import { placeTip } from "../model/infoTip";
 
 function place(button: HTMLElement, pop: HTMLElement): void {
@@ -71,29 +65,16 @@ export function InfoTip({
     };
   }, [open, children]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      // Captured first while the user is on the tip (hovering or focused), so a dialog's
-      // own Escape waits until it is gone (ADR 0199). A tip that is only pinned closes and
-      // lets the Escape through: it is not what the user is working on.
-      if (live.current.hovered || live.current.focused) e.stopPropagation();
-      close();
-    };
-    const onDown = (e: Event) => {
-      if (wrap.current?.contains(e.target as Node)) return;
-      close();
-    };
-    window.addEventListener("keydown", onKey, true);
-    document.addEventListener("pointerdown", onDown, true);
-    document.addEventListener("mousedown", onDown, true);
-    return () => {
-      window.removeEventListener("keydown", onKey, true);
-      document.removeEventListener("pointerdown", onDown, true);
-      document.removeEventListener("mousedown", onDown, true);
-    };
-  }, [open, close]);
+  // Escape is heard first of all while the user is on the tip (hovering or focused), and
+  // ends there, so a dialog's own Escape waits until it is gone (ADR 0199). A tip that is
+  // only pinned closes and lets the Escape through: it is not what the user is working on.
+  useDismiss(close, {
+    open,
+    inside: [wrap],
+    escape: "tip",
+    stops: () => live.current.hovered || live.current.focused,
+    outside: "press",
+  });
 
   const setTrigger = (k: "hovered" | "focused", on: boolean) => {
     live.current[k] = on;

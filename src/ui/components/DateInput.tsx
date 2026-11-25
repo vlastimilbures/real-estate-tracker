@@ -2,12 +2,13 @@
 // Manual typing stays the source of truth; the calendar is an additive convenience.
 // String-level contract — the picker just writes a dd.mm.yyyy string — so every path
 // still round-trips through parseDate/dateDraft and the engine parity is untouched.
-import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { Calendar } from "lucide-react";
 import { dateDraft, parseDate } from "../model/formParse";
 import { localDay, localMidnight } from "../../lib/day";
 import { useT } from "../hooks/useT";
+import { useDismiss } from "../hooks/useDismiss";
 import { useFieldControlProps } from "./fieldContext";
 import type { DateCalendar } from "./DateCalendar";
 
@@ -77,33 +78,18 @@ export function DateInput({
     setCoords(null);
   }
 
-  // Lightweight popover dismissal: outside-click + Esc, returning focus to the trigger.
-  // Not a modal (no global focus trap) — it sits inline in a form. The popover is
-  // portaled, so the "inside" check must cover both the field and the popover node.
-  useEffect(() => {
-    if (!open) return;
-    function onDown(e: MouseEvent) {
-      const target = e.target as Node;
-      if (rootRef.current?.contains(target) || popRef.current?.contains(target))
-        return;
+  // Lightweight popover dismissal: outside-click + Esc, Esc returning focus to the
+  // trigger. Not a modal (no global focus trap) — it sits inline in a form. The popover is
+  // portaled, so the "inside" check must cover both the field and the popover node. Esc
+  // is heard `first` and ends there: it closes only the popover, never a modal behind it
+  // (DR-148).
+  useDismiss(
+    (cause) => {
       close();
-    }
-    // Capture phase + stopPropagation: Esc closes only the popover, never a modal
-    // listening on document behind it (DR-148).
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        close();
-        triggerRef.current?.focus();
-      }
-    }
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey, true);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey, true);
-    };
-  }, [open]);
+      if (cause === "escape") triggerRef.current?.focus();
+    },
+    { open, inside: [rootRef, popRef], escape: "first", outside: "mousedown" },
+  );
 
   // Position the fixed popover from the field's rect: below it, or flipped above when
   // there isn't room. Recomputed on scroll/resize so it tracks the field.

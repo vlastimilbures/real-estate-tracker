@@ -7,7 +7,8 @@ import { RowActions, WriteRowAction } from "./RowActions";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import type { MutationResult } from "../../state/portfolioStore";
-import { layerOpen } from "../hooks/useModalA11y";
+import { anyOpen } from "../layers";
+import { isEscape } from "../hooks/useDismiss";
 import { focusLost } from "../focus";
 import {
   focusableFromScript,
@@ -171,7 +172,7 @@ export function ConfirmRow({
       className="confirm-row"
       ref={rowRef}
       onKeyDown={(e) => {
-        if (e.key === "Escape" && !busy && !layerOpen()) cancel();
+        if (isEscape(e) && !busy && !anyOpen()) cancel();
       }}
     >
       <div className="confirm-row-content">

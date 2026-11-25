@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { focusables, focusLost, reachable } from "../focus";
+import { useDismiss } from "./useDismiss";
 
 /**
  * Modal accessibility wiring: Escape-to-close plus moving focus into the dialog on
@@ -13,32 +14,22 @@ import { focusables, focusLost, reachable } from "../focus";
  *   that element has left the page, focus goes to the first reachable focusable element
  *   of its nearest ancestor still on the page, below the app root (ADR 0173).
  *
- * Open dialogs and popovers form a stack (ADR 0157): Escape and the Tab trap act on the
- * top-most one only, so one Escape closes one layer.
+ * Open dialogs and popovers are layers on one stack (ADR 0157, src/ui/layers.ts): Escape
+ * and the Tab trap act on the top-most one only, so one Escape closes one layer.
  *
- * `onClose` is read through a ref so an inline-arrow handler (a fresh identity each
- * render) doesn't re-run the focus effect on every keystroke — it runs once on mount.
+ * `onClose` is read when Escape comes (useDismiss), so an inline-arrow handler (a fresh
+ * identity each render) doesn't re-run the focus effect on every keystroke — it runs once
+ * on mount.
  */
-const stack: symbol[] = [];
-
-/** True while a dialog or popover is open: it owns Escape (ADR 0157, ADR 0173). */
-export const layerOpen = (): boolean => stack.length > 0;
-
 export function useModalA11y(
   onClose: () => void,
   { trap = false, restoreFocus = false } = {},
 ) {
   const ref = useRef<HTMLDivElement>(null);
-  const closeRef = useRef(onClose);
-  // Refresh the ref after each render (not during it); layout effects run before any
-  // keydown can reach the handler.
-  useLayoutEffect(() => {
-    closeRef.current = onClose;
-  });
+  // Declared before the focus effect, so the layer is on the stack before focus moves in.
+  const isTop = useDismiss(() => onClose(), { escape: "top" });
 
   useEffect(() => {
-    const self = Symbol("dialog");
-    stack.push(self);
     const opener =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
@@ -54,9 +45,7 @@ export function useModalA11y(
     )
       ancestors.push(a);
     function onKey(e: KeyboardEvent) {
-      if (stack.at(-1) !== self) return;
-      if (e.key === "Escape") closeRef.current();
-      else if (trap && e.key === "Tab") wrapTab(e);
+      if (trap && e.key === "Tab" && isTop()) wrapTab(e);
     }
     function wrapTab(e: KeyboardEvent) {
       const root = ref.current;
@@ -85,7 +74,6 @@ export function useModalA11y(
     (first ?? el)?.focus();
     return () => {
       document.removeEventListener("keydown", onKey);
-      stack.splice(stack.indexOf(self), 1);
       // Return focus only when it is lost: fallen back to <body> with the dialog's nodes,
       // or still inside the dialog (StrictMode's rehearsal cleanup, before a real close).
       if (!restoreFocus || !focusLost(el) || !opener) return;
@@ -97,7 +85,7 @@ export function useModalA11y(
         if (home) focusables(home).find(reachable)?.focus();
       }
     };
-  }, [trap, restoreFocus]); // constant per call site, so this runs once on mount
+  }, [trap, restoreFocus, isTop]); // constant per call site, so this runs once on mount
 
   return ref;
 }
