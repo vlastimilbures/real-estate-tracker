@@ -167,6 +167,36 @@ export async function enterLoanEvents(ux: Ux) {
 }
 
 /**
+ * Property detail of the first property, then its loan's stored instalment set to 1 Kč,
+ * below the interest (INSTALMENT_BELOW_INTEREST), and the store reloaded: the page then
+ * shows the invalid-data notice (DR-146). The forms and a restore refuse such a loan, so
+ * the edit goes to the sample's in-memory database the store holds (`portfolioDb`, its
+ * test seam); Vite serves the module by URL, so it is the app's own instance. Returns
+ * the property's name.
+ */
+export async function breakFirstLoan(ux: Ux): Promise<string> {
+  await boot(ux.page);
+  await openFirstProperty(ux);
+  const name = (await ux.page.locator("header.topbar h1").innerText()).trim();
+  const changed = await ux.page.evaluate(async (property) => {
+    const url = "/src/state/portfolioStore.ts";
+    const { portfolioDb, usePortfolioStore } = (await import(
+      /* @vite-ignore */ url
+    )) as typeof import("../src/state/portfolioStore");
+    const sql = portfolioDb.get();
+    if (!sql) throw new Error("no open database");
+    const { rowsAffected } = await sql.execute(
+      "UPDATE mortgage_blocks SET monthly_instalment = '1' WHERE property_id = (SELECT id FROM properties WHERE name = ?)",
+      [property],
+    );
+    await usePortfolioStore.getState().refresh();
+    return rowsAffected;
+  }, name);
+  if (changed === 0) throw new Error(`${name} has no loan`);
+  return name;
+}
+
+/**
  * In the open property dialog, opens the Acquisition section and fills the given
  * funding fields (ADR 0119 §9).
  */
