@@ -1,7 +1,7 @@
 // UX-046 (DR-133): a failed write reads as a translated sentence, tied to the form field
 // when one field is at fault — never SQLite's raw text.
 import { describe, it, expect } from "vitest";
-import { describeWriteError, formWriteErrors } from "../writeError";
+import { describeWriteError, fieldsIn, formWriteErrors } from "../writeError";
 import { getDict } from "../../../i18n";
 import { BASELINE, MIGRATIONS } from "../../../data/migrations";
 import type { WriteError } from "../../../state/writeError";
@@ -207,7 +207,7 @@ describe("formWriteErrors with list rows", () => {
   it("keys an indexed error by its draft row", () => {
     const rowOf = (field: string, i: number) =>
       field === "prepayments" ? ([2, 5][i] ?? null) : null;
-    expect(formWriteErrors(en, input, fields, rowOf)).toEqual({
+    expect(formWriteErrors(en, input, fieldsIn(fields, rowOf))).toEqual({
       fieldErrors: {
         "prepayments.5": en.inputRules.EVENT_BEFORE_START,
         "prepayments.2": en.inputRules.EVENT_BEFORE_START,
@@ -225,11 +225,15 @@ describe("formWriteErrors with list rows", () => {
 
   it("falls back to the field when the row is unknown", () => {
     expect(
-      formWriteErrors(en, input, fields, () => null).fieldErrors.prepayments,
+      formWriteErrors(
+        en,
+        input,
+        fieldsIn(fields, () => null),
+      ).fieldErrors.prepayments,
     ).toBe(en.inputRules.EVENT_BEFORE_START);
-    expect(formWriteErrors(en, input, fields).fieldErrors.prepayments).toBe(
-      en.inputRules.EVENT_BEFORE_START,
-    );
+    expect(
+      formWriteErrors(en, input, fieldsIn(fields)).fieldErrors.prepayments,
+    ).toBe(en.inputRules.EVENT_BEFORE_START);
   });
 });
 
@@ -249,7 +253,7 @@ describe("a scenario the assumptions edit would break (ADR 0128)", () => {
       formWriteErrors(
         en,
         breaks("rateShock", "SHOCKED_RATE_OUT_OF_RANGE"),
-        fields,
+        fieldsIn(fields),
       ),
     ).toEqual({
       fieldErrors: {
@@ -264,7 +268,7 @@ describe("a scenario the assumptions edit would break (ADR 0128)", () => {
       formWriteErrors(
         en,
         breaks("inflationShock", "SHOCKED_INFLATION_OUT_OF_RANGE"),
-        fields,
+        fieldsIn(fields),
       ).fieldErrors,
     ).toEqual({
       inflationPa: en.writeErrors.scenarioBreaks(

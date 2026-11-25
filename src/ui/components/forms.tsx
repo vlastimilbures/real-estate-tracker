@@ -2,7 +2,7 @@
 // live in ./fields and parsing/formatting helpers in ../model/formParse. A form with
 // more than text fields (the mortgage form) renders RecordFormView with its own parts.
 import { Fragment, type ReactNode } from "react";
-import type { FieldSpec } from "../model/formParse";
+import type { FieldSpec, FormSpec } from "../model/formParse";
 import { Button } from "./primitives";
 import { DateInput } from "./DateInput";
 import { Field, TextInput } from "./fields";
@@ -25,7 +25,7 @@ export interface FieldAction {
 
 interface RecordFormViewProps {
   form: RecordFormState;
-  specs: readonly FieldSpec[];
+  specs: readonly FormSpec[];
   submitLabel: string;
   onCancel?: (() => void) | undefined;
   /** Above the fields, e.g. a mode switch kept in the draft (ADR 0098). */
@@ -34,13 +34,13 @@ interface RecordFormViewProps {
   hint?: string | null | undefined;
   /** Field-row buttons by field name; a missing or null entry shows none. */
   actions?: Readonly<Record<string, FieldAction | null>> | undefined;
-  /** What to show in place of a field, by field name (a row list). */
-  slots?: Readonly<Record<string, (spec: FieldSpec) => ReactNode>> | undefined;
+  /** What to show in place of a spec, by name: a row list shows only through its slot. */
+  slots?: Readonly<Record<string, (spec: FormSpec) => ReactNode>> | undefined;
 }
 
 /** Controlled record form: renders specs, validates on submit, and hands back values
  *  typed by the specs (declare them inline so their names and kinds stay literal). */
-export function RecordForm<const S extends readonly FieldSpec[]>({
+export function RecordForm<const S extends readonly FormSpec[]>({
   specs,
   initial,
   onSubmit,
@@ -95,6 +95,7 @@ export function RecordFormView({
           if (form.hidden.includes(spec.name)) return null;
           const slot = slots?.[spec.name];
           if (slot) return <Fragment key={spec.name}>{slot(spec)}</Fragment>;
+          if (spec.kind === "list") return null;
           return (
             <SpecField
               key={spec.name}

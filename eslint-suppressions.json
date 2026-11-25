@@ -12,11 +12,6 @@
       "count": 1
     }
   },
-  "src/ui/components/PropertyFormModal.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/ui/components/charts.tsx": {
     "complexity": {
       "count": 1

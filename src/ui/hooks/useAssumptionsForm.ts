@@ -12,15 +12,15 @@ import {
   percentDraft,
   moneyDraft,
   dateDraft,
+  FORM_PARSERS,
   type CollectRules,
 } from "../model/formParse";
-import { FORM_PARSERS } from "../model/formParsers";
 import { INT_RANGES } from "../../lib/rules";
 import type { Assumptions } from "../../engine";
 import { CZK } from "../../lib/currency";
 import { type Dictionary } from "../../i18n";
 import { useT } from "./useT";
-import { formWriteErrors } from "../model/writeError";
+import { fieldsIn, formWriteErrors } from "../model/writeError";
 import { useToast } from "./useToast";
 import { useFormSubmit } from "./useFormSubmit";
 import { useLeaveGuard } from "./useLeaveGuard";
@@ -185,7 +185,7 @@ export function useAssumptionsForm(active: boolean) {
       const split = formWriteErrors(
         t,
         failure,
-        specs.map((s) => s.name),
+        fieldsIn(specs.map((s) => s.name)),
       );
       return {
         fieldErrors: split.fieldErrors,

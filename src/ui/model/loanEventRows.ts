@@ -6,7 +6,6 @@
 // `index` is a position among the non-blank rows (`draftRowOf` maps it back).
 import {
   dateDraft,
-  invalidHint,
   moneyDraft,
   parseDate,
   parseMoney,
@@ -201,11 +200,6 @@ export function writeRows(rows: readonly object[]): string {
   return rows.length === 0 ? "" : JSON.stringify(rows);
 }
 
-/** The rows of a list's text ("" ⇒ none), for the text parsers of FORM_PARSERS. */
-export function readRows<R extends EventRow = EventRow>(text: string): R[] {
-  return text === "" ? [] : (JSON.parse(text) as R[]);
-}
-
 export const prepaymentsDraft = (
   list?: MortgagePrepayment[],
 ): PrepaymentRow[] => (list ?? []).map(PREPAYMENTS.rowOf);
@@ -248,11 +242,15 @@ function parseRows<K extends EventListKind>(
   return out;
 }
 
+// One list kind's parse, for the tests (the form parses its lists through EVENT_LISTS).
+/** @internal */
 export const parsePrepaymentRows = (rows: readonly PrepaymentRow[]) =>
   parseRows<"prepayments">(rows);
+/** @internal */
 export const parseRecastRows = (rows: readonly RecastRow[]) =>
   parseRows<"recasts">(rows);
-/** The tranches in row order (the engine does not depend on their order). */
+/** The tranches in row order (the engine does not depend on their order).
+ *  @internal */
 export const parseDrawRows = (rows: readonly DrawRow[]) =>
   parseRows<"draws">(rows);
 
@@ -313,14 +311,13 @@ export function draftRowOf(
 
 /** The mortgage form's row lists, as useRecordForm keeps them beside the fields. */
 export const EVENT_LISTS: FormLists<EventLists> = {
-  names: ["draws", "prepayments", "recasts"],
   texts: (lists) => ({
     draws: writeRows(lists.draws),
     prepayments: writeRows(lists.prepayments),
     recasts: writeRows(lists.recasts),
   }),
   // A list with no row is null, as a blank optional field; one whose rows do not parse
-  // gets its kind's message (formRules' `invalid`).
+  // gets its list's message.
   parse(lists, t) {
     const values: Record<string, unknown> = {};
     const errors: Record<string, string> = {};
@@ -328,7 +325,7 @@ export const EVENT_LISTS: FormLists<EventLists> = {
       const rows = lists[kind];
       const parsed = rows.length === 0 ? null : parseRows(rows);
       if (rows.length > 0 && parsed === null)
-        errors[kind] = invalidHint(t, kind);
+        errors[kind] = t.forms.invalidHint[kind];
       else values[kind] = parsed;
     }
     return { values, errors };

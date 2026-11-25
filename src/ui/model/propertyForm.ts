@@ -1,65 +1,188 @@
 // Pure validation + DTO assembly for the property add/edit form. Kept out of the
 // modal component so it's unit-testable in the node test env (no DOM), mirroring
 // ./mortgageForm.ts.
-import { collectValues, moneyDraft, type FieldSpec } from "./formParse";
-import { formRules } from "./formParsers";
-import { INT_RANGES } from "../../lib/rules";
+import {
+  collectValues,
+  formRules,
+  moneyDraft,
+  type FieldKind,
+} from "./formParse";
+import { INT_RANGES, type IntRange } from "../../lib/rules";
+import { CZK } from "../../lib/currency";
 import { propertyKey } from "../../lib/propertyKey";
 import type { AcquisitionFunding, Property } from "../../engine";
 import type { Dictionary } from "../../i18n";
 
-export interface PropertyFormState {
+/** Where a field sits in the dialog: the property's identity, its purchase, or the
+ *  Acquisition section (ADR 0119 §9). */
+type Section = "identity" | "purchase" | "funding";
+
+/** One text or date field of the dialog: how it shows and, with a `kind`, how it parses. */
+interface PropertyField {
   name: string;
-  address: string;
-  type: string;
-  size_m2: string;
-  garage: boolean | null;
-  purchase_date: string;
-  purchase_price: string;
-  appreciation_override_pa: string;
-  rent_index_override_pa: string;
-  /** The acquisition funding record (ADR 0119): blank = unknown. */
-  own_cash: string;
-  transaction_costs: string;
-  initial_works: string;
-  funding_note: string;
+  label: string;
+  section: Section;
+  kind?: FieldKind;
+  optional?: boolean;
+  range?: IntRange;
+  help?: string;
+  suffix?: string;
+  inputMode: "text" | "numeric" | "decimal";
+  placeholder?: string;
+  /** Marked through Field (CSS marker + aria-required, UX-072). */
+  required?: boolean;
 }
+
+/**
+ * The dialog's text and date fields in its order, declared once (#490): the modal renders
+ * them, the parsed ones (with a `kind`) are their own specs, and their names are the
+ * form state's keys. Name, address and type are plain text; garage and the funding note
+ * are not text fields.
+ */
+export function propertyFields(t: Dictionary) {
+  const p = t.propertyForm;
+  return [
+    {
+      name: "name",
+      label: p.name,
+      section: "identity",
+      inputMode: "text",
+      required: true,
+    },
+    {
+      name: "address",
+      label: p.address,
+      section: "identity",
+      inputMode: "text",
+    },
+    {
+      name: "type",
+      label: p.type,
+      section: "identity",
+      help: p.typeHelp,
+      inputMode: "text",
+    },
+    {
+      name: "sizeM2",
+      label: p.size,
+      section: "identity",
+      kind: "size", // one decimal place (ADR 0236 §1)
+      optional: true,
+      range: INT_RANGES.sizeM2, // ADR 0075 (DR-078)
+      inputMode: "decimal",
+    },
+    {
+      name: "purchaseDate",
+      label: p.purchaseDate,
+      section: "purchase",
+      kind: "date",
+      inputMode: "text",
+      required: true,
+    },
+    {
+      name: "purchasePrice",
+      label: p.purchasePrice,
+      section: "purchase",
+      kind: "money",
+      suffix: CZK.symbol,
+      inputMode: "decimal",
+      required: true,
+    },
+    overrideField(t, "appreciationOverridePa", p.appreciationOverride),
+    overrideField(t, "rentIndexOverridePa", p.rentIndexOverride),
+    fundingField(t, "ownCash", p.ownCash, p.ownCashHelp),
+    fundingField(
+      t,
+      "transactionCosts",
+      p.transactionCosts,
+      p.transactionCostsHelp,
+    ),
+    fundingField(t, "initialWorks", p.initialWorks, p.initialWorksHelp),
+  ] as const satisfies readonly PropertyField[];
+}
+
+/** A growth override (ADR 0102): a signed percentage, blank is the assumptions' level. */
+function overrideField<const N extends string>(
+  t: Dictionary,
+  name: N,
+  label: string,
+) {
+  return {
+    name,
+    label,
+    section: "purchase",
+    kind: "pct",
+    optional: true,
+    help: t.propertyForm.overrideHelp,
+    suffix: "%",
+    inputMode: "decimal",
+    placeholder: t.forms.defaultPlaceholder,
+  } as const;
+}
+
+/** The funding record's amounts (ADR 0119 §9): blank is unknown, not 0. */
+function fundingField<const N extends string>(
+  t: Dictionary,
+  name: N,
+  label: string,
+  help: string,
+) {
+  return {
+    name,
+    label,
+    section: "funding",
+    kind: "money",
+    optional: true,
+    help,
+    suffix: CZK.symbol,
+    inputMode: "decimal",
+    placeholder: t.propertyForm.unknownPlaceholder,
+  } as const;
+}
+
+type Fields = ReturnType<typeof propertyFields>[number];
+type TextKey = Fields["name"];
+
+export type PropertyFormState = Record<TextKey, string> & {
+  garage: boolean | null;
+  /** The acquisition funding record's note (ADR 0119): blank = none. */
+  fundingNote: string;
+};
 
 export const BLANK_PROPERTY_FORM: PropertyFormState = {
   name: "",
   address: "",
   type: "",
-  size_m2: "",
+  sizeM2: "",
   garage: null,
-  purchase_date: "",
-  purchase_price: "",
-  appreciation_override_pa: "",
-  rent_index_override_pa: "",
-  own_cash: "",
-  transaction_costs: "",
-  initial_works: "",
-  funding_note: "",
+  purchaseDate: "",
+  purchasePrice: "",
+  appreciationOverridePa: "",
+  rentIndexOverridePa: "",
+  ownCash: "",
+  transactionCosts: "",
+  initialWorks: "",
+  fundingNote: "",
 };
 
-type FundingKey =
-  "own_cash" | "transaction_costs" | "initial_works" | "funding_note";
+/** The form's keys: a failed save naming one of them shows on its field (ADR 0261). */
+export const PROPERTY_FORM_KEYS: readonly string[] =
+  Object.keys(BLANK_PROPERTY_FORM);
 
-/** The form's money fields for each part of the funding record. */
-const FUNDING_MONEY = [
-  ["own_cash", "ownCash"],
-  ["transaction_costs", "transactionCosts"],
-  ["initial_works", "initialWorks"],
-] as const;
+/** The funding record's amounts, keyed like the record (ADR 0119 §9). */
+const FUNDING_MONEY = ["ownCash", "transactionCosts", "initialWorks"] as const;
+
+type FundingKey = (typeof FUNDING_MONEY)[number] | "fundingNote";
 
 /** A stored funding record as the form's drafts (blank where unknown). */
 export function fundingDraft(
   f: AcquisitionFunding | undefined,
 ): Pick<PropertyFormState, FundingKey> {
   return {
-    own_cash: moneyDraft(f?.ownCash),
-    transaction_costs: moneyDraft(f?.transactionCosts),
-    initial_works: moneyDraft(f?.initialWorks),
-    funding_note: f?.note ?? "",
+    ownCash: moneyDraft(f?.ownCash),
+    transactionCosts: moneyDraft(f?.transactionCosts),
+    initialWorks: moneyDraft(f?.initialWorks),
+    fundingNote: f?.note ?? "",
   };
 }
 
@@ -69,49 +192,12 @@ export type PropertyFormErrors = Partial<
 
 /** Whether any funding field has an error (the form opens its Acquisition section). */
 export function hasFundingError(errors: PropertyFormErrors): boolean {
-  return FUNDING_MONEY.some(([key]) => errors[key] !== undefined);
+  return FUNDING_MONEY.some((key) => errors[key] !== undefined);
 }
 
-/** The form's parsed fields; name, address, type, garage and the note are plain text. */
-function propertySpecs(t: Dictionary) {
-  const p = t.propertyForm;
-  return [
-    { name: "purchase_date", label: p.purchaseDate, kind: "date" },
-    { name: "purchase_price", label: p.purchasePrice, kind: "money" },
-    {
-      name: "size_m2",
-      label: p.size,
-      kind: "size", // one decimal place (ADR 0236)
-      optional: true,
-      range: INT_RANGES.sizeM2, // ADR 0075 (DR-078)
-    },
-    {
-      name: "appreciation_override_pa",
-      label: p.appreciationOverride,
-      kind: "pct",
-      optional: true,
-    },
-    {
-      name: "rent_index_override_pa",
-      label: p.rentIndexOverride,
-      kind: "pct",
-      optional: true,
-    },
-    { name: "own_cash", label: p.ownCash, kind: "money", optional: true },
-    {
-      name: "transaction_costs",
-      label: p.transactionCosts,
-      kind: "money",
-      optional: true,
-    },
-    {
-      name: "initial_works",
-      label: p.initialWorks,
-      kind: "money",
-      optional: true,
-    },
-  ] as const satisfies readonly FieldSpec[];
-}
+/** A field that parses: its own spec. */
+const parsed = <F extends Fields>(f: F): f is Extract<F, { kind: FieldKind }> =>
+  "kind" in f;
 
 export type PropertyFormResult =
   | {
@@ -144,7 +230,7 @@ export function parsePropertyForm(
   existingNames: string[],
   t: Dictionary,
 ): PropertyFormResult {
-  const specs = propertySpecs(t);
+  const specs = propertyFields(t).filter(parsed);
   const draft = Object.fromEntries(specs.map((f) => [f.name, form[f.name]]));
   const { values: v, errors } = collectValues(specs, draft, formRules(t));
   const errs: PropertyFormErrors = errors;
@@ -169,22 +255,22 @@ export function parsePropertyForm(
   // The record the form shows (ADR 0119 §8–§9): a blank amount is unknown and a blank note
   // is no note, so all-blank is `{}`, which clears the stored record.
   const funding: AcquisitionFunding = {};
-  for (const [key, field] of FUNDING_MONEY) {
+  for (const key of FUNDING_MONEY) {
     const amount = v[key];
-    if (amount !== null) funding[field] = amount;
+    if (amount !== null) funding[key] = amount;
   }
-  const note = form.funding_note.trim();
+  const note = form.fundingNote.trim();
   if (note) funding.note = note;
 
   const property: Property = {
     id,
     name,
     type: form.type.trim() || undefined,
-    sizeM2: v.size_m2 ?? undefined,
-    purchaseDate: v.purchase_date,
-    purchasePrice: v.purchase_price,
-    appreciationOverridePa: v.appreciation_override_pa ?? undefined,
-    rentIndexOverridePa: v.rent_index_override_pa ?? undefined,
+    sizeM2: v.sizeM2 ?? undefined,
+    purchaseDate: v.purchaseDate,
+    purchasePrice: v.purchasePrice,
+    appreciationOverridePa: v.appreciationOverridePa ?? undefined,
+    rentIndexOverridePa: v.rentIndexOverridePa ?? undefined,
     funding,
   };
   return {

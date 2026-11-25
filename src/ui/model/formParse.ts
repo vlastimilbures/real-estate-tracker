@@ -14,10 +14,7 @@ import {
   money,
   rate,
   type IsoDate,
-  type LoanRecast,
   type Money,
-  type MortgageDraw,
-  type MortgagePrepayment,
   type Rate,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
@@ -98,15 +95,7 @@ export function dateDraft(date: Date | undefined): string {
 
 // ---- field specs + kind parsing -------------------------------------------
 
-export type FieldKind =
-  | "date"
-  | "money"
-  | "pct"
-  | "int"
-  | "size"
-  | "draws"
-  | "prepayments"
-  | "recasts";
+export type FieldKind = "date" | "money" | "pct" | "int" | "size";
 
 export interface FieldSpec {
   name: string;
@@ -117,11 +106,37 @@ export interface FieldSpec {
   help?: string;
   /** Bounds of an `int` or `size` field; a parsed value outside them is invalid. */
   range?: IntRange;
-  /** A row list's fixed first row (ADR 0167): another spec's money field shown as the
+}
+
+/** A row list among a form's fields (the mortgage's events, ADR 0116): its place in the
+ *  grid, label and help, and error routing. It is not parsed as text: its value is its
+ *  list's (FormLists), typed by `V`. */
+export interface ListSpec<V = unknown> {
+  name: string;
+  label: string;
+  kind: "list";
+  help?: string;
+  /** The list's fixed first row (ADR 0167): another spec's money field shown as the
    *  list's first row, dated by a date field it mirrors read-only. Hide that spec from
    *  the grid while the list shows. */
   lead?: LeadRow;
+  /** Type only, never set: the list's parsed value. */
+  readonly value?: V;
 }
+
+/** A form's spec: a text field or a row list. */
+export type FormSpec = FieldSpec | ListSpec;
+
+/** A row list's spec, its value typed `V` (`listSpec<MortgageDraw[]>()({ ... })`). */
+export function listSpec<V>() {
+  return <const S extends Omit<ListSpec, "kind" | "value">>(
+    spec: S,
+  ): S & { kind: "list"; readonly value?: V } => ({ ...spec, kind: "list" });
+}
+
+/** A text field's spec, not a row list's. */
+export const isFieldSpec = (spec: FormSpec): spec is FieldSpec =>
+  spec.kind !== "list";
 
 export interface LeadRow {
   field: string;
@@ -135,7 +150,6 @@ export interface LeadRow {
  *  specs stay in the form's specs, for grid order, label, help and error routing; their
  *  values are the lists'. */
 export interface FormLists<L> {
-  names: readonly string[];
   /** Each list's text for the unsaved check, keyed by name. */
   texts(lists: L): Record<string, string>;
   /** The lists' values keyed by name, or an error per list that does not parse. */
@@ -151,13 +165,15 @@ export interface FormLists<L> {
  *  row list shows as its first row (ADR 0167). A save error on any other field goes
  *  above the buttons (ADR 0243). */
 export function shownFields(
-  specs: readonly FieldSpec[],
+  specs: readonly FormSpec[],
   hidden: readonly string[],
 ): string[] {
   const shown = specs.filter((s) => !hidden.includes(s.name));
   return [
     ...shown.map((s) => s.name),
-    ...shown.flatMap((s) => (s.lead ? [s.lead.field] : [])),
+    ...shown.flatMap((s) =>
+      s.kind === "list" && s.lead ? [s.lead.field] : [],
+    ),
   ];
 }
 
@@ -202,28 +218,29 @@ export interface KindValue {
   pct: Rate;
   int: number;
   size: number;
-  draws: MortgageDraw[];
-  /** Row-editor lists (ADR 0116): a JSON draft, see loanEventRows.ts. */
-  prepayments: MortgagePrepayment[];
-  recasts: LoanRecast[];
 }
 
 /** Any one parsed field value; null = an optional field left blank. */
 export type ParsedValue = KindValue[FieldKind] | null;
 
 /** One spec's parsed value: its kind's type, plus null when the spec has an `optional`
- *  flag that is not literally false (a plain FieldSpec may be optional, so it gets null). */
-type SpecValue<F extends FieldSpec> =
-  | KindValue[F["kind"]]
-  | ("optional" extends keyof F
-      ? F extends { optional: false }
-        ? never
-        : null
-      : never);
+ *  flag that is not literally false (a plain FieldSpec may be optional, so it gets null).
+ *  A row list's is its list's value, or null for no rows. */
+type SpecValue<F extends FormSpec> =
+  F extends ListSpec<infer V>
+    ? V | null
+    : F extends FieldSpec
+      ? | KindValue[F["kind"]]
+        | ("optional" extends keyof F
+            ? F extends { optional: false }
+              ? never
+              : null
+            : never)
+      : never;
 
-/** A form's parsed values, keyed and typed by its field specs. Declare the specs inline
- *  (or `as const`) so their names, kinds and `optional: true` stay literal. */
-export type ParsedValues<S extends readonly FieldSpec[]> = {
+/** A form's parsed values, keyed and typed by its specs. Declare the specs inline (or
+ *  `as const`) so their names, kinds and `optional: true` stay literal. */
+export type ParsedValues<S extends readonly FormSpec[]> = {
   [F in S[number] as F["name"]]: SpecValue<F>;
 };
 
@@ -269,4 +286,28 @@ export function collectValues<const S extends readonly FieldSpec[]>(
   // Every value came from its own spec's kind parser, and null only from an optional
   // blank, so the record has the ParsedValues<S> shape (read only when errors is empty).
   return { values: values as ParsedValues<S>, errors };
+}
+
+/** The forms' parsers. Money is non-negative everywhere it's entered (price, rent,
+ *  principal, instalment, costs), so negatives are rejected here; pct stays signed (a
+ *  declining-market appreciation override is legitimately negative). */
+export const FORM_PARSERS: KindParsers = {
+  date: parseDate,
+  money: (raw) => {
+    const m = parseMoney(raw);
+    return m === null || m.isNegative() ? null : m;
+  },
+  pct: parsePercentToRatio,
+  int: parseIntField,
+  size: parseSizeField,
+};
+
+/** The forms' shared rules: these parsers, "Required" for a blank required field, and the
+ *  field's expected format (or its range) for text that does not parse. */
+export function formRules(t: Pick<Dictionary, "forms">): CollectRules {
+  return {
+    parsers: FORM_PARSERS,
+    blank: () => t.forms.required,
+    invalid: (spec) => fieldHint(t, spec),
+  };
 }

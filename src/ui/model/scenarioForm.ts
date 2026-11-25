@@ -1,9 +1,8 @@
 // Pure draft-parsing for the scenario create/edit form. Kept out of ScenarioForm.tsx
 // so it's unit-testable without mounting the component (mirrors ./mortgageForm.ts).
-import { collectValues, type FieldSpec } from "./formParse";
-import { formRules } from "./formParsers";
+import { collectValues, formRules, type FieldSpec } from "./formParse";
 import { CRASH_YEAR, SHOCK_YEARS } from "../../lib/rules";
-import { formWriteErrors, type FormWriteError } from "./writeError";
+import { fieldsIn, formWriteErrors, type FormWriteError } from "./writeError";
 import type {
   EngineValidationError,
   Rate,
@@ -187,6 +186,18 @@ function shockField(x: EngineValidationError): string | undefined {
   return x.field;
 }
 
+/** The fields a scenario's save error shows on. */
+const SCENARIO_ERROR_FIELD = fieldsIn([
+  ...OVERRIDE_KEYS,
+  "valueShockPct",
+  "rateShockDelta",
+  "inflationShockDelta",
+  // A year the store refuses as out of range (ADR 0257 §1).
+  "inflationShockYears",
+  "rateShockYears",
+  "valueShockYear",
+]);
+
 /** A refused save, split for the form (ADR 0123, ADR 0128): the store checks a scenario
  *  with the engine's assumption rules, which name the override. A rule on a level, the
  *  value crash or a shocked level shows on that field in the engine's words, and an
@@ -200,14 +211,5 @@ export function scenarioWriteErrors(
     e.kind === "input"
       ? { ...e, errors: e.errors.map((x) => ({ ...x, field: shockField(x) })) }
       : e;
-  return formWriteErrors(t, onForm, [
-    ...OVERRIDE_KEYS,
-    "valueShockPct",
-    "rateShockDelta",
-    "inflationShockDelta",
-    // A year the store refuses as out of range (ADR 0257 §1).
-    "inflationShockYears",
-    "rateShockYears",
-    "valueShockYear",
-  ]);
+  return formWriteErrors(t, onForm, SCENARIO_ERROR_FIELD);
 }

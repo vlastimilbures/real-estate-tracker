@@ -16,21 +16,16 @@ import {
   fieldHint,
   shownFields,
   type FieldSpec,
+  type FormSpec,
   type ParsedValues,
   type CollectRules,
+  FORM_PARSERS,
+  formRules,
 } from "../formParse";
-import { FORM_PARSERS, formRules } from "../formParsers";
 import { INT_RANGES } from "../../../lib/rules";
 import { D } from "../../../lib/money";
 import { getDict } from "../../../i18n";
-import {
-  type IsoDate,
-  type Money,
-  type LoanRecast,
-  type MortgageDraw,
-  type MortgagePrepayment,
-  type Rate,
-} from "../../../engine";
+import { type IsoDate, type Money, type Rate } from "../../../engine";
 
 describe("parseDecimal", () => {
   it("accepts both Czech-grouped and plain forms, equally", () => {
@@ -203,7 +198,6 @@ describe("collectValues", () => {
     { name: "from", label: "From", kind: "date", optional: true },
     { name: "rate", label: "Rate", kind: "pct" },
     { name: "years", label: "Years", kind: "int", optional: false },
-    { name: "draws", label: "Draws", kind: "draws", optional: true },
   ] as const;
 
   it("types each value by its spec's kind (null only for optional fields)", () => {
@@ -212,19 +206,10 @@ describe("collectValues", () => {
       from: IsoDate | null;
       rate: Rate;
       years: number;
-      draws: MortgageDraw[] | null;
     }>();
     // A spec typed as plain FieldSpec may be optional, so its values include null.
     expectTypeOf<ParsedValues<FieldSpec[]>>().toEqualTypeOf<{
-      [name: string]:
-        | Money
-        | IsoDate
-        | Rate
-        | number
-        | MortgageDraw[]
-        | MortgagePrepayment[]
-        | LoanRecast[]
-        | null;
+      [name: string]: Money | IsoDate | Rate | number | null;
     }>();
   });
 
@@ -239,7 +224,6 @@ describe("collectValues", () => {
     expect(values.from).toBeNull();
     expect(values.rate.toString()).toBe("0.045");
     expect(values.years).toBe(30);
-    expect(values.draws).toBeNull();
     // @ts-expect-error not a field of these specs
     expect(values.other).toBeUndefined();
   });
@@ -256,7 +240,7 @@ describe("collectValues", () => {
       rate: "invalid pct",
       years: "invalid int",
     });
-    expect(values).toEqual({ draws: null });
+    expect(values).toEqual({});
   });
 
   it("reports a whole number outside its spec's range (ADR 0075, DR-078)", () => {
@@ -386,9 +370,9 @@ describe("shownFields (ADR 0243)", () => {
     label: "Drawn at start",
     dateFallback: "–",
   };
-  const specs: FieldSpec[] = [
+  const specs: FormSpec[] = [
     { name: "startDate", label: "Start", kind: "date" },
-    { name: "draws", label: "Draws", kind: "draws", optional: true, lead },
+    { name: "draws", label: "Draws", kind: "list", lead },
     { name: "initialPrincipal", label: "Principal", kind: "money" },
     { name: "completionDate", label: "Completion", kind: "date" },
   ];

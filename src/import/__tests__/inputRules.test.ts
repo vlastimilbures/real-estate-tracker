@@ -4,8 +4,7 @@ import { describe, it, expect } from "vitest";
 import { checkInputRules } from "../../state/restoreRules";
 import { parseMortgages, parseProperties } from "../csv";
 import { INT_RANGES, type IntRange } from "../../lib/rules";
-import { collectValues } from "../../ui/model/formParse";
-import { FORM_PARSERS } from "../../ui/model/formParsers";
+import { collectValues, FORM_PARSERS } from "../../ui/model/formParse";
 import {
   isoDate,
   rate,

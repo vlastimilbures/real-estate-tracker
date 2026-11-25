@@ -15,7 +15,6 @@ import {
   parsePrepaymentRows,
   parseRecastRows,
   prepaymentsDraft,
-  readRows,
   recastsDraft,
   rowProblems,
   writeRows,
@@ -84,7 +83,6 @@ describe("loan event rows", () => {
     expect(prepaymentsDraft(undefined)).toEqual([]);
     expect(recastsDraft([])).toEqual([]);
     expect(writeRows([])).toBe("");
-    expect(readRows("")).toEqual([]);
     expect(parsePrepaymentRows([])).toEqual([]);
   });
 

@@ -16,7 +16,7 @@ import { SettingsPage } from "../../pages/Settings";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { getDict } from "../../../i18n";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
-import type { FieldSpec } from "../../model/formParse";
+import type { FormSpec } from "../../model/formParse";
 
 const en = getDict("en");
 
@@ -36,10 +36,10 @@ beforeEach(() =>
   }),
 );
 
-const specs: FieldSpec[] = [
+const specs: FormSpec[] = [
   { name: "price", label: "Price", kind: "money" },
   { name: "start", label: "Start", kind: "date", optional: true },
-  { name: "draws", label: "Draws", kind: "draws", optional: true },
+  { name: "draws", label: "Draws", kind: "list" },
 ];
 
 /** A record form with a tranche list among its fields, as the mortgage form composes
