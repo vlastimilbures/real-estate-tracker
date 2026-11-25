@@ -313,3 +313,41 @@ export async function expectDataCheckLayout(p: Locator) {
     if (r.wide) expect(r.right, "the fix right of its problem").toBe(true);
   }
 }
+
+/** Property detail with stored data that breaks an engine rule (DR-146): the page keeps
+ *  its heading, shows the invalid-data notice naming the broken rule, and keeps
+ *  the sections where the record can be fixed (Records, Financing, Holding costs); the
+ *  sections that need figures are gone from the page and from the section nav. */
+export async function expectInvalidPropertyData(ux: Ux, name: string) {
+  await expect(
+    ux.page.locator("header.topbar").getByRole("heading", { level: 1, name }),
+  ).toBeVisible();
+  const notice = ux.page.getByRole("alert").filter({
+    has: ux.page.getByRole("heading", {
+      name: ux.t.errorBoundary.invalidDataTitle,
+    }),
+  });
+  await expect(notice).toBeVisible();
+  // The rule the scene's loan breaks (flows.ts `breakFirstLoan`), in the user's words.
+  await expect(notice).toContainText(ux.t.inputRules.INSTALMENT_BELOW_INTEREST);
+  const section = (s: string) => ux.page.locator(`#pd-${s}`);
+  for (const s of ["records", "financing", "holding"])
+    await expect(section(s), `${s} shown`).toBeVisible();
+  for (const s of [
+    "overview",
+    "acquisition",
+    "projection",
+    "amortization",
+    "dataCheck",
+  ])
+    await expect(section(s), `${s} hidden`).toHaveCount(0);
+  const d = ux.t.propertyDetail;
+  const links = ux.page
+    .getByRole("navigation", { name: d.sectionNavLabel })
+    .getByRole("link");
+  await expect(links).toHaveText([
+    d.sectionRecords,
+    d.sectionFinancing,
+    d.sectionHolding,
+  ]);
+}

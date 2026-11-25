@@ -1,5 +1,5 @@
 // Property detail: sections, holding costs, info tips, amortization and loan events.
-import { enterLoanEvents } from "../flows";
+import { breakFirstLoan, enterLoanEvents } from "../flows";
 import {
   boot,
   expect,
@@ -19,7 +19,11 @@ import {
   expectBandTileLabelsOneLine,
   expectKpiStrip,
 } from "../layout/dashboard";
-import { expectProjectionGrid, expectPropertyTopBar } from "../layout/pages";
+import {
+  expectInvalidPropertyData,
+  expectProjectionGrid,
+  expectPropertyTopBar,
+} from "../layout/pages";
 import { defineScreen, type Screen } from "./define";
 
 export const propertyDetailScreens: Screen[] = [
@@ -92,6 +96,15 @@ export const propertyDetailScreens: Screen[] = [
       });
       await holding.scrollIntoViewIfNeeded();
       await ux.capture("20d-property-holding-default", { fullPage: false });
+    },
+  ),
+  defineScreen(
+    "20e-property-invalid-data",
+    "Property detail with a stored loan that breaks a rule: the invalid-data notice, the records to fix and no figures (DR-146)",
+    async (ux) => {
+      const name = await breakFirstLoan(ux);
+      await expectInvalidPropertyData(ux, name);
+      await ux.capture();
     },
   ),
   defineScreen(
