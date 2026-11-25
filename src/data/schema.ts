@@ -31,8 +31,9 @@ export interface TableSpec {
   readonly checks: readonly string[];
 }
 
-/** `assumptions.selling_cost_pct` (v11, ADR 0183): the column's DEFAULT and the value a
- *  restore or a write without one stores. */
+/** `assumptions.selling_cost_pct` (v11, ADR 0183): the value a restore or a write without
+ *  one stores. The frozen v11 migration writes the same DEFAULT as a literal; the drift
+ *  test pins this constant to the column's `dflt_value`. */
 export const SELLING_COST_DEFAULT = "0";
 
 const req = <N extends string, K extends ColumnKind>(
