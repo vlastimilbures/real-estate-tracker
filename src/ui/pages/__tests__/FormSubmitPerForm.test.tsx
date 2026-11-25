@@ -24,7 +24,18 @@ import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 
 const refused: WriteError = { kind: "other", message: "disk full" };
+const never = () => new Promise<never>(() => undefined);
 const escaped = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** Two submit events in one tick, before React commits the busy flag. */
+function submitTwice(form: HTMLFormElement) {
+  act(() => {
+    for (let i = 0; i < 2; i++)
+      form.dispatchEvent(
+        new Event("submit", { bubbles: true, cancelable: true }),
+      );
+  });
+}
 
 describe("RecordForm", () => {
   function renderForm(onSubmit: () => Promise<void | WriteError>) {
@@ -42,6 +53,13 @@ describe("RecordForm", () => {
     renderForm(() => Promise.resolve(refused));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(screen.getByRole("alert").textContent).toContain("disk full");
+  });
+
+  it("two submits in one tick write once", () => {
+    const onSubmit = vi.fn(never);
+    renderForm(onSubmit);
+    submitTwice(document.querySelector("form")!);
+    expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
   it("an edit keeps the form-level message (today; ADR 0262 proposed)", async () => {

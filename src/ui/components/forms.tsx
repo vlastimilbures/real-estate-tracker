@@ -1,6 +1,6 @@
 // Form components — a generic record form; field controls live in ./fields, loan-event
 // rows in ./LoanEventRows and parsing/formatting helpers in ../model/formParse.
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import {
   collectValues,
   shownFields,
@@ -13,11 +13,11 @@ import { draftRowOf, listKind } from "../model/loanEventRows";
 import { Button } from "./primitives";
 import { DateInput } from "./DateInput";
 import { Field, TextInput } from "./fields";
-import { useSaveBusy } from "../hooks/useSaveBusy";
+import { useFormSubmit } from "../hooks/useFormSubmit";
+import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useT } from "../hooks/useT";
 import { formWriteErrors } from "../model/writeError";
-import { toWriteError, type WriteError } from "../../state/writeError";
-import { useUiStore } from "../../state/uiStore";
+import type { WriteError } from "../../state/writeError";
 import { isDirty } from "../model/dirty";
 import {
   LoanEventRows,
@@ -101,34 +101,39 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
 }) {
   const t = useT();
   const [draft, setDraft] = useState<Record<string, string>>(initial);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [formError, setFormError] = useState<string | null>(null);
-  const [busy, setBusy] = useSaveBusy(errors, formError);
   // Leave guard (UX-073): while the draft differs from the values the form opened with
   // (or last saved), navigation asks first. Each form registers under its own key.
   const ownKey = useId();
   const formKey = unsavedKey ?? ownKey;
   const [baseline, setBaseline] = useState(initial);
-  const setUnsavedChanges = useUiStore((s) => s.setUnsavedChanges);
   const fieldsOf = (r: Record<string, string>) =>
     Object.fromEntries(specs.map((spec) => [spec.name, r[spec.name] ?? ""]));
   const unsaved = isDirty(fieldsOf(baseline), fieldsOf(draft));
-  useEffect(() => {
-    setUnsavedChanges(formKey, unsaved);
-  }, [formKey, unsaved, setUnsavedChanges]);
-  useEffect(
-    () => () => setUnsavedChanges(formKey, false),
-    [formKey, setUnsavedChanges],
-  );
+  useLeaveGuard(formKey, unsaved);
+
+  // A failure goes on the field it names if shown, else above the buttons; the line
+  // above the buttons stays until the next Save (ADR 0262, proposed, would drop it on
+  // an edit).
+  const { busy, errors, formError, submit, clearFields } = useFormSubmit({
+    run: onSubmit,
+    mapErrors: (failure) =>
+      formWriteErrors(
+        t,
+        failure,
+        shownFields(specs, hiddenFields?.(draft) ?? []),
+        (field, index) =>
+          listKind(specs.find((s) => s.name === field)?.kind)
+            ? draftRowOf(draft[field] ?? "", index)
+            : null,
+      ),
+    onSaved: () => setBaseline(draft),
+    formErrorUntil: "submit",
+  });
 
   /** Edit fields; their errors go with the edit (ADR 0141, as the property form). */
   function patch(p: Record<string, string>) {
     setDraft((d) => ({ ...d, ...p }));
-    setErrors((e) => {
-      const copy = { ...e };
-      for (const name of Object.keys(p)) delete copy[name];
-      return copy;
-    });
+    clearFields(Object.keys(p));
   }
   const edit = (name: string, v: string) => patch({ [name]: v });
   /** A row list's fixed first row, bound to its field in the draft (ADR 0167). */
@@ -141,42 +146,16 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
       onChange: (v) => edit(lead.field, v),
     };
 
-  async function submit() {
+  /** Parse the draft; cross-field rules only run once every field parses, so messages
+   *  point at the real problem (not a noisy parse error) and `values` is complete. */
+  function check() {
     const { values, errors: errs } = collectValues(specs, draft, formRules(t));
-    // Cross-field rules only run once every field parses, so messages point at the
-    // real problem (not a noisy parse error) and `values` is fully populated.
     if (Object.keys(errs).length === 0 && validate) {
       Object.assign(errs, validate(values, draft));
     }
-    setErrors(errs);
-    setFormError(null);
-    if (Object.keys(errs).length > 0) return;
-    setBusy(true);
-    try {
-      // A throwing onSubmit (sync or async) is shown like a returned failure (DR-090).
-      let failure: void | WriteError;
-      try {
-        failure = await onSubmit(values);
-      } catch (e) {
-        failure = toWriteError(e);
-      }
-      if (!failure) setBaseline(draft);
-      else {
-        const split = formWriteErrors(
-          t,
-          failure,
-          shownFields(specs, hiddenFields?.(draft) ?? []),
-          (field, index) =>
-            listKind(specs.find((s) => s.name === field)?.kind)
-              ? draftRowOf(draft[field] ?? "", index)
-              : null,
-        );
-        setErrors(split.fieldErrors);
-        setFormError(split.formError);
-      }
-    } finally {
-      setBusy(false);
-    }
+    return Object.keys(errs).length > 0
+      ? { ok: false as const, errors: errs }
+      : { ok: true as const, values };
   }
 
   return (
@@ -185,7 +164,8 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
-        if (!busy) void submit();
+        // A throwing onSubmit (sync or async) is shown like a returned failure (DR-090).
+        void submit(check);
       }}
     >
       {header?.(draft, patch)}
@@ -208,13 +188,8 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
                     setDraft((d) => ({ ...d, [spec.name]: v }));
                     // Row errors are keyed by position: an edit can move rows, so the
                     // list's errors go until the next save.
-                    setErrors((e) =>
-                      Object.fromEntries(
-                        Object.entries(e).filter(
-                          ([k]) =>
-                            k !== spec.name && !k.startsWith(`${spec.name}.`),
-                        ),
-                      ),
+                    clearFields(
+                      (k) => k === spec.name || k.startsWith(`${spec.name}.`),
                     );
                   }}
                 />
