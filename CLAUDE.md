@@ -35,7 +35,7 @@ reference models (mortgage, KPI) are the regression baseline (ADR 0081, 0174).
 ## 3. Project structure (non-obvious bits)
 
 - `src/engine/` is PURE (§4); `__tests__/` = parity, invariant and property tests.
-- `src/data/sql.ts` = SQL adapter: `tauriSql.ts` in the app, `browserSql.ts` = E2E fallback.
+- `src/data/sql.ts` = SQL adapter: `tauriSql.ts` in the app, `src/e2e/browserSql.ts` = E2E fallback (only via `open.ts`'s dynamic import).
   Multi-step writes go through the Rust transaction command (ADR 0014).
 - `src/import/`: CSV is canonical — there is no xlsx importer. `csv.ts` = pure parse/validate;
   `csvImport.ts` = DB write.
