@@ -9,7 +9,7 @@
 import { describe, it, expect } from "vitest";
 import fc from "fast-check";
 import { addDays, edate, utc } from "../dates";
-import { drawMonth } from "../amortization";
+import { drawMonth } from "../loanTerm";
 import { money, rate } from "../brands";
 import { EngineInputError } from "../errors";
 import { buildSchedule, lastPaymentMonth, propertySchedule } from "../schedule";

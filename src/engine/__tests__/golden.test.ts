@@ -7,12 +7,8 @@ import { describe, it, expect } from "vitest";
 import { D, Decimal } from "../../lib/money";
 import { rate } from "../brands";
 import { edate, isoDate } from "../dates";
-import {
-  amortizationHealth,
-  drawMonth,
-  scheduleMonths,
-  termMonths,
-} from "../amortization";
+import { amortizationHealth } from "../loanChecks";
+import { drawMonth, scheduleMonths, termMonths } from "../loanTerm";
 import {
   buildSchedule,
   EMPTY_PROPERTY_SCHEDULE,

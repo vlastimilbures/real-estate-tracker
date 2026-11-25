@@ -6,7 +6,7 @@ import {
   paymentOnOrAfter,
   paymentsDueBy,
   termMonths,
-} from "../amortization";
+} from "../loanTerm";
 import type {
   Assumptions,
   LoanEventIssue,
@@ -166,12 +166,27 @@ export interface Settled {
 
 const larger = (a: Decimal, b: Decimal): Decimal => (a.greaterThan(b) ? a : b);
 
-export function prepaymentIssue(
+function prepaymentIssue(
   requested: Decimal,
   applied: Decimal,
 ): LoanEventIssue | null {
   if (!applied.greaterThan(ZERO)) return "PREPAYMENT_AFTER_PAYOFF";
   return applied.lessThan(requested) ? "PREPAYMENT_EXCEEDS_BALANCE" : null;
+}
+
+/**
+ * A prepayment of `requested` paid out of `available`: at most what is left, charged its
+ * entered `fee` only when it repays something, with the issue it is reported with
+ * (ADR 0109, ADR 0116). The one clamp of the schedule's prepayments and the handover's.
+ */
+export function clampPrepayment(
+  requested: Decimal,
+  available: Decimal,
+  fee: Decimal | undefined,
+): { applied: Decimal; charged: Decimal; issue: LoanEventIssue | null } {
+  const applied = requested.lessThan(available) ? requested : available;
+  const charged = applied.greaterThan(ZERO) ? (fee ?? ZERO) : ZERO;
+  return { applied, charged, issue: prepaymentIssue(requested, applied) };
 }
 
 /**
@@ -200,8 +215,11 @@ function applyPrepayments(
   const outcomes: Outcome[] = [];
   for (const p of prepayments) {
     const available = balance.plus(seen(p.date));
-    const applied = p.amount.lessThan(available) ? p.amount : available;
-    const charged = applied.greaterThan(ZERO) ? (p.fee ?? ZERO) : ZERO;
+    const { applied, charged, issue } = clampPrepayment(
+      p.amount,
+      available,
+      p.fee,
+    );
     if (applied.greaterThan(ZERO)) {
       [balance, prepaid, fee] = [
         balance.minus(applied),
@@ -219,7 +237,7 @@ function applyPrepayments(
       requested: p.amount,
       applied,
       fee: charged,
-      issue: prepaymentIssue(p.amount, applied),
+      issue,
       enteredFee: p.fee ?? ZERO,
     });
   }

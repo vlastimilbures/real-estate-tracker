@@ -1,15 +1,14 @@
 // Non-parity amortization unit tests. The Javorova parity rows live in
 // parity/amortization.test.ts.
 import { describe, it, expect } from "vitest";
+import { instalmentFor, suggestedInstalment } from "../loanInstalment";
+import { amortizationHealth } from "../loanChecks";
 import {
-  instalmentFor,
-  suggestedInstalment,
-  amortizationHealth,
   fixationExpired,
   blockEndDate,
   rateAt,
   rateFixedUntil,
-} from "../amortization";
+} from "../loanRate";
 import { buildSchedule, openingBalance } from "../schedule";
 import { edate, isoDate } from "../dates";
 import { D, Decimal, PMT, ceilCzk } from "../../lib/money";

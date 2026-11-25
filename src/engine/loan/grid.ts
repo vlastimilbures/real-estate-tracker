@@ -4,12 +4,11 @@ import { isAfter } from "../dates";
 import {
   dueDate,
   eventTermMonths,
-  instalmentFor,
-  isDevLoan,
-  scheduledInstalment,
   scheduleMonths,
   termMonths,
-} from "../amortization";
+} from "../loanTerm";
+import { instalmentFor, scheduledInstalment } from "../loanInstalment";
+import { isDevLoan } from "../loanBlock";
 import type { AmortizationRow, Assumptions, MortgageBlock } from "../types";
 import {
   paymentOffset,

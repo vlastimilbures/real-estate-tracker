@@ -1,5 +1,5 @@
-// ADR 0099: which open-ended record a newly added valuation or lease succeeds; ADR 0163:
-// which leases overlap.
+// Effective-dated records (valuations, leases): which open-ended record a newly added
+// one succeeds (ADR 0099) and which leases overlap (ADR 0163).
 import { byStart, isAfter, isOnOrBefore } from "./dates";
 import type { Lease } from "./types";
 

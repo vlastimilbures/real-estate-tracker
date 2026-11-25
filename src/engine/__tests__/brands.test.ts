@@ -3,7 +3,7 @@
 import { describe, it, expect, expectTypeOf } from "vitest";
 import { D, type Decimal } from "../../lib/money";
 import { money, rate, type Money, type Rate } from "../brands";
-import { mortgageBlock } from "../amortization";
+import { mortgageBlock } from "../loanBlock";
 import { isoDate } from "../dates";
 import type { MortgageBlock } from "../types";
 

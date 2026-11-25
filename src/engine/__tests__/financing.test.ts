@@ -6,15 +6,15 @@ import fc from "fast-check";
 import {
   debtResettingWithin,
   financingExposure,
-  leaseEndWithoutFollowOn,
   propertyLoanExposure,
-  upcomingEvents,
   type FinancingExposure,
   type FixationReset,
 } from "../financing";
+import { leaseEndWithoutFollowOn, upcomingEvents } from "../upcomingEvents";
 import { propertySchedules, type PropertySchedule } from "../schedule";
 import { portfolioOutputs } from "../outputs";
-import { impliedMaturity, mortgageBlock } from "../amortization";
+import { impliedMaturity } from "../loanChecks";
+import { mortgageBlock } from "../loanBlock";
 import { edate, isoDate } from "../dates";
 import { money, rate } from "../brands";
 import { ZERO } from "../../lib/money";

@@ -30,7 +30,7 @@
 // grid.
 import { ZERO, type Decimal } from "../../lib/money";
 import { edate } from "../dates";
-import { dueDate } from "../amortization";
+import { dueDate } from "../loanTerm";
 import type {
   AmortizationRow,
   Assumptions,

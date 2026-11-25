@@ -1,6 +1,6 @@
 // One mortgage block's checks (D-17, D-36, D-37) and the loan asserts: the one path into
 // checkMortgage.
-import { derivedTermProblem, dueDate } from "../amortization";
+import { derivedTermProblem, dueDate } from "../loanTerm";
 import { isAfter, isOnOrBefore } from "../dates";
 import type { MortgageBlock } from "../types";
 import {

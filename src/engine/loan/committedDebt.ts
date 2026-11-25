@@ -1,7 +1,9 @@
 // Development-loan principal not drawn yet: committed debt (ADR 0166).
 import { ZERO, type Decimal } from "../../lib/money";
 import { firstGridMonthOnOrAfter, isAfter } from "../dates";
-import { drawMonth, fundedThePurchase, isDevLoan } from "../amortization";
+import { drawMonth } from "../loanTerm";
+import { fundedThePurchase } from "../acquisitionLoan";
+import { isDevLoan } from "../loanBlock";
 import { assertLoanInputs } from "../validate";
 import type {
   Assumptions,
@@ -9,7 +11,7 @@ import type {
   MortgageDraw,
   Property,
 } from "../types";
-import { afterSuccessor, chainLinks, replacedByMonth } from "./chain";
+import { afterSuccessor, chainLinks, replacedByMonth } from "./blockChain";
 
 /**
  * Development-loan principal not drawn yet at the end of grid month `month` (0 =

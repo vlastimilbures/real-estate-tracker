@@ -4,7 +4,8 @@
 import { describe, it, expect } from "vitest";
 import { rate } from "../brands";
 import { isoDate } from "../dates";
-import { amortizationHealth, termMonths } from "../amortization";
+import { amortizationHealth } from "../loanChecks";
+import { termMonths } from "../loanTerm";
 import {
   buildSchedule,
   openingBalance,

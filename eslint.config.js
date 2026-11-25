@@ -130,7 +130,7 @@ const engineDateBan = {
 };
 
 // Brands get values only through their constructors (ADR 0074): engine/brands.ts (Money,
-// Rate), engine/dates.ts (IsoDate) and `mortgageBlock` in engine/amortization.ts.
+// Rate), engine/dates.ts (IsoDate) and `mortgageBlock` in engine/loanBlock.ts.
 const BRAND_TYPES =
   "/^(Money|Rate|IsoDate|MortgageBlock|PlainLoan|DevelopmentLoan)$/";
 const brandCastBans = [

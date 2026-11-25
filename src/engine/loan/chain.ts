@@ -1,12 +1,9 @@
 // One block's schedule and a property's refinance chain (D-27, D-43, D-47).
 import { ZERO, type Decimal } from "../../lib/money";
-import { firstAfter, isOnOrBefore } from "../dates";
-import {
-  drawMonth,
-  dueDate,
-  mortgageBlock,
-  selectBlock,
-} from "../amortization";
+import { isOnOrBefore } from "../dates";
+import { drawMonth, dueDate } from "../loanTerm";
+import { cutAfter } from "../loanBlock";
+import { afterSuccessor, type ChainLink, chainLinks } from "./blockChain";
 import { at } from "../arrays";
 import {
   assertAssumptions,
@@ -23,7 +20,7 @@ import type {
   Refinance,
 } from "../types";
 import { paymentOffset } from "./calendar";
-import { type Outcome, prepaymentIssue } from "./events";
+import { clampPrepayment, type Outcome } from "./events";
 import { type BlockSchedule, buildBlockSchedule } from "./grid";
 import { lastPaymentMonth } from "./queries";
 
@@ -78,66 +75,6 @@ export function effectiveMaturity(
 // ---------------------------------------------------------------------------
 // Refinance chains (D-27, D-43, D-47)
 // ---------------------------------------------------------------------------
-
-/**
- * The blocks that drive a property's schedule: the block in force at baseDate (else
- * the earliest upcoming one), then each later start in order — a successor replaces
- * its predecessor from its start (D-27, D-43). Earlier blocks are already replaced.
- */
-export function blockChain(
-  blocks: MortgageBlock[],
-  baseDate: Date,
-): MortgageBlock[] {
-  const chain: MortgageBlock[] = [];
-  let block = selectBlock(blocks, baseDate);
-  while (block) {
-    chain.push(block);
-    block = firstAfter(blocks, block.startDate, (b) => b.startDate);
-  }
-  return chain;
-}
-
-/** One block of a refinance chain with the successor that replaces it, if any. */
-export interface ChainLink {
-  block: MortgageBlock;
-  next: MortgageBlock | undefined;
-}
-
-/** The chain of `blockChain` at `date`, each block with its successor: the one place the
- *  chain's block/successor pairs are built (#476). */
-export function chainLinks(blocks: MortgageBlock[], date: Date): ChainLink[] {
-  const chain = blockChain(blocks, date);
-  return chain.map((block, i) => ({ block, next: chain[i + 1] }));
-}
-
-/**
- * True when an item dated `date` falls after the successor's start, so the block never
- * draws or applies it: the successor replaces the block from that date (D-47, DR-126,
- * ADR 0109). False without a successor. An invalid date counts as after the successor;
- * callers rely on `assertLoanRows` (via `propertySchedules`) having refused one upstream.
- */
-export function afterSuccessor(
-  next: MortgageBlock | undefined,
-  date: Date,
-): boolean {
-  return next !== undefined && !isOnOrBefore(date, next.startDate);
-}
-
-/** True when the link's successor has started on or before `date`, so it has replaced
- *  the block by then (D-27, D-43). False without a successor. */
-export function replacedOnOrBefore(link: ChainLink, date: Date): boolean {
-  return link.next !== undefined && isOnOrBefore(link.next.startDate, date);
-}
-
-/** True when the link's successor has drawn by grid month `m`: the schedule follows the
- *  successor from its draw month (D-27, D-47). False without a successor. */
-export function replacedByMonth(
-  link: ChainLink,
-  m: number,
-  baseDate: Date,
-): boolean {
-  return link.next !== undefined && drawMonth(link.next, baseDate) <= m;
-}
 
 /**
  * Splice `next` into the chain's rows from its draw month `d` (D-47). The owner's
@@ -237,14 +174,16 @@ function handoverPrepayments(
     }
     if (o.kind === "recast")
       return { ...o, month: null, issue: "RECAST_REPLACED" };
-    const paid = o.requested.lessThan(left) ? o.requested : left;
-    const charged = paid.greaterThan(ZERO) ? (o.enteredFee ?? ZERO) : ZERO;
+    const {
+      applied: paid,
+      charged,
+      issue,
+    } = clampPrepayment(o.requested, left, o.enteredFee);
     [left, applied, fee] = [
       left.minus(paid),
       applied.plus(paid),
       fee.plus(charged),
     ];
-    const issue = prepaymentIssue(o.requested, paid);
     return { ...o, month: d, applied: paid, fee: charged, issue };
   });
   return { applied, fee, outcomes: out };
@@ -325,28 +264,16 @@ function cutAt(
   block: MortgageBlock,
   next: MortgageBlock,
 ): { block: MortgageBlock; dropped: Outcome[] } {
-  const keep = (e: { date: Date }) => !afterSuccessor(next, e.date);
+  const replaced = (e: { date: Date }) => afterSuccessor(next, e.date);
   const dropped = [
     ...(block.prepayments ?? [])
-      .filter((p) => !keep(p))
+      .filter(replaced)
       .map((p) => replacedOutcome(block, "prepayment", p)),
     ...(block.recasts ?? [])
-      .filter((r) => !keep(r))
+      .filter(replaced)
       .map((r) => replacedOutcome(block, "recast", r)),
   ];
-  const draws = block.draws?.filter(keep);
-  const unchanged =
-    dropped.length === 0 && draws?.length === block.draws?.length;
-  if (unchanged) return { block, dropped };
-  return {
-    block: mortgageBlock({
-      ...block,
-      draws,
-      prepayments: block.prepayments?.filter(keep),
-      recasts: block.recasts?.filter(keep),
-    }),
-    dropped,
-  };
+  return { block: cutAfter(block, next.startDate), dropped };
 }
 
 /**
@@ -416,11 +343,11 @@ export function propertySchedule(
   };
 }
 
-/** An outcome without the internal entered fee. */
+/** A copy of the outcome without the internal entered fee, its fields in order. */
 function publicOutcome(o: Outcome): LoanEventOutcome {
-  const { enteredFee, ...rest } = o;
-  void enteredFee;
-  return rest;
+  const copy: Outcome = { ...o };
+  delete copy.enteredFee;
+  return copy;
 }
 
 /**

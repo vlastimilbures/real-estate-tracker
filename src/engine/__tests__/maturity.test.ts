@@ -4,7 +4,7 @@
 // from the P02 report §5.
 import { describe, it, expect } from "vitest";
 import { isoDate } from "../dates";
-import { impliedMaturity, maturityMismatch } from "../amortization";
+import { impliedMaturity, maturityMismatch } from "../loanChecks";
 import { validateInputs } from "../validate";
 import { EngineInputError } from "../errors";
 import { portfolioSnapshot } from "../metrics";

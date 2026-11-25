@@ -7,7 +7,7 @@ import {
   paymentOnOrAfter,
   paymentsDueBy,
   termMonths,
-} from "../amortization";
+} from "../loanTerm";
 import { isOnOrBefore } from "../dates";
 import type { LoanRecast, MortgageBlock } from "../types";
 import type { FieldOf, ValidationCode } from "./codes";

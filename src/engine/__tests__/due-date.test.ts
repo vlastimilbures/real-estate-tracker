@@ -5,7 +5,7 @@
 // none. Javorova pays on the 17th; baseDate is the 7th, so the grid date is 21 days
 // after each due date.
 import { describe, it, expect } from "vitest";
-import { mortgageBlock } from "../amortization";
+import { mortgageBlock } from "../loanBlock";
 import { money, rate } from "../brands";
 import { edate, isoDate } from "../dates";
 import { propertyLoanExposure } from "../financing";

@@ -2,7 +2,9 @@
 // The plain-loan parity is covered by amortization.test.ts; here we exercise the
 // dev path that fires only when `draws` or `completionDate` are present.
 import { describe, it, expect } from "vitest";
-import { instalmentFor, isDevLoan, termMonths } from "../amortization";
+import { instalmentFor } from "../loanInstalment";
+import { isDevLoan } from "../loanBlock";
+import { termMonths } from "../loanTerm";
 import { buildSchedule, balanceAtMonth } from "../schedule";
 import { EngineInputError } from "../errors";
 import { portfolioProjection } from "../projections";

@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { money, rate } from "../brands";
 import { isoDate } from "../dates";
-import { isDevLoan } from "../amortization";
+import { isDevLoan } from "../loanBlock";
 import { buildSchedule, propertySchedule } from "../schedule";
 import { EngineInputError } from "../errors";
 import {

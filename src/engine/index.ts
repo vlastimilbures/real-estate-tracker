@@ -24,21 +24,19 @@ export {
   monthsBetween,
   utc,
 } from "./dates";
-export { openPredecessor, overlappingLeases } from "./succession";
+export { openPredecessor, overlappingLeases } from "./effectiveDating";
 
 // Loans
+export { isDevLoan, mortgageBlock } from "./loanBlock";
+export { blockEndDate, fixationExpired } from "./loanRate";
+export { suggestedInstalment } from "./loanInstalment";
 export {
   amortizationHealth,
-  blockEndDate,
-  fixationExpired,
   /** @internal test seam (UI model tests) */
   impliedMaturity,
-  isDevLoan,
-  suggestedInstalment,
   maturityMismatch,
-  mortgageBlock,
-  selectBlock,
-} from "./amortization";
+} from "./loanChecks";
+export { selectBlock } from "./loan/blockChain";
 export {
   /** @internal test seam (CSV import tests) */
   MAX_LOAN_TERM_MONTHS,
@@ -83,20 +81,16 @@ export {
   projectionAndKpis,
 } from "./kpis";
 export { portfolioOutputs } from "./outputs";
-export {
-  debtResettingWithin,
-  leaseEndWithoutFollowOn,
-  propertyLoanExposure,
-  upcomingEvents,
-} from "./financing";
+export { debtResettingWithin, propertyLoanExposure } from "./financing";
 export type {
   Drawdown,
   DrawdownTranche,
-  FinancingEventKind,
   FinancingExposure,
   FixationReset,
   PropertyLoan,
 } from "./financing";
+export { leaseEndWithoutFollowOn, upcomingEvents } from "./upcomingEvents";
+export type { FinancingEventKind } from "./upcomingEvents";
 export { applyScenario } from "./scenarios";
 export { blocksReachedByShock } from "./shockReach";
 export type { BlockShockReach } from "./shockReach";
