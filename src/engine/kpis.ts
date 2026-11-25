@@ -21,6 +21,7 @@ import type {
   IrrNoRateReason,
   Portfolio,
   PortfolioKPIs,
+  PortfolioYear,
   ProjectionYear,
 } from "./types";
 import { yearsToMonths } from "./units";
@@ -304,7 +305,7 @@ function interestInHorizon(
 export function projectionAndKpis(
   portfolio: Portfolio,
   assumptions: Assumptions,
-): { projection: ProjectionYear[]; kpis: PortfolioKPIs } {
+): { projection: PortfolioYear[]; kpis: PortfolioKPIs } {
   const v = assertInputs(portfolio, assumptions); // D-37
   const built = propertySchedules(
     portfolio.mortgages,
@@ -321,7 +322,7 @@ export function projectionAndKpis(
  * #291).
  */
 export function runPortfolio(run: EngineRun): {
-  projection: ProjectionYear[];
+  projection: PortfolioYear[];
   kpis: PortfolioKPIs;
 } {
   const { years: projection, prePurchase } = projectPortfolioParts(run);

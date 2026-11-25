@@ -413,6 +413,16 @@ export interface ProjectionYear {
   ratePa: Decimal | null;
 }
 
+/** A property's projection year (`propertyProjection`): `ratePa` is the rate of its
+ *  year's last month with a payment, or null. */
+export type PropertyYear = ProjectionYear;
+
+/** A portfolio projection year (`portfolioProjection`): the property years summed. Rates
+ *  are not summed, so `ratePa` is always null. */
+export interface PortfolioYear extends ProjectionYear {
+  ratePa: null;
+}
+
 /** Why a levered IRR has no value (DR-158): no root in the search range, or the NPV
  *  has more than one root there. */
 export type IrrNoRateReason = "NO_ROOT" | "NOT_UNIQUE";

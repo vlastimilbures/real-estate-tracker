@@ -20,14 +20,14 @@ import type {
   Portfolio,
   PortfolioKPIs,
   PortfolioSnapshot,
-  ProjectionYear,
+  PortfolioYear,
 } from "./types";
 
 export interface PortfolioOutputs {
   /** Each property's amortization rows, keyed by propertyId. */
   schedules: Map<string, AmortizationRow[]>;
   snapshot: PortfolioSnapshot;
-  projection: ProjectionYear[];
+  projection: PortfolioYear[];
   kpis: PortfolioKPIs;
   /** Next fixations, modelled payoffs and fixation ends at `asOf` (ADR 0103). */
   financing: FinancingExposure;
