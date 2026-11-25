@@ -4,9 +4,9 @@ import { MetricLabel } from "./MetricLabel";
 import { Money, Pct, TableWrap } from "./primitives";
 import { fmtDscr } from "../../lib/format";
 import type { Decimal } from "../../lib/money";
+import { purchasedValue } from "../../engine";
 import {
   projectionExtras,
-  purchasedValue,
   purchasesColumn,
   undrawnColumn,
   yearCellPeriod,

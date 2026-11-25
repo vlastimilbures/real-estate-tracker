@@ -79,6 +79,7 @@ export {
   realPropertySnapshot,
 } from "./real";
 export { acquisitionSummary } from "./acquisition";
+export { equityBridge, purchasedValue } from "./equityBridge";
 export type { AcquisitionSummary } from "./acquisition";
 export {
   /** @internal test seam (tests; the app runs `portfolioOutputs`) */
