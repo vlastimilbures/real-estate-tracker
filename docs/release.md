@@ -101,7 +101,8 @@ On the Mac that built it, the app opens normally (no quarantine attribute).
 Which databases a release upgrades: every database at version 8 or later, that is, last
 opened with 1.4.0 or later (ADR 0230). An older one is refused unchanged with a message to
 open it once with 1.5.0 first, so keep the 1.5.0 dmg on its GitHub release. The step list is
-`src/data/migrations.ts`: the version 8 baseline, then one step per later version.
+`src/data/migrations/`: the version 8 baseline (`baseline.ts`), then one step per later
+version (`steps.ts`).
 
 The database runs in WAL mode: committed data can sit in `portfolio.db-wal` until a checkpoint.
 To back it up, use **Settings → Backup & Restore → Export backup** (a consistent JSON copy) or

@@ -115,6 +115,17 @@ module.exports = {
       },
     },
     {
+      name: "migrations-frozen",
+      severity: "error",
+      comment:
+        "A schema step never changes with today's code (#472): the migrations import only the Sql interface, the data errors and each other, never the mappers or the JSON codecs.",
+      from: { path: "^src/data/migrations/", pathNot: TESTS },
+      to: {
+        path: "^src/",
+        pathNot: "^src/data/(migrations/|sql\\.ts$|errors\\.ts$)",
+      },
+    },
+    {
       name: "data-no-ui-lib",
       severity: "error",
       comment:
