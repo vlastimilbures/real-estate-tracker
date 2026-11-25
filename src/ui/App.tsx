@@ -21,11 +21,9 @@ import { ToastRegion } from "./components/OutcomeRegions";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PageBoundary } from "./components/PageBoundary";
 import { BootFailure } from "./components/BootFailure";
-import { applyTheme, onSystemThemeChange } from "./theme";
 import { useT } from "./hooks/useT";
-import { menuLabels, menuRoute } from "./model/menu";
-import { isTauri } from "../lib/tauri";
-import { onMenuEvent, setMenuLabels } from "../state/platform";
+import { useNativeMenu } from "./hooks/useNativeMenu";
+import { useThemeSync } from "./hooks/useThemeSync";
 
 // Pages away from the start screen load on first visit (P9): their code, and the
 // libraries only they use, stay out of the startup bundle. The fallback is empty; the
@@ -88,7 +86,6 @@ export function App() {
   const t = useT();
   const status = usePortfolioStore((s) => s.status.kind);
   const init = usePortfolioStore((s) => s.init);
-  const theme = useUiStore((s) => s.theme);
   const aboutOpen = useUiStore((s) => s.aboutOpen);
   const closeAbout = useUiStore((s) => s.closeAbout);
   const route = useUiStore((s) => s.route);
@@ -97,51 +94,8 @@ export function App() {
     void init();
   }, [init]);
 
-  // Native menu items (UX-066): App ▸ About…, View ▸ page (⌘1–⌘5), File ▸ New Property…
-  // (⌘N) and Settings… (⌘,, UX-074). Ignored while a dialog is open, so a menu key never
-  // leaves a form behind or stacks About over it (ADR 0157). They are also ignored while
-  // the app is not ready (loading or an error screen), so Try again returns to the page
-  // the owner was on, with no About left to pop up (ADR 0228). Guarded by the Tauri check (mirrors
-  // src/data/tauriSql.ts) so browser/E2E never crash on the missing event bridge.
-  useEffect(() => {
-    if (!isTauri()) return;
-    const dialogOpen = () =>
-      document.querySelector('[aria-modal="true"]') !== null;
-    const held = () =>
-      dialogOpen() || usePortfolioStore.getState().status.kind !== "ready";
-    const offs = [
-      onMenuEvent("menu://about", () => {
-        if (!held()) useUiStore.getState().openAbout();
-      }),
-      onMenuEvent("menu://navigate", (e) => {
-        const route = menuRoute(e.payload);
-        if (route && !held()) useUiStore.getState().navigate(route);
-      }),
-      onMenuEvent("menu://new-property", () => {
-        if (!held()) useUiStore.getState().requestNewProperty();
-      }),
-      onMenuEvent("menu://settings", () => {
-        if (!held()) useUiStore.getState().openSettings();
-      }),
-    ];
-    return () => {
-      for (const off of offs) void off.then((f) => f());
-    };
-  }, []);
-
-  // The native menu items the app adds follow the UI language (UX-076): sent at start and
-  // on every language change (`t` is one dictionary object per language).
-  useEffect(() => {
-    if (isTauri()) setMenuLabels(menuLabels(t));
-  }, [t]);
-
-  // Keep <html data-theme> in sync with the preference, and follow the OS while the
-  // preference is "system".
-  useEffect(() => {
-    applyTheme(theme);
-    if (theme !== "system") return;
-    return onSystemThemeChange(() => applyTheme("system"));
-  }, [theme]);
+  useNativeMenu();
+  useThemeSync();
 
   if (status === "loading" || status === "idle") {
     return (
