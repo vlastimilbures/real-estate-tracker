@@ -34,7 +34,8 @@ export interface ValueShock {
   atYear: number; // projection year (0 = today); growth resumes from the lower base
 }
 
-/** The assumptions the owner stores (the one `assumptions` row): every field present. */
+/** The assumptions the owner stores (the one `assumptions` row). Every field is present
+ *  except `sellingCostPct`, which stays optional (undefined ⇒ 0). */
 export interface StoredAssumptions {
   baseDate: IsoDate;
   appreciationPa: Rate;
