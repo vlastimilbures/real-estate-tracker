@@ -9,7 +9,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { useRecordForm, type RecordFormOptions } from "../useRecordForm";
-import type { FieldSpec } from "../../model/formParse";
+import type { FormSpec } from "../../model/formParse";
 import {
   EVENT_LISTS,
   type EventLists,
@@ -21,13 +21,8 @@ import type { WriteError } from "../../../state/writeError";
 const specs = [
   { name: "startDate", label: "Start date", kind: "date" },
   { name: "amount", label: "Amount", kind: "money" },
-  {
-    name: "prepayments",
-    label: "Prepayments",
-    kind: "prepayments",
-    optional: true,
-  },
-] as const satisfies readonly FieldSpec[];
+  { name: "prepayments", label: "Prepayments", kind: "list" },
+] as const satisfies readonly FormSpec[];
 
 const row: PrepaymentRow = {
   kind: "prepayments",

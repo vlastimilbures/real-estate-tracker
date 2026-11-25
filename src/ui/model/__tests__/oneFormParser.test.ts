@@ -1,8 +1,13 @@
 // ADR 0140 (#125): every form parses through collectValues with one message set, and a
 // money field refuses an amount shaped like an English thousands separator.
 import { describe, it, expect } from "vitest";
-import { collectValues, parseMoney, parsePercentToRatio } from "../formParse";
-import { FORM_PARSERS, formRules } from "../formParsers";
+import {
+  collectValues,
+  FORM_PARSERS,
+  formRules,
+  parseMoney,
+  parsePercentToRatio,
+} from "../formParse";
 import {
   parseDrawRows,
   parsePrepaymentRows,

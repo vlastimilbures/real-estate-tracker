@@ -1,7 +1,6 @@
 // Pure draft-parsing for the scenario create/edit form. Kept out of ScenarioForm.tsx
 // so it's unit-testable without mounting the component (mirrors ./mortgageForm.ts).
-import { collectValues, type FieldSpec } from "./formParse";
-import { formRules } from "./formParsers";
+import { collectValues, formRules, type FieldSpec } from "./formParse";
 import { CRASH_YEAR, SHOCK_YEARS } from "../../lib/rules";
 import { formWriteErrors, type FormWriteError } from "./writeError";
 import type {

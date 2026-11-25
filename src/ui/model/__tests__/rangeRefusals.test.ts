@@ -1,8 +1,12 @@
 // #464: today's form refusals and their English messages at each bound, pinned with
 // literal values so moving the input rules into one module cannot change them.
 import { describe, it, expect } from "vitest";
-import { collectValues, parseDate, type FieldSpec } from "../formParse";
-import { formRules } from "../formParsers";
+import {
+  collectValues,
+  formRules,
+  parseDate,
+  type FieldSpec,
+} from "../formParse";
 import { BLANK_PROPERTY_FORM, parsePropertyForm } from "../propertyForm";
 import { parseScenarioDraft, type ScenarioDraftFields } from "../scenarioForm";
 import { en } from "../../../i18n/en";

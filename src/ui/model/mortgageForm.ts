@@ -9,6 +9,7 @@ import {
   percentDraft,
   parsePercentToRatio,
   parseIntField,
+  listSpec,
 } from "./formParse";
 import {
   drawWarnings,
@@ -245,13 +246,11 @@ export function mortgageSpecs(t: Dictionary) {
       label: t.propertyDetail.fieldStartDate,
       kind: "date",
     },
-    {
-      // Development only: the start draw (the initial principal) is its first row
-      // (ADR 0167).
+    // Development only: the start draw (the initial principal) is its first row
+    // (ADR 0167).
+    listSpec<MortgageDraw[]>()({
       name: "draws",
       label: t.propertyDetail.fieldDraws,
-      kind: "draws",
-      optional: true,
       help: t.propertyDetail.helpDraws,
       lead: {
         field: "initialPrincipal",
@@ -259,7 +258,7 @@ export function mortgageSpecs(t: Dictionary) {
         label: t.propertyDetail.drawnAtStart,
         dateFallback: t.propertyDetail.drawnAtStartNoDate,
       },
-    },
+    }),
     {
       name: "initialPrincipal",
       label: t.propertyDetail.fieldInitialPrincipal,
@@ -315,19 +314,15 @@ function laterSpecs(t: Dictionary) {
       optional: true,
       help: t.propertyDetail.helpContractMaturity,
     },
-    {
+    listSpec<MortgagePrepayment[]>()({
       name: "prepayments",
       label: t.propertyDetail.fieldPrepayments,
-      kind: "prepayments",
-      optional: true,
       help: t.propertyDetail.helpPrepayments,
-    },
-    {
+    }),
+    listSpec<LoanRecast[]>()({
       name: "recasts",
       label: t.propertyDetail.fieldRecasts,
-      kind: "recasts",
-      optional: true,
       help: t.propertyDetail.helpRecasts,
-    },
+    }),
   ] as const;
 }

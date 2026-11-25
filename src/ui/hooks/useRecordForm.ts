@@ -5,12 +5,13 @@
 import { useId, useState } from "react";
 import {
   collectValues,
+  formRules,
+  isFieldSpec,
   shownFields,
-  type FieldSpec,
   type FormLists,
+  type FormSpec,
   type ParsedValues,
 } from "../model/formParse";
-import { formRules } from "../model/formParsers";
 import { formWriteErrors } from "../model/writeError";
 import { isDirty } from "../model/dirty";
 import type { WriteError } from "../../state/writeError";
@@ -20,10 +21,7 @@ import { useT } from "./useT";
 
 type Draft = Record<string, string>;
 
-export interface RecordFormOptions<
-  S extends readonly FieldSpec[],
-  L = NoLists,
-> {
+export interface RecordFormOptions<S extends readonly FormSpec[], L = NoLists> {
   specs: S;
   initial: Draft;
   /** The row lists and their model, for a form that has any. */
@@ -45,7 +43,6 @@ export interface RecordFormOptions<
 type NoLists = Record<never, never>;
 
 const NO_LISTS: FormLists<NoLists> = {
-  names: [],
   texts: () => ({}),
   parse: () => ({ values: {}, errors: {} }),
   rowOf: () => null,
@@ -77,10 +74,9 @@ export interface RecordFormWithLists<L> extends RecordFormState {
   editList: <K extends keyof L & string>(name: K, rows: L[K]) => void;
 }
 
-export function useRecordForm<
-  const S extends readonly FieldSpec[],
-  L = NoLists,
->(options: RecordFormOptions<S, L>): RecordFormWithLists<L> {
+export function useRecordForm<const S extends readonly FormSpec[], L = NoLists>(
+  options: RecordFormOptions<S, L>,
+): RecordFormWithLists<L> {
   const { specs, initial, onSubmit, hiddenFields, unsavedKey } = options;
   const model = (options.lists?.model ?? NO_LISTS) as FormLists<L>;
   const t = useT();
@@ -122,18 +118,19 @@ export function useRecordForm<
     setDraft((d) => ({ ...d, lists: { ...d.lists, [name]: rows } }));
     clearFields((k) => k === name || k.startsWith(`${name}.`));
   }
-  /** Parse the draft: the text fields by their specs, the lists by their model. A list's
-   *  spec is optional, so its absent text parses to null before the list's own value. */
+  /** Parse the draft: the text fields by their specs, the lists by their model (a row
+   *  list's spec is not text, so it never reaches collectValues). */
   function check() {
-    const parsed = collectValues(specs, draft.fields, formRules(t));
+    const fields = specs.filter(isFieldSpec);
+    const parsed = collectValues(fields, draft.fields, formRules(t));
     const lists = model.parse(draft.lists, t);
     const errs = { ...parsed.errors, ...lists.errors };
-    return Object.keys(errs).length > 0
-      ? { ok: false as const, errors: errs }
-      : {
-          ok: true as const,
-          values: Object.assign(parsed.values, lists.values),
-        };
+    if (Object.keys(errs).length > 0)
+      return { ok: false as const, errors: errs };
+    // Each field spec's value came from collectValues and each list's from its model, so
+    // the record has the ParsedValues<S> shape.
+    const values = { ...parsed.values, ...lists.values } as ParsedValues<S>;
+    return { ok: true as const, values };
   }
 
   return {

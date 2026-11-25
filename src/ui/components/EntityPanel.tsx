@@ -5,7 +5,7 @@ import { Panel, Button } from "./primitives";
 import { RecordForm } from "./forms";
 import { EntityTable } from "./EntityPanelParts";
 import { ConfirmRow } from "./ConfirmRow";
-import type { FieldSpec, ParsedValues } from "../model/formParse";
+import type { FormSpec, ParsedValues } from "../model/formParse";
 import { useT } from "../hooks/useT";
 import { useUiStore } from "../../state/uiStore";
 import type { WriteError } from "../../state/writeError";
@@ -35,7 +35,7 @@ export interface PanelTable<T> {
 }
 
 /** What a panel's add or edit form gets: the row (null when adding) and the save. */
-export interface EntityFormProps<T, S extends readonly FieldSpec[]> {
+export interface EntityFormProps<T, S extends readonly FormSpec[]> {
   specs: S;
   row: T | null;
   adding: boolean;
@@ -47,7 +47,7 @@ export interface EntityFormProps<T, S extends readonly FieldSpec[]> {
 
 /** The add/edit form: its specs, the draft of a row and the row built from the values.
  *  A form of its own (`render`, the mortgage form) takes the place of RecordForm. */
-export interface PanelForm<T, S extends readonly FieldSpec[]> {
+export interface PanelForm<T, S extends readonly FormSpec[]> {
   specs: S;
   /** RecordForm's draft of a row (null when adding); blank without it. */
   draftOf?: (r: T | null) => Draft;
@@ -67,7 +67,7 @@ type Mode =
  *  values typed by the inline `specs`. */
 export function EntityPanel<
   T extends { id: string },
-  const S extends readonly FieldSpec[],
+  const S extends readonly FormSpec[],
 >({
   chrome,
   table,
@@ -163,7 +163,7 @@ export function EntityPanel<
 }
 
 /** The add form (`editId` null) or the edit form of one row. */
-function EntityForm<T extends { id: string }, S extends readonly FieldSpec[]>({
+function EntityForm<T extends { id: string }, S extends readonly FormSpec[]>({
   form,
   editId,
   rows,

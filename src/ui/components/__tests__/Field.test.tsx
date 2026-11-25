@@ -15,7 +15,7 @@ import { PropertyFormModal } from "../PropertyFormModal";
 import { ScenarioForm } from "../../pages/ScenarioForm";
 import { getDict } from "../../../i18n";
 import { assumptions } from "../../../engine/__tests__/support/seed";
-import type { FieldSpec } from "../../model/formParse";
+import type { FormSpec } from "../../model/formParse";
 
 /** Every input/select/textarea under `root` has an accessible name source. */
 function unlabelled(root: HTMLElement): string[] {
@@ -32,10 +32,10 @@ function unlabelled(root: HTMLElement): string[] {
     .map((c) => c.outerHTML);
 }
 
-const specs: FieldSpec[] = [
+const specs: FormSpec[] = [
   { name: "price", label: "Price", kind: "money", help: "In Kč" },
   { name: "startDate", label: "Start date", kind: "date" },
-  { name: "draws", label: "Draws", kind: "draws", optional: true },
+  { name: "draws", label: "Draws", kind: "list" },
 ];
 
 /** A record form with a tranche list among its fields, as the mortgage form composes

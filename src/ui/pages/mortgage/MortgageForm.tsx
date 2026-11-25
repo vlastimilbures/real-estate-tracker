@@ -8,7 +8,7 @@ import {
   type RecordFormWithLists,
 } from "../../hooks/useRecordForm";
 import { useT } from "../../hooks/useT";
-import type { FieldSpec } from "../../model/formParse";
+import type { FormSpec } from "../../model/formParse";
 import {
   EVENT_LISTS,
   type EventListKind,
@@ -69,7 +69,7 @@ export function MortgageForm({
       ? form.patch({ loanType: next, completionDate: "" }, { draws: [] })
       : form.patch({ loanType: next });
   const list =
-    (kind: EventListKind, notes: ListNotes | null) => (spec: FieldSpec) => (
+    (kind: EventListKind, notes: ListNotes | null) => (spec: FormSpec) => (
       <ListField form={form} spec={spec} kind={kind} notes={notes} />
     );
   return (
@@ -105,12 +105,12 @@ function ListField<K extends EventListKind>({
   notes,
 }: {
   form: Form;
-  spec: FieldSpec;
+  spec: FormSpec;
   kind: K;
   notes: ListNotes | null;
 }) {
   const { draft, errors } = form;
-  const { lead } = spec;
+  const lead = spec.kind === "list" ? spec.lead : undefined;
   /** A row list's fixed first row, bound to its field in the draft (ADR 0167). */
   const binding: LeadBinding | undefined = lead && {
     ...lead,

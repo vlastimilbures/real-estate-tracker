@@ -1,8 +1,12 @@
 // Pure validation + DTO assembly for the property add/edit form. Kept out of the
 // modal component so it's unit-testable in the node test env (no DOM), mirroring
 // ./mortgageForm.ts.
-import { collectValues, moneyDraft, type FieldSpec } from "./formParse";
-import { formRules } from "./formParsers";
+import {
+  collectValues,
+  formRules,
+  moneyDraft,
+  type FieldSpec,
+} from "./formParse";
 import { INT_RANGES } from "../../lib/rules";
 import { propertyKey } from "../../lib/propertyKey";
 import type { AcquisitionFunding, Property } from "../../engine";
