@@ -12,7 +12,7 @@ import { parseDraws, parsePrepayments, parseRecasts } from "./loanEventsJson";
 import { parseOverrides, serializeOverrides } from "./scenarioOverrides";
 import type {
   AcquisitionFunding,
-  Assumptions,
+  StoredAssumptions,
   Property,
   MortgageBlock,
   Valuation,
@@ -158,7 +158,7 @@ export function rowToHoldingCost(r: HoldingCostRow): HoldingCost {
   };
 }
 
-export function rowToAssumptions(r: AssumptionsRow): Assumptions {
+export function rowToAssumptions(r: AssumptionsRow): StoredAssumptions {
   const ref = { table: "assumptions", id: String(r.id) };
   const mon = (c: keyof AssumptionsRow) => g.moneyText(ref, c, r[c]);
   const rt = (c: keyof AssumptionsRow) => g.rateText(ref, c, r[c]);

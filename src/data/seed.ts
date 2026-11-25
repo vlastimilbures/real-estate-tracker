@@ -2,7 +2,7 @@
 // engine's test fixtures) so the data layer doesn't make the engine depend on it.
 // `seedIfEmpty` inserts only when the DB has no properties yet.
 import { isoDate, rate } from "../engine";
-import type { Assumptions } from "../engine";
+import type { StoredAssumptions } from "../engine";
 import type { Sql, SqlStatement } from "./sql";
 import {
   propertyToRow,
@@ -32,7 +32,7 @@ import { money } from "../engine";
 
 const BASE_DATE = isoDate("2026-06-07");
 
-export const SEED_ASSUMPTIONS: Assumptions = {
+export const SEED_ASSUMPTIONS: StoredAssumptions = {
   baseDate: BASE_DATE,
   appreciationPa: rate("0.04"),
   rentIndexationPa: rate("0.03"),

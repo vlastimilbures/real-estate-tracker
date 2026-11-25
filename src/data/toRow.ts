@@ -17,7 +17,7 @@ import type {
   AssumptionsRow,
 } from "./mappers";
 import type {
-  Assumptions,
+  StoredAssumptions,
   Property,
   MortgageBlock,
   Valuation,
@@ -112,7 +112,7 @@ export function holdingCostToRow(h: HoldingCost): HoldingCostRow {
   };
 }
 
-export function assumptionsToRow(a: Assumptions): AssumptionsRow {
+export function assumptionsToRow(a: StoredAssumptions): AssumptionsRow {
   return {
     id: 1,
     base_date: isoTextReq(a.baseDate),

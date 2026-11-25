@@ -34,7 +34,8 @@ export interface ValueShock {
   atYear: number; // projection year (0 = today); growth resumes from the lower base
 }
 
-export interface Assumptions {
+/** The assumptions the owner stores (the one `assumptions` row): every field present. */
+export interface StoredAssumptions {
   baseDate: IsoDate;
   appreciationPa: Rate;
   rentIndexationPa: Rate;
@@ -48,9 +49,14 @@ export interface Assumptions {
    *  column is NOT NULL DEFAULT '0', which a restore fills in too. */
   sellingCostPct: Rate;
   defaults: CostDefaults;
-  // --- Scenario-only shock descriptors (SPEC §7 what-ifs). Portfolio/seed
-  // Assumptions NEVER set these; they are populated solely by `applyScenario`.
-  // All undefined ⇒ engine output is byte-identical to the parity targets. ---
+}
+
+/**
+ * What a scenario adds to the stored assumptions (SPEC §7 what-ifs). Stored assumptions
+ * never carry these; only `applyScenario` sets them. All undefined ⇒ engine output is
+ * byte-identical to the parity targets.
+ */
+export interface ScenarioContext {
   /** Inflation elevated by `deltaPa` for the first `durationYears`, then reverts to
    *  `inflationPa`. Affects holding-cost growth, the real-terms deflator, and real IRR. */
   inflationShock?: ShockBand | undefined;
@@ -67,6 +73,9 @@ export interface Assumptions {
    *  which the base run validates. */
   openingAppreciationPa?: Rate | undefined;
 }
+
+/** The engine's assumptions: the stored ones, plus the scenario context of a what-if. */
+export interface Assumptions extends StoredAssumptions, ScenarioContext {}
 
 export interface Property {
   id: string;

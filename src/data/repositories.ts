@@ -10,7 +10,7 @@ import { DataError } from "./errors";
 import { loadState } from "./loadState";
 import { LAST_BACKUP_AT, markDataChanged, recordBackup } from "./appMeta";
 import type {
-  Assumptions,
+  StoredAssumptions,
   Property,
   Scenario,
   Valuation,
@@ -268,7 +268,7 @@ export const deleteMortgageBlock = (sql: Sql, id: string) =>
   deleteById(sql, "mortgage_blocks", id);
 
 /** Upsert the single assumptions row (id = 1), in one transaction. */
-export const upsertAssumptions = async (sql: Sql, a: Assumptions) =>
+export const upsertAssumptions = async (sql: Sql, a: StoredAssumptions) =>
   run(sql, {
     statements: [
       { query: "DELETE FROM assumptions WHERE id = 1" },
