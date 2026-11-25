@@ -4,7 +4,8 @@
 // payment 14 (due 2027-03-08) is the last interest-only one, whatever baseDate's day.
 import { describe, it, expect } from "vitest";
 import { isoDate } from "../dates";
-import { buildSchedule, paymentOffset } from "../schedule";
+import { buildSchedule } from "../schedule";
+import { paymentOffset } from "../loan/calendar";
 import type { AmortizationRow } from "../types";
 import type { RefLoan } from "./reference/mortgageReference";
 import { both, maxDev, TIGHT, toBlock } from "./reference/eventHarness";

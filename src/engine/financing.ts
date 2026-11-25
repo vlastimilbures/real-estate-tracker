@@ -17,12 +17,12 @@ import {
   type ChainLink,
   hasPayment,
   lastPaymentMonth,
-  paymentOffset,
   propertySchedule,
   type PropertySchedule,
   replacedByMonth,
   replacedOnOrBefore,
 } from "./schedule";
+import { paymentOffset } from "./loan/calendar";
 import type {
   AmortizationRow,
   Assumptions,
