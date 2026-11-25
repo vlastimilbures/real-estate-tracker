@@ -1,8 +1,12 @@
 // The single seam between the data layer and a concrete SQLite driver.
 // Repositories, migrations and the seed depend ONLY on this interface — never on
-// `@tauri-apps/plugin-sql` or `better-sqlite3` directly. Two adapters implement it:
+// `@tauri-apps/plugin-sql` or `better-sqlite3` directly. Three adapters implement it:
 //   - tauriSql.ts            → the app runtime (Rust-backed plugin, inside Tauri)
 //   - __tests__/betterSqlite → Node/Vitest (better-sqlite3, in-memory)
+//   - browserSql.ts          → the browser E2E / ux:capture run only (sql.js)
+// The guarantees below are one set of contract scenarios
+// (__tests__/fixtures/sql-contract.json), run against the test adapter
+// (__tests__/sqlContract.test.ts) and the Rust commands (src-tauri/tests/db_contract.rs).
 //
 // The shape mirrors `@tauri-apps/plugin-sql`'s Database: `execute` for writes/DDL,
 // `select` for reads. Parameters are positional (`?` placeholders).
