@@ -339,6 +339,36 @@ export function financingLabels(
   };
 }
 
+/** The whole panel for the chosen window (#485): its figures, the timeline, the labels of
+ *  the lens, whether the window toggle shows, and the note under the timeline. In the
+ *  real lens, with rows, the note also says the debt at reset is nominal (ADR 0214 §3). */
+export function financingView(
+  input: {
+    fx: FinancingExposure;
+    portfolio: Portfolio;
+    kpis: PortfolioKPIs;
+    mode: Mode;
+    horizonYears: number;
+  },
+  span: ResetWindow,
+  t: Dictionary,
+) {
+  const { fx, portfolio, kpis, mode, horizonYears } = input;
+  const d = t.dashboard;
+  const panel = financingPanel(fx, portfolio, kpis, mode, span);
+  const timeline = financingTimeline(fx, portfolio, span, t);
+  return {
+    panel,
+    timeline,
+    labels: financingLabels(t, mode, span, horizonYears),
+    showWindow: panel.hasLoans || timeline.rows.length > 0,
+    note:
+      timeline.rows.length > 0 && mode === "real"
+        ? `${d.financingRowsNominal} ${d.financingDisclaimer}`
+        : d.financingDisclaimer,
+  };
+}
+
 /** One marked year on a 30-year value chart: its upcoming fixation ends (ADR 0210). */
 export interface ResetMarker {
   calendarYear: number;

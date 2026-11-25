@@ -19,6 +19,7 @@ import {
   Pct,
 } from "../components/primitives";
 import { PropertyFormModal } from "../components/PropertyFormModal";
+import { PropertyLink } from "../components/PropertyLink";
 import { SampleBanner } from "../components/SampleBanner";
 import { fmtCzkM, fmtDate, noBreak, fmtPct, fmtDscr } from "../../lib/format";
 import { undrawnPart } from "../model/debt";
@@ -242,19 +243,11 @@ export function Properties() {
                     <td className="left sticky-col cell-strong">
                       {/* A real button so the keyboard can drill in too; the row
                           click stays as the mouse shortcut (UX-022). */}
-                      <button
-                        type="button"
-                        className="link-button cell-name"
-                        // Long names are cut with an ellipsis; the full name shows
-                        // on hover and stays the accessible name (ADR 0085).
-                        title={p.name}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openProperty(p.propertyId);
-                        }}
-                      >
-                        {p.name}
-                      </button>
+                      <PropertyLink
+                        id={p.propertyId}
+                        name={p.name}
+                        stopPropagation
+                      />
                       {!p.active && (
                         <span className="ml-s2">
                           <Badge band="neutral">

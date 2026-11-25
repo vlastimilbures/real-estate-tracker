@@ -51,11 +51,6 @@
       "Function 'constraintText'": 15
     }
   },
-  "src/ui/pages/Dashboard.tsx": {
-    "lines": {
-      "Function 'Dashboard'": 184
-    }
-  },
   "src/ui/pages/Guide.tsx": {
     "lines": {
       "Function 'Guide'": 197
@@ -79,7 +74,7 @@
       "Function 'Properties'": 22
     },
     "lines": {
-      "Function 'Properties'": 322
+      "Function 'Properties'": 316
     }
   },
   "src/ui/pages/ScenarioCompare.tsx": {

@@ -18,6 +18,7 @@ import { fmtDate, fmtNumber } from "../../lib/format";
 import { exportFilename } from "../../lib/slug";
 import type { ResolvedAsOf } from "./asOf";
 import { toChartRows, type ChartRow } from "./chartData";
+import { resetMarkerHeading } from "./chartSeries";
 import {
   asOfHint,
   asOfView,
@@ -27,11 +28,7 @@ import {
 import { dataCheckItems } from "./dataCheck";
 import { resetMarkers, type ResetMarker } from "./financing";
 import { acquisitionView, type AcquisitionView } from "./acquisition";
-import {
-  projectionColumns,
-  projectionSeries,
-  type SeriesRow,
-} from "./projection";
+import { projectionSeries, type SeriesRow } from "./projection";
 import {
   amortizationColumns,
   loanOutlook,
@@ -47,23 +44,14 @@ import {
 import {
   lensLabel,
   lensWord,
-  projectionExportNotes,
+  projectionExport,
   projectionPanelHint,
 } from "./tableContext";
 import type { Mode } from "./lens";
-import type { XlsxColumn } from "./xlsxExport";
+import type { TableExport } from "./xlsxExport";
 
 /** The engine's output for one property (a type-only edge, ADR 0072). */
 type PropertyDetailOut = PropertyEngineOutput;
-
-/** What `exportTableXlsx` takes: one sheet. */
-export interface TableExport<R> {
-  filename: string;
-  sheetName: string;
-  columns: (rows: R[]) => XlsxColumn<R>[];
-  rows: R[];
-  notes: string[];
-}
 
 /** The parts of the page that exist only with the engine's figures. */
 export interface PropertyDetailBodyView {
@@ -207,8 +195,7 @@ export function propertyBodyView(
       chartRows,
       new Map([[property.id, property.name]]),
     ),
-    markerHeading:
-      mode === "real" ? t.charts.rateResetNominal : t.charts.rateReset,
+    markerHeading: resetMarkerHeading(t, mode),
     outlook: out.financing
       ? loanOutlook(out.financing, mortgages, t.propertyDetail)
       : null,
@@ -243,13 +230,13 @@ function tableExports(
   t: Dictionary,
 ) {
   return {
-    projectionExport: {
-      filename: exportFilename(property.name, property.id, "projection", mode),
-      sheetName: t.xlsx.sheetNames.projection,
-      columns: (rows: SeriesRow[]) => projectionColumns(t, baseDate, rows),
-      rows: series,
-      notes: projectionExportNotes(t, property.name, mode, baseDate),
-    },
+    projectionExport: projectionExport(
+      t,
+      { name: property.name, id: property.id },
+      series,
+      mode,
+      baseDate,
+    ),
     amortizationExport: {
       filename: exportFilename(property.name, property.id, "amortization"),
       sheetName: t.xlsx.sheetNames.amortization,

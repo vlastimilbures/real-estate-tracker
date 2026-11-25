@@ -9,6 +9,7 @@ import { portfolioKpis, portfolioSnapshot } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { KpiStrip, KpiListPanel } from "../DashboardPanels";
+import { kpiListView, stripView } from "./dashboardViewSupport";
 import type { LeveredIrr } from "../../model/irr";
 
 const s = portfolioSnapshot(portfolio, assumptions);
@@ -19,24 +20,28 @@ function renderPanels(irr: LeveredIrr) {
   return render(
     <>
       <KpiStrip
-        s={s}
-        basis={{ kind: "today" }}
-        mode="nominal"
-        isToday
-        horizon={kpis.netWorthNominal}
-        horizonYears={assumptions.horizonYears}
-        horizonEndYear={2056}
-        netWorthMultiple={kpis.netWorthMultiple}
-        modeWord={en.common.nominalLower}
-        irr={irr}
+        view={stripView({
+          s,
+          basis: { kind: "today" },
+          mode: "nominal",
+          isToday: true,
+          horizon: kpis.netWorthNominal,
+          horizonYears: assumptions.horizonYears,
+          horizonEndYear: 2056,
+          netWorthMultiple: kpis.netWorthMultiple,
+          modeWord: en.common.nominalLower,
+          irr,
+        })}
       />
       <KpiListPanel
-        s={s}
-        basis={{ kind: "today" }}
-        kpis={kpis}
-        mode="nominal"
-        horizonYears={assumptions.horizonYears}
-        cashInvested={null}
+        view={kpiListView({
+          s,
+          basis: { kind: "today" },
+          kpis,
+          mode: "nominal",
+          horizonYears: assumptions.horizonYears,
+          cashInvested: null,
+        })}
       />
     </>,
   );

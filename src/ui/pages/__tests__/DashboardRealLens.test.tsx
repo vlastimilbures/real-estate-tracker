@@ -11,6 +11,7 @@ import { fmtMultiple } from "../../../lib/format";
 import { lensKpis } from "../../model/lensKpis";
 import type { Mode } from "../../model/lens";
 import { KpiStrip, KpiListPanel } from "../DashboardPanels";
+import { kpiListView, stripView } from "./dashboardViewSupport";
 import { rowLabel } from "./kpiStripSupport";
 
 const s = portfolioSnapshot(portfolio, assumptions);
@@ -22,24 +23,28 @@ function renderPanels(mode: Mode) {
   return render(
     <>
       <KpiStrip
-        s={s}
-        basis={{ kind: "today" }}
-        mode={mode}
-        isToday
-        horizon={real ? kpis.netWorthReal : kpis.netWorthNominal}
-        horizonYears={N}
-        horizonEndYear={2056}
-        netWorthMultiple={lensKpis(kpis, mode).netWorthMultiple}
-        modeWord={real ? en.common.realLower : en.common.nominalLower}
-        irr={{ rate: null, reason: "NO_ROOT" }}
+        view={stripView({
+          s,
+          basis: { kind: "today" },
+          mode,
+          isToday: true,
+          horizon: real ? kpis.netWorthReal : kpis.netWorthNominal,
+          horizonYears: N,
+          horizonEndYear: 2056,
+          netWorthMultiple: lensKpis(kpis, mode).netWorthMultiple,
+          modeWord: real ? en.common.realLower : en.common.nominalLower,
+          irr: { rate: null, reason: "NO_ROOT" },
+        })}
       />
       <KpiListPanel
-        s={s}
-        basis={{ kind: "today" }}
-        kpis={kpis}
-        mode={mode}
-        horizonYears={N}
-        cashInvested={null}
+        view={kpiListView({
+          s,
+          basis: { kind: "today" },
+          kpis,
+          mode,
+          horizonYears: N,
+          cashInvested: null,
+        })}
       />
     </>,
   );

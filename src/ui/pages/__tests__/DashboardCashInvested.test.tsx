@@ -19,6 +19,7 @@ import { D } from "../../../lib/money";
 import { fmtCzk } from "../../../lib/format";
 import type { Mode } from "../../model/lens";
 import { KpiListPanel } from "../DashboardPanels";
+import { kpiListView } from "./dashboardViewSupport";
 import { Dashboard } from "../Dashboard";
 
 const dash = en.dashboard;
@@ -28,12 +29,14 @@ const kpis = portfolioKpis(portfolio, assumptions);
 function renderList(mode: Mode, cashInvested: ReturnType<typeof D> | null) {
   render(
     <KpiListPanel
-      s={s}
-      basis={{ kind: "today" }}
-      kpis={kpis}
-      mode={mode}
-      horizonYears={assumptions.horizonYears}
-      cashInvested={cashInvested}
+      view={kpiListView({
+        s,
+        basis: { kind: "today" },
+        kpis,
+        mode,
+        horizonYears: assumptions.horizonYears,
+        cashInvested,
+      })}
     />,
   );
 }

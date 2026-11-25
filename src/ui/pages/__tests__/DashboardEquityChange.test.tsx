@@ -21,10 +21,12 @@ function renderCharts(p: typeof portfolio) {
   render(
     <>
       <ProjectionCharts
-        mode="nominal"
-        rows={toChartRows(series)}
-        eqChange={toEquityChangeRows(series)}
-        horizonYears={assumptions.horizonYears}
+        view={{
+          mode: "nominal",
+          rows: toChartRows(series),
+          eqChange: toEquityChangeRows(series),
+          horizonYears: assumptions.horizonYears,
+        }}
       />
     </>,
   );

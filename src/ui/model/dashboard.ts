@@ -11,6 +11,7 @@ import {
 } from "../../engine";
 import type {
   Assumptions,
+  Portfolio,
   PortfolioSnapshot,
   ProjectionYear,
   Property,
@@ -258,4 +259,28 @@ export function prunedFilter(
   const kept = saved.filter((id) => activeIds.has(id));
   if (kept.length === saved.length) return null;
   return kept.length < activeIds.size ? kept : [];
+}
+
+/** The Dashboard's property filter (ADR 0155, 0180 §7), from the saved ids. Only active
+ *  properties get a chip, so an id of a now-deactivated one is dropped: the dashboard
+ *  falls back to "All" instead of rendering zeroes for an invisible chip. A filter that
+ *  keeps every active property filters nothing. `pruned` is what to store back (see
+ *  `prunedFilter`), and only once the portfolio is loaded: before, every id looks
+ *  inactive. */
+export function dashboardFilter(
+  portfolio: Pick<Portfolio, "properties"> | null,
+  saved: readonly string[],
+) {
+  const properties = (portfolio?.properties ?? []).filter(
+    (p) => p.active !== false,
+  );
+  const activeIds = new Set(properties.map((p) => p.id));
+  const effectiveIds = saved.filter((id) => activeIds.has(id));
+  return {
+    properties,
+    effectiveIds,
+    filterActive:
+      effectiveIds.length > 0 && effectiveIds.length < properties.length,
+    pruned: portfolio ? prunedFilter(saved, activeIds) : null,
+  };
 }

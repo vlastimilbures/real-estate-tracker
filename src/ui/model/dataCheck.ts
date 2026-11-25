@@ -111,6 +111,18 @@ export type DataCheckFix =
   | PropertyFormTarget
   | "assumptions";
 
+/** The page title's review pill: the attention count, named by the full sentence, or
+ *  none (ADR 0218 §1, 0223 §5). Each page says where its pill goes. */
+export function reviewPill(
+  t: Dictionary,
+  count: number,
+  onSelect: () => void,
+): { count: number; label: string; onSelect: () => void } | undefined {
+  return count > 0
+    ? { count, label: t.dataCheck.reviewPill(count), onSelect }
+    : undefined;
+}
+
 /** The property's findings at `asOf`; before its purchase date only the own-cash one.
  *  `baseDate` = the projection start, for what the projection assumes about an ended
  *  lease and whether it derives the down payment. */

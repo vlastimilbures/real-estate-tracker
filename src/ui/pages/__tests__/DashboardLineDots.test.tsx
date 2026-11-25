@@ -73,10 +73,12 @@ describe("Dashboard line charts: hover dot (ADR 0188)", () => {
     render(
       <>
         <ProjectionCharts
-          mode="nominal"
-          rows={toChartRows(series)}
-          eqChange={toEquityChangeRows(series)}
-          horizonYears={assumptions.horizonYears}
+          view={{
+            mode: "nominal",
+            rows: toChartRows(series),
+            eqChange: toEquityChangeRows(series),
+            horizonYears: assumptions.horizonYears,
+          }}
         />
       </>,
     );

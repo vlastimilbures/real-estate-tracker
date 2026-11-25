@@ -1,5 +1,7 @@
-// Sub-components pulled out of Dashboard.tsx to shrink its render tree. Pure
-// presentation — no logic beyond what Dashboard.tsx already computed.
+// The Dashboard's panels: the KPI band, the projection charts and the key-figures list.
+// Each renders its slice of `dashboardView` (src/ui/model/dashboardView.ts); the series
+// come from `dashboardSeries`. What stays here is markup: the tiles, the charts, the
+// key-figure rows and `keepTail`, which keeps a label's closing parenthetical together.
 import {
   KpiBand,
   KpiBandGroup,
@@ -9,68 +11,35 @@ import {
   MoneyM,
   IrrValue,
   Pct,
-  Dscr,
   StatList,
 } from "../components/primitives";
 import { ChartCard } from "../components/charts";
-import {
-  SERIES,
-  COMMITTED_DASH,
-  hasPurchases,
-  hasUndrawn,
-  type ChartRow,
-  type EquityChangeRow,
-} from "../model/chartData";
+import { DscrTile, LtvTile, NetCashFlowTile } from "../components/kpiTiles";
 import { fmtCzkM, fmtMultiple, fmtPct, noBreak } from "../../lib/format";
 import type { ReactNode } from "react";
-import { dscrBadge, ltvBadge } from "../model/health";
 import {
   basisCaption,
   basisText,
   monthlyFlow,
   monthlyFlowHint,
-  type AsOfBasis,
 } from "../model/dashboard";
-import type { LeveredIrr } from "../model/irr";
-import { lensKpis } from "../model/lensKpis";
-import type { ResetMarker } from "../model/financing";
+import { dashboardSeries, resetMarkerHeading } from "../model/chartSeries";
+import type {
+  KpiListView,
+  KpiStripView,
+  ProjectionChartsView,
+} from "../model/dashboardView";
 import { undrawnPart } from "../model/debt";
-import type { PortfolioKPIs, PortfolioSnapshot } from "../../engine";
-import type { Decimal } from "../../lib/money";
-import type { Mode } from "../../state/uiStore";
 import { useT } from "../hooks/useT";
 
 /** The Dashboard's KPI band (ADR 0200, 0222): as of the chosen date, then at the
  *  horizon, each group captioned with what it is for. */
-export function KpiStrip({
-  s,
-  basis,
-  mode,
-  isToday,
-  horizon,
-  horizonYears,
-  horizonEndYear,
-  netWorthMultiple,
-  modeWord,
-  irr,
-}: {
-  s: PortfolioSnapshot;
-  /** What the tiles are for: current, a projection year or a date (ADR 0088). */
-  basis: AsOfBasis;
-  mode: Mode;
-  isToday: boolean;
-  horizon: Decimal;
-  horizonYears: number;
-  /** Calendar year of the last projection row (ADR 0088). */
-  horizonEndYear: number;
-  netWorthMultiple: Decimal | null;
-  modeWord: string;
-  irr: LeveredIrr;
-}) {
+export function KpiStrip({ view }: { view: KpiStripView }) {
+  const { s, basis, mode, isToday, lens, horizonYears, modeWord } = view;
   const t = useT();
   const d = t.dashboard;
   const undrawn = undrawnPart(s.totalUndrawnDebt);
-  const flow = monthlyFlow(s);
+  const irr = lens.leveredIrr;
   return (
     <KpiBand>
       <KpiBandGroup caption={basisCaption(t, basis)} cells={4}>
@@ -94,49 +63,25 @@ export function KpiStrip({
             </>
           }
         />
-        <KpiTile
-          compact
-          delay={24}
-          label={d.stripNetCashFlow}
-          value={
-            <>
-              <Money value={flow.net} signed />
-              <span className="unit">{d.perMonth}</span>
-            </>
-          }
-          foot={
-            <>
-              <Money value={s.netCashFlow} />
-              {d.perYear}
-            </>
-          }
-        />
-        <KpiTile
-          compact
-          delay={48}
-          label={d.portfolioLtv}
-          value={<Pct value={s.ltv} dp={1} />}
-          health={ltvBadge(t, s.ltv)}
-        />
-        <KpiTile
-          compact
-          delay={72}
-          label={d.portfolioDscr}
-          value={s.dscr ? <Dscr value={s.dscr} /> : "—"}
-          health={dscrBadge(t, s.dscr)}
-        />
+        <NetCashFlowTile s={s} delay={24} />
+        <LtvTile ltv={s.ltv} label={d.portfolioLtv} delay={48} />
+        <DscrTile dscr={s.dscr} label={d.portfolioDscr} delay={72} />
       </KpiBandGroup>
       <KpiBandGroup
-        caption={d.bandHorizonCaption(horizonEndYear, horizonYears, modeWord)}
+        caption={d.bandHorizonCaption(
+          view.horizonEndYear,
+          horizonYears,
+          modeWord,
+        )}
         cells={2}
       >
         <KpiTile
           compact
           delay={96}
           label={d.netWorth}
-          value={<MoneyM value={horizon} />}
+          value={<MoneyM value={lens.netWorth} />}
           foot={d.bandMultiple(
-            netWorthMultiple ? fmtMultiple(netWorthMultiple) : "—",
+            lens.netWorthMultiple ? fmtMultiple(lens.netWorthMultiple) : "—",
           )}
         />
         <KpiTile
@@ -152,77 +97,14 @@ export function KpiStrip({
   );
 }
 
-/** The series of the Dashboard's projection charts (the rows carry the lens). */
-function useProjectionSeries(rows: ChartRow[], eqChange: EquityChangeRow[]) {
-  const t = useT();
-  const d = t.dashboard;
-  const valueSeries = [
-    { key: "value", name: d.seriesValue, color: SERIES.petrol },
-    { key: "balance", name: d.seriesDebt, color: SERIES.clay },
-    // ADR 0169: dashed while a development loan has tranches ahead.
-    ...(hasUndrawn(rows)
-      ? [
-          {
-            key: "committedDebt",
-            name: d.seriesCommittedDebt,
-            color: SERIES.clay,
-            dash: COMMITTED_DASH,
-          },
-        ]
-      : []),
-    { key: "equity", name: d.seriesEquity, color: SERIES.brass },
-  ];
-  const equitySeries = [
-    { key: "appreciation", name: d.seriesAppreciation, color: SERIES.petrol },
-    // ADR 0165: only when a purchase falls inside the projection.
-    ...(hasPurchases(eqChange)
-      ? [{ key: "purchases", name: d.seriesPurchases, color: SERIES.slate }]
-      : []),
-    { key: "paydown", name: d.seriesDebtPaydown, color: SERIES.brass },
-    { key: "drawdown", name: d.seriesDebtDrawn, color: SERIES.clay },
-  ];
-  const cashFlowSeries = [
-    { key: "netCashFlow", name: d.seriesNetCashFlow, color: SERIES.positive },
-  ];
-  const rentSeries = [
-    { key: "grossRent", name: d.seriesGross, color: SERIES.slate },
-    { key: "effectiveRent", name: d.seriesEffective, color: SERIES.petrol },
-  ];
-  const noiSeries = [
-    { key: "noi", name: d.seriesNoi, color: SERIES.petrol },
-    { key: "debtService", name: d.seriesDebtService, color: SERIES.clay },
-  ];
-  const ltvSeries = [{ key: "ltv", name: d.seriesLtv, color: SERIES.slate }];
-  return {
-    valueSeries,
-    equitySeries,
-    cashFlowSeries,
-    rentSeries,
-    noiSeries,
-    ltvSeries,
-  };
-}
-
 /** One plot height for every Dashboard chart (ADR 0218 §2). */
 const CHART_HEIGHT = 220;
 
 /** The projection: six charts, two per row, under one heading that names the horizon
  *  and the lens once (ADR 0218 §2). The value chart leads and keeps the fixation-end
  *  markers (ADR 0210). */
-export function ProjectionCharts({
-  mode,
-  rows,
-  eqChange,
-  markers = [],
-  horizonYears,
-}: {
-  mode: Mode;
-  rows: ChartRow[];
-  eqChange: EquityChangeRow[];
-  /** Upcoming fixation ends (ADR 0210). */
-  markers?: readonly ResetMarker[] | undefined;
-  horizonYears: number;
-}) {
+export function ProjectionCharts({ view }: { view: ProjectionChartsView }) {
+  const { mode, rows, eqChange, markers = [], horizonYears } = view;
   const t = useT();
   const d = t.dashboard;
   const {
@@ -232,7 +114,7 @@ export function ProjectionCharts({
     rentSeries,
     noiSeries,
     ltvSeries,
-  } = useProjectionSeries(rows, eqChange);
+  } = dashboardSeries(t, rows, eqChange);
   return (
     <section className="chart-grid-wrap projection-charts">
       <div className="charts-head">
@@ -249,9 +131,7 @@ export function ProjectionCharts({
           series={valueSeries}
           height={CHART_HEIGHT}
           markers={markers}
-          markerHeading={
-            mode === "real" ? t.charts.rateResetNominal : t.charts.rateReset
-          }
+          markerHeading={resetMarkerHeading(t, mode)}
         />
         <ChartCard
           title={d.chartNetCashFlowByYear}
@@ -311,27 +191,11 @@ function keepTail(label: string): ReactNode {
   );
 }
 
-export function KpiListPanel({
-  s,
-  basis,
-  kpis,
-  mode,
-  horizonYears,
-  cashInvested,
-}: {
-  s: PortfolioSnapshot;
-  /** What the as-of figures (yields, monthly flows) are for (ADR 0200 §3). */
-  basis: AsOfBasis;
-  kpis: PortfolioKPIs;
-  mode: Mode;
-  horizonYears: number;
-  /** Σ own cash, null unless every property has it (ADR 0119 §9). */
-  cashInvested: Decimal | null;
-}) {
+export function KpiListPanel({ view }: { view: KpiListView }) {
+  const { s, basis, kpis, lens, mode, horizonYears, cashInvested } = view;
   const t = useT();
   const d = t.dashboard;
   const real = mode === "real";
-  const lens = lensKpis(kpis, mode);
   const cagr = lens.cagr;
   const flow = monthlyFlow(s);
   // Only what the tiles do not show, in three groups (ADR 0208); net worth at the horizon,
