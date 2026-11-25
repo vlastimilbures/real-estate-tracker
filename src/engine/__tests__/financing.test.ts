@@ -6,12 +6,11 @@ import fc from "fast-check";
 import {
   debtResettingWithin,
   financingExposure,
-  leaseEndWithoutFollowOn,
   propertyLoanExposure,
-  upcomingEvents,
   type FinancingExposure,
   type FixationReset,
 } from "../financing";
+import { leaseEndWithoutFollowOn, upcomingEvents } from "../upcomingEvents";
 import { propertySchedules, type PropertySchedule } from "../schedule";
 import { portfolioOutputs } from "../outputs";
 import { impliedMaturity } from "../loanChecks";

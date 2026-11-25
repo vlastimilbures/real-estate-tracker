@@ -1,7 +1,7 @@
 // ADR 0099: the open-ended record a new valuation/lease succeeds, and the end date it gets.
 import { describe, it, expect } from "vitest";
 import { dayBefore, isoDate } from "../dates";
-import { openPredecessor } from "../succession";
+import { openPredecessor } from "../effectiveDating";
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 

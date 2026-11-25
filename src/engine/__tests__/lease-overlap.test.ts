@@ -4,7 +4,7 @@
 import { describe, it, expect } from "vitest";
 import { money } from "../brands";
 import { isoDate } from "../dates";
-import { overlappingLeases } from "../succession";
+import { overlappingLeases } from "../effectiveDating";
 import {
   leaseOverlapErrors,
   validateInputs,

@@ -3,7 +3,7 @@
 import type { Decimal } from "../../lib/money";
 import { isAfter } from "../dates";
 import { COST_KEYS } from "../figures";
-import { overlappingLeases } from "../succession";
+import { overlappingLeases } from "../effectiveDating";
 import type { AcquisitionFunding, Portfolio, Property } from "../types";
 import type { EngineValidationError, FieldOf, ValidationField } from "./codes";
 import {
