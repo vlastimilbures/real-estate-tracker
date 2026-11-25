@@ -214,17 +214,12 @@ function snapshotIncome(
   const lease = leaseInForce(forProperty(portfolio.leases, property.id), asOf);
   const monthlyRent = lease ? lease.monthlyRent : ZERO;
   const grossAnnualRent = monthlyRent.times(12);
-  const { fixed, mgmtPct, maintPct } = holdingCostBasis(
-    property,
-    portfolio,
-    assumptions,
-  );
+  const costs = holdingCostBasis(property, portfolio, assumptions);
   const { effectiveRent, holdingCosts, noi } = costsAndNoi(
-    fixed,
+    costs.fixed,
     grossAnnualRent,
     assumptions.vacancyAllowance,
-    mgmtPct,
-    maintPct,
+    costs,
   );
   return {
     grossAnnualRent,
@@ -238,6 +233,7 @@ function snapshotIncome(
  * One property's snapshot at `asOf`. Pass its `schedule` (the rows from `propertySchedules`
  * on the same inputs) to reuse it; an omitted one is built here (DR-042, DR-118).
  */
+// eslint-disable-next-line max-params -- public API with app and test callers (#480)
 export function propertySnapshot(
   property: Property,
   portfolio: Portfolio,

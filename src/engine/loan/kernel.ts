@@ -109,11 +109,11 @@ export function amortizeMonth(
  *  because `Decimal(0).isPositive()` is true — DR-102.) */
 export function reamortizes(
   draw: Decimal,
-  prevInterestOnly: boolean,
+  prev: { prevInterestOnly: boolean; prevRate: Decimal },
   interestOnly: boolean,
   ratePa: Decimal,
-  prevRate: Decimal,
 ): boolean {
+  const { prevInterestOnly, prevRate } = prev;
   return (
     draw.greaterThan(ZERO) ||
     (prevInterestOnly && !interestOnly) ||

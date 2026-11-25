@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 import { money } from "../brands";
 import { isoDate } from "../dates";
 import { ZERO, type Decimal } from "../../lib/money";
-import { portfolioProjection, cpiIndex as buildCpiIndex } from "../projections";
+import { portfolioProjection, cpiIndex } from "../projections";
 import { realProjection } from "../real";
 import { portfolioKpis } from "../kpis";
 import { financingExposure } from "../financing";
@@ -98,7 +98,7 @@ describe("ADR 0109: prepayments in the projection", () => {
   });
 
   it("deflates prepaid and fees in the real lens", () => {
-    const cpi = buildCpiIndex(assumptions);
+    const cpi = cpiIndex(assumptions);
     const real = realProjection(proj, cpi);
     expect(real[5].prepaid.equals(proj[5].prepaid.div(cpi[5]))).toBe(true);
     expect(

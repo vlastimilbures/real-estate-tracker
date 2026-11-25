@@ -138,12 +138,12 @@ const brandCastBans = [
   {
     selector: `TSAsExpression > TSTypeReference.typeAnnotation[typeName.name=${BRAND_TYPES}]`,
     message:
-      "No brand casts (ADR 0074): build the value with money()/rate()/utc()/isoDate()/mortgageBlock().",
+      "No brand casts (ADR 0074): build the value with money()/rate()/utc()/isoDate()/mortgageBlock()/assertInputs()/assertAssumptions().",
   },
   {
     selector: `TSAsExpression > TSUnionType.typeAnnotation > TSTypeReference[typeName.name=${BRAND_TYPES}]`,
     message:
-      "No brand casts (ADR 0074): build the value with money()/rate()/utc()/isoDate()/mortgageBlock().",
+      "No brand casts (ADR 0074): build the value with money()/rate()/utc()/isoDate()/mortgageBlock()/assertInputs()/assertAssumptions().",
   },
 ];
 
@@ -305,6 +305,8 @@ export default tseslint.config(
       ),
       // P4a limits (P04a-engine-refactor.md §6): keep engine functions small.
       ...sizeRules(ENGINE_LIMITS),
+      // At most four positional parameters; more travel as one object (#480).
+      "max-params": ["error", 4],
     },
   },
   // The brand constructors themselves (ADR 0074): no brand-cast ban here.

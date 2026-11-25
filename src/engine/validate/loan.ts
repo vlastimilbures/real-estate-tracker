@@ -51,23 +51,23 @@ const lastDrawDate = (b: MortgageBlock) => paymentFromEnd(b, 1);
  *  may have (ADR 0226 §1). */
 const lastButTwoDate = (b: MortgageBlock) => paymentFromEnd(b, 2);
 
-/** The last-but-one and last-but-two payment dates a draw is checked against. */
+/** The loan's start and its last-but-one and last-but-two payment dates a draw is
+ *  checked against. */
 interface DrawLimits {
+  start: Date;
   lastDraw: Date | undefined;
   lastButTwo: Date | undefined;
 }
 
 function checkDrawDate(
   date: Date,
-  b: MortgageBlock,
-  { lastDraw, lastButTwo }: DrawLimits,
+  { start, lastDraw, lastButTwo }: DrawLimits,
   i: number,
   report: LoanReport,
 ): void {
   if (badDate(date)) report("INVALID_DATE", "draws", i);
   // A draw on the start date itself belongs in the initial principal (D-42).
-  else if (isOnOrBefore(date, b.startDate))
-    report("DRAW_BEFORE_START", "draws", i);
+  else if (isOnOrBefore(date, start)) report("DRAW_BEFORE_START", "draws", i);
   // A later draw lands on the final payment, which would repay it in one shot
   // (DR-074, ADR 0129 §3).
   else if (lastDraw && isAfter(date, lastDraw))
@@ -78,9 +78,13 @@ function checkDrawDate(
 }
 
 function checkDevFeatures(b: MortgageBlock, report: LoanReport): void {
-  const limits = { lastDraw: lastDrawDate(b), lastButTwo: lastButTwoDate(b) };
+  const limits = {
+    start: b.startDate,
+    lastDraw: lastDrawDate(b),
+    lastButTwo: lastButTwoDate(b),
+  };
   (b.draws ?? []).forEach((d, i) => {
-    checkDrawDate(d.date, b, limits, i, report);
+    checkDrawDate(d.date, limits, i, report);
     checkAmount(d.amount, notPositive, "NON_POSITIVE_DRAW", (code) =>
       report(code, "draws", i),
     );
@@ -146,7 +150,7 @@ function blockErrors(
   return blockIssues(b)
     .filter(([code, field]) => raised(code, field))
     .map(([code, field, index]) =>
-      rowError("mortgage", b.id, code, field, index),
+      rowError({ entity: "mortgage", id: b.id }, code, field, index),
     );
 }
 

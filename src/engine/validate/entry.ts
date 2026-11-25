@@ -8,6 +8,11 @@ import { assumptionError, assumptionReporter } from "./check";
 import { checkAssumptions } from "./assumptions";
 import { checkPortfolio } from "./rows";
 
+// Known gap: an object spread keeps the brand, so `{ ...v.assumptions, horizonYears: -5 }`
+// still type-checks as ValidAssumptions and `{ ...v, portfolio: q }` as ValidInputs. Use
+// the asserts' results as they are: never spread or rebuild a branded value (the engine
+// composes them, e.g. `EngineRun` holds `inputs`). A lint ban would need type
+// information the syntax rules do not have.
 declare const validBrand: unique symbol;
 
 /** Assumptions `assertAssumptions` (or `assertInputs`) raised nothing on. A compile-time

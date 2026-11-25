@@ -58,7 +58,7 @@ export function portfolioOutputs(
   const v = assertInputs(portfolio, assumptions); // D-37
   assertAsOf(asOf, assumptions.baseDate); // D-19
   const snapshot = snapshotPortfolio(v, asOf, rows);
-  const { projection, kpis } = runPortfolio(v, built);
+  const { projection, kpis } = runPortfolio({ inputs: v, schedules: built });
   return {
     schedules: rows,
     snapshot,

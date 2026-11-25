@@ -75,8 +75,7 @@ export function costsAndNoi(
   fixed: Decimal,
   grossRent: Decimal,
   vacancy: Decimal,
-  mgmtPct: Decimal,
-  maintPct: Decimal,
+  { mgmtPct, maintPct }: { mgmtPct: Decimal; maintPct: Decimal },
 ): { effectiveRent: Decimal; holdingCosts: Decimal; noi: Decimal } {
   const effectiveRent = grossRent.times(ONE.minus(vacancy));
   const holdingCosts = fixed

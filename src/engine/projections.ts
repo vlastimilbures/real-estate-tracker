@@ -11,6 +11,7 @@ import {
   type PropertySchedule,
 } from "./schedule";
 import { firstActiveGridMonth, turnOnYear, yearSlice } from "./yearGrid";
+import type { EngineRun } from "./engineRun";
 import {
   cashOutsideNetCf,
   prePurchaseDebtService,
@@ -228,23 +229,59 @@ function computeTurnOnGates(
   };
 }
 
+/**
+ * One property's projection inputs, built once per property (#480): its basis, loan
+ * blocks, turn-on gates and CPI index, the value after any timed value correction
+ * (`crash`) and its development principal not drawn yet at each year end (`undrawn`).
+ */
+interface PropertyRun {
+  property: Property;
+  assumptions: ValidAssumptions;
+  basis: PropertyBasis;
+  blocks: MortgageBlock[];
+  gates: TurnOnGates;
+  cpi: Decimal[];
+  crash: (value: Decimal, t: number) => Decimal;
+  undrawn: (t: number) => Decimal;
+}
+
+function propertyRun(
+  property: Property,
+  v: ValidInputs,
+  schedule: AmortizationRow[],
+): PropertyRun {
+  const { portfolio, assumptions } = v;
+  const basis = propertyBasis(property, portfolio, assumptions, schedule);
+  const cpi = buildCpiIndex(assumptions);
+  // A timed, permanent value correction: from projection year `atYear` the value curve
+  // is scaled by `1 − pct` and growth resumes from the lower base (debt & rent untouched).
+  // Applied as the outermost multiply (after re-anchor); undefined ⇒ no change.
+  const vs = assumptions.valueShock;
+  const crash = (value: Decimal, t: number): Decimal =>
+    vs && t >= vs.atYear ? value.times(ONE.minus(vs.pct)) : value;
+  const gates = computeTurnOnGates(property, assumptions);
+  const blocks = forProperty(portfolio.mortgages, property.id);
+  // Development principal not drawn yet at each year end, 0 before the property is
+  // owned (ADR 0166).
+  const undrawn = (t: number): Decimal =>
+    t < gates.tStart
+      ? ZERO
+      : undrawnPrincipal(property, blocks, assumptions, yearsToMonths(t));
+  return { property, assumptions, basis, blocks, gates, cpi, crash, undrawn };
+}
+
 /** Year 0 — opening position (stocks only). Empty if not owned yet. */
-function buildYear0(
-  b: PropertyBasis,
-  blocks: MortgageBlock[],
-  assumptions: Assumptions,
-  baseYear: number,
-  tStart: number,
-  crash: (value: Decimal, t: number) => Decimal,
-  undrawn0: Decimal,
-): YearRow {
-  if (tStart > 0) return zeroYear(0, baseYear, assumptions.baseDate);
+function buildYear0(run: PropertyRun): YearRow {
+  const { basis: b, assumptions } = run;
+  const baseYear = assumptions.baseDate.getUTCFullYear();
+  if (run.gates.tStart > 0) return zeroYear(0, baseYear, assumptions.baseDate);
+  const undrawn0 = run.undrawn(0);
   // The debt at baseDate, not grid month 1's opening balance: a loan drawn after
   // baseDate is new debt in its year, not opening debt (D-33).
-  const balance0 = debtAtGridMonth(b.schedule, blocks, assumptions, 0);
+  const balance0 = debtAtGridMonth(b.schedule, run.blocks, assumptions, 0);
   return {
     ...zeroYear(0, baseYear, assumptions.baseDate),
-    ...stocksOf(crash(b.v0, 0), balance0, undrawn0),
+    ...stocksOf(run.crash(b.v0, 0), balance0, undrawn0),
   };
 }
 
@@ -255,16 +292,14 @@ function buildYear0(
  * the baseDate anchor the growth is exactly `t` years, the parity path.
  */
 function computeValueForYear(
-  b: PropertyBasis,
-  property: Property,
-  assumptions: Assumptions,
+  run: PropertyRun,
   t: number,
   yearDate: Date,
-  crash: (value: Decimal, t: number) => Decimal,
 ): Decimal {
+  const { basis: b, assumptions } = run;
   const { value, anchor } = valueAnchor(
     b.valuations,
-    property,
+    run.property,
     assumptions,
     yearDate,
   );
@@ -272,7 +307,7 @@ function computeValueForYear(
     anchor.getTime() === assumptions.baseDate.getTime()
       ? t
       : growthYears(anchor, yearDate);
-  return crash(valueAt(value, b.g, years), t);
+  return run.crash(valueAt(value, b.g, years), t);
 }
 
 interface RentAndCosts {
@@ -289,14 +324,9 @@ interface RentAndCosts {
  * not rebased to its turn-on year, ADR 0165), pro-rated by months owned in the turn-on
  * year (12 once owned from a prior year).
  */
-function computeRentAndCosts(
-  b: PropertyBasis,
-  gates: TurnOnGates,
-  t: number,
-  cpi: Decimal[],
-  vacancy: Decimal,
-): RentAndCosts {
-  const ownedMonths = activeMonthsInYear(gates.firstOwnedMonth, t);
+function computeRentAndCosts(run: PropertyRun, t: number): RentAndCosts {
+  const b = run.basis;
+  const ownedMonths = activeMonthsInYear(run.gates.firstOwnedMonth, t);
   const monthsLet = new Map<RentTerm, number>();
   for (const term of b.rentPlan.slice(yearsToMonths(t - 1), yearsToMonths(t))) {
     if (term) monthsLet.set(term, (monthsLet.get(term) ?? 0) + 1);
@@ -309,33 +339,60 @@ function computeRentAndCosts(
         .times(months),
     );
   }
-  const fixed = b.fixed0.times(at(cpi, t)).times(ownedMonths).div(12);
+  const fixed = b.fixed0.times(at(run.cpi, t)).times(ownedMonths).div(12);
   return {
     grossRent,
-    ...costsAndNoi(fixed, grossRent, vacancy, b.mgmtPct, b.maintPct),
+    ...costsAndNoi(fixed, grossRent, run.assumptions.vacancyAllowance, b),
   };
 }
 
-function buildYearRow(
-  t: number,
-  baseDate: Date,
-  value: Decimal,
-  rc: RentAndCosts,
-  slice: ReturnType<typeof yearSlice>,
-  parts: {
-    draws: Decimal;
-    acquiredValue: Decimal;
-    undrawn: Decimal;
-    undrawnBefore: Decimal;
-  },
-): YearRow {
-  const { draws, acquiredValue } = parts;
+/** What a projection year row is built from (`buildYearRow`). */
+interface YearInputs {
+  value: Decimal;
+  rc: RentAndCosts;
+  slice: ReturnType<typeof yearSlice>;
+  draws: Decimal;
+  acquiredValue: Decimal;
+  undrawn: Decimal;
+  undrawnBefore: Decimal;
+}
+
+/** Projection year `t` ≥ 1 of an owned property. */
+function propertyYear(run: PropertyRun, t: number): YearRow {
+  const { basis: b, assumptions } = run;
+  const { tStart } = run.gates;
+  const yearDate = addYears(assumptions.baseDate, t);
+  const value = computeValueForYear(run, t, yearDate);
+  const rc = computeRentAndCosts(run, t);
+  const slice = yearSlice(b.schedule, t);
+  // In a later turn-on year the debt the property comes online with is new to it
+  // (the years before are empty), so it counts as drawn (DR-092).
+  const turnsOn = t === tStart && tStart > 0;
+  const carriedIn = turnsOn
+    ? debtAtGridMonth(b.schedule, run.blocks, assumptions, yearsToMonths(t - 1))
+    : ZERO;
+  return buildYearRow(t, assumptions.baseDate, {
+    value,
+    rc,
+    slice,
+    draws: slice.drawn.plus(carriedIn),
+    // ADR 0165: the value it comes online with is its value at the purchase date
+    // (the basis is anchored there), bought in rather than appreciation. A
+    // development flat comes in at its completed value (ADR 0166).
+    acquiredValue: turnsOn ? run.crash(b.v0, t) : ZERO,
+    undrawn: run.undrawn(t),
+    undrawnBefore: run.undrawn(t - 1),
+  });
+}
+
+function buildYearRow(t: number, baseDate: Date, f: YearInputs): YearRow {
+  const { rc, slice, draws, acquiredValue } = f;
   const netCashFlow = rc.noi.minus(slice.debtService);
   return {
     year: t,
     calendarYear: baseDate.getUTCFullYear() + t,
     ...yearPeriod(baseDate, t),
-    ...stocksOf(value, slice.balance, parts.undrawn),
+    ...stocksOf(f.value, slice.balance, f.undrawn),
     grossRent: rc.grossRent,
     effectiveRent: rc.effectiveRent,
     holdingCosts: rc.holdingCosts,
@@ -346,7 +403,7 @@ function buildYearRow(
     netCashFlow,
     draws,
     // A tranche drawn this year was already committed (ADR 0166).
-    committedDraws: draws.minus(parts.undrawnBefore.minus(parts.undrawn)),
+    committedDraws: draws.minus(f.undrawnBefore.minus(f.undrawn)),
     acquiredValue,
     refinanced: slice.refinanced,
     prepaid: slice.prepaid,
@@ -397,11 +454,11 @@ function projectProperty(
   built: PropertySchedule,
 ): ProjectionYear[] {
   const years = propertyYears(property, v, built.rows);
-  const own = new Map([[property.id, built]]);
-  return withCashToOwner(
-    years,
-    cashOutsideNetCf([property], v.portfolio, v.assumptions, own, years),
-  );
+  const own: EngineRun = {
+    inputs: v,
+    schedules: new Map([[property.id, built]]),
+  };
+  return withCashToOwner(years, cashOutsideNetCf([property], own, years));
 }
 
 /** A property's projection years before their cash to owner (ADR 0161). */
@@ -410,66 +467,15 @@ function propertyYears(
   v: ValidInputs,
   schedule: AmortizationRow[],
 ): YearRow[] {
-  const { portfolio, assumptions } = v;
-  const b = propertyBasis(property, portfolio, assumptions, schedule);
-  const baseYear = assumptions.baseDate.getUTCFullYear();
-  const vacancy = assumptions.vacancyAllowance;
-  const cpi = buildCpiIndex(assumptions);
-  const years: YearRow[] = [];
-
-  // A timed, permanent value correction: from projection year `atYear` the value curve
-  // is scaled by `1 − pct` and growth resumes from the lower base (debt & rent untouched).
-  // Applied as the outermost multiply (after re-anchor); undefined ⇒ no change.
-  const vs = assumptions.valueShock;
-  const crash = (value: Decimal, t: number): Decimal =>
-    vs && t >= vs.atYear ? value.times(ONE.minus(vs.pct)) : value;
-
-  const gates = computeTurnOnGates(property, assumptions);
-  const { tStart } = gates;
-
-  const blocks = forProperty(portfolio.mortgages, property.id);
-  // Development principal not drawn yet at each year end, 0 before the property is
-  // owned (ADR 0166).
-  const undrawn = (t: number): Decimal =>
-    t < tStart
-      ? ZERO
-      : undrawnPrincipal(property, blocks, assumptions, yearsToMonths(t));
-  years.push(
-    buildYear0(b, blocks, assumptions, baseYear, tStart, crash, undrawn(0)),
-  );
-
-  for (let t = 1; t <= assumptions.horizonYears; t++) {
-    if (t < tStart) {
-      years.push(zeroYear(t, baseYear + t, assumptions.baseDate));
-      continue;
-    }
-    const yearDate = addYears(assumptions.baseDate, t);
-    const value = computeValueForYear(
-      b,
-      property,
-      assumptions,
-      t,
-      yearDate,
-      crash,
-    );
-    const rc = computeRentAndCosts(b, gates, t, cpi, vacancy);
-    const slice = yearSlice(schedule, t);
-    // In a later turn-on year the debt the property comes online with is new to it
-    // (the years before are empty), so it counts as drawn (DR-092).
-    const turnsOn = t === tStart && tStart > 0;
-    const carriedIn = turnsOn
-      ? debtAtGridMonth(schedule, blocks, assumptions, yearsToMonths(t - 1))
-      : ZERO;
+  const run = propertyRun(property, v, schedule);
+  const { baseDate, horizonYears } = run.assumptions;
+  const baseYear = baseDate.getUTCFullYear();
+  const years: YearRow[] = [buildYear0(run)];
+  for (let t = 1; t <= horizonYears; t++) {
     years.push(
-      buildYearRow(t, assumptions.baseDate, value, rc, slice, {
-        draws: slice.drawn.plus(carriedIn),
-        // ADR 0165: the value it comes online with is its value at the purchase date
-        // (the basis is anchored there), bought in rather than appreciation. A
-        // development flat comes in at its completed value (ADR 0166).
-        acquiredValue: turnsOn ? crash(b.v0, t) : ZERO,
-        undrawn: undrawn(t),
-        undrawnBefore: undrawn(t - 1),
-      }),
+      t < run.gates.tStart
+        ? zeroYear(t, baseYear + t, baseDate)
+        : propertyYear(run, t),
     );
   }
   return years;
@@ -553,18 +559,20 @@ export function portfolioProjection(
       portfolio.properties.map((p) => p.id),
       assumptions,
     );
-  return projectPortfolioParts(v, built).years;
+  return projectPortfolioParts({ inputs: v, schedules: built }).years;
 }
 
 /**
- * `portfolioProjection` on validated inputs and their schedules (DR-128): the portfolio
- * is checked once per public call, not again per property. Also returns the debt service
- * paid before a future buy turns on (ADR 0124), so the KPIs reuse it (#291).
+ * `portfolioProjection` on an engine run (validated inputs and their schedules, DR-128):
+ * the portfolio is checked once per public call, not again per property. Also returns
+ * the debt service paid before a future buy turns on (ADR 0124), so the KPIs reuse it
+ * (#291).
  */
-export function projectPortfolioParts(
-  v: ValidInputs,
-  schedules: Map<string, PropertySchedule>,
-): { years: ProjectionYear[]; prePurchase: DebtServicePaid[] } {
+export function projectPortfolioParts(run: EngineRun): {
+  years: ProjectionYear[];
+  prePurchase: DebtServicePaid[];
+} {
+  const { inputs: v, schedules } = run;
   const { portfolio, assumptions } = v;
   const active = portfolio.properties.filter((p) => p.active !== false);
   // The property years without their own cash to owner: the portfolio's is computed
@@ -578,14 +586,7 @@ export function projectPortfolioParts(
   // KPIs sum these, and another summation order would move their last digits.
   const years = withCashToOwner(
     out,
-    cashOutsideNetCf(
-      active,
-      portfolio,
-      assumptions,
-      schedules,
-      out,
-      prePurchase,
-    ),
+    cashOutsideNetCf(active, run, out, prePurchase),
   );
   return { years, prePurchase };
 }

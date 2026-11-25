@@ -109,8 +109,7 @@ export function inWindow(date: Date, asOf: Date, months: number): boolean {
  * or before baseDate (m ≤ 0) has no schedule row: passed unless replaced (ADR 0030).
  */
 function resetStatus(
-  fixationEnd: Date,
-  m: number,
+  { fixationEnd, m }: { fixationEnd: Date; m: number },
   link: ChainLink,
   rows: AmortizationRow[],
   ctx: { asOf: Date; baseDate: Date },
@@ -141,7 +140,7 @@ function chainResets(
     const fixationEnd = blockEndDate(block);
     const m =
       yearsToMonths(block.fixationYears) - paymentOffset(block, ctx.baseDate);
-    const status = resetStatus(fixationEnd, m, link, rows, ctx);
+    const status = resetStatus({ fixationEnd, m }, link, rows, ctx);
     resets.push({
       propertyId: block.propertyId,
       blockId: block.id,

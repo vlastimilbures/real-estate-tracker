@@ -29,8 +29,7 @@ export type RowEntity = Exclude<ValidationEntity, "assumptions">;
 
 /** A row's error: `field` always present, `index` only for a list item (ADR 0116). */
 export function rowError<E extends RowEntity>(
-  entity: E,
-  id: string,
+  { entity, id }: { entity: E; id: string },
   code: ValidationCode,
   field: FieldOf<E> | undefined,
   index?: number,
@@ -58,7 +57,8 @@ export function rowReporter<E extends RowEntity>(
   id: string,
   add: Add,
 ): Report<FieldOf<E>> {
-  return (code, field, index) => add(rowError(entity, id, code, field, index));
+  return (code, field, index) =>
+    add(rowError({ entity, id }, code, field, index));
 }
 
 /** The reporter of the assumptions: every problem becomes `assumptionError`. */

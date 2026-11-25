@@ -11,8 +11,9 @@ import {
   IRR_SCAN_GRID,
 } from "./irrConstants";
 import { at } from "./arrays";
-import { propertySchedules, type PropertySchedule } from "./schedule";
-import { assertInputs, type ValidInputs } from "./validate";
+import { propertySchedules } from "./schedule";
+import { assertInputs } from "./validate";
+import type { EngineRun } from "./engineRun";
 import { buildCpiIndex, projectPortfolioParts } from "./projections";
 import { scheduleOf, type DebtServicePaid } from "./ownerCash";
 import type {
@@ -264,11 +265,9 @@ function leveredCashFlows(
  * rows include the years before a future buy turns on, so this equals the projection's
  * principal + prepaid plus `prePurchaseDebtService`'s (ADR 0124).
  */
-function principalRepaidInHorizon(
-  portfolio: Portfolio,
-  assumptions: Assumptions,
-  schedules: Map<string, PropertySchedule>,
-): Decimal {
+function principalRepaidInHorizon(run: EngineRun): Decimal {
+  const { portfolio, assumptions } = run.inputs;
+  const { schedules } = run;
   const horizonMonths = yearsToMonths(assumptions.horizonYears);
   let total = ZERO;
   // Once per property id, in first-seen order (as a Map keyed by id would).
@@ -311,25 +310,23 @@ export function projectionAndKpis(
     portfolio.properties.map((p) => p.id),
     assumptions,
   );
-  return runPortfolio(v, built);
+  return runPortfolio({ inputs: v, schedules: built });
 }
 
 /**
- * The portfolio projection and its KPIs on validated inputs and their schedules: the one
- * run sequence behind `projectionAndKpis` and `portfolioOutputs`, so each schedule is
- * built once and the projection is not rebuilt for the KPIs (DR-042, #291).
+ * The portfolio projection and its KPIs on an engine run (validated inputs and their
+ * schedules): the one run sequence behind `projectionAndKpis` and `portfolioOutputs`, so
+ * each schedule is built once and the projection is not rebuilt for the KPIs (DR-042,
+ * #291).
  */
-export function runPortfolio(
-  v: ValidInputs,
-  schedules: Map<string, PropertySchedule>,
-): { projection: ProjectionYear[]; kpis: PortfolioKPIs } {
-  const { years: projection, prePurchase } = projectPortfolioParts(
-    v,
-    schedules,
-  );
+export function runPortfolio(run: EngineRun): {
+  projection: ProjectionYear[];
+  kpis: PortfolioKPIs;
+} {
+  const { years: projection, prePurchase } = projectPortfolioParts(run);
   return {
     projection,
-    kpis: kpisFrom(v, projection, schedules, prePurchase),
+    kpis: kpisFrom(run, projection, prePurchase),
   };
 }
 
@@ -347,12 +344,11 @@ export function portfolioKpis(
  * service already built from the same validated inputs (see `runPortfolio`).
  */
 function kpisFrom(
-  v: ValidInputs,
+  run: EngineRun,
   proj: ProjectionYear[],
-  schedules: Map<string, PropertySchedule>,
   prePurchase: DebtServicePaid[],
 ): PortfolioKPIs {
-  const { portfolio, assumptions } = v;
+  const { assumptions } = run.inputs;
   const N = assumptions.horizonYears;
   // Time-varying CPI (honours a temporary inflation shock); cpi[N] is the horizon
   // deflator and cpi[t] deflates each cash flow. Collapses to (1+inflationPa)^t when
@@ -376,11 +372,7 @@ function kpisFrom(
     ...equityGrowth(equity0, equityN, at(cpi, N), N),
     ...cashFlowMilestones(proj, flows, cpi),
     ...leveredIrr(nominalVector, realVector),
-    totalPrincipalRepaid: principalRepaidInHorizon(
-      portfolio,
-      assumptions,
-      schedules,
-    ),
+    totalPrincipalRepaid: principalRepaidInHorizon(run),
     ...interestInHorizon(proj, prePurchase, cpi, N),
   };
 }
