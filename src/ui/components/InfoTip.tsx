@@ -2,11 +2,11 @@
 // shows it in a small popover under the icon, a click pins it; Escape or a click outside
 // hides it. The text is also the button's description, so a screen reader reads it on
 // focus whether or not it shows.
-import { useCallback, useId, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useId, useLayoutEffect, useReducer, useRef } from "react";
 import { Info } from "lucide-react";
 import { useT } from "../hooks/useT";
 import { useDismiss } from "../hooks/useDismiss";
-import { placeTip } from "../model/infoTip";
+import { placeTip, TIP_AT_REST, tipOpen, tipReducer } from "../model/infoTip";
 
 function place(button: HTMLElement, pop: HTMLElement): void {
   const bar = document.querySelector(".topbar")?.getBoundingClientRect();
@@ -36,20 +36,11 @@ export function InfoTip({
   const wrap = useRef<HTMLSpanElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const pop = useRef<HTMLSpanElement>(null);
-  const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const [pinned, setPinned] = useState(false);
-  // Escape or an outside click hides it while the pointer or focus that showed it is
-  // still there; it shows again once that trigger leaves and comes back.
-  const [dismissed, setDismissed] = useState(false);
-  // The latest triggers, read by the window listeners and the handlers.
-  const live = useRef({ hovered: false, focused: false });
-  const open = !dismissed && (pinned || hovered || focused);
-
-  const close = useCallback(() => {
-    setPinned(false);
-    setDismissed(live.current.hovered || live.current.focused);
-  }, []);
+  // Hover, focus, a pin and a dismissal (tipReducer): Escape or an outside click hides it
+  // while the pointer or focus that showed it is still there.
+  const [tip, send] = useReducer(tipReducer, TIP_AT_REST);
+  const open = tipOpen(tip);
+  const close = useCallback(() => send({ type: "dismiss" }), []);
 
   useLayoutEffect(() => {
     if (!open || !button.current || !pop.current) return;
@@ -72,24 +63,16 @@ export function InfoTip({
     open,
     inside: [wrap],
     escape: "tip",
-    stops: () => live.current.hovered || live.current.focused,
+    stops: () => tip.hovered || tip.focused,
     outside: "press",
   });
-
-  const setTrigger = (k: "hovered" | "focused", on: boolean) => {
-    live.current[k] = on;
-    (k === "hovered" ? setHovered : setFocused)(on);
-    // A dismissal ends once neither trigger is left.
-    if (!on && !live.current.hovered && !live.current.focused)
-      setDismissed(false);
-  };
 
   return (
     <span
       ref={wrap}
       className="info-tip"
-      onMouseEnter={() => setTrigger("hovered", true)}
-      onMouseLeave={() => setTrigger("hovered", false)}
+      onMouseEnter={() => send({ type: "hover", on: true })}
+      onMouseLeave={() => send({ type: "hover", on: false })}
     >
       <button
         ref={button}
@@ -99,22 +82,14 @@ export function InfoTip({
         aria-describedby={id}
         aria-expanded={open}
         aria-controls={id}
-        onFocus={() => setTrigger("focused", true)}
-        onBlur={(e) => {
-          // Focus leaving the tip unpins it: a pin never outlives the user's attention.
-          if (!wrap.current?.contains(e.relatedTarget as Node | null))
-            setPinned(false);
-          setTrigger("focused", false);
-        }}
-        onClick={() => {
-          // A toggle: shown by a pin, or by focus alone (a keyboard Enter), it closes;
-          // shown by hover, or hidden, it pins open.
-          if (open && (pinned || !live.current.hovered)) close();
-          else {
-            setDismissed(false);
-            setPinned(true);
-          }
-        }}
+        onFocus={() => send({ type: "focus" })}
+        onBlur={(e) =>
+          send({
+            type: "blur",
+            leftTip: !wrap.current?.contains(e.relatedTarget as Node | null),
+          })
+        }
+        onClick={() => send({ type: "click" })}
       >
         <Info size={15} strokeWidth={1.75} aria-hidden="true" />
       </button>
