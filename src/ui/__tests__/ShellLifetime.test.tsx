@@ -154,7 +154,9 @@ describe("chrome lifetime across pages (#483)", () => {
     const before = disconnects;
     await go("settings");
     await waitFor(() => expect(title()?.textContent).toBe(en.settings.title));
-    expect(disconnects).toBeGreaterThan(before);
+    // The new page commits before React runs the old frame's effect cleanup (#605): wait
+    // for the old top bar's observer to disconnect, not only for the new title.
+    await waitFor(() => expect(disconnects).toBeGreaterThan(before));
     const next = document.querySelector("header.topbar");
     expect(next).not.toBe(first);
     expect(observed).toContain(next);
