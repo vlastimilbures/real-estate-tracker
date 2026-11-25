@@ -81,7 +81,7 @@ describe("describeWriteError", () => {
     }
   });
 
-  it("translates the v9 JSON checks added outside V7_TABLES (ADR 0109)", () => {
+  it("translates the v9 JSON checks added outside the baseline (ADR 0109)", () => {
     for (const name of ["mortgage_prepayments_json", "mortgage_recasts_json"]) {
       expect(describeWriteError(en, check(name)).message, name).not.toBe(
         en.writeErrors.otherConstraint,
