@@ -31,7 +31,6 @@ export {
   amortizationHealth,
   blockEndDate,
   fixationExpired,
-  rateFixedUntil,
   /** @internal test seam (UI model tests) */
   impliedMaturity,
   isDevLoan,
@@ -48,11 +47,7 @@ export {
   IRR_BRACKET_MAX,
 } from "./constants";
 export { basisDate, scheduledPrincipal } from "./growth";
-export {
-  EMPTY_PROPERTY_SCHEDULE,
-  effectiveMaturity,
-  propertySchedules,
-} from "./schedule";
+export { EMPTY_PROPERTY_SCHEDULE, propertySchedules } from "./schedule";
 export type { PropertySchedule } from "./schedule";
 
 // Snapshot, projection, KPIs, scenarios, validation
@@ -102,6 +97,8 @@ export type {
   PropertyLoan,
 } from "./financing";
 export { applyScenario } from "./scenarios";
+export { blocksReachedByShock } from "./shockReach";
+export type { BlockShockReach } from "./shockReach";
 export {
   comparableScenarios,
   leaseOverlapErrors,
