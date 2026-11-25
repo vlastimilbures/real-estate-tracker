@@ -1,6 +1,7 @@
 // What the Data check reports on a loan block (SPEC §4.4): the closed-form health check
 // and implied vs contract maturity (D-29). The wording is UI (P7).
-import { FV, PMT, type Decimal } from "../lib/money";
+import type { Decimal } from "../lib/money";
+import { annuityPayment, balanceAfter } from "./finance";
 import { edate, isAfter } from "./dates";
 import { isDevLoan } from "./loanBlock";
 import { dueDate, termMonths } from "./loanTerm";
@@ -25,18 +26,18 @@ export interface AmortizationHealth {
 export function amortizationHealth(block: MortgageBlock): AmortizationHealth {
   const rateMonthly = block.interestRatePa.div(12);
   const term = termMonths(block);
-  const suggestedInstalment = PMT(
+  const suggestedInstalment = annuityPayment(
     rateMonthly,
     term,
-    block.initialPrincipal.negated(),
+    block.initialPrincipal,
   );
   // Residual balance after `term` payments of the entered instalment.
-  const shortfall = FV(
+  const shortfall = balanceAfter(
     rateMonthly,
     term,
-    block.monthlyInstalment.negated(),
+    block.monthlyInstalment,
     block.initialPrincipal,
-  ).negated();
+  );
   const firstInterest = block.initialPrincipal.times(rateMonthly);
   const fullyAmortizes =
     block.monthlyInstalment.greaterThan(firstInterest) &&

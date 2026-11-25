@@ -6,7 +6,7 @@ import { amortizationHealth } from "../loanChecks";
 import { termMonths, scheduleMonths, drawMonth } from "../loanTerm";
 import { buildSchedule } from "../schedule";
 import { isoDate } from "../dates";
-import { PMT } from "../../lib/money";
+import { PMT } from "./support/excelFinance";
 import { assumptions } from "./support/seed";
 import type { MortgageBlock } from "../types";
 import { rate } from "../brands";

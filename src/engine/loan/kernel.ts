@@ -1,5 +1,6 @@
 // The month-step kernel of the loan schedule (SPEC §4.4; see `pay.ts`).
-import { PMT, ZERO, type Decimal } from "../../lib/money";
+import { ZERO, type Decimal } from "../../lib/money";
+import { annuityPayment } from "../finance";
 import { isAfter } from "../dates";
 import type { AmortizationRow, IsoDate, MortgageBlock } from "../types";
 
@@ -35,7 +36,7 @@ export function recomputeInstalment(
   balance: Decimal,
 ): Decimal {
   return remainingTerm > 0
-    ? PMT(rateMonthly, remainingTerm, balance.negated())
+    ? annuityPayment(rateMonthly, remainingTerm, balance)
     : balance.plus(balance.times(rateMonthly));
 }
 

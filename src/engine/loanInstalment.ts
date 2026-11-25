@@ -1,6 +1,7 @@
 // The instalment of a loan block (SPEC §4.4): the annuity, the whole-CZK figure a form
 // suggests and the instalment a schedule opens with (D-31).
-import { PMT, ceilCzk, type Decimal } from "../lib/money";
+import { ceilCzk, type Decimal } from "../lib/money";
+import { annuityPayment } from "./finance";
 import { isDevLoan } from "./loanBlock";
 import type { MortgageBlock } from "./types";
 
@@ -10,7 +11,7 @@ export function instalmentFor(
   ratePa: Decimal,
   termYears: number,
 ): Decimal {
-  return PMT(ratePa.div(12), termYears * 12, principal.negated());
+  return annuityPayment(ratePa.div(12), termYears * 12, principal);
 }
 
 /**

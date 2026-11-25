@@ -1,7 +1,8 @@
 // A loan block's term and payment calendar (SPEC §4.4): its length in payments (D-08,
 // D-17), payment numbers and due dates on its own cadence (D-21, ADR 0109) and how many
 // grid months its schedule runs.
-import { NPER, ZERO, type Decimal } from "../lib/money";
+import { ZERO, type Decimal } from "../lib/money";
+import { paymentsToRepay } from "./finance";
 import {
   edate,
   firstGridMonthOnOrAfter,
@@ -118,7 +119,7 @@ export function nperMonths(
   instalment: Decimal,
   balance: Decimal,
 ): number {
-  const n = NPER(rateMonthly, instalment.negated(), balance);
+  const n = paymentsToRepay(rateMonthly, instalment, balance);
   // eslint-disable-next-line no-restricted-syntax -- an NPER month count, not money
   return Math.ceil(n.toNumber());
 }
