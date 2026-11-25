@@ -315,7 +315,7 @@ export async function expectDataCheckLayout(p: Locator) {
 }
 
 /** Property detail with stored data that breaks an engine rule (DR-146): the page keeps
- *  its heading, shows the invalid-data notice with at least one record named, and keeps
+ *  its heading, shows the invalid-data notice naming the broken rule, and keeps
  *  the sections where the record can be fixed (Records, Financing, Holding costs); the
  *  sections that need figures are gone from the page and from the section nav. */
 export async function expectInvalidPropertyData(ux: Ux, name: string) {
@@ -328,9 +328,8 @@ export async function expectInvalidPropertyData(ux: Ux, name: string) {
     }),
   });
   await expect(notice).toBeVisible();
-  expect(await notice.locator("li").count(), "records named").toBeGreaterThan(
-    0,
-  );
+  // The rule the scene's loan breaks (flows.ts `breakFirstLoan`), in the user's words.
+  await expect(notice).toContainText(ux.t.inputRules.INSTALMENT_BELOW_INTEREST);
   const section = (s: string) => ux.page.locator(`#pd-${s}`);
   for (const s of ["records", "financing", "holding"])
     await expect(section(s), `${s} shown`).toBeVisible();
