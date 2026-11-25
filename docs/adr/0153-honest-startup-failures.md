@@ -17,6 +17,8 @@
 - Amended by: [0228](0228-read-back-failure-stops.md) (§3: a restore on the screen whose data cannot be loaded shows the read-back message)
 - Amended by: [0231](0231-unreadable-scenario-invalid.md) (§2, §3: `SCENARIO_INVALID` reaches
   the screen and is handled like `ROW_INVALID`: Restore a backup…, no Try again)
+- Amended by: [0230](0230-schema-starts-at-version-8.md) (§1, §2: `MIGRATION_CONFLICT` and
+  `boot.partialConflict` are removed; `DB_TOO_OLD` is added)
 
 ## Context
 
