@@ -11,6 +11,7 @@ import {
   type PropertySchedule,
 } from "./schedule";
 import { firstActiveGridMonth, turnOnYear, yearSlice } from "./yearGrid";
+import type { EngineRun } from "./engineRun";
 import {
   cashOutsideNetCf,
   prePurchaseDebtService,
@@ -459,11 +460,11 @@ function projectProperty(
   built: PropertySchedule,
 ): ProjectionYear[] {
   const years = propertyYears(property, v, built.rows);
-  const own = new Map([[property.id, built]]);
-  return withCashToOwner(
-    years,
-    cashOutsideNetCf([property], v.portfolio, v.assumptions, own, years),
-  );
+  const own: EngineRun = {
+    inputs: v,
+    schedules: new Map([[property.id, built]]),
+  };
+  return withCashToOwner(years, cashOutsideNetCf([property], own, years));
 }
 
 /** A property's projection years before their cash to owner (ADR 0161). */
@@ -564,18 +565,20 @@ export function portfolioProjection(
       portfolio.properties.map((p) => p.id),
       assumptions,
     );
-  return projectPortfolioParts(v, built).years;
+  return projectPortfolioParts({ inputs: v, schedules: built }).years;
 }
 
 /**
- * `portfolioProjection` on validated inputs and their schedules (DR-128): the portfolio
- * is checked once per public call, not again per property. Also returns the debt service
- * paid before a future buy turns on (ADR 0124), so the KPIs reuse it (#291).
+ * `portfolioProjection` on an engine run (validated inputs and their schedules, DR-128):
+ * the portfolio is checked once per public call, not again per property. Also returns
+ * the debt service paid before a future buy turns on (ADR 0124), so the KPIs reuse it
+ * (#291).
  */
-export function projectPortfolioParts(
-  v: ValidInputs,
-  schedules: Map<string, PropertySchedule>,
-): { years: ProjectionYear[]; prePurchase: DebtServicePaid[] } {
+export function projectPortfolioParts(run: EngineRun): {
+  years: ProjectionYear[];
+  prePurchase: DebtServicePaid[];
+} {
+  const { inputs: v, schedules } = run;
   const { portfolio, assumptions } = v;
   const active = portfolio.properties.filter((p) => p.active !== false);
   // The property years without their own cash to owner: the portfolio's is computed
@@ -589,14 +592,7 @@ export function projectPortfolioParts(
   // KPIs sum these, and another summation order would move their last digits.
   const years = withCashToOwner(
     out,
-    cashOutsideNetCf(
-      active,
-      portfolio,
-      assumptions,
-      schedules,
-      out,
-      prePurchase,
-    ),
+    cashOutsideNetCf(active, run, out, prePurchase),
   );
   return { years, prePurchase };
 }

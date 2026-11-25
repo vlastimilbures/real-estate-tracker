@@ -9,6 +9,7 @@ import {
   repaidBeforeBase,
 } from "./acquisition";
 import { at } from "./arrays";
+import type { EngineRun } from "./engineRun";
 import { EMPTY_PROPERTY_SCHEDULE, type PropertySchedule } from "./schedule";
 import { turnOnYear, yearSlice } from "./yearGrid";
 import type { Assumptions, Portfolio, Property } from "./types";
@@ -135,12 +136,16 @@ export function prePurchaseDebtService(
  */
 export function cashOutsideNetCf(
   properties: Property[],
-  portfolio: Portfolio,
-  assumptions: Assumptions,
-  schedules: Map<string, PropertySchedule>,
+  run: EngineRun,
   rows: { prepaid: Decimal; prepaymentFees: Decimal }[],
-  prePurchase = prePurchaseDebtService(properties, assumptions, schedules),
+  prePurchase = prePurchaseDebtService(
+    properties,
+    run.inputs.assumptions,
+    run.schedules,
+  ),
 ): Decimal[] {
+  const { portfolio, assumptions } = run.inputs;
+  const { schedules } = run;
   const refiCash = refinanceCash(properties, assumptions, schedules);
   return acquisitionOutflows(properties, portfolio, assumptions).map((x, t) => {
     const pre = at(prePurchase, t);
