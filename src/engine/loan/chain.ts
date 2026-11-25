@@ -20,7 +20,7 @@ import type {
   Refinance,
 } from "../types";
 import { paymentOffset } from "./calendar";
-import { type Outcome, prepaymentIssue } from "./events";
+import { clampPrepayment, type Outcome } from "./events";
 import { type BlockSchedule, buildBlockSchedule } from "./grid";
 import { lastPaymentMonth } from "./queries";
 
@@ -174,14 +174,16 @@ function handoverPrepayments(
     }
     if (o.kind === "recast")
       return { ...o, month: null, issue: "RECAST_REPLACED" };
-    const paid = o.requested.lessThan(left) ? o.requested : left;
-    const charged = paid.greaterThan(ZERO) ? (o.enteredFee ?? ZERO) : ZERO;
+    const {
+      applied: paid,
+      charged,
+      issue,
+    } = clampPrepayment(o.requested, left, o.enteredFee);
     [left, applied, fee] = [
       left.minus(paid),
       applied.plus(paid),
       fee.plus(charged),
     ];
-    const issue = prepaymentIssue(o.requested, paid);
     return { ...o, month: d, applied: paid, fee: charged, issue };
   });
   return { applied, fee, outcomes: out };
@@ -341,11 +343,11 @@ export function propertySchedule(
   };
 }
 
-/** An outcome without the internal entered fee. */
+/** A copy of the outcome without the internal entered fee, its fields in order. */
 function publicOutcome(o: Outcome): LoanEventOutcome {
-  const { enteredFee, ...rest } = o;
-  void enteredFee;
-  return rest;
+  const copy: Outcome = { ...o };
+  delete copy.enteredFee;
+  return copy;
 }
 
 /**
