@@ -12,7 +12,7 @@ import {
   type FormSpec,
   type ParsedValues,
 } from "../model/formParse";
-import { formWriteErrors } from "../model/writeError";
+import { fieldsIn, formWriteErrors } from "../model/writeError";
 import { isDirty } from "../model/dirty";
 import type { WriteError } from "../../state/writeError";
 import { useFormSubmit } from "./useFormSubmit";
@@ -101,8 +101,13 @@ export function useRecordForm<const S extends readonly FormSpec[], L = NoLists>(
   const { busy, errors, formError, submit, clearFields } = useFormSubmit({
     run: onSubmit,
     mapErrors: (failure) =>
-      formWriteErrors(t, failure, shownFields(specs, hidden), (field, index) =>
-        model.rowOf(draft.lists, field, index),
+      formWriteErrors(
+        t,
+        failure,
+        // The shown fields by name, a list item on its draft row.
+        fieldsIn(shownFields(specs, hidden), (field, index) =>
+          model.rowOf(draft.lists, field, index),
+        ),
       ),
     onSaved: () => setBaseline(draft),
   });

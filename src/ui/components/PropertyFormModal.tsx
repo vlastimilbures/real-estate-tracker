@@ -21,26 +21,22 @@ import { type Dictionary } from "../../i18n";
 import { useFormSubmit, type FormFailure } from "../hooks/useFormSubmit";
 import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useT } from "../hooks/useT";
-import { formWriteErrors } from "../model/writeError";
+import { formWriteErrors, type ErrorField } from "../model/writeError";
 import { isDirty } from "../model/dirty";
 
 const snakeToCamel = (k: string) =>
   k.replace(/_([a-z0-9])/g, (_, c: string) => c.toUpperCase());
 
-/** A failed save for this form: a rule tied to a field shows on that field; anything
- *  else above the buttons. Failures name engine fields (purchaseDate); this form's keys
- *  are snake_case. */
+/** Where a failed save shows: a rule tied to a field on that field, anything else above
+ *  the buttons. Failures name engine fields (purchaseDate); this form's keys are
+ *  snake_case. */
+const BY_FIELD = new Map(
+  Object.keys(BLANK_PROPERTY_FORM).map((k) => [snakeToCamel(k), k]),
+);
+const propertyErrorField: ErrorField = (field) => BY_FIELD.get(field) ?? null;
+
 function propertyWriteErrors(t: Dictionary, failure: WriteError): FormFailure {
-  const byField = new Map(
-    Object.keys(BLANK_PROPERTY_FORM).map((k) => [snakeToCamel(k), k]),
-  );
-  const split = formWriteErrors(t, failure, [...byField.keys()]);
-  const fieldErrors: Record<string, string> = {};
-  for (const [field, message] of Object.entries(split.fieldErrors)) {
-    const key = byField.get(field); // split only names the fields passed in
-    if (key) fieldErrors[key] = message;
-  }
-  return { fieldErrors, formError: split.formError };
+  return formWriteErrors(t, failure, propertyErrorField);
 }
 
 /** What a save writes, once the form's checks pass. */

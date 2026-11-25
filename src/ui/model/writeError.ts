@@ -30,8 +30,7 @@ export interface WriteErrorText {
 }
 
 /** CHECK constraint → engine rule wording + the field it guards, named like the engine
- *  field (the property modal maps these to its snake_case keys). One list for the schema
- *  and this map (src/lib/checkConstraints.ts, #470). */
+ *  field. One list for the schema and this map (src/lib/checkConstraints.ts, #470). */
 const CHECKS: Record<
   string,
   { rule: ValidationCode | "flag" | "json"; field?: string }
@@ -139,28 +138,38 @@ export function writeErrorTexts(
   return [...out, ...rangeTexts(t, e.ranges)];
 }
 
+/** A form's own key for a failure's field (and list item): where the form shows it, or
+ *  null when it shows it above the buttons (ADR 0261, #440). Each form declares one. */
+export type ErrorField = (field: string, index?: number) => string | null;
+
+/** The ErrorField of a form that shows `fields` under their own names. An error on a list
+ *  item is keyed `field.row` when `rowOf` finds the form row it came from (ADR 0116). */
+export function fieldsIn(
+  fields: readonly string[],
+  rowOf?: (field: string, index: number) => number | null,
+): ErrorField {
+  return (field, index) => {
+    if (!fields.includes(field)) return null;
+    const row = index === undefined ? null : (rowOf?.(field, index) ?? null);
+    return row === null ? field : `${field}.${row}`;
+  };
+}
+
 /**
- * Split a failure for a form: messages for the fields the form shows (first message
- * per field), and one line for the rest, shown above the buttons. An error on a list
- * item is keyed `field.row` when `rowOf` finds the form row it came from (ADR 0116).
+ * Split a failure for a form: messages on the keys its `errorField` names (first message
+ * per key), and one line for the rest, shown above the buttons.
  */
 export function formWriteErrors(
   t: Dictionary,
   e: FormWriteError,
-  fields: readonly string[],
-  rowOf?: (field: string, index: number) => number | null,
+  errorField: ErrorField,
 ): { fieldErrors: Record<string, string>; formError: string | null } {
   const fieldErrors: Record<string, string> = {};
   const rest: string[] = [];
   for (const text of writeErrorTexts(t, e)) {
-    if (text.field && fields.includes(text.field)) {
-      const row =
-        text.index === undefined
-          ? null
-          : (rowOf?.(text.field, text.index) ?? null);
-      fieldErrors[row === null ? text.field : `${text.field}.${row}`] ??=
-        text.message;
-    } else rest.push(text.message);
+    const key = text.field ? errorField(text.field, text.index) : null;
+    if (key === null) rest.push(text.message);
+    else fieldErrors[key] ??= text.message;
   }
   return { fieldErrors, formError: rest.length ? rest.join(" · ") : null };
 }

@@ -4,6 +4,7 @@
 import { describe, it, expect } from "vitest";
 import {
   describeWriteError,
+  fieldsIn,
   formWriteErrors,
   writeErrorTexts,
 } from "../writeError";
@@ -56,7 +57,7 @@ describe("a refused out-of-range value (ADR 0245)", () => {
 
   it("shows on the field when the form shows it, else above the buttons", () => {
     const e = refusal(["fixationYears", 51], ["loanTermYears", 51]);
-    expect(formWriteErrors(en, e, ["fixationYears"])).toEqual({
+    expect(formWriteErrors(en, e, fieldsIn(["fixationYears"]))).toEqual({
       fieldErrors: { fixationYears: en.forms.intRange("0", "50") },
       formError: en.forms.intRange("1", "50"),
     });
