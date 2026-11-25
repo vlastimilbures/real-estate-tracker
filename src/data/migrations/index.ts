@@ -8,8 +8,9 @@
 // "use the Assumptions default" — the override semantics from SPEC §4.1.
 //
 // The schema starts at version 8 (ADR 0230): a new database gets the version 8 tables in
-// one step (`BASELINE`, the frozen DDL in baseline.ts), then steps 9 onwards (steps.ts); a database at version 8 or later upgrades
-// step by step; an older one is refused before anything is written.
+// one step (`BASELINE`, the frozen DDL in baseline.ts), then steps 9 onwards (steps.ts);
+// a database at version 8 or later upgrades step by step; an older one is refused before
+// anything is written.
 //
 // Safety (P5a): migrations are forward-only. Before the first pending step of an existing
 // database the runner checks integrity and writes a verified backup; each step then runs
