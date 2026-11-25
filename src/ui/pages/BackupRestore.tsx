@@ -64,7 +64,7 @@ function LastBackup() {
   );
 }
 
-/** Backup/restore body without an AppShell — embedded in the Settings page sub-tabs. */
+/** Backup/restore body without a PageFrame — embedded in the Settings page sub-tabs. */
 export function BackupRestorePanel() {
   const t = useT();
   const exportBackup = usePortfolioStore((s) => s.exportBackup);

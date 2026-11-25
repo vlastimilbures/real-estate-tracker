@@ -1,6 +1,6 @@
 import { useId, useRef } from "react";
 import { useUiStore, type SettingsTab } from "../../state/uiStore";
-import { AppShell } from "../components/AppShell";
+import { PageFrame } from "../components/PageFrame";
 import { AssumptionsPanel, AssumptionsActions } from "./Assumptions";
 import { useAssumptionsForm } from "../hooks/useAssumptionsForm";
 import { BackupRestorePanel } from "./BackupRestore";
@@ -78,7 +78,7 @@ export function SettingsPage() {
   // Tabs in the top bar's section row; Save and Discard in its actions on the
   // Assumptions tab (ADR 0221).
   return (
-    <AppShell
+    <PageFrame
       title={t.settings.title}
       subtitle={t.settings.subtitle}
       showLens={false}
@@ -100,6 +100,6 @@ export function SettingsPage() {
         )}
         {activeTab === "backup" && <BackupRestorePanel />}
       </div>
-    </AppShell>
+    </PageFrame>
   );
 }

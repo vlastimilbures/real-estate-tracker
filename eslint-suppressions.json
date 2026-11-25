@@ -4,14 +4,6 @@
       "count": 1
     }
   },
-  "src/ui/components/AppShell.tsx": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/ui/components/charts.tsx": {
     "complexity": {
       "count": 1

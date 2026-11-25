@@ -308,7 +308,7 @@ Each outcome is shown once, in one place (ADR 0141, ADR 0154, ADR 0261):
    its submit state from `useFormSubmit` and registers unsaved input with `useLeaveGuard`.
 3. **The banner when there is no such place.** An action with no place of its own (Keep
    exploring, a preset, Duplicate, an Assumptions save failing on no input rule) puts its
-   failure in the AppShell banner with `showError`.
+   failure in the page banner (PageFrame) with `showError`.
 4. **The failure area for whole-database actions.** Import, restore, Load sample, Clear
    sample and backup export show their failure in the failure area under the banner
    (`OutcomeRegions`). Exceptions: the Clear sample dialog shows its own failure in the

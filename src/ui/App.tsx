@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { useEffect } from "react";
 import "./styles/global.css";
 import "./components/shell.css";
 import "./components/panel.css";
@@ -8,87 +8,42 @@ import "./components/forms.css";
 import "./components/feedback.css";
 import "./components/charts.css";
 import "./components/layout.css";
-// Here, not in InfoTip.tsx: the build puts InfoTip in the shared AppShell chunk, whose
+// Here, not in InfoTip.tsx: the build puts InfoTip in the chunk the pages share, whose
 // stylesheet loads before this one, so equal-specificity rules above would win (#494).
 import "./styles/info-tip.css";
 import { usePortfolioStore } from "../state/portfolioStore";
 import { useUiStore } from "../state/uiStore";
-import { Dashboard } from "./pages/Dashboard";
-import { Properties } from "./pages/Properties";
+import { ROUTES } from "./routes";
 import { AboutModal } from "./components/AboutModal";
 import { LeaveGuard } from "./components/LeaveGuard";
 import { ToastRegion } from "./components/OutcomeRegions";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PageBoundary } from "./components/PageBoundary";
 import { BootFailure } from "./components/BootFailure";
-import { applyTheme, onSystemThemeChange } from "./theme";
 import { useT } from "./hooks/useT";
-import { menuLabels, menuRoute } from "./model/menu";
-import { isTauri } from "../lib/tauri";
-import { onMenuEvent, setMenuLabels } from "../state/platform";
+import { useNativeMenu } from "./hooks/useNativeMenu";
+import { useThemeSync } from "./hooks/useThemeSync";
 
-// Pages away from the start screen load on first visit (P9): their code, and the
-// libraries only they use, stay out of the startup bundle. The fallback is empty; the
-// chunk is a local file, so the gap is a few milliseconds (D-66, DR-009).
-const PropertyDetail = lazy(() =>
-  import("./pages/PropertyDetail").then((m) => ({ default: m.PropertyDetail })),
-);
-const Projections = lazy(() =>
-  import("./pages/Projections").then((m) => ({ default: m.Projections })),
-);
-const Scenarios = lazy(() =>
-  import("./pages/Scenarios").then((m) => ({ default: m.Scenarios })),
-);
-const Import = lazy(() =>
-  import("./pages/Import").then((m) => ({ default: m.Import })),
-);
-const SettingsPage = lazy(() =>
-  import("./pages/Settings").then((m) => ({ default: m.SettingsPage })),
-);
-const Guide = lazy(() =>
-  import("./pages/Guide").then((m) => ({ default: m.Guide })),
-);
-
-// A page that fails to render keeps the sidebar (ADR 0146).
+// The page inside the app's chrome; a page that fails to render keeps the sidebar
+// (ADR 0146).
 function CurrentPage() {
   return (
     <PageBoundary>
-      <Suspense fallback={null}>
-        <Page />
-      </Suspense>
+      <Page />
     </PageBoundary>
   );
 }
 
+/** The route's page, from the table (src/ui/routes.ts). */
 function Page() {
-  const route = useUiStore((s) => s.route);
-  switch (route) {
-    case "dashboard":
-      return <Dashboard />;
-    case "properties":
-      return <Properties />;
-    case "property":
-      return <PropertyDetail />;
-    case "projections":
-      return <Projections />;
-    case "scenarios":
-      return <Scenarios />;
-    case "import":
-      return <Import />;
-    case "settings":
-      return <SettingsPage />;
-    case "guide":
-      return <Guide />;
-    default:
-      return <Dashboard />;
-  }
+  const Current = ROUTES[useUiStore((s) => s.route)].page;
+  return <Current />;
 }
 
 export function App() {
   const t = useT();
   const status = usePortfolioStore((s) => s.status.kind);
   const init = usePortfolioStore((s) => s.init);
-  const theme = useUiStore((s) => s.theme);
   const aboutOpen = useUiStore((s) => s.aboutOpen);
   const closeAbout = useUiStore((s) => s.closeAbout);
   const route = useUiStore((s) => s.route);
@@ -97,51 +52,8 @@ export function App() {
     void init();
   }, [init]);
 
-  // Native menu items (UX-066): App ▸ About…, View ▸ page (⌘1–⌘5), File ▸ New Property…
-  // (⌘N) and Settings… (⌘,, UX-074). Ignored while a dialog is open, so a menu key never
-  // leaves a form behind or stacks About over it (ADR 0157). They are also ignored while
-  // the app is not ready (loading or an error screen), so Try again returns to the page
-  // the owner was on, with no About left to pop up (ADR 0228). Guarded by the Tauri check (mirrors
-  // src/data/tauriSql.ts) so browser/E2E never crash on the missing event bridge.
-  useEffect(() => {
-    if (!isTauri()) return;
-    const dialogOpen = () =>
-      document.querySelector('[aria-modal="true"]') !== null;
-    const held = () =>
-      dialogOpen() || usePortfolioStore.getState().status.kind !== "ready";
-    const offs = [
-      onMenuEvent("menu://about", () => {
-        if (!held()) useUiStore.getState().openAbout();
-      }),
-      onMenuEvent("menu://navigate", (e) => {
-        const route = menuRoute(e.payload);
-        if (route && !held()) useUiStore.getState().navigate(route);
-      }),
-      onMenuEvent("menu://new-property", () => {
-        if (!held()) useUiStore.getState().requestNewProperty();
-      }),
-      onMenuEvent("menu://settings", () => {
-        if (!held()) useUiStore.getState().openSettings();
-      }),
-    ];
-    return () => {
-      for (const off of offs) void off.then((f) => f());
-    };
-  }, []);
-
-  // The native menu items the app adds follow the UI language (UX-076): sent at start and
-  // on every language change (`t` is one dictionary object per language).
-  useEffect(() => {
-    if (isTauri()) setMenuLabels(menuLabels(t));
-  }, [t]);
-
-  // Keep <html data-theme> in sync with the preference, and follow the OS while the
-  // preference is "system".
-  useEffect(() => {
-    applyTheme(theme);
-    if (theme !== "system") return;
-    return onSystemThemeChange(() => applyTheme("system"));
-  }, [theme]);
+  useNativeMenu();
+  useThemeSync();
 
   if (status === "loading" || status === "idle") {
     return (

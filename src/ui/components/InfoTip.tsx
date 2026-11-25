@@ -7,9 +7,10 @@ import { Info } from "lucide-react";
 import { useT } from "../hooks/useT";
 import { useDismiss } from "../hooks/useDismiss";
 import { placeTip, TIP_AT_REST, tipOpen, tipReducer } from "../model/infoTip";
+import { topbarRect } from "../hooks/useTopbar";
 
 function place(button: HTMLElement, pop: HTMLElement): void {
-  const bar = document.querySelector(".topbar")?.getBoundingClientRect();
+  const bar = topbarRect();
   const p = placeTip(
     button.getBoundingClientRect(),
     { width: pop.offsetWidth, height: pop.offsetHeight },

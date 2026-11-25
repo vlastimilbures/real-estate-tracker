@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Dashboard } from "../Dashboard";
+import { AppLayout } from "../../components/AppLayout";
 import { SettingsPage as Settings } from "../Settings";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
@@ -74,7 +75,11 @@ describe("Settings → Backup: last backup (ADR 0110)", () => {
 
 describe("sidebar backup reminder (ADR 0110)", () => {
   it("is hidden while nothing changed (a fresh sample install)", () => {
-    render(<Dashboard />);
+    render(
+      <AppLayout>
+        <Dashboard />
+      </AppLayout>,
+    );
     expect(hint()).toBeNull();
   });
 
@@ -84,14 +89,22 @@ describe("sidebar backup reminder (ADR 0110)", () => {
       lastFile: "a.json",
       changedSince: true,
     });
-    render(<Dashboard />);
+    render(
+      <AppLayout>
+        <Dashboard />
+      </AppLayout>,
+    );
     expect(hint()).toBeNull();
   });
 
   it("shows when data changed and there is no backup, and opens Settings → Backup", async () => {
     setBackup({ lastAt: null, lastFile: null, changedSince: true });
     act(() => useUiStore.setState({ settingsTab: "assumptions" }));
-    render(<Dashboard />);
+    render(
+      <AppLayout>
+        <Dashboard />
+      </AppLayout>,
+    );
     vi.useRealTimers();
     setClock(PINNED_DAY);
     await userEvent.click(
@@ -107,7 +120,11 @@ describe("sidebar backup reminder (ADR 0110)", () => {
       lastFile: "a.json",
       changedSince: true,
     });
-    render(<Dashboard />);
+    render(
+      <AppLayout>
+        <Dashboard />
+      </AppLayout>,
+    );
     expect(
       screen.getByRole("button", { name: en.shell.backupHintOld(45) }),
     ).toBeTruthy();
@@ -115,7 +132,11 @@ describe("sidebar backup reminder (ADR 0110)", () => {
 
   it("can be hidden for the session", async () => {
     setBackup({ lastAt: null, lastFile: null, changedSince: true });
-    render(<Dashboard />);
+    render(
+      <AppLayout>
+        <Dashboard />
+      </AppLayout>,
+    );
     vi.useRealTimers();
     setClock(PINNED_DAY);
     await userEvent.click(
@@ -128,7 +149,11 @@ describe("sidebar backup reminder (ADR 0110)", () => {
   it("is one labelled icon button in the collapsed sidebar", () => {
     setBackup({ lastAt: null, lastFile: null, changedSince: true });
     act(() => useUiStore.setState({ sidebarCollapsed: true }));
-    render(<Dashboard />);
+    render(
+      <AppLayout>
+        <Dashboard />
+      </AppLayout>,
+    );
     expect(
       screen.getByRole("button", { name: en.shell.backupHintNone }),
     ).toBeTruthy();
