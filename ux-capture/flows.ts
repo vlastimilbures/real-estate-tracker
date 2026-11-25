@@ -83,7 +83,7 @@ async function pickEditedBackup(ux: Ux, edit: (tables: BackupTables) => void) {
 }
 
 /**
- * The startup error screen for a forced failure (ADR 0153): src/data/e2eFaults.ts reads
+ * The startup error screen for a forced failure (ADR 0153): src/e2e/e2eFaults.ts reads
  * `sessionStorage["e2e.fault"]` in the browser E2E build, and the data layer then refuses
  * the database for real.
  */

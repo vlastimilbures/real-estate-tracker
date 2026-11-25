@@ -16,9 +16,9 @@ export async function defaultOpen(): Promise<Sql> {
   // shipped bundle. The browser fallback exists only for the Playwright E2E (run via the
   // dev server with VITE_E2E=1); production always uses the Tauri SQLite adapter.
   if (import.meta.env.DEV && !inTauri && import.meta.env.VITE_E2E === "1") {
-    const { openBrowserSql } = await import("./browserSql");
+    const { openBrowserSql } = await import("../e2e/browserSql");
     // ux:capture forces a startup failure to capture its screen (ADR 0153).
-    const faults = await import("./e2eFaults");
+    const faults = await import("../e2e/e2eFaults");
     const fault = faults.e2eFault();
     const sql = await openBrowserSql();
     await faults.beforeMigrate(sql, fault);

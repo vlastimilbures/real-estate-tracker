@@ -9,8 +9,8 @@ import { DELETE_SAMPLE_MARKERS } from "../appMeta";
 import { TABLES, restoreDefaults } from "../schema";
 import { DataError } from "../errors";
 import { spellingKey } from "../../lib/propertyKey";
+import { upgradeLegacyOverrides } from "../scenarioOverrides";
 import {
-  parseOverrides,
   rowToAssumptions,
   rowToHoldingCost,
   rowToLease,
@@ -18,7 +18,6 @@ import {
   rowToProperty,
   rowToScenario,
   rowToValuation,
-  serializeOverrides,
   toColumn,
   type AssumptionsRow,
   type HoldingCostRow,
@@ -105,7 +104,7 @@ type Tables = Record<BackupTable, Row[]>;
 
 /** Every table present, only known columns, scalar cells (DR-017); then each row
  *  brought to the current schema: missing added columns get their default and
- *  scenario overrides are rewritten to the versioned shape (what migration v8 does).
+ *  scenario overrides are rewritten to the versioned shape (`upgradeLegacyOverrides`).
  *  A scenario's created_at must be non-empty text: the app never reads it, but it orders
  *  the list and the column is NOT NULL (ADR 0123). */
 function upgradeRows(backup: BackupFile): {
@@ -161,9 +160,7 @@ function upgradeRows(backup: BackupFile): {
         rule: "UNREADABLE_VALUE",
       });
     try {
-      s.overrides = serializeOverrides(
-        parseOverrides(String(s.name), String(s.overrides)),
-      );
+      s.overrides = upgradeLegacyOverrides(String(s.name), String(s.overrides));
     } catch {
       unreadable("overrides");
     }

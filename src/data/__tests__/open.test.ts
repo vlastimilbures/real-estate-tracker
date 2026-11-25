@@ -13,7 +13,7 @@ const adapters = vi.hoisted(() => ({
 }));
 vi.mock("../../lib/tauri", () => ({ isTauri: () => adapters.inTauri }));
 vi.mock("../tauriSql", () => ({ openTauriSql: adapters.tauri }));
-vi.mock("../browserSql", () => ({ openBrowserSql: adapters.browser }));
+vi.mock("../../e2e/browserSql", () => ({ openBrowserSql: adapters.browser }));
 
 const { defaultOpen } = await import("../open");
 

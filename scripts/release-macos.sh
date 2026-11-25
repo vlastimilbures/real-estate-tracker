@@ -42,7 +42,7 @@ APP=$(find "$BUNDLE_DIR/macos" -maxdepth 1 -name '*.app' | head -1)
 DMG="$BUNDLE_DIR/dmg/Real Estate Tracker_${pkg_version}_aarch64.dmg"
 [[ -f "$DMG" ]] || fail "dmg not found: $DMG"
 
-step "No sql.js in the frontend bundle (E2E only, src/data/browserSql.ts)"
+step "No sql.js in the frontend bundle (E2E only, src/e2e/browserSql.ts)"
 status=0
 grep -rlE 'sql-wasm|initSqlJs' dist/assets || status=$?
 [[ $status == 1 ]] || fail "sql.js reached dist/assets, or dist/assets is unreadable"

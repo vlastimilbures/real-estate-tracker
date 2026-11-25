@@ -1,7 +1,7 @@
 //! #118 (R3-10): the real migration SQL on the SQLite that sqlx bundles, which is the one
 //! the app ships. Every Vitest migration test runs on better-sqlite3's newer SQLite, so
 //! SQL that only a newer engine accepts would otherwise pass CI and fail on first launch.
-//! The fixture is generated from `src/data/migrations.ts` and kept in step by
+//! The fixture is generated from `src/data/migrations/` and kept in step by
 //! `src/data/__tests__/migrationsFixture.test.ts`: the version 8 baseline first (ADR 0230),
 //! then every later step. Never touches the real database.
 
