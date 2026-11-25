@@ -40,11 +40,6 @@
       "count": 1
     }
   },
-  "src/ui/components/forms.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/ui/hooks/useAssumptionsForm.ts": {
     "max-lines-per-function": {
       "count": 1

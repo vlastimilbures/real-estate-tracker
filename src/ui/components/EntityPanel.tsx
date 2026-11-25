@@ -34,7 +34,6 @@ export function EntityPanel<
   addLabel,
   computeHint,
   fieldActions,
-  validate,
   formHeader,
   hiddenFields,
   listNotes,
@@ -66,10 +65,6 @@ export function EntityPanel<
   ) => ReactNode;
   hiddenFields?: (draft: Record<string, string>) => readonly string[];
   listNotes?: (name: string, draft: Record<string, string>) => ListNotes | null;
-  validate?: (
-    values: ParsedValues<S>,
-    draft: Record<string, string>,
-  ) => Record<string, string>;
 }) {
   const tr = useT();
   // The form's leave-guard key: a row's Edit or Delete asks first while this form holds
@@ -157,7 +152,6 @@ export function EntityPanel<
             onCancel={() => setMode({ t: "idle" })}
             computeHint={computeHint}
             fieldActions={fieldActions}
-            validate={validate}
             header={
               formHeader &&
               ((draft, patch) => formHeader(draft, patch, mode.t === "add"))

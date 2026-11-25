@@ -40,11 +40,6 @@
       "Function 'ChartBody'": 161
     }
   },
-  "src/ui/components/forms.tsx": {
-    "lines": {
-      "Function 'RecordForm'": 199
-    }
-  },
   "src/ui/hooks/useAssumptionsForm.ts": {
     "lines": {
       "Function 'useAssumptionsForm'": 129
