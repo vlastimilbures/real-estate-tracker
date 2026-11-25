@@ -1,10 +1,10 @@
-// Engine-boundary validation (P4a): a pure check of the inputs the engine would
-// otherwise turn into NaN, Infinity, an endless loop or a silently wrong number.
-// `validateInputs` only reports. The engine raises a typed error per approved
-// decision: the D-17 loan codes via `assertLoanInputs` (P4b), D-27 overlap via
-// `assertBlockStarts` (P4b), D-19 as-of before baseDate via `assertAsOf` (P4b), D-37
-// corrupt data and D-38 ranges via `assertInputs` / `assertAssumptions` (P4b).
-// Entry-point rejection is P5b/P7; messages belong to P7.
+// Engine-boundary validation: a pure check of the inputs the engine would otherwise turn
+// into NaN, Infinity, an endless loop or a silently wrong number. `validateInputs` only
+// reports. The asserts raise a typed `EngineInputError`: the loan codes (D-17) via
+// `assertLoanInputs`, overlapping block starts (D-27) via `assertBlockStarts`, an as-of
+// date before baseDate (D-19) via `assertAsOf`, and corrupt data and ranges (D-37, D-38)
+// via `assertInputs` / `assertAssumptions`, which return the inputs branded
+// `ValidInputs` / `ValidAssumptions`. The error names codes; the UI words them.
 export type {
   EngineValidationError,
   ValidationCode,
