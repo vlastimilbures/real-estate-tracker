@@ -10,7 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { ValuationsPanel } from "../PropertyEntityPanels";
 import { Properties } from "../Properties";
 import { Scenarios } from "../Scenarios";
-import { HoldingCostsPanel } from "../PropertyDetailPanels";
+import { HoldingCostsPanel } from "../propertyDetail/HoldingCostsPanel";
 import { usePortfolioStore, portfolioDb } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import {

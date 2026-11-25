@@ -15,7 +15,7 @@ import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { KpiStrip, KpiListPanel } from "../DashboardPanels";
 import { renderStrip } from "./kpiStripSupport";
-import { PropertySnapshotTiles } from "../PropertyDetailPanels";
+import { PropertySnapshotTiles } from "../propertyDetail/PropertySnapshotTiles";
 
 const debtFree: Portfolio = { ...portfolio, mortgages: [] };
 const N = assumptions.horizonYears;

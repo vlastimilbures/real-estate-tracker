@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { ProjectionGrid } from "../components/ProjectionGrid";
-import { AmortizationTable } from "../pages/PropertyDetailPanels";
+import { AmortizationTable } from "../pages/propertyDetail/AmortizationTable";
 import { getDict } from "../../i18n";
 import {
   portfolioProjection,

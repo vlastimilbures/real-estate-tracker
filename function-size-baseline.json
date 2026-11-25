@@ -82,19 +82,6 @@
       "Function 'Properties'": 322
     }
   },
-  "src/ui/pages/PropertyDetail.tsx": {
-    "complexity": {
-      "Function 'PropertyDetail'": 59
-    },
-    "lines": {
-      "Function 'PropertyDetail'": 394
-    }
-  },
-  "src/ui/pages/PropertyDetailPanels.tsx": {
-    "lines": {
-      "Function 'HoldingCostsPanel'": 155
-    }
-  },
   "src/ui/pages/ScenarioCompare.tsx": {
     "lines": {
       "Function 'CompareView'": 181

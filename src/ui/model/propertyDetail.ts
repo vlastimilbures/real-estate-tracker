@@ -213,6 +213,8 @@ export interface DrawdownView {
   blockId: string;
   /** Drawn ÷ total, for the bar (0 when nothing counts). */
   share: Decimal;
+  /** The share as a whole percent, the bar's value and width. */
+  percent: number;
   full: boolean;
   /** "Drawdown", or "Drawdown · from dd.mm.yyyy" when the loan has several. */
   title: string;
@@ -308,6 +310,7 @@ function drawdownView(
   return {
     blockId: dd.blockId,
     share,
+    percent: Math.round(share.toNumber() * 100),
     full,
     progress: full
       ? d.drawdownFull(fmtCzk(dd.total))

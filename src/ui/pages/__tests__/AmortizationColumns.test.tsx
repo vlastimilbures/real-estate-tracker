@@ -4,7 +4,7 @@
 // some row has a non-zero value, so the balance reconciles on screen.
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { AmortizationTable } from "../PropertyDetailPanels";
+import { AmortizationTable } from "../propertyDetail/AmortizationTable";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { isoDate, money, propertySchedules } from "../../../engine";
 import type { MortgageBlock } from "../../../engine";
