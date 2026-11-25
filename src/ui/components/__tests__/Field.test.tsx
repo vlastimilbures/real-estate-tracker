@@ -6,7 +6,11 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Field, SelectInput, TextArea } from "../fields";
-import { RecordForm } from "../forms";
+import { RecordFormView } from "../forms";
+import { useRecordForm } from "../../hooks/useRecordForm";
+import { EVENT_LISTS } from "../../model/loanEventRows";
+import { mortgageDraft } from "../../model/mortgageForm";
+import { LoanEventRows } from "../../pages/mortgage/LoanEventRows";
 import { PropertyFormModal } from "../PropertyFormModal";
 import { ScenarioForm } from "../../pages/ScenarioForm";
 import { getDict } from "../../../i18n";
@@ -34,16 +38,47 @@ const specs: FieldSpec[] = [
   { name: "draws", label: "Draws", kind: "draws", optional: true },
 ];
 
+/** A record form with a tranche list among its fields, as the mortgage form composes
+ *  it (#490: the generic RecordForm has no row lists). */
+function ListForm({
+  initial,
+  onSubmit,
+}: {
+  initial: Record<string, string>;
+  onSubmit: () => void;
+}) {
+  const form = useRecordForm({
+    specs,
+    initial,
+    lists: { initial: mortgageDraft(null).lists, model: EVENT_LISTS },
+    onSubmit,
+  });
+  return (
+    <RecordFormView
+      form={form}
+      specs={specs}
+      submitLabel="Save"
+      slots={{
+        draws: (spec) => (
+          <LoanEventRows
+            kind="draws"
+            name={spec.name}
+            label={spec.label}
+            rows={form.lists.draws}
+            errors={form.errors}
+            onChange={(rows) => form.editList("draws", rows)}
+          />
+        ),
+      }}
+    />
+  );
+}
+
 describe("Field labels its control (UX-018)", () => {
   it("names text, date, textarea and select controls", () => {
     render(
       <>
-        <RecordForm
-          specs={specs}
-          initial={{}}
-          submitLabel="Save"
-          onSubmit={() => undefined}
-        />
+        <ListForm initial={{}} onSubmit={() => undefined} />
         <Field label="Note">
           <TextArea rows={2} value="" onChange={() => undefined} />
         </Field>
@@ -68,14 +103,7 @@ describe("Field labels its control (UX-018)", () => {
   });
 
   it("links the hint, then the error, through aria-describedby", async () => {
-    render(
-      <RecordForm
-        specs={specs}
-        initial={{}}
-        submitLabel="Save"
-        onSubmit={() => undefined}
-      />,
-    );
+    render(<ListForm initial={{}} onSubmit={() => undefined} />);
     const price = screen.getByLabelText("Price");
     expect(price.getAttribute("aria-invalid")).toBeNull();
     const hintId = price.getAttribute("aria-describedby")!;

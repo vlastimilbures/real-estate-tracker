@@ -1,34 +1,44 @@
 // @vitest-environment jsdom
 //
-// RecordForm's optional hooks: typed values to onSubmit (ADR 0074), the live
-// `computeHint` and inline `fieldActions` buttons.
+// The record form's options: typed values to onSubmit (ADR 0074), a live hint and an
+// inline field-row button, computed from the draft by the form that renders the view
+// (as the mortgage form does, #490).
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { RecordForm } from "../forms";
+import { RecordFormView } from "../forms";
+import { useRecordForm } from "../../hooks/useRecordForm";
+
+const specs = [
+  { name: "principal", label: "Principal", kind: "money" },
+  { name: "term", label: "Term", kind: "int", optional: true },
+] as const;
+
+function HintForm({ onSubmit }: { onSubmit: () => void }) {
+  const form = useRecordForm({
+    specs,
+    initial: { principal: "1000", term: "" },
+    onSubmit,
+  });
+  const { draft } = form;
+  return (
+    <RecordFormView
+      form={form}
+      specs={specs}
+      submitLabel="Save"
+      hint={draft.principal ? `Hint for ${draft.principal}` : null}
+      actions={{
+        principal: draft.term
+          ? { label: "Fill", patch: { principal: "9000" } }
+          : { label: "Fill", title: "Enter a term first" },
+        term: null,
+      }}
+    />
+  );
+}
 
 function renderForm(onSubmit = vi.fn()) {
-  render(
-    <RecordForm
-      specs={[
-        { name: "principal", label: "Principal", kind: "money" },
-        { name: "term", label: "Term", kind: "int", optional: true },
-      ]}
-      initial={{ principal: "1000", term: "" }}
-      submitLabel="Save"
-      onSubmit={onSubmit}
-      computeHint={(draft) =>
-        draft.principal ? `Hint for ${draft.principal}` : null
-      }
-      fieldActions={{
-        principal: (draft) =>
-          draft.term
-            ? { label: "Fill", patch: { principal: "9000" } }
-            : { label: "Fill", title: "Enter a term first" },
-        term: () => null,
-      }}
-    />,
-  );
+  render(<HintForm onSubmit={onSubmit} />);
   return onSubmit;
 }
 

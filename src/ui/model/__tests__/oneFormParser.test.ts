@@ -8,7 +8,6 @@ import {
   parsePrepaymentRows,
   parseRecastRows,
   rowProblems,
-  writeRows,
 } from "../loanEventRows";
 import { parsePropertyForm, BLANK_PROPERTY_FORM } from "../propertyForm";
 import { parseScenarioDraft, type ScenarioDraftFields } from "../scenarioForm";
@@ -36,26 +35,28 @@ describe("money refuses a thousands-shaped amount (ADR 0140 §3)", () => {
 
   it("refuses it in a development draw row", () => {
     expect(
-      parseDrawRows(writeRows([{ date: "01.02.2024", amount: "450,000" }])),
+      parseDrawRows([{ kind: "draws", date: "01.02.2024", amount: "450,000" }]),
     ).toBeNull();
   });
 
   it("refuses it in a prepayment or recast row", () => {
     const prepayment = {
+      kind: "prepayments",
       date: "01.02.2024",
       amount: "450,000",
       effect: "lowerInstalment",
       fee: "1,250",
     } as const;
     expect(rowProblems(prepayment)).toEqual(["amount", "fee"]);
-    expect(parsePrepaymentRows(writeRows([prepayment]))).toBeNull();
+    expect(parsePrepaymentRows([prepayment])).toBeNull();
     const recast = {
+      kind: "recasts",
       date: "01.02.2024",
       mode: "instalment",
       value: "12.500",
     } as const;
     expect(rowProblems(recast)).toEqual(["value"]);
-    expect(parseRecastRows(writeRows([recast]))).toBeNull();
+    expect(parseRecastRows([recast])).toBeNull();
   });
 
   it.each([

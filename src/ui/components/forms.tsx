@@ -1,9 +1,8 @@
 // Form components — a generic record form: its state is useRecordForm's, field controls
-// live in ./fields, loan-event rows in ./LoanEventRows and parsing/formatting helpers in
-// ../model/formParse.
-import type { ReactNode } from "react";
-import type { FieldSpec, LeadRow } from "../model/formParse";
-import { listKind, type EventListKind } from "../model/loanEventRows";
+// live in ./fields and parsing/formatting helpers in ../model/formParse. A form with
+// more than text fields (the mortgage form) renders RecordFormView with its own parts.
+import { Fragment, type ReactNode } from "react";
+import type { FieldSpec } from "../model/formParse";
 import { Button } from "./primitives";
 import { DateInput } from "./DateInput";
 import { Field, TextInput } from "./fields";
@@ -13,48 +12,30 @@ import {
   type RecordFormOptions,
   type RecordFormState,
 } from "../hooks/useRecordForm";
-import {
-  LoanEventRows,
-  type LeadBinding,
-  type ListNotes,
-} from "./LoanEventRows";
 
 type Draft = Record<string, string>;
 
-/** One field-row button, from the draft (see RecordForm's `fieldActions`). */
-type FieldAction = (draft: Draft) => {
+/** A button to the right of a field that patches the draft on click; without a `patch`
+ *  it renders disabled (not yet computable). */
+export interface FieldAction {
   label: string;
   title?: string | undefined;
   patch?: Draft | undefined;
-} | null;
-
-/** Field-row buttons keyed by field name (see RecordForm's `fieldActions`). */
-export type FieldActions<S extends readonly FieldSpec[]> = Partial<
-  Record<S[number]["name"], FieldAction>
->;
-
-/** What the record form shows around its fields (all optional). */
-interface RecordFormExtras<S extends readonly FieldSpec[]> {
-  /** Live hint computed from the current draft (e.g. a suggested instalment). */
-  computeHint?: ((draft: Draft) => string | null) | undefined;
-  /** Optional draft-derived buttons keyed by field name; the button renders inline
-   *  to the right of that field and patches the draft on click. A null return hides
-   *  the button entirely; an omitted `patch` renders it disabled (not yet computable). */
-  fieldActions?: FieldActions<S> | undefined;
-  /** Rendered above the fields with the draft and a way to patch it, e.g. a mode
-   *  switch kept in the draft under a key that is not a spec (ADR 0098). */
-  header?: ((draft: Draft, patch: (p: Draft) => void) => ReactNode) | undefined;
-  /** Soft warnings and a footer for a row list, from the draft (ADR 0167). */
-  listNotes?: ((name: string, draft: Draft) => ListNotes | null) | undefined;
 }
 
-interface RecordFormViewProps<
-  S extends readonly FieldSpec[],
-> extends RecordFormExtras<S> {
+interface RecordFormViewProps {
   form: RecordFormState;
-  specs: S;
+  specs: readonly FieldSpec[];
   submitLabel: string;
   onCancel?: (() => void) | undefined;
+  /** Above the fields, e.g. a mode switch kept in the draft (ADR 0098). */
+  header?: ReactNode;
+  /** A live hint under the fields (e.g. a suggested instalment). */
+  hint?: string | null | undefined;
+  /** Field-row buttons by field name; a missing or null entry shows none. */
+  actions?: Readonly<Record<string, FieldAction | null>> | undefined;
+  /** What to show in place of a field, by field name (a row list). */
+  slots?: Readonly<Record<string, (spec: FieldSpec) => ReactNode>> | undefined;
 }
 
 /** Controlled record form: renders specs, validates on submit, and hands back values
@@ -65,12 +46,12 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
   onSubmit,
   hiddenFields,
   unsavedKey,
-  ...view
-}: RecordFormOptions<S> &
-  RecordFormExtras<S> & {
-    submitLabel: string;
-    onCancel?: (() => void) | undefined;
-  }) {
+  submitLabel,
+  onCancel,
+}: RecordFormOptions<S> & {
+  submitLabel: string;
+  onCancel?: (() => void) | undefined;
+}) {
   const form = useRecordForm({
     specs,
     initial,
@@ -78,22 +59,27 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
     hiddenFields,
     unsavedKey,
   });
-  return <RecordFormView form={form} specs={specs} {...view} />;
+  return (
+    <RecordFormView
+      form={form}
+      specs={specs}
+      submitLabel={submitLabel}
+      onCancel={onCancel}
+    />
+  );
 }
 
 /** The record form's markup, from its state (useRecordForm). */
-function RecordFormView<S extends readonly FieldSpec[]>({
+export function RecordFormView({
   form,
   specs,
   submitLabel,
   onCancel,
-  computeHint,
-  fieldActions,
   header,
-  listNotes,
-}: RecordFormViewProps<S>) {
-  const { draft } = form;
-  const hint = computeHint?.(draft) ?? null;
+  hint,
+  actions,
+  slots,
+}: RecordFormViewProps) {
   return (
     <form
       className="record-form"
@@ -103,27 +89,18 @@ function RecordFormView<S extends readonly FieldSpec[]>({
         void form.submit();
       }}
     >
-      {header?.(draft, form.patch)}
+      {header}
       <div className="form-grid">
         {specs.map((spec) => {
           if (form.hidden.includes(spec.name)) return null;
-          if (listKind(spec.kind))
-            return (
-              <ListField
-                key={spec.name}
-                form={form}
-                spec={spec}
-                kind={spec.kind}
-                notes={listNotes?.(spec.name, draft)}
-              />
-            );
-          const action = fieldActions?.[spec.name as S[number]["name"]];
+          const slot = slots?.[spec.name];
+          if (slot) return <Fragment key={spec.name}>{slot(spec)}</Fragment>;
           return (
             <SpecField
               key={spec.name}
               form={form}
               spec={spec}
-              action={action?.(draft) ?? null}
+              action={actions?.[spec.name] ?? null}
             />
           );
         })}
@@ -139,45 +116,6 @@ function RecordFormView<S extends readonly FieldSpec[]>({
   );
 }
 
-/** A row list, wide in the grid (ADR 0116 §11, ADR 0167). */
-function ListField({
-  form,
-  spec,
-  kind,
-  notes,
-}: {
-  form: RecordFormState;
-  spec: FieldSpec;
-  kind: EventListKind;
-  notes: ListNotes | null | undefined;
-}) {
-  const { draft, errors } = form;
-  /** A row list's fixed first row, bound to its field in the draft (ADR 0167). */
-  const leadOf = (lead: LeadRow | undefined): LeadBinding | undefined =>
-    lead && {
-      ...lead,
-      value: draft[lead.field] ?? "",
-      date: draft[lead.dateField] ?? "",
-      error: errors[lead.field],
-      onChange: (v) => form.patch({ [lead.field]: v }),
-    };
-  return (
-    <div className="form-wide">
-      <LoanEventRows
-        kind={kind}
-        name={spec.name}
-        label={spec.label}
-        help={spec.help}
-        value={draft[spec.name] ?? ""}
-        errors={errors}
-        notes={notes}
-        lead={leadOf(spec.lead)}
-        onChange={(v) => form.editList(spec.name, v)}
-      />
-    </div>
-  );
-}
-
 /** One plain field: a date or a number, with its optional field-row button. */
 function SpecField({
   form,
@@ -186,7 +124,7 @@ function SpecField({
 }: {
   form: RecordFormState;
   spec: FieldSpec;
-  action: ReturnType<FieldAction>;
+  action: FieldAction | null;
 }) {
   const t = useT();
   const value = form.draft[spec.name] ?? "";

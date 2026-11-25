@@ -1,5 +1,6 @@
-// ADR 0116 §11: the mortgage form's prepayment and recast rows. A draft holds the rows as
-// one JSON string, blank rows are ignored, a row that does not parse fails the list, and
+// ADR 0116 §11: the mortgage form's prepayment and recast rows. A draft holds each list as
+// typed rows (its text, `writeRows`, is what the unsaved check compares), blank rows are
+// ignored, a row that does not parse fails the list, and
 // an engine error's index maps back to the row it came from.
 import { describe, it, expect } from "vitest";
 import { isoDate, money } from "../../../engine";
@@ -24,6 +25,7 @@ import {
 } from "../loanEventRows";
 
 const pre = (r: Partial<PrepaymentRow> = {}): PrepaymentRow => ({
+  kind: "prepayments",
   date: "17.01.2031",
   amount: "500000",
   effect: "shortenTerm",
@@ -31,6 +33,7 @@ const pre = (r: Partial<PrepaymentRow> = {}): PrepaymentRow => ({
   ...r,
 });
 const rec = (r: Partial<RecastRow> = {}): RecastRow => ({
+  kind: "recasts",
   date: "17.01.2032",
   mode: "maturity",
   value: "17.01.2045",
@@ -78,19 +81,19 @@ describe("loan event rows", () => {
   });
 
   it("an empty list is an empty draft, and back", () => {
-    expect(prepaymentsDraft(undefined)).toBe("");
-    expect(recastsDraft([])).toBe("");
+    expect(prepaymentsDraft(undefined)).toEqual([]);
+    expect(recastsDraft([])).toEqual([]);
     expect(writeRows([])).toBe("");
     expect(readRows("")).toEqual([]);
-    expect(parsePrepaymentRows("")).toEqual([]);
+    expect(parsePrepaymentRows([])).toEqual([]);
   });
 
   it("ignores blank rows and keeps the draft order", () => {
-    const draft = writeRows([
+    const draft = [
       pre({ date: "17.01.2033" }),
       blankPre,
       pre({ date: "17.01.2031" }),
-    ]);
+    ];
     expect(parsePrepaymentRows(draft)?.map((p) => p.date)).toEqual([
       isoDate("2033-01-17"),
       isoDate("2031-01-17"),
@@ -109,14 +112,12 @@ describe("loan event rows", () => {
     expect(rowProblems(rec({ mode: "instalment", value: "9 000" }))).toEqual(
       [],
     );
-    expect(
-      parsePrepaymentRows(writeRows([pre(), pre({ amount: "x" })])),
-    ).toBeNull();
-    expect(parseRecastRows(writeRows([rec({ date: "" })]))).toBeNull();
+    expect(parsePrepaymentRows([pre(), pre({ amount: "x" })])).toBeNull();
+    expect(parseRecastRows([rec({ date: "" })])).toBeNull();
   });
 
   it("maps an engine index (position among non-blank rows) to its draft row", () => {
-    const draft = writeRows([blankPre, pre(), blankPre, pre()]);
+    const draft = [blankPre, pre(), blankPre, pre()];
     expect(draftRowOf(draft, 0)).toBe(1);
     expect(draftRowOf(draft, 1)).toBe(3);
     expect(draftRowOf(draft, 2)).toBeNull();
@@ -128,6 +129,7 @@ describe("loan event rows", () => {
 // tranche after the interest-only end or two tranches on the same date.
 describe("drawdown rows (ADR 0167)", () => {
   const draw = (r: Partial<DrawRow> = {}): DrawRow => ({
+    kind: "draws",
     date: "01.09.2027",
     amount: "800000",
     ...r,
@@ -140,35 +142,35 @@ describe("drawdown rows (ADR 0167)", () => {
       { date: isoDate("2028-03-01"), amount: money(500000) },
     ];
     expect(parseDrawRows(drawsDraft(stored))).toEqual(stored);
-    expect(drawsDraft(undefined)).toBe("");
-    expect(drawsDraft([])).toBe("");
+    expect(drawsDraft(undefined)).toEqual([]);
+    expect(drawsDraft([])).toEqual([]);
     expect(BLANK_ROW.draws).toEqual(blank);
   });
 
   it("ignores blank rows, keeps the draft order, and fails on a bad row", () => {
-    const draft = writeRows([draw({ date: "01.03.2028" }), blank, draw()]);
+    const draft = [draw({ date: "01.03.2028" }), blank, draw()];
     expect(parseDrawRows(draft)?.map((x) => x.date)).toEqual([
       isoDate("2028-03-01"),
       isoDate("2027-09-01"),
     ]);
-    expect(parseDrawRows(writeRows([blank]))).toEqual([]);
-    expect(parseDrawRows(writeRows([draw({ amount: "0" })]))).toBeNull();
+    expect(parseDrawRows([blank])).toEqual([]);
+    expect(parseDrawRows([draw({ amount: "0" })])).toBeNull();
     expect(rowProblems(draw({ date: "31.02.2027", amount: "-5" }))).toEqual([
       "date",
       "amount",
     ]);
     expect(rowProblems(blank)).toEqual([]);
-    expect(draftRowOf(writeRows([blank, draw()]), 0)).toBe(1);
+    expect(draftRowOf([blank, draw()], 0)).toBe(1);
   });
 
   it("knows whether a list has a row worth saving", () => {
-    expect(hasRows("")).toBe(false);
-    expect(hasRows(writeRows([blank]))).toBe(false);
-    expect(hasRows(writeRows([blank, draw({ amount: "" })]))).toBe(true);
+    expect(hasRows([])).toBe(false);
+    expect(hasRows([blank])).toBe(false);
+    expect(hasRows([blank, draw({ amount: "" })])).toBe(true);
   });
 
   it("totals the start draw and the tranches that parse", () => {
-    const draft = writeRows([draw(), blank, draw({ amount: "x" })]);
+    const draft = [draw(), blank, draw({ amount: "x" })];
     const t = drawdownTotal("1 200 000", draft)!;
     expect(t.total.toString()).toBe("2000000");
     expect(t.tranches).toBe(1);
@@ -176,17 +178,17 @@ describe("drawdown rows (ADR 0167)", () => {
     expect(drawdownTotal("x", draft)).toBeNull();
     // Nothing drawn at start is a valid construction loan (review of PR #301).
     expect(drawdownTotal("0", draft)!.total.toString()).toBe("800000");
-    expect(drawdownTotal("1200000", "")!.tranches).toBe(0);
+    expect(drawdownTotal("1200000", [])!.tranches).toBe(0);
   });
 
   it("warns on a tranche after the interest-only end and on a shared date", () => {
-    const draft = writeRows([
+    const draft = [
       draw({ date: "01.09.2027" }),
       draw({ date: "01.06.2028" }),
       blank,
       draw({ date: "01.09.2027" }),
       draw({ date: "bad" }),
-    ]);
+    ];
     expect(drawWarnings(draft, "31.03.2028")).toEqual([
       ["sameDate"],
       ["afterCompletion"],
@@ -195,11 +197,9 @@ describe("drawdown rows (ADR 0167)", () => {
       [],
     ]);
     // On the completion date itself is still inside the interest-only period.
-    expect(
-      drawWarnings(writeRows([draw({ date: "31.03.2028" })]), "31.03.2028"),
-    ).toEqual([[]]);
-    expect(drawWarnings(writeRows([draw({ date: "01.06.2028" })]), "")).toEqual(
-      [[]],
-    );
+    expect(drawWarnings([draw({ date: "31.03.2028" })], "31.03.2028")).toEqual([
+      [],
+    ]);
+    expect(drawWarnings([draw({ date: "01.06.2028" })], "")).toEqual([[]]);
   });
 });

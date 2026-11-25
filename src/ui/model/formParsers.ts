@@ -14,6 +14,10 @@ import {
   parseDrawRows,
   parsePrepaymentRows,
   parseRecastRows,
+  readRows,
+  type DrawRow,
+  type PrepaymentRow,
+  type RecastRow,
 } from "./loanEventRows";
 import type { Dictionary } from "../../i18n";
 
@@ -29,9 +33,11 @@ export const FORM_PARSERS: KindParsers = {
   pct: parsePercentToRatio,
   int: parseIntField,
   size: parseSizeField,
-  draws: parseDrawRows,
-  prepayments: parsePrepaymentRows,
-  recasts: parseRecastRows,
+  // A list's text (the mortgage form keeps its lists as rows, so it never reaches these;
+  // they go with the list kinds, #490 PR 3).
+  draws: (raw) => parseDrawRows(readRows<DrawRow>(raw)),
+  prepayments: (raw) => parsePrepaymentRows(readRows<PrepaymentRow>(raw)),
+  recasts: (raw) => parseRecastRows(readRows<RecastRow>(raw)),
 };
 
 /** The forms' shared rules: these parsers, "Required" for a blank required field, and the

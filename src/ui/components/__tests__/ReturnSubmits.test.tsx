@@ -5,7 +5,11 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { RecordForm } from "../forms";
+import { RecordFormView } from "../forms";
+import { useRecordForm } from "../../hooks/useRecordForm";
+import { EVENT_LISTS } from "../../model/loanEventRows";
+import { mortgageDraft } from "../../model/mortgageForm";
+import { LoanEventRows } from "../../pages/mortgage/LoanEventRows";
 import { PropertyFormModal } from "../PropertyFormModal";
 import { ScenarioForm } from "../../pages/ScenarioForm";
 import { SettingsPage } from "../../pages/Settings";
@@ -38,16 +42,45 @@ const specs: FieldSpec[] = [
   { name: "draws", label: "Draws", kind: "draws", optional: true },
 ];
 
+/** A record form with a tranche list among its fields, as the mortgage form composes
+ *  it (#490: the generic RecordForm has no row lists). */
+function ListForm({
+  initial,
+  onSubmit,
+}: {
+  initial: Record<string, string>;
+  onSubmit: () => void;
+}) {
+  const form = useRecordForm({
+    specs,
+    initial,
+    lists: { initial: mortgageDraft(null).lists, model: EVENT_LISTS },
+    onSubmit,
+  });
+  return (
+    <RecordFormView
+      form={form}
+      specs={specs}
+      submitLabel="Save"
+      slots={{
+        draws: (spec) => (
+          <LoanEventRows
+            kind="draws"
+            name={spec.name}
+            label={spec.label}
+            rows={form.lists.draws}
+            errors={form.errors}
+            onChange={(rows) => form.editList("draws", rows)}
+          />
+        ),
+      }}
+    />
+  );
+}
+
 function renderRecordForm() {
   const onSubmit = vi.fn();
-  render(
-    <RecordForm
-      specs={specs}
-      initial={{ price: "" }}
-      submitLabel="Save"
-      onSubmit={onSubmit}
-    />,
-  );
+  render(<ListForm initial={{ price: "" }} onSubmit={onSubmit} />);
   return onSubmit;
 }
 

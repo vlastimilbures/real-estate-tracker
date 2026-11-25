@@ -1,10 +1,17 @@
 // The mortgage form's prepayment, recast and development-draw rows (ADR 0116 §11,
-// ADR 0167). Pure. A draft keeps a
-// list as one JSON string under its field name, so the form's dirty check and leave guard
-// compare it like any other field. Blank rows are ignored. The form submits the other
-// rows in the order shown; the engine sorts by date itself, so an engine error's `index`
-// is a position among the non-blank rows (`draftRowOf` maps it back).
-import { dateDraft, moneyDraft, parseDate, parseMoney } from "./formParse";
+// ADR 0167). Pure. The form keeps each list as an array of typed rows; a row's `kind` is
+// its list's name, and EVENT_KINDS holds what differs per kind. The unsaved check
+// compares a list by its text (`writeRows`). Blank rows are ignored. The form submits the
+// other rows in the order shown; the engine sorts by date itself, so an engine error's
+// `index` is a position among the non-blank rows (`draftRowOf` maps it back).
+import {
+  dateDraft,
+  invalidHint,
+  moneyDraft,
+  parseDate,
+  parseMoney,
+  type FormLists,
+} from "./formParse";
 import type {
   Money,
   LoanRecast,
@@ -20,6 +27,7 @@ export const listKind = (kind: string | undefined): kind is EventListKind =>
   kind === "prepayments" || kind === "recasts" || kind === "draws";
 
 export interface PrepaymentRow {
+  kind: "prepayments";
   date: string;
   amount: string;
   effect: PrepaymentEffect;
@@ -27,6 +35,7 @@ export interface PrepaymentRow {
 }
 
 export interface RecastRow {
+  kind: "recasts";
   date: string;
   /** A new maturity date, or a new instalment the term follows from. */
   mode: "maturity" | "instalment";
@@ -35,92 +44,48 @@ export interface RecastRow {
 
 /** A development-loan tranche drawn after the start (ADR 0167). */
 export interface DrawRow {
+  kind: "draws";
   date: string;
   amount: string;
 }
 
-interface Rows {
+/** The row of each list kind. */
+export interface RowOf {
   prepayments: PrepaymentRow;
   recasts: RecastRow;
   draws: DrawRow;
 }
 
-/** A new row's draft. */
-export const BLANK_ROW: Rows = {
-  prepayments: { date: "", amount: "", effect: "lowerInstalment", fee: "" },
-  recasts: { date: "", mode: "maturity", value: "" },
-  draws: { date: "", amount: "" },
-};
-
-type Row = PrepaymentRow | RecastRow | DrawRow;
-
-/** The rows of a list draft ("" ⇒ none). */
-export function readRows<R extends Row = Row>(draft: string): R[] {
-  return draft === "" ? [] : (JSON.parse(draft) as R[]);
+/** The engine event of each list kind. */
+interface EventOf {
+  prepayments: MortgagePrepayment;
+  recasts: LoanRecast;
+  draws: MortgageDraw;
 }
 
-/** A list draft: "" when there is no row, so an untouched empty list stays clean. */
-export function writeRows(rows: readonly object[]): string {
-  return rows.length === 0 ? "" : JSON.stringify(rows);
-}
+/** A mortgage draft's row lists. */
+export type EventLists = { [K in EventListKind]: RowOf[K][] };
 
-export function prepaymentsDraft(list?: MortgagePrepayment[]): string {
-  return writeRows(
-    (list ?? []).map((p): PrepaymentRow => ({
-      date: dateDraft(p.date),
-      amount: moneyDraft(p.amount),
-      effect: p.effect,
-      fee: moneyDraft(p.fee),
-    })),
-  );
-}
+export type EventRow = RowOf[EventListKind];
 
-export function drawsDraft(list?: MortgageDraw[]): string {
-  return writeRows(
-    (list ?? []).map((x): DrawRow => ({
-      date: dateDraft(x.date),
-      amount: moneyDraft(x.amount),
-    })),
-  );
-}
-
-export function recastsDraft(list?: LoanRecast[]): string {
-  return writeRows(
-    (list ?? []).map((r): RecastRow =>
-      r.maturity !== undefined
-        ? {
-            date: dateDraft(r.date),
-            mode: "maturity",
-            value: dateDraft(r.maturity),
-          }
-        : {
-            date: dateDraft(r.date),
-            mode: "instalment",
-            value: moneyDraft(r.instalment),
-          },
-    ),
-  );
+/** What differs between the list kinds (the view's part is in LoanEventRows). */
+interface EventKind<K extends EventListKind> {
+  /** A new row's draft. */
+  blank: RowOf[K];
+  /** The row of a stored event. */
+  rowOf(event: EventOf[K]): RowOf[K];
+  /** The text cells of a row (a select is never blank). */
+  texts(row: RowOf[K]): string[];
+  /** Each cell parsed; null where it does not parse. */
+  cells(row: RowOf[K]): Record<string, unknown>;
+  /** The event of a row that is not blank, or null when it does not parse. */
+  event(row: RowOf[K]): EventOf[K] | null;
 }
 
 const positive = (raw: string) => {
   const m = parseMoney(raw);
   return m !== null && m.greaterThan(0) ? m : null;
 };
-
-/** The text cells of a row (a select is never blank). */
-const texts = (row: Row): string[] =>
-  "effect" in row
-    ? [row.date, row.amount, row.fee]
-    : "mode" in row
-      ? [row.date, row.value]
-      : [row.date, row.amount];
-
-const isBlank = (row: Row) => texts(row).every((v) => v.trim() === "");
-
-/** True when a list draft has a row that is not blank. */
-export function hasRows(draft: string): boolean {
-  return readRows(draft).some((row) => !isBlank(row));
-}
 
 /** An optional fee: undefined when blank, null when not an amount of 0 or more. */
 function parseFee(raw: string): Money | null | undefined {
@@ -145,62 +110,151 @@ const drawCells = (row: DrawRow) => ({
   amount: positive(row.amount),
 });
 
-/** Each cell parsed; null where it does not parse. */
-const cells = (row: Row): Record<string, unknown> =>
-  "effect" in row
-    ? prepaymentCells(row)
-    : "mode" in row
-      ? recastCells(row)
-      : drawCells(row);
+const PREPAYMENTS: EventKind<"prepayments"> = {
+  blank: {
+    kind: "prepayments",
+    date: "",
+    amount: "",
+    effect: "lowerInstalment",
+    fee: "",
+  },
+  rowOf: (p) => ({
+    kind: "prepayments",
+    date: dateDraft(p.date),
+    amount: moneyDraft(p.amount),
+    effect: p.effect,
+    fee: moneyDraft(p.fee),
+  }),
+  texts: (row) => [row.date, row.amount, row.fee],
+  cells: prepaymentCells,
+  event(row) {
+    const { date, amount, fee } = prepaymentCells(row);
+    if (!date || !amount || fee === null) return null;
+    return { date, amount, effect: row.effect, ...(fee ? { fee } : {}) };
+  },
+};
+
+const RECASTS: EventKind<"recasts"> = {
+  blank: { kind: "recasts", date: "", mode: "maturity", value: "" },
+  rowOf: (r) =>
+    r.maturity !== undefined
+      ? {
+          kind: "recasts",
+          date: dateDraft(r.date),
+          mode: "maturity",
+          value: dateDraft(r.maturity),
+        }
+      : {
+          kind: "recasts",
+          date: dateDraft(r.date),
+          mode: "instalment",
+          value: moneyDraft(r.instalment),
+        },
+  texts: (row) => [row.date, row.value],
+  cells: recastCells,
+  event(row) {
+    const { date, value } = recastCells(row);
+    if (!date || !value) return null;
+    // A maturity parses to a date, an instalment to an amount.
+    return value instanceof Date
+      ? { date, maturity: value }
+      : { date, instalment: value };
+  },
+};
+
+const DRAWS: EventKind<"draws"> = {
+  blank: { kind: "draws", date: "", amount: "" },
+  rowOf: (x) => ({
+    kind: "draws",
+    date: dateDraft(x.date),
+    amount: moneyDraft(x.amount),
+  }),
+  texts: (row) => [row.date, row.amount],
+  cells: drawCells,
+  event(row) {
+    const { date, amount } = drawCells(row);
+    return date && amount ? { date, amount } : null;
+  },
+};
+
+export const EVENT_KINDS: { [K in EventListKind]: EventKind<K> } = {
+  prepayments: PREPAYMENTS,
+  recasts: RECASTS,
+  draws: DRAWS,
+};
+
+/** A new row of each kind. */
+export const BLANK_ROW: RowOf = {
+  prepayments: PREPAYMENTS.blank,
+  recasts: RECASTS.blank,
+  draws: DRAWS.blank,
+};
+
+/** The kind entry of a row. */
+function kindOf<K extends EventListKind>(row: RowOf[K]): EventKind<K> {
+  return EVENT_KINDS[row.kind] as EventKind<K>;
+}
+
+/** A list's text for the unsaved check: "" when there is no row, so an untouched empty
+ *  list stays clean; else the rows as JSON, key order included. */
+export function writeRows(rows: readonly object[]): string {
+  return rows.length === 0 ? "" : JSON.stringify(rows);
+}
+
+/** The rows of a list's text ("" ⇒ none), for the text parsers of FORM_PARSERS. */
+export function readRows<R extends EventRow = EventRow>(text: string): R[] {
+  return text === "" ? [] : (JSON.parse(text) as R[]);
+}
+
+export const prepaymentsDraft = (
+  list?: MortgagePrepayment[],
+): PrepaymentRow[] => (list ?? []).map(PREPAYMENTS.rowOf);
+
+export const drawsDraft = (list?: MortgageDraw[]): DrawRow[] =>
+  (list ?? []).map(DRAWS.rowOf);
+
+export const recastsDraft = (list?: LoanRecast[]): RecastRow[] =>
+  (list ?? []).map(RECASTS.rowOf);
+
+const isBlank = (row: EventRow) =>
+  kindOf(row)
+    .texts(row)
+    .every((v) => v.trim() === "");
+
+/** True when a list has a row that is not blank. */
+export function hasRows(rows: readonly EventRow[]): boolean {
+  return rows.some((row) => !isBlank(row));
+}
 
 /** The cells of a row that do not parse, in column order ([] for a blank row). */
-export function rowProblems(row: Row): string[] {
+export function rowProblems(row: EventRow): string[] {
   if (isBlank(row)) return [];
-  return Object.entries(cells(row))
+  return Object.entries(kindOf(row).cells(row))
     .filter(([, v]) => v === null)
     .map(([k]) => k);
 }
 
-function toPrepayment(row: PrepaymentRow): MortgagePrepayment | null {
-  const { date, amount, fee } = prepaymentCells(row);
-  if (!date || !amount || fee === null) return null;
-  return { date, amount, effect: row.effect, ...(fee ? { fee } : {}) };
-}
-
-function toRecast(row: RecastRow): LoanRecast | null {
-  const { date, value } = recastCells(row);
-  if (!date || !value) return null;
-  // A maturity parses to a date, an instalment to an amount.
-  return value instanceof Date
-    ? { date, maturity: value }
-    : { date, instalment: value };
-}
-
-function toDraw(row: DrawRow): MortgageDraw | null {
-  const { date, amount } = drawCells(row);
-  return date && amount ? { date, amount } : null;
-}
-
 /** A list's events in row order, or null when a non-blank row does not parse. */
-function parseRows<R extends Row, E>(
-  draft: string,
-  toEvent: (row: R) => E | null,
-): E[] | null {
-  const out: E[] = [];
-  for (const row of readRows<R>(draft)) {
+function parseRows<K extends EventListKind>(
+  rows: readonly RowOf[K][],
+): EventOf[K][] | null {
+  const out: EventOf[K][] = [];
+  for (const row of rows) {
     if (isBlank(row)) continue;
-    const e = toEvent(row);
+    const e = kindOf<K>(row).event(row);
     if (!e) return null;
     out.push(e);
   }
   return out;
 }
 
-export const parsePrepaymentRows = (draft: string) =>
-  parseRows(draft, toPrepayment);
-export const parseRecastRows = (draft: string) => parseRows(draft, toRecast);
+export const parsePrepaymentRows = (rows: readonly PrepaymentRow[]) =>
+  parseRows<"prepayments">(rows);
+export const parseRecastRows = (rows: readonly RecastRow[]) =>
+  parseRows<"recasts">(rows);
 /** The tranches in row order (the engine does not depend on their order). */
-export const parseDrawRows = (draft: string) => parseRows(draft, toDraw);
+export const parseDrawRows = (rows: readonly DrawRow[]) =>
+  parseRows<"draws">(rows);
 
 /**
  * The total loan the form shows under the drawdown schedule: the start draw plus every
@@ -209,12 +263,12 @@ export const parseDrawRows = (draft: string) => parseRows(draft, toDraw);
  */
 export function drawdownTotal(
   startDraft: string,
-  draft: string,
+  rows: readonly DrawRow[],
 ): { total: Decimal; tranches: number } | null {
   const start = parseMoney(startDraft);
   if (!start || start.isNegative()) return null;
-  const amounts = readRows<DrawRow>(draft)
-    .map((row) => (isBlank(row) ? null : toDraw(row)))
+  const amounts = rows
+    .map((row) => (isBlank(row) ? null : DRAWS.event(row)))
     .filter((x): x is MortgageDraw => x !== null)
     .map((x) => x.amount);
   return {
@@ -231,13 +285,11 @@ export type DrawWarning = "afterCompletion" | "sameDate";
  * added together. A row without a valid date gets none.
  */
 export function drawWarnings(
-  draft: string,
+  rows: readonly DrawRow[],
   completionDraft: string,
 ): DrawWarning[][] {
   const completion = parseDate(completionDraft);
-  const dates = readRows<DrawRow>(draft).map((row) =>
-    parseDate(row.date)?.getTime(),
-  );
+  const dates = rows.map((row) => parseDate(row.date)?.getTime());
   return dates.map((t) => {
     if (t === undefined) return [];
     const out: DrawWarning[] = [];
@@ -248,10 +300,39 @@ export function drawWarnings(
 }
 
 /** The draft row of the `index`-th non-blank row (an engine error's index), or null. */
-export function draftRowOf(draft: string, index: number): number | null {
+export function draftRowOf(
+  rows: readonly EventRow[],
+  index: number,
+): number | null {
   let seen = -1;
-  for (const [i, row] of readRows(draft).entries()) {
+  for (const [i, row] of rows.entries()) {
     if (!isBlank(row) && ++seen === index) return i;
   }
   return null;
 }
+
+/** The mortgage form's row lists, as useRecordForm keeps them beside the fields. */
+export const EVENT_LISTS: FormLists<EventLists> = {
+  names: ["draws", "prepayments", "recasts"],
+  texts: (lists) => ({
+    draws: writeRows(lists.draws),
+    prepayments: writeRows(lists.prepayments),
+    recasts: writeRows(lists.recasts),
+  }),
+  // A list with no row is null, as a blank optional field; one whose rows do not parse
+  // gets its kind's message (formRules' `invalid`).
+  parse(lists, t) {
+    const values: Record<string, unknown> = {};
+    const errors: Record<string, string> = {};
+    for (const kind of ["draws", "prepayments", "recasts"] as const) {
+      const rows = lists[kind];
+      const parsed = rows.length === 0 ? null : parseRows(rows);
+      if (rows.length > 0 && parsed === null)
+        errors[kind] = invalidHint(t, kind);
+      else values[kind] = parsed;
+    }
+    return { values, errors };
+  },
+  rowOf: (lists, field, index) =>
+    listKind(field) ? draftRowOf(lists[field], index) : null,
+};

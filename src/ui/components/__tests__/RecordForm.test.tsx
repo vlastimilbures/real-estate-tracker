@@ -10,6 +10,9 @@ import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import type { FieldSpec } from "../../model/formParse";
 import type { WriteError } from "../../../state/writeError";
+import { MortgageForm } from "../../pages/mortgage/MortgageForm";
+import { mortgageSpecs } from "../../model/mortgageForm";
+import { isoDate, money, mortgageBlock, rate } from "../../../engine";
 
 const specs: FieldSpec[] = [
   { name: "monthlyInstalment", label: "Monthly instalment", kind: "money" },
@@ -147,35 +150,27 @@ describe("a refused save on a field the form is not showing (#440, ADR 0243)", (
   });
 
   it("an error on a list's first-row field stays on that row (ADR 0167)", async () => {
+    // A development loan (the mortgage form, #490): the start draw is the drawdown
+    // schedule's first row, and the initial principal field is hidden.
+    const block = mortgageBlock({
+      id: "m",
+      propertyId: "p",
+      startDate: isoDate("2027-03-01"),
+      initialPrincipal: money("100"),
+      fixationYears: 5,
+      interestRatePa: rate("0.05"),
+      monthlyInstalment: money("1"),
+      completionDate: isoDate("2028-03-01"),
+    });
     render(
-      <RecordForm
-        specs={[
-          { name: "startDate", label: "Start date", kind: "date" },
-          {
-            name: "draws",
-            label: "Draws",
-            kind: "draws",
-            optional: true,
-            lead: {
-              field: "initialPrincipal",
-              dateField: "startDate",
-              label: "Drawn at start",
-              dateFallback: "–",
-            },
-          },
-          {
-            name: "initialPrincipal",
-            label: "Initial principal",
-            kind: "money",
-          },
-        ]}
-        initial={{
-          startDate: "01.03.2027",
-          draws: "",
-          initialPrincipal: "100",
-        }}
+      <MortgageForm
+        specs={mortgageSpecs(en)}
+        row={block}
+        adding={false}
+        successorNote={false}
         submitLabel="Save"
-        hiddenFields={() => ["initialPrincipal"]}
+        unsavedKey="m"
+        onCancel={() => undefined}
         onSubmit={async () => ({
           kind: "constraint",
           constraint: {
@@ -186,9 +181,10 @@ describe("a refused save on a field the form is not showing (#440, ADR 0243)", (
       />,
     );
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect(screen.getByRole("group", { name: "Draws" }).textContent).toContain(
-      en.inputRules.NEGATIVE_AMOUNT,
-    );
+    expect(
+      screen.getByRole("group", { name: en.propertyDetail.fieldDraws })
+        .textContent,
+    ).toContain(en.inputRules.NEGATIVE_AMOUNT);
     expect(screen.queryByRole("alert")).toBeNull();
   });
 });
