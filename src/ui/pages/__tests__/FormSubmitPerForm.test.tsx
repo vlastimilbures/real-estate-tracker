@@ -209,6 +209,15 @@ describe("Assumptions form", () => {
     );
   });
 
+  it("two submits in one tick write once", async () => {
+    save.mockImplementation(never);
+    renderWithPortfolio(<SettingsPage />, { route: "settings" });
+    await userEvent.clear(inflation());
+    await userEvent.type(inflation(), "3");
+    submitTwice(inflation().closest("form")!);
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
   it("an edit drops the form-level message (today, ADR 0095)", async () => {
     await editAndSave();
     expect(summary()).not.toBeNull();
