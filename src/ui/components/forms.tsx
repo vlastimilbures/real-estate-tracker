@@ -1,139 +1,157 @@
-// Form components — a generic record form; field controls live in ./fields, loan-event
-// rows in ./LoanEventRows and parsing/formatting helpers in ../model/formParse.
-import { useId, useState, type ReactNode } from "react";
-import {
-  collectValues,
-  shownFields,
-  type FieldSpec,
-  type LeadRow,
-  type ParsedValues,
-} from "../model/formParse";
-import { formRules } from "../model/formParsers";
-import { draftRowOf, listKind } from "../model/loanEventRows";
+// Form components — a generic record form: its state is useRecordForm's, field controls
+// live in ./fields, loan-event rows in ./LoanEventRows and parsing/formatting helpers in
+// ../model/formParse.
+import type { ReactNode } from "react";
+import type { FieldSpec, LeadRow } from "../model/formParse";
+import { listKind, type EventListKind } from "../model/loanEventRows";
 import { Button } from "./primitives";
 import { DateInput } from "./DateInput";
 import { Field, TextInput } from "./fields";
-import { useFormSubmit } from "../hooks/useFormSubmit";
-import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useT } from "../hooks/useT";
-import { formWriteErrors } from "../model/writeError";
-import type { WriteError } from "../../state/writeError";
-import { isDirty } from "../model/dirty";
+import {
+  useRecordForm,
+  type RecordFormOptions,
+  type RecordFormState,
+} from "../hooks/useRecordForm";
 import {
   LoanEventRows,
   type LeadBinding,
   type ListNotes,
 } from "./LoanEventRows";
 
+type Draft = Record<string, string>;
+
+/** One field-row button, from the draft (see RecordForm's `fieldActions`). */
+type FieldAction = (draft: Draft) => {
+  label: string;
+  title?: string | undefined;
+  patch?: Draft | undefined;
+} | null;
+
 /** Field-row buttons keyed by field name (see RecordForm's `fieldActions`). */
 export type FieldActions<S extends readonly FieldSpec[]> = Partial<
-  Record<
-    S[number]["name"],
-    (draft: Record<string, string>) => {
-      label: string;
-      title?: string | undefined;
-      patch?: Record<string, string> | undefined;
-    } | null
-  >
+  Record<S[number]["name"], FieldAction>
 >;
 
-/** Controlled record form: renders specs, validates on submit, and hands back values
- *  typed by the specs (declare them inline so their names and kinds stay literal). */
-export function RecordForm<const S extends readonly FieldSpec[]>({
-  specs,
-  initial,
-  submitLabel,
-  onSubmit,
-  onCancel,
-  computeHint,
-  fieldActions,
-  validate,
-  header,
-  hiddenFields,
-  listNotes,
-  unsavedKey,
-}: {
-  specs: S;
-  initial: Record<string, string>;
-  submitLabel: string;
-  /** May be async; while the returned promise is pending the submit/cancel buttons
-   *  disable and the submit label shows "Saving…", so a mutation can't be double-fired.
-   *  Resolve to a WriteError to keep the form open with the failure shown: on the
-   *  field it names if shown, else above the buttons (UX-047, ADR 0243). */
-  onSubmit: (
-    values: ParsedValues<S>,
-  ) => void | WriteError | Promise<void | WriteError>;
-  onCancel?: (() => void) | undefined;
+/** What the record form shows around its fields (all optional). */
+interface RecordFormExtras<S extends readonly FieldSpec[]> {
   /** Live hint computed from the current draft (e.g. a suggested instalment). */
-  computeHint?: ((draft: Record<string, string>) => string | null) | undefined;
-  /** Cross-field validation run after per-field parsing succeeds; returns a map of
-   *  field name → error message (empty when valid). Lets the form reject e.g. a
-   *  development loan missing its required term, with the error shown inline. */
-  validate?:
-    | ((
-        values: ParsedValues<S>,
-        draft: Record<string, string>,
-      ) => Record<string, string>)
-    | undefined;
+  computeHint?: ((draft: Draft) => string | null) | undefined;
   /** Optional draft-derived buttons keyed by field name; the button renders inline
    *  to the right of that field and patches the draft on click. A null return hides
    *  the button entirely; an omitted `patch` renders it disabled (not yet computable). */
   fieldActions?: FieldActions<S> | undefined;
   /** Rendered above the fields with the draft and a way to patch it, e.g. a mode
    *  switch kept in the draft under a key that is not a spec (ADR 0098). */
-  header?:
-    | ((
-        draft: Record<string, string>,
-        patch: (p: Record<string, string>) => void,
-      ) => ReactNode)
-    | undefined;
-  /** Names of the specs not shown for this draft. They still parse on submit, so a
-   *  hidden field should be blank; a save error on one shows above the buttons. */
-  hiddenFields?:
-    ((draft: Record<string, string>) => readonly string[]) | undefined;
+  header?: ((draft: Draft, patch: (p: Draft) => void) => ReactNode) | undefined;
   /** Soft warnings and a footer for a row list, from the draft (ADR 0167). */
-  listNotes?:
-    | ((name: string, draft: Record<string, string>) => ListNotes | null)
-    | undefined;
-  /** The leave-guard key for this form's unsaved edits, when the parent guards its own
-   *  actions with it (ADR 0142); else the form makes its own. */
-  unsavedKey?: string | undefined;
-}) {
-  const t = useT();
-  const [draft, setDraft] = useState<Record<string, string>>(initial);
-  // Leave guard (UX-073): while the draft differs from the values the form opened with
-  // (or last saved), navigation asks first. Each form registers under its own key.
-  const ownKey = useId();
-  const formKey = unsavedKey ?? ownKey;
-  const [baseline, setBaseline] = useState(initial);
-  const fieldsOf = (r: Record<string, string>) =>
-    Object.fromEntries(specs.map((spec) => [spec.name, r[spec.name] ?? ""]));
-  const unsaved = isDirty(fieldsOf(baseline), fieldsOf(draft));
-  useLeaveGuard(formKey, unsaved);
+  listNotes?: ((name: string, draft: Draft) => ListNotes | null) | undefined;
+}
 
-  // A failure goes on the field it names if shown, else above the buttons, until the
-  // next edit or Save (ADR 0262 §1).
-  const { busy, errors, formError, submit, clearFields } = useFormSubmit({
-    run: onSubmit,
-    mapErrors: (failure) =>
-      formWriteErrors(
-        t,
-        failure,
-        shownFields(specs, hiddenFields?.(draft) ?? []),
-        (field, index) =>
-          listKind(specs.find((s) => s.name === field)?.kind)
-            ? draftRowOf(draft[field] ?? "", index)
-            : null,
-      ),
-    onSaved: () => setBaseline(draft),
+interface RecordFormViewProps<
+  S extends readonly FieldSpec[],
+> extends RecordFormExtras<S> {
+  form: RecordFormState;
+  specs: S;
+  submitLabel: string;
+  onCancel?: (() => void) | undefined;
+}
+
+/** Controlled record form: renders specs, validates on submit, and hands back values
+ *  typed by the specs (declare them inline so their names and kinds stay literal). */
+export function RecordForm<const S extends readonly FieldSpec[]>({
+  specs,
+  initial,
+  onSubmit,
+  hiddenFields,
+  unsavedKey,
+  ...view
+}: RecordFormOptions<S> &
+  RecordFormExtras<S> & {
+    submitLabel: string;
+    onCancel?: (() => void) | undefined;
+  }) {
+  const form = useRecordForm({
+    specs,
+    initial,
+    onSubmit,
+    hiddenFields,
+    unsavedKey,
   });
+  return <RecordFormView form={form} specs={specs} {...view} />;
+}
 
-  /** Edit fields; their errors go with the edit (ADR 0141, as the property form). */
-  function patch(p: Record<string, string>) {
-    setDraft((d) => ({ ...d, ...p }));
-    clearFields(Object.keys(p));
-  }
-  const edit = (name: string, v: string) => patch({ [name]: v });
+/** The record form's markup, from its state (useRecordForm). */
+function RecordFormView<S extends readonly FieldSpec[]>({
+  form,
+  specs,
+  submitLabel,
+  onCancel,
+  computeHint,
+  fieldActions,
+  header,
+  listNotes,
+}: RecordFormViewProps<S>) {
+  const { draft } = form;
+  const hint = computeHint?.(draft) ?? null;
+  return (
+    <form
+      className="record-form"
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        void form.submit();
+      }}
+    >
+      {header?.(draft, form.patch)}
+      <div className="form-grid">
+        {specs.map((spec) => {
+          if (form.hidden.includes(spec.name)) return null;
+          if (listKind(spec.kind))
+            return (
+              <ListField
+                key={spec.name}
+                form={form}
+                spec={spec}
+                kind={spec.kind}
+                notes={listNotes?.(spec.name, draft)}
+              />
+            );
+          const action = fieldActions?.[spec.name as S[number]["name"]];
+          return (
+            <SpecField
+              key={spec.name}
+              form={form}
+              spec={spec}
+              action={action?.(draft) ?? null}
+            />
+          );
+        })}
+      </div>
+      {hint && <p className="form-hint">{hint}</p>}
+      {form.formError && (
+        <p className="error-text" role="alert">
+          {form.formError}
+        </p>
+      )}
+      <FormActions form={form} submitLabel={submitLabel} onCancel={onCancel} />
+    </form>
+  );
+}
+
+/** A row list, wide in the grid (ADR 0116 §11, ADR 0167). */
+function ListField({
+  form,
+  spec,
+  kind,
+  notes,
+}: {
+  form: RecordFormState;
+  spec: FieldSpec;
+  kind: EventListKind;
+  notes: ListNotes | null | undefined;
+}) {
+  const { draft, errors } = form;
   /** A row list's fixed first row, bound to its field in the draft (ADR 0167). */
   const leadOf = (lead: LeadRow | undefined): LeadBinding | undefined =>
     lead && {
@@ -141,133 +159,106 @@ export function RecordForm<const S extends readonly FieldSpec[]>({
       value: draft[lead.field] ?? "",
       date: draft[lead.dateField] ?? "",
       error: errors[lead.field],
-      onChange: (v) => edit(lead.field, v),
+      onChange: (v) => form.patch({ [lead.field]: v }),
     };
-
-  /** Parse the draft; cross-field rules only run once every field parses, so messages
-   *  point at the real problem (not a noisy parse error) and `values` is complete. */
-  function check() {
-    const { values, errors: errs } = collectValues(specs, draft, formRules(t));
-    if (Object.keys(errs).length === 0 && validate) {
-      Object.assign(errs, validate(values, draft));
-    }
-    return Object.keys(errs).length > 0
-      ? { ok: false as const, errors: errs }
-      : { ok: true as const, values };
-  }
-
   return (
-    <form
-      className="record-form"
-      noValidate
-      onSubmit={(e) => {
-        e.preventDefault();
-        // A throwing onSubmit (sync or async) is shown like a returned failure (DR-090).
-        void submit(check);
-      }}
+    <div className="form-wide">
+      <LoanEventRows
+        kind={kind}
+        name={spec.name}
+        label={spec.label}
+        help={spec.help}
+        value={draft[spec.name] ?? ""}
+        errors={errors}
+        notes={notes}
+        lead={leadOf(spec.lead)}
+        onChange={(v) => form.editList(spec.name, v)}
+      />
+    </div>
+  );
+}
+
+/** One plain field: a date or a number, with its optional field-row button. */
+function SpecField({
+  form,
+  spec,
+  action,
+}: {
+  form: RecordFormState;
+  spec: FieldSpec;
+  action: ReturnType<FieldAction>;
+}) {
+  const t = useT();
+  const value = form.draft[spec.name] ?? "";
+  const edit = (v: string) => form.patch({ [spec.name]: v });
+  const input =
+    spec.kind === "date" ? (
+      <DateInput value={value} onChange={edit} />
+    ) : (
+      <TextInput
+        value={value}
+        onChange={edit}
+        suffix={spec.suffix}
+        inputMode="decimal"
+        placeholder={spec.optional ? t.forms.defaultPlaceholder : undefined}
+      />
+    );
+  return (
+    <Field
+      label={spec.label}
+      required={!spec.optional}
+      error={form.errors[spec.name]}
+      help={spec.help}
     >
-      {header?.(draft, patch)}
-      <div className="form-grid">
-        {specs.map((spec) => {
-          if (hiddenFields?.(draft).includes(spec.name)) return null;
-          if (listKind(spec.kind))
-            return (
-              <div key={spec.name} className="form-wide">
-                <LoanEventRows
-                  kind={spec.kind}
-                  name={spec.name}
-                  label={spec.label}
-                  help={spec.help}
-                  value={draft[spec.name] ?? ""}
-                  errors={errors}
-                  notes={listNotes?.(spec.name, draft)}
-                  lead={leadOf(spec.lead)}
-                  onChange={(v) => {
-                    setDraft((d) => ({ ...d, [spec.name]: v }));
-                    // Row errors are keyed by position: an edit can move rows, so the
-                    // list's errors go until the next save.
-                    clearFields(
-                      (k) => k === spec.name || k.startsWith(`${spec.name}.`),
-                    );
-                  }}
-                />
-              </div>
-            );
-          const action =
-            fieldActions?.[spec.name as S[number]["name"]]?.(draft) ?? null;
-          const input =
-            spec.kind === "date" ? (
-              <DateInput
-                value={draft[spec.name] ?? ""}
-                onChange={(v) => edit(spec.name, v)}
-              />
-            ) : (
-              <TextInput
-                value={draft[spec.name] ?? ""}
-                onChange={(v) => edit(spec.name, v)}
-                suffix={spec.suffix}
-                inputMode="decimal"
-                placeholder={
-                  spec.optional ? t.forms.defaultPlaceholder : undefined
-                }
-              />
-            );
-          return (
-            <Field
-              key={spec.name}
-              label={spec.label}
-              required={!spec.optional}
-              error={errors[spec.name]}
-              help={spec.help}
-            >
-              {action ? (
-                <div className="field-row">
-                  {input}
-                  <Button
-                    type="button"
-                    size="sm"
-                    title={action.title ?? action.label}
-                    disabled={!action.patch}
-                    onClick={() => action.patch && patch(action.patch)}
-                  >
-                    {action.label}
-                  </Button>
-                </div>
-              ) : (
-                input
-              )}
-            </Field>
-          );
-        })}
-      </div>
-      {computeHint &&
-        (() => {
-          const h = computeHint(draft);
-          return h ? <p className="form-hint">{h}</p> : null;
-        })()}
-      {formError && (
-        <p className="error-text" role="alert">
-          {formError}
-        </p>
-      )}
-      <div className="form-actions">
-        {unsaved && (
-          <span className="form-state">{t.common.unsavedChanges}</span>
-        )}
-        {onCancel && (
+      {action ? (
+        <div className="field-row">
+          {input}
           <Button
             type="button"
-            variant="ghost"
-            onClick={onCancel}
-            disabled={busy}
+            size="sm"
+            title={action.title ?? action.label}
+            disabled={!action.patch}
+            onClick={() => action.patch && form.patch(action.patch)}
           >
-            {t.common.cancel}
+            {action.label}
           </Button>
-        )}
-        <Button type="submit" variant="primary" disabled={busy}>
-          {busy ? t.common.saving : submitLabel}
+        </div>
+      ) : (
+        input
+      )}
+    </Field>
+  );
+}
+
+/** The unsaved note, Cancel and Save. */
+function FormActions({
+  form,
+  submitLabel,
+  onCancel,
+}: {
+  form: RecordFormState;
+  submitLabel: string;
+  onCancel?: (() => void) | undefined;
+}) {
+  const t = useT();
+  return (
+    <div className="form-actions">
+      {form.unsaved && (
+        <span className="form-state">{t.common.unsavedChanges}</span>
+      )}
+      {onCancel && (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onCancel}
+          disabled={form.busy}
+        >
+          {t.common.cancel}
         </Button>
-      </div>
-    </form>
+      )}
+      <Button type="submit" variant="primary" disabled={form.busy}>
+        {form.busy ? t.common.saving : submitLabel}
+      </Button>
+    </div>
   );
 }

@@ -84,16 +84,22 @@ describe("a failed edit shows in place only (ADR 0261 §2)", () => {
     render(
       <AppShell title="Valuations">
         <EntityPanel
-          title="Valuations"
-          addLabel="valuation"
-          rows={[{ id: v.id, value: "1" }]}
-          columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
-          specs={specs}
-          draftOf={(r) => ({ value: r ? r.value : "" })}
-          build={(values, id) => ({ id, value: String(values.value) })}
-          onAdd={async () => ({ ok: true })}
-          onSave={() => usePortfolioStore.getState().saveValuation(v)}
-          onDelete={(id) => usePortfolioStore.getState().removeValuation(id)}
+          chrome={{
+            title: "Valuations",
+            addLabel: "valuation",
+          }}
+          table={{
+            rows: [{ id: v.id, value: "1" }],
+            columns: [{ head: "Value", left: true, cell: (r) => r.value }],
+            onDelete: (id) => usePortfolioStore.getState().removeValuation(id),
+          }}
+          form={{
+            specs,
+            draftOf: (r) => ({ value: r ? r.value : "" }),
+            build: (values, id) => ({ id, value: String(values.value) }),
+            onAdd: async () => ({ ok: true }),
+            onSave: () => usePortfolioStore.getState().saveValuation(v),
+          }}
         />
       </AppShell>,
     );

@@ -12,81 +12,76 @@ import { useUiStore } from "../../state/uiStore";
 
 const newId = () => crypto.randomUUID();
 
-/** Generic add/edit/delete panel for a property's child rows. `build` gets the form
- *  values typed by the inline `specs`. */
-export function EntityPanel<
-  T extends { id: string },
-  const S extends readonly FieldSpec[],
->({
-  title,
-  hint,
-  help,
-  info,
-  rows,
-  columns,
-  specs,
-  draftOf,
-  build,
-  onAdd,
-  onSave,
-  onDelete,
-  describe,
-  addLabel,
-  computeHint,
-  fieldActions,
-  validate,
-  formHeader,
-  hiddenFields,
-  listNotes,
-}: {
+type Draft = Record<string, string>;
+
+/** The panel around the table: its heading and the add button's label. */
+export interface PanelChrome {
   title: string;
   hint?: string;
   /** The panel's explanation, leading its body (ADR 0214). */
   help?: ReactNode;
   /** A definition behind the info icon after the title (ADR 0217). */
   info?: string;
+  addLabel: string;
+}
+
+/** The rows, their columns and their delete. */
+export interface PanelTable<T> {
   rows: T[];
   columns: { head: string; cell: (r: T) => ReactNode; left?: boolean }[];
-  specs: S;
-  draftOf: (r: T | null) => Record<string, string>;
-  build: (values: ParsedValues<S>, id: string) => T;
-  onAdd: (r: T) => Promise<MutationResult>;
-  onSave: (r: T) => Promise<MutationResult>;
   onDelete?: (id: string) => Promise<MutationResult>;
   /** Names a row in its delete confirm (ADR 0143); defaults to "Delete this record?". */
   describe?: (row: T) => string;
-  addLabel: string;
-  computeHint?: (draft: Record<string, string>) => string | null;
+}
+
+/** The add/edit form: its specs, the draft of a row and the row built from the values. */
+export interface PanelForm<T, S extends readonly FieldSpec[]> {
+  specs: S;
+  draftOf: (r: T | null) => Draft;
+  build: (values: ParsedValues<S>, id: string) => T;
+  onAdd: (r: T) => Promise<MutationResult>;
+  onSave: (r: T) => Promise<MutationResult>;
+  computeHint?: (draft: Draft) => string | null;
   fieldActions?: FieldActions<S>;
   /** Above the form's fields; `adding` is true for a new row (ADR 0098). */
-  formHeader?: (
-    draft: Record<string, string>,
-    patch: (p: Record<string, string>) => void,
+  header?: (
+    draft: Draft,
+    patch: (p: Draft) => void,
     adding: boolean,
   ) => ReactNode;
-  hiddenFields?: (draft: Record<string, string>) => readonly string[];
-  listNotes?: (name: string, draft: Record<string, string>) => ListNotes | null;
-  validate?: (
-    values: ParsedValues<S>,
-    draft: Record<string, string>,
-  ) => Record<string, string>;
+  hiddenFields?: (draft: Draft) => readonly string[];
+  listNotes?: (name: string, draft: Draft) => ListNotes | null;
+}
+
+type Mode =
+  | { t: "idle" }
+  | { t: "add" }
+  | { t: "edit"; id: string }
+  | { t: "confirm-delete"; id: string };
+
+/** Generic add/edit/delete panel for a property's child rows. `build` gets the form
+ *  values typed by the inline `specs`. */
+export function EntityPanel<
+  T extends { id: string },
+  const S extends readonly FieldSpec[],
+>({
+  chrome,
+  table,
+  form,
+}: {
+  chrome: PanelChrome;
+  table: PanelTable<T>;
+  form: PanelForm<T, S>;
 }) {
   const tr = useT();
+  const { title, addLabel } = chrome;
+  const { rows, onDelete, describe } = table;
   // The form's leave-guard key: a row's Edit or Delete asks first while this form holds
   // unsaved edits, and only this form's (ADR 0142).
   const formSource = useId();
   const guardedAction = useUiStore((s) => s.guardedAction);
-  const [mode, setMode] = useState<
-    | { t: "idle" }
-    | { t: "add" }
-    | { t: "edit"; id: string }
-    | { t: "confirm-delete"; id: string }
-  >({
-    t: "idle",
-  });
+  const [mode, setMode] = useState<Mode>({ t: "idle" });
 
-  const editingRow =
-    mode.t === "edit" ? (rows.find((r) => r.id === mode.id) ?? null) : null;
   const deletingRow =
     mode.t === "confirm-delete"
       ? rows.find((r) => r.id === mode.id)
@@ -95,9 +90,9 @@ export function EntityPanel<
   return (
     <Panel
       title={title}
-      hint={hint}
-      help={help}
-      info={info}
+      hint={chrome.hint}
+      help={chrome.help}
+      info={chrome.info}
       action={
         mode.t === "idle" ? (
           <Button size="sm" icon={Plus} onClick={() => setMode({ t: "add" })}>
@@ -110,7 +105,7 @@ export function EntityPanel<
       <EntityTable
         label={title}
         rows={rows}
-        columns={columns}
+        columns={table.columns}
         onDelete={onDelete}
         onEdit={(id) => {
           // The row already open stays as it is: nothing to switch, nothing to drop.
@@ -145,41 +140,71 @@ export function EntityPanel<
 
       {(mode.t === "add" || mode.t === "edit") && (
         <div className="entity-form">
-          <RecordForm
+          <EntityForm
             // Remount the form when the edit target changes so its draft re-seeds
             // from the new row; otherwise React keeps the previous row's `useState`
             // draft and a row-switch mid-edit saves one row's values onto another.
             key={mode.t === "edit" ? mode.id : "add"}
+            form={form}
+            editId={mode.t === "edit" ? mode.id : null}
+            rows={rows}
+            addLabel={addLabel}
             unsavedKey={formSource}
-            specs={specs}
-            initial={draftOf(editingRow)}
-            submitLabel={mode.t === "add" ? addLabel : tr.common.saveChanges}
-            onCancel={() => setMode({ t: "idle" })}
-            computeHint={computeHint}
-            fieldActions={fieldActions}
-            validate={validate}
-            header={
-              formHeader &&
-              ((draft, patch) => formHeader(draft, patch, mode.t === "add"))
-            }
-            hiddenFields={hiddenFields}
-            listNotes={listNotes}
-            onSubmit={async (values) => {
-              const id = mode.t === "edit" ? mode.id : newId();
-              const entity = build(values, id);
-              const result =
-                mode.t === "edit" ? await onSave(entity) : await onAdd(entity);
-              // Keep the form open (preserving input) on failure, with the failure
-              // shown in the form. Close only when the write actually landed.
-              if (!result.ok) return result.error;
-              // Row actions are disabled while the save runs, so this is still the form
-              // that saved (ADR 0253).
-              setMode({ t: "idle" });
-              return undefined;
-            }}
+            onClose={() => setMode({ t: "idle" })}
           />
         </div>
       )}
     </Panel>
+  );
+}
+
+/** The add form (`editId` null) or the edit form of one row. */
+function EntityForm<T extends { id: string }, S extends readonly FieldSpec[]>({
+  form,
+  editId,
+  rows,
+  addLabel,
+  unsavedKey,
+  onClose,
+}: {
+  form: PanelForm<T, S>;
+  editId: string | null;
+  rows: T[];
+  addLabel: string;
+  unsavedKey: string;
+  onClose: () => void;
+}) {
+  const tr = useT();
+  const { header } = form;
+  const adding = editId === null;
+  const editingRow =
+    editId === null ? null : (rows.find((r) => r.id === editId) ?? null);
+  return (
+    <RecordForm
+      unsavedKey={unsavedKey}
+      specs={form.specs}
+      initial={form.draftOf(editingRow)}
+      submitLabel={adding ? addLabel : tr.common.saveChanges}
+      onCancel={onClose}
+      computeHint={form.computeHint}
+      fieldActions={form.fieldActions}
+      header={header && ((draft, patch) => header(draft, patch, adding))}
+      hiddenFields={form.hiddenFields}
+      listNotes={form.listNotes}
+      onSubmit={async (values) => {
+        const id = editId ?? newId();
+        const entity = form.build(values, id);
+        const result = adding
+          ? await form.onAdd(entity)
+          : await form.onSave(entity);
+        // Keep the form open (preserving input) on failure, with the failure
+        // shown in the form. Close only when the write actually landed.
+        if (!result.ok) return result.error;
+        // Row actions are disabled while the save runs, so this is still the form
+        // that saved (ADR 0253).
+        onClose();
+        return undefined;
+      }}
+    />
   );
 }

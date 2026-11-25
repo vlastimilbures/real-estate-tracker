@@ -83,19 +83,25 @@ function RecordPanel({
 }) {
   return (
     <EntityPanel
-      title="Rows"
-      addLabel="row"
-      rows={[
-        { id: "a", value: "100" },
-        { id: "b", value: "200" },
-      ]}
-      columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
-      specs={recordSpecs}
-      draftOf={(r) => ({ value: r ? r.value : "" })}
-      build={(v, id): RecordRow => ({ id, value: String(v.value) })}
-      onAdd={ok}
-      onSave={ok}
-      onDelete={onDelete}
+      chrome={{
+        title: "Rows",
+        addLabel: "row",
+      }}
+      table={{
+        rows: [
+          { id: "a", value: "100" },
+          { id: "b", value: "200" },
+        ],
+        columns: [{ head: "Value", left: true, cell: (r) => r.value }],
+        onDelete,
+      }}
+      form={{
+        specs: recordSpecs,
+        draftOf: (r) => ({ value: r ? r.value : "" }),
+        build: (v, id): RecordRow => ({ id, value: String(v.value) }),
+        onAdd: ok,
+        onSave: ok,
+      }}
     />
   );
 }
