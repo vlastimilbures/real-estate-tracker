@@ -47,6 +47,7 @@ export {
   IRR_BRACKET_MAX,
 } from "./constants";
 export { basisDate, scheduledPrincipal } from "./growth";
+export { monthlyFlow } from "./figures";
 export { EMPTY_PROPERTY_SCHEDULE, propertySchedules } from "./schedule";
 export type { PropertySchedule } from "./schedule";
 

@@ -1,6 +1,5 @@
 // Pure presentation model for the Dashboard's as-of tiles and monthly inflow / outflow
-// band. Monthly = the tiles' annual ÷ 12. Net is the baseline (== netCashFlow ÷ 12).
-import type { Decimal } from "../../lib/money";
+// band. The monthly figures are the engine's `monthlyFlow` of the tiles' snapshot.
 import {
   cpiAt,
   edate,
@@ -23,23 +22,8 @@ import type { Dictionary } from "../../i18n";
 import { periodLabelLocalized, yearLabel, type SeriesRow } from "./projection";
 import { at } from "../../lib/arrays";
 
-export interface MonthlyFlow {
-  inflow: Decimal; // effective rent / 12
-  outflow: Decimal; // (holding costs + debt service) / 12
-  net: Decimal; // baseline
-}
-
-/** A portfolio's or a property's flow per month (ADR 0200, 0215). */
-export function monthlyFlow(
-  s: Pick<
-    PortfolioSnapshot,
-    "effectiveGrossIncome" | "holdingCosts" | "annualDebtService"
-  >,
-): MonthlyFlow {
-  const inflow = s.effectiveGrossIncome.div(12);
-  const outflow = s.holdingCosts.plus(s.annualDebtService).div(12);
-  return { inflow, outflow, net: inflow.minus(outflow) };
-}
+/** A portfolio's or a property's flow per month (ADR 0200, 0215), from the engine. */
+export { monthlyFlow } from "../../engine";
 
 /** Projection year (0..horizon) closest to an as-of date, on the baseDate-anchored
  *  whole-year grid the projection/charts use. ≤ baseDate ⇒ 0 (the current snapshot).
