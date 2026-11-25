@@ -1,4 +1,4 @@
-import { lazy, useEffect } from "react";
+import { useEffect } from "react";
 import "./styles/global.css";
 import "./components/shell.css";
 import "./components/panel.css";
@@ -13,8 +13,7 @@ import "./components/layout.css";
 import "./styles/info-tip.css";
 import { usePortfolioStore } from "../state/portfolioStore";
 import { useUiStore } from "../state/uiStore";
-import { Dashboard } from "./pages/Dashboard";
-import { Properties } from "./pages/Properties";
+import { ROUTES } from "./routes";
 import { AboutModal } from "./components/AboutModal";
 import { LeaveGuard } from "./components/LeaveGuard";
 import { ToastRegion } from "./components/OutcomeRegions";
@@ -24,28 +23,6 @@ import { BootFailure } from "./components/BootFailure";
 import { useT } from "./hooks/useT";
 import { useNativeMenu } from "./hooks/useNativeMenu";
 import { useThemeSync } from "./hooks/useThemeSync";
-
-// Pages away from the start screen load on first visit (P9): their code, and the
-// libraries only they use, stay out of the startup bundle. The fallback is empty; the
-// chunk is a local file, so the gap is a few milliseconds (D-66, DR-009).
-const PropertyDetail = lazy(() =>
-  import("./pages/PropertyDetail").then((m) => ({ default: m.PropertyDetail })),
-);
-const Projections = lazy(() =>
-  import("./pages/Projections").then((m) => ({ default: m.Projections })),
-);
-const Scenarios = lazy(() =>
-  import("./pages/Scenarios").then((m) => ({ default: m.Scenarios })),
-);
-const Import = lazy(() =>
-  import("./pages/Import").then((m) => ({ default: m.Import })),
-);
-const SettingsPage = lazy(() =>
-  import("./pages/Settings").then((m) => ({ default: m.SettingsPage })),
-);
-const Guide = lazy(() =>
-  import("./pages/Guide").then((m) => ({ default: m.Guide })),
-);
 
 // The page inside the app's chrome; a page that fails to render keeps the sidebar
 // (ADR 0146).
@@ -57,28 +34,10 @@ function CurrentPage() {
   );
 }
 
+/** The route's page, from the table (src/ui/routes.ts). */
 function Page() {
-  const route = useUiStore((s) => s.route);
-  switch (route) {
-    case "dashboard":
-      return <Dashboard />;
-    case "properties":
-      return <Properties />;
-    case "property":
-      return <PropertyDetail />;
-    case "projections":
-      return <Projections />;
-    case "scenarios":
-      return <Scenarios />;
-    case "import":
-      return <Import />;
-    case "settings":
-      return <SettingsPage />;
-    case "guide":
-      return <Guide />;
-    default:
-      return <Dashboard />;
-  }
+  const Current = ROUTES[useUiStore((s) => s.route)].page;
+  return <Current />;
 }
 
 export function App() {

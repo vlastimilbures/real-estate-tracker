@@ -12,30 +12,9 @@ import { Suspense, type ReactNode } from "react";
 import { AppLayout } from "./AppLayout";
 import { PageFrame } from "./PageFrame";
 import { BoundaryFallback, ErrorBoundary } from "./ErrorBoundary";
-import { useUiStore, type Route } from "../../state/uiStore";
+import { useUiStore } from "../../state/uiStore";
 import { useT } from "../hooks/useT";
-import type { Dictionary } from "../../i18n";
-
-/** The page title the fallback shows; property detail falls under Properties. */
-function pageTitle(t: Dictionary, route: Route): string {
-  switch (route) {
-    case "dashboard":
-      return t.dashboard.title;
-    case "properties":
-    case "property":
-      return t.properties.title;
-    case "projections":
-      return t.projections.title;
-    case "scenarios":
-      return t.scenarios.title;
-    case "import":
-      return t.importPage.title;
-    case "settings":
-      return t.settings.title;
-    case "guide":
-      return t.guide.title;
-  }
-}
+import { ROUTES } from "../routes";
 
 export function PageBoundary({ children }: { children: ReactNode }) {
   const t = useT();
@@ -48,7 +27,7 @@ export function PageBoundary({ children }: { children: ReactNode }) {
       resetKey={route}
       fallback={(error, reset) =>
         inLayout(
-          <PageFrame title={pageTitle(t, route)} showLens={false}>
+          <PageFrame title={ROUTES[route].title(t)} showLens={false}>
             <BoundaryFallback error={error} reset={reset} />
           </PageFrame>,
         )

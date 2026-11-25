@@ -4,47 +4,22 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
-  LayoutDashboard,
-  Building2,
-  LineChart,
-  GitCompareArrows,
-  Upload,
-  Settings,
-  BookOpen,
   PanelLeftClose,
   PanelLeftOpen,
   Sun,
   Moon,
   Monitor,
 } from "lucide-react";
-import { useUiStore, type Route, type Theme } from "../../state/uiStore";
+import { useUiStore, type Theme } from "../../state/uiStore";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { BrandMark } from "./BrandMark";
 import { BackupHint } from "./BackupHint";
 import { SkipLink } from "./SkipLink";
 import { fmtDate } from "../../lib/format";
-import { APP_NAME, LANGUAGES, type Dictionary } from "../../i18n";
+import { APP_NAME, LANGUAGES } from "../../i18n";
+import { NAV_GROUPS, navMarked } from "../routes";
 import { useT } from "../hooks/useT";
 import { at } from "../../lib/arrays";
-
-interface NavItem {
-  route: Route;
-  navKey: keyof Dictionary["nav"];
-  icon: LucideIcon;
-}
-
-/** The left bar's two groups (ADR 0219): the pages on top, the tools above the footer. */
-const NAV_PAGES: NavItem[] = [
-  { route: "dashboard", navKey: "dashboard", icon: LayoutDashboard },
-  { route: "properties", navKey: "properties", icon: Building2 },
-  { route: "projections", navKey: "projections", icon: LineChart },
-  { route: "scenarios", navKey: "scenarios", icon: GitCompareArrows },
-];
-const NAV_TOOLS: NavItem[] = [
-  { route: "import", navKey: "importData", icon: Upload },
-  { route: "settings", navKey: "settings", icon: Settings },
-  { route: "guide", navKey: "guide", icon: BookOpen },
-];
 
 const THEME_OPTIONS: {
   value: Theme;
@@ -193,12 +168,10 @@ function Sidebar({ collapsed }: { collapsed: boolean }) {
       </div>
 
       <nav className="nav">
-        {[NAV_PAGES, NAV_TOOLS].map((group, g) => (
+        {NAV_GROUPS.map((group, g) => (
           <div key={g} className={g === 0 ? "nav-group" : "nav-group tools"}>
             {group.map((n) => {
-              const active =
-                route === n.route ||
-                (route === "property" && n.route === "properties");
+              const active = navMarked(route, n.route);
               const Icon = n.icon;
               const label = t.nav[n.navKey];
               return (
