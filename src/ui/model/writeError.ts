@@ -6,6 +6,7 @@ import type { ConstraintFailure } from "../../data/errors";
 import type { WriteError, WriteRangeProblem } from "../../state/writeError";
 import { fieldHint } from "./formParse";
 import { inputRuleText } from "./inputRule";
+import { CHECK_CONSTRAINTS } from "../../lib/checkConstraints";
 
 /** An input error whose field may be a form's own key, not only an engine field: the
  *  scenario form names a shock rule by its form field (ADR 0251 §4). */
@@ -28,88 +29,13 @@ export interface WriteErrorText {
   index?: number | undefined;
 }
 
-/** CHECK constraint (migrations v7) → engine rule wording + the field it guards, named
- *  like the engine field (the property modal maps these to its snake_case keys). */
+/** CHECK constraint → engine rule wording + the field it guards, named like the engine
+ *  field (the property modal maps these to its snake_case keys). One list for the schema
+ *  and this map (src/lib/checkConstraints.ts, #470). */
 const CHECKS: Record<
   string,
   { rule: ValidationCode | "flag" | "json"; field?: string }
-> = {
-  property_purchase_date_iso: { rule: "INVALID_DATE", field: "purchaseDate" },
-  property_purchase_price_not_negative: {
-    rule: "NEGATIVE_AMOUNT",
-    field: "purchasePrice",
-  },
-  // v10 (ADR 0119)
-  property_own_cash_not_negative: { rule: "NEGATIVE_AMOUNT", field: "ownCash" },
-  property_transaction_costs_not_negative: {
-    rule: "NEGATIVE_AMOUNT",
-    field: "transactionCosts",
-  },
-  property_initial_works_not_negative: {
-    rule: "NEGATIVE_AMOUNT",
-    field: "initialWorks",
-  },
-  property_active_flag: { rule: "flag" },
-  property_garage_flag: { rule: "flag", field: "garage" },
-  mortgage_start_date_iso: { rule: "INVALID_DATE", field: "startDate" },
-  mortgage_principal_not_negative: {
-    rule: "NEGATIVE_AMOUNT",
-    field: "initialPrincipal",
-  },
-  mortgage_instalment_not_negative: {
-    rule: "NEGATIVE_AMOUNT",
-    field: "monthlyInstalment",
-  },
-  mortgage_rate_0_to_1: { rule: "RATE_OUT_OF_RANGE", field: "interestRatePa" },
-  mortgage_fixation_whole_years: {
-    rule: "INVALID_TERM",
-    field: "fixationYears",
-  },
-  mortgage_term_positive: { rule: "INVALID_TERM", field: "loanTermYears" },
-  mortgage_interest_only_until_iso: {
-    rule: "INVALID_DATE",
-    field: "completionDate",
-  },
-  mortgage_contract_maturity_iso: { rule: "INVALID_DATE" },
-  mortgage_draws_json: { rule: "json", field: "draws" },
-  // v9 (ADR 0109): added with their columns, outside the frozen V7_TABLES.
-  mortgage_prepayments_json: { rule: "json", field: "prepayments" },
-  mortgage_recasts_json: { rule: "json", field: "recasts" },
-  valuation_valid_from_iso: { rule: "INVALID_DATE", field: "validFrom" },
-  valuation_valid_to_iso: { rule: "INVALID_DATE", field: "validTo" },
-  valuation_end_not_before_start: {
-    rule: "END_BEFORE_START",
-    field: "validTo",
-  },
-  valuation_value_not_negative: {
-    rule: "NEGATIVE_AMOUNT",
-    field: "marketValue",
-  },
-  lease_start_date_iso: { rule: "INVALID_DATE", field: "startDate" },
-  lease_end_date_iso: { rule: "INVALID_DATE", field: "endDate" },
-  lease_end_not_before_start: { rule: "END_BEFORE_START", field: "endDate" },
-  lease_rent_not_negative: { rule: "NEGATIVE_AMOUNT", field: "monthlyRent" },
-  assumptions_base_date_iso: { rule: "INVALID_DATE", field: "baseDate" },
-  assumptions_horizon_positive: {
-    rule: "HORIZON_NOT_POSITIVE",
-    field: "horizonYears",
-  },
-  assumptions_vacancy_0_to_1: {
-    rule: "RATE_OUT_OF_RANGE",
-    field: "vacancyAllowance",
-  },
-  assumptions_mgmt_0_to_1: { rule: "RATE_OUT_OF_RANGE", field: "mgmtPctRent" },
-  assumptions_maint_0_to_1: {
-    rule: "RATE_OUT_OF_RANGE",
-    field: "maintPctRent",
-  },
-  // v11 (ADR 0183)
-  assumptions_selling_cost_0_to_1: {
-    rule: "RATE_OUT_OF_RANGE",
-    field: "sellingCostPct",
-  },
-  scenario_overrides_json: { rule: "json" },
-};
+> = Object.fromEntries(CHECK_CONSTRAINTS.map((c) => [c.name, c]));
 
 function constraintText(t: Dictionary, c: ConstraintFailure): WriteErrorText {
   const w = t.writeErrors;

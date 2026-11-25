@@ -540,6 +540,9 @@ export const MIGRATIONS: Migration[] = [
   },
 ];
 
+/** The newest schema this app writes and reads (the last migration). */
+export const SCHEMA_HEAD = Math.max(...MIGRATIONS.map((m) => m.version));
+
 function scenarioRows(
   sql: Sql,
 ): Promise<{ id: string; name: string; overrides: string }[]> {
@@ -618,7 +621,7 @@ export async function migrate(
   );
   const done = new Set(applied.map((r) => Number(r.version)));
   const from = done.size === 0 ? 0 : Math.max(...done);
-  const head = Math.max(...MIGRATIONS.map((m) => m.version));
+  const head = SCHEMA_HEAD;
   if (from > head) {
     throw new DataError(
       "DB_NEWER",
