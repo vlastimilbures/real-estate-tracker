@@ -138,12 +138,12 @@ const brandCastBans = [
   {
     selector: `TSAsExpression > TSTypeReference.typeAnnotation[typeName.name=${BRAND_TYPES}]`,
     message:
-      "No brand casts (ADR 0074): build the value with money()/rate()/utc()/isoDate()/mortgageBlock().",
+      "No brand casts (ADR 0074): build the value with money()/rate()/utc()/isoDate()/mortgageBlock()/assertInputs()/assertAssumptions().",
   },
   {
     selector: `TSAsExpression > TSUnionType.typeAnnotation > TSTypeReference[typeName.name=${BRAND_TYPES}]`,
     message:
-      "No brand casts (ADR 0074): build the value with money()/rate()/utc()/isoDate()/mortgageBlock().",
+      "No brand casts (ADR 0074): build the value with money()/rate()/utc()/isoDate()/mortgageBlock()/assertInputs()/assertAssumptions().",
   },
 ];
 
