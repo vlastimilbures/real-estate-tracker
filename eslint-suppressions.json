@@ -1,9 +1,4 @@
 {
-  "src/data/mappers.ts": {
-    "complexity": {
-      "count": 1
-    }
-  },
   "src/state/uiStore.ts": {
     "max-lines-per-function": {
       "count": 1

@@ -1,9 +1,4 @@
 {
-  "src/data/mappers.ts": {
-    "complexity": {
-      "Function 'parseOverrides'": 22
-    }
-  },
   "src/state/uiStore.ts": {
     "lines": {
       "Arrow function (useUiStore: create)": 138

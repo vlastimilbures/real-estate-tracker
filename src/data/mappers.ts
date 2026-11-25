@@ -2,14 +2,14 @@
 // the TEXT-decimal / ISO-date DB representation is converted to/from engine types
 // (decimal.js, branded Money / Rate / IsoDate). The engine itself never imports this file — data flows
 // DB → mappers → engine, one way (CLAUDE.md §4). The row writers live in toRow.ts and
-// the mortgage event JSON in loanEventsJson.ts (#471); this module re-exports the writers,
-// so the boundary keeps one import path.
-import type { Decimal } from "../lib/money";
-import { mortgageBlock, rate } from "../engine";
-import { DataError } from "./errors";
+// the mortgage event JSON in loanEventsJson.ts (#471), the scenario overrides JSON in
+// scenarioOverrides.ts (#472); this module re-exports the writers, so the boundary keeps
+// one import path.
+import { mortgageBlock } from "../engine";
 import * as g from "./guards";
 import type { RowOf } from "./schema";
 import { parseDraws, parsePrepayments, parseRecasts } from "./loanEventsJson";
+import { parseOverrides, serializeOverrides } from "./scenarioOverrides";
 import type {
   AcquisitionFunding,
   Assumptions,
@@ -18,10 +18,7 @@ import type {
   Valuation,
   Lease,
   HoldingCost,
-  Rate,
-  ShockBand,
   Scenario,
-  ScenarioOverrides,
 } from "../engine";
 
 /** The snake_case column name of a camelCase field (`purchasePrice` ⇒ `purchase_price`). */
@@ -40,138 +37,6 @@ export type LeaseRow = RowOf<"leases">;
 export type HoldingCostRow = RowOf<"holding_costs">;
 export type ScenarioRow = RowOf<"scenarios">;
 export type AssumptionsRow = RowOf<"assumptions">;
-
-/**
- * Scenario overrides → JSON. Flat level deltas are decimal strings; the time-aware
- * shocks serialize as nested objects ({deltaPa, durationYears} / {pct, atYear}).
- * Undefined keys are omitted (so the Base path stores `{"version":1}`).
- */
-export function serializeOverrides(overrides: ScenarioOverrides): string {
-  const out: Record<string, unknown> = { version: OVERRIDES_VERSION };
-  const put = (k: string, v: Decimal | undefined) => {
-    if (v != null) out[k] = v.toString();
-  };
-  put("appreciationPa", overrides.appreciationPa);
-  put("rentIndexationPa", overrides.rentIndexationPa);
-  put("vacancyAllowance", overrides.vacancyAllowance);
-  put("postFixationResetRatePa", overrides.postFixationResetRatePa);
-  put("inflationPa", overrides.inflationPa);
-  if (overrides.inflationShock) {
-    out.inflationShock = {
-      deltaPa: overrides.inflationShock.deltaPa.toString(),
-      durationYears: overrides.inflationShock.durationYears,
-    };
-  }
-  if (overrides.rateShock) {
-    out.rateShock = {
-      deltaPa: overrides.rateShock.deltaPa.toString(),
-      durationYears: overrides.rateShock.durationYears,
-    };
-  }
-  if (overrides.valueShock) {
-    out.valueShock = {
-      pct: overrides.valueShock.pct.toString(),
-      atYear: overrides.valueShock.atYear,
-    };
-  }
-  return JSON.stringify(out);
-}
-
-// --- scenario overrides JSON ----------------------------------------------------
-// Versioned since P5a (DR-037): `version: 1`. A row without `version` is the legacy
-// shape (which also allowed the flat `valueShockPct`); migration v8 rewrites stored rows
-// to v1 and the reader still accepts legacy JSON (e.g. from an old backup file).
-
-export const OVERRIDES_VERSION = 1;
-
-const FLAT_KEYS = [
-  "appreciationPa",
-  "rentIndexationPa",
-  "vacancyAllowance",
-  "postFixationResetRatePa",
-  "inflationPa",
-] as const;
-/** The keys a v1 overrides JSON may hold (a restore test checks its fixture holds all). */
-export const V1_KEYS = new Set<string>([
-  "version",
-  ...FLAT_KEYS,
-  "inflationShock",
-  "rateShock",
-  "valueShock",
-]);
-const LEGACY_KEYS = new Set<string>([...V1_KEYS, "valueShockPct"]);
-
-/** Parse stored overrides JSON (v1 or legacy) or throw SCENARIO_INVALID. */
-export function parseOverrides(
-  scenarioName: string,
-  json: string,
-): ScenarioOverrides {
-  const bad = (problem: string, message?: string): never => {
-    const line = `scenario "${scenarioName}": overrides ${problem}`;
-    throw new DataError(
-      "SCENARIO_INVALID",
-      message ?? `A saved scenario cannot be read: ${line}.`,
-      [line],
-    );
-  };
-  let raw: unknown;
-  try {
-    raw = JSON.parse(json);
-  } catch {
-    return bad(
-      "is not valid JSON",
-      `Corrupt scenario overrides JSON for "${scenarioName}"`,
-    );
-  }
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw))
-    return bad("is not a JSON object");
-  const o = raw as Record<string, unknown>;
-  if (o.version !== undefined && o.version !== OVERRIDES_VERSION)
-    return bad(`has unsupported version ${JSON.stringify(o.version)}`);
-  const allowed = o.version === undefined ? LEGACY_KEYS : V1_KEYS;
-  for (const k of Object.keys(o))
-    if (!allowed.has(k)) bad(`has an unknown key "${k}"`);
-
-  const decimalAt = (k: string, v: unknown): Rate => {
-    const d = g.parseDecimalText(v);
-    return d ? rate(d) : bad(`${k} is not a decimal string`);
-  };
-  const isWhole = (v: unknown): v is number =>
-    typeof v === "number" && Number.isInteger(v);
-  const band = (k: string, v: unknown): ShockBand | undefined => {
-    if (v === undefined) return undefined;
-    const b = (v ?? {}) as { deltaPa?: unknown; durationYears?: unknown };
-    const deltaPa = g.parseDecimalText(b.deltaPa);
-    if (typeof v !== "object" || !deltaPa || !isWhole(b.durationYears))
-      return bad(`${k} is not {deltaPa, durationYears}`);
-    return { deltaPa: rate(deltaPa), durationYears: b.durationYears };
-  };
-
-  const overrides: ScenarioOverrides = {};
-  for (const k of FLAT_KEYS)
-    if (o[k] !== undefined) overrides[k] = decimalAt(k, o[k]);
-  const inflationShock = band("inflationShock", o.inflationShock);
-  if (inflationShock) overrides.inflationShock = inflationShock;
-  const rateShock = band("rateShock", o.rateShock);
-  if (rateShock) overrides.rateShock = rateShock;
-  if (o.valueShock !== undefined) {
-    const v = (o.valueShock ?? {}) as { pct?: unknown; atYear?: unknown };
-    const pct = g.parseDecimalText(v.pct);
-    // Legacy rows may omit atYear (a year-0 crash); v1 always writes it.
-    const atYear =
-      v.atYear === undefined && o.version === undefined ? 0 : v.atYear;
-    if (typeof o.valueShock !== "object" || !pct || !isWhole(atYear))
-      return bad("valueShock is not {pct, atYear}");
-    overrides.valueShock = { pct: rate(pct), atYear };
-  } else if (o.valueShockPct !== undefined) {
-    // Legacy flat form from before timed corrections existed: a year-0 crash.
-    overrides.valueShock = {
-      pct: decimalAt("valueShockPct", o.valueShockPct),
-      atYear: 0,
-    };
-  }
-  return overrides;
-}
 
 // --- row → engine input --------------------------------------------------------
 
@@ -339,6 +204,11 @@ export function scenarioToRow(s: Scenario, createdAt: Date): ScenarioRow {
     created_at: createdAt.toISOString(),
   };
 }
+
+/** The v1 key set, kept on this path for the restore test, which imports it from here
+ *  unchanged (#472).
+ *  @internal */
+export { V1_KEYS } from "./scenarioOverrides";
 
 export {
   assumptionsToRow,
