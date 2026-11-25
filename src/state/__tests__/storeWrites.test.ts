@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import type { IsoDate } from "../../engine";
 import type { Sql } from "../../data/sql";
-import { CHANGED_SINCE_BACKUP } from "../../data/repositories";
+import { CHANGED_SINCE_BACKUP } from "../../data/appMeta";
 import { money } from "../../engine";
 import { openSeeded, text } from "./support/openSeeded";
 import { statusOf } from "../../__tests__/support/status";

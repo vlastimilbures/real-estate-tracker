@@ -1,9 +1,4 @@
 {
-  "src/data/backup.ts": {
-    "lines": {
-      "Function 'prepareRestore'": 87
-    }
-  },
   "src/data/mappers.ts": {
     "complexity": {
       "Function 'parseOverrides'": 22

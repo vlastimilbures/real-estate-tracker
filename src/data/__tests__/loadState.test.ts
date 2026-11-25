@@ -5,7 +5,6 @@ import { openMemorySql } from "./betterSqlite";
 import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
 import { loadState, upsertAssumptions, upsertScenario } from "../repositories";
-import { scenarioToRow } from "../mappers";
 import { isoDate, rate } from "../../engine";
 import type { Sql } from "../sql";
 import { SEED_ASSUMPTIONS } from "../seed";
@@ -16,14 +15,12 @@ async function seeded() {
   await seedIfEmpty(db);
   await upsertScenario(
     db,
-    scenarioToRow(
-      {
-        id: "s-1",
-        name: "Shock",
-        overrides: { appreciationPa: rate("0.01") },
-      },
-      isoDate("2026-06-08"),
-    ),
+    {
+      id: "s-1",
+      name: "Shock",
+      overrides: { appreciationPa: rate("0.01") },
+    },
+    isoDate("2026-06-08"),
   );
   return db;
 }

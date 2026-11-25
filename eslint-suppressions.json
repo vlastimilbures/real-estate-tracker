@@ -1,9 +1,4 @@
 {
-  "src/data/backup.ts": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/data/mappers.ts": {
     "complexity": {
       "count": 1

@@ -12,7 +12,7 @@ export {
   type PickedBackup,
   type RestoreIssue,
 } from "../data/backup";
-export { type BackupState } from "../data/repositories";
+export { type BackupState } from "../data/appMeta";
 
 /** Pick a backup file and check it completely; `null` when the user cancels. */
 export const chooseRestoreFile = () => chooseWithRules(checkInputRules);

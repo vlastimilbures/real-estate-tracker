@@ -1,20 +1,20 @@
 // Pure row ⇄ engine-input mappers. No IO, no driver imports. This is the ONLY place
 // the TEXT-decimal / ISO-date DB representation is converted to/from engine types
 // (decimal.js, branded Money / Rate / IsoDate). The engine itself never imports this file — data flows
-// DB → mappers → engine, one way (CLAUDE.md §4).
+// DB → mappers → engine, one way (CLAUDE.md §4). The row writers live in toRow.ts and
+// the mortgage event JSON in loanEventsJson.ts (#471); this module re-exports the writers,
+// so the boundary keeps one import path.
 import type { Decimal } from "../lib/money";
-import { money, mortgageBlock, rate } from "../engine";
+import { mortgageBlock, rate } from "../engine";
 import { DataError } from "./errors";
 import * as g from "./guards";
-import { SELLING_COST_DEFAULT, type RowOf } from "./schema";
+import type { RowOf } from "./schema";
+import { parseDraws, parsePrepayments, parseRecasts } from "./loanEventsJson";
 import type {
   AcquisitionFunding,
   Assumptions,
   Property,
-  LoanRecast,
   MortgageBlock,
-  MortgageDraw,
-  MortgagePrepayment,
   Valuation,
   Lease,
   HoldingCost,
@@ -40,161 +40,6 @@ export type LeaseRow = RowOf<"leases">;
 export type HoldingCostRow = RowOf<"holding_costs">;
 export type ScenarioRow = RowOf<"scenarios">;
 export type AssumptionsRow = RowOf<"assumptions">;
-
-// --- small helpers -------------------------------------------------------------
-// Reads go through the DR-037 guards (guards.ts): shape-checked, typed DataError on
-// a value the column cannot hold.
-
-/** Decimal → TEXT, undefined → NULL. */
-function dtext(v: Decimal | undefined): string | null {
-  return v == null ? null : v.toString();
-}
-/** Date → ISO yyyy-mm-dd. */
-function isoTextReq(v: Date): string {
-  return v.toISOString().slice(0, 10);
-}
-/** Date → ISO yyyy-mm-dd, undefined → NULL. */
-function isoText(v: Date | undefined): string | null {
-  return v == null ? null : isoTextReq(v);
-}
-/** JSON tranche array → MortgageDraw[] (sorted), NULL/empty → undefined; only `date` and
- *  `amount` are allowed (ADR 0184). */
-function parseDraws(
-  ref: g.RowRef,
-  v: string | null,
-): MortgageDraw[] | undefined {
-  return parseEventList(ref, "draws", v, ["date", "amount"], (o, bad) => {
-    if (typeof o.date !== "string" || !g.isIsoDate(o.date))
-      return bad("has an invalid date");
-    return {
-      date: g.date(ref, "draws", o.date),
-      amount: eventAmount(o.amount, bad),
-    };
-  });
-}
-/**
- * A JSON array column → items sorted by date, NULL/empty → undefined (ADR 0109). Any
- * malformed item, or one with a key outside `keys` (a misspelt `fees` would drop the
- * fee, ADR 0116), rejects the whole row (ROW_INVALID), like the draws column.
- */
-function parseEventList<T extends { date: Date }>(
-  ref: g.RowRef,
-  column: string,
-  v: string | null,
-  keys: readonly string[],
-  item: (o: Record<string, unknown>, bad: (problem: string) => never) => T,
-): T[] | undefined {
-  if (v == null) return undefined;
-  const bad = (problem: string): never => {
-    const line = `${ref.table} ${ref.id}: ${column} ${problem}`;
-    throw new DataError(
-      "ROW_INVALID",
-      `Corrupt mortgage ${column} JSON: ${line}.`,
-      [line],
-    );
-  };
-  let arr: unknown;
-  try {
-    arr = JSON.parse(v);
-  } catch {
-    return bad("is not valid JSON");
-  }
-  if (!Array.isArray(arr)) return bad("is not an array");
-  const known = (x: unknown) => {
-    const o = (x ?? {}) as Record<string, unknown>;
-    const extra = Object.keys(o).find((k) => !keys.includes(k));
-    return extra === undefined ? o : bad(`has an unknown field ${extra}`);
-  };
-  const items = arr
-    .map((x: unknown) => item(known(x), bad))
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
-  return items.length ? items : undefined;
-}
-
-/** A required decimal-string amount of an event item. */
-function eventAmount(
-  value: unknown,
-  bad: (problem: string) => never,
-): ReturnType<typeof money> {
-  const amount = g.parseDecimalText(value);
-  return amount ? money(amount) : bad("has an invalid amount");
-}
-
-function parsePrepayments(
-  ref: g.RowRef,
-  v: string | null,
-): MortgagePrepayment[] | undefined {
-  const keys = ["date", "amount", "effect", "fee"] as const;
-  return parseEventList(ref, "prepayments", v, keys, (o, bad) => {
-    if (typeof o.date !== "string" || !g.isIsoDate(o.date))
-      return bad("has an invalid date");
-    if (o.effect !== "lowerInstalment" && o.effect !== "shortenTerm")
-      return bad("has an invalid effect");
-    return {
-      date: g.date(ref, "prepayments", o.date),
-      amount: eventAmount(o.amount, bad),
-      effect: o.effect,
-      fee: o.fee == null ? undefined : eventAmount(o.fee, bad),
-    };
-  });
-}
-
-function parseRecasts(
-  ref: g.RowRef,
-  v: string | null,
-): LoanRecast[] | undefined {
-  const keys = ["date", "maturity", "instalment"] as const;
-  return parseEventList(ref, "recasts", v, keys, (o, bad): LoanRecast => {
-    if (typeof o.date !== "string" || !g.isIsoDate(o.date))
-      return bad("has an invalid date");
-    const date = g.date(ref, "recasts", o.date);
-    if ((o.maturity == null) === (o.instalment == null))
-      return bad("needs either a maturity or an instalment");
-    if (o.instalment != null)
-      return { date, instalment: eventAmount(o.instalment, bad) };
-    if (typeof o.maturity !== "string" || !g.isIsoDate(o.maturity))
-      return bad("has an invalid maturity");
-    return { date, maturity: g.date(ref, "recasts", o.maturity) };
-  });
-}
-
-/** Prepayments → JSON (amounts as decimal strings), empty/undefined → NULL. */
-function prepaymentsToJson(
-  prepayments: MortgagePrepayment[] | undefined,
-): string | null {
-  if (!prepayments || prepayments.length === 0) return null;
-  return JSON.stringify(
-    prepayments.map((p) => ({
-      date: isoTextReq(p.date),
-      amount: p.amount.toString(),
-      effect: p.effect,
-      ...(p.fee ? { fee: p.fee.toString() } : {}),
-    })),
-  );
-}
-
-/** Recasts → JSON, empty/undefined → NULL. */
-function recastsToJson(recasts: LoanRecast[] | undefined): string | null {
-  if (!recasts || recasts.length === 0) return null;
-  return JSON.stringify(
-    recasts.map((r) =>
-      r.maturity === undefined
-        ? { date: isoTextReq(r.date), instalment: r.instalment.toString() }
-        : { date: isoTextReq(r.date), maturity: isoTextReq(r.maturity) },
-    ),
-  );
-}
-
-/** MortgageDraw[] → JSON (amounts as decimal strings), empty/undefined → NULL. */
-function drawsToJson(draws: MortgageDraw[] | undefined): string | null {
-  if (!draws || draws.length === 0) return null;
-  return JSON.stringify(
-    draws.map((d) => ({
-      date: isoTextReq(d.date),
-      amount: d.amount.toString(),
-    })),
-  );
-}
 
 /**
  * Scenario overrides → JSON. Flat level deltas are decimal strings; the time-aware
@@ -481,85 +326,7 @@ export function rowToScenario(r: ScenarioRow): Scenario {
   };
 }
 
-// --- engine input → row (extra fields for DB fidelity passed alongside) --------
-
-/** The stored property fields that are not engine inputs. Every property write passes
- *  them, so none can write NULL by leaving them out (ADR 0184 §3). */
-export interface PropertyExtras {
-  address: string | null;
-  garage: boolean | null;
-}
-
-export function propertyToRow(p: Property, extra: PropertyExtras): PropertyRow {
-  return {
-    id: p.id,
-    name: p.name,
-    address: extra.address,
-    type: p.type ?? null,
-    size_m2: p.sizeM2 ?? null,
-    garage: extra.garage == null ? null : extra.garage ? 1 : 0,
-    purchase_date: isoTextReq(p.purchaseDate),
-    purchase_price: p.purchasePrice.toString(),
-    appreciation_override_pa: dtext(p.appreciationOverridePa),
-    rent_index_override_pa: dtext(p.rentIndexOverridePa),
-    active: p.active === false ? 0 : 1,
-    own_cash: dtext(p.funding?.ownCash),
-    transaction_costs: dtext(p.funding?.transactionCosts),
-    initial_works: dtext(p.funding?.initialWorks),
-    funding_note: p.funding?.note?.trim() ? p.funding.note : null,
-  };
-}
-
-export function mortgageBlockToRow(m: MortgageBlock): MortgageBlockRow {
-  return {
-    id: m.id,
-    property_id: m.propertyId,
-    start_date: isoTextReq(m.startDate),
-    initial_principal: m.initialPrincipal.toString(),
-    fixation_years: m.fixationYears,
-    interest_rate_pa: m.interestRatePa.toString(),
-    monthly_instalment: m.monthlyInstalment.toString(),
-    loan_term_years: m.loanTermYears ?? null,
-    draws: drawsToJson(m.draws),
-    interest_only_until: isoText(m.completionDate),
-    contract_maturity_date: isoText(m.contractMaturityDate),
-    prepayments: prepaymentsToJson(m.prepayments),
-    recasts: recastsToJson(m.recasts),
-  };
-}
-
-export function valuationToRow(v: Valuation): ValuationRow {
-  return {
-    id: v.id,
-    property_id: v.propertyId,
-    valid_from: isoTextReq(v.validFrom),
-    valid_to: isoText(v.validTo),
-    market_value: v.marketValue.toString(),
-  };
-}
-
-export function leaseToRow(l: Lease): LeaseRow {
-  return {
-    id: l.id,
-    property_id: l.propertyId,
-    start_date: isoTextReq(l.startDate),
-    end_date: isoText(l.endDate),
-    monthly_rent: l.monthlyRent.toString(),
-  };
-}
-
-export function holdingCostToRow(h: HoldingCost): HoldingCostRow {
-  return {
-    id: h.id,
-    property_id: h.propertyId,
-    property_tax_yr: dtext(h.propertyTaxYr),
-    insurance_yr: dtext(h.insuranceYr),
-    mgmt_pct_rent: dtext(h.mgmtPctRent),
-    maint_pct_rent: dtext(h.maintPctRent),
-    svj_monthly: dtext(h.svjMonthly),
-    other_yr: dtext(h.otherYr),
-  };
-}
+// --- engine input → row --------------------------------------------------------
 
 /** `createdAt` is the time of the write: an insert stores it, an update keeps the stored
  *  value (`upsertScenario`, ADR 0123). */
@@ -573,22 +340,12 @@ export function scenarioToRow(s: Scenario, createdAt: Date): ScenarioRow {
   };
 }
 
-export function assumptionsToRow(a: Assumptions): AssumptionsRow {
-  return {
-    id: 1,
-    base_date: isoTextReq(a.baseDate),
-    appreciation_pa: a.appreciationPa.toString(),
-    rent_indexation_pa: a.rentIndexationPa.toString(),
-    vacancy_allowance: a.vacancyAllowance.toString(),
-    post_fixation_reset_rate_pa: a.postFixationResetRatePa.toString(),
-    horizon_years: a.horizonYears,
-    inflation_pa: a.inflationPa.toString(),
-    default_property_tax_yr: a.defaults.propertyTaxYr.toString(),
-    default_insurance_yr: a.defaults.insuranceYr.toString(),
-    default_mgmt_pct_rent: a.defaults.mgmtPctRent.toString(),
-    default_maint_pct_rent: a.defaults.maintPctRent.toString(),
-    default_svj_monthly: a.defaults.svjMonthly.toString(),
-    default_other_yr: a.defaults.otherYr.toString(),
-    selling_cost_pct: (a.sellingCostPct ?? SELLING_COST_DEFAULT).toString(),
-  };
-}
+export {
+  assumptionsToRow,
+  holdingCostToRow,
+  leaseToRow,
+  mortgageBlockToRow,
+  propertyToRow,
+  valuationToRow,
+  type PropertyExtras,
+} from "./toRow";

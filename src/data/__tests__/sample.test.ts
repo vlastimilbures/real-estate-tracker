@@ -19,10 +19,9 @@ import {
   insertLease,
   insertPropertyWithCosts,
   loadState,
-  SAMPLE_PROPERTIES,
   upsertAssumptions,
 } from "../repositories";
-import { holdingCostToRow, leaseToRow, propertyToRow } from "../mappers";
+import { SAMPLE_PROPERTIES } from "../appMeta";
 import type { Sql } from "../sql";
 import { isoDate, rate } from "../../engine";
 import { noExtras } from "./support/noExtras";
@@ -70,21 +69,16 @@ async function withOwnData(): Promise<TestSql> {
   const sampleLease = p.leases.find((x) => x.propertyId === "javorova")!;
   await insertPropertyWithCosts(
     sql,
-    propertyToRow({ ...sampleProperty, id: "mine", name: "My flat" }, noExtras),
-    holdingCostToRow({ ...sampleCost, id: "hc-mine", propertyId: "mine" }),
+    { ...sampleProperty, id: "mine", name: "My flat" },
+    noExtras,
+    { ...sampleCost, id: "hc-mine", propertyId: "mine" },
   );
-  await insertLease(
-    sql,
-    leaseToRow({ ...sampleLease, id: "l-mine", propertyId: "mine" }),
-  );
-  await insertLease(
-    sql,
-    leaseToRow({
-      ...sampleLease,
-      id: "l-javorova-user",
-      startDate: isoDate("2027-01-01"),
-    }),
-  );
+  await insertLease(sql, { ...sampleLease, id: "l-mine", propertyId: "mine" });
+  await insertLease(sql, {
+    ...sampleLease,
+    id: "l-javorova-user",
+    startDate: isoDate("2027-01-01"),
+  });
   return sql;
 }
 
@@ -230,12 +224,8 @@ describe("the sample is matched by id and name (ADR 0127)", () => {
     const cost = p.holdingCosts.find((x) => x.propertyId === id)!;
     const lease = p.leases.find((x) => x.propertyId === id)!;
     await sql.execute(`DELETE FROM properties WHERE id = '${id}'`);
-    await insertPropertyWithCosts(
-      sql,
-      propertyToRow({ ...flat, name }, noExtras),
-      holdingCostToRow(cost),
-    );
-    await insertLease(sql, leaseToRow({ ...lease, id: `l-own-${id}` }));
+    await insertPropertyWithCosts(sql, { ...flat, name }, noExtras, cost);
+    await insertLease(sql, { ...lease, id: `l-own-${id}` });
     return sql;
   }
 

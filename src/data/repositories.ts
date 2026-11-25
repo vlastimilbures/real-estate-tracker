@@ -1,10 +1,17 @@
-// Typed repositories over the `Sql` seam. Writes take DB row objects (produced by the
-// mappers); reads return engine inputs. The engine never imports this file.
-import type { ExecuteResult, Sql, SqlStatement } from "./sql";
+// Typed repositories over the `Sql` seam: the record writes and the reads besides the full
+// load (loadState.ts). The app's own flags live in appMeta.ts. The engine never imports
+// this file.
+//
+// One write convention (#471): every write takes engine values (domain objects), maps them
+// to rows here and only here, builds its statements, and hands them to `run`. Reads return
+// engine inputs.
+import type { Sql, SqlStatement } from "./sql";
 import { DataError } from "./errors";
+import { loadState } from "./loadState";
+import { LAST_BACKUP_AT, markDataChanged, recordBackup } from "./appMeta";
 import type {
-  Portfolio,
   Assumptions,
+  Property,
   Scenario,
   Valuation,
   Lease,
@@ -12,26 +19,15 @@ import type {
   HoldingCost,
 } from "../engine";
 import {
-  rowToProperty,
-  rowToMortgageBlock,
-  rowToValuation,
-  rowToLease,
-  rowToHoldingCost,
-  rowToAssumptions,
-  rowToScenario,
   assumptionsToRow,
   valuationToRow,
   leaseToRow,
   mortgageBlockToRow,
   holdingCostToRow,
+  propertyToRow,
+  scenarioToRow,
   type PropertyExtras,
   type PropertyRow,
-  type MortgageBlockRow,
-  type ValuationRow,
-  type LeaseRow,
-  type HoldingCostRow,
-  type AssumptionsRow,
-  type ScenarioRow,
 } from "./mappers";
 
 // The six portfolio tables, in FK-safe insert order (properties first).
@@ -44,7 +40,10 @@ export const PORTFOLIO_TABLES = [
 ] as const;
 
 /** Generic positional INSERT from a row object's own keys. */
-export function insertStatement(table: string, row: object): SqlStatement {
+export function insertStatement(
+  table: string,
+  row: object,
+): Required<SqlStatement> {
   const entries = Object.entries(row);
   const cols = entries.map(([k]) => k);
   const placeholders = cols.map(() => "?").join(", ");
@@ -52,50 +51,6 @@ export function insertStatement(table: string, row: object): SqlStatement {
     query: `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${placeholders})`,
     params: entries.map(([, v]) => v),
   };
-}
-
-async function insertRow(sql: Sql, table: string, row: object): Promise<void> {
-  const { query, params } = insertStatement(table, row);
-  await sql.execute(query, params);
-}
-
-// --- inserts (row-level, used by the store and tests) ----------------------------
-
-export const insertMortgageBlock = (sql: Sql, r: MortgageBlockRow) =>
-  insertRow(sql, "mortgage_blocks", r);
-export const insertValuation = (sql: Sql, r: ValuationRow) =>
-  insertRow(sql, "valuations", r);
-export const insertLease = (sql: Sql, r: LeaseRow) =>
-  insertRow(sql, "leases", r);
-
-/** A new property and its holding-costs row, in one transaction. */
-export const insertPropertyWithCosts = (
-  sql: Sql,
-  property: PropertyRow,
-  costs: HoldingCostRow,
-) =>
-  sql.transaction([
-    insertStatement("properties", property),
-    insertStatement("holding_costs", costs),
-  ]);
-
-// --- updates (row-level, used by the edit forms) -------------------------------
-
-/** An update/delete by id must hit its row; zero rows means it no longer exists
- *  (DR-082) — an error, not a silent success. */
-async function byId(
-  table: string,
-  id: string,
-  write: Promise<ExecuteResult>,
-): Promise<void> {
-  const { rowsAffected } = await write;
-  if (rowsAffected === 0) {
-    throw new DataError(
-      "ROW_MISSING",
-      `The record no longer exists: ${table} ${id}.`,
-      [`${table} ${id}`],
-    );
-  }
 }
 
 /** UPDATE `table` SET <only these columns> WHERE id = ? — columns not in `values` are
@@ -112,28 +67,81 @@ export function updateStatement(
   };
 }
 
-/** UPDATE of every column of a row object (id excluded). */
-const rowUpdate = (table: string, { id, ...values }: { id: string }) =>
-  updateStatement(table, id, values);
+// --- running a write -------------------------------------------------------------
 
-async function updateRow(
-  sql: Sql,
-  table: string,
-  row: { id: string },
-): Promise<void> {
-  const { query, params } = rowUpdate(table, row);
-  await byId(table, row.id, sql.execute(query, params));
+/** One write: its statements, in order, and for an update or delete by id the row it
+ *  must hit. */
+interface Write {
+  statements: SqlStatement[];
+  /** An update/delete by id must hit its row; zero rows means it no longer exists
+   *  (DR-082) — an error, not a silent success. */
+  target?: { table: string; id: string };
 }
 
-const deleteById = (sql: Sql, table: string, id: string) =>
-  byId(table, id, sql.execute(`DELETE FROM ${table} WHERE id = ?`, [id]));
+/** Run `write`: a single statement through `execute`, several through `transaction`, so
+ *  they all commit or none does (D-14). */
+async function run(sql: Sql, { statements, target }: Write): Promise<void> {
+  const [only, ...rest] = statements;
+  if (!only || rest.length > 0) {
+    await sql.transaction(statements);
+    return;
+  }
+  const { rowsAffected } = await sql.execute(only.query, only.params);
+  if (target && rowsAffected === 0) {
+    const ref = `${target.table} ${target.id}`;
+    throw new DataError("ROW_MISSING", `The record no longer exists: ${ref}.`, [
+      ref,
+    ]);
+  }
+}
 
-export const updateValuation = (sql: Sql, v: Valuation) =>
-  updateRow(sql, "valuations", valuationToRow(v));
-export const updateLease = (sql: Sql, l: Lease) =>
-  updateRow(sql, "leases", leaseToRow(l));
-export const updateMortgageBlock = (sql: Sql, m: MortgageBlock) =>
-  updateRow(sql, "mortgage_blocks", mortgageBlockToRow(m));
+const insert = (table: string, row: object): Write => ({
+  statements: [insertStatement(table, row)],
+});
+
+/** UPDATE of every column of a row object (id excluded), which must hit its row. */
+const update = (table: string, { id, ...values }: { id: string }): Write => ({
+  statements: [updateStatement(table, id, values)],
+  target: { table, id },
+});
+
+const deleteById = (sql: Sql, table: string, id: string) =>
+  run(sql, {
+    statements: [{ query: `DELETE FROM ${table} WHERE id = ?`, params: [id] }],
+    target: { table, id },
+  });
+
+// --- inserts -------------------------------------------------------------------
+
+export const insertMortgageBlock = async (sql: Sql, m: MortgageBlock) =>
+  run(sql, insert("mortgage_blocks", mortgageBlockToRow(m)));
+export const insertValuation = async (sql: Sql, v: Valuation) =>
+  run(sql, insert("valuations", valuationToRow(v)));
+export const insertLease = async (sql: Sql, l: Lease) =>
+  run(sql, insert("leases", leaseToRow(l)));
+
+/** A new property and its holding-costs row, in one transaction. */
+export const insertPropertyWithCosts = async (
+  sql: Sql,
+  p: Property,
+  extra: PropertyExtras,
+  costs: HoldingCost,
+) =>
+  run(sql, {
+    statements: [
+      insertStatement("properties", propertyToRow(p, extra)),
+      insertStatement("holding_costs", holdingCostToRow(costs)),
+    ],
+  });
+
+// --- updates (used by the edit forms) ------------------------------------------
+
+export const updateValuation = async (sql: Sql, v: Valuation) =>
+  run(sql, update("valuations", valuationToRow(v)));
+export const updateLease = async (sql: Sql, l: Lease) =>
+  run(sql, update("leases", leaseToRow(l)));
+export const updateMortgageBlock = async (sql: Sql, m: MortgageBlock) =>
+  run(sql, update("mortgage_blocks", mortgageBlockToRow(m)));
 
 /** Ends an open record: only its end column, only while it is still open (ADR 0184 §2),
  *  so a correction saved after the caller took its copy is kept. A row deleted meanwhile
@@ -150,57 +158,68 @@ const closeStatement = (
 
 /** A new valuation plus the end date of the open-ended one it succeeds, in one
  *  transaction (ADR 0099, 0227). */
-export const insertValuationClosingPrevious = (
+export const insertValuationClosingPrevious = async (
   sql: Sql,
   v: Valuation,
   closedPrev: Valuation,
 ) =>
-  sql.transaction([
-    insertStatement("valuations", valuationToRow(v)),
-    closeStatement(
-      "valuations",
-      "valid_to",
-      closedPrev.id,
-      valuationToRow(closedPrev).valid_to,
-    ),
-  ]);
+  run(sql, {
+    statements: [
+      insertStatement("valuations", valuationToRow(v)),
+      closeStatement(
+        "valuations",
+        "valid_to",
+        closedPrev.id,
+        valuationToRow(closedPrev).valid_to,
+      ),
+    ],
+  });
 /** A new lease plus the end date of the open-ended one it succeeds (ADR 0099). */
-export const insertLeaseClosingPrevious = (
+export const insertLeaseClosingPrevious = async (
   sql: Sql,
   l: Lease,
   closedPrev: Lease,
 ) =>
-  sql.transaction([
-    insertStatement("leases", leaseToRow(l)),
-    closeStatement(
-      "leases",
-      "end_date",
-      closedPrev.id,
-      leaseToRow(closedPrev).end_date,
-    ),
-  ]);
+  run(sql, {
+    statements: [
+      insertStatement("leases", leaseToRow(l)),
+      closeStatement(
+        "leases",
+        "end_date",
+        closedPrev.id,
+        leaseToRow(closedPrev).end_date,
+      ),
+    ],
+  });
+
 /** Save a property's holding costs: one row per property (UNIQUE property_id, v7).
  *  Inserts the row when the property has none, so an edit is never silently lost. */
-export async function updateHoldingCost(
+export async function upsertHoldingCost(
   sql: Sql,
   h: HoldingCost,
 ): Promise<void> {
-  const { query, params } = insertStatement(
-    "holding_costs",
-    holdingCostToRow(h),
-  );
-  const values = Object.keys(holdingCostToRow(h))
+  const row = holdingCostToRow(h);
+  const { query, params } = insertStatement("holding_costs", row);
+  const values = Object.keys(row)
     .filter((k) => k !== "id" && k !== "property_id")
     .map((k) => `${k} = excluded.${k}`)
     .join(", ");
-  await sql.execute(
-    `${query} ON CONFLICT(property_id) DO UPDATE SET ${values}`,
-    params,
-  );
+  await run(sql, {
+    statements: [
+      {
+        query: `${query} ON CONFLICT(property_id) DO UPDATE SET ${values}`,
+        params,
+      },
+    ],
+  });
 }
 
-export const updateProperty = (sql: Sql, r: PropertyRow) =>
-  updateRow(sql, "properties", r);
+/** Every stored column of the property, `extra` included (ADR 0184 §3). */
+export const updateProperty = async (
+  sql: Sql,
+  p: Property,
+  extra: PropertyExtras,
+) => run(sql, update("properties", propertyToRow(p, extra)));
 
 /** Address/garage are persisted for fidelity but dropped by `rowToProperty` (not
  *  engine inputs) — this is their only read path, used to prefill the edit form. */
@@ -224,15 +243,20 @@ export async function getPropertyExtras(
  * Toggle a property's active flag without round-tripping the whole row — a full
  * `updateProperty` would null the address/garage columns that `rowToProperty` drops.
  */
-export const setPropertyActive = (sql: Sql, id: string, active: boolean) =>
-  byId(
-    "properties",
-    id,
-    sql.execute("UPDATE properties SET active = ? WHERE id = ?", [
-      active ? 1 : 0,
-      id,
-    ]),
-  );
+export const setPropertyActive = async (
+  sql: Sql,
+  id: string,
+  active: boolean,
+) =>
+  run(sql, {
+    statements: [
+      {
+        query: "UPDATE properties SET active = ? WHERE id = ?",
+        params: [active ? 1 : 0, id],
+      },
+    ],
+    target: { table: "properties", id },
+  });
 
 // --- deletes by id (child rows) ------------------------------------------------
 
@@ -244,26 +268,36 @@ export const deleteMortgageBlock = (sql: Sql, id: string) =>
   deleteById(sql, "mortgage_blocks", id);
 
 /** Upsert the single assumptions row (id = 1), in one transaction. */
-export async function upsertAssumptions(
-  sql: Sql,
-  a: Assumptions,
-): Promise<void> {
-  await sql.transaction([
-    { query: "DELETE FROM assumptions WHERE id = 1" },
-    insertStatement("assumptions", assumptionsToRow(a)),
-  ]);
-}
+export const upsertAssumptions = async (sql: Sql, a: Assumptions) =>
+  run(sql, {
+    statements: [
+      { query: "DELETE FROM assumptions WHERE id = 1" },
+      insertStatement("assumptions", assumptionsToRow(a)),
+    ],
+  });
 
 // --- scenarios (what-if overrides; not part of Portfolio) ----------------------
 
-/** Upsert a scenario by `id` (rename + duplicate both rely on id-keying). On update
- *  only name + overrides change — `created_at` is preserved. */
-export async function upsertScenario(sql: Sql, r: ScenarioRow): Promise<void> {
-  const { query, params } = insertStatement("scenarios", r);
-  await sql.execute(
-    `${query} ON CONFLICT(id) DO UPDATE SET name = excluded.name, overrides = excluded.overrides`,
-    params,
+/** Upsert a scenario by `id` (rename + duplicate both rely on id-keying). `createdAt` is
+ *  the time of the write: an insert stores it; on update only name + overrides change,
+ *  so the stored `created_at` is preserved (ADR 0123). */
+export async function upsertScenario(
+  sql: Sql,
+  s: Scenario,
+  createdAt: Date,
+): Promise<void> {
+  const { query, params } = insertStatement(
+    "scenarios",
+    scenarioToRow(s, createdAt),
   );
+  await run(sql, {
+    statements: [
+      {
+        query: `${query} ON CONFLICT(id) DO UPDATE SET name = excluded.name, overrides = excluded.overrides`,
+        params,
+      },
+    ],
+  });
 }
 
 export const deleteScenario = (sql: Sql, id: string) =>
@@ -283,181 +317,10 @@ export async function countProperties(sql: Sql): Promise<number> {
   return Number(rows[0]?.n ?? 0);
 }
 
-// The reads behind a full load, in the order `loadState` maps them.
-const PORTFOLIO_QUERIES = [
-  "SELECT * FROM properties ORDER BY id",
-  "SELECT * FROM mortgage_blocks ORDER BY start_date, id",
-  "SELECT * FROM valuations ORDER BY valid_from, id",
-  "SELECT * FROM leases ORDER BY start_date, id",
-  "SELECT * FROM holding_costs ORDER BY id",
-] as const;
-const ASSUMPTIONS_QUERY = "SELECT * FROM assumptions WHERE id = 1";
-// Creation order (DR-181): older yyyy-mm-dd rows sort before same-day timestamps, by id.
-const SCENARIOS_QUERY = "SELECT * FROM scenarios ORDER BY created_at, id";
-
-// Properties are listed by name in Czech order, numbers by value (ADR 0127: ids are random).
-// The sort is stable, so the query's id order breaks ties.
-const byName = new Intl.Collator("cs", { numeric: true }).compare;
-
-function toPortfolio([
-  properties,
-  mortgages,
-  valuations,
-  leases,
-  holdingCosts,
-]: unknown[][]): Portfolio {
-  return {
-    properties: (properties as PropertyRow[])
-      .map(rowToProperty)
-      .sort((a, b) => byName(a.name, b.name)),
-    mortgages: (mortgages as MortgageBlockRow[]).map(rowToMortgageBlock),
-    valuations: (valuations as ValuationRow[]).map(rowToValuation),
-    leases: (leases as LeaseRow[]).map(rowToLease),
-    holdingCosts: (holdingCosts as HoldingCostRow[]).map(rowToHoldingCost),
-  };
-}
-
-function toAssumptions(rows: unknown[]): Assumptions {
-  // A lost row is not re-created from the sample values: startup stops (ADR 0252).
-  if (rows.length === 0)
-    throw new DataError(
-      "ROW_INVALID",
-      "A saved record cannot be read: assumptions row not found (id = 1).",
-      ["assumptions 1: row not found"],
-    );
-  return rowToAssumptions(rows[0] as AssumptionsRow);
-}
-
-/** The first-run sample portfolio (ADR 0094): its properties as seeded and the `app_meta`
- *  keys that mark it as active and its banner as dismissed. A property is part of the
- *  sample only while both its id and its name are the seeded ones (ADR 0127). */
-export const SAMPLE_PROPERTIES = [
-  { id: "javorova", name: "Byt Javorova" },
-  { id: "lipova", name: "Byt Lipova" },
-  { id: "dubova", name: "Byt Dubova" },
-] as const;
-export const SAMPLE_ACTIVE = "sample_active";
-export const SAMPLE_DISMISSED = "sample_banner_dismissed";
-const SAMPLE_META_QUERY = `SELECT key FROM app_meta WHERE key IN ('${SAMPLE_ACTIVE}', '${SAMPLE_DISMISSED}')`;
-/** Removes both sample markers: Clear sample (ADR 0094) and every restore (ADR 0127). */
-export const DELETE_SAMPLE_MARKERS: SqlStatement = {
-  query: "DELETE FROM app_meta WHERE key IN (?, ?)",
-  params: [SAMPLE_ACTIVE, SAMPLE_DISMISSED],
-};
-
-const isSampleProperty = (p: { id: string; name: string }) =>
-  SAMPLE_PROPERTIES.some((s) => s.id === p.id && s.name === p.name);
-
-/** Whether the sample is still in place (marker set and at least one sample property
- *  left) and whether its banner was dismissed (ADR 0094). */
-export interface SampleState {
-  active: boolean;
-  dismissed: boolean;
-}
-
-function toSample(keys: unknown[], portfolio: Portfolio): SampleState {
-  const set = new Set((keys as { key: string }[]).map((r) => r.key));
-  return {
-    active:
-      set.has(SAMPLE_ACTIVE) && portfolio.properties.some(isSampleProperty),
-    dismissed: set.has(SAMPLE_DISMISSED),
-  };
-}
-
-/** Backup recency (ADR 0110): the last recorded export and whether the data changed
- *  since. App state in `app_meta`, so never part of a backup or a restore. */
-export const LAST_BACKUP_AT = "last_backup_at";
-export const LAST_BACKUP_FILE = "last_backup_file";
-export const CHANGED_SINCE_BACKUP = "changed_since_backup";
-const BACKUP_META_QUERY = `SELECT key, value FROM app_meta WHERE key IN ('${LAST_BACKUP_AT}', '${LAST_BACKUP_FILE}', '${CHANGED_SINCE_BACKUP}')`;
-
-export interface BackupState {
-  /** ISO UTC timestamp of the last successful export, or null. */
-  lastAt: string | null;
-  /** Its file name (no path), or null. */
-  lastFile: string | null;
-  changedSince: boolean;
-}
-
-function toBackupState(rows: unknown[]): BackupState {
-  const meta = new Map(
-    (rows as { key: string; value: string }[]).map((r) => [r.key, r.value]),
-  );
-  return {
-    lastAt: meta.get(LAST_BACKUP_AT) ?? null,
-    lastFile: meta.get(LAST_BACKUP_FILE) ?? null,
-    changedSince: meta.has(CHANGED_SINCE_BACKUP),
-  };
-}
-
-/** Record a successful export (ADR 0110): `at` comes from the caller, never the clock.
- *  `clearChanged: false` keeps the changed flag, for a write that landed after the
- *  exported snapshot was read. */
-export async function recordBackup(
-  sql: Sql,
-  at: string,
-  file: string,
-  clearChanged = true,
-): Promise<void> {
-  const upsert =
-    "INSERT INTO app_meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value";
-  await sql.transaction([
-    { query: upsert, params: [LAST_BACKUP_AT, at] },
-    { query: upsert, params: [LAST_BACKUP_FILE, file] },
-    ...(clearChanged
-      ? [
-          {
-            query: "DELETE FROM app_meta WHERE key = ?",
-            params: [CHANGED_SINCE_BACKUP],
-          },
-        ]
-      : []),
-  ]);
-}
-
-/** Sets the `app_meta` flag `key` (value '1'); a flag already set stays. */
-export const flagStatement = (key: string): SqlStatement => ({
-  query: "INSERT OR IGNORE INTO app_meta (key, value) VALUES (?, '1')",
-  params: [key],
-});
-
-/** Mark the data as changed since the last backup (ADR 0110). */
-export async function markDataChanged(sql: Sql): Promise<void> {
-  const { query, params } = flagStatement(CHANGED_SINCE_BACKUP);
-  await sql.execute(query, params);
-}
-
-/** Everything the app shows, as one point-in-time snapshot (DR-134). */
-export interface LoadedState {
-  portfolio: Portfolio;
-  assumptions: Assumptions;
-  scenarios: Scenario[];
-  sample: SampleState;
-  backup: BackupState;
-}
-
-/** The portfolio, assumptions, scenarios and the sample and backup state, read in one
- *  snapshot so a write landing mid-load cannot mix states (DR-134). */
-export async function loadState(sql: Sql): Promise<LoadedState> {
-  const results = await sql.selectSnapshot(
-    [
-      ...PORTFOLIO_QUERIES,
-      ASSUMPTIONS_QUERY,
-      SCENARIOS_QUERY,
-      SAMPLE_META_QUERY,
-      BACKUP_META_QUERY,
-    ].map((query) => ({ query })),
-  );
-  const n = PORTFOLIO_QUERIES.length;
-  const portfolio = toPortfolio(results.slice(0, n));
-  return {
-    portfolio,
-    assumptions: toAssumptions(results[n] ?? []),
-    // A scenario row the app cannot read stops the load like any other (ADR 0231).
-    scenarios: ((results[n + 1] ?? []) as unknown as ScenarioRow[]).map(
-      rowToScenario,
-    ),
-    sample: toSample(results[n + 2] ?? [], portfolio),
-    backup: toBackupState(results[n + 3] ?? []),
-  };
-}
+/**
+ * The full load and the backup-recency writers, kept on this path for the backup, restore
+ * and migration tests, which import them from here unchanged (#471). The app imports
+ * loadState.ts and appMeta.ts.
+ * @internal
+ */
+export { loadState, LAST_BACKUP_AT, markDataChanged, recordBackup };

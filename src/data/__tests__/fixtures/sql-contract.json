@@ -1,0 +1,161 @@
+{
+  "comment": "The Sql seam's contract (#471): one set of scenarios run against the better-sqlite3 test adapter (src/data/__tests__/sqlContract.test.ts) and the app's Rust commands (src-tauri/tests/db_contract.rs, labels in src-tauri/src/db.rs). Each scenario starts on a fresh database holding `schema`.",
+  "schema": [
+    "CREATE TABLE p (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE)",
+    "CREATE TABLE c (id TEXT PRIMARY KEY, p_id TEXT NOT NULL REFERENCES p(id) ON DELETE CASCADE)",
+    "CREATE TABLE v (t TEXT, i INTEGER, r REAL, n TEXT)"
+  ],
+  "transactions": [
+    {
+      "name": "commits every statement",
+      "statements": [
+        {
+          "query": "INSERT INTO p (id, name) VALUES (?, ?)",
+          "params": ["a", "A"]
+        },
+        {
+          "query": "INSERT INTO c (id, p_id) VALUES (?, ?)",
+          "params": ["c1", "a"]
+        }
+      ],
+      "error": null,
+      "counts": { "p": 1, "c": 1 }
+    },
+    {
+      "name": "a failing statement keeps none of them",
+      "statements": [
+        {
+          "query": "INSERT INTO p (id, name) VALUES (?, ?)",
+          "params": ["a", "A"]
+        },
+        {
+          "query": "INSERT INTO p (id, name) VALUES (?, ?)",
+          "params": ["b", "A"]
+        }
+      ],
+      "error": "UNIQUE",
+      "counts": { "p": 0 }
+    },
+    {
+      "name": "a failure after a cascade keeps the deleted children",
+      "setup": [
+        {
+          "query": "INSERT INTO p (id, name) VALUES (?, ?)",
+          "params": ["a", "A"]
+        },
+        {
+          "query": "INSERT INTO c (id, p_id) VALUES (?, ?)",
+          "params": ["c1", "a"]
+        }
+      ],
+      "statements": [
+        { "query": "DELETE FROM p WHERE id = ?", "params": ["a"] },
+        {
+          "query": "INSERT INTO c (id, p_id) VALUES (?, ?)",
+          "params": ["c2", "missing"]
+        }
+      ],
+      "error": "FOREIGN KEY",
+      "counts": { "p": 1, "c": 1 }
+    },
+    {
+      "name": "foreign keys are enforced",
+      "statements": [
+        {
+          "query": "INSERT INTO c (id, p_id) VALUES (?, ?)",
+          "params": ["c1", "missing"]
+        }
+      ],
+      "error": "FOREIGN KEY",
+      "counts": { "c": 0 }
+    },
+    {
+      "name": "a delete cascades to the children",
+      "setup": [
+        {
+          "query": "INSERT INTO p (id, name) VALUES (?, ?)",
+          "params": ["a", "A"]
+        },
+        {
+          "query": "INSERT INTO c (id, p_id) VALUES (?, ?)",
+          "params": ["c1", "a"]
+        }
+      ],
+      "statements": [
+        { "query": "DELETE FROM p WHERE id = ?", "params": ["a"] }
+      ],
+      "error": null,
+      "counts": { "p": 0, "c": 0 }
+    },
+    {
+      "name": "binds text, integer, real and null",
+      "statements": [
+        {
+          "query": "INSERT INTO v (t, i, r, n) VALUES (?, ?, ?, ?)",
+          "params": ["9515405.13", 7, 0.5, null]
+        }
+      ],
+      "error": null,
+      "counts": { "v": 1 }
+    }
+  ],
+  "snapshots": [
+    {
+      "name": "one row list per statement, in order, with params bound",
+      "setup": [
+        {
+          "query": "INSERT INTO p (id, name) VALUES (?, ?)",
+          "params": ["a", "A"]
+        },
+        {
+          "query": "INSERT INTO p (id, name) VALUES (?, ?)",
+          "params": ["b", "B"]
+        }
+      ],
+      "statements": [
+        {
+          "query": "SELECT id, name FROM p WHERE id IN (?, ?) ORDER BY id",
+          "params": ["b", "a"]
+        },
+        { "query": "SELECT COUNT(*) AS n FROM p" },
+        { "query": "SELECT id FROM c" }
+      ],
+      "error": null,
+      "expected": [
+        [
+          { "id": "a", "name": "A" },
+          { "id": "b", "name": "B" }
+        ],
+        [{ "n": 2 }],
+        []
+      ]
+    },
+    {
+      "name": "values come back by storage class",
+      "setup": [
+        {
+          "query": "INSERT INTO v (t, i, r, n) VALUES (?, ?, ?, ?)",
+          "params": ["9515405.13", 7, 0.5, null]
+        }
+      ],
+      "statements": [{ "query": "SELECT t, i, r, n, typeof(i) AS ti FROM v" }],
+      "error": null,
+      "expected": [
+        [{ "t": "9515405.13", "i": 7, "r": 0.5, "n": null, "ti": "integer" }]
+      ]
+    },
+    {
+      "name": "a failing read rejects the whole snapshot",
+      "statements": [
+        { "query": "SELECT id FROM p" },
+        { "query": "SELECT id FROM missing" }
+      ],
+      "error": "no such table",
+      "expected": null
+    }
+  ],
+  "labels": {
+    "valid": ["pre-migration-v6-to-v7-20261001T120000Z", "a", "A-1-b"],
+    "invalid": ["../escape", "a b", "", "a_b", "é"]
+  }
+}

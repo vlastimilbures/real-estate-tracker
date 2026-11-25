@@ -4,7 +4,7 @@ import { create } from "zustand";
 import type { Sql } from "../../data/sql";
 import { DataError } from "../../data/errors";
 import { logFailure } from "../../data/errorLog";
-import { loadState } from "../../data/repositories";
+import { loadState } from "../../data/loadState";
 import { toWriteError } from "../writeError";
 import { createWriteRunner } from "./writeRunner";
 import { refusedOf, writesRefused } from "./status";

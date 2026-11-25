@@ -68,7 +68,7 @@ describe("scenarios repository", () => {
   afterAll(() => sql.db.close());
 
   it("inserts, lists, updates (preserving created_at), and deletes by id", async () => {
-    await upsertScenario(sql, scenarioToRow(sample, created));
+    await upsertScenario(sql, sample, created);
     let all = await listScenarios(sql);
     expect(all.map((s) => s.id)).toEqual(["s-1"]);
 
@@ -76,17 +76,15 @@ describe("scenarios repository", () => {
     // change but the stored created_at is preserved.
     await upsertScenario(
       sql,
-      scenarioToRow(
-        {
-          ...sample,
-          name: "Severe recession",
-          overrides: {
-            ...sample.overrides,
-            valueShock: { pct: rate("0.35"), atYear: 10 },
-          },
+      {
+        ...sample,
+        name: "Severe recession",
+        overrides: {
+          ...sample.overrides,
+          valueShock: { pct: rate("0.35"), atYear: 10 },
         },
-        isoDate("2030-01-01"),
-      ),
+      },
+      isoDate("2030-01-01"),
     );
     all = await listScenarios(sql);
     expect(all).toHaveLength(1);
@@ -135,10 +133,7 @@ describe("scenario creation order", () => {
       ["zz", "2026-10-02T09:00:00.000Z"],
       ["aa", "2026-10-02T09:00:01.000Z"],
     ] as const) {
-      await upsertScenario(
-        sql,
-        scenarioToRow({ ...sample, id, name: id }, new Date(at)),
-      );
+      await upsertScenario(sql, { ...sample, id, name: id }, new Date(at));
     }
     const all = await listScenarios(sql);
     expect(all.map((x) => x.id)).toEqual(["legacy-a", "legacy-b", "zz", "aa"]);
@@ -155,7 +150,7 @@ describe("scenarios persist across a restart (gate)", () => {
       const first = openMemorySql(file);
       await migrate(first);
       await upsertAssumptions(first, SEED_ASSUMPTIONS);
-      await upsertScenario(first, scenarioToRow(sample, created));
+      await upsertScenario(first, sample, created);
       first.db.close();
 
       const second = openMemorySql(file);

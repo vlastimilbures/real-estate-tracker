@@ -288,4 +288,20 @@ mod tests {
         assert!(!valid_label("a b"));
         assert!(!valid_label(""));
     }
+
+    /// #471: the label rule of the Sql contract (src/data/__tests__/fixtures/
+    /// sql-contract.json), which the better-sqlite3 test adapter is checked against too.
+    #[test]
+    fn labels_match_the_contract() {
+        let contract: serde_json::Value = serde_json::from_str(include_str!(
+            "../../src/data/__tests__/fixtures/sql-contract.json"
+        ))
+        .unwrap();
+        for (key, want) in [("valid", true), ("invalid", false)] {
+            for label in contract["labels"][key].as_array().unwrap() {
+                let label = label.as_str().unwrap();
+                assert_eq!(valid_label(label), want, "{label:?}");
+            }
+        }
+    }
 }

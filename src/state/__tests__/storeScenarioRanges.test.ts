@@ -12,7 +12,6 @@ import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
 import { upsertScenario } from "../../data/repositories";
-import { scenarioToRow } from "../../data/mappers";
 import { rate, type Scenario, type ScenarioOverrides } from "../../engine";
 import { CRASH_YEAR, SHOCK_YEARS } from "../../lib/rules";
 import { scenarioWriteErrors } from "../../ui/model/scenarioForm";
@@ -60,7 +59,7 @@ const refused = (field: string, value: number) => ({
 
 /** Store `s` past the store's rules, as a restored file can (ADR 0148). */
 async function storeRaw(s: Scenario): Promise<void> {
-  await upsertScenario(portfolioDb.get()!, scenarioToRow(s, new Date()));
+  await upsertScenario(portfolioDb.get()!, s, new Date());
   await store().refresh();
 }
 

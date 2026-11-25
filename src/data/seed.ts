@@ -12,16 +12,22 @@ import {
   holdingCostToRow,
 } from "./mappers";
 import {
-  flagStatement,
   insertStatement,
   upsertAssumptions,
   countProperties,
+} from "./repositories";
+import {
+  clearKeyStatement,
+  flagStatement,
+  hasFlag,
+  setFlag,
   DELETE_SAMPLE_MARKERS,
   SAMPLE_ACTIVE,
   SAMPLE_DISMISSED,
   SAMPLE_PROPERTIES,
-} from "./repositories";
-import { writeSafetyBackup } from "./backup";
+  SAMPLE_SEEDED,
+} from "./appMeta";
+import { writeSafetyBackup } from "./backup/backupFiles";
 import { money } from "../engine";
 
 const BASE_DATE = isoDate("2026-06-07");
@@ -199,13 +205,6 @@ function sampleStatements(): SqlStatement[] {
   ];
 }
 
-const SEEDED_FLAG = "sample_seeded";
-
-async function markSeeded(sql: Sql): Promise<void> {
-  const { query, params } = flagStatement(SEEDED_FLAG);
-  await sql.execute(query, params);
-}
-
 /** Seed the sample portfolio on the first run only (D-16): once the `sample_seeded`
  *  flag is in `app_meta`, an empty portfolio stays empty. Assumes `migrate` has run.
  *  The assumptions row is written on that true first run only (no flag, no property),
@@ -213,13 +212,9 @@ async function markSeeded(sql: Sql): Promise<void> {
  *  a database that later lost it is not repaired from the sample values, and loading it
  *  stops at startup with ROW_INVALID (ADR 0252). */
 export async function seedIfEmpty(sql: Sql): Promise<boolean> {
-  const flag = await sql.select<{ key: string }>(
-    "SELECT key FROM app_meta WHERE key = ?",
-    [SEEDED_FLAG],
-  );
-  if (flag.length > 0) return false;
+  if (await hasFlag(sql, SAMPLE_SEEDED)) return false;
   if ((await countProperties(sql)) > 0) {
-    await markSeeded(sql);
+    await setFlag(sql, SAMPLE_SEEDED);
     return false;
   }
   // First-run assumptions (ADR 0252 §1), only where none exist: an existing row is never
@@ -233,7 +228,7 @@ export async function seedIfEmpty(sql: Sql): Promise<boolean> {
   // failure leaves nothing behind and the next launch simply seeds again.
   await sql.transaction([
     ...sampleStatements(),
-    flagStatement(SEEDED_FLAG),
+    flagStatement(SAMPLE_SEEDED),
     // Marks the sample for the banner and "Clear sample" (ADR 0094).
     flagStatement(SAMPLE_ACTIVE),
   ]);
@@ -258,18 +253,13 @@ export async function loadSample(sql: Sql): Promise<void> {
   await sql.transaction([
     ...sampleStatements(),
     flagStatement(SAMPLE_ACTIVE),
-    {
-      query: "DELETE FROM app_meta WHERE key = ?",
-      params: [SAMPLE_DISMISSED],
-    },
+    clearKeyStatement(SAMPLE_DISMISSED),
   ]);
 }
 
 /** "Keep exploring": hide the sample banner for good (ADR 0094). */
-export async function dismissSampleBanner(sql: Sql): Promise<void> {
-  const { query, params } = flagStatement(SAMPLE_DISMISSED);
-  await sql.execute(query, params);
-}
+export const dismissSampleBanner = (sql: Sql): Promise<void> =>
+  setFlag(sql, SAMPLE_DISMISSED);
 
 /** "Clear sample and start my own" (ADR 0094): write and verify a safety backup (D-52),
  *  then in one transaction (D-14) delete the sample properties — their records go with

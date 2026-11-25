@@ -12,7 +12,6 @@ import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
 import { insertLease } from "../../data/repositories";
-import { leaseToRow } from "../../data/mappers";
 import {
   dayBefore,
   isoDate,
@@ -243,7 +242,7 @@ describe("leases never overlap (ADR 0163)", () => {
     beforeEach(() =>
       reset(async () => {
         const sql = await openSeeded();
-        await insertLease(sql, leaseToRow(legacy));
+        await insertLease(sql, legacy);
         return sql;
       }),
     );
@@ -275,7 +274,7 @@ describe("leases never overlap (ADR 0163)", () => {
 
       await reset(async () => {
         const sql = await openSeeded();
-        await insertLease(sql, leaseToRow(legacy));
+        await insertLease(sql, legacy);
         return sql;
       });
       expect(await store().removeLease(legacy.id)).toEqual({ ok: true });
@@ -295,7 +294,7 @@ describe("leases never overlap (ADR 0163)", () => {
     };
     await reset(async () => {
       const sql = await openSeeded();
-      await insertLease(sql, leaseToRow(old));
+      await insertLease(sql, old);
       return sql;
     });
     const r = await store().addLease({

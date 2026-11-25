@@ -4,7 +4,7 @@ import type { Sql } from "../../data/sql";
 import { EngineInputError } from "../../engine";
 import { toWriteError } from "../writeError";
 import { logFailure } from "../../data/errorLog";
-import { markDataChanged } from "../../data/repositories";
+import { markDataChanged } from "../../data/appMeta";
 import { perfMark, perfMeasure } from "../../lib/perf";
 import { createWriteQueue } from "./writeQueue";
 import { refusedOf, writesRefused } from "./status";

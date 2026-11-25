@@ -5,7 +5,7 @@ import { READ_FAILURES } from "../../data/errors";
 import { logFailure, type FailureSite } from "../diagnostics";
 import { clearSample, loadSample } from "../../data/seed";
 import { confirmRestore, exportBackup } from "../../data/backup";
-import { recordBackup } from "../../data/repositories";
+import { recordBackup } from "../../data/appMeta";
 import type { CsvImportPreview } from "../../import/csvImport";
 import { localIsoDay } from "../../lib/day";
 import { saveFile } from "../../platform/saveFile";
