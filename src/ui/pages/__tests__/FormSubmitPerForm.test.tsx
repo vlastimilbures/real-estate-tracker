@@ -36,6 +36,7 @@ function submitTwice(form: HTMLFormElement) {
       );
   });
 }
+const dialogForm = () => screen.getByRole("dialog").querySelector("form")!;
 
 describe("RecordForm", () => {
   function renderForm(onSubmit: () => Promise<void | WriteError>) {
@@ -90,6 +91,14 @@ describe("ScenarioForm", () => {
       screen.getByRole("button", { name: en.common.create }),
     );
     expect(screen.getByRole("alert").textContent).toContain("disk full");
+  });
+
+  it("two submits in one tick write once", async () => {
+    const onSubmit = vi.fn(never);
+    renderForm(onSubmit);
+    await userEvent.type(name(), "Crash");
+    submitTwice(dialogForm());
+    expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
   it("an edit keeps the form-level message (today; ADR 0262 proposed)", async () => {
