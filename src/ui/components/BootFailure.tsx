@@ -33,10 +33,7 @@ function startupText(t: Dictionary, e: StartupError): string[] {
   if (u && isPartial(u)) {
     // A brand-new database: no previous version, no data, so no copy to name.
     if (u.from === 0) return [t.boot.partialNew(u.reached, u.stoppedAt)];
-    const stopped =
-      e.code === "MIGRATION_CONFLICT"
-        ? t.boot.partialConflict(u.reached, u.stoppedAt)
-        : t.boot.partialFailed(u.reached, u.stoppedAt);
+    const stopped = t.boot.partialFailed(u.reached, u.stoppedAt);
     // An existing database is copied before its first step, so the path is set here.
     return u.backupPath
       ? [stopped, t.boot.copyAt(fileName(u.backupPath))]

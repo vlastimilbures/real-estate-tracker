@@ -188,8 +188,6 @@ export const en = {
     // ADR 0230: below the version 8 baseline.
     DB_TOO_OLD:
       "This database was last opened with a version older than 1.4.0. Open it once with version 1.5.0, then update.",
-    MIGRATION_CONFLICT:
-      "The database upgrade stopped before changing anything: some saved records conflict with the new data rules. Correct them in the previous app version, then open this version again.",
     MIGRATION_BACKUP_FAILED:
       "The database upgrade did not start because the safety backup could not be written or verified. Nothing was changed. Check that the disk has free space, then open the app again.",
     MIGRATION_FAILED:
@@ -205,8 +203,6 @@ export const en = {
 
   // The startup error screen (#115, ADR 0153).
   boot: {
-    partialConflict: (reached: number, stoppedAt: number) =>
-      `The database upgrade stopped at version ${stoppedAt}: some saved records conflict with the new data rules. The steps before it went through, so the database is now at version ${reached}, and the previous app version no longer opens it.`,
     partialFailed: (reached: number, stoppedAt: number) =>
       `The database upgrade failed at version ${stoppedAt}, and that step was rolled back. The steps before it went through, so the database is now at version ${reached}, and the previous app version no longer opens it.`,
     copyAt: (file: string) =>

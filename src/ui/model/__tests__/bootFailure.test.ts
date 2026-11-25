@@ -10,7 +10,6 @@ describe("bootView", () => {
     // ADR 0230: refused on every start. Restore stays off until the owner decides how it
     // treats the refused file (open point on #450).
     ["DB_TOO_OLD", { retry: false, records: false, restore: false }],
-    ["MIGRATION_CONFLICT", { retry: false, records: true, restore: false }],
     [
       "MIGRATION_BACKUP_FAILED",
       { retry: true, records: false, restore: false },

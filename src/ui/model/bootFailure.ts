@@ -21,11 +21,9 @@ const LASTING = new Set<DataErrorCode>([
   "DB_INTEGRITY",
   "DB_NEWER",
   "DB_TOO_OLD",
-  "MIGRATION_CONFLICT",
 ]);
 
 const RECORDS = new Set<DataErrorCode>([
-  "MIGRATION_CONFLICT",
   "ROW_INVALID",
   "ROW_MISSING",
   "SCENARIO_INVALID",
