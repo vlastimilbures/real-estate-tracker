@@ -5,8 +5,9 @@
 // may hold the flat `valueShockPct` and a `valueShock` without `atYear` (both a year-0
 // crash). Old backup files still carry it, so restore upgrades every scenario with
 // `upgradeLegacyOverrides` before reading it (backup/restorePlan.ts). The legacy rules
-// below (`LEGACY_KEYS`, `legacyValueShock`) are FROZEN: never change them. A new version
-// gets its own reader.
+// below (`LEGACY_KEYS`, the `atYear` default in `readValueShock`, `legacyValueShock`) are
+// FROZEN: never change them. A new version gets its own reader. The upgrade writes with
+// today's v1 serialiser.
 import type { Decimal } from "../lib/money";
 import { rate } from "../engine";
 import { DataError } from "./errors";
@@ -30,8 +31,23 @@ export const V1_KEYS = new Set<string>([
   "rateShock",
   "valueShock",
 ]);
-/** Frozen: the keys a legacy (unversioned) overrides JSON may hold. */
-const LEGACY_KEYS = new Set<string>([...V1_KEYS, "valueShockPct"]);
+/**
+ * Frozen: the keys a legacy (unversioned) overrides JSON may hold, spelt out so a change
+ * to the v1 keys never changes what an old backup may contain (#472).
+ * @internal
+ */
+export const LEGACY_KEYS: ReadonlySet<string> = new Set<string>([
+  "version",
+  "appreciationPa",
+  "rentIndexationPa",
+  "vacancyAllowance",
+  "postFixationResetRatePa",
+  "inflationPa",
+  "inflationShock",
+  "rateShock",
+  "valueShock",
+  "valueShockPct",
+]);
 
 /**
  * Scenario overrides → JSON. Flat level deltas are decimal strings; the time-aware

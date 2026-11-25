@@ -3,7 +3,7 @@
 // the v1 JSON the database stores, as the old migration 8 did.
 import { describe, expect, it } from "vitest";
 import { DataError } from "../errors";
-import { upgradeLegacyOverrides } from "../scenarioOverrides";
+import { LEGACY_KEYS, upgradeLegacyOverrides } from "../scenarioOverrides";
 
 describe("upgradeLegacyOverrides", () => {
   it.each([
@@ -64,5 +64,22 @@ describe("upgradeLegacyOverrides", () => {
       message: `A saved scenario cannot be read: ${line}.`,
       details: [line],
     });
+  });
+});
+
+describe("LEGACY_KEYS", () => {
+  it("is the frozen key list of a legacy overrides JSON", () => {
+    expect([...LEGACY_KEYS]).toEqual([
+      "version",
+      "appreciationPa",
+      "rentIndexationPa",
+      "vacancyAllowance",
+      "postFixationResetRatePa",
+      "inflationPa",
+      "inflationShock",
+      "rateShock",
+      "valueShock",
+      "valueShockPct",
+    ]);
   });
 });
