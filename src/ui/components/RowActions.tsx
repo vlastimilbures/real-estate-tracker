@@ -1,6 +1,6 @@
 // Row actions on every list (ADR 0199): icon-only quiet buttons whose name is also the
 // tooltip shown on hover and on keyboard focus.
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, type Ref } from "react";
 import type { LucideIcon } from "lucide-react";
 import { useWriteRunning } from "../../state/portfolioStore";
 import { isEscape, useDismiss } from "../hooks/useDismiss";
@@ -33,6 +33,7 @@ export function RowAction({
   danger = false,
   disabled,
   onClick,
+  buttonRef,
 }: {
   icon: LucideIcon;
   label: string;
@@ -40,6 +41,8 @@ export function RowAction({
   danger?: boolean | undefined;
   disabled?: boolean | undefined;
   onClick: () => void;
+  /** The button, for a caller that moves focus to it (Holding costs' pencil). */
+  buttonRef?: Ref<HTMLButtonElement> | undefined;
 }) {
   const [tipOff, setTipOff] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -54,6 +57,7 @@ export function RowAction({
     .join(" ");
   return (
     <button
+      ref={buttonRef}
       type="button"
       className={cls}
       disabled={disabled}
