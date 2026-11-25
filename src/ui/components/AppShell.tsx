@@ -20,6 +20,7 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { SegmentedToggle, ErrorBanner } from "./primitives";
 import { useFirstShow } from "../hooks/useFirstShow";
 import { focusLost } from "../focus";
+import { swapShownRoute } from "../../state/shellMemory";
 import { BrandMark } from "./BrandMark";
 import { BackupHint } from "./BackupHint";
 import { SkipLink } from "./SkipLink";
@@ -158,10 +159,6 @@ const BRAND_SPLIT = APP_NAME.lastIndexOf(" ");
 const BRAND_HEAD = APP_NAME.slice(0, BRAND_SPLIT).replace(/ /g, "\u00a0");
 const BRAND_TAIL = APP_NAME.slice(BRAND_SPLIT + 1);
 
-// The route the last mounted shell showed. Module scope: each page renders its own shell,
-// so a page change mounts a new one (ADR 0146).
-let shownRoute: Route | null = null;
-
 export function AppShell({
   title,
   subtitle,
@@ -217,8 +214,10 @@ export function AppShell({
   // focus (a dialog, a glossary term, a section): only focus that was lost moves.
   const mainRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    const changed = shownRoute !== null && shownRoute !== route;
-    shownRoute = route;
+    // The route the last mounted shell showed: each page renders its own shell, so a page
+    // change mounts a new one (ADR 0146).
+    const before = swapShownRoute(route);
+    const changed = before !== null && before !== route;
     if (changed && focusLost()) mainRef.current?.focus({ preventScroll: true });
   }, [route]);
 

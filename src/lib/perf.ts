@@ -72,3 +72,14 @@ export function perfReport(name: string): void {
   perfMark(name);
   sink?.(name, null);
 }
+
+/** The milestones already reported in the app's lifetime, whether timing was on or not. */
+const reported = new Set<string>();
+
+/** `perfReport(name)` the first time only in the app's lifetime: a page's first render
+ *  is the cold-start end (P9); later renders of that page are not. */
+export function perfReportOnce(name: string): void {
+  if (reported.has(name)) return;
+  reported.add(name);
+  perfReport(name);
+}

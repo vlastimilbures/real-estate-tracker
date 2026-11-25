@@ -12,14 +12,6 @@ import { useDismiss } from "../hooks/useDismiss";
 import { useFieldControlProps } from "./fieldContext";
 import type { DateCalendar } from "./DateCalendar";
 
-// The calendar loads on the first open (DR-009): react-day-picker stays out of the startup
-// bundle. The popover opens once the chunk is in, so it never shows a placeholder; the
-// chunk is a local file, so the wait is a few milliseconds (ADR 0066).
-let LoadedCalendar: typeof DateCalendar | undefined;
-async function loadCalendar(): Promise<void> {
-  LoadedCalendar = (await import("./DateCalendar")).DateCalendar;
-}
-
 // dd.mm.yyyy for a day picked in the calendar. The day comes from react-day-picker as a
 // LOCAL Date, so take its local calendar day (localDay) to avoid an off-by-one near
 // midnight.
@@ -56,6 +48,14 @@ export function DateInput({
   const t = useT();
   const fieldProps = useFieldControlProps();
   const [open, setOpen] = useState(false);
+  // The calendar loads on the first open (DR-009): react-day-picker stays out of the
+  // startup bundle. The popover opens once the chunk is in, so it never shows a
+  // placeholder; the chunk is a local file, so the wait is a few milliseconds (ADR 0066),
+  // and the module cache answers a later field's first open at once. Held per field, so
+  // there is no module state (#491); a load that fails leaves the popover shut.
+  const [LoadedCalendar, setLoadedCalendar] = useState<
+    typeof DateCalendar | null
+  >(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
@@ -150,7 +150,11 @@ export function DateInput({
           onClick={() => {
             if (open) close();
             else if (LoadedCalendar) setOpen(true);
-            else void loadCalendar().then(() => setOpen(true));
+            else
+              void import("./DateCalendar").then(({ DateCalendar }) => {
+                setLoadedCalendar(() => DateCalendar);
+                setOpen(true);
+              });
           }}
         >
           <Calendar size={16} aria-hidden />
