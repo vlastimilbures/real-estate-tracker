@@ -40,6 +40,7 @@ export const SEED_ASSUMPTIONS: Assumptions = {
   postFixationResetRatePa: rate("0.045"),
   horizonYears: 30,
   inflationPa: rate("0.025"),
+  sellingCostPct: rate("0"), // the column default (ADR 0183)
   defaults: {
     propertyTaxYr: money("2550"),
     insuranceYr: money("2550"),
