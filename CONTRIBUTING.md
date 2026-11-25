@@ -91,12 +91,14 @@ still describe it. Which document owns what is listed in
   Vitest tests run; on push, the full typecheck, `pnpm depcruise`, `pnpm knip`,
   `pnpm knip:prod` and `pnpm adr:check` run. A green CI run is required to merge — do not
   bypass the hooks.
-- **Git in tests** (#589): git sets `GIT_DIR` (and `GIT_WORK_TREE`) inside
-  `git rebase --exec` and some hooks, and a test that inherits them runs its git on the real
-  repository (once: `core.bare=true` and a stray branch `pr`). A script test that runs git in
-  a temp repository runs it with `scripts/__tests__/support/cleanGitEnv.mjs`;
-  `git-env-isolation.test.mjs` runs those suites against a sentinel repository and fails
-  when one is not listed. So `pnpm check` is guarded inside `git rebase --exec`, but prefer
+- **Git in tests** (#589): git sets `GIT_DIR` inside `git rebase --exec` run in a linked
+  worktree and inside some hooks (a commit hook can also get `GIT_INDEX_FILE`), and a test
+  that inherits it runs its git on the real repository (once: `core.bare=true` and a stray
+  branch `pr`). A test that starts git, or a script that runs git, does so with
+  `scripts/__tests__/support/cleanGitEnv.mjs`; `git-env-isolation.test.mjs` runs those
+  suites against a sentinel repository and fails when a test file under `scripts/`,
+  `ux-capture/` or `src/` does either without being listed. So `pnpm check` is guarded
+  inside `git rebase --exec`, but prefer
   `env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE pnpm check` there: the gates themselves
   (the baseline checks) still read the repository git points them at.
 - **Stylesheets** (#460): `pnpm lint:css` runs stylelint (`stylelint.config.mjs`: no
