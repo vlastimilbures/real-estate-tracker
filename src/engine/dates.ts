@@ -5,6 +5,7 @@
 // `addYears`), and read them only through `getUTC*`, so results never depend on the
 // host time zone or DST. Month arithmetic follows Excel EDATE (clamp to month end).
 import type { IsoDate } from "./brands";
+import { yearsToMonths } from "./units";
 
 /** Build a UTC date from y/m/d (m is 1-based). The root IsoDate constructor. It takes the
  *  full year (Date.UTC would map 0–99 to 1900–1999, ADR 0149 §5) and rolls an
@@ -74,7 +75,7 @@ export function addDays(date: Date, days: number): IsoDate {
 
 /** Add whole years as EDATE(date, 12·years), so Feb 29 clamps to Feb 28. */
 export function addYears(date: Date, years: number): IsoDate {
-  return edate(date, years * 12);
+  return edate(date, yearsToMonths(years));
 }
 
 /**
@@ -133,7 +134,7 @@ function gridStep(anchor: Date, k: number): IsoDate {
  */
 export function monthsBetween(a: Date, b: Date): number {
   let months =
-    (b.getUTCFullYear() - a.getUTCFullYear()) * 12 +
+    yearsToMonths(b.getUTCFullYear() - a.getUTCFullYear()) +
     (b.getUTCMonth() - a.getUTCMonth());
   if (b.getUTCDate() < a.getUTCDate()) months -= 1;
   return months;

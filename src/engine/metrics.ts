@@ -40,6 +40,7 @@ import type {
   PropertySnapshot,
   PortfolioSnapshot,
 } from "./types";
+import { monthsToYears } from "./units";
 
 /** Lease in force at `asOf`: latest startDate ≤ asOf, endDate blank or ≥ asOf. */
 export function leaseInForce(leases: Lease[], asOf: Date): Lease | undefined {
@@ -151,7 +152,7 @@ export function valueAnchor(
 /** Years of growth from `anchor` to `asOf`: grid months / 12 by the D-21 month-end
  *  rule, so a clamped month-end (29 Feb → 28 Feb) counts (D-32, D-45); never negative. */
 export function growthYears(anchor: Date, asOf: Date): number {
-  return lastGridMonthOnOrBefore(anchor, asOf) / 12;
+  return monthsToYears(lastGridMonthOnOrBefore(anchor, asOf));
 }
 
 /**

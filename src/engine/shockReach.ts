@@ -15,6 +15,7 @@ import {
   type ChainLink,
 } from "./schedule";
 import type { Assumptions, IsoDate, Portfolio, ShockBand } from "./types";
+import { yearsToMonths } from "./units";
 
 /** Why a block's payments miss the shock window. */
 export type ShockMissReason =
@@ -96,14 +97,14 @@ function missReason(
   if (b.fixationYears > 0 && !isAfter(maturity, fixEnd))
     return "fixedToMaturity";
   const offset = paymentOffset(b, a.baseDate);
-  const k = Math.max(1, offset + 1, b.fixationYears * 12 + 1);
+  const k = Math.max(1, offset + 1, yearsToMonths(b.fixationYears) + 1);
   const due = dueDate(b, k);
   const row = k - offset;
   if (isAfter(due, maturity)) return "repaid";
-  if (isAfter(due, edate(fixEnd, shock.durationYears * 12)))
+  if (isAfter(due, edate(fixEnd, yearsToMonths(shock.durationYears))))
     return "windowEnded";
   if (replacedAt(link, row, due, a.baseDate)) return "replacedBySuccessor";
-  if (row > a.horizonYears * 12) return "refixAfterHorizon";
+  if (row > yearsToMonths(a.horizonYears)) return "refixAfterHorizon";
   return undefined;
 }
 

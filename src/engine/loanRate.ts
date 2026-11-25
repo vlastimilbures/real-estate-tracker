@@ -1,12 +1,12 @@
 // The rate a loan block pays (SPEC §4.4): its fixation end and the fixation- and
 // shock-aware rate in force on a payment's due date (D-21, ADR 0162).
 import type { Decimal } from "../lib/money";
-import { edate, isAfter, isOnOrBefore } from "./dates";
+import { addYears, isAfter, isOnOrBefore } from "./dates";
 import type { Assumptions, IsoDate, MortgageBlock } from "./types";
 
 /** End of the fixation period: startDate + fixationYears*12 months (EDATE). */
 export function blockEndDate(block: MortgageBlock): IsoDate {
-  return edate(block.startDate, block.fixationYears * 12);
+  return addYears(block.startDate, block.fixationYears);
 }
 
 /**
@@ -55,7 +55,7 @@ export function rateAt(
   if (
     rateShock &&
     isAfter(date, baseDate) &&
-    isOnOrBefore(date, edate(endDate, rateShock.durationYears * 12))
+    isOnOrBefore(date, addYears(endDate, rateShock.durationYears))
   ) {
     return postFixationResetRatePa.plus(rateShock.deltaPa);
   }

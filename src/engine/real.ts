@@ -16,6 +16,7 @@ import type {
   ProjectionYear,
   PropertySnapshot,
 } from "./types";
+import { monthsToYears, yearsToMonths } from "./units";
 
 /**
  * Price index at `asOf` (baseDate = 1): the yearly index of the last whole projection
@@ -30,16 +31,16 @@ export function cpiAt(assumptions: Assumptions, asOf: Date): Decimal {
   // Months on the D-21 month-end grid, as value growth counts them (DR-182, ADR 0080).
   const months = lastGridMonthOnOrBefore(assumptions.baseDate, asOf);
   if (months <= 0) return ONE;
-  if (months > assumptions.horizonYears * 12)
+  if (months > yearsToMonths(assumptions.horizonYears))
     throw new RangeError(
       `cpiAt: as-of ${asOf.toISOString().slice(0, 10)} is past the horizon.`,
     );
   const cpi = buildCpiIndex(assumptions);
-  const whole = Math.floor(months / 12);
-  const rest = months - whole * 12;
+  const whole = Math.floor(monthsToYears(months));
+  const rest = months - yearsToMonths(whole);
   if (rest === 0) return at(cpi, whole);
   const infl = inflationInYear(assumptions, whole + 1);
-  return at(cpi, whole).times(powYears(ONE.plus(infl), rest / 12));
+  return at(cpi, whole).times(powYears(ONE.plus(infl), monthsToYears(rest)));
 }
 
 /** Every money field of a projection year: all but the labels and the ratios (#478). */

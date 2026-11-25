@@ -18,6 +18,7 @@ import {
   notPositive,
   type Report,
 } from "./check";
+import { yearsToMonths } from "../units";
 
 /** A block's reporter: a problem on a mortgage field. */
 type LoanReport = Report<FieldOf<"mortgage">>;
@@ -27,7 +28,7 @@ type LoanReport = Report<FieldOf<"mortgage">>;
 function contractTerm(b: MortgageBlock): number | undefined {
   if (b.loanTermYears != null) {
     return Number.isInteger(b.loanTermYears) && b.loanTermYears > 0
-      ? b.loanTermYears * 12
+      ? yearsToMonths(b.loanTermYears)
       : undefined;
   }
   const finite =

@@ -4,6 +4,7 @@ import { ceilCzk, type Decimal } from "../lib/money";
 import { annuityPayment } from "./finance";
 import { isDevLoan } from "./loanBlock";
 import type { MortgageBlock } from "./types";
+import { monthlyRate, yearsToMonths } from "./units";
 
 /** Annuity instalment that amortizes `principal` over `termYears` at `ratePa`. */
 export function instalmentFor(
@@ -11,7 +12,11 @@ export function instalmentFor(
   ratePa: Decimal,
   termYears: number,
 ): Decimal {
-  return annuityPayment(ratePa.div(12), termYears * 12, principal);
+  return annuityPayment(
+    monthlyRate(ratePa),
+    yearsToMonths(termYears),
+    principal,
+  );
 }
 
 /**

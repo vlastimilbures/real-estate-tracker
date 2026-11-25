@@ -3,6 +3,7 @@ import { ZERO, type Decimal } from "../../lib/money";
 import { annuityPayment } from "../finance";
 import { isAfter } from "../dates";
 import type { AmortizationRow, IsoDate, MortgageBlock } from "../types";
+import { monthlyRate } from "../units";
 
 // ---------------------------------------------------------------------------
 // The month-step kernel
@@ -71,7 +72,7 @@ export function amortizeMonth(
   interestOnly: boolean,
   pay: PaymentTerms,
 ): MonthStep {
-  const rateMonthly = ratePa.div(12);
+  const rateMonthly = monthlyRate(ratePa);
   if (interestOnly) {
     const interest = balanceIn.isPositive()
       ? balanceIn.times(rateMonthly)

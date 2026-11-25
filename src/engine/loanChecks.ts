@@ -7,6 +7,7 @@ import { isDevLoan } from "./loanBlock";
 import { dueDate, termMonths } from "./loanTerm";
 import { FULLY_AMORTIZES_TOLERANCE } from "./constants";
 import type { IsoDate, MortgageBlock } from "./types";
+import { monthlyRate } from "./units";
 
 export interface AmortizationHealth {
   /** Instalment that exactly amortizes the principal over the term at the block rate. */
@@ -24,7 +25,7 @@ export interface AmortizationHealth {
  * from the instalment (no explicit `loanTermYears`) amortizes by construction.
  */
 export function amortizationHealth(block: MortgageBlock): AmortizationHealth {
-  const rateMonthly = block.interestRatePa.div(12);
+  const rateMonthly = monthlyRate(block.interestRatePa);
   const term = termMonths(block);
   const suggestedInstalment = annuityPayment(
     rateMonthly,
