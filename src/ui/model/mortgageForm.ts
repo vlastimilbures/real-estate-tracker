@@ -3,12 +3,21 @@
 // Kept out of the page component so they are unit-testable in the node test env
 // (no DOM).
 import {
+  dateDraft,
   moneyDraft,
   parseDecimal,
+  percentDraft,
   parsePercentToRatio,
   parseIntField,
 } from "./formParse";
-import { drawWarnings, drawdownTotal, hasRows } from "./loanEventRows";
+import {
+  drawWarnings,
+  drawdownTotal,
+  drawsDraft,
+  hasRows,
+  prepaymentsDraft,
+  recastsDraft,
+} from "./loanEventRows";
 import { mortgageBlock, suggestedInstalment } from "../../engine";
 import type {
   IsoDate,
@@ -59,6 +68,28 @@ function draftIsDev(draft: Record<string, string>): boolean {
   return (
     hasRows(draft.draws ?? "") || (draft.completionDate ?? "").trim() !== ""
   );
+}
+
+/** The form's draft of a block, or of a new one (null). */
+export function mortgageDraft(r: MortgageBlock | null): Record<string, string> {
+  const b: Partial<MortgageBlock> = r ?? {};
+  const years = (n: number | undefined) => (n != null ? String(n) : "");
+  const base = {
+    startDate: dateDraft(b.startDate),
+    initialPrincipal: moneyDraft(b.initialPrincipal),
+    fixationYears: years(b.fixationYears),
+    loanTermYears: years(b.loanTermYears),
+    interestRatePa: percentDraft(b.interestRatePa),
+    monthlyInstalment: moneyDraft(b.monthlyInstalment),
+    draws: drawsDraft(b.draws),
+    completionDate: dateDraft(b.completionDate),
+    contractMaturityDate: dateDraft(b.contractMaturityDate),
+    // Stored events come date-sorted from the mapper (ADR 0116 §11).
+    prepayments: prepaymentsDraft(b.prepayments),
+    recasts: recastsDraft(b.recasts),
+  };
+  // The Standard | Development switch starts from the block's data (ADR 0098).
+  return { ...base, loanType: loanTypeOf(base) };
 }
 
 /**

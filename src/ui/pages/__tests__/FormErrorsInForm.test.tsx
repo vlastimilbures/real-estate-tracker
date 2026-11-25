@@ -74,23 +74,28 @@ describe("a refused form save stays in the form (R4-05)", () => {
     render(
       <AppShell title="Loans">
         <EntityPanel
-          title="Loans"
-          addLabel="loan"
-          rows={[{ id: block.id, value: "1" }]}
-          columns={[{ head: "Value", left: true, cell: (r) => r.value }]}
-          specs={specs}
-          draftOf={(r) => ({ value: r ? r.value : "" })}
-          build={(v, id) => ({ id, value: String(v.value) })}
-          onAdd={async () => ({ ok: true })}
-          // A development loan without a term: the store refuses it (an input rule).
-          onSave={() =>
-            usePortfolioStore.getState().saveMortgageBlock({
-              ...block,
-              draws: [{ date: isoDate("2026-09-01"), amount: money("100") }],
-              completionDate: isoDate("2028-10-10"),
-            } as unknown as MortgageBlock)
-          }
-          onDelete={async () => ({ ok: true })}
+          chrome={{
+            title: "Loans",
+            addLabel: "loan",
+          }}
+          table={{
+            rows: [{ id: block.id, value: "1" }],
+            columns: [{ head: "Value", left: true, cell: (r) => r.value }],
+            onDelete: async () => ({ ok: true }),
+          }}
+          form={{
+            specs,
+            draftOf: (r) => ({ value: r ? r.value : "" }),
+            build: (v, id) => ({ id, value: String(v.value) }),
+            onAdd: async () => ({ ok: true }),
+            // A development loan without a term: the store refuses it (an input rule).
+            onSave: () =>
+              usePortfolioStore.getState().saveMortgageBlock({
+                ...block,
+                draws: [{ date: isoDate("2026-09-01"), amount: money("100") }],
+                completionDate: isoDate("2028-10-10"),
+              } as unknown as MortgageBlock),
+          }}
         />
       </AppShell>,
     );

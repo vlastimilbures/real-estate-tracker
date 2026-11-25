@@ -115,11 +115,6 @@
       "Function 'HoldingCostsPanel'": 155
     }
   },
-  "src/ui/pages/PropertyEntityPanels.tsx": {
-    "lines": {
-      "Function 'MortgagesPanel'": 185
-    }
-  },
   "src/ui/pages/ScenarioCompare.tsx": {
     "lines": {
       "Function 'CompareView'": 181
