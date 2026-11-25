@@ -217,8 +217,35 @@ module.exports = {
       severity: "error",
       comment:
         "Shipped code may not import devDependencies (DR-011/DR-153): it hides runtime packages from `pnpm audit --prod`.",
-      from: { path: "^src/", pathNot: `${TESTS}|^src/data/browserSql\\.ts$` },
+      from: { path: "^src/", pathNot: `${TESTS}|^src/e2e/browserSql\\.ts$` },
       to: { dependencyTypes: ["npm-dev"], dependencyTypesNot: ["type-only"] },
+    },
+    {
+      name: "e2e-only-from-open",
+      severity: "error",
+      comment:
+        "src/e2e holds what only the browser E2E and ux:capture runs use (#472): the sql.js adapter and the forced startup faults. Only src/data/open.ts reaches it, inside its DEV + VITE_E2E branch, which the production build removes.",
+      from: {
+        path: "^src/",
+        pathNot: `${TESTS}|^src/e2e/|^src/data/open\\.ts$`,
+      },
+      to: { path: "^src/e2e/" },
+    },
+    {
+      name: "e2e-dynamic-import-only",
+      severity: "error",
+      comment:
+        "src/data/open.ts loads src/e2e only by a dynamic import (#472), so the sql.js chunk is split off and dead-code-eliminated from the shipped bundle.",
+      from: { path: "^src/data/open\\.ts$" },
+      to: { path: "^src/e2e/", dependencyTypesNot: ["dynamic-import"] },
+    },
+    {
+      name: "e2e-leaf",
+      severity: "error",
+      comment:
+        "src/e2e implements the Sql interface and nothing else of the app (#472): it imports only src/data/sql.ts and its own modules.",
+      from: { path: "^src/e2e/", pathNot: TESTS },
+      to: { path: "^src/", pathNot: "^src/(e2e/|data/sql\\.ts$)" },
     },
     {
       name: "not-to-unresolvable",

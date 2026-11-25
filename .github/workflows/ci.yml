@@ -83,7 +83,7 @@ jobs:
         run: pnpm coverage:ratchet
 
       # Only the production build exercises Rolldown chunking, `?url` asset imports and the
-      # dead-code elimination that keeps the E2E-only sql.js (src/data/browserSql.ts) out of
+      # dead-code elimination that keeps the E2E-only sql.js (src/e2e/browserSql.ts) out of
       # the app bundle; otherwise a break shows up only at release time (#161).
       - name: Production build
         run: pnpm exec vite build
@@ -94,7 +94,7 @@ jobs:
           status=0
           grep -rlE 'sql-wasm|initSqlJs' dist/assets || status=$?
           if [[ $status == 0 ]]; then
-            echo "::error::sql.js reached dist/assets; src/data/browserSql.ts is for E2E only"
+            echo "::error::sql.js reached dist/assets; src/e2e/browserSql.ts is for E2E only"
           fi
           [[ $status == 1 ]]
 

@@ -6,7 +6,7 @@ import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
 import { loadState } from "../repositories";
 import { DataError } from "../errors";
-import { afterSeed, beforeMigrate, e2eFault } from "../e2eFaults";
+import { afterSeed, beforeMigrate, e2eFault } from "../../e2e/e2eFaults";
 
 async function code(p: Promise<unknown>): Promise<string> {
   try {
