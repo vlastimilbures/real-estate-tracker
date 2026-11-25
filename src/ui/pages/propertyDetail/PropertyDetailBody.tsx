@@ -5,7 +5,7 @@ import type { DataCheckFix } from "../../model/dataCheck";
 import type { PropertyDetailView } from "../../model/propertyDetailView";
 import type { PropertyFormTarget } from "../../model/sectionNav";
 import type { usePropertyActivation } from "../../hooks/usePropertyActivation";
-import type { usePropertyRecords } from "../../hooks/usePropertyRecords";
+import type { PropertyRecords } from "../../model/propertyRecords";
 import type {
   Assumptions,
   EngineInputError,
@@ -35,7 +35,7 @@ export interface PropertyDetailBodyProps {
   invalid: EngineInputError | null;
   portfolio: Portfolio;
   assumptions: Assumptions;
-  records: ReturnType<typeof usePropertyRecords>;
+  records: PropertyRecords;
   activation: ReturnType<typeof usePropertyActivation>;
   asOf: {
     value: Date | null;

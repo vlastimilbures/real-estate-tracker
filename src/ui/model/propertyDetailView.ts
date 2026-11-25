@@ -1,18 +1,18 @@
 // Property detail's view (#484): everything the page derives from the engine's output, the
 // property and the lens, so the page only renders. Pure.
 import type {
-  AcquisitionSummary,
   AmortizationRow,
   Assumptions,
-  EngineInputError,
-  LoanEventOutcome,
   MortgageBlock,
   Portfolio,
-  ProjectionYear,
   Property,
-  PropertyLoan,
   PropertySnapshot,
 } from "../../engine";
+import type {
+  InvalidPropertyData,
+  PropertyEngineOutput,
+  PropertyResult,
+} from "../../state/engineModel";
 import type { Dictionary } from "../../i18n";
 import { fmtDate, fmtNumber } from "../../lib/format";
 import { exportFilename } from "../../lib/slug";
@@ -53,17 +53,8 @@ import {
 import type { Mode } from "./lens";
 import type { XlsxColumn } from "./xlsxExport";
 
-/** The engine's output for one property, as the page reads it (state's
- *  PropertyEngineOutput). */
-export interface PropertyDetailOut {
-  asOf: Date;
-  snapshot: PropertySnapshot;
-  projection: ProjectionYear[];
-  schedule: AmortizationRow[];
-  eventOutcomes: LoanEventOutcome[];
-  financing: PropertyLoan | null;
-  acquisition: AcquisitionSummary;
-}
+/** The engine's output for one property (a type-only edge, ADR 0072). */
+type PropertyDetailOut = PropertyEngineOutput;
 
 /** What `exportTableXlsx` takes: one sheet. */
 export interface TableExport<R> {
@@ -123,9 +114,10 @@ export interface PropertyDetailInput {
 
 /** The engine's result split: its figures, or the rule the stored data breaks (DR-146);
  *  both null for an unknown property. */
-export function splitResult(
-  result: PropertyDetailOut | { invalid: EngineInputError } | null,
-): { out: PropertyDetailOut | null; invalid: EngineInputError | null } {
+export function splitResult(result: PropertyResult): {
+  out: PropertyDetailOut | null;
+  invalid: InvalidPropertyData["invalid"] | null;
+} {
   if (!result) return { out: null, invalid: null };
   return "invalid" in result
     ? { out: null, invalid: result.invalid }

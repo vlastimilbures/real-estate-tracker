@@ -1,14 +1,41 @@
-// Rules and texts of Property detail's record panels (#484): the mortgage table's
-// development summary and the valuation an added one closes. Pure.
+// Property detail's records (#484): one property's rows, the mortgage table's development
+// summary and the valuation an added one closes. Pure.
 import {
   dayBefore,
   openPredecessor,
   scheduledPrincipal,
+  type HoldingCost,
+  type Lease,
   type MortgageBlock,
+  type Portfolio,
   type Valuation,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import { fmtCzk, fmtDate } from "../../lib/format";
+
+/** One property's stored records. */
+export interface PropertyRecords {
+  valuations: Valuation[];
+  leases: Lease[];
+  mortgages: MortgageBlock[];
+  holding: HoldingCost | undefined;
+}
+
+/** The property's valuations, leases and loan blocks, and its holding costs; empty while
+ *  no portfolio has loaded. New arrays on every call, as the page always built them. */
+export function propertyRecords(
+  portfolio: Portfolio | null,
+  propertyId: string | null,
+): PropertyRecords {
+  const mine = <R extends { propertyId: string }>(rows: R[] | undefined) =>
+    (rows ?? []).filter((r) => r.propertyId === propertyId);
+  return {
+    valuations: mine(portfolio?.valuations),
+    leases: mine(portfolio?.leases),
+    mortgages: mine(portfolio?.mortgages),
+    holding: portfolio?.holdingCosts.find((h) => h.propertyId === propertyId),
+  };
+}
 
 /** The mortgage table's compact development-loan summary: tranches and total loan, the
  *  interest-only end; "—" for a standard loan. */

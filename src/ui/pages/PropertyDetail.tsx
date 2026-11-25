@@ -13,7 +13,7 @@ import { useT } from "../hooks/useT";
 import { useAsOf } from "../hooks/useAsOf";
 import { useSectionSpy } from "../hooks/useSectionSpy";
 import { usePropertyActivation } from "../hooks/usePropertyActivation";
-import { usePropertyRecords } from "../hooks/usePropertyRecords";
+import { propertyRecords } from "../model/propertyRecords";
 import {
   detailSections,
   propertyDetailView,
@@ -96,9 +96,9 @@ export function PropertyDetail() {
     acquisitionOpener.current = null;
     if (!opener.isConnected) focusSection(sectionId("acquisition"));
   }, [editing]);
-  const activation = usePropertyActivation(propertyId ?? "");
+  const activation = usePropertyActivation(propertyId);
   const { showToast } = useToast();
-  const records = usePropertyRecords(propertyId);
+  const records = propertyRecords(store.portfolio, propertyId);
   const found = store.portfolio?.properties.find((p) => p.id === propertyId);
   const isActive = found?.active !== false;
   // Computed before the early return so the spy hook runs on every render.
