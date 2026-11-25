@@ -374,7 +374,7 @@ describe("fixation timeline (ADR 0204)", () => {
     // ADR 0214 §3: one note, the nominal line leading the disclaimer.
     const notes = [...container.querySelectorAll(".fx-notes .panel-note")];
     expect(notes.map((n) => n.textContent)).toEqual([
-      `${d.financingRowsNominal} ${d.financingDisclaimer}`,
+      d.financingRowsNominalDisclaimer,
     ]);
   });
 });

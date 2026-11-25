@@ -152,7 +152,7 @@ describe("Financing note (ADR 0214 §3)", () => {
   it("real: the nominal note, then the disclaimer, as one paragraph", () => {
     act(() => useUiStore.setState({ mode: "real" }));
     showDashboard(mixed, []);
-    expect(note()).toBe(`${d.financingRowsNominal} ${d.financingDisclaimer}`);
+    expect(note()).toBe(d.financingRowsNominalDisclaimer);
     expect(document.querySelectorAll(".fx-notes p")).toHaveLength(1);
   });
 });

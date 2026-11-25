@@ -364,7 +364,7 @@ export function financingView(
     showWindow: panel.hasLoans || timeline.rows.length > 0,
     note:
       timeline.rows.length > 0 && mode === "real"
-        ? `${d.financingRowsNominal} ${d.financingDisclaimer}`
+        ? d.financingRowsNominalDisclaimer
         : d.financingDisclaimer,
   };
 }
