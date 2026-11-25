@@ -11,10 +11,9 @@ import {
   updateValuation,
   deleteLease,
   setPropertyActive,
-  updateHoldingCost,
+  upsertHoldingCost,
 } from "../repositories";
 import { DataError } from "../errors";
-import { propertyToRow, holdingCostToRow } from "../mappers";
 import type { Sql } from "../sql";
 import { isoDate } from "../../engine";
 import { money } from "../../engine";
@@ -70,17 +69,17 @@ describe("atomic writes", () => {
     await expect(
       insertPropertyWithCosts(
         failOn(sql, /INSERT INTO holding_costs/),
-        propertyToRow(p, noExtras),
-        holdingCostToRow({ id: "hc-p-new", propertyId: "p-new" }),
+        p,
+        noExtras,
+        { id: "hc-p-new", propertyId: "p-new" },
       ),
     ).rejects.toThrow();
     expect(await count(sql, "properties")).toBe(0);
 
-    await insertPropertyWithCosts(
-      sql,
-      propertyToRow(p, noExtras),
-      holdingCostToRow({ id: "hc-p-new", propertyId: "p-new" }),
-    );
+    await insertPropertyWithCosts(sql, p, noExtras, {
+      id: "hc-p-new",
+      propertyId: "p-new",
+    });
     expect(await count(sql, "properties")).toBe(1);
     expect(await count(sql, "holding_costs")).toBe(1);
   });
@@ -138,7 +137,7 @@ describe("saving holding costs", () => {
     await sql.execute(
       "INSERT INTO properties (id, name, purchase_date, purchase_price) VALUES ('p1', 'P', '2025-01-01', '1')",
     );
-    await updateHoldingCost(sql, {
+    await upsertHoldingCost(sql, {
       id: "hc-new",
       propertyId: "p1",
       insuranceYr: money("3000"),
@@ -149,7 +148,7 @@ describe("saving holding costs", () => {
     }>("SELECT property_id, insurance_yr FROM holding_costs");
     expect(rows).toEqual([{ property_id: "p1", insurance_yr: "3000" }]);
     // Saving again updates that one row (one holding-costs row per property).
-    await updateHoldingCost(sql, {
+    await upsertHoldingCost(sql, {
       id: "hc-new",
       propertyId: "p1",
       insuranceYr: money("3500"),

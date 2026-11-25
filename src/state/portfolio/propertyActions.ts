@@ -7,7 +7,6 @@ import {
   setPropertyActive,
   getPropertyExtras,
 } from "../../data/repositories";
-import { holdingCostToRow, propertyToRow } from "../../data/mappers";
 import { checkEdit, withRow } from "./rules";
 import { success } from "../result";
 import { toWriteError } from "../writeError";
@@ -37,11 +36,7 @@ export function propertyActions({
           }),
           [p.id, cost.id],
         );
-        await insertPropertyWithCosts(
-          sql,
-          propertyToRow(p, extra),
-          holdingCostToRow(cost),
-        );
+        await insertPropertyWithCosts(sql, p, extra, cost);
       }),
     editProperty: (edited, extra) =>
       mutate("properties", async (sql) => {
@@ -60,7 +55,7 @@ export function propertyActions({
           (pf) => ({ ...pf, properties: withRow(pf.properties, p) }),
           [p.id],
         );
-        await updateProperty(sql, propertyToRow(p, extra));
+        await updateProperty(sql, p, extra);
       }),
     // A failed read is the form's to show, not logged (ADR 0241).
     getPropertyExtras: async (id) => {

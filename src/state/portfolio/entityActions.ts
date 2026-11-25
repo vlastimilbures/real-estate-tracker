@@ -15,13 +15,8 @@ import {
   insertMortgageBlock,
   updateMortgageBlock,
   deleteMortgageBlock,
-  updateHoldingCost,
+  upsertHoldingCost,
 } from "../../data/repositories";
-import {
-  valuationToRow,
-  leaseToRow,
-  mortgageBlockToRow,
-} from "../../data/mappers";
 import type { WriteTarget } from "../writeTargets";
 import { checkEdit, withRow } from "./rules";
 import type { MutationResult, PortfolioState, StoreCtx } from "./types";
@@ -31,7 +26,7 @@ type RowKey = "valuations" | "leases" | "mortgages" | "holdingCosts";
 
 /** Write `row` of `p[key]` to `target`: check the loaded portfolio with `row` in place of
  *  the row with its id, then run `write`. Both run inside the queued op, so the check
- *  sees every earlier write and a mapper in `write` runs after the check. */
+ *  sees every earlier write and the row mapping in `write` runs after the check. */
 export function writeRow<K extends RowKey>(
   { mutate, get }: StoreCtx,
   target: WriteTarget,
@@ -70,7 +65,7 @@ export function valuationActions(
   return {
     addValuation: (v) =>
       writeRow(ctx, "valuations", "valuations", v, (sql) =>
-        insertValuation(sql, valuationToRow(v)),
+        insertValuation(sql, v),
       ),
     addValuationClosingPrevious: (v, closedPrev) =>
       mutate("valuations", async (sql) => {
@@ -112,7 +107,7 @@ export function leaseActions(
             (p) => ({ ...p, leases: withRow(p.leases, l) }),
             [l.id],
           );
-          await insertLease(sql, leaseToRow(l));
+          await insertLease(sql, l);
           return;
         }
         const closedPrev = { ...prev, endDate: dayBefore(l.startDate) };
@@ -141,7 +136,7 @@ export function blockActions(
   return {
     addMortgageBlock: (m) =>
       writeRow(ctx, "mortgage_blocks", "mortgages", m, (sql) =>
-        insertMortgageBlock(sql, mortgageBlockToRow(m)),
+        insertMortgageBlock(sql, m),
       ),
     saveMortgageBlock: (m) =>
       writeRow(ctx, "mortgage_blocks", "mortgages", m, (sql) =>
@@ -158,7 +153,7 @@ export function holdingCostActions(
   return {
     saveHoldingCost: (h) =>
       writeRow(ctx, "holding_costs", "holdingCosts", h, (sql) =>
-        updateHoldingCost(sql, h),
+        upsertHoldingCost(sql, h),
       ),
   };
 }

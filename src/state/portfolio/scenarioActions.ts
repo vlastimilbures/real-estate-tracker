@@ -6,7 +6,6 @@ import {
   deleteScenario,
   upsertAssumptions,
 } from "../../data/repositories";
-import { scenarioToRow } from "../../data/mappers";
 import { dismissSampleBanner } from "../../data/seed";
 import { checkAssumptions, checkScenario } from "./rules";
 import type { PortfolioState, StoreCtx } from "./types";
@@ -29,7 +28,7 @@ export function scenarioActions({
   const writeScenario = (s: Scenario) =>
     mutate("scenarios", async (sql) => {
       checkScenario(get(), s);
-      await upsertScenario(sql, scenarioToRow(s, now()));
+      await upsertScenario(sql, s, now());
     });
 
   return {
@@ -47,7 +46,7 @@ export function scenarioActions({
         if (!src) throw new Error("Scenario not found");
         const copy: Scenario = { ...src, id: newId, name };
         checkScenario(get(), copy, src);
-        await upsertScenario(sql, scenarioToRow(copy, now()));
+        await upsertScenario(sql, copy, now());
       }),
     removeScenario: (id) =>
       mutate("scenarios", (sql) => deleteScenario(sql, id)),

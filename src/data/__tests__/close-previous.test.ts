@@ -12,7 +12,7 @@ import {
   updateValuation,
   upsertAssumptions,
 } from "../repositories";
-import { propertyToRow, valuationToRow, leaseToRow } from "../mappers";
+import { propertyToRow } from "../mappers";
 import { isoDate, money, type Lease, type Valuation } from "../../engine";
 import { noExtras } from "./support/noExtras";
 import { insertProperty, loadPortfolio } from "./support/reads";
@@ -59,8 +59,8 @@ async function ready(): Promise<TestSql> {
       noExtras,
     ),
   );
-  await insertValuation(sql, valuationToRow(prevV));
-  await insertLease(sql, leaseToRow(prevL));
+  await insertValuation(sql, prevV);
+  await insertLease(sql, prevL);
   return sql;
 }
 

@@ -8,7 +8,6 @@ import { insertLease, upsertAssumptions } from "../../data/repositories";
 import { SEED_ASSUMPTIONS } from "../../data/seed";
 import type { Sql } from "../../data/sql";
 import { isoDate, money, portfolioKpis } from "../../engine";
-import { leaseToRow } from "../../data/mappers";
 import {
   parseMortgages,
   parseProperties,
@@ -619,15 +618,12 @@ describe("importCsv — leases never overlap (ADR 0163)", () => {
       ["l-1", "2024-01-01"],
       ["l-2", "2026-01-01"],
     ] as const)
-      await insertLease(
-        sql,
-        leaseToRow({
-          id: lid,
-          propertyId: id,
-          startDate: isoDate(start),
-          monthlyRent: money("20000"),
-        }),
-      );
+      await insertLease(sql, {
+        id: lid,
+        propertyId: id,
+        startDate: isoDate(start),
+        monthlyRent: money("20000"),
+      });
     await importNow(sql, {
       rents: parseRents(`${RH}\nByt B,2025-01-01,,15000`).rows,
     });
@@ -660,15 +656,12 @@ describe("importCsv — leases never overlap (ADR 0163)", () => {
       ["l-1", "2024-01-01"],
       ["l-2", "2026-01-01"],
     ] as const)
-      await insertLease(
-        sql,
-        leaseToRow({
-          id: lid,
-          propertyId: id,
-          startDate: isoDate(start),
-          monthlyRent: money("20000"),
-        }),
-      );
+      await insertLease(sql, {
+        id: lid,
+        propertyId: id,
+        startDate: isoDate(start),
+        monthlyRent: money("20000"),
+      });
     const e = await refused(
       importNow(sql, {
         rents: parseRents(`${RH}\nByt A,2026-01-01,,21000`).rows,
