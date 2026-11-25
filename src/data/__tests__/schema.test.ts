@@ -92,6 +92,14 @@ async function uniqueDrift(
       ];
 }
 
+/** CHECKs without a CONSTRAINT name, which the description cannot list by name. Each one
+ *  is listed here on purpose, so a new unnamed CHECK fails the drift test. */
+const UNNAMED_CHECKS: Readonly<Record<string, number>> = {
+  // `id INTEGER PRIMARY KEY CHECK (id = 1)`: the single assumptions row (v1).
+  assumptions: 1,
+};
+
+/** Named CHECKs by name, and every CHECK (named or not, on one line or several) by count. */
 async function checkDrift(
   db: TestSql,
   table: string,
@@ -101,10 +109,15 @@ async function checkDrift(
     "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
     [table],
   );
-  const have = [...(row?.sql ?? "").matchAll(/CONSTRAINT (\w+) CHECK/g)]
+  const sql = row?.sql ?? "";
+  const named = [...sql.matchAll(/\bCONSTRAINT\s+(\w+)\s+CHECK\s*\(/gi)]
     .map((m) => m[1] ?? "")
     .sort();
-  const want = [...spec.checks].sort();
+  const have = { named, total: [...sql.matchAll(/\bCHECK\s*\(/gi)].length };
+  const want = {
+    named: [...spec.checks].sort(),
+    total: spec.checks.length + (UNNAMED_CHECKS[table] ?? 0),
+  };
   return JSON.stringify(have) === JSON.stringify(want)
     ? []
     : [
@@ -179,6 +192,38 @@ describe("schema description (#470)", () => {
       expect.stringMatching(/^scenarios keys: /),
       expect.stringMatching(/^scenarios checks: /),
     ]);
+    db.db.close();
+  });
+
+  it("an unnamed CHECK the description does not list fails the drift test", async () => {
+    const db = await migrated();
+    await db.execute(
+      "ALTER TABLE leases ADD COLUMN test_note TEXT CHECK (test_note <> '')",
+    );
+    const drift = await schemaDrift(db, withTestColumn());
+    expect(drift).toEqual([
+      expect.stringMatching(/^leases checks: .*"total":5.*"total":4/),
+    ]);
+    db.db.close();
+  });
+
+  it("reads a named CHECK split over several lines", async () => {
+    const db = await migrated();
+    await db.execute(
+      "ALTER TABLE leases ADD COLUMN test_note TEXT CONSTRAINT\n  lease_test_note_set\n  CHECK\n  (test_note <> '')",
+    );
+    const tables = withTestColumn();
+    const leases = tables.leases;
+    expect(
+      await schemaDrift(db, {
+        ...tables,
+        leases: {
+          columns: leases?.columns ?? [],
+          unique: leases?.unique ?? [],
+          checks: [...(leases?.checks ?? []), "lease_test_note_set"],
+        },
+      }),
+    ).toEqual([]);
     db.db.close();
   });
 
