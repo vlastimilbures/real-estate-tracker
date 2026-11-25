@@ -37,7 +37,7 @@
   },
   "src/ui/components/PropertyFormModal.tsx": {
     "lines": {
-      "Function 'PropertyFormModal'": 194
+      "Function 'PropertyFormModal'": 180
     }
   },
   "src/ui/components/charts.tsx": {
@@ -50,12 +50,12 @@
   },
   "src/ui/components/forms.tsx": {
     "lines": {
-      "Function 'RecordForm'": 229
+      "Function 'RecordForm'": 200
     }
   },
   "src/ui/hooks/useAssumptionsForm.ts": {
     "lines": {
-      "Function 'useAssumptionsForm'": 141
+      "Function 'useAssumptionsForm'": 130
     }
   },
   "src/ui/hooks/useModalA11y.ts": {
@@ -148,7 +148,7 @@
       "Arrow function (ScenarioForm > [initialDraft]: useState)": 20
     },
     "lines": {
-      "Function 'ScenarioForm'": 184
+      "Function 'ScenarioForm'": 165
     }
   },
   "src/ui/pages/Scenarios.tsx": {
