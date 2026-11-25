@@ -28,8 +28,8 @@ import {
   type ChartRow,
 } from "../model/chartData";
 import { RecordForm } from "../components/forms";
-import { ConfirmRow } from "../components/EntityPanelParts";
-import { focusSection } from "../components/focusSection";
+import { ConfirmRow } from "../components/ConfirmRow";
+import { focusLost, focusSection } from "../focus";
 import { sectionId } from "../model/sectionNav";
 import { moneyDraft, percentDraft } from "../model/formParse";
 import { fmtCzk, fmtCzkM, fmtDate, fmtPct, noBreak } from "../../lib/format";
@@ -252,6 +252,7 @@ export function HoldingCostsPanel({
   const d = t.propertyDetail;
   const [editing, setEditing] = useState(false);
   const root = useRef<HTMLDivElement>(null);
+  const pencil = useRef<HTMLButtonElement>(null);
   // Focus follows the switch (ADR 0207 §3): into the form's first field on Edit, back to
   // the pencil on Cancel or Save; nothing on the first render. Focus that has moved on
   // elsewhere during a slow save stays where it is; the pencil's section scrolls to the
@@ -261,17 +262,13 @@ export function HoldingCostsPanel({
     if (!switched.current) return;
     switched.current = false;
     const box = root.current;
-    const active = document.activeElement;
-    if (!box || (active && active !== document.body && !box.contains(active)))
-      return;
+    if (!box || !focusLost(box)) return;
     if (editing) {
       box.querySelector<HTMLElement>("form input, form select")?.focus();
       return;
     }
-    box
-      .querySelector<HTMLElement>(".panel-head .row-action")
-      ?.focus({ preventScroll: true });
-    (box.closest<HTMLElement>(".pd-section") ?? box).scrollIntoView?.({
+    pencil.current?.focus({ preventScroll: true });
+    (document.getElementById(sectionId("holding")) ?? box).scrollIntoView?.({
       block: "start",
     });
   }, [editing]);
@@ -288,6 +285,7 @@ export function HoldingCostsPanel({
           editing ? undefined : (
             <RowActions>
               <WriteRowAction
+                buttonRef={pencil}
                 icon={Pencil}
                 label={d.editHoldingCosts}
                 onClick={() => toggle(true)}

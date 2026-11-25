@@ -1,8 +1,9 @@
 // Row actions on every list (ADR 0199): icon-only quiet buttons whose name is also the
 // tooltip shown on hover and on keyboard focus.
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode, type Ref } from "react";
 import type { LucideIcon } from "lucide-react";
 import { useWriteRunning } from "../../state/portfolioStore";
+import { isEscape, useDismiss } from "../hooks/useDismiss";
 
 /** The group of a row's actions, right-aligned with 4 px between targets. */
 export function RowActions({ children }: { children: ReactNode }) {
@@ -32,6 +33,7 @@ export function RowAction({
   danger = false,
   disabled,
   onClick,
+  buttonRef,
 }: {
   icon: LucideIcon;
   label: string;
@@ -39,26 +41,23 @@ export function RowAction({
   danger?: boolean | undefined;
   disabled?: boolean | undefined;
   onClick: () => void;
+  /** The button, for a caller that moves focus to it (Holding costs' pencil). */
+  buttonRef?: Ref<HTMLButtonElement> | undefined;
 }) {
   const [tipOff, setTipOff] = useState(false);
   const [hovered, setHovered] = useState(false);
-  // While hovered, the tooltip shows whatever has focus: catch Escape before anything
-  // else (a dialog's own Escape listener) and hide it.
-  useEffect(() => {
-    if (!hovered || tipOff) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      e.stopPropagation();
-      setTipOff(true);
-    };
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [hovered, tipOff]);
+  // While hovered, the tooltip shows whatever has focus: Escape is heard before anything
+  // else (a dialog's own Escape listener), hides it and ends there.
+  useDismiss(() => setTipOff(true), {
+    open: hovered && !tipOff,
+    escape: "tip",
+  });
   const cls = ["row-action", danger ? "danger" : "", tipOff ? "tip-off" : ""]
     .filter(Boolean)
     .join(" ");
   return (
     <button
+      ref={buttonRef}
       type="button"
       className={cls}
       disabled={disabled}
@@ -74,7 +73,7 @@ export function RowAction({
         onClick();
       }}
       onKeyDown={(e) => {
-        if (e.key !== "Escape" || tipOff || !tipShows(e.currentTarget)) return;
+        if (!isEscape(e) || tipOff || !tipShows(e.currentTarget)) return;
         e.stopPropagation();
         setTipOff(true);
       }}

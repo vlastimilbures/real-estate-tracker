@@ -2,7 +2,7 @@ import type { EngineInputError, Portfolio } from "../../engine";
 import { invalidDataLines, leftoverBlockHints } from "../model/invalidData";
 import { sectionId, type PropertySection } from "../model/sectionNav";
 import { useT } from "../hooks/useT";
-import { focusSection } from "./focusSection";
+import { focusSection } from "../focus";
 import { Button } from "./primitives";
 
 /**

@@ -26,12 +26,13 @@ import {
   useBusyFocus,
   type BusyFocusTarget,
 } from "../hooks/useBusyFocus";
+import { inConfirmRow } from "../components/panelFocus";
 import "../styles/scenarios.css";
 
 /** A preset or Duplicate gets focus back after any outcome (ADR 0248 §2); a delete's
  *  confirm row places focus itself (ADR 0173, ADR 0248 §1). */
 const pressedUnlessConfirm: BusyFocusTarget = (el) =>
-  el.closest(".confirm-row") ? KEEP : el;
+  inConfirmRow(el) ? KEEP : el;
 
 export function Scenarios() {
   const t = useT();
