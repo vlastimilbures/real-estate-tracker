@@ -602,7 +602,7 @@ netCF_N + equity_N − value_N · sellingCostPct]` — acquisition outflows, ref
   when unset). Net worth, the multiple and CAGR stay value minus debt. Real IRR deflates each entry by `CPI_t`.
   Computed by bisection on the decimal NPV (tolerance |NPV| < 1e-9 Kč, at most 200
   iterations) over the domain **−90 % … +1000 %** a year (ADR 0079; `src/engine/kpis.ts`
-  `irrResult`, `src/engine/constants.ts`). The search starts with −90 % … +100 % and, when
+  `irrResult`, `src/engine/irrConstants.ts`). The search starts with −90 % … +100 % and, when
   that brackets no sign change, widens the upper bound to +200 %, +400 %, +800 % and
   +1000 %. A bracket end with |NPV| < 1e-9 Kč is the IRR (ADR 0121, #185).
   Uniqueness: with at most one sign change in the cash flows the NPV has at most

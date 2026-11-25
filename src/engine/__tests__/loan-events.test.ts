@@ -4,7 +4,8 @@
 import { describe, it, expect } from "vitest";
 import { money, rate } from "../brands";
 import { isoDate } from "../dates";
-import { D, NPER } from "../../lib/money";
+import { D } from "../../lib/money";
+import { NPER } from "./support/excelFinance";
 import {
   balanceAtMonth,
   buildSchedule,

@@ -40,10 +40,12 @@ export { selectBlock } from "./loan/blockChain";
 export {
   /** @internal test seam (CSV import tests) */
   MAX_LOAN_TERM_MONTHS,
+} from "./loanConstants";
+export {
   /** The IRR search range the "no IRR" note names (#441). */
   IRR_BRACKET_LOW,
   IRR_BRACKET_MAX,
-} from "./constants";
+} from "./irrConstants";
 export { basisDate, scheduledPrincipal } from "./growth";
 export { monthlyFlow } from "./figures";
 export { EMPTY_PROPERTY_SCHEDULE, propertySchedules } from "./schedule";

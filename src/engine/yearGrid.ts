@@ -4,11 +4,12 @@
 import { ZERO, type Decimal } from "../lib/money";
 import { firstGridMonthOnOrAfter, isOnOrBefore } from "./dates";
 import type { AmortizationRow, Assumptions } from "./types";
+import { monthsToYears, yearsToMonths } from "./units";
 
 /** Sum a schedule's months for projection year t (months (t-1)*12+1 .. t*12). */
 export function yearSlice(schedule: AmortizationRow[], t: number) {
-  const start = (t - 1) * 12;
-  const end = t * 12;
+  const start = yearsToMonths(t - 1);
+  const end = yearsToMonths(t);
   let interest = ZERO;
   let principal = ZERO;
   let drawn = ZERO;
@@ -54,7 +55,7 @@ export function firstActiveGridMonth(
 ): number {
   const { baseDate, horizonYears } = assumptions;
   if (isOnOrBefore(date, baseDate)) return 1;
-  return firstGridMonthOnOrAfter(baseDate, date, horizonYears * 12);
+  return firstGridMonthOnOrAfter(baseDate, date, yearsToMonths(horizonYears));
 }
 
 /**
@@ -66,5 +67,5 @@ export function firstActiveGridMonth(
  */
 export function turnOnYear(date: Date, assumptions: Assumptions): number {
   if (isOnOrBefore(date, assumptions.baseDate)) return 0;
-  return Math.ceil(firstActiveGridMonth(date, assumptions) / 12);
+  return Math.ceil(monthsToYears(firstActiveGridMonth(date, assumptions)));
 }

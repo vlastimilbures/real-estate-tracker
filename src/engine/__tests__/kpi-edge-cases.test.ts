@@ -9,7 +9,7 @@ import { validateInputs } from "../validate";
 import { isoDate } from "../dates";
 import { money, rate } from "../brands";
 import { ZERO, type Decimal } from "../../lib/money";
-import { DEBT_FREE_EPSILON } from "../constants";
+import { DEBT_FREE_EPSILON } from "../loanConstants";
 import type { Assumptions, Portfolio, PortfolioKPIs } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 

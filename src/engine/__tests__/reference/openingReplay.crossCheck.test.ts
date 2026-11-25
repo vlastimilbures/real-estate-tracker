@@ -4,7 +4,8 @@
 // before, which now lives in the reference model (`closedFormBalance`).
 import { describe, it, expect } from "vitest";
 import fc from "fast-check";
-import { PMT, D } from "../../../lib/money";
+import { D } from "../../../lib/money";
+import { PMT } from "../support/excelFinance";
 import { isoDate } from "../../dates";
 import { rate } from "../../brands";
 import { openingBalance } from "../../schedule";

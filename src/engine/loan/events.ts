@@ -18,6 +18,7 @@ import type {
 } from "../types";
 import { recomputeInstalment, type PaymentTerms } from "./kernel";
 import { rateOfPayment, bucketByStep } from "./calendar";
+import { monthlyRate } from "../units";
 
 // ---------------------------------------------------------------------------
 // Prepayments and recasts (ADR 0109)
@@ -274,7 +275,7 @@ function prepaymentTerms(
       repaysByMaturity: true,
     };
   }
-  const next = rateOfPayment(done.p + 1, ev.block, ev.assumptions).div(12);
+  const next = monthlyRate(rateOfPayment(done.p + 1, ev.block, ev.assumptions));
   const kept =
     terms.agreedInstalment ??
     (terms.reamortizeNext
@@ -307,7 +308,7 @@ function recastTerms(
       issue: null,
     };
   }
-  const next = rateOfPayment(done.p + 1, ev.block, ev.assumptions).div(12);
+  const next = monthlyRate(rateOfPayment(done.p + 1, ev.block, ev.assumptions));
   if (r.instalment.lessThanOrEqualTo(done.balance.times(next))) {
     return { terms: done.terms, issue: "RECAST_INSTALMENT_BELOW_INTEREST" };
   }

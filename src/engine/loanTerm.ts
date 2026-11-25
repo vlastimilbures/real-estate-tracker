@@ -1,7 +1,8 @@
 // A loan block's term and payment calendar (SPEC §4.4): its length in payments (D-08,
 // D-17), payment numbers and due dates on its own cadence (D-21, ADR 0109) and how many
 // grid months its schedule runs.
-import { NPER, ZERO, type Decimal } from "../lib/money";
+import { ZERO, type Decimal } from "../lib/money";
+import { paymentsToRepay } from "./finance";
 import {
   edate,
   firstGridMonthOnOrAfter,
@@ -12,7 +13,8 @@ import { isDevLoan } from "./loanBlock";
 import type { Assumptions, IsoDate, MortgageBlock } from "./types";
 import type { ValidationCode } from "./validate";
 import { EngineInputError } from "./errors";
-import { MAX_LOAN_TERM_MONTHS } from "./constants";
+import { MAX_LOAN_TERM_MONTHS } from "./loanConstants";
+import { monthlyRate, yearsToMonths } from "./units";
 
 /**
  * Why a loan's term cannot come from its instalment (NPER), or undefined when it can
@@ -37,7 +39,7 @@ export function derivedTermProblem(block: MortgageBlock):
       : { code: "ZERO_RATE_ZERO_INSTALMENT", field };
   }
   const firstInterest = block.initialPrincipal.times(
-    block.interestRatePa.div(12),
+    monthlyRate(block.interestRatePa),
   );
   return block.monthlyInstalment.lessThanOrEqualTo(firstInterest)
     ? { code: "INSTALMENT_BELOW_INTEREST", field }
@@ -52,7 +54,7 @@ export function derivedTermProblem(block: MortgageBlock):
  * length for a future-drawn loan.
  */
 export function termMonths(block: MortgageBlock): number {
-  if (block.loanTermYears != null) return block.loanTermYears * 12;
+  if (block.loanTermYears != null) return yearsToMonths(block.loanTermYears);
   // A dev loan without a term, a 0 % loan with no instalment, or an instalment that
   // never covers the interest has no NPER term (NaN or Infinity): raise a typed error
   // rather than emit an empty or endless schedule (D-17).
@@ -63,7 +65,7 @@ export function termMonths(block: MortgageBlock): number {
     ]);
   }
   return nperMonths(
-    block.interestRatePa.div(12),
+    monthlyRate(block.interestRatePa),
     block.monthlyInstalment,
     block.initialPrincipal,
   );
@@ -118,7 +120,7 @@ export function nperMonths(
   instalment: Decimal,
   balance: Decimal,
 ): number {
-  const n = NPER(rateMonthly, instalment.negated(), balance);
+  const n = paymentsToRepay(rateMonthly, instalment, balance);
   // eslint-disable-next-line no-restricted-syntax -- an NPER month count, not money
   return Math.ceil(n.toNumber());
 }
@@ -148,5 +150,5 @@ export function scheduleMonths(
   const d = drawMonth(block, baseDate);
   const payoffMonth =
     d > 0 ? d + term : Math.max(0, term - paymentsDueBy(block, baseDate));
-  return Math.max(horizonYears * 12, payoffMonth);
+  return Math.max(yearsToMonths(horizonYears), payoffMonth);
 }

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { D, powInt, FV, PMT, NPER, ceilCzk } from "../money";
+import { D, powInt, ceilCzk } from "../money";
+import { FV, PMT, NPER } from "../../engine/__tests__/support/excelFinance";
 import { KC, RATIO, near } from "../../engine/__tests__/support/tolerance";
 
 describe("powInt", () => {

@@ -12,6 +12,7 @@ import { at } from "./arrays";
 import { EMPTY_PROPERTY_SCHEDULE, type PropertySchedule } from "./schedule";
 import { turnOnYear, yearSlice } from "./yearGrid";
 import type { Assumptions, Portfolio, Property } from "./types";
+import { monthsToYears } from "./units";
 
 /** A property's schedule from the shared map (every property id has an entry). */
 export function scheduleOf(
@@ -72,7 +73,7 @@ export function refinanceCash(
   const out: Decimal[] = Array.from({ length: N + 1 }, () => ZERO);
   for (const p of properties) {
     for (const r of scheduleOf(schedules, p.id).refinances) {
-      const t = Math.ceil(r.month / 12);
+      const t = Math.ceil(monthsToYears(r.month));
       if (t <= N) out[t] = at(out, t).plus(r.drawn).minus(r.paidOff);
     }
   }

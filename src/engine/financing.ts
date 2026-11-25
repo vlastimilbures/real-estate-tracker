@@ -9,7 +9,7 @@ import { ZERO, type Decimal } from "../lib/money";
 import { blockEndDate } from "./loanRate";
 import { withoutPrepayments } from "./loanBlock";
 import { selectBlock } from "./loan/blockChain";
-import { DEBT_FREE_EPSILON } from "./constants";
+import { DEBT_FREE_EPSILON } from "./loanConstants";
 import { edate, isAfter, isOnOrBefore } from "./dates";
 import {
   afterSuccessor,
@@ -30,6 +30,7 @@ import type {
   MortgageBlock,
   Portfolio,
 } from "./types";
+import { yearsToMonths } from "./units";
 
 /** One block's fixation end and the debt exposed to the reset after it. */
 export interface FixationReset {
@@ -138,7 +139,8 @@ function chainResets(
     const { block } = link;
     if (block.fixationYears === 0) continue;
     const fixationEnd = blockEndDate(block);
-    const m = block.fixationYears * 12 - paymentOffset(block, ctx.baseDate);
+    const m =
+      yearsToMonths(block.fixationYears) - paymentOffset(block, ctx.baseDate);
     const status = resetStatus(fixationEnd, m, link, rows, ctx);
     resets.push({
       propertyId: block.propertyId,
@@ -315,7 +317,8 @@ export function debtResettingWithin(
 ): { amount: Decimal; loans: number } {
   const hit = fx.resets.filter(
     (r) =>
-      r.status === "upcoming" && inWindow(r.fixationEnd, fx.asOf, years * 12),
+      r.status === "upcoming" &&
+      inWindow(r.fixationEnd, fx.asOf, yearsToMonths(years)),
   );
   return {
     amount: hit.reduce((s, r) => s.plus(r.balance), ZERO),

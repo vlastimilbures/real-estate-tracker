@@ -19,7 +19,8 @@
 // (a late `shortenTerm` after a recast on payment o, ADR 0136) comes up ~18 times in
 // 1000, not ~1 (#237, measured the same way).
 import fc from "fast-check";
-import { D, PMT } from "../../../lib/money";
+import { D } from "../../../lib/money";
+import { PMT } from "../support/excelFinance";
 import { rate } from "../../brands";
 import { EngineInputError } from "../../errors";
 import { assertLoanInputs } from "../../validate";

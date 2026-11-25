@@ -1,15 +1,15 @@
 // Portfolio KPIs incl. levered IRR (SPEC §4.6), computed from the portfolio
 // projection. Every value is a pure function of (portfolio, assumptions).
 import { ZERO, ONE, type Decimal } from "../lib/money";
+import { DEBT_FREE_EPSILON } from "./loanConstants";
 import {
-  DEBT_FREE_EPSILON,
   IRR_BRACKET_EXTENSIONS,
   IRR_BRACKET_HIGH,
   IRR_BRACKET_LOW,
   IRR_MAX_ITERATIONS,
   IRR_NPV_TOLERANCE,
   IRR_SCAN_GRID,
-} from "./constants";
+} from "./irrConstants";
 import { at } from "./arrays";
 import { propertySchedules, type PropertySchedule } from "./schedule";
 import { assertInputs } from "./validate";
@@ -22,6 +22,7 @@ import type {
   PortfolioKPIs,
   ProjectionYear,
 } from "./types";
+import { yearsToMonths } from "./units";
 
 /** An IRR, or why there is none (DR-158). */
 type IrrResult =
@@ -268,7 +269,7 @@ function principalRepaidInHorizon(
   assumptions: Assumptions,
   schedules: Map<string, PropertySchedule>,
 ): Decimal {
-  const horizonMonths = assumptions.horizonYears * 12;
+  const horizonMonths = yearsToMonths(assumptions.horizonYears);
   let total = ZERO;
   // Once per property id, in first-seen order (as a Map keyed by id would).
   const active = portfolio.properties.filter((p) => p.active !== false);

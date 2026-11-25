@@ -37,6 +37,7 @@ import type {
   AmortizationRow,
   MortgageBlock,
 } from "./types";
+import { yearsToMonths } from "./units";
 
 /**
  * Cumulative consumer-price index by projection year: `cpi[t] = ∏_{k=1..t}(1+infl_k)`,
@@ -168,7 +169,7 @@ function buildRentPlan(
     }
     return term;
   };
-  const months = assumptions.horizonYears * 12;
+  const months = yearsToMonths(assumptions.horizonYears);
   const first = firstActiveGridMonth(basis, assumptions);
   const plan: (RentTerm | undefined)[] = [];
   for (let m = 1; m <= months; m++) {
@@ -292,7 +293,7 @@ function computeRentAndCosts(
 ): RentAndCosts {
   const ownedMonths = activeMonthsInYear(gates.firstOwnedMonth, t);
   const monthsLet = new Map<RentTerm, number>();
-  for (const term of b.rentPlan.slice((t - 1) * 12, t * 12)) {
+  for (const term of b.rentPlan.slice(yearsToMonths(t - 1), yearsToMonths(t))) {
     if (term) monthsLet.set(term, (monthsLet.get(term) ?? 0) + 1);
   }
   let grossRent = ZERO;
@@ -431,7 +432,9 @@ function propertyYears(
   // Development principal not drawn yet at each year end, 0 before the property is
   // owned (ADR 0166).
   const undrawn = (t: number): Decimal =>
-    t < tStart ? ZERO : undrawnPrincipal(property, blocks, assumptions, t * 12);
+    t < tStart
+      ? ZERO
+      : undrawnPrincipal(property, blocks, assumptions, yearsToMonths(t));
   years.push(
     buildYear0(b, blocks, assumptions, baseYear, tStart, crash, undrawn(0)),
   );
@@ -456,7 +459,7 @@ function propertyYears(
     // (the years before are empty), so it counts as drawn (DR-092).
     const turnsOn = t === tStart && tStart > 0;
     const carriedIn = turnsOn
-      ? debtAtGridMonth(schedule, blocks, assumptions, (t - 1) * 12)
+      ? debtAtGridMonth(schedule, blocks, assumptions, yearsToMonths(t - 1))
       : ZERO;
     years.push(
       buildYearRow(t, assumptions.baseDate, value, rc, slice, {
@@ -504,7 +507,8 @@ function withCashToOwner(
  * partial count in its turn-on year, 0 before.
  */
 function activeMonthsInYear(firstGridMonth: number, t: number): number {
-  const active = t * 12 - Math.max((t - 1) * 12, firstGridMonth - 1);
+  const active =
+    yearsToMonths(t) - Math.max(yearsToMonths(t - 1), firstGridMonth - 1);
   return Math.max(0, Math.min(12, active));
 }
 
@@ -514,8 +518,8 @@ function activeMonthsInYear(firstGridMonth: number, t: number): number {
  */
 function yearPeriod(baseDate: Date, t: number) {
   return {
-    periodStart: edate(baseDate, Math.max(0, t - 1) * 12),
-    periodEnd: edate(baseDate, t * 12),
+    periodStart: edate(baseDate, yearsToMonths(Math.max(0, t - 1))),
+    periodEnd: edate(baseDate, yearsToMonths(t)),
   };
 }
 

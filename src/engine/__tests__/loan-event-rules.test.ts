@@ -1,6 +1,7 @@
 // #130 R1-07: one hand-computed figure per loan-event rule, from the ADR text and the
-// annuity formulas in `lib/money` (FV, PMT, NPER), never from the engine's or the
-// reference model's event code. The engine must reproduce each to 1e-6 Kč.
+// Excel annuity formulas (FV, PMT, NPER in `support/excelFinance`), never from the
+// engine's or the reference model's event code. The engine must reproduce each to
+// 1e-6 Kč.
 //
 // Plain loan L: 1,200,000 Kč at 6 % (r = 0.5 % a month) from 2026-01-07, instalment
 // ceil(PMT) over 240 payments, fixed for 30 years, so no reset interferes. baseDate
@@ -8,7 +9,8 @@
 // apply after payment 8 (ADR 0109 §3), on the balance
 //   B8 = 1,200,000 · 1.005^8 − A · (1.005^8 − 1) / 0.005  (= −FV).
 import { describe, it, expect } from "vitest";
-import { D, FV, NPER, PMT, type Decimal } from "../../lib/money";
+import { D, type Decimal } from "../../lib/money";
+import { FV, NPER, PMT } from "./support/excelFinance";
 import { isoDate } from "../dates";
 import { openingBalance, paymentOffset, propertySchedule } from "../schedule";
 import type { AmortizationRow, Assumptions } from "../types";

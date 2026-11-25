@@ -11,7 +11,8 @@ import {
 } from "../loanRate";
 import { buildSchedule, openingBalance } from "../schedule";
 import { edate, isoDate } from "../dates";
-import { D, Decimal, PMT, ceilCzk } from "../../lib/money";
+import { D, Decimal, ceilCzk } from "../../lib/money";
+import { PMT } from "./support/excelFinance";
 import type { Assumptions, MortgageBlock } from "../types";
 import { assumptions, BASE_DATE } from "./support/seed";
 import { loan } from "./support/loan";

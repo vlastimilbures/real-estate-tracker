@@ -11,7 +11,8 @@ import { propertySnapshot, leaseInForce, selectValuation } from "../metrics";
 import { propertyProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
 import { edate, isAfter, isOnOrBefore, utc } from "../dates";
-import { D, FV, NPER, PMT, ZERO, ceilCzk, type Decimal } from "../../lib/money";
+import { D, ZERO, ceilCzk, type Decimal } from "../../lib/money";
+import { FV, NPER, PMT } from "./support/excelFinance";
 import type {
   Assumptions,
   Lease,

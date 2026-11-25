@@ -24,6 +24,7 @@ import {
   type SignRule,
 } from "./check";
 import { checkLoanEvents } from "./loanEvents";
+import { yearsToMonths } from "../units";
 
 /** A block's reporter: a problem on a mortgage field. */
 export type LoanReport = Report<FieldOf<"mortgage">>;
@@ -39,7 +40,7 @@ function checkDerivedTerm(b: MortgageBlock, report: LoanReport): void {
  *  reports instead). */
 function paymentFromEnd(b: MortgageBlock, back: number): Date | undefined {
   return b.loanTermYears != null && Number.isInteger(b.loanTermYears)
-    ? dueDate(b, b.loanTermYears * 12 - back)
+    ? dueDate(b, yearsToMonths(b.loanTermYears) - back)
     : undefined;
 }
 

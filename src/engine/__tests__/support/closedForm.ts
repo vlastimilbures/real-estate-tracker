@@ -1,7 +1,8 @@
 // TEST-ONLY: the closed-form balance the engine opened a plain loan with until
 // ADR 0235, moved here unchanged. The frozen golden v1 edge-loan balances, the as-of
 // snapshot tests and the reference edge cases pin it.
-import { FV, ZERO, type Decimal } from "../../../lib/money";
+import { ZERO, type Decimal } from "../../../lib/money";
+import { FV } from "./excelFinance";
 import { paymentsDueBy } from "../../loanTerm";
 import type { MortgageBlock } from "../../types";
 
