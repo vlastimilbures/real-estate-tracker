@@ -1,6 +1,7 @@
 // Parity — current snapshot (engine-parity.md "Current snapshot"). Table-driven over PARITY.
 import { describe, it, expect } from "vitest";
-import { portfolioSnapshot, leaseInForce } from "../../metrics";
+import { portfolioSnapshot } from "../../metrics";
+import { leaseInForce } from "../../selectors";
 import type { Decimal } from "../../../lib/money";
 import {
   assumptions,

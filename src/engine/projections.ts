@@ -26,12 +26,13 @@ import {
 import { decimalsOf, fieldsOf } from "./yearFields";
 import { basisDate, growthRate, valueAt } from "./growth";
 import {
-  valueAnchor,
-  growthYears,
-  leaseInForce,
+  activeProperties,
   forProperty,
+  growthYears,
   holdingCostBasis,
-} from "./metrics";
+  leaseInForce,
+  valueAnchor,
+} from "./selectors";
 import { costsAndNoi, dscrOf, stocksOf } from "./figures";
 import type {
   Assumptions,
@@ -574,7 +575,7 @@ export function projectPortfolioParts(run: EngineRun): {
 } {
   const { inputs: v, schedules } = run;
   const { portfolio, assumptions } = v;
-  const active = portfolio.properties.filter((p) => p.active !== false);
+  const active = activeProperties(portfolio.properties);
   // The property years without their own cash to owner: the portfolio's is computed
   // once below, not summed from them.
   const perProp = active.map((p) =>

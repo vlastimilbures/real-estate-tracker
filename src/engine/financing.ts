@@ -31,6 +31,7 @@ import type {
   Portfolio,
 } from "./types";
 import { yearsToMonths } from "./units";
+import { activeProperties } from "./selectors";
 
 /** One block's fixation end and the debt exposed to the reset after it. */
 export interface FixationReset {
@@ -294,7 +295,7 @@ export function financingExposure(
   const ctx = { asOf, assumptions, baseDate: assumptions.baseDate };
   const loans: LoanExposure[] = [];
   const resets: FixationReset[] = [];
-  const active = portfolio.properties.filter((p) => p.active !== false);
+  const active = activeProperties(portfolio.properties);
   for (const id of new Set(active.map((p) => p.id))) {
     const blocks = portfolio.mortgages.filter((b) => b.propertyId === id);
     const one = propertyExposure(

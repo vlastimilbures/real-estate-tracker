@@ -53,12 +53,11 @@ export type { PropertySchedule } from "./schedule";
 
 // Snapshot, projection, KPIs, scenarios, validation
 export {
-  leaseInForce,
   /** @internal test seam (tests; the app runs `portfolioOutputs`) */
   portfolioSnapshot,
   propertySnapshot,
-  selectValuation,
 } from "./metrics";
+export { leaseInForce, selectValuation } from "./selectors";
 export {
   cpiIndex,
   portfolioProjection,

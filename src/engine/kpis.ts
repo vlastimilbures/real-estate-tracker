@@ -24,6 +24,7 @@ import type {
   ProjectionYear,
 } from "./types";
 import { yearsToMonths } from "./units";
+import { activeProperties } from "./selectors";
 
 /** An IRR, or why there is none (DR-158). */
 type IrrResult =
@@ -271,7 +272,7 @@ function principalRepaidInHorizon(run: EngineRun): Decimal {
   const horizonMonths = yearsToMonths(assumptions.horizonYears);
   let total = ZERO;
   // Once per property id, in first-seen order (as a Map keyed by id would).
-  const active = portfolio.properties.filter((p) => p.active !== false);
+  const active = activeProperties(portfolio.properties);
   for (const id of new Set(active.map((p) => p.id))) {
     for (const r of scheduleOf(schedules, id).rows) {
       if (r.month > horizonMonths) break;

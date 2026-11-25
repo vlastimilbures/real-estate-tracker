@@ -16,6 +16,7 @@ import {
 import { paymentOffset } from "./loan/calendar";
 import type { Assumptions, IsoDate, Portfolio, ShockBand } from "./types";
 import { yearsToMonths } from "./units";
+import { activeProperties } from "./selectors";
 
 /** Why a block's payments miss the shock window. */
 export type ShockMissReason =
@@ -49,17 +50,15 @@ export function blocksReachedByShock(
   assumptions: Assumptions,
   shock: ShockBand,
 ): LoanShockReach[] {
-  return portfolio.properties
-    .filter((p) => p.active !== false)
-    .flatMap((p) => {
-      const links = chainLinks(
-        portfolio.mortgages.filter((m) => m.propertyId === p.id),
-        assumptions.baseDate,
-      );
-      if (links.length === 0) return [];
-      const blocks = links.map((l) => blockReach(l, assumptions, shock));
-      return [{ propertyId: p.id, blocks }];
-    });
+  return activeProperties(portfolio.properties).flatMap((p) => {
+    const links = chainLinks(
+      portfolio.mortgages.filter((m) => m.propertyId === p.id),
+      assumptions.baseDate,
+    );
+    if (links.length === 0) return [];
+    const blocks = links.map((l) => blockReach(l, assumptions, shock));
+    return [{ propertyId: p.id, blocks }];
+  });
 }
 
 function blockReach(
