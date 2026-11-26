@@ -506,7 +506,7 @@ export function ErrorBanner({
 }) {
   const t = useT();
   return (
-    <div className="error-banner" role={live ? "alert" : undefined}>
+    <div className="banner error" role={live ? "alert" : undefined}>
       <span>{message}</span>
       {onDismiss && (
         <button

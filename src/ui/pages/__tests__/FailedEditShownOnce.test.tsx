@@ -42,7 +42,7 @@ const bannerText = describeWriteError(en, {
 }).message;
 
 /** The page banner (PageFrame), not a form's or a row's own error line. */
-const pageBanner = () => document.querySelector("#main > .error-banner");
+const pageBanner = () => document.querySelector("#main > .banner.error");
 
 /** The real store on a seeded in-memory DB, run through `before`; then every write fails
  *  and reads still work. */

@@ -22,7 +22,7 @@ let usePortfolioStore: typeof import("../../state/portfolioStore").usePortfolioS
 const sidebar = () => document.querySelector("aside.sidebar");
 const shell = () => document.querySelector<HTMLElement>(".shell");
 const title = () => document.querySelector(".page-title");
-const banner = () => document.querySelector(".error-banner");
+const banner = () => document.querySelector(".banner.error");
 const content = () => document.querySelector<HTMLElement>(".content");
 /** Whether `el` and its parents are shown: Suspense hides with display: none. */
 const displayed = (el: Element | null) => {

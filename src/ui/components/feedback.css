@@ -42,15 +42,21 @@
   font-size: var(--fs-13);
 }
 
-/* ============ Inline warning banner ============ */
-.banner.warn {
+/* ============ Banners: one box, three tones (ADR 0267) ============ */
+/* The box every banner shares; a tone below sets its colours and layout. */
+.banner {
   padding: var(--s3) var(--s4);
-  margin-bottom: var(--s4);
   border-radius: var(--r-sm);
+  border: 1px solid;
+  font-size: var(--fs-13);
+}
+
+/* Inline warning */
+.banner.warn {
+  margin-bottom: var(--s4);
   background: var(--chip-bg);
   color: var(--warn);
-  border: 1px solid var(--warn);
-  font-size: var(--fs-13);
+  border-color: var(--warn);
 }
 
 /* ============ Information banner and getting-started steps (ADR 0094) ============ */
@@ -60,13 +66,10 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--s3) var(--s4);
-  padding: var(--s3) var(--s4);
   margin-bottom: var(--s4);
-  border-radius: var(--r-sm);
   background: var(--accent-wash);
   color: var(--ink);
-  border: 1px solid var(--hairline-strong);
-  font-size: var(--fs-13);
+  border-color: var(--hairline-strong);
 }
 
 .getting-started {
@@ -91,17 +94,15 @@
 }
 
 /* ============ Error banner, error boundary, loading and error screens ============ */
-.error-banner {
+/* A failed write, with its dismiss button (ADR 0267: a tone of .banner). */
+.banner.error {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--s4);
-  padding: var(--s3) var(--s4);
-  border-radius: var(--r-sm);
   background: var(--negative-wash);
   color: var(--negative);
-  border: 1px solid var(--negative);
-  font-size: var(--fs-13);
+  border-color: var(--negative);
 }
 .error-boundary {
   display: flex;
