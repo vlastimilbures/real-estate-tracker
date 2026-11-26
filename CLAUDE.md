@@ -42,8 +42,10 @@ reference models (mortgage, KPI) are the regression baseline (ADR 0081, 0174).
 - `src/ui/model/` = pure presentation logic (chart/table shaping).
 - `src/platform/` = Tauri command wrappers (file save, perf report, menu events); the UI
   reaches data, import and platform only through `src/state` facades (ADR 0072).
-- `src-tauri/src/` = Rust commands: DB transactions (`db.rs`), file dialogs + atomic writes
-  (`files.rs`, ADR 0064), menu, navigation guard, perf log.
+- `src-tauri/src/` = Rust commands: DB transactions (`db.rs`), file dialogs, backup and
+  reveal (`commands/`), atomic writes (`fs_atomic.rs`, ADR 0064), user-only permissions
+  (`private_fs.rs`), app paths + file names (`paths.rs`), menu table (`menu.rs`),
+  navigation guard, perf log.
 - `ux-capture/` = permanent screenshot + axe harness (`pnpm ux:capture`, ADR 0057).
 
 ## 4. Architectural rules (hard)
