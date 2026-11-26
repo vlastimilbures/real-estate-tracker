@@ -81,7 +81,6 @@ export function BackupRestorePanel() {
   const setNotice = useUiStore((s) => s.setNotice);
   const setFailure = useUiStore((s) => s.setFailure);
   const dismissFailure = useUiStore((s) => s.dismissFailure);
-  const dataReplaced = useUiStore((s) => s.dataReplaced);
 
   /** Report a failure in the notice, which follows the owner to any page; a refused
    *  backup keeps its records there, anything else is logged under `site` (ADR 0154).
@@ -98,7 +97,6 @@ export function BackupRestorePanel() {
     restore: restoreBackup,
     restored: ({ safetyBackup }) => {
       // The only pointer to the undo copy: a notice until dismissed (ADR 0154).
-      dataReplaced();
       setNotice({ kind: "restored", file: safetyBackup });
     },
     // One transaction: only a failure before the commit lands here, so the current data
@@ -139,7 +137,6 @@ export function BackupRestorePanel() {
     try {
       const loaded = await loadSample();
       if (loaded.ok) {
-        dataReplaced();
         showToast(t.sample.loaded);
       } else setFailure("loadSample", loaded.error);
     } finally {

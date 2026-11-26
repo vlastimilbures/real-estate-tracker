@@ -5,6 +5,7 @@
 // app's one store, with the app's database opener and the clock.
 import { defaultOpen } from "../data/open";
 import { createPortfolioStore } from "./portfolio/store";
+import { useUiStore } from "./uiStore";
 export type { MutationResult, StartupError, Status } from "./portfolio/types";
 /** Address and garage: stored, but not engine inputs (ADR 0184 §3).
  *  @internal test seam: UI tests reach the type through the state facade (ADR 0072). */
@@ -15,6 +16,8 @@ export type { PropertyEdit } from "./portfolio/types";
 const { store, db } = createPortfolioStore({
   open: defaultOpen,
   now: () => new Date(),
+  // Replacing the data drops the UI's notice, failure and import report (ADR 0154).
+  dataReplaced: (safetyCopy) => useUiStore.getState().dataReplaced(safetyCopy),
 });
 
 export const usePortfolioStore = store;

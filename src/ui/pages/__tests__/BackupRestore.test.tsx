@@ -11,7 +11,6 @@ import { BackupRestorePanel } from "../BackupRestore";
 import { OutcomeRegions, ToastRegion } from "../../components/OutcomeRegions";
 import { portfolioDb, usePortfolioStore } from "../../../state/portfolioStore";
 import type { Sql } from "../../../data/sql";
-import { useUiStore } from "../../../state/uiStore";
 import { logFailure } from "../../../state/diagnostics";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
@@ -240,17 +239,6 @@ describe("Restore a backup (#118)", () => {
 
     await user.click(screen.getByRole("button", { name: en.common.dismiss }));
     expect(screen.queryByText(en.backup.restored("safety.json"))).toBeNull();
-  });
-
-  it("a restore clears the last import report (#136)", async () => {
-    restoreBackup.mockResolvedValue(success({ safetyBackup: "safety.json" }));
-    act(() => useUiStore.setState({ lastImport: { items: [] } as never }));
-    await pick(await backupText());
-    await userEvent.click(
-      await screen.findByRole("button", { name: en.backup.restoreNow }),
-    );
-    await screen.findByText(en.backup.restored("safety.json"));
-    expect(useUiStore.getState().lastImport).toBeNull();
   });
 
   it("the other buttons wait while a restore runs (#136)", async () => {

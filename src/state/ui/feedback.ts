@@ -45,8 +45,10 @@ export interface FeedbackSlice {
   setFailure: (action: OutcomeAction, error: ActionError) => void;
   dismissFailure: () => void;
   /** The data was replaced (restore, Clear sample, Load sample): drop the notice, the
-   *  failure and the import report, which describe the old data (ADR 0154). */
-  dataReplaced: () => void;
+   *  failure and the import report, which describe the old data, and show `next`, the
+   *  notice naming the new safety copy, in the same update (ADR 0154). The portfolio
+   *  store calls it when a replacing action succeeds. */
+  dataReplaced: (next?: Notice) => void;
   /** The sample was cleared: name the safety backup in the notice (ADR 0094) and open
    *  the Dashboard. */
   showSampleCleared: (safetyBackup: string) => void;
@@ -77,7 +79,8 @@ export function feedbackSlice({ set, get }: SliceCtx): FeedbackSlice {
     failure: null,
     setFailure: (action, error) => set({ failure: { action, error } }),
     dismissFailure: () => set({ failure: null }),
-    dataReplaced: () => set({ notice: null, failure: null, lastImport: null }),
+    dataReplaced: (next) =>
+      set({ notice: next ?? null, failure: null, lastImport: null }),
     showSampleCleared: (safetyBackup) => {
       set({ notice: { kind: "sampleCleared", file: safetyBackup } });
       guarded(get, set, { route: "dashboard" });

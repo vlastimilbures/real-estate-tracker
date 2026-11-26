@@ -203,7 +203,16 @@ export interface StoreAccess {
 }
 
 /** What an action module gets from its store: the store's own `set` and `get`, its one
- *  write runner, and the clock. */
+ *  write runner, the clock, and what to drop once the data is replaced. */
 export interface StoreCtx extends StoreAccess, WriteRunner {
   now: () => Date;
+  /** The data was replaced: drop what described the old data and, in the same update,
+   *  name the safety copy that replaced it, if any (ADR 0154). */
+  dataReplaced: (safetyCopy?: ReplacedNotice) => void;
+}
+
+/** The notice naming the safety copy a replacing action wrote (ADR 0154). */
+export interface ReplacedNotice {
+  kind: "restored" | "sampleCleared";
+  file: string;
 }

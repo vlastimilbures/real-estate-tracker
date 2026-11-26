@@ -139,11 +139,14 @@ describe("Clear sample dialog (ADR 0094)", () => {
   });
 
   it("Clear, then Load sample: the Dashboard shows only the sample banner (#136)", async () => {
+    // As the real action does: the sample replaces the data, and the old data's notice
+    // goes with it (replaceDropsFeedback.test.ts).
     const loadSample = vi.fn(() => {
       usePortfolioStore.setState({
         portfolio,
         sample: { active: true, dismissed: false },
       });
+      useUiStore.getState().dataReplaced();
       return Promise.resolve(success(undefined));
     });
     act(() => {
