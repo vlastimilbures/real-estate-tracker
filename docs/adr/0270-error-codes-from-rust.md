@@ -1,13 +1,16 @@
 # 0270. Rust sends an error code with its text; TypeScript matches on the code
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-26
 - Source: issue #463 (code review 2026-11, CR-11, findings R12-03 and R03-07, tracking
   #435). The owner decided on 2026-11-26 (comment on #463) on the direction: Rust sends a
   stable error code alongside the display text, TypeScript matches on codes, and the visible
-  texts do not change. This ADR comes first, and the owner approves it before any code.
+  texts do not change. The owner accepted this ADR on 2026-11-26 (comment on #664,
+  "follow best practice and the customer-first principle"), answering its seven questions
+  (see "Resolved questions").
+- Amends: [0147](0147-failure-messages-and-log.md) (decision 7: a log line for a failed
+  command also records its Rust code)
 - Related: [0014](0014-rust-transaction-command.md) (writes in a Rust command),
-  [0147](0147-failure-messages-and-log.md) (what the log may hold),
   [0175](0175-verified-file-writes-error-codes-backup-folder.md) (the `BACKUP_*` texts).
   It replaces the rule in the header of `src-tauri/src/error.rs` that the display text is
   the contract.
@@ -94,13 +97,39 @@ constraint? }`.
    - The tests stop copying Rust's texts and assert on codes.
 6. **Rust and TypeScript change in one commit.** TypeScript that still expects a string
    would show a structured rejection as `[object Object]`, so the two sides land together.
+7. **The error log also records the Rust code** (extends ADR 0147). `describeFailure`
+   (`src/data/errorLog.ts:50`) finds the `CommandError` in the error itself or in its
+   `cause` chain (`BackupExportError`, `BackupReadError` and `SafetyBackupError` keep the
+   original rejection as `cause`, `backupFiles.ts:31`, `:77`, `:122`).
+   - **What a line gains.** For such a failure, the context field starts with the Rust code
+     and a colon, in the same shape as a `DataError`'s `STARTUP: …` context. The log code
+     field stays the failure site (ADR 0147 point 1). For example,
+     `WRITE_FAILED disk full at #` becomes `WRITE_FAILED IO: disk full at #`. A failure
+     without a `CommandError` logs exactly as today.
+   - **Where it comes from.** The prefix is the `code` value, one of the fixed
+     `CommandErrorCode` constants; nothing from the message or the user goes into it. The
+     rest of the context is today's masked text (`maskNumbers`, ADR 0147 point 5, with the
+     OS and SQLite codes kept, ADR 0175 point 5). `log_error` keeps its caps (80 characters
+     for the code field, 500 for the context, `src-tauri/src/error_log.rs:8`), and the
+     prefix counts towards the 500.
+   - **No personal data and no new free text.** A code is upper snake case with no digits
+     and comes from a closed list, so it carries no amount, name, id or path, and masking
+     cannot change it. The names and ids the log already holds (option B in ADR 0147) are
+     neither added to nor removed.
 
 ## Visible effects
 
-None. Every message the user sees today stays the same in English, Czech and Russian,
-including the untranslated Rust details inside the safety-backup, export, unreadable-file
-and upgrade-stopped messages. Computed numbers, stored data and the layout are not
-affected. The error log keeps its lines, because the message is still the same text.
+- **On screen: none.** Every message the user sees today stays the same in English, Czech
+  and Russian, including the untranslated Rust details inside the safety-backup, export,
+  unreadable-file and upgrade-stopped messages. Translating those details is out of scope
+  here; a follow-up ADR after this one covers it (resolved question 5).
+- **The local error log** (`~/Library/Logs/com.bures.realestate-tracker/app.log`) gains
+  the Rust code in the context of a line for a failed command (point 7). The app does not
+  show this file. The user sees it only by opening it, for example when the bug form
+  (`.github/ISSUE_TEMPLATE/bug_report.yml`) asks for an excerpt, or by following the path
+  the startup error screen names. The bug form's advice still holds: the code adds nothing
+  to replace.
+- Computed numbers, stored data and the layout are not affected.
 
 ## Tests
 
@@ -117,6 +146,13 @@ These tests are written first, and each fails on main:
 - **TypeScript, the code list:** a test checks it against `error.rs`.
 - **TypeScript, `constraintOf`:** it reads the fields, and it returns null for text that
   only looks like a constraint message.
+- **TypeScript, the log line (point 7):** in `src/data/__tests__/errorLog.test.ts`, a new
+  case "a failed command logs its Rust code before the masked detail" checks that
+  `describeFailure("WRITE", e)`, for a `CommandError` with code `IO` and detail
+  `disk full at 123456`, gives
+  `{ code: "WRITE_FAILED", context: "IO: disk full at #" }`, that a `SafetyBackupError`
+  whose `cause` is a `CommandError` gets the same prefix, and that a plain `Error` still
+  logs without one. The existing cases stay green unchanged.
 - **No string matching:** no production TypeScript compares an error to a string literal or
   matches a driver message. This is a source test, in the style of the existing
   boundary tests.
@@ -134,33 +170,26 @@ name, restore, safety-backup and boot-failure messages in all three languages.
 - The cost is a wider contract: 22 codes, a `constraint` shape kept in two languages, and
   one new command, `db_execute`, which needs its `allow-*` grant and its entry in
   `command_list.rs`.
+- A log line for a failed command says which kind of failure it was, which helps diagnose
+  a reported problem.
+- Out of scope, each with its own follow-up: translating the `BACKUP_*` details (a
+  follow-up ADR) and consolidating the data-layer error classes (issue #677).
 
-## Open questions
+## Resolved questions
 
-1. **Single-statement writes (point 4).** Should they go through a new `db_execute` command
-   (recommended)? The alternative is to keep one regular expression just for the SQL
-   plugin's text. That would leave part of the problem in place.
-2. **Where the constraint is parsed (point 3).** Rust (recommended) sends finished fields.
-   Alternatively, Rust could send the extended code plus SQLite's bare message, and
-   TypeScript would take the columns from it. Either way, the parsing reads SQLite's own
-   message, not sqlx's wrapper.
-3. **How fine the codes are.** Should `Sql`, `Io` and `Other` each have one code
-   (recommended for now)? The alternative is finer codes, such as a separate code for a
-   missing file. Nothing in TypeScript tells them apart today.
-4. **How the code list is shared.** Should a TypeScript test read `error.rs` (recommended,
-   as `commands.test.ts` does for command names)? The alternative is a generated JSON file
-   that both sides read.
-5. **The untranslated `BACKUP_*` details.** Translating them would be a visible change. Is
-   that wanted as a follow-up ADR, or should it be left as it is?
-6. **The data-layer classes.** The issue also suggests these steps:
-   - one `FileStepError { step, detail }` in place of `BackupExportError`,
-     `BackupReadError` and `SafetyBackupError`;
-   - all error classes in `src/data/errors.ts`;
-   - `DataError` codes for the remaining plain `Error`s (`tauriSql.ts:28`, `:43`,
-     `snapshot.ts:19`).
+The owner answered on 2026-11-26 (comment on #664).
 
-   These steps do not change behaviour and need no ADR. Should they be part of this work,
-   or a separate refactor issue?
-
-7. **The error log.** Should a log line also record the Rust code? That changes what the
-   log holds (ADR 0147), so it is left out of this decision unless the owner wants it.
+1. **Single-statement writes:** through a new `db_execute` command, as recommended
+   (point 4).
+2. **Where the constraint is parsed:** in Rust, which sends the finished fields, as
+   recommended (point 3).
+3. **How fine the codes are:** one code each for `Sql`, `Io` and `Other` for now, as
+   recommended (point 1).
+4. **How the code list is shared:** a TypeScript test reads `error.rs`, as recommended
+   (point 2).
+5. **The untranslated `BACKUP_*` details:** they are to be translated, so Czech and Russian
+   users do not see English error text. That is a visible change, so it is out of scope
+   for this ADR and gets its own follow-up ADR after this one.
+6. **The data-layer classes** (one `FileStepError`, all classes in `src/data/errors.ts`,
+   `DataError` codes for the remaining plain `Error`s): a separate refactor, issue #677.
+7. **The error log:** it also records the Rust code (point 7, which extends ADR 0147).
