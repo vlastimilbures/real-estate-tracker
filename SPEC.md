@@ -600,8 +600,9 @@ debt, committed debt) for every property; when every loan retires within the hor
 - **Levered IRR** (nominal & real): IRR of the vector `[−equity₀, netCF₁, …, netCF_{N−1},
 netCF_N + equity_N − value_N · sellingCostPct]` — acquisition outflows, refinance cash, prepayments with their
   fees and debt service paid before a future purchase (ADR 0124) adjust the relevant year's entry; terminal = projected equity at horizon less the
-  selling costs, `equity_N − value_N · sellingCostPct` on the market value (ADR 0183; a
-  missing stored value reads 0). Net worth, the multiple and CAGR stay value minus debt. Real IRR deflates each entry by `CPI_t`.
+  selling costs, `equity_N − value_N · sellingCostPct` on the market value (ADR 0183; an
+  absent column (the v11 migration) or an absent backup key (restore) stores 0; a stored
+  NULL is refused as ROW_INVALID). Net worth, the multiple and CAGR stay value minus debt. Real IRR deflates each entry by `CPI_t`.
   Computed by bisection on the decimal NPV (tolerance |NPV| < 1e-9 Kč, at most 200
   iterations) over the domain **−90 % … +1000 %** a year (ADR 0079; `src/engine/kpis.ts`
   `irrResult`, `src/engine/irrConstants.ts`). The search starts with −90 % … +100 % and, when

@@ -52,7 +52,7 @@ describe("migration v11 — selling costs (ADR 0183)", () => {
     expect(await sql.select("SELECT * FROM assumptions")).toEqual([
       { ...before[0], selling_cost_pct: "0" },
     ]);
-    expect((await loadAssumptions(sql)).sellingCostPct?.toString()).toBe("0");
+    expect((await loadAssumptions(sql)).sellingCostPct.toString()).toBe("0");
     sql.db.close();
   });
 
@@ -73,7 +73,7 @@ describe("migration v11 — selling costs (ADR 0183)", () => {
       ...seedAssumptions,
       sellingCostPct: rate("0.035"),
     });
-    expect((await loadAssumptions(sql)).sellingCostPct?.toString()).toBe(
+    expect((await loadAssumptions(sql)).sellingCostPct.toString()).toBe(
       "0.035",
     );
     sql.db.close();
@@ -91,9 +91,7 @@ describe("migration v11 — selling costs (ADR 0183)", () => {
       selling_cost_pct: "0.04",
     });
     await restoreFromJson(sql, backup, checkInputRules);
-    expect((await loadAssumptions(sql)).sellingCostPct?.toString()).toBe(
-      "0.04",
-    );
+    expect((await loadAssumptions(sql)).sellingCostPct.toString()).toBe("0.04");
 
     const older = {
       ...backup,
@@ -108,7 +106,7 @@ describe("migration v11 — selling costs (ADR 0183)", () => {
       },
     };
     await restoreFromJson(sql, older, checkInputRules);
-    expect((await loadAssumptions(sql)).sellingCostPct?.toString()).toBe("0");
+    expect((await loadAssumptions(sql)).sellingCostPct.toString()).toBe("0");
     sql.db.close();
   });
 });
@@ -146,6 +144,6 @@ describe("mapper — selling costs", () => {
   it("writes the seed's default '0' and reads it back as 0", () => {
     const row = assumptionsToRow(seedAssumptions);
     expect(row.selling_cost_pct).toBe("0");
-    expect(rowToAssumptions(row).sellingCostPct?.toString()).toBe("0");
+    expect(rowToAssumptions(row).sellingCostPct.toString()).toBe("0");
   });
 });
