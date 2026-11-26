@@ -18,6 +18,8 @@ const ARCHIVE_ID = /\b(?:(?:DR|UX|J|Q|D)-\d+[a-z]?|P\d+[a-z]?)\b/g;
 const ADR_CITE = /\bADR (\d{4})\b/g;
 /** `#nnn`, not an HTML entity (`&#123;`) or a digit-only hex colour (`#202427`). */
 const ISSUE_REF = /(?<![\w&#])#(\d{2,4})\b/g;
+/** A backtick code span: it quotes a value (a colour such as `#666`), not an issue. */
+const CODE_SPAN = /`[^`\n]*`/g;
 
 /**
  * The open issues a comment may cite, each where the code still carries its debt. The
@@ -108,7 +110,7 @@ export function problemsIn(text, path, adrs, open = CITED_OPEN_ISSUES) {
             line: line + i,
             message: `ADR ${m[1]} has no file in docs/adr`,
           });
-      for (const m of l.matchAll(ISSUE_REF))
+      for (const m of l.replace(CODE_SPAN, "").matchAll(ISSUE_REF))
         if (!open.has(Number(m[1])))
           out.push({
             path,

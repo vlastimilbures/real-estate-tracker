@@ -25,6 +25,7 @@ describe("comment references", () => {
     ["a phase id with a letter", "// failure (P5a)"],
     ["an issue not on the open list", "// the caller reuses it (#291)"],
     ["an issue ref in a stylesheet comment", "/* the chip shape (#495) */"],
+    ["an archive id quoted as code", "// the `DR-044` guard"],
   ])("rejects %s in a comment", (_, line) => {
     expect(problems(line)).toHaveLength(1);
   });
@@ -52,6 +53,7 @@ describe("comment references", () => {
     ["an open issue on the list", "// a known gap (debt #611, #476)"],
     ["an HTML entity or a format", "// &#123; and the `#,##0` pattern, row #1"],
     ["a digit-only hex colour", "/* the dark surface #202427 */"],
+    ["a hex value quoted as code", "// its `#666` default fill"],
     [
       "a word ending in an id-like part",
       "// an ADR-backed rule, 3D-12 and SKU-12",
