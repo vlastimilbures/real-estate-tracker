@@ -146,6 +146,7 @@ describe("confirmRestore — safety backup (DR-019, D-52)", () => {
       (e: unknown) => e,
     );
     expect(err).toBeInstanceOf(FileStepError);
+    expect(err).toMatchObject({ step: "safety" });
     expect((err as Error).message).toMatch(/disk full/);
     expect(await propertyCount()).toBe(3);
   });
@@ -162,6 +163,7 @@ describe("confirmRestore — safety backup (DR-019, D-52)", () => {
       checkInputRules,
     ).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(FileStepError);
+    expect(err).toMatchObject({ step: "safety" });
     expect((err as FileStepError).detail).toMatch(/^BACKUP_EXISTS: /);
     expect(await propertyCount()).toBe(3);
   });
@@ -254,6 +256,7 @@ describe("writeSafetyBackup — reading the data is part of it (ADR 0147)", () =
     };
     const err = await writeSafetyBackup(failing).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(FileStepError);
+    expect(err).toMatchObject({ step: "safety" });
     expect(commands()).toEqual([]);
   });
 });
@@ -288,6 +291,7 @@ describe("chooseRestoreFile — the picked backup (DR-138)", () => {
     );
     expect(err).toMatchObject({
       name: "FileStepError",
+      step: "read",
       detail: "Operation not permitted (os error 1)",
     });
   });
@@ -343,6 +347,7 @@ describe("exportBackup — honest outcome in Tauri (DR-026)", () => {
     rust.writeError = { code: "IO", detail: "permission denied" };
     const err = await exportWithAppDeps(sql).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(FileStepError);
+    expect(err).toMatchObject({ step: "export" });
     expect((err as FileStepError).detail).toBe("permission denied");
   });
 
@@ -351,6 +356,7 @@ describe("exportBackup — honest outcome in Tauri (DR-026)", () => {
     rust.readBack = () => "{}";
     const err = await exportWithAppDeps(sql).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(FileStepError);
+    expect(err).toMatchObject({ step: "export" });
     expect((err as FileStepError).detail).toMatch(/does not match/);
   });
 

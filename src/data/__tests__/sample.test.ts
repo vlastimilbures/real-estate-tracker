@@ -195,7 +195,9 @@ describe("clearSample (ADR 0094)", () => {
   it("deletes nothing when the safety backup fails", async () => {
     const sql = await withOwnData();
     disk.fail = true;
-    await expect(clearSample(sql, NOW)).rejects.toBeInstanceOf(FileStepError);
+    const cleared = clearSample(sql, NOW);
+    await expect(cleared).rejects.toBeInstanceOf(FileStepError);
+    await expect(cleared).rejects.toMatchObject({ step: "safety" });
     expect(await ids(sql, "properties")).toEqual([...SAMPLE, "mine"].sort());
     expect(await meta(sql)).toEqual(["sample_active", "sample_seeded"]);
   });
