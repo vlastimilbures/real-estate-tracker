@@ -41,9 +41,6 @@ beforeEach(() => {
     usePortfolioStore.setState({ portfolio: leftover, assumptions });
     useUiStore.setState({
       language: "en",
-      route: "dashboard",
-      selectedPropertyId: null,
-      propertyTarget: null,
     });
   });
 });

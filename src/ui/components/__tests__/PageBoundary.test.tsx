@@ -35,7 +35,7 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
   act(() => {
     usePortfolioStore.setState({ portfolio, assumptions });
-    useUiStore.setState({ language: "cs", route: "dashboard" });
+    useUiStore.setState({ language: "cs" });
   });
 });
 

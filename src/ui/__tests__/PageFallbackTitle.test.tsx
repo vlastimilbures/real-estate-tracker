@@ -75,12 +75,10 @@ beforeEach(() => {
       portfolio,
       assumptions,
       status: { kind: "ready" },
-      error: null,
       init: async () => {},
     } as never);
     useUiStore.setState({
       language: "en",
-      route: "dashboard",
       selectedPropertyId: portfolio.properties[0]!.id,
     });
   });

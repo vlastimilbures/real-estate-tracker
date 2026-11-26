@@ -32,18 +32,12 @@ beforeEach(() => {
       portfolio,
       assumptions,
       status: { kind: "ready" },
-      scenarios: [],
       addScenario,
       getPropertyExtras: () =>
         Promise.resolve(success({ address: null, garage: null })),
     });
     useUiStore.setState({
       route: "scenarios",
-      unsavedSources: [],
-      unsavedChanges: false,
-      pendingLeave: null,
-      pendingSource: null,
-      newPropertyRequested: false,
     });
   });
 });
