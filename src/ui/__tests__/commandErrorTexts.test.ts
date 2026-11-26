@@ -19,8 +19,8 @@ import { loadDictionary, type Dictionary, type Language } from "../../i18n";
 vi.mock("../../lib/tauri", () => ({ isTauri: () => true }));
 
 /** Rust's rejection for the next command call. */
-function rustFails(code: string, detail: string): void {
-  vi.mocked(invoke).mockRejectedValueOnce({ code, detail });
+function rustFails(code: string, detail: string, constraint?: object): void {
+  vi.mocked(invoke).mockRejectedValueOnce({ code, detail, constraint });
 }
 
 async function caught(p: Promise<unknown>): Promise<unknown> {
@@ -93,6 +93,7 @@ describe.each(["en", "cs", "ru"] as const)(
       rustFails(
         "SQL",
         "error returned from database: (code: 2067) UNIQUE constraint failed: properties.name",
+        { kind: "unique", table: "properties", columns: ["name"] },
       );
       const e = await caught(dbTransaction([{ query: "INSERT …" }]));
       expect(describeWriteError(t, toWriteError(e))).toEqual({

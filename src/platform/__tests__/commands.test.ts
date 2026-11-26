@@ -131,6 +131,37 @@ describe("a failed command", () => {
     });
   });
 
+  it("carries a constraint failure's fields (ADR 0270 point 3)", async () => {
+    const constraint = {
+      kind: "unique",
+      table: "properties",
+      columns: ["name"],
+    };
+    invoke.mockRejectedValueOnce({ code: "SQL", detail: "x", constraint });
+    const err: unknown = await call("db_transaction", { statements: [] }).catch(
+      (e: unknown) => e,
+    );
+    expect(err).toBeInstanceOf(CommandError);
+    expect(err).toMatchObject({ code: "SQL", message: "x", constraint });
+  });
+
+  it.each([
+    { kind: "unique", table: "t" },
+    { kind: "unique", table: "t", columns: [1] },
+    { kind: "notNull", columns: ["a"] },
+    { kind: "check" },
+    { kind: "primary" },
+    "unique",
+  ])("drops a malformed constraint %j, keeping code and detail", async (c) => {
+    invoke.mockRejectedValueOnce({ code: "SQL", detail: "x", constraint: c });
+    const err: unknown = await call("db_transaction", { statements: [] }).catch(
+      (e: unknown) => e,
+    );
+    expect(err).toBeInstanceOf(CommandError);
+    expect((err as CommandError).constraint).toBeUndefined();
+    expect((err as CommandError).message).toBe("x");
+  });
+
   it("keeps the detail of a code it does not know, as OTHER", async () => {
     // The code-list test keeps both lists equal; this guards the user's text if one
     // slips anyway: never "[object Object]".

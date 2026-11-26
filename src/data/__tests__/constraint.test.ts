@@ -1,9 +1,14 @@
 // DR-133: a write rejected by a v7 constraint must be recognised so the UI can show a
 // translated message instead of SQLite's raw text. Real constraint failures come from
-// a migrated in-memory DB; the Tauri wording (sqlx prefix, string rejection) is a
-// literal sample.
+// a migrated in-memory DB through the test double, which rejects as Rust does: a
+// CommandError with the constraint's fields (ADR 0270 points 3 and 5). No text is
+// parsed: a message that only reads like a constraint failure is none.
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { constraintOf } from "../errors";
+import {
+  CommandError,
+  type ConstraintFailure,
+} from "../../platform/commandError";
 import { openMemorySql, type TestSql } from "./betterSqlite";
 import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
@@ -96,27 +101,45 @@ describe("constraintOf", () => {
     });
   });
 
-  it("reads the Tauri wording (sqlx prefix, string rejection)", () => {
-    expect(
-      constraintOf(
-        "error returned from database: (code: 2067) UNIQUE constraint failed: leases.property_id, leases.start_date",
-      ),
-    ).toEqual({
+  it("a refused write is Rust's CommandError: code SQL, SQLite's text, the fields", async () => {
+    const e = await failure(
+      "INSERT INTO leases (id, property_id, start_date, monthly_rent) VALUES ('l', 'nope', '2026-01-01', '1')",
+    );
+    expect(e).toBeInstanceOf(CommandError);
+    expect(e).toMatchObject({
+      code: "SQL",
+      message: "FOREIGN KEY constraint failed",
+      constraint: { kind: "foreignKey" },
+    });
+  });
+
+  it("reads the fields Rust sends", () => {
+    const detail =
+      "error returned from database: (code: 2067) UNIQUE constraint failed: leases.property_id, leases.start_date";
+    const constraint: ConstraintFailure = {
       kind: "unique",
       table: "leases",
       columns: ["property_id", "start_date"],
-    });
+    };
+    expect(constraintOf(new CommandError("SQL", detail, constraint))).toEqual(
+      constraint,
+    );
+  });
+
+  it("is null for text that only looks like a constraint message", () => {
+    const sqlx =
+      "error returned from database: (code: 275) CHECK constraint failed: mortgage_rate_0_to_1";
+    expect(constraintOf(sqlx)).toBeNull();
+    expect(constraintOf(new Error(sqlx))).toBeNull();
+    expect(constraintOf(new CommandError("SQL", sqlx))).toBeNull();
     expect(
-      constraintOf(
-        new Error(
-          "error returned from database: (code: 275) CHECK constraint failed: mortgage_rate_0_to_1",
-        ),
-      ),
-    ).toEqual({ kind: "check", check: "mortgage_rate_0_to_1" });
+      constraintOf(new Error("UNIQUE constraint failed: properties.name")),
+    ).toBeNull();
   });
 
   it("is null for anything else", () => {
     expect(constraintOf(new Error("disk is full"))).toBeNull();
+    expect(constraintOf(new CommandError("IO", "disk is full"))).toBeNull();
     expect(constraintOf(undefined)).toBeNull();
   });
 });
