@@ -23,14 +23,32 @@ import {
 
 export type ExportOutcome = SaveOutcome;
 
-/** The backup file could not be written. */
-export class BackupExportError extends Error {
-  /** The underlying failure, for display. */
+/** The file step of Backup & Restore that failed: the export through the save dialog,
+ *  the read of a picked restore file (an unplugged disk, a file not downloaded from
+ *  iCloud: nothing is known about its content, ADR 0147), or the pre-restore safety
+ *  backup (nothing changed). */
+export type FileStep = "export" | "read" | "safety";
+
+/** The English message each step starts with: the log line's text (ADR 0147). */
+const STEP_MESSAGE: Readonly<Record<FileStep, string>> = {
+  export: "Could not save the backup",
+  read: "Could not read the backup file",
+  safety: "Could not save the safety backup",
+};
+
+/** A Backup & Restore file step failed. The failure stays its `cause`, so the error log
+ *  finds a failed command's Rust code in it (ADR 0270 point 7). */
+export class FileStepError extends Error {
+  readonly step: FileStep;
+  /** The underlying failure, for display: for an export, the save's OS text without
+   *  its English wrapper (ADR 0193). */
   readonly detail: string;
-  constructor(cause: unknown) {
-    const detail = saveFailureDetail(cause);
-    super(`Could not save the backup: ${detail}`, { cause });
-    this.name = "BackupExportError";
+  constructor(step: FileStep, cause: unknown) {
+    const detail =
+      step === "export" ? saveFailureDetail(cause) : messageOf(cause);
+    super(`${STEP_MESSAGE[step]}: ${detail}`, { cause });
+    this.name = "FileStepError";
+    this.step = step;
     this.detail = detail;
   }
 }
@@ -49,7 +67,7 @@ export interface ExportDeps {
 /**
  * Export the whole DB to JSON and hand it to the user via `deps.save`: a cancelled
  * dialog returns `cancelled`; a failed write — or a file that does not read back as
- * written — throws `BackupExportError`.
+ * written — throws a `FileStepError` (step `export`).
  */
 export async function exportBackup(
   sql: Sql,
@@ -64,20 +82,7 @@ export async function exportBackup(
       filter: { name: "JSON backup", extensions: ["json"] },
     });
   } catch (e) {
-    throw new BackupExportError(e);
-  }
-}
-
-/** The picked backup file could not be read (an unplugged disk, a file not downloaded
- *  from iCloud): nothing is known about its content (ADR 0147). */
-export class BackupReadError extends Error {
-  /** The underlying failure, for display. */
-  readonly detail: string;
-  constructor(cause: unknown) {
-    const detail = messageOf(cause);
-    super(`Could not read the backup file: ${detail}`, { cause });
-    this.name = "BackupReadError";
-    this.detail = detail;
+    throw new FileStepError("export", e);
   }
 }
 
@@ -93,8 +98,8 @@ export interface PickedBackup {
 /**
  * Prompt the user to pick a backup JSON file and check it completely, so the confirm
  * step only ever offers a restorable file. Returns `null` when the user cancels;
- * throws RestoreError for a file that cannot be restored and BackupReadError for one
- * that cannot be read.
+ * throws RestoreError for a file that cannot be restored and a FileStepError (step
+ * `read`) for one that cannot be read.
  */
 export async function chooseRestoreFile(
   rules: InputRules,
@@ -105,7 +110,7 @@ export async function chooseRestoreFile(
     picked = await openBackupFile(BACKUP_MAX_BYTES);
   } catch (e) {
     if (isCommandError(e, "BACKUP_TOO_LARGE")) throw backupTooLarge();
-    throw new BackupReadError(e);
+    throw new FileStepError("read", e);
   }
   if (picked === null) return null;
 
@@ -114,24 +119,12 @@ export async function chooseRestoreFile(
   return { file: picked.name, backup, summary, warnings };
 }
 
-/** The pre-restore safety backup could not be written or verified; nothing changed. */
-export class SafetyBackupError extends Error {
-  /** The underlying failure, for display. */
-  readonly detail: string;
-  constructor(cause: unknown) {
-    const detail = messageOf(cause);
-    super(`Could not save the safety backup: ${detail}`, { cause });
-    this.name = "SafetyBackupError";
-    this.detail = detail;
-  }
-}
-
 /**
  * Pre-restore snapshot, so a bad restore is still recoverable from the Restore screen
  * (ADR 0052): `<app config>/backups/portfolio-before-restore-<UTC stamp>.json`, next to
  * the database and its pre-migration backups. Rust writes a temp file, reads it back
  * and compares the bytes, then renames it into place (ADR 0175). Any failure
- * throws `SafetyBackupError` — without a verified file a restore must not start.
+ * throws a `FileStepError` (step `safety`) — without a verified file a restore must not start.
  * `prefix` names the file for other destructive actions. Returns the file name.
  */
 export async function writeSafetyBackup(
@@ -147,7 +140,7 @@ export async function writeSafetyBackup(
     // Verified temp file + rename in `<app config>/backups` (src-tauri/src/commands/backup.rs).
     await writeAppBackup(filename, json);
   } catch (e) {
-    throw new SafetyBackupError(e);
+    throw new FileStepError("safety", e);
   }
   return filename;
 }

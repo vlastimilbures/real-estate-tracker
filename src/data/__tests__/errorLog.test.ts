@@ -4,7 +4,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
 import { describeFailure, logFailure, maskNumbers } from "../errorLog";
 import { DataError } from "../errors";
-import { SafetyBackupError } from "../backup";
+import { FileStepError } from "../backup";
 import { COMMAND_ERROR_CODES, CommandError } from "../../platform/commandError";
 import { isTauri } from "../../lib/tauri";
 import { unhandledRejections } from "../../__tests__/support/unhandled";
@@ -91,7 +91,7 @@ describe("error log lines", () => {
       context: "IO: disk full at #",
     });
     // Kept as the cause of the data layer's own error.
-    expect(describeFailure("WRITE", new SafetyBackupError(e))).toEqual({
+    expect(describeFailure("WRITE", new FileStepError("safety", e))).toEqual({
       code: "WRITE_FAILED",
       context: "IO: Could not save the safety backup: disk full at #",
     });

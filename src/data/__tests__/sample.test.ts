@@ -13,7 +13,7 @@ import {
   SampleNotEmptyError,
   seedIfEmpty,
 } from "../seed";
-import { confirmRestore, exportToJson, SafetyBackupError } from "../backup";
+import { confirmRestore, exportToJson, FileStepError } from "../backup";
 import { checkInputRules } from "../../state/restoreRules";
 import {
   insertLease,
@@ -195,9 +195,7 @@ describe("clearSample (ADR 0094)", () => {
   it("deletes nothing when the safety backup fails", async () => {
     const sql = await withOwnData();
     disk.fail = true;
-    await expect(clearSample(sql, NOW)).rejects.toBeInstanceOf(
-      SafetyBackupError,
-    );
+    await expect(clearSample(sql, NOW)).rejects.toBeInstanceOf(FileStepError);
     expect(await ids(sql, "properties")).toEqual([...SAMPLE, "mine"].sort());
     expect(await meta(sql)).toEqual(["sample_active", "sample_seeded"]);
   });

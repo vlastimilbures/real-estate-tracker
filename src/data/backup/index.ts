@@ -14,9 +14,7 @@ export {
 } from "./validate";
 export { type BackupSummary, type InputRules } from "./restorePlan";
 export {
-  BackupExportError,
-  BackupReadError,
-  SafetyBackupError,
+  FileStepError,
   chooseRestoreFile,
   confirmRestore,
   exportBackup,

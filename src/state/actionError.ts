@@ -1,10 +1,8 @@
 // What a failed whole-database action tells the UI: a typed value the UI translates
 // (ui/components/restoreFailure.ts), like a failed write's WriteError.
 import {
-  BackupExportError,
-  BackupReadError,
+  FileStepError,
   RestoreError,
-  SafetyBackupError,
   type RestoreErrorCode,
   type RestoreIssue,
 } from "../data/backup";
@@ -36,6 +34,13 @@ export type ActionError =
    *  Import page shows them as the preview does (ADR 0229 §2). */
   | { kind: "planRefused"; preview: CsvImportPreview };
 
+/** The failure kind of each Backup & Restore file step. */
+const FILE_STEP_KIND = {
+  export: "backupExport",
+  read: "backupUnreadable",
+  safety: "safetyBackup",
+} as const satisfies Record<FileStepError["step"], ActionError["kind"]>;
+
 /** The typed failure for `e`. A refused CSV plan is converted where the CSV import is
  *  loaded, so its class stays out of the startup bundle. */
 export function toActionError(e: unknown): ActionError {
@@ -47,12 +52,8 @@ export function toActionError(e: unknown): ActionError {
       issues: e.issues,
     };
   if (e instanceof SampleNotEmptyError) return { kind: "sampleNotEmpty" };
-  if (e instanceof SafetyBackupError)
-    return { kind: "safetyBackup", detail: e.detail };
-  if (e instanceof BackupExportError)
-    return { kind: "backupExport", detail: e.detail };
-  if (e instanceof BackupReadError)
-    return { kind: "backupUnreadable", detail: e.detail };
+  if (e instanceof FileStepError)
+    return { kind: FILE_STEP_KIND[e.step], detail: e.detail };
   if (e instanceof SaveFileError)
     return { kind: "saveFailed", detail: e.detail };
   return toWriteError(e);
