@@ -34,8 +34,7 @@ export interface ValueShock {
   atYear: number; // projection year (0 = today); growth resumes from the lower base
 }
 
-/** The assumptions the owner stores (the one `assumptions` row). Every field is present
- *  except `sellingCostPct`, which stays optional (undefined ⇒ 0). */
+/** The assumptions the owner stores (the one `assumptions` row). Every field is present. */
 export interface StoredAssumptions {
   baseDate: IsoDate;
   appreciationPa: Rate;
@@ -46,8 +45,10 @@ export interface StoredAssumptions {
   inflationPa: Rate;
   /** Selling costs of a sale at the horizon, as a fraction of the projected market value
    *  in [0, 1] (agent, legal and escrow fees). Taken off the levered IRR's terminal value
-   *  only; net worth stays value minus debt (ADR 0183). Undefined ⇒ 0. */
-  sellingCostPct?: Rate | undefined;
+   *  only; net worth stays value minus debt (ADR 0183). Always present: the DB gives a
+   *  missing value its default, 0, once (the v11 column is NOT NULL DEFAULT '0' and a
+   *  restore of an older backup fills the same default), and the mapper reads it. */
+  sellingCostPct: Rate;
   defaults: CostDefaults;
 }
 

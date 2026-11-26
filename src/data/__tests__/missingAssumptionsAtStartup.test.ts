@@ -5,7 +5,6 @@ import { openMemorySql, type TestSql } from "./betterSqlite";
 import { migrate } from "../migrations";
 import { SEED_ASSUMPTIONS, seedIfEmpty } from "../seed";
 import { loadState } from "../repositories";
-import { rate } from "../../engine";
 
 let sql: TestSql;
 afterEach(() => sql.db.close());
@@ -61,11 +60,7 @@ describe("guards: the row still exists where it should", () => {
 
     expect(await assumptionRows()).toBe(1);
     const state = await loadState(sql);
-    // The seed leaves sellingCostPct to the column default, 0.
-    expect(state.assumptions).toEqual({
-      ...SEED_ASSUMPTIONS,
-      sellingCostPct: rate("0"),
-    });
+    expect(state.assumptions).toEqual(SEED_ASSUMPTIONS);
   });
 
   it("an emptied portfolio that keeps its row loads", async () => {
@@ -76,9 +71,6 @@ describe("guards: the row still exists where it should", () => {
     expect(await launch()).toBe(false);
     const state = await loadState(sql);
     expect(state.portfolio.properties).toEqual([]);
-    expect(state.assumptions).toEqual({
-      ...SEED_ASSUMPTIONS,
-      sellingCostPct: rate("0"),
-    });
+    expect(state.assumptions).toEqual(SEED_ASSUMPTIONS);
   });
 });

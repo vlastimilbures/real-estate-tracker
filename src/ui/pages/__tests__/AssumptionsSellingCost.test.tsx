@@ -63,7 +63,7 @@ describe("Assumptions — selling costs (ADR 0183)", () => {
     renderWithPortfolio(<SettingsPage />, { route: "settings" });
     await saveWith("3.5");
     expect(save).toHaveBeenCalledTimes(1);
-    expect(save.mock.calls[0]![0].sellingCostPct?.toString()).toBe("0.035");
+    expect(save.mock.calls[0]![0].sellingCostPct.toString()).toBe("0.035");
   });
 
   it("refuses 150 % on the field", async () => {
