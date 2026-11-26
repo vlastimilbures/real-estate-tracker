@@ -2,6 +2,8 @@
 import { describe, expect, it } from "vitest";
 import {
   audit,
+  movesFrom,
+  rerunBoth,
   retryCounted,
   rows,
   staleMoves,
@@ -114,15 +116,60 @@ describe("test audit", () => {
       expect(summary(result)).toContain("  src/a.test.ts › s › gone");
     });
 
-    it("re-runs a moved test from its base file under its base name", () => {
+    it("re-runs a moved test from each side's own file under its own name", () => {
       const retry = new Set(["src/merged.test.ts › first behaviour › one"]);
       expect(toRerun(base, merged, retry, moves)).toEqual([
         {
           key: "src/merged.test.ts › first behaviour › one",
-          file: "src/a.test.ts",
-          fullName: "s one",
+          base: {
+            key: "src/a.test.ts › s › one",
+            file: "src/a.test.ts",
+            fullName: "s one",
+          },
+          head: {
+            key: "src/merged.test.ts › first behaviour › one",
+            file: "src/merged.test.ts",
+            fullName: "first behaviour one",
+          },
         },
       ]);
+    });
+
+    it("rejects a map that is not an object of base keys to head keys", () => {
+      expect(movesFrom({ a: "b" })).toEqual(new Map([["a", "b"]]));
+      for (const bad of [[], null, "a", 1, { a: 1 }])
+        expect(() => movesFrom(bad)).toThrow(/expected a JSON object/);
+    });
+
+    it("re-runs a moved test on each side under that side's file and name", () => {
+      const retry = new Set(["src/merged.test.ts › first behaviour › one"]);
+      const [moved] = toRerun(base, merged, retry, moves);
+      // Stands in for Vitest: the report of `file` filtered by `-t`, in each checkout.
+      const checkouts = { "/base": base, "/head": merged };
+      const runs = [];
+      const run = (dir, file, fullName) => {
+        runs.push({ dir, file, fullName });
+        const testResults = checkouts[dir].testResults
+          .filter((f) => f.name === `${dir}/${file}`)
+          .map((f) => ({
+            ...f,
+            assertionResults: f.assertionResults.filter(
+              (t) => [...t.ancestorTitles, t.title].join(" ") === fullName,
+            ),
+          }));
+        return { testResults };
+      };
+      expect(rerunBoth(moved, "/base", "/head", 2, run)).toEqual({
+        base: [2, 2],
+        head: [2, 2],
+      });
+      const onBase = { dir: "/base", file: "src/a.test.ts", fullName: "s one" };
+      const onHead = {
+        dir: "/head",
+        file: "src/merged.test.ts",
+        fullName: "first behaviour one",
+      };
+      expect(runs).toEqual([onBase, onBase, onHead, onHead]);
     });
   });
 
@@ -147,8 +194,9 @@ describe("test audit", () => {
     const retry = new Set([key]);
 
     it("re-runs every retry-counted test, with the name -t matches", () => {
+      const side = { key, file: "src/a.test.ts", fullName: "s one" };
       expect(toRerun(base, base, retry)).toEqual([
-        { key, file: "src/a.test.ts", fullName: "s one" },
+        { key, base: side, head: side },
       ]);
       expect(toRerun(base, head, new Set())).toEqual([]);
     });
