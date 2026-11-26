@@ -220,9 +220,9 @@ still describe it. Which document owns what is listed in
 
 `.dependency-cruiser.cjs` encodes the layer map (ADR 0072, amended by ADR 0171 and ADR 0244): the engine may import
 only `decimal.js`, `src/lib/money.ts` and `src/lib/rules.ts` (which imports only lib/money); Tauri calls live in `src/platform`,
-except the SQL plugin, which only `src/data/tauriSql.ts` calls; the UI reaches data,
+except the SQL plugin, which stays the data adapter's (`src/data/tauriSql.ts`); the UI reaches data,
 import and platform only through `src/state` (the facade modules there); no runtime import
-cycles. State and UI may import _types_ from any layer. ESLint narrows this: the engine
+cycles. State and UI may import _types_ from any layer. ESLint narrows the engine rule: the engine
 takes `Decimal` from `src/lib/money.ts`, never `decimal.js` directly.
 
 `.dependency-cruiser-known-violations.json` is empty. A **new** violation fails CI. Fix it;

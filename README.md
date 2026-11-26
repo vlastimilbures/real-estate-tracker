@@ -299,8 +299,8 @@ flowchart LR
     PLATFORM["platform<br/>Tauri command wrappers"]
   end
   DB <--> CMD
-  DATA -- "reads (SQL plugin)" --> DB
-  DATA -- "writes" --> PLATFORM
+  DATA -- "single reads (SQL plugin)" --> DB
+  DATA -- "writes · snapshot reads" --> PLATFORM
   IMPORT --> DATA
   DATA -- "engine inputs" --> STATE
   STATE -- "inputs" --> ENGINE
