@@ -23,7 +23,7 @@ import type { Decimal } from "../../lib/money";
 
 export type EventListKind = "prepayments" | "recasts" | "draws";
 
-export const listKind = (kind: string | undefined): kind is EventListKind =>
+const listKind = (kind: string | undefined): kind is EventListKind =>
   kind === "prepayments" || kind === "recasts" || kind === "draws";
 
 export interface PrepaymentRow {
@@ -177,7 +177,7 @@ const DRAWS: EventKind<"draws"> = {
   },
 };
 
-export const EVENT_KINDS: { [K in EventListKind]: EventKind<K> } = {
+const EVENT_KINDS: { [K in EventListKind]: EventKind<K> } = {
   prepayments: PREPAYMENTS,
   recasts: RECASTS,
   draws: DRAWS,

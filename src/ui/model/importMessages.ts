@@ -2,14 +2,14 @@
 // translated text.
 import type { Dictionary } from "../../i18n";
 import type { CsvErrorCode, CsvImportProblem } from "../../state/csv";
-import { fmtCzk } from "../../lib/format";
+import { fmtInt } from "../../lib/format";
 import { DATE_FLOOR, isoDay } from "../../lib/day";
 import { storedEventText } from "./importPreview";
 import { inputRuleText } from "./inputRule";
 
 type Code = CsvErrorCode["code"];
 type Of<K extends Code> = Extract<CsvErrorCode, { code: K }>;
-const n = (v: number) => fmtCzk(v, { suffix: false });
+const n = fmtInt;
 
 /** Each code's message; the mapped type keeps the table exhaustive. */
 const CSV_ERROR_TEXT: { [K in Code]: (t: Dictionary, e: Of<K>) => string } = {
