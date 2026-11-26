@@ -7,27 +7,11 @@ import {
   mortgageBlockToRow,
   type MortgageBlockRow,
 } from "../mappers";
-import { isoDate, rate, mortgageBlock } from "../../engine";
+import { isoDate } from "../../engine";
 import type { MortgageBlock } from "../../engine";
-import { money } from "../../engine";
+import { devFuture } from "../../engine/__tests__/support/loan";
 
 // A construction loan with development fields: two tranche draws + a completion date.
-const devFuture: MortgageBlock = mortgageBlock({
-  id: "dev-future",
-  propertyId: "javorova",
-  startDate: isoDate("2026-09-01"),
-  initialPrincipal: money("2000000"),
-  fixationYears: 10,
-  interestRatePa: rate("0.05"),
-  monthlyInstalment: money("10000"),
-  loanTermYears: 30,
-  draws: [
-    { date: isoDate("2027-03-01"), amount: money("1500000") },
-    { date: isoDate("2027-09-01"), amount: money("2000000") },
-  ],
-  completionDate: isoDate("2027-12-01"),
-});
-
 describe("mapper round-trip for development fields", () => {
   it("preserves draws + completion date through row ⇄ block", () => {
     const row = mortgageBlockToRow(devFuture);

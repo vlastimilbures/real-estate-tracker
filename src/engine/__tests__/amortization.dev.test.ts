@@ -17,28 +17,13 @@ import type { MortgageBlock, Portfolio } from "../types";
 import { KC } from "./support/tolerance";
 import { rate } from "../brands";
 import { money } from "../brands";
+import { devFuture } from "./support/loan";
 
 const sumPrincipal = (
   rows: { principal: import("../../lib/money").Decimal }[],
 ) => rows.reduce((s, r) => s.plus(r.principal), D("0"));
 
-// A future-start construction loan: drawn 2026-09, two tranches, interest-only until
-// completion 2027-12, then re-amortizes over the remaining term to startDate+30y.
-const devFuture: MortgageBlock = mortgageBlock({
-  id: "dev-future",
-  propertyId: "javorova",
-  startDate: isoDate("2026-09-01"),
-  initialPrincipal: money("2000000"),
-  fixationYears: 10,
-  interestRatePa: rate("0.05"),
-  monthlyInstalment: money("10000"), // ignored while interest-only
-  loanTermYears: 30,
-  draws: [
-    { date: isoDate("2027-03-01"), amount: money("1500000") },
-    { date: isoDate("2027-09-01"), amount: money("2000000") },
-  ],
-  completionDate: isoDate("2027-12-01"),
-});
+// What `devFuture` (support/loan.ts) draws: its principal at the start, then two tranches.
 const TOTAL_DRAWN = 5_500_000; // 2.0M + 1.5M + 2.0M
 
 describe("isDevLoan gate", () => {

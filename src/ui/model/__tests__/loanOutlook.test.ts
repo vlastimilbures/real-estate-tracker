@@ -23,6 +23,7 @@ import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
 import { fmtCzk, fmtPct } from "../../../lib/format";
+import { fourPctLoan } from "../../../engine/__tests__/support/loan";
 
 const d = en.propertyDetail;
 
@@ -39,18 +40,6 @@ function outlook(blocks: MortgageBlock[], asOf: IsoDate = BASE_DATE) {
 
 const javorova = (p = portfolio) =>
   p.mortgages.filter((b) => b.propertyId === "javorova");
-
-function block(id: string, start: string, fixationYears = 5): MortgageBlock {
-  return mortgageBlock({
-    id,
-    propertyId: "p",
-    startDate: isoDate(start),
-    initialPrincipal: money("3000000"),
-    fixationYears,
-    interestRatePa: rate("0.04"),
-    monthlyInstalment: money("14322.46"),
-  });
-}
 
 describe("ADR 0117: loan outlook rows", () => {
   it("Javorova: the next reset on 17.01.2031 with the parity balance of month 56", () => {
@@ -84,9 +73,9 @@ describe("ADR 0117: loan outlook rows", () => {
 
   it("a block replaced before baseDate is listed as replaced, oldest first", () => {
     const o = outlook([
-      block("later", "2029-01-10"),
-      block("old", "2018-03-10"),
-      block("now", "2024-01-10"),
+      fourPctLoan({ id: "later", startDate: isoDate("2029-01-10") }),
+      fourPctLoan({ id: "old", startDate: isoDate("2018-03-10") }),
+      fourPctLoan({ id: "now", startDate: isoDate("2024-01-10") }),
     ]);
     expect(o.resets.map((r) => [r.blockId, r.status, r.fixationEnd])).toEqual([
       ["old", "replaced", "10.03.2023"],
@@ -96,7 +85,13 @@ describe("ADR 0117: loan outlook rows", () => {
   });
 
   it("a floating block has no fixation end and no balance", () => {
-    const o = outlook([block("float", "2024-01-10", 0)]);
+    const o = outlook([
+      fourPctLoan({
+        id: "float",
+        startDate: isoDate("2024-01-10"),
+        fixationYears: 0,
+      }),
+    ]);
     expect(o.resets).toEqual([
       expect.objectContaining({
         blockId: "float",
@@ -109,7 +104,18 @@ describe("ADR 0117: loan outlook rows", () => {
   });
 
   it("a refix on the fixation end stays replaced; a reset that happened has passed", () => {
-    const blocks = [block("a", "2024-01-10", 3), block("b", "2027-01-10", 2)];
+    const blocks = [
+      fourPctLoan({
+        id: "a",
+        startDate: isoDate("2024-01-10"),
+        fixationYears: 3,
+      }),
+      fourPctLoan({
+        id: "b",
+        startDate: isoDate("2027-01-10"),
+        fixationYears: 2,
+      }),
+    ];
     const o = outlook(blocks, isoDate("2027-06-01"));
     expect(o.resets.map((r) => [r.blockId, r.status])).toEqual([
       ["a", "replaced"],
@@ -143,8 +149,8 @@ describe("ADR 0117: loan outlook rows", () => {
 
   it("an upcoming reset that is not the next one says upcoming", () => {
     const o = outlook([
-      block("now", "2024-01-10"),
-      block("next", "2030-01-10"),
+      fourPctLoan({ id: "now", startDate: isoDate("2024-01-10") }),
+      fourPctLoan({ id: "next", startDate: isoDate("2030-01-10") }),
     ]);
     expect(o.resets.map((r) => r.status)).toEqual(["nextReset", "upcoming"]);
     expect(o.resets[1].label).toBe(d.outlookStatus.upcoming);
@@ -155,8 +161,12 @@ describe("ADR 0117: loan outlook rows", () => {
 describe("ADR 0117: loan outlook edge cases", () => {
   it("a 0-year block replaced before baseDate is replaced, with no fixation end", () => {
     const o = outlook([
-      block("float", "2018-03-10", 0),
-      block("now", "2024-01-10"),
+      fourPctLoan({
+        id: "float",
+        startDate: isoDate("2018-03-10"),
+        fixationYears: 0,
+      }),
+      fourPctLoan({ id: "now", startDate: isoDate("2024-01-10") }),
     ]);
     expect(o.resets.map((r) => [r.blockId, r.status, r.fixationEnd])).toEqual([
       ["float", "replaced", "—"],
@@ -166,8 +176,12 @@ describe("ADR 0117: loan outlook edge cases", () => {
 
   it("a floating block followed by a fixed one: floating, then the next rate reset", () => {
     const o = outlook([
-      block("float", "2024-01-10", 0),
-      block("next", "2027-01-10"),
+      fourPctLoan({
+        id: "float",
+        startDate: isoDate("2024-01-10"),
+        fixationYears: 0,
+      }),
+      fourPctLoan({ id: "next", startDate: isoDate("2027-01-10") }),
     ]);
     expect(o.resets.map((r) => [r.blockId, r.status, r.fixationEnd])).toEqual([
       ["float", "floating", "—"],
@@ -286,7 +300,18 @@ describe("ADR 0224: the figure row's next rate reset", () => {
   });
 
   it("is null with no reset ahead: a floating block, a repaid loan", () => {
-    expect(outlook([block("float", "2024-01-10", 0)]).next).toBeNull();
-    expect(outlook([block("old", "2010-01-10")]).next).toBeNull();
+    expect(
+      outlook([
+        fourPctLoan({
+          id: "float",
+          startDate: isoDate("2024-01-10"),
+          fixationYears: 0,
+        }),
+      ]).next,
+    ).toBeNull();
+    expect(
+      outlook([fourPctLoan({ id: "old", startDate: isoDate("2010-01-10") })])
+        .next,
+    ).toBeNull();
   });
 });

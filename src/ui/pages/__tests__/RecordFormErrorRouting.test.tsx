@@ -27,10 +27,10 @@ import {
   type EngineValidationError,
   type MortgageBlock,
   type Valuation,
-  mortgageBlock,
 } from "../../../engine";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { shownErrors } from "../../../__tests__/support/shownErrors";
+import { dubovaDevLoan } from "../../../engine/__tests__/support/loan";
 
 const en = getDict("en");
 const d = en.propertyDetail;
@@ -74,6 +74,7 @@ const onField = (
 });
 
 const plain = portfolio.mortgages.find((m) => m.propertyId === "dubova")!;
+const dev = dubovaDevLoan();
 const withEvents: MortgageBlock = {
   ...plain,
   prepayments: [
@@ -90,13 +91,6 @@ const withEvents: MortgageBlock = {
   ],
   recasts: [{ date: isoDate("2034-01-17"), instalment: money("15000") }],
 };
-const dev: MortgageBlock = mortgageBlock({
-  ...plain,
-  loanTermYears: 30,
-  draws: [{ date: isoDate("2024-09-01"), amount: money("500000") }],
-  completionDate: isoDate("2025-03-31"),
-});
-
 const save = () => screen.getByRole("button", { name: en.common.saveChanges });
 
 /** Save an edit of `block` the store refuses with `error`, after `edit`: the errors. */

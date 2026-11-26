@@ -14,30 +14,12 @@ import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
 import { rateShockNote, rateShockReach, reachSummary } from "../rateShockReach";
+import { shockLoan } from "../../../engine/__tests__/support/loan";
 
 const shock = (durationYears: number): ShockBand => ({
   deltaPa: rate("0.02"),
   durationYears,
 });
-
-function block(
-  id: string,
-  startDate: string,
-  fixationYears: number,
-  loanTermYears = 30,
-  propertyId = "p1",
-): MortgageBlock {
-  return mortgageBlock({
-    id,
-    propertyId,
-    startDate: isoDate(startDate),
-    initialPrincipal: money("3000000"),
-    fixationYears,
-    interestRatePa: rate("0.04"),
-    monthlyInstalment: money("15000"),
-    loanTermYears,
-  });
-}
 
 function withBlocks(
   mortgages: MortgageBlock[],
@@ -67,7 +49,13 @@ const reachOf = (mortgages: MortgageBlock[], years = 3, inactive?: string[]) =>
 
 describe("rateShockReach", () => {
   it("hits a loan that refixes inside the horizon", () => {
-    const [loan] = reachOf([block("a", "2021-01-17", 10)]);
+    const [loan] = reachOf([
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2021-01-17"),
+        fixationYears: 10,
+      }),
+    ]);
     expect(loan).toMatchObject({ propertyId: "p1", hit: true });
     expect(loan?.refixYears).toEqual([2031]);
   });
@@ -76,7 +64,11 @@ describe("rateShockReach", () => {
   it("misses a loan a prepayment repays before its refix", () => {
     const [loan] = reachOf([
       {
-        ...block("a", "2021-01-17", 10),
+        ...shockLoan({
+          id: "a",
+          startDate: isoDate("2021-01-17"),
+          fixationYears: 10,
+        }),
         prepayments: [
           {
             date: isoDate("2028-02-01"),
@@ -95,7 +87,12 @@ describe("rateShockReach", () => {
     // Contract: 2021 + 10 years, fixed for 10: fixed to maturity without the recast.
     const [loan] = reachOf([
       {
-        ...block("a", "2021-01-17", 10, 10),
+        ...shockLoan({
+          id: "a",
+          startDate: isoDate("2021-01-17"),
+          fixationYears: 10,
+          loanTermYears: 10,
+        }),
         recasts: [
           { date: isoDate("2028-01-17"), maturity: isoDate("2041-01-17") },
         ],
@@ -105,50 +102,110 @@ describe("rateShockReach", () => {
   });
 
   it("misses a loan fixed to maturity", () => {
-    const [loan] = reachOf([block("a", "2020-01-01", 20, 20)]);
+    const [loan] = reachOf([
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2020-01-01"),
+        fixationYears: 20,
+        loanTermYears: 20,
+      }),
+    ]);
     expect(loan?.hit).toBe(false);
     expect(loan?.blocks[0]?.reason).toBe("fixedToMaturity");
   });
 
   it("misses a loan whose shock window ended before baseDate", () => {
-    const [loan] = reachOf([block("a", "2015-01-01", 5)]);
+    const [loan] = reachOf([
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2015-01-01"),
+        fixationYears: 5,
+      }),
+    ]);
     expect(loan?.hit).toBe(false);
     expect(loan?.blocks[0]?.reason).toBe("windowEnded");
   });
 
   it("misses a window that ends on baseDate (only later payments are shocked)", () => {
-    const [loan] = reachOf([block("a", "2020-06-07", 5)], 1);
+    const [loan] = reachOf(
+      [
+        shockLoan({
+          id: "a",
+          startDate: isoDate("2020-06-07"),
+          fixationYears: 5,
+        }),
+      ],
+      1,
+    );
     expect(loan?.blocks[0]?.reason).toBe("windowEnded");
   });
 
   it("hits the rest of a window that started before baseDate (expired fixation)", () => {
-    const [loan] = reachOf([block("a", "2020-06-01", 5)]);
+    const [loan] = reachOf([
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2020-06-01"),
+        fixationYears: 5,
+      }),
+    ]);
     expect(loan?.hit).toBe(true);
     expect(loan?.refixYears).toEqual([2025]);
   });
 
   // ADR 0162: a floating block's window starts at baseDate, or at a later start.
   it("hits a floating block started long ago, from baseDate's year", () => {
-    const [loan] = reachOf([block("a", "2015-01-01", 0)], 1);
+    const [loan] = reachOf(
+      [
+        shockLoan({
+          id: "a",
+          startDate: isoDate("2015-01-01"),
+          fixationYears: 0,
+        }),
+      ],
+      1,
+    );
     expect(loan?.hit).toBe(true);
     expect(loan?.refixYears).toEqual([2026]);
   });
 
   it("hits a future floating block from its start year", () => {
-    const [loan] = reachOf([block("a", "2027-03-01", 0)], 1);
+    const [loan] = reachOf(
+      [
+        shockLoan({
+          id: "a",
+          startDate: isoDate("2027-03-01"),
+          fixationYears: 0,
+        }),
+      ],
+      1,
+    );
     expect(loan?.hit).toBe(true);
     expect(loan?.refixYears).toEqual([2027]);
   });
 
   it("misses a floating block repaid before baseDate as repaid", () => {
-    const old = block("a", "2000-01-01", 0, 10);
+    const old = shockLoan({
+      id: "a",
+      startDate: isoDate("2000-01-01"),
+      fixationYears: 0,
+      loanTermYears: 10,
+    });
     const [loan] = reachOf([{ ...old, monthlyInstalment: money("31000") }]);
     expect(loan?.hit).toBe(false);
     expect(loan?.blocks[0]?.reason).toBe("repaid");
   });
 
   it("hits a loan whose fixation ends on baseDate", () => {
-    const [loan] = reachOf([block("a", "2019-06-07", 7)], 1);
+    const [loan] = reachOf(
+      [
+        shockLoan({
+          id: "a",
+          startDate: isoDate("2019-06-07"),
+          fixationYears: 7,
+        }),
+      ],
+      1,
+    );
     expect(loan?.hit).toBe(true);
     expect(loan?.refixYears).toEqual([2026]);
   });
@@ -158,7 +215,12 @@ describe("rateShockReach", () => {
     // schedule's payoff, not the entered term, is the maturity).
     const [loan] = reachOf([
       {
-        ...block("a", "2026-01-01", 31, 40),
+        ...shockLoan({
+          id: "a",
+          startDate: isoDate("2026-01-01"),
+          fixationYears: 31,
+          loanTermYears: 40,
+        }),
         monthlyInstalment: money("12600"),
       },
     ]);
@@ -167,14 +229,28 @@ describe("rateShockReach", () => {
   });
 
   it("hits a loan that starts after baseDate", () => {
-    const [loan] = reachOf([block("a", "2027-01-01", 3)]);
+    const [loan] = reachOf([
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2027-01-01"),
+        fixationYears: 3,
+      }),
+    ]);
     expect(loan?.refixYears).toEqual([2030]);
   });
 
   it("misses a block replaced before its refix, but its successor can be hit", () => {
     const [loan] = reachOf([
-      block("a", "2022-01-01", 7),
-      block("b", "2028-01-01", 5),
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2022-01-01"),
+        fixationYears: 7,
+      }),
+      shockLoan({
+        id: "b",
+        startDate: isoDate("2028-01-01"),
+        fixationYears: 5,
+      }),
     ]);
     expect(loan?.blocks.map((b) => [b.blockId, b.hit, b.reason])).toEqual([
       ["a", false, "replacedBySuccessor"],
@@ -186,8 +262,16 @@ describe("rateShockReach", () => {
 
   it("counts a property's block chain as one loan", () => {
     const reach = reachOf([
-      block("a", "2022-01-01", 7),
-      block("b", "2028-01-01", 30, 30),
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2022-01-01"),
+        fixationYears: 7,
+      }),
+      shockLoan({
+        id: "b",
+        startDate: isoDate("2028-01-01"),
+        fixationYears: 30,
+      }),
     ]);
     expect(reach).toHaveLength(1);
     expect(reach[0]?.hit).toBe(false);
@@ -195,7 +279,19 @@ describe("rateShockReach", () => {
 
   it("skips inactive properties and properties without a mortgage", () => {
     const reach = reachOf(
-      [block("a", "2021-01-17", 10), block("b", "2021-01-17", 10, 30, "off")],
+      [
+        shockLoan({
+          id: "a",
+          startDate: isoDate("2021-01-17"),
+          fixationYears: 10,
+        }),
+        shockLoan({
+          id: "b",
+          startDate: isoDate("2021-01-17"),
+          fixationYears: 10,
+          propertyId: "off",
+        }),
+      ],
       3,
       ["off", "nomortgage"],
     );
@@ -218,15 +314,30 @@ describe("rateShockReach", () => {
 
 describe("reachSummary", () => {
   const twoLoans = [
-    block("a", "2021-01-17", 10),
-    block("b", "2022-01-15", 7, 30, "p2"),
-    block("c", "2015-01-01", 5, 30, "p3"),
+    shockLoan({ id: "a", startDate: isoDate("2021-01-17"), fixationYears: 10 }),
+    shockLoan({
+      id: "b",
+      startDate: isoDate("2022-01-15"),
+      fixationYears: 7,
+      propertyId: "p2",
+    }),
+    shockLoan({
+      id: "c",
+      startDate: isoDate("2015-01-01"),
+      fixationYears: 5,
+      propertyId: "p3",
+    }),
   ];
 
   it("names how many loans are hit and the deduplicated, sorted refix years", () => {
     const reach = reachOf([
       ...twoLoans,
-      block("d", "2021-03-01", 10, 30, "p4"),
+      shockLoan({
+        id: "d",
+        startDate: isoDate("2021-03-01"),
+        fixationYears: 10,
+        propertyId: "p4",
+      }),
     ]);
     expect(reachSummary(reach, en)).toBe(
       "hits 3 of 4 loans (fixation end 2029, 2031)",
@@ -234,7 +345,13 @@ describe("reachSummary", () => {
   });
 
   it("says when no loan is hit", () => {
-    const reach = reachOf([block("c", "2015-01-01", 5)]);
+    const reach = reachOf([
+      shockLoan({
+        id: "c",
+        startDate: isoDate("2015-01-01"),
+        fixationYears: 5,
+      }),
+    ]);
     expect(reachSummary(reach, en)).toBe(en.scenarios.reachNone);
   });
 
@@ -243,7 +360,13 @@ describe("reachSummary", () => {
   });
 
   it("uses the singular and the cs/ru plural forms", () => {
-    const one = reachOf([block("a", "2021-01-17", 10)]);
+    const one = reachOf([
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2021-01-17"),
+        fixationYears: 10,
+      }),
+    ]);
     expect(reachSummary(one, en)).toBe("hits 1 of 1 loan (fixation end 2031)");
     expect(reachSummary(one, cs)).toBe(
       "zasáhne 1 z 1 úvěru (konec fixace 2031)",
@@ -290,7 +413,11 @@ describe("rateShockNote", () => {
 
   it("is undefined when a loan has no term (invalid data)", () => {
     const noTerm = mortgageBlock({
-      ...block("a", "2021-01-17", 10),
+      ...shockLoan({
+        id: "a",
+        startDate: isoDate("2021-01-17"),
+        fixationYears: 10,
+      }),
       loanTermYears: undefined,
       monthlyInstalment: money("0"),
     });

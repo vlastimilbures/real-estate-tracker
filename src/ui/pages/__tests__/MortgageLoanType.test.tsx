@@ -11,25 +11,14 @@ import { MortgagesPanel } from "../PropertyEntityPanels";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
-import {
-  isoDate,
-  money,
-  type MortgageBlock,
-  mortgageBlock,
-} from "../../../engine";
+import { type MortgageBlock } from "../../../engine";
 import { portfolio } from "../../../engine/__tests__/support/seed";
+import { dubovaDevLoan } from "../../../engine/__tests__/support/loan";
 
 const en = getDict("en");
 const d = en.propertyDetail;
 const plain = portfolio.mortgages.find((m) => m.propertyId === "dubova")!;
-const dev: MortgageBlock = mortgageBlock({
-  ...plain,
-  id: "m-dev",
-  loanTermYears: 30,
-  draws: [{ date: isoDate("2024-09-01"), amount: money("500000") }],
-  completionDate: isoDate("2025-03-31"),
-});
-
+const dev = dubovaDevLoan({ id: "m-dev" });
 const add = vi.fn(async () => ({ ok: true as const }));
 const save = vi.fn(async () => ({ ok: true as const }));
 

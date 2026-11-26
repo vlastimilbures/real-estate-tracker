@@ -7,25 +7,13 @@ import { portfolioProjection } from "../projections";
 import { propertySchedule } from "../schedule";
 import { isoDate } from "../dates";
 import { D, ZERO, type Decimal } from "../../lib/money";
-import { rate } from "../brands";
 import type { MortgageBlock, Portfolio } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 import { KC, RATIO, near } from "./support/tolerance";
 import { money } from "../brands";
-import { mortgageBlock } from "../loanBlock";
+import { refiLoan } from "./support/loan";
 
 const N = assumptions.horizonYears;
-
-const refi = (start: string, principal: Decimal): MortgageBlock =>
-  mortgageBlock({
-    id: "m-refi",
-    propertyId: "javorova",
-    startDate: isoDate(start),
-    initialPrincipal: money(principal),
-    fixationYears: 5,
-    interestRatePa: rate("0.039"),
-    monthlyInstalment: money("9800"),
-  });
 
 const withRefi = (block: MortgageBlock): Portfolio => ({
   ...portfolio,
@@ -59,9 +47,12 @@ function expectedKpis(p: Portfolio) {
 describe("D-47: net refinance cash in the KPIs", () => {
   // Javorova refixed on its fixation end (grid month 56, projection year 5).
   const paidOff = propertySchedule(
-    withRefi(refi("2031-01-17", D("1633000"))).mortgages.filter(
-      (m) => m.propertyId === "javorova",
-    ),
+    withRefi(
+      refiLoan({
+        startDate: isoDate("2031-01-17"),
+        initialPrincipal: money(D("1633000")),
+      }),
+    ).mortgages.filter((m) => m.propertyId === "javorova"),
     assumptions,
   ).refinances[0]?.paidOff;
   if (!paidOff) throw new Error("expected a handover");
@@ -73,7 +64,12 @@ describe("D-47: net refinance cash in the KPIs", () => {
   ];
 
   it.each(cases)("%s: cumulative net CF and IRR include it", (_, p0, sign) => {
-    const p = withRefi(refi("2031-01-17", p0));
+    const p = withRefi(
+      refiLoan({
+        startDate: isoDate("2031-01-17"),
+        initialPrincipal: money(p0),
+      }),
+    );
     const k = portfolioKpis(p, assumptions);
     const want = expectedKpis(p);
     expect(handover(p).year).toBe(5);
@@ -87,8 +83,18 @@ describe("D-47: net refinance cash in the KPIs", () => {
   });
 
   it("a cash-out refinance raises cumulative CF by exactly the cash", () => {
-    const out = withRefi(refi("2031-01-17", D("2500000")));
-    const same = withRefi(refi("2031-01-17", paidOff));
+    const out = withRefi(
+      refiLoan({
+        startDate: isoDate("2031-01-17"),
+        initialPrincipal: money(D("2500000")),
+      }),
+    );
+    const same = withRefi(
+      refiLoan({
+        startDate: isoDate("2031-01-17"),
+        initialPrincipal: money(paidOff),
+      }),
+    );
     const delta = portfolioKpis(out, assumptions).cumulativeNetCashFlow.minus(
       portfolioKpis(same, assumptions).cumulativeNetCashFlow,
     );
@@ -110,7 +116,12 @@ describe("D-47: net refinance cash in the KPIs", () => {
   it("a refinance in the horizon's last year adds its cash", () => {
     // A 5-year horizon ends in the handover year: year N itself still counts.
     const a5 = { ...assumptions, horizonYears: 5 };
-    const p = withRefi(refi("2031-01-17", D("2500000")));
+    const p = withRefi(
+      refiLoan({
+        startDate: isoDate("2031-01-17"),
+        initialPrincipal: money(D("2500000")),
+      }),
+    );
     const blocks = p.mortgages.filter((m) => m.propertyId === "javorova");
     const [r] = propertySchedule(blocks, a5).refinances;
     if (!r) throw new Error("expected a handover");
@@ -127,7 +138,12 @@ describe("D-47: net refinance cash in the KPIs", () => {
   });
 
   it("a refinance after the horizon adds no cash", () => {
-    const late = withRefi(refi("2057-01-17", D("100000")));
+    const late = withRefi(
+      refiLoan({
+        startDate: isoDate("2057-01-17"),
+        initialPrincipal: money(D("100000")),
+      }),
+    );
     near(
       portfolioKpis(late, assumptions).cumulativeNetCashFlow,
       portfolioKpis(portfolio, assumptions).cumulativeNetCashFlow.toNumber(),

@@ -11,31 +11,12 @@ import { money, rate } from "../brands";
 import { assumptions, portfolio } from "./support/seed";
 import { devBlock, mixed } from "./support/mixed";
 import type { MortgageBlock, Portfolio, ShockBand } from "../types";
-import { mortgageBlock } from "../loanBlock";
+import { shockLoan } from "./support/loan";
 
 const shock = (durationYears: number): ShockBand => ({
   deltaPa: rate("0.02"),
   durationYears,
 });
-
-function block(
-  id: string,
-  startDate: string,
-  fixationYears: number,
-  loanTermYears = 30,
-  propertyId = "p1",
-): MortgageBlock {
-  return mortgageBlock({
-    id,
-    propertyId,
-    startDate: isoDate(startDate),
-    initialPrincipal: money("3000000"),
-    fixationYears,
-    interestRatePa: rate("0.04"),
-    monthlyInstalment: money("15000"),
-    loanTermYears,
-  });
-}
 
 function withBlocks(
   mortgages: MortgageBlock[],
@@ -73,7 +54,13 @@ const only = (mortgages: MortgageBlock[], years = 3) => {
 
 describe("blocksReachedByShock", () => {
   it("hits a block that refixes inside the horizon, at its fixation end", () => {
-    const b = only([block("a", "2021-01-17", 10)]);
+    const b = only([
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2021-01-17"),
+        fixationYears: 10,
+      }),
+    ]);
     expect(b).toEqual({
       blockId: "a",
       hit: true,
@@ -84,7 +71,11 @@ describe("blocksReachedByShock", () => {
   it("misses a block a prepayment repays before its refix (ADR 0116)", () => {
     const b = only([
       {
-        ...block("a", "2021-01-17", 10),
+        ...shockLoan({
+          id: "a",
+          startDate: isoDate("2021-01-17"),
+          fixationYears: 10,
+        }),
         prepayments: [
           {
             date: isoDate("2028-02-01"),
@@ -100,7 +91,12 @@ describe("blocksReachedByShock", () => {
   it("hits a block a recast keeps running past its contract maturity", () => {
     const b = only([
       {
-        ...block("a", "2021-01-17", 10, 10),
+        ...shockLoan({
+          id: "a",
+          startDate: isoDate("2021-01-17"),
+          fixationYears: 10,
+          loanTermYears: 10,
+        }),
         recasts: [
           { date: isoDate("2028-01-17"), maturity: isoDate("2041-01-17") },
         ],
@@ -112,32 +108,58 @@ describe("blocksReachedByShock", () => {
   it.each([
     [
       "fixed to maturity",
-      block("a", "2020-01-01", 20, 20),
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2020-01-01"),
+        fixationYears: 20,
+        loanTermYears: 20,
+      }),
       3,
       "fixedToMaturity",
     ],
     [
       "window ended before baseDate",
-      block("a", "2015-01-01", 5),
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2015-01-01"),
+        fixationYears: 5,
+      }),
       3,
       "windowEnded",
     ],
     [
       "window ending on baseDate",
-      block("a", "2020-06-07", 5),
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2020-06-07"),
+        fixationYears: 5,
+      }),
       1,
       "windowEnded",
     ],
     [
       "floating, repaid before baseDate",
-      { ...block("a", "2000-01-01", 0, 10), monthlyInstalment: money("31000") },
+      {
+        ...shockLoan({
+          id: "a",
+          startDate: isoDate("2000-01-01"),
+          fixationYears: 0,
+          loanTermYears: 10,
+        }),
+        monthlyInstalment: money("31000"),
+      },
       3,
       "repaid",
     ],
     [
       "refixing after the horizon",
       {
-        ...block("a", "2026-01-01", 31, 40),
+        ...shockLoan({
+          id: "a",
+          startDate: isoDate("2026-01-01"),
+          fixationYears: 31,
+          loanTermYears: 40,
+        }),
         monthlyInstalment: money("12600"),
       },
       3,
@@ -150,31 +172,51 @@ describe("blocksReachedByShock", () => {
   it.each([
     [
       "the rest of an expired fixation's window",
-      block("a", "2020-06-01", 5),
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2020-06-01"),
+        fixationYears: 5,
+      }),
       3,
       "2025-06-01",
     ],
     [
       "a floating block from baseDate (ADR 0162)",
-      block("a", "2015-01-01", 0),
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2015-01-01"),
+        fixationYears: 0,
+      }),
       1,
       "2026-06-07",
     ],
     [
       "a future floating block from its start",
-      block("a", "2027-03-01", 0),
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2027-03-01"),
+        fixationYears: 0,
+      }),
       1,
       "2027-03-01",
     ],
     [
       "a fixation ending on baseDate",
-      block("a", "2019-06-07", 7),
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2019-06-07"),
+        fixationYears: 7,
+      }),
       1,
       "2026-06-07",
     ],
     [
       "a block starting after baseDate",
-      block("a", "2027-01-01", 3),
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2027-01-01"),
+        fixationYears: 3,
+      }),
       3,
       "2030-01-01",
     ],
@@ -188,8 +230,16 @@ describe("blocksReachedByShock", () => {
 
   it("misses a block replaced before its refix; its successor can be hit", () => {
     const [loan] = reachOf([
-      block("a", "2022-01-01", 7),
-      block("b", "2028-01-01", 5),
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2022-01-01"),
+        fixationYears: 7,
+      }),
+      shockLoan({
+        id: "b",
+        startDate: isoDate("2028-01-01"),
+        fixationYears: 5,
+      }),
     ]);
     expect(loan?.blocks.map((b) => [b.blockId, b.hit, b.reason])).toEqual([
       ["a", false, "replacedBySuccessor"],
@@ -200,9 +250,22 @@ describe("blocksReachedByShock", () => {
   it("reports a property's block chain as one loan, skipping inactive and loan-free properties", () => {
     const reach = reachOf(
       [
-        block("a", "2022-01-01", 7),
-        block("b", "2028-01-01", 30, 30),
-        block("c", "2021-01-17", 10, 30, "off"),
+        shockLoan({
+          id: "a",
+          startDate: isoDate("2022-01-01"),
+          fixationYears: 7,
+        }),
+        shockLoan({
+          id: "b",
+          startDate: isoDate("2028-01-01"),
+          fixationYears: 30,
+        }),
+        shockLoan({
+          id: "c",
+          startDate: isoDate("2021-01-17"),
+          fixationYears: 10,
+          propertyId: "off",
+        }),
       ],
       3,
       ["off", "nomortgage"],
@@ -254,7 +317,13 @@ describe("blocksReachedByShock agrees with the shocked projection", () => {
   const onlyLipova = (m: MortgageBlock) =>
     m.propertyId === "lipova" ? m : pastHorizon(m);
   const lipovaSuccessor = (fixationYears: number) => ({
-    ...block("m-lipova-2", "2028-06-15", fixationYears, 25, "lipova"),
+    ...shockLoan({
+      id: "m-lipova-2",
+      startDate: isoDate("2028-06-15"),
+      fixationYears,
+      loanTermYears: 25,
+      propertyId: "lipova",
+    }),
     monthlyInstalment: money("25000"),
   });
   // Every block of the mixed fixture but the development loan refixes past the horizon.
@@ -292,7 +361,13 @@ describe("blocksReachedByShock agrees with the shocked projection", () => {
         m.propertyId === "lipova" ? { ...m, fixationYears: 0 } : pastHorizon(m),
       [
         {
-          ...block("m-lipova-2", "2026-06-10", 25, 25, "lipova"),
+          ...shockLoan({
+            id: "m-lipova-2",
+            startDate: isoDate("2026-06-10"),
+            fixationYears: 25,
+            loanTermYears: 25,
+            propertyId: "lipova",
+          }),
           monthlyInstalment: money("25000"),
         },
       ],
@@ -334,7 +409,12 @@ describe("blocksReachedByShock agrees with the shocked projection", () => {
       onlyDev,
       [
         {
-          ...block("m-dev-2", "2030-03-01", 30, 30, "dev"),
+          ...shockLoan({
+            id: "m-dev-2",
+            startDate: isoDate("2030-03-01"),
+            fixationYears: 30,
+            propertyId: "dev",
+          }),
           initialPrincipal: money("4300000"),
         },
       ],
