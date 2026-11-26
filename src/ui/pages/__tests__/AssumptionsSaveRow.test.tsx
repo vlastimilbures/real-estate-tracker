@@ -147,6 +147,8 @@ describe("Assumptions error summary (ADR 0095)", () => {
       en.assumptions.inflation,
       en.assumptions.other,
     ]);
+    // The always-underlined text button (ADR 0266).
+    for (const l of links) expect(l.className).toBe("link-button underlined");
     await userEvent.click(links[1]!);
     expect(document.activeElement).toBe(input(en.assumptions.other));
   });

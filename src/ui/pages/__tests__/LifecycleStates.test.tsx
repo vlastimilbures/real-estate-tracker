@@ -374,9 +374,12 @@ describe("a pending purchase (#126 item 1, ADR 0156)", () => {
     // Date and a link only: the price and loan are in the Acquisition section (ADR 0189).
     expect(panel.textContent).not.toContain(fmtCzk(future.purchasePrice));
     expect(panel.textContent).not.toContain(fmtCzk(loan.initialPrincipal));
-    fireEvent.click(
-      within(panel).getByRole("button", { name: pd.notOwnedFundingLink }),
-    );
+    const fundingLink = within(panel).getByRole("button", {
+      name: pd.notOwnedFundingLink,
+    });
+    // The always-underlined text button (ADR 0266).
+    expect(fundingLink.className).toBe("link-button underlined");
+    fireEvent.click(fundingLink);
     expect(document.activeElement?.textContent).toBe(pd.acqTitle);
     expect(hasTile(pd.marketValue)).toBe(false);
     expect(screen.queryByText(en.dashboard.badgeConservative)).toBeNull();

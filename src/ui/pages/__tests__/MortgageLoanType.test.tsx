@@ -170,9 +170,12 @@ describe("successor-block note (ADR 0098)", () => {
   it("shows on Add when the property already has a block, with a Guide link", async () => {
     await openAdd([plain]);
     expect(screen.getByText(d.successorNote)).toBeTruthy();
-    await userEvent.click(
-      screen.getByRole("button", { name: d.successorLearnMore }),
-    );
+    const learnMore = screen.getByRole("button", {
+      name: d.successorLearnMore,
+    });
+    // The always-underlined text button (ADR 0266).
+    expect(learnMore.className).toBe("link-button underlined");
+    await userEvent.click(learnMore);
     expect(useUiStore.getState().route).toBe("guide");
     expect(useUiStore.getState().guideTerm).toBe("fixation");
   });
