@@ -284,10 +284,16 @@ describe("the unsaved note", () => {
     const field = screen.getByLabelText(/^Monthly rent/);
     await userEvent.type(field, "5");
     const note = screen.getByText(en.common.unsavedChanges);
-    // In the footer: beside the form's buttons.
-    expect(note.parentElement).toBe(
+    // In the footer: beside the form's buttons, in a row that holds both buttons and no
+    // field (so the note and Save cannot leave the footer together unnoticed).
+    const row = note.parentElement!;
+    expect(row).toBe(
       screen.getByRole("button", { name: "Save" }).parentElement,
     );
+    expect(
+      row.contains(screen.getByRole("button", { name: en.common.cancel })),
+    ).toBe(true);
+    expect(row.contains(field)).toBe(false);
     await userEvent.clear(field);
     await userEvent.type(field, "100");
     expect(screen.queryByText(en.common.unsavedChanges)).toBeNull();
