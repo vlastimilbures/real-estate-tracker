@@ -12,11 +12,6 @@
       "count": 1
     }
   },
-  "src/ui/hooks/useAssumptionsForm.ts": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/ui/model/compare.ts": {
     "max-lines-per-function": {
       "count": 1
