@@ -4,7 +4,9 @@
 - Date: 2026-10-07
 - Source: issue #131 (review findings R5-04, R4-10, G2-5-04, R5-03), option A; Track 10 PR 10.7
 - Amended by: [0254](0254-unknown-property-reported-once.md) (§2: the Import page no longer
-  checks child files for known property names, so it reads none)
+  checks child files for known property names, so it reads none),
+  [0263](0263-chrome-stays-mounted.md) (§1: the fallback renders inside the one chrome; §4:
+  focus in the chrome also moves to the main region)
 - Related: [0075](0075-input-rejection-gaps.md) (stored data that breaks a rule shows the
   UX-049 invalid-data notice)
 

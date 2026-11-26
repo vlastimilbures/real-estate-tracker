@@ -282,6 +282,12 @@ engine without the form, and remove it when the last part lands.
   after a restore, the sample panel heading after a sample load. A failed Assumptions save
   that shows only in the banner puts focus back on Save. Focus the user moved stays where
   it is (ADR 0248, #549).
+- The sidebar stays in place when you move to another page: it keeps its scroll position
+  in a short window, and it stays on screen while a page opens for the first time (the
+  window used to go blank for a moment). When a page cannot be shown and its notice
+  replaces it, focus on a sidebar button stays there; it used to fall to the top of the
+  window. After a page change, focus still moves to the new page's content (ADR 0263,
+  #601).
 
 ### Security
 

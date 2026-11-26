@@ -29,9 +29,15 @@ async function renderAt(route: Route) {
   await settled();
 }
 
-/** Lazy pages load after the first render: wait until a page or a notice shows. */
+/** Lazy pages load after the first render: wait until a page or a notice shows. While a
+ *  page's code loads, the content column is hidden with the outgoing page or notice still
+ *  in it (ADR 0263 §4), so wait for the column to show too. */
 const settled = () =>
-  waitFor(() => expect(notice() || pageTitle() !== undefined).toBe(true));
+  waitFor(() => {
+    const column = document.querySelector<HTMLElement>(".content");
+    expect(column?.style.display).not.toBe("none");
+    expect(notice() || pageTitle() !== undefined).toBe(true);
+  });
 
 const sidebar = () =>
   screen.queryByRole("button", { name: en.nav.settings }) !== null;

@@ -1,7 +1,8 @@
 // What every page renders inside the app's chrome (#483): its sticky top bar (PageHeader)
 // and its main region, with the kept banners above the page's content. A page returns it as
 // its root in every variant (loading, empty, full), so a variant switch keeps it, and a page
-// change mounts a new one with the page.
+// change mounts a new one with the page. The chrome around it, and the focus move to its
+// main region after a page change, are AppLayout's (ADR 0263).
 import { useEffect, useRef, type ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import { useUiStore } from "../../state/uiStore";
@@ -9,8 +10,6 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { SegmentedToggle, ErrorBanner } from "./primitives";
 import { useFirstShow } from "../hooks/useFirstShow";
 import { usePublishTopbarHeight } from "../hooks/useTopbar";
-import { focusLost } from "../focus";
-import { swapShownRoute } from "../../state/shellMemory";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { OutcomeRegions } from "./OutcomeRegions";
 import { useT } from "../hooks/useT";
@@ -136,18 +135,6 @@ export function PageFrame({
     window.scrollTo(0, 0);
   }, [route, selectedPropertyId]);
 
-  // A page change removes the nav button that was pressed, and focus falls to <body>.
-  // Move it to the new page's main region, so Tab continues there and a screen reader
-  // hears the change (ADR 0146). Not at startup, and not when the page already placed
-  // focus (a dialog, a glossary term, a section): only focus that was lost moves.
-  const mainRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    // The route the last mounted frame showed: a page change mounts a new one (ADR 0146).
-    const before = swapShownRoute(route);
-    const changed = before !== null && before !== route;
-    if (changed && focusLost()) mainRef.current?.focus({ preventScroll: true });
-  }, [route]);
-
   // The top bar's height as --topbar-h (scroll-margin-top under the sticky bar).
   const topbarRef = useRef<HTMLElement>(null);
   usePublishTopbarHeight(topbarRef);
@@ -161,7 +148,6 @@ export function PageFrame({
         className={pageClass ? `page ${pageClass}` : "page"}
         id="main"
         tabIndex={-1}
-        ref={mainRef}
       >
         {error && (
           <ErrorBanner

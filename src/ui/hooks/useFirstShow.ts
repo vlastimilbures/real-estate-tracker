@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { markShown, wasShown } from "../../state/shellMemory";
 
-/** True only on the page where `item` first shows: each page mounts its own shell, and a
+/** True only on the page where `item` first shows: each page mounts its own frame, and a
  *  kept banner is announced once, then stays silent (ADR 0189, ADR 0194). False for null. */
 export function useFirstShow(item: object | null): boolean {
   const [mine, setMine] = useState(() =>

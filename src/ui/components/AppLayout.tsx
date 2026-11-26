@@ -1,7 +1,8 @@
 // The app's chrome around the page (#483): the skip link, the sidebar and the column the
 // page's own frame (PageFrame: top bar and main region) fills. PageBoundary renders it once
-// per page, keyed by the route, so a page change mounts it again (ADR 0146).
-import type { ReactNode } from "react";
+// while the app is ready, so a page change, a page's code loading and a page error keep
+// the sidebar's nodes, its scroll position and the focus in it (ADR 0263).
+import { Suspense, useEffect, useRef, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   PanelLeftClose,
@@ -11,6 +12,7 @@ import {
   Monitor,
 } from "lucide-react";
 import { useUiStore, type Theme } from "../../state/uiStore";
+import { swapShownRoute } from "../../state/shellMemory";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { BrandMark } from "./BrandMark";
 import { BackupHint } from "./BackupHint";
@@ -19,6 +21,7 @@ import { fmtDate } from "../../lib/format";
 import { APP_NAME, LANGUAGES } from "../../i18n";
 import { NAV_GROUPS, navMarked } from "../routes";
 import { useT } from "../hooks/useT";
+import { focusLost } from "../focus";
 import { at } from "../../lib/arrays";
 
 const THEME_OPTIONS: {
@@ -209,14 +212,56 @@ function Sidebar({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-/** The chrome around one page; `children` is the page, which renders its PageFrame. */
+/** Whether focus is lost or in the chrome around `content` (the skip link, the sidebar):
+ *  the parts a page change does not hand to the new page. */
+function focusOffPage(content: HTMLElement): boolean {
+  const active = document.activeElement;
+  const shell = content.parentElement;
+  return (
+    focusLost() || (!!shell?.contains(active) && !content.contains(active))
+  );
+}
+
+/**
+ * The column the page fills. After a page change it moves focus to the new page's main
+ * region when focus is lost or still in the chrome (the pressed nav button, the skip link),
+ * so Tab continues there and a screen reader hears the change (ADR 0146 §4, ADR 0263 §2).
+ * Not at startup, and not when the page already placed focus (a dialog, a glossary term,
+ * a section). It sits inside the lazy pages' Suspense, so its effect runs when the new page
+ * commits, after the page's own effects.
+ */
+function Content({ children }: { children: ReactNode }) {
+  const route = useUiStore((s) => s.route);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // The route shown last, kept in module state: the chrome mounts again when the app
+    // comes back to the ready state, maybe on another page (ADR 0263).
+    const before = swapShownRoute(route);
+    const content = ref.current;
+    if (before === null || before === route || !content) return;
+    if (focusOffPage(content))
+      content
+        .querySelector<HTMLElement>("#main")
+        ?.focus({ preventScroll: true });
+  }, [route]);
+  return (
+    <div className="content" ref={ref}>
+      {children}
+    </div>
+  );
+}
+
+/** The chrome around the pages; `children` is the page, which renders its PageFrame.
+ *  While a page's code loads, the content column is hidden and the sidebar stays. */
 export function AppLayout({ children }: { children: ReactNode }) {
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   return (
     <div className={collapsed ? "shell collapsed" : "shell"}>
       <SkipLink />
       <Sidebar collapsed={collapsed} />
-      <div className="content">{children}</div>
+      <Suspense fallback={null}>
+        <Content>{children}</Content>
+      </Suspense>
     </div>
   );
 }

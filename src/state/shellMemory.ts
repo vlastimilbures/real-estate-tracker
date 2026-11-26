@@ -1,12 +1,13 @@
-// What the app remembers across page shells for its lifetime. A page change mounts the
-// chrome and the page's frame again (AppLayout, PageFrame; ADR 0146), so neither can hold
-// it; it lives here, in the state layer, rather than as module state in src/ui (#491).
+// What the app remembers across page frames and chromes for its lifetime. A page change
+// mounts the page's frame again (PageFrame), and the chrome mounts again when the app
+// comes back to the ready state (AppLayout; ADR 0263), so neither can hold it; it lives
+// here, in the state layer, rather than as module state in src/ui (#491).
 import type { Route } from "./uiStore";
 
 let shownRoute: Route | null = null;
 
-/** Records `route` as the one the newest frame shows; returns the route the frame before
- *  it showed (null at startup). */
+/** Records `route` as the one the content column shows; returns the route it showed
+ *  before (null at startup), also across a remount of the chrome. */
 export function swapShownRoute(route: Route): Route | null {
   const before = shownRoute;
   shownRoute = route;

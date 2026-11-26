@@ -109,7 +109,7 @@ describe("notice (#136)", () => {
   });
 });
 
-// #274 (ADR 0189): each page mounts its own shell. A kept notice or failure is announced
+// #274 (ADR 0189): each page mounts its own frame. A kept notice or failure is announced
 // where it first appears; on later pages it stays, silent, until dismissed.
 describe("announced once (#274)", () => {
   it("a notice keeps its live role only where it first shows", () => {
