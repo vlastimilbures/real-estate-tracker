@@ -8,7 +8,7 @@ import { Panel, StatList } from "../components/layout";
 import { IrrValue, Pct } from "../components/rates";
 import { ChartCard } from "../components/charts";
 import { DscrTile, LtvTile, NetCashFlowTile } from "../components/kpiTiles";
-import { fmtCzkM, fmtMultiple, fmtPct, noBreak } from "../../lib/format";
+import { fmtCzkM, fmtMultiple, fmtPct, noBreak, EMPTY } from "../../lib/format";
 import type { ReactNode } from "react";
 import {
   basisCaption,
@@ -74,7 +74,7 @@ export function KpiStrip({ view }: { view: KpiStripView }) {
           label={d.netWorth}
           value={<MoneyM value={lens.netWorth} />}
           foot={d.bandMultiple(
-            lens.netWorthMultiple ? fmtMultiple(lens.netWorthMultiple) : "—",
+            lens.netWorthMultiple ? fmtMultiple(lens.netWorthMultiple) : EMPTY,
           )}
         />
         <KpiTile
@@ -199,7 +199,7 @@ export function KpiListPanel({ view }: { view: KpiListView }) {
     {
       title: d.kpiGroupReturns,
       rows: [
-        { k: d.kpiNetWorthCagr, v: cagr ? <Pct value={cagr} dp={2} /> : "—" },
+        { k: d.kpiNetWorthCagr, v: cagr ? <Pct value={cagr} dp={2} /> : EMPTY },
         { k: d.netYieldCap, v: <Pct value={s.netYield} dp={2} /> },
         { k: d.kpiGrossYield, v: <Pct value={s.grossYield} dp={2} /> },
         // A recorded nominal amount, labelled so in the real lens (ADR 0087, 0119 §9).
@@ -230,7 +230,7 @@ export function KpiListPanel({ view }: { view: KpiListView }) {
         },
         {
           k: d.kpiFirstCfPositiveYear,
-          v: kpis.firstCashFlowPositiveYear ?? "—",
+          v: kpis.firstCashFlowPositiveYear ?? EMPTY,
         },
       ],
     },
@@ -250,7 +250,7 @@ export function KpiListPanel({ view }: { view: KpiListView }) {
           ),
           v: <Money value={kpis.totalPrincipalRepaid} parens={false} />,
         },
-        { k: d.kpiDebtFullyRepaid, v: kpis.debtFreeYear ?? "—" },
+        { k: d.kpiDebtFullyRepaid, v: kpis.debtFreeYear ?? EMPTY },
       ],
     },
   ];

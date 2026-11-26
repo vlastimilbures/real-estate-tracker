@@ -9,7 +9,7 @@ import {
   type Valuation,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
-import { fmtCzk, fmtDate } from "../../lib/format";
+import { fmtCzk, fmtDate, EMPTY } from "../../lib/format";
 
 /** One property's stored records. */
 export interface PropertyRecords {
@@ -47,5 +47,5 @@ export function developmentSummary(t: Dictionary, r: MortgageBlock): string {
     parts.push(`${d.tranches(r.draws.length)} · ${d.totalLoan(fmtCzk(total))}`);
   }
   if (r.completionDate) parts.push(d.ioUntil(fmtDate(r.completionDate)));
-  return parts.length ? parts.join(" · ") : "—";
+  return parts.length ? parts.join(" · ") : EMPTY;
 }

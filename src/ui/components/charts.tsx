@@ -29,6 +29,7 @@ import {
   fmtPct,
   pickCzkAxisUnit,
   type CzkAxisUnit,
+  EMPTY,
 } from "../../lib/format";
 import { SERIES } from "../model/chartSeries";
 import {
@@ -326,7 +327,7 @@ function ChartTable({
                         kind === "pct" ? (
                           t.common.notApplicable
                         ) : (
-                          "—"
+                          EMPTY
                         )
                       ) : kind === "pct" ? (
                         <Pct value={v} />
@@ -383,7 +384,7 @@ export function Tip({
             {it.value === null
               ? it.kind === "pct"
                 ? t.common.notApplicable // no base (ADR 0133)
-                : "—"
+                : EMPTY
               : it.kind === "pct"
                 ? fmtPct(it.value)
                 : fmtCzk(it.value, { parens: true })}

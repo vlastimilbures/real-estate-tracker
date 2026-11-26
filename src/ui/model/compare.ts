@@ -8,6 +8,8 @@ import {
   fmtPp,
   fmtSigned,
   toNumber,
+  EMPTY,
+  orDash,
 } from "../../lib/format";
 import type { Decimal } from "../../lib/money";
 import type {
@@ -50,8 +52,8 @@ export interface CompareValueRow extends CompareKpiRow {
   value: (r: CompareResult) => Cell;
 }
 
-const pct = (d: Decimal | null) => (d ? fmtPct(d) : "—");
-const mult = (d: Decimal | null) => (d ? fmtMultiple(d) : "—");
+const pct = (d: Decimal | null) => orDash(d, fmtPct);
+const mult = (d: Decimal | null) => orDash(d, fmtMultiple);
 
 const rowsOf = (r: CompareResult, mode: Mode) =>
   mode === "real" ? r.realProjection : r.projection;
@@ -129,7 +131,7 @@ export function compareKpiRows(
           {
             ...row,
             fmt: (r: CompareResult) =>
-              r.id === base.id ? "—" : delta(r, base).text,
+              r.id === base.id ? EMPTY : delta(r, base).text,
             note: (r: CompareResult) =>
               r.id === base.id ? undefined : delta(r, base).note,
           },
@@ -160,13 +162,13 @@ function kpiRowSpecs(
     base !== undefined && startsDifferently(r, base);
 
   // Δ cells: "—" when either side has no value, with a note when Base is the one missing.
-  const missingBase = { text: "—", note: s.deltaNoBaseValue };
+  const missingBase = { text: EMPTY, note: s.deltaNoBaseValue };
   const decimalDelta =
     (pick: (r: CompareResult) => Decimal | null, fmt: (d: Decimal) => string) =>
     (r: CompareResult, b: CompareResult): DeltaCell => {
       const v = pick(r);
       const w = pick(b);
-      if (v === null) return { text: "—" };
+      if (v === null) return { text: EMPTY };
       if (w === null) return missingBase;
       return { text: fmtSigned(v.minus(w), fmt) };
     };
@@ -175,7 +177,7 @@ function kpiRowSpecs(
     (r: CompareResult, b: CompareResult): DeltaCell => {
       const v = pick(r);
       const w = pick(b);
-      if (v === null) return { text: "—" };
+      if (v === null) return { text: EMPTY };
       if (w === null) return missingBase;
       return { text: s.deltaYears(v - w) };
     };
@@ -203,7 +205,7 @@ function kpiRowSpecs(
           {
             label: s.kpiNetWorthDeltaVsBase,
             fmt: (r: CompareResult) => {
-              if (r.id === base.id) return "—";
+              if (r.id === base.id) return EMPTY;
               return fmtSigned(netWorth(r).minus(netWorth(base)), fmtCzkM);
             },
             kind: "money" as const,
@@ -263,21 +265,21 @@ function kpiRowSpecs(
       delta: (r, b) =>
         irrRate(r) === null
           ? {
-              text: "—",
+              text: EMPTY,
               note: irrReasonText(t, lens(r).leveredIrr.reason),
             }
           : irrDelta(r, b),
     },
     {
       label: s.kpiFirstCfPositiveYear,
-      fmt: (r) => firstCfYear(r)?.toString() ?? "—",
+      fmt: (r) => orDash(firstCfYear(r), String),
       kind: "int",
       value: firstCfYear,
       delta: yearDelta(firstCfYear),
     },
     {
       label: s.kpiDebtFreeYear,
-      fmt: (r) => debtFreeYear(r)?.toString() ?? "—",
+      fmt: (r) => orDash(debtFreeYear(r), String),
       kind: "int",
       value: debtFreeYear,
       delta: yearDelta(debtFreeYear),

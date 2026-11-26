@@ -5,6 +5,7 @@ import type { LoanOutlook } from "../../model/propertyDetail";
 import { useT } from "../../hooks/useT";
 import { DrawdownSection } from "./DrawdownSection";
 import "../../styles/loan-outlook.css";
+import { EMPTY } from "../../../lib/format";
 
 /**
  * The loan's modelled payoff, remaining term and the interest its prepayments save
@@ -24,7 +25,7 @@ export function LoanSummary({ outlook }: { outlook: LoanOutlook }) {
     {
       id: "balance",
       label: d.colBalanceAtReset,
-      value: next ? <Money value={next.balance} parens={false} /> : "—",
+      value: next ? <Money value={next.balance} parens={false} /> : EMPTY,
     },
     { id: "payoff", label: d.loanPayoff, value: outlook.payoff },
   ];
@@ -81,7 +82,11 @@ export function LoanSummary({ outlook }: { outlook: LoanOutlook }) {
                 <td className="left">{r.start}</td>
                 <td className="left">{r.fixationEnd}</td>
                 <td>
-                  {r.balance ? <Money value={r.balance} parens={false} /> : "—"}
+                  {r.balance ? (
+                    <Money value={r.balance} parens={false} />
+                  ) : (
+                    EMPTY
+                  )}
                 </td>
                 <td className="left">{r.label}</td>
               </tr>

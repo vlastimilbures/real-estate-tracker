@@ -9,7 +9,7 @@ import type {
   ImportItem,
 } from "../../state/csv";
 import { isoDate } from "../../engine";
-import { fmtCzk, fmtDate, fmtPct } from "../../lib/format";
+import { fmtCzk, fmtDate, fmtPct, EMPTY } from "../../lib/format";
 import { inputRuleText } from "./inputRule";
 
 export interface FileGroup {
@@ -129,7 +129,7 @@ const DATES = new Set([
 
 /** A stored cell as the app shows it; empty ⇒ "—"; a flag as yes / no (ADR 0250). */
 function showValue(t: Dictionary, field: string, v: string | null): string {
-  if (v === null) return "—";
+  if (v === null) return EMPTY;
   if (MONEY.has(field)) return fmtCzk(v);
   if (RATES.has(field)) return fmtPct(v, 2);
   if (DATES.has(field)) return showDate(v);
@@ -139,7 +139,7 @@ function showValue(t: Dictionary, field: string, v: string | null): string {
 
 /** A stored cell at full precision: money to the haléř, rates to four decimals. */
 function showExact(field: string, v: string | null): string {
-  if (v === null) return "—";
+  if (v === null) return EMPTY;
   if (MONEY.has(field)) return fmtCzk(v, { decimals: 2 });
   if (RATES.has(field)) return fmtPct(v, 4);
   return v;
@@ -151,7 +151,7 @@ export function changeText(t: Dictionary, change: FieldChange): string {
   const { field, before, after } = change;
   const shown = (f: string, v: string | null) => showValue(t, f, v);
   const show =
-    [shown, showExact, (_: string, v: string | null) => v ?? "—"].find(
+    [shown, showExact, (_: string, v: string | null) => v ?? EMPTY].find(
       (f) => f(field, before) !== f(field, after),
     ) ?? shown;
   return `${show(field, before)} → ${show(field, after)}`;

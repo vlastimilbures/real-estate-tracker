@@ -6,7 +6,7 @@ import { Money } from "../components/figures";
 import { Pct } from "../components/rates";
 import { EntityPanel, type PanelTable } from "../components/EntityPanel";
 import { moneyDraft, dateDraft } from "../model/formParse";
-import { fmtDate } from "../../lib/format";
+import { fmtDate, orDash } from "../../lib/format";
 import { CZK } from "../../lib/currency";
 import { mortgageFromForm, mortgageSpecs } from "../model/mortgageForm";
 import { developmentSummary } from "../model/propertyRecords";
@@ -47,7 +47,7 @@ export function ValuationsPanel({
           {
             head: t.propertyDetail.colValidTo,
             left: true,
-            cell: (r) => (r.validTo ? fmtDate(r.validTo) : "—"),
+            cell: (r) => orDash(r.validTo, fmtDate),
           },
           {
             head: t.propertyDetail.colMarketValue,
@@ -128,7 +128,7 @@ export function LeasesPanel({
           {
             head: t.propertyDetail.colEnd,
             left: true,
-            cell: (r) => (r.endDate ? fmtDate(r.endDate) : "—"),
+            cell: (r) => orDash(r.endDate, fmtDate),
           },
           {
             head: t.propertyDetail.colMonthlyRent,
