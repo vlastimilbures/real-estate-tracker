@@ -184,7 +184,6 @@ function kpiRowSpecs(
   const irrDelta = decimalDelta(irrRate, pp);
 
   // Each row's value, shared by its text, its Δ and its export cell.
-  const startEquity = (r: CompareResult) => at(rowsOf(r, mode), 0).equity;
   const multiple = (r: CompareResult) => lens(r).netWorthMultiple;
   const cagr = (r: CompareResult) => lens(r).cagr;
   const cumCf = (r: CompareResult) => lens(r).cumulativeNetCashFlow;
@@ -194,10 +193,10 @@ function kpiRowSpecs(
   return [
     {
       label: s.kpiStartingEquity,
-      fmt: (r) => fmtCzkM(startEquity(r)),
+      fmt: (r) => fmtCzkM(startingEquity(r)),
       kind: "money",
-      value: startEquity,
-      delta: decimalDelta(startEquity, fmtCzkM),
+      value: startingEquity,
+      delta: decimalDelta(startingEquity, fmtCzkM),
     },
     ...(base
       ? [
