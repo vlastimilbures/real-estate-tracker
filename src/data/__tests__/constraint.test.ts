@@ -108,7 +108,9 @@ describe("constraintOf", () => {
     expect(e).toBeInstanceOf(CommandError);
     expect(e).toMatchObject({
       code: "SQL",
-      message: "FOREIGN KEY constraint failed",
+      // sqlx's text, as Rust's detail is: the extended code, then SQLite's message.
+      message:
+        "error returned from database: (code: 787) FOREIGN KEY constraint failed",
       constraint: { kind: "foreignKey" },
     });
   });

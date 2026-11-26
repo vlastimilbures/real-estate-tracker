@@ -80,12 +80,34 @@ function constraintFrom(
   }
 }
 
-/** A driver failure as Rust's commands reject: code SQL, SQLite's text, the constraint. */
+/** SQLite's (extended) result codes by better-sqlite3's name, for the detail sqlx
+ *  writes: the ones a test can meet. A name not listed keeps SQLite's bare message. */
+const RESULT_CODES: Readonly<Record<string, number>> = {
+  SQLITE_ERROR: 1,
+  SQLITE_BUSY: 5,
+  SQLITE_READONLY: 8,
+  SQLITE_CONSTRAINT: 19,
+  SQLITE_MISMATCH: 20,
+  SQLITE_RANGE: 25,
+  SQLITE_CONSTRAINT_CHECK: 275,
+  SQLITE_CONSTRAINT_FOREIGNKEY: 787,
+  SQLITE_CONSTRAINT_NOTNULL: 1299,
+  SQLITE_CONSTRAINT_PRIMARYKEY: 1555,
+  SQLITE_CONSTRAINT_UNIQUE: 2067,
+};
+
+/** A driver failure as Rust's commands reject: code SQL, sqlx's text as the detail
+ *  (`error returned from database: (code: N) <SQLite's message>`), the constraint. */
 function asRust(e: unknown): Error {
   if (!(e instanceof Error)) return new Error(String(e));
   const code = (e as Error & { code?: unknown }).code;
   if (typeof code !== "string" || !code.startsWith("SQLITE_")) return e;
-  return new CommandError("SQL", e.message, constraintFrom(code, e.message));
+  const n = RESULT_CODES[code];
+  const detail =
+    n === undefined
+      ? e.message
+      : `error returned from database: (code: ${n}) ${e.message}`;
+  return new CommandError("SQL", detail, constraintFrom(code, e.message));
 }
 
 export function openMemorySql(filename = ":memory:"): TestSql {
