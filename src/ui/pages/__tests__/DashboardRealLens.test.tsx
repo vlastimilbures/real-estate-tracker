@@ -4,7 +4,10 @@
 // foot shows the lens-matched multiple "from projection start".
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { portfolioKpis, portfolioSnapshot } from "../../../engine";
+import {
+  portfolioKpis,
+  portfolioSnapshot,
+} from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { fmtMultiple } from "../../../lib/format";

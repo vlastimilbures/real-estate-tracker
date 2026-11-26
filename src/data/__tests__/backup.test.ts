@@ -14,7 +14,7 @@ import {
 } from "../backup";
 import { checkInputRules } from "../../state/restoreRules";
 import type { Sql } from "../sql";
-import { portfolioSnapshot } from "../../engine";
+import { portfolioSnapshot } from "../../engine/__tests__/support/seams";
 import { expectKc } from "../../engine/__tests__/support/tolerance";
 import {
   rowToScenario,

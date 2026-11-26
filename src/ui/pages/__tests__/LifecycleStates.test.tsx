@@ -19,7 +19,8 @@ import { mixed } from "../../../engine/__tests__/support/mixed";
 import { mixedCashOutside } from "../../../engine/__tests__/support/synthetic";
 import { fmtCzk, fmtCzkM, fmtDate, fmtPct, noBreak } from "../../../lib/format";
 import { D } from "../../../lib/money";
-import { isoDate, portfolioSnapshot } from "../../../engine";
+import { isoDate } from "../../../engine";
+import { portfolioSnapshot } from "../../../engine/__tests__/support/seams";
 import { setClock } from "../../../__tests__/support/clock";
 
 beforeEach(() => setClock("2026-10-01"));

@@ -8,14 +8,16 @@ import {
   applyScenario,
   isoDate,
   money,
-  portfolioKpis,
   portfolioProjection,
-  portfolioSnapshot,
   portfolioSnapshotAtYear,
   propertySnapshot,
   rate,
   type Portfolio,
 } from "../../../engine";
+import {
+  portfolioKpis,
+  portfolioSnapshot,
+} from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { renderWithPortfolio } from "../../../__tests__/support/world";
 import { en } from "../../../i18n/en";

@@ -4,12 +4,8 @@
 // scenario whose levered IRR has no value, next to a scenario that has one.
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
-import {
-  cpiIndex,
-  portfolioKpis,
-  portfolioProjection,
-  realProjection,
-} from "../../../engine";
+import { cpiIndex, portfolioProjection, realProjection } from "../../../engine";
+import { portfolioKpis } from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import type { CompareResult } from "../../model/compare";

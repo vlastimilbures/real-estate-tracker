@@ -4,13 +4,11 @@
 // growth base (null) shows "—" on the hero foot and in the KPI list.
 import { describe, it, expect } from "vitest";
 import { render, screen, within } from "@testing-library/react";
+import { isoDate, propertySnapshot, type Portfolio } from "../../../engine";
 import {
-  isoDate,
   portfolioKpis,
   portfolioSnapshot,
-  propertySnapshot,
-  type Portfolio,
-} from "../../../engine";
+} from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { KpiStrip, KpiListPanel } from "../DashboardPanels";

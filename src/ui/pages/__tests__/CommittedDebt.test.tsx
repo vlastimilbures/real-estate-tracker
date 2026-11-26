@@ -5,12 +5,11 @@
 // the value tile the completed value. A portfolio with everything drawn shows no such note.
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { propertySnapshot, type Portfolio } from "../../../engine";
 import {
   portfolioKpis,
   portfolioSnapshot,
-  propertySnapshot,
-  type Portfolio,
-} from "../../../engine";
+} from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
 import { en } from "../../../i18n/en";

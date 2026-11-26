@@ -8,11 +8,11 @@ import { render, screen, within } from "@testing-library/react";
 import {
   applyScenario,
   cpiIndex,
-  portfolioKpis,
   portfolioProjection,
   rate,
   realProjection,
 } from "../../../engine";
+import { portfolioKpis } from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import type { CompareResult } from "../../model/compare";

@@ -4,7 +4,10 @@
 // horizon instead of a hardcoded 30 years.
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { portfolioKpis, portfolioSnapshot } from "../../../engine";
+import {
+  portfolioKpis,
+  portfolioSnapshot,
+} from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { KpiListPanel, ProjectionCharts } from "../DashboardPanels";
 import { kpiListView } from "./dashboardViewSupport";

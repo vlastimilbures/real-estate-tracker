@@ -5,11 +5,11 @@ import ExcelJS from "exceljs";
 import {
   applyScenario,
   cpiIndex,
-  portfolioKpis,
   portfolioProjection,
   rate,
   realProjection,
 } from "../../../engine";
+import { portfolioKpis } from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { D } from "../../../lib/money";
 import { fmtCzkM, fmtDate, fmtMultiple, fmtPct } from "../../../lib/format";

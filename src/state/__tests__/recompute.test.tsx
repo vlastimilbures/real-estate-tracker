@@ -26,8 +26,6 @@ vi.mock("../../engine", async (importOriginal) => {
   return {
     ...actual,
     portfolioProjection: vi.fn(actual.portfolioProjection),
-    portfolioSnapshot: vi.fn(actual.portfolioSnapshot),
-    portfolioKpis: vi.fn(actual.portfolioKpis),
     propertyProjection: vi.fn(actual.propertyProjection),
     propertyProjections: vi.fn(actual.propertyProjections),
     propertySnapshot: vi.fn(actual.propertySnapshot),
@@ -36,10 +34,10 @@ vi.mock("../../engine", async (importOriginal) => {
   };
 });
 
+// portfolioSnapshot and portfolioKpis left the barrel for the test seams (#480), so app
+// code cannot call them and they need no spy.
 const spies = [
   engine.portfolioProjection,
-  engine.portfolioSnapshot,
-  engine.portfolioKpis,
   engine.propertyProjection,
   engine.propertyProjections,
   engine.propertySnapshot,

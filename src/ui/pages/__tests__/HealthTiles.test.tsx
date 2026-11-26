@@ -4,7 +4,8 @@
 // foot; the label row holds only the label, so it stays on one line.
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { portfolioSnapshot, propertySnapshot } from "../../../engine";
+import { propertySnapshot } from "../../../engine";
+import { portfolioSnapshot } from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import {

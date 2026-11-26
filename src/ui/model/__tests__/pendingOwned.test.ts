@@ -7,10 +7,10 @@ import {
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedules,
   propertyProjections,
-  portfolioSnapshot,
   isoDate,
   type IsoDate,
 } from "../../../engine";
+import { portfolioSnapshot } from "../../../engine/__tests__/support/seams";
 import { assumptions } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
 import { projectionSeries } from "../projection";

@@ -6,13 +6,13 @@ import {
   cpiAt,
   edate,
   portfolioProjection,
-  portfolioSnapshot,
   propertyProjection,
   propertySnapshot,
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedules,
   type IsoDate,
 } from "../../../engine";
+import { portfolioSnapshot } from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { ZERO, type Decimal } from "../../../lib/money";
 import { projectionSeries } from "../projection";

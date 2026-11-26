@@ -17,6 +17,14 @@ const APP_LAYERS = "^src/(engine|data|state|ui|import|i18n|platform)/";
 module.exports = {
   forbidden: [
     {
+      name: "test-code-tests-only",
+      severity: "error",
+      comment:
+        "Test code (fixtures, support, the engine's test seams in src/engine/__tests__/support/seams.ts, #480) is imported by tests only, never by app code.",
+      from: { path: "^src/", pathNot: TESTS },
+      to: { path: TESTS },
+    },
+    {
       name: "no-circular",
       severity: "error",
       comment:

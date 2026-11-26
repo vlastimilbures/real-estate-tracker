@@ -11,13 +11,8 @@ import {
 } from "../../data/repositories";
 import { SEED_ASSUMPTIONS } from "../../data/seed";
 import type { Sql } from "../../data/sql";
-import {
-  isoDate,
-  money,
-  portfolioKpis,
-  rate,
-  mortgageBlock,
-} from "../../engine";
+import { isoDate, money, rate, mortgageBlock } from "../../engine";
+import { portfolioKpis } from "../../engine/__tests__/support/seams";
 import {
   parseMortgages,
   parseProperties,
