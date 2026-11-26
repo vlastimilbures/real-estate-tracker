@@ -28,6 +28,7 @@ function multi(selected: string[] = [], onChange = vi.fn()) {
         allLabel="All"
         selected={selected}
         onChange={onChange}
+        testId="dashboard-filter"
       />
       <button type="button">Outside</button>
     </>,
@@ -153,6 +154,7 @@ describe("PropertySelect dropdown, multi mode (#128 R5-05)", () => {
           allLabel="All"
           selected={[]}
           onChange={() => {}}
+          testId="dashboard-filter"
         />
       </StrictMode>,
     );

@@ -16,7 +16,8 @@ type MultiProps = {
   allLabel: string;
   selected: string[];
   onChange: (ids: string[]) => void;
-  testId?: string;
+  /** The group's test id; each pill adds `-all` or `-<value>`, the trigger `-trigger`. */
+  testId: string;
 };
 
 type SingleProps = {
@@ -30,98 +31,120 @@ type SingleProps = {
 
 type Props = MultiProps | SingleProps;
 
-// ─── Multi-select ────────────────────────────────────────────────────────────
+// ─── Rows: what both renderers show ─────────────────────────────────────────
 
-function MultiPills({
-  options,
-  allLabel,
-  selected,
-  onChange,
-  testId,
-}: MultiProps) {
-  const allActive = selected.length === 0;
-  const toggle = (id: string) =>
-    onChange(
-      selected.includes(id)
-        ? selected.filter((x) => x !== id)
-        : [...selected, id],
-    );
-  return (
-    <div
-      className="pill-group"
-      role="group"
-      aria-label={allLabel}
-      data-testid={testId ?? "dashboard-filter"}
-    >
-      <button
-        type="button"
-        className={`pill${allActive ? " on" : ""}`}
-        aria-pressed={allActive}
-        onClick={() => onChange([])}
-        data-testid={testId ? `${testId}-all` : "dashboard-filter-all"}
-      >
-        {allLabel}
-      </button>
-      {options.map((o) => {
-        const on = selected.includes(o.value);
-        return (
-          <button
-            key={o.value}
-            type="button"
-            className={`pill${on ? " on" : ""}`}
-            aria-pressed={on}
-            onClick={() => toggle(o.value)}
-            data-testid={
-              testId ? `${testId}-${o.value}` : `dashboard-filter-${o.value}`
-            }
-          >
-            {o.label}
-          </button>
-        );
-      })}
-    </div>
-  );
+/** One choice: a pill, or an option in the open list. */
+type Row = {
+  key: string;
+  label: string;
+  checked: boolean;
+  pick: () => void;
+  title?: string | undefined;
+  testId?: string | undefined;
+};
+
+/** The selection with `id` added, or removed when it was in. */
+function toggled(selected: string[], id: string): string[] {
+  return selected.includes(id)
+    ? selected.filter((x) => x !== id)
+    : [...selected, id];
 }
 
-// ─── Single-select ───────────────────────────────────────────────────────────
+/** "All" (nothing selected), then one row per shown option. */
+function multiRows(props: MultiProps, shown: Option[]): Row[] {
+  const { allLabel, selected, onChange } = props;
+  return [
+    {
+      key: "",
+      label: allLabel,
+      checked: selected.length === 0,
+      pick: () => onChange([]),
+    },
+    ...shown.map((o) => ({
+      key: o.value,
+      label: o.label,
+      checked: selected.includes(o.value),
+      pick: () => onChange(toggled(selected, o.value)),
+    })),
+  ];
+}
 
-function SinglePills({
-  options,
-  selected,
-  onChange,
+function singleRows({ options, selected, onChange }: SingleProps): Row[] {
+  return options.map((o) => ({
+    key: o.value,
+    label: o.label,
+    checked: o.value === selected,
+    pick: () => onChange(o.value),
+  }));
+}
+
+// ─── Pills (up to the threshold) ─────────────────────────────────────────────
+
+function Pills({
+  className,
   ariaLabel,
   testId,
-}: SingleProps) {
+  rows,
+}: {
+  className: string;
+  ariaLabel?: string | undefined;
+  testId?: string | undefined;
+  rows: Row[];
+}) {
   return (
     <div
-      className="pill-group segmented"
+      className={className}
       role="group"
       aria-label={ariaLabel}
       data-testid={testId}
     >
-      {options.map((o) => {
-        const on = o.value === selected;
-        return (
-          <button
-            key={o.value}
-            type="button"
-            className={`pill${on ? " on" : ""}`}
-            aria-pressed={on}
-            onClick={() => onChange(o.value)}
-            // A long name is cut with an ellipsis; hover shows it in full (ADR 0242 §3).
-            title={o.label}
-          >
-            {o.label}
-          </button>
-        );
-      })}
+      {rows.map((r) => (
+        <button
+          key={r.key}
+          type="button"
+          className={`pill${r.checked ? " on" : ""}`}
+          aria-pressed={r.checked}
+          onClick={r.pick}
+          title={r.title}
+          data-testid={r.testId}
+        >
+          {r.label}
+        </button>
+      ))}
     </div>
   );
 }
 
-// ─── Dropdown (past the pill threshold) ──────────────────────────────────────
+function MultiPills(props: MultiProps) {
+  const { testId } = props;
+  const rows = multiRows(props, props.options).map((r) => ({
+    ...r,
+    testId: `${testId}-${r.key === "" ? "all" : r.key}`,
+  }));
+  return (
+    <Pills
+      className="pill-group"
+      ariaLabel={props.allLabel}
+      testId={testId}
+      rows={rows}
+    />
+  );
+}
 
-type Row = { key: string; label: string; checked: boolean; pick: () => void };
+function SinglePills(props: SingleProps) {
+  // A long name is cut with an ellipsis; hover shows it in full (ADR 0242 §3).
+  const rows = singleRows(props).map((r) => ({ ...r, title: r.label }));
+  return (
+    <Pills
+      className="pill-group segmented"
+      ariaLabel={props.ariaLabel}
+      testId={props.testId}
+      rows={rows}
+    />
+  );
+}
+
+// ─── Dropdown (past the pill threshold) ──────────────────────────────────────
 
 /**
  * The open list (ADR 0157). It mounts on open, so useModalA11y moves focus in;
@@ -319,22 +342,11 @@ function Dropdown({
   );
 }
 
-function MultiDropdown({
-  options,
-  allLabel,
-  selected,
-  onChange,
-  testId,
-}: MultiProps) {
+function MultiDropdown(props: MultiProps) {
+  const { options, allLabel, selected, testId } = props;
   const t = useT();
   const [query, setQuery] = useState("");
   const allActive = selected.length === 0;
-  const toggle = (id: string) =>
-    onChange(
-      selected.includes(id)
-        ? selected.filter((x) => x !== id)
-        : [...selected, id],
-    );
   const filtered = options.filter((o) =>
     o.label.toLowerCase().includes(query.toLowerCase()),
   );
@@ -343,29 +355,15 @@ function MultiDropdown({
     : selected.length === 1
       ? (options.find((o) => o.value === selected[0])?.label ?? allLabel)
       : t.common.nSelected(selected.length);
-  const rows: Row[] = [
-    {
-      key: "",
-      label: allLabel,
-      checked: allActive,
-      pick: () => onChange([]),
-    },
-    ...filtered.map((o) => ({
-      key: o.value,
-      label: o.label,
-      checked: selected.includes(o.value),
-      pick: () => toggle(o.value),
-    })),
-  ];
 
   return (
     <Dropdown
       label={label}
       listLabel={allLabel}
       triggerClass={`property-select-trigger pill${!allActive ? " on" : ""}`}
-      rootTestId={testId ?? "dashboard-filter"}
-      triggerTestId={testId ? `${testId}-trigger` : "dashboard-filter-trigger"}
-      rows={rows}
+      rootTestId={testId}
+      triggerTestId={`${testId}-trigger`}
+      rows={multiRows(props, filtered)}
       initial={0}
       multi
       closeOnPick={false}
@@ -385,21 +383,10 @@ function MultiDropdown({
   );
 }
 
-function SingleDropdown({
-  options,
-  selected,
-  onChange,
-  ariaLabel,
-  testId,
-}: SingleProps) {
+function SingleDropdown(props: SingleProps) {
+  const { options, selected, ariaLabel, testId } = props;
   const index = options.findIndex((o) => o.value === selected);
   const label = options[index]?.label ?? options[0]?.label ?? "";
-  const rows: Row[] = options.map((o) => ({
-    key: o.value,
-    label: o.label,
-    checked: o.value === selected,
-    pick: () => onChange(o.value),
-  }));
   return (
     <Dropdown
       label={label}
@@ -407,7 +394,7 @@ function SingleDropdown({
       triggerClass="property-select-trigger pill on"
       ariaLabel={ariaLabel}
       rootTestId={testId}
-      rows={rows}
+      rows={singleRows(props)}
       initial={Math.max(index, 0)}
       multi={false}
       closeOnPick

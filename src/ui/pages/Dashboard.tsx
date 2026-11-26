@@ -135,6 +135,7 @@ export function Dashboard() {
             allLabel={t.common.all}
             selected={filter.effectiveIds}
             onChange={filter.setIds}
+            testId="dashboard-filter"
           />
         )}
         <AsOfPicker
