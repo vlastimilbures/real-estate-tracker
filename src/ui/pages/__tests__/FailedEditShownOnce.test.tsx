@@ -24,7 +24,7 @@ import { openSeeded } from "../../../state/__tests__/support/openSeeded";
 import { en } from "../../../i18n/en";
 
 // The compare runs the engine; these tests only need the list.
-vi.mock("../ScenarioCompare", () => ({ CompareView: () => null }));
+vi.mock("../ScenarioCompare", () => ({ ScenarioCompareView: () => null }));
 
 class NoopObserver {
   observe() {}

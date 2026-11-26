@@ -28,7 +28,7 @@ import { seedIfEmpty } from "../../../data/seed";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 
 // The compare runs the engine; the duplicate test only needs the list.
-vi.mock("../ScenarioCompare", () => ({ CompareView: () => null }));
+vi.mock("../ScenarioCompare", () => ({ ScenarioCompareView: () => null }));
 
 const en = getDict("en");
 

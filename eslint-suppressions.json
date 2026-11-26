@@ -37,20 +37,10 @@
       "count": 1
     }
   },
-  "src/ui/pages/ScenarioCompare.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/ui/pages/ScenarioForm.tsx": {
     "complexity": {
       "count": 1
     },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/ui/pages/Scenarios.tsx": {
     "max-lines-per-function": {
       "count": 1
     }

@@ -37,22 +37,12 @@
       "Function 'Guide'": 197
     }
   },
-  "src/ui/pages/ScenarioCompare.tsx": {
-    "lines": {
-      "Function 'CompareView'": 181
-    }
-  },
   "src/ui/pages/ScenarioForm.tsx": {
     "complexity": {
       "Arrow function (ScenarioForm > [initialDraft]: useState)": 20
     },
     "lines": {
       "Function 'ScenarioForm'": 165
-    }
-  },
-  "src/ui/pages/Scenarios.tsx": {
-    "lines": {
-      "Function 'Scenarios'": 161
     }
   }
 }

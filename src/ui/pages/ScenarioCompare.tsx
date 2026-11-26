@@ -18,6 +18,7 @@ import { lensLabel } from "../model/tableContext";
 import { GitCompare } from "lucide-react";
 import { ChartCard, SMALL_CHART_HEIGHT } from "../components/charts";
 import type { Scenario } from "../../engine";
+import type { Mode } from "../model/lens";
 import { useT } from "../hooks/useT";
 import {
   compareBase,
@@ -26,11 +27,13 @@ import {
   compareKpiRows,
   compareSeriesStyle,
   mergeCompareMetric,
+  metricColumnWidth,
   ownRateNotes,
+  type CompareResult,
   type CompareView,
 } from "../model/compare";
 
-export function CompareView({
+export function ScenarioCompareView({
   selected,
   reachText,
 }: {
@@ -72,19 +75,6 @@ export function CompareView({
     );
   }
 
-  // Colour and dash by position, so the lines read in greyscale too (ADR 0114).
-  const series = results.map((r, i) => ({
-    key: `s${i}`,
-    name: r.name,
-    ...compareSeriesStyle(i),
-  }));
-
-  // Each scenario under the Nominal/Real lens, real by its own CPI.
-  const netWorthRows = mergeCompareMetric(results, mode, (y) => y.equity);
-  const cashFlowRows = mergeCompareMetric(results, mode, (y) => y.netCashFlow, {
-    flow: true,
-  });
-  const ltvRows = mergeCompareMetric(results, mode, (y) => y.ltv);
   // Owner's loss next to the rebased returns of a crash at Today (ADR 0089).
   const footnote = compareFootnote(t, results);
   // A scenario level a property's own rate overrides (ADR 0190); compared picks only.
@@ -96,7 +86,6 @@ export function CompareView({
   // Δ vs Base needs Base; without it the table shows values (ADR 0097).
   const base = compareBase(results);
   const shownView: CompareView = base ? view : "values";
-  const lensSub = lensLabel(t, mode);
 
   return (
     <>
@@ -134,13 +123,9 @@ export function CompareView({
             <caption className="sr-only">{t.scenarios.keyFiguresTitle}</caption>
             <thead>
               <tr>
-                {/* The metric column takes 1.4 shares, each scenario one (a plain
-                  percentage: table columns ignore calc() with %). */}
                 <td
                   className="sticky-col"
-                  style={{
-                    width: `${(140 / (1.4 + results.length)).toFixed(2)}%`,
-                  }}
+                  style={{ width: metricColumnWidth(results.length) }}
                 />
                 {results.map((r, i) => {
                   const reach = reachText?.(r.id);
@@ -187,40 +172,67 @@ export function CompareView({
         ))}
       </Panel>
 
-      {/* Three in a row, two and one, or one per row by the charts' own width: never an
-          empty cell (ADR 0216 §1). */}
-      <div className="chart-grid-wrap">
-        <div className="chart-grid trio">
-          <ChartCard
-            title={t.scenarios.chartNetWorth}
-            sub={lensSub}
-            kind="czk"
-            rows={netWorthRows}
-            series={series}
-            legend
-            height={SMALL_CHART_HEIGHT}
-          />
-          <ChartCard
-            title={t.scenarios.chartNetCashFlow}
-            sub={lensSub}
-            kind="czk"
-            rows={cashFlowRows}
-            series={series}
-            legend
-            height={SMALL_CHART_HEIGHT}
-          />
-          <ChartCard
-            title={t.scenarios.chartLtv}
-            sub={t.scenarios.subPct}
-            kind="pct"
-            rows={ltvRows}
-            series={series}
-            legend
-            height={SMALL_CHART_HEIGHT}
-          />
-        </div>
-      </div>
+      <CompareCharts results={results} mode={mode} />
     </>
+  );
+}
+
+/** Net worth, net cash flow and LTV of each compared scenario. */
+function CompareCharts({
+  results,
+  mode,
+}: {
+  results: CompareResult[];
+  mode: Mode;
+}) {
+  const t = useT();
+  // Colour and dash by position, so the lines read in greyscale too (ADR 0114).
+  const series = results.map((r, i) => ({
+    key: `s${i}`,
+    name: r.name,
+    ...compareSeriesStyle(i),
+  }));
+  // Each scenario under the Nominal/Real lens, real by its own CPI.
+  const netWorthRows = mergeCompareMetric(results, mode, (y) => y.equity);
+  const cashFlowRows = mergeCompareMetric(results, mode, (y) => y.netCashFlow, {
+    flow: true,
+  });
+  const ltvRows = mergeCompareMetric(results, mode, (y) => y.ltv);
+  const lensSub = lensLabel(t, mode);
+  // Three in a row, two and one, or one per row by the charts' own width: never an empty
+  // cell (ADR 0216 §1).
+  return (
+    <div className="chart-grid-wrap">
+      <div className="chart-grid trio">
+        <ChartCard
+          title={t.scenarios.chartNetWorth}
+          sub={lensSub}
+          kind="czk"
+          rows={netWorthRows}
+          series={series}
+          legend
+          height={SMALL_CHART_HEIGHT}
+        />
+        <ChartCard
+          title={t.scenarios.chartNetCashFlow}
+          sub={lensSub}
+          kind="czk"
+          rows={cashFlowRows}
+          series={series}
+          legend
+          height={SMALL_CHART_HEIGHT}
+        />
+        <ChartCard
+          title={t.scenarios.chartLtv}
+          sub={t.scenarios.subPct}
+          kind="pct"
+          rows={ltvRows}
+          series={series}
+          legend
+          height={SMALL_CHART_HEIGHT}
+        />
+      </div>
+    </div>
   );
 }
 

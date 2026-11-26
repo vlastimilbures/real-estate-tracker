@@ -16,7 +16,7 @@ import type { Scenario } from "../../../engine";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 
 // The compare runs the engine; these tests only need the presets panel.
-vi.mock("../ScenarioCompare", () => ({ CompareView: () => null }));
+vi.mock("../ScenarioCompare", () => ({ ScenarioCompareView: () => null }));
 
 const sc = getDict("en").scenarios;
 
@@ -100,16 +100,19 @@ describe("collapsible stress presets (#54)", () => {
   it("counts only saved scenarios: an id not yet pruned is not counted", () => {
     render(
       <ScenarioListPanel
-        scenarios={[saved("a", "A")]}
-        baseOn
-        onToggleBase={() => undefined}
-        selectedIds={["a", "ghost"]}
-        maxCompare={3}
-        onToggle={() => undefined}
-        busy={false}
-        onEdit={() => undefined}
-        onDuplicate={() => undefined}
-        onDelete={() => Promise.resolve({ ok: true as const })}
+        list={{
+          scenarios: [saved("a", "A")],
+          baseOn: true,
+          selectedIds: ["a", "ghost"],
+          busy: false,
+        }}
+        actions={{
+          toggleBase: () => undefined,
+          toggle: () => undefined,
+          edit: () => undefined,
+          duplicate: () => undefined,
+          remove: () => Promise.resolve({ ok: true as const }),
+        }}
       />,
     );
     const head = document.querySelector("section.panel .panel-head")!;

@@ -30,7 +30,7 @@ vi.mock("../../../state/useEngine", () =>
 const save = vi.hoisted(() => vi.fn());
 vi.mock("../../../platform/saveFile", () => ({ saveFile: save }));
 
-const { CompareView } = await import("../ScenarioCompare");
+const { ScenarioCompareView } = await import("../ScenarioCompare");
 
 const [first, ...rest] = portfolio.properties;
 const own = { ...first!, appreciationOverridePa: rate("0.01") };
@@ -52,14 +52,16 @@ beforeEach(() => {
 
 describe("Compare own-rate note (ADR 0190)", () => {
   it("names the properties with their own rate under the table", () => {
-    const { container } = render(<CompareView selected={[base, low]} />);
+    const { container } = render(
+      <ScenarioCompareView selected={[base, low]} />,
+    );
     expect(screen.getByText(line)).toBe(
       container.querySelector(".ct-footnote"),
     );
   });
 
   it("the Excel export carries the line in the Key figures notes", async () => {
-    render(<CompareView selected={[base, low]} />);
+    render(<ScenarioCompareView selected={[base, low]} />);
     await userEvent.click(
       screen.getByRole("button", { name: en.xlsx.exportToExcel }),
     );
@@ -76,7 +78,9 @@ describe("Compare own-rate note (ADR 0190)", () => {
 
   it("a scenario left out of the comparison gets no line", () => {
     results = [compareResult(base.id, base.name, base.overrides)];
-    const { container } = render(<CompareView selected={[base, low]} />);
+    const { container } = render(
+      <ScenarioCompareView selected={[base, low]} />,
+    );
     expect(
       screen.getByText(en.scenarios.notCompared("Low growth")),
     ).toBeTruthy();
@@ -91,7 +95,7 @@ describe("Compare own-rate note (ADR 0190)", () => {
       compareResult(twin.id, twin.name, twin.overrides),
     ];
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    render(<CompareView selected={[base, low, twin]} />);
+    render(<ScenarioCompareView selected={[base, low, twin]} />);
     expect(screen.getAllByText(line)).toHaveLength(2);
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
@@ -99,7 +103,9 @@ describe("Compare own-rate note (ADR 0190)", () => {
 
   it("no property with its own rate: no note", () => {
     act(() => usePortfolioStore.setState({ portfolio }));
-    const { container } = render(<CompareView selected={[base, low]} />);
+    const { container } = render(
+      <ScenarioCompareView selected={[base, low]} />,
+    );
     expect(container.querySelector(".ct-footnote")).toBeNull();
   });
 });

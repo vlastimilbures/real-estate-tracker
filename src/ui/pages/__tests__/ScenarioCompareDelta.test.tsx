@@ -23,7 +23,7 @@ vi.mock("../../../state/useEngine", () =>
   mockScenarioComparison(() => results),
 );
 
-const { CompareView } = await import("../ScenarioCompare");
+const { ScenarioCompareView } = await import("../ScenarioCompare");
 
 const sc = en.scenarios;
 const cellsOf = (label: string) => {
@@ -37,7 +37,7 @@ const toggle = () => screen.queryByRole("group", { name: sc.viewToggleLabel });
 describe("Compare Δ vs Base view (ADR 0097)", () => {
   it("switches the key figures to the difference to Base", async () => {
     results = [base, crash];
-    render(<CompareView selected={[]} />);
+    render(<ScenarioCompareView selected={[]} />);
     const values = screen.getByRole("button", { name: sc.viewValues });
     expect(values.getAttribute("aria-pressed")).toBe("true");
     expect(cellsOf(sc.kpiNetWorthNominal)[1]).toBe("74,5 M Kč");
@@ -56,12 +56,12 @@ describe("Compare Δ vs Base view (ADR 0097)", () => {
 
   it("without Base there is no toggle and the table shows values", async () => {
     results = [base, crash];
-    const { rerender } = render(<CompareView selected={[]} />);
+    const { rerender } = render(<ScenarioCompareView selected={[]} />);
     await userEvent.click(
       screen.getByRole("button", { name: sc.viewDeltaVsBase }),
     );
     results = [crash];
-    rerender(<CompareView selected={[]} />);
+    rerender(<ScenarioCompareView selected={[]} />);
     expect(toggle()).toBeNull();
     expect(cellsOf(sc.kpiNetWorthNominal)).toEqual(["74,5 M Kč"]);
   });

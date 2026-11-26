@@ -23,7 +23,7 @@ import { money, type IsoDate } from "../../../engine";
 import { en } from "../../../i18n/en";
 
 // The compare runs the engine; these tests need the scenario list only.
-vi.mock("../ScenarioCompare", () => ({ CompareView: () => null }));
+vi.mock("../ScenarioCompare", () => ({ ScenarioCompareView: () => null }));
 
 let db: TestSql;
 

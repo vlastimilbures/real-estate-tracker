@@ -1,5 +1,5 @@
-// Sub-components pulled out of Scenarios.tsx to shrink its render tree. Pure
-// presentation — no logic beyond what Scenarios.tsx already computed.
+// The Scenarios page's panels: the stress presets and the saved-scenario list. Pure
+// presentation: the state and actions are useScenariosPage's.
 import { useId, useState, type ReactNode } from "react";
 import { Copy, Pencil, Trash2 } from "lucide-react";
 import { DisclosureButton } from "../components/Disclosure";
@@ -8,8 +8,12 @@ import { InfoTip } from "../components/InfoTip";
 import { Panel, Button, SegmentedToggle } from "../components/primitives";
 import { ConfirmRow } from "../components/ConfirmRow";
 import { RowActions, WriteRowAction } from "../components/RowActions";
-import type { MutationResult } from "../../state/portfolioStore";
+import { MAX_COMPARE } from "../../state/uiStore";
 import type { Scenario, ScenarioOverrides } from "../../engine";
+import type {
+  ScenarioListActions,
+  ScenarioListView,
+} from "../hooks/useScenariosPage";
 import { useT } from "../hooks/useT";
 import {
   COMBINED_RECIPES,
@@ -124,31 +128,12 @@ export function PresetBar({
 }
 
 export function ScenarioListPanel({
-  scenarios,
-  baseOn,
-  onToggleBase,
-  selectedIds,
-  maxCompare,
-  onToggle,
-  busy,
-  onEdit,
-  onDuplicate,
-  onDelete,
-  reachText,
+  list: { scenarios, baseOn, selectedIds, busy, reachText },
+  actions,
   presets,
 }: {
-  scenarios: Scenario[];
-  baseOn: boolean;
-  onToggleBase: () => void;
-  selectedIds: string[];
-  maxCompare: number;
-  onToggle: (id: string) => void;
-  busy: boolean;
-  onEdit: (s: Scenario) => void;
-  onDuplicate: (s: Scenario) => void;
-  onDelete: (s: Scenario) => Promise<MutationResult>;
-  /** Which loans the scenario's rate shock hits (ADR 0100). */
-  reachText?: (id: string) => string | undefined;
+  list: ScenarioListView;
+  actions: ScenarioListActions;
   /** The "Add from preset" disclosure and the preset bar it opens under the list
    *  (ADR 0220); its open state is the page's (ADR 0106). */
   presets?: { open: boolean; onToggle: () => void; bar: ReactNode } | undefined;
@@ -175,7 +160,7 @@ export function ScenarioListPanel({
           busyLabel={t.common.deleting}
           onConfirm={async () => {
             // Close only once the delete landed; a failure stays shown here.
-            const result = await onDelete(item);
+            const result = await actions.remove(item);
             if (result.ok) setConfirmingId(null);
             return result;
           }}
@@ -188,8 +173,8 @@ export function ScenarioListPanel({
   return (
     <Panel
       title={t.scenarios.listTitle}
-      hint={t.scenarios.comparedOf(compared, maxCompare)}
-      help={<HelpText>{t.scenarios.listHint(maxCompare)}</HelpText>}
+      hint={t.scenarios.comparedOf(compared, MAX_COMPARE)}
+      help={<HelpText>{t.scenarios.listHint(MAX_COMPARE)}</HelpText>}
       action={
         presets && (
           <span className="head-toggle">
@@ -221,7 +206,11 @@ export function ScenarioListPanel({
         <ul className="scenario-list">
           <li className="scenario-row">
             <label className="scenario-pick">
-              <input type="checkbox" checked={baseOn} onChange={onToggleBase} />
+              <input
+                type="checkbox"
+                checked={baseOn}
+                onChange={actions.toggleBase}
+              />
               <span className="scenario-name">{t.scenarios.base}</span>
             </label>
             <span className="scenario-summary">
@@ -237,9 +226,9 @@ export function ScenarioListPanel({
                   checked={selectedIds.includes(s.id)}
                   disabled={
                     !selectedIds.includes(s.id) &&
-                    selectedIds.length >= maxCompare
+                    selectedIds.length >= MAX_COMPARE
                   }
-                  onChange={() => onToggle(s.id)}
+                  onChange={() => actions.toggle(s.id)}
                 />
                 <span className="scenario-name">{s.name}</span>
               </label>
@@ -251,13 +240,13 @@ export function ScenarioListPanel({
                   <WriteRowAction
                     icon={Pencil}
                     label={t.common.edit}
-                    onClick={() => onEdit(s)}
+                    onClick={() => actions.edit(s)}
                   />
                   <WriteRowAction
                     icon={Copy}
                     label={t.scenarios.duplicate}
                     disabled={busy}
-                    onClick={() => onDuplicate(s)}
+                    onClick={() => actions.duplicate(s)}
                   />
                   {deleteButton(s)}
                 </RowActions>

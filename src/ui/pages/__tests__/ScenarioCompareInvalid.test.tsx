@@ -5,7 +5,7 @@
 // keeps working; before, the throw replaced the whole Scenarios page (probe R4-02A-1).
 import { beforeEach, describe, expect, it } from "vitest";
 import { act, render, screen } from "@testing-library/react";
-import { CompareView } from "../ScenarioCompare";
+import { ScenarioCompareView } from "../ScenarioCompare";
 import { ErrorBoundary } from "../../components/ErrorBoundary";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
@@ -33,7 +33,7 @@ beforeEach(() =>
 function renderCompare(selected: Scenario[]) {
   render(
     <ErrorBoundary>
-      <CompareView selected={selected} />
+      <ScenarioCompareView selected={selected} />
     </ErrorBoundary>,
   );
 }

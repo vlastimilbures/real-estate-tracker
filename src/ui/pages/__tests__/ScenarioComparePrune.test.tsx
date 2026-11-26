@@ -19,7 +19,6 @@ import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 
 // The compare runs the engine; these tests only need the selection.
 vi.mock("../ScenarioCompare", () => ({
-  CompareView: () => null,
   ScenarioCompareView: () => null,
 }));
 
@@ -100,16 +99,19 @@ describe("the list panel with an id not pruned yet", () => {
     seed([], []);
     render(
       <ScenarioListPanel
-        scenarios={[saved("a"), saved("b"), saved("c")]}
-        baseOn={false}
-        onToggleBase={() => undefined}
-        selectedIds={["gone", "a", "b"]}
-        maxCompare={3}
-        onToggle={() => undefined}
-        busy={false}
-        onEdit={() => undefined}
-        onDuplicate={() => undefined}
-        onDelete={async () => ({ ok: true })}
+        list={{
+          scenarios: [saved("a"), saved("b"), saved("c")],
+          baseOn: false,
+          selectedIds: ["gone", "a", "b"],
+          busy: false,
+        }}
+        actions={{
+          toggleBase: () => undefined,
+          toggle: () => undefined,
+          edit: () => undefined,
+          duplicate: () => undefined,
+          remove: async () => ({ ok: true }),
+        }}
       />,
     );
     expect(screen.getByText(sc.comparedOf(2, 3))).toBeTruthy();

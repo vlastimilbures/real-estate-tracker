@@ -35,11 +35,11 @@ vi.mock("../../../state/useEngine", () =>
   mockScenarioComparison(() => [base, flat]),
 );
 
-const { CompareView } = await import("../ScenarioCompare");
+const { ScenarioCompareView } = await import("../ScenarioCompare");
 
 describe("Compare levered IRR (UX-079)", () => {
   it("shows the rate for one scenario and n/a with the reason for the other", () => {
-    render(<CompareView selected={[]} />);
+    render(<ScenarioCompareView selected={[]} />);
     const na = screen.getByTitle(en.common.irrNotUnique);
     expect(na.textContent).toBe(
       `${en.common.notApplicable} (${en.common.irrNotUnique})`,
@@ -53,7 +53,7 @@ describe("Compare levered IRR (UX-079)", () => {
 // headers and metric row headers.
 describe("Compare key figures table semantics (UX-081)", () => {
   it("is a captioned table with column and row headers", () => {
-    render(<CompareView selected={[]} />);
+    render(<ScenarioCompareView selected={[]} />);
     const table = screen.getByRole("table", {
       name: en.scenarios.keyFiguresTitle,
     });

@@ -17,7 +17,7 @@ import { success } from "../../../__tests__/support/result";
 import { en } from "../../../i18n/en";
 
 // The compare runs the engine; these tests only need the dialog.
-vi.mock("../ScenarioCompare", () => ({ CompareView: () => null }));
+vi.mock("../ScenarioCompare", () => ({ ScenarioCompareView: () => null }));
 
 const sources = () => useUiStore.getState().unsavedSources;
 const addScenario = vi.fn(async (s: Scenario) => {

@@ -19,7 +19,9 @@ import { LANGUAGES } from "../../../i18n/types";
 import { en } from "../../../i18n/en";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 
-vi.mock("../../pages/ScenarioCompare", () => ({ CompareView: () => null }));
+vi.mock("../../pages/ScenarioCompare", () => ({
+  ScenarioCompareView: () => null,
+}));
 
 beforeEach(() =>
   act(() => {

@@ -47,16 +47,14 @@ describe("Scenarios wording (ADR 0090)", () => {
     // The Scenarios panel's info icon holds it (ADR 0220).
     render(
       <ScenarioListPanel
-        scenarios={[]}
-        baseOn
-        onToggleBase={() => undefined}
-        selectedIds={[]}
-        maxCompare={3}
-        onToggle={() => undefined}
-        busy={false}
-        onEdit={() => undefined}
-        onDuplicate={() => undefined}
-        onDelete={() => Promise.resolve({ ok: true as const })}
+        list={{ scenarios: [], baseOn: true, selectedIds: [], busy: false }}
+        actions={{
+          toggleBase: () => undefined,
+          toggle: () => undefined,
+          edit: () => undefined,
+          duplicate: () => undefined,
+          remove: () => Promise.resolve({ ok: true as const }),
+        }}
         presets={{ open: true, onToggle: () => undefined, bar: null }}
       />,
     );
@@ -127,16 +125,14 @@ describe("Scenarios wording (ADR 0090)", () => {
   it("list hint says Base does not count toward the limit", () => {
     render(
       <ScenarioListPanel
-        scenarios={[]}
-        baseOn
-        onToggleBase={() => undefined}
-        selectedIds={[]}
-        maxCompare={3}
-        onToggle={() => undefined}
-        busy={false}
-        onEdit={() => undefined}
-        onDuplicate={() => undefined}
-        onDelete={async () => ({ ok: true })}
+        list={{ scenarios: [], baseOn: true, selectedIds: [], busy: false }}
+        actions={{
+          toggleBase: () => undefined,
+          toggle: () => undefined,
+          edit: () => undefined,
+          duplicate: () => undefined,
+          remove: async () => ({ ok: true }),
+        }}
       />,
     );
     const hint = en.scenarios.listHint(3);

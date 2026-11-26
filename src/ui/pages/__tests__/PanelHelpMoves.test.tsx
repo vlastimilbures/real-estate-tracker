@@ -33,16 +33,14 @@ function infoOf(panel: HTMLElement, topic: string, where = ".panel-head") {
 function scenariosPanel(open: boolean) {
   return render(
     <ScenarioListPanel
-      scenarios={[]}
-      baseOn
-      onToggleBase={() => undefined}
-      selectedIds={[]}
-      maxCompare={3}
-      onToggle={() => undefined}
-      busy={false}
-      onEdit={() => undefined}
-      onDuplicate={() => undefined}
-      onDelete={() => Promise.resolve({ ok: true as const })}
+      list={{ scenarios: [], baseOn: true, selectedIds: [], busy: false }}
+      actions={{
+        toggleBase: () => undefined,
+        toggle: () => undefined,
+        edit: () => undefined,
+        duplicate: () => undefined,
+        remove: () => Promise.resolve({ ok: true as const }),
+      }}
       presets={{
         open,
         onToggle: () => undefined,
@@ -82,16 +80,14 @@ describe("other header explanations: instructions stay help lines, definitions g
   it("Scenarios list", () => {
     render(
       <ScenarioListPanel
-        scenarios={[]}
-        baseOn
-        onToggleBase={() => undefined}
-        selectedIds={[]}
-        maxCompare={3}
-        onToggle={() => undefined}
-        busy={false}
-        onEdit={() => undefined}
-        onDuplicate={() => undefined}
-        onDelete={() => Promise.resolve({ ok: true as const })}
+        list={{ scenarios: [], baseOn: true, selectedIds: [], busy: false }}
+        actions={{
+          toggleBase: () => undefined,
+          toggle: () => undefined,
+          edit: () => undefined,
+          duplicate: () => undefined,
+          remove: () => Promise.resolve({ ok: true as const }),
+        }}
       />,
     );
     const panel = panelOf(sc.listTitle);

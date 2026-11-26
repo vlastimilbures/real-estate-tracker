@@ -12,7 +12,7 @@ import { getDict } from "../../../i18n";
 import type { WriteError } from "../../../state/writeError";
 
 // The compare runs the engine; these tests only need the form and the list.
-vi.mock("../ScenarioCompare", () => ({ CompareView: () => null }));
+vi.mock("../ScenarioCompare", () => ({ ScenarioCompareView: () => null }));
 
 const en = getDict("en");
 const sc = en.scenarios;

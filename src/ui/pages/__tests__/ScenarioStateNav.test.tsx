@@ -15,7 +15,7 @@ import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 
 // The compare runs the engine; these tests only need the selection.
 vi.mock("../ScenarioCompare", () => ({
-  CompareView: ({ selected }: { selected: Scenario[] }) => (
+  ScenarioCompareView: ({ selected }: { selected: Scenario[] }) => (
     <ul aria-label="compared">
       {selected.map((s) => (
         <li key={s.id}>{s.name}</li>
