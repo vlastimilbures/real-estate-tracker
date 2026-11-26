@@ -28,7 +28,7 @@ vi.mock("../../../state/useEngine", () =>
 const save = vi.hoisted(() => vi.fn());
 vi.mock("../../../platform/saveFile", () => ({ saveFile: save }));
 
-const { CompareView } = await import("../ScenarioCompare");
+const { ScenarioCompareView } = await import("../ScenarioCompare");
 
 beforeEach(() => {
   save.mockReset();
@@ -39,7 +39,7 @@ beforeEach(() => {
 describe("Compare export to Excel (ADR 0108)", () => {
   it("saves the compare under the lens, as values even in the Δ view", async () => {
     results = [base, crash];
-    render(<CompareView selected={[]} />);
+    render(<ScenarioCompareView selected={[]} />);
     await userEvent.click(
       screen.getByRole("button", { name: en.scenarios.viewDeltaVsBase }),
     );
@@ -69,7 +69,7 @@ describe("Compare export to Excel (ADR 0108)", () => {
 
   it("is offered without Base too", () => {
     results = [crash];
-    render(<CompareView selected={[]} />);
+    render(<ScenarioCompareView selected={[]} />);
     expect(
       screen.getByRole("button", { name: en.xlsx.exportToExcel }),
     ).toBeTruthy();

@@ -17,7 +17,7 @@ import { deferred, type Deferred } from "../../../__tests__/support/deferred";
 import { en } from "../../../i18n/en";
 
 // The compare runs the engine; these tests need the list and the presets only.
-vi.mock("../ScenarioCompare", () => ({ CompareView: () => null }));
+vi.mock("../ScenarioCompare", () => ({ ScenarioCompareView: () => null }));
 
 const sc = en.scenarios;
 const saved: Scenario = { id: "s1", name: "Rates up", overrides: {} };

@@ -17,7 +17,7 @@ import { ratePreset as presetOf } from "../../model/scenarios";
 
 // The compare runs the engine; these tests only need the list and the selection.
 vi.mock("../ScenarioCompare", () => ({
-  CompareView: ({ selected }: { selected: Scenario[] }) => (
+  ScenarioCompareView: ({ selected }: { selected: Scenario[] }) => (
     <ul aria-label="compared">
       {selected.map((s) => (
         <li key={s.id}>{s.name}</li>

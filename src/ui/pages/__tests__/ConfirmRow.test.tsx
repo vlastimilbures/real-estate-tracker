@@ -180,16 +180,19 @@ describe("focus moves into the confirm row (ADR 0143)", () => {
   it("scenario list: onto Cancel (#132)", async () => {
     render(
       <ScenarioListPanel
-        scenarios={[{ id: "s1", name: "Rates up", overrides: {} }]}
-        baseOn
-        onToggleBase={() => undefined}
-        selectedIds={[]}
-        maxCompare={4}
-        onToggle={() => undefined}
-        busy={false}
-        onEdit={() => undefined}
-        onDuplicate={() => undefined}
-        onDelete={ok}
+        list={{
+          scenarios: [{ id: "s1", name: "Rates up", overrides: {} }],
+          baseOn: true,
+          selectedIds: [],
+          busy: false,
+        }}
+        actions={{
+          toggleBase: () => undefined,
+          toggle: () => undefined,
+          edit: () => undefined,
+          duplicate: () => undefined,
+          remove: ok,
+        }}
       />,
     );
     await clickDelete();
@@ -244,16 +247,19 @@ describe("a failed scenario delete keeps the row open (ADR 0143)", () => {
   it("shows the reason next to the buttons (#132)", async () => {
     render(
       <ScenarioListPanel
-        scenarios={[{ id: "s1", name: "Rates up", overrides: {} }]}
-        baseOn
-        onToggleBase={() => undefined}
-        selectedIds={[]}
-        maxCompare={4}
-        onToggle={() => undefined}
-        busy={false}
-        onEdit={() => undefined}
-        onDuplicate={() => undefined}
-        onDelete={async () => gone}
+        list={{
+          scenarios: [{ id: "s1", name: "Rates up", overrides: {} }],
+          baseOn: true,
+          selectedIds: [],
+          busy: false,
+        }}
+        actions={{
+          toggleBase: () => undefined,
+          toggle: () => undefined,
+          edit: () => undefined,
+          duplicate: () => undefined,
+          remove: async () => gone,
+        }}
       />,
     );
     await clickDelete();
@@ -292,16 +298,19 @@ describe("ConfirmRow focus on every caller (#249)", () => {
   it("scenario list: Cancel puts focus back on the scenario's Delete", async () => {
     render(
       <ScenarioListPanel
-        scenarios={[{ id: "s1", name: "Rates up", overrides: {} }]}
-        baseOn
-        onToggleBase={() => undefined}
-        selectedIds={[]}
-        maxCompare={4}
-        onToggle={() => undefined}
-        busy={false}
-        onEdit={() => undefined}
-        onDuplicate={() => undefined}
-        onDelete={ok}
+        list={{
+          scenarios: [{ id: "s1", name: "Rates up", overrides: {} }],
+          baseOn: true,
+          selectedIds: [],
+          busy: false,
+        }}
+        actions={{
+          toggleBase: () => undefined,
+          toggle: () => undefined,
+          edit: () => undefined,
+          duplicate: () => undefined,
+          remove: ok,
+        }}
       />,
     );
     const trigger = screen.getByRole("button", { name: en.common.delete });
@@ -393,16 +402,19 @@ describe("focus after a successful confirm (#247)", () => {
   it("scenario list: onto the panel", async () => {
     render(
       <ScenarioListPanel
-        scenarios={[{ id: "s1", name: "Rates up", overrides: {} }]}
-        baseOn
-        onToggleBase={() => undefined}
-        selectedIds={[]}
-        maxCompare={4}
-        onToggle={() => undefined}
-        busy={false}
-        onEdit={() => undefined}
-        onDuplicate={() => undefined}
-        onDelete={ok}
+        list={{
+          scenarios: [{ id: "s1", name: "Rates up", overrides: {} }],
+          baseOn: true,
+          selectedIds: [],
+          busy: false,
+        }}
+        actions={{
+          toggleBase: () => undefined,
+          toggle: () => undefined,
+          edit: () => undefined,
+          duplicate: () => undefined,
+          remove: ok,
+        }}
       />,
     );
     await clickDelete();

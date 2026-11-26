@@ -19,7 +19,7 @@ import { seedIfEmpty } from "../../../data/seed";
 import { en } from "../../../i18n/en";
 
 // The compare runs the engine; this test needs the scenario list only.
-vi.mock("../ScenarioCompare", () => ({ CompareView: () => null }));
+vi.mock("../ScenarioCompare", () => ({ ScenarioCompareView: () => null }));
 
 let db: TestSql;
 

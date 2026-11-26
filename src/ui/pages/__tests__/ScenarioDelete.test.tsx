@@ -22,16 +22,19 @@ function renderList(
 ) {
   render(
     <ScenarioListPanel
-      scenarios={[scenario]}
-      baseOn
-      onToggleBase={() => undefined}
-      selectedIds={[]}
-      maxCompare={4}
-      onToggle={() => undefined}
-      busy={false}
-      onEdit={() => undefined}
-      onDuplicate={() => undefined}
-      onDelete={onDelete}
+      list={{
+        scenarios: [scenario],
+        baseOn: true,
+        selectedIds: [],
+        busy: false,
+      }}
+      actions={{
+        toggleBase: () => undefined,
+        toggle: () => undefined,
+        edit: () => undefined,
+        duplicate: () => undefined,
+        remove: onDelete,
+      }}
     />,
   );
 }

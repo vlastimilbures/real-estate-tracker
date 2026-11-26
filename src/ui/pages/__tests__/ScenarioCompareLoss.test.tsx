@@ -26,7 +26,7 @@ vi.mock("../../../state/useEngine", () =>
   mockScenarioComparison(() => results),
 );
 
-const { CompareView } = await import("../ScenarioCompare");
+const { ScenarioCompareView } = await import("../ScenarioCompare");
 
 const cellsOf = (label: string) => {
   const row = screen.getByRole("rowheader", { name: label });
@@ -36,7 +36,7 @@ const cellsOf = (label: string) => {
 describe("Compare owner loss (ADR 0089)", () => {
   it("shows starting equity, Δ net worth and the rebased-returns footnote", () => {
     results = [base, crash];
-    render(<CompareView selected={[]} />);
+    render(<ScenarioCompareView selected={[]} />);
     const start = cellsOf(en.scenarios.kpiStartingEquity);
     expect(start.map((c) => c.textContent)).toEqual(["19,2 M Kč", "13,5 M Kč"]);
     const delta = cellsOf(en.scenarios.kpiNetWorthDeltaVsBase);
@@ -54,7 +54,7 @@ describe("Compare owner loss (ADR 0089)", () => {
 
   it("a rate shock keeps Base's starting equity: no marker, no footnote", () => {
     results = [base, rateShock];
-    const { container } = render(<CompareView selected={[]} />);
+    const { container } = render(<ScenarioCompareView selected={[]} />);
     expect(container.querySelector(".ct-footnote")).toBeNull();
     expect(container.querySelector(".ct-mark")).toBeNull();
   });

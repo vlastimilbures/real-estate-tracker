@@ -92,6 +92,13 @@ export function compareBase(
 /** How the key figures read: the values, or each scenario minus Base (ADR 0097). */
 export type CompareView = "values" | "delta";
 
+/** The key-figures table's metric column width for `n` scenario columns: the metric
+ *  column takes 1.4 shares, each scenario one, as a plain percentage (table columns
+ *  ignore calc() with %). */
+export function metricColumnWidth(n: number): string {
+  return `${(140 / (1.4 + n)).toFixed(2)}%`;
+}
+
 /** One Δ-vs-Base cell: its text and, when it has no value, why. */
 interface DeltaCell {
   text: string;

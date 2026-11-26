@@ -21,7 +21,7 @@ vi.mock("../../../state/useEngine", () =>
   mockScenarioComparison(() => results),
 );
 
-const { CompareView } = await import("../ScenarioCompare");
+const { ScenarioCompareView } = await import("../ScenarioCompare");
 
 const selected = results.map((r) => ({
   id: r.id,
@@ -31,7 +31,7 @@ const selected = results.map((r) => ({
 
 describe("charts (ADR 0216 §1)", () => {
   it("three charts in the trio grid, inside a container-query wrap", () => {
-    const { container } = render(<CompareView selected={selected} />);
+    const { container } = render(<ScenarioCompareView selected={selected} />);
     const grid = container.querySelector(".chart-grid-wrap > .chart-grid.trio");
     expect(grid).not.toBeNull();
     expect(grid!.children).toHaveLength(3);
@@ -39,7 +39,7 @@ describe("charts (ADR 0216 §1)", () => {
 
   it("each at the Dashboard's small-multiple height", () => {
     expect(SMALL_CHART_HEIGHT).toBe(180);
-    const { container } = render(<CompareView selected={selected} />);
+    const { container } = render(<ScenarioCompareView selected={selected} />);
     const plots = [
       ...container.querySelectorAll<HTMLElement>(
         ".chart-grid.trio .recharts-responsive-container",
@@ -53,7 +53,7 @@ describe("charts (ADR 0216 §1)", () => {
 
 describe("key figures table (ADR 0216 §2)", () => {
   it("is a flush data table with a pinned metric column", () => {
-    render(<CompareView selected={selected} />);
+    render(<ScenarioCompareView selected={selected} />);
     const table = screen.getByRole("table", {
       name: en.scenarios.keyFiguresTitle,
     });

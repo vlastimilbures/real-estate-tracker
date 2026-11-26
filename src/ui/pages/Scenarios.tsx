@@ -1,109 +1,24 @@
 // What-if scenarios (SPEC §7): create/edit/duplicate/delete named assumption overrides,
 // one-click stress presets, and a 2–3-way side-by-side compare (net worth, net cash flow,
 // LTV). Scenarios never mutate portfolio data — the engine re-runs over overridden
-// assumptions (+ a transient value-crash portfolio) via useScenarioComparison.
-import { useEffect, useMemo, useState } from "react";
-import {
-  usePortfolioStore,
-  type MutationResult,
-} from "../../state/portfolioStore";
-import { MAX_COMPARE, useUiStore } from "../../state/uiStore";
+// assumptions (+ a transient value-crash portfolio) via useScenarioComparison. The page's
+// state and actions are useScenariosPage's; this renders them.
 import { PageFrame } from "../components/PageFrame";
 import { Button, EmptyState } from "../components/primitives";
 import { FolderOpen, Plus } from "lucide-react";
-import type { Scenario, ScenarioOverrides } from "../../engine";
 import { useT } from "../hooks/useT";
-import { rateShockNote } from "../model/rateShockReach";
-import { baseScenario, findSaved } from "../model/scenarios";
-import { CompareView } from "./ScenarioCompare";
+import { useScenariosPage } from "../hooks/useScenariosPage";
+import { ScenarioCompareView } from "./ScenarioCompare";
 import { ScenarioForm } from "./ScenarioForm";
 import { PresetBar, ScenarioListPanel } from "./ScenariosPanels";
-import { useToast } from "../hooks/useToast";
 import { PortfolioStateNotice } from "../components/PortfolioStateNotice";
 import { portfolioState } from "../model/portfolioState";
-import {
-  KEEP,
-  useBusyFocus,
-  type BusyFocusTarget,
-} from "../hooks/useBusyFocus";
-import { inConfirmRow } from "../components/panelFocus";
 import "../styles/scenarios.css";
-
-/** A preset or Duplicate gets focus back after any outcome (ADR 0248 §2); a delete's
- *  confirm row places focus itself (ADR 0173, ADR 0248 §1). */
-const pressedUnlessConfirm: BusyFocusTarget = (el) =>
-  inConfirmRow(el) ? KEEP : el;
 
 export function Scenarios() {
   const t = useT();
-  const assumptions = usePortfolioStore((s) => s.assumptions);
-  const portfolio = usePortfolioStore((s) => s.portfolio);
-  const scenarios = usePortfolioStore((s) => s.scenarios);
-  const addScenario = usePortfolioStore((s) => s.addScenario);
-  const saveScenario = usePortfolioStore((s) => s.saveScenario);
-  const duplicateScenario = usePortfolioStore((s) => s.duplicateScenario);
-  const removeScenario = usePortfolioStore((s) => s.removeScenario);
-  const showError = usePortfolioStore((s) => s.showError);
-
-  // Compare selection (saved-scenario ids, capped at MAX_COMPARE), the Base toggle and
-  // the crash-preset timing live in uiStore for the session (ADR 0101). Base is shown
-  // first when on.
-  const selectedIds = useUiStore((s) => s.compareIds);
-  const baseOn = useUiStore((s) => s.compareBase);
-  const crashAtYear = useUiStore((s) => s.crashAtYear);
-  const toggle = useUiStore((s) => s.toggleCompare);
-  const tick = useUiStore((s) => s.tickCompare);
-  const pruneCompare = useUiStore((s) => s.pruneCompare);
-  const toggleBase = useUiStore((s) => s.toggleCompareBase);
-  const setCrashAtYear = useUiStore((s) => s.setCrashAtYear);
-  // The presets (the Scenarios panel's "Add from preset", ADR 0220) start closed once a
-  // scenario is saved. The default is decided when the page opens, so saving the first
-  // preset does not close them under the pointer; a manual open or close wins for the
-  // session (ADR 0106).
-  const [autoPresetsOpen] = useState(() => scenarios.length === 0);
-  const presetsOpen = useUiStore((s) => s.presetsOpen) ?? autoPresetsOpen;
-  const setPresetsOpen = useUiStore((s) => s.setPresetsOpen);
-  const [editing, setEditing] = useState<Scenario | "new" | null>(null);
-  // One in-flight mutation at a time: disables the action buttons and surfaces a
-  // success toast. A failure shows where the action was started: a preset and
-  // Duplicate have no place of their own, so they put theirs in the banner (ADR 0261).
-  const [busy, setBusy] = useBusyFocus(pressedUnlessConfirm);
-  const { showToast } = useToast();
-
-  // Which loans each saved scenario's rate shock hits (ADR 0100). Each note builds a
-  // block schedule per loan, so it is built once per data change.
-  const reach = useMemo(
-    () =>
-      new Map(
-        scenarios.map((s) => [
-          s.id,
-          rateShockNote(s, portfolio, assumptions, t),
-        ]),
-      ),
-    [scenarios, portfolio, assumptions, t],
-  );
-  const reachText = (id: string) => reach.get(id);
-
-  // A deleted (or restored-away) scenario leaves the compare selection.
-  useEffect(
-    () => pruneCompare(scenarios.map((s) => s.id)),
-    [scenarios, pruneCompare],
-  );
-
-  async function run(
-    action: () => Promise<MutationResult>,
-    successMsg?: string,
-  ): Promise<MutationResult> {
-    setBusy(true);
-    let res: MutationResult;
-    try {
-      res = await action();
-    } finally {
-      setBusy(false);
-    }
-    if (res.ok && successMsg) showToast(successMsg);
-    return res;
-  }
+  const page = useScenariosPage();
+  const { assumptions, portfolio, editing } = page;
 
   if (!assumptions) {
     return (
@@ -116,44 +31,6 @@ export function Scenarios() {
   }
 
   const state = portfolio ? portfolioState(portfolio) : null;
-  const base = baseScenario(t);
-  const selected: Scenario[] = [
-    ...(baseOn ? [base] : []),
-    ...scenarios.filter((s) => selectedIds.includes(s.id)),
-  ];
-
-  async function addPreset(name: string, overrides: ScenarioOverrides) {
-    // A preset that is already saved, under any name, creates no second row (ADR 0093,
-    // ADR 0191 §3); the toast names the saved one.
-    const existing = findSaved(scenarios, overrides);
-    if (existing) {
-      tick(existing.id);
-      showToast(t.scenarios.alreadySaved(existing.name));
-      return;
-    }
-    const id = crypto.randomUUID();
-    const res = await run(() => addScenario({ id, name, overrides }));
-    if (!res.ok) return showError(res.error);
-    showToast(
-      tick(id)
-        ? t.scenarios.addedScenario(name)
-        : t.scenarios.addedCompareFull(name, MAX_COMPARE),
-    );
-  }
-
-  async function duplicate(s: Scenario) {
-    const id = crypto.randomUUID();
-    const res = await run(() =>
-      duplicateScenario(s.id, id, t.scenarios.copyName(s.name)),
-    );
-    if (!res.ok) return showError(res.error);
-    showToast(
-      tick(id)
-        ? t.scenarios.duplicatedScenario(s.name)
-        : t.scenarios.duplicatedCompareFull(s.name, MAX_COMPARE),
-    );
-  }
-
   return (
     <PageFrame
       title={t.scenarios.title}
@@ -161,7 +38,7 @@ export function Scenarios() {
       // With nothing to compare there is no lens to switch (ADR 0155).
       showLens={!state || state.kind === "ready"}
       actions={
-        <Button variant="primary" icon={Plus} onClick={() => setEditing("new")}>
+        <Button variant="primary" icon={Plus} onClick={page.openNew}>
           {t.scenarios.addScenario}
         </Button>
       }
@@ -170,45 +47,18 @@ export function Scenarios() {
         <ScenarioForm
           assumptions={assumptions}
           scenario={editing === "new" ? null : editing}
-          onCancel={() => setEditing(null)}
-          onSubmit={async (s) => {
-            const isNew = editing === "new";
-            const res = isNew ? await addScenario(s) : await saveScenario(s);
-            // A refusal stays in the form, on the field it names (ADR 0123).
-            if (!res.ok) return res.error;
-            setEditing(null);
-            if (isNew && !tick(s.id))
-              showToast(t.scenarios.addedCompareFull(s.name, MAX_COMPARE));
-            return undefined;
-          }}
+          onCancel={page.closeForm}
+          onSubmit={page.submit}
         />
       )}
 
       <ScenarioListPanel
-        scenarios={scenarios}
-        baseOn={baseOn}
-        onToggleBase={toggleBase}
-        selectedIds={selectedIds}
-        maxCompare={MAX_COMPARE}
-        onToggle={toggle}
-        busy={busy}
-        onEdit={setEditing}
-        onDuplicate={duplicate}
-        onDelete={(s) =>
-          run(() => removeScenario(s.id), t.scenarios.deletedScenario(s.name))
-        }
-        reachText={reachText}
+        list={page.list}
+        actions={page.actions}
         presets={{
-          open: presetsOpen,
-          onToggle: () => setPresetsOpen(!presetsOpen),
+          ...page.presets,
           bar: (
-            <PresetBar
-              busy={busy}
-              baseDate={assumptions.baseDate}
-              crashAtYear={crashAtYear}
-              onCrashAtYearChange={setCrashAtYear}
-              onAddPreset={addPreset}
-            />
+            <PresetBar baseDate={assumptions.baseDate} {...page.presetBar} />
           ),
         }}
       />
@@ -218,7 +68,10 @@ export function Scenarios() {
       {state && state.kind !== "ready" ? (
         <PortfolioStateNotice state={state} />
       ) : (
-        <CompareView selected={selected} reachText={reachText} />
+        <ScenarioCompareView
+          selected={page.selected}
+          reachText={page.reachText}
+        />
       )}
     </PageFrame>
   );
