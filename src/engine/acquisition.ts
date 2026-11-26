@@ -62,8 +62,8 @@ export function laterFirstLoan(
 }
 
 /**
- * ADR 0134 (#193): the principal a future buy's acquisition loan repaid before baseDate
- * (an off-plan loan drawn at contract). The down payment nets off the whole loan, but the
+ * ADR 0134: the principal a future buy's acquisition loan repaid before baseDate (an
+ * off-plan loan drawn at contract). The down payment nets off the whole loan, but the
  * property turns on with the running balance, so this is charged with the down payment.
  * Drawn by baseDate (initial principal + tranches dated on or before it) − its balance at
  * baseDate. 0 for a property owned at baseDate, for a loan drawn after baseDate, and when

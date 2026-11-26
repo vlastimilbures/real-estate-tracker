@@ -1,6 +1,6 @@
 // The year-on-year equity bridge (ADR 0165, 0170) and the value a year's purchases and
-// construction add (ADR 0194), for the equity-change chart, the grid and the Excel export
-// (#481). Pure: projection rows in (either lens), Decimals out at full precision.
+// construction add (ADR 0194), for the equity-change chart, the grid and the Excel
+// export. Pure: projection rows in (either lens), Decimals out at full precision.
 //
 // Equity = value − committed debt, and the drawn balance moves by
 // −principal − prepaid + draws + refinanced, so a year's equity change is two economically

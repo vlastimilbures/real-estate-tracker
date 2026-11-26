@@ -43,7 +43,7 @@ export function cpiAt(assumptions: Assumptions, asOf: Date): Decimal {
   return at(cpi, whole).times(powYears(ONE.plus(infl), monthsToYears(rest)));
 }
 
-/** Every money field of a projection year: all but the labels and the ratios (#478). */
+/** Every money field of a projection year: all but the labels and the ratios. */
 const YEAR_MONEY_FIELDS = fieldsOf(
   "stock",
   "derivedStock",
@@ -68,7 +68,7 @@ export function realProjection(
  *  real terms) or a lens-invariant ratio (`ratio`). */
 type SnapshotFieldKind = "label" | "money" | "ratio";
 
-/** Every field of `PropertySnapshot` with its kind (#478).
+/** Every field of `PropertySnapshot` with its kind.
  *  @internal exported for the compile-time fixture */
 export const PROPERTY_SNAPSHOT_KINDS = {
   propertyId: "label",
@@ -93,8 +93,8 @@ export const PROPERTY_SNAPSHOT_KINDS = {
   dscr: "ratio",
 } as const satisfies Record<keyof PropertySnapshot, SnapshotFieldKind>;
 
-/** Every field of `PortfolioSnapshot` with its kind (#478). The per-property list is
- *  kept as it is.
+/** Every field of `PortfolioSnapshot` with its kind. The per-property list is kept as it
+ *  is.
  *  @internal exported for the compile-time fixture */
 export const PORTFOLIO_SNAPSHOT_KINDS = {
   asOf: "label",
@@ -153,7 +153,7 @@ export function realPropertySnapshot(
 type NotFromYear = "grossYield" | "netYield";
 
 /** Snapshot field → the projection-year field it is read from: every money and ratio
- *  field but the yields (#478). */
+ *  field but the yields. */
 const PROPERTY_FROM_YEAR = {
   value: "value",
   debt: "balance",

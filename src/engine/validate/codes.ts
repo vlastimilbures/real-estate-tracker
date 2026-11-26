@@ -1,4 +1,4 @@
-// The validation codes, their entities and the gates that raise them (#479).
+// The validation codes, their entities and the gates that raise them.
 
 export type ValidationCode =
   | "INVALID_DATE"
@@ -153,7 +153,7 @@ export interface EngineValidationError {
  *  (`instalmentBelowInterestErrors`, ADR 0264). */
 type Gate = "data" | "range" | "loan";
 
-/** Every code's gates, in one table: a code left out fails `tsc` (#479). */
+/** Every code's gates, in one table: a code left out fails `tsc`. */
 const RAISED_BY = {
   INVALID_DATE: ["data"],
   NON_FINITE_NUMBER: ["data"],

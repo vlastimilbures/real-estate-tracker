@@ -71,7 +71,7 @@ function checkPrepayments(
 /** A recast maturity must leave at least the next payment, stay within the cap and,
  *  on a development loan, fall after the completion's payment (ADR 0116). Counting the
  *  payments needs a valid start: without one only the maturity date is checked
- *  (ADR 0247, #543). */
+ *  (ADR 0247). */
 function checkRecastMaturity(
   b: MortgageBlock,
   r: LoanRecast,

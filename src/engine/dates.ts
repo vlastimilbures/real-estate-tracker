@@ -96,15 +96,14 @@ export function firstGridMonthOnOrAfter(
 }
 
 /**
- * The last month grid point on or before `date`: the number of k ≥ 1 with
- * EDATE(anchor, k) ≤ date (0 when there is none). With a loan's start as the anchor
- * this is the number of payments due by `date` (ADR 0021): unlike `monthsBetween`, a
- * clamped month-end due date counts (start 31 Jan → due 28 Feb).
- * An invalid date raises a RangeError: no due date ever passes it, so the walk would
- * never end (ADR 0247, #543). So does a step past the end of the Date range (year
- * 275760), which is an Invalid Date too. Two valid dates always give a whole month
- * count, and a step that stays in the range is a valid date, so neither guard fires on
- * a walk that ends.
+ * The last month grid point on or before `date`: the number of k ≥ 1 with EDATE(anchor,
+ * k) ≤ date (0 when there is none). With a loan's start as the anchor this is the number
+ * of payments due by `date` (ADR 0021): unlike `monthsBetween`, a clamped month-end due
+ * date counts (start 31 Jan → due 28 Feb). An invalid date raises a RangeError: no due
+ * date ever passes it, so the walk would never end (ADR 0247). So does a step past the
+ * end of the Date range (year 275760), which is an Invalid Date too. Two valid dates
+ * always give a whole month count, and a step that stays in the range is a valid date, so
+ * neither guard fires on a walk that ends.
  */
 export function lastGridMonthOnOrBefore(anchor: Date, date: Date): number {
   const months = monthsBetween(anchor, date);

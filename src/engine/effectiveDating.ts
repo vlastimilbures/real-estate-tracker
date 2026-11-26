@@ -8,7 +8,7 @@ import type { Lease } from "./types";
  * before `newStart`, or `undefined` when there is none. Same-start ties keep input
  * order (the last one wins), as in `lastOnOrBefore`.
  */
-// eslint-disable-next-line max-params -- public API with app and test callers (#480)
+// eslint-disable-next-line max-params -- public API with app and test callers
 export function openPredecessor<T extends { propertyId: string }>(
   rows: readonly T[],
   propertyId: string,

@@ -1,4 +1,4 @@
-// The owner's cash outside net cash flow, by projection year (SPEC §4.6, #117):
+// The owner's cash outside net cash flow, by projection year (SPEC §4.6):
 // acquisitions out, net refinance cash in (ADR 0027), prepayments and their fees out
 // (ADR 0109), and the debt service paid before a future buy turns on (ADR 0124). Net cash
 // flow minus it is the owner's flow the cumulative cash flow and IRR sum.
@@ -90,12 +90,12 @@ export interface DebtServicePaid {
 }
 
 /**
- * ADR 0124 (#104): the debt service the owner pays before a future buy turns on, by
- * projection year (index 0..N, year 0 always zero). A loan drawn before the purchase
- * date runs its schedule while the property's rows are still empty (years before
- * tStart), so its interest, principal, prepaid and fees are owner cash outside the rows.
- * The same months and fields as the rows (`yearSlice`); draws are the bank's money and
- * arrive as the turn-on year's carried-in debt. Zero for an all-owned portfolio.
+ * ADR 0124: the debt service the owner pays before a future buy turns on, by projection
+ * year (index 0..N, year 0 always zero). A loan drawn before the purchase date runs its
+ * schedule while the property's rows are still empty (years before tStart), so its
+ * interest, principal, prepaid and fees are owner cash outside the rows. The same months
+ * and fields as the rows (`yearSlice`); draws are the bank's money and arrive as the
+ * turn-on year's carried-in debt. Zero for an all-owned portfolio.
  */
 export function prePurchaseDebtService(
   properties: Property[],

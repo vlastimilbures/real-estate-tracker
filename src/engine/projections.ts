@@ -232,9 +232,9 @@ function computeTurnOnGates(
 }
 
 /**
- * One property's projection inputs, built once per property (#480): its basis, loan
- * blocks, turn-on gates and CPI index, the value after any timed value correction
- * (`crash`) and its development principal not drawn yet at each year end (`undrawn`).
+ * One property's projection inputs, built once per property: its basis, loan blocks,
+ * turn-on gates and CPI index, the value after any timed value correction (`crash`) and
+ * its development principal not drawn yet at each year end (`undrawn`).
  */
 interface PropertyRun {
   property: Property;
@@ -489,7 +489,7 @@ type YearRow = Omit<PropertyYear, "cashToOwner">;
 type PortfolioYearRow = Omit<PortfolioYear, "cashToOwner">;
 
 /** A row's stocks (summed and derived), its summed stocks and its flows, in the
- *  order of `YEAR_FIELD_KINDS` (#478). */
+ *  order of `YEAR_FIELD_KINDS`. */
 const STOCK_FIELDS = fieldsOf("stock", "derivedStock");
 const SUMMED_STOCK_FIELDS = fieldsOf("stock");
 const FLOW_FIELDS = fieldsOf("flow");
@@ -567,10 +567,9 @@ export function portfolioProjection(
 }
 
 /**
- * `portfolioProjection` on an engine run (validated inputs and their schedules):
- * the portfolio is checked once per public call, not again per property. Also returns
- * the debt service paid before a future buy turns on (ADR 0124), so the KPIs reuse it
- * (#291).
+ * `portfolioProjection` on an engine run (validated inputs and their schedules): the
+ * portfolio is checked once per public call, not again per property. Also returns the
+ * debt service paid before a future buy turns on (ADR 0124), so the KPIs reuse it.
  */
 export function projectPortfolioParts(run: EngineRun): {
   years: PortfolioYear[];

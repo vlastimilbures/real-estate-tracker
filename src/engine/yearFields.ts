@@ -1,7 +1,7 @@
-// One classification of the fields of a projection year (#478). The empty row, the
-// opening row, the portfolio sum and the real-terms lens read their field lists from
-// this table, so a field added to `ProjectionYear` and left out of it fails `tsc`, and
-// a money field cannot stay nominal in a real series.
+// One classification of the fields of a projection year. The empty row, the opening row,
+// the portfolio sum and the real-terms lens read their field lists from this table, so a
+// field added to `ProjectionYear` and left out of it fails `tsc`, and a money field
+// cannot stay nominal in a real series.
 import { ZERO, type Decimal } from "../lib/money";
 import type { ProjectionYear } from "./types";
 

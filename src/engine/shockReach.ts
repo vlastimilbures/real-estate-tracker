@@ -1,8 +1,8 @@
-// Which loan blocks a scenario rate shock reaches (ADR 0100, #47, #481), for the
-// Scenarios page's note. It walks the chain the schedule follows (`chainLinks`) and
-// reads each block's fixation end as `rateAt` does (`rateFixedUntil`); each block's
-// maturity in force comes from its schedule (ADR 0116). No rate maths: a block is hit
-// when its first payment past the fixation end and baseDate is shocked and counted.
+// Which loan blocks a scenario rate shock reaches (ADR 0100), for the Scenarios page's
+// note. It walks the chain the schedule follows (`chainLinks`) and reads each block's
+// fixation end as `rateAt` does (`rateFixedUntil`); each block's maturity in force comes
+// from its schedule (ADR 0116). No rate maths: a block is hit when its first payment past
+// the fixation end and baseDate is shocked and counted.
 import { dueDate } from "./loanTerm";
 import { rateFixedUntil } from "./loanRate";
 import { edate, isAfter } from "./dates";

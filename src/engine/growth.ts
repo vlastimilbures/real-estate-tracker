@@ -46,7 +46,7 @@ export function valueAt(v0: Decimal, g: Numeric, years: number): Decimal {
 }
 
 /** What a principal sum reads of a loan: the start draw and the tranches, so a draft
- *  loan being edited can be summed too (#481). */
+ *  loan being edited can be summed too. */
 type Principal = Pick<MortgageBlock, "initialPrincipal" | "draws">;
 
 /** A loan's initial principal plus its tranches dated on or before `cutoff` (all of them
