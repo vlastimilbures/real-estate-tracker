@@ -106,6 +106,14 @@ module.exports = {
       to: { path: "^src/(engine|data|state|ui|import|i18n)/" },
     },
     {
+      name: "tauri-api-in-platform",
+      severity: "error",
+      comment:
+        "The app's commands are typed once, in platform/commands.ts: only src/platform imports @tauri-apps/api (the SQL plugin stays the data adapter's).",
+      from: { path: "^src/", pathNot: `${TESTS}|^src/platform/` },
+      to: { path: "node_modules/@tauri-apps/api/" },
+    },
+    {
       name: "data-no-upper-layers",
       severity: "error",
       comment: "One-way data flow: data never reaches state/ui/import/react.",

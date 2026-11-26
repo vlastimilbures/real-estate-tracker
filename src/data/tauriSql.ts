@@ -4,9 +4,13 @@
 // through the app's own Rust commands (src-tauri/src/db.rs, ADR 0014), which borrow the
 // plugin's pool.
 import Database from "@tauri-apps/plugin-sql";
-import { invoke } from "@tauri-apps/api/core";
 import type { ExecuteResult, Sql, SqlStatement } from "./sql";
 import { isTauri } from "../lib/tauri";
+import {
+  dbBackup,
+  dbSelectSnapshot,
+  dbTransaction,
+} from "../platform/dbCommands";
 
 /** Transaction control. Each `execute` may run on another pooled connection, so these sent
  *  as separate calls would not make the statements between them atomic. */
@@ -46,27 +50,15 @@ export async function openTauriSql(
       return db.select<T[]>(query, params);
     },
     async transaction(statements: SqlStatement[]): Promise<void> {
-      await invoke("db_transaction", {
-        db: connection,
-        statements: statements.map((s) => ({
-          query: s.query,
-          params: s.params ?? [],
-        })),
-      });
+      await dbTransaction(connection, statements);
     },
     async selectSnapshot(
       statements: SqlStatement[],
     ): Promise<Record<string, unknown>[][]> {
-      return invoke<Record<string, unknown>[][]>("db_select_snapshot", {
-        db: connection,
-        statements: statements.map((s) => ({
-          query: s.query,
-          params: s.params ?? [],
-        })),
-      });
+      return dbSelectSnapshot(connection, statements);
     },
     async backup(label: string): Promise<string> {
-      return invoke<string>("db_backup", { db: connection, label });
+      return dbBackup(connection, label);
     },
   };
 }

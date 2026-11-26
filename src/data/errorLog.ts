@@ -8,9 +8,9 @@
 // masked, so an amount that slipped into a message is not recorded (ADR 0147), except an
 // OS or SQLite error code, which says what failed (ADR 0175). Names are kept (they help
 // diagnosis); the bug form says to replace them before pasting.
-import { invoke } from "@tauri-apps/api/core";
 import { DataError, messageOf } from "./errors";
 import { isTauri } from "../lib/tauri";
+import { writeErrorLine } from "../platform/errorLog";
 
 /** A 1–5 digit code right after the word `os error ` or `code ` / `code: ` (sqlx prints
  *  `(code: 2067)`), kept; or any other digit run with its separators, masked. */
@@ -59,5 +59,5 @@ export function describeFailure(
 /** Fire-and-forget: logging must never turn into a second failure. */
 export function logFailure(where: FailureSite, e: unknown): void {
   if (!isTauri()) return;
-  invoke("log_error", describeFailure(where, e)).catch(() => undefined);
+  writeErrorLine(describeFailure(where, e));
 }

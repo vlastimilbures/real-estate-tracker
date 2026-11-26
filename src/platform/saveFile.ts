@@ -3,7 +3,7 @@
 // dialog, writes a temp file renamed into place and reads it back
 // (src-tauri/src/files.rs, ADR 0064), so `saved` means the file on disk is right; a
 // cancelled dialog is `cancelled` (the user's own choice, no message).
-import { invoke } from "@tauri-apps/api/core";
+import { call } from "./commands";
 import { isTauri } from "../lib/tauri";
 import {
   SaveFileError,
@@ -35,7 +35,7 @@ export async function saveFile(opts: SaveFileOptions): Promise<SaveOutcome> {
     extensions: filter.extensions,
   });
   try {
-    return await invoke<SaveOutcome>("save_file", body, {
+    return await call("save_file", body, {
       headers: { "x-save-options": encodeURIComponent(options) },
     });
   } catch (e) {
