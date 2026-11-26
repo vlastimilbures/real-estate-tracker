@@ -4,12 +4,11 @@
 // "current", and the horizon tile names its end year whatever the as-of date.
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { addYears, portfolioProjection } from "../../../engine";
 import {
-  addYears,
   portfolioKpis,
-  portfolioProjection,
   portfolioSnapshot,
-} from "../../../engine";
+} from "../../../engine/__tests__/support/seams";
 import type { IsoDate } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";

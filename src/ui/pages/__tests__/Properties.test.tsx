@@ -18,12 +18,8 @@ import {
   withPropertyId,
 } from "../../../engine/__tests__/support/seed";
 import { mixed } from "../../../engine/__tests__/support/mixed";
-import {
-  isoDate,
-  portfolioSnapshot,
-  propertySnapshot,
-  type Portfolio,
-} from "../../../engine";
+import { isoDate, propertySnapshot, type Portfolio } from "../../../engine";
+import { portfolioSnapshot } from "../../../engine/__tests__/support/seams";
 import { fmtCzk, fmtCzkM, fmtDscr, fmtPct, noBreak } from "../../../lib/format";
 import { dscrBandWord, ltvBandWord } from "../../model/health";
 import type { Decimal } from "../../../lib/money";

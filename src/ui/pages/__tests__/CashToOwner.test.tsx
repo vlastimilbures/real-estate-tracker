@@ -8,12 +8,14 @@ import { render, screen } from "@testing-library/react";
 import {
   isoDate,
   money,
-  portfolioKpis,
   portfolioProjection,
-  portfolioSnapshot,
   type MortgageBlock,
   type Portfolio,
 } from "../../../engine";
+import {
+  portfolioKpis,
+  portfolioSnapshot,
+} from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { ZERO } from "../../../lib/money";
 import { en } from "../../../i18n/en";

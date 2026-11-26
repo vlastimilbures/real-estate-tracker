@@ -6,7 +6,10 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
 import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
-import { portfolioSnapshot, portfolioKpis } from "../../engine";
+import {
+  portfolioSnapshot,
+  portfolioKpis,
+} from "../../engine/__tests__/support/seams";
 import type {
   Portfolio,
   Assumptions,

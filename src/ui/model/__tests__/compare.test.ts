@@ -4,11 +4,11 @@ import { describe, it, expect } from "vitest";
 import {
   applyScenario,
   cpiIndex,
-  portfolioKpis,
   portfolioProjection,
   rate,
   realProjection,
 } from "../../../engine";
+import { portfolioKpis } from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import type { Decimal } from "../../../lib/money";
 import { fmtCzkM, fmtMultiple, fmtPp, toNumber } from "../../../lib/format";

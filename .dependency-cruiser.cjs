@@ -208,6 +208,8 @@ module.exports = {
     {
       name: "no-prod-to-tests",
       severity: "error",
+      // This also keeps app code off the engine's test seams,
+      // src/engine/__tests__/support/seams.ts (#480).
       comment: "Production code never imports test code.",
       from: { path: "^src/", pathNot: TESTS },
       to: { path: TESTS },

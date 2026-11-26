@@ -4,11 +4,11 @@
 import { describe, it, expect } from "vitest";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import {
-  portfolioSnapshot,
   portfolioProjection,
   isoDate,
   realPropertySnapshot,
 } from "../../../engine";
+import { portfolioSnapshot } from "../../../engine/__tests__/support/seams";
 import { D, ONE } from "../../../lib/money";
 import { en } from "../../../i18n/en";
 import {

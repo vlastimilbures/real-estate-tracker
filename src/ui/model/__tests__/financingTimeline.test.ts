@@ -4,12 +4,12 @@
 import { describe, it, expect } from "vitest";
 import {
   edate,
-  impliedMaturity,
   isoDate,
   portfolioOutputs,
   type Portfolio,
 } from "../../../engine";
 import { mixed } from "../../../engine/__tests__/support/mixed";
+import { impliedMaturity } from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";

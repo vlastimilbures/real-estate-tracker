@@ -9,12 +9,12 @@ import ExcelJS from "exceljs";
 import {
   applyScenario,
   cpiIndex,
-  portfolioKpis,
   portfolioProjection,
   rate,
   realProjection,
   type Scenario,
 } from "../../../engine";
+import { portfolioKpis } from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { en } from "../../../i18n/en";

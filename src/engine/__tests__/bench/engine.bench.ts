@@ -11,7 +11,6 @@ import { schedulesByProperty } from "../support/schedules";
 import {
   applyScenario,
   cpiIndex,
-  portfolioKpis,
   portfolioOutputs,
   portfolioProjection,
   projectionAndKpis,
@@ -21,6 +20,7 @@ import {
   type Portfolio,
   type ScenarioOverrides,
 } from "../..";
+import { portfolioKpis } from "../support/seams";
 import { assumptions, portfolio as seed } from "../support/seed";
 import { synthetic } from "../support/synthetic";
 

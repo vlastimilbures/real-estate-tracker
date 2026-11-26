@@ -9,10 +9,10 @@ import userEvent from "@testing-library/user-event";
 import {
   applyScenario,
   cpiIndex,
-  portfolioKpis,
   portfolioProjection,
   realProjection,
 } from "../../../engine";
+import { portfolioKpis } from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { fmtDate } from "../../../lib/format";

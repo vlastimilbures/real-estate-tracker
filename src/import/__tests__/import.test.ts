@@ -11,7 +11,7 @@ import {
   parseMortgages,
 } from "../csv";
 import { SEED_ASSUMPTIONS } from "../../data/seed";
-import { portfolioSnapshot } from "../../engine";
+import { portfolioSnapshot } from "../../engine/__tests__/support/seams";
 import { KC, RATIO, near } from "../../engine/__tests__/support/tolerance";
 import {
   MORTGAGES_CSV,

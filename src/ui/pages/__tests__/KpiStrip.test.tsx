@@ -5,14 +5,11 @@
 // leaves the page, and the basis and the horizon are each named once, in a caption.
 import { describe, it, expect } from "vitest";
 import { render, screen, within } from "@testing-library/react";
+import { addYears, money, rate, portfolioProjection } from "../../../engine";
 import {
-  addYears,
-  money,
-  rate,
   portfolioKpis,
-  portfolioProjection,
   portfolioSnapshot,
-} from "../../../engine";
+} from "../../../engine/__tests__/support/seams";
 import type { IsoDate } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";

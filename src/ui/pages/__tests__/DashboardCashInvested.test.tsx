@@ -5,12 +5,11 @@
 // nominal amount, so the real lens says so (as Σ principal, ADR 0087).
 import { describe, it, expect } from "vitest";
 import { act, render, screen } from "@testing-library/react";
+import { money, type Portfolio } from "../../../engine";
 import {
-  money,
   portfolioKpis,
   portfolioSnapshot,
-  type Portfolio,
-} from "../../../engine";
+} from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";

@@ -7,12 +7,11 @@ import {
   PARITY,
 } from "../../../engine/__tests__/support/seed";
 import { KC, near } from "../../../engine/__tests__/support/tolerance";
+import { portfolioProjection, realPortfolioSnapshot } from "../../../engine";
 import {
   portfolioSnapshot,
-  portfolioProjection,
   portfolioKpis,
-  realPortfolioSnapshot,
-} from "../../../engine";
+} from "../../../engine/__tests__/support/seams";
 import { projectionSeries } from "../projection";
 import { monthlyFlow } from "../dashboard";
 import { lensKpis } from "../lensKpis";

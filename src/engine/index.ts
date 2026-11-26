@@ -1,7 +1,8 @@
 // The engine's public API: the only module code outside src/engine may import
 // (enforced by ESLint no-restricted-imports). Pure: no React/Tauri/DB imports anywhere
 // under src/engine. Everything not listed here is internal to the engine; engine
-// tests may import internal modules directly.
+// tests may import internal modules directly. The test seams (exports only tests use)
+// live in __tests__/support/seams.ts, not here (#480).
 
 // Types (inputs, outputs, brands)
 export * from "./types";
@@ -31,17 +32,8 @@ export { isDevLoan, mortgageBlock } from "./loanBlock";
 export { blockEndDate, fixationExpired } from "./loanRate";
 export { suggestedInstalment } from "./loanInstalment";
 export type { InstalmentCode } from "./loanTerm";
-export {
-  amortizationHealth,
-  /** @internal test seam (UI model tests) */
-  impliedMaturity,
-  maturityMismatch,
-} from "./loanChecks";
+export { amortizationHealth, maturityMismatch } from "./loanChecks";
 export { selectBlock } from "./loan/blockChain";
-export {
-  /** @internal test seam (CSV import tests) */
-  MAX_LOAN_TERM_MONTHS,
-} from "./loanConstants";
 export {
   /** The IRR search range the "no IRR" note names (#441). */
   IRR_BRACKET_LOW,
@@ -53,11 +45,7 @@ export { EMPTY_PROPERTY_SCHEDULE, propertySchedules } from "./schedule";
 export type { PropertySchedule } from "./schedule";
 
 // Snapshot, projection, KPIs, scenarios, validation
-export {
-  /** @internal test seam (tests; the app runs `portfolioOutputs`) */
-  portfolioSnapshot,
-  propertySnapshot,
-} from "./metrics";
+export { propertySnapshot } from "./metrics";
 export { leaseInForce, selectValuation } from "./selectors";
 export {
   cpiIndex,
@@ -77,11 +65,7 @@ export {
 export { acquisitionSummary } from "./acquisition";
 export { equityBridge, purchasedValue } from "./equityBridge";
 export type { AcquisitionSummary } from "./acquisition";
-export {
-  /** @internal test seam (tests; the app runs `portfolioOutputs`) */
-  portfolioKpis,
-  projectionAndKpis,
-} from "./kpis";
+export { projectionAndKpis } from "./kpis";
 export { portfolioOutputs } from "./outputs";
 export { debtResettingWithin, propertyLoanExposure } from "./financing";
 export type {

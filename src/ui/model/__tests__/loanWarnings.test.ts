@@ -4,7 +4,8 @@
 // expired fixation with no follow-on block.
 import { describe, it, expect } from "vitest";
 import { loanWarnings, loanWarningText } from "../propertyDetail";
-import { impliedMaturity, isoDate, rate, mortgageBlock } from "../../../engine";
+import { isoDate, rate, mortgageBlock } from "../../../engine";
+import { impliedMaturity } from "../../../engine/__tests__/support/seams";
 import type {
   LoanEventIssue,
   LoanEventOutcome,
