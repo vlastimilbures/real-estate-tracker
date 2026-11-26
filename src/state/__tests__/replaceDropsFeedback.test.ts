@@ -1,6 +1,7 @@
 // ADR 0154: replacing the data drops what described the old data — the UI's notice, its
 // failure and the last import report. The store's replacing actions do it themselves
-// when they succeed (#468); a failed one leaves them, since the data is as it was.
+// when they succeed (#468), and name their own safety copy in the same update; a failed
+// one leaves them, since the data is as it was.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { usePortfolioStore, portfolioDb } from "../portfolioStore";
 import { useUiStore } from "../uiStore";
@@ -54,15 +55,23 @@ describe("a replacing action drops the old data's feedback (ADR 0154)", () => {
     const db = await start(true);
     const file = await exportToJson(db, new Date());
     leftovers();
-    expect((await store().restoreBackup(file)).ok).toBe(true);
-    expect(dropped()).toEqual(NONE);
+    const r = await store().restoreBackup(file);
+    if (!r.ok) throw new Error("restore failed");
+    expect(dropped()).toEqual({
+      ...NONE,
+      notice: { kind: "restored", file: r.value.safetyBackup },
+    });
   });
 
   it("Clear sample", async () => {
     await start(true);
     leftovers();
-    expect((await store().clearSample()).ok).toBe(true);
-    expect(dropped()).toEqual(NONE);
+    const r = await store().clearSample();
+    if (!r.ok) throw new Error("clear failed");
+    expect(dropped()).toEqual({
+      ...NONE,
+      notice: { kind: "sampleCleared", file: r.value.safetyBackup },
+    });
   });
 
   it("Load sample", async () => {

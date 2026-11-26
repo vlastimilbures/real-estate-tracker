@@ -13,7 +13,7 @@ import { checkInputRules } from "../restoreRules";
 import { toActionError, type ActionError } from "../actionError";
 import { toWriteError } from "../writeError";
 import { success, type Result } from "../result";
-import type { PortfolioState, StoreCtx } from "./types";
+import type { PortfolioState, ReplacedNotice, StoreCtx } from "./types";
 
 type WholeDbActions = Pick<
   PortfolioState,
@@ -104,14 +104,18 @@ function csvActions({
   };
 }
 
-/** `result`, after dropping what described the old data when it replaced the data
- *  (ADR 0154). */
+/** `result`, after dropping what described the old data when it replaced the data,
+ *  together with the notice naming its safety copy (ADR 0154). One update, so a
+ *  notice already showing changes its text in place. */
 function replacing<T>(
   ctx: StoreCtx,
   result: Promise<Result<T, ActionError>>,
+  safetyCopy: (
+    done: Result<T, ActionError> & { ok: true },
+  ) => ReplacedNotice | undefined = () => undefined,
 ): Promise<Result<T, ActionError>> {
   return result.then((r) => {
-    if (r.ok) ctx.dataReplaced();
+    if (r.ok) ctx.dataReplaced(safetyCopy(r));
     return r;
   });
 }
@@ -148,6 +152,12 @@ function restoreAtStartupAction(
             get().status.kind === "startupFailed" && get().portfolio !== null,
         };
       }),
+      // Not read back: the read-back screen names the copy (ADR 0154 §5, ADR 0228).
+      // Read back: the restored screen names it, and Continue sets the notice.
+      ({ value }) =>
+        value.ready
+          ? undefined
+          : { kind: "restored", file: value.safetyBackup },
     );
 }
 
@@ -165,6 +175,7 @@ function replaceActions(
             confirmRestore(sql, backup, checkInputRules),
           ),
         ),
+        ({ value }) => ({ kind: "restored", file: value.safetyBackup }),
       ),
     restoreAtStartup: restoreAtStartupAction(ctx),
     continueAfterRestore: () => {
@@ -178,6 +189,7 @@ function replaceActions(
         attempt("SAMPLE", () =>
           replaceData("clearSample", (sql) => clearSample(sql)),
         ),
+        ({ value }) => ({ kind: "sampleCleared", file: value.safetyBackup }),
       ),
     loadSample: () =>
       replacing(

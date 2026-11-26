@@ -17,7 +17,12 @@ import {
 import { propertyActions } from "./propertyActions";
 import { scenarioActions } from "./scenarioActions";
 import { wholeDbActions } from "./wholeDb";
-import type { DbHandle, PortfolioState, StoreCtx } from "./types";
+import type {
+  DbHandle,
+  PortfolioState,
+  ReplacedNotice,
+  StoreCtx,
+} from "./types";
 
 /** What a store needs from outside: the database opener `init` uses by default, the
  *  clock that stamps scenarios and backups, and what to drop once the data is replaced
@@ -25,7 +30,7 @@ import type { DbHandle, PortfolioState, StoreCtx } from "./types";
 export interface StoreDeps {
   open: () => Promise<Sql>;
   now: () => Date;
-  dataReplaced: () => void;
+  dataReplaced: (safetyCopy?: ReplacedNotice) => void;
 }
 
 /** Startup and reading the data back, and the banner error. */

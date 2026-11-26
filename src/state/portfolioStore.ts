@@ -17,7 +17,7 @@ const { store, db } = createPortfolioStore({
   open: defaultOpen,
   now: () => new Date(),
   // Replacing the data drops the UI's notice, failure and import report (ADR 0154).
-  dataReplaced: () => useUiStore.getState().dataReplaced(),
+  dataReplaced: (safetyCopy) => useUiStore.getState().dataReplaced(safetyCopy),
 });
 
 export const usePortfolioStore = store;
