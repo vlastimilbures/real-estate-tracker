@@ -2,7 +2,7 @@
 // The theme, the language and the sidebar persist in localStorage; the lens does not.
 import { isDictionaryLoaded, loadDictionary } from "../../i18n";
 import type { Language } from "../../i18n/types";
-import type { Mode } from "../../ui/model/lens";
+import type { Mode } from "../navigation";
 import { THEME_KEY, readPersistedTheme, type Theme } from "../themePreference";
 import type { SliceCtx } from "./types";
 

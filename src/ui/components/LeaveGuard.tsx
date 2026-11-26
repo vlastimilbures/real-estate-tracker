@@ -5,7 +5,7 @@ import { Button } from "./primitives";
 
 /**
  * Asks before a navigation drops unsaved form edits. The store holds the navigation back
- * while `unsavedChanges` is set; Discard carries it out, Keep editing (also ✕, Esc and
+ * while a form holds unsaved edits; Discard carries it out, Keep editing (also ✕, Esc and
  * the backdrop) stays.
  */
 export function LeaveGuard() {

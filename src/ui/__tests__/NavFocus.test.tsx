@@ -35,7 +35,7 @@ beforeEach(async () => {
       route: "dashboard",
       asOf: null,
       dashboardPropertyIds: [],
-      unsavedChanges: false,
+      unsavedSources: [],
       pendingLeave: null,
       guideTerm: null,
     });

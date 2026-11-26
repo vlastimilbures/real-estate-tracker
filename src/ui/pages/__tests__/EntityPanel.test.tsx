@@ -10,7 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { EntityPanel } from "../../components/EntityPanel";
 import { LeaveGuard } from "../../components/LeaveGuard";
 import type { FieldSpec } from "../../model/formParse";
-import { useUiStore } from "../../../state/uiStore";
+import { hasUnsavedChanges, useUiStore } from "../../../state/uiStore";
 import type { MutationResult } from "../../../state/portfolioStore";
 import { en } from "../../../i18n/en";
 
@@ -201,7 +201,7 @@ describe("EntityPanel row-switch", () => {
     );
     expect(valueInputs()[0].value).toBe("1005");
     expect(useUiStore.getState().unsavedSources).toHaveLength(1);
-    expect(useUiStore.getState().unsavedChanges).toBe(true);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(true);
   });
 });
 

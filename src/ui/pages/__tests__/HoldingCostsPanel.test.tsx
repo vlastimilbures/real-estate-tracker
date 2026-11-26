@@ -6,7 +6,7 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { money, rate, type HoldingCost } from "../../../engine";
 import { assumptions } from "../../../engine/__tests__/support/seed";
-import { useUiStore } from "../../../state/uiStore";
+import { hasUnsavedChanges, useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
@@ -174,7 +174,7 @@ describe("Holding costs Edit (ADR 0207 §2, §3)", () => {
       screen.getByLabelText(p.fieldOther, { exact: false }),
       "5",
     );
-    expect(useUiStore.getState().unsavedChanges).toBe(true);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(true);
     act(() => useUiStore.getState().navigate("dashboard"));
     expect(useUiStore.getState().pendingLeave).not.toBeNull();
     expect(useUiStore.getState().route).toBe("property");
@@ -182,7 +182,7 @@ describe("Holding costs Edit (ADR 0207 §2, §3)", () => {
     await userEvent.click(
       screen.getByRole("button", { name: en.common.cancel }),
     );
-    expect(useUiStore.getState().unsavedChanges).toBe(false);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(false);
   });
 
   it("a slow save that lands after a refresh still returns to the read view and the pencil", async () => {

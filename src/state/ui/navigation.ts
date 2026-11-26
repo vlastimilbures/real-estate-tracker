@@ -1,28 +1,9 @@
 // Navigation: the page shown, the open property and Settings tab, and the one-off
 // requests a navigation hands its page (a Guide term, ⌘N's Add form, a property target).
 // Every move goes through the leave guard.
-import type {
-  PropertyFormTarget,
-  PropertySection,
-} from "../../ui/model/sectionNav";
+import type { PropertyTarget, Route, SettingsTab } from "../navigation";
 import { guarded } from "./leaveGuard";
 import type { SliceCtx } from "./types";
-
-export type Route =
-  | "dashboard"
-  | "properties"
-  | "property"
-  | "projections"
-  | "scenarios"
-  | "import"
-  | "settings"
-  | "guide";
-
-/** Which sub-tab the Settings page opens on. */
-export type SettingsTab = "assumptions" | "backup";
-
-/** Where Property detail lands once: a section, or the open property form (ADR 0118). */
-export type PropertyTarget = PropertySection | PropertyFormTarget;
 
 export interface NavigationSlice {
   route: Route;

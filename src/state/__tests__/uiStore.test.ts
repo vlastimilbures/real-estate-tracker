@@ -1,7 +1,7 @@
 // Navigation/presentation store: pure synchronous state, no DB. Driven directly via
 // getState() (zustand works outside React), so no DOM is needed.
 import { describe, expect, it, vi } from "vitest";
-import { MAX_COMPARE, useUiStore } from "../uiStore";
+import { hasUnsavedChanges, MAX_COMPARE, useUiStore } from "../uiStore";
 
 describe("uiStore", () => {
   it("starts on the dashboard, nominal lens, no property selected", () => {
@@ -44,7 +44,7 @@ describe("requestNewProperty", () => {
   });
 
   it("is held back by unsaved edits like any navigation (UX-030)", () => {
-    useUiStore.setState({ unsavedChanges: true });
+    useUiStore.setState({ unsavedSources: ["test"] });
     useUiStore.getState().requestNewProperty();
     let s = useUiStore.getState();
     expect(s.route).toBe("dashboard");
@@ -65,10 +65,10 @@ describe("setUnsavedChanges", () => {
     s.setUnsavedChanges("b", true);
     s.setUnsavedChanges("a", true);
     s.setUnsavedChanges("b", false);
-    expect(useUiStore.getState().unsavedChanges).toBe(true);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(true);
     expect(useUiStore.getState().unsavedSources).toEqual(["a"]);
     s.setUnsavedChanges("a", false);
-    expect(useUiStore.getState().unsavedChanges).toBe(false);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(false);
   });
 
   it("Discard clears every form", () => {
@@ -78,7 +78,7 @@ describe("setUnsavedChanges", () => {
     s.navigate("projections");
     useUiStore.getState().confirmLeave();
     expect(useUiStore.getState().unsavedSources).toEqual([]);
-    expect(useUiStore.getState().unsavedChanges).toBe(false);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(false);
   });
 });
 
@@ -116,7 +116,7 @@ describe("guardedAction", () => {
     useUiStore.getState().confirmLeave();
     expect(fn).toHaveBeenCalledOnce();
     expect(useUiStore.getState().unsavedSources).toEqual(["b"]);
-    expect(useUiStore.getState().unsavedChanges).toBe(true);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(true);
     expect(useUiStore.getState().pendingSource).toBeNull();
   });
 
@@ -215,7 +215,7 @@ describe("data check state", () => {
   });
 
   it("the target waits behind unsaved edits like the navigation (UX-030)", () => {
-    useUiStore.setState({ unsavedChanges: true });
+    useUiStore.setState({ unsavedSources: ["test"] });
     useUiStore.getState().openProperty("lipova", "edit");
     expect(useUiStore.getState().propertyTarget).toBeNull();
     useUiStore.getState().confirmLeave();

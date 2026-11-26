@@ -16,7 +16,6 @@ beforeEach(() => {
     newPropertyRequested: false,
     propertyTarget: null,
     notice: null,
-    unsavedChanges: false,
     unsavedSources: [],
     pendingLeave: null,
     pendingSource: null,

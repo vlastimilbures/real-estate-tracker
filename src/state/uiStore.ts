@@ -6,13 +6,16 @@ import { loadDictionary } from "../i18n";
 import { useUiStore } from "./ui/store";
 
 export { useUiStore } from "./ui/store";
-export type { Route, SettingsTab } from "./ui/navigation";
+export type { Route, SettingsTab } from "./navigation";
 export type { Theme } from "./themePreference";
 export type { OutcomeAction, Notice, Failure } from "./ui/feedback";
 /** How long a toast stays.
  *  @internal test seam: tests reach it through the state facade (ADR 0072). */
 export { TOAST_MS } from "./ui/feedback";
 export { MAX_COMPARE } from "./ui/compare";
+/** Some open form holds unsaved edits: derived from the sources, never stored.
+ *  @internal test seam: the guard reads it inside the store (ADR 0072). */
+export { hasUnsavedChanges } from "./ui/leaveGuard";
 
 /** Load the saved language's dictionary before the first render (src/main.tsx).
  *  If it fails, show English for this session; the saved choice is kept. */

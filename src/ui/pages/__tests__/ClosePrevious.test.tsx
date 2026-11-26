@@ -12,7 +12,7 @@ import {
   usePortfolioStore,
   type MutationResult,
 } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
+import { hasUnsavedChanges, useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { isoDate, money, type Lease, type Valuation } from "../../../engine";
 import { isoOf } from "../../../engine/__tests__/support/dates";
@@ -208,6 +208,6 @@ describe("ending the previous open-ended record (ADR 0227, 0163)", () => {
       ).value.replace(/\D/g, ""),
     ).toBe("6000000");
     expect(screen.getByText(en.common.unsavedChanges)).toBeTruthy();
-    expect(useUiStore.getState().unsavedChanges).toBe(true);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(true);
   });
 });

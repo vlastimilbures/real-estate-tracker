@@ -24,7 +24,6 @@ beforeEach(() => {
       guideTerm: null,
       newPropertyRequested: false,
       propertyTarget: null,
-      unsavedChanges: false,
       unsavedSources: [],
       pendingLeave: null,
       pendingSource: null,
