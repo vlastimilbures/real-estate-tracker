@@ -9,6 +9,7 @@
 import type { Worksheet } from "exceljs";
 import type { Decimal } from "../../lib/money";
 import {
+  CZK,
   cellMoney,
   cellMultiple,
   cellPct,
@@ -16,7 +17,6 @@ import {
   fmtMultiple,
   fmtPct,
 } from "../../lib/format";
-import { CZK } from "../../lib/currency";
 
 /** What `exportTableXlsx` takes: one sheet. */
 export interface TableExport<R> {

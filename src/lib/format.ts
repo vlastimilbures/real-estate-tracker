@@ -4,7 +4,16 @@
 // is a Czech real-estate tracker: "Kč", dd.mm.yyyy dates) → space thousands separator,
 // comma decimal separator, space before the unit.
 import { D, Decimal, type Numeric } from "./money";
-import { CZK } from "./currency";
+
+/** The display currency. Amounts are always CZK: the engine, the database and the parity
+ *  targets are in CZK and are never converted, so there is no currency picker
+ *  (ADR 0058). */
+export const CZK = {
+  /** Suffix appended to whole amounts. */
+  symbol: "Kč",
+  /** Axis/hero label for millions. */
+  millionsLabel: "M Kč",
+} as const;
 
 const MINUS = "−"; // real minus sign, not a hyphen
 const NBSP = "\u00A0";
