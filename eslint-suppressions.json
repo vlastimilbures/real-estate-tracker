@@ -1,9 +1,4 @@
 {
-  "src/state/uiStore.ts": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/ui/components/charts.tsx": {
     "complexity": {
       "count": 1
