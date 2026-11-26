@@ -1,4 +1,4 @@
-use tauri::{Emitter, Manager};
+use tauri::Manager;
 #[cfg(target_os = "macos")]
 use tauri::{RunEvent, WindowEvent};
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
@@ -103,15 +103,7 @@ pub fn run() {
 
             Ok(())
         })
-        .on_menu_event(|app, event| {
-            if event.id() == menu::ABOUT {
-                let _ = app.emit("menu://about", ());
-            } else if event.id() == menu::SETTINGS {
-                let _ = app.emit("menu://settings", ());
-            } else if let Some((name, payload)) = menu::webview_event(event.id().as_ref()) {
-                let _ = app.emit(name, payload);
-            }
-        })
+        .on_menu_event(menu::on_event)
         // macOS convention (UX-045): ⌘W and the red close button hide the window instead of
         // quitting; clicking the Dock icon shows it again; ⌘Q (Quit) still exits.
         .on_window_event(|window, event| {
