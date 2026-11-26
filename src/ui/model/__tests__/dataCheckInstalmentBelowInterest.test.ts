@@ -23,12 +23,11 @@ import { ru } from "../../../i18n/ru";
 import { fmtCzk } from "../../../lib/format";
 import {
   dashboardDataCheck,
-  dataCheckGroups,
   findingFix,
-  findingText,
   propertyDataCheck,
   type DataFinding,
 } from "../dataCheck";
+import { dataCheckGroups, findingText } from "../dataCheckText";
 
 const resetRate = assumptions.postFixationResetRatePa;
 

@@ -11,12 +11,8 @@ import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
 import { fmtCzk, fmtDate, fmtPct } from "../../../lib/format";
-import {
-  dashboardDataCheck,
-  dataCheckGroups,
-  findingText,
-  type DataCheckItem,
-} from "../dataCheck";
+import { dashboardDataCheck, type DataCheckItem } from "../dataCheck";
+import { dataCheckGroups, findingText } from "../dataCheckText";
 
 const d = en.dataCheck;
 const resetRate = assumptions.postFixationResetRatePa;

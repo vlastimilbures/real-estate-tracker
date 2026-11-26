@@ -1,6 +1,7 @@
 // Pure model for the Data check (ADR 0118): the inputs behind a property's numbers
 // that are stale, missing or left at a portfolio default, at an explicit as-of date. It
 // calls the engine's own selectors, so a finding appears exactly when the engine falls back.
+// This file finds them and says where each is fixed; dataCheckText.ts words them.
 import {
   basisDate,
   edate,
@@ -21,23 +22,17 @@ import type {
   Portfolio,
   Property,
   InstalmentCode,
-  Rate,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import type { Decimal } from "../../lib/money";
-import { fmtCzk, fmtDate, fmtNumber, fmtPct } from "../../lib/format";
-import { inRange, rangeProblems, type IntRange } from "../../lib/rules";
-import {
-  loanWarnings,
-  loanWarningText,
-  type LoanWarning,
-} from "./propertyDetail";
+import { rangeProblems, type IntRange } from "../../lib/rules";
+import { loanWarnings, type LoanWarning } from "./propertyDetail";
 import type { PropertyFormTarget, PropertySection } from "./sectionNav";
 
 /** A valuation more than this many months old at the as-of date is stale. */
-const VALUATION_STALE_MONTHS = 12;
+export const VALUATION_STALE_MONTHS = 12;
 /** A lease ending within this many months of the as-of date (that day included). */
-const LEASE_ENDING_MONTHS = 3;
+export const LEASE_ENDING_MONTHS = 3;
 
 /** The holding-cost fields, in the Holding costs form's order. */
 const COST_FIELDS = [
@@ -48,7 +43,7 @@ const COST_FIELDS = [
   "mgmtPctRent",
   "maintPctRent",
 ] as const;
-type CostField = (typeof COST_FIELDS)[number];
+export type CostField = (typeof COST_FIELDS)[number];
 
 /** One data-check finding for a property. */
 export type DataFinding =
@@ -341,95 +336,12 @@ export function dashboardDataCheck(
   };
 }
 
-/** One property's place in a grouped line: the chip that links to its fix. A portfolio
- *  row has no property (`propertyId` and `name` null). */
-export interface DataCheckChip {
-  propertyId: string | null;
-  name: string | null;
-  /** This property's part of the problem (an age, a date), or null when the line says
-   *  it all. */
-  detail: string | null;
-  fix: DataCheckFix;
-}
-
-/** One line of the grouped Data check: the problem and its effect once, then a chip per
- *  affected property (ADR 0206 §4). */
-export interface DataCheckGroup {
-  kind: DataFinding["kind"];
-  headline: string;
-  chips: DataCheckChip[];
-}
-
-/** A finding as a shared line and its property's detail: the kinds whose sentence holds
- *  a per-property value get a line of their own and the value on the chip; every other
- *  finding keeps its sentence, which equal findings share. */
-function findingLine(
-  t: Pick<Dictionary, "dataCheck" | "propertyDetail">,
-  f: DataFinding,
-  resetRate: Rate,
-): { headline: string; detail: string | null } {
-  const d = t.dataCheck;
-  switch (f.kind) {
-    case "valuationStale":
-      return {
-        headline: d.valuationStaleGroup(
-          fmtNumber(VALUATION_STALE_MONTHS),
-          VALUATION_STALE_MONTHS,
-        ),
-        detail: `${t.propertyDetail.monthsCount(f.months)} · ${fmtDate(f.validFrom)}`,
-      };
-    case "noValuation":
-      return {
-        headline: d.noValuationGroup,
-        detail: `${fmtCzk(f.purchasePrice)} · ${fmtDate(f.purchaseDate)}`,
-      };
-    case "leaseEnded":
-      return { headline: d.leaseEndedGroup, detail: fmtDate(f.endDate) };
-    case "leaseEnding":
-      return {
-        headline: d.leaseEndingGroup(
-          fmtNumber(LEASE_ENDING_MONTHS),
-          LEASE_ENDING_MONTHS,
-        ),
-        detail: fmtDate(f.endDate),
-      };
-    case "fixationEnded":
-      if (!f.until)
-        return {
-          headline: d.fixationEndedGroup(fmtPct(resetRate)),
-          detail: fmtDate(f.fixationEnd),
-        };
-      break;
-    default:
-      break;
-  }
-  return { headline: findingText(t, f, resetRate), detail: null };
-}
-
-/** The list's findings grouped by problem, in the order each problem first appears, so
- *  portfolio rows stay first (ADR 0206 §4). */
-export function dataCheckGroups(
-  t: Pick<Dictionary, "dataCheck" | "propertyDetail">,
-  items: readonly DataCheckItem[],
-  resetRate: Rate,
-): DataCheckGroup[] {
-  const groups = new Map<string, DataCheckGroup>();
-  for (const { propertyId, name, finding } of items) {
-    const { headline, detail } = findingLine(t, finding, resetRate);
-    const key = `${finding.kind}\u0000${headline}`;
-    let g = groups.get(key);
-    if (!g) {
-      g = { kind: finding.kind, headline, chips: [] };
-      groups.set(key, g);
-    }
-    g.chips.push({ propertyId, name, detail, fix: findingFix(finding) });
-  }
-  return [...groups.values()];
-}
-
-type FindingKind = DataFinding["kind"];
-type FindingOf<K extends FindingKind> = Extract<DataFinding, { kind: K }>;
-type OutOfRange = FindingOf<"outOfRange">;
+export type FindingKind = DataFinding["kind"];
+export type FindingOf<K extends FindingKind> = Extract<
+  DataFinding,
+  { kind: K }
+>;
+export type OutOfRange = FindingOf<"outOfRange">;
 
 /** Where each kind of finding is fixed; an out-of-range value by its field. */
 const FINDING_FIX: Record<Exclude<FindingKind, "outOfRange">, DataCheckFix> = {
@@ -457,126 +369,4 @@ export function findingFix(f: DataFinding): DataCheckFix {
   return f.kind === "outOfRange"
     ? OUT_OF_RANGE_FIX[f.field]
     : FINDING_FIX[f.kind];
-}
-
-type TextDict = Pick<Dictionary, "dataCheck" | "propertyDetail">;
-
-/** A stored value outside the form range, with every decimal (ADR 0180 §2). */
-function outOfRangeText(t: TextDict, f: OutOfRange): string {
-  const d = t.dataCheck;
-  const value = fmtNumber(f.value);
-  const range = `${fmtNumber(f.range.min)}–${fmtNumber(f.range.max)}`;
-  const loan = f.loanStart ? fmtDate(f.loanStart) : "";
-  switch (f.field) {
-    case "sizeM2":
-      // Only the size can hold a fraction: the engine refuses one in the others
-      // (engine/validate/, whole years), so they never reach the Data check. Inside the
-      // range it is listed only with two or more decimals (ADR 0236 §3).
-      return inRange(f.value, f.range)
-        ? d.sizeDecimals(value, range)
-        : d.outOfRangeSize(value, range);
-    case "fixationYears":
-      return d.outOfRangeFixation(loan, value, range, f.value);
-    case "loanTermYears":
-      return d.outOfRangeTerm(loan, value, range, f.value);
-    case "horizonYears":
-      return d.outOfRangeHorizon(value, range, f.value);
-  }
-}
-
-/** A stored loan below its interest, worded by the rule it breaks (ADR 0264): every
- *  instalment code needs its sentence. */
-const INSTALMENT_TEXT: Record<
-  InstalmentCode,
-  (t: TextDict, f: FindingOf<"instalmentBelowInterest">) => string
-> = {
-  INSTALMENT_BELOW_INTEREST: (t, f) =>
-    t.dataCheck.instalmentBelowInterest(
-      fmtDate(f.loanStart),
-      fmtCzk(f.instalment),
-      fmtCzk(f.interest),
-    ),
-  ZERO_RATE_ZERO_INSTALMENT: (t, f) =>
-    t.dataCheck.zeroRateZeroInstalment(fmtDate(f.loanStart)),
-};
-
-/** Each kind of finding's sentence. */
-const FINDING_TEXT: {
-  [K in FindingKind]: (t: TextDict, f: FindingOf<K>, resetRate: Rate) => string;
-} = {
-  valuationStale: (t, f) =>
-    t.dataCheck.valuationStale(
-      t.propertyDetail.monthsCount(f.months),
-      fmtDate(f.validFrom),
-    ),
-  noValuation: (t, f) =>
-    t.dataCheck.noValuation(fmtCzk(f.purchasePrice), fmtDate(f.purchaseDate)),
-  noLease: (t, f) => t.dataCheck.noLease(fmtDate(f.asOf)),
-  leaseEnded: (t, f) => t.dataCheck.leaseEnded(fmtDate(f.endDate)),
-  leaseEnding: (t, f) => t.dataCheck.leaseEnding(fmtDate(f.endDate)),
-  leaseOverlap: (t, f) =>
-    t.dataCheck.leaseOverlap(fmtDate(f.first), fmtDate(f.second)),
-  fixationEnded: (t, f, resetRate) => loanWarningText(t, f, resetRate),
-  instalmentBelowInterest: (t, f) => INSTALMENT_TEXT[f.code](t, f),
-  growthDefault: ({ dataCheck: d }, f) =>
-    f.appreciation && f.rentIndexation
-      ? d.growthBoth
-      : f.appreciation
-        ? d.growthAppreciation
-        : d.growthRentIndexation,
-  costDefaults: (t, f) =>
-    t.dataCheck.costDefaults(
-      f.fields.map((field) => costLabel(t, field)).join(", "),
-    ),
-  fundingUnknown: ({ dataCheck: d }, f) =>
-    f.future ? d.fundingUnknownFuture : d.fundingUnknown,
-  outOfRange: outOfRangeText,
-};
-
-/** The finding and its effect as one or two sentences in the user's language. */
-export function findingText<K extends FindingKind>(
-  t: TextDict,
-  f: FindingOf<K>,
-  resetRate: Rate,
-): string {
-  // The table's type pairs each kind with its finding; `f.kind` is that kind.
-  return FINDING_TEXT[f.kind as K](t, f, resetRate);
-}
-
-/** The fix link's label: the section it moves to, or the property form. */
-export function fixLabel(
-  t: Pick<
-    Dictionary,
-    "dataCheck" | "propertyDetail" | "properties" | "settings"
-  >,
-  fix: DataCheckFix,
-): string {
-  const d = t.propertyDetail;
-  switch (fix) {
-    case "records":
-      return t.dataCheck.goTo(d.sectionRecords);
-    case "financing":
-      return t.dataCheck.goTo(d.sectionFinancing);
-    case "holding":
-      return t.dataCheck.goTo(d.sectionHolding);
-    case "edit":
-      return t.properties.editProperty;
-    case "editFunding":
-      return t.dataCheck.recordFunding;
-    case "assumptions":
-      return t.dataCheck.goTo(t.settings.tabs.assumptions);
-  }
-}
-
-function costLabel(t: Pick<Dictionary, "propertyDetail">, f: CostField) {
-  const d = t.propertyDetail;
-  const labels: Record<CostField, string> = {
-    propertyTaxYr: d.fieldPropertyTax,
-    insuranceYr: d.fieldInsurance,
-    svjMonthly: d.fieldSvjMo,
-    otherYr: d.fieldOther,
-    mgmtPctRent: d.fieldMgmtPct,
-    maintPctRent: d.fieldMaintPct,
-  };
-  return labels[f];
 }

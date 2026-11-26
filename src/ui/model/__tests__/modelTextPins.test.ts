@@ -12,12 +12,10 @@ import { mixed } from "../../../engine/__tests__/support/mixed";
 import { getDict } from "../../../i18n";
 import {
   dashboardDataCheck,
-  dataCheckGroups,
   findingFix,
-  findingText,
-  fixLabel,
   type DataCheckItem,
 } from "../dataCheck";
+import { dataCheckGroups, findingText, fixLabel } from "../dataCheckText";
 import { holdingCostsView } from "../holdingCosts";
 import {
   compareKpiRows,

@@ -23,12 +23,11 @@ import { fmtCzk } from "../../../lib/format";
 import {
   dataCheckItems,
   findingFix,
-  findingText,
-  fixLabel,
   portfolioDataCheck,
   propertyDataCheck,
   type DataFinding,
 } from "../dataCheck";
+import { findingText, fixLabel } from "../dataCheckText";
 import { loanWarningText } from "../propertyDetail";
 
 function check(id: string, asOf: Date = BASE_DATE, p: Portfolio = portfolio) {
