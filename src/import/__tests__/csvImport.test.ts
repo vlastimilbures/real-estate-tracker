@@ -11,7 +11,13 @@ import {
 } from "../../data/repositories";
 import { SEED_ASSUMPTIONS } from "../../data/seed";
 import type { Sql } from "../../data/sql";
-import { isoDate, money, portfolioKpis, rate } from "../../engine";
+import {
+  isoDate,
+  money,
+  portfolioKpis,
+  rate,
+  mortgageBlock,
+} from "../../engine";
 import {
   parseMortgages,
   parseProperties,
@@ -681,16 +687,19 @@ describe("importCsv — a loan with a term pays more than its first interest (AD
   /** A Byt A loan stored before the rule: 3,000,000 Kč at 5 % (first interest
    *  12,500 Kč), a 30-year term, instalment 1,000 Kč. */
   const storeBelow = () =>
-    insertMortgageBlock(sql, {
-      id: "m-below",
-      propertyId: idOf("Byt A"),
-      startDate: isoDate("2027-01-17"),
-      initialPrincipal: money("3000000"),
-      fixationYears: 3,
-      interestRatePa: rate("0.05"),
-      monthlyInstalment: money("1000"),
-      loanTermYears: 30,
-    });
+    insertMortgageBlock(
+      sql,
+      mortgageBlock({
+        id: "m-below",
+        propertyId: idOf("Byt A"),
+        startDate: isoDate("2027-01-17"),
+        initialPrincipal: money("3000000"),
+        fixationYears: 3,
+        interestRatePa: rate("0.05"),
+        monthlyInstalment: money("1000"),
+        loanTermYears: 30,
+      }),
+    );
 
   it("a row with a term and an instalment below the interest rejects the file", async () => {
     const before = dump(sql);

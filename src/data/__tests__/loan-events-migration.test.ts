@@ -11,12 +11,18 @@ import {
   type MortgageBlockRow,
 } from "../mappers";
 import { DataError } from "../errors";
-import { isoDate, money, rate, type MortgageBlock } from "../../engine";
+import {
+  isoDate,
+  money,
+  rate,
+  type MortgageBlock,
+  mortgageBlock,
+} from "../../engine";
 import { loadPortfolio } from "./support/reads";
 import { upsertAssumptions } from "../repositories";
 import { SEED_ASSUMPTIONS } from "../seed";
 
-const block: MortgageBlock = {
+const block: MortgageBlock = mortgageBlock({
   id: "m1",
   propertyId: "p1",
   startDate: isoDate("2024-03-12"),
@@ -24,7 +30,7 @@ const block: MortgageBlock = {
   fixationYears: 7,
   interestRatePa: rate("0.0449"),
   monthlyInstalment: money("21576.4"),
-};
+});
 
 const withEvents: MortgageBlock = {
   ...block,

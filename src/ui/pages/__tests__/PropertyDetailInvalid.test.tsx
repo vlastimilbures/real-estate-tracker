@@ -10,7 +10,7 @@ import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
-import { isoDate, money } from "../../../engine";
+import { isoDate, money, mortgageBlock } from "../../../engine";
 
 const loan = portfolio.mortgages[0];
 const owner = portfolio.properties.find((p) => p.id === loan.propertyId)!;
@@ -59,11 +59,11 @@ describe("Property detail with a loan shape ADR 0226 refuses", () => {
     ...portfolio,
     mortgages: portfolio.mortgages.map((m) =>
       m.id === loan.id
-        ? {
+        ? mortgageBlock({
             ...m,
             loanTermYears: 30,
             draws: [{ date: isoDate("2050-12-01"), amount: money(100000) }],
-          }
+          })
         : m,
     ),
   };

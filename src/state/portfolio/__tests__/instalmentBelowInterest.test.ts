@@ -12,7 +12,13 @@ import { openMemorySql } from "../../../data/__tests__/betterSqlite";
 import { migrate } from "../../../data/migrations";
 import { seedIfEmpty } from "../../../data/seed";
 import { insertMortgageBlock } from "../../../data/repositories";
-import { isoDate, money, rate, type MortgageBlock } from "../../../engine";
+import {
+  isoDate,
+  money,
+  rate,
+  type MortgageBlock,
+  mortgageBlock,
+} from "../../../engine";
 import type { Sql } from "../../../data/sql";
 
 async function openSeeded(): Promise<Sql> {
@@ -44,7 +50,7 @@ const inputErrors = (r: MutationResult) =>
 
 /** A Dubova refinance: 3,000,000 Kč at 5 %, a 30-year term, instalment 1,000 Kč. Its
  *  first month's interest is 12,500 Kč. */
-const below: MortgageBlock = {
+const below: MortgageBlock = mortgageBlock({
   id: "m-below",
   propertyId: "dubova",
   startDate: isoDate("2027-03-12"),
@@ -53,7 +59,7 @@ const below: MortgageBlock = {
   interestRatePa: rate("0.05"),
   monthlyInstalment: money("1000"),
   loanTermYears: 30,
-};
+});
 
 beforeEach(() => reset());
 

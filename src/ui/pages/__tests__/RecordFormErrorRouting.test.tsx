@@ -27,6 +27,7 @@ import {
   type EngineValidationError,
   type MortgageBlock,
   type Valuation,
+  mortgageBlock,
 } from "../../../engine";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { shownErrors } from "../../../__tests__/support/shownErrors";
@@ -89,12 +90,12 @@ const withEvents: MortgageBlock = {
   ],
   recasts: [{ date: isoDate("2034-01-17"), instalment: money("15000") }],
 };
-const dev: MortgageBlock = {
+const dev: MortgageBlock = mortgageBlock({
   ...plain,
   loanTermYears: 30,
   draws: [{ date: isoDate("2024-09-01"), amount: money("500000") }],
   completionDate: isoDate("2025-03-31"),
-};
+});
 
 const save = () => screen.getByRole("button", { name: en.common.saveChanges });
 

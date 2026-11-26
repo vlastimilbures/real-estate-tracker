@@ -10,6 +10,7 @@ import {
   rate,
   type MortgageBlock,
   type Portfolio,
+  mortgageBlock,
 } from "../../../engine";
 import {
   BASE_DATE,
@@ -43,7 +44,7 @@ const fields = {
   monthlyInstalment: money("1000"),
   loanTermYears: 30,
 };
-const below: MortgageBlock = fields;
+const below: MortgageBlock = mortgageBlock(fields);
 const withBlocks = (...blocks: MortgageBlock[]): Portfolio => ({
   ...portfolio,
   mortgages: [...portfolio.mortgages, ...blocks],
@@ -96,7 +97,12 @@ describe("the Data check lists a stored loan below its first interest (ADR 0264)
     expect(attention(portfolio)).toEqual([]);
     expect(
       attention(
-        withBlocks({ ...fields, completionDate: edate(fields.startDate, 12) }),
+        withBlocks(
+          mortgageBlock({
+            ...fields,
+            completionDate: edate(fields.startDate, 12),
+          }),
+        ),
       ),
     ).toEqual([]);
   });

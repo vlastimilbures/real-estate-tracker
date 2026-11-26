@@ -10,7 +10,13 @@ import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
-import { isoDate, money, portfolioOutputs, rate } from "../../../engine";
+import {
+  isoDate,
+  money,
+  portfolioOutputs,
+  rate,
+  mortgageBlock,
+} from "../../../engine";
 import { fmtCzk, fmtDate } from "../../../lib/format";
 import type { MortgagePrepayment } from "../../../engine";
 
@@ -189,7 +195,7 @@ describe("ADR 0130: interest saved on Property detail", () => {
                   }
                 : m,
             ),
-            {
+            mortgageBlock({
               id: "m-refi",
               propertyId: "javorova",
               startDate: isoDate("2036-01-17"),
@@ -197,7 +203,7 @@ describe("ADR 0130: interest saved on Property detail", () => {
               fixationYears: 5,
               interestRatePa: rate("0.039"),
               monthlyInstalment: money(9800),
-            },
+            }),
           ],
         },
         assumptions,
@@ -227,7 +233,7 @@ describe("ADR 0130: a prepayment at the refix saves nothing in the model", () =>
             }
           : m,
       ),
-      {
+      mortgageBlock({
         id: "m-refi",
         propertyId: "javorova",
         startDate: refix,
@@ -235,7 +241,7 @@ describe("ADR 0130: a prepayment at the refix saves nothing in the model", () =>
         fixationYears: 5,
         interestRatePa: rate("0.039"),
         monthlyInstalment: money(9800),
-      },
+      }),
     ];
     const p = { ...portfolio, mortgages };
     const loan = portfolioOutputs(
