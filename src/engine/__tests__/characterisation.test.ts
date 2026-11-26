@@ -22,6 +22,7 @@ import { KC, RATIO, near } from "./support/tolerance";
 import { rate } from "../brands";
 import { EngineInputError } from "../errors";
 import { money } from "../brands";
+import { mortgageBlock } from "../loanBlock";
 
 const fullSchedules = propertySchedules(
   portfolio.mortgages,
@@ -155,7 +156,7 @@ describe("Loan starting in (baseDate, baseDate + 1 month] on an owned property /
       },
     ],
     mortgages: [
-      {
+      mortgageBlock({
         id: "m",
         propertyId: "p",
         startDate: isoDate("2026-06-20"), // after baseDate 2026-06-07
@@ -163,7 +164,7 @@ describe("Loan starting in (baseDate, baseDate + 1 month] on an owned property /
         fixationYears: 5,
         interestRatePa: rate("0.04"),
         monthlyInstalment: money(12_000),
-      },
+      }),
     ],
     valuations: [],
     leases: [],
@@ -172,12 +173,12 @@ describe("Loan starting in (baseDate, baseDate + 1 month] on an owned property /
   const devOwned: Portfolio = {
     ...owned,
     mortgages: [
-      {
+      mortgageBlock({
         ...owned.mortgages[0],
         loanTermYears: 20,
         completionDate: isoDate("2027-06-20"),
         draws: [{ date: isoDate("2026-12-20"), amount: money(300_000) }],
-      },
+      }),
     ],
   };
   const openingDebt = (p: Portfolio) =>
@@ -238,7 +239,7 @@ describe("Tranche dated after baseDate within grid month 1 // D-44 (DR-121)", ()
       },
     ],
     mortgages: [
-      {
+      mortgageBlock({
         id: "m",
         propertyId: "p",
         startDate: isoDate("2025-02-28"),
@@ -251,7 +252,7 @@ describe("Tranche dated after baseDate within grid month 1 // D-44 (DR-121)", ()
           date: isoDate(d.date),
           amount: money(d.amount),
         })),
-      },
+      }),
     ],
     valuations: [],
     leases: [],
@@ -398,7 +399,7 @@ describe("CAGR and DSCR edge cases", () => {
   ) => ({
     properties: [{ ...property, purchaseDate }],
     mortgages: [
-      {
+      mortgageBlock({
         id: "m",
         propertyId: "p",
         startDate: purchaseDate,
@@ -406,7 +407,7 @@ describe("CAGR and DSCR edge cases", () => {
         fixationYears: 5,
         interestRatePa: rate("0.03"),
         monthlyInstalment: money(Math.ceil(principal / 150)),
-      },
+      }),
     ],
     valuations: [
       {

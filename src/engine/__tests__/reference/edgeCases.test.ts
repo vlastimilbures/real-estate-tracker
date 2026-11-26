@@ -28,6 +28,7 @@ import {
 import { RESET, SEED_LOANS } from "./seedLoans";
 import { TIGHT, both, chainBoth, maxDev, toBlock } from "./eventHarness";
 import { money, rate } from "../../brands";
+import { mortgageBlock } from "../../loanBlock";
 
 const CENT = 0.01; // Kč, for quoted engine/reference figures
 
@@ -695,7 +696,7 @@ describe("deviations (engine asserted as today; reference = Czech-practice truth
   // Under D-43 a later start is a successor, so a top-up replaces the main loan;
   // entry-point rejection and the fixation-end warning come in P5b/P7 (DR-103).
   it("C-12/J-14: a concurrent loan hides the other block's debt // DR-103", () => {
-    const topUp: MortgageBlock = {
+    const topUp: MortgageBlock = mortgageBlock({
       id: "m-topup",
       propertyId: "javorova",
       startDate: isoDate("2024-06-01"),
@@ -703,7 +704,7 @@ describe("deviations (engine asserted as today; reference = Czech-practice truth
       fixationYears: 5,
       interestRatePa: rate("0.05"),
       monthlyInstalment: money("5300"),
-    };
+    });
     const P = { ...P0, mortgages: [...P0.mortgages, topUp] };
     const s = portfolioSnapshot(
       P,

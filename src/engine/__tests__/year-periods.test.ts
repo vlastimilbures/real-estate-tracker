@@ -16,6 +16,7 @@ import type {
 } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 import { mixed } from "./support/mixed";
+import { mortgageBlock } from "../loanBlock";
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const periods = (p: ProjectionYear[]) =>
@@ -111,7 +112,7 @@ describe("ADR 0121: the first cash-flow-positive year is strictly positive", () 
   });
 
   /** 2.0 M Kč at 4.9 % from the 2029-01-01 purchase, 10,614.53 Kč a month. */
-  const loan2029: MortgageBlock = {
+  const loan2029: MortgageBlock = mortgageBlock({
     id: "m-f",
     propertyId: "f",
     startDate: isoDate("2029-01-01"),
@@ -119,7 +120,7 @@ describe("ADR 0121: the first cash-flow-positive year is strictly positive", () 
     fixationYears: 5,
     interestRatePa: rate("0.049"),
     monthlyInstalment: money("10614.53"),
-  };
+  });
 
   /** The KPI year nets > 0 and no earlier year does (none at all when null). */
   function expectFirstStrictlyPositive(k: PortfolioKPIs, p: ProjectionYear[]) {

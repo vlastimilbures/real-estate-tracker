@@ -18,9 +18,10 @@ import { near, KC } from "./support/tolerance";
 import { ZERO, type Decimal } from "../../lib/money";
 import { rate } from "../brands";
 import { money } from "../brands";
+import { mortgageBlock } from "../loanBlock";
 
 // initial 2.25M + draws 2.30M + 4.00M + 0.70M = 9.25M total principal.
-const devBlock: MortgageBlock = {
+const devBlock: MortgageBlock = mortgageBlock({
   id: "m-dev",
   propertyId: "dev",
   startDate: isoDate("2026-06-01"), // on/before baseDate 2026-06-07 → initial drawn
@@ -35,7 +36,7 @@ const devBlock: MortgageBlock = {
     { date: isoDate("2028-10-10"), amount: money("700000") },
   ],
   completionDate: isoDate("2028-10-10"),
-};
+});
 const TOTAL = 9_250_000;
 const COMPLETED = 12_000_000;
 
@@ -176,11 +177,13 @@ describe("projection: draws move debt from undrawn to drawn and create no equity
   });
 
   it("the value is the completed value from year 0 (no construction ramp)", () => {
-    const plain = portfolioWith({
-      ...devBlock,
-      draws: undefined,
-      completionDate: undefined,
-    });
+    const plain = portfolioWith(
+      mortgageBlock({
+        ...devBlock,
+        draws: undefined,
+        completionDate: undefined,
+      }),
+    );
     const plainProj = propertyProjection(
       property,
       plain,
@@ -298,12 +301,12 @@ describe("snapshot ↔ projection consistency (the invariant anchor)", () => {
 describe("probe R8-2: returns match the completed flat with the same debt (#120)", () => {
   const dev = mixedDevOnly([mixedDevBlock]);
   const plain = mixedDevOnly([
-    {
+    mortgageBlock({
       ...mixedDevBlock,
       initialPrincipal: money("4500000"),
       draws: undefined,
       completionDate: undefined,
-    },
+    }),
   ]);
 
   it("year-0 equity is completed value − whole loan, not the drawn share of it", () => {
@@ -330,7 +333,7 @@ describe("probe R8-2: returns match the completed flat with the same debt (#120)
 
 describe("committed debt edge cases", () => {
   it("an owned flat's development loan drawn after baseDate is committed from baseDate, with no cash in", () => {
-    const late: MortgageBlock = {
+    const late: MortgageBlock = mortgageBlock({
       ...devBlock,
       startDate: isoDate("2026-09-01"),
       draws: [
@@ -338,7 +341,7 @@ describe("committed debt edge cases", () => {
         { date: isoDate("2027-09-01"), amount: money("4000000") },
       ],
       completionDate: isoDate("2027-09-01"),
-    };
+    });
     const pf = portfolioWith(late);
     const proj = portfolioProjection(pf, assumptions);
     // The loan pays the developer, not the owner (ADR 0166 narrows ADR 0134 to plain
@@ -372,7 +375,7 @@ describe("committed debt edge cases", () => {
   });
 
   it("tranches of a development loan replaced by a successor are not committed after the handover", () => {
-    const refi: MortgageBlock = {
+    const refi: MortgageBlock = mortgageBlock({
       id: "m-refi",
       propertyId: "dev",
       startDate: isoDate("2027-01-01"),
@@ -380,7 +383,7 @@ describe("committed debt edge cases", () => {
       fixationYears: 5,
       interestRatePa: rate("0.045"),
       monthlyInstalment: money("20000"),
-    };
+    });
     const pf = mixedDevOnly([mixedDevBlock, refi]);
     const proj = portfolioProjection(pf, assumptions);
     // Year 0: the 1.5M tranche of 2026-11-15 is still ahead; the 1.0M one of 2027-08-20
@@ -393,7 +396,7 @@ describe("committed debt edge cases", () => {
   });
 
   it("a future purchase owes nothing before it turns on and comes online at its full value", () => {
-    const futureDev: MortgageBlock = {
+    const futureDev: MortgageBlock = mortgageBlock({
       ...mixedDevBlock,
       startDate: isoDate("2027-03-01"),
       loanTermYears: 30,
@@ -402,7 +405,7 @@ describe("committed debt edge cases", () => {
         { date: isoDate("2028-08-20"), amount: money("1000000") },
       ],
       completionDate: isoDate("2028-08-20"),
-    };
+    });
     const pf: Portfolio = {
       ...mixedDevOnly([futureDev]),
       properties: [
@@ -445,7 +448,7 @@ describe("committed debt edge cases", () => {
   it("a future buy's development loan starting after the window is committed from the turn-on year, with no cash in (ADR 0168)", () => {
     // Purchase 2027-03-01 (turn-on year 1, grid date 2027-06-07); the loan contract
     // follows 122 days later, as an off-plan loan often does.
-    const lateDev: MortgageBlock = {
+    const lateDev: MortgageBlock = mortgageBlock({
       ...mixedDevBlock,
       startDate: isoDate("2027-07-01"),
       loanTermYears: 30,
@@ -454,7 +457,7 @@ describe("committed debt edge cases", () => {
         { date: isoDate("2028-08-20"), amount: money("1000000") },
       ],
       completionDate: isoDate("2028-08-20"),
-    };
+    });
     const pf: Portfolio = {
       ...mixedDevOnly([lateDev]),
       properties: [
@@ -491,7 +494,11 @@ describe("committed debt edge cases", () => {
   });
 
   it("a plain loan has no committed part beyond its balance", () => {
-    const plain = { ...devBlock, draws: undefined, completionDate: undefined };
+    const plain = mortgageBlock({
+      ...devBlock,
+      draws: undefined,
+      completionDate: undefined,
+    });
     const proj = portfolioProjection(portfolioWith(plain), assumptions);
     for (const y of proj) {
       expect(y.committedDebt.toString()).toBe(y.balance.toString());

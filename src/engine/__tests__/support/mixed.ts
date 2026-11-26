@@ -6,8 +6,9 @@ import type { MortgageBlock, Portfolio } from "../../types";
 import { portfolio } from "./seed";
 import { rate } from "../../brands";
 import { money } from "../../brands";
+import { mortgageBlock } from "../../loanBlock";
 
-export const devBlock: MortgageBlock = {
+export const devBlock: MortgageBlock = mortgageBlock({
   id: "m-dev",
   propertyId: "dev",
   startDate: isoDate("2026-03-01"), // > 1 month before baseDate (avoids DR-016)
@@ -21,7 +22,7 @@ export const devBlock: MortgageBlock = {
     { date: isoDate("2027-08-20"), amount: money("1000000") },
   ],
   completionDate: isoDate("2027-08-20"),
-};
+});
 
 export const mixed: Portfolio = {
   properties: [
@@ -48,7 +49,7 @@ export const mixed: Portfolio = {
   ],
   mortgages: [
     ...portfolio.mortgages,
-    {
+    mortgageBlock({
       id: "m-future",
       propertyId: "future",
       startDate: isoDate("2028-03-15"),
@@ -56,9 +57,9 @@ export const mixed: Portfolio = {
       fixationYears: 5,
       interestRatePa: rate("0.042"),
       monthlyInstalment: money("24000"),
-    },
+    }),
     devBlock,
-    {
+    mortgageBlock({
       id: "m-inactive",
       propertyId: "inactive",
       startDate: isoDate("2019-05-01"),
@@ -66,7 +67,7 @@ export const mixed: Portfolio = {
       fixationYears: 5,
       interestRatePa: rate("0.02"),
       monthlyInstalment: money("9000"),
-    },
+    }),
   ],
   valuations: [
     ...portfolio.valuations,

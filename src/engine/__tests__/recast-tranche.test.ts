@@ -22,7 +22,7 @@ const AGREED = 15000;
  *  cadence the recast follows payment 10 (2027-01-01), so `q` = payment 11 = grid
  *  month 8 (2027-02-07); a tranche dated 2027-01-15 lands on `q`, 2027-02-15 on `q+1`. */
 function loan(trancheDate: string, fixationYears: number): MortgageBlock {
-  return {
+  return mortgageBlock({
     id: "dev",
     propertyId: "p",
     startDate: isoDate("2026-03-01"),
@@ -33,7 +33,7 @@ function loan(trancheDate: string, fixationYears: number): MortgageBlock {
     loanTermYears: 30,
     draws: [{ date: isoDate(trancheDate), amount: money(1000000) }],
     recasts: [{ date: isoDate("2027-01-01"), instalment: money(AGREED) }],
-  };
+  });
 }
 
 const Q = 8; // grid month of payment q

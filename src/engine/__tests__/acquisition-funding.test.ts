@@ -19,6 +19,7 @@ import type {
 } from "../types";
 import { assumptions, portfolio, PARITY } from "./support/seed";
 import { expectKc, expectRatio } from "./support/tolerance";
+import { mortgageBlock } from "../loanBlock";
 
 const PURCHASE = isoDate("2029-01-01"); // baseDate 2026-06-07 → tStart 3
 const PRICE = 5_800_000;
@@ -28,19 +29,20 @@ const loan = (
   patch: Partial<
     Pick<MortgageBlock, "id" | "startDate" | "initialPrincipal">
   > = {},
-): MortgageBlock => ({
-  id: "m-buy",
-  propertyId: "buy",
-  startDate: PURCHASE,
-  initialPrincipal: money(2_000_000),
-  fixationYears: 5,
-  interestRatePa: rate("0.04"),
-  monthlyInstalment: money("30000"),
-  ...patch,
-});
+): MortgageBlock =>
+  mortgageBlock({
+    id: "m-buy",
+    propertyId: "buy",
+    startDate: PURCHASE,
+    initialPrincipal: money(2_000_000),
+    fixationYears: 5,
+    interestRatePa: rate("0.04"),
+    monthlyInstalment: money("30000"),
+    ...patch,
+  });
 
 /** 2 M at purchase, then 3 M + 3 M tranches (#103 probe shape). */
-const devLoan: MortgageBlock = {
+const devLoan: MortgageBlock = mortgageBlock({
   ...loan(),
   interestRatePa: rate("0.05"),
   monthlyInstalment: money("10000"),
@@ -50,7 +52,7 @@ const devLoan: MortgageBlock = {
     { date: isoDate("2030-06-01"), amount: money(3_000_000) },
   ],
   completionDate: isoDate("2030-06-01"),
-};
+});
 
 /** The seed plus one future buy with its own blocks and funding record. */
 function withBuy(

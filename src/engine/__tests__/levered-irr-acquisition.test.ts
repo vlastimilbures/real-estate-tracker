@@ -14,6 +14,7 @@ import { rate } from "../brands";
 import { money } from "../brands";
 import { ZERO } from "../../lib/money";
 import { expectKc } from "./support/tolerance";
+import { mortgageBlock } from "../loanBlock";
 
 const PURCHASE = isoDate("2029-01-01"); // baseDate 2026-06-07 → tStart = 3
 const FUTURE_VALUE = 6_200_000;
@@ -30,7 +31,7 @@ const withFuture: Portfolio = {
   properties: [...portfolio.properties, slovanske],
   mortgages: [
     ...portfolio.mortgages,
-    {
+    mortgageBlock({
       id: "m-slovanske",
       propertyId: "slovanske",
       startDate: PURCHASE,
@@ -38,7 +39,7 @@ const withFuture: Portfolio = {
       fixationYears: 5,
       interestRatePa: rate("0.04"),
       monthlyInstalment: money("30000"), // fully amortizes in-window
-    },
+    }),
   ],
   valuations: [
     ...portfolio.valuations,
