@@ -5,7 +5,10 @@ import { fmtPct, fmtPp, fmtSigned } from "../../lib/format";
 import { D, Decimal } from "../../lib/money";
 import { rate, type Scenario, type ScenarioOverrides } from "../../engine";
 import type { Dictionary } from "../../i18n";
-import { DEFAULT_SHOCK_YEARS } from "./scenarioForm";
+
+// A temporary shock reverts to trend after this many years: the presets' shocks and the
+// form's default.
+export const DEFAULT_SHOCK_YEARS = 3;
 
 /** The implicit Base = the saved assumptions (no overrides, no shock). */
 /** The id of the synthetic Base scenario (the saved assumptions). */

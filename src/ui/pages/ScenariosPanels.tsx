@@ -25,13 +25,13 @@ import {
   combinedPreset,
   crashPreset,
   crashSuffix,
+  DEFAULT_SHOCK_YEARS,
   inflationPreset,
   ratePreset,
   summarize,
   type Preset,
 } from "../model/scenarios";
 import { fmtDate } from "../../lib/format";
-import { DEFAULT_SHOCK_YEARS } from "./ScenarioForm";
 
 /** The stress presets: one click saves a scenario (ADR 0101, 0106, 0220). */
 export function PresetBar({

@@ -11,9 +11,7 @@ import type {
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import type { WriteError } from "../../state/writeError";
-
-// A temporary shock reverts to trend after this many years (shared with the preset bar).
-export const DEFAULT_SHOCK_YEARS = 3;
+import { DEFAULT_SHOCK_YEARS } from "./scenarios";
 
 // The five permanent level overrides (Decimal-valued keys of ScenarioOverrides).
 export type LevelKey =

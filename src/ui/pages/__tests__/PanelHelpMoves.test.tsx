@@ -9,7 +9,7 @@ import { ScenarioListPanel } from "../ScenariosPanels";
 import { MortgagesPanel } from "../PropertyEntityPanels";
 import { AcquisitionPanel } from "../propertyDetail/AcquisitionPanel";
 import type { AcquisitionView } from "../../model/acquisition";
-import { DEFAULT_SHOCK_YEARS } from "../ScenarioForm";
+import { DEFAULT_SHOCK_YEARS } from "../../model/scenarios";
 import { D } from "../../../lib/money";
 import { en } from "../../../i18n/en";
 
