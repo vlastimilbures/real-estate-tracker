@@ -7,8 +7,14 @@
 // row id, column, rule — never a value); any other error's message has every number
 // masked, so an amount that slipped into a message is not recorded (ADR 0147), except an
 // OS or SQLite error code, which says what failed (ADR 0175). Names are kept (they help
-// diagnosis); the bug form says to replace them before pasting.
+// diagnosis); the bug form says to replace them before pasting. A failed app command's
+// context starts with its Rust code (ADR 0270 point 7): a closed list of upper snake
+// case names, written as it is.
 import { DataError, messageOf } from "./errors";
+import {
+  isCommandError,
+  type CommandErrorCode,
+} from "../platform/commandError";
 import { isTauri } from "../lib/tauri";
 import { writeErrorLine } from "../platform/errorLog";
 
@@ -46,6 +52,17 @@ export type FailureSite =
   // (ADR 0175).
   | "REVEAL";
 
+/** The Rust code of the failed command behind `e`: in `e` itself or in its `cause`
+ *  chain (the backup errors keep the rejection as their cause). A looping chain ends. */
+function commandCodeOf(e: unknown): CommandErrorCode | null {
+  const seen = new Set<unknown>();
+  for (let at = e; at instanceof Error && !seen.has(at); at = at.cause) {
+    if (isCommandError(at)) return at.code;
+    seen.add(at);
+  }
+  return null;
+}
+
 /** The code + context line written for a failure in `where`. */
 export function describeFailure(
   where: FailureSite,
@@ -53,7 +70,12 @@ export function describeFailure(
 ): { code: string; context: string } {
   if (e instanceof DataError)
     return { code: e.code, context: `${where}: ${e.details.join("; ")}` };
-  return { code: `${where}_FAILED`, context: maskNumbers(messageOf(e)) };
+  const masked = maskNumbers(messageOf(e));
+  const rust = commandCodeOf(e);
+  return {
+    code: `${where}_FAILED`,
+    context: rust ? `${rust}: ${masked}` : masked,
+  };
 }
 
 /** Fire-and-forget: logging must never turn into a second failure. */

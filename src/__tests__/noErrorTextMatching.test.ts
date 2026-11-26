@@ -3,6 +3,12 @@
 // compares an error to a string literal or matches a driver's message: a reworded
 // message, from Rust or from an sqlx or SQL plugin upgrade, cannot change what the user
 // sees. Comments are not code, so they may still quote a message.
+//
+// How much it proves: the bans on a driver's text (SQLite's "constraint failed", sqlx's
+// wrapper) are the solid part, since no production code needs those words. The rules on
+// comparisons and searches are a tripwire keyed on names (a catch parameter called `e`,
+// `err` or `error`; `messageOf(…)`; `.message`): code that names its error otherwise
+// slips past them, so review still matters.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
