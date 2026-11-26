@@ -62,7 +62,7 @@ function PageTitle({
       {attention && (
         <button
           type="button"
-          className="title-pill warn"
+          className="chip warn title-pill"
           aria-label={attention.label}
           title={attention.label}
           onClick={attention.onSelect}

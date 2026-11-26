@@ -62,7 +62,7 @@ function GroupedBlock({
                 <Fragment key={chipId}>
                   <button
                     type="button"
-                    className="dc-chip"
+                    className="chip dc-chip"
                     aria-labelledby={`${chipId} ${problemId}`}
                     // A portfolio chip already reads its destination.
                     aria-describedby={
