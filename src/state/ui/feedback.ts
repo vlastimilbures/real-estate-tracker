@@ -55,11 +55,11 @@ export interface FeedbackSlice {
   dismissBackupHint: () => void;
 }
 
-/** The pending toast dismissal; a newer toast restarts it. */
-let toastTimer: ReturnType<typeof setTimeout> | undefined;
-let toastSeq = 0;
-
 export function feedbackSlice({ set, get }: SliceCtx): FeedbackSlice {
+  // The pending toast dismissal, which a newer toast restarts, and the last toast's id:
+  // the store's own, made once with it.
+  let toastTimer: ReturnType<typeof setTimeout> | undefined;
+  let toastSeq = 0;
   return {
     toast: null,
     showToast: (message) => {

@@ -49,10 +49,10 @@ export interface PrefsSlice {
   toggleSidebar: () => void;
 }
 
-/** The language last passed to setLanguage, so a slower earlier load cannot win. */
-let requestedLanguage: Language | null = null;
-
 export function prefsSlice({ set, get }: SliceCtx): PrefsSlice {
+  // The language last passed to setLanguage, so a slower earlier load cannot win: the
+  // store's own, made once with it.
+  let requestedLanguage: Language | null = null;
   return {
     mode: "nominal",
     theme: readPersistedTheme(),
