@@ -73,10 +73,12 @@ describe("portfolioStore whole-database actions (DR-047)", () => {
     unwrap(await usePortfolioStore.getState().previewCsv(batch));
     portfolioDb.set(slow);
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
+    // Dated, so the add is one insert and changes no other row (ADR 0144).
     const a = usePortfolioStore.getState().addValuation({
       id: "queued",
       propertyId: pid,
       validFrom: new Date(Date.UTC(2033, 0, 1)) as IsoDate,
+      validTo: new Date(Date.UTC(2033, 11, 31)) as IsoDate,
       marketValue: money("1"),
     });
     const b = usePortfolioStore.getState().importCsv(batch);

@@ -18,14 +18,17 @@ export { money, rate } from "./brands";
 export {
   addYears,
   calendarDay,
-  dayBefore,
   edate,
   isoDate,
   lastGridMonthOnOrBefore,
   monthsBetween,
   utc,
 } from "./dates";
-export { openPredecessor, overlappingLeases } from "./effectiveDating";
+export {
+  leaseClosedBy,
+  overlappingLeases,
+  valuationClosedBy,
+} from "./effectiveDating";
 
 // Loans
 export { isDevLoan, mortgageBlock } from "./loanBlock";

@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 //
 // ADR 0227 (amends ADR 0099, 0144): adding an open-ended valuation after an open-ended
-// one ends that one on the day before the new start, with no dialog. A dated new
-// valuation, an edit and a refused add change no other row (#436).
+// one ends that one on the day before the new start, with no dialog. The panel hands the
+// record to the store's add; the store ends the previous one (EndPrevious.test.tsx runs
+// both on a database). An edit and a refused add change no other row (#436).
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -37,7 +38,6 @@ const leases: Lease[] = [
 
 const spies = {
   addValuation: vi.fn(ok),
-  addValuationClosingPrevious: vi.fn(ok),
   saveValuation: vi.fn(ok),
   addLease: vi.fn(ok),
 };
@@ -73,7 +73,7 @@ async function add(
 }
 
 describe("ending the previous open-ended record (ADR 0227, 0163)", () => {
-  it("valuation: ends the previous open-ended one the day before, with no dialog", async () => {
+  it("valuation: adds without asking", async () => {
     const user = userEvent.setup();
     render(<ValuationsPanel propertyId="p1" rows={valuations} />);
     await add(
@@ -83,13 +83,10 @@ describe("ending the previous open-ended record (ADR 0227, 0163)", () => {
       en.propertyDetail.fieldMarketValue,
     );
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(spies.addValuationClosingPrevious).toHaveBeenCalledTimes(1);
-    const [added, closed] = spies.addValuationClosingPrevious.mock
-      .calls[0] as unknown as [Valuation, Valuation];
+    expect(spies.addValuation).toHaveBeenCalledTimes(1);
+    const [added] = spies.addValuation.mock.calls[0] as unknown as [Valuation];
     expect(iso(added.validFrom)).toBe("2026-07-01");
-    expect(closed.id).toBe("v-old");
-    expect(iso(closed.validTo)).toBe("2026-06-30");
-    expect(spies.addValuation).not.toHaveBeenCalled();
+    expect(added.validTo).toBeUndefined();
     expect(formOpen()).toBe(false);
   });
 
@@ -144,7 +141,6 @@ describe("ending the previous open-ended record (ADR 0227, 0163)", () => {
     expect(spies.addValuation).toHaveBeenCalledTimes(1);
     const [added] = spies.addValuation.mock.calls[0] as unknown as [Valuation];
     expect(iso(added.validTo)).toBe("2027-06-30");
-    expect(spies.addValuationClosingPrevious).not.toHaveBeenCalled();
   });
 
   it("lease: adds plainly when the new one has an end date (#121)", async () => {
@@ -185,7 +181,6 @@ describe("ending the previous open-ended record (ADR 0227, 0163)", () => {
     );
     expect(spies.saveValuation).toHaveBeenCalledTimes(1);
     expect(spies.addValuation).not.toHaveBeenCalled();
-    expect(spies.addValuationClosingPrevious).not.toHaveBeenCalled();
   });
 
   // #436: the old dialog's Cancel closed the form with nothing saved. A refused add now
@@ -195,7 +190,7 @@ describe("ending the previous open-ended record (ADR 0227, 0163)", () => {
       ok: false,
       error: { kind: "other", message: "disk is full" },
     };
-    spies.addValuationClosingPrevious.mockImplementation(async () => refused);
+    spies.addValuation.mockImplementation(async () => refused);
     const user = userEvent.setup();
     render(<ValuationsPanel propertyId="p1" rows={valuations} />);
     await add(
@@ -204,7 +199,7 @@ describe("ending the previous open-ended record (ADR 0227, 0163)", () => {
       en.propertyDetail.fieldValidFrom,
       en.propertyDetail.fieldMarketValue,
     );
-    expect(spies.addValuationClosingPrevious).toHaveBeenCalledTimes(1);
+    expect(spies.addValuation).toHaveBeenCalledTimes(1);
     expect(formOpen()).toBe(true);
     expect(
       (

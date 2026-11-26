@@ -94,13 +94,10 @@ export interface PortfolioState {
   showError: (error: WriteError) => void;
 
   // valuations
+  /** Add `v`. An open-ended `v` ends the open-ended valuation before it the day before
+   *  `v` starts, in the same write, without asking (ADR 0099, 0227); a dated one changes
+   *  no other row (ADR 0144). */
   addValuation: (v: Valuation) => Promise<MutationResult>;
-  /** Add `v` and save `closedPrev` (the open-ended valuation it succeeds, now with an
-   *  end date) in one write (ADR 0099, 0227: the panel calls it without asking). */
-  addValuationClosingPrevious: (
-    v: Valuation,
-    closedPrev: Valuation,
-  ) => Promise<MutationResult>;
   saveValuation: (v: Valuation) => Promise<MutationResult>;
   removeValuation: (id: string) => Promise<MutationResult>;
   // leases

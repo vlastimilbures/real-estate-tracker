@@ -1,5 +1,5 @@
-// ADR 0099: adding a valuation can end the previous open-ended one in the same write. Both
-// rows pass the engine input checks, and no computed number changes.
+// ADR 0099, 0227: adding an open-ended valuation ends the previous open-ended one in the
+// same write. Both rows pass the engine input checks, and no computed number changes.
 // ADR 0163: leases of one apartment never overlap. Adding a lease ends the open lease
 // before it the day before, and a write that would overlap another lease is refused.
 import { beforeEach, describe, expect, it } from "vitest";
@@ -11,16 +11,15 @@ import {
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
-import { insertLease } from "../../data/repositories";
+import { insertLease, insertValuation } from "../../data/repositories";
 import {
-  dayBefore,
   isoDate,
   money,
-  openPredecessor,
   portfolioOutputs,
   type Lease,
   type Valuation,
 } from "../../engine";
+import { openPredecessor } from "../../engine/__tests__/support/seams";
 import type { Sql } from "../../data/sql";
 
 async function openSeeded(): Promise<Sql> {
@@ -92,28 +91,22 @@ describe("add closing the previous valuation (ADR 0099)", () => {
       validFrom: START,
       marketValue: money("15000000"),
     };
-    const result = await store().addValuationClosingPrevious(v, {
-      ...prev,
-      validTo: dayBefore(START),
-    });
+    const result = await store().addValuation(v);
     expect(result.ok).toBe(true);
     const old = pf().valuations.find((x) => x.id === prev.id)!;
     expect(day(old.validTo)).toBe("2029-12-31");
     expect(pf().valuations.some((x) => x.id === "v-new")).toBe(true);
   });
 
-  it("rejects an end date before the previous start and writes nothing", async () => {
+  it("a refused add writes neither row", async () => {
     const prev = openValuation();
     const before = pf().valuations.length;
-    const result = await store().addValuationClosingPrevious(
-      {
-        id: "v-new",
-        propertyId: prev.propertyId,
-        validFrom: START,
-        marketValue: money("1"),
-      },
-      { ...prev, validTo: dayBefore(prev.validFrom) },
-    );
+    const result = await store().addValuation({
+      id: "v-new",
+      propertyId: prev.propertyId,
+      validFrom: START,
+      marketValue: money("-1"),
+    });
     expect(result.ok).toBe(false);
     expect(pf().valuations).toHaveLength(before);
     expect(pf().valuations.find((x) => x.id === prev.id)!.validTo).toBe(
@@ -121,7 +114,7 @@ describe("add closing the previous valuation (ADR 0099)", () => {
     );
   });
 
-  it("computes the same outputs as the plain add", async () => {
+  it("computes the same outputs as the row inserted without ending the previous one", async () => {
     const prev = openValuation();
     const v: Valuation = {
       id: "v-new",
@@ -129,16 +122,21 @@ describe("add closing the previous valuation (ADR 0099)", () => {
       validFrom: START,
       marketValue: money("15000000"),
     };
-    expect((await store().addValuation(v)).ok).toBe(true);
+    await reset(async () => {
+      const sql = await openSeeded();
+      await insertValuation(sql, v);
+      return sql;
+    });
+    expect(pf().valuations.find((x) => x.id === prev.id)!.validTo).toBe(
+      undefined,
+    );
     const plain = outputs();
 
     await reset();
-    expect(
-      await store().addValuationClosingPrevious(v, {
-        ...prev,
-        validTo: dayBefore(START),
-      }),
-    ).toEqual({ ok: true });
+    expect(await store().addValuation(v)).toEqual({ ok: true });
+    expect(day(pf().valuations.find((x) => x.id === prev.id)!.validTo)).toBe(
+      "2029-12-31",
+    );
     expect(outputs()).toBe(plain);
   });
 });

@@ -156,41 +156,52 @@ const closeStatement = (
   params: [end, id],
 });
 
-/** A new valuation plus the end date of the open-ended one it succeeds, in one
- *  transaction (ADR 0099, 0227). */
+/** A new row plus the end date (`column`, `end`) of the open-ended row `prevId` it
+ *  succeeds, in one transaction, the insert first (ADR 0099). */
+function insertClosingPrevious(
+  sql: Sql,
+  table: string,
+  row: object,
+  column: string,
+  prevId: string,
+  end: string | null,
+) {
+  return run(sql, {
+    statements: [
+      insertStatement(table, row),
+      closeStatement(table, column, prevId, end),
+    ],
+  });
+}
+
+/** A new valuation plus the end date of the open-ended one it succeeds (ADR 0227). */
 export const insertValuationClosingPrevious = async (
   sql: Sql,
   v: Valuation,
   closedPrev: Valuation,
 ) =>
-  run(sql, {
-    statements: [
-      insertStatement("valuations", valuationToRow(v)),
-      closeStatement(
-        "valuations",
-        "valid_to",
-        closedPrev.id,
-        valuationToRow(closedPrev).valid_to,
-      ),
-    ],
-  });
-/** A new lease plus the end date of the open-ended one it succeeds (ADR 0099). */
+  insertClosingPrevious(
+    sql,
+    "valuations",
+    valuationToRow(v),
+    "valid_to",
+    closedPrev.id,
+    valuationToRow(closedPrev).valid_to,
+  );
+/** A new lease plus the end date of the open-ended one it succeeds (ADR 0163). */
 export const insertLeaseClosingPrevious = async (
   sql: Sql,
   l: Lease,
   closedPrev: Lease,
 ) =>
-  run(sql, {
-    statements: [
-      insertStatement("leases", leaseToRow(l)),
-      closeStatement(
-        "leases",
-        "end_date",
-        closedPrev.id,
-        leaseToRow(closedPrev).end_date,
-      ),
-    ],
-  });
+  insertClosingPrevious(
+    sql,
+    "leases",
+    leaseToRow(l),
+    "end_date",
+    closedPrev.id,
+    leaseToRow(closedPrev).end_date,
+  );
 
 /** Save a property's holding costs: one row per property (UNIQUE property_id, v7).
  *  Inserts the row when the property has none, so an edit is never silently lost. */
