@@ -13,6 +13,20 @@ pub mod menu;
 pub mod nav;
 pub mod perf;
 
+include!("command_list.rs");
+
+/// Registers every listed command with the webview.
+macro_rules! command_handler {
+    ($($module:ident :: $command:ident),* $(,)?) => {
+        tauri::generate_handler![$($module::$command),*]
+    };
+}
+
+/// The app's own commands, as the webview calls them (src/command_list.rs).
+pub fn command_names() -> &'static [&'static str] {
+    app_commands!(command_names)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     crash::install_panic_hook();
@@ -59,19 +73,7 @@ pub fn run() {
                 })
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![
-            db::db_transaction,
-            db::db_select_snapshot,
-            db::db_backup,
-            db::log_error,
-            perf::perf_enabled,
-            perf::perf_report,
-            files::save_file,
-            files::open_backup_file,
-            files::write_app_backup,
-            files::reveal_data_dir,
-            menu::set_menu_labels
-        ])
+        .invoke_handler(app_commands!(command_handler))
         .setup(|app| {
             // DR-157: the database, its backups and the window state are private (0600 in
             // a 0700 folder). Covers files from older versions; never fatal.
