@@ -4,6 +4,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
 import { describeFailure, logFailure, maskNumbers } from "../errorLog";
 import { DataError } from "../errors";
+import { SafetyBackupError } from "../backup";
+import { COMMAND_ERROR_CODES, CommandError } from "../../platform/commandError";
 import { isTauri } from "../../lib/tauri";
 import { unhandledRejections } from "../../__tests__/support/unhandled";
 
@@ -79,6 +81,62 @@ describe("error log lines", () => {
       code: "WRITE_FAILED",
       context: "plain string",
     });
+  });
+
+  // ADR 0270 point 7: the context starts with the Rust code, the log code stays the site.
+  it("a failed command logs its Rust code before the masked detail", () => {
+    const e = new CommandError("IO", "disk full at 123456");
+    expect(describeFailure("WRITE", e)).toEqual({
+      code: "WRITE_FAILED",
+      context: "IO: disk full at #",
+    });
+    // Kept as the cause of the data layer's own error.
+    expect(describeFailure("WRITE", new SafetyBackupError(e))).toEqual({
+      code: "WRITE_FAILED",
+      context: "IO: Could not save the safety backup: disk full at #",
+    });
+    expect(describeFailure("WRITE", new Error("disk full at 123456"))).toEqual({
+      code: "WRITE_FAILED",
+      context: "disk full at #",
+    });
+  });
+
+  it("finds the command error further down the cause chain", () => {
+    const rust = new CommandError(
+      "BACKUP_EXISTS",
+      "BACKUP_EXISTS: /b/x-2026.json",
+    );
+    const outer = new Error("restore failed", {
+      cause: new Error("step 1", { cause: rust }),
+    });
+    expect(describeFailure("RESTORE", outer).context).toBe(
+      "BACKUP_EXISTS: restore failed",
+    );
+  });
+
+  it("stops on a cause chain that loops", () => {
+    const a = new Error("a");
+    const b = new Error("b", { cause: a });
+    Object.defineProperty(a, "cause", { value: b });
+    expect(describeFailure("WRITE", a)).toEqual({
+      code: "WRITE_FAILED",
+      context: "a",
+    });
+  });
+
+  it("the prefix is a code from the closed list, written as it is", () => {
+    for (const code of COMMAND_ERROR_CODES) {
+      const { context } = describeFailure(
+        "WRITE",
+        new CommandError(code, "at 12345"),
+      );
+      const prefix = context.slice(0, context.indexOf(": "));
+      // Upper snake case (letters, digits, underscores), never masked: a digit in a
+      // code such as BACKUP_PATH_NOT_UTF8 stays.
+      expect(prefix).toBe(code);
+      expect(prefix).toMatch(/^[A-Z][A-Z0-9_]*$/);
+      expect(context).toBe(`${code}: at #`);
+    }
   });
 
   it("is a silent no-op outside the desktop app", () => {
