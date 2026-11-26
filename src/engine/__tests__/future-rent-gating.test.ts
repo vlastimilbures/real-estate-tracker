@@ -12,6 +12,7 @@ import type { Portfolio, Property } from "../types";
 import { rate } from "../brands";
 import { money } from "../brands";
 import { D, ONE, powInt } from "../../lib/money";
+import { mortgageBlock } from "../loanBlock";
 
 const PURCHASE = isoDate("2026-09-01"); // ~3 months after baseDate 2026-06-07
 const RENT_START = isoDate("2029-06-01"); // unit finished/let only later, mid-bucket
@@ -48,7 +49,7 @@ const withFuture: Portfolio = {
   properties: [...portfolio.properties, slovanske],
   mortgages: [
     ...portfolio.mortgages,
-    {
+    mortgageBlock({
       id: "m-slovanske",
       propertyId: "slovanske",
       startDate: PURCHASE,
@@ -57,7 +58,7 @@ const withFuture: Portfolio = {
       interestRatePa: rate("0.045"),
       monthlyInstalment: money("20266"), // ≈ 30-yr amortizing instalment
       loanTermYears: 30,
-    },
+    }),
   ],
   valuations: [
     ...portfolio.valuations,

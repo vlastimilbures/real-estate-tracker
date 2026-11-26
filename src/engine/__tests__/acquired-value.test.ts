@@ -15,6 +15,7 @@ import { D } from "../../lib/money";
 import { assumptions, portfolio as seed } from "./support/seed";
 import { devBlock, mixed } from "./support/mixed";
 import type { MortgageBlock, Portfolio, Property } from "../types";
+import { mortgageBlock } from "../loanBlock";
 
 const future = mixed.properties.find((p) => p.id === "future") as Property;
 // Purchase 15.03.2028 on the 2026-06-07 grid: projection year 2 (2028).
@@ -98,7 +99,7 @@ describe("ProjectionYear.acquiredValue (ADR 0165)", () => {
   it("is the completed value at the purchase date for a development future buy (ADR 0166)", () => {
     // The dev-committed-debt.test.ts future buy: purchase 2027-03-01 (turn-on year 1),
     // a development loan drawing after it, valued 9,500,000 from the purchase date.
-    const futureDev: MortgageBlock = {
+    const futureDev: MortgageBlock = mortgageBlock({
       ...devBlock,
       startDate: isoDate("2027-03-01"),
       loanTermYears: 30,
@@ -107,7 +108,7 @@ describe("ProjectionYear.acquiredValue (ADR 0165)", () => {
         { date: isoDate("2028-08-20"), amount: money("1000000") },
       ],
       completionDate: isoDate("2028-08-20"),
-    };
+    });
     const pf: Portfolio = {
       properties: [
         {

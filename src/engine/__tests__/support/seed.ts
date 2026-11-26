@@ -6,6 +6,7 @@ import { isoDate } from "../../dates";
 import type { Assumptions, Portfolio } from "../../types";
 import { rate } from "../../brands";
 import { money } from "../../brands";
+import { mortgageBlock } from "../../loanBlock";
 
 export const BASE_DATE = isoDate("2026-06-07");
 
@@ -70,7 +71,7 @@ export const portfolio: Portfolio = {
     },
   ],
   mortgages: [
-    {
+    mortgageBlock({
       id: "m-javorova",
       propertyId: "javorova",
       startDate: isoDate("2021-01-17"),
@@ -78,8 +79,8 @@ export const portfolio: Portfolio = {
       fixationYears: 10,
       interestRatePa: rate("0.0169"),
       monthlyInstalment: money("6721.8"),
-    },
-    {
+    }),
+    mortgageBlock({
       id: "m-lipova",
       propertyId: "lipova",
       startDate: isoDate("2022-01-15"),
@@ -87,8 +88,8 @@ export const portfolio: Portfolio = {
       fixationYears: 7,
       interestRatePa: rate("0.0359"),
       monthlyInstalment: money("25567.15"),
-    },
-    {
+    }),
+    mortgageBlock({
       id: "m-dubova",
       propertyId: "dubova",
       startDate: isoDate("2024-03-12"),
@@ -96,7 +97,7 @@ export const portfolio: Portfolio = {
       fixationYears: 7,
       interestRatePa: rate("0.0449"),
       monthlyInstalment: money("21576.4"),
-    },
+    }),
   ],
   valuations: [
     {

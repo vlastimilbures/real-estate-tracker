@@ -12,6 +12,7 @@ import { ZERO, type Decimal } from "../../lib/money";
 import { DEBT_FREE_EPSILON } from "../loanConstants";
 import type { Assumptions, Portfolio, PortfolioKPIs } from "../types";
 import { assumptions, portfolio } from "./support/seed";
+import { mortgageBlock } from "../loanBlock";
 
 function crash(
   pct: string,
@@ -85,7 +86,7 @@ describe("ADR 0126: debt-free year", () => {
       ...portfolio,
       mortgages: [
         ...portfolio.mortgages,
-        {
+        mortgageBlock({
           id: "m-later",
           propertyId: "lipova",
           startDate: isoDate("2053-09-01"),
@@ -93,7 +94,7 @@ describe("ADR 0126: debt-free year", () => {
           fixationYears: 5,
           interestRatePa: rate("0.05"),
           monthlyInstalment: money(instalment),
-        },
+        }),
       ],
     };
   }
@@ -130,7 +131,7 @@ describe("ADR 0126: debt-free year", () => {
     const p: Portfolio = {
       ...portfolio,
       mortgages: [
-        {
+        mortgageBlock({
           id: "m-only",
           propertyId: "lipova",
           startDate: isoDate(start),
@@ -138,7 +139,7 @@ describe("ADR 0126: debt-free year", () => {
           fixationYears: 5,
           interestRatePa: rate("0"),
           monthlyInstalment: money(instalment),
-        },
+        }),
       ],
     };
     expect(validateInputs(p, assumptions)).toEqual([]);

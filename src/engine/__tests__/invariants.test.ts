@@ -6,7 +6,7 @@ import { describe, it, expect } from "vitest";
 import { portfolioSnapshot, propertySnapshot } from "../metrics";
 import { portfolioProjection, propertyProjection } from "../projections";
 import { portfolioKpis } from "../kpis";
-import { isDevLoan } from "../loanBlock";
+import { isDevLoan, mortgageBlock } from "../loanBlock";
 import {
   EMPTY_PROPERTY_SCHEDULE,
   propertySchedule,
@@ -39,7 +39,7 @@ const refinanced: Portfolio = {
   ...portfolio,
   mortgages: [
     ...portfolio.mortgages,
-    {
+    mortgageBlock({
       id: "m-refi-javorova",
       propertyId: "javorova",
       startDate: isoDate("2031-01-17"),
@@ -47,8 +47,8 @@ const refinanced: Portfolio = {
       fixationYears: 5,
       interestRatePa: rate("0.039"),
       monthlyInstalment: money("9800"),
-    },
-    {
+    }),
+    mortgageBlock({
       id: "m-refi-lipova",
       propertyId: "lipova",
       startDate: isoDate("2029-01-15"),
@@ -56,7 +56,7 @@ const refinanced: Portfolio = {
       fixationYears: 5,
       interestRatePa: rate("0.04"),
       monthlyInstalment: money("35000"),
-    },
+    }),
   ],
 };
 
@@ -316,7 +316,7 @@ describe("Invariant — snapshot(baseDate + N y) == projection year N", () => {
       ...mixed,
       mortgages: mixed.mortgages.map((m) =>
         m.id === "m-dev"
-          ? { ...m, draws: undefined, completionDate: undefined }
+          ? mortgageBlock({ ...m, draws: undefined, completionDate: undefined })
           : m,
       ),
     };

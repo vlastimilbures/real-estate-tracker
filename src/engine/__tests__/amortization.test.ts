@@ -20,6 +20,7 @@ import { near } from "./support/tolerance";
 import { rate } from "../brands";
 import type { IsoDate } from "../brands";
 import { money } from "../brands";
+import { mortgageBlock } from "../loanBlock";
 
 describe("instalmentFor — annuity instalment from principal/rate/term", () => {
   it("equals PMT(rate/12, term*12, −principal)", () => {
@@ -40,16 +41,17 @@ describe("instalmentFor — annuity instalment from principal/rate/term", () => 
   // fractional part is < 0.5, nearest underpays, and that deficit compounds past the
   // fully-amortizes threshold — wrongly flagging a loan the user just auto-calculated.
   // This case (exact ≈ 18,685.24) underpays at 18,685 but is healthy at 18,686.
-  const blockWith = (instalment: ReturnType<typeof D>): MortgageBlock => ({
-    id: "x",
-    propertyId: "dubova",
-    startDate: new Date(Date.UTC(2024, 2, 12)) as IsoDate,
-    initialPrincipal: money("3034500"),
-    fixationYears: 7,
-    interestRatePa: rate("0.0449"),
-    monthlyInstalment: money(instalment),
-    loanTermYears: 28,
-  });
+  const blockWith = (instalment: ReturnType<typeof D>): MortgageBlock =>
+    mortgageBlock({
+      id: "x",
+      propertyId: "dubova",
+      startDate: new Date(Date.UTC(2024, 2, 12)) as IsoDate,
+      initialPrincipal: money("3034500"),
+      fixationYears: 7,
+      interestRatePa: rate("0.0449"),
+      monthlyInstalment: money(instalment),
+      loanTermYears: 28,
+    });
   const exact28 = instalmentFor(D("3034500"), D("0.0449"), 28);
   it("ceil-rounded derived instalment fully amortizes", () => {
     expect(amortizationHealth(blockWith(ceilCzk(exact28))).fullyAmortizes).toBe(
@@ -66,15 +68,16 @@ describe("instalmentFor — annuity instalment from principal/rate/term", () => 
 });
 
 describe("fixationExpired — refix terms needed (D-30)", () => {
-  const block = (start: string, fixationYears: number): MortgageBlock => ({
-    id: "m",
-    propertyId: "p",
-    startDate: isoDate(start),
-    initialPrincipal: money("3000000"),
-    fixationYears,
-    interestRatePa: rate("0.02"),
-    monthlyInstalment: money("12000"),
-  });
+  const block = (start: string, fixationYears: number): MortgageBlock =>
+    mortgageBlock({
+      id: "m",
+      propertyId: "p",
+      startDate: isoDate(start),
+      initialPrincipal: money("3000000"),
+      fixationYears,
+      interestRatePa: rate("0.02"),
+      monthlyInstalment: money("12000"),
+    });
   const base = isoDate("2026-06-07");
   it("is true when the fixation ended before baseDate", () => {
     expect(fixationExpired(block("2018-03-15", 5), base)).toBe(true);

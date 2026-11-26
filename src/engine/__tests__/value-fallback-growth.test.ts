@@ -10,6 +10,7 @@ import { portfolioProjection } from "../projections";
 import { applyScenario } from "../scenarios";
 import type { Assumptions, Portfolio, Property } from "../types";
 import { assumptions, portfolio } from "./support/seed";
+import { mortgageBlock } from "../loanBlock";
 
 // Javorova (bought 2015-06-01 for 4,080,000) with its valuation removed: 132 whole months
 // to the base date 2026-06-07, so 4,080,000 × 1.04^11.
@@ -126,11 +127,11 @@ describe("ADR 0181: the purchase-price fallback grows to the projection start", 
       ...noJavorovaValuation,
       mortgages: noJavorovaValuation.mortgages.map((m) =>
         m.propertyId === "javorova"
-          ? {
+          ? mortgageBlock({
               ...m,
               loanTermYears: 30,
               draws: [{ date: isoDate("2027-01-17"), amount: money("500000") }],
-            }
+            })
           : m,
       ),
     };

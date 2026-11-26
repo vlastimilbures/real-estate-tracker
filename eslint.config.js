@@ -134,35 +134,30 @@ const engineDateBan = {
 // asserts in engine/validate/entry.ts (ValidInputs, ValidAssumptions).
 const BRAND_TYPES =
   "/^(Money|Rate|IsoDate|MortgageBlock|PlainLoan|DevelopmentLoan|ValidInputs|ValidAssumptions)$/";
-const brandCastBans = [
-  {
-    selector: `TSAsExpression > TSTypeReference.typeAnnotation[typeName.name=${BRAND_TYPES}]`,
-    message:
-      "No brand casts (ADR 0074): build the value with money()/rate()/utc()/isoDate()/mortgageBlock()/assertInputs()/assertAssumptions().",
-  },
-  {
-    selector: `TSAsExpression > TSUnionType.typeAnnotation > TSTypeReference[typeName.name=${BRAND_TYPES}]`,
-    message:
-      "No brand casts (ADR 0074): build the value with money()/rate()/utc()/isoDate()/mortgageBlock()/assertInputs()/assertAssumptions().",
-  },
+// Every way a cast can name a brand: the type itself, a union with it, an array of it
+// (`T[]`, `readonly T[]`, `(T | undefined)[]`) and `Array<T>` / `ReadonlyArray<T>`.
+const castSelectors = (types) => [
+  `TSAsExpression > TSTypeReference.typeAnnotation[typeName.name=${types}]`,
+  `TSAsExpression > TSUnionType.typeAnnotation > TSTypeReference[typeName.name=${types}]`,
+  `TSAsExpression > TSArrayType.typeAnnotation TSTypeReference[typeName.name=${types}]`,
+  `TSAsExpression > TSTypeOperator.typeAnnotation > TSArrayType TSTypeReference[typeName.name=${types}]`,
+  `TSAsExpression > TSTypeReference.typeAnnotation[typeName.name=/^(Array|ReadonlyArray)$/] TSTypeReference[typeName.name=${types}]`,
 ];
+const castBans = (types, message) =>
+  castSelectors(types).map((selector) => ({ selector, message }));
+const brandCastBans = castBans(
+  BRAND_TYPES,
+  "No brand casts (ADR 0074): build the value with money()/rate()/utc()/isoDate()/mortgageBlock()/assertInputs()/assertAssumptions().",
+);
 
 // Tests build loan blocks through `mortgageBlock()` too (#480), so every block goes through
 // the one constructor, which a later `kind` discriminant will rely on. Other brands may
 // still be cast in tests.
 const BLOCK_TYPES = "/^(MortgageBlock|PlainLoan|DevelopmentLoan)$/";
-const blockCastMessage =
-  "No loan-block casts (#480): build the block with mortgageBlock().";
-const blockCastBans = [
-  {
-    selector: `TSAsExpression > TSTypeReference.typeAnnotation[typeName.name=${BLOCK_TYPES}]`,
-    message: blockCastMessage,
-  },
-  {
-    selector: `TSAsExpression > TSUnionType.typeAnnotation > TSTypeReference[typeName.name=${BLOCK_TYPES}]`,
-    message: blockCastMessage,
-  },
-];
+const blockCastBans = castBans(
+  BLOCK_TYPES,
+  "No loan-block casts (#480): build the block with mortgageBlock().",
+);
 
 // Only src/lib/money.ts touches decimal.js directly (DR-075): one Decimal configuration.
 const decimalPath = {

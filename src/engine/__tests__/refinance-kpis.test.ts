@@ -12,18 +12,20 @@ import type { MortgageBlock, Portfolio } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 import { KC, RATIO, near } from "./support/tolerance";
 import { money } from "../brands";
+import { mortgageBlock } from "../loanBlock";
 
 const N = assumptions.horizonYears;
 
-const refi = (start: string, principal: Decimal): MortgageBlock => ({
-  id: "m-refi",
-  propertyId: "javorova",
-  startDate: isoDate(start),
-  initialPrincipal: money(principal),
-  fixationYears: 5,
-  interestRatePa: rate("0.039"),
-  monthlyInstalment: money("9800"),
-});
+const refi = (start: string, principal: Decimal): MortgageBlock =>
+  mortgageBlock({
+    id: "m-refi",
+    propertyId: "javorova",
+    startDate: isoDate(start),
+    initialPrincipal: money(principal),
+    fixationYears: 5,
+    interestRatePa: rate("0.039"),
+    monthlyInstalment: money("9800"),
+  });
 
 const withRefi = (block: MortgageBlock): Portfolio => ({
   ...portfolio,

@@ -61,7 +61,7 @@ const plainLoan = fc
   .map(({ bp, principal, months, fixationYears, start }) => {
     const rate = D(bp).div(10_000);
     const P = money(principal);
-    const block: MortgageBlock = {
+    const block: MortgageBlock = mortgageBlock({
       id: "m",
       propertyId: "p",
       startDate: start,
@@ -69,7 +69,7 @@ const plainLoan = fc
       fixationYears,
       interestRatePa: rate as Rate,
       monthlyInstalment: money(ceilCzk(PMT(rate.div(12), months, P.negated()))),
-    };
+    });
     return { block, months };
   });
 
@@ -468,7 +468,7 @@ describe("invalid loans — typed errors (D-17)", { timeout: TIMEOUT }, () => {
         (bp, principal, share) => {
           const rate = D(bp).div(10_000);
           const interest = D(principal).times(rate).div(12);
-          const block: MortgageBlock = {
+          const block: MortgageBlock = mortgageBlock({
             id: "bad",
             propertyId: "p",
             startDate: utc(2025, 1, 15),
@@ -476,7 +476,7 @@ describe("invalid loans — typed errors (D-17)", { timeout: TIMEOUT }, () => {
             fixationYears: 5,
             interestRatePa: rate as Rate,
             monthlyInstalment: money(interest.times(share).floor()),
-          };
+          });
           expect(codeOf(() => termMonths(block))).toBe(
             "INSTALMENT_BELOW_INTEREST",
           );
@@ -492,7 +492,7 @@ describe("invalid loans — typed errors (D-17)", { timeout: TIMEOUT }, () => {
   it("0 % rate with a 0 instalment ⇒ ZERO_RATE_ZERO_INSTALMENT, no endless loop (DR-018)", () => {
     fc.assert(
       fc.property(fc.integer({ min: 1, max: 20_000_000 }), (principal) => {
-        const block: MortgageBlock = {
+        const block: MortgageBlock = mortgageBlock({
           id: "zero",
           propertyId: "p",
           startDate: utc(2025, 1, 15),
@@ -500,7 +500,7 @@ describe("invalid loans — typed errors (D-17)", { timeout: TIMEOUT }, () => {
           fixationYears: 5,
           interestRatePa: ZERO as Rate,
           monthlyInstalment: money(0),
-        };
+        });
         expect(codeOf(() => termMonths(block))).toBe(
           "ZERO_RATE_ZERO_INSTALMENT",
         );
@@ -531,15 +531,17 @@ describe("invalid loans — typed errors (D-17)", { timeout: TIMEOUT }, () => {
 
   it("horizonYears = 0 ⇒ HORIZON_NOT_POSITIVE (D-38, was NaN CAGR — DR-043)", () => {
     const a: Assumptions = { ...assumptions, horizonYears: 0 };
-    const { portfolio } = onePropertyPortfolio({
-      id: "m",
-      propertyId: "p",
-      startDate: utc(2020, 1, 15),
-      initialPrincipal: money(2_000_000),
-      fixationYears: 5,
-      interestRatePa: brandRate("0.03"),
-      monthlyInstalment: money(12_000),
-    });
+    const { portfolio } = onePropertyPortfolio(
+      mortgageBlock({
+        id: "m",
+        propertyId: "p",
+        startDate: utc(2020, 1, 15),
+        initialPrincipal: money(2_000_000),
+        fixationYears: 5,
+        interestRatePa: brandRate("0.03"),
+        monthlyInstalment: money(12_000),
+      }),
+    );
     expect(codeOf(() => portfolioKpis(portfolio, a))).toBe(
       "HORIZON_NOT_POSITIVE",
     );

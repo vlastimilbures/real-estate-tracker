@@ -11,6 +11,7 @@ import type { IsoDate, MortgageBlock } from "../types";
 import { BASE_DATE, assumptions, portfolio } from "./support/seed";
 import { devBlock, mixed } from "./support/mixed";
 import { expectKc } from "./support/tolerance";
+import { mortgageBlock } from "../loanBlock";
 
 function drawdowns(blocks: MortgageBlock[], asOf: IsoDate = BASE_DATE) {
   const s = propertySchedule(blocks, assumptions);
@@ -91,7 +92,7 @@ describe("drawdown progress (ADR 0167)", () => {
   });
 
   it("a tranche dated after a successor's start is never drawn and leaves the total", () => {
-    const successor: MortgageBlock = {
+    const successor: MortgageBlock = mortgageBlock({
       id: "m-refi",
       propertyId: "dev",
       startDate: isoDate("2027-03-01"),
@@ -99,7 +100,7 @@ describe("drawdown progress (ADR 0167)", () => {
       fixationYears: 5,
       interestRatePa: devBlock.interestRatePa,
       monthlyInstalment: money("18000"),
-    };
+    });
     const blocks = [devBlock, successor];
     expect(drawdowns(blocks)).toHaveLength(1);
     const [dd] = drawdowns(blocks, isoDate("2027-02-01"));

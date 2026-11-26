@@ -11,6 +11,7 @@ import { assumptions, portfolio } from "./support/seed";
 import type { Lease, Portfolio, Property } from "../types";
 import { rate } from "../brands";
 import { money } from "../brands";
+import { mortgageBlock } from "../loanBlock";
 
 const PURCHASE = isoDate("2029-01-01"); // baseDate is 2026-06-07 → tStart = 3
 const PURCHASE_YEAR = 2029;
@@ -33,7 +34,7 @@ const withFuture: Portfolio = {
   properties: [...portfolio.properties, slovanske],
   mortgages: [
     ...portfolio.mortgages,
-    {
+    mortgageBlock({
       id: "m-slovanske",
       propertyId: "slovanske",
       startDate: PURCHASE,
@@ -41,7 +42,7 @@ const withFuture: Portfolio = {
       fixationYears: 5,
       interestRatePa: rate("0.04"),
       monthlyInstalment: money("30000"), // high enough to fully amortize in-window
-    },
+    }),
   ],
   valuations: [
     ...portfolio.valuations,
@@ -153,7 +154,7 @@ describe("future property — mid-year purchase (turn-on alignment)", () => {
     properties: [...portfolio.properties, midProp],
     mortgages: [
       ...portfolio.mortgages,
-      {
+      mortgageBlock({
         id: "m-mid",
         propertyId: "mid",
         startDate: MID,
@@ -161,7 +162,7 @@ describe("future property — mid-year purchase (turn-on alignment)", () => {
         fixationYears: 5,
         interestRatePa: rate("0.04"),
         monthlyInstalment: money("16000"),
-      },
+      }),
     ],
     valuations: [
       ...portfolio.valuations,

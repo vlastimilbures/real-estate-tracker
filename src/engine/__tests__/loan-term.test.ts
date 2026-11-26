@@ -11,18 +11,20 @@ import { assumptions } from "./support/seed";
 import type { MortgageBlock } from "../types";
 import { rate } from "../brands";
 import { money } from "../brands";
+import { mortgageBlock } from "../loanBlock";
 
-const block = (over: Partial<MortgageBlock> = {}): MortgageBlock => ({
-  id: "m",
-  propertyId: "p",
-  startDate: isoDate("2026-09-01"),
-  initialPrincipal: money("4000000"),
-  fixationYears: 5,
-  interestRatePa: rate("0.045"),
-  monthlyInstalment: money("20266"),
-  loanTermYears: 30,
-  ...over,
-});
+const block = (over: Partial<MortgageBlock> = {}): MortgageBlock =>
+  mortgageBlock({
+    id: "m",
+    propertyId: "p",
+    startDate: isoDate("2026-09-01"),
+    initialPrincipal: money("4000000"),
+    fixationYears: 5,
+    interestRatePa: rate("0.045"),
+    monthlyInstalment: money("20266"),
+    loanTermYears: 30,
+    ...over,
+  });
 
 describe("termMonths", () => {
   it("uses the explicit term when set", () => {

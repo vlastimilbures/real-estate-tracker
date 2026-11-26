@@ -7,13 +7,14 @@ import { edate, isoDate } from "../../dates";
 import type { MortgageBlock, Portfolio } from "../../types";
 import { mixed } from "./mixed";
 import { money } from "../../brands";
+import { mortgageBlock } from "../../loanBlock";
 
 /** `mixed` + a refinance: a successor block takes over Javorova at its refix. */
 export const mixedWithRefi: Portfolio = {
   ...mixed,
   mortgages: [
     ...mixed.mortgages,
-    {
+    mortgageBlock({
       id: "m-refi",
       propertyId: "javorova",
       startDate: isoDate("2031-01-17"),
@@ -21,7 +22,7 @@ export const mixedWithRefi: Portfolio = {
       fixationYears: 5,
       interestRatePa: rate("0.039"),
       monthlyInstalment: money("9800"),
-    },
+    }),
   ],
 };
 

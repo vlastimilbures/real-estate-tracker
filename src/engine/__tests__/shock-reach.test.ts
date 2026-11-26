@@ -11,6 +11,7 @@ import { money, rate } from "../brands";
 import { assumptions, portfolio } from "./support/seed";
 import { devBlock, mixed } from "./support/mixed";
 import type { MortgageBlock, Portfolio, ShockBand } from "../types";
+import { mortgageBlock } from "../loanBlock";
 
 const shock = (durationYears: number): ShockBand => ({
   deltaPa: rate("0.02"),
@@ -24,7 +25,7 @@ function block(
   loanTermYears = 30,
   propertyId = "p1",
 ): MortgageBlock {
-  return {
+  return mortgageBlock({
     id,
     propertyId,
     startDate: isoDate(startDate),
@@ -33,7 +34,7 @@ function block(
     interestRatePa: rate("0.04"),
     monthlyInstalment: money("15000"),
     loanTermYears,
-  };
+  });
 }
 
 function withBlocks(

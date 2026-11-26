@@ -24,7 +24,7 @@ const sumPrincipal = (
 
 // A future-start construction loan: drawn 2026-09, two tranches, interest-only until
 // completion 2027-12, then re-amortizes over the remaining term to startDate+30y.
-const devFuture: MortgageBlock = {
+const devFuture: MortgageBlock = mortgageBlock({
   id: "dev-future",
   propertyId: "javorova",
   startDate: isoDate("2026-09-01"),
@@ -38,21 +38,29 @@ const devFuture: MortgageBlock = {
     { date: isoDate("2027-09-01"), amount: money("2000000") },
   ],
   completionDate: isoDate("2027-12-01"),
-};
+});
 const TOTAL_DRAWN = 5_500_000; // 2.0M + 1.5M + 2.0M
 
 describe("isDevLoan gate", () => {
   it("is true with draws or a completion date, false otherwise", () => {
     expect(isDevLoan(devFuture)).toBe(true);
     expect(
-      isDevLoan({ ...devFuture, draws: undefined, completionDate: undefined }),
+      isDevLoan(
+        mortgageBlock({
+          ...devFuture,
+          draws: undefined,
+          completionDate: undefined,
+        }),
+      ),
     ).toBe(false);
     expect(
-      isDevLoan({
-        ...devFuture,
-        draws: [],
-        completionDate: isoDate("2027-01-01"),
-      }),
+      isDevLoan(
+        mortgageBlock({
+          ...devFuture,
+          draws: [],
+          completionDate: isoDate("2027-01-01"),
+        }),
+      ),
     ).toBe(true);
   });
 });
@@ -127,7 +135,7 @@ describe("Development loan — gradual utilization + interest-only", () => {
 describe("Development loan — post-completion tranche re-amortizes the instalment", () => {
   // Completion early (2026-12), then a tranche after completion (2027-06) must bump the
   // instalment to PMT(rate, remaining term, post-draw balance).
-  const block: MortgageBlock = {
+  const block: MortgageBlock = mortgageBlock({
     id: "dev-post",
     propertyId: "javorova",
     startDate: isoDate("2026-07-01"),
@@ -138,7 +146,7 @@ describe("Development loan — post-completion tranche re-amortizes the instalme
     loanTermYears: 30,
     draws: [{ date: isoDate("2027-06-01"), amount: money("1000000") }],
     completionDate: isoDate("2026-12-01"),
-  };
+  });
   const schedule = buildSchedule(block, assumptions);
   const idx = (iso: string) =>
     schedule.findIndex((r) => r.date.getTime() === isoDate(iso).getTime());
@@ -174,7 +182,7 @@ describe("Development loan — already running at baseDate (opening balance)", (
   // Started 2025-01, interest-only until 2026-09, a tranche before baseDate and one
   // after. At baseDate (2026-06-07) only interest has been paid, so the opening balance
   // is the draws to date: 1.0M initial + 1.0M (2025-07) = 2.0M.
-  const block: MortgageBlock = {
+  const block: MortgageBlock = mortgageBlock({
     id: "dev-running",
     propertyId: "javorova",
     startDate: isoDate("2025-01-01"),
@@ -188,7 +196,7 @@ describe("Development loan — already running at baseDate (opening balance)", (
       { date: isoDate("2026-12-01"), amount: money("1000000") },
     ],
     completionDate: isoDate("2026-09-01"),
-  };
+  });
   const schedule = buildSchedule(block, assumptions);
 
   it("opening balance folds in the draws drawn before baseDate (no principal paid yet)", () => {
@@ -225,7 +233,7 @@ describe("Development loan — under a temporary rate shock", () => {
   });
 
   it("running-at-baseDate dev loan still amortizes to the total drawn (simulate path)", () => {
-    const running: MortgageBlock = {
+    const running: MortgageBlock = mortgageBlock({
       id: "dev-running-shock",
       propertyId: "javorova",
       startDate: isoDate("2025-01-01"),
@@ -236,7 +244,7 @@ describe("Development loan — under a temporary rate shock", () => {
       loanTermYears: 30,
       draws: [{ date: isoDate("2025-07-01"), amount: money("1000000") }],
       completionDate: isoDate("2026-09-01"),
-    };
+    });
     const schedule = buildSchedule(running, shocked);
     expect(
       Math.abs(sumPrincipal(schedule).toNumber() - 2_000_000),
@@ -284,7 +292,7 @@ describe("Development loan — through the projection path", () => {
   }
 
   // Running multi-draw + interest-only loan (matures startDate+30y = 2055).
-  const running: MortgageBlock = {
+  const running: MortgageBlock = mortgageBlock({
     id: "dev",
     propertyId: "dev",
     startDate: isoDate("2025-01-01"),
@@ -298,7 +306,7 @@ describe("Development loan — through the projection path", () => {
       { date: isoDate("2026-12-01"), amount: money("1000000") },
     ],
     completionDate: isoDate("2026-09-01"),
-  };
+  });
 
   it("Σ annual principal (yrs 1..N) equals total drawn through year-slicing", () => {
     const proj = portfolioProjection(portfolioWith(running), assumptions);
@@ -320,12 +328,12 @@ describe("Development loan — through the projection path", () => {
 
   it("an interest-only projection year carries ~no principal; debt service is interest", () => {
     // Completion far out (2030) so year 1 (months 1..12 from baseDate) is fully IO.
-    const longIo: MortgageBlock = {
+    const longIo: MortgageBlock = mortgageBlock({
       ...running,
       draws: undefined,
       initialPrincipal: money("2000000"),
       completionDate: isoDate("2030-01-01"),
-    };
+    });
     const proj = portfolioProjection(portfolioWith(longIo), assumptions);
     const y1 = proj[1];
     expect(y1.principal.toNumber()).toBeLessThanOrEqual(KC);
@@ -342,7 +350,7 @@ describe("Development loan — through the projection path", () => {
 describe("Development loan — instalment from the term, held between events (D-24/D-31)", () => {
   // Running since 2025-02-28, one tranche before baseDate, one in grid month 5
   // (2026-10-31 → 2026-11-07); fixation to 2035, so no rate change for years.
-  const running: MortgageBlock = {
+  const running: MortgageBlock = mortgageBlock({
     id: "dev-held",
     propertyId: "javorova",
     startDate: isoDate("2025-02-28"),
@@ -355,7 +363,7 @@ describe("Development loan — instalment from the term, held between events (D-
       { date: isoDate("2025-10-31"), amount: money("500000") },
       { date: isoDate("2026-10-31"), amount: money("700000") },
     ],
-  };
+  });
   const schedule = buildSchedule(running, assumptions);
 
   it("holds the instalment exactly between events", () => {
@@ -386,10 +394,10 @@ describe("Development loan — instalment from the term, held between events (D-
   });
 
   it("a running loan with no event yet pays instalmentFor(principal, rate, term)", () => {
-    const noEventYet: MortgageBlock = {
+    const noEventYet: MortgageBlock = mortgageBlock({
       ...running,
       draws: [{ date: isoDate("2027-03-31"), amount: money("700000") }],
-    };
+    });
     const s = buildSchedule(noEventYet, assumptions);
     expect(
       s[0].instalment.equals(instalmentFor(D("3000000"), D("0.029"), 20)),
@@ -397,11 +405,11 @@ describe("Development loan — instalment from the term, held between events (D-
   });
 
   it("a future-start loan's first payment is instalmentFor(principal, rate, term)", () => {
-    const future: MortgageBlock = {
+    const future: MortgageBlock = mortgageBlock({
       ...running,
       startDate: isoDate("2026-09-01"),
       draws: [{ date: isoDate("2027-09-01"), amount: money("700000") }],
-    };
+    });
     const s = buildSchedule(future, assumptions);
     const first = s.find((r) => r.interest.greaterThan(0))!;
     expect(
@@ -411,13 +419,13 @@ describe("Development loan — instalment from the term, held between events (D-
 
   it("emits zero rows after maturity (payoff guard)", () => {
     // Matures 2030-01-15, well inside the 30-year horizon.
-    const short: MortgageBlock = {
+    const short: MortgageBlock = mortgageBlock({
       ...running,
       startDate: isoDate("2020-01-15"),
       initialPrincipal: money("1000000"),
       loanTermYears: 10,
       draws: [{ date: isoDate("2020-06-15"), amount: money("200000") }],
-    };
+    });
     const s = buildSchedule(short, assumptions);
     // The payment due 2030-01-15 sits on grid row 2030-02-07 and clears the balance.
     const payoff = s.findIndex((r) => r.endBalance.isZero());

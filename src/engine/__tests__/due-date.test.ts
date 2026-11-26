@@ -130,15 +130,16 @@ describe("ADR 0164: amortization rows carry the payment due date", () => {
   });
 
   describe("a refinance handover", () => {
-    const refi = (start: string, principal: string): MortgageBlock => ({
-      id: "m-refi",
-      propertyId: "javorova",
-      startDate: isoDate(start),
-      initialPrincipal: money(principal),
-      fixationYears: 5,
-      interestRatePa: rate("0.039"),
-      monthlyInstalment: money("9800"),
-    });
+    const refi = (start: string, principal: string): MortgageBlock =>
+      mortgageBlock({
+        id: "m-refi",
+        propertyId: "javorova",
+        startDate: isoDate(start),
+        initialPrincipal: money(principal),
+        fixationYears: 5,
+        interestRatePa: rate("0.039"),
+        monthlyInstalment: money("9800"),
+      });
 
     it("a kept handover row carries the owner's due date, then the successor's", () => {
       const s = propertySchedule(
