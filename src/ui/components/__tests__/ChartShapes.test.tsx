@@ -15,7 +15,7 @@ import {
 import { render } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { ChartCard } from "../charts";
-import { SERIES } from "../../model/chartData";
+import { SERIES } from "../../model/chartSeries";
 import { stubResizeObserver } from "../../../__tests__/support/dom";
 
 type TooltipProps = {

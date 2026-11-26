@@ -22,7 +22,7 @@ import { irrReasonText } from "./irr";
 import { lensKpis } from "./lensKpis";
 import { at } from "../../lib/arrays";
 import { BASE_SCENARIO_ID } from "./scenarios";
-import { SERIES } from "./chartData";
+import { SERIES } from "./chartSeries";
 import type { Cell, CellKind } from "./xlsxExport";
 
 /** One compared scenario: its projection in both lenses and its KPIs. */

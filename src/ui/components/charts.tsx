@@ -30,8 +30,8 @@ import {
   pickCzkAxisUnit,
   type CzkAxisUnit,
 } from "../../lib/format";
+import { SERIES } from "../model/chartSeries";
 import {
-  SERIES,
   tipValue,
   tableValue,
   tableYear,
