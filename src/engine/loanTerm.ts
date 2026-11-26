@@ -17,7 +17,7 @@ import { MAX_LOAN_TERM_MONTHS } from "./loanConstants";
 import { monthlyRate, yearsToMonths } from "./units";
 
 /** The first month's interest at the block's own principal and entered rate. */
-function firstMonthInterest(block: MortgageBlock): Decimal {
+export function firstMonthInterest(block: MortgageBlock): Decimal {
   return block.initialPrincipal.times(monthlyRate(block.interestRatePa));
 }
 
@@ -26,7 +26,7 @@ function firstMonthInterest(block: MortgageBlock): Decimal {
  * can: at 0 % it must be positive; otherwise it must exceed the first month's interest.
  * Expects finite principal and rate.
  */
-function instalmentProblem(
+export function instalmentProblem(
   block: MortgageBlock,
 ): { code: ValidationCode; field: "monthlyInstalment" } | undefined {
   const field = "monthlyInstalment";

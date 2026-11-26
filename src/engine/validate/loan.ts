@@ -1,6 +1,13 @@
 // One mortgage block's checks (D-17, D-36, D-37) and the loan asserts: the one path into
 // checkMortgage.
-import { derivedTermProblem, dueDate } from "../loanTerm";
+import type { Decimal } from "../../lib/money";
+import {
+  derivedTermProblem,
+  dueDate,
+  firstMonthInterest,
+  instalmentProblem,
+} from "../loanTerm";
+import { isDevLoan } from "../loanBlock";
 import { isAfter, isOnOrBefore } from "../dates";
 import type { MortgageBlock } from "../types";
 import {
@@ -140,6 +147,35 @@ export function blockIssues(b: MortgageBlock): Issue[] {
     issues.push(issue);
   });
   return issues;
+}
+
+/** The fields the instalment rule reads: a problem on one of them is reported first
+ *  (ADR 0251, one error per field). */
+const INSTALMENT_INPUTS: ReadonlySet<string | undefined> = new Set([
+  "initialPrincipal",
+  "interestRatePa",
+  "monthlyInstalment",
+  "loanTermYears",
+]);
+
+/**
+ * ADR 0264 §1: why a plain loan with an explicit term cannot be saved, or undefined. Its
+ * instalment must pay more than its first month's interest, as D-17 asks of a loan
+ * without a term; at 0 % it must be above 0. A development loan is not checked (its
+ * entered instalment is not used), nor a block with another problem on the fields the
+ * rule reads. A write-time rule: `blockIssues` does not report it, so a stored loan
+ * like that still loads and projects (debt #611).
+ */
+export function instalmentBelowInterest(
+  b: MortgageBlock,
+): { code: ValidationCode; firstInterest: Decimal } | undefined {
+  if (b.loanTermYears == null || isDevLoan(b)) return undefined;
+  if (blockIssues(b).some(([, field]) => INSTALMENT_INPUTS.has(field)))
+    return undefined;
+  const problem = instalmentProblem(b);
+  return (
+    problem && { code: problem.code, firstInterest: firstMonthInterest(b) }
+  );
 }
 
 /** The block's problems a gate raises, as errors on the block. */

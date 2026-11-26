@@ -97,6 +97,8 @@ export { blocksReachedByShock } from "./shockReach";
 export type { BlockShockReach } from "./shockReach";
 export {
   comparableScenarios,
+  instalmentBelowInterest,
+  instalmentBelowInterestErrors,
   leaseOverlapErrors,
   scenarioErrorsAddedBy,
   scenarioRuleErrors,

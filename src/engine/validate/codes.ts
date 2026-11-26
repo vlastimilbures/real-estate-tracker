@@ -146,7 +146,9 @@ export interface EngineValidationError {
  *  (D-38, ADR 0128), raised at every entry point by `assertInputs` / `assertAssumptions`;
  *  "loan" is an invalid loan (D-17, D-36), raised by `assertLoanInputs`. A code with no
  *  gate is raised on its own path: `assertBlockStarts`, `assertAsOf`, or a write-time
- *  rule (LEASE_OVERLAP). */
+ *  rule (LEASE_OVERLAP). INSTALMENT_BELOW_INTEREST and ZERO_RATE_ZERO_INSTALMENT keep the
+ *  "loan" gate for a loan without a term and are also raised by a write-time rule for a
+ *  loan with one (`instalmentBelowInterestErrors`, ADR 0264). */
 type Gate = "data" | "range" | "loan";
 
 /** Every code's gates, in one table: a code left out fails `tsc` (#479). */

@@ -21,7 +21,7 @@ import {
   type SignRule,
 } from "./check";
 import { duplicateStarts, refinancesWithinAMonth } from "./blockStarts";
-import { blockIssues } from "./loan";
+import { blockIssues, instalmentBelowInterest } from "./loan";
 
 /** Effective-dated rows: valid dates, finite non-negative amount, end ≥ start. */
 function checkDated<F extends ValidationField>(
@@ -184,4 +184,27 @@ export function leaseOverlapErrors(
   return [...named].map((id) =>
     rowError({ entity: "lease", id }, "LEASE_OVERLAP", "startDate"),
   );
+}
+
+/**
+ * INSTALMENT_BELOW_INTEREST (or ZERO_RATE_ZERO_INSTALMENT) on the instalment of each plain
+ * loan with a term that pays at or below its first month's interest (ADR 0264). A
+ * write-time rule, as `leaseOverlapErrors`: the store and CSV import apply it to the rows
+ * they write, so a stored loan like that still loads and restores (the Data check lists it).
+ */
+export function instalmentBelowInterestErrors(
+  portfolio: Portfolio,
+): EngineValidationError[] {
+  return portfolio.mortgages.flatMap((b) => {
+    const found = instalmentBelowInterest(b);
+    return found
+      ? [
+          rowError(
+            { entity: "mortgage", id: b.id },
+            found.code,
+            "monthlyInstalment",
+          ),
+        ]
+      : [];
+  });
 }
