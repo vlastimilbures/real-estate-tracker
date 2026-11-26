@@ -22,11 +22,6 @@
       "count": 1
     }
   },
-  "src/ui/model/dataCheck.ts": {
-    "complexity": {
-      "count": 2
-    }
-  },
   "src/ui/model/financing.ts": {
     "max-lines-per-function": {
       "count": 1

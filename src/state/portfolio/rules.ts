@@ -2,6 +2,7 @@
 // so a form shows the rule (UX-047). The store reads their inputs inside the queued op.
 import {
   EngineInputError,
+  instalmentBelowInterestErrors,
   leaseOverlapErrors,
   scenarioErrorsAddedBy,
   scenarioRuleErrors,
@@ -36,9 +37,10 @@ export function withRow<T extends { id: string }>(rows: T[], row: T): T[] {
 }
 
 /** Throw the engine input rules broken by the rows `ids` of the candidate portfolio
- *  (D-17, D-27, D-37, D-42, D-54), and the write-time lease overlap rule (ADR 0163), so
- *  a form shows the rule before anything is written (UX-047). Problems in other rows
- *  are not this edit's to report: a stored overlap does not block other edits.
+ *  (D-17, D-27, D-37, D-42, D-54), and the write-time instalment (ADR 0264) and lease
+ *  overlap (ADR 0163) rules, so a form shows the rule before anything is written
+ *  (UX-047). Problems in other rows are not this edit's to report: a stored overlap or
+ *  a stored loan below its interest does not block other edits.
  *  `overlapIds` (default `ids`) narrows the overlap rule to the rows that can add one.
  *  Then the out-of-range values the edit adds to the `stored` portfolio (ADR 0245). */
 function assertRows(
@@ -51,6 +53,7 @@ function assertRows(
     e.id !== undefined && rows.includes(e.id);
   const errors = [
     ...validatePortfolio(candidate).filter(of(ids)),
+    ...instalmentBelowInterestErrors(candidate).filter(of(ids)),
     ...leaseOverlapErrors(candidate).filter(of(overlapIds)),
   ];
   if (errors.length > 0) throw new EngineInputError(errors);

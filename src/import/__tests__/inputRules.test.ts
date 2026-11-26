@@ -7,6 +7,7 @@ import { INT_RANGES, type IntRange } from "../../lib/rules";
 import { collectValues, FORM_PARSERS } from "../../ui/model/formParse";
 import {
   isoDate,
+  money,
   rate,
   scenarioErrorsAddedBy,
   scenarioRuleErrors,
@@ -334,6 +335,23 @@ describe("overlapping leases (ADR 0163)", () => {
       startDate: isoDate("2027-01-01"),
     };
     const p = { ...portfolio, leases: [...portfolio.leases, later] };
+    expect(checkInputRules(p, assumptions)).toEqual([]);
+    expect(checkInputRules(p)).toEqual([]);
+  });
+});
+
+describe("a loan with a term below its first interest (ADR 0264)", () => {
+  it("is not a restore problem: a backup with it restores silently, the Data check lists it", () => {
+    // The #597 loan: 3,000,000 Kč at 5 %, a 30-year term, instalment 1,000 Kč.
+    const [m0, ...ms] = portfolio.mortgages;
+    const below = {
+      ...m0!,
+      initialPrincipal: money("3000000"),
+      interestRatePa: rate("0.05"),
+      loanTermYears: 30,
+      monthlyInstalment: money("1000"),
+    };
+    const p = { ...portfolio, mortgages: [below, ...ms] };
     expect(checkInputRules(p, assumptions)).toEqual([]);
     expect(checkInputRules(p)).toEqual([]);
   });

@@ -10,9 +10,17 @@ export type {
   ValidationCode,
   ValidationEntity,
 } from "./codes";
-export { assertLoanInputs, assertLoanRows } from "./loan";
+export {
+  assertLoanInputs,
+  assertLoanRows,
+  instalmentBelowInterest,
+} from "./loan";
 export { assertBlockStarts } from "./blockStarts";
-export { leaseOverlapErrors, validatePortfolio } from "./rows";
+export {
+  instalmentBelowInterestErrors,
+  leaseOverlapErrors,
+  validatePortfolio,
+} from "./rows";
 export {
   assertAsOf,
   assertAssumptions,

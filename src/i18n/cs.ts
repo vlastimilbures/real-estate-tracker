@@ -456,6 +456,10 @@ export const cs: Dictionary = {
       `Horizont projekce ${value} ${csPlural(n, ["rok", "roky", "let"])} je mimo rozsah, který formuláře přijímají (${range} let).`,
     leaseOverlap: (first, second) =>
       `Nájmy od ${first} a od ${second} se překrývají. Nájmy jednoho bytu se překrývat nemohou: nastavte dřívějšímu nájmu datum konce před začátkem pozdějšího.`,
+    instalmentBelowInterest: (date, instalment, interest) =>
+      `Hypotéka od ${date}: splátka ${instalment} nepokrývá úrok za první měsíc ${interest}. Čísla až do příští změny sazby nezahrnují nezaplacený úrok. Zvyšte splátku, aby bylo možné úvěr znovu uložit.`,
+    zeroRateZeroInstalment: (date) =>
+      `Hypotéka od ${date}: bezúročný úvěr s dobou splatnosti potřebuje splátku vyšší než 0 Kč. Zvyšte splátku, aby bylo možné úvěr znovu uložit.`,
   },
 
   properties: {

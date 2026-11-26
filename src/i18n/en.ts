@@ -515,6 +515,17 @@ export const en = {
     // ADR 0163: two stored leases of one apartment overlap (a database from before the rule).
     leaseOverlap: (first: string, second: string) =>
       `The leases from ${first} and from ${second} overlap. Leases on one apartment cannot overlap: set an end date on the earlier lease before the later one starts.`,
+    // ADR 0264: a stored plain loan with a term whose instalment is at or below its first
+    // month's interest (a database from before the rule).
+    instalmentBelowInterest: (
+      date: string,
+      instalment: string,
+      interest: string,
+    ) =>
+      `Mortgage from ${date}: the instalment ${instalment} does not cover the first month's interest ${interest}. The figures leave the unpaid interest out until the next rate reset. Raise the instalment to save this loan again.`,
+    // ADR 0264: the same for a 0 % loan with a term and a 0 Kč instalment.
+    zeroRateZeroInstalment: (date: string) =>
+      `Mortgage from ${date}: an interest-free loan with a term needs an instalment above 0 Kč. Raise the instalment to save this loan again.`,
   },
 
   properties: {

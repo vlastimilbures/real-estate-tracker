@@ -30,6 +30,7 @@ export { openPredecessor, overlappingLeases } from "./effectiveDating";
 export { isDevLoan, mortgageBlock } from "./loanBlock";
 export { blockEndDate, fixationExpired } from "./loanRate";
 export { suggestedInstalment } from "./loanInstalment";
+export type { InstalmentCode } from "./loanTerm";
 export {
   amortizationHealth,
   /** @internal test seam (UI model tests) */
@@ -97,6 +98,8 @@ export { blocksReachedByShock } from "./shockReach";
 export type { BlockShockReach } from "./shockReach";
 export {
   comparableScenarios,
+  instalmentBelowInterest,
+  instalmentBelowInterestErrors,
   leaseOverlapErrors,
   scenarioErrorsAddedBy,
   scenarioRuleErrors,

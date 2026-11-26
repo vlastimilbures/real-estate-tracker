@@ -266,3 +266,24 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 - Rejected: keeping the join, which fixes the order of the two sentences and the space
   between them in every language.
 - Approved by: owner OK 2026-11-25 (recorded in the #435 log)
+
+### 2026-11-26 · #597 / ADR 0264
+
+- Keys: `dataCheck.instalmentBelowInterest`, `dataCheck.zeroRateZeroInstalment` (en, cs,
+  ru), new
+- Change: the Data check's "Needs attention" line for a stored plain loan with a term whose
+  instalment does not cover its first month's interest. It opens "Mortgage from {date}" as
+  the neighbouring `dataCheck` keys do, names the instalment and that interest, says the
+  figures leave the unpaid interest out until the next rate reset, and asks to raise the
+  instalment to save the loan again. A 0 % loan with a 0 Kč instalment
+  (`ZERO_RATE_ZERO_INSTALMENT`) gets its own sentence, chosen by the finding's code, instead
+  of reading "0 Kč … 0 Kč". "Does not cover" rather than "is below", as the rule also
+  refuses an equal instalment and the amounts shown are rounded. The list is
+  `role="list"`, not a live region; ADR 0264 records the finding.
+- Rejected: also advising "or remove the term", which is wrong: a loan without a term is
+  refused by D-17 on the same test. A term-specific variant of
+  `inputRules.INSTALMENT_BELOW_INTEREST` for the refusal; the owner kept the existing text.
+  Leaving the 0 % case out of the Data check, which ADR 0264 lists as failing the rule.
+- Approved by: en, owner 2026-11-26 (#597 decision 6, corrected on PR #613); cs/ru:
+  owner-approved choices (opening noun, 'aby bylo možné', 'расчёты'); final text reviewed
+  under the owner's delegation, 2026-11-26

@@ -12,7 +12,9 @@
   value is anchored),
   [0206](0206-data-check-grouped.md) (the Dashboard panel is last, summary first, its
   findings grouped by problem),
-  [0223](0223-data-check-blocks.md) (Property detail: last section, blocks of rows, the title pill)
+  [0223](0223-data-check-blocks.md) (Property detail: last section, blocks of rows, the title pill),
+  [0264](0264-loan-term-instalment-above-interest.md) (a stored loan paying at or below its
+  first interest needs attention)
 
 ## Context
 

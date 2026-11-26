@@ -231,6 +231,12 @@ engine without the form, and remove it when the last part lands.
 - Internal: the Dashboard Financing note in the real lens is one dictionary entry instead of
   two sentences joined in code, so each language can phrase the whole note (#485 follow-up,
   wording log 2026-11-25). The text shown is unchanged in every language.
+- A plain loan **with a loan term** whose monthly instalment is at or below its first
+  month's interest is now refused in the mortgage form and in a `mortgages.csv` import, as
+  a loan without a term already was, with the same message on the instalment (ADR 0264,
+  #597). A loan like that saved before still loads, restores and projects as before; the
+  Data check lists it under "Needs attention", and it can be saved again once its
+  instalment is raised. No figure changes.
 
 ### Fixed
 

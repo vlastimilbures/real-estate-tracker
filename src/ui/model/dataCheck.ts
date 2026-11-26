@@ -4,6 +4,7 @@
 import {
   basisDate,
   edate,
+  instalmentBelowInterest,
   leaseEndWithoutFollowOn,
   leaseInForce,
   monthsBetween,
@@ -19,9 +20,11 @@ import type {
   MortgageBlock,
   Portfolio,
   Property,
+  InstalmentCode,
   Rate,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
+import type { Decimal } from "../../lib/money";
 import { fmtCzk, fmtDate, fmtNumber, fmtPct } from "../../lib/format";
 import { inRange, rangeProblems, type IntRange } from "../../lib/rules";
 import {
@@ -88,7 +91,18 @@ export type DataFinding =
     }
   /** Two stored leases of the property that overlap (ADR 0163), by start date: a
    *  database from before the rule keeps them. */
-  | { kind: "leaseOverlap"; first: IsoDate; second: IsoDate };
+  | { kind: "leaseOverlap"; first: IsoDate; second: IsoDate }
+  /** A stored plain loan with a term whose instalment is at or below its first month's
+   *  interest (ADR 0264): a database from before the rule keeps it, and its figures
+   *  leave the unpaid interest out until the next rate reset. `code` is the rule it
+   *  breaks: ZERO_RATE_ZERO_INSTALMENT for a 0 % loan with a 0 Kč instalment. */
+  | {
+      kind: "instalmentBelowInterest";
+      code: InstalmentCode;
+      loanStart: IsoDate;
+      instalment: Money;
+      interest: Decimal;
+    };
 
 /** A property's findings: "needs attention" (counted) and "using portfolio defaults". */
 export interface DataCheck {
@@ -138,6 +152,7 @@ export function propertyDataCheck(
   const stored = [
     ...rangeFindings(property, own(portfolio.mortgages)),
     ...leaseOverlapFindings(own(portfolio.leases)),
+    ...instalmentFindings(own(portfolio.mortgages)),
   ];
   if (property.purchaseDate.getTime() > asOf.getTime())
     return { attention: stored, defaults: fundingOf(property, baseDate) };
@@ -217,6 +232,25 @@ function leaseOverlapFindings(leases: Lease[]): DataFinding[] {
     first: a.startDate,
     second: b.startDate,
   }));
+}
+
+/** Stored loans with a term that pay at or below their first month's interest (ADR 0264):
+ *  every such block, a replaced past one too, as the forms refuse to save any of them. */
+function instalmentFindings(mortgages: MortgageBlock[]): DataFinding[] {
+  return mortgages.flatMap((b) => {
+    const found = instalmentBelowInterest(b);
+    return found
+      ? [
+          {
+            kind: "instalmentBelowInterest" as const,
+            code: found.code,
+            loanStart: b.startDate,
+            instalment: b.monthlyInstalment,
+            interest: found.firstInterest,
+          },
+        ]
+      : [];
+  });
 }
 
 /** The portfolio's own findings, as rows without a property: a stored projection horizon
@@ -393,92 +427,120 @@ export function dataCheckGroups(
   return [...groups.values()];
 }
 
+type FindingKind = DataFinding["kind"];
+type FindingOf<K extends FindingKind> = Extract<DataFinding, { kind: K }>;
+type OutOfRange = FindingOf<"outOfRange">;
+
+/** Where each kind of finding is fixed; an out-of-range value by its field. */
+const FINDING_FIX: Record<Exclude<FindingKind, "outOfRange">, DataCheckFix> = {
+  valuationStale: "records",
+  noValuation: "records",
+  noLease: "records",
+  leaseEnded: "records",
+  leaseEnding: "records",
+  leaseOverlap: "records",
+  fixationEnded: "financing",
+  instalmentBelowInterest: "financing",
+  costDefaults: "holding",
+  growthDefault: "edit",
+  fundingUnknown: "editFunding",
+};
+const OUT_OF_RANGE_FIX: Record<OutOfRange["field"], DataCheckFix> = {
+  sizeM2: "edit",
+  fixationYears: "financing",
+  loanTermYears: "financing",
+  horizonYears: "assumptions",
+};
+
 /** Where the finding is fixed. */
 export function findingFix(f: DataFinding): DataCheckFix {
-  switch (f.kind) {
-    case "valuationStale":
-    case "noValuation":
-    case "noLease":
-    case "leaseEnded":
-    case "leaseEnding":
-    case "leaseOverlap":
-      return "records";
-    case "fixationEnded":
-      return "financing";
-    case "costDefaults":
-      return "holding";
-    case "growthDefault":
-      return "edit";
-    case "fundingUnknown":
-      return "editFunding";
-    case "outOfRange":
-      return f.field === "sizeM2"
-        ? "edit"
-        : f.field === "horizonYears"
-          ? "assumptions"
-          : "financing";
+  return f.kind === "outOfRange"
+    ? OUT_OF_RANGE_FIX[f.field]
+    : FINDING_FIX[f.kind];
+}
+
+type TextDict = Pick<Dictionary, "dataCheck" | "propertyDetail">;
+
+/** A stored value outside the form range, with every decimal (ADR 0180 §2). */
+function outOfRangeText(t: TextDict, f: OutOfRange): string {
+  const d = t.dataCheck;
+  const value = fmtNumber(f.value);
+  const range = `${fmtNumber(f.range.min)}–${fmtNumber(f.range.max)}`;
+  const loan = f.loanStart ? fmtDate(f.loanStart) : "";
+  switch (f.field) {
+    case "sizeM2":
+      // Only the size can hold a fraction: the engine refuses one in the others
+      // (engine/validate/, whole years), so they never reach the Data check. Inside the
+      // range it is listed only with two or more decimals (ADR 0236 §3).
+      return inRange(f.value, f.range)
+        ? d.sizeDecimals(value, range)
+        : d.outOfRangeSize(value, range);
+    case "fixationYears":
+      return d.outOfRangeFixation(loan, value, range, f.value);
+    case "loanTermYears":
+      return d.outOfRangeTerm(loan, value, range, f.value);
+    case "horizonYears":
+      return d.outOfRangeHorizon(value, range, f.value);
   }
 }
 
+/** A stored loan below its interest, worded by the rule it breaks (ADR 0264): every
+ *  instalment code needs its sentence. */
+const INSTALMENT_TEXT: Record<
+  InstalmentCode,
+  (t: TextDict, f: FindingOf<"instalmentBelowInterest">) => string
+> = {
+  INSTALMENT_BELOW_INTEREST: (t, f) =>
+    t.dataCheck.instalmentBelowInterest(
+      fmtDate(f.loanStart),
+      fmtCzk(f.instalment),
+      fmtCzk(f.interest),
+    ),
+  ZERO_RATE_ZERO_INSTALMENT: (t, f) =>
+    t.dataCheck.zeroRateZeroInstalment(fmtDate(f.loanStart)),
+};
+
+/** Each kind of finding's sentence. */
+const FINDING_TEXT: {
+  [K in FindingKind]: (t: TextDict, f: FindingOf<K>, resetRate: Rate) => string;
+} = {
+  valuationStale: (t, f) =>
+    t.dataCheck.valuationStale(
+      t.propertyDetail.monthsCount(f.months),
+      fmtDate(f.validFrom),
+    ),
+  noValuation: (t, f) =>
+    t.dataCheck.noValuation(fmtCzk(f.purchasePrice), fmtDate(f.purchaseDate)),
+  noLease: (t, f) => t.dataCheck.noLease(fmtDate(f.asOf)),
+  leaseEnded: (t, f) => t.dataCheck.leaseEnded(fmtDate(f.endDate)),
+  leaseEnding: (t, f) => t.dataCheck.leaseEnding(fmtDate(f.endDate)),
+  leaseOverlap: (t, f) =>
+    t.dataCheck.leaseOverlap(fmtDate(f.first), fmtDate(f.second)),
+  fixationEnded: (t, f, resetRate) => loanWarningText(t, f, resetRate),
+  instalmentBelowInterest: (t, f) => INSTALMENT_TEXT[f.code](t, f),
+  growthDefault: ({ dataCheck: d }, f) =>
+    f.appreciation && f.rentIndexation
+      ? d.growthBoth
+      : f.appreciation
+        ? d.growthAppreciation
+        : d.growthRentIndexation,
+  costDefaults: (t, f) =>
+    t.dataCheck.costDefaults(
+      f.fields.map((field) => costLabel(t, field)).join(", "),
+    ),
+  fundingUnknown: ({ dataCheck: d }, f) =>
+    f.future ? d.fundingUnknownFuture : d.fundingUnknown,
+  outOfRange: outOfRangeText,
+};
+
 /** The finding and its effect as one or two sentences in the user's language. */
-export function findingText(
-  t: Pick<Dictionary, "dataCheck" | "propertyDetail">,
-  f: DataFinding,
+export function findingText<K extends FindingKind>(
+  t: TextDict,
+  f: FindingOf<K>,
   resetRate: Rate,
 ): string {
-  const d = t.dataCheck;
-  switch (f.kind) {
-    case "valuationStale":
-      return d.valuationStale(
-        t.propertyDetail.monthsCount(f.months),
-        fmtDate(f.validFrom),
-      );
-    case "noValuation":
-      return d.noValuation(fmtCzk(f.purchasePrice), fmtDate(f.purchaseDate));
-    case "noLease":
-      return d.noLease(fmtDate(f.asOf));
-    case "leaseEnded":
-      return d.leaseEnded(fmtDate(f.endDate));
-    case "leaseEnding":
-      return d.leaseEnding(fmtDate(f.endDate));
-    case "leaseOverlap":
-      return d.leaseOverlap(fmtDate(f.first), fmtDate(f.second));
-    case "fixationEnded":
-      return loanWarningText(t, f, resetRate);
-    case "growthDefault":
-      return f.appreciation && f.rentIndexation
-        ? d.growthBoth
-        : f.appreciation
-          ? d.growthAppreciation
-          : d.growthRentIndexation;
-    case "costDefaults":
-      return d.costDefaults(
-        f.fields.map((field) => costLabel(t, field)).join(", "),
-      );
-    case "fundingUnknown":
-      return f.future ? d.fundingUnknownFuture : d.fundingUnknown;
-    case "outOfRange": {
-      // The stored value with every decimal (ADR 0180 §2).
-      const value = fmtNumber(f.value);
-      const range = `${fmtNumber(f.range.min)}–${fmtNumber(f.range.max)}`;
-      const loan = f.loanStart ? fmtDate(f.loanStart) : "";
-      switch (f.field) {
-        case "sizeM2":
-          // Only the size can hold a fraction: the engine refuses one in the others
-          // (engine/validate/, whole years), so they never reach the Data check. Inside the
-          // range it is listed only with two or more decimals (ADR 0236 §3).
-          return inRange(f.value, f.range)
-            ? d.sizeDecimals(value, range)
-            : d.outOfRangeSize(value, range);
-        case "fixationYears":
-          return d.outOfRangeFixation(loan, value, range, f.value);
-        case "loanTermYears":
-          return d.outOfRangeTerm(loan, value, range, f.value);
-        case "horizonYears":
-          return d.outOfRangeHorizon(value, range, f.value);
-      }
-    }
-  }
+  // The table's type pairs each kind with its finding; `f.kind` is that kind.
+  return FINDING_TEXT[f.kind as K](t, f, resetRate);
 }
 
 /** The fix link's label: the section it moves to, or the property form. */

@@ -150,7 +150,9 @@ completion. A block whose start date is invalid reports `INVALID_DATE` on it and
 checks that count from the start (event and draw dates against the start or the schedule
 end, the recast maturity); the payment-grid walk raises a `RangeError` on an invalid date
 instead of looping (ADR 0247). `LEASE_OVERLAP` (two leases of one property overlap, ADR 0163) is a write-time
-rule outside `validateInputs`. Ranges (ADR 0038, ADR 0128):
+rule outside `validateInputs`, and so is the instalment rule for a plain loan with an explicit term
+(`INSTALMENT_BELOW_INTEREST`, or `ZERO_RATE_ZERO_INSTALMENT` at 0 %: the instalment must exceed the
+first month's interest, ADR 0264); a stored loan like that still loads and projects. Ranges (ADR 0038, ADR 0128):
 interest 0–100 %, the post-fixation reset rate included; vacancy, cost shares and value
 haircut 0–1; shock durations whole years ≥ 0; horizon a whole number ≥ 1; growth,
 indexation, inflation and a property's growth overrides may be negative but must be
@@ -212,8 +214,8 @@ and restores with no warning (ADR 0232).
   running loan, plain or development (ADR 0235). For an ordinary plain loan this equals the
   closed form (FV at the original rate and instalment, kept in the reference model as
   `closedFormBalance`). A plain loan whose instalment cannot repay it by its explicit term
-  follows its payments as scheduled: at or below the month's interest it opens at the
-  principal; viewed on or after maturity it opens at 0 (the payment at maturity cleared
+  follows its payments as scheduled: at or below the month's interest (a loan stored before
+  ADR 0264) it opens at the principal; viewed on or after maturity it opens at 0 (the payment at maturity cleared
   it). Blocks with `startDate > asOf` are _future_; `balance ≤ 0` ⇒ _closed_.
 
 ### 4.3 Snapshot (the as-of lens)
