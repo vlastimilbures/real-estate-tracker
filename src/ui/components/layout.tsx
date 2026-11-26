@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { useT } from "../hooks/useT";
 import { InfoTip } from "./InfoTip";
 import { PanelSection } from "./panelFocus";
+import { cx } from "../../lib/cx";
 
 /** Horizontally/vertically scrolling table container: a named region keyboard users can
  *  Tab to and scroll with the arrow keys. */
@@ -83,7 +84,7 @@ export function Panel({
           </div>
         )}
         {badges && <div className="panel-badges">{badges}</div>}
-        <div className={`panel-body${flush ? " flush" : ""}`}>
+        <div className={cx("panel-body", flush && "flush")}>
           {help && <div className="panel-help">{help}</div>}
           {children}
         </div>

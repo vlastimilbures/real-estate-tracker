@@ -5,6 +5,7 @@ import { Money } from "../../components/figures";
 import { TableWrap } from "../../components/layout";
 import type { DrawdownRow, DrawdownView } from "../../model/propertyDetail";
 import { useT } from "../../hooks/useT";
+import { cx } from "../../../lib/cx";
 
 const DRAW_ICON: Record<DrawdownRow["status"], typeof Check> = {
   drawn: Check,
@@ -28,7 +29,7 @@ export function DrawdownSection({ dd }: { dd: DrawdownView }) {
         <InfoTip topic={dd.title}>{d.drawdownNote}</InfoTip>
       </div>
       <div
-        className={`drawdown-bar${dd.full ? " full" : ""}`}
+        className={cx("drawdown-bar", dd.full && "full")}
         role="progressbar"
         aria-labelledby={headingId}
         aria-valuemin={0}

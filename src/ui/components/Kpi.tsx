@@ -2,6 +2,7 @@
 import { useId, type ReactNode } from "react";
 import type { Band } from "../model/health";
 import { HealthMarker } from "./status";
+import { cx } from "../../lib/cx";
 
 /** The KPI band (ADR 0222): one surface holding captioned groups of compact tiles. */
 export function KpiBand({ children }: { children: ReactNode }) {
@@ -63,7 +64,7 @@ export function KpiTile({
 }) {
   return (
     <div
-      className={`tile reveal${compact ? " compact" : ""}`}
+      className={cx("tile reveal", compact && "compact")}
       style={{ animationDelay: `${delay}ms` }}
     >
       <span className="label">{label}</span>

@@ -11,6 +11,7 @@ import { addYears } from "../../engine";
 import { useT } from "../hooks/useT";
 import { DateInput } from "./DateInput";
 import { clampAsOf, resolveAsOf, type AsOfBounds } from "../model/asOf";
+import { cx } from "../../lib/cx";
 
 /** The "+N years" presets after Today. */
 const PRESET_YEARS = [1, 5] as const;
@@ -96,7 +97,7 @@ export function AsOfPicker({
         <div className="pill-group">
           <button
             type="button"
-            className={`pill${isToday ? " on" : ""}`}
+            className={cx("pill", isToday && "on")}
             aria-pressed={isToday}
             onClick={() => onChange(null)}
             data-testid="asof-today"
@@ -107,7 +108,7 @@ export function AsOfPicker({
             <button
               key={years}
               type="button"
-              className={`pill${on ? " on" : ""}`}
+              className={cx("pill", on && "on")}
               aria-pressed={on}
               onClick={() => pick(target)}
               data-testid={`asof-${years}y`}

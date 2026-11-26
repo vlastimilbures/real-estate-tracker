@@ -5,6 +5,7 @@ import { useCallback, useId, useRef, useState } from "react";
 import { useModalA11y } from "../hooks/useModalA11y";
 import { useDismiss } from "../hooks/useDismiss";
 import { useT } from "../hooks/useT";
+import { cx } from "../../lib/cx";
 
 const PILL_THRESHOLD = 5;
 
@@ -102,7 +103,7 @@ function Pills({
         <button
           key={r.key}
           type="button"
-          className={`pill${r.checked ? " on" : ""}`}
+          className={cx("pill", r.checked && "on")}
           aria-pressed={r.checked}
           onClick={r.pick}
           title={r.title}
@@ -211,7 +212,7 @@ function ListboxPopover({
             ref={(el) => {
               optionRefs.current[i] = el;
             }}
-            className={`property-select-row${r.checked ? " checked" : ""}`}
+            className={cx("property-select-row", r.checked && "checked")}
             role="option"
             aria-selected={r.checked}
             tabIndex={i === current ? 0 : -1}
