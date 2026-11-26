@@ -7,6 +7,12 @@
 // passes, and each test makes as many assertions as on the base. A test added in a file the
 // base does not have is listed, not failed; one added to an existing file fails.
 //
+// A refactor that merges or renames suites (#497) passes `--moves <map.json>`: an object
+// from a base key (`file › suite › … › title`, as the summary prints it) to the key the
+// same test has on the head. A moved test is compared under its head key and re-run from
+// its base file on the base and its head file on the head; a map entry that names no base
+// test fails the audit, and a map that is not such an object is rejected.
+//
 // A `waitFor(() => expect(…))` counts every retry, so its count can move with timing.
 // Every test that calls waitFor (retry-counted, on either side) is re-run alone RERUNS
 // times in each checkout, whether or not its count differs, and the two sides compare by
@@ -31,23 +37,47 @@ function rootOf(report) {
 }
 
 /** One row per test: `file › suite › … › title`, its status, its assertion count and its
- *  line. The file is relative to the checkout the report ran in, so base and head compare. */
-export function rows(report, root = rootOf(report)) {
+ *  line. The file is relative to the checkout the report ran in, so base and head compare.
+ *  `moves` renames a key (a base test that moved); `baseKey`, its file and its full name
+ *  stay the base's, where a base rerun finds it. */
+export function rows(report, root = rootOf(report), moves = new Map()) {
   const out = [];
   for (const file of report.testResults) {
     const name = relative(root, file.name).split("\\").join("/");
-    for (const t of file.assertionResults)
+    for (const t of file.assertionResults) {
+      const key = [name, ...t.ancestorTitles, t.title].join(" › ");
       out.push({
         file: name,
-        key: [name, ...t.ancestorTitles, t.title].join(" › "),
+        key: moves.get(key) ?? key,
+        // The key before `moves`, which a rerun in this checkout matches.
+        baseKey: key,
         // Vitest's own full name, what `-t` matches.
         fullName: [...t.ancestorTitles, t.title].join(" "),
         status: t.status,
         assertions: t.meta?.assertionCalls ?? null,
         line: t.location?.line ?? null,
       });
+    }
   }
   return out;
+}
+
+/** The `--moves` map from its parsed JSON: a plain object from base keys to head keys.
+ *  Anything else (an array, null, a scalar, a key mapped to a non-string) throws. */
+export function movesFrom(json) {
+  const plain =
+    json !== null && typeof json === "object" && !Array.isArray(json);
+  if (!plain || !Object.values(json).every((v) => typeof v === "string"))
+    throw new Error(
+      "expected a JSON object from each moved test's base key to its head key (a string)",
+    );
+  return new Map(Object.entries(json));
+}
+
+/** The `moves` entries that name no test of the base report. */
+export function staleMoves(base, moves) {
+  const keys = new Set(rows(base).map((r) => r.key));
+  return [...moves.keys()].filter((k) => !keys.has(k));
 }
 
 const WAIT_FOR = /\bwaitFor\(/;
@@ -98,9 +128,10 @@ const lowest = (counts) =>
 export function audit(
   base,
   head,
-  { reruns = new Map(), retry = new Set() } = {},
+  { reruns = new Map(), retry = new Set(), moves = new Map() } = {},
 ) {
-  const b = rows(base);
+  const b = rows(base, undefined, moves);
+  const stale = staleMoves(base, moves);
   const h = rows(head);
   const bMap = byKey(b);
   const hMap = byKey(h);
@@ -154,6 +185,7 @@ export function audit(
   }
   return {
     ok:
+      stale.length === 0 &&
       missing.length === 0 &&
       added.length === 0 &&
       notPassing.length === 0 &&
@@ -165,6 +197,8 @@ export function audit(
     headAssertions: h.reduce((n, r) => n + (r.assertions ?? 0), 0),
     retryCounted: h.filter((r) => retry.has(r.key)).length,
     rerunChecked,
+    moved: moves.size,
+    stale,
     missing,
     added,
     addedInNewFiles,
@@ -176,14 +210,22 @@ export function audit(
 }
 
 /** The tests to re-run: every retry-counted test that both sides have once, whether or
- *  not its count differs. */
-export function toRerun(base, head, retry) {
+ *  not its count differs. `key` is the head key (what `audit` looks reruns up by); each
+ *  side has its own key, file and full name, which differ for a moved test. */
+export function toRerun(base, head, retry, moves = new Map()) {
   const hMap = byKey(rows(head));
   const out = [];
-  for (const [key, bs] of byKey(rows(base))) {
+  for (const [key, bs] of byKey(rows(base, undefined, moves))) {
     const hs = hMap.get(key) ?? [];
-    if (retry.has(key) && bs.length === 1 && hs.length === 1)
-      out.push({ key, file: bs[0].file, fullName: bs[0].fullName });
+    if (retry.has(key) && bs.length === 1 && hs.length === 1) {
+      const [b] = bs;
+      const [h] = hs;
+      out.push({
+        key,
+        base: { key: b.baseKey, file: b.file, fullName: b.fullName },
+        head: { key: h.key, file: h.file, fullName: h.fullName },
+      });
+    }
   }
   return out;
 }
@@ -197,6 +239,7 @@ export function summary(result) {
       `not passing: ${result.notPassing.length}, without a count: ${result.unaudited.length}, ` +
       `assertion-count diffs: ${result.assertionDiffs.length}`,
     `added in new files: ${result.addedInNewFiles.length}`,
+    `moved by the map: ${result.moved}, map entries naming no base test: ${result.stale.length}`,
     `retry-counted (call waitFor): ${result.retryCounted}, compared by lowest count after ` +
       `${RERUNS} isolated reruns each side: ${result.rerunChecked}; ` +
       `full-run count differed, lowest count the same: ${result.settledByRerun.length}`,
@@ -206,6 +249,7 @@ export function summary(result) {
     lines.push(`${title}:`);
     for (const item of items) lines.push(`  ${item}`);
   };
+  list("map entries naming no base test", result.stale);
   list("missing", result.missing);
   list("added to existing files", result.added);
   list("added in new files", result.addedInNewFiles);
@@ -230,38 +274,53 @@ export function summary(result) {
 
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-/** Counts of `times` passing runs of one test alone in checkout `dir`. */
-function rerunAlone(dir, { file, fullName, key }, times) {
-  const counts = [];
+/** Runs one test alone in checkout `dir` under the audit setup: its JSON report, or null. */
+function vitestAlone(dir, file, fullName) {
   const tmp = mkdtempSync(join(tmpdir(), "test-audit-"));
   try {
-    for (let i = 0; i < times; i++) {
-      const out = join(tmp, `${i}.json`);
-      spawnSync(
-        "pnpm",
-        [
-          "exec",
-          "vitest",
-          "run",
-          file,
-          "--maxWorkers=1",
-          "-t",
-          `^${escape(fullName)}$`,
-          "--reporter=json",
-          `--outputFile=${out}`,
-        ],
-        { cwd: dir, env: { ...process.env, TEST_AUDIT: "1" }, stdio: "ignore" },
-      );
-      if (!existsSync(out)) continue;
-      const report = JSON.parse(readFileSync(out, "utf8"));
-      const row = rows(report, dir).find((r) => r.key === key);
-      if (row?.status === "passed" && row.assertions !== null)
-        counts.push(row.assertions);
-    }
+    const out = join(tmp, "report.json");
+    spawnSync(
+      "pnpm",
+      [
+        "exec",
+        "vitest",
+        "run",
+        file,
+        "--maxWorkers=1",
+        "-t",
+        `^${escape(fullName)}$`,
+        "--reporter=json",
+        `--outputFile=${out}`,
+      ],
+      { cwd: dir, env: { ...process.env, TEST_AUDIT: "1" }, stdio: "ignore" },
+    );
+    return existsSync(out) ? JSON.parse(readFileSync(out, "utf8")) : null;
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
+}
+
+/** Counts of `times` passing runs of one test alone in checkout `dir`. `run` runs it and
+ *  returns the report (tests stand in for Vitest here). */
+function rerunAlone(dir, { file, fullName, key }, times, run = vitestAlone) {
+  const counts = [];
+  for (let i = 0; i < times; i++) {
+    const report = run(dir, file, fullName);
+    if (!report) continue;
+    const row = rows(report, dir).find((r) => r.key === key);
+    if (row?.status === "passed" && row.assertions !== null)
+      counts.push(row.assertions);
+  }
   return counts;
+}
+
+/** The isolated rerun counts of one `toRerun` entry, `{ base, head }`: each side runs
+ *  its own file and full name and matches its own key. */
+export function rerunBoth(test, baseDir, headDir, times = RERUNS, run) {
+  return {
+    base: rerunAlone(baseDir, test.base, times, run),
+    head: rerunAlone(headDir, test.head, times, run),
+  };
 }
 
 function option(name) {
@@ -273,7 +332,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const [basePath, headPath] = process.argv.slice(2);
   if (!basePath || !headPath || basePath.startsWith("--")) {
     console.error(
-      "usage: node scripts/test-audit.mjs <base.json> <head.json> [--base-dir <dir>] [--head-dir <dir>]",
+      "usage: node scripts/test-audit.mjs <base.json> <head.json> [--base-dir <dir>] [--head-dir <dir>] [--moves <map.json>]",
     );
     process.exit(2);
   }
@@ -282,23 +341,28 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const head = read(headPath);
   const baseDir = option("--base-dir");
   const headDir = resolve(option("--head-dir") ?? ".");
+  const movesPath = option("--moves");
+  let moves;
+  try {
+    moves = movesFrom(movesPath ? read(movesPath) : {});
+  } catch (e) {
+    console.error(`--moves ${movesPath}: ${e.message}`);
+    process.exit(2);
+  }
   const sourceIn = (root) => (file) => {
     const p = join(root, file);
     return existsSync(p) ? readFileSync(p, "utf8") : null;
   };
   // Retry-counted on either side: a waitFor dropped on the head is still re-run.
   const retry = new Set([
-    ...retryCounted(rows(base), sourceIn(rootOf(base))),
+    ...retryCounted(rows(base, undefined, moves), sourceIn(rootOf(base))),
     ...retryCounted(rows(head), sourceIn(rootOf(head))),
   ]);
   const reruns = new Map();
   if (baseDir)
-    for (const test of toRerun(base, head, retry))
-      reruns.set(test.key, {
-        base: rerunAlone(resolve(baseDir), test, RERUNS),
-        head: rerunAlone(headDir, test, RERUNS),
-      });
-  const result = audit(base, head, { reruns, retry });
+    for (const test of toRerun(base, head, retry, moves))
+      reruns.set(test.key, rerunBoth(test, resolve(baseDir), headDir));
+  const result = audit(base, head, { reruns, retry, moves });
   console.log(summary(result));
   process.exit(result.ok ? 0 : 1);
 }

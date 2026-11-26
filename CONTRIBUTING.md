@@ -140,7 +140,12 @@ still describe it. Which document owns what is listed in
   (retry-counted, on either side) is re-run alone three times in each checkout, whether
   or not its count differs, and the two sides compare by their lowest count. Any other
   test compares its full-run count with no reruns, so any difference fails. Paste the
-  summary into the PR.
+  summary into the PR. A refactor that merges or renames suites adds
+  `--moves <map.json>`, an object from each moved test's base key to its head key (the
+  keys as the summary prints them); the map is the PR's list of test names before and
+  after, and an entry that names no base test fails the audit. The reviewer checks each
+  pairing in the map: the audit compares only counts, so a map that pairs a deleted test
+  with an unrelated new one of the same count passes.
 
 - **UI and state tests** (#458) start with both stores in their initial state
   (`src/__tests__/setup/stores.ts`) and with `errorLog` and Tauri core replaced by spies
