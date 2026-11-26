@@ -54,6 +54,10 @@ function noticeText(t: Dictionary, notice: Notice): string {
     : t.sample.cleared(notice.file);
 }
 
+// ReadBackText, StartupText and StopText take `t` as a prop: the one exception to "a
+// component calls useT()" (CONTRIBUTING.md "What a component reads"), because this screen
+// may render before the stores work.
+
 /** A save committed but its read-back failed: say the change was saved, name the
  *  writes queued behind it that were refused (ADR 0255), and still name the safety copy
  *  (ADR 0228, ADR 0154 §5). */

@@ -316,6 +316,22 @@ Amends / Amended-by link.
 
 Refactors are behaviour-neutral and need no ADR.
 
+## What a component reads
+
+How a component gets the dictionary, the lens and the stores (#492, owner decision
+2026-11-26):
+
+1. **Dictionary.** A component calls `useT()`; `t` is never a component prop. A plain
+   text-building function may take `t` (`startupText(t, e)`, `mortgageColumns(t)`). The one
+   exception is the start-up failure screens in `BootFailure.tsx`, which may render before
+   the stores work.
+2. **Lens.** The page reads `mode` from the UI store once, and a child that needs it takes
+   it as a prop. There is no `useMode()` hook.
+3. **Stores.** The shared components in `src/ui/components` are presentational: data and
+   callbacks come in as props. `ExportXlsxButton` is the one deliberate exception (it raises
+   the toast and the failure notice). Pages and `src/ui/hooks` read the stores with
+   selectors and write through store actions.
+
 ## Where a result is shown
 
 Each outcome is shown once, in one place (ADR 0141, ADR 0154, ADR 0261):
