@@ -135,8 +135,9 @@ reference models (mortgage, KPI) are the regression baseline (ADR 0081, 0174).
   read into the repo, or commit the real database, bank statements or screenshots. Tests use
   synthetic fixtures only.
 - **Evidence:** every finding cites `file:line` or a command output.
-- Backlog: `docs/roadmap.md` and GitHub issues. `DR-nnn` / `UX-nnn` / `J-nn` / `P-nn` in
-  comments are legacy IDs from the retired refactor archive (ADR 0081); `D-nn` = ADR `00nn`.
+- Backlog: `docs/roadmap.md` and GitHub issues. Comments cite decisions as `ADR nnnn` only;
+  `pnpm lint` (`scripts/check-comment-refs.mjs`) rejects retired archive ids (`DR-`, `UX-`,
+  `J-`, `D-nn`, phase ids) and an `ADR nnnn` with no file.
 
 ## 9. Model routing
 
